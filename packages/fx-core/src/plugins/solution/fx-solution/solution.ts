@@ -463,6 +463,14 @@ export class TeamsAppSolution implements Solution {
     if (canProvision.isErr()) {
       return canProvision;
     }
+
+    if (!ctx.config.get(GLOBAL_CONFIG)) {
+      ctx.config.set(GLOBAL_CONFIG, new ConfigMap());
+    }
+
+    // TODO: remove after "programmingLanguage" is extracted from env profile.
+    ctx.config.get(GLOBAL_CONFIG)?.set("programmingLanguage", "javascript");
+
     const provisioned = this.checkWetherProvisionSucceeded(ctx.config);
     if (provisioned) {
       const msg = util.format(
