@@ -10,13 +10,12 @@ import {
   PluginConfig,
   ProjectSettings,
   Result,
-  SolutionConfig,
   SolutionContext,
   Stage,
   StaticPlatforms,
   Tools,
 } from "@microsoft/teamsfx-api";
-import { CoreHookContext, FxCore, objectToMap } from "../..";
+import { CoreHookContext } from "../..";
 import {
   InvalidProjectError,
   NoProjectOpenedError,
@@ -26,11 +25,10 @@ import {
 import * as path from "path";
 import * as fs from "fs-extra";
 import { Middleware, NextFunction } from "@feathersjs/hooks/lib";
-import { validateProject } from "../../common";
+import { validateSettings } from "../../common";
 import * as uuid from "uuid";
 import { LocalCrypto } from "../crypto";
 import { PluginNames } from "../../plugins/solution/fx-solution/constants";
-import { environmentManager } from "../environment";
 
 export const ContextLoaderMW: Middleware = async (ctx: CoreHookContext, next: NextFunction) => {
   const inputs = ctx.arguments[ctx.arguments.length - 1] as Inputs;
@@ -52,26 +50,29 @@ export const ContextLoaderMW: Middleware = async (ctx: CoreHookContext, next: Ne
       ctx.result = err(PathNotExistError(inputs.projectPath));
       return;
     }
-    const core = ctx.self as FxCore;
-    const loadRes = await loadSolutionContext(core.tools, inputs);
+    const loadRes = await loadProjectSettings(inputs);
     if (loadRes.isErr()) {
       ctx.result = err(loadRes.error);
       return;
     }
-    const validRes = validateProject(loadRes.value);
+
+    const [projectSettings, projectIdMissing] = loadRes.value;
+
+    const validRes = validateSettings(projectSettings);
     if (validRes) {
       ctx.result = err(InvalidProjectError(validRes));
       return;
     }
-    ctx.solutionContext = loadRes.value;
+
+    ctx.projectSettings = projectSettings;
+    ctx.projectIdMissing = projectIdMissing;
   }
   await next();
 };
 
-export async function loadSolutionContext(
-  tools: Tools,
+export async function loadProjectSettings(
   inputs: Inputs
-): Promise<Result<SolutionContext, FxError>> {
+): Promise<Result<[ProjectSettings, boolean], FxError>> {
   try {
     if (!inputs.projectPath) {
       return err(NoProjectOpenedError());
@@ -93,30 +94,7 @@ export async function loadSolutionContext(
       projectSettings.solutionSettings.activeResourcePlugins.push(PluginNames.APPST);
     }
 
-    const cryptoProvider = new LocalCrypto(projectSettings.projectId);
-    // ensure backwards compatibility:
-    // no need to decrypt the secrets in *.userdata for previous TeamsFx project, which has no project id.
-    const envDataResult = await environmentManager.loadEnvProfile(
-      inputs.projectPath,
-      inputs.targetEnvName,
-      projectIdMissing ? undefined : cryptoProvider
-    );
-    if (envDataResult.isErr()) {
-      return err(envDataResult.error);
-    }
-    const envInfo = envDataResult.value;
-
-    const solutionContext: SolutionContext = {
-      projectSettings: projectSettings,
-      targetEnvName: envInfo.envName,
-      config: envInfo.data,
-      root: inputs.projectPath || "",
-      ...tools,
-      ...tools.tokenProvider,
-      answers: inputs,
-      cryptoProvider: cryptoProvider,
-    };
-    return ok(solutionContext);
+    return ok([projectSettings, projectIdMissing]);
   } catch (e) {
     return err(ReadFileError(e));
   }

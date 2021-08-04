@@ -74,6 +74,7 @@ import * as uuid from "uuid";
 import { AxiosResponse } from "axios";
 import { ProjectUpgraderMW } from "./middleware/projectUpgrader";
 import { globalStateUpdate } from "../common/globalState";
+import { EnvLoaderMW } from "./middleware/envLoader";
 
 export interface CoreHookContext extends HookContext {
   solutionContext?: SolutionContext;
@@ -284,6 +285,7 @@ export class FxCore implements Core {
     ErrorHandlerMW,
     ConcurrentLockerMW,
     ContextLoaderMW,
+    EnvLoaderMW,
     SolutionLoaderMW(defaultSolutionLoader),
     QuestionModelMW,
     ContextInjecterMW,
@@ -297,6 +299,7 @@ export class FxCore implements Core {
     ErrorHandlerMW,
     ConcurrentLockerMW,
     ContextLoaderMW,
+    EnvLoaderMW,
     SolutionLoaderMW(defaultSolutionLoader),
     QuestionModelMW,
     ContextInjecterMW,
@@ -324,6 +327,7 @@ export class FxCore implements Core {
     ErrorHandlerMW,
     ConcurrentLockerMW,
     ContextLoaderMW,
+    EnvLoaderMW,
     SolutionLoaderMW(defaultSolutionLoader),
     QuestionModelMW,
     ContextInjecterMW,
@@ -413,7 +417,7 @@ export class FxCore implements Core {
     ctx?: CoreHookContext
   ): Promise<Result<ProjectConfig | undefined, FxError>> {
     return ok({
-      settings: ctx!.solutionContext!.projectSettings,
+      settings: ctx!.projectSettings,
       config: ctx!.solutionContext!.config,
     });
   }

@@ -20,9 +20,12 @@ export enum CoreQuestionNames {
   Samples = "samples",
   Stage = "stage",
   SubStage = "substage",
+  TargetEnvName = "targetEnvName",
+  NewTargetEnvName = "newTargetEnvName",
 }
 
 export const ProjectNamePattern = "^[a-zA-Z][\\da-zA-Z]+$";
+export const EnvNamePattern = "^[wd-_]+$";
 
 export const QuestionAppName: TextInputQuestion = {
   type: "text",
@@ -52,7 +55,7 @@ export const QuestionAppName: TextInputQuestion = {
 export const QuestionRootFolder: FolderQuestion = {
   type: "folder",
   name: CoreQuestionNames.Foler,
-  title: "Workspace folder"
+  title: "Workspace folder",
 };
 
 export const QuestionSelectSolution: SingleSelectQuestion = {
@@ -61,6 +64,32 @@ export const QuestionSelectSolution: SingleSelectQuestion = {
   title: "Select a solution",
   staticOptions: [],
   skipSingleOption: true,
+};
+
+export const QuestionSelectTargetEnvironment: SingleSelectQuestion = {
+  type: "singleSelect",
+  name: CoreQuestionNames.TargetEnvName,
+  title: "Select the target environment",
+  staticOptions: [],
+  skipSingleOption: true,
+};
+
+export const QuestionNewTargetEnvironmentName: TextInputQuestion = {
+  type: "text",
+  name: CoreQuestionNames.NewTargetEnvName,
+  title: "New target environment name",
+  validation: {
+    validFunc: async (input: string): Promise<string | undefined> => {
+      // const targetEnvName = input as string;
+      // const validateResult = jsonschema.validate(targetEnvName, { pattern: EnvNamePattern });
+      // if (validateResult.errors && validateResult.errors.length > 0) {
+      //   return "Environment name can only contain letters, digits, _ and -.";
+      // }
+
+      return undefined;
+    },
+  },
+  placeholder: "New target environment name",
 };
 
 export const ScratchOptionYesVSC: OptionItem = {
@@ -92,7 +121,10 @@ export function getCreateNewOrFromSampleQuestion(platform: Platform): SingleSele
     type: "singleSelect",
     name: CoreQuestionNames.CreateFromScratch,
     title: "Teams Toolkit: Create a new Teams app",
-    staticOptions: (platform === Platform.VSCode)? [ScratchOptionYesVSC, ScratchOptionNoVSC]:[ScratchOptionYes, ScratchOptionNo],
+    staticOptions:
+      platform === Platform.VSCode
+        ? [ScratchOptionYesVSC, ScratchOptionNoVSC]
+        : [ScratchOptionYes, ScratchOptionNo],
     default: ScratchOptionYes.id,
     placeholder: "Select an option",
     skipSingleOption: true,
