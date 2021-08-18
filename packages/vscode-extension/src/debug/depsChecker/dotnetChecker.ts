@@ -66,6 +66,7 @@ export class DotnetChecker implements IDepsChecker {
     map.set("configPath", DotnetChecker.getDotnetConfigPath());
     return {
       name: DotnetCoreSDKName,
+      isLinuxSupported: false,
       installVersion: `${installVersion}`,
       supportedVersions: supportedVersions,
       details: map,

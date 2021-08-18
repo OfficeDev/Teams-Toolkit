@@ -116,6 +116,10 @@ export class TestAdapter implements IDepsAdapter {
     return Promise.resolve(this._nodeCheckerEnabled);
   }
 
+  bicepCheckerEnabled(): Promise<boolean> {
+    return Promise.resolve(true);
+  }
+
   async runWithProgressIndicator(callback: () => Promise<void>): Promise<void> {
     await callback();
   }

@@ -48,6 +48,10 @@ export const Messages = {
   failToInstallFuncCoreTool: `Failed to install @NameVersion. Install @NameVersion manually.`,
   failToValidateFuncCoreTool: `Failed to validate @NameVersion after installation.`,
 
+  downloadBicep: `Downloading and installing the portable version of @NameVersion, which will be installed to @InstallDir and will not affect your environment.`,
+  finishInstallBicep: `Successfully installed @NameVersion.`,
+  failToInstallBicep: `Failed to install @NameVersion. Install @NameVersion manually and restart Visual Studio Code.`,
+
   downloadDotnet: `Downloading and installing the portable version of @NameVersion, which will be installed to @InstallDir and will not affect your environment.`,
   finishInstallDotnet: `Successfully installed @NameVersion.`,
   useGlobalDotnet: `Using dotnet from PATH:`,
@@ -100,6 +104,14 @@ export enum DepsCheckerEvent {
   funcInstallScriptError = "func-install-script-error",
   funcValidationError = "func-validation-error",
 
+  bicepCheckSkipped = "bicep-check-skipped",
+  bicepAlreadyInstalled = "bicep-already-installed",
+  bicepInstallCompleted = "bicep-install-completed",
+  bicepInstallError = "bicep-install-error",
+  bicepInstallScriptCompleted = "bicep-install-script-completed",
+  bicepInstallScriptError = "bicep-install-script-error",
+  bicepValidationError = "bicep-validation-error",
+
   dotnetCheckSkipped = "dotnet-check-skipped",
   dotnetAlreadyInstalled = "dotnet-already-installed",
   dotnetInstallCompleted = "dotnet-install-completed",
@@ -124,6 +136,8 @@ export enum DepsCheckerEvent {
 export enum TelemtryMessages {
   failedToInstallFunc = "failed to install Func core tools.",
   failedToValidateFunc = "failed to validate func.",
+  failedToInstallBicep = "failed to install Bicep.",
+  failedToValidateBicep = "failed to validate Bicep.",
   NPMNotFound = "npm is not found.",
   failedToExecDotnetScript = "failed to exec dotnet script.",
   failedToValidateDotnet = "failed to validate dotnet.",

@@ -500,6 +500,11 @@
             "description": "Ensure Azure Function Core Tools is installed.",
             "default": true
           },
+          "fx-extension.validateBicep": {
+            "type": "boolean",
+            "description": "Ensure Bicep CLI is installed.",
+            "default": true
+          },
           "fx-extension.stopTeamsToolkitTasksPostDebug": {
             "type": "boolean",
             "description": "Automatically stop all Teams Toolkit tasks when debug session ends.",

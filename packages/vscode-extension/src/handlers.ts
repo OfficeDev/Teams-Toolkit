@@ -68,6 +68,7 @@ import { DepsChecker } from "./debug/depsChecker/checker";
 import { BackendExtensionsInstaller } from "./debug/depsChecker/backendExtensionsInstall";
 import { DotnetChecker } from "./debug/depsChecker/dotnetChecker";
 import { FuncToolChecker } from "./debug/depsChecker/funcToolChecker";
+import { BicepChecker } from "./debug/depsChecker/bicepChecker";
 import * as util from "util";
 import * as StringResources from "./resources/Strings.json";
 import { vscodeAdapter } from "./debug/depsChecker/vscodeAdapter";
@@ -421,10 +422,12 @@ export async function validateDependenciesHandler(): Promise<void> {
   const nodeChecker = new AzureNodeChecker(vscodeAdapter, vscodeLogger, vscodeTelemetry);
   const dotnetChecker = new DotnetChecker(vscodeAdapter, vscodeLogger, vscodeTelemetry);
   const funcChecker = new FuncToolChecker(vscodeAdapter, vscodeLogger, vscodeTelemetry);
+  const bicepChecker = new BicepChecker(vscodeAdapter, vscodeLogger, vscodeTelemetry);
   const depsChecker = new DepsChecker(vscodeLogger, vscodeAdapter, [
     nodeChecker,
     dotnetChecker,
     funcChecker,
+    bicepChecker, // TODO: fix it after testing
   ]);
   await validateDependenciesCore(depsChecker);
 }

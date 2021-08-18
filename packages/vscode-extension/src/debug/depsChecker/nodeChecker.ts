@@ -70,6 +70,7 @@ export abstract class NodeChecker implements IDepsChecker {
   public async getDepsInfo(): Promise<DepsInfo> {
     return {
       name: NodeName,
+      isLinuxSupported: false,
       supportedVersions: this._supportedVersions,
       details: new Map<string, string>(),
     };

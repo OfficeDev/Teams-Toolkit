@@ -11,6 +11,8 @@ export class VSCodeAdapter implements IDepsAdapter {
   private readonly downloadIndicatorInterval = 1000; // same as vscode-dotnet-runtime
   private readonly validateDotnetSdkKey = "validateDotnetSdk";
   private readonly validateFuncCoreToolsKey = "validateFuncCoreTools";
+  private readonly validateBicepKey = "validateBicep";
+
   private readonly validateNodeVersionKey = "validateNode";
   private readonly _telemetry: IDepsTelemetry;
 
@@ -32,6 +34,10 @@ export class VSCodeAdapter implements IDepsAdapter {
 
   public nodeCheckerEnabled(): Promise<boolean> {
     return Promise.resolve(this.checkerEnabled(this.validateNodeVersionKey));
+  }
+
+  public bicepCheckerEnabled(): Promise<boolean> {
+    return Promise.resolve(this.checkerEnabled(this.validateBicepKey));
   }
 
   public async runWithProgressIndicator(callback: () => Promise<void>): Promise<void> {

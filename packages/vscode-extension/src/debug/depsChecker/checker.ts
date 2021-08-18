@@ -38,6 +38,7 @@ export interface IDepsAdapter {
   dotnetCheckerEnabled(): Promise<boolean>;
   funcToolCheckerEnabled(): Promise<boolean>;
   nodeCheckerEnabled(): Promise<boolean>;
+  bicepCheckerEnabled(): Promise<boolean>;
   runWithProgressIndicator(callback: () => Promise<void>): Promise<void>;
   getResourceDir(): string;
 }
@@ -65,6 +66,7 @@ export interface IDepsTelemetry {
 
 export interface DepsInfo {
   name: string;
+  isLinuxSupported: boolean;
   installVersion?: string;
   supportedVersions: string[];
   details: Map<string, string>;
@@ -98,16 +100,22 @@ export class DepsChecker {
       return shouldContinue;
     }
 
-    if (isLinux()) {
-      const confirmMessage = await this.generateMsg(validCheckers);
+    const linuxNotSupportedCheckers = validCheckers.filter(this.isLinuxNotSupported);
+    if (isLinux() && linuxNotSupportedCheckers.length > 0) {
+      const confirmMessage = await this.generateMsg(linuxNotSupportedCheckers);
       this._logger.cleanup();
-      return await this._adapter.displayContinueWithLearnMore(confirmMessage, defaultHelpLink);
+      if (!(await this._adapter.displayContinueWithLearnMore(confirmMessage, defaultHelpLink))) {
+        return !shouldContinue;
+      }
     }
 
     this._adapter.showOutputChannel();
     for (const checker of validCheckers) {
       try {
-        await checker.install();
+        const info = await checker.getDepsInfo();
+        if (!isLinux() || info.isLinuxSupported) {
+          await checker.install();
+        }
       } catch (error) {
         await this._logger.printDetailLog();
         this._logger.cleanup();
@@ -177,5 +185,10 @@ export class DepsChecker {
     } else {
       return await adapter.displayLearnMore(Messages.defaultErrorMessage, defaultHelpLink);
     }
+  }
+
+  private async isLinuxNotSupported(checker: IDepsChecker): Promise<boolean> {
+    const info = await checker.getDepsInfo();
+    return !info.isLinuxSupported;
   }
 }

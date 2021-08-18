@@ -39,6 +39,7 @@ export class FuncToolChecker implements IDepsChecker {
   public getDepsInfo(): Promise<DepsInfo> {
     return Promise.resolve({
       name: funcToolName,
+      isLinuxSupported: false,
       installVersion: installVersion,
       supportedVersions: supportedVersions,
       details: new Map<string, string>(),
