@@ -331,15 +331,18 @@ export async function registerAccountTreeHandler(): Promise<Result<Void, FxError
   };
 
   const signinAzureTreeItem: TreeItem = {
-    commandId: "fx-extension.signinM365",
-    label: StringResources.vsc.handlers.signIn365,
-    callback: signinM365Callback,
+    commandId: "fx-extension.signinAzure",
+    label: StringContext.getSignInAzureContext(),
+    callback: async (args?: any[]) => {
+      return signinAzureCallback(args);
+    },
     parent: TreeCategory.Account,
-    contextValue: "signinM365",
-    icon: "M365",
+    contextValue: "signinAzure",
+    subTreeItems: [],
+    icon: "azure",
     tooltip: {
       isMarkdown: true,
-      value: StringResources.vsc.accountTree.m365AccountTooltip,
+      value: StringResources.vsc.accountTree.azureAccountTooltip,
     },
   };
 
