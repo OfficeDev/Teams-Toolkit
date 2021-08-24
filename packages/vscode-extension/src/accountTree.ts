@@ -317,41 +317,46 @@ export async function registerAccountTreeHandler(): Promise<Result<Void, FxError
       return Promise.resolve();
     }
   );
-  tools.treeProvider!.add([
-    {
-      commandId: "fx-extension.signinM365",
-      label: StringResources.vsc.handlers.signIn365,
-      callback: signinM365Callback,
-      parent: TreeCategory.Account,
-      contextValue: "signinM365",
-      icon: "M365",
-      tooltip: {
-        isMarkdown: true,
-        value: StringResources.vsc.accountTree.m365AccountTooltip,
-      },
+
+  const signinM365TreeItem: TreeItem = {
+    commandId: "fx-extension.signinM365",
+    label: StringResources.vsc.handlers.signIn365,
+    callback: signinM365Callback,
+    parent: TreeCategory.Account,
+    contextValue: "signinM365",
+    icon: "M365",
+    tooltip: {
+      isMarkdown: true,
+      value: StringResources.vsc.accountTree.m365AccountTooltip,
     },
-    {
-      commandId: "fx-extension.signinAzure",
-      label: StringContext.getSignInAzureContext(),
-      callback: async (args?: any[]) => {
-        return signinAzureCallback(args);
-      },
-      parent: TreeCategory.Account,
-      contextValue: "signinAzure",
-      subTreeItems: [],
-      icon: "azure",
-      tooltip: {
-        isMarkdown: true,
-        value: StringResources.vsc.accountTree.azureAccountTooltip,
-      },
+  };
+
+  const signinAzureTreeItem: TreeItem = {
+    commandId: "fx-extension.signinM365",
+    label: StringResources.vsc.handlers.signIn365,
+    callback: signinM365Callback,
+    parent: TreeCategory.Account,
+    contextValue: "signinM365",
+    icon: "M365",
+    tooltip: {
+      isMarkdown: true,
+      value: StringResources.vsc.accountTree.m365AccountTooltip,
     },
-    {
-      commandId: "fx-extension.specifySubscription",
-      label: StringResources.vsc.accountTree.specifySubscription,
-      callback: selectSubscriptionCallback,
-      parent: undefined,
-    },
-  ]);
+  };
+
+  const specifySubscriptionTreeItem: TreeItem = {
+    commandId: "fx-extension.specifySubscription",
+    label: StringResources.vsc.accountTree.specifySubscription,
+    callback: selectSubscriptionCallback,
+    parent: undefined,
+  };
+
+  const solutionSettings = await getAzureSolutionSettings();
+  if (solutionSettings && "Azure" === solutionSettings.hostType) {
+    tools.treeProvider!.add([signinM365TreeItem, signinAzureTreeItem, specifySubscriptionTreeItem]);
+  } else {
+    tools.treeProvider!.add([signinM365TreeItem]);
+  }
 
   return ok(Void);
 }
