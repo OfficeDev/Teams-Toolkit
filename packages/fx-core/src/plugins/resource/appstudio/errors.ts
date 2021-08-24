@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+import { Constants } from "./constants";
+
 export class AppStudioError {
   public static readonly FileNotFoundError = {
     name: "FileNotFoundError",
@@ -136,8 +138,20 @@ export class AppStudioError {
     message: (error: any) => (error.message ? error.message : "Teams app scaffold failed!"),
   };
 
+  public static readonly MigrateV1ProjectFailedError = {
+    name: "MigrateV1ProjectFailed",
+    message: (error: any) =>
+      error.message ? error.message : "Migrate Teams Toolkit V1 project failed!",
+  };
+  
   public static readonly CheckPermissionFailedError = {
     name: "CheckPermissionFailed",
     message: (error: any) => `Check permission failed. Reason: ${error.message}`,
+  };
+
+  public static readonly GrantPermissionFailedError = {
+    name: "GrantPermissionFailed",
+    message: (errorMessage: string, id?: string) =>
+      `${Constants.PERMISSIONS.name}: ${id}. Grant permission failed. Reason: ${errorMessage}`,
   };
 }

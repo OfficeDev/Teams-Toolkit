@@ -354,9 +354,14 @@ export class UpdatePermissionConfig {
   }
 }
 
-export class CheckPermissionConfig {
+export class CheckGrantPermissionConfig {
   public userInfo?: any;
   public objectId?: string;
+  public isGrantPermission: boolean;
+
+  constructor(isGrantPermission = false) {
+    this.isGrantPermission = isGrantPermission;
+  }
 
   public async restoreConfigFromContext(ctx: PluginContext): Promise<void> {
     const objectId: ConfigValue = ctx.config?.get(ConfigKeys.objectId);
@@ -365,7 +370,10 @@ export class CheckPermissionConfig {
     } else {
       throw ResultFactory.SystemError(
         GetConfigError.name,
-        GetConfigError.message(Errors.GetConfigError(ConfigKeys.objectId, Plugins.pluginName))
+        Utils.getPermissionErrorMessage(
+          GetConfigError.message(Errors.GetConfigError(ConfigKeys.objectId, Plugins.pluginName)),
+          this.isGrantPermission
+        )
       );
     }
 
@@ -375,8 +383,10 @@ export class CheckPermissionConfig {
     if (!userInfo) {
       throw ResultFactory.SystemError(
         GetConfigError.name,
-        GetConfigError.message(
-          Errors.GetConfigError(ConfigKeysOfOtherPlugin.solutionUserInfo, Plugins.solution)
+        Utils.getPermissionErrorMessage(
+          Errors.GetConfigError(ConfigKeysOfOtherPlugin.solutionUserInfo, Plugins.solution),
+          this.isGrantPermission,
+          this.objectId
         )
       );
     }
@@ -384,7 +394,14 @@ export class CheckPermissionConfig {
     try {
       this.userInfo = JSON.parse(userInfo);
     } catch (error) {
-      throw ResultFactory.SystemError(GetConfigError.name, GetConfigError.message(error.message));
+      throw ResultFactory.SystemError(
+        GetConfigError.name,
+        Utils.getPermissionErrorMessage(
+          GetConfigError.message(error.message),
+          this.isGrantPermission,
+          this.objectId
+        )
+      );
     }
   }
 }

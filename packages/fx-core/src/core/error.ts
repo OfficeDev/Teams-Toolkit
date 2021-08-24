@@ -178,3 +178,11 @@ export function ProjectEnvNotExistError(env: string): SystemError {
     `The specified env ${env} does not exist. Select an existing env.`
   );
 }
+
+export function InvalidEnvNameError(): FxError {
+  return new UserError(
+    CoreSource,
+    "InvalidEnvNameError",
+    `Environment name can only contain letters, digits, _ and -.`
+  );
+}

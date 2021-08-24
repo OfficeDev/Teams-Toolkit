@@ -112,6 +112,48 @@ describe("Telemetry Reporter", function () {
     });
   });
 
+  describe("removePropertiesWithPossibleUserInfo", () => {
+    const sandbox = sinon.createSandbox();
+
+    before(() => {
+      sandbox.stub(UserSettings, "getTelemetrySetting").returns(ok(false));
+    });
+
+    after(() => {
+      sandbox.restore();
+    });
+
+    it("undefined", () => {
+      const reporter = new Reporter("real", "real", "real", "real");
+      const result = reporter["removePropertiesWithPossibleUserInfo"](undefined);
+      expect(result).equals(undefined);
+    });
+
+    it("abcdefg", () => {
+      const reporter = new Reporter("real", "real", "real", "real");
+      const result = reporter["removePropertiesWithPossibleUserInfo"]({ a: "abcdefg" });
+      expect(result).deep.equals({ a: "abcdefg" });
+    });
+
+    it("xxxx@yyy.zzz", () => {
+      const reporter = new Reporter("real", "real", "real", "real");
+      const result = reporter["removePropertiesWithPossibleUserInfo"]({ a: "xxxx@yyy.zzz" });
+      expect(result).deep.equals({ a: "<REDACTED: email>" });
+    });
+
+    it("password", () => {
+      const reporter = new Reporter("real", "real", "real", "real");
+      const result = reporter["removePropertiesWithPossibleUserInfo"]({ a: "ssword=sasdfsdf" });
+      expect(result).deep.equals({ a: "<REDACTED: password>" });
+    });
+
+    it("token", () => {
+      const reporter = new Reporter("real", "real", "real", "real");
+      const result = reporter["removePropertiesWithPossibleUserInfo"]({ a: "token=asdfasdfasdf" });
+      expect(result).deep.equals({ a: "<REDACTED: token>" });
+    });
+  });
+
   it("sendTelemetryEvent", () => {
     sandbox.stub(UserSettings, "getTelemetrySetting").returns(ok(false));
     sandbox.stub(TelemetryClient.prototype, "trackEvent");

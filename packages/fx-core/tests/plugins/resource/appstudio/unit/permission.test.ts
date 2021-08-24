@@ -76,4 +76,40 @@ describe("Remote Collaboration", () => {
       chai.assert.deepEqual(checkPermission.value[0].roles, ["Administrator"]);
     }
   });
+
+  it("Grant permission", async () => {
+    const appId = faker.datatype.uuid();
+
+    const soltuionContext = new ConfigMap();
+    soltuionContext.set(USER_INFO, JSON.stringify(userList));
+    soltuionContext.set(REMOTE_TEAMS_APP_ID, appId);
+
+    configOfOtherPlugins.set(SOLUTION, soltuionContext);
+
+    ctx = {
+      root: "./tests/plugins/resource/appstudio/resources/",
+      configOfOtherPlugins: configOfOtherPlugins,
+      config: new ConfigMap(),
+      answers: { platform: Platform.VSCode },
+      appStudioToken: new MockedAppStudioTokenProvider(),
+    };
+    ctx.projectSettings = {
+      appName: "my app",
+      projectId: "project id",
+      solutionSettings: {
+        name: "azure",
+        version: "1.0",
+      },
+    };
+
+    sandbox.stub(ctx.appStudioToken!, "getAccessToken").resolves("anything");
+    sandbox.stub(AppStudioClient, "grantPermission").resolves();
+
+    const grantPermission = await plugin.grantPermission(ctx);
+    console.log(grantPermission);
+    chai.assert.isTrue(grantPermission.isOk());
+    if (grantPermission.isOk()) {
+      chai.assert.deepEqual(grantPermission.value[0].roles, ["Administrator"]);
+    }
+  });
 });

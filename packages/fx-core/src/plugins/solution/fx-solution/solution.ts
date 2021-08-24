@@ -111,7 +111,7 @@ import { scaffoldReadmeAndLocalSettings } from "./v2/scaffolding";
 import { PermissionRequestFileProvider } from "../../../core/permissionRequest";
 import { IUserList } from "../../resource/appstudio/interfaces/IAppDefinition";
 import axios from "axios";
-import { ResourcePermission } from "../../../common/permissionInterface";
+import { AadOwner, Collaborator, ResourcePermission } from "../../../common/permissionInterface";
 
 export type LoadedPlugin = Plugin;
 export type PluginsWithContext = [LoadedPlugin, PluginContext];
@@ -583,22 +583,6 @@ export class TeamsAppSolution implements Solution {
       return canProvision;
     }
 
-    const provisioned = this.checkWetherProvisionSucceeded(ctx.config);
-    if (provisioned) {
-      const msg = util.format(
-        getStrings().solution.AlreadyProvisionNotice,
-        ctx.projectSettings?.appName
-      );
-      ctx.ui?.showMessage("warn", msg, false);
-      const pluginCtx = getPluginContext(ctx, this.AppStudioPlugin.name);
-      const remoteTeamsAppId = await this.AppStudioPlugin.provision(pluginCtx);
-      if (remoteTeamsAppId.isOk()) {
-        ctx.config.get(GLOBAL_CONFIG)?.set(REMOTE_TEAMS_APP_ID, remoteTeamsAppId.value);
-      } else {
-        return remoteTeamsAppId;
-      }
-      return await this.AppStudioPlugin.postProvision(pluginCtx);
-    }
     try {
       // Just to trigger M365 login before the concurrent execution of provision.
       // Because concurrent exectution of provision may getAccessToken() concurrently, which
@@ -1499,8 +1483,10 @@ export class TeamsAppSolution implements Solution {
   }
 
   @hooks([ErrorHandlerMW])
-  async listCollaborator(ctx: SolutionContext): Promise<Result<any, FxError>> {
-    return ok(Void);
+  async listCollaborator(
+    ctx: SolutionContext
+  ): Promise<Result<Collaborator[] | undefined, FxError>> {
+    return ok(undefined);
   }
 
   private async checkAndGetCurrentUserInfo(ctx: SolutionContext): Promise<Result<any, FxError>> {
@@ -2398,17 +2384,17 @@ export class TeamsAppSolution implements Solution {
         return undefined;
       }
 
-      const collaborator = res.data.value.find(
-        (user: any) => (user["userPrincipalName"] as string) === email
+      const collaborator: AadOwner = res.data.value.find(
+        (user: AadOwner) => user.userPrincipalName === email
       );
 
       if (!collaborator) {
         return undefined;
       }
 
-      aadId = collaborator["id"] as string;
-      userPrincipalName = collaborator["userPrincipalName"] as string;
-      displayName = collaborator["displayName"] as string;
+      aadId = collaborator.id;
+      userPrincipalName = collaborator.userPrincipalName;
+      displayName = collaborator.displayName;
     }
 
     return {

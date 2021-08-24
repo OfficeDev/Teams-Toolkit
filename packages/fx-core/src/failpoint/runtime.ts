@@ -62,7 +62,7 @@ function parseValue(name: string, term: string): Value | undefined {
       throw new Error(`invalid syntax(${term}) for failpoint ${name}. Not a number.`);
     }
     return { kind: "number", value: result };
-  } else if (value[0] == '"' && value.length >= 2 && value[value.length - 1] == '"') {
+  } else if (value[0] == "\"" && value.length >= 2 && value[value.length - 1] == "\"") {
     return { kind: "string", value: value.substring(1, value.length - 1) };
   } else if (value === "true" || value === "false") {
     const result: boolean = value === "true";

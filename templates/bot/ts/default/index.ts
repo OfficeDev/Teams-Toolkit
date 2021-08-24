@@ -1,20 +1,12 @@
 // Import required packages
-import * as path from "path";
 import * as restify from "restify";
 
 // Import required bot services.
 // See https://aka.ms/bot-services to learn more about the different parts of a bot.
-import {
-  BotFrameworkAdapter,
-  ConversationState,
-  MemoryStorage,
-  UserState,
-  TurnContext,
-} from "botbuilder";
+import { BotFrameworkAdapter, TurnContext } from "botbuilder";
 
 // This bot's main dialog.
 import { TeamsBot } from "./teamsBot";
-import { MainDialog } from "./dialogs/mainDialog";
 
 // Create adapter.
 // See https://aka.ms/about-bot-adapter to learn more about adapters.
@@ -46,23 +38,8 @@ const onTurnErrorHandler = async (context: TurnContext, error: Error) => {
 // Set the onTurnError for the singleton BotFrameworkAdapter.
 adapter.onTurnError = onTurnErrorHandler;
 
-// Define the state store for your bot.
-// See https://aka.ms/about-bot-state to learn more about using MemoryStorage.
-// A bot requires a state storage system to persist the dialog and user state between messages.
-const memoryStorage = new MemoryStorage();
-
-// For a distributed bot in production,
-// this requires a distributed storage to ensure only one token exchange is processed.
-const dedupMemory = new MemoryStorage();
-
-// Create conversation and user state with in-memory storage provider.
-const conversationState = new ConversationState(memoryStorage);
-const userState = new UserState(memoryStorage);
-
-// Create the main dialog.
-const dialog = new MainDialog(dedupMemory);
 // Create the bot that will handle incoming messages.
-const bot = new TeamsBot(conversationState, userState, dialog);
+const bot = new TeamsBot();
 
 // Create HTTP server.
 const server = restify.createServer();
@@ -72,21 +49,7 @@ server.listen(process.env.port || process.env.PORT || 3978, () => {
 
 // Listen for incoming requests.
 server.post("/api/messages", async (req, res) => {
-  await adapter
-    .processActivity(req, res, async (context) => {
-      await bot.run(context);
-    })
-    .catch((err) => {
-      // Error message including "412" means it is waiting for user's consent, which is a normal process of SSO, sholdn't throw this error.
-      if (!err.message.includes("412")) {
-        throw err;
-      }
-    });
+  await adapter.processActivity(req, res, async (context) => {
+    await bot.run(context);
+  });
 });
-
-server.get(
-  "/auth-*.html",
-  restify.plugins.serveStatic({
-    directory: path.join(__dirname, "public"),
-  })
-);

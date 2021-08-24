@@ -19,6 +19,7 @@ import {
   AzureSolutionSettings,
   Func,
   newSystemError,
+  Void,
 } from "@microsoft/teamsfx-api";
 import { AppStudioPluginImpl } from "./plugin";
 import { Constants } from "./constants";
@@ -36,9 +37,6 @@ export class AppStudioPlugin implements Plugin {
   name = "fx-resource-appstudio";
   displayName = "App Studio";
   activate(solutionSettings: AzureSolutionSettings): boolean {
-    if (solutionSettings?.migrateFromV1) {
-      return false;
-    }
     return true;
   }
   private appStudioPluginImpl = new AppStudioPluginImpl();
@@ -206,6 +204,28 @@ export class AppStudioPlugin implements Plugin {
   }
 
   /**
+   * Migrate V1 project
+   */
+  public async migrateV1Project(ctx: PluginContext): Promise<Result<Void, FxError>> {
+    TelemetryUtils.init(ctx);
+    TelemetryUtils.sendStartEvent(TelemetryEventName.migrateV1Project);
+
+    try {
+      await this.appStudioPluginImpl.migrateV1Project(ctx);
+      TelemetryUtils.sendSuccessEvent(TelemetryEventName.migrateV1Project);
+      return ok(Void);
+    } catch (error) {
+      TelemetryUtils.sendErrorEvent(TelemetryEventName.migrateV1Project, error);
+      return err(
+        AppStudioResultFactory.SystemError(
+          AppStudioError.MigrateV1ProjectFailedError.name,
+          AppStudioError.MigrateV1ProjectFailedError.message(error)
+        )
+      );
+    }
+  }
+
+  /**
    * Publish the app to Teams App Catalog
    * @param {PluginContext} ctx
    * @returns {string[]} - Teams App ID in Teams app catalog
@@ -307,6 +327,25 @@ export class AppStudioPlugin implements Plugin {
     }
   }
 
+  public async grantPermission(ctx: PluginContext): Promise<Result<any, FxError>> {
+    TelemetryUtils.init(ctx);
+    TelemetryUtils.sendStartEvent(TelemetryEventName.grantPermission);
+
+    try {
+      const grantPermissionResult = await this.appStudioPluginImpl.grantPermission(ctx);
+      TelemetryUtils.sendSuccessEvent(TelemetryEventName.grantPermission);
+      return ok(grantPermissionResult);
+    } catch (error) {
+      TelemetryUtils.sendErrorEvent(TelemetryEventName.grantPermission, error);
+      return err(
+        AppStudioResultFactory.SystemError(
+          AppStudioError.GrantPermissionFailedError.name,
+          error.message
+        )
+      );
+    }
+  }
+
   async executeUserTask(func: Func, ctx: PluginContext): Promise<Result<any, FxError>> {
     if (func.method === "validateManifest") {
       return await this.validateManifest(ctx);
@@ -328,6 +367,8 @@ export class AppStudioPlugin implements Plugin {
           Links.ISSUE_LINK
         )
       );
+    } else if (func.method === "migrateV1Project") {
+      return await this.migrateV1Project(ctx);
     }
     return err(
       newSystemError(

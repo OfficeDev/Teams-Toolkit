@@ -9,6 +9,7 @@ import {
   UserError,
   AzureSolutionSettings,
   ok,
+  Func,
 } from "@microsoft/teamsfx-api";
 
 import { ErrorFactory, TeamsFxResult } from "./error-factory";
@@ -34,9 +35,6 @@ export class FrontendPlugin implements Plugin, ArmResourcePlugin {
   name = "fx-resource-frontend-hosting";
   displayName = "Tab Front-end";
   activate(solutionSettings: AzureSolutionSettings): boolean {
-    if (solutionSettings?.migrateFromV1) {
-      return false;
-    }
     const cap = solutionSettings.capabilities || [];
     return solutionSettings.hostType === HostTypeOptionAzure.id && cap.includes(TabOptionItem.id);
   }
@@ -100,15 +98,26 @@ export class FrontendPlugin implements Plugin, ArmResourcePlugin {
     );
   }
 
+  public async executeUserTask(func: Func, ctx: PluginContext): Promise<TeamsFxResult> {
+    FrontendPlugin.setContext(ctx);
+    return this.runWithErrorHandling(
+      ctx,
+      TelemetryEvent.ExecuteUserTask,
+      () => this.frontendPluginImpl.executeUserTask(func, ctx),
+      { method: func.method }
+    );
+  }
+
   private async runWithErrorHandling(
     ctx: PluginContext,
     stage: string,
-    fn: () => Promise<TeamsFxResult>
+    fn: () => Promise<TeamsFxResult>,
+    properties: { [key: string]: string } = {}
   ): Promise<TeamsFxResult> {
     try {
-      TelemetryHelper.sendStartEvent(stage);
+      TelemetryHelper.sendStartEvent(stage, properties);
       const result = await fn();
-      TelemetryHelper.sendSuccessEvent(stage);
+      TelemetryHelper.sendSuccessEvent(stage, properties);
       return result;
     } catch (e) {
       await ProgressHelper.endAllHandlers(false);
@@ -123,17 +132,17 @@ export class FrontendPlugin implements Plugin, ArmResourcePlugin {
                 e.getInnerError(),
                 e.getInnerError()?.stack
               );
-        TelemetryHelper.sendErrorEvent(stage, error);
+        TelemetryHelper.sendErrorEvent(stage, error, properties);
         return err(error);
       }
 
       if (e instanceof UserError || e instanceof SystemError) {
-        TelemetryHelper.sendErrorEvent(stage, e);
+        TelemetryHelper.sendErrorEvent(stage, e, properties);
         return err(e);
       }
 
       const error = ErrorFactory.SystemError(UnhandledErrorCode, UnhandledErrorMessage, e, e.stack);
-      TelemetryHelper.sendErrorEvent(stage, error);
+      TelemetryHelper.sendErrorEvent(stage, error, properties);
       return err(error);
     }
   }

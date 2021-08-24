@@ -4,7 +4,7 @@
 import { AzureInfo, Constants, FrontendPathInfo, FrontendPluginInfo } from "../constants";
 import { Logger } from "../utils/logger";
 import path from "path";
-import { ConfigFolderName } from "@microsoft/teamsfx-api";
+import { ConfigFolderName, ArchiveFolderName } from "@microsoft/teamsfx-api";
 
 export enum ErrorType {
   User,
@@ -34,6 +34,7 @@ const tips = {
   registerRequiredRP: `Register required resource provider '${AzureInfo.RequiredResourceProviders.join(
     `', '`
   )}' for your subscription manually.`,
+  migrateV1Project: `Rollback your project from '${ArchiveFolderName}' folder.`,
 };
 
 export class FrontendPluginError extends Error {
@@ -335,6 +336,28 @@ export class InvalidAadPluginConfigError extends FrontendPluginError {
       "InvalidAadPluginConfigError",
       "The aad plugin configuration is invalid.",
       [tips.restoreEnvironment, tips.reProvision]
+    );
+  }
+}
+
+export class MigrateV1ProjectError extends FrontendPluginError {
+  constructor() {
+    super(
+      ErrorType.User,
+      "MigrateV1ProjectError",
+      `Failed to migrate Teams Toolkit V1 project into '${FrontendPathInfo.WorkingDir}'.`,
+      [tips.migrateV1Project, tips.checkLog]
+    );
+  }
+}
+
+export class UserTaskNotImplementedError extends FrontendPluginError {
+  constructor(taskName: string) {
+    super(
+      ErrorType.System,
+      "UserTaskNotImplementedError",
+      `User task '${taskName}' is not implemented.`,
+      []
     );
   }
 }

@@ -527,9 +527,9 @@ describe("AAD App Client Test", () => {
       };
       sinon.stub(AadAppClient, "retryHanlder").throws(error);
       try {
-        const getResult = await AadAppClient.checkPermission(
+        const checkPermissionResult = await AadAppClient.checkPermission(
           ctx,
-          "getAadApp",
+          "checkPermission",
           faker.datatype.uuid(),
           faker.datatype.uuid()
         );
@@ -547,9 +547,61 @@ describe("AAD App Client Test", () => {
       };
       sinon.stub(AadAppClient, "retryHanlder").throws(error);
       try {
-        const getResult = await AadAppClient.checkPermission(
+        const checkPermissionResult = await AadAppClient.checkPermission(
           ctx,
-          "getAadApp",
+          "checkPermission",
+          faker.datatype.uuid(),
+          faker.datatype.uuid()
+        );
+      } catch (error) {
+        chai.assert.isTrue(error instanceof SystemError);
+      }
+    });
+  });
+
+  describe("grantPermission", async () => {
+    it("Happy Path", async () => {
+      sinon.stub(GraphClient, "grantPermission").resolves();
+      const grantPermissionResult = await AadAppClient.grantPermission(
+        ctx,
+        "checkPermission",
+        faker.datatype.uuid(),
+        faker.datatype.uuid()
+      );
+    });
+
+    it("User Error", async () => {
+      const error = {
+        response: {
+          status: 404,
+          message: "errorMessage",
+        },
+      };
+      sinon.stub(AadAppClient, "retryHanlder").throws(error);
+      try {
+        const grantPermissionResult = await AadAppClient.grantPermission(
+          ctx,
+          "grantPermission",
+          faker.datatype.uuid(),
+          faker.datatype.uuid()
+        );
+      } catch (error) {
+        chai.assert.isTrue(error instanceof UserError);
+      }
+    });
+
+    it("System Error", async () => {
+      const error = {
+        response: {
+          status: 500,
+          message: "errorMessage",
+        },
+      };
+      sinon.stub(GraphClient, "grantPermission").throws(error);
+      try {
+        const grantPermissionResult = await AadAppClient.grantPermission(
+          ctx,
+          "grantPermission",
           faker.datatype.uuid(),
           faker.datatype.uuid()
         );

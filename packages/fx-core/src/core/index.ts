@@ -563,9 +563,9 @@ export class FxCore implements Core {
     ctx?: CoreHookContext
   ): Promise<Result<ProjectConfig | undefined, FxError>> {
     return ok({
-      settings: ctx!.solutionContext!.projectSettings,
-      config: ctx!.solutionContext!.config,
-      localSettings: ctx!.solutionContext!.localSettings,
+      settings: ctx!.projectSettings,
+      config: ctx!.solutionContext?.config,
+      localSettings: ctx!.solutionContext?.localSettings,
     });
   }
 
@@ -755,7 +755,7 @@ export class FxCore implements Core {
             description: "",
             author: "",
             scripts: {
-              test: 'echo "Error: no test specified" && exit 1',
+              test: "echo \"Error: no test specified\" && exit 1",
             },
             devDependencies: {
               "@microsoft/teamsfx-cli": "0.*",

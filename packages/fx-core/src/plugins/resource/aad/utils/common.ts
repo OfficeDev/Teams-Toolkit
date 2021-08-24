@@ -30,4 +30,14 @@ export class Utils {
   public static addLocalDebugPrefix(isLocalDebug: boolean, key: string): string {
     return isLocalDebug ? Constants.localDebugPrefix + key : key;
   }
+
+  public static getPermissionErrorMessage(
+    message: string,
+    isGrantPermission = false,
+    objectId?: string
+  ): string {
+    return isGrantPermission
+      ? `${Constants.permissions.name}: ${objectId}. Error: ${message}`
+      : message;
+  }
 }

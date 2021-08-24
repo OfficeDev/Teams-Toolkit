@@ -67,6 +67,7 @@ export class FrontendPathInfo {
     FrontendPathInfo.NodePackageFolderName,
     FrontendPathInfo.TabDeploymentFolderName,
   ];
+  static ReadmeFileName = "README.md";
 }
 
 export class DependentPluginInfo {
@@ -126,6 +127,7 @@ export class TelemetryEvent {
   static readonly SkipDeploy = "skip-deploy";
 
   static readonly GenerateArmTemplates = "generate-arm-templates";
+  static readonly ExecuteUserTask = "execute-user-task";
 }
 
 export class TelemetryKey {

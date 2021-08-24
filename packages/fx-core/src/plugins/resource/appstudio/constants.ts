@@ -36,6 +36,7 @@ export const FRONTEND_ENDPOINT_ARM = "frontendHosting_endpoint";
 export const FRONTEND_DOMAIN_ARM = "frontendHosting_domain";
 export const BOT_ID = "botId";
 export const LOCAL_BOT_ID = "localBotId";
+export const V1_MANIFEST = "manifest.json";
 
 /**
  * Config Keys that are useful for remote collaboration
@@ -166,12 +167,12 @@ export const BOTS_TPL: IBot[] = [
         scopes: ["personal", "team", "groupchat"],
         commands: [
           {
-            title: "intro",
-            description: "Send introduction card of this Bot",
+            title: "welcome",
+            description: "Resend welcome card of this Bot",
           },
           {
-            title: "show",
-            description: "Show user profile by calling Microsoft Graph API with SSO",
+            title: "learn",
+            description: "Learn about Adaptive Card and Bot Command",
           },
         ],
       },

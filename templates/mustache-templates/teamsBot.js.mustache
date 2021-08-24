@@ -2,55 +2,63 @@
 const axios = require("axios");
 const querystring = require("querystring");
 {{/IS_ME}}
-const { TeamsActivityHandler, CardFactory{{#IS_BOT}}, ActionTypes{{/IS_BOT}}} = require("botbuilder");
+const { TeamsActivityHandler, CardFactory{{#IS_BOT}}, TurnContext{{/IS_BOT}}} = require("botbuilder");
+{{#IS_BOT}}
+const rawWelcomeCard = require("./adaptiveCards/welcome.json");
+const rawLearnCard = require("./adaptiveCards/learn.json");
+const ACData = require("adaptivecards-templating");
+{{/IS_BOT}}
 
 class {{#IS_BOT}}TeamsBot{{/IS_BOT}}{{^IS_BOT}}MessageExtensionBot{{/IS_BOT}} extends TeamsActivityHandler {
   {{#IS_BOT}}
-  /**
-   * @param {ConversationState} conversationState
-   * @param {UserState} userState
-   * @param {Dialog} dialog
-   */
-  constructor(conversationState, userState, dialog) {
+  constructor() {
     super();
-    if (!conversationState) {
-      throw new Error("[TeamsBot]: Missing parameter. conversationState is required");
-    }
-    if (!userState) {
-      throw new Error("[TeamsBot]: Missing parameter. userState is required");
-    }
-    if (!dialog) {
-      throw new Error("[TeamsBot]: Missing parameter. dialog is required");
-    }
-    this.conversationState = conversationState;
-    this.userState = userState;
-    this.dialog = dialog;
-    this.dialogState = this.conversationState.createProperty("DialogState");
+
+    // record the likeCount
+    this.likeCountObj = { likeCount: 0 };
 
     this.onMessage(async (context, next) => {
-      console.log("Running dialog with Message Activity.");
+      console.log("Running with Message Activity.");
+      let txt = context.activity.text;
+      const removedMentionText = TurnContext.removeRecipientMention(
+        context.activity
+      );
+      if (removedMentionText) {
+        // Remove the line break
+        txt = removedMentionText.toLowerCase().replace(/\n|\r/g, "").trim();
+      }
 
-      // Run the Dialog with the new message Activity.
-      await this.dialog.run(context, this.dialogState);
+      // Trigger command by IM text
+      switch (txt) {
+        case "welcome": {
+          const card = this.renderAdaptiveCard(rawWelcomeCard);
+          await context.sendActivity({ attachments: [card] });
+          break;
+        }
+        case "learn": {
+          this.likeCountObj.likeCount = 0;
+          const card = this.renderAdaptiveCard(rawLearnCard, this.likeCountObj);
+          await context.sendActivity({ attachments: [card] });
+          break;
+        }
+        /**
+         * case "yourCommand": {
+         *   await context.sendActivity(`Add your response here!`);
+         *   break;
+         * }
+         */
+      }
 
       // By calling next() you ensure that the next BotHandler is run.
       await next();
     });
 
+    // Listen to MembersAdded event, view https://docs.microsoft.com/en-us/microsoftteams/platform/resources/bot-v3/bots-notifications for more events
     this.onMembersAdded(async (context, next) => {
       const membersAdded = context.activity.membersAdded;
       for (let cnt = 0; cnt < membersAdded.length; cnt++) {
         if (membersAdded[cnt].id) {
-          const cardButtons = [
-            {
-              type: ActionTypes.ImBack,
-              title: "Show introduction card",
-              value: "intro",
-            },
-          ];
-          const card = CardFactory.heroCard("Welcome", null, cardButtons, {
-            text: `Congratulations! Your hello world Bot template is running. This bot has default commands to help you modify it. <br>You can reply <strong>intro</strong> to see the introduction card. This bot is built with <a href=\"https://dev.botframework.com/\">Microsoft Bot Framework</a>`,
-          });
+          const card = this.renderAdaptiveCard(rawWelcomeCard);
           await context.sendActivity({ attachments: [card] });
           break;
         }
@@ -59,32 +67,28 @@ class {{#IS_BOT}}TeamsBot{{/IS_BOT}}{{^IS_BOT}}MessageExtensionBot{{/IS_BOT}} ex
     });
   }
 
-  async run(context) {
-    await super.run(context);
-
-    // Save any state changes. The load happened during the execution of the Dialog.
-    await this.conversationState.saveChanges(context, false);
-    await this.userState.saveChanges(context, false);
+  // Invoked when an action is taken on an Adaptive Card. The Adaptive Card sends an event to the Bot and this
+  // method handles that event.
+  async onAdaptiveCardInvoke(context, invokeValue) {
+    // The verb "userlike" is sent from the Adaptive Card defined in adaptiveCards/learn.json
+    if (invokeValue.action.verb === "userlike") {
+      this.likeCountObj.likeCount++;
+      const card = this.renderAdaptiveCard(rawLearnCard, this.likeCountObj);
+      await context.updateActivity({
+        type: "message",
+        id: context.activity.replyToId,
+        attachments: [card],
+      });
+      return { statusCode: 200 };
+    }
   }
 
-  async handleTeamsSigninVerifyState(context, query) {
-    console.log("Running dialog with signin/verifystate from an Invoke Activity.");
-    await this.dialog.run(context, this.dialogState);
-  }
-
-  async handleTeamsSigninTokenExchange(context, query) {
-    await this.dialog.run(context, this.dialogState);
-  }
-
-  async onTokenResponseEvent(context) {
-    console.log("Running dialog with Token Response Event Activity.");
-
-    // Run the Dialog with the new Token Response Event Activity.
-    await this.dialog.run(context, this.dialogState);
-  }
-
-  async onSignInInvoke(context) {
-    await this.dialog.run(context, this.dialogState);
+  // Bind AdaptiveCard with data
+  renderAdaptiveCard(rawCardTemplate, dataObj) {
+    const cardTemplate = new ACData.Template(rawCardTemplate);
+    const cardWithData = cardTemplate.expand({ $root: dataObj });
+    const card = CardFactory.adaptiveCard(cardWithData);
+    return card;
   }
   {{/IS_BOT}}
 

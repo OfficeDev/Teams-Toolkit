@@ -1,6 +1,13 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-import { PluginContext, ok } from "@microsoft/teamsfx-api";
+import {
+  PluginContext,
+  ok,
+  Func,
+  ArchiveFolderName,
+  ArchiveLogFileName,
+  AppPackageFolderName,
+} from "@microsoft/teamsfx-api";
 import path from "path";
 
 import { AzureStorageClient } from "./clients";
@@ -19,6 +26,8 @@ import {
   StorageAccountAlreadyTakenError,
   runWithErrorCatchAndWrap,
   RegisterResourceProviderError,
+  UserTaskNotImplementedError,
+  MigrateV1ProjectError,
 } from "./resources/errors";
 import {
   ArmOutput,
@@ -39,6 +48,7 @@ import { Messages } from "./resources/messages";
 import { FrontendScaffold as Scaffold } from "./ops/scaffold";
 import { TeamsFxResult } from "./error-factory";
 import {
+  MigrateSteps,
   PreDeploySteps,
   ProgressHelper,
   ProvisionSteps,
@@ -52,6 +62,7 @@ import { ScaffoldArmTemplateResult } from "../../../common/armInterface";
 import * as fs from "fs-extra";
 import { Bicep, ConstantString } from "../../../common/constants";
 import { EnvironmentUtils } from "./utils/environment-utils";
+import { copyFiles } from "../../../common";
 
 export class FrontendPluginImpl {
   private setConfigIfNotExists(ctx: PluginContext, key: string, value: unknown): void {
@@ -319,5 +330,32 @@ export class FrontendPluginImpl {
       FrontendPathInfo.TabEnvironmentFilePath
     );
     await EnvironmentUtils.writeEnvironments(envFilePath, envs);
+  }
+
+  public async executeUserTask(func: Func, ctx: PluginContext): Promise<TeamsFxResult> {
+    if (func.method === "migrateV1Project") {
+      Logger.info(Messages.StartMigrateV1Project(PluginInfo.DisplayName));
+      const progressHandler = await ProgressHelper.startMigrateProgressHandler(ctx);
+      await progressHandler?.next(MigrateSteps.Migrate);
+
+      const sourceFolder = path.join(ctx.root, ArchiveFolderName);
+      const distFolder = path.join(ctx.root, FrontendPathInfo.WorkingDir);
+      const excludeFiles = [
+        { fileName: ArchiveFolderName, recursive: false },
+        { fileName: ArchiveLogFileName, recursive: false },
+        { fileName: AppPackageFolderName, recursive: false },
+        { fileName: FrontendPathInfo.ReadmeFileName, recursive: false },
+        { fileName: FrontendPathInfo.NodePackageFolderName, recursive: true },
+      ];
+
+      await runWithErrorCatchAndThrow(new MigrateV1ProjectError(), async () => {
+        await copyFiles(sourceFolder, distFolder, excludeFiles);
+      });
+
+      await ProgressHelper.endMigrateProgress(true);
+      Logger.info(Messages.EndMigrateV1Project(PluginInfo.DisplayName));
+      return ok(undefined);
+    }
+    throw new UserTaskNotImplementedError(func.method);
   }
 }

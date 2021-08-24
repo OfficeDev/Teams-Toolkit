@@ -10,6 +10,7 @@ export class Messages {
   static readonly ProvisionProgressTitle = "Provisioning Tab";
   static readonly PreDeployProgressTitle = "Building Tab";
   static readonly DeployProgressTitle = "Deploying Tab";
+  static readonly MigrateProgressTitle = "Migrating Tab";
 
   static readonly ProgressStart = "Preparing.";
   static readonly ProgressScaffold = "Scaffolding Tab frontend project.";
@@ -22,6 +23,7 @@ export class Messages {
   static readonly ProgressGetSrcAndDest = "Retrieving deployment source and destination.";
   static readonly ProgressClear = "Cleaning up Azure Storage account.";
   static readonly ProgressUpload = "Uploading Tab frontend to Azure Storage account.";
+  static readonly ProgressMigrate = "Migrating Tab frontend project.";
 
   // Logging messages
   static readonly StartScaffold = (name: string) => `Scaffolding '${name}'.`;
@@ -38,6 +40,8 @@ export class Messages {
     `Generating ARM templates '${name}'.`;
   static readonly EndGenerateArmTemplates = (name: string) =>
     `Successfully generated ARM templates '${name}'.`;
+  static readonly StartMigrateV1Project = (name: string) => `Migrating '${name}'.`;
+  static readonly EndMigrateV1Project = (name: string) => `Successfully migrated '${name}'.`;
 
   static readonly SkipBuild =
     "Skip building Tab frontend project because no change was detected since last build.";

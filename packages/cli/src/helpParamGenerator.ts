@@ -40,12 +40,14 @@ export class HelpParamGenerator {
   private core: FxCore;
   private questionsMap: Map<string, QTreeNode> = new Map<string, QTreeNode>();
   private initialized = false;
+
   private static showEnvStage: string[] = [
     Stage.build,
     Stage.publish,
     Stage.deploy,
     Stage.grantPermission,
     Stage.checkPermission,
+    "validate",
   ];
 
   private static instance: HelpParamGenerator;

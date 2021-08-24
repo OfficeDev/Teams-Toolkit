@@ -143,6 +143,38 @@ export default class TelemetryReporter {
     return updatedStack;
   }
 
+  private removePropertiesWithPossibleUserInfo(
+    properties: { [key: string]: string } | undefined
+  ): { [key: string]: string } | undefined {
+    if (typeof properties !== "object") {
+      return;
+    }
+    const cleanedObject = Object.create(null);
+    // Loop through key and values of the properties object
+    for (const key of Object.keys(properties)) {
+      const value = properties[key];
+      // If for some reason it is undefined we skip it (this shouldn't be possible);
+      if (!value) {
+        continue;
+      }
+
+      // Regex which matches @*.site
+      const emailRegex = /@[a-zA-Z0-9-.]+/;
+
+      // Check for common user data in the telemetry events
+      if (value.indexOf("token=") !== -1) {
+        cleanedObject[key] = "<REDACTED: token>";
+      } else if (value.indexOf("ssword=") !== -1) {
+        cleanedObject[key] = "<REDACTED: password>";
+      } else if (emailRegex.test(value)) {
+        cleanedObject[key] = "<REDACTED: email>";
+      } else {
+        cleanedObject[key] = value;
+      }
+    }
+    return cleanedObject;
+  }
+
   public setAppRoot(appRoot: string): void {
     this.appRoot = appRoot;
   }
@@ -159,7 +191,7 @@ export default class TelemetryReporter {
 
       this.appInsightsClient.trackEvent({
         name: `${this.cliName}/${eventName}`,
-        properties: cleanProperties,
+        properties: this.removePropertiesWithPossibleUserInfo(cleanProperties),
         measurements: measurements,
       });
 
@@ -188,7 +220,7 @@ export default class TelemetryReporter {
 
       this.appInsightsClient.trackEvent({
         name: `${this.cliName}/${eventName}`,
-        properties: cleanProperties,
+        properties: this.removePropertiesWithPossibleUserInfo(cleanProperties),
         measurements: measurements,
       });
 
@@ -215,7 +247,7 @@ export default class TelemetryReporter {
 
       this.appInsightsClient.trackException({
         exception: error,
-        properties: cleanProperties,
+        properties: this.removePropertiesWithPossibleUserInfo(cleanProperties),
         measurements: measurements,
       });
 

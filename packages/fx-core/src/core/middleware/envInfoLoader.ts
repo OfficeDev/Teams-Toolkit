@@ -17,6 +17,7 @@ import {
 import { CoreHookContext, FxCore } from "../..";
 import {
   NoProjectOpenedError,
+  InvalidEnvNameError,
   ProjectEnvNotExistError,
   ProjectSettingsUndefinedError,
 } from "../error";
@@ -221,7 +222,14 @@ async function useUserSetEnv(
     ctx.result = checkEnv.error;
     return undefined;
   }
-  if (checkEnv.value || allowCreateNewEnv) {
+  if (checkEnv.value) {
+    return inputs.env;
+  } else if (allowCreateNewEnv) {
+    const match = inputs.env.match(environmentManager.envNameRegex);
+    if (!match) {
+      ctx.result = err(InvalidEnvNameError());
+      return undefined;
+    }
     return inputs.env;
   } else {
     ctx.result = err(ProjectEnvNotExistError(inputs.env));

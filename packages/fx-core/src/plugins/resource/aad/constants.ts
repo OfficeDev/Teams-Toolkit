@@ -27,6 +27,9 @@ export class Constants {
     type: "M365",
   };
 
+  static createOwnerDuplicatedMessage =
+    "One or more added object references already exist for the following modified properties: 'owners'.";
+
   static defaultPermissions: RequiredResourceAccess = {
     resourceAppId: "00000003-0000-0000-c000-000000000000",
     resourceAccess: [
@@ -196,6 +199,16 @@ export class Messages {
     telemetry: Messages.getEventName("check-permission"),
   };
 
+  static readonly StartGrantPermission: Messages = {
+    log: Messages.getLog("Start to grant permission"),
+    telemetry: Messages.getEventName("grant-permission-start"),
+  };
+
+  static readonly EndGrantPermission: Messages = {
+    log: Messages.getLog("Successfully grant permission"),
+    telemetry: Messages.getEventName("grant-permission"),
+  };
+
   static readonly GetAadAppSuccess = "Successfully get Azure AD app.";
   static readonly CreateAadAppSuccess = "Successfully created Azure AD app.";
   static readonly CreateAadAppPasswordSuccess = "Successfully created password for Azure AD app.";
@@ -212,6 +225,8 @@ export class Messages {
     "Successfully updated permission for Azure AD app. You can go to Azure Portal to check the permission or grant admin consent.";
   static readonly SkipProvision =
     "Azure AD app provision skipped. You need to mannual provision and config Azure AD app.";
+  static readonly OwnerAlreadyAdded = (userObjectId: string, objectId: string) =>
+    `User ${userObjectId} is already added as owner of Azure AD app ${objectId}.`;
 }
 
 export class ProgressTitle {

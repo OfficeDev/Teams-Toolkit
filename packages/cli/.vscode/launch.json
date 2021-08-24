@@ -28,7 +28,7 @@
       "name": "Launch provision command (non-interactive)",
       "skipFiles": ["<node_internals>/**"],
       "program": "${workspaceFolder}/cli.js",
-      "args": ["provision", "--folder", "../../../teams/app001"],
+      "args": ["provision", "--folder", "../../../teams/app01"],
       "outFiles": [
         "${workspaceFolder}/lib/**/*.js",
         "${workspaceFolder}/../fx-core/build/**/*.js",

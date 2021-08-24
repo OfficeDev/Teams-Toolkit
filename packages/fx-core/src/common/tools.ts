@@ -451,3 +451,29 @@ export function getAppStudioEndpoint(): string {
     return "https://dev.teams.microsoft.com";
   }
 }
+
+export async function copyFiles(
+  srcPath: string,
+  distPath: string,
+  excludeFileList: { fileName: string; recursive: boolean }[] = []
+): Promise<void> {
+  await fs.ensureDir(distPath);
+
+  const excludeFileNames = excludeFileList.map((file) => file.fileName);
+  const recursiveExcludeFileNames = excludeFileList
+    .filter((file) => file.recursive)
+    .map((file) => file.fileName);
+
+  const fileNames = await fs.readdir(srcPath);
+  for (const fileName of fileNames) {
+    if (excludeFileNames.includes(fileName)) {
+      continue;
+    }
+    await fs.copy(path.join(srcPath, fileName), path.join(distPath, fileName), {
+      overwrite: false,
+      errorOnExist: true,
+      filter: (src: string, dest: string): boolean =>
+        !recursiveExcludeFileNames.includes(path.basename(src)),
+    });
+  }
+}

@@ -105,7 +105,8 @@ export function anonymizeFilePaths(stack?: string): string {
   }
 
   const nodeModulesRegex = /^[\\\/]?(node_modules|node_modules\.asar)[\\\/]/;
-  const fileRegex = /(file:\/\/)?([a-zA-Z]:(\\\\|\\|\/)|(\\\\|\\|\/))?([\w-\._]+(\\\\|\\|\/))+[\w-\._]*/g;
+  const fileRegex =
+    /(file:\/\/)?([a-zA-Z]:(\\\\|\\|\/)|(\\\\|\\|\/))?([\w-\._]+(\\\\|\\|\/))+[\w-\._]*/g;
   let lastIndex = 0;
   updatedStack = "";
 

@@ -127,11 +127,9 @@ describe("Solution migrate()", async () => {
   });
 
   it("should succeed if projectSettings, solution settings and v1 capability are provided, language is typescript", async () => {
-    mocker.stub(fs, "access").callsFake(
-      async (path: PathLike, mode?: number): Promise<void> => {
-        return;
-      }
-    );
+    mocker.stub(fs, "access").callsFake(async (path: PathLike, mode?: number): Promise<void> => {
+      return;
+    });
     fileContent.clear();
     const solution = new TeamsAppSolution();
     cleanPlugins(solution, mocker);
@@ -158,11 +156,11 @@ describe("Solution migrate()", async () => {
 });
 
 function cleanPlugins(solution: TeamsAppSolution, mocker: sinon.SinonSandbox) {
-  mocker.stub(solution.LocalDebugPlugin, "executeUserTask").callsFake(
-    async (): Promise<Result<any, FxError>> => {
+  mocker
+    .stub(solution.LocalDebugPlugin, "executeUserTask")
+    .callsFake(async (): Promise<Result<any, FxError>> => {
       return ok(undefined);
-    }
-  );
+    });
   mocker.stub(solution.AadPlugin, "activate").callsFake((): boolean => {
     return false;
   });
