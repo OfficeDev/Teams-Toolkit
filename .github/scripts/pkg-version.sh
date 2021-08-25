@@ -19,4 +19,13 @@ elif [ $1 == 'fx-core' ]; then
     node ../../.github/scripts/update-simpleauth-ver.js 
     fi
     git add ../fx-core
+elif [ $1 == 'function-extension' ]; then   
+    if [[ -z "$(git diff -- ../../templates)" ]]; then
+    echo "need bump up tempaltes version since templates do not bump up by self"
+    node ../../.github/scripts/update-extension-ver.js yes
+    else 
+    echo "no need to bump up templates version"
+    node ../../.github/scripts/update-extension-ver.js
+    fi
+    git add ../../templates
 fi
