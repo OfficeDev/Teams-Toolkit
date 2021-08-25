@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 
 import {
-  AzureSolutionSettings,
   err,
   FxError,
   ok,
@@ -12,9 +11,8 @@ import {
   TreeItem,
   Void,
 } from "@microsoft/teamsfx-api";
-import { AzureAccount } from "./commonlib/azure-account.api";
 import AzureAccountManager from "./commonlib/azureLogin";
-import { core, getSystemInputs, tools } from "./handlers";
+import { core, getSystemInputs, tools, getAzureSolutionSettings } from "./handlers";
 import { askSubscription } from "@microsoft/teamsfx-core";
 import { VS_CODE_UI } from "./extension";
 import {
@@ -31,22 +29,6 @@ export async function getSubscriptionId(): Promise<string | undefined> {
   const subscriptionInfo = await AzureAccountManager.getSelectedSubscription();
   if (subscriptionInfo) {
     return subscriptionInfo.subscriptionId;
-  }
-  // else {
-  //   showError(projectConfigRes.error);
-  // }
-  return undefined;
-}
-
-export async function getAzureSolutionSettings(): Promise<AzureSolutionSettings | undefined> {
-  const input = getSystemInputs();
-  input.ignoreEnvInfo = true;
-  const projectConfigRes = await core.getProjectConfig(input);
-
-  if (projectConfigRes.isOk()) {
-    if (projectConfigRes.value) {
-      return projectConfigRes.value.settings?.solutionSettings as AzureSolutionSettings;
-    }
   }
   // else {
   //   showError(projectConfigRes.error);

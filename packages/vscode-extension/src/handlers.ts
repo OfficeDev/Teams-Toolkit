@@ -24,12 +24,12 @@ import {
   UserError,
   SystemError,
   returnSystemError,
-  ConfigFolderName,
   Inputs,
   VsCodeEnv,
   AppStudioTokenProvider,
   Void,
   Tools,
+  AzureSolutionSettings,
 } from "@microsoft/teamsfx-api";
 import {
   isUserCancelError,
@@ -161,6 +161,22 @@ export async function activate(): Promise<Result<Void, FxError>> {
     return err(FxError);
   }
   return result;
+}
+
+export async function getAzureSolutionSettings(): Promise<AzureSolutionSettings | undefined> {
+  const input = getSystemInputs();
+  input.ignoreEnvInfo = true;
+  const projectConfigRes = await core.getProjectConfig(input);
+
+  if (projectConfigRes.isOk()) {
+    if (projectConfigRes.value) {
+      return projectConfigRes.value.settings?.solutionSettings as AzureSolutionSettings;
+    }
+  }
+  // else {
+  //   showError(projectConfigRes.error);
+  // }
+  return undefined;
 }
 
 export function getSystemInputs(): Inputs {
@@ -833,17 +849,20 @@ export async function cmpAccountsHandler() {
     quickItemOptionArray.push(signInM365Option);
   }
 
-  const azureAccount = await AzureAccountManager.getStatus();
-  if (azureAccount.status === "SignedIn") {
-    const accountInfo = azureAccount.accountInfo;
-    const email = (accountInfo as any).upn ? (accountInfo as any).upn : undefined;
-    if (email !== undefined) {
-      signOutAzureOption.label = signOutAzureOption.label.concat(email);
+  const solutionSettings = await getAzureSolutionSettings();
+  if (solutionSettings && "Azure" === solutionSettings.hostType) {
+    const azureAccount = await AzureAccountManager.getStatus();
+    if (azureAccount.status === "SignedIn") {
+      const accountInfo = azureAccount.accountInfo;
+      const email = (accountInfo as any).upn ? (accountInfo as any).upn : undefined;
+      if (email !== undefined) {
+        signOutAzureOption.label = signOutAzureOption.label.concat(email);
+      }
+      quickItemOptionArray.push(signOutAzureOption);
+      //quickItemOptionArray.push(selectSubscriptionOption);
+    } else {
+      quickItemOptionArray.push(signInAzureOption);
     }
-    quickItemOptionArray.push(signOutAzureOption);
-    //quickItemOptionArray.push(selectSubscriptionOption);
-  } else {
-    quickItemOptionArray.push(signInAzureOption);
   }
 
   quickPick.items = quickItemOptionArray;
