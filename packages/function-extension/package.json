@@ -3,7 +3,7 @@
   "version": "0.2.0",
   "private": "true",
   "scripts": {
-    "version1": "../../.github/scripts/pkg-version.sh function-extension && git add .",
+    "version": "../../.github/scripts/pkg-version.sh function-extension && git add .",
     "postversion": "../../.github/scripts/pkg-postversion.sh templates"
   },
   "license": "MIT",
