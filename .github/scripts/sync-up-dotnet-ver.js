@@ -1,10 +1,9 @@
 const fse = require("fs-extra");
-const { resolve } = require("path");
-const path = require("path")
-const semver = require("semver")
+const path = require("path");
+const semver = require("semver");
 const targetPkgName = process.argv[2];
 const targetPath = path.join(__dirname, "../../packages", targetPkgName);
-const xml2js = require(path.join(targetPath, "node_modules/xml2js"))
+const xml2js = require(path.join(targetPath, "node_modules/xml2js"));
 // ---- target pkg name and version -----
 const pkgName = require(path.join(targetPath, 'package.json')).name;
 const pkgVer = require(path.join(targetPath, "package.json")).version;
@@ -36,7 +35,7 @@ async function updateCurrentCSprojVer(csprojFile) {
     const builder = new xml2js.Builder({ trim: true, headless: true });
     const xml = builder.buildObject(result);
     // write updated XML string to a file
-    await fse.writeFile(csprojFile, xml)
+    await fse.writeFile(csprojFile, xml);
 }
 
 // only to sync up templates version with function-extension.
@@ -53,7 +52,7 @@ async function syncUpTemplateVer(targetFile) {
             let ver = item.$.Version;
             if (!semver.intersects(ver, pkgVer)) {
                 changed = true;
-                item.$.Version = pkgVer
+                item.$.Version = pkgVer;
             }
         }
     }
@@ -69,9 +68,9 @@ async function syncUpTemplateVer(targetFile) {
 async function bumpUpTargetPkgVer(changed, targetPkgPath) {
     // only alpha and stable release bump up version
     let needBumpUp = process.argv[3] === "yes" ? true : false;
-    console.log('version changed? ', changed, ' need bump up ', needBumpUp)
+    console.log('version changed? ', changed, ' need bump up ', needBumpUp);
     if (changed && needBumpUp) {
-        console.log('bump up template version syncup with function extension')
+        console.log('bump up template version syncup with function extension');
         let file = path.join(targetPkgPath, "package.json");
         let pkg_ = await fse.readJson(file);
         let ver = pkg_.version;
@@ -88,7 +87,7 @@ async function bumpUpTargetPkgVer(changed, targetPkgPath) {
         if (file) {
             pkg_ = await fse.readJson(file);
             pkg_.version = ver;
-            await fse.writeFile(file, JSON.stringify(pkg_, null, 4))
+            await fse.writeFile(file, JSON.stringify(pkg_, null, 4));
         }
 
         console.log("bump up templates version as ", ver);
@@ -97,12 +96,12 @@ async function bumpUpTargetPkgVer(changed, targetPkgPath) {
 
 // simpleauth need to update fx-core simpleauth version file
 async function updateFxCoreSimpleAuthVer(simpleauthVer, targetPkgPath) {
-    const simpleauthVerTxt = path.join(targetPkgPath, "./templates/plugins/resource/simpleauth/version.txt")
+    const simpleauthVerTxt = path.join(targetPkgPath, "./templates/plugins/resource/simpleauth/version.txt");
     const version = await fse.readFile(simpleauthVerTxt, "utf8");
     let changed = false;
     if (version != simpleauthVer) {
         changed = true;
-        await fse.writeFile(simpleauthVerTxt, simpleauthVer, "utf8")
+        await fse.writeFile(simpleauthVerTxt, simpleauthVer, "utf8");
     }
     return changed;
 }
@@ -121,20 +120,19 @@ async function updateSimpleAuth() {
     await bumpUpTargetPkgVer(changed, fxCorePath);
 }
 
-// uopdate template csproj file
 async function updateExtension() {
-    const synup = process.env.SkipSyncup
-    const templatePath = path.join(__dirname, "../../templates")
-    const targetJsCsprojFile = path.join(templatePath, "function-base/js/default/extensions.csproj")
-    const targetTsCsprojFile = path.join(templatePath, "function-base/ts/default/extensions.csproj")
-    const csprojFile = path.join(targetPath, "src/Microsoft.Azure.WebJobs.Extensions.TeamsFx.csproj")
-    await updateCurrentCSprojVer(csprojFile)
-    if (synup && synup.includes("fx-core")) {
+    const synup = process.env.SkipSyncup;
+    const templatePath = path.join(__dirname, "../../templates");
+    const targetJsCsprojFile = path.join(templatePath, "function-base/js/default/extensions.csproj");
+    const targetTsCsprojFile = path.join(templatePath, "function-base/ts/default/extensions.csproj");
+    const csprojFile = path.join(targetPath, "src/Microsoft.Azure.WebJobs.Extensions.TeamsFx.csproj");
+    await updateCurrentCSprojVer(csprojFile);
+    if (synup && synup.includes("template")) {
         return;
     }
     let changed = true;
     for (let targetFile of [targetJsCsprojFile, targetTsCsprojFile]) {
-        changed = changed && await syncUpTemplateVer(targetFile);
+        changed = changed || await syncUpTemplateVer(targetFile);
     }
     // ---- templates relative path -----
     bumpUpTargetPkgVer(changed, templatePath);
