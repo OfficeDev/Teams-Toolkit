@@ -100,7 +100,7 @@ async function updateFxCoreSimpleAuthVer(simpleauthVer, targetPkgPath) {
     const simpleauthVerTxt = path.join(targetPkgPath, "./templates/plugins/resource/simpleauth/version.txt")
     const version = await fse.readFile(simpleauthVerTxt, "utf8");
     let changed = false;
-    if(version != simpleauthVer) {
+    if (version != simpleauthVer) {
         changed = true;
         await fse.writeFile(simpleauthVerTxt, simpleauthVer, "utf8")
     }
