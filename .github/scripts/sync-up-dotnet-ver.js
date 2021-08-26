@@ -62,7 +62,7 @@ async function syncUpTemplateVer(targetFile) {
         const xml = builder.buildObject(result);
         await fse.writeFile(targetFile, xml);
     }
-    return new Promise((resolve) => {resolve(changed)});
+    return changed;
 };
 
 // if templates deps has changed, need to bump up templates version.
@@ -104,7 +104,7 @@ async function updateFxCoreSimpleAuthVer(simpleauthVer, targetPkgPath) {
         changed = true;
         await fse.writeFile(simpleauthVerTxt, simpleauthVer, "utf8")
     }
-    return new Promise((resolve) => {resolve(changed)});
+    return changed;
 }
 
 async function updateSimpleAuth() {
