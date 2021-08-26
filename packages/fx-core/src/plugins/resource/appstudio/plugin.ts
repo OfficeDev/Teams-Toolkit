@@ -1243,6 +1243,10 @@ export class AppStudioPluginImpl {
     return teamsAppId;
   }
 
+  /**
+   *
+   * Refer to AppDefinitionProfile.cs
+   */
   private convertToAppDefinition(
     appManifest: TeamsAppManifest,
     ignoreIcon: boolean
@@ -1251,6 +1255,9 @@ export class AppStudioPluginImpl {
       appName: appManifest.name.short,
       validDomains: appManifest.validDomains,
     };
+
+    appDefinition.showLoadingIndicator = appManifest.showLoadingIndicator;
+    appDefinition.isFullScreen = appManifest.isFullScreen;
     appDefinition.appId = appManifest.id;
 
     appDefinition.appName = appManifest.name.short;
@@ -1258,6 +1265,10 @@ export class AppStudioPluginImpl {
     appDefinition.version = appManifest.version;
 
     appDefinition.packageName = appManifest.packageName;
+    appDefinition.accentColor = appManifest.accentColor;
+
+    appDefinition.developerName = appManifest.developer.name;
+    appDefinition.mpnId = appManifest.developer.mpnId;
     appDefinition.websiteUrl = appManifest.developer.websiteUrl;
     appDefinition.privacyUrl = appManifest.developer.privacyUrl;
     appDefinition.termsOfUseUrl = appManifest.developer.termsOfUseUrl;
@@ -1265,13 +1276,15 @@ export class AppStudioPluginImpl {
     appDefinition.shortDescription = appManifest.description.short;
     appDefinition.longDescription = appManifest.description.full;
 
-    appDefinition.developerName = appManifest.developer.name;
-
     appDefinition.staticTabs = appManifest.staticTabs;
     appDefinition.configurableTabs = appManifest.configurableTabs;
 
     appDefinition.bots = this.convertToAppDefinitionBots(appManifest);
     appDefinition.messagingExtensions = this.convertToAppDefinitionMessagingExtensions(appManifest);
+
+    appDefinition.connectors = appManifest.connectors;
+    appDefinition.devicePermissions = appManifest.devicePermissions;
+    appDefinition.localizationInfo = appManifest.localizationInfo;
 
     if (appManifest.webApplicationInfo) {
       appDefinition.webApplicationInfoId = appManifest.webApplicationInfo.id;
