@@ -7,7 +7,6 @@
         "packages/cli",
         "packages/vscode-extension",
         "packages/failpoint-ts",
-        "packages/simpleauth",
         "templates"
     ],
     "command": {

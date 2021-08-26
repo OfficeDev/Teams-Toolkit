@@ -1,0 +1,15 @@
+{
+  "name": "function-extension",
+  "version": "0.1.0",
+  "private": "true",
+  "scripts": {
+    "version": "../../.github/scripts/pkg-version.sh function-extension && git add .",
+    "postversion": "../../.github/scripts/pkg-postversion.sh templates"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "fs-extra": "^10.0.0",
+    "semver": "^7.3.5",
+    "xml2js": "^0.4.23"
+  }
+}

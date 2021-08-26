@@ -186,6 +186,14 @@ jobs:
       - name: cleanup templates
         run: rm -rf ./*.zip && git clean -df
 
+      - name: just trigger function extension azure build pipeline for stable release
+        if: ${{ contains(steps.version-change.outputs.CHANGED, 'function-extension') && github.event_name == 'workflow_dispatch' && github.event.inputs.preid == 'stable' }}
+        uses: Azure/pipelines@v1
+        with:
+          azure-devops-project-url: 'https://dev.azure.com/mseng/VSIoT'
+          azure-pipeline-name: 'Build Function Extension Release Artifacts' 
+          azure-devops-token: '${{ secrets.ADO_PAT }}'
+
       - name: trigger simpleauth azure build pipeline for stable release
         if: ${{ contains(steps.version-change.outputs.CHANGED, 'simpleauth') && github.event_name == 'workflow_dispatch' && github.event.inputs.preid == 'stable' }}
         uses: Azure/pipelines@v1
