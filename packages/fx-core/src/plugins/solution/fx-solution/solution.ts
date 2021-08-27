@@ -2510,7 +2510,7 @@ export class TeamsAppSolution implements Solution {
         return undefined;
       }
 
-      aadId = collaborator.userObjectId;
+      aadId = collaborator.id;
       userPrincipalName = collaborator.userPrincipalName;
       displayName = collaborator.displayName;
     }

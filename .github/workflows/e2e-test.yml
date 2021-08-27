@@ -16,6 +16,7 @@ jobs:
       M365_ACCOUNT_NAME: ${{ secrets.TEST_USER_NAME }}
       M365_ACCOUNT_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
       M365_TENANT_ID: ${{ secrets.TEST_TENANT_ID_2 }}
+      M365_ACCOUNT_COLLABORATOR: ${{ secrets.TEST_COLLABORATOR_USER_NAME }}
       CI_ENABLED: "true"
 
     runs-on: [self-hosted, linux, 8cpu]

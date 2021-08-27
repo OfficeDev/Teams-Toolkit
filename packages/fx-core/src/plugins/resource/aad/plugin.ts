@@ -407,7 +407,7 @@ export class AadAppForTeamsImpl {
       {
         name: Constants.permissions.name,
         type: Constants.permissions.type,
-        roles: Constants.permissions.owner,
+        roles: [Constants.permissions.owner],
         resourceId: config.objectId!,
       },
     ];
