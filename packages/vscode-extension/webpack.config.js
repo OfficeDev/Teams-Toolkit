@@ -19,6 +19,7 @@ const config = {
   entry: {
     extension: "./src/extension.ts", // the entry point of this extension, 📖 -> https://webpack.js.org/configuration/entry-context/
     client: "./src/controls/index.tsx",
+    tree: "./src/controls/tree.tsx",
   },
   output: {
     // the bundle is stored in the 'dist' folder (check package.json), 📖 -> https://webpack.js.org/configuration/output/
@@ -31,7 +32,7 @@ const config = {
   devtool: "source-map",
   externals: {
     vscode: "commonjs vscode", // the vscode-module is created on-the-fly and must be excluded. Add other modules that cannot be webpack'ed, 📖 -> https://webpack.js.org/configuration/externals/
-    keytar: "keytar"
+    keytar: "keytar",
   },
   resolve: {
     // support reading TypeScript and JavaScript files, 📖 -> https://github.com/TypeStrong/ts-loader
@@ -89,12 +90,12 @@ const config = {
         },
         {
           from: "../fx-core/resource/",
-          to: "../resource/"
+          to: "../resource/",
         },
         {
           from: "../fx-core/templates/",
-          to: "../templates/"
-        }
+          to: "../templates/",
+        },
       ],
     }),
   ],

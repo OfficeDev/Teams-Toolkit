@@ -18,6 +18,18 @@
       "preLaunchTask": "npm: build"
     },
     {
+      "name": "Run Extension(webpacked)",
+      "type": "pwa-extensionHost",
+      "request": "launch",
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/out/**/*.js",
+        "${workspaceFolder}/../fx-core/build/**/*.js",
+        "${workspaceFolder}/../api/build/**/*.js"
+      ],
+      "preLaunchTask": "npm: build-webpack"
+    },
+    {
       "name": "Run Extension with Failpoints",
       "type": "pwa-extensionHost",
       "request": "launch",

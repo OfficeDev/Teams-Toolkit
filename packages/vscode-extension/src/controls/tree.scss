@@ -1,0 +1,41 @@
+.row {
+  display: flex;
+  height: 22px;
+
+  span {
+    line-height: 22px;
+    font-size: 13px;
+    margin: 0;
+    i {
+      width: 16px;
+      padding-right: 6px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #c5c5c5;
+      margin: 0;
+    }
+
+    div {
+      padding-right: 6px;
+    }
+
+    img {
+      width: 16px;
+      height: 16px;
+      padding-right: 6px;
+    }
+  }
+
+  button {
+    height: 22px;
+    color: #cccccc;
+    padding-left: 8px;
+  }
+
+  button:disabled,
+  button[disabled] {
+    color: #555555;
+  }
+}
