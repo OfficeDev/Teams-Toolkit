@@ -16,4 +16,6 @@ export enum ExtensionErrors {
   FolderAlreadyExist = "FolderAlreadyExist",
   InvalidProject = "InvalidProject",
   FetchSampleError = "FetchSampleError",
+  OpenEnvProfileError = "OpenEnvProfileError",
+  NoEnvProfileError = "NoEnvProfileError",
 }

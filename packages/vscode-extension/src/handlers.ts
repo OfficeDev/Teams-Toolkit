@@ -30,6 +30,7 @@ import {
   Void,
   Tools,
   AzureSolutionSettings,
+  ConfigFolderName,
 } from "@microsoft/teamsfx-api";
 import {
   isUserCancelError,
@@ -86,6 +87,8 @@ import * as path from "path";
 import { exp } from "./exp/index";
 import { TreatmentVariables } from "./exp/treatmentVariables";
 import { StringContext } from "./utils/stringContext";
+import { ext } from "./extensionVariables";
+import { InputConfigsFolderName } from "@microsoft/teamsfx-api";
 
 export let core: FxCore;
 export let tools: Tools;
@@ -681,8 +684,52 @@ export async function createNewEnvironment(args?: any[]): Promise<Result<Void, F
   return result;
 }
 
-export async function viewEnvironment(args?: any[]): Promise<Result<Void, FxError>> {
-  // todo add view logic
+export async function viewEnvironment(env: string): Promise<Result<Void, FxError>> {
+  if (workspace.workspaceFolders && workspace.workspaceFolders.length > 0) {
+    const envFilePath = path.join(
+      workspace.workspaceFolders![0].uri.fsPath,
+      `.${ConfigFolderName}`,
+      InputConfigsFolderName,
+      `config.${env}.json`
+    );
+    const envPath: vscode.Uri = vscode.Uri.file(envFilePath);
+    if (await fs.pathExists(envFilePath)) {
+      vscode.workspace.openTextDocument(envPath).then(
+        (a: vscode.TextDocument) => {
+          vscode.window.showTextDocument(a, 1, false);
+        },
+        (error: any) => {
+          const openEnvError = new SystemError(
+            ExtensionErrors.OpenEnvProfileError,
+            `Can not open project environment ${env}.`,
+            ExtensionSource
+          );
+          showError(openEnvError);
+          ExtTelemetry.sendTelemetryErrorEvent(TelemetryEvent.ViewEnvironment, openEnvError);
+          return err(openEnvError);
+        }
+      );
+    } else {
+      const noEnvError = new SystemError(
+        ExtensionErrors.NoEnvProfileError,
+        `Can not find project environment ${env}.`,
+        ExtensionSource
+      );
+      showError(noEnvError);
+      ExtTelemetry.sendTelemetryErrorEvent(TelemetryEvent.ViewEnvironment, noEnvError);
+      return err(noEnvError);
+    }
+  } else {
+    const FxError: FxError = {
+      name: "NoWorkspace",
+      source: ExtensionSource,
+      message: StringResources.vsc.handlers.noOpenWorkspace,
+      timestamp: new Date(),
+    };
+    showError(FxError);
+    ExtTelemetry.sendTelemetryErrorEvent(TelemetryEvent.ViewEnvironment, FxError);
+    return err(FxError);
+  }
   return ok(Void);
 }
 

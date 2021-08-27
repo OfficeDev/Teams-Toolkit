@@ -327,12 +327,12 @@
       },
       {
         "command": "fx-extension.viewEnvironment",
-        "title": "Teams: View environment profile",
+        "title": "View environment",
         "enablement": "fx-extension.isMultiEnvEnabled"
       },
       {
         "command": "fx-extension.activateEnvironment",
-        "title": "Teams: Activate environment",
+        "title": "Activate environment",
         "enablement": "fx-extension.isMultiEnvEnabled"
       }
     ],

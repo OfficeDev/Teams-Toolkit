@@ -175,6 +175,16 @@ suite("handlers", () => {
       sinon.restore();
       sinon.assert.calledOnce(createEnv);
     });
+
+    test("viewEnv", async () => {
+      sinon.stub(handlers, "core").value(new MockCore());
+      sinon.stub(ExtTelemetry, "sendTelemetryEvent");
+      sinon.stub(ExtTelemetry, "sendTelemetryErrorEvent");
+
+      await handlers.viewEnvironment("test");
+
+      sinon.restore();
+    });
   });
 
   suite("detectVsCodeEnv()", () => {
