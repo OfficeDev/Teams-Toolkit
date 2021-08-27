@@ -1,0 +1,36 @@
+{
+    "manifestVersion": 1,
+    "id": "teamsfx-cli-task",
+    "name": "Teamsfx CLI Task",
+    "version": "1.0.0",
+    "publisher": "TeamsDevApp",
+    "targets": [
+        {
+            "id": "Microsoft.VisualStudio.Services"
+        }
+    ],    
+    "description": "Azure DevOps Task to help Teams App Developers build their CI/CD pipelines.",
+    "categories": [
+        "Azure Pipelines"
+    ],
+    "icons": {
+        "default": "images/logo.png"        
+    },
+    "files": [
+        {
+            "path": "buildAndReleaseTask"
+        }
+    ],
+    "contributions": [
+        {
+            "id": "teamsfx-cli-task",
+            "type": "ms.vss-distributed-task.task",
+            "targets": [
+                "ms.vss-distributed-task.tasks"
+            ],
+            "properties": {
+                "name": "buildAndReleaseTask"
+            }
+        }
+    ]
+}

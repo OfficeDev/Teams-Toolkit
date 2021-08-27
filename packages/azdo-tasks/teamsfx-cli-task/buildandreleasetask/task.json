@@ -1,0 +1,252 @@
+{
+    "$schema": "https://raw.githubusercontent.com/Microsoft/azure-pipelines-task-lib/master/tasks.schema.json",
+    "id": "55dd6b57-7058-43fd-b76d-3323f4721395",
+    "name": "teamsfx-cli-task",
+    "friendlyName": "Teamsfx CLI Task",
+    "description": "Azure DevOps Task to help Teams App Developers build their CI/CD pipelines.",
+    "helpMarkDown": "",
+    "category": "Utility",
+    "visibility": [
+        "Build",
+        "Release"
+    ],
+    "author": "Ivan He",
+    "version": {
+        "Major": 0,
+        "Minor": 4,
+        "Patch": 1
+    },
+    "instanceNameFormat": "Teams App CI/CD - $(commands)",
+    "inputs": [
+        {
+            "name": "commands",
+            "type": "string",
+            "label": "Commands",
+            "helpMarkDown": "The commands list in order which includes top-commands, sub-commands and positional parameters."
+        },
+        {
+            "name": "verbose",
+            "type": "boolean",
+            "label": "Verbose",
+            "defaultValue": "false"
+        },
+        {
+            "name": "version",
+            "type": "boolean",
+            "label": "Version"
+        },
+        {
+            "name": "debug",
+            "type": "boolean",
+            "label": "Debug",
+            "defaultValue": "false"
+        },
+        {
+            "name": "help",
+            "type": "boolean",
+            "label": "Help",
+            "defaultValue": "false"
+        },
+        {
+            "name": "action",
+            "type": "pickList",
+            "label": "Action",
+            "visibleRule": "commands StartsWith account",
+            "options": {
+                "show": "show",
+                "login": "login",
+                "logout": "logout",
+                "set": "set"
+            }
+        },
+        {
+            "name": "tenant",
+            "type": "string",
+            "label": "Tenant",
+            "visibleRule": "commands StartsWith provision"
+        },
+        {
+            "name": "folder",
+            "type": "filePath",
+            "label": "Folder",
+            "visibleRule": "commands NotStartsWith account"
+        },
+        {
+            "name": "subscription",
+            "type": "string",
+            "label": "Subscription",
+            "visibleRule": "commands StartsWith provision"
+        },
+        {
+            "name": "interactive",
+            "type": "boolean",
+            "label": "Interactive",
+            "visibleRule": "commands StartsWith new",
+            "defaultValue": "true"
+        },
+        {
+            "name": "scratch",
+            "type": "pickList",
+            "label": "Scratch",
+            "visibleRule": "commands StartsWith new",
+            "options": {
+                "yes": "yes",
+                "no": "no"
+            },
+            "defaultValue": "yes"
+        },
+        {
+            "name": "host-type",
+            "type": "pickList",
+            "label": "Host Type",
+            "visibleRule": "commands StartsWith new",
+            "options": {
+                "azure": "azure",
+                "spfx": "spfx"
+            },
+            "defaultValue": "azure"
+        },
+        {
+            "name": "spfx-framework-type",
+            "type": "pickList",
+            "label": "Spfx Framework Type",
+            "visibleRule": "commands StartsWith new",
+            "options": {
+                "none": "none",
+                "react": "react"
+            },
+            "defaultValue": "none"
+        },
+        {
+            "name": "spfx-webpart-name",
+            "type": "string",
+            "label": "Spfx Webpart Name",
+            "visibleRule": "commands StartsWith new"
+        },
+        {
+            "name": "spfx-webpart-desp",
+            "type": "string",
+            "label": "Spfx Webpart Description",
+            "visibleRule": "commands StartsWith new"
+        },
+        {
+            "name": "way-to-register-bot",
+            "type": "pickList",
+            "label": "Way To Register Bot",
+            "visibleRule": "commands StartsWith new",
+            "options": {
+                "create-new": "create-new",
+                "reuse-existing": "reuse-existing"
+            },
+            "defaultValue": "create-new"
+        },
+        {
+            "name": "bot-id",
+            "type": "string",
+            "label": "Bot Id",
+            "visibleRule": "commands StartsWith new"
+        },
+        {
+            "name": "bot-password",
+            "type": "string",
+            "label": "Bot Password",
+            "visibleRule": "commands StartsWith new"
+        },
+        {
+            "name": "programming-language",
+            "type": "string",
+            "label": "Progamming Language",
+            "visibleRule": "commands StartsWith new"
+        },
+        {
+            "name": "app-name",
+            "type": "string",
+            "label": "App Name",
+            "vsisibleRule": "commands StartsWith new"
+        },
+        {
+            "name": "samples",
+            "type": "pickList",
+            "label": "Samples",
+            "visibleRule": "commands StartsWith new",
+            "options": {
+                "todo-list-with-Azure-backend": "todo-list-with-Azure-backend",
+                "todo-list-SPFx": "todo-list-SPFx",
+                "share-now": "share-now",
+                "in-meeting-app": "in-meeting-app",
+                "faq-plus": "faq-plus" 
+            }
+        },
+        {
+            "name": "sql-admin-name",
+            "type": "string",
+            "label": "SQL Admin Name",
+            "visibleRule": "commands StartsWith provision"
+        },
+        {
+            "name": "sql-password",
+            "type": "string",
+            "label": "SQL Password",
+            "visibleRule": "commands StartsWith provision"
+        },
+        {
+            "name": "open-api-document",
+            "type": "filePath",
+            "label": "Open API Document",
+            "visibleRule": "commands StartsWith deploy"
+        },
+        {
+            "name": "api-prefix",
+            "type": "string",
+            "label": "The API name prefix",
+            "visibleRule": "commands StartsWith deploy"
+        },
+        {
+            "name": "api-version",
+            "type": "string",
+            "label": "The API version",
+            "visibleRule": "commands StartsWith deploy"
+        },
+        {
+            "name": "environment",
+            "type": "pickList",
+            "label": "Environment",
+            "visibleRule": "commands StartsWith init",
+            "options": {
+                "local": "local",
+                "remote": "remote"
+            },
+            "defaultValue": "local"
+        },
+        {
+            "name": "endpoint",
+            "type": "string",
+            "label": "Teams app endpoint",
+            "visibleRule": "commands StartsWith init"
+        },
+        {
+            "name": "root-path",
+            "type": "filePath",
+            "label": "Path to the setting files",
+            "visibleRule": "commands StartsWith init",
+            "defaultValue": "./"
+        },
+        {
+            "name": "azure-resources",
+            "type": "multiLine",
+            "label": "AzureResources",
+            "visibleRule": "commands StartsWith new"
+        },
+        {
+            "name": "capabilities",
+            "type": "multiLine",
+            "label": "Capabilities",
+            "visibleRule": "commands StartsWith new"
+        }
+    ],
+    "execution": {
+        "Node10": {
+            "target": "lib/main.js"
+        }
+    }
+}
