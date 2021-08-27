@@ -1,0 +1,28 @@
+name: Create Milestone
+
+on: 
+  schedule:
+    - cron: "20 0 * * *"
+  workflow_dispatch:
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Actions
+        uses: actions/checkout@v2
+        with:
+         repository: "OfficeDev/teamsfx-issue-triage-bot"
+         ref: main 
+         path: ./actions
+         token: ${{secrets.TEAMSFX_BOT}}
+      - name: Install Actions
+        run: npm install --production --prefix ./actions
+
+      - name: Run Create Milestone
+        uses: ./actions/create-milestone
+        with:
+          milestone-prefix: CY
+          milestone-days: 14
+          advanced-days: 5
+          token: ${{secrets.TEAMSFX_BOT}}
