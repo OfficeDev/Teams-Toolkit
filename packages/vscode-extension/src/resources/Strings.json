@@ -172,7 +172,13 @@
       "signingInAzure": "Azure: Signing in...",
       "m365AccountTooltip": "M365 ACCOUNT  \nThe Teams Toolkit requires an Microsoft 365 organizational account where Teams is running and has been registered.",
       "azureAccountTooltip": "AZURE ACCOUNT  \nThe Teams Toolkit may require an Azure subscription to deploy the Azure resources for your project.",
-      "specifySubscription": "Specify subscription"
+      "specifySubscription": "Specify subscription",
+      "sideloadingPass": "Have custom app permission",
+      "sideloadingWarning": "No custom app permission",
+      "sideloadingUnknown": "Custom app permission unknown",
+      "sideloadingRefresh": "Refresh",
+      "sideloadingTooltip": "Custom app permission is required to load your app within Teams.",
+      "sideloadingMessage": "[Teams Toolkit] Your Microsoft 365 account doesn't have a sideloading permission. Without this permission, you cannot load your app within Teams. Contact to your administrator to resolve this issue or signin another account with sideloading permission."
     },
     "qm": {
       "emptySelection": "select option is empty",

@@ -999,6 +999,13 @@ export async function signOutM365(isFromTreeView: boolean) {
         contextValue: "signinM365",
       },
     ]);
+    await TreeViewManagerInstance.getTreeView("teamsfx-accounts")!.remove([
+      {
+        commandId: "fx-extension.checkSideloading",
+        label: "",
+        parent: "fx-extension.signinM365",
+      },
+    ]);
   }
 }
 

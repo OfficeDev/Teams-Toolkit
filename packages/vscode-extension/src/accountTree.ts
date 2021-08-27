@@ -11,6 +11,7 @@ import {
   TreeItem,
   Void,
 } from "@microsoft/teamsfx-api";
+import AppStudioLogin from "./commonlib/appStudioLogin";
 import AzureAccountManager from "./commonlib/azureLogin";
 import { core, getSystemInputs, tools, getAzureSolutionSettings } from "./handlers";
 import { askSubscription } from "@microsoft/teamsfx-core";
@@ -21,6 +22,7 @@ import {
   TelemetryProperty,
   TelemetryTiggerFrom,
 } from "./telemetry/extTelemetryEvents";
+import axios from "axios";
 import * as util from "util";
 import * as StringResources from "./resources/Strings.json";
 import { StringContext } from "./utils/stringContext";
@@ -118,6 +120,74 @@ export async function registerAccountTreeHandler(): Promise<Result<Void, FxError
     }
   };
 
+  const getSideloadingItem = async (token: string): Promise<TreeItem[]> => {
+    const isSideloadingAllowed = await getSideloadingStatus(token);
+    if (isSideloadingAllowed === undefined) {
+      return [
+        {
+          commandId: "fx-extension.checkSideloading",
+          label: StringResources.vsc.accountTree.sideloadingUnknown,
+          callback: () => {
+            return Promise.resolve(ok(null));
+          },
+          parent: "fx-extension.signinM365",
+          contextValue: "checkSideloading",
+          icon: "info",
+          tooltip: {
+            isMarkdown: false,
+            value: StringResources.vsc.accountTree.sideloadingTooltip,
+          },
+        },
+      ];
+    } else if (isSideloadingAllowed === true) {
+      return [
+        {
+          commandId: "fx-extension.checkSideloading",
+          label: StringResources.vsc.accountTree.sideloadingPass,
+          callback: () => {
+            return Promise.resolve(ok(null));
+          },
+          parent: "fx-extension.signinM365",
+          contextValue: "checkSideloading",
+          icon: "pass",
+          tooltip: {
+            isMarkdown: false,
+            value: StringResources.vsc.accountTree.sideloadingTooltip,
+          },
+        },
+      ];
+    } else {
+      VS_CODE_UI.showMessage(
+        "warn",
+        StringResources.vsc.accountTree.sideloadingMessage,
+        false,
+        StringResources.vsc.common.readMore
+      )
+        .then(async (result) => {
+          if (result.isOk() && result.value === StringResources.vsc.common.readMore) {
+            await VS_CODE_UI.openUrl("https://aka.ms/teamsfx-custom-app");
+          }
+        })
+        .catch((error) => {});
+      return [
+        {
+          commandId: "fx-extension.checkSideloading",
+          label: StringResources.vsc.accountTree.sideloadingWarning,
+          callback: () => {
+            return Promise.resolve(ok(null));
+          },
+          parent: "fx-extension.signinM365",
+          contextValue: "checkSideloading",
+          icon: "warning",
+          tooltip: {
+            isMarkdown: false,
+            value: StringResources.vsc.accountTree.sideloadingTooltip,
+          },
+        },
+      ];
+    }
+  };
+
   const selectSubscriptionCallback = async (args?: any[]): Promise<Result<null, FxError>> => {
     tools.telemetryReporter?.sendTelemetryEvent(TelemetryEvent.SelectSubscription, {
       [TelemetryProperty.TriggerFrom]: args
@@ -131,6 +201,35 @@ export async function registerAccountTreeHandler(): Promise<Result<Void, FxError
     );
     if (askSubRes.isErr()) return err(askSubRes.error);
     await setSubscription(askSubRes.value);
+    return ok(null);
+  };
+
+  const refreshSideloadingCallback = async (args?: any[]): Promise<Result<null, FxError>> => {
+    const status = await AppStudioLogin.getStatus();
+    if (status.token !== undefined) {
+      const subItem = await getSideloadingItem(status.token);
+      tools.treeProvider?.refresh(subItem);
+    } else {
+      // just in corner case that cannot get token and show unknown status
+      const subItem = [
+        {
+          commandId: "fx-extension.checkSideloading",
+          label: StringResources.vsc.accountTree.sideloadingUnknown,
+          callback: () => {
+            return Promise.resolve(ok(null));
+          },
+          parent: "fx-extension.signinM365",
+          contextValue: "checkSideloading",
+          icon: "info",
+          tooltip: {
+            isMarkdown: false,
+            value: StringResources.vsc.accountTree.sideloadingTooltip,
+          },
+        } as TreeItem,
+      ];
+      tools.treeProvider?.refresh(subItem);
+    }
+
     return ok(null);
   };
 
@@ -204,18 +303,19 @@ export async function registerAccountTreeHandler(): Promise<Result<Void, FxError
       accountInfo?: Record<string, unknown> | undefined
     ) => {
       if (status === "SignedIn") {
-        const token = await tools.tokenProvider.appStudioToken.getJsonObject(true);
-        if (token !== undefined) {
+        if (token !== undefined && accountInfo !== undefined) {
           tools.treeProvider?.refresh([
             {
               commandId: "fx-extension.signinM365",
-              label: (token as any).upn ? (token as any).upn : "",
+              label: (accountInfo.upn as string) ? (accountInfo.upn as string) : "",
               callback: signinM365Callback,
               parent: TreeCategory.Account,
               contextValue: "signedinM365",
               icon: "M365",
             },
           ]);
+          const subItem = await getSideloadingItem(token);
+          tools.treeProvider?.add(subItem);
         }
       } else if (status === "SigningIn") {
         tools.treeProvider?.refresh([
@@ -227,6 +327,13 @@ export async function registerAccountTreeHandler(): Promise<Result<Void, FxError
             icon: "spinner",
           },
         ]);
+        tools.treeProvider?.remove([
+          {
+            commandId: "fx-extension.checkSideloading",
+            label: "",
+            parent: "fx-extension.signinM365",
+          },
+        ]);
       } else if (status === "SignedOut") {
         tools.treeProvider?.refresh([
           {
@@ -236,6 +343,13 @@ export async function registerAccountTreeHandler(): Promise<Result<Void, FxError
             parent: TreeCategory.Account,
             icon: "M365",
             contextValue: "signinM365",
+          },
+        ]);
+        tools.treeProvider?.remove([
+          {
+            commandId: "fx-extension.checkSideloading",
+            label: "",
+            parent: "fx-extension.signinM365",
           },
         ]);
       }
@@ -312,6 +426,13 @@ export async function registerAccountTreeHandler(): Promise<Result<Void, FxError
     },
   };
 
+  const refreshSideloadingTreeItem: TreeItem = {
+    commandId: "fx-extension.refreshSideloading",
+    label: StringResources.vsc.accountTree.sideloadingRefresh,
+    callback: refreshSideloadingCallback,
+    parent: undefined,
+  };
+
   const signinAzureTreeItem: TreeItem = {
     commandId: "fx-extension.signinAzure",
     label: StringContext.getSignInAzureContext(),
@@ -337,9 +458,14 @@ export async function registerAccountTreeHandler(): Promise<Result<Void, FxError
 
   const solutionSettings = await getAzureSolutionSettings();
   if (solutionSettings && "Azure" === solutionSettings.hostType) {
-    tools.treeProvider!.add([signinM365TreeItem, signinAzureTreeItem, specifySubscriptionTreeItem]);
+    tools.treeProvider!.add([
+      signinM365TreeItem,
+      refreshSideloadingTreeItem,
+      signinAzureTreeItem,
+      specifySubscriptionTreeItem,
+    ]);
   } else {
-    tools.treeProvider!.add([signinM365TreeItem]);
+    tools.treeProvider!.add([signinM365TreeItem, refreshSideloadingTreeItem]);
   }
 
   return ok(Void);
@@ -367,5 +493,30 @@ async function setSubscription(subscription: SubscriptionInfo | undefined) {
         },
       },
     ]);
+  }
+}
+
+async function getSideloadingStatus(token: string): Promise<boolean | undefined> {
+  const instance = axios.create({
+    baseURL: "https://dev-int.teams.microsoft.com",
+    timeout: 30000,
+  });
+  instance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+  try {
+    const response = await instance.get("/api/usersettings/mtUserAppPolicy");
+    let result: boolean | undefined;
+    if (response.status >= 400) {
+      result = undefined;
+    } else {
+      result = response.data?.value?.isSideloadingAllowed as boolean;
+    }
+
+    tools.telemetryReporter?.sendTelemetryEvent(TelemetryEvent.CheckSideloading, {
+      [TelemetryProperty.IsSideloadingAllowed]: result + "",
+    });
+    return result;
+  } catch (error) {
+    tools.telemetryReporter?.sendTelemetryErrorEvent(TelemetryEvent.CheckSideloading, error);
+    return undefined;
   }
 }
