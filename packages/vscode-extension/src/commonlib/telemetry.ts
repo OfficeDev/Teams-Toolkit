@@ -3,7 +3,7 @@
 import * as vscode from "vscode";
 import Reporter from "vscode-extension-telemetry";
 import { TelemetryReporter } from "@microsoft/teamsfx-api";
-import { getPackageVersion, getProjectId } from "../utils/commonUtils";
+import { getAllFeatureFlags, getPackageVersion, getProjectId } from "../utils/commonUtils";
 import { TelemetryProperty } from "../telemetry/extTelemetryEvents";
 import { Correlator } from "@microsoft/teamsfx-core";
 
@@ -47,6 +47,9 @@ export class VSCodeTelemetryReporter extends vscode.Disposable implements Teleme
     const projectId = getProjectId();
     properties[TelemetryProperty.ProjectId] = projectId ? projectId : "";
     properties[TelemetryProperty.CorrelationId] = Correlator.getId();
+
+    const featureFlags = getAllFeatureFlags();
+    properties[TelemetryProperty.FeatureFlags] = featureFlags ? featureFlags.join(";") : "";
     this.reporter.sendTelemetryErrorEvent(eventName, properties, measurements, errorProps);
   }
 
@@ -64,6 +67,9 @@ export class VSCodeTelemetryReporter extends vscode.Disposable implements Teleme
     const projectId = getProjectId();
     properties[TelemetryProperty.ProjectId] = projectId ? projectId : "";
     properties[TelemetryProperty.CorrelationId] = Correlator.getId();
+
+    const featureFlags = getAllFeatureFlags();
+    properties[TelemetryProperty.FeatureFlags] = featureFlags ? featureFlags.join(";") : "";
     this.reporter.sendTelemetryEvent(eventName, properties, measurements);
   }
 
@@ -81,6 +87,9 @@ export class VSCodeTelemetryReporter extends vscode.Disposable implements Teleme
     const projectId = getProjectId();
     properties[TelemetryProperty.ProjectId] = projectId ? projectId : "";
     properties[TelemetryProperty.CorrelationId] = Correlator.getId();
+
+    const featureFlags = getAllFeatureFlags();
+    properties[TelemetryProperty.FeatureFlags] = featureFlags ? featureFlags.join(";") : "";
     this.reporter.sendTelemetryException(error, properties, measurements);
   }
 }

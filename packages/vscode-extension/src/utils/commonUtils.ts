@@ -176,3 +176,31 @@ export function syncFeatureFlags() {
     ConfigurationKey.ArmSupportEnabled
   ).toString();
 }
+
+export class FeatureFlags {
+  static readonly RemoteCollaboration = "TEAMSFX_REMOTE_COL";
+  static readonly MultiEnv = "TEAMSFX_MULTI_ENV";
+  static readonly ArmSupport = "TEAMSFX_ARM_SUPPORT";
+}
+
+// Determine whether feature flag is enabled based on environment variable setting
+export function isFeatureFlagEnabled(featureFlagName: string, defaultValue = false): boolean {
+  const flag = process.env[featureFlagName];
+  if (flag === undefined) {
+    return defaultValue; // allows consumer to set a default value when environment variable not set
+  } else {
+    return flag === "1" || flag.toLowerCase() === "true"; // can enable feature flag by set environment variable value to "1" or "true"
+  }
+}
+
+export function getAllFeatureFlags(): string[] | undefined {
+  const result = Object.values(FeatureFlags)
+    .filter((featureFlag) => {
+      return isFeatureFlagEnabled(featureFlag);
+    })
+    .map((featureFlag) => {
+      return featureFlag;
+    });
+
+  return result;
+}

@@ -44,6 +44,9 @@ mock("vscode-extension-telemetry", {
 });
 
 import { VSCodeTelemetryReporter } from "../../../src/commonlib/telemetry";
+import { getAllFeatureFlags } from "../../../src/utils/commonUtils";
+
+const featureFlags = getAllFeatureFlags()?.join(";") ?? "";
 
 suite("telemetry", () => {
   let tester: TelemetryReporter;
@@ -62,7 +65,12 @@ suite("telemetry", () => {
 
     expect(reporterSpy.sendTelemetryEvent).to.have.been.called.with(
       "sampleEvent",
-      { stringProp: "some string", "project-id": "", "correlation-id": "" },
+      {
+        stringProp: "some string",
+        "project-id": "",
+        "correlation-id": "",
+        "feature-flags": featureFlags,
+      },
       { numericMeasure: 123 }
     );
   });
@@ -85,6 +93,7 @@ suite("telemetry", () => {
         stackProp: "some user stack trace",
         "project-id": "",
         "correlation-id": "",
+        "feature-flags": featureFlags,
       },
       { numericMeasure: 123 },
       ["stackProp"]
@@ -97,7 +106,12 @@ suite("telemetry", () => {
 
     expect(reporterSpy.sendTelemetryException).to.have.been.called.with(
       error,
-      { stringProp: "some string", "project-id": "", "correlation-id": "" },
+      {
+        stringProp: "some string",
+        "project-id": "",
+        "correlation-id": "",
+        "feature-flags": featureFlags,
+      },
       { numericMeasure: 123 }
     );
   });

@@ -403,3 +403,15 @@ export function isFeatureFlagEnabled(featureFlagName: string, defaultValue = fal
 export function isRemoteCollaborationEnabled(): boolean {
   return isFeatureFlagEnabled(FeatureFlags.RemoteCollaboration, false);
 }
+
+export function getAllFeatureFlags(): string[] | undefined {
+  const result = Object.values(FeatureFlags)
+    .filter((featureFlag) => {
+      return isFeatureFlagEnabled(featureFlag);
+    })
+    .map((featureFlag) => {
+      return featureFlag;
+    });
+
+  return result;
+}

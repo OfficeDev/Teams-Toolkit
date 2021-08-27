@@ -132,6 +132,7 @@ export enum TelemetryProperty {
   SampleAppName = "sample-app-name",
   CurrentAction = "current-action",
   VideoPlayFrom = "video-play-from",
+  FeatureFlags = "feature-flags",
 }
 
 export enum TelemetrySuccess {

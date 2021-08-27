@@ -6,7 +6,7 @@ import Reporter from "../telemetry/telemetryReporter";
 import { TelemetryReporter } from "@microsoft/teamsfx-api";
 import { Correlator } from "@microsoft/teamsfx-core";
 import { TelemetryProperty } from "../telemetry/cliTelemetryEvents";
-import { getProjectId } from "../utils";
+import { getAllFeatureFlags, getProjectId } from "../utils";
 import { CliConfigOptions, CliConfigRunFrom, UserSettings } from "../userSetttings";
 
 /**
@@ -52,6 +52,9 @@ export class CliTelemetryReporter implements TelemetryReporter {
     const runFrom = result.isOk() ? result.value : CliConfigRunFrom.Other;
     properties[CliConfigOptions.RunFrom] = runFrom;
 
+    const featureFlags = getAllFeatureFlags();
+    properties[TelemetryProperty.FeatureFlags] = featureFlags ? featureFlags.join(";") : "";
+
     this.reporter.sendTelemetryErrorEvent(eventName, properties, measurements, errorProps);
   }
 
@@ -72,6 +75,9 @@ export class CliTelemetryReporter implements TelemetryReporter {
     const runFrom = result.isOk() ? result.value : CliConfigRunFrom.Other;
     properties[CliConfigOptions.RunFrom] = runFrom;
 
+    const featureFlags = getAllFeatureFlags();
+    properties[TelemetryProperty.FeatureFlags] = featureFlags ? featureFlags.join(";") : "";
+
     this.reporter.sendTelemetryEvent(eventName, properties, measurements);
   }
 
@@ -91,6 +97,9 @@ export class CliTelemetryReporter implements TelemetryReporter {
     const result = UserSettings.getRunFromSetting();
     const runFrom = result.isOk() ? result.value : CliConfigRunFrom.Other;
     properties[CliConfigOptions.RunFrom] = runFrom;
+
+    const featureFlags = getAllFeatureFlags();
+    properties[TelemetryProperty.FeatureFlags] = featureFlags ? featureFlags.join(";") : "";
 
     this.reporter.sendTelemetryException(error, properties, measurements);
   }
