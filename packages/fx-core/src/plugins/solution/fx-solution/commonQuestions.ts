@@ -84,13 +84,13 @@ async function getQuestionsForResourceGroup(
   existingResourceGroupNameLocations: [string, string][],
   availableLocations: string[]
 ) {
-  const selectEnv = QuestionSelectResourceGroup;
+  const selectResourceGroup = QuestionSelectResourceGroup;
   const resourceGroupNames = existingResourceGroupNameLocations.map((item) => item[0]);
 
   // TODO: display location alongaside with name
-  selectEnv.staticOptions = [newResourceGroupOption].concat(resourceGroupNames);
+  selectResourceGroup.staticOptions = [newResourceGroupOption].concat(resourceGroupNames);
 
-  const node = new QTreeNode(selectEnv);
+  const node = new QTreeNode(selectResourceGroup);
 
   const newResourceGroupNameNode = new QTreeNode(QuestionNewResourceGroupName);
   newResourceGroupNameNode.condition = { equals: newResourceGroupOption };
@@ -108,7 +108,7 @@ async function getQuestionsForResourceGroup(
 /**
  * Ask user to create a new resource group or use an exsiting resource group
  */
-async function askResourceGroupInfo(
+export async function askResourceGroupInfo(
   ctx: SolutionContext,
   rmClient: ResourceManagementClient,
   inputs: Inputs,

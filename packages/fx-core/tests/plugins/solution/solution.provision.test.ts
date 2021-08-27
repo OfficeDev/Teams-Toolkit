@@ -63,14 +63,19 @@ import { IAppDefinition } from "../../../src/plugins/resource/appstudio/interfac
 import _ from "lodash";
 import { TokenCredential } from "@azure/core-auth";
 import { TokenCredentialsBase, UserTokenCredentials } from "@azure/ms-rest-nodeauth";
-import { ResourceGroups } from "@azure/arm-resources";
+import { ResourceGroups, ResourceManagementClient } from "@azure/arm-resources";
 import { AppStudioClient } from "../../../src/plugins/resource/appstudio/appStudio";
 import { AppStudioPluginImpl } from "../../../src/plugins/resource/appstudio/plugin";
 import * as solutionUtil from "../../../src/plugins/solution/fx-solution/utils/util";
 import * as uuid from "uuid";
 import { ResourcePlugins } from "../../../src/plugins/solution/fx-solution/ResourcePluginContainer";
-import { AadAppForTeamsPlugin, newEnvInfo } from "../../../src";
+import { AadAppForTeamsPlugin, isMultiEnvEnabled, newEnvInfo } from "../../../src";
 import Container from "typedi";
+import { askResourceGroupInfo } from "../../../src/plugins/solution/fx-solution/commonQuestions";
+import { ResourceManagementModels } from "@azure/arm-resources";
+import * as msRest from "@azure/ms-rest-js";
+import { CoreQuestionNames } from "../../../src/core/question";
+import * as os from "os";
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -565,5 +570,95 @@ describe("provision() happy path for Azure projects", () => {
     // expect(mockedCtx.envInfo.profile.get(GLOBAL_CONFIG)?.get(REMOTE_TEAMS_APP_ID)).equals(
     //   mockedAppDef.teamsAppId
     // );
+  });
+});
+
+describe("provision() resource group info user interaction", () => {
+  const mocker = sinon.createSandbox();
+  const resourceGroupsCreated = new Map<string, string>();
+  beforeEach(() => {
+    mocker.stub(solutionUtil, "getSubsriptionDisplayName").resolves(mockedSubscriptionName);
+    mocker.stub(process, "env").get(() => {
+      return { TEAMSFX_MULTI_ENV: "true" };
+    });
+  });
+
+  afterEach(() => {
+    mocker.restore();
+  });
+
+  it("should create new resource group happy path", async () => {
+    // Arrange
+    const mockNewResourceGroupName = "test-new-rg";
+    const mockNewResourceGroupLocation = "West US";
+
+    const mockedCtx = mockSolutionContext();
+    mockedCtx.ui!.inputText = async (
+      config: InputTextConfig
+    ): Promise<Result<InputTextResult, FxError>> => {
+      if (config.name === CoreQuestionNames.NewResourceGroupName) {
+        return ok({ type: "success", result: mockNewResourceGroupName });
+      } else {
+        return ok({ type: "back", result: undefined });
+      }
+    };
+    mockedCtx.ui!.selectOption = async (
+      config: SingleSelectConfig
+    ): Promise<Result<SingleSelectResult, FxError>> => {
+      if (config.name === CoreQuestionNames.TargetResourceGroupName) {
+        return ok({ type: "success", result: "+ New resource group" });
+      } else if (config.name === CoreQuestionNames.NewResourceGroupLocation) {
+        return ok({ type: "success", result: mockNewResourceGroupLocation });
+      } else {
+        return ok({ type: "back", result: undefined });
+      }
+    };
+
+    mockedCtx.projectSettings = {
+      appName: "my app",
+      projectId: uuid.v4(),
+      solutionSettings: {
+        hostType: HostTypeOptionAzure.id,
+        name: "azure",
+        version: "1.0",
+        activeResourcePlugins: [],
+      },
+    };
+
+    const token = await mockedCtx.azureAccountProvider?.getAccountCredentialAsync();
+    expect(token).to.exist;
+    const fakeSubscriptionId = "3b8db46f-4298-458a-ac36-e04e7e66b68f";
+
+    mocker
+      .stub(ResourceGroups.prototype, "list")
+      .callsFake((options?: ResourceManagementModels.ResourceGroupsListOptionalParams) => {
+        return [] as any;
+      });
+    const appName = "testapp";
+    const mockRmClient = new ResourceManagementClient(token!, fakeSubscriptionId);
+
+    // Act
+    const resourceGroupInfoResult = await askResourceGroupInfo(
+      mockedCtx,
+      mockRmClient,
+      mockedCtx.answers!,
+      mockedCtx.ui!,
+      appName
+    );
+
+    // Assume
+    if (!resourceGroupInfoResult.isOk()) {
+      expect(resourceGroupInfoResult.isOk()).to.be.true;
+      // just to make the compiler happy
+      return;
+    }
+
+    const resourceGroupInfo = resourceGroupInfoResult.value;
+
+    expect(resourceGroupInfo.createNewResourceGroup).to.be.true;
+    expect(resourceGroupInfo.name).to.equal(mockNewResourceGroupName);
+    expect(resourceGroupInfo.createNewResourceGroup && resourceGroupInfo.location).to.equal(
+      mockNewResourceGroupLocation
+    );
   });
 });
