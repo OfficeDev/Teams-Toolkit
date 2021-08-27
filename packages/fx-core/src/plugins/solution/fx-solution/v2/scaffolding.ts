@@ -50,6 +50,38 @@ export async function scaffoldSourceCode(
   }
 }
 
+export async function scaffoldByPlugins(ctx: v2.Context, inputs: Inputs, plugins: v2.ResourcePlugin[]): Promise<Result<Record<v2.PluginName, { output: Record<string, string> }>, FxError>> {
+  const thunks: NamedThunk<{ output: Record<string, string> }>[] = plugins
+    .filter((plugin) => !!plugin.scaffoldSourceCode)
+    .map((plugin) => {
+      return {
+        pluginName: `${plugin.name}`,
+        taskName: "scaffoldSourceCode",
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        thunk: () => plugin.scaffoldSourceCode!(ctx, inputs),
+      };
+    });
+
+  const result = await executeConcurrently(thunks, ctx.logProvider);
+  const solutionSettings = getAzureSolutionSettings(ctx);
+  if (result.isOk()) {
+    const capabilities = solutionSettings.capabilities;
+    const azureResources = solutionSettings.azureResources;
+
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    await scaffoldReadmeAndLocalSettings(capabilities, azureResources, inputs.projectPath!);
+
+    ctx.userInteraction.showMessage(
+      "info",
+      `Success: ${getStrings().solution.ScaffoldSuccessNotice}`,
+      false
+    );
+    return ok(combineRecords(result.value));
+  } else {
+    return err(result.error);
+  }
+}
+
 export async function scaffoldReadmeAndLocalSettings(
   capabilities: string[],
   azureResources: string[],

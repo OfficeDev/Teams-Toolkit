@@ -33,6 +33,7 @@ import {
   TaskConfig,
   AzureAccountProvider,
   SubscriptionInfo,
+  AppStudioTokenProvider,
 } from "@microsoft/teamsfx-api";
 
 export const validManifest = {
@@ -282,6 +283,32 @@ class MockedTokenCredentials extends TokenCredentialsBase {
       resource: "mock",
       accessToken: "mock",
     };
+  }
+}
+
+export class MockedAppStudioProvider implements AppStudioTokenProvider {
+  async getAccessToken(showDialog?: boolean): Promise<string> {
+    return "fakeToken";
+  }
+  async getJsonObject(showDialog?: boolean): Promise<Record<string, unknown>> {
+    return {};
+  }
+  async signout(): Promise<boolean> {
+    return true;
+  }
+  async setStatusChangeMap(
+    name: string,
+    statusChange: (
+      status: string,
+      token?: string,
+      accountInfo?: Record<string, unknown>
+    ) => Promise<void>,
+    immediateCall?: boolean
+  ): Promise<boolean> {
+    return true;
+  }
+  async removeStatusChangeMap(name: string): Promise<boolean> {
+    return true;
   }
 }
 

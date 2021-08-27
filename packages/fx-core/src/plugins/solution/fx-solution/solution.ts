@@ -112,6 +112,13 @@ import { PermissionRequestFileProvider } from "../../../core/permissionRequest";
 import { IUserList } from "../../resource/appstudio/interfaces/IAppDefinition";
 import axios from "axios";
 import {
+  canAddCapability,
+  canAddResource,
+  confirmRegenerateArmTemplate,
+  extractParamForRegisterTeamsAppAndAad,
+  ParamForRegisterTeamsAppAndAad,
+} from "./v2/executeUserTask";
+import {
   AadOwner,
   Collaborator,
   ResourcePermission,
@@ -120,13 +127,6 @@ import {
 
 export type LoadedPlugin = Plugin;
 export type PluginsWithContext = [LoadedPlugin, PluginContext];
-
-type ParamForRegisterTeamsAppAndAad = {
-  "app-name": string;
-  environment: "local" | "remote";
-  endpoint: string;
-  "root-path": string;
-};
 
 // Maybe we need a state machine to track state transition.
 export enum SolutionRunningState {
@@ -1915,27 +1915,11 @@ export class TeamsAppSolution implements Solution {
     }
     const settings = this.getAzureSolutionSettings(ctx);
     const originalSettings = deepCopy(settings);
-    if (
-      !(
-        settings.hostType === HostTypeOptionAzure.id &&
-        settings.capabilities &&
-        settings.capabilities.includes(TabOptionItem.id)
-      )
-    ) {
-      const e = returnUserError(
-        new Error("Add resource is only supported for Tab app hosted in Azure."),
-        "Solution",
-        SolutionError.AddResourceNotSupport
-      );
-
-      return err(
-        sendErrorTelemetryThenReturnError(
-          SolutionTelemetryEvent.AddResource,
-          e,
-          ctx.telemetryReporter
-        )
-      );
+    const canProceed = canAddResource(settings, ctx.telemetryReporter!);
+    if (canProceed.isErr()) {
+      return canProceed;
     }
+
     const selectedPlugins = settings.activeResourcePlugins;
     const functionPlugin: Plugin = this.FunctionPlugin;
     const sqlPlugin: Plugin = this.SqlPlugin;
@@ -2002,7 +1986,7 @@ export class TeamsAppSolution implements Solution {
 
     if (notifications.length > 0) {
       if (isArmSupportEnabled() && addNewResoruceToProvision) {
-        const confirmed = await this.confirmRegenerateArmTemplate(ctx);
+        const confirmed = await confirmRegenerateArmTemplate(ctx.ui);
         if (!confirmed) {
           return ok(Void);
         }
@@ -2045,7 +2029,7 @@ export class TeamsAppSolution implements Solution {
     return ok(Void);
   }
 
-  async executeAddCapability(func: Func, ctx: SolutionContext): Promise<Result<any, FxError>> {
+  async executeAddCapability(ctx: SolutionContext): Promise<Result<any, FxError>> {
     ctx.telemetryReporter?.sendTelemetryEvent(SolutionTelemetryEvent.AddCapabilityStart, {
       [SolutionTelemetryProperty.Component]: SolutionTelemetryComponentName,
     });
@@ -2056,19 +2040,9 @@ export class TeamsAppSolution implements Solution {
     }
     const settings = this.getAzureSolutionSettings(ctx);
     const originalSettings = deepCopy(settings);
-    if (!(settings.hostType === HostTypeOptionAzure.id)) {
-      const e = returnUserError(
-        new Error("Add capability is not supported for SPFx project"),
-        "Solution",
-        SolutionError.FailedToAddCapability
-      );
-      return err(
-        sendErrorTelemetryThenReturnError(
-          SolutionTelemetryEvent.AddCapability,
-          e,
-          ctx.telemetryReporter
-        )
-      );
+    const canProceed = canAddCapability(settings, ctx.telemetryReporter!);
+    if (canProceed.isErr()) {
+      return canProceed;
     }
 
     const capabilitiesAnswer = ctx.answers[AzureSolutionQuestionNames.Capabilities] as string[];
@@ -2123,7 +2097,7 @@ export class TeamsAppSolution implements Solution {
 
     if (change) {
       if (isArmSupportEnabled()) {
-        const confirmed = await this.confirmRegenerateArmTemplate(ctx);
+        const confirmed = await confirmRegenerateArmTemplate(ctx.ui);
         if (!confirmed) {
           return ok(Void);
         }
@@ -2182,14 +2156,14 @@ export class TeamsAppSolution implements Solution {
     const method = func.method;
     const array = namespace.split("/");
     if (method === "addCapability") {
-      return this.executeAddCapability(func, ctx!);
+      return this.executeAddCapability(ctx!);
     }
     if (method === "addResource") {
       return this.executeAddResource(ctx);
     }
     if (namespace.includes("solution")) {
       if (method === "registerTeamsAppAndAad") {
-        const maybeParams = this.extractParamForRegisterTeamsAppAndAad(ctx.answers);
+        const maybeParams = extractParamForRegisterTeamsAppAndAad(ctx.answers);
         if (maybeParams.isErr()) {
           return maybeParams;
         }
@@ -2236,42 +2210,6 @@ export class TeamsAppSolution implements Solution {
         `executeUserTaskRouteFailed`
       )
     );
-  }
-
-  private extractParamForRegisterTeamsAppAndAad(
-    answers?: Inputs
-  ): Result<ParamForRegisterTeamsAppAndAad, FxError> {
-    if (answers == undefined) {
-      return err(
-        returnSystemError(
-          new Error("Input is undefined"),
-          "Solution",
-          SolutionError.FailedToGetParamForRegisterTeamsAppAndAad
-        )
-      );
-    }
-
-    const param: ParamForRegisterTeamsAppAndAad = {
-      "app-name": "",
-      endpoint: "",
-      environment: "local",
-      "root-path": "",
-    };
-    for (const key of Object.keys(param)) {
-      const value = answers[key];
-      if (value == undefined) {
-        return err(
-          returnSystemError(
-            new Error(`${key} not found`),
-            "Solution",
-            SolutionError.FailedToGetParamForRegisterTeamsAppAndAad
-          )
-        );
-      }
-      (param as any)[key] = value;
-    }
-
-    return ok(param);
   }
 
   private prepareConfigForRegisterTeamsAppAndAad(
@@ -2522,15 +2460,5 @@ export class TeamsAppSolution implements Solution {
       displayName,
       isAdministrator,
     };
-  }
-
-  private async confirmRegenerateArmTemplate(ctx: SolutionContext): Promise<boolean> {
-    const msg: string = util.format(getStrings().solution.RegenerateArmTemplateConfirmNotice);
-    const okItem = "Ok";
-    const confirmRes = await ctx.ui?.showMessage("warn", msg, true, okItem);
-
-    const confirm = confirmRes?.isOk() ? confirmRes.value : undefined;
-
-    return confirm === okItem;
   }
 }

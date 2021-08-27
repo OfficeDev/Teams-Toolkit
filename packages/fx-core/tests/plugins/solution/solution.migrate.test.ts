@@ -11,6 +11,7 @@ import {
   ok,
   Result,
   FxError,
+  SolutionSettings,
 } from "@microsoft/teamsfx-api";
 import * as sinon from "sinon";
 import fs, { PathLike } from "fs-extra";
@@ -67,7 +68,7 @@ describe("Solution migrate()", async () => {
     mockedSolutionCtx.projectSettings = {
       appName: "my app",
       projectId: uuid.v4(),
-      solutionSettings: undefined,
+      solutionSettings: undefined as unknown as SolutionSettings,
     };
     const result = await solution.migrate(mockedSolutionCtx);
     expect(result.isErr()).equals(true);

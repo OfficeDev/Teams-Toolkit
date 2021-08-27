@@ -152,8 +152,8 @@ export interface SolutionPlugin {
    * execute user customized task, for example `Add Resource`, `Add Capabilities`, etc
    */
   executeUserTask?: (
+    ctx: Context,
     func: Func,
     inputs: Inputs,
-    ctx?: Context
   ) => Promise<Result<unknown, FxError>>;
 }

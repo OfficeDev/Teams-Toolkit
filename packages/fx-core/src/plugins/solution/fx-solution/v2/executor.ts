@@ -23,12 +23,14 @@ export async function executeConcurrently<R>(
 
   let failed = false;
   const ret = [];
+  const errors = [];
   for (let i = 0; i < results.length; ++i) {
     const name = `${namedThunks[i].pluginName}-${namedThunks[i].taskName}`;
     const result = results[i];
     logger.info(`${name.padEnd(60, ".")} ${result.isOk() ? "[ok]" : "[failed]"}`);
     if (result.isErr()) {
       failed = true;
+      errors.push(result.error);
     } else {
       ret.push({ name, result: result.value });
     }
@@ -43,7 +45,11 @@ export async function executeConcurrently<R>(
   if (failed) {
     return err(
       returnSystemError(
-        new Error(`Failed to run tasks concurrently`),
+        new Error(
+          `Failed to run tasks concurrently due to ${JSON.stringify(
+            errors.map((e) => `${e.name}:${e.message}`)
+          )}`
+        ),
         "Solution",
         SolutionError.InternelError
       )

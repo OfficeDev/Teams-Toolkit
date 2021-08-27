@@ -2,7 +2,6 @@ import {
   v2,
   SolutionContext,
   Inputs,
-  SolutionConfig,
   AppStudioTokenProvider,
   AzureAccountProvider,
   CryptoProvider,
@@ -13,7 +12,6 @@ import {
   TelemetryReporter,
   TreeProvider,
   UserInteraction,
-  ConfigMap,
 } from "@microsoft/teamsfx-api";
 import { newEnvInfo } from "../../../../core/tools";
 

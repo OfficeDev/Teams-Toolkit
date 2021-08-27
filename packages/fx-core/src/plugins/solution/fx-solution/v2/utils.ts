@@ -10,7 +10,7 @@ import {
   combine,
 } from "@microsoft/teamsfx-api";
 import { HostTypeOptionAzure } from "../question";
-import { getActivatedV2ResourcePlugins } from "../ResourcePluginContainer";
+import { getActivatedResourcePlugins, getActivatedV2ResourcePlugins } from "../ResourcePluginContainer";
 
 export function getSelectedPlugins(azureSettings: AzureSolutionSettings): v2.ResourcePlugin[] {
   const plugins = getActivatedV2ResourcePlugins(azureSettings);
@@ -45,4 +45,10 @@ export function extractSolutionInputs(record: Record<string, string>): v2.Soluti
     teamsAppTenantId: record["teamsAppTenantId"],
     remoteTeamsAppId: undefined,
   };
+}
+
+export function reloadV2Plugins(solutionSettings: AzureSolutionSettings): v2.ResourcePlugin[] {
+  const res = getActivatedV2ResourcePlugins(solutionSettings);
+  solutionSettings.activeResourcePlugins = res.map((p) => p.name);
+  return res;
 }
