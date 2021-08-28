@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+import { ArchiveFolderName } from "@microsoft/teamsfx-api";
+
 export class Messages {
   public static readonly SomethingIsInvalidWithValue = (something: string, value: string): string =>
     `'${something}' is invalid with value: '${value}'.`;
@@ -129,4 +131,9 @@ export class Messages {
   public static readonly ReopenWorkingDir =
     "Please check whether the working directory path is valid, if no, please move the project to a valid working directory path.";
   public static readonly PostProvisioningStart = "Start to Post Provision.";
+
+  // for the use of migrating v1 project
+  public static readonly StartMigrateV1Project = (name: string) => `Migrating '${name}'.`;
+  public static readonly EndMigrateV1Project = (name: string) => `Successfully migrated '${name}'.`;
+  public static readonly RollbackToV1Project = `Rollback your project from '${ArchiveFolderName}' folder.`;
 }
