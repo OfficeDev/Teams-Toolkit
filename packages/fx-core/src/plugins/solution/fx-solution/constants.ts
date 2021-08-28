@@ -172,6 +172,15 @@ export enum SolutionTelemetryEvent {
 
   AddCapabilityStart = "add-capability-start",
   AddCapability = "add-capability",
+
+  GrantPermissionStart = "grant-permission-start",
+  GrantPermission = "grant-permission",
+
+  CheckPermissionStart = "check-permission-start",
+  CheckPermission = "check-permission",
+
+  ListCollaboratorStart = "list-collaborator-start",
+  ListCollaborator = "list-collaborator",
 }
 
 export enum SolutionTelemetryProperty {

@@ -1310,10 +1310,20 @@ export class TeamsAppSolution implements Solution {
 
   @hooks([ErrorHandlerMW])
   async grantPermission(ctx: SolutionContext): Promise<Result<any, FxError>> {
+    ctx.telemetryReporter?.sendTelemetryEvent(SolutionTelemetryEvent.GrantPermissionStart, {
+      [SolutionTelemetryProperty.Component]: SolutionTelemetryComponentName,
+    });
+
     try {
       const result = await this.checkAndGetCurrentUserInfo(ctx);
       if (result.isErr()) {
-        return result;
+        return err(
+          sendErrorTelemetryThenReturnError(
+            SolutionTelemetryEvent.GrantPermission,
+            result.error,
+            ctx.telemetryReporter
+          )
+        );
       }
 
       const email = ctx.answers!["email"] as string;
@@ -1321,12 +1331,16 @@ export class TeamsAppSolution implements Solution {
 
       if (!userInfo) {
         return err(
-          returnUserError(
-            new Error(
-              "Cannot find user in current tenant, please check whether your email address is correct"
+          sendErrorTelemetryThenReturnError(
+            SolutionTelemetryEvent.GrantPermission,
+            returnUserError(
+              new Error(
+                "Cannot find user in current tenant, please check whether your email address is correct"
+              ),
+              "Solution",
+              SolutionError.CannotFindUserInCurrentTenant
             ),
-            "Solution",
-            SolutionError.CannotFindUserInCurrentTenant
+            ctx.telemetryReporter
           )
         );
       }
@@ -1402,9 +1416,18 @@ export class TeamsAppSolution implements Solution {
 
       if (errorMsg) {
         return err(
-          returnUserError(new Error(errorMsg), "Solution", SolutionError.FailedToGrantPermission)
+          sendErrorTelemetryThenReturnError(
+            SolutionTelemetryEvent.GrantPermission,
+            returnUserError(new Error(errorMsg), "Solution", SolutionError.FailedToGrantPermission),
+            ctx.telemetryReporter
+          )
         );
       }
+
+      ctx.telemetryReporter?.sendTelemetryEvent(SolutionTelemetryEvent.GrantPermission, {
+        [SolutionTelemetryProperty.Component]: SolutionTelemetryComponentName,
+        [SolutionTelemetryProperty.Success]: SolutionTelemetrySuccess.Yes,
+      });
 
       return ok(permissions);
     } finally {
@@ -1415,10 +1438,20 @@ export class TeamsAppSolution implements Solution {
 
   @hooks([ErrorHandlerMW])
   async checkPermission(ctx: SolutionContext): Promise<Result<any, FxError>> {
+    ctx.telemetryReporter?.sendTelemetryEvent(SolutionTelemetryEvent.CheckPermissionStart, {
+      [SolutionTelemetryProperty.Component]: SolutionTelemetryComponentName,
+    });
+
     try {
       const result = await this.checkAndGetCurrentUserInfo(ctx);
       if (result.isErr()) {
-        return result;
+        return err(
+          sendErrorTelemetryThenReturnError(
+            SolutionTelemetryEvent.CheckPermission,
+            result.error,
+            ctx.telemetryReporter
+          )
+        );
       }
 
       const userInfo = result.value as IUserList;
@@ -1482,10 +1515,18 @@ export class TeamsAppSolution implements Solution {
 
       if (errorMsg) {
         return err(
-          returnUserError(new Error(errorMsg), "Solution", SolutionError.FailedToCheckPermission)
+          sendErrorTelemetryThenReturnError(
+            SolutionTelemetryEvent.CheckPermission,
+            returnUserError(new Error(errorMsg), "Solution", SolutionError.FailedToCheckPermission),
+            ctx.telemetryReporter
+          )
         );
       }
 
+      ctx.telemetryReporter?.sendTelemetryEvent(SolutionTelemetryEvent.CheckPermission, {
+        [SolutionTelemetryProperty.Component]: SolutionTelemetryComponentName,
+        [SolutionTelemetryProperty.Success]: SolutionTelemetrySuccess.Yes,
+      });
       return ok(permissions);
     } finally {
       ctx.envInfo.profile.get(GLOBAL_CONFIG)?.delete(USER_INFO);
@@ -1495,10 +1536,20 @@ export class TeamsAppSolution implements Solution {
 
   @hooks([ErrorHandlerMW])
   async listCollaborator(ctx: SolutionContext): Promise<Result<Collaborator[], FxError>> {
+    ctx.telemetryReporter?.sendTelemetryEvent(SolutionTelemetryEvent.ListCollaboratorStart, {
+      [SolutionTelemetryProperty.Component]: SolutionTelemetryComponentName,
+    });
+
     try {
       const result = await this.checkAndGetCurrentUserInfo(ctx);
       if (result.isErr()) {
-        return result;
+        return err(
+          sendErrorTelemetryThenReturnError(
+            SolutionTelemetryEvent.ListCollaborator,
+            result.error,
+            ctx.telemetryReporter
+          )
+        );
       }
       const userInfo = result.value as IUserList;
 
@@ -1546,7 +1597,15 @@ export class TeamsAppSolution implements Solution {
 
       if (errorMsg) {
         return err(
-          returnUserError(new Error(errorMsg), "Solution", SolutionError.FailedToListCollaborator)
+          sendErrorTelemetryThenReturnError(
+            SolutionTelemetryEvent.ListCollaborator,
+            returnUserError(
+              new Error(errorMsg),
+              "Solution",
+              SolutionError.FailedToListCollaborator
+            ),
+            ctx.telemetryReporter
+          )
         );
       }
 
@@ -1587,6 +1646,11 @@ export class TeamsAppSolution implements Solution {
           }
         }
       }
+
+      ctx.telemetryReporter?.sendTelemetryEvent(SolutionTelemetryEvent.ListCollaborator, {
+        [SolutionTelemetryProperty.Component]: SolutionTelemetryComponentName,
+        [SolutionTelemetryProperty.Success]: SolutionTelemetrySuccess.Yes,
+      });
 
       return ok(collaborators);
     } finally {
