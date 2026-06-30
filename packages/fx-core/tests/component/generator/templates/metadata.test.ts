@@ -81,6 +81,52 @@ describe("metadata platform routing", () => {
       assert.include(readPath, path.join("metadata", "allTemplates.json"));
     });
 
+    it("falls back to bundled metadata and clears cache markers when cached metadata is corrupted", () => {
+      sandbox.stub(templateHelper, "useLocalTemplate").returns(false);
+      sandbox.stub(folder, "getTemplatesFolder").returns(path.resolve("/bundled"));
+      sandbox.stub(fs, "pathExistsSync").returns(true);
+      const readFileSyncStub = sandbox.stub(fs, "readFileSync");
+      readFileSyncStub.onFirstCall().throws(new Error("corrupted cache"));
+      readFileSyncStub.onSecondCall().returns(JSON.stringify(mockTemplates));
+      const removeSyncStub = sandbox.stub(fs, "removeSync");
+
+      const result = getAllTemplatesOnPlatform(Platform.VSCode);
+
+      assert.deepEqual(result, [mockTemplates[0], mockTemplates[2]]);
+      assert.isTrue(removeSyncStub.called);
+      assert.isTrue(
+        removeSyncStub.calledWithMatch(
+          sinon.match((p) => String(p).includes("template-version.txt"))
+        )
+      );
+      assert.isTrue(
+        removeSyncStub.calledWithMatch(
+          sinon.match((p) => String(p).includes("template-version-v4.txt"))
+        )
+      );
+    });
+
+    it("clears VS marker when VS cached metadata is corrupted", () => {
+      sandbox.stub(templateHelper, "useLocalTemplate").returns(false);
+      sandbox.stub(folder, "getTemplatesFolder").returns(path.resolve("/bundled"));
+      sandbox.stub(fs, "pathExistsSync").returns(true);
+      const readFileSyncStub = sandbox.stub(fs, "readFileSync");
+      readFileSyncStub.onFirstCall().throws(new Error("corrupted cache"));
+      readFileSyncStub.onSecondCall().returns(JSON.stringify(mockTemplates));
+      const removeSyncStub = sandbox.stub(fs, "removeSync");
+
+      const result = getAllTemplatesOnPlatform(Platform.VS);
+
+      assert.deepEqual(result, [mockTemplates[1]]);
+      assert.isTrue(
+        removeSyncStub.calledWithMatch(
+          sinon.match((p) =>
+            String(p).includes(path.join("vs-metadata", "template-vs-version.txt"))
+          )
+        )
+      );
+    });
+
     it("falls back to bundled path when useLocalTemplate is true", () => {
       vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(true);
       vi.spyOn(folder, "getTemplatesFolder").mockReturnValue(path.resolve("/bundled"));
