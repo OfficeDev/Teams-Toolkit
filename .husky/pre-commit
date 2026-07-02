@@ -3,5 +3,6 @@
 
 # ESLINT_FAST skips type-aware + whole-graph cyclic-import linting so staged-file
 # checks take ~1s instead of tens of seconds. The full checks still run in CI.
-# Default lerna concurrency (CPU count) parallelizes across changed packages.
-ESLINT_FAST=1 npx lerna run --stream precommit --since HEAD --exclude-dependents
+# pnpm's "[HEAD]" changed-package filter scopes precommit to packages with staged
+# changes and boots far faster than lerna's whole-graph analysis (~9s vs ~30s).
+ESLINT_FAST=1 pnpm --filter "[HEAD]" --workspace-concurrency=8 run precommit
