@@ -45,7 +45,7 @@
       "step_2c108401"
     ],
     "tags": [],
-    "updated_at": "2026-06-01T02:43:30.740856"
+    "updated_at": "2026-07-01T14:16:35.515000"
   },
   "steps": [
     {
@@ -309,7 +309,7 @@
       "parameters": {
         "button": "left",
         "x": 326,
-        "y": 259
+        "y": 300
       },
       "description": "Click the \"Office Add-in\" option in the \"New Project\" dropdown menu within the Microsoft 365 Agents Toolkit interface, as indicated by the red crosshair.",
       "content_refs": [],
@@ -317,11 +317,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:326:259:16:5:6c6a2b6ba941084b",
-        "dhash:326:259:96:5:42998d42859912ed",
-        "dhash:326:259:0:10:c4c8809092b17075"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_2b58b65d",
@@ -333,7 +329,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion \"Task pane\", \"Custom Function and Shortcut\", \"Create Declarative Agent with Office Add-in Action\" and \"Upgrade an Existing Office Add-in\" exist.",
+      "description": "@assertion \"Task pane\", \"Custom Function and Shortcut\" and \"Upgrade an Existing Office Add-in\" exist.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
