@@ -1,6 +1,6 @@
+import eslintConfigPrettier from "eslint-config-prettier";
 import importPlugin from "eslint-plugin-import-x";
 import noSecrets from "eslint-plugin-no-secrets";
-import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 
@@ -27,7 +27,6 @@ export default [
     },
   },
   ...tseslint.configs.recommended,
-  eslintPluginPrettierRecommended,
   importPlugin.flatConfigs.recommended,
   {
     ...importPlugin.flatConfigs.typescript,
@@ -41,12 +40,6 @@ export default [
       "no-secrets": noSecrets,
     },
     rules: {
-      quotes: [
-        "error",
-        "double",
-        { allowTemplateLiterals: true, avoidEscape: true },
-      ],
-      semi: ["error", "always"],
       "@typescript-eslint/no-require-imports": "off",
       "@typescript-eslint/no-empty-function": "off",
       "@typescript-eslint/no-explicit-any": "warn",
@@ -76,4 +69,8 @@ export default [
       ],
     },
   },
+  // Keep last: turns off all ESLint rules that conflict with Prettier so Prettier is
+  // the single source of truth for formatting (approach B: eslint = quality, prettier =
+  // formatting, run as separate tools).
+  eslintConfigPrettier,
 ];

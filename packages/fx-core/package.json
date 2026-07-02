@@ -178,7 +178,8 @@
   },
   "lint-staged": {
     "*.{js,jsx,css,ts,tsx}": [
-      "eslint --cache --fix --quiet"
+      "eslint --cache --fix --quiet",
+      "prettier --cache --write --ignore-unknown"
     ]
   }
 }
