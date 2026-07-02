@@ -517,11 +517,10 @@ describe("runCreateSelector (walk-create-selector)", () => {
     assert.deepEqual(ui.selectNames, ["projectType", "daTemplate"]);
   });
 
-  it("WCS-20: Office DA MetaOS upgrade resolves the v4 pipeline-only route", async () => {
+  it("WCS-20: Office Add-in no longer offers the DA MetaOS capability", async () => {
     const picks = {
       projectType: "office-meta-os-type",
-      officeAddinCapability: "office-da-meta-os",
-      daMetaOsCapability: "declarative-agent-meta-os-upgrade-project",
+      officeAddinCapability: "office-addin-config",
     };
     const ui = new ScriptedUI(picks);
 
@@ -531,15 +530,16 @@ describe("runCreateSelector (walk-create-selector)", () => {
 
     assert.isTrue(res.isOk());
     if (res.isOk()) {
-      assert.equal(res.value.templateId, "declarative-agent-meta-os-upgrade-project");
+      assert.equal(res.value.templateId, "office-addin-config");
       assert.equal(res.value.engine, "v4");
       assert.deepEqual(res.value.answers, picks);
     }
-    assert.deepEqual(ui.selectNames, [
-      "projectType",
-      "officeAddinCapability",
-      "daMetaOsCapability",
-    ]);
+    assert.deepEqual(ui.selectNames, ["projectType", "officeAddinCapability"]);
+    assert.notInclude(
+      offeredIds(ui.configByName.get("officeAddinCapability")),
+      "office-da-meta-os"
+    );
+    assert.isUndefined(ui.configByName.get("daMetaOsCapability"));
   });
 
   it("WCS-21: Office task pane resolves the v4 route", async () => {
