@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 32,
+    "total_steps": 33,
     "created_at": "2026-06-29T03:21:51.231595",
     "name": "DA_with_MCP Server(Oauth)",
     "description": {
@@ -42,6 +42,7 @@
       "step_0abfa1e9",
       "step_02fe6ba0",
       "step_ac7309cf",
+      "step_prov_dev01",
       "step_73df5e59",
       "step_10a9f134",
       "step_5fa52f1b",
@@ -58,7 +59,7 @@
       "step_5b6d6181"
     ],
     "tags": [],
-    "updated_at": "2026-07-02T12:03:02.000000"
+    "updated_at": "2026-07-02T12:48:10.000000"
   },
   "steps": [
     {
@@ -499,6 +500,32 @@
       "tags": [],
       "screenshot": "step_ac7309cf",
       "created_at": "2026-06-29T03:21:51.438542",
+      "plan_id": "plan_r_1024_023252"
+    },
+    {
+      "step_id": "step_prov_dev01",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 391,
+        "y": 69
+      },
+      "description": "Click the \"dev\" option in the \"Select an environment\" dropdown that appears after starting Microsoft 365 Agents: Provision, so provisioning can proceed to the OAuth registration client-id prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:391:69:16:5:0000000042004200",
+        "dhash:391:69:96:5:0000004200000000",
+        "dhash:391:69:0:10:d08822232303a421"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_prov_dev01",
+      "created_at": "2026-06-29T03:21:51.438600",
       "plan_id": "plan_r_1024_023252"
     },
     {
