@@ -55,7 +55,7 @@
       "step_5f013884"
     ],
     "tags": [],
-    "updated_at": "2026-07-02T06:35:00.000000"
+    "updated_at": "2026-07-02T06:45:00.000000"
   },
   "steps": [
     {
@@ -537,7 +537,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion Verify the 'Add an action to your declarative agent' quick pick lists these four options. Match each option by the bold label text at the START of its row; the grey description text after the label may be truncated or cut off in the UI, and truncated descriptions are acceptable. Consider the assertion satisfied if these option labels are visible: 'No Action', 'Add an Action', 'Add a Copilot connector', and 'Start with TypeSpec for Microsoft 365 Copilot'.",
+      "description": "@assertion Verify the 'Add an action to your declarative agent' quick pick lists four options. IMPORTANT: The bold label at the start of each row is often truncated, cut off, or hard to read; do NOT require the exact label text. Instead, match each option by EITHER its bold label OR its grey description text (whichever is legible). Consider the assertion satisfied if a quick pick with four rows is shown and these texts are visible (any combination of label or description is acceptable): row 1 = 'No Action' or 'Create declarative agent only'; row 2 = 'Add an Action' or 'Create a declarative agent with an action'; row 3 = 'Add a Copilot connector' or 'Create a declarative agent with a Copilot connector'; row 4 = 'Start with TypeSpec for Microsoft 365 Copilot'.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
