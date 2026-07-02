@@ -174,9 +174,14 @@ This operation does **not**:
   [`scaffolding.backlog.md`](../../../02-architecture/scaffolding.backlog.md) §1).
   It executes only the create-needed steps and binds the domain-typed-naming +
   manifest-wrapper principle so those steps land already-shaped for that library.
-- Register new steps, pipelines, action templates, or options providers. The
-  three whitelists are engine-owned and grow only via an fx-core PR + T2 test
-  (decision 2); this operation only **dispatches** within them.
+- Register new steps, pipelines, action templates, options providers, or
+  validators. These whitelists/registries are engine-owned extension points and
+  grow only via an fx-core PR + T2 test (ADR-0016 / ADR-0017); this operation
+  only **dispatches** within the pipeline and step registries it is given.
+- Encode capability-specific side effects. MCP/OpenAPI/Graph/Office behavior
+  must be a render template and/or a named pipeline step selected by
+  `pipeline.json`; this executor never adds hidden branches for a template id,
+  auth type, file path, or capability.
 
 ## Invariants
 
@@ -187,6 +192,11 @@ This operation does **not**:
   resolve within the engine whitelist; an unknown name reaching execution is a
   `SystemError`, because the reverse `minEngineVersion` gate (ADR-0015) already
   rejected a too-old engine with a user-fixable upgrade error.
+- **INV-2a — Business logic is enumerable.** The observable behavior of a
+  scaffold package is decomposable into template files, provider/validator
+  outputs that produced the answers, and `pipeline.steps`. The pipeline executor
+  contains no capability-specific branch that a template author or reviewer must
+  discover by reading TypeScript outside the registered step implementation.
 - **INV-3 — Manifest-wrapper routing.** A step that mutates a manifest file
   applies through the `packages/manifest` wrapper; direct
   `JSON.parse → mutate → stringify` is prohibited in step implementations

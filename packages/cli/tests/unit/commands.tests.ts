@@ -89,7 +89,9 @@ describe("CLI commands", () => {
     it("happy path for donet", async () => {
       vi.spyOn(activate, "getFxCore").mockReturnValue(new FxCore({} as any));
       vi.spyOn(FxCore.prototype, "createProject").mockResolvedValue(ok({ projectPath: "..." }));
-      vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(true);
+      vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation(
+        (flag) => flag.name === FeatureFlags.CLIDotNet.name
+      );
       const ctx: CLIContext = {
         command: { ...getCreateCommand(), fullName: "new" },
         optionValues: {

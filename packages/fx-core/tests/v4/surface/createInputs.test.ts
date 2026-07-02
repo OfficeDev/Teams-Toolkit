@@ -80,10 +80,16 @@ const RAG_CUSTOM_API: DeclarativeLocator = {
 };
 const OPENAPI_SPEC = path.resolve(__dirname, "../scenarios/fixtures/repairs-openapi.yaml");
 
+let cachedFloor: Buffer | undefined;
+
 function buildFloor(): Buffer {
+  if (cachedFloor !== undefined) {
+    return Buffer.from(cachedFloor);
+  }
   const zip = new AdmZip();
   zip.addLocalFolder(TEMPLATES_V4_DIR, "v4");
-  return zip.toBuffer();
+  cachedFloor = zip.toBuffer();
+  return Buffer.from(cachedFloor);
 }
 
 function buildLanguageFloor(): Buffer {
@@ -275,6 +281,14 @@ describe("runCreateInputs (collect-create-inputs)", () => {
     assert.notInclude(ui.selectNames, "mcpServerType");
     assert.deepEqual(ui.selectNames, ["authType"]);
     assert.deepEqual(ui.textNames, ["mcpServerUrl"]);
+    assert.equal(ui.lastInputConfig?.name, "mcpServerUrl");
+    assert.isFunction(ui.lastInputConfig?.validation);
+    const validation = ui.lastInputConfig?.validation;
+    if (validation === undefined) {
+      assert.fail("expected MCP server URL prompt validation");
+    }
+    assert.equal(await validation("not a uri"), "must be a valid URI");
+    assert.isUndefined(await validation("https://api.example.com/mcp"));
   });
 
   it("CCI-17: openapi.operations provider lists operations from the selected OpenAPI document", async () => {
@@ -437,6 +451,37 @@ describe("runCreateInputs (collect-create-inputs)", () => {
       assert.equal(res.value.language, "typescript");
     }
     assert.deepEqual(ui.promptNames, ["llmService", "openAIKey", "language", "folder", "app-name"]);
+  });
+
+  it("CCI-24: threads create floor app-name validation to the text prompt", async () => {
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "v4-app-name-"));
+    try {
+      fs.ensureDirSync(path.join(tempRoot, "TakenName"));
+      const ui = new ScriptedUserInteraction({
+        select: { llmService: "llm-service-openai", language: "typescript" },
+        text: { openAIKey: "fake-openai-key", "app-name": "MyAgent" },
+        folder: { folder: tempRoot },
+      });
+
+      const res = await runCreateInputs(buildFloor(), BASIC_CUSTOM_ENGINE_AGENT, {}, asUI(ui), {
+        flagReader: () => false,
+        inputs: { platform: Platform.VSCode },
+        surface: "vscode",
+      });
+
+      assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
+      assert.equal(ui.lastInputConfig?.name, "app-name");
+      assert.isFunction(ui.lastInputConfig?.validation);
+      const validation = ui.lastInputConfig?.validation;
+      if (validation === undefined) {
+        assert.fail("expected app-name prompt validation");
+      }
+      assert.include(await validation("a".repeat(31)), "30 characters");
+      assert.include(await validation("TakenName"), "Path exists");
+      assert.isUndefined(await validation("AvailableName"));
+    } finally {
+      removeSync(tempRoot);
+    }
   });
 
   it("uses create floor defaults without prompts in non-interactive mode", async () => {

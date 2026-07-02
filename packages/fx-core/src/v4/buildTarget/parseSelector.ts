@@ -37,9 +37,7 @@ function stringArray(value: unknown): string[] | undefined {
 
 /** Membership test for the closed dispatch-engine set. */
 function isDispatchEngine(value: unknown): value is DispatchEngine {
-  return (
-    value === "v4" || value === "v3" || value === "v3-core-method" || value === "surface-action"
-  );
+  return value === "v4" || value === "v3-core-method" || value === "surface-action";
 }
 
 /** Structural check for the authored `ExpressionNode` union. */
@@ -94,10 +92,6 @@ function parseRoute(raw: unknown): Result<SelectorRoute, FxError> {
   const templateId = stringField(raw, "templateId");
   if (templateId !== undefined) {
     route.templateId = templateId;
-  }
-  const v3Adapter = stringField(raw, "v3Adapter");
-  if (v3Adapter !== undefined) {
-    route.v3Adapter = v3Adapter;
   }
   const coreMethod = stringField(raw, "coreMethod");
   if (coreMethod !== undefined) {

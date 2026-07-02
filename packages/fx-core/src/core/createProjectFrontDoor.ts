@@ -42,10 +42,8 @@ import { QuestionNames } from "../question/questionNames";
  *   - `v4`             → run the template's own Q2 (`runCreateInputs`) over the
  *                        same floor, with the create floor appended to the same
  *                        walk, then `scaffoldV4` the authored package;
- *   - `v3`             → translate the Q1 picks onto the v3 `QuestionNames.*`
- *                        (`applyV3PreFill`, INV-5) and hand off to `createV3`,
- *                        whose `QuestionMW` then skips Q1 and asks only Q2;
  *   - `surface-action` → return the action's surface signal (no scaffold).
+ *   - `v3` / `v3-core-method` → unsupported when the v4 front door is enabled.
  * Flag off is a pure pass-through to the unmodified `createV3` (INV-1): the
  * selector is never walked, so v3 behavior is byte-identical.
  *
@@ -98,15 +96,15 @@ const NON_V4_INPUT_KEYS: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * The create front door's injected seams. `createV3` is required — it is both the
- * flag-off pass-through and the engine=v3 hand-off, and injecting it (rather than
- * importing `FxCore`) keeps this seam free of an import cycle. `scaffoldV4`,
- * `runInputs`, and `applyV3PreFill` are the flag-on hand-offs the
+ * The create front door's injected seams. `createV3` is required for the
+ * flag-off pass-through, and injecting it (rather than importing `FxCore`) keeps
+ * this seam free of an import cycle. `scaffoldV4`, `runInputs`, and the legacy
+ * `collectCreateFloor` seam are the flag-on hand-offs the
  * composition root (`FxCore`) supplies. The remaining members default to the real
  * wiring, so a production caller passes only the four handlers.
  */
 export interface CreateFrontDoorDeps {
-  /** The flag-off pass-through + the engine=v3 hand-off: the unmodified `FxCore.createProject`. */
+  /** The flag-off pass-through: the unmodified `FxCore.createProject`. */
   createV3: (inputs: Inputs) => Promise<Result<CreateProjectResult, FxError>>;
   /** The engine=v4 hand-off: build the scaffold context + run the authored declarative package. */
   scaffoldV4: (
@@ -118,8 +116,6 @@ export interface CreateFrontDoorDeps {
   ) => Promise<Result<CreateProjectResult, FxError>>;
   /** Legacy create-floor seam retained for existing composition wiring; v4 now appends floor questions inside `runInputs`. */
   collectCreateFloor: (inputs: Inputs, ui: UserInteraction) => Promise<Result<undefined, FxError>>;
-  /** The engine=v3 adapter: translate the Q1 dimension picks onto the v3 `QuestionNames.*` (INV-5). */
-  applyV3PreFill: (inputs: Inputs, target: BuildTarget) => void;
   /** The feature-flag reader (default: `featureFlagManager`-backed, so VS Code-settings flags apply). */
   flagReader?: (name: string) => boolean;
   /** The bundled-floor channel-zip reader (default: the shipped `templates.zip`; injectable for tests, INV-6). */
@@ -238,11 +234,19 @@ function dispatchSurfaceAction(target: BuildTarget): Result<CreateProjectResult,
   );
 }
 
+function unsupportedCreateTarget(target: BuildTarget): SystemError {
+  return new SystemError({
+    source: SOURCE,
+    name: "UnsupportedCreateEngine",
+    message: `The create front door does not dispatch the '${target.engine}' engine.`,
+  });
+}
+
 /**
  * Run the create front door for `inputs`, dispatching the resolved engine.
  *
- * @param inputs the v3 create inputs (carries `platform`; mutated in place by the
- *               engine=v3 pre-fill before the hand-off to `createV3`)
+ * @param inputs the create inputs (carries `platform`; mutated in place by the
+ *               v4 floor collection before the hand-off to `scaffoldV4`)
  * @param deps   the injected seams (see `CreateFrontDoorDeps`)
  * @returns the created project (drop-in for `FxCore.createProject`), or a
  *          `UserError` / `SystemError` (a surface cancellation or a route break)
@@ -268,8 +272,7 @@ export async function createProjectFrontDoor(
   // mode presets `template-name` from its `-c` capability — pins the BuildTarget by
   // id: the Q1 selector is a *router*, so re-walking it would re-prompt, or (non-
   // interactive) fail on a missing dimension, for a target already chosen. Resolve
-  // the engine from the template's route and reuse the v3 `traverse` short-circuit
-  // on `template-name` for the v3 hand-off. Otherwise walk Q1 (INV-2), threading
+  // the engine from the template's route. Otherwise walk Q1 (INV-2), threading
   // `interactive` so a non-interactive surface never silently prompts.
   const presetTemplateId = inputs[QuestionNames.TemplateName];
   let target: Result<BuildTarget, FxError>;
@@ -334,15 +337,6 @@ export async function createProjectFrontDoor(
   switch (target.value.engine) {
     case "surface-action":
       return dispatchSurfaceAction(target.value);
-    case "v3":
-      // INV-5: translate the Q1 picks onto the v3 inputs (a translation, not a
-      // re-ask), then hand off to createProject — its QuestionMW skips Q1. A preset
-      // `template-name` carries no Q1 picks and already short-circuits the v3
-      // traverse, so the pre-fill is skipped.
-      if (!presetTemplateId) {
-        deps.applyV3PreFill(inputs, target.value);
-      }
-      return deps.createV3(inputs);
     case "v4": {
       inputs[QuestionNames.TemplateName] = templateNameForV4(target.value);
       const runInputs = deps.runInputs ?? runCreateInputs;
@@ -387,14 +381,6 @@ export async function createProjectFrontDoor(
       return deps.scaffoldV4(inputs, target.value, answers.value, flagReader);
     }
     case "v3-core-method":
-      // The shipped create selector carries no v3-core-method route; fail loudly
-      // (no silent fallback) rather than mis-route through createProject.
-      return err(
-        new SystemError({
-          source: SOURCE,
-          name: "UnsupportedCreateEngine",
-          message: `The create front door does not dispatch the '${target.value.engine}' engine.`,
-        })
-      );
+      return err(unsupportedCreateTarget(target.value));
   }
 }

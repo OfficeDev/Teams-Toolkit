@@ -74,9 +74,6 @@ function makePort(opts: PortOpts): RouteResolverPort {
     v4Registry(templateId) {
       return (opts.v4 ?? []).includes(templateId);
     },
-    v3Registry(templateId) {
-      return (opts.v4 ?? []).includes(templateId);
-    },
     v3CoreMethodRegistry() {
       return false;
     },
@@ -105,9 +102,8 @@ describe("v4/buildTarget/parseSelector", () => {
       routes: [
         {
           when: "projectType=='copilot-agent-type'",
-          engine: "v3",
+          engine: "v4",
           templateId: "copilot-gpt-basic",
-          v3Adapter: "DeclarativeAgentGenerator",
           comment: "authoring note that must not survive",
         },
         {
@@ -134,9 +130,8 @@ describe("v4/buildTarget/parseSelector", () => {
     // routes: when + engine + only that engine's key — authoring `comment` is dropped.
     assert.deepStrictEqual(spec.routes[0], {
       when: "projectType=='copilot-agent-type'",
-      engine: "v3",
+      engine: "v4",
       templateId: "copilot-gpt-basic",
-      v3Adapter: "DeclarativeAgentGenerator",
     });
     assert.deepStrictEqual(spec.routes[1], {
       when: "projectType=='start-with-github-copilot'",
