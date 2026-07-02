@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 29,
+    "total_steps": 30,
     "created_at": "2026-01-06T02:01:16.119023",
     "name": "Feature: UI Layout & Create Project Questions",
     "description": {
@@ -23,6 +23,7 @@
       "plan_r_0624_024810",
       "step_34be0072",
       "step_ae8b01b3",
+      "step_lang_fix01",
       "step_90d68e68",
       "plan_r_0928_014459",
       "step_add65aa6",
@@ -107,6 +108,28 @@
       "tags": [],
       "screenshot": "step_ae8b01b3",
       "created_at": "2026-01-06T09:55:50.955950",
+      "plan_id": "plan_47e4bf4e"
+    },
+    {
+      "step_id": "step_lang_fix01",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 400,
+        "y": 78
+      },
+      "description": "Select the \"TypeScript\" programming language option (top, highlighted) in the \"Programming Language\" dropdown that now appears after choosing the \"Tab\" Teams capability. The extension added this question between the Teams Capability selection and the Workspace Folder prompt, so selecting a language is required to advance the wizard to the \"Workspace Folder\" dialog expected by the next step.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
+      "created_at": "2026-01-06T09:55:50.960000",
       "plan_id": "plan_47e4bf4e"
     },
     {
