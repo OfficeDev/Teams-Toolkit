@@ -160,6 +160,7 @@
     "ts-morph": "^19.0.0",
     "ts-node": "^10.9.2",
     "tslib": "^2.3.1",
+    "tsx": "^4.20.6",
     "typescript": "~5.9.0",
     "typescript-eslint": "^8.56.0",
     "vitest": "^4.1.8",
