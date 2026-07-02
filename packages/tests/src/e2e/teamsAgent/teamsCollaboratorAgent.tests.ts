@@ -88,7 +88,7 @@ describe("Teams Collaborator Agent", function () {
         testFolder,
         Capability.TeamsCollaboratorAgent,
         process.env,
-        options
+        options,
       );
 
       // Validate Scaffold
@@ -126,7 +126,7 @@ describe("Teams Collaborator Agent", function () {
       assert.equal(bot?.botId, context.BOT_ID);
       assert.equal(
         bot?.messagingEndpoint,
-        "https://test.ngrok.io/api/messages"
+        "https://test.ngrok.io/api/messages",
       );
 
       // Local Debug (Deploy)
@@ -139,14 +139,14 @@ describe("Teams Collaborator Agent", function () {
       // validate .localConfigs
       assert.isTrue(
         await fs.pathExists(path.join(projectPath, ".localConfigs")),
-        ".localConfigs should exist"
+        ".localConfigs should exist",
       );
 
       // Remote Provision
       const result = await createResourceGroup(resourceGroupName, "westus");
       assert.isTrue(
         result,
-        `failed to create resource group: ${resourceGroupName}`
+        `failed to create resource group: ${resourceGroupName}`,
       );
 
       await CliHelper.provisionProject(projectPath, "", "dev", {
@@ -166,7 +166,7 @@ describe("Teams Collaborator Agent", function () {
         context[EnvConstants.BOT_AZURE_APP_SERVICE_RESOURCE_ID];
       assert.exists(
         appServiceResourceId,
-        "Azure App Service resource ID should exist"
+        "Azure App Service resource ID should exist",
       );
 
       const tokenProvider = MockAzureAccountProvider;
@@ -178,23 +178,23 @@ describe("Teams Collaborator Agent", function () {
         subscription,
         getResourceGroupNameFromResourceId(appServiceResourceId),
         getSiteNameFromResourceId(appServiceResourceId),
-        token as string
+        token as string,
       );
       assert.exists(response, "Web app settings should exist");
       assert.equal(
         response["WEBSITE_NODE_DEFAULT_VERSION"],
-        "~20",
-        "Node version should be 20"
+        "~22",
+        "Node version should be 22",
       );
       assert.equal(
         response["WEBSITE_RUN_FROM_PACKAGE"],
         "1",
-        "Run from package should be 1"
+        "Run from package should be 1",
       );
       assert.equal(
         response["RUNNING_ON_AZURE"],
         "1",
-        "Running on azure should be 1"
+        "Running on azure should be 1",
       );
 
       // Remote Deploy
@@ -203,6 +203,6 @@ describe("Teams Collaborator Agent", function () {
       // Validate Deploy
       context = await readContextMultiEnvV3(projectPath, envName);
       assert.exists(context, "env file should exist");
-    }
+    },
   );
 });

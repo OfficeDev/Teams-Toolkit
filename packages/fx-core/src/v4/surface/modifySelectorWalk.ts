@@ -14,21 +14,30 @@ import {
   RouteQuestion,
   RouteResolverPort,
   resolveBuildTarget,
+  v4RouteRegistryFromSelector,
 } from "../buildTarget/resolveBuildTarget";
-import { openModifySelector, openModifySelectorPresentation } from "../distribution/createSelector";
+import {
+  openModifySelector,
+  openModifySelectorPresentation,
+  openSelectorFromJsonBytes,
+  openSelectorPresentationFromJsonBytes,
+} from "../distribution/createSelector";
 import { openDeclarativePackage } from "../distribution/declarativePackage";
 import { ExpressionRuntimePort, Scope, evaluateExpression } from "../expression/evaluateExpression";
+import { readBooleanFeatureFlag } from "../../common/featureFlags";
 
 const SOURCE = "Scaffold";
 
 export interface ModifySelectorDeps {
   flagReader?: (name: string) => boolean;
+  selectorBytesKind?: "zip" | "json";
+  v4Registry?: (templateId: string) => boolean;
   prefilled?: Record<string, string>;
   interactive?: boolean;
 }
 
 function envFlagReader(name: string): boolean {
-  return process.env[name] === "true";
+  return readBooleanFeatureFlag(name);
 }
 
 function toFxError(e: unknown): FxError {
@@ -44,7 +53,8 @@ function buildPort(
   presentation: SelectorPresentation,
   ui: UserInteraction,
   surface: string,
-  flagReader: (name: string) => boolean
+  flagReader: (name: string) => boolean,
+  v4Registry: ((templateId: string) => boolean) | undefined
 ): RouteResolverPort {
   const exprPort: ExpressionRuntimePort = { functions: () => undefined, flags: flagReader };
   const byName = new Map<string, PresentationQuestion>(
@@ -104,6 +114,9 @@ function buildPort(
     prompt,
     featureFlag: flagReader,
     v4Registry(templateId: string): boolean {
+      if (v4Registry !== undefined) {
+        return v4Registry(templateId);
+      }
       return openDeclarativePackage(floorBytes, { kind: "modify", templateId }).isOk();
     },
     v3Registry(): boolean {
@@ -122,17 +135,32 @@ export async function runModifySelector(
   deps: ModifySelectorDeps = {}
 ): Promise<Result<BuildTarget, FxError>> {
   const flagReader = deps.flagReader ?? envFlagReader;
+  const selectorBytesKind = deps.selectorBytesKind ?? "zip";
   const prefilled = deps.prefilled ?? {};
   const interactive = deps.interactive ?? true;
-  const spec = openModifySelector(floorBytes);
+  const spec =
+    selectorBytesKind === "json"
+      ? openSelectorFromJsonBytes(floorBytes, "modify")
+      : openModifySelector(floorBytes);
   if (spec.isErr()) {
     return err(spec.error);
   }
-  const presentation = openModifySelectorPresentation(floorBytes);
+  const presentation =
+    selectorBytesKind === "json"
+      ? openSelectorPresentationFromJsonBytes(floorBytes, "modify")
+      : openModifySelectorPresentation(floorBytes);
   if (presentation.isErr()) {
     return err(presentation.error);
   }
-  const port = buildPort(floorBytes, presentation.value, ui, surface, flagReader);
+  const port = buildPort(
+    floorBytes,
+    presentation.value,
+    ui,
+    surface,
+    flagReader,
+    deps.v4Registry ??
+      (selectorBytesKind === "json" ? v4RouteRegistryFromSelector(spec.value) : undefined)
+  );
   try {
     return await resolveBuildTarget(spec.value, prefilled, interactive, port);
   } catch (e) {

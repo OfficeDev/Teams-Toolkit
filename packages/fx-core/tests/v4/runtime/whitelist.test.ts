@@ -3,6 +3,7 @@
 
 import { evaluateExpression } from "../../../src/v4/expression/evaluateExpression";
 import { assert } from "vitest";
+import { FeatureFlagName } from "../../../src/common/featureFlags";
 import {
   createExpressionPort,
   deriveMcpServerName,
@@ -85,6 +86,33 @@ describe("v4 runtime — whitelist functions + ExpressionRuntimePort", () => {
       const port = createExpressionPort((name) => name === "TEAMSFX_MCP_FOR_DA_DT");
       assert.isTrue(port.flags("TEAMSFX_MCP_FOR_DA_DT"));
       assert.isFalse(port.flags("TEAMSFX_MCP_FOR_DA_DCR"));
+    });
+
+    it("uses the shared fx-core feature flag semantics by default", () => {
+      const originalV4 = process.env[FeatureFlagName.V4Enabled];
+      const originalDcr = process.env[FeatureFlagName.MCPForDADCR];
+      try {
+        const port = createExpressionPort();
+        process.env[FeatureFlagName.V4Enabled] = "1";
+        assert.isTrue(port.flags(FeatureFlagName.V4Enabled));
+
+        process.env[FeatureFlagName.V4Enabled] = "TRUE";
+        assert.isTrue(port.flags(FeatureFlagName.V4Enabled));
+
+        delete process.env[FeatureFlagName.MCPForDADCR];
+        assert.isTrue(port.flags(FeatureFlagName.MCPForDADCR));
+      } finally {
+        if (originalV4 === undefined) {
+          delete process.env[FeatureFlagName.V4Enabled];
+        } else {
+          process.env[FeatureFlagName.V4Enabled] = originalV4;
+        }
+        if (originalDcr === undefined) {
+          delete process.env[FeatureFlagName.MCPForDADCR];
+        } else {
+          process.env[FeatureFlagName.MCPForDADCR] = originalDcr;
+        }
+      }
     });
 
     it("SCN-CREATE-MCP-02: the evaluator resolves `mcpNamespace(mcpServerUrl)` through the port", () => {

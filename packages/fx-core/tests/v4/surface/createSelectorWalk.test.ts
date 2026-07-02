@@ -11,6 +11,7 @@ import {
   UserInteraction,
 } from "@microsoft/teamsfx-api";
 import AdmZip from "adm-zip";
+import fs from "fs-extra";
 import path from "path";
 import { Result, err, ok } from "neverthrow";
 import { openCreateSelectorPresentation } from "../../../src/v4/distribution/createSelector";
@@ -117,6 +118,27 @@ const MCP_DA_PICKS: Record<string, string> = {
 const LANGUAGE_QUESTION = ["lang", "uage"].join("");
 
 describe("runCreateSelector (walk-create-selector)", () => {
+  it("WCS-00: selector-only Q1 can resolve from the selector's own v4 routes", async () => {
+    const selectorBytes = fs.readFileSync(path.join(TEMPLATES_V4_DIR, "create", "selector.json"));
+    const picks = {
+      projectType: "custom-engine-agent-type",
+      customEngineAgent: "weather-agent",
+    };
+    const ui = new ScriptedUI(picks);
+
+    const res = await runCreateSelector(selectorBytes, asUI(ui), "vscode", {
+      flagReader: () => false,
+      selectorBytesKind: "json",
+    });
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.equal(res.value.templateId, "weather-agent");
+      assert.equal(res.value.engine, "v4");
+      assert.deepEqual(res.value.answers, picks);
+    }
+  });
+
   it("WCS-01: copilot→add-action→mcp with DT on resolves the v4 da/mcp-server front door", async () => {
     const ui = new ScriptedUI(MCP_DA_PICKS);
 
@@ -134,7 +156,21 @@ describe("runCreateSelector (walk-create-selector)", () => {
     assert.deepEqual(ui.selectNames, ["projectType", "daTemplate", "actionSource"]);
   });
 
-  it("WCS-02: the same picks with DT off resolve the v4 static MCP route", async () => {
+  it("WCS-02: CLI DA+MCP with DT off resolves the v4 static MCP route", async () => {
+    const ui = new ScriptedUI(MCP_DA_PICKS);
+
+    const res = await runCreateSelector(buildFloor(), asUI(ui), "cli", {
+      flagReader: () => false,
+    });
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.equal(res.value.templateId, "da/mcp-server-static");
+      assert.equal(res.value.engine, "v4");
+    }
+  });
+
+  it("WCS-02b: VS Code DA+MCP with DT off resolves the v4 static MCP route", async () => {
     const ui = new ScriptedUI(MCP_DA_PICKS);
 
     const res = await runCreateSelector(buildFloor(), asUI(ui), "vscode", {
@@ -148,7 +184,7 @@ describe("runCreateSelector (walk-create-selector)", () => {
     }
   });
 
-  it("WCS-02b: custom-engine→basic-custom-engine-agent resolves the v4 route", async () => {
+  it("WCS-02c: custom-engine→basic-custom-engine-agent resolves the v4 route", async () => {
     const picks = {
       projectType: "custom-engine-agent-type",
       customEngineAgent: "basic-custom-engine-agent",
@@ -243,6 +279,27 @@ describe("runCreateSelector (walk-create-selector)", () => {
     assert.isTrue(res.isOk());
     if (res.isOk()) {
       assert.equal(res.value.templateId, "custom-copilot-rag-azure-ai-search");
+      assert.equal(res.value.engine, "v4");
+      assert.deepEqual(res.value.answers, picks);
+    }
+    assert.deepEqual(ui.selectNames, ["projectType", "teamsApp", "customCopilotRagType"]);
+  });
+
+  it("WCS-02g: teams→rag→custom-copilot-rag-custom-api resolves the v4 route", async () => {
+    const picks = {
+      projectType: "teams-agent-and-app-type",
+      teamsApp: "rag",
+      customCopilotRagType: "custom-copilot-rag-custom-api",
+    };
+    const ui = new ScriptedUI(picks);
+
+    const res = await runCreateSelector(buildFloor(), asUI(ui), "vscode", {
+      flagReader: () => false,
+    });
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.equal(res.value.templateId, "custom-copilot-rag-custom-api");
       assert.equal(res.value.engine, "v4");
       assert.deepEqual(res.value.answers, picks);
     }
@@ -379,6 +436,19 @@ describe("runCreateSelector (walk-create-selector)", () => {
     assert.notInclude(offered, "skill");
   });
 
+  it("WCS-22: DA add-action no longer offers the Office Add-in Action source", async () => {
+    const ui = new ScriptedUI(MCP_DA_PICKS);
+
+    const res = await runCreateSelector(buildFloor(), asUI(ui), "vscode", {
+      flagReader: flagsOn("TEAMSFX_DA_METAOS", "TEAMSFX_MCP_FOR_DA_DT"),
+    });
+
+    assert.isTrue(res.isOk());
+    const offered = offeredIds(ui.configByName.get("actionSource"));
+    assert.include(offered, "mcp");
+    assert.notInclude(offered, "da-meta-os");
+  });
+
   it("WCS-13: copilot\u2192skill with TEAMSFX_AGENT_SKILLS on resolves the v4 route", async () => {
     const picks = { projectType: "copilot-agent-type", daTemplate: "skill" };
     const ui = new ScriptedUI(picks);
@@ -484,6 +554,24 @@ describe("runCreateSelector (walk-create-selector)", () => {
     assert.isTrue(res.isOk());
     if (res.isOk()) {
       assert.equal(res.value.templateId, "office-addin-excel-cfshortcut");
+      assert.equal(res.value.engine, "v4");
+      assert.deepEqual(res.value.answers, picks);
+    }
+    assert.deepEqual(ui.selectNames, ["projectType", "officeAddinCapability"]);
+  });
+
+  it("WCS-22b: Office Add-in common configuration resolves the v4 route", async () => {
+    const picks = {
+      projectType: "office-meta-os-type",
+      officeAddinCapability: "office-addin-config",
+    };
+    const ui = new ScriptedUI(picks);
+
+    const res = await runCreateSelector(buildFloor(), asUI(ui), "vscode");
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.equal(res.value.templateId, "office-addin-config");
       assert.equal(res.value.engine, "v4");
       assert.deepEqual(res.value.answers, picks);
     }

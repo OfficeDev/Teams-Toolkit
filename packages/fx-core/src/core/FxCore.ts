@@ -192,6 +192,7 @@ import { LocalCrypto } from "./crypto";
 import { environmentNameManager } from "./environmentName";
 import { FxCoreOpenPluginPart } from "./FxCore.openPlugin";
 import { generateConfigFiles } from "./generateConfigFiles";
+import { resolveV4TemplateArtifactSnapshot } from "./v4ArtifactSnapshot";
 import { ConcurrentLockerMW } from "./middleware/concurrentLocker";
 import { ContextInjectorMW } from "./middleware/contextInjector";
 import { ErrorHandlerMW } from "./middleware/errorHandler";
@@ -277,6 +278,7 @@ export class FxCore extends FxCoreOpenPluginPart {
       scaffoldV4,
       collectCreateFloor,
       applyV3PreFill,
+      resolveArtifactSnapshot: resolveV4TemplateArtifactSnapshot,
     });
   }
 
@@ -3103,15 +3105,9 @@ export class FxCore extends FxCoreOpenPluginPart {
 
       let latestVersion: string;
       if (useV4Channel) {
-        // Transitional: in the v4 channel the metadata rides the SAME single
-        // decision point as the template package —
-        // `resolveTemplateSource((v4.range, v4.bundled, port))`. The `bundled`
-        // field is CD-baked (= !goproduct), so goproduct builds (stable AND
-        // prerelease) resolve to an online/cache source while non-goproduct or
-        // daily builds resolve to the bundled floor. metadata.zip lives in the
-        // same `templates-v4@<ver>` release as the resolved package, so the
-        // resolved version names the release to pull metadata from. Remove once
-        // selector.json drives metadata distribution.
+        // V4 publishes templates-metadata.zip as a staged artifact. Resolve it
+        // through the shared artifact cache and leave the legacy ~/.fx metadata
+        // directory untouched so old metadata readers keep using bundled v4 data.
         const resolved = await resolveV4MetadataSource();
         if (resolved.isErr()) {
           // Malformed tag list / digest mismatch are hard errors (no silent
@@ -3119,13 +3115,7 @@ export class FxCore extends FxCoreOpenPluginPart {
           // resolved to a bundled-fallback origin handled below.
           return err(resolved.error);
         }
-        const source = resolved.value;
-        if (source.origin === "bundled" || source.origin === "bundled-fallback") {
-          // Bundled build or unreachable channel: read the bundled metadata
-          // (the readers fall back via `useBundledMetadataForV4`). No download.
-          return ok(undefined);
-        }
-        latestVersion = source.version;
+        return ok(undefined);
       } else {
         // v3: prerelease builds use the mutable rolling `0.0.0-rc` tag; stable
         // builds resolve the latest published templates version.

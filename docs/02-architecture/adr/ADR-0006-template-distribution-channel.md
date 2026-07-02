@@ -138,9 +138,9 @@ exactly two things — `range` and `bundled` — through one pure function.
    prerelease versions from a stable `range` unless the range itself names
    the segment (`>=6.11.0-beta`). Lane isolation is therefore free from
    SemVer. "alpha" stops being a third lane — it was only ever
-   `bundled=true`, now expressed directly. Because selector, descriptor,
-   and content also travel in one artifact resolved at one point, content
-   and metadata can no longer disagree.
+  `bundled=true`, now expressed directly. Because selector, descriptor,
+  and content are pinned by one resolved v4 artifact snapshot, content and
+  metadata can no longer disagree.
 
 3. **Digest-addressed pinning replaces both `0.0.0-rc` and a fixed version
    (fixes deficiency 2).** The mutable hand-written `0.0.0-rc` tag is
@@ -148,10 +148,12 @@ exactly two things — `range` and `bundled` — through one pure function.
    (e.g. `templates@6.11.0-rc.0`) in independent mode. Rather than pinning
    one concrete version (permanently reproducible, but templates could
    never update independently of the engine), the build pins the `range`
-   and records the *resolved* `{version, digest}` on the scaffold outcome
-   and telemetry. The on-disk cache is keyed by `digest`
-   (`~/.fx/templates-cache/templates@<version>/`), strengthening the
-   immutable tag against a re-push. This yields **auditable strong
+  and records the resolved version plus digest evidence on the scaffold outcome
+  and telemetry. In the final v4 channel, digest pinning is per staged
+  artifact (`create-selector`, `modify-selector`, `metadata`, `templates`)
+  rather than one top-level package digest. The on-disk cache is keyed by
+  version and artifact kind under `~/.fx/templates-cache/templates-v4@<version>/`,
+  strengthening the immutable tag against a re-push. This yields **auditable strong
    reproducibility** — a recorded digest always re-fetches the same bytes
    — without sacrificing post-ship template updates, restoring
    [`../scaffolding.md`](../scaffolding.md) §3.4 across the rc window.
@@ -247,121 +249,45 @@ final removal of `getTemplateVSCUrl` / `getTemplateVSUrl` /
   non-obvious constraint is that `rc` must also set `goproduct=true`, since
   the upload switch lives on `goproduct`, not on `preid`.
 - Decomposes into the cluster C fix tracked alongside the v4 proposal
-  [§5.2 distribution seam](../scaffolding.create.proposal.md); the seam
-  contract is unchanged — the engine still assumes `(range, bundled)`
-  resolves to one `(source, version, digest)` and reads only
-  `minEngineVersion` plus the `scaffold-v4-template` telemetry properties
-  across it.
+  [§5.2 distribution seam](../scaffolding.create.proposal.md). The legacy
+  full-package seam still resolves `(source, version, digest)`; the final v4
+  seam resolves a `TemplateArtifactSnapshot` that pins one version and one
+  artifact digest set across Q1, Q2, and scaffold.
 
-## Transitional follow-up — selector/content consistency during the metadata-cache phase
+## Final v4 staged artifact follow-up
 
-*Added 2026-06-12. Scope: the window AFTER the two-field
-`resolveTemplateSource((range, bundled, port))` seam lands but BEFORE
-`selector.json` drives metadata distribution. Deleted once metadata +
-content travel in the single resolved artifact (Decision §2).*
+*Added 2026-07-01. Replaces the earlier metadata-cache transition. There is no
+online v4 channel using the older draft shape, so the first published v4 channel
+uses this final protocol directly.*
 
-### The gap
+The v4 release unit `templates-v4@<version>` publishes four assets:
+`create-selector.json`, `modify-selector.json`, `templates-metadata.zip`, and
+`templates.zip`. The separate v4 tag-list asset is NDJSON with one entry per
+line in the shape `{ "version": "6.11.0", "artifacts": { ... } }`. Each
+artifact ref carries its own file name and `sha256:` digest; there is no
+top-level `digest`.
 
-The Decision unifies **content** behind one resolution point, but the
-**selector / metadata / NLS** that the question phase reads is, in the v4
-channel, still distributed through a *second* path. A successful background
-[`fetchOnlineTemplateMetadata`](../../../packages/fx-core/src/core/FxCore.ts)
-writes `~/.fx/metadata`, `~/.fx/ui`, and `~/.fx/template-version-v4.txt`,
-and the readers gate on
-[`useBundledMetadataForV4()`](../../../packages/fx-core/src/component/generator/templateHelper.ts)
-(version-file absent → bundled floor; present → cache). Content, by
-contrast, resolves at scaffold time through
-[`resolveChannelPackageBytes`](../../../packages/fx-core/src/component/generator/v4TemplateBridge.ts)
-→ `resolveTemplateSource({ bundled: false })`, which prefers the newest
-satisfying *online* version.
+### Staged invariants
 
-Two gates, two on-disk locations, evaluated at two different moments inside
-one `createProject` invocation (the selector read runs in the
-`QuestionMW("createProject")` hook; content resolves later in the method
-body). This transitionally re-opens the **cluster C split-brain**
-([`../scaffolding.current-state.md` §C](../scaffolding.current-state.md))
-that the Decision set out to close: during the first-run window — before
-the background warm has written the version file — the question phase
-builds options from the **bundled floor** version *X*, while scaffold
-resolves and downloads the newest **online** version *Y*. If *X ≠ Y* and
-their template sets differ, the `templateId` chosen from *X* may not exist
-in *Y* (or *Y*'s new templates never appear in the questions).
+- **INV-S1 — resolve once per invocation.** A create or modify invocation
+  resolves one `TemplateArtifactSnapshot` and pins it for the whole run. Q1,
+  Q2, and scaffold never mix artifact versions.
+- **INV-S2 — Q1 uses selector assets.** Interactive create reads
+  `create-selector.json`; interactive modify reads `modify-selector.json`.
+  The selector routes are sufficient to identify v4 template ids without
+  opening `templates.zip`.
+- **INV-S3 — Q2 uses metadata assets.** Input collection reads
+  `templates-metadata.zip`, which contains selectors, descriptors, questions,
+  and pipelines, but no `content/**`.
+- **INV-S4 — scaffold uses full templates.** The full `templates.zip` asset is
+  required only when rendering content, or immediately for non-interactive
+  template-id resolution.
+- **INV-S5 — cache retention is per artifact kind and minor line.** For each
+  artifact kind and each `major.minor`, keep only the highest cached patch.
+  A new `6.11.x` cache entry does not evict `6.10.x`.
 
-That same first-run window is where the cost lands. In the v4 channel
-`fetchOnlineTemplateMetadata` now resolves through
-`resolveTemplateSource(bundled=false)`, which downloads the **full
-`templates.zip`** (not just the small `metadata.zip` v3 fetched). It runs
-fire-and-forget (`void runBackgroundAsyncTasks` /
-`void …fetchOnlineTemplateMetadata()`), so it never blocks the first
-question — Q1 is already pure local I/O — but it is the heavy
-"first download is slow" work, and it overlaps exactly the inconsistency
-window.
-
-### Decision (transitional invariants)
-
-- **INV-T1 — resolve once per invocation.** A single create / modify
-  invocation resolves the template source exactly once and pins it for the
-  whole invocation; the selector/metadata read and the content read use
-  that one snapshot. The per-invocation gate never flips mid-run, so a
-  concurrent background warm writing the version file cannot tear the
-  selector away from the content.
-- **INV-T2 — prefer-local, no network on the create/modify path.** The
-  per-invocation resolution is local-only: `max(cache, floor)` consistent
-  with the metadata gate, computed without a network round-trip. The
-  online channel resolve + download is confined to the background
-  cache-warmer (`fetchOnlineTemplateMetadata`), whose job is to prepare the
-  cache for the *next* invocation, not to source the current one.
-- **Consequence — one-invocation-deferred adoption.** A newly published
-  `templates-v4@<version>` is adopted on the first invocation *after* the
-  background warm has populated the cache and written the version file.
-  This trades "always the absolute latest" for determinism, an instant Q1,
-  and elimination of the split-brain — consistent with
-  [`../scaffolding.md`](../scaffolding.md) §3.1 (deterministic) and §3.2
-  (offline-by-default); the bundled floor stays the floor. The resolved
-  `{origin, version, digest}` is still recorded on telemetry, so a
-  cache-vs-floor outcome remains observable, never silent (Decision §4).
-
-These invariants are **transitional**. When `selector.json` drives metadata
-distribution, selector + descriptor + content again travel in the single
-resolved artifact (Decision §2) and INV-T1 holds structurally — "one
-artifact" *is* the snapshot — so this section is deleted with the rest of
-the metadata-cache scaffolding.
-
-### Minimal change points (for review — not yet implemented)
-
-1. **Local session resolver (new, no network).** A pure helper returning
-   the single `TemplateSource` for this invocation by replaying the
-   metadata gate locally: `TEMPLATE_VERSION=local` / `useLocalTemplate()` →
-   floor; v4 version-file absent → floor (bundled); else → the cached
-   `templates-v4@<version>` named by `template-version-v4.txt` (digest from
-   the channel cache). Natural home: the v4 distribution layer, beside
-   [`resolveV4MetadataSource`](../../../packages/fx-core/src/component/generator/v4MetadataSource.ts).
-2. **Snapshot + carry (key seam).** Capture (1) once per invocation and
-   thread it so both phases read it; it must be set no later than the first
-   selector/metadata read. *Open question for review — placement:* (a) as
-   the first step of `QuestionMW` for the create/modify stages; (b) a
-   dedicated middleware ahead of `QuestionMW`; (c) on `createContext()` if
-   the readers can reach the context. Carried on `inputs`/`context` as a
-   reserved internal key, not a question.
-3. **Selector/metadata readers honor the snapshot.**
-   `useBundledMetadataForV4()` /
-   [`getTemplateMetadataConfig()`](../../../packages/fx-core/src/component/generator/templates/metadata/index.ts)
-   / [`loadUiNode()`](../../../packages/fx-core/src/question/scaffold/vsc/rootNode.ts)
-   choose bundled-vs-cache to **match** the snapshot rather than each
-   re-reading the version file independently. This is the most invasive
-   point — the static readers currently take no `inputs`/context, so the
-   snapshot (or its `origin` + `version`) must be passed down.
-4. **Content reader honors the snapshot.** `resolveChannelPackageBytes`
-   uses the snapshot source (`loadResolvedPackage(snapshot, port)` from
-   cache/floor by version + digest) instead of calling
-   `resolveTemplateSource({ bundled: false })`. Falls back to current
-   behavior when no snapshot is present (non-create callers).
-5. **Background fetch reframed, role unchanged.**
-   `fetchOnlineTemplateMetadata` / `resolveV4MetadataSource` remain the
-   *only* online-resolving path; they download + verify + cache + write the
-   version file as the cache-warmer for the next invocation, no longer the
-   source for the current run.
-
-Net effect: Q1 stays instant (local), the create/modify path never blocks
-on the network, content and selector are guaranteed to agree, and the heavy
-`templates.zip` download is purely a background cache-warmer.
+`fetchOnlineTemplateMetadata` no longer downloads the legacy v3-style
+`metadata.zip` for v4. When v4 is enabled, it warms `templates-metadata.zip`
+through the same staged artifact resolver and leaves the legacy `~/.fx`
+metadata directory untouched; legacy metadata readers continue to use bundled
+v4 data while the create/modify front doors use staged artifacts directly.

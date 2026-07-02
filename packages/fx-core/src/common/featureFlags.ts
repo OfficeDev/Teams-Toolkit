@@ -121,7 +121,7 @@ export class FeatureFlags {
   };
   static readonly V4Enabled = {
     name: FeatureFlagName.V4Enabled,
-    defaultValue: "false",
+    defaultValue: "true",
   };
   static readonly MCPForDADT = {
     name: FeatureFlagName.MCPForDADT,
@@ -148,6 +148,12 @@ export class FeatureFlagManager {
       featureFlag.defaultValue === "true" || featureFlag.defaultValue === "1"
     );
   }
+  getBooleanValueByName(featureFlagName: string, defaultValue = false): boolean {
+    const featureFlag = this.list().find((flag) => flag.name === featureFlagName);
+    return this.getBooleanValue(
+      featureFlag ?? { name: featureFlagName, defaultValue: defaultValue ? "true" : "false" }
+    );
+  }
   setBooleanValue(featureFlag: FeatureFlag, value: boolean): void {
     process.env[featureFlag.name] = value ? "true" : "false";
   }
@@ -165,3 +171,7 @@ export class FeatureFlagManager {
 }
 
 export const featureFlagManager = new FeatureFlagManager();
+
+export function readBooleanFeatureFlag(featureFlagName: string, defaultValue = false): boolean {
+  return featureFlagManager.getBooleanValueByName(featureFlagName, defaultValue);
+}

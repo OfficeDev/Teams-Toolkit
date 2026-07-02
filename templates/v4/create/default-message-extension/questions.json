@@ -1,4 +1,4 @@
 {
-  "$schema": "../../schema/questions.schema.json",
+  "$schema": "../../schema/question.schema.json",
   "questions": []
 }

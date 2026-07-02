@@ -9,7 +9,11 @@
 
   "optionsSchema": {
     "type": "object",
-    "properties": {},
+    "properties": {
+      "azureOpenAIKey": { "type": "string" },
+      "azureOpenAIEndpoint": { "type": "string" },
+      "azureOpenAIDeploymentName": { "type": "string" }
+    },
     "additionalProperties": false
   },
 
@@ -22,10 +26,10 @@
     { "var": "useAzureOpenAI", "const": "true" },
     { "var": "openAIKey", "const": "" },
     { "var": "originalOpenAIKey", "const": "" },
-    { "var": "azureOpenAIKey", "const": "" },
-    { "var": "originalAzureOpenAIKey", "const": "" },
-    { "var": "azureOpenAIEndpoint", "const": "" },
-    { "var": "azureOpenAIDeploymentName", "const": "" },
+    { "var": "azureOpenAIKey", "from": "azureOpenAIKey" },
+    { "var": "originalAzureOpenAIKey", "from": "azureOpenAIKey" },
+    { "var": "azureOpenAIEndpoint", "from": "azureOpenAIEndpoint" },
+    { "var": "azureOpenAIDeploymentName", "from": "azureOpenAIDeploymentName" },
     { "var": "openAIModel", "const": "" }
   ]
 }

@@ -39,7 +39,10 @@ import { templateDefaultOnActionError } from "../component/generator/generator";
 import { GeneratorContext } from "../component/generator/generatorAction";
 import * as openApiSpecHelperModule from "../component/generator/openApiSpec/helper";
 import { getParserOptions } from "../component/generator/openApiSpec/helper";
-import { scaffoldDeclarativeFromV4Channel } from "../component/generator/v4TemplateBridge";
+import {
+  ResolvedV4ChannelPackage,
+  scaffoldDeclarativeFromV4Channel,
+} from "../component/generator/v4TemplateBridge";
 import { QuestionMW } from "../component/middleware/questionMW";
 import { outputScaffoldingWarningMessage } from "../component/utils/common";
 import {
@@ -56,6 +59,7 @@ import type { Answers, BuildTarget } from "../v4";
 import { ConcurrentLockerMW } from "./middleware/concurrentLocker";
 import { ErrorHandlerMW } from "./middleware/errorHandler";
 import { modifyProjectFrontDoor } from "./modifyProjectFrontDoor";
+import { resolveV4TemplateArtifactSnapshot } from "./v4ArtifactSnapshot";
 
 export interface ScaffoldAddMcpServerFromV4Options {
   templateId: string;
@@ -65,6 +69,7 @@ export interface ScaffoldAddMcpServerFromV4Options {
   appName: string;
   mcpServerUrl: string;
   authType: string;
+  resolvedPackage?: ResolvedV4ChannelPackage;
 }
 
 function targetRelativePath(projectPath: string, filePath: string): string {
@@ -105,7 +110,10 @@ async function scaffoldAddMcpServerFromV4(
         teamsManifestPath: targetRelativePath(options.projectPath, options.teamsManifestPath),
         authType: options.authType,
       },
-      { appName: options.appName, language: "common" }
+      { appName: options.appName, language: "common" },
+      undefined,
+      undefined,
+      options.resolvedPackage
     );
     if (source.warning) {
       TOOLS.logProvider.warning(source.warning);
@@ -127,6 +135,7 @@ export const fxCoreDeclarativeAgentDeps = {
   generateFromApiSpec: openApiSpecHelperModule.generateFromApiSpec,
   generateScaffoldingSummary: openApiSpecHelperModule.generateScaffoldingSummary,
   modifyProjectFrontDoor,
+  resolveV4TemplateArtifactSnapshot,
   scaffoldAddMcpServerFromV4,
 };
 export class FxCoreDeclarativeAgentPart {
@@ -656,7 +665,12 @@ export class FxCoreDeclarativeAgentPart {
             authType: authType || "none",
           },
           {
-            scaffoldV4: async (_inputs: Inputs, target: BuildTarget, answers: Answers) => {
+            scaffoldV4: async (
+              _inputs: Inputs,
+              target: BuildTarget,
+              answers: Answers,
+              resolvedPackage?: ResolvedV4ChannelPackage
+            ) => {
               if (target.engine !== "v4") {
                 return err(unsupportedModifyTarget(target));
               }
@@ -679,10 +693,12 @@ export class FxCoreDeclarativeAgentPart {
                 appName: manifestRes.value.name?.short ?? path.basename(projectPath),
                 mcpServerUrl: answerMcpServerUrl,
                 authType: answerAuthType,
+                resolvedPackage,
               });
             },
             callCoreMethod: (_inputs: Inputs, target: BuildTarget) =>
               Promise.resolve(err(unsupportedModifyTarget(target))),
+            resolveArtifactSnapshot: fxCoreDeclarativeAgentDeps.resolveV4TemplateArtifactSnapshot,
           }
         );
         if (dispatchRes.isErr()) {

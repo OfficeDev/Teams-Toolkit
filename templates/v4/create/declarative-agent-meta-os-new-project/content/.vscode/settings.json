@@ -1,7 +1,0 @@
-{
-    "eslint.validate": [
-      "javascript",
-      "javascriptreact",
-      "typescript"
-    ]
-  }

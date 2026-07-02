@@ -34,13 +34,16 @@ shared `v4/schema/`.
 
 ## Decision
 
-1. **One release artifact `templates-v4@<version>`** carries all v4 starters,
-   published under the dedicated `templates-v4@` tag prefix on its own model-A
-   tag list (ADR-0006 §5) — never the legacy `templates@` channel a v3 client
-   reads. Its version tracks the engine's `6.x` line (e.g. `templates-v4@6.11.0`)
-   rather than forcing a MAJOR jump. Inside it,
-   packages are partitioned by lifecycle **kind** at the top level:
-   `v4/{create,modify}/<id>/`. Each `<id>` package is **four-file isomorphic**:
+1. **One release unit `templates-v4@<version>` publishes four assets** under
+  the dedicated `templates-v4@` tag prefix on its own model-A tag list
+  (ADR-0006 §5) — never the legacy `templates@` channel a v3 client reads.
+  Its version tracks the engine's `6.x` line (e.g. `templates-v4@6.11.0`)
+  rather than forcing a MAJOR jump. The assets are `create-selector.json`,
+  `modify-selector.json`, `templates-metadata.zip`, and `templates.zip`.
+  The tag-list entry is `{ version, artifacts }`, with a digest per artifact;
+  there is no top-level digest compatibility field. Inside `templates.zip`,
+  packages are partitioned by lifecycle **kind** at the top level:
+  `v4/{create,modify}/<id>/`. Each `<id>` package is **four-file isomorphic**:
    `descriptor.json` + `questions.json` + `pipeline.json` + optional `content/`
    (§3). `content/` is **optional** (a `modify` package that adds no files omits
    it entirely — emptiness is absence, not a marker file), while
@@ -57,16 +60,18 @@ shared `v4/schema/`.
    `.tpl` the author can hand-edit.
 
 3. **Each kind carries one `selector.json`** at `v4/<kind>/selector.json`
-   (§5); the artifact therefore contains both the routable templates and the
-   per-kind routing that indexes them. Routing is derived from the descriptors
-   present (ADR-0014 §5.3), so the artifact is internally consistent by
-   construction.
+  (§5). The same selector is also published as the small selector-only asset
+  for Q1. `templates-metadata.zip` carries both selectors plus every
+  `descriptor.json`, `questions.json`, and `pipeline.json`, but excludes all
+  `content/**`; Q2 can therefore collect inputs without downloading the full
+  scaffold content. `templates.zip` remains the full-content asset used for
+  direct template-id resolution and scaffold.
 
 4. **Compatibility is bidirectional, not a lockstep.** *Forward* (which artifact
-   the engine resolves) is **ADR-0006's**: the engine pins a SemVer `range` over
-   `templates-v4@<version>`, resolves it through the
-   `(package-source, package-version)` hand-off, and records the resolved
-   `{version, digest}`. *Reverse* (whether a resolved package may run on this
+  the engine resolves) is **ADR-0006's**: the engine pins a SemVer `range` over
+  `templates-v4@<version>`, resolves one staged artifact snapshot through the
+  `(package-source, package-version)` hand-off, and records the resolved
+  version plus per-artifact digests. *Reverse* (whether a resolved package may run on this
    engine) is **this ADR's**: each template carries `descriptor.minEngineVersion`
    (both MCP scenarios pin `5.20.0`), checked before the package runs. Starter
    edits therefore ship as a new `templates-v4@<version>` within the engine's

@@ -34,7 +34,7 @@ new DeclarativeAgentWithApiKeyAuth(
   ["function"],
   ProgrammingLanguage.JS,
   {},
-  myRecord
+  myRecord,
 ).test();
 
 new DeclarativeAgentWithApiKeyAuth(
@@ -44,5 +44,5 @@ new DeclarativeAgentWithApiKeyAuth(
   ["function"],
   ProgrammingLanguage.TS,
   {},
-  myRecord
+  myRecord,
 ).test();

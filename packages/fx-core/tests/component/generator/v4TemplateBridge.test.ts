@@ -346,6 +346,45 @@ describe("v4TemplateBridge.scaffoldDeclarativeFromV4Channel", () => {
     assert.strictEqual(telemetryProps[TelemetryProperty.TemplatePackageVersion], "6.10.1");
   });
 
+  it("uses supplied staged package bytes without resolving the local channel", async () => {
+    const ctx = makeContext("da-mcp", tmpDir, {});
+    const stagedSource: TemplateSource = {
+      origin: "online",
+      version: "6.11.0",
+      digest: "sha256:staged",
+      location: "templates.zip",
+    };
+    const resolveLocal = vi
+      .spyOn(v4TemplateBridgeDeps, "resolveLocalTemplateSource")
+      .mockImplementation(() => {
+        throw new Error("local resolver must not run");
+      });
+    const loadResolved = vi
+      .spyOn(v4TemplateBridgeDeps, "loadResolvedPackage")
+      .mockImplementation(() => {
+        throw new Error("local package loader must not run");
+      });
+    const telemetryProps: Record<string, string> = {};
+
+    const result = await scaffoldDeclarativeFromV4Channel(
+      ctx,
+      locator,
+      { mcpServerType: "remote", mcpServerUrl: "https://api.github.com/mcp", authType: "none" },
+      { appName: "MyMcpAgent", language: "common" },
+      telemetryProps,
+      undefined,
+      { source: stagedSource, bytes: channelBytes() }
+    );
+
+    assert.deepEqual(result, stagedSource);
+    assert.equal(resolveLocal.mock.calls.length, 0);
+    assert.equal(loadResolved.mock.calls.length, 0);
+    assert.strictEqual(telemetryProps[TelemetryProperty.TemplatePackageSource], "online");
+    assert.strictEqual(telemetryProps[TelemetryProperty.TemplatePackageVersion], "6.11.0");
+    assert.strictEqual(telemetryProps[TelemetryProperty.TemplatePackageDigest], "sha256:staged");
+    assert.include(ctx.outputs ?? [], "appPackage/ai-plugin.json");
+  });
+
   it("threads the answers into the engine (oauth selects the vault auth block)", async () => {
     const ctx = makeContext("da-mcp", tmpDir, {});
     vi.spyOn(v4TemplateBridgeDeps, "resolveLocalTemplateSource").mockReturnValue(source);

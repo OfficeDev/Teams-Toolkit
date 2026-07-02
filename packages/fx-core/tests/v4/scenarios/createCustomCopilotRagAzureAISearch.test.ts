@@ -11,6 +11,7 @@ import {
   readJsonObject,
   recordProperty,
   runV4Package,
+  text,
 } from "./helpers/scenarioHarness";
 
 /**
@@ -24,8 +25,11 @@ import {
 const templatePackage = loadV4Package("create", "custom-copilot-rag-azure-ai-search");
 const appName = "My Search Agent";
 
-async function run(language: "typescript" | "javascript" | "python" = "typescript") {
-  return runV4Package(templatePackage, { callerFloor: { appName, language } });
+async function run(
+  language: "typescript" | "javascript" | "python" = "typescript",
+  answers: Record<string, string> = {}
+) {
+  return runV4Package(templatePackage, { answers, callerFloor: { appName, language } });
 }
 
 describe("SCN-TEAMS-CREATE-CUSTOM-COPILOT-RAG-AZURE-AI-SEARCH (v4, T3 InMemoryRuntime)", () => {
@@ -51,6 +55,36 @@ describe("SCN-TEAMS-CREATE-CUSTOM-COPILOT-RAG-AZURE-AI-SEARCH (v4, T3 InMemoryRu
     const manifest = readJsonObject(files, "appPackage/manifest.json");
     const name = recordProperty(manifest, "name");
     assert.strictEqual(name.short, "My Search Agent${{APP_NAME_SUFFIX}}");
+  });
+
+  it("OpenAI answers render the OpenAI data and chat branches", async () => {
+    const { files } = await run("typescript", {
+      llmService: "llm-service-openai",
+      openAIKey: "fake-openai-key",
+    });
+
+    const app = text(files, "src/app/app.ts");
+    assert.include(app, "apiKey: config.openAIKey!");
+    assert.include(app, "openAIEmbeddingModelName: config.openAIEmbeddingModelName!");
+    assert.include(app, "model: config.openAIModelName");
+    assert.notInclude(app, "azureOpenAIApiKey");
+    assert.notInclude(app, "endpoint: config.azureOpenAIEndpoint");
+  });
+
+  it("Azure OpenAI answers render the Azure OpenAI data and chat branches", async () => {
+    const { files } = await run("typescript", {
+      llmService: "llm-service-azure-openai",
+      azureOpenAIKey: "fake-azure-openai-key",
+      azureOpenAIEndpoint: "https://fake.openai.azure.com/",
+      azureOpenAIDeploymentName: "fake-deployment",
+    });
+
+    const app = text(files, "src/app/app.ts");
+    assert.include(app, "azureOpenAIApiKey: config.azureOpenAIKey!");
+    assert.include(app, "azureOpenAIEndpoint: config.azureOpenAIEndpoint!");
+    assert.include(app, "model: config.azureOpenAIDeploymentName");
+    assert.notInclude(app, "openAIEmbeddingModelName: config.openAIEmbeddingModelName!");
+    assert.notInclude(app, "model: config.openAIModelName");
   });
 
   it("SCN-CREATE-RAG-AZURE-SEARCH-03: JavaScript scaffold selects the JavaScript subtree", async () => {

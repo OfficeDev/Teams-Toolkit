@@ -15,6 +15,12 @@ Given a build-pinned `range`, a build-pinned `bundled` flag, and an injected
 any template is read or rendered. This is the single decision point that
 replaces v3's three `package.json#version`-sniffing call sites.
 
+For the final v4 channel, interactive create/modify resolve a staged
+`TemplateArtifactSnapshot` instead of one full zip up front. The snapshot pins
+one `templates-v4@<version>` and one digest set across `create-selector`,
+`modify-selector`, `metadata`, and `templates`, so Q1, Q2, and scaffold never
+mix bytes from different releases.
+
 ## Inputs
 
 | Input | Type | Origin |
@@ -32,7 +38,7 @@ the full runtime composes later:
 | Port face | Shape | Responsibility |
 |-----------|-------|----------------|
 | `env` | `(name) => string \| undefined` | read `TEMPLATE_VERSION` |
-| `tagList` | `() => Promise<Array<{ version: string; digest: string }>>` | the channel's published `{version, digest}` entries (model A — the tag list carries the expected digest per version) |
+| `tagList` | `() => Promise<Array<{ version: string; digest: string }>>` or staged `{ version, artifacts }` entries | the channel's published digest entries (model A — the tag list carries the expected digest per version/artifact) |
 | `packages` | `(version, expectedDigest) => Promise<bytes>` | download a package; the digest the caller verifies against is the tag-list's expected digest |
 | `cache` | `{ get(version): { digest, bytes } \| undefined; put(version, digest, bytes): void; keys(): string[] }` | the local digest-keyed package cache (`keys` enumerates cached versions for the offline `max(cache, floor)` fallback) |
 | `floor` | `{ version: string; digest: string; bytes: ... }` | the bundled floor baked into the engine |
@@ -85,52 +91,33 @@ outcome and telemetry; it is never written back into committed config.
 | AC-19 | L1 | `bundled=false`, a version is picked from the tag-list, but `port.packages(...)` (download) rejects | resolve | returns `err(FxError)` (an existing FxError is preserved; otherwise wrapped as `TemplateDownloadFailed`); the rejection never escapes as a thrown promise — the neverthrow contract holds for the download path too |
 
 
-## Transitional local resolution — `resolveLocalTemplateSource` (INV-T2)
+## Final v4 staged artifact resolution — `resolveTemplateArtifactSnapshot`
 
-> **Scope — transitional.** Added by the [ADR-0006](../../../02-architecture/adr/ADR-0006-template-distribution-channel.md)
-> "selector/content consistency during the metadata-cache phase" follow-up.
-> Deleted together with that phase once `selector.json` drives metadata
-> distribution.
+The final v4 channel resolves a staged `TemplateArtifactSnapshot` rather than
+one full package for every interactive run. The snapshot pins a single
+`templates-v4@<version>` and the digest refs for all four artifact kinds:
+`create-selector`, `modify-selector`, `metadata`, and `templates`.
 
-`resolveTemplateSource` (above) may go to the network when `bundled=false`. On
-the **create / modify path** the engine resolves the content package and the
-selector/metadata from two different gates at two moments in one invocation,
-which re-opens the cluster-C split-brain (questions from the bundled floor,
-content from a newer online version). `resolveLocalTemplateSource` is the
-no-network sibling the create/modify chokepoint calls instead, so the content
-resolves to the same local source the selector/metadata gate sees and the
-scaffold never blocks on a download (the online fetch is confined to the
-background cache-warmer `fetchOnlineTemplateMetadata`, which serves the *next*
-invocation — one-invocation-deferred adoption, INV-T1/INV-T2).
+Interactive create/modify requests the selector artifact first. Q2 later reads
+the metadata artifact from the same snapshot, and scaffold reads the full
+templates artifact from that same snapshot. Non-interactive template-id paths
+request the full `templates` artifact directly. A failed later artifact fetch is
+an error for the invocation; it does not silently switch from online selector
+bytes to bundled metadata or content.
 
-It is **synchronous and total** (no `tagList`/`packages` faces are touched, no
-expected failure) and returns `max(cached-satisfying-range, floor)`:
-
-1. `TEMPLATE_VERSION=local` → bundled floor (`origin=bundled`), mirroring
-   `resolveTemplateSource` AC-02.
-2. otherwise → the highest cached version satisfying `range` if it strictly
-   beats the floor (`origin=cache`); a tie or empty/out-of-range cache resolves
-   the floor (`origin=bundled`) — the same `max(cache, floor)` selection as the
-   offline fallback, but with `origin=bundled` (not `bundled-fallback`) and **no**
-   "channel unreachable" warning, because local-first is deliberate, not a
-   degraded fallback.
+The artifact cache is shared by create and modify. For each artifact kind and
+each `major.minor` line, GC keeps only the highest patch version; a `6.11.x`
+write does not delete the latest cached `6.10.x` artifact.
 
 | ID | Tier | Given | When | Then |
 |----|------|-------|------|------|
-| AC-T1 | L1 | `port.env("TEMPLATE_VERSION")="local"`, cache holds `6.10.5` (> floor) | resolve local | `origin=bundled`, `version`=floor; `port.httpCalls===0`, no download |
-| AC-T2 | L1 | no `TEMPLATE_VERSION`, cache empty, floor `6.10.1` satisfies `~6.10` | resolve local | `origin=bundled`, `version=6.10.1`; `port.httpCalls===0` |
-| AC-T3 | L1 | no `TEMPLATE_VERSION`, cache holds `6.10.5` (digest `D5`, > floor) satisfying `~6.10` | resolve local | `origin=cache`, `version=6.10.5`, `digest=D5`; `port.httpCalls===0`, no download |
-| AC-T4 | L1 | cache holds only `6.9.0` (does **not** satisfy `~6.10`), floor `6.10.1` | resolve local | `origin=bundled`, `version=6.10.1` — out-of-range cache entry ignored (INV-5) |
-| AC-T5 | L1 | cache holds `6.10.1` equal to the floor `6.10.1` | resolve local | `origin=bundled` (tie goes to the floor, decision #2); `port.httpCalls===0` |
-| AC-T6 | L1 | any of the above | resolve local | the result never has the offline `warning` set (local-first is not a degraded fallback) |
-| AC-T7 | L1 | identical `(range, port state)` | resolve local twice | both return the identical `{origin, version, digest}` (INV-6) |
-
-The v3→v4 content chokepoint (`v4TemplateBridge.resolveChannelPackageBytes`)
-calls `resolveLocalTemplateSource` rather than `resolveTemplateSource`, so a
-create/modify run reads only local bytes (`max(cache, floor)`) and stays off the
-network; closing the residual mid-invocation race (a background fetch landing
-between the selector read and the content read) requires the resolve-once
-snapshot tracked separately in ADR-0006 (CP2/CP3).
+| AC-S1 | L1 | interactive create, online `6.11.2` satisfies `range` | Q1 starts | `create-selector.json` is downloaded/verified/cached before selector walk; `templates.zip` is not required |
+| AC-S2 | L1 | interactive modify, online `6.11.2` satisfies `range` | Q1 starts | `modify-selector.json` is downloaded/verified/cached before selector walk; `templates.zip` is not required |
+| AC-S3 | L1 | Q1 selected a v4 template from snapshot version `6.11.2` | Q2 starts | `templates-metadata.zip` from `6.11.2` is used; no `content/**` is required |
+| AC-S4 | L1 | Q2 completed from metadata snapshot version `6.11.2` | scaffold starts | `templates.zip` from `6.11.2` is used; scaffold receives full content bytes from the same snapshot |
+| AC-S5 | L1 | non-interactive create/modify names a concrete v4 template id | resolve | `templates.zip` is the required first artifact; selector-only Q1 is skipped |
+| AC-S6 | L1 | metadata download fails after an online selector succeeded | continue invocation | returns `err(FxError)`; bundled metadata/content are not mixed into the same invocation |
+| AC-S7 | L1 | cache contains `6.10.5` and `6.11.1`, then writes `6.11.2` for `metadata` | cache GC runs | keeps `6.10.5` and `6.11.2`, deletes lower `6.11.x` metadata entries only |
 
 
 ## Flow
@@ -190,10 +177,11 @@ This operation does **not**:
   substitutes a different source without recording it.
 - **INV-2 — Never sniff `package.json#version`.** Resolution depends only on
   `range`, `bundled`, `runtime`, and `TEMPLATE_VERSION`.
-- **INV-3 — Digest integrity.** The tag list publishes a `{version, digest}`
-  per version (model A); downloaded bytes are never returned or cached unless
-  their computed digest matches the tag-list's expected digest for that
-  version; a mismatch is a hard error, not a fallback.
+- **INV-3 — Digest integrity.** The legacy full-package resolver uses
+  `{version, digest}` entries; the final v4 staged resolver uses
+  `{ version, artifacts }` entries with a digest per artifact. Downloaded bytes
+  are never returned or cached unless their computed digest matches the
+  tag-list's expected digest; a mismatch is a hard error, not a fallback.
 - **INV-4 — Stable excludes prerelease.** A `range` without a prerelease
   segment never resolves a `-beta` version (SemVer `maxSatisfying` semantics).
 - **INV-5 — Fallback satisfies `range`.** Every fallback candidate (cache
@@ -220,13 +208,13 @@ This operation does **not**:
    during the transition window, with identical values
    (`bundled | online | cache | bundled-fallback`); `package-source` is removed
    once consumers have migrated to `origin`.
-4. **Expected digest comes from the tag list (model A).** The published tag
-   list is a list of `{version, digest}` entries, not bare versions. Every
-   online resolve has an a-priori expected digest to verify the downloaded
-   bytes against (INV-3, AC-11), and the cache key is trustworthy. This is a
-   **new** channel artifact: the v3 bare-version tag-list URL is never altered
-   (ADR-0006 v3-non-blocking constraint); model A ships a separate
-   digest-bearing list for v4.
+4. **Expected digests come from the tag list (model A).** The final v4 tag
+  list is NDJSON with one `{ version, artifacts }` entry per line. Each
+  artifact ref carries its file name and expected digest. There is no
+  top-level `digest`; every online resolve verifies the specific downloaded
+  artifact bytes against the artifact digest (INV-3, AC-11), and the cache key
+  is trustworthy. This is a **new** channel artifact: the v3 bare-version
+  tag-list URL is never altered (ADR-0006 v3-non-blocking constraint).
 5. **v4 uses a dedicated `templates-v4@` tag prefix.** v4 template releases
    publish under `templates-v4@<version>` on a separate tag list (mirroring
    the existing `templates-vs@` split), so a v3 `templates@` client can never
@@ -234,13 +222,17 @@ This operation does **not**:
    isolation). v4 versions therefore stay in sync with the engine's `6.x`
    line; no MAJOR jump. `location` / cache keys use the `templates-v4@`
    prefix.
-6. **`digest` = `sha256` of the package `.zip` raw bytes.** The digest is the
-   `sha256` hash of the exact downloaded `.zip` byte stream, prefixed
-   `sha256:`. The publish side computes it over the same artifact bytes; any
-   single-byte difference (zip metadata, line endings) is a deliberate
-   mismatch, not tolerated. `computeDigest(bytes)` is the one authority.
+6. **Artifact digests are `sha256` of raw artifact bytes.** The digest is the
+  `sha256` hash of the exact downloaded asset byte stream, prefixed
+  `sha256:`. The publish side computes it over the same artifact bytes; any
+  single-byte difference (zip metadata, line endings) is a deliberate
+  mismatch, not tolerated.
 7. **The v4 tag list is NDJSON.** The model-A tag list is newline-delimited
-   JSON: one `{"version":"6.11.0","digest":"sha256:…"}` object per line.
-   Blank lines and `\r` are ignored; a malformed line is a hard parse error
-   (no silent skip). Served at a **new** URL (`templatesV4TagListURL`),
-   separate from the frozen v3 `tagListURL`.
+  JSON: one `{ "version": "6.11.0", "artifacts": { ... } }` object per
+  line. Blank lines and `\r` are ignored; a malformed line is a hard parse
+  error (no silent skip). Served at a **new** URL (`templatesV4TagListURL`),
+  separate from the frozen v3 `tagListURL`.
+8. **Staged cache retention is per minor line and per artifact kind.** The
+  cache keeps only the highest patch version for each `major.minor` line and
+  artifact kind, so stable, prerelease, and CLI clients do not evict each
+  other's usable cache while stale lower patches are collected.

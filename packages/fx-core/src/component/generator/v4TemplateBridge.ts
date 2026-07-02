@@ -33,6 +33,11 @@ export const v4TemplateBridgeDeps = {
   openTemplatePackage: templatePackageMod.openTemplatePackage,
 };
 
+export interface ResolvedV4ChannelPackage {
+  source: TemplateSource;
+  bytes: Buffer;
+}
+
 /**
  * Resolve a template entry's relative name to an absolute path and verify it
  * stays within `destination`. The entry name originates from the (untrusted)
@@ -114,8 +119,18 @@ export async function renderTemplateEntries(
  */
 function resolveChannelPackageBytes(
   context: GeneratorContext,
-  telemetryProps?: Record<string, string>
-): { source: TemplateSource; bytes: Buffer } {
+  telemetryProps?: Record<string, string>,
+  resolvedPackage?: ResolvedV4ChannelPackage
+): ResolvedV4ChannelPackage {
+  if (resolvedPackage !== undefined) {
+    merge(telemetryProps, {
+      [TelemetryProperty.TemplatePackageSource]: resolvedPackage.source.origin,
+      [TelemetryProperty.TemplatePackageVersion]: resolvedPackage.source.version,
+      [TelemetryProperty.TemplatePackageDigest]: resolvedPackage.source.digest,
+    });
+    return resolvedPackage;
+  }
+
   const channelConfig = {
     templatesV4TagListURL: templateConfig.templatesV4TagListURL,
     templateDownloadBaseURL: templateConfig.templateDownloadBaseURL,
@@ -151,9 +166,10 @@ function resolveChannelPackageBytes(
 export async function scaffoldFromV4Channel(
   context: GeneratorContext,
   locator: TemplateLocator,
-  telemetryProps?: Record<string, string>
+  telemetryProps?: Record<string, string>,
+  resolvedPackage?: ResolvedV4ChannelPackage
 ): Promise<TemplateSource> {
-  const { source, bytes } = resolveChannelPackageBytes(context, telemetryProps);
+  const { source, bytes } = resolveChannelPackageBytes(context, telemetryProps, resolvedPackage);
 
   const entriesResult = v4TemplateBridgeDeps.openTemplatePackage(bytes, locator);
   if (entriesResult.isErr()) {
@@ -211,9 +227,11 @@ export async function scaffoldDeclarativeFromV4Channel(
   locator: DeclarativeLocator,
   answers: Answers,
   callerFloor: CallerFloor,
-  telemetryProps?: Record<string, string>
+  telemetryProps?: Record<string, string>,
+  flagReader?: (name: string) => boolean,
+  resolvedPackage?: ResolvedV4ChannelPackage
 ): Promise<TemplateSource> {
-  const { source, bytes } = resolveChannelPackageBytes(context, telemetryProps);
+  const { source, bytes } = resolveChannelPackageBytes(context, telemetryProps, resolvedPackage);
 
   const loaded = openDeclarativePackage(bytes, locator);
   if (loaded.isErr()) {
@@ -230,7 +248,7 @@ export async function scaffoldDeclarativeFromV4Channel(
       callerFloor,
       targetDir: { path: context.destination, existing },
     },
-    createRealRuntime(context.destination)
+    createRealRuntime(context.destination, flagReader)
   );
   if (result.isErr()) {
     throw result.error;

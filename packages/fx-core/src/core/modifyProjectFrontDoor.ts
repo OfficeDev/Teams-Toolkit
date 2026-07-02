@@ -14,8 +14,18 @@ import path from "path";
 import { Result } from "neverthrow";
 import { featureFlagManager } from "../common/featureFlags";
 import { TOOLS } from "../common/globalVars";
-import { Answers, BuildTarget, DeclarativeLocator, bundledFloorDir, runCreateInputs } from "../v4";
+import {
+  Answers,
+  BuildTarget,
+  DeclarativeLocator,
+  TemplateArtifactKind,
+  TemplateArtifactSnapshot,
+  bundledFloorDir,
+  runCreateInputs,
+  templateSourceFromArtifactSnapshot,
+} from "../v4";
 import { runModifySelector } from "../v4/surface/modifySelectorWalk";
+import type { ResolvedV4ChannelPackage } from "../component/generator/v4TemplateBridge";
 
 const SOURCE = "Scaffold";
 
@@ -23,11 +33,17 @@ export interface ModifyFrontDoorDeps {
   scaffoldV4: (
     inputs: Inputs,
     target: BuildTarget,
-    answers: Answers
+    answers: Answers,
+    resolvedPackage?: ResolvedV4ChannelPackage
   ) => Promise<Result<undefined, FxError>>;
   callCoreMethod: (inputs: Inputs, target: BuildTarget) => Promise<Result<undefined, FxError>>;
   flagReader?: (name: string) => boolean;
   readFloorBytes?: () => Buffer;
+  artifactSnapshot?: TemplateArtifactSnapshot;
+  resolveArtifactSnapshot?: (
+    requiredKind: TemplateArtifactKind
+  ) => Promise<Result<TemplateArtifactSnapshot, FxError>>;
+  v4Registry?: (templateId: string) => boolean;
   ui?: UserInteraction;
   runSelector?: typeof runModifySelector;
   runInputs?: typeof runCreateInputs;
@@ -39,6 +55,13 @@ function defaultFlagReader(name: string): boolean {
 
 function readBundledFloorBytes(): Buffer {
   return fs.readFileSync(path.join(bundledFloorDir(), "templates.zip"));
+}
+
+async function readSnapshotBytes(
+  snapshot: TemplateArtifactSnapshot,
+  kind: TemplateArtifactKind
+): Promise<Result<Buffer, FxError>> {
+  return snapshot.bytes(kind);
 }
 
 function surfaceOf(platform: Platform | undefined): string {
@@ -80,19 +103,45 @@ export async function modifyProjectFrontDoor(
 ): Promise<Result<undefined, FxError>> {
   const flagReader = deps.flagReader ?? defaultFlagReader;
   const ui = deps.ui ?? TOOLS.ui;
-  let floorBytes: Buffer;
-  try {
-    floorBytes = (deps.readFloorBytes ?? readBundledFloorBytes)();
-  } catch (error) {
-    return err(floorReadError(error));
+  let snapshot = deps.artifactSnapshot;
+  let floorBytes: Buffer | undefined;
+  let selectorBytes: Buffer;
+  if (snapshot === undefined && deps.resolveArtifactSnapshot !== undefined) {
+    const resolved = await deps.resolveArtifactSnapshot("modify-selector");
+    if (resolved.isErr()) {
+      return err(resolved.error);
+    }
+    snapshot = resolved.value;
+  }
+  if (snapshot === undefined) {
+    try {
+      floorBytes = (deps.readFloorBytes ?? readBundledFloorBytes)();
+    } catch (error) {
+      return err(floorReadError(error));
+    }
+    selectorBytes = floorBytes;
+  } else {
+    const selector = await readSnapshotBytes(snapshot, "modify-selector");
+    if (selector.isErr()) {
+      return err(selector.error);
+    }
+    selectorBytes = selector.value;
   }
   const surface = surfaceOf(inputs.platform);
   const runSelector = deps.runSelector ?? runModifySelector;
-  const target = await runSelector(floorBytes, ui, surface, {
+  const selectorDeps = {
     flagReader,
     interactive: !inputs.nonInteractive,
     prefilled: selectorPrefill,
-  });
+  };
+  const target =
+    snapshot === undefined
+      ? await runSelector(selectorBytes, ui, surface, selectorDeps)
+      : await runSelector(selectorBytes, ui, surface, {
+          ...selectorDeps,
+          selectorBytesKind: "json",
+          v4Registry: deps.v4Registry,
+        });
   if (target.isErr()) {
     return err(target.error);
   }
@@ -101,8 +150,25 @@ export async function modifyProjectFrontDoor(
     case "v4": {
       const runInputs = deps.runInputs ?? runCreateInputs;
       const locator: DeclarativeLocator = { kind: "modify", templateId: target.value.templateId };
+      let inputBytes: Buffer;
+      if (snapshot === undefined) {
+        if (floorBytes === undefined) {
+          try {
+            floorBytes = (deps.readFloorBytes ?? readBundledFloorBytes)();
+          } catch (error) {
+            return err(floorReadError(error));
+          }
+        }
+        inputBytes = floorBytes;
+      } else {
+        const metadataBytes = await readSnapshotBytes(snapshot, "metadata");
+        if (metadataBytes.isErr()) {
+          return err(metadataBytes.error);
+        }
+        inputBytes = metadataBytes.value;
+      }
       const answers = await runInputs(
-        floorBytes,
+        inputBytes,
         locator,
         { ...(target.value.answers ?? {}), ...entryParams },
         ui,
@@ -110,6 +176,16 @@ export async function modifyProjectFrontDoor(
       );
       if (answers.isErr()) {
         return err(answers.error);
+      }
+      if (snapshot !== undefined) {
+        const fullBytes = await readSnapshotBytes(snapshot, "templates");
+        if (fullBytes.isErr()) {
+          return err(fullBytes.error);
+        }
+        return deps.scaffoldV4(inputs, target.value, answers.value, {
+          source: templateSourceFromArtifactSnapshot(snapshot),
+          bytes: fullBytes.value,
+        });
       }
       return deps.scaffoldV4(inputs, target.value, answers.value);
     }

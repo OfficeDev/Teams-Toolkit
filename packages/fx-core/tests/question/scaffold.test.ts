@@ -10,7 +10,7 @@ import {
   SingleSelectQuestion,
   StringValidation,
 } from "@microsoft/teamsfx-api";
-import { featureFlagManager, FeatureFlags } from "../../src/common/featureFlags";
+import { featureFlagManager, FeatureFlagName, FeatureFlags } from "../../src/common/featureFlags";
 import { getLocalizedString } from "../../src/common/localizeUtils";
 import { AppDefinition } from "../../src/component/driver/teamsApp/interfaces/appdefinitions/appDefinition";
 import { Bot } from "../../src/component/driver/teamsApp/interfaces/appdefinitions/bot";
@@ -26,7 +26,16 @@ import {
 } from "../../src/question/scaffold/commonNodes";
 import { constructNode } from "../../src/question/scaffold/constructNode";
 import { scaffoldQuestionForVS } from "../../src/question/scaffold/vs/createRootNode";
-import { ActionStartOptions } from "../../src/question/scaffold/vsc/CapabilityOptions";
+import {
+  ActionStartOptions,
+  BotCapabilityOptions,
+  CustomCopilotRagOptions,
+  MeArchitectureOptions,
+  MeCapabilityOptions,
+  NotificationBotOptions,
+  TabCapabilityOptions,
+  TeamsAgentCapabilityOptions,
+} from "../../src/question/scaffold/vsc/CapabilityOptions";
 import { ProjectTypeOptions } from "../../src/question/scaffold/vsc/ProjectTypeOptions";
 import {
   createFromTdpNode,
@@ -48,15 +57,6 @@ import { AppPackageFolderName } from "@microsoft/teamsfx-api";
 import fs from "fs-extra";
 import path from "path";
 import { assert, vi } from "vitest";
-import {
-  BotCapabilityOptions,
-  CustomCopilotRagOptions,
-  MeArchitectureOptions,
-  MeCapabilityOptions,
-  NotificationBotOptions,
-  TabCapabilityOptions,
-  TeamsAgentCapabilityOptions,
-} from "../../src/question/scaffold/vsc/CapabilityOptions";
 import {
   botProjectTypeNode,
   CreateNewPluginManifestSentinel,
@@ -1617,6 +1617,123 @@ describe("constructNode", () => {
     const data = node.data as SingleSelectQuestion;
     const options = data.staticOptions as OptionItem[];
     assert.equal(options.length, 2);
+  });
+
+  it("should include a true-default feature-flagged option when env var is unset", () => {
+    delete process.env[FeatureFlagName.OpenPluginImportExport];
+    const json = JSON.stringify({
+      data: {
+        title: "test.title",
+        name: "test",
+        type: "singleSelect",
+        options: [
+          { id: "always-visible", label: "Always" },
+          { id: "flagged", label: "Flagged", featureFlag: FeatureFlagName.OpenPluginImportExport },
+        ],
+      },
+    });
+
+    const node = constructNode(json);
+    const data = node.data as SingleSelectQuestion;
+    const options = data.staticOptions as OptionItem[];
+    assert.equal(options.length, 2);
+    assert.isTrue(options.some((o) => o.id === "flagged"));
+  });
+
+  it("should exclude a false-default feature-flagged option when env var is unset", () => {
+    delete process.env[FeatureFlagName.AgentSkillsManifest];
+    const json = JSON.stringify({
+      data: {
+        title: "test.title",
+        name: "test",
+        type: "singleSelect",
+        options: [
+          { id: "always-visible", label: "Always" },
+          { id: "flagged", label: "Flagged", featureFlag: FeatureFlagName.AgentSkillsManifest },
+        ],
+      },
+    });
+
+    const node = constructNode(json);
+    const data = node.data as SingleSelectQuestion;
+    const options = data.staticOptions as OptionItem[];
+    assert.equal(options.length, 1);
+    assert.equal(options[0].id, "always-visible");
+  });
+
+  it("should let an explicit env override win for a true-default flag", () => {
+    process.env[FeatureFlagName.OpenPluginImportExport] = "false";
+    try {
+      const json = JSON.stringify({
+        data: {
+          title: "test.title",
+          name: "test",
+          type: "singleSelect",
+          options: [
+            { id: "always-visible", label: "Always" },
+            {
+              id: "flagged",
+              label: "Flagged",
+              featureFlag: FeatureFlagName.OpenPluginImportExport,
+            },
+          ],
+        },
+      });
+
+      const node = constructNode(json);
+      const data = node.data as SingleSelectQuestion;
+      const options = data.staticOptions as OptionItem[];
+      assert.equal(options.length, 1);
+      assert.equal(options[0].id, "always-visible");
+    } finally {
+      delete process.env[FeatureFlagName.OpenPluginImportExport];
+    }
+  });
+
+  it("should let an explicit env override win for a false-default flag", () => {
+    process.env[FeatureFlagName.AgentSkillsManifest] = "true";
+    try {
+      const json = JSON.stringify({
+        data: {
+          title: "test.title",
+          name: "test",
+          type: "singleSelect",
+          options: [
+            { id: "always-visible", label: "Always" },
+            { id: "flagged", label: "Flagged", featureFlag: FeatureFlagName.AgentSkillsManifest },
+          ],
+        },
+      });
+
+      const node = constructNode(json);
+      const data = node.data as SingleSelectQuestion;
+      const options = data.staticOptions as OptionItem[];
+      assert.equal(options.length, 2);
+      assert.isTrue(options.some((o) => o.id === "flagged"));
+    } finally {
+      delete process.env[FeatureFlagName.AgentSkillsManifest];
+    }
+  });
+
+  it("should exclude an unknown feature flag when env var is unset", () => {
+    delete process.env["TEAMSFX_UNKNOWN_FLAG"];
+    const json = JSON.stringify({
+      data: {
+        title: "test.title",
+        name: "test",
+        type: "singleSelect",
+        options: [
+          { id: "always-visible", label: "Always" },
+          { id: "flagged", label: "Flagged", featureFlag: "TEAMSFX_UNKNOWN_FLAG" },
+        ],
+      },
+    });
+
+    const node = constructNode(json);
+    const data = node.data as SingleSelectQuestion;
+    const options = data.staticOptions as OptionItem[];
+    assert.equal(options.length, 1);
+    assert.equal(options[0].id, "always-visible");
   });
 
   it("should handle group type nodes", () => {

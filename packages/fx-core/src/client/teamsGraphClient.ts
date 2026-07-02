@@ -5,6 +5,8 @@ import { hooks } from "@feathersjs/hooks";
 import { AxiosInstance } from "axios";
 import { getResourceServiceEndpoint, ResourceServiceType } from "../common/constants";
 import { ErrorContextMW } from "../common/globalVars";
+import { RetryHandler } from "../common/retryHandler";
+import { TEAMS_GRAPH_API_NAMES } from "../common/teamsGraphApiNames";
 import { WrappedAxiosClient } from "../common/wrappedAxiosClient";
 import {
   ApiSecretRegistration,
@@ -14,17 +16,8 @@ import { DcrRegistration } from "../component/driver/teamsApp/interfaces/DcrRegi
 import { OauthConfigurationId } from "../component/driver/teamsApp/interfaces/OauthConfigurationId";
 import { OauthRegistration } from "../component/driver/teamsApp/interfaces/OauthRegistration";
 import { TeamsGraphAPIFailedSystemError } from "../error/teamsGraph";
-import { RetryHandler } from "../common/retryHandler";
 
-export class TEAMS_GRAPH_API_NAMES {
-  static readonly GET_OAUTH = "teams_graph_get_oauth";
-  static readonly CREATE_OAUTH = "teams_graph_create_oauth";
-  static readonly UPDATE_OAUTH = "teams_graph_update_oauth";
-  static readonly CREATE_DCR = "teams_graph_create_dcr";
-  static readonly GET_API_KEY = "teams_graph_get_api_secret_registration";
-  static readonly CREATE_API_KEY = "teams_graph_create_api_secret_registration";
-  static readonly UPDATE_API_KEY = "teams_graph_update_api_secret_registration";
-}
+export { TEAMS_GRAPH_API_NAMES } from "../common/teamsGraphApiNames";
 
 export class TeamsGraphClient {
   getEndpoint(): string {

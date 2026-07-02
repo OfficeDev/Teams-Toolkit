@@ -38,6 +38,13 @@ on:
 permissions:
   actions: read
 
+# Production runs (dev / release/*) use a unique group so concurrency is a no-op (nightly is
+# never cancelled); feature/PR branches dispatched by the smoke pipeline are grouped per-branch
+# so a re-dispatch cancels the stale UI-test run.
+concurrency:
+  group: ${{ format('uitest-vscuse-template-{0}', (github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/heads/release/')) && github.run_id || github.ref_name) }}
+  cancel-in-progress: true
+
 jobs:
   run:
     uses: ./.github/workflows/ui-test-vscuse-common.yml

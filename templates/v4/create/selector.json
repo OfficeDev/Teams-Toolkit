@@ -88,11 +88,6 @@
           "label": "Start with an OpenAPI Description Document",
           "detail": "Create an action from your existing API",
           "keyPrefix": "template.createProjectQuestion.capability.copilotPluginApiSpecOption" },
-        { "id": "da-meta-os",
-          "label": "Start with an Office Add-in Action",
-          "detail": "Create a Declarative Agent with Office add-in action",
-          "condition": { "featureFlag": "TEAMSFX_DA_METAOS" },
-          "keyPrefix": "template.createProjectQuestion.capability.DAMetaOS" },
         { "id": "mcp",
           "label": "Start with a MCP server",
           "detail": "Create an action from your existing MCP server",
@@ -237,10 +232,6 @@
       "keyPrefix": "template.createProjectQuestion.DAMetaOS.capability",
       "condition": { "expr": "officeAddinCapability == 'office-da-meta-os'" },
       "staticOptions": [
-        { "id": "declarative-agent-meta-os-new-project",
-          "label": "New Declarative Agent with Office Add-in Actions",
-          "detail": "Build a new Declarative Agent with Office add-in actions",
-          "keyPrefix": "template.createProjectQuestion.DAMetaOS.capability.newProject" },
         { "id": "declarative-agent-meta-os-upgrade-project",
           "label": "Extend an existing Office Add-in",
           "detail": "Extend an add-in project to the declarative agent with add-in actions",
@@ -289,8 +280,7 @@
     {
       "when": "projectType=='teams-agent-and-app-type' && teamsApp=='rag' && customCopilotRagType=='custom-copilot-rag-custom-api'",
       "templateId": "custom-copilot-rag-custom-api",
-      "engine": "v3",
-      "v3Adapter": "CustomEngineAgentWithExistingApiSpecGenerator"
+      "engine": "v4"
     },
     {
       "when": "projectType=='teams-agent-and-app-type' && teamsApp=='teams-collaborator-agent'",
@@ -323,11 +313,6 @@
       "engine": "v4"
     },
     {
-      "when": "projectType=='office-meta-os-type' && officeAddinCapability=='office-da-meta-os' && daMetaOsCapability=='declarative-agent-meta-os-new-project'",
-      "templateId": "declarative-agent-meta-os-new-project",
-      "engine": "v4"
-    },
-    {
       "when": "projectType=='office-meta-os-type' && officeAddinCapability=='office-da-meta-os' && daMetaOsCapability=='declarative-agent-meta-os-upgrade-project'",
       "templateId": "declarative-agent-meta-os-upgrade-project",
       "engine": "v4"
@@ -335,8 +320,7 @@
     {
       "when": "projectType=='office-meta-os-type' && officeAddinCapability=='office-addin-config'",
       "templateId": "office-addin-config",
-      "engine": "v3",
-      "v3Adapter": "OfficeAddinGeneratorNew"
+      "engine": "v4"
     },
     {
       "when": "projectType=='copilot-agent-type' && daTemplate=='no-action'",

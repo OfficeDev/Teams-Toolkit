@@ -9,7 +9,7 @@
 
   "optionsSchema": {
     "type": "object",
-    "required": ["mcpServerType", "authType"],
+    "required": ["mcpServerType"],
     "properties": {
       "mcpServerType": { "enum": ["local", "remote"], "default": "remote" },
       "mcpServerUrl": { "type": "string", "format": "uri" },
@@ -18,13 +18,12 @@
       "oauthClientSecret": { "type": "string" },
       "oauthScopes": { "type": "string" },
       "entraClientId": { "type": "string" },
-      "selectedLocalServers": { "type": "array", "items": { "type": "string" } },
-      "localServerCatalog": { "type": "string" }
+      "selectedLocalServers": { "type": "array", "items": { "type": "string" } }
     },
     "allOf": [
       {
         "if": { "properties": { "mcpServerType": { "const": "remote" } } },
-        "then": { "required": ["mcpServerUrl"] }
+        "then": { "required": ["mcpServerUrl", "authType"] }
       },
       {
         "if": { "properties": { "mcpServerType": { "const": "local" } } },

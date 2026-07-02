@@ -33,8 +33,13 @@ const CREATE_INPUT_ALIASES: ReadonlyArray<readonly [string, string]> = [
   ["api-auth", "apiAuth"],
   ["openapi-spec-location", "apiSpecLocation"],
   ["api-operation", "apiOperations"],
+  ["addin-project-manifest", "officeAddinManifest"],
   ["mcp-da-server-url", "mcpServerUrl"],
+  ["mcp-tools-file-path", "mcpToolsFilePath"],
   ["mcp-da-auth-type", "authType"],
+  ["azure-openai-key", "azureOpenAIKey"],
+  ["azure-openai-endpoint", "azureOpenAIEndpoint"],
+  ["azure-openai-deployment-name", "azureOpenAIDeploymentName"],
 ];
 
 const DECLARATIVE_AGENT_CAPABILITY = "declarative-agent";
@@ -53,7 +58,6 @@ const DA_TEMPLATE_BY_WITH_PLUGIN: Readonly<Record<string, string>> = {
 const ACTION_SOURCE_BY_ACTION_TYPE: Readonly<Record<string, string>> = {
   "new-api": NEW_API_ACTION_SOURCE,
   "api-spec": "openapi",
-  "da-meta-os": "da-meta-os",
   mcp: "mcp",
 };
 
@@ -115,6 +119,11 @@ const MIGRATION_CREATE_OPTIONS: CLICommandOption[] = [
     name: "addin-project-folder",
     type: "string",
     description: "Existing Office Add-in project folder.",
+  },
+  {
+    name: "addin-project-manifest",
+    type: "string",
+    description: "Existing Office Add-in manifest file.",
   },
 ];
 
@@ -227,6 +236,10 @@ function normalizeLegacyCreateRouteInputs(inputs: CreateProjectInputs): boolean 
   const routeAnswers = DA_TEMPLATE_ROUTE_BY_CAPABILITY[capability];
   if (routeAnswers === undefined) {
     return stringInput(inputs, "projectType") !== undefined;
+  }
+  const withPlugin = stringInput(inputs, "with-plugin");
+  if (routeAnswers.daTemplate === "no-action" && withPlugin !== undefined && withPlugin !== "no") {
+    return normalizeDeclarativeAgentRouteInputs(inputs);
   }
 
   applyRouteAnswers(inputs, routeAnswers);

@@ -16,7 +16,19 @@ import { InstallSoftwareError } from "../../../../src/error/common";
 import { MockedM365Provider, MockTools } from "../../../core/utils";
 import { MockedLogProvider, MockedUserInteraction } from "../../../plugins/solution/util";
 
-vi.mock("fs-extra");
+vi.mock("fs-extra", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("fs-extra")>();
+  const pathExists = vi.fn();
+  return {
+    ...actual.default,
+    ...actual,
+    default: {
+      ...actual.default,
+      pathExists,
+    },
+    pathExists,
+  };
+});
 vi.mock("../../../../src/component/generator/spfx/spfxGenerator");
 vi.mock("../../../../src/component/driver/teamsApp/utils/ManifestUtils");
 describe("Add web part driver", async () => {

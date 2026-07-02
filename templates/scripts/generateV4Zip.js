@@ -33,7 +33,7 @@
  */
 
 const AdmZip = require("adm-zip");
-const { readdirSync, mkdirSync, writeFileSync, existsSync } = require("node:fs");
+const { readdirSync, mkdirSync, writeFileSync, existsSync, copyFileSync } = require("node:fs");
 const path = require("path");
 const semver = require("semver");
 
@@ -59,6 +59,25 @@ function computeV4PublishVersion(rawVersion) {
   return `${parsed.major}.${parsed.minor}.${parsed.patch}`;
 }
 
+function addV4MetadataFiles(zip, sourceRoot, zipRoot) {
+  for (const entry of readdirSync(sourceRoot, { withFileTypes: true })) {
+    const sourcePath = path.join(sourceRoot, entry.name);
+    const zipPath = path.posix.join(zipRoot, entry.name);
+    if (entry.isDirectory()) {
+      if (entry.name === "content") {
+        continue;
+      }
+      addV4MetadataFiles(zip, sourcePath, zipPath);
+      continue;
+    }
+    if (
+      ["selector.json", "descriptor.json", "questions.json", "pipeline.json"].includes(entry.name)
+    ) {
+      zip.addLocalFile(sourcePath, path.posix.dirname(zipPath));
+    }
+  }
+}
+
 const LANGUAGES = ["common", "js", "ts", "python"];
 const BUILD_PATH = path.join(__dirname, "..", "build", "v4");
 const rawVersion = require(path.join(__dirname, "..", "package.json")).version;
@@ -82,6 +101,19 @@ LANGUAGES.forEach((lang) => {
 const v4SourcePath = path.join(__dirname, "..", "v4");
 if (existsSync(v4SourcePath)) {
   zip.addLocalFolder(v4SourcePath, "v4");
+
+  copyFileSync(
+    path.join(v4SourcePath, "create", "selector.json"),
+    path.join(BUILD_PATH, "create-selector.json")
+  );
+  copyFileSync(
+    path.join(v4SourcePath, "modify", "selector.json"),
+    path.join(BUILD_PATH, "modify-selector.json")
+  );
+
+  const metadataZip = new AdmZip();
+  addV4MetadataFiles(metadataZip, v4SourcePath, "v4");
+  metadataZip.writeZip(path.join(BUILD_PATH, "templates-metadata.zip"));
 }
 
 console.log(`Generating v4 templates.zip (version ${version})`);

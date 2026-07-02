@@ -1,4 +1,23 @@
 {
-  "$schema": "../../schema/questions.schema.json",
-  "questions": []
+  "$schema": "../../schema/question.schema.json",
+  "questions": [
+    {
+      "name": "azureOpenAIKey",
+      "type": "text",
+      "title": "Input Azure OpenAI service key now or set it later in the project",
+      "optional": true
+    },
+    {
+      "name": "azureOpenAIEndpoint",
+      "type": "text",
+      "title": "Input Azure OpenAI service endpoint now or set it later in the project",
+      "optional": true
+    },
+    {
+      "name": "azureOpenAIDeploymentName",
+      "type": "text",
+      "title": "Input Azure OpenAI deployment name",
+      "optional": true
+    }
+  ]
 }

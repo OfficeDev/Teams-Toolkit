@@ -1,0 +1,71 @@
+{
+  "$schema": "../../schema/question.schema.json",
+  "questions": [
+    {
+      "name": "apiSpecLocation",
+      "type": "text",
+      "title": "OpenAPI Description Document",
+      "placeholder": "https://example.com/openapi.yaml or ./openapi.yaml",
+      "prompt": "Enter an OpenAPI description document URL or local path.",
+      "cliShortName": "a",
+      "cliDescription": "OpenAPI description document location."
+    },
+    {
+      "name": "apiOperations",
+      "type": "multiSelect",
+      "title": "API Operations",
+      "optionsFrom": "openapi.operations",
+      "optionsFromParams": {
+        "apiSpecLocation": { "expr": "apiSpecLocation" }
+      },
+      "cliDescription": "API operations to include in the custom API agent."
+    },
+    {
+      "name": "llmService",
+      "type": "singleSelect",
+      "title": "Service for Large Language Model (LLM)",
+      "placeholder": "Select a service to access LLMs",
+      "default": "llm-service-azure-openai",
+      "staticOptions": [
+        {
+          "id": "llm-service-azure-openai",
+          "label": "Azure OpenAI",
+          "detail": "Use Azure OpenAI as the language model service."
+        },
+        {
+          "id": "llm-service-openai",
+          "label": "OpenAI",
+          "detail": "Use OpenAI as the language model service."
+        }
+      ]
+    },
+    {
+      "name": "openAIKey",
+      "type": "text",
+      "title": "Input OpenAI service key now or set it later in the project.",
+      "condition": { "equals": { "llmService": "llm-service-openai" } },
+      "optional": true
+    },
+    {
+      "name": "azureOpenAIKey",
+      "type": "text",
+      "title": "Input Azure OpenAI service key now or set it later in the project",
+      "condition": { "equals": { "llmService": "llm-service-azure-openai" } },
+      "optional": true
+    },
+    {
+      "name": "azureOpenAIEndpoint",
+      "type": "text",
+      "title": "Input Azure OpenAI service endpoint now or set it later in the project",
+      "condition": { "equals": { "llmService": "llm-service-azure-openai" } },
+      "optional": true
+    },
+    {
+      "name": "azureOpenAIDeploymentName",
+      "type": "text",
+      "title": "Input Azure OpenAI deployment name",
+      "condition": { "equals": { "llmService": "llm-service-azure-openai" } },
+      "optional": true
+    }
+  ]
+}

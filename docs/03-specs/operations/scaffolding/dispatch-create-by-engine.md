@@ -91,7 +91,7 @@ adds no new transitional state of its own.
 | `inputs` | `Inputs` (`@microsoft/teamsfx-api`) | the host inputs bag; pre-filled CLI args / URL seeds are read as `entryParams`, and the routing decision + collected answers are merged back so the generator dispatches on them |
 | `ui` | `UserInteraction` (`@microsoft/teamsfx-api`) | the host surface; the only non-v4 type the funnel halves touch (INV-7 preserved) |
 | `surface` | `SurfaceId` (`"vscode"` \| `"cli"` \| …) | scopes option filtering (e.g. `start-with-github-copilot` only on `vscode`) — passed straight through to `runCreateSelector` |
-| `deps` | `{ flagReader?, optionsProvider?, runSelector?, resolveByTemplateId?, runInputs?, collectCreateFloor?, scaffoldDeclarative?, createV3? }` (injected, defaulted) | feature-flag reader (default env-backed), Q2 provider registry (default remote-only `mcp.serverTypes`), the two funnel halves (`runSelector` for the Q1 walk + `resolveByTemplateId` for the preset-`template-name` short-circuit), the v4 create-floor collection (`collectCreateFloor`, reusing the v3 `folderQuestion` / `appNameQuestion`), the declarative scaffold, and the v3 handler (`createV3` defaults to `FxCore.createProject` bound) — all defaulted to the real implementations and stubbable for isolation in tests |
+| `deps` | `{ flagReader?, optionsProvider?, runSelector?, resolveByTemplateId?, runInputs?, collectCreateFloor?, scaffoldDeclarative?, createV3? }` (injected, defaulted) | feature-flag reader (default env-backed), Q2 provider registry (default remote-only `mcp.serverTypes`), the two funnel halves (`runSelector` for the Q1 walk + `resolveByTemplateId` for the preset-`template-name` short-circuit), the v4 create-floor collection (`collectCreateFloor`, using the shared floor question definitions directly through the host UI), the declarative scaffold, and the v3 handler (`createV3` defaults to `FxCore.createProject` bound) — all defaulted to the real implementations and stubbable for isolation in tests |
 
 ## Outputs
 
@@ -124,8 +124,11 @@ adds no new transitional state of its own.
 | DCE-11 | L1 | flag **on**, `inputs["template-name"] = "da/mcp-server"` preset, a selector whose route is `engine:"v4"` | `createProjectFrontDoor` | resolves via `resolveByTemplateId` (no Q1 walk) to `engine:"v4"`; runs Q2 via `runCreateInputs` then `scaffoldDeclarativeFromV4Channel`; `runSelector` is **not** called |
 | DCE-12 | L1 | flag **on**, `inputs["template-name"]` preset to an id with **no** selector route | `createProjectFrontDoor` | `resolveByTemplateId` returns the coexistence default `engine:"v3"` and delegates to `createV3` — any preset `TemplateNames` value scaffolds exactly as flag-off, whether or not the selector happens to expose it |
 | DCE-13 | L1 | flag **on**, `inputs.nonInteractive = true`, **no** preset `template-name` | `createProjectFrontDoor` | walks Q1 via `runSelector` with `interactive:false`, so an un-pre-filled gated dimension is a `BuildTargetMissingDimension` `UserError` (a non-interactive surface never silently prompts) rather than a hang |
-| DCE-14 | L1 | flag **on**, the DA+MCP v4 route, a scripted UI answering Q2 then the floor | `createProjectFrontDoor` | after `runCreateInputs` (Q2) and **before** `scaffoldDeclarativeFromV4Channel`, the front door collects the create floor (`folder` + `app-name`) by reusing the v3 `folderQuestion` / `appNameQuestion`, and the answers land on the same `inputs` bag the scaffold then reads (the v4 path has no `QuestionMW`, so without this step the scaffold hits `MissingRequiredInputError: folder`) |
+| DCE-14 | L1 | flag **on**, the DA+MCP v4 route, a scripted UI answering Q2 then the floor | `createProjectFrontDoor` | after `runCreateInputs` (Q2) and **before** `scaffoldDeclarativeFromV4Channel`, the front door collects the create floor (`folder` + `app-name`) directly through the host UI using the shared floor question definitions, without invoking the v3 question tree visitor; the answers land on the same `inputs` bag the scaffold then reads (without this step the scaffold hits `MissingRequiredInputError: folder`) |
 | DCE-15 | L1 | flag **on**, the v4 route, a scripted UI that cancels the create-floor prompt | `createProjectFrontDoor` | `err` is the cancellation `UserError` propagated unchanged; **no** scaffold occurs |
+| DCE-19 | L1 | flag **on**, a v4 target whose id has a known v3 template equivalent | `createProjectFrontDoor` resolves the target | the front door stores the mapped v3 template id on `inputs["template-name"]` before Q2 runs, so v4 scaffold-level `generate-template` telemetry can report a v3-compatible `template-name` and continue joining with command-level `create-project`; create-floor collection still runs and is not short-circuited by the resolved template name |
+| DCE-20 | L1 | flag **on**, a v4 target whose id has no mapping entry | `createProjectFrontDoor` resolves the target | `inputs["template-name"]` falls back to the v4 target id itself, preserving a stable match key for `generate-template` telemetry |
+| DCE-21 | L1 | flag **on**, the v4 scaffold succeeds or fails after target resolution | `scaffoldV4` | emits `generate-template` success/error telemetry with `template-name = <mapped-or-fallback-template-id>-<language-key>` and the resolved v4 package source/version/digest properties, so existing OKR queries can continue to join `generate-template` with `create-project` by correlation id |
 
 ## Flow
 
@@ -136,7 +139,7 @@ flowchart TD
   flag -- on --> sel["runCreateSelector(floor, ui, surface) → BuildTarget"]
   sel --> eng{"engine"}
   eng -- "surface-action" --> act["return {projectPath:'', shouldInvokeTeamsAgent:true}\n(no Q2, no scaffold)"] --> done
-  eng -- "v4" --> q2v4["runCreateInputs(floor, locator, answers, ui) → Answers"] --> floor["collectCreateFloor(inputs, ui)\n(folder + app-name, via v3 folderQuestion/appNameQuestion)"] --> sc["scaffoldDeclarativeFromV4Channel(locator, answers)"] --> done
+  eng -- "v4" --> q2v4["runCreateInputs(floor, locator, answers, ui) → Answers"] --> floor["collectCreateFloor(inputs, ui)\n(folder + app-name, direct host UI)"] --> sc["scaffoldDeclarativeFromV4Channel(locator, answers)"] --> done
   eng -- "v3" --> pf["pre-fill answers → QuestionNames.*"] --> cv3["createV3(inputs)\n(QuestionMW skips Q1, asks Q2) → v3 generator"] --> done
   sel -. cancel .-> e(["err(UserError)"])
   q2v4 -. cancel/invalid .-> e
@@ -189,13 +192,11 @@ flowchart TD
   shipped v3 CLI is unchanged.
 - **INV-9** — The v4 path collects its own create floor. Because the front door
   carries no `QuestionMW`, the `engine:"v4"` branch asks `folder` + `app-name`
-  itself — **after** Q2, **before** the scaffold — by reusing the v3
-  `folderQuestion` / `appNameQuestion` through `traverse` (DCE-14). This lives in
-  the **seam** (the composition-root `collectCreateFloor`), not `src/v4`, so INV-4
-  / INV-7 hold. The `traverse` short-circuit on a preset `template-name` and the
-  `questionVisitor` preset-skip mean a non-interactive surface (CLI `-f` / `-n`) is
-  never re-prompted — the same floor the v3 `QuestionMW` collects last; a floor
-  cancellation propagates unchanged with no scaffold (DCE-15).
+  itself — **after** Q2, **before** the scaffold — using the shared floor question
+  definitions directly through the host UI (DCE-14). This lives in the **seam**
+  (the composition-root `collectCreateFloor`), not `src/v4`, so INV-4 / INV-7
+  hold. Preset `folder` / `app-name` values are reused and never re-prompted; a
+  floor cancellation propagates unchanged with no scaffold (DCE-15).
 
 ## Notes
 

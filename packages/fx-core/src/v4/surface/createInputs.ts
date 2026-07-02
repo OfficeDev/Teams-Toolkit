@@ -1,7 +1,14 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { FxError, SystemError, UserError, UserInteraction } from "@microsoft/teamsfx-api";
+import {
+  FuncValidation,
+  FxError,
+  Inputs,
+  SystemError,
+  UserError,
+  UserInteraction,
+} from "@microsoft/teamsfx-api";
 import {
   ListAPIInfo,
   ParseOptions,
@@ -10,16 +17,22 @@ import {
   Utils,
   ValidationStatus,
 } from "@microsoft/m365-spec-parser";
-import { Result, err } from "neverthrow";
+import fs from "fs-extra";
+import { Result, err, ok } from "neverthrow";
+import { MCPFetchResult, fetchMCPTools } from "../../component/utils/mcpToolFetcher";
+import { ODRProvider, type ODRServer } from "../../component/utils/odrProvider";
+import { readBooleanFeatureFlag } from "../../common/featureFlags";
 import {
   CollectInputsPort,
   OptionsProvider,
   OptionsSchema,
+  QuestionSpec,
   Validator,
   collectInputs,
 } from "../collectInputs/collectInputs";
-import { openCreateQuestions } from "../distribution/createQuestions";
-import { openDeclarativePackage } from "../distribution/declarativePackage";
+import { InputValidationError, MissingRequiredInputError } from "../../error/common";
+import { QuestionNames, appNameQuestion, folderQuestion } from "../../question";
+import { openDeclarativePackageMetadata } from "../distribution/declarativePackage";
 import { evaluateExpression } from "../expression/evaluateExpression";
 import { parseMcpStaticToolsJson } from "../mcp/mcpStaticTools";
 import { Answers, DeclarativeLocator } from "../model/dataModel";
@@ -29,12 +42,58 @@ import { createUiPromptUI } from "./uiPromptUI";
 
 /** Live create-path surface wiring for `collect-inputs`. See collect-create-inputs spec. */
 
-/** Default `mcp.serverTypes` provider; live local detection is injected later. */
-const remoteOnlyServerTypes: OptionsProvider = {
-  fetch() {
-    return { options: [{ id: "remote", label: "Remote" }] };
-  },
+const remoteMcpServerType = { id: "remote", label: "Remote" };
+const localMcpServerType = { id: "local", label: "Local" };
+const LANGUAGE_LABELS: Record<string, string> = {
+  javascript: "JavaScript",
+  typescript: "TypeScript",
+  csharp: "C#",
+  python: "Python",
 };
+
+function createLocalServerCache(
+  listLocalMcpServers: () => Promise<ODRServer[]>
+): () => Promise<ODRServer[]> {
+  let cached: Promise<ODRServer[]> | undefined;
+  return () => {
+    if (cached === undefined) {
+      cached = listLocalMcpServers();
+    }
+    return cached;
+  };
+}
+
+function createMcpServerTypesProvider(localServers: () => Promise<ODRServer[]>): OptionsProvider {
+  return {
+    async fetch() {
+      const servers = await localServers();
+      return {
+        options:
+          servers.length > 0 ? [remoteMcpServerType, localMcpServerType] : [remoteMcpServerType],
+      };
+    },
+  };
+}
+
+function localServerDetail(server: ODRServer): string {
+  const toolsDetail = `${server.tools.length} tools available`;
+  return server.description ? `${server.description} (${toolsDetail})` : toolsDetail;
+}
+
+function createLocalMcpServersProvider(localServers: () => Promise<ODRServer[]>): OptionsProvider {
+  return {
+    async fetch() {
+      const servers = await localServers();
+      return {
+        options: servers.map((server) => ({
+          id: server.name,
+          label: server.display_name || server.name,
+          detail: localServerDetail(server),
+        })),
+      };
+    },
+  };
+}
 
 const openApiMethods = [
   "get",
@@ -128,36 +187,96 @@ const openApiOperationsProvider: OptionsProvider = {
   },
 };
 
-const mcpToolsProvider: OptionsProvider = {
-  fetch(params) {
-    const toolsJson = params.toolsJson?.trim();
-    if (!toolsJson) {
-      throw new UserError({
-        source: "Scaffold",
-        name: "McpToolsJsonMissing",
-        message: "MCP tools JSON is required before listing tools.",
-      });
-    }
-    const parsed = parseMcpStaticToolsJson(toolsJson);
-    if (!parsed.ok) {
-      throw new UserError({ source: "Scaffold", name: parsed.code, message: parsed.message });
-    }
-    return {
-      options: parsed.tools.map((tool) => ({
-        id: tool.name,
-        label: tool.name,
-        detail: tool.description,
-      })),
-    };
-  },
-};
+function mcpToolsJsonFromFetchResult(
+  serverUrl: string | undefined,
+  result: MCPFetchResult
+): string {
+  if (result.requiresAuth) {
+    throw new UserError({
+      source: "Scaffold",
+      name: "McpAuthRequired",
+      message: `The MCP server${serverUrl ? ` at ${serverUrl}` : ""} requires authentication.`,
+    });
+  }
+  if (result.tools.length === 0) {
+    throw new UserError({
+      source: "Scaffold",
+      name: "McpToolsNotFound",
+      message: `No tools were discovered from the MCP server${serverUrl ? ` at ${serverUrl}` : ""}.`,
+    });
+  }
+  return JSON.stringify({ tools: result.tools });
+}
+
+function createMcpToolsProvider(
+  fetchTools: (serverUrl: string) => Promise<MCPFetchResult>
+): OptionsProvider {
+  return {
+    async fetch(params) {
+      let toolsJson = params.toolsJson?.trim();
+      const toolsFilePath = params.toolsFilePath?.trim();
+      if (!toolsJson && toolsFilePath) {
+        try {
+          toolsJson = fs.readFileSync(toolsFilePath, "utf8");
+        } catch {
+          throw new UserError({
+            source: "Scaffold",
+            name: "McpToolsFileReadFailed",
+            message: "Failed to read the MCP tools file.",
+          });
+        }
+      }
+      const serverUrl = params.serverUrl?.trim();
+      if (!toolsJson && serverUrl) {
+        try {
+          toolsJson = mcpToolsJsonFromFetchResult(serverUrl, await fetchTools(serverUrl));
+        } catch (error) {
+          if (error instanceof UserError) {
+            throw error;
+          }
+          throw new UserError({
+            source: "Scaffold",
+            name: "McpToolsFetchFailed",
+            message: `Failed to fetch tools from the MCP server at ${serverUrl}.`,
+          });
+        }
+      }
+      if (!toolsJson) {
+        throw new UserError({
+          source: "Scaffold",
+          name: "McpToolsJsonMissing",
+          message: "MCP tools JSON is required before listing tools.",
+        });
+      }
+      const parsed = parseMcpStaticToolsJson(toolsJson);
+      if (!parsed.ok) {
+        throw new UserError({ source: "Scaffold", name: parsed.code, message: parsed.message });
+      }
+      return {
+        options: parsed.tools.map((tool) => ({
+          id: tool.name,
+          label: tool.name,
+          detail: tool.description,
+        })),
+        derived: { toolsJson },
+      };
+    },
+  };
+}
 
 /** Default `optionsFrom` provider registry. */
-const defaultProviders: Record<string, OptionsProvider> = {
-  "mcp.serverTypes": remoteOnlyServerTypes,
-  "mcp.tools": mcpToolsProvider,
-  "openapi.operations": openApiOperationsProvider,
-};
+function createDefaultProviders(
+  fetchTools: (serverUrl: string) => Promise<MCPFetchResult>,
+  listLocalMcpServers: () => Promise<ODRServer[]>
+): Record<string, OptionsProvider> {
+  const localServers = createLocalServerCache(listLocalMcpServers);
+  return {
+    "mcp.serverTypes": createMcpServerTypesProvider(localServers),
+    "mcp.localServers": createLocalMcpServersProvider(localServers),
+    "mcp.tools": createMcpToolsProvider(fetchTools),
+    "openapi.operations": openApiOperationsProvider,
+  };
+}
 
 /** The `"uri"` validator: a value that does not parse as a URL is user-fixable. */
 const uriValidator: Validator = (value: string): string | undefined => {
@@ -218,6 +337,148 @@ const validators: Record<string, Validator> = {
   graphConnectorConnectionId: graphConnectorConnectionIdValidator,
 };
 
+interface CreateFloorTail {
+  questions: QuestionSpec[];
+  answers: Answers;
+  validators: Record<string, Validator>;
+}
+
+function isFuncValidation(value: unknown): value is FuncValidation<string> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof Reflect.get(value, "validFunc") === "function"
+  );
+}
+
+function getStringValidationFunc(
+  validation: FuncValidation<string> | object | undefined
+): FuncValidation<string>["validFunc"] | undefined {
+  return isFuncValidation(validation) ? validation.validFunc : undefined;
+}
+
+async function resolveStringValue(
+  value:
+    | string
+    | ((inputs: Inputs) => string | undefined | Promise<string | undefined>)
+    | undefined,
+  inputs: Inputs
+): Promise<string | undefined> {
+  return typeof value === "function" ? await value(inputs) : value;
+}
+
+async function createFloorTail(
+  inputs: Inputs | undefined,
+  languages: string[]
+): Promise<Result<CreateFloorTail, FxError>> {
+  const questions: QuestionSpec[] = [];
+  const answers: Answers = {};
+
+  if (languages.length > 1) {
+    questions.push({
+      name: "language",
+      type: "singleSelect",
+      title: "Programming Language",
+      staticOptions: languages.map((language) => ({
+        id: language,
+        label: LANGUAGE_LABELS[language] ?? language,
+      })),
+    });
+  } else if (languages.length === 1 && languages[0] !== "common") {
+    answers.language = languages[0];
+  }
+
+  if (inputs === undefined) {
+    return ok({ questions, answers, validators: {} });
+  }
+
+  const folder = folderQuestion();
+  const appName = appNameQuestion();
+
+  const existingFolder = inputs[QuestionNames.Folder];
+  if (typeof existingFolder === "string") {
+    answers[QuestionNames.Folder] = existingFolder;
+  } else {
+    const defaultFolder = await resolveStringValue(folder.default, inputs);
+    if (inputs.nonInteractive) {
+      if (defaultFolder !== undefined) {
+        answers[QuestionNames.Folder] = defaultFolder;
+      }
+    } else {
+      questions.push({
+        name: folder.name,
+        type: "folder",
+        title: (await resolveStringValue(folder.title, inputs)) ?? folder.name,
+        placeholder: await resolveStringValue(folder.placeholder, inputs),
+        prompt: await resolveStringValue(folder.prompt, inputs),
+        default: defaultFolder,
+      });
+    }
+  }
+
+  const existingAppName = inputs[QuestionNames.AppName];
+  if (typeof existingAppName === "string") {
+    answers[QuestionNames.AppName] = existingAppName;
+  } else {
+    const defaultAppName = await resolveStringValue(appName.default, inputs);
+    if (inputs.nonInteractive) {
+      if (defaultAppName === undefined) {
+        return err(new MissingRequiredInputError(QuestionNames.AppName, "createFrontDoor"));
+      }
+      answers[QuestionNames.AppName] = defaultAppName;
+    } else {
+      questions.push({
+        name: appName.name,
+        type: "text",
+        title: (await resolveStringValue(appName.title, inputs)) ?? appName.name,
+        placeholder: await resolveStringValue(appName.placeholder, inputs),
+        prompt: await resolveStringValue(appName.prompt, inputs),
+        default: defaultAppName,
+        validation: "appName",
+      });
+    }
+  }
+
+  const validateAppName = getStringValidationFunc(appName.validation);
+  const floorValidators: Record<string, Validator> = {};
+  if (validateAppName !== undefined) {
+    floorValidators.appName = async (value, currentAnswers) => {
+      const validationInputs: Inputs = { ...inputs };
+      const folderAnswer = currentAnswers[QuestionNames.Folder];
+      if (typeof folderAnswer === "string") {
+        validationInputs[QuestionNames.Folder] = folderAnswer;
+      }
+      return validateAppName(value, validationInputs);
+    };
+  }
+
+  return ok({ questions, answers, validators: floorValidators });
+}
+
+async function validateCreateFloorAnswers(
+  inputs: Inputs,
+  answers: Answers
+): Promise<Result<undefined, FxError>> {
+  const appName = answers[QuestionNames.AppName];
+  if (typeof appName !== "string") {
+    return err(new MissingRequiredInputError(QuestionNames.AppName, "createFrontDoor"));
+  }
+  const validateAppName = getStringValidationFunc(appNameQuestion().validation);
+  if (validateAppName === undefined) {
+    return ok(undefined);
+  }
+  const validationInputs: Inputs = { ...inputs };
+  const folderAnswer = answers[QuestionNames.Folder];
+  if (typeof folderAnswer === "string") {
+    validationInputs[QuestionNames.Folder] = folderAnswer;
+  }
+  const message = await validateAppName(appName, validationInputs);
+  if (message !== undefined) {
+    return err(new InputValidationError(QuestionNames.AppName, message, "createFrontDoor"));
+  }
+  return ok(undefined);
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -243,7 +504,7 @@ const CSHARP_LANGUAGE = "csharp";
 
 /** The default env-backed feature-flag reader (a flag is on iff its env var is exactly `"true"`). */
 function envFlagReader(name: string): boolean {
-  return process.env[name] === "true";
+  return readBooleanFeatureFlag(name);
 }
 
 /** Gate `csharp` by surface and the .NET flag; other languages pass through. */
@@ -273,6 +534,12 @@ export interface CreateInputsDeps {
   flagReader?: (name: string) => boolean;
   /** The host surface (`vscode` / `cli` / `vs`) — gates the `csharp` language axis (default `vscode`). */
   surface?: string;
+  /** Full create inputs when the create floor (`folder` / `app-name`) should be appended after Q2. */
+  inputs?: Inputs;
+  /** Fetch static MCP tools when CLI did not provide a tools file path. */
+  fetchMcpTools?: (serverUrl: string) => Promise<MCPFetchResult>;
+  /** List available local MCP servers for the dynamic MCP create flow. */
+  listLocalMcpServers?: () => Promise<ODRServer[]>;
 }
 
 /** Run one create template's Q2 over the host surface. */
@@ -283,12 +550,7 @@ export async function runCreateInputs(
   ui: UserInteraction,
   deps: CreateInputsDeps = {}
 ): Promise<Result<Answers, FxError>> {
-  const questions = openCreateQuestions(floorBytes, locator);
-  if (questions.isErr()) {
-    return err(questions.error);
-  }
-
-  const opened = openDeclarativePackage(floorBytes, locator);
+  const opened = openDeclarativePackageMetadata(floorBytes, locator);
   if (opened.isErr()) {
     return err(opened.error);
   }
@@ -299,20 +561,50 @@ export async function runCreateInputs(
     deps.flagReader ?? envFlagReader
   );
 
-  const providers = { ...defaultProviders, ...(deps.optionsProvider ?? {}) };
+  const providers = {
+    ...createDefaultProviders(
+      deps.fetchMcpTools ?? fetchMCPTools,
+      deps.listLocalMcpServers ?? ODRProvider.listServers
+    ),
+    ...(deps.optionsProvider ?? {}),
+  };
   const expressionPort = createExpressionPort(deps.flagReader);
+  const surface = deps.surface ?? "vscode";
+  const floorTail = await createFloorTail(deps.inputs, languages);
+  if (floorTail.isErr()) {
+    return err(floorTail.error);
+  }
+  const validatorRegistry = { ...validators, ...floorTail.value.validators };
   const port: CollectInputsPort = {
     ui: createUiPromptUI(ui),
     optionsProvider: (providerId) => providers[providerId],
-    validator: (name) => validators[name],
+    validator: (name) => validatorRegistry[name],
     evaluate: (node, scope) => evaluateExpression(node, scope, expressionPort),
   };
+  const initialAnswers = {
+    ...entryParams,
+    ...floorTail.value.answers,
+    surface,
+    nonInteractive: deps.inputs?.nonInteractive === true ? "true" : "false",
+  };
 
-  return collectInputs(
-    questions.value,
+  const answers = await collectInputs(
+    [...opened.value.questions, ...floorTail.value.questions],
     declaredOptionsSchema(descriptor),
-    entryParams,
+    initialAnswers,
     languages,
-    port
+    port,
+    { appendLanguage: false }
   );
+  if (answers.isErr()) {
+    return err(answers.error);
+  }
+  delete answers.value.nonInteractive;
+  if (deps.inputs !== undefined) {
+    const validation = await validateCreateFloorAnswers(deps.inputs, answers.value);
+    if (validation.isErr()) {
+      return err(validation.error);
+    }
+  }
+  return answers;
 }

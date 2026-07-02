@@ -3,6 +3,7 @@
 
 import { ExpressionRuntimePort, WhitelistFn } from "../expression/evaluateExpression";
 import * as path from "path";
+import { readBooleanFeatureFlag } from "../../common/featureFlags";
 
 /** Closed v4 render-context function whitelist. See build-render-context spec. */
 
@@ -45,8 +46,7 @@ const WHITELIST = new Map<string, WhitelistFn>([
 
 /** Default feature-flag reader: an env-backed truthy check (`"true"` / `"1"`). */
 function envFlagReader(name: string): boolean {
-  const value = process.env[name];
-  return value === "true" || value === "1";
+  return readBooleanFeatureFlag(name);
 }
 
 /** Build the real pure expression runtime port. */

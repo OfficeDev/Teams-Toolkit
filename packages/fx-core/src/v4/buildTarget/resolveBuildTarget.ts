@@ -41,6 +41,17 @@ export interface SelectorSpec {
   routes: SelectorRoute[];
 }
 
+/** Build a v4 membership test from the selector's own v4 routes. */
+export function v4RouteRegistryFromSelector(spec: SelectorSpec): (templateId: string) => boolean {
+  const templateIds = new Set<string>();
+  for (const route of spec.routes) {
+    if (route.engine === "v4" && route.templateId !== undefined) {
+      templateIds.add(route.templateId);
+    }
+  }
+  return (templateId: string) => templateIds.has(templateId);
+}
+
 /** One interactive Q1 prompt outcome. */
 export type PromptResult = { kind: "value"; value: string } | { kind: "back" };
 

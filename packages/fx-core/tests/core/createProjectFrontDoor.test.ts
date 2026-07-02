@@ -1,17 +1,29 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { CreateProjectResult, FxError, Inputs, Platform, UserError } from "@microsoft/teamsfx-api";
-import { UserInteraction } from "@microsoft/teamsfx-api";
-import fs from "fs-extra";
+import {
+  CreateProjectResult,
+  FxError,
+  Inputs,
+  Platform,
+  SystemError,
+  UserError,
+  UserInteraction,
+} from "@microsoft/teamsfx-api";
 import { Result, err, ok } from "neverthrow";
-import os from "os";
-import path from "path";
 import { assert } from "vitest";
-import { Answers, BuildTarget, DeclarativeLocator } from "../../src/v4";
+import {
+  Answers,
+  BuildTarget,
+  DeclarativeLocator,
+  TemplateArtifactKind,
+  TemplateArtifactSnapshot,
+} from "../../src/v4";
+import type { ResolvedV4ChannelPackage } from "../../src/component/generator/v4TemplateBridge";
 import { CreateFrontDoorDeps, createProjectFrontDoor } from "../../src/core/createProjectFrontDoor";
 import { FeatureFlags } from "../../src/common/featureFlags";
 import { QuestionNames } from "../../src/question/questionNames";
+import { TemplateNames } from "../../src/component/generator/templates/templateNames";
 
 /**
  * Tests for docs/03-specs/operations/scaffolding/dispatch-create-by-engine.md.
@@ -77,13 +89,23 @@ const okResult = (projectPath: string): Promise<Result<CreateProjectResult, FxEr
   Promise.resolve(ok({ projectPath }));
 const okAnswers = (answers: Answers): Promise<Result<Answers, FxError>> =>
   Promise.resolve(ok(answers));
+const okArtifactSnapshot = (
+  snapshot: TemplateArtifactSnapshot
+): Promise<Result<TemplateArtifactSnapshot, FxError>> => {
+  const result: Result<TemplateArtifactSnapshot, FxError> = ok<TemplateArtifactSnapshot, FxError>(
+    snapshot
+  );
+  return Promise.resolve(result);
+};
 const okTarget = (target: BuildTarget): Promise<Result<BuildTarget, FxError>> =>
   Promise.resolve(ok(target));
 const okFloor = (): Promise<Result<undefined, FxError>> => Promise.resolve(ok(undefined));
 const okScaffold = (
   _inputs: Inputs,
   _target: BuildTarget,
-  _answers: Answers
+  _answers: Answers,
+  _flagReader?: (name: string) => boolean,
+  _resolvedPackage?: ResolvedV4ChannelPackage
 ): Promise<Result<CreateProjectResult, FxError>> => okResult("/v4");
 
 /** A typed `runCreateSelector` stub that records its `(floor, ui, surface, deps)` args. */
@@ -97,6 +119,8 @@ function selectorRecorder(target: BuildTarget) {
         flagReader?: (name: string) => boolean;
         interactive?: boolean;
         prefilled?: Record<string, string>;
+        selectorBytesKind?: "zip" | "json";
+        v4Registry?: (templateId: string) => boolean;
       }
     ): Promise<Result<BuildTarget, FxError>> => okTarget(target)
   );
@@ -115,6 +139,39 @@ function inputsRecorder(answers: Answers) {
   );
 }
 
+function artifactSnapshotRecorder(bytesByKind: Record<TemplateArtifactKind, Buffer>): {
+  snapshot: TemplateArtifactSnapshot;
+  calls: TemplateArtifactKind[];
+} {
+  const calls: TemplateArtifactKind[] = [];
+  return {
+    calls,
+    snapshot: {
+      version: "6.11.0",
+      origin: "online",
+      artifacts: {
+        "create-selector": {
+          kind: "create-selector",
+          file: "create-selector.json",
+          digest: "sha256:create",
+        },
+        "modify-selector": {
+          kind: "modify-selector",
+          file: "modify-selector.json",
+          digest: "sha256:modify",
+        },
+        metadata: { kind: "metadata", file: "templates-metadata.zip", digest: "sha256:metadata" },
+        templates: { kind: "templates", file: "templates.zip", digest: "sha256:templates" },
+      },
+      bytes(kind: TemplateArtifactKind): Promise<Result<Buffer, FxError>> {
+        calls.push(kind);
+        const result: Result<Buffer, FxError> = ok<Buffer, FxError>(bytesByKind[kind]);
+        return Promise.resolve(result);
+      },
+    },
+  };
+}
+
 /** A typed `resolveCreateTargetByTemplateId` stub that records its `(floor, templateId)` args. */
 function resolveByTemplateIdRecorder(target: BuildTarget) {
   return recorder(
@@ -129,7 +186,9 @@ const failCreateV3 = (_inputs: Inputs): Promise<Result<CreateProjectResult, FxEr
 const failScaffoldV4 = (
   _inputs: Inputs,
   _target: BuildTarget,
-  _answers: Answers
+  _answers: Answers,
+  _flagReader?: (name: string) => boolean,
+  _resolvedPackage?: ResolvedV4ChannelPackage
 ): Promise<Result<CreateProjectResult, FxError>> => {
   throw new Error("scaffoldV4 must not run on this path");
 };
@@ -203,8 +262,12 @@ describe("createProjectFrontDoor (dispatch-create-by-engine)", () => {
     };
     const createV3 = recorder((_inputs: Inputs) => okResult("/v3"));
     const runInputs = inputsRecorder(q2);
-    const scaffoldV4 = recorder((_i: Inputs, _t: BuildTarget, _a: Answers) => okResult("/v4"));
+    const scaffoldV4 = recorder(
+      (_i: Inputs, _t: BuildTarget, _a: Answers, _flagReader: (name: string) => boolean) =>
+        okResult("/v4")
+    );
     const runSelector = selectorRecorder(V4_TARGET);
+    const flagReader = (name: string): boolean => name === FeatureFlags.V4Enabled.name;
 
     const res = await createProjectFrontDoor(
       baseInputs(),
@@ -214,6 +277,7 @@ describe("createProjectFrontDoor (dispatch-create-by-engine)", () => {
         runSelector: runSelector.fn,
         runInputs: runInputs.fn,
         collectCreateFloor: okFloor,
+        flagReader,
       })
     );
 
@@ -225,6 +289,190 @@ describe("createProjectFrontDoor (dispatch-create-by-engine)", () => {
     assert.equal(runInputs.calls[0][4]?.surface, "vscode"); // host platform → inputs surface (gates csharp)
     assert.deepEqual(scaffoldV4.calls[0][1], V4_TARGET);
     assert.deepEqual(scaffoldV4.calls[0][2], q2);
+    assert.strictEqual(scaffoldV4.calls[0][3], flagReader);
+  });
+
+  it("DCE-02b: interactive v4 uses one staged snapshot for selector, metadata, and templates", async () => {
+    const selectorBytes = Buffer.from("selector-json");
+    const metadataBytes = Buffer.from("metadata-zip");
+    const templatesBytes = Buffer.from("templates-zip");
+    const artifactSnapshot = artifactSnapshotRecorder({
+      "create-selector": selectorBytes,
+      "modify-selector": Buffer.from("modify-selector-json"),
+      metadata: metadataBytes,
+      templates: templatesBytes,
+    });
+    const runSelector = selectorRecorder(V4_TARGET);
+    const runInputs = inputsRecorder({ authType: "none" });
+    const scaffoldV4 = recorder(
+      (
+        _i: Inputs,
+        _t: BuildTarget,
+        _a: Answers,
+        _flagReader: (name: string) => boolean,
+        _resolvedPackage?: ResolvedV4ChannelPackage
+      ) => okResult("/v4")
+    );
+
+    const res = await createProjectFrontDoor(
+      baseInputs(),
+      deps({
+        artifactSnapshot: artifactSnapshot.snapshot,
+        v4Registry: () => true,
+        runSelector: runSelector.fn,
+        runInputs: runInputs.fn,
+        scaffoldV4: scaffoldV4.fn,
+        collectCreateFloor: okFloor,
+      })
+    );
+
+    assert.isTrue(res.isOk());
+    assert.deepEqual(artifactSnapshot.calls, ["create-selector", "metadata", "templates"]);
+    assert.strictEqual(runSelector.calls[0][0], selectorBytes);
+    assert.strictEqual(runSelector.calls[0][3]?.selectorBytesKind, "json");
+    assert.strictEqual(runSelector.calls[0][3]?.v4Registry?.("da/mcp-server"), true);
+    assert.strictEqual(runInputs.calls[0][0], metadataBytes);
+    assert.deepEqual(scaffoldV4.calls[0][4], {
+      source: {
+        origin: "online",
+        version: "6.11.0",
+        digest: "sha256:templates",
+        location: "templates.zip",
+      },
+      bytes: templatesBytes,
+    });
+  });
+
+  it("DCE-02c: interactive v4 resolves one staged artifact snapshot before walking Q1", async () => {
+    const selectorBytes = Buffer.from("selector-json");
+    const metadataBytes = Buffer.from("metadata-zip");
+    const templatesBytes = Buffer.from("templates-zip");
+    const artifactSnapshot = artifactSnapshotRecorder({
+      "create-selector": selectorBytes,
+      "modify-selector": Buffer.from("modify-selector-json"),
+      metadata: metadataBytes,
+      templates: templatesBytes,
+    });
+    const resolveArtifactSnapshotCalls: TemplateArtifactKind[] = [];
+    const resolveArtifactSnapshot = async (
+      kind: TemplateArtifactKind
+    ): Promise<Result<TemplateArtifactSnapshot, FxError>> => {
+      resolveArtifactSnapshotCalls.push(kind);
+      return await okArtifactSnapshot(artifactSnapshot.snapshot);
+    };
+    const runSelector = selectorRecorder(V4_TARGET);
+    const runInputs = inputsRecorder({ authType: "none" });
+    const scaffoldV4 = recorder(
+      (
+        _i: Inputs,
+        _t: BuildTarget,
+        _a: Answers,
+        _flagReader: (name: string) => boolean,
+        _resolvedPackage?: ResolvedV4ChannelPackage
+      ) => okResult("/v4")
+    );
+
+    const res = await createProjectFrontDoor(
+      baseInputs(),
+      deps({
+        resolveArtifactSnapshot,
+        v4Registry: () => true,
+        runSelector: runSelector.fn,
+        runInputs: runInputs.fn,
+        scaffoldV4: scaffoldV4.fn,
+        collectCreateFloor: okFloor,
+      })
+    );
+
+    assert.isTrue(res.isOk());
+    assert.deepEqual(resolveArtifactSnapshotCalls, ["create-selector"]);
+    assert.deepEqual(artifactSnapshot.calls, ["create-selector", "metadata", "templates"]);
+    assert.strictEqual(runSelector.calls[0][0], selectorBytes);
+    assert.strictEqual(runInputs.calls[0][0], metadataBytes);
+    assert.strictEqual(scaffoldV4.calls[0][4]?.bytes, templatesBytes);
+  });
+
+  it("returns staged artifact resolver and selector-byte errors before dispatching create", async () => {
+    const artifactError = new SystemError({
+      source: "Test",
+      name: "ArtifactResolveFailed",
+      message: "artifact failed",
+    });
+    const selectorError = new SystemError({
+      source: "Test",
+      name: "SelectorBytesFailed",
+      message: "selector bytes failed",
+    });
+    const selectorSnapshot = artifactSnapshotRecorder({
+      "create-selector": Buffer.from("selector-json"),
+      "modify-selector": Buffer.from("modify-selector-json"),
+      metadata: Buffer.from("metadata-zip"),
+      templates: Buffer.from("templates-zip"),
+    });
+    selectorSnapshot.snapshot.bytes = (kind: TemplateArtifactKind) =>
+      Promise.resolve(kind === "create-selector" ? err(selectorError) : ok(Buffer.from(kind)));
+
+    const resolverResult = await createProjectFrontDoor(
+      baseInputs(),
+      deps({ resolveArtifactSnapshot: () => Promise.resolve(err(artifactError)) })
+    );
+    const selectorResult = await createProjectFrontDoor(
+      baseInputs(),
+      deps({ artifactSnapshot: selectorSnapshot.snapshot })
+    );
+
+    assert.strictEqual(resolverResult._unsafeUnwrapErr(), artifactError);
+    assert.strictEqual(selectorResult._unsafeUnwrapErr(), selectorError);
+  });
+
+  it("returns staged metadata and template bytes errors before v4 scaffold", async () => {
+    const metadataError = new SystemError({
+      source: "Test",
+      name: "MetadataBytesFailed",
+      message: "metadata failed",
+    });
+    const templatesError = new SystemError({
+      source: "Test",
+      name: "TemplatesBytesFailed",
+      message: "templates failed",
+    });
+    const metadataSnapshot = artifactSnapshotRecorder({
+      "create-selector": Buffer.from("selector-json"),
+      "modify-selector": Buffer.from("modify-selector-json"),
+      metadata: Buffer.from("metadata-zip"),
+      templates: Buffer.from("templates-zip"),
+    });
+    metadataSnapshot.snapshot.bytes = (kind: TemplateArtifactKind) =>
+      Promise.resolve(kind === "metadata" ? err(metadataError) : ok(Buffer.from(kind)));
+    const templatesSnapshot = artifactSnapshotRecorder({
+      "create-selector": Buffer.from("selector-json"),
+      "modify-selector": Buffer.from("modify-selector-json"),
+      metadata: Buffer.from("metadata-zip"),
+      templates: Buffer.from("templates-zip"),
+    });
+    templatesSnapshot.snapshot.bytes = (kind: TemplateArtifactKind) =>
+      Promise.resolve(kind === "templates" ? err(templatesError) : ok(Buffer.from(kind)));
+
+    const metadataResult = await createProjectFrontDoor(
+      baseInputs(),
+      deps({
+        artifactSnapshot: metadataSnapshot.snapshot,
+        runSelector: selectorRecorder(V4_TARGET).fn,
+        runInputs: failRunInputs,
+      })
+    );
+    const templatesResult = await createProjectFrontDoor(
+      baseInputs(),
+      deps({
+        artifactSnapshot: templatesSnapshot.snapshot,
+        runSelector: selectorRecorder(V4_TARGET).fn,
+        runInputs: inputsRecorder({}).fn,
+        collectCreateFloor: okFloor,
+      })
+    );
+
+    assert.strictEqual(metadataResult._unsafeUnwrapErr(), metadataError);
+    assert.strictEqual(templatesResult._unsafeUnwrapErr(), templatesError);
   });
 
   it("DCE-03: the Q2 answers reach scaffoldV4 under the create locator", async () => {
@@ -234,7 +482,10 @@ describe("createProjectFrontDoor (dispatch-create-by-engine)", () => {
       authType: "none",
     };
     const runInputs = inputsRecorder(q2);
-    const scaffoldV4 = recorder((_i: Inputs, _t: BuildTarget, _a: Answers) => okResult("/v4"));
+    const scaffoldV4 = recorder(
+      (_i: Inputs, _t: BuildTarget, _a: Answers, _flagReader: (name: string) => boolean) =>
+        okResult("/v4")
+    );
 
     const res = await createProjectFrontDoor(
       baseInputs(),
@@ -276,8 +527,9 @@ describe("createProjectFrontDoor (dispatch-create-by-engine)", () => {
   });
 
   it("DCE-05: DT-off DA+MCP resolves the v4 static route and bypasses createV3", async () => {
-    const scaffoldV4 = recorder((_i: Inputs, _t: BuildTarget, _a: Answers) =>
-      okResult("/v4-static")
+    const scaffoldV4 = recorder(
+      (_i: Inputs, _t: BuildTarget, _a: Answers, _flagReader: (name: string) => boolean) =>
+        okResult("/v4-static")
     );
     const runInputs = recorder((_floor: Buffer, _locator: DeclarativeLocator) =>
       Promise.resolve(ok<Answers, FxError>({ selectedMcpTools: ["search"] }))
@@ -382,7 +634,10 @@ describe("createProjectFrontDoor (dispatch-create-by-engine)", () => {
       answers: {},
     });
     const runInputs = inputsRecorder(q2);
-    const scaffoldV4 = recorder((_i: Inputs, _t: BuildTarget, _a: Answers) => okResult("/v4"));
+    const scaffoldV4 = recorder(
+      (_i: Inputs, _t: BuildTarget, _a: Answers, _flagReader: (name: string) => boolean) =>
+        okResult("/v4")
+    );
 
     const res = await createProjectFrontDoor(
       presetInputs("da/mcp-server"),
@@ -399,6 +654,77 @@ describe("createProjectFrontDoor (dispatch-create-by-engine)", () => {
     assert.equal(runInputs.calls.length, 1);
     assert.equal(scaffoldV4.calls.length, 1);
     assert.deepEqual(runInputs.calls[0][1], { kind: "create", templateId: "da/mcp-server" });
+  });
+
+  it("DCE-11b: preset v4 resolves templates artifact before resolving by template id", async () => {
+    const artifactSnapshot = artifactSnapshotRecorder({
+      "create-selector": Buffer.from("selector-json"),
+      "modify-selector": Buffer.from("modify-selector-json"),
+      metadata: Buffer.from("metadata-zip"),
+      templates: Buffer.from("templates-zip"),
+    });
+    const resolveArtifactSnapshotCalls: TemplateArtifactKind[] = [];
+    const resolveArtifactSnapshot = async (
+      kind: TemplateArtifactKind
+    ): Promise<Result<TemplateArtifactSnapshot, FxError>> => {
+      resolveArtifactSnapshotCalls.push(kind);
+      return await okArtifactSnapshot(artifactSnapshot.snapshot);
+    };
+    const resolveByTemplateId = resolveByTemplateIdRecorder({
+      templateId: "da/mcp-server",
+      engine: "v4",
+      answers: {},
+    });
+    const runInputs = inputsRecorder({});
+
+    const res = await createProjectFrontDoor(
+      presetInputs("da/mcp-server"),
+      deps({
+        resolveArtifactSnapshot,
+        resolveByTemplateId: resolveByTemplateId.fn,
+        runInputs: runInputs.fn,
+        collectCreateFloor: okFloor,
+        scaffoldV4: okScaffold,
+      })
+    );
+
+    assert.isTrue(res.isOk());
+    assert.deepEqual(resolveArtifactSnapshotCalls, ["templates"]);
+    assert.strictEqual(resolveByTemplateId.calls[0][0].toString(), "templates-zip");
+    assert.deepEqual(artifactSnapshot.calls, ["templates", "metadata", "templates"]);
+  });
+
+  it("returns preset staged artifact resolver and template-byte errors before resolving by template id", async () => {
+    const resolverError = new SystemError({
+      source: "Test",
+      name: "PresetArtifactResolveFailed",
+      message: "artifact failed",
+    });
+    const templatesError = new SystemError({
+      source: "Test",
+      name: "PresetTemplatesBytesFailed",
+      message: "templates failed",
+    });
+    const snapshot = artifactSnapshotRecorder({
+      "create-selector": Buffer.from("selector-json"),
+      "modify-selector": Buffer.from("modify-selector-json"),
+      metadata: Buffer.from("metadata-zip"),
+      templates: Buffer.from("templates-zip"),
+    });
+    snapshot.snapshot.bytes = (kind: TemplateArtifactKind) =>
+      Promise.resolve(kind === "templates" ? err(templatesError) : ok(Buffer.from(kind)));
+
+    const resolverResult = await createProjectFrontDoor(
+      presetInputs("da/mcp-server"),
+      deps({ resolveArtifactSnapshot: () => Promise.resolve(err(resolverError)) })
+    );
+    const templatesResult = await createProjectFrontDoor(
+      presetInputs("da/mcp-server"),
+      deps({ artifactSnapshot: snapshot.snapshot })
+    );
+
+    assert.strictEqual(resolverResult._unsafeUnwrapErr(), resolverError);
+    assert.strictEqual(templatesResult._unsafeUnwrapErr(), templatesError);
   });
 
   it("DCE-13: a non-interactive walk (no preset template-name) threads interactive:false into runSelector", async () => {
@@ -471,56 +797,61 @@ describe("createProjectFrontDoor (dispatch-create-by-engine)", () => {
     });
   });
 
-  it("DCE-18: legacy CLI MCP tools file is bridged into static v4 MCP Q2 params", async () => {
-    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "atk-mcp-tools-"));
-    const toolsPath = path.join(tempDir, "mcp-tools.json");
-    fs.writeJsonSync(toolsPath, {
-      tools: [
-        {
-          name: "searchFlights",
-          description: "Search available flights",
-          inputSchema: { type: "object", properties: {} },
-        },
-      ],
-    });
+  it("passes neutral array inputs and office manifest aliases to the v4 input walk", async () => {
     const runInputs = inputsRecorder({});
+    const inputs: Inputs = {
+      platform: Platform.CLI,
+      nonInteractive: true,
+      apiPermissions: ["User.Read", "Calendars.Read"],
+      [QuestionNames.OfficeAddinManifest]: "manifest.json",
+    };
+
+    const res = await createProjectFrontDoor(
+      inputs,
+      deps({
+        runSelector: selectorRecorder(V4_TARGET).fn,
+        runInputs: runInputs.fn,
+        collectCreateFloor: okFloor,
+        scaffoldV4: okScaffold,
+      })
+    );
+
+    assert.isTrue(res.isOk());
+    assert.deepEqual(runInputs.calls[0][2].apiPermissions, ["User.Read", "Calendars.Read"]);
+    assert.equal(runInputs.calls[0][2].officeAddinManifest, "manifest.json");
+  });
+
+  it("DCE-18: CLI static MCP neutral params are passed through to Q2", async () => {
+    const runInputs = inputsRecorder({});
+    const toolsJson = JSON.stringify({
+      tools: [{ name: "searchFlights", description: "Search available flights" }],
+    });
     const inputs: Inputs = {
       platform: Platform.CLI,
       nonInteractive: true,
       mcpServerUrl: "https://api.example/mcp",
       authType: "none",
-      [QuestionNames.MCPToolsFilePath]: toolsPath,
+      mcpToolsFilePath: "C:/tools/mcp-tools.json",
+      mcpToolsJson: toolsJson,
+      selectedMcpTools: ["searchFlights"],
     };
 
-    try {
-      const res = await createProjectFrontDoor(
-        inputs,
-        deps({
-          runSelector: selectorRecorder(STATIC_MCP_TARGET).fn,
-          runInputs: runInputs.fn,
-          collectCreateFloor: okFloor,
-          scaffoldV4: okScaffold,
-        })
-      );
+    const res = await createProjectFrontDoor(
+      inputs,
+      deps({
+        runSelector: selectorRecorder(STATIC_MCP_TARGET).fn,
+        runInputs: runInputs.fn,
+        collectCreateFloor: okFloor,
+        scaffoldV4: okScaffold,
+      })
+    );
 
-      assert.isTrue(res.isOk());
-      const mcpToolsJson = runInputs.calls[0][2].mcpToolsJson;
-      if (typeof mcpToolsJson !== "string") {
-        assert.fail("Expected mcpToolsJson to be bridged as a string.");
-      }
-      assert.deepEqual(JSON.parse(mcpToolsJson), {
-        tools: [
-          {
-            name: "searchFlights",
-            description: "Search available flights",
-            inputSchema: { type: "object", properties: {} },
-          },
-        ],
-      });
-      assert.deepEqual(runInputs.calls[0][2].selectedMcpTools, ["searchFlights"]);
-    } finally {
-      fs.removeSync(tempDir);
-    }
+    assert.isTrue(res.isOk());
+    assert.equal(runInputs.calls[0][2].mcpServerUrl, "https://api.example/mcp");
+    assert.equal(runInputs.calls[0][2].authType, "none");
+    assert.equal(runInputs.calls[0][2].mcpToolsFilePath, "C:/tools/mcp-tools.json");
+    assert.equal(runInputs.calls[0][2].mcpToolsJson, toolsJson);
+    assert.deepEqual(runInputs.calls[0][2].selectedMcpTools, ["searchFlights"]);
   });
 
   it("DCE-17b: Office Add-in folder input is passed to the v4 input walk under its neutral key", async () => {
@@ -558,28 +889,31 @@ describe("createProjectFrontDoor (dispatch-create-by-engine)", () => {
     });
   });
 
-  it("DCE-14: engine v4 collects the create floor after Q2 and before scaffoldV4", async () => {
+  it("DCE-14: engine v4 collects Q2+Q3 in one input walk before scaffoldV4", async () => {
     const order: string[] = [];
+    const q2AndFloor: Answers = {
+      authType: "none",
+      [QuestionNames.Folder]: "C:/src",
+      [QuestionNames.AppName]: "MyAgent",
+    };
     const runInputs = recorder(
       (
         _floor: Buffer,
         _locator: DeclarativeLocator,
         _entry: Answers,
         _ui: UserInteraction,
-        _deps?: { flagReader?: (name: string) => boolean }
+        _deps?: { flagReader?: (name: string) => boolean; inputs?: Inputs }
       ): Promise<Result<Answers, FxError>> => {
-        order.push("q2");
-        return okAnswers({});
+        order.push("q2+q3");
+        return okAnswers(q2AndFloor);
       }
     );
-    const collectFloor = recorder((_i: Inputs, _ui: UserInteraction) => {
-      order.push("floor");
-      return okFloor();
-    });
-    const scaffoldV4 = recorder((_i: Inputs, _t: BuildTarget, _a: Answers) => {
-      order.push("scaffold");
-      return okResult("/v4");
-    });
+    const scaffoldV4 = recorder(
+      (_i: Inputs, _t: BuildTarget, _a: Answers, _flagReader: (name: string) => boolean) => {
+        order.push("scaffold");
+        return okResult("/v4");
+      }
+    );
 
     const res = await createProjectFrontDoor(
       baseInputs(),
@@ -587,28 +921,31 @@ describe("createProjectFrontDoor (dispatch-create-by-engine)", () => {
         scaffoldV4: scaffoldV4.fn,
         runSelector: () => okTarget(V4_TARGET),
         runInputs: runInputs.fn,
-        collectCreateFloor: collectFloor.fn,
       })
     );
 
     assert.isTrue(res.isOk());
-    assert.equal(collectFloor.calls.length, 1);
-    assert.deepEqual(order, ["q2", "floor", "scaffold"]); // floor sits between Q2 and the scaffold
-    // the floor mutates the same inputs bag scaffoldV4 then scaffolds from.
-    assert.strictEqual(collectFloor.calls[0][0], scaffoldV4.calls[0][0]);
+    assert.deepEqual(order, ["q2+q3", "scaffold"]);
+    assert.strictEqual(runInputs.calls[0][4]?.inputs, scaffoldV4.calls[0][0]);
+    assert.equal(scaffoldV4.calls[0][0][QuestionNames.Folder], "C:/src");
+    assert.equal(scaffoldV4.calls[0][0][QuestionNames.AppName], "MyAgent");
+    assert.deepEqual(scaffoldV4.calls[0][2], q2AndFloor);
+    assert.equal(scaffoldV4.calls[0][0]["template-name"], "declarative-agent-with-action-from-mcp");
   });
 
-  it("DCE-15: a create-floor cancellation propagates and does not scaffold", async () => {
+  it("DCE-15: a Q2+Q3 input cancellation propagates and does not scaffold", async () => {
     const cancel = new UserError({ source: "Test", name: "UserCancelError", message: "cancel" });
-    const scaffoldV4 = recorder((_i: Inputs, _t: BuildTarget, _a: Answers) => okResult("/v4"));
+    const scaffoldV4 = recorder(
+      (_i: Inputs, _t: BuildTarget, _a: Answers, _flagReader: (name: string) => boolean) =>
+        okResult("/v4")
+    );
 
     const res = await createProjectFrontDoor(
       baseInputs(),
       deps({
         scaffoldV4: scaffoldV4.fn,
         runSelector: () => okTarget(V4_TARGET),
-        runInputs: () => okAnswers({}),
-        collectCreateFloor: () => Promise.resolve(err(cancel)),
+        runInputs: () => Promise.resolve(err(cancel)),
       })
     );
 
@@ -629,20 +966,22 @@ describe("createProjectFrontDoor (dispatch-create-by-engine)", () => {
     assert.equal(vs.calls[0][2], "vs");
   });
 
-  it("defaults the flag reader to featureFlagManager (V4 off ⇒ pass-through)", async () => {
+  it("defaults the flag reader to featureFlagManager (V4 on ⇒ selector)", async () => {
     const saved = process.env[FeatureFlags.V4Enabled.name];
     delete process.env[FeatureFlags.V4Enabled.name];
     try {
       const createV3 = recorder((_inputs: Inputs) => okResult("/v3"));
+      const runSelector = selectorRecorder(SURFACE_ACTION_TARGET);
 
       const res = await createProjectFrontDoor(
         baseInputs(),
-        // no flagReader override → the real featureFlagManager default reads V4 off.
-        deps({ createV3: createV3.fn, flagReader: undefined, runSelector: failRunSelector })
+        // no flagReader override → the real featureFlagManager default reads V4 on.
+        deps({ createV3: createV3.fn, flagReader: undefined, runSelector: runSelector.fn })
       );
 
       assert.isTrue(res.isOk());
-      assert.equal(createV3.calls.length, 1);
+      assert.equal(runSelector.calls.length, 1);
+      assert.equal(createV3.calls.length, 0);
     } finally {
       if (saved === undefined) {
         delete process.env[FeatureFlags.V4Enabled.name];
@@ -652,24 +991,82 @@ describe("createProjectFrontDoor (dispatch-create-by-engine)", () => {
     }
   });
 
-  it("propagates a Q2 error and does not scaffold", async () => {
+  it("DCE-19: a v4 target maps its template id to the v3 telemetry template before Q2", async () => {
     const q2Failed = new UserError({ source: "Test", name: "Q2Failed", message: "bad inputs" });
-    const scaffoldV4 = recorder((_i: Inputs, _t: BuildTarget, _a: Answers) => okResult("/v4"));
+    const expectedMappings: ReadonlyArray<readonly [string, string]> = [
+      ["basic-custom-engine-agent", TemplateNames.BasicCustomEngineAgent],
+      ["weather-agent", TemplateNames.WeatherAgent],
+      ["graph-connector", TemplateNames.GraphConnector],
+      ["custom-copilot-basic", TemplateNames.CustomCopilotBasic],
+      ["custom-copilot-rag-customize", TemplateNames.CustomCopilotRagCustomize],
+      ["custom-copilot-rag-azure-ai-search", TemplateNames.CustomCopilotRagAzureAISearch],
+      ["custom-copilot-rag-custom-api", TemplateNames.CustomCopilotRagCustomApi],
+      ["teams-collaborator-agent", TemplateNames.TeamsCollaboratorAgent],
+      ["non-sso-tab", TemplateNames.Tab],
+      ["default-message-extension", TemplateNames.DefaultMessageExtension],
+      ["default-bot", TemplateNames.DefaultBot],
+      ["office-addin-wxpo-taskpane", TemplateNames.WXPTaskpane],
+      ["office-addin-excel-cfshortcut", TemplateNames.ExcelCFShortcut],
+      ["declarative-agent-meta-os-upgrade-project", "declarative-agent-meta-os-upgrade-project"],
+      ["office-addin-config", TemplateNames.OfficeAddinCommon],
+      ["da/no-action", TemplateNames.DeclarativeAgentBasic],
+      ["da/graph-connector", TemplateNames.DeclarativeAgentWithGraphConnector],
+      ["da/typespec", TemplateNames.DeclarativeAgentWithTypeSpec],
+      ["da/skill", TemplateNames.DeclarativeAgentWithSkill],
+      ["da/api-plugin-from-scratch", TemplateNames.DeclarativeAgentWithActionFromScratch],
+      [
+        "da/api-plugin-from-scratch-bearer",
+        TemplateNames.DeclarativeAgentWithActionFromScratchBearer,
+      ],
+      [
+        "da/api-plugin-from-scratch-oauth",
+        TemplateNames.DeclarativeAgentWithActionFromScratchOAuth,
+      ],
+      [
+        "da/api-plugin-from-existing-api",
+        TemplateNames.DeclarativeAgentWithActionFromExistingApiSpec,
+      ],
+      ["da/mcp-server-static", TemplateNames.DeclarativeAgentWithActionFromMCP],
+      ["da/mcp-server", TemplateNames.DeclarativeAgentWithActionFromMCP],
+    ];
+
+    for (const [templateId, expectedTemplateName] of expectedMappings) {
+      const scaffoldV4 = recorder((_i: Inputs, _t: BuildTarget, _a: Answers) => okResult("/v4"));
+      const inputs = baseInputs();
+
+      const res = await createProjectFrontDoor(
+        inputs,
+        deps({
+          scaffoldV4: scaffoldV4.fn,
+          runSelector: () => okTarget({ templateId, engine: "v4", answers: {} }),
+          runInputs: () => Promise.resolve(err(q2Failed)),
+        })
+      );
+
+      assert.isTrue(res.isErr());
+      if (res.isErr()) {
+        assert.equal(res.error.name, "Q2Failed");
+      }
+      assert.equal(scaffoldV4.calls.length, 0);
+      assert.equal(inputs["template-name"], expectedTemplateName, templateId);
+    }
+  });
+
+  it("DCE-20: an unmapped v4 telemetry template id falls back to itself", async () => {
+    const q2Failed = new UserError({ source: "Test", name: "Q2Failed", message: "bad inputs" });
+    const target: BuildTarget = { templateId: "future/v4-template", engine: "v4", answers: {} };
+    const inputs = baseInputs();
 
     const res = await createProjectFrontDoor(
-      baseInputs(),
+      inputs,
       deps({
-        scaffoldV4: scaffoldV4.fn,
-        runSelector: () => okTarget(V4_TARGET),
+        runSelector: () => okTarget(target),
         runInputs: () => Promise.resolve(err(q2Failed)),
       })
     );
 
     assert.isTrue(res.isErr());
-    if (res.isErr()) {
-      assert.equal(res.error.name, "Q2Failed");
-    }
-    assert.equal(scaffoldV4.calls.length, 0);
+    assert.equal(inputs["template-name"], "future/v4-template");
   });
 
   it("fails loudly on an unsupported create engine (v3-core-method)", async () => {

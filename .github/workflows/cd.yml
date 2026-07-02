@@ -45,10 +45,21 @@ on:
         type: boolean
         default: false
         description: "[Dev/Testing only] Skip branch validation."
+      skipdockerbuild:
+        type: boolean
+        default: false
+        description: "Skip triggering the VscUse ATK docker build after CD (e.g. when the caller builds its own image)."
 
 permissions:
   actions: write
   contents: write
+
+# Production CD runs (dev / release/*) use a unique group so concurrency is a no-op and
+# real releases / nightly are never cancelled or queued. Other refs (feature/PR branches
+# used by the smoke pipeline) are grouped per-branch so a re-dispatch cancels the stale run.
+concurrency:
+  group: ${{ format('cd-{0}', (github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/heads/release/')) && github.run_id || github.ref_name) }}
+  cancel-in-progress: true
 
 jobs:
   cd:
@@ -312,22 +323,17 @@ jobs:
       # the v4-owned releases; the v3 templates@ channel above is untouched.
       - name: Publish v4 template channel
         if: ${{ contains(steps.version-change.outputs.CHANGED, 'templates@') && github.event_name == 'workflow_dispatch' && github.event.inputs.goproduct == 'true' }}
-        # continue-on-error is intentional ONLY while no shipped engine consumes
-        # the v4 channel yet (generator wiring is pending, plan item #7): a v4
-        # publish failure here has zero production impact and must not block the
-        # v3 CD. Remove this line once the v4 generator goes live, so a failed
-        # channel update fails the shipping build instead of silently leaving
-        # the channel behind the engine config.
-        continue-on-error: true
         env:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
         run: |
           bash .github/scripts/v4/publish-v4-channel.sh \
             "${{ steps.version-change.outputs.TEMPLATE_VERSION }}" \
+            "${{ github.workspace }}/templates/build/v4/create-selector.json" \
+            "${{ github.workspace }}/templates/build/v4/modify-selector.json" \
+            "${{ github.workspace }}/templates/build/v4/templates-metadata.zip" \
             "${{ github.workspace }}/templates/build/v4/templates.zip" \
             "${{ runner.temp }}" \
-            "${{ github.sha }}" \
-            "${{ github.workspace }}/templates/build/metadata.zip"
+            "${{ github.sha }}"
 
       - name: Release RC VS templates to GitHub
         if: ${{ contains(steps.version-change.outputs.CHANGED, 'templates@') && github.event_name == 'workflow_dispatch' && github.event.inputs.vsrelease == 'true' }}
@@ -576,7 +582,7 @@ jobs:
 
   trigger-docker-build:
     needs: cd
-    if: ${{ success() }}
+    if: ${{ success() && !inputs.skipdockerbuild }}
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Docker Build Workflow

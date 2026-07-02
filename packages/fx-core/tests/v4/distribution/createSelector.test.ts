@@ -3,8 +3,13 @@
 
 import { SystemError } from "@microsoft/teamsfx-api";
 import AdmZip from "adm-zip";
+import fs from "fs-extra";
 import path from "path";
-import { openCreateSelector } from "../../../src/v4/distribution/createSelector";
+import {
+  openCreateSelector,
+  openSelectorFromJsonBytes,
+  openSelectorPresentationFromJsonBytes,
+} from "../../../src/v4/distribution/createSelector";
 import { SelectorRoute } from "../../../src/v4/buildTarget/resolveBuildTarget";
 import { assert } from "vitest";
 
@@ -24,6 +29,38 @@ function buildFloor(): Buffer {
 }
 
 describe("openCreateSelector (resolve-build-target AC-22)", () => {
+  it("AC-23: reads and parses raw create-selector.json bytes without a full package", () => {
+    const bytes = fs.readFileSync(path.join(TEMPLATES_V4_DIR, "create", "selector.json"));
+
+    const result = openSelectorFromJsonBytes(bytes, "create");
+
+    assert.isTrue(result.isOk());
+    if (result.isOk()) {
+      const v4Route = result.value.routes.find(
+        (route: SelectorRoute) => route.engine === "v4" && route.templateId === "da/mcp-server"
+      );
+      assert.isDefined(v4Route, "the raw create selector carries the v4 da/mcp-server route");
+    }
+  });
+
+  it("AC-23: invalid raw selector JSON returns PackageFileInvalid", () => {
+    const result = openSelectorFromJsonBytes(Buffer.from("{"), "create");
+
+    assert.isTrue(result.isErr());
+    assert.strictEqual(result._unsafeUnwrapErr().name, "PackageFileInvalid");
+  });
+
+  it("AC-23: reads selector presentation from raw selector bytes", () => {
+    const bytes = fs.readFileSync(path.join(TEMPLATES_V4_DIR, "modify", "selector.json"));
+
+    const result = openSelectorPresentationFromJsonBytes(bytes, "modify");
+
+    assert.isTrue(result.isOk());
+    if (result.isOk()) {
+      assert.isArray(result.value.questions);
+    }
+  });
+
   it("AC-22: reads and parses the real shipped create selector from the floor", () => {
     const result = openCreateSelector(buildFloor());
 

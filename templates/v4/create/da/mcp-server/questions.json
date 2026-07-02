@@ -19,10 +19,19 @@
       "validation": "uri"
     },
     {
+      "name": "selectedLocalServers",
+      "type": "multiSelect",
+      "title": "Local MCP Servers",
+      "keyPrefix": "template.daMcpServer.localServers",
+      "optionsFrom": "mcp.localServers",
+      "condition": { "expr": "mcpServerType == 'local'" }
+    },
+    {
       "name": "authType",
       "type": "singleSelect",
       "title": "Authentication",
       "keyPrefix": "template.daMcpServer.authType",
+      "condition": { "expr": "mcpServerType == 'remote'" },
       "staticOptions": [
         { "id": "oauth", "label": "OAuth (with static registration)" },
         { "id": "oauth-dynamic", "label": "OAuth (with dynamic registration)",
@@ -31,6 +40,35 @@
         { "id": "none", "label": "None" }
       ],
       "default": "none"
+    },
+    {
+      "name": "oauthClientId",
+      "type": "text",
+      "title": "OAuth Client ID",
+      "keyPrefix": "template.daMcpServer.oauthClientId",
+      "condition": { "expr": "authType == 'oauth'" }
+    },
+    {
+      "name": "oauthClientSecret",
+      "type": "text",
+      "title": "OAuth Client Secret",
+      "keyPrefix": "template.daMcpServer.oauthClientSecret",
+      "condition": { "expr": "authType == 'oauth'" }
+    },
+    {
+      "name": "oauthScopes",
+      "type": "text",
+      "title": "OAuth Scopes",
+      "keyPrefix": "template.daMcpServer.oauthScopes",
+      "condition": { "expr": "authType == 'oauth'" },
+      "optional": true
+    },
+    {
+      "name": "entraClientId",
+      "type": "text",
+      "title": "Entra Client ID",
+      "keyPrefix": "template.daMcpServer.entraClientId",
+      "condition": { "expr": "authType == 'entra-sso'" }
     }
   ]
 }

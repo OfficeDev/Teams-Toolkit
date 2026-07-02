@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aka.ms/m365atk/v4/pipeline.schema.json",
+  "title": "v4 pipeline.json",
+  "description": "Authoring-time schema for a v4 template scaffold pipeline: a named orchestration plus an ordered list of whitelisted runtime steps.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["pipeline", "steps"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "pipeline": { "type": "string" },
+    "comment": { "type": "string" },
+    "steps": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/pipelineStep" }
+    }
+  },
+  "$defs": {
+    "pipelineStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["step"],
+      "properties": {
+        "step": { "type": "string" },
+        "comment": { "type": "string" },
+        "when": { "type": "string" },
+        "with": {
+          "type": "object",
+          "additionalProperties": {
+            "oneOf": [
+              { "type": "string" },
+              { "type": "boolean" },
+              { "type": "array", "items": { "type": "string" } }
+            ]
+          }
+        },
+        "produces": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}

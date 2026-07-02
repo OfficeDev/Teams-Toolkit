@@ -21,7 +21,16 @@ import {
 } from "./steps/mcpAuth";
 import { STEP_MATERIALIZE_LOCAL_SERVERS, mcpLocalMaterializeServers } from "./steps/mcpLocal";
 import { STEP_MATERIALIZE_STATIC_MCP_TOOLS, mcpStaticMaterializeTools } from "./steps/mcpStatic";
-import { STEP_GENERATE_OPENAPI_PLUGIN_FILES, openApiGeneratePluginFiles } from "./steps/openApi";
+import {
+  STEP_IMPORT_EXISTING_OFFICE_ADDIN_PROJECT,
+  officeAddinImportExistingProject,
+} from "./steps/officeAddin";
+import {
+  STEP_GENERATE_OPENAPI_PLUGIN_FILES,
+  STEP_GENERATE_TEAMS_AI_CUSTOM_API_FILES,
+  openApiGeneratePluginFiles,
+  openApiGenerateTeamsAiCustomApiFiles,
+} from "./steps/openApi";
 import {
   STEP_UNIFY_PROJECT_ID,
   STEP_UPGRADE_EXISTING_PROJECT,
@@ -42,6 +51,8 @@ export const STEP_REGISTRY = new Map<string, RegisteredStep>([
   [STEP_MATERIALIZE_LOCAL_SERVERS, mcpLocalMaterializeServers],
   [STEP_MATERIALIZE_STATIC_MCP_TOOLS, mcpStaticMaterializeTools],
   [STEP_GENERATE_OPENAPI_PLUGIN_FILES, openApiGeneratePluginFiles],
+  [STEP_GENERATE_TEAMS_AI_CUSTOM_API_FILES, openApiGenerateTeamsAiCustomApiFiles],
+  [STEP_IMPORT_EXISTING_OFFICE_ADDIN_PROJECT, officeAddinImportExistingProject],
   [STEP_UNIFY_PROJECT_ID, metaOsUnifyProjectId],
   [STEP_UPGRADE_EXISTING_PROJECT, metaOsUpgradeExistingProject],
 ]);

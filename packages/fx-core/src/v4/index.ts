@@ -6,6 +6,7 @@
 export * from "./model/dataModel";
 export * from "./distribution/templateSource";
 export * from "./distribution/templateSourcePort";
+export * from "./distribution/templateArtifacts";
 export * from "./distribution/bundledFloor";
 export * from "./distribution/templateConfig";
 export * from "./distribution/templatePackage";

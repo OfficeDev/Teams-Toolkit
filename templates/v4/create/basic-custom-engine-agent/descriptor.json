@@ -9,7 +9,13 @@
 
   "optionsSchema": {
     "type": "object",
-    "properties": {},
+    "properties": {
+      "llmService": { "type": "string" },
+      "openAIKey": { "type": "string" },
+      "azureOpenAIKey": { "type": "string" },
+      "azureOpenAIEndpoint": { "type": "string" },
+      "azureOpenAIDeploymentName": { "type": "string" }
+    },
     "additionalProperties": false
   },
 
@@ -18,11 +24,11 @@
     { "var": "SandBoxedTeam", "when": "featureFlag('TEAMSFX_SANDBOXED_TEAM')", "value": "true" },
     { "var": "CEAEnabled", "when": "featureFlag('TEAMSFX_CEA_ENABLED')", "value": "true" },
     { "var": "pathDelimiter", "expr": "pathDelimiter()" },
-    { "var": "useOpenAI", "const": "" },
-    { "var": "useAzureOpenAI", "const": "true" },
-    { "var": "openAIKey", "const": "" },
-    { "var": "azureOpenAIKey", "const": "" },
-    { "var": "azureOpenAIEndpoint", "const": "" },
-    { "var": "azureOpenAIDeploymentName", "const": "" }
+    { "var": "useOpenAI", "when": "llmService == 'llm-service-openai'", "value": "true" },
+    { "var": "useAzureOpenAI", "when": "llmService != 'llm-service-openai'", "value": "true" },
+    { "var": "openAIKey", "from": "openAIKey" },
+    { "var": "azureOpenAIKey", "from": "azureOpenAIKey" },
+    { "var": "azureOpenAIEndpoint", "from": "azureOpenAIEndpoint" },
+    { "var": "azureOpenAIDeploymentName", "from": "azureOpenAIDeploymentName" }
   ]
 }

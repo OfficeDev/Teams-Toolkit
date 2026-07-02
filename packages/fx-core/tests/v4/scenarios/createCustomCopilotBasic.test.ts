@@ -11,6 +11,7 @@ import {
   readJsonObject,
   recordProperty,
   runV4Package,
+  text,
 } from "./helpers/scenarioHarness";
 
 /**
@@ -24,8 +25,11 @@ import {
 const templatePackage = loadV4Package("create", "custom-copilot-basic");
 const appName = "My Teams Agent";
 
-async function run(language: "typescript" | "javascript" | "python" = "typescript") {
-  return runV4Package(templatePackage, { callerFloor: { appName, language } });
+async function run(
+  language: "typescript" | "javascript" | "python" = "typescript",
+  answers: Record<string, string> = {}
+) {
+  return runV4Package(templatePackage, { answers, callerFloor: { appName, language } });
 }
 
 describe("SCN-TEAMS-CREATE-CUSTOM-COPILOT-BASIC (v4, T3 InMemoryRuntime)", () => {
@@ -48,6 +52,42 @@ describe("SCN-TEAMS-CREATE-CUSTOM-COPILOT-BASIC (v4, T3 InMemoryRuntime)", () =>
     const manifest = readJsonObject(files, "appPackage/manifest.json");
     const name = recordProperty(manifest, "name");
     assert.strictEqual(name.short, "My Teams Agent${{APP_NAME_SUFFIX}}");
+  });
+
+  it("OpenAI answers render the OpenAI branch", async () => {
+    const { files } = await run("typescript", {
+      llmService: "llm-service-openai",
+      openAIKey: "fake-openai-key",
+    });
+
+    const config = text(files, "src/config.ts");
+    assert.include(config, "openAIKey: process.env.OPENAI_API_KEY");
+    assert.notInclude(config, "azureOpenAIKey");
+
+    const app = text(files, "src/app/app.ts");
+    assert.include(app, "model: config.openAIModelName");
+    assert.include(app, "apiKey: config.openAIKey");
+    assert.notInclude(app, "endpoint: config.azureOpenAIEndpoint");
+  });
+
+  it("Azure OpenAI answers render the Azure OpenAI branch", async () => {
+    const { files } = await run("typescript", {
+      llmService: "llm-service-azure-openai",
+      azureOpenAIKey: "fake-azure-openai-key",
+      azureOpenAIEndpoint: "https://fake.openai.azure.com/",
+      azureOpenAIDeploymentName: "fake-deployment",
+    });
+
+    const config = text(files, "src/config.ts");
+    assert.include(config, "azureOpenAIKey: process.env.AZURE_OPENAI_API_KEY");
+    assert.include(config, "azureOpenAIEndpoint: process.env.AZURE_OPENAI_ENDPOINT");
+    assert.notInclude(config, "openAIKey");
+
+    const app = text(files, "src/app/app.ts");
+    assert.include(app, "model: config.azureOpenAIDeploymentName");
+    assert.include(app, "apiKey: config.azureOpenAIKey");
+    assert.include(app, "endpoint: config.azureOpenAIEndpoint");
+    assert.notInclude(app, "model: config.openAIModelName");
   });
 
   it("SCN-CREATE-CUSTOM-COPILOT-BASIC-03: JavaScript scaffold selects the JavaScript subtree", async () => {

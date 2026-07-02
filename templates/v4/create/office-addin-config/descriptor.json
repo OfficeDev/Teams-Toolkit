@@ -1,0 +1,24 @@
+{
+  "$schema": "../../schema/descriptor.schema.json",
+  "id": "office-addin-config",
+  "name": "Office Add-in Common Configuration",
+  "languages": ["common"],
+  "minEngineVersion": "5.20.0",
+  "spec": "docs/03-specs/scenarios/office-addin/create-office-addin-config.md",
+  "requiresNetwork": false,
+
+  "optionsSchema": {
+    "type": "object",
+    "properties": {
+      "officeAddinFolder": { "type": "string" },
+      "officeAddinManifest": { "type": "string" }
+    },
+    "required": ["officeAddinFolder", "officeAddinManifest"],
+    "additionalProperties": false
+  },
+
+  "replaceMap": [
+    { "var": "OfficeAddinFolder", "from": "officeAddinFolder" },
+    { "var": "OfficeAddinManifest", "from": "officeAddinManifest" }
+  ]
+}

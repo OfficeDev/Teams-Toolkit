@@ -8,7 +8,7 @@
     },
     {
       "step": "mcp-auth/inject-yml-action",
-      "when": "authType != 'none'",
+      "when": "mcpServerType == 'remote' && authType != 'none'",
       "with": {
         "ymlPath": "m365agents.yml",
         "authType": "{{authType}}",
@@ -18,7 +18,7 @@
     },
     {
       "step": "mcp-auth/persist-credential-env",
-      "when": "authType == 'oauth' || authType == 'entra-sso'",
+      "when": "mcpServerType == 'remote' && (authType == 'oauth' || authType == 'entra-sso')",
       "with": {
         "authType": "{{authType}}",
         "mcpServerUrl": "{{MCPForDAServerUrl}}"

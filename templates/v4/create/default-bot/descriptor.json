@@ -16,12 +16,6 @@
   "replaceMap": [
     { "var": "SafeProjectNameLowerCase", "expr": "safeProjectNameLowerCase(appName)" },
     { "var": "SandBoxedTeam", "when": "featureFlag('TEAMSFX_SANDBOXED_TEAM')", "value": "true" },
-    { "var": "pathDelimiter", "expr": "pathDelimiter()" },
-    { "var": "useOpenAI", "const": "" },
-    { "var": "useAzureOpenAI", "const": "true" },
-    { "var": "openAIKey", "const": "" },
-    { "var": "azureOpenAIKey", "const": "" },
-    { "var": "azureOpenAIEndpoint", "const": "" },
-    { "var": "azureOpenAIDeploymentName", "const": "" }
+    { "var": "pathDelimiter", "expr": "pathDelimiter()" }
   ]
 }

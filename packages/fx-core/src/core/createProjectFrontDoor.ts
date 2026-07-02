@@ -7,7 +7,6 @@ import {
   Inputs,
   Platform,
   SystemError,
-  UserError,
   UserInteraction,
 } from "@microsoft/teamsfx-api";
 import fs from "fs-extra";
@@ -17,14 +16,18 @@ import {
   Answers,
   BuildTarget,
   DeclarativeLocator,
+  TemplateArtifactKind,
+  TemplateArtifactSnapshot,
   bundledFloorDir,
   resolveCreateTargetByTemplateId,
   runCreateInputs,
   runCreateSelector,
+  templateSourceFromArtifactSnapshot,
 } from "../v4";
-import { parseMcpStaticToolsJson } from "../v4/mcp/mcpStaticTools";
-import { FeatureFlags, featureFlagManager } from "../common/featureFlags";
+import { FeatureFlags, readBooleanFeatureFlag } from "../common/featureFlags";
 import { TOOLS } from "../common/globalVars";
+import { TemplateNames } from "../component/generator/templates/templateNames";
+import type { ResolvedV4ChannelPackage } from "../component/generator/v4TemplateBridge";
 import { QuestionNames } from "../question/questionNames";
 
 /**
@@ -37,9 +40,8 @@ import { QuestionNames } from "../question/questionNames";
  * Behind `TEAMSFX_V4_ENABLED`, the v4 create selector is the live Q1 front door
  * and the resolved `BuildTarget` is dispatched by its `engine` (INV-3):
  *   - `v4`             → run the template's own Q2 (`runCreateInputs`) over the
- *                        same floor, collect the create floor (`folder`/`app-name`,
- *                        the step the v3 `QuestionMW` owns), then `scaffoldV4` the
- *                        authored package;
+ *                        same floor, with the create floor appended to the same
+ *                        walk, then `scaffoldV4` the authored package;
  *   - `v3`             → translate the Q1 picks onto the v3 `QuestionNames.*`
  *                        (`applyV3PreFill`, INV-5) and hand off to `createV3`,
  *                        whose `QuestionMW` then skips Q1 and asks only Q2;
@@ -57,7 +59,33 @@ const SOURCE = "Scaffold";
 
 /** The only shipped create `surface-action`: open GitHub Copilot Chat (the v3 `startWithGithubCopilot` shape). */
 const OPEN_GITHUB_COPILOT_CHAT = "open-github-copilot-chat";
-const STATIC_MCP_TEMPLATE_ID = "da/mcp-server-static";
+const V4_TO_V3_TEMPLATE_ID: Readonly<Record<string, string>> = {
+  "basic-custom-engine-agent": TemplateNames.BasicCustomEngineAgent,
+  "weather-agent": TemplateNames.WeatherAgent,
+  "graph-connector": TemplateNames.GraphConnector,
+  "custom-copilot-basic": TemplateNames.CustomCopilotBasic,
+  "custom-copilot-rag-customize": TemplateNames.CustomCopilotRagCustomize,
+  "custom-copilot-rag-azure-ai-search": TemplateNames.CustomCopilotRagAzureAISearch,
+  "custom-copilot-rag-custom-api": TemplateNames.CustomCopilotRagCustomApi,
+  "teams-collaborator-agent": TemplateNames.TeamsCollaboratorAgent,
+  "non-sso-tab": TemplateNames.Tab,
+  "default-message-extension": TemplateNames.DefaultMessageExtension,
+  "default-bot": TemplateNames.DefaultBot,
+  "office-addin-wxpo-taskpane": TemplateNames.WXPTaskpane,
+  "office-addin-excel-cfshortcut": TemplateNames.ExcelCFShortcut,
+  "declarative-agent-meta-os-upgrade-project": "declarative-agent-meta-os-upgrade-project",
+  "office-addin-config": TemplateNames.OfficeAddinCommon,
+  "da/no-action": TemplateNames.DeclarativeAgentBasic,
+  "da/graph-connector": TemplateNames.DeclarativeAgentWithGraphConnector,
+  "da/typespec": TemplateNames.DeclarativeAgentWithTypeSpec,
+  "da/skill": TemplateNames.DeclarativeAgentWithSkill,
+  "da/api-plugin-from-scratch": TemplateNames.DeclarativeAgentWithActionFromScratch,
+  "da/api-plugin-from-scratch-bearer": TemplateNames.DeclarativeAgentWithActionFromScratchBearer,
+  "da/api-plugin-from-scratch-oauth": TemplateNames.DeclarativeAgentWithActionFromScratchOAuth,
+  "da/api-plugin-from-existing-api": TemplateNames.DeclarativeAgentWithActionFromExistingApiSpec,
+  "da/mcp-server-static": TemplateNames.DeclarativeAgentWithActionFromMCP,
+  "da/mcp-server": TemplateNames.DeclarativeAgentWithActionFromMCP,
+};
 const NON_V4_INPUT_KEYS: ReadonlySet<string> = new Set([
   "capabilities",
   "folder",
@@ -73,7 +101,7 @@ const NON_V4_INPUT_KEYS: ReadonlySet<string> = new Set([
  * The create front door's injected seams. `createV3` is required — it is both the
  * flag-off pass-through and the engine=v3 hand-off, and injecting it (rather than
  * importing `FxCore`) keeps this seam free of an import cycle. `scaffoldV4`,
- * `collectCreateFloor`, and `applyV3PreFill` are the flag-on hand-offs the
+ * `runInputs`, and `applyV3PreFill` are the flag-on hand-offs the
  * composition root (`FxCore`) supplies. The remaining members default to the real
  * wiring, so a production caller passes only the four handlers.
  */
@@ -84,15 +112,11 @@ export interface CreateFrontDoorDeps {
   scaffoldV4: (
     inputs: Inputs,
     target: BuildTarget,
-    answers: Answers
+    answers: Answers,
+    flagReader: (name: string) => boolean,
+    resolvedPackage?: ResolvedV4ChannelPackage
   ) => Promise<Result<CreateProjectResult, FxError>>;
-  /**
-   * The engine=v4 create-floor collection: ask `folder` + `app-name`. The v4 path
-   * carries no `QuestionMW`, so the front door collects the floor itself — the same
-   * step `createProject`'s `QuestionMW` runs (last) for v3. Interactive surfaces are
-   * prompted; a non-interactive surface (a CLI preset `template-name` / `-f` / `-n`)
-   * is skipped exactly as v3 is.
-   */
+  /** Legacy create-floor seam retained for existing composition wiring; v4 now appends floor questions inside `runInputs`. */
   collectCreateFloor: (inputs: Inputs, ui: UserInteraction) => Promise<Result<undefined, FxError>>;
   /** The engine=v3 adapter: translate the Q1 dimension picks onto the v3 `QuestionNames.*` (INV-5). */
   applyV3PreFill: (inputs: Inputs, target: BuildTarget) => void;
@@ -100,6 +124,14 @@ export interface CreateFrontDoorDeps {
   flagReader?: (name: string) => boolean;
   /** The bundled-floor channel-zip reader (default: the shipped `templates.zip`; injectable for tests, INV-6). */
   readFloorBytes?: () => Buffer;
+  /** Per-invocation staged artifact snapshot. When supplied, Q1/Q2/full staging read from this snapshot. */
+  artifactSnapshot?: TemplateArtifactSnapshot;
+  /** Resolves a per-invocation staged artifact snapshot after the v4 flag is known to be on. */
+  resolveArtifactSnapshot?: (
+    requiredKind: TemplateArtifactKind
+  ) => Promise<Result<TemplateArtifactSnapshot, FxError>>;
+  /** Membership test supplied with selector-only artifacts. */
+  v4Registry?: (templateId: string) => boolean;
   /** The host surface (default: `TOOLS.ui`). */
   ui?: UserInteraction;
   /** The Q1 selector walk (default: the real `runCreateSelector`). */
@@ -112,12 +144,19 @@ export interface CreateFrontDoorDeps {
 
 /** The default `featureFlagManager`-backed reader (a flag is on per its env var / VS Code setting). */
 function defaultFlagReader(name: string): boolean {
-  return featureFlagManager.getBooleanValue({ name, defaultValue: "false" });
+  return readBooleanFeatureFlag(name);
 }
 
 /** Read the shipped bundled-floor channel zip (the default `readFloorBytes`). */
 function readBundledFloorBytes(): Buffer {
   return fs.readFileSync(path.join(bundledFloorDir(), "templates.zip"));
+}
+
+function readSnapshotBytes(
+  snapshot: TemplateArtifactSnapshot,
+  kind: TemplateArtifactKind
+): Promise<Result<Buffer, FxError>> {
+  return snapshot.bytes(kind);
 }
 
 function isV4NeutralInput(key: string, value: unknown): value is string | string[] {
@@ -140,49 +179,11 @@ function neutralAnswersFromInputs(inputs: Inputs): Answers {
   if (typeof officeAddinFolder === "string" && answers.officeAddinFolder === undefined) {
     answers.officeAddinFolder = officeAddinFolder;
   }
+  const officeAddinManifest = inputs[QuestionNames.OfficeAddinManifest];
+  if (typeof officeAddinManifest === "string" && answers.officeAddinManifest === undefined) {
+    answers.officeAddinManifest = officeAddinManifest;
+  }
   return answers;
-}
-
-function addLegacyStaticMcpInputs(
-  target: BuildTarget,
-  inputs: Inputs,
-  entryParams: Answers
-): Result<Answers, FxError> {
-  if (target.templateId !== STATIC_MCP_TEMPLATE_ID) {
-    return ok(entryParams);
-  }
-
-  const toolsFilePath = inputs[QuestionNames.MCPToolsFilePath];
-  if (typeof toolsFilePath !== "string" || toolsFilePath.length === 0) {
-    return ok(entryParams);
-  }
-
-  let toolsJson: string;
-  try {
-    toolsJson = fs.readFileSync(toolsFilePath, "utf8");
-  } catch {
-    return err(
-      new UserError({
-        source: SOURCE,
-        name: "McpToolsFileReadFailed",
-        message: "Failed to read the MCP tools file.",
-      })
-    );
-  }
-
-  const parsed = parseMcpStaticToolsJson(toolsJson);
-  if (!parsed.ok) {
-    return err(new UserError({ source: SOURCE, name: parsed.code, message: parsed.message }));
-  }
-
-  return ok({
-    ...entryParams,
-    mcpToolsJson:
-      typeof entryParams.mcpToolsJson === "string" ? entryParams.mcpToolsJson : toolsJson,
-    selectedMcpTools: Array.isArray(entryParams.selectedMcpTools)
-      ? entryParams.selectedMcpTools
-      : parsed.tools.map((tool) => tool.name),
-  });
 }
 
 function selectorPrefillFromInputs(inputs: Inputs): Record<string, string> {
@@ -193,6 +194,21 @@ function selectorPrefillFromInputs(inputs: Inputs): Record<string, string> {
     }
   }
   return answers;
+}
+
+function templateNameForV4(target: BuildTarget): string {
+  return V4_TO_V3_TEMPLATE_ID[target.templateId] ?? target.templateId;
+}
+
+function applyV4CreateFloorAnswers(inputs: Inputs, answers: Answers): void {
+  const folder = answers[QuestionNames.Folder];
+  if (typeof folder === "string") {
+    inputs[QuestionNames.Folder] = folder;
+  }
+  const appName = answers[QuestionNames.AppName];
+  if (typeof appName === "string") {
+    inputs[QuestionNames.AppName] = appName;
+  }
 }
 
 /** Map the host `Platform` onto the selector's `surface` axis (drives option `condition`s). */
@@ -244,7 +260,8 @@ export async function createProjectFrontDoor(
 
   const ui = deps.ui ?? TOOLS.ui;
   const surface = surfaceOf(inputs.platform);
-  const floorBytes = (deps.readFloorBytes ?? readBundledFloorBytes)();
+  let snapshot = deps.artifactSnapshot;
+  let floorBytes: Buffer | undefined;
   const interactive = !inputs.nonInteractive;
 
   // A surface that already resolved the leaf template — the CLI in non-interactive
@@ -257,15 +274,57 @@ export async function createProjectFrontDoor(
   const presetTemplateId = inputs[QuestionNames.TemplateName];
   let target: Result<BuildTarget, FxError>;
   if (presetTemplateId) {
+    if (snapshot === undefined && deps.resolveArtifactSnapshot !== undefined) {
+      const resolved = await deps.resolveArtifactSnapshot("templates");
+      if (resolved.isErr()) {
+        return err(resolved.error);
+      }
+      snapshot = resolved.value;
+    }
+    if (snapshot === undefined) {
+      floorBytes = (deps.readFloorBytes ?? readBundledFloorBytes)();
+    } else {
+      const fullBytes = await readSnapshotBytes(snapshot, "templates");
+      if (fullBytes.isErr()) {
+        return err(fullBytes.error);
+      }
+      floorBytes = fullBytes.value;
+    }
     const resolveByTemplateId = deps.resolveByTemplateId ?? resolveCreateTargetByTemplateId;
     target = resolveByTemplateId(floorBytes, presetTemplateId);
   } else {
+    if (snapshot === undefined && deps.resolveArtifactSnapshot !== undefined) {
+      const resolved = await deps.resolveArtifactSnapshot("create-selector");
+      if (resolved.isErr()) {
+        return err(resolved.error);
+      }
+      snapshot = resolved.value;
+    }
+    let selectorBytes: Buffer;
+    if (snapshot === undefined) {
+      floorBytes = (deps.readFloorBytes ?? readBundledFloorBytes)();
+      selectorBytes = floorBytes;
+    } else {
+      const selector = await readSnapshotBytes(snapshot, "create-selector");
+      if (selector.isErr()) {
+        return err(selector.error);
+      }
+      selectorBytes = selector.value;
+    }
     const runSelector = deps.runSelector ?? runCreateSelector;
-    target = await runSelector(floorBytes, ui, surface, {
+    const selectorDeps = {
       flagReader,
       interactive,
       prefilled: selectorPrefillFromInputs(inputs),
-    });
+    };
+    target =
+      snapshot === undefined
+        ? await runSelector(selectorBytes, ui, surface, selectorDeps)
+        : await runSelector(selectorBytes, ui, surface, {
+            ...selectorDeps,
+            selectorBytesKind: "json",
+            v4Registry: deps.v4Registry,
+          });
   }
   if (target.isErr()) {
     return err(target.error);
@@ -285,6 +344,7 @@ export async function createProjectFrontDoor(
       }
       return deps.createV3(inputs);
     case "v4": {
+      inputs[QuestionNames.TemplateName] = templateNameForV4(target.value);
       const runInputs = deps.runInputs ?? runCreateInputs;
       const locator: DeclarativeLocator = { kind: "create", templateId: target.value.templateId };
       // Q2: the template's own inputs, over the same floor.
@@ -292,26 +352,39 @@ export async function createProjectFrontDoor(
         ...(target.value.answers ?? {}),
         ...neutralAnswersFromInputs(inputs),
       };
-      const bridgedEntryParams = addLegacyStaticMcpInputs(target.value, inputs, entryParams);
-      if (bridgedEntryParams.isErr()) {
-        return err(bridgedEntryParams.error);
+      let inputBytes: Buffer;
+      if (snapshot === undefined) {
+        if (floorBytes === undefined) {
+          floorBytes = (deps.readFloorBytes ?? readBundledFloorBytes)();
+        }
+        inputBytes = floorBytes;
+      } else {
+        const metadataBytes = await readSnapshotBytes(snapshot, "metadata");
+        if (metadataBytes.isErr()) {
+          return err(metadataBytes.error);
+        }
+        inputBytes = metadataBytes.value;
       }
-      const answers = await runInputs(floorBytes, locator, bridgedEntryParams.value, ui, {
+      const answers = await runInputs(inputBytes, locator, entryParams, ui, {
         flagReader,
         surface,
+        inputs,
       });
       if (answers.isErr()) {
         return err(answers.error);
       }
-      // The v4 path carries no QuestionMW (createProject's, which asks the v3 tree's
-      // folder/app-name last), so collect the create floor here — interactive
-      // surfaces are prompted; a non-interactive surface (CLI preset / -f / -n) is
-      // skipped (the traverse short-circuit + questionVisitor preset-skip mirror v3).
-      const floorRes = await deps.collectCreateFloor(inputs, ui);
-      if (floorRes.isErr()) {
-        return err(floorRes.error);
+      applyV4CreateFloorAnswers(inputs, answers.value);
+      if (snapshot !== undefined) {
+        const fullBytes = await readSnapshotBytes(snapshot, "templates");
+        if (fullBytes.isErr()) {
+          return err(fullBytes.error);
+        }
+        return deps.scaffoldV4(inputs, target.value, answers.value, flagReader, {
+          source: templateSourceFromArtifactSnapshot(snapshot),
+          bytes: fullBytes.value,
+        });
       }
-      return deps.scaffoldV4(inputs, target.value, answers.value);
+      return deps.scaffoldV4(inputs, target.value, answers.value, flagReader);
     }
     case "v3-core-method":
       // The shipped create selector carries no v3-core-method route; fail loudly

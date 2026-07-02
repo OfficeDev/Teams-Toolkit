@@ -6,6 +6,7 @@ import {
   InputTextConfig,
   MultiSelectConfig,
   OptionItem as SurfaceOptionItem,
+  SelectFolderConfig,
   SingleSelectConfig,
   SystemError,
   UserInteraction,
@@ -72,6 +73,7 @@ export function createUiPromptUI(ui: UserInteraction): PromptUI {
           title: question.title ?? question.name,
           placeholder: question.placeholder,
           prompt: question.prompt,
+          default: question.default,
           options: toSurfaceOptions(options),
           returnObject: false,
           step,
@@ -91,9 +93,28 @@ export function createUiPromptUI(ui: UserInteraction): PromptUI {
           title: question.title ?? question.name,
           placeholder: question.placeholder,
           prompt: question.prompt,
+          default: question.default,
           step,
         };
         const result = await ui.inputText(config);
+        if (result.isErr()) {
+          return err(result.error);
+        }
+        if (result.value.type === "back") {
+          return ok({ kind: "back" });
+        }
+        return ok({ kind: "value", value: result.value.result ?? "" });
+      }
+      if (question.type === "folder") {
+        const config: SelectFolderConfig = {
+          name: question.name,
+          title: question.title ?? question.name,
+          placeholder: question.placeholder,
+          prompt: question.prompt,
+          default: question.default,
+          step,
+        };
+        const result = await ui.selectFolder(config);
         if (result.isErr()) {
           return err(result.error);
         }

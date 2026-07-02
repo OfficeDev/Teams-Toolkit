@@ -9,11 +9,13 @@
       "validation": "uri"
     },
     {
-      "name": "mcpToolsJson",
+      "name": "mcpToolsFilePath",
       "type": "text",
-      "title": "MCP Tools JSON",
-      "prompt": "Paste the MCP tools JSON returned by the server tools/list response.",
-      "cliDescription": "MCP tools JSON returned by the server tools/list response."
+      "title": "MCP Tools File Path",
+      "prompt": "Enter the path to a JSON file containing MCP tool definitions.",
+      "cliDescription": "Path to a JSON file containing MCP tool definitions.",
+      "optional": true,
+      "condition": { "expr": "surface == 'cli' && nonInteractive != 'true' && mcpToolsJson == null" }
     },
     {
       "name": "selectedMcpTools",
@@ -21,9 +23,12 @@
       "title": "MCP Tools",
       "optionsFrom": "mcp.tools",
       "optionsFromParams": {
-        "toolsJson": { "expr": "mcpToolsJson" }
+        "toolsJson": { "expr": "mcpToolsJson" },
+        "toolsFilePath": { "expr": "mcpToolsFilePath" },
+        "serverUrl": { "expr": "mcpServerUrl" }
       },
-      "cliDescription": "MCP tools to include in the action."
+      "cliDescription": "MCP tools to include in the action.",
+      "condition": { "expr": "surface == 'cli' && nonInteractive != 'true'" }
     }
   ]
 }

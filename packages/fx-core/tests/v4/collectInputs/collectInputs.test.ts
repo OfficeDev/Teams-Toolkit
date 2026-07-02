@@ -487,19 +487,22 @@ describe("collectInputs (v4)", () => {
     assert.strictEqual(resAsk._unsafeUnwrap().mcpServerUrl, url);
   });
 
-  it("INPUT-13: a non-singleton languages list asks Q0 language; ['common'] auto-skips", async () => {
-    // multi-language → Q0 is asked
-    const uiMulti = new ScriptedUI({ language: "typescript" });
+  it("INPUT-13: a non-singleton languages list asks language after Q2; ['common'] auto-skips", async () => {
+    const questions: QuestionSpec[] = [
+      { name: "first", type: "singleSelect", staticOptions: [{ id: "a" }, { id: "b" }] },
+    ];
+    const uiMulti = new ScriptedUI({ first: "a", language: "typescript" });
     const resMulti = await collectInputs(
-      [],
-      {},
+      questions,
+      { properties: { first: {} } },
       {},
       ["typescript", "javascript", "python"],
       makePort({ ui: uiMulti })
     );
+    assert.strictEqual(resMulti._unsafeUnwrap().first, "a");
     assert.strictEqual(resMulti._unsafeUnwrap().language, "typescript");
-    assert.include(uiMulti.asked, "language");
-    // the Q0 options carry proper-cased display labels (mirroring v3's LanguageOptionMap),
+    assert.deepStrictEqual(uiMulti.asked, ["first", "language"]);
+    // the language options carry proper-cased display labels (mirroring v3's LanguageOptionMap),
     // not the raw lowercase ids
     assert.deepStrictEqual(uiMulti.lastOptions.language, [
       { id: "typescript", label: "TypeScript" },
@@ -513,7 +516,7 @@ describe("collectInputs (v4)", () => {
     assert.notProperty(resCommon._unsafeUnwrap(), "language");
   });
 
-  it("INPUT-13: a pre-filled language skips Q0 for a multi-language template", async () => {
+  it("INPUT-13: a pre-filled language skips the language axis for a multi-language template", async () => {
     const ui = new ScriptedUI({});
     const res = await collectInputs(
       [],
@@ -616,16 +619,16 @@ describe("collectInputs (v4)", () => {
     );
   });
 
-  it("INPUT-17: a back from the first question crosses into the Q0 language axis", async () => {
+  it("INPUT-17: a back from the language axis crosses into the previous Q2 question", async () => {
     const questions: QuestionSpec[] = [
       { name: "first", type: "singleSelect", staticOptions: [{ id: "a" }, { id: "b" }] },
     ];
-    // language→typescript, first→back (re-asks Q0), language→javascript, first→a
+    // first→a, language→back (re-asks Q2), first→b, language→javascript
     const ui = new SequencedPromptUI([
-      { kind: "value", value: "typescript" },
-      { kind: "back" },
-      { kind: "value", value: "javascript" },
       { kind: "value", value: "a" },
+      { kind: "back" },
+      { kind: "value", value: "b" },
+      { kind: "value", value: "javascript" },
     ]);
     const res = await collectInputs(
       questions,
@@ -635,11 +638,11 @@ describe("collectInputs (v4)", () => {
       makePort({ ui })
     );
     assert.isTrue(res.isOk());
-    // the back from the first question re-asks Q0; the re-picked language wins
-    assert.deepStrictEqual(res._unsafeUnwrap(), { language: "javascript", first: "a" });
+    // the stale first=a is discarded; the re-picked first=b wins
+    assert.deepStrictEqual(res._unsafeUnwrap(), { first: "b", language: "javascript" });
     assert.deepStrictEqual(
       ui.calls.map((c) => c.name),
-      ["language", "first", "language", "first"]
+      ["first", "language", "first", "language"]
     );
     assert.deepStrictEqual(
       ui.calls.map((c) => c.step),

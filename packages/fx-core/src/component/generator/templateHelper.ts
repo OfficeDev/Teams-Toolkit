@@ -30,18 +30,10 @@ export function useLocalTemplate(): boolean {
 }
 
 /**
- * Transitional: in the v4 channel the metadata/UI readers must read the bundled
- * copy and ignore any (possibly stale v3) `~/.fx` cache UNLESS the v4 online
- * fetch populated its cache. `fetchOnlineTemplateMetadata` writes
- * `~/.fx/template-version-v4.txt` only after a successful v4 download, so its
- * presence is the single signal that downloaded v4 metadata is available:
- *   - present → read the downloaded v4 cache;
- *   - absent  → bundled build / channel unreachable / not yet published, so
- *               read the bundled copy (never a stale v3 cache).
- * This mirrors the `resolveTemplateSource` decision in
- * `fetchOnlineTemplateMetadata`.
- *
- * Remove once selector.json drives metadata distribution.
+ * V4 front doors resolve selector/metadata through the staged artifact cache.
+ * The legacy metadata/UI readers still read bundled data unless a pre-existing
+ * v4 metadata cache marker is present; final staged metadata warming does not
+ * write this marker.
  */
 export function useBundledMetadataForV4(): boolean {
   if (!featureFlagManager.getBooleanValue(FeatureFlags.V4Enabled)) {

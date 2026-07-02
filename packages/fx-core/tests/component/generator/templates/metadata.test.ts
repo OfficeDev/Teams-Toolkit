@@ -20,6 +20,17 @@ const mockTemplates: Template[] = [
   { id: "t3", name: "JavaScript Tab", language: "javascript", description: "A JS tab" },
 ];
 
+function firstCheckedPathContaining(
+  pathExistsStub: ReturnType<typeof vi.spyOn>,
+  fragment: string
+): string {
+  const checkedPath = pathExistsStub.mock.calls
+    .map((call) => String(call[0]))
+    .find((value) => value.includes(fragment));
+  assert.isDefined(checkedPath);
+  return checkedPath;
+}
+
 describe("metadata platform routing", () => {
   const sandbox = vi;
 
@@ -49,7 +60,7 @@ describe("metadata platform routing", () => {
 
       getAllTemplatesOnPlatform(Platform.VSCode);
 
-      const checkedPath = pathExistsStub.mock.calls[0][0] as string;
+      const checkedPath = firstCheckedPathContaining(pathExistsStub, "allTemplates.json");
       assert.notInclude(checkedPath, "vs-metadata");
       assert.include(checkedPath, path.join(".fx", "metadata"));
       assert.include(checkedPath, "allTemplates.json");
@@ -198,7 +209,10 @@ describe("metadata platform routing", () => {
 
       getDefaultTemplatesOnPlatform(Platform.VSCode);
 
-      const checkedPath = pathExistsStub.mock.calls[0][0] as string;
+      const checkedPath = firstCheckedPathContaining(
+        pathExistsStub,
+        "defaultGeneratorTemplates.json"
+      );
       assert.notInclude(checkedPath, "vs-metadata");
       assert.include(checkedPath, "defaultGeneratorTemplates.json");
     });

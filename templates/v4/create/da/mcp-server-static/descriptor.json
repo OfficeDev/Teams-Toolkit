@@ -9,9 +9,10 @@
 
   "optionsSchema": {
     "type": "object",
-    "required": ["mcpServerUrl", "mcpToolsJson", "selectedMcpTools"],
+    "required": ["mcpServerUrl"],
     "properties": {
       "mcpServerUrl": { "type": "string", "format": "uri" },
+      "mcpToolsFilePath": { "type": "string" },
       "mcpToolsJson": { "type": "string" },
       "selectedMcpTools": { "type": "array", "items": { "type": "string" } }
     },

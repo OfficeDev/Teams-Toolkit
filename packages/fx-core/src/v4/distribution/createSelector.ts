@@ -11,19 +11,36 @@ import {
   parseSelectorSpec,
 } from "../buildTarget/parseSelector";
 
-/** Load the bundled-floor create selector. See resolve-build-target spec. */
+/** Load the v4 create/modify selectors. See resolve-build-target spec. */
 
 const SOURCE = "Scaffold";
 
-type SelectorKind = "create" | "modify";
+export type SelectorKind = "create" | "modify";
 
 /** The selector's fixed entry path inside the channel `templates.zip`. */
 function selectorEntry(kind: SelectorKind): string {
   return `v4/${kind}/selector.json`;
 }
 
-/** Read and JSON-parse the single selector entry shared by both projections. */
-function readSelectorRaw(bytes: Buffer, kind: SelectorKind): Result<unknown, FxError> {
+function parseSelectorJson(selectorRaw: string, sourcePath: string): Result<unknown, FxError> {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(selectorRaw);
+  } catch {
+    return err(
+      new SystemError({
+        source: SOURCE,
+        name: "PackageFileInvalid",
+        message: `The template package file "${sourcePath}" is not valid JSON.`,
+      })
+    );
+  }
+
+  return ok(parsed);
+}
+
+/** Read and JSON-parse the single selector entry from the full package zip. */
+function readSelectorRawFromZip(bytes: Buffer, kind: SelectorKind): Result<unknown, FxError> {
   let zip: AdmZip;
   try {
     zip = new AdmZip(bytes);
@@ -60,24 +77,11 @@ function readSelectorRaw(bytes: Buffer, kind: SelectorKind): Result<unknown, FxE
     );
   }
 
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(selectorRaw);
-  } catch {
-    return err(
-      new SystemError({
-        source: SOURCE,
-        name: "PackageFileInvalid",
-        message: `The template package file "${selectorPath}" is not valid JSON.`,
-      })
-    );
-  }
-
-  return ok(parsed);
+  return parseSelectorJson(selectorRaw, selectorPath);
 }
 
 export function openSelector(bytes: Buffer, kind: SelectorKind): Result<SelectorSpec, FxError> {
-  const raw = readSelectorRaw(bytes, kind);
+  const raw = readSelectorRawFromZip(bytes, kind);
   if (raw.isErr()) {
     return err(raw.error);
   }
@@ -88,7 +92,31 @@ export function openSelectorPresentation(
   bytes: Buffer,
   kind: SelectorKind
 ): Result<SelectorPresentation, FxError> {
-  const raw = readSelectorRaw(bytes, kind);
+  const raw = readSelectorRawFromZip(bytes, kind);
+  if (raw.isErr()) {
+    return err(raw.error);
+  }
+  return parseSelectorPresentation(raw.value);
+}
+
+export function openSelectorFromJsonBytes(
+  bytes: Buffer,
+  kind: SelectorKind
+): Result<SelectorSpec, FxError> {
+  const selectorPath = selectorEntry(kind);
+  const raw = parseSelectorJson(bytes.toString("utf8"), selectorPath);
+  if (raw.isErr()) {
+    return err(raw.error);
+  }
+  return parseSelectorSpec(raw.value);
+}
+
+export function openSelectorPresentationFromJsonBytes(
+  bytes: Buffer,
+  kind: SelectorKind
+): Result<SelectorPresentation, FxError> {
+  const selectorPath = selectorEntry(kind);
+  const raw = parseSelectorJson(bytes.toString("utf8"), selectorPath);
   if (raw.isErr()) {
     return err(raw.error);
   }

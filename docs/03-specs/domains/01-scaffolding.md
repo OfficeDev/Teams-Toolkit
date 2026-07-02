@@ -34,15 +34,16 @@ it is retired template-by-template per the migration ratchet
 
 - **Template** — a versioned, declarative starting point (descriptor +
   questions + pipeline + content) that the engine renders into a project.
-- **Template package** — the single distributable artifact
-  (`templates-v4@<version>`) that carries every template plus its selector and
-  metadata.
+- **Template package** — the `templates-v4@<version>` release unit. It publishes
+  selector, metadata, and full-template assets derived from the same
+  `templates/v4` source.
 - **Bundled floor** — the copy of the template package shipped inside the
   engine binary; the offline / deterministic baseline.
 - **Release channel** — the GitHub-release-hosted template packages that let
   templates ship independently of the engine.
-- **Template source** — a resolved `(origin, version, digest, location)` that
-  names exactly which bytes a scaffold run will use.
+- **Template source** — a resolved `(origin, version, digest, location)` for one
+  artifact, or a staged artifact snapshot that pins one version and digest set
+  across selector, metadata, and full-template bytes.
 - **Range** — the SemVer range a build is permitted to resolve within.
 - **Lane** — `stable` vs `beta`, expressed purely through SemVer prerelease
   semantics (a `-beta` segment), not a separate field.

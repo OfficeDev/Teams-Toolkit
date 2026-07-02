@@ -7,7 +7,10 @@ import * as os from "os";
 import * as path from "path";
 import { SystemError } from "@microsoft/teamsfx-api";
 import { loadPackageDir } from "../../../src/v4/distribution/packageDir";
-import { openDeclarativePackage } from "../../../src/v4/distribution/declarativePackage";
+import {
+  openDeclarativePackage,
+  openDeclarativePackageMetadata,
+} from "../../../src/v4/distribution/declarativePackage";
 import { createRealRuntime } from "../../../src/v4/runtime/realRuntime";
 import { scaffold } from "../../../src/v4/runtime/scaffold";
 import { assert } from "vitest";
@@ -127,6 +130,116 @@ describe("openDeclarativePackage (v4, zip declarative-subtree reader)", () => {
     const result = openDeclarativePackage(Buffer.from("not a zip at all"), LOCATOR);
     assert.isTrue(result.isErr(), "expected an error for non-zip bytes");
     assert.strictEqual(result._unsafeUnwrapErr().name, "TemplatePackageCorrupt");
+  });
+
+  it("DECL-04b: metadata reader returns errors for invalid archive and missing metadata files", () => {
+    const invalidZip = openDeclarativePackageMetadata(Buffer.from("not a zip at all"), LOCATOR);
+    assert.isTrue(invalidZip.isErr());
+    assert.strictEqual(invalidZip._unsafeUnwrapErr().name, "TemplatePackageCorrupt");
+
+    const missingQuestions = new AdmZip();
+    missingQuestions.addFile(
+      "v4/create/da/mcp-server/descriptor.json",
+      Buffer.from(JSON.stringify({ id: "da/mcp-server" }))
+    );
+    missingQuestions.addFile(
+      "v4/create/da/mcp-server/pipeline.json",
+      Buffer.from(JSON.stringify({ pipeline: "default" }))
+    );
+
+    const missingQuestionsResult = openDeclarativePackageMetadata(
+      missingQuestions.toBuffer(),
+      LOCATOR
+    );
+    assert.isTrue(missingQuestionsResult.isErr());
+    assert.strictEqual(missingQuestionsResult._unsafeUnwrapErr().name, "PackageFileMissing");
+  });
+
+  it("DECL-04d: metadata reader reports missing descriptor and pipeline files", () => {
+    const missingDescriptor = new AdmZip();
+    missingDescriptor.addFile(
+      "v4/create/da/mcp-server/questions.json",
+      Buffer.from(JSON.stringify({ questions: [] }))
+    );
+    missingDescriptor.addFile(
+      "v4/create/da/mcp-server/pipeline.json",
+      Buffer.from(JSON.stringify({ pipeline: "default" }))
+    );
+    const missingPipeline = new AdmZip();
+    missingPipeline.addFile(
+      "v4/create/da/mcp-server/descriptor.json",
+      Buffer.from(JSON.stringify({ id: "da/mcp-server" }))
+    );
+    missingPipeline.addFile(
+      "v4/create/da/mcp-server/questions.json",
+      Buffer.from(JSON.stringify({ questions: [] }))
+    );
+
+    const descriptorResult = openDeclarativePackageMetadata(missingDescriptor.toBuffer(), LOCATOR);
+    const pipelineResult = openDeclarativePackageMetadata(missingPipeline.toBuffer(), LOCATOR);
+
+    assert.strictEqual(descriptorResult._unsafeUnwrapErr().name, "PackageFileMissing");
+    assert.strictEqual(pipelineResult._unsafeUnwrapErr().name, "PackageFileMissing");
+  });
+
+  it("DECL-04e: metadata reader reports invalid descriptor and questions JSON", () => {
+    const invalidDescriptor = new AdmZip();
+    invalidDescriptor.addFile("v4/create/da/mcp-server/descriptor.json", Buffer.from("{"));
+    invalidDescriptor.addFile(
+      "v4/create/da/mcp-server/questions.json",
+      Buffer.from(JSON.stringify({ questions: [] }))
+    );
+    invalidDescriptor.addFile(
+      "v4/create/da/mcp-server/pipeline.json",
+      Buffer.from(JSON.stringify({ pipeline: "default" }))
+    );
+    const invalidQuestions = new AdmZip();
+    invalidQuestions.addFile(
+      "v4/create/da/mcp-server/descriptor.json",
+      Buffer.from(JSON.stringify({ id: "da/mcp-server" }))
+    );
+    invalidQuestions.addFile("v4/create/da/mcp-server/questions.json", Buffer.from("{"));
+    invalidQuestions.addFile(
+      "v4/create/da/mcp-server/pipeline.json",
+      Buffer.from(JSON.stringify({ pipeline: "default" }))
+    );
+
+    const descriptorResult = openDeclarativePackageMetadata(invalidDescriptor.toBuffer(), LOCATOR);
+    const questionsResult = openDeclarativePackageMetadata(invalidQuestions.toBuffer(), LOCATOR);
+
+    assert.strictEqual(descriptorResult._unsafeUnwrapErr().name, "PackageFileInvalid");
+    assert.strictEqual(questionsResult._unsafeUnwrapErr().name, "PackageFileInvalid");
+  });
+
+  it("DECL-04f: package reader reports invalid pipeline JSON", () => {
+    const invalidPipeline = new AdmZip();
+    invalidPipeline.addFile(
+      "v4/create/da/mcp-server/descriptor.json",
+      Buffer.from(JSON.stringify({ id: "da/mcp-server" }))
+    );
+    invalidPipeline.addFile("v4/create/da/mcp-server/pipeline.json", Buffer.from("{"));
+
+    const result = openDeclarativePackage(invalidPipeline.toBuffer(), LOCATOR);
+
+    assert.strictEqual(result._unsafeUnwrapErr().name, "PackageFileInvalid");
+  });
+
+  it("DECL-04c: metadata reader validates questions JSON shape", () => {
+    const zip = new AdmZip();
+    zip.addFile(
+      "v4/create/da/mcp-server/descriptor.json",
+      Buffer.from(JSON.stringify({ id: "da/mcp-server" }))
+    );
+    zip.addFile("v4/create/da/mcp-server/questions.json", Buffer.from(JSON.stringify({})));
+    zip.addFile(
+      "v4/create/da/mcp-server/pipeline.json",
+      Buffer.from(JSON.stringify({ pipeline: "default" }))
+    );
+
+    const result = openDeclarativePackageMetadata(zip.toBuffer(), LOCATOR);
+
+    assert.isTrue(result.isErr());
+    assert.strictEqual(result._unsafeUnwrapErr().name, "PackageFileInvalid");
   });
 
   it("DECL-05: a Zip-Slip content entry is rejected", () => {

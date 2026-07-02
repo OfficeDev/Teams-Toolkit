@@ -86,7 +86,10 @@ export interface OptionsProvider {
 }
 
 /** Engine-registered validator: an error message, or `undefined` when valid. */
-export type Validator = (value: string) => string | undefined;
+export type Validator = (
+  value: string,
+  answers: Answers
+) => string | undefined | Promise<string | undefined>;
 
 /** One prompt's outcome: a chosen value or the host's `back` request. */
 export type Asked<T> = { kind: "value"; value: T } | { kind: "back" };
@@ -113,6 +116,10 @@ export interface CollectInputsPort {
   optionsProvider(providerId: string): OptionsProvider | undefined;
   validator(name: string): Validator | undefined;
   evaluate(node: ConditionNode, scope: Scope): Result<EvalValue, FxError>;
+}
+
+export interface CollectInputsOptions {
+  appendLanguage?: boolean;
 }
 
 /** `SystemError` names for engine-side input collection breaks. */
@@ -143,7 +150,8 @@ export async function collectInputs(
   optionsSchema: OptionsSchema,
   entryParams: Answers,
   languages: string[],
-  port: CollectInputsPort
+  port: CollectInputsPort,
+  options: CollectInputsOptions = {}
 ): Promise<Result<Answers, FxError>> {
   // Pre-filled entry params must be visible to question conditions.
   let answers: Answers = { ...entryParams };
@@ -156,10 +164,11 @@ export async function collectInputs(
   // Back history snapshots only prompted steps; skipped and pre-filled steps are crossed over.
   const history: { pos: number; answers: Answers }[] = [];
 
-  // pos 0 is the language axis; later positions map to authored questions.
+  // Authored questions are asked first; the language axis is appended after Q2 by default.
+  const appendLanguage = options.appendLanguage ?? true;
   let pos = 0;
-  while (pos <= questions.length) {
-    if (pos === 0) {
+  while (pos < questions.length || (appendLanguage && pos === questions.length)) {
+    if (pos === questions.length) {
       // A non-singleton language list prompts; `["common"]` has no axis.
       if (languages.length > 1) {
         if (typeof answers.language === "string") {
@@ -197,7 +206,7 @@ export async function collectInputs(
       continue;
     }
 
-    const q = questions[pos - 1];
+    const q = questions[pos];
 
     // Keep the schema invariant guarded at runtime too.
     if (q.staticOptions !== undefined && q.optionsFrom !== undefined) {
@@ -344,7 +353,7 @@ export async function collectInputs(
           )
         );
       }
-      const message = validator(value);
+      const message = await validator(value, answers);
       if (message !== undefined) {
         return err(
           new UserError({

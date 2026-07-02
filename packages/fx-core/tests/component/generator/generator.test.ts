@@ -527,6 +527,7 @@ describe("Generator error", async () => {
   const tmpDir = path.join(__dirname, "tmp");
 
   beforeEach(() => {
+    vi.stubEnv(FeatureFlags.V4Enabled.name, "false");
     vi.spyOn(fs, "readFileSync").mockReturnValue(`[{
           "id": "default-bot-ts",
           "name": "default-bot",
@@ -847,7 +848,10 @@ describe("render template", () => {
         [QuestionNames.TemplateName]: TemplateNames.DefaultBot,
       } as Inputs;
       savedProcessEnv = process.env;
-      process.env = { TEAMSFX_NEW_GENERATOR: "true" } as any;
+      process.env = {
+        TEAMSFX_NEW_GENERATOR: "true",
+        [FeatureFlags.V4Enabled.name]: "false",
+      } as any;
       vi.spyOn(fs, "readFileSync").mockReturnValue(`[{
           "id": "default-bot-ts",
           "name": "default-bot",

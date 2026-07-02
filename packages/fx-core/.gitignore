@@ -8,7 +8,7 @@ coverage
 .fx
 templates/**/*.zip
 templates/configs
-templates/v4/floor.json
+templates/v4
 tests/**/TeamsSPFxApp.zip
 resource/templates
 tsconfig.tsbuildinfo
