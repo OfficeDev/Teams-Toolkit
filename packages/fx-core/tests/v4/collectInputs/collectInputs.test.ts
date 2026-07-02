@@ -14,7 +14,9 @@ import {
   CollectInputsPort,
   INPUT_BOTH_OPTION_SOURCES,
   INPUT_FORWARD_DERIVED_REFERENCE,
+  INPUT_PROVIDER_FAILED,
   INPUT_VALIDATION_FAILED,
+  INPUT_UNKNOWN_VALIDATOR,
   INPUT_WALK_CANCELLED,
   OptionItem,
   OptionsSource,
@@ -463,6 +465,98 @@ describe("collectInputs (v4)", () => {
     assert.instanceOf(e, UserError);
     assert.strictEqual(e.name, INPUT_VALIDATION_FAILED);
     assert.include(e.message, "mcpServerUrl");
+  });
+
+  it("INPUT-10: an unknown question validator is rejected before prompting", async () => {
+    const questions: QuestionSpec[] = [
+      { name: "mcpServerUrl", type: "text", validation: "missing" },
+    ];
+    const ui = new ScriptedUI({ mcpServerUrl: "https://api.example.com/mcp" });
+
+    const res = await collectInputs(
+      questions,
+      { properties: { mcpServerUrl: {} } },
+      {},
+      ["common"],
+      makePort({ ui })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_UNKNOWN_VALIDATOR);
+    assert.deepStrictEqual(ui.asked, []);
+  });
+
+  it("INPUT-10: an unknown input-box validator is rejected before prompting", async () => {
+    const questions: QuestionSpec[] = [
+      {
+        name: "apiSpecLocation",
+        type: "singleFileOrText",
+        inputOptionItem: { id: "input" },
+        inputBoxConfig: { name: "input-api-spec-url", validation: "missing" },
+      },
+    ];
+    const ui = new ScriptedUI({ apiSpecLocation: "https://example.com/openapi.yaml" });
+
+    const res = await collectInputs(
+      questions,
+      { properties: { apiSpecLocation: {} } },
+      {},
+      ["common"],
+      makePort({ ui })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_UNKNOWN_VALIDATOR);
+    assert.deepStrictEqual(ui.asked, []);
+  });
+
+  it("INPUT-10: scalar provider errors after prompting are returned as input errors", async () => {
+    const providerError = new UserError({
+      source: "Test",
+      name: "ProviderUserError",
+      message: "bad",
+    });
+    const provider: OptionsProvider = { fetch: async () => Promise.reject(providerError) };
+    const questions: QuestionSpec[] = [
+      { name: "openApiSpec", type: "singleSelect", optionsFrom: "openapi.search" },
+    ];
+
+    const res = await collectInputs(
+      questions,
+      { properties: { openApiSpec: {} } },
+      {},
+      ["common"],
+      makePort({
+        ui: new SequencedPromptUI([{ kind: "value", value: "https://example.com/openapi.yaml" }]),
+        providers: { "openapi.search": provider },
+      })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, "ProviderUserError");
+  });
+
+  it("INPUT-10: multi provider exceptions after prompting are wrapped as provider failures", async () => {
+    const provider: OptionsProvider = {
+      fetch: async () => Promise.reject(new Error("provider exploded")),
+    };
+    const questions: QuestionSpec[] = [
+      { name: "apiOperations", type: "multiSelect", optionsFrom: "openapi.operations" },
+    ];
+
+    const res = await collectInputs(
+      questions,
+      { properties: { apiOperations: {} } },
+      {},
+      ["common"],
+      makePort({
+        ui: new SequencedPromptUI([{ kind: "multi", value: ["GET /repairs"] }]),
+        providers: { "openapi.operations": provider },
+      })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_PROVIDER_FAILED);
   });
 
   it("INPUT-11: machine-state (odr.exe) gating is the provider, never a condition predicate", async () => {

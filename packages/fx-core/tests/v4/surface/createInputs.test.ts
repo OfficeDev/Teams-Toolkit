@@ -456,7 +456,34 @@ describe("runCreateInputs (collect-create-inputs)", () => {
   it("asks for the OpenAPI spec source before collecting DA OpenAPI operations", async () => {
     const ui = new ScriptedUserInteraction({
       select: { openApiSpecType: "enter-url" },
-      text: { apiSpecLocation: OPENAPI_SPEC },
+      text: { apiSpecLocation: "https://example.com/openapi.yaml" },
+      multi: { apiOperations: ["GET /repairs"] },
+    });
+
+    const res = await runCreateInputs(buildFloor(), OPENAPI_DA, {}, asUI(ui), {
+      flagReader: () => false,
+    });
+
+    assert.isTrue(res.isErr(), "expected the fake remote URL to fail when operations load");
+    assert.equal(res._unsafeUnwrapErr().name, "OpenApiSpecInvalid");
+    assert.deepEqual(ui.promptNames, ["openApiSpecType", "apiSpecLocation", "apiOperations"]);
+    assert.deepEqual(ui.textNames, ["apiSpecLocation"]);
+    assert.deepEqual(ui.fileNames, []);
+    assert.deepEqual(ui.fileOrInputNames, []);
+    assert.equal(ui.lastInputConfig?.placeholder, "https://example.com/openapi.yaml");
+    assert.equal(ui.lastInputConfig?.prompt, "Enter an OpenAPI description document URL.");
+    assert.isFunction(ui.lastInputConfig?.validation);
+    assert.equal(
+      await ui.lastInputConfig?.validation?.("./openapi.yaml"),
+      "Enter a valid HTTP URL without authentication to access your OpenAPI description document."
+    );
+    assert.deepEqual(ui.dynamicOptionNames, ["apiOperations"]);
+  });
+
+  it("browses a local DA OpenAPI document only from the local file branch", async () => {
+    const ui = new ScriptedUserInteraction({
+      select: { openApiSpecType: "open-file" },
+      file: { apiSpecLocation: OPENAPI_SPEC },
       multi: { apiOperations: ["GET /repairs"] },
     });
 
@@ -466,12 +493,18 @@ describe("runCreateInputs (collect-create-inputs)", () => {
 
     assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
     if (res.isOk()) {
-      assert.equal(res.value.openApiSpecType, "enter-url");
+      assert.equal(res.value.openApiSpecType, "open-file");
       assert.equal(res.value.apiSpecLocation, OPENAPI_SPEC);
       assert.deepEqual(res.value.apiOperations, ["GET /repairs"]);
     }
     assert.deepEqual(ui.promptNames, ["openApiSpecType", "apiSpecLocation", "apiOperations"]);
-    assert.deepEqual(ui.dynamicOptionNames, ["apiOperations"]);
+    assert.deepEqual(ui.fileNames, ["apiSpecLocation"]);
+    assert.deepEqual(ui.textNames, []);
+    assert.deepEqual(ui.fileOrInputNames, []);
+    assert.equal(ui.lastFileConfig?.placeholder, "Select an OpenAPI description document.");
+    assert.deepEqual(ui.lastFileConfig?.filters, {
+      "OpenAPI Description Document": ["json", "yml", "yaml"],
+    });
   });
 
   it("collects DA OpenAPI operations from a searched OpenAPI document", async () => {
@@ -514,6 +547,27 @@ describe("runCreateInputs (collect-create-inputs)", () => {
     assert.equal(options[0].id, OPENAPI_SPEC);
     assert.equal(options[0].label, "Repairs API");
     assert.equal(options[0].detail, "Manage repairs");
+  });
+
+  it("surfaces empty OpenAPI search results as a user-fixable error", async () => {
+    const ui = new ScriptedUserInteraction({
+      select: { openApiSpecType: "search-api" },
+      text: { searchOpenApiSpecQuery: "missing" },
+    });
+
+    const res = await runCreateInputs(buildFloor(), OPENAPI_DA, {}, asUI(ui), {
+      flagReader: () => false,
+      searchOpenAPISpec: async () => [],
+    });
+
+    assert.isTrue(res.isErr(), "expected empty search results to fail");
+    assert.equal(res._unsafeUnwrapErr().name, "OpenApi" + "SearchResult" + "NotFound");
+    assert.deepEqual(ui.promptNames, [
+      "openApiSpecType",
+      "searchOpenApiSpecQuery",
+      "selectOpenApiSpec",
+    ]);
+    assert.deepEqual(ui.dynamicOptionNames, ["selectOpenApiSpec"]);
   });
 
   it("surfaces invalid OpenAPI operation loading as a user-fixable error", async () => {

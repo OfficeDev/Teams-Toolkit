@@ -218,29 +218,10 @@
           "detail": "Task pane add-in with custom function and shortcut",
           "condition": { "featureFlag": "TEAMSFX_CF_SHORTCUT_METAOS" },
           "keyPrefix": "template.newCFShortcut" },
-        { "id": "office-da-meta-os",
-          "label": "Create Declarative Agent with Office Add-in Action",
-          "detail": "Create a Declarative Agent with Office add-in action",
-          "condition": { "featureFlag": "TEAMSFX_DA_METAOS" },
-          "keyPrefix": "template.createProjectQuestion.DAMetaOS" },
         { "id": "office-addin-config",
           "label": "Upgrade an Existing Office Add-in",
           "detail": "Upgrade an add-in project to the latest app manifest and project structure",
           "keyPrefix": "template.importOfficeAddin" }
-      ]
-    },
-    {
-      "name": "daMetaOsCapability",
-      "type": "singleSelect",
-      "title": "Declarative Agent in MetaOS Capabilities",
-      "placeholder": "Select a capability",
-      "keyPrefix": "template.createProjectQuestion.DAMetaOS.capability",
-      "condition": { "expr": "officeAddinCapability == 'office-da-meta-os'" },
-      "staticOptions": [
-        { "id": "declarative-agent-meta-os-upgrade-project",
-          "label": "Extend an existing Office Add-in",
-          "detail": "Extend an add-in project to the declarative agent with add-in actions",
-          "keyPrefix": "template.createProjectQuestion.DAMetaOS.capability.upgradeProject" }
       ]
     }
   ],
@@ -320,11 +301,6 @@
     {
       "when": "projectType=='office-meta-os-type' && officeAddinCapability=='office-addin-excel-cfshortcut'",
       "templateId": "office-addin-excel-cfshortcut",
-      "engine": "v4"
-    },
-    {
-      "when": "projectType=='office-meta-os-type' && officeAddinCapability=='office-da-meta-os' && daMetaOsCapability=='declarative-agent-meta-os-upgrade-project'",
-      "templateId": "declarative-agent-meta-os-upgrade-project",
       "engine": "v4"
     },
     {
