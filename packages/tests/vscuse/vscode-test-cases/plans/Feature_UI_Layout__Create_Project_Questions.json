@@ -291,7 +291,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion Verify that there are 5 options \u201cDeclarative Agent\u201d, \"Custom Engine Agent\", \"Copilot Connectors\", \"Teams Agents and Apps\" and \"Office Add-in\"",
+      "description": "@assertion Verify that there are 6 options \u201cDeclarative Agent\u201d, \"Custom Engine Agent\", \"Copilot Connectors\", \"Blank App\", \"Teams Agents and Apps\" and \"Office Add-in\"",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
