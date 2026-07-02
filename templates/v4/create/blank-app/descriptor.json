@@ -1,0 +1,17 @@
+{
+  "$schema": "../../schema/descriptor.schema.json",
+  "id": "blank-app",
+  "name": "Blank App",
+  "languages": ["common"],
+  "minEngineVersion": "5.20.0",
+  "spec": "docs/03-specs/scenarios/teams/create-blank-app.md",
+  "requiresNetwork": false,
+
+  "optionsSchema": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+
+  "replaceMap": []
+}

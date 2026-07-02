@@ -29,6 +29,7 @@ const DT = "TEAMSFX_MCP_FOR_DA_DT";
 const SELECTOR_PATH = path.resolve(__dirname, "../../../../../templates/v4/create/selector.json");
 
 const CURRENT_CREATE_V4_TEMPLATE_IDS = [
+  "blank-app",
   "basic-custom-engine-agent",
   "custom-copilot-basic",
   "custom-copilot-rag-azure-ai-search",

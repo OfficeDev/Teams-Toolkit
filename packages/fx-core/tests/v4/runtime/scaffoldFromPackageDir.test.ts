@@ -162,4 +162,66 @@ describe("scaffoldFromPackageDir (v4 product front-door)", () => {
     assert.instanceOf(error, SystemError);
     assert.strictEqual(error?.name, "ScaffoldPathEscape");
   });
+
+  it("ORCH-08: excludes sandbox env and config files when the sandboxed team flag is off", async () => {
+    const packageDir = path.join(tempDir, "package");
+    const outputDir = path.join(tempDir, "output");
+    fs.ensureDirSync(path.join(packageDir, "content", "env"));
+    fs.writeFileSync(path.join(packageDir, "descriptor.json"), JSON.stringify({ replaceMap: [] }));
+    fs.writeFileSync(
+      path.join(packageDir, "pipeline.json"),
+      JSON.stringify({ pipeline: "default", steps: [] })
+    );
+    fs.writeFileSync(path.join(packageDir, "content", "keep.txt"), "keep");
+    fs.writeFileSync(path.join(packageDir, "content", "m365agents.sandbox.yml.tpl"), "sandbox yml");
+    fs.writeFileSync(path.join(packageDir, "content", "teamsapp.sandbox.yml.tpl"), "sandbox yml");
+    fs.writeFileSync(path.join(packageDir, "content", "env", ".env.sandbox"), "sandbox");
+    fs.writeFileSync(path.join(packageDir, "content", "env", ".env.sandbox.user.tpl"), "user");
+
+    const result = await scaffoldFromPackageDir(
+      packageDir,
+      {},
+      FLOOR,
+      { path: outputDir, existing: [] },
+      () => false
+    );
+    assert.isTrue(result.isOk(), result.isErr() ? result.error.message : "expected ok");
+
+    assert.isTrue(fs.existsSync(path.join(outputDir, "keep.txt")), "ordinary content on disk");
+    assert.isFalse(fs.existsSync(path.join(outputDir, "m365agents.sandbox.yml")));
+    assert.isFalse(fs.existsSync(path.join(outputDir, "teamsapp.sandbox.yml")));
+    assert.isFalse(fs.existsSync(path.join(outputDir, "env", ".env.sandbox")));
+    assert.isFalse(fs.existsSync(path.join(outputDir, "env", ".env.sandbox.user")));
+  });
+
+  it("ORCH-09: includes sandbox env and config files when the sandboxed team flag is on", async () => {
+    const packageDir = path.join(tempDir, "package");
+    const outputDir = path.join(tempDir, "output");
+    fs.ensureDirSync(path.join(packageDir, "content", "env"));
+    fs.writeFileSync(path.join(packageDir, "descriptor.json"), JSON.stringify({ replaceMap: [] }));
+    fs.writeFileSync(
+      path.join(packageDir, "pipeline.json"),
+      JSON.stringify({ pipeline: "default", steps: [] })
+    );
+    fs.writeFileSync(path.join(packageDir, "content", "keep.txt"), "keep");
+    fs.writeFileSync(path.join(packageDir, "content", "m365agents.sandbox.yml.tpl"), "sandbox yml");
+    fs.writeFileSync(path.join(packageDir, "content", "teamsapp.sandbox.yml.tpl"), "sandbox yml");
+    fs.writeFileSync(path.join(packageDir, "content", "env", ".env.sandbox"), "sandbox");
+    fs.writeFileSync(path.join(packageDir, "content", "env", ".env.sandbox.user.tpl"), "user");
+
+    const result = await scaffoldFromPackageDir(
+      packageDir,
+      {},
+      FLOOR,
+      { path: outputDir, existing: [] },
+      () => true
+    );
+    assert.isTrue(result.isOk(), result.isErr() ? result.error.message : "expected ok");
+
+    assert.isTrue(fs.existsSync(path.join(outputDir, "keep.txt")), "ordinary content on disk");
+    assert.isTrue(fs.existsSync(path.join(outputDir, "m365agents.sandbox.yml")));
+    assert.isTrue(fs.existsSync(path.join(outputDir, "teamsapp.sandbox.yml")));
+    assert.isTrue(fs.existsSync(path.join(outputDir, "env", ".env.sandbox")));
+    assert.isTrue(fs.existsSync(path.join(outputDir, "env", ".env.sandbox.user")));
+  });
 });
