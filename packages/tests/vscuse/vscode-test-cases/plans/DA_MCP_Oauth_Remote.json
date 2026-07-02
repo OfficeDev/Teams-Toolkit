@@ -5,7 +5,7 @@
     "execution_context": {
       "delay_between_steps": 0.5,
       "stop_on_error": true,
-      "precondition_wait_timeout": 120,
+      "precondition_wait_timeout": 240,
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
@@ -59,7 +59,7 @@
       "step_5b6d6181"
     ],
     "tags": [],
-    "updated_at": "2026-07-02T12:48:10.000000"
+    "updated_at": "2026-07-02T13:27:00.000000"
   },
   "steps": [
     {
