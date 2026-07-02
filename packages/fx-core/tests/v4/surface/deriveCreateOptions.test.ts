@@ -161,6 +161,9 @@ describe("deriveCreateOptions", () => {
       assert.equal(apiOperations?.type, "array");
       assert.isTrue(skipValidationOf(apiOperations));
 
+      const openApiSpecType = optionByName(res.value, "open-api-spec-type");
+      assert.includeMembers(choicesOf(openApiSpecType), ["enter-url", "open-file", "search-api"]);
+
       const apiSpecLocation = optionByName(res.value, "api-spec-location");
       assert.equal(apiSpecLocation?.shortName, "a");
     }

@@ -2,13 +2,59 @@
   "$schema": "../../schema/question.schema.json",
   "questions": [
     {
+      "name": "openApiSpecType",
+      "type": "singleSelect",
+      "title": "OpenAPI Spec Document",
+      "cliDescription": "The type of the API spec.",
+      "condition": { "expr": "apiSpecLocation == null" },
+      "staticOptions": [
+        {
+          "id": "enter-url",
+          "label": "Enter OpenAPI description document URL",
+          "keyPrefix": "core.createProjectQuestion.capability.selectOpenAPISpecFromUrl"
+        },
+        {
+          "id": "open-file",
+          "label": "Browse OpenAPI description document locally",
+          "keyPrefix": "core.createProjectQuestion.capability.selectOpenAPISpecFromFile"
+        },
+        {
+          "id": "search-api",
+          "label": "Search OpenAPI description document",
+          "keyPrefix": "core.createProjectQuestion.capability.selectOpenAPISpecFromSearch"
+        }
+      ]
+    },
+    {
       "name": "apiSpecLocation",
       "type": "text",
       "title": "OpenAPI Description Document",
       "placeholder": "https://example.com/openapi.yaml or ./openapi.yaml",
       "prompt": "Enter an OpenAPI description document URL or local path.",
       "cliShortName": "a",
-      "cliDescription": "OpenAPI description document location."
+      "cliDescription": "OpenAPI description document location.",
+      "condition": { "expr": "openApiSpecType == 'enter-url' || openApiSpecType == 'open-file' || (openApiSpecType == null && apiSpecLocation == null)" }
+    },
+    {
+      "name": "searchOpenApiSpecQuery",
+      "type": "text",
+      "title": "Search OpenAPI Document",
+      "placeholder": "Input text to search OpenAPI description document",
+      "keyPrefix": "core.createProjectQuestion.capability.searchOpenAPISpecQueryQuestion",
+      "cliDescription": "Search OpenAPI Document",
+      "condition": { "expr": "openApiSpecType == 'search-api'" }
+    },
+    {
+      "name": "selectOpenApiSpec",
+      "type": "singleSelect",
+      "title": "Select OpenAPI Document",
+      "keyPrefix": "core.createProjectQuestion.capability.selectOpenAPISpecQuestion",
+      "optionsFrom": "openapi.search",
+      "optionsFromParams": {
+        "query": { "expr": "searchOpenApiSpecQuery" }
+      },
+      "cliDescription": "Select OpenAPI Document",
+      "condition": { "expr": "openApiSpecType == 'search-api'" }
     },
     {
       "name": "apiOperations",
@@ -18,52 +64,75 @@
       "optionsFromParams": {
         "apiSpecLocation": { "expr": "apiSpecLocation" }
       },
-      "cliDescription": "API operations to include in the custom API agent."
+      "cliDescription": "API operations to include in the custom API agent.",
+      "condition": { "expr": "selectOpenApiSpec == null" }
+    },
+    {
+      "name": "apiOperations",
+      "type": "multiSelect",
+      "title": "API Operations",
+      "optionsFrom": "openapi.operations",
+      "optionsFromParams": {
+        "apiSpecLocation": { "expr": "selectOpenApiSpec" }
+      },
+      "cliDescription": "API operations to include in the custom API agent.",
+      "condition": { "expr": "selectOpenApiSpec != null" }
     },
     {
       "name": "llmService",
       "type": "singleSelect",
       "title": "Service for Large Language Model (LLM)",
       "placeholder": "Select a service to access LLMs",
+      "keyPrefix": "core.createProjectQuestion.llmService",
       "default": "llm-service-azure-openai",
       "staticOptions": [
         {
           "id": "llm-service-azure-openai",
           "label": "Azure OpenAI",
-          "detail": "Use Azure OpenAI as the language model service."
+          "detail": "Access powerful LLMs in OpenAI with Azure security and reliability",
+          "keyPrefix": "core.createProjectQuestion.llmServiceAzureOpenAIOption"
         },
         {
           "id": "llm-service-openai",
           "label": "OpenAI",
-          "detail": "Use OpenAI as the language model service."
+          "detail": "Access LLMs developed by OpenAI",
+          "keyPrefix": "core.createProjectQuestion.llmServiceOpenAIOption"
         }
       ]
     },
     {
       "name": "openAIKey",
       "type": "text",
-      "title": "Input OpenAI service key now or set it later in the project.",
+      "title": "OpenAI Key",
+      "placeholder": "Input OpenAI service key now or set it later in the project",
+      "keyPrefix": "core.createProjectQuestion.llmService.openAIKey",
       "condition": { "equals": { "llmService": "llm-service-openai" } },
       "optional": true
     },
     {
       "name": "azureOpenAIKey",
       "type": "text",
-      "title": "Input Azure OpenAI service key now or set it later in the project",
+      "title": "Azure OpenAI Key",
+      "placeholder": "Input Azure OpenAI service key now or set it later in the project",
+      "keyPrefix": "core.createProjectQuestion.llmService.azureOpenAIKey",
       "condition": { "equals": { "llmService": "llm-service-azure-openai" } },
       "optional": true
     },
     {
       "name": "azureOpenAIEndpoint",
       "type": "text",
-      "title": "Input Azure OpenAI service endpoint now or set it later in the project",
+      "title": "Azure OpenAI Endpoint",
+      "placeholder": "Input Azure OpenAI service endpoint now or set it later in the project",
+      "keyPrefix": "core.createProjectQuestion.llmService.azureOpenAIEndpoint",
       "condition": { "equals": { "llmService": "llm-service-azure-openai" } },
       "optional": true
     },
     {
       "name": "azureOpenAIDeploymentName",
       "type": "text",
-      "title": "Input Azure OpenAI deployment name",
+      "title": "Azure OpenAI Deployment Name",
+      "placeholder": "Input Azure OpenAI deployment name now or set it later in the project",
+      "keyPrefix": "core.createProjectQuestion.llmService.azureOpenAIDeploymentName",
       "condition": { "equals": { "llmService": "llm-service-azure-openai" } },
       "optional": true
     }

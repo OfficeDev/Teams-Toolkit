@@ -2,7 +2,7 @@
   "$schema": "../../schema/descriptor.schema.json",
   "id": "weather-agent",
   "name": "Weather Agent",
-  "languages": ["typescript", "javascript", "python"],
+  "languages": ["typescript", "javascript"],
   "minEngineVersion": "5.20.0",
   "spec": "docs/03-specs/scenarios/teams/create-weather-agent.md",
   "requiresNetwork": false,

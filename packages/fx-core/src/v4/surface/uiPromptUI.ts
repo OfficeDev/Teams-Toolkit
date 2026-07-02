@@ -12,20 +12,43 @@ import {
   UserInteraction,
 } from "@microsoft/teamsfx-api";
 import { Result, err, ok } from "neverthrow";
+import { getLocalizedString } from "../../common/localizeUtils";
 import { Asked, OptionItem, PromptUI, QuestionSpec } from "../collectInputs/collectInputs";
 
 /** Create-Q2 prompt bridge from v4 `PromptUI` to host `UserInteraction`. */
 
 const SOURCE = "Scaffold";
 
+function localizeText(text: string | undefined): string | undefined {
+  if (text === undefined) {
+    return undefined;
+  }
+  const localized = getLocalizedString(text);
+  return localized.length > 0 ? localized : text;
+}
+
+function localizePrefixedText(
+  keyPrefix: string | undefined,
+  suffix: string,
+  fallback: string | undefined
+): string | undefined {
+  if (keyPrefix !== undefined) {
+    const localized = getLocalizedString(`${keyPrefix}.${suffix}`);
+    if (localized.length > 0) {
+      return localized;
+    }
+  }
+  return localizeText(fallback);
+}
+
 /** Map a v4 identity-only option to the surface option shape (label defaults to its id). */
 function toSurfaceOptions(options: OptionItem[]): SurfaceOptionItem[] {
   return options.map((option) => ({
     id: option.id,
-    label: option.label ?? option.id,
-    description: option.description,
-    detail: option.detail,
-    groupName: option.groupName,
+    label: localizePrefixedText(option.keyPrefix, "label", option.label) ?? option.id,
+    description: localizePrefixedText(option.keyPrefix, "description", option.description),
+    detail: localizePrefixedText(option.keyPrefix, "detail", option.detail),
+    groupName: localizePrefixedText(option.keyPrefix, "groupName", option.groupName),
   }));
 }
 
@@ -70,9 +93,13 @@ export function createUiPromptUI(ui: UserInteraction): PromptUI {
         }
         const config: SingleSelectConfig = {
           name: question.name,
-          title: question.title ?? question.name,
-          placeholder: question.placeholder,
-          prompt: question.prompt,
+          title: localizePrefixedText(question.keyPrefix, "title", question.title) ?? question.name,
+          placeholder: localizePrefixedText(
+            question.keyPrefix,
+            "placeholder",
+            question.placeholder
+          ),
+          prompt: localizePrefixedText(question.keyPrefix, "prompt", question.prompt),
           default: question.default,
           options: toSurfaceOptions(options),
           returnObject: false,
@@ -90,9 +117,13 @@ export function createUiPromptUI(ui: UserInteraction): PromptUI {
       if (question.type === "text") {
         const config: InputTextConfig = {
           name: question.name,
-          title: question.title ?? question.name,
-          placeholder: question.placeholder,
-          prompt: question.prompt,
+          title: localizePrefixedText(question.keyPrefix, "title", question.title) ?? question.name,
+          placeholder: localizePrefixedText(
+            question.keyPrefix,
+            "placeholder",
+            question.placeholder
+          ),
+          prompt: localizePrefixedText(question.keyPrefix, "prompt", question.prompt),
           default: question.default,
           step,
         };
@@ -108,9 +139,13 @@ export function createUiPromptUI(ui: UserInteraction): PromptUI {
       if (question.type === "folder") {
         const config: SelectFolderConfig = {
           name: question.name,
-          title: question.title ?? question.name,
-          placeholder: question.placeholder,
-          prompt: question.prompt,
+          title: localizePrefixedText(question.keyPrefix, "title", question.title) ?? question.name,
+          placeholder: localizePrefixedText(
+            question.keyPrefix,
+            "placeholder",
+            question.placeholder
+          ),
+          prompt: localizePrefixedText(question.keyPrefix, "prompt", question.prompt),
           default: question.default,
           step,
         };
@@ -136,9 +171,9 @@ export function createUiPromptUI(ui: UserInteraction): PromptUI {
       }
       const config: MultiSelectConfig = {
         name: question.name,
-        title: question.title ?? question.name,
-        placeholder: question.placeholder,
-        prompt: question.prompt,
+        title: localizePrefixedText(question.keyPrefix, "title", question.title) ?? question.name,
+        placeholder: localizePrefixedText(question.keyPrefix, "placeholder", question.placeholder),
+        prompt: localizePrefixedText(question.keyPrefix, "prompt", question.prompt),
         options: toSurfaceOptions(options),
         returnObject: false,
         step,
