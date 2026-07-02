@@ -186,7 +186,7 @@ import { ShareOperationOption, ShareScopeOption } from "../question/share";
 import { CallbackRegistry, CoreCallbackFunc } from "./callback";
 import * as collaboratorCore from "./collaborator";
 import { CollaborationUtil } from "./collaborator";
-import { applyV3PreFill, collectCreateFloor, scaffoldV4 } from "./createFrontDoorAdapters";
+import { collectCreateFloor, scaffoldV4 } from "./createFrontDoorAdapters";
 import { createProjectFrontDoor as runCreateFrontDoor } from "./createProjectFrontDoor";
 import { LocalCrypto } from "./crypto";
 import { environmentNameManager } from "./environmentName";
@@ -277,7 +277,6 @@ export class FxCore extends FxCoreOpenPluginPart {
       createV3: (i) => this.createProject(i),
       scaffoldV4,
       collectCreateFloor,
-      applyV3PreFill,
       resolveArtifactSnapshot: resolveV4TemplateArtifactSnapshot,
     });
   }

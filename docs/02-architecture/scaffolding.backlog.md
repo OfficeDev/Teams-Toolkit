@@ -7,8 +7,9 @@
   create design conversation, and the Visual Studio multi-project surface. The
   create/modify **engine** is decided and Accepted; nothing here reopens it.
 - **Companion:** [`scaffolding.create.proposal.md`](scaffolding.create.proposal.md)
-  (decomposed into ADR-0014 – ADR-0019) and
-  [`scaffolding.current-state.md`](scaffolding.current-state.md).
+  (historical decomposition map for ADR-0014 ... ADR-0019) and
+  [`scaffolding.current-state.md`](scaffolding.current-state.md) (historical v3
+  pain catalog).
 
 > **Why this exists.** Relocated from `scaffolding.create.proposal.md` §13 when
 > that proposal was decomposed into ADR-0014 … ADR-0019 (all **Accepted**
@@ -51,10 +52,9 @@ and its create counterpart
 [`create-mcp-server.md`](../03-specs/scenarios/da/create-mcp-server.md).
 
 The shipped `modify/add-mcp-server` package is the conformance fixture: a single
-`entry: { params: ["mcpServerUrl"] }` (DT-on dynamic discovery, no static tool
-list), with the legacy static-`tools` `fetch` and the non-DT `add` routed
-separately through `engine: "v3-core-method"` (`coreMethod: "addPlugin"`) in
-`modify/selector.json` — i.e. a separate route, not a second entry.
+`entry: { params: ["mcpServerUrl"] }` for the MCP add-action path. The selector
+routes that path directly to the authored v4 modify package; non-DT no longer
+falls back to `engine: "v3-core-method"` / `coreMethod: "addPlugin"`.
 
 Two consequences worth stating once:
 
@@ -149,7 +149,7 @@ decided by ADR-0014 … ADR-0019:
 
 ## 3. Visual Studio multi-project surface
 
-The csharp / Visual Studio surface scaffolds into an IDE-managed *solution*
+The C# / Visual Studio surface scaffolds into an IDE-managed *solution*
 (`.sln` + one or more `.csproj`), not a bare folder. v3 handles this with
 surface-supplied identifiers (`solutionName`, `safeProjectName`,
 `PlaceProjectFileInSolutionDir`) and a VS-specific generator path. This
@@ -170,7 +170,7 @@ the hooks so adding it later does not reshape the model:
   in the existing BuildTarget model; nothing about `{ templateId, language }`
   changes.
 
-What stays genuinely open, to be settled when VS support is actually built:
+What stays genuinely open for the Visual Studio surface:
 
 - **Solution-vs-project granularity.** Whether one `templateId` emits a
   whole solution (multi-`.csproj`) or whether a solution is composed from
@@ -181,15 +181,13 @@ What stays genuinely open, to be settled when VS support is actually built:
   whole solution layout via `content/`), keeping the model intact.
 - **Where `.sln` placement / nesting rules live.** Almost certainly
   ordinary `pipeline.json` file-write steps plus the existing
-  `PlaceProjectFileInSolutionDir`-style flag, not a new step family — but
-  this is unconfirmed until a real VS template is migrated.
+  `PlaceProjectFileInSolutionDir`-style flag, not a new step family.
 - **Who computes `safeProjectName`.** Today the IDE supplies it; the
   derivable `safeAlphanumeric(appName)` path (ADR-0016) may make the
-  surface-supplied value redundant. Resolving this is a VS-migration
-  detail, not a model change.
+  surface-supplied value redundant. Resolving this is a VS-surface detail, not a
+  model change.
 
 The load-bearing claim is only this: **none of the above requires changing
 the question layers, the language axis, or BuildTarget resolution
-(ADR-0014 / ADR-0016).** VS support lands as new descriptors plus, at most,
-one fx-core PR for a VS-specific step — the same migration cost any other
-template family pays.
+(ADR-0014 / ADR-0016).** VS support lands as descriptors plus, at most, one
+fx-core PR for a VS-specific step.

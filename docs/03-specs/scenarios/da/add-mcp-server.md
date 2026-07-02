@@ -1,8 +1,8 @@
 # Scenario — Add MCP Server Action to Declarative Agent (`add-mcp-server`)
 
 - **Status:** Accepted design; implementation incomplete — the authored modify
-  package, runtime step, selector walk, generic modify front door, and DT-on
-  `addPlugin` dispatch exist, but broader modify surfaces are not wired yet.
+  package, runtime step, selector walk, and generic modify front door exist, but
+  broader modify surfaces are not wired yet.
 - **Domain:** [`01-scaffolding`](../../domains/01-scaffolding.md)
 - **Scenario ID:** `SCN-DA-ADD-MCP-ACTION-TO-DA` (mirrors product scenario
   [`add-mcp-action-to-da.md`](../../../01-product/scenarios/da/add-mcp-action-to-da.md))
@@ -26,18 +26,17 @@ applied to an in-memory existing project under `InMemoryRuntime` (every row
 The authored `templates/v4/modify/add-mcp-server` package is present, and the
 runtime slice is covered under `InMemoryRuntime`: it renders the dynamic plugin
 manifest, registers it in the existing DA manifest, shares the create
-`mcp-auth/*` steps, and no-ops an identical re-run. The DT-on `addPlugin` MCP
-path now resolves `templates/v4/modify/selector.json` and dispatches the matched
-v4 target through the generic modify front door, threading the existing project
-root, pre-filled MCP URL, app name, and auth type.
+`mcp-auth/*` steps, and no-ops an identical re-run. The MCP add-action path now
+resolves `templates/v4/modify/selector.json` and dispatches the matched v4
+target through the generic modify front door, threading the existing project
+root, pre-filled MCP URL, app name, and auth type. With v4 enabled, this path no
+longer falls back to `core.addPlugin`.
 The remaining product-flow work is:
 
 - Reuse the generic modify front door from the other modify surfaces (`add
   knowledge`, `add auth`, future modify commands) instead of routing them
   directly through legacy handlers.
-- Add L1 entry-path tests for those surface routes, including the DT-off
-  `v3-core-method: addPlugin` route when that path moves behind the generic
-  selector entry.
+- Add L1 entry-path tests for those surface routes.
 
 ## Acceptance Criteria
 

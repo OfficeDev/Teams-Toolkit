@@ -1,31 +1,29 @@
-# Scaffolding subsystem — current-state assessment
+# Scaffolding subsystem — historical v3 assessment
 
-> **Time-bound.** Describes the v3 implementation as of 2026-05.
-> **Not a contract, not a decision, not a navigation aid.** Inputs to future
-> ADR proposals and to the AI-vibe-coding skill.
-> **Expires-when:** the ADRs in [`scaffolding.md`](scaffolding.md#4-open-structural-questions)
-> §4 are all `Accepted` **and** the question-model / template-generator
-> reshape has landed. (The §4 ADR set is the machine-checkable trigger; the
-> reshape clause is a human gate.)
+> **Historical context.** Describes the v3 implementation as of 2026-05.
+> The v4 question-model / template-generator reshape has since landed and is the
+> formal scaffolding path; this page is retained only because accepted ADRs and
+> specs cite its pain-cluster anchors.
+> **Not a contract, not a decision, not a navigation aid.** Current contracts live
+> in [`scaffolding.md`](scaffolding.md), ADR-0014 ... ADR-0019, and
+> [`docs/03-specs/`](../03-specs/README.md).
 
 ## 0. How to read this page
 
-This page is a *current-state assessment*: the observed costs of how the
-scaffolding subsystem is implemented today. It exists so that successive
-ADR proposals do not each have to re-derive the same backdrop, and so
-that an AI agent picking up scaffolding work has a written floor of
-context rather than re-discovering it every session.
+This page is a *historical assessment*: the observed costs of the v3
+scaffolding implementation before the v4 reshape landed. It remains in the tree
+as decision history, not as a description of the current architecture.
 
 | What it IS | What it is NOT |
 |---|---|
 | Observed pain in the v3 implementation, with code citations | A spec or contract (those live in [`scaffolding.md`](scaffolding.md) §2/§3 and in [`docs/03-specs/`](../03-specs/README.md)) |
-| A shared Context section future ADRs may link to | An ADR — it does not decide anything, and offers no solutions |
-| A floor of context for AI agents working in this subsystem | A navigation map ([`scaffolding.code-map.md`](scaffolding.code-map.md) is that) |
+| A shared Context section accepted ADRs may link to | An ADR — it does not decide anything, and offers no solutions |
+| Historical context for why the v4 shape exists | A navigation map ([`scaffolding.code-map.md`](scaffolding.code-map.md) is that) |
 | A list of *gaps* relative to [`scaffolding.md`](scaffolding.md) §3 properties | An external-substrate fact page (those live in [`external-dependencies/`](external-dependencies/README.md)) |
 
-Audience: refactor authors writing the next ADRs; AI agents picking up
-behavior changes in this subsystem; reviewers evaluating whether a
-proposed change is local cleanup or actually moves the underlying shape.
+Audience: readers following ADR-0014 ... ADR-0019 back to their original pain
+clusters. For current implementation navigation, use
+[`scaffolding.code-map.md`](scaffolding.code-map.md).
 
 ## 1. Scope
 
@@ -477,7 +475,5 @@ the cluster heading.
 - It does **not** propose any solution. Solutions belong in ADRs.
 - It does **not** assert all ten clusters must be fixed. Some may be
   accepted costs.
-- It does **not** survive its own subject. When the ADRs in
-  [`scaffolding.md`](scaffolding.md#4-open-structural-questions) §4 are
-  `Accepted` and the new shape lands, this page is to be rewritten or
-  deleted — not preserved as historical record.
+- It does **not** describe the current scaffolding path. The v4 shape has landed;
+  this file survives only as historical context for accepted ADR links.

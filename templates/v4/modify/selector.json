@@ -70,14 +70,9 @@
 
   "routes": [
     {
-      "when": "addCapability=='add-action' && actionSource=='mcp' && featureFlag('TEAMSFX_MCP_FOR_DA_DT')",
+      "when": "addCapability=='add-action' && actionSource=='mcp'",
       "templateId": "add-mcp-server",
       "engine": "v4"
-    },
-    {
-      "when": "addCapability=='add-action' && actionSource=='mcp' && !featureFlag('TEAMSFX_MCP_FOR_DA_DT')",
-      "engine": "v3-core-method",
-      "coreMethod": "addPlugin"
     }
   ]
 }

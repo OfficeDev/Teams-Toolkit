@@ -33,10 +33,16 @@ import {
 
 const TEMPLATES_V4_DIR = path.resolve(__dirname, "../../../../../templates/v4");
 
+let cachedFloor: Buffer | undefined;
+
 function buildFloor(): Buffer {
+  if (cachedFloor !== undefined) {
+    return Buffer.from(cachedFloor);
+  }
   const zip = new AdmZip();
   zip.addLocalFolder(TEMPLATES_V4_DIR, "v4");
-  return zip.toBuffer();
+  cachedFloor = zip.toBuffer();
+  return Buffer.from(cachedFloor);
 }
 
 /** The feature-flag reader that turns on exactly the named flags (every other flag is off). */
@@ -731,14 +737,12 @@ describe("resolveCreateTargetByTemplateId (dispatch-create-by-engine — preset 
     }
   });
 
-  it("defaults an id with no selector route to the v3 coexistence engine (dispatch-create-by-engine DCE-12)", () => {
+  it("returns an explicit error for an id with no selector route (dispatch-create-by-engine DCE-12)", () => {
     const res = resolveCreateTargetByTemplateId(buildFloor(), "some-unrouted-template");
 
-    assert.isTrue(res.isOk());
-    if (res.isOk()) {
-      assert.equal(res.value.templateId, "some-unrouted-template");
-      assert.equal(res.value.engine, "v3");
-      assert.deepEqual(res.value.answers, {});
+    assert.isTrue(res.isErr());
+    if (res.isErr()) {
+      assert.equal(res.error.name, "BuildTargetUnknownTemplate");
     }
   });
 

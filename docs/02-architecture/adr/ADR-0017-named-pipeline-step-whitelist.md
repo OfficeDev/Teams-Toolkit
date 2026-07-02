@@ -42,7 +42,7 @@ in full, `m365agents.yml` as the auth-less skeleton). The `modify` pipeline adds
    list (§3.3). Both MCP scenarios use `"pipeline": "default"`. The pipeline name
    selects the engine's orchestration; `steps` are data.
 
-2. **Three engine-owned whitelists, each gated by an fx-core PR + T2 test**
+2. **Engine-owned whitelists, each gated by an fx-core PR + T2 test**
    (invariants 6–7):
    - **`step` names** — adding a step type needs a new `paramsSchema` + T2 test;
      *combining* existing steps is data. `mcp-auth/inject-yml-action` is a single
@@ -58,6 +58,15 @@ in full, `m365agents.yml` as the auth-less skeleton). The `modify` pipeline adds
    - **`optionsFrom` providers** ([ADR-0016](ADR-0016-declarative-template-format.md)
      question surface; mechanics in §3.3.2) — adding a dynamic-options source
      needs an fx-core PR + T2 test; templates select by name.
+   - **validators** ([ADR-0016](ADR-0016-declarative-template-format.md)
+     question surface; mechanics in §6.4) — adding a reusable answer validator
+     needs an fx-core PR + T2 test; templates select by name.
+
+   These whitelists should be organized as explicit extension-point registries,
+   not hidden inside surface wiring. Pipeline `steps`, `optionsFrom` providers,
+   and validators all follow the same shape: templates reference stable ids;
+   dedicated implementation files own the domain logic; a small registry maps ids
+   to implementations; orchestration code receives the registry through a port.
 
 3. **Step naming is domain-typed over primitive** (§3.3.1, invariant 5). Step
    names encode *what* (`mcp-auth/inject-yml-action`, `da-action/register-plugin-manifest`,
@@ -109,6 +118,14 @@ in full, `m365agents.yml` as the auth-less skeleton). The `modify` pipeline adds
 - **Adding a side-effect type is an fx-core release event** (§10), but adding a
   *template that composes existing steps* is a `templates-v4@version` data change —
   the safe-to-edit property of goal #2/#3.
+- **No hidden side-effect business logic in the v4 engine.** Any
+  capability-specific mutation, external probe, generated file that cannot be
+  expressed as pure template content, credential wiring, manifest registration,
+  or post-render fixup must be represented as a named pipeline step selected by
+  `pipeline.json`. The pipeline executor may hardcode only the generic render →
+  step orchestration, registry lookup, guard handling, and schema validation; it
+  MUST NOT contain MCP/OpenAPI/Graph/Office/template-specific branches outside
+  registered step implementations.
 - **The complete manifest-step library is deferred** to the `modify` flow design
   (§13.1), where it co-designs conflict-detection/merge-strategy. This ADR fixes
   the *naming + wrapper* principle so the few steps `create` needs land

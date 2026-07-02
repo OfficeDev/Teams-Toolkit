@@ -12,7 +12,14 @@ import {
   UserInteraction,
 } from "@microsoft/teamsfx-api";
 import { Result, err, ok } from "neverthrow";
-import { Asked, OptionItem, PromptUI, QuestionSpec } from "../collectInputs/collectInputs";
+import {
+  Asked,
+  OptionItem,
+  PromptUI,
+  QuestionSpec,
+  Validator,
+} from "../collectInputs/collectInputs";
+import { Answers } from "../model/dataModel";
 
 /** Create-Q2 prompt bridge from v4 `PromptUI` to host `UserInteraction`. */
 
@@ -56,13 +63,35 @@ function unsupportedKind(question: QuestionSpec): FxError {
   });
 }
 
+function promptValidator(
+  question: QuestionSpec,
+  validator: ((name: string) => Validator | undefined) | undefined,
+  answers: Answers | undefined
+): InputTextConfig["validation"] | undefined {
+  if (question.validation === undefined || validator === undefined) {
+    return undefined;
+  }
+  const validatorName =
+    typeof question.validation === "string" ? question.validation : question.validation.use;
+  const validate = validator(validatorName);
+  if (validate === undefined) {
+    return undefined;
+  }
+  const currentAnswers = { ...(answers ?? {}) };
+  return (input: string) => validate(input, currentAnswers);
+}
+
 /** Build a `PromptUI` over the host `UserInteraction`. */
-export function createUiPromptUI(ui: UserInteraction): PromptUI {
+export function createUiPromptUI(
+  ui: UserInteraction,
+  validator?: (name: string) => Validator | undefined
+): PromptUI {
   return {
     async ask(
       question: QuestionSpec,
       options: OptionItem[] | undefined,
-      step?: number
+      step?: number,
+      answers?: Answers
     ): Promise<Result<Asked<string>, FxError>> {
       if (question.type === "singleSelect") {
         if (options === undefined) {
@@ -94,6 +123,7 @@ export function createUiPromptUI(ui: UserInteraction): PromptUI {
           placeholder: question.placeholder,
           prompt: question.prompt,
           default: question.default,
+          validation: promptValidator(question, validator, answers),
           step,
         };
         const result = await ui.inputText(config);

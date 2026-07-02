@@ -153,17 +153,17 @@ is the index of the open set, not a place for decisions.
 > ADR-0007 – ADR-0012 stay `Proposed`: each binds only when its specific
 > template pipeline is actually built, so they remain deferred until then.
 
-The v4 **create-flow shape** is a second cluster of structural questions,
-decomposed from [`scaffolding.create.proposal.md`](scaffolding.create.proposal.md)
-and validated against the two on-disk worked examples under
-`templates/v4/{create,modify}/`. All six are now **`Accepted`** (2026-06-08),
-each having derived its specs under [`docs/03-specs/`](../03-specs/README.md);
-that proposal is now a short decomposition pointer, and its open `modify` / VS
-backlog moved to [`scaffolding.backlog.md`](scaffolding.backlog.md):
+The v4 **create/modify shape** is the current scaffolding architecture. It was
+decomposed from the former
+[`scaffolding.create.proposal.md`](scaffolding.create.proposal.md) into six
+focused ADRs, all **`Accepted`** (2026-06-08), and is contracted by the derived
+specs under [`docs/03-specs/`](../03-specs/README.md). The former proposal file
+is now only a decomposition map; deferred scenario refinements and the Visual
+Studio surface notes live in [`scaffolding.backlog.md`](scaffolding.backlog.md):
 
 | Question | ADR |
 |---|---|
-| Dispatcher + BuildTarget resolution (front stage, v3/v4 coexistence, descriptor-derived routing) | [ADR-0014](adr/ADR-0014-dispatcher-buildtarget-resolution.md) |
+| Dispatcher + BuildTarget resolution (front stage, descriptor-derived routing, legacy-engine rejection) | [ADR-0014](adr/ADR-0014-dispatcher-buildtarget-resolution.md) |
 | `templates-v4@version` release artifact shape | [ADR-0015](adr/ADR-0015-templates-version-artifact-shape.md) |
 | Declarative descriptor + questions + replaceMap format | [ADR-0016](adr/ADR-0016-declarative-template-format.md) |
 | Named pipeline + step whitelist + domain-typed step naming | [ADR-0017](adr/ADR-0017-named-pipeline-step-whitelist.md) |

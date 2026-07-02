@@ -9,6 +9,7 @@ import {
   SelectorPresentation,
 } from "../buildTarget/parseSelector";
 import {
+  BUILD_TARGET_UNKNOWN_TEMPLATE,
   BuildTarget,
   PromptResult,
   RouteQuestion,
@@ -130,9 +131,6 @@ function buildPort(
       }
       return openDeclarativePackage(floorBytes, { kind: "create", templateId }).isOk();
     },
-    v3Registry(): boolean {
-      return false;
-    },
     v3CoreMethodRegistry(): boolean {
       return false;
     },
@@ -180,7 +178,7 @@ export async function runCreateSelector(
   }
 }
 
-/** Resolve a pinned template id without re-walking Q1; unknown routes default to v3. */
+/** Resolve a pinned template id without re-walking Q1. */
 export function resolveCreateTargetByTemplateId(
   floorBytes: Buffer,
   templateId: string
@@ -190,5 +188,14 @@ export function resolveCreateTargetByTemplateId(
     return err(spec.error);
   }
   const route = spec.value.routes.find((r) => r.templateId === templateId);
-  return ok({ templateId, engine: route?.engine ?? "v3", answers: {} });
+  if (route === undefined) {
+    return err(
+      new UserError({
+        source: SOURCE,
+        name: BUILD_TARGET_UNKNOWN_TEMPLATE,
+        message: `Template '${templateId}' is not present in the create selector.`,
+      })
+    );
+  }
+  return ok({ templateId, engine: route.engine, answers: {} });
 }

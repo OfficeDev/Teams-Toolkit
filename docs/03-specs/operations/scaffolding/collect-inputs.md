@@ -3,7 +3,7 @@
 - **Status:** Accepted (Decision source [ADR-0016](../../../02-architecture/adr/ADR-0016-declarative-template-format.md) Accepted 2026-06-08) — ready for tests
 - **Domain:** [`01-scaffolding`](../../domains/01-scaffolding.md)
 - **Decision source:** [ADR-0016](../../../02-architecture/adr/ADR-0016-declarative-template-format.md)
-  decisions 2 (`optionsSchema`), 5 (the `language` axis), 6 (native
+  decisions 2 (`optionsSchema`), 6 (native
   `QuestionSpec`, `OptionItem` identity-only, `staticOptions` xor `optionsFrom`,
   `skipSingleOption`, `validation` shorthand). Question / option `condition` and
   `optionsFromParams` **reference** the shared evaluator
@@ -21,28 +21,35 @@
 
 ## Purpose
 
-Walk one template's native `questions.json` (`QuestionSpec[]`) — applying
-question and option `condition`, resolving `staticOptions` / `optionsFrom`
-providers, honoring `skipSingleOption` and `entry.params`, and validating each
-answer — into the **resolved answer object** the render-context build consumes.
-It realizes ADR-0016 decision 6: the authored fields **are** the runtime model
-(§4.2), parsed straight into a `QuestionSpec[]` a surface-neutral driver renders
-through `runtime.ui`, with **no** rehydration into v3's `IQTreeNode` tree and no
-`func` / `onDidSelection` callbacks that could change a question's shape at
-runtime.
+Walk a normalized `QuestionSpec[]` — applying question and option `condition`,
+resolving `staticOptions` / `optionsFrom` providers, honoring
+`skipSingleOption` and pre-filled `entry.params`, and validating each answer —
+into the **resolved answer object** the caller consumes. This is the shared
+question-walk engine: Q1 selector adapters and Q2+common-floor create-input
+adapters feed it different question sources, but the walking semantics are
+implemented once.
 
-This is **one** behavior — questions → answers — distinct from
-[`build-render-context`](build-render-context.md) (answers → render vars) even
-though both call the shared evaluator. It does **not** compute render variables
-or write files.
+For template-local Q2, it realizes ADR-0016 decision 6: the authored
+`questions.json` fields **are** the runtime model (§4.2), parsed straight into a
+`QuestionSpec[]` a surface-neutral driver renders through `runtime.ui`, with
+**no** rehydration into v3's `IQTreeNode` tree and no `func` / `onDidSelection`
+callbacks that could change a question's shape at runtime. For Q1 and common
+create floor questions, adapters project their source data into the same
+normalized question shape before invoking this engine.
+
+This is **one** behavior — questions → answers — distinct from route dispatch,
+floor write-back, and [`build-render-context`](build-render-context.md)
+(answers → render vars) even though those callers also use the shared evaluator.
+It does **not** compute a `BuildTarget`, compute render variables, mutate
+`Inputs`, or write files.
 
 ## Inputs
 
 | Input | Type | Origin |
 |-------|------|--------|
-| `questions` | the native `QuestionSpec[]` | `questions.json` ([`open-template-package`](open-template-package.md), schema-valid) |
-| `optionsSchema` | the Q2 options JSON Schema (validation + identifier domain) | `descriptor.optionsSchema` (ADR-0016 decision 2) |
-| `entryParams` | the option ids a pre-filled CLI arg / URL supplies | `descriptor.entry.params` (modify templates) |
+| `questions` | normalized `QuestionSpec[]` | an adapter-owned source: `selector.json` Q1 dimensions, a template's `questions.json`, or common create floor questions injected by the create caller (including a descriptor-derived `language` question when that caller needs one) |
+| `optionsSchema` | the answer JSON Schema (validation + identifier domain) | usually `descriptor.optionsSchema` (ADR-0016 decision 2); selector/common-floor callers may supply a narrow schema for their normalized question set |
+| `entryParams` | pre-filled answer ids / strings | CLI args, URL seeds, Q1 answers seeding Q2, or caller-provided floor values (`folder` / `app-name`) |
 | `port` | `CollectInputsPort` | injected; an in-memory fake in tests |
 
 The narrow port (interface-segregation over the full `ScaffoldRuntime`):
@@ -50,8 +57,8 @@ The narrow port (interface-segregation over the full `ScaffoldRuntime`):
 | Port face | Shape | Responsibility |
 |-----------|-------|----------------|
 | `ui` | the surface-neutral prompt driver (`ScriptedUI` in tests) | renders a `QuestionSpec` across `vscode`/`cli`/`vs`/`server` (proposal §4.2 / §8) |
-| `optionsProvider` | `(providerId) => Provider \| undefined` | the engine's `optionsFrom` provider whitelist (§3.3.2), each carrying `paramsSchema` / `derivedSchema` |
-| `validator` | `(name) => Validator \| undefined` | the engine validator registry (§6.4); the `"uri"` shorthand resolves here |
+| `optionsProvider` | `(providerId) => Provider \| undefined` | the engine's `optionsFrom` provider registry (§3.3.2), each carrying `paramsSchema` / `derivedSchema`; concrete providers live in dedicated extension-point files and are registered by id |
+| `validator` | `(name) => Validator \| undefined` | the engine validator registry (§6.4), shared by Q1 selector and Q2+common-floor create-input callers; concrete validators live in dedicated extension-point files and are registered by id; the `"uri"` shorthand resolves here |
 | `evaluate` | `(expr, scope) => Result<boolean\|string>` | the shared evaluator ([`evaluate-expression`](evaluate-expression.md)) for `condition` / `optionsFromParams` |
 | `http` | read-only fetch | provider I/O only; `InMemoryRuntime` in tests (§3.3.2 rule 3) |
 
@@ -92,11 +99,11 @@ On `err`:
 | INPUT-10 | L1 | `validation: "uri"` on `mcpServerUrl`, a non-URI input | collect | the loader normalizes the shorthand string to `{ use: "uri" }`; validation fails with a **`UserError`** naming the question; the prompt is re-shown (interactive) |
 | INPUT-11 | L1 | `mcpServerType`'s `local` option gated on `odr.exe` being installed | collect | the machine-state probe is the `mcp.serverTypes` **provider**, never a `condition` predicate — the evaluator stays pure (proposal §3.3.2 rule 8) |
 | INPUT-12 | L1 | the modify `add-mcp-server` with `entry.params = ["mcpServerUrl"]` and a pre-filled URL | collect | the `mcpServerUrl` question is skipped (its `condition: { expr: "mcpServerUrl == null" }` is false); the supplied value is used (conformance fixture) |
-| INPUT-13 | L1 | a multi-language template and `descriptor.languages` a non-singleton | collect | the Q0 `language` question is asked, bounded by the engine-owned enum, its options carrying proper-cased display labels (`TypeScript` / `JavaScript`, mirroring v3's `LanguageOptionMap`); `["common"]` auto-skips it (decision 5) |
+| INPUT-13 | L1 | the caller includes a normalized `language` `singleSelect` question, or pre-fills `language` in `entryParams` | collect | `language` behaves like any other question: it is asked in declaration order, pre-filled values skip it, and a caller that wants no language axis simply omits the question |
 | INPUT-14 | L1 | identical `(questions, optionsSchema, scripted answers, provider state)` | collect twice | identical `answers` — deterministic under `InMemoryRuntime` + `ScriptedUI` |
 | INPUT-15 | L1 | a `multiSelect` question (`staticOptions` or `optionsFrom`) and a scripted selection of ≥1 option ids | collect | the answer is recorded as a **`string[]`** of the selected ids, order-preserving; every other kind (`singleSelect` / `text` / …) records a scalar `string`. The list is available to [`build-render-context`](build-render-context.md) `{from}` and step `with`, but is **not** placed in the scalar expression `scope` (INV-7) |
 | INPUT-16 | L1 | two prompted questions, the host returns `back` at the second | collect | the walk re-asks the **previous** prompted question; the stale second answer is discarded and the re-pick wins. `step` = prompts shown so far + 1, so the first prompt is step 1 (no Back button) and the second is step 2 |
-| INPUT-17 | L1 | a multi-language template (Q0 `language` asked) + one question, the host returns `back` at that first question | collect | `back` crosses into the Q0 `language` axis (Q0 is re-asked at step 1); the re-picked language wins, then the question is asked again |
+| INPUT-17 | L1 | a caller-provided `language` question after one earlier prompted question, and the host returns `back` at `language` | collect | `back` crosses into the previous prompted question; the re-picked previous answer wins, then `language` is asked again |
 | INPUT-18 | L1 | a single prompted question, the host returns `back` at it (the first prompt) | collect | the walk is cancelled with a **`UserError`** named `InputWalkCancelled` (a `back` past the first prompt — unreachable via UI, where step 1 shows no Back button) |
 | INPUT-19 | L1 | a `singleSelect` then a `multiSelect`, the host returns `back` at the multiSelect | collect | the previous question is re-asked and the staged multi-select is discarded; the re-walk records the new `string[]` (the multi-pick face honours `back` too) |
 
@@ -135,6 +142,15 @@ This operation does **not**:
 - Compute **render variables**. That is
   [`build-render-context`](build-render-context.md), downstream; this operation
   produces the `answers` (incl. `derived.*`) it consumes.
+- Resolve routes or dispatch engines. Q1 selector callers use this operation to
+  collect routing dimensions, then evaluate their routes outside the engine.
+- Derive or inject the `language` axis from a descriptor. Descriptor-specific
+  language handling belongs to the caller that owns the descriptor, such as
+  [`collect-create-inputs`](collect-create-inputs.md), which may include a
+  normalized `language` question in `questions` or pre-fill/omit it.
+- Mutate host `Inputs` or create folders. Q2+common-floor create callers may
+  write selected common floor answers back to `Inputs`, but that is caller-owned
+  write-back, not question-walk behavior.
 - **Define** the expression grammar. Question / option `condition` and
   `optionsFromParams` **reference** [`evaluate-expression`](evaluate-expression.md);
   this operation adds no operator.
@@ -145,18 +161,38 @@ This operation does **not**:
 - Run a v3 `IQTreeNode` tree or any `func` / `onDidSelection` callback. v4 owns
   its own surface-neutral question model (§4.2); the two engines never share a
   node type — the seam is the dispatcher, not a shared `IQTreeNode`.
-- Register new providers or validators. Both registries are engine-owned and
-  grow only via an fx-core PR + a file-unit test (§3.3.2, §6.4).
+- Register new providers or validators. Both registries are engine-owned
+  extension points and grow only via an fx-core PR + a file-unit test (§3.3.2,
+  §6.4). Implementations belong in dedicated provider/validator files, not in a
+  surface adapter such as create-input UI wiring.
+- Defer interactive input validation to scaffold runtime. When a surface can
+  validate text while prompting, the prompt bridge receives the current answers
+  and may wire the named validator into the host prompt configuration. The
+  post-prompt validator check in this operation remains authoritative for
+  non-interactive callers and thin prompt fakes.
 - Probe runtime machine state from the grammar. Impure question-time data is an
   `optionsFrom` provider; post-answer side effects are pipeline steps
   ([`run-scaffold-pipeline`](run-scaffold-pipeline.md)) — the three runtime-input
   kinds stay cleanly separated (§3.3.2 rule 8).
+- Encode capability-specific business logic. The walk engine is a generic
+  interpreter for normalized questions and registries. MCP/OpenAPI/Graph/Office
+  logic belongs in template-authored question data, provider implementations, or
+  validators, never as hardcoded branches in this operation.
 
 ## Invariants
 
-- **INV-1 — Authored == executed.** `questions.json` parses straight into the
-  runtime `QuestionSpec[]`; there is no rehydration into `IQTreeNode` and no
-  callback that mutates a question's shape at runtime (decision 6 / §4.2).
+- **INV-1 — One walk engine.** The semantics for pre-filled answers,
+  `condition`, option filtering, `optionsFrom`, `skipSingleOption`, validation,
+  cancellation/back, and non-interactive missing values live here once. Q1
+  selector callers and Q2+common-floor create-input callers differ only in how
+  they adapt their source files/questions into `QuestionSpec[]` and how they
+  consume the resulting answers.
+- **INV-1b — No built-in language question.** `language` is not a special case in
+  this operation. A descriptor-aware caller that needs a language axis must add a
+  normal `QuestionSpec` to `questions`, pre-fill `language`, or omit it.
+- **INV-1a — Authored == executed.** Template `questions.json` parses straight
+  into the runtime `QuestionSpec[]`; there is no rehydration into `IQTreeNode`
+  and no callback that mutates a question's shape at runtime (decision 6 / §4.2).
 - **INV-2 — `OptionItem` identity-only.** An option carries `id` +
   presentational fields + an optional visibility `condition`; **no**
   configuration payload hangs off it (no `option.data`). Computed fields go
@@ -165,6 +201,21 @@ This operation does **not**:
   per option-bearing question (schema-enforced); a dynamic list is an
   engine-registered provider referenced by name, never an inline closure
   (replacing v3 `dynamicOptions`).
+- **INV-3a — Providers and validators are named extension points.** Like
+  pipeline steps, each `optionsFrom` provider and validator has a stable id, a
+  dedicated implementation file, registry wiring, and focused tests. The shared
+  walk engine consumes only the registry callbacks; it does not import MCP,
+  OpenAPI, Graph connector, or other domain-specific implementations directly.
+- **INV-3b — One validator registry for all question walks.** Q1 selector callers
+  and Q2+common-floor create-input callers resolve `validation` through the same
+  engine-owned validator registry. Q1 may have no authored validators today, but
+  adding validation to selector-normalized questions uses the shared registry,
+  not a Q1-specific path.
+- **INV-3c — No hidden question-time business logic.** A new capability can add
+  or change question-time behavior only by editing template question data or by
+  adding/overriding a named provider or validator. Changes to the shared walk
+  engine are allowed only for generic semantics that apply to every caller, not
+  for template-specific special cases.
 - **INV-4 — Provider namespacing + order.** `derived` writes only under
   `derived.<provider-id>.<key>` (collision-free by construction); providers
   resolve in declaration order and forward `derived` references are
@@ -191,5 +242,5 @@ This operation does **not**:
   `back` steps over them — discarding the popped answer and everything downstream.
   `step` = prompts shown so far + 1 (the host shows a Back button only when
   `step > 1`), so the first prompt is step 1 and a `back` there cancels the walk
-  (`InputWalkCancelled`). The Q0 `language` axis is position 0 of the same walk,
-  so a `back` from the first question re-asks it (INPUT-16..19).
+  (`InputWalkCancelled`). A caller-provided `language` question participates in
+  that same history like any other prompted question (INPUT-16..19).
