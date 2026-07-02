@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 29,
+    "total_steps": 31,
     "created_at": "2026-01-06T02:01:16.119023",
     "name": "Feature: UI Layout & Create Project Questions",
     "description": {
@@ -32,7 +32,8 @@
       "step_179ff717",
       "step_e5c7e8aa",
       "step_61ee9d59",
-      "plan_r_0624_024810",
+      "step_7d1f2a3b",
+      "step_7d1f2a3c",
       "step_18eec105",
       "step_3b65d9b9",
       "step_91e5b84d",
@@ -54,7 +55,7 @@
       "step_5f013884"
     ],
     "tags": [],
-    "updated_at": "2026-01-06T09:56:34.118912"
+    "updated_at": "2026-07-02T06:06:27.000000"
   },
   "steps": [
     {
@@ -268,7 +269,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion Verify that there are 5 options “Declarative Agent”, \"Custom Engine Agent\", \"Copilot Connectors\", \"Teams Agents and Apps\" and \"Office Add-in\"",
+      "description": "@assertion Verify that there are 5 options \u201cDeclarative Agent\", \"Custom Engine Agent\", \"Copilot Connectors\", \"Teams Agents and Apps\" and \"Office Add-in\"",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -279,6 +280,46 @@
       "tags": [],
       "screenshot": null,
       "created_at": "2026-01-06T09:55:51.032498",
+      "plan_id": "plan_47e4bf4e"
+    },
+    {
+      "step_id": "step_7d1f2a3b",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Teams Agents and Apps"
+      },
+      "description": "Type \"Teams Agents and Apps\" into the \"New Project\" quick pick filter to select that option regardless of UI zoom level, then confirm with Enter. Replaces the shared normal-zoom click group whose coordinates drift after Ctrl+- zoom-out.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": null,
+      "created_at": "2026-01-06T09:55:51.045000",
+      "plan_id": "plan_47e4bf4e"
+    },
+    {
+      "step_id": "step_7d1f2a3c",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the filtered \"Teams Agents and Apps\" selection in the New Project quick pick, opening the Teams capability submenu.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": null,
+      "created_at": "2026-01-06T09:55:51.046000",
       "plan_id": "plan_47e4bf4e"
     },
     {
@@ -422,7 +463,7 @@
         "x": 278,
         "y": 17
       },
-      "description": "Click the \"Back (Ctrl+Alt+←)\" button in the Teams Capability quick selection popup at the top of the Visual Studio Code interface.",
+      "description": "Click the \"Back (Ctrl+Alt+\u2190)\" button in the Teams Capability quick selection popup at the top of the Visual Studio Code interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -632,7 +673,7 @@
         "x": 277,
         "y": 12
       },
-      "description": "Click the \"Back (Ctrl+Alt+←)\" button in the \"Create an Action\" modal at the top of the Visual Studio Code interface to return to the previous selection screen.",
+      "description": "Click the \"Back (Ctrl+Alt+\u2190)\" button in the \"Create an Action\" modal at the top of the Visual Studio Code interface to return to the previous selection screen.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
