@@ -46,19 +46,19 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 951,
-        "y": 130
+        "x": 955,
+        "y": 135
       },
-      "description": "Click the language selection button (flag icon) in the top right corner of the VS Code welcome screen to open the language options.",
+      "description": "Click the \"Close\" (X) button on the top-right corner of the VS Code welcome screen to dismiss the welcome/sign-in prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:951:130:16:5:cb26345936268d04",
-        "dhash:951:130:96:5:2244283030280404",
-        "dhash:951:130:0:10:2592eae0f08e8621"
+        "dhash:955:135:16:5:64e299a955090100",
+        "dhash:955:135:96:5:210c303030040404",
+        "dhash:955:135:0:10:2592eae0f08e8621"
       ],
       "postconditions": [],
       "tags": [],
@@ -191,11 +191,13 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "delay:5"
+      "preconditions": [
+        "dhash:566:433:16:5:2b33334c33000000",
+        "dhash:566:433:96:5:00043a2a00089051",
+        "dhash:566:433:0:10:4078747470717c2d"
       ],
+      "postconditions": [],
+      "tags": [],
       "screenshot": "step_fa6d6cb1",
       "created_at": "2026-06-17T02:24:33.865380",
       "plan_id": "plan_80b368dd"
