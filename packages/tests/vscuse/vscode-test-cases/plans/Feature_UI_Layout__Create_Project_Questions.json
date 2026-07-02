@@ -585,7 +585,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion verify options like below:\n start with a new api\ncreate an action with a new api from azure functions, \nstart with an openapi description document\ncreate an action form your existing api, \nstart with an office add-in action\ncreate a declarative agent with office add in action, \nstart with an MCP server\ncreate actions from your existing mcp server.",
+      "description": "@assertion verify options like below:\n start with a new api\ncreate an action with a new api from azure functions, \nstart with an openapi description document\ncreate an action from your existing api, \nstart with an MCP server\ncreate actions from your existing mcp server.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
