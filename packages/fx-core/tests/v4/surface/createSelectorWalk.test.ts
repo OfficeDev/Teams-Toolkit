@@ -224,6 +224,24 @@ describe("runCreateSelector (walk-create-selector)", () => {
     assert.deepEqual(ui.selectNames, ["projectType", "customEngineAgent"]);
   });
 
+  it("WCS-02h: blank app resolves the v4 route", async () => {
+    const picks = { projectType: "blank-app-type" };
+    const ui = new ScriptedUI(picks);
+
+    const res = await runCreateSelector(buildFloor(), asUI(ui), "vscode", {
+      flagReader: () => false,
+    });
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.equal(res.value.templateId, "blank-app");
+      assert.equal(res.value.engine, "v4");
+      assert.deepEqual(res.value.answers, picks);
+    }
+    assert.deepEqual(ui.selectNames, ["projectType"]);
+    assert.include(offeredIds(ui.configByName.get("projectType")), "blank-app-type");
+  });
+
   it("WCS-02d: teams→custom-copilot-basic resolves the v4 route", async () => {
     const picks = {
       projectType: "teams-agent-and-app-type",
@@ -671,8 +689,12 @@ describe("openCreateSelectorPresentation (walk-create-selector)", () => {
       const projectType = pres.value.questions.find((q) => q.name === "projectType");
       assert.isDefined(projectType);
       assert.equal(projectType?.title, "New Project");
-      // presentation is unfiltered — all six options, including the conditioned github-copilot one.
-      assert.equal(projectType?.staticOptions.length, 6);
+      // presentation is unfiltered — all options, including conditioned github-copilot and blank app.
+      assert.equal(projectType?.staticOptions.length, 7);
+      assert.include(
+        (projectType?.staticOptions ?? []).map((option) => option.id),
+        "blank-app-type"
+      );
       assert.include(
         (projectType?.staticOptions ?? []).map((option) => option.id),
         "start-with-github-copilot"

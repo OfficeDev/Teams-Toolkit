@@ -23,6 +23,11 @@
           "detail": "Embed your organization data to make it searchable in Microsoft 365 Copilot",
           "groupName": "Agents for Microsoft 365 Copilot",
           "keyPrefix": "template.createProjectQuestion.createGraphConnector" },
+        { "id": "blank-app-type",
+          "label": "Blank App",
+          "detail": "Blank Microsoft 365 app with minimal structure",
+          "groupName": "Apps for Microsoft 365",
+          "keyPrefix": "template.createProjectQuestion.projectType.blankApp" },
         { "id": "teams-agent-and-app-type",
           "label": "Teams Agents and Apps",
           "detail": "Create agent, chat bot, web pages or other apps in Microsoft Teams using Microsoft Teams SDK.",
@@ -246,6 +251,11 @@
       "engine": "surface-action",
       "action": "open-github-copilot-chat",
       "surfaces": ["vscode"]
+    },
+    {
+      "when": "projectType=='blank-app-type'",
+      "templateId": "blank-app",
+      "engine": "v4"
     },
     {
       "when": "projectType=='custom-engine-agent-type' && customEngineAgent=='basic-custom-engine-agent'",
