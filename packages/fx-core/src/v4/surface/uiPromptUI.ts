@@ -108,7 +108,8 @@ export function createUiPromptUI(ui: UserInteraction): PromptUI {
       question: QuestionSpec,
       options: OptionsSource | undefined,
       step?: number,
-      validation?: PromptValidation
+      validation?: PromptValidation,
+      inputBoxValidation?: PromptValidation
     ): Promise<Result<Asked<string>, FxError>> {
       if (question.type === "singleSelect") {
         if (options === undefined) {
@@ -218,7 +219,7 @@ export function createUiPromptUI(ui: UserInteraction): PromptUI {
             prompt: localizePrefixedText(inputBoxConfig.keyPrefix, "prompt", inputBoxConfig.prompt),
             default: inputBoxConfig.default,
             step: inputBoxConfig.step ?? step,
-            validation,
+            validation: inputBoxValidation,
           },
           filters: question.filters,
           step,

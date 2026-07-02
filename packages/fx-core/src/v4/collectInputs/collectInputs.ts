@@ -40,6 +40,7 @@ export interface InputBoxConfig {
   default?: string;
   step?: number;
   keyPrefix?: string;
+  validation?: string | ValidationSpec;
 }
 
 /** Native question kinds the surface-neutral driver renders. */
@@ -118,7 +119,8 @@ export interface PromptUI {
     question: QuestionSpec,
     options: OptionsSource | undefined,
     step?: number,
-    validation?: PromptValidation
+    validation?: PromptValidation,
+    inputBoxValidation?: PromptValidation
   ): Promise<Result<Asked<string>, FxError>>;
   /** Render one multi-pick question without collapsing selected ids to a scalar. */
   askMulti(
@@ -348,7 +350,17 @@ export async function collectInputs(
       return err(validationResult.error);
     }
     const validation = validationResult.value;
-    const asked = await port.ui.ask(q, options, history.length + 1, validation);
+    const inputBoxValidationResult = resolveValidation(
+      q.inputBoxConfig?.validation,
+      answers,
+      port,
+      q.name
+    );
+    if (inputBoxValidationResult.isErr()) {
+      return err(inputBoxValidationResult.error);
+    }
+    const inputBoxValidation = inputBoxValidationResult.value;
+    const asked = await port.ui.ask(q, options, history.length + 1, validation, inputBoxValidation);
     if (asked.isErr()) {
       return err(asked.error);
     }
@@ -388,17 +400,25 @@ function resolveQuestionValidation(
   answers: Answers,
   port: CollectInputsPort
 ): Result<PromptValidation | undefined, FxError> {
-  if (question.validation === undefined) {
+  return resolveValidation(question.validation, answers, port, question.name);
+}
+
+function resolveValidation(
+  validation: string | ValidationSpec | undefined,
+  answers: Answers,
+  port: CollectInputsPort,
+  questionName: string
+): Result<PromptValidation | undefined, FxError> {
+  if (validation === undefined) {
     return ok(undefined);
   }
-  const validatorName =
-    typeof question.validation === "string" ? question.validation : question.validation.use;
+  const validatorName = typeof validation === "string" ? validation : validation.use;
   const validator = port.validator(validatorName);
   if (validator === undefined) {
     return err(
       systemError(
         INPUT_UNKNOWN_VALIDATOR,
-        `validation '${validatorName}' on question '${question.name}' is not a registered validator`
+        `validation '${validatorName}' on question '${questionName}' is not a registered validator`
       )
     );
   }
