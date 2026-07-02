@@ -1547,7 +1547,6 @@
     ]
   },
   "scripts": {
-    "lint:staged": "lint-staged",
     "vscode:prepublish": "rimraf out && npm run package",
     "package": "npm run check-types && npm run vite && node esbuild.mjs --production",
     "build": "npm run check-types && npm run vite && node esbuild.mjs",
@@ -1699,7 +1698,7 @@
       "prettier --cache --write --ignore-unknown"
     ],
     "*.json": [
-      "npx prettier --cache --write --ignore-unknown"
+      "prettier --cache --write --ignore-unknown"
     ]
   }
 }

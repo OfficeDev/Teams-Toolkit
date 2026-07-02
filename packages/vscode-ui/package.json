@@ -6,7 +6,6 @@
   "license": "MIT",
   "publisher": "TeamsDevApp",
   "scripts": {
-    "lint:staged": "lint-staged",
     "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\"",
     "test:unit": "nyc mocha \"tests/**/*.test.ts\" ",
     "clean": "rm -rf build",

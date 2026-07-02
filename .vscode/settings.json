@@ -2,5 +2,6 @@
   "cSpell.words": [
     "kusto",
     "logmining"
-  ]
+  ],
+  "js/ts.tsdk.path": "node_modules/.pnpm/typescript@5.9.2/node_modules/typescript/lib"
 }

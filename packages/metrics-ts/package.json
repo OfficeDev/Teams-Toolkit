@@ -18,8 +18,7 @@
     "build": "rimraf build && npx tsc -p ./",
     "format-check": "echo test",
     "precommit": "lint-staged",
-    "lint": "eslint \"**/*.ts\"",
-    "lint:staged": "lint-staged"
+    "lint": "eslint \"**/*.ts\""
   },
   "bugs": {
     "url": "https://github.com/OfficeDev/TeamsFx/issues"

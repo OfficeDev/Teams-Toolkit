@@ -12,7 +12,6 @@
     "test:unit:node": "nyc --no-clean -- mocha -r config/mocha.env.ts --config config/.mocharc.json",
     "test:unit:browser": "karma start karma.conf.cjs --single-run --unit",
     "test:unit": "npm run test:unit:node && npm run test:unit:browser ",
-    "lint:staged": "lint-staged",
     "lint": "eslint \"**/*.ts\"",
     "precommit": "lint-staged",
     "check-format": "prettier --list-different \"src/**/*.ts\" \"test/**/*.ts\" \"*.{js,json}\"",

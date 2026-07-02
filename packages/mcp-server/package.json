@@ -13,7 +13,6 @@
     "test:unit": "jest",
     "precommit": "lint-staged",
     "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\"",
-    "lint:staged": "lint-staged",
     "lint:fix": "eslint --fix \"src/**/*.ts\" \"tests/**/*.ts\""
   },
   "publishConfig": {

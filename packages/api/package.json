@@ -14,7 +14,6 @@
     "build/**/*"
   ],
   "scripts": {
-    "lint:staged": "lint-staged",
     "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\"",
     "prebuild": "npx json2ts --input src/schemas/envConfig.json --output src/schemas/envConfig.ts",
     "build": "tsc -p ./ --incremental",

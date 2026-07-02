@@ -13,7 +13,6 @@
     "clean": "rimraf --glob dist dist-* temp types *.tgz *.log",
     "check-format": "prettier --list-different \"src/**/*.ts\" \"test/**/*.ts\" \"*.{js,json}\" \"config/*.js\"",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\" \"*.{js,json}\" \"config/*.js\"",
-    "lint:staged": "lint-staged",
     "lint": "eslint \"**/*.ts\"",
     "test": "npm run test:unit && npm run test:e2e",
     "test:unit:browser": "karma start --single-run --unit",

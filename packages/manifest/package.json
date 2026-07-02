@@ -53,7 +53,6 @@
     "test:unit": "npx nyc mocha --no-timeouts --require ts-node/register \"test/**/*.test.ts\"",
     "lint": "eslint \"**/*.ts\"",
     "precommit": "lint-staged",
-    "lint:staged": "lint-staged",
     "convert": "node convert.js"
   },
   "files": [

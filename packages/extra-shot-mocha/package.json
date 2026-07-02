@@ -6,7 +6,6 @@
   "license": "MIT",
   "scripts": {
     "build": "npx tsc -p ./",
-    "lint:staged": "lint-staged",
     "precommit": "lint-staged",
     "test:unit": "nyc mocha \"tests/**/*.test.ts\" "
   },
