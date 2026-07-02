@@ -9,19 +9,13 @@ import {
   UserError,
   UserInteraction,
 } from "@microsoft/teamsfx-api";
-import {
-  ListAPIInfo,
-  ParseOptions,
-  ProjectType,
-  SpecParser,
-  Utils,
-  ValidationStatus,
-} from "@microsoft/m365-spec-parser";
+import { ListAPIInfo, Utils } from "@microsoft/m365-spec-parser";
 import fs from "fs-extra";
 import { Result, err, ok } from "neverthrow";
 import { MCPFetchResult, fetchMCPTools } from "../../component/utils/mcpToolFetcher";
 import { ODRProvider, type ODRServer } from "../../component/utils/odrProvider";
 import { readBooleanFeatureFlag } from "../../common/featureFlags";
+import { listAPIInfo } from "../../common/daSpecParser";
 import { SearchOpenAPISpecResult, searchOpenAPISpec } from "../../common/kiotaClient";
 import {
   CollectInputsPort,
@@ -96,35 +90,6 @@ function createLocalMcpServersProvider(localServers: () => Promise<ODRServer[]>)
   };
 }
 
-const openApiMethods = [
-  "get",
-  "post",
-  "put",
-  "delete",
-  "patch",
-  "head",
-  "connect",
-  "options",
-  "trace",
-];
-
-function openApiParseOptions(): ParseOptions {
-  return {
-    isGptPlugin: true,
-    allowAPIKeyAuth: true,
-    allowBearerTokenAuth: true,
-    allowMultipleParameters: true,
-    allowOauth2: true,
-    projectType: ProjectType.Copilot,
-    allowMissingId: true,
-    allowSwagger: true,
-    allowMethods: openApiMethods,
-    allowResponseSemantics: true,
-    allowConversationStarters: false,
-    allowConfirmation: false,
-  };
-}
-
 function operationDetail(operation: ListAPIInfo): string {
   if (!operation.auth) {
     return "No authentication";
@@ -165,25 +130,31 @@ const openApiOperationsProvider: OptionsProvider = {
         message: "OpenAPI operations cannot be listed without an API spec location.",
       });
     }
-    const parser = new SpecParser(apiSpecLocation, openApiParseOptions());
-    const validation = await parser.validate();
-    if (validation.status === ValidationStatus.Error) {
-      throw new SystemError({
+    let listed: Awaited<ReturnType<typeof listAPIInfo>>;
+    try {
+      listed = await listAPIInfo(apiSpecLocation);
+    } catch {
+      throw new UserError({
         source: "Scaffold",
         name: "OpenApiSpecInvalid",
         message: "The OpenAPI description document is invalid or contains no supported operations.",
       });
     }
-    const listed = await parser.list();
+    const operations = sortOperations(listed.APIs).filter((operation) => operation.isValid);
+    if (operations.length === 0) {
+      throw new UserError({
+        source: "Scaffold",
+        name: "OpenApiSpecInvalid",
+        message: "The OpenAPI description document is invalid or contains no supported operations.",
+      });
+    }
     return {
-      options: sortOperations(listed.APIs)
-        .filter((operation) => operation.isValid)
-        .map((operation) => ({
-          id: operation.api,
-          label: operation.api,
-          groupName: operation.api.toUpperCase().split(" ")[0],
-          detail: operationDetail(operation),
-        })),
+      options: operations.map((operation) => ({
+        id: operation.api,
+        label: operation.api,
+        groupName: operation.api.toUpperCase().split(" ")[0],
+        detail: operationDetail(operation),
+      })),
     };
   },
 };

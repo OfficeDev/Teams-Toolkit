@@ -41,6 +41,9 @@
       "title": "OpenAPI Description Document",
       "placeholder": "Select an OpenAPI description document.",
       "prompt": "Select an OpenAPI description document from your local machine.",
+      "filters": {
+        "OpenAPI Description Document": ["json", "yml", "yaml"]
+      },
       "cliShortName": "a",
       "cliDescription": "OpenAPI description document location.",
       "condition": { "expr": "openApiSpecType == 'open-file'" }

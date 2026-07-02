@@ -15,9 +15,6 @@
       "azureOpenAIKey": { "type": "string" },
       "azureOpenAIEndpoint": { "type": "string" },
       "azureOpenAIDeploymentName": { "type": "string" },
-      "openApiSpecType": { "type": "string" },
-      "searchOpenApiSpecQuery": { "type": "string" },
-      "selectOpenApiSpec": { "type": "string" },
       "apiSpecLocation": { "type": "string" },
       "apiOperations": { "type": "array", "items": { "type": "string" } }
     },

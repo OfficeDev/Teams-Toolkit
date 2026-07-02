@@ -28,6 +28,15 @@
         "placeholder": { "type": "string" },
         "prompt": { "type": "string" },
         "default": {},
+        "filters": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "inputOptionItem": { "$ref": "#/$defs/option" },
+        "inputBoxConfig": { "$ref": "#/$defs/inputBoxConfig" },
         "validation": { "$ref": "#/$defs/validation" },
         "staticOptions": {
           "type": "array",
@@ -50,6 +59,20 @@
       "comment": "Exactly one of staticOptions / optionsFrom may be present (proposal §4).",
       "not": {
         "required": ["staticOptions", "optionsFrom"]
+      }
+    },
+    "inputBoxConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string" },
+        "title": { "type": "string" },
+        "placeholder": { "type": "string" },
+        "prompt": { "type": "string" },
+        "default": {},
+        "step": { "type": "number" },
+        "keyPrefix": { "type": "string" }
       }
     },
     "option": {
