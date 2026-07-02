@@ -282,6 +282,79 @@ describe("runScaffoldPipeline (v4)", () => {
     assert.deepStrictEqual(res._unsafeUnwrap().written, ["kept.txt"]);
   });
 
+  it("AC-23: inactive render filters leave matching files to normal write and skip handling", async () => {
+    const pipeline: Pipeline = {
+      pipeline: "default",
+      render: {
+        filters: [{ when: "featureFlag('TEST_OFF')", exclude: ["copy.txt", "skip.txt"] }],
+      },
+      steps: [],
+    };
+    const { port, writes } = makePort();
+    const res = await runScaffoldPipeline(
+      pipeline,
+      [entry("copy.txt", "copy"), entry("skip.txt", "skip")],
+      {},
+      target(["skip.txt"]),
+      port
+    );
+
+    assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
+    const outcome = res._unsafeUnwrap();
+    assert.deepStrictEqual(outcome.filtered, []);
+    assert.deepStrictEqual(outcome.written, ["copy.txt"]);
+    assert.deepStrictEqual(
+      outcome.skipped.map((s) => s.path),
+      ["skip.txt"]
+    );
+    assert.strictEqual(writes.get("copy.txt")?.toString(), "copy");
+    assert.isFalse(writes.has("skip.txt"));
+  });
+
+  it("AC-23: render filter predicate errors stop before writing matching files", async () => {
+    const pipeline: Pipeline = {
+      pipeline: "default",
+      render: {
+        filters: [{ when: "missingFlag == 'on'", exclude: ["copy.txt"] }],
+      },
+      steps: [],
+    };
+    const { port, writes } = makePort();
+    const res = await runScaffoldPipeline(
+      pipeline,
+      [entry("copy.txt", "copy")],
+      {},
+      target([]),
+      port
+    );
+
+    assert.isTrue(res.isErr());
+    assert.instanceOf(res._unsafeUnwrapErr(), SystemError);
+    assert.strictEqual(writes.size, 0);
+  });
+
+  it("AC-23: render filter predicate errors stop tpl files before body render", async () => {
+    const pipeline: Pipeline = {
+      pipeline: "default",
+      render: {
+        filters: [{ when: "missingFlag == 'on'", exclude: ["copy.txt"] }],
+      },
+      steps: [],
+    };
+    const { port, writes } = makePort();
+    const res = await runScaffoldPipeline(
+      pipeline,
+      [entry("copy.txt.tpl", "{{missingProducer}}")],
+      {},
+      target([]),
+      port
+    );
+
+    assert.isTrue(res.isErr());
+    assert.instanceOf(res._unsafeUnwrapErr(), SystemError);
+    assert.strictEqual(writes.size, 0);
+  });
+
   it("AC-23: render filters match the final output path after path render and tpl stripping", async () => {
     const pipeline: Pipeline = {
       pipeline: "default",

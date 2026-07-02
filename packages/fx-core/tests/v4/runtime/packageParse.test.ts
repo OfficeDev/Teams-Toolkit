@@ -11,6 +11,7 @@ describe("v4 runtime — packageParse", () => {
       render: {
         filters: [
           {
+            comment: "sandbox files are opt-in",
             when: "!featureFlag('TEAMSFX_SANDBOXED_TEAM')",
             exclude: ["m365agents.sandbox.yml", "env/.env.sandbox"],
           },
@@ -22,6 +23,7 @@ describe("v4 runtime — packageParse", () => {
     assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
     assert.deepStrictEqual(res._unsafeUnwrap().render?.filters, [
       {
+        comment: "sandbox files are opt-in",
         when: "!featureFlag('TEAMSFX_SANDBOXED_TEAM')",
         exclude: ["m365agents.sandbox.yml", "env/.env.sandbox"],
       },
@@ -38,6 +40,38 @@ describe("v4 runtime — packageParse", () => {
     });
 
     assert.isTrue(res.isErr());
+  });
+
+  it("parsePipeline rejects malformed render filter containers", () => {
+    const nonObjectRender = parsePipeline({
+      pipeline: "default",
+      render: "nope",
+      steps: [],
+    });
+    const nonArrayFilters = parsePipeline({
+      pipeline: "default",
+      render: { filters: "nope" },
+      steps: [],
+    });
+
+    assert.isTrue(nonObjectRender.isErr());
+    assert.isTrue(nonArrayFilters.isErr());
+  });
+
+  it("parsePipeline rejects malformed render filter items", () => {
+    const nonObjectFilter = parsePipeline({
+      pipeline: "default",
+      render: { filters: ["nope"] },
+      steps: [],
+    });
+    const nonStringExclude = parsePipeline({
+      pipeline: "default",
+      render: { filters: [{ exclude: ["m365agents.sandbox.yml", 1] }] },
+      steps: [],
+    });
+
+    assert.isTrue(nonObjectFilter.isErr());
+    assert.isTrue(nonStringExclude.isErr());
   });
 
   it("parsePipeline accepts literal string[] step parameters", () => {
