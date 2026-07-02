@@ -303,6 +303,67 @@ describe("runCreateInputs (collect-create-inputs)", () => {
     assert.strictEqual(multiOptionAt(ui.lastMultiConfig, 0).id, "GET /repairs");
   });
 
+  it("asks for the OpenAPI spec source before collecting DA OpenAPI operations", async () => {
+    const ui = new ScriptedUserInteraction({
+      select: { openApiSpecType: "enter-url" },
+      text: { apiSpecLocation: OPENAPI_SPEC },
+      multi: { apiOperations: ["GET /repairs"] },
+    });
+
+    const res = await runCreateInputs(buildFloor(), OPENAPI_DA, {}, asUI(ui), {
+      flagReader: () => false,
+    });
+
+    assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
+    if (res.isOk()) {
+      assert.equal(res.value.openApiSpecType, "enter-url");
+      assert.equal(res.value.apiSpecLocation, OPENAPI_SPEC);
+      assert.deepEqual(res.value.apiOperations, ["GET /repairs"]);
+    }
+    assert.deepEqual(ui.promptNames, ["openApiSpecType", "apiSpecLocation", "apiOperations"]);
+  });
+
+  it("collects DA OpenAPI operations from a searched OpenAPI document", async () => {
+    const ui = new ScriptedUserInteraction({
+      select: { openApiSpecType: "search-api", selectOpenApiSpec: OPENAPI_SPEC },
+      text: { searchOpenApiSpecQuery: "repairs" },
+      multi: { apiOperations: ["GET /repairs"] },
+    });
+
+    const res = await runCreateInputs(buildFloor(), OPENAPI_DA, {}, asUI(ui), {
+      flagReader: () => false,
+      searchOpenAPISpec: async (query) => {
+        assert.equal(query, "repairs");
+        return [
+          {
+            key: "Repairs API",
+            url: OPENAPI_SPEC,
+            description: "Manage repairs",
+          },
+        ];
+      },
+    });
+
+    assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
+    if (res.isOk()) {
+      assert.equal(res.value.openApiSpecType, "search-api");
+      assert.equal(res.value.searchOpenApiSpecQuery, "repairs");
+      assert.equal(res.value.selectOpenApiSpec, OPENAPI_SPEC);
+      assert.equal(res.value.apiSpecLocation, OPENAPI_SPEC);
+      assert.deepEqual(res.value.apiOperations, ["GET /repairs"]);
+    }
+    assert.deepEqual(ui.promptNames, [
+      "openApiSpecType",
+      "searchOpenApiSpecQuery",
+      "selectOpenApiSpec",
+      "apiOperations",
+    ]);
+    const options = (ui.lastSelectConfig?.options ?? []) as SurfaceOptionItem[];
+    assert.equal(options[0].id, OPENAPI_SPEC);
+    assert.equal(options[0].label, "Repairs API");
+    assert.equal(options[0].detail, "Manage repairs");
+  });
+
   it("validates Graph connector display name", async () => {
     const ui = new ScriptedUserInteraction({
       text: { graphConnectorName: "   " },
@@ -589,7 +650,7 @@ describe("runCreateInputs (collect-create-inputs)", () => {
 
   it("collects custom API OpenAPI inputs before LLM inputs", async () => {
     const ui = new ScriptedUserInteraction({
-      select: { llmService: "llm-service-azure-openai" },
+      select: { openApiSpecType: "enter-url", llmService: "llm-service-azure-openai" },
       text: {
         apiSpecLocation: OPENAPI_SPEC,
         azureOpenAIKey: "fake-azure-openai-key",
@@ -609,6 +670,7 @@ describe("runCreateInputs (collect-create-inputs)", () => {
 
     assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
     if (res.isOk()) {
+      assert.equal(res.value.openApiSpecType, "enter-url");
       assert.equal(res.value.apiSpecLocation, OPENAPI_SPEC);
       assert.deepEqual(res.value.apiOperations, ["GET /repairs"]);
       assert.equal(res.value.llmService, "llm-service-azure-openai");
@@ -617,6 +679,7 @@ describe("runCreateInputs (collect-create-inputs)", () => {
       assert.equal(res.value.azureOpenAIDeploymentName, "fake-deployment");
     }
     assert.deepEqual(ui.promptNames, [
+      "openApiSpecType",
       "apiSpecLocation",
       "apiOperations",
       "llmService",
@@ -728,7 +791,12 @@ describe("runCreateInputs (collect-create-inputs)", () => {
       asUI(ui),
       {
         surface: "cli",
-        inputs: { nonInteractive: true, folder: "C:/src", "app-name": "MyAgent" },
+        inputs: {
+          platform: Platform.CLI,
+          nonInteractive: true,
+          folder: "C:/src",
+          "app-name": "MyAgent",
+        },
         flagReader: () => false,
         fetchMcpTools: async () => {
           fetchCalled = true;
@@ -1093,6 +1161,47 @@ describe("createUiPromptUI (collect-create-inputs)", () => {
     // a v4 option with no label defaults its surface label to its id.
     assert.equal(options[1].id, "b");
     assert.equal(options[1].label, "b");
+  });
+
+  it("resolves keyPrefix localization before rendering authored v4 LLM questions", async () => {
+    const ui = new ScriptedUserInteraction({ select: { llmService: "llm-service-openai" } });
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask(
+      {
+        name: "llmService",
+        type: "singleSelect",
+        title: "Service for Large Language Model (LLM)",
+        placeholder: "Select a service to access LLMs",
+        keyPrefix: "core.createProjectQuestion.llmService",
+      },
+      [
+        {
+          id: "llm-service-azure-openai",
+          label: "Azure OpenAI",
+          detail: "Access powerful LLMs in OpenAI with Azure security and reliability",
+          keyPrefix: "core.createProjectQuestion.llmServiceAzureOpenAIOption",
+        },
+        {
+          id: "llm-service-openai",
+          label: "OpenAI",
+          detail: "Access LLMs developed by OpenAI",
+          keyPrefix: "core.createProjectQuestion.llmServiceOpenAIOption",
+        },
+      ]
+    );
+
+    assert.isTrue(res.isOk());
+    assert.equal(ui.lastSelectConfig?.title, "Service for Large Language Model (LLM)");
+    assert.equal(ui.lastSelectConfig?.placeholder, "Select a service to access LLMs");
+    const options = (ui.lastSelectConfig?.options ?? []) as SurfaceOptionItem[];
+    assert.equal(options[0].label, "Azure OpenAI");
+    assert.equal(
+      options[0].detail,
+      "Access powerful LLMs in OpenAI with Azure security and reliability"
+    );
+    assert.equal(options[1].label, "OpenAI");
+    assert.equal(options[1].detail, "Access LLMs developed by OpenAI");
   });
 
   it("CCI-07: ask maps a text question to inputText and returns the string", async () => {

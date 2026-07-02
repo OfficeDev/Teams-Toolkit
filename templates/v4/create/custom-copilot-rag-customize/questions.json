@@ -6,45 +6,56 @@
       "type": "singleSelect",
       "title": "Service for Large Language Model (LLM)",
       "placeholder": "Select a service to access LLMs",
+      "keyPrefix": "core.createProjectQuestion.llmService",
       "default": "llm-service-azure-openai",
       "staticOptions": [
         {
           "id": "llm-service-azure-openai",
           "label": "Azure OpenAI",
-          "detail": "Use Azure OpenAI as the language model service."
+          "detail": "Access powerful LLMs in OpenAI with Azure security and reliability",
+          "keyPrefix": "core.createProjectQuestion.llmServiceAzureOpenAIOption"
         },
         {
           "id": "llm-service-openai",
           "label": "OpenAI",
-          "detail": "Use OpenAI as the language model service."
+          "detail": "Access LLMs developed by OpenAI",
+          "keyPrefix": "core.createProjectQuestion.llmServiceOpenAIOption"
         }
       ]
     },
     {
       "name": "openAIKey",
       "type": "text",
-      "title": "Input OpenAI service key now or set it later in the project.",
+      "title": "OpenAI Key",
+      "placeholder": "Input OpenAI service key now or set it later in the project",
+      "keyPrefix": "core.createProjectQuestion.llmService.openAIKey",
       "condition": { "equals": { "llmService": "llm-service-openai" } },
       "optional": true
     },
     {
       "name": "azureOpenAIKey",
       "type": "text",
-      "title": "Input Azure OpenAI service key now or set it later in the project",
+      "title": "Azure OpenAI Key",
+      "placeholder": "Input Azure OpenAI service key now or set it later in the project",
+      "keyPrefix": "core.createProjectQuestion.llmService.azureOpenAIKey",
       "condition": { "equals": { "llmService": "llm-service-azure-openai" } },
       "optional": true
     },
     {
       "name": "azureOpenAIEndpoint",
       "type": "text",
-      "title": "Input Azure OpenAI service endpoint now or set it later in the project",
+      "title": "Azure OpenAI Endpoint",
+      "placeholder": "Input Azure OpenAI service endpoint now or set it later in the project",
+      "keyPrefix": "core.createProjectQuestion.llmService.azureOpenAIEndpoint",
       "condition": { "equals": { "llmService": "llm-service-azure-openai" } },
       "optional": true
     },
     {
       "name": "azureOpenAIDeploymentName",
       "type": "text",
-      "title": "Input Azure OpenAI deployment name",
+      "title": "Azure OpenAI Deployment Name",
+      "placeholder": "Input Azure OpenAI deployment name now or set it later in the project",
+      "keyPrefix": "core.createProjectQuestion.llmService.azureOpenAIDeploymentName",
       "condition": { "equals": { "llmService": "llm-service-azure-openai" } },
       "optional": true
     }

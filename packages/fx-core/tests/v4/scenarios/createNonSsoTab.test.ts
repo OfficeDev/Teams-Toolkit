@@ -7,6 +7,7 @@ import { REQUIRE_EMPTY_TARGET } from "../../../src/v4/pipeline/runScaffoldPipeli
 import { createInMemoryRuntime } from "../../../src/v4/runtime/inMemoryRuntime";
 import { scaffold } from "../../../src/v4/runtime/scaffold";
 import {
+  isRecord,
   loadV4Package,
   readJsonObject,
   recordProperty,
@@ -23,7 +24,23 @@ import {
 const templatePackage = loadV4Package("create", "non-sso-tab");
 const appName = "My Tab App";
 
-async function run(language: "typescript" | "python" = "typescript") {
+function descriptorLanguages(): string[] {
+  if (!isRecord(templatePackage.descriptor)) {
+    assert.fail("expected descriptor to be an object");
+  }
+  const languages = templatePackage.descriptor.languages;
+  if (!Array.isArray(languages)) {
+    assert.fail("expected descriptor languages to be an array");
+  }
+  return languages.map((language) => {
+    if (typeof language !== "string") {
+      assert.fail("expected descriptor language to be a string");
+    }
+    return language;
+  });
+}
+
+async function run(language: "typescript" = "typescript") {
   return runV4Package(templatePackage, { callerFloor: { appName, language } });
 }
 
@@ -48,12 +65,8 @@ describe("SCN-TEAMS-CREATE-NONSSO-TAB (v4, T3 InMemoryRuntime)", () => {
     assert.strictEqual(name.short, "My Tab App${{APP_NAME_SUFFIX}}");
   });
 
-  it("SCN-CREATE-NONSSO-TAB-03: Python scaffold selects the Python subtree", async () => {
-    const { outcome } = await run("python");
-    assert.include(outcome.written, "src/app.py");
-    assert.include(outcome.written, "src/requirements.txt");
-    assert.include(outcome.written, "src/Web/index.html");
-    assert.notInclude(outcome.written, "package.json");
+  it("SCN-CREATE-NONSSO-TAB-03: descriptor exposes TypeScript only", () => {
+    assert.deepStrictEqual(descriptorLanguages(), ["typescript"]);
   });
 
   it("SCN-CREATE-NONSSO-TAB-04: only require-empty-target runs", async () => {

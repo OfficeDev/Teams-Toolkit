@@ -7,6 +7,7 @@ import { REQUIRE_EMPTY_TARGET } from "../../../src/v4/pipeline/runScaffoldPipeli
 import { createInMemoryRuntime } from "../../../src/v4/runtime/inMemoryRuntime";
 import { scaffold } from "../../../src/v4/runtime/scaffold";
 import {
+  isRecord,
   loadV4Package,
   readJsonObject,
   recordProperty,
@@ -24,7 +25,23 @@ import {
 const templatePackage = loadV4Package("create", "weather-agent");
 const appName = "My Weather Agent";
 
-async function run(language: "typescript" | "javascript" | "python" = "typescript") {
+function descriptorLanguages(): string[] {
+  if (!isRecord(templatePackage.descriptor)) {
+    assert.fail("expected descriptor to be an object");
+  }
+  const languages = templatePackage.descriptor.languages;
+  if (!Array.isArray(languages)) {
+    assert.fail("expected descriptor languages to be an array");
+  }
+  return languages.map((language) => {
+    if (typeof language !== "string") {
+      assert.fail("expected descriptor language to be a string");
+    }
+    return language;
+  });
+}
+
+async function run(language: "typescript" | "javascript" = "typescript") {
   return runV4Package(templatePackage, { callerFloor: { appName, language } });
 }
 
@@ -58,12 +75,8 @@ describe("SCN-TEAMS-CREATE-WEATHER-AGENT (v4, T3 InMemoryRuntime)", () => {
     assert.notInclude(outcome.written, "src/index.ts");
   });
 
-  it("SCN-CREATE-WEATHER-04: Python scaffold selects the Python subtree", async () => {
-    const { outcome } = await run("python");
-    assert.include(outcome.written, "src/app.py");
-    assert.include(outcome.written, "src/agent.py");
-    assert.include(outcome.written, "src/tools/get_weather_tool.py");
-    assert.notInclude(outcome.written, "package.json");
+  it("SCN-CREATE-WEATHER-04: descriptor exposes TypeScript and JavaScript only", () => {
+    assert.deepStrictEqual(descriptorLanguages(), ["typescript", "javascript"]);
   });
 
   it("SCN-CREATE-WEATHER-05: only require-empty-target runs", async () => {
