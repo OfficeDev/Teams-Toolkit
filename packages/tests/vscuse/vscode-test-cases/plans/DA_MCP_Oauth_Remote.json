@@ -5,7 +5,7 @@
     "execution_context": {
       "delay_between_steps": 0.5,
       "stop_on_error": true,
-      "precondition_wait_timeout": 60,
+      "precondition_wait_timeout": 120,
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
@@ -58,7 +58,7 @@
       "step_5b6d6181"
     ],
     "tags": [],
-    "updated_at": "2026-06-29T03:25:40.465092"
+    "updated_at": "2026-07-02T12:03:02.000000"
   },
   "steps": [
     {
@@ -648,14 +648,14 @@
       "parameters": {
         "text": "read:user"
       },
-      "description": "Type 'read:user' into the “Scope(s) for OAuth registration” input field at the top of the Visual Studio Code window.",
+      "description": "Type 'read:user' into the \u201cScope(s) for OAuth registration\u201d input field at the top of the Visual Studio Code window.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:512:384:0:20:70242a232362642b"
+        "dhash:512:384:0:20:74c240406460623a"
       ],
       "postconditions": [],
       "tags": [],
