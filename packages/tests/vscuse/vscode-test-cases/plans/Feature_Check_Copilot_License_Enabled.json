@@ -182,8 +182,8 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 512,
-        "y": 431
+        "x": 566,
+        "y": 433
       },
       "description": "Click the \"Set up your environment\" option in the guided tutorial list under the \"Build a Declarative Agent\" section of the Microsoft 365 Agents Toolkit welcome screen in Visual Studio Code.",
       "content_refs": [],
@@ -191,7 +191,11 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [],
+      "preconditions": [
+        "dhash:566:433:16:5:2b33334c33000000",
+        "dhash:566:433:96:5:00043a2a00089051",
+        "dhash:566:433:0:10:4078747470717c2d"
+      ],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_fa6d6cb1",
