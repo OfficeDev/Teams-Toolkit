@@ -55,7 +55,7 @@
       "step_5f013884"
     ],
     "tags": [],
-    "updated_at": "2026-07-02T06:45:00.000000"
+    "updated_at": "2026-07-02T06:53:01.944000"
   },
   "steps": [
     {
@@ -581,7 +581,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion verify options like below:\n start with a new api\ncreate an action with a new api from azure functions, \nstart with an openapi description document\ncreate an action form your existing api, \nstart with an office add-in action\ncreate a declarative agent with office add in action, \nstart with an MCP server\ncreate actions from your existing mcp server.",
+      "description": "@assertion Verify the 'Create an action' quick pick lists the available options for adding an action. IMPORTANT: The bold label at the start of each row is often truncated, cut off, or hard to read; do NOT require the exact label text. Instead, match each option by EITHER its bold label OR its grey description text (whichever is legible). Consider the assertion satisfied if these options are visible (any combination of label or description is acceptable): 'Start with a New API' or 'Create an action with a new API from Azure Functions'; 'Start with an OpenAPI Description Document' or 'Create an action from your existing API'; 'Start with an MCP server' or 'Create actions from your existing MCP server'. Do NOT require any 'office add-in' option, as it is no longer present in this menu.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
