@@ -72,11 +72,5 @@
     "*.{js,jsx,css,ts,tsx}": [
       "npx eslint --cache --fix --quiet"
     ]
-  },
-  "pnpm": {
-    "overrides": {
-      "hono@<4.12.16": "^4.12.16",
-      "ip-address@<10.1.1": "^10.1.1"
-    }
   }
 }

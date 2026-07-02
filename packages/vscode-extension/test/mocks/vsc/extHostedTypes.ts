@@ -744,10 +744,7 @@ export class Hover {
 
   constructor(
     contents:
-      | vscode.MarkdownString
-      | vscode.MarkedString
-      | vscode.MarkdownString[]
-      | vscode.MarkedString[],
+      vscode.MarkdownString | vscode.MarkedString | vscode.MarkdownString[] | vscode.MarkedString[],
     range?: Range
   ) {
     this.range = range || new Range(new Position(0, 0), new Position(0, 0));
@@ -1593,10 +1590,7 @@ export class Task implements vscode.Task {
   private _definition!: vscode.TaskDefinition;
 
   private _scope:
-    | vscode.TaskScope.Global
-    | vscode.TaskScope.Workspace
-    | vscode.WorkspaceFolder
-    | undefined;
+    vscode.TaskScope.Global | vscode.TaskScope.Workspace | vscode.WorkspaceFolder | undefined;
 
   private _name!: string;
 
@@ -1719,10 +1713,7 @@ export class Task implements vscode.Task {
   }
 
   get scope():
-    | vscode.TaskScope.Global
-    | vscode.TaskScope.Workspace
-    | vscode.WorkspaceFolder
-    | undefined {
+    vscode.TaskScope.Global | vscode.TaskScope.Workspace | vscode.WorkspaceFolder | undefined {
     return this._scope;
   }
 
@@ -2175,14 +2166,7 @@ export declare type uinteger = number;
 export declare type decimal = number;
 
 export declare type LSPAny =
-  | LSPObject
-  | LSPArray
-  | string
-  | integer
-  | uinteger
-  | decimal
-  | boolean
-  | null;
+  LSPObject | LSPArray | string | integer | uinteger | decimal | boolean | null;
 
 export class ProtocolTypeHierarchyItem extends TypeHierarchyItem {
   data?;

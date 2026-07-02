@@ -1,4 +1,7 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-npx lerna run --concurrency 1 --stream precommit --since HEAD --exclude-dependents
+# ESLINT_FAST skips type-aware + whole-graph cyclic-import linting so staged-file
+# checks take ~1s instead of tens of seconds. The full checks still run in CI.
+# Default lerna concurrency (CPU count) parallelizes across changed packages.
+ESLINT_FAST=1 npx lerna run --stream precommit --since HEAD --exclude-dependents

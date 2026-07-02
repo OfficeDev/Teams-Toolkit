@@ -74,7 +74,7 @@
     "path-browserify": "^1.0.1",
     "pkg": "^5.8.1",
     "pkg-fetch": "^3.4.2",
-    "prettier": "^2.4.1",
+    "prettier": "^3.3.3",
     "rcedit": "^3.0.1",
     "rimraf": "^5.0.1",
     "sass-loader": "^11.1.1",

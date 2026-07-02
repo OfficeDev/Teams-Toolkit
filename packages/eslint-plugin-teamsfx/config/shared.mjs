@@ -1,8 +1,13 @@
-import tseslint from "typescript-eslint";
-import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
 import importPlugin from "eslint-plugin-import-x";
 import noSecrets from "eslint-plugin-no-secrets";
+import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
 import globals from "globals";
+import tseslint from "typescript-eslint";
+
+// When ESLINT_FAST is set (e.g. by the pre-commit hook) skip the whole-graph
+// cyclic-import check, which traverses the entire import graph and is expensive.
+// CI still runs it.
+const fast = !!process.env.ESLINT_FAST;
 
 export default [
   {
@@ -49,13 +54,15 @@ export default [
       "@typescript-eslint/no-unused-expressions": "off",
       "@typescript-eslint/no-duplicate-enum-values": "warn",
       "@typescript-eslint/no-unsafe-declaration-merging": "warn",
-      "import-x/no-cycle": [
-        "error",
-        {
-          maxDepth: Infinity,
-          ignoreExternal: true,
-        },
-      ],
+      "import-x/no-cycle": fast
+        ? "off"
+        : [
+            "error",
+            {
+              maxDepth: Infinity,
+              ignoreExternal: true,
+            },
+          ],
       "import-x/no-unresolved": ["warn"],
       "no-secrets/no-secrets": [
         "warn",
