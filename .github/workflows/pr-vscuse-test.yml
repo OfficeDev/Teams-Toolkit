@@ -1,7 +1,6 @@
 ﻿name: PR VscUse Test Plan Selector
 
 # Triggered automatically on every PR open/sync/reopen/ready_for_review,
-# when the 'atk-vsuse-test' label is added to a PR,
 # OR manually via workflow_dispatch with a pr_number input.
 #
 # IMPORTANT: this workflow is INFORMATIONAL ONLY — it must NEVER block merge.
@@ -11,7 +10,7 @@
 #   * Results are surfaced via PR comments; use them as guidance, not a gate.
 #
 # This workflow:
-#   1. Resolves PR context (works for label, auto, and manual triggers)
+#   1. Resolves PR context (works for both automatic and manual triggers)
 #   2. Gets the diff between the PR branch and the target branch
 #   3. Selects test plans — a changed test plan file is run as an "impacted" case;
 #      for product-code changes GitHub Copilot CLI (Claude Sonnet 4.6) picks relevant plans
@@ -21,7 +20,7 @@
 
 on:
   pull_request:
-    types: [labeled, opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
     inputs:
       pr_number:
@@ -42,13 +41,10 @@ permissions:
 
 jobs:
   select-plans-and-run:
-    # Run for: label add (atk-vsuse-test), automatic PR events (skip drafts), or manual dispatch.
+    # Run for: automatic PR events (skip drafts) or manual dispatch.
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'pull_request' && (
-        (github.event.action == 'labeled' && github.event.label.name == 'atk-vsuse-test') ||
-        (github.event.action != 'labeled' && github.event.pull_request.draft == false)
-      ))
+      (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
     runs-on: ubuntu-latest
 
     steps:
@@ -772,55 +768,4 @@ jobs:
             // The PR comment carries the result; merge gating must not depend on this run.
             if (!succeeded) {
               console.log(`VscUse tests concluded: ${conclusion}. See: ${smokeUrl}`);
-            }
-      # ── 9. Remove atk-vsuse-test label (signals completion) ───────────
-      - name: Remove atk-vsuse-test label
-        if: always()
-        uses: actions/github-script@v6
-        env:
-          PR_NUMBER: ${{ steps.pr-context.outputs.pr_number }}
-        with:
-          script: |
-            const prNumber = parseInt(process.env.PR_NUMBER);
-            if (!prNumber) { console.log('No PR number — skipping label removal'); return; }
-            try {
-              await github.rest.issues.removeLabel({
-                owner:        context.repo.owner,
-                repo:         context.repo.repo,
-                issue_number: prNumber,
-                name:         'atk-vsuse-test',
-              });
-              console.log(`Removed label 'atk-vsuse-test' from PR #${prNumber}`);
-            } catch (err) {
-              if (err.status === 404) {
-                console.log('Label not present, nothing to remove');
-              } else {
-                throw err;
-              }
-            }
-
-      # ── 9. Remove trigger label to indicate completion ────────────────
-      - name: Remove atk-vsuse-test label
-        if: always()
-        uses: actions/github-script@v6
-        env:
-          PR_NUMBER: ${{ steps.pr-context.outputs.pr_number }}
-        with:
-          script: |
-            const prNumber = parseInt(process.env.PR_NUMBER);
-            if (!prNumber) { console.log('No PR number — skipping label removal'); return; }
-            try {
-              await github.rest.issues.removeLabel({
-                owner:       context.repo.owner,
-                repo:        context.repo.repo,
-                issue_number: prNumber,
-                name:        'atk-vsuse-test',
-              });
-              console.log(`Removed label 'atk-vsuse-test' from PR #${prNumber}`);
-            } catch (err) {
-              if (err.status === 404) {
-                console.log('Label not present — nothing to remove');
-              } else {
-                throw err;
-              }
             }
