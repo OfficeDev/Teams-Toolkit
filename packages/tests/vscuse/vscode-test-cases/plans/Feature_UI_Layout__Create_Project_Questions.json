@@ -541,7 +541,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion verify options like : no action, add an action, add a copilot connector and start with typespec for microsoft 365 copilot",
+      "description": "@assertion verify options like : no action, create a declarative agent with an action, add a copilot connector and start with typespec for microsoft 365 copilot",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
