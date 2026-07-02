@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0.0
     },
-    "total_steps": 16,
+    "total_steps": 15,
     "created_at": "2026-06-17T02:10:05.016638",
     "name": "Feature Check Copilot License Enabled",
     "description": {
@@ -25,7 +25,6 @@
       "step_f0d7ba3e",
       "step_436b1f61",
       "step_a0026de5",
-      "step_fa6d6cb1",
       "step_78a597ab",
       "step_47935ca7",
       "step_ed29b905",
@@ -37,7 +36,7 @@
       "step_35bc35cf"
     ],
     "tags": [],
-    "updated_at": "2026-07-02T08:32:11.919000"
+    "updated_at": "2026-07-02T08:42:38.000000"
   },
   "steps": [
     {
@@ -174,32 +173,6 @@
       "tags": [],
       "screenshot": "step_a0026de5",
       "created_at": "2026-06-17T02:19:55.474845",
-      "plan_id": "plan_80b368dd"
-    },
-    {
-      "step_id": "step_fa6d6cb1",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 566,
-        "y": 433
-      },
-      "description": "Click the \"Set up your environment\" option in the guided tutorial list under the \"Build a Declarative Agent\" section of the Microsoft 365 Agents Toolkit welcome screen in Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:566:433:16:5:2b33334c33000000",
-        "dhash:566:433:96:5:00043a2a00089051",
-        "dhash:566:433:0:10:4078747470717c2d"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_fa6d6cb1",
-      "created_at": "2026-06-17T02:24:33.865380",
       "plan_id": "plan_80b368dd"
     },
     {
