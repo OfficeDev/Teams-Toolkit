@@ -31,6 +31,12 @@
       "step_b3c8f37a",
       "step_179ff717",
       "step_e5c7e8aa",
+      "step_add65aa6",
+      "step_9fd72915",
+      "step_6879ec50",
+      "step_b3c8f37a",
+      "step_179ff717",
+      "step_e5c7e8aa",
       "step_61ee9d59",
       "step_7d1f2a3b",
       "step_7d1f2a3c",
@@ -55,7 +61,7 @@
       "step_5f013884"
     ],
     "tags": [],
-    "updated_at": "2026-07-02T06:06:27.000000"
+    "updated_at": "2026-07-02T06:20:29.000000"
   },
   "steps": [
     {
@@ -537,7 +543,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion verify options like : no action, add an action, add a copilot connector and start with typespec for microsoft 365 copilot",
+      "description": "@assertion Verify the 'Add an action to your declarative agent' quick pick lists these four options. Match each option by the bold label text at the START of its row; the grey description text after the label may be truncated or cut off in the UI, and truncated descriptions are acceptable. Consider the assertion satisfied if these option labels are visible: 'No Action', 'Add an Action', 'Add a Copilot connector', and 'Start with TypeSpec for Microsoft 365 Copilot'.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
