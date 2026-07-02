@@ -662,7 +662,7 @@ export class WorkspaceEdit implements vscode.WorkspaceEdit {
     return this._textEdits.has(uri.toString());
   }
 
-  set(uri: vscUri.URI, edits: TextEdit[]): void {
+  set(uri: vscUri.URI, edits: readonly any[]): void {
     let data = this._textEdits.get(uri.toString());
     if (!data) {
       data = { seq: (this._seqPool += 1), uri, edits: [] };
@@ -906,7 +906,7 @@ export class Diagnostic {
 }
 
 export class Hover {
-  public contents: vscode.MarkdownString[] | vscode.MarkedString[];
+  public contents: (vscode.MarkdownString | vscode.MarkedString)[];
 
   public range: Range;
 
@@ -2038,7 +2038,7 @@ export class TreeItem {
 
   resourceUri?: vscUri.URI;
 
-  iconPath?: string | vscUri.URI | { light: string | vscUri.URI; dark: string | vscUri.URI };
+  iconPath?: string | vscUri.URI | vscode.ThemeIcon | { light: vscUri.URI; dark: vscUri.URI };
 
   command?: vscode.Command;
 
