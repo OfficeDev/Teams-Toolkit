@@ -13,7 +13,8 @@
       "inputBoxConfig": {
         "name": "input-api-spec-url",
         "title": "OpenAPI Document",
-        "placeholder": "Enter OpenAPI Document URL"
+        "placeholder": "Enter OpenAPI Document URL",
+        "validation": "openapiUrl"
       },
       "filters": {
         "files": ["json", "yml", "yaml"]

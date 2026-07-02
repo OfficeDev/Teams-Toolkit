@@ -15,8 +15,10 @@ import { Result, err, ok } from "neverthrow";
 import { MCPFetchResult, fetchMCPTools } from "../../component/utils/mcpToolFetcher";
 import { ODRProvider, type ODRServer } from "../../component/utils/odrProvider";
 import { readBooleanFeatureFlag } from "../../common/featureFlags";
+import { getLocalizedString } from "../../common/localizeUtils";
 import { listAPIInfo } from "../../common/daSpecParser";
 import { SearchOpenAPISpecResult, searchOpenAPISpec } from "../../common/kiotaClient";
+import { isValidHttpUrl } from "../../common/stringUtils";
 import {
   CollectInputsPort,
   OptionsProvider,
@@ -294,6 +296,13 @@ const uriValidator: Validator = (value: string): string | undefined => {
   }
 };
 
+/** The OpenAPI URL entry in the combined file-or-input picker accepts HTTP(S) URLs only. */
+const openApiUrlValidator: Validator = (value: string): string | undefined => {
+  return isValidHttpUrl(value.trim())
+    ? undefined
+    : getLocalizedString("core.createProjectQuestion.invalidUrl.message");
+};
+
 /** The graph connector display name cannot be empty. */
 const graphConnectorNameValidator: Validator = (value: string): string | undefined => {
   return value.trim().length > 0 ? undefined : "must not be empty";
@@ -339,6 +348,7 @@ const graphConnectorConnectionIdValidator: Validator = (value: string): string |
 /** Engine-registered validator registry. */
 const validators: Record<string, Validator> = {
   uri: uriValidator,
+  openapiUrl: openApiUrlValidator,
   graphConnectorName: graphConnectorNameValidator,
   graphConnectorConnectionId: graphConnectorConnectionIdValidator,
 };

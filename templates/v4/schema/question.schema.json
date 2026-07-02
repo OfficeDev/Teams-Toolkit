@@ -72,7 +72,8 @@
         "prompt": { "type": "string" },
         "default": {},
         "step": { "type": "number" },
-        "keyPrefix": { "type": "string" }
+        "keyPrefix": { "type": "string" },
+        "validation": { "$ref": "#/$defs/validation" }
       }
     },
     "option": {

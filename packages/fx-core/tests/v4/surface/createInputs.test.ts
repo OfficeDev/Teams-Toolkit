@@ -869,6 +869,12 @@ describe("runCreateInputs (collect-create-inputs)", () => {
       ui.lastFileOrInputConfig?.inputOptionItem.label,
       "$(cloud) Enter OpenAPI Document URL"
     );
+    assert.isUndefined(ui.lastFileOrInputConfig?.validation);
+    assert.isFunction(ui.lastFileOrInputConfig?.inputBoxConfig.validation);
+    assert.equal(
+      await ui.lastFileOrInputConfig?.inputBoxConfig.validation?.("not-a-url"),
+      "Enter a valid HTTP URL without authentication to access your OpenAPI description document."
+    );
     assert.deepEqual(ui.lastFileOrInputConfig?.filters, { files: ["json", "yml", "yaml"] });
   });
 
@@ -908,6 +914,8 @@ describe("runCreateInputs (collect-create-inputs)", () => {
       ui.lastFileOrInputConfig?.inputBoxConfig.placeholder,
       "Enter OpenAPI Document URL"
     );
+    assert.isUndefined(ui.lastFileOrInputConfig?.validation);
+    assert.isFunction(ui.lastFileOrInputConfig?.inputBoxConfig.validation);
   });
 
   it("lists static MCP tools from the provided tools JSON", async () => {
