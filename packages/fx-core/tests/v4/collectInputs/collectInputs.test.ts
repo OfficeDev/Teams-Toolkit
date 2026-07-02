@@ -559,6 +559,30 @@ describe("collectInputs (v4)", () => {
     assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_PROVIDER_FAILED);
   });
 
+  it("INPUT-10: non-Error provider exceptions are wrapped as provider failures", async () => {
+    const provider: OptionsProvider = {
+      fetch: async () => Promise.reject("provider exploded"),
+    };
+    const questions: QuestionSpec[] = [
+      { name: "apiOperations", type: "multiSelect", optionsFrom: "openapi.operations" },
+    ];
+
+    const res = await collectInputs(
+      questions,
+      { properties: { apiOperations: {} } },
+      {},
+      ["common"],
+      makePort({
+        ui: new SequencedPromptUI([{ kind: "multi", value: ["GET /repairs"] }]),
+        providers: { "openapi.operations": provider },
+      })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_PROVIDER_FAILED);
+    assert.include(res._unsafeUnwrapErr().message, "provider exploded");
+  });
+
   it("INPUT-11: machine-state (odr.exe) gating is the provider, never a condition predicate", async () => {
     // odr absent → the provider yields only 'remote'; no condition probes the machine.
     const odrAbsent = new FakeProvider({ options: [{ id: "remote" }] });

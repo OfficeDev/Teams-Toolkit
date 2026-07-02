@@ -570,6 +570,48 @@ describe("runCreateInputs (collect-create-inputs)", () => {
     assert.deepEqual(ui.dynamicOptionNames, ["selectOpenApiSpec"]);
   });
 
+  it("surfaces blank OpenAPI search query as a user-fixable error", async () => {
+    const ui = new ScriptedUserInteraction({
+      select: { openApiSpecType: "search-api" },
+      text: { searchOpenApiSpecQuery: "   " },
+    });
+
+    const res = await runCreateInputs(buildFloor(), OPENAPI_DA, {}, asUI(ui), {
+      flagReader: () => false,
+    });
+
+    assert.isTrue(res.isErr(), "expected blank search query to fail");
+    assert.equal(res._unsafeUnwrapErr().name, "OpenApiSearchQueryMissing");
+    assert.deepEqual(ui.dynamicOptionNames, ["selectOpenApiSpec"]);
+  });
+
+  it("surfaces OpenAPI documents with no supported operations as a user-fixable error", async () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "atk-openapi-empty-"));
+    const openApiPath = path.join(tempDir, "openapi.yaml");
+    fs.writeFileSync(
+      openApiPath,
+      ["openapi: 3.0.0", "info:", "  title: Empty API", "  version: 1.0.0", "paths: {}"].join("\n"),
+      "utf8"
+    );
+    const ui = new ScriptedUserInteraction({ multi: { apiOperations: [] } });
+
+    try {
+      const res = await runCreateInputs(
+        buildFloor(),
+        OPENAPI_DA,
+        { apiSpecLocation: openApiPath },
+        asUI(ui),
+        { flagReader: () => false }
+      );
+
+      assert.isTrue(res.isErr(), "expected empty OpenAPI operations to fail");
+      assert.equal(res._unsafeUnwrapErr().name, "OpenApiSpecInvalid");
+      assert.deepEqual(ui.dynamicOptionNames, ["apiOperations"]);
+    } finally {
+      removeSync(tempDir);
+    }
+  });
+
   it("surfaces invalid OpenAPI operation loading as a user-fixable error", async () => {
     const ui = new ScriptedUserInteraction({
       multi: { apiOperations: ["GET /repairs"] },
@@ -1102,6 +1144,31 @@ describe("runCreateInputs (collect-create-inputs)", () => {
     assert.notProperty(res._unsafeUnwrap(), "mcpToolsJson");
   });
 
+  it("fails before static MCP materialization when non-interactive CLI create omits the server URL", async () => {
+    const ui = new ScriptedUserInteraction({});
+    let fetchCalled = false;
+
+    const res = await runCreateInputs(buildFloor(), STATIC_MCP_DA, {}, asUI(ui), {
+      surface: "cli",
+      inputs: {
+        platform: Platform.CLI,
+        nonInteractive: true,
+        folder: "C:/src",
+        "app-name": "MyAgent",
+      },
+      flagReader: () => false,
+      fetchMcpTools: async () => {
+        fetchCalled = true;
+        return { requiresAuth: false, tools: [] };
+      },
+    });
+
+    assert.isTrue(res.isErr(), "expected missing MCP server URL to fail");
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_VALIDATION_FAILED);
+    assert.include(res._unsafeUnwrapErr().message, "mcpServerUrl");
+    assert.isFalse(fetchCalled);
+  });
+
   it("fails when static MCP tool auto-fetch requires auth", async () => {
     const ui = new ScriptedUserInteraction({ text: { mcpToolsFilePath: "" } });
 
@@ -1528,6 +1595,110 @@ describe("createUiPromptUI (collect-create-inputs)", () => {
     }
     assert.deepEqual(ui.fileOrInputNames, ["apiSpecLocation"]);
     assert.equal(ui.lastFileOrInputConfig?.step, 2);
+  });
+
+  it("maps a singleFile question to selectFile and returns the path", async () => {
+    const ui = new ScriptedUserInteraction({ file: { apiSpecLocation: OPENAPI_SPEC } });
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask(
+      {
+        name: "apiSpecLocation",
+        type: "singleFile",
+        title: "OpenAPI Document",
+        filters: { files: ["json", "yml", "yaml"] },
+      },
+      undefined,
+      2
+    );
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.deepEqual(res.value, { kind: "value", value: OPENAPI_SPEC });
+    }
+    assert.deepEqual(ui.fileNames, ["apiSpecLocation"]);
+    assert.equal(ui.lastFileConfig?.step, 2);
+  });
+
+  it("returns host errors from singleFile prompts", async () => {
+    const ui = new ScriptedUserInteraction({});
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask(
+      { name: "apiSpecLocation", type: "singleFile", title: "OpenAPI Document" },
+      undefined
+    );
+
+    assert.isTrue(res.isErr());
+    assert.equal(res._unsafeUnwrapErr().name, "NoScriptedAnswer");
+  });
+
+  it("projects a host back on a singleFile question to { kind: 'back' }", async () => {
+    const ui = new ScriptedUserInteraction({ back: ["apiSpecLocation"] });
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask(
+      { name: "apiSpecLocation", type: "singleFile", title: "OpenAPI Document" },
+      undefined
+    );
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.deepEqual(res.value, { kind: "back" });
+    }
+  });
+
+  it("returns host errors from singleFileOrText prompts", async () => {
+    const ui = new ScriptedUserInteraction({});
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask(
+      {
+        name: "apiSpecLocation",
+        type: "singleFileOrText",
+        title: "OpenAPI Document",
+        inputOptionItem: { id: "input" },
+        inputBoxConfig: { name: "input-api-spec-url" },
+      },
+      undefined
+    );
+
+    assert.isTrue(res.isErr());
+    assert.equal(res._unsafeUnwrapErr().name, "NoScriptedAnswer");
+  });
+
+  it("projects a host back on a singleFileOrText question to { kind: 'back' }", async () => {
+    const ui = new ScriptedUserInteraction({ back: ["apiSpecLocation"] });
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask(
+      {
+        name: "apiSpecLocation",
+        type: "singleFileOrText",
+        title: "OpenAPI Document",
+        inputOptionItem: { id: "input" },
+        inputBoxConfig: { name: "input-api-spec-url" },
+      },
+      undefined
+    );
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.deepEqual(res.value, { kind: "back" });
+    }
+  });
+
+  it("rejects malformed singleFileOrText question configs", async () => {
+    const ui = new ScriptedUserInteraction({});
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask(
+      { name: "apiSpecLocation", type: "singleFileOrText", title: "OpenAPI Document" },
+      undefined
+    );
+
+    assert.isTrue(res.isErr());
+    assert.equal(res._unsafeUnwrapErr().name, "UnsupportedQuestionKind");
   });
 
   it("maps a folder question to selectFolder and returns the path", async () => {

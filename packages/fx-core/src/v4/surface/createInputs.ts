@@ -395,6 +395,7 @@ async function createFloorTail(
       name: "language",
       type: "singleSelect",
       title: "Programming Language",
+      default: languages[0],
       staticOptions: languages.map((language) => ({
         id: language,
         label: LANGUAGE_LABELS[language] ?? language,

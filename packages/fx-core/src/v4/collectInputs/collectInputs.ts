@@ -164,6 +164,14 @@ function walkCancelled(): UserError {
   });
 }
 
+function missingNonInteractiveAnswer(questionName: string): UserError {
+  return new UserError({
+    source: SOURCE,
+    name: INPUT_VALIDATION_FAILED,
+    message: `${questionName} is required in non-interactive mode.`,
+  });
+}
+
 /** Walk one template's questions into the resolved answer object. */
 export async function collectInputs(
   questions: QuestionSpec[],
@@ -256,6 +264,19 @@ export async function collectInputs(
     if (q.name in answers) {
       pos++;
       continue;
+    }
+
+    if (answers.nonInteractive === "true") {
+      if (typeof q.default === "string") {
+        answers[q.name] = q.default;
+        pos++;
+        continue;
+      }
+      if (q.optional === true) {
+        pos++;
+        continue;
+      }
+      return err(missingNonInteractiveAnswer(q.name));
     }
 
     // Resolve static or provider-backed options.
