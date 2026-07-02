@@ -5,7 +5,6 @@
     "types": ["node"],
     "module": "commonjs",
     "target": "ES2022",
-    "rootDir": ".",
     "outDir": "build",
     "lib": ["ES2022", "dom.iterable", "dom"],
     "allowJs": true,
