@@ -198,7 +198,8 @@ export namespace ExtTelemetry {
 
   export async function sendCachedTelemetryEventsAsync() {
     const existingValue = (await teamsfxCore.globalStateGet(TelemetryCacheKey)) as
-      string | undefined;
+      | string
+      | undefined;
     if (existingValue) {
       try {
         const telemetryEvent = JSON.parse(existingValue) as {

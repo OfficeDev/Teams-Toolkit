@@ -269,7 +269,10 @@ export class Hover {
 
   constructor(
     contents:
-      vscode.MarkdownString | vscode.MarkedString | vscode.MarkdownString[] | vscode.MarkedString[],
+      | vscode.MarkdownString
+      | vscode.MarkedString
+      | vscode.MarkdownString[]
+      | vscode.MarkedString[],
     range?: vscode.Range
   ) {
     if (!contents) {
