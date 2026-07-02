@@ -5,4 +5,7 @@
 # checks take ~1s instead of tens of seconds. The full checks still run in CI.
 # pnpm's "[HEAD]" changed-package filter scopes precommit to packages with staged
 # changes and boots far faster than lerna's whole-graph analysis (~9s vs ~30s).
-ESLINT_FAST=1 pnpm --filter "[HEAD]" --workspace-concurrency=8 run precommit
+# workspace-concurrency=1 runs the per-package lint-staged serially: each instance
+# manipulates the single shared .git/index (stash backup), so running them in
+# parallel races on .git/index.lock and aborts the commit.
+ESLINT_FAST=1 pnpm --filter "[HEAD]" --workspace-concurrency=1 run precommit
