@@ -32,7 +32,7 @@
       "step_179ff717",
       "step_e5c7e8aa",
       "step_61ee9d59",
-      "plan_r_0624_024810",
+      "step_ta_fix01",
       "step_18eec105",
       "step_3b65d9b9",
       "step_91e5b84d",
@@ -268,7 +268,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion Verify that there are 5 options “Declarative Agent”, \"Custom Engine Agent\", \"Copilot Connectors\", \"Teams Agents and Apps\" and \"Office Add-in\"",
+      "description": "@assertion Verify that there are 5 options \u201cDeclarative Agent\u201d, \"Custom Engine Agent\", \"Copilot Connectors\", \"Teams Agents and Apps\" and \"Office Add-in\"",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -279,6 +279,28 @@
       "tags": [],
       "screenshot": null,
       "created_at": "2026-01-06T09:55:51.032498",
+      "plan_id": "plan_47e4bf4e"
+    },
+    {
+      "step_id": "step_ta_fix01",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 307,
+        "y": 232
+      },
+      "description": "Click the \"Teams Agents and Apps\" option in the \"New Project\" dropdown menu within the Microsoft 365 Agents Toolkit interface. Inline replacement for the read-only Teams Agents group: the earlier Ctrl+- zoom-out compressed the menu, so the group fixed y=266 was landing one row lower on \"Office Add-in\"; y is shifted up one row to hit \"Teams Agents and Apps\".",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
+      "created_at": "2026-01-06T09:55:51.049000",
       "plan_id": "plan_47e4bf4e"
     },
     {
@@ -422,7 +444,7 @@
         "x": 278,
         "y": 17
       },
-      "description": "Click the \"Back (Ctrl+Alt+←)\" button in the Teams Capability quick selection popup at the top of the Visual Studio Code interface.",
+      "description": "Click the \"Back (Ctrl+Alt+\u2190)\" button in the Teams Capability quick selection popup at the top of the Visual Studio Code interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -632,7 +654,7 @@
         "x": 277,
         "y": 12
       },
-      "description": "Click the \"Back (Ctrl+Alt+←)\" button in the \"Create an Action\" modal at the top of the Visual Studio Code interface to return to the previous selection screen.",
+      "description": "Click the \"Back (Ctrl+Alt+\u2190)\" button in the \"Create an Action\" modal at the top of the Visual Studio Code interface to return to the previous selection screen.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
