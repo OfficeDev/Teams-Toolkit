@@ -76,7 +76,7 @@ jobs:
       - name: setup project
         uses: ./.github/actions/setup-project
 
-      - name: prettier check files in PR on Fork
+      - name: lint and format check files in PR on Fork
         if: ${{ github.event.pull_request.head.repo.full_name != 'OfficeDev/TeamsFx' }}
         run: |
           git remote add upstream https://github.com/OfficeDev/TeamsFx.git
@@ -84,7 +84,7 @@ jobs:
           VAR=$(realpath .github/scripts/lint-pr.sh)
           pnpm -r exec -- bash $VAR upstream/${{ github.event.pull_request.base.ref }}
 
-      - name: prettier check files in PR on local
+      - name: lint and format check files in PR on local
         if: ${{ github.event.pull_request.head.repo.full_name == 'OfficeDev/TeamsFx' }}
         run: |
           VAR=$(realpath .github/scripts/lint-pr.sh)

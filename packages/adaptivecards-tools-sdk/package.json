@@ -9,7 +9,6 @@
     "clean-build": "npm run clean && npm run build",
     "build": "rollup -c",
     "lint": "eslint \"**/*.ts\"",
-    "lint:staged": "lint-staged",
     "precommit": "lint-staged",
     "check-format": "prettier --list-different \"src/**/*.ts\" \"*.{js,json}\"",
     "format": "prettier --write --config ./.prettierrc.js --ignore-path ./.prettierignore \"src/**/*.ts\" \"*.{js,json}\""
@@ -66,7 +65,8 @@
   ],
   "lint-staged": {
     "*.{js,jsx,css,ts,tsx}": [
-      "npx eslint --cache --fix --quiet"
+      "eslint --cache --fix --quiet",
+      "prettier --cache --write --ignore-unknown"
     ]
   }
 }

@@ -5,7 +5,6 @@
   "types": "build/index.d.ts",
   "license": "MIT",
   "scripts": {
-    "lint:staged": "lint-staged",
     "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\"",
     "test:unit": "vitest run --coverage --config vitest.config.ts --maxWorkers=75%",
     "test:unit:fast": "vitest run --config vitest.config.ts --maxWorkers=75% --reporter=dot",
@@ -88,7 +87,7 @@
     "uuid": "^8.3.2",
     "validator": "^13.7.0",
     "xml2js": "^0.5.0",
-    "yaml": "^2.2.2"
+    "yaml": "^2.4.2"
   },
   "devDependencies": {
     "@azure/storage-blob": "^12.5.0",
@@ -149,7 +148,7 @@
     "mock-fs": "5.2.0",
     "mocked-env": "^1.3.5",
     "nyc": "^17.1.0",
-    "prettier": "^2.4.1",
+    "prettier": "^3.3.3",
     "proxyquire": "^2.1.3",
     "rewire": "^6.0.0",
     "rimraf": "^5.0.1",
@@ -160,6 +159,7 @@
     "ts-morph": "^19.0.0",
     "ts-node": "^10.9.2",
     "tslib": "^2.3.1",
+    "tsx": "^4.20.6",
     "typescript": "~5.9.0",
     "typescript-eslint": "^8.56.0",
     "vitest": "^4.1.8",
@@ -177,13 +177,8 @@
   },
   "lint-staged": {
     "*.{js,jsx,css,ts,tsx}": [
-      "npx eslint --cache --fix --quiet"
+      "eslint --cache --fix --quiet",
+      "prettier --cache --write --ignore-unknown"
     ]
-  },
-  "pnpm": {
-    "overrides": {
-      "hono@<4.12.16": "^4.12.16",
-      "ip-address@<10.1.1": "^10.1.1"
-    }
   }
 }

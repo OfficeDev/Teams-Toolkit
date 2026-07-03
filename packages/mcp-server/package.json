@@ -13,7 +13,6 @@
     "test:unit": "jest",
     "precommit": "lint-staged",
     "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\"",
-    "lint:staged": "lint-staged",
     "lint:fix": "eslint --fix \"src/**/*.ts\" \"tests/**/*.ts\""
   },
   "publishConfig": {
@@ -70,13 +69,8 @@
   },
   "lint-staged": {
     "*.{js,jsx,css,ts,tsx}": [
-      "npx eslint --cache --fix --quiet"
+      "eslint --cache --fix --quiet",
+      "prettier --cache --write --ignore-unknown"
     ]
-  },
-  "pnpm": {
-    "overrides": {
-      "hono@<4.12.16": "^4.12.16",
-      "ip-address@<10.1.1": "^10.1.1"
-    }
   }
 }

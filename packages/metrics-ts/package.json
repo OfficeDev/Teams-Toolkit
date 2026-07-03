@@ -18,8 +18,7 @@
     "build": "rimraf build && npx tsc -p ./",
     "format-check": "echo test",
     "precommit": "lint-staged",
-    "lint": "eslint \"**/*.ts\"",
-    "lint:staged": "lint-staged"
+    "lint": "eslint \"**/*.ts\""
   },
   "bugs": {
     "url": "https://github.com/OfficeDev/TeamsFx/issues"
@@ -41,7 +40,7 @@
     "lint-staged": "^10.5.4",
     "mocha": "^11.0.0",
     "nyc": "^17.1.0",
-    "prettier": "^2.4.1",
+    "prettier": "^3.3.3",
     "rimraf": "^5.0.1",
     "ts-node": "^10.9.2",
     "tslint": "^6.1.3",
@@ -55,7 +54,8 @@
   },
   "lint-staged": {
     "*.{js,jsx,css,ts,tsx}": [
-      "npx eslint --cache --fix --quiet"
+      "eslint --cache --fix --quiet",
+      "prettier --cache --write --ignore-unknown"
     ]
   },
   "dependencies": {
