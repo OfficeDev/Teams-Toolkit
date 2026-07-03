@@ -37,6 +37,7 @@ whole template scaffolded under `InMemoryRuntime` (every row is **L1**).
 | SCN-CREATE-APIPLUGIN-OPENAPI-07 | L1 | identical inputs re-run | scaffold completes twice | deterministic - identical `written` sets and identical generated `appPackage/ai-plugin.json` bytes |
 | SCN-CREATE-APIPLUGIN-OPENAPI-08 | L1 | selected OpenAPI operation uses API-key auth | scaffold completes | both `m365agents.yml` and `m365agents.local.yml` include an `apiKey/register` action for the auth scheme, `apiSpecPath: ./appPackage/apiSpecificationFile/openapi.yaml`, and a `registrationId` environment-file output |
 | SCN-CREATE-APIPLUGIN-OPENAPI-09 | L1 | selected OpenAPI operation has a `summary` or `description` | scaffold completes | `appPackage/declarativeAgent.json` includes a `conversation_starters` entry whose `text` comes from the selected operation summary, falling back to description; duplicates are not added and the DA manifest keeps at most six starters |
+| SCN-CREATE-APIPLUGIN-OPENAPI-10 | L1 | generated plugin response semantics reference a static template file | scaffold completes | the referenced adaptive card template is written under `appPackage/adaptiveCards/` |
 
 ## Composed operations
 

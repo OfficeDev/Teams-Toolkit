@@ -457,6 +457,28 @@ describe("runCreateInputs (collect-create-inputs)", () => {
     assert.isUndefined(pythonOption.description);
   });
 
+  it("uses the language id as the label for unrecognized descriptor languages", async () => {
+    const ui = new ScriptedUserInteraction({ select: { language: "rust" } });
+
+    const res = await runCreateInputs(
+      buildLanguageFloor(["typescript", "rust"]),
+      LANGUAGE_DA,
+      {},
+      asUI(ui),
+      {
+        flagReader: () => false,
+        surface: "vscode",
+      }
+    );
+
+    assert.isTrue(res.isOk(), res.isErr() ? `${res.error.name}: ${res.error.message}` : "ok");
+    assert.strictEqual(res._unsafeUnwrap().language, "rust");
+    const rustOption = selectOptionAt(ui.lastSelectConfig, 1);
+    assert.strictEqual(rustOption.id, "rust");
+    assert.strictEqual(rustOption.label, "rust");
+    assert.isUndefined(rustOption.description);
+  });
+
   it("CCI-01: remote-only provider auto-skips mcpServerType, asks url + authType=none", async () => {
     const ui = new ScriptedUserInteraction({
       text: { mcpServerUrl: "https://api.example.com/mcp" },

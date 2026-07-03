@@ -23,7 +23,7 @@ import {
  * existing OpenAPI description document — scaffolded under `InMemoryRuntime`.
  *
  * Spec: docs/03-specs/scenarios/da/create-api-plugin-from-existing-api.md
- * (SCN-CREATE-APIPLUGIN-OPENAPI-01..09)
+ * (SCN-CREATE-APIPLUGIN-OPENAPI-01..10)
  */
 
 const SPEC_PATH = path.resolve(__dirname, "fixtures/repairs-openapi.yaml");
@@ -71,6 +71,7 @@ describe("SCN-DA-CREATE-API-PLUGIN-FROM-EXISTING-API (v4, T3 InMemoryRuntime)", 
     const { files } = await run();
     assert.isTrue(files.has("appPackage/ai-plugin.json"));
     assert.isTrue(files.has("appPackage/apiSpecificationFile/openapi.yaml"));
+    assert.isTrue(files.has("appPackage/adaptiveCards/listRepairs.json"));
     assert.include(
       text(files, "appPackage/apiSpecificationFile/openapi.yaml.original"),
       "title: Repairs API"

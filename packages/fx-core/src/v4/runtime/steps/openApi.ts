@@ -58,6 +58,7 @@ interface TeamsAiSpecOperation {
   method: string;
   operationId: string;
   description: string;
+  prompt: string;
   parametersSchema: Record<string, unknown>;
   auth: boolean;
   source: Record<string, unknown>;
@@ -465,6 +466,18 @@ function teamsAiOperationDescription(
   );
 }
 
+function teamsAiOperationPrompt(
+  operation: Record<string, unknown>,
+  method: string,
+  pathUrl: string
+): string {
+  return (
+    stringProperty(operation, "summary") ??
+    stringProperty(operation, "description") ??
+    `${method.toUpperCase()} ${pathUrl}`
+  );
+}
+
 function filterJsonSchema(schema: unknown): Record<string, unknown> {
   if (!isRecord(schema)) {
     return { type: "object" };
@@ -597,6 +610,7 @@ function teamsAiSpecOperations(spec: unknown): TeamsAiSpecOperation[] {
         method,
         operationId,
         description: teamsAiOperationDescription(operation, method, pathUrl),
+        prompt: teamsAiOperationPrompt(operation, method, pathUrl),
         parametersSchema: teamsAiParametersSchema(operation),
         auth: Array.isArray(operation.security) && operation.security.length > 0,
         source: operation,
@@ -773,8 +787,8 @@ async function updatePromptSuggestions(
     {
       scopes: ["personal"],
       commands: operations.slice(0, 10).map((operation) => ({
-        title: operation.description.slice(0, 32),
-        description: operation.description.slice(0, 128),
+        title: operation.prompt.slice(0, 32),
+        description: operation.prompt.slice(0, 128),
       })),
     },
   ];
@@ -1035,10 +1049,8 @@ export const openApiGeneratePluginFiles: RegisteredStep = {
         return err(registrations.error);
       }
 
-      ctx.write(MANIFEST_PATH, await fs.readFile(temp.manifestPath));
-      ctx.write(AGENT_PATH, Buffer.from(updatedAgent.value, "utf8"));
-      ctx.write(PLUGIN_PATH, await fs.readFile(temp.pluginPath));
-      ctx.write(API_SPEC_PATH, await fs.readFile(temp.apiSpecPath));
+      await fs.writeFile(path.join(tempRoot, AGENT_PATH), updatedAgent.value);
+      await writeTempTreeToContext(tempRoot, ctx);
       ctx.write(ORIGINAL_API_SPEC_PATH, await readOriginalOpenApiSpec(apiSpecLocation));
       updateAuthYml(ctx, M365_AGENTS_YML, registrations.value);
       updateAuthYml(ctx, M365_AGENTS_LOCAL_YML, registrations.value);

@@ -1217,6 +1217,103 @@ describe("daSpecParser", () => {
       );
     });
 
+    it("patches OpenAPI extensions into generated Kiota plugin manifests", async () => {
+      const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "da-generate-plugin-"));
+      tempDirs.push(tempRoot);
+
+      const tmpDir = path.join(tempRoot, "kiota-work");
+      const specPath = path.join(tempRoot, "spec.yaml");
+      const teamsManifestPath = path.join(tempRoot, "manifest.json");
+      const outputDir = path.join(tempRoot, "appPackage");
+      const outputAPISpecPath = path.join(outputDir, "apiSpecificationFile", "openapi.yaml");
+      const outputAIPluginPath = path.join(outputDir, "ai-plugin.json");
+      const generatedPluginDir = path.join(tempRoot, "generated", "plugin");
+      const generatedSpecPath = path.join(generatedPluginDir, "openapi.yaml");
+      const generatedPluginPath = path.join(generatedPluginDir, "ai-plugin.json");
+
+      await fs.ensureDir(path.dirname(outputAPISpecPath));
+      await fs.ensureDir(generatedPluginDir);
+      await fs.ensureDir(path.join(tmpDir, ".kiota", "documents", "testapp"));
+      await fs.ensureDir(path.join(tempRoot, "adaptiveCards"));
+      await fs.writeFile(
+        specPath,
+        [
+          "openapi: 3.0.0",
+          "info:",
+          "  title: Repairs API",
+          "  version: 1.0.0",
+          "paths:",
+          "  /repairs:",
+          "    get:",
+          "      operationId: listRepairs",
+          "      x-ai-adaptive-card:",
+          "        data_path: $.results",
+          "        file: adaptiveCards/listRepairs.json",
+          "      responses:",
+          "        '200':",
+          "          description: ok",
+        ].join("\n"),
+        "utf8"
+      );
+      await fs.writeJson(path.join(tempRoot, "adaptiveCards", "listRepairs.json"), {
+        type: "AdaptiveCard",
+        body: [],
+      });
+      await fs.writeJson(teamsManifestPath, { name: { short: "Test App" } });
+      await fs.writeFile(generatedSpecPath, "openapi: 3.0.0", "utf8");
+      await fs.writeJson(generatedPluginPath, {
+        runtimes: [{ spec: { url: "placeholder.yaml" }, run_for_functions: ["listRepairs"] }],
+        functions: [{ name: "listRepairs", description: "List repairs" }],
+      });
+      await fs.writeFile(
+        path.join(tmpDir, ".kiota", "documents", "testapp", "openapi.json"),
+        "{}",
+        "utf8"
+      );
+      const rootNode: KiotaOpenApiNode = {
+        isOperation: true,
+        path: "/repairs#GET",
+        segment: "GET",
+        operationId: "listRepairs",
+        selected: true,
+        children: [],
+      };
+
+      vi.spyOn(tmp, "dirSync").mockReturnValue({
+        name: tmpDir,
+        removeCallback: vi.fn(),
+      } satisfies tmp.DirResult);
+      vi.spyOn(kiotaClient, "listAPITreeInfo").mockResolvedValue({
+        rootNode: rootNode,
+        servers: ["https://api.example.com"],
+        security: [],
+        securitySchemes: {},
+        logs: [],
+        specVersion: OpenApiSpecVersion.V3_0,
+      });
+      vi.spyOn(kiotaClient, "kiotageneratePlugin").mockResolvedValue({
+        openAPISpec: generatedSpecPath,
+        aiPlugin: generatedPluginPath,
+        logs: [],
+      } satisfies GeneratePluginResult);
+
+      const result = await daSpecParser.generatePlugin(
+        specPath,
+        teamsManifestPath,
+        outputAPISpecPath,
+        outputAIPluginPath,
+        ["GET /repairs"],
+        AdaptiveCardUpdateStrategy.KeepExisting
+      );
+
+      assert.isTrue(result.allSuccess);
+      const plugin = await fs.readJson(outputAIPluginPath);
+      assert.deepEqual(plugin.functions[0].capabilities.response_semantics, {
+        data_path: "$.results",
+        static_template: { type: "AdaptiveCard", body: [] },
+      });
+    });
+
     it("should warn when adaptive card generation fails for new Kiota plugins", async () => {
       const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "da-generate-plugin-"));
       tempDirs.push(tempRoot);

@@ -226,6 +226,7 @@ export async function generatePlugin(
         });
       }
     }
+    await patchOpenApiExtensionsIntoPluginManifest(specPath, outputAIPluginPath);
     return {
       allSuccess: true,
       warnings: warnings,

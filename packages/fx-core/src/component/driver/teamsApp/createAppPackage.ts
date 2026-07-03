@@ -877,7 +877,7 @@ export class CreateAppPackageDriver implements StepDriver {
     }
 
     if (checkExistenceRes.isErr()) {
-      delete func.capabilities!.response_semantics!.static_template!.file;
+      delete func.capabilities!.response_semantics!.static_template;
       context.logProvider.warning(
         getLocalizedString(
           "plugins.appstudio.createPackage.aiPlugin.invalidFilePropertyWarning",
