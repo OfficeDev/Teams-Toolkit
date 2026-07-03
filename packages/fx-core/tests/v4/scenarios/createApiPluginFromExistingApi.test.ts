@@ -71,7 +71,6 @@ describe("SCN-DA-CREATE-API-PLUGIN-FROM-EXISTING-API (v4, T3 InMemoryRuntime)", 
     const { files } = await run();
     assert.isTrue(files.has("appPackage/ai-plugin.json"));
     assert.isTrue(files.has("appPackage/apiSpecificationFile/openapi.yaml"));
-    assert.isTrue(files.has("appPackage/adaptiveCards/listRepairs.json"));
     assert.include(
       text(files, "appPackage/apiSpecificationFile/openapi.yaml.original"),
       "title: Repairs API"
@@ -85,6 +84,11 @@ describe("SCN-DA-CREATE-API-PLUGIN-FROM-EXISTING-API (v4, T3 InMemoryRuntime)", 
     assert.strictEqual(runtime.type, "OpenApi");
     assert.strictEqual(auth.type, "None");
     assert.strictEqual(spec.url, "apiSpecificationFile/openapi.yaml");
+  });
+
+  it("SCN-CREATE-APIPLUGIN-OPENAPI-10: referenced static adaptive card templates are preserved", async () => {
+    const { files } = await run();
+    assert.isTrue(files.has("appPackage/adaptiveCards/listRepairs.json"));
   });
 
   it("SCN-CREATE-APIPLUGIN-OPENAPI-03: declarativeAgent.json is updated with the generated action", async () => {
