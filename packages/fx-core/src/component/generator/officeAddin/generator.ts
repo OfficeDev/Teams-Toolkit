@@ -6,12 +6,12 @@
  */
 
 import {
+  AppManifestUtils,
   Context,
   err,
   FxError,
   GeneratorResult,
   Inputs,
-  ManifestUtil,
   ok,
   Result,
   TeamsManifestVDevPreview,
@@ -151,7 +151,7 @@ export class OfficeAddinGenerator {
 type OfficeHost = "Outlook" | "Word" | "Excel" | "PowerPoint"; // | "OneNote" | "Project"
 export async function getHost(addinManifestPath: string): Promise<OfficeHost> {
   // Read add-in manifest file
-  const addinManifest = (await ManifestUtil.loadFromPath(
+  const addinManifest = (await AppManifestUtils.readTeamsManifest(
     addinManifestPath
   )) as TeamsManifestVDevPreview.TeamsManifestVDevPreview;
   let host: OfficeHost = "Outlook";

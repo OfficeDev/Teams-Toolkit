@@ -4,7 +4,14 @@
 /**
  * @author darrmill@microsoft.com, yefuwang@microsoft.com
  */
-import { DevPreviewSchema, FxError, ManifestUtil, Result, err, ok } from "@microsoft/teamsfx-api";
+import {
+  AppManifestUtils,
+  DevPreviewSchema,
+  FxError,
+  Result,
+  err,
+  ok,
+} from "@microsoft/teamsfx-api";
 import AdmZip from "adm-zip";
 import fse from "fs-extra";
 import * as path from "path";
@@ -25,21 +32,25 @@ export class HelperMethods {
 
   static async updateManifest(projectRoot: string, addinManifestPath: string): Promise<void> {
     // Read add-in manifest file
-    const addinManifest = (await ManifestUtil.loadFromPath(addinManifestPath)) as DevPreviewSchema;
+    const addinManifest = (await AppManifestUtils.readTeamsManifest(
+      addinManifestPath
+    )) as DevPreviewSchema;
 
     // Open project manifest file
     const manifestTemplatePath = manifestUtils.getTeamsAppManifestPath(projectRoot);
     if (!(await fse.pathExists(manifestTemplatePath))) {
       return;
     }
-    const manifest = (await ManifestUtil.loadFromPath(manifestTemplatePath)) as DevPreviewSchema;
+    const manifest = (await AppManifestUtils.readTeamsManifest(
+      manifestTemplatePath
+    )) as DevPreviewSchema;
 
     // Update project manifest
     manifest.extensions = addinManifest.extensions;
     manifest.authorization = addinManifest.authorization;
 
     // Save project manifest
-    await ManifestUtil.writeToPath(manifestTemplatePath, manifest);
+    await AppManifestUtils.writeTeamsManifest(manifestTemplatePath, manifest);
   }
 
   // Move the manifest.json and assets to appPackage folder and update related files.

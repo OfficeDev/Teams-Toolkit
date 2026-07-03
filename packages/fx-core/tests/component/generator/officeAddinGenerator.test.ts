@@ -11,7 +11,6 @@ import {
   DevPreviewSchema,
   err,
   Inputs,
-  ManifestUtil,
   ok,
   Platform,
   SystemError,
@@ -126,7 +125,7 @@ describe("OfficeAddinGenerator for Outlook Addin", function () {
         return;
       });
 
-    vi.spyOn(ManifestUtil, "loadFromPath").mockResolvedValue({
+    vi.spyOn(AppManifestUtils, "readTeamsManifest").mockResolvedValue({
       extensions: [
         {
           requirements: {
@@ -201,7 +200,7 @@ describe("OfficeAddinGenerator for Outlook Addin", function () {
       convertProjectStub as any
     );
 
-    vi.spyOn(ManifestUtil, "loadFromPath").mockResolvedValue({
+    vi.spyOn(AppManifestUtils, "readTeamsManifest").mockResolvedValue({
       extensions: [
         {
           requirements: {
@@ -281,7 +280,7 @@ describe("HelperMethods", async () => {
     let writePathResult: DevPreviewSchema | undefined = undefined;
 
     beforeEach(() => {
-      vi.spyOn(ManifestUtil, "loadFromPath").mockImplementation(async (path) => {
+      vi.spyOn(AppManifestUtils, "readTeamsManifest").mockImplementation(async (path) => {
         if (path === manifestPath) {
           return {
             extensions: [],
@@ -301,10 +300,12 @@ describe("HelperMethods", async () => {
         throw new Error("Invalid path");
       });
 
-      vi.spyOn(ManifestUtil, "writeToPath").mockImplementation(async (path, manifest) => {
-        writePathResult = manifest as DevPreviewSchema;
-        return;
-      });
+      vi.spyOn(AppManifestUtils, "writeTeamsManifest").mockImplementation(
+        async (path, manifest) => {
+          writePathResult = manifest as DevPreviewSchema;
+          return;
+        }
+      );
 
       vi.spyOn(manifestUtils, "getTeamsAppManifestPath").mockReturnValue(manifestTemplatePath);
     });
