@@ -22,10 +22,12 @@ import {
   SystemError,
   UserError,
 } from "@microsoft/teamsfx-api";
+import axios from "axios";
 import * as fs from "fs-extra";
 import * as os from "os";
 import * as path from "path";
 import { Result, err, ok } from "neverthrow";
+import { isValidHttpUrl } from "../../../common/stringUtils";
 import { isJsonSpecFile } from "../../../common/utils";
 import { ProgrammingLanguage } from "../../../question/constants";
 import { RegisteredStep, StepContext, StepParams } from "../../pipeline/runScaffoldPipeline";
@@ -41,6 +43,7 @@ const MANIFEST_PATH = `${AppPackageFolderName}/${ManifestTemplateFileName}`;
 const AGENT_PATH = `${AppPackageFolderName}/declarativeAgent.json`;
 const PLUGIN_PATH = `${AppPackageFolderName}/${DefaultPluginManifestFileName}`;
 const API_SPEC_PATH = `${AppPackageFolderName}/${DefaultApiSpecFolderName}/${DefaultApiSpecYamlFileName}`;
+const ORIGINAL_API_SPEC_PATH = `${API_SPEC_PATH}.original`;
 const DEFAULT_ACTION_ID = "action_1";
 const M365_AGENTS_YML = "m365agents.yml";
 const M365_AGENTS_LOCAL_YML = "m365agents.local.yml";
@@ -971,6 +974,14 @@ async function writeTempBaseFiles(
   return { manifestPath, pluginPath, apiSpecPath };
 }
 
+async function readOriginalOpenApiSpec(apiSpecLocation: string): Promise<Buffer> {
+  if (isValidHttpUrl(apiSpecLocation)) {
+    const response = await axios.get<ArrayBuffer>(apiSpecLocation, { responseType: "arraybuffer" });
+    return Buffer.from(response.data);
+  }
+  return await fs.readFile(apiSpecLocation);
+}
+
 export const openApiGeneratePluginFiles: RegisteredStep = {
   validateParams(resolved: StepParams): string | undefined {
     if (stringParam(resolved, "apiSpecLocation") === undefined) {
@@ -1019,14 +1030,16 @@ export const openApiGeneratePluginFiles: RegisteredStep = {
         return err(updatedAgent.error);
       }
 
-      ctx.write(MANIFEST_PATH, await fs.readFile(temp.manifestPath));
-      ctx.write(AGENT_PATH, Buffer.from(updatedAgent.value, "utf8"));
-      ctx.write(PLUGIN_PATH, await fs.readFile(temp.pluginPath));
-      ctx.write(API_SPEC_PATH, await fs.readFile(temp.apiSpecPath));
       const registrations = await selectedAuthRegistrations(apiSpecLocation, apiOperations);
       if (registrations.isErr()) {
         return err(registrations.error);
       }
+
+      ctx.write(MANIFEST_PATH, await fs.readFile(temp.manifestPath));
+      ctx.write(AGENT_PATH, Buffer.from(updatedAgent.value, "utf8"));
+      ctx.write(PLUGIN_PATH, await fs.readFile(temp.pluginPath));
+      ctx.write(API_SPEC_PATH, await fs.readFile(temp.apiSpecPath));
+      ctx.write(ORIGINAL_API_SPEC_PATH, await readOriginalOpenApiSpec(apiSpecLocation));
       updateAuthYml(ctx, M365_AGENTS_YML, registrations.value);
       updateAuthYml(ctx, M365_AGENTS_LOCAL_YML, registrations.value);
       return ok(undefined);

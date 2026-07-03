@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+import * as path from "path";
 import { SystemError, UserError } from "@microsoft/teamsfx-api";
 import { StepContext } from "../../../../src/v4/pipeline/runScaffoldPipeline";
 import { STEP_REGISTRY } from "../../../../src/v4/runtime/runtimeRegistry";
@@ -11,7 +12,7 @@ import {
   openApiGenerateTeamsAiCustomApiFiles,
 } from "../../../../src/v4/runtime/steps/openApi";
 import { ProgrammingLanguage } from "../../../../src/question/constants";
-import { assert, beforeEach, vi } from "vitest";
+import { assert, beforeEach, expect, vi } from "vitest";
 
 interface MockParserOperation {
   api: string;
@@ -67,6 +68,13 @@ const mockGenerateAdaptiveCard = vi.hoisted(() =>
     [],
   ])
 );
+const mockAxiosGet = vi.hoisted(() => vi.fn());
+
+const SPEC_PATH = path.resolve(__dirname, "../../scenarios/fixtures/repairs-openapi.yaml");
+
+vi.mock("axios", () => ({
+  default: { get: mockAxiosGet },
+}));
 
 vi.mock("@microsoft/m365-spec-parser", () => {
   class SpecParser {
@@ -246,6 +254,7 @@ beforeEach(() => {
   mockSpecParserState.pluginConversationStarters = [{ text: "Find pets" }];
   mockSpecParserState.validationStatus = "Ok";
   mockGenerateAdaptiveCard.mockClear();
+  mockAxiosGet.mockReset();
 });
 
 describe("OpenAPI runtime steps (v4)", () => {
@@ -309,7 +318,7 @@ describe("OpenAPI runtime steps (v4)", () => {
     });
 
     const result = await openApiGeneratePluginFiles.apply(
-      { apiSpecLocation: "openapi.yml", apiOperations: ["GET /pets"] },
+      { apiSpecLocation: SPEC_PATH, apiOperations: ["GET /pets"] },
       ctx
     );
 
@@ -320,9 +329,37 @@ describe("OpenAPI runtime steps (v4)", () => {
     }
     assert.deepInclude(agent.actions, { id: "action_1", file: "ai-plugin.json" });
     assert.deepInclude(agent.conversation_starters, { text: "Find pets" });
+    assert.include(
+      text(files, "appPackage/apiSpecificationFile/openapi.yaml.original"),
+      "title: Repairs API"
+    );
     assert.include(text(files, "m365agents.yml"), "uses: apiKey/register");
     assert.include(text(files, "m365agents.yml"), "registrationId: PETKEY_REGISTRATION_ID");
     assert.include(text(files, "m365agents.local.yml"), "uses: apiKey/register");
+  });
+
+  it("preserves the original OpenAPI description from a URL for plugin regeneration", async () => {
+    mockAxiosGet.mockResolvedValue({
+      data: Buffer.from("openapi: 3.0.1\ninfo:\n  title: Remote API\n"),
+    });
+    const { ctx, files } = makeCtx({
+      "appPackage/manifest.json": JSON.stringify({ name: "manifest" }),
+      "appPackage/declarativeAgent.json": JSON.stringify({ name: "Agent" }),
+    });
+
+    const result = await openApiGeneratePluginFiles.apply(
+      { apiSpecLocation: "https://example.com/openapi.yaml", apiOperations: ["GET /pets"] },
+      ctx
+    );
+
+    assert.isTrue(result.isOk(), result.isErr() ? result.error.message : "expected ok");
+    expect(mockAxiosGet).toHaveBeenCalledWith("https://example.com/openapi.yaml", {
+      responseType: "arraybuffer",
+    });
+    assert.include(
+      text(files, "appPackage/apiSpecificationFile/openapi.yaml.original"),
+      "title: Remote API"
+    );
   });
 
   it("returns parse and shape errors for invalid generated OpenAPI JSON artifacts", async () => {
@@ -369,7 +406,7 @@ describe("OpenAPI runtime steps (v4)", () => {
     });
 
     const result = await openApiGeneratePluginFiles.apply(
-      { apiSpecLocation: "openapi.yml", apiOperations: ["GET /pets"] },
+      { apiSpecLocation: SPEC_PATH, apiOperations: ["GET /pets"] },
       ctx
     );
 
@@ -397,7 +434,7 @@ describe("OpenAPI runtime steps (v4)", () => {
     });
 
     const result = await openApiGeneratePluginFiles.apply(
-      { apiSpecLocation: "openapi.yml", apiOperations: ["GET /pets"] },
+      { apiSpecLocation: SPEC_PATH, apiOperations: ["GET /pets"] },
       ctx
     );
 
@@ -427,7 +464,7 @@ describe("OpenAPI runtime steps (v4)", () => {
     });
 
     const result = await openApiGeneratePluginFiles.apply(
-      { apiSpecLocation: "openapi.yml", apiOperations: ["GET /pets", "POST /pets"] },
+      { apiSpecLocation: SPEC_PATH, apiOperations: ["GET /pets", "POST /pets"] },
       ctx
     );
 

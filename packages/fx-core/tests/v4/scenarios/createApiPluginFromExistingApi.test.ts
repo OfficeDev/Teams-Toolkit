@@ -71,6 +71,10 @@ describe("SCN-DA-CREATE-API-PLUGIN-FROM-EXISTING-API (v4, T3 InMemoryRuntime)", 
     const { files } = await run();
     assert.isTrue(files.has("appPackage/ai-plugin.json"));
     assert.isTrue(files.has("appPackage/apiSpecificationFile/openapi.yaml"));
+    assert.include(
+      text(files, "appPackage/apiSpecificationFile/openapi.yaml.original"),
+      "title: Repairs API"
+    );
     const plugin = readJsonObject(files, "appPackage/ai-plugin.json");
     const runtimes = recordArrayProperty(plugin, "runtimes");
     const runtime = runtimes[0];
