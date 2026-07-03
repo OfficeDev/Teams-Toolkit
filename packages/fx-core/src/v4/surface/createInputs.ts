@@ -9,19 +9,16 @@ import {
   UserError,
   UserInteraction,
 } from "@microsoft/teamsfx-api";
-import {
-  ListAPIInfo,
-  ParseOptions,
-  ProjectType,
-  SpecParser,
-  Utils,
-  ValidationStatus,
-} from "@microsoft/m365-spec-parser";
+import { ListAPIInfo, Utils } from "@microsoft/m365-spec-parser";
 import fs from "fs-extra";
 import { Result, err, ok } from "neverthrow";
 import { MCPFetchResult, fetchMCPTools } from "../../component/utils/mcpToolFetcher";
 import { ODRProvider, type ODRServer } from "../../component/utils/odrProvider";
 import { readBooleanFeatureFlag } from "../../common/featureFlags";
+import { getLocalizedString } from "../../common/localizeUtils";
+import { listAPIInfo } from "../../common/daSpecParser";
+import { SearchOpenAPISpecResult, searchOpenAPISpec } from "../../common/kiotaClient";
+import { isValidHttpUrl } from "../../common/stringUtils";
 import {
   CollectInputsPort,
   OptionsProvider,
@@ -95,35 +92,6 @@ function createLocalMcpServersProvider(localServers: () => Promise<ODRServer[]>)
   };
 }
 
-const openApiMethods = [
-  "get",
-  "post",
-  "put",
-  "delete",
-  "patch",
-  "head",
-  "connect",
-  "options",
-  "trace",
-];
-
-function openApiParseOptions(): ParseOptions {
-  return {
-    isGptPlugin: true,
-    allowAPIKeyAuth: true,
-    allowBearerTokenAuth: true,
-    allowMultipleParameters: true,
-    allowOauth2: true,
-    projectType: ProjectType.Copilot,
-    allowMissingId: true,
-    allowSwagger: true,
-    allowMethods: openApiMethods,
-    allowResponseSemantics: true,
-    allowConversationStarters: false,
-    allowConfirmation: false,
-  };
-}
-
 function operationDetail(operation: ListAPIInfo): string {
   if (!operation.auth) {
     return "No authentication";
@@ -164,28 +132,66 @@ const openApiOperationsProvider: OptionsProvider = {
         message: "OpenAPI operations cannot be listed without an API spec location.",
       });
     }
-    const parser = new SpecParser(apiSpecLocation, openApiParseOptions());
-    const validation = await parser.validate();
-    if (validation.status === ValidationStatus.Error) {
-      throw new SystemError({
+    let listed: Awaited<ReturnType<typeof listAPIInfo>>;
+    try {
+      listed = await listAPIInfo(apiSpecLocation);
+    } catch {
+      throw new UserError({
         source: "Scaffold",
         name: "OpenApiSpecInvalid",
         message: "The OpenAPI description document is invalid or contains no supported operations.",
       });
     }
-    const listed = await parser.list();
+    const operations = sortOperations(listed.APIs).filter((operation) => operation.isValid);
+    if (operations.length === 0) {
+      throw new UserError({
+        source: "Scaffold",
+        name: "OpenApiSpecInvalid",
+        message: "The OpenAPI description document is invalid or contains no supported operations.",
+      });
+    }
     return {
-      options: sortOperations(listed.APIs)
-        .filter((operation) => operation.isValid)
-        .map((operation) => ({
-          id: operation.api,
-          label: operation.api,
-          groupName: operation.api.toUpperCase().split(" ")[0],
-          detail: operationDetail(operation),
-        })),
+      options: operations.map((operation) => ({
+        id: operation.api,
+        label: operation.api,
+        groupName: operation.api.toUpperCase().split(" ")[0],
+        detail: operationDetail(operation),
+      })),
     };
   },
 };
+
+function createOpenApiSearchProvider(
+  searchApiSpec: (query: string) => Promise<SearchOpenAPISpecResult[]>
+): OptionsProvider {
+  return {
+    async fetch(params) {
+      const query = params.query?.trim();
+      if (!query) {
+        throw new UserError({
+          source: "Scaffold",
+          name: "OpenApiSearchQueryMissing",
+          message: "Please enter a search query.",
+        });
+      }
+      const results = await searchApiSpec(query);
+      if (results.length === 0) {
+        throw new UserError({
+          source: "Scaffold",
+          name: "OpenApiSearchResultNotFound",
+          message: "No search result found.",
+        });
+      }
+      return {
+        options: results.map((api) => ({
+          id: api.url,
+          label: api.key,
+          detail: api.description,
+        })),
+      };
+    },
+  };
+}
 
 function mcpToolsJsonFromFetchResult(
   serverUrl: string | undefined,
@@ -267,13 +273,15 @@ function createMcpToolsProvider(
 /** Default `optionsFrom` provider registry. */
 function createDefaultProviders(
   fetchTools: (serverUrl: string) => Promise<MCPFetchResult>,
-  listLocalMcpServers: () => Promise<ODRServer[]>
+  listLocalMcpServers: () => Promise<ODRServer[]>,
+  searchApiSpec: (query: string) => Promise<SearchOpenAPISpecResult[]>
 ): Record<string, OptionsProvider> {
   const localServers = createLocalServerCache(listLocalMcpServers);
   return {
     "mcp.serverTypes": createMcpServerTypesProvider(localServers),
     "mcp.localServers": createLocalMcpServersProvider(localServers),
     "mcp.tools": createMcpToolsProvider(fetchTools),
+    "openapi.search": createOpenApiSearchProvider(searchApiSpec),
     "openapi.operations": openApiOperationsProvider,
   };
 }
@@ -286,6 +294,13 @@ const uriValidator: Validator = (value: string): string | undefined => {
   } catch {
     return "must be a valid URI";
   }
+};
+
+/** The OpenAPI URL entry in the combined file-or-input picker accepts HTTP(S) URLs only. */
+const openApiUrlValidator: Validator = (value: string): string | undefined => {
+  return isValidHttpUrl(value.trim())
+    ? undefined
+    : getLocalizedString("core.createProjectQuestion.invalidUrl.message");
 };
 
 /** The graph connector display name cannot be empty. */
@@ -333,6 +348,7 @@ const graphConnectorConnectionIdValidator: Validator = (value: string): string |
 /** Engine-registered validator registry. */
 const validators: Record<string, Validator> = {
   uri: uriValidator,
+  openapiUrl: openApiUrlValidator,
   graphConnectorName: graphConnectorNameValidator,
   graphConnectorConnectionId: graphConnectorConnectionIdValidator,
 };
@@ -379,6 +395,7 @@ async function createFloorTail(
       name: "language",
       type: "singleSelect",
       title: "Programming Language",
+      default: languages[0],
       staticOptions: languages.map((language) => ({
         id: language,
         label: LANGUAGE_LABELS[language] ?? language,
@@ -540,6 +557,8 @@ export interface CreateInputsDeps {
   fetchMcpTools?: (serverUrl: string) => Promise<MCPFetchResult>;
   /** List available local MCP servers for the dynamic MCP create flow. */
   listLocalMcpServers?: () => Promise<ODRServer[]>;
+  /** Search public OpenAPI descriptions for the v3-compatible OpenAPI source picker. */
+  searchOpenAPISpec?: (query: string) => Promise<SearchOpenAPISpecResult[]>;
 }
 
 /** Run one create template's Q2 over the host surface. */
@@ -564,7 +583,8 @@ export async function runCreateInputs(
   const providers = {
     ...createDefaultProviders(
       deps.fetchMcpTools ?? fetchMCPTools,
-      deps.listLocalMcpServers ?? ODRProvider.listServers
+      deps.listLocalMcpServers ?? ODRProvider.listServers,
+      deps.searchOpenAPISpec ?? searchOpenAPISpec
     ),
     ...(deps.optionsProvider ?? {}),
   };
@@ -600,6 +620,10 @@ export async function runCreateInputs(
     return err(answers.error);
   }
   delete answers.value.nonInteractive;
+  const selectedOpenApiSpec = answers.value.selectOpenApiSpec;
+  if (answers.value.apiSpecLocation === undefined && typeof selectedOpenApiSpec === "string") {
+    answers.value.apiSpecLocation = selectedOpenApiSpec;
+  }
   if (deps.inputs !== undefined) {
     const validation = await validateCreateFloorAnswers(deps.inputs, answers.value);
     if (validation.isErr()) {

@@ -77,13 +77,23 @@ class StaticMcpQ2UI {
     return Promise.resolve(ok({ type: "success", result: "" }));
   }
 
-  selectOptions(config: MultiSelectConfig): Promise<Result<MultiSelectResult, FxError>> {
+  async selectOptions(config: MultiSelectConfig): Promise<Result<MultiSelectResult, FxError>> {
     this.multiNames.push(config.name);
+    if (typeof config.options === "function") {
+      try {
+        config = { ...config, options: await config.options() };
+      } catch (error) {
+        if (error instanceof UserError) {
+          return err(error);
+        }
+        return err(noAnswer(config.name));
+      }
+    }
     this.lastMultiConfig = config;
     if (config.name !== "selectedMcpTools") {
-      return Promise.resolve(err(noAnswer(config.name)));
+      return err(noAnswer(config.name));
     }
-    return Promise.resolve(ok({ type: "success", result: ["search"] }));
+    return ok({ type: "success", result: ["search"] });
   }
 }
 
@@ -252,6 +262,6 @@ describe("SCN-DA-CREATE-WITH-MCP-SERVER-STATIC (v4, T3 InMemoryRuntime)", () => 
     assert.instanceOf(error, UserError);
     assert.strictEqual(error.name, "McpAuthRequired");
     assert.deepStrictEqual(ui.textNames, ["mcpToolsFilePath"]);
-    assert.deepStrictEqual(ui.multiNames, []);
+    assert.deepStrictEqual(ui.multiNames, ["selectedMcpTools"]);
   });
 });
