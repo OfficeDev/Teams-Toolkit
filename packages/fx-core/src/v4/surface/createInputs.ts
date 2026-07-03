@@ -21,6 +21,7 @@ import { SearchOpenAPISpecResult, searchOpenAPISpec } from "../../common/kiotaCl
 import { isValidHttpUrl } from "../../common/stringUtils";
 import {
   CollectInputsPort,
+  OptionItem,
   OptionsProvider,
   OptionsSchema,
   QuestionSpec,
@@ -47,6 +48,18 @@ const LANGUAGE_LABELS: Record<string, string> = {
   csharp: "C#",
   python: "Python",
 };
+const PYTHON_LANGUAGE = "python";
+
+function languageOption(language: string): OptionItem {
+  return {
+    id: language,
+    label: LANGUAGE_LABELS[language] ?? language,
+    description:
+      language === PYTHON_LANGUAGE
+        ? getLocalizedString("core.createProjectQuestion.option.description.preview")
+        : undefined,
+  };
+}
 
 function createLocalServerCache(
   listLocalMcpServers: () => Promise<ODRServer[]>
@@ -396,10 +409,7 @@ async function createFloorTail(
       type: "singleSelect",
       title: "Programming Language",
       default: languages[0],
-      staticOptions: languages.map((language) => ({
-        id: language,
-        label: LANGUAGE_LABELS[language] ?? language,
-      })),
+      staticOptions: languages.map(languageOption),
     });
   } else if (languages.length === 1 && languages[0] !== "common") {
     answers.language = languages[0];

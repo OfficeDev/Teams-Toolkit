@@ -90,12 +90,12 @@ function buildFloor(): Buffer {
   return zip.toBuffer();
 }
 
-function buildLanguageFloor(): Buffer {
+function buildLanguageFloor(languages = ["typescript", "csharp"]): Buffer {
   const zip = new AdmZip();
   const root = "v4/create/test/language-axis";
   zip.addFile(
     `${root}/descriptor.json`,
-    Buffer.from(JSON.stringify({ id: "test/language-axis", languages: ["typescript", "csharp"] }))
+    Buffer.from(JSON.stringify({ id: "test/language-axis", languages }))
   );
   zip.addFile(`${root}/questions.json`, Buffer.from(JSON.stringify({ questions: [] })));
   zip.addFile(`${root}/pipeline.json`, Buffer.from("{}"));
@@ -380,6 +380,23 @@ function multiOptionAt(config: MultiSelectConfig | undefined, index: number): Su
   return option;
 }
 
+function selectOptionAt(config: SingleSelectConfig | undefined, index: number): SurfaceOptionItem {
+  if (config === undefined) {
+    assert.fail("expected a single-select config");
+  }
+  if (!Array.isArray(config.options)) {
+    assert.fail("expected static single-select options");
+  }
+  const option = config.options[index];
+  if (option === undefined) {
+    assert.fail(`expected single-select option at index ${index}`);
+  }
+  if (typeof option === "string") {
+    assert.fail(`expected single-select option item at index ${index}`);
+  }
+  return option;
+}
+
 function optionId(option: string | SurfaceOptionItem): string {
   return typeof option === "string" ? option : option.id;
 }
@@ -398,6 +415,28 @@ describe("runCreateInputs (collect-create-inputs)", () => {
       assert.deepEqual(res.value, { language: "typescript", surface: "vscode" });
     }
     assert.deepEqual(ui.selectNames, []);
+  });
+
+  it("CCI-17: VS Code Python language option carries the v3 Preview description", async () => {
+    const ui = new ScriptedUserInteraction({ select: { language: "python" } });
+
+    const res = await runCreateInputs(
+      buildLanguageFloor(["typescript", "javascript", "python"]),
+      LANGUAGE_DA,
+      {},
+      asUI(ui),
+      {
+        flagReader: () => false,
+        surface: "vscode",
+      }
+    );
+
+    assert.isTrue(res.isOk(), res.isErr() ? `${res.error.name}: ${res.error.message}` : "ok");
+    assert.strictEqual(res._unsafeUnwrap().language, "python");
+    const pythonOption = selectOptionAt(ui.lastSelectConfig, 2);
+    assert.strictEqual(pythonOption.id, "python");
+    assert.strictEqual(pythonOption.label, "Python");
+    assert.strictEqual(pythonOption.description, "Preview");
   });
 
   it("CCI-01: remote-only provider auto-skips mcpServerType, asks url + authType=none", async () => {
