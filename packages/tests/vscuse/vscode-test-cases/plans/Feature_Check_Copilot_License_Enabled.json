@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0.0
     },
-    "total_steps": 19,
+    "total_steps": 20,
     "created_at": "2026-06-17T02:10:05.016638",
     "name": "Feature Check Copilot License Enabled",
     "description": {
@@ -35,12 +35,13 @@
       "step_f4511a9d",
       "step_20a9e867",
       "step_5204bd27",
+      "step_5a9e1f0c",
       "step_51c331e7",
       "step_24db8255",
       "step_35bc35cf"
     ],
     "tags": [],
-    "updated_at": "2026-07-03T09:53:10.000000"
+    "updated_at": "2026-07-03T10:26:56.000000"
   },
   "steps": [
     {
@@ -282,52 +283,6 @@
       "plan_id": "plan_80b368dd"
     },
     {
-      "step_id": "step_24db8255",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 540,
-        "y": 446
-      },
-      "description": "Click the \"Check Copilot License\" button in the \"Set up your environment\" section of the Microsoft 365 Agents Toolkit welcome interface within Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:540:446:16:5:e829abaaaa2bd42b",
-        "dhash:540:446:96:5:929a8572629400d2",
-        "dhash:540:446:0:10:23b89490b0717d7f"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_24db8255",
-      "created_at": "2026-06-17T02:19:55.512507",
-      "plan_id": "plan_80b368dd"
-    },
-    {
-      "step_id": "step_35bc35cf",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion 'Your Microsoft 365 account has Copilot access enabled' is visible in the output panel",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "delay:5"
-      ],
-      "screenshot": null,
-      "created_at": "2026-06-17T02:19:55.517019",
-      "plan_id": "plan_80b368dd"
-    },
-    {
       "step_id": "step_52764361",
       "agent": "interaction",
       "tool": "click",
@@ -450,6 +405,34 @@
       "plan_id": "plan_80b368dd"
     },
     {
+      "step_id": "step_5a9e1f0c",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 618,
+        "y": 531
+      },
+      "description": "Click the \"Yes\" button on the \"Stay signed in?\" prompt within the Microsoft login interface to confirm staying signed in.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:618:531:16:5:2d1229151b17140a",
+        "dhash:618:531:96:5:004452584c020000",
+        "dhash:618:531:0:10:1c0cf0d9d9e6e6e4"
+      ],
+      "postconditions": [],
+      "tags": [
+        "delay:3"
+      ],
+      "screenshot": "step_5a9e1f0c",
+      "created_at": "2026-07-03T10:26:56.000000",
+      "plan_id": "plan_80b368dd"
+    },
+    {
       "step_id": "step_51c331e7",
       "agent": "interaction",
       "tool": "click",
@@ -475,6 +458,52 @@
       ],
       "screenshot": "step_51c331e7",
       "created_at": "2026-06-17T02:02:48.596698",
+      "plan_id": "plan_80b368dd"
+    },
+    {
+      "step_id": "step_24db8255",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 540,
+        "y": 446
+      },
+      "description": "Click the \"Check Copilot License\" button in the \"Set up your environment\" section of the Microsoft 365 Agents Toolkit welcome interface within Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:540:446:16:5:e829abaaaa2bd42b",
+        "dhash:540:446:96:5:929a8572629400d2",
+        "dhash:540:446:0:10:23b89490b0717d7f"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_24db8255",
+      "created_at": "2026-06-17T02:19:55.512507",
+      "plan_id": "plan_80b368dd"
+    },
+    {
+      "step_id": "step_35bc35cf",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion 'Your Microsoft 365 account has Copilot access enabled' is visible in the output panel",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay:5"
+      ],
+      "screenshot": null,
+      "created_at": "2026-06-17T02:19:55.517019",
       "plan_id": "plan_80b368dd"
     }
   ],
