@@ -1043,6 +1043,11 @@ describe("teamsApp/createAppPackage", async () => {
       );
       chai.assert(openapiContent.search("APP_NAME_SUFFIX") < 0, "APP_NAME_SUFFIX not replaced");
       chai.assert(aiPluginContent.search("file") < 0, "file not replaced");
+      const aiPlugin = JSON.parse(aiPluginContent);
+      chai.assert.isUndefined(
+        aiPlugin.functions[2].capabilities.response_semantics.static_template,
+        "invalid external adaptive card reference should not leave an empty static_template"
+      );
 
       await fs.remove(args.outputZipPath);
     }

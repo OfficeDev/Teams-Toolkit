@@ -9,6 +9,7 @@ import { createInMemoryRuntime } from "../../../src/v4/runtime/inMemoryRuntime";
 import { scaffold } from "../../../src/v4/runtime/scaffold";
 import {
   loadV4Package,
+  recordArrayProperty,
   readJsonObject,
   recordProperty,
   runV4Package,
@@ -50,6 +51,12 @@ describe("SCN-TEAMS-CREATE-CUSTOM-COPILOT-RAG-CUSTOM-API (v4, T3 InMemoryRuntime
     assert.isTrue(files.has("src/app/functions.json"));
     assert.isTrue(files.has("src/app/instructions.txt"));
     assert.isTrue(files.has("src/adaptiveCards/listRepairs.json"));
+    assert.include(text(files, "src/adaptiveCards/listRepairs.json"), '"$data": "${results}"');
+    assert.include(
+      text(files, "src/adaptiveCards/listRepairs.json"),
+      "title: ${if(title, title, 'N/A')}"
+    );
+    assert.include(text(files, "src/adaptiveCards/listRepairs.data.json"), '"title"');
     assert.include(text(files, "src/app/app.ts"), "functionDefs.listRepairs.name");
     assert.include(text(files, "src/app/handlers.ts"), "listRepairsHandler");
     assert.include(text(files, "src/app/handlers.ts"), "openapi.yaml");
@@ -96,6 +103,15 @@ describe("SCN-TEAMS-CREATE-CUSTOM-COPILOT-RAG-CUSTOM-API (v4, T3 InMemoryRuntime
     assert.include(text(files, "src/app.py"), 'function_defs["listRepairs"]["name"]');
     assert.include(text(files, "src/handlers.py"), "client.listRepairs");
     assert.include(text(files, "src/handlers.py"), "openapi.yaml");
+
+    const manifest = readJsonObject(files, "appPackage/manifest.json");
+    const bots = recordArrayProperty(manifest, "bots");
+    assert.deepStrictEqual(bots[0].commandLists, [
+      {
+        scopes: ["personal"],
+        commands: [{ title: "List repairs", description: "List repairs" }],
+      },
+    ]);
   });
 
   it("SCN-CREATE-RAG-CUSTOM-API-06: a non-empty target fails require-empty-target first", async () => {
