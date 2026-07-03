@@ -50,7 +50,6 @@ const LANGUAGE_LABELS: Record<string, string> = {
 };
 const PYTHON_LANGUAGE = "python";
 const TEAMS_AGENTS_AND_APPS_TEMPLATE_IDS = new Set([
-  "basic-custom-engine-agent",
   "custom-copilot-basic",
   "custom-copilot-rag-azure-ai-search",
   "custom-copilot-rag-custom-api",
@@ -59,7 +58,6 @@ const TEAMS_AGENTS_AND_APPS_TEMPLATE_IDS = new Set([
   "default-message-extension",
   "non-sso-tab",
   "teams-collaborator-agent",
-  "weather-agent",
 ]);
 
 function languageOption(language: string, showPythonPreview: boolean): OptionItem {

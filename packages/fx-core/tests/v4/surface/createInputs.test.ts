@@ -457,6 +457,26 @@ describe("runCreateInputs (collect-create-inputs)", () => {
     assert.isUndefined(pythonOption.description);
   });
 
+  it("does not mark Python preview for Custom Engine Agent language options", async () => {
+    const ui = new ScriptedUserInteraction({
+      select: { llmService: "llm-service-openai", language: "python" },
+      text: { openAIKey: "fake-openai-key", "app-name": "MyAgent" },
+      folder: { folder: "C:/src" },
+    });
+
+    const res = await runCreateInputs(buildFloor(), BASIC_CUSTOM_ENGINE_AGENT, {}, asUI(ui), {
+      flagReader: () => false,
+      inputs: { platform: Platform.VSCode },
+      surface: "vscode",
+    });
+
+    assert.isTrue(res.isOk(), res.isErr() ? `${res.error.name}: ${res.error.message}` : "ok");
+    assert.strictEqual(res._unsafeUnwrap().language, "python");
+    const pythonOption = selectOptionAt(ui.lastSelectConfig, 2);
+    assert.strictEqual(pythonOption.id, "python");
+    assert.isUndefined(pythonOption.description);
+  });
+
   it("uses the language id as the label for unrecognized descriptor languages", async () => {
     const ui = new ScriptedUserInteraction({ select: { language: "rust" } });
 
