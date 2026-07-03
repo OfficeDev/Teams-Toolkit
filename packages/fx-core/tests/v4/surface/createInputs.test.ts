@@ -417,7 +417,26 @@ describe("runCreateInputs (collect-create-inputs)", () => {
     assert.deepEqual(ui.selectNames, []);
   });
 
-  it("CCI-17: VS Code Python language option carries the v3 Preview description", async () => {
+  it("CCI-17: VS Code Teams Agents and Apps Python language option carries the v3 Preview description", async () => {
+    const ui = new ScriptedUserInteraction({
+      select: { llmService: "llm-service-openai", language: "python" },
+      text: { openAIKey: "fake-openai-key" },
+    });
+
+    const res = await runCreateInputs(buildFloor(), CUSTOM_COPILOT_BASIC, {}, asUI(ui), {
+      flagReader: () => false,
+      surface: "vscode",
+    });
+
+    assert.isTrue(res.isOk(), res.isErr() ? `${res.error.name}: ${res.error.message}` : "ok");
+    assert.strictEqual(res._unsafeUnwrap().language, "python");
+    const pythonOption = selectOptionAt(ui.lastSelectConfig, 2);
+    assert.strictEqual(pythonOption.id, "python");
+    assert.strictEqual(pythonOption.label, "Python");
+    assert.strictEqual(pythonOption.description, "Preview");
+  });
+
+  it("does not mark Python preview for non-Teams Agents and Apps language descriptors", async () => {
     const ui = new ScriptedUserInteraction({ select: { language: "python" } });
 
     const res = await runCreateInputs(
@@ -435,8 +454,7 @@ describe("runCreateInputs (collect-create-inputs)", () => {
     assert.strictEqual(res._unsafeUnwrap().language, "python");
     const pythonOption = selectOptionAt(ui.lastSelectConfig, 2);
     assert.strictEqual(pythonOption.id, "python");
-    assert.strictEqual(pythonOption.label, "Python");
-    assert.strictEqual(pythonOption.description, "Preview");
+    assert.isUndefined(pythonOption.description);
   });
 
   it("CCI-01: remote-only provider auto-skips mcpServerType, asks url + authType=none", async () => {

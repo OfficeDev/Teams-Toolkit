@@ -49,16 +49,32 @@ const LANGUAGE_LABELS: Record<string, string> = {
   python: "Python",
 };
 const PYTHON_LANGUAGE = "python";
+const TEAMS_AGENTS_AND_APPS_TEMPLATE_IDS = new Set([
+  "basic-custom-engine-agent",
+  "custom-copilot-basic",
+  "custom-copilot-rag-azure-ai-search",
+  "custom-copilot-rag-custom-api",
+  "custom-copilot-rag-customize",
+  "default-bot",
+  "default-message-extension",
+  "non-sso-tab",
+  "teams-collaborator-agent",
+  "weather-agent",
+]);
 
-function languageOption(language: string): OptionItem {
+function languageOption(language: string, showPythonPreview: boolean): OptionItem {
   return {
     id: language,
     label: LANGUAGE_LABELS[language] ?? language,
     description:
-      language === PYTHON_LANGUAGE
+      showPythonPreview && language === PYTHON_LANGUAGE
         ? getLocalizedString("core.createProjectQuestion.option.description.preview")
         : undefined,
   };
+}
+
+function showsPythonPreview(templateId: string): boolean {
+  return TEAMS_AGENTS_AND_APPS_TEMPLATE_IDS.has(templateId);
 }
 
 function createLocalServerCache(
@@ -398,7 +414,8 @@ async function resolveStringValue(
 
 async function createFloorTail(
   inputs: Inputs | undefined,
-  languages: string[]
+  languages: string[],
+  showPythonPreview: boolean
 ): Promise<Result<CreateFloorTail, FxError>> {
   const questions: QuestionSpec[] = [];
   const answers: Answers = {};
@@ -409,7 +426,7 @@ async function createFloorTail(
       type: "singleSelect",
       title: "Programming Language",
       default: languages[0],
-      staticOptions: languages.map(languageOption),
+      staticOptions: languages.map((language) => languageOption(language, showPythonPreview)),
     });
   } else if (languages.length === 1 && languages[0] !== "common") {
     answers.language = languages[0];
@@ -600,7 +617,11 @@ export async function runCreateInputs(
   };
   const expressionPort = createExpressionPort(deps.flagReader);
   const surface = deps.surface ?? "vscode";
-  const floorTail = await createFloorTail(deps.inputs, languages);
+  const floorTail = await createFloorTail(
+    deps.inputs,
+    languages,
+    showsPythonPreview(locator.templateId)
+  );
   if (floorTail.isErr()) {
     return err(floorTail.error);
   }
