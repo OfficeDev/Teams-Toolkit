@@ -342,7 +342,7 @@
       "parameters": {
         "button": "left",
         "x": 345,
-        "y": 94
+        "y": 70
       },
       "description": "Click the \"OAuth (with static registration)\" option in the \"Select Authentication Type\" dropdown within Visual Studio Code.",
       "content_refs": [],
