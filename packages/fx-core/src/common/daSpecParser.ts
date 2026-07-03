@@ -210,6 +210,22 @@ export async function generatePlugin(
     }
 
     await parseAndUpdatePluginManifestForKiota(outputAIPluginPath, true);
+    if (adaptiveCardUpdateStrategy !== AdaptiveCardUpdateStrategy.KeepExisting) {
+      try {
+        const parser = new SpecParser(outputAPISpecPath, daProjectConfig);
+        await parser.generateAdaptiveCardInPlugin(outputAIPluginPath, operations, undefined);
+      } catch (error) {
+        warnings.push({
+          type: WarningType.GenerateCardFailed,
+          content: getLocalizedString(
+            "core.copilotPlugin.scaffold.summary.warning.generate.ac.failed",
+            operations.join(", "),
+            error instanceof Error ? error.message : String(error)
+          ),
+          data: operations.join(", "),
+        });
+      }
+    }
     return {
       allSuccess: true,
       warnings: warnings,

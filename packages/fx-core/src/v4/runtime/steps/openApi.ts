@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import {
+  AdaptiveCardGenerator,
   ConstantString,
   ListAPIInfo,
   ParseOptions,
@@ -56,6 +57,7 @@ interface TeamsAiSpecOperation {
   description: string;
   parametersSchema: Record<string, unknown>;
   auth: boolean;
+  source: Record<string, unknown>;
 }
 
 interface AuthRegistration {
@@ -594,6 +596,7 @@ function teamsAiSpecOperations(spec: unknown): TeamsAiSpecOperation[] {
         description: teamsAiOperationDescription(operation, method, pathUrl),
         parametersSchema: teamsAiParametersSchema(operation),
         auth: Array.isArray(operation.security) && operation.security.length > 0,
+        source: operation,
       });
     }
   }
@@ -719,6 +722,26 @@ function teamsAiAdaptiveCard(operation: TeamsAiSpecOperation): Record<string, un
   };
 }
 
+function teamsAiAdaptiveCardWithMockData(operation: TeamsAiSpecOperation): {
+  card: unknown;
+  data: unknown;
+} {
+  try {
+    const [card, jsonPath, jsonData] = AdaptiveCardGenerator.generateAdaptiveCard(
+      operation.source,
+      true,
+      5
+    );
+    const body = isRecord(card) ? card.body : undefined;
+    if (jsonPath !== "$" && Array.isArray(body) && isRecord(body[0])) {
+      body[0].$data = `\${${jsonPath}}`;
+    }
+    return { card, data: jsonData };
+  } catch {
+    return { card: teamsAiAdaptiveCard(operation), data: {} };
+  }
+}
+
 async function updatePromptSuggestions(
   destinationPath: string,
   operations: TeamsAiSpecOperation[]
@@ -785,11 +808,15 @@ async function updateTypescriptJavascriptTeamsAiCustomApi(
       parameters: operation.parametersSchema,
     };
     const cardName = safeFileStem(operation.operationId);
+    const adaptiveCard = teamsAiAdaptiveCardWithMockData(operation);
     await fs.writeFile(
       path.join(adaptiveCardsFolder, `${cardName}.json`),
-      JSON.stringify(teamsAiAdaptiveCard(operation), null, 2)
+      JSON.stringify(adaptiveCard.card, null, 2)
     );
-    await fs.writeFile(path.join(adaptiveCardsFolder, `${cardName}.data.json`), "{}\n");
+    await fs.writeFile(
+      path.join(adaptiveCardsFolder, `${cardName}.data.json`),
+      JSON.stringify(adaptiveCard.data, null, 2)
+    );
   }
   await fs.writeFile(path.join(appFolder, "functions.json"), JSON.stringify(actions, null, 2));
 
@@ -859,11 +886,15 @@ async function updatePythonTeamsAiCustomApi(
     operationIds.push(operation.operationId);
 
     const cardName = safeFileStem(operation.operationId);
+    const adaptiveCard = teamsAiAdaptiveCardWithMockData(operation);
     await fs.writeFile(
       path.join(adaptiveCardsFolder, `${cardName}.json`),
-      JSON.stringify(teamsAiAdaptiveCard(operation), null, 2)
+      JSON.stringify(adaptiveCard.card, null, 2)
     );
-    await fs.writeFile(path.join(adaptiveCardsFolder, `${cardName}.data.json`), "{}\n");
+    await fs.writeFile(
+      path.join(adaptiveCardsFolder, `${cardName}.data.json`),
+      JSON.stringify(adaptiveCard.data, null, 2)
+    );
   }
   await fs.writeFile(path.join(srcFolder, "functions.json"), JSON.stringify(functions, null, 2));
 
@@ -884,6 +915,7 @@ async function updatePythonTeamsAiCustomApi(
       .replace("{{OPENAPI_SPEC_PATH}}", openapiSpecFileName)
       .replace("// Replace with function handler code", functionHandlers.join("\n\n"))
   );
+  await updatePromptSuggestions(destinationPath, operations);
   return ok(undefined);
 }
 

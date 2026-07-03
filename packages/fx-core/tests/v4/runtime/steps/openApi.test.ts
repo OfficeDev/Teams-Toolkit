@@ -42,6 +42,32 @@ const mockSpecParserState = vi.hoisted<MockSpecParserState>(() => ({
   validationStatus: "Ok",
 }));
 
+const mockGenerateAdaptiveCard = vi.hoisted(() =>
+  vi.fn(() => [
+    {
+      type: "AdaptiveCard",
+      $schema: "https://adaptivecards.io/schemas/adaptive-card.json",
+      version: "1.5",
+      body: [
+        {
+          type: "Container",
+          $data: "${pets}",
+          items: [
+            {
+              type: "TextBlock",
+              text: "name: ${if(name, name, 'N/A')}",
+              wrap: true,
+            },
+          ],
+        },
+      ],
+    },
+    "pets",
+    { pets: [{ name: "Milo" }] },
+    [],
+  ])
+);
+
 vi.mock("@microsoft/m365-spec-parser", () => {
   class SpecParser {
     async list(): Promise<{ APIs: MockParserOperation[] }> {
@@ -81,6 +107,7 @@ vi.mock("@microsoft/m365-spec-parser", () => {
   }
 
   return {
+    AdaptiveCardGenerator: { generateAdaptiveCard: mockGenerateAdaptiveCard },
     ConstantString: { RegistrationIdPostfix: "REGISTRATION_ID" },
     ProjectType: { Copilot: "copilot", TeamsAi: "teams-ai" },
     SpecParser,
@@ -174,6 +201,29 @@ function teamsAiSpec(): Record<string, unknown> {
             },
           },
           security: [{ apiKey: [] }],
+          responses: {
+            "200": {
+              description: "Pets response",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      pets: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: {
+                            name: { type: "string" },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -195,6 +245,7 @@ beforeEach(() => {
   mockSpecParserState.pluginManifest = undefined;
   mockSpecParserState.pluginConversationStarters = [{ text: "Find pets" }];
   mockSpecParserState.validationStatus = "Ok";
+  mockGenerateAdaptiveCard.mockClear();
 });
 
 describe("OpenAPI runtime steps (v4)", () => {
@@ -409,11 +460,39 @@ describe("OpenAPI runtime steps (v4)", () => {
     assert.include(text(files, "src/app/handlers.ts"), "openapi.yaml");
     assert.include(text(files, "src/app/instructions.txt"), "Pet store APIs");
     assert.isTrue(files.has("src/adaptiveCards/getPets.json"));
+    assert.include(text(files, "src/adaptiveCards/getPets.json"), '"$data": "${pets}"');
+    assert.include(text(files, "src/adaptiveCards/getPets.json"), "name: ${if(name, name, 'N/A')}");
+    assert.include(text(files, "src/adaptiveCards/getPets.data.json"), '"name": "Milo"');
+    assert.strictEqual(mockGenerateAdaptiveCard.mock.calls.length, 1);
     const manifest = readJsonObject(files, "appPackage/manifest.json");
     if (!isRecordArray(manifest.bots)) {
       assert.fail("manifest should contain bot records");
     }
     assert.isArray(manifest.bots[0].commandLists);
+  });
+
+  it("falls back to a basic Teams AI adaptive card when schema card generation fails", async () => {
+    mockGenerateAdaptiveCard.mockImplementationOnce(() => {
+      throw new Error("card boom");
+    });
+    const { ctx, files } = makeCtx({
+      "appPackage/manifest.json": JSON.stringify({ bots: [{}] }),
+      "src/app/app.ts": "// Replace with function definition code\n",
+      "src/app/handlers.ts": "{{OPENAPI_SPEC_PATH}}\n// Replace with function handler code\n",
+    });
+
+    const result = await openApiGenerateTeamsAiCustomApiFiles.apply(
+      {
+        apiSpecLocation: "openapi.yaml",
+        apiOperations: ["GET /pets"],
+        language: ProgrammingLanguage.TS,
+      },
+      ctx
+    );
+
+    assert.isTrue(result.isOk(), result.isErr() ? result.error.message : "expected ok");
+    assert.include(text(files, "src/adaptiveCards/getPets.json"), "Get pets by id");
+    assert.strictEqual(text(files, "src/adaptiveCards/getPets.data.json"), "{}");
   });
 
   it("updates Python Teams AI custom API files from generated operations", async () => {
@@ -439,6 +518,18 @@ describe("OpenAPI runtime steps (v4)", () => {
     assert.include(text(files, "src/handlers.py"), "openapi.json");
     assert.include(text(files, "src/handlers.py"), "async def getPets");
     assert.isTrue(files.has("src/adaptiveCards/getPets.json"));
+    assert.include(text(files, "src/adaptiveCards/getPets.json"), '"$data": "${pets}"');
+    assert.include(text(files, "src/adaptiveCards/getPets.data.json"), '"name": "Milo"');
+    const manifest = readJsonObject(files, "appPackage/manifest.json");
+    if (!isRecordArray(manifest.bots)) {
+      assert.fail("manifest should contain bot records");
+    }
+    assert.deepStrictEqual(manifest.bots[0].commandLists, [
+      {
+        scopes: ["personal"],
+        commands: [{ title: "Get pets by id", description: "Get pets by id" }],
+      },
+    ]);
   });
 
   it("returns Teams AI validation and filtered-spec errors", async () => {

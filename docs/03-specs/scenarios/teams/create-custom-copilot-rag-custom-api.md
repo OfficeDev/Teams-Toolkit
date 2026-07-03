@@ -6,11 +6,11 @@
 
 | ID | Runtime | Purpose | Gate | Harness | Scenario | Expected result |
 | --- | --- | --- | --- | --- | --- | --- |
-| SCN-CREATE-RAG-CUSTOM-API-01 | L1 | scenario | per-PR | InMemoryRuntime | Scaffold the TypeScript Teams agent with data from a selected OpenAPI operation. | The scaffold writes the TypeScript Teams AI project files and generates the filtered OpenAPI spec, function definition file, handlers, instructions, adaptive card files, app package, infra, and m365agents yaml. |
+| SCN-CREATE-RAG-CUSTOM-API-01 | L1 | scenario | per-PR | InMemoryRuntime | Scaffold the TypeScript Teams agent with data from a selected OpenAPI operation. | The scaffold writes the TypeScript Teams AI project files and generates the filtered OpenAPI spec, function definition file, handlers, instructions, schema-derived adaptive card files with mock data, app package, infra, and m365agents yaml. |
 | SCN-CREATE-RAG-CUSTOM-API-02 | L1 | scenario | per-PR | InMemoryRuntime | Render a TypeScript custom API RAG agent with app name `My API Agent`. | Package and manifest app-name fields are rendered from caller floor values. |
 | SCN-CREATE-RAG-CUSTOM-API-03 | L1 | scenario | per-PR | InMemoryRuntime | Run the custom API post-render pipeline. | The pipeline runs `require-empty-target` followed by `openapi/generate-teams-ai-custom-api-files`. |
 | SCN-CREATE-RAG-CUSTOM-API-04 | L1 | scenario | per-PR | InMemoryRuntime | Scaffold the JavaScript custom API RAG agent. | The scaffold selects the JavaScript subtree and injects JavaScript function wiring for the selected API operation. |
-| SCN-CREATE-RAG-CUSTOM-API-05 | L1 | scenario | per-PR | InMemoryRuntime | Scaffold the Python custom API RAG agent. | The scaffold selects the Python subtree and injects Python function wiring for the selected API operation. |
+| SCN-CREATE-RAG-CUSTOM-API-05 | L1 | scenario | per-PR | InMemoryRuntime | Scaffold the Python custom API RAG agent. | The scaffold selects the Python subtree, injects Python function wiring for the selected API operation, and writes bot prompt suggestions for the selected operation into the Teams manifest. |
 | SCN-CREATE-RAG-CUSTOM-API-06 | L1 | scenario | per-PR | InMemoryRuntime | Scaffold into a target that already contains a file. | The scaffold fails with `REQUIRE_EMPTY_TARGET` before writing files. |
 
 ## Flow
