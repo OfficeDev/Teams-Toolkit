@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import {
+  AdaptiveCardGenerator,
   ConstantString,
   ListAPIInfo,
   ParseOptions,
@@ -21,10 +22,12 @@ import {
   SystemError,
   UserError,
 } from "@microsoft/teamsfx-api";
+import axios from "axios";
 import * as fs from "fs-extra";
 import * as os from "os";
 import * as path from "path";
 import { Result, err, ok } from "neverthrow";
+import { isValidHttpUrl } from "../../../common/stringUtils";
 import { isJsonSpecFile } from "../../../common/utils";
 import { ProgrammingLanguage } from "../../../question/constants";
 import { RegisteredStep, StepContext, StepParams } from "../../pipeline/runScaffoldPipeline";
@@ -40,6 +43,7 @@ const MANIFEST_PATH = `${AppPackageFolderName}/${ManifestTemplateFileName}`;
 const AGENT_PATH = `${AppPackageFolderName}/declarativeAgent.json`;
 const PLUGIN_PATH = `${AppPackageFolderName}/${DefaultPluginManifestFileName}`;
 const API_SPEC_PATH = `${AppPackageFolderName}/${DefaultApiSpecFolderName}/${DefaultApiSpecYamlFileName}`;
+const ORIGINAL_API_SPEC_PATH = `${API_SPEC_PATH}.original`;
 const DEFAULT_ACTION_ID = "action_1";
 const M365_AGENTS_YML = "m365agents.yml";
 const M365_AGENTS_LOCAL_YML = "m365agents.local.yml";
@@ -54,8 +58,10 @@ interface TeamsAiSpecOperation {
   method: string;
   operationId: string;
   description: string;
+  prompt: string;
   parametersSchema: Record<string, unknown>;
   auth: boolean;
+  source: Record<string, unknown>;
 }
 
 interface AuthRegistration {
@@ -460,6 +466,18 @@ function teamsAiOperationDescription(
   );
 }
 
+function teamsAiOperationPrompt(
+  operation: Record<string, unknown>,
+  method: string,
+  pathUrl: string
+): string {
+  return (
+    stringProperty(operation, "summary") ??
+    stringProperty(operation, "description") ??
+    `${method.toUpperCase()} ${pathUrl}`
+  );
+}
+
 function filterJsonSchema(schema: unknown): Record<string, unknown> {
   if (!isRecord(schema)) {
     return { type: "object" };
@@ -592,8 +610,10 @@ function teamsAiSpecOperations(spec: unknown): TeamsAiSpecOperation[] {
         method,
         operationId,
         description: teamsAiOperationDescription(operation, method, pathUrl),
+        prompt: teamsAiOperationPrompt(operation, method, pathUrl),
         parametersSchema: teamsAiParametersSchema(operation),
         auth: Array.isArray(operation.security) && operation.security.length > 0,
+        source: operation,
       });
     }
   }
@@ -719,6 +739,26 @@ function teamsAiAdaptiveCard(operation: TeamsAiSpecOperation): Record<string, un
   };
 }
 
+function teamsAiAdaptiveCardWithMockData(operation: TeamsAiSpecOperation): {
+  card: unknown;
+  data: unknown;
+} {
+  try {
+    const [card, jsonPath, jsonData] = AdaptiveCardGenerator.generateAdaptiveCard(
+      operation.source,
+      true,
+      5
+    );
+    const body = isRecord(card) ? card.body : undefined;
+    if (jsonPath !== "$" && Array.isArray(body) && isRecord(body[0])) {
+      body[0].$data = `\${${jsonPath}}`;
+    }
+    return { card, data: jsonData };
+  } catch {
+    return { card: teamsAiAdaptiveCard(operation), data: {} };
+  }
+}
+
 async function updatePromptSuggestions(
   destinationPath: string,
   operations: TeamsAiSpecOperation[]
@@ -747,8 +787,8 @@ async function updatePromptSuggestions(
     {
       scopes: ["personal"],
       commands: operations.slice(0, 10).map((operation) => ({
-        title: operation.description.slice(0, 32),
-        description: operation.description.slice(0, 128),
+        title: operation.prompt.slice(0, 32),
+        description: operation.prompt.slice(0, 128),
       })),
     },
   ];
@@ -785,11 +825,15 @@ async function updateTypescriptJavascriptTeamsAiCustomApi(
       parameters: operation.parametersSchema,
     };
     const cardName = safeFileStem(operation.operationId);
+    const adaptiveCard = teamsAiAdaptiveCardWithMockData(operation);
     await fs.writeFile(
       path.join(adaptiveCardsFolder, `${cardName}.json`),
-      JSON.stringify(teamsAiAdaptiveCard(operation), null, 2)
+      JSON.stringify(adaptiveCard.card, null, 2)
     );
-    await fs.writeFile(path.join(adaptiveCardsFolder, `${cardName}.data.json`), "{}\n");
+    await fs.writeFile(
+      path.join(adaptiveCardsFolder, `${cardName}.data.json`),
+      JSON.stringify(adaptiveCard.data, null, 2)
+    );
   }
   await fs.writeFile(path.join(appFolder, "functions.json"), JSON.stringify(actions, null, 2));
 
@@ -859,11 +903,15 @@ async function updatePythonTeamsAiCustomApi(
     operationIds.push(operation.operationId);
 
     const cardName = safeFileStem(operation.operationId);
+    const adaptiveCard = teamsAiAdaptiveCardWithMockData(operation);
     await fs.writeFile(
       path.join(adaptiveCardsFolder, `${cardName}.json`),
-      JSON.stringify(teamsAiAdaptiveCard(operation), null, 2)
+      JSON.stringify(adaptiveCard.card, null, 2)
     );
-    await fs.writeFile(path.join(adaptiveCardsFolder, `${cardName}.data.json`), "{}\n");
+    await fs.writeFile(
+      path.join(adaptiveCardsFolder, `${cardName}.data.json`),
+      JSON.stringify(adaptiveCard.data, null, 2)
+    );
   }
   await fs.writeFile(path.join(srcFolder, "functions.json"), JSON.stringify(functions, null, 2));
 
@@ -884,6 +932,7 @@ async function updatePythonTeamsAiCustomApi(
       .replace("{{OPENAPI_SPEC_PATH}}", openapiSpecFileName)
       .replace("// Replace with function handler code", functionHandlers.join("\n\n"))
   );
+  await updatePromptSuggestions(destinationPath, operations);
   return ok(undefined);
 }
 
@@ -939,6 +988,14 @@ async function writeTempBaseFiles(
   return { manifestPath, pluginPath, apiSpecPath };
 }
 
+async function readOriginalOpenApiSpec(apiSpecLocation: string): Promise<Buffer> {
+  if (isValidHttpUrl(apiSpecLocation)) {
+    const response = await axios.get<ArrayBuffer>(apiSpecLocation, { responseType: "arraybuffer" });
+    return Buffer.from(response.data);
+  }
+  return await fs.readFile(apiSpecLocation);
+}
+
 export const openApiGeneratePluginFiles: RegisteredStep = {
   validateParams(resolved: StepParams): string | undefined {
     if (stringParam(resolved, "apiSpecLocation") === undefined) {
@@ -987,14 +1044,14 @@ export const openApiGeneratePluginFiles: RegisteredStep = {
         return err(updatedAgent.error);
       }
 
-      ctx.write(MANIFEST_PATH, await fs.readFile(temp.manifestPath));
-      ctx.write(AGENT_PATH, Buffer.from(updatedAgent.value, "utf8"));
-      ctx.write(PLUGIN_PATH, await fs.readFile(temp.pluginPath));
-      ctx.write(API_SPEC_PATH, await fs.readFile(temp.apiSpecPath));
       const registrations = await selectedAuthRegistrations(apiSpecLocation, apiOperations);
       if (registrations.isErr()) {
         return err(registrations.error);
       }
+
+      await fs.writeFile(path.join(tempRoot, AGENT_PATH), updatedAgent.value);
+      await writeTempTreeToContext(tempRoot, ctx);
+      ctx.write(ORIGINAL_API_SPEC_PATH, await readOriginalOpenApiSpec(apiSpecLocation));
       updateAuthYml(ctx, M365_AGENTS_YML, registrations.value);
       updateAuthYml(ctx, M365_AGENTS_LOCAL_YML, registrations.value);
       return ok(undefined);
