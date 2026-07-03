@@ -11,7 +11,7 @@ import {
   ManifestCapability,
   ok,
   Result,
-  TeamsAppManifest,
+  TeamsManifestLatest,
   TeamsManifest,
 } from "@microsoft/teamsfx-api";
 import AdmZip from "adm-zip";
@@ -93,12 +93,12 @@ export interface ManifestCommonProperties {
 }
 
 export class ManifestUtils {
-  async readAppManifest(projectPath: string): Promise<Result<TeamsAppManifest, FxError>> {
+  async readAppManifest(projectPath: string): Promise<Result<TeamsManifestLatest, FxError>> {
     const filePath = this.getTeamsAppManifestPath(projectPath);
     return await this._readAppManifest(filePath);
   }
 
-  readAppManifestSync(projectPath: string): Result<TeamsAppManifest, FxError> {
+  readAppManifestSync(projectPath: string): Result<TeamsManifestLatest, FxError> {
     const filePath = this.getTeamsAppManifestPath(projectPath);
     if (!fs.existsSync(filePath)) {
       return err(new FileNotFoundError("teamsApp", filePath));
@@ -114,7 +114,7 @@ export class ManifestUtils {
     content = stripBom(content);
     const contentV3 = convertManifestTemplateToV3(content);
     try {
-      const manifest = JSON.parse(contentV3) as TeamsAppManifest;
+      const manifest = JSON.parse(contentV3) as TeamsManifestLatest;
       return ok(manifest);
     } catch (e) {
       return err(new JSONSyntaxError(filePath, e, "ManifestUtils"));
@@ -122,7 +122,9 @@ export class ManifestUtils {
   }
 
   @hooks([ErrorContextMW({ component: "ManifestUtils" })])
-  async _readAppManifest(manifestTemplatePath: string): Promise<Result<TeamsAppManifest, FxError>> {
+  async _readAppManifest(
+    manifestTemplatePath: string
+  ): Promise<Result<TeamsManifestLatest, FxError>> {
     if (!(await fs.pathExists(manifestTemplatePath))) {
       return err(new FileNotFoundError("teamsApp", manifestTemplatePath));
     }
@@ -132,7 +134,7 @@ export class ManifestUtils {
     content = stripBom(content);
     const contentV3 = convertManifestTemplateToV3(content);
     try {
-      const manifest = JSON.parse(contentV3) as TeamsAppManifest;
+      const manifest = JSON.parse(contentV3) as TeamsManifestLatest;
       return ok(manifest);
     } catch (e) {
       return err(new JSONSyntaxError(manifestTemplatePath, e, "ManifestUtils"));
@@ -140,7 +142,7 @@ export class ManifestUtils {
   }
 
   async _writeAppManifest(
-    appManifest: TeamsAppManifest,
+    appManifest: TeamsManifestLatest,
     manifestTemplatePath: string
   ): Promise<Result<undefined, FxError>> {
     const content = JSON.stringify(appManifest, undefined, 4);
@@ -212,7 +214,11 @@ export class ManifestUtils {
         case "configurableTab":
           appManifest.configurableTabs = appManifest.configurableTabs || [];
           if (capability.snippet) {
-            appManifest.configurableTabs.push(capability.snippet);
+            appManifest.configurableTabs.push(
+              capability.snippet as unknown as NonNullable<
+                TeamsManifestLatest["configurableTabs"]
+              >[number]
+            );
           } else {
             if (capability.existingApp) {
               appManifest.configurableTabs = appManifest.configurableTabs.concat(
@@ -228,7 +234,9 @@ export class ManifestUtils {
         case "Bot":
           appManifest.bots = appManifest.bots || [];
           if (capability.snippet) {
-            appManifest.bots.push(capability.snippet);
+            appManifest.bots.push(
+              capability.snippet as unknown as NonNullable<TeamsManifestLatest["bots"]>[number]
+            );
           } else {
             if (capability.existingApp) {
               appManifest.bots = appManifest.bots.concat(
@@ -325,7 +333,7 @@ export class ManifestUtils {
   }
 
   _capabilityExceedLimit(
-    manifest: TeamsAppManifest,
+    manifest: TeamsManifestLatest,
     capability: "staticTab" | "configurableTab" | "Bot" | "MessageExtension" | "WebApplicationInfo"
   ): boolean {
     switch (capability) {
@@ -345,7 +353,7 @@ export class ManifestUtils {
         return false;
     }
   }
-  public getCapabilities(template: TeamsAppManifest): string[] {
+  public getCapabilities(template: TeamsManifestLatest): string[] {
     return checkManifestCapabilities(template);
   }
 
@@ -353,37 +361,14 @@ export class ManifestUtils {
    * Get command id from composeExtensions
    * @param manifest
    */
-  public getOperationIds(manifest: TeamsAppManifest): string[] {
+  public getOperationIds(manifest: TeamsManifestLatest): string[] {
     const ids: string[] = [];
-    manifest.composeExtensions?.map((extension: IComposeExtension) => {
-      extension.commands?.map((command: IMessagingExtensionCommand) => {
+    manifest.composeExtensions?.map((extension) => {
+      extension.commands?.map((command) => {
         ids.push(command.id);
       });
     });
     return ids;
-  }
-
-  public async getPluginFilePath(
-    manifest: TeamsAppManifest,
-    manifestPath: string
-  ): Promise<Result<string, FxError>> {
-    const pluginFile = manifest.copilotAgents?.plugins?.[0]?.file;
-    if (pluginFile) {
-      const plugin = path.resolve(path.dirname(manifestPath), pluginFile);
-      const doesFileExist = await fs.pathExists(plugin);
-      if (doesFileExist) {
-        return ok(plugin);
-      } else {
-        return err(new FileNotFoundError("ManifestUtils", pluginFile));
-      }
-    } else {
-      return err(
-        AppStudioResultFactory.UserError(
-          AppStudioError.TeamsAppRequiredPropertyMissingError.name,
-          AppStudioError.TeamsAppRequiredPropertyMissingError.message("plugins", manifestPath)
-        )
-      );
-    }
   }
 
   async getManifestV3(
@@ -434,7 +419,7 @@ export class ManifestUtils {
 
     return ok(manifest);
   }
-  extractManifestFromArchivedFile(archivedFile: Buffer): Result<TeamsAppManifest, FxError> {
+  extractManifestFromArchivedFile(archivedFile: Buffer): Result<TeamsManifestLatest, FxError> {
     const zipEntries = new AdmZip(archivedFile).getEntries();
     const manifestFile = zipEntries.find((x) => x.entryName === Constants.MANIFEST_FILE);
     if (!manifestFile) {
@@ -446,7 +431,7 @@ export class ManifestUtils {
       );
     }
     const manifestString = manifestFile.getData().toString();
-    const manifest = JSON.parse(manifestString) as TeamsAppManifest;
+    const manifest = JSON.parse(manifestString) as TeamsManifestLatest;
     return ok(manifest);
   }
 
@@ -459,7 +444,7 @@ export class ManifestUtils {
   ): Promise<Result<undefined, FxError>> {
     const manifestPath = this.getTeamsAppManifestPath(projectPath);
     if (fs.pathExistsSync(manifestPath)) {
-      const manifest = (await fs.readJson(manifestPath)) as TeamsAppManifest;
+      const manifest = (await fs.readJson(manifestPath)) as TeamsManifestLatest;
       const shortName = manifest.name.short;
       // Extract placeholder strings like ${{xxx}}
       const placeholderRegex = /\$\{\{[^}]+\}\}/g;
@@ -523,7 +508,7 @@ export class ManifestUtils {
    * Parse the manifest and get properties
    * @param manifest
    */
-  parseCommonProperties(manifest: TeamsAppManifest): ManifestCommonProperties {
+  parseCommonProperties(manifest: TeamsManifestLatest): ManifestCommonProperties {
     const capabilities: string[] = [];
     if (manifest.staticTabs && manifest.staticTabs.length > 0) {
       capabilities.push("staticTab");
@@ -576,17 +561,6 @@ export class ManifestUtils {
       properties.isApiMeAAD = true;
     }
 
-    if (manifest.copilotAgents?.plugins) {
-      const apiPlugins = manifest.copilotAgents?.plugins;
-      if (
-        apiPlugins &&
-        apiPlugins.length > 0 &&
-        apiPlugins[0].file &&
-        !capabilities.includes("plugin")
-      )
-        capabilities.push("plugin");
-    }
-
     if (manifest.copilotAgents?.declarativeAgents) {
       const copilotGpts = manifest.copilotAgents?.declarativeAgents;
       if (copilotGpts && copilotGpts.length > 0 && !capabilities.includes("copilotGpt"))
@@ -601,7 +575,7 @@ export class ManifestUtils {
    * @param manifest
    * @returns Telemetry properties
    */
-  parseCommonTelemetryProperties(manifest: TeamsAppManifest): {
+  parseCommonTelemetryProperties(manifest: TeamsManifestLatest): {
     [p: string]: string;
   } {
     const properties = this.parseCommonProperties(manifest);

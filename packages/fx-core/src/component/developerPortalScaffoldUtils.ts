@@ -6,14 +6,11 @@
  */
 
 import {
-  BotOrMeScopes,
   Context,
   FxError,
-  ICommandList,
-  IStaticTab,
   Inputs,
   Result,
-  TeamsAppManifest,
+  TeamsManifestLatest,
   UserError,
   err,
   ok,
@@ -134,7 +131,7 @@ async function updateManifest(
   }
 
   // manifest
-  const manifest = JSON.parse(appPackage.manifest.toString("utf8")) as TeamsAppManifest;
+  const manifest = JSON.parse(appPackage.manifest.toString("utf8")) as TeamsManifestLatest;
   manifest.id = "${{TEAMS_APP_ID}}";
 
   // manifest: tab
@@ -247,7 +244,7 @@ async function updateManifest(
       manifest.configurableTabs[0].scopes = adjustScopeBasedOnVersion(
         manifest.configurableTabs[0].scopes,
         manifest.manifestVersion
-      ) as ("team" | "groupchat")[];
+      ) as unknown as ("team" | "groupChat")[];
     }
   }
   if (!!manifest.bots && manifest.bots.length > 0) {
@@ -255,27 +252,18 @@ async function updateManifest(
       manifest.bots[0].scopes = adjustScopeBasedOnVersion(
         manifest.bots[0].scopes,
         manifest.manifestVersion
-      ) as BotOrMeScopes;
+      ) as unknown as ("team" | "personal" | "groupChat" | "copilot")[];
     }
 
     if (manifest.bots[0].commandLists) {
-      manifest.bots[0].commandLists.forEach((commandList: ICommandList) => {
+      manifest.bots[0].commandLists.forEach((commandList) => {
         if (commandList.scopes) {
           commandList.scopes = adjustScopeBasedOnVersion(
             commandList.scopes,
             manifest.manifestVersion
-          ) as BotOrMeScopes;
+          ) as unknown as ("team" | "personal" | "groupChat" | "copilot")[];
         }
       });
-    }
-  }
-
-  if (!!manifest.composeExtensions && manifest.composeExtensions.length > 0) {
-    if (manifest.composeExtensions[0].scopes) {
-      manifest.composeExtensions[0].scopes = adjustScopeBasedOnVersion(
-        manifest.composeExtensions[0].scopes,
-        manifest.manifestVersion
-      ) as BotOrMeScopes;
     }
   }
 
@@ -314,8 +302,8 @@ export async function updateEnv(
 function updateTabUrl(
   answers: string[],
   tabUrlType: TabUrlType,
-  tabs: IStaticTab[] | undefined,
-  existingManifestStaticTabs: IStaticTab[] | undefined
+  tabs: TeamsManifestLatest["staticTabs"],
+  existingManifestStaticTabs: TeamsManifestLatest["staticTabs"]
 ) {
   if (!tabs || tabs.length === 0) {
     return err(new InputValidationError("tabs in manifest.json", "empty"));
@@ -341,7 +329,10 @@ function updateTabUrl(
   });
 }
 
-function findTabBasedOnName(name: string, tabs: IStaticTab[]): IStaticTab | undefined {
+function findTabBasedOnName(
+  name: string,
+  tabs: NonNullable<TeamsManifestLatest["staticTabs"]>
+): NonNullable<TeamsManifestLatest["staticTabs"]>[number] | undefined {
   return tabs.find((o) => o.name === name);
 }
 

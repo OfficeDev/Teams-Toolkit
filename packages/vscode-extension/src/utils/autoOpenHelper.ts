@@ -191,10 +191,11 @@ export async function ShowScaffoldingWarningSummary(
     if (manifestRes.isOk()) {
       const teamsManifest = manifestRes.value;
       const commonProperties = manifestUtils.parseCommonProperties(teamsManifest);
-      if (commonProperties.capabilities.includes("plugin")) {
+      const manifestPath = path.join(workspacePath, AppPackageFolderName, ManifestTemplateFileName);
+      if (await pluginManifestUtils.isApiPluginFromDeclarativeAgent(teamsManifest, manifestPath)) {
         const apiSpecFilePathRes = await pluginManifestUtils.getApiSpecFilePathFromTeamsManifest(
           teamsManifest,
-          path.join(workspacePath, AppPackageFolderName, ManifestTemplateFileName)
+          manifestPath
         );
         if (apiSpecFilePathRes.isErr()) {
           ExtTelemetry.sendTelemetryErrorEvent(
@@ -202,11 +203,20 @@ export async function ShowScaffoldingWarningSummary(
             apiSpecFilePathRes.error
           );
         } else {
+          const pluginPathsRes =
+            await pluginManifestUtils.getPluginManifestPathsFromDeclarativeAgent(
+              teamsManifest,
+              manifestPath
+            );
+          const pluginRelativePath =
+            pluginPathsRes.isOk() && pluginPathsRes.value.length > 0
+              ? path.relative(workspacePath, pluginPathsRes.value[0])
+              : undefined;
           message = await generateScaffoldingSummary(
             createWarnings,
             teamsManifest,
             path.relative(workspacePath, apiSpecFilePathRes.value[0]),
-            path.join(AppPackageFolderName, teamsManifest.copilotAgents!.plugins![0].file),
+            pluginRelativePath,
             workspacePath
           );
         }

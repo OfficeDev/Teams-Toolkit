@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 import { hooks } from "@feathersjs/hooks/lib";
-import { TeamsAppManifest } from "@microsoft/teamsfx-api";
+import { TeamsManifestLatest } from "@microsoft/teamsfx-api";
 import AdmZip from "adm-zip";
 import fs from "fs-extra";
 import path from "path";
@@ -99,7 +99,7 @@ export class copyAppPackageToSPFxDriver implements StepDriver {
       throw new FileNotFoundError(actionName, Constants.MANIFEST_FILE);
     }
     const manifestString = manifestFile.getData().toString();
-    const manifest = JSON.parse(manifestString) as TeamsAppManifest;
+    const manifest = JSON.parse(manifestString) as TeamsManifestLatest;
 
     const colorFile =
       manifest.icons.color && !manifest.icons.color.startsWith("https://")

@@ -5,7 +5,7 @@ import {
   AppPackageFolderName,
   ManifestTemplateFileName,
   SensitivityLabel,
-  TeamsAppManifest,
+  TeamsManifestLatest,
   TemplateFolderName,
   signedIn,
 } from "@microsoft/teamsfx-api";
@@ -19,6 +19,7 @@ import {
   getAllowedAppMaps,
   getPermissionMap,
   manifestUtils,
+  pluginManifestUtils,
 } from "@microsoft/teamsfx-core";
 import fs from "fs-extra";
 import * as parser from "jsonc-parser";
@@ -574,7 +575,7 @@ export class CopilotPluginCodeLensProvider implements vscode.CodeLensProvider {
   ): vscode.ProviderResult<vscode.CodeLens[]> {
     const codeLenses: vscode.CodeLens[] = [];
 
-    const manifest: TeamsAppManifest = JSON.parse(document.getText());
+    const manifest: TeamsManifestLatest = JSON.parse(document.getText());
     const manifestProperties = manifestUtils.parseCommonProperties(manifest);
     if (!manifestProperties.isApiME) {
       return codeLenses;
@@ -604,9 +605,7 @@ export class CopilotPluginCodeLensProvider implements vscode.CodeLensProvider {
 }
 
 export class ApiPluginCodeLensProvider implements vscode.CodeLensProvider {
-  public provideCodeLenses(
-    document: vscode.TextDocument
-  ): vscode.ProviderResult<vscode.CodeLens[]> {
+  public async provideCodeLenses(document: vscode.TextDocument): Promise<vscode.CodeLens[]> {
     const inputs = getSystemInputs();
 
     if (inputs.projectPath) {
@@ -625,8 +624,9 @@ export class ApiPluginCodeLensProvider implements vscode.CodeLensProvider {
       }
       const manifestContent = fs.readFileSync(manifestFilePath, "utf-8");
       const manifest = JSON.parse(manifestContent);
-      const manifestProperties = manifestUtils.parseCommonProperties(manifest);
-      if (!manifestProperties.capabilities.includes("plugin")) {
+      if (
+        !(await pluginManifestUtils.isApiPluginFromDeclarativeAgent(manifest, manifestFilePath))
+      ) {
         return [];
       }
 
@@ -663,7 +663,7 @@ export class DeclarativeAgentSensitivityLabelCodeLensProvider implements vscode.
       return [];
     }
     const manifestContent = fs.readFileSync(manifestFilePath, "utf-8");
-    const manifest = JSON.parse(manifestContent) as TeamsAppManifest;
+    const manifest = JSON.parse(manifestContent) as TeamsManifestLatest;
     const declarativeAgentFilePath = manifest.copilotAgents?.declarativeAgents?.[0]?.file;
     if (!declarativeAgentFilePath) {
       return [];
@@ -881,8 +881,8 @@ export class OneDriveSharePointCodeLensProvider implements vscode.CodeLensProvid
       }
 
       let agentFileName: string | undefined;
-      if ((manifest as TeamsAppManifest).copilotAgents?.declarativeAgents) {
-        const agents = (manifest as TeamsAppManifest).copilotAgents?.declarativeAgents;
+      if ((manifest as TeamsManifestLatest).copilotAgents?.declarativeAgents) {
+        const agents = (manifest as TeamsManifestLatest).copilotAgents?.declarativeAgents;
         if (agents && agents.length > 0) {
           agentFileName = agents[0].file;
         }

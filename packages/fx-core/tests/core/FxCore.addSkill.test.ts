@@ -2,12 +2,13 @@
 // Licensed under the MIT license.
 
 import {
+  createDefaultTeamsManifest,
   DeclarativeCopilotManifestSchema,
   err,
   Inputs,
   ok,
   Platform,
-  TeamsAppManifest,
+  TeamsManifestLatest,
   UserError,
 } from "@microsoft/teamsfx-api";
 import fs from "fs-extra";
@@ -38,8 +39,8 @@ describe("addSkill", () => {
     vi.restoreAllMocks();
   });
 
-  function createManifestWithDA(): TeamsAppManifest {
-    const manifest = new TeamsAppManifest();
+  function createManifestWithDA(): TeamsManifestLatest {
+    const manifest = createDefaultTeamsManifest();
     manifest.copilotAgents = {
       declarativeAgents: [
         {
@@ -228,7 +229,7 @@ describe("addSkill", () => {
 
   it("errors when project has no DA manifest", async () => {
     const inputs = createBaseInputs();
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     // No copilotAgents/declarativeAgents set
 
     vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
@@ -440,7 +441,7 @@ describe("addSkill", () => {
 
   it("errors when DA has copilotAgents but no file property", async () => {
     const inputs = createBaseInputs();
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.copilotAgents = {
       declarativeAgents: [
         {

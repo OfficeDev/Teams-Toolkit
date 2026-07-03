@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { M365TokenProvider, TeamsAppManifest } from "@microsoft/teamsfx-api";
+import { M365TokenProvider, TeamsManifestLatest } from "@microsoft/teamsfx-api";
 import axios, { AxiosInstance } from "axios";
 import MockM365TokenProvider from "@microsoft/m365agentstoolkit-cli/src/commonlib/m365LoginUserPassword";
 import AdmZip from "adm-zip";
@@ -42,7 +42,7 @@ export class M365TitleHelper {
   public static async init(
     endpoint: string = sideloadingServiceEndpoint,
     scope: string = sideloadingServiceScope,
-    provider: M365TokenProvider = MockM365TokenProvider
+    provider: M365TokenProvider = MockM365TokenProvider,
   ): Promise<M365TitleHelper> {
     if (!M365TitleHelper.instance) {
       const res = await provider.getAccessToken({
@@ -60,7 +60,7 @@ export class M365TitleHelper {
         });
         this.instance = new M365TitleHelper(
           envInfo.data.titlesServiceUrl,
-          res.value
+          res.value,
         );
       } catch (error: any) {
         throw error;
@@ -98,7 +98,7 @@ export class M365TitleHelper {
       manifest.copilotAgents.declarativeAgents.length > 0
     );
   }
-  getManifestFromZip(path: string): TeamsAppManifest | undefined {
+  getManifestFromZip(path: string): TeamsManifestLatest | undefined {
     const zip = new AdmZip(path);
     const manifestEntry = zip.getEntry("manifest.json");
     if (!manifestEntry) {
@@ -106,7 +106,7 @@ export class M365TitleHelper {
     }
     let manifestContent = manifestEntry.getData().toString("utf8");
     manifestContent = stripBom(manifestContent);
-    return JSON.parse(manifestContent) as TeamsAppManifest;
+    return JSON.parse(manifestContent) as TeamsManifestLatest;
   }
 
   public async acquire(packageFile: string): Promise<[string, string]> {
@@ -131,7 +131,7 @@ export class M365TitleHelper {
     content.append("package", data);
     const uploadResponse = await this.axios!.post(
       "/dev/v1/users/packages",
-      content.getBuffer()
+      content.getBuffer(),
     );
 
     const operationId = uploadResponse.data.operationId;
@@ -141,13 +141,13 @@ export class M365TitleHelper {
       "/dev/v1/users/packages/acquisitions",
       {
         operationId: operationId,
-      }
+      },
     );
     const statusId = acquireResponse.data.statusId;
     console.debug(`Acquiring package with statusId: ${statusId as string} ...`);
     do {
       const statusResponse = await this.axios!.get(
-        `/dev/v1/users/packages/status/${statusId as string}`
+        `/dev/v1/users/packages/status/${statusId as string}`,
       );
       const resCode = statusResponse.status;
       console.debug(`Package status: ${resCode} ...`);
@@ -166,7 +166,7 @@ export class M365TitleHelper {
 
   public async acquireV2(
     packageFile: string,
-    appScope: string
+    appScope: string,
   ): Promise<[string, string]> {
     this.checkZip(packageFile);
     const data = (await fs.readFile(packageFile)) as Buffer;
@@ -183,7 +183,7 @@ export class M365TitleHelper {
         params: {
           scope: appScope,
         },
-      }
+      },
     );
 
     const statusId = uploadResponse.data.statusId;
@@ -195,7 +195,7 @@ export class M365TitleHelper {
         {
           baseURL: "https://titles.prod.mos.microsoft.com",
           headers: uploadHeaders,
-        }
+        },
       );
       const resCode = statusResponse.status;
       console.debug(`Package status: ${resCode} ...`);

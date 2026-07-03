@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { TeamsAppManifest } from "@microsoft/teamsfx-api";
+import { createDefaultTeamsManifest } from "@microsoft/teamsfx-api";
 import AdmZip from "adm-zip";
 import fs from "fs-extra";
 import mockedEnv from "mocked-env";
@@ -131,7 +131,7 @@ describe("teamsApp/update", async () => {
     vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     vi.spyOn(fs, "readFile").mockImplementation(async () => {
       const zip = new AdmZip();
-      const manifest = new TeamsAppManifest();
+      const manifest = createDefaultTeamsManifest();
       zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(manifest)));
       zip.addFile("color.png", Buffer.from(""));
       zip.addFile("outlie.png", Buffer.from(""));
@@ -158,7 +158,7 @@ describe("teamsApp/update", async () => {
     vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     vi.spyOn(fs, "readFile").mockImplementation(async () => {
       const zip = new AdmZip();
-      const manifest = new TeamsAppManifest();
+      const manifest = createDefaultTeamsManifest();
       manifest.id = uuid();
       manifest.staticTabs = [
         {
@@ -197,7 +197,7 @@ describe("teamsApp/update", async () => {
     vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     vi.spyOn(fs, "readFile").mockImplementation(async () => {
       const zip = new AdmZip();
-      const manifest = new TeamsAppManifest();
+      const manifest = createDefaultTeamsManifest();
       manifest.id = uuid();
       manifest.staticTabs = [
         {
@@ -237,7 +237,7 @@ describe("teamsApp/update", async () => {
     vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     vi.spyOn(fs, "readFile").mockImplementation(async () => {
       const zip = new AdmZip();
-      const manifest = new TeamsAppManifest();
+      const manifest = createDefaultTeamsManifest();
       manifest.id = uuid();
       zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(manifest)));
       zip.addFile("color.png", Buffer.from(""));

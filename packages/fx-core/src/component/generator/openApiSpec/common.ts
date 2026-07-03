@@ -19,7 +19,7 @@ import {
   Platform,
   ResponseTemplatesFolderName,
   SystemError,
-  TeamsAppManifest,
+  TeamsManifestLatest,
 } from "@microsoft/teamsfx-api";
 import fs from "fs-extra";
 import { merge } from "lodash";
@@ -57,7 +57,7 @@ async function handleWarnings(
   context: Context,
   inputs: Inputs,
   warnings: WarningResult[],
-  teamsManifest: TeamsAppManifest,
+  teamsManifest: TeamsManifestLatest,
   destinationPath: string,
   openapiSpecPath: string,
   pluginManifestPath?: string

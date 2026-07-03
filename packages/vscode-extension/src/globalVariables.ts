@@ -5,7 +5,7 @@ import fs from "fs-extra";
 import path from "path";
 import * as vscode from "vscode";
 
-import { TeamsAppManifest, Tools } from "@microsoft/teamsfx-api";
+import { TeamsManifestLatest, Tools } from "@microsoft/teamsfx-api";
 import {
   copilotGptManifestUtils,
   FxCore,
@@ -170,7 +170,7 @@ export function checkIsDeclarativeCopilotApp(directory: string): boolean {
   }
 }
 
-export function updateIsDeclarativeCopilotApp(manifest: TeamsAppManifest): boolean {
+export function updateIsDeclarativeCopilotApp(manifest: TeamsManifestLatest): boolean {
   const value = manifestUtils.getCapabilities(manifest).includes("copilotGpt");
   isDeclarativeCopilotApp = value;
   return isDeclarativeCopilotApp;

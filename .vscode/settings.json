@@ -3,5 +3,13 @@
     "kusto",
     "logmining"
   ],
-  "js/ts.tsdk.path": "node_modules/.pnpm/typescript@5.9.2/node_modules/typescript/lib"
+  "js/ts.tsdk.path": "node_modules/.pnpm/typescript@5.9.2/node_modules/typescript/lib",
+  "search.exclude": {
+    "**/coverage": true,
+    "**/out": true,
+    "**/build": true,
+    "**/dist": true,
+    "**/package.nls.*.json": true,
+    "**/.nyc_output": true
+  },
 }

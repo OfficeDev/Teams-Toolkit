@@ -17,7 +17,7 @@ import {
   Inputs,
   Platform,
   SystemError,
-  TeamsAppManifest,
+  createDefaultTeamsManifest,
   UserError,
   err,
   ok,
@@ -122,7 +122,7 @@ describe("copilotPlugin", async () => {
       projectPath: path.join(os.tmpdir(), appName),
       ignoreLockByUT: true,
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.composeExtensions = [
       {
         composeExtensionType: "apiBased",
@@ -179,7 +179,7 @@ describe("copilotPlugin", async () => {
       projectPath: path.join(os.tmpdir(), appName),
       ignoreLockByUT: true,
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.composeExtensions = [
       {
         composeExtensionType: "apiBased",
@@ -241,7 +241,7 @@ describe("copilotPlugin", async () => {
       projectPath: path.join(os.tmpdir(), appName),
       ignoreLockByUT: true,
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.composeExtensions = [
       {
         composeExtensionType: "apiBased",
@@ -343,7 +343,7 @@ describe("copilotPlugin", async () => {
       projectPath: path.join(os.tmpdir(), appName),
       ignoreLockByUT: true,
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.composeExtensions = [
       {
         composeExtensionType: "apiBased",
@@ -422,7 +422,7 @@ describe("copilotPlugin", async () => {
       projectPath: path.join(os.tmpdir(), appName),
       ignoreLockByUT: true,
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.composeExtensions = [
       {
         composeExtensionType: "apiBased",
@@ -523,7 +523,7 @@ describe("copilotPlugin", async () => {
       projectPath: path.join(os.tmpdir(), appName),
       ignoreLockByUT: true,
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.composeExtensions = [
       {
         composeExtensionType: "apiBased",
@@ -608,7 +608,7 @@ describe("copilotPlugin", async () => {
       projectPath: path.join(os.tmpdir(), appName),
       ignoreLockByUT: true,
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.composeExtensions = [
       {
         composeExtensionType: "apiBased",
@@ -702,7 +702,7 @@ describe("copilotPlugin", async () => {
       projectPath: path.join(os.tmpdir(), appName),
       ignoreLockByUT: true,
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.composeExtensions = [
       {
         composeExtensionType: "apiBased",
@@ -805,7 +805,7 @@ describe("copilotPlugin", async () => {
       projectPath: path.join(os.tmpdir(), appName),
       ignoreLockByUT: true,
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.composeExtensions = [
       {
         composeExtensionType: "apiBased",
@@ -924,7 +924,7 @@ describe("copilotPlugin", async () => {
       projectPath: path.join(os.tmpdir(), appName),
       ignoreLockByUT: true,
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.composeExtensions = [
       {
         composeExtensionType: "apiBased",
@@ -1067,7 +1067,7 @@ describe("copilotPlugin", async () => {
       projectPath: path.join(os.tmpdir(), appName),
       ignoreLockByUT: true,
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.composeExtensions = [
       {
         composeExtensionType: "apiBased",
@@ -1181,7 +1181,7 @@ describe("copilotPlugin", async () => {
       projectPath: path.join(os.tmpdir(), appName),
       ignoreLockByUT: true,
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.composeExtensions = [
       {
         composeExtensionType: "apiBased",
@@ -1345,7 +1345,7 @@ describe("copilotPlugin", async () => {
       [QuestionNames.ManifestPath]: path.join(os.tmpdir(), appName, "appPackage/manifest.json"),
       projectPath: path.join(os.tmpdir(), appName),
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.composeExtensions = [
       {
         composeExtensionType: "apiBased",
@@ -1499,7 +1499,7 @@ describe("copilotPlugin", async () => {
       [QuestionNames.ManifestPath]: path.join(os.tmpdir(), appName, "appPackage/manifest.json"),
       projectPath: path.join(os.tmpdir(), appName),
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.composeExtensions = [
       {
         composeExtensionType: "apiBased",
@@ -1660,7 +1660,7 @@ describe("copilotPlugin", async () => {
       [QuestionNames.ManifestPath]: path.join(os.tmpdir(), appName, "appPackage/manifest.json"),
       projectPath: path.join(os.tmpdir(), appName),
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.composeExtensions = [
       {
         composeExtensionType: "apiBased",
@@ -1800,7 +1800,7 @@ describe("copilotPlugin", async () => {
       [QuestionNames.ManifestPath]: path.join(os.tmpdir(), appName, "appPackage/manifest.json"),
       projectPath: path.join(os.tmpdir(), appName),
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.composeExtensions = [
       {
         composeExtensionType: "apiBased",
@@ -1957,7 +1957,7 @@ describe("copilotPlugin", async () => {
       [QuestionNames.ManifestPath]: path.join(os.tmpdir(), appName, "appPackage/manifest.json"),
       projectPath: path.join(os.tmpdir(), appName),
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.composeExtensions = [
       {
         composeExtensionType: "apiBased",
@@ -2115,7 +2115,7 @@ describe("copilotPlugin", async () => {
       [QuestionNames.ManifestPath]: path.join(os.tmpdir(), appName, "appPackage/manifest.json"),
       projectPath: path.join(os.tmpdir(), appName),
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.composeExtensions = [
       {
         composeExtensionType: "apiBased",
@@ -2191,7 +2191,7 @@ describe("copilotPlugin", async () => {
       [QuestionNames.ManifestPath]: path.join(os.tmpdir(), appName, "appPackage/manifest.json"),
       projectPath: path.join(os.tmpdir(), appName),
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.composeExtensions = [
       {
         composeExtensionType: "apiBased",
@@ -2278,7 +2278,7 @@ describe("copilotPlugin", async () => {
 
   it("add API - assembleError", async () => {
     const appName = await mockV3Project();
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.composeExtensions = [
       {
         composeExtensionType: "apiBased",
@@ -2308,7 +2308,7 @@ describe("copilotPlugin", async () => {
 
   it("add API - SpecParserError", async () => {
     const appName = await mockV3Project();
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.composeExtensions = [
       {
         composeExtensionType: "apiBased",
@@ -2364,7 +2364,7 @@ describe("copilotPlugin", async () => {
 
   it("add API - ui error", async () => {
     const appName = await mockV3Project();
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.composeExtensions = [
       {
         composeExtensionType: "apiBased",
@@ -2396,7 +2396,7 @@ describe("copilotPlugin", async () => {
 
   it("add API - not 'add' when confirm", async () => {
     const appName = await mockV3Project();
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.composeExtensions = [
       {
         composeExtensionType: "apiBased",
@@ -2436,7 +2436,7 @@ describe("copilotPlugin", async () => {
 
   it("isDeclarativeAgentApp - true", async () => {
     const core = new FxCore(tools);
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.copilotAgents = {
       declarativeAgents: [
         {
@@ -2456,7 +2456,7 @@ describe("copilotPlugin", async () => {
 
   it("isDeclarativeAgentApp - false", async () => {
     const core = new FxCore(tools);
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
     const inputs = { projectPath: "mock" } as Inputs;
     const res = await core.isDelcarativeAgentApp(inputs);
@@ -2472,7 +2472,7 @@ describe("copilotPlugin", async () => {
         [QuestionNames.ManifestPath]: "manifest.json",
         platform: Platform.VS,
       };
-      const manifest = new TeamsAppManifest();
+      const manifest = createDefaultTeamsManifest();
       manifest.copilotAgents = {
         plugins: [
           {
@@ -2515,7 +2515,7 @@ describe("copilotPlugin", async () => {
         [QuestionNames.ManifestPath]: "manifest.json",
         platform: Platform.VS,
       };
-      const manifest = new TeamsAppManifest();
+      const manifest = createDefaultTeamsManifest();
       manifest.copilotAgents = {
         plugins: [
           {
@@ -2919,7 +2919,7 @@ describe("regeneratePlugin", async () => {
       projectPath: path.join(os.tmpdir(), appName),
       ignoreLockByUT: true,
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.copilotAgents = {
       declarativeAgents: [
         {
@@ -3086,7 +3086,7 @@ describe("regeneratePlugin", async () => {
     });
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
 
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.copilotAgents = {
       declarativeAgents: [{ file: "dcManifest.json", id: "action_1" }],
     };
@@ -3180,7 +3180,7 @@ describe("regeneratePlugin", async () => {
       ignoreLockByUT: true,
     };
 
-    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(new TeamsAppManifest()));
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(createDefaultTeamsManifest()));
     coreSpy("getManifestPath").mockResolvedValue(
       ok(path.join(appPath, "appPackage", "dcManifest.json"))
     );
@@ -3773,7 +3773,7 @@ describe("kiotaRegenerate", async () => {
       ignoreLockByUT: true,
     };
 
-    const teamsManifest = new TeamsAppManifest();
+    const teamsManifest = createDefaultTeamsManifest();
     teamsManifest.copilotAgents = {
       declarativeAgents: [{ id: "action_1", file: "dcManifest.json" }],
     };

@@ -4,7 +4,13 @@ import fs from "fs-extra";
 import "mocha";
 import * as path from "path";
 import sinon from "sinon";
-import { AppManifestUtils, ManifestUtil, TeamsAppManifest, TeamsManifestConverter } from "../src";
+import {
+  AppManifestUtils,
+  ManifestUtil,
+  TeamsManifestLatest,
+  TeamsManifestConverter,
+  createDefaultTeamsManifest,
+} from "../src";
 
 chai.use(chaiAsPromised);
 
@@ -43,7 +49,7 @@ describe("Manifest manipulation", async () => {
 
     it("should succeed when writing to a valid path", async () => {
       const filePath = path.join(__dirname, "test_manifest.json");
-      const manifest = new TeamsAppManifest();
+      const manifest = createDefaultTeamsManifest();
       const fakeId = "some-fake-id";
       manifest.id = fakeId;
       await ManifestUtil.writeToPath(filePath, manifest);
@@ -60,7 +66,7 @@ describe("Manifest manipulation", async () => {
     });
 
     it("should throw if $schema is undefined", async () => {
-      const manifest = new TeamsAppManifest();
+      const manifest = createDefaultTeamsManifest();
       manifest.$schema = undefined;
       chai.expect(ManifestUtil.validateManifest(manifest)).to.be.rejectedWith(Error);
     });
@@ -89,13 +95,12 @@ describe("Manifest manipulation", async () => {
     it("should return error string array", async () => {
       // schema has version 1.11
       const schema = await loadSchema();
-      const manifest = new TeamsAppManifest();
-      chai.expect(manifest.manifestVersion).equals("1.15");
+      const manifest = createDefaultTeamsManifest();
+      chai.expect(manifest.manifestVersion).equals("1.28");
       const result = await ManifestUtil.validateManifestAgainstSchema(manifest, schema);
       chai.expect(result).not.to.be.empty;
-      chai.expect(result.length).equals(7);
-      // 1.15 doesn't match 1.11, so it should return an error
-      chai.expect(result[5]).to.contain("/manifestVersion");
+      // 1.28 doesn't match the loaded schema version, so it should return a manifestVersion error
+      chai.expect(result.some((e) => e.includes("/manifestVersion"))).to.be.true;
     });
   });
 });
@@ -196,7 +201,7 @@ describe("ManifestUtil", () => {
 
       sandbox.stub(mockFetch, "default").resolves(mockResponse as any);
 
-      const manifest = { $schema: "https://example.com/schema.json" } as TeamsAppManifest;
+      const manifest = { $schema: "https://example.com/schema.json" } as TeamsManifestLatest;
       const result = await ManifestUtil.fetchSchema(manifest);
 
       chai.expect(result).to.deep.include({ type: "object", properties: {} });
@@ -215,7 +220,7 @@ describe("ManifestUtil", () => {
         return { pattern: "\\x07 test pattern" };
       });
 
-      const manifest = { $schema: "https://example.com/schema.json" } as TeamsAppManifest;
+      const manifest = { $schema: "https://example.com/schema.json" } as TeamsManifestLatest;
       await ManifestUtil.fetchSchema(manifest);
 
       chai.expect(jsonParseStub.calledOnce).to.be.true;
@@ -225,7 +230,9 @@ describe("ManifestUtil", () => {
       const fetchError = new Error("Network error");
       sandbox.stub(mockFetch, "default").rejects(fetchError);
 
-      const manifest = { $schema: "https://example.com/invalid-schema.json" } as TeamsAppManifest;
+      const manifest = {
+        $schema: "https://example.com/invalid-schema.json",
+      } as TeamsManifestLatest;
 
       try {
         await ManifestUtil.fetchSchema(manifest);
@@ -247,7 +254,7 @@ describe("ManifestUtil", () => {
 
       sandbox.stub(mockFetch, "default").resolves(mockResponse as any);
 
-      const manifest = { $schema: "https://example.com/schema.json" } as TeamsAppManifest;
+      const manifest = { $schema: "https://example.com/schema.json" } as TeamsManifestLatest;
 
       try {
         await ManifestUtil.fetchSchema(manifest);
@@ -268,7 +275,7 @@ describe("ManifestUtil", () => {
 
       sandbox.stub(mockFetch, "default").resolves(mockResponse as any);
 
-      const manifest = { $schema: "https://example.com/schema.json" } as TeamsAppManifest;
+      const manifest = { $schema: "https://example.com/schema.json" } as TeamsManifestLatest;
 
       try {
         await ManifestUtil.fetchSchema(manifest);
@@ -283,7 +290,7 @@ describe("ManifestUtil", () => {
     it("should throw generic error when non-Error exception occurs", async () => {
       sandbox.stub(mockFetch, "default").rejects("string error");
 
-      const manifest = { $schema: "https://example.com/schema.json" } as TeamsAppManifest;
+      const manifest = { $schema: "https://example.com/schema.json" } as TeamsManifestLatest;
 
       try {
         await ManifestUtil.fetchSchema(manifest);
@@ -303,7 +310,9 @@ describe("ManifestUtil", () => {
 
       sandbox.stub(mockFetch, "default").resolves(mockResponse as any);
 
-      const manifest = { schema: "https://example.com/schema.json" } as unknown as TeamsAppManifest;
+      const manifest = {
+        schema: "https://example.com/schema.json",
+      } as unknown as TeamsManifestLatest;
       const result = await ManifestUtil.fetchSchema(manifest);
 
       chai.expect(result).to.deep.equal(mockSchema);

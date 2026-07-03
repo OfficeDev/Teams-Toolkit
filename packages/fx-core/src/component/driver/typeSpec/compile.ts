@@ -8,7 +8,7 @@ import {
   ok,
   Platform,
   SystemError,
-  TeamsAppManifest,
+  TeamsManifestLatest,
   UserError,
 } from "@microsoft/teamsfx-api";
 import fs from "fs-extra";
@@ -168,7 +168,7 @@ export class TypeSpecCompileDriver implements StepDriver {
           outputFolderPath,
           path.basename(args.manifestPath)
         );
-        const manifest = (await fs.readJSON(manifestFilePath)) as TeamsAppManifest;
+        const manifest = (await fs.readJSON(manifestFilePath)) as TeamsManifestLatest;
         manifest.copilotAgents = manifest.copilotAgents || {};
         manifest.copilotAgents.declarativeAgents = manifest.copilotAgents.declarativeAgents || [];
         manifest.copilotAgents.declarativeAgents = [

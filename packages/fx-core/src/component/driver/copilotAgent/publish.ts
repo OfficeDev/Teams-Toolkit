@@ -6,7 +6,13 @@ import * as fs from "fs-extra";
 import { Service } from "typedi";
 
 import { hooks } from "@feathersjs/hooks/lib";
-import { FxError, Result, SystemError, TeamsAppManifest, UserError } from "@microsoft/teamsfx-api";
+import {
+  FxError,
+  Result,
+  SystemError,
+  TeamsManifestLatest,
+  UserError,
+} from "@microsoft/teamsfx-api";
 
 import {
   getResourceServiceEndpoint,
@@ -96,7 +102,7 @@ export class CopilotAgentPublishDriver implements StepDriver {
         throw new FileNotFoundError(actionName, Constants.MANIFEST_FILE, helpLink);
       }
       const manifestString = manifestFile.getData().toString();
-      const manifest = JSON.parse(manifestString) as TeamsAppManifest;
+      const manifest = JSON.parse(manifestString) as TeamsManifestLatest;
 
       const declarativeAgents = manifest.copilotAgents?.declarativeAgents;
 

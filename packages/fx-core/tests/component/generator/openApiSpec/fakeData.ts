@@ -1,6 +1,6 @@
-import { TeamsAppManifest } from "@microsoft/teamsfx-api";
+import { TeamsManifestLatest } from "@microsoft/teamsfx-api";
 
-export const teamsManifest: TeamsAppManifest = {
+export const teamsManifest: TeamsManifestLatest = {
   name: {
     short: "short name",
     full: "full name",

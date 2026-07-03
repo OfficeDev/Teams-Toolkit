@@ -12,7 +12,7 @@ import {
   M365TokenProvider,
   Platform,
   Result,
-  TeamsAppManifest,
+  TeamsManifestLatest,
   UserError,
   err,
   ok,
@@ -245,7 +245,7 @@ export async function updateTeamsAppV3ForPublish(
   if (manifestFile) {
     try {
       const manifestString = manifestFile.getData().toString();
-      const manifest = JSON.parse(manifestString) as TeamsAppManifest;
+      const manifest = JSON.parse(manifestString) as TeamsManifestLatest;
       if (!manifest.id || !isUUID(manifest.id)) {
         validationError = AppStudioResultFactory.UserError(
           AppStudioError.ValidationFailedError.name,

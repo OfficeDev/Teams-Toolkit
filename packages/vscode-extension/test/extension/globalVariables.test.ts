@@ -4,7 +4,7 @@ import { assert, expect, vi } from "vitest";
 import { ExtensionContext, Uri } from "vscode";
 import { mockValue } from "../mocks/vitestMockUtils";
 
-import { err, ok, SystemError, TeamsAppManifest } from "@microsoft/teamsfx-api";
+import { err, ok, SystemError, createDefaultTeamsManifest } from "@microsoft/teamsfx-api";
 import * as teamsfxCore from "@microsoft/teamsfx-core";
 import { copilotGptManifestUtils, manifestUtils } from "@microsoft/teamsfx-core";
 import * as globalVariables from "../../src/globalVariables";
@@ -85,7 +85,7 @@ describe("Global Variables", () => {
 
   describe("isDeclarativeCopilotApp", () => {
     it("Declarative copilot project", () => {
-      const teamsManifest = new TeamsAppManifest();
+      const teamsManifest = createDefaultTeamsManifest();
       teamsManifest.copilotAgents = {
         declarativeAgents: [{ id: "1", file: "testFile" }],
       };
@@ -96,7 +96,7 @@ describe("Global Variables", () => {
     });
 
     it("Not declarative copilot project", () => {
-      const teamsManifest = new TeamsAppManifest();
+      const teamsManifest = createDefaultTeamsManifest();
       vi.spyOn(manifestUtils, "readAppManifestSync").mockReturnValue(ok(teamsManifest));
 
       const res = globalVariables.checkIsDeclarativeCopilotApp("projectPath");
@@ -163,7 +163,7 @@ describe("Global Variables", () => {
     const fakeDirectory = "fakeDir";
 
     it("returns true when sensitivity label is set", () => {
-      const teamsManifest = new TeamsAppManifest();
+      const teamsManifest = createDefaultTeamsManifest();
       teamsManifest.copilotAgents = {
         declarativeAgents: [{ id: "test-id", file: "test.txt" }],
       };
@@ -190,7 +190,7 @@ describe("Global Variables", () => {
     });
 
     it("returns false when manifest has no declarative agent path", () => {
-      const teamsManifest = new TeamsAppManifest();
+      const teamsManifest = createDefaultTeamsManifest();
       vi.spyOn(manifestUtils, "readAppManifestSync").mockReturnValue(ok(teamsManifest));
 
       const result = globalVariables.checkIsSensitivityLabelSet(fakeDirectory);
@@ -198,7 +198,7 @@ describe("Global Variables", () => {
     });
 
     it("returns false when declarative agent manifest read fails", () => {
-      const teamsManifest = new TeamsAppManifest();
+      const teamsManifest = createDefaultTeamsManifest();
       teamsManifest.copilotAgents = {
         declarativeAgents: [{ id: "test-id", file: "test.txt" }],
       };
@@ -212,7 +212,7 @@ describe("Global Variables", () => {
     });
 
     it("returns false when declarative agent manifest has no sensitivity label", () => {
-      const teamsManifest = new TeamsAppManifest();
+      const teamsManifest = createDefaultTeamsManifest();
       teamsManifest.copilotAgents = {
         declarativeAgents: [{ id: "test-id", file: "test.txt" }],
       };
@@ -230,7 +230,7 @@ describe("Global Variables", () => {
   });
 
   it("updateIsDeclarativeCopilotApp", () => {
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     let res = globalVariables.updateIsDeclarativeCopilotApp(manifest);
     assert.isFalse(res);
 

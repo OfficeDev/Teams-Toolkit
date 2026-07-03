@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { err, TeamsAppManifest } from "@microsoft/teamsfx-api";
+import { err, createDefaultTeamsManifest } from "@microsoft/teamsfx-api";
 import AdmZip from "adm-zip";
 import fs from "fs-extra";
 import os from "os";
@@ -21,7 +21,7 @@ import { MockedLogProvider, MockedUserInteraction } from "../../../plugins/solut
 describe("copilotAgent/publish", async () => {
   const tempDir = path.join(os.tmpdir(), "fx-core-copilot-publish-tests");
   const createManifestWithDA = (declarativeAgentFile: string) => {
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.copilotAgents = {
       declarativeAgents: [{ id: "da1", file: declarativeAgentFile }],
     };
@@ -117,7 +117,7 @@ describe("copilotAgent/publish", async () => {
 
   it("happy path - default scope (Personal)", async () => {
     const appPackagePath = await createPackage({
-      [Constants.MANIFEST_FILE]: new TeamsAppManifest(),
+      [Constants.MANIFEST_FILE]: createDefaultTeamsManifest(),
       "color.png": Buffer.from(""),
       "outline.png": Buffer.from(""),
     });
@@ -144,7 +144,7 @@ describe("copilotAgent/publish", async () => {
 
   it("happy path - tenant scope", async () => {
     const appPackagePath = await createPackage({
-      [Constants.MANIFEST_FILE]: new TeamsAppManifest(),
+      [Constants.MANIFEST_FILE]: createDefaultTeamsManifest(),
       "color.png": Buffer.from(""),
       "outline.png": Buffer.from(""),
     });
@@ -172,7 +172,7 @@ describe("copilotAgent/publish", async () => {
 
   it("happy path - shared scope", async () => {
     const appPackagePath = await createPackage({
-      [Constants.MANIFEST_FILE]: new TeamsAppManifest(),
+      [Constants.MANIFEST_FILE]: createDefaultTeamsManifest(),
       "color.png": Buffer.from(""),
       "outline.png": Buffer.from(""),
     });
@@ -199,7 +199,7 @@ describe("copilotAgent/publish", async () => {
   });
 
   it("should return token error when getAccessToken fails", async () => {
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.id = uuid();
     const appPackagePath = await createPackage({
       [Constants.MANIFEST_FILE]: manifest,
@@ -225,7 +225,7 @@ describe("copilotAgent/publish", async () => {
   });
 
   it("should return error when publishAgent throws", async () => {
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.id = uuid();
     const appPackagePath = await createPackage({
       [Constants.MANIFEST_FILE]: manifest,
@@ -251,7 +251,7 @@ describe("copilotAgent/publish", async () => {
 
   it("run method should work", async () => {
     const appPackagePath = await createPackage({
-      [Constants.MANIFEST_FILE]: new TeamsAppManifest(),
+      [Constants.MANIFEST_FILE]: createDefaultTeamsManifest(),
     });
     const args: CopilotAgentPublishArgs = {
       appPackagePath,
@@ -287,7 +287,7 @@ describe("copilotAgent/publish", async () => {
 
   it("should return shareLink when published with shared scope", async () => {
     const appPackagePath = await createPackage({
-      [Constants.MANIFEST_FILE]: new TeamsAppManifest(),
+      [Constants.MANIFEST_FILE]: createDefaultTeamsManifest(),
     });
     const args: CopilotAgentPublishArgs = {
       appPackagePath,
@@ -320,7 +320,7 @@ describe("copilotAgent/publish", async () => {
 
   it("should not set shareLink when shareLinkKey is not provided", async () => {
     const appPackagePath = await createPackage({
-      [Constants.MANIFEST_FILE]: new TeamsAppManifest(),
+      [Constants.MANIFEST_FILE]: createDefaultTeamsManifest(),
     });
     const args: CopilotAgentPublishArgs = {
       appPackagePath,

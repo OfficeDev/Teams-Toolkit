@@ -1,9 +1,16 @@
-import { err, ok, SystemError, SystemErrorOptions, TeamsAppManifest } from "@microsoft/teamsfx-api";
+import {
+  err,
+  ok,
+  SystemError,
+  SystemErrorOptions,
+  createDefaultTeamsManifest,
+} from "@microsoft/teamsfx-api";
 import {
   copilotGptManifestUtils,
   envUtil,
   featureFlagManager,
   GraphClient,
+  pluginManifestUtils,
 } from "@microsoft/teamsfx-core";
 import fs from "fs-extra";
 import * as path from "path";
@@ -281,7 +288,7 @@ describe("CodeLens Provider", () => {
 
   describe("API ME CodeLensProvider", () => {
     it("Add API", async () => {
-      const manifest = new TeamsAppManifest();
+      const manifest = createDefaultTeamsManifest();
       manifest.composeExtensions = [
         {
           composeExtensionType: "apiBased",
@@ -319,7 +326,7 @@ describe("CodeLens Provider", () => {
     });
 
     it("Do not show codelens for non-copilot plugin project", async () => {
-      const manifest = new TeamsAppManifest();
+      const manifest = createDefaultTeamsManifest();
       const manifestString = JSON.stringify(manifest);
       const document = {
         fileName: "manifest.json",
@@ -348,12 +355,12 @@ describe("CodeLens Provider", () => {
 
   describe("Api plugin CodeLensProvider", () => {
     it("Add API", async () => {
-      const manifest = new TeamsAppManifest();
+      const manifest = createDefaultTeamsManifest();
       manifest.copilotAgents = {
-        plugins: [
+        declarativeAgents: [
           {
-            file: "test.json",
-            id: "plugin1",
+            file: "declarativeAgent.json",
+            id: "agent1",
           },
         ],
       };
@@ -382,10 +389,10 @@ describe("CodeLens Provider", () => {
       vi.spyOn(globalVariables, "workspaceUri").value(
         vscode.Uri.parse(path.resolve(__dirname, "unknown"))
       );
+      vi.spyOn(pluginManifestUtils, "isApiPluginFromDeclarativeAgent").mockResolvedValue(true);
       const apiPluginCodelensProvider = new ApiPluginCodeLensProvider();
-      const codelens: vscode.CodeLens[] = apiPluginCodelensProvider.provideCodeLenses(
-        document
-      ) as vscode.CodeLens[];
+      const codelens: vscode.CodeLens[] =
+        await apiPluginCodelensProvider.provideCodeLenses(document);
 
       assert.equal(codelens.length, 1);
       expect(codelens[0].command!.title).to.equal("➕Add another API");
@@ -420,9 +427,8 @@ describe("CodeLens Provider", () => {
         vscode.Uri.parse(path.resolve(__dirname, "unknown"))
       );
       const apiPluginCodelensProvider = new ApiPluginCodeLensProvider();
-      const codelens: vscode.CodeLens[] = apiPluginCodelensProvider.provideCodeLenses(
-        document
-      ) as vscode.CodeLens[];
+      const codelens: vscode.CodeLens[] =
+        await apiPluginCodelensProvider.provideCodeLenses(document);
 
       assert.equal(codelens.length, 0);
     });
@@ -453,15 +459,14 @@ describe("CodeLens Provider", () => {
         vscode.Uri.parse(path.resolve(__dirname, "unknown"))
       );
       const apiPluginCodelensProvider = new ApiPluginCodeLensProvider();
-      const codelens: vscode.CodeLens[] = apiPluginCodelensProvider.provideCodeLenses(
-        document
-      ) as vscode.CodeLens[];
+      const codelens: vscode.CodeLens[] =
+        await apiPluginCodelensProvider.provideCodeLenses(document);
 
       assert.equal(codelens.length, 0);
     });
 
     it("Do not show codelens for if not API plugin project", async () => {
-      const manifest = new TeamsAppManifest();
+      const manifest = createDefaultTeamsManifest();
       manifest.copilotAgents = {};
       const openApiObject = {
         openapi: "3.0",
@@ -489,9 +494,8 @@ describe("CodeLens Provider", () => {
         vscode.Uri.parse(path.resolve(__dirname, "unknown"))
       );
       const apiPluginCodelensProvider = new ApiPluginCodeLensProvider();
-      const codelens: vscode.CodeLens[] = apiPluginCodelensProvider.provideCodeLenses(
-        document
-      ) as vscode.CodeLens[];
+      const codelens: vscode.CodeLens[] =
+        await apiPluginCodelensProvider.provideCodeLenses(document);
 
       assert.equal(codelens.length, 0);
     });
@@ -639,7 +643,7 @@ publish:
     it("should not provide codelens when not a copilot project", async () => {
       vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(true);
       vi.spyOn(fs, "existsSync").mockReturnValue(true);
-      const manifest = new TeamsAppManifest();
+      const manifest = createDefaultTeamsManifest();
       manifest.copilotAgents = {};
       vi.spyOn(fs, "readFileSync").mockReturnValue(JSON.stringify(manifest));
       vi.spyOn(globalVariables, "workspaceUri").value(

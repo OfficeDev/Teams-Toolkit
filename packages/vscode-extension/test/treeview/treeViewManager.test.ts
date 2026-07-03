@@ -1,4 +1,4 @@
-import { TeamsAppManifest, ok } from "@microsoft/teamsfx-api";
+import { TeamsManifestLatest, ok } from "@microsoft/teamsfx-api";
 import { featureFlagManager, manifestUtils } from "@microsoft/teamsfx-core";
 import { assert, vi } from "vitest";
 import * as vscode from "vscode";
@@ -98,7 +98,7 @@ describe("TreeViewManager", () => {
   it("updateTreeViewsByContent if remove project related commands", async () => {
     mockValue(globalVariables, "workspaceUri", "");
     vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
-    vi.spyOn(manifestUtils, "readAppManifest").mockResolvedValue(ok({} as TeamsAppManifest));
+    vi.spyOn(manifestUtils, "readAppManifest").mockResolvedValue(ok({} as TeamsManifestLatest));
     vi.spyOn(manifestUtils, "getCapabilities").mockReturnValue(["tab"]);
     treeViewManager.registerTreeViews({
       subscriptions: [],
@@ -122,7 +122,7 @@ describe("TreeViewManager", () => {
   it("updateTreeViewsByContent if remove project related commands when HideGitHubCopilotPreviewTag is enabled", async () => {
     mockValue(globalVariables, "workspaceUri", "");
     vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(true);
-    vi.spyOn(manifestUtils, "readAppManifest").mockResolvedValue(ok({} as TeamsAppManifest));
+    vi.spyOn(manifestUtils, "readAppManifest").mockResolvedValue(ok({} as TeamsManifestLatest));
     vi.spyOn(manifestUtils, "getCapabilities").mockReturnValue(["tab"]);
     treeViewManager.registerTreeViews({
       subscriptions: [],

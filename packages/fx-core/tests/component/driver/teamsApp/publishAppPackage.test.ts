@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { err, ok, Platform, TeamsAppManifest } from "@microsoft/teamsfx-api";
+import { err, ok, Platform, createDefaultTeamsManifest } from "@microsoft/teamsfx-api";
 import AdmZip from "adm-zip";
 import fs from "fs-extra";
 import mockedEnv from "mocked-env";
@@ -112,7 +112,10 @@ describe("teamsApp/publishAppPackage", async () => {
     vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     vi.spyOn(fs, "readFile").mockImplementation(async () => {
       const zip = new AdmZip();
-      zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(new TeamsAppManifest())));
+      zip.addFile(
+        Constants.MANIFEST_FILE,
+        Buffer.from(JSON.stringify(createDefaultTeamsManifest()))
+      );
       zip.addFile("color.png", Buffer.from(""));
       zip.addFile("outlie.png", Buffer.from(""));
 
@@ -134,7 +137,7 @@ describe("teamsApp/publishAppPackage", async () => {
     vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     vi.spyOn(fs, "readFile").mockImplementation(async () => {
       const zip = new AdmZip();
-      const manifest = new TeamsAppManifest();
+      const manifest = createDefaultTeamsManifest();
       manifest.id = uuid();
       manifest.name = { short: "test-app", full: "test-app" } as any;
       zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(manifest)));
@@ -161,7 +164,7 @@ describe("teamsApp/publishAppPackage", async () => {
     vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     vi.spyOn(fs, "readFile").mockImplementation(async () => {
       const zip = new AdmZip();
-      const manifest = new TeamsAppManifest();
+      const manifest = createDefaultTeamsManifest();
       manifest.id = uuid();
       manifest.name = { short: "test-app", full: "test-app" } as any;
       zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(manifest)));
@@ -188,7 +191,10 @@ describe("teamsApp/publishAppPackage", async () => {
     vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     vi.spyOn(fs, "readFile").mockImplementation(async () => {
       const zip = new AdmZip();
-      zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(new TeamsAppManifest())));
+      zip.addFile(
+        Constants.MANIFEST_FILE,
+        Buffer.from(JSON.stringify(createDefaultTeamsManifest()))
+      );
       zip.addFile("color.png", Buffer.from(""));
       zip.addFile("outlie.png", Buffer.from(""));
 
@@ -215,7 +221,10 @@ describe("teamsApp/publishAppPackage", async () => {
     vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     vi.spyOn(fs, "readFile").mockImplementation(async () => {
       const zip = new AdmZip();
-      zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(new TeamsAppManifest())));
+      zip.addFile(
+        Constants.MANIFEST_FILE,
+        Buffer.from(JSON.stringify(createDefaultTeamsManifest()))
+      );
       zip.addFile("color.png", Buffer.from(""));
       zip.addFile("outlie.png", Buffer.from(""));
 
@@ -239,7 +248,7 @@ describe("teamsApp/publishAppPackage", async () => {
       vi.spyOn(fs, "pathExists").mockResolvedValue(true);
       vi.spyOn(fs, "readFile").mockImplementation(async () => {
         const zip = new AdmZip();
-        const manifest = new TeamsAppManifest();
+        const manifest = createDefaultTeamsManifest();
         zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(manifest)));
         return zip.toBuffer();
       });
@@ -258,7 +267,7 @@ describe("teamsApp/publishAppPackage", async () => {
       vi.spyOn(fs, "pathExists").mockResolvedValue(true);
       vi.spyOn(fs, "readFile").mockImplementation(async () => {
         const zip = new AdmZip();
-        const manifest: any = new TeamsAppManifest();
+        const manifest: any = createDefaultTeamsManifest();
         manifest.copilotAgents = {
           declarativeAgents: [{ id: "agent1", file: "declarativeAgent.json" }],
         };
@@ -289,7 +298,7 @@ describe("teamsApp/publishAppPackage", async () => {
       vi.spyOn(fs, "pathExists").mockResolvedValue(true);
       vi.spyOn(fs, "readFile").mockImplementation(async () => {
         const zip = new AdmZip();
-        const manifest: any = new TeamsAppManifest();
+        const manifest: any = createDefaultTeamsManifest();
         manifest.copilotAgents = {
           declarativeAgents: [{ id: "agent1", file: "declarativeAgent.json" }],
         };
@@ -330,7 +339,7 @@ describe("teamsApp/publishAppPackage", async () => {
       vi.spyOn(fs, "pathExists").mockResolvedValue(true);
       vi.spyOn(fs, "readFile").mockImplementation(async () => {
         const zip = new AdmZip();
-        const manifest: any = new TeamsAppManifest();
+        const manifest: any = createDefaultTeamsManifest();
         manifest.copilotAgents = {
           declarativeAgents: [{ id: "agent1", file: "declarativeAgent.json" }],
         };
@@ -377,7 +386,7 @@ describe("teamsApp/publishAppPackage", async () => {
       vi.spyOn(fs, "pathExists").mockResolvedValue(true);
       vi.spyOn(fs, "readFile").mockImplementation(async () => {
         const zip = new AdmZip();
-        const manifest: any = new TeamsAppManifest();
+        const manifest: any = createDefaultTeamsManifest();
         manifest.copilotAgents = {
           declarativeAgents: [{ id: "agent1", file: "declarativeAgent.json" }],
         };
@@ -424,7 +433,7 @@ describe("teamsApp/publishAppPackage", async () => {
       vi.spyOn(fs, "pathExists").mockResolvedValue(true);
       vi.spyOn(fs, "readFile").mockImplementation(async () => {
         const zip = new AdmZip();
-        const manifest: any = new TeamsAppManifest();
+        const manifest: any = createDefaultTeamsManifest();
         manifest.copilotAgents = {
           declarativeAgents: [{ id: "agent1", file: "declarativeAgent.json" }],
         };
@@ -472,7 +481,7 @@ describe("teamsApp/publishAppPackage", async () => {
       vi.spyOn(fs, "pathExists").mockResolvedValue(true);
       vi.spyOn(fs, "readFile").mockImplementation(async () => {
         const zip = new AdmZip();
-        const manifest: any = new TeamsAppManifest();
+        const manifest: any = createDefaultTeamsManifest();
         manifest.copilotAgents = {
           declarativeAgents: [{ id: "agent1", file: "declarativeAgent.json" }],
         };
@@ -533,7 +542,7 @@ describe("teamsApp/publishAppPackage", async () => {
       vi.spyOn(fs, "pathExists").mockResolvedValue(true);
       vi.spyOn(fs, "readFile").mockImplementation(async () => {
         const zip = new AdmZip();
-        const manifest: any = new TeamsAppManifest();
+        const manifest: any = createDefaultTeamsManifest();
         manifest.copilotAgents = {
           declarativeAgents: [{ id: "agent1", file: "declarativeAgent.json" }],
         };
@@ -595,7 +604,7 @@ describe("teamsApp/publishAppPackage", async () => {
       vi.spyOn(fs, "pathExists").mockResolvedValue(true);
       vi.spyOn(fs, "readFile").mockImplementation(async () => {
         const zip = new AdmZip();
-        const manifest: any = new TeamsAppManifest();
+        const manifest: any = createDefaultTeamsManifest();
         manifest.copilotAgents = {
           declarativeAgents: [{ id: "agent1", file: "declarativeAgent.json" }],
         };
@@ -657,7 +666,7 @@ describe("teamsApp/publishAppPackage", async () => {
       vi.spyOn(fs, "pathExists").mockResolvedValue(true);
       vi.spyOn(fs, "readFile").mockImplementation(async () => {
         const zip = new AdmZip();
-        const manifest: any = new TeamsAppManifest();
+        const manifest: any = createDefaultTeamsManifest();
         manifest.copilotAgents = {
           declarativeAgents: [{ id: "agent1", file: "declarativeAgent.json" }],
         };

@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 import { hooks } from "@feathersjs/hooks/lib";
-import { FxError, Platform, Result, TeamsAppManifest, err, ok } from "@microsoft/teamsfx-api";
+import { FxError, Platform, Result, TeamsManifestLatest, err, ok } from "@microsoft/teamsfx-api";
 import AdmZip from "adm-zip";
 import fs from "fs-extra";
 import { merge } from "lodash";
@@ -99,7 +99,7 @@ export class PublishAppPackageDriver implements StepDriver {
       );
     }
     const manifestString = manifestFile.getData().toString();
-    const manifest = JSON.parse(manifestString) as TeamsAppManifest;
+    const manifest = JSON.parse(manifestString) as TeamsManifestLatest;
 
     const declarativeAgents = manifest.copilotAgents?.declarativeAgents;
 

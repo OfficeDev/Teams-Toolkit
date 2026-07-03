@@ -13,7 +13,7 @@ import path from "path";
 import {
   AppPackageFolderName,
   ManifestTemplateFileName,
-  TeamsAppManifest,
+  TeamsManifestLatest,
 } from "@microsoft/teamsfx-api";
 import TreeViewManagerInstance from "./treeview/treeViewManager";
 import { ExtTelemetry } from "./telemetry/extTelemetry";
@@ -55,7 +55,7 @@ export function manifestListener(): vscode.Disposable {
           await setAbortableTimeout(5000, abortController.signal);
           if (!abortController.signal.aborted) {
             const currValue = isDeclarativeCopilotApp;
-            const manifest: TeamsAppManifest = JSON.parse(event.getText());
+            const manifest: TeamsManifestLatest = JSON.parse(event.getText());
             const newValue = updateIsDeclarativeCopilotApp(manifest);
             if (currValue !== newValue) {
               ExtTelemetry.sendTelemetryEvent(TelemetryEvent.UpdateAddPluginTreeview, {

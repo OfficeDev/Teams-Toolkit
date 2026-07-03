@@ -1,4 +1,4 @@
-import { ok, TeamsAppManifest } from "@microsoft/teamsfx-api";
+import { ok, TeamsManifestLatest } from "@microsoft/teamsfx-api";
 import * as globalState from "@microsoft/teamsfx-core";
 import {
   featureFlagManager,
@@ -456,7 +456,7 @@ describe("autoOpenHelper", () => {
   it("ShowScaffoldingWarningSummary() - copilot agents", async () => {
     const workspacePath = "/path/to/workspace";
 
-    const manifest: TeamsAppManifest = {
+    const manifest: TeamsManifestLatest = {
       manifestVersion: "version",
       id: "mock-app-id",
       name: { short: "short-name" },
@@ -480,15 +480,19 @@ describe("autoOpenHelper", () => {
         },
       ],
       copilotAgents: {
-        plugins: [
+        declarativeAgents: [
           {
-            id: "plugin-id",
-            file: "copilot-plugin-file",
+            id: "declarativeAgent",
+            file: "declarativeAgent.json",
           },
         ],
       },
     };
     vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(pluginManifestUtils, "isApiPluginFromDeclarativeAgent").mockResolvedValue(true);
+    vi.spyOn(pluginManifestUtils, "getPluginManifestPathsFromDeclarativeAgent").mockResolvedValue(
+      ok(["/path/to/plugin.json"])
+    );
     vi.spyOn(pluginManifestUtils, "getApiSpecFilePathFromTeamsManifest").mockResolvedValue(
       ok(["/path/to/api/spec"])
     );
@@ -510,7 +514,7 @@ describe("autoOpenHelper", () => {
   it("ShowScaffoldingWarningSummary() - copilot extensions", async () => {
     const workspacePath = "/path/to/workspace";
 
-    const manifest: TeamsAppManifest = {
+    const manifest: TeamsManifestLatest = {
       manifestVersion: "version",
       id: "mock-app-id",
       name: { short: "short-name" },
@@ -534,15 +538,19 @@ describe("autoOpenHelper", () => {
         },
       ],
       copilotAgents: {
-        plugins: [
+        declarativeAgents: [
           {
-            id: "plugin-id",
-            file: "copilot-plugin-file",
+            id: "declarativeAgent",
+            file: "declarativeAgent.json",
           },
         ],
       },
     };
     vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(pluginManifestUtils, "isApiPluginFromDeclarativeAgent").mockResolvedValue(true);
+    vi.spyOn(pluginManifestUtils, "getPluginManifestPathsFromDeclarativeAgent").mockResolvedValue(
+      ok(["/path/to/plugin.json"])
+    );
     vi.spyOn(pluginManifestUtils, "getApiSpecFilePathFromTeamsManifest").mockResolvedValue(
       ok(["/path/to/api/spec"])
     );
@@ -564,7 +572,7 @@ describe("autoOpenHelper", () => {
   it("ShowScaffoldingWarningSummary() - declarative agent", async () => {
     const workspacePath = "/path/to/workspace";
 
-    const manifest: TeamsAppManifest = {
+    const manifest: TeamsManifestLatest = {
       manifestVersion: "version",
       id: "mock-app-id",
       name: { short: "short-name" },

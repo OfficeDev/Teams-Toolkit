@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { err, FxError, ok, Result, TeamsAppManifest, UserError } from "@microsoft/teamsfx-api";
+import { err, FxError, ok, Result, TeamsManifestLatest, UserError } from "@microsoft/teamsfx-api";
 import AdmZip from "adm-zip";
 import fs from "fs-extra";
 import path from "path";
@@ -96,7 +96,7 @@ export async function parseShareAppActionYamlConfig(
       )
     );
   }
-  const manifest = JSON.parse(manifestFile.getData().toString()) as TeamsAppManifest;
+  const manifest = JSON.parse(manifestFile.getData().toString()) as TeamsManifestLatest;
   const manifestId = manifest.id;
   if (!manifestId) {
     return err(

@@ -10,7 +10,7 @@ import {
   FxError,
   GeneratorResult,
   Inputs,
-  TeamsAppManifest,
+  TeamsManifestLatest,
 } from "@microsoft/teamsfx-api";
 import fs from "fs-extra";
 import { err, ok, Result } from "neverthrow";
@@ -41,18 +41,7 @@ export async function kiotaPostProcess(
   // 2.1 Need to update the plugin manifest file
   await parseAndUpdatePluginManifestForKiota(pluginManifestPath, true);
 
-  // 3. Update teams app manifest
-  const manifest: TeamsAppManifest = await fs.readJSON(manifestPath);
-  const apiPluginRelativePath = path.relative(manifestPath, pluginManifestPath);
-  manifest.copilotAgents = manifest.copilotAgents || {};
-  manifest.copilotAgents.plugins = [
-    {
-      file: apiPluginRelativePath,
-      id: "plugin_1",
-    },
-  ];
-
-  // 4. add action in da manifest
+  // 3. add action in da manifest
   const addActionResult = await copilotGptManifestUtils.updateDeclarativeAgentManifest(
     manifestPath,
     defaultDeclarativeAgentManifestFileName,

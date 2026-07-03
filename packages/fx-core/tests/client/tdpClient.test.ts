@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { TeamsAppManifest, err, ok } from "@microsoft/teamsfx-api";
+import { createDefaultTeamsManifest, err, ok } from "@microsoft/teamsfx-api";
 import axios, { AxiosResponse } from "axios";
 import mockedEnv from "mocked-env";
 import { v4 as uuid } from "uuid";
@@ -485,7 +485,7 @@ describe("TeamsDevPortalClient Test", () => {
       const fakeAxiosInstance = axios.create();
       vi.spyOn(axios, "create").mockReturnValue(fakeAxiosInstance);
       vi.spyOn(manifestUtils, "extractManifestFromArchivedFile").mockReturnValue(
-        ok(new TeamsAppManifest())
+        ok(createDefaultTeamsManifest())
       );
 
       const error = {

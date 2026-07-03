@@ -5,7 +5,7 @@ import {
   FxError,
   Result,
   TeamsAppInputs,
-  TeamsAppManifest,
+  TeamsManifestLatest,
   err,
   ok,
 } from "@microsoft/teamsfx-api";
@@ -64,13 +64,13 @@ class TeamsAppMgr {
     return ok(undefined);
   }
 
-  async readManifestFromZip(appPackagePath: string): Promise<Result<TeamsAppManifest, FxError>> {
+  async readManifestFromZip(appPackagePath: string): Promise<Result<TeamsManifestLatest, FxError>> {
     const archivedFile = await fs.readFile(appPackagePath);
     const zipEntries = new AdmZip(archivedFile).getEntries();
     const manifestFile = zipEntries.find((x) => x.entryName === Constants.MANIFEST_FILE);
     if (manifestFile) {
       const manifestContent = manifestFile.getData().toString();
-      const manifest = JSON.parse(manifestContent) as TeamsAppManifest;
+      const manifest = JSON.parse(manifestContent) as TeamsManifestLatest;
       return ok(manifest);
     }
     return err(

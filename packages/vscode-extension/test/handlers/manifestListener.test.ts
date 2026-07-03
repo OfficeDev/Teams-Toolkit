@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as globalVariables from "../../src/globalVariables";
 import { manifestListener } from "../../src/manifestListener";
-import { TeamsAppManifest } from "@microsoft/teamsfx-api";
+import { createDefaultTeamsManifest } from "@microsoft/teamsfx-api";
 import path from "path";
 import TreeViewManagerInstance from "../../src/treeview/treeViewManager";
 import * as projectSettingsHelper from "@microsoft/teamsfx-core/build/common/projectSettingsHelper";
@@ -44,7 +44,7 @@ describe("registerManifestListener", () => {
     const fakeDocument = {
       fileName: path.join(vscode.Uri.file(".").fsPath, "appPackage", "manifest.json"),
       getText: () => {
-        return JSON.stringify(new TeamsAppManifest());
+        return JSON.stringify(createDefaultTeamsManifest());
       },
     };
 
@@ -83,7 +83,7 @@ describe("registerManifestListener", () => {
     const fakeDocument = {
       fileName: path.join(vscode.Uri.file(".").fsPath, "appPackage", "manifest.json"),
       getText: () => {
-        return JSON.stringify(new TeamsAppManifest());
+        return JSON.stringify(createDefaultTeamsManifest());
       },
     };
 
@@ -115,7 +115,7 @@ describe("registerManifestListener", () => {
     const fakeDocument = {
       fileName: path.join(vscode.Uri.file(".").fsPath, "appPackage", "manifest.json"),
       getText: () => {
-        return JSON.stringify(new TeamsAppManifest());
+        return JSON.stringify(createDefaultTeamsManifest());
       },
     };
 
@@ -140,7 +140,7 @@ describe("registerManifestListener", () => {
     const fakeDocument = {
       fileName: path.join(vscode.Uri.file(".").fsPath, "appPackage", "manifest.json"),
       getText: () => {
-        return JSON.stringify(new TeamsAppManifest());
+        return JSON.stringify(createDefaultTeamsManifest());
       },
     };
 
@@ -165,7 +165,7 @@ describe("registerManifestListener", () => {
     const fakeDocument = {
       fileName: path.join(vscode.Uri.file(".").fsPath, "appPackage", "unknown.json"),
       getText: () => {
-        return JSON.stringify(new TeamsAppManifest());
+        return JSON.stringify(createDefaultTeamsManifest());
       },
     };
 

@@ -6,8 +6,8 @@ import {
   FxError,
   Result,
   SystemError,
-  TeamsAppManifest,
   UserError,
+  createDefaultTeamsManifest,
   err,
   ok,
 } from "@microsoft/teamsfx-api";
@@ -128,7 +128,7 @@ export class CreateTeamsAppDriver implements StepDriver {
     }
 
     if (create) {
-      const manifest = new TeamsAppManifest();
+      const manifest = createDefaultTeamsManifest();
       manifest.name.short = args.name;
       if (teamsAppId) {
         manifest.id = teamsAppId;

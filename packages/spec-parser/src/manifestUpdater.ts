@@ -8,7 +8,7 @@ import {
   IComposeExtension,
   IMessagingExtensionCommand,
   PluginManifestSchema,
-  TeamsAppManifest,
+  TeamsManifestLatest,
 } from "@microsoft/app-manifest";
 import fs from "fs-extra";
 import { OpenAPIV3 } from "openapi-types";
@@ -39,8 +39,8 @@ export class ManifestUpdater {
     options: ParseOptions,
     authMap: OperationAuthInfoMap,
     existingPluginManifestInfo?: ExistingPluginManifestInfo
-  ): Promise<[TeamsAppManifest, PluginManifestSchema, WarningResult[], Record<string, any>]> {
-    const manifest: TeamsAppManifest = await fs.readJSON(manifestPath);
+  ): Promise<[TeamsManifestLatest, PluginManifestSchema, WarningResult[], Record<string, any>]> {
+    const manifest: TeamsManifestLatest = await fs.readJSON(manifestPath);
     const apiPluginRelativePath = ManifestUpdater.getRelativePath(manifestPath, apiPluginFilePath);
 
     if (!options.isGptPlugin) {
@@ -70,7 +70,7 @@ export class ManifestUpdater {
     return [manifest, apiPlugin, warnings, jsonDataSet];
   }
 
-  static updateManifestDescription(manifest: TeamsAppManifest, spec: OpenAPIV3.Document): void {
+  static updateManifestDescription(manifest: TeamsManifestLatest, spec: OpenAPIV3.Document): void {
     manifest.description = {
       short: spec.info.title.slice(0, ConstantString.ShortDescriptionMaxLens),
       full: (spec.info.description ?? manifest.description.full)?.slice(
@@ -378,9 +378,9 @@ export class ManifestUpdater {
     options: ParseOptions,
     adaptiveCardFolder?: string,
     authInfo?: AuthInfo
-  ): Promise<[TeamsAppManifest, WarningResult[]]> {
+  ): Promise<[TeamsManifestLatest, WarningResult[]]> {
     try {
-      const originalManifest: TeamsAppManifest = await fs.readJSON(manifestPath);
+      const originalManifest: TeamsManifestLatest = await fs.readJSON(manifestPath);
       const updatedPart: any = {};
       updatedPart.composeExtensions = [];
       let warnings: WarningResult[] = [];

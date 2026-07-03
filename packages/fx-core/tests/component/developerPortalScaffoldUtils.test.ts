@@ -1,7 +1,7 @@
 /**
  * @author Yuqi Zhou <yuqzho@microsoft.com>
  */
-import { err, Inputs, ok, Platform, TeamsAppManifest, UserError } from "@microsoft/teamsfx-api";
+import { err, Inputs, ok, Platform, TeamsManifestLatest, UserError } from "@microsoft/teamsfx-api";
 import fs from "fs-extra";
 import { merge } from "lodash";
 import path from "path";
@@ -144,7 +144,7 @@ describe("developPortalScaffoldUtils", () => {
       };
       const inputs: Inputs = { platform: Platform.VSCode };
 
-      const manifest: TeamsAppManifest = {
+      const manifest: TeamsManifestLatest = {
         manifestVersion: "version",
         id: "mock-app-id",
         name: { short: "short-name" },
@@ -183,7 +183,7 @@ describe("developPortalScaffoldUtils", () => {
         })
       );
       vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(
-        ok(undefined as unknown as TeamsAppManifest)
+        ok(undefined as unknown as TeamsManifestLatest)
       );
       const res = await developerPortalScaffoldUtils.updateFilesForTdp(ctx, appDefinition, inputs);
 
@@ -221,7 +221,7 @@ describe("developPortalScaffoldUtils", () => {
         [QuestionNames.ReplaceContentUrl]: ["name1"],
         projectPath: "project-path",
       };
-      const manifest: TeamsAppManifest = {
+      const manifest: TeamsManifestLatest = {
         manifestVersion: "version",
         id: "mock-app-id",
         name: { short: "short-name" },
@@ -253,7 +253,7 @@ describe("developPortalScaffoldUtils", () => {
         ],
       };
 
-      const manifestTemplate: TeamsAppManifest = {
+      const manifestTemplate: TeamsManifestLatest = {
         manifestVersion: "version",
         id: "mock-app-id",
         name: { short: "short-name" },
@@ -323,7 +323,7 @@ describe("developPortalScaffoldUtils", () => {
       chai.assert.isTrue(updateColor);
       chai.assert.isTrue(updateOutline);
       chai.assert.isTrue(updateLanguage);
-      const updatedManifest = JSON.parse(updatedManifestData) as TeamsAppManifest;
+      const updatedManifest = JSON.parse(updatedManifestData) as TeamsManifestLatest;
       chai.assert.equal(updatedManifest.id, "${{TEAMS_APP_ID}}");
       chai.assert.equal(updatedManifest.staticTabs![0].contentUrl, "contentUrl0");
       chai.assert.equal(updatedManifest.staticTabs![0].websiteUrl, "localhost/website");
@@ -367,7 +367,7 @@ describe("developPortalScaffoldUtils", () => {
         [QuestionNames.ReplaceContentUrl]: [],
         projectPath: "project-path",
       };
-      const manifest: TeamsAppManifest = {
+      const manifest: TeamsManifestLatest = {
         manifestVersion: "version",
         id: "mock-app-id",
         name: { short: "short-name" },
@@ -463,7 +463,7 @@ describe("developPortalScaffoldUtils", () => {
       chai.assert.isTrue(updateColor);
       chai.assert.isTrue(updateOutline);
       chai.assert.isTrue(updateLanguage);
-      const updatedManifest = JSON.parse(updatedManifestData) as TeamsAppManifest;
+      const updatedManifest = JSON.parse(updatedManifestData) as TeamsManifestLatest;
       chai.assert.equal(updatedManifest.id, "${{TEAMS_APP_ID}}");
       chai.assert.equal(updatedManifest.staticTabs![0].contentUrl, "contentUrl0");
       chai.assert.equal(updatedManifest.staticTabs![0].websiteUrl, "websiteUrl0");
@@ -504,7 +504,7 @@ describe("developPortalScaffoldUtils", () => {
         [QuestionNames.ReplaceBotIds]: ["bot"],
         projectPath: "project-path",
       };
-      const manifest: TeamsAppManifest = {
+      const manifest: TeamsManifestLatest = {
         manifestVersion: "version",
         id: "mock-app-id",
         name: { short: "short-name" },
@@ -533,7 +533,7 @@ describe("developPortalScaffoldUtils", () => {
         ],
       };
 
-      const existingManifest: TeamsAppManifest = {
+      const existingManifest: TeamsManifestLatest = {
         manifestVersion: "version",
         id: "mock-app-id",
         name: { short: "short-name" },
@@ -589,7 +589,7 @@ describe("developPortalScaffoldUtils", () => {
       chai.assert.isTrue(updateColor);
       chai.assert.isTrue(updateOutline);
       chai.assert.isTrue(updateLanguage);
-      const updatedManifest = JSON.parse(updatedManifestData) as TeamsAppManifest;
+      const updatedManifest = JSON.parse(updatedManifestData) as TeamsManifestLatest;
       chai.assert.equal(updatedManifest.id, "${{TEAMS_APP_ID}}");
       const expectedBots = BOTS_TPL_V3;
       expectedBots[0].botId = "${{BOT_ID}}";
@@ -628,7 +628,7 @@ describe("developPortalScaffoldUtils", () => {
         [QuestionNames.ReplaceBotIds]: ["messageExtension"],
         projectPath: "project-path",
       };
-      const manifest: TeamsAppManifest = {
+      const manifest: TeamsManifestLatest = {
         manifestVersion: "version",
         id: "mock-app-id",
         name: { short: "short-name" },
@@ -658,7 +658,7 @@ describe("developPortalScaffoldUtils", () => {
         validDomains: [],
       };
 
-      const existingManifest: TeamsAppManifest = {
+      const existingManifest: TeamsManifestLatest = {
         manifestVersion: "version",
         id: "mock-app-id",
         name: { short: "short-name" },
@@ -725,7 +725,7 @@ describe("developPortalScaffoldUtils", () => {
       chai.assert.isTrue(updateColor);
       chai.assert.isTrue(updateOutline);
       chai.assert.isTrue(updateLanguage);
-      const updatedManifest = JSON.parse(updatedManifestData) as TeamsAppManifest;
+      const updatedManifest = JSON.parse(updatedManifestData) as TeamsManifestLatest;
       chai.assert.equal(updatedManifest.id, "${{TEAMS_APP_ID}}");
       chai.assert.deepEqual(updatedManifest.bots![0], manifest.bots![0]);
       chai.assert.deepEqual(
@@ -765,7 +765,7 @@ describe("developPortalScaffoldUtils", () => {
         [QuestionNames.ReplaceBotIds]: ["bot", "messageExtension"],
         projectPath: "project-path",
       };
-      const manifest: TeamsAppManifest = {
+      const manifest: TeamsManifestLatest = {
         manifestVersion: "version",
         id: "mock-app-id",
         name: { short: "short-name" },
@@ -795,7 +795,7 @@ describe("developPortalScaffoldUtils", () => {
         validDomains: [],
       };
 
-      const existingManifest: TeamsAppManifest = {
+      const existingManifest: TeamsManifestLatest = {
         manifestVersion: "version",
         id: "mock-app-id",
         name: { short: "short-name" },
@@ -864,7 +864,7 @@ describe("developPortalScaffoldUtils", () => {
       chai.assert.isTrue(updateColor);
       chai.assert.isTrue(updateOutline);
       chai.assert.isTrue(updateLanguage);
-      const updatedManifest = JSON.parse(updatedManifestData) as TeamsAppManifest;
+      const updatedManifest = JSON.parse(updatedManifestData) as TeamsManifestLatest;
       chai.assert.equal(updatedManifest.id, "${{TEAMS_APP_ID}}");
       chai.assert.deepEqual(updatedManifest.bots![0], existingManifest.bots![0]);
       chai.assert.deepEqual(updatedManifest.composeExtensions![0].botId, "${{BOT_ID}}");
@@ -894,7 +894,7 @@ describe("developPortalScaffoldUtils", () => {
         [QuestionNames.ReplaceBotIds]: ["bot", "messageExtension"],
         projectPath: "project-path",
       };
-      const manifest: TeamsAppManifest = {
+      const manifest: TeamsManifestLatest = {
         manifestVersion: "version",
         id: "mock-app-id",
         name: { short: "short-name" },
@@ -910,7 +910,7 @@ describe("developPortalScaffoldUtils", () => {
         },
       };
 
-      const existingManifest: TeamsAppManifest = {
+      const existingManifest: TeamsManifestLatest = {
         manifestVersion: "version",
         id: "mock-app-id",
         name: { short: "short-name" },
@@ -992,7 +992,7 @@ describe("developPortalScaffoldUtils", () => {
       chai.assert.isTrue(updateColor);
       chai.assert.isTrue(updateOutline);
       chai.assert.isTrue(updateLanguage);
-      const updatedManifest = JSON.parse(updatedManifestData) as TeamsAppManifest;
+      const updatedManifest = JSON.parse(updatedManifestData) as TeamsManifestLatest;
       chai.assert.equal(updatedManifest.id, "${{TEAMS_APP_ID}}");
       chai.assert.deepEqual(updatedManifest.bots![0], existingManifest.bots![0]);
       chai.assert.equal(updatedManifest.developer.privacyUrl, DEFAULT_DEVELOPER.privacyUrl);
@@ -1107,7 +1107,7 @@ describe("developPortalScaffoldUtils", () => {
       });
 
       vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(
-        ok(manifest as TeamsAppManifest)
+        ok(manifest as TeamsManifestLatest)
       );
 
       const res = await developerPortalScaffoldUtils.updateFilesForTdp(ctx, appDefinition, inputs);
@@ -1117,7 +1117,7 @@ describe("developPortalScaffoldUtils", () => {
       chai.assert.isTrue(updateColor);
       chai.assert.isTrue(updateOutline);
       chai.assert.isTrue(updateLanguage);
-      const updatedManifest = JSON.parse(updatedManifestData) as TeamsAppManifest;
+      const updatedManifest = JSON.parse(updatedManifestData) as TeamsManifestLatest;
       chai.assert.equal(updatedManifest.id, "${{TEAMS_APP_ID}}");
       chai.assert.isTrue(
         (updatedManifest.configurableTabs![0].scopes as string[]).includes("groupChat")
@@ -1125,9 +1125,6 @@ describe("developPortalScaffoldUtils", () => {
       chai.assert.isTrue((updatedManifest.bots![0].scopes as string[]).includes("groupChat"));
       chai.assert.isTrue(
         (updatedManifest.bots![0].commandLists![0].scopes as string[]).includes("groupChat")
-      );
-      chai.assert.isTrue(
-        (updatedManifest.composeExtensions![0].scopes! as string[]).includes("groupChat")
       );
       chai.assert.equal(updatedManifest.developer.privacyUrl, DEFAULT_DEVELOPER.privacyUrl);
       chai.assert.equal(updatedManifest.developer.termsOfUseUrl, DEFAULT_DEVELOPER.termsOfUseUrl);
@@ -1233,7 +1230,7 @@ describe("developPortalScaffoldUtils", () => {
       });
 
       vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(
-        ok(manifest as TeamsAppManifest)
+        ok(manifest as TeamsManifestLatest)
       );
 
       const res = await developerPortalScaffoldUtils.updateFilesForTdp(ctx, appDefinition, inputs);
@@ -1243,7 +1240,7 @@ describe("developPortalScaffoldUtils", () => {
       chai.assert.isTrue(updateColor);
       chai.assert.isTrue(updateOutline);
       chai.assert.isTrue(updateLanguage);
-      const updatedManifest = JSON.parse(updatedManifestData) as TeamsAppManifest;
+      const updatedManifest = JSON.parse(updatedManifestData) as TeamsManifestLatest;
       chai.assert.equal(updatedManifest.id, "${{TEAMS_APP_ID}}");
     });
 
@@ -1275,7 +1272,7 @@ describe("developPortalScaffoldUtils", () => {
         [QuestionNames.ReplaceContentUrl]: ["name1"],
         projectPath: "project-path",
       };
-      const manifest: TeamsAppManifest = {
+      const manifest: TeamsManifestLatest = {
         manifestVersion: "version",
         id: "mock-app-id",
         name: { short: "short-name" },
@@ -1340,7 +1337,7 @@ describe("developPortalScaffoldUtils", () => {
         platform: Platform.VSCode,
         projectPath: "project-path",
       };
-      const manifest: TeamsAppManifest = {
+      const manifest: TeamsManifestLatest = {
         manifestVersion: "version",
         id: "mock-app-id",
         name: { short: "short-name" },
@@ -1356,7 +1353,7 @@ describe("developPortalScaffoldUtils", () => {
         },
       };
 
-      const manifestTemplate: TeamsAppManifest = {
+      const manifestTemplate: TeamsManifestLatest = {
         manifestVersion: "version",
         id: "mock-app-id",
         name: { short: "short-name" },
@@ -1396,7 +1393,7 @@ describe("developPortalScaffoldUtils", () => {
       const res = await developerPortalScaffoldUtils.updateFilesForTdp(ctx, appDefinition, inputs);
 
       chai.assert.isTrue(res.isOk());
-      const updatedManifest = JSON.parse(updatedManifestData) as TeamsAppManifest;
+      const updatedManifest = JSON.parse(updatedManifestData) as TeamsManifestLatest;
       chai.assert.equal(updatedManifest.supportsChannelFeatures, "tier1");
     });
 
@@ -1416,7 +1413,7 @@ describe("developPortalScaffoldUtils", () => {
         platform: Platform.VSCode,
         projectPath: "project-path",
       };
-      const manifest: TeamsAppManifest = {
+      const manifest: TeamsManifestLatest = {
         manifestVersion: "version",
         id: "mock-app-id",
         name: { short: "short-name" },
@@ -1432,7 +1429,7 @@ describe("developPortalScaffoldUtils", () => {
         },
       };
 
-      const manifestTemplate: TeamsAppManifest = {
+      const manifestTemplate: TeamsManifestLatest = {
         manifestVersion: "version",
         id: "mock-app-id",
         name: { short: "short-name" },
@@ -1472,7 +1469,7 @@ describe("developPortalScaffoldUtils", () => {
       const res = await developerPortalScaffoldUtils.updateFilesForTdp(ctx, appDefinition, inputs);
 
       chai.assert.isTrue(res.isOk());
-      const updatedManifest = JSON.parse(updatedManifestData) as TeamsAppManifest;
+      const updatedManifest = JSON.parse(updatedManifestData) as TeamsManifestLatest;
       chai.assert.isUndefined(updatedManifest.supportsChannelFeatures);
     });
 
@@ -1492,7 +1489,7 @@ describe("developPortalScaffoldUtils", () => {
         platform: Platform.VSCode,
         projectPath: "project-path",
       };
-      const manifest: TeamsAppManifest = {
+      const manifest: TeamsManifestLatest = {
         manifestVersion: "version",
         id: "mock-app-id",
         name: { short: "short-name" },
@@ -1508,7 +1505,7 @@ describe("developPortalScaffoldUtils", () => {
         },
       };
 
-      const manifestTemplate: TeamsAppManifest = {
+      const manifestTemplate: TeamsManifestLatest = {
         manifestVersion: "version",
         id: "mock-app-id",
         name: { short: "short-name" },
@@ -1548,7 +1545,7 @@ describe("developPortalScaffoldUtils", () => {
       const res = await developerPortalScaffoldUtils.updateFilesForTdp(ctx, appDefinition, inputs);
 
       chai.assert.isTrue(res.isOk());
-      const updatedManifest = JSON.parse(updatedManifestData) as TeamsAppManifest;
+      const updatedManifest = JSON.parse(updatedManifestData) as TeamsManifestLatest;
       chai.assert.isUndefined(updatedManifest.supportsChannelFeatures);
     });
 
@@ -1568,7 +1565,7 @@ describe("developPortalScaffoldUtils", () => {
         platform: Platform.VSCode,
         projectPath: "project-path",
       };
-      const manifest: TeamsAppManifest = {
+      const manifest: TeamsManifestLatest = {
         manifestVersion: "version",
         id: "mock-app-id",
         name: { short: "short-name" },
@@ -1584,7 +1581,7 @@ describe("developPortalScaffoldUtils", () => {
         },
       };
 
-      const manifestTemplate: TeamsAppManifest = {
+      const manifestTemplate: TeamsManifestLatest = {
         manifestVersion: "version",
         id: "mock-app-id",
         name: { short: "short-name" },
@@ -1624,7 +1621,7 @@ describe("developPortalScaffoldUtils", () => {
       const res = await developerPortalScaffoldUtils.updateFilesForTdp(ctx, appDefinition, inputs);
 
       chai.assert.isTrue(res.isOk());
-      const updatedManifest = JSON.parse(updatedManifestData) as TeamsAppManifest;
+      const updatedManifest = JSON.parse(updatedManifestData) as TeamsManifestLatest;
       chai.assert.isUndefined(updatedManifest.supportsChannelFeatures);
     });
   });

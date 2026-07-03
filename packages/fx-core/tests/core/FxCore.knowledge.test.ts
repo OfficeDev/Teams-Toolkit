@@ -7,7 +7,7 @@ import {
   Inputs,
   Platform,
   SystemError,
-  TeamsAppManifest,
+  createDefaultTeamsManifest,
   UserError,
   err,
   ok,
@@ -81,7 +81,7 @@ describe("addKnowledge", async () => {
       [QuestionNames.SearchType]: KnowledgeSearchTypeOptions.allWeb().id,
       projectPath: path.join(os.tmpdir(), appName),
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.copilotAgents = {
       declarativeAgents: [
         {
@@ -133,7 +133,7 @@ describe("addKnowledge", async () => {
       webSearchUrl: searchUrl,
       projectPath: path.join(os.tmpdir(), appName),
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.copilotAgents = {
       declarativeAgents: [
         {
@@ -174,7 +174,7 @@ describe("addKnowledge", async () => {
       webSearchUrl: searchUrl,
       projectPath: path.join(os.tmpdir(), appName),
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.copilotAgents = {
       declarativeAgents: [
         {
@@ -218,7 +218,7 @@ describe("addKnowledge", async () => {
       [QuestionNames.SearchType]: KnowledgeSearchTypeOptions.allWeb().id,
       projectPath: path.join(os.tmpdir(), appName),
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.copilotAgents = {
       declarativeAgents: [
         {
@@ -256,7 +256,7 @@ describe("addKnowledge", async () => {
       [QuestionNames.EmbeddedKnowledgeFiles]: ["test:txt"],
       [QuestionNames.ManifestPath]: "manifest.json",
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.copilotAgents = {
       declarativeAgents: [
         {
@@ -288,7 +288,7 @@ describe("addKnowledge", async () => {
       [QuestionNames.SearchType]: KnowledgeSearchTypeOptions.allOneDriveSharepoint().id,
       projectPath: path.join(os.tmpdir(), appName),
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.copilotAgents = {
       declarativeAgents: [
         {
@@ -334,7 +334,7 @@ describe("addKnowledge", async () => {
       ],
       projectPath: path.join(os.tmpdir(), appName),
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.copilotAgents = {
       declarativeAgents: [
         {
@@ -387,7 +387,7 @@ describe("addKnowledge", async () => {
       ],
       projectPath: path.join(os.tmpdir(), appName),
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.copilotAgents = {
       declarativeAgents: [
         {
@@ -481,7 +481,7 @@ describe("addKnowledge", async () => {
       ],
       projectPath: path.join(os.tmpdir(), appName),
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.copilotAgents = {
       declarativeAgents: [
         {
@@ -538,7 +538,7 @@ describe("addKnowledge", async () => {
       ],
       projectPath: path.join(os.tmpdir(), appName),
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.copilotAgents = {
       declarativeAgents: [
         {
@@ -584,7 +584,7 @@ describe("addKnowledge", async () => {
       [QuestionNames.SearchType]: KnowledgeSearchTypeOptions.allWeb().id,
       projectPath: path.join(os.tmpdir(), appName),
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.copilotAgents = {
       declarativeAgents: [
         {
@@ -623,7 +623,7 @@ describe("addKnowledge", async () => {
       [QuestionNames.SearchType]: KnowledgeSearchTypeOptions.allOneDriveSharepoint().id,
       projectPath: path.join(os.tmpdir(), appName),
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.copilotAgents = {
       declarativeAgents: [
         {
@@ -676,7 +676,7 @@ describe("addKnowledge", async () => {
       [QuestionNames.SearchType]: KnowledgeSearchTypeOptions.allWeb().id,
       projectPath: path.join(os.tmpdir(), appName),
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.copilotAgents = {
       declarativeAgents: [
         {
@@ -708,7 +708,7 @@ describe("addKnowledge", async () => {
       [QuestionNames.SearchType]: KnowledgeSearchTypeOptions.allWeb().id,
       projectPath: path.join(os.tmpdir(), appName),
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.copilotAgents = {
       declarativeAgents: [
         {
@@ -738,7 +738,7 @@ describe("addKnowledge", async () => {
       [QuestionNames.SearchType]: KnowledgeSearchTypeOptions.allWeb().id,
       projectPath: path.join(os.tmpdir(), appName),
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.copilotAgents = {
       declarativeAgents: [
         {
@@ -777,7 +777,7 @@ describe("addKnowledge", async () => {
       [QuestionNames.SearchType]: KnowledgeSearchTypeOptions.allWeb().id,
       projectPath: path.join(os.tmpdir(), appName),
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.copilotAgents = {
       declarativeAgents: [
         {
@@ -814,7 +814,7 @@ describe("addKnowledge", async () => {
       [QuestionNames.SearchType]: KnowledgeSearchTypeOptions.allWeb().id,
       projectPath: path.join(os.tmpdir(), appName),
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.copilotAgents = {
       declarativeAgents: [
         {
@@ -866,7 +866,7 @@ describe("addKnowledge", async () => {
         projectPath: path.join(os.tmpdir(), appName),
       },
     ];
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.copilotAgents = {
       declarativeAgents: [
         {
@@ -998,7 +998,7 @@ describe("addKnowledge", async () => {
       [QuestionNames.EmbeddedKnowledgeFiles]: "fake files",
       projectPath: path.join(os.tmpdir(), appName),
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.copilotAgents = {
       declarativeAgents: [
         {
@@ -1038,7 +1038,7 @@ describe("addKnowledge", async () => {
       [QuestionNames.GCInput]: "fake inputs",
       projectPath: path.join(os.tmpdir(), appName),
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.copilotAgents = {
       declarativeAgents: [
         {
@@ -1083,7 +1083,7 @@ describe("addKnowledge", async () => {
       [QuestionNames.GCList]: "fake lists",
       projectPath: path.join(os.tmpdir(), appName),
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.copilotAgents = {
       declarativeAgents: [
         {
@@ -1128,7 +1128,7 @@ describe("addKnowledge", async () => {
       [QuestionNames.GCList]: "fake lists",
       projectPath: path.join(os.tmpdir(), appName),
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.copilotAgents = {
       declarativeAgents: [
         {
@@ -1170,7 +1170,7 @@ describe("addKnowledge", async () => {
       [QuestionNames.SearchType]: KnowledgeSearchTypeOptions.allOneDriveSharepoint().id,
       projectPath: path.join(os.tmpdir(), appName),
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.copilotAgents = {
       declarativeAgents: [
         {
@@ -1226,7 +1226,7 @@ describe("addKnowledge", async () => {
       [QuestionNames.SearchType]: KnowledgeSearchTypeOptions.allWeb().id,
       projectPath: path.join(os.tmpdir(), appName),
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.copilotAgents = {
       declarativeAgents: [
         {
@@ -1275,7 +1275,7 @@ describe("addKnowledge", async () => {
       [QuestionNames.SearchType]: KnowledgeSearchTypeOptions.allWeb().id,
       projectPath: path.join(os.tmpdir(), appName),
     };
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.copilotAgents = {
       declarativeAgents: [
         {

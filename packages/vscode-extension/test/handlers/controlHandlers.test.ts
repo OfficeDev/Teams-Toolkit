@@ -1,4 +1,4 @@
-import { ok, TeamsAppManifest } from "@microsoft/teamsfx-api";
+import { ok, TeamsManifestLatest } from "@microsoft/teamsfx-api";
 import * as teamsfxCore from "@microsoft/teamsfx-core";
 import fs from "fs-extra";
 import * as path from "path";
@@ -35,7 +35,7 @@ describe("Control Handlers", () => {
     it("opens intelligent app walkthrough for API plugin apps", async () => {
       vi.spyOn(teamsfxCore.featureFlagManager, "getBooleanValue").mockReturnValue(false);
       vi.spyOn(teamsfxCore.manifestUtils, "readAppManifest").mockResolvedValue(
-        ok({} as TeamsAppManifest)
+        ok({} as TeamsManifestLatest)
       );
       vi.spyOn(teamsfxCore.manifestUtils, "getCapabilities").mockReturnValue(["copilotGpt"]);
       mockValue(globalVariables, "workspaceUri", { fsPath: "/test" });
@@ -54,7 +54,7 @@ describe("Control Handlers", () => {
     it("opens intelligent app walkthrough with chat for API plugin apps", async () => {
       vi.spyOn(teamsfxCore.featureFlagManager, "getBooleanValue").mockReturnValue(true);
       vi.spyOn(teamsfxCore.manifestUtils, "readAppManifest").mockResolvedValue(
-        ok({} as TeamsAppManifest)
+        ok({} as TeamsManifestLatest)
       );
       vi.spyOn(teamsfxCore.manifestUtils, "getCapabilities").mockReturnValue(["copilotGpt"]);
       mockValue(globalVariables, "workspaceUri", { fsPath: "/test" });
@@ -73,7 +73,7 @@ describe("Control Handlers", () => {
     it("opens intelligent app walkthrough for JS/TS custom engine copilot apps", async () => {
       vi.spyOn(teamsfxCore.featureFlagManager, "getBooleanValue").mockReturnValue(false);
       vi.spyOn(teamsfxCore.manifestUtils, "readAppManifest").mockResolvedValue(
-        ok({} as TeamsAppManifest)
+        ok({} as TeamsManifestLatest)
       );
       vi.spyOn(teamsfxCore.manifestUtils, "getCapabilities").mockReturnValue(["bot"]);
       mockValue(globalVariables, "workspaceUri", { fsPath: "/test" });
@@ -96,7 +96,7 @@ describe("Control Handlers", () => {
     it("opens intelligent app walkthrough for python custom engine copilot apps", async () => {
       vi.spyOn(teamsfxCore.featureFlagManager, "getBooleanValue").mockReturnValue(false);
       vi.spyOn(teamsfxCore.manifestUtils, "readAppManifest").mockResolvedValue(
-        ok({} as TeamsAppManifest)
+        ok({} as TeamsManifestLatest)
       );
       vi.spyOn(teamsfxCore.manifestUtils, "getCapabilities").mockReturnValue(["bot"]);
       mockValue(globalVariables, "workspaceUri", { fsPath: "/test" });

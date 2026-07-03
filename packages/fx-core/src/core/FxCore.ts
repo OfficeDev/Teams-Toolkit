@@ -35,7 +35,7 @@ import {
   Stage,
   SystemError,
   TeamsAppInputs,
-  TeamsAppManifest,
+  TeamsManifestLatest,
   Tools,
   UserError,
   err,
@@ -1342,7 +1342,9 @@ export class FxCore extends FxCoreOpenPluginPart {
     }
 
     const teamsAppId = manifestRes.value.id;
-    const properties = manifestUtils.parseCommonProperties(manifestRes.value as TeamsAppManifest);
+    const properties = manifestUtils.parseCommonProperties(
+      manifestRes.value as TeamsManifestLatest
+    );
 
     const launchHelper = new LaunchHelper(TOOLS.tokenProvider.m365TokenProvider, TOOLS.logProvider);
     const result = await launchHelper.getLaunchUrl(hub, teamsAppId, properties, true);

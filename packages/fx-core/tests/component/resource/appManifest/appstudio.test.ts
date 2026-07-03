@@ -6,7 +6,7 @@ import {
   Context,
   InputsWithProjectPath,
   Platform,
-  TeamsAppManifest,
+  createDefaultTeamsManifest,
   TeamsManifest,
   UserError,
   err,
@@ -541,7 +541,7 @@ describe("App-manifest Component - v3", () => {
   });
 
   it("updateManifestV3 - preview only", async function () {
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.id = "";
     manifest.icons.color = "resources/color.png";
     manifest.icons.outline = "resources/outline.png";
@@ -562,7 +562,7 @@ describe("App-manifest Component - v3", () => {
   });
 
   it("updateManifestV3 - happy path", async function () {
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.id = "";
     manifest.icons.color = "resources/color.png";
     manifest.icons.outline = "resources/outline.png";
@@ -582,7 +582,7 @@ describe("App-manifest Component - v3", () => {
   });
 
   it("updateManifestV3 - rebuild", async function () {
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.id = "";
     manifest.icons.color = "resources/color.png";
     manifest.icons.outline = "resources/outline.png";

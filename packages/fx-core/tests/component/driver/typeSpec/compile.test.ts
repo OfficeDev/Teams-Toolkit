@@ -6,7 +6,7 @@ import {
   ok,
   Platform,
   SystemError,
-  TeamsAppManifest,
+  TeamsManifestLatest,
 } from "@microsoft/teamsfx-api";
 import fs from "fs-extra";
 import mockedEnv, { RestoreFn } from "mocked-env";
@@ -37,7 +37,7 @@ describe("typeSpecCompilt", async () => {
   const sandbox = vi;
   let envRestore: RestoreFn | undefined;
   const typeSpecCompileDriver = new TypeSpecCompileDriver();
-  const manifest: TeamsAppManifest = {
+  const manifest: TeamsManifestLatest = {
     manifestVersion: "mockedManifestVersion",
     version: "mockedVersion",
     id: "mockedId",

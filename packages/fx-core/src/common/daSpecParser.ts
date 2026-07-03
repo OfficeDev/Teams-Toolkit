@@ -31,7 +31,7 @@ import {
   Platform,
   PluginManifestSchema,
   RuntimeObjectOpenapi,
-  TeamsAppManifest,
+  TeamsManifestLatest,
 } from "@microsoft/teamsfx-api";
 import { createHash } from "crypto";
 import * as fs from "fs-extra";
@@ -73,7 +73,7 @@ export async function generatePlugin(
     const warnings: WarningResult[] = [];
     const tmpWorkingDir = tmp.dirSync({ unsafeCleanup: true });
     const tmpOutputDir = path.join(tmpWorkingDir.name, "plugin");
-    const manifest: TeamsAppManifest = await fs.readJSON(teamsManifestPath);
+    const manifest: TeamsManifestLatest = await fs.readJSON(teamsManifestPath);
 
     const namespace = removeEnvsAndSpecialCharaters(manifest.name.short);
     const includePatterns: string[] = [];

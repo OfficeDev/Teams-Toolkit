@@ -1,13 +1,13 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import path from "path";
+import { TeamsManifestLatest } from "@microsoft/teamsfx-api";
 import fs from "fs-extra";
+import path from "path";
+import { ProjectTypeProps, TelemetryProperty, WebApplicationIdValue } from "../../common/telemetry";
 import { MetadataV3 } from "../../common/versionMetadata";
 import { ProjectModel } from "../configManager/interface";
-import { ProjectTypeProps, TelemetryProperty, WebApplicationIdValue } from "../../common/telemetry";
 import { manifestUtils } from "../driver/teamsApp/utils/ManifestUtils";
-import { TeamsAppManifest } from "../../../../manifest/build/manifest";
 
 interface summary {
   version: string;
@@ -57,7 +57,7 @@ class MetadataRscPermissionUtil {
     }
   }
 
-  summary(manifest: TeamsAppManifest): summary | undefined {
+  summary(manifest: TeamsManifestLatest): summary | undefined {
     const version = manifest.version;
     const rscApplication: string[] = [];
     const rscDelegated: string[] = [];
@@ -67,9 +67,6 @@ class MetadataRscPermissionUtil {
       } else {
         rscDelegated.push(permission.name);
       }
-    }
-    for (const permission of manifest.webApplicationInfo?.applicationPermissions || []) {
-      rscApplication.push(permission);
     }
 
     return {

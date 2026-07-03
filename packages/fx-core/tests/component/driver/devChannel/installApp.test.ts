@@ -6,7 +6,7 @@ import mockedEnv from "mocked-env";
 import fs from "fs-extra";
 import path from "path";
 import AdmZip from "adm-zip";
-import { TeamsAppManifest } from "@microsoft/teamsfx-api";
+import { createDefaultTeamsManifest } from "@microsoft/teamsfx-api";
 import { InstallAppToChannelDriver } from "../../../../src/component/driver/devChannel/installApp";
 import { GraphClient } from "../../../../src/client/graphClient";
 import { MockedM365Provider, MockLogProvider } from "../../../core/utils";
@@ -34,7 +34,7 @@ describe("InstallAppToChannelDriver", () => {
 
   const driver = new InstallAppToChannelDriver();
 
-  const manifest = new TeamsAppManifest();
+  const manifest = createDefaultTeamsManifest();
   manifest.id = "fake-id";
   const zip = new AdmZip();
   zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(manifest)));

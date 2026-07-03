@@ -9,7 +9,7 @@ import {
   ok,
   Result,
   SystemError,
-  TeamsAppManifest,
+  TeamsManifestLatest,
   UserError,
 } from "@microsoft/teamsfx-api";
 import AdmZip from "adm-zip";
@@ -950,7 +950,7 @@ export class PackageService {
     }
   }
 
-  private getManifestFromZip(path: string): TeamsAppManifest | undefined {
+  private getManifestFromZip(path: string): TeamsManifestLatest | undefined {
     const zip = new AdmZip(path);
     const manifestEntry = zip.getEntry("manifest.json");
     if (!manifestEntry) {
@@ -958,6 +958,6 @@ export class PackageService {
     }
     let manifestContent = manifestEntry.getData().toString("utf8");
     manifestContent = stripBom(manifestContent);
-    return JSON.parse(manifestContent) as TeamsAppManifest;
+    return JSON.parse(manifestContent) as TeamsManifestLatest;
   }
 }

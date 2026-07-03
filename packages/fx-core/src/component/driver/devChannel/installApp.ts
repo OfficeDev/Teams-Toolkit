@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 import { hooks } from "@feathersjs/hooks/lib";
-import { FxError, Result, err, ok, TeamsAppManifest } from "@microsoft/teamsfx-api";
+import { FxError, Result, err, ok, TeamsManifestLatest } from "@microsoft/teamsfx-api";
 import { Service } from "typedi";
 import axios from "axios";
 import fs from "fs-extra";
@@ -67,7 +67,7 @@ export class InstallAppToChannelDriver implements StepDriver {
       return err(new FileNotFoundError(actionName, Constants.MANIFEST_FILE));
     }
     const manifestString = manifestFile.getData().toString();
-    const manifest = JSON.parse(manifestString) as TeamsAppManifest;
+    const manifest = JSON.parse(manifestString) as TeamsManifestLatest;
     const teamsAppId = manifest.id;
 
     try {

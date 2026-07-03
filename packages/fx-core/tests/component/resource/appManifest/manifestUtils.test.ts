@@ -4,7 +4,7 @@ import {
   AppManifestUtils,
   InputsWithProjectPath,
   Platform,
-  TeamsAppManifest,
+  createDefaultTeamsManifest,
   TeamsManifest,
   TeamsManifestV1D14,
 } from "@microsoft/teamsfx-api";
@@ -124,7 +124,7 @@ describe("getManifest V3", () => {
   });
 
   it("getOperationIds", async () => {
-    const manifest = new TeamsAppManifest();
+    const manifest = createDefaultTeamsManifest();
     manifest.composeExtensions = [
       {
         botId: uuid.v4(),

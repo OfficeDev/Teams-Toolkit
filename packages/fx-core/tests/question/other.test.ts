@@ -12,7 +12,7 @@ import {
   SingleFileQuestion,
   SingleSelectQuestion,
   SystemError,
-  TeamsAppManifest,
+  TeamsManifestLatest,
   TextInputQuestion,
 } from "@microsoft/teamsfx-api";
 import fs from "fs-extra";
@@ -752,7 +752,7 @@ describe("setSensitivityLabelNode", () => {
             },
           ],
         },
-      } as TeamsAppManifest)
+      } as TeamsManifestLatest)
     );
     const question = selectDeclarativeAgentManifestQuestion() as SingleFileQuestion;
     const defaultPath = await ((question?.default as any)(inputs) as Promise<string | undefined>);
@@ -824,7 +824,7 @@ describe("setSensitivityLabelNode", () => {
             },
           ],
         },
-      } as TeamsAppManifest)
+      } as TeamsManifestLatest)
     );
     const question = selectDeclarativeAgentManifestQuestion() as SingleFileQuestion;
     const defaultPath = await ((question?.default as any)(inputs) as Promise<string | undefined>);

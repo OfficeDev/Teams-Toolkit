@@ -6,7 +6,7 @@ import {
   Platform,
   PluginManifestSchema,
   SystemError,
-  TeamsAppManifest,
+  TeamsManifestLatest,
   err,
 } from "@microsoft/teamsfx-api";
 import fs from "fs-extra";
@@ -63,7 +63,7 @@ describe("pluginManifestUtils", () => {
     ],
   };
 
-  const teamsManifest: TeamsAppManifest = {
+  const teamsManifest: TeamsManifestLatest = {
     $schema:
       "https://developer.microsoft.com/en-us/json-schemas/teams/v1.9/MicrosoftTeams.schema.json",
     manifestVersion: "1.9",
@@ -96,13 +96,25 @@ describe("pluginManifestUtils", () => {
     permissions: [],
     validDomains: [],
     copilotAgents: {
-      plugins: [
+      declarativeAgents: [
         {
-          file: "resources/plugin.json",
-          id: "plugin1",
+          file: "resources/declarativeAgent.json",
+          id: "agent1",
         },
       ],
     },
+  };
+
+  const declarativeAgentManifest = {
+    id: "agent1",
+    name: "test",
+    description: "test",
+    actions: [
+      {
+        id: "action1",
+        file: "plugin.json",
+      },
+    ],
   };
 
   it("readPluginManifestFile success", async () => {
@@ -139,7 +151,12 @@ describe("pluginManifestUtils", () => {
 
   it("getApiSpecFilePathFromTeamsManifest sucess", async () => {
     vi.spyOn(fs, "pathExists").mockResolvedValue(true);
-    vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify(pluginManifest) as any);
+    vi.spyOn(fs, "readFile").mockImplementation(
+      async (p: any) =>
+        (String(p).includes("declarativeAgent")
+          ? JSON.stringify(declarativeAgentManifest)
+          : JSON.stringify(pluginManifest)) as any
+    );
     const res = await pluginManifestUtils.getApiSpecFilePathFromTeamsManifest(
       teamsManifest,
       "/test/path"
@@ -172,7 +189,7 @@ describe("pluginManifestUtils", () => {
   it("getApiSpecFilePathFromTeamsManifest error: invalid plugin node case 1", async () => {
     const testManifest = {
       ...teamsManifest,
-      copilotAgents: { plugins: [] },
+      copilotAgents: { declarativeAgents: [] },
     };
     vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify(pluginManifest) as any);
     const res = await pluginManifestUtils.getApiSpecFilePathFromTeamsManifest(
@@ -215,7 +232,7 @@ describe("pluginManifestUtils", () => {
     };
     vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify(pluginManifest) as any);
     const res = await pluginManifestUtils.getApiSpecFilePathFromTeamsManifest(
-      testManifest as unknown as TeamsAppManifest,
+      testManifest as unknown as TeamsManifestLatest,
       "/test/path"
     );
     chai.assert.isTrue(res.isErr());
@@ -233,7 +250,12 @@ describe("pluginManifestUtils", () => {
         return true;
       }
     });
-    vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify(pluginManifest) as any);
+    vi.spyOn(fs, "readFile").mockImplementation(
+      async (p: any) =>
+        (String(p).includes("declarativeAgent")
+          ? JSON.stringify(declarativeAgentManifest)
+          : JSON.stringify(pluginManifest)) as any
+    );
     const res = await pluginManifestUtils.getApiSpecFilePathFromTeamsManifest(
       teamsManifest,
       "/test/path"
@@ -259,7 +281,12 @@ describe("pluginManifestUtils", () => {
       ],
     };
     vi.spyOn(fs, "pathExists").mockResolvedValue(true);
-    vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify(testPluginManifest) as any);
+    vi.spyOn(fs, "readFile").mockImplementation(
+      async (p: any) =>
+        (String(p).includes("declarativeAgent")
+          ? JSON.stringify(declarativeAgentManifest)
+          : JSON.stringify(testPluginManifest)) as any
+    );
     const res = await pluginManifestUtils.getApiSpecFilePathFromTeamsManifest(
       teamsManifest,
       "/test/path"

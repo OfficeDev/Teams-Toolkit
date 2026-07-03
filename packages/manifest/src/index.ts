@@ -6,31 +6,32 @@ import Ajv from "ajv-draft-04";
 import addFormats from "ajv-formats";
 import Ajv2020 from "ajv/dist/2020";
 import fs from "fs-extra";
-import fetch from "./fetchHelper";
-import { ManifestCommonProperties } from "./ManifestCommonProperties";
 import { DeclarativeCopilotManifestSchema } from "./declarativeCopilotManifest";
+import fetch from "./fetchHelper";
 import {
   AppManifestUtils,
   DevPreviewSchema,
   TeamsManifest,
   TeamsManifestConverter,
+  TeamsManifestLatest,
 } from "./generated-types";
-import { TeamsAppManifest } from "./manifest";
+import { ManifestCommonProperties } from "./ManifestCommonProperties";
 import { PluginManifestSchema } from "./pluginManifest";
 
 export * from "./declarativeCopilotManifest";
 export * from "./generated-types";
 export * from "./manifest";
+export * from "./manifestFactory";
 export * from "./pluginManifest";
 export * from "./wrappers";
 
-export type TeamsAppManifestJSONSchema = JSONSchemaType<TeamsAppManifest>;
+export type TeamsAppManifestJSONSchema = JSONSchemaType<TeamsManifestLatest>;
 export type DevPreviewManifestJSONSchema = JSONSchemaType<DevPreviewSchema>;
 
 /**
  * @deprecated
  */
-export type Manifest = TeamsAppManifest | DevPreviewSchema;
+export type Manifest = TeamsManifestLatest | DevPreviewSchema;
 
 export type ManifestProperties = ManifestCommonProperties;
 
@@ -74,7 +75,7 @@ export class ManifestUtil {
    * @throws Will propagate any error thrown by the fs-extra#writeJson.
    *
    */
-  static async writeToPath<T extends Manifest = TeamsAppManifest>(
+  static async writeToPath<T extends Manifest = TeamsManifestLatest>(
     path: string,
     manifest: T
   ): Promise<void> {
@@ -89,11 +90,8 @@ export class ManifestUtil {
    * @returns An empty array if it passes validation, or an array of error string otherwise.
    */
   static validateManifestAgainstSchema<
-    T extends
-      | Manifest
-      | DeclarativeCopilotManifestSchema
-      | PluginManifestSchema
-      | TeamsManifest = TeamsAppManifest,
+    T extends Manifest | DeclarativeCopilotManifestSchema | PluginManifestSchema | TeamsManifest =
+      TeamsManifestLatest,
   >(manifest: T, schema: JSONSchemaType<T>): Promise<string[]> {
     let validate;
     if (schema.$schema?.includes("2020-12")) {
@@ -134,11 +132,8 @@ export class ManifestUtil {
    * @returns
    */
   static async fetchSchema<
-    T extends
-      | Manifest
-      | DeclarativeCopilotManifestSchema
-      | PluginManifestSchema
-      | TeamsManifest = TeamsAppManifest,
+    T extends Manifest | DeclarativeCopilotManifestSchema | PluginManifestSchema | TeamsManifest =
+      TeamsManifestLatest,
   >(manifest: T): Promise<JSONSchemaType<T>> {
     const schemaUrl = ((manifest as any).$schema || (manifest as any).schema) as string;
     if (!schemaUrl) {
@@ -162,21 +157,18 @@ export class ManifestUtil {
   }
 
   /**
-   * Validate manifest against {@link TeamsAppManifest#$schema}.
+   * Validate manifest against {@link TeamsManifestLatest#$schema}.
    *
    * @deprecated use `AppManifestUtils.validateAgainstSchema(manifest: T)` instead
    * @param manifest - Manifest object to be validated
-   * @throws Will throw if {@link TeamsAppManifest#$schema} is undefined, not valid
+   * @throws Will throw if {@link TeamsManifestLatest#$schema} is undefined, not valid
    *         or there is any network failure when getting the schema.
    *
    * @returns An empty array if schema validation passes, or an array of error string otherwise.
    */
   static async validateManifest<
-    T extends
-      | Manifest
-      | DeclarativeCopilotManifestSchema
-      | PluginManifestSchema
-      | TeamsManifest = TeamsAppManifest,
+    T extends Manifest | DeclarativeCopilotManifestSchema | PluginManifestSchema | TeamsManifest =
+      TeamsManifestLatest,
   >(manifest: T): Promise<string[]> {
     const schema = await this.fetchSchema(manifest);
     return ManifestUtil.validateManifestAgainstSchema(manifest, schema);

@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { err, ok, Platform, SystemError, TeamsAppManifest } from "@microsoft/teamsfx-api";
+import { err, ok, Platform, SystemError, createDefaultTeamsManifest } from "@microsoft/teamsfx-api";
 import AdmZip from "adm-zip";
 import fs from "fs-extra";
 import { setTools } from "../../../../src/common/globalVars";
@@ -95,7 +95,10 @@ describe("teamsApp/validateWithTestCases", async () => {
     vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     vi.spyOn(fs, "readFile").mockImplementation(async () => {
       const zip = new AdmZip();
-      zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(new TeamsAppManifest())));
+      zip.addFile(
+        Constants.MANIFEST_FILE,
+        Buffer.from(JSON.stringify(createDefaultTeamsManifest()))
+      );
       const archivedFile = zip.toBuffer();
       return archivedFile;
     });
@@ -303,7 +306,10 @@ describe("teamsApp/validateWithTestCases", async () => {
     vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     vi.spyOn(fs, "readFile").mockImplementation(async () => {
       const zip = new AdmZip();
-      zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(new TeamsAppManifest())));
+      zip.addFile(
+        Constants.MANIFEST_FILE,
+        Buffer.from(JSON.stringify(createDefaultTeamsManifest()))
+      );
       const archivedFile = zip.toBuffer();
       return archivedFile;
     });
@@ -352,7 +358,10 @@ describe("teamsApp/validateWithTestCases", async () => {
     vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     vi.spyOn(fs, "readFile").mockImplementation(async () => {
       const zip = new AdmZip();
-      zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(new TeamsAppManifest())));
+      zip.addFile(
+        Constants.MANIFEST_FILE,
+        Buffer.from(JSON.stringify(createDefaultTeamsManifest()))
+      );
       const archivedFile = zip.toBuffer();
       return archivedFile;
     });
@@ -405,7 +414,10 @@ describe("teamsApp/validateWithTestCases", async () => {
     vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     vi.spyOn(fs, "readFile").mockImplementation(async () => {
       const zip = new AdmZip();
-      zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(new TeamsAppManifest())));
+      zip.addFile(
+        Constants.MANIFEST_FILE,
+        Buffer.from(JSON.stringify(createDefaultTeamsManifest()))
+      );
       const archivedFile = zip.toBuffer();
       return archivedFile;
     });
@@ -454,7 +466,10 @@ describe("teamsApp/validateWithTestCases", async () => {
     vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     vi.spyOn(fs, "readFile").mockImplementation(async () => {
       const zip = new AdmZip();
-      zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(new TeamsAppManifest())));
+      zip.addFile(
+        Constants.MANIFEST_FILE,
+        Buffer.from(JSON.stringify(createDefaultTeamsManifest()))
+      );
       const archivedFile = zip.toBuffer();
       return archivedFile;
     });
@@ -508,7 +523,10 @@ describe("teamsApp/validateWithTestCases", async () => {
     vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     vi.spyOn(fs, "readFile").mockImplementation(async () => {
       const zip = new AdmZip();
-      zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(new TeamsAppManifest())));
+      zip.addFile(
+        Constants.MANIFEST_FILE,
+        Buffer.from(JSON.stringify(createDefaultTeamsManifest()))
+      );
       const archivedFile = zip.toBuffer();
       return archivedFile;
     });
@@ -619,7 +637,10 @@ describe("teamsApp/validateWithTestCases", async () => {
     vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     vi.spyOn(fs, "readFile").mockImplementation(async () => {
       const zip = new AdmZip();
-      zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(new TeamsAppManifest())));
+      zip.addFile(
+        Constants.MANIFEST_FILE,
+        Buffer.from(JSON.stringify(createDefaultTeamsManifest()))
+      );
       const archivedFile = zip.toBuffer();
       return archivedFile;
     });
@@ -687,7 +708,10 @@ describe("teamsApp/validateWithTestCases", async () => {
     vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     vi.spyOn(fs, "readFile").mockImplementation(async () => {
       const zip = new AdmZip();
-      zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(new TeamsAppManifest())));
+      zip.addFile(
+        Constants.MANIFEST_FILE,
+        Buffer.from(JSON.stringify(createDefaultTeamsManifest()))
+      );
       const archivedFile = zip.toBuffer();
       return archivedFile;
     });

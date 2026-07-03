@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { Platform, TeamsAppManifest, err, ok } from "@microsoft/teamsfx-api";
+import { Platform, createDefaultTeamsManifest, err, ok } from "@microsoft/teamsfx-api";
 import fs from "fs-extra";
 import { TOOLS, setTools } from "../../../../src/common/globalVars";
 import { ConfigureTeamsAppDriver } from "../../../../src/component/driver/teamsApp/configure";
@@ -414,7 +414,9 @@ describe("TeamsAppMgr", async () => {
         ok({ scope: [] })
       );
       vi.spyOn(teamsappMgr, "ensureAppPackageFile").mockResolvedValue(ok(undefined));
-      vi.spyOn(teamsappMgr, "readManifestFromZip").mockResolvedValue(ok(new TeamsAppManifest()));
+      vi.spyOn(teamsappMgr, "readManifestFromZip").mockResolvedValue(
+        ok(createDefaultTeamsManifest())
+      );
       vi.spyOn(ValidateAppPackageDriver.prototype, "execute").mockResolvedValue({
         result: ok(new Map()),
         summaries: [],
@@ -474,7 +476,9 @@ describe("TeamsAppMgr", async () => {
     });
     it("success", async () => {
       vi.spyOn(teamsappMgr, "ensureAppPackageFile").mockResolvedValue(ok(undefined));
-      vi.spyOn(teamsappMgr, "readManifestFromZip").mockResolvedValue(ok(new TeamsAppManifest()));
+      vi.spyOn(teamsappMgr, "readManifestFromZip").mockResolvedValue(
+        ok(createDefaultTeamsManifest())
+      );
       vi.spyOn(ValidateAppPackageDriver.prototype, "execute").mockResolvedValue({
         result: ok(new Map()),
         summaries: [],

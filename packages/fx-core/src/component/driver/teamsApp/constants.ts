@@ -4,9 +4,18 @@
 /**
  * @author Huajie Zhang <huajiezhang@microsoft.com>
  */
-import { IBot, IComposeExtension, IConfigurableTab, IStaticTab } from "@microsoft/teamsfx-api";
+import {
+  IBot,
+  IComposeExtension,
+  IConfigurableTab,
+  IStaticTab,
+  TeamsManifestLatest,
+} from "@microsoft/teamsfx-api";
 import semver from "semver";
 import { ComponentNames } from "../../migrate";
+
+type Bot = NonNullable<TeamsManifestLatest["bots"]>[number];
+type ConfigurableTab = NonNullable<TeamsManifestLatest["configurableTabs"]>[number];
 
 const AAD_STATE_KEY = ComponentNames.AadApp;
 const TAB_STATE_KEY = ComponentNames.TeamsTab;
@@ -45,12 +54,12 @@ export const CONFIGURABLE_TABS_TPL_V4: IConfigurableTab[] = [
   },
 ];
 
-export function getConfigurableTabsTplBasedOnVersion(version: string): IConfigurableTab[] {
+export function getConfigurableTabsTplBasedOnVersion(version: string): ConfigurableTab[] {
   const manifestVersion = semver.coerce(version);
   if (version === "devPreview" || (manifestVersion && semver.gte(manifestVersion, "1.17.0"))) {
-    return CONFIGURABLE_TABS_TPL_V4;
+    return CONFIGURABLE_TABS_TPL_V4 as unknown as ConfigurableTab[];
   }
-  return CONFIGURABLE_TABS_TPL_V3;
+  return CONFIGURABLE_TABS_TPL_V3 as unknown as ConfigurableTab[];
 }
 
 const BOT_ID_PLACEHOLDER = `{{state.${BOT_STATE_KEY}.botId}}`;
@@ -95,12 +104,12 @@ export const BOTS_TPL_FOR_COMMAND_AND_RESPONSE_V4: IBot[] = [
   },
 ];
 
-export function getBotsTplForCommandAndResponseBasedOnVersion(version: string): IBot[] {
+export function getBotsTplForCommandAndResponseBasedOnVersion(version: string): Bot[] {
   const manifestVersion = semver.coerce(version);
   if (version === "devPreview" || (manifestVersion && semver.gte(manifestVersion, "1.17.0"))) {
-    return BOTS_TPL_FOR_COMMAND_AND_RESPONSE_V4;
+    return BOTS_TPL_FOR_COMMAND_AND_RESPONSE_V4 as unknown as Bot[];
   }
-  return BOTS_TPL_FOR_COMMAND_AND_RESPONSE_V3;
+  return BOTS_TPL_FOR_COMMAND_AND_RESPONSE_V3 as unknown as Bot[];
 }
 
 export const BOTS_TPL_FOR_NOTIFICATION_V3: IBot[] = [
@@ -121,12 +130,12 @@ export const BOTS_TPL_FOR_NOTIFICATION_V4: IBot[] = [
   },
 ];
 
-export function getBotsTplForNotificationBasedOnVersion(version: string): IBot[] {
+export function getBotsTplForNotificationBasedOnVersion(version: string): Bot[] {
   const manifestVersion = semver.coerce(version);
   if (version === "devPreview" || (manifestVersion && semver.gte(manifestVersion, "1.17.0"))) {
-    return BOTS_TPL_FOR_NOTIFICATION_V4;
+    return BOTS_TPL_FOR_NOTIFICATION_V4 as unknown as Bot[];
   }
-  return BOTS_TPL_FOR_NOTIFICATION_V3;
+  return BOTS_TPL_FOR_NOTIFICATION_V3 as unknown as Bot[];
 }
 
 export const BOTS_TPL_V3: IBot[] = [
@@ -177,12 +186,12 @@ export const BOTS_TPL_V4: IBot[] = [
   },
 ];
 
-export function getBotsTplBasedOnVersion(version: string): IBot[] {
+export function getBotsTplBasedOnVersion(version: string): Bot[] {
   const manifestVersion = semver.coerce(version);
   if (version === "devPreview" || (manifestVersion && semver.gte(manifestVersion, "1.17.0"))) {
-    return BOTS_TPL_V4;
+    return BOTS_TPL_V4 as unknown as Bot[];
   }
-  return BOTS_TPL_V3;
+  return BOTS_TPL_V3 as unknown as Bot[];
 }
 
 export const COMPOSE_EXTENSIONS_TPL_M365_V3: IComposeExtension[] = [
@@ -409,12 +418,12 @@ export const BOTS_TPL_EXISTING_APP_V2: IBot[] = [
   },
 ];
 
-export function getBotsTplExistingAppBasedOnVersion(version: string): IBot[] {
+export function getBotsTplExistingAppBasedOnVersion(version: string): Bot[] {
   const manifestVersion = semver.coerce(version);
   if (version === "devPreview" || (manifestVersion && semver.gte(manifestVersion, "1.17.0"))) {
-    return BOTS_TPL_EXISTING_APP_V2;
+    return BOTS_TPL_EXISTING_APP_V2 as unknown as Bot[];
   }
-  return BOTS_TPL_EXISTING_APP;
+  return BOTS_TPL_EXISTING_APP as unknown as Bot[];
 }
 
 export const COMPOSE_EXTENSIONS_TPL_EXISTING_APP: IComposeExtension[] = [
@@ -450,12 +459,12 @@ export const CONFIGURABLE_TABS_TPL_EXISTING_APP_V2: IConfigurableTab[] = [
 
 export function getConfigurableTabsTplExistingAppBasedOnVersion(
   version: string
-): IConfigurableTab[] {
+): ConfigurableTab[] {
   const manifestVersion = semver.coerce(version);
   if (version === "devPreview" || (manifestVersion && semver.gte(manifestVersion, "1.17.0"))) {
-    return CONFIGURABLE_TABS_TPL_EXISTING_APP_V2;
+    return CONFIGURABLE_TABS_TPL_EXISTING_APP_V2 as unknown as ConfigurableTab[];
   }
-  return CONFIGURABLE_TABS_TPL_EXISTING_APP;
+  return CONFIGURABLE_TABS_TPL_EXISTING_APP as unknown as ConfigurableTab[];
 }
 
 export const STATIC_TABS_TPL_EXISTING_APP: IStaticTab[] = [

@@ -4,6 +4,7 @@
 import {
   AppManifestUtils,
   Colors,
+  DeclarativeCopilotManifestSchema,
   DefaultApiSpecJsonFileName,
   DefaultApiSpecYamlFileName,
   FxError,
@@ -13,7 +14,7 @@ import {
   FunctionObject,
   RuntimeObjectLocalplugin,
   Result,
-  TeamsAppManifest,
+  TeamsManifestLatest,
   err,
   ok,
 } from "@microsoft/teamsfx-api";
@@ -121,23 +122,80 @@ export class PluginManifestUtils {
   }
 
   public async getApiSpecFilePathFromTeamsManifest(
-    manifest: TeamsAppManifest,
+    manifest: TeamsManifestLatest,
     manifestPath: string
   ): Promise<Result<string[], FxError>> {
-    const pluginFilePathRes = await manifestUtils.getPluginFilePath(manifest, manifestPath);
-    if (pluginFilePathRes.isErr()) {
-      return err(pluginFilePathRes.error);
-    }
-    const pluginFilePath = pluginFilePathRes.value;
-    const pluginContentRes = await this.readPluginManifestFile(pluginFilePath);
-    if (pluginContentRes.isErr()) {
-      return err(pluginContentRes.error);
-    }
-    const apiSpecFiles = await this.getApiSpecFilePathFromPlugin(
-      pluginContentRes.value,
-      pluginFilePath
+    const pluginPathsRes = await this.getPluginManifestPathsFromDeclarativeAgent(
+      manifest,
+      manifestPath
     );
+    if (pluginPathsRes.isErr()) {
+      return err(pluginPathsRes.error);
+    }
+    const apiSpecFiles: string[] = [];
+    for (const pluginFilePath of pluginPathsRes.value) {
+      const pluginContentRes = await this.readPluginManifestFile(pluginFilePath);
+      if (pluginContentRes.isErr()) {
+        return err(pluginContentRes.error);
+      }
+      const files = await this.getApiSpecFilePathFromPlugin(pluginContentRes.value, pluginFilePath);
+      apiSpecFiles.push(...files);
+    }
     return ok(apiSpecFiles);
+  }
+
+  /**
+   * Resolve the plugin manifest file path(s) referenced by the declarative agent's actions.
+   * In the unified manifest, an API plugin is referenced from the declarative agent manifest's
+   * `actions`, not from the (now removed) `copilotAgents.plugins` field.
+   */
+  public async getPluginManifestPathsFromDeclarativeAgent(
+    manifest: TeamsManifestLatest,
+    manifestPath: string
+  ): Promise<Result<string[], FxError>> {
+    const declarativeAgentFile = manifest.copilotAgents?.declarativeAgents?.[0]?.file;
+    if (!declarativeAgentFile) {
+      return err(
+        AppStudioResultFactory.UserError(
+          AppStudioError.TeamsAppRequiredPropertyMissingError.name,
+          AppStudioError.TeamsAppRequiredPropertyMissingError.message(
+            "declarativeAgents",
+            manifestPath
+          )
+        )
+      );
+    }
+    const declarativeAgentPath = path.resolve(path.dirname(manifestPath), declarativeAgentFile);
+    if (!(await fs.pathExists(declarativeAgentPath))) {
+      return err(new FileNotFoundError("PluginManifestUtils", declarativeAgentFile));
+    }
+    let declarativeAgentManifest: DeclarativeCopilotManifestSchema;
+    try {
+      const content = stripBom(await fs.readFile(declarativeAgentPath, { encoding: "utf-8" }));
+      declarativeAgentManifest = JSON.parse(content) as DeclarativeCopilotManifestSchema;
+    } catch (e) {
+      return err(new JSONSyntaxError(declarativeAgentPath, e, "PluginManifestUtils"));
+    }
+    const actions = declarativeAgentManifest.actions ?? [];
+    const pluginPaths = actions
+      .filter((action) => !!action.file)
+      .map((action) => path.resolve(path.dirname(declarativeAgentPath), action.file));
+    return ok(pluginPaths);
+  }
+
+  /**
+   * Detect whether the app is an API plugin project by checking if the referenced declarative
+   * agent manifest declares any actions.
+   */
+  public async isApiPluginFromDeclarativeAgent(
+    manifest: TeamsManifestLatest,
+    manifestPath: string
+  ): Promise<boolean> {
+    const pluginPathsRes = await this.getPluginManifestPathsFromDeclarativeAgent(
+      manifest,
+      manifestPath
+    );
+    return pluginPathsRes.isOk() && pluginPathsRes.value.length > 0;
   }
 
   public logValidationErrors(

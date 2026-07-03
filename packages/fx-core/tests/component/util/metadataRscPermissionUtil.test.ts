@@ -184,9 +184,7 @@ describe("metadata rsc permission util", () => {
     await metadataRscPermissionUtil.parseManifest(ymlPath, mockProjectModel, props);
     assert(props[ProjectTypeProps.TeamsManifestVersion] === "1.16");
     assert(props[TelemetryProperty.RscDelegated] === "ChannelMeetingStage.Write.Group");
-    assert(
-      props[TelemetryProperty.RscApplication] === "TeamSettings.Read.Group,ChatSettings.Read.Chat"
-    );
+    assert(props[TelemetryProperty.RscApplication] === "TeamSettings.Read.Group");
 
     // no manifest path in teamsApp/validateManifest action
     const model = Object.assign({}, mockProjectModel);

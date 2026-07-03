@@ -275,13 +275,6 @@ export function getCapabilities(manifest: any): string[] {
     capabilities.push("extension");
   }
   if (
-    manifest.copilotAgents?.plugins &&
-    manifest.copilotAgents.plugins.length > 0 &&
-    !capabilities.includes("plugin")
-  ) {
-    capabilities.push("plugin");
-  }
-  if (
     manifest.copilotAgents?.declarativeAgents &&
     manifest.copilotAgents.declarativeAgents.length > 0 &&
     !capabilities.includes("copilotGpt")

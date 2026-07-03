@@ -11,7 +11,7 @@ import {
   Platform,
   Question,
   SingleSelectQuestion,
-  TeamsAppManifest,
+  TeamsManifestLatest,
   TextInputQuestion,
   UserError,
   UserInteraction,
@@ -1258,7 +1258,7 @@ describe("addPluginQuestionNode", async () => {
   });
 
   it("success: can add a plugin from api spec", async () => {
-    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok({} as TeamsAppManifest));
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok({} as TeamsManifestLatest));
     vi.spyOn(manifestUtils, "parseCommonProperties").mockReturnValue({
       capabilities: ["copilotGpt"],
       isApiME: false,

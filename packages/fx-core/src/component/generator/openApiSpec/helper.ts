@@ -38,7 +38,7 @@ import {
   Result,
   Stage,
   SystemError,
-  TeamsAppManifest,
+  TeamsManifestLatest,
   UserError,
   Warning,
 } from "@microsoft/teamsfx-api";
@@ -429,7 +429,7 @@ function formatTelemetryValidationProperty(result: ErrorResult | WarningResult):
 }
 
 export async function listPluginExistingOperations(
-  manifest: TeamsAppManifest,
+  manifest: TeamsManifestLatest,
   teamsManifestPath: string,
   destinationApiSpecFilePath: string
 ): Promise<string[]> {
@@ -756,7 +756,7 @@ export async function injectAuthAction(
  */
 export async function generateScaffoldingSummary(
   warnings: Warning[],
-  teamsManifest: TeamsAppManifest,
+  teamsManifest: TeamsManifestLatest,
   apiSpecFilePath: string,
   pluginManifestPath: string | undefined,
   projectPath: string
@@ -809,7 +809,7 @@ export async function generateScaffoldingSummary(
 function formatApiSpecValidationWarningMessage(
   specWarnings: Warning[],
   apiSpecFileName: string,
-  teamsManifest: TeamsAppManifest
+  teamsManifest: TeamsManifestLatest
 ): string[] {
   const resultWarnings = [];
   const operationIdWarning = specWarnings.find((w) => w.type === WarningType.OperationIdMissing);
@@ -867,7 +867,7 @@ function formatApiSpecValidationWarningMessage(
 }
 
 function validateTeamsManifestLength(
-  teamsManifest: TeamsAppManifest,
+  teamsManifest: TeamsManifestLatest,
   warnings: Warning[]
 ): string[] {
   const nameShortLimit = 30;
@@ -908,7 +908,7 @@ function validateTeamsManifestLength(
         )
     );
   }
-  if (teamsManifest.description.full!.length > descriptionFullLimit) {
+  if (teamsManifest.description.full.length > descriptionFullLimit) {
     resultWarnings.push(
       formatLengthExceedingErrorMessage("/description/full", descriptionFullLimit)
     );
@@ -942,7 +942,7 @@ function validateTeamsManifestLength(
       }
     }
 
-    const commands = teamsManifest.composeExtensions![0].commands;
+    const commands = teamsManifest.composeExtensions![0].commands ?? [];
 
     for (const command of commands) {
       if (command.type === "query") {

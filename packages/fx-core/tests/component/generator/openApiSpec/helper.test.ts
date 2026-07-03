@@ -21,7 +21,7 @@ import {
   Platform,
   PluginManifestSchema,
   SystemError,
-  TeamsAppManifest,
+  TeamsManifestLatest,
 } from "@microsoft/teamsfx-api";
 import { fail } from "assert";
 import axios from "axios";
@@ -705,7 +705,7 @@ describe("injectAuthAction", async () => {
 });
 
 describe("listPluginExistingOperations", () => {
-  const teamsManifestWithPlugin: TeamsAppManifest = {
+  const teamsManifestWithPlugin: TeamsManifestLatest = {
     ...teamsManifest,
     copilotAgents: {
       plugins: [
@@ -860,7 +860,7 @@ describe("updateForCustomApi", async () => {
     },
   } as OpenAPIV3.Document;
 
-  const manifest: TeamsAppManifest = {
+  const manifest: TeamsManifestLatest = {
     manifestVersion: "version",
     id: "mock-app-id",
     name: { short: "short-name" },
