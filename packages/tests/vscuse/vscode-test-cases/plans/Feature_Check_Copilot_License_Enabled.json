@@ -1,194 +1,792 @@
 {
   "plan_metadata": {
     "version": "1.1",
-    "plan_id": "plan_80b368dd",
+    "plan_id": "plan_r_1024_023252",
     "execution_context": {
       "delay_between_steps": 0.5,
       "stop_on_error": true,
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2,
-      "step_retry_timeout": 0.0
+      "step_retry_count": 0
     },
-    "total_steps": 16,
-    "created_at": "2026-06-17T02:10:05.016638",
-    "name": "Feature Check Copilot License Enabled",
+    "total_steps": 32,
+    "created_at": "2026-06-29T03:21:51.231595",
+    "name": "DA_with_MCP Server(Oauth)",
     "description": {
       "other": "",
-      "owner": "v-yajunlu@microsoft.com",
-      "workitem": "28202384"
+      "owner": "v-annefu@microsoft.com",
+      "workitem": "35613058"
     },
-    "generated_at": "2026-06-17T02:10:05.016638",
+    "generated_at": "2026-06-29T03:21:51.231595",
     "execution_order": [
-      "step_3ca9f2b7",
-      "step_eb544d52",
-      "step_c3c0a40a",
-      "step_f0d7ba3e",
-      "step_436b1f61",
-      "step_a0026de5",
-      "step_fa6d6cb1",
-      "step_abe26cd9",
-      "step_aa0c3ceb",
-      "step_36f93ed7",
-      "step_78a597ab",
-      "step_47935ca7",
-      "step_ed29b905",
-      "step_b16aa4f5",
-      "step_c51b1af7",
-      "step_b92621be",
-      "step_9a825c12",
-      "step_24db8255",
-      "step_35bc35cf"
+      "plan_r_0928_012254",
+      "plan_r_0629_031130",
+      "step_5f1a8731",
+      "step_9c87f073",
+      "step_52c22c4c",
+      "step_9a8146c5",
+      "plan_r_0928_014459",
+      "plan_r_1021_081410",
+      "step_94025678",
+      "step_5b9f6257",
+      "plan_26ac4c4e",
+      "step_4b860701",
+      "step_35164443",
+      "step_a712386e",
+      "step_5120006b",
+      "step_289ade9c",
+      "step_d0c53170",
+      "step_8ed7e3fe",
+      "step_c83f7f58",
+      "step_8db1832f",
+      "step_0abfa1e9",
+      "step_02fe6ba0",
+      "step_ac7309cf",
+      "step_73df5e59",
+      "step_10a9f134",
+      "step_5fa52f1b",
+      "step_6ed8712c",
+      "step_24e52ca7",
+      "step_f1a98f32",
+      "step_9ecdaafc",
+      "step_3a870434",
+      "step_54e19323",
+      "step_dcecd61a",
+      "step_6278739e",
+      "step_dc8a5e54",
+      "step_11c1cd46",
+      "step_5b6d6181"
     ],
     "tags": [],
-    "updated_at": "2026-07-03T07:50:04.402000"
+    "updated_at": "2026-06-29T03:25:40.465092"
   },
   "steps": [
     {
-      "step_id": "step_3ca9f2b7",
+      "step_id": "step_5f1a8731",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 951,
-        "y": 130
+        "x": 281,
+        "y": 36
       },
-      "description": "Click the language selection button (flag icon) in the top right corner of the VS Code welcome screen to open the language options.",
+      "description": "Click inside the \"Enter your MCP server URL\" input field in the MCP Server URL prompt within Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:951:130:16:5:cb26345936268d04",
-        "dhash:951:130:96:5:2244283030280404",
-        "dhash:951:130:0:10:2592eae0f08e8621"
+        "dhash:281:36:16:5:0000000000521a25",
+        "dhash:281:36:96:5:00009049b4a62aba",
+        "dhash:281:36:0:10:f0b09494b2717075"
       ],
       "postconditions": [],
       "tags": [],
-      "screenshot": "step_3ca9f2b7",
-      "created_at": "2026-06-17T02:19:55.448923",
-      "plan_id": "plan_80b368dd"
+      "screenshot": "step_5f1a8731",
+      "created_at": "2026-06-29T03:21:51.261164",
+      "plan_id": "plan_r_1024_023252"
     },
     {
-      "step_id": "step_eb544d52",
+      "step_id": "step_9c87f073",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "https://api.githubcopilot.com/mcp/"
+      },
+      "description": "Type 'https://api.githubcopilot.com/mcp/' into the \"Enter your MCP server URL\" input field in the MCP Server URL prompt at the top of the Visual Studio Code window.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:f0b09494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_9c87f073",
+      "created_at": "2026-06-29T03:21:51.269731",
+      "plan_id": "plan_r_1024_023252"
+    },
+    {
+      "step_id": "step_52c22c4c",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to submit the MCP server URL (\"https://api.githubcopilot.com/mcp/\") in the input dialog at the top of the Visual Studio Code window.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:e0b09494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_52c22c4c",
+      "created_at": "2026-06-29T03:21:51.277234",
+      "plan_id": "plan_r_1024_023252"
+    },
+    {
+      "step_id": "step_9a8146c5",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 364,
+        "y": 74
+      },
+      "description": "Click the \"Default folder\" option (/home/vscode/AgentsToolkitProjects) in the \"Workspace Folder\" dialog of Visual Studio Code to select the project root directory.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:364:74:16:5:08146a985d551696",
+        "dhash:364:74:96:5:44232282e2068e01",
+        "dhash:364:74:0:10:f0b09494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_9a8146c5",
+      "created_at": "2026-06-29T03:21:51.289248",
+      "plan_id": "plan_r_1024_023252"
+    },
+    {
+      "step_id": "step_94025678",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 628,
+        "y": 140
+      },
+      "description": "Click the \"Start\" badge link next to \"Fetch action from MCP\" in the mcp.json file header within the VS Code editor.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:628:140:16:5:534de9a9a940b400",
+        "dhash:628:140:96:5:00120866f6090049",
+        "dhash:628:140:0:10:23b1212121213a1c"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_94025678",
+      "created_at": "2026-06-29T03:21:51.300954",
+      "plan_id": "plan_r_1024_023252"
+    },
+    {
+      "step_id": "step_5b9f6257",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 464,
+        "y": 94
+      },
+      "description": "Click the \"Allow\" button in the GitHub authentication prompt for the MCP Server Definition within Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:464:94:16:5:10accc569692b245",
+        "dhash:464:94:96:5:00021827039484b3",
+        "dhash:464:94:0:10:d2b12d2121213a1c"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_5b9f6257",
+      "created_at": "2026-06-29T03:21:51.313980",
+      "plan_id": "plan_r_1024_023252"
+    },
+    {
+      "step_id": "step_4b860701",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 506,
+        "y": 137
+      },
+      "description": "Click the \"Fetch from MCP\" link above the \"servers\" section in the mcp.json file within Visual Studio Code, located in the MICROSOFT 365 AGENTS TOOLKIT interface.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:506:137:16:5:86584b4adc5a6391",
+        "dhash:506:137:96:5:80404ca232c42838",
+        "dhash:506:137:0:10:23b531212121213a"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_4b860701",
+      "created_at": "2026-06-29T03:21:51.327519",
+      "plan_id": "plan_r_1024_023252"
+    },
+    {
+      "step_id": "step_35164443",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 445,
+        "y": 72
+      },
+      "description": "Click the \"ai-plugin.json\" file option in the manifest selection dropdown of Visual Studio Code when prompted with \"Select the action manifest you want to update\".",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:445:72:16:5:00408023d4aa2a2a",
+        "dhash:445:72:96:5:0000108eb2364ea1",
+        "dhash:445:72:0:10:f0b031282020223a"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_35164443",
+      "created_at": "2026-06-29T03:21:51.338524",
+      "plan_id": "plan_r_1024_023252"
+    },
+    {
+      "step_id": "step_a712386e",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "get"
+      },
+      "description": "Type 'get' into the search input field of the \"Select Operation(s) Copilot can interact with\" dialog in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:74c240406460623a"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_a712386e",
+      "created_at": "2026-06-29T03:21:51.348700",
+      "plan_id": "plan_r_1024_023252"
+    },
+    {
+      "step_id": "step_5120006b",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 314,
+        "y": 81
+      },
+      "description": "Click on the search input field in the \"Select Operation(s) Copilot can interact with\" dialog within Visual Studio Code to focus and enter text.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:314:81:16:5:0000000000000052",
+        "dhash:314:81:96:5:4040209184a281c8",
+        "dhash:314:81:0:10:74c240406460623a"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_5120006b",
+      "created_at": "2026-06-29T03:21:51.357709",
+      "plan_id": "plan_r_1024_023252"
+    },
+    {
+      "step_id": "step_289ade9c",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 788,
+        "y": 49
+      },
+      "description": "Click the blue plus (+) button in the \"Select Operation(s) Copilot can interact with\" dialog in Visual Studio Code to add the selected operation.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:788:49:16:5:8d92696d6d69132c",
+        "dhash:788:49:96:5:0909699191699d45",
+        "dhash:788:49:0:10:74c240406460623a"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_289ade9c",
+      "created_at": "2026-06-29T03:21:51.364260",
+      "plan_id": "plan_r_1024_023252"
+    },
+    {
+      "step_id": "step_d0c53170",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 345,
+        "y": 130
+      },
+      "description": "Click the \"OAuth (with static registration)\" option in the \"Select Authentication Type\" dropdown within Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:345:70:16:5:1040a8c10c336149",
+        "dhash:345:70:96:5:000090236cc42314",
+        "dhash:345:70:0:10:40b030216060623a"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_d0c53170",
+      "created_at": "2026-06-29T03:21:51.370262",
+      "plan_id": "plan_r_1024_023252"
+    },
+    {
+      "step_id": "step_8ed7e3fe",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
         "key": "f1"
       },
-      "description": "Press the \"F1\" key to open the Command Palette in the Visual Studio Code interface, with the workspace view active.",
+      "description": "Press the F1 key to open the Command Palette in Visual Studio Code while viewing the ai-plugin.json file.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:512:384:0:20:326c626363636421"
+        "dhash:512:384:0:20:2131b13321787c79"
       ],
       "postconditions": [],
       "tags": [],
-      "screenshot": "step_eb544d52",
-      "created_at": "2026-06-17T02:19:55.453854",
-      "plan_id": "plan_80b368dd"
+      "screenshot": "step_8ed7e3fe",
+      "created_at": "2026-06-29T03:21:51.387782",
+      "plan_id": "plan_r_1024_023252"
     },
     {
-      "step_id": "step_c3c0a40a",
+      "step_id": "step_c83f7f58",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Welcome: Open Walkthrough"
+        "text": "close alleditors"
       },
-      "description": "Type text: 'Welcome: Open Walkthrough' in the Visual Studio Code command palette (invoked via the top search input field).",
+      "description": "Type 'close alleditors' into the Visual Studio Code Command Palette input field to search for the \"Close All Editors\" command.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:512:384:0:20:64404c6723636421"
+        "dhash:512:384:0:20:64c5cc3131787c69"
       ],
       "postconditions": [],
       "tags": [],
-      "screenshot": "step_c3c0a40a",
-      "created_at": "2026-06-17T02:19:55.459351",
-      "plan_id": "plan_80b368dd"
+      "screenshot": "step_c83f7f58",
+      "created_at": "2026-06-29T03:21:51.399971",
+      "plan_id": "plan_r_1024_023252"
     },
     {
-      "step_id": "step_f0d7ba3e",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press the \"Enter\" key to select the \"Welcome: Open Walkthrough...\" command from the command palette in Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:6464626363636421"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_f0d7ba3e",
-      "created_at": "2026-06-17T02:19:55.464379",
-      "plan_id": "plan_80b368dd"
-    },
-    {
-      "step_id": "step_436b1f61",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "Build a Declarative Agent"
-      },
-      "description": "Type text: 'Build a Declarative Agent' into the dropdown menu labeled \"Select a walkthrough to open\" in the Visual Studio Code interface under the \"Explorer\" tab. This interaction is related to selecting a guided walkthrough option from the list, specifically in the application context of Microsoft 365 development.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:40404067636a6421"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_436b1f61",
-      "created_at": "2026-06-17T02:19:55.469830",
-      "plan_id": "plan_80b368dd"
-    },
-    {
-      "step_id": "step_a0026de5",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press the \"Enter\" key to select the highlighted suggestion (\"Build a Declarative Agent\") in the command palette of Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:6070626363626421"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_a0026de5",
-      "created_at": "2026-06-17T02:19:55.474845",
-      "plan_id": "plan_80b368dd"
-    },
-    {
-      "step_id": "step_fa6d6cb1",
+      "step_id": "step_8db1832f",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 512,
-        "y": 431
+        "x": 318,
+        "y": 72
       },
-      "description": "Click the \"Set up your environment\" option in the guided tutorial list under the \"Build a Declarative Agent\" section of the Microsoft 365 Agents Toolkit welcome screen in Visual Studio Code.",
+      "description": "Click the \"Close All Editors\" option in the command palette dropdown of Visual Studio Code to close all open editor tabs.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:318:72:16:5:498c53336369c9cd",
+        "dhash:318:72:96:5:8934ad1ad212d234",
+        "dhash:318:72:0:10:4ccdb0322078706b"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_8db1832f",
+      "created_at": "2026-06-29T03:21:51.412015",
+      "plan_id": "plan_r_1024_023252"
+    },
+    {
+      "step_id": "step_0abfa1e9",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "f1"
+      },
+      "description": "Press F1 to open the command palette in Visual Studio Code with the Explorer panel active.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:32ac2a2323626423"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_0abfa1e9",
+      "created_at": "2026-06-29T03:21:51.418988",
+      "plan_id": "plan_r_1024_023252"
+    },
+    {
+      "step_id": "step_02fe6ba0",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "provision"
+      },
+      "description": "Type 'provision' into the VS Code Command Palette input field at the top center of the window.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:44a42a2323626423"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_02fe6ba0",
+      "created_at": "2026-06-29T03:21:51.429538",
+      "plan_id": "plan_r_1024_023252"
+    },
+    {
+      "step_id": "step_ac7309cf",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 377,
+        "y": 54
+      },
+      "description": "Click on the \"Microsoft 365 Agents: Provision\" command suggestion in the VS Code command palette dropdown, immediately under the search term \">provision\".",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:377:54:16:5:9c5a5b185919e530",
+        "dhash:377:54:96:5:000060db0db20000",
+        "dhash:377:54:0:10:44a42a2323626423"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_ac7309cf",
+      "created_at": "2026-06-29T03:21:51.438542",
+      "plan_id": "plan_r_1024_023252"
+    },
+    {
+      "step_id": "step_73df5e59",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 309,
+        "y": 36
+      },
+      "description": "Click the input field in the \"Enter client id for OAuth registration in OpenAPI Description Document\" prompt at the top of the Visual Studio Code window.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:309:36:16:5:000000000045d144",
+        "dhash:309:36:96:5:0000402a959513db",
+        "dhash:309:36:0:10:702022232362642b"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_73df5e59",
+      "created_at": "2026-06-29T03:21:51.444890",
+      "plan_id": "plan_r_1024_023252"
+    },
+    {
+      "step_id": "step_10a9f134",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{env:DA_MCP_OAUTH_CLIENTID}}"
+      },
+      "description": "Type ${{env:DA_MCP_OAUTH_CLIENTID}}  into the \"Enter client id for OAuth registration in OpenAPI Description Document\" input field in the Visual Studio Code Microsoft 365 Agents extension modal.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:702022232362642b"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_10a9f134",
+      "created_at": "2026-06-29T03:21:51.451732",
+      "plan_id": "plan_r_1024_023252"
+    },
+    {
+      "step_id": "step_5fa52f1b",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press the Enter key to confirm the client ID input in the \"Enter client id for OAuth registration in OpenAPI Description Document\" prompt within Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:40242a232362642b"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_5fa52f1b",
+      "created_at": "2026-06-29T03:21:51.458604",
+      "plan_id": "plan_r_1024_023252"
+    },
+    {
+      "step_id": "step_6ed8712c",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{secret:DA_MCP_OAUTH_CLIENT_SECERT}}"
+      },
+      "description": "Type ${{secret:DA_MCP_OAUTH_CLIENT_SECERT}}  into the \"Enter client secret for OAuth registration in OpenAPI Description Document\" input field in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:c0b130322030302a"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_6ed8712c",
+      "created_at": "2026-06-29T03:21:51.471436",
+      "plan_id": "plan_r_1024_023252"
+    },
+    {
+      "step_id": "step_24e52ca7",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press 'Enter' to confirm the entered client secret in the \"Enter client secret for OAuth registration in OpenAPI Description Document\" input dialog within Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:70242a232362642b"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_24e52ca7",
+      "created_at": "2026-06-29T03:21:51.482128",
+      "plan_id": "plan_r_1024_023252"
+    },
+    {
+      "step_id": "step_f1a98f32",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 296,
+        "y": 41
+      },
+      "description": "Click the \"Input scopes for OAuth registration\" text field in the Visual Studio Code extension setup dialog to begin entering OAuth scopes.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:296:41:16:5:00000810442126ad",
+        "dhash:296:41:96:5:0013166049984565",
+        "dhash:296:41:0:10:602022232362642b"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_f1a98f32",
+      "created_at": "2026-06-29T03:21:51.497015",
+      "plan_id": "plan_r_1024_023252"
+    },
+    {
+      "step_id": "step_9ecdaafc",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "read:user"
+      },
+      "description": "Type 'read:user' into the \u201cScope(s) for OAuth registration\u201d input field at the top of the Visual Studio Code window.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:70242a232362642b"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_9ecdaafc",
+      "created_at": "2026-06-29T03:21:51.507404",
+      "plan_id": "plan_r_1024_023252"
+    },
+    {
+      "step_id": "step_3a870434",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the \"read:user\" OAuth scope in the \"Scope(s) for OAuth registration\" input dialog within Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:50242a232362642b"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_3a870434",
+      "created_at": "2026-06-29T03:21:51.515779",
+      "plan_id": "plan_r_1024_023252"
+    },
+    {
+      "step_id": "step_54e19323",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 464,
+        "y": 114
+      },
+      "description": "Click the \"Confirm\" button on the Microsoft 365 Agents Toolkit OAuth registration dialog in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:464:114:16:5:10de2175d45434cb",
+        "dhash:464:114:96:5:0004789787780400",
+        "dhash:464:114:0:10:52322e232362642b"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_54e19323",
+      "created_at": "2026-06-29T03:21:51.530790",
+      "plan_id": "plan_r_1024_023252"
+    },
+    {
+      "step_id": "step_dcecd61a",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "f1"
+      },
+      "description": "Press F1 to open the command palette in the VS Code file explorer view, with the project folder \"VSCUSE_APP_DXVUJ\" expanded.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:322c2aa323626423"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_dcecd61a",
+      "created_at": "2026-06-29T03:21:51.538798",
+      "plan_id": "plan_r_1024_023252"
+    },
+    {
+      "step_id": "step_6278739e",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Notifications:show notifications"
+      },
+      "description": "Type 'Notifications:show notifications' into the VS Code Command Palette input field at the top center of the Visual Studio Code interface.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:602422a323626423"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_6278739e",
+      "created_at": "2026-06-29T03:21:51.555045",
+      "plan_id": "plan_r_1024_023252"
+    },
+    {
+      "step_id": "step_dc8a5e54",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 400,
+        "y": 48
+      },
+      "description": "Click the highlighted \"Notifications: Show Notifications\" command in the Visual Studio Code command palette to select it.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:400:48:16:5:161459a66622a6b6",
+        "dhash:400:48:96:5:15eaca5b6a9aa205",
+        "dhash:400:48:0:10:642422a323626423"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_dc8a5e54",
+      "created_at": "2026-06-29T03:21:51.570081",
+      "plan_id": "plan_r_1024_023252"
+    },
+    {
+      "step_id": "step_11c1cd46",
+      "agent": "code",
+      "tool": "",
+      "parameters": {},
+      "description": "@code wait for #text:/home/vscode/AgentsToolkitProjects/${{var:app_name}}/appPackage/build/manifest.dev.json exist. Timeout: 120s",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -197,272 +795,16 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [],
-      "screenshot": "step_fa6d6cb1",
-      "created_at": "2026-06-17T02:24:33.865380",
-      "plan_id": "plan_80b368dd"
+      "screenshot": null,
+      "created_at": "2026-06-29T03:21:51.585629",
+      "plan_id": "plan_r_1024_023252"
     },
     {
-      "step_id": "step_abe26cd9",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "f1"
-      },
-      "description": "Press the F1 key to open the command palette in Visual Studio Code, focusing on resolving the YAML file error displayed in the \"Microsoft 365 Agents Toolkit\" extension notification.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "postconditions": [],
-      "tags": [],
-      "created_at": "2026-05-21T02:53:05.678586",
-      "plan_id": "plan_80b368dd"
-    },
-    {
-      "step_id": "step_aa0c3ceb",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "Notifications: Clear All Notifications"
-      },
-      "description": "Type text into the Visual Studio Code command palette: 'Notifications: Clear All Notifications'. Select the option labeled \"Notifications: Clear All Notifications\" from the displayed list.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "postconditions": [],
-      "tags": [],
-      "created_at": "2026-05-21T02:53:05.683646",
-      "plan_id": "plan_80b368dd"
-    },
-    {
-      "step_id": "step_36f93ed7",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press the \"Enter\" key to select the \"Notifications: Clear All Notifications\" option in the Command Palette within the Visual Studio Code interface.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "postconditions": [],
-      "tags": [],
-      "created_at": "2026-05-21T02:53:05.688020",
-      "plan_id": "plan_80b368dd"
-    },
-    {
-      "step_id": "step_78a597ab",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 516,
-        "y": 447
-      },
-      "description": "Click the \"Check Copilot License\" button in the \"Set up your environment\" section of the Microsoft 365 Agents Toolkit welcome screen in Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:516:447:16:5:2493f3ec6b936ad2",
-        "dhash:516:447:96:5:75622a1d99660000",
-        "dhash:516:447:0:10:24b0949090b17075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_78a597ab",
-      "created_at": "2026-06-17T02:28:51.067052",
-      "plan_id": "plan_80b368dd"
-    },
-    {
-      "step_id": "step_47935ca7",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 703,
-        "y": 100
-      },
-      "description": "Click the \"Sign in\" button in the Microsoft 365 notification at the top of the Visual Studio Code interface to access a Microsoft 365 account.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:703:100:16:5:0000000000000000",
-        "dhash:703:100:96:5:00000042b2474971",
-        "dhash:703:100:0:10:9cb89590b0717d7f"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_47935ca7",
-      "created_at": "2026-06-17T02:19:55.488096",
-      "plan_id": "plan_80b368dd"
-    },
-    {
-      "step_id": "step_ed29b905",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "${{env:M365_ACCOUNT_NAME_EnableCopilotAccess}}"
-      },
-      "description": "Type ${{env:M365_ACCOUNT_NAME_EnableCopilotAccess}}  into the 'Email, phone, or Skype' input field on the Microsoft account sign-in page.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:1b28f0d9c7e6dae4"
-      ],
-      "postconditions": [],
-      "tags": [
-        "delay:5"
-      ],
-      "screenshot": "step_ed29b905",
-      "created_at": "2026-06-17T02:19:55.493347",
-      "plan_id": "plan_80b368dd"
-    },
-    {
-      "step_id": "step_b16aa4f5",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 633,
-        "y": 486
-      },
-      "description": "Click the blue \"Next\" button on the Microsoft Sign in screen after entering the email address (test04@atktesting05.onmicrosoft.com) in the Chrome browser login flow.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:633:486:16:5:92aa29a3b24db200",
-        "dhash:633:486:96:5:000004b0300c0000",
-        "dhash:633:486:0:10:1b28f0cbc6e6dae4"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_b16aa4f5",
-      "created_at": "2026-06-17T02:19:55.497254",
-      "plan_id": "plan_80b368dd"
-    },
-    {
-      "step_id": "step_c51b1af7",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "${{secret:M365_ACCOUNT_PASSWORD_EnableCopilotAccess}}"
-      },
-      "description": "Type the password ${{secret:M365_ACCOUNT_PASSWORD_EnableCopilotAccess}}' into the 'Password' field on the Microsoft login page.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:1b08f0d9d1e6e6e4"
-      ],
-      "postconditions": [],
-      "tags": [
-        "delay:3"
-      ],
-      "screenshot": "step_c51b1af7",
-      "created_at": "2026-06-17T02:19:55.500253",
-      "plan_id": "plan_80b368dd"
-    },
-    {
-      "step_id": "step_b92621be",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press the \"Enter\" key to submit the password and proceed from the Microsoft login interface after entering credentials.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:1b08f0d9d1e6e6e4"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_b92621be",
-      "created_at": "2026-06-17T02:19:55.504235",
-      "plan_id": "plan_80b368dd"
-    },
-    {
-      "step_id": "step_9a825c12",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 254,
-        "y": 19
-      },
-      "description": "Click the 'X' button to close the page",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:254:19:16:5:01a1424249420221",
-        "dhash:254:19:96:5:9144640100000004",
-        "dhash:254:19:0:10:9391610169414141"
-      ],
-      "postconditions": [],
-      "tags": [
-        "delay:3"
-      ],
-      "screenshot": "step_9a825c12",
-      "created_at": "2026-06-17T02:19:55.509186",
-      "plan_id": "plan_80b368dd"
-    },
-    {
-      "step_id": "step_24db8255",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 540,
-        "y": 446
-      },
-      "description": "Click the \"Check Copilot License\" button in the \"Set up your environment\" section of the Microsoft 365 Agents Toolkit welcome interface within Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:540:446:16:5:e829abaaaa2bd42b",
-        "dhash:540:446:96:5:929a8572629400d2",
-        "dhash:540:446:0:10:23b89490b0717d7f"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_24db8255",
-      "created_at": "2026-06-17T02:19:55.512507",
-      "plan_id": "plan_80b368dd"
-    },
-    {
-      "step_id": "step_35bc35cf",
+      "step_id": "step_5b6d6181",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion 'Your Microsoft 365 account has Copilot access enabled' is visible in the output panel",
+      "description": "@assertion notification \\\"provision stage executed successfully\\\" exist.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -471,11 +813,11 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "delay:5"
+        "step_retry_timeout: 120"
       ],
       "screenshot": null,
-      "created_at": "2026-06-17T02:19:55.517019",
-      "plan_id": "plan_80b368dd"
+      "created_at": "2026-06-29T03:21:51.597839",
+      "plan_id": "plan_r_1024_023252"
     }
   ],
   "screenshots": {
