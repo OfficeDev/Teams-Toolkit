@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 32,
+    "total_steps": 34,
     "created_at": "2026-06-29T03:21:51.231595",
     "name": "DA_with_MCP Server(Oauth)",
     "description": {
@@ -36,6 +36,8 @@
       "step_5120006b",
       "step_289ade9c",
       "step_d0c53170",
+      "step_d0c53171",
+      "step_d0c53172",
       "step_8ed7e3fe",
       "step_c83f7f58",
       "step_8db1832f",
@@ -341,10 +343,10 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 345,
-        "y": 94
+        "x": 317,
+        "y": 38
       },
-      "description": "Click the \"OAuth (with static registration)\" option in the \"Select Authentication Type\" dropdown within Visual Studio Code. It is the second item because \"OAuth (with dynamic registration)\" now appears above it.",
+      "description": "Click the search input field in the \"Select Authentication Type\" dropdown dialog of Visual Studio Code to activate it for text entry.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -354,6 +356,48 @@
       "postconditions": [],
       "tags": [],
       "screenshot": "step_d0c53170",
+      "created_at": "2026-06-29T03:21:51.370262",
+      "plan_id": "plan_r_1024_023252"
+    },
+    {
+      "step_id": "step_d0c53171",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "static"
+      },
+      "description": "Type \"static\" into the \"Select Authentication Type\" filter box to uniquely narrow the list to \"OAuth (with static registration)\".",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
+      "created_at": "2026-06-29T03:21:51.370262",
+      "plan_id": "plan_r_1024_023252"
+    },
+    {
+      "step_id": "step_d0c53172",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 296,
+        "y": 72
+      },
+      "description": "Click the \"OAuth (with static registration)\" option in the \"Select Authentication Type\" dropdown within Visual Studio Code, after typing \"static\" in the filter box.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
       "created_at": "2026-06-29T03:21:51.370262",
       "plan_id": "plan_r_1024_023252"
     },
