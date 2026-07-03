@@ -1,7 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { FxError, SystemError, SystemErrorOptions, UserError } from "@microsoft/teamsfx-api";
+import type { FxError, SystemErrorOptions } from "@microsoft/teamsfx-api";
+import { SystemError, UserError } from "@microsoft/teamsfx-api";
 
 export class UserCancelError extends UserError {
   constructor(message: string, displayMessage: string) {

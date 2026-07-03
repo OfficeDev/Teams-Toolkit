@@ -1,6 +1,7 @@
 {
   "name": "@microsoft/vscode-ui",
   "version": "1.0.16",
+  "private": true,
   "main": "build/index.js",
   "types": "build/index.d.ts",
   "license": "MIT",
@@ -11,8 +12,6 @@
     "clean": "rm -rf build",
     "build": "rimraf build && npx tsc -p ./",
     "lint:fix": "eslint --fix \"src/**/*.ts\" \"tests/**/*.ts\"",
-    "prepublishOnly": "npm run build",
-    "package": "rimraf build && webpack --mode production --config ./webpack.config.js",
     "precommit": "lint-staged",
     "installAll": "npm run install:tabs"
   },
@@ -21,6 +20,7 @@
     "async-mutex": "^0.3.1",
     "jsonschema": "1.4.0",
     "lodash": "^4.17.21",
+    "neverthrow": "^3.2.0",
     "tmp": "^0.2.5"
   },
   "devDependencies": {
@@ -37,7 +37,6 @@
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "chai-spies": "^1.0.0",
-    "copy-webpack-plugin": "^6.4.1",
     "eslint": "^9.0.0",
     "eslint-config-prettier": "^10.1.0",
     "eslint-plugin-headers": "^1.3.4",
@@ -52,8 +51,6 @@
     "prettier": "^3.3.3",
     "sinon": "^19.0.0",
     "source-map-support": "^0.5.19",
-    "terser-webpack-plugin": "^5.3.9",
-    "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
     "ts-sinon": "2.0.2",
     "tslib": "^2.3.1",
@@ -65,9 +62,6 @@
     "build/**/*"
   ],
   "gitHead": "7d60c0765c0ea8c023a26c10d1c93001c597afbb",
-  "publishConfig": {
-    "access": "public"
-  },
   "lint-staged": {
     "*.{js,jsx,css,ts,tsx}": [
       "eslint --cache --fix --quiet",

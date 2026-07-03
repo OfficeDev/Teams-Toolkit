@@ -7,12 +7,29 @@ packages:
   -  "packages/manifest"
   -  "packages/eslint-plugin-teamsfx"
   -  "packages/tests"
-  # Deprecated SDKs (community-supported / replaced upstream):
-  # excluded from workspace to reduce setup time. Maintained out-of-band.
-  # -  "packages/sdk"
-  # -  "packages/sdk-react"
-  # -  "packages/adaptivecards-tools-sdk"  # superseded by `adaptivecards-templating`
-  # -  "packages/mcp-server"               # deprecated
+  # ---------------------------------------------------------------------------
+  # Deprecated runtime SDKs — intentionally EXCLUDED from the pnpm workspace.
+  #
+  # This exclusion is the single control point that isolates these packages from
+  # the main engine: because `lerna.json` sets `useWorkspaces: true` and the root
+  # `build`/`setup` scripts run `pnpm -r ...`, anything not listed here is never
+  # installed, built, or linted as part of the toolkit engine. They are released
+  # out-of-band via their own dedicated CI pipelines (sdk-e2e-test, dotnetsdk-ci)
+  # which check out the repo and operate on the fixed `packages/**` paths below.
+  #
+  # Do NOT re-add these to the workspace. All four are deprecated with announced
+  # sunset dates; bug fixes only (see each package README / copilot-instructions).
+  # -  "packages/sdk"                       # @microsoft/teamsfx        -> @microsoft/agents-hosting (sunset 2026-07)
+  # -  "packages/sdk-react"                 # @microsoft/teamsfx-react  -> copy hooks into app source (sunset 2026-07)
+  # -  "packages/adaptivecards-tools-sdk"   # @microsoft/adaptivecards-tools -> adaptivecards-templating (sunset 2026-09)
+  # packages/dotnet-sdk (Microsoft.TeamsFx, sunset 2026-09) is a .NET/NuGet package
+  # and is never a pnpm workspace member; it is isolated by construction.
+  # ---------------------------------------------------------------------------
+  # NOTE: packages/mcp-server is currently commented out below but, per
+  # copilot-instructions, it is an ACTIVE Group-1 package (the toolkit's own MCP
+  # server), not a deprecated SDK. Its exclusion is left unchanged here to avoid
+  # altering build behavior — please confirm whether it should rejoin the workspace.
+  # -  "packages/mcp-server"
   -  "packages/server"
   -  "packages/vscode-ui"
   -  "packages/spec-parser"

@@ -1,10 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+import type { IProgressHandler } from "@microsoft/teamsfx-api";
 import { Mutex } from "async-mutex";
+import { ok } from "neverthrow";
 import * as util from "util";
 import { ProgressLocation, window } from "vscode";
-import { IProgressHandler, ok } from "@microsoft/teamsfx-api";
 
 export class ProgressHandler implements IProgressHandler {
   private totalSteps: number;

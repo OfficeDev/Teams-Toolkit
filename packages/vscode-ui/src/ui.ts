@@ -26,11 +26,10 @@ import {
   workspace,
 } from "vscode";
 
-import {
+import type {
   Colors,
   ConfirmConfig,
   ConfirmResult,
-  err,
   ExecuteFuncConfig,
   FxError,
   InputResult,
@@ -39,9 +38,7 @@ import {
   IProgressHandler,
   MultiSelectConfig,
   MultiSelectResult,
-  ok,
   OptionItem,
-  Result,
   SelectFileConfig,
   SelectFileResult,
   SelectFilesConfig,
@@ -52,10 +49,11 @@ import {
   SingleSelectConfig,
   SingleSelectResult,
   StaticOptions,
-  SystemError,
   UIConfig,
   UserInteraction,
 } from "@microsoft/teamsfx-api";
+import { SystemError } from "@microsoft/teamsfx-api";
+import { err, ok, Result } from "neverthrow";
 import {
   EmptyOptionsError,
   InternalUIError,

@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import {
+import type {
   FxError,
   IQTreeNode,
   InputResult,
@@ -9,14 +9,12 @@ import {
   MultiSelectQuestion,
   OptionItem,
   Question,
-  Result,
   SingleSelectQuestion,
   StaticOptions,
   UserInteraction,
-  err,
-  ok,
 } from "@microsoft/teamsfx-api";
 import { assign, cloneDeep } from "lodash";
+import { Result, err, ok } from "neverthrow";
 import {
   EmptyOptionsError,
   InputValidationError,
@@ -92,10 +90,7 @@ export class QuestionModelEngine {
       // second priority: use default as value
       if (question.default) {
         const value = (await getCallFuncValue(inputs, question.default)) as
-          | string
-          | string[]
-          | OptionItem
-          | OptionItem[];
+          string | string[] | OptionItem | OptionItem[];
         if (value) {
           const validateRes = await validationUtils.validateInputs(question, value, inputs);
           if (validateRes) {

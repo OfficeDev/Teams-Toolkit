@@ -14,7 +14,7 @@ on:
       pkgs:
         type: string
         required: false
-        description: "Please enter the package names you want to publish, such as cli, vscode, ui, sdk, server and template. Please separate multiple entries with spaces"
+        description: "Please enter the package names you want to publish, such as cli, vscode, sdk, server and template. Please separate multiple entries with spaces"
         default: ""
       vsrelease:
         type: boolean

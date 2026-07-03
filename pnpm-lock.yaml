@@ -2136,6 +2136,9 @@ importers:
       lodash:
         specifier: ^4.17.21
         version: 4.18.1
+      neverthrow:
+        specifier: ^3.2.0
+        version: 3.2.0
       tmp:
         specifier: ^0.2.5
         version: 0.2.5
@@ -2179,9 +2182,6 @@ importers:
       chai-spies:
         specifier: ^1.0.0
         version: 1.0.0(chai@4.3.4)
-      copy-webpack-plugin:
-        specifier: ^6.4.1
-        version: 6.4.1(webpack@5.108.3)
       eslint:
         specifier: ^9.0.0
         version: 9.0.0
@@ -2224,12 +2224,6 @@ importers:
       source-map-support:
         specifier: ^0.5.19
         version: 0.5.19
-      terser-webpack-plugin:
-        specifier: ^5.3.9
-        version: 5.6.1(webpack@5.108.3)
-      ts-loader:
-        specifier: ^9.5.2
-        version: 9.5.2(typescript@5.9.2)(webpack@5.108.3)
       ts-node:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@22.15.0)(typescript@5.9.2)
@@ -12951,28 +12945,6 @@ packages:
       webpack: 5.95.0(postcss@8.5.16)(webpack-cli@5.1.4)
     dev: true
 
-  /copy-webpack-plugin@6.4.1(webpack@5.108.3):
-    resolution: {integrity: sha512-MXyPCjdPVx5iiWyl40Va3JGh27bKzOTNY3NjUTrosD2q7dR/cLD0013uqJ3BpFbUjyONINjb6qI7nDIJujrMbA==}
-    engines: {node: '>= 10.13.0'}
-    peerDependencies:
-      webpack: ^4.37.0 || ^5.0.0
-    dependencies:
-      cacache: 15.3.0
-      fast-glob: 3.3.3
-      find-cache-dir: 3.3.2
-      glob-parent: 5.1.2
-      globby: 11.1.0
-      loader-utils: 2.0.4
-      normalize-path: 3.0.0
-      p-limit: 3.1.0
-      schema-utils: 3.3.0
-      serialize-javascript: 5.0.1
-      webpack: 5.108.3
-      webpack-sources: 1.4.3
-    transitivePeerDependencies:
-      - bluebird
-    dev: true
-
   /copy-webpack-plugin@6.4.1(webpack@5.95.0):
     resolution: {integrity: sha512-MXyPCjdPVx5iiWyl40Va3JGh27bKzOTNY3NjUTrosD2q7dR/cLD0013uqJ3BpFbUjyONINjb6qI7nDIJujrMbA==}
     engines: {node: '>= 10.13.0'}
@@ -20285,56 +20257,6 @@ packages:
       webpack: 5.108.3(esbuild@0.23.0)
     dev: true
 
-  /minimizer-webpack-plugin@5.6.1(webpack@5.108.3):
-    resolution: {integrity: sha512-DoeAZz8Q1C1znwsUzej1fdoi4jCf7/+Em27ouLqfK/+3m8G+D7yDhUwrc3CNhjSzGUN1kn7Iv4sWmjflQHenpw==}
-    engines: {node: '>= 10.13.0'}
-    peerDependencies:
-      '@minify-html/node': '*'
-      '@swc/core': '*'
-      '@swc/css': '*'
-      '@swc/html': '*'
-      clean-css: '*'
-      cssnano: '*'
-      csso: '*'
-      esbuild: '*'
-      html-minifier-terser: '*'
-      lightningcss: '*'
-      postcss: '*'
-      uglify-js: '*'
-      webpack: ^5.1.0
-    peerDependenciesMeta:
-      '@minify-html/node':
-        optional: true
-      '@swc/core':
-        optional: true
-      '@swc/css':
-        optional: true
-      '@swc/html':
-        optional: true
-      clean-css:
-        optional: true
-      cssnano:
-        optional: true
-      csso:
-        optional: true
-      esbuild:
-        optional: true
-      html-minifier-terser:
-        optional: true
-      lightningcss:
-        optional: true
-      postcss:
-        optional: true
-      uglify-js:
-        optional: true
-    dependencies:
-      '@jridgewell/trace-mapping': 0.3.31
-      jest-worker: 27.5.1
-      schema-utils: 4.3.3
-      terser: 5.48.0
-      webpack: 5.108.3
-    dev: true
-
   /minipass-collect@1.0.2:
     resolution: {integrity: sha512-6T6lH0H8OG9kITm/Jm6tdooIbogG9e0tLgpY6mphXSm/A9u8Nq1ryBG+Qspiub9LjWlBPsPS3tWQ/Botq4FdxA==}
     engines: {node: '>= 8'}
@@ -25210,56 +25132,6 @@ packages:
       webpack: 5.95.0(postcss@8.5.16)(webpack-cli@5.1.4)
     dev: true
 
-  /terser-webpack-plugin@5.6.1(webpack@5.108.3):
-    resolution: {integrity: sha512-201R5j+sJpK8nFWwKVyNfZot8FaJbLZDq5evriVzbV1wDtSXDjRUDRfJzHpAaxFDMEhsZL1QkeqM61wgsS3KaQ==}
-    engines: {node: '>= 10.13.0'}
-    peerDependencies:
-      '@minify-html/node': '*'
-      '@swc/core': '*'
-      '@swc/css': '*'
-      '@swc/html': '*'
-      clean-css: '*'
-      cssnano: '*'
-      csso: '*'
-      esbuild: '*'
-      html-minifier-terser: '*'
-      lightningcss: '*'
-      postcss: '*'
-      uglify-js: '*'
-      webpack: ^5.1.0
-    peerDependenciesMeta:
-      '@minify-html/node':
-        optional: true
-      '@swc/core':
-        optional: true
-      '@swc/css':
-        optional: true
-      '@swc/html':
-        optional: true
-      clean-css:
-        optional: true
-      cssnano:
-        optional: true
-      csso:
-        optional: true
-      esbuild:
-        optional: true
-      html-minifier-terser:
-        optional: true
-      lightningcss:
-        optional: true
-      postcss:
-        optional: true
-      uglify-js:
-        optional: true
-    dependencies:
-      '@jridgewell/trace-mapping': 0.3.31
-      jest-worker: 27.5.1
-      schema-utils: 4.3.3
-      terser: 5.48.0
-      webpack: 5.108.3
-    dev: true
-
   /terser-webpack-plugin@5.6.1(webpack@5.95.0):
     resolution: {integrity: sha512-201R5j+sJpK8nFWwKVyNfZot8FaJbLZDq5evriVzbV1wDtSXDjRUDRfJzHpAaxFDMEhsZL1QkeqM61wgsS3KaQ==}
     engines: {node: '>= 10.13.0'}
@@ -25606,7 +25478,7 @@ packages:
       semver: 7.7.2
       source-map: 0.7.6
       typescript: 5.9.2
-      webpack: 5.95.0(webpack-cli@6.0.1)
+      webpack: 5.95.0(postcss@8.5.16)(webpack-cli@5.1.4)
     dev: true
 
   /ts-morph@19.0.0:
@@ -27092,53 +26964,6 @@ packages:
   /webpack-sources@3.5.0:
     resolution: {integrity: sha512-HPuy+uuoTCaaoEoI1LQ3JN9+vrPBvEesnnX1jADHy728cHSMlq4wUc4afYqahq2B1mhQVZxCXOkNTnXltr+2vQ==}
     engines: {node: '>=10.13.0'}
-    dev: true
-
-  /webpack@5.108.3:
-    resolution: {integrity: sha512-hOpaCHmQVVY66IVTjofnH14IgSdmod2aquSGHGuYig/OIdWge01Hk2Wt988DZcwXumFUT4+FvJY5N+ikl8o/ww==}
-    engines: {node: '>=10.13.0'}
-    hasBin: true
-    peerDependencies:
-      webpack-cli: '*'
-    peerDependenciesMeta:
-      webpack-cli:
-        optional: true
-    dependencies:
-      '@types/estree': 1.0.9
-      '@types/json-schema': 7.0.15
-      '@webassemblyjs/ast': 1.14.1
-      '@webassemblyjs/wasm-edit': 1.14.1
-      '@webassemblyjs/wasm-parser': 1.14.1
-      acorn: 8.17.0
-      acorn-import-phases: 1.0.4(acorn@8.17.0)
-      browserslist: 4.28.4
-      chrome-trace-event: 1.0.4
-      enhanced-resolve: 5.24.1
-      es-module-lexer: 2.3.0
-      eslint-scope: 5.1.1
-      events: 3.3.0
-      graceful-fs: 4.2.11
-      loader-runner: 4.3.2
-      mime-db: 1.54.0
-      minimizer-webpack-plugin: 5.6.1(webpack@5.108.3)
-      neo-async: 2.6.2
-      schema-utils: 4.3.3
-      tapable: 2.3.3
-      watchpack: 2.5.2
-      webpack-sources: 3.5.0
-    transitivePeerDependencies:
-      - '@minify-html/node'
-      - '@swc/core'
-      - '@swc/css'
-      - '@swc/html'
-      - clean-css
-      - cssnano
-      - csso
-      - esbuild
-      - html-minifier-terser
-      - lightningcss
-      - postcss
-      - uglify-js
     dev: true
 
   /webpack@5.108.3(esbuild@0.23.0):

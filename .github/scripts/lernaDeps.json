@@ -45,10 +45,6 @@
   "template": ["templates"],
   "extra-shot-mocha": ["packages/extra-shot-mocha"],
   "eslint-plugin-teamsfx": ["packages/eslint-plugin-teamsfx"],
-  "ui": [
-    "packages/api",
-    "packages/vscode-ui"
-  ],
   "spec-parser": [
     "packages/spec-parser",
     "packages/manifest"
