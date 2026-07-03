@@ -26,6 +26,9 @@
       "step_436b1f61",
       "step_a0026de5",
       "step_fa6d6cb1",
+      "step_abe26cd9",
+      "step_aa0c3ceb",
+      "step_36f93ed7",
       "step_78a597ab",
       "step_47935ca7",
       "step_ed29b905",
@@ -217,9 +220,8 @@
       "depends_on": [],
       "postconditions": [],
       "tags": [],
-      "screenshot": "step_abe26cd9",
       "created_at": "2026-05-21T02:53:05.678586",
-      "plan_id": "plan_5d2bbca5"
+      "plan_id": "plan_80b368dd"
     },
     {
       "step_id": "step_aa0c3ceb",
@@ -236,9 +238,8 @@
       "depends_on": [],
       "postconditions": [],
       "tags": [],
-      "screenshot": "step_aa0c3ceb",
       "created_at": "2026-05-21T02:53:05.683646",
-      "plan_id": "plan_5d2bbca5"
+      "plan_id": "plan_80b368dd"
     },
     {
       "step_id": "step_36f93ed7",
@@ -255,9 +256,8 @@
       "depends_on": [],
       "postconditions": [],
       "tags": [],
-      "screenshot": "step_36f93ed7",
       "created_at": "2026-05-21T02:53:05.688020",
-      "plan_id": "plan_5d2bbca5"
+      "plan_id": "plan_80b368dd"
     },
     {
       "step_id": "step_78a597ab",
