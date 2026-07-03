@@ -1,13 +1,13 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+import { PluginManifestSchema } from "@microsoft/app-manifest";
 import { expect } from "chai";
-import sinon from "sinon";
 import fs from "fs-extra";
-import os from "os";
 import "mocha";
-import { ManifestUpdater } from "../src/manifestUpdater";
-import { SpecParserError } from "../src/specParserError";
+import os from "os";
+import sinon from "sinon";
+import { ConstantString } from "../src/constants";
 import {
   AuthInfo,
   ErrorType,
@@ -16,13 +16,10 @@ import {
   ProjectType,
   WarningType,
 } from "../src/interfaces";
-import { ConstantString } from "../src/constants";
+import { ManifestUpdater } from "../src/manifestUpdater";
+import { SpecParserError } from "../src/specParserError";
 import { Utils } from "../src/utils";
-import { PluginManifestSchema, ManifestUtil, AppManifestUtils } from "@microsoft/app-manifest";
 describe("updateManifestWithAiPlugin", () => {
-  beforeEach(() => {
-    sinon.stub(ManifestUpdater, "useCopilotExtensionsInSchema").resolves(false);
-  });
   afterEach(() => {
     sinon.restore();
   });
@@ -299,8 +296,6 @@ describe("updateManifestWithAiPlugin", () => {
     });
 
     it("should generate response semantics based on the response - 2", async () => {
-      sinon.restore();
-      sinon.stub(ManifestUpdater, "useCopilotExtensionsInSchema").resolves(true);
       const spec: any = {
         openapi: "3.0.2",
         info: {
@@ -368,7 +363,7 @@ describe("updateManifestWithAiPlugin", () => {
       const expectedManifest = {
         name: { short: "Original Name", full: "Original Full Name" },
         description: { short: "My API", full: "My API description" },
-        copilotExtensions: {
+        copilotAgents: {
           plugins: [
             {
               file: "ai-plugin.json",
@@ -467,8 +462,6 @@ describe("updateManifestWithAiPlugin", () => {
     });
 
     it("should generate response semantics based on the response - 3", async () => {
-      sinon.restore();
-      sinon.stub(ManifestUpdater, "useCopilotExtensionsInSchema").resolves(true);
       const spec: any = {
         openapi: "3.0.2",
         info: {
@@ -544,7 +537,7 @@ describe("updateManifestWithAiPlugin", () => {
       const expectedManifest = {
         name: { short: "Original Name", full: "Original Full Name" },
         description: { short: "My API", full: "My API description" },
-        copilotExtensions: {
+        copilotAgents: {
           plugins: [
             {
               file: "ai-plugin.json",
@@ -4206,7 +4199,7 @@ describe("updateManifestWithAiPlugin", () => {
     expect(warnings).to.deep.equal([]);
   });
 
-  it("should update existing manifest and use old copilotExtensions property if it exist", async () => {
+  it("should add copilotAgents plugin and preserve existing copilotExtensions", async () => {
     const spec: any = {
       openapi: "3.0.2",
       info: {
@@ -4280,6 +4273,9 @@ describe("updateManifestWithAiPlugin", () => {
       name: { short: "Original Name", full: "Original Full Name" },
       description: { short: "My API", full: "My API description" },
       copilotExtensions: {
+        plugins: [{ file: "ai-plugin-old.json", id: "plugin_1" }],
+      },
+      copilotAgents: {
         plugins: [
           {
             file: "ai-plugin.json",
@@ -5781,40 +5777,6 @@ describe("manifestUpdater", () => {
 
     expect(result).to.deep.equal(expectedManifest);
     expect(warnings).to.deep.equal([]);
-  });
-  describe("useCopilotExtensionsInSchema", async () => {
-    let fetchSchemaStub: sinon.SinonStub;
-
-    beforeEach(() => {
-      fetchSchemaStub = sinon.stub(AppManifestUtils, "fetchSchema");
-    });
-
-    afterEach(() => {
-      sinon.restore();
-    });
-
-    it("should return true when copilotExtensions exist in schema definitions", async () => {
-      const mockSchema = {
-        properties: {
-          copilotExtensions: {},
-        },
-      };
-
-      fetchSchemaStub.resolves(mockSchema);
-
-      const result = await ManifestUpdater.useCopilotExtensionsInSchema({} as any);
-      expect(result).to.be.true;
-    });
-
-    it("should return false when copilotExtensions do not exist in schema definitions", async () => {
-      const mockSchema = {
-        properties: {},
-      };
-      fetchSchemaStub.resolves(mockSchema);
-
-      const result = await ManifestUpdater.useCopilotExtensionsInSchema({} as any);
-      expect(result).to.be.false;
-    });
   });
 });
 

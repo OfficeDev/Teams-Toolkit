@@ -1,14 +1,13 @@
 import { err, ok, SystemError, SystemErrorOptions, TeamsAppManifest } from "@microsoft/teamsfx-api";
 import {
+  copilotGptManifestUtils,
   envUtil,
   featureFlagManager,
   GraphClient,
-  copilotGptManifestUtils,
 } from "@microsoft/teamsfx-core";
 import fs from "fs-extra";
 import * as path from "path";
-import { afterEach, describe, expect, assert } from "vitest";
-import { mockValue } from "../mocks/vitestMockUtils";
+import { assert, describe, expect } from "vitest";
 import * as vscode from "vscode";
 import {
   AadAppTemplateCodeLensProvider,
@@ -28,8 +27,9 @@ import {
 import * as globalVariables from "../../src/globalVariables";
 import { setTools } from "../../src/globalVariables";
 import { TelemetryTriggerFrom } from "../../src/telemetry/extTelemetryEvents";
-import { MockTools } from "../mocks/mockTools";
 import * as systemEnvUtils from "../../src/utils/systemEnvUtils";
+import { MockTools } from "../mocks/mockTools";
+import { mockValue } from "../mocks/vitestMockUtils";
 
 describe("CodeLens Provider", () => {
   describe("Manifest codelens", () => {
@@ -349,7 +349,7 @@ describe("CodeLens Provider", () => {
   describe("Api plugin CodeLensProvider", () => {
     it("Add API", async () => {
       const manifest = new TeamsAppManifest();
-      manifest.copilotExtensions = {
+      manifest.copilotAgents = {
         plugins: [
           {
             file: "test.json",
@@ -462,7 +462,7 @@ describe("CodeLens Provider", () => {
 
     it("Do not show codelens for if not API plugin project", async () => {
       const manifest = new TeamsAppManifest();
-      manifest.copilotExtensions = {};
+      manifest.copilotAgents = {};
       const openApiObject = {
         openapi: "3.0",
       };

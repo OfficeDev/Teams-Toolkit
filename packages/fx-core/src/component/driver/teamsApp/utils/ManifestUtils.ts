@@ -367,9 +367,7 @@ export class ManifestUtils {
     manifest: TeamsAppManifest,
     manifestPath: string
   ): Promise<Result<string, FxError>> {
-    const pluginFile = manifest.copilotExtensions
-      ? manifest.copilotExtensions.plugins?.[0]?.file
-      : manifest.copilotAgents?.plugins?.[0]?.file;
+    const pluginFile = manifest.copilotAgents?.plugins?.[0]?.file;
     if (pluginFile) {
       const plugin = path.resolve(path.dirname(manifestPath), pluginFile);
       const doesFileExist = await fs.pathExists(plugin);
@@ -576,16 +574,6 @@ export class ManifestUtils {
       manifest.composeExtensions[0].authorization?.authType == "microsoftEntra"
     ) {
       properties.isApiMeAAD = true;
-    }
-
-    if (manifest.copilotExtensions?.plugins) {
-      const apiPlugins = manifest.copilotExtensions?.plugins;
-      if (apiPlugins && apiPlugins.length > 0 && apiPlugins[0].file) capabilities.push("plugin");
-    }
-
-    if (manifest.copilotExtensions?.declarativeCopilots) {
-      const copilotGpts = manifest.copilotExtensions?.declarativeCopilots;
-      if (copilotGpts && copilotGpts.length > 0) capabilities.push("copilotGpt");
     }
 
     if (manifest.copilotAgents?.plugins) {

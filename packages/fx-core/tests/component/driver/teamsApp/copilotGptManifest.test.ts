@@ -958,30 +958,6 @@ describe("copilotGptManifestUtils", () => {
       projectPath: "",
     });
 
-    it("get manifest success", async () => {
-      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(
-        ok({
-          copilotExtensions: {
-            declarativeCopilots: [
-              {
-                file: "test",
-                id: "1",
-              },
-            ],
-          },
-        } as any)
-      );
-      vi.spyOn(path, "dirname").mockReturnValue("testFolder");
-      vi.spyOn(path, "resolve").mockReturnValue("testFolder/test");
-
-      const res = await copilotGptManifestUtils.getManifestPath("testPath");
-
-      chai.assert.isTrue(res.isOk());
-      if (res.isOk()) {
-        chai.assert.equal(res.value, "testFolder/test");
-      }
-    });
-
     it("get manifest success - copilot agent", async () => {
       vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(
         ok({
@@ -1028,19 +1004,6 @@ describe("copilotGptManifestUtils", () => {
       }
     });
 
-    it("declarativeCopilots error 1", async () => {
-      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(
-        ok({
-          copilotExtensions: {},
-        } as any)
-      );
-      const res = await copilotGptManifestUtils.getManifestPath("testPath");
-      chai.assert.isTrue(res.isErr());
-      if (res.isErr()) {
-        chai.assert.isTrue(res.error instanceof UserError);
-      }
-    });
-
     it("read Teams manifest error", async () => {
       vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(
         err(new UserError("readError", "readError", "", ""))
@@ -1057,8 +1020,8 @@ describe("copilotGptManifestUtils", () => {
     it("missing file property", async () => {
       vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(
         ok({
-          copilotExtensions: {
-            declarativeCopilots: [
+          copilotAgents: {
+            declarativeAgents: [
               {
                 id: "1",
               },

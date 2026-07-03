@@ -101,8 +101,7 @@ export class PublishAppPackageDriver implements StepDriver {
     const manifestString = manifestFile.getData().toString();
     const manifest = JSON.parse(manifestString) as TeamsAppManifest;
 
-    const declarativeAgents =
-      manifest.copilotExtensions?.declarativeCopilots || manifest.copilotAgents?.declarativeAgents;
+    const declarativeAgents = manifest.copilotAgents?.declarativeAgents;
 
     if (declarativeAgents && declarativeAgents.length > 0) {
       const declarativeAgentFile = zipEntries.find(

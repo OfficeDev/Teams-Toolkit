@@ -707,7 +707,7 @@ describe("injectAuthAction", async () => {
 describe("listPluginExistingOperations", () => {
   const teamsManifestWithPlugin: TeamsAppManifest = {
     ...teamsManifest,
-    copilotExtensions: {
+    copilotAgents: {
       plugins: [
         {
           file: "resources/plugin.json",

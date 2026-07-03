@@ -1390,8 +1390,8 @@ describe("addPlugin", async () => {
       projectPath: path.join(os.tmpdir(), appName),
     };
     const manifest = new TeamsAppManifest();
-    manifest.copilotExtensions = {
-      declarativeCopilots: [
+    manifest.copilotAgents = {
+      declarativeAgents: [
         {
           file: "test1.json",
           id: "action_1",
@@ -1483,8 +1483,8 @@ describe("addPlugin", async () => {
       projectPath: path.join(os.tmpdir(), appName),
     };
     const manifest = new TeamsAppManifest();
-    manifest.copilotExtensions = {
-      declarativeCopilots: [
+    manifest.copilotAgents = {
+      declarativeAgents: [
         {
           file: "test1.json",
           id: "action_1",
@@ -1594,8 +1594,8 @@ describe("addPlugin", async () => {
       projectPath: path.join(os.tmpdir(), appName),
     };
     const manifest = new TeamsAppManifest();
-    manifest.copilotExtensions = {
-      declarativeCopilots: [
+    manifest.copilotAgents = {
+      declarativeAgents: [
         {
           file: "test1.json",
           id: "action_1",
@@ -1701,7 +1701,7 @@ describe("addPlugin", async () => {
     }
   });
 
-  it("from API spec: empty declarativeCopilots 1", async () => {
+  it("from API spec: empty declarativeAgents 1", async () => {
     const appName = await mockV3Project();
     const inputs: Inputs = {
       platform: Platform.VSCode,
@@ -1713,7 +1713,7 @@ describe("addPlugin", async () => {
       projectPath: path.join(os.tmpdir(), appName),
     };
     const manifest = new TeamsAppManifest();
-    manifest.copilotExtensions = {};
+    manifest.copilotAgents = {};
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
     vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
     vi.spyOn(manifestUtils, "_writeAppManifest").mockResolvedValue(ok(undefined));
@@ -1767,7 +1767,7 @@ describe("addPlugin", async () => {
     }
   });
 
-  it("from API spec: empty declarativeCopilots 2", async () => {
+  it("from API spec: empty declarativeAgents 2", async () => {
     const appName = await mockV3Project();
     const inputs: Inputs = {
       platform: Platform.VSCode,
@@ -1779,8 +1779,8 @@ describe("addPlugin", async () => {
       projectPath: path.join(os.tmpdir(), appName),
     };
     const manifest = new TeamsAppManifest();
-    manifest.copilotExtensions = {
-      declarativeCopilots: [],
+    manifest.copilotAgents = {
+      declarativeAgents: [],
     };
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
     vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
@@ -1940,8 +1940,8 @@ describe("addPlugin", async () => {
       projectPath: path.join(os.tmpdir(), appName),
     };
     const manifest = new TeamsAppManifest();
-    manifest.copilotExtensions = {
-      declarativeCopilots: [
+    manifest.copilotAgents = {
+      declarativeAgents: [
         {
           file: "test1.json",
           id: "action_1",
@@ -2016,8 +2016,8 @@ describe("addPlugin", async () => {
       projectPath: path.join(os.tmpdir(), appName),
     };
     const manifest = new TeamsAppManifest();
-    manifest.copilotExtensions = {
-      declarativeCopilots: [
+    manifest.copilotAgents = {
+      declarativeAgents: [
         {
           file: "test1.json",
           id: "action_1",
@@ -2063,8 +2063,8 @@ describe("addPlugin", async () => {
       projectPath: path.join(os.tmpdir(), appName),
     };
     const manifest = new TeamsAppManifest();
-    manifest.copilotExtensions = {
-      declarativeCopilots: [
+    manifest.copilotAgents = {
+      declarativeAgents: [
         {
           file: "test1.json",
           id: "action_1",
@@ -2110,8 +2110,8 @@ describe("addPlugin", async () => {
       projectPath: path.join(os.tmpdir(), appName),
     };
     const manifest = new TeamsAppManifest();
-    manifest.copilotExtensions = {
-      declarativeCopilots: [
+    manifest.copilotAgents = {
+      declarativeAgents: [
         {
           file: "test1.json",
           id: "action_1",
@@ -2168,8 +2168,8 @@ describe("addPlugin", async () => {
       projectPath: path.join(os.tmpdir(), appName),
     };
     const manifest = new TeamsAppManifest();
-    manifest.copilotExtensions = {
-      declarativeCopilots: [
+    manifest.copilotAgents = {
+      declarativeAgents: [
         {
           file: "test1.json",
           id: "action_1",
@@ -2236,8 +2236,8 @@ describe("addPlugin", async () => {
       projectPath: path.join(os.tmpdir(), appName),
     };
     const manifest = new TeamsAppManifest();
-    manifest.copilotExtensions = {
-      declarativeCopilots: [
+    manifest.copilotAgents = {
+      declarativeAgents: [
         {
           file: "test1.json",
           id: "action_1",
@@ -2268,8 +2268,8 @@ describe("addPlugin", async () => {
       projectPath: path.join(os.tmpdir(), appName),
     };
     const manifest = new TeamsAppManifest();
-    manifest.copilotExtensions = {
-      declarativeCopilots: [
+    manifest.copilotAgents = {
+      declarativeAgents: [
         {
           file: "test1.json",
           id: "action_1",
@@ -2304,8 +2304,8 @@ describe("addPlugin", async () => {
       projectPath: path.join(os.tmpdir(), appName),
     };
     const manifest = new TeamsAppManifest();
-    manifest.copilotExtensions = {
-      declarativeCopilots: [
+    manifest.copilotAgents = {
+      declarativeAgents: [
         {
           file: "test1.json",
           id: "action_1",
@@ -2367,8 +2367,8 @@ describe("addPlugin", async () => {
       projectPath: path.join(os.tmpdir(), appName),
     };
     const manifest = new TeamsAppManifest();
-    manifest.copilotExtensions = {
-      declarativeCopilots: [
+    manifest.copilotAgents = {
+      declarativeAgents: [
         {
           file: "test1.json",
           id: "action_1",
@@ -2419,8 +2419,8 @@ describe("addPlugin", async () => {
       projectPath: path.join(os.tmpdir(), appName),
     };
     const manifest = new TeamsAppManifest();
-    manifest.copilotExtensions = {
-      declarativeCopilots: [
+    manifest.copilotAgents = {
+      declarativeAgents: [
         {
           file: "test1.json",
           id: "action_1",
@@ -2480,8 +2480,8 @@ describe("addPlugin", async () => {
     };
 
     const manifest = new TeamsAppManifest();
-    manifest.copilotExtensions = {
-      declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
+    manifest.copilotAgents = {
+      declarativeAgents: [{ file: "test1.json", id: "action_1" }],
     };
 
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
@@ -2540,8 +2540,8 @@ describe("addPlugin", async () => {
     };
 
     const manifest = new TeamsAppManifest();
-    manifest.copilotExtensions = {
-      declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
+    manifest.copilotAgents = {
+      declarativeAgents: [{ file: "test1.json", id: "action_1" }],
     };
 
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
@@ -2598,8 +2598,8 @@ describe("addPlugin", async () => {
     };
 
     const manifest = new TeamsAppManifest();
-    manifest.copilotExtensions = {
-      declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
+    manifest.copilotAgents = {
+      declarativeAgents: [{ file: "test1.json", id: "action_1" }],
     };
 
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
@@ -2674,8 +2674,8 @@ describe("addPlugin", async () => {
     };
 
     const manifest = new TeamsAppManifest();
-    manifest.copilotExtensions = {
-      declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
+    manifest.copilotAgents = {
+      declarativeAgents: [{ file: "test1.json", id: "action_1" }],
     };
 
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
@@ -2741,8 +2741,8 @@ describe("addPlugin", async () => {
 
     const manifest = new TeamsAppManifest();
     manifest.name = { short: "My MCP App", full: "My MCP App" };
-    manifest.copilotExtensions = {
-      declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
+    manifest.copilotAgents = {
+      declarativeAgents: [{ file: "test1.json", id: "action_1" }],
     };
 
     vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) => {
@@ -2853,8 +2853,8 @@ describe("addPlugin", async () => {
     };
 
     const manifest = new TeamsAppManifest();
-    manifest.copilotExtensions = {
-      declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
+    manifest.copilotAgents = {
+      declarativeAgents: [{ file: "test1.json", id: "action_1" }],
     };
 
     vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) => {
@@ -2937,8 +2937,8 @@ describe("addPlugin", async () => {
     };
 
     const manifest = new TeamsAppManifest();
-    manifest.copilotExtensions = {
-      declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
+    manifest.copilotAgents = {
+      declarativeAgents: [{ file: "test1.json", id: "action_1" }],
     };
 
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
@@ -2984,8 +2984,8 @@ describe("addPlugin", async () => {
     };
 
     const manifest = new TeamsAppManifest();
-    manifest.copilotExtensions = {
-      declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
+    manifest.copilotAgents = {
+      declarativeAgents: [{ file: "test1.json", id: "action_1" }],
     };
 
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
@@ -3037,8 +3037,8 @@ describe("addPlugin", async () => {
     };
 
     const manifest = new TeamsAppManifest();
-    manifest.copilotExtensions = {
-      declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
+    manifest.copilotAgents = {
+      declarativeAgents: [{ file: "test1.json", id: "action_1" }],
     };
 
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
@@ -3087,8 +3087,8 @@ describe("addPlugin", async () => {
     };
 
     const manifest = new TeamsAppManifest();
-    manifest.copilotExtensions = {
-      declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
+    manifest.copilotAgents = {
+      declarativeAgents: [{ file: "test1.json", id: "action_1" }],
     };
 
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
@@ -3426,8 +3426,8 @@ describe("addPlugin", async () => {
     };
 
     const manifest = new TeamsAppManifest();
-    manifest.copilotExtensions = {
-      declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
+    manifest.copilotAgents = {
+      declarativeAgents: [{ file: "test1.json", id: "action_1" }],
     };
 
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
@@ -3477,8 +3477,8 @@ describe("addPlugin", async () => {
     };
 
     const manifest = new TeamsAppManifest();
-    manifest.copilotExtensions = {
-      declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
+    manifest.copilotAgents = {
+      declarativeAgents: [{ file: "test1.json", id: "action_1" }],
     };
 
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
@@ -3525,8 +3525,8 @@ describe("addPlugin", async () => {
     };
 
     const manifest = new TeamsAppManifest();
-    manifest.copilotExtensions = {
-      declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
+    manifest.copilotAgents = {
+      declarativeAgents: [{ file: "test1.json", id: "action_1" }],
     };
 
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
@@ -3572,8 +3572,8 @@ describe("addPlugin", async () => {
     };
 
     const manifest = new TeamsAppManifest();
-    manifest.copilotExtensions = {
-      declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
+    manifest.copilotAgents = {
+      declarativeAgents: [{ file: "test1.json", id: "action_1" }],
     };
 
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
@@ -3635,8 +3635,8 @@ describe("addPlugin", async () => {
     };
 
     const manifest = new TeamsAppManifest();
-    manifest.copilotExtensions = {
-      declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
+    manifest.copilotAgents = {
+      declarativeAgents: [{ file: "test1.json", id: "action_1" }],
     };
 
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
@@ -3698,8 +3698,8 @@ describe("addPlugin", async () => {
     };
 
     const manifest = new TeamsAppManifest();
-    manifest.copilotExtensions = {
-      declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
+    manifest.copilotAgents = {
+      declarativeAgents: [{ file: "test1.json", id: "action_1" }],
     };
 
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);

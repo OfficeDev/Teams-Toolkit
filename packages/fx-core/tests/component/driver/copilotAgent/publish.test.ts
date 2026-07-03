@@ -459,35 +459,4 @@ describe("copilotAgent/publish", async () => {
     chai.assert.isTrue(result.result.isOk());
     chai.assert.equal(verifyStub.mock.calls.length, 0);
   });
-
-  it("should handle copilotExtensions.declarativeCopilots format", async () => {
-    const manifest = new TeamsAppManifest();
-    manifest.copilotExtensions = {
-      declarativeCopilots: [{ id: "dc1", file: "declarativeAgent.json" }],
-    };
-    const daManifest = {
-      actions: [{ id: "action1", file: "plugin.json" }],
-    };
-    const appPackagePath = await createPackage({
-      [Constants.MANIFEST_FILE]: manifest,
-      "declarativeAgent.json": daManifest,
-      "plugin.json": { runtimes: [] },
-    });
-    const args: CopilotAgentPublishArgs = {
-      appPackagePath,
-    };
-    const outputEnvVarNames = new Map<string, string>([
-      ["titleId", "M365_TITLE_ID"],
-      ["appId", "M365_APP_ID"],
-    ]);
-
-    const titleId = uuid();
-    const appId = uuid();
-
-    vi.spyOn(McpCertVerification, "verifyLocalMCPPluginCerts").mockResolvedValue(true);
-    vi.spyOn(PackageService.prototype, "publishAgent").mockResolvedValue([titleId, appId, ""]);
-
-    const result = await driver.execute(args, mockedDriverContext, outputEnvVarNames);
-    chai.assert.isTrue(result.result.isOk());
-  });
 });

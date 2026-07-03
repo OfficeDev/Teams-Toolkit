@@ -1,10 +1,10 @@
 import { err, ok, SystemError, UserError } from "@microsoft/teamsfx-api";
-import { manifestUtils, pluginManifestUtils } from "@microsoft/teamsfx-core";
 import * as globalState from "@microsoft/teamsfx-core";
+import { manifestUtils, pluginManifestUtils } from "@microsoft/teamsfx-core";
 import * as pluginGeneratorHelper from "@microsoft/teamsfx-core/build/component/generator/openApiSpec/helper";
 import path from "path";
+import { assert, vi } from "vitest";
 import * as vscode from "vscode";
-import { vi, assert } from "vitest";
 import VsCodeLogInstance from "../../src/commonlib/log";
 import { GlobalKey } from "../../src/constants";
 import * as globalVariables from "../../src/globalVariables";
@@ -181,7 +181,7 @@ describe("autoOpenProjectHandler", () => {
       ok({
         name: { short: "short", full: "full" },
         description: { short: "short", full: "" },
-        copilotExtensions: { plugins: [{ file: "ai-plugin.json", id: "plugin1" }] },
+        copilotAgents: { plugins: [{ file: "ai-plugin.json", id: "plugin1" }] },
       } as any)
     );
     const parseRes = {
@@ -243,7 +243,7 @@ describe("autoOpenProjectHandler", () => {
       ok({
         name: { short: "short", full: "full" },
         description: { short: "short", full: "" },
-        copilotExtensions: { plugins: [{ file: "ai-plugin.json", id: "plugin1" }] },
+        copilotAgents: { plugins: [{ file: "ai-plugin.json", id: "plugin1" }] },
       } as any)
     );
     const parseRes = {

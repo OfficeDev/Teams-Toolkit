@@ -1,31 +1,31 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+import AdmZip from "adm-zip";
 import * as fs from "fs-extra";
 import { Service } from "typedi";
-import AdmZip from "adm-zip";
 
 import { hooks } from "@feathersjs/hooks/lib";
 import { FxError, Result, SystemError, TeamsAppManifest, UserError } from "@microsoft/teamsfx-api";
 
-import { getLocalizedString } from "../../../common/localizeUtils";
-import { FileNotFoundError, InvalidActionInputError, assembleError } from "../../../error/common";
-import { AppScope, PackageService } from "../../m365/packageService";
 import {
   getResourceServiceEndpoint,
   MosServiceScope,
   ResourceServiceType,
 } from "../../../common/constants";
+import { getLocalizedString } from "../../../common/localizeUtils";
+import { assembleError, FileNotFoundError, InvalidActionInputError } from "../../../error/common";
+import { AppScope, PackageService } from "../../m365/packageService";
 import { getAbsolutePath, wrapRun } from "../../utils/common";
 import { logMessageKeys } from "../aad/utility/constants";
 import { DriverContext } from "../interface/commonArgs";
 import { ExecutionResult, StepDriver } from "../interface/stepDriver";
 import { addStartAndEndTelemetry } from "../middleware/addStartAndEndTelemetry";
-import { CopilotAgentPublishArgs } from "./interfaces/PublishArgs";
 import { Constants } from "../teamsApp/constants";
-import { verifyLocalMCPPluginCerts } from "../teamsApp/utils/McpCertVerification";
 import { AppStudioError } from "../teamsApp/errors";
 import { AppStudioResultFactory } from "../teamsApp/results";
+import { verifyLocalMCPPluginCerts } from "../teamsApp/utils/McpCertVerification";
+import { CopilotAgentPublishArgs } from "./interfaces/PublishArgs";
 
 export const actionName = "copilotAgent/publish";
 const helpLink = "https://aka.ms/teamsfx-actions/copilotagent-publish";
@@ -98,9 +98,7 @@ export class CopilotAgentPublishDriver implements StepDriver {
       const manifestString = manifestFile.getData().toString();
       const manifest = JSON.parse(manifestString) as TeamsAppManifest;
 
-      const declarativeAgents =
-        manifest.copilotExtensions?.declarativeCopilots ||
-        manifest.copilotAgents?.declarativeAgents;
+      const declarativeAgents = manifest.copilotAgents?.declarativeAgents;
 
       if (declarativeAgents && declarativeAgents.length > 0) {
         const declarativeAgentFile = zipEntries.find(

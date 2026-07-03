@@ -318,7 +318,7 @@ describe("ManifestUtils", () => {
   });
   it("getPluginFilePath error 5", async () => {
     const mockManifest = {
-      copilotExtensions: {},
+      copilotAgents: {},
     };
     vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(mockManifest as any));
     const res = await manifestUtils.getPluginFilePath(mockManifest as any, "fake");
@@ -329,7 +329,7 @@ describe("ManifestUtils", () => {
   });
   it("getPluginFilePath error 6", async () => {
     const mockManifest = {
-      copilotExtensions: {
+      copilotAgents: {
         plugins: [],
       },
     };
@@ -772,7 +772,6 @@ describe("parseCommonProperties", () => {
       id: "mockid",
       version: "1.0.0",
       manifestVersion: "1.14",
-      copilotExtensions: {},
       copilotAgents: {
         declarativeAgents: [],
       },

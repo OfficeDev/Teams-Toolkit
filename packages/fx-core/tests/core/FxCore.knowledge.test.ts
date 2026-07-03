@@ -17,6 +17,7 @@ import fs from "fs-extra";
 import mockedEnv from "mocked-env";
 import * as os from "os";
 import * as path from "path";
+import { assert, vi } from "vitest";
 import { FxCore } from "../../src";
 import { featureFlagManager } from "../../src/common/featureFlags";
 import { setTools } from "../../src/common/globalVars";
@@ -28,7 +29,6 @@ import { QuestionNames } from "../../src/question";
 import { KnowledgeSearchTypeOptions, KnowledgeSourceOptions } from "../../src/question/constants";
 import { validationUtils } from "../../src/ui/validationUtils";
 import { MockTools, MockUserInteraction, randomAppName } from "./utils";
-import { assert, vi } from "vitest";
 
 const tools = new MockTools();
 
@@ -677,8 +677,8 @@ describe("addKnowledge", async () => {
       projectPath: path.join(os.tmpdir(), appName),
     };
     const manifest = new TeamsAppManifest();
-    manifest.copilotExtensions = {
-      declarativeCopilots: [
+    manifest.copilotAgents = {
+      declarativeAgents: [
         {
           id: "knowledege_1",
           file: "",
@@ -709,8 +709,8 @@ describe("addKnowledge", async () => {
       projectPath: path.join(os.tmpdir(), appName),
     };
     const manifest = new TeamsAppManifest();
-    manifest.copilotExtensions = {
-      declarativeCopilots: [
+    manifest.copilotAgents = {
+      declarativeAgents: [
         {
           id: "knowledege_1",
           file: "fakePath",

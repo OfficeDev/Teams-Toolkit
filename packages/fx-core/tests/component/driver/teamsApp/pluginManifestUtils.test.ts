@@ -95,7 +95,7 @@ describe("pluginManifestUtils", () => {
     staticTabs: [],
     permissions: [],
     validDomains: [],
-    copilotExtensions: {
+    copilotAgents: {
       plugins: [
         {
           file: "resources/plugin.json",
@@ -172,7 +172,7 @@ describe("pluginManifestUtils", () => {
   it("getApiSpecFilePathFromTeamsManifest error: invalid plugin node case 1", async () => {
     const testManifest = {
       ...teamsManifest,
-      copilotExtensions: { plugins: [] },
+      copilotAgents: { plugins: [] },
     };
     vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify(pluginManifest) as any);
     const res = await pluginManifestUtils.getApiSpecFilePathFromTeamsManifest(
@@ -275,7 +275,7 @@ describe("pluginManifestUtils", () => {
     vi.spyOn(fs, "pathExists").mockResolvedValue(true);
 
     const res = await pluginManifestUtils.getApiSpecFilePathFromTeamsManifest(
-      { ...teamsManifest, copilotExtensions: {} },
+      { ...teamsManifest, copilotAgents: {} },
       "/test/path"
     );
     chai.assert.isTrue(res.isErr());

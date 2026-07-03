@@ -192,11 +192,11 @@ import { LocalCrypto } from "./crypto";
 import { environmentNameManager } from "./environmentName";
 import { FxCoreOpenPluginPart } from "./FxCore.openPlugin";
 import { generateConfigFiles } from "./generateConfigFiles";
-import { resolveV4TemplateArtifactSnapshot } from "./v4ArtifactSnapshot";
 import { ConcurrentLockerMW } from "./middleware/concurrentLocker";
 import { ContextInjectorMW } from "./middleware/contextInjector";
 import { ErrorHandlerMW } from "./middleware/errorHandler";
 import { withFileLock } from "./middleware/fileLocker";
+import { resolveV4TemplateArtifactSnapshot } from "./v4ArtifactSnapshot";
 
 import { runWithRetry } from "./middleware/retry";
 import * as v3MigrationUtils from "./middleware/utils/v3MigrationUtils";
@@ -894,10 +894,10 @@ export class FxCore extends FxCoreOpenPluginPart {
     const removeUsersInput = inputs[QuestionNames.RemoveUsers] as string[] | string | undefined;
     const emails = Array.isArray(removeUsersInput)
       ? removeUsersInput
-      : removeUsersInput
+      : (removeUsersInput
           ?.split(",")
           .map((email) => email.trim())
-          .filter((email) => !!email) ?? [];
+          .filter((email) => !!email) ?? []);
     if (!emails || emails.length === 0) {
       return err(new MissingRequiredInputError("emails", "FxCore"));
     }
@@ -1281,8 +1281,9 @@ export class FxCore extends FxCoreOpenPluginPart {
       manifestPath: teamsAppManifestFilePath,
       outputZipPath:
         inputs[QuestionNames.OutputZipPathParamName] ??
-        `${inputs.projectPath}/${AppPackageFolderName}/${BuildFolderName}/appPackage.${process.env
-          .TEAMSFX_ENV!}.zip`,
+        `${inputs.projectPath}/${AppPackageFolderName}/${BuildFolderName}/appPackage.${
+          process.env.TEAMSFX_ENV!
+        }.zip`,
       outputFolder:
         inputs[QuestionNames.OutputManifestParamName] ??
         `${inputs.projectPath}/${AppPackageFolderName}/${BuildFolderName}`,
@@ -2201,9 +2202,7 @@ export class FxCore extends FxCoreOpenPluginPart {
     }
 
     const teamsManifest = manifestRes.value;
-    const agent = teamsManifest.copilotExtensions
-      ? teamsManifest.copilotExtensions.declarativeCopilots?.[0]
-      : teamsManifest.copilotAgents?.declarativeAgents?.[0];
+    const agent = teamsManifest.copilotAgents?.declarativeAgents?.[0];
     if (!agent?.file) {
       return err(
         AppStudioResultFactory.UserError(
@@ -2308,9 +2307,7 @@ export class FxCore extends FxCoreOpenPluginPart {
     }
 
     const teamsManifest = manifestRes.value;
-    const agent = teamsManifest.copilotExtensions
-      ? teamsManifest.copilotExtensions.declarativeCopilots?.[0]
-      : teamsManifest.copilotAgents?.declarativeAgents?.[0];
+    const agent = teamsManifest.copilotAgents?.declarativeAgents?.[0];
     if (!agent?.file) {
       return err(
         AppStudioResultFactory.UserError(
@@ -2750,15 +2747,13 @@ export class FxCore extends FxCoreOpenPluginPart {
     }
 
     const teamsManifest = manifestRes.value;
-    const declarativeGpt = teamsManifest.copilotExtensions
-      ? teamsManifest.copilotExtensions.declarativeCopilots?.[0]
-      : teamsManifest.copilotAgents?.declarativeAgents?.[0];
+    const declarativeGpt = teamsManifest.copilotAgents?.declarativeAgents?.[0];
     if (!declarativeGpt?.file) {
       return err(
         AppStudioResultFactory.UserError(
           AppStudioError.TeamsAppRequiredPropertyMissingError.name,
           AppStudioError.TeamsAppRequiredPropertyMissingError.message(
-            "declarativeCopilots",
+            "declarativeAgents",
             teamsManifestPath
           )
         )

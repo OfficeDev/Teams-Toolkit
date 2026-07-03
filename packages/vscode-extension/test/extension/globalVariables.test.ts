@@ -86,8 +86,8 @@ describe("Global Variables", () => {
   describe("isDeclarativeCopilotApp", () => {
     it("Declarative copilot project", () => {
       const teamsManifest = new TeamsAppManifest();
-      teamsManifest.copilotExtensions = {
-        declarativeCopilots: [{ id: "1", file: "testFile" }],
+      teamsManifest.copilotAgents = {
+        declarativeAgents: [{ id: "1", file: "testFile" }],
       };
       vi.spyOn(manifestUtils, "readAppManifestSync").mockReturnValue(ok(teamsManifest));
 
@@ -236,8 +236,8 @@ describe("Global Variables", () => {
 
     res = globalVariables.updateIsDeclarativeCopilotApp({
       ...manifest,
-      copilotExtensions: {
-        declarativeCopilots: [
+      copilotAgents: {
+        declarativeAgents: [
           {
             id: "1",
             file: "test",

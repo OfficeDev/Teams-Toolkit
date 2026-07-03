@@ -658,8 +658,8 @@ describe("teamsApp/publishAppPackage", async () => {
       vi.spyOn(fs, "readFile").mockImplementation(async () => {
         const zip = new AdmZip();
         const manifest: any = new TeamsAppManifest();
-        manifest.copilotExtensions = {
-          declarativeCopilots: [{ id: "agent1", file: "declarativeAgent.json" }],
+        manifest.copilotAgents = {
+          declarativeAgents: [{ id: "agent1", file: "declarativeAgent.json" }],
         };
         zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(manifest)));
         zip.addFile(

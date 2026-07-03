@@ -5,6 +5,7 @@ import fs from "fs-extra";
 import path from "path";
 import semver from "semver";
 import { parseDocument } from "yaml";
+import { pathUtils } from "../component/utils/pathUtils";
 import { isValidOfficeAddInProject } from "./projectSettingsHelper";
 import {
   isYamlFileName,
@@ -13,7 +14,6 @@ import {
   MetadataV3,
   MetadataV4,
 } from "./versionMetadata";
-import { pathUtils } from "../component/utils/pathUtils";
 
 export const TeamsJsModule = "@microsoft/teams-js";
 
@@ -273,15 +273,6 @@ export function getCapabilities(manifest: any): string[] {
   }
   if (manifest.extensions && manifest.extensions.length > 0) {
     capabilities.push("extension");
-  }
-  if (manifest.copilotExtensions?.plugins && manifest.copilotExtensions.plugins.length > 0) {
-    capabilities.push("plugin");
-  }
-  if (
-    manifest.copilotExtensions?.declarativeCopilots &&
-    manifest.copilotExtensions.declarativeCopilots.length > 0
-  ) {
-    capabilities.push("copilotGpt");
   }
   if (
     manifest.copilotAgents?.plugins &&

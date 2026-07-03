@@ -106,10 +106,6 @@ describe("ProjectTypeChecker", () => {
         bots: [1],
         composeExtensions: [1],
         extensions: [1],
-        copilotExtensions: {
-          plugins: [1],
-          declarativeCopilots: [1],
-        },
         copilotAgents: {
           plugins: [1],
           declarativeAgents: [1],

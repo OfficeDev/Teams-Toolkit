@@ -658,17 +658,6 @@ export class TeamsAppManifest {
     };
   };
 
-  copilotExtensions?: {
-    /**
-     * Pointer to plugins.
-     */
-    plugins?: IPlugin[];
-    /**
-     * Pointer to declarative Copilot.
-     */
-    declarativeCopilots?: IDeclarativeCopilot[];
-  };
-
   copilotAgents?: {
     /**
      * Pointer to plugins.

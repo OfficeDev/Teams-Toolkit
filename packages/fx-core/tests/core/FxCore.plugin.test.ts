@@ -2473,7 +2473,7 @@ describe("copilotPlugin", async () => {
         platform: Platform.VS,
       };
       const manifest = new TeamsAppManifest();
-      manifest.copilotExtensions = {
+      manifest.copilotAgents = {
         plugins: [
           {
             file: "ai-plugin.json",
@@ -2516,7 +2516,7 @@ describe("copilotPlugin", async () => {
         platform: Platform.VS,
       };
       const manifest = new TeamsAppManifest();
-      manifest.copilotExtensions = {
+      manifest.copilotAgents = {
         plugins: [
           {
             file: "ai-plugin.json",

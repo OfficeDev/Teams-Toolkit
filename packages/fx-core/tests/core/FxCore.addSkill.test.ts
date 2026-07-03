@@ -362,40 +362,6 @@ describe("addSkill", () => {
     }
   });
 
-  it("works with copilotExtensions manifest format", async () => {
-    const inputs = createBaseInputs();
-    const manifest = new TeamsAppManifest();
-    manifest.copilotExtensions = {
-      declarativeCopilots: [
-        {
-          id: "agent_1",
-          file: "declarativeAgent.json",
-        },
-      ],
-    };
-
-    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
-    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
-      ok(path.resolve("test-project", "appPackage", "declarativeAgent.json"))
-    );
-
-    vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok("Add"));
-    vi.spyOn(fs, "ensureDir").mockResolvedValue();
-    vi.spyOn(fs, "writeFile").mockResolvedValue();
-
-    vi.spyOn(copilotGptManifestUtils, "addSkill").mockResolvedValue(
-      ok({
-        name: "test-agent",
-        description: "description",
-      } as DeclarativeCopilotManifestSchema)
-    );
-
-    const core = new FxCore(tools);
-    const result = await core.addSkill(inputs);
-
-    assert.isTrue(result.isOk());
-  });
-
   it("existing skill: errors when skill is outside appPackage", async () => {
     const appPackageFolder = path.resolve("test-project", "appPackage");
     const inputs = createBaseInputs({

@@ -2,8 +2,8 @@
 // Licensed under the MIT license.
 
 import { FxError, SystemError } from "@microsoft/teamsfx-api";
-import path from "path";
 import { Result, err, ok } from "neverthrow";
+import path from "path";
 import { RegisteredStep, StepContext, StepParams } from "../../pipeline/runScaffoldPipeline";
 
 /** Declarative Agent manifest mutation steps for modify flows. */
@@ -69,12 +69,6 @@ function nestedRecord(value: unknown, key: string): Record<string, unknown> | un
 }
 
 function declarativeAgentFile(teamsManifest: Record<string, unknown>): string | undefined {
-  const copilotExtensions = nestedRecord(teamsManifest, "copilotExtensions");
-  const legacy = firstFileFromArray(copilotExtensions?.declarativeCopilots);
-  if (legacy !== undefined) {
-    return legacy;
-  }
-
   const copilotAgents = nestedRecord(teamsManifest, "copilotAgents");
   const current = firstFileFromArray(copilotAgents?.declarativeAgents);
   if (current !== undefined) {

@@ -533,7 +533,7 @@ describe("autoOpenHelper", () => {
           websiteUrl: "localhost/website",
         },
       ],
-      copilotExtensions: {
+      copilotAgents: {
         plugins: [
           {
             id: "plugin-id",

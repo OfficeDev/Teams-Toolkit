@@ -2,9 +2,20 @@
 // Licensed under the MIT license.
 "use strict";
 
-import { OpenAPIV3 } from "openapi-types";
+import {
+  AuthObject,
+  FunctionObject,
+  IComposeExtension,
+  IMessagingExtensionCommand,
+  PluginManifestSchema,
+  TeamsAppManifest,
+} from "@microsoft/app-manifest";
 import fs from "fs-extra";
+import { OpenAPIV3 } from "openapi-types";
 import path from "path";
+import { AdaptiveCardGenerator } from "./adaptiveCardGenerator";
+import { wrapResponseSemantics } from "./adaptiveCardWrapper";
+import { ConstantString } from "./constants";
 import {
   AuthInfo,
   ErrorType,
@@ -16,26 +27,10 @@ import {
   WarningResult,
   WarningType,
 } from "./interfaces";
-import { Utils } from "./utils";
 import { SpecParserError } from "./specParserError";
-import { ConstantString } from "./constants";
-import {
-  IComposeExtension,
-  IMessagingExtensionCommand,
-  TeamsAppManifest,
-  PluginManifestSchema,
-  FunctionObject,
-  AuthObject,
-  AppManifestUtils,
-} from "@microsoft/app-manifest";
-import { AdaptiveCardGenerator } from "./adaptiveCardGenerator";
-import { wrapResponseSemantics } from "./adaptiveCardWrapper";
+import { Utils } from "./utils";
 
 export class ManifestUpdater {
-  static async useCopilotExtensionsInSchema(manifest: TeamsAppManifest): Promise<boolean> {
-    const schema = await AppManifestUtils.fetchSchema(manifest.$schema!);
-    return !!schema.properties.copilotExtensions;
-  }
   static async updateManifestWithAiPlugin(
     manifestPath: string,
     outputSpecPath: string,
@@ -48,29 +43,15 @@ export class ManifestUpdater {
     const manifest: TeamsAppManifest = await fs.readJSON(manifestPath);
     const apiPluginRelativePath = ManifestUpdater.getRelativePath(manifestPath, apiPluginFilePath);
 
-    const useCopilotExtensionsInSchema = await this.useCopilotExtensionsInSchema(manifest);
-    if (manifest.copilotExtensions || useCopilotExtensionsInSchema) {
-      manifest.copilotExtensions = manifest.copilotExtensions || {};
-      if (!options.isGptPlugin) {
-        manifest.copilotExtensions.plugins = [
-          {
-            file: apiPluginRelativePath,
-            id: ConstantString.DefaultPluginId,
-          },
-        ];
-        ManifestUpdater.updateManifestDescription(manifest, spec);
-      }
-    } else {
+    if (!options.isGptPlugin) {
       manifest.copilotAgents = manifest.copilotAgents || {};
-      if (!options.isGptPlugin) {
-        (manifest as any).copilotAgents.plugins = [
-          {
-            file: apiPluginRelativePath,
-            id: ConstantString.DefaultPluginId,
-          },
-        ];
-        ManifestUpdater.updateManifestDescription(manifest, spec);
-      }
+      (manifest as any).copilotAgents.plugins = [
+        {
+          file: apiPluginRelativePath,
+          id: ConstantString.DefaultPluginId,
+        },
+      ];
+      ManifestUpdater.updateManifestDescription(manifest, spec);
     }
 
     const appName = this.removeEnvs(manifest.name.short);
