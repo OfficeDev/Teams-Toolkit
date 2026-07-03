@@ -5,12 +5,16 @@ import {
   FxError,
   InputTextConfig,
   InputTextResult,
+  InputResult,
   MultiSelectConfig,
   MultiSelectResult,
   OptionItem as SurfaceOptionItem,
   Platform,
+  SelectFileConfig,
+  SelectFileResult,
   SelectFolderConfig,
   SelectFolderResult,
+  SingleFileOrInputConfig,
   SingleSelectConfig,
   SingleSelectResult,
   SystemError,
@@ -126,6 +130,8 @@ const localMcpServers = [
 interface Script {
   select?: Record<string, string>;
   text?: Record<string, string>;
+  fileOrInput?: Record<string, string>;
+  file?: Record<string, string>;
   folder?: Record<string, string>;
   multi?: Record<string, string[]>;
   back?: string[];
@@ -146,26 +152,51 @@ class ScriptedUserInteraction {
   selectNames: string[] = [];
   textNames: string[] = [];
   folderNames: string[] = [];
+  fileNames: string[] = [];
+  fileOrInputNames: string[] = [];
   multiNames: string[] = [];
+  dynamicOptionNames: string[] = [];
   lastSelectConfig?: SingleSelectConfig;
   lastInputConfig?: InputTextConfig;
+  lastFileOrInputConfig?: SingleFileOrInputConfig;
+  lastFileConfig?: SelectFileConfig;
   lastFolderConfig?: SelectFolderConfig;
   lastMultiConfig?: MultiSelectConfig;
   constructor(private readonly script: Script) {}
 
-  selectOption(config: SingleSelectConfig): Promise<Result<SingleSelectResult, FxError>> {
+  async selectOption(config: SingleSelectConfig): Promise<Result<SingleSelectResult, FxError>> {
     this.promptNames.push(config.name);
     this.selectNames.push(config.name);
+    let loadedOptions = config.options;
+    if (typeof config.options === "function") {
+      this.dynamicOptionNames.push(config.name);
+      try {
+        loadedOptions = await config.options();
+        config = { ...config, options: loadedOptions };
+      } catch (error) {
+        if (error instanceof UserError || error instanceof SystemError) {
+          return err(error);
+        }
+        return err(noAnswer(config.name));
+      }
+    }
     this.lastSelectConfig = config;
+    if (
+      Array.isArray(loadedOptions) &&
+      config.skipSingleOption === true &&
+      loadedOptions.length === 1
+    ) {
+      return ok({ type: "skip", result: optionId(loadedOptions[0]) });
+    }
     if (this.script.back?.includes(config.name) === true) {
-      return Promise.resolve(ok({ type: "back" }));
+      return ok({ type: "back" });
     }
     const answer = this.script.select?.[config.name];
     if (answer === undefined) {
-      return Promise.resolve(err(noAnswer(config.name)));
+      return err(noAnswer(config.name));
     }
     const result: SingleSelectResult = { type: "success", result: answer };
-    return Promise.resolve(ok(result));
+    return ok(result);
   }
 
   inputText(config: InputTextConfig): Promise<Result<InputTextResult, FxError>> {
@@ -179,7 +210,85 @@ class ScriptedUserInteraction {
     if (answer === undefined) {
       return Promise.resolve(err(noAnswer(config.name)));
     }
+    const validation = config.validation;
+    if (validation !== undefined) {
+      return Promise.resolve(validation(answer)).then((message) => {
+        if (message !== undefined) {
+          return err(
+            new UserError({
+              source: "Test",
+              name: INPUT_VALIDATION_FAILED,
+              message: `'${config.name}': ${message}`,
+            })
+          );
+        }
+        const result: InputTextResult = { type: "success", result: answer };
+        return ok(result);
+      });
+    }
     const result: InputTextResult = { type: "success", result: answer };
+    return Promise.resolve(ok(result));
+  }
+
+  selectFileOrInput(
+    config: SingleFileOrInputConfig
+  ): Promise<Result<InputResult<string>, FxError>> {
+    this.promptNames.push(config.name);
+    this.fileOrInputNames.push(config.name);
+    this.lastFileOrInputConfig = config;
+    if (this.script.back?.includes(config.name) === true) {
+      return Promise.resolve(ok({ type: "back" }));
+    }
+    const answer = this.script.fileOrInput?.[config.name];
+    if (answer === undefined) {
+      return Promise.resolve(err(noAnswer(config.name)));
+    }
+    const validation = config.validation;
+    if (validation !== undefined) {
+      return Promise.resolve(validation(answer)).then((message) => {
+        if (message !== undefined) {
+          return err(
+            new UserError({
+              source: "Test",
+              name: INPUT_VALIDATION_FAILED,
+              message: `'${config.name}': ${message}`,
+            })
+          );
+        }
+        return ok({ type: "success", result: answer });
+      });
+    }
+    return Promise.resolve(ok({ type: "success", result: answer }));
+  }
+
+  selectFile(config: SelectFileConfig): Promise<Result<SelectFileResult, FxError>> {
+    this.promptNames.push(config.name);
+    this.fileNames.push(config.name);
+    this.lastFileConfig = config;
+    if (this.script.back?.includes(config.name) === true) {
+      return Promise.resolve(ok({ type: "back" }));
+    }
+    const answer = this.script.file?.[config.name];
+    if (answer === undefined) {
+      return Promise.resolve(err(noAnswer(config.name)));
+    }
+    const validation = config.validation;
+    if (validation !== undefined) {
+      return Promise.resolve(validation(answer)).then((message) => {
+        if (message !== undefined) {
+          return err(
+            new UserError({
+              source: "Test",
+              name: INPUT_VALIDATION_FAILED,
+              message: `'${config.name}': ${message}`,
+            })
+          );
+        }
+        const result: SelectFileResult = { type: "success", result: answer };
+        return ok(result);
+      });
+    }
+    const result: SelectFileResult = { type: "success", result: answer };
     return Promise.resolve(ok(result));
   }
 
@@ -194,23 +303,59 @@ class ScriptedUserInteraction {
     if (answer === undefined) {
       return Promise.resolve(err(noAnswer(config.name)));
     }
+    const validation = config.validation;
+    if (validation !== undefined) {
+      return Promise.resolve(validation(answer)).then((message) => {
+        if (message !== undefined) {
+          return err(
+            new UserError({
+              source: "Test",
+              name: INPUT_VALIDATION_FAILED,
+              message: `'${config.name}': ${message}`,
+            })
+          );
+        }
+        const result: SelectFolderResult = { type: "success", result: answer };
+        return ok(result);
+      });
+    }
     const result: SelectFolderResult = { type: "success", result: answer };
     return Promise.resolve(ok(result));
   }
 
-  selectOptions(config: MultiSelectConfig): Promise<Result<MultiSelectResult, FxError>> {
+  async selectOptions(config: MultiSelectConfig): Promise<Result<MultiSelectResult, FxError>> {
     this.promptNames.push(config.name);
     this.multiNames.push(config.name);
+    let loadedOptions = config.options;
+    if (typeof config.options === "function") {
+      this.dynamicOptionNames.push(config.name);
+      try {
+        loadedOptions = await config.options();
+        config = { ...config, options: loadedOptions };
+      } catch (error) {
+        if (error instanceof UserError || error instanceof SystemError) {
+          return err(error);
+        }
+        return err(noAnswer(config.name));
+      }
+    }
     this.lastMultiConfig = config;
+    if (
+      Array.isArray(loadedOptions) &&
+      config.skipSingleOption === true &&
+      loadedOptions.length === 1
+    ) {
+      return ok({ type: "skip", result: [optionId(loadedOptions[0])] });
+    }
     if (this.script.back?.includes(config.name) === true) {
-      return Promise.resolve(ok({ type: "back" }));
+      return ok({ type: "back" });
     }
     const answer = this.script.multi?.[config.name];
     if (answer === undefined) {
-      return Promise.resolve(err(noAnswer(config.name)));
+      return err(noAnswer(config.name));
     }
     const result: MultiSelectResult = { type: "success", result: answer };
-    return Promise.resolve(ok(result));
+    return ok(result);
   }
 }
 
@@ -233,6 +378,10 @@ function multiOptionAt(config: MultiSelectConfig | undefined, index: number): Su
     assert.fail(`expected multi-select option item at index ${index}`);
   }
   return option;
+}
+
+function optionId(option: string | SurfaceOptionItem): string {
+  return typeof option === "string" ? option : option.id;
 }
 
 describe("runCreateInputs (collect-create-inputs)", () => {
@@ -271,9 +420,9 @@ describe("runCreateInputs (collect-create-inputs)", () => {
         authType: "none",
       });
     }
-    // mcpServerType has a single option (remote-only) + skipSingleOption -> never prompted.
-    assert.notInclude(ui.selectNames, "mcpServerType");
-    assert.deepEqual(ui.selectNames, ["authType"]);
+    // mcpServerType has a single dynamic option (remote-only) + skipSingleOption -> auto-skipped.
+    assert.deepEqual(ui.selectNames, ["mcpServerType", "authType"]);
+    assert.deepEqual(ui.dynamicOptionNames, ["mcpServerType"]);
     assert.deepEqual(ui.textNames, ["mcpServerUrl"]);
   });
 
@@ -300,7 +449,189 @@ describe("runCreateInputs (collect-create-inputs)", () => {
     }
     assert.deepEqual(ui.textNames, []);
     assert.deepEqual(ui.multiNames, ["apiOperations"]);
+    assert.deepEqual(ui.dynamicOptionNames, ["apiOperations"]);
     assert.strictEqual(multiOptionAt(ui.lastMultiConfig, 0).id, "GET /repairs");
+  });
+
+  it("asks for the OpenAPI spec source before collecting DA OpenAPI operations", async () => {
+    const ui = new ScriptedUserInteraction({
+      select: { openApiSpecType: "enter-url" },
+      text: { apiSpecLocation: "https://example.com/openapi.yaml" },
+      multi: { apiOperations: ["GET /repairs"] },
+    });
+
+    const res = await runCreateInputs(buildFloor(), OPENAPI_DA, {}, asUI(ui), {
+      flagReader: () => false,
+    });
+
+    assert.isTrue(res.isErr(), "expected the fake remote URL to fail when operations load");
+    assert.equal(res._unsafeUnwrapErr().name, "OpenApiSpecInvalid");
+    assert.deepEqual(ui.promptNames, ["openApiSpecType", "apiSpecLocation", "apiOperations"]);
+    assert.deepEqual(ui.textNames, ["apiSpecLocation"]);
+    assert.deepEqual(ui.fileNames, []);
+    assert.deepEqual(ui.fileOrInputNames, []);
+    assert.equal(ui.lastInputConfig?.placeholder, "https://example.com/openapi.yaml");
+    assert.equal(ui.lastInputConfig?.prompt, "Enter an OpenAPI description document URL.");
+    assert.isFunction(ui.lastInputConfig?.validation);
+    assert.equal(
+      await ui.lastInputConfig?.validation?.("./openapi.yaml"),
+      "Enter a valid HTTP URL without authentication to access your OpenAPI description document."
+    );
+    assert.deepEqual(ui.dynamicOptionNames, ["apiOperations"]);
+  });
+
+  it("browses a local DA OpenAPI document only from the local file branch", async () => {
+    const ui = new ScriptedUserInteraction({
+      select: { openApiSpecType: "open-file" },
+      file: { apiSpecLocation: OPENAPI_SPEC },
+      multi: { apiOperations: ["GET /repairs"] },
+    });
+
+    const res = await runCreateInputs(buildFloor(), OPENAPI_DA, {}, asUI(ui), {
+      flagReader: () => false,
+    });
+
+    assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
+    if (res.isOk()) {
+      assert.equal(res.value.openApiSpecType, "open-file");
+      assert.equal(res.value.apiSpecLocation, OPENAPI_SPEC);
+      assert.deepEqual(res.value.apiOperations, ["GET /repairs"]);
+    }
+    assert.deepEqual(ui.promptNames, ["openApiSpecType", "apiSpecLocation", "apiOperations"]);
+    assert.deepEqual(ui.fileNames, ["apiSpecLocation"]);
+    assert.deepEqual(ui.textNames, []);
+    assert.deepEqual(ui.fileOrInputNames, []);
+    assert.equal(ui.lastFileConfig?.placeholder, "Select an OpenAPI description document.");
+    assert.deepEqual(ui.lastFileConfig?.filters, {
+      "OpenAPI Description Document": ["json", "yml", "yaml"],
+    });
+  });
+
+  it("collects DA OpenAPI operations from a searched OpenAPI document", async () => {
+    const ui = new ScriptedUserInteraction({
+      select: { openApiSpecType: "search-api", selectOpenApiSpec: OPENAPI_SPEC },
+      text: { searchOpenApiSpecQuery: "repairs" },
+      multi: { apiOperations: ["GET /repairs"] },
+    });
+
+    const res = await runCreateInputs(buildFloor(), OPENAPI_DA, {}, asUI(ui), {
+      flagReader: () => false,
+      searchOpenAPISpec: async (query) => {
+        assert.equal(query, "repairs");
+        return [
+          {
+            key: "Repairs API",
+            url: OPENAPI_SPEC,
+            description: "Manage repairs",
+          },
+        ];
+      },
+    });
+
+    assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
+    if (res.isOk()) {
+      assert.equal(res.value.openApiSpecType, "search-api");
+      assert.equal(res.value.searchOpenApiSpecQuery, "repairs");
+      assert.equal(res.value.selectOpenApiSpec, OPENAPI_SPEC);
+      assert.equal(res.value.apiSpecLocation, OPENAPI_SPEC);
+      assert.deepEqual(res.value.apiOperations, ["GET /repairs"]);
+    }
+    assert.deepEqual(ui.promptNames, [
+      "openApiSpecType",
+      "searchOpenApiSpecQuery",
+      "selectOpenApiSpec",
+      "apiOperations",
+    ]);
+    assert.deepEqual(ui.dynamicOptionNames, ["selectOpenApiSpec", "apiOperations"]);
+    const options = (ui.lastSelectConfig?.options ?? []) as SurfaceOptionItem[];
+    assert.equal(options[0].id, OPENAPI_SPEC);
+    assert.equal(options[0].label, "Repairs API");
+    assert.equal(options[0].detail, "Manage repairs");
+  });
+
+  it("surfaces empty OpenAPI search results as a user-fixable error", async () => {
+    const ui = new ScriptedUserInteraction({
+      select: { openApiSpecType: "search-api" },
+      text: { searchOpenApiSpecQuery: "missing" },
+    });
+
+    const res = await runCreateInputs(buildFloor(), OPENAPI_DA, {}, asUI(ui), {
+      flagReader: () => false,
+      searchOpenAPISpec: async () => [],
+    });
+
+    assert.isTrue(res.isErr(), "expected empty search results to fail");
+    assert.equal(res._unsafeUnwrapErr().name, "OpenApi" + "SearchResult" + "NotFound");
+    assert.deepEqual(ui.promptNames, [
+      "openApiSpecType",
+      "searchOpenApiSpecQuery",
+      "selectOpenApiSpec",
+    ]);
+    assert.deepEqual(ui.dynamicOptionNames, ["selectOpenApiSpec"]);
+  });
+
+  it("surfaces blank OpenAPI search query as a user-fixable error", async () => {
+    const ui = new ScriptedUserInteraction({
+      select: { openApiSpecType: "search-api" },
+      text: { searchOpenApiSpecQuery: "   " },
+    });
+
+    const res = await runCreateInputs(buildFloor(), OPENAPI_DA, {}, asUI(ui), {
+      flagReader: () => false,
+    });
+
+    assert.isTrue(res.isErr(), "expected blank search query to fail");
+    assert.equal(res._unsafeUnwrapErr().name, "OpenApiSearchQueryMissing");
+    assert.deepEqual(ui.dynamicOptionNames, ["selectOpenApiSpec"]);
+  });
+
+  it("surfaces OpenAPI documents with no supported operations as a user-fixable error", async () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "atk-openapi-empty-"));
+    const openApiPath = path.join(tempDir, "openapi.yaml");
+    fs.writeFileSync(
+      openApiPath,
+      ["openapi: 3.0.0", "info:", "  title: Empty API", "  version: 1.0.0", "paths: {}"].join("\n"),
+      "utf8"
+    );
+    const ui = new ScriptedUserInteraction({ multi: { apiOperations: [] } });
+
+    try {
+      const res = await runCreateInputs(
+        buildFloor(),
+        OPENAPI_DA,
+        { apiSpecLocation: openApiPath },
+        asUI(ui),
+        { flagReader: () => false }
+      );
+
+      assert.isTrue(res.isErr(), "expected empty OpenAPI operations to fail");
+      assert.equal(res._unsafeUnwrapErr().name, "OpenApiSpecInvalid");
+      assert.deepEqual(ui.dynamicOptionNames, ["apiOperations"]);
+    } finally {
+      removeSync(tempDir);
+    }
+  });
+
+  it("surfaces invalid OpenAPI operation loading as a user-fixable error", async () => {
+    const ui = new ScriptedUserInteraction({
+      multi: { apiOperations: ["GET /repairs"] },
+    });
+
+    const res = await runCreateInputs(
+      buildFloor(),
+      OPENAPI_DA,
+      { apiSpecLocation: __filename },
+      asUI(ui),
+      { flagReader: () => false }
+    );
+
+    assert.isTrue(res.isErr(), "expected invalid OpenAPI spec to fail");
+    if (res.isErr()) {
+      assert.equal(res.error.name, "OpenApiSpecInvalid");
+      assert.isTrue(res.error instanceof UserError);
+    }
+    assert.deepEqual(ui.promptNames, ["apiOperations"]);
+    assert.deepEqual(ui.dynamicOptionNames, ["apiOperations"]);
   });
 
   it("validates Graph connector display name", async () => {
@@ -437,6 +768,8 @@ describe("runCreateInputs (collect-create-inputs)", () => {
       assert.equal(res.value.language, "typescript");
     }
     assert.deepEqual(ui.promptNames, ["llmService", "openAIKey", "language", "folder", "app-name"]);
+    assert.isFunction(ui.lastInputConfig?.validation);
+    assert.isString(await ui.lastInputConfig?.validation?.("!"));
   });
 
   it("uses create floor defaults without prompts in non-interactive mode", async () => {
@@ -590,8 +923,8 @@ describe("runCreateInputs (collect-create-inputs)", () => {
   it("collects custom API OpenAPI inputs before LLM inputs", async () => {
     const ui = new ScriptedUserInteraction({
       select: { llmService: "llm-service-azure-openai" },
+      fileOrInput: { apiSpecLocation: OPENAPI_SPEC },
       text: {
-        apiSpecLocation: OPENAPI_SPEC,
         azureOpenAIKey: "fake-azure-openai-key",
         azureOpenAIEndpoint: "https://fake.openai.azure.com/",
         azureOpenAIDeploymentName: "fake-deployment",
@@ -624,6 +957,61 @@ describe("runCreateInputs (collect-create-inputs)", () => {
       "azureOpenAIEndpoint",
       "azureOpenAIDeploymentName",
     ]);
+    assert.deepEqual(ui.fileOrInputNames, ["apiSpecLocation"]);
+    assert.equal(ui.lastFileOrInputConfig?.title, "OpenAPI Document");
+    assert.equal(ui.lastFileOrInputConfig?.placeholder, "Enter OpenAPI Document URL");
+    assert.equal(ui.lastFileOrInputConfig?.inputOptionItem.id, "input");
+    assert.equal(
+      ui.lastFileOrInputConfig?.inputOptionItem.label,
+      "$(cloud) Enter OpenAPI Document URL"
+    );
+    assert.isUndefined(ui.lastFileOrInputConfig?.validation);
+    assert.isFunction(ui.lastFileOrInputConfig?.inputBoxConfig.validation);
+    assert.equal(
+      await ui.lastFileOrInputConfig?.inputBoxConfig.validation?.("not-a-url"),
+      "Enter a valid HTTP URL without authentication to access your OpenAPI description document."
+    );
+    assert.deepEqual(ui.lastFileOrInputConfig?.filters, { files: ["json", "yml", "yaml"] });
+  });
+
+  it("browses a local OpenAPI document for custom API through the combined picker", async () => {
+    const ui = new ScriptedUserInteraction({
+      select: { llmService: "llm-service-azure-openai" },
+      fileOrInput: { apiSpecLocation: OPENAPI_SPEC },
+      multi: { apiOperations: ["GET /repairs"] },
+      text: {
+        azureOpenAIKey: "",
+        azureOpenAIEndpoint: "",
+        azureOpenAIDeploymentName: "",
+      },
+    });
+    const res = await runCreateInputs(
+      buildFloor(),
+      RAG_CUSTOM_API,
+      { language: "typescript", platform: Platform.VSCode },
+      asUI(ui),
+      { flagReader: () => false }
+    );
+
+    if (res.isErr()) {
+      assert.fail(res.error.message);
+    }
+    assert.equal(res.value.apiSpecLocation, OPENAPI_SPEC);
+    assert.deepEqual(ui.textNames, [
+      "azureOpenAIKey",
+      "azureOpenAIEndpoint",
+      "azureOpenAIDeploymentName",
+    ]);
+    assert.deepEqual(ui.fileNames, []);
+    assert.deepEqual(ui.fileOrInputNames, ["apiSpecLocation"]);
+    assert.equal(ui.lastFileOrInputConfig?.inputBoxConfig.name, "input-api-spec-url");
+    assert.equal(ui.lastFileOrInputConfig?.inputBoxConfig.title, "OpenAPI Document");
+    assert.equal(
+      ui.lastFileOrInputConfig?.inputBoxConfig.placeholder,
+      "Enter OpenAPI Document URL"
+    );
+    assert.isUndefined(ui.lastFileOrInputConfig?.validation);
+    assert.isFunction(ui.lastFileOrInputConfig?.inputBoxConfig.validation);
   });
 
   it("lists static MCP tools from the provided tools JSON", async () => {
@@ -728,7 +1116,12 @@ describe("runCreateInputs (collect-create-inputs)", () => {
       asUI(ui),
       {
         surface: "cli",
-        inputs: { nonInteractive: true, folder: "C:/src", "app-name": "MyAgent" },
+        inputs: {
+          platform: Platform.CLI,
+          nonInteractive: true,
+          folder: "C:/src",
+          "app-name": "MyAgent",
+        },
         flagReader: () => false,
         fetchMcpTools: async () => {
           fetchCalled = true;
@@ -749,6 +1142,31 @@ describe("runCreateInputs (collect-create-inputs)", () => {
     assert.isFalse(fetchCalled);
     assert.notProperty(res._unsafeUnwrap(), "selectedMcpTools");
     assert.notProperty(res._unsafeUnwrap(), "mcpToolsJson");
+  });
+
+  it("fails before static MCP materialization when non-interactive CLI create omits the server URL", async () => {
+    const ui = new ScriptedUserInteraction({});
+    let fetchCalled = false;
+
+    const res = await runCreateInputs(buildFloor(), STATIC_MCP_DA, {}, asUI(ui), {
+      surface: "cli",
+      inputs: {
+        platform: Platform.CLI,
+        nonInteractive: true,
+        folder: "C:/src",
+        "app-name": "MyAgent",
+      },
+      flagReader: () => false,
+      fetchMcpTools: async () => {
+        fetchCalled = true;
+        return { requiresAuth: false, tools: [] };
+      },
+    });
+
+    assert.isTrue(res.isErr(), "expected missing MCP server URL to fail");
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_VALIDATION_FAILED);
+    assert.include(res._unsafeUnwrapErr().message, "mcpServerUrl");
+    assert.isFalse(fetchCalled);
   });
 
   it("fails when static MCP tool auto-fetch requires auth", async () => {
@@ -1095,6 +1513,47 @@ describe("createUiPromptUI (collect-create-inputs)", () => {
     assert.equal(options[1].label, "b");
   });
 
+  it("resolves keyPrefix localization before rendering authored v4 LLM questions", async () => {
+    const ui = new ScriptedUserInteraction({ select: { llmService: "llm-service-openai" } });
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask(
+      {
+        name: "llmService",
+        type: "singleSelect",
+        title: "Service for Large Language Model (LLM)",
+        placeholder: "Select a service to access LLMs",
+        keyPrefix: "core.createProjectQuestion.llmService",
+      },
+      [
+        {
+          id: "llm-service-azure-openai",
+          label: "Azure OpenAI",
+          detail: "Access powerful LLMs in OpenAI with Azure security and reliability",
+          keyPrefix: "core.createProjectQuestion.llmServiceAzureOpenAIOption",
+        },
+        {
+          id: "llm-service-openai",
+          label: "OpenAI",
+          detail: "Access LLMs developed by OpenAI",
+          keyPrefix: "core.createProjectQuestion.llmServiceOpenAIOption",
+        },
+      ]
+    );
+
+    assert.isTrue(res.isOk());
+    assert.equal(ui.lastSelectConfig?.title, "Service for Large Language Model (LLM)");
+    assert.equal(ui.lastSelectConfig?.placeholder, "Select a service to access LLMs");
+    const options = (ui.lastSelectConfig?.options ?? []) as SurfaceOptionItem[];
+    assert.equal(options[0].label, "Azure OpenAI");
+    assert.equal(
+      options[0].detail,
+      "Access powerful LLMs in OpenAI with Azure security and reliability"
+    );
+    assert.equal(options[1].label, "OpenAI");
+    assert.equal(options[1].detail, "Access LLMs developed by OpenAI");
+  });
+
   it("CCI-07: ask maps a text question to inputText and returns the string", async () => {
     const ui = new ScriptedUserInteraction({ text: { freeText: "hello world" } });
     const prompt = createUiPromptUI(asUI(ui));
@@ -1106,6 +1565,140 @@ describe("createUiPromptUI (collect-create-inputs)", () => {
       assert.deepEqual(res.value, { kind: "value", value: "hello world" });
     }
     assert.deepEqual(ui.textNames, ["freeText"]);
+  });
+
+  it("maps a singleFileOrText question to selectFileOrInput and returns the path or text", async () => {
+    const ui = new ScriptedUserInteraction({ fileOrInput: { apiSpecLocation: OPENAPI_SPEC } });
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask(
+      {
+        name: "apiSpecLocation",
+        type: "singleFileOrText",
+        title: "OpenAPI Document",
+        placeholder: "Enter OpenAPI Document URL",
+        inputOptionItem: { id: "input", label: "$(cloud) Enter OpenAPI Document URL" },
+        inputBoxConfig: {
+          name: "input-api-spec-url",
+          title: "OpenAPI Document",
+          placeholder: "Enter OpenAPI Document URL",
+        },
+        filters: { files: ["json", "yml", "yaml"] },
+      },
+      undefined,
+      2
+    );
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.deepEqual(res.value, { kind: "value", value: OPENAPI_SPEC });
+    }
+    assert.deepEqual(ui.fileOrInputNames, ["apiSpecLocation"]);
+    assert.equal(ui.lastFileOrInputConfig?.step, 2);
+  });
+
+  it("maps a singleFile question to selectFile and returns the path", async () => {
+    const ui = new ScriptedUserInteraction({ file: { apiSpecLocation: OPENAPI_SPEC } });
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask(
+      {
+        name: "apiSpecLocation",
+        type: "singleFile",
+        title: "OpenAPI Document",
+        filters: { files: ["json", "yml", "yaml"] },
+      },
+      undefined,
+      2
+    );
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.deepEqual(res.value, { kind: "value", value: OPENAPI_SPEC });
+    }
+    assert.deepEqual(ui.fileNames, ["apiSpecLocation"]);
+    assert.equal(ui.lastFileConfig?.step, 2);
+  });
+
+  it("returns host errors from singleFile prompts", async () => {
+    const ui = new ScriptedUserInteraction({});
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask(
+      { name: "apiSpecLocation", type: "singleFile", title: "OpenAPI Document" },
+      undefined
+    );
+
+    assert.isTrue(res.isErr());
+    assert.equal(res._unsafeUnwrapErr().name, "NoScriptedAnswer");
+  });
+
+  it("projects a host back on a singleFile question to { kind: 'back' }", async () => {
+    const ui = new ScriptedUserInteraction({ back: ["apiSpecLocation"] });
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask(
+      { name: "apiSpecLocation", type: "singleFile", title: "OpenAPI Document" },
+      undefined
+    );
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.deepEqual(res.value, { kind: "back" });
+    }
+  });
+
+  it("returns host errors from singleFileOrText prompts", async () => {
+    const ui = new ScriptedUserInteraction({});
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask(
+      {
+        name: "apiSpecLocation",
+        type: "singleFileOrText",
+        title: "OpenAPI Document",
+        inputOptionItem: { id: "input" },
+        inputBoxConfig: { name: "input-api-spec-url" },
+      },
+      undefined
+    );
+
+    assert.isTrue(res.isErr());
+    assert.equal(res._unsafeUnwrapErr().name, "NoScriptedAnswer");
+  });
+
+  it("projects a host back on a singleFileOrText question to { kind: 'back' }", async () => {
+    const ui = new ScriptedUserInteraction({ back: ["apiSpecLocation"] });
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask(
+      {
+        name: "apiSpecLocation",
+        type: "singleFileOrText",
+        title: "OpenAPI Document",
+        inputOptionItem: { id: "input" },
+        inputBoxConfig: { name: "input-api-spec-url" },
+      },
+      undefined
+    );
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.deepEqual(res.value, { kind: "back" });
+    }
+  });
+
+  it("rejects malformed singleFileOrText question configs", async () => {
+    const ui = new ScriptedUserInteraction({});
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask(
+      { name: "apiSpecLocation", type: "singleFileOrText", title: "OpenAPI Document" },
+      undefined
+    );
+
+    assert.isTrue(res.isErr());
+    assert.equal(res._unsafeUnwrapErr().name, "UnsupportedQuestionKind");
   });
 
   it("maps a folder question to selectFolder and returns the path", async () => {

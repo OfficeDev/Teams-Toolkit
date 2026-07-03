@@ -10,6 +10,9 @@
   "optionsSchema": {
     "type": "object",
     "properties": {
+      "openApiSpecType": { "type": "string" },
+      "searchOpenApiSpecQuery": { "type": "string" },
+      "selectOpenApiSpec": { "type": "string" },
       "apiSpecLocation": { "type": "string" },
       "apiOperations": { "type": "array", "items": { "type": "string" } }
     },

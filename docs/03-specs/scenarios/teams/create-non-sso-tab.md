@@ -13,7 +13,7 @@ This is the vertical contract for the native v4 Teams tab create package. The pa
 |----|------|-------|------|------|
 | SCN-CREATE-NONSSO-TAB-01 | L1 | empty target and TypeScript language | scaffold completes | the render phase writes the Teams tab project file set (`.tpl` stripped) including `.vscode`, `appPackage`, `src`, `infra`, env, yaml, and package files |
 | SCN-CREATE-NONSSO-TAB-02 | L1 | rendered TypeScript `package.json` and manifest | render | package `name` is the lower-case safe project name; manifest app names use the caller floor `appName` and preserve `${{APP_NAME_SUFFIX}}` |
-| SCN-CREATE-NONSSO-TAB-03 | L1 | empty target and Python language | scaffold completes | the Python language subtree is selected and writes Python source files without TypeScript package files |
+| SCN-CREATE-NONSSO-TAB-03 | L1 | the Teams tab descriptor | inspect languages | the descriptor exposes TypeScript only |
 | SCN-CREATE-NONSSO-TAB-04 | L1 | empty target | scaffold | only the `require-empty-target` step runs; no post-render scaffold injection is run |
 | SCN-CREATE-NONSSO-TAB-05 | L1 | non-empty target | scaffold | `require-empty-target` fails first with **`UserError`** and writes nothing |
 

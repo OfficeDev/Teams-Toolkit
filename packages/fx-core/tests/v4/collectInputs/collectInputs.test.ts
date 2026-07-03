@@ -14,9 +14,12 @@ import {
   CollectInputsPort,
   INPUT_BOTH_OPTION_SOURCES,
   INPUT_FORWARD_DERIVED_REFERENCE,
+  INPUT_PROVIDER_FAILED,
   INPUT_VALIDATION_FAILED,
+  INPUT_UNKNOWN_VALIDATOR,
   INPUT_WALK_CANCELLED,
   OptionItem,
+  OptionsSource,
   OptionsProvider,
   PromptUI,
   QuestionSpec,
@@ -57,50 +60,85 @@ class ExprPort implements ExpressionRuntimePort {
 class ScriptedUI implements PromptUI {
   asked: string[] = [];
   lastOptions: Record<string, OptionItem[] | undefined> = {};
+  lastValidations: Record<
+    string,
+    ((value: string) => string | undefined | Promise<string | undefined>) | undefined
+  > = {};
   private readonly script: Record<string, string>;
   private readonly multiScript: Record<string, string[]>;
   constructor(script: Record<string, string>, multiScript: Record<string, string[]> = {}) {
     this.script = script;
     this.multiScript = multiScript;
   }
-  ask(
+  async ask(
     question: QuestionSpec,
-    options: OptionItem[] | undefined
+    options: OptionsSource | undefined,
+    _step?: number,
+    validation?: (value: string) => string | undefined | Promise<string | undefined>
   ): Promise<Result<Asked<string>, FxError>> {
     this.asked.push(question.name);
-    this.lastOptions[question.name] = options;
-    if (question.name in this.script) {
-      return Promise.resolve(ok({ kind: "value", value: this.script[question.name] }));
+    this.lastValidations[question.name] = validation;
+    const resolvedOptions = await resolveTestOptions(options);
+    this.lastOptions[question.name] = resolvedOptions;
+    if (question.skipSingleOption === true && resolvedOptions?.length === 1) {
+      return ok({ kind: "value", value: optionId(resolvedOptions[0]) });
     }
-    return Promise.resolve(
-      err(
-        new UserError({
-          source: "Test",
-          name: "NoScriptedAnswer",
-          message: `no scripted answer for '${question.name}'`,
-        })
-      )
+    if (question.name in this.script) {
+      const value = this.script[question.name];
+      const message = await validation?.(value);
+      if (message !== undefined) {
+        return err(
+          new UserError({
+            source: "Test",
+            name: INPUT_VALIDATION_FAILED,
+            message: `'${question.name}': ${message}`,
+          })
+        );
+      }
+      return ok({ kind: "value", value });
+    }
+    return err(
+      new UserError({
+        source: "Test",
+        name: "NoScriptedAnswer",
+        message: `no scripted answer for '${question.name}'`,
+      })
     );
   }
-  askMulti(
+  async askMulti(
     question: QuestionSpec,
-    options: OptionItem[] | undefined
+    options: OptionsSource | undefined
   ): Promise<Result<Asked<string[]>, FxError>> {
     this.asked.push(question.name);
-    this.lastOptions[question.name] = options;
-    if (question.name in this.multiScript) {
-      return Promise.resolve(ok({ kind: "value", value: this.multiScript[question.name] }));
+    const resolvedOptions = await resolveTestOptions(options);
+    this.lastOptions[question.name] = resolvedOptions;
+    if (question.skipSingleOption === true && resolvedOptions?.length === 1) {
+      return ok({ kind: "value", value: [optionId(resolvedOptions[0])] });
     }
-    return Promise.resolve(
-      err(
-        new UserError({
-          source: "Test",
-          name: "NoScriptedAnswer",
-          message: `no scripted multi-answer for '${question.name}'`,
-        })
-      )
+    if (question.name in this.multiScript) {
+      return ok({ kind: "value", value: this.multiScript[question.name] });
+    }
+    return err(
+      new UserError({
+        source: "Test",
+        name: "NoScriptedAnswer",
+        message: `no scripted multi-answer for '${question.name}'`,
+      })
     );
   }
+}
+
+function optionId(option: OptionItem): string {
+  return option.id;
+}
+
+async function resolveTestOptions(
+  options: OptionsSource | undefined
+): Promise<OptionItem[] | undefined> {
+  if (options === undefined || Array.isArray(options)) {
+    return options;
+  }
+  return (await options()).options;
 }
 
 /** A no-scripted-answer error for the sequence-driven driver. */
@@ -125,7 +163,7 @@ class SequencedPromptUI implements PromptUI {
   constructor(private readonly responses: SeqResponse[]) {}
   ask(
     question: QuestionSpec,
-    _options: OptionItem[] | undefined,
+    _options: OptionsSource | undefined,
     step?: number
   ): Promise<Result<Asked<string>, FxError>> {
     this.calls.push({ name: question.name, step });
@@ -140,7 +178,7 @@ class SequencedPromptUI implements PromptUI {
   }
   askMulti(
     question: QuestionSpec,
-    _options: OptionItem[] | undefined,
+    _options: OptionsSource | undefined,
     step?: number
   ): Promise<Result<Asked<string[]>, FxError>> {
     this.calls.push({ name: question.name, step });
@@ -274,7 +312,7 @@ describe("collectInputs (v4)", () => {
     assert.strictEqual(e.name, INPUT_BOTH_OPTION_SOURCES);
   });
 
-  it("INPUT-04: skipSingleOption auto-selects a sole option without prompting", async () => {
+  it("INPUT-04: skipSingleOption auto-selects a sole provider option through the UI", async () => {
     const provider = new FakeProvider({ options: [{ id: "remote" }] });
     const questions: QuestionSpec[] = [
       {
@@ -293,7 +331,7 @@ describe("collectInputs (v4)", () => {
       makePort({ ui, providers: { "mcp.serverTypes": provider } })
     );
     assert.strictEqual(res._unsafeUnwrap().mcpServerType, "remote");
-    assert.notInclude(ui.asked, "mcpServerType");
+    assert.include(ui.asked, "mcpServerType");
   });
 
   it("INPUT-05: optionsFrom invokes the named provider through the port", async () => {
@@ -421,11 +459,128 @@ describe("collectInputs (v4)", () => {
       ["common"],
       makePort({ ui, validators: { uri: uriValidator } })
     );
+    assert.isFunction(ui.lastValidations.mcpServerUrl);
     assert.isTrue(res.isErr());
     const e = res._unsafeUnwrapErr();
     assert.instanceOf(e, UserError);
     assert.strictEqual(e.name, INPUT_VALIDATION_FAILED);
     assert.include(e.message, "mcpServerUrl");
+  });
+
+  it("INPUT-10: an unknown question validator is rejected before prompting", async () => {
+    const questions: QuestionSpec[] = [
+      { name: "mcpServerUrl", type: "text", validation: "missing" },
+    ];
+    const ui = new ScriptedUI({ mcpServerUrl: "https://api.example.com/mcp" });
+
+    const res = await collectInputs(
+      questions,
+      { properties: { mcpServerUrl: {} } },
+      {},
+      ["common"],
+      makePort({ ui })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_UNKNOWN_VALIDATOR);
+    assert.deepStrictEqual(ui.asked, []);
+  });
+
+  it("INPUT-10: an unknown input-box validator is rejected before prompting", async () => {
+    const questions: QuestionSpec[] = [
+      {
+        name: "apiSpecLocation",
+        type: "singleFileOrText",
+        inputOptionItem: { id: "input" },
+        inputBoxConfig: { name: "input-api-spec-url", validation: "missing" },
+      },
+    ];
+    const ui = new ScriptedUI({ apiSpecLocation: "https://example.com/openapi.yaml" });
+
+    const res = await collectInputs(
+      questions,
+      { properties: { apiSpecLocation: {} } },
+      {},
+      ["common"],
+      makePort({ ui })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_UNKNOWN_VALIDATOR);
+    assert.deepStrictEqual(ui.asked, []);
+  });
+
+  it("INPUT-10: scalar provider errors after prompting are returned as input errors", async () => {
+    const providerError = new UserError({
+      source: "Test",
+      name: "ProviderUserError",
+      message: "bad",
+    });
+    const provider: OptionsProvider = { fetch: async () => Promise.reject(providerError) };
+    const questions: QuestionSpec[] = [
+      { name: "openApiSpec", type: "singleSelect", optionsFrom: "openapi.search" },
+    ];
+
+    const res = await collectInputs(
+      questions,
+      { properties: { openApiSpec: {} } },
+      {},
+      ["common"],
+      makePort({
+        ui: new SequencedPromptUI([{ kind: "value", value: "https://example.com/openapi.yaml" }]),
+        providers: { "openapi.search": provider },
+      })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, "ProviderUserError");
+  });
+
+  it("INPUT-10: multi provider exceptions after prompting are wrapped as provider failures", async () => {
+    const provider: OptionsProvider = {
+      fetch: async () => Promise.reject(new Error("provider exploded")),
+    };
+    const questions: QuestionSpec[] = [
+      { name: "apiOperations", type: "multiSelect", optionsFrom: "openapi.operations" },
+    ];
+
+    const res = await collectInputs(
+      questions,
+      { properties: { apiOperations: {} } },
+      {},
+      ["common"],
+      makePort({
+        ui: new SequencedPromptUI([{ kind: "multi", value: ["GET /repairs"] }]),
+        providers: { "openapi.operations": provider },
+      })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_PROVIDER_FAILED);
+  });
+
+  it("INPUT-10: non-Error provider exceptions are wrapped as provider failures", async () => {
+    const provider: OptionsProvider = {
+      fetch: async () => Promise.reject("provider exploded"),
+    };
+    const questions: QuestionSpec[] = [
+      { name: "apiOperations", type: "multiSelect", optionsFrom: "openapi.operations" },
+    ];
+
+    const res = await collectInputs(
+      questions,
+      { properties: { apiOperations: {} } },
+      {},
+      ["common"],
+      makePort({
+        ui: new SequencedPromptUI([{ kind: "multi", value: ["GET /repairs"] }]),
+        providers: { "openapi.operations": provider },
+      })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_PROVIDER_FAILED);
+    assert.include(res._unsafeUnwrapErr().message, "provider exploded");
   });
 
   it("INPUT-11: machine-state (odr.exe) gating is the provider, never a condition predicate", async () => {
