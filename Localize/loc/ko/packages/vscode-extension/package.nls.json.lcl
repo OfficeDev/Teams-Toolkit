@@ -1444,7 +1444,7 @@
         </Str>
         <Disp Icon="Str" />
       </Item>
-      <Item ItemId=";teamstoolkit.commands.checkCopilotAccess.title" ItemType="0" PsrId="306" Leaf="true">
+      <Item ItemId=";teamstoolkit.commands.checkCopilotAccess" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Check Copilot Access]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
@@ -2067,6 +2067,42 @@
           <Val><![CDATA[Add Action]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
             <Val><![CDATA[동작 추가]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";teamstoolkit.commandsTreeViewProvider.addSkill.blockTooltip" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Unable to run command when adding a skill. Try again after adding completes.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[기술을 추가할 때 명령을 실행할 수 없습니다. 추가가 완료된 후 다시 시도하세요.]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";teamstoolkit.commandsTreeViewProvider.addSkill.running" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Adding skill...]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[기술 추가 중...]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";teamstoolkit.commandsTreeViewProvider.addSkillDescription" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Add skill in declarative agent]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[선언적 에이전트에 기술 추가]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";teamstoolkit.commandsTreeViewProvider.addSkillTitle" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Add Skill]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[기술 추가]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -3518,7 +3554,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Automate routine business tasks through conversation.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[대화를 통해 일상적인 비즈니스 작업을 자동화합니다.]]></Val>
+            <Val><![CDATA[대화를 통해 루틴 비즈니스 작업을 자동화합니다.]]></Val>
           </Tgt>
           <Prev Cat="Text">
             <Val><![CDATA[Automate repetitive workflows for common business processes in conversation]]></Val>
@@ -3566,7 +3602,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Automate routine tasks using simple commands in a chat.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[채팅에서 간단한 명령을 사용하여 일상적인 작업을 자동화합니다.]]></Val>
+            <Val><![CDATA[채팅에서 간단한 명령을 사용하여 루틴 작업을 자동화합니다.]]></Val>
           </Tgt>
           <Prev Cat="Text">
             <Val><![CDATA[Automate repetitive tasks with a simple command and response in conversation.]]></Val>
@@ -4296,6 +4332,15 @@
           <Val><![CDATA[Declarative agent project successfully created with a MCP wrapped. You can now start the MCP server from CodeLens button "Start" or customize your MCP server in .vscode/mcp.json file.]A;To fetch tools from MCP server, click "ATK: Update Action with MCP" from the CodeLens or Command Palatte.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
             <Val><![CDATA[MCP로 래핑된 선언적 에이전트 프로젝트가 성공적으로 생성되었습니다. 이제 CodeLens의 "시작" 버튼을 눌러 MCP 서버를 시작하거나 .vscode/mcp.json 파일에서 MCP 서버를 원하는 대로 설정할 수 있습니다.]A;MCP 서버에서 도구를 가져오려면 CodeLens 또는 Command Framework에서 "ATK: UPDATE Action with MCP"를 클릭합니다.]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";teamstoolkit.handlers.openWorkspaceMCPConfigNotification.dt" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Declarative agent project successfully created with the MCP action already wired into the manifest. Tools are discovered from the MCP server at runtime (dynamic tool discovery) — provision and run the agent directly. If dynamic discovery doesn’t work for your server, you can fall back to baking tool definitions into ai-plugin.json via the CodeLens in .vscode/mcp.json.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[매니페스트에 MCP 작업이 이미 연결된 선언적 에이전트 프로젝트가 만들어졌습니다. 도구는 런타임에 MCP 서버에서 검색됩니다(동적 도구 검색) — 에이전트를 바로 프로비전하고 실행하세요. 서버에서 동적 검색이 작동하지 않으면 .vscode/mcp.json의 CodeLens를 사용해 도구 정의를 ai-plugin.json에 포함하는 방식으로 대체할 수 있습니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />

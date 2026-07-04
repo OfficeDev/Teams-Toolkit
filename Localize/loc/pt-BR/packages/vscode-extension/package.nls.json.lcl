@@ -1444,11 +1444,11 @@
         </Str>
         <Disp Icon="Str" />
       </Item>
-      <Item ItemId=";teamstoolkit.commands.checkCopilotAccess.title" ItemType="0" PsrId="306" Leaf="true">
+      <Item ItemId=";teamstoolkit.commands.checkCopilotAccess" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Check Copilot Access]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Verificar o Acesso do Copilot]]></Val>
+            <Val><![CDATA[Verificar Acesso ao Copilot]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -2067,6 +2067,42 @@
           <Val><![CDATA[Add Action]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
             <Val><![CDATA[Adicionar Ação]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";teamstoolkit.commandsTreeViewProvider.addSkill.blockTooltip" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Unable to run command when adding a skill. Try again after adding completes.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Não foi possível executar o comando ao adicionar uma habilidade. Tente novamente depois que a adição terminar.]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";teamstoolkit.commandsTreeViewProvider.addSkill.running" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Adding skill...]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Adicionando habilidade...]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";teamstoolkit.commandsTreeViewProvider.addSkillDescription" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Add skill in declarative agent]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Adicionar habilidade no agente declarativo]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";teamstoolkit.commandsTreeViewProvider.addSkillTitle" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Add Skill]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Adicionar Habilidade]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -4296,6 +4332,15 @@
           <Val><![CDATA[Declarative agent project successfully created with a MCP wrapped. You can now start the MCP server from CodeLens button "Start" or customize your MCP server in .vscode/mcp.json file.]A;To fetch tools from MCP server, click "ATK: Update Action with MCP" from the CodeLens or Command Palatte.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
             <Val><![CDATA[Projeto de agente declarativo criado com sucesso com um MCP encapsulado. Agora você pode iniciar o servidor MCP pelo botão CodeLens "Start" ou personalizar seu servidor MCP no arquivo .vscode/mcp.json.]A;Para buscar ferramentas do servidor MCP, clique em "ATK: Atualizar Ação com MCP" no CodeLens ou na Paleta de Comandos.]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";teamstoolkit.handlers.openWorkspaceMCPConfigNotification.dt" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Declarative agent project successfully created with the MCP action already wired into the manifest. Tools are discovered from the MCP server at runtime (dynamic tool discovery) — provision and run the agent directly. If dynamic discovery doesn’t work for your server, you can fall back to baking tool definitions into ai-plugin.json via the CodeLens in .vscode/mcp.json.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Projeto de agente declarativo criado com êxito, com a ação MCP já vinculada ao manifesto. As ferramentas são descobertas no servidor MCP em tempo de execução (descoberta dinâmica de ferramentas) — provisione e execute o agente diretamente. Se a descoberta dinâmica não funcionar para o seu servidor, você pode voltar a incorporar as definições das ferramentas em ai-plugin.json por meio do CodeLens em .vscode/mcp.json.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />

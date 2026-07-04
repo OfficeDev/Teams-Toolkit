@@ -1444,7 +1444,7 @@
         </Str>
         <Disp Icon="Str" />
       </Item>
-      <Item ItemId=";teamstoolkit.commands.checkCopilotAccess.title" ItemType="0" PsrId="306" Leaf="true">
+      <Item ItemId=";teamstoolkit.commands.checkCopilotAccess" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Check Copilot Access]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
@@ -2067,6 +2067,42 @@
           <Val><![CDATA[Add Action]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
             <Val><![CDATA[新增動作]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";teamstoolkit.commandsTreeViewProvider.addSkill.blockTooltip" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Unable to run command when adding a skill. Try again after adding completes.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[新增技能時無法執行命令。在新增完成後，再試一次。]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";teamstoolkit.commandsTreeViewProvider.addSkill.running" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Adding skill...]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[正在新增技能...]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";teamstoolkit.commandsTreeViewProvider.addSkillDescription" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Add skill in declarative agent]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[在宣告式 Agent 中新增技能]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";teamstoolkit.commandsTreeViewProvider.addSkillTitle" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Add Skill]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[新增技能]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -4296,6 +4332,15 @@
           <Val><![CDATA[Declarative agent project successfully created with a MCP wrapped. You can now start the MCP server from CodeLens button "Start" or customize your MCP server in .vscode/mcp.json file.]A;To fetch tools from MCP server, click "ATK: Update Action with MCP" from the CodeLens or Command Palatte.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
             <Val><![CDATA[已成功建立宣告式代理程式專案並包裝 MCP。您現在可以從 CodeLens 按鈕 [開始]5D; 啟動 MCP 伺服器，或在 .vscode/mcp.json 檔案中自訂 MCP 伺服器。]A;若要從 MCP 伺服器擷取工具，請按一下 CodeLens 或命令面板中的 [ATK: 使用 MCP 更新動作]5D;。]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";teamstoolkit.handlers.openWorkspaceMCPConfigNotification.dt" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Declarative agent project successfully created with the MCP action already wired into the manifest. Tools are discovered from the MCP server at runtime (dynamic tool discovery) — provision and run the agent directly. If dynamic discovery doesn’t work for your server, you can fall back to baking tool definitions into ai-plugin.json via the CodeLens in .vscode/mcp.json.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[宣告式 Agent 專案建立成功，MCP 動作已整合到命令清單中。在執行階段從 MCP 伺服器探索工具 (動態工具探索) — 佈建並直接執行 Agent。如果動態探索不適用於您的伺服器，您可以透過 .vscode/mcp.json 中的 CodeLens，倒退回將工具定義轉換到 ai-plugin.json 中。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />

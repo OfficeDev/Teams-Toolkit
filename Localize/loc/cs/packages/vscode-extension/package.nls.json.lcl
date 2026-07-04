@@ -1444,11 +1444,11 @@
         </Str>
         <Disp Icon="Str" />
       </Item>
-      <Item ItemId=";teamstoolkit.commands.checkCopilotAccess.title" ItemType="0" PsrId="306" Leaf="true">
+      <Item ItemId=";teamstoolkit.commands.checkCopilotAccess" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Check Copilot Access]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Zkontrolovat přístup ke službě Copilot]]></Val>
+            <Val><![CDATA[Zkontrolovat přístup ke Copilotovi]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -2067,6 +2067,42 @@
           <Val><![CDATA[Add Action]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
             <Val><![CDATA[Přidat akci]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";teamstoolkit.commandsTreeViewProvider.addSkill.blockTooltip" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Unable to run command when adding a skill. Try again after adding completes.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Při přidávání dovednosti nelze spustit příkaz. Zkuste to znovu po dokončení přidávání.]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";teamstoolkit.commandsTreeViewProvider.addSkill.running" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Adding skill...]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Přidává se dovednost...]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";teamstoolkit.commandsTreeViewProvider.addSkillDescription" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Add skill in declarative agent]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Přidat dovednost v deklarativním agentovi]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";teamstoolkit.commandsTreeViewProvider.addSkillTitle" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Add Skill]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Přidat dovednost]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -4296,6 +4332,15 @@
           <Val><![CDATA[Declarative agent project successfully created with a MCP wrapped. You can now start the MCP server from CodeLens button "Start" or customize your MCP server in .vscode/mcp.json file.]A;To fetch tools from MCP server, click "ATK: Update Action with MCP" from the CodeLens or Command Palatte.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
             <Val><![CDATA[Projekt deklarativního agenta byl úspěšně vytvořen se zabaleným MCP. Server MCP teď můžete spustit pomocí tlačítka CodeLens „Spustit“ nebo můžete přizpůsobit server MCP v souboru .vscode/mcp.json.]A;Pokud chcete načíst nástroje ze serveru MCP, klikněte v CodeLens nebo na paletě příkazů na „ATK: aktualizovat akci pomocí MCP“.]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";teamstoolkit.handlers.openWorkspaceMCPConfigNotification.dt" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Declarative agent project successfully created with the MCP action already wired into the manifest. Tools are discovered from the MCP server at runtime (dynamic tool discovery) — provision and run the agent directly. If dynamic discovery doesn’t work for your server, you can fall back to baking tool definitions into ai-plugin.json via the CodeLens in .vscode/mcp.json.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Projekt deklarativního agenta byl úspěšně vytvořen a akce MCP je již zapojena do manifestu. Nástroje se zjišťují ze serveru MCP za běhu (dynamické zjišťování nástrojů). Zřiďte a spusťte agenta přímo. Pokud dynamické zjišťování pro váš server nefunguje, můžete se vrátit k vložení definic nástrojů do souboru ai-plugin.json prostřednictvím funkce CodeLens v souboru .vscode/mcp.json.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
