@@ -76,9 +76,9 @@ jobs:
       PRODUCTION: ${{ github.event.inputs.goproduct }}
     steps:
       - name: Validate CD branch
-        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.SkipBranchCheck != 'true' && github.ref != 'refs/heads/dev' && !startsWith(github.ref, 'refs/heads/release/') }}
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.SkipBranchCheck != 'true' && github.ref != 'refs/heads/dev' && github.ref != 'refs/heads/fix/disable-v4-feature-flag' && !startsWith(github.ref, 'refs/heads/release/') }}
         run: |
-          echo It's allowed to run CD on dev or release branch.
+          echo It's allowed to run CD on dev, release branch, or fix/disable-v4-feature-flag.
           exit 1
 
       - name: Validate inputs for release
