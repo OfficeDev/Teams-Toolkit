@@ -33,7 +33,8 @@
       "step_179ff717",
       "step_e5c7e8aa",
       "step_61ee9d59",
-      "step_ta_fix01",
+      "step_ta_zoomreset",
+      "plan_r_0624_024810",
       "step_18eec105",
       "step_3b65d9b9",
       "step_91e5b84d",
@@ -305,15 +306,13 @@
       "plan_id": "plan_47e4bf4e"
     },
     {
-      "step_id": "step_ta_fix01",
+      "step_id": "step_ta_zoomreset",
       "agent": "interaction",
-      "tool": "click",
+      "tool": "keyboard_shortcut",
       "parameters": {
-        "button": "left",
-        "x": 307,
-        "y": 232
+        "keys": "ctrl+="
       },
-      "description": "Click the \"Teams Agents and Apps\" option in the \"New Project\" dropdown menu within the Microsoft 365 Agents Toolkit interface. Inline replacement for the read-only Teams Agents group: the earlier Ctrl+- zoom-out compressed the menu, so the group fixed y=266 was landing one row lower on \"Office Add-in\"; y is shifted up one row to hit \"Teams Agents and Apps\".",
+      "description": "Restore the Visual Studio Code zoom level to default (Ctrl + =) to undo the earlier Ctrl + - zoom-out (step_9fd72915). This is required before reusing the read-only Teams Agents group (plan_r_0624_024810), whose fixed click at y=266 only lands on \"Teams Agents and Apps\" at the default zoom level.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
