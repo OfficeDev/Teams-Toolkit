@@ -8,10 +8,16 @@ import * as uuid from "uuid";
 const asyncLocalStorage = new AsyncLocalStorage<string>();
 
 export class Correlator {
-  static setId(): string {
-    const id = uuid.v4();
-    asyncLocalStorage.enterWith(id);
-    return id;
+  /**
+   * Sets the ambient correlation id for the current async context. A valid UUID
+   * `id` is adopted as-is — the seam that lets an external caller (e.g. the wiqd
+   * CLI) thread its own correlation id in; absent/malformed values mint a fresh
+   * UUID so the id is always well-formed.
+   */
+  static setId(id?: string): string {
+    const newId = id && uuid.validate(id) ? id : uuid.v4();
+    asyncLocalStorage.enterWith(newId);
+    return newId;
   }
   static run<T extends unknown[], R>(work: (...args: [...T]) => R, ...args: [...T]): R {
     const id = asyncLocalStorage.getStore() || uuid.v4();

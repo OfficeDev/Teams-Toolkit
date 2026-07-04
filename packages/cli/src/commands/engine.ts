@@ -66,7 +66,10 @@ class CLIEngine {
    * entry point of the CLI engine
    */
   async start(rootCmd: CLICommand): Promise<void> {
-    Correlator.setId();
+    // Seed the correlation id from ATK_CLI_CORRELATION_ID when a parent process
+    // (e.g. the wiqd CLI) passes one, so this run's telemetry shares the parent's
+    // `correlation-id`. Absent/malformed values fall back to a fresh UUID.
+    Correlator.setId(process.env.ATK_CLI_CORRELATION_ID);
 
     // Fire-and-forget: fetch latest metadata in background, same as VSC extension activation
     void getFxCore().fetchOnlineTemplateMetadata();

@@ -17,6 +17,7 @@ import {
   MissingEnvironmentVariablesError,
   UserCancelError,
   VersionState,
+  Correlator,
 } from "@microsoft/teamsfx-core";
 import mockedEnv from "mocked-env";
 import { assert, vi } from "vitest";
@@ -789,6 +790,28 @@ describe("CLI Engine", () => {
       const result = engine.parseArgs(ctx, rootCommand, []);
       assert.isTrue(result.isOk());
       assert.notProperty(ctx.telemetryProperties, TelemetryProperty.Skill);
+      mockedEnvRestore();
+    });
+  });
+
+  describe("ATK_CLI_CORRELATION_ID env var", () => {
+    it("seeds the Correlator with the parent-provided id", async () => {
+      const externalId = "11111111-1111-4111-8111-111111111111";
+      const mockedEnvRestore = mockedEnv({ ATK_CLI_CORRELATION_ID: externalId });
+      const setIdStub = sandbox.stub(Correlator, "setId");
+      sandbox.stub(process, "argv").value(["node", "cli", "-h"]);
+      sandbox.stub(logger, "info");
+      await engine.start(rootCommand);
+      assert.isTrue(setIdStub.calledWith(externalId));
+      mockedEnvRestore();
+    });
+    it("seeds the Correlator with undefined when the env var is not set", async () => {
+      const mockedEnvRestore = mockedEnv({ ATK_CLI_CORRELATION_ID: undefined });
+      const setIdStub = sandbox.stub(Correlator, "setId");
+      sandbox.stub(process, "argv").value(["node", "cli", "-h"]);
+      sandbox.stub(logger, "info");
+      await engine.start(rootCommand);
+      assert.isTrue(setIdStub.calledWith(undefined));
       mockedEnvRestore();
     });
   });
