@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 32,
+    "total_steps": 33,
     "created_at": "2026-06-29T03:21:51.231595",
     "name": "DA_with_MCP Server(Oauth)",
     "description": {
@@ -35,6 +35,7 @@
       "step_a712386e",
       "step_5120006b",
       "step_289ade9c",
+      "step_oauth_filter",
       "step_d0c53170",
       "step_8ed7e3fe",
       "step_c83f7f58",
@@ -336,6 +337,26 @@
       "plan_id": "plan_r_1024_023252"
     },
     {
+      "step_id": "step_oauth_filter",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "static"
+      },
+      "description": "Type 'static' into the search input box of the \"Select Authentication Type\" quick pick in Visual Studio Code to filter the list down to the \"OAuth (with static registration)\" option.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
+      "created_at": "2026-06-29T03:21:51.370200",
+      "plan_id": "plan_r_1024_023252"
+    },
+    {
       "step_id": "step_d0c53170",
       "agent": "interaction",
       "tool": "click",
@@ -344,17 +365,13 @@
         "x": 345,
         "y": 70
       },
-      "description": "Click the \"OAuth (with static registration)\" option in the \"Select Authentication Type\" dropdown within Visual Studio Code.",
+      "description": "Click the \"OAuth (with static registration)\" option (now the top filtered result) in the \"Select Authentication Type\" quick pick within Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:345:70:16:5:1040a8c10c336149",
-        "dhash:345:70:96:5:000090236cc42314",
-        "dhash:345:70:0:10:40b030216060623a"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_d0c53170",
@@ -648,7 +665,7 @@
       "parameters": {
         "text": "read:user"
       },
-      "description": "Type 'read:user' into the “Scope(s) for OAuth registration” input field at the top of the Visual Studio Code window.",
+      "description": "Type 'read:user' into the \u201cScope(s) for OAuth registration\u201d input field at the top of the Visual Studio Code window.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
