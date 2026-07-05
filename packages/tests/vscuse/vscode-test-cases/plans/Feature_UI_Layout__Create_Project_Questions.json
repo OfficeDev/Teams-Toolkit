@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 30,
+    "total_steps": 29,
     "created_at": "2026-01-06T02:01:16.119023",
     "name": "Feature: UI Layout & Create Project Questions",
     "description": {
@@ -27,13 +27,12 @@
       "step_90d68e68",
       "plan_r_0928_014459",
       "step_add65aa6",
-      "step_9fd72915",
       "step_6879ec50",
       "step_b3c8f37a",
       "step_179ff717",
       "step_e5c7e8aa",
       "step_61ee9d59",
-      "step_ta_fix01",
+      "plan_r_0624_024810",
       "step_18eec105",
       "step_3b65d9b9",
       "step_91e5b84d",
@@ -185,28 +184,6 @@
       "plan_id": "plan_47e4bf4e"
     },
     {
-      "step_id": "step_9fd72915",
-      "agent": "interaction",
-      "tool": "keyboard_shortcut",
-      "parameters": {
-        "keys": "ctrl+-"
-      },
-      "description": "Reduce the zoom level of the Visual Studio Code interface using the keyboard shortcut Ctrl + -; this affects all UI elements, including the sidebar (showing Microsoft 365 Agents Toolkit) and the main editor area.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:322c2a23a3232421"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_9fd72915",
-      "created_at": "2026-01-06T09:55:50.986208",
-      "plan_id": "plan_47e4bf4e"
-    },
-    {
       "step_id": "step_6879ec50",
       "agent": "assertion",
       "tool": "",
@@ -302,28 +279,6 @@
       "tags": [],
       "screenshot": null,
       "created_at": "2026-01-06T09:55:51.032498",
-      "plan_id": "plan_47e4bf4e"
-    },
-    {
-      "step_id": "step_ta_fix01",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 307,
-        "y": 232
-      },
-      "description": "Click the \"Teams Agents and Apps\" option in the \"New Project\" dropdown menu within the Microsoft 365 Agents Toolkit interface. Inline replacement for the read-only Teams Agents group: the earlier Ctrl+- zoom-out compressed the menu, so the group fixed y=266 was landing one row lower on \"Office Add-in\"; y is shifted up one row to hit \"Teams Agents and Apps\".",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "",
-      "created_at": "2026-01-06T09:55:51.049000",
       "plan_id": "plan_47e4bf4e"
     },
     {
