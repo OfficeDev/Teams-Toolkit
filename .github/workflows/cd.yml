@@ -594,7 +594,8 @@ jobs:
             --ref ${{ github.ref }} \
             -f run_id=${{ github.run_id }} \
             -f tag=${{ inputs.series == '' && 'latest' || inputs.series }} \
-            -f run_test_cases=${{ github.event_name == 'schedule' || inputs.run_test_cases }}
+            -f run_test_cases=${{ github.event_name == 'schedule' || inputs.run_test_cases }} \
+            -f source_ref=${{ (github.ref != 'refs/heads/dev' && !startsWith(github.ref, 'refs/heads/release/')) && github.ref_name || '' }}
 
   trigger-sync-release-runs:
     needs: cd
