@@ -110,6 +110,14 @@ function offeredIds(config: SingleSelectConfig | undefined): string[] {
   return options.map((option) => option.id);
 }
 
+function offeredOption(
+  config: SingleSelectConfig | undefined,
+  id: string
+): SurfaceOptionItem | undefined {
+  const options = (config?.options ?? []) as SurfaceOptionItem[];
+  return options.find((option) => option.id === id);
+}
+
 const MCP_DA_PICKS: Record<string, string> = {
   projectType: "copilot-agent-type",
   daTemplate: "add-action",
@@ -117,7 +125,189 @@ const MCP_DA_PICKS: Record<string, string> = {
 };
 const LANGUAGE_QUESTION = ["lang", "uage"].join("");
 
+const MINIMAL_SELECTOR = {
+  questions: [
+    {
+      name: "projectType",
+      type: "singleSelect",
+      title: "Project Type",
+      staticOptions: [{ id: "minimal", label: "Minimal" }],
+    },
+  ],
+  routes: [{ when: "projectType=='minimal'", engine: "v4", templateId: "minimal" }],
+};
+
 describe("runCreateSelector (walk-create-selector)", () => {
+  it("WCS-00: selector project type options preserve authored icons", async () => {
+    const ui = new ScriptedUI({
+      projectType: "copilot-agent-type",
+      daTemplate: "no-action",
+    });
+
+    await runCreateSelector(buildFloor(), asUI(ui), "vscode", {
+      flagReader: flagsOn("TEAMSFX_CHAT_PARTICIPANT_ENTRIES"),
+    });
+
+    const projectType = ui.configByName.get("projectType");
+    assert.deepEqual(
+      [
+        "copilot-agent-type",
+        "custom-engine-agent-type",
+        "graph-connector-type",
+        "blank-app-type",
+        "teams-agent-and-app-type",
+        "office-meta-os-type",
+        "start-with-github-copilot",
+      ].map((id) => [id, offeredOption(projectType, id)?.label]),
+      [
+        ["copilot-agent-type", "$(teamsfx-agent) Declarative Agent"],
+        ["custom-engine-agent-type", "$(teamsfx-custom-copilot) Custom Engine Agent"],
+        ["graph-connector-type", "$(teamsfx-graph-connector) Copilot connectors"],
+        ["blank-app-type", "$(file) Blank App"],
+        ["teams-agent-and-app-type", "$(microsoft365-agents-toolkit-teams) Teams Agents and Apps"],
+        ["office-meta-os-type", "$(microsoft365-agents-office) Office Add-in"],
+        [
+          "start-with-github-copilot",
+          "$(question) Don't know how to start? Use GitHub Copilot Chat",
+        ],
+      ]
+    );
+  });
+
+  it("WCS-00: selector JSON bytes use the selector route registry without opening packages", async () => {
+    const ui = new ScriptedUI({ projectType: "minimal" });
+
+    const res = await runCreateSelector(
+      Buffer.from(JSON.stringify(MINIMAL_SELECTOR)),
+      asUI(ui),
+      "vscode",
+      {
+        selectorBytesKind: "json",
+        flagReader: () => false,
+      }
+    );
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.equal(res.value.templateId, "minimal");
+      assert.equal(res.value.engine, "v4");
+    }
+  });
+
+  it("WCS-00: selector JSON accepts object results from the host", async () => {
+    const ui = new ScriptedUI({});
+    ui.selectOption = (
+      config: SingleSelectConfig
+    ): Promise<Result<SingleSelectResult, FxError>> => {
+      ui.selectNames.push(config.name);
+      ui.configByName.set(config.name, config);
+      return Promise.resolve(ok({ type: "success", result: { id: "minimal", label: "Minimal" } }));
+    };
+
+    const res = await runCreateSelector(
+      Buffer.from(JSON.stringify(MINIMAL_SELECTOR)),
+      asUI(ui),
+      "vscode",
+      {
+        selectorBytesKind: "json",
+        flagReader: () => false,
+      }
+    );
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.equal(res.value.templateId, "minimal");
+    }
+  });
+
+  it("WCS-00: returns option condition evaluation errors from selector JSON", async () => {
+    const ui = new ScriptedUI({ projectType: "minimal" });
+    const selector = {
+      questions: [
+        {
+          name: "projectType",
+          type: "singleSelect",
+          staticOptions: [
+            { id: "minimal", label: "Minimal", condition: { expr: "unknown == 'yes'" } },
+          ],
+        },
+      ],
+      routes: [{ when: "projectType=='minimal'", engine: "v4", templateId: "minimal" }],
+    };
+
+    const res = await runCreateSelector(Buffer.from(JSON.stringify(selector)), asUI(ui), "vscode", {
+      selectorBytesKind: "json",
+      flagReader: () => false,
+    });
+
+    assert.isTrue(res.isErr());
+    if (res.isErr()) {
+      assert.equal(res.error.name, "ExprUndeclaredIdentifier");
+    }
+  });
+
+  it("WCS-00: uses the default v3 core-method registry for selector JSON routes", async () => {
+    const ui = new ScriptedUI({ projectType: "minimal" });
+    const selector = {
+      questions: [
+        {
+          name: "projectType",
+          type: "singleSelect",
+          staticOptions: [{ id: "minimal", label: "Minimal" }],
+        },
+      ],
+      routes: [
+        {
+          when: "projectType=='minimal'",
+          engine: "v3-core-method",
+          coreMethod: "createSampleProject",
+        },
+      ],
+    };
+
+    const res = await runCreateSelector(Buffer.from(JSON.stringify(selector)), asUI(ui), "vscode", {
+      selectorBytesKind: "json",
+      flagReader: () => false,
+    });
+
+    assert.isTrue(res.isErr());
+    if (res.isErr()) {
+      assert.equal(res.error.name, ["BuildTargetUnknown", "Template"].join(""));
+    }
+  });
+
+  it("WCS-00: returns selector parse errors for invalid selector JSON bytes", async () => {
+    const ui = new ScriptedUI({});
+
+    const res = await runCreateSelector(Buffer.from("{ not json"), asUI(ui), "vscode", {
+      selectorBytesKind: "json",
+      flagReader: () => false,
+    });
+
+    assert.isTrue(res.isErr());
+    if (res.isErr()) {
+      assert.equal(res.error.name, "PackageFileInvalid");
+    }
+  });
+
+  it("WCS-00: returns selector presentation parse errors for malformed options", async () => {
+    const ui = new ScriptedUI({ projectType: "minimal" });
+    const selector = {
+      questions: [{ name: "projectType", type: "singleSelect", staticOptions: "malformed" }],
+      routes: [{ when: "projectType=='minimal'", engine: "v4", templateId: "minimal" }],
+    };
+
+    const res = await runCreateSelector(Buffer.from(JSON.stringify(selector)), asUI(ui), "vscode", {
+      selectorBytesKind: "json",
+      flagReader: () => false,
+    });
+
+    assert.isTrue(res.isErr());
+    if (res.isErr()) {
+      assert.equal(res.error.name, "BuildTargetMalformedSelector");
+    }
+  });
+
   it("WCS-00: selector-only Q1 can resolve from the selector's own v4 routes", async () => {
     const selectorBytes = fs.readFileSync(path.join(TEMPLATES_V4_DIR, "create", "selector.json"));
     const picks = {

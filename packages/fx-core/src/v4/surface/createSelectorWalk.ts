@@ -30,6 +30,10 @@ import { readBooleanFeatureFlag } from "../../common/featureFlags";
 
 const SOURCE = "Scaffold";
 
+function labelWithIcon(label: string, iconPath: string | undefined): string {
+  return iconPath === undefined ? label : `$(${iconPath}) ${label}`;
+}
+
 /** Create-selector options; all are defaulted. */
 export interface CreateSelectorDeps {
   /** The feature-flag reader (default: env-backed); v4 imports no `featureFlagManager`. */
@@ -102,7 +106,7 @@ function buildPort(
       step,
       options: visible.map((option) => ({
         id: option.id,
-        label: option.label,
+        label: labelWithIcon(option.label, option.iconPath),
         detail: option.detail,
         groupName: option.groupName,
       })),

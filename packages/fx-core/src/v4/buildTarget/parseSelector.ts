@@ -152,6 +152,7 @@ export interface PresentationOption {
   label: string;
   detail?: string;
   groupName?: string;
+  iconPath?: string;
   condition?: ExpressionNode;
 }
 
@@ -189,6 +190,10 @@ function parsePresentationOption(raw: unknown): Result<PresentationOption, FxErr
   const groupName = stringField(raw, "groupName");
   if (groupName !== undefined) {
     option.groupName = groupName;
+  }
+  const iconPath = stringField(raw, "iconPath");
+  if (iconPath !== undefined) {
+    option.iconPath = iconPath;
   }
   const condition = raw.condition;
   if (condition !== undefined) {

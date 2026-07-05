@@ -161,6 +161,39 @@ describe("AzureDeployImpl zip deploy acceleration", () => {
       );
   });
 
+  it("Get zip deploy endpoint reports ARM status when resource lookup fails", async () => {
+    const ar: AzureResourceInfo = {
+      subscriptionId: "aaa",
+      resourceGroupName: "bbb",
+      instanceId: "ccc",
+    };
+    const config: AzureUploadConfig = {
+      headers: {
+        "Content-Type": "AAA",
+        "Cache-Control": "bbb",
+        Authorization: "ccc",
+      },
+      maxContentLength: 1,
+      maxBodyLength: 2,
+      timeout: 3,
+    };
+    vi.spyOn(global, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          error: {
+            code: "ResourceNotFound",
+            message: "The Resource was not found.",
+          },
+        }),
+        { status: 404 }
+      )
+    );
+
+    await expect(AzureZipDeployImpl.getZipDeployEndpoint(ar, config)).rejects.toThrow(
+      "Failed to get Azure App Service host names. Status code: 404"
+    );
+  });
+
   it("checkDeployStatus empty response", async () => {
     vi.spyOn(AzureDeployImpl.AXIOS_INSTANCE, "get").mockResolvedValue("");
     const config = {

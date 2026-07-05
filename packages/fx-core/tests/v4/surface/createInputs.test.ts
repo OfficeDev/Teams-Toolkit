@@ -1612,6 +1612,80 @@ describe("createUiPromptUI (collect-create-inputs)", () => {
     assert.equal(options[1].label, "b");
   });
 
+  it("renders authored option icons through the existing VS Code codicon label syntax", async () => {
+    const ui = new ScriptedUserInteraction({ select: { picker: "a" } });
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask({ name: "picker", type: "singleSelect", title: "Pick" }, [
+      { id: "a", label: "Agent", iconPath: "teamsfx-agent" },
+    ]);
+
+    assert.isTrue(res.isOk());
+    const options = (ui.lastSelectConfig?.options ?? []) as SurfaceOptionItem[];
+    assert.equal(options[0].label, "$(teamsfx-agent) Agent");
+  });
+
+  it("projects undefined singleSelect results to an empty value", async () => {
+    const ui = new ScriptedUserInteraction({ select: { picker: "a" } });
+    ui.selectOption = async (config: SingleSelectConfig) => {
+      ui.lastSelectConfig = config;
+      return ok({ type: "success" });
+    };
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask({ name: "picker", type: "singleSelect", title: "Pick" }, [
+      { id: "a" },
+    ]);
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.deepEqual(res.value, { kind: "value", value: "" });
+    }
+  });
+
+  it("projects object singleSelect results to their option id", async () => {
+    const ui = new ScriptedUserInteraction({ select: { picker: "a" } });
+    ui.selectOption = async (config: SingleSelectConfig) => {
+      ui.lastSelectConfig = config;
+      return ok({ type: "success", result: { id: "a", label: "A" } });
+    };
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask({ name: "picker", type: "singleSelect", title: "Pick" }, [
+      { id: "a", label: "A" },
+    ]);
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.deepEqual(res.value, { kind: "value", value: "a" });
+    }
+  });
+
+  it("rejects singleSelect questions when no options source is supplied", async () => {
+    const ui = new ScriptedUserInteraction({});
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask(
+      { name: "picker", type: "singleSelect", title: "Pick" },
+      undefined
+    );
+
+    assert.isTrue(res.isErr());
+    assert.equal(res._unsafeUnwrapErr().name, "UnsupportedQuestionKind");
+  });
+
+  it("rejects unsupported ask question kinds after other supported kinds are checked", async () => {
+    const ui = new ScriptedUserInteraction({});
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask({ name: "servers", type: "multiSelect", title: "Servers" }, [
+      { id: "alpha" },
+    ]);
+
+    assert.isTrue(res.isErr());
+    assert.equal(res._unsafeUnwrapErr().name, "UnsupportedQuestionKind");
+  });
+
   it("resolves keyPrefix localization before rendering authored v4 LLM questions", async () => {
     const ui = new ScriptedUserInteraction({ select: { llmService: "llm-service-openai" } });
     const prompt = createUiPromptUI(asUI(ui));
@@ -1841,6 +1915,43 @@ describe("createUiPromptUI (collect-create-inputs)", () => {
       assert.deepEqual(res.value, { kind: "value", value: ["alpha", "beta"] });
     }
     assert.deepEqual(ui.multiNames, ["servers"]);
+  });
+
+  it("projects undefined multiSelect results to an empty list", async () => {
+    const ui = new ScriptedUserInteraction({ multi: { servers: ["alpha"] } });
+    ui.selectOptions = async (config: MultiSelectConfig) => {
+      ui.lastMultiConfig = config;
+      return ok({ type: "success" });
+    };
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.askMulti({ name: "servers", type: "multiSelect", title: "Servers" }, [
+      { id: "alpha" },
+    ]);
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.deepEqual(res.value, { kind: "value", value: [] });
+    }
+  });
+
+  it("rejects askMulti when the question kind or options source is unsupported", async () => {
+    const ui = new ScriptedUserInteraction({});
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const wrongKind = await prompt.askMulti(
+      { name: "servers", type: "singleSelect", title: "Servers" },
+      [{ id: "alpha" }]
+    );
+    const missingOptions = await prompt.askMulti(
+      { name: "servers", type: "multiSelect", title: "Servers" },
+      undefined
+    );
+
+    assert.isTrue(wrongKind.isErr());
+    assert.equal(wrongKind._unsafeUnwrapErr().name, "UnsupportedQuestionKind");
+    assert.isTrue(missingOptions.isErr());
+    assert.equal(missingOptions._unsafeUnwrapErr().name, "UnsupportedQuestionKind");
   });
 
   it("CCI-10: ask projects a host back on a singleSelect to { kind: 'back' }", async () => {

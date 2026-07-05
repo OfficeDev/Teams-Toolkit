@@ -28,6 +28,7 @@ export interface OptionItem {
   description?: string;
   detail?: string;
   groupName?: string;
+  iconPath?: string;
   condition?: ConditionNode;
   keyPrefix?: string;
 }

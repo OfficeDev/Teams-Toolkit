@@ -86,6 +86,7 @@
         "description": { "type": "string" },
         "detail": { "type": "string" },
         "groupName": { "type": "string" },
+        "iconPath": { "type": "string" },
         "condition": { "$ref": "#/$defs/condition" },
         "keyPrefix": { "type": "string" }
       }
