@@ -508,6 +508,18 @@ export async function generateForMCPForDA(
   destinationPath: string,
   inputs: Inputs
 ): Promise<Result<GeneratorResult, FxError>> {
+  const mcpServerUrl = inputs[QuestionNames.MCPForDAServerUrl];
+  if (!mcpServerUrl) {
+    return err(
+      new UserError({
+        source: "Scaffold",
+        name: "InputValidationFailed",
+        message: "mcpServerUrl is required when --api-plugin-type is mcp.",
+        displayMessage: getLocalizedString("core.MCPForDA.missingServerUrl"),
+      })
+    );
+  }
+
   // 1. Get ai-plugin.json
   const aiPluginFilePath = path.join(
     destinationPath,
@@ -538,7 +550,6 @@ export async function generateForMCPForDA(
     return generateForMCPForDAWithAuth(destinationPath, aiPluginFilePath, inputs);
   }
 
-  const mcpServerUrl = inputs[QuestionNames.MCPForDAServerUrl];
   const serverName = inputs[QuestionNames.MCPForDAServerName];
   const warnings: Warning[] = [];
 
