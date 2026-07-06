@@ -374,7 +374,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion  verify there are some options like: \"Customize\", \"Azure AI Search\" and \"Custom API\".",
+      "description": "@assertion  verify there are some options like: \"Azure AI Search\" and \"Custom API\".",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
