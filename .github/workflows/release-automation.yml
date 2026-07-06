@@ -897,12 +897,18 @@ jobs:
           script: |
             console.log('No release scheduled for tomorrow. Triggering default CD on dev.');
 
+            const now = new Date();
+            const utc8 = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+            const series = `${utc8.getUTCFullYear()}${String(utc8.getUTCMonth() + 1).padStart(2, '0')}${String(utc8.getUTCDate()).padStart(2, '0')}`;
+            console.log(`  series: ${series}`);
+
             await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'cd.yml',
               ref: 'dev',
               inputs: {
+                series: series,
                 run_test_cases: 'true'
               }
             });
