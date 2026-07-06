@@ -349,10 +349,10 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 424,
+        "x": 371,
         "y": 111
       },
-      "description": "Click the \"General Teams Agent\" option in the dropdown menu within the \"Teams Agent or App Using Microsoft Teams SDK\" setup dialog in Visual Studio Code, highlighting the selection for creating a Teams agent that chats with users using the Teams AI Library and LLMs.",
+      "description": "Click the \"Teams Agent with Data\" option in the dropdown menu within the \"Agent that uses your content and knowledge to accurately answer domain-specific questions\"",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -374,7 +374,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion  verify there are some options like: \"Azure AI Search\" and \"Custom API\".",
+      "description": "@assertion  verify there are some options like: \"Customize\", \"Azure AI Search\" and \"Custom API\".",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
