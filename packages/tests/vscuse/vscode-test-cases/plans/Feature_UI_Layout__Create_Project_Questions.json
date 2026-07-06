@@ -310,9 +310,9 @@
       "agent": "interaction",
       "tool": "keyboard_shortcut",
       "parameters": {
-        "keys": "ctrl++"
+        "keys": "ctrl+="
       },
-      "description": "Increase the zoom level of the Visual Studio Code interface using the keyboard shortcut Ctrl + +; this affects all UI elements, including the sidebar (showing Microsoft 365 Agents Toolkit) and the main editor area.",
+      "description": "Increase the zoom level of the Visual Studio Code interface using the keyboard shortcut Ctrl + = (VS Code's Zoom In binding); this affects all UI elements, including the sidebar (showing Microsoft 365 Agents Toolkit) and the main editor area.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
