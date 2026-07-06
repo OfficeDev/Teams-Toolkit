@@ -186,8 +186,6 @@
   "teamstoolkit.commandsTreeViewProvider.manageCollaboratorDescription": "管理 Microsoft 365 應用程式 (具有 Microsoft Entra 應用程式) 共同作業者者",
   "teamstoolkit.commandsTreeViewProvider.addPluginTitle": "新增動作",
   "teamstoolkit.commandsTreeViewProvider.addPluginDescription": "在宣告式代理程式中新增動作",
-  "teamstoolkit.commandsTreeViewProvider.metaOSExtendToDA": "將應用程式延伸至宣告式代理程式",
-  "teamstoolkit.commandsTreeViewProvider.metaOSExtendToDADescription": "將增益集專案延伸至宣告式代理程式",
   "teamstoolkit.commandsTreeViewProvider.metaOS.convert.title": "延伸至宣告式代理程式",
   "teamstoolkit.commandsTreeViewProvider.metaOS.convert.description": "將增益集專案延伸至宣告式代理程式動作",
   "teamstoolkit.commandsTreeViewProvider.regenerateActionTitle": "重新產生動作",
