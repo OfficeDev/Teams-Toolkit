@@ -1107,6 +1107,34 @@ describe("helper", async () => {
     const testDestinationPath = "/test/destination";
     const testAiPluginPath = path.join(testDestinationPath, "appPackage", "ai-plugin.json");
 
+    it("error: missing MCP server URL returns input validation failure", async () => {
+      const tempDestinationPath = path.join(process.cwd(), ".tmp", "missing-mcp-url-test");
+      const tempAiPluginPath = path.join(tempDestinationPath, "appPackage", "ai-plugin.json");
+      await fs.remove(tempDestinationPath);
+      await fs.ensureDir(path.dirname(tempAiPluginPath));
+      await fs.writeJSON(tempAiPluginPath, {
+        schema_version: "v1",
+        name_for_human: "Test Plugin",
+        functions: [],
+        runtimes: [],
+      });
+
+      const inputs: Inputs = {
+        platform: Platform.CLI,
+      };
+
+      const res = await generatorHelper.generateForMCPForDA(tempDestinationPath, inputs);
+
+      await fs.remove(tempDestinationPath);
+
+      assert.isTrue(res.isErr());
+      if (res.isErr()) {
+        assert.equal(res.error.source, "Scaffold");
+        assert.equal(res.error.name, "InputValidationFailed");
+        assert.include(res.error.message, "mcpServerUrl");
+      }
+    });
+
     it("error: ai-plugin.json file not found", async () => {
       vi.spyOn(fs, "pathExists").mockResolvedValue(false);
 

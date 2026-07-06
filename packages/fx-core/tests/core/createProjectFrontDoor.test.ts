@@ -966,7 +966,7 @@ describe("createProjectFrontDoor (dispatch-create-by-engine)", () => {
     assert.equal(vs.calls[0][2], "vs");
   });
 
-  it("defaults the flag reader to featureFlagManager (V4 on ⇒ selector)", async () => {
+  it("defaults the flag reader to featureFlagManager (V4 off => createV3)", async () => {
     const saved = process.env[FeatureFlags.V4Enabled.name];
     delete process.env[FeatureFlags.V4Enabled.name];
     try {
@@ -975,7 +975,31 @@ describe("createProjectFrontDoor (dispatch-create-by-engine)", () => {
 
       const res = await createProjectFrontDoor(
         baseInputs(),
-        // no flagReader override → the real featureFlagManager default reads V4 on.
+        // no flagReader override -> the real featureFlagManager default reads V4 off.
+        deps({ createV3: createV3.fn, flagReader: undefined, runSelector: runSelector.fn })
+      );
+
+      assert.isTrue(res.isOk());
+      assert.equal(runSelector.calls.length, 0);
+      assert.equal(createV3.calls.length, 1);
+    } finally {
+      if (saved === undefined) {
+        delete process.env[FeatureFlags.V4Enabled.name];
+      } else {
+        process.env[FeatureFlags.V4Enabled.name] = saved;
+      }
+    }
+  });
+
+  it("uses the default flag reader to honor explicit V4 opt-in", async () => {
+    const saved = process.env[FeatureFlags.V4Enabled.name];
+    process.env[FeatureFlags.V4Enabled.name] = "true";
+    try {
+      const createV3 = recorder((_inputs: Inputs) => okResult("/v3"));
+      const runSelector = selectorRecorder(SURFACE_ACTION_TARGET);
+
+      const res = await createProjectFrontDoor(
+        baseInputs(),
         deps({ createV3: createV3.fn, flagReader: undefined, runSelector: runSelector.fn })
       );
 

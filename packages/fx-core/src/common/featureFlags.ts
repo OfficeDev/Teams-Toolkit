@@ -121,7 +121,7 @@ export class FeatureFlags {
   };
   static readonly V4Enabled = {
     name: FeatureFlagName.V4Enabled,
-    defaultValue: "true",
+    defaultValue: "false",
   };
   static readonly MCPForDADT = {
     name: FeatureFlagName.MCPForDADT,
