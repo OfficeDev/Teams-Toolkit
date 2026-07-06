@@ -1,256 +1,368 @@
 {
   "plan_metadata": {
     "version": "1.1",
-    "plan_id": "plan_876b96d4",
+    "plan_id": "plan_r_0930_063548",
     "execution_context": {
-      "delay_between_steps": 1,
+      "delay_between_steps": 0.5,
       "stop_on_error": true,
-      "precondition_wait_timeout": 30,
-      "precondition_retry_interval": 1
+      "precondition_wait_timeout": 60,
+      "precondition_retry_interval": 2
     },
-    "total_steps": 8,
-    "created_at": "2026-02-02T09:12:09.611556",
-    "name": "Basic Custom Engine Azure OpenAI js remote debug",
+    "total_steps": 14,
+    "created_at": "2026-06-05T07:17:55.223333",
+    "name": "group: debug_in_teams_remote",
     "description": {
-      "other": "",
+      "other": "Generated from recording r_0930_063548",
       "owner": "v-ivanchen@microsoft.com",
-      "workitem": "33338521"
+      "workitem": ""
     },
-    "generated_at": "2026-02-02T09:12:09.611556",
+    "generated_at": "2026-06-05T07:17:55.223333",
     "execution_order": [
-      "plan_r_0928_012254",
-      "step_d5d456e1",
-      "step_22d9c27b",
-      "plan_r_0930_054245",
-      "step_533513ce",
-      "step_650d57c8",
-      "plan_r_0928_014459",
-      "plan_r_0928_020230",
-      "plan_r_0929_040401",
-      "plan_r_0928_073729",
-      "plan_r_0928_075846",
-      "step_668b4449",
-      "step_8d906e1b",
-      "step_82b3df5a",
-      "step_d9a66a39",
-      "plan_r_1229_080428",
-      "plan_r_0930_063548",
-      "plan_r_1020_110153"
+      "step_64456d0d",
+      "step_3fb94c2c",
+      "step_0f0c12ce",
+      "step_710f99f7",
+      "step_edc27950",
+      "step_5721b490",
+      "step_b2737c0c",
+      "step_ea74996b",
+      "step_82f6ba51",
+      "step_56f3a504",
+      "step_25ce8a2f",
+      "step_06f77d3f",
+      "step_d491dc74",
+      "step_6df62c65"
     ],
-    "tags": [],
-    "updated_at": "2026-02-02T09:44:57.430617"
+    "tags": [
+      "group"
+    ],
+    "updated_at": "2026-06-05T07:21:19.261171"
   },
   "steps": [
     {
-      "step_id": "step_d5d456e1",
+      "step_id": "step_64456d0d",
       "agent": "interaction",
-      "tool": "click",
+      "tool": "key_press",
       "parameters": {
-        "button": "left",
-        "dx": null,
-        "dy": null,
-        "key": null,
-        "keys": null,
-        "text": null,
-        "x": 369,
-        "y": 134
+        "key": "f1"
       },
-      "description": "Click the \"Custom Engine Agent\" option in the \"New Project\" modal dropdown within the Microsoft 365 Agents Toolkit extension for Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "0",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:369:134:16:5:ca9629443bd8282a",
-        "dhash:369:134:96:5:6565293144c82423",
-        "dhash:369:134:0:10:c8c88094b0717c6f"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_d5d456e1",
-      "created_at": "2026-02-02T09:12:09.624062",
-      "plan_id": "plan_876b96d4"
-    },
-    {
-      "step_id": "step_22d9c27b",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "dx": null,
-        "dy": null,
-        "key": null,
-        "keys": null,
-        "text": null,
-        "x": 352,
-        "y": 83
-      },
-      "description": "Click the \"Basic Custom Engine Agent\" option in the dropdown menu within the \"App Features Using Microsoft 365 Agents SDK\" window in Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "0",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:352:83:16:5:52525222519659ca",
-        "dhash:352:83:96:5:100ad56622138410",
-        "dhash:352:83:0:10:c0d09094b2717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_22d9c27b",
-      "created_at": "2026-02-02T09:12:09.633547",
-      "plan_id": "plan_876b96d4"
-    },
-    {
-      "step_id": "step_533513ce",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 310,
-        "y": 100
-      },
-      "description": "Click the \"JavaScript\" option from the programming language dropdown in the VS Code interface.",
+      "description": "Press the F1 key in Visual Studio Code to open the command palette.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:310:100:16:5:0000000000000000",
-        "dhash:310:100:96:5:b04848c8c0303030",
-        "dhash:310:100:0:10:d0989494b0707061"
+        "dhash:512:384:0:20:32832723b32c6c2b"
       ],
       "postconditions": [],
       "tags": [],
-      "screenshot": "step_533513ce",
-      "created_at": "2026-02-02T09:12:09.642572",
-      "plan_id": "plan_876b96d4"
+      "screenshot": "step_64456d0d",
+      "created_at": "2026-06-05T07:17:55.236797",
+      "plan_id": "plan_r_0930_063548"
     },
     {
-      "step_id": "step_650d57c8",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "dx": null,
-        "dy": null,
-        "key": null,
-        "keys": null,
-        "text": null,
-        "x": 356,
-        "y": 77
-      },
-      "description": "Click the \"Default folder /home/vscode/AgentsToolkitProjects\" option in the \"Workspace Folder\" dropdown within Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "0",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:356:77:16:5:4923483a3029adb3",
-        "dhash:356:77:96:5:0091915351864e01",
-        "dhash:356:77:0:10:f0b09494b2717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_650d57c8",
-      "created_at": "2026-02-02T09:12:09.651716",
-      "plan_id": "plan_876b96d4"
-    },
-    {
-      "step_id": "step_668b4449",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 1007,
-        "y": 506
-      },
-      "description": "Click the \"View provisioned resources\" button in the Notifications panel of Visual Studio Code, within the Microsoft 365 Agents Toolkit workspace. This action confirms successful provisioning and deploy stages, as indicated by the notification details.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:1007:506:16:5:2818e44c949848a4",
-        "dhash:1007:506:96:5:008806d898546485",
-        "dhash:1007:506:0:10:b2822323b4656a0f"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_668b4449",
-      "created_at": "2026-02-02T09:44:57.391668",
-      "plan_id": "plan_876b96d4"
-    },
-    {
-      "step_id": "step_8d906e1b",
-      "agent": "interaction",
-      "tool": "keyboard_shortcut",
-      "parameters": {
-        "keys": "ctrl+shift+P"
-      },
-      "description": "Use the keyboard shortcut **Ctrl+Shift+P** to open the Command Palette in Visual Studio Code, within the \"Microsoft 365 Agents Toolkit\" workspace interface.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:b28c2223a22b3a2f"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_8d906e1b",
-      "created_at": "2026-02-02T09:44:57.400684",
-      "plan_id": "plan_876b96d4"
-    },
-    {
-      "step_id": "step_82b3df5a",
+      "step_id": "step_3fb94c2c",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "notifications: clear"
+        "text": "Debug: Select and Start Debugging"
       },
-      "description": "Type the text \"notifications: clear\" into the VS Code Command Palette input field at the top center of the Visual Studio Code window, triggering the \"Notifications: Clear All Notifications\" suggestion.",
+      "description": "Type 'Debug: Select and Start Debugging' into the Visual Studio Code Command Palette input box at the top of the window.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:512:384:0:20:cc8c3223a22b3a2f"
+        "dhash:512:384:0:20:cce44463b32c6c2b"
       ],
       "postconditions": [],
       "tags": [],
-      "screenshot": "step_82b3df5a",
-      "created_at": "2026-02-02T09:44:57.410248",
-      "plan_id": "plan_876b96d4"
+      "screenshot": "step_3fb94c2c",
+      "created_at": "2026-06-05T07:17:55.242212",
+      "plan_id": "plan_r_0930_063548"
     },
     {
-      "step_id": "step_d9a66a39",
+      "step_id": "step_0f0c12ce",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
         "key": "enter"
       },
-      "description": "Press Enter to select \"Notifications: Clear All Notifications\" from the VS Code command palette.",
+      "description": "Press Enter to select \"Debug: Select and Start Debugging\" from the command palette in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:512:384:0:20:cc8c3223a22b3a2f"
+        "dhash:512:384:0:20:e4822323b32c6c2b"
       ],
       "postconditions": [],
       "tags": [],
-      "screenshot": "step_d9a66a39",
-      "created_at": "2026-02-02T09:44:57.420248",
-      "plan_id": "plan_876b96d4"
+      "screenshot": "step_0f0c12ce",
+      "created_at": "2026-06-05T07:17:55.254924",
+      "plan_id": "plan_r_0930_063548"
+    },
+    {
+      "step_id": "step_710f99f7",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Launch Remote (Chrome)"
+      },
+      "description": "Type #text:'Launch Remote (Chrome)' into the debug configuration dropdown at the top of the Visual Studio Code interface, within the Microsoft 365 Agents project workspace.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:c4c44423b32c6c2b"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_710f99f7",
+      "created_at": "2026-06-05T07:17:55.261012",
+      "plan_id": "plan_r_0930_063548"
+    },
+    {
+      "step_id": "step_edc27950",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to select \"Launch Remote (Chrome)\" from the debug configuration dropdown in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:c4832323b32c6c2b"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_edc27950",
+      "created_at": "2026-06-05T07:17:55.266797",
+      "plan_id": "plan_r_0930_063548"
+    },
+    {
+      "step_id": "step_5721b490",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 400,
+        "y": 410
+      },
+      "description": "Click the \"Password\" input field on the Microsoft login page to focus and enable password entry for the account test04@atktesting05.onmicrosoft.com.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:400:410:16:5:d85858d828585000",
+        "dhash:400:410:96:5:e7081258180124c5",
+        "dhash:400:410:0:10:1308f0d9d9e6e6e4"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition_wait_timeout:60",
+        "delay:30"
+      ],
+      "screenshot": "step_5721b490",
+      "created_at": "2026-06-05T07:17:55.274621",
+      "plan_id": "plan_r_0930_063548"
+    },
+    {
+      "step_id": "step_b2737c0c",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{secret:M365_ACCOUNT_PASSWORD}}"
+      },
+      "description": "Type  ${{secret:M365_ACCOUNT_PASSWORD}} into the password input field on the Microsoft sign-in page for user  ${{env:M365_ACCOUNT_NAME}}.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:1b08f0d9d1e6e6e4"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_b2737c0c",
+      "created_at": "2026-06-05T07:17:55.282581",
+      "plan_id": "plan_r_0930_063548"
+    },
+    {
+      "step_id": "step_ea74996b",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 627,
+        "y": 534
+      },
+      "description": "Click the \"Sign in\" button on the Microsoft login password entry page to submit credentials and proceed with account authentication.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:627:534:16:5:4ab2425cd55559d4",
+        "dhash:627:534:96:5:00004b6474530000",
+        "dhash:627:534:0:10:1308f0d9d9e6e6e4"
+      ],
+      "postconditions": [],
+      "tags": [
+        "delay:3"
+      ],
+      "screenshot": "step_ea74996b",
+      "created_at": "2026-06-05T07:17:55.287023",
+      "plan_id": "plan_r_0930_063548"
+    },
+    {
+      "step_id": "step_82f6ba51",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 623,
+        "y": 533
+      },
+      "description": "Click the \"Yes\" button on the Microsoft sign-in prompt to confirm staying signed in for account  ${{env:M365_ACCOUNT_NAME}}.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:623:533:16:5:9626a6deb9a00805",
+        "dhash:623:533:96:5:0008525959460000",
+        "dhash:623:533:0:10:1c0cf0d9d9e6e6e4"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_82f6ba51",
+      "created_at": "2026-06-05T07:17:55.296447",
+      "plan_id": "plan_r_0930_063548"
+    },
+    {
+      "step_id": "step_56f3a504",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion there's \"Add\" or \"Open\" blue button exist.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "step_retry_timeout: 180"
+      ],
+      "screenshot": null,
+      "created_at": "2026-06-05T07:17:55.304234",
+      "plan_id": "plan_r_0930_063548"
+    },
+    {
+      "step_id": "step_25ce8a2f",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 265,
+        "y": 214
+      },
+      "description": "Click the \u201cAdd\u201d or \u201cOpen\u201d blue button within the app details in Microsoft Teams (web interface), located below the app name and publisher. The button reads \u201cAdd\u201d when the app is not yet installed and \u201cOpen\u201d when it is already installed; both are at the same location.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_25ce8a2f",
+      "created_at": "2026-06-05T07:17:55.311011",
+      "plan_id": "plan_r_0930_063548"
+    },
+    {
+      "step_id": "step_06f77d3f",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion there's \"Open\" blue button exist.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "step_retry_timeout: 180"
+      ],
+      "screenshot": null,
+      "created_at": "2026-06-05T07:17:55.318381",
+      "plan_id": "plan_r_0930_063548"
+    },
+    {
+      "step_id": "step_d491dc74",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 529,
+        "y": 506
+      },
+      "description": "Click the \"Open\" button in the pop-up dialog for the  app on the Microsoft Teams web interface.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:529:506:16:5:0000a25da1929292",
+        "dhash:529:506:96:5:000058a4c4580040",
+        "dhash:529:506:0:10:3669696969697979"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition_wait_timeout: 200"
+      ],
+      "screenshot": "step_d491dc74",
+      "created_at": "2026-06-05T07:17:55.320306",
+      "plan_id": "plan_r_0930_063548"
+    },
+    {
+      "step_id": "step_6df62c65",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion there's ${{var:app_name}}dev exist.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "step_retry_timeout: 60"
+      ],
+      "screenshot": null,
+      "created_at": "2026-06-05T07:17:55.334167",
+      "plan_id": "plan_r_0930_063548"
     }
   ],
   "screenshots": {
