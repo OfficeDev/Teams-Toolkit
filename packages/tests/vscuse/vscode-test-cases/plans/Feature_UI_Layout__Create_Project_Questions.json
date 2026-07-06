@@ -393,19 +393,19 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 281,
-        "y": 110
+        "x": 227,
+        "y": 19
       },
-      "description": "Click the \"Customize\" option in the dropdown menu within the \"Teams Agent with Data\" setup dialog in Visual Studio Code.",
+      "description": "Click the back button to go back to the previous screen",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:281:110:16:5:9042225242c25262",
-        "dhash:281:110:96:5:3864647af4f270f1",
-        "dhash:281:110:0:10:6060322626222421"
+        "dhash:227:19:16:5:9042225242c25262",
+        "dhash:227:19:96:5:3864647af4f270f1",
+        "dhash:227:19:0:10:6060322626222421"
       ],
       "postconditions": [],
       "tags": [],
@@ -419,19 +419,19 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 379,
-        "y": 193
+        "x": 474,
+        "y": 219
       },
-      "description": "Click the \"General Teams Agent\" option in the dropdown menu of the \"Teams Agent or App Using Microsoft Teams SDK\" dialog within Visual Studio Code.",
+      "description": "Click the \"Other Teams Capabilities\" option in the dropdown menu",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:379:193:16:5:d94c2949cc934c93",
-        "dhash:379:193:96:5:c6d2642a2a940000",
-        "dhash:379:193:0:10:6869602226222421"
+        "dhash:474:219:16:5:d94c2949cc934c93",
+        "dhash:474:219:96:5:c6d2642a2a940000",
+        "dhash:474:219:0:10:6869602226222421"
       ],
       "postconditions": [],
       "tags": [],
@@ -463,8 +463,8 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 278,
-        "y": 17
+        "x": 227,
+        "y": 19
       },
       "description": "Click the \"Back (Ctrl+Alt+\u2190)\" button in the Teams Capability quick selection popup at the top of the Visual Studio Code interface.",
       "content_refs": [],
@@ -473,9 +473,9 @@
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:278:17:16:5:509c30308c982851",
-        "dhash:278:17:96:5:38b43234b47376f9",
-        "dhash:278:17:0:10:6060322626222421"
+        "dhash:227:19:16:5:509c30308c982851",
+        "dhash:227:19:96:5:38b43234b47376f9",
+        "dhash:227:19:0:10:6060322626222421"
       ],
       "postconditions": [],
       "tags": [],
@@ -489,8 +489,8 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 275,
-        "y": 10
+        "x": 227,
+        "y": 19
       },
       "description": "Click the \"Back\" button (top-left, marked by a red crosshair) in the Teams Agent or App creation dialog within Visual Studio Code.",
       "content_refs": [],
@@ -499,9 +499,9 @@
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:275:10:16:5:4040a0d4a46ed0c8",
-        "dhash:275:10:96:5:38b0b231b4f63374",
-        "dhash:275:10:0:10:6869622626222421"
+        "dhash:227:19:16:5:4040a0d4a46ed0c8",
+        "dhash:227:19:96:5:38b0b231b4f63374",
+        "dhash:227:19:0:10:6869622626222421"
       ],
       "postconditions": [],
       "tags": [],
@@ -515,8 +515,8 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 345,
-        "y": 80
+        "x": 290,
+        "y": 88
       },
       "description": "Click the \"Declarative Agent\" option in the \"New Project\" dialog of the Microsoft 365 Agents Toolkit extension within Visual Studio Code.",
       "content_refs": [],
@@ -525,9 +525,9 @@
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:345:80:16:5:86568919361c2dd2",
-        "dhash:345:80:96:5:0409644a4b97c676",
-        "dhash:345:80:0:10:6869602626222421"
+        "dhash:290:88:16:5:86568919361c2dd2",
+        "dhash:290:88:96:5:0409644a4b97c676",
+        "dhash:290:88:0:10:6869602626222421"
       ],
       "postconditions": [],
       "tags": [],
@@ -540,7 +540,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion verify options like : no action, create a declarative agent with an action, add a copilot connector and start with typespec for microsoft 365 copilot",
+      "description": "@assertion verify options like : no action, Add an action, add a copilot connector and start with typespec for microsoft 365 copilot",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -559,8 +559,8 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 371,
-        "y": 105
+        "x": 300,
+        "y": 132
       },
       "description": "Click the \"Add an Action\" option in the \"Create Declarative Agent\" dropdown menu within Visual Studio Code, as indicated by the red crosshair.",
       "content_refs": [],
@@ -569,9 +569,9 @@
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:371:105:16:5:0000000000000018",
-        "dhash:371:105:96:5:5124e49192a2bc30",
-        "dhash:371:105:0:10:6061702226222421"
+        "dhash:300:132:16:5:0000000000000018",
+        "dhash:300:132:96:5:5124e49192a2bc30",
+        "dhash:300:132:0:10:6061702226222421"
       ],
       "postconditions": [],
       "tags": [],
@@ -584,7 +584,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion verify options like below:\n start with a new api\ncreate an action with a new api from azure functions, \nstart with an openapi description document\ncreate an action from your existing api, \nstart with an MCP server\ncreate actions from your existing mcp server.",
+      "description": "@assertion verify options like below:\n start with a new api\nstart with an OpenAPI Description Document, \nStart with a MCP server.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -603,8 +603,8 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 401,
-        "y": 59
+        "x": 290,
+        "y": 88
       },
       "description": "Click the highlighted \"Start with a New API\" option in the \"Create an Action\" dropdown within the Microsoft Visual Studio Code interface, under the \"Create New Agent/App\" workflow.",
       "content_refs": [],
@@ -613,9 +613,9 @@
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:401:59:16:5:00000000150080a0",
-        "dhash:401:59:96:5:408419494a4d456b",
-        "dhash:401:59:0:10:6060622626222421"
+        "dhash:290:88:16:5:00000000150080a0",
+        "dhash:290:88:96:5:408419494a4d456b",
+        "dhash:290:88:0:10:6060622626222421"
       ],
       "postconditions": [],
       "tags": [],
@@ -647,19 +647,19 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 275,
-        "y": 13
+        "x": 227,
+        "y": 19
       },
-      "description": "Click the drop-down field labeled \"Select an authentication type\" in the \"Authentication Type\" dialog within Visual Studio Code, at the top-center of the interface.",
+      "description": "Click the \"Back (Ctrl+Alt+\u2190)\" button",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:275:13:16:5:c284d466ccd86ba4",
-        "dhash:275:13:96:5:3cb0b0b032793572",
-        "dhash:275:13:0:10:6048222626222421"
+        "dhash:227:19:16:5:c284d466ccd86ba4",
+        "dhash:227:19:96:5:3cb0b0b032793572",
+        "dhash:227:19:0:10:6048222626222421"
       ],
       "postconditions": [],
       "tags": [],
@@ -673,8 +673,8 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 277,
-        "y": 12
+        "x": 227,
+        "y": 19
       },
       "description": "Click the \"Back (Ctrl+Alt+\u2190)\" button in the \"Create an Action\" modal at the top of the Visual Studio Code interface to return to the previous selection screen.",
       "content_refs": [],
@@ -683,9 +683,9 @@
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:277:12:16:5:0040a84894a090c4",
-        "dhash:277:12:96:5:38b4b431b4f27374",
-        "dhash:277:12:0:10:6060622626222421"
+        "dhash:227:19:16:5:0040a84894a090c4",
+        "dhash:227:19:96:5:38b4b431b4f27374",
+        "dhash:227:19:0:10:6060622626222421"
       ],
       "postconditions": [],
       "tags": [],
@@ -699,8 +699,8 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 278,
-        "y": 13
+        "x": 512,
+        "y": 41
       },
       "description": "Click the text input field at the top of the \"Create Declarative Agent\" dropdown in Visual Studio Code, to start entering or selecting an action for the agent creation workflow.",
       "content_refs": [],
@@ -709,9 +709,9 @@
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:278:13:16:5:0810509c30308cd0",
-        "dhash:278:13:96:5:38b43438b0f175f2",
-        "dhash:278:13:0:10:6060602226222421"
+        "dhash:512:41:16:5:0810509c30308cd0",
+        "dhash:512:41:96:5:38b43438b0f175f2",
+        "dhash:512:41:0:10:6060602226222421"
       ],
       "postconditions": [],
       "tags": [],
@@ -725,8 +725,8 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 312,
-        "y": 107
+        "x": 300,
+        "y": 132
       },
       "description": "Click on the \"Custom Engine Agent\" option in the \"New Project\" popup dialog within the Microsoft 365 Agents Toolkit extension in Visual Studio Code.",
       "content_refs": [],
@@ -735,9 +735,9 @@
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:312:107:16:5:ada935649965ea4b",
-        "dhash:312:107:96:5:8ce98993c98a9385",
-        "dhash:312:107:0:10:6869602626222421"
+        "dhash:300:132:16:5:ada935649965ea4b",
+        "dhash:300:132:96:5:8ce98993c98a9385",
+        "dhash:300:132:0:10:6869602626222421"
       ],
       "postconditions": [],
       "tags": [],
