@@ -45,6 +45,13 @@ describe("FeatureFlagManager", () => {
     const stringRes = featureFlagManager.getStringValue(FeatureFlags.MCPForDADCR);
     chai.assert.equal(stringRes, "false");
   });
+  it("V4Enabled defaults to false", async () => {
+    mockedEnvRestore = mockedEnv({ [FeatureFlags.V4Enabled.name]: undefined });
+    const booleanRes = featureFlagManager.getBooleanValue(FeatureFlags.V4Enabled);
+    chai.assert.isFalse(booleanRes);
+    const stringRes = featureFlagManager.getStringValue(FeatureFlags.V4Enabled);
+    chai.assert.equal(stringRes, "false");
+  });
   it("list", async () => {
     const list = featureFlagManager.list();
     chai.assert.deepEqual(list, Object.values(FeatureFlags));
