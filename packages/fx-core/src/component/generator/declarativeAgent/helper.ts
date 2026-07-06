@@ -199,7 +199,7 @@ export async function addExistingPlugin(
 
   const runtimes = pluginManifest.runtimes!; // have validated that the value exists.
   const destinationApiSpecRelativePath = runtimes.find((runtime) => runtime.type === "OpenApi")!
-    .spec.url as string; // have validated that the value exists.
+    .spec.url; // have validated that the value exists.
 
   const outputFolder = path.dirname(declarativeCopilotManifestPath);
 
