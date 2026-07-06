@@ -53,7 +53,15 @@ function syncTemplateVersion(templateVersion, templateConfigs) {
 }
 
 function updateUseLocalFlag(templateVersion, templateConfigs) {
-  if (!semver.prerelease(templateVersion) || templateVersion.includes("rc") || process.env.VS_RELEASE === "true") {
+  // Bundle the in-tree templates & metadata (useLocalTemplate = true) for every
+  // build EXCEPT a stable production release, i.e. a stable (non-prerelease)
+  // template version AND goproduct=true (PRODUCTION env). A stable production
+  // release downloads the published templates instead; every other build (alpha,
+  // preview/beta, rc, and any non-goproduct build) stays self-contained so a PR's
+  // CD-built vsix reflects its own template/metadata/wizard changes.
+  const isStableRelease = !semver.prerelease(templateVersion);
+  const isProduction = process.env.PRODUCTION === "true";
+  if (isStableRelease && isProduction) {
     templateConfigs.useLocalTemplate = false;
   } else {
     templateConfigs.useLocalTemplate = true;
