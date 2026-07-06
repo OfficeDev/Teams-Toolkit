@@ -539,10 +539,27 @@ class CLIEngine {
       context.telemetryProperties[TelemetryProperty.Skill] = "true";
       CliTelemetry.reporter?.addSharedProperty(TelemetryProperty.Skill, "true");
     }
+    // Tag the invoking tool (e.g. wiqd) so wrapper-driven runs are distinguishable.
+    const caller = this.sanitizeCallerSource(process.env.ATK_CALLER);
+    if (caller) {
+      context.telemetryProperties[TelemetryProperty.CallerSource] = caller;
+      CliTelemetry.reporter?.addSharedProperty(TelemetryProperty.CallerSource, caller);
+    }
     // context.telemetryProperties[TelemetryProperty.CorrelationId] =
     //   context.optionValues.correlationId;
 
     return ok(undefined);
+  }
+
+  // ATK_CALLER is free-form env input; clamp to a short safe slug before it
+  // becomes a telemetry dimension to avoid PII leakage and high cardinality.
+  sanitizeCallerSource(raw?: string): string | undefined {
+    const slug = (raw ?? "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9._-]/g, "")
+      .slice(0, 40);
+    return slug || undefined;
   }
 
   validateOptionsAndArguments(

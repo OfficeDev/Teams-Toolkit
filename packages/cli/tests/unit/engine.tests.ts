@@ -746,4 +746,95 @@ describe("CLI Engine", () => {
       mockedEnvRestore();
     });
   });
+
+  describe("ATK_CALLER env var", () => {
+    it("sets CallerSource telemetry property from ATK_CALLER", async () => {
+      const mockedEnvRestore = mockedEnv({
+        ATK_CALLER: "wiqd",
+      });
+      const command: CLIFoundCommand = {
+        name: "test",
+        fullName: "test",
+        description: "test command",
+      };
+      const ctx: CLIContext = {
+        command: command,
+        optionValues: {},
+        globalOptionValues: {},
+        argumentValues: [],
+        telemetryProperties: {},
+      };
+      const result = engine.parseArgs(ctx, rootCommand, []);
+      assert.isTrue(result.isOk());
+      assert.equal(ctx.telemetryProperties[TelemetryProperty.CallerSource], "wiqd");
+      mockedEnvRestore();
+    });
+
+    it("does not set CallerSource when ATK_CALLER is not set", async () => {
+      const mockedEnvRestore = mockedEnv({
+        ATK_CALLER: undefined,
+      });
+      const command: CLIFoundCommand = {
+        name: "test",
+        fullName: "test",
+        description: "test command",
+      };
+      const ctx: CLIContext = {
+        command: command,
+        optionValues: {},
+        globalOptionValues: {},
+        argumentValues: [],
+        telemetryProperties: {},
+      };
+      const result = engine.parseArgs(ctx, rootCommand, []);
+      assert.isTrue(result.isOk());
+      assert.notProperty(ctx.telemetryProperties, TelemetryProperty.CallerSource);
+      mockedEnvRestore();
+    });
+
+    it("sanitizes ATK_CALLER to a lowercase slug capped at 40 chars", async () => {
+      const mockedEnvRestore = mockedEnv({
+        ATK_CALLER: "  WIQD/CLI!! " + "x".repeat(40),
+      });
+      const command: CLIFoundCommand = {
+        name: "test",
+        fullName: "test",
+        description: "test command",
+      };
+      const ctx: CLIContext = {
+        command: command,
+        optionValues: {},
+        globalOptionValues: {},
+        argumentValues: [],
+        telemetryProperties: {},
+      };
+      const result = engine.parseArgs(ctx, rootCommand, []);
+      assert.isTrue(result.isOk());
+      const value = ctx.telemetryProperties[TelemetryProperty.CallerSource];
+      assert.equal(value, ("wiqdcli" + "x".repeat(40)).slice(0, 40));
+      mockedEnvRestore();
+    });
+
+    it("does not set CallerSource when ATK_CALLER has no safe characters", async () => {
+      const mockedEnvRestore = mockedEnv({
+        ATK_CALLER: "!!! @@@ ///",
+      });
+      const command: CLIFoundCommand = {
+        name: "test",
+        fullName: "test",
+        description: "test command",
+      };
+      const ctx: CLIContext = {
+        command: command,
+        optionValues: {},
+        globalOptionValues: {},
+        argumentValues: [],
+        telemetryProperties: {},
+      };
+      const result = engine.parseArgs(ctx, rootCommand, []);
+      assert.isTrue(result.isOk());
+      assert.notProperty(ctx.telemetryProperties, TelemetryProperty.CallerSource);
+      mockedEnvRestore();
+    });
+  });
 });
