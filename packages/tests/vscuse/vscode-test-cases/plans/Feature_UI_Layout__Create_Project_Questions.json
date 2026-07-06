@@ -394,7 +394,7 @@
       "parameters": {
         "button": "left",
         "x": 281,
-        "y": 13
+        "y": 110
       },
       "description": "Click the \"Customize\" option in the dropdown menu within the \"Teams Agent with Data\" setup dialog in Visual Studio Code.",
       "content_refs": [],
@@ -403,9 +403,9 @@
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:281:13:16:5:9042225242c25262",
-        "dhash:281:13:96:5:3864647af4f270f1",
-        "dhash:281:13:0:10:6060322626222421"
+        "dhash:281:110:16:5:9042225242c25262",
+        "dhash:281:110:96:5:3864647af4f270f1",
+        "dhash:281:110:0:10:6060322626222421"
       ],
       "postconditions": [],
       "tags": [],
