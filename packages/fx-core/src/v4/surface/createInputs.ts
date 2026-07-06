@@ -402,9 +402,7 @@ function getStringValidationFunc(
 
 async function resolveStringValue(
   value:
-    | string
-    | ((inputs: Inputs) => string | undefined | Promise<string | undefined>)
-    | undefined,
+    string | ((inputs: Inputs) => string | undefined | Promise<string | undefined>) | undefined,
   inputs: Inputs
 ): Promise<string | undefined> {
   return typeof value === "function" ? await value(inputs) : value;
@@ -484,7 +482,7 @@ async function createFloorTail(
   const validateAppName = getStringValidationFunc(appName.validation);
   const floorValidators: Record<string, Validator> = {};
   if (validateAppName !== undefined) {
-    floorValidators.appName = async (value, currentAnswers) => {
+    floorValidators.appName = (value, currentAnswers) => {
       const validationInputs: Inputs = { ...inputs };
       const folderAnswer = currentAnswers[QuestionNames.Folder];
       if (typeof folderAnswer === "string") {
