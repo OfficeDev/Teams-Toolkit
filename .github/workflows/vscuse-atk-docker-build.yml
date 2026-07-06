@@ -201,6 +201,6 @@ jobs:
         run: |
           gh workflow run ui-test-vscuse-template.yml \
             --repo ${{ github.repository }} \
-            --ref ${{ github.event.inputs.source_ref || github.ref }} \
+            --ref refs/heads/dev \
             -f image_tag=${{ github.event.inputs.tag || 'latest' }} \
             -f schedule_trigger=${{ github.event.inputs.run_test_cases || 'false' }}
