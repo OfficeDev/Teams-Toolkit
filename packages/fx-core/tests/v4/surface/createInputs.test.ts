@@ -90,12 +90,12 @@ function buildFloor(): Buffer {
   return zip.toBuffer();
 }
 
-function buildLanguageFloor(): Buffer {
+function buildLanguageFloor(languages = ["typescript", "csharp"]): Buffer {
   const zip = new AdmZip();
   const root = "v4/create/test/language-axis";
   zip.addFile(
     `${root}/descriptor.json`,
-    Buffer.from(JSON.stringify({ id: "test/language-axis", languages: ["typescript", "csharp"] }))
+    Buffer.from(JSON.stringify({ id: "test/language-axis", languages }))
   );
   zip.addFile(`${root}/questions.json`, Buffer.from(JSON.stringify({ questions: [] })));
   zip.addFile(`${root}/pipeline.json`, Buffer.from("{}"));
@@ -380,6 +380,23 @@ function multiOptionAt(config: MultiSelectConfig | undefined, index: number): Su
   return option;
 }
 
+function selectOptionAt(config: SingleSelectConfig | undefined, index: number): SurfaceOptionItem {
+  if (config === undefined) {
+    assert.fail("expected a single-select config");
+  }
+  if (!Array.isArray(config.options)) {
+    assert.fail("expected static single-select options");
+  }
+  const option = config.options[index];
+  if (option === undefined) {
+    assert.fail(`expected single-select option at index ${index}`);
+  }
+  if (typeof option === "string") {
+    assert.fail(`expected single-select option item at index ${index}`);
+  }
+  return option;
+}
+
 function optionId(option: string | SurfaceOptionItem): string {
   return typeof option === "string" ? option : option.id;
 }
@@ -398,6 +415,88 @@ describe("runCreateInputs (collect-create-inputs)", () => {
       assert.deepEqual(res.value, { language: "typescript", surface: "vscode" });
     }
     assert.deepEqual(ui.selectNames, []);
+  });
+
+  it("CCI-17: VS Code Teams Agents and Apps Python language option carries the v3 Preview description", async () => {
+    const ui = new ScriptedUserInteraction({
+      select: { llmService: "llm-service-openai", language: "python" },
+      text: { openAIKey: "fake-openai-key" },
+    });
+
+    const res = await runCreateInputs(buildFloor(), CUSTOM_COPILOT_BASIC, {}, asUI(ui), {
+      flagReader: () => false,
+      surface: "vscode",
+    });
+
+    assert.isTrue(res.isOk(), res.isErr() ? `${res.error.name}: ${res.error.message}` : "ok");
+    assert.strictEqual(res._unsafeUnwrap().language, "python");
+    const pythonOption = selectOptionAt(ui.lastSelectConfig, 2);
+    assert.strictEqual(pythonOption.id, "python");
+    assert.strictEqual(pythonOption.label, "Python");
+    assert.strictEqual(pythonOption.description, "Preview");
+  });
+
+  it("does not mark Python preview for non-Teams Agents and Apps language descriptors", async () => {
+    const ui = new ScriptedUserInteraction({ select: { language: "python" } });
+
+    const res = await runCreateInputs(
+      buildLanguageFloor(["typescript", "javascript", "python"]),
+      LANGUAGE_DA,
+      {},
+      asUI(ui),
+      {
+        flagReader: () => false,
+        surface: "vscode",
+      }
+    );
+
+    assert.isTrue(res.isOk(), res.isErr() ? `${res.error.name}: ${res.error.message}` : "ok");
+    assert.strictEqual(res._unsafeUnwrap().language, "python");
+    const pythonOption = selectOptionAt(ui.lastSelectConfig, 2);
+    assert.strictEqual(pythonOption.id, "python");
+    assert.isUndefined(pythonOption.description);
+  });
+
+  it("does not mark Python preview for Custom Engine Agent language options", async () => {
+    const ui = new ScriptedUserInteraction({
+      select: { llmService: "llm-service-openai", language: "python" },
+      text: { openAIKey: "fake-openai-key", "app-name": "MyAgent" },
+      folder: { folder: "C:/src" },
+    });
+
+    const res = await runCreateInputs(buildFloor(), BASIC_CUSTOM_ENGINE_AGENT, {}, asUI(ui), {
+      flagReader: () => false,
+      inputs: { platform: Platform.VSCode },
+      surface: "vscode",
+    });
+
+    assert.isTrue(res.isOk(), res.isErr() ? `${res.error.name}: ${res.error.message}` : "ok");
+    assert.strictEqual(res._unsafeUnwrap().language, "python");
+    const pythonOption = selectOptionAt(ui.lastSelectConfig, 2);
+    assert.strictEqual(pythonOption.id, "python");
+    assert.isUndefined(pythonOption.description);
+  });
+
+  it("uses the language id as the label for unrecognized descriptor languages", async () => {
+    const ui = new ScriptedUserInteraction({ select: { language: "rust" } });
+
+    const res = await runCreateInputs(
+      buildLanguageFloor(["typescript", "rust"]),
+      LANGUAGE_DA,
+      {},
+      asUI(ui),
+      {
+        flagReader: () => false,
+        surface: "vscode",
+      }
+    );
+
+    assert.isTrue(res.isOk(), res.isErr() ? `${res.error.name}: ${res.error.message}` : "ok");
+    assert.strictEqual(res._unsafeUnwrap().language, "rust");
+    const rustOption = selectOptionAt(ui.lastSelectConfig, 1);
+    assert.strictEqual(rustOption.id, "rust");
+    assert.strictEqual(rustOption.label, "rust");
+    assert.isUndefined(rustOption.description);
   });
 
   it("CCI-01: remote-only provider auto-skips mcpServerType, asks url + authType=none", async () => {

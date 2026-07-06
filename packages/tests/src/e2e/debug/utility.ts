@@ -52,7 +52,7 @@ export async function deleteAadAppByObjectId(objectId: string) {
 
 export async function getAadAppByClientId(clientId: string): Promise<any> {
   const requester = await createGraphRequester();
-  for (let retries = 3; retries > 0; --retries) {
+  for (let retries = 6; retries > 0; --retries) {
     try {
       const response = await requester.get(
         `/applications(appId='${clientId}')`,
@@ -61,6 +61,25 @@ export async function getAadAppByClientId(clientId: string): Promise<any> {
         console.log(
           `Successfully got AAD app ${response.data.id} with client id ${clientId}`,
         );
+        return response.data;
+      }
+    } catch (e) {
+      console.log(`Failed to get AAD app, error: ${e}`);
+      if (retries > 1) {
+        await new Promise((resolve) => setTimeout(resolve, 10000));
+      }
+    }
+  }
+  return undefined;
+}
+
+export async function getAadAppByObjectId(objectId: string): Promise<any> {
+  const requester = await createGraphRequester();
+  for (let retries = 6; retries > 0; --retries) {
+    try {
+      const response = await requester.get(`/applications/${objectId}`);
+      if (response.status >= 200 && response.status < 300) {
+        console.log(`Successfully got AAD app ${objectId}`);
         return response.data;
       }
     } catch (e) {

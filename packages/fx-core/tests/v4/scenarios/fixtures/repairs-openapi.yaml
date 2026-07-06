@@ -9,6 +9,7 @@ paths:
     get:
       operationId: listRepairs
       summary: List repairs
+      description: Returns a list of repairs with their details and images.
       responses:
         "200":
           description: Repairs returned
