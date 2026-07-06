@@ -186,8 +186,6 @@
   "teamstoolkit.commandsTreeViewProvider.manageCollaboratorDescription": "Microsoft 365 앱 관리(Microsoft Entra 앱 포함) 공동 작업자",
   "teamstoolkit.commandsTreeViewProvider.addPluginTitle": "동작 추가",
   "teamstoolkit.commandsTreeViewProvider.addPluginDescription": "선언적 에이전트에 작업 추가",
-  "teamstoolkit.commandsTreeViewProvider.metaOSExtendToDA": "앱을 선언적 에이전트로 확장",
-  "teamstoolkit.commandsTreeViewProvider.metaOSExtendToDADescription": "추가 기능 프로젝트를 선언적 에이전트로 확장",
   "teamstoolkit.commandsTreeViewProvider.metaOS.convert.title": "선언적 에이전트로 확장",
   "teamstoolkit.commandsTreeViewProvider.metaOS.convert.description": "추가 기능 프로젝트를 선언적 에이전트 작업으로 확장",
   "teamstoolkit.commandsTreeViewProvider.regenerateActionTitle": "작업 다시 생성",

@@ -186,8 +186,6 @@
   "teamstoolkit.commandsTreeViewProvider.manageCollaboratorDescription": "Microsoft 365 Uygulaması (Microsoft Entra uygulaması ile) Ortak Çalışanlarını Yönetin",
   "teamstoolkit.commandsTreeViewProvider.addPluginTitle": "Eylem Ekle",
   "teamstoolkit.commandsTreeViewProvider.addPluginDescription": "Bildirim aracısının eylemlerini ekle",
-  "teamstoolkit.commandsTreeViewProvider.metaOSExtendToDA": "Uygulamayı Bildirim Aracısına genişlet",
-  "teamstoolkit.commandsTreeViewProvider.metaOSExtendToDADescription": "Eklenti projesini Bildirim Aracısına genişlet",
   "teamstoolkit.commandsTreeViewProvider.metaOS.convert.title": "Bildirim Aracısına genişlet",
   "teamstoolkit.commandsTreeViewProvider.metaOS.convert.description": "Eklenti projesini Bildirim Aracısı eylemine genişlet",
   "teamstoolkit.commandsTreeViewProvider.regenerateActionTitle": "Eylemi Yeniden Oluştur",

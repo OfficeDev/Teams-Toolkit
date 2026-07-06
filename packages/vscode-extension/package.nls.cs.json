@@ -186,8 +186,6 @@
   "teamstoolkit.commandsTreeViewProvider.manageCollaboratorDescription": "Správa spolupracovníků aplikace Microsoft 365 (s aplikací Microsoft Entra)",
   "teamstoolkit.commandsTreeViewProvider.addPluginTitle": "Přidat akci",
   "teamstoolkit.commandsTreeViewProvider.addPluginDescription": "Přidat akci v deklarativním agentovi",
-  "teamstoolkit.commandsTreeViewProvider.metaOSExtendToDA": "Rozšířit aplikaci na deklarativního agenta",
-  "teamstoolkit.commandsTreeViewProvider.metaOSExtendToDADescription": "Rozšíření projektu doplňku na deklarativního agenta",
   "teamstoolkit.commandsTreeViewProvider.metaOS.convert.title": "Rozšířit na deklarativního agenta",
   "teamstoolkit.commandsTreeViewProvider.metaOS.convert.description": "Rozšíření projektu doplňku na akci deklarativního agenta",
   "teamstoolkit.commandsTreeViewProvider.regenerateActionTitle": "Znovu vygenerovat akci",
