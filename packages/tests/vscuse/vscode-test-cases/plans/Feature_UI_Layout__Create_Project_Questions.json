@@ -349,8 +349,8 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 371,
-        "y": 111
+        "x": 424,
+        "y": 132
       },
       "description": "Click the \"Teams Agent with Data\" option in the dropdown menu within the \"Agent that uses your content and knowledge to accurately answer domain-specific questions\"",
       "content_refs": [],
