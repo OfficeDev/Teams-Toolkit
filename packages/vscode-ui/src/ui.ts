@@ -1056,15 +1056,15 @@ export class VSCodeUI implements UserInteraction {
         let promise: Thenable<string | undefined>;
         switch (level) {
           case "info": {
-            promise = window.showInformationMessage(message as string, option, ...items);
+            promise = window.showInformationMessage(message, option, ...items);
             break;
           }
           case "warn": {
-            promise = window.showWarningMessage(message as string, option, ...items);
+            promise = window.showWarningMessage(message, option, ...items);
             break;
           }
           case "error":
-            promise = window.showErrorMessage(message as string, option, ...items);
+            promise = window.showErrorMessage(message, option, ...items);
         }
         promise.then(
           (v) => {

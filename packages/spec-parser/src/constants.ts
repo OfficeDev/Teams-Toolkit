@@ -2,7 +2,13 @@
 // Licensed under the MIT license.
 "use strict";
 
-import { APIPluginManifestLatestSchemaUrl } from "@microsoft/app-manifest";
+import type { APIPluginManifestLatest } from "@microsoft/app-manifest";
+
+// Kept in lock-step with the latest generated API plugin manifest schema: the type
+// annotation forces a compile error if the generated `*Latest` schema_version changes.
+// Uses a type-only import so no runtime code (and its `fs` dependency) is pulled into
+// the browser bundle.
+const PLUGIN_MANIFEST_VERSION: APIPluginManifestLatest["schema_version"] = "v2.4";
 
 export class ConstantString {
   static readonly CancelledMessage = "Operation is cancelled.";
@@ -134,5 +140,6 @@ export class ConstantString {
   static readonly SMERequiredParamsMaxNum = 5;
   static readonly FunctionDescriptionMaxLens = 100;
   static readonly DefaultPluginId = "plugin_1";
-  static readonly PluginManifestSchema = APIPluginManifestLatestSchemaUrl;
+  static readonly PluginManifestVersion = PLUGIN_MANIFEST_VERSION;
+  static readonly PluginManifestSchema = `https://developer.microsoft.com/json-schemas/copilot/plugin/${PLUGIN_MANIFEST_VERSION}/schema.json`;
 }
