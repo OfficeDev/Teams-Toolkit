@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { randomUUID } from "crypto";
 import { assert } from "chai";
+import { randomUUID } from "crypto";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
@@ -125,7 +125,7 @@ describe("SCN-DA-CREATE-METAOS-UPGRADE-PROJECT (v4, T3 InMemoryRuntime)", () => 
     assert.isTrue(isRecordArray(agent.actions));
     assert.deepInclude(agent.actions, { id: "alchemyPlugin", file: "alchemy-plugin.json" });
     const action = readJsonObject(files, "appPackage/alchemy-plugin.json");
-    assert.strictEqual(action.schema_version, "v2.3");
+    assert.strictEqual(action.schema_version, "v2.4");
     assert.strictEqual(action.namespace, "AddInFunctions");
     assert.isTrue(isRecordArray(action.functions));
     assert.sameMembers(

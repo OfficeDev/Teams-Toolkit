@@ -2,40 +2,39 @@
 // Licensed under the MIT license.
 
 import {
+  ActionObject,
   AppManifestUtils,
   Colors,
   DeclarativeCopilotManifestSchema,
   DefaultApiSpecJsonFileName,
   DefaultApiSpecYamlFileName,
+  err,
+  FunctionObject,
   FxError,
-  IPlugin,
+  ok,
   Platform,
   PluginManifestSchema,
-  FunctionObject,
-  RuntimeObjectLocalplugin,
   Result,
+  RuntimeObjectLocalplugin,
   TeamsManifestLatest,
-  err,
-  ok,
 } from "@microsoft/teamsfx-api";
 import fs from "fs-extra";
-import { FileNotFoundError, JSONSyntaxError } from "../../../../error/common";
-import stripBom from "strip-bom";
-import path from "path";
-import { manifestUtils } from "./ManifestUtils";
-import { getResolvedManifest } from "./utils";
-import { AppStudioResultFactory } from "../results";
-import { AppStudioError } from "../errors";
-import { getDefaultString, getLocalizedString } from "../../../../common/localizeUtils";
-import { PluginManifestValidationResult } from "../interfaces/ValidationResult";
-import { SummaryConstant } from "../../../configManager/constant";
 import { EOL } from "os";
-import { ManifestType } from "../../../utils/envFunctionUtils";
-import { DriverContext } from "../../interface/commonArgs";
-import { isJsonSpecFile } from "../../../../common/utils";
+import path from "path";
+import stripBom from "strip-bom";
 import { featureFlagManager, FeatureFlags } from "../../../../common/featureFlags";
-import { ODRProvider, ODRServer, ODRTool } from "../../../utils/odrProvider";
+import { getDefaultString, getLocalizedString } from "../../../../common/localizeUtils";
+import { isJsonSpecFile } from "../../../../common/utils";
+import { FileNotFoundError, JSONSyntaxError } from "../../../../error/common";
+import { SummaryConstant } from "../../../configManager/constant";
 import { LocalMcpPrefix } from "../../../constants";
+import { ManifestType } from "../../../utils/envFunctionUtils";
+import { ODRProvider, ODRServer, ODRTool } from "../../../utils/odrProvider";
+import { DriverContext } from "../../interface/commonArgs";
+import { AppStudioError } from "../errors";
+import { PluginManifestValidationResult } from "../interfaces/ValidationResult";
+import { AppStudioResultFactory } from "../results";
+import { getResolvedManifest } from "./utils";
 
 export class PluginManifestUtils {
   public async readPluginManifestFile(
@@ -86,7 +85,7 @@ export class PluginManifestUtils {
   }
 
   public async validateAgainstSchema(
-    plugin: IPlugin,
+    plugin: ActionObject,
     path: string,
     context: DriverContext
   ): Promise<Result<PluginManifestValidationResult, FxError>> {

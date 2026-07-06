@@ -1,11 +1,17 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+import {
+  APIPluginManifestLatestSchemaUrl,
+  APIPluginManifestLatestVersion,
+  FxError,
+  SystemError,
+  UserError,
+} from "@microsoft/teamsfx-api";
 import { randomUUID } from "crypto";
-import { FxError, SystemError, UserError } from "@microsoft/teamsfx-api";
 import * as fs from "fs-extra";
-import * as path from "path";
 import { Result, err, ok } from "neverthrow";
+import * as path from "path";
 import { RegisteredStep, StepContext, StepParams } from "../../pipeline/runScaffoldPipeline";
 
 /** MetaOS post-render steps. */
@@ -325,8 +331,8 @@ function functionDefinition(
 
 function actionManifest(appName: string, commandNames: CommandNames): Record<string, unknown> {
   return {
-    $schema: "https://developer.microsoft.com/json-schemas/copilot/plugin/v2.3/schema.json",
-    schema_version: "v2.3",
+    $schema: APIPluginManifestLatestSchemaUrl,
+    schema_version: APIPluginManifestLatestVersion,
     name_for_human: `Add-in Skill + Agent for ${appName}`,
     description_for_human: "Get answer for user's question related to Microsoft 365 products",
     namespace: "AddInFunctions",

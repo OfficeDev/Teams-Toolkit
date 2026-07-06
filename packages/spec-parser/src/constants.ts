@@ -2,6 +2,8 @@
 // Licensed under the MIT license.
 "use strict";
 
+import { APIPluginManifestLatestSchemaUrl } from "@microsoft/app-manifest";
+
 export class ConstantString {
   static readonly CancelledMessage = "Operation is cancelled.";
   static readonly NoServerInformation =
@@ -132,6 +134,5 @@ export class ConstantString {
   static readonly SMERequiredParamsMaxNum = 5;
   static readonly FunctionDescriptionMaxLens = 100;
   static readonly DefaultPluginId = "plugin_1";
-  static readonly PluginManifestSchema =
-    "https://developer.microsoft.com/json-schemas/copilot/plugin/v2.2/schema.json";
+  static readonly PluginManifestSchema = APIPluginManifestLatestSchemaUrl;
 }

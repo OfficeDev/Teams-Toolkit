@@ -3,6 +3,7 @@
 "use strict";
 
 import {
+  APIPluginManifestLatestVersion,
   AuthObject,
   FunctionObject,
   IComposeExtension,
@@ -276,7 +277,7 @@ export class ManifestUpdater {
     } else {
       apiPlugin = {
         $schema: ConstantString.PluginManifestSchema,
-        schema_version: "v2.2",
+        schema_version: APIPluginManifestLatestVersion,
         name_for_human: "",
         description_for_human: "",
         namespace: "",

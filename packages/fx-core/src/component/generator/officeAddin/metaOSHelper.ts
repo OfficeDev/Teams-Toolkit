@@ -4,6 +4,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import {
+  APIPluginManifestLatestSchemaUrl,
+  APIPluginManifestLatestVersion,
   AppManifestUtils,
   AppPackageFolderName,
   DeclarativeAgentManifestV1D4,
@@ -299,8 +301,8 @@ export class MetaOSHelper {
   ): Promise<void> {
     // TODO: as any for temporary, since the runtime type `localPlugin` is not type defined yet
     const fileJson: any = {
-      $schema: "https://developer.microsoft.com/json-schemas/copilot/plugin/v2.3/schema.json",
-      schema_version: "v2.3",
+      $schema: APIPluginManifestLatestSchemaUrl,
+      schema_version: APIPluginManifestLatestVersion,
       name_for_human: `Add-in Skill + Agent for ${appName}`,
       description_for_human: "Get answer for user's question related to Microsoft 365 products",
       namespace: "AddInFunctions",

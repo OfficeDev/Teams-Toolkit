@@ -5,9 +5,9 @@ import Ajv04 from "ajv-draft-04";
 import addFormats from "ajv-formats";
 import Ajv2020 from "ajv/dist/2020";
 import fs from "fs-extra";
-import fetch from "../fetchHelper";
 import path from "path";
 import stripBom from "strip-bom";
+import fetch from "../fetchHelper";
 import * as DeclarativeAgentManifestV1D0 from "./copilot/declarative-agent/DeclarativeAgentManifestV1D0";
 import * as DeclarativeAgentManifestV1D2 from "./copilot/declarative-agent/DeclarativeAgentManifestV1D2";
 import * as DeclarativeAgentManifestV1D3 from "./copilot/declarative-agent/DeclarativeAgentManifestV1D3";
@@ -150,6 +150,18 @@ export type APIPluginManifest =
   | APIPluginManifestV2D3.APIPluginManifestV2D3
   | APIPluginManifestV2D4.APIPluginManifestV2D4;
 export type APIPluginManifestLatest = APIPluginManifestV2D4.APIPluginManifestV2D4;
+
+/**
+ * The `schema_version` value of the latest API plugin manifest schema.
+ * Typed against {@link APIPluginManifestLatest} so bumping the latest type forces this
+ * constant to be updated in lock-step.
+ */
+export const APIPluginManifestLatestVersion: APIPluginManifestLatest["schema_version"] = "v2.4";
+
+/**
+ * The canonical `$schema` URL for the latest API plugin manifest schema.
+ */
+export const APIPluginManifestLatestSchemaUrl = `https://developer.microsoft.com/json-schemas/copilot/plugin/${APIPluginManifestLatestVersion}/schema.json`;
 
 export type AppManifest = TeamsManifest | DeclarativeAgentManifest | APIPluginManifest;
 
