@@ -125,7 +125,7 @@ export class FeatureFlags {
   };
   static readonly MCPForDADT = {
     name: FeatureFlagName.MCPForDADT,
-    defaultValue: "false",
+    defaultValue: "true",
   };
   static readonly MCPForDADCR = {
     name: FeatureFlagName.MCPForDADCR,
@@ -165,7 +165,7 @@ export class FeatureFlagManager {
   }
   listEnabled(): string[] {
     return this.list()
-      .filter((f) => isFeatureFlagEnabled(f.name))
+      .filter((f) => this.getBooleanValue(f))
       .map((f) => f.name);
   }
 }
