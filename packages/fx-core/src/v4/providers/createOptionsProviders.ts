@@ -289,7 +289,7 @@ export function createMcpToolsProvider(
 export function createDefaultCreateOptionsProviders(
   fetchTools: (serverUrl: string) => Promise<MCPFetchResult>,
   listLocalMcpServers: () => Promise<ODRServer[]>,
-  searchApiSpec: (query: string) => Promise<SearchOpenAPISpecResult[]> = async () => []
+  searchApiSpec: (query: string) => Promise<SearchOpenAPISpecResult[]> = () => Promise.resolve([])
 ): Record<string, OptionsProvider> {
   const localServers = createLocalServerCache(listLocalMcpServers);
   return {
