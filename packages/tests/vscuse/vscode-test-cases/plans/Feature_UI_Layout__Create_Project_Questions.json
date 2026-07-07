@@ -50,6 +50,7 @@
       "step_14935a07",
       "step_5aeeea30",
       "step_b32f2d00",
+      "step_b32f2d00",
       "step_08923874",
       "step_11c74efe",
       "step_5b0cb3e8",
@@ -663,6 +664,29 @@
       "tags": [],
       "screenshot": "step_08923874",
       "created_at": "2026-01-06T09:55:51.212081",
+      "plan_id": "plan_47e4bf4e"
+    },
+    {
+      "step_id": "step_b32f2d00",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 227,
+        "y": 19
+      },
+      "description": "Click the \"Back (Ctrl+Alt+\u2190)\" button",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
+      "created_at": "2026-01-06T09:55:51.204350",
       "plan_id": "plan_47e4bf4e"
     },
     {
