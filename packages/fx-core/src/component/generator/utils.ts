@@ -56,6 +56,13 @@ async function getTemplateVSCUrl(
     );
   }
 
+  // Honor the build-time template distribution flag: it is `true` on dev / PR /
+  // prerelease builds and only `false` for a stable production release, so the
+  // bundled in-tree template zips are used unless this is a real release.
+  if (templateConfig.useLocalTemplate) {
+    return;
+  }
+
   const version: string = packageJson.version;
   if (version.includes("alpha")) {
     // daily build version
