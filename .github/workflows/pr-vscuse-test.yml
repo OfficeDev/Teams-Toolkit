@@ -672,6 +672,43 @@ jobs:
               }
             };
 
+            // Count per-plan (matrix) job outcomes on the UI test run. Each selected
+            // plan renders as a "<caller_job> / Case-<plan>" job (see ui-test-vscuse-common.yml
+            // job `main`, name "Case-${{ matrix.test_plan }}"). Retries re-run failed jobs as
+            // new run attempts, so list with filter=all and keep the latest attempt per plan
+            // to reflect each plan's final pass/fail status.
+            const extractTestCounts = async (uiUrl) => {
+              const idMatch = (uiUrl || '').match(/\/runs\/(\d+)/);
+              if (!idMatch) return null;
+              try {
+                const uiJobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun, {
+                  owner, repo, run_id: parseInt(idMatch[1]), filter: 'all', per_page: 100,
+                });
+                // Keep the newest attempt for each distinct Case-<plan> job.
+                const latestByName = new Map();
+                for (const j of uiJobs) {
+                  const name = (j.name || '').trim();
+                  if (!/(?:^|\/\s*)Case-[^/]+$/.test(name)) continue;
+                  const prev = latestByName.get(name);
+                  if (!prev || (j.run_attempt || 0) >= (prev.run_attempt || 0)) {
+                    latestByName.set(name, j);
+                  }
+                }
+                let passed = 0, failed = 0;
+                for (const j of latestByName.values()) {
+                  if (j.conclusion === 'success') passed++;
+                  else if (j.conclusion === 'skipped' || j.conclusion == null) continue;
+                  else failed++;
+                }
+                const total = passed + failed;
+                console.log(`Test-plan results: ${passed} passed, ${failed} failed (of ${total} plans).`);
+                return { passed, failed, total };
+              } catch (err) {
+                console.log(`Failed to compute test-plan counts: ${err.message}`);
+                return null;
+              }
+            };
+
             while (Date.now() - start < EIGHT_HOURS) {
               const { data: run } = await github.rest.actions.getWorkflowRun({ owner, repo, run_id: runId });
               console.log(`Smoke pipeline: ${run.status} / ${run.conclusion}`);
@@ -681,6 +718,10 @@ jobs:
                 const uiUrl = await extractUiTestUrl();
                 core.setOutput('ui_test_url', uiUrl);
                 core.setOutput('report_url',  await extractReportUrl(uiUrl));
+                const counts = await extractTestCounts(uiUrl);
+                core.setOutput('passed_count', counts ? String(counts.passed) : '');
+                core.setOutput('failed_count', counts ? String(counts.failed) : '');
+                core.setOutput('total_count',  counts ? String(counts.total)  : '');
                 return;
               }
               await new Promise(r => setTimeout(r, 60000));
@@ -689,6 +730,10 @@ jobs:
             const uiUrl = await extractUiTestUrl();
             core.setOutput('ui_test_url', uiUrl);
             core.setOutput('report_url',  await extractReportUrl(uiUrl));
+            const counts = await extractTestCounts(uiUrl);
+            core.setOutput('passed_count', counts ? String(counts.passed) : '');
+            core.setOutput('failed_count', counts ? String(counts.failed) : '');
+            core.setOutput('total_count',  counts ? String(counts.total)  : '');
             console.log('Smoke pipeline timed out after 8 hours — reporting as timed_out (workflow stays green; this run is informational only).');
 
       # ── 8. Resolve PR comment with final result ────────────────────────
@@ -703,6 +748,9 @@ jobs:
           SMOKE_URL:   ${{ steps.wait-smoke.outputs.run_url }}
           UI_TEST_URL: ${{ steps.wait-smoke.outputs.ui_test_url }}
           REPORT_URL:  ${{ steps.wait-smoke.outputs.report_url }}
+          PASSED_COUNT: ${{ steps.wait-smoke.outputs.passed_count }}
+          FAILED_COUNT: ${{ steps.wait-smoke.outputs.failed_count }}
+          TOTAL_COUNT:  ${{ steps.wait-smoke.outputs.total_count }}
           PR_NUMBER:   ${{ steps.pr-context.outputs.pr_number }}
           HEAD_REF:    ${{ steps.pr-context.outputs.head_ref }}
           BASE_REF:    ${{ steps.pr-context.outputs.base_ref }}
@@ -721,9 +769,20 @@ jobs:
             const baseRef    = process.env.BASE_REF;
             const planList   = plans.map(p => `- \`${p}\``).join('\n');
 
+            const passedCount = process.env.PASSED_COUNT || '';
+            const failedCount = process.env.FAILED_COUNT || '';
+            const totalCount  = process.env.TOTAL_COUNT  || '';
+            const hasCounts   = passedCount !== '' && failedCount !== '' && Number(totalCount) > 0;
+            const resultsLine = hasCounts
+              ? `**Results:** ✅ ${passedCount} passed · ❌ ${failedCount} failed (of ${totalCount} plans)`
+              : '';
+
             const succeeded  = conclusion === 'success';
             const icon       = succeeded ? '✅' : '❌';
             const statusText = succeeded ? 'All tests passed' : `Tests ${conclusion}`;
+            const stepThreeText = hasCounts
+              ? `${icon} ${statusText} (${passedCount}/${totalCount} passed)`
+              : `${icon} ${statusText}`;
 
             const body = [
               `## ${icon} VscUse Test Plan — ${statusText}`,
@@ -731,6 +790,8 @@ jobs:
               `**Why these tests:** ${reason}`,
               '',
               `**Branch diff:** \`${headRef}\` → \`${baseRef}\``,
+              '',
+              resultsLine,
               '',
               '**Plans run:**',
               planList,
@@ -740,7 +801,7 @@ jobs:
               '|------|--------|',
               '| 1️⃣ Build VSIX (CD) | ✅ Done |',
               '| 2️⃣ Build Docker image | ✅ Done |',
-              `| 3️⃣ Run UI tests | ${icon} ${statusText} |`,
+              `| 3️⃣ Run UI tests | ${stepThreeText} |`,
               '',
               uiTestUrl ? `> 🎯 [Actual UI test run](${uiTestUrl})` : '',
               smokeUrl  ? `> 🔗 [Full pipeline results](${smokeUrl})`  : '',
