@@ -250,7 +250,6 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { mcpServerType: {}, mcpServerUrl: {} } },
       {},
-      ["common"],
       makePort({ ui })
     );
     assert.isTrue(res.isOk());
@@ -283,7 +282,6 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { authType: {} } },
       {},
-      ["common"],
       makePort({ ui, exprPort: new ExprPort({}) })
     );
     assert.isTrue(res.isOk());
@@ -303,7 +301,6 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { x: {} } },
       {},
-      ["common"],
       makePort({ ui: new ScriptedUI({}) })
     );
     assert.isTrue(res.isErr());
@@ -327,7 +324,6 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { mcpServerType: {} } },
       {},
-      ["common"],
       makePort({ ui, providers: { "mcp.serverTypes": provider } })
     );
     assert.strictEqual(res._unsafeUnwrap().mcpServerType, "remote");
@@ -344,7 +340,6 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { mcpServerType: {} } },
       {},
-      ["common"],
       makePort({ ui, providers: { "mcp.serverTypes": provider } })
     );
     assert.strictEqual(provider.fetchCount, 1);
@@ -372,7 +367,6 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { apiSpecLocation: {}, apiOperation: {} } },
       {},
-      ["common"],
       makePort({ ui, providers: { "openapi.operations": provider } })
     );
     assert.isTrue(res.isOk());
@@ -398,7 +392,6 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { mcpServerType: {} } },
       {},
-      ["common"],
       makePort({ ui: new ScriptedUI({}), providers: { "mcp.serverTypes": provider } })
     );
     assert.strictEqual(res._unsafeUnwrap()["derived.mcp.serverTypes.apiAuthData"], "bearer");
@@ -422,7 +415,6 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { q1: {}, q2: {} } },
       {},
-      ["common"],
       makePort({ ui: new ScriptedUI({}), providers: { early, late } })
     );
     assert.isTrue(res.isErr());
@@ -441,7 +433,6 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { a: {}, b: {} } },
       {},
-      ["common"],
       makePort({ ui: new ScriptedUI({}), providers: { "mcp.serverTypes": provider } })
     );
     assert.isTrue(res.isOk());
@@ -456,7 +447,6 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { mcpServerUrl: {} } },
       {},
-      ["common"],
       makePort({ ui, validators: { uri: uriValidator } })
     );
     assert.isFunction(ui.lastValidations.mcpServerUrl);
@@ -477,7 +467,6 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { mcpServerUrl: {} } },
       {},
-      ["common"],
       makePort({ ui })
     );
 
@@ -501,7 +490,6 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { apiSpecLocation: {} } },
       {},
-      ["common"],
       makePort({ ui })
     );
 
@@ -525,7 +513,6 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { openApiSpec: {} } },
       {},
-      ["common"],
       makePort({
         ui: new SequencedPromptUI([{ kind: "value", value: "https://example.com/openapi.yaml" }]),
         providers: { "openapi.search": provider },
@@ -548,7 +535,6 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { apiOperations: {} } },
       {},
-      ["common"],
       makePort({
         ui: new SequencedPromptUI([{ kind: "multi", value: ["GET /repairs"] }]),
         providers: { "openapi.operations": provider },
@@ -571,7 +557,6 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { apiOperations: {} } },
       {},
-      ["common"],
       makePort({
         ui: new SequencedPromptUI([{ kind: "multi", value: ["GET /repairs"] }]),
         providers: { "openapi.operations": provider },
@@ -598,7 +583,6 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { mcpServerType: {} } },
       {},
-      ["common"],
       makePort({ ui: new ScriptedUI({}), providers: { "mcp.serverTypes": odrAbsent } })
     );
     assert.strictEqual(res._unsafeUnwrap().mcpServerType, "remote");
@@ -622,7 +606,6 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { mcpServerUrl: {} } },
       { mcpServerUrl: url },
-      ["common"],
       makePort({ ui: uiPre, validators: { uri: uriValidator } })
     );
     assert.isTrue(resPre.isOk());
@@ -634,7 +617,6 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { mcpServerUrl: {} } },
       {},
-      ["common"],
       makePort({ ui: uiAsk, validators: { uri: uriValidator } })
     );
     assert.isTrue(resAsk.isOk());
@@ -642,16 +624,24 @@ describe("collectInputs (v4)", () => {
     assert.strictEqual(resAsk._unsafeUnwrap().mcpServerUrl, url);
   });
 
-  it("INPUT-13: a non-singleton languages list asks language after Q2; ['common'] auto-skips", async () => {
+  it("INPUT-13: caller-provided language question behaves like any other singleSelect", async () => {
     const questions: QuestionSpec[] = [
       { name: "first", type: "singleSelect", staticOptions: [{ id: "a" }, { id: "b" }] },
+      {
+        name: "language",
+        type: "singleSelect",
+        staticOptions: [
+          { id: "typescript", label: "TypeScript" },
+          { id: "javascript", label: "JavaScript" },
+          { id: "python", label: "Python" },
+        ],
+      },
     ];
     const uiMulti = new ScriptedUI({ first: "a", language: "typescript" });
     const resMulti = await collectInputs(
       questions,
-      { properties: { first: {} } },
+      { properties: { first: {}, language: {} } },
       {},
-      ["typescript", "javascript", "python"],
       makePort({ ui: uiMulti })
     );
     assert.strictEqual(resMulti._unsafeUnwrap().first, "a");
@@ -664,20 +654,26 @@ describe("collectInputs (v4)", () => {
       { id: "javascript", label: "JavaScript" },
       { id: "python", label: "Python" },
     ]);
-    // ['common'] → the language axis is auto-skipped
+
+    // A caller whose descriptor languages are ['common'] simply does not add a language question.
     const uiCommon = new ScriptedUI({});
-    const resCommon = await collectInputs([], {}, {}, ["common"], makePort({ ui: uiCommon }));
+    const resCommon = await collectInputs([], {}, {}, makePort({ ui: uiCommon }));
     assert.notInclude(uiCommon.asked, "language");
     assert.notProperty(resCommon._unsafeUnwrap(), "language");
   });
 
-  it("INPUT-13: a pre-filled language skips the language axis for a multi-language template", async () => {
+  it("INPUT-13: a pre-filled language skips the caller-provided language question", async () => {
     const ui = new ScriptedUI({});
     const res = await collectInputs(
-      [],
-      {},
+      [
+        {
+          name: "language",
+          type: "singleSelect",
+          staticOptions: [{ id: "typescript" }, { id: "javascript" }],
+        },
+      ],
+      { properties: { language: {} } },
       { language: "javascript" },
-      ["typescript", "javascript"],
       makePort({ ui })
     );
 
@@ -705,14 +701,12 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { mcpServerType: {}, authType: {} } },
       {},
-      ["common"],
       build(new FakeProvider({ options: [{ id: "remote" }] }))
     );
     const b = await collectInputs(
       questions,
       { properties: { mcpServerType: {}, authType: {} } },
       {},
-      ["common"],
       build(new FakeProvider({ options: [{ id: "remote" }] }))
     );
     assert.deepStrictEqual(a._unsafeUnwrap(), b._unsafeUnwrap());
@@ -731,7 +725,6 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { selectedLocalServers: {} } },
       {},
-      ["common"],
       makePort({ ui })
     );
     assert.isTrue(res.isOk());
@@ -756,7 +749,6 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { first: {}, second: {} } },
       {},
-      ["common"],
       makePort({ ui })
     );
     assert.isTrue(res.isOk());
@@ -774,9 +766,14 @@ describe("collectInputs (v4)", () => {
     );
   });
 
-  it("INPUT-17: a back from the language axis crosses into the previous Q2 question", async () => {
+  it("INPUT-17: a back from a caller-provided language question crosses into the previous question", async () => {
     const questions: QuestionSpec[] = [
       { name: "first", type: "singleSelect", staticOptions: [{ id: "a" }, { id: "b" }] },
+      {
+        name: "language",
+        type: "singleSelect",
+        staticOptions: [{ id: "typescript" }, { id: "javascript" }],
+      },
     ];
     // first→a, language→back (re-asks Q2), first→b, language→javascript
     const ui = new SequencedPromptUI([
@@ -787,9 +784,8 @@ describe("collectInputs (v4)", () => {
     ]);
     const res = await collectInputs(
       questions,
-      { properties: { first: {} } },
+      { properties: { first: {}, language: {} } },
       {},
-      ["typescript", "javascript"],
       makePort({ ui })
     );
     assert.isTrue(res.isOk());
@@ -810,13 +806,7 @@ describe("collectInputs (v4)", () => {
       { name: "first", type: "singleSelect", staticOptions: [{ id: "a" }, { id: "b" }] },
     ];
     const ui = new SequencedPromptUI([{ kind: "back" }]);
-    const res = await collectInputs(
-      questions,
-      { properties: { first: {} } },
-      {},
-      ["common"],
-      makePort({ ui })
-    );
+    const res = await collectInputs(questions, { properties: { first: {} } }, {}, makePort({ ui }));
     assert.isTrue(res.isErr());
     const e = res._unsafeUnwrapErr();
     assert.instanceOf(e, UserError);
@@ -845,7 +835,6 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { first: {}, servers: {} } },
       {},
-      ["common"],
       makePort({ ui })
     );
     assert.isTrue(res.isOk());

@@ -28,6 +28,12 @@ import { hooks } from "@feathersjs/hooks";
 import { ReadStream } from "fs-extra";
 import { getResourceServiceEndpoint, ResourceServiceType } from "../../../../../common/constants";
 
+type JsonObject = Record<string, unknown>;
+
+function isJsonObject(value: unknown): value is JsonObject {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 export class AzureZipDeployImpl extends AzureDeployImpl {
   pattern =
     /\/subscriptions\/([^\/]*)\/resourceGroups\/([^\/]*)\/providers\/Microsoft.Web\/sites\/([^\/]*)/i;
@@ -257,8 +263,22 @@ export class AzureZipDeployImpl extends AzureDeployImpl {
         headers: config.headers,
       }
     );
-    const responseData = await response.json();
-    const hostNames: string[] = responseData.properties.enabledHostNames;
+    const responseData = await AzureZipDeployImpl.readResponseData(response);
+    if (!response.ok) {
+      throw new Error(
+        `Failed to get Azure App Service host names. Status code: ${
+          response.status
+        }. Response: ${AzureZipDeployImpl.formatResponseData(responseData)}`
+      );
+    }
+    const hostNames = AzureZipDeployImpl.getEnabledHostNames(responseData);
+    if (!hostNames) {
+      throw new Error(
+        `Failed to get Azure App Service host names. Response does not contain properties.enabledHostNames. Response: ${AzureZipDeployImpl.formatResponseData(
+          responseData
+        )}`
+      );
+    }
     const scmHostName = hostNames.find((host) => host.includes("scm"));
     if (!scmHostName) {
       throw new Error(`Cannot find SCM host name. Available host names: ${hostNames.join(", ")}`);
@@ -266,7 +286,38 @@ export class AzureZipDeployImpl extends AzureDeployImpl {
     return `https://${scmHostName}/api/zipdeploy?isAsync=true`;
   }
 
+  private static async readResponseData(response: Response): Promise<unknown> {
+    const responseText = await response.text();
+    if (!responseText) {
+      return "";
+    }
+    try {
+      return JSON.parse(responseText);
+    } catch {
+      return responseText;
+    }
+  }
+
+  private static getEnabledHostNames(responseData: unknown): string[] | undefined {
+    if (!isJsonObject(responseData) || !isJsonObject(responseData.properties)) {
+      return undefined;
+    }
+    const hostNames = responseData.properties.enabledHostNames;
+    if (!Array.isArray(hostNames) || !hostNames.every((hostName) => typeof hostName === "string")) {
+      return undefined;
+    }
+    return hostNames;
+  }
+
+  private static formatResponseData(responseData: unknown): string {
+    const responseText =
+      typeof responseData === "string" ? responseData : JSON.stringify(responseData);
+    return responseText.length > 1000 ? `${responseText.substring(0, 1000)}...` : responseText;
+  }
+
   updateProgressbar(): void {
-    this.progressBar?.next(ProgressMessages.deployToAzure(this.workingDirectory, this.serviceName));
+    void this.progressBar?.next(
+      ProgressMessages.deployToAzure(this.workingDirectory, this.serviceName)
+    );
   }
 }

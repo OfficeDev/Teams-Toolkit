@@ -9,6 +9,7 @@ import {
   SelectorPresentation,
 } from "../buildTarget/parseSelector";
 import {
+  BUILD_TARGET_UNKNOWN_TEMPLATE,
   BuildTarget,
   PromptResult,
   RouteQuestion,
@@ -29,6 +30,10 @@ import { readBooleanFeatureFlag } from "../../common/featureFlags";
 /** Live Q1 create-selector prompt face. See walk-create-selector spec. */
 
 const SOURCE = "Scaffold";
+
+function labelWithIcon(label: string, iconPath: string | undefined): string {
+  return iconPath === undefined ? label : `$(${iconPath}) ${label}`;
+}
 
 /** Create-selector options; all are defaulted. */
 export interface CreateSelectorDeps {
@@ -102,7 +107,7 @@ function buildPort(
       step,
       options: visible.map((option) => ({
         id: option.id,
-        label: option.label,
+        label: labelWithIcon(option.label, option.iconPath),
         detail: option.detail,
         groupName: option.groupName,
       })),
@@ -129,9 +134,6 @@ function buildPort(
         return v4Registry(templateId);
       }
       return openDeclarativePackage(floorBytes, { kind: "create", templateId }).isOk();
-    },
-    v3Registry(): boolean {
-      return false;
     },
     v3CoreMethodRegistry(): boolean {
       return false;
@@ -180,7 +182,7 @@ export async function runCreateSelector(
   }
 }
 
-/** Resolve a pinned template id without re-walking Q1; unknown routes default to v3. */
+/** Resolve a pinned template id without re-walking Q1. */
 export function resolveCreateTargetByTemplateId(
   floorBytes: Buffer,
   templateId: string
@@ -190,5 +192,14 @@ export function resolveCreateTargetByTemplateId(
     return err(spec.error);
   }
   const route = spec.value.routes.find((r) => r.templateId === templateId);
-  return ok({ templateId, engine: route?.engine ?? "v3", answers: {} });
+  if (route === undefined) {
+    return err(
+      new UserError({
+        source: SOURCE,
+        name: BUILD_TARGET_UNKNOWN_TEMPLATE,
+        message: `Template '${templateId}' is not present in the create selector.`,
+      })
+    );
+  }
+  return ok({ templateId, engine: route.engine, answers: {} });
 }

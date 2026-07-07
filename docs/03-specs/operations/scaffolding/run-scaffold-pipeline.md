@@ -74,6 +74,7 @@ A `Result<ScaffoldOutcome, FxError>`:
 | Field (ok) | Meaning |
 |------------|---------|
 | `written` | the render-phase paths actually written (absent-in-target) |
+| `filtered` | the render-phase paths intentionally omitted by `pipeline.render.filters` |
 | `skipped` | the render-phase paths skipped because they already existed (each carries the "exists, not overwritten" warning) |
 | `stepsRun` | the ordered list of steps whose `when` evaluated true and that applied |
 | `stepsSkipped` | the steps whose `when` evaluated false |
@@ -116,6 +117,8 @@ On `err`:
 | AC-20 | L1 | a `.tpl` body contains `{{token}}` with **no** producer in `renderVars` ([`validate-template-package`](validate-template-package.md) AC-11 placeholder closure should have caught it) | run render phase | `SystemError` — reaching the render phase with an unproducible body token is a build-gate inconsistency, our bug, **never** a silent empty substitution |
 | AC-21 | L1 | a **non-manifest** step (`mcp-auth/inject-yml-action`) whose `apply` reads the render-phase `m365agents.yml` via `ctx.read`, appends the `oauth/register` action, and rewrites it via `ctx.write` | run after the render phase | the rewrite is observed in the final file set (read-modify-write); a render-phase file is mutated **only** by a post-render step (INV-5), and this `ctx.read` + `ctx.write` fallback is for **non-manifest** files only — manifest mutation still routes through `manifestWrapper` (INV-3) |
 | AC-22 | L1 | a step `with` value that is **exactly** a single token `{{X}}` whose render-var `X` is a `string[]` (a `multiSelect` selection carried through `{from}`, [`build-render-context`](build-render-context.md) RCTX-11) | run | the value resolves **structurally** to that `string[]` — the step receives the list **verbatim, order-preserving**, not flattened by the scalar Mustache surface; any other `with` value (a scalar token, or a token embedded in surrounding text) still renders to a `string` via `renderValue` (AC-09 unchanged), and an absent token remains the AC-20 / AC-11 producer error |
+| AC-23 | L1 | `pipeline.render.filters[]` has `when = "!featureFlag('TEAMSFX_SANDBOXED_TEAM')"` and excludes sandbox output paths | run with the flag off | matching render-phase paths are listed in `filtered`, not `written` or `skipped`, and are never written |
+| AC-24 | L1 | a filtered `.tpl` body contains an otherwise missing token | run with the filter active | the file is omitted before body render, so the missing token does not fail the scaffold; inactive filters preserve AC-20 |
 
 ## Flow
 
@@ -124,9 +127,12 @@ flowchart TD
   start([run-scaffold-pipeline]) --> pl{pipeline ∈ pipelineRegistry?}
   pl -->|no| errPl([SystemError: unknown pipeline])
   pl -->|yes| render[render phase: for each content file]
-  render --> exists{target path exists?}
+  render --> filter{active render filter matches path?}
+  filter -->|yes| omitted[record in filtered, do not render body/write]
+  filter -->|no| exists{target path exists?}
   exists -->|yes| skip[skip + warning, record in skipped]
   exists -->|no| write[render .tpl / copy others, record in written]
+  omitted --> nextFile{more files?}
   skip --> nextFile{more files?}
   write --> nextFile
   nextFile -->|yes| render
@@ -174,9 +180,18 @@ This operation does **not**:
   [`scaffolding.backlog.md`](../../../02-architecture/scaffolding.backlog.md) §1).
   It executes only the create-needed steps and binds the domain-typed-naming +
   manifest-wrapper principle so those steps land already-shaped for that library.
-- Register new steps, pipelines, action templates, or options providers. The
-  three whitelists are engine-owned and grow only via an fx-core PR + T2 test
-  (decision 2); this operation only **dispatches** within them.
+- Register new steps, pipelines, action templates, options providers, or
+  validators. These whitelists/registries are engine-owned extension points and
+  grow only via an fx-core PR + T2 test (ADR-0016 / ADR-0017); this operation
+  only **dispatches** within the pipeline and step registries it is given.
+- Encode capability-specific render omissions. A template package may declare
+  `pipeline.render.filters` with the shared expression DSL; this executor only
+  evaluates the generic filter and omits matching output paths before body
+  render/write.
+- Encode capability-specific side effects. MCP/OpenAPI/Graph/Office behavior
+  must be a render template and/or a named pipeline step selected by
+  `pipeline.json`; this executor never adds hidden branches for a template id,
+  auth type, file path, or capability.
 
 ## Invariants
 
@@ -187,6 +202,11 @@ This operation does **not**:
   resolve within the engine whitelist; an unknown name reaching execution is a
   `SystemError`, because the reverse `minEngineVersion` gate (ADR-0015) already
   rejected a too-old engine with a user-fixable upgrade error.
+- **INV-2a — Business logic is enumerable.** The observable behavior of a
+  scaffold package is decomposable into template files, provider/validator
+  outputs that produced the answers, and `pipeline.steps`. The pipeline executor
+  contains no capability-specific branch that a template author or reviewer must
+  discover by reading TypeScript outside the registered step implementation.
 - **INV-3 — Manifest-wrapper routing.** A step that mutates a manifest file
   applies through the `packages/manifest` wrapper; direct
   `JSON.parse → mutate → stringify` is prohibited in step implementations

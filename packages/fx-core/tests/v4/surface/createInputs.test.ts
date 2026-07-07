@@ -84,10 +84,16 @@ const RAG_CUSTOM_API: DeclarativeLocator = {
 };
 const OPENAPI_SPEC = path.resolve(__dirname, "../scenarios/fixtures/repairs-openapi.yaml");
 
+let cachedFloor: Buffer | undefined;
+
 function buildFloor(): Buffer {
+  if (cachedFloor !== undefined) {
+    return Buffer.from(cachedFloor);
+  }
   const zip = new AdmZip();
   zip.addLocalFolder(TEMPLATES_V4_DIR, "v4");
-  return zip.toBuffer();
+  cachedFloor = zip.toBuffer();
+  return Buffer.from(cachedFloor);
 }
 
 function buildLanguageFloor(languages = ["typescript", "csharp"]): Buffer {
@@ -523,6 +529,14 @@ describe("runCreateInputs (collect-create-inputs)", () => {
     assert.deepEqual(ui.selectNames, ["mcpServerType", "authType"]);
     assert.deepEqual(ui.dynamicOptionNames, ["mcpServerType"]);
     assert.deepEqual(ui.textNames, ["mcpServerUrl"]);
+    assert.equal(ui.lastInputConfig?.name, "mcpServerUrl");
+    assert.isFunction(ui.lastInputConfig?.validation);
+    const validation = ui.lastInputConfig?.validation;
+    if (validation === undefined) {
+      assert.fail("expected MCP server URL prompt validation");
+    }
+    assert.equal(await validation("not a uri"), "must be a valid URI");
+    assert.isUndefined(await validation("https://api.example.com/mcp"));
   });
 
   it("CCI-17: openapi.operations provider lists operations from the selected OpenAPI document", async () => {
@@ -869,6 +883,37 @@ describe("runCreateInputs (collect-create-inputs)", () => {
     assert.deepEqual(ui.promptNames, ["llmService", "openAIKey", "language", "folder", "app-name"]);
     assert.isFunction(ui.lastInputConfig?.validation);
     assert.isString(await ui.lastInputConfig?.validation?.("!"));
+  });
+
+  it("CCI-24: threads create floor app-name validation to the text prompt", async () => {
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "v4-app-name-"));
+    try {
+      fs.ensureDirSync(path.join(tempRoot, "TakenName"));
+      const ui = new ScriptedUserInteraction({
+        select: { llmService: "llm-service-openai", language: "typescript" },
+        text: { openAIKey: "fake-openai-key", "app-name": "MyAgent" },
+        folder: { folder: tempRoot },
+      });
+
+      const res = await runCreateInputs(buildFloor(), BASIC_CUSTOM_ENGINE_AGENT, {}, asUI(ui), {
+        flagReader: () => false,
+        inputs: { platform: Platform.VSCode },
+        surface: "vscode",
+      });
+
+      assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
+      assert.equal(ui.lastInputConfig?.name, "app-name");
+      assert.isFunction(ui.lastInputConfig?.validation);
+      const validation = ui.lastInputConfig?.validation;
+      if (validation === undefined) {
+        assert.fail("expected app-name prompt validation");
+      }
+      assert.include(await validation("a".repeat(31)), "30 characters");
+      assert.include(await validation("TakenName"), "Path exists");
+      assert.isUndefined(await validation("AvailableName"));
+    } finally {
+      removeSync(tempRoot);
+    }
   });
 
   it("uses create floor defaults without prompts in non-interactive mode", async () => {
@@ -1612,6 +1657,80 @@ describe("createUiPromptUI (collect-create-inputs)", () => {
     assert.equal(options[1].label, "b");
   });
 
+  it("renders authored option icons through the existing VS Code codicon label syntax", async () => {
+    const ui = new ScriptedUserInteraction({ select: { picker: "a" } });
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask({ name: "picker", type: "singleSelect", title: "Pick" }, [
+      { id: "a", label: "Agent", iconPath: "teamsfx-agent" },
+    ]);
+
+    assert.isTrue(res.isOk());
+    const options = (ui.lastSelectConfig?.options ?? []) as SurfaceOptionItem[];
+    assert.equal(options[0].label, "$(teamsfx-agent) Agent");
+  });
+
+  it("projects undefined singleSelect results to an empty value", async () => {
+    const ui = new ScriptedUserInteraction({ select: { picker: "a" } });
+    ui.selectOption = async (config: SingleSelectConfig) => {
+      ui.lastSelectConfig = config;
+      return ok({ type: "success" });
+    };
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask({ name: "picker", type: "singleSelect", title: "Pick" }, [
+      { id: "a" },
+    ]);
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.deepEqual(res.value, { kind: "value", value: "" });
+    }
+  });
+
+  it("projects object singleSelect results to their option id", async () => {
+    const ui = new ScriptedUserInteraction({ select: { picker: "a" } });
+    ui.selectOption = async (config: SingleSelectConfig) => {
+      ui.lastSelectConfig = config;
+      return ok({ type: "success", result: { id: "a", label: "A" } });
+    };
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask({ name: "picker", type: "singleSelect", title: "Pick" }, [
+      { id: "a", label: "A" },
+    ]);
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.deepEqual(res.value, { kind: "value", value: "a" });
+    }
+  });
+
+  it("rejects singleSelect questions when no options source is supplied", async () => {
+    const ui = new ScriptedUserInteraction({});
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask(
+      { name: "picker", type: "singleSelect", title: "Pick" },
+      undefined
+    );
+
+    assert.isTrue(res.isErr());
+    assert.equal(res._unsafeUnwrapErr().name, "UnsupportedQuestionKind");
+  });
+
+  it("rejects unsupported ask question kinds after other supported kinds are checked", async () => {
+    const ui = new ScriptedUserInteraction({});
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask({ name: "servers", type: "multiSelect", title: "Servers" }, [
+      { id: "alpha" },
+    ]);
+
+    assert.isTrue(res.isErr());
+    assert.equal(res._unsafeUnwrapErr().name, "UnsupportedQuestionKind");
+  });
+
   it("resolves keyPrefix localization before rendering authored v4 LLM questions", async () => {
     const ui = new ScriptedUserInteraction({ select: { llmService: "llm-service-openai" } });
     const prompt = createUiPromptUI(asUI(ui));
@@ -1841,6 +1960,43 @@ describe("createUiPromptUI (collect-create-inputs)", () => {
       assert.deepEqual(res.value, { kind: "value", value: ["alpha", "beta"] });
     }
     assert.deepEqual(ui.multiNames, ["servers"]);
+  });
+
+  it("projects undefined multiSelect results to an empty list", async () => {
+    const ui = new ScriptedUserInteraction({ multi: { servers: ["alpha"] } });
+    ui.selectOptions = async (config: MultiSelectConfig) => {
+      ui.lastMultiConfig = config;
+      return ok({ type: "success" });
+    };
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.askMulti({ name: "servers", type: "multiSelect", title: "Servers" }, [
+      { id: "alpha" },
+    ]);
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.deepEqual(res.value, { kind: "value", value: [] });
+    }
+  });
+
+  it("rejects askMulti when the question kind or options source is unsupported", async () => {
+    const ui = new ScriptedUserInteraction({});
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const wrongKind = await prompt.askMulti(
+      { name: "servers", type: "singleSelect", title: "Servers" },
+      [{ id: "alpha" }]
+    );
+    const missingOptions = await prompt.askMulti(
+      { name: "servers", type: "multiSelect", title: "Servers" },
+      undefined
+    );
+
+    assert.isTrue(wrongKind.isErr());
+    assert.equal(wrongKind._unsafeUnwrapErr().name, "UnsupportedQuestionKind");
+    assert.isTrue(missingOptions.isErr());
+    assert.equal(missingOptions._unsafeUnwrapErr().name, "UnsupportedQuestionKind");
   });
 
   it("CCI-10: ask projects a host back on a singleSelect to { kind: 'back' }", async () => {

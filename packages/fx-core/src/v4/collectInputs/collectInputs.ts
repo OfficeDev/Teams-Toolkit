@@ -3,23 +3,12 @@
 
 import { FxError, SystemError, UserError } from "@microsoft/teamsfx-api";
 import { Result, err, ok } from "neverthrow";
-import { EvalValue, ExpressionNode, NULL_VALUE, Scope } from "../expression/evaluateExpression";
+import { ConditionNode, EvalValue, NULL_VALUE, Scope } from "../expression/evaluateExpression";
 import { Answers } from "../model/dataModel";
 
 /** v4 input collection: native questions to answers. See collect-inputs spec and ADR-0016. */
 
 const SOURCE = "Scaffold";
-
-/** v4-local language labels; importing the v3 label map would break isolation. */
-const LANGUAGE_LABELS: Record<string, string> = {
-  javascript: "JavaScript",
-  typescript: "TypeScript",
-  csharp: "C#",
-  python: "Python",
-};
-
-/** An authored visibility / value guard — the same closed form the evaluator parses. */
-export type ConditionNode = ExpressionNode;
 
 /** Identity-only option; computed values flow through provider `derived.*`. */
 export interface OptionItem {
@@ -28,6 +17,7 @@ export interface OptionItem {
   description?: string;
   detail?: string;
   groupName?: string;
+  iconPath?: string;
   condition?: ConditionNode;
   keyPrefix?: string;
 }
@@ -138,10 +128,6 @@ export interface CollectInputsPort {
   evaluate(node: ConditionNode, scope: Scope): Result<EvalValue, FxError>;
 }
 
-export interface CollectInputsOptions {
-  appendLanguage?: boolean;
-}
-
 /** `SystemError` names for engine-side input collection breaks. */
 export const INPUT_BOTH_OPTION_SOURCES = "InputBothOptionSources";
 export const INPUT_UNKNOWN_PROVIDER = "InputUnknownProvider";
@@ -177,9 +163,7 @@ export async function collectInputs(
   questions: QuestionSpec[],
   optionsSchema: OptionsSchema,
   entryParams: Answers,
-  languages: string[],
-  port: CollectInputsPort,
-  options: CollectInputsOptions = {}
+  port: CollectInputsPort
 ): Promise<Result<Answers, FxError>> {
   // Pre-filled entry params must be visible to question conditions.
   let answers: Answers = { ...entryParams };
@@ -192,48 +176,8 @@ export async function collectInputs(
   // Back history snapshots only prompted steps; skipped and pre-filled steps are crossed over.
   const history: { pos: number; answers: Answers }[] = [];
 
-  // Authored questions are asked first; the language axis is appended after Q2 by default.
-  const appendLanguage = options.appendLanguage ?? true;
   let pos = 0;
-  while (pos < questions.length || (appendLanguage && pos === questions.length)) {
-    if (pos === questions.length) {
-      // A non-singleton language list prompts; `["common"]` has no axis.
-      if (languages.length > 1) {
-        if (typeof answers.language === "string") {
-          pos++;
-          continue;
-        }
-        const langQuestion: QuestionSpec = {
-          name: "language",
-          type: "singleSelect",
-          title: "Programming Language",
-        };
-        const asked = await port.ui.ask(
-          langQuestion,
-          languages.map((l) => ({ id: l, label: LANGUAGE_LABELS[l] ?? l })),
-          history.length + 1
-        );
-        if (asked.isErr()) {
-          return err(asked.error);
-        }
-        if (asked.value.kind === "back") {
-          const restore = history.pop();
-          if (restore === undefined) {
-            return err(walkCancelled());
-          }
-          answers = restore.answers;
-          pos = restore.pos;
-          continue;
-        }
-        history.push({ pos: 0, answers: { ...answers } });
-        answers.language = asked.value.value;
-      } else if (languages.length === 1 && languages[0] !== "common") {
-        answers.language = languages[0];
-      }
-      pos++;
-      continue;
-    }
-
+  while (pos < questions.length) {
     const q = questions[pos];
 
     // Keep the schema invariant guarded at runtime too.

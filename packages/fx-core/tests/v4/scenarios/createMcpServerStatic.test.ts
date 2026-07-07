@@ -54,10 +54,16 @@ const MCP_TOOLS_JSON = JSON.stringify({
 
 const templatePackage = loadV4Package("create", "da/mcp-server-static");
 
+let cachedFloor: Buffer | undefined;
+
 function buildFloor(): Buffer {
+  if (cachedFloor !== undefined) {
+    return Buffer.from(cachedFloor);
+  }
   const zip = new AdmZip();
   zip.addLocalFolder(TEMPLATES_V4_DIR, "v4");
-  return zip.toBuffer();
+  cachedFloor = zip.toBuffer();
+  return Buffer.from(cachedFloor);
 }
 
 function noAnswer(name: string): FxError {

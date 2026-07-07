@@ -43,8 +43,8 @@ class ExprPort implements ExpressionRuntimePort {
   functions(_name: string): WhitelistFn | undefined {
     return undefined;
   }
-  flags(_name: string): boolean {
-    return false;
+  flags(name: string): boolean {
+    return name === "TEST_ON";
   }
 }
 
@@ -222,6 +222,160 @@ describe("runScaffoldPipeline (v4)", () => {
     assert.notInclude(outcome.written, "ai-plugin.json");
     assert.isFalse(writes.has("ai-plugin.json")); // never overwritten
     assert.isTrue(writes.has("m365agents.yml"));
+  });
+
+  it("AC-23: active render filters omit matching paths before write/skip handling", async () => {
+    const pipeline: Pipeline = {
+      pipeline: "default",
+      render: {
+        filters: [
+          {
+            when: "!featureFlag('TEST_OFF')",
+            exclude: ["m365agents.sandbox.yml", "env/.env.sandbox"],
+          },
+        ],
+      },
+      steps: [],
+    };
+    const { port, writes } = makePort();
+    const res = await runScaffoldPipeline(
+      pipeline,
+      [
+        entry("m365agents.sandbox.yml.tpl", "sandbox"),
+        entry("env/.env.sandbox", "sandbox-env"),
+        entry("m365agents.yml.tpl", "main"),
+      ],
+      {},
+      target(["env/.env.sandbox"]),
+      port
+    );
+
+    assert.isTrue(res.isOk());
+    const outcome = res._unsafeUnwrap();
+    assert.deepStrictEqual(outcome.filtered, ["m365agents.sandbox.yml", "env/.env.sandbox"]);
+    assert.deepStrictEqual(outcome.written, ["m365agents.yml"]);
+    assert.deepStrictEqual(outcome.skipped, []);
+    assert.isFalse(writes.has("m365agents.sandbox.yml"));
+    assert.isFalse(writes.has("env/.env.sandbox"));
+    assert.isTrue(writes.has("m365agents.yml"));
+  });
+
+  it("AC-24: active render filters omit tpl bodies before missing-token render failures", async () => {
+    const pipeline: Pipeline = {
+      pipeline: "default",
+      render: {
+        filters: [{ when: "featureFlag('TEST_ON')", exclude: ["filtered.txt"] }],
+      },
+      steps: [],
+    };
+    const { port } = makePort();
+    const res = await runScaffoldPipeline(
+      pipeline,
+      [entry("filtered.txt.tpl", "{{missingProducer}}"), entry("kept.txt.tpl", "ok")],
+      {},
+      target([]),
+      port
+    );
+
+    assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
+    assert.deepStrictEqual(res._unsafeUnwrap().filtered, ["filtered.txt"]);
+    assert.deepStrictEqual(res._unsafeUnwrap().written, ["kept.txt"]);
+  });
+
+  it("AC-23: inactive render filters leave matching files to normal write and skip handling", async () => {
+    const pipeline: Pipeline = {
+      pipeline: "default",
+      render: {
+        filters: [{ when: "featureFlag('TEST_OFF')", exclude: ["copy.txt", "skip.txt"] }],
+      },
+      steps: [],
+    };
+    const { port, writes } = makePort();
+    const res = await runScaffoldPipeline(
+      pipeline,
+      [entry("copy.txt", "copy"), entry("skip.txt", "skip")],
+      {},
+      target(["skip.txt"]),
+      port
+    );
+
+    assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
+    const outcome = res._unsafeUnwrap();
+    assert.deepStrictEqual(outcome.filtered, []);
+    assert.deepStrictEqual(outcome.written, ["copy.txt"]);
+    assert.deepStrictEqual(
+      outcome.skipped.map((s) => s.path),
+      ["skip.txt"]
+    );
+    assert.strictEqual(writes.get("copy.txt")?.toString(), "copy");
+    assert.isFalse(writes.has("skip.txt"));
+  });
+
+  it("AC-23: render filter predicate errors stop before writing matching files", async () => {
+    const pipeline: Pipeline = {
+      pipeline: "default",
+      render: {
+        filters: [{ when: "missingFlag == 'on'", exclude: ["copy.txt"] }],
+      },
+      steps: [],
+    };
+    const { port, writes } = makePort();
+    const res = await runScaffoldPipeline(
+      pipeline,
+      [entry("copy.txt", "copy")],
+      {},
+      target([]),
+      port
+    );
+
+    assert.isTrue(res.isErr());
+    assert.instanceOf(res._unsafeUnwrapErr(), SystemError);
+    assert.strictEqual(writes.size, 0);
+  });
+
+  it("AC-23: render filter predicate errors stop tpl files before body render", async () => {
+    const pipeline: Pipeline = {
+      pipeline: "default",
+      render: {
+        filters: [{ when: "missingFlag == 'on'", exclude: ["copy.txt"] }],
+      },
+      steps: [],
+    };
+    const { port, writes } = makePort();
+    const res = await runScaffoldPipeline(
+      pipeline,
+      [entry("copy.txt.tpl", "{{missingProducer}}")],
+      {},
+      target([]),
+      port
+    );
+
+    assert.isTrue(res.isErr());
+    assert.instanceOf(res._unsafeUnwrapErr(), SystemError);
+    assert.strictEqual(writes.size, 0);
+  });
+
+  it("AC-23: render filters match the final output path after path render and tpl stripping", async () => {
+    const pipeline: Pipeline = {
+      pipeline: "default",
+      render: {
+        filters: [{ exclude: ["sandbox/m365agents.yml"] }],
+      },
+      steps: [],
+    };
+    const { port, writes } = makePort();
+    const res = await runScaffoldPipeline(
+      pipeline,
+      [entry("{{folder}}/m365agents.yml.tpl", "{{missingProducer}}"), entry("kept.yml.tpl", "ok")],
+      { folder: "sandbox" },
+      target([]),
+      port
+    );
+
+    assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
+    assert.deepStrictEqual(res._unsafeUnwrap().filtered, ["sandbox/m365agents.yml"]);
+    assert.isFalse(writes.has("sandbox/m365agents.yml"));
+    assert.isTrue(writes.has("kept.yml"));
   });
 
   it("AC-06: declared-order steps apply in order, after the render phase completes", async () => {
