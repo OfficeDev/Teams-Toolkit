@@ -1,16 +1,16 @@
 name: PR VscUse Test Plan Comment Trigger
 
-# Triggered when a PR comment starts with `/atk-vsuse-test`.
+# Triggered when a PR comment starts with `/atk-vscuse-test`.
 #
 # This workflow:
 #   1. Verifies the commenter has write/maintain/admin permission (anti-abuse).
-#   2. Extracts the hint text after `/atk-vsuse-test`.
+#   2. Extracts the hint text after `/atk-vscuse-test`.
 #   3. Posts a hidden marker comment (<!-- atk-vsuse-test-hint -->) carrying the hint
 #      so the existing pr-vscuse-test.yml workflow can feed it to the AI plan selector.
 #   4. Dispatches pr-vscuse-test.yml via workflow_dispatch with the PR number, so it
 #      re-runs and reads the hint comment we just posted.
 #
-# Why workflow_dispatch instead of cycling the `atk-vsuse-test` label?
+# Why workflow_dispatch instead of cycling the `atk-vscuse-test` label?
 # GitHub's anti-recursion protection means actions performed with the default
 # GITHUB_TOKEN (such as remove/add label) do NOT trigger other workflows — so a
 # `pull_request: labeled` listener would silently never fire. workflow_dispatch
@@ -36,7 +36,7 @@ jobs:
     # Only run when the comment is on a PR and starts with the trigger keyword.
     if: >-
       github.event.issue.pull_request != null &&
-      startsWith(github.event.comment.body, '/atk-vsuse-test')
+      startsWith(github.event.comment.body, '/atk-vscuse-test')
     runs-on: ubuntu-latest
 
     steps:
@@ -48,14 +48,14 @@ jobs:
             const allowed = ['OWNER', 'MEMBER', 'COLLABORATOR'];
             const assoc   = context.payload.comment.author_association;
             if (!allowed.includes(assoc)) {
-              core.setFailed(`Commenter (${context.payload.comment.user.login}, association=${assoc}) is not authorized to trigger atk-vsuse-test.`);
+              core.setFailed(`Commenter (${context.payload.comment.user.login}, association=${assoc}) is not authorized to trigger atk-vscuse-test.`);
               return;
             }
 
             // Strip the trigger keyword and any leading whitespace/colon.
             const raw = context.payload.comment.body || '';
             const hint = raw
-              .replace(/^\/atk-vsuse-test\b[:\s]*/, '')
+              .replace(/^\/atk-vscuse-test\b[:\s]*/, '')
               .trim();
 
             core.setOutput('hint', hint);
@@ -95,7 +95,7 @@ jobs:
               hint,
               '```',
               '',
-              '_The next `atk-vsuse-test` run will pass this hint to the AI plan selector._',
+              '_The next `atk-vscuse-test` run will pass this hint to the AI plan selector._',
             ].join('\n');
             await github.rest.issues.createComment({
               owner:        context.repo.owner,
