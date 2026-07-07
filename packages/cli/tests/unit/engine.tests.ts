@@ -748,9 +748,9 @@ describe("CLI Engine", () => {
   });
 
   describe("ATK_CALLER env var", () => {
-    it("sets CallerSource telemetry property from ATK_CALLER", async () => {
+    it("sets CallerSource to a known caller from ATK_CALLER", async () => {
       const mockedEnvRestore = mockedEnv({
-        ATK_CALLER: "wiqd",
+        ATK_CALLER: "  WIQD  ",
       });
       const command: CLIFoundCommand = {
         name: "test",
@@ -792,9 +792,9 @@ describe("CLI Engine", () => {
       mockedEnvRestore();
     });
 
-    it("sanitizes ATK_CALLER to a lowercase slug capped at 40 chars", async () => {
+    it("maps an unknown ATK_CALLER to \"other\"", async () => {
       const mockedEnvRestore = mockedEnv({
-        ATK_CALLER: "  WIQD/CLI!! " + "x".repeat(40),
+        ATK_CALLER: "johnsmith",
       });
       const command: CLIFoundCommand = {
         name: "test",
@@ -810,14 +810,35 @@ describe("CLI Engine", () => {
       };
       const result = engine.parseArgs(ctx, rootCommand, []);
       assert.isTrue(result.isOk());
-      const value = ctx.telemetryProperties[TelemetryProperty.CallerSource];
-      assert.equal(value, ("wiqdcli" + "x".repeat(40)).slice(0, 40));
+      assert.equal(ctx.telemetryProperties[TelemetryProperty.CallerSource], "other");
       mockedEnvRestore();
     });
 
-    it("does not set CallerSource when ATK_CALLER has no safe characters", async () => {
+    it("maps a near-miss of a known caller to \"other\" (no partial matching)", async () => {
       const mockedEnvRestore = mockedEnv({
-        ATK_CALLER: "!!! @@@ ///",
+        ATK_CALLER: "wiqd-cli",
+      });
+      const command: CLIFoundCommand = {
+        name: "test",
+        fullName: "test",
+        description: "test command",
+      };
+      const ctx: CLIContext = {
+        command: command,
+        optionValues: {},
+        globalOptionValues: {},
+        argumentValues: [],
+        telemetryProperties: {},
+      };
+      const result = engine.parseArgs(ctx, rootCommand, []);
+      assert.isTrue(result.isOk());
+      assert.equal(ctx.telemetryProperties[TelemetryProperty.CallerSource], "other");
+      mockedEnvRestore();
+    });
+
+    it("does not set CallerSource when ATK_CALLER is blank", async () => {
+      const mockedEnvRestore = mockedEnv({
+        ATK_CALLER: "   ",
       });
       const command: CLIFoundCommand = {
         name: "test",
