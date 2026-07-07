@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 34,
+    "total_steps": 47,
     "created_at": "2026-02-02T09:12:09.611556",
     "name": "Basic Custom Engine Azure OpenAI js remote debug",
     "description": {
@@ -45,7 +45,20 @@
       "step_82b3df5a",
       "step_d9a66a39",
       "plan_r_1229_080428",
-      "plan_r_0930_063548",
+      "step_64456d0d",
+      "step_3fb94c2c",
+      "step_0f0c12ce",
+      "step_710f99f7",
+      "step_edc27950",
+      "step_5721b490",
+      "step_b2737c0c",
+      "step_ea74996b",
+      "step_82f6ba51",
+      "step_56f3a504",
+      "step_25ce8a2f",
+      "step_06f77d3f",
+      "step_d491dc74",
+      "step_6df62c65",
       "step_8c6b26a7",
       "step_6d3141f9",
       "step_5793c327",
@@ -728,6 +741,331 @@
       "screenshot": null,
       "created_at": "2026-06-12T00:52:29.512449",
       "plan_id": "plan_r_0928_073729"
+    },
+    {
+      "step_id": "step_64456d0d",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "f1"
+      },
+      "description": "Press the F1 key in Visual Studio Code to open the command palette.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:32832723b32c6c2b"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_64456d0d",
+      "created_at": "2026-06-05T07:17:55.236797",
+      "plan_id": "plan_r_0930_063548"
+    },
+    {
+      "step_id": "step_3fb94c2c",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Debug: Select and Start Debugging"
+      },
+      "description": "Type 'Debug: Select and Start Debugging' into the Visual Studio Code Command Palette input box at the top of the window.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:cce44463b32c6c2b"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_3fb94c2c",
+      "created_at": "2026-06-05T07:17:55.242212",
+      "plan_id": "plan_r_0930_063548"
+    },
+    {
+      "step_id": "step_0f0c12ce",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to select \"Debug: Select and Start Debugging\" from the command palette in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:e4822323b32c6c2b"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_0f0c12ce",
+      "created_at": "2026-06-05T07:17:55.254924",
+      "plan_id": "plan_r_0930_063548"
+    },
+    {
+      "step_id": "step_710f99f7",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Launch Remote (Chrome)"
+      },
+      "description": "Type #text:'Launch Remote (Chrome)' into the debug configuration dropdown at the top of the Visual Studio Code interface, within the Microsoft 365 Agents project workspace.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:c4c44423b32c6c2b"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_710f99f7",
+      "created_at": "2026-06-05T07:17:55.261012",
+      "plan_id": "plan_r_0930_063548"
+    },
+    {
+      "step_id": "step_edc27950",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to select \"Launch Remote (Chrome)\" from the debug configuration dropdown in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:c4832323b32c6c2b"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_edc27950",
+      "created_at": "2026-06-05T07:17:55.266797",
+      "plan_id": "plan_r_0930_063548"
+    },
+    {
+      "step_id": "step_5721b490",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 400,
+        "y": 410
+      },
+      "description": "Click the \"Password\" input field on the Microsoft login page to focus and enable password entry for the account test04@atktesting05.onmicrosoft.com.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:400:410:16:5:d85858d828585000",
+        "dhash:400:410:96:5:e7081258180124c5",
+        "dhash:400:410:0:10:1308f0d9d9e6e6e4"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition_wait_timeout:60",
+        "delay:30"
+      ],
+      "screenshot": "step_5721b490",
+      "created_at": "2026-06-05T07:17:55.274621",
+      "plan_id": "plan_r_0930_063548"
+    },
+    {
+      "step_id": "step_b2737c0c",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{secret:M365_ACCOUNT_PASSWORD}}"
+      },
+      "description": "Type  ${{secret:M365_ACCOUNT_PASSWORD}} into the password input field on the Microsoft sign-in page for user  ${{env:M365_ACCOUNT_NAME}}.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:1b08f0d9d1e6e6e4"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_b2737c0c",
+      "created_at": "2026-06-05T07:17:55.282581",
+      "plan_id": "plan_r_0930_063548"
+    },
+    {
+      "step_id": "step_ea74996b",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 627,
+        "y": 534
+      },
+      "description": "Click the \"Sign in\" button on the Microsoft login password entry page to submit credentials and proceed with account authentication.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:627:534:16:5:4ab2425cd55559d4",
+        "dhash:627:534:96:5:00004b6474530000",
+        "dhash:627:534:0:10:1308f0d9d9e6e6e4"
+      ],
+      "postconditions": [],
+      "tags": [
+        "delay:3"
+      ],
+      "screenshot": "step_ea74996b",
+      "created_at": "2026-06-05T07:17:55.287023",
+      "plan_id": "plan_r_0930_063548"
+    },
+    {
+      "step_id": "step_82f6ba51",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 623,
+        "y": 533
+      },
+      "description": "Click the \"Yes\" button on the Microsoft sign-in prompt to confirm staying signed in for account  ${{env:M365_ACCOUNT_NAME}}.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:623:533:16:5:9626a6deb9a00805",
+        "dhash:623:533:96:5:0008525959460000",
+        "dhash:623:533:0:10:1c0cf0d9d9e6e6e4"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_82f6ba51",
+      "created_at": "2026-06-05T07:17:55.296447",
+      "plan_id": "plan_r_0930_063548"
+    },
+    {
+      "step_id": "step_56f3a504",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion there's \"Add\" or \"Open\" blue button exist.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "step_retry_timeout: 180"
+      ],
+      "screenshot": null,
+      "created_at": "2026-06-05T07:17:55.304234",
+      "plan_id": "plan_r_0930_063548"
+    },
+    {
+      "step_id": "step_25ce8a2f",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 265,
+        "y": 214
+      },
+      "description": "Click the primary blue button (\"Add\" or \"Open\") within the app details in Microsoft Teams (web interface), located below the app name and publisher. The app may already be installed, in which case the button shows \"Open\".",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_25ce8a2f",
+      "created_at": "2026-06-05T07:17:55.311011",
+      "plan_id": "plan_r_0930_063548"
+    },
+    {
+      "step_id": "step_06f77d3f",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion there's \"Open\" blue button exist.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "step_retry_timeout: 180"
+      ],
+      "screenshot": null,
+      "created_at": "2026-06-05T07:17:55.318381",
+      "plan_id": "plan_r_0930_063548"
+    },
+    {
+      "step_id": "step_d491dc74",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 529,
+        "y": 506
+      },
+      "description": "Click the \"Open\" button in the pop-up dialog for the  app on the Microsoft Teams web interface.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:529:506:16:5:0000a25da1929292",
+        "dhash:529:506:96:5:000058a4c4580040",
+        "dhash:529:506:0:10:3669696969697979"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition_wait_timeout: 200"
+      ],
+      "screenshot": "step_d491dc74",
+      "created_at": "2026-06-05T07:17:55.320306",
+      "plan_id": "plan_r_0930_063548"
+    },
+    {
+      "step_id": "step_6df62c65",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion there's ${{var:app_name}}dev exist.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "step_retry_timeout: 60"
+      ],
+      "screenshot": null,
+      "created_at": "2026-06-05T07:17:55.334167",
+      "plan_id": "plan_r_0930_063548"
     }
   ]
 }
