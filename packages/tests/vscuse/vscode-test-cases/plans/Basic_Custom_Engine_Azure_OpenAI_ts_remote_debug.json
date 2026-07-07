@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 18,
+    "total_steps": 24,
     "created_at": "2025-11-14T05:50:41.381007",
     "name": "Basic Custom Engine Azure OpenAI ts Remote Debug",
     "description": {
@@ -43,10 +43,15 @@
       "step_06f77d3f",
       "step_d491dc74",
       "step_6df62c65",
-      "plan_r_1020_110153"
+      "step_8c6b26a7",
+      "step_6d3141f9",
+      "step_5793c327",
+      "step_5b2a3d32",
+      "step_d2127173",
+      "step_aef94205"
     ],
     "tags": [],
-    "updated_at": "2025-11-14T05:52:26.306047"
+    "updated_at": "2026-07-07T06:22:16.719423"
   },
   "steps": [
     {
@@ -493,6 +498,148 @@
       "screenshot": null,
       "created_at": "2026-06-05T07:17:55.334167",
       "plan_id": "plan_r_0930_063548"
+    },
+    {
+      "agent": "interaction",
+      "description": "Click the \"How can you help me?\" dialog box within the vscuse_app_X1Cladev interface on Microsoft Teams at coordinates (558, 535) to activate or interact with its content.",
+      "step_id": "step_8c6b26a7",
+      "content_refs": [],
+      "retry_count": 0,
+      "depends_on": [],
+      "postconditions": [],
+      "screenshot": "step_8c6b26a7",
+      "tool": "click",
+      "plan_id": "plan_r_1020_110153",
+      "parameters": {
+        "x": 558,
+        "y": 535,
+        "button": "left"
+      },
+      "timeout": 30,
+      "continue_on_error": "false",
+      "preconditions": [
+        "dhash:558:535:16:5:2840000000000000",
+        "dhash:558:535:96:5:894d179a20000000",
+        "dhash:558:535:0:10:10b0b08e8c8e81a1"
+      ],
+      "tags": [],
+      "created_at": "2025-10-20T11:06:21.798378"
+    },
+    {
+      "agent": "interaction",
+      "description": "Click the \"Send\" button in the Microsoft Teams chat interface to submit the message \"How can you help me?\".",
+      "step_id": "step_6d3141f9",
+      "content_refs": [],
+      "retry_count": 0,
+      "depends_on": [],
+      "postconditions": [],
+      "screenshot": "step_6d3141f9",
+      "tool": "click",
+      "plan_id": "plan_r_1020_110153",
+      "parameters": {
+        "x": 936,
+        "y": 718,
+        "button": "left"
+      },
+      "timeout": 30,
+      "continue_on_error": "false",
+      "preconditions": [
+        "dhash:936:718:16:5:c070d8e8e8d028d0",
+        "dhash:936:718:96:5:b791649f146d1c00",
+        "dhash:936:718:0:10:10b0b08e8c8c80a9"
+      ],
+      "tags": [],
+      "created_at": "2025-10-20T11:06:21.817013"
+    },
+    {
+      "agent": "interaction",
+      "description": "Click the \"Send a message\" text box in Microsoft Teams to enable typing input.",
+      "step_id": "step_5793c327",
+      "content_refs": [],
+      "retry_count": 0,
+      "depends_on": [],
+      "postconditions": [],
+      "screenshot": "step_5793c327",
+      "tool": "click",
+      "plan_id": "plan_r_1020_110153",
+      "parameters": {
+        "x": 924,
+        "y": 446,
+        "button": "left"
+      },
+      "timeout": 30,
+      "continue_on_error": "false",
+      "preconditions": [],
+      "tags": [
+        "delay: 10"
+      ],
+      "created_at": "2025-10-20T11:06:21.835728"
+    },
+    {
+      "agent": "interaction",
+      "description": "Press 'Home' key to move the cursor to the beginning of the message input field in the Microsoft Teams web application chat interface.",
+      "step_id": "step_5b2a3d32",
+      "content_refs": [],
+      "retry_count": 0,
+      "depends_on": [],
+      "postconditions": [],
+      "screenshot": "step_5b2a3d32",
+      "tool": "key_press",
+      "plan_id": "plan_r_1020_110153",
+      "parameters": {
+        "key": "home"
+      },
+      "timeout": 30,
+      "continue_on_error": "false",
+      "preconditions": [
+        "dhash:512:384:0:20:10b0b93e333232e1"
+      ],
+      "tags": [],
+      "created_at": "2025-10-20T11:06:21.855222"
+    },
+    {
+      "agent": "assertion",
+      "description": "@assertion there's response message form ai agent.",
+      "step_id": "step_d2127173",
+      "content_refs": [],
+      "retry_count": 0,
+      "depends_on": [],
+      "postconditions": [],
+      "screenshot": null,
+      "tool": "",
+      "plan_id": "plan_r_1020_110153",
+      "parameters": {},
+      "timeout": 30,
+      "continue_on_error": "false",
+      "preconditions": [],
+      "tags": [],
+      "created_at": "2025-10-20T11:08:12.560330"
+    },
+    {
+      "agent": "interaction",
+      "description": "Click the \"Close (X)\" button located in the top-right corner of the Microsoft Teams chat application to close the window.",
+      "step_id": "step_aef94205",
+      "content_refs": [],
+      "retry_count": 0,
+      "depends_on": [],
+      "postconditions": [],
+      "screenshot": "step_aef94205",
+      "tool": "click",
+      "plan_id": "plan_r_1020_110153",
+      "parameters": {
+        "x": 1001,
+        "y": 20,
+        "button": "left"
+      },
+      "timeout": 30,
+      "continue_on_error": "false",
+      "preconditions": [
+        "dhash:1001:20:16:5:3748cd2323cd4823",
+        "dhash:1001:20:96:5:c233333342007666",
+        "dhash:1001:20:0:10:10b0a0a1363f3ba1"
+      ],
+      "tags": [],
+      "created_at": "2025-10-20T15:14:53.955086"
     }
   ],
   "screenshots": {
