@@ -50,11 +50,16 @@ function localizePrefixedText(
   return localizeText(fallback);
 }
 
+function labelWithIcon(label: string, iconPath: string | undefined): string {
+  return iconPath === undefined ? label : `$(${iconPath}) ${label}`;
+}
+
 /** Map a v4 identity-only option to the surface option shape (label defaults to its id). */
 function toSurfaceOption(option: OptionItem): SurfaceOptionItem {
+  const label = localizePrefixedText(option.keyPrefix, "label", option.label) ?? option.id;
   return {
     id: option.id,
-    label: localizePrefixedText(option.keyPrefix, "label", option.label) ?? option.id,
+    label: labelWithIcon(label, option.iconPath),
     description: localizePrefixedText(option.keyPrefix, "description", option.description),
     detail: localizePrefixedText(option.keyPrefix, "detail", option.detail),
     groupName: localizePrefixedText(option.keyPrefix, "groupName", option.groupName),

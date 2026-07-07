@@ -39,15 +39,6 @@ const V4_TARGET: BuildTarget = {
   engine: "v4",
   answers: { projectType: "copilot-agent-type", daTemplate: "add-action", actionSource: "mcp" },
 };
-const V3_TARGET: BuildTarget = {
-  templateId: "default-bot",
-  engine: "v3",
-  answers: {
-    projectType: "teams-agent-and-app-type",
-    teamsApp: "other",
-    teamsOtherAppType: "default-bot",
-  },
-};
 const STATIC_MCP_TARGET: BuildTarget = {
   templateId: "da/mcp-server-static",
   engine: "v4",
@@ -198,9 +189,6 @@ const failCollectFloor = (
 ): Promise<Result<undefined, FxError>> => {
   throw new Error("collectCreateFloor must not run on this path");
 };
-const failPreFill = (_inputs: Inputs, _target: BuildTarget): void => {
-  throw new Error("applyV3PreFill must not run on this path");
-};
 const failRunInputs = (): Promise<Result<Answers, FxError>> => {
   throw new Error("runInputs must not run on this path");
 };
@@ -221,7 +209,6 @@ function deps(overrides: Partial<CreateFrontDoorDeps>): CreateFrontDoorDeps {
     createV3: failCreateV3,
     scaffoldV4: failScaffoldV4,
     collectCreateFloor: failCollectFloor,
-    applyV3PreFill: failPreFill,
     flagReader: () => true,
     readFloorBytes: () => EMPTY_FLOOR,
     ui: stubUI,
@@ -286,7 +273,7 @@ describe("createProjectFrontDoor (dispatch-create-by-engine)", () => {
     assert.equal(scaffoldV4.calls.length, 1);
     assert.equal(createV3.calls.length, 0);
     assert.equal(runSelector.calls[0][2], "vscode"); // host platform → selector surface
-    assert.equal(runInputs.calls[0][4]?.surface, "vscode"); // host platform → inputs surface (gates csharp)
+    assert.equal(runInputs.calls[0][4]?.surface, "vscode"); // host platform → inputs surface
     assert.deepEqual(scaffoldV4.calls[0][1], V4_TARGET);
     assert.deepEqual(scaffoldV4.calls[0][2], q2);
     assert.strictEqual(scaffoldV4.calls[0][3], flagReader);
@@ -503,29 +490,6 @@ describe("createProjectFrontDoor (dispatch-create-by-engine)", () => {
     assert.deepEqual(scaffoldV4.calls[0][2], q2);
   });
 
-  it("DCE-04: engine v3 pre-fills from the Q1 picks then delegates to createV3", async () => {
-    const prefill = recorder((_i: Inputs, _t: BuildTarget) => undefined);
-    const createV3 = recorder((_inputs: Inputs) => okResult("/v3"));
-    const inputs = baseInputs();
-
-    const res = await createProjectFrontDoor(
-      inputs,
-      deps({
-        createV3: createV3.fn,
-        applyV3PreFill: prefill.fn,
-        runSelector: () => okTarget(V3_TARGET),
-      })
-    );
-
-    assert.isTrue(res.isOk());
-    assert.equal(prefill.calls.length, 1);
-    assert.deepEqual(prefill.calls[0][1], V3_TARGET);
-    assert.equal(createV3.calls.length, 1);
-    // pre-fill mutates the same inputs object that is then handed to createV3.
-    assert.strictEqual(prefill.calls[0][0], inputs);
-    assert.strictEqual(createV3.calls[0][0], inputs);
-  });
-
   it("DCE-05: DT-off DA+MCP resolves the v4 static route and bypasses createV3", async () => {
     const scaffoldV4 = recorder(
       (_i: Inputs, _t: BuildTarget, _a: Answers, _flagReader: (name: string) => boolean) =>
@@ -551,7 +515,7 @@ describe("createProjectFrontDoor (dispatch-create-by-engine)", () => {
   });
 
   it("DCE-06: a surface-action returns shouldInvokeTeamsAgent and scaffolds nothing", async () => {
-    // createV3 / scaffoldV4 / applyV3PreFill / runInputs all default to fail-if-called.
+    // createV3 / scaffoldV4 / runInputs all default to fail-if-called.
     const res = await createProjectFrontDoor(
       baseInputs(),
       deps({ runSelector: () => okTarget(SURFACE_ACTION_TARGET) })
@@ -597,29 +561,6 @@ describe("createProjectFrontDoor (dispatch-create-by-engine)", () => {
     if (res.isErr()) {
       assert.equal(res.error.name, "UserCancelError");
     }
-  });
-
-  it("DCE-10: a preset template-name resolving to v3 skips Q1 + pre-fill, then delegates to createV3", async () => {
-    // runSelector + applyV3PreFill default to fail-if-called: the preset path walks
-    // neither (the v3 traverse short-circuits on template-name downstream).
-    const resolveByTemplateId = resolveByTemplateIdRecorder({
-      templateId: "default-bot",
-      engine: "v3",
-      answers: {},
-    });
-    const createV3 = recorder((_inputs: Inputs) => okResult("/v3"));
-    const inputs = presetInputs("default-bot");
-
-    const res = await createProjectFrontDoor(
-      inputs,
-      deps({ createV3: createV3.fn, resolveByTemplateId: resolveByTemplateId.fn })
-    );
-
-    assert.isTrue(res.isOk());
-    assert.equal(resolveByTemplateId.calls.length, 1);
-    assert.equal(resolveByTemplateId.calls[0][1], "default-bot"); // the preset id is forwarded
-    assert.equal(createV3.calls.length, 1);
-    assert.strictEqual(createV3.calls[0][0], inputs);
   });
 
   it("DCE-11: a preset template-name resolving to v4 runs Q2 then scaffoldV4, never createV3", async () => {

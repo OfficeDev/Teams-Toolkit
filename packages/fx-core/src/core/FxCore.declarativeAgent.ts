@@ -696,8 +696,6 @@ export class FxCoreDeclarativeAgentPart {
                 resolvedPackage,
               });
             },
-            callCoreMethod: (_inputs: Inputs, target: BuildTarget) =>
-              Promise.resolve(err(unsupportedModifyTarget(target))),
             resolveArtifactSnapshot: fxCoreDeclarativeAgentDeps.resolveV4TemplateArtifactSnapshot,
           }
         );

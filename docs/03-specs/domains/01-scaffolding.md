@@ -7,9 +7,9 @@
   ready-to-build starting project.
 - **Architecture source:** [`../../02-architecture/scaffolding.md`](../../02-architecture/scaffolding.md)
   (capabilities + cross-cutting properties) and
-  [ADR-0014 … ADR-0019](../../02-architecture/adr/README.md) (the v4
+  [ADR-0014 ... ADR-0019](../../02-architecture/adr/README.md) (the v4
   create/modify shape); [`../../02-architecture/scaffolding.create.proposal.md`](../../02-architecture/scaffolding.create.proposal.md)
-  is now the decomposition map into those ADRs.
+  is historical and exists only as the decomposition map into those ADRs.
 
 ## Boundary
 
@@ -24,11 +24,10 @@ The one residual open item — step conflict policy beyond upsert — is a defer
 step-contract refinement tracked in
 [`scaffolding.backlog.md`](../../02-architecture/scaffolding.backlog.md) §1.
 
-This domain is the **v4 world** decomposed into
-[ADR-0014 … ADR-0019](../../02-architecture/adr/README.md). All operation specs
-here describe v4 behavior. The frozen v3 generator registry is not re-specified;
-it is retired template-by-template per the migration ratchet
-([ADR-0014](../../02-architecture/adr/ADR-0014-dispatcher-buildtarget-resolution.md)).
+This domain is the **v4 scaffolding contract** decomposed into
+[ADR-0014 ... ADR-0019](../../02-architecture/adr/README.md). All operation specs
+here describe v4 behavior. Legacy v3 routes are specified only at explicit
+handoff seams, not as a parallel generator contract.
 
 ## Vocabulary
 
@@ -54,7 +53,7 @@ it is retired template-by-template per the migration ratchet
 
 | Operation | Spec | Summary |
 |-----------|------|---------|
-| `resolve-build-target` | [`operations/scaffolding/resolve-build-target.md`](../operations/scaffolding/resolve-build-target.md) | Resolve a create entry (interactive / pre-filled / batch) to a `BuildTarget = { templateId, engine, answers }` and dispatch the `templateId` to its world (v4 / v3 / v3-core-method / surface-action). |
+| `resolve-build-target` | [`operations/scaffolding/resolve-build-target.md`](../operations/scaffolding/resolve-build-target.md) | Resolve a create entry (interactive / pre-filled / batch) to a `BuildTarget = { templateId, engine, answers }`; v4-enabled front doors execute v4/surface-action targets and reject legacy v3 engine values. |
 | `resolve-template-source` | [`operations/scaffolding/resolve-template-source.md`](../operations/scaffolding/resolve-template-source.md) | Resolve `(range, bundled, runtime)` to one `(origin, version, digest, location)` before any rendering. |
 | `open-template-package` | [`operations/scaffolding/open-template-package.md`](../operations/scaffolding/open-template-package.md) | Open the resolved package bytes and return one template's file entries, locator prefix stripped, unrendered. |
 | `validate-template-package` | [`operations/scaffolding/validate-template-package.md`](../operations/scaffolding/validate-template-package.md) | Validate one package's four-file shape + schema + placeholder accounting + selector/descriptor consistency (build CI **and** engine load), and the reverse `minEngineVersion` compatibility gate (explicit upgrade error, never silent fallback). |
@@ -62,7 +61,26 @@ it is retired template-by-template per the migration ratchet
 | `build-render-context` | [`operations/scaffolding/build-render-context.md`](../operations/scaffolding/build-render-context.md) | Resolve the closed `replaceMap` DSL (`{const}/{from}/{when,value}/{expr}`) against answers + the caller-injected floor into the render-var map `content/**` and step `with` interpolate against. |
 | `evaluate-expression` | [`operations/scaffolding/evaluate-expression.md`](../operations/scaffolding/evaluate-expression.md) | The one shared closed-grammar evaluator (function whitelist + `optionsSchema.properties` identifier domain + sugar desugaring + no-JS-escape closure) that every `when`/`condition`/`{expr}` call site references. |
 | `run-scaffold-pipeline` | [`operations/scaffolding/run-scaffold-pipeline.md`](../operations/scaffolding/run-scaffold-pipeline.md) | Execute one validated package's pipeline: the fixed render phase (new-files-only, skip-with-warning on collision) then the ordered post-render steps, enforcing the closed step whitelist, the `with`/`when` contract, and `packages/manifest`-wrapper routing for manifest mutations. |
-| `emit-scaffold-telemetry` | [`operations/scaffolding/emit-scaffold-telemetry.md`](../operations/scaffolding/emit-scaffold-telemetry.md) | Planned telemetry operation: emit the v3 events verbatim plus the parallel `scaffold-v4-template` / `-step` / `-outcome` family, paired by `correlation-id`; no emitter exists yet. |
+| `emit-scaffold-telemetry` | [`operations/scaffolding/emit-scaffold-telemetry.md`](../operations/scaffolding/emit-scaffold-telemetry.md) | Accepted telemetry design, not yet implemented: keep compatibility v3 events and add the parallel `scaffold-v4-template` / `-step` / `-outcome` family, paired by `correlation-id`. |
+
+**v4 engine business-logic rule:** v4 scaffolding engine operations are generic
+interpreters and dispatchers. Capability-specific behavior must be enumerable
+from the template package and registered extension points: selector/template
+data, `questions.json`, `descriptor.json`, `replaceMap`, provider/validator
+registries, and `pipeline.steps`. Engine code may own schemas, parsers,
+registry lookup, the closed evaluator, and generic orchestration, but MUST NOT
+hide MCP/OpenAPI/Graph/Office/template-specific behavior in front-door, walk,
+render, or pipeline executor branches.
+
+**v4 scaffolding test-shape rule:** tests follow the same ownership boundaries
+as the engine. Generic engine semantics are tested with in-memory selector /
+question / pipeline fixtures and fake registries; provider, validator, and step
+business logic is tested directly at the registered extension-point
+implementation; full template-package floors are reserved for the smallest
+useful integration set that proves package loading and cross-operation wiring.
+An acceptance criterion for a provider, validator, or step MUST NOT require a
+full `templates/v4` floor unless the criterion is explicitly about package
+metadata or end-to-end scaffolding composition.
 
 ## Scenarios
 

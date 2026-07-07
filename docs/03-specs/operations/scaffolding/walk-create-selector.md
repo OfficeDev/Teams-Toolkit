@@ -17,46 +17,53 @@
 Run a create kind's **Q1** (its `selector.json` routing questions) over the host
 `UserInteraction`, producing the engine decision — a `BuildTarget`
 (`{ templateId, engine, answers }`). This is the live surface wiring of
-[`resolve-build-target`](resolve-build-target.md)'s single prefill-aware `walk`
-(`resolveBuildTarget(selector, prefilled, interactive, port)`): it loads the
-shipped `selector.json` from the bundled floor, builds a `RouteResolverPort`
-whose `prompt` face renders each routing question over the host's
-surface-neutral `UserInteraction`, and walks Q1 into the dispatched
-`BuildTarget` — skipping any dimension already in `prefilled`. `language` is
+[`resolve-build-target`](resolve-build-target.md)'s selector adapter over the
+shared [`collect-inputs`](collect-inputs.md) question-walk engine: it loads the
+shipped `selector.json` from the caller-supplied selector bytes (the standalone
+`create-selector.json` staged artifact in production, or a full `templates.zip`
+floor in tests), adapts selector dimensions into normalized questions, builds a
+prompt face over the host's surface-neutral `UserInteraction`, and walks Q1 into
+answers — skipping any dimension already in `prefilled`. The selector adapter
+then matches routes outside the walk engine to produce the dispatched
+`BuildTarget`. `language` is
 **not** decided here (ADR-0014 Amendment 2); it is the Q0 `language` question in
 [`collect-create-inputs`](collect-create-inputs.md).
 
 It is the **front door** half of the front-loaded create funnel (principle 1):
 the v4 engine obtains the `templateId` from the selector, never from the v3
 question tree. The other half, [`collect-create-inputs`](collect-create-inputs.md),
-then asks the resolved template's Q2. Together they front-load the whole create
-funnel: every create kind passes through this v4 Q1 first; a `v4` route runs the
-v4 Q2 + scaffold, and a `v3` route hands off to the v3 generator with the Q1
-answers pre-filled (the `engine=v3` adapter is a later increment — this operation
-stops at the dispatched `BuildTarget`).
+then asks the resolved template's Q2 plus the common create floor in one shared
+question-walk pass. Together they front-load the whole create funnel: every
+create kind passes through this v4 Q1 first; a `v4` route runs the v4 create
+input walk + scaffold, and any legacy v3 engine value is returned only so the
+v4-enabled front door can reject it. This operation stops at the dispatched
+`BuildTarget`.
 
 ## Boundary
 
 The operation owns the **surface composition** for the create Q1 and nothing
 else:
 
-1. **The presentation read** — `openCreateSelectorPresentation(bytes)` projects
-   the floor `selector.json` onto a `SelectorPresentation` (each question's
-   `title` / `placeholder` / `staticOptions[{ id, label, detail?, groupName?,
-   condition? }]`). It is the presentation sibling of `openCreateSelector` (which
-   keeps only `{ name, condition }` for routing, resolve-build-target AC-19);
-   both read the same single `v4/create/selector.json` entry.
-2. **The prompt face** — a `RouteResolverPort.prompt` that, for a walked
+1. **The presentation read** — for full-package floor bytes,
+  `openCreateSelectorPresentation(bytes)` projects `v4/create/selector.json`
+  onto a `SelectorPresentation` (each question's `title` / `placeholder` /
+  `staticOptions[{ id, label, detail?, groupName?, condition? }]`). For a staged
+  selector artifact, the same projection runs over the standalone JSON bytes.
+  It is the presentation sibling of `openCreateSelector` /
+  `openSelectorFromJsonBytes` (which keep only `{ name, condition }` for
+  routing, resolve-build-target AC-19).
+2. **The prompt face** — a shared question-walk prompt face that, for a walked
    `RouteQuestion`, looks up its presentation by `name`, filters its
    `staticOptions` by each option's environment `condition` (the shared
    evaluator over a `{ surface }` scope + the injected feature-flag reader),
    renders the survivors via `UserInteraction.selectOption`, and returns the
    chosen `id`. A surface cancellation surfaces as the `Result` error.
-3. **The port assembly + run** — build the `RouteResolverPort` (the prompt face +
-   the descriptor-derived `v4Registry` over the floor + the injected feature-flag
-   reader), then call `resolveBuildTarget(selector, prefilled, interactive, port)`
-   with the parsed `SelectorSpec` (the pre-fill map + interactive flag passed
-   through from the caller).
+3. **The port assembly + run** — build the shared question-walk port from the
+  prompt face, the shared validator registry, and the shared evaluator; route
+  matching then uses the descriptor-derived `v4Registry` over the floor + the
+  injected feature-flag reader to produce `BuildTarget`. Selector questions are
+  closed single-select today, so they rarely need validators, but any Q1
+  validation resolves through the same registry as Q2+common-floor.
 
 It does **not** translate the answers to v3 inputs, does **not** ask Q2, does
 **not** scaffold, and adds **no** routing grammar — every question `condition`,
@@ -69,7 +76,7 @@ presentation, so it does not change this operation's shape.
 
 | Input | Type | Origin |
 |-------|------|--------|
-| `floorBytes` | `Buffer` (injected) | the bundled-floor channel zip; injectable so the operation is CI-testable from an in-memory floor with no built artifact |
+| `selectorBytes` | `Buffer` (injected) | either standalone `create-selector.json` bytes from the staged artifact snapshot or the full bundled-floor `templates.zip` used by tests; injectable so the operation is CI-testable from an in-memory floor with no built artifact |
 | `ui` | `UserInteraction` | the host surface (`@microsoft/teamsfx-api`); the only non-v4 type, upstream of both worlds (INV-1 preserved) |
 | `surface` | `string` | the host surface id (`"vscode"` / `"cli"` / `"vs"`) used to evaluate option-visibility `condition`s (e.g. `surface == 'vscode'`) |
 | `prefilled` | `Record<string, string>`, optional (default `{}`) | Q1-dimension answers known up front (CLI flags / a seed), passed in the options arg; a pre-filled dimension is used as-is, never prompted (resolve-build-target `walk`) |
@@ -81,9 +88,9 @@ presentation, so it does not change this operation's shape.
 `Promise<Result<BuildTarget, FxError>>`:
 
 - `ok(BuildTarget)` — `{ templateId, engine, answers }`: the dispatched engine +
-  id (`v4` / `v3` / `surface-action`) and `answers` — the collected Q1 dimension
-  picks, surfaced for the downstream `engine=v3` pre-fill adapter and as the gate
-  for the Q0 `language` question. `language` is resolved later, in
+  id (`v4` / `surface-action`, plus the retained `v3-core-method` modify
+  exception) and `answers` — the collected Q1 dimension picks, surfaced as the
+  gate for the Q0 `language` question. `language` is resolved later, in
   [`collect-create-inputs`](collect-create-inputs.md) (ADR-0014 Amendment 2).
 - `UserError` — a route/selector authoring break (malformed / dangling-`v4` /
   no-matching route), a surface cancellation propagated from the prompt, or a
@@ -134,9 +141,9 @@ presentation, so it does not change this operation's shape.
 
 ```mermaid
 flowchart TD
-  start(["runCreateSelector(floor, ui, surface, deps)"]) --> spec["openCreateSelector(floor) → SelectorSpec"]
-  start --> pres["openCreateSelectorPresentation(floor) → SelectorPresentation"]
-  pres --> port["build RouteResolverPort\n(prompt face over ui + option-condition filter + v4Registry + flagReader)"]
+  start(["runCreateSelector(selector bytes, ui, surface, deps)"]) --> spec["open selector JSON/zip → SelectorSpec"]
+  start --> pres["open selector JSON/zip → SelectorPresentation"]
+  pres --> port["build shared walk port + route registries\n(prompt face over ui + validator registry + option-condition filter + v4Registry + flagReader)"]
   spec --> resolve["resolveBuildTarget(SelectorSpec, prefilled, interactive, port)"]
   port --> resolve
   resolve --> walk["walkWithPrefill → pre-filled ⇒ skip · interactive ⇒ prompt · else ⇒ missing-dimension error"]
@@ -161,34 +168,33 @@ flowchart TD
   by `walkInteractive` over the answers scope; option `condition` (gating which
   options are offered) is evaluated by the prompt face over a `{ surface }` scope
   — the same evaluator, two scopes, no second grammar.
-- **INV-5** — The floor read is injectable, so the operation is CI-testable from
-  an in-memory floor built from the loose `templates/v4` source — no built
+- **INV-4a** — Q1 uses the shared validator registry. The selector adapter does
+  not own a Q1-only validator map; normalized selector questions, if they declare
+  validation, resolve it through the same engine-owned registry used by
+  [`collect-create-inputs`](collect-create-inputs.md).
+- **INV-5** — The selector bytes are injectable, so the operation is CI-testable
+  from an in-memory floor built from the loose `templates/v4` source — no built
   `templates.zip` artifact required.
 
 ## Notes
 
 - `BuildTarget` carries `answers: Record<string, string>` — the resolved target
   plus the Q1 dimension picks that produced it (whether pre-filled or prompted);
-  it is empty only for a `surface-action` route that scaffolds nothing. The
-  downstream `engine=v3` adapter (a later increment) consumes `answers` to
-  pre-fill the v3 inputs so the v3 question tree skips Q1 and asks only Q2 (the
-  CLI skip-already-answered behavior).
+  it is empty only for a `surface-action` route that scaffolds nothing. v4
+  create routes pass these answers into the create-input entry params; legacy v3
+  generator engine values are no longer valid selector outputs and are not
+  adapted back into the v3 question tree.
 - The prompt face needs only `{ surface }` + the feature-flag reader to filter
   options: every authored option `condition` references `surface` and/or
   `featureFlag('…')` only — never a prior answer (option visibility is an
   environment fact, not a downstream-answer fact). Question conditions, by
   contrast, reference prior answers only — so the two evaluation scopes never
   overlap.
-- Only one `v4` route exists today (`da/mcp-server`), and `resolve-build-target`
-  gates the whole table up front (AC-12): the floor must carry the
-  `da/mcp-server` descriptor or **every** interactive resolution fails
-  `BuildTargetDanglingV4Route`. The bundled floor carries it; the in-memory test
-  floor is the same loose `templates/v4` source.
-- This operation stops at the dispatched `BuildTarget`. Wiring it into
-  `FxCore.createProject` behind `TEAMSFX_V4_ENABLED` (flag-off ⇒ pure v3, zero
-  regression), the `engine=v3` answers → v3-inputs pre-fill adapter, and the
-  `engine=v4` Q2 + scaffold hand-off are the next increments; keeping the walk a
-  pure, injectable orchestrator (like `runCreateInputs`) keeps each of those
-  CI-testable in isolation.
+- Every `engine:"v4"` route is checked against the descriptor-derived registry
+  (AC-12): the resolved source must carry a descriptor for that `templateId`, or
+  route resolution fails with `BuildTargetDanglingV4Route`.
+- This operation stops at the dispatched `BuildTarget`; `createProjectFrontDoor`
+  owns the `engine=v4` Q2 + scaffold hand-off and rejects the retained
+  `engine=v3-core-method` exception on the create surface.
 </content>
 </invoke>

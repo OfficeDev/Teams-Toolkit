@@ -18,10 +18,16 @@ import { assert } from "vitest";
 const TEMPLATES_V4_DIR = path.resolve(__dirname, "../../../../../templates/v4");
 const DT = "TEAMSFX_MCP_FOR_DA_DT";
 
+let cachedFloor: Buffer | undefined;
+
 function buildFloor(): Buffer {
+  if (cachedFloor !== undefined) {
+    return Buffer.from(cachedFloor);
+  }
   const zip = new AdmZip();
   zip.addLocalFolder(TEMPLATES_V4_DIR, "v4");
-  return zip.toBuffer();
+  cachedFloor = zip.toBuffer();
+  return Buffer.from(cachedFloor);
 }
 
 function flagsOn(...names: string[]): (name: string) => boolean {
@@ -110,7 +116,7 @@ describe("runModifySelector", () => {
     }
   });
 
-  it("WMS-02: add-action→mcp with DT off resolves the v3 addPlugin core method", async () => {
+  it("WMS-02: add-action→mcp with DT off still resolves the v4 add MCP server package", async () => {
     const ui = new ScriptedUI(MCP_ADD_ACTION_PICKS);
 
     const res = await runModifySelector(buildFloor(), asUI(ui), "vscode", {
@@ -119,8 +125,8 @@ describe("runModifySelector", () => {
 
     assert.isTrue(res.isOk());
     if (res.isOk()) {
-      assert.equal(res.value.templateId, "addPlugin");
-      assert.equal(res.value.engine, "v3-core-method");
+      assert.equal(res.value.templateId, "add-mcp-server");
+      assert.equal(res.value.engine, "v4");
       assert.deepEqual(res.value.answers, MCP_ADD_ACTION_PICKS);
     }
   });

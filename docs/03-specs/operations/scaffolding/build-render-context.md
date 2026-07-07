@@ -120,12 +120,22 @@ This operation does **not**:
   RenderVars` comparison (§3.4 / §3.5) is owned by
   [`validate-template-package`](validate-template-package.md) at build time; this
   operation assumes that gate has passed.
+- **Encode template-specific transforms outside the DSL.** Business-specific
+  render behavior must be expressed as `replaceMap` data, closed evaluator
+  functions, provider-derived answers, or pipeline steps. This operation MUST NOT
+  branch on a template id, capability, auth type, or file path to synthesize
+  render variables.
 
 ## Invariants
 
 - **INV-1 — Closed DSL.** Every `replaceMap` entry is exactly one of `{const}`,
   `{from}`, `{when, value}`, `{expr}` (schema `oneOf`); there is no free-form
   string-assembly path (ADR-0016 decision 3, replacing `templateReplaceMap.ts`).
+- **INV-1a — Render business logic is data.** The render-var map is fully
+  decomposable into caller floor, collected answers (including provider-derived
+  values), and authored `replaceMap` entries. Any behavior that cannot fit that
+  model must become a provider, evaluator function, or pipeline step through an
+  explicit registry change, not a hidden branch here.
 - **INV-2 — No caller-floor shadowing.** A `replaceMap[].var` never names a
   caller-injected identifier; templates derive **new** `PascalCase` vars and
   never transform `appName` (or any floor id) in place (decision 4 / invariant 4).

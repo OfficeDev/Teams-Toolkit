@@ -186,7 +186,7 @@ import { ShareOperationOption, ShareScopeOption } from "../question/share";
 import { CallbackRegistry, CoreCallbackFunc } from "./callback";
 import * as collaboratorCore from "./collaborator";
 import { CollaborationUtil } from "./collaborator";
-import { applyV3PreFill, collectCreateFloor, scaffoldV4 } from "./createFrontDoorAdapters";
+import { collectCreateFloor, scaffoldV4 } from "./createFrontDoorAdapters";
 import { createProjectFrontDoor as runCreateFrontDoor } from "./createProjectFrontDoor";
 import { LocalCrypto } from "./crypto";
 import { environmentNameManager } from "./environmentName";
@@ -277,7 +277,6 @@ export class FxCore extends FxCoreOpenPluginPart {
       createV3: (i) => this.createProject(i),
       scaffoldV4,
       collectCreateFloor,
-      applyV3PreFill,
       resolveArtifactSnapshot: resolveV4TemplateArtifactSnapshot,
     });
   }
@@ -894,10 +893,10 @@ export class FxCore extends FxCoreOpenPluginPart {
     const removeUsersInput = inputs[QuestionNames.RemoveUsers] as string[] | string | undefined;
     const emails = Array.isArray(removeUsersInput)
       ? removeUsersInput
-      : removeUsersInput
+      : (removeUsersInput
           ?.split(",")
           .map((email) => email.trim())
-          .filter((email) => !!email) ?? [];
+          .filter((email) => !!email) ?? []);
     if (!emails || emails.length === 0) {
       return err(new MissingRequiredInputError("emails", "FxCore"));
     }
@@ -1281,8 +1280,9 @@ export class FxCore extends FxCoreOpenPluginPart {
       manifestPath: teamsAppManifestFilePath,
       outputZipPath:
         inputs[QuestionNames.OutputZipPathParamName] ??
-        `${inputs.projectPath}/${AppPackageFolderName}/${BuildFolderName}/appPackage.${process.env
-          .TEAMSFX_ENV!}.zip`,
+        `${inputs.projectPath}/${AppPackageFolderName}/${BuildFolderName}/appPackage.${
+          process.env.TEAMSFX_ENV!
+        }.zip`,
       outputFolder:
         inputs[QuestionNames.OutputManifestParamName] ??
         `${inputs.projectPath}/${AppPackageFolderName}/${BuildFolderName}`,

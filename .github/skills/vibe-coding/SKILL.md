@@ -1,6 +1,6 @@
 ---
 name: vibe-coding
-description: "End-to-end workflow for agent-driven changes that add or modify behavior in the toolkit packages. Use when: adding or changing a behavior (anything that warrants an Acceptance Criteria row); refactoring toward a structural shape governed by ADRs in `docs/02-architecture/`; adding a behavior-changing CLI or VS Code action. Codifies the design-first → tests-from-AC → implement → verify → self-review → docs-when-needed cycle that keeps contributions safe to merge."
+description: "End-to-end workflow for agent-driven changes that add or modify behavior in the toolkit packages. Use when: adding or changing a behavior (anything that warrants an Acceptance Criteria row); refactoring toward a structural shape governed by ADRs in `docs/02-architecture/`; changing v4 scaffolding architecture, removing duplicate Q1/Q2/Q3 logic, extracting shared engines, or moving logic into providers/validators/steps; adding a behavior-changing CLI or VS Code action. Codifies the design-first → tests-from-AC → implement → verify → self-review → docs-when-needed cycle that keeps contributions safe to merge."
 argument-hint: "Describe the behavior change or structural-shape work"
 ---
 

@@ -3,8 +3,15 @@
 
 import { FxError, SystemError } from "@microsoft/teamsfx-api";
 import { Result, err, ok } from "neverthrow";
+import { ConditionalExpression } from "../expression/evaluateExpression";
 import { ReplaceMapEntry } from "../renderContext/buildRenderContext";
-import { Pipeline, PipelineStep, StepParams } from "../pipeline/runScaffoldPipeline";
+import {
+  Pipeline,
+  PipelineRender,
+  PipelineStep,
+  RenderFilter,
+  StepParams,
+} from "../pipeline/runScaffoldPipeline";
 
 /** Typed boundary parsers for descriptor and pipeline JSON. */
 
@@ -129,6 +136,24 @@ function toStepParams(raw: unknown): StepParams | undefined {
   return params;
 }
 
+function applyConditionalMetadata(
+  item: Record<string, unknown>,
+  target: ConditionalExpression,
+  rejectMalformedWhen: boolean
+): boolean {
+  const comment = stringField(item, "comment");
+  if (comment !== undefined) {
+    target.comment = comment;
+  }
+  const when = stringField(item, "when");
+  if (when !== undefined) {
+    target.when = when;
+  } else if (rejectMalformedWhen && item.when !== undefined) {
+    return false;
+  }
+  return true;
+}
+
 function toPipelineStep(item: unknown): PipelineStep | undefined {
   if (!isRecord(item)) {
     return undefined;
@@ -138,13 +163,8 @@ function toPipelineStep(item: unknown): PipelineStep | undefined {
     return undefined;
   }
   const result: PipelineStep = { step: stepName };
-  const comment = stringField(item, "comment");
-  if (comment !== undefined) {
-    result.comment = comment;
-  }
-  const when = stringField(item, "when");
-  if (when !== undefined) {
-    result.when = when;
+  if (!applyConditionalMetadata(item, result, false)) {
+    return undefined;
   }
   if (item.with !== undefined) {
     const params = toStepParams(item.with);
@@ -159,6 +179,43 @@ function toPipelineStep(item: unknown): PipelineStep | undefined {
       return undefined;
     }
     result.produces = produces;
+  }
+  return result;
+}
+
+function toRenderFilter(item: unknown): RenderFilter | undefined {
+  if (!isRecord(item)) {
+    return undefined;
+  }
+  const exclude = toStringArray(item.exclude);
+  if (exclude === undefined) {
+    return undefined;
+  }
+  const result: RenderFilter = { exclude };
+  if (!applyConditionalMetadata(item, result, true)) {
+    return undefined;
+  }
+  return result;
+}
+
+function toPipelineRender(raw: unknown): PipelineRender | undefined {
+  if (!isRecord(raw)) {
+    return undefined;
+  }
+  const result: PipelineRender = {};
+  if (raw.filters !== undefined) {
+    if (!Array.isArray(raw.filters)) {
+      return undefined;
+    }
+    const filters: RenderFilter[] = [];
+    for (const item of raw.filters) {
+      const filter = toRenderFilter(item);
+      if (filter === undefined) {
+        return undefined;
+      }
+      filters.push(filter);
+    }
+    result.filters = filters;
   }
   return result;
 }
@@ -184,5 +241,17 @@ export function parsePipeline(raw: unknown): Result<Pipeline, FxError> {
     steps.push(step);
   }
   const comment = stringField(raw, "comment");
-  return ok(comment !== undefined ? { pipeline: name, comment, steps } : { pipeline: name, steps });
+  let render: PipelineRender | undefined;
+  if (raw.render !== undefined) {
+    render = toPipelineRender(raw.render);
+    if (render === undefined) {
+      return err(systemError(`invalid pipeline render: ${JSON.stringify(raw.render)}`));
+    }
+  }
+  return ok({
+    pipeline: name,
+    ...(comment !== undefined ? { comment } : {}),
+    ...(render !== undefined ? { render } : {}),
+    steps,
+  });
 }
