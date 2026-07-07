@@ -89,7 +89,7 @@ jobs:
           PR_NUMBER: ${{ steps.pr-context.outputs.pr_number }}
         with:
           script: |
-            const MARKER = '<!-- atk-vsuse-test-hint -->';
+            const MARKER = '<!-- atk-vscuse-test-hint -->';
             const prNumber = parseInt(process.env.PR_NUMBER);
             const comments = await github.paginate(github.rest.issues.listComments, {
               owner:        context.repo.owner,

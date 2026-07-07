@@ -5,7 +5,7 @@ name: PR VscUse Test Plan Comment Trigger
 # This workflow:
 #   1. Verifies the commenter has write/maintain/admin permission (anti-abuse).
 #   2. Extracts the hint text after `/atk-vscuse-test`.
-#   3. Posts a hidden marker comment (<!-- atk-vsuse-test-hint -->) carrying the hint
+#   3. Posts a hidden marker comment (<!-- atk-vscuse-test-hint -->) carrying the hint
 #      so the existing pr-vscuse-test.yml workflow can feed it to the AI plan selector.
 #   4. Dispatches pr-vscuse-test.yml via workflow_dispatch with the PR number, so it
 #      re-runs and reads the hint comment we just posted.
@@ -88,7 +88,7 @@ jobs:
             const actor    = process.env.ACTOR;
             // The marker is what pr-vscuse-test.yml searches for. Keep it stable.
             const body = [
-              '<!-- atk-vsuse-test-hint -->',
+              '<!-- atk-vscuse-test-hint -->',
               `**🎯 VscUse test plan hint from @${actor}:**`,
               '',
               '```',
