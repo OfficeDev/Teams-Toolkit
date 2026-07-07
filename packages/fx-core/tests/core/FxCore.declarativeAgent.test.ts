@@ -3184,6 +3184,82 @@ describe("addPlugin", async () => {
     }
   });
 
+  it("from MCP (DT flag on): still injects oauth/register when auth metadata cannot be resolved", async () => {
+    const appName = await mockV3Project();
+    const projectPath = path.join(os.tmpdir(), appName);
+    const inputs: Inputs = {
+      platform: Platform.CLI,
+      [QuestionNames.Folder]: os.tmpdir(),
+      [QuestionNames.TeamsAppManifestFilePath]: "manifest.json",
+      [QuestionNames.ActionType]: ActionStartOptions.mcp().id,
+      [QuestionNames.MCPForDAServerUrl]: "https://example.com/mcp",
+      [QuestionNames.MCPToolsFilePath]: "",
+      [QuestionNames.MCPForDAAuthType]: "oauth",
+      [QuestionNames.MCPForDAClientId]: "client-id",
+      [QuestionNames.MCPForDAClientSecret]: "client-secret",
+      [QuestionNames.MCPForDAScopes]: "scope-a",
+      [QuestionNames.MCPForDAAuthMetadataUrl]: "https://example.com/.well-known/oauth-metadata",
+      projectPath,
+    };
+
+    const manifest = new TeamsAppManifest();
+    manifest.copilotExtensions = {
+      declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
+    };
+
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) => {
+      return flag === FeatureFlags.MCPForDADT;
+    });
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(
+      copilotGptManifestUtils,
+      "getDefaultNextAvailablePluginManifestPath"
+    ).mockResolvedValue("ai-plugin_1.json");
+    vi.spyOn(copilotGptManifestUtils, "addAction").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+
+    vi.spyOn(addPluginTools.ui, "showMessage").mockImplementation((level) => {
+      if (level === "warn") return Promise.resolve(ok("Add"));
+      return Promise.resolve(ok(""));
+    });
+
+    // Auth-server metadata resolution fails (server unreachable / no metadata).
+    const mcpAuthScaffolderModule = await import("../../src/component/utils/mcpAuthScaffolder");
+    vi.spyOn(
+      mcpAuthScaffolderModule.mcpAuthScaffolderDeps,
+      "resolveMCPOAuthMetadata"
+    ).mockRejectedValue(new Error("no resource_metadata"));
+
+    const actionInjectorModule = await import("../../src/component/configManager/actionInjector");
+    const injectStub = vi
+      .spyOn(actionInjectorModule.ActionInjector, "injectCreateOAuthActionForMCP")
+      .mockResolvedValue();
+
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+    vi.spyOn(fs, "ensureFile").mockResolvedValue();
+    vi.spyOn(fs, "writeJSON").mockResolvedValue();
+
+    const core = new FxCore(addPluginTools);
+    const result = await core.addPlugin(inputs);
+
+    assert.isTrue(result.isOk());
+    // Endpoint resolution failing must NOT block the oauth/register injection:
+    // the action is still written (with empty endpoints for the dev to fill in).
+    assert.equal(injectStub.mock.calls.length, 1);
+    assert.equal(injectStub.mock.calls[0][2], "examplecom");
+    assert.equal(injectStub.mock.calls[0][3], "MCP_DA_AUTH_ID_EXAMPLECOM");
+
+    if (await fs.pathExists(projectPath)) {
+      await fs.remove(projectPath);
+    }
+  });
+
   it("from MCP (DT off): uses legacy static add-action path", async () => {
     const appName = await mockV3Project();
     const projectPath = path.join(os.tmpdir(), appName);
