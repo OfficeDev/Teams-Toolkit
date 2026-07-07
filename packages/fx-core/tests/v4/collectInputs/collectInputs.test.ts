@@ -148,9 +148,7 @@ function noScripted(name: string): FxError {
 
 /** One scripted reply for the sequenced driver: a scalar value, a multi value, or a host back. */
 type SeqResponse =
-  | { kind: "value"; value: string }
-  | { kind: "multi"; value: string[] }
-  | { kind: "back" };
+  { kind: "value"; value: string } | { kind: "multi"; value: string[] } | { kind: "back" };
 
 /**
  * A sequence-driven prompt driver: it answers each ask / askMulti from an ordered

@@ -893,10 +893,10 @@ export class FxCore extends FxCoreOpenPluginPart {
     const removeUsersInput = inputs[QuestionNames.RemoveUsers] as string[] | string | undefined;
     const emails = Array.isArray(removeUsersInput)
       ? removeUsersInput
-      : removeUsersInput
+      : (removeUsersInput
           ?.split(",")
           .map((email) => email.trim())
-          .filter((email) => !!email) ?? [];
+          .filter((email) => !!email) ?? []);
     if (!emails || emails.length === 0) {
       return err(new MissingRequiredInputError("emails", "FxCore"));
     }
@@ -1280,8 +1280,9 @@ export class FxCore extends FxCoreOpenPluginPart {
       manifestPath: teamsAppManifestFilePath,
       outputZipPath:
         inputs[QuestionNames.OutputZipPathParamName] ??
-        `${inputs.projectPath}/${AppPackageFolderName}/${BuildFolderName}/appPackage.${process.env
-          .TEAMSFX_ENV!}.zip`,
+        `${inputs.projectPath}/${AppPackageFolderName}/${BuildFolderName}/appPackage.${
+          process.env.TEAMSFX_ENV!
+        }.zip`,
       outputFolder:
         inputs[QuestionNames.OutputManifestParamName] ??
         `${inputs.projectPath}/${AppPackageFolderName}/${BuildFolderName}`,

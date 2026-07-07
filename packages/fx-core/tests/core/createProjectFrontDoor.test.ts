@@ -165,8 +165,8 @@ function artifactSnapshotRecorder(bytesByKind: Record<TemplateArtifactKind, Buff
 
 /** A typed `resolveCreateTargetByTemplateId` stub that records its `(floor, templateId)` args. */
 function resolveByTemplateIdRecorder(target: BuildTarget) {
-  return recorder(
-    (_floor: Buffer, _templateId: string): Result<BuildTarget, FxError> => ok(target)
+  return recorder((_floor: Buffer, _templateId: string): Result<BuildTarget, FxError> =>
+    ok(target)
   );
 }
 

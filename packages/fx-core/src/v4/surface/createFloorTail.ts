@@ -50,9 +50,7 @@ function getStringValidationFunc(
 
 async function resolveStringValue(
   value:
-    | string
-    | ((inputs: Inputs) => string | undefined | Promise<string | undefined>)
-    | undefined,
+    string | ((inputs: Inputs) => string | undefined | Promise<string | undefined>) | undefined,
   inputs: Inputs
 ): Promise<string | undefined> {
   return typeof value === "function" ? await value(inputs) : value;
