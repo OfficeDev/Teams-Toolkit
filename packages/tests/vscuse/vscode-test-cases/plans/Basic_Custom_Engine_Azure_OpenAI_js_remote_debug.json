@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 47,
+    "total_steps": 53,
     "created_at": "2026-02-02T09:12:09.611556",
     "name": "Basic Custom Engine Azure OpenAI js remote debug",
     "description": {
@@ -21,7 +21,13 @@
       "plan_r_0928_012254",
       "step_d5d456e1",
       "step_22d9c27b",
-      "plan_r_0930_054245",
+      "step_faaf88c5",
+      "step_6e03c09d",
+      "step_4c6b6a22",
+      "step_e7480adc",
+      "step_87469f25",
+      "step_36038e3b",
+      "step_fafefe39",
       "step_533513ce",
       "step_650d57c8",
       "plan_r_0928_014459",
@@ -130,6 +136,160 @@
       "tags": [],
       "screenshot": "step_22d9c27b",
       "created_at": "2026-02-02T09:12:09.633547",
+      "plan_id": "plan_876b96d4"
+    },
+    {
+      "step_id": "step_faaf88c5",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 314,
+        "y": 88
+      },
+      "description": "Click the \"Azure OpenAI\" option in the \"Select a service to access LLMs\" dropdown within the \"Service for Large Language Model (LLM)\" dialog in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_faaf88c5",
+      "created_at": "2025-11-06T03:23:59.264287",
+      "plan_id": "plan_876b96d4"
+    },
+    {
+      "step_id": "step_6e03c09d",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{secret:AZURE_OPENAI_API_KEY}}"
+      },
+      "description": "Type ${{secret:AZURE_OPENAI_API_KEY}} into the \"Input Azure OpenAI service key now or set it later in the project\" input box in the VS Code command palette.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:f0b09494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_6e03c09d",
+      "created_at": "2025-11-06T03:23:59.283561",
+      "plan_id": "plan_876b96d4"
+    },
+    {
+      "step_id": "step_4c6b6a22",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the Azure OpenAI service key input in the VS Code command palette.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:f0b09494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_4c6b6a22",
+      "created_at": "2025-11-06T03:23:59.299397",
+      "plan_id": "plan_876b96d4"
+    },
+    {
+      "step_id": "step_e7480adc",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{env:AZURE_OPENAI_ENDPOINT}}"
+      },
+      "description": "Type ${{env:AZURE_OPENAI_ENDPOINT}} into the \"Input Azure OpenAI service endpoint now or set it later in the project\" prompt at the top of the VS Code window.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:f0b09494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_e7480adc",
+      "created_at": "2025-11-06T03:23:59.313904",
+      "plan_id": "plan_876b96d4"
+    },
+    {
+      "step_id": "step_87469f25",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press the Enter key to confirm the Azure OpenAI Endpoint URL input in the pop-up text field within Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:e0b09494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_87469f25",
+      "created_at": "2025-11-06T03:23:59.328876",
+      "plan_id": "plan_876b96d4"
+    },
+    {
+      "step_id": "step_36038e3b",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{env:AZURE_OPENAI_MODEL}}"
+      },
+      "description": "Type ${{env:AZURE_OPENAI_MODEL}} into the \"Input Azure OpenAI deployment name\" prompt at the top of the Visual Studio Code interface.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:f0b09494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_36038e3b",
+      "created_at": "2025-11-06T03:23:59.342983",
+      "plan_id": "plan_876b96d4"
+    },
+    {
+      "step_id": "step_fafefe39",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press 'Enter' to confirm the Azure OpenAI deployment name  in the input command bar at the top of the Visual Studio Code interface.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:f0b89494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_fafefe39",
+      "created_at": "2025-11-06T03:23:59.357239",
       "plan_id": "plan_876b96d4"
     },
     {
@@ -501,7 +661,9 @@
         "dhash:512:384:0:20:c4942a2323232421"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition_wait_timeout: 30"
+      ],
       "screenshot": "step_338413ba",
       "created_at": "2026-06-12T00:52:29.451781",
       "plan_id": "plan_r_0928_073729"
