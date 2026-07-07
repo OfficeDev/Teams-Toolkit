@@ -115,6 +115,33 @@ body.vscode-light {
     .upgrade-banner {
         background-color: #F0F0F0;
     }
+
+    /* TC-009: .env snippet syntax colors must keep >= 4.5:1 on light backgrounds.
+     * The default dark-theme GitHub token palette in github.scss uses low-contrast
+     * colors on white (for example #ff7b72 / #a5d6ff). Override key token colors
+     * in sample detail README rendering with light-theme accessible alternatives. */
+    .sample-detail-page {
+        .readme .pl-k {
+            color: #B42318;
+        }
+
+        .readme .pl-c1,
+        .readme .pl-s .pl-v,
+        .readme .pl-s,
+        .readme .pl-pds,
+        .readme .pl-s .pl-pse .pl-s1,
+        .readme .pl-sr,
+        .readme .pl-sr .pl-sre,
+        .readme .pl-sr .pl-sra,
+        .readme .pl-corl {
+            color: #0550AE;
+        }
+
+        .readme .pl-v,
+        .readme .pl-smw {
+            color: #953800;
+        }
+    }
 }
 
 body.vscode-dark {
