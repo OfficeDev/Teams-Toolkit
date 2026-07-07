@@ -50,7 +50,15 @@
       "step_8d906e1b",
       "step_82b3df5a",
       "step_d9a66a39",
-      "plan_r_1229_080428",
+      "step_861719f5",
+      "step_bebe59ce",
+      "step_2ca4bc9f",
+      "step_fac19e5b",
+      "step_8cf91e7c",
+      "step_039e984f",
+      "step_7b350969",
+      "step_46d8daa9",
+      "step_421508b7",
       "step_64456d0d",
       "step_3fb94c2c",
       "step_0f0c12ce",
@@ -1228,6 +1236,204 @@
       "screenshot": null,
       "created_at": "2026-06-05T07:17:55.334167",
       "plan_id": "plan_r_0930_063548"
+    },
+    {
+      "step_id": "step_861719f5",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+shift+P"
+      },
+      "description": "Trigger the Command Palette in Visual Studio Code by pressing Ctrl+Shift+P on the main editor interface, with the Microsoft 365 Agents Toolkit panel open in the left sidebar.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:b28c2a23a3232421"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_861719f5",
+      "created_at": "2025-12-30T10:02:31.266085",
+      "plan_id": "plan_r_1229_080428"
+    },
+    {
+      "step_id": "step_bebe59ce",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "view: show run and debug"
+      },
+      "description": "Type the command \"view: show run and debug\" into the VS Code command palette input box, located at the top center of the Visual Studio Code interface.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:e4e43a23a3232421"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_bebe59ce",
+      "created_at": "2025-12-30T10:02:31.276059",
+      "plan_id": "plan_r_1229_080428"
+    },
+    {
+      "step_id": "step_2ca4bc9f",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press the Enter key to select the \"View: Show Run and Debug\" command from the Command Palette in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:e4e43a23a3232421"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_2ca4bc9f",
+      "created_at": "2025-12-30T10:02:31.288348",
+      "plan_id": "plan_r_1229_080428"
+    },
+    {
+      "step_id": "step_fac19e5b",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 219,
+        "y": 48
+      },
+      "description": "Click the green \"Start Debugging\" button labeled \"Debug\" in the Run and Debug panel of Visual Studio Code to initiate debugging in Microsoft 365 Agents Playground.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:219:48:16:5:00000a94222c9c43",
+        "dhash:219:48:96:5:2020c51a1acc3c09",
+        "dhash:219:48:0:10:a2646a6363236421"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_fac19e5b",
+      "created_at": "2025-12-30T10:02:31.298524",
+      "plan_id": "plan_r_1229_080428"
+    },
+    {
+      "step_id": "step_8cf91e7c",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the first items of debug options in dropdown is: \nDebug in Microsoft 365 Agents Playground",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": null,
+      "created_at": "2025-12-30T10:02:31.307207",
+      "plan_id": "plan_r_1229_080428"
+    },
+    {
+      "step_id": "step_039e984f",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 621,
+        "y": 177
+      },
+      "description": "Click the \"Debug in Microsoft 365 Agents Playground\" option in the Run and Debug dropdown menu within the Visual Studio Code interface. The red crosshair at (621, 177) precisely marks this menu item for selection.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_039e984f",
+      "created_at": "2025-12-30T10:02:31.317438",
+      "plan_id": "plan_r_1229_080428"
+    },
+    {
+      "step_id": "step_7b350969",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+shift+P"
+      },
+      "description": "Use the keyboard shortcut Ctrl+Shift+P to open the Command Palette in the Visual Studio Code interface, as indicated by the central VS Code logo and the dark theme workspace.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:b26c6a6363236421"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_7b350969",
+      "created_at": "2025-12-30T10:02:31.326481",
+      "plan_id": "plan_r_1229_080428"
+    },
+    {
+      "step_id": "step_46d8daa9",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "view: show Microsoft 365 agent toolkit"
+      },
+      "description": "Type the #text:'view: show Microsoft 365 agent toolkit' into the Visual Studio Code command palette input box at the top center of the interface.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:e4607a6363236421"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_46d8daa9",
+      "created_at": "2025-12-30T10:02:31.338679",
+      "plan_id": "plan_r_1229_080428"
+    },
+    {
+      "step_id": "step_421508b7",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press the Enter key to select \"View: Show Microsoft 365 Agents Toolkit\" in the command palette of Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:e4706a6363236421"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_421508b7",
+      "created_at": "2025-12-30T10:02:31.347024",
+      "plan_id": "plan_r_1229_080428"
     }
   ]
 }
