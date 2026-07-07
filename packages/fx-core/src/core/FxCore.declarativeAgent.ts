@@ -678,28 +678,42 @@ export class FxCoreDeclarativeAgentPart {
         };
 
         if (authType && authType !== "none") {
-          try {
-            // The add question tree does not collect the auth-server metadata /
-            // well-known URL, so — mirroring the create flow — probe the MCP
-            // server to discover it when the caller didn't pass one. The result
-            // feeds resolveMCPAuthEndpoints so oauth/register + dcr/register get
-            // real authorization/token/well-known URLs. Only oauth /
-            // oauth-dynamic consume metadata; entra-sso resolves no endpoints,
-            // so skip the (10s-timeout) probe for it. Best-effort: a failure
-            // leaves endpoints empty for the developer to fill in later.
-            const needsMetadataProbe = authType === "oauth" || authType === "oauth-dynamic";
-            if (needsMetadataProbe && !inputs[QuestionNames.MCPForDAAuthMetadataUrl]) {
-              try {
-                const { probeMCPServerAuth } = await import("../component/utils/mcpToolFetcher");
-                const authProbe = await probeMCPServerAuth(mcpServerUrl);
-                if (authProbe.authMetadataUrl) {
-                  inputs[QuestionNames.MCPForDAAuthMetadataUrl] = authProbe.authMetadataUrl;
-                }
-              } catch {
-                // best-effort probe; endpoint resolution below tolerates undefined
+          // The add question tree does not collect the auth-server metadata /
+          // well-known URL, so — mirroring the create flow — probe the MCP
+          // server to discover it when the caller didn't pass one. The result
+          // feeds resolveMCPAuthEndpoints so oauth/register + dcr/register get
+          // real authorization/token/well-known URLs. Only oauth / oauth-dynamic
+          // consume metadata; entra-sso resolves no endpoints, so skip the
+          // (10s-timeout) probe for it.
+          const needsMetadataProbe = authType === "oauth" || authType === "oauth-dynamic";
+          if (needsMetadataProbe && !inputs[QuestionNames.MCPForDAAuthMetadataUrl]) {
+            try {
+              const { probeMCPServerAuth } = await import("../component/utils/mcpToolFetcher");
+              const authProbe = await probeMCPServerAuth(mcpServerUrl);
+              if (authProbe.authMetadataUrl) {
+                inputs[QuestionNames.MCPForDAAuthMetadataUrl] = authProbe.authMetadataUrl;
               }
+            } catch {
+              // best-effort probe; endpoint resolution below tolerates undefined
             }
-            const endpoints = await resolveMCPAuthEndpoints(authType, inputs);
+          }
+          // Endpoint resolution is best-effort and MUST NOT block the
+          // oauth/register injection: an unreachable server or missing metadata
+          // leaves endpoints empty and the injector still writes the action
+          // (with placeholder URLs) so the developer can fill them in later.
+          let endpoints: ResolvedMCPAuthEndpoints = {};
+          try {
+            endpoints = await resolveMCPAuthEndpoints(authType, inputs);
+          } catch (error: any) {
+            mcpWarnings.push({
+              type: "mcpAuthMetadataError",
+              content: getLocalizedString(
+                "core.MCPForDA.mcpAuthMetadataMissingError",
+                error.message
+              ),
+            });
+          }
+          try {
             const ymlPath = pathUtils.getYmlFilePath(inputs.projectPath);
             if (ymlPath) {
               await injectMCPAuthActionToYml({
