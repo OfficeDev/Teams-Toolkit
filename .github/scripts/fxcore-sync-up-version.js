@@ -54,14 +54,19 @@ function syncTemplateVersion(templateVersion, templateConfigs) {
 
 function updateUseLocalFlag(templateVersion, templateConfigs) {
   // Bundle the in-tree templates & metadata (useLocalTemplate = true) for every
-  // build EXCEPT a stable production release, i.e. a stable (non-prerelease)
-  // template version AND goproduct=true (PRODUCTION env). A stable production
-  // release downloads the published templates instead; every other build (alpha,
-  // preview/beta, rc, and any non-goproduct build) stays self-contained so a PR's
-  // CD-built vsix reflects its own template/metadata/wizard changes.
+  // build EXCEPT a stable production release or a VS release. A stable production
+  // release is a stable (non-prerelease) template version AND goproduct=true
+  // (PRODUCTION env). A VS release (VS_RELEASE env) always downloads its published
+  // templates too - a VS release ships with a beta fx-core, so isStableRelease is
+  // false and it must be handled explicitly here or VS would wrongly bundle the
+  // local templates. Both cases download the published templates instead; every
+  // other build (alpha, preview/beta, rc, and any non-goproduct VSC build) stays
+  // self-contained so a PR's CD-built vsix reflects its own template/metadata/
+  // wizard changes.
   const isStableRelease = !semver.prerelease(templateVersion);
   const isProduction = process.env.PRODUCTION === "true";
-  if (isStableRelease && isProduction) {
+  const isVsRelease = process.env.VS_RELEASE === "true";
+  if ((isStableRelease && isProduction) || isVsRelease) {
     templateConfigs.useLocalTemplate = false;
   } else {
     templateConfigs.useLocalTemplate = true;
