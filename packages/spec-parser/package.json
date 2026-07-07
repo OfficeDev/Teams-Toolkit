@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/m365-spec-parser",
-  "version": "0.2.13",
+  "version": "0.2.14-rc.0",
   "description": "OpenAPI specification files Parser for M365 Apps",
   "main": "dist/index.node.cjs.js",
   "browser": "dist/index.esm2017.js",
