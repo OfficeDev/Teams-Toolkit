@@ -141,6 +141,20 @@ describe("createUiPromptUI (collect-create-inputs prompt bridge)", () => {
     assert.equal(seenFolder, "C:/src");
   });
 
+  it("passes password through to the text input config", async () => {
+    const secret = new ScriptedUi({ text: ok({ type: "success", result: "sk-123" }) });
+    const masked = await createUiPromptUI(asUi(secret)).ask(
+      { name: "openAIKey", type: "text", password: true },
+      undefined
+    );
+    assert.deepEqual(masked._unsafeUnwrap(), { kind: "value", value: "sk-123" });
+    assert.isTrue(secret.lastTextConfig?.password);
+
+    const plain = new ScriptedUi({ text: ok({ type: "success", result: "x" }) });
+    await createUiPromptUI(asUi(plain)).ask({ name: "app-name", type: "text" }, undefined);
+    assert.isUndefined(plain.lastTextConfig?.password);
+  });
+
   it("maps host back and error results without rewriting them", async () => {
     const back = await createUiPromptUI(asUi(new ScriptedUi({ select: ok({ type: "back" }) }))).ask(
       { name: "language", type: "singleSelect" },

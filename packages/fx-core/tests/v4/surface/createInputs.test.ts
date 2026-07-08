@@ -583,8 +583,9 @@ describe("runCreateInputs (collect-create-inputs)", () => {
     assert.deepEqual(ui.textNames, ["apiSpecLocation"]);
     assert.deepEqual(ui.fileNames, []);
     assert.deepEqual(ui.fileOrInputNames, []);
-    assert.equal(ui.lastInputConfig?.placeholder, "https://example.com/openapi.yaml");
-    assert.equal(ui.lastInputConfig?.prompt, "Enter an OpenAPI description document URL.");
+    assert.equal(ui.lastInputConfig?.title, "OpenAPI Document");
+    assert.equal(ui.lastInputConfig?.placeholder, "Enter OpenAPI Document URL");
+    assert.isUndefined(ui.lastInputConfig?.prompt);
     assert.isFunction(ui.lastInputConfig?.validation);
     assert.equal(
       await ui.lastInputConfig?.validation?.("./openapi.yaml"),
@@ -614,7 +615,8 @@ describe("runCreateInputs (collect-create-inputs)", () => {
     assert.deepEqual(ui.fileNames, ["apiSpecLocation"]);
     assert.deepEqual(ui.textNames, []);
     assert.deepEqual(ui.fileOrInputNames, []);
-    assert.equal(ui.lastFileConfig?.placeholder, "Select an OpenAPI description document.");
+    assert.equal(ui.lastFileConfig?.title, "OpenAPI Document");
+    assert.isUndefined(ui.lastFileConfig?.placeholder);
     assert.deepEqual(ui.lastFileConfig?.filters, {
       "OpenAPI Description Document": ["json", "yml", "yaml"],
     });
@@ -1125,8 +1127,6 @@ describe("runCreateInputs (collect-create-inputs)", () => {
       multi: { apiOperations: ["GET /repairs"] },
       text: {
         azureOpenAIKey: "",
-        azureOpenAIEndpoint: "",
-        azureOpenAIDeploymentName: "",
       },
     });
     const res = await runCreateInputs(
@@ -1141,11 +1141,9 @@ describe("runCreateInputs (collect-create-inputs)", () => {
       assert.fail(res.error.message);
     }
     assert.equal(res.value.apiSpecLocation, OPENAPI_SPEC);
-    assert.deepEqual(ui.textNames, [
-      "azureOpenAIKey",
-      "azureOpenAIEndpoint",
-      "azureOpenAIDeploymentName",
-    ]);
+    // Empty Azure OpenAI key short-circuits the cascade: the endpoint and
+    // deployment name questions are never asked.
+    assert.deepEqual(ui.textNames, ["azureOpenAIKey"]);
     assert.deepEqual(ui.fileNames, []);
     assert.deepEqual(ui.fileOrInputNames, ["apiSpecLocation"]);
     assert.equal(ui.lastFileOrInputConfig?.inputBoxConfig.name, "input-api-spec-url");
@@ -1156,6 +1154,29 @@ describe("runCreateInputs (collect-create-inputs)", () => {
     );
     assert.isUndefined(ui.lastFileOrInputConfig?.validation);
     assert.isFunction(ui.lastFileOrInputConfig?.inputBoxConfig.validation);
+  });
+
+  it("cascades Azure OpenAI questions: a filled key reveals the endpoint, an empty endpoint skips the deployment name", async () => {
+    const ui = new ScriptedUserInteraction({
+      select: { llmService: "llm-service-azure-openai" },
+      text: {
+        azureOpenAIKey: "fake-azure-openai-key",
+        azureOpenAIEndpoint: "",
+      },
+    });
+
+    const res = await runCreateInputs(
+      buildFloor(),
+      WEATHER_AGENT,
+      { language: "typescript" },
+      asUI(ui),
+      { flagReader: () => false }
+    );
+
+    assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
+    // The filled key reveals the endpoint; the empty endpoint short-circuits
+    // the deployment name.
+    assert.deepEqual(ui.textNames, ["azureOpenAIKey", "azureOpenAIEndpoint"]);
   });
 
   it("lists static MCP tools from the provided tools JSON", async () => {

@@ -17,8 +17,16 @@ import { type ODRServer } from "../../component/utils/odrProvider";
 import { SearchOpenAPISpecResult } from "../../common/kiotaClient";
 import { parseMcpStaticToolsJson } from "../mcp/mcpStaticTools";
 
-const remoteMcpServerType = { id: "remote", label: "Remote" };
-const localMcpServerType = { id: "local", label: "Local" };
+const remoteMcpServerType = {
+  id: "remote",
+  label: "Remote MCP Server",
+  keyPrefix: "core.createProjectQuestion.mcpServerType.remote",
+};
+const localMcpServerType = {
+  id: "local",
+  label: "Local MCP Server",
+  keyPrefix: "core.createProjectQuestion.mcpServerType.local",
+};
 
 function createLocalServerCache(
   listLocalMcpServers: () => Promise<ODRServer[]>

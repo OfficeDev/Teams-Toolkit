@@ -80,7 +80,7 @@ Schemas. The two MCP scenarios are the conformance fixtures: identical
    `condition` that is the **shared Decision-7 grammar**, not option-bound logic.
    **No configuration payload** hangs off an option — the v3 `option.data` /
    `JSON.parse(option.data)` overload does **not** exist (it is absent from
-   `question.schema.json`); configuration lives in `descriptor.optionsSchema` and
+   `questions.schema.json`); configuration lives in `descriptor.optionsSchema` and
    computed fields in the provider `derived.<id>.<key>` namespace (§5). Exactly
   one of `staticOptions` / `optionsFrom`
   per option-bearing question. `optionsFrom` names an engine-owned provider

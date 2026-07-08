@@ -59,6 +59,7 @@ export interface QuestionSpec {
   placeholder?: string;
   prompt?: string;
   default?: string;
+  password?: boolean;
   filters?: Record<string, string[]>;
   inputOptionItem?: OptionItem;
   inputBoxConfig?: InputBoxConfig;
