@@ -88,11 +88,16 @@ async def handle_stateful_conversation(model: AIModel, ctx: ActivityContext[Mess
 
     // Replace with function definition code
 
-    chat_result = await prompt.send(
-        input=ctx.activity.text, 
-        memory=memory,
-        instructions=INSTRUCTIONS
-    )
+    try:
+        chat_result = await prompt.send(
+            input=ctx.activity.text, 
+            memory=memory,
+            instructions=INSTRUCTIONS
+        )
+    except Exception as e:
+        print(f"Error sending chat prompt: {e}")
+        await ctx.send(MessageActivityInput(text="An error occurred while processing your request."))
+        return
 
     await ctx.send(MessageActivityInput(text=chat_result.response.content).add_ai_generated().add_feedback())
 
