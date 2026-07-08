@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 11,
+    "total_steps": 12,
     "created_at": "2026-05-11T06:38:05.296841",
     "name": "Basic Custom Engine Agent Azure OpenAI py Remote Debug",
     "description": {
@@ -38,10 +38,11 @@
       "step_2c1eae55",
       "step_743cf4e1",
       "plan_r_0930_063548",
+      "step_focus_teams_tab",
       "plan_r_1009_093215"
     ],
     "tags": [],
-    "updated_at": "2026-05-11T06:44:45.049169"
+    "updated_at": "2026-07-08T06:47:12.309000"
   },
   "steps": [
     {
@@ -300,6 +301,30 @@
       ],
       "screenshot": null,
       "created_at": "2026-05-11T06:44:25.861256",
+      "plan_id": "plan_b3437999"
+    },
+    {
+      "step_id": "step_focus_teams_tab",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 175,
+        "y": 19
+      },
+      "description": "Click the Microsoft Teams app browser tab (the \"vscuse_app...\" tab) at the top-left of the Google Chrome window to restore focus to the Teams chat. During the previous validation flow a documentation page can open in a new browser tab and steal focus; re-selecting the Teams tab ensures the Teams chat is the active tab before validating the bot response.",
+      "content_refs": [],
+      "timeout": 15,
+      "retry_count": 0,
+      "continue_on_error": "true",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "force_run:true"
+      ],
+      "screenshot": "",
+      "created_at": "2026-07-08T06:47:12.309000",
       "plan_id": "plan_b3437999"
     }
   ],
