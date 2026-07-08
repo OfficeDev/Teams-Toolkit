@@ -365,6 +365,9 @@ coverage
 # test
 test-results.*
 .env
+/.local/
+/set-azure-env.ps1
+packages/tests/vscuse/vscode-test-cases/.local/
 
 # simple auth
 SimpleAuth.zip

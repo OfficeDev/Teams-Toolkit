@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 14,
+    "total_steps": 12,
     "created_at": "2026-06-05T07:17:55.223333",
     "name": "group: debug_in_teams_remote",
     "description": {
@@ -29,8 +29,6 @@
       "step_82f6ba51",
       "step_56f3a504",
       "step_25ce8a2f",
-      "step_06f77d3f",
-      "step_d491dc74",
       "step_6df62c65"
     ],
     "tags": [
@@ -283,29 +281,7 @@
         "x": 265,
         "y": 214
       },
-      "description": "Click the “Add” button within the app details  in Microsoft Teams (web interface), indicated by a blue button below the app name and publisher.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:265:214:16:5:2020202020202020",
-        "dhash:265:214:96:5:6d65604747c40096",
-        "dhash:265:214:0:10:00b4b0d8f4fcf0e8"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_25ce8a2f",
-      "created_at": "2026-06-05T07:17:55.311011",
-      "plan_id": "plan_r_0930_063548"
-    },
-    {
-      "step_id": "step_06f77d3f",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion there's \"Open\" blue button exist.",
+      "description": "Click the visible blue \"Add\" or \"Open\" button in the Microsoft Teams app details dialog.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -314,38 +290,10 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "step_retry_timeout: 180"
+        "ocr:true"
       ],
-      "screenshot": null,
-      "created_at": "2026-06-05T07:17:55.318381",
-      "plan_id": "plan_r_0930_063548"
-    },
-    {
-      "step_id": "step_d491dc74",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 529,
-        "y": 506
-      },
-      "description": "Click the \"Open\" button in the pop-up dialog for the  app on the Microsoft Teams web interface.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:529:506:16:5:0000a25da1929292",
-        "dhash:529:506:96:5:000058a4c4580040",
-        "dhash:529:506:0:10:3669696969697979"
-      ],
-      "postconditions": [],
-      "tags": [
-        "precondition_wait_timeout: 200"
-      ],
-      "screenshot": "step_d491dc74",
-      "created_at": "2026-06-05T07:17:55.320306",
+      "screenshot": "step_25ce8a2f",
+      "created_at": "2026-06-05T07:17:55.311011",
       "plan_id": "plan_r_0930_063548"
     },
     {
