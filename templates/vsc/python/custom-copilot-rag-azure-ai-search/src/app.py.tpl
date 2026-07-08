@@ -98,7 +98,7 @@ async def handle_stateful_conversation(model: AIModel, ctx: ActivityContext[Mess
             instructions=f"{INSTRUCTIONS}\n\nAdditional Context:\n${data_context.output}"
         )
     except OpenAIError as e:
-        print(f"Error sending chat prompt: {e}")
+        print(f"Error generating Azure AI Search response: {e}")
         await ctx.send(MessageActivityInput(text="An error occurred while processing your request."))
         return
 

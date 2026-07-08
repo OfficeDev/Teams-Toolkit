@@ -47,14 +47,19 @@ describe("Python OpenAI error handling templates", () => {
     const app = readTemplate(
       "templates/vsc/python/custom-copilot-rag-azure-ai-search/src/app.py.tpl"
     );
+    const dataSource = readTemplate(
+      "templates/vsc/python/custom-copilot-rag-azure-ai-search/src/azure_ai_search_data_source.py.tpl"
+    );
 
     assert.include(app, "from openai import OpenAIError");
+    assert.include(dataSource, "result = await client.embeddings.create(");
+    assert.include(dataSource, "embedding = await get_embedding_vector(query)");
     assertContainsInOrder(app, [
       "try:",
       "data_context = await azure_ai_search.render_data(input)",
       "chat_result = await chat_prompt.send(",
       "except OpenAIError as e:",
-      'print(f"Error sending chat prompt: {e}")',
+      'print(f"Error generating Azure AI Search response: {e}")',
       'await ctx.send(MessageActivityInput(text="An error occurred while processing your request."))',
       "return",
     ]);
