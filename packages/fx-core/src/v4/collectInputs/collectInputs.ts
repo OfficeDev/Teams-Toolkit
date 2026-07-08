@@ -441,11 +441,8 @@ export async function collectInputs(
   if (outcome.isErr()) {
     return err(outcome.error);
   }
-  /* istanbul ignore next -- backable is off here, so the walk cancels before returning a top-level back */
-  if (outcome.value.kind === "back") {
-    return err(walkCancelled());
-  }
-  return ok(outcome.value.answers);
+  // `backable` is off here, so the walk cancels rather than returning a top-level back.
+  return outcome.value.kind === "back" ? err(walkCancelled()) : ok(outcome.value.answers);
 }
 
 function resolveQuestionValidation(

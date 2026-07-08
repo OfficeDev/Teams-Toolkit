@@ -978,4 +978,40 @@ describe("collectInputs (v4)", () => {
       { name: "second", step: 1 },
     ]);
   });
+
+  it("INPUT-21b: a multiSelect first prompt returns a typed back when backable", async () => {
+    const questions: QuestionSpec[] = [
+      { name: "servers", type: "multiSelect", staticOptions: [{ id: "x" }, { id: "y" }] },
+    ];
+    const ui = new SequencedPromptUI([{ kind: "back" }]);
+    const res = await walkInputs(questions, { properties: { servers: {} } }, {}, makePort({ ui }), {
+      backable: true,
+    });
+    assert.isTrue(res.isOk());
+    assert.strictEqual(res._unsafeUnwrap().kind, "back");
+  });
+
+  it("INPUT-22b: resuming an empty history cancels, or hands a typed back when backable", async () => {
+    const questions: QuestionSpec[] = [
+      { name: "first", type: "singleSelect", staticOptions: [{ id: "a" }] },
+    ];
+    const cancelled = await walkInputs(
+      questions,
+      { properties: { first: {} } },
+      {},
+      makePort({ ui: new SequencedPromptUI([]) }),
+      { resume: { history: [] } }
+    );
+    assert.isTrue(cancelled.isErr());
+    assert.strictEqual(cancelled._unsafeUnwrapErr().name, INPUT_WALK_CANCELLED);
+    const back = await walkInputs(
+      questions,
+      { properties: { first: {} } },
+      {},
+      makePort({ ui: new SequencedPromptUI([]) }),
+      { resume: { history: [] }, backable: true }
+    );
+    assert.isTrue(back.isOk());
+    assert.strictEqual(back._unsafeUnwrap().kind, "back");
+  });
 });

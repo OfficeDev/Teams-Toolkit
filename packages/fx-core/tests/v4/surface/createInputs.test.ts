@@ -2131,6 +2131,21 @@ describe("createUiPromptUI (collect-create-inputs)", () => {
     }
   });
 
+  it("CCI-27b: askMulti projects a host skip on a skipSingleOption multiSelect to { kind: 'skip' }", async () => {
+    const ui = new ScriptedUserInteraction({});
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.askMulti(
+      { name: "servers", type: "multiSelect", title: "Servers", skipSingleOption: true },
+      [{ id: "only" }]
+    );
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.deepEqual(res.value, { kind: "skip", value: ["only"] });
+    }
+  });
+
   it("ask projects a host back on a folder question to { kind: 'back' }", async () => {
     const ui = new ScriptedUserInteraction({ back: ["folder"] });
     const prompt = createUiPromptUI(asUI(ui));

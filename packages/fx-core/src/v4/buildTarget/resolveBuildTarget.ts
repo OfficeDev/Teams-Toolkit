@@ -308,15 +308,15 @@ async function collectSelectorAnswers(
     return err(collected.error);
   }
   const outcome = collected.value;
-  /* istanbul ignore next -- Q1 is not backable; a back past the first prompt errors in the prompt face (WCS-17) */
-  if (outcome.kind === "back") {
-    return err(userError(BUILD_TARGET_WALK_CANCELLED, "the create selector was cancelled"));
-  }
-  const scalar = scalarAnswers(selector, outcome.answers, port);
-  if (scalar.isErr()) {
-    return err(scalar.error);
-  }
-  return ok({ answers: scalar.value, history: outcome.history, promptCount: outcome.promptCount });
+  // `backable` is off for Q1, so a back past the first prompt errors in the prompt face (WCS-17)
+  // rather than returning a top-level back; the `done` branch is the live path.
+  return outcome.kind === "done"
+    ? scalarAnswers(selector, outcome.answers, port).map((answers) => ({
+        answers,
+        history: outcome.history,
+        promptCount: outcome.promptCount,
+      }))
+    : err(userError(BUILD_TARGET_WALK_CANCELLED, "the create selector was cancelled"));
 }
 
 /** Match the first route whose `when` predicate is true against the collected answers. */

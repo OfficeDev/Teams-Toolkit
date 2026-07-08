@@ -603,6 +603,53 @@ describe("createProjectFrontDoor (dispatch-create-by-engine)", () => {
     assert.deepEqual(runInputs.calls[0][1], { kind: "create", templateId: "da/mcp-server" });
   });
 
+  it("DCE-12: a preset template-name with no route returns the resolve error, never createV3", async () => {
+    const notFound = new UserError({
+      source: "Test",
+      name: "BuildTargetUnknownTemplate",
+      message: "no route",
+    });
+    const createV3 = recorder((_inputs: Inputs) => okResult("/v3"));
+
+    const res = await createProjectFrontDoor(
+      presetInputs("future/unknown"),
+      deps({ createV3: createV3.fn, resolveByTemplateId: () => err(notFound) })
+    );
+
+    assert.isTrue(res.isErr());
+    if (res.isErr()) {
+      assert.equal(res.error.name, "BuildTargetUnknownTemplate");
+    }
+    assert.equal(createV3.calls.length, 0);
+  });
+
+  it("DCE-11c: a preset v4 route whose Q2 fails propagates the error and never scaffolds", async () => {
+    const q2Failed = new UserError({ source: "Test", name: "Q2Failed", message: "bad inputs" });
+    const resolveByTemplateId = resolveByTemplateIdRecorder({
+      templateId: "da/mcp-server",
+      engine: "v4",
+      answers: {},
+    });
+    const scaffoldV4 = recorder(
+      (_i: Inputs, _t: BuildTarget, _a: Answers, _fr: (name: string) => boolean) => okResult("/v4")
+    );
+
+    const res = await createProjectFrontDoor(
+      presetInputs("da/mcp-server"),
+      deps({
+        resolveByTemplateId: resolveByTemplateId.fn,
+        runInputs: () => Promise.resolve(err(q2Failed)),
+        scaffoldV4: scaffoldV4.fn,
+      })
+    );
+
+    assert.isTrue(res.isErr());
+    if (res.isErr()) {
+      assert.equal(res.error.name, "Q2Failed");
+    }
+    assert.equal(scaffoldV4.calls.length, 0);
+  });
+
   it("DCE-11b: preset v4 resolves templates artifact before resolving by template id", async () => {
     const artifactSnapshot = artifactSnapshotRecorder({
       "create-selector": Buffer.from("selector-json"),

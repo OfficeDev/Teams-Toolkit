@@ -218,15 +218,14 @@ export async function runCreateInputs(
   if (outcome.isErr()) {
     return err(outcome.error);
   }
-  /* istanbul ignore next -- backable is forced off, so the walk cancels before returning a top-level back */
-  if (outcome.value.kind === "back") {
-    return err(
-      new UserError({
-        source: "Scaffold",
-        name: "InputWalkCancelled",
-        message: "the input walk was cancelled by going back from the first question",
-      })
-    );
-  }
-  return ok(outcome.value.answers);
+  // `backable` is forced off here, so the walk cancels rather than returning a top-level back.
+  return outcome.value.kind === "back"
+    ? err(
+        new UserError({
+          source: "Scaffold",
+          name: "InputWalkCancelled",
+          message: "the input walk was cancelled by going back from the first question",
+        })
+      )
+    : ok(outcome.value.answers);
 }

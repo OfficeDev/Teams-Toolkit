@@ -296,10 +296,7 @@ export async function createProjectFrontDoor(
         };
         let inputBytes: Buffer;
         if (snapshot === undefined) {
-          if (floorBytes === undefined) {
-            floorBytes = (deps.readFloorBytes ?? readBundledFloorBytes)();
-          }
-          inputBytes = floorBytes;
+          inputBytes = floorBytes ?? (deps.readFloorBytes ?? readBundledFloorBytes)();
         } else {
           const metadataBytes = await readSnapshotBytes(snapshot, "metadata");
           if (metadataBytes.isErr()) {
@@ -380,11 +377,10 @@ export async function createProjectFrontDoor(
     if (dispatched.isErr()) {
       return err(dispatched.error);
     }
-    /* istanbul ignore next -- the preset path is not backable (baseStep 0, backable false) */
-    if (dispatched.value.kind === "back") {
-      return err(unsupportedCreateTarget(target.value));
-    }
-    return ok(dispatched.value.result);
+    // The preset path is not backable (baseStep 0, backable false), so `done` is the live branch.
+    return dispatched.value.kind === "back"
+      ? err(unsupportedCreateTarget(target.value))
+      : ok(dispatched.value.result);
   }
 
   // Otherwise walk Q1 (INV-2). The selector bytes are stable across the cross-phase
