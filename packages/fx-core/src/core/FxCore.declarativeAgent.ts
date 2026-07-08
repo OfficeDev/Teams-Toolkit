@@ -53,6 +53,7 @@ import {
   ResolvedMCPAuthEndpoints,
   deriveMCPManifestOAuth,
   injectMCPAuthActionToYml,
+  persistMCPAuthCredentialEnvVars,
   resolveMCPAuthEndpoints,
 } from "../component/utils/mcpAuthScaffolder";
 import { pathUtils } from "../component/utils/pathUtils";
@@ -678,6 +679,10 @@ export class FxCoreDeclarativeAgentPart {
         };
 
         if (authType && authType !== "none") {
+          // Uppercased server name drives the credential env-var suffix
+          // (`MCP_DA_OAUTH_CLIENT_ID_<NAME>` ...). Shared with the create flow so
+          // a created project and a re-add of the same server reuse the same vars.
+          const serverName = deriveMCPServerNameFromUrl(mcpServerUrl).toUpperCase();
           // The add question tree does not collect the auth-server metadata /
           // well-known URL, so — mirroring the create flow — probe the MCP
           // server to discover it when the caller didn't pass one. The result
@@ -723,11 +728,34 @@ export class FxCoreDeclarativeAgentPart {
                 registrationId,
                 mcpServerUrl,
                 endpoints,
+                persistCredentialEnvRefs: true,
+                serverName,
               });
             }
           } catch (error: any) {
             mcpWarnings.push({
               type: "mcpAuthMetadataError",
+              content: getLocalizedString(
+                "core.MCPForDA.mcpAuthMetadataMissingError",
+                error.message
+              ),
+            });
+          }
+          // Persist the client id / secret / scopes the user entered into env
+          // files so the `${{...}}` refs stamped above resolve at provision time.
+          // No-op for oauth-dynamic / none. Mirrors the create flow.
+          try {
+            await persistMCPAuthCredentialEnvVars({
+              projectPath,
+              authType,
+              serverName,
+              clientId: inputs[QuestionNames.MCPForDAClientId],
+              clientSecret: inputs[QuestionNames.MCPForDAClientSecret],
+              scopes: inputs[QuestionNames.MCPForDAScopes],
+            });
+          } catch (error: any) {
+            mcpWarnings.push({
+              type: "mcpAuthEnvPersistError",
               content: getLocalizedString(
                 "core.MCPForDA.mcpAuthMetadataMissingError",
                 error.message
