@@ -33,11 +33,13 @@ describe("Python OpenAI error handling templates", () => {
     );
 
     assert.include(app, "from openai import OpenAIError");
+    assert.include(app, 'message = error_body.get("message")');
     assertContainsInOrder(app, [
+      "def get_openai_error_message(error: OpenAIError) -> str:",
       "try:",
       "chat_result = await prompt.send(",
       "except OpenAIError as e:",
-      'print(f"Error sending chat prompt: {e}")',
+      'print(f"Error sending chat prompt: {get_openai_error_message(e)}")',
       'await ctx.send(MessageActivityInput(text="An error occurred while processing your request."))',
       "return",
     ]);
@@ -54,12 +56,14 @@ describe("Python OpenAI error handling templates", () => {
     assert.include(app, "from openai import OpenAIError");
     assert.include(dataSource, "result = await client.embeddings.create(");
     assert.include(dataSource, "embedding = await get_embedding_vector(query)");
+    assert.include(app, 'message = error_body.get("message")');
     assertContainsInOrder(app, [
+      "def get_openai_error_message(error: OpenAIError) -> str:",
       "try:",
       "data_context = await azure_ai_search.render_data(input)",
       "chat_result = await chat_prompt.send(",
       "except OpenAIError as e:",
-      'print(f"Error generating Azure AI Search response: {e}")',
+      'print(f"Error generating Azure AI Search response: {get_openai_error_message(e)}")',
       'await ctx.send(MessageActivityInput(text="An error occurred while processing your request."))',
       "return",
     ]);

@@ -36,6 +36,21 @@ def load_instructions() -> str:
 
 INSTRUCTIONS = load_instructions()
 
+def get_openai_error_message(error: OpenAIError) -> str:
+    body = getattr(error, "body", None)
+    if isinstance(body, dict):
+        error_body = body.get("error")
+        if isinstance(error_body, dict):
+            message = error_body.get("message")
+            if isinstance(message, str) and message:
+                return message
+
+    message = getattr(error, "message", None)
+    if isinstance(message, str) and message:
+        return message
+
+    return error.__class__.__name__
+
 def create_token_factory():
     def get_token(scopes, tenant_id=None):
         credential = ManagedIdentityCredential(client_id=config.APP_ID)
@@ -98,7 +113,7 @@ async def handle_stateful_conversation(model: AIModel, ctx: ActivityContext[Mess
             instructions=f"{INSTRUCTIONS}\n\nAdditional Context:\n${data_context.output}"
         )
     except OpenAIError as e:
-        print(f"Error generating Azure AI Search response: {e}")
+        print(f"Error generating Azure AI Search response: {get_openai_error_message(e)}")
         await ctx.send(MessageActivityInput(text="An error occurred while processing your request."))
         return
 
