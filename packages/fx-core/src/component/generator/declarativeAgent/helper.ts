@@ -854,6 +854,7 @@ async function generateForMCPForDAWithAuth(
             endpoints,
             persistCredentialEnvRefs: dtOn,
             serverName,
+            scopes: inputs[QuestionNames.MCPForDAScopes],
           });
           if (injectResult.wellKnownUrlPlaceholderUsed) {
             warnings.push({
