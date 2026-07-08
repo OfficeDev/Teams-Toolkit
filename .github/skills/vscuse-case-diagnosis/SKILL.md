@@ -38,6 +38,7 @@ If local setup, image build, runner install, or credentials are missing, use the
 - A feature-flagged plan is not self-contained if the flags only live in a previous shell command. The plan should declare them with `feature_flag:*` tags, and the run must apply them before vscuse starts the container and VS Code extension host.
 - When the user identifies a docs scenario as the source of truth, compare the case to that doc before preserving old steps. If the doc removes a shipped sub-flow, classify the old steps as test plan drift and do not keep executing them merely because they appear in the existing plan.
 - Prefer `key_press` and `type_text` over `click` when a command palette, quick pick, focused button, or default selection can be driven by keyboard. Coordinate clicks with screenshot preconditions are more brittle under layout, zoom, focus, and tooltip changes.
+- Treat keyboard-driven quick-pick steps as stateful interactions, not unconditional commands. If a step presses `enter` to select a row, keep a precondition/wait that proves the intended row is visible and highlighted; otherwise the key can fire before the quick pick loads or select the wrong existing item.
 - For semantically equivalent UI states, such as a Teams app button showing either `Add` or `Open`, do not preserve a single-label visual precondition. Accept both states in the assertion, use a semantic/OCR-backed action when keyboard is not available, and validate the shared outcome.
 - For optional UI prompts, do not use `force_run:true`. Use prompt-specific preconditions, `key_press` where possible, a short `precondition_wait_timeout:X` tag, and `continue_on_error` only after confirming the runner treats it as a non-failing skip.
 - After plan or runner edits, do not trust stale failure rows in an already-open vscuse-ui tab. Reload the tab or click `Restart`/`Clear`, then confirm the UI has reloaded the edited plan before classifying a new failure.
@@ -132,6 +133,7 @@ Use this decision table:
 Interaction repair preferences:
 
 - Replace recorded coordinate clicks with keyboard sequences when the UI has a stable keyboard path: `f1` -> type command -> `enter`; type quick-pick filter -> `enter`; `escape` to dismiss; arrows only when the list order is stable.
+- For quick picks whose contents load asynchronously, pair the final `enter` with the row's visual precondition and a suitable precondition wait. This is better than adding a blind delay and safer than returning to coordinate clicks.
 - Keep coordinate clicks for true pointer-only controls, but make their preconditions local and stable rather than full-screen.
 - Remember that step `timeout` does not shorten precondition waiting; use `precondition_wait_timeout:X` for optional visual states.
 - If a step is a branch guard such as "select dev only if Select an environment appears", make it optional and short, then let the next deterministic assertion prove the final state.

@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 12,
+    "total_steps": 14,
     "created_at": "2026-06-05T07:17:55.223333",
     "name": "group: debug_in_teams_remote",
     "description": {
@@ -29,6 +29,8 @@
       "step_82f6ba51",
       "step_56f3a504",
       "step_25ce8a2f",
+      "step_06f77d3f",
+      "step_d491dc74",
       "step_6df62c65"
     ],
     "tags": [
@@ -294,6 +296,50 @@
       ],
       "screenshot": "step_25ce8a2f",
       "created_at": "2026-06-05T07:17:55.311011",
+      "plan_id": "plan_r_0930_063548"
+    },
+    {
+      "step_id": "step_06f77d3f",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion there's a \"Let's go\" dialog with a blue \"Open\" button exist.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "step_retry_timeout: 180"
+      ],
+      "screenshot": null,
+      "created_at": "2026-06-05T07:17:55.322778",
+      "plan_id": "plan_r_0930_063548"
+    },
+    {
+      "step_id": "step_d491dc74",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 529,
+        "y": 506
+      },
+      "description": "Click the blue \"Open\" button in the \"Let's go\" dialog for the app in Microsoft Teams.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "ocr:true"
+      ],
+      "screenshot": "step_d491dc74",
+      "created_at": "2026-06-05T07:17:55.328515",
       "plan_id": "plan_r_0930_063548"
     },
     {

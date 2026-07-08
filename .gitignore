@@ -368,6 +368,8 @@ test-results.*
 /.local/
 /set-azure-env.ps1
 packages/tests/vscuse/vscode-test-cases/.local/
+packages/tests/vscuse/vscode-test-cases/plans/r_*.json
+packages/tests/vscuse/vscode-test-cases/test_report/
 
 # simple auth
 SimpleAuth.zip

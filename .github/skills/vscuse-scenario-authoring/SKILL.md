@@ -31,6 +31,7 @@ This workflow is for authoring or refreshing vscuse coverage. For diagnosing an 
 - Do not hardcode app names, paths, tenant data, API keys, or secrets captured during recording.
 - Scenario feature flags must enter the target plan as `plan_metadata.tags` entries such as `feature_flag:TEAMSFX_MCP_FOR_DA_DT=true`. Do not leave them only in a local shell command or narrative notes.
 - Prefer keyboard-driven steps over pointer-driven steps when authoring or cleaning recordings. Quick picks, command palette commands, focused default buttons, and simple selections should usually become `key_press`/`type_text` steps instead of coordinate `click` steps.
+- When converting quick-pick clicks to `key_press enter`, preserve or create the wait condition that proves the intended row is loaded and highlighted. A keyboard action without a prompt-specific precondition can run before the list appears and type subsequent input into the wrong quick pick.
 - When recording captures equivalent labels for the same action, such as Teams `Add` versus `Open`, author the case around the shared user intent: assertion accepts either label, the action is semantic/OCR-backed when keyboard is unavailable, and the next assertion verifies the converged outcome.
 - When a prompt is conditional, record the observed UI first, then convert it into an optional guarded step: prompt-specific preconditions, short `precondition_wait_timeout:X`, no `force_run:true`, and `continue_on_error` only if the runner is known to honor it.
 
@@ -146,7 +147,7 @@ Use direct JSON edits only for changes that are easier to review as text, such a
 When cleaning recorded interactions:
 
 - Convert command palette and quick-pick clicks to keyboard flows whenever possible: `key_press f1`, `type_text`, `key_press enter`.
-- Convert selected/default quick-pick choices to `key_press enter` with the quick-pick precondition instead of clicking the row, unless the row order or selected state is ambiguous.
+- Convert selected/default quick-pick choices to `key_press enter` with the quick-pick precondition instead of clicking the row, unless the row order or selected state is ambiguous. If the selected row loads after the prompt opens, use a precondition wait on that row rather than an immediate Enter.
 - Use `click` only when the target is not keyboard-reachable or when the scenario specifically validates pointer behavior.
 - Do not assume `timeout` makes a visual precondition optional; use `precondition_wait_timeout:X` and verify the loaded plan in vscuse-ui after editing.
 - Reload the vscuse-ui tab or use `Restart`/`Clear` after direct JSON edits, because old execution results can remain visible and look like current failures.
