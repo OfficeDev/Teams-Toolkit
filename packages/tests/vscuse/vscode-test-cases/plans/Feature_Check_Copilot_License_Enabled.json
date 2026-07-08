@@ -36,7 +36,7 @@
       "step_35bc35cf"
     ],
     "tags": [],
-    "updated_at": "2026-07-08T03:40:07.001000"
+    "updated_at": "2026-07-08T03:45:19.726000"
   },
   "steps": [
     {
@@ -352,11 +352,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:540:446:16:5:e829abaaaa2bd42b",
-        "dhash:540:446:96:5:929a8572629400d2",
-        "dhash:540:446:0:10:23b89490b0717d7f"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_24db8255",
