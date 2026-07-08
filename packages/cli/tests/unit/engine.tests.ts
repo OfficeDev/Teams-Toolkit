@@ -792,7 +792,7 @@ describe("CLI Engine", () => {
       mockedEnvRestore();
     });
 
-    it("maps an unknown ATK_CALLER to \"other\"", async () => {
+    it('maps an unknown ATK_CALLER to "other"', async () => {
       const mockedEnvRestore = mockedEnv({
         ATK_CALLER: "johnsmith",
       });
@@ -814,7 +814,7 @@ describe("CLI Engine", () => {
       mockedEnvRestore();
     });
 
-    it("maps a near-miss of a known caller to \"other\" (no partial matching)", async () => {
+    it('maps a near-miss of a known caller to "other" (no partial matching)', async () => {
       const mockedEnvRestore = mockedEnv({
         ATK_CALLER: "wiqd-cli",
       });
