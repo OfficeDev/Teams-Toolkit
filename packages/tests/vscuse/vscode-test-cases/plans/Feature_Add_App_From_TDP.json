@@ -26,7 +26,6 @@
       "step_ba470b19",
       "step_5e71293c",
       "plan_a4d84624",
-      "plan_r_0624_024810",
       "step_7c1a2b3d",
       "step_22498d6e",
       "step_b3327844",
@@ -125,7 +124,7 @@
         "x": 307,
         "y": 266
       },
-      "description": "Click the \"Teams Agents and Apps\" option in the top-level \"New Project\" dialog to navigate into the \"Teams Agent or App Using Microsoft Teams SDK\" sub-dialog. The prior selection did not advance the wizard, so re-select \"Teams Agents and Apps\" (under the \"Apps for Microsoft 365\" group) to open the Teams SDK capability sub-dialog before choosing a capability.",
+      "description": "Click the \"Teams Agents and Apps\" option in the top-level \"New Project\" dialog (under the \"Apps for Microsoft 365\" group) to open the \"Teams Agent or App Using Microsoft Teams SDK\" capability sub-dialog.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
