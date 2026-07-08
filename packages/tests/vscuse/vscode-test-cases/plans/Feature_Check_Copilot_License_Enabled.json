@@ -36,7 +36,7 @@
       "step_35bc35cf"
     ],
     "tags": [],
-    "updated_at": "2026-07-08T03:29:19.772000"
+    "updated_at": "2026-07-08T03:40:07.001000"
   },
   "steps": [
     {
@@ -328,11 +328,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:254:19:16:5:01a1424249420221",
-        "dhash:254:19:96:5:9144640100000004",
-        "dhash:254:19:0:10:9391610169414141"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "delay:3"
