@@ -1132,7 +1132,7 @@ export function apiSpecFromPluginManifestQuestion(): SingleSelectQuestion {
       const pluginManifest = (await fs.readJson(pluginManifestPath)) as PluginManifestSchema;
       const specs = pluginManifest
         .runtimes!.filter((runtime) => runtime.type === "OpenApi")
-        .map((runtime) => runtime.spec.url as string);
+        .map((runtime) => runtime.spec.url);
       return [...new Set(specs)];
     },
   };
