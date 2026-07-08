@@ -28,6 +28,7 @@ import { copilotGptManifestUtils } from "../../src/component/driver/teamsApp/uti
 import { manifestUtils } from "../../src/component/driver/teamsApp/utils/ManifestUtils";
 import * as declarativeAgentHelper from "../../src/component/generator/declarativeAgent/helper";
 import * as openApiSpecHelper from "../../src/component/generator/openApiSpec/helper";
+import { envUtil } from "../../src/component/utils/envUtil";
 import { pathUtils } from "../../src/component/utils/pathUtils";
 import { NotImplementedError, UserCancelError } from "../../src/error/common";
 import { QuestionNames } from "../../src/question";
@@ -2796,6 +2797,8 @@ describe("addPlugin", async () => {
     vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
     vi.spyOn(fs, "ensureFile").mockResolvedValue();
     const writeJSONStub = vi.spyOn(fs, "writeJSON").mockResolvedValue();
+    vi.spyOn(envUtil, "listEnv").mockResolvedValue(ok(["dev"]));
+    const writeEnvStub = vi.spyOn(envUtil, "writeEnv").mockResolvedValue(ok(undefined));
 
     const core = new FxCore(addPluginTools);
     const result = await core.addPlugin(inputs);
@@ -2826,6 +2829,21 @@ describe("addPlugin", async () => {
     assert.equal(injectStub.mock.calls.length, 1);
     assert.equal(injectStub.mock.calls[0][2], "examplecom");
     assert.equal(injectStub.mock.calls[0][3], "MCP_DA_AUTH_ID_EXAMPLECOM");
+    // The client id / secret / scopes the user entered are persisted to env so
+    // the injected ${{...}} refs resolve at provision time. serverName is the
+    // uppercased URL-derived name, matching the registration id suffix.
+    assert.deepEqual(injectStub.mock.calls[0][8], {
+      clientIdEnvName: "MCP_DA_OAUTH_CLIENT_ID_EXAMPLECOM",
+      clientSecretEnvName: "SECRET_MCP_DA_OAUTH_CLIENT_SECRET_EXAMPLECOM",
+      scopeEnvName: "MCP_DA_OAUTH_SCOPE_EXAMPLECOM",
+    });
+    assert.equal(writeEnvStub.mock.calls.length, 1);
+    assert.equal(writeEnvStub.mock.calls[0][1], "dev");
+    assert.deepEqual(writeEnvStub.mock.calls[0][2], {
+      MCP_DA_OAUTH_CLIENT_ID_EXAMPLECOM: "client-id",
+      SECRET_MCP_DA_OAUTH_CLIENT_SECRET_EXAMPLECOM: "client-secret",
+      MCP_DA_OAUTH_SCOPE_EXAMPLECOM: "scope-a",
+    });
 
     if (await fs.pathExists(projectPath)) {
       await fs.remove(projectPath);
@@ -2964,6 +2982,8 @@ describe("addPlugin", async () => {
     vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
     vi.spyOn(fs, "ensureFile").mockResolvedValue();
     const writeJSONStub = vi.spyOn(fs, "writeJSON").mockResolvedValue();
+    vi.spyOn(envUtil, "listEnv").mockResolvedValue(ok(["dev"]));
+    const writeEnvStub = vi.spyOn(envUtil, "writeEnv").mockResolvedValue(ok(undefined));
 
     const core = new FxCore(addPluginTools);
     const result = await core.addPlugin(inputs);
@@ -2977,6 +2997,14 @@ describe("addPlugin", async () => {
     assert.equal(oauthInjectStub.mock.calls[0][1], "entra-sso");
     assert.equal(oauthInjectStub.mock.calls[0][2], "examplecom");
     assert.equal(dcrInjectStub.mock.calls.length, 0);
+    // entra-sso collects (and persists) only the client id — no secret / scopes.
+    assert.deepEqual(oauthInjectStub.mock.calls[0][8], {
+      clientIdEnvName: "MCP_DA_OAUTH_CLIENT_ID_EXAMPLECOM",
+    });
+    assert.equal(writeEnvStub.mock.calls.length, 1);
+    assert.deepEqual(writeEnvStub.mock.calls[0][2], {
+      MCP_DA_OAUTH_CLIENT_ID_EXAMPLECOM: "entra-client-id",
+    });
 
     const pluginCall = writeJSONStub.mock.calls.find((c) => String(c[0]).includes("ai-plugin"));
     assert.isDefined(pluginCall);
