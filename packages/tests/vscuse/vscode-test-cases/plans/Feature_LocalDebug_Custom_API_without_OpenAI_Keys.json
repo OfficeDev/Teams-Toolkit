@@ -306,7 +306,7 @@
       "agent": "code",
       "tool": "",
       "parameters": {
-        "sample": "=== Generated Script ===\nLanguage: python\n\n```python\nimport os\n\nfile_path=\"/home/vscode/AgentsToolkitProjects/vscuse_app_DNmrJ/src/app.py\"\n\n# Verify file exists\nif not os.path.isfile(file_path):\n    print(f\"File does not exist: {file_path}\")\n    exit(1)\n\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Replace only the first occurrence\nnew_content = content.replace(\"model=config.OPENAI_MODEL_NAME\", \"model=config.OPENAI_MODEL_NAME, azure_endpoint = \\\"\\\"\", 1)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\n\nprint(\"Replacement complete.\")\n```\n\n=== Execution Results ===\nExit Code: 0\n\n=== STDOUT ===\nReplacement complete.\n\n✓ Script executed successfully"
+        "sample": "=== Generated Script ===\nLanguage: python\n\n```python\nimport os\n\nfile_path=\"/home/vscode/AgentsToolkitProjects/vscuse_app_DNmrJ/src/app.py\"\n\n# Verify file exists\nif not os.path.isfile(file_path):\n    print(f\"File does not exist: {file_path}\")\n    exit(1)\n\nwith open(file_path, 'r') as f:\n    content = f.read()\n\n# Replace only the first occurrence\nnew_content = content.replace(\"model=config.OPENAI_MODEL_NAME\", \"model=config.OPENAI_MODEL_NAME, azure_endpoint = \\\"\\\"\", 1)\n\nwith open(file_path, 'w') as f:\n    f.write(new_content)\n\nprint(\"Replacement complete.\")\n```\n\n=== Execution Results ===\nExit Code: 0\n\n=== STDOUT ===\nReplacement complete.\n\n\u2713 Script executed successfully"
       },
       "description": "@code replace \"model=config.OPENAI_MODEL_NAME\" with \"model=config.OPENAI_MODEL_NAME, azure_endpoint = \"\"\" in file \\\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}/src/app.py\\\"\"",
       "content_refs": [],
@@ -504,17 +504,13 @@
         "x": 312,
         "y": 216
       },
-      "description": "Click the \"Open\" button in the app details popup for vscuse_app_4YhGglocal within the Microsoft Teams web interface.",
+      "description": "Click the \"Open\" button in the app details popup for the debugged app instance within the Microsoft Teams web interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:312:216:16:5:34e338b4b4b018c7",
-        "dhash:312:216:96:5:93102561610d0047",
-        "dhash:312:216:0:10:00bcb0d8f8fce0d8"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "precondition_wait_timeout:180"
@@ -532,17 +528,13 @@
         "x": 509,
         "y": 513
       },
-      "description": "Click the \"Open\" button in the vsсuse_app_4YhGglocal app onboarding dialog within the Microsoft Teams web interface.",
+      "description": "Click the \"Open\" button in the debugged app instance onboarding dialog within the Microsoft Teams web interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:509:513:16:5:d3d3dadad3d1d932",
-        "dhash:509:513:96:5:00000669712c1c53",
-        "dhash:509:513:0:10:3669696969696979"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "precondition_wait_timeout:180"
