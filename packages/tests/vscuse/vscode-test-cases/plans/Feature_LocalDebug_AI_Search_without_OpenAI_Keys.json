@@ -402,7 +402,7 @@
         "x": 312,
         "y": 216
       },
-      "description": "Click the \"Open\" button in the app details popup for vscuse_app_4YhGglocal within the Microsoft Teams web interface.",
+      "description": "Click the button named \"Open\" or \"Add\" in the app details popup for vscuse_app_4YhGglocal within the Microsoft Teams web interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

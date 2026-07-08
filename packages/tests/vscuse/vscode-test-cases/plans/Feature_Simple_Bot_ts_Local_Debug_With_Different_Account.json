@@ -956,7 +956,7 @@
         "x": 515,
         "y": 512
       },
-      "description": "Click the \"Open\" button in the \"Let's go\" dialog of the app within the Microsoft Teams web interface.",
+      "description": "Click the button named \"Open\" or \"Add\" in the pop-up dialog of the app within the Microsoft Teams web interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
