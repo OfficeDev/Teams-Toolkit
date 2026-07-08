@@ -75,7 +75,7 @@ function loadUiNode(fileName: string, platform: Platform): IQTreeNode {
       invalidateCorruptedUiCache(cachedJsonPath);
       source = "bundled";
       TOOLS?.logProvider?.info(
-        `[Dynamic Template] Cached ${fileName} is corrupted, fallback to bundled metadata.`
+        `[Dynamic Template] Cached ${fileName} is corrupted, fallback to bundled UI.`
       );
     }
   } else {

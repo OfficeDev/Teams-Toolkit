@@ -82,48 +82,43 @@ describe("metadata platform routing", () => {
     });
 
     it("falls back to bundled metadata and clears cache markers when cached metadata is corrupted", () => {
-      sandbox.stub(templateHelper, "useLocalTemplate").returns(false);
-      sandbox.stub(folder, "getTemplatesFolder").returns(path.resolve("/bundled"));
-      sandbox.stub(fs, "pathExistsSync").returns(true);
-      const readFileSyncStub = sandbox.stub(fs, "readFileSync");
-      readFileSyncStub.onFirstCall().throws(new Error("corrupted cache"));
-      readFileSyncStub.onSecondCall().returns(JSON.stringify(mockTemplates));
-      const removeSyncStub = sandbox.stub(fs, "removeSync");
+      vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(false);
+      vi.spyOn(folder, "getTemplatesFolder").mockReturnValue(path.resolve("/bundled"));
+      vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
+      const readFileSyncStub = vi
+        .spyOn(fs, "readFileSync")
+        .mockImplementationOnce(() => {
+          throw new Error("corrupted cache");
+        })
+        .mockReturnValue(JSON.stringify(mockTemplates) as any);
+      const removeSyncStub = vi.spyOn(fs, "removeSync").mockImplementation(() => {});
 
       const result = getAllTemplatesOnPlatform(Platform.VSCode);
 
       assert.deepEqual(result, [mockTemplates[0], mockTemplates[2]]);
-      assert.isTrue(removeSyncStub.called);
-      assert.isTrue(
-        removeSyncStub.calledWithMatch(
-          sinon.match((p) => String(p).includes("template-version.txt"))
-        )
-      );
-      assert.isTrue(
-        removeSyncStub.calledWithMatch(
-          sinon.match((p) => String(p).includes("template-version-v4.txt"))
-        )
-      );
+      assert.isTrue(removeSyncStub.mock.calls.length > 0);
+      const removedPaths = removeSyncStub.mock.calls.map((c) => String(c[0]));
+      assert.isTrue(removedPaths.some((p) => p.includes("template-version.txt")));
+      assert.isTrue(removedPaths.some((p) => p.includes("template-version-v4.txt")));
     });
 
     it("clears VS marker when VS cached metadata is corrupted", () => {
-      sandbox.stub(templateHelper, "useLocalTemplate").returns(false);
-      sandbox.stub(folder, "getTemplatesFolder").returns(path.resolve("/bundled"));
-      sandbox.stub(fs, "pathExistsSync").returns(true);
-      const readFileSyncStub = sandbox.stub(fs, "readFileSync");
-      readFileSyncStub.onFirstCall().throws(new Error("corrupted cache"));
-      readFileSyncStub.onSecondCall().returns(JSON.stringify(mockTemplates));
-      const removeSyncStub = sandbox.stub(fs, "removeSync");
+      vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(false);
+      vi.spyOn(folder, "getTemplatesFolder").mockReturnValue(path.resolve("/bundled"));
+      vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
+      vi.spyOn(fs, "readFileSync")
+        .mockImplementationOnce(() => {
+          throw new Error("corrupted cache");
+        })
+        .mockReturnValue(JSON.stringify(mockTemplates) as any);
+      const removeSyncStub = vi.spyOn(fs, "removeSync").mockImplementation(() => {});
 
       const result = getAllTemplatesOnPlatform(Platform.VS);
 
       assert.deepEqual(result, [mockTemplates[1]]);
+      const removedPaths = removeSyncStub.mock.calls.map((c) => String(c[0]));
       assert.isTrue(
-        removeSyncStub.calledWithMatch(
-          sinon.match((p) =>
-            String(p).includes(path.join("vs-metadata", "template-vs-version.txt"))
-          )
-        )
+        removedPaths.some((p) => p.includes(path.join("vs-metadata", "template-vs-version.txt")))
       );
     });
 
