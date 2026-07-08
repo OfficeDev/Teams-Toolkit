@@ -122,9 +122,9 @@
       "parameters": {
         "button": "left",
         "x": 350,
-        "y": 218
+        "y": 176
       },
-      "description": "Click on the \"Other Teams Capabilities\" option within the dropdown menu in the \"Teams Agent or App Using Microsoft Teams SDK\" dialog box.",
+      "description": "Click on the \"Teams Agents and Apps\" option in the \"New Project\" dropdown menu to open the Teams Capability selection.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
