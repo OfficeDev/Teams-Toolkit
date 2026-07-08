@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://aka.ms/m365atk/v4/question.schema.json",
+  "$id": "https://aka.ms/m365atk/v4/questions.schema.json",
   "title": "v4 questions.json",
   "description": "Authoring-time schema for a v4 template's Q2 questions (proposal §4). The field whitelist here is the single machine-readable source of truth; the §4 prose table is its human gloss.",
   "type": "object",
@@ -10,10 +10,18 @@
     "$schema": { "type": "string" },
     "questions": {
       "type": "array",
-      "items": { "$ref": "#/$defs/question" }
+      "items": {
+        "oneOf": [{ "$ref": "#/$defs/question" }, { "$ref": "#/$defs/useRef" }]
+      }
     }
   },
   "$defs": {
+    "useRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["use"],
+      "properties": { "use": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9-]*$" } }
+    },
     "question": {
       "type": "object",
       "additionalProperties": false,
@@ -28,6 +36,7 @@
         "placeholder": { "type": "string" },
         "prompt": { "type": "string" },
         "default": {},
+        "password": { "type": "boolean" },
         "filters": {
           "type": "object",
           "additionalProperties": {

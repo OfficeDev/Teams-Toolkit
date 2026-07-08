@@ -3,46 +3,18 @@
 
 import { FxError, SystemError } from "@microsoft/teamsfx-api";
 import AdmZip from "adm-zip";
-import { Result, err, ok } from "neverthrow";
+import { Result, err } from "neverthrow";
 import { QuestionSpec } from "../collectInputs/collectInputs";
 import { DeclarativeLocator } from "../model/dataModel";
+import { resolveQuestions, zipFragmentReader } from "./questionFragments";
 
 /** Load one create template's `questions.json`. See collect-create-inputs spec. */
 
 const SOURCE = "Scaffold";
 
-/** The native question kinds `questions.json` may declare (collect-inputs `QuestionType`). */
-const QUESTION_TYPES: ReadonlySet<string> = new Set([
-  "singleSelect",
-  "multiSelect",
-  "text",
-  "confirm",
-  "singleFile",
-  "folder",
-  "singleFileOrText",
-]);
-
 /** The `v4/<kind>/<templateId>/questions.json` entry this locator resolves to. */
 function questionsEntry(locator: DeclarativeLocator): string {
   return `v4/${locator.kind}/${locator.templateId}/questions.json`;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-/** Predicate-narrow a parsed `questions` array without an unchecked cast. */
-function isQuestionSpecArray(value: unknown): value is QuestionSpec[] {
-  return (
-    Array.isArray(value) &&
-    value.every(
-      (item) =>
-        isRecord(item) &&
-        typeof item.name === "string" &&
-        typeof item.type === "string" &&
-        QUESTION_TYPES.has(item.type)
-    )
-  );
 }
 
 export function openCreateQuestions(
@@ -98,15 +70,5 @@ export function openCreateQuestions(
     );
   }
 
-  if (!isRecord(parsed) || !isQuestionSpecArray(parsed.questions)) {
-    return err(
-      new SystemError({
-        source: SOURCE,
-        name: "PackageFileInvalid",
-        message: `The template package file "${entryPath}" must be an object with a "questions" array.`,
-      })
-    );
-  }
-
-  return ok(parsed.questions);
+  return resolveQuestions(parsed, entryPath, zipFragmentReader(zip));
 }

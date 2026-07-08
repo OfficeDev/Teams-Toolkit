@@ -47,7 +47,8 @@ else:
 1. **The presentation read** — for full-package floor bytes,
   `openCreateSelectorPresentation(bytes)` projects `v4/create/selector.json`
   onto a `SelectorPresentation` (each question's `title` / `placeholder` /
-  `staticOptions[{ id, label, detail?, groupName?, condition? }]`). For a staged
+  `keyPrefix?` / `staticOptions[{ id, label, detail?, groupName?, keyPrefix?,
+  condition? }]`). For a staged
   selector artifact, the same projection runs over the standalone JSON bytes.
   It is the presentation sibling of `openCreateSelector` /
   `openSelectorFromJsonBytes` (which keep only `{ name, condition }` for
@@ -56,7 +57,10 @@ else:
    `RouteQuestion`, looks up its presentation by `name`, filters its
    `staticOptions` by each option's environment `condition` (the shared
    evaluator over a `{ surface }` scope + the injected feature-flag reader),
-   renders the survivors via `UserInteraction.selectOption`, and returns the
+   renders the survivors via `UserInteraction.selectOption` — localizing each
+   question's `title` / `placeholder` and each option's `label` / `detail` /
+   `groupName` through its `keyPrefix` (the shared `localizePrefixedText` over
+   the NLS bundle, with the authored literal as fallback) — and returns the
    chosen `id`. A surface cancellation surfaces as the `Result` error.
 3. **The port assembly + run** — build the shared question-walk port from the
   prompt face, the shared validator registry, and the shared evaluator; route
@@ -68,9 +72,12 @@ else:
 It does **not** translate the answers to v3 inputs, does **not** ask Q2, does
 **not** scaffold, and adds **no** routing grammar — every question `condition`,
 option `condition`, and route `when` is the one shared `evaluate-expression`
-grammar (resolve-build-target INV-3). Option labels are the authored English
-fallback; `keyPrefix` localization is a tracked follow-up and rides the same
-presentation, so it does not change this operation's shape.
+grammar (resolve-build-target INV-3). User-visible text localizes through each
+question's / option's `keyPrefix` (`<keyPrefix>.{title|placeholder|label|detail|
+groupName}` in the NLS bundle) with the authored English literal as fallback —
+the same shared `localizePrefixedText` the Q2 + common-floor bridge uses
+([`collect-create-inputs`](collect-create-inputs.md)), so Q1 and Q2/Q3 share one
+localization mechanism.
 
 ## Inputs
 
@@ -122,6 +129,7 @@ presentation, so it does not change this operation's shape.
 | WCS-11 | L1 | the floor, `interactive=false`, `prefilled={ projectType:"copilot-agent-type" }` (missing `daTemplate` / `actionSource`), a UI that throws if called | `runCreateSelector` | `err` — a `UserError` naming the missing required dimension; **no** `ui.selectOption` call, **no** silent route coercion (resolve-build-target AC-03b) |
 | WCS-12 | L1 | the real shipped floor, `surface="vscode"`, `flagReader(TEAMSFX_AGENT_SKILLS)=false`, a scripted UI reaching `daTemplate` (after `projectType=copilot-agent-type`) | `runCreateSelector` (prompt face) | `ui.selectOption` is offered the `daTemplate` options **without** `skill` — the option-level `featureFlag('TEAMSFX_AGENT_SKILLS')` condition filters it; the always-on options (e.g. `no-action`) remain |
 | WCS-13 | L1 | the floor, `flagReader(TEAMSFX_AGENT_SKILLS)=true`, a scripted UI picking `projectType=copilot-agent-type` → `daTemplate=skill` | `runCreateSelector` | the `skill` option **is offered**; `ok` `BuildTarget` `{ templateId:"da/skill", engine:"v4" }`; the walk ends at `daTemplate` (no `actionSource` — that is `add-action` only) and `answers` carry both picks; the route's `featureFlag('TEAMSFX_AGENT_SKILLS')` gate is honored |
+| WCS-23 | L1 | the real shipped floor, `surface="vscode"`, a scripted UI picking `projectType=copilot-agent-type` → `daTemplate=no-action` | `runCreateSelector` (prompt face) | the `projectType` prompt localizes its `title` and each option's `label` / `detail` via `<keyPrefix>.{title\|label\|detail}` from the NLS bundle — e.g. `blank-app-type` renders its NLS label (which differs from the authored literal `"Blank App"`) with the authored icon preserved — falling back to the authored literal when no key is registered |
 | WCS-18 | L1 | the floor, a scripted UI picking `projectType=copilot-agent-type` → `daTemplate=typespec` | `runCreateSelector` | `ok` `BuildTarget` `{ templateId:"da/typespec", engine:"v4" }`; the walk ends at `daTemplate` and `answers` carry both picks |
 | WCS-19 | L1 | the floor, a scripted UI picking `projectType=copilot-agent-type` → `daTemplate=graph-connector` | `runCreateSelector` | `ok` `BuildTarget` `{ templateId:"da/graph-connector", engine:"v4" }`; the walk ends at `daTemplate` and `answers` carry both picks |
 | WCS-20 | L1 | the floor, a scripted UI picking `projectType=graph-connector-type` | `runCreateSelector` | `ok` `BuildTarget` `{ templateId:"graph-connector", engine:"v4" }`; the walk ends at `projectType` and `answers` carry that pick |

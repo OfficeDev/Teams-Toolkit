@@ -131,6 +131,7 @@ export interface PresentationOption {
   detail?: string;
   groupName?: string;
   iconPath?: string;
+  keyPrefix?: string;
   condition?: ConditionNode;
 }
 
@@ -139,6 +140,7 @@ export interface PresentationQuestion {
   name: string;
   title?: string;
   placeholder?: string;
+  keyPrefix?: string;
   staticOptions: PresentationOption[];
 }
 
@@ -173,6 +175,10 @@ function parsePresentationOption(raw: unknown): Result<PresentationOption, FxErr
   if (iconPath !== undefined) {
     option.iconPath = iconPath;
   }
+  const keyPrefix = stringField(raw, "keyPrefix");
+  if (keyPrefix !== undefined) {
+    option.keyPrefix = keyPrefix;
+  }
   const condition = raw.condition;
   if (condition !== undefined) {
     if (!isExpressionNode(condition)) {
@@ -200,6 +206,10 @@ function parsePresentationQuestion(raw: unknown): Result<PresentationQuestion, F
   const placeholder = stringField(raw, "placeholder");
   if (placeholder !== undefined) {
     question.placeholder = placeholder;
+  }
+  const keyPrefix = stringField(raw, "keyPrefix");
+  if (keyPrefix !== undefined) {
+    question.keyPrefix = keyPrefix;
   }
   if (raw.staticOptions !== undefined) {
     if (!Array.isArray(raw.staticOptions)) {

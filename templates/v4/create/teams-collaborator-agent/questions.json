@@ -1,9 +1,10 @@
 {
-  "$schema": "../../schema/question.schema.json",
+  "$schema": "../../schema/questions.schema.json",
   "questions": [
     {
       "name": "azureOpenAIKey",
       "type": "text",
+      "password": true,
       "title": "Azure OpenAI Key",
       "placeholder": "Input Azure OpenAI service key now or set it later in the project",
       "keyPrefix": "core.createProjectQuestion.llmService.azureOpenAIKey",
@@ -15,6 +16,7 @@
       "title": "Azure OpenAI Endpoint",
       "placeholder": "Input Azure OpenAI service endpoint now or set it later in the project",
       "keyPrefix": "core.createProjectQuestion.llmService.azureOpenAIEndpoint",
+      "condition": { "expr": "azureOpenAIKey != ''" },
       "optional": true
     },
     {
@@ -23,6 +25,7 @@
       "title": "Azure OpenAI Deployment Name",
       "placeholder": "Input Azure OpenAI deployment name now or set it later in the project",
       "keyPrefix": "core.createProjectQuestion.llmService.azureOpenAIDeploymentName",
+      "condition": { "expr": "azureOpenAIKey != '' && azureOpenAIEndpoint != ''" },
       "optional": true
     }
   ]

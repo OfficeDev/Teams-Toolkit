@@ -359,7 +359,7 @@ export function extractFeatures(text: string): Token[] {
   const allTokens = tokenize(text);
   const featureTokens = allTokens.filter((t) => t.type === "feature");
   for (let i = 0; i < featureTokens.length; i++) {
-    const tokenObj = featureTokens[i] as FeatureToken;
+    const tokenObj = featureTokens[i];
     let token = tokenObj.token;
 
     if (token.endsWith("<secret>")) {

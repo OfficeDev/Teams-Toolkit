@@ -1,5 +1,5 @@
 {
-  "$schema": "../../schema/question.schema.json",
+  "$schema": "../../schema/questions.schema.json",
   "questions": [
     {
       "name": "mcpServerUrl",

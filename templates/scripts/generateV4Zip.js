@@ -70,9 +70,14 @@ function addV4MetadataFiles(zip, sourceRoot, zipRoot) {
       addV4MetadataFiles(zip, sourcePath, zipPath);
       continue;
     }
-    if (
-      ["selector.json", "descriptor.json", "questions.json", "pipeline.json"].includes(entry.name)
-    ) {
+    const isTemplateMeta = [
+      "selector.json",
+      "descriptor.json",
+      "questions.json",
+      "pipeline.json",
+    ].includes(entry.name);
+    const isSharedFragment = zipPath.includes("/_shared/") && entry.name.endsWith(".json");
+    if (isTemplateMeta || isSharedFragment) {
       zip.addLocalFile(sourcePath, path.posix.dirname(zipPath));
     }
   }

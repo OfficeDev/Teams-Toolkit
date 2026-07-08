@@ -14,7 +14,6 @@ import {
   UserInteraction,
 } from "@microsoft/teamsfx-api";
 import { Result, err, ok } from "neverthrow";
-import { getLocalizedString } from "../../common/localizeUtils";
 import {
   Asked,
   OptionItem,
@@ -23,32 +22,11 @@ import {
   PromptUI,
   QuestionSpec,
 } from "../collectInputs/collectInputs";
+import { localizePrefixedText } from "./localizePrompt";
 
 /** Create-Q2 prompt bridge from v4 `PromptUI` to host `UserInteraction`. */
 
 const SOURCE = "Scaffold";
-
-function localizeText(text: string | undefined): string | undefined {
-  if (text === undefined) {
-    return undefined;
-  }
-  const localized = getLocalizedString(text);
-  return localized.length > 0 ? localized : text;
-}
-
-function localizePrefixedText(
-  keyPrefix: string | undefined,
-  suffix: string,
-  fallback: string | undefined
-): string | undefined {
-  if (keyPrefix !== undefined) {
-    const localized = getLocalizedString(`${keyPrefix}.${suffix}`);
-    if (localized.length > 0) {
-      return localized;
-    }
-  }
-  return localizeText(fallback);
-}
 
 function labelWithIcon(label: string, iconPath: string | undefined): string {
   return iconPath === undefined ? label : `$(${iconPath}) ${label}`;
@@ -156,6 +134,7 @@ export function createUiPromptUI(ui: UserInteraction): PromptUI {
           ),
           prompt: localizePrefixedText(question.keyPrefix, "prompt", question.prompt),
           default: question.default,
+          password: question.password,
           step,
           validation,
         };

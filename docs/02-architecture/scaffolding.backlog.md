@@ -146,6 +146,15 @@ decided by ADR-0014 … ADR-0019:
   (b) is clean but needs two invocations. The ADR-0014 dispatcher
   *resolution* contract does not depend on which is chosen; only the help
   UX does.
+- **v3 parity gap — DA api-spec route not `KiotaNPMIntegration`-gated
+  (recorded, not fixed).** v3 `daProjectTypeNode` chooses `apiSpecWithSearchNode()`
+  (url/file/search split) vs `apiSpecNode()` (single `singleFileOrText`) on
+  `FeatureFlags.KiotaNPMIntegration` (default `"true"`). The v4 `openapi`
+  selector route always targets the split-form `da/api-plugin-from-existing-api`.
+  Default-consistent (flag on → both split); diverges only when the flag is off.
+  Full parity would add a flag-gated route + a `singleFileOrText` DA api-plugin
+  variant (mirrors the mcp DT split `da/mcp-server` vs `da/mcp-server-static`).
+  (Found 2026-07-07.)
 
 ## 3. Visual Studio multi-project surface
 

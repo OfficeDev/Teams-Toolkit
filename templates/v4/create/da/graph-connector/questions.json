@@ -3,16 +3,18 @@
     {
       "name": "graphConnectorName",
       "type": "text",
-      "title": "Copilot connector name",
-      "placeholder": "GitHub Issues",
+      "title": "Add a connector name",
+      "placeholder": "Create a name for Copilot connector",
+      "keyPrefix": "core.GCNameQuestion",
       "cliDescription": "a name for Copilot connector",
       "validation": "graphConnectorName"
     },
     {
       "name": "graphConnectorConnectionId",
       "type": "text",
-      "title": "Copilot connector connection id",
-      "placeholder": "githubissues",
+      "title": "Add a connection ID",
+      "placeholder": "Add a connection ID for Copilot connector",
+      "keyPrefix": "core.GCConnectionIdQuestion",
       "cliDescription": "a connection id for Copilot connector",
       "validation": "graphConnectorConnectionId"
     }

@@ -7,6 +7,7 @@ import { Result, err, ok } from "neverthrow";
 import { QuestionSpec } from "../collectInputs/collectInputs";
 import { DeclarativeLocator, TemplateFileEntry } from "../model/dataModel";
 import { LoadedPackage } from "./packageDir";
+import { resolveQuestions, zipFragmentReader } from "./questionFragments";
 
 /** Open one declarative package subtree from channel zip bytes. See open-template-package spec. */
 
@@ -45,46 +46,6 @@ function missingFile(file: string): FxError {
     name: "PackageFileMissing",
     message: `The template package is missing "${file}".`,
   });
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-const QUESTION_TYPES: ReadonlySet<string> = new Set([
-  "singleSelect",
-  "multiSelect",
-  "text",
-  "confirm",
-  "singleFile",
-  "folder",
-  "singleFileOrText",
-]);
-
-function isQuestionSpecArray(value: unknown): value is QuestionSpec[] {
-  return (
-    Array.isArray(value) &&
-    value.every(
-      (item) =>
-        isRecord(item) &&
-        typeof item.name === "string" &&
-        typeof item.type === "string" &&
-        QUESTION_TYPES.has(item.type)
-    )
-  );
-}
-
-function parseQuestions(raw: unknown, file: string): Result<QuestionSpec[], FxError> {
-  if (!isRecord(raw) || !isQuestionSpecArray(raw.questions)) {
-    return err(
-      new SystemError({
-        source: SOURCE,
-        name: "PackageFileInvalid",
-        message: `The template package file "${file}" must be an object with a "questions" array.`,
-      })
-    );
-  }
-  return ok(raw.questions);
 }
 
 interface PackageMetadataEntries {
@@ -230,7 +191,11 @@ export function openDeclarativePackageMetadata(
   if (questionsRaw.isErr()) {
     return err(questionsRaw.error);
   }
-  const questions = parseQuestions(questionsRaw.value, `${root}questions.json`);
+  const questions = resolveQuestions(
+    questionsRaw.value,
+    `${root}questions.json`,
+    zipFragmentReader(zip.value)
+  );
   if (questions.isErr()) {
     return err(questions.error);
   }

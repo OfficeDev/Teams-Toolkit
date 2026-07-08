@@ -26,6 +26,7 @@ import {
 import { openDeclarativePackage } from "../distribution/declarativePackage";
 import { ExpressionRuntimePort, Scope, evaluateExpression } from "../expression/evaluateExpression";
 import { readBooleanFeatureFlag } from "../../common/featureFlags";
+import { localizePrefixedText } from "./localizePrompt";
 
 /** Live Q1 create-selector prompt face. See walk-create-selector spec. */
 
@@ -102,14 +103,17 @@ function buildPort(
     }
     const selected = await ui.selectOption({
       name: pq.name,
-      title: pq.title ?? pq.name,
-      placeholder: pq.placeholder,
+      title: localizePrefixedText(pq.keyPrefix, "title", pq.title) ?? pq.name,
+      placeholder: localizePrefixedText(pq.keyPrefix, "placeholder", pq.placeholder),
       step,
       options: visible.map((option) => ({
         id: option.id,
-        label: labelWithIcon(option.label, option.iconPath),
-        detail: option.detail,
-        groupName: option.groupName,
+        label: labelWithIcon(
+          localizePrefixedText(option.keyPrefix, "label", option.label) ?? option.label,
+          option.iconPath
+        ),
+        detail: localizePrefixedText(option.keyPrefix, "detail", option.detail),
+        groupName: localizePrefixedText(option.keyPrefix, "groupName", option.groupName),
       })),
       returnObject: false,
     });

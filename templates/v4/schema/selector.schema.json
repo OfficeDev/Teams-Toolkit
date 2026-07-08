@@ -13,7 +13,7 @@
       "items": {
         "comment": "A Q1 selector question is single-select only: it presents a closed staticOptions set and routes to exactly one template. The other input kinds (text / confirm / singleFile / folder / singleFileOrText / multiSelect) are Q2 (template) or general-input concerns, not routing dimensions, and the Q1 walk only renders staticOptions picks.",
         "allOf": [
-          { "$ref": "./question.schema.json#/$defs/question" },
+          { "$ref": "./questions.schema.json#/$defs/question" },
           { "properties": { "type": { "const": "singleSelect" } } }
         ]
       }

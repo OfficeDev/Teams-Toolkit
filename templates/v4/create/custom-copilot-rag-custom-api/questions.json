@@ -1,5 +1,5 @@
 {
-  "$schema": "../../schema/question.schema.json",
+  "$schema": "../../schema/questions.schema.json",
   "questions": [
     {
       "name": "apiSpecLocation",
@@ -25,70 +25,14 @@
     {
       "name": "apiOperations",
       "type": "multiSelect",
-      "title": "API Operations",
+      "title": "Select Operation(s) Teams Can Interact with",
+      "keyPrefix": "core.createProjectQuestion.apiSpec.operation",
       "optionsFrom": "openapi.operations",
       "optionsFromParams": {
         "apiSpecLocation": { "expr": "apiSpecLocation" }
       },
       "cliDescription": "API operations to include in the custom API agent."
     },
-    {
-      "name": "llmService",
-      "type": "singleSelect",
-      "title": "Service for Large Language Model (LLM)",
-      "placeholder": "Select a service to access LLMs",
-      "keyPrefix": "core.createProjectQuestion.llmService",
-      "default": "llm-service-azure-openai",
-      "staticOptions": [
-        {
-          "id": "llm-service-azure-openai",
-          "label": "Azure OpenAI",
-          "detail": "Access powerful LLMs in OpenAI with Azure security and reliability",
-          "keyPrefix": "core.createProjectQuestion.llmServiceAzureOpenAIOption"
-        },
-        {
-          "id": "llm-service-openai",
-          "label": "OpenAI",
-          "detail": "Access LLMs developed by OpenAI",
-          "keyPrefix": "core.createProjectQuestion.llmServiceOpenAIOption"
-        }
-      ]
-    },
-    {
-      "name": "openAIKey",
-      "type": "text",
-      "title": "OpenAI Key",
-      "placeholder": "Input OpenAI service key now or set it later in the project",
-      "keyPrefix": "core.createProjectQuestion.llmService.openAIKey",
-      "condition": { "equals": { "llmService": "llm-service-openai" } },
-      "optional": true
-    },
-    {
-      "name": "azureOpenAIKey",
-      "type": "text",
-      "title": "Azure OpenAI Key",
-      "placeholder": "Input Azure OpenAI service key now or set it later in the project",
-      "keyPrefix": "core.createProjectQuestion.llmService.azureOpenAIKey",
-      "condition": { "equals": { "llmService": "llm-service-azure-openai" } },
-      "optional": true
-    },
-    {
-      "name": "azureOpenAIEndpoint",
-      "type": "text",
-      "title": "Azure OpenAI Endpoint",
-      "placeholder": "Input Azure OpenAI service endpoint now or set it later in the project",
-      "keyPrefix": "core.createProjectQuestion.llmService.azureOpenAIEndpoint",
-      "condition": { "equals": { "llmService": "llm-service-azure-openai" } },
-      "optional": true
-    },
-    {
-      "name": "azureOpenAIDeploymentName",
-      "type": "text",
-      "title": "Azure OpenAI Deployment Name",
-      "placeholder": "Input Azure OpenAI deployment name now or set it later in the project",
-      "keyPrefix": "core.createProjectQuestion.llmService.azureOpenAIDeploymentName",
-      "condition": { "equals": { "llmService": "llm-service-azure-openai" } },
-      "optional": true
-    }
+    { "use": "llm-service" }
   ]
 }

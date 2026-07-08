@@ -20,6 +20,7 @@ import {
   resolveCreateTargetByTemplateId,
   runCreateSelector,
 } from "../../../src/v4/surface/createSelectorWalk";
+import { getLocalizedString } from "../../../src/common/localizeUtils";
 
 /**
  * Tests for docs/03-specs/operations/scaffolding/walk-create-selector.md.
@@ -155,6 +156,8 @@ describe("runCreateSelector (walk-create-selector)", () => {
     });
 
     const projectType = ui.configByName.get("projectType");
+    // Labels localize via each option's `keyPrefix` (NLS); the authored selector
+    // literals are kept in sync with the v3 NLS, so they double as the fallback.
     assert.deepEqual(
       [
         "copilot-agent-type",
@@ -169,7 +172,7 @@ describe("runCreateSelector (walk-create-selector)", () => {
         ["copilot-agent-type", "$(teamsfx-agent) Declarative Agent"],
         ["custom-engine-agent-type", "$(teamsfx-custom-copilot) Custom Engine Agent"],
         ["graph-connector-type", "$(teamsfx-graph-connector) Copilot connectors"],
-        ["blank-app-type", "$(file) Blank App"],
+        ["blank-app-type", "$(file) Blank Copilot app/agent"],
         ["teams-agent-and-app-type", "$(microsoft365-agents-toolkit-teams) Teams Agents and Apps"],
         ["office-meta-os-type", "$(microsoft365-agents-office) Office Add-in"],
         [
@@ -177,6 +180,54 @@ describe("runCreateSelector (walk-create-selector)", () => {
           "$(question) Don't know how to start? Use GitHub Copilot Chat",
         ],
       ]
+    );
+  });
+
+  it("WCS-23: Q1 prompts localize title, label, and detail via keyPrefix (NLS wins over the authored literal)", async () => {
+    // A selector whose keyPrefixes point at real shipped NLS keys but whose authored
+    // literals are deliberately wrong — proving the walk renders the localized value,
+    // not the literal fallback. (The shipped selector keeps its literals in sync with
+    // the v3 NLS, so a divergent literal is constructed here to isolate the behavior.)
+    const selector = {
+      questions: [
+        {
+          name: "projectType",
+          type: "singleSelect",
+          title: "WRONG TITLE LITERAL",
+          keyPrefix: "template.createProjectQuestion",
+          staticOptions: [
+            {
+              id: "blank-app-type",
+              label: "WRONG LABEL LITERAL",
+              detail: "WRONG DETAIL LITERAL",
+              keyPrefix: "template.createProjectQuestion.projectType.blankApp",
+            },
+          ],
+        },
+      ],
+      routes: [{ when: "projectType=='blank-app-type'", engine: "v4", templateId: "x" }],
+    };
+    const ui = new ScriptedUI({ projectType: "blank-app-type" });
+
+    await runCreateSelector(Buffer.from(JSON.stringify(selector)), asUI(ui), "vscode", {
+      selectorBytesKind: "json",
+    });
+
+    const projectType = ui.configByName.get("projectType");
+    // Title resolves `<keyPrefix>.title` from the NLS bundle, overriding the wrong literal.
+    assert.equal(projectType?.title, getLocalizedString("template.createProjectQuestion.title"));
+    assert.notEqual(projectType?.title, "WRONG TITLE LITERAL");
+
+    // Option label + detail resolve `<keyPrefix>.{label,detail}`, overriding the wrong literals.
+    const blankApp = offeredOption(projectType, "blank-app-type");
+    assert.equal(
+      blankApp?.label,
+      getLocalizedString("template.createProjectQuestion.projectType.blankApp.label")
+    );
+    assert.notEqual(blankApp?.label, "WRONG LABEL LITERAL");
+    assert.equal(
+      blankApp?.detail,
+      getLocalizedString("template.createProjectQuestion.projectType.blankApp.detail")
     );
   });
 

@@ -1,5 +1,5 @@
 {
-  "$schema": "../../../schema/question.schema.json",
+  "$schema": "../../../schema/questions.schema.json",
   "questions": [
     {
       "name": "openApiSpecType",
@@ -10,17 +10,17 @@
       "staticOptions": [
         {
           "id": "enter-url",
-          "label": "Enter OpenAPI description document URL",
+          "label": "Enter OpenAPI Document URL",
           "keyPrefix": "core.createProjectQuestion.capability.selectOpenAPISpecFromUrl"
         },
         {
           "id": "open-file",
-          "label": "Browse OpenAPI description document locally",
+          "label": "Browse to Open File",
           "keyPrefix": "core.createProjectQuestion.capability.selectOpenAPISpecFromFile"
         },
         {
           "id": "search-api",
-          "label": "Search OpenAPI description document",
+          "label": "Search OpenAPI Document",
           "keyPrefix": "core.createProjectQuestion.capability.selectOpenAPISpecFromSearch"
         }
       ]
@@ -28,9 +28,9 @@
     {
       "name": "apiSpecLocation",
       "type": "text",
-      "title": "OpenAPI Description Document",
-      "placeholder": "https://example.com/openapi.yaml",
-      "prompt": "Enter an OpenAPI description document URL.",
+      "title": "OpenAPI Document",
+      "placeholder": "Enter OpenAPI Document URL",
+      "keyPrefix": "core.createProjectQuestion.apiSpec",
       "validation": "openapiUrl",
       "cliShortName": "a",
       "cliDescription": "OpenAPI description document URL.",
@@ -39,9 +39,7 @@
     {
       "name": "apiSpecLocation",
       "type": "singleFile",
-      "title": "OpenAPI Description Document",
-      "placeholder": "Select an OpenAPI description document.",
-      "prompt": "Select an OpenAPI description document from your local machine.",
+      "title": "OpenAPI Document",
       "filters": {
         "OpenAPI Description Document": ["json", "yml", "yaml"]
       },
@@ -73,7 +71,8 @@
     {
       "name": "apiOperations",
       "type": "multiSelect",
-      "title": "API Operations",
+      "title": "Select Operation(s) Copilot Can Interact with",
+      "keyPrefix": "core.createProjectQuestion.apiSpec.copilotOperation",
       "optionsFrom": "openapi.operations",
       "optionsFromParams": {
         "apiSpecLocation": { "expr": "apiSpecLocation" }
@@ -84,7 +83,8 @@
     {
       "name": "apiOperations",
       "type": "multiSelect",
-      "title": "API Operations",
+      "title": "Select Operation(s) Copilot Can Interact with",
+      "keyPrefix": "core.createProjectQuestion.apiSpec.copilotOperation",
       "optionsFrom": "openapi.operations",
       "optionsFromParams": {
         "apiSpecLocation": { "expr": "selectOpenApiSpec" }

@@ -154,6 +154,12 @@ flowchart TD
   walked by the surface-neutral driver, and the common floor questions are
   operation-owned normalized `QuestionSpec`s in the same walk. Neither is ever
   rehydrated into a v3 `IQTreeNode` (ADR-0016 decision 6 / collect-inputs INV-1).
+  A `questions` array item may also be a `{ "use": "<name>" }` reference to a
+  shared fragment under `v4/_shared/questions/<name>.json`; the loader splices the
+  fragment's own `questions` in place (recursively; bare-name / cycle guarded) so
+  the walk always sees one flat `QuestionSpec[]`. This is authoring-time reuse
+  only (e.g. the `llm-service` fragment shared by the custom-copilot / CEA
+  templates) — it changes neither the resolved questions nor any behavior.
 - **INV-3** — A v4 identity-only `OptionItem` carries no configuration payload
   across the bridge (no v3 `option.data`); only its `id` round-trips
   (collect-inputs INV-2).
