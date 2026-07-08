@@ -122,7 +122,7 @@
       "parameters": {
         "button": "left",
         "x": 307,
-        "y": 266
+        "y": 176
       },
       "description": "Click the \"Teams Agents and Apps\" option in the top-level \"New Project\" dialog (under the \"Apps for Microsoft 365\" group) to open the \"Teams Agent or App Using Microsoft Teams SDK\" capability sub-dialog.",
       "content_refs": [],
