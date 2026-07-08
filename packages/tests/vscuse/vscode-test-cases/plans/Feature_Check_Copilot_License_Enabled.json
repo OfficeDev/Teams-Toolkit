@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0.0
     },
-    "total_steps": 15,
+    "total_steps": 16,
     "created_at": "2026-06-17T02:10:05.016638",
     "name": "Feature Check Copilot License Enabled",
     "description": {
@@ -32,6 +32,7 @@
       "step_c51b1af7",
       "step_b92621be",
       "step_9a825c12",
+      "step_7f3e9c21",
       "step_24db8255",
       "step_35bc35cf"
     ],
@@ -338,6 +339,30 @@
       "plan_id": "plan_80b368dd"
     },
     {
+      "step_id": "step_7f3e9c21",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 546,
+        "y": 347
+      },
+      "description": "Click the \"Set up your environment\" checklist item header in the Microsoft 365 Agents Toolkit \"Build a Declarative Agent\" walkthrough to re-expand it. After signing in, the walkthrough auto-advances and marks \"Set up your environment\" as done, collapsing it and expanding \"Build a declarative agent\" instead, which hides the \"Check Copilot License\" button. Re-expanding this section makes the button visible again for the following step.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay:2"
+      ],
+      "screenshot": "",
+      "created_at": "2026-06-17T02:19:55.511000",
+      "plan_id": "plan_80b368dd"
+    },
+    {
       "step_id": "step_24db8255",
       "agent": "interaction",
       "tool": "click",
@@ -354,7 +379,9 @@
       "depends_on": [],
       "preconditions": [],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "delay:2"
+      ],
       "screenshot": "step_24db8255",
       "created_at": "2026-06-17T02:19:55.512507",
       "plan_id": "plan_80b368dd"
