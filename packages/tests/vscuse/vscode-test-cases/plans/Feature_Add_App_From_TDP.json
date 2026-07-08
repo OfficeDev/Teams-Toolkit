@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2.0,
       "step_retry_timeout": 0.0
     },
-    "total_steps": 13,
+    "total_steps": 22,
     "created_at": "2026-05-18T02:19:09.515002",
     "name": "Feature Add App From TDP",
     "description": {
@@ -33,14 +33,22 @@
       "step_e71580bd",
       "step_cc23b555",
       "step_20f65283",
-      "plan_f839825b",
+      "step_31e9f685",
+      "step_a297f5f8",
+      "step_03f4c979",
+      "step_21c5b5f8",
+      "step_e0078f6d",
+      "step_d9003849",
+      "step_107216f3",
+      "step_bb847ffb",
+      "step_5486c0aa",
       "step_87ea497c",
       "step_5594f205",
       "step_8a889fe3",
       "plan_r_1023_094053"
     ],
     "tags": [],
-    "updated_at": "2026-05-18T02:48:48.001467"
+    "updated_at": "2026-07-08T06:35:07.537723"
   },
   "steps": [
     {
@@ -340,6 +348,212 @@
       "screenshot": null,
       "created_at": "2026-05-18T02:19:09.620794",
       "plan_id": "plan_06dbd424"
+    },
+    {
+      "step_id": "step_31e9f685",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "f1"
+      },
+      "description": "Press the F1 key to open the command palette in Visual Studio Code, while viewing the \"Preview README.md\" document and Microsoft 365 Agents Toolkit notifications.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:2024b03060707030"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_31e9f685",
+      "created_at": "2026-05-07T07:48:39.638253",
+      "plan_id": "plan_f839825b"
+    },
+    {
+      "step_id": "step_a297f5f8",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Debug: Select and Start Debugging"
+      },
+      "description": "Type 'Debug: Select and Start Debugging' into the VS Code Command Palette input field at the top of the window.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:6042ca2620707030"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_a297f5f8",
+      "created_at": "2026-05-07T07:48:39.666673",
+      "plan_id": "plan_f839825b"
+    },
+    {
+      "step_id": "step_03f4c979",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to select \"Debug: Select and Start Debugging\" from the command palette dropdown in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:6464b03060707030"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_03f4c979",
+      "created_at": "2026-05-07T07:48:39.689814",
+      "plan_id": "plan_f839825b"
+    },
+    {
+      "step_id": "step_21c5b5f8",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Debug in Teams (Chrome)"
+      },
+      "description": "Type 'Debug in Teams (Chrome)' into the VS Code Run and Debug launch configuration dropdown at the top center of the window.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:4446c63420706030"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_21c5b5f8",
+      "created_at": "2026-05-07T07:48:39.697280",
+      "plan_id": "plan_f839825b"
+    },
+    {
+      "step_id": "step_e0078f6d",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to select \"Debug in Teams (Chrome)\" from the launch configuration dropdown in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:4444b03060707030"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_e0078f6d",
+      "created_at": "2026-05-07T07:48:39.706926",
+      "plan_id": "plan_f839825b"
+    },
+    {
+      "step_id": "step_d9003849",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 375,
+        "y": 405
+      },
+      "description": "Click on the \"Password\" input field within the Microsoft login form on the \"Enter password\" page. The red crosshair indicates the precise interaction point for focusing on the input field.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay:180"
+      ],
+      "screenshot": "step_d9003849",
+      "created_at": "2026-05-07T07:49:06.663246",
+      "plan_id": "plan_f839825b"
+    },
+    {
+      "step_id": "step_107216f3",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{secret:M365_ACCOUNT_PASSWORD}}"
+      },
+      "description": "Type ${{secret:M365_ACCOUNT_PASSWORD}} into the 'Password' field on the Microsoft login page for user ${{env:M365_ACCOUNT_NAME}}.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:1308f0d9d1e6e6e4"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_107216f3",
+      "created_at": "2026-05-07T07:48:39.719062",
+      "plan_id": "plan_f839825b"
+    },
+    {
+      "step_id": "step_bb847ffb",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press the \"Enter\" key to submit the login password in the Microsoft sign-in page form after entering the \"Enter password\" field.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:1b08f0d9d1e6e6e4"
+      ],
+      "postconditions": [],
+      "tags": [
+        "delay: 3"
+      ],
+      "screenshot": "step_bb847ffb",
+      "created_at": "2026-05-07T07:48:39.726799",
+      "plan_id": "plan_f839825b"
+    },
+    {
+      "step_id": "step_5486c0aa",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 618,
+        "y": 531
+      },
+      "description": "Click the \"Yes\" button on the \"Stay signed in?\" prompt within the Microsoft login interface to confirm staying signed in.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:618:531:16:5:2d1229151b0b2002",
+        "dhash:618:531:96:5:004452584c020000",
+        "dhash:618:531:0:10:1c0cf0d9d9e6e6e4"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_5486c0aa",
+      "created_at": "2026-05-07T07:48:39.732975",
+      "plan_id": "plan_f839825b"
     }
   ],
   "screenshots": {
