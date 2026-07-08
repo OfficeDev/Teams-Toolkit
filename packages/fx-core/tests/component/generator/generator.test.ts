@@ -62,6 +62,9 @@ import sampleConfigV3 from "../../common/samples-config-v3.json";
 import { MockTools, randomAppName } from "../../core/utils";
 
 const originalTemplateConfig = { ...templateConfig };
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const packageJson = require("../../../package.json");
+const originalPackageVersion = (packageJson as any).version;
 
 const mockedSampleInfo: SampleConfig = {
   id: "test-id",
@@ -870,6 +873,7 @@ describe("render template", () => {
     afterEach(async () => {
       vi.restoreAllMocks();
       Object.assign(templateConfig, originalTemplateConfig);
+      (packageJson as any).version = originalPackageVersion;
       if (await fs.pathExists(tmpDir)) {
         await fs.remove(tmpDir);
       }
@@ -1121,6 +1125,10 @@ describe("render template", () => {
       await buildFakeTemplateZip(templateName, mockFileName);
 
       vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(false);
+      // Force a stable package version so getTemplateUrl runs the local-vs-remote
+      // version comparison instead of the rc short-circuit (which returns a
+      // remote URL and triggers the fallback this test guards against).
+      (packageJson as any).version = "3.0.0";
       (templateConfig as any).localVersion = "9.9.9";
       (templateConfig as any).version = "~3.0.0";
       const tagList = "1.0.0\n 2.0.0\n 2.1.0\n 3.0.0";

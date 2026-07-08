@@ -14,58 +14,71 @@ import { execAsync } from "../../../utils/commonUtils";
 import { Capability } from "../../../utils/constants";
 import { CaseFactory } from "../../caseFactory";
 import { getTestFolder, getUniqueAppName } from "../../commonUtils";
+import {
+  createMCPProjectWithEnv,
+  expectDynamicMCPProject,
+  expectNoOAuthRegister,
+  learnMCPServerUrl,
+  mcpDynamicFlowEnv,
+} from "./mcpTestUtils";
 
 // Case 2 & 5: With learn.microsoft.com/api/mcp (a public no-auth server that
 // returns tools), these cases verify the server-URL-only flow produces a valid
 // scaffold with tools and no auth block — even when no --mcp-da-auth-type is given.
 class DeclarativeAgentMCPServerUrlOnly extends CaseFactory {
+  public override async onCreate(
+    appName: string,
+    testFolder: string,
+    capability: Capability,
+    programmingLanguage?: ProgrammingLanguage,
+    custimized?: Record<string, string>,
+  ): Promise<void> {
+    await createMCPProjectWithEnv(
+      testFolder,
+      appName,
+      capability,
+      programmingLanguage,
+      custimized,
+      mcpDynamicFlowEnv,
+    );
+  }
+
   public override async onAfter(projectPath: string): Promise<void> {
     await fs.remove(projectPath);
   }
 
   public override async onAfterCreate(projectPath: string): Promise<void> {
-    const appPackage = path.join(projectPath, "appPackage");
-
-    // ai-plugin.json should have functions and runtime from auto-fetch
-    const aiPlugin = await fs.readJSON(path.join(appPackage, "ai-plugin.json"));
-    expect(aiPlugin.functions).to.be.an("array").that.is.not.empty;
-    expect(aiPlugin.runtimes).to.be.an("array").that.is.not.empty;
-    expect(aiPlugin.runtimes[0].type).to.equal("RemoteMCPServer");
-    // No auth block since server doesn't require auth
-    expect(aiPlugin.runtimes[0].auth).to.be.undefined;
-
-    // mcp-tools-1.json should exist with fetched tools
-    const mcpToolsPath = path.join(appPackage, "mcp-tools-1.json");
-    expect(fs.pathExistsSync(mcpToolsPath)).to.be.true;
-    const mcpTools = await fs.readJSON(mcpToolsPath);
-    expect(mcpTools.tools).to.be.an("array").that.is.not.empty;
-
-    // No oauth/register in yml
-    const ymlPath = path.join(projectPath, "m365agents.yml");
-    if (fs.pathExistsSync(ymlPath)) {
-      const ymlContent = fs.readFileSync(ymlPath, "utf8");
-      expect(ymlContent).to.not.include("oauth/register");
-    }
+    await expectDynamicMCPProject(projectPath);
+    expectNoOAuthRegister(projectPath);
   }
 }
 
 // Case 7: --mcp-da-auth-type omitted with a no-auth server — project should
 // succeed because auth probe detects no auth requirement.
 class DeclarativeAgentMCPNoAuthTypeNeeded extends CaseFactory {
+  public override async onCreate(
+    appName: string,
+    testFolder: string,
+    capability: Capability,
+    programmingLanguage?: ProgrammingLanguage,
+    custimized?: Record<string, string>,
+  ): Promise<void> {
+    await createMCPProjectWithEnv(
+      testFolder,
+      appName,
+      capability,
+      programmingLanguage,
+      custimized,
+      mcpDynamicFlowEnv,
+    );
+  }
+
   public override async onAfter(projectPath: string): Promise<void> {
     await fs.remove(projectPath);
   }
 
   public override async onAfterCreate(projectPath: string): Promise<void> {
-    // Project should be created successfully with no auth blocks
-    const appPackage = path.join(projectPath, "appPackage");
-    const aiPluginPath = path.join(appPackage, "ai-plugin.json");
-    expect(fs.pathExistsSync(aiPluginPath)).to.be.true;
-    const aiPlugin = await fs.readJSON(aiPluginPath);
-    expect(aiPlugin.functions).to.be.an("array").that.is.not.empty;
-    expect(aiPlugin.runtimes).to.be.an("array").that.is.not.empty;
-    // No auth — server doesn't require it
-    expect(aiPlugin.runtimes[0].auth).to.be.undefined;
+    await expectDynamicMCPProject(projectPath);
   }
 }
 
@@ -103,7 +116,10 @@ class DeclarativeAgentMCPMissingServerUrl extends CaseFactory {
 
         try {
           console.log(`[Start] "${command}" in ${testFolder}.`);
-          await execAsync(command, { cwd: testFolder, env: process.env });
+          await execAsync(command, {
+            cwd: testFolder,
+            env: { ...process.env, ...mcpDynamicFlowEnv },
+          });
           expect.fail("Expected MCP scaffold without mcpServerUrl to fail.");
         } catch (error) {
           const message =
@@ -123,8 +139,7 @@ class DeclarativeAgentMCPMissingServerUrl extends CaseFactory {
 const serverUrlOnlyRecord: Record<string, string> = {};
 serverUrlOnlyRecord["with-plugin"] = "yes";
 serverUrlOnlyRecord["api-plugin-type"] = "mcp";
-serverUrlOnlyRecord["mcp-da-server-url"] =
-  "https://learn.microsoft.com/api/mcp";
+serverUrlOnlyRecord["mcp-da-server-url"] = learnMCPServerUrl;
 
 new DeclarativeAgentMCPServerUrlOnly(
   Capability.DeclarativeAgent,
@@ -142,7 +157,7 @@ new DeclarativeAgentMCPServerUrlOnly(
 const noAuthTypeRecord: Record<string, string> = {};
 noAuthTypeRecord["with-plugin"] = "yes";
 noAuthTypeRecord["api-plugin-type"] = "mcp";
-noAuthTypeRecord["mcp-da-server-url"] = "https://learn.microsoft.com/api/mcp";
+noAuthTypeRecord["mcp-da-server-url"] = learnMCPServerUrl;
 // Intentionally omit mcp-da-auth-type
 
 new DeclarativeAgentMCPNoAuthTypeNeeded(

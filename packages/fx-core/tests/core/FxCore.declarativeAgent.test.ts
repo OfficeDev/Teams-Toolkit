@@ -2484,6 +2484,7 @@ describe("addPlugin", async () => {
       declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
     };
 
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
     vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
     vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
@@ -2544,6 +2545,7 @@ describe("addPlugin", async () => {
       declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
     };
 
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
     vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
     vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
@@ -2602,6 +2604,7 @@ describe("addPlugin", async () => {
       declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
     };
 
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
     vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
     vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
@@ -2678,6 +2681,7 @@ describe("addPlugin", async () => {
       declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
     };
 
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
     vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
     vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
@@ -2720,7 +2724,7 @@ describe("addPlugin", async () => {
     }
   });
 
-  it("from MCP (DT flag on): scaffolds the v4 add-mcp-server modify package", async () => {
+  it("from MCP (DT flag on): writes a URL-only plugin and injects oauth without the modify front door", async () => {
     const appName = await mockV3Project();
     const projectPath = path.join(os.tmpdir(), appName);
     const inputs: Inputs = {
@@ -2762,18 +2766,11 @@ describe("addPlugin", async () => {
       ok({} as DeclarativeCopilotManifestSchema)
     );
     const declarativeAgentModule = await import("../../src/core/FxCore.declarativeAgent");
-    const scaffoldV4Stub = vi
-      .spyOn(declarativeAgentModule.fxCoreDeclarativeAgentDeps, "scaffoldAddMcpServerFromV4")
-      .mockResolvedValue(ok(undefined));
-    const modifyFrontDoorStub = vi
-      .spyOn(declarativeAgentModule.fxCoreDeclarativeAgentDeps, "modifyProjectFrontDoor")
-      .mockImplementation(async (_inputs, selectorPrefill, entryParams, deps) => {
-        return deps.scaffoldV4(
-          inputs,
-          { templateId: "add-mcp-server", engine: "v4", answers: selectorPrefill },
-          entryParams
-        );
-      });
+    // DT add mcp must NOT route through the v4 modify front door.
+    const modifyFrontDoorStub = vi.spyOn(
+      declarativeAgentModule.fxCoreDeclarativeAgentDeps,
+      "modifyProjectFrontDoor"
+    );
 
     vi.spyOn(addPluginTools.ui, "showMessage").mockImplementation((level) => {
       if (level === "warn") return Promise.resolve(ok("Add"));
@@ -2796,12 +2793,6 @@ describe("addPlugin", async () => {
       .spyOn(actionInjectorModule.ActionInjector, "injectCreateOAuthActionForMCP")
       .mockResolvedValue();
 
-    const envUtilModule = await import("../../src/component/utils/envUtil");
-    vi.spyOn(envUtilModule.envUtil, "listEnv").mockResolvedValue(ok(["dev"]));
-    const writeEnvStub = vi
-      .spyOn(envUtilModule.envUtil, "writeEnv")
-      .mockResolvedValue(ok(undefined));
-
     vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
     vi.spyOn(fs, "ensureFile").mockResolvedValue();
     const writeJSONStub = vi.spyOn(fs, "writeJSON").mockResolvedValue();
@@ -2810,35 +2801,38 @@ describe("addPlugin", async () => {
     const result = await core.addPlugin(inputs);
 
     assert.isTrue(result.isOk());
-    assert.isTrue(modifyFrontDoorStub.mock.calls.length === 1);
-    assert.deepEqual(modifyFrontDoorStub.mock.calls[0][1], {
-      addCapability: "add-action",
-      actionSource: "mcp",
+    assert.equal(modifyFrontDoorStub.mock.calls.length, 0);
+
+    // The rendered plugin is URL-only: no static tools file, no
+    // `enable_dynamic_discovery` flag.
+    const pluginCall = writeJSONStub.mock.calls.find((c) => String(c[0]).includes("ai-plugin"));
+    assert.isDefined(pluginCall);
+    const pluginManifest = pluginCall![1] as any;
+    assert.deepEqual(pluginManifest.functions, []);
+    const runtime = pluginManifest.runtimes[0];
+    assert.equal(runtime.type, "RemoteMCPServer");
+    assert.deepEqual(runtime.spec, { url: "https://example.com/mcp" });
+    assert.notProperty(runtime.spec, "enable_dynamic_discovery");
+    assert.notProperty(runtime.spec, "mcp_tool_description");
+    assert.deepEqual(runtime.run_for_functions, ["*"]);
+    assert.equal(pluginManifest.namespace, "examplecom");
+    assert.deepEqual(runtime.auth, {
+      type: "OAuthPluginVault",
+      reference_id: "${{MCP_DA_AUTH_ID_EXAMPLECOM}}",
     });
-    assert.deepInclude(modifyFrontDoorStub.mock.calls[0][2], {
-      mcpServerUrl: "https://example.com/mcp",
-      teamsManifestPath: "manifest.json",
-      authType: "oauth",
-    });
-    assert.isTrue(scaffoldV4Stub.mock.calls.length === 1);
-    assert.deepInclude(scaffoldV4Stub.mock.calls[0][0], {
-      templateId: "add-mcp-server",
-      projectPath,
-      teamsManifestPath: "manifest.json",
-      appName: "My MCP App",
-      mcpServerUrl: "https://example.com/mcp",
-      authType: "oauth",
-    });
-    assert.isTrue(injectStub.mock.calls.length === 0);
-    assert.isTrue(writeEnvStub.mock.calls.length === 0);
-    assert.isTrue(writeJSONStub.mock.calls.length === 0);
+
+    // oauth/register is injected via the shared, complete injector, named after
+    // the URL-derived namespace (shared per server) — not the action id.
+    assert.equal(injectStub.mock.calls.length, 1);
+    assert.equal(injectStub.mock.calls[0][2], "examplecom");
+    assert.equal(injectStub.mock.calls[0][3], "MCP_DA_AUTH_ID_EXAMPLECOM");
 
     if (await fs.pathExists(projectPath)) {
       await fs.remove(projectPath);
     }
   });
 
-  it("from MCP (DT flag on): none auth type writes None auth without injection", async () => {
+  it("from MCP (DT flag on): none auth writes None auth and skips oauth injection", async () => {
     const appName = await mockV3Project();
     const projectPath = path.join(os.tmpdir(), appName);
     const inputs: Inputs = {
@@ -2874,18 +2868,10 @@ describe("addPlugin", async () => {
       ok({} as DeclarativeCopilotManifestSchema)
     );
     const declarativeAgentModule = await import("../../src/core/FxCore.declarativeAgent");
-    const scaffoldV4Stub = vi
-      .spyOn(declarativeAgentModule.fxCoreDeclarativeAgentDeps, "scaffoldAddMcpServerFromV4")
-      .mockResolvedValue(ok(undefined));
-    const modifyFrontDoorStub = vi
-      .spyOn(declarativeAgentModule.fxCoreDeclarativeAgentDeps, "modifyProjectFrontDoor")
-      .mockImplementation(async (_inputs, selectorPrefill, entryParams, deps) => {
-        return deps.scaffoldV4(
-          inputs,
-          { templateId: "add-mcp-server", engine: "v4", answers: selectorPrefill },
-          entryParams
-        );
-      });
+    const modifyFrontDoorStub = vi.spyOn(
+      declarativeAgentModule.fxCoreDeclarativeAgentDeps,
+      "modifyProjectFrontDoor"
+    );
 
     vi.spyOn(addPluginTools.ui, "showMessage").mockImplementation((level) => {
       if (level === "warn") return Promise.resolve(ok("Add"));
@@ -2904,16 +2890,438 @@ describe("addPlugin", async () => {
     const result = await core.addPlugin(inputs);
 
     assert.isTrue(result.isOk());
-    assert.isTrue(injectStub.mock.calls.length === 0);
-    assert.isTrue(modifyFrontDoorStub.mock.calls.length === 1);
-    assert.isTrue(scaffoldV4Stub.mock.calls.length === 1);
-    assert.deepInclude(scaffoldV4Stub.mock.calls[0][0], {
-      templateId: "add-mcp-server",
+    assert.equal(modifyFrontDoorStub.mock.calls.length, 0);
+    assert.equal(injectStub.mock.calls.length, 0);
+
+    const pluginCall = writeJSONStub.mock.calls.find((c) => String(c[0]).includes("ai-plugin"));
+    assert.isDefined(pluginCall);
+    const runtime = (pluginCall![1] as any).runtimes[0];
+    assert.equal(runtime.type, "RemoteMCPServer");
+    assert.deepEqual(runtime.spec, { url: "https://example.com/mcp" });
+    assert.notProperty(runtime.spec, "enable_dynamic_discovery");
+    assert.deepEqual(runtime.auth, { type: "None" });
+
+    if (await fs.pathExists(projectPath)) {
+      await fs.remove(projectPath);
+    }
+  });
+
+  it("from MCP (DT flag on): entra-sso routes through the shared oauth injector", async () => {
+    const appName = await mockV3Project();
+    const projectPath = path.join(os.tmpdir(), appName);
+    const inputs: Inputs = {
+      platform: Platform.CLI,
+      [QuestionNames.Folder]: os.tmpdir(),
+      [QuestionNames.TeamsAppManifestFilePath]: "manifest.json",
+      [QuestionNames.ActionType]: ActionStartOptions.mcp().id,
+      [QuestionNames.MCPForDAServerUrl]: "https://example.com/mcp",
+      [QuestionNames.MCPToolsFilePath]: "",
+      [QuestionNames.MCPForDAAuthType]: "entra-sso",
+      [QuestionNames.MCPForDAClientId]: "entra-client-id",
       projectPath,
-      mcpServerUrl: "https://example.com/mcp",
-      authType: "none",
+    };
+
+    const manifest = new TeamsAppManifest();
+    manifest.copilotExtensions = {
+      declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
+    };
+
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) => {
+      return flag === FeatureFlags.MCPForDADT;
     });
-    assert.isTrue(writeJSONStub.mock.calls.length === 0);
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(
+      copilotGptManifestUtils,
+      "getDefaultNextAvailablePluginManifestPath"
+    ).mockResolvedValue("ai-plugin_1.json");
+    vi.spyOn(copilotGptManifestUtils, "addAction").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    const declarativeAgentModule = await import("../../src/core/FxCore.declarativeAgent");
+    const modifyFrontDoorStub = vi.spyOn(
+      declarativeAgentModule.fxCoreDeclarativeAgentDeps,
+      "modifyProjectFrontDoor"
+    );
+
+    vi.spyOn(addPluginTools.ui, "showMessage").mockImplementation((level) => {
+      if (level === "warn") return Promise.resolve(ok("Add"));
+      return Promise.resolve(ok(""));
+    });
+
+    const actionInjectorModule = await import("../../src/component/configManager/actionInjector");
+    const oauthInjectStub = vi
+      .spyOn(actionInjectorModule.ActionInjector, "injectCreateOAuthActionForMCP")
+      .mockResolvedValue();
+    const dcrInjectStub = vi
+      .spyOn(actionInjectorModule.ActionInjector, "injectCreateDcrActionForMCP")
+      .mockResolvedValue();
+
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+    vi.spyOn(fs, "ensureFile").mockResolvedValue();
+    const writeJSONStub = vi.spyOn(fs, "writeJSON").mockResolvedValue();
+
+    const core = new FxCore(addPluginTools);
+    const result = await core.addPlugin(inputs);
+
+    assert.isTrue(result.isOk());
+    assert.equal(modifyFrontDoorStub.mock.calls.length, 0);
+
+    // entra-sso reuses the OAuth injector (which stamps identityProvider =
+    // MicrosoftEntra internally) — not the DCR injector.
+    assert.equal(oauthInjectStub.mock.calls.length, 1);
+    assert.equal(oauthInjectStub.mock.calls[0][1], "entra-sso");
+    assert.equal(oauthInjectStub.mock.calls[0][2], "examplecom");
+    assert.equal(dcrInjectStub.mock.calls.length, 0);
+
+    const pluginCall = writeJSONStub.mock.calls.find((c) => String(c[0]).includes("ai-plugin"));
+    assert.isDefined(pluginCall);
+    const pluginManifest = pluginCall![1] as any;
+    assert.equal(pluginManifest.namespace, "examplecom");
+    const runtime = pluginManifest.runtimes[0];
+    assert.deepEqual(runtime.spec, { url: "https://example.com/mcp" });
+    assert.deepEqual(runtime.auth, {
+      type: "OAuthPluginVault",
+      reference_id: "${{MCP_DA_AUTH_ID_EXAMPLECOM}}",
+    });
+
+    if (await fs.pathExists(projectPath)) {
+      await fs.remove(projectPath);
+    }
+  });
+
+  it("from MCP (DT flag on): oauth-dynamic routes through the shared DCR injector", async () => {
+    const appName = await mockV3Project();
+    const projectPath = path.join(os.tmpdir(), appName);
+    const inputs: Inputs = {
+      platform: Platform.CLI,
+      [QuestionNames.Folder]: os.tmpdir(),
+      [QuestionNames.TeamsAppManifestFilePath]: "manifest.json",
+      [QuestionNames.ActionType]: ActionStartOptions.mcp().id,
+      [QuestionNames.MCPForDAServerUrl]: "https://example.com/mcp",
+      [QuestionNames.MCPToolsFilePath]: "",
+      [QuestionNames.MCPForDAAuthType]: "oauth-dynamic",
+      [QuestionNames.MCPForDAAuthWellKnownUrl]:
+        "https://example.com/.well-known/oauth-authorization-server",
+      projectPath,
+    };
+
+    const manifest = new TeamsAppManifest();
+    manifest.copilotExtensions = {
+      declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
+    };
+
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) => {
+      return flag === FeatureFlags.MCPForDADT;
+    });
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(
+      copilotGptManifestUtils,
+      "getDefaultNextAvailablePluginManifestPath"
+    ).mockResolvedValue("ai-plugin_1.json");
+    vi.spyOn(copilotGptManifestUtils, "addAction").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    const declarativeAgentModule = await import("../../src/core/FxCore.declarativeAgent");
+    const modifyFrontDoorStub = vi.spyOn(
+      declarativeAgentModule.fxCoreDeclarativeAgentDeps,
+      "modifyProjectFrontDoor"
+    );
+
+    vi.spyOn(addPluginTools.ui, "showMessage").mockImplementation((level) => {
+      if (level === "warn") return Promise.resolve(ok("Add"));
+      return Promise.resolve(ok(""));
+    });
+
+    const mcpAuthScaffolderModule = await import("../../src/component/utils/mcpAuthScaffolder");
+    vi.spyOn(
+      mcpAuthScaffolderModule.mcpAuthScaffolderDeps,
+      "resolveMCPOAuthMetadata"
+    ).mockResolvedValue({
+      authorizationUrl: "https://example.com/oauth/authorize",
+      tokenUrl: "https://example.com/oauth/token",
+      refreshUrl: "https://example.com/oauth/token",
+      wellKnownUrl: "https://example.com/.well-known/oauth-authorization-server",
+    });
+
+    const actionInjectorModule = await import("../../src/component/configManager/actionInjector");
+    const oauthInjectStub = vi
+      .spyOn(actionInjectorModule.ActionInjector, "injectCreateOAuthActionForMCP")
+      .mockResolvedValue();
+    const dcrInjectStub = vi
+      .spyOn(actionInjectorModule.ActionInjector, "injectCreateDcrActionForMCP")
+      .mockResolvedValue();
+
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+    vi.spyOn(fs, "ensureFile").mockResolvedValue();
+    const writeJSONStub = vi.spyOn(fs, "writeJSON").mockResolvedValue();
+
+    const core = new FxCore(addPluginTools);
+    const result = await core.addPlugin(inputs);
+
+    assert.isTrue(result.isOk());
+    assert.equal(modifyFrontDoorStub.mock.calls.length, 0);
+
+    // oauth-dynamic reuses the DCR injector (dcr/register) — not the OAuth one.
+    assert.equal(dcrInjectStub.mock.calls.length, 1);
+    assert.equal(dcrInjectStub.mock.calls[0][1], "examplecom");
+    assert.equal(dcrInjectStub.mock.calls[0][2], "MCP_DA_AUTH_ID_EXAMPLECOM");
+    assert.equal(oauthInjectStub.mock.calls.length, 0);
+
+    const pluginCall = writeJSONStub.mock.calls.find((c) => String(c[0]).includes("ai-plugin"));
+    assert.isDefined(pluginCall);
+    const pluginManifest = pluginCall![1] as any;
+    assert.equal(pluginManifest.namespace, "examplecom");
+    const runtime = pluginManifest.runtimes[0];
+    assert.deepEqual(runtime.spec, { url: "https://example.com/mcp" });
+    assert.deepEqual(runtime.auth, {
+      type: "OAuthPluginVault",
+      reference_id: "${{MCP_DA_AUTH_ID_EXAMPLECOM}}",
+    });
+
+    if (await fs.pathExists(projectPath)) {
+      await fs.remove(projectPath);
+    }
+  });
+
+  it("from MCP (DT flag on): probes the MCP server for auth metadata when none is provided", async () => {
+    const appName = await mockV3Project();
+    const projectPath = path.join(os.tmpdir(), appName);
+    const inputs: Inputs = {
+      platform: Platform.CLI,
+      [QuestionNames.Folder]: os.tmpdir(),
+      [QuestionNames.TeamsAppManifestFilePath]: "manifest.json",
+      [QuestionNames.ActionType]: ActionStartOptions.mcp().id,
+      [QuestionNames.MCPForDAServerUrl]: "https://example.com/mcp",
+      [QuestionNames.MCPToolsFilePath]: "",
+      [QuestionNames.MCPForDAAuthType]: "oauth",
+      [QuestionNames.MCPForDAClientId]: "client-id",
+      [QuestionNames.MCPForDAClientSecret]: "client-secret",
+      [QuestionNames.MCPForDAScopes]: "scope-a",
+      // MCPForDAAuthMetadataUrl intentionally absent — the add question tree does
+      // not collect it, so the server must be probed to discover it.
+      projectPath,
+    };
+
+    const manifest = new TeamsAppManifest();
+    manifest.copilotExtensions = {
+      declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
+    };
+
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) => {
+      return flag === FeatureFlags.MCPForDADT;
+    });
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(
+      copilotGptManifestUtils,
+      "getDefaultNextAvailablePluginManifestPath"
+    ).mockResolvedValue("ai-plugin_1.json");
+    vi.spyOn(copilotGptManifestUtils, "addAction").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+
+    vi.spyOn(addPluginTools.ui, "showMessage").mockImplementation((level) => {
+      if (level === "warn") return Promise.resolve(ok("Add"));
+      return Promise.resolve(ok(""));
+    });
+
+    const mcpToolFetcherModule = await import("../../src/component/utils/mcpToolFetcher");
+    const probeStub = vi.spyOn(mcpToolFetcherModule, "probeMCPServerAuth").mockResolvedValue({
+      requiresAuth: true,
+      authMetadataUrl: "https://example.com/.well-known/oauth-protected-resource",
+    });
+
+    const mcpAuthScaffolderModule = await import("../../src/component/utils/mcpAuthScaffolder");
+    const resolveMetadataStub = vi
+      .spyOn(mcpAuthScaffolderModule.mcpAuthScaffolderDeps, "resolveMCPOAuthMetadata")
+      .mockResolvedValue({
+        authorizationUrl: "https://example.com/oauth/authorize",
+        tokenUrl: "https://example.com/oauth/token",
+        refreshUrl: "https://example.com/oauth/token",
+        wellKnownUrl: "https://example.com/.well-known/oauth-authorization-server",
+      });
+
+    const actionInjectorModule = await import("../../src/component/configManager/actionInjector");
+    vi.spyOn(
+      actionInjectorModule.ActionInjector,
+      "injectCreateOAuthActionForMCP"
+    ).mockResolvedValue();
+
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+    vi.spyOn(fs, "ensureFile").mockResolvedValue();
+    vi.spyOn(fs, "writeJSON").mockResolvedValue();
+
+    const core = new FxCore(addPluginTools);
+    const result = await core.addPlugin(inputs);
+
+    assert.isTrue(result.isOk());
+    // No metadata URL was provided, so the server is probed and the discovered
+    // URL flows into endpoint resolution.
+    assert.equal(probeStub.mock.calls.length, 1);
+    assert.equal(probeStub.mock.calls[0][0], "https://example.com/mcp");
+    assert.equal(resolveMetadataStub.mock.calls.length, 1);
+    assert.equal(
+      resolveMetadataStub.mock.calls[0][0],
+      "https://example.com/.well-known/oauth-protected-resource"
+    );
+
+    if (await fs.pathExists(projectPath)) {
+      await fs.remove(projectPath);
+    }
+  });
+
+  it("from MCP (DT flag on): still injects oauth/register when auth metadata cannot be resolved", async () => {
+    const appName = await mockV3Project();
+    const projectPath = path.join(os.tmpdir(), appName);
+    const inputs: Inputs = {
+      platform: Platform.CLI,
+      [QuestionNames.Folder]: os.tmpdir(),
+      [QuestionNames.TeamsAppManifestFilePath]: "manifest.json",
+      [QuestionNames.ActionType]: ActionStartOptions.mcp().id,
+      [QuestionNames.MCPForDAServerUrl]: "https://example.com/mcp",
+      [QuestionNames.MCPToolsFilePath]: "",
+      [QuestionNames.MCPForDAAuthType]: "oauth",
+      [QuestionNames.MCPForDAClientId]: "client-id",
+      [QuestionNames.MCPForDAClientSecret]: "client-secret",
+      [QuestionNames.MCPForDAScopes]: "scope-a",
+      [QuestionNames.MCPForDAAuthMetadataUrl]: "https://example.com/.well-known/oauth-metadata",
+      projectPath,
+    };
+
+    const manifest = new TeamsAppManifest();
+    manifest.copilotExtensions = {
+      declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
+    };
+
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) => {
+      return flag === FeatureFlags.MCPForDADT;
+    });
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(
+      copilotGptManifestUtils,
+      "getDefaultNextAvailablePluginManifestPath"
+    ).mockResolvedValue("ai-plugin_1.json");
+    vi.spyOn(copilotGptManifestUtils, "addAction").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+
+    vi.spyOn(addPluginTools.ui, "showMessage").mockImplementation((level) => {
+      if (level === "warn") return Promise.resolve(ok("Add"));
+      return Promise.resolve(ok(""));
+    });
+
+    // Auth-server metadata resolution fails (server unreachable / no metadata).
+    const mcpAuthScaffolderModule = await import("../../src/component/utils/mcpAuthScaffolder");
+    vi.spyOn(
+      mcpAuthScaffolderModule.mcpAuthScaffolderDeps,
+      "resolveMCPOAuthMetadata"
+    ).mockRejectedValue(new Error("no resource_metadata"));
+
+    const actionInjectorModule = await import("../../src/component/configManager/actionInjector");
+    const injectStub = vi
+      .spyOn(actionInjectorModule.ActionInjector, "injectCreateOAuthActionForMCP")
+      .mockResolvedValue();
+
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+    vi.spyOn(fs, "ensureFile").mockResolvedValue();
+    vi.spyOn(fs, "writeJSON").mockResolvedValue();
+
+    const core = new FxCore(addPluginTools);
+    const result = await core.addPlugin(inputs);
+
+    assert.isTrue(result.isOk());
+    // Endpoint resolution failing must NOT block the oauth/register injection:
+    // the action is still written (with empty endpoints for the dev to fill in).
+    assert.equal(injectStub.mock.calls.length, 1);
+    assert.equal(injectStub.mock.calls[0][2], "examplecom");
+    assert.equal(injectStub.mock.calls[0][3], "MCP_DA_AUTH_ID_EXAMPLECOM");
+
+    if (await fs.pathExists(projectPath)) {
+      await fs.remove(projectPath);
+    }
+  });
+
+  it("from MCP (DT off): uses legacy static add-action path", async () => {
+    const appName = await mockV3Project();
+    const projectPath = path.join(os.tmpdir(), appName);
+    const inputs: Inputs = {
+      platform: Platform.CLI,
+      [QuestionNames.Folder]: os.tmpdir(),
+      [QuestionNames.TeamsAppManifestFilePath]: "manifest.json",
+      [QuestionNames.ActionType]: ActionStartOptions.mcp().id,
+      [QuestionNames.MCPForDAServerUrl]: "https://example.com/mcp",
+      [QuestionNames.MCPToolsFilePath]: "",
+      [QuestionNames.MCPForDAAvailableTools]: [{ name: "tool1", description: "Tool 1" }],
+      [QuestionNames.MCPForDAPreFetchTools]: ["tool1"],
+      [QuestionNames.MCPForDAAuth]: "NoneAuth",
+      [QuestionNames.MCPForDAAuthType]: "none",
+      projectPath,
+    };
+
+    const manifest = new TeamsAppManifest();
+    manifest.copilotExtensions = {
+      declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
+    };
+
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(
+      copilotGptManifestUtils,
+      "getDefaultNextAvailablePluginManifestPath"
+    ).mockResolvedValue("ai-plugin_1.json");
+    vi.spyOn(copilotGptManifestUtils, "addAction").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    const declarativeAgentModule = await import("../../src/core/FxCore.declarativeAgent");
+    const modifyFrontDoorStub = vi
+      .spyOn(declarativeAgentModule.fxCoreDeclarativeAgentDeps, "modifyProjectFrontDoor")
+      .mockRejectedValue(new Error("modifyProjectFrontDoor should not run when DT is off"));
+
+    vi.spyOn(addPluginTools.ui, "showMessage").mockImplementation((level) => {
+      if (level === "warn") return Promise.resolve(ok("Add"));
+      return Promise.resolve(ok(""));
+    });
+
+    vi.spyOn(fs, "ensureFile").mockResolvedValue();
+    const writeJSONStub = vi.spyOn(fs, "writeJSON").mockResolvedValue();
+
+    const core = new FxCore(addPluginTools);
+    const result = await core.addPlugin(inputs);
+
+    assert.isTrue(result.isOk());
+    assert.isTrue(modifyFrontDoorStub.mock.calls.length === 0);
+    const pluginCall = writeJSONStub.mock.calls.find((call) => {
+      const content = call[1] as any;
+      return Array.isArray(content?.functions) && Array.isArray(content?.runtimes);
+    });
+    assert.isDefined(pluginCall);
+    assert.deepEqual((pluginCall?.[1] as any).functions, [
+      { name: "tool1", description: "Tool 1" },
+    ]);
 
     if (await fs.pathExists(projectPath)) {
       await fs.remove(projectPath);
@@ -2941,6 +3349,7 @@ describe("addPlugin", async () => {
       declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
     };
 
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
     vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
     vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
@@ -2988,6 +3397,7 @@ describe("addPlugin", async () => {
       declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
     };
 
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
     vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
     vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
@@ -3041,6 +3451,7 @@ describe("addPlugin", async () => {
       declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
     };
 
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
     vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
     vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
@@ -3091,6 +3502,7 @@ describe("addPlugin", async () => {
       declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
     };
 
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
     vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
     vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
@@ -3138,6 +3550,7 @@ describe("addPlugin", async () => {
       projectPath,
     };
 
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
     const realEnsureDir = fs.ensureDir.bind(fs);
     const ensureDirStub = vi.spyOn(fs, "ensureDir").mockImplementation(async (p: any) => {
@@ -3190,6 +3603,7 @@ describe("addPlugin", async () => {
       projectPath,
     };
 
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
     vi.spyOn(addPluginTools.ui, "showMessage");
 
@@ -3218,6 +3632,7 @@ describe("addPlugin", async () => {
       projectPath,
     };
 
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
     vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     vi.spyOn(fs, "readJSON").mockResolvedValue({
@@ -3279,6 +3694,7 @@ describe("addPlugin", async () => {
       projectPath,
     };
 
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
     vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     vi.spyOn(fs, "readJSON").mockResolvedValue({
@@ -3331,6 +3747,7 @@ describe("addPlugin", async () => {
       projectPath,
     };
 
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
     vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     vi.spyOn(fs, "readJSON").mockRejectedValue(new Error("invalid JSON"));
@@ -3378,6 +3795,7 @@ describe("addPlugin", async () => {
       projectPath,
     };
 
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
     vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     // Existing file is valid JSON but missing the `servers` field.
@@ -3430,6 +3848,7 @@ describe("addPlugin", async () => {
       declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
     };
 
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
     vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
     vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
@@ -3481,6 +3900,7 @@ describe("addPlugin", async () => {
       declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
     };
 
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
     vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
     vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
@@ -3529,6 +3949,7 @@ describe("addPlugin", async () => {
       declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
     };
 
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
     vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
     vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
@@ -3576,6 +3997,7 @@ describe("addPlugin", async () => {
       declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
     };
 
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
     vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
     vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
@@ -3639,6 +4061,7 @@ describe("addPlugin", async () => {
       declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
     };
 
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
     vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
     vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
@@ -3702,6 +4125,7 @@ describe("addPlugin", async () => {
       declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
     };
 
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
     vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
     vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
     vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
