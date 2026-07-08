@@ -8,6 +8,7 @@ from microsoft_teams.ai.ai_model import AIModel
 from microsoft_teams.apps import App, ActivityContext
 from microsoft_teams.openai import OpenAICompletionsAIModel
 from microsoft_teams.api import CitationAppearance, MessageActivity, MessageActivityInput, MessageSubmitActionInvokeActivity
+from openai import OpenAIError
 
 from config import Config
 from azure_ai_search_data_source import AzureAISearchDataSource, AzureAISearchDataSourceOptions
@@ -96,7 +97,7 @@ async def handle_stateful_conversation(model: AIModel, ctx: ActivityContext[Mess
             memory=memory,
             instructions=f"{INSTRUCTIONS}\n\nAdditional Context:\n${data_context.output}"
         )
-    except Exception as e:
+    except OpenAIError as e:
         print(f"Error sending chat prompt: {e}")
         await ctx.send(MessageActivityInput(text="An error occurred while processing your request."))
         return

@@ -1,14 +1,29 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+import { assert } from "chai";
 import * as fs from "fs";
 import * as path from "path";
-import { assert } from "vitest";
 
 const REPO_ROOT = path.resolve(__dirname, "../../../../..");
 
 function readTemplate(relativePath: string): string {
   return fs.readFileSync(path.join(REPO_ROOT, relativePath), "utf8");
+}
+
+function assertContainsInOrder(text: string, parts: string[]): void {
+  let previousIndex = -1;
+
+  for (const part of parts) {
+    const currentIndex = text.indexOf(part, previousIndex + 1);
+    assert.isAtLeast(currentIndex, 0, `expected template to include '${part}'`);
+    assert.isAbove(
+      currentIndex,
+      previousIndex,
+      `expected '${part}' to appear after the prior step`
+    );
+    previousIndex = currentIndex;
+  }
 }
 
 describe("Python OpenAI error handling templates", () => {
@@ -17,10 +32,15 @@ describe("Python OpenAI error handling templates", () => {
       "templates/vsc/python/teams-agent-with-data-custom-api-v2/src/app.py.tpl"
     );
 
-    assert.match(
-      app,
-      /try:\s+chat_result = await prompt\.send\([\s\S]+except Exception as e:\s+print\(f"Error sending chat prompt: \{e\}"\)\s+await ctx\.send\(MessageActivityInput\(text="An error occurred while processing your request\."\)\)\s+return/
-    );
+    assert.include(app, "from openai import OpenAIError");
+    assertContainsInOrder(app, [
+      "try:",
+      "chat_result = await prompt.send(",
+      "except OpenAIError as e:",
+      'print(f"Error sending chat prompt: {e}")',
+      'await ctx.send(MessageActivityInput(text="An error occurred while processing your request."))',
+      "return",
+    ]);
   });
 
   it("wraps Azure AI Search data fetch and prompt.send in the same catch block", () => {
@@ -28,9 +48,15 @@ describe("Python OpenAI error handling templates", () => {
       "templates/vsc/python/custom-copilot-rag-azure-ai-search/src/app.py.tpl"
     );
 
-    assert.match(
-      app,
-      /try:\s+data_context = await azure_ai_search\.render_data\(input\)[\s\S]+chat_result = await chat_prompt\.send\([\s\S]+except Exception as e:\s+print\(f"Error sending chat prompt: \{e\}"\)\s+await ctx\.send\(MessageActivityInput\(text="An error occurred while processing your request\."\)\)\s+return/
-    );
+    assert.include(app, "from openai import OpenAIError");
+    assertContainsInOrder(app, [
+      "try:",
+      "data_context = await azure_ai_search.render_data(input)",
+      "chat_result = await chat_prompt.send(",
+      "except OpenAIError as e:",
+      'print(f"Error sending chat prompt: {e}")',
+      'await ctx.send(MessageActivityInput(text="An error occurred while processing your request."))',
+      "return",
+    ]);
   });
 });
