@@ -14,9 +14,11 @@ import {
   PromptResult,
   RouteQuestion,
   RouteResolverPort,
+  SelectorWalkResult,
   resolveBuildTarget,
   v4RouteRegistryFromSelector,
 } from "../buildTarget/resolveBuildTarget";
+import { WalkHistoryEntry } from "../collectInputs/collectInputs";
 import {
   openCreateSelector,
   openCreateSelectorPresentation,
@@ -48,6 +50,8 @@ export interface CreateSelectorDeps {
   prefilled?: Record<string, string>;
   /** Whether unfilled required dimensions may be prompted. */
   interactive?: boolean;
+  /** Resume a prior Q1 walk (cross-phase back): re-ask its last dimension with the retained history. */
+  resume?: { history: WalkHistoryEntry[] };
 }
 
 /** The default env-backed feature-flag reader (a flag is on iff its env var is exactly `"true"`). */
@@ -151,7 +155,7 @@ export async function runCreateSelector(
   ui: UserInteraction,
   surface: string,
   deps: CreateSelectorDeps = {}
-): Promise<Result<BuildTarget, FxError>> {
+): Promise<Result<SelectorWalkResult, FxError>> {
   const flagReader = deps.flagReader ?? envFlagReader;
   const selectorBytesKind = deps.selectorBytesKind ?? "zip";
   const prefilled = deps.prefilled ?? {};
@@ -180,7 +184,9 @@ export async function runCreateSelector(
       (selectorBytesKind === "json" ? v4RouteRegistryFromSelector(spec.value) : undefined)
   );
   try {
-    return await resolveBuildTarget(spec.value, prefilled, interactive, port);
+    return await resolveBuildTarget(spec.value, prefilled, interactive, port, {
+      resume: deps.resume,
+    });
   } catch (e) {
     return err(toFxError(e));
   }

@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { FxError, Inputs, UserInteraction } from "@microsoft/teamsfx-api";
-import { Result, err } from "neverthrow";
+import { FxError, Inputs, UserError, UserInteraction } from "@microsoft/teamsfx-api";
+import { Result, err, ok } from "neverthrow";
 import { MCPFetchResult, fetchMCPTools } from "../../component/utils/mcpToolFetcher";
 import { ODRProvider, type ODRServer } from "../../component/utils/odrProvider";
 import { readBooleanFeatureFlag } from "../../common/featureFlags";
@@ -11,7 +11,7 @@ import {
   CollectInputsPort,
   OptionsProvider,
   OptionsSchema,
-  collectInputs,
+  walkInputs,
 } from "../collectInputs/collectInputs";
 import { openDeclarativePackageMetadata } from "../distribution/declarativePackage";
 import { evaluateExpression } from "../expression/evaluateExpression";
@@ -103,16 +103,28 @@ export interface CreateInputsDeps {
   listLocalMcpServers?: () => Promise<ODRServer[]>;
   /** Search public OpenAPI descriptions for the v3-compatible OpenAPI source picker. */
   searchOpenAPISpec?: (query: string) => Promise<SearchOpenAPISpecResult[]>;
+  /** Continue Q1's step numbering (its `promptCount`) so Q2's first prompt shows a Back button. */
+  baseStep?: number;
+  /** When true, a back past Q2's first prompt returns `{ kind: "back" }` (the front door re-enters Q1). */
+  backable?: boolean;
 }
 
-/** Run one create template's Q2 over the host surface. */
-export async function runCreateInputs(
+/** The create-input walk's outcome: completed answers, or a `back` for the front door's re-entry loop. */
+export type CreateInputsOutcome = { kind: "done"; answers: Answers } | { kind: "back" };
+
+/**
+ * Run one create template's Q2 + common floor over the host surface, returning a
+ * resumable outcome. `deps.baseStep` continues Q1's step numbering and
+ * `deps.backable` turns a back past the first prompt into a `{ kind: "back" }`
+ * outcome (the front door then re-enters Q1). See collect-create-inputs CCI-25/26.
+ */
+export async function runCreateInputsWalk(
   floorBytes: Buffer,
   locator: DeclarativeLocator,
   entryParams: Answers,
   ui: UserInteraction,
   deps: CreateInputsDeps = {}
-): Promise<Result<Answers, FxError>> {
+): Promise<Result<CreateInputsOutcome, FxError>> {
   const opened = openDeclarativePackageMetadata(floorBytes, locator);
   if (opened.isErr()) {
     return err(opened.error);
@@ -159,25 +171,62 @@ export async function runCreateInputs(
     nonInteractive: deps.inputs?.nonInteractive === true ? "true" : "false",
   };
 
-  const answers = await collectInputs(
+  const walked = await walkInputs(
     [...opened.value.questions, ...floorTail.value.questions],
     declaredOptionsSchema(descriptor),
     initialAnswers,
-    port
+    port,
+    { baseStep: deps.baseStep, backable: deps.backable }
   );
-  if (answers.isErr()) {
-    return err(answers.error);
+  if (walked.isErr()) {
+    return err(walked.error);
   }
-  delete answers.value.nonInteractive;
-  const selectedOpenApiSpec = answers.value.selectOpenApiSpec;
-  if (answers.value.apiSpecLocation === undefined && typeof selectedOpenApiSpec === "string") {
-    answers.value.apiSpecLocation = selectedOpenApiSpec;
+  if (walked.value.kind === "back") {
+    return ok({ kind: "back" });
+  }
+  const answers = walked.value.answers;
+  delete answers.nonInteractive;
+  const selectedOpenApiSpec = answers.selectOpenApiSpec;
+  if (answers.apiSpecLocation === undefined && typeof selectedOpenApiSpec === "string") {
+    answers.apiSpecLocation = selectedOpenApiSpec;
   }
   if (deps.inputs !== undefined) {
-    const validation = await validateCreateFloorAnswers(deps.inputs, answers.value);
+    const validation = await validateCreateFloorAnswers(deps.inputs, answers);
     if (validation.isErr()) {
       return err(validation.error);
     }
   }
-  return answers;
+  return ok({ kind: "done", answers });
+}
+
+/**
+ * Run one create template's Q2 over the host surface — the stable non-resumable
+ * entry over {@link runCreateInputsWalk} (`backable` off), so a back past the
+ * first prompt cancels and the result is the plain `Answers`.
+ */
+export async function runCreateInputs(
+  floorBytes: Buffer,
+  locator: DeclarativeLocator,
+  entryParams: Answers,
+  ui: UserInteraction,
+  deps: CreateInputsDeps = {}
+): Promise<Result<Answers, FxError>> {
+  const outcome = await runCreateInputsWalk(floorBytes, locator, entryParams, ui, {
+    ...deps,
+    backable: false,
+  });
+  if (outcome.isErr()) {
+    return err(outcome.error);
+  }
+  /* istanbul ignore next -- backable is forced off, so the walk cancels before returning a top-level back */
+  if (outcome.value.kind === "back") {
+    return err(
+      new UserError({
+        source: "Scaffold",
+        name: "InputWalkCancelled",
+        message: "the input walk was cancelled by going back from the first question",
+      })
+    );
+  }
+  return ok(outcome.value.answers);
 }

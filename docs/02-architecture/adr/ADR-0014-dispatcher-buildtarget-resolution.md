@@ -1,8 +1,8 @@
 # ADR-0014 — Dispatcher + BuildTarget resolution as the scaffolding front stage
 
-- **Status:** Accepted (Amended 2026-07-02 — see Amendments 1–3)
+- **Status:** Accepted (Amended 2026-07-08 — see Amendments 1–4)
 - **Date:** 2026-05-28 (Accepted 2026-06-05; Amended 2026-06-15;
-  Amended 2026-07-02)
+  Amended 2026-07-02; Amended 2026-07-08)
 - **Source:** [`scaffolding.create.proposal.md` §14](../scaffolding.create.proposal.md#14-adrs-this-proposal-will-be-decomposed-into)
   (decomposes §§5, 5.1, 5.3, 9, 9.1, 10; invariants 12, 17). Validated against
   the on-disk `templates/v4/create/selector.json` and
@@ -294,3 +294,78 @@ rejects legacy `engine:"v3"` routes as malformed selector JSON. Create dispatch
 withdraws the v3-generator rejection AC rows because such `BuildTarget`s are no
 longer representable; `engine:"v3-core-method"` remains an unsupported create
 target.
+
+## Amendment 4 — Cross-phase back navigation as a front-door re-entry loop (2026-07-08)
+
+- **Status:** Accepted (in-place amendment; additive — no prior decision is
+  superseded).
+- **Scope:** How back navigation composes across the Q1 → dispatch → Q2 phase
+  boundary. The single `walk` source, the closed `engine` set, descriptor-bound
+  `language`, and `templateId`-only dispatch are all unchanged.
+
+### Why
+
+Q1 (`walk-create-selector`) and Q2+common-floor (`collect-create-inputs`) are
+two separate runs of the one shared question-walk engine, glued by this
+dispatcher: Q1 resolves a `BuildTarget`, then dispatch runs Q2 for the resolved
+template. Each phase already has *internal* back (collect-inputs INV-8), but a
+`back` at Q2's **first** prompt had nowhere to go — the first prompt showed no
+Back button (step 1) and a forced back cancelled the whole create. Users expect
+one continuous wizard: from Q2's first question, `back` should return to Q1's
+last dimension and let them re-pick, potentially selecting a **different**
+template whose Q2+Q3 differ.
+
+The original deferral cited the shared v3 `traverse`; that reason is now moot —
+the create selector routes are all `engine:"v4"` (Amendment 3), so every create
+Q2 is the v4 engine this project owns. The only real question is how a changed
+Q1 pick loads a different template's Q2+Q3 without a stale-state hazard.
+
+### Decision
+
+1. **A front-door re-entry loop.** With `TEAMSFX_V4_ENABLED` on, the
+   `engine:"v4"` path is a loop: run Q1 (retaining its `history` +
+   `promptCount`), dispatch, run Q2+floor with `baseStep = promptCount` (so Q2's
+   first prompt continues Q1's numbering and shows a Back button) and
+   `backable`, and on a Q2-first `back` re-enter Q1 at its last dimension via its
+   retained history. `back` past Q1's first dimension cancels the whole create
+   (`BuildTargetWalkCancelled`).
+
+2. **Q1 history is retained; Q2+Q3 are stateless-rebuilt per forward crossing.**
+   The loop retains only the **Q1** walk history (so Q1 back is multi-level and
+   continuous across re-entry). Q2+Q3 are re-derived from the resolved
+   `BuildTarget` on every forward crossing — a different `templateId` re-opens
+   that template's `questions.json` + `descriptor` (its `optionsSchema`,
+   `languages`) and rebuilds the question set from scratch. The loop keeps **no**
+   Q2 answer cache, so "different Q1 pick → different Q2+Q3" needs no
+   invalidation logic: the stale template's answers are simply not carried.
+
+3. **All back logic stays in the one shared engine.** The engine
+   (`collect-inputs`) gains a `baseStep` offset, a `backable` typed
+   `{ kind:"back" }` outcome, and a resumable `history` (in/out) — no surface or
+   this dispatcher owns a parallel back-stack. The front door only ferries the
+   opaque Q1 `history` between phases (v4-scaffolding "one walk engine").
+
+### Consequences
+
+- **New constraint:** the re-entry loop is scoped **below** the
+  preset-`template-name` short-circuit (Amendment 1 / INV-8), so a prior
+  iteration's `inputs["template-name"]` never re-triggers the preset path and
+  skips Q1. Preset resolution stays a one-shot, non-looping front-door entry.
+- The legacy `collectInputs(...)` entry stays a thin wrapper over the resumable
+  engine, so the existing collect-inputs contract (INPUT-01..19, INV-8) is
+  byte-for-byte unchanged; only new callers opt into `baseStep` / `backable` /
+  `resume`.
+- Whole behavior is behind `TEAMSFX_V4_ENABLED` (default off); flag-off is the
+  unchanged v3 pass-through.
+
+### Derived-spec impact
+
+[`collect-inputs`](../../03-specs/operations/scaffolding/collect-inputs.md)
+(INPUT-20..22, INV-9 — the resumable walk primitive),
+[`collect-create-inputs`](../../03-specs/operations/scaffolding/collect-create-inputs.md)
+(CCI-25/26, INV-11 — threading + stateless Q2+Q3 rebuild),
+[`walk-create-selector`](../../03-specs/operations/scaffolding/walk-create-selector.md)
+(WCS-24/25, INV-6 — Q1 resume + `history`/`promptCount` output), and
+[`dispatch-create-by-engine`](../../03-specs/operations/scaffolding/dispatch-create-by-engine.md)
+(DCE-22..25, INV-10 — the re-entry loop) realize this amendment. No other
+ADR-0014 consequence changes.

@@ -15,7 +15,9 @@ import { assert } from "vitest";
 import {
   Answers,
   BuildTarget,
+  CreateInputsOutcome,
   DeclarativeLocator,
+  SelectorWalkResult,
   TemplateArtifactKind,
   TemplateArtifactSnapshot,
 } from "../../src/v4";
@@ -78,8 +80,8 @@ function recorder<A extends unknown[], R>(
 
 const okResult = (projectPath: string): Promise<Result<CreateProjectResult, FxError>> =>
   Promise.resolve(ok({ projectPath }));
-const okAnswers = (answers: Answers): Promise<Result<Answers, FxError>> =>
-  Promise.resolve(ok(answers));
+const okAnswers = (answers: Answers): Promise<Result<CreateInputsOutcome, FxError>> =>
+  Promise.resolve(ok({ kind: "done", answers }));
 const okArtifactSnapshot = (
   snapshot: TemplateArtifactSnapshot
 ): Promise<Result<TemplateArtifactSnapshot, FxError>> => {
@@ -88,8 +90,8 @@ const okArtifactSnapshot = (
   );
   return Promise.resolve(result);
 };
-const okTarget = (target: BuildTarget): Promise<Result<BuildTarget, FxError>> =>
-  Promise.resolve(ok(target));
+const okTarget = (target: BuildTarget): Promise<Result<SelectorWalkResult, FxError>> =>
+  Promise.resolve(ok({ ...target, history: [], promptCount: 0 }));
 const okFloor = (): Promise<Result<undefined, FxError>> => Promise.resolve(ok(undefined));
 const okScaffold = (
   _inputs: Inputs,
@@ -113,11 +115,11 @@ function selectorRecorder(target: BuildTarget) {
         selectorBytesKind?: "zip" | "json";
         v4Registry?: (templateId: string) => boolean;
       }
-    ): Promise<Result<BuildTarget, FxError>> => okTarget(target)
+    ): Promise<Result<SelectorWalkResult, FxError>> => okTarget(target)
   );
 }
 
-/** A typed `runCreateInputs` stub that records its `(floor, locator, entry, ui, deps)` args. */
+/** A typed `runCreateInputsWalk` stub that records its `(floor, locator, entry, ui, deps)` args. */
 function inputsRecorder(answers: Answers) {
   return recorder(
     (
@@ -126,7 +128,7 @@ function inputsRecorder(answers: Answers) {
       _entry: Answers,
       _ui: UserInteraction,
       _deps?: { flagReader?: (name: string) => boolean; surface?: string }
-    ): Promise<Result<Answers, FxError>> => okAnswers(answers)
+    ): Promise<Result<CreateInputsOutcome, FxError>> => okAnswers(answers)
   );
 }
 
@@ -189,10 +191,10 @@ const failCollectFloor = (
 ): Promise<Result<undefined, FxError>> => {
   throw new Error("collectCreateFloor must not run on this path");
 };
-const failRunInputs = (): Promise<Result<Answers, FxError>> => {
+const failRunInputs = (): Promise<Result<CreateInputsOutcome, FxError>> => {
   throw new Error("runInputs must not run on this path");
 };
-const failRunSelector = (): Promise<Result<BuildTarget, FxError>> => {
+const failRunSelector = (): Promise<Result<SelectorWalkResult, FxError>> => {
   throw new Error("runSelector must not run on this path");
 };
 const failResolveByTemplateId = (): Result<BuildTarget, FxError> => {
@@ -495,8 +497,12 @@ describe("createProjectFrontDoor (dispatch-create-by-engine)", () => {
       (_i: Inputs, _t: BuildTarget, _a: Answers, _flagReader: (name: string) => boolean) =>
         okResult("/v4-static")
     );
-    const runInputs = recorder((_floor: Buffer, _locator: DeclarativeLocator) =>
-      Promise.resolve(ok<Answers, FxError>({ selectedMcpTools: ["search"] }))
+    const runInputs = recorder(
+      (
+        _floor: Buffer,
+        _locator: DeclarativeLocator
+      ): Promise<Result<CreateInputsOutcome, FxError>> =>
+        Promise.resolve(ok({ kind: "done", answers: { selectedMcpTools: ["search"] } }))
     );
 
     const res = await createProjectFrontDoor(
@@ -1060,5 +1066,199 @@ describe("createProjectFrontDoor (dispatch-create-by-engine)", () => {
     if (res.isErr()) {
       assert.equal(res.error.name, "UnsupportedCreateAction");
     }
+  });
+
+  it("DCE-22: a back at Q2's first prompt re-enters Q1 instead of cancelling the create", async () => {
+    const q2: Answers = { authType: "none" };
+    const walkResult: SelectorWalkResult = {
+      ...V4_TARGET,
+      history: [{ pos: 0, answers: {} }],
+      promptCount: 1,
+    };
+    const runSelector = recorder(
+      (
+        _f: Buffer,
+        _u: UserInteraction,
+        _s: string,
+        _d?: { resume?: { history: unknown[] } }
+      ): Promise<Result<SelectorWalkResult, FxError>> => Promise.resolve(ok(walkResult))
+    );
+    let q2Call = 0;
+    const runInputs = recorder(
+      (
+        _f: Buffer,
+        _l: DeclarativeLocator,
+        _e: Answers,
+        _u: UserInteraction,
+        _d?: { baseStep?: number; backable?: boolean }
+      ): Promise<Result<CreateInputsOutcome, FxError>> => {
+        q2Call++;
+        const outcome: CreateInputsOutcome =
+          q2Call === 1 ? { kind: "back" } : { kind: "done", answers: q2 };
+        return Promise.resolve(ok(outcome));
+      }
+    );
+    const scaffoldV4 = recorder(
+      (_i: Inputs, _t: BuildTarget, _a: Answers, _fr: (name: string) => boolean) => okResult("/v4")
+    );
+
+    const res = await createProjectFrontDoor(
+      baseInputs(),
+      deps({ runSelector: runSelector.fn, runInputs: runInputs.fn, scaffoldV4: scaffoldV4.fn })
+    );
+
+    assert.isTrue(res.isOk());
+    // Q1 re-walked once (re-entry), Q2 run twice, scaffold once — no cancel.
+    assert.equal(runSelector.calls.length, 2);
+    assert.equal(runInputs.calls.length, 2);
+    assert.equal(scaffoldV4.calls.length, 1);
+    // Q2 continues Q1's step numbering (baseStep = promptCount) and is backable.
+    assert.equal(runInputs.calls[0][4]?.baseStep, 1);
+    assert.strictEqual(runInputs.calls[0][4]?.backable, true);
+    // The first walk carries no resume; the re-entry resumes Q1 with the retained history.
+    assert.isUndefined(runSelector.calls[0][3]?.resume);
+    assert.deepEqual(runSelector.calls[1][3]?.resume, { history: walkResult.history });
+  });
+
+  it("DCE-23: re-entering Q1 with a different pick loads the new template's Q2 fresh", async () => {
+    const walkA: SelectorWalkResult = {
+      ...V4_TARGET,
+      history: [{ pos: 0, answers: {} }],
+      promptCount: 1,
+    };
+    const targetB: BuildTarget = { templateId: "da/no-action", engine: "v4", answers: {} };
+    const walkB: SelectorWalkResult = {
+      ...targetB,
+      history: [{ pos: 0, answers: {} }],
+      promptCount: 1,
+    };
+    let selCall = 0;
+    const runSelector = recorder(
+      (
+        _f: Buffer,
+        _u: UserInteraction,
+        _s: string,
+        _d?: { resume?: { history: unknown[] } }
+      ): Promise<Result<SelectorWalkResult, FxError>> => {
+        selCall++;
+        return Promise.resolve(ok(selCall === 1 ? walkA : walkB));
+      }
+    );
+    let q2Call = 0;
+    const runInputs = recorder(
+      (
+        _f: Buffer,
+        _l: DeclarativeLocator,
+        _e: Answers,
+        _u: UserInteraction,
+        _d?: { baseStep?: number; backable?: boolean }
+      ): Promise<Result<CreateInputsOutcome, FxError>> => {
+        q2Call++;
+        const outcome: CreateInputsOutcome =
+          q2Call === 1 ? { kind: "back" } : { kind: "done", answers: {} };
+        return Promise.resolve(ok(outcome));
+      }
+    );
+    const scaffoldV4 = recorder(
+      (_i: Inputs, _t: BuildTarget, _a: Answers, _fr: (name: string) => boolean) => okResult("/v4")
+    );
+
+    const res = await createProjectFrontDoor(
+      baseInputs(),
+      deps({ runSelector: runSelector.fn, runInputs: runInputs.fn, scaffoldV4: scaffoldV4.fn })
+    );
+
+    assert.isTrue(res.isOk());
+    // Q2's first locator was da/mcp-server; after the re-pick, the second is da/no-action (fresh load).
+    assert.equal(runInputs.calls[0][1].templateId, "da/mcp-server");
+    assert.equal(runInputs.calls[1][1].templateId, "da/no-action");
+    // The scaffold gets the re-picked target, not the discarded one.
+    assert.equal(scaffoldV4.calls[0][1].templateId, "da/no-action");
+  });
+
+  it("DCE-24: backing through Q2 into Q1 and past its first dimension cancels the whole create", async () => {
+    const cancel = new UserError({
+      source: "Scaffold",
+      name: "BuildTargetWalkCancelled",
+      message: "cancelled",
+    });
+    const walkResult: SelectorWalkResult = {
+      ...V4_TARGET,
+      history: [{ pos: 0, answers: {} }],
+      promptCount: 1,
+    };
+    let selCall = 0;
+    const runSelector = recorder(
+      (
+        _f: Buffer,
+        _u: UserInteraction,
+        _s: string,
+        _d?: { resume?: { history: unknown[] } }
+      ): Promise<Result<SelectorWalkResult, FxError>> => {
+        selCall++;
+        return Promise.resolve(selCall === 1 ? ok(walkResult) : err(cancel));
+      }
+    );
+    const runInputs = recorder((): Promise<Result<CreateInputsOutcome, FxError>> =>
+      Promise.resolve(ok({ kind: "back" }))
+    );
+    const scaffoldV4 = recorder(
+      (_i: Inputs, _t: BuildTarget, _a: Answers, _fr: (name: string) => boolean) => okResult("/v4")
+    );
+
+    const res = await createProjectFrontDoor(
+      baseInputs(),
+      deps({ runSelector: runSelector.fn, runInputs: runInputs.fn, scaffoldV4: scaffoldV4.fn })
+    );
+
+    assert.isTrue(res.isErr());
+    if (res.isErr()) {
+      assert.equal(res.error.name, "BuildTargetWalkCancelled");
+    }
+    assert.equal(scaffoldV4.calls.length, 0);
+  });
+
+  it("DCE-25: a re-entry iteration re-walks Q1 and never mistakes a prior template-name for a preset", async () => {
+    const walkResult: SelectorWalkResult = {
+      ...V4_TARGET,
+      history: [{ pos: 0, answers: {} }],
+      promptCount: 1,
+    };
+    const runSelector = recorder(
+      (
+        _f: Buffer,
+        _u: UserInteraction,
+        _s: string,
+        _d?: { resume?: { history: unknown[] } }
+      ): Promise<Result<SelectorWalkResult, FxError>> => Promise.resolve(ok(walkResult))
+    );
+    let q2Call = 0;
+    const runInputs = recorder(
+      (
+        _f: Buffer,
+        _l: DeclarativeLocator,
+        _e: Answers,
+        _u: UserInteraction,
+        _d?: { baseStep?: number; backable?: boolean }
+      ): Promise<Result<CreateInputsOutcome, FxError>> => {
+        q2Call++;
+        const outcome: CreateInputsOutcome =
+          q2Call === 1 ? { kind: "back" } : { kind: "done", answers: {} };
+        return Promise.resolve(ok(outcome));
+      }
+    );
+    const inputs = baseInputs();
+
+    // `resolveByTemplateId` (the preset short-circuit) defaults to fail-if-called: the loop must
+    // re-walk Q1 even though dispatchByEngine set inputs["template-name"] on the first iteration.
+    const res = await createProjectFrontDoor(
+      inputs,
+      deps({ runSelector: runSelector.fn, runInputs: runInputs.fn, scaffoldV4: okScaffold })
+    );
+
+    assert.isTrue(res.isOk());
+    assert.equal(runSelector.calls.length, 2);
+    // The v4 template-name was written (proving dispatch ran), yet Q1 was still re-walked.
+    assert.equal(inputs["template-name"], TemplateNames.DeclarativeAgentWithActionFromMCP);
   });
 });

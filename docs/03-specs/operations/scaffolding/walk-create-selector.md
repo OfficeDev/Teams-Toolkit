@@ -139,6 +139,8 @@ localization mechanism.
 | WCS-15 | L1 | the floor (flag on), a scripted UI picking `projectType=copilot-agent-type` → `daTemplate=add-action`, returning `back` at `actionSource`, then re-picking `daTemplate=no-action` | `runCreateSelector` | `back` re-asks the previous prompted dimension (`daTemplate`) and discards the stale `add-action` pick before re-routing; `answers={ projectType:"copilot-agent-type", daTemplate:"no-action" }` (no `actionSource` left behind); prompt order is `projectType, daTemplate, actionSource, daTemplate` |
 | WCS-16 | L1 | the floor, a scripted UI picking `projectType=copilot-agent-type`, returning `back` at `daTemplate`, then re-picking `projectType` → `daTemplate=no-action` | `runCreateSelector` | `back` at the second prompt re-asks the first dimension (`projectType`) at `step` 1 (no Back button there); prompt order is `projectType(1), daTemplate(2), projectType(1), daTemplate(2)` |
 | WCS-17 | L1 | the floor, a scripted UI returning `back` at the very first prompt (`projectType`) | `runCreateSelector` | `err` — a `UserError` named `BuildTargetWalkCancelled` (a `back` past the first prompt cancels the walk; unreachable via UI, where step 1 shows no Back button) |
+| WCS-24 | L1 | a completed Q1 walk whose `history` the caller retained, then a `resume` of that history (the front door re-entering Q1 after a Q2 `back`) | `runCreateSelector` | the walk re-asks Q1's **last** prompted dimension with its history intact, and a further `back` multi-hops through the earlier Q1 dimensions (each still `step > 1`) until the first dimension, where `back` cancels with `BuildTargetWalkCancelled` — resuming preserves continuous Q1 back navigation across the phase boundary (collect-inputs INPUT-22) |
+| WCS-25 | L1 | any Q1 walk | `runCreateSelector` | the `ok` result exposes the walk `history` and `promptCount` (the number of dimensions actually prompted) so the front door can retain the history for `resume` and use `promptCount` as Q2's `baseStep`; a `surface-action` / fully-pre-filled walk reports `promptCount` accordingly (0 when nothing was prompted) |
 
 > **Withdrawn by ADR-0014 Amendment 2:** WCS-08 (the single-language no-prompt
 > check). `language` is no longer resolved in this Q1 walk; that behavior is now
@@ -183,6 +185,10 @@ flowchart TD
 - **INV-5** — The selector bytes are injectable, so the operation is CI-testable
   from an in-memory floor built from the loose `templates/v4` source — no built
   `templates.zip` artifact required.
+- **INV-6** — Resume preserves one back-stack. Q1 exposes the shared engine's
+  resumable `history` + `promptCount` (collect-inputs INV-9) so the front door
+  can re-enter it after a downstream Q2 `back` (WCS-24/25); the multi-level Q1
+  back on resume is the engine's history, not a Q1-specific re-implementation.
 
 ## Notes
 

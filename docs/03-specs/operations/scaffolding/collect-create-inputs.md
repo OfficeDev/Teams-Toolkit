@@ -128,6 +128,10 @@ in-memory provider while production uses the default registry.
 | CCI-22 | L1 | the same route, a scripted UI that cancels on `folder` or `app-name` | `runCreateInputs` | `err` is the cancellation `UserError` propagated unchanged; the front door does not scaffold |
 | CCI-23 | L1 | `entryParams` already contains `folder`, `app-name`, or `language` | `runCreateInputs` | those common floor values are used as pre-filled answers and are not prompted again; validation/bounds checking still happens in the shared walk |
 | CCI-24 | L1 | an interactive text question with a registered validator (`mcpServerUrl` or common-floor `app-name`) and earlier answers that the validator depends on | `runCreateInputs` | the prompt bridge passes a validation callback to `inputText`, bound to the current answers, so invalid text can be rejected during collection rather than only later at scaffold runtime |
+| CCI-25 | L1 | the DA+MCP v4 route, a caller-supplied `baseStep` (Q1's `promptCount`) and `backable: true` | `runCreateInputs` | the values are threaded onto the shared walk, so the **first** Q2/floor prompt shows a Back button (`step > 1`, collect-inputs INPUT-20) and a `back` at it returns a typed `{ kind:"back" }` outcome to the front door instead of cancelling the create (INPUT-21); the operation adds no back logic of its own |
+| CCI-26 | L1 | two `runCreateInputs` calls under **different** `locator.templateId`s (a Q1 re-pick from `da/mcp-server` to `da/no-action`) | `runCreateInputs` | each call re-opens `questions.json` + `descriptor` for its own `templateId` and rebuilds Q2 + the descriptor-bound `language` axis + common floor from scratch, holding no state from the other call — the Q2+Q3 set is a pure function of the current `locator`, so a Q1 re-pick that changes the template yields the new template's questions and discards the prior template's answers with no invalidation logic |
+| CCI-27 | L1 | a `skipSingleOption` singleSelect with a single option, a fake `UserInteraction` whose `selectOption` returns `{ type: "skip" }` | `createUiPromptUI(ui).ask(q, options)` | the host skip is projected to `ok({ kind: "skip", value })` so the shared walk records the answer without a back-stop (collect-inputs INPUT-24) |
+| CCI-28 | L1 | the real `da/mcp-server` (remote-only `mcp.serverTypes`, so `mcpServerType` auto-skips), a caller `baseStep` + `backable`, and a `back` at the first *visible* prompt (`mcpServerUrl`) | `runCreateInputsWalk` | the auto-skipped `mcpServerType` leaves no history, so the `back` returns `{ kind:"back" }` to the front door (re-enters Q1) instead of re-asking the skipped question, and `mcpServerUrl` is shown at `baseStep + 1` |
 
 ## Flow
 
@@ -169,9 +173,11 @@ flowchart TD
   from an in-memory floor built from the loose `templates/v4` source — no built
   `templates.zip` artifact required.
 - **INV-6** — The bridge threads the caller's 1-based `step` onto each host config
-  (the Back-button gate) and projects a host `back` result to `{ kind: "back" }`,
-  so [`collect-inputs`](collect-inputs.md) drives back navigation
-  surface-neutrally (CCI-10..13 / INPUT-16..19).
+  (the Back-button gate), projects a host `back` result to `{ kind: "back" }`, and
+  projects a host `skip` (an auto-selected `skipSingleOption`) to `{ kind: "skip" }`,
+  so [`collect-inputs`](collect-inputs.md) drives back navigation and
+  skip-transparency surface-neutrally (CCI-10..13, CCI-27..28 / INPUT-16..19,
+  INPUT-24).
 - **INV-7** — The `csharp` language axis is gated by `surface` + the injected
   `TEAMSFX_CLI_DOTNET` reader **before** the create floor composer builds the language question
   (CCI-14..16): the VS Code extension never offers C#, the CLI / VS surfaces offer
@@ -196,6 +202,15 @@ flowchart TD
   for focused integration checks such as descriptor/question loading and the
   default registry wiring, and may be shared across tests in that file because
   package bytes are immutable input.
+- **INV-11** — Q2+Q3 are stateless-rebuilt per call; back navigation is threaded,
+  not owned. `runCreateInputs` derives the entire Q2 + `language` + common-floor
+  question set from `locator` + the loaded descriptor on every call, holding no
+  cross-call state, so the front door's re-entry loop (dispatch-create-by-engine
+  INV-10) produces the correct new Q2+Q3 for a changed `BuildTarget` with no
+  invalidation logic (CCI-26). The operation only threads the caller's `baseStep`
+  / `backable` / typed `{ kind:"back" }` outcome through to the shared
+  [`collect-inputs`](collect-inputs.md) engine (collect-inputs INV-9); it
+  implements no back-stack of its own.
 
 ## Notes
 

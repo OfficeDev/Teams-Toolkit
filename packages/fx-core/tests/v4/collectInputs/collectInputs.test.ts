@@ -26,6 +26,7 @@ import {
   ResolvedOptions,
   Validator,
   collectInputs,
+  walkInputs,
 } from "../../../src/v4/collectInputs/collectInputs";
 
 /**
@@ -81,7 +82,7 @@ class ScriptedUI implements PromptUI {
     const resolvedOptions = await resolveTestOptions(options);
     this.lastOptions[question.name] = resolvedOptions;
     if (question.skipSingleOption === true && resolvedOptions?.length === 1) {
-      return ok({ kind: "value", value: optionId(resolvedOptions[0]) });
+      return ok({ kind: "skip", value: optionId(resolvedOptions[0]) });
     }
     if (question.name in this.script) {
       const value = this.script[question.name];
@@ -113,7 +114,7 @@ class ScriptedUI implements PromptUI {
     const resolvedOptions = await resolveTestOptions(options);
     this.lastOptions[question.name] = resolvedOptions;
     if (question.skipSingleOption === true && resolvedOptions?.length === 1) {
-      return ok({ kind: "value", value: [optionId(resolvedOptions[0])] });
+      return ok({ kind: "skip", value: [optionId(resolvedOptions[0])] });
     }
     if (question.name in this.multiScript) {
       return ok({ kind: "value", value: this.multiScript[question.name] });
@@ -146,9 +147,12 @@ function noScripted(name: string): FxError {
   return new UserError({ source: "Test", name: "NoScriptedAnswer", message: name });
 }
 
-/** One scripted reply for the sequenced driver: a scalar value, a multi value, or a host back. */
+/** One scripted reply for the sequenced driver: a scalar value, a multi value, a surface skip, or a host back. */
 type SeqResponse =
-  { kind: "value"; value: string } | { kind: "multi"; value: string[] } | { kind: "back" };
+  | { kind: "value"; value: string }
+  | { kind: "multi"; value: string[] }
+  | { kind: "skip"; value: string }
+  | { kind: "back" };
 
 /**
  * A sequence-driven prompt driver: it answers each ask / askMulti from an ordered
@@ -172,6 +176,9 @@ class SequencedPromptUI implements PromptUI {
     if (response.kind === "back") {
       return Promise.resolve(ok({ kind: "back" }));
     }
+    if (response.kind === "skip") {
+      return Promise.resolve(ok({ kind: "skip", value: response.value }));
+    }
     return Promise.resolve(ok({ kind: "value", value: response.value }));
   }
   askMulti(
@@ -181,7 +188,7 @@ class SequencedPromptUI implements PromptUI {
   ): Promise<Result<Asked<string[]>, FxError>> {
     this.calls.push({ name: question.name, step });
     const response = this.responses[this.cursor++];
-    if (response === undefined || response.kind === "value") {
+    if (response === undefined || response.kind === "value" || response.kind === "skip") {
       return Promise.resolve(err(noScripted(question.name)));
     }
     if (response.kind === "back") {
@@ -841,5 +848,134 @@ describe("collectInputs (v4)", () => {
       ui.calls.map((c) => c.name),
       ["first", "servers", "first", "servers"]
     );
+  });
+
+  it("INPUT-20: a baseStep offset continues the step numbering so the first prompt shows a Back button", async () => {
+    const questions: QuestionSpec[] = [
+      { name: "first", type: "singleSelect", staticOptions: [{ id: "a" }, { id: "b" }] },
+      { name: "second", type: "singleSelect", staticOptions: [{ id: "x" }, { id: "y" }] },
+    ];
+    const ui = new SequencedPromptUI([
+      { kind: "value", value: "a" },
+      { kind: "value", value: "x" },
+    ]);
+    const res = await walkInputs(
+      questions,
+      { properties: { first: {}, second: {} } },
+      {},
+      makePort({ ui }),
+      { baseStep: 3 }
+    );
+    assert.isTrue(res.isOk());
+    const outcome = res._unsafeUnwrap();
+    assert.strictEqual(outcome.kind, "done");
+    if (outcome.kind === "done") {
+      assert.deepStrictEqual(outcome.answers, { first: "a", second: "x" });
+      assert.strictEqual(outcome.promptCount, 2);
+    }
+    // baseStep 3 → first prompt is step 4 (Back button shown), second is step 5
+    assert.deepStrictEqual(
+      ui.calls.map((c) => c.step),
+      [4, 5]
+    );
+  });
+
+  it("INPUT-21: with backable set, a back at the first prompt returns a typed back outcome instead of cancelling", async () => {
+    const questions: QuestionSpec[] = [
+      { name: "first", type: "singleSelect", staticOptions: [{ id: "a" }, { id: "b" }] },
+    ];
+    const ui = new SequencedPromptUI([{ kind: "back" }]);
+    const res = await walkInputs(questions, { properties: { first: {} } }, {}, makePort({ ui }), {
+      baseStep: 2,
+      backable: true,
+    });
+    assert.isTrue(res.isOk(), res.isErr() ? `${res.error.name}: ${res.error.message}` : "ok");
+    assert.strictEqual(res._unsafeUnwrap().kind, "back");
+    // default (backable false) still cancels — INPUT-18 unchanged
+    const uiCancel = new SequencedPromptUI([{ kind: "back" }]);
+    const cancelled = await walkInputs(
+      questions,
+      { properties: { first: {} } },
+      {},
+      makePort({ ui: uiCancel })
+    );
+    assert.isTrue(cancelled.isErr());
+    assert.strictEqual(cancelled._unsafeUnwrapErr().name, INPUT_WALK_CANCELLED);
+  });
+
+  it("INPUT-22: resuming a prior walk's history re-asks the last prompted question and preserves back", async () => {
+    const questions: QuestionSpec[] = [
+      { name: "first", type: "singleSelect", staticOptions: [{ id: "a" }, { id: "b" }] },
+      { name: "second", type: "singleSelect", staticOptions: [{ id: "x" }, { id: "y" }] },
+    ];
+    // First, run to done to capture the walk history.
+    const uiFirst = new SequencedPromptUI([
+      { kind: "value", value: "a" },
+      { kind: "value", value: "x" },
+    ]);
+    const firstRun = await walkInputs(
+      questions,
+      { properties: { first: {}, second: {} } },
+      {},
+      makePort({ ui: uiFirst })
+    );
+    assert.isTrue(firstRun.isOk());
+    const done = firstRun._unsafeUnwrap();
+    assert.strictEqual(done.kind, "done");
+    if (done.kind !== "done") {
+      return;
+    }
+    // Resume: re-asks 'second' (the last prompted question), then a back crosses into
+    // 'first' (the retained history is intact), then re-forward.
+    const uiResume = new SequencedPromptUI([
+      { kind: "back" },
+      { kind: "value", value: "b" },
+      { kind: "value", value: "y" },
+    ]);
+    const resumed = await walkInputs(
+      questions,
+      { properties: { first: {}, second: {} } },
+      {},
+      makePort({ ui: uiResume }),
+      { resume: { history: done.history } }
+    );
+    assert.isTrue(resumed.isOk());
+    const resumedOutcome = resumed._unsafeUnwrap();
+    assert.strictEqual(resumedOutcome.kind, "done");
+    if (resumedOutcome.kind === "done") {
+      assert.deepStrictEqual(resumedOutcome.answers, { first: "b", second: "y" });
+    }
+    assert.deepStrictEqual(
+      uiResume.calls.map((c) => c.name),
+      ["second", "first", "second"]
+    );
+    // 'second' re-asked at step 2 (history retains 'first'); back crosses to 'first' at step 1
+    assert.deepStrictEqual(
+      uiResume.calls.map((c) => c.step),
+      [2, 1, 2]
+    );
+  });
+
+  it("INPUT-24: a surface-skipped question is back-transparent (pushes no history)", async () => {
+    const questions: QuestionSpec[] = [
+      { name: "skipped", type: "singleSelect", staticOptions: [{ id: "auto" }] },
+      { name: "second", type: "singleSelect", staticOptions: [{ id: "x" }, { id: "y" }] },
+    ];
+    // 'skipped' auto-skips (records its answer, but is not a back-stop); a back at 'second'
+    // crosses straight over it into an empty history and cancels — it does NOT re-ask 'skipped'.
+    const ui = new SequencedPromptUI([{ kind: "skip", value: "auto" }, { kind: "back" }]);
+    const res = await collectInputs(
+      questions,
+      { properties: { skipped: {}, second: {} } },
+      {},
+      makePort({ ui })
+    );
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_WALK_CANCELLED);
+    // both prompts are step 1: 'skipped' pushed no history, so 'second' is also the first step.
+    assert.deepStrictEqual(ui.calls, [
+      { name: "skipped", step: 1 },
+      { name: "second", step: 1 },
+    ]);
   });
 });

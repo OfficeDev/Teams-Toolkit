@@ -121,6 +121,9 @@ export function createUiPromptUI(ui: UserInteraction): PromptUI {
         if (result.value.type === "back") {
           return ok({ kind: "back" });
         }
+        if (result.value.type === "skip") {
+          return ok({ kind: "skip", value: selectedId(result.value.result) });
+        }
         return ok({ kind: "value", value: selectedId(result.value.result) });
       }
       if (question.type === "text") {
@@ -268,6 +271,9 @@ export function createUiPromptUI(ui: UserInteraction): PromptUI {
       }
       if (result.value.type === "back") {
         return ok({ kind: "back" });
+      }
+      if (result.value.type === "skip") {
+        return ok({ kind: "skip", value: selectedIds(result.value.result) });
       }
       return ok({ kind: "value", value: selectedIds(result.value.result) });
     },

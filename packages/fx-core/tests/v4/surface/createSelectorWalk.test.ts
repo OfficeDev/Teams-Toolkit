@@ -925,6 +925,62 @@ describe("runCreateSelector (walk-create-selector)", () => {
       assert.equal(res.error.name, "BuildTargetWalkCancelled");
     }
   });
+
+  it("WCS-25: the walk result exposes the Q1 history and promptCount for the front door to retain", async () => {
+    const ui = new ScriptedUI(MCP_DA_PICKS);
+    const res = await runCreateSelector(buildFloor(), asUI(ui), "vscode", {
+      flagReader: flagsOn("TEAMSFX_MCP_FOR_DA_DT"),
+    });
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.strictEqual(res.value.templateId, "da/mcp-server");
+      // projectType, daTemplate, actionSource were all prompted.
+      assert.strictEqual(res.value.promptCount, 3);
+      assert.lengthOf(res.value.history, 3);
+    }
+  });
+
+  it("WCS-24: resuming a completed Q1 walk re-asks its last dimension with the history intact", async () => {
+    // First, walk Q1 to a done target and capture its history + promptCount.
+    const firstUi = new SequencedUI([
+      { type: "success", result: "copilot-agent-type" }, // projectType (step 1)
+      { type: "success", result: "add-action" }, // daTemplate (step 2)
+      { type: "success", result: "mcp" }, // actionSource (step 3)
+    ]);
+    const first = await runCreateSelector(buildFloor(), asUI(firstUi), "vscode", {
+      flagReader: flagsOn("TEAMSFX_MCP_FOR_DA_DT"),
+    });
+    assert.isTrue(first.isOk());
+    if (!first.isOk()) {
+      return;
+    }
+    assert.strictEqual(first.value.templateId, "da/mcp-server");
+
+    // Resume (the front door re-entering Q1 after a Q2 back): the last dimension
+    // (actionSource, step 3) is re-asked; a back crosses into daTemplate (step 2),
+    // and re-picking no-action re-routes to a different target.
+    const resumeUi = new SequencedUI([
+      { type: "back" }, // actionSource re-asked (step 3) → back
+      { type: "success", result: "no-action" }, // daTemplate re-asked (step 2)
+    ]);
+    const resumed = await runCreateSelector(buildFloor(), asUI(resumeUi), "vscode", {
+      flagReader: flagsOn("TEAMSFX_MCP_FOR_DA_DT"),
+      resume: { history: first.value.history },
+    });
+    assert.isTrue(resumed.isOk());
+    if (resumed.isOk()) {
+      assert.strictEqual(resumed.value.templateId, "da/no-action");
+      assert.deepEqual(resumed.value.answers, {
+        projectType: "copilot-agent-type",
+        daTemplate: "no-action",
+      });
+    }
+    // resume re-asks the last dimension first, then back multi-hops to daTemplate.
+    assert.deepEqual(resumeUi.calls, [
+      { name: "actionSource", step: 3 },
+      { name: "daTemplate", step: 2 },
+    ]);
+  });
 });
 
 describe("openCreateSelectorPresentation (walk-create-selector)", () => {

@@ -8,7 +8,8 @@ import {
   OptionItem,
   PromptUI,
   QuestionSpec,
-  collectInputs,
+  WalkHistoryEntry,
+  walkInputs,
 } from "../collectInputs/collectInputs";
 import {
   ExpressionNode,
@@ -81,6 +82,17 @@ export interface BuildTarget {
   engine: DispatchEngine;
   /** The Q1 dimension picks that produced this target. */
   answers?: Record<string, string>;
+}
+
+/**
+ * A `BuildTarget` plus the Q1 walk state the front door retains for cross-phase
+ * back (a superset, so existing `BuildTarget` reads are unaffected). `history` is
+ * opaque to the front door — it is only handed back via `resume`; `promptCount`
+ * is the number of Q1 dimensions actually prompted (Q2's `baseStep`).
+ */
+export interface SelectorWalkResult extends BuildTarget {
+  history: WalkHistoryEntry[];
+  promptCount: number;
 }
 
 /** `UserError` name: a resolved/supplied `templateId` belongs to no world. */
@@ -277,18 +289,34 @@ async function collectSelectorAnswers(
   selector: SelectorSpec,
   prefilled: Record<string, string>,
   interactive: boolean,
-  port: RouteResolverPort
-): Promise<Result<Record<string, string>, FxError>> {
-  const collected = await collectInputs(
+  port: RouteResolverPort,
+  resume: { history: WalkHistoryEntry[] } | undefined
+): Promise<
+  Result<
+    { answers: Record<string, string>; history: WalkHistoryEntry[]; promptCount: number },
+    FxError
+  >
+> {
+  const collected = await walkInputs(
     selectorQuestions(selector),
     selectorOptionsSchema(selector),
     prefilled,
-    buildCollectPort(interactive, port)
+    buildCollectPort(interactive, port),
+    { resume }
   );
   if (collected.isErr()) {
     return err(collected.error);
   }
-  return scalarAnswers(selector, collected.value, port);
+  const outcome = collected.value;
+  /* istanbul ignore next -- Q1 is not backable; a back past the first prompt errors in the prompt face (WCS-17) */
+  if (outcome.kind === "back") {
+    return err(userError(BUILD_TARGET_WALK_CANCELLED, "the create selector was cancelled"));
+  }
+  const scalar = scalarAnswers(selector, outcome.answers, port);
+  if (scalar.isErr()) {
+    return err(scalar.error);
+  }
+  return ok({ answers: scalar.value, history: outcome.history, promptCount: outcome.promptCount });
 }
 
 /** Match the first route whose `when` predicate is true against the collected answers. */
@@ -359,8 +387,9 @@ export async function resolveBuildTarget(
   selector: SelectorSpec,
   prefilled: Record<string, string>,
   interactive: boolean,
-  port: RouteResolverPort
-): Promise<Result<BuildTarget, FxError>> {
+  port: RouteResolverPort,
+  options: { resume?: { history: WalkHistoryEntry[] } } = {}
+): Promise<Result<SelectorWalkResult, FxError>> {
   // Validate the whole routing table before any route match.
   const routesOk = validateRoutes(selector.routes, port);
   if (routesOk.isErr()) {
@@ -368,11 +397,17 @@ export async function resolveBuildTarget(
   }
 
   // One prefill-aware walk covers interactive and non-interactive resolution.
-  const walked = await collectSelectorAnswers(selector, prefilled, interactive, port);
+  const walked = await collectSelectorAnswers(
+    selector,
+    prefilled,
+    interactive,
+    port,
+    options.resume
+  );
   if (walked.isErr()) {
     return err(walked.error);
   }
-  const answers = walked.value;
+  const { answers, history, promptCount } = walked.value;
 
   const matched = matchRoute(selector, answers, port);
   if (matched.isErr()) {
@@ -383,5 +418,5 @@ export async function resolveBuildTarget(
     return err(dispatched.error);
   }
 
-  return ok({ ...dispatched.value, answers });
+  return ok({ ...dispatched.value, answers, history, promptCount });
 }
