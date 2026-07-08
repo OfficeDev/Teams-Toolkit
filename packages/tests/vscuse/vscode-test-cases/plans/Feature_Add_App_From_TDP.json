@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2.0,
       "step_retry_timeout": 0.0
     },
-    "total_steps": 12,
+    "total_steps": 13,
     "created_at": "2026-05-18T02:19:09.515002",
     "name": "Feature Add App From TDP",
     "description": {
@@ -27,6 +27,7 @@
       "step_5e71293c",
       "plan_a4d84624",
       "step_22498d6e",
+      "step_9c4d1a7f",
       "step_b3327844",
       "step_43412fab",
       "step_e71580bd",
@@ -39,7 +40,7 @@
       "plan_r_1023_094053"
     ],
     "tags": [],
-    "updated_at": "2026-05-18T02:48:48.001467"
+    "updated_at": "2026-07-08T08:23:49.000000"
   },
   "steps": [
     {
@@ -137,6 +138,28 @@
       "plan_id": "plan_06dbd424"
     },
     {
+      "step_id": "step_9c4d1a7f",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 350,
+        "y": 218
+      },
+      "description": "Click on the \"Other Teams Capabilities\" option within the \"Teams Agents and Apps\" project-type sub-menu to reveal the Teams capability list (Tab, Message Extension, Bot).",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
+      "created_at": "2026-07-08T08:23:49.000000",
+      "plan_id": "plan_06dbd424"
+    },
+    {
       "step_id": "step_b3327844",
       "agent": "interaction",
       "tool": "click",
@@ -151,11 +174,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:355:174:16:5:000000009146aad9",
-        "dhash:355:174:96:5:adcb120128285200",
-        "dhash:355:174:0:10:d0c0b890b2726261"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_b3327844",
