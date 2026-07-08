@@ -2850,6 +2850,99 @@ describe("addPlugin", async () => {
     }
   });
 
+  it("from MCP (DT flag on): omits the scope env ref and var when no scope is entered (oauth)", async () => {
+    const appName = await mockV3Project();
+    const projectPath = path.join(os.tmpdir(), appName);
+    const inputs: Inputs = {
+      platform: Platform.CLI,
+      [QuestionNames.Folder]: os.tmpdir(),
+      [QuestionNames.TeamsAppManifestFilePath]: "manifest.json",
+      [QuestionNames.ActionType]: ActionStartOptions.mcp().id,
+      [QuestionNames.MCPForDAServerUrl]: "https://example.com/mcp",
+      [QuestionNames.MCPToolsFilePath]: "",
+      [QuestionNames.MCPForDAAuthType]: "oauth",
+      [QuestionNames.MCPForDAClientId]: "client-id",
+      [QuestionNames.MCPForDAClientSecret]: "client-secret",
+      // Scope left blank (optional for OAuth).
+      [QuestionNames.MCPForDAScopes]: "",
+      [QuestionNames.MCPForDAAuthMetadataUrl]:
+        "https://example.com/.well-known/oauth-authorization-server",
+      projectPath,
+    };
+
+    const manifest = new TeamsAppManifest();
+    manifest.name = { short: "My MCP App", full: "My MCP App" };
+    manifest.copilotExtensions = {
+      declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
+    };
+
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) => {
+      return flag === FeatureFlags.MCPForDADT;
+    });
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(
+      copilotGptManifestUtils,
+      "getDefaultNextAvailablePluginManifestPath"
+    ).mockResolvedValue("ai-plugin_1.json");
+    vi.spyOn(copilotGptManifestUtils, "addAction").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+
+    vi.spyOn(addPluginTools.ui, "showMessage").mockImplementation((level) => {
+      if (level === "warn") return Promise.resolve(ok("Add"));
+      return Promise.resolve(ok(""));
+    });
+
+    const mcpAuthScaffolderModule = await import("../../src/component/utils/mcpAuthScaffolder");
+    vi.spyOn(
+      mcpAuthScaffolderModule.mcpAuthScaffolderDeps,
+      "resolveMCPOAuthMetadata"
+    ).mockResolvedValue({
+      authorizationUrl: "https://example.com/oauth/authorize",
+      tokenUrl: "https://example.com/oauth/token",
+      refreshUrl: "https://example.com/oauth/token",
+      wellKnownUrl: "https://example.com/.well-known/oauth-authorization-server",
+    });
+
+    const actionInjectorModule = await import("../../src/component/configManager/actionInjector");
+    const injectStub = vi
+      .spyOn(actionInjectorModule.ActionInjector, "injectCreateOAuthActionForMCP")
+      .mockResolvedValue();
+
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+    vi.spyOn(fs, "ensureFile").mockResolvedValue();
+    vi.spyOn(fs, "writeJSON").mockResolvedValue();
+    vi.spyOn(envUtil, "listEnv").mockResolvedValue(ok(["dev"]));
+    const writeEnvStub = vi.spyOn(envUtil, "writeEnv").mockResolvedValue(ok(undefined));
+
+    const core = new FxCore(addPluginTools);
+    const result = await core.addPlugin(inputs);
+
+    assert.isTrue(result.isOk());
+    // No scope entered -> the injector receives no scopeEnvName, so the yaml
+    // oauth/register action carries no scope ${{...}} ref.
+    assert.deepEqual(injectStub.mock.calls[0][8], {
+      clientIdEnvName: "MCP_DA_OAUTH_CLIENT_ID_EXAMPLECOM",
+      clientSecretEnvName: "SECRET_MCP_DA_OAUTH_CLIENT_SECRET_EXAMPLECOM",
+    });
+    // ...and no MCP_DA_OAUTH_SCOPE_* var is written, keeping env and yaml
+    // consistent so provision never resolves a dangling reference.
+    assert.equal(writeEnvStub.mock.calls.length, 1);
+    assert.deepEqual(writeEnvStub.mock.calls[0][2], {
+      MCP_DA_OAUTH_CLIENT_ID_EXAMPLECOM: "client-id",
+      SECRET_MCP_DA_OAUTH_CLIENT_SECRET_EXAMPLECOM: "client-secret",
+    });
+
+    if (await fs.pathExists(projectPath)) {
+      await fs.remove(projectPath);
+    }
+  });
+
   it("from MCP (DT flag on): none auth writes None auth and skips oauth injection", async () => {
     const appName = await mockV3Project();
     const projectPath = path.join(os.tmpdir(), appName);

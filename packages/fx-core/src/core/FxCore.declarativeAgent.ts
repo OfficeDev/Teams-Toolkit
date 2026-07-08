@@ -730,6 +730,7 @@ export class FxCoreDeclarativeAgentPart {
                 endpoints,
                 persistCredentialEnvRefs: true,
                 serverName,
+                scopes: inputs[QuestionNames.MCPForDAScopes],
               });
             }
           } catch (error: any) {
