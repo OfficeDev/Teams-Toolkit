@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 11,
+    "total_steps": 18,
     "created_at": "2026-05-11T06:38:05.296841",
     "name": "Basic Custom Engine Agent Azure OpenAI py Remote Debug",
     "description": {
@@ -38,7 +38,13 @@
       "step_2c1eae55",
       "step_743cf4e1",
       "plan_r_0930_063548",
-      "plan_r_1009_093215"
+      "step_ca70af4b",
+      "step_6524a9b0",
+      "step_fcd065be",
+      "step_3d8a9df6",
+      "step_18c4c16f",
+      "step_9b9ff263",
+      "step_2e6e5ac9"
     ],
     "tags": [],
     "updated_at": "2026-05-11T06:44:45.049169"
@@ -300,6 +306,168 @@
       ],
       "screenshot": null,
       "created_at": "2026-05-11T06:44:25.861256",
+      "plan_id": "plan_b3437999"
+    },
+    {
+      "step_id": "step_ca70af4b",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 278,
+        "y": 721
+      },
+      "description": "Click the 'Type a message' input field in the Microsoft Teams app window at coordinates (278, 721).",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:278:721:16:5:8080c08000000000",
+        "dhash:278:721:96:5:002050b030400000",
+        "dhash:278:721:0:10:30b0b08e8e8c81a1"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_ca70af4b",
+      "created_at": "2026-03-12T05:21:37.607610",
+      "plan_id": "plan_b3437999"
+    },
+    {
+      "step_id": "step_6524a9b0",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "How to develop agent for Teams?"
+      },
+      "description": "Type the text 'How to develop agent for Teams?' into the input field located at the bottom of the chat interface within the Teams application, under the section titled 'vscuse_app_QTSvnlocal'.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:30b0b08e8e8c80b9"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_6524a9b0",
+      "created_at": "2026-03-12T05:21:37.612758",
+      "plan_id": "plan_b3437999"
+    },
+    {
+      "step_id": "step_fcd065be",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press the \"Enter\" key to submit the message typed in the input field at the bottom of the Microsoft Teams interface in the  conversation.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:30b0b08e8e8c80b9"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_fcd065be",
+      "created_at": "2026-03-12T05:21:37.618277",
+      "plan_id": "plan_b3437999"
+    },
+    {
+      "step_id": "step_3d8a9df6",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 893,
+        "y": 484
+      },
+      "description": "Click the chat main panel at position (893, 484).",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:893:484:16:5:0000000000000000",
+        "dhash:893:484:96:5:8080808080808080",
+        "dhash:893:484:0:10:30f833bbaf3f3ba1"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_3d8a9df6",
+      "created_at": "2026-03-12T05:21:37.622589",
+      "plan_id": "plan_b3437999"
+    },
+    {
+      "step_id": "step_18c4c16f",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "home"
+      },
+      "description": "Press the \"Home\" key to navigate to the top of the chat in the Microsoft Teams chat interface.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_18c4c16f",
+      "created_at": "2026-03-12T05:21:37.628093",
+      "plan_id": "plan_b3437999"
+    },
+    {
+      "step_id": "step_9b9ff263",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion bot has responsed user's question.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "step_retry_timeout: 60"
+      ],
+      "screenshot": null,
+      "created_at": "2026-03-12T05:21:37.632619",
+      "plan_id": "plan_b3437999"
+    },
+    {
+      "step_id": "step_2e6e5ac9",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 999,
+        "y": 18
+      },
+      "description": "Click the \"Close\" button (X) at the top-right corner of the Google Chrome window to exit the Microsoft Teams web app.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:999:18:16:5:0d19246691916624",
+        "dhash:999:18:96:5:c233333342006666",
+        "dhash:999:18:0:10:30b8b1b337bfbfa1"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_2e6e5ac9",
+      "created_at": "2026-03-12T05:21:37.636618",
       "plan_id": "plan_b3437999"
     }
   ],
