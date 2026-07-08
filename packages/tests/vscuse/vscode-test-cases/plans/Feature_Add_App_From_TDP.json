@@ -66,11 +66,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:362:369:16:5:0909092909090909",
-        "dhash:362:369:96:5:2525252525a52525",
-        "dhash:362:369:0:10:1708584d4d4c49cd"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_f66090ed",
