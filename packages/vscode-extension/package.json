@@ -2,7 +2,7 @@
   "name": "ms-teams-vscode-extension",
   "displayName": "Microsoft 365 Agents Toolkit",
   "description": "Create, debug, and deploy agents with Microsoft 365 Agents Toolkit",
-  "version": "6.12.0-rc",
+  "version": "6.12.0-rc.0",
   "publisher": "TeamsDevApp",
   "author": "Microsoft Corporation",
   "private": true,
