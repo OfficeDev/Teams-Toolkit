@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2.0,
       "step_retry_timeout": 0.0
     },
-    "total_steps": 12,
+    "total_steps": 13,
     "created_at": "2026-05-18T02:19:09.515002",
     "name": "Feature Add App From TDP",
     "description": {
@@ -27,6 +27,7 @@
       "step_5e71293c",
       "plan_a4d84624",
       "plan_r_0624_024810",
+      "step_7c1a2b3d",
       "step_22498d6e",
       "step_b3327844",
       "step_43412fab",
@@ -116,6 +117,30 @@
       "plan_id": "plan_06dbd424"
     },
     {
+      "step_id": "step_7c1a2b3d",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 307,
+        "y": 266
+      },
+      "description": "Click the \"Teams Agents and Apps\" option in the top-level \"New Project\" dialog to navigate into the \"Teams Agent or App Using Microsoft Teams SDK\" sub-dialog. The prior selection did not advance the wizard, so re-select \"Teams Agents and Apps\" (under the \"Apps for Microsoft 365\" group) to open the Teams SDK capability sub-dialog before choosing a capability.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay:3"
+      ],
+      "screenshot": "",
+      "created_at": "2026-05-18T02:19:09.570000",
+      "plan_id": "plan_06dbd424"
+    },
+    {
       "step_id": "step_22498d6e",
       "agent": "interaction",
       "tool": "click",
@@ -130,11 +155,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:350:218:16:5:6acc9582814a9626",
-        "dhash:350:218:96:5:9743dc66696a9400",
-        "dhash:350:218:0:10:c0c88890b2726261"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_22498d6e",
@@ -156,11 +177,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:355:174:16:5:000000009146aad9",
-        "dhash:355:174:96:5:adcb120128285200",
-        "dhash:355:174:0:10:d0c0b890b2726261"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_b3327844",
@@ -182,11 +199,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:338:75:16:5:9191000000000000",
-        "dhash:338:75:96:5:00008040404070c8",
-        "dhash:338:75:0:10:d0949090b2726261"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_43412fab",
@@ -208,11 +221,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:374:78:16:5:526c29abddd92613",
-        "dhash:374:78:96:5:8146444586a22100",
-        "dhash:374:78:0:10:f0b09090b2726261"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_e71580bd",
@@ -232,9 +241,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:d0b09090b2726261"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_cc23b555",
