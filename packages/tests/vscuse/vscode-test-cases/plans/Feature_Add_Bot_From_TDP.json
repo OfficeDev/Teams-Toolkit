@@ -397,7 +397,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion 'TDP' is exist",
+      "description": "@assertion a project folder or item whose name contains the substring 'TDP' exists (substring match is sufficient; it need not appear as a standalone word)",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
