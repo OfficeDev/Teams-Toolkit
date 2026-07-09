@@ -25,7 +25,10 @@ class SettingsUtils {
     const normalizedBase = process.platform === "win32" ? resolvedBase.toLowerCase() : resolvedBase;
     const normalizedTarget =
       process.platform === "win32" ? resolvedTarget.toLowerCase() : resolvedTarget;
-    return normalizedTarget.startsWith(`${normalizedBase}${path.sep}`);
+    return (
+      normalizedTarget === normalizedBase ||
+      normalizedTarget.startsWith(`${normalizedBase}${path.sep}`)
+    );
   }
 
   async readSettings(
