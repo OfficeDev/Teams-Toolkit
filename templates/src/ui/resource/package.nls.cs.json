@@ -85,5 +85,11 @@
   "template.newCFShortcut.detail": "Doplněk podokna úloh s vlastní funkcí a klávesovou zkratkou",
   "template.newCFShortcut.label": "Vlastní funkce a zástupce",
   "template.newTaskpaneAddin.detail": "Umožňuje přizpůsobit pás karet pomocí tlačítka a vložit obsah do podokna úloh.",
-  "template.newTaskpaneAddin.label": "Podokno úloh"
+  "template.newTaskpaneAddin.label": "Podokno úloh",
+  "template.officeAddin.hosts.title": "Select the Office applications to support",
+  "template.officeAddin.hosts.placeholder": "Select at least one Office application",
+  "template.officeAddin.hosts.word.label": "Word",
+  "template.officeAddin.hosts.powerpoint.label": "PowerPoint",
+  "template.officeAddin.hosts.outlook.label": "Outlook",
+  "template.officeAddin.hosts.excel.label": "Excel"
 }

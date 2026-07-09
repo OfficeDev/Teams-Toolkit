@@ -1219,6 +1219,21 @@ describe("constructNode", () => {
     assert.isDefined(node);
   });
 
+  it("should return officeAddinHostsNode multiSelect with all hosts selected by default", () => {
+    const json = JSON.stringify({
+      node: "officeAddinHostsNode",
+      condition: { equals: "wxp-json-taskpane" },
+    });
+    const node = constructNode(json);
+    assert.isDefined(node);
+    assert.equal((node.data as any).type, "multiSelect");
+    assert.equal((node.data as any).name, QuestionNames.OfficeAddinHosts);
+    assert.deepEqual((node.data as any).default, ["word", "powerpoint", "outlook", "excel"]);
+    assert.lengthOf((node.data as any).staticOptions, 4);
+    assert.deepEqual((node.data as any).validation, { minItems: 1 });
+    assert.deepEqual(node.condition, { equals: "wxp-json-taskpane" });
+  });
+
   it("should return azureOpenAINode when node is azureOpenAINode", () => {
     const json = JSON.stringify({
       node: "azureOpenAINode",

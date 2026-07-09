@@ -176,6 +176,22 @@ export async function getHost(addinManifestPath: string): Promise<OfficeHost> {
   return host;
 }
 
+export const OFFICE_ADDIN_HOSTS = ["word", "powerpoint", "outlook", "excel"] as const;
+
+// Office add-in manifest requirement scope for each host.
+const OFFICE_ADDIN_HOST_SCOPE: { [host: string]: string } = {
+  outlook: "mail",
+  excel: "workbook",
+  word: "document",
+  powerpoint: "presentation",
+};
+
+function getSelectedOfficeAddinHosts(inputs: Inputs): string[] {
+  const hosts = inputs[QuestionNames.OfficeAddinHosts];
+  // Fall back to all hosts when the question was not asked (CLI / non-interactive).
+  return Array.isArray(hosts) && hosts.length > 0 ? hosts : [...OFFICE_ADDIN_HOSTS];
+}
+
 export class OfficeAddinGeneratorNew extends DefaultTemplateGenerator {
   componentName = "office-addin-generator";
 
@@ -201,12 +217,26 @@ export class OfficeAddinGeneratorNew extends DefaultTemplateGenerator {
     // Hanlde the MetaOS Project
     const res = await OfficeAddinGenerator.doScaffolding(context, inputs, destinationPath);
     if (res.isErr()) return err(res.error);
+
+    const replaceMap: { [key: string]: string } = { manifestId: getUuid() };
+    if (templateName === TemplateNames.WXPTaskpane) {
+      const hosts = getSelectedOfficeAddinHosts(inputs);
+      for (const host of OFFICE_ADDIN_HOSTS) {
+        replaceMap[host] = hosts.includes(host) ? "true" : "";
+      }
+      // Pre-join the manifest requirement scopes so the rendered JSON array stays
+      // valid for any host subset (avoids trailing-comma issues in Mustache).
+      replaceMap["manifestScopes"] = OFFICE_ADDIN_HOSTS.filter((host) => hosts.includes(host))
+        .map((host) => `"${OFFICE_ADDIN_HOST_SCOPE[host]}"`)
+        .join(",\n                    ");
+    }
+
     return Promise.resolve(
       ok([
         {
           templateName: templateName,
           language: ProgrammingLanguage.TS,
-          replaceMap: { manifestId: getUuid() },
+          replaceMap,
         },
       ])
     );
@@ -218,6 +248,16 @@ export class OfficeAddinGeneratorNew extends DefaultTemplateGenerator {
     destinationPath: string,
     actionContext?: ActionContext
   ): Promise<Result<GeneratorResult, FxError>> {
+    // Remove the source files of the Office hosts that the user did not select.
+    if (inputs[QuestionNames.TemplateName] === TemplateNames.WXPTaskpane) {
+      const hosts = getSelectedOfficeAddinHosts(inputs);
+      const unselected = OFFICE_ADDIN_HOSTS.filter((host) => !hosts.includes(host));
+      for (const host of unselected) {
+        await fse.remove(path.join(destinationPath, "src", "taskpane", `${host}.ts`));
+        await fse.remove(path.join(destinationPath, "src", "commands", `${host}.ts`));
+      }
+    }
+
     // Hanlde the MetaOS Project import
     const fromFolder = inputs[QuestionNames.OfficeAddinFolder];
     if (fromFolder) {

@@ -85,5 +85,11 @@
   "template.newCFShortcut.detail": "Özel işlev ve kısayol içeren görev bölmesi eklentisi",
   "template.newCFShortcut.label": "Özel İşlev ve Kısayol",
   "template.newTaskpaneAddin.detail": "Şeridi düğmeyle özelleştirip görev bölmesine içerik ekleyin",
-  "template.newTaskpaneAddin.label": "Görev bölmesi"
+  "template.newTaskpaneAddin.label": "Görev bölmesi",
+  "template.officeAddin.hosts.title": "Select the Office applications to support",
+  "template.officeAddin.hosts.placeholder": "Select at least one Office application",
+  "template.officeAddin.hosts.word.label": "Word",
+  "template.officeAddin.hosts.powerpoint.label": "PowerPoint",
+  "template.officeAddin.hosts.outlook.label": "Outlook",
+  "template.officeAddin.hosts.excel.label": "Excel"
 }

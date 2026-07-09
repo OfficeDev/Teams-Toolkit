@@ -610,6 +610,48 @@ describe("OfficeAddinGeneratorNew", () => {
       const res = await generator.getTemplateInfos(context, inputs, "./");
       chai.assert.isTrue(res.isErr());
     });
+
+    it(`should set all host flags by default for WXPTaskpane`, async () => {
+      vi.spyOn(OfficeAddinGenerator, "doScaffolding").mockResolvedValue(ok(undefined));
+      const inputs: Inputs = {
+        platform: Platform.CLI,
+        projectPath: "./",
+      };
+      inputs[QuestionNames.TemplateName] = TemplateNames.WXPTaskpane;
+      const res = await generator.getTemplateInfos(context, inputs, "./");
+      chai.assert.isTrue(res.isOk());
+      if (res.isOk()) {
+        const replaceMap = res.value[0].replaceMap!;
+        chai.assert.equal(replaceMap.word, "true");
+        chai.assert.equal(replaceMap.excel, "true");
+        chai.assert.equal(replaceMap.powerpoint, "true");
+        chai.assert.equal(replaceMap.outlook, "true");
+        chai.assert.equal(
+          replaceMap.manifestScopes,
+          `"document",\n                    "presentation",\n                    "mail",\n                    "workbook"`
+        );
+      }
+    });
+
+    it(`should honor host subset for WXPTaskpane`, async () => {
+      vi.spyOn(OfficeAddinGenerator, "doScaffolding").mockResolvedValue(ok(undefined));
+      const inputs: Inputs = {
+        platform: Platform.CLI,
+        projectPath: "./",
+      };
+      inputs[QuestionNames.TemplateName] = TemplateNames.WXPTaskpane;
+      inputs[QuestionNames.OfficeAddinHosts] = ["word"];
+      const res = await generator.getTemplateInfos(context, inputs, "./");
+      chai.assert.isTrue(res.isOk());
+      if (res.isOk()) {
+        const replaceMap = res.value[0].replaceMap!;
+        chai.assert.equal(replaceMap.word, "true");
+        chai.assert.equal(replaceMap.excel, "");
+        chai.assert.equal(replaceMap.powerpoint, "");
+        chai.assert.equal(replaceMap.outlook, "");
+        chai.assert.equal(replaceMap.manifestScopes, `"document"`);
+      }
+    });
   });
 
   describe("post()", () => {
@@ -648,6 +690,37 @@ describe("OfficeAddinGeneratorNew", () => {
       const res = await generator.post(context, inputs, "./");
       chai.assert.isTrue(res.isOk());
       chai.assert.isTrue(reset.mock.calls.length === 0);
+    });
+
+    it(`prunes unselected host files for WXPTaskpane`, async () => {
+      const remove = vi.spyOn(fse, "remove").mockResolvedValue();
+      const inputs: Inputs = {
+        platform: Platform.CLI,
+        projectPath: "./",
+      };
+      inputs[QuestionNames.TemplateName] = TemplateNames.WXPTaskpane;
+      inputs[QuestionNames.OfficeAddinHosts] = ["word", "excel"];
+      const res = await generator.post(context, inputs, "/dest");
+      chai.assert.isTrue(res.isOk());
+      const removed = remove.mock.calls.map((c) => (c[0] as string).replace(/\\/g, "/"));
+      chai.assert.include(removed, "/dest/src/taskpane/powerpoint.ts");
+      chai.assert.include(removed, "/dest/src/commands/powerpoint.ts");
+      chai.assert.include(removed, "/dest/src/taskpane/outlook.ts");
+      chai.assert.include(removed, "/dest/src/commands/outlook.ts");
+      chai.assert.notInclude(removed, "/dest/src/taskpane/word.ts");
+      chai.assert.notInclude(removed, "/dest/src/taskpane/excel.ts");
+    });
+
+    it(`prunes nothing for WXPTaskpane when all hosts selected`, async () => {
+      const remove = vi.spyOn(fse, "remove").mockResolvedValue();
+      const inputs: Inputs = {
+        platform: Platform.CLI,
+        projectPath: "./",
+      };
+      inputs[QuestionNames.TemplateName] = TemplateNames.WXPTaskpane;
+      const res = await generator.post(context, inputs, "/dest");
+      chai.assert.isTrue(res.isOk());
+      chai.assert.isTrue(remove.mock.calls.length === 0);
     });
   });
 });

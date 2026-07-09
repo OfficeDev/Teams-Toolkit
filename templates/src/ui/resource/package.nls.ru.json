@@ -85,5 +85,11 @@
   "template.newCFShortcut.detail": "Надстройка области задач с настраиваемой функцией и ярлыком",
   "template.newCFShortcut.label": "Настраиваемая функция и ярлык",
   "template.newTaskpaneAddin.detail": "Настройка ленты с помощью кнопки и внедрение содержимого в область задач",
-  "template.newTaskpaneAddin.label": "Область задач"
+  "template.newTaskpaneAddin.label": "Область задач",
+  "template.officeAddin.hosts.title": "Select the Office applications to support",
+  "template.officeAddin.hosts.placeholder": "Select at least one Office application",
+  "template.officeAddin.hosts.word.label": "Word",
+  "template.officeAddin.hosts.powerpoint.label": "PowerPoint",
+  "template.officeAddin.hosts.outlook.label": "Outlook",
+  "template.officeAddin.hosts.excel.label": "Excel"
 }

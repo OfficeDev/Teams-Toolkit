@@ -85,5 +85,11 @@
   "template.newCFShortcut.detail": "Dodatek okienka zadań z funkcją niestandardową i skrótem",
   "template.newCFShortcut.label": "Funkcja niestandardowa i skrót",
   "template.newTaskpaneAddin.detail": "Dostosuj wstążkę za pomocą przycisku i osadź zawartość w okienku zadań",
-  "template.newTaskpaneAddin.label": "Okienko zadań"
+  "template.newTaskpaneAddin.label": "Okienko zadań",
+  "template.officeAddin.hosts.title": "Select the Office applications to support",
+  "template.officeAddin.hosts.placeholder": "Select at least one Office application",
+  "template.officeAddin.hosts.word.label": "Word",
+  "template.officeAddin.hosts.powerpoint.label": "PowerPoint",
+  "template.officeAddin.hosts.outlook.label": "Outlook",
+  "template.officeAddin.hosts.excel.label": "Excel"
 }
