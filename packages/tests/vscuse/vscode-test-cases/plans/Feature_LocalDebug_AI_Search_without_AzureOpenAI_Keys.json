@@ -516,17 +516,13 @@
         "x": 288,
         "y": 214
       },
-      "description": "Click the \"Add\" or \"Open\" blue button on the app details popup for the sideloaded app within the Microsoft Teams web interface. Coordinate (288,214) and the button-region dhash preconditions are taken directly from the proven canonical debug_in_teams_local group (step_31620d1e); they land on either the \"Add\" (fresh app) or \"Open\" (already-added app) button and gate the click until the button actually renders. The randomly generated app name means no app-name-specific precondition is used.",
+      "description": "Click the \"Add\" or \"Open\" blue button in the app details popup for the sideloaded app within the Microsoft Teams web interface. Coordinate (288,214) is the proven canonical debug_in_teams_local position that lands on either the \"Add\" (fresh app, button center ~251,217 spanning x204-299) or \"Open\" (already-added app, ~308,216) button. The state-specific dhash preconditions were REMOVED because the actual Teams screen showed a fresh/stale app dialog in the \"Add\" state whose button-region hash never matched the recorded \"Open\" state, causing a 180s precondition timeout; the preceding assertion (step_ad0f21c7, \"Add OR Open exists\", 180s retry) already gates this click until the button renders.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:288:214:16:5:05100a0511030b12",
-        "dhash:288:214:96:5:2616011c1c01005b",
-        "dhash:288:214:0:10:00b4b0d8f8fcf0d8"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "precondition_wait_timeout:180"
