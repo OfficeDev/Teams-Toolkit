@@ -45,7 +45,6 @@
       "step_0c38e94d",
       "step_fa9853a3",
       "plan_r_0430_071628",
-      "plan_r_0414_052653",
       "step_ad0f21c7",
       "step_74ea95d1",
       "step_be7c92d4",
@@ -517,13 +516,17 @@
         "x": 288,
         "y": 214
       },
-      "description": "Click the \"Add\" or \"Open\" blue button on the app details popup for the sideloaded app within the Microsoft Teams web interface. The preceding patch_for_add_app recovery group (Back, close stale Teams tab, relaunch debug, reopen Teams) ensures the CURRENT run's app dialog is shown rather than a stale/different app left over from a previous run. Coordinate (288,214) is the proven canonical debug_in_teams_local value that lands on either the \"Add\" or the \"Open\" button regardless of state; the randomly generated app name means no app-specific dhash precondition is used.",
+      "description": "Click the \"Add\" or \"Open\" blue button on the app details popup for the sideloaded app within the Microsoft Teams web interface. Coordinate (288,214) and the button-region dhash preconditions are taken directly from the proven canonical debug_in_teams_local group (step_31620d1e); they land on either the \"Add\" (fresh app) or \"Open\" (already-added app) button and gate the click until the button actually renders. The randomly generated app name means no app-name-specific precondition is used.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [],
+      "preconditions": [
+        "dhash:288:214:16:5:05100a0511030b12",
+        "dhash:288:214:96:5:2616011c1c01005b",
+        "dhash:288:214:0:10:00b4b0d8f8fcf0d8"
+      ],
       "postconditions": [],
       "tags": [
         "precondition_wait_timeout:180"
@@ -561,13 +564,17 @@
         "x": 533,
         "y": 508
       },
-      "description": "Click the \"Open\" button in the \"Added successfully!\" / \"Let's go\" onboarding dialog for the sideloaded app within the Microsoft Teams web interface. Coordinate (533,508) matches the proven value used by the canonical debug_in_teams_local group so the added app reliably opens.",
+      "description": "Click the \"Open\" button in the \"Added successfully!\" / \"Let's go\" onboarding dialog for the sideloaded app within the Microsoft Teams web interface. Coordinate (533,508) and its dhash preconditions match the proven canonical debug_in_teams_local group (step_22db8609) so the added app reliably opens.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [],
+      "preconditions": [
+        "dhash:533:508:16:5:00987494ca4acacc",
+        "dhash:533:508:96:5:000058a48598e36b",
+        "dhash:533:508:0:10:1669696969696979"
+      ],
       "postconditions": [],
       "tags": [
         "precondition_wait_timeout:180"
