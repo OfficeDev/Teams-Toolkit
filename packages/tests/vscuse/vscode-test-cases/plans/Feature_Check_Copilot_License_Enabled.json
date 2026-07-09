@@ -207,10 +207,10 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 703,
-        "y": 100
+        "x": 754,
+        "y": 17
       },
-      "description": "Click the \"Sign in\" button in the Microsoft 365 notification at the top of the Visual Studio Code interface to access a Microsoft 365 account.",
+      "description": "Click the blue \"Sign In\" button in the Visual Studio Code title bar (next to the Microsoft 365 Agents Toolkit hexagon icon) to start the Microsoft 365 account sign-in flow and open the browser login page. The old bottom-right sign-in notification toast is unreliable because it collapses under stacked update/telemetry notifications, so use the always-visible title-bar Sign In button instead.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
