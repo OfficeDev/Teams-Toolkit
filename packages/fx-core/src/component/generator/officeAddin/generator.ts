@@ -248,14 +248,10 @@ export class OfficeAddinGeneratorNew extends DefaultTemplateGenerator {
     destinationPath: string,
     actionContext?: ActionContext
   ): Promise<Result<GeneratorResult, FxError>> {
-    // Remove the source files of the Office hosts that the user did not select.
+    // Prune everything tied to the Office hosts that the user did not select.
     if (inputs[QuestionNames.TemplateName] === TemplateNames.WXPTaskpane) {
       const hosts = getSelectedOfficeAddinHosts(inputs);
-      const unselected = OFFICE_ADDIN_HOSTS.filter((host) => !hosts.includes(host));
-      for (const host of unselected) {
-        await fse.remove(path.join(destinationPath, "src", "taskpane", `${host}.ts`));
-        await fse.remove(path.join(destinationPath, "src", "commands", `${host}.ts`));
-      }
+      await pruneUnselectedOfficeAddinHosts(destinationPath, hosts);
     }
 
     // Hanlde the MetaOS Project import
@@ -271,5 +267,66 @@ export class OfficeAddinGeneratorNew extends DefaultTemplateGenerator {
       }
     }
     return ok({});
+  }
+}
+
+/**
+ * Remove all references to unselected Office hosts from a scaffolded WXP task
+ * pane project: per-host source files, the `.vscode/launch.json` debug
+ * configurations/compounds (which drive the Run and Debug dropdown), and the
+ * `package.json` debug scripts / default debug app.
+ */
+async function pruneUnselectedOfficeAddinHosts(
+  destinationPath: string,
+  hosts: string[]
+): Promise<void> {
+  const unselected = OFFICE_ADDIN_HOSTS.filter((host) => !hosts.includes(host));
+
+  // 1. Per-host source files.
+  for (const host of unselected) {
+    await fse.remove(path.join(destinationPath, "src", "taskpane", `${host}.ts`));
+    await fse.remove(path.join(destinationPath, "src", "commands", `${host}.ts`));
+  }
+
+  const isSelectedHostName = (name: string): boolean => {
+    const firstToken = name.trim().split(/\s+/)[0]?.toLowerCase();
+    // Keep entries that do not belong to any known host, or belong to a selected one.
+    return !OFFICE_ADDIN_HOSTS.includes(firstToken as (typeof OFFICE_ADDIN_HOSTS)[number])
+      ? true
+      : hosts.includes(firstToken);
+  };
+
+  // 2. `.vscode/launch.json` — filter host-specific configurations and compounds
+  //    so the Run and Debug dropdown only lists the selected hosts.
+  const launchPath = path.join(destinationPath, ".vscode", "launch.json");
+  if (await fse.pathExists(launchPath)) {
+    const launch = await fse.readJson(launchPath);
+    if (Array.isArray(launch.configurations)) {
+      launch.configurations = launch.configurations.filter((c: { name?: string }) =>
+        isSelectedHostName(c.name ?? "")
+      );
+    }
+    if (Array.isArray(launch.compounds)) {
+      launch.compounds = launch.compounds.filter((c: { name?: string }) =>
+        isSelectedHostName(c.name ?? "")
+      );
+    }
+    await fse.writeJson(launchPath, launch, { spaces: 2 });
+  }
+
+  // 3. `package.json` — drop the `start:desktop:<host>` scripts for unselected
+  //    hosts and point the default debug app at a selected host.
+  const packagePath = path.join(destinationPath, "package.json");
+  if (await fse.pathExists(packagePath)) {
+    const pkg = await fse.readJson(packagePath);
+    if (pkg.scripts) {
+      for (const host of unselected) {
+        delete pkg.scripts[`start:desktop:${host}`];
+      }
+    }
+    if (pkg.config && !hosts.includes(pkg.config.app_to_debug)) {
+      pkg.config.app_to_debug = hosts[0];
+    }
+    await fse.writeJson(packagePath, pkg, { spaces: 2 });
   }
 }
