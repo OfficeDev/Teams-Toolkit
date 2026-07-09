@@ -513,10 +513,10 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 281,
+        "x": 251,
         "y": 217
       },
-      "description": "Click the \"Add\" or \"Open\" button on the app details popup for the sideloaded app within the Microsoft Teams web interface. Coordinates target the horizontal overlap of both the \"Add\" (~251) and \"Open\" (~310) button positions so the click lands regardless of whether the app is already installed.",
+      "description": "Click the \"Add\" or \"Open\" blue button on the app details popup for the sideloaded app within the Microsoft Teams web interface. This run's dialog shows the fresh-app \"Add\" button, whose measured center is (251,217) (box x 204-299) in the failure screenshot; prior attempts clicked x=312 and x=281 (right of / near the rounded edge) and missed it. No app-name-specific dhash precondition because the sideloaded app name is randomly generated per run.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -557,10 +557,10 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 509,
-        "y": 513
+        "x": 533,
+        "y": 508
       },
-      "description": "Click the \"Open\" button in the vs\u0441use_app_4YhGglocal app onboarding dialog within the Microsoft Teams web interface.",
+      "description": "Click the \"Open\" button in the \"Added successfully!\" / \"Let's go\" onboarding dialog for the sideloaded app within the Microsoft Teams web interface. Coordinate (533,508) matches the proven value used by the canonical debug_in_teams_local group so the added app reliably opens.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
