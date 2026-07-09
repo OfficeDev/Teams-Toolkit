@@ -94,17 +94,16 @@ export interface ManifestCommonProperties {
 }
 
 export class ManifestUtils {
-  private normalizePathForComparison(inputPath: string): string {
-    return process.platform === "win32" ? inputPath.toLowerCase() : inputPath;
-  }
-
-  private isPathWithinDirectory(baseDir: string, targetPath: string): boolean {
+  private isPathInOrUnderDirectory(baseDir: string, targetPath: string): boolean {
     const resolvedBase = path.resolve(baseDir);
     const resolvedTarget = path.resolve(targetPath);
-    const normalizedBase = this.normalizePathForComparison(resolvedBase);
-    const normalizedTarget = this.normalizePathForComparison(resolvedTarget);
-    const relative = path.relative(normalizedBase, normalizedTarget);
-    return relative !== "" && !relative.startsWith("..") && !path.isAbsolute(relative);
+    const normalizedBase = process.platform === "win32" ? resolvedBase.toLowerCase() : resolvedBase;
+    const normalizedTarget =
+      process.platform === "win32" ? resolvedTarget.toLowerCase() : resolvedTarget;
+    return (
+      normalizedTarget === normalizedBase ||
+      normalizedTarget.startsWith(`${normalizedBase}${path.sep}`)
+    );
   }
 
   async readAppManifest(projectPath: string): Promise<Result<TeamsAppManifest, FxError>> {
@@ -474,7 +473,7 @@ export class ManifestUtils {
     maxLength = 25
   ): Promise<Result<undefined, FxError>> {
     const manifestPath = this.getTeamsAppManifestPath(projectPath);
-    if (this.isPathWithinDirectory(os.tmpdir(), manifestPath)) {
+    if (this.isPathInOrUnderDirectory(os.tmpdir(), manifestPath)) {
       return ok(undefined);
     }
     if (fs.pathExistsSync(manifestPath)) {

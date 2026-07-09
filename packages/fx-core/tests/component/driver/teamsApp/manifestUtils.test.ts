@@ -474,8 +474,6 @@ describe("getTeamsAppManifestPath", () => {
 });
 
 describe("trimManifestShortName", () => {
-  const sandbox = vi;
-
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -526,24 +524,24 @@ describe("trimManifestShortName", () => {
   it("should skip paths in temp directory", async () => {
     const teamsManifest = new TeamsAppManifest();
     teamsManifest.name.short = "shortname abcdefghijklmnopqrstuvwxyz${{APP_NAME_SUFFIX}}";
-    const readJsonStub = sandbox.stub(fs, "readJson").resolves(teamsManifest);
-    const writeFileStub = sandbox.stub(fs, "writeFile").resolves();
-    const pathExistsSyncStub = sandbox.stub(fs, "pathExistsSync").returns(true);
+    const readJsonStub = vi.spyOn(fs, "readJson").mockResolvedValue(teamsManifest);
+    const writeFileStub = vi.spyOn(fs, "writeFile").mockResolvedValue();
+    const pathExistsSyncStub = vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
     const tempManifestPath = path.join(
       os.tmpdir(),
       `test-manifest-${Date.now()}`,
       "appManifest",
       "manifest.json"
     );
-    sandbox.stub(manifestUtils, "getTeamsAppManifestPath").returns(tempManifestPath);
+    vi.spyOn(manifestUtils, "getTeamsAppManifestPath").mockReturnValue(tempManifestPath);
 
     const res = await manifestUtils.trimManifestShortName(
       path.join(os.tmpdir(), "test-project-path")
     );
     assert.isTrue(res.isOk());
-    assert.isTrue(pathExistsSyncStub.notCalled);
-    assert.isTrue(readJsonStub.notCalled);
-    assert.isTrue(writeFileStub.notCalled);
+    assert.equal(pathExistsSyncStub.mock.calls.length, 0);
+    assert.equal(readJsonStub.mock.calls.length, 0);
+    assert.equal(writeFileStub.mock.calls.length, 0);
   });
 });
 

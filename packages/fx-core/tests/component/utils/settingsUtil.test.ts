@@ -26,12 +26,10 @@ function stubPathUtils(getYmlFilePath?: string, getAvailableYmlFilePath?: string
 }
 
 describe("SettingsUtils", () => {
-  let sandbox: any;
   let tempDir: string;
   let envRestore: RestoreFn;
 
   beforeEach(async () => {
-    sandbox = vi;
     tempDir = path.join(process.cwd(), ".tmp-settings-tests", `test-settings-${Date.now()}`);
     await fs.ensureDir(tempDir);
     envRestore = mockedEnv({});
@@ -96,11 +94,9 @@ describe("SettingsUtils", () => {
           await fs.ensureDir(projectPath);
           await fs.writeFile(ymlPath, "version: 1.0");
 
-          sandbox.stub(pathUtils, "pathUtils").value({
-            getYmlFilePath: sandbox.stub().returns(ymlPath),
-            getAvailableYmlFilePath: sandbox.stub(),
-          });
-          sandbox.stub(telemetryModule, "sendTelemetryEvent").resolves();
+          vi.spyOn(pathUtils.pathUtils, "getYmlFilePath").mockReturnValue(ymlPath);
+          vi.spyOn(pathUtils.pathUtils, "getAvailableYmlFilePath").mockReturnValue(undefined);
+          vi.spyOn(telemetryModule, "sendTelemetryEvent").mockResolvedValue();
 
           const result = await settingsUtil.readSettings(projectPath, true);
 
@@ -284,10 +280,8 @@ describe("SettingsUtils", () => {
           await fs.ensureDir(projectPath);
           await fs.writeFile(ymlPath, `projectId: ${oldId}\nversion: 1.0`);
 
-          sandbox.stub(pathUtils, "pathUtils").value({
-            getYmlFilePath: sandbox.stub().returns(ymlPath),
-            getAvailableYmlFilePath: sandbox.stub(),
-          });
+          vi.spyOn(pathUtils.pathUtils, "getYmlFilePath").mockReturnValue(ymlPath);
+          vi.spyOn(pathUtils.pathUtils, "getAvailableYmlFilePath").mockReturnValue(undefined);
 
           const result = await settingsUtil.writeSettings(projectPath, {
             trackingId: newId,

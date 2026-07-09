@@ -19,17 +19,16 @@ import { FileNotFoundError } from "../../error/common";
 import { pathUtils } from "./pathUtils";
 
 class SettingsUtils {
-  private normalizePathForComparison(inputPath: string): string {
-    return process.platform === "win32" ? inputPath.toLowerCase() : inputPath;
-  }
-
-  private isPathWithinDirectory(baseDir: string, targetPath: string): boolean {
+  private isPathInOrUnderDirectory(baseDir: string, targetPath: string): boolean {
     const resolvedBase = path.resolve(baseDir);
     const resolvedTarget = path.resolve(targetPath);
-    const normalizedBase = this.normalizePathForComparison(resolvedBase);
-    const normalizedTarget = this.normalizePathForComparison(resolvedTarget);
-    const relative = path.relative(normalizedBase, normalizedTarget);
-    return relative !== "" && !relative.startsWith("..") && !path.isAbsolute(relative);
+    const normalizedBase = process.platform === "win32" ? resolvedBase.toLowerCase() : resolvedBase;
+    const normalizedTarget =
+      process.platform === "win32" ? resolvedTarget.toLowerCase() : resolvedTarget;
+    return (
+      normalizedTarget === normalizedBase ||
+      normalizedTarget.startsWith(`${normalizedBase}${path.sep}`)
+    );
   }
 
   async readSettings(
@@ -52,7 +51,7 @@ class SettingsUtils {
       const projectId = uuid.v4();
       const projectIdField = appYaml.createPair("projectId", projectId);
       appYaml.add(projectIdField);
-      if (!this.isPathWithinDirectory(os.tmpdir(), projectYamlPath)) {
+      if (!this.isPathInOrUnderDirectory(os.tmpdir(), projectYamlPath)) {
         await fs.writeFile(projectYamlPath, appYaml.toString());
       }
       sendTelemetryEvent(Component.core, TelemetryEvent.FillProjectId, {
@@ -82,7 +81,7 @@ class SettingsUtils {
     const yamlFileContent: string = await fs.readFile(projectYamlPath, "utf8");
     const appYaml = parseDocument(yamlFileContent);
     appYaml.set("projectId", settings.trackingId);
-    if (!this.isPathWithinDirectory(os.tmpdir(), projectYamlPath)) {
+    if (!this.isPathInOrUnderDirectory(os.tmpdir(), projectYamlPath)) {
       await fs.writeFile(projectYamlPath, appYaml.toString());
     }
     return ok(projectYamlPath);
