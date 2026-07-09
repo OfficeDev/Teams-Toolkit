@@ -107,7 +107,7 @@ export class ManifestUtils {
     const normalizedBase = this.normalizePathForComparison(resolvedBase);
     const normalizedTarget = this.normalizePathForComparison(resolvedTarget);
     const relative = path.relative(normalizedBase, normalizedTarget);
-    return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
+    return relative !== "" && !relative.startsWith("..") && !path.isAbsolute(relative);
   }
 
   async readAppManifest(projectPath: string): Promise<Result<TeamsAppManifest, FxError>> {

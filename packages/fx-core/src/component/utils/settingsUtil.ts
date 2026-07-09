@@ -29,7 +29,7 @@ class SettingsUtils {
     const normalizedBase = this.normalizePathForComparison(resolvedBase);
     const normalizedTarget = this.normalizePathForComparison(resolvedTarget);
     const relative = path.relative(normalizedBase, normalizedTarget);
-    return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
+    return relative !== "" && !relative.startsWith("..") && !path.isAbsolute(relative);
   }
 
   async readSettings(
@@ -50,7 +50,7 @@ class SettingsUtils {
     const appYaml = parseDocument(yamlFileContent);
     if (!appYaml.has("projectId") && ensureTrackingId) {
       const projectId = uuid.v4();
-      const projectIdField = appYaml.createPair("projectId", uuid.v4());
+      const projectIdField = appYaml.createPair("projectId", projectId);
       appYaml.add(projectIdField);
       if (!this.isPathWithinDirectory(os.tmpdir(), projectYamlPath)) {
         await fs.writeFile(projectYamlPath, appYaml.toString());

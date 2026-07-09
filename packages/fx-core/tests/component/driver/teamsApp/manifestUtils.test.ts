@@ -522,7 +522,7 @@ describe("trimManifestShortName", () => {
     assert.isTrue(readJsonStub.notCalled);
     assert.isTrue(writeFileStub.notCalled);
   });
-  it("Skips paths in temp directory", async () => {
+  it("should skip paths in temp directory", async () => {
     const teamsManifest = new TeamsAppManifest();
     teamsManifest.name.short = "shortname abcdefghijklmnopqrstuvwxyz${{APP_NAME_SUFFIX}}";
     const readJsonStub = sandbox.stub(fs, "readJson").resolves(teamsManifest);
@@ -536,7 +536,9 @@ describe("trimManifestShortName", () => {
     );
     sandbox.stub(manifestUtils, "getTeamsAppManifestPath").returns(tempManifestPath);
 
-    const res = await manifestUtils.trimManifestShortName("/some/project/path");
+    const res = await manifestUtils.trimManifestShortName(
+      path.join(os.tmpdir(), "test-project-path")
+    );
     assert.isTrue(res.isOk());
     assert.isTrue(pathExistsSyncStub.notCalled);
     assert.isTrue(readJsonStub.notCalled);
