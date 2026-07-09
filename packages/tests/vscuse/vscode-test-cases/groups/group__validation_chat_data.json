@@ -50,11 +50,7 @@
       },
       "timeout": 30,
       "continue_on_error": "false",
-      "preconditions": [
-        "dhash:558:535:16:5:2840000000000000",
-        "dhash:558:535:96:5:894d179a20000000",
-        "dhash:558:535:0:10:10b0b08e8c8e81a1"
-      ],
+      "preconditions": [],
       "tags": [],
       "created_at": "2025-10-20T11:06:21.798378"
     },
