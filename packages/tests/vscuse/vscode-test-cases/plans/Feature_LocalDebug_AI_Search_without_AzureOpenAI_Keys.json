@@ -513,10 +513,10 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 312,
-        "y": 214
+        "x": 281,
+        "y": 217
       },
-      "description": "Click the \"Add\" or \"Open\" button on the app details popup for the sideloaded app within the Microsoft Teams web interface.",
+      "description": "Click the \"Add\" or \"Open\" button on the app details popup for the sideloaded app within the Microsoft Teams web interface. Coordinates target the horizontal overlap of both the \"Add\" (~251) and \"Open\" (~310) button positions so the click lands regardless of whether the app is already installed.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
