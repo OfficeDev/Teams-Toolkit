@@ -88,8 +88,11 @@ class DictionaryMatcher {
 }
 
 export function trimNonAlphabetChars(token: string): string {
-  // Regular expression to match non-alphabet characters at the beginning and end
-  return token.replace(/^[^a-zA-Z]+|[^a-zA-Z]+$/g, "");
+  // Regular expression to match non-alphabet characters at the beginning and end.
+  // The positive lookbehind (?<=[a-zA-Z]) pins the trailing match to start right after
+  // an alphabet char, removing the start-position ambiguity that caused quadratic
+  // backtracking (ReDoS) on long runs of trailing non-alphabet characters.
+  return token.replace(/^[^a-zA-Z]+|(?<=[a-zA-Z])[^a-zA-Z]+$/g, "");
 }
 
 export const dictMatcher = new DictionaryMatcher();
