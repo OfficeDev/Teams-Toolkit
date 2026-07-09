@@ -47,6 +47,12 @@ import UI from "../userInteraction";
 import { editDistance, getSystemInputs } from "../utils";
 import { helper } from "./helper";
 
+// Tools permitted to identify themselves as the atk caller via ATK_CALLER.
+// Any other value is mapped to "other" so the caller-source telemetry
+// dimension stays low-cardinality and cannot leak free-form input (e.g. PII).
+const KNOWN_CALLER_SOURCES = new Set(["wiqd"]);
+const OTHER_CALLER_SOURCE = "other";
+
 class CLIEngine {
   /**
    * @description cached debug logsd
@@ -539,10 +545,26 @@ class CLIEngine {
       context.telemetryProperties[TelemetryProperty.Skill] = "true";
       CliTelemetry.reporter?.addSharedProperty(TelemetryProperty.Skill, "true");
     }
+    // Tag the invoking tool (e.g. wiqd) so wrapper-driven runs are distinguishable.
+    const caller = this.resolveCallerSource(process.env.ATK_CALLER);
+    if (caller) {
+      context.telemetryProperties[TelemetryProperty.CallerSource] = caller;
+      CliTelemetry.reporter?.addSharedProperty(TelemetryProperty.CallerSource, caller);
+    }
     // context.telemetryProperties[TelemetryProperty.CorrelationId] =
     //   context.optionValues.correlationId;
 
     return ok(undefined);
+  }
+
+  // ATK_CALLER is free-form env input, so normalize for matching and resolve
+  // against a known-caller allowlist; any recognized value maps to itself, any
+  // other declared value collapses to "other" to keep the telemetry dimension
+  // low-cardinality and free of PII. Blank/unset stays untagged.
+  private resolveCallerSource(raw?: string): string | undefined {
+    const value = (raw ?? "").trim().toLowerCase();
+    if (!value) return undefined;
+    return KNOWN_CALLER_SOURCES.has(value) ? value : OTHER_CALLER_SOURCE;
   }
 
   validateOptionsAndArguments(
