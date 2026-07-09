@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 30,
+    "total_steps": 31,
     "created_at": "2026-06-11T03:17:05.683269",
     "name": "group: login_azure_and_m365",
     "description": {
@@ -43,6 +43,7 @@
       "step_e2cc78ad",
       "step_301225ad",
       "step_329b2533",
+      "step_esc9f7a21",
       "step_961d5765",
       "step_bc756061",
       "step_c1b49ad1",
@@ -52,7 +53,7 @@
     "tags": [
       "group"
     ],
-    "updated_at": "2026-06-11T07:59:47.739210"
+    "updated_at": "2026-07-09T06:19:15.000000"
   },
   "steps": [
     {
@@ -781,6 +782,29 @@
       ],
       "screenshot": null,
       "created_at": "2026-06-11T03:17:05.862305",
+      "plan_id": "plan_r_0928_020230"
+    },
+    {
+      "step_id": "step_esc9f7a21",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "escape"
+      },
+      "description": "Press Escape to dismiss the 'Use passkey from another device' browser autofill popup that appears after entering the M365 account email. If left open, this popup consumes the subsequent Next button click (closing itself instead of submitting), leaving the page stuck on the email entry screen so the password page never loads.",
+      "content_refs": [],
+      "timeout": 10,
+      "retry_count": 0,
+      "continue_on_error": "true",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay: 2",
+        "force_run:true"
+      ],
+      "screenshot": "",
+      "created_at": "2026-07-09T06:19:15.000000",
       "plan_id": "plan_r_0928_020230"
     }
   ],
