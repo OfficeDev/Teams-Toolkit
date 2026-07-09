@@ -662,8 +662,8 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 626,
-        "y": 517
+        "x": 633,
+        "y": 544
       },
       "description": "Click the \"Next\" button on the Microsoft sign-in page in Google Chrome after entering the account email address.",
       "content_refs": [],
