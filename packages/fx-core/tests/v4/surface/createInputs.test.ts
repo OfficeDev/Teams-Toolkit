@@ -31,7 +31,11 @@ import { openCreateQuestions } from "../../../src/v4/distribution/createQuestion
 import { openDeclarativePackageMetadata } from "../../../src/v4/distribution/declarativePackage";
 import { DeclarativeLocator } from "../../../src/v4/model/dataModel";
 import { createUiPromptUI } from "../../../src/v4/surface/uiPromptUI";
-import { gateLanguagesBySurface, runCreateInputs } from "../../../src/v4/surface/createInputs";
+import {
+  gateLanguagesBySurface,
+  runCreateInputs,
+  runCreateInputsWalk,
+} from "../../../src/v4/surface/createInputs";
 import { assert } from "vitest";
 
 /**
@@ -46,6 +50,7 @@ import { assert } from "vitest";
 
 const TEMPLATES_V4_DIR = path.resolve(__dirname, "../../../../../templates/v4");
 const MCP_DA: DeclarativeLocator = { kind: "create", templateId: "da/mcp-server" };
+const NO_ACTION: DeclarativeLocator = { kind: "create", templateId: "da/no-action" };
 const STATIC_MCP_DA: DeclarativeLocator = {
   kind: "create",
   templateId: "da/mcp-server-static",
@@ -421,6 +426,68 @@ describe("runCreateInputs (collect-create-inputs)", () => {
       assert.deepEqual(res.value, { language: "typescript", surface: "vscode" });
     }
     assert.deepEqual(ui.selectNames, []);
+  });
+
+  it("CCI-25: threads baseStep + backable so Q2's first prompt shows Back and a back returns a typed outcome", async () => {
+    const ui = new ScriptedUserInteraction({ back: ["llmService"] });
+    const res = await runCreateInputsWalk(buildFloor(), CUSTOM_COPILOT_BASIC, {}, asUI(ui), {
+      flagReader: () => false,
+      surface: "vscode",
+      baseStep: 3,
+      backable: true,
+    });
+    assert.isTrue(res.isOk(), res.isErr() ? `${res.error.name}: ${res.error.message}` : "ok");
+    if (res.isOk()) {
+      // a back at Q2's first prompt hands control back to the front door (no cancel).
+      assert.strictEqual(res.value.kind, "back");
+    }
+    // llmService is the first prompt, shown at baseStep + 1 = 4, so the host renders a
+    // Back button (step > 1).
+    assert.strictEqual(ui.lastSelectConfig?.step, 4);
+  });
+
+  it("CCI-26: a different locator rebuilds Q2+Q3 fresh — no stale question is carried across templates", async () => {
+    // The MCP server template asks its own Q2 (mcpServerType / url / authType).
+    const mcpUi = new ScriptedUserInteraction({
+      text: { mcpServerUrl: "https://api.example.com/mcp" },
+      select: { authType: "none" },
+    });
+    const mcp = await runCreateInputs(buildFloor(), MCP_DA, {}, asUI(mcpUi), {
+      listLocalMcpServers: async () => [],
+      flagReader: () => false,
+    });
+    assert.isTrue(mcp.isOk(), mcp.isErr() ? `${mcp.error.name}: ${mcp.error.message}` : "ok");
+    assert.deepEqual(mcpUi.promptNames, ["mcpServerType", "mcpServerUrl", "authType"]);
+
+    // The no-action template (empty Q2, common language) under a different locator asks none
+    // of the MCP questions — the Q2+Q3 set is a pure function of the current locator.
+    const noActionUi = new ScriptedUserInteraction({});
+    const noAction = await runCreateInputs(buildFloor(), NO_ACTION, {}, asUI(noActionUi), {
+      flagReader: () => false,
+    });
+    assert.isTrue(
+      noAction.isOk(),
+      noAction.isErr() ? `${noAction.error.name}: ${noAction.error.message}` : "ok"
+    );
+    assert.deepEqual(noActionUi.promptNames, []);
+  });
+
+  it("CCI-28: a provider-single-option first question is back-transparent, so a back at the next prompt re-enters Q1", async () => {
+    const ui = new ScriptedUserInteraction({ back: ["mcpServerUrl"] });
+    const res = await runCreateInputsWalk(buildFloor(), MCP_DA, {}, asUI(ui), {
+      listLocalMcpServers: async () => [], // remote-only → mcpServerType auto-skips
+      flagReader: () => false,
+      baseStep: 3,
+      backable: true,
+    });
+    assert.isTrue(res.isOk(), res.isErr() ? `${res.error.name}: ${res.error.message}` : "ok");
+    if (res.isOk()) {
+      // mcpServerType auto-skipped (records remote, no back-stop); backing mcpServerUrl now
+      // crosses straight into Q1 instead of re-asking the skipped provider question.
+      assert.strictEqual(res.value.kind, "back");
+    }
+    // mcpServerUrl is the first *visible* prompt, at baseStep + 1 = 4 (the skip left no step).
+    assert.strictEqual(ui.lastInputConfig?.step, 4);
   });
 
   it("CCI-17: VS Code Teams Agents and Apps Python language option carries the v3 Preview description", async () => {
@@ -2044,6 +2111,38 @@ describe("createUiPromptUI (collect-create-inputs)", () => {
     assert.isTrue(res.isOk());
     if (res.isOk()) {
       assert.deepEqual(res.value, { kind: "back" });
+    }
+  });
+
+  it("CCI-27: ask projects a host skip on a skipSingleOption singleSelect to { kind: 'skip' }", async () => {
+    const ui = new ScriptedUserInteraction({});
+    const prompt = createUiPromptUI(asUI(ui));
+
+    // A single option + skipSingleOption → the surface returns { type: "skip" }, which the
+    // bridge projects to { kind: "skip" } so the walk records it without a back-stop.
+    const res = await prompt.ask(
+      { name: "picker", type: "singleSelect", title: "Pick", skipSingleOption: true },
+      [{ id: "only" }]
+    );
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.deepEqual(res.value, { kind: "skip", value: "only" });
+    }
+  });
+
+  it("CCI-27b: askMulti projects a host skip on a skipSingleOption multiSelect to { kind: 'skip' }", async () => {
+    const ui = new ScriptedUserInteraction({});
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.askMulti(
+      { name: "servers", type: "multiSelect", title: "Servers", skipSingleOption: true },
+      [{ id: "only" }]
+    );
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.deepEqual(res.value, { kind: "skip", value: ["only"] });
     }
   });
 

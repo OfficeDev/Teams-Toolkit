@@ -112,6 +112,10 @@ production path does not split selector and content resolution.
 | DCE-19 | L1 | flag **on**, a v4 target whose id has a known v3 template equivalent | `createProjectFrontDoor` resolves the target | the front door stores the mapped v3 template id on `inputs["template-name"]` before the create-input walk runs, so v4 scaffold-level `generate-template` telemetry can report a v3-compatible `template-name` and continue joining with command-level `create-project`; common floor collection inside `runCreateInputs` is not short-circuited by the resolved template name |
 | DCE-20 | L1 | flag **on**, a v4 target whose id has no mapping entry | `createProjectFrontDoor` resolves the target | `inputs["template-name"]` falls back to the v4 target id itself, preserving a stable match key for `generate-template` telemetry |
 | DCE-21 | L1 | flag **on**, the v4 scaffold succeeds or fails after target resolution | `scaffoldV4` | emits `generate-template` success/error telemetry with `template-name = <mapped-or-fallback-template-id>-<language-key>` and the resolved v4 package source/version/digest properties, so existing OKR queries can continue to join `generate-template` with `create-project` by correlation id |
+| DCE-22 | L1 | flag **on**, the DA+MCP v4 route, a scripted UI answering Q1, reaching Q2, then returning `back` at Q2's **first** prompt | `createProjectFrontDoor` | the front door does **not** cancel the create; it re-enters Q1 (resuming at its last dimension — walk-create-selector WCS-24, collect-create-inputs CCI-25) so the user can re-pick a Q1 dimension — Q1 and Q2 form one continuous back-navigable wizard across the phase boundary |
+| DCE-23 | L1 | flag **on**, after re-entering Q1 the user picks a **different** dimension that resolves a **different** `templateId` (e.g. `daTemplate` `add-action`→`no-action`) | `createProjectFrontDoor` | the loop resolves the new `BuildTarget` and runs `runCreateInputs` fresh under the new `locator`, loading that template's Q2+Q3 (CCI-26); the prior template's Q2 answers are discarded and no stale question is asked — the Q2+Q3 set always matches the currently resolved template |
+| DCE-24 | L1 | flag **on**, the user backs through Q2 into Q1 and then `back` at Q1's **first** dimension | `createProjectFrontDoor` | the whole create is cancelled with the propagated `BuildTargetWalkCancelled` `UserError` (the true top of the wizard); no scaffold occurs |
+| DCE-25 | L1 | flag **on**, a re-entry loop iteration whose prior iteration wrote `inputs["template-name"]` | `createProjectFrontDoor` | the loop re-walks Q1 and does **not** mistake the prior iteration's `inputs["template-name"]` for a preset short-circuit; the preset-`template-name` fast path (INV-8) is evaluated once, before the loop, so re-entry never skips Q1 |
 
 ## Flow
 
@@ -120,10 +124,12 @@ flowchart TD
   start(["createProjectFrontDoor(inputs)"]) --> flag{"TEAMSFX_V4_ENABLED?"}
   flag -- off --> v3pass["createV3(inputs)\n(unmodified createProject — pass-through)"] --> done(["CreateProjectResult"])
   flag -- on --> src["resolve TemplateArtifactSnapshot\n(or injected floor bytes in tests)"]
-  src --> sel["runCreateSelector(create-selector bytes, ui, surface) → BuildTarget"]
+  src --> sel["runCreateSelector(create-selector bytes, ui, surface,\nresume=retained Q1 history) → BuildTarget + history + promptCount"]
   sel --> eng{"engine"}
   eng -- "surface-action" --> act["return {projectPath:'', shouldInvokeTeamsAgent:true}\n(no Q2, no scaffold)"] --> done
-  eng -- "v4" --> q2v4["runCreateInputs(metadata bytes, locator, answers, ui)\n→ Answers + floor write-back"] --> sc["scaffoldDeclarativeFromV4Channel(locator, answers, templates bytes)"] --> done
+  eng -- "v4" --> q2v4["runCreateInputs(metadata bytes, locator, answers, ui,\nbaseStep=Q1 promptCount, backable)\n→ Answers + floor write-back | back"]
+  q2v4 -- "back at Q2 first prompt" --> sel
+  q2v4 -- "done" --> sc["scaffoldDeclarativeFromV4Channel(locator, answers, templates bytes)"] --> done
   eng -- "v3-core-method" --> unsupported(["err(UnsupportedCreateEngine)\nno v3 hand-off"])
   sel -. cancel .-> e(["err(UserError)"])
   q2v4 -. cancel/invalid .-> e
@@ -187,6 +193,20 @@ flowchart TD
   `collectCreateFloor` prompt engine and no v3 question-tree visitor. Preset
   `folder` / `app-name` values are reused and never re-prompted; a floor
   cancellation propagates unchanged with no scaffold (DCE-15).
+- **INV-10** — Cross-phase back is a front-door re-entry loop; Q1 history
+  retained, Q2+Q3 stateless-rebuilt. With `TEAMSFX_V4_ENABLED` on, the
+  `engine:"v4"` path is a loop: run Q1 (retaining its `history` + `promptCount`),
+  dispatch, run Q2+floor with `baseStep = promptCount` and `backable`, and on a
+  Q2-first `back` re-enter Q1 via its retained history (DCE-22..24). Q2+Q3 are
+  rebuilt fresh from the resolved `BuildTarget` on every forward crossing
+  (collect-create-inputs CCI-26 / INV-11) — the loop keeps **no** Q2 answer
+  cache, so a changed `templateId` yields the new template's questions with no
+  invalidation logic. The loop is scoped **below** the preset-`template-name`
+  check so a prior iteration's `inputs["template-name"]` never short-circuits Q1
+  (DCE-25). All back logic lives in the shared engine (collect-inputs INV-9); the
+  front door only ferries the opaque `history` between phases. The whole loop is
+  behind the flag (default off); flag-off is the unchanged v3 pass-through
+  (INV-1).
 
 ## Notes
 
@@ -216,3 +236,16 @@ flowchart TD
   design folds those common floor questions into `runCreateInputs`: template Q2,
   descriptor-bound `language`, and `folder` / `app-name` are one shared
   question-walk pass, while the front door remains a dispatch-only seam.
+- **Resolved (cross-phase back, 2026-07-08) — a surface auto-skip is
+ back-transparent.** The re-entry loop (INV-10) crosses back into Q1 when a
+  `back` reaches Q2's walk with an **empty** history. A provider-backed question
+  with `skipSingleOption` (e.g. `mcpServerType` when only `remote` is available)
+  is auto-selected by the **surface** (`{ type: "skip" }`); the prompt bridge now
+  projects that to `{ kind: "skip" }`, and the shared walk records the answer but
+  pushes **no** history (collect-inputs INPUT-24 / collect-create-inputs
+  CCI-27..28) — identically to a `staticOptions` single-option skip. So when such
+  a question is Q2's first, a `back` at the next visible prompt (`mcpServerUrl`)
+  now re-enters Q1 rather than re-asking the skipped provider question. (Earlier
+  this pushed history and shadowed the Q1 re-entry; it also affected Q2's own
+  internal back. Both are fixed by the symmetric skip handling.)
+

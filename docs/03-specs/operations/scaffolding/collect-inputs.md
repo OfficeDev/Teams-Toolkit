@@ -106,6 +106,10 @@ On `err`:
 | INPUT-17 | L1 | a caller-provided `language` question after one earlier prompted question, and the host returns `back` at `language` | collect | `back` crosses into the previous prompted question; the re-picked previous answer wins, then `language` is asked again |
 | INPUT-18 | L1 | a single prompted question, the host returns `back` at it (the first prompt) | collect | the walk is cancelled with a **`UserError`** named `InputWalkCancelled` (a `back` past the first prompt — unreachable via UI, where step 1 shows no Back button) |
 | INPUT-19 | L1 | a `singleSelect` then a `multiSelect`, the host returns `back` at the multiSelect | collect | the previous question is re-asked and the staged multi-select is discarded; the re-walk records the new `string[]` (the multi-pick face honours `back` too) |
+| INPUT-20 | L1 | a `baseStep` offset of `N` and two prompted questions | walkInputs | the shown `step` for the k-th prompted question is `N + (prompts shown so far) + 1`, so with `N ≥ 1` the **first** prompted question is `step ≥ 2` and the host shows a Back button on it — the create funnel's Q2 continues Q1's step numbering instead of restarting at 1 |
+| INPUT-21 | L1 | `backable: true`, a single prompted question, the host returns `back` at it (the first prompt) | walkInputs | the walk does **not** cancel; it returns a typed `{ kind: "back" }` outcome carrying the walk `history`, so the caller can hand control to the previous phase. With `backable: false` (the default) the same `back` still cancels with `InputWalkCancelled` (INPUT-18 unchanged) |
+| INPUT-22 | L1 | a `resume` of a prior walk's returned `history` (a re-entered phase) | walkInputs | the walk restores that history and re-asks its **last** prompted question; a subsequent `back` pops the retained history exactly as if it had been built in-process (a resumed phase's back reaches every prompt the previous run recorded), and a `back` past the retained history's first entry follows the `backable` rule (typed `back` or `InputWalkCancelled`) |
+| INPUT-24 | L1 | a question the surface auto-skips (the prompt driver returns `{ kind: "skip" }`, e.g. a `skipSingleOption` provider question resolved to a single option), then a `back` at the next prompt | walkInputs | the skipped question's answer is **recorded** but pushes **no** history, so the `back` crosses straight over it (matching the engine's static `skipSingleOption` skip) — it re-asks the previous *prompted* question, or crosses into the previous phase / cancels when none remain; the skipped step consumes no `step` number |
 
 ## Flow
 
@@ -243,4 +247,22 @@ This operation does **not**:
   `step` = prompts shown so far + 1 (the host shows a Back button only when
   `step > 1`), so the first prompt is step 1 and a `back` there cancels the walk
   (`InputWalkCancelled`). A caller-provided `language` question participates in
-  that same history like any other prompted question (INPUT-16..19).
+  that same history like any other prompted question (INPUT-16..19). A **surface**
+  auto-skip (the prompt driver returns `{ kind: "skip" }` — e.g. `skipSingleOption`
+  resolved to a single option) is one such auto-selected step: it records its
+  answer but pushes no history (INPUT-24), so `back` crosses over it identically
+  to the engine's static single-option skip (the two skip paths are symmetric).
+- **INV-9 — Resumable walk with step offset (the cross-phase back primitive).**
+  The walk exposes an optional `baseStep` (added to the 1-based shown step so a
+  later phase continues an earlier phase's numbering, INPUT-20), an optional
+  `backable` flag (a `back` past the first prompt returns a typed
+  `{ kind:"back" }` outcome instead of cancelling, INPUT-21), and an optional
+  `resume` of a prior walk's `history` (re-enter a completed phase at its last
+  prompt with the retained history intact, INPUT-22). The engine returns
+  `{ kind, answers?, history, promptCount }` (`promptCount` = prompts actually
+  shown; skipped / pre-filled / auto-selected steps excluded). The legacy
+  `collectInputs(...)` entry is a thin wrapper (`baseStep:0`, `backable:false`,
+  no `resume`) mapping `{kind:"done"}` → `ok(answers)` and back-past-first →
+  `InputWalkCancelled`, so INPUT-01..19 and INV-8 are byte-for-byte unchanged.
+  All back logic lives in this one engine — no surface or front door owns a
+  parallel back-stack (v4-scaffolding "one walk engine").
