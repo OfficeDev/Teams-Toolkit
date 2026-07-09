@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 4,
+    "total_steps": 6,
     "created_at": "2025-11-14T05:50:41.381007",
     "name": "Basic Custom Engine Azure OpenAI ts Remote Debug",
     "description": {
@@ -19,6 +19,8 @@
     "generated_at": "2025-11-14T05:50:41.380998",
     "execution_order": [
       "plan_r_0928_012254",
+      "step_ab12cd34",
+      "step_ef56ab78",
       "step_c3e4c33c",
       "step_f4da92e4",
       "plan_r_0930_054245",
@@ -33,9 +35,67 @@
       "plan_r_1020_110153"
     ],
     "tags": [],
-    "updated_at": "2025-11-14T05:52:26.306047"
+    "updated_at": "2026-07-09T06:01:23.000000"
   },
   "steps": [
+    {
+      "step_id": "step_ab12cd34",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "dx": null,
+        "dy": null,
+        "key": null,
+        "keys": null,
+        "text": null,
+        "x": 952,
+        "y": 128
+      },
+      "description": "Click the red \"close\" (X) button in the top-right corner of the \"Welcome to VS Code\" GitHub sign-in dialog to dismiss it if it has reappeared after opening the New Project flow. If the dialog is not present, this click lands in the empty editor area and simply dismisses any open dropdown so it can be reopened cleanly by the next step.",
+      "content_refs": [],
+      "timeout": 10,
+      "retry_count": 0,
+      "continue_on_error": "1",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "force_run:true"
+      ],
+      "screenshot": "",
+      "created_at": "2026-07-09T06:01:23.000000",
+      "plan_id": "plan_5b32a1a1"
+    },
+    {
+      "step_id": "step_ef56ab78",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "dx": null,
+        "dy": null,
+        "key": null,
+        "keys": null,
+        "text": null,
+        "x": 187,
+        "y": 312
+      },
+      "description": "Click the \"Create a New Agent/App\" button in the MICROSOFT 365 AGENTS TOOLKIT panel on the left side of Visual Studio Code to (re)open the \"New Project\" dropdown, in case the previously opened dropdown was dismissed by the reappearing VS Code welcome sign-in dialog.",
+      "content_refs": [],
+      "timeout": 15,
+      "retry_count": 0,
+      "continue_on_error": "1",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "force_run:true"
+      ],
+      "screenshot": "",
+      "created_at": "2026-07-09T06:01:23.000000",
+      "plan_id": "plan_5b32a1a1"
+    },
     {
       "step_id": "step_c3e4c33c",
       "agent": "interaction",
