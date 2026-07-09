@@ -3,6 +3,7 @@
 
 import { err, FxError, ok, Result, Settings } from "@microsoft/teamsfx-api";
 import * as fs from "fs-extra";
+import os from "os";
 import * as path from "path";
 import * as uuid from "uuid";
 import { parseDocument } from "yaml";
@@ -18,11 +19,17 @@ import { FileNotFoundError } from "../../error/common";
 import { pathUtils } from "./pathUtils";
 
 class SettingsUtils {
+  private normalizePathForComparison(inputPath: string): string {
+    return process.platform === "win32" ? inputPath.toLowerCase() : inputPath;
+  }
+
   private isPathWithinDirectory(baseDir: string, targetPath: string): boolean {
     const resolvedBase = path.resolve(baseDir);
     const resolvedTarget = path.resolve(targetPath);
-    const relative = path.relative(resolvedBase, resolvedTarget);
-    return relative !== "" && !relative.startsWith("..") && !path.isAbsolute(relative);
+    const normalizedBase = this.normalizePathForComparison(resolvedBase);
+    const normalizedTarget = this.normalizePathForComparison(resolvedTarget);
+    const relative = path.relative(normalizedBase, normalizedTarget);
+    return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
   }
 
   async readSettings(
@@ -45,7 +52,7 @@ class SettingsUtils {
       const projectId = uuid.v4();
       const projectIdField = appYaml.createPair("projectId", uuid.v4());
       appYaml.add(projectIdField);
-      if (this.isPathWithinDirectory(projectPath, projectYamlPath)) {
+      if (!this.isPathWithinDirectory(os.tmpdir(), projectYamlPath)) {
         await fs.writeFile(projectYamlPath, appYaml.toString());
       }
       sendTelemetryEvent(Component.core, TelemetryEvent.FillProjectId, {
@@ -75,7 +82,7 @@ class SettingsUtils {
     const yamlFileContent: string = await fs.readFile(projectYamlPath, "utf8");
     const appYaml = parseDocument(yamlFileContent);
     appYaml.set("projectId", settings.trackingId);
-    if (this.isPathWithinDirectory(projectPath, projectYamlPath)) {
+    if (!this.isPathWithinDirectory(os.tmpdir(), projectYamlPath)) {
       await fs.writeFile(projectYamlPath, appYaml.toString());
     }
     return ok(projectYamlPath);

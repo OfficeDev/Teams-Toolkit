@@ -20,7 +20,7 @@ describe("SettingsUtils", () => {
 
   beforeEach(async () => {
     sandbox = createSandbox();
-    tempDir = path.join(os.tmpdir(), `test-settings-${Date.now()}`);
+    tempDir = path.join(process.cwd(), ".tmp-settings-tests", `test-settings-${Date.now()}`);
     await fs.ensureDir(tempDir);
     envRestore = mockedEnv({});
   });
@@ -87,6 +87,25 @@ describe("SettingsUtils", () => {
         assert.isTrue(result.isOk());
         const fileContent = await fs.readFile(ymlPath, "utf8");
         assert.isTrue(fileContent.includes("projectId"));
+      });
+
+      it("should skip writing projectId when yaml file is in temp directory", async () => {
+        const projectPath = path.join(os.tmpdir(), `test-settings-read-${Date.now()}`);
+        const ymlPath = path.join(projectPath, "m365agents.dev.yml");
+        await fs.ensureDir(projectPath);
+        await fs.writeFile(ymlPath, "version: 1.0");
+
+        sandbox.stub(pathUtils, "pathUtils").value({
+          getYmlFilePath: sandbox.stub().returns(ymlPath),
+          getAvailableYmlFilePath: sandbox.stub(),
+        });
+        sandbox.stub(telemetryModule, "sendTelemetryEvent").resolves();
+
+        const result = await settingsUtil.readSettings(projectPath, true);
+
+        assert.isTrue(result.isOk());
+        const fileContent = await fs.readFile(ymlPath, "utf8");
+        assert.isFalse(fileContent.includes("projectId"));
       });
 
       it("should not add projectId if ensureTrackingId is false", async () => {
@@ -286,6 +305,30 @@ describe("SettingsUtils", () => {
         const fileContent = await fs.readFile(ymlPath, "utf8");
         assert.isTrue(fileContent.includes(newId));
         assert.isFalse(fileContent.includes(oldId));
+      });
+
+      it("should skip updating projectId when yaml file is in temp directory", async () => {
+        const projectPath = path.join(os.tmpdir(), `test-settings-write-${Date.now()}`);
+        const ymlPath = path.join(projectPath, "m365agents.dev.yml");
+        const oldId = "old-temp-id";
+        const newId = "new-temp-id";
+        await fs.ensureDir(projectPath);
+        await fs.writeFile(ymlPath, `projectId: ${oldId}\nversion: 1.0`);
+
+        sandbox.stub(pathUtils, "pathUtils").value({
+          getYmlFilePath: sandbox.stub().returns(ymlPath),
+          getAvailableYmlFilePath: sandbox.stub(),
+        });
+
+        const result = await settingsUtil.writeSettings(projectPath, {
+          trackingId: newId,
+          version: "1.0",
+        });
+
+        assert.isTrue(result.isOk());
+        const fileContent = await fs.readFile(ymlPath, "utf8");
+        assert.isTrue(fileContent.includes(oldId));
+        assert.isFalse(fileContent.includes(newId));
       });
     });
 
