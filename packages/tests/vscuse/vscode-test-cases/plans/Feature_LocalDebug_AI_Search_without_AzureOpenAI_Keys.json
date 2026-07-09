@@ -45,6 +45,7 @@
       "step_0c38e94d",
       "step_fa9853a3",
       "plan_r_0430_071628",
+      "plan_r_0414_052653",
       "step_ad0f21c7",
       "step_74ea95d1",
       "step_be7c92d4",
@@ -513,10 +514,10 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 251,
-        "y": 217
+        "x": 288,
+        "y": 214
       },
-      "description": "Click the \"Add\" or \"Open\" blue button on the app details popup for the sideloaded app within the Microsoft Teams web interface. This run's dialog shows the fresh-app \"Add\" button, whose measured center is (251,217) (box x 204-299) in the failure screenshot; prior attempts clicked x=312 and x=281 (right of / near the rounded edge) and missed it. No app-name-specific dhash precondition because the sideloaded app name is randomly generated per run.",
+      "description": "Click the \"Add\" or \"Open\" blue button on the app details popup for the sideloaded app within the Microsoft Teams web interface. The preceding patch_for_add_app recovery group (Back, close stale Teams tab, relaunch debug, reopen Teams) ensures the CURRENT run's app dialog is shown rather than a stale/different app left over from a previous run. Coordinate (288,214) is the proven canonical debug_in_teams_local value that lands on either the \"Add\" or the \"Open\" button regardless of state; the randomly generated app name means no app-specific dhash precondition is used.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
