@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 21,
+    "total_steps": 23,
     "created_at": "2026-04-30T06:59:07.793321",
     "name": "Feature LocalDebug AI Search without AzureOpenAI Keys",
     "description": {
@@ -45,7 +45,9 @@
       "step_0c38e94d",
       "step_fa9853a3",
       "plan_r_0430_071628",
+      "step_ad0f21c7",
       "step_74ea95d1",
+      "step_be7c92d4",
       "step_d58cfe4b",
       "plan_r_1023_013114"
     ],
@@ -486,31 +488,67 @@
       "plan_id": "plan_feedd4e6"
     },
     {
+      "step_id": "step_ad0f21c7",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion there's \"Add\" or \"Open\" blue button exist.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "step_retry_timeout:180"
+      ],
+      "screenshot": null,
+      "created_at": "2026-04-30T07:23:59.790000",
+      "plan_id": "plan_feedd4e6"
+    },
+    {
       "step_id": "step_74ea95d1",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
         "button": "left",
         "x": 312,
-        "y": 216
+        "y": 214
       },
-      "description": "Click the \"Open\" button in the app details popup for vscuse_app_4YhGglocal within the Microsoft Teams web interface.",
+      "description": "Click the \"Add\" or \"Open\" button on the app details popup for the sideloaded app within the Microsoft Teams web interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:312:216:16:5:34e338b4b4b018c7",
-        "dhash:312:216:96:5:93102561610d0047",
-        "dhash:312:216:0:10:00bcb0d8f8fce0d8"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "precondition_wait_timeout:180"
       ],
       "screenshot": "step_74ea95d1",
       "created_at": "2026-04-30T07:23:59.796260",
+      "plan_id": "plan_feedd4e6"
+    },
+    {
+      "step_id": "step_be7c92d4",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion there's \"open\" blue button exist.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "step_retry_timeout:180"
+      ],
+      "screenshot": null,
+      "created_at": "2026-04-30T07:23:59.795000",
       "plan_id": "plan_feedd4e6"
     },
     {
@@ -522,17 +560,13 @@
         "x": 509,
         "y": 513
       },
-      "description": "Click the \"Open\" button in the vsсuse_app_4YhGglocal app onboarding dialog within the Microsoft Teams web interface.",
+      "description": "Click the \"Open\" button in the vs\u0441use_app_4YhGglocal app onboarding dialog within the Microsoft Teams web interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:509:513:16:5:d3d3dadad3d1d932",
-        "dhash:509:513:96:5:00000669712c1c53",
-        "dhash:509:513:0:10:3669696969696979"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "precondition_wait_timeout:180"
