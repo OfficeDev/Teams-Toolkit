@@ -1005,6 +1005,101 @@ describe("developPortalScaffoldUtils", () => {
       chai.assert.isTrue(updatedManifest.validDomains?.includes("valid-domain"));
     });
 
+    it("update schema version to match template when TDP manifest uses older version", async () => {
+      const ctx = createContext();
+      ctx.tokenProvider = {
+        m365TokenProvider: new MockedM365Provider(),
+        azureAccountProvider: new MockedAzureAccountProvider(),
+      };
+      ctx.projectPath = "project-path";
+      // Empty app from TDP (no bots, tabs, or messaging extensions)
+      const appDefinition: AppDefinition = {
+        appId: "mock-app-id",
+        teamsAppId: "mock-app-id",
+      };
+      const inputs: Inputs = {
+        platform: Platform.VSCode,
+        projectPath: "project-path",
+      };
+      // TDP returns manifest with older schema version
+      const manifest: TeamsAppManifest = {
+        $schema:
+          "https://developer.microsoft.com/en-us/json-schemas/teams/v1.17/MicrosoftTeams.schema.json",
+        manifestVersion: "1.17",
+        id: "mock-app-id",
+        name: { short: "short-name" },
+        description: { short: "", full: "" },
+        version: "version",
+        icons: { outline: "outline.png", color: "color.png" },
+        accentColor: "#ffffff",
+        developer: {
+          privacyUrl: "",
+          websiteUrl: "",
+          termsOfUseUrl: "",
+          name: "developer-name",
+        },
+      };
+
+      // Template uses newer schema version with new bot properties
+      const existingManifest: TeamsAppManifest = {
+        $schema:
+          "https://developer.microsoft.com/en-us/json-schemas/teams/v1.29/MicrosoftTeams.schema.json",
+        manifestVersion: "1.29",
+        id: "mock-app-id",
+        name: { short: "short-name" },
+        description: { short: "", full: "" },
+        version: "version",
+        icons: { outline: "outline.png", color: "color.png" },
+        accentColor: "#ffffff",
+        developer: {
+          privacyUrl: "",
+          websiteUrl: "",
+          termsOfUseUrl: "",
+          name: "developer-name",
+        },
+        bots: [
+          {
+            botId: "${{BOT_ID}}",
+            scopes: ["personal", "team", "groupChat"],
+            supportsFiles: false,
+            isNotificationOnly: false,
+          },
+        ],
+        validDomains: ["valid-domain"],
+      };
+
+      let updatedManifestData = "";
+      vi.spyOn(pathUtils, "getEnvFilePath").mockResolvedValue(ok("fake env path"));
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.mocked(appStudio.getAppPackage).mockResolvedValue(
+        ok({
+          manifest: Buffer.from(JSON.stringify(manifest)),
+          icons: { color: Buffer.from(""), outline: Buffer.from("") },
+          languages: {},
+        })
+      );
+      vi.spyOn(fs, "writeFile").mockImplementation((file: number | fs.PathLike, data: any) => {
+        if (file === path.join(ctx.projectPath!, "appPackage", "manifest.json")) {
+          updatedManifestData = data;
+        }
+      });
+
+      vi.spyOn(envUtil, "writeEnv").mockResolvedValue(ok(undefined));
+      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(existingManifest));
+      const res = await developerPortalScaffoldUtils.updateFilesForTdp(ctx, appDefinition, inputs);
+
+      chai.assert.isTrue(res.isOk());
+      const updatedManifest = JSON.parse(updatedManifestData) as TeamsAppManifest;
+      // Schema version should be updated to match the template
+      chai.assert.equal(
+        updatedManifest.$schema,
+        "https://developer.microsoft.com/en-us/json-schemas/teams/v1.29/MicrosoftTeams.schema.json"
+      );
+      chai.assert.equal(updatedManifest.manifestVersion, "1.29");
+      // Bots from template should be present
+      chai.assert.deepEqual(updatedManifest.bots, existingManifest.bots);
+    });
+
     it("update group chat", async () => {
       const ctx = createContext();
       ctx.tokenProvider = {

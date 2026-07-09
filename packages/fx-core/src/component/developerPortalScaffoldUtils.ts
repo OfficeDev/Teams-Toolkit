@@ -279,6 +279,17 @@ async function updateManifest(
     }
   }
 
+  // Update schema version to match the template so that template-specific
+  // properties (e.g. supportsTargetedMessages, commandLists[].triggers) pass
+  // schema validation. The TDP manifest may use an older schema that does not
+  // define these properties while the template requires them.
+  if (existingManifestTemplate.$schema) {
+    manifest.$schema = existingManifestTemplate.$schema;
+  }
+  if (existingManifestTemplate.manifestVersion) {
+    manifest.manifestVersion = existingManifestTemplate.manifestVersion;
+  }
+
   await fs.writeFile(manifestTemplatePath, JSON.stringify(manifest, null, "\t"), "utf-8");
 
   // languages
