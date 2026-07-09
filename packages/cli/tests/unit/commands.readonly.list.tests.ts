@@ -2,22 +2,21 @@
 // Licensed under the MIT license.
 
 import { CLIContext } from "@microsoft/teamsfx-api";
-import { assert } from "chai";
-import * as sinon from "sinon";
 import { helpCommand, listSamplesCommand, listTemplatesCommand } from "../../src/commands/models";
 import * as listTemplatesModule from "../../src/commands/models/listTemplates";
 import * as utils from "../../src/utils";
+import { assert, vi } from "vitest";
 
 describe("CLI read-only commands list", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   beforeEach(() => {
-    sandbox.stub(process.stdout, "write").returns(true as any);
-    sandbox.stub(process.stderr, "write").returns(true as any);
+    vi.spyOn(process.stdout, "write").mockReturnValue(true as any);
+    vi.spyOn(process.stderr, "write").mockReturnValue(true as any);
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   describe("listTemplatesCommand", async () => {
@@ -84,7 +83,7 @@ describe("CLI read-only commands list", () => {
 
   describe("listSamplesCommand", async () => {
     it("json", async () => {
-      sandbox.stub(utils, "getTemplates").resolves([]);
+      vi.spyOn(utils, "getTemplates").mockResolvedValue([]);
       const ctx: CLIContext = {
         command: { ...listSamplesCommand, fullName: "..." },
         optionValues: { format: "json" },
@@ -96,7 +95,7 @@ describe("CLI read-only commands list", () => {
       assert.isTrue(res.isOk());
     });
     it("table with filter + description", async () => {
-      sandbox.stub(utils, "getTemplates").resolves([]);
+      vi.spyOn(utils, "getTemplates").mockResolvedValue([]);
       const ctx: CLIContext = {
         command: { ...listSamplesCommand, fullName: "..." },
         optionValues: { tag: "tab", format: "table", description: true },
@@ -108,7 +107,7 @@ describe("CLI read-only commands list", () => {
       assert.isTrue(res.isOk());
     });
     it("table without description", async () => {
-      sandbox.stub(utils, "getTemplates").resolves([]);
+      vi.spyOn(utils, "getTemplates").mockResolvedValue([]);
       const ctx: CLIContext = {
         command: { ...listSamplesCommand, fullName: "..." },
         optionValues: { format: "table", description: false },

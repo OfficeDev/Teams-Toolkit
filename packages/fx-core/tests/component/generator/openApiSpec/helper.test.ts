@@ -15,23 +15,28 @@ import {
   WarningType,
 } from "@microsoft/m365-spec-parser";
 import {
+  err,
   IComposeExtension,
+  ok,
   Platform,
   PluginManifestSchema,
   SystemError,
   TeamsAppManifest,
-  err,
-  ok,
 } from "@microsoft/teamsfx-api";
 import { fail } from "assert";
 import axios from "axios";
-import { assert, expect } from "chai";
 import fs from "fs-extra";
 import mockedEnv, { RestoreFn } from "mocked-env";
 import { OpenAPIV3 } from "openapi-types";
 import path from "path";
-import * as sinon from "sinon";
 import { format } from "util";
+import { assert, chai, vi } from "vitest";
+import * as daSpecParser from "../../../../src/common/daSpecParser";
+import {
+  featureFlagManager,
+  FeatureFlagName,
+  FeatureFlags,
+} from "../../../../src/common/featureFlags";
 import { createContext, setTools } from "../../../../src/common/globalVars";
 import { getLocalizedString } from "../../../../src/common/localizeUtils";
 import * as commonUtils from "../../../../src/common/utils";
@@ -39,7 +44,6 @@ import { ActionInjector } from "../../../../src/component/configManager/actionIn
 import { manifestUtils } from "../../../../src/component/driver/teamsApp/utils/ManifestUtils";
 import { PluginManifestUtils } from "../../../../src/component/driver/teamsApp/utils/PluginManifestUtils";
 import * as openApiSpecHelper from "../../../../src/component/generator/openApiSpec/helper";
-import * as daSpecParser from "../../../../src/common/daSpecParser";
 import {
   formatValidationErrors,
   generateAdaptiveCardInPluginManifestForKiota,
@@ -47,29 +51,24 @@ import {
   injectAuthAction,
   listPluginExistingOperations,
 } from "../../../../src/component/generator/openApiSpec/helper";
+import { pathUtils } from "../../../../src/component/utils/pathUtils";
 import { DeclarativeAgentApiSpecOptionId, QuestionNames } from "../../../../src/question";
 import { MockTools } from "../../../core/utils";
 import { teamsManifest } from "./fakeData";
-import {
-  featureFlagManager,
-  FeatureFlagName,
-  FeatureFlags,
-} from "../../../../src/common/featureFlags";
-import { pathUtils } from "../../../../src/component/utils/pathUtils";
 
 const tools = new MockTools();
 
 describe("generateScaffoldingSummary", async () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   beforeEach(() => {
     setTools(tools);
   });
   afterEach(async () => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   it("no warnings", async () => {
-    sandbox.stub(fs, "existsSync").returns(true);
+    vi.spyOn(fs, "existsSync").mockReturnValue(true);
     const composeExtension: IComposeExtension = {
       composeExtensionType: "apiBased",
       commands: [
@@ -230,7 +229,7 @@ describe("generateScaffoldingSummary", async () => {
         { id: "command1", type: "query", apiResponseRenderingTemplateFile: "", title: "" },
       ],
     };
-    sandbox.stub(fs, "existsSync").returns(false);
+    vi.spyOn(fs, "existsSync").mockReturnValue(false);
     const res = await generateScaffoldingSummary(
       [{ type: WarningType.GenerateCardFailed, content: "test", data: "command1" }],
       {
@@ -312,34 +311,34 @@ describe("isJsonSpecFile", () => {
     setTools(tools);
   });
   afterEach(() => {
-    sinon.restore();
+    vi.restoreAllMocks();
   });
   it("should return true for a valid JSON file", async () => {
     const result = await commonUtils.isJsonSpecFile("test.json");
-    expect(result).to.be.true;
+    chai.expect(result).to.be.true;
   });
 
   it("should return false for an yaml file", async () => {
     const result = await commonUtils.isJsonSpecFile("test.yaml");
-    expect(result).to.be.false;
+    chai.expect(result).to.be.false;
   });
 
   it("should handle local json files", async () => {
-    const readFileStub = sinon.stub(fs, "readFile").resolves('{"name": "test"}' as any);
+    const readFileStub = vi.spyOn(fs, "readFile").mockResolvedValue('{"name": "test"}' as any);
     const result = await commonUtils.isJsonSpecFile("path/to/localfile");
-    expect(result).to.be.true;
+    chai.expect(result).to.be.true;
   });
 
   it("should handle remote files", async () => {
-    const axiosStub = sinon.stub(axios, "get").resolves({ data: '{"name": "test"}' });
+    const axiosStub = vi.spyOn(axios, "get").mockResolvedValue({ data: '{"name": "test"}' });
     const result = await commonUtils.isJsonSpecFile("http://example.com/remotefile");
-    expect(result).to.be.true;
+    chai.expect(result).to.be.true;
   });
 
   it("should return false if it is a yaml file", async () => {
-    const readFileStub = sinon.stub(fs, "readFile").resolves("openapi: 3.0.0" as any);
+    const readFileStub = vi.spyOn(fs, "readFile").mockResolvedValue("openapi: 3.0.0" as any);
     const result = await commonUtils.isJsonSpecFile("path/to/localfile");
-    expect(result).to.be.false;
+    chai.expect(result).to.be.false;
   });
 });
 
@@ -442,20 +441,24 @@ describe("formatValidationErrors", () => {
       [QuestionNames.ManifestPath]: "testmanifest.json",
     });
 
-    expect(res[0].content).equals("test");
-    expect(res[1].content).includes(getLocalizedString("core.common.ErrorFetchApiSpec"));
-    expect(res[2].content).equals("test");
-    expect(res[3].content).equals(getLocalizedString("core.common.NoServerInformation"));
-    expect(res[4].content).equals(
-      getLocalizedString("core.common.UrlProtocolNotSupported", "http")
-    );
-    expect(res[5].content).equals(getLocalizedString("core.common.RelativeServerUrlNotSupported"));
-    expect(res[6].content).equals(
-      getLocalizedString(
-        "core.common.NoSupportedApi",
-        getLocalizedString("core.common.invalidReason.NoAPIs")
-      )
-    );
+    chai.expect(res[0].content).equals("test");
+    chai.expect(res[1].content).includes(getLocalizedString("core.common.ErrorFetchApiSpec"));
+    chai.expect(res[2].content).equals("test");
+    chai.expect(res[3].content).equals(getLocalizedString("core.common.NoServerInformation"));
+    chai
+      .expect(res[4].content)
+      .equals(getLocalizedString("core.common.UrlProtocolNotSupported", "http"));
+    chai
+      .expect(res[5].content)
+      .equals(getLocalizedString("core.common.RelativeServerUrlNotSupported"));
+    chai
+      .expect(res[6].content)
+      .equals(
+        getLocalizedString(
+          "core.common.NoSupportedApi",
+          getLocalizedString("core.common.invalidReason.NoAPIs")
+        )
+      );
 
     const errorMessage1 = [
       getLocalizedString("core.common.invalidReason.AuthTypeIsNotSupported"),
@@ -475,27 +478,31 @@ describe("formatValidationErrors", () => {
       getLocalizedString("core.common.invalidReason.CircularReference"),
     ];
 
-    expect(res[7].content).equals(
-      getLocalizedString(
-        "core.common.NoSupportedApi",
-        "GET /api: " +
-          errorMessage1.join(", ") +
-          "\n" +
-          "GET /api2: " +
-          errorMessage2.join(", ") +
-          "\n" +
-          "GET /api3: unknown"
-      )
-    );
-    expect(res[8].content).equals(getLocalizedString("error.apime.noExtraAPICanBeAdded"));
-    expect(res[9].content).equals("resolveurl");
-    expect(res[10].content).equals(getLocalizedString("core.common.CancelledMessage"));
-    expect(res[11].content).equals(getLocalizedString("core.common.SwaggerNotSupported"));
-    expect(res[12].content).equals(
-      format(getLocalizedString("core.common.SpecVersionNotSupported"), res[12].data)
-    );
-    expect(res[13].content).equals("unknown");
-    expect(res[14].content).equals(getLocalizedString("core.common.AddedAPINotInOriginalSpec"));
+    chai
+      .expect(res[7].content)
+      .equals(
+        getLocalizedString(
+          "core.common.NoSupportedApi",
+          "GET /api: " +
+            errorMessage1.join(", ") +
+            "\n" +
+            "GET /api2: " +
+            errorMessage2.join(", ") +
+            "\n" +
+            "GET /api3: unknown"
+        )
+      );
+    chai.expect(res[8].content).equals(getLocalizedString("error.apime.noExtraAPICanBeAdded"));
+    chai.expect(res[9].content).equals("resolveurl");
+    chai.expect(res[10].content).equals(getLocalizedString("core.common.CancelledMessage"));
+    chai.expect(res[11].content).equals(getLocalizedString("core.common.SwaggerNotSupported"));
+    chai
+      .expect(res[12].content)
+      .equals(format(getLocalizedString("core.common.SpecVersionNotSupported"), res[12].data));
+    chai.expect(res[13].content).equals("unknown");
+    chai
+      .expect(res[14].content)
+      .equals(getLocalizedString("core.common.AddedAPINotInOriginalSpec"));
   });
 
   it("format validation errors from spec parser: copilot", () => {
@@ -557,41 +564,42 @@ describe("formatValidationErrors", () => {
       getLocalizedString("core.common.invalidReason.NoAPIInfo"),
     ];
 
-    expect(res[0].content).equals(
-      getLocalizedString(
-        "core.common.NoSupportedApiCopilot",
-        "GET /api: " +
-          errorMessage1.join(", ") +
-          "\n" +
-          "GET /api2: " +
-          errorMessage2.join(", ") +
-          "\n" +
-          "GET /api3: unknown"
-      )
-    );
-    expect(res[1].content).equals(getLocalizedString("error.copilot.noExtraAPICanBeAdded"));
+    chai
+      .expect(res[0].content)
+      .equals(
+        getLocalizedString(
+          "core.common.NoSupportedApiCopilot",
+          "GET /api: " +
+            errorMessage1.join(", ") +
+            "\n" +
+            "GET /api2: " +
+            errorMessage2.join(", ") +
+            "\n" +
+            "GET /api3: unknown"
+        )
+      );
+    chai.expect(res[1].content).equals(getLocalizedString("error.copilot.noExtraAPICanBeAdded"));
   });
 });
 
 describe("injectAuthAction", async () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   beforeEach(() => {
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
   });
   afterEach(async () => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("api key auth", async () => {
-    sandbox
-      .stub(fs, "pathExists")
-      .onFirstCall()
-      .resolves(true)
-      .onSecondCall()
-      .resolves(false)
-      .resolves(true);
-    sandbox.stub(Utils, "isBearerTokenAuth").returns(true);
-    const injectStub = sandbox.stub(ActionInjector, "injectCreateAPIKeyAction").resolves(undefined);
+    vi.spyOn(fs, "pathExists")
+      .mockResolvedValueOnce(true)
+      .mockResolvedValueOnce(false)
+      .mockResolvedValue(true);
+    vi.spyOn(Utils, "isBearerTokenAuth").mockReturnValue(true);
+    const injectStub = vi
+      .spyOn(ActionInjector, "injectCreateAPIKeyAction")
+      .mockResolvedValue(undefined);
     const res = await injectAuthAction(
       "oauth",
       "test",
@@ -601,13 +609,15 @@ describe("injectAuthAction", async () => {
     );
 
     assert.isUndefined(res);
-    assert.isTrue(injectStub.calledTwice);
+    assert.isTrue(injectStub.mock.calls.length === 2);
   });
 
   it("api key auth: no local yaml", async () => {
-    sandbox.stub(fs, "pathExists").resolves(false);
-    sandbox.stub(Utils, "isBearerTokenAuth").returns(true);
-    const injectStub = sandbox.stub(ActionInjector, "injectCreateAPIKeyAction").resolves(undefined);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+    vi.spyOn(Utils, "isBearerTokenAuth").mockReturnValue(true);
+    const injectStub = vi
+      .spyOn(ActionInjector, "injectCreateAPIKeyAction")
+      .mockResolvedValue(undefined);
     const res = await injectAuthAction(
       "oauth",
       "test",
@@ -617,13 +627,15 @@ describe("injectAuthAction", async () => {
     );
 
     assert.isUndefined(res);
-    assert.isTrue(injectStub.calledOnce);
+    assert.isTrue(injectStub.mock.calls.length === 1);
   });
 
   it("oauth auth", async () => {
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(Utils, "isOAuthWithAuthCodeFlow").returns(true);
-    const injectStub = sandbox.stub(ActionInjector, "injectCreateOAuthAction").resolves(undefined);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(Utils, "isOAuthWithAuthCodeFlow").mockReturnValue(true);
+    const injectStub = vi
+      .spyOn(ActionInjector, "injectCreateOAuthAction")
+      .mockResolvedValue(undefined);
     const res = await injectAuthAction(
       "oauth",
       "test",
@@ -633,13 +645,15 @@ describe("injectAuthAction", async () => {
     );
 
     assert.isUndefined(res);
-    assert.isTrue(injectStub.calledTwice);
+    assert.isTrue(injectStub.mock.calls.length === 2);
   });
 
   it("oauth auth: no local yaml", async () => {
-    sandbox.stub(fs, "pathExists").resolves(false);
-    sandbox.stub(Utils, "isOAuthWithAuthCodeFlow").returns(true);
-    const injectStub = sandbox.stub(ActionInjector, "injectCreateOAuthAction").resolves(undefined);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+    vi.spyOn(Utils, "isOAuthWithAuthCodeFlow").mockReturnValue(true);
+    const injectStub = vi
+      .spyOn(ActionInjector, "injectCreateOAuthAction")
+      .mockResolvedValue(undefined);
     const res = await injectAuthAction(
       "oauth",
       "test",
@@ -649,13 +663,15 @@ describe("injectAuthAction", async () => {
     );
 
     assert.isUndefined(res);
-    assert.isTrue(injectStub.calledOnce);
+    assert.isTrue(injectStub.mock.calls.length === 1);
   });
 
   it("api key auth from authType", async () => {
-    sandbox.stub(fs, "pathExists").resolves(true);
-    // sandbox.stub(Utils, "isBearerTokenAuth").returns(true);
-    const injectStub = sandbox.stub(ActionInjector, "injectCreateAPIKeyAction").resolves(undefined);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    // vi.spyOn(Utils, "isBearerTokenAuth").mockReturnValue(true);
+    const injectStub = vi
+      .spyOn(ActionInjector, "injectCreateAPIKeyAction")
+      .mockResolvedValue(undefined);
     const res = await injectAuthAction(
       "oauth",
       "test",
@@ -666,12 +682,14 @@ describe("injectAuthAction", async () => {
     );
 
     assert.isUndefined(res);
-    assert.isTrue(injectStub.calledTwice);
+    assert.isTrue(injectStub.mock.calls.length === 2);
   });
 
   it("oauth auth from authType", async () => {
-    sandbox.stub(fs, "pathExists").resolves(true);
-    const injectStub = sandbox.stub(ActionInjector, "injectCreateOAuthAction").resolves(undefined);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    const injectStub = vi
+      .spyOn(ActionInjector, "injectCreateOAuthAction")
+      .mockResolvedValue(undefined);
     const res = await injectAuthAction(
       "oauth",
       "test",
@@ -682,7 +700,7 @@ describe("injectAuthAction", async () => {
     );
 
     assert.isUndefined(res);
-    assert.isTrue(injectStub.calledTwice);
+    assert.isTrue(injectStub.mock.calls.length === 2);
   });
 });
 
@@ -699,24 +717,26 @@ describe("listPluginExistingOperations", () => {
     },
   };
 
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   afterEach(async () => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("success", async () => {
-    sandbox
-      .stub(PluginManifestUtils.prototype, "getApiSpecFilePathFromTeamsManifest")
-      .resolves(ok(["openapi.yaml"]));
-    sandbox
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
+    vi.spyOn(
+      PluginManifestUtils.prototype,
+      "getApiSpecFilePathFromTeamsManifest"
+    ).mockResolvedValue(ok(["openapi.yaml"]));
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) =>
+      flag === FeatureFlags.KiotaNPMIntegration ? false : false
+    );
 
-    sandbox
-      .stub(SpecParser.prototype, "validate")
-      .resolves({ status: ValidationStatus.Valid, warnings: [], errors: [] });
-    sandbox.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(SpecParser.prototype, "validate").mockResolvedValue({
+      status: ValidationStatus.Valid,
+      warnings: [],
+      errors: [],
+    });
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api1",
@@ -741,13 +761,16 @@ describe("listPluginExistingOperations", () => {
       "manifestPath",
       "openapi.yaml"
     );
-    expect(res).to.be.deep.equal(["api1"]);
+    chai.expect(res).to.be.deep.equal(["api1"]);
   });
 
   it("get api spec error", async () => {
-    sandbox
-      .stub(PluginManifestUtils.prototype, "getApiSpecFilePathFromTeamsManifest")
-      .resolves(err(new SystemError("getApiSpecFilePathFromTeamsManifest", "name", "", "")));
+    vi.spyOn(
+      PluginManifestUtils.prototype,
+      "getApiSpecFilePathFromTeamsManifest"
+    ).mockResolvedValue(
+      err(new SystemError("getApiSpecFilePathFromTeamsManifest", "name", "", ""))
+    );
 
     let hasException = false;
 
@@ -755,30 +778,31 @@ describe("listPluginExistingOperations", () => {
       await listPluginExistingOperations(teamsManifestWithPlugin, "manifestPath", "openapi.yaml");
     } catch (e) {
       hasException = true;
-      expect(e.source).equal("getApiSpecFilePathFromTeamsManifest");
+      chai.expect(e.source).equal("getApiSpecFilePathFromTeamsManifest");
     }
-    expect(hasException).to.be.true;
+    chai.expect(hasException).to.be.true;
   });
 
   it("openapi is not referenced for plugin", async () => {
-    sandbox
-      .stub(PluginManifestUtils.prototype, "getApiSpecFilePathFromTeamsManifest")
-      .resolves(ok(["openapi.yaml"]));
+    vi.spyOn(
+      PluginManifestUtils.prototype,
+      "getApiSpecFilePathFromTeamsManifest"
+    ).mockResolvedValue(ok(["openapi.yaml"]));
     let hasException = false;
 
     try {
       await listPluginExistingOperations(teamsManifestWithPlugin, "manifestPath", "notexist.yaml");
     } catch (e) {
       hasException = true;
-      expect(e.source).equal("listPluginExistingOperations");
-      expect(e.name).equal("api-spec-not-used-in-plugin");
+      chai.expect(e.source).equal("listPluginExistingOperations");
+      chai.expect(e.name).equal("api-spec-not-used-in-plugin");
     }
-    expect(hasException).to.be.true;
+    chai.expect(hasException).to.be.true;
   });
 });
 
 describe("updateForCustomApi", async () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   const spec = {
     openapi: "3.0.0",
     info: {
@@ -864,50 +888,48 @@ describe("updateForCustomApi", async () => {
   let mockedEnvRestore: RestoreFn | undefined;
 
   afterEach(async () => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     if (mockedEnvRestore) {
       mockedEnvRestore();
     }
   });
 
   it("happy path: ts", async () => {
-    sandbox.stub(fs, "ensureDir").resolves();
-    sandbox.stub(fs, "writeFile").callsFake((file, data) => {
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    vi.spyOn(fs, "writeFile").mockImplementation((file, data) => {
       if (file === path.join("path", "src", "app", "instructions.txt")) {
-        expect(data).to.contains("The following is a conversation with an AI assistant.");
+        chai.expect(data).to.contains("The following is a conversation with an AI assistant.");
       } else if (file === path.join("path", "src", "adaptiveCard", "hello.json")) {
-        expect(data).to.contains("getHello");
+        chai.expect(data).to.contains("getHello");
       } else if (file === path.join("path", "src", "app", "functions.json")) {
-        expect(data).to.contains("getHello");
+        chai.expect(data).to.contains("getHello");
       } else if (file === path.join("path", "src", "app", "app.ts")) {
-        expect(data).to.contains("functionDefs.getHello");
-        expect(data).not.to.contains("// Replace with function definition code");
+        chai.expect(data).to.contains("functionDefs.getHello");
+        chai.expect(data).not.to.contains("// Replace with function definition code");
       } else if (file === path.join("path", "src", "app", "handlers.ts")) {
-        expect(data).to.contains("const client = await api.getClient();");
-        expect(data).not.to.contains("{{");
+        chai.expect(data).to.contains("const client = await api.getClient();");
+        chai.expect(data).not.to.contains("{{");
       }
     });
-    sandbox
-      .stub(fs, "readFile")
-      .resolves(
-        Buffer.from(
-          "// Replace with function definition code // Replace with function handler code {{OPENAPI_SPEC_PATH}}"
-        )
-      );
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
+    vi.spyOn(fs, "readFile").mockResolvedValue(
+      Buffer.from(
+        "// Replace with function definition code // Replace with function handler code {{OPENAPI_SPEC_PATH}}"
+      )
+    );
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
 
-    sandbox
-      .stub(manifestUtils, "_writeAppManifest")
-      .callsFake(async (updatedManifest, manifestPath) => {
-        expect(manifestPath.replace(/\\/g, "/")).to.be.equal("path/appPackage/manifest.json");
-        expect(updatedManifest.bots![0].commandLists![0].commands[0].title).to.be.equal(
-          "Returns a greeting"
-        );
-        expect(updatedManifest.bots![0].commandLists![0].commands[1].title).to.be.equal(
-          "Create a pet"
-        );
+    vi.spyOn(manifestUtils, "_writeAppManifest").mockImplementation(
+      async (updatedManifest, manifestPath) => {
+        chai.expect(manifestPath.replace(/\\/g, "/")).to.be.equal("path/appPackage/manifest.json");
+        chai
+          .expect(updatedManifest.bots![0].commandLists![0].commands[0].title)
+          .to.be.equal("Returns a greeting");
+        chai
+          .expect(updatedManifest.bots![0].commandLists![0].commands[1].title)
+          .to.be.equal("Create a pet");
         return ok(undefined);
-      });
+      }
+    );
     await openApiSpecHelper.updateForCustomApi(spec, "typescript", "path", "openapi.yaml");
   });
 
@@ -915,117 +937,110 @@ describe("updateForCustomApi", async () => {
     mockedEnvRestore = mockedEnv({
       [FeatureFlagName.CEAEnabled]: "true",
     });
-    sandbox.stub(fs, "ensureDir").resolves();
-    sandbox.stub(fs, "writeFile").callsFake((file, data) => {
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    vi.spyOn(fs, "writeFile").mockImplementation((file, data) => {
       if (file === path.join("path", "src", "app", "instructions.txt")) {
-        expect(data).to.contains("The following is a conversation with an AI assistant.");
+        chai.expect(data).to.contains("The following is a conversation with an AI assistant.");
       } else if (file === path.join("path", "src", "adaptiveCard", "hello.json")) {
-        expect(data).to.contains("getHello");
+        chai.expect(data).to.contains("getHello");
       } else if (file === path.join("path", "src", "app", "functions.json")) {
-        expect(data).to.contains("getHello");
+        chai.expect(data).to.contains("getHello");
       } else if (file === path.join("path", "src", "app", "app.ts")) {
-        expect(data).to.contains("functionDefs.getHello");
-        expect(data).not.to.contains("// Replace with function definition code");
+        chai.expect(data).to.contains("functionDefs.getHello");
+        chai.expect(data).not.to.contains("// Replace with function definition code");
       } else if (file === path.join("path", "src", "app", "handlers.ts")) {
-        expect(data).to.contains("const client = await api.getClient();");
-        expect(data).not.to.contains("{{");
+        chai.expect(data).to.contains("const client = await api.getClient();");
+        chai.expect(data).not.to.contains("{{");
       }
     });
-    sandbox
-      .stub(fs, "readFile")
-      .resolves(
-        Buffer.from(
-          "// Replace with function definition code // Replace with function handler code {{OPENAPI_SPEC_PATH}}"
-        )
-      );
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
+    vi.spyOn(fs, "readFile").mockResolvedValue(
+      Buffer.from(
+        "// Replace with function definition code // Replace with function handler code {{OPENAPI_SPEC_PATH}}"
+      )
+    );
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
 
-    sandbox
-      .stub(manifestUtils, "_writeAppManifest")
-      .callsFake(async (updatedManifest, manifestPath) => {
-        expect(manifestPath.replace(/\\/g, "/")).to.be.equal("path/appPackage/manifest.json");
-        expect(updatedManifest.bots![0].commandLists![0].scopes).deep.equal([
-          "personal",
-          "copilot",
-        ]);
-        expect(updatedManifest.bots![0].commandLists![0].commands[0].title).to.be.equal(
-          "Returns a greeting"
-        );
-        expect(updatedManifest.bots![0].commandLists![0].commands[1].title).to.be.equal(
-          "Create a pet"
-        );
+    vi.spyOn(manifestUtils, "_writeAppManifest").mockImplementation(
+      async (updatedManifest, manifestPath) => {
+        chai.expect(manifestPath.replace(/\\/g, "/")).to.be.equal("path/appPackage/manifest.json");
+        chai
+          .expect(updatedManifest.bots![0].commandLists![0].scopes)
+          .deep.equal(["personal", "copilot"]);
+        chai
+          .expect(updatedManifest.bots![0].commandLists![0].commands[0].title)
+          .to.be.equal("Returns a greeting");
+        chai
+          .expect(updatedManifest.bots![0].commandLists![0].commands[1].title)
+          .to.be.equal("Create a pet");
         return ok(undefined);
-      });
+      }
+    );
     await openApiSpecHelper.updateForCustomApi(spec, "typescript", "path", "openapi.yaml");
   });
 
   it("read manifest failed", async () => {
-    sandbox.stub(fs, "ensureDir").resolves();
-    sandbox.stub(fs, "writeFile").callsFake((file, data) => {
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    vi.spyOn(fs, "writeFile").mockImplementation((file, data) => {
       if (file === path.join("path", "src", "app", "instructions.txt")) {
-        expect(data).to.contains("The following is a conversation with an AI assistant.");
+        chai.expect(data).to.contains("The following is a conversation with an AI assistant.");
       } else if (file === path.join("path", "src", "adaptiveCard", "hello.json")) {
-        expect(data).to.contains("getHello");
+        chai.expect(data).to.contains("getHello");
       } else if (file === path.join("path", "src", "app", "functions.json")) {
-        expect(data).to.contains("getHello");
+        chai.expect(data).to.contains("getHello");
       } else if (file === path.join("path", "src", "app", "app.ts")) {
-        expect(data).to.contains("functionDefs.getHello");
-        expect(data).not.to.contains("// Replace with function definition code");
+        chai.expect(data).to.contains("functionDefs.getHello");
+        chai.expect(data).not.to.contains("// Replace with function definition code");
       } else if (file === path.join("path", "src", "app", "handlers.ts")) {
-        expect(data).to.contains("const client = await api.getClient();");
-        expect(data).not.to.contains("{{");
+        chai.expect(data).to.contains("const client = await api.getClient();");
+        chai.expect(data).not.to.contains("{{");
       }
     });
-    sandbox
-      .stub(fs, "readFile")
-      .resolves(
-        Buffer.from(
-          "// Replace with function definition code // Replace with function handler code {{OPENAPI_SPEC_PATH}}"
-        )
-      );
+    vi.spyOn(fs, "readFile").mockResolvedValue(
+      Buffer.from(
+        "// Replace with function definition code // Replace with function handler code {{OPENAPI_SPEC_PATH}}"
+      )
+    );
 
-    sandbox
-      .stub(manifestUtils, "_readAppManifest")
-      .resolves(err(new SystemError("test", "", "", "")));
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(
+      err(new SystemError("test", "", "", ""))
+    );
     try {
       await openApiSpecHelper.updateForCustomApi(spec, "typescript", "path", "openapi.yaml");
       assert.fail("should throw error");
     } catch (e) {
-      expect(e.source).to.be.equal("test");
+      chai.expect(e.source).to.be.equal("test");
     }
   });
 
   it("happy path: should contain warning if generate adaptive card failed", async () => {
-    sandbox.stub(fs, "ensureDir").resolves();
-    sandbox.stub(fs, "writeFile").callsFake((file, data) => {
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    vi.spyOn(fs, "writeFile").mockImplementation((file, data) => {
       if (file === path.join("path", "src", "app", "instructions.txt")) {
-        expect(data).to.contains("The following is a conversation with an AI assistant.");
+        chai.expect(data).to.contains("The following is a conversation with an AI assistant.");
       } else if (file === path.join("path", "src", "adaptiveCard", "hello.json")) {
-        expect(data).to.contains("getHello");
+        chai.expect(data).to.contains("getHello");
       } else if (file === path.join("path", "src", "app", "functions.json")) {
-        expect(data).to.contains("getHello");
+        chai.expect(data).to.contains("getHello");
       } else if (file === path.join("path", "src", "app", "app.ts")) {
-        expect(data).to.contains("functionDefs.getHello");
-        expect(data).not.to.contains("// Replace with function definition code");
+        chai.expect(data).to.contains("functionDefs.getHello");
+        chai.expect(data).not.to.contains("// Replace with function definition code");
       } else if (file === path.join("path", "src", "app", "handlers.ts")) {
-        expect(data).to.contains("const client = await api.getClient();");
-        expect(data).not.to.contains("{{");
+        chai.expect(data).to.contains("const client = await api.getClient();");
+        chai.expect(data).not.to.contains("{{");
       }
     });
-    sandbox
-      .stub(fs, "readFile")
-      .resolves(
-        Buffer.from(
-          "// Replace with function definition code // Replace with function handler code {{OPENAPI_SPEC_PATH}}"
-        )
-      );
+    vi.spyOn(fs, "readFile").mockResolvedValue(
+      Buffer.from(
+        "// Replace with function definition code // Replace with function handler code {{OPENAPI_SPEC_PATH}}"
+      )
+    );
 
-    sandbox
-      .stub(AdaptiveCardGenerator, "generateAdaptiveCard")
-      .throws(new Error("generate adaptive card failed"));
+    vi.spyOn(AdaptiveCardGenerator, "generateAdaptiveCard").mockImplementation(() => {
+      throw new Error("generate adaptive card failed");
+    });
 
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(manifestUtils, "_writeAppManifest").resolves(ok(undefined));
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(manifestUtils, "_writeAppManifest").mockResolvedValue(ok(undefined));
 
     const result = await openApiSpecHelper.updateForCustomApi(
       spec,
@@ -1034,7 +1049,7 @@ describe("updateForCustomApi", async () => {
       "openapi.yaml"
     );
 
-    expect(result).to.be.deep.equal([
+    chai.expect(result).to.be.deep.equal([
       {
         type: WarningType.GenerateCardFailed,
         content:
@@ -1051,62 +1066,58 @@ describe("updateForCustomApi", async () => {
   });
 
   it("happy path: js", async () => {
-    sandbox.stub(fs, "ensureDir").resolves();
-    sandbox.stub(fs, "writeFile").callsFake((file, data) => {
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    vi.spyOn(fs, "writeFile").mockImplementation((file, data) => {
       if (file === path.join("path", "src", "app", "instructions.txt")) {
-        expect(data).to.contains("The following is a conversation with an AI assistant.");
+        chai.expect(data).to.contains("The following is a conversation with an AI assistant.");
       } else if (file === path.join("path", "src", "adaptiveCard", "hello.json")) {
-        expect(data).to.contains("getHello");
+        chai.expect(data).to.contains("getHello");
       } else if (file === path.join("path", "src", "app", "functions.json")) {
-        expect(data).to.contains("getHello");
+        chai.expect(data).to.contains("getHello");
       } else if (file === path.join("path", "src", "app", "app.js")) {
-        expect(data).to.contains("functionDefs.getHello");
-        expect(data).not.to.contains("// Replace with function definition code");
+        chai.expect(data).to.contains("functionDefs.getHello");
+        chai.expect(data).not.to.contains("// Replace with function definition code");
       } else if (file === path.join("path", "src", "app", "handlers.js")) {
-        expect(data).to.contains("const client = await api.getClient();");
-        expect(data).not.to.contains("{{");
+        chai.expect(data).to.contains("const client = await api.getClient();");
+        chai.expect(data).not.to.contains("{{");
       }
     });
-    sandbox
-      .stub(fs, "readFile")
-      .resolves(
-        Buffer.from(
-          "// Replace with function definition code // Replace with function handler code {{OPENAPI_SPEC_PATH}}"
-        )
-      );
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
+    vi.spyOn(fs, "readFile").mockResolvedValue(
+      Buffer.from(
+        "// Replace with function definition code // Replace with function handler code {{OPENAPI_SPEC_PATH}}"
+      )
+    );
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
 
-    sandbox.stub(manifestUtils, "_writeAppManifest").resolves(ok(undefined));
+    vi.spyOn(manifestUtils, "_writeAppManifest").mockResolvedValue(ok(undefined));
 
     await openApiSpecHelper.updateForCustomApi(spec, "javascript", "path", "openapi.yaml");
   });
 
   it("happy path: should contain warning if generate adaptive card data failed", async () => {
-    sandbox.stub(fs, "ensureDir").resolves();
-    sandbox.stub(fs, "writeFile").callsFake((file, data) => {
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    vi.spyOn(fs, "writeFile").mockImplementation((file, data) => {
       if (file === path.join("path", "src", "app", "instructions.txt")) {
-        expect(data).to.contains("The following is a conversation with an AI assistant.");
+        chai.expect(data).to.contains("The following is a conversation with an AI assistant.");
       } else if (file === path.join("path", "src", "adaptiveCard", "hello.json")) {
-        expect(data).to.contains("getHello");
+        chai.expect(data).to.contains("getHello");
       } else if (file === path.join("path", "src", "app", "functions.json")) {
-        expect(data).to.contains("getHello");
+        chai.expect(data).to.contains("getHello");
       } else if (file === path.join("path", "src", "app", "app.ts")) {
-        expect(data).to.contains("functionDefs.getHello");
-        expect(data).not.to.contains("// Replace with function definition code");
+        chai.expect(data).to.contains("functionDefs.getHello");
+        chai.expect(data).not.to.contains("// Replace with function definition code");
       } else if (file === path.join("path", "src", "app", "handlers.ts")) {
-        expect(data).to.contains("const client = await api.getClient();");
-        expect(data).not.to.contains("{{");
+        chai.expect(data).to.contains("const client = await api.getClient();");
+        chai.expect(data).not.to.contains("{{");
       }
     });
-    sandbox
-      .stub(fs, "readFile")
-      .resolves(
-        Buffer.from(
-          "// Replace with function definition code // Replace with function handler code {{OPENAPI_SPEC_PATH}}"
-        )
-      );
+    vi.spyOn(fs, "readFile").mockResolvedValue(
+      Buffer.from(
+        "// Replace with function definition code // Replace with function handler code {{OPENAPI_SPEC_PATH}}"
+      )
+    );
 
-    sandbox.stub(AdaptiveCardGenerator, "generateAdaptiveCard").returns([
+    vi.spyOn(AdaptiveCardGenerator, "generateAdaptiveCard").mockReturnValue([
       {
         type: "AdaptiveCard",
         $schema: "https://adaptivecards.io/schemas/adaptive-card.json",
@@ -1124,8 +1135,8 @@ describe("updateForCustomApi", async () => {
       [{ type: WarningType.GenerateJsonDataFailed, content: "generate json data failed" }],
     ]);
 
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(manifestUtils, "_writeAppManifest").resolves(ok(undefined));
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(manifestUtils, "_writeAppManifest").mockResolvedValue(ok(undefined));
 
     const result = await openApiSpecHelper.updateForCustomApi(
       spec,
@@ -1134,7 +1145,7 @@ describe("updateForCustomApi", async () => {
       "openapi.yaml"
     );
 
-    expect(result).to.be.deep.equal([
+    chai.expect(result).to.be.deep.equal([
       {
         type: WarningType.GenerateJsonDataFailed,
         content:
@@ -1151,94 +1162,92 @@ describe("updateForCustomApi", async () => {
   });
 
   it("happy path: js", async () => {
-    sandbox.stub(fs, "ensureDir").resolves();
-    sandbox.stub(fs, "writeFile").callsFake((file, data) => {
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    vi.spyOn(fs, "writeFile").mockImplementation((file, data) => {
       if (file === path.join("path", "src", "app", "instructions.txt")) {
-        expect(data).to.contains("The following is a conversation with an AI assistant.");
+        chai.expect(data).to.contains("The following is a conversation with an AI assistant.");
       } else if (file === path.join("path", "src", "adaptiveCard", "hello.json")) {
-        expect(data).to.contains("getHello");
+        chai.expect(data).to.contains("getHello");
       } else if (file === path.join("path", "src", "app", "functions.json")) {
-        expect(data).to.contains("getHello");
+        chai.expect(data).to.contains("getHello");
       } else if (file === path.join("path", "src", "app", "app.ts")) {
-        expect(data).to.contains("functionDefs.getHello");
-        expect(data).not.to.contains("// Replace with function definition code");
+        chai.expect(data).to.contains("functionDefs.getHello");
+        chai.expect(data).not.to.contains("// Replace with function definition code");
       } else if (file === path.join("path", "src", "app", "handlers.ts")) {
-        expect(data).to.contains("const client = await api.getClient();");
-        expect(data).not.to.contains("{{");
+        chai.expect(data).to.contains("const client = await api.getClient();");
+        chai.expect(data).not.to.contains("{{");
       }
     });
-    sandbox
-      .stub(fs, "readFile")
-      .resolves(
-        Buffer.from(
-          "// Replace with function definition code // Replace with function handler code {{OPENAPI_SPEC_PATH}}"
-        )
-      );
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(manifestUtils, "_writeAppManifest").resolves(ok(undefined));
+    vi.spyOn(fs, "readFile").mockResolvedValue(
+      Buffer.from(
+        "// Replace with function definition code // Replace with function handler code {{OPENAPI_SPEC_PATH}}"
+      )
+    );
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(manifestUtils, "_writeAppManifest").mockResolvedValue(ok(undefined));
     await openApiSpecHelper.updateForCustomApi(spec, "javascript", "path", "openapi.yaml");
   });
 
   it("happy path: python", async () => {
-    sandbox.stub(fs, "ensureDir").resolves();
-    sandbox.stub(fs, "writeFile").callsFake((file, data) => {
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    vi.spyOn(fs, "writeFile").mockImplementation((file, data) => {
       if (file == path.join("path", "src", "prompts", "chat", "skprompt.txt")) {
-        expect(data).to.contains("The following is a conversation with an AI assistant.");
+        chai.expect(data).to.contains("The following is a conversation with an AI assistant.");
       } else if (file === path.join("path", "src", "adaptiveCard", "hello.json")) {
-        expect(data).to.contains("getHello");
+        chai.expect(data).to.contains("getHello");
       } else if (file === path.join("path", "src", "prompts", "chat", "actions.json")) {
-        expect(data).to.contains("getHello");
+        chai.expect(data).to.contains("getHello");
       } else if (file == path.join("path", "src", "bot.py")) {
-        expect(data).to.contains(`@bot_app.ai.action("getHello")`);
-        expect(data).not.to.contains("{{");
-        expect(data).not.to.contains("# Replace with action code");
+        chai.expect(data).to.contains(`@bot_app.ai.action("getHello")`);
+        chai.expect(data).not.to.contains("{{");
+        chai.expect(data).not.to.contains("# Replace with action code");
       }
     });
-    sandbox
-      .stub(fs, "readFile")
-      .resolves(Buffer.from("test code # Replace with action code {{OPENAPI_SPEC_PATH}}"));
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(manifestUtils, "_writeAppManifest").resolves(ok(undefined));
+    vi.spyOn(fs, "readFile").mockResolvedValue(
+      Buffer.from("test code # Replace with action code {{OPENAPI_SPEC_PATH}}")
+    );
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(manifestUtils, "_writeAppManifest").mockResolvedValue(ok(undefined));
     await openApiSpecHelper.updateForCustomApi(spec, "python", "path", "openapi.yaml");
   });
 
   it("happy path: csharp", async () => {
-    sandbox.stub(fs, "ensureDir").resolves();
-    sandbox.stub(fs, "writeFile").callsFake((file, data) => {
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    vi.spyOn(fs, "writeFile").mockImplementation((file, data) => {
       if (file == path.join("path", "APIActions.cs")) {
-        expect(data).to.contains(`[Action("getHello")]`);
-        expect(data).to.contains(`public async Task<string> GetHelloAsync`);
-        expect(data).to.contains("openapi.yaml");
-        expect(data).not.to.contains("{{");
-        expect(data).not.to.contains("# Replace with action code");
+        chai.expect(data).to.contains(`[Action("getHello")]`);
+        chai.expect(data).to.contains(`public async Task<string> GetHelloAsync`);
+        chai.expect(data).to.contains("openapi.yaml");
+        chai.expect(data).not.to.contains("{{");
+        chai.expect(data).not.to.contains("# Replace with action code");
       }
 
       if (file.toString().endsWith("actions.json")) {
-        expect(file == path.join("path", "prompts", "Chat", "actions.json")).to.be.true;
+        chai.expect(file == path.join("path", "prompts", "Chat", "actions.json")).to.be.true;
       }
 
       if (file.toString().endsWith("skprompt.txt")) {
-        expect(file == path.join("path", "prompts", "Chat", "skprompt.txt")).to.be.true;
+        chai.expect(file == path.join("path", "prompts", "Chat", "skprompt.txt")).to.be.true;
       }
 
       if (file.toString().endsWith("getHello.json")) {
-        expect(file == path.join("path", "adaptiveCards", "getHello.json")).to.be.true;
+        chai.expect(file == path.join("path", "adaptiveCards", "getHello.json")).to.be.true;
       }
     });
 
-    sandbox
-      .stub(fs, "readFile")
-      .resolves(Buffer.from("test code // Replace with action code {{OPENAPI_SPEC_PATH}}"));
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(manifestUtils, "_writeAppManifest").resolves(ok(undefined));
+    vi.spyOn(fs, "readFile").mockResolvedValue(
+      Buffer.from("test code // Replace with action code {{OPENAPI_SPEC_PATH}}")
+    );
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(manifestUtils, "_writeAppManifest").mockResolvedValue(ok(undefined));
     //sandbox fs.readdir(destinationPath)
-    sandbox.stub(fs, "readdir").resolves(["MyApp.csproj"] as any);
+    vi.spyOn(fs, "readdir").mockResolvedValue(["MyApp.csproj"] as any);
     await openApiSpecHelper.updateForCustomApi(spec, "csharp", "path", "openapi.yaml");
   });
 
   it("unknown language: unknown", async () => {
-    sandbox.stub(fs, "ensureDir").resolves();
-    sandbox.stub(fs, "writeFile").callsFake((file, data) => {
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    vi.spyOn(fs, "writeFile").mockImplementation((file, data) => {
       if (file == path.join("path", "APIActions.cs")) {
         fail("actions.json should not be created for unknown language");
       }
@@ -1256,11 +1265,11 @@ describe("updateForCustomApi", async () => {
       }
     });
 
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(manifestUtils, "_writeAppManifest").resolves(ok(undefined));
-    sandbox
-      .stub(fs, "readFile")
-      .resolves(Buffer.from("test code // Replace with action code {{OPENAPI_SPEC_PATH}}"));
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(manifestUtils, "_writeAppManifest").mockResolvedValue(ok(undefined));
+    vi.spyOn(fs, "readFile").mockResolvedValue(
+      Buffer.from("test code // Replace with action code {{OPENAPI_SPEC_PATH}}")
+    );
     await openApiSpecHelper.updateForCustomApi(spec, "unknown", "path", "openapi.yaml");
   });
 
@@ -1272,22 +1281,22 @@ describe("updateForCustomApi", async () => {
         version: "1.0.0",
       },
     } as OpenAPIV3.Document;
-    sandbox.stub(fs, "ensureDir").resolves();
-    sandbox.stub(fs, "writeFile").callsFake((file, data) => {
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    vi.spyOn(fs, "writeFile").mockImplementation((file, data) => {
       if (file === path.join("path", "src", "prompts", "chat", "skprompt.txt")) {
-        expect(data).to.contains("The following is a conversation with an AI assistant.");
+        chai.expect(data).to.contains("The following is a conversation with an AI assistant.");
       } else if (file === path.join("path", "src", "prompts", "chat", "actions.json")) {
-        expect(data).to.equals("[]");
+        chai.expect(data).to.equals("[]");
       } else if (file === path.join("path", "src", "app", "app.ts")) {
-        expect(data).not.to.contains("{{");
-        expect(data).not.to.contains("// Replace with action code");
+        chai.expect(data).not.to.contains("{{");
+        chai.expect(data).not.to.contains("// Replace with action code");
       }
     });
-    sandbox
-      .stub(fs, "readFile")
-      .resolves(Buffer.from("test code // Replace with action code {{OPENAPI_SPEC_PATH}}"));
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(manifestUtils, "_writeAppManifest").resolves(ok(undefined));
+    vi.spyOn(fs, "readFile").mockResolvedValue(
+      Buffer.from("test code // Replace with action code {{OPENAPI_SPEC_PATH}}")
+    );
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(manifestUtils, "_writeAppManifest").mockResolvedValue(ok(undefined));
     await openApiSpecHelper.updateForCustomApi(limitedSpec, "javascript", "path", "openapi.yaml");
   });
 
@@ -1300,29 +1309,27 @@ describe("updateForCustomApi", async () => {
       },
       paths: {},
     } as OpenAPIV3.Document;
-    sandbox.stub(fs, "ensureDir").resolves();
-    sandbox.stub(fs, "writeFile").callsFake((file, data) => {
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    vi.spyOn(fs, "writeFile").mockImplementation((file, data) => {
       if (file === path.join("path", "src", "app", "instructions.txt")) {
-        expect(data).to.contains("The following is a conversation with an AI assistant.");
+        chai.expect(data).to.contains("The following is a conversation with an AI assistant.");
       } else if (file === path.join("path", "src", "app", "functions.json")) {
-        expect(data).to.equals("{}");
+        chai.expect(data).to.equals("{}");
       } else if (file === path.join("path", "src", "app", "app.ts")) {
-        expect(data).not.to.contains("// Replace with function definition code");
+        chai.expect(data).not.to.contains("// Replace with function definition code");
       } else if (file === path.join("path", "src", "app", "handlers.ts")) {
-        expect(data).to.contains("const client = await api.getClient();");
-        expect(data).not.to.contains("{{");
+        chai.expect(data).to.contains("const client = await api.getClient();");
+        chai.expect(data).not.to.contains("{{");
       }
     });
-    sandbox
-      .stub(fs, "readFile")
-      .resolves(
-        Buffer.from(
-          "// Replace with function definition code // Replace with function handler code {{OPENAPI_SPEC_PATH}}"
-        )
-      );
+    vi.spyOn(fs, "readFile").mockResolvedValue(
+      Buffer.from(
+        "// Replace with function definition code // Replace with function handler code {{OPENAPI_SPEC_PATH}}"
+      )
+    );
 
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(manifestUtils, "_writeAppManifest").resolves(ok(undefined));
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(manifestUtils, "_writeAppManifest").mockResolvedValue(ok(undefined));
     await openApiSpecHelper.updateForCustomApi(limitedSpec, "javascript", "path", "openapi.yaml");
   });
 
@@ -1357,31 +1364,29 @@ describe("updateForCustomApi", async () => {
         },
       },
     } as OpenAPIV3.Document;
-    sandbox.stub(fs, "ensureDir").resolves();
-    const mockWriteFile = sandbox.stub(fs, "writeFile").callsFake((file, data) => {
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    const mockWriteFile = vi.spyOn(fs, "writeFile").mockImplementation((file, data) => {
       if (file === path.join("path", "src", "app", "instructions.txt")) {
-        expect(data).to.contains("The following is a conversation with an AI assistant.");
+        chai.expect(data).to.contains("The following is a conversation with an AI assistant.");
       } else if (file === path.join("path", "src", "adaptiveCard", "hello.json")) {
-        expect(data).to.equals("[]");
+        chai.expect(data).to.equals("[]");
       } else if (file === path.join("path", "src", "app", "functions.json")) {
-        expect(data).to.equals("{}");
+        chai.expect(data).to.equals("{}");
       } else if (file === path.join("path", "src", "app", "app.js")) {
-        expect(data).not.to.contains("// Replace with function definition code");
+        chai.expect(data).not.to.contains("// Replace with function definition code");
       } else if (file === path.join("path", "src", "app", "handlers.js")) {
-        expect(data).not.to.contains("{{");
+        chai.expect(data).not.to.contains("{{");
       }
     });
-    sandbox
-      .stub(fs, "readFile")
-      .resolves(
-        Buffer.from(
-          "// Replace with function definition code // Replace with function handler code {{OPENAPI_SPEC_PATH}}"
-        )
-      );
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(manifestUtils, "_writeAppManifest").resolves(ok(undefined));
+    vi.spyOn(fs, "readFile").mockResolvedValue(
+      Buffer.from(
+        "// Replace with function definition code // Replace with function handler code {{OPENAPI_SPEC_PATH}}"
+      )
+    );
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(manifestUtils, "_writeAppManifest").mockResolvedValue(ok(undefined));
     await openApiSpecHelper.updateForCustomApi(limitedSpec, "javascript", "path", "openapi.yaml");
-    expect(mockWriteFile.callCount).to.equal(4);
+    chai.expect(mockWriteFile.mock.calls.length).to.equal(4);
   });
 
   it("happy path with spec with required and multiple parameter", async () => {
@@ -1455,32 +1460,30 @@ describe("updateForCustomApi", async () => {
         },
       },
     } as OpenAPIV3.Document;
-    sandbox.stub(fs, "ensureDir").resolves();
-    sandbox.stub(fs, "writeFile").callsFake((file, data) => {
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    vi.spyOn(fs, "writeFile").mockImplementation((file, data) => {
       if (file === path.join("path", "src", "app", "instructions.txt")) {
-        expect(data).to.contains("The following is a conversation with an AI assistant.");
+        chai.expect(data).to.contains("The following is a conversation with an AI assistant.");
       } else if (file === path.join("path", "src", "adaptiveCard", "hello.json")) {
-        expect(data).to.contains("getHello");
+        chai.expect(data).to.contains("getHello");
       } else if (file === path.join("path", "src", "app", "functions.json")) {
-        expect(data).to.contains("getHello");
+        chai.expect(data).to.contains("getHello");
       } else if (file === path.join("path", "src", "app", "app.ts")) {
-        expect(data).to.contains("functionDefs.getHello");
-        expect(data).not.to.contains("// Replace with function definition code");
+        chai.expect(data).to.contains("functionDefs.getHello");
+        chai.expect(data).not.to.contains("// Replace with function definition code");
       } else if (file === path.join("path", "src", "app", "handlers.ts")) {
-        expect(data).to.contains("const client = await api.getClient();");
-        expect(data).not.to.contains("{{");
+        chai.expect(data).to.contains("const client = await api.getClient();");
+        chai.expect(data).not.to.contains("{{");
       }
     });
-    sandbox
-      .stub(fs, "readFile")
-      .resolves(
-        Buffer.from(
-          "// Replace with function definition code // Replace with function handler code {{OPENAPI_SPEC_PATH}}"
-        )
-      );
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
+    vi.spyOn(fs, "readFile").mockResolvedValue(
+      Buffer.from(
+        "// Replace with function definition code // Replace with function handler code {{OPENAPI_SPEC_PATH}}"
+      )
+    );
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
 
-    sandbox.stub(manifestUtils, "_writeAppManifest").resolves(ok(undefined));
+    vi.spyOn(manifestUtils, "_writeAppManifest").mockResolvedValue(ok(undefined));
     await openApiSpecHelper.updateForCustomApi(newSpec, "typescript", "path", "openapi.yaml");
   });
 
@@ -1586,32 +1589,30 @@ describe("updateForCustomApi", async () => {
         },
       },
     } as OpenAPIV3.Document;
-    sandbox.stub(fs, "ensureDir").resolves();
-    sandbox.stub(fs, "writeFile").callsFake((file, data) => {
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    vi.spyOn(fs, "writeFile").mockImplementation((file, data) => {
       if (file === path.join("path", "src", "app", "instructions.txt")) {
-        expect(data).to.contains("The following is a conversation with an AI assistant.");
+        chai.expect(data).to.contains("The following is a conversation with an AI assistant.");
       } else if (file === path.join("path", "src", "adaptiveCard", "hello.json")) {
-        expect(data).to.contains("getHello");
+        chai.expect(data).to.contains("getHello");
       } else if (file === path.join("path", "src", "app", "functions.json")) {
-        expect(data).to.contains("getHello");
+        chai.expect(data).to.contains("getHello");
       } else if (file === path.join("path", "src", "app", "app.ts")) {
-        expect(data).to.contains("functionDefs.getHello");
-        expect(data).not.to.contains("// Replace with function definition code");
+        chai.expect(data).to.contains("functionDefs.getHello");
+        chai.expect(data).not.to.contains("// Replace with function definition code");
       } else if (file === path.join("path", "src", "app", "handlers.ts")) {
-        expect(data).to.contains("const client = await api.getClient();");
-        expect(data).not.to.contains("{{");
+        chai.expect(data).to.contains("const client = await api.getClient();");
+        chai.expect(data).not.to.contains("{{");
       }
     });
-    sandbox
-      .stub(fs, "readFile")
-      .resolves(
-        Buffer.from(
-          "// Replace with function definition code // Replace with function handler code {{OPENAPI_SPEC_PATH}}"
-        )
-      );
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
+    vi.spyOn(fs, "readFile").mockResolvedValue(
+      Buffer.from(
+        "// Replace with function definition code // Replace with function handler code {{OPENAPI_SPEC_PATH}}"
+      )
+    );
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
 
-    sandbox.stub(manifestUtils, "_writeAppManifest").resolves(ok(undefined));
+    vi.spyOn(manifestUtils, "_writeAppManifest").mockResolvedValue(ok(undefined));
 
     await openApiSpecHelper.updateForCustomApi(newSpec, "typescript", "path", "openapi.yaml");
   });
@@ -1687,32 +1688,30 @@ describe("updateForCustomApi", async () => {
         },
       },
     } as OpenAPIV3.Document;
-    sandbox.stub(fs, "ensureDir").resolves();
-    sandbox.stub(fs, "writeFile").callsFake((file, data) => {
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    vi.spyOn(fs, "writeFile").mockImplementation((file, data) => {
       if (file === path.join("path", "src", "app", "instructions.txt")) {
-        expect(data).to.contains("The following is a conversation with an AI assistant.");
+        chai.expect(data).to.contains("The following is a conversation with an AI assistant.");
       } else if (file === path.join("path", "src", "adaptiveCard", "hello.json")) {
-        expect(data).to.contains("getHello");
+        chai.expect(data).to.contains("getHello");
       } else if (file === path.join("path", "src", "app", "functions.json")) {
-        expect(data).to.contains("getHello");
+        chai.expect(data).to.contains("getHello");
       } else if (file === path.join("path", "src", "app", "app.ts")) {
-        expect(data).to.contains("functionDefs.getHello");
-        expect(data).not.to.contains("// Replace with function definition code");
+        chai.expect(data).to.contains("functionDefs.getHello");
+        chai.expect(data).not.to.contains("// Replace with function definition code");
       } else if (file === path.join("path", "src", "app", "handlers.ts")) {
-        expect(data).to.contains("const client = await api.getClient();");
-        expect(data).not.to.contains("{{");
+        chai.expect(data).to.contains("const client = await api.getClient();");
+        chai.expect(data).not.to.contains("{{");
       }
     });
-    sandbox
-      .stub(fs, "readFile")
-      .resolves(
-        Buffer.from(
-          "// Replace with function definition code // Replace with function handler code {{OPENAPI_SPEC_PATH}}"
-        )
-      );
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
+    vi.spyOn(fs, "readFile").mockResolvedValue(
+      Buffer.from(
+        "// Replace with function definition code // Replace with function handler code {{OPENAPI_SPEC_PATH}}"
+      )
+    );
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
 
-    sandbox.stub(manifestUtils, "_writeAppManifest").resolves(ok(undefined));
+    vi.spyOn(manifestUtils, "_writeAppManifest").mockResolvedValue(ok(undefined));
     await openApiSpecHelper.updateForCustomApi(authSpec, "typescript", "path", "openapi.yaml");
   });
 
@@ -1766,32 +1765,30 @@ describe("updateForCustomApi", async () => {
         },
       },
     } as OpenAPIV3.Document;
-    sandbox.stub(fs, "ensureDir").resolves();
-    sandbox.stub(fs, "writeFile").callsFake((file, data) => {
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    vi.spyOn(fs, "writeFile").mockImplementation((file, data) => {
       if (file === path.join("path", "src", "app", "instructions.txt")) {
-        expect(data).to.contains("The following is a conversation with an AI assistant.");
+        chai.expect(data).to.contains("The following is a conversation with an AI assistant.");
       } else if (file === path.join("path", "src", "adaptiveCard", "hello.json")) {
-        expect(data).to.contains("getHello");
+        chai.expect(data).to.contains("getHello");
       } else if (file === path.join("path", "src", "app", "functions.json")) {
-        expect(data).to.contains("getHello");
+        chai.expect(data).to.contains("getHello");
       } else if (file === path.join("path", "src", "app", "app.ts")) {
-        expect(data).to.contains("functionDefs.getHello");
-        expect(data).not.to.contains("// Replace with function definition code");
+        chai.expect(data).to.contains("functionDefs.getHello");
+        chai.expect(data).not.to.contains("// Replace with function definition code");
       } else if (file === path.join("path", "src", "app", "handlers.ts")) {
-        expect(data).to.contains("const client = await api.getClient();");
-        expect(data).not.to.contains("{{");
+        chai.expect(data).to.contains("const client = await api.getClient();");
+        chai.expect(data).not.to.contains("{{");
       }
     });
-    sandbox
-      .stub(fs, "readFile")
-      .resolves(
-        Buffer.from(
-          "// Replace with function definition code // Replace with function handler code {{OPENAPI_SPEC_PATH}}"
-        )
-      );
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
+    vi.spyOn(fs, "readFile").mockResolvedValue(
+      Buffer.from(
+        "// Replace with function definition code // Replace with function handler code {{OPENAPI_SPEC_PATH}}"
+      )
+    );
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
 
-    sandbox.stub(manifestUtils, "_writeAppManifest").resolves(ok(undefined));
+    vi.spyOn(manifestUtils, "_writeAppManifest").mockResolvedValue(ok(undefined));
 
     await openApiSpecHelper.updateForCustomApi(
       specWithJsonPath,
@@ -1803,7 +1800,7 @@ describe("updateForCustomApi", async () => {
 });
 
 describe("listOperations", async () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   const spec = {
     openapi: "3.0.0",
     info: {
@@ -1879,7 +1876,7 @@ describe("listOperations", async () => {
     setTools(tools);
   });
   afterEach(async () => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("allow auth for teams ai project", async () => {
@@ -1888,20 +1885,22 @@ describe("listOperations", async () => {
       "custom-copilot-rag": "custom-copilot-rag-customApi",
       platform: Platform.VSCode,
     };
-    sandbox.stub(openApiSpecHelper, "formatValidationErrors").resolves([]);
-    sandbox.stub(openApiSpecHelper, "logValidationResults").resolves();
-    sandbox.stub(SpecParser.prototype, "validate").resolves({
+    vi.spyOn(openApiSpecHelper, "formatValidationErrors").mockResolvedValue([]);
+    vi.spyOn(openApiSpecHelper, "logValidationResults").mockResolvedValue();
+    vi.spyOn(SpecParser.prototype, "validate").mockResolvedValue({
       status: ValidationStatus.Valid,
       warnings: [],
       errors: [],
       specHash: "xxx",
     });
-    sandbox
-      .stub(SpecParser.prototype, "list")
-      .resolves({ APIs: [], allAPICount: 1, validAPICount: 0 });
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
+      APIs: [],
+      allAPICount: 1,
+      validAPICount: 0,
+    });
 
     const res = await openApiSpecHelper.listOperations(context, "", inputs, true, false, "");
-    expect(res.isOk()).to.be.true;
+    chai.expect(res.isOk()).to.be.true;
   });
 
   it("will show invalid api reasons", async () => {
@@ -1910,15 +1909,15 @@ describe("listOperations", async () => {
       "custom-copilot-rag": "custom-copilot-rag-customApi",
       platform: Platform.VSCode,
     };
-    sandbox.stub(openApiSpecHelper, "formatValidationErrors").resolves([]);
-    sandbox.stub(openApiSpecHelper, "logValidationResults").resolves();
-    sandbox.stub(SpecParser.prototype, "validate").resolves({
+    vi.spyOn(openApiSpecHelper, "formatValidationErrors").mockResolvedValue([]);
+    vi.spyOn(openApiSpecHelper, "logValidationResults").mockResolvedValue();
+    vi.spyOn(SpecParser.prototype, "validate").mockResolvedValue({
       status: ValidationStatus.Valid,
       warnings: [],
       errors: [],
       specHash: "",
     });
-    sandbox.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "1",
@@ -1938,11 +1937,11 @@ describe("listOperations", async () => {
       allAPICount: 2,
       validAPICount: 1,
     });
-    const warningSpy = sandbox.spy(context.logProvider, "warning");
+    const warningSpy = vi.spyOn(context.logProvider, "warning");
 
     const res = await openApiSpecHelper.listOperations(context, "", inputs, true, false, "");
-    expect(res.isOk()).to.be.true;
-    expect(warningSpy.calledOnce).to.be.true;
+    chai.expect(res.isOk()).to.be.true;
+    chai.expect(warningSpy.mock.calls.length === 1).to.be.true;
   });
 
   it("should throw error if list api not from original OpenAPI spec", async () => {
@@ -1951,18 +1950,18 @@ describe("listOperations", async () => {
       platform: Platform.VSCode,
       "manifest-path": "fake-path",
     };
-    sandbox.stub(openApiSpecHelper, "formatValidationErrors").resolves([]);
-    sandbox.stub(openApiSpecHelper, "logValidationResults").resolves();
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok({} as any));
-    sandbox.stub(manifestUtils, "getOperationIds").returns(["getHello"]);
-    sandbox.stub(openApiSpecHelper, "listPluginExistingOperations").resolves(["getHello"]);
-    sandbox.stub(SpecParser.prototype, "validate").resolves({
+    vi.spyOn(openApiSpecHelper, "formatValidationErrors").mockResolvedValue([]);
+    vi.spyOn(openApiSpecHelper, "logValidationResults").mockResolvedValue();
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok({} as any));
+    vi.spyOn(manifestUtils, "getOperationIds").mockReturnValue(["getHello"]);
+    vi.spyOn(openApiSpecHelper, "listPluginExistingOperations").mockResolvedValue(["getHello"]);
+    vi.spyOn(SpecParser.prototype, "validate").mockResolvedValue({
       status: ValidationStatus.Valid,
       warnings: [],
       errors: [],
       specHash: "",
     });
-    sandbox.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "GET /api",
@@ -1977,10 +1976,10 @@ describe("listOperations", async () => {
     });
 
     const res = await openApiSpecHelper.listOperations(context, "", inputs, false, false, "");
-    expect(res.isErr()).to.be.true;
+    chai.expect(res.isErr()).to.be.true;
     if (res.isErr()) {
-      expect(res.error.length).to.be.equal(1);
-      expect(res.error[0].type).to.be.equal(ErrorType.AddedAPINotInOriginalSpec);
+      chai.expect(res.error.length).to.be.equal(1);
+      chai.expect(res.error[0].type).to.be.equal(ErrorType.AddedAPINotInOriginalSpec);
     }
   });
 
@@ -1989,15 +1988,15 @@ describe("listOperations", async () => {
     const inputs = {
       platform: Platform.VS,
     };
-    sandbox.stub(openApiSpecHelper, "formatValidationErrors").resolves([]);
-    sandbox.stub(openApiSpecHelper, "logValidationResults").resolves();
-    sandbox.stub(SpecParser.prototype, "validate").resolves({
+    vi.spyOn(openApiSpecHelper, "formatValidationErrors").mockResolvedValue([]);
+    vi.spyOn(openApiSpecHelper, "logValidationResults").mockResolvedValue();
+    vi.spyOn(SpecParser.prototype, "validate").mockResolvedValue({
       status: ValidationStatus.Valid,
       warnings: [],
       errors: [],
       specHash: "xxx",
     });
-    sandbox.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "1",
@@ -2012,7 +2011,7 @@ describe("listOperations", async () => {
     });
 
     const res = await openApiSpecHelper.listOperations(context, "", inputs, true, false, "");
-    expect(res.isOk()).to.be.true;
+    chai.expect(res.isOk()).to.be.true;
   });
 
   it("should not allow auth for VS copilot project", async () => {
@@ -2021,19 +2020,18 @@ describe("listOperations", async () => {
       platform: Platform.VS,
       "api-plugin-type": "api-spec",
     };
-    sandbox.stub(openApiSpecHelper, "formatValidationErrors").resolves([]);
-    sandbox.stub(openApiSpecHelper, "logValidationResults").resolves();
-    sandbox.stub(SpecParser.prototype, "validate").resolves({
+    vi.spyOn(openApiSpecHelper, "formatValidationErrors").mockResolvedValue([]);
+    vi.spyOn(openApiSpecHelper, "logValidationResults").mockResolvedValue();
+    vi.spyOn(SpecParser.prototype, "validate").mockResolvedValue({
       status: ValidationStatus.Valid,
       warnings: [],
       errors: [],
       specHash: "xxx",
     });
-    sandbox
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sandbox.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) =>
+      flag === FeatureFlags.KiotaNPMIntegration ? false : false
+    );
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "1",
@@ -2048,25 +2046,25 @@ describe("listOperations", async () => {
     });
 
     const res = await openApiSpecHelper.listOperations(context, "", inputs, true, false, "");
-    expect(res.isOk()).to.be.true;
+    chai.expect(res.isOk()).to.be.true;
   });
 });
 
 describe("parseAndUpdatePluginManifestForKiota", async () => {
   const tools = new MockTools();
   setTools(tools);
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   let mockedEnvRestore: RestoreFn | undefined;
 
   afterEach(async () => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     if (mockedEnvRestore) {
       mockedEnvRestore();
     }
   });
 
   it("happy path: update plugin manifest", async () => {
-    sandbox.stub(fs, "readJSON").resolves({
+    vi.spyOn(fs, "readJSON").mockResolvedValue({
       schema_version: "v1",
       name_for_human: "test",
       description_for_human: "test",
@@ -2105,7 +2103,7 @@ describe("parseAndUpdatePluginManifestForKiota", async () => {
         },
       ],
     } as PluginManifestSchema);
-    sandbox.stub(fs, "writeJSON").callsFake((path, data) => {
+    vi.spyOn(fs, "writeJSON").mockImplementation((path, data) => {
       const dataJson = JSON.parse(data);
       assert.isTrue(dataJson.runtimes.length === 2);
       assert.equal(dataJson.runtimes[0].auth.reference_id, "${{TEST_REIGSTRATION_ID}}");
@@ -2132,7 +2130,7 @@ describe("parseAndUpdatePluginManifestForKiota", async () => {
   });
 
   it("happy path: skip update plugin manifest", async () => {
-    sandbox.stub(fs, "readJSON").resolves({
+    vi.spyOn(fs, "readJSON").mockResolvedValue({
       schema_version: "v1",
       name_for_human: "test",
       description_for_human: "test",
@@ -2160,7 +2158,7 @@ describe("parseAndUpdatePluginManifestForKiota", async () => {
         },
       ],
     } as PluginManifestSchema);
-    const writeJsonStub = sandbox.stub(fs, "writeJSON").resolves();
+    const writeJsonStub = vi.spyOn(fs, "writeJSON").mockResolvedValue();
 
     const result = await daSpecParser.parseAndUpdatePluginManifestForKiota(
       "pluginManifestPath",
@@ -2174,11 +2172,11 @@ describe("parseAndUpdatePluginManifestForKiota", async () => {
         specPath: "mock_spec_url",
       },
     ]);
-    assert.isTrue(writeJsonStub.notCalled);
+    assert.isTrue(writeJsonStub.mock.calls.length === 0);
   });
 
   it("happy path: skip update plugin manifest if no auth", async () => {
-    sandbox.stub(fs, "readJSON").resolves({
+    vi.spyOn(fs, "readJSON").mockResolvedValue({
       schema_version: "v1",
       name_for_human: "test",
       description_for_human: "test",
@@ -2195,18 +2193,18 @@ describe("parseAndUpdatePluginManifestForKiota", async () => {
         },
       ],
     } as PluginManifestSchema);
-    const writeJsonStub = sandbox.stub(fs, "writeJSON").resolves();
+    const writeJsonStub = vi.spyOn(fs, "writeJSON").mockResolvedValue();
 
     const result = await daSpecParser.parseAndUpdatePluginManifestForKiota(
       "pluginManifestPath",
       true
     );
     assert.isTrue(result.length === 0);
-    assert.isTrue(writeJsonStub.notCalled);
+    assert.isTrue(writeJsonStub.mock.calls.length === 0);
   });
 
   it("happy path: do nothing if no auth in runtime", async () => {
-    sandbox.stub(fs, "readJSON").resolves({
+    vi.spyOn(fs, "readJSON").mockResolvedValue({
       schema_version: "v1",
       name_for_human: "test",
       description_for_human: "test",
@@ -2217,17 +2215,17 @@ describe("parseAndUpdatePluginManifestForKiota", async () => {
         },
       ],
     } as PluginManifestSchema);
-    const writeJsonStub = sandbox.stub(fs, "writeJSON").resolves();
+    const writeJsonStub = vi.spyOn(fs, "writeJSON").mockResolvedValue();
 
     const result = await daSpecParser.parseAndUpdatePluginManifestForKiota(
       "pluginManifestPath",
       true
     );
-    assert.isTrue(writeJsonStub.notCalled);
+    assert.isTrue(writeJsonStub.mock.calls.length === 0);
   });
 
   it("happy path: do nothing if no placeholder", async () => {
-    sandbox.stub(fs, "readJSON").resolves({
+    vi.spyOn(fs, "readJSON").mockResolvedValue({
       schema_version: "v1",
       name_for_human: "test",
       description_for_human: "test",
@@ -2266,7 +2264,7 @@ describe("parseAndUpdatePluginManifestForKiota", async () => {
         },
       ],
     } as PluginManifestSchema);
-    sandbox.stub(fs, "writeJSON").callsFake((path, data) => {
+    vi.spyOn(fs, "writeJSON").mockImplementation((path, data) => {
       const dataJson = JSON.parse(data);
       assert.isTrue(dataJson.runtimes.length === 2);
       assert.equal(dataJson.runtimes[0].auth.reference_id, "${{TEST_REIGSTRATION_ID}}");
@@ -2284,18 +2282,18 @@ describe("generateAdaptiveCardInPluginManifestForKiota", async () => {
   const tools = new MockTools();
   setTools(tools);
   const context = createContext();
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   let mockedEnvRestore: RestoreFn | undefined;
 
   afterEach(async () => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     if (mockedEnvRestore) {
       mockedEnvRestore();
     }
   });
 
   it("happy path", async () => {
-    sandbox.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       allAPICount: 1,
       validAPICount: 1,
       APIs: [
@@ -2315,22 +2313,20 @@ describe("generateAdaptiveCardInPluginManifestForKiota", async () => {
         },
       ],
     });
-    sandbox
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sandbox.stub(SpecParser.prototype, "generateAdaptiveCardInPlugin").resolves();
-    const warningStub = sandbox.stub(tools.logProvider, "warning").resolves();
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) =>
+      flag === FeatureFlags.KiotaNPMIntegration ? false : false
+    );
+    vi.spyOn(SpecParser.prototype, "generateAdaptiveCardInPlugin").mockResolvedValue();
+    const warningStub = vi.spyOn(tools.logProvider, "warning").mockResolvedValue();
     await generateAdaptiveCardInPluginManifestForKiota("pluginManifestPath", "specPath", context);
-    assert.isTrue(warningStub.notCalled);
+    assert.isTrue(warningStub.mock.calls.length === 0);
   });
 
   it("happy path: should not throw error if error occurs", async () => {
-    sandbox
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sandbox.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) =>
+      flag === FeatureFlags.KiotaNPMIntegration ? false : false
+    );
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       allAPICount: 1,
       validAPICount: 1,
       APIs: [
@@ -2350,9 +2346,11 @@ describe("generateAdaptiveCardInPluginManifestForKiota", async () => {
         },
       ],
     });
-    sandbox.stub(SpecParser.prototype, "generateAdaptiveCardInPlugin").throws(new Error("test"));
-    const warningStub = sandbox.stub(tools.logProvider, "warning").resolves();
+    vi.spyOn(SpecParser.prototype, "generateAdaptiveCardInPlugin").mockImplementation(() => {
+      throw new Error("test");
+    });
+    const warningStub = vi.spyOn(tools.logProvider, "warning").mockResolvedValue();
     await generateAdaptiveCardInPluginManifestForKiota("pluginManifestPath", "specPath", context);
-    assert.isTrue(warningStub.calledOnce);
+    assert.isTrue(warningStub.mock.calls.length === 1);
   });
 });

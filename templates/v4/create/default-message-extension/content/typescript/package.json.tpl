@@ -1,0 +1,45 @@
+{
+  "name": "{{SafeProjectNameLowerCase}}",
+  "version": "1.0.0",
+  "description": "Microsoft 365 Agents Toolkit message extension sample",
+  "engines": {
+    "node": "22"
+  },
+  "author": "Microsoft",
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "dev:teamsfx": "env-cmd --silent -f .localConfigs npm run dev",
+    "dev:teamsfx:playground": "env-cmd --silent -f .localConfigs.playground npm run dev",
+    "dev:teamsfx:launch-playground": "env-cmd --silent -f env/.env.playground agentsplayground start",
+    "clean": "rimraf ./dist",
+    "lint": "eslint",
+    "lint:fix": "eslint --fix",
+    "build": "tsc --build",
+    "start": "node .",
+    "dev": "nodemon --exec node --inspect=9239 --signal SIGINT -r ts-node/register ./src/index.ts",
+    "watch": "nodemon --exec \"npm run start\""
+  },
+  "dependencies": {
+    "@azure/identity": "^4.11.1",
+    "@microsoft/teams.api": "^2.0.0",
+    "@microsoft/teams.apps": "^2.0.0",
+    "@microsoft/teams.cards": "^2.0.0",
+    "@microsoft/teams.common": "^2.0.0",
+    "@microsoft/teams.dev": "^2.0.0",
+    "@microsoft/teams.graph": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.4",
+    "dotenv": "^16.4.5",
+    "nodemon": "^3.1.4",
+    "rimraf": "^6.0.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5",
+    "env-cmd": "^11.0.0"
+  }
+}

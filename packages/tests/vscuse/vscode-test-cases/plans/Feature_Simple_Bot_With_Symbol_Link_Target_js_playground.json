@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 20,
+    "total_steps": 19,
     "created_at": "2026-05-20T03:22:38.797255",
     "name": "Feature Simple Bot With Symbol Link Target js playground",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2026-05-20T03:22:38.797255",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_dbaaff41",
+      "plan_r_0624_024810",
       "step_d24e9414",
       "step_27b83f03",
       "step_2c442a53",
@@ -46,32 +46,6 @@
     "updated_at": "2026-05-20T03:30:58.666947"
   },
   "steps": [
-    {
-      "step_id": "step_dbaaff41",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 364,
-        "y": 214
-      },
-      "description": "Click the \"Teams Agents and Apps\" option in the \"New Project\" popup within the Microsoft 365 Agents Toolkit extension for Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:364:214:16:5:34a4a494d0a7a050",
-        "dhash:364:214:96:5:6399912ca6d32820",
-        "dhash:364:214:0:10:c8c88094b2717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_dbaaff41",
-      "created_at": "2026-05-20T03:22:51.728682",
-      "plan_id": "plan_35f71b94"
-    },
     {
       "step_id": "step_d24e9414",
       "agent": "interaction",

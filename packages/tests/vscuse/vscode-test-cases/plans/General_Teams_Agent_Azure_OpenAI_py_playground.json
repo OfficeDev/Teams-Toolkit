@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 4,
+    "total_steps": 3,
     "created_at": "2026-01-27T01:54:07.482070",
     "name": "General Teams Agent Azure OpenAI py playground",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2026-01-27T01:54:07.481134",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_f977155b",
+      "plan_r_0624_024810",
       "step_efb4726f",
       "plan_r_0930_054245",
       "step_50f024fe",
@@ -34,32 +34,6 @@
     "updated_at": "2026-01-27T02:07:24.274550"
   },
   "steps": [
-    {
-      "step_id": "step_f977155b",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 355,
-        "y": 223
-      },
-      "description": "Click on the \"Teams Agents and Apps\" option in the dropdown menu within the \"New Project\" interface to select it.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:355:223:16:5:a31562d4290c2d29",
-        "dhash:355:223:96:5:c8c8165649071f64",
-        "dhash:355:223:0:10:c8c88094b0717065"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_f977155b",
-      "created_at": "2026-01-27T02:07:13.336383",
-      "plan_id": "plan_7fb5e663"
-    },
     {
       "step_id": "step_efb4726f",
       "agent": "interaction",

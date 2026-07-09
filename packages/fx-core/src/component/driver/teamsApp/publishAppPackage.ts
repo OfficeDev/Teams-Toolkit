@@ -25,10 +25,6 @@ import { AppStudioResultFactory } from "./results";
 import { verifyLocalMCPPluginCerts } from "./utils/McpCertVerification";
 import { TelemetryPropertyKey } from "./utils/telemetry";
 
-export const publishAppPackageDeps = {
-  verifyLocalMCPPluginCerts,
-};
-
 export const actionName = "teamsApp/publishAppPackage";
 
 const defaultOutputNames = {
@@ -121,7 +117,7 @@ export class PublishAppPackageDriver implements StepDriver {
           for (const action of declarativeAgentManifest.actions) {
             const actionFile = zipEntries.find((x) => x.entryName === action.file);
             if (actionFile) {
-              const isValid = await publishAppPackageDeps.verifyLocalMCPPluginCerts(actionFile);
+              const isValid = await verifyLocalMCPPluginCerts(actionFile);
               if (!isValid) {
                 const message = getLocalizedString(
                   "driver.teamsApp.error.localMcpCertVerificationFailed"

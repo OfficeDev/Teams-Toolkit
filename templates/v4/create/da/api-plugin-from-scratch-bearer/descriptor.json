@@ -1,0 +1,19 @@
+{
+  "$schema": "../../../schema/descriptor.schema.json",
+  "id": "da/api-plugin-from-scratch-bearer",
+  "name": "Declarative Agent with API Plugin using API Key",
+  "languages": ["typescript", "javascript"],
+  "minEngineVersion": "5.20.0",
+  "spec": "docs/03-specs/scenarios/da/create-api-plugin-from-scratch-bearer.md",
+  "requiresNetwork": false,
+
+  "optionsSchema": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+
+  "replaceMap": [
+    { "var": "SafeProjectNameLowerCase", "expr": "safeProjectNameLowerCase(appName)" }
+  ]
+}

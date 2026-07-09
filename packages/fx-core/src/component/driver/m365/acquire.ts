@@ -26,15 +26,10 @@ interface AcquireArgs {
   scope?: AppScope;
 }
 
-export const m365AcquireDeps = {
-  pathExists: fs.pathExists,
-  getAbsolutePath,
-  getResourceServiceEndpoint,
-  MosServiceScope,
-  createPackageService: (serviceEndpoint: string, logProvider?: DriverContext["logProvider"]) =>
-    new PackageService(serviceEndpoint, logProvider),
-  assembleError,
-};
+const createPackageService = (
+  serviceEndpoint: string,
+  logProvider?: DriverContext["logProvider"]
+) => new PackageService(serviceEndpoint, logProvider);
 
 export const actionName = "teamsApp/extendToM365";
 const helpLink = "https://aka.ms/teamsfx-actions/teamsapp-extendToM365";
@@ -90,25 +85,17 @@ export class M365TitleAcquireDriver implements StepDriver {
     try {
       this.validateArgs(args);
       this.validateOutputEnvVarNames(outputEnvVarNames);
-      const appPackagePath = m365AcquireDeps.getAbsolutePath(
-        args.appPackagePath!,
-        context.projectPath
-      );
-      if (!(await m365AcquireDeps.pathExists(appPackagePath))) {
+      const appPackagePath = getAbsolutePath(args.appPackagePath!, context.projectPath);
+      if (!(await fs.pathExists(appPackagePath))) {
         throw new FileNotFoundError(actionName, appPackagePath, helpLink);
       }
 
       // get sideloading service settings
-      const sideloadingServiceEndpoint = m365AcquireDeps.getResourceServiceEndpoint(
-        ResourceServiceType.MOS3
-      );
+      const sideloadingServiceEndpoint = getResourceServiceEndpoint(ResourceServiceType.MOS3);
 
-      const packageService = m365AcquireDeps.createPackageService(
-        sideloadingServiceEndpoint,
-        context.logProvider
-      );
+      const packageService = createPackageService(sideloadingServiceEndpoint, context.logProvider);
       const sideloadingTokenRes = await context.m365TokenProvider.getAccessToken({
-        scopes: m365AcquireDeps.MosServiceScope(),
+        scopes: MosServiceScope(),
       });
       if (sideloadingTokenRes.isErr()) {
         throw sideloadingTokenRes.error;
@@ -146,7 +133,7 @@ export class M365TitleAcquireDriver implements StepDriver {
       context.logProvider?.error(
         getLocalizedString(logMessageKeys.failExecuteDriver, actionName, message)
       );
-      throw m365AcquireDeps.assembleError(error as Error, actionName);
+      throw assembleError(error as Error, actionName);
     }
   }
 

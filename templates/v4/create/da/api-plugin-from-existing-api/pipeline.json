@@ -1,0 +1,14 @@
+{
+  "pipeline": "default",
+  "comment": "Render the common declarative-agent shell, then generate the API plugin manifest and filtered OpenAPI spec from the selected existing OpenAPI operations.",
+  "steps": [
+    { "step": "require-empty-target" },
+    {
+      "step": "openapi/generate-plugin-files",
+      "with": {
+        "apiSpecLocation": "{{apiSpecLocation}}",
+        "apiOperations": "{{apiOperations}}"
+      }
+    }
+  ]
+}

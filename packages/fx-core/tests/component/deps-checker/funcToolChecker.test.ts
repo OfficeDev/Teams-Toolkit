@@ -6,28 +6,30 @@
  */
 
 import { ConfigFolderName } from "@microsoft/teamsfx-api";
-import chai from "chai";
 import { SpawnOptions } from "child_process";
 import * as fs from "fs-extra";
 import * as path from "path";
-import * as sinon from "sinon";
 import * as uuid from "uuid";
+import { chai, vi } from "vitest";
 import { v3DefaultHelpLink } from "../../../src/component/deps-checker/constant/helpLink";
-import {
-  FuncToolChecker,
-  funcToolCheckerDeps,
-} from "../../../src/component/deps-checker/internal/funcToolChecker";
+import { FuncToolChecker } from "../../../src/component/deps-checker/internal/funcToolChecker";
 import { DebugLogger, cpUtils } from "../../../src/component/deps-checker/util/cpUtils";
 import { DepsCheckerError, NodejsNotFoundError } from "../../../src/error";
 
+// Mock os module
+vi.mock("os");
+
+import * as os from "os";
+
 describe("Func Tools Checker Test", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   const baseDir = path.resolve(__dirname, "test-data", "funcToolChecker");
 
   let testPath: string | undefined = undefined;
 
   afterEach(async () => {
-    sandbox.restore();
+    vi.restoreAllMocks();
+    vi.clearAllMocks();
     if (testPath) {
       await fs.remove(testPath);
     }
@@ -967,68 +969,62 @@ describe("Func Tools Checker Test", () => {
       }
     }
 
-    funcToolCheckerDeps.homedir = () => homeDir;
-    funcToolCheckerDeps.isWindows = () => osType === "Windows_NT";
-    funcToolCheckerDeps.isLinux = () => osType === "Linux";
+    vi.mocked(os.homedir).mockReturnValue(homeDir);
+    vi.mocked(os.type).mockReturnValue(osType);
     const module = { FuncToolChecker };
 
-    sandbox
-      .stub(cpUtils, "executeCommand")
-      .callsFake(
-        async (
-          workingDirectory: string | undefined,
-          logger: DebugLogger | undefined,
-          options: SpawnOptions | undefined,
-          command: string,
-          ...args: string[]
-        ) => {
-          if (command === "node" && args.length == 1 && args[0] === "--version") {
-            // Mock query node version
-            if (!nodeVersion) {
-              throw new Error("Mock node not installed.");
-            }
-            return `v${nodeVersion}`;
-          } else if (command.endsWith('func"') && args.length == 1 && args[0] === "--version") {
-            if (command === '"func"') {
-              // Mock query global func version
-              if (!globalFuncVersion) {
-                throw new Error("Mock global func not installed.");
-              }
-              return globalFuncVersion;
-            } else {
-              const funcBinPath = path.dirname(command.substring(1, command.length - 1));
-              return await mockGetVersion(funcBinPath);
-            }
-          } else if (command === "npm" && args.length == 1 && args[0] === "--version") {
-            // Mock query npm version
-            if (!npmMajorVersion) {
-              throw new Error("Mock npm not installed.");
-            }
-            return `${npmMajorVersion}.0.0`;
-          } else if (args.length > 4 && args[0] === "install") {
-            // Mock install func
-            if (!installFuncVersion) {
-              throw new Error("Mock install failed");
-            }
-            if (overrideInstallFunc) {
-              await overrideInstallFunc(
-                installFuncVersion,
-                args[3].substring(1, args[3].length - 1)
-              );
-            } else {
-              await mockInstallFunc(
-                installFuncVersion,
-                args[3].substring(1, args[3].length - 1),
-                false,
-                false
-              );
-            }
-            return "";
-          } else {
-            throw new Error("Not mocked error");
+    vi.spyOn(cpUtils, "executeCommand").mockImplementation(
+      async (
+        workingDirectory: string | undefined,
+        logger: DebugLogger | undefined,
+        options: SpawnOptions | undefined,
+        command: string,
+        ...args: string[]
+      ) => {
+        if (command === "node" && args.length == 1 && args[0] === "--version") {
+          // Mock query node version
+          if (!nodeVersion) {
+            throw new Error("Mock node not installed.");
           }
+          return `v${nodeVersion}`;
+        } else if (command.endsWith('func"') && args.length == 1 && args[0] === "--version") {
+          if (command === '"func"') {
+            // Mock query global func version
+            if (!globalFuncVersion) {
+              throw new Error("Mock global func not installed.");
+            }
+            return globalFuncVersion;
+          } else {
+            const funcBinPath = path.dirname(command.substring(1, command.length - 1));
+            return await mockGetVersion(funcBinPath);
+          }
+        } else if (command === "npm" && args.length == 1 && args[0] === "--version") {
+          // Mock query npm version
+          if (!npmMajorVersion) {
+            throw new Error("Mock npm not installed.");
+          }
+          return `${npmMajorVersion}.0.0`;
+        } else if (args.length > 4 && args[0] === "install") {
+          // Mock install func
+          if (!installFuncVersion) {
+            throw new Error("Mock install failed");
+          }
+          if (overrideInstallFunc) {
+            await overrideInstallFunc(installFuncVersion, args[3].substring(1, args[3].length - 1));
+          } else {
+            await mockInstallFunc(
+              installFuncVersion,
+              args[3].substring(1, args[3].length - 1),
+              false,
+              false
+            );
+          }
+          return "";
+        } else {
+          throw new Error("Not mocked error");
         }
-      );
+      }
+    );
     return { module: module, projectDir: projectDir, homeDir: homeDir };
   };
 });

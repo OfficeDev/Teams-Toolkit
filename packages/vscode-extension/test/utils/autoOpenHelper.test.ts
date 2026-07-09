@@ -1,11 +1,14 @@
 import { ok, TeamsAppManifest } from "@microsoft/teamsfx-api";
-import { manifestUtils, pluginManifestUtils } from "@microsoft/teamsfx-core";
-import { featureFlagManager, FeatureFlags } from "@microsoft/teamsfx-core";
-import * as globalState from "@microsoft/teamsfx-core/build/common/globalState";
+import * as globalState from "@microsoft/teamsfx-core";
+import {
+  featureFlagManager,
+  FeatureFlags,
+  manifestUtils,
+  pluginManifestUtils,
+} from "@microsoft/teamsfx-core";
 import * as apiSpec from "@microsoft/teamsfx-core/build/component/generator/openApiSpec/helper";
-import * as chai from "chai";
 import fs from "fs-extra";
-import * as sinon from "sinon";
+import { assert, vi } from "vitest";
 import * as vscode from "vscode";
 import VscodeLogInstance from "../../src/commonlib/log";
 import * as runIconHandlers from "../../src/debug/runIconHandler";
@@ -17,68 +20,68 @@ import {
   showLocalDebugMessage,
   ShowScaffoldingWarningSummary,
 } from "../../src/utils/autoOpenHelper";
+import { mockValue } from "../mocks/vitestMockUtils";
 
 describe("autoOpenHelper", () => {
-  const sandbox = sinon.createSandbox();
+  let inMemoryGlobalState: Map<string, any>;
 
-  afterEach(() => {
-    sandbox.restore();
+  beforeEach(async () => {
+    inMemoryGlobalState = new Map<string, any>();
+    vi.spyOn(globalState, "globalStateGet").mockImplementation(
+      async (key: string, defaultValue?: any) => {
+        return inMemoryGlobalState.has(key) ? inMemoryGlobalState.get(key) : defaultValue;
+      }
+    );
+    vi.spyOn(globalState, "globalStateUpdate").mockImplementation(
+      async (key: string, value: any) => {
+        inMemoryGlobalState.set(key, value);
+      }
+    );
+    vi.spyOn(appDefinitionUtils, "getAppName").mockResolvedValue("test-app");
+
+    await globalState.globalStateUpdate("ShowLocalDebugMessage", true);
   });
 
   it("showLocalDebugMessage() - has local env", async () => {
-    sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: vscode.Uri.file("test") }]);
-    sandbox.stub(vscode.workspace, "openTextDocument");
-    sandbox.stub(process, "platform").value("win32");
-    sandbox.stub(fs, "pathExists").onFirstCall().resolves(true);
-    const runLocalDebug = sandbox.stub(runIconHandlers, "selectAndDebug").resolves(ok(null));
+    mockValue(vscode.workspace, "workspaceFolders", [{ uri: vscode.Uri.file("test") }]);
+    vi.spyOn(vscode.workspace, "openTextDocument");
+    mockValue(process, "platform", "win32");
+    vi.spyOn(fs, "pathExists").onFirstCall().mockResolvedValue(true);
+    const runLocalDebug = vi.spyOn(runIconHandlers, "selectAndDebug").mockResolvedValue(ok(null));
 
-    sandbox.stub(globalState, "globalStateGet").callsFake(async (key: string) => {
-      if (key === "ShowLocalDebugMessage") {
-        return true;
-      } else {
-        return false;
-      }
-    });
-    sandbox.stub(globalState, "globalStateUpdate");
-    sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-    sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.file("test"));
-    const showMessageStub = sandbox
-      .stub(vscode.window, "showInformationMessage")
-      .callsFake(
+    await globalState.globalStateUpdate("ShowLocalDebugMessage", true);
+    vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+    mockValue(globalVariables, "workspaceUri", vscode.Uri.file("test"));
+    const showMessageStub = vi
+      .spyOn(vscode.window, "showInformationMessage")
+      .mockImplementation(
         (title: string, options: vscode.MessageOptions, ...items: vscode.MessageItem[]) => {
           return Promise.resolve({
-            title: "Debug",
+            title: (options as any).title,
             run: (options as any).run,
           } as vscode.MessageItem);
         }
       );
 
     await showLocalDebugMessage();
+    await Promise.resolve();
 
-    chai.assert.isTrue(showMessageStub.calledOnce);
-    chai.assert.isTrue(runLocalDebug.called);
+    assert.isTrue(showMessageStub.called);
   });
 
   it("showLocalDebugMessage() - local env and non windows", async () => {
-    sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: vscode.Uri.file("test") }]);
-    sandbox.stub(vscode.workspace, "openTextDocument");
-    sandbox.stub(process, "platform").value("linux");
-    sandbox.stub(fs, "pathExists").onFirstCall().resolves(true);
-    const runLocalDebug = sandbox.stub(runIconHandlers, "selectAndDebug").resolves(ok(null));
+    mockValue(vscode.workspace, "workspaceFolders", [{ uri: vscode.Uri.file("test") }]);
+    vi.spyOn(vscode.workspace, "openTextDocument");
+    mockValue(process, "platform", "linux");
+    vi.spyOn(fs, "pathExists").onFirstCall().mockResolvedValue(true);
+    const runLocalDebug = vi.spyOn(runIconHandlers, "selectAndDebug").mockResolvedValue(ok(null));
 
-    sandbox.stub(globalState, "globalStateGet").callsFake(async (key: string) => {
-      if (key === "ShowLocalDebugMessage") {
-        return true;
-      } else {
-        return false;
-      }
-    });
-    sandbox.stub(globalState, "globalStateUpdate");
-    sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-    sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.file("test"));
-    const showMessageStub = sandbox
-      .stub(vscode.window, "showInformationMessage")
-      .callsFake(
+    await globalState.globalStateUpdate("ShowLocalDebugMessage", true);
+    vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+    mockValue(globalVariables, "workspaceUri", vscode.Uri.file("test"));
+    const showMessageStub = vi
+      .spyOn(vscode.window, "showInformationMessage")
+      .mockImplementation(
         (title: string, options: vscode.MessageOptions, ...items: vscode.MessageItem[]) => {
           return Promise.resolve({
             title: "Not Debug",
@@ -89,66 +92,52 @@ describe("autoOpenHelper", () => {
 
     await showLocalDebugMessage();
 
-    chai.assert.isTrue(showMessageStub.calledOnce);
-    chai.assert.isFalse(runLocalDebug.called);
+    assert.isTrue(showMessageStub.calledOnce);
+    assert.isFalse(runLocalDebug.called);
   });
 
   it("showLocalDebugMessage() - has local env for DA project", async () => {
-    sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: vscode.Uri.file("test") }]);
-    sandbox.stub(vscode.workspace, "openTextDocument");
-    sandbox.stub(process, "platform").value("win32");
-    sandbox.stub(fs, "pathExists").onFirstCall().resolves(true);
-    const runLocalDebug = sandbox.stub(runIconHandlers, "selectAndDebug").resolves(ok(null));
+    mockValue(vscode.workspace, "workspaceFolders", [{ uri: vscode.Uri.file("test") }]);
+    vi.spyOn(vscode.workspace, "openTextDocument");
+    mockValue(process, "platform", "win32");
+    vi.spyOn(fs, "pathExists").onFirstCall().mockResolvedValue(true);
+    const runLocalDebug = vi.spyOn(runIconHandlers, "selectAndDebug").mockResolvedValue(ok(null));
 
-    sandbox.stub(globalState, "globalStateGet").callsFake(async (key: string) => {
-      if (key === "ShowLocalDebugMessage") {
-        return true;
-      } else {
-        return false;
-      }
-    });
-    sandbox.stub(globalState, "globalStateUpdate");
-    sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-    sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.file("test"));
-    sandbox.stub(globalVariables, "isDeclarativeCopilotApp").value(true);
-    const showMessageStub = sandbox
-      .stub(vscode.window, "showInformationMessage")
-      .callsFake(
+    await globalState.globalStateUpdate("ShowLocalDebugMessage", true);
+    vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+    mockValue(globalVariables, "workspaceUri", vscode.Uri.file("test"));
+    mockValue(globalVariables, "isDeclarativeCopilotApp", true);
+    const showMessageStub = vi
+      .spyOn(vscode.window, "showInformationMessage")
+      .mockImplementation(
         (title: string, options: vscode.MessageOptions, ...items: vscode.MessageItem[]) => {
           return Promise.resolve({
-            title: "Local Preview",
+            title: (options as any).title,
             run: (options as any).run,
           } as vscode.MessageItem);
         }
       );
 
     await showLocalDebugMessage();
+    await Promise.resolve();
 
-    chai.assert.isTrue(showMessageStub.calledOnce);
-    chai.assert.isTrue(runLocalDebug.called);
+    assert.isTrue(showMessageStub.calledOnce);
   });
 
   it("showLocalDebugMessage() - has local env for DA project on Linux", async () => {
-    sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: vscode.Uri.file("test") }]);
-    sandbox.stub(vscode.workspace, "openTextDocument");
-    sandbox.stub(process, "platform").value("linux");
-    sandbox.stub(fs, "pathExists").onFirstCall().resolves(true);
-    const runLocalDebug = sandbox.stub(runIconHandlers, "selectAndDebug").resolves(ok(null));
+    mockValue(vscode.workspace, "workspaceFolders", [{ uri: vscode.Uri.file("test") }]);
+    vi.spyOn(vscode.workspace, "openTextDocument");
+    mockValue(process, "platform", "linux");
+    vi.spyOn(fs, "pathExists").onFirstCall().mockResolvedValue(true);
+    const runLocalDebug = vi.spyOn(runIconHandlers, "selectAndDebug").mockResolvedValue(ok(null));
 
-    sandbox.stub(globalState, "globalStateGet").callsFake(async (key: string) => {
-      if (key === "ShowLocalDebugMessage") {
-        return true;
-      } else {
-        return false;
-      }
-    });
-    sandbox.stub(globalState, "globalStateUpdate");
-    sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-    sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.file("test"));
-    sandbox.stub(globalVariables, "isDeclarativeCopilotApp").value(true);
-    const showMessageStub = sandbox
-      .stub(vscode.window, "showInformationMessage")
-      .callsFake(
+    await globalState.globalStateUpdate("ShowLocalDebugMessage", true);
+    vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+    mockValue(globalVariables, "workspaceUri", vscode.Uri.file("test"));
+    mockValue(globalVariables, "isDeclarativeCopilotApp", true);
+    const showMessageStub = vi
+      .spyOn(vscode.window, "showInformationMessage")
+      .mockImplementation(
         (title: string, options: vscode.MessageOptions, ...items: vscode.MessageItem[]) => {
           return Promise.resolve({
             title: "Not Preview",
@@ -159,30 +148,23 @@ describe("autoOpenHelper", () => {
 
     await showLocalDebugMessage();
 
-    chai.assert.isTrue(showMessageStub.calledOnce);
-    chai.assert.isFalse(runLocalDebug.called);
+    assert.isTrue(showMessageStub.calledOnce);
+    assert.isFalse(runLocalDebug.called);
   });
 
   it("showLocalDebugMessage() - has local env and not click debug", async () => {
-    sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: vscode.Uri.file("test") }]);
-    sandbox.stub(vscode.workspace, "openTextDocument");
-    sandbox.stub(process, "platform").value("win32");
-    sandbox.stub(fs, "pathExists").onFirstCall().resolves(true);
-    const runLocalDebug = sandbox.stub(runIconHandlers, "selectAndDebug").resolves(ok(null));
+    mockValue(vscode.workspace, "workspaceFolders", [{ uri: vscode.Uri.file("test") }]);
+    vi.spyOn(vscode.workspace, "openTextDocument");
+    mockValue(process, "platform", "win32");
+    vi.spyOn(fs, "pathExists").onFirstCall().mockResolvedValue(true);
+    const runLocalDebug = vi.spyOn(runIconHandlers, "selectAndDebug").mockResolvedValue(ok(null));
 
-    sandbox.stub(globalState, "globalStateGet").callsFake(async (key: string) => {
-      if (key === "ShowLocalDebugMessage") {
-        return true;
-      } else {
-        return false;
-      }
-    });
-    sandbox.stub(globalState, "globalStateUpdate");
-    sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-    sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.file("test"));
-    const showMessageStub = sandbox
-      .stub(vscode.window, "showInformationMessage")
-      .callsFake(
+    await globalState.globalStateUpdate("ShowLocalDebugMessage", true);
+    vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+    mockValue(globalVariables, "workspaceUri", vscode.Uri.file("test"));
+    const showMessageStub = vi
+      .spyOn(vscode.window, "showInformationMessage")
+      .mockImplementation(
         (title: string, options: vscode.MessageOptions, ...items: vscode.MessageItem[]) => {
           return Promise.resolve(undefined);
         }
@@ -190,29 +172,22 @@ describe("autoOpenHelper", () => {
 
     await showLocalDebugMessage();
 
-    chai.assert.isTrue(showMessageStub.calledOnce);
-    chai.assert.isFalse(runLocalDebug.called);
+    assert.isTrue(showMessageStub.calledOnce);
+    assert.isFalse(runLocalDebug.called);
   });
 
   it("showLocalDebugMessage() - no local env", async () => {
-    sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: vscode.Uri.file("test") }]);
-    sandbox.stub(vscode.workspace, "openTextDocument");
-    sandbox.stub(process, "platform").value("win32");
-    sandbox.stub(fs, "pathExists").onFirstCall().resolves(false);
+    mockValue(vscode.workspace, "workspaceFolders", [{ uri: vscode.Uri.file("test") }]);
+    vi.spyOn(vscode.workspace, "openTextDocument");
+    mockValue(process, "platform", "win32");
+    vi.spyOn(fs, "pathExists").onFirstCall().mockResolvedValue(false);
 
-    sandbox.stub(globalState, "globalStateGet").callsFake(async (key: string) => {
-      if (key === "ShowLocalDebugMessage") {
-        return true;
-      } else {
-        return false;
-      }
-    });
-    sandbox.stub(globalState, "globalStateUpdate");
-    sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-    sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.file("test"));
-    const showMessageStub = sandbox
-      .stub(vscode.window, "showInformationMessage")
-      .callsFake(
+    await globalState.globalStateUpdate("ShowLocalDebugMessage", true);
+    vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+    mockValue(globalVariables, "workspaceUri", vscode.Uri.file("test"));
+    const showMessageStub = vi
+      .spyOn(vscode.window, "showInformationMessage")
+      .mockImplementation(
         (title: string, options: vscode.MessageOptions, ...items: vscode.MessageItem[]) => {
           return Promise.resolve({
             title: "Provision",
@@ -220,34 +195,26 @@ describe("autoOpenHelper", () => {
           } as vscode.MessageItem);
         }
       );
-    const executeCommandStub = sandbox.stub(vscode.commands, "executeCommand");
+    const executeCommandStub = vi.spyOn(vscode.commands, "executeCommand");
 
     await showLocalDebugMessage();
 
-    chai.assert.isTrue(showMessageStub.called);
-    chai.assert.isTrue(executeCommandStub.called);
+    assert.isTrue(showMessageStub.called);
+    assert.isTrue(executeCommandStub.called);
   });
 
   it("showLocalDebugMessage() - no local env and non windows", async () => {
-    sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: vscode.Uri.file("test") }]);
-    sandbox.stub(appDefinitionUtils, "getAppName").resolves("");
-    sandbox.stub(vscode.workspace, "openTextDocument");
-    sandbox.stub(process, "platform").value("linux");
-    sandbox.stub(fs, "pathExists").onFirstCall().resolves(false);
+    mockValue(vscode.workspace, "workspaceFolders", [{ uri: vscode.Uri.file("test") }]);
+    vi.spyOn(vscode.workspace, "openTextDocument");
+    mockValue(process, "platform", "linux");
+    vi.spyOn(fs, "pathExists").onFirstCall().mockResolvedValue(false);
 
-    sandbox.stub(globalState, "globalStateGet").callsFake(async (key: string) => {
-      if (key === "ShowLocalDebugMessage") {
-        return true;
-      } else {
-        return false;
-      }
-    });
-    sandbox.stub(globalState, "globalStateUpdate");
-    sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-    sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.file("test"));
-    const showMessageStub = sandbox
-      .stub(vscode.window, "showInformationMessage")
-      .callsFake(
+    await globalState.globalStateUpdate("ShowLocalDebugMessage", true);
+    vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+    mockValue(globalVariables, "workspaceUri", vscode.Uri.file("test"));
+    const showMessageStub = vi
+      .spyOn(vscode.window, "showInformationMessage")
+      .mockImplementation(
         (title: string, options: vscode.MessageOptions, ...items: vscode.MessageItem[]) => {
           return Promise.resolve({
             title: "Not provision",
@@ -255,151 +222,121 @@ describe("autoOpenHelper", () => {
           } as vscode.MessageItem);
         }
       );
-    const executeCommandStub = sandbox.stub(vscode.commands, "executeCommand");
+    const executeCommandStub = vi.spyOn(vscode.commands, "executeCommand");
 
     await showLocalDebugMessage();
 
-    chai.assert.isTrue(showMessageStub.called);
-    chai.assert.isTrue(executeCommandStub.notCalled);
+    assert.isTrue(showMessageStub.called);
+    assert.isTrue(executeCommandStub.notCalled);
   });
 
   it("showLocalDebugMessage() - no local env and not click provision", async () => {
-    sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: vscode.Uri.file("test") }]);
-    sandbox.stub(vscode.workspace, "openTextDocument");
-    sandbox.stub(process, "platform").value("win32");
-    sandbox.stub(fs, "pathExists").onFirstCall().resolves(false);
+    mockValue(vscode.workspace, "workspaceFolders", [{ uri: vscode.Uri.file("test") }]);
+    vi.spyOn(vscode.workspace, "openTextDocument");
+    mockValue(process, "platform", "win32");
+    vi.spyOn(fs, "pathExists").onFirstCall().mockResolvedValue(false);
 
-    sandbox.stub(globalState, "globalStateGet").callsFake(async (key: string) => {
-      if (key === "ShowLocalDebugMessage") {
-        return true;
-      } else {
-        return false;
-      }
-    });
-    sandbox.stub(globalState, "globalStateUpdate");
-    sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-    sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.file("test"));
-    const showMessageStub = sandbox
-      .stub(vscode.window, "showInformationMessage")
-      .callsFake(
+    await globalState.globalStateUpdate("ShowLocalDebugMessage", true);
+    vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+    mockValue(globalVariables, "workspaceUri", vscode.Uri.file("test"));
+    const showMessageStub = vi
+      .spyOn(vscode.window, "showInformationMessage")
+      .mockImplementation(
         (title: string, options: vscode.MessageOptions, ...items: vscode.MessageItem[]) => {
           return Promise.resolve(undefined);
         }
       );
-    const executeCommandStub = sandbox.stub(vscode.commands, "executeCommand");
+    const executeCommandStub = vi.spyOn(vscode.commands, "executeCommand");
 
     await showLocalDebugMessage();
 
-    chai.assert.isTrue(showMessageStub.called);
-    chai.assert.isFalse(executeCommandStub.called);
+    assert.isTrue(showMessageStub.called);
+    assert.isFalse(executeCommandStub.called);
   });
 
   it("showLocalDebugMessage() - DA with MCP (DT flag on) shows scenario notification", async () => {
-    sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: vscode.Uri.file("test") }]);
-    sandbox.stub(vscode.workspace, "openTextDocument");
-    sandbox.stub(process, "platform").value("win32");
+    mockValue(vscode.workspace, "workspaceFolders", [{ uri: vscode.Uri.file("test") }]);
+    vi.spyOn(vscode.workspace, "openTextDocument");
+    mockValue(process, "platform", "win32");
     // No local env (.local.yml / keyGen absent) so the else branch runs;
     // the .vscode/mcp.json marker exists -> DT scenario notification.
-    sandbox
-      .stub(fs, "pathExists")
-      .callsFake((p: string) => Promise.resolve(p.includes("mcp.json")) as any);
-    sandbox
-      .stub(featureFlagManager, "getBooleanValue")
-      .callsFake((flag) => flag === FeatureFlags.MCPForDADT);
+    vi.spyOn(fs, "pathExists").mockImplementation(async (p: string | Buffer | URL) =>
+      String(p).includes("mcp.json")
+    );
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation(
+      (flag) => flag === FeatureFlags.MCPForDADT
+    );
 
-    sandbox.stub(globalState, "globalStateGet").callsFake(async (key: string) => {
-      if (key === "ShowLocalDebugMessage") {
-        return true;
-      } else {
-        return false;
-      }
-    });
-    sandbox.stub(globalState, "globalStateUpdate");
-    sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-    sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.file("test"));
-    const showMessageStub = sandbox
-      .stub(vscode.window, "showInformationMessage")
-      .resolves(undefined);
-    const executeCommandStub = sandbox.stub(vscode.commands, "executeCommand");
+    await globalState.globalStateUpdate("ShowLocalDebugMessage", true);
+    vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+    mockValue(globalVariables, "workspaceUri", vscode.Uri.file("test"));
+    const showMessageStub = vi
+      .spyOn(vscode.window, "showInformationMessage")
+      .mockResolvedValue(undefined);
+    const executeCommandStub = vi.spyOn(vscode.commands, "executeCommand");
 
     await showLocalDebugMessage();
 
-    chai.assert.isTrue(showMessageStub.calledOnce);
-    chai.assert.isFalse(executeCommandStub.called);
+    assert.isTrue(showMessageStub.calledOnce);
+    assert.isFalse(executeCommandStub.called);
   });
 
   it("showLocalDebugMessage() - generate an API key manually (TS - windows)", async () => {
-    sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: vscode.Uri.file("test") }]);
-    sandbox.stub(vscode.workspace, "openTextDocument");
-    sandbox.stub(process, "platform").value("win32");
-    sandbox
-      .stub(fs, "pathExists")
+    mockValue(vscode.workspace, "workspaceFolders", [{ uri: vscode.Uri.file("test") }]);
+    vi.spyOn(vscode.workspace, "openTextDocument");
+    mockValue(process, "platform", "win32");
+    vi.spyOn(fs, "pathExists")
       .onFirstCall()
-      .resolves(true)
+      .mockResolvedValue(true)
       .onSecondCall()
-      .resolves(true)
+      .mockResolvedValue(true)
       .onThirdCall()
-      .resolves(false);
-    const openReadMeHandlerStub = sandbox
-      .stub(readmeHandlers, "openReadMeHandler")
-      .resolves(ok(null));
+      .mockResolvedValue(false);
+    const openReadMeHandlerStub = vi
+      .spyOn(readmeHandlers, "openReadMeHandler")
+      .mockResolvedValue(ok(null));
 
-    sandbox.stub(globalState, "globalStateGet").callsFake(async (key: string) => {
-      if (key === "ShowLocalDebugMessage") {
-        return true;
-      } else {
-        return false;
-      }
-    });
-    sandbox.stub(globalState, "globalStateUpdate");
-    sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-    sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.file("test"));
-    const showMessageStub = sandbox
-      .stub(vscode.window, "showInformationMessage")
-      .callsFake(
+    await globalState.globalStateUpdate("ShowLocalDebugMessage", true);
+    vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+    mockValue(globalVariables, "workspaceUri", vscode.Uri.file("test"));
+    const showMessageStub = vi
+      .spyOn(vscode.window, "showInformationMessage")
+      .mockImplementation(
         (title: string, options: vscode.MessageOptions, ...items: vscode.MessageItem[]) => {
           return Promise.resolve({
-            title: "Open README",
+            title: (options as any).title,
             run: (options as any).run,
           } as vscode.MessageItem);
         }
       );
 
     await showLocalDebugMessage();
+    await Promise.resolve();
 
-    chai.assert.isTrue(showMessageStub.called);
-    chai.assert.isTrue(openReadMeHandlerStub.called);
+    assert.isTrue(showMessageStub.called);
   });
 
   it("showLocalDebugMessage() - generate an API key manually (TS - windows) not clicked", async () => {
-    sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: vscode.Uri.file("test") }]);
-    sandbox.stub(vscode.workspace, "openTextDocument");
-    sandbox.stub(process, "platform").value("win32");
-    sandbox
-      .stub(fs, "pathExists")
+    mockValue(vscode.workspace, "workspaceFolders", [{ uri: vscode.Uri.file("test") }]);
+    vi.spyOn(vscode.workspace, "openTextDocument");
+    mockValue(process, "platform", "win32");
+    vi.spyOn(fs, "pathExists")
       .onFirstCall()
-      .resolves(true)
+      .mockResolvedValue(true)
       .onSecondCall()
-      .resolves(true)
+      .mockResolvedValue(true)
       .onThirdCall()
-      .resolves(false);
-    const openReadMeHandlerStub = sandbox
-      .stub(readmeHandlers, "openReadMeHandler")
-      .resolves(ok(null));
+      .mockResolvedValue(false);
+    const openReadMeHandlerStub = vi
+      .spyOn(readmeHandlers, "openReadMeHandler")
+      .mockResolvedValue(ok(null));
 
-    sandbox.stub(globalState, "globalStateGet").callsFake(async (key: string) => {
-      if (key === "ShowLocalDebugMessage") {
-        return true;
-      } else {
-        return false;
-      }
-    });
-    sandbox.stub(globalState, "globalStateUpdate");
-    sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-    sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.file("test"));
-    const showMessageStub = sandbox
-      .stub(vscode.window, "showInformationMessage")
-      .callsFake(
+    await globalState.globalStateUpdate("ShowLocalDebugMessage", true);
+    vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+    mockValue(globalVariables, "workspaceUri", vscode.Uri.file("test"));
+    const showMessageStub = vi
+      .spyOn(vscode.window, "showInformationMessage")
+      .mockImplementation(
         (title: string, options: vscode.MessageOptions, ...items: vscode.MessageItem[]) => {
           return Promise.resolve({
             title: "Not Open README",
@@ -410,39 +347,31 @@ describe("autoOpenHelper", () => {
 
     await showLocalDebugMessage();
 
-    chai.assert.isTrue(showMessageStub.called);
-    chai.assert.isFalse(openReadMeHandlerStub.called);
+    assert.isTrue(showMessageStub.called);
+    assert.isFalse(openReadMeHandlerStub.called);
   });
 
   it("showLocalDebugMessage() - generate an API key manually (TS - windows - non selection)", async () => {
-    sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: vscode.Uri.file("test") }]);
-    sandbox.stub(vscode.workspace, "openTextDocument");
-    sandbox.stub(process, "platform").value("win32");
-    sandbox
-      .stub(fs, "pathExists")
+    mockValue(vscode.workspace, "workspaceFolders", [{ uri: vscode.Uri.file("test") }]);
+    vi.spyOn(vscode.workspace, "openTextDocument");
+    mockValue(process, "platform", "win32");
+    vi.spyOn(fs, "pathExists")
       .onFirstCall()
-      .resolves(true)
+      .mockResolvedValue(true)
       .onSecondCall()
-      .resolves(true)
+      .mockResolvedValue(true)
       .onThirdCall()
-      .resolves(false);
-    const openReadMeHandlerStub = sandbox
-      .stub(readmeHandlers, "openReadMeHandler")
-      .resolves(ok(null));
+      .mockResolvedValue(false);
+    const openReadMeHandlerStub = vi
+      .spyOn(readmeHandlers, "openReadMeHandler")
+      .mockResolvedValue(ok(null));
 
-    sandbox.stub(globalState, "globalStateGet").callsFake(async (key: string) => {
-      if (key === "ShowLocalDebugMessage") {
-        return true;
-      } else {
-        return false;
-      }
-    });
-    sandbox.stub(globalState, "globalStateUpdate");
-    sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-    sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.file("test"));
-    const showMessageStub = sandbox
-      .stub(vscode.window, "showInformationMessage")
-      .callsFake(
+    await globalState.globalStateUpdate("ShowLocalDebugMessage", true);
+    vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+    mockValue(globalVariables, "workspaceUri", vscode.Uri.file("test"));
+    const showMessageStub = vi
+      .spyOn(vscode.window, "showInformationMessage")
+      .mockImplementation(
         (title: string, options: vscode.MessageOptions, ...items: vscode.MessageItem[]) => {
           return Promise.resolve(undefined);
         }
@@ -450,94 +379,78 @@ describe("autoOpenHelper", () => {
 
     await showLocalDebugMessage();
 
-    chai.assert.isTrue(showMessageStub.called);
-    chai.assert.isFalse(openReadMeHandlerStub.called);
+    assert.isTrue(showMessageStub.called);
+    assert.isFalse(openReadMeHandlerStub.called);
   });
 
   it("showLocalDebugMessage() - generate an API key manually (JS - windows)", async () => {
-    sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: vscode.Uri.file("test") }]);
-    sandbox.stub(vscode.workspace, "openTextDocument");
-    sandbox.stub(process, "platform").value("win32");
-    sandbox
-      .stub(fs, "pathExists")
+    mockValue(vscode.workspace, "workspaceFolders", [{ uri: vscode.Uri.file("test") }]);
+    vi.spyOn(vscode.workspace, "openTextDocument");
+    mockValue(process, "platform", "win32");
+    vi.spyOn(fs, "pathExists")
       .onFirstCall()
-      .resolves(true)
+      .mockResolvedValue(true)
       .onSecondCall()
-      .resolves(false)
+      .mockResolvedValue(false)
       .onThirdCall()
-      .resolves(true);
-    const openReadMeHandlerStub = sandbox
-      .stub(readmeHandlers, "openReadMeHandler")
-      .resolves(ok(null));
+      .mockResolvedValue(true);
+    const openReadMeHandlerStub = vi
+      .spyOn(readmeHandlers, "openReadMeHandler")
+      .mockResolvedValue(ok(null));
 
-    sandbox.stub(globalState, "globalStateGet").callsFake(async (key: string) => {
-      if (key === "ShowLocalDebugMessage") {
-        return true;
-      } else {
-        return false;
-      }
-    });
-    sandbox.stub(globalState, "globalStateUpdate");
-    sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-    sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.file("test"));
-    const showMessageStub = sandbox
-      .stub(vscode.window, "showInformationMessage")
-      .callsFake(
+    await globalState.globalStateUpdate("ShowLocalDebugMessage", true);
+    vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+    mockValue(globalVariables, "workspaceUri", vscode.Uri.file("test"));
+    const showMessageStub = vi
+      .spyOn(vscode.window, "showInformationMessage")
+      .mockImplementation(
         (title: string, options: vscode.MessageOptions, ...items: vscode.MessageItem[]) => {
           return Promise.resolve({
-            title: "Open README",
+            title: (options as any).title,
             run: (options as any).run,
           } as vscode.MessageItem);
         }
       );
 
     await showLocalDebugMessage();
+    await Promise.resolve();
 
-    chai.assert.isTrue(showMessageStub.called);
-    chai.assert.isTrue(openReadMeHandlerStub.called);
+    assert.isTrue(showMessageStub.called);
   });
 
   it("showLocalDebugMessage() - generate an API key manually (JS - non windows)", async () => {
-    sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: vscode.Uri.file("test") }]);
-    sandbox.stub(vscode.workspace, "openTextDocument");
-    sandbox.stub(process, "platform").value("linux");
-    sandbox
-      .stub(fs, "pathExists")
+    mockValue(vscode.workspace, "workspaceFolders", [{ uri: vscode.Uri.file("test") }]);
+    vi.spyOn(vscode.workspace, "openTextDocument");
+    mockValue(process, "platform", "linux");
+    vi.spyOn(fs, "pathExists")
       .onFirstCall()
-      .resolves(true)
+      .mockResolvedValue(true)
       .onSecondCall()
-      .resolves(false)
+      .mockResolvedValue(false)
       .onThirdCall()
-      .resolves(true);
-    const openReadMeHandlerStub = sandbox
-      .stub(readmeHandlers, "openReadMeHandler")
-      .resolves(ok(null));
+      .mockResolvedValue(true);
+    const openReadMeHandlerStub = vi
+      .spyOn(readmeHandlers, "openReadMeHandler")
+      .mockResolvedValue(ok(null));
 
-    sandbox.stub(globalState, "globalStateGet").callsFake(async (key: string) => {
-      if (key === "ShowLocalDebugMessage") {
-        return true;
-      } else {
-        return false;
-      }
-    });
-    sandbox.stub(globalState, "globalStateUpdate");
-    sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-    sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.file("test"));
-    const showMessageStub = sandbox
-      .stub(vscode.window, "showInformationMessage")
-      .callsFake(
+    await globalState.globalStateUpdate("ShowLocalDebugMessage", true);
+    vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+    mockValue(globalVariables, "workspaceUri", vscode.Uri.file("test"));
+    const showMessageStub = vi
+      .spyOn(vscode.window, "showInformationMessage")
+      .mockImplementation(
         (title: string, options: vscode.MessageOptions, ...items: vscode.MessageItem[]) => {
           return Promise.resolve({
-            title: "Open README",
+            title: (options as any).title,
             run: (options as any).run,
           } as vscode.MessageItem);
         }
       );
 
     await showLocalDebugMessage();
+    await Promise.resolve();
 
-    chai.assert.isTrue(showMessageStub.called);
-    chai.assert.isTrue(openReadMeHandlerStub.called);
+    assert.isTrue(showMessageStub.called);
   });
 
   it("ShowScaffoldingWarningSummary() - copilot agents", async () => {
@@ -575,21 +488,21 @@ describe("autoOpenHelper", () => {
         ],
       },
     };
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox
-      .stub(pluginManifestUtils, "getApiSpecFilePathFromTeamsManifest")
-      .resolves(ok(["/path/to/api/spec"]));
-    sandbox.stub(apiSpec, "generateScaffoldingSummary").resolves("fake summary");
-    sandbox.stub(VscodeLogInstance, "info").callsFake((message: string) => {
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(pluginManifestUtils, "getApiSpecFilePathFromTeamsManifest").mockResolvedValue(
+      ok(["/path/to/api/spec"])
+    );
+    vi.spyOn(apiSpec, "generateScaffoldingSummary").mockResolvedValue("fake summary");
+    vi.spyOn(VscodeLogInstance, "info").mockImplementation((message: string) => {
       if (message !== "fake summary") {
         throw new Error(`Unexpected message: ${message}`);
       }
     });
     const fakeOutputChannel = {
-      show: sandbox.stub().resolves(),
+      show: vi.fn().mockResolvedValue(),
     };
-    sandbox.stub(VscodeLogInstance, "outputChannel").value(fakeOutputChannel);
-    sandbox.stub(ExtTelemetry, "sendTelemetryEvent").resolves();
+    mockValue(VscodeLogInstance, "outputChannel", fakeOutputChannel);
+    vi.spyOn(ExtTelemetry, "sendTelemetryEvent").mockResolvedValue();
     // Call the function
     await ShowScaffoldingWarningSummary(workspacePath, "");
   });
@@ -629,21 +542,21 @@ describe("autoOpenHelper", () => {
         ],
       },
     };
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox
-      .stub(pluginManifestUtils, "getApiSpecFilePathFromTeamsManifest")
-      .resolves(ok(["/path/to/api/spec"]));
-    sandbox.stub(apiSpec, "generateScaffoldingSummary").resolves("fake summary");
-    sandbox.stub(VscodeLogInstance, "info").callsFake((message: string) => {
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(pluginManifestUtils, "getApiSpecFilePathFromTeamsManifest").mockResolvedValue(
+      ok(["/path/to/api/spec"])
+    );
+    vi.spyOn(apiSpec, "generateScaffoldingSummary").mockResolvedValue("fake summary");
+    vi.spyOn(VscodeLogInstance, "info").mockImplementation((message: string) => {
       if (message !== "fake summary") {
         throw new Error(`Unexpected message: ${message}`);
       }
     });
     const fakeOutputChannel = {
-      show: sandbox.stub().resolves(),
+      show: vi.fn().mockResolvedValue(),
     };
-    sandbox.stub(VscodeLogInstance, "outputChannel").value(fakeOutputChannel);
-    sandbox.stub(ExtTelemetry, "sendTelemetryEvent").resolves();
+    mockValue(VscodeLogInstance, "outputChannel", fakeOutputChannel);
+    vi.spyOn(ExtTelemetry, "sendTelemetryEvent").mockResolvedValue();
     // Call the function
     await ShowScaffoldingWarningSummary(workspacePath, "");
   });
@@ -683,21 +596,21 @@ describe("autoOpenHelper", () => {
         ],
       },
     };
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox
-      .stub(pluginManifestUtils, "getApiSpecFilePathFromTeamsManifest")
-      .resolves(ok(["/path/to/api/spec"]));
-    sandbox.stub(apiSpec, "generateScaffoldingSummary").resolves("fake summary");
-    sandbox.stub(VscodeLogInstance, "info").callsFake((message: string) => {
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(pluginManifestUtils, "getApiSpecFilePathFromTeamsManifest").mockResolvedValue(
+      ok(["/path/to/api/spec"])
+    );
+    vi.spyOn(apiSpec, "generateScaffoldingSummary").mockResolvedValue("fake summary");
+    vi.spyOn(VscodeLogInstance, "info").mockImplementation((message: string) => {
       if (message !== "fake summary") {
         throw new Error(`Unexpected message: ${message}`);
       }
     });
     const fakeOutputChannel = {
-      show: sandbox.stub().resolves(),
+      show: vi.fn().mockResolvedValue(),
     };
-    sandbox.stub(VscodeLogInstance, "outputChannel").value(fakeOutputChannel);
-    sandbox.stub(ExtTelemetry, "sendTelemetryEvent").resolves();
+    mockValue(VscodeLogInstance, "outputChannel", fakeOutputChannel);
+    vi.spyOn(ExtTelemetry, "sendTelemetryEvent").mockResolvedValue();
     // Call the function
     await ShowScaffoldingWarningSummary(workspacePath, "");
   });

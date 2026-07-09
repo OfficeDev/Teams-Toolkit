@@ -1,0 +1,19 @@
+# TeamsFx files
+env/.env.*.user
+env/.env.local
+.localConfigs
+appPackage/build
+build
+
+# dependencies
+node_modules/
+
+# misc
+.env
+.deployment
+.DS_Store
+
+# generated files
+appPackage/.generated
+# generated environment variables
+src/agent/env.tsp

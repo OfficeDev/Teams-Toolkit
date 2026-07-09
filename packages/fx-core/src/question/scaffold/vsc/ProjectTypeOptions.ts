@@ -17,6 +17,7 @@ export class ProjectTypeOptions {
   static outlookAddinOptionId = "outlook-addin-type";
   static officeMetaOSOptionId = "office-meta-os-type";
   static graphConnectorOptionId = "graph-connector-type";
+  static blankAppOptionId = "blank-app-type";
   static startWithGithubCopilotOptionId = "start-with-github-copilot";
 
   static groupName(group: ProjectTypeGroup): string | undefined {
@@ -58,6 +59,17 @@ export class ProjectTypeOptions {
 
   static officeAddin(platform: Platform = Platform.VSCode): OptionItem {
     return this.officeMetaOS(platform);
+  }
+
+  static blankApp(platform: Platform = Platform.VSCode): OptionItem {
+    return {
+      id: ProjectTypeOptions.blankAppOptionId,
+      label: `${
+        platform === Platform.VSCode ? "$(file) " : ""
+      }${getLocalizedString("template.createProjectQuestion.projectType.blankApp.label")}`,
+      detail: getLocalizedString("template.createProjectQuestion.projectType.blankApp.detail"),
+      groupName: ProjectTypeOptions.groupName(ProjectTypeGroup.M365Apps),
+    };
   }
 
   static declarativeAgent(platform: Platform = Platform.VSCode): OptionItem {

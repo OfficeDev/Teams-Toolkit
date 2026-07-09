@@ -4,49 +4,26 @@
 /**
  * @author xzf0587 <zhaofengxu@microsoft.com>
  */
-import * as chai from "chai";
-import * as sinon from "sinon";
+import { BlobServiceClient, ServiceGetPropertiesResponse } from "@azure/storage-blob";
+import { IProgressHandler } from "@microsoft/teamsfx-api";
+import { chai, vi } from "vitest";
 import * as tools from "../../../../../src/common/utils";
 import { AzureStorageStaticWebsiteConfigDriver } from "../../../../../src/component/driver/deploy/azure/azureStorageStaticWebsiteConfigDriver";
-import { TestLogProvider } from "../../../util/logProviderMock";
-import { DriverContext } from "../../../../../src/component/driver/interface/commonArgs";
-import { ListAccountSasResponse, StorageManagementClient } from "@azure/arm-storage";
-import { BlobServiceClient, ServiceGetPropertiesResponse } from "@azure/storage-blob";
-import * as armStorage from "@azure/arm-storage";
+import * as azureResourceOperation from "../../../../../src/component/utils/azureResourceOperation";
 import {
   MockedAzureAccountProvider,
   MockUserInteraction,
   MyTokenCredential,
 } from "../../../../core/utils";
-import { IProgressHandler } from "@microsoft/teamsfx-api";
+import { TestLogProvider } from "../../../util/logProviderMock";
 
 describe("Azure Storage enable static website Driver test", () => {
-  const sandbox = sinon.createSandbox();
-
-  function getMockStorageAccount1() {
-    return {
-      // beginCreateAndWait: async function (
-      //   resourceGroupName: string,
-      //   accountName: string,
-      //   parameters: StorageAccountCreateParameters,
-      //   options?: StorageAccountsCreateOptionalParams
-      // ): Promise<StorageAccountsCreateResponse> {
-      //   return storageAccount!;
-      // },
-      listAccountSAS: async function (): Promise<ListAccountSasResponse> {
-        return {
-          accountSasToken: "abc",
-        };
-      },
-    };
-  }
-
   beforeEach(() => {
-    sandbox.stub(tools, "waitSeconds").resolves();
+    vi.spyOn(tools, "waitSeconds").mockResolvedValue();
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("Azure Storage enable static website happy path", async () => {
@@ -62,23 +39,19 @@ describe("Azure Storage enable static website Driver test", () => {
       } as IProgressHandler,
     } as any;
     // fake azure credentials
-    sandbox
-      .stub(context.azureAccountProvider, "getIdentityCredentialAsync")
-      .resolves(new MyTokenCredential());
+    vi.spyOn(context.azureAccountProvider, "getIdentityCredentialAsync").mockResolvedValue(
+      new MyTokenCredential()
+    );
 
-    // fake sas account token
-    const mockStorageManagementClient = new StorageManagementClient(new MyTokenCredential(), "id");
-    mockStorageManagementClient.storageAccounts = getMockStorageAccount1() as any;
-    sandbox.stub(armStorage, "StorageManagementClient").returns(mockStorageManagementClient);
-
-    // fake properties
-    sandbox.stub(BlobServiceClient.prototype, "getProperties").resolves({
-      staticWebsite: {
-        enabled: false,
-      },
-    } as ServiceGetPropertiesResponse);
-
-    const caller = sandbox.stub(BlobServiceClient.prototype, "setProperties").resolves();
+    const blobClient = {
+      getProperties: vi.fn().mockResolvedValue({
+        staticWebsite: {
+          enabled: false,
+        },
+      } as ServiceGetPropertiesResponse),
+      setProperties: vi.fn().mockResolvedValue(undefined),
+    } as unknown as BlobServiceClient;
+    vi.spyOn(azureResourceOperation, "createBlobServiceClient").mockResolvedValue(blobClient);
 
     const res = await driver.run(
       {
@@ -90,7 +63,7 @@ describe("Azure Storage enable static website Driver test", () => {
       context
     );
 
-    sinon.assert.calledOnce(caller);
+    chai.assert.equal(blobClient.setProperties.mock.calls.length, 1);
     chai.assert.equal(res.isOk(), true);
 
     const rex = await driver.execute(
@@ -113,23 +86,19 @@ describe("Azure Storage enable static website Driver test", () => {
       logProvider: new TestLogProvider(),
     } as any;
     // fake azure credentials
-    sandbox
-      .stub(context.azureAccountProvider, "getIdentityCredentialAsync")
-      .resolves(new MyTokenCredential());
+    vi.spyOn(context.azureAccountProvider, "getIdentityCredentialAsync").mockResolvedValue(
+      new MyTokenCredential()
+    );
 
-    // fake sas account token
-    const mockStorageManagementClient = new StorageManagementClient(new MyTokenCredential(), "id");
-    mockStorageManagementClient.storageAccounts = getMockStorageAccount1() as any;
-    sandbox.stub(armStorage, "StorageManagementClient").returns(mockStorageManagementClient);
-
-    // fake properties
-    sandbox.stub(BlobServiceClient.prototype, "getProperties").resolves({
-      staticWebsite: {
-        enabled: false,
-      },
-    } as ServiceGetPropertiesResponse);
-
-    const caller = sandbox.stub(BlobServiceClient.prototype, "setProperties").resolves();
+    const blobClient = {
+      getProperties: vi.fn().mockResolvedValue({
+        staticWebsite: {
+          enabled: false,
+        },
+      } as ServiceGetPropertiesResponse),
+      setProperties: vi.fn().mockResolvedValue(undefined),
+    } as unknown as BlobServiceClient;
+    vi.spyOn(azureResourceOperation, "createBlobServiceClient").mockResolvedValue(blobClient);
 
     const res = await driver.run(
       {
@@ -140,7 +109,7 @@ describe("Azure Storage enable static website Driver test", () => {
       context
     );
 
-    sinon.assert.calledOnce(caller);
+    chai.assert.equal(blobClient.setProperties.mock.calls.length, 1);
     chai.assert.equal(res.isOk(), true);
   });
 
@@ -151,23 +120,19 @@ describe("Azure Storage enable static website Driver test", () => {
       logProvider: new TestLogProvider(),
     } as any;
     // fake azure credentials
-    sandbox
-      .stub(context.azureAccountProvider, "getIdentityCredentialAsync")
-      .resolves(new MyTokenCredential());
+    vi.spyOn(context.azureAccountProvider, "getIdentityCredentialAsync").mockResolvedValue(
+      new MyTokenCredential()
+    );
 
-    // fake sas account token
-    const mockStorageManagementClient = new StorageManagementClient(new MyTokenCredential(), "id");
-    mockStorageManagementClient.storageAccounts = getMockStorageAccount1() as any;
-    sandbox.stub(armStorage, "StorageManagementClient").returns(mockStorageManagementClient);
-
-    // fake properties
-    sandbox.stub(BlobServiceClient.prototype, "getProperties").resolves({
-      staticWebsite: {
-        enabled: true,
-      },
-    } as ServiceGetPropertiesResponse);
-
-    const caller = sandbox.stub(BlobServiceClient.prototype, "setProperties").resolves();
+    const blobClient = {
+      getProperties: vi.fn().mockResolvedValue({
+        staticWebsite: {
+          enabled: true,
+        },
+      } as ServiceGetPropertiesResponse),
+      setProperties: vi.fn().mockResolvedValue(undefined),
+    } as unknown as BlobServiceClient;
+    vi.spyOn(azureResourceOperation, "createBlobServiceClient").mockResolvedValue(blobClient);
 
     await driver.run(
       {
@@ -179,7 +144,7 @@ describe("Azure Storage enable static website Driver test", () => {
       context
     );
 
-    sinon.assert.notCalled(caller);
+    chai.assert.equal(blobClient.setProperties.mock.calls.length, 0);
   });
 
   it("Azure Storage set properties error", async () => {
@@ -190,25 +155,19 @@ describe("Azure Storage enable static website Driver test", () => {
       logProvider: new TestLogProvider(),
     } as any;
     // fake azure credentials
-    sandbox
-      .stub(context.azureAccountProvider, "getIdentityCredentialAsync")
-      .resolves(new MyTokenCredential());
+    vi.spyOn(context.azureAccountProvider, "getIdentityCredentialAsync").mockResolvedValue(
+      new MyTokenCredential()
+    );
 
-    // fake sas account token
-    const mockStorageManagementClient = new StorageManagementClient(new MyTokenCredential(), "id");
-    mockStorageManagementClient.storageAccounts = getMockStorageAccount1() as any;
-    sandbox.stub(armStorage, "StorageManagementClient").returns(mockStorageManagementClient);
-
-    // fake properties
-    sandbox.stub(BlobServiceClient.prototype, "getProperties").resolves({
-      staticWebsite: {
-        enabled: false,
-      },
-    } as ServiceGetPropertiesResponse);
-
-    const caller = sandbox
-      .stub(BlobServiceClient.prototype, "setProperties")
-      .throws({ statusCode: 404, message: "Not found" });
+    const blobClient = {
+      getProperties: vi.fn().mockResolvedValue({
+        staticWebsite: {
+          enabled: false,
+        },
+      } as ServiceGetPropertiesResponse),
+      setProperties: vi.fn().mockRejectedValue({ statusCode: 404, message: "Not found" }),
+    } as unknown as BlobServiceClient;
+    vi.spyOn(azureResourceOperation, "createBlobServiceClient").mockResolvedValue(blobClient);
 
     const res = await driver.run(
       {
@@ -220,7 +179,7 @@ describe("Azure Storage enable static website Driver test", () => {
       context
     );
 
-    sinon.assert.calledOnce(caller);
+    chai.assert.equal(blobClient.setProperties.mock.calls.length, 1);
     chai.assert.equal(res.isErr(), true);
   });
 
@@ -232,25 +191,19 @@ describe("Azure Storage enable static website Driver test", () => {
       logProvider: new TestLogProvider(),
     } as any;
     // fake azure credentials
-    sandbox
-      .stub(context.azureAccountProvider, "getIdentityCredentialAsync")
-      .resolves(new MyTokenCredential());
+    vi.spyOn(context.azureAccountProvider, "getIdentityCredentialAsync").mockResolvedValue(
+      new MyTokenCredential()
+    );
 
-    // fake sas account token
-    const mockStorageManagementClient = new StorageManagementClient(new MyTokenCredential(), "id");
-    mockStorageManagementClient.storageAccounts = getMockStorageAccount1() as any;
-    sandbox.stub(armStorage, "StorageManagementClient").returns(mockStorageManagementClient);
-
-    // fake properties
-    sandbox.stub(BlobServiceClient.prototype, "getProperties").resolves({
-      staticWebsite: {
-        enabled: false,
-      },
-    } as ServiceGetPropertiesResponse);
-
-    const caller = sandbox
-      .stub(BlobServiceClient.prototype, "setProperties")
-      .throws({ statusCode: 500 });
+    const blobClient = {
+      getProperties: vi.fn().mockResolvedValue({
+        staticWebsite: {
+          enabled: false,
+        },
+      } as ServiceGetPropertiesResponse),
+      setProperties: vi.fn().mockRejectedValue({ statusCode: 500 }),
+    } as unknown as BlobServiceClient;
+    vi.spyOn(azureResourceOperation, "createBlobServiceClient").mockResolvedValue(blobClient);
 
     const res = await driver.run(
       {
@@ -262,7 +215,7 @@ describe("Azure Storage enable static website Driver test", () => {
       context
     );
 
-    sinon.assert.calledOnce(caller);
+    chai.assert.equal(blobClient.setProperties.mock.calls.length, 1);
     chai.assert.equal(res.isErr(), true);
     console.log(res);
   });
@@ -275,19 +228,15 @@ describe("Azure Storage enable static website Driver test", () => {
       logProvider: new TestLogProvider(),
     } as any;
     // fake azure credentials
-    sandbox
-      .stub(context.azureAccountProvider, "getIdentityCredentialAsync")
-      .resolves(new MyTokenCredential());
+    vi.spyOn(context.azureAccountProvider, "getIdentityCredentialAsync").mockResolvedValue(
+      new MyTokenCredential()
+    );
 
-    // fake sas account token
-    const mockStorageManagementClient = new StorageManagementClient(new MyTokenCredential(), "id");
-    mockStorageManagementClient.storageAccounts = getMockStorageAccount1() as any;
-    sandbox.stub(armStorage, "StorageManagementClient").returns(mockStorageManagementClient);
-
-    // fake properties
-    sandbox
-      .stub(BlobServiceClient.prototype, "getProperties")
-      .throws({ statusCode: 404, message: "Not found" });
+    const blobClient = {
+      getProperties: vi.fn().mockRejectedValue({ statusCode: 404, message: "Not found" }),
+      setProperties: vi.fn().mockResolvedValue(undefined),
+    } as unknown as BlobServiceClient;
+    vi.spyOn(azureResourceOperation, "createBlobServiceClient").mockResolvedValue(blobClient);
 
     const res = await driver.run(
       {
@@ -310,17 +259,15 @@ describe("Azure Storage enable static website Driver test", () => {
       logProvider: new TestLogProvider(),
     } as any;
     // fake azure credentials
-    sandbox
-      .stub(context.azureAccountProvider, "getIdentityCredentialAsync")
-      .resolves(new MyTokenCredential());
+    vi.spyOn(context.azureAccountProvider, "getIdentityCredentialAsync").mockResolvedValue(
+      new MyTokenCredential()
+    );
 
-    // fake sas account token
-    const mockStorageManagementClient = new StorageManagementClient(new MyTokenCredential(), "id");
-    mockStorageManagementClient.storageAccounts = getMockStorageAccount1() as any;
-    sandbox.stub(armStorage, "StorageManagementClient").returns(mockStorageManagementClient);
-
-    // fake properties
-    sandbox.stub(BlobServiceClient.prototype, "getProperties").throws({ statusCode: 500 });
+    const blobClient = {
+      getProperties: vi.fn().mockRejectedValue({ statusCode: 500 }),
+      setProperties: vi.fn().mockResolvedValue(undefined),
+    } as unknown as BlobServiceClient;
+    vi.spyOn(azureResourceOperation, "createBlobServiceClient").mockResolvedValue(blobClient);
 
     const res = await driver.run(
       {

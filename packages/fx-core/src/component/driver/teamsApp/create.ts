@@ -16,7 +16,9 @@ import fs from "fs-extra";
 import * as path from "path";
 import { Service } from "typedi";
 import { v4 } from "uuid";
+import isUUID from "validator/lib/isUUID";
 import { teamsDevPortalClient } from "../../../client/teamsDevPortalClient";
+import { isSovereignHigh } from "../../../common/accountUtils";
 import { AppStudioScopes } from "../../../common/constants";
 import { getLocalizedString } from "../../../common/localizeUtils";
 import { InvalidActionInputError } from "../../../error/common";
@@ -37,8 +39,6 @@ import {
 import { AppStudioError } from "./errors";
 import { CreateTeamsAppArgs } from "./interfaces/CreateTeamsAppArgs";
 import { AppStudioResultFactory } from "./results";
-import { isSovereignHigh } from "../../../common/accountUtils";
-import { isUUID } from "validator";
 
 const actionName = "teamsApp/create";
 

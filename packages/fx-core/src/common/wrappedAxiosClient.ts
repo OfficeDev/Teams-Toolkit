@@ -7,7 +7,6 @@ import axios, {
   CreateAxiosDefaults,
   InternalAxiosRequestConfig,
 } from "axios";
-import { TEAMS_GRAPH_API_NAMES } from "../client/teamsGraphClient";
 import { HttpMethod } from "../component/constant/commonConstant";
 import {
   APP_STUDIO_API_NAMES,
@@ -22,6 +21,7 @@ import { MOS3Api, MOS3ApiDefinitions } from "../component/m365/serviceConstant";
 import { DeveloperPortalAPIFailedSystemError } from "../error/teamsApp";
 import { TOOLS } from "./globalVars";
 import { getDefaultString } from "./localizeUtils";
+import { TEAMS_GRAPH_API_NAMES } from "./teamsGraphApiNames";
 import { TelemetryEvent, TelemetryProperty, TelemetrySuccess } from "./telemetry";
 
 /**
@@ -95,7 +95,7 @@ export class WrappedAxiosClient {
     // real transport-level failure (TLS handshake, ECONNRESET on a kept-alive
     // socket, etc.) returned to the caller. See AB#37640864.
     try {
-      const method = ((error.request?.method as string) ?? "").toString();
+      const method = ((error.request?.method as string) ?? error.config?.method ?? "").toString();
       const fullPath = `${error.config?.baseURL ?? ""}${error.config?.url ?? ""}`;
       const apiName = this.convertUrlToApiName(fullPath, method);
 

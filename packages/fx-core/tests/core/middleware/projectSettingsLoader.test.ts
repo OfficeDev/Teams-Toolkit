@@ -1,44 +1,40 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { assert } from "chai";
 import path from "path";
-import { createSandbox, SinonSandbox, SinonStub } from "sinon";
+import { assert, vi } from "vitest";
 import { featureFlagManager, FeatureFlags } from "../../../src/common/featureFlags";
 import { pathUtils } from "../../../src/component/utils/pathUtils";
 import { getProjectSettingsPath } from "../../../src/core/middleware/projectSettingsLoader";
 
 describe("projectSettingsLoader - getProjectSettingsPath", () => {
-  let sandbox: SinonSandbox;
-  let flagStub: SinonStub;
-  let availablePathStub: SinonStub;
-  let ymlPathStub: SinonStub;
+  let flagStub: any;
+  let availablePathStub: any;
+  let ymlPathStub: any;
 
   const projectPath = "/tmp/project";
 
   beforeEach(() => {
-    sandbox = createSandbox();
-    flagStub = sandbox
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.GenerateConfigFiles)
-      .returns(true);
-    availablePathStub = sandbox.stub(pathUtils, "getAvailableYmlFilePath");
-    ymlPathStub = sandbox.stub(pathUtils, "getYmlFilePath");
+    flagStub = vi
+      .spyOn(featureFlagManager, "getBooleanValue")
+      .mockImplementation((flag) => flag === FeatureFlags.GenerateConfigFiles);
+    availablePathStub = vi.spyOn(pathUtils, "getAvailableYmlFilePath");
+    ymlPathStub = vi.spyOn(pathUtils, "getYmlFilePath");
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("returns playground config path when flag enabled and playground exists", () => {
     const playgroundPath = path.join(projectPath, "m365agents.playground.yml");
-    availablePathStub.returns(playgroundPath);
+    availablePathStub.mockReturnValue(playgroundPath);
 
     const result = getProjectSettingsPath(projectPath);
 
     assert.equal(result, playgroundPath);
-    assert.isTrue(availablePathStub.calledOnce);
-    assert.isTrue(flagStub.calledOnce);
-    assert.isTrue(ymlPathStub.notCalled);
+    assert.isTrue(availablePathStub.mock.calls.length === 1);
+    assert.isTrue(flagStub.mock.calls.length === 1);
+    assert.isTrue(ymlPathStub.mock.calls.length === 0);
   });
 });

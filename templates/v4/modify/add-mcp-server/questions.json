@@ -1,0 +1,27 @@
+{
+  "$schema": "../../schema/questions.schema.json",
+  "questions": [
+    {
+      "name": "mcpServerUrl",
+      "type": "text",
+      "title": "MCP Server URL",
+      "keyPrefix": "template.mcpAddServer.mcpServerUrl",
+      "condition": { "expr": "mcpServerUrl == null" },
+      "validation": "uri"
+    },
+    {
+      "name": "authType",
+      "type": "singleSelect",
+      "title": "Authentication",
+      "keyPrefix": "template.daMcpServer.authType",
+      "staticOptions": [
+        { "id": "oauth", "label": "OAuth (with static registration)" },
+        { "id": "oauth-dynamic", "label": "OAuth (with dynamic registration)",
+          "condition": { "expr": "featureFlag('TEAMSFX_MCP_FOR_DA_DT') && featureFlag('TEAMSFX_MCP_FOR_DA_DCR')" } },
+        { "id": "entra-sso", "label": "Entra SSO" },
+        { "id": "none", "label": "None" }
+      ],
+      "default": "none"
+    }
+  ]
+}

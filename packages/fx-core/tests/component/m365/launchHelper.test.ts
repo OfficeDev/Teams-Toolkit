@@ -1,19 +1,18 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { err, ok, ManifestProperties } from "@microsoft/teamsfx-api";
-import * as chai from "chai";
-import sinon from "sinon";
+import { err, ManifestProperties, ok } from "@microsoft/teamsfx-api";
+import mockedEnv, { RestoreFn } from "mocked-env";
+import { chai, expect, vi } from "vitest";
+import { FeatureFlagName } from "../../../src";
+import { SovereignCloudEnvironment } from "../../../src/common/accountUtils";
+import { GraphScopes } from "../../../src/common/constants";
+import { outlookCopilotAppId } from "../../../src/component/m365/constants";
 import { NotExtendedToM365Error } from "../../../src/component/m365/errors";
 import { LaunchHelper } from "../../../src/component/m365/launchHelper";
 import { PackageService } from "../../../src/component/m365/packageService";
 import { HubTypes } from "../../../src/question";
-import { outlookCopilotAppId } from "../../../src/component/m365/constants";
-import { GraphScopes } from "../../../src/common/constants";
-import { SovereignCloudEnvironment } from "../../../src/common/accountUtils";
 import { MockedM365Provider } from "../../core/utils";
-import mockedEnv, { RestoreFn } from "mocked-env";
-import { FeatureFlagName } from "../../../src";
 
 describe("LaunchHelper", () => {
   const m365TokenProvider = new MockedM365Provider();
@@ -21,14 +20,14 @@ describe("LaunchHelper", () => {
   let restoreEnv: RestoreFn | undefined;
 
   afterEach(() => {
-    sinon.restore();
+    vi.restoreAllMocks();
     restoreEnv?.();
     restoreEnv = undefined;
   });
 
   describe("getLaunchUrl", () => {
     it("getLaunchUrl: Teams, signed in", async () => {
-      sinon.stub(m365TokenProvider, "getStatus").resolves(
+      vi.spyOn(m365TokenProvider, "getStatus").mockResolvedValue(
         ok({
           status: "",
           accountInfo: {
@@ -55,7 +54,7 @@ describe("LaunchHelper", () => {
     });
 
     it("getLaunchUrl: Teams, signed in, copilot plugin", async () => {
-      sinon.stub(m365TokenProvider, "getStatus").resolves(
+      vi.spyOn(m365TokenProvider, "getStatus").mockResolvedValue(
         ok({
           status: "",
           accountInfo: {
@@ -82,7 +81,7 @@ describe("LaunchHelper", () => {
     });
 
     it("getLaunchUrl: Teams, signed in, copilot plugin + staticTab", async () => {
-      sinon.stub(m365TokenProvider, "getStatus").resolves(
+      vi.spyOn(m365TokenProvider, "getStatus").mockResolvedValue(
         ok({
           status: "",
           accountInfo: {
@@ -109,7 +108,7 @@ describe("LaunchHelper", () => {
     });
 
     it("getLaunchUrl: Teams, signed in, copilot plugin + configurableTab", async () => {
-      sinon.stub(m365TokenProvider, "getStatus").resolves(
+      vi.spyOn(m365TokenProvider, "getStatus").mockResolvedValue(
         ok({
           status: "",
           accountInfo: {
@@ -136,7 +135,7 @@ describe("LaunchHelper", () => {
     });
 
     it("getLaunchUrl: Teams, signed in, copilot plugin + bot", async () => {
-      sinon.stub(m365TokenProvider, "getStatus").resolves(
+      vi.spyOn(m365TokenProvider, "getStatus").mockResolvedValue(
         ok({
           status: "",
           accountInfo: {
@@ -163,7 +162,7 @@ describe("LaunchHelper", () => {
     });
 
     it("Teams, signed out", async () => {
-      sinon.stub(m365TokenProvider, "getStatus").resolves(
+      vi.spyOn(m365TokenProvider, "getStatus").mockResolvedValue(
         ok({
           status: "",
         })
@@ -189,7 +188,7 @@ describe("LaunchHelper", () => {
       restoreEnv = mockedEnv({
         [FeatureFlagName.SovereignCloudEnvironment]: SovereignCloudEnvironment.GCCH,
       });
-      const getStatusStub = sinon.stub(m365TokenProvider, "getStatus").resolves(
+      const getStatusStub = vi.spyOn(m365TokenProvider, "getStatus").mockResolvedValue(
         ok({
           status: "",
           accountInfo: {
@@ -211,13 +210,13 @@ describe("LaunchHelper", () => {
       const result = await launchHelper.getLaunchUrl(HubTypes.teams, "test-id", properties);
 
       chai.assert(result.isOk());
-      sinon.assert.calledTwice(getStatusStub);
-      chai.assert.deepEqual(getStatusStub.firstCall.firstArg.scopes, GraphScopes);
-      chai.assert.deepEqual(getStatusStub.secondCall.firstArg.scopes, GraphScopes);
+      expect(getStatusStub).toHaveBeenCalledTimes(2);
+      chai.assert.deepEqual(getStatusStub.mock.calls[0][0].scopes, GraphScopes);
+      chai.assert.deepEqual(getStatusStub.mock.calls[1][0].scopes, GraphScopes);
     });
 
     it("Outlook, staticTab, acquired, signed in", async () => {
-      sinon.stub(m365TokenProvider, "getStatus").resolves(
+      vi.spyOn(m365TokenProvider, "getStatus").mockResolvedValue(
         ok({
           status: "",
           accountInfo: {
@@ -235,7 +234,7 @@ describe("LaunchHelper", () => {
         isSPFx: false,
         isApiMeAAD: false,
       };
-      sinon.stub(LaunchHelper.prototype, "getM365AppId" as any).resolves(ok("test-app-id"));
+      vi.spyOn(LaunchHelper.prototype, "getM365AppId" as any).mockResolvedValue(ok("test-app-id"));
       const result = await launchHelper.getLaunchUrl(HubTypes.outlook, "test-id", properties);
       chai.assert(result.isOk());
       chai.assert.equal(
@@ -245,7 +244,7 @@ describe("LaunchHelper", () => {
     });
 
     it("Outlook, staticTab, unacquired, signed in", async () => {
-      sinon.stub(m365TokenProvider, "getStatus").resolves(
+      vi.spyOn(m365TokenProvider, "getStatus").mockResolvedValue(
         ok({
           status: "",
           accountInfo: {
@@ -254,7 +253,9 @@ describe("LaunchHelper", () => {
           },
         })
       );
-      sinon.stub(LaunchHelper.prototype, "getM365AppId" as any).resolves(err({ foo: "bar" }));
+      vi.spyOn(LaunchHelper.prototype, "getM365AppId" as any).mockResolvedValue(
+        err({ foo: "bar" })
+      );
       const properties: ManifestProperties = {
         capabilities: ["staticTab"],
         id: "test-id",
@@ -270,7 +271,7 @@ describe("LaunchHelper", () => {
     });
 
     it("Outlook, Bot, signed in", async () => {
-      sinon.stub(m365TokenProvider, "getStatus").resolves(
+      vi.spyOn(m365TokenProvider, "getStatus").mockResolvedValue(
         ok({
           status: "",
           accountInfo: {
@@ -279,7 +280,7 @@ describe("LaunchHelper", () => {
           },
         })
       );
-      sinon.stub(LaunchHelper.prototype, "getM365AppId" as any).resolves(ok("test-app-id"));
+      vi.spyOn(LaunchHelper.prototype, "getM365AppId" as any).mockResolvedValue(ok("test-app-id"));
       const properties: ManifestProperties = {
         capabilities: ["Bot"],
         id: "test-id",
@@ -298,7 +299,7 @@ describe("LaunchHelper", () => {
     });
 
     it("Outlook, signed in", async () => {
-      sinon.stub(m365TokenProvider, "getStatus").resolves(
+      vi.spyOn(m365TokenProvider, "getStatus").mockResolvedValue(
         ok({
           status: "",
           accountInfo: {
@@ -307,7 +308,7 @@ describe("LaunchHelper", () => {
           },
         })
       );
-      sinon.stub(LaunchHelper.prototype, "getM365AppId" as any).resolves(ok("test-app-id"));
+      vi.spyOn(LaunchHelper.prototype, "getM365AppId" as any).mockResolvedValue(ok("test-app-id"));
       const properties: ManifestProperties = {
         capabilities: ["Bot"],
         id: "test-id",
@@ -326,7 +327,7 @@ describe("LaunchHelper", () => {
     });
 
     it("Outlook, copilot extension", async () => {
-      sinon.stub(m365TokenProvider, "getStatus").resolves(
+      vi.spyOn(m365TokenProvider, "getStatus").mockResolvedValue(
         ok({
           status: "",
           accountInfo: {
@@ -344,7 +345,7 @@ describe("LaunchHelper", () => {
         isSPFx: false,
         isApiMeAAD: false,
       };
-      sinon.stub(LaunchHelper.prototype, "getM365AppId" as any).resolves(ok("test-app-id"));
+      vi.spyOn(LaunchHelper.prototype, "getM365AppId" as any).mockResolvedValue(ok("test-app-id"));
       const result = await launchHelper.getLaunchUrl(HubTypes.outlook, "test-id", properties);
       chai.assert(result.isOk());
       chai.assert.equal(
@@ -354,7 +355,7 @@ describe("LaunchHelper", () => {
     });
 
     it("Office, copilot extension", async () => {
-      sinon.stub(m365TokenProvider, "getStatus").resolves(
+      vi.spyOn(m365TokenProvider, "getStatus").mockResolvedValue(
         ok({
           status: "",
           accountInfo: {
@@ -363,7 +364,7 @@ describe("LaunchHelper", () => {
           },
         })
       );
-      sinon.stub(LaunchHelper.prototype, "getM365AppId" as any).resolves(ok("test-app-id"));
+      vi.spyOn(LaunchHelper.prototype, "getM365AppId" as any).mockResolvedValue(ok("test-app-id"));
       const properties: ManifestProperties = {
         capabilities: ["copilotGpt"],
         id: "test-id",
@@ -384,33 +385,33 @@ describe("LaunchHelper", () => {
 
   describe("getM365AppId", () => {
     it("getAccessToken error", async () => {
-      sinon.stub(m365TokenProvider, "getAccessToken").resolves(err({ foo: "bar" } as any));
+      vi.spyOn(m365TokenProvider, "getAccessToken").mockResolvedValue(err({ foo: "bar" } as any));
       const result = await launchHelper.getM365AppId("test-id");
       chai.assert(result.isErr());
       chai.assert.deepEqual((result as any).error, { foo: "bar" });
     });
 
     it("retrieveAppId 404", async () => {
-      sinon.stub(m365TokenProvider, "getAccessToken").resolves(ok(""));
-      sinon
-        .stub(PackageService.prototype, "retrieveAppId")
-        .rejects(new NotExtendedToM365Error("test"));
+      vi.spyOn(m365TokenProvider, "getAccessToken").mockResolvedValue(ok(""));
+      vi.spyOn(PackageService.prototype, "retrieveAppId").mockRejectedValue(
+        new NotExtendedToM365Error("test")
+      );
       const result = await launchHelper.getM365AppId("test-id");
       chai.assert(result.isErr());
       chai.assert.deepEqual((result as any).error.name, "NotExtendedToM365Error");
     });
 
     it("retrieveAppId undefined", async () => {
-      sinon.stub(m365TokenProvider, "getAccessToken").resolves(ok(""));
-      sinon.stub(PackageService.prototype, "retrieveAppId").resolves(undefined);
+      vi.spyOn(m365TokenProvider, "getAccessToken").mockResolvedValue(ok(""));
+      vi.spyOn(PackageService.prototype, "retrieveAppId").mockResolvedValue(undefined);
       const result = await launchHelper.getM365AppId("test-id");
       chai.assert(result.isErr());
       chai.assert.deepEqual((result as any).error.name, "NotExtendedToM365Error");
     });
 
     it("happy path", async () => {
-      sinon.stub(m365TokenProvider, "getAccessToken").resolves(ok(""));
-      sinon.stub(PackageService.prototype, "retrieveAppId").resolves("test-app-id");
+      vi.spyOn(m365TokenProvider, "getAccessToken").mockResolvedValue(ok(""));
+      vi.spyOn(PackageService.prototype, "retrieveAppId").mockResolvedValue("test-app-id");
       const result = await launchHelper.getM365AppId("test-id");
       chai.assert(result.isOk());
       chai.assert.deepEqual((result as any).value, "test-app-id");

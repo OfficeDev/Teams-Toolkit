@@ -7,7 +7,7 @@ import { promisify } from "util";
 import { LocalMcpPrefix } from "../../../constants";
 import { ODRProvider } from "../../../utils/odrProvider";
 
-export const mcpCertVerificationDeps = {
+export const mcpCertDeps = {
   exec,
 };
 
@@ -67,7 +67,7 @@ export async function verifyLocalMCPPluginCerts(pluginFile: AdmZip.IZipEntry): P
  * Invalid certs include: Developer (self-signed).
  */
 export async function verifyPackageFamilyCertIsValid(packageName: string): Promise<boolean> {
-  const execAsync = promisify(mcpCertVerificationDeps.exec);
+  const execAsync = promisify(mcpCertDeps.exec);
   const command = `powershell.exe -Command "& Get-AppxPackage | where { $_.PackageFamilyName -eq '${packageName}' } | select { $_.SignatureKind }"`;
 
   try {

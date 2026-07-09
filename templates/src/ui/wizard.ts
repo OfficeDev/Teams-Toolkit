@@ -9,6 +9,7 @@
  * Source sub-trees are defined separately for maintainability
  * but merged here into a single JSON for distribution.
  */
+import { blankNode } from "./blank";
 import { ceaNode } from "./cea";
 import { daNode } from "./da";
 import { graphConnectorNode } from "./graphConnector";
@@ -19,6 +20,7 @@ import { teamsNode } from "./teams";
 
 // Map node references to their actual sub-tree definitions
 const nodeMap: Record<string, Record<string, unknown>> = {
+  blankNode: blankNode,
   daNode: daNode,
   ceaNode: ceaNode,
   graphConnectorNode: graphConnectorNode,

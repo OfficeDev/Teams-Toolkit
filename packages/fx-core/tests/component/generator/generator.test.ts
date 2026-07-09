@@ -4,14 +4,13 @@
 import { Inputs, Platform } from "@microsoft/teamsfx-api";
 import AdmZip from "adm-zip";
 import axios, { AxiosError, AxiosHeaders, AxiosResponse } from "axios";
-import { assert } from "chai";
 import fs from "fs-extra";
 import mockedEnv, { RestoreFn } from "mocked-env";
 import Mustache from "mustache";
 import { ok } from "neverthrow";
 import os from "os";
 import path from "path";
-import { createSandbox } from "sinon";
+import { assert, vi } from "vitest";
 import * as folderUtils from "../../../../fx-core/src/folder";
 import { FeatureFlags } from "../../../src/common/featureFlags";
 import { createContext, setTools } from "../../../src/common/globalVars";
@@ -52,7 +51,7 @@ import {
   runWithLimitedConcurrency,
   simplifyAxiosError,
 } from "../../../src/component/generator/utils";
-import * as v4TemplateBridge from "../../../src/component/generator/v4TemplateBridge";
+import { v4TemplateBridgeDeps } from "../../../src/component/generator/v4TemplateBridge";
 import { ActionContext } from "../../../src/component/middleware/actionExecutionMW";
 import { ProgrammingLanguage, QuestionNames } from "../../../src/question";
 import {
@@ -61,6 +60,8 @@ import {
 } from "../../../src/question/scaffold/vsc/CapabilityOptions";
 import sampleConfigV3 from "../../common/samples-config-v3.json";
 import { MockTools, randomAppName } from "../../core/utils";
+
+const originalTemplateConfig = { ...templateConfig };
 
 const mockedSampleInfo: SampleConfig = {
   id: "test-id",
@@ -110,11 +111,13 @@ const mockedExternalSampleConfig = {
 
 describe("Generator utils", () => {
   const tmpDir = path.join(__dirname, "tmp");
-  const sandbox = createSandbox();
+  const sandbox = vi;
   let mockedEnvRestore: RestoreFn = () => {};
 
   afterEach(async () => {
-    sandbox.restore();
+    vi.restoreAllMocks();
+    vi.unstubAllEnvs();
+    Object.assign(templateConfig, originalTemplateConfig);
     if (await fs.pathExists(tmpDir)) {
       await fs.remove(tmpDir);
     }
@@ -126,8 +129,8 @@ describe("Generator utils", () => {
       TEMPLATE_VERSION: "0.0.0-rc",
     });
     const tagList = "1.0.0\n 2.0.0\n 2.1.0\n 3.0.0\n 0.0.0-rc";
-    sandbox.stub(templateHelper, "useLocalTemplate").returns(false);
-    sandbox.stub(axios, "get").resolves({ data: tagList, status: 200 } as AxiosResponse);
+    vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(false);
+    vi.spyOn(axios, "get").mockResolvedValue({ data: tagList, status: 200 } as AxiosResponse);
     const url = await generatorUtils.getTemplateUrl(
       "templateName",
       generatorUtils.getTemplateLatestVersion
@@ -141,10 +144,10 @@ describe("Generator utils", () => {
     });
     const tagList = "1.0.0\n 2.0.0\n 2.1.0\n 3.0.0";
     const tag = "2.1.0";
-    sandbox.stub(templateHelper, "useLocalTemplate").returns(false);
-    sandbox.stub(axios, "get").resolves({ data: tagList, status: 200 } as AxiosResponse);
-    sandbox.stub(templateConfig, "version").value("^2.0.0");
-    sandbox.replace(templateConfig, "tagPrefix", "templates@");
+    vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(false);
+    vi.spyOn(axios, "get").mockResolvedValue({ data: tagList, status: 200 } as AxiosResponse);
+    (templateConfig as any).version = "^2.0.0";
+    (templateConfig as any).tagPrefix = "templates@";
     const templateName = "templateName";
     const selectedTag = await generatorUtils.getTemplateLatestVersion();
     const url = generatorUtils.getTemplateZipUrlByVersion(templateName, selectedTag, "templates@");
@@ -156,9 +159,9 @@ describe("Generator utils", () => {
       TEAMSFX_TEMPLATE_PRERELEASE: "",
     });
     const tagList = "1.0.0\n 2.0.0\n 2.1.0\n 3.0.0";
-    sandbox.stub(axios, "get").resolves({ data: tagList, status: 200 } as AxiosResponse);
-    sandbox.stub(templateConfig, "version").value("^4.0.0");
-    sandbox.replace(templateConfig, "tagPrefix", "templates@");
+    vi.spyOn(axios, "get").mockResolvedValue({ data: tagList, status: 200 } as AxiosResponse);
+    (templateConfig as any).version = "^4.0.0";
+    (templateConfig as any).tagPrefix = "templates@";
     try {
       await generatorUtils.getTemplateLatestVersion();
     } catch (e) {
@@ -211,7 +214,7 @@ describe("Generator utils", () => {
     const requestFn = async () => {
       throw new Error("test");
     };
-    sandbox.stub(axios, "isCancel").returns(true);
+    vi.spyOn(axios, "isCancel").mockReturnValue(true);
     try {
       await sendRequestWithTimeout(requestFn, 1000, 2);
     } catch (e) {
@@ -222,7 +225,7 @@ describe("Generator utils", () => {
   });
 
   it("fetch zip from url", async () => {
-    sandbox.stub(axios, "get").resolves({ status: 200, data: new AdmZip().toBuffer() });
+    vi.spyOn(axios, "get").mockResolvedValue({ status: 200, data: new AdmZip().toBuffer() });
     const url = "ut";
     const zip = await generatorUtils.fetchZipFromUrl(url);
     assert.equal(zip.getEntries().length, 0);
@@ -307,7 +310,7 @@ describe("Generator utils", () => {
   });
 
   it("download directory get file info error", async () => {
-    const axiosStub = sandbox.stub(axios, "get");
+    const axiosStub = vi.spyOn(axios, "get");
     const error = new Error("Network error");
     (error as any).isAxiosError = true;
     (error as any).response = {
@@ -316,7 +319,7 @@ describe("Generator utils", () => {
         "x-ratelimit-remaining": "0",
       },
     };
-    axiosStub.onFirstCall().rejects(error);
+    axiosStub.mockRejectedValueOnce(error);
     try {
       await downloadDirectory(
         {
@@ -335,13 +338,13 @@ describe("Generator utils", () => {
   });
 
   it("download directory happy path", async () => {
-    const axiosStub = sandbox.stub(axios, "get");
+    const axiosStub = vi.spyOn(axios, "get");
     const sampleName = "test";
     const mockFileName = "test.txt";
     const mockFileData = "test data";
     const fileInfo = [{ type: "file", path: `${sampleName}/${mockFileName}` }];
-    axiosStub.onFirstCall().resolves({ status: 200, data: { tree: fileInfo } });
-    axiosStub.onSecondCall().resolves({ status: 200, data: mockFileData });
+    axiosStub.mockResolvedValueOnce({ status: 200, data: { tree: fileInfo } });
+    axiosStub.mockResolvedValueOnce({ status: 200, data: mockFileData });
     await fs.ensureDir(tmpDir);
     await downloadDirectory(
       {
@@ -357,16 +360,16 @@ describe("Generator utils", () => {
   });
 
   it("download directory with LFS files", async () => {
-    const axiosStub = sandbox.stub(axios, "get");
+    const axiosStub = vi.spyOn(axios, "get");
     const sampleName = "test";
     const mockFileName = "test.txt";
     const mockFileData = "test data";
     const lfsData =
       "version https://git-lfs.github.com/spec/v1\noid sha256:548c1fe07b6b278da680ccd84483be06262521f2e3\nsize 100";
     const fileInfo = [{ type: "file", path: `${sampleName}/${mockFileName}` }];
-    axiosStub.onFirstCall().resolves({ status: 200, data: { tree: fileInfo } });
-    axiosStub.onSecondCall().resolves({ status: 200, data: lfsData });
-    axiosStub.onThirdCall().resolves({ status: 200, data: mockFileData });
+    axiosStub.mockResolvedValueOnce({ status: 200, data: { tree: fileInfo } });
+    axiosStub.mockResolvedValueOnce({ status: 200, data: lfsData });
+    axiosStub.mockResolvedValueOnce({ status: 200, data: mockFileData });
     await fs.ensureDir(tmpDir);
     await downloadDirectory(
       {
@@ -520,11 +523,12 @@ describe("Generator error", async () => {
     [QuestionNames.ProgrammingLanguage]: ProgrammingLanguage.JS,
     [QuestionNames.Capabilities]: BotCapabilityOptions.basicBot().id,
   } as Inputs;
-  const sandbox = createSandbox();
+  const sandbox = vi;
   const tmpDir = path.join(__dirname, "tmp");
 
   beforeEach(() => {
-    sandbox.stub(fs, "readFileSync").returns(`[{
+    vi.stubEnv(FeatureFlags.V4Enabled.name, "false");
+    vi.spyOn(fs, "readFileSync").mockReturnValue(`[{
           "id": "default-bot-ts",
           "name": "default-bot",
           "language": "typescript",
@@ -543,14 +547,15 @@ describe("Generator error", async () => {
     if (await fs.pathExists(tmpDir)) {
       await fs.remove(tmpDir);
     }
-    sandbox.restore();
+    vi.restoreAllMocks();
+    vi.unstubAllEnvs();
   });
 
   [false, true].forEach((newGeneratorFlag) => {
     it("template fallback error", async () => {
-      sandbox.stub(process, "env").value({ TEAMSFX_NEW_GENERATOR: `${newGeneratorFlag}` });
-      sandbox.stub(ScaffoldRemoteTemplateAction, "run").resolves();
-      sandbox.stub(folderUtils, "getTemplatesFolder").returns("foobar");
+      vi.stubEnv("TEAMSFX_NEW_GENERATOR", `${newGeneratorFlag}`);
+      vi.spyOn(ScaffoldRemoteTemplateAction, "run").mockResolvedValue();
+      vi.spyOn(folderUtils, "getTemplatesFolder").mockReturnValue("foobar");
       const result = newGeneratorFlag
         ? await new DefaultTemplateGenerator().run(ctx, inputs, tmpDir)
         : await Generator.generateTemplate(ctx, tmpDir, "bot", "ts");
@@ -562,9 +567,9 @@ describe("Generator error", async () => {
     });
 
     it("template not found error", async () => {
-      sandbox.stub(process, "env").value({ TEAMSFX_NEW_GENERATOR: `${newGeneratorFlag}` });
-      sandbox.stub(ScaffoldRemoteTemplateAction, "run").resolves();
-      sandbox.stub(generatorActionDeps, "unzip").resolves();
+      vi.stubEnv("TEAMSFX_NEW_GENERATOR", `${newGeneratorFlag}`);
+      vi.spyOn(ScaffoldRemoteTemplateAction, "run").mockResolvedValue();
+      vi.spyOn(generatorActionDeps, "unzip").mockResolvedValue();
       const result = newGeneratorFlag
         ? await new DefaultTemplateGenerator().run(ctx, inputs, tmpDir)
         : await Generator.generateTemplate(ctx, tmpDir, "bot", "ts");
@@ -577,7 +582,9 @@ describe("Generator error", async () => {
   });
 
   it("fetch sample info fail", async () => {
-    sandbox.stub(fetchSampleInfoAction, "run").throws(new Error("test"));
+    vi.spyOn(fetchSampleInfoAction, "run").mockImplementation(() => {
+      throw new Error("test");
+    });
     const result = await Generator.generateSample(ctx, tmpDir, "test");
     if (result.isErr()) {
       assert.equal(result.error.name, "FetchSampleInfoError");
@@ -587,11 +594,11 @@ describe("Generator error", async () => {
   });
 
   it("sample not found error", async () => {
-    sandbox.stub(generatorActionDeps, "getSampleInfoFromName").resolves(mockedSampleInfo);
-    sandbox.stub(generatorActionDeps, "downloadDirectory").resolves([] as string[]);
-    sandbox
-      .stub(requestUtils, "sendRequestWithTimeout")
-      .resolves({ data: sampleConfigV3 } as AxiosResponse);
+    vi.spyOn(generatorActionDeps, "getSampleInfoFromName").mockResolvedValue(mockedSampleInfo);
+    vi.spyOn(generatorActionDeps, "downloadDirectory").mockResolvedValue([] as string[]);
+    vi.spyOn(requestUtils, "sendRequestWithTimeout").mockResolvedValue({
+      data: sampleConfigV3,
+    } as AxiosResponse);
 
     const result = await Generator.generateSample(ctx, tmpDir, "test");
     if (result.isErr()) {
@@ -808,11 +815,12 @@ describe("render template", () => {
     setTools(tools);
     const context = createContext();
     let inputs: Inputs;
-    const sandbox = createSandbox();
+    const sandbox = vi;
     const tmpDir = path.join(__dirname, "tmp");
     const templateName = TemplateNames.DefaultBot;
     const language = "ts";
     let mockedEnvRestore: RestoreFn = () => {};
+    let savedProcessEnv: NodeJS.ProcessEnv;
 
     async function buildFakeTemplateZip(templateName: string, mockFileName: string) {
       const mockFileData = "test data";
@@ -839,8 +847,12 @@ describe("render template", () => {
         [QuestionNames.Capabilities]: BotCapabilityOptions.basicBot().id,
         [QuestionNames.TemplateName]: TemplateNames.DefaultBot,
       } as Inputs;
-      sandbox.stub(process, "env").value({ TEAMSFX_NEW_GENERATOR: "true" });
-      sandbox.stub(fs, "readFileSync").returns(`[{
+      savedProcessEnv = process.env;
+      process.env = {
+        TEAMSFX_NEW_GENERATOR: "true",
+        [FeatureFlags.V4Enabled.name]: "false",
+      } as any;
+      vi.spyOn(fs, "readFileSync").mockReturnValue(`[{
           "id": "default-bot-ts",
           "name": "default-bot",
           "language": "typescript",
@@ -856,18 +868,20 @@ describe("render template", () => {
     });
 
     afterEach(async () => {
-      sandbox.restore();
+      vi.restoreAllMocks();
+      Object.assign(templateConfig, originalTemplateConfig);
       if (await fs.pathExists(tmpDir)) {
         await fs.remove(tmpDir);
       }
       mockedEnvRestore();
+      process.env = savedProcessEnv;
     });
 
     it("external sample", async () => {
-      const axiosStub = sandbox.stub(axios, "get");
-      sandbox
-        .stub(sampleProvider, "SampleCollection")
-        .value(Promise.resolve(mockedExternalSampleConfig));
+      const axiosStub = vi.spyOn(axios, "get");
+      vi.spyOn(sampleProvider, "SampleCollection", "get").mockReturnValue(
+        Promise.resolve(mockedExternalSampleConfig)
+      );
       const sampleName = "test";
       const mockFileName = "test.txt";
       const mockFileData = "test data";
@@ -877,8 +891,8 @@ describe("render template", () => {
         { type: "file", path: `sample/${sampleName}/${mockFileName}` },
         { type: "file", path: `sample/${foobarName}/${foobarFileName}` },
       ];
-      axiosStub.onFirstCall().resolves({ status: 200, data: { tree: fileInfo } });
-      axiosStub.onSecondCall().resolves({ status: 200, data: mockFileData });
+      axiosStub.mockResolvedValueOnce({ status: 200, data: { tree: fileInfo } });
+      axiosStub.mockResolvedValueOnce({ status: 200, data: mockFileData });
       const result = await Generator.generateSample(context, tmpDir, sampleName);
       assert.isTrue(result.isOk());
       if (!fs.existsSync(path.join(tmpDir, mockFileName))) {
@@ -903,25 +917,21 @@ describe("render template", () => {
       }
       const actionContext: ActionContext = { telemetryProps: {} };
       process.env[FeatureFlags.V4Enabled.name] = "true";
-      sandbox
-        .stub(v4TemplateBridge.v4TemplateBridgeDeps, "createTemplateSourcePort")
-        .returns({} as any);
-      sandbox.stub(v4TemplateBridge.v4TemplateBridgeDeps, "loadBundledFloor").returns({} as any);
-      sandbox.stub(v4TemplateBridge.v4TemplateBridgeDeps, "resolveTemplateSource").resolves(
-        ok({
-          origin: "bundled",
-          version: "6.10.1",
-          digest: "sha256:abc",
-          location: "/floor/templates.zip",
-          warning: "resolved from floor",
-        })
+      vi.spyOn(v4TemplateBridgeDeps, "createTemplateSourcePort").mockReturnValue({} as any);
+      vi.spyOn(v4TemplateBridgeDeps, "loadBundledFloor").mockReturnValue({} as any);
+      vi.spyOn(v4TemplateBridgeDeps, "resolveLocalTemplateSource").mockReturnValue({
+        origin: "bundled",
+        version: "6.10.1",
+        digest: "sha256:abc",
+        location: "/floor/templates.zip",
+        warning: "resolved from floor",
+      });
+      vi.spyOn(v4TemplateBridgeDeps, "loadResolvedPackage").mockReturnValue(
+        ok(Buffer.from("zip-bytes"))
       );
-      sandbox
-        .stub(v4TemplateBridge.v4TemplateBridgeDeps, "loadResolvedPackage")
-        .returns(ok(Buffer.from("zip-bytes")));
-      sandbox
-        .stub(v4TemplateBridge.v4TemplateBridgeDeps, "openTemplatePackage")
-        .returns(ok([{ path: "manifest.json", data: Buffer.from('{"a":1}') }]));
+      vi.spyOn(v4TemplateBridgeDeps, "openTemplatePackage").mockReturnValue(
+        ok([{ path: "manifest.json", data: Buffer.from('{"a":1}') }])
+      );
       context.templateVariables = Generator.getDefaultVariables("test");
 
       const result = await new DefaultTemplateGenerator().run(
@@ -1005,7 +1015,7 @@ describe("render template", () => {
     });
 
     it("template variables when contains auth", async () => {
-      sandbox.stub(process, "env").value({ TEAMSFX_TEST_TOOL: "false" });
+      process.env = { TEAMSFX_TEST_TOOL: "false" } as any;
       const vars = Generator.getDefaultVariables("Test", "Test", "Test", "net6", false, [
         {
           authName: "authName",
@@ -1023,7 +1033,7 @@ describe("render template", () => {
     });
 
     it("template variables when contains auth with special characters", async () => {
-      sandbox.stub(process, "env").value({ TEAMSFX_TEST_TOOL: "false" });
+      process.env = { TEAMSFX_TEST_TOOL: "false" } as any;
       const vars = Generator.getDefaultVariables("Test", "Test", "Test", "net6", false, [
         {
           authName: "authName",
@@ -1050,7 +1060,7 @@ describe("render template", () => {
     });
 
     it("template variables when contains auth with name not start with [A-Z]", async () => {
-      sandbox.stub(process, "env").value({ TEAMSFX_TEST_TOOL: "false" });
+      process.env = { TEAMSFX_TEST_TOOL: "false" } as any;
       const vars = Generator.getDefaultVariables("Test", "Test", "Test", undefined, false, [
         {
           authName: "authName",
@@ -1088,8 +1098,8 @@ describe("render template", () => {
       mockedEnvRestore = mockedEnv({
         TEMPLATE_VERSION: "local",
       });
-      sandbox.stub(templateHelper, "useLocalTemplate").returns(true);
-      sandbox.stub(folderUtils, "getTemplatesFolder").returns(tmpDir);
+      vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(true);
+      vi.spyOn(folderUtils, "getTemplatesFolder").mockReturnValue(tmpDir);
 
       const result = newGeneratorFlag
         ? await new DefaultTemplateGenerator().run(context, inputs, tmpDir, actionContext)
@@ -1110,15 +1120,15 @@ describe("render template", () => {
       };
       await buildFakeTemplateZip(templateName, mockFileName);
 
-      sandbox.stub(templateHelper, "useLocalTemplate").returns(false);
-      sandbox.replace(templateConfig, "localVersion", "9.9.9");
-      sandbox.replace(templateConfig, "version", "~3.0.0");
+      vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(false);
+      (templateConfig as any).localVersion = "9.9.9";
+      (templateConfig as any).version = "~3.0.0";
       const tagList = "1.0.0\n 2.0.0\n 2.1.0\n 3.0.0";
-      sandbox.stub(axios, "get").resolves({ data: tagList, status: 200 } as AxiosResponse);
-      sandbox.stub(folderUtils, "getTemplatesFolder").returns(tmpDir);
-      sandbox
-        .stub(generatorUtils, "getTemplateZipUrlByVersion")
-        .resolves("fooUrl/templates@0.1.0/test.zip");
+      vi.spyOn(axios, "get").mockResolvedValue({ data: tagList, status: 200 } as AxiosResponse);
+      vi.spyOn(folderUtils, "getTemplatesFolder").mockReturnValue(tmpDir);
+      vi.spyOn(generatorUtils, "getTemplateZipUrlByVersion").mockResolvedValue(
+        "fooUrl/templates@0.1.0/test.zip"
+      );
 
       const result = newGeneratorFlag
         ? await new DefaultTemplateGenerator().run(context, inputs, tmpDir, actionContext)
@@ -1139,11 +1149,11 @@ describe("render template", () => {
         telemetryProps: {},
       };
 
-      sandbox.stub(templateHelper, "useLocalTemplate").returns(false);
-      sandbox.replace(templateConfig, "localVersion", "0.1.0");
-      sandbox.stub(folderUtils, "getTemplatesFolder").returns(tmpDir);
-      sandbox.stub(generatorActionDeps, "getTemplateLatestVersion").resolves("0.1.1");
-      sandbox.stub(generatorActionDeps, "fetchZipFromUrl").resolves(zip);
+      vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(false);
+      (templateConfig as any).localVersion = "0.1.0";
+      vi.spyOn(folderUtils, "getTemplatesFolder").mockReturnValue(tmpDir);
+      vi.spyOn(generatorActionDeps, "getTemplateLatestVersion").mockResolvedValue("0.1.1");
+      vi.spyOn(generatorActionDeps, "fetchZipFromUrl").mockResolvedValue(zip);
 
       const result = newGeneratorFlag
         ? await new DefaultTemplateGenerator().run(context, inputs, tmpDir, actionContext)
@@ -1170,11 +1180,11 @@ describe("render template", () => {
       mockedEnvRestore = mockedEnv({
         TEAMSFX_TEMPLATE_PRERELEASE: "rc",
       });
-      sandbox.stub(templateHelper, "useLocalTemplate").returns(false);
-      sandbox.replace(templateConfig, "localVersion", "0.1.0");
-      sandbox.stub(folderUtils, "getTemplatesFolder").returns(tmpDir);
-      sandbox.stub(generatorActionDeps, "getTemplateLatestVersion").resolves("0.1.1");
-      sandbox.stub(generatorActionDeps, "fetchZipFromUrl").resolves(zip);
+      vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(false);
+      (templateConfig as any).localVersion = "0.1.0";
+      vi.spyOn(folderUtils, "getTemplatesFolder").mockReturnValue(tmpDir);
+      vi.spyOn(generatorActionDeps, "getTemplateLatestVersion").mockResolvedValue("0.1.1");
+      vi.spyOn(generatorActionDeps, "fetchZipFromUrl").mockResolvedValue(zip);
 
       const result = newGeneratorFlag
         ? await new DefaultTemplateGenerator().run(context, inputs, tmpDir, actionContext)
@@ -1208,7 +1218,7 @@ describe("render template", () => {
     });
 
     it("template variables when CEA enabled", async () => {
-      sandbox.stub(process, "env").value({ TEAMSFX_CEA_ENABLED: "true" });
+      process.env = { TEAMSFX_CEA_ENABLED: "true" } as any;
       const vars = newGeneratorFlag
         ? getTemplateReplaceMap(inputs)
         : Generator.getDefaultVariables("test");
@@ -1216,7 +1226,7 @@ describe("render template", () => {
     });
 
     it("template variables when CEA disabled", async () => {
-      sandbox.stub(process, "env").value({ TEAMSFX_CEA_ENABLED: "false" });
+      process.env = { TEAMSFX_CEA_ENABLED: "false" } as any;
       const vars = newGeneratorFlag
         ? getTemplateReplaceMap(inputs)
         : Generator.getDefaultVariables("test");
@@ -1224,7 +1234,7 @@ describe("render template", () => {
     });
 
     it("CEA works in M365 tag shows when CEA enabled", async () => {
-      sandbox.stub(process, "env").value({ TEAMSFX_CEA_ENABLED: "true" });
+      process.env = { TEAMSFX_CEA_ENABLED: "true" } as any;
       const descriptionAnswer = getLocalizedString(
         "core.createProjectQuestion.capability.customEngineAgent.description"
       );
@@ -1234,7 +1244,7 @@ describe("render template", () => {
     });
 
     it("CEA works in M365 tag doesn't show when CEA disabled", async () => {
-      sandbox.stub(process, "env").value({ TEAMSFX_CEA_ENABLED: "false" });
+      process.env = { TEAMSFX_CEA_ENABLED: "false" } as any;
       assert.equal(TeamsAgentCapabilityOptions.basicChatbot().description, undefined);
       assert.equal(TeamsAgentCapabilityOptions.customCopilotRag().description, undefined);
       // assert.equal(CustomCopilotCapabilityOptions.aiAgent().description, undefined);
@@ -1242,7 +1252,7 @@ describe("render template", () => {
 
     it("template name with language 'common' or 'none' uses full id as folderName", async () => {
       let folderName = "";
-      sandbox.stub(Generator, "generate").callsFake(async (context: GeneratorContext) => {
+      vi.spyOn(Generator, "generate").mockImplementation(async (context: GeneratorContext) => {
         folderName = context.name;
       });
 
@@ -1267,8 +1277,8 @@ describe("render template", () => {
 
     it("template name doesn't exist", async () => {
       let folderName = "";
-      sandbox.stub(templateMetadata, "getAllTemplatesOnPlatform").returns([]);
-      sandbox.stub(Generator, "generate").callsFake(async (context: GeneratorContext) => {
+      vi.spyOn(templateMetadata, "getAllTemplatesOnPlatform").mockReturnValue([]);
+      vi.spyOn(Generator, "generate").mockImplementation(async (context: GeneratorContext) => {
         folderName = context.name;
       });
 
@@ -1296,7 +1306,7 @@ describe("render template", () => {
 
 describe("Generate sample using download directory", () => {
   const tmpDir = path.join(__dirname, "tmp");
-  const sandbox = createSandbox();
+  const sandbox = vi;
   let mockedEnvRestore = mockedEnv({});
   const tools = new MockTools();
   setTools(tools);
@@ -1305,11 +1315,11 @@ describe("Generate sample using download directory", () => {
     mockedEnvRestore = mockedEnv({
       DOWNLOAD_DIRECTORY: "true",
     });
-    sandbox.stub(generatorActionDeps, "getSampleInfoFromName").resolves(mockedSampleInfo);
+    vi.spyOn(generatorActionDeps, "getSampleInfoFromName").mockResolvedValue(mockedSampleInfo);
   });
 
   afterEach(async () => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     mockedEnvRestore();
     if (await fs.pathExists(tmpDir)) {
       await fs.remove(tmpDir);
@@ -1317,19 +1327,19 @@ describe("Generate sample using download directory", () => {
   });
 
   it("generate sample using download directory", async () => {
-    const axiosStub = sandbox.stub(axios, "get");
+    const axiosStub = vi.spyOn(axios, "get");
     const sampleName = "test";
     const mockFileName = "test.txt";
     const mockFileData = "test data";
     const fileInfo = [{ type: "file", path: `${sampleName}/${mockFileName}` }];
-    axiosStub.onFirstCall().resolves({ status: 200, data: { tree: fileInfo } });
-    axiosStub.onSecondCall().resolves({ status: 200, data: mockFileData });
+    axiosStub.mockResolvedValueOnce({ status: 200, data: { tree: fileInfo } });
+    axiosStub.mockResolvedValueOnce({ status: 200, data: mockFileData });
     const result = await Generator.generateSample(ctx, tmpDir, "test");
     assert.isTrue(result.isOk());
   });
 
   it("download directory throw api limit error", async () => {
-    const axiosStub = sandbox.stub(axios, "get");
+    const axiosStub = vi.spyOn(axios, "get");
     const error = new Error("Network error");
     (error as any).isAxiosError = true;
     (error as any).response = {
@@ -1338,7 +1348,7 @@ describe("Generate sample using download directory", () => {
         "x-ratelimit-remaining": "0",
       },
     };
-    axiosStub.onSecondCall().rejects(error);
+    axiosStub.mockRejectedValueOnce(error);
     const result = await Generator.generateSample(ctx, tmpDir, "test");
     assert.isTrue(result.isErr());
     if (result.isErr()) {
@@ -1347,9 +1357,9 @@ describe("Generate sample using download directory", () => {
   });
 
   it("download directory throw network error", async () => {
-    const axiosStub = sandbox.stub(axios, "get");
-    axiosStub.onFirstCall().resolves({ status: 502 });
-    axiosStub.onSecondCall().resolves({ status: 502 });
+    const axiosStub = vi.spyOn(axios, "get");
+    axiosStub.mockResolvedValueOnce({ status: 502 });
+    axiosStub.mockResolvedValueOnce({ status: 502 });
     const result = await Generator.generateSample(ctx, tmpDir, "test");
     assert.isTrue(result.isErr());
     if (result.isErr()) {
@@ -1358,7 +1368,7 @@ describe("Generate sample using download directory", () => {
   });
 
   it("throw error if one file download failed", async () => {
-    const axiosStub = sandbox.stub(axios, "get");
+    const axiosStub = vi.spyOn(axios, "get");
     const sampleName = "test";
     const mockFileName = "test.txt";
     const mockFileData = "test data";
@@ -1367,11 +1377,11 @@ describe("Generate sample using download directory", () => {
       { type: "file", path: `${sampleName}/${mockFileName}_1` },
       { type: "file", path: `${sampleName}/${mockFileName}_2` },
     ];
-    axiosStub.onCall(0).resolves({ status: 200, data: { tree: fileInfo } });
-    axiosStub.onCall(1).resolves({ status: 200, data: mockFileData });
-    axiosStub.onCall(2).resolves({ status: 200, data: mockFileData });
-    axiosStub.onCall(3).resolves({ status: 502 });
-    axiosStub.onCall(4).resolves({ status: 502 });
+    axiosStub.mockResolvedValueOnce({ status: 200, data: { tree: fileInfo } });
+    axiosStub.mockResolvedValueOnce({ status: 200, data: mockFileData });
+    axiosStub.mockResolvedValueOnce({ status: 200, data: mockFileData });
+    axiosStub.mockResolvedValueOnce({ status: 502 });
+    axiosStub.mockResolvedValueOnce({ status: 502 });
     const result = await Generator.generateSample(ctx, tmpDir, "test");
     assert.isTrue(result.isErr());
     if (result.isErr()) {
@@ -1381,21 +1391,21 @@ describe("Generate sample using download directory", () => {
   });
 
   it("clean up if downloading failed", async () => {
-    const rmStub = sandbox.stub(fs, "remove").resolves();
-    const existsStub = sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(generatorActionDeps, "downloadDirectory").rejects();
+    const rmStub = vi.spyOn(fs, "remove").mockResolvedValue();
+    const existsStub = vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(generatorActionDeps, "downloadDirectory").mockRejectedValue(new Error());
     const result = await Generator.generateSample(ctx, tmpDir, "test");
     assert.isTrue(result.isErr());
     if (result.isErr()) {
       assert.equal(result.error.name, "DownloadSampleNetworkError");
     }
-    assert.isTrue(rmStub.calledOnce);
-    assert.isTrue(existsStub.calledOnce);
+    assert.isTrue(rmStub.mock.calls.length === 1);
+    assert.isTrue(existsStub.mock.calls.length === 1);
   });
 });
 
 describe("getTemplateReplaceMap", () => {
-  const sandbox = createSandbox();
+  const sandbox = vi;
   const inputs = {
     platform: Platform.VSCode,
     [QuestionNames.AppName]: randomAppName(),
@@ -1404,15 +1414,15 @@ describe("getTemplateReplaceMap", () => {
     [QuestionNames.TemplateName]: TemplateNames.DefaultBot,
   } as Inputs;
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   it("should return windows pathDelimiter", () => {
-    sandbox.stub(os, "platform").returns("win32");
+    vi.spyOn(os, "platform").mockReturnValue("win32");
     const map = getTemplateReplaceMap(inputs);
     assert.equal(map.pathDelimiter, ";");
   });
   it("should return windows pathDelimiter", () => {
-    sandbox.stub(os, "platform").returns("linux");
+    vi.spyOn(os, "platform").mockReturnValue("linux");
     const map = getTemplateReplaceMap(inputs);
     assert.equal(map.pathDelimiter, ":");
   });

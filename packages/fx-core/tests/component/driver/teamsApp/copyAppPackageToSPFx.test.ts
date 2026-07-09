@@ -1,17 +1,12 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-import * as sinon from "sinon";
-import chai from "chai";
-import fs from "fs-extra";
-import { copyAppPackageToSPFxDriver } from "../../../../src/component/driver/teamsApp/copyAppPackageToSPFx";
-import { copyAppPackageToSPFxArgs } from "../../../../src/component/driver/teamsApp/interfaces/CopyAppPackageToSPFxArgs";
-import { AppStudioError } from "../../../../src/component/driver/teamsApp/errors";
-import chaiAsPromised from "chai-as-promised";
 import AdmZip from "adm-zip";
+import fs from "fs-extra";
+import { expect, vi } from "vitest";
 import { Constants } from "../../../../src/component/driver/teamsApp/constants";
-
-chai.use(chaiAsPromised);
-const expect = chai.expect;
+import { copyAppPackageToSPFxDriver } from "../../../../src/component/driver/teamsApp/copyAppPackageToSPFx";
+import { AppStudioError } from "../../../../src/component/driver/teamsApp/errors";
+import { copyAppPackageToSPFxArgs } from "../../../../src/component/driver/teamsApp/interfaces/CopyAppPackageToSPFxArgs";
 
 describe("teamsApp/copyAppPackageToSPFx", async () => {
   const driver = new copyAppPackageToSPFxDriver();
@@ -22,17 +17,18 @@ describe("teamsApp/copyAppPackageToSPFx", async () => {
   const mockedDriverContext: any = { projectPath: "C://TeamsApp" };
 
   afterEach(() => {
-    sinon.restore();
+    vi.restoreAllMocks();
   });
 
   it("should successfully copy app package for SPFx", async () => {
-    sinon.stub(fs, "pathExists").resolves(true);
-    sinon.stub(fs, "copyFile");
-    sinon.stub(fs, "writeFile");
-    sinon.stub(fs, "readdir").resolves(["color.png", "outline.png"] as any);
-    sinon
-      .stub(copyAppPackageToSPFxDriver.prototype, "getIcons")
-      .resolves({ color: Buffer.from("color.png"), outline: Buffer.from("outline.png") });
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "copyFile").mockResolvedValue();
+    vi.spyOn(fs, "writeFile").mockResolvedValue();
+    vi.spyOn(fs, "readdir").mockResolvedValue(["color.png", "outline.png"] as any);
+    vi.spyOn(copyAppPackageToSPFxDriver.prototype, "getIcons").mockResolvedValue({
+      color: Buffer.from("color.png"),
+      outline: Buffer.from("outline.png"),
+    });
 
     const result = await driver.execute(args, mockedDriverContext);
     expect(result.result.isOk()).to.be.true;
@@ -40,7 +36,7 @@ describe("teamsApp/copyAppPackageToSPFx", async () => {
   });
 
   it("fail to copy app package for SPFx - FileNotFoundError", async () => {
-    sinon.stub(fs, "pathExists").resolves(false);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
 
     const result = await driver.execute(args, mockedDriverContext);
     expect(result.result.isErr()).to.be.true;
@@ -55,15 +51,15 @@ describe("teamsApp/copyAppPackageToSPFx", async () => {
     );
     zip.addFile("./resources/color.png", Buffer.from(""));
     zip.addFile("./resources/outline.png", Buffer.from(""));
-    sinon.stub(fs, "readFile").resolves(zip.toBuffer());
-    await expect(driver.getIcons(args.appPackagePath)).to.eventually.deep.equal({
+    vi.spyOn(fs, "readFile").mockResolvedValue(zip.toBuffer());
+    expect(await driver.getIcons(args.appPackagePath)).to.deep.equal({
       color: Buffer.from(""),
       outline: Buffer.from(""),
     });
   });
 
   it("fail to get icons - FileNotFoundError", async () => {
-    sinon.stub(fs, "readFile").resolves(undefined);
-    await expect(driver.getIcons(args.appPackagePath)).to.be.rejectedWith();
+    vi.spyOn(fs, "readFile").mockResolvedValue(undefined);
+    await expect(driver.getIcons(args.appPackagePath)).rejects.toThrow();
   });
 });

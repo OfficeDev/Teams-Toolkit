@@ -1,0 +1,37 @@
+{
+  "pipeline": "default",
+  "comment": "Render produces the pure parts: ai-plugin.json is rendered in full (URL-derived namespace + auth reference_id via the mcpNamespace/mcpAuthRef expr functions + the unconditional dynamic-discovery RemoteMCPServer runtime), and m365agents.yml is the v1.12 skeleton WITHOUT the auth step. The auth wiring is post-render injection, NOT render, for two reasons the PR makes explicit: (1) it is impure — probed oauth authorization/token URLs, DCR well-known auto-discovery that falls back to a placeholder + warning, and a v1.12 -> v1.13 schema bump on dcr/register; (2) it must run through the SAME code path as the `add` flow (mcpAuthScaffolder.injectMCPAuthActionToYml + ActionInjector + persistMCPAuthCredentialEnvVars) so create and add never drift. The step derives namespace / registration id from mcpServerUrl itself (deriveMCPServerNameFromUrl -> namespace `apigithubc`, id `MCP_DA_AUTH_ID_APIGITHUBC`, never `action_1`); passing them in would duplicate that derivation. Routed only when DT is on, so credential persistence to env files (includeCredentialRefs) is unconditional. See proposal §13.1.",
+  "steps": [
+    {
+      "step": "require-empty-target",
+      "comment": "Guards the create contract: the target dir has no colliding files so render writes every file. Possibly redundant if the engine already guarantees create scaffolds into a fresh empty dir — pending alignment with the v4 engine; not from PR #16067."
+    },
+    {
+      "step": "mcp-auth/inject-yml-action",
+      "when": "mcpServerType == 'remote' && authType != 'none'",
+      "with": {
+        "ymlPath": "m365agents.yml",
+        "authType": "{{authType}}",
+        "mcpServerUrl": "{{MCPForDAServerUrl}}",
+        "includeCredentialRefs": true
+      }
+    },
+    {
+      "step": "mcp-auth/persist-credential-env",
+      "when": "mcpServerType == 'remote' && (authType == 'oauth' || authType == 'entra-sso')",
+      "with": {
+        "authType": "{{authType}}",
+        "mcpServerUrl": "{{MCPForDAServerUrl}}"
+      }
+    },
+    {
+      "step": "mcp-local/materialize-servers",
+      "when": "mcpServerType == 'local'",
+      "with": {
+        "target": ".vscode/mcp.json",
+        "selected": "{{selectedLocalServers}}",
+        "catalog": "{{localServerCatalog}}"
+      }
+    }
+  ]
+}

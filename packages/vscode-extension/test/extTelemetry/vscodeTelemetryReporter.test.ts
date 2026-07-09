@@ -3,20 +3,19 @@
 
 // eslint-disable-next-line import-x/default
 import TelemetryReporter from "@vscode/extension-telemetry";
-import * as sinon from "sinon";
 import { VSCodeTelemetryReporter } from "../../src/telemetry/vscodeTelemetryReporter";
 import { MockTelemetryReporter } from "../mocks/mockTools";
 import { featureFlagManager } from "@microsoft/teamsfx-core";
+import { vi } from "vitest";
 
 const featureFlags = featureFlagManager.listEnabled().join(";") ?? "";
 
 describe("vscodeTelemetryReporter", () => {
   let tester: VSCodeTelemetryReporter;
-  const sandbox = sinon.createSandbox();
   const reporterStub = new MockTelemetryReporter();
-  let sendTelemetryEventSpy: sinon.SinonSpy;
-  let sendTelemetryExceptionSpy: sinon.SinonSpy;
-  let sendTelemetryErrorEventSpy: sinon.SinonSpy;
+  let sendTelemetryEventSpy: ReturnType<typeof vi.spyOn>;
+  let sendTelemetryExceptionSpy: ReturnType<typeof vi.spyOn>;
+  let sendTelemetryErrorEventSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     tester = new VSCodeTelemetryReporter(
@@ -30,14 +29,14 @@ describe("vscodeTelemetryReporter", () => {
     tester.addSharedProperty("host-type", "");
     tester.addSharedProperty("is-from-sample", "");
 
-    sendTelemetryEventSpy = sandbox.spy(reporterStub, "sendTelemetryEvent");
-    sendTelemetryExceptionSpy = sandbox.spy(reporterStub, "sendTelemetryException");
-    sendTelemetryErrorEventSpy = sandbox.spy(reporterStub, "sendTelemetryErrorEvent");
+    sendTelemetryEventSpy = vi.spyOn(reporterStub, "sendTelemetryEvent");
+    sendTelemetryExceptionSpy = vi.spyOn(reporterStub, "sendTelemetryException");
+    sendTelemetryErrorEventSpy = vi.spyOn(reporterStub, "sendTelemetryErrorEvent");
   });
 
   afterEach(() => {
     tester.dispose();
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("sendTelemetryEvent", () => {
@@ -47,10 +46,10 @@ describe("vscodeTelemetryReporter", () => {
       { numericMeasure: 123 }
     );
 
-    sinon.assert.calledOnceWithMatch(
-      sendTelemetryEventSpy,
+    expect(sendTelemetryEventSpy).toHaveBeenCalledTimes(1);
+    expect(sendTelemetryEventSpy).toHaveBeenCalledWith(
       "sampleEvent",
-      {
+      expect.objectContaining({
         stringProp: "some string",
         "project-id": "",
         "correlation-id": "",
@@ -58,7 +57,7 @@ describe("vscodeTelemetryReporter", () => {
         "programming-language": "",
         "host-type": "",
         "is-from-sample": "",
-      },
+      }),
       { numericMeasure: 123 }
     );
   });
@@ -74,10 +73,10 @@ describe("vscodeTelemetryReporter", () => {
       ["error-stack"]
     );
 
-    sinon.assert.calledOnceWithMatch(
-      sendTelemetryErrorEventSpy,
+    expect(sendTelemetryErrorEventSpy).toHaveBeenCalledTimes(1);
+    expect(sendTelemetryErrorEventSpy).toHaveBeenCalledWith(
       "sampleErrorEvent",
-      {
+      expect.objectContaining({
         stringProp: "some string",
         "error-stack": "some user stack trace at (<REDACTED: user-file-path>/fake_file:1:1)",
         "project-id": "",
@@ -86,7 +85,7 @@ describe("vscodeTelemetryReporter", () => {
         "programming-language": "",
         "host-type": "",
         "is-from-sample": "",
-      },
+      }),
       { numericMeasure: 123 }
     );
   });
@@ -103,10 +102,10 @@ describe("vscodeTelemetryReporter", () => {
       ["error-stack"]
     );
 
-    sinon.assert.calledOnceWithMatch(
-      sendTelemetryErrorEventSpy,
+    expect(sendTelemetryErrorEventSpy).toHaveBeenCalledTimes(1);
+    expect(sendTelemetryErrorEventSpy).toHaveBeenCalledWith(
       "sampleErrorEvent",
-      {
+      expect.objectContaining({
         stringProp: "some string",
         "error-stack": "some user stack trace at (<REDACTED: user-file-path>/fake_file:1:1)",
         "project-id": "",
@@ -115,7 +114,7 @@ describe("vscodeTelemetryReporter", () => {
         "programming-language": "",
         "host-type": "",
         "is-from-sample": "",
-      },
+      }),
       { numericMeasure: 123 }
     );
   });
@@ -124,10 +123,10 @@ describe("vscodeTelemetryReporter", () => {
     const error = new Error("error for test");
     tester.sendTelemetryException(error, { stringProp: "some string" }, { numericMeasure: 123 });
 
-    sinon.assert.calledOnceWithMatch(
-      sendTelemetryExceptionSpy,
+    expect(sendTelemetryExceptionSpy).toHaveBeenCalledTimes(1);
+    expect(sendTelemetryExceptionSpy).toHaveBeenCalledWith(
       error,
-      {
+      expect.objectContaining({
         stringProp: "some string",
         "project-id": "",
         "correlation-id": "",
@@ -135,7 +134,7 @@ describe("vscodeTelemetryReporter", () => {
         "programming-language": "",
         "host-type": "",
         "is-from-sample": "",
-      },
+      }),
       { numericMeasure: 123 }
     );
   });

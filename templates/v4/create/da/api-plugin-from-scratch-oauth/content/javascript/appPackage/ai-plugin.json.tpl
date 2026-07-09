@@ -1,0 +1,52 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/copilot/plugin/v2.4/schema.json",
+  "schema_version": "v2.4",
+  "namespace": "repairs",
+  "name_for_human": "{{appName}}${{APP_NAME_SUFFIX}}",
+  "description_for_human": "Track your repair records",
+  "description_for_model": "Plugin for searching a repair list, you can search by who's assigned to the repair.",
+  "functions": [
+    {
+      "name": "listRepairs",
+      "description": "Returns a list of repairs with their details and images",
+      "capabilities": {
+        "response_semantics": {
+          "data_path": "$.results",
+          "properties": {
+            "title": "$.title",
+            "subtitle": "$.description"
+          },
+          "static_template": {
+            "file": "adaptiveCards/listRepairs.json"
+          }
+        }
+      }
+    }
+  ],
+  "runtimes": [
+    {
+      "type": "OpenApi",
+      "auth": {
+        "type": "OAuthPluginVault",
+{{#MicrosoftEntra}}
+        "reference_id": "${{AADAUTHCODE_CONFIGURATION_ID}}"
+{{/MicrosoftEntra}}
+{{^MicrosoftEntra}}
+        "reference_id": "${{OAUTH2AUTHCODE_CONFIGURATION_ID}}"
+{{/MicrosoftEntra}}
+      },
+      "spec": {
+        "url": "apiSpecificationFile/repair.yml",
+        "progress_style": "ShowUsageWithInputAndOutput"
+      },
+      "run_for_functions": ["listRepairs"]
+    }
+  ],
+  "capabilities": {
+    "conversation_starters": [
+      {
+        "text": "List all repairs"
+      }
+    ]
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "$schema": "../../../schema/descriptor.schema.json",
+  "id": "da/api-plugin-from-scratch-oauth",
+  "name": "Declarative Agent with API Plugin using OAuth",
+  "languages": ["typescript", "javascript"],
+  "minEngineVersion": "5.20.0",
+  "spec": "docs/03-specs/scenarios/da/create-api-plugin-from-scratch-oauth.md",
+  "requiresNetwork": false,
+
+  "optionsSchema": {
+    "type": "object",
+    "properties": {
+      "apiAuth": { "enum": ["microsoft-entra", "oauth"] }
+    },
+    "additionalProperties": false
+  },
+
+  "replaceMap": [
+    { "var": "SafeProjectNameLowerCase", "expr": "safeProjectNameLowerCase(appName)" },
+    { "var": "MicrosoftEntra", "when": "apiAuth == 'microsoft-entra'", "value": "true" }
+  ]
+}

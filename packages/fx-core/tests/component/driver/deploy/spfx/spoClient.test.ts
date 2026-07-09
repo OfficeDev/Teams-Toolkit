@@ -1,25 +1,22 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
-import chai from "chai";
-import chaiAsPromised from "chai-as-promised";
-import sinon from "sinon";
+import { chai, vi } from "vitest";
 import { SPOClient } from "../../../../../src/component/driver/deploy/spfx/utility/spoClient";
 
-chai.use(chaiAsPromised);
 const expect = chai.expect;
 
 describe("SPFx SPO Client", async () => {
   afterEach(() => {
-    sinon.restore();
+    vi.restoreAllMocks();
   });
 
   it("get app catalog site", async () => {
-    sinon.stub(axios, "create").returns({
+    vi.spyOn(axios, "create").mockReturnValue({
       defaults: { headers: { common: {} } },
       interceptors: {
         request: {
-          use: sinon.stub(),
+          use: vi.fn(),
         },
       },
       get: function <T = any, R = AxiosResponse<T>>(
@@ -29,15 +26,15 @@ describe("SPFx SPO Client", async () => {
         return { data: { CorporateCatalogUrl: "fakeUrl" } } as any;
       },
     } as any);
-    await expect(SPOClient.getAppCatalogSite("")).to.eventually.equal("fakeUrl");
+    expect(await SPOClient.getAppCatalogSite("")).to.equal("fakeUrl");
   });
 
   it("get app catalog site - undefined", async () => {
-    sinon.stub(axios, "create").returns({
+    vi.spyOn(axios, "create").mockReturnValue({
       defaults: { headers: { common: {} } },
       interceptors: {
         request: {
-          use: sinon.stub(),
+          use: vi.fn(),
         },
       },
       get: function <T = any, R = AxiosResponse<T>>(
@@ -47,15 +44,15 @@ describe("SPFx SPO Client", async () => {
         return { data: {} } as any;
       },
     } as any);
-    await expect(SPOClient.getAppCatalogSite("")).to.eventually.equal(undefined);
+    expect(await SPOClient.getAppCatalogSite("")).to.equal(undefined);
   });
 
   it("upload app package", async () => {
-    sinon.stub(axios, "create").returns({
+    vi.spyOn(axios, "create").mockReturnValue({
       defaults: { headers: { common: {} } },
       interceptors: {
         request: {
-          use: sinon.stub(),
+          use: vi.fn(),
         },
       },
       post: function <T = any, R = AxiosResponse<T>>(
@@ -65,15 +62,15 @@ describe("SPFx SPO Client", async () => {
         return { data: { CorporateCatalogUrl: "fakeUrl" } } as any;
       },
     } as any);
-    await expect(SPOClient.uploadAppPackage("", "", Buffer.from(""))).not.rejected;
+    await SPOClient.uploadAppPackage("", "", Buffer.from(""));
   });
 
   it("deploy app package", async () => {
-    sinon.stub(axios, "create").returns({
+    vi.spyOn(axios, "create").mockReturnValue({
       defaults: { headers: { common: {} } },
       interceptors: {
         request: {
-          use: sinon.stub(),
+          use: vi.fn(),
         },
       },
       post: function <T = any, R = AxiosResponse<T>>(
@@ -83,15 +80,15 @@ describe("SPFx SPO Client", async () => {
         return { data: { CorporateCatalogUrl: "fakeUrl" } } as any;
       },
     } as any);
-    await expect(SPOClient.deployAppPackage("", "")).not.rejected;
+    await SPOClient.deployAppPackage("", "");
   });
 
   it("create app catelog", async () => {
-    sinon.stub(axios, "create").returns({
+    vi.spyOn(axios, "create").mockReturnValue({
       defaults: { headers: { common: {} } },
       interceptors: {
         request: {
-          use: sinon.stub(),
+          use: vi.fn(),
         },
       },
       post: function <T = any, R = AxiosResponse<T>>(
@@ -101,6 +98,6 @@ describe("SPFx SPO Client", async () => {
         return { data: { CorporateCatalogUrl: "fakeUrl" } } as any;
       },
     } as any);
-    await expect(SPOClient.createAppCatalog("")).not.rejected;
+    await SPOClient.createAppCatalog("");
   });
 });

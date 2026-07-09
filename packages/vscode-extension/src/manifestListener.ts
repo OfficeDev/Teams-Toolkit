@@ -18,7 +18,7 @@ import {
 import TreeViewManagerInstance from "./treeview/treeViewManager";
 import { ExtTelemetry } from "./telemetry/extTelemetry";
 import { TelemetryEvent, TelemetryProperty } from "./telemetry/extTelemetryEvents";
-import { isValidProjectV3 } from "@microsoft/teamsfx-core";
+import * as projectSettingsHelper from "@microsoft/teamsfx-core/build/common/projectSettingsHelper";
 
 function setAbortableTimeout(ms: number, signal: any) {
   return new Promise((resolve, reject) => {
@@ -43,7 +43,7 @@ export function manifestListener(): vscode.Disposable {
       try {
         if (
           workspaceUri &&
-          isValidProjectV3(workspaceUri.fsPath) &&
+          projectSettingsHelper.isValidProjectV3(workspaceUri.fsPath) &&
           event.fileName ===
             path.join(workspaceUri.fsPath, AppPackageFolderName, ManifestTemplateFileName)
         ) {

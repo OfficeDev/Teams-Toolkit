@@ -12,8 +12,8 @@ import { developerPortalScaffoldUtils } from "../../developerPortalScaffoldUtils
 import { ActionContext } from "../../middleware/actionExecutionMW";
 import { DefaultTemplateGenerator } from "../defaultGenerator";
 import { Generator } from "../generator";
-import { TemplateNames } from "../templates/templateNames";
 import { TemplateInfo } from "../templates/templateInfo";
+import { TemplateNames } from "../templates/templateNames";
 
 /**
  * TdpGenerator is used to generate code from TDP app definition.
@@ -38,8 +38,6 @@ export class TdpGenerator extends DefaultTemplateGenerator {
     TemplateNames.DeclarativeAgentWithActionFromExistingApiSpec,
     // CustomEngineAgentWithExistingApiSpecGenerator: parses API spec
     TemplateNames.CustomCopilotRagCustomApi,
-    // OfficeAddinGeneratorNew
-    TemplateNames.DeclarativeAgentMetaOSNewProject,
   ]);
 
   // activation condition

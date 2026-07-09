@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2.0,
       "step_retry_timeout": 0.0
     },
-    "total_steps": 23,
+    "total_steps": 22,
     "created_at": "2026-01-08T02:56:22.389128",
     "name": "Featrue Open DeveloperPortal Publish",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2026-01-08T02:56:22.389128",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_6d3e3b14",
+      "plan_r_0624_024810",
       "step_206e46f1",
       "step_1131885f",
       "step_46ef147d",
@@ -52,32 +52,6 @@
     "updated_at": "2026-01-08T10:07:29.283679"
   },
   "steps": [
-    {
-      "step_id": "step_6d3e3b14",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 391,
-        "y": 230
-      },
-      "description": "Click the \"Teams Agents and Apps\" option in the dropdown menu within the \"New Project\" dialog to select the application type \"Apps for Microsoft 365.\"",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:391:230:16:5:699495d149491649",
-        "dhash:391:230:96:5:8cc1a05bdb244945",
-        "dhash:391:230:0:10:c0c88094b2717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_6d3e3b14",
-      "created_at": "2026-01-08T10:04:34.860487",
-      "plan_id": "plan_b1cfb283"
-    },
     {
       "step_id": "step_206e46f1",
       "agent": "interaction",

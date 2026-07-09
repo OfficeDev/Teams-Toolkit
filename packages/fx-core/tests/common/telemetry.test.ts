@@ -1,17 +1,13 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { assert } from "chai";
-import sinon from "sinon";
+import { afterEach, assert } from "vitest";
 import { TelemetryProperty, telemetryUtils } from "../../src/common/telemetry";
 import { ScriptExecutionError } from "../../src/error/script";
-import { maskSecret } from "../../src/common/stringUtils";
 
 describe("telemetry", () => {
-  const sandbox = sinon.createSandbox();
-
   afterEach(async () => {
-    sandbox.restore();
+    // Cleanup if needed
   });
   describe("extractMethodNamesFromErrorStack", () => {
     it("happy path", async () => {

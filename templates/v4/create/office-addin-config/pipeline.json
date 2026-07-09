@@ -1,0 +1,15 @@
+{
+  "$schema": "../../schema/pipeline.schema.json",
+  "pipeline": "default",
+  "comment": "Render Toolkit Office Add-in configuration, then import an existing Office Add-in project without letting copied files overwrite the rendered configuration baseline.",
+  "steps": [
+    { "step": "require-empty-target" },
+    {
+      "step": "officeaddin/import-existing-project",
+      "with": {
+        "sourceFolder": "{{OfficeAddinFolder}}",
+        "manifestPath": "{{OfficeAddinManifest}}"
+      }
+    }
+  ]
+}

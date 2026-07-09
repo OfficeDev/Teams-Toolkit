@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 14,
+    "total_steps": 12,
     "created_at": "2026-01-20T09:13:08.158166",
     "name": "Feature Newproject In Exist Project",
     "description": {
@@ -20,14 +20,14 @@
     "generated_at": "2026-01-20T09:13:08.158166",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_791fdae9",
+      "plan_r_0624_024810",
       "step_bdf94d9e",
       "step_fd9170e4",
       "step_22221324",
       "plan_r_0928_014459",
       "step_e33e7b02",
       "step_3f0c2883",
-      "step_3d56209d",
+      "plan_r_0624_024810",
       "step_1aa5dab3",
       "step_537589bd",
       "step_1a945bf6",
@@ -40,32 +40,6 @@
     "updated_at": "2026-01-21T03:19:06.754015"
   },
   "steps": [
-    {
-      "step_id": "step_791fdae9",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 361,
-        "y": 229
-      },
-      "description": "Click on the \"Declarative Agent\" option within the \"New Project\" dropdown menu to create an agent using instructions and actions.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:361:229:16:5:534cd35ac8d2f328",
-        "dhash:361:229:96:5:959834d3d22706c6",
-        "dhash:361:229:0:10:c8c88094b0717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_791fdae9",
-      "created_at": "2026-01-21T03:10:10.104175",
-      "plan_id": "plan_004c8b8e"
-    },
     {
       "step_id": "step_bdf94d9e",
       "agent": "interaction",
@@ -194,32 +168,6 @@
       "tags": [],
       "screenshot": "step_3f0c2883",
       "created_at": "2026-01-21T03:10:10.256072",
-      "plan_id": "plan_004c8b8e"
-    },
-    {
-      "step_id": "step_3d56209d",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 349,
-        "y": 203
-      },
-      "description": "Click the \"Teams Agents and Apps – Apps for Microsoft 365\" option in the \"New Project\" dialog within the Microsoft Visual Studio Code extension for Microsoft 365 Agents. The interaction is marked by a red crosshair on the targeted menu item.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:349:203:16:5:00242a93c973727a",
-        "dhash:349:203:96:5:a968ce4c1a696d82",
-        "dhash:349:203:0:10:c8c84823a32a2421"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_3d56209d",
-      "created_at": "2026-01-21T03:10:10.278098",
       "plan_id": "plan_004c8b8e"
     },
     {

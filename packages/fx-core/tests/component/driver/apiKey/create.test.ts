@@ -3,12 +3,10 @@
 
 import { SpecParser } from "@microsoft/m365-spec-parser";
 import { err, SystemError } from "@microsoft/teamsfx-api";
-import * as chai from "chai";
-import chaiAsPromised from "chai-as-promised";
 import mockedEnv, { RestoreFn } from "mocked-env";
-import * as sinon from "sinon";
+import { expect, vi } from "vitest";
 import { teamsGraphClient } from "../../../../src/client/teamsGraphClient";
-import { featureFlagManager, FeatureFlags } from "../../../../src/common/featureFlags";
+import { featureFlagManager } from "../../../../src/common/featureFlags";
 import { setTools } from "../../../../src/common/globalVars";
 import { CreateApiKeyDriver } from "../../../../src/component/driver/apiKey/create";
 import {
@@ -17,9 +15,6 @@ import {
 } from "../../../../src/component/driver/teamsApp/interfaces/ApiSecretRegistration";
 import { MockedAzureAccountProvider, MockedM365Provider } from "../../../core/utils";
 import { MockedLogProvider, MockedUserInteraction } from "../../../plugins/solution/util";
-
-chai.use(chaiAsPromised);
-const expect = chai.expect;
 
 const outputKeys = {
   registrationId: "REGISTRATION_ID",
@@ -48,7 +43,7 @@ describe("CreateApiKeyDriver", () => {
   });
 
   afterEach(() => {
-    sinon.restore();
+    vi.restoreAllMocks();
     if (envRestore) {
       envRestore();
       envRestore = undefined;
@@ -56,13 +51,13 @@ describe("CreateApiKeyDriver", () => {
   });
 
   it("happy path: create registraionid, read domain from api spec, clientSecret from input", async () => {
-    sinon.stub(teamsGraphClient, "createApiKeyRegistration").resolves({
+    vi.spyOn(teamsGraphClient, "createApiKeyRegistration").mockResolvedValue({
       id: "mockedRegistrationId",
       clientSecrets: [],
       targetUrlsShouldStartWith: [],
       applicableToApps: ApiSecretRegistrationAppType.SpecificApp,
     });
-    sinon.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",
@@ -84,10 +79,7 @@ describe("CreateApiKeyDriver", () => {
       validAPICount: 1,
     });
 
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
 
     const args: any = {
       name: "test",
@@ -104,7 +96,7 @@ describe("CreateApiKeyDriver", () => {
   });
 
   it("happy path: create registraionid, read domain from baseURL, clientSecret from input", async () => {
-    sinon.stub(teamsGraphClient, "createApiKeyRegistration").resolves({
+    vi.spyOn(teamsGraphClient, "createApiKeyRegistration").mockResolvedValue({
       id: "mockedRegistrationId",
       clientSecrets: [],
       targetUrlsShouldStartWith: [],
@@ -127,7 +119,7 @@ describe("CreateApiKeyDriver", () => {
   });
 
   it("should throw error if baseURL is not a valid https URL", async () => {
-    sinon.stub(teamsGraphClient, "createApiKeyRegistration").resolves({
+    vi.spyOn(teamsGraphClient, "createApiKeyRegistration").mockResolvedValue({
       id: "mockedRegistrationId",
       clientSecrets: [],
       targetUrlsShouldStartWith: [],
@@ -158,7 +150,7 @@ describe("CreateApiKeyDriver", () => {
   });
 
   it("should throw error if baseURL and apiSpecPath are both missing", async () => {
-    sinon.stub(teamsGraphClient, "createApiKeyRegistration").resolves({
+    vi.spyOn(teamsGraphClient, "createApiKeyRegistration").mockResolvedValue({
       id: "mockedRegistrationId",
       clientSecrets: [],
       targetUrlsShouldStartWith: [],
@@ -180,18 +172,15 @@ describe("CreateApiKeyDriver", () => {
   });
 
   it("happy path: create registraionid, read domain from api spec, clientSecret and secondaryClientSecret from input", async () => {
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon.stub(teamsGraphClient, "createApiKeyRegistration").resolves({
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+    vi.spyOn(teamsGraphClient, "createApiKeyRegistration").mockResolvedValue({
       id: "mockedRegistrationId",
       clientSecrets: [],
       targetUrlsShouldStartWith: [],
       applicableToApps: ApiSecretRegistrationAppType.SpecificApp,
     });
 
-    sinon.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",
@@ -228,18 +217,15 @@ describe("CreateApiKeyDriver", () => {
   });
 
   it("happy path: create registraionid and read domain from env and secret from env", async () => {
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon.stub(teamsGraphClient, "createApiKeyRegistration").resolves({
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+    vi.spyOn(teamsGraphClient, "createApiKeyRegistration").mockResolvedValue({
       id: "mockedRegistrationId",
       clientSecrets: [],
       targetUrlsShouldStartWith: [],
       applicableToApps: ApiSecretRegistrationAppType.SpecificApp,
     });
 
-    sinon.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",
@@ -277,7 +263,7 @@ describe("CreateApiKeyDriver", () => {
   });
 
   it("happy path: registration id exists in env", async () => {
-    sinon.stub(teamsGraphClient, "getApiKeyRegistrationById").resolves({
+    vi.spyOn(teamsGraphClient, "getApiKeyRegistrationById").mockResolvedValue({
       id: "mockedRegistrationId",
       clientSecrets: [],
       targetUrlsShouldStartWith: [],
@@ -302,23 +288,22 @@ describe("CreateApiKeyDriver", () => {
   });
 
   it("happy path: create registrationid, read applicableToApps and targetAudience from input", async () => {
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon.stub(teamsGraphClient, "createApiKeyRegistration").callsFake(async (token, apiKey) => {
-      expect(apiKey.targetAudience).equals(ApiSecretRegistrationTargetAudience.HomeTenant);
-      expect(apiKey.specificAppId).equals("mockedAppId");
-      expect(apiKey.applicableToApps).equals(ApiSecretRegistrationAppType.SpecificApp);
-      return {
-        id: "mockedRegistrationId",
-        clientSecrets: [],
-        targetUrlsShouldStartWith: [],
-        applicableToApps: ApiSecretRegistrationAppType.AnyApp,
-        targetAudience: ApiSecretRegistrationTargetAudience.AnyTenant,
-      };
-    });
-    sinon.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+    vi.spyOn(teamsGraphClient, "createApiKeyRegistration").mockImplementation(
+      async (token, apiKey) => {
+        expect(apiKey.targetAudience).equals(ApiSecretRegistrationTargetAudience.HomeTenant);
+        expect(apiKey.specificAppId).equals("mockedAppId");
+        expect(apiKey.applicableToApps).equals(ApiSecretRegistrationAppType.SpecificApp);
+        return {
+          id: "mockedRegistrationId",
+          clientSecrets: [],
+          targetUrlsShouldStartWith: [],
+          applicableToApps: ApiSecretRegistrationAppType.AnyApp,
+          targetAudience: ApiSecretRegistrationTargetAudience.AnyTenant,
+        };
+      }
+    );
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",
@@ -356,17 +341,14 @@ describe("CreateApiKeyDriver", () => {
   });
 
   it("happy path: create registraionid, read domain from api spec, clientSecret from input with invalid api", async () => {
-    sinon.stub(teamsGraphClient, "createApiKeyRegistration").resolves({
+    vi.spyOn(teamsGraphClient, "createApiKeyRegistration").mockResolvedValue({
       id: "mockedRegistrationId",
       clientSecrets: [],
       targetUrlsShouldStartWith: [],
       applicableToApps: ApiSecretRegistrationAppType.SpecificApp,
     });
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",
@@ -416,9 +398,9 @@ describe("CreateApiKeyDriver", () => {
   });
 
   it("should throw error when failed to get app studio token", async () => {
-    sinon
-      .stub(MockedM365Provider.prototype, "getAccessToken")
-      .resolves(err(new SystemError("source", "name", "message")));
+    vi.spyOn(MockedM365Provider.prototype, "getAccessToken").mockResolvedValue(
+      err(new SystemError("source", "name", "message"))
+    );
     const args: any = {
       name: "test",
       appId: "mockedAppId",
@@ -433,9 +415,9 @@ describe("CreateApiKeyDriver", () => {
   });
 
   it("should show warning if registration id exists and failed to get API key", async () => {
-    sinon
-      .stub(teamsGraphClient, "getApiKeyRegistrationById")
-      .throws(new SystemError("source", "name", "message"));
+    vi.spyOn(teamsGraphClient, "getApiKeyRegistrationById").mockImplementation(() => {
+      throw new SystemError("source", "name", "message");
+    });
 
     const args: any = {
       name: "test",
@@ -556,11 +538,8 @@ describe("CreateApiKeyDriver", () => {
       primaryClientSecret: "mockedSecret",
       apiSpecPath: "mockedPath",
     };
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",
@@ -609,13 +588,12 @@ describe("CreateApiKeyDriver", () => {
       primaryClientSecret: "mockedSecret",
       apiSpecPath: "mockedPath",
     };
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon
-      .stub(SpecParser.prototype, "list")
-      .resolves({ APIs: [], validAPICount: 0, allAPICount: 1 });
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
+      APIs: [],
+      validAPICount: 0,
+      allAPICount: 1,
+    });
     const result = await createApiKeyDriver.execute(args, mockedDriverContext, outputEnvVarNames);
     expect(result.result.isErr()).to.be.true;
     if (result.result.isErr()) {
@@ -630,11 +608,8 @@ describe("CreateApiKeyDriver", () => {
       primaryClientSecret: "mockedSecret",
       apiSpecPath: "mockedPath",
     };
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",
@@ -661,11 +636,8 @@ describe("CreateApiKeyDriver", () => {
       primaryClientSecret: "mockedSecret",
       apiSpecPath: "mockedPath",
     };
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api1",
@@ -728,11 +700,8 @@ describe("CreateApiKeyDriver", () => {
       primaryClientSecret: "mockedSecret",
       apiSpecPath: "mockedPath",
     };
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api1",
@@ -789,15 +758,12 @@ describe("CreateApiKeyDriver", () => {
   });
 
   it("should throw error if failed to create API key", async () => {
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon
-      .stub(teamsGraphClient, "createApiKeyRegistration")
-      .throws(new SystemError("source", "name", "message"));
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+    vi.spyOn(teamsGraphClient, "createApiKeyRegistration").mockImplementation(() => {
+      throw new SystemError("source", "name", "message");
+    });
 
-    sinon.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",
@@ -832,7 +798,9 @@ describe("CreateApiKeyDriver", () => {
   });
 
   it("should throw unhandled error if error is not SystemError or UserError", async () => {
-    sinon.stub(MockedM365Provider.prototype, "getAccessToken").throws(new Error("unhandled error"));
+    vi.spyOn(MockedM365Provider.prototype, "getAccessToken").mockImplementation(() => {
+      throw new Error("unhandled error");
+    });
     const args: any = {
       name: "test",
       appId: "mockedAppId",
@@ -847,14 +815,14 @@ describe("CreateApiKeyDriver", () => {
   });
 
   it("should throw error if invalid applicableToApps and targetAudience", async () => {
-    sinon.stub(teamsGraphClient, "createApiKeyRegistration").resolves({
+    vi.spyOn(teamsGraphClient, "createApiKeyRegistration").mockResolvedValue({
       id: "mockedRegistrationId",
       clientSecrets: [],
       targetUrlsShouldStartWith: [],
       applicableToApps: ApiSecretRegistrationAppType.AnyApp,
       targetAudience: ApiSecretRegistrationTargetAudience.AnyTenant,
     });
-    sinon.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",

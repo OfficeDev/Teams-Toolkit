@@ -1,0 +1,5 @@
+{
+  "$schema": "../../schema/pipeline.schema.json",
+  "pipeline": "default",
+  "steps": [{ "step": "require-empty-target" }]
+}

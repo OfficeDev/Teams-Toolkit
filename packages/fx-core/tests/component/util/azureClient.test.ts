@@ -1,24 +1,20 @@
-import chai from "chai";
-import chaiAsPromised from "chai-as-promised";
-import * as sinon from "sinon";
 import { azureClientHelper } from "../../../src/component/utils/azureClient";
 import { InvalidAzureCredentialError } from "../../../src/error";
 import { MockedAzureAccountProvider } from "../../core/utils";
-
-chai.use(chaiAsPromised);
+import { chai, vi } from "vitest";
 
 describe("azureClient test", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   beforeEach(async () => {});
 
   afterEach(async () => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("getChallengeHandler returns invalid token", async () => {
     const tokenProvider = new MockedAzureAccountProvider();
-    sandbox.stub(tokenProvider, "getIdentityCredentialAsync").resolves(undefined);
+    vi.spyOn(tokenProvider, "getIdentityCredentialAsync").mockResolvedValue(undefined);
 
     const getTokenForChallenge = azureClientHelper.getChallengeHandler(tokenProvider);
     try {
@@ -34,7 +30,7 @@ describe("azureClient test", () => {
 
   it("getChallengeHandler happy pass", async () => {
     const tokenProvider = new MockedAzureAccountProvider();
-    sandbox.stub(tokenProvider, "getIdentityCredentialAsync").resolves({
+    vi.spyOn(tokenProvider, "getIdentityCredentialAsync").mockResolvedValue({
       getToken: async function (scopes: string | string[]) {
         return { token: "fake-token", expiresOnTimestamp: 0 };
       },

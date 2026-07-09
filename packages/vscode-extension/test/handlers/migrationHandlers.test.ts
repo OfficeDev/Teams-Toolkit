@@ -1,7 +1,7 @@
 import { err, ok, UserError } from "@microsoft/teamsfx-api";
 import { ProgressHandler } from "@microsoft/vscode-ui";
-import * as sinon from "sinon";
-import { assert } from "chai";
+import { assert, vi } from "vitest";
+import * as vscode from "vscode";
 import VsCodeLogInstance from "../../src/commonlib/log";
 import * as errorCommon from "../../src/error/common";
 import {
@@ -12,36 +12,28 @@ import { TeamsAppMigrationHandler } from "../../src/migration/migrationHandler";
 import * as vsc_ui from "../../src/qm/vsc_ui";
 import { ExtTelemetry } from "../../src/telemetry/extTelemetry";
 import * as localizeUtils from "../../src/utils/localizeUtils";
+import { mockValue } from "../mocks/vitestMockUtils";
 
 describe("Migration handlers", () => {
-  const sandbox = sinon.createSandbox();
-
   beforeEach(() => {
-    sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-  });
-
-  afterEach(() => {
-    sandbox.restore();
+    vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+    mockValue(vsc_ui, "VS_CODE_UI", new vsc_ui.VsCodeUI(<vscode.ExtensionContext>{}));
   });
 
   describe("migrateTeamsTabAppHandler", () => {
-    const sandbox = sinon.createSandbox();
-
-    afterEach(() => {
-      sandbox.restore();
-    });
-
     it("happy path", async () => {
-      sandbox.stub(localizeUtils, "localize").callsFake((key: string) => key);
+      vi.spyOn(localizeUtils, "localize").mockImplementation((key: string) => key);
       const progressHandler = new ProgressHandler("title", 1);
-      sandbox.stub(vsc_ui, "VS_CODE_UI").value({
-        showMessage: () => Promise.resolve(ok("teamstoolkit.migrateTeamsTabApp.upgrade")),
-        selectFolder: () => Promise.resolve(ok({ type: "success", result: "test" })),
-        createProgressBar: () => progressHandler,
-      });
-      sandbox.stub(VsCodeLogInstance, "info").returns();
-      sandbox.stub(TeamsAppMigrationHandler.prototype, "updatePackageJson").resolves(ok(true));
-      sandbox.stub(TeamsAppMigrationHandler.prototype, "updateCodes").resolves(ok([]));
+      vi.spyOn(vsc_ui.VS_CODE_UI, "showMessage").mockResolvedValue(
+        ok("teamstoolkit.migrateTeamsTabApp.upgrade")
+      );
+      vi.spyOn(vsc_ui.VS_CODE_UI, "selectFolder").mockResolvedValue(
+        ok({ type: "success", result: "test" })
+      );
+      vi.spyOn(vsc_ui.VS_CODE_UI, "createProgressBar").mockReturnValue(progressHandler);
+      vi.spyOn(VsCodeLogInstance, "info").mockReturnValue();
+      vi.spyOn(TeamsAppMigrationHandler.prototype, "updatePackageJson").mockResolvedValue(ok(true));
+      vi.spyOn(TeamsAppMigrationHandler.prototype, "updateCodes").mockResolvedValue(ok([]));
 
       const result = await migrateTeamsTabAppHandler();
 
@@ -49,19 +41,21 @@ describe("Migration handlers", () => {
     });
 
     it("happy path: failed files", async () => {
-      sandbox.stub(localizeUtils, "localize").callsFake((key: string) => key);
+      vi.spyOn(localizeUtils, "localize").mockImplementation((key: string) => key);
       const progressHandler = new ProgressHandler("title", 1);
-      sandbox.stub(vsc_ui, "VS_CODE_UI").value({
-        showMessage: () => Promise.resolve(ok("teamstoolkit.migrateTeamsTabApp.upgrade")),
-        selectFolder: () => Promise.resolve(ok({ type: "success", result: "test" })),
-        createProgressBar: () => progressHandler,
-      });
-      sandbox.stub(VsCodeLogInstance, "info").returns();
-      const warningStub = sandbox.stub(VsCodeLogInstance, "warning");
-      sandbox.stub(TeamsAppMigrationHandler.prototype, "updatePackageJson").resolves(ok(true));
-      sandbox
-        .stub(TeamsAppMigrationHandler.prototype, "updateCodes")
-        .resolves(ok(["test1", "test2"]));
+      vi.spyOn(vsc_ui.VS_CODE_UI, "showMessage").mockResolvedValue(
+        ok("teamstoolkit.migrateTeamsTabApp.upgrade")
+      );
+      vi.spyOn(vsc_ui.VS_CODE_UI, "selectFolder").mockResolvedValue(
+        ok({ type: "success", result: "test" })
+      );
+      vi.spyOn(vsc_ui.VS_CODE_UI, "createProgressBar").mockReturnValue(progressHandler);
+      vi.spyOn(VsCodeLogInstance, "info").mockReturnValue();
+      const warningStub = vi.spyOn(VsCodeLogInstance, "warning");
+      vi.spyOn(TeamsAppMigrationHandler.prototype, "updatePackageJson").mockResolvedValue(ok(true));
+      vi.spyOn(TeamsAppMigrationHandler.prototype, "updateCodes").mockResolvedValue(
+        ok(["test1", "test2"])
+      );
 
       const result = await migrateTeamsTabAppHandler();
 
@@ -70,19 +64,21 @@ describe("Migration handlers", () => {
     });
 
     it("error", async () => {
-      const sendTelemetryErrorEventStub = sandbox.stub(ExtTelemetry, "sendTelemetryErrorEvent");
-      sandbox.stub(localizeUtils, "localize").callsFake((key: string) => key);
+      const sendTelemetryErrorEventStub = vi.spyOn(ExtTelemetry, "sendTelemetryErrorEvent");
+      vi.spyOn(localizeUtils, "localize").mockImplementation((key: string) => key);
       const progressHandler = new ProgressHandler("title", 1);
-      sandbox.stub(vsc_ui, "VS_CODE_UI").value({
-        showMessage: () => Promise.resolve(ok("teamstoolkit.migrateTeamsTabApp.upgrade")),
-        selectFolder: () => Promise.resolve(ok({ type: "success", result: "test" })),
-        createProgressBar: () => progressHandler,
-      });
-      sandbox.stub(VsCodeLogInstance, "info").returns();
-      sandbox.stub(TeamsAppMigrationHandler.prototype, "updatePackageJson").resolves(ok(true));
-      sandbox
-        .stub(TeamsAppMigrationHandler.prototype, "updateCodes")
-        .resolves(err({ foo: "bar" } as any));
+      vi.spyOn(vsc_ui.VS_CODE_UI, "showMessage").mockResolvedValue(
+        ok("teamstoolkit.migrateTeamsTabApp.upgrade")
+      );
+      vi.spyOn(vsc_ui.VS_CODE_UI, "selectFolder").mockResolvedValue(
+        ok({ type: "success", result: "test" })
+      );
+      vi.spyOn(vsc_ui.VS_CODE_UI, "createProgressBar").mockReturnValue(progressHandler);
+      vi.spyOn(VsCodeLogInstance, "info").mockReturnValue();
+      vi.spyOn(TeamsAppMigrationHandler.prototype, "updatePackageJson").mockResolvedValue(ok(true));
+      vi.spyOn(TeamsAppMigrationHandler.prototype, "updateCodes").mockResolvedValue(
+        err({ foo: "bar" } as any)
+      );
 
       const result = await migrateTeamsTabAppHandler();
 
@@ -91,12 +87,12 @@ describe("Migration handlers", () => {
     });
 
     it("user cancel", async () => {
-      sandbox.stub(localizeUtils, "localize").callsFake((key: string) => key);
-      const sendTelemetryErrorEventStub = sandbox.stub(ExtTelemetry, "sendTelemetryErrorEvent");
-      sandbox.stub(vsc_ui, "VS_CODE_UI").value({
-        showMessage: () => Promise.resolve(ok("teamstoolkit.migrateTeamsTabApp.upgrade")),
-        selectFolder: () => Promise.resolve(ok({ type: "skip" })),
-      });
+      vi.spyOn(localizeUtils, "localize").mockImplementation((key: string) => key);
+      const sendTelemetryErrorEventStub = vi.spyOn(ExtTelemetry, "sendTelemetryErrorEvent");
+      vi.spyOn(vsc_ui.VS_CODE_UI, "showMessage").mockResolvedValue(
+        ok("teamstoolkit.migrateTeamsTabApp.upgrade")
+      );
+      vi.spyOn(vsc_ui.VS_CODE_UI, "selectFolder").mockResolvedValue(ok({ type: "skip" }));
 
       const result = await migrateTeamsTabAppHandler();
 
@@ -105,11 +101,9 @@ describe("Migration handlers", () => {
     });
 
     it("user cancel: skip folder selection", async () => {
-      sandbox.stub(localizeUtils, "localize").callsFake((key: string) => key);
-      const sendTelemetryErrorEventStub = sandbox.stub(ExtTelemetry, "sendTelemetryErrorEvent");
-      sandbox.stub(vsc_ui, "VS_CODE_UI").value({
-        showMessage: () => Promise.resolve(ok("cancel")),
-      });
+      vi.spyOn(localizeUtils, "localize").mockImplementation((key: string) => key);
+      const sendTelemetryErrorEventStub = vi.spyOn(ExtTelemetry, "sendTelemetryErrorEvent");
+      vi.spyOn(vsc_ui.VS_CODE_UI, "showMessage").mockResolvedValue(ok("cancel"));
 
       const result = await migrateTeamsTabAppHandler();
 
@@ -118,16 +112,20 @@ describe("Migration handlers", () => {
     });
 
     it("no change in package.json", async () => {
-      sandbox.stub(localizeUtils, "localize").callsFake((key: string) => key);
+      vi.spyOn(localizeUtils, "localize").mockImplementation((key: string) => key);
       const progressHandler = new ProgressHandler("title", 1);
-      sandbox.stub(vsc_ui, "VS_CODE_UI").value({
-        showMessage: () => Promise.resolve(ok("teamstoolkit.migrateTeamsTabApp.upgrade")),
-        selectFolder: () => Promise.resolve(ok({ type: "success", result: "test" })),
-        createProgressBar: () => progressHandler,
-      });
-      sandbox.stub(VsCodeLogInstance, "info").returns();
-      sandbox.stub(VsCodeLogInstance, "warning").returns();
-      sandbox.stub(TeamsAppMigrationHandler.prototype, "updatePackageJson").resolves(ok(false));
+      vi.spyOn(vsc_ui.VS_CODE_UI, "showMessage").mockResolvedValue(
+        ok("teamstoolkit.migrateTeamsTabApp.upgrade")
+      );
+      vi.spyOn(vsc_ui.VS_CODE_UI, "selectFolder").mockResolvedValue(
+        ok({ type: "success", result: "test" })
+      );
+      vi.spyOn(vsc_ui.VS_CODE_UI, "createProgressBar").mockReturnValue(progressHandler);
+      vi.spyOn(VsCodeLogInstance, "info").mockReturnValue();
+      vi.spyOn(VsCodeLogInstance, "warning").mockReturnValue();
+      vi.spyOn(TeamsAppMigrationHandler.prototype, "updatePackageJson").mockResolvedValue(
+        ok(false)
+      );
 
       const result = await migrateTeamsTabAppHandler();
 
@@ -136,22 +134,18 @@ describe("Migration handlers", () => {
   });
 
   describe("migrateTeamsManifestHandler", () => {
-    const sandbox = sinon.createSandbox();
-
-    afterEach(() => {
-      sandbox.restore();
-    });
-
     it("happy path", async () => {
-      sandbox.stub(localizeUtils, "localize").callsFake((key: string) => key);
+      vi.spyOn(localizeUtils, "localize").mockImplementation((key: string) => key);
       const progressHandler = new ProgressHandler("title", 1);
-      sandbox.stub(vsc_ui, "VS_CODE_UI").value({
-        showMessage: () => Promise.resolve(ok("teamstoolkit.migrateTeamsManifest.upgrade")),
-        selectFile: () => Promise.resolve(ok({ type: "success", result: "test" })),
-        createProgressBar: () => progressHandler,
-      });
-      sandbox.stub(VsCodeLogInstance, "info").returns();
-      sandbox.stub(TeamsAppMigrationHandler.prototype, "updateManifest").resolves(ok(null));
+      vi.spyOn(vsc_ui.VS_CODE_UI, "showMessage").mockResolvedValue(
+        ok("teamstoolkit.migrateTeamsManifest.upgrade")
+      );
+      vi.spyOn(vsc_ui.VS_CODE_UI, "selectFile").mockResolvedValue(
+        ok({ type: "success", result: "test" })
+      );
+      vi.spyOn(vsc_ui.VS_CODE_UI, "createProgressBar").mockReturnValue(progressHandler);
+      vi.spyOn(VsCodeLogInstance, "info").mockReturnValue();
+      vi.spyOn(TeamsAppMigrationHandler.prototype, "updateManifest").mockResolvedValue(ok(null));
 
       const result = await migrateTeamsManifestHandler();
 
@@ -159,16 +153,16 @@ describe("Migration handlers", () => {
     });
 
     it("user cancel: skip file selection", async () => {
-      const sendTelemetryErrorEventStub = sandbox.stub(ExtTelemetry, "sendTelemetryErrorEvent");
-      sandbox.stub(localizeUtils, "localize").callsFake((key: string) => key);
+      const sendTelemetryErrorEventStub = vi.spyOn(ExtTelemetry, "sendTelemetryErrorEvent");
+      vi.spyOn(localizeUtils, "localize").mockImplementation((key: string) => key);
       const progressHandler = new ProgressHandler("title", 1);
-      sandbox.stub(vsc_ui, "VS_CODE_UI").value({
-        showMessage: () => Promise.resolve(ok("teamstoolkit.migrateTeamsManifest.upgrade")),
-        selectFile: () => Promise.resolve(ok({ type: "skip" })),
-        createProgressBar: () => progressHandler,
-      });
-      sandbox.stub(VsCodeLogInstance, "info").returns();
-      sandbox.stub(TeamsAppMigrationHandler.prototype, "updateManifest").resolves(ok(null));
+      vi.spyOn(vsc_ui.VS_CODE_UI, "showMessage").mockResolvedValue(
+        ok("teamstoolkit.migrateTeamsManifest.upgrade")
+      );
+      vi.spyOn(vsc_ui.VS_CODE_UI, "selectFile").mockResolvedValue(ok({ type: "skip" }));
+      vi.spyOn(vsc_ui.VS_CODE_UI, "createProgressBar").mockReturnValue(progressHandler);
+      vi.spyOn(VsCodeLogInstance, "info").mockReturnValue();
+      vi.spyOn(TeamsAppMigrationHandler.prototype, "updateManifest").mockResolvedValue(ok(null));
 
       const result = await migrateTeamsManifestHandler();
 
@@ -177,19 +171,21 @@ describe("Migration handlers", () => {
     });
 
     it("error", async () => {
-      sandbox.stub(localizeUtils, "localize").callsFake((key: string) => key);
-      const sendTelemetryErrorEventStub = sandbox.stub(ExtTelemetry, "sendTelemetryErrorEvent");
+      vi.spyOn(localizeUtils, "localize").mockImplementation((key: string) => key);
+      const sendTelemetryErrorEventStub = vi.spyOn(ExtTelemetry, "sendTelemetryErrorEvent");
       const progressHandler = new ProgressHandler("title", 1);
-      sandbox.stub(vsc_ui, "VS_CODE_UI").value({
-        showMessage: () => Promise.resolve(ok("teamstoolkit.migrateTeamsManifest.upgrade")),
-        selectFile: () => Promise.resolve(ok({ type: "success", result: "test" })),
-        createProgressBar: () => progressHandler,
-      });
-      sandbox.stub(VsCodeLogInstance, "info").returns();
-      sandbox
-        .stub(TeamsAppMigrationHandler.prototype, "updateManifest")
-        .resolves(err(new UserError("source", "name", "")));
-      sandbox.stub(errorCommon, "showError").callsFake(async () => {});
+      vi.spyOn(vsc_ui.VS_CODE_UI, "showMessage").mockResolvedValue(
+        ok("teamstoolkit.migrateTeamsManifest.upgrade")
+      );
+      vi.spyOn(vsc_ui.VS_CODE_UI, "selectFile").mockResolvedValue(
+        ok({ type: "success", result: "test" })
+      );
+      vi.spyOn(vsc_ui.VS_CODE_UI, "createProgressBar").mockReturnValue(progressHandler);
+      vi.spyOn(VsCodeLogInstance, "info").mockReturnValue();
+      vi.spyOn(TeamsAppMigrationHandler.prototype, "updateManifest").mockResolvedValue(
+        err(new UserError("source", "name", ""))
+      );
+      vi.spyOn(errorCommon, "showError").mockImplementation(async () => {});
 
       const result = await migrateTeamsManifestHandler();
 

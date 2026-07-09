@@ -1,10 +1,9 @@
 import { err, ok, UserError } from "@microsoft/teamsfx-api";
 import AdmZip from "adm-zip";
-import chai from "chai";
 import fs from "fs-extra";
 import os from "os";
 import path from "path";
-import sinon from "sinon";
+import { chai, vi } from "vitest";
 import { parseShareAppActionYamlConfig } from "../../../../src/component/driver/share/utils";
 import { Constants } from "../../../../src/component/driver/teamsApp/constants";
 import { envUtil } from "../../../../src/component/utils/envUtil";
@@ -39,15 +38,15 @@ function createMockZipFileWithoutManifestId(): string {
 }
 
 describe("parseShareAppActionYamlConfig", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("should return manifestId, sharedTitleId, and sharedAppId when config is valid", async () => {
     const mockZipPath = createMockZipFile();
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("mockTemplatePath");
-    sandbox.stub(metadataUtil, "parse").resolves(
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("mockTemplatePath");
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(
       ok({
         deploy: {
           driverDefs: [
@@ -63,8 +62,8 @@ describe("parseShareAppActionYamlConfig", () => {
         },
       } as any)
     );
-    sandbox.stub(envUtil, "readEnv").resolves(ok({}));
-    sandbox.stub(fs, "existsSync").returns(true);
+    vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
+    vi.spyOn(fs, "existsSync").mockReturnValue(true);
     process.env["parseShareAppActionYamlConfigMockTitleIdName"] = "mockTitleId";
     process.env["parseShareAppActionYamlConfigMockAppIdName"] = "mockAppId";
     const result = await parseShareAppActionYamlConfig("mockProjectPath");
@@ -83,10 +82,10 @@ describe("parseShareAppActionYamlConfig", () => {
   });
 
   it("should return error when yaml config is invalid", async () => {
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("mockTemplatePath");
-    sandbox
-      .stub(metadataUtil, "parse")
-      .resolves(err(new UserError("FxCore", "InvalidYaml", "Invalid yaml config")));
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("mockTemplatePath");
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(
+      err(new UserError("FxCore", "InvalidYaml", "Invalid yaml config"))
+    );
 
     const result = await parseShareAppActionYamlConfig("mockProjectPath");
 
@@ -98,8 +97,8 @@ describe("parseShareAppActionYamlConfig", () => {
   });
 
   it("should return error when appPackagePath is missing", async () => {
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("mockTemplatePath");
-    sandbox.stub(metadataUtil, "parse").resolves(
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("mockTemplatePath");
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(
       ok({
         deploy: {
           driverDefs: [
@@ -122,8 +121,8 @@ describe("parseShareAppActionYamlConfig", () => {
 
   it("should return error when manifest file is missing", async () => {
     const mockZipPath = createMockZipFileWithoutManifest();
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("mockTemplatePath");
-    sandbox.stub(metadataUtil, "parse").resolves(
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("mockTemplatePath");
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(
       ok({
         deploy: {
           driverDefs: [
@@ -135,8 +134,8 @@ describe("parseShareAppActionYamlConfig", () => {
         },
       } as any)
     );
-    sandbox.stub(envUtil, "readEnv").resolves(ok({}));
-    sandbox.stub(fs, "existsSync").returns(true);
+    vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
+    vi.spyOn(fs, "existsSync").mockReturnValue(true);
 
     const result = await parseShareAppActionYamlConfig("mockProjectPath");
 
@@ -149,8 +148,8 @@ describe("parseShareAppActionYamlConfig", () => {
 
   it("should return error when sharedTitleId or sharedAppId is missing", async () => {
     const mockZipPath = createMockZipFile();
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("mockTemplatePath");
-    sandbox.stub(metadataUtil, "parse").resolves(
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("mockTemplatePath");
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(
       ok({
         deploy: {
           driverDefs: [
@@ -163,16 +162,15 @@ describe("parseShareAppActionYamlConfig", () => {
         },
       } as any)
     );
-    sandbox.stub(envUtil, "readEnv").resolves(ok({}));
-    sandbox.stub(fs, "existsSync").returns(true);
+    vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
+    vi.spyOn(fs, "existsSync").mockReturnValue(true);
     const admZipInstance = new AdmZip();
-    sandbox.stub(admZipInstance, "getEntries").returns([
+    vi.spyOn(admZipInstance, "getEntries").mockReturnValue([
       {
         entryName: Constants.MANIFEST_FILE,
         getData: () => Buffer.from(JSON.stringify({ id: "mockManifestId" })),
       },
     ] as any);
-    sandbox.stub(AdmZip, "prototype").returns(admZipInstance);
 
     const result = await parseShareAppActionYamlConfig("mockProjectPath");
 
@@ -184,8 +182,8 @@ describe("parseShareAppActionYamlConfig", () => {
   });
 
   it("should return error when projectModel.share or driverDefs is missing", async () => {
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("mockTemplatePath");
-    sandbox.stub(metadataUtil, "parse").resolves(ok({} as any));
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("mockTemplatePath");
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(ok({} as any));
 
     const result = await parseShareAppActionYamlConfig("mockProjectPath");
 
@@ -196,8 +194,8 @@ describe("parseShareAppActionYamlConfig", () => {
   });
 
   it("should return error when provision has no driverDefs and deploy is missing", async () => {
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("mockTemplatePath");
-    sandbox.stub(metadataUtil, "parse").resolves(
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("mockTemplatePath");
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(
       ok({
         provision: {},
       } as any)
@@ -213,8 +211,8 @@ describe("parseShareAppActionYamlConfig", () => {
   });
 
   it("should return error when deploy has no driverDefs and provision is missing", async () => {
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("mockTemplatePath");
-    sandbox.stub(metadataUtil, "parse").resolves(
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("mockTemplatePath");
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(
       ok({
         deploy: {},
       } as any)
@@ -230,8 +228,8 @@ describe("parseShareAppActionYamlConfig", () => {
   });
 
   it("should return error when both provision and deploy have no driverDefs", async () => {
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("mockTemplatePath");
-    sandbox.stub(metadataUtil, "parse").resolves(
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("mockTemplatePath");
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(
       ok({
         provision: {},
         deploy: {},
@@ -249,8 +247,8 @@ describe("parseShareAppActionYamlConfig", () => {
 
   it("should find extendToM365Action in provision when deploy doesn't have it", async () => {
     const mockZipPath = createMockZipFile();
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("mockTemplatePath");
-    sandbox.stub(metadataUtil, "parse").resolves(
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("mockTemplatePath");
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(
       ok({
         provision: {
           driverDefs: [
@@ -273,8 +271,8 @@ describe("parseShareAppActionYamlConfig", () => {
         },
       } as any)
     );
-    sandbox.stub(envUtil, "readEnv").resolves(ok({}));
-    sandbox.stub(fs, "existsSync").returns(true);
+    vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
+    vi.spyOn(fs, "existsSync").mockReturnValue(true);
     process.env["parseShareAppActionYamlConfigMockTitleIdName"] = "mockTitleId";
     process.env["parseShareAppActionYamlConfigMockAppIdName"] = "mockAppId";
 
@@ -294,8 +292,8 @@ describe("parseShareAppActionYamlConfig", () => {
   });
 
   it("should return error when share action is not found in either provision or deploy", async () => {
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("mockTemplatePath");
-    sandbox.stub(metadataUtil, "parse").resolves(
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("mockTemplatePath");
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(
       ok({
         provision: {
           driverDefs: [
@@ -325,8 +323,8 @@ describe("parseShareAppActionYamlConfig", () => {
 
   it("should find copilotAgent/publish action in provision", async () => {
     const mockZipPath = createMockZipFile();
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("mockTemplatePath");
-    sandbox.stub(metadataUtil, "parse").resolves(
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("mockTemplatePath");
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(
       ok({
         provision: {
           driverDefs: [
@@ -342,8 +340,8 @@ describe("parseShareAppActionYamlConfig", () => {
         },
       } as any)
     );
-    sandbox.stub(envUtil, "readEnv").resolves(ok({}));
-    sandbox.stub(fs, "existsSync").returns(true);
+    vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
+    vi.spyOn(fs, "existsSync").mockReturnValue(true);
     process.env["parseShareAppActionYamlConfigMockTitleIdName"] = "mockTitleId";
     process.env["parseShareAppActionYamlConfigMockAppIdName"] = "mockAppId";
 
@@ -363,8 +361,8 @@ describe("parseShareAppActionYamlConfig", () => {
   });
 
   it("should return error when extendToM365Action is missing", async () => {
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("mockTemplatePath");
-    sandbox.stub(metadataUtil, "parse").resolves(ok({ deploy: { driverDefs: [] } } as any));
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("mockTemplatePath");
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(ok({ deploy: { driverDefs: [] } } as any));
 
     const result = await parseShareAppActionYamlConfig("mockProjectPath");
 
@@ -376,8 +374,8 @@ describe("parseShareAppActionYamlConfig", () => {
 
   it("should return error when readEnv fails", async () => {
     const mockZipPath = createMockZipFile();
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("mockTemplatePath");
-    sandbox.stub(metadataUtil, "parse").resolves(
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("mockTemplatePath");
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(
       ok({
         deploy: {
           driverDefs: [
@@ -393,10 +391,10 @@ describe("parseShareAppActionYamlConfig", () => {
         },
       } as any)
     );
-    sandbox.stub(fs, "existsSync").returns(true);
-    sandbox
-      .stub(envUtil, "readEnv")
-      .resolves(err(new UserError("FxCore", "EnvError", "Failed to read env")));
+    vi.spyOn(fs, "existsSync").mockReturnValue(true);
+    vi.spyOn(envUtil, "readEnv").mockResolvedValue(
+      err(new UserError("FxCore", "EnvError", "Failed to read env"))
+    );
 
     const result = await parseShareAppActionYamlConfig("mockProjectPath");
 
@@ -408,8 +406,8 @@ describe("parseShareAppActionYamlConfig", () => {
 
   it("should return error when resolvedAppPackagePath does not exist", async () => {
     const mockZipPath = createMockZipFile();
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("mockTemplatePath");
-    sandbox.stub(metadataUtil, "parse").resolves(
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("mockTemplatePath");
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(
       ok({
         deploy: {
           driverDefs: [
@@ -425,8 +423,8 @@ describe("parseShareAppActionYamlConfig", () => {
         },
       } as any)
     );
-    sandbox.stub(envUtil, "readEnv").resolves(ok({}));
-    sandbox.stub(fs, "existsSync").returns(false);
+    vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
+    vi.spyOn(fs, "existsSync").mockReturnValue(false);
 
     const result = await parseShareAppActionYamlConfig("mockProjectPath");
 
@@ -438,8 +436,8 @@ describe("parseShareAppActionYamlConfig", () => {
 
   it("should return error when manifestId is missing", async () => {
     const mockZipPath = createMockZipFileWithoutManifestId();
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("mockTemplatePath");
-    sandbox.stub(metadataUtil, "parse").resolves(
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("mockTemplatePath");
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(
       ok({
         deploy: {
           driverDefs: [
@@ -455,8 +453,8 @@ describe("parseShareAppActionYamlConfig", () => {
         },
       } as any)
     );
-    sandbox.stub(envUtil, "readEnv").resolves(ok({}));
-    sandbox.stub(fs, "existsSync").returns(true);
+    vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
+    vi.spyOn(fs, "existsSync").mockReturnValue(true);
     process.env["parseShareAppActionYamlConfigMockTitleIdName"] = "mockTitleId";
     process.env["parseShareAppActionYamlConfigMockAppIdName"] = "mockAppId";
 
@@ -470,8 +468,8 @@ describe("parseShareAppActionYamlConfig", () => {
 
   it("should return error when shared ids are missing in environment", async () => {
     const mockZipPath = createMockZipFile();
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("mockTemplatePath");
-    sandbox.stub(metadataUtil, "parse").resolves(
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("mockTemplatePath");
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(
       ok({
         deploy: {
           driverDefs: [
@@ -487,8 +485,8 @@ describe("parseShareAppActionYamlConfig", () => {
         },
       } as any)
     );
-    sandbox.stub(envUtil, "readEnv").resolves(ok({}));
-    sandbox.stub(fs, "existsSync").returns(true);
+    vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
+    vi.spyOn(fs, "existsSync").mockReturnValue(true);
     delete process.env["parseShareAppActionYamlConfigMissingTitleIdName"];
     delete process.env["parseShareAppActionYamlConfigMissingAppIdName"];
 
@@ -502,8 +500,8 @@ describe("parseShareAppActionYamlConfig", () => {
   });
 
   it("should error with yamlConfigNotSupported for version < 1.10.0", async () => {
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("mockTemplatePath");
-    sandbox.stub(metadataUtil, "parse").resolves(ok({ version: "v1.9" } as any));
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("mockTemplatePath");
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(ok({ version: "v1.9" } as any));
 
     const result = await parseShareAppActionYamlConfig("mockProjectPath");
 
@@ -520,9 +518,9 @@ describe("parseShareAppActionYamlConfig", () => {
   });
 
   it("should proceed when version >= 1.10.0", async () => {
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("mockTemplatePath");
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("mockTemplatePath");
     // minimal model with only version; subsequent checks will return yamlConfigNotFound
-    sandbox.stub(metadataUtil, "parse").resolves(ok({ version: "v1.10" } as any));
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(ok({ version: "v1.10" } as any));
 
     const result = await parseShareAppActionYamlConfig("mockProjectPath");
 

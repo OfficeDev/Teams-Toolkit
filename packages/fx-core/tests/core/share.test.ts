@@ -2,8 +2,7 @@
 // Licensed under the MIT license.
 
 import { err, ok } from "@microsoft/teamsfx-api";
-import { assert } from "chai";
-import sinon from "sinon";
+import { assert, vi } from "vitest";
 import { GraphClient } from "../../src/client/graphClient";
 import { setTools } from "../../src/common/globalVars";
 import { AppUser } from "../../src/component/driver/teamsApp/interfaces/appdefinitions/appUser";
@@ -15,7 +14,6 @@ import { InputValidationError } from "../../src/error/common";
 import { MockTools } from "./utils";
 
 describe("share", () => {
-  const sandbox = sinon.createSandbox();
   const tools = new MockTools();
   setTools(tools);
   const mockMosToken = "mock-mos-token";
@@ -28,37 +26,37 @@ describe("share", () => {
   };
 
   beforeEach(() => {
-    sandbox.stub(PackageService, "GetSharedInstance").returns(mockSharedInstance as any);
+    vi.spyOn(PackageService, "GetSharedInstance").mockReturnValue(mockSharedInstance as any);
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   describe("shareWithTenant", () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
     it("should share with tenant successfully", async () => {
       // Arrange
-      const shareWithTenantStub = sandbox
-        .stub(mockSharedInstance, "shareWithTenant")
-        .resolves(ok(undefined));
-      sandbox.stub(tools.ui, "showMessage");
+      const shareWithTenantStub = vi
+        .spyOn(mockSharedInstance, "shareWithTenant")
+        .mockResolvedValue(ok(undefined));
+      vi.spyOn(tools.ui, "showMessage").mockImplementation(async () => undefined as any);
 
       // Act
       const result = await shareWithTenant(mockMosToken, mockTitleId);
 
       // Assert
       assert.isTrue(result.isOk());
-      assert.isTrue(shareWithTenantStub.calledOnce);
-      assert.deepEqual(shareWithTenantStub.args[0], [mockMosToken, mockTitleId]);
+      assert.equal(shareWithTenantStub.mock.calls.length, 1);
+      assert.deepEqual(shareWithTenantStub.mock.calls[0], [mockMosToken, mockTitleId]);
     });
 
     it("should return error when sharing with tenant fails", async () => {
       // Arrange
       const mockError = new InputValidationError("test", "Share with tenant failed");
-      sandbox.stub(mockSharedInstance, "shareWithTenant").resolves(err(mockError));
+      vi.spyOn(mockSharedInstance, "shareWithTenant").mockResolvedValue(err(mockError));
 
       // Act
       const result = await shareWithTenant(mockMosToken, mockTitleId);
@@ -92,51 +90,57 @@ describe("share", () => {
     ];
 
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("should add shared users successfully", async () => {
       // Arrange
-      const getSharedUsersStub = sandbox
-        .stub(mockSharedInstance, "getSharedUsers")
-        .resolves(ok(mockExistingEntities));
+      const getSharedUsersStub = vi
+        .spyOn(mockSharedInstance, "getSharedUsers")
+        .mockResolvedValue(ok(mockExistingEntities));
 
-      const shareWithUsersStub = sandbox
-        .stub(mockSharedInstance, "shareWithUsers")
-        .resolves(ok(undefined));
+      const shareWithUsersStub = vi
+        .spyOn(mockSharedInstance, "shareWithUsers")
+        .mockResolvedValue(ok(undefined));
 
-      const getUserInfoStub = sandbox.stub(CollaborationUtil, "getUserInfo");
-      getUserInfoStub.withArgs(sinon.match.any, mockEmails[0]).resolves(mockUserInfo1);
-      getUserInfoStub.withArgs(sinon.match.any, mockEmails[1]).resolves(mockUserInfo2);
+      const getUserInfoStub = vi.spyOn(CollaborationUtil, "getUserInfo");
+      getUserInfoStub.mockImplementation(async (_token, email) => {
+        if (email === mockEmails[0]) return mockUserInfo1;
+        if (email === mockEmails[1]) return mockUserInfo2;
+        return undefined;
+      });
 
       // Act
       const result = await addSharedUsers(mockMosToken, mockTitleId, mockEmails);
 
       // Assert
       assert.isTrue(result.isOk());
-      assert.isTrue(getSharedUsersStub.calledOnce);
-      assert.isTrue(getUserInfoStub.calledTwice);
+      assert.equal(getSharedUsersStub.mock.calls.length, 1);
+      assert.equal(getUserInfoStub.mock.calls.length, 2);
 
       // Should call shareWithUsers
-      assert.isTrue(shareWithUsersStub.calledOnce);
+      assert.equal(shareWithUsersStub.mock.calls.length, 1);
 
       // We can't check the exact arguments due to TypeScript issues,
       // but we can verify it was called
-      assert.isTrue(shareWithUsersStub.called);
+      assert.isAbove(shareWithUsersStub.mock.calls.length, 0);
     });
 
     it("should return error when invalid user email is provided", async () => {
       // Arrange
-      sandbox.stub(mockSharedInstance, "getSharedUsers").resolves(ok(mockExistingEntities));
+      vi.spyOn(mockSharedInstance, "getSharedUsers").mockResolvedValue(ok(mockExistingEntities));
 
-      const getUserInfoStub = sandbox.stub(CollaborationUtil, "getUserInfo");
-      getUserInfoStub.withArgs(sinon.match.any, mockEmails[0]).resolves(mockUserInfo1);
-      getUserInfoStub.withArgs(sinon.match.any, mockEmails[1]).resolves(undefined);
+      const getUserInfoStub = vi.spyOn(CollaborationUtil, "getUserInfo");
+      getUserInfoStub.mockImplementation(async (_token, email) => {
+        if (email === mockEmails[0]) return mockUserInfo1;
+        if (email === mockEmails[1]) return undefined;
+        return undefined;
+      });
 
       // Mock GraphClient.getGroupInfo to also return undefined
-      const getGroupInfoStub = sandbox
-        .stub(GraphClient.prototype, "getGroupInfo")
-        .resolves(undefined);
+      const getGroupInfoStub = vi
+        .spyOn(GraphClient.prototype, "getGroupInfo")
+        .mockResolvedValue(undefined);
 
       // Act
       const result = await addSharedUsers(mockMosToken, mockTitleId, mockEmails);
@@ -147,7 +151,7 @@ describe("share", () => {
         assert.instanceOf(result.error, InputValidationError);
         assert.include(result.error.message, "Invalid user or group: user2@example.com");
       }
-      assert.isTrue(getGroupInfoStub.calledOnce);
+      assert.equal(getGroupInfoStub.mock.calls.length, 1);
     });
 
     it("should add group when user info not found but group info is found", async () => {
@@ -160,27 +164,33 @@ describe("share", () => {
       };
       const emailsWithGroup = [mockEmails[0], groupEmail];
 
-      sandbox.stub(mockSharedInstance, "getSharedUsers").resolves(ok(mockExistingEntities));
+      vi.spyOn(mockSharedInstance, "getSharedUsers").mockResolvedValue(ok(mockExistingEntities));
 
-      const shareWithUsersStub = sandbox
-        .stub(mockSharedInstance, "shareWithUsers")
-        .resolves(ok(undefined));
+      const shareWithUsersStub = vi
+        .spyOn(mockSharedInstance, "shareWithUsers")
+        .mockResolvedValue(ok(undefined));
 
-      const getUserInfoStub = sandbox.stub(CollaborationUtil, "getUserInfo");
-      getUserInfoStub.withArgs(sinon.match.any, mockEmails[0]).resolves(mockUserInfo1);
-      getUserInfoStub.withArgs(sinon.match.any, groupEmail).resolves(undefined);
+      const getUserInfoStub = vi.spyOn(CollaborationUtil, "getUserInfo");
+      getUserInfoStub.mockImplementation(async (_token, email) => {
+        if (email === mockEmails[0]) return mockUserInfo1;
+        if (email === groupEmail) return undefined;
+        return undefined;
+      });
 
-      const getGroupInfoStub = sandbox.stub(GraphClient.prototype, "getGroupInfo");
-      getGroupInfoStub.withArgs(groupEmail).resolves(mockGroupInfo);
+      const getGroupInfoStub = vi.spyOn(GraphClient.prototype, "getGroupInfo");
+      getGroupInfoStub.mockImplementation(async (email) => {
+        if (email === groupEmail) return mockGroupInfo;
+        return undefined;
+      });
 
       // Act
       const result = await addSharedUsers(mockMosToken, mockTitleId, emailsWithGroup);
 
       // Assert
       assert.isTrue(result.isOk());
-      assert.isTrue(getUserInfoStub.calledTwice);
-      assert.isTrue(getGroupInfoStub.calledOnce);
-      assert.isTrue(shareWithUsersStub.calledOnce);
+      assert.equal(getUserInfoStub.mock.calls.length, 2);
+      assert.equal(getGroupInfoStub.mock.calls.length, 1);
+      assert.equal(shareWithUsersStub.mock.calls.length, 1);
     });
 
     it("should handle mixed users and groups successfully", async () => {
@@ -193,34 +203,40 @@ describe("share", () => {
       };
       const emailsWithMixed = [mockEmails[0], groupEmail, mockEmails[1]];
 
-      sandbox.stub(mockSharedInstance, "getSharedUsers").resolves(ok(mockExistingEntities));
+      vi.spyOn(mockSharedInstance, "getSharedUsers").mockResolvedValue(ok(mockExistingEntities));
 
-      const shareWithUsersStub = sandbox
-        .stub(mockSharedInstance, "shareWithUsers")
-        .resolves(ok(undefined));
+      const shareWithUsersStub = vi
+        .spyOn(mockSharedInstance, "shareWithUsers")
+        .mockResolvedValue(ok(undefined));
 
-      const getUserInfoStub = sandbox.stub(CollaborationUtil, "getUserInfo");
-      getUserInfoStub.withArgs(sinon.match.any, mockEmails[0]).resolves(mockUserInfo1);
-      getUserInfoStub.withArgs(sinon.match.any, groupEmail).resolves(undefined);
-      getUserInfoStub.withArgs(sinon.match.any, mockEmails[1]).resolves(mockUserInfo2);
+      const getUserInfoStub = vi.spyOn(CollaborationUtil, "getUserInfo");
+      getUserInfoStub.mockImplementation(async (_token, email) => {
+        if (email === mockEmails[0]) return mockUserInfo1;
+        if (email === groupEmail) return undefined;
+        if (email === mockEmails[1]) return mockUserInfo2;
+        return undefined;
+      });
 
-      const getGroupInfoStub = sandbox.stub(GraphClient.prototype, "getGroupInfo");
-      getGroupInfoStub.withArgs(groupEmail).resolves(mockGroupInfo);
+      const getGroupInfoStub = vi.spyOn(GraphClient.prototype, "getGroupInfo");
+      getGroupInfoStub.mockImplementation(async (email) => {
+        if (email === groupEmail) return mockGroupInfo;
+        return undefined;
+      });
 
       // Act
       const result = await addSharedUsers(mockMosToken, mockTitleId, emailsWithMixed);
 
       // Assert
       assert.isTrue(result.isOk());
-      assert.isTrue(getUserInfoStub.calledThrice);
-      assert.isTrue(getGroupInfoStub.calledOnce);
-      assert.isTrue(shareWithUsersStub.calledOnce);
+      assert.equal(getUserInfoStub.mock.calls.length, 3);
+      assert.equal(getGroupInfoStub.mock.calls.length, 1);
+      assert.equal(shareWithUsersStub.mock.calls.length, 1);
     });
 
     it("should return error when getSharedUsers fails", async () => {
       // Arrange
       const mockError = new InputValidationError("test", "Get shared users failed");
-      sandbox.stub(mockSharedInstance, "getSharedUsers").resolves(err(mockError));
+      vi.spyOn(mockSharedInstance, "getSharedUsers").mockResolvedValue(err(mockError));
 
       // Act
       const result = await addSharedUsers(mockMosToken, mockTitleId, mockEmails);
@@ -236,16 +252,16 @@ describe("share", () => {
       // Arrange
       const mockError = new InputValidationError("test", "Share with users failed");
 
-      sandbox.stub(mockSharedInstance, "getSharedUsers").resolves(ok(mockExistingEntities));
+      vi.spyOn(mockSharedInstance, "getSharedUsers").mockResolvedValue(ok(mockExistingEntities));
 
-      sandbox
-        .stub(CollaborationUtil, "getUserInfo")
-        .withArgs(sinon.match.any, mockEmails[0])
-        .resolves(mockUserInfo1)
-        .withArgs(sinon.match.any, mockEmails[1])
-        .resolves(mockUserInfo2);
+      const getUserInfoStub = vi.spyOn(CollaborationUtil, "getUserInfo");
+      getUserInfoStub.mockImplementation(async (_token, email) => {
+        if (email === mockEmails[0]) return mockUserInfo1;
+        if (email === mockEmails[1]) return mockUserInfo2;
+        return undefined;
+      });
 
-      sandbox.stub(mockSharedInstance, "shareWithUsers").resolves(err(mockError));
+      vi.spyOn(mockSharedInstance, "shareWithUsers").mockResolvedValue(err(mockError));
 
       // Act
       const result = await addSharedUsers(mockMosToken, mockTitleId, mockEmails);
@@ -282,36 +298,39 @@ describe("share", () => {
     ];
 
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("should remove users and keep remaining users", async () => {
       // Arrange
-      const getSharedUsersStub = sandbox
-        .stub(mockSharedInstance, "getSharedUsers")
-        .resolves(ok(mockExistingEntities));
+      const getSharedUsersStub = vi
+        .spyOn(mockSharedInstance, "getSharedUsers")
+        .mockResolvedValue(ok(mockExistingEntities));
 
-      const shareWithUsersStub = sandbox
-        .stub(mockSharedInstance, "shareWithUsers")
-        .resolves(ok(undefined));
+      const shareWithUsersStub = vi
+        .spyOn(mockSharedInstance, "shareWithUsers")
+        .mockResolvedValue(ok(undefined));
 
-      const unshareStub = sandbox.stub(mockSharedInstance, "unshare");
+      const unshareStub = vi.spyOn(mockSharedInstance, "unshare");
 
-      const getUserInfoStub = sandbox.stub(CollaborationUtil, "getUserInfo");
-      getUserInfoStub.withArgs(sinon.match.any, mockEmails[0]).resolves(mockUserInfo1);
-      getUserInfoStub.withArgs(sinon.match.any, mockEmails[1]).resolves(mockUserInfo2);
+      const getUserInfoStub = vi.spyOn(CollaborationUtil, "getUserInfo");
+      getUserInfoStub.mockImplementation(async (_token, email) => {
+        if (email === mockEmails[0]) return mockUserInfo1;
+        if (email === mockEmails[1]) return mockUserInfo2;
+        return undefined;
+      });
 
       // Act
       const result = await removeShareAccess(mockMosToken, mockTitleId, mockEmails);
 
       // Assert
       assert.isTrue(result.isOk());
-      assert.isTrue(getSharedUsersStub.calledOnce);
-      assert.isTrue(getUserInfoStub.calledTwice);
+      assert.equal(getSharedUsersStub.mock.calls.length, 1);
+      assert.equal(getUserInfoStub.mock.calls.length, 2);
 
       // Should call shareWithUsers with remaining users and not call unshare
-      assert.isTrue(shareWithUsersStub.calledOnce);
-      assert.isFalse(unshareStub.called);
+      assert.equal(shareWithUsersStub.mock.calls.length, 1);
+      assert.equal(unshareStub.mock.calls.length, 0);
     });
 
     it("should unshare when removing all users", async () => {
@@ -322,29 +341,32 @@ describe("share", () => {
         { entityId: "user2-id", entityType: M365EntityType.User },
       ];
 
-      const getSharedUsersStub = sandbox
-        .stub(mockSharedInstance, "getSharedUsers")
-        .resolves(ok(limitedEntities));
+      const getSharedUsersStub = vi
+        .spyOn(mockSharedInstance, "getSharedUsers")
+        .mockResolvedValue(ok(limitedEntities));
 
-      const shareWithUsersStub = sandbox.stub(mockSharedInstance, "shareWithUsers");
+      const shareWithUsersStub = vi.spyOn(mockSharedInstance, "shareWithUsers");
 
-      const unshareStub = sandbox.stub(mockSharedInstance, "unshare").resolves(ok(undefined));
+      const unshareStub = vi.spyOn(mockSharedInstance, "unshare").mockResolvedValue(ok(undefined));
 
-      const getUserInfoStub = sandbox.stub(CollaborationUtil, "getUserInfo");
-      getUserInfoStub.withArgs(sinon.match.any, mockEmails[0]).resolves(mockUserInfo1);
-      getUserInfoStub.withArgs(sinon.match.any, mockEmails[1]).resolves(mockUserInfo2);
+      const getUserInfoStub = vi.spyOn(CollaborationUtil, "getUserInfo");
+      getUserInfoStub.mockImplementation(async (_token, email) => {
+        if (email === mockEmails[0]) return mockUserInfo1;
+        if (email === mockEmails[1]) return mockUserInfo2;
+        return undefined;
+      });
 
       // Act
       const result = await removeShareAccess(mockMosToken, mockTitleId, mockEmails);
 
       // Assert
       assert.isTrue(result.isOk());
-      assert.isTrue(getSharedUsersStub.calledOnce);
-      assert.isTrue(getUserInfoStub.calledTwice);
+      assert.equal(getSharedUsersStub.mock.calls.length, 1);
+      assert.equal(getUserInfoStub.mock.calls.length, 2);
 
       // Should call unshare because all users are removed
-      assert.isFalse(shareWithUsersStub.called);
-      assert.isTrue(unshareStub.calledOnce);
+      assert.equal(shareWithUsersStub.mock.calls.length, 0);
+      assert.equal(unshareStub.mock.calls.length, 1);
     });
 
     it("should remove group when user info not found but group info is found", async () => {
@@ -357,41 +379,50 @@ describe("share", () => {
       };
       const emailsWithGroup = [mockEmails[0], groupEmail];
 
-      sandbox.stub(mockSharedInstance, "getSharedUsers").resolves(ok(mockExistingEntities));
+      vi.spyOn(mockSharedInstance, "getSharedUsers").mockResolvedValue(ok(mockExistingEntities));
 
-      const shareWithUsersStub = sandbox
-        .stub(mockSharedInstance, "shareWithUsers")
-        .resolves(ok(undefined));
+      const shareWithUsersStub = vi
+        .spyOn(mockSharedInstance, "shareWithUsers")
+        .mockResolvedValue(ok(undefined));
 
-      const getUserInfoStub = sandbox.stub(CollaborationUtil, "getUserInfo");
-      getUserInfoStub.withArgs(sinon.match.any, mockEmails[0]).resolves(mockUserInfo1);
-      getUserInfoStub.withArgs(sinon.match.any, groupEmail).resolves(undefined);
+      const getUserInfoStub = vi.spyOn(CollaborationUtil, "getUserInfo");
+      getUserInfoStub.mockImplementation(async (_token, email) => {
+        if (email === mockEmails[0]) return mockUserInfo1;
+        if (email === groupEmail) return undefined;
+        return undefined;
+      });
 
-      const getGroupInfoStub = sandbox.stub(GraphClient.prototype, "getGroupInfo");
-      getGroupInfoStub.withArgs(groupEmail).resolves(mockGroupInfo);
+      const getGroupInfoStub = vi.spyOn(GraphClient.prototype, "getGroupInfo");
+      getGroupInfoStub.mockImplementation(async (email) => {
+        if (email === groupEmail) return mockGroupInfo;
+        return undefined;
+      });
 
       // Act
       const result = await removeShareAccess(mockMosToken, mockTitleId, emailsWithGroup);
 
       // Assert
       assert.isTrue(result.isOk());
-      assert.isTrue(getUserInfoStub.calledTwice);
-      assert.isTrue(getGroupInfoStub.calledOnce);
-      assert.isTrue(shareWithUsersStub.calledOnce);
+      assert.equal(getUserInfoStub.mock.calls.length, 2);
+      assert.equal(getGroupInfoStub.mock.calls.length, 1);
+      assert.equal(shareWithUsersStub.mock.calls.length, 1);
     });
 
     it("should return error when invalid user email is provided", async () => {
       // Arrange
-      sandbox.stub(mockSharedInstance, "getSharedUsers").resolves(ok(mockExistingEntities));
+      vi.spyOn(mockSharedInstance, "getSharedUsers").mockResolvedValue(ok(mockExistingEntities));
 
-      const getUserInfoStub = sandbox.stub(CollaborationUtil, "getUserInfo");
-      getUserInfoStub.withArgs(sinon.match.any, mockEmails[0]).resolves(mockUserInfo1);
-      getUserInfoStub.withArgs(sinon.match.any, mockEmails[1]).resolves(undefined);
+      const getUserInfoStub = vi.spyOn(CollaborationUtil, "getUserInfo");
+      getUserInfoStub.mockImplementation(async (_token, email) => {
+        if (email === mockEmails[0]) return mockUserInfo1;
+        if (email === mockEmails[1]) return undefined;
+        return undefined;
+      });
 
       // Mock GraphClient.getGroupInfo to also return undefined
-      const getGroupInfoStub = sandbox
-        .stub(GraphClient.prototype, "getGroupInfo")
-        .resolves(undefined);
+      const getGroupInfoStub = vi
+        .spyOn(GraphClient.prototype, "getGroupInfo")
+        .mockResolvedValue(undefined);
 
       // Act
       const result = await removeShareAccess(mockMosToken, mockTitleId, mockEmails);
@@ -402,13 +433,13 @@ describe("share", () => {
         assert.instanceOf(result.error, InputValidationError);
         assert.include(result.error.message, "Invalid user or group: user2@example.com");
       }
-      assert.isTrue(getGroupInfoStub.calledOnce);
+      assert.equal(getGroupInfoStub.mock.calls.length, 1);
     });
 
     it("should return error when getSharedUsers fails", async () => {
       // Arrange
       const mockError = new InputValidationError("test", "Get shared users failed");
-      sandbox.stub(mockSharedInstance, "getSharedUsers").resolves(err(mockError));
+      vi.spyOn(mockSharedInstance, "getSharedUsers").mockResolvedValue(err(mockError));
 
       // Act
       const result = await removeShareAccess(mockMosToken, mockTitleId, mockEmails);
@@ -424,16 +455,16 @@ describe("share", () => {
       // Arrange
       const mockError = new InputValidationError("test", "Share with users failed");
 
-      sandbox.stub(mockSharedInstance, "getSharedUsers").resolves(ok(mockExistingEntities));
+      vi.spyOn(mockSharedInstance, "getSharedUsers").mockResolvedValue(ok(mockExistingEntities));
 
-      sandbox
-        .stub(CollaborationUtil, "getUserInfo")
-        .withArgs(sinon.match.any, mockEmails[0])
-        .resolves(mockUserInfo1)
-        .withArgs(sinon.match.any, mockEmails[1])
-        .resolves(mockUserInfo2);
+      const getUserInfoStub = vi.spyOn(CollaborationUtil, "getUserInfo");
+      getUserInfoStub.mockImplementation(async (_token, email) => {
+        if (email === mockEmails[0]) return mockUserInfo1;
+        if (email === mockEmails[1]) return mockUserInfo2;
+        return undefined;
+      });
 
-      sandbox.stub(mockSharedInstance, "shareWithUsers").resolves(err(mockError));
+      vi.spyOn(mockSharedInstance, "shareWithUsers").mockResolvedValue(err(mockError));
 
       // Act
       const result = await removeShareAccess(mockMosToken, mockTitleId, mockEmails);
@@ -454,16 +485,16 @@ describe("share", () => {
         { entityId: "user2-id", entityType: M365EntityType.User },
       ];
 
-      sandbox.stub(mockSharedInstance, "getSharedUsers").resolves(ok(limitedEntities));
+      vi.spyOn(mockSharedInstance, "getSharedUsers").mockResolvedValue(ok(limitedEntities));
 
-      sandbox
-        .stub(CollaborationUtil, "getUserInfo")
-        .withArgs(sinon.match.any, mockEmails[0])
-        .resolves(mockUserInfo1)
-        .withArgs(sinon.match.any, mockEmails[1])
-        .resolves(mockUserInfo2);
+      const getUserInfoStub = vi.spyOn(CollaborationUtil, "getUserInfo");
+      getUserInfoStub.mockImplementation(async (_token, email) => {
+        if (email === mockEmails[0]) return mockUserInfo1;
+        if (email === mockEmails[1]) return mockUserInfo2;
+        return undefined;
+      });
 
-      sandbox.stub(mockSharedInstance, "unshare").resolves(err(mockError));
+      vi.spyOn(mockSharedInstance, "unshare").mockResolvedValue(err(mockError));
 
       // Act
       const result = await removeShareAccess(mockMosToken, mockTitleId, mockEmails);

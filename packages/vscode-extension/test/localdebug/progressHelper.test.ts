@@ -1,24 +1,17 @@
+import { vi, assert } from "vitest";
+import { createMock } from "../mocks/vitestMockUtils";
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-
-import * as sinon from "sinon";
-import * as chai from "chai";
 import { ProgressHelper } from "../../src/debug/progressHelper";
 import { ProgressHandler } from "../../src/debug/progressHandler";
 
 afterEach(() => {
   // Restore the default sandbox here
-  sinon.restore();
+  vi.restoreAllMocks();
 });
 
 describe("[debug > ProgressHelper]", () => {
   describe("ParallelProgressHelper", () => {
-    const sandbox = sinon.createSandbox();
-
-    afterEach(() => {
-      sandbox.restore();
-    });
-
     const testData = [
       {
         name: "empty",
@@ -100,15 +93,15 @@ describe("[debug > ProgressHelper]", () => {
 
     testData.forEach((data) => {
       it(data.name, async () => {
-        const mockProgressHandler = sandbox.createStubInstance(ProgressHandler);
+        const mockProgressHandler = createMock<ProgressHandler>();
         const testProgressHelper = new ProgressHelper(mockProgressHandler);
         await testProgressHelper.start(data.input);
         for (const callMessage of data.calledMessage) {
           await testProgressHelper.end(callMessage);
         }
         const called = mockProgressHandler.next.getCalls().map(({ args }) => args[0]);
-        chai.assert.deepEqual(called, data.expected);
-        sandbox.restore();
+        assert.deepEqual(called, data.expected);
+        vi.restoreAllMocks();
       });
     });
   });

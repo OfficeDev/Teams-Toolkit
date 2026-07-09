@@ -2,34 +2,33 @@
 // Licensed under the MIT license.
 
 import { err, ok, UserError } from "@microsoft/teamsfx-api";
-import { assert } from "chai";
-import sinon from "sinon";
+import { afterEach, assert, beforeEach, describe, expect, it, vi } from "vitest";
 import { featureFlagManager, FeatureFlags } from "../../src/common/featureFlags";
 import { setTools } from "../../src/common/globalVars";
 import { FxCore } from "../../src/core/FxCore";
-import { fxCoreOpenPluginDeps } from "../../src/core/FxCore.openPlugin";
+import * as openPluginExporter from "../../src/component/generator/openPlugin/exporter";
+import * as openPluginImporter from "../../src/component/generator/openPlugin/importer";
 import { MockTools } from "./utils";
 
 describe("FxCore.openPlugin", () => {
-  const sandbox = sinon.createSandbox();
   let core: FxCore;
 
   beforeEach(() => {
     setTools(new MockTools());
     core = new FxCore(new MockTools());
-    sandbox
-      .stub(featureFlagManager, "getBooleanValue")
-      .callsFake((flag) => flag.name === FeatureFlags.OpenPluginImportExport.name);
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation(
+      (flag) => flag.name === FeatureFlags.OpenPluginImportExport.name
+    );
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   describe("importOpenPlugin", () => {
     it("returns UserError when feature flag is disabled", async () => {
-      sandbox.restore();
-      sandbox.stub(featureFlagManager, "getBooleanValue").returns(false);
+      vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
       const res = await core.importOpenPlugin({ platform: "cli", path: "x" } as any);
       assert.isTrue(res.isErr());
       if (res.isErr()) assert.equal(res.error.name, "FeatureFlagDisabled");
@@ -52,9 +51,9 @@ describe("FxCore.openPlugin", () => {
     });
 
     it("delegates to importer.importOpenPlugin on the success path", async () => {
-      const stub = sandbox
-        .stub(fxCoreOpenPluginDeps, "importOpenPlugin")
-        .resolves(ok({ projectPath: "/tmp/out", warnings: ["w"] }));
+      const stub = vi
+        .spyOn(openPluginImporter, "importOpenPlugin")
+        .mockResolvedValue(ok({ projectPath: "/tmp/out", warnings: ["w"] }));
       const res = await core.importOpenPlugin({
         platform: "cli",
         path: "/tmp/in",
@@ -68,17 +67,17 @@ describe("FxCore.openPlugin", () => {
         assert.equal(res.value.warnings?.[0].type, "openPluginImport");
         assert.equal(res.value.warnings?.[0].content, "w");
       }
-      assert.isTrue(stub.calledOnce);
-      const arg = stub.firstCall.args[0];
+      expect(stub).toHaveBeenCalledOnce();
+      const arg = stub.mock.calls[0][0];
       assert.equal(arg.path, "/tmp/in");
       assert.equal(arg.privacyUrl, "https://x/p");
       assert.equal(arg.termsUrl, "https://x/t");
     });
 
     it("propagates importer errors", async () => {
-      sandbox
-        .stub(fxCoreOpenPluginDeps, "importOpenPlugin")
-        .resolves(err(new UserError("OpenPluginImport", "Boom", "boom")));
+      vi.spyOn(openPluginImporter, "importOpenPlugin").mockResolvedValue(
+        err(new UserError("OpenPluginImport", "Boom", "boom"))
+      );
       const res = await core.importOpenPlugin({
         platform: "cli",
         path: "/tmp/in",
@@ -89,8 +88,7 @@ describe("FxCore.openPlugin", () => {
 
   describe("exportOpenPlugin", () => {
     it("returns UserError when feature flag is disabled", async () => {
-      sandbox.restore();
-      sandbox.stub(featureFlagManager, "getBooleanValue").returns(false);
+      vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
       const res = await core.exportOpenPlugin({ platform: "cli", path: "x" } as any);
       assert.isTrue(res.isErr());
       if (res.isErr()) assert.equal(res.error.name, "FeatureFlagDisabled");
@@ -113,9 +111,9 @@ describe("FxCore.openPlugin", () => {
     });
 
     it("delegates to exporter.exportOpenPlugin on the success path", async () => {
-      const stub = sandbox
-        .stub(fxCoreOpenPluginDeps, "exportOpenPlugin")
-        .resolves(ok({ outputPath: "/tmp/out", warnings: ["w"] }));
+      const stub = vi
+        .spyOn(openPluginExporter, "exportOpenPlugin")
+        .mockResolvedValue(ok({ outputPath: "/tmp/out", warnings: ["w"] }));
       const res = await core.exportOpenPlugin({
         platform: "cli",
         path: "/tmp/proj",
@@ -127,16 +125,16 @@ describe("FxCore.openPlugin", () => {
         assert.equal(res.value.outputPath, "/tmp/out");
         assert.equal(res.value.warnings[0].type, "openPluginExport");
       }
-      assert.isTrue(stub.calledOnce);
-      const arg = stub.firstCall.args[0];
+      expect(stub).toHaveBeenCalledOnce();
+      const arg = stub.mock.calls[0][0];
       assert.equal(arg.path, "/tmp/proj");
       assert.equal(arg.manifestKind, "claude-plugin");
     });
 
     it("propagates exporter errors", async () => {
-      sandbox
-        .stub(fxCoreOpenPluginDeps, "exportOpenPlugin")
-        .resolves(err(new UserError("OpenPluginExport", "Boom", "boom")));
+      vi.spyOn(openPluginExporter, "exportOpenPlugin").mockResolvedValue(
+        err(new UserError("OpenPluginExport", "Boom", "boom"))
+      );
       const res = await core.exportOpenPlugin({
         platform: "cli",
         path: "/tmp/proj",

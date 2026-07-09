@@ -398,9 +398,9 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "cat ~/.fx/ui/wizardNode.json"
+        "text": "grep office-meta-os-type ~/.fx/ui/wizardNode.json"
       },
-      "description": "Type the command `cat ~/.fx/ui/wizardNode.json` into the integrated Terminal input field in Visual Studio Code, within the workspace environment.",
+      "description": "Type the command `grep office-meta-os-type ~/.fx/ui/wizardNode.json` into the integrated Terminal input field in Visual Studio Code, within the workspace environment. Using grep ensures the target key is printed at the prompt instead of scrolling off-screen with cat.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -422,7 +422,7 @@
       "parameters": {
         "key": "enter"
       },
-      "description": "Press the Enter key in the VS Code integrated terminal after entering the command `cat ~/.fx/ui/wizardNode.json`.",
+      "description": "Press the Enter key in the VS Code integrated terminal after entering the command `grep office-meta-os-type ~/.fx/ui/wizardNode.json`.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -892,9 +892,9 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "cat ~/.fx/ui/wizardNode.json"
+        "text": "grep office-meta-os-type ~/.fx/ui/wizardNode.json"
       },
-      "description": "Type the command `cat ~/.fx/ui/wizardNode.json` into the integrated Terminal panel within Visual Studio Code, where the active shell is set to 'bash' in a workspace featuring the Microsoft 365 Agents Toolkit extension.",
+      "description": "Type the command `grep office-meta-os-type ~/.fx/ui/wizardNode.json` into the integrated Terminal panel within Visual Studio Code, where the active shell is set to 'bash' in a workspace featuring the Microsoft 365 Agents Toolkit extension. Using grep ensures the target key is printed at the prompt instead of scrolling off-screen with cat.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -916,7 +916,7 @@
       "parameters": {
         "key": "enter"
       },
-      "description": "Press the Enter key in the integrated Terminal (bash) of Visual Studio Code, following the command `cat ~/.fx/ui/wizardNode.json`.",
+      "description": "Press the Enter key in the integrated Terminal (bash) of Visual Studio Code, following the command `grep office-meta-os-type ~/.fx/ui/wizardNode.json`.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

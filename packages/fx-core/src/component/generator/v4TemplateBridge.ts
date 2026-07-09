@@ -6,7 +6,17 @@ import { merge } from "lodash";
 import path from "path";
 import { TelemetryProperty } from "../../common/telemetry";
 import templateConfig from "../../common/templates-config.json";
-import { TemplateFileEntry, TemplateLocator, TemplateSource } from "../../v4";
+import {
+  Answers,
+  CallerFloor,
+  DeclarativeLocator,
+  TemplateFileEntry,
+  TemplateLocator,
+  TemplateSource,
+  createRealRuntime,
+  openDeclarativePackage,
+  scaffold,
+} from "../../v4";
 import * as bundledFloorMod from "../../v4/distribution/bundledFloor";
 import * as templatePackageMod from "../../v4/distribution/templatePackage";
 import * as templateSourceMod from "../../v4/distribution/templateSource";
@@ -18,10 +28,15 @@ import { GeneratorContext } from "./generatorAction";
 export const v4TemplateBridgeDeps = {
   createTemplateSourcePort: templateSourcePortMod.createTemplateSourcePort,
   loadBundledFloor: bundledFloorMod.loadBundledFloor,
-  resolveTemplateSource: templateSourceMod.resolveTemplateSource,
+  resolveLocalTemplateSource: templateSourceMod.resolveLocalTemplateSource,
   loadResolvedPackage: templateSourcePortMod.loadResolvedPackage,
   openTemplatePackage: templatePackageMod.openTemplatePackage,
 };
+
+export interface ResolvedV4ChannelPackage {
+  source: TemplateSource;
+  bytes: Buffer;
+}
 
 /**
  * Resolve a template entry's relative name to an absolute path and verify it
@@ -84,23 +99,38 @@ export async function renderTemplateEntries(
 }
 
 /**
- * v3 → v4 wiring (one-way; v3 may call into the v4 barrel, v4 knows nothing of
- * v3). Resolves the scaffold template through the v4 distribution channel, then
- * renders the located template's entries onto disk.
+ * Resolve the v4 distribution channel and load the located package bytes — the
+ * steps `scaffoldFromV4Channel` and `scaffoldDeclarativeFromV4Channel` share
+ * verbatim (resolve the source, record its telemetry, read the bytes).
  *
- * Expected failures from the v4 operations surface as thrown `FxError`s,
- * matching how the legacy local-template action rejects.
+ * Transitional (ADR-0006 INV-T2): the create/modify content path resolves
+ * LOCAL-only via `resolveLocalTemplateSource` — `max(cache, floor)`, never the
+ * network — so it agrees with the selector/metadata gate within one invocation
+ * and the scaffold never blocks on a download. The online resolve lives solely
+ * in the background cache-warmer (`fetchOnlineTemplateMetadata`), which warms
+ * the cache the *next* invocation reads. Local resolution is total, so the only
+ * expected failure here is reading the bytes; `telemetryProps` is still
+ * populated with the resolved `source` before the read so a read failure stays
+ * attributable.
  *
- * `telemetryProps` (the `GenerateTemplate` event's props) is populated with the
- * resolved `source` as soon as resolution succeeds — before the package is read
- * or rendered — so a later digest/render failure still carries the origin and
- * version, making v4 errors attributable in telemetry.
+ * Synchronous: both `resolveLocalTemplateSource` and `loadResolvedPackage` are
+ * synchronous. Expected failures surface as thrown `FxError`s, matching how the
+ * legacy local-template action rejects.
  */
-export async function scaffoldFromV4Channel(
+function resolveChannelPackageBytes(
   context: GeneratorContext,
-  locator: TemplateLocator,
-  telemetryProps?: Record<string, string>
-): Promise<TemplateSource> {
+  telemetryProps?: Record<string, string>,
+  resolvedPackage?: ResolvedV4ChannelPackage
+): ResolvedV4ChannelPackage {
+  if (resolvedPackage !== undefined) {
+    merge(telemetryProps, {
+      [TelemetryProperty.TemplatePackageSource]: resolvedPackage.source.origin,
+      [TelemetryProperty.TemplatePackageVersion]: resolvedPackage.source.version,
+      [TelemetryProperty.TemplatePackageDigest]: resolvedPackage.source.digest,
+    });
+    return resolvedPackage;
+  }
+
   const channelConfig = {
     templatesV4TagListURL: templateConfig.templatesV4TagListURL,
     templateDownloadBaseURL: templateConfig.templateDownloadBaseURL,
@@ -111,15 +141,10 @@ export async function scaffoldFromV4Channel(
     v4TemplateBridgeDeps.loadBundledFloor()
   );
 
-  const sourceResult = await v4TemplateBridgeDeps.resolveTemplateSource({
+  const source = v4TemplateBridgeDeps.resolveLocalTemplateSource({
     range: templateConfig.v4.range,
-    bundled: templateConfig.v4.bundled,
     port,
   });
-  if (sourceResult.isErr()) {
-    throw sourceResult.error;
-  }
-  const source = sourceResult.value;
   merge(telemetryProps, {
     [TelemetryProperty.TemplatePackageSource]: source.origin,
     [TelemetryProperty.TemplatePackageVersion]: source.version,
@@ -130,12 +155,105 @@ export async function scaffoldFromV4Channel(
   if (bytesResult.isErr()) {
     throw bytesResult.error;
   }
+  return { source, bytes: bytesResult.value };
+}
 
-  const entriesResult = v4TemplateBridgeDeps.openTemplatePackage(bytesResult.value, locator);
+/**
+ * v3 → v4 wiring (one-way; v3 may call into the v4 barrel, v4 knows nothing of
+ * v3). Resolves the scaffold template through the v4 distribution channel, then
+ * renders the located template's entries onto disk via the v3 GeneratorContext.
+ */
+export async function scaffoldFromV4Channel(
+  context: GeneratorContext,
+  locator: TemplateLocator,
+  telemetryProps?: Record<string, string>,
+  resolvedPackage?: ResolvedV4ChannelPackage
+): Promise<TemplateSource> {
+  const { source, bytes } = resolveChannelPackageBytes(context, telemetryProps, resolvedPackage);
+
+  const entriesResult = v4TemplateBridgeDeps.openTemplatePackage(bytes, locator);
   if (entriesResult.isErr()) {
     throw entriesResult.error;
   }
 
   context.outputs = await renderTemplateEntries(context, entriesResult.value);
+  return source;
+}
+
+/**
+ * List the files already present under `dest`, as content-relative,
+ * forward-slash paths — the create-empty contract's `existing` set
+ * (`run-scaffold-pipeline` `TargetDir.existing`). An absent directory reads as
+ * empty (EAFP: read, don't stat first).
+ */
+async function listExistingRelativeFiles(dest: string): Promise<string[]> {
+  const results: string[] = [];
+  const walk = async (dir: string): Promise<void> => {
+    const names = await fs.readdir(dir).catch(() => undefined);
+    if (!names) {
+      return; // the directory (or a subdirectory) does not exist — nothing existing
+    }
+    for (const name of names) {
+      const full = path.join(dir, name);
+      const stat = await fs.stat(full);
+      if (stat.isDirectory()) {
+        await walk(full);
+      } else {
+        results.push(path.relative(dest, full).replace(/\\/g, "/"));
+      }
+    }
+  };
+  await walk(dest);
+  return results;
+}
+
+/**
+ * v3 → v4 wiring for the declarative engine: resolve the template through the
+ * same v4 distribution channel, then run the authored declarative package
+ * (`descriptor` + `pipeline` + `content`) through `scaffold` onto disk, instead
+ * of the v3 render path. The package is located by `{kind, templateId}` and
+ * materialized by the on-disk runtime rooted at `context.destination`.
+ *
+ * `answers` and `callerFloor` are supplied by the caller: the v3 surface maps
+ * its question values into them (v3 → v4 is allowed; v4 derives the rest from
+ * the descriptor). The resolved `source` telemetry is recorded by the shared
+ * resolve step before the package is opened.
+ *
+ * Expected failures (resolution, read, an unmet create-empty contract, an
+ * engine break) surface as thrown `FxError`s, matching `scaffoldFromV4Channel`.
+ */
+export async function scaffoldDeclarativeFromV4Channel(
+  context: GeneratorContext,
+  locator: DeclarativeLocator,
+  answers: Answers,
+  callerFloor: CallerFloor,
+  telemetryProps?: Record<string, string>,
+  flagReader?: (name: string) => boolean,
+  resolvedPackage?: ResolvedV4ChannelPackage
+): Promise<TemplateSource> {
+  const { source, bytes } = resolveChannelPackageBytes(context, telemetryProps, resolvedPackage);
+
+  const loaded = openDeclarativePackage(bytes, locator);
+  if (loaded.isErr()) {
+    throw loaded.error;
+  }
+
+  const existing = await listExistingRelativeFiles(context.destination);
+  const result = await scaffold(
+    {
+      descriptor: loaded.value.descriptor,
+      pipeline: loaded.value.pipeline,
+      content: loaded.value.content,
+      answers,
+      callerFloor,
+      targetDir: { path: context.destination, existing },
+    },
+    createRealRuntime(context.destination, flagReader)
+  );
+  if (result.isErr()) {
+    throw result.error;
+  }
+
+  context.outputs = result.value.written;
   return source;
 }

@@ -187,8 +187,6 @@
   "teamstoolkit.commandsTreeViewProvider.manageCollaboratorDescription": "Manage Microsoft 365 App (with Microsoft Entra app) Collaborators",
   "teamstoolkit.commandsTreeViewProvider.addPluginTitle": "Add Action",
   "teamstoolkit.commandsTreeViewProvider.addPluginDescription": "Add action in declarative agent",
-  "teamstoolkit.commandsTreeViewProvider.metaOSExtendToDA": "Extend the App to Declarative Agent",
-  "teamstoolkit.commandsTreeViewProvider.metaOSExtendToDADescription": "Extend the add-in project to Declarative Agent",
   "teamstoolkit.commandsTreeViewProvider.metaOS.convert.title": "Extend to Declarative Agent",
   "teamstoolkit.commandsTreeViewProvider.metaOS.convert.description": "Extend the add-in project to Declarative Agent action",
   "teamstoolkit.commandsTreeViewProvider.regenerateActionTitle": "Regenerate Action",

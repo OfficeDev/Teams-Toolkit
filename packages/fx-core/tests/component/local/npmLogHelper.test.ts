@@ -1,15 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import * as chai from "chai";
-import chaiAsPromised from "chai-as-promised";
 import * as fs from "fs-extra";
 import * as path from "path";
-import * as sinon from "sinon";
 import { cpUtils } from "../../../src/component/deps-checker/util/cpUtils";
 import { getNpmInstallLogInfo } from "../../../src/component/local/npmLogHelper";
-
-chai.use(chaiAsPromised);
+import { chai, vi } from "vitest";
 
 describe("npmLogHelper", () => {
   describe("getNpmInstallLogInfo()", () => {
@@ -27,7 +23,7 @@ describe("npmLogHelper", () => {
     ";
 
     beforeEach(() => {
-      sinon.restore();
+      vi.restoreAllMocks();
       fs.ensureDirSync(npmLogPath);
       fs.emptyDirSync(npmLogPath);
     });
@@ -37,7 +33,7 @@ describe("npmLogHelper", () => {
         path.join(npmLogPath, "2021-12-02T20_21_12_020Z-debug.log"),
         npmErrorLogRaw
       );
-      sinon.stub(cpUtils, "executeCommand").resolves(npmCachePath);
+      vi.spyOn(cpUtils, "executeCommand").mockResolvedValue(npmCachePath);
 
       const logInfo = await getNpmInstallLogInfo();
 
@@ -55,7 +51,7 @@ describe("npmLogHelper", () => {
     });
 
     it("no log file", async () => {
-      sinon.stub(cpUtils, "executeCommand").resolves(npmCachePath);
+      vi.spyOn(cpUtils, "executeCommand").mockResolvedValue(npmCachePath);
 
       const logInfo = await getNpmInstallLogInfo();
 
@@ -64,7 +60,7 @@ describe("npmLogHelper", () => {
 
     it("invalid log file name", async () => {
       await fs.writeFile(path.join(npmLogPath, "invalid.invalid"), npmErrorLogRaw);
-      sinon.stub(cpUtils, "executeCommand").resolves(npmCachePath);
+      vi.spyOn(cpUtils, "executeCommand").mockResolvedValue(npmCachePath);
 
       const logInfo = await getNpmInstallLogInfo();
 
@@ -87,7 +83,7 @@ describe("npmLogHelper", () => {
         npmErrorLogRaw
       );
       await fs.writeFile(path.join(npmLogPath, "2099-12-31T23_59_59_000Z-debug.log"), "no error");
-      sinon.stub(cpUtils, "executeCommand").resolves(npmCachePath);
+      vi.spyOn(cpUtils, "executeCommand").mockResolvedValue(npmCachePath);
 
       const logInfo = await getNpmInstallLogInfo();
 

@@ -2,8 +2,7 @@ import * as armResources from "@azure/arm-resources";
 import { ResourceManagementClient } from "@azure/arm-resources";
 import { SubscriptionClient } from "@azure/arm-subscriptions";
 import { ok, Platform } from "@microsoft/teamsfx-api";
-import { assert } from "chai";
-import * as sinon from "sinon";
+import { assert, vi } from "vitest";
 import { setTools, TOOLS } from "../../src/common/globalVars";
 import {
   resourceGroupHelper,
@@ -19,21 +18,21 @@ import {
 import { MockTools, MyTokenCredential } from "../core/utils";
 
 describe("resouce group helper test", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   const tools = new MockTools();
   setTools(tools);
   beforeEach(() => {
-    sandbox.stub(tools.tokenProvider.azureAccountProvider, "setSubscription").resolves();
+    vi.spyOn(tools.tokenProvider.azureAccountProvider, "setSubscription").mockResolvedValue();
   });
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   it("askResourceGroupInfoV3", async () => {
-    sandbox.stub(resourceGroupHelper, "listResourceGroups").resolves(ok([["rg1", "loc1"]]));
-    sandbox.stub(resourceGroupHelper, "getLocations").resolves(ok(["loc1"]));
-    sandbox
-      .stub(TOOLS.ui, "selectOption")
-      .resolves(ok({ type: "success", result: { id: "rg1", label: "loc1" } }));
+    vi.spyOn(resourceGroupHelper, "listResourceGroups").mockResolvedValue(ok([["rg1", "loc1"]]));
+    vi.spyOn(resourceGroupHelper, "getLocations").mockResolvedValue(ok(["loc1"]));
+    vi.spyOn(TOOLS.ui, "selectOption").mockResolvedValue(
+      ok({ type: "success", result: { id: "rg1", label: "loc1" } })
+    );
     const mockResourceManagementClient = new ResourceManagementClient(
       new MyTokenCredential(),
       "id"
@@ -60,14 +59,18 @@ describe("resouce group helper test", () => {
       new MyTokenCredential(),
       "id"
     );
-    sandbox.stub(armResources, "ResourceManagementClient").returns(mockResourceManagementClient);
-    sandbox
-      .stub(tools.tokenProvider.azureAccountProvider, "getIdentityCredentialAsync")
-      .resolves(new MyTokenCredential());
-    sandbox.stub(resourceGroupHelper, "checkResourceGroupExistence").resolves(ok(false));
-    sandbox
-      .stub(mockResourceManagementClient.resourceGroups, "createOrUpdate")
-      .resolves({ name: undefined, location: "east us" });
+    vi.spyOn(armResources, "ResourceManagementClient").mockImplementation(function () {
+      return mockResourceManagementClient as any;
+    } as any);
+    vi.spyOn(
+      tools.tokenProvider.azureAccountProvider,
+      "getIdentityCredentialAsync"
+    ).mockResolvedValue(new MyTokenCredential());
+    vi.spyOn(resourceGroupHelper, "checkResourceGroupExistence").mockResolvedValue(ok(false));
+    vi.spyOn(mockResourceManagementClient.resourceGroups, "createOrUpdate").mockResolvedValue({
+      name: undefined,
+      location: "east us",
+    });
     const res = await resourceGroupHelper.createNewResourceGroup(
       "mockRG",
       tools.tokenProvider.azureAccountProvider,
@@ -85,14 +88,17 @@ describe("resouce group helper test", () => {
       new MyTokenCredential(),
       "id"
     );
-    sandbox.stub(armResources, "ResourceManagementClient").returns(mockResourceManagementClient);
-    sandbox
-      .stub(tools.tokenProvider.azureAccountProvider, "getIdentityCredentialAsync")
-      .resolves(new MyTokenCredential());
-    sandbox.stub(resourceGroupHelper, "checkResourceGroupExistence").resolves(ok(false));
-    sandbox
-      .stub(mockResourceManagementClient.resourceGroups, "createOrUpdate")
-      .rejects(new Error("test"));
+    vi.spyOn(armResources, "ResourceManagementClient").mockImplementation(function () {
+      return mockResourceManagementClient as any;
+    } as any);
+    vi.spyOn(
+      tools.tokenProvider.azureAccountProvider,
+      "getIdentityCredentialAsync"
+    ).mockResolvedValue(new MyTokenCredential());
+    vi.spyOn(resourceGroupHelper, "checkResourceGroupExistence").mockResolvedValue(ok(false));
+    vi.spyOn(mockResourceManagementClient.resourceGroups, "createOrUpdate").mockRejectedValue(
+      new Error("test")
+    );
     const res = await resourceGroupHelper.createNewResourceGroup(
       "mockRG",
       tools.tokenProvider.azureAccountProvider,
@@ -110,14 +116,18 @@ describe("resouce group helper test", () => {
       new MyTokenCredential(),
       "id"
     );
-    sandbox.stub(armResources, "ResourceManagementClient").returns(mockResourceManagementClient);
-    sandbox
-      .stub(tools.tokenProvider.azureAccountProvider, "getIdentityCredentialAsync")
-      .resolves(new MyTokenCredential());
-    sandbox.stub(resourceGroupHelper, "checkResourceGroupExistence").resolves(ok(false));
-    sandbox
-      .stub(mockResourceManagementClient.resourceGroups, "createOrUpdate")
-      .resolves({ name: "mockRg", location: "east us" });
+    vi.spyOn(armResources, "ResourceManagementClient").mockImplementation(function () {
+      return mockResourceManagementClient as any;
+    } as any);
+    vi.spyOn(
+      tools.tokenProvider.azureAccountProvider,
+      "getIdentityCredentialAsync"
+    ).mockResolvedValue(new MyTokenCredential());
+    vi.spyOn(resourceGroupHelper, "checkResourceGroupExistence").mockResolvedValue(ok(false));
+    vi.spyOn(mockResourceManagementClient.resourceGroups, "createOrUpdate").mockResolvedValue({
+      name: "mockRg",
+      location: "east us",
+    });
     const res = await resourceGroupHelper.createNewResourceGroup(
       "mockRG",
       tools.tokenProvider.azureAccountProvider,
@@ -132,9 +142,9 @@ describe("resouce group helper test", () => {
       new MyTokenCredential(),
       "id"
     );
-    sandbox
-      .stub(mockResourceManagementClient.resourceGroups, "checkExistence")
-      .resolves({ body: true });
+    vi.spyOn(mockResourceManagementClient.resourceGroups, "checkExistence").mockResolvedValue({
+      body: true,
+    });
     const res = await resourceGroupHelper.checkResourceGroupExistence(
       "mockRG",
       mockResourceManagementClient
@@ -150,9 +160,9 @@ describe("resouce group helper test", () => {
       new MyTokenCredential(),
       "id"
     );
-    sandbox
-      .stub(mockResourceManagementClient.resourceGroups, "checkExistence")
-      .rejects(new Error("test"));
+    vi.spyOn(mockResourceManagementClient.resourceGroups, "checkExistence").mockRejectedValue(
+      new Error("test")
+    );
     const res = await resourceGroupHelper.checkResourceGroupExistence(
       "mockRG",
       mockResourceManagementClient
@@ -168,9 +178,10 @@ describe("resouce group helper test", () => {
       new MyTokenCredential(),
       "id"
     );
-    sandbox
-      .stub(mockResourceManagementClient.resourceGroups, "get")
-      .resolves({ name: "mockRG", location: "XXX" });
+    vi.spyOn(mockResourceManagementClient.resourceGroups, "get").mockResolvedValue({
+      name: "mockRG",
+      location: "XXX",
+    });
     const res = await resourceGroupHelper.getResourceGroupInfo(
       "mockRG",
       mockResourceManagementClient
@@ -186,7 +197,9 @@ describe("resouce group helper test", () => {
       new MyTokenCredential(),
       "id"
     );
-    sandbox.stub(mockResourceManagementClient.resourceGroups, "get").resolves({ location: "XXX" });
+    vi.spyOn(mockResourceManagementClient.resourceGroups, "get").mockResolvedValue({
+      location: "XXX",
+    });
     const res = await resourceGroupHelper.getResourceGroupInfo(
       "mockRG",
       mockResourceManagementClient
@@ -202,7 +215,7 @@ describe("resouce group helper test", () => {
       new MyTokenCredential(),
       "id"
     );
-    sandbox.stub(mockResourceManagementClient.resourceGroups, "get").rejects(new Error(""));
+    vi.spyOn(mockResourceManagementClient.resourceGroups, "get").mockRejectedValue(new Error(""));
     const res = await resourceGroupHelper.getResourceGroupInfo(
       "mockRG",
       mockResourceManagementClient
@@ -216,24 +229,22 @@ describe("resouce group helper test", () => {
   it("listResourceGroups success", async () => {
     const client = new ResourceManagementClient(new MyTokenCredential(), "id");
     const iterator = {
-      next: sandbox
-        .stub()
-        .onFirstCall()
-        .resolves({
+      next: vi
+        .fn()
+        .mockResolvedValueOnce({
           value: { name: "rg1", location: "east us" },
           done: false,
         })
-        .onSecondCall()
-        .resolves({
+        .mockResolvedValueOnce({
           value: { name: "rg2", location: "east us" },
           done: true,
         }),
-      byPage: sandbox.stub().resolves([[{ name: "rg", location: "east us" }]]),
+      byPage: vi.fn().mockResolvedValue([[{ name: "rg", location: "east us" }]]),
       [Symbol.asyncIterator]() {
         return this;
       },
     };
-    sandbox.stub(client.resourceGroups, "list").returns(iterator);
+    vi.spyOn(client.resourceGroups, "list").mockReturnValue(iterator);
     const res = await resourceGroupHelper.listResourceGroups(client);
     assert.isTrue(res.isOk());
     if (res.isOk()) {
@@ -244,13 +255,13 @@ describe("resouce group helper test", () => {
   it("listResourceGroups throw Error", async () => {
     const client = new ResourceManagementClient(new MyTokenCredential(), "id");
     const iterator = {
-      next: sandbox.stub().rejects(new Error("test")),
-      byPage: sandbox.stub().resolves([[{ name: "rg", location: "east us" }]]),
+      next: vi.fn().mockRejectedValue(new Error("test")),
+      byPage: vi.fn().mockResolvedValue([[{ name: "rg", location: "east us" }]]),
       [Symbol.asyncIterator]() {
         return this;
       },
     };
-    sandbox.stub(client.resourceGroups, "list").returns(iterator);
+    vi.spyOn(client.resourceGroups, "list").mockReturnValue(iterator);
     const res = await resourceGroupHelper.listResourceGroups(client);
     assert.isTrue(res.isErr());
     if (res.isErr()) {
@@ -261,37 +272,38 @@ describe("resouce group helper test", () => {
   it("getLocations success", async () => {
     const rmClient = new ResourceManagementClient(new MyTokenCredential(), "id");
     const iterator = {
-      next: sandbox
-        .stub()
-        .onFirstCall()
-        .resolves({
+      next: vi
+        .fn()
+        .mockResolvedValueOnce({
           value: { displayName: "east us" },
           done: false,
         })
-        .onSecondCall()
-        .resolves({
+        .mockResolvedValueOnce({
           value: { displayName: "central us" },
           done: true,
         }),
-      byPage: sandbox.stub().resolves([[{ displayName: "east us" }]]),
+      byPage: vi.fn().mockResolvedValue([[{ displayName: "east us" }]]),
       [Symbol.asyncIterator]() {
         return this;
       },
     };
-    sandbox
-      .stub(resourceGroupHelperDeps, "createSubscriptionClient")
-      .returns({ subscriptions: { listLocations: () => iterator } } as any);
-    sandbox.stub(tools.tokenProvider.azureAccountProvider, "getSelectedSubscription").resolves({
-      subscriptionId: "mockSubId",
-      subscriptionName: "mockSubName",
-      tenantId: "mockTID",
-    });
-    sandbox.stub(rmClient.providers, "get").resolves({
+    vi.spyOn(resourceGroupHelperDeps, "createSubscriptionClient").mockReturnValue({
+      subscriptions: { listLocations: () => iterator },
+    } as any);
+    vi.spyOn(tools.tokenProvider.azureAccountProvider, "getSelectedSubscription").mockResolvedValue(
+      {
+        subscriptionId: "mockSubId",
+        subscriptionName: "mockSubName",
+        tenantId: "mockTID",
+      }
+    );
+    vi.spyOn(rmClient.providers, "get").mockResolvedValue({
       resourceTypes: [{ resourceType: "resourceGroups", locations: ["east us"] }],
     });
-    sandbox
-      .stub(tools.tokenProvider.azureAccountProvider, "getIdentityCredentialAsync")
-      .resolves(new MyTokenCredential());
+    vi.spyOn(
+      tools.tokenProvider.azureAccountProvider,
+      "getIdentityCredentialAsync"
+    ).mockResolvedValue(new MyTokenCredential());
     const res = await resourceGroupHelper.getLocations(
       tools.tokenProvider.azureAccountProvider,
       rmClient
@@ -305,37 +317,38 @@ describe("resouce group helper test", () => {
   it("getLocations return zero results", async () => {
     const rmClient = new ResourceManagementClient(new MyTokenCredential(), "id");
     const iterator = {
-      next: sandbox
-        .stub()
-        .onFirstCall()
-        .resolves({
+      next: vi
+        .fn()
+        .mockResolvedValueOnce({
           value: { displayName: "east us" },
           done: false,
         })
-        .onSecondCall()
-        .resolves({
+        .mockResolvedValueOnce({
           value: { displayName: "central us" },
           done: true,
         }),
-      byPage: sandbox.stub().resolves([[{ displayName: "east us" }]]),
+      byPage: vi.fn().mockResolvedValue([[{ displayName: "east us" }]]),
       [Symbol.asyncIterator]() {
         return this;
       },
     };
-    sandbox
-      .stub(resourceGroupHelperDeps, "createSubscriptionClient")
-      .returns({ subscriptions: { listLocations: () => iterator } } as any);
-    sandbox.stub(tools.tokenProvider.azureAccountProvider, "getSelectedSubscription").resolves({
-      subscriptionId: "mockSubId",
-      subscriptionName: "mockSubName",
-      tenantId: "mockTID",
-    });
-    sandbox.stub(rmClient.providers, "get").resolves({
+    vi.spyOn(resourceGroupHelperDeps, "createSubscriptionClient").mockReturnValue({
+      subscriptions: { listLocations: () => iterator },
+    } as any);
+    vi.spyOn(tools.tokenProvider.azureAccountProvider, "getSelectedSubscription").mockResolvedValue(
+      {
+        subscriptionId: "mockSubId",
+        subscriptionName: "mockSubName",
+        tenantId: "mockTID",
+      }
+    );
+    vi.spyOn(rmClient.providers, "get").mockResolvedValue({
       resourceTypes: [],
     });
-    sandbox
-      .stub(tools.tokenProvider.azureAccountProvider, "getIdentityCredentialAsync")
-      .resolves(new MyTokenCredential());
+    vi.spyOn(
+      tools.tokenProvider.azureAccountProvider,
+      "getIdentityCredentialAsync"
+    ).mockResolvedValue(new MyTokenCredential());
     const res = await resourceGroupHelper.getLocations(
       tools.tokenProvider.azureAccountProvider,
       rmClient
@@ -349,23 +362,26 @@ describe("resouce group helper test", () => {
   it("getLocations throw Error", async () => {
     const rmClient = new ResourceManagementClient(new MyTokenCredential(), "id");
     const iterator = {
-      next: sandbox.stub().rejects({ message: "test error" }),
-      byPage: sandbox.stub().resolves([[{ displayName: "east us" }]]),
+      next: vi.fn().mockRejectedValue({ message: "test error" }),
+      byPage: vi.fn().mockResolvedValue([[{ displayName: "east us" }]]),
       [Symbol.asyncIterator]() {
         return this;
       },
     };
-    sandbox
-      .stub(resourceGroupHelperDeps, "createSubscriptionClient")
-      .returns({ subscriptions: { listLocations: () => iterator } } as any);
-    sandbox.stub(tools.tokenProvider.azureAccountProvider, "getSelectedSubscription").resolves({
-      subscriptionId: "mockSubId",
-      subscriptionName: "mockSubName",
-      tenantId: "mockTID",
-    });
-    sandbox
-      .stub(tools.tokenProvider.azureAccountProvider, "getIdentityCredentialAsync")
-      .resolves(new MyTokenCredential());
+    vi.spyOn(resourceGroupHelperDeps, "createSubscriptionClient").mockReturnValue({
+      subscriptions: { listLocations: () => iterator },
+    } as any);
+    vi.spyOn(tools.tokenProvider.azureAccountProvider, "getSelectedSubscription").mockResolvedValue(
+      {
+        subscriptionId: "mockSubId",
+        subscriptionName: "mockSubName",
+        tenantId: "mockTID",
+      }
+    );
+    vi.spyOn(
+      tools.tokenProvider.azureAccountProvider,
+      "getIdentityCredentialAsync"
+    ).mockResolvedValue(new MyTokenCredential());
     const res = await resourceGroupHelper.getLocations(
       tools.tokenProvider.azureAccountProvider,
       rmClient

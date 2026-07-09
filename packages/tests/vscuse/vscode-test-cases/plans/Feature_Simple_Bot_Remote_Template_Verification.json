@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 28,
+    "total_steps": 26,
     "created_at": "2026-05-25T10:06:39.800165",
     "name": "Feature Simple Bot Remote Template Verification",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2026-05-25T10:06:39.800165",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_fa4e2fc9",
+      "plan_r_0624_024810",
       "step_c6bcc774",
       "step_1b6988d7",
       "step_4dda74af",
@@ -38,7 +38,7 @@
       "step_d909ee30",
       "step_1fdeb60a",
       "step_168668df",
-      "step_60fda345",
+      "plan_r_0624_024810",
       "step_052e6cd1",
       "step_112495b6",
       "step_be6b6e63",
@@ -54,32 +54,6 @@
     "updated_at": "2026-05-25T10:31:47.887131"
   },
   "steps": [
-    {
-      "step_id": "step_fa4e2fc9",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 341,
-        "y": 225
-      },
-      "description": "Click the \"Teams Agents and Apps\" option in the dropdown under \"Agents for Microsoft 365 Copilot\" to initiate creating or managing bots, apps, or web pages using the Microsoft Teams SDK.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:341:225:16:5:80019847b99dd5d5",
-        "dhash:341:225:96:5:66648da934870e36",
-        "dhash:341:225:0:10:c0c88094b0717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_fa4e2fc9",
-      "created_at": "2026-05-25T10:06:39.812907",
-      "plan_id": "plan_a94bb561"
-    },
     {
       "step_id": "step_c6bcc774",
       "agent": "interaction",
@@ -466,32 +440,6 @@
       "tags": [],
       "screenshot": "step_168668df",
       "created_at": "2026-05-25T10:06:40.060006",
-      "plan_id": "plan_a94bb561"
-    },
-    {
-      "step_id": "step_60fda345",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 351,
-        "y": 217
-      },
-      "description": "Click the \"Teams Agents and Apps – Apps for Microsoft 365\" option in the \"New Project\" dialog within the Microsoft 365 Agents Toolkit extension in Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:351:217:16:5:e5f5d5d52ac40082",
-        "dhash:351:217:96:5:30ccc81a4b691200",
-        "dhash:351:217:0:10:c8c88097a269696b"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_60fda345",
-      "created_at": "2026-05-25T10:06:40.067929",
       "plan_id": "plan_a94bb561"
     },
     {

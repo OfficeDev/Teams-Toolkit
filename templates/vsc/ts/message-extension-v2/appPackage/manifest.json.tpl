@@ -1,6 +1,6 @@
 {
-    "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.28/MicrosoftTeams.schema.json",
-    "manifestVersion": "1.28",
+    "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.29/MicrosoftTeams.schema.json",
+    "manifestVersion": "1.29",
     "version": "1.0.0",
     "id": "${{TEAMS_APP_ID}}",
     "developer": {
@@ -32,6 +32,7 @@
                 "groupChat"
             ],
             "isNotificationOnly": false,
+            "supportsTargetedMessages": false,
             "supportsCalling": false,
             "supportsVideo": false,
             "supportsFiles": false

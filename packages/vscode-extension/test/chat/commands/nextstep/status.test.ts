@@ -1,31 +1,24 @@
-import * as chai from "chai";
-import chaiPromised from "chai-as-promised";
-import * as sinon from "sinon";
 import * as status from "../../../../src/chat/commands/nextstep/status";
-import * as helper from "../../../../src/chat/commands/nextstep/helper";
 import { MachineStatus, WholeStatus } from "../../../../src/chat/commands/nextstep/types";
 import * as projectStatusUtils from "../../../../src/utils/projectStatusUtils";
-
-chai.use(chaiPromised);
+import * as helper from "../../../../src/chat/commands/nextstep/helper";
+import { vi, expect } from "vitest";
 
 describe("chat nextstep status", () => {
   afterEach(() => {
     // Restore the default sandbox here
-    sinon.restore();
+    vi.restoreAllMocks();
   });
 
   describe("func: getWholeStatus", () => {
-    const sandbox = sinon.createSandbox();
-
-    afterEach(() => {
-      sandbox.restore();
-    });
-
     it("folder === undefined", async () => {
-      sandbox.stub(helper, "checkCredential").resolves({ m365LoggedIn: true, azureLoggedIn: true });
-      sandbox.stub(helper, "globalStateGet").resolves(true);
-      sandbox.stub(helper, "globalStateUpdate");
-      await chai.expect(status.getWholeStatus()).to.eventually.deep.equal({
+      vi.spyOn(helper, "checkCredential").mockResolvedValue({
+        m365LoggedIn: true,
+        azureLoggedIn: true,
+      });
+      vi.spyOn(helper, "globalStateGet").mockResolvedValue(true);
+      vi.spyOn(helper, "globalStateUpdate").mockResolvedValue(undefined as any);
+      await expect(status.getWholeStatus()).resolves.toEqual({
         machineStatus: {
           azureLoggedIn: true,
           firstInstalled: true,
@@ -35,17 +28,20 @@ describe("chat nextstep status", () => {
     });
 
     it("folder !== undefined", async () => {
-      sandbox.stub(helper, "getProjectMetadata").returns({ projectId: "test-id" });
-      sandbox
-        .stub(projectStatusUtils, "getProjectStatus")
-        .resolves(projectStatusUtils.emptyProjectStatus());
-      sandbox.stub(projectStatusUtils, "getFileModifiedTime").resolves(new Date(0));
-      sandbox.stub(projectStatusUtils, "getREADME").resolves(undefined);
-      sandbox.stub(projectStatusUtils, "getLaunchJSON").resolves(undefined);
-      sandbox.stub(helper, "checkCredential").resolves({ m365LoggedIn: true, azureLoggedIn: true });
-      sandbox.stub(helper, "globalStateGet").resolves(true);
-      sandbox.stub(helper, "globalStateUpdate");
-      await chai.expect(status.getWholeStatus("test-folder")).to.eventually.deep.equal({
+      vi.spyOn(helper, "getProjectMetadata").mockReturnValue({ projectId: "test-id" });
+      vi.spyOn(projectStatusUtils, "getProjectStatus").mockResolvedValue(
+        projectStatusUtils.emptyProjectStatus()
+      );
+      vi.spyOn(projectStatusUtils, "getFileModifiedTime").mockResolvedValue(new Date(0));
+      vi.spyOn(projectStatusUtils, "getREADME").mockResolvedValue(undefined);
+      vi.spyOn(projectStatusUtils, "getLaunchJSON").mockResolvedValue(undefined);
+      vi.spyOn(helper, "checkCredential").mockResolvedValue({
+        m365LoggedIn: true,
+        azureLoggedIn: true,
+      });
+      vi.spyOn(helper, "globalStateGet").mockResolvedValue(true);
+      vi.spyOn(helper, "globalStateUpdate").mockResolvedValue(undefined as any);
+      await expect(status.getWholeStatus("test-folder")).resolves.toEqual({
         machineStatus: {
           azureLoggedIn: true,
           firstInstalled: true,
@@ -66,17 +62,20 @@ describe("chat nextstep status", () => {
     });
 
     it("folder !== undefined (no project id)", async () => {
-      sandbox.stub(helper, "getProjectMetadata").returns(undefined);
-      sandbox
-        .stub(projectStatusUtils, "getProjectStatus")
-        .resolves(projectStatusUtils.emptyProjectStatus());
-      sandbox.stub(projectStatusUtils, "getFileModifiedTime").resolves(new Date(0));
-      sandbox.stub(projectStatusUtils, "getREADME").resolves(undefined);
-      sandbox.stub(projectStatusUtils, "getLaunchJSON").resolves(undefined);
-      sandbox.stub(helper, "checkCredential").resolves({ m365LoggedIn: true, azureLoggedIn: true });
-      sandbox.stub(helper, "globalStateGet").resolves(true);
-      sandbox.stub(helper, "globalStateUpdate");
-      await chai.expect(status.getWholeStatus("test-folder")).to.eventually.deep.equal({
+      vi.spyOn(helper, "getProjectMetadata").mockReturnValue(undefined);
+      vi.spyOn(projectStatusUtils, "getProjectStatus").mockResolvedValue(
+        projectStatusUtils.emptyProjectStatus()
+      );
+      vi.spyOn(projectStatusUtils, "getFileModifiedTime").mockResolvedValue(new Date(0));
+      vi.spyOn(projectStatusUtils, "getREADME").mockResolvedValue(undefined);
+      vi.spyOn(projectStatusUtils, "getLaunchJSON").mockResolvedValue(undefined);
+      vi.spyOn(helper, "checkCredential").mockResolvedValue({
+        m365LoggedIn: true,
+        azureLoggedIn: true,
+      });
+      vi.spyOn(helper, "globalStateGet").mockResolvedValue(true);
+      vi.spyOn(helper, "globalStateUpdate").mockResolvedValue(undefined as any);
+      await expect(status.getWholeStatus("test-folder")).resolves.toEqual({
         machineStatus: {
           azureLoggedIn: true,
           firstInstalled: true,
@@ -98,17 +97,14 @@ describe("chat nextstep status", () => {
   });
 
   describe("func: getMachineStatus", () => {
-    const sandbox = sinon.createSandbox();
-
-    afterEach(() => {
-      sandbox.restore();
-    });
-
     it("func: getMachineStatus", async () => {
-      sandbox.stub(helper, "checkCredential").resolves({ m365LoggedIn: true, azureLoggedIn: true });
-      sandbox.stub(helper, "globalStateGet").resolves(true);
-      sandbox.stub(helper, "globalStateUpdate");
-      await chai.expect(status.getMachineStatus()).to.eventually.deep.equal({
+      vi.spyOn(helper, "checkCredential").mockResolvedValue({
+        m365LoggedIn: true,
+        azureLoggedIn: true,
+      });
+      vi.spyOn(helper, "globalStateGet").mockResolvedValue(true);
+      vi.spyOn(helper, "globalStateUpdate").mockResolvedValue(undefined as any);
+      await expect(status.getMachineStatus()).resolves.toEqual({
         azureLoggedIn: true,
         firstInstalled: true,
         m365LoggedIn: true,

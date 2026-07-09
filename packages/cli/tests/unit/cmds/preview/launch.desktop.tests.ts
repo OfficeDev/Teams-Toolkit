@@ -3,7 +3,6 @@
 
 import { IProgressHandler } from "@microsoft/teamsfx-api";
 import cp from "child_process";
-import * as sinon from "sinon";
 import * as commonUtils from "../../../../src/cmds/preview/commonUtils";
 import { Browser } from "../../../../src/cmds/preview/constants";
 import { openTeamsDesktopClient } from "../../../../src/cmds/preview/launch";
@@ -11,11 +10,11 @@ import cliLogger from "../../../../src/commonlib/log";
 import cliTelemetry from "../../../../src/telemetry/cliTelemetry";
 import CLIUIInstance from "../../../../src/userInteraction";
 import { expect } from "../../utils";
-
+import { vi } from "vitest";
 describe("launch openTeamsDesktopClient", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   let telemetries: any[] = [];
@@ -27,36 +26,36 @@ describe("launch openTeamsDesktopClient", () => {
   beforeEach(() => {
     telemetries = [];
 
-    sandbox.stub(process.stdout, "write").returns(true as any);
-    sandbox.stub(process.stderr, "write").returns(true as any);
+    vi.spyOn(process.stdout, "write").mockReturnValue(true as any);
+    vi.spyOn(process.stderr, "write").mockReturnValue(true as any);
 
-    sandbox.stub(cliTelemetry, "sendTelemetryEvent").callsFake((eventName, properties) => {
+    vi.spyOn(cliTelemetry, "sendTelemetryEvent").mockImplementation((eventName, properties) => {
       telemetries.push([eventName, properties]);
     });
-    sandbox
-      .stub(cliTelemetry, "sendTelemetryErrorEvent")
-      .callsFake((eventName, error, properties) => {
+    vi.spyOn(cliTelemetry, "sendTelemetryErrorEvent").mockImplementation(
+      (eventName, error, properties) => {
         telemetries.push([eventName, error, properties]);
-      });
-    sandbox.stub(cliLogger, "necessaryLog").callsFake(() => {});
-    sandbox.stub(CLIUIInstance, "createProgressBar").returns(new MockProgressHandler());
-    sandbox.stub(cp, "exec");
+      }
+    );
+    vi.spyOn(cliLogger, "necessaryLog").mockImplementation(() => {});
+    vi.spyOn(CLIUIInstance, "createProgressBar").mockReturnValue(new MockProgressHandler());
+    vi.spyOn(cp, "exec");
   });
 
   it("happy path windows", async () => {
-    sandbox.stub(process, "platform").value("win32");
+    Object.defineProperty(process, "platform", { value: "win32", configurable: true });
     await openTeamsDesktopClient("http://test-url", "username", Browser.default);
     expect(telemetries.length).to.deep.equals(0);
   });
 
   it("happy path mac", async () => {
-    sandbox.stub(process, "platform").value("darwin");
+    Object.defineProperty(process, "platform", { value: "darwin", configurable: true });
     await openTeamsDesktopClient("http://test-url", "username", Browser.default);
     expect(telemetries.length).to.deep.equals(0);
   });
 
   it("happy path windows - with telemetry", async () => {
-    sandbox.stub(process, "platform").value("win32");
+    Object.defineProperty(process, "platform", { value: "win32", configurable: true });
     await openTeamsDesktopClient(
       "http://test-url",
       "username",
@@ -68,17 +67,19 @@ describe("launch openTeamsDesktopClient", () => {
   });
 
   it("happy path others", async () => {
-    sandbox.stub(process, "platform").value("linux");
-    sandbox
-      .stub(commonUtils, "openBrowser")
-      .callsFake(async (browser, url, browserArguments) => {});
+    Object.defineProperty(process, "platform", { value: "linux", configurable: true });
+    vi.spyOn(commonUtils, "openBrowser").mockImplementation(
+      async (browser, url, browserArguments) => {}
+    );
     await openTeamsDesktopClient("http://test-url", "username", Browser.default, ["test"]);
     expect(telemetries.length).to.deep.equals(0);
   });
 
   it("openBrowser error", async () => {
-    sandbox.stub(process, "platform").value("linux");
-    sandbox.stub(commonUtils, "openBrowser").throws();
+    Object.defineProperty(process, "platform", { value: "linux", configurable: true });
+    vi.spyOn(commonUtils, "openBrowser").mockImplementation(() => {
+      throw new Error();
+    });
     await openTeamsDesktopClient("http://test-url", "username", Browser.default);
     expect(telemetries.length).to.deep.equals(0);
   });

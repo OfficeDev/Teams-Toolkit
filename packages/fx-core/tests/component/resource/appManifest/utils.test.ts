@@ -1,9 +1,9 @@
-import * as chai from "chai";
 import { AppDefinition } from "../../../../src/component/driver/teamsApp/interfaces/appdefinitions/appDefinition";
 import { Bot } from "../../../../src/component/driver/teamsApp/interfaces/appdefinitions/bot";
 import { ConfigurableTab } from "../../../../src/component/driver/teamsApp/interfaces/appdefinitions/configurableTab";
 import { MessagingExtension } from "../../../../src/component/driver/teamsApp/interfaces/appdefinitions/messagingExtension";
 import { StaticTab } from "../../../../src/component/driver/teamsApp/interfaces/appdefinitions/staticTab";
+import { chai } from "vitest";
 import {
   CommandScope,
   containsUnsupportedFeature,

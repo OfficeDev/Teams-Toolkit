@@ -63,6 +63,14 @@ Every fact in §1 of the fact page must have a row in the code map. If a
 | Topic | Fact page | Code map |
 |---|---|---|
 | Identity & login (first-party AAD app, broker, sovereign clouds, token-provider boundary) | [`identity-and-login.md`](identity-and-login.md) | [`identity-and-login.code-map.md`](identity-and-login.code-map.md) |
+| Manifest schemas (Teams app, Declarative Agent, API Plugin — host, versions, JSON Schema draft) | [`manifest-schemas.md`](manifest-schemas.md) | [`manifest-schemas.code-map.md`](manifest-schemas.code-map.md) |
+| Office Developer Runtime (ODR) (Windows binary, `odr list` contract, MCP-server enumeration) | [`odr.md`](odr.md) | [`odr.code-map.md`](odr.code-map.md) |
+| Kiota (`@microsoft/kiota` package, native binary discovery, `generatePlugin` contract) | [`kiota.md`](kiota.md) | [`kiota.code-map.md`](kiota.code-map.md) |
+| SPFx scaffolding tooling (Yeoman + `@microsoft/generator-sharepoint`, web part GUIDs, pre-release successor `@microsoft/spfx-cli` + `@microsoft/spfx-template-api`) | [`spfx-tooling.md`](spfx-tooling.md) | [`spfx-tooling.code-map.md`](spfx-tooling.code-map.md) |
+| TypeSpec compiler (`@typespec/compiler` + M365 / OpenAPI emitters, compile-input contract) | [`typespec-compiler.md`](typespec-compiler.md) | [`typespec-compiler.code-map.md`](typespec-compiler.code-map.md) |
+| OpenAPI spec parser (`@microsoft/m365-spec-parser` public surface, URL-vs-path input, validation diagnostics) | [`openapi-spec-parser.md`](openapi-spec-parser.md) | [`openapi-spec-parser.code-map.md`](openapi-spec-parser.code-map.md) |
+| Office Add-in tooling (`office-addin-project` / `office-addin-manifest`, `convertProject` precondition, MetaOS schema pins) | [`office-addin-tooling.md`](office-addin-tooling.md) | [`office-addin-tooling.code-map.md`](office-addin-tooling.code-map.md) |
+| Microsoft Graph DriveItem resolution (`/sites`, `/shares` endpoints, share-URL encoding, stable identifiers) | [`graph-driveitem-resolution.md`](graph-driveitem-resolution.md) | [`graph-driveitem-resolution.code-map.md`](graph-driveitem-resolution.code-map.md) |
 
 ## What does NOT live here
 

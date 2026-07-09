@@ -1,31 +1,23 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-import {
-  err,
-  FxError,
-  ok,
-  Result,
-  SingleSelectConfig,
-  Stage,
-  UserError,
-} from "@microsoft/teamsfx-api";
-import { getSystemInputs } from "../utils/systemEnvUtils";
-import { ExtTelemetry } from "../telemetry/extTelemetry";
-import { TelemetryEvent } from "../telemetry/extTelemetryEvents";
-import path from "path";
-import * as fs from "fs-extra";
-import { QuestionNames, ODRProvider, ODRTool } from "@microsoft/teamsfx-core";
-import * as vscode from "vscode";
-import axios from "axios";
+import { err, FxError, Result, SingleSelectConfig, Stage, UserError } from "@microsoft/teamsfx-api";
+import { ODRProvider, ODRTool, probeMCPServerAuth, QuestionNames } from "@microsoft/teamsfx-core";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
-import { runCommand } from "./sharedOpts";
-import { VS_CODE_UI } from "../qm/vsc_ui";
+import axios from "axios";
+import * as fs from "fs-extra";
 import * as parser from "jsonc-parser";
-import { getDefaultString, localize } from "../utils/localizeUtils";
+import path from "path";
+import * as vscode from "vscode";
 import { ExtensionErrors } from "../error/error";
+import { VS_CODE_UI } from "../qm/vsc_ui";
+import { ExtTelemetry } from "../telemetry/extTelemetry";
+import { TelemetryEvent } from "../telemetry/extTelemetryEvents";
+import { getDefaultString, localize } from "../utils/localizeUtils";
+import * as systemEnvUtils from "../utils/systemEnvUtils";
 import { getTriggerFromProperty } from "../utils/telemetryUtils";
+import * as sharedOpts from "./sharedOpts";
 
 /**
  * Sanitize MCP server name to match VS Code's tool prefix generation logic.
@@ -79,7 +71,7 @@ export async function updateActionWithMCP(args?: any[]): Promise<Result<any, FxE
     TelemetryEvent.UpdateActionWithMCPStart,
     getTriggerFromProperty(args && args.length > 1 ? [args[1]] : undefined)
   );
-  const inputs = getSystemInputs();
+  const inputs = systemEnvUtils.getSystemInputs();
   let mcpName = args && args.length > 0 ? args[0].serverName : undefined;
   let server = args && args.length > 0 ? args[0].serverConfig?.url : undefined;
   let command = args && args.length > 0 ? args[0].serverConfig?.command : undefined;
@@ -318,19 +310,13 @@ export async function updateActionWithMCP(args?: any[]): Promise<Result<any, FxE
   let oauthMetadataUrl = undefined;
 
   if (!isLocalMCP && server) {
-    try {
-      await axios.get(server);
-    } catch (error) {
-      if (error.status == 401) {
-        auth = "OAuthPluginVault";
-        const errorDetails = error.response?.headers?.["www-authenticate"];
-        if (errorDetails) {
-          const match = errorDetails.match(/resource_metadata=\s*"([^"]+)"/);
-          if (match) {
-            oauthMetadataUrl = match[1];
-          }
-        }
-      }
+    // Probe with a POST `initialize` request. A plain GET is unreliable: spec-compliant
+    // MCP servers (e.g. Figma) return 405 to GET and only emit the 401 + WWW-Authenticate
+    // challenge on POST, so GET-based detection would miss their auth requirement.
+    const authProbe = await probeMCPServerAuth(server);
+    if (authProbe.requiresAuth) {
+      auth = "OAuthPluginVault";
+      oauthMetadataUrl = authProbe.authMetadataUrl;
     }
     if (auth === "OAuthPluginVault" && !oauthMetadataUrl) {
       const originalURL = new URL(server);
@@ -347,7 +333,7 @@ export async function updateActionWithMCP(args?: any[]): Promise<Result<any, FxE
 
   inputs[QuestionNames.MCPForDAAuth] = auth;
   inputs[QuestionNames.MCPForDAAuthMetadataUrl] = oauthMetadataUrl;
-  const result = await runCommand(Stage.updateActionWithMCP, inputs);
+  const result = await sharedOpts.runCommand(Stage.updateActionWithMCP, inputs);
   if (result.isErr()) {
     ExtTelemetry.sendTelemetryErrorEvent(TelemetryEvent.UpdateActionWithMCP, result.error, {
       "auth-type": auth,

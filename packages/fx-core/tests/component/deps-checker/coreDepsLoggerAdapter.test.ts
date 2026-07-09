@@ -5,22 +5,21 @@
  * @author Aocheng Wang <aochengwang@microsoft.com>
  */
 
-import chai from "chai";
-import * as sinon from "sinon";
 import { LogProvider } from "@microsoft/teamsfx-api";
 import { CoreDepsLoggerAdapter } from "../../../src/component/deps-checker/coreDepsLoggerAdapter";
+import { chai, vi } from "vitest";
 
 describe("CoreDepsLoggerAdapter", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("append", () => {
     // Arrange
     let text = "";
-    const stub = sandbox.stub().callsFake((_level, _text: string) => (text = _text));
+    const stub = vi.fn().mockImplementation((_level, _text: string) => (text = _text));
     const logProvider = { log: stub } as any as LogProvider;
 
     // Act
@@ -34,7 +33,7 @@ describe("CoreDepsLoggerAdapter", () => {
   it("appendLine", () => {
     // Arrange
     let text = "";
-    const stub = sandbox.stub().callsFake((_level, _text: string) => (text = _text));
+    const stub = vi.fn().mockImplementation((_level, _text: string) => (text = _text));
     const logProvider = { log: stub } as any as LogProvider;
 
     // Act
@@ -48,7 +47,7 @@ describe("CoreDepsLoggerAdapter", () => {
   it("error", () => {
     // Arrange
     let text = "";
-    const stub = sandbox.stub().callsFake((_text: string) => (text = _text));
+    const stub = vi.fn().mockImplementation((_text: string) => (text = _text));
     const logProvider = { error: stub } as any as LogProvider;
 
     // Act
@@ -62,7 +61,7 @@ describe("CoreDepsLoggerAdapter", () => {
   it("info", () => {
     // Arrange
     let text = "";
-    const stub = sandbox.stub().callsFake((_text: string) => (text = _text));
+    const stub = vi.fn().mockImplementation((_text: string) => (text = _text));
     const logProvider = { info: stub } as any as LogProvider;
 
     // Act
@@ -76,7 +75,7 @@ describe("CoreDepsLoggerAdapter", () => {
   it("warning", () => {
     // Arrange
     let text = "";
-    const stub = sandbox.stub().callsFake((_text: string) => (text = _text));
+    const stub = vi.fn().mockImplementation((_text: string) => (text = _text));
     const logProvider = { warning: stub } as any as LogProvider;
 
     // Act
@@ -90,7 +89,7 @@ describe("CoreDepsLoggerAdapter", () => {
   it("debug", () => {
     // Arrange
     let text = "";
-    const stub = sandbox.stub().callsFake((_text: string) => (text = _text));
+    const stub = vi.fn().mockImplementation((_text: string) => (text = _text));
     const logProvider = { error: stub } as any as LogProvider;
 
     // Act

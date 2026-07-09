@@ -28,6 +28,10 @@ on:
         required: false
         type: string
         default: "latest"
+      template_version:
+        required: false
+        type: string
+        default: ""
       email_receiver:
         required: false
         type: string
@@ -280,6 +284,28 @@ jobs:
           echo "✅ Image pulled successfully!"
           docker images $VSCUSE_VSCODE_IMAGE
 
+      - name: Inject TEMPLATE_VERSION into config.yaml
+        env:
+          TEMPLATE_VERSION: ${{ inputs.template_version }}
+        run: |
+          cd packages/tests/vscuse/vscode-test-cases
+
+          if [ -n "$TEMPLATE_VERSION" ]; then
+            awk '
+              /^execution:/ && !inserted {
+                print "    TEMPLATE_VERSION: \"" ENVIRON["TEMPLATE_VERSION"] "\""
+                print ""
+                inserted = 1
+              }
+              { print }
+            ' config.yaml > config.yaml.tmp
+            mv config.yaml.tmp config.yaml
+
+            echo "Injected TEMPLATE_VERSION into VSCUSE config.yaml: $TEMPLATE_VERSION"
+          else
+            echo "TEMPLATE_VERSION not provided; TEMPLATE_VERSION won't be added to config.yaml"
+          fi
+
       - name: Run test
         run: |
           echo "🚀 Running test plan: ${{ matrix.test_plan }}"
@@ -338,12 +364,17 @@ jobs:
             echo "No run_result.txt found" > error.txt
           fi
 
+          # Copy to a uniquely named file so the report job can recover the test
+          # plan identity from the file name even when download-artifact flattens a
+          # single artifact into the download root (no per-artifact subdirectory).
+          cp error.txt "error-${{ matrix.test_plan }}-${{ github.run_id }}.txt"
+
       - name: Upload error file
         if: always()
         uses: actions/upload-artifact@v6
         with:
           name: error-file-${{ matrix.test_plan }}-${{ github.run_id }}
-          path: error.txt
+          path: error-${{ matrix.test_plan }}-${{ github.run_id }}.txt
           retention-days: 7
           if-no-files-found: ignore
 
@@ -410,7 +441,7 @@ jobs:
 
           Write-Host "🌐Here is the report: $storageUrl"
 
-          echo "$storageUrl" > storage_url.txt
+          echo "$storageUrl" > "storage_url-${{ matrix.test_plan }}-${{ github.run_id }}.txt"
 
           az storage blob upload-batch `
             --account-name $account `
@@ -426,7 +457,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: storage-url-${{ matrix.test_plan }}-${{ github.run_id }}
-          path: storage_url.txt
+          path: storage_url-${{ matrix.test_plan }}-${{ github.run_id }}.txt
           retention-days: 7
           if-no-files-found: ignore
 
@@ -497,12 +528,14 @@ jobs:
         with:
           pattern: storage-url-*
           path: /tmp/storage-urls
+          merge-multiple: true
 
       - name: Download error files
         uses: actions/download-artifact@v7
         with:
           pattern: error-file-*
           path: /tmp/error-files
+          merge-multiple: true
 
       - name: Process storage URLs
         shell: bash
@@ -514,13 +547,13 @@ jobs:
             echo "{" > /tmp/url_mapping.json
             first_entry=true
 
-            find /tmp/storage-urls -type f -name "storage_url.txt" | while read file; do
-              dir_name=$(basename $(dirname "$file"))
-              run_id=$(echo "$dir_name" | rev | cut -d'-' -f1 | rev)
-              test_plan=$(echo "$dir_name" | sed "s/^storage-url-//" | sed "s/-${run_id}$//")
-              case_run_id="${test_plan}-${run_id}"
+            find /tmp/storage-urls -type f -name "storage_url-*.txt" | while read file; do
+              # Identity is encoded in the file name (storage_url-<test_plan>-<run_id>.txt)
+              # rather than the parent directory, so this works whether download-artifact
+              # nests each artifact in its own folder or flattens a single one.
+              case_run_id=$(basename "$file" | sed "s/^storage_url-//" | sed "s/\.txt$//")
 
-              echo "Processing: dir_name=$dir_name, test_plan=$test_plan, run_id=$run_id, case_run_id=$case_run_id"
+              echo "Processing: file=$file, case_run_id=$case_run_id"
 
               content_json=$(cat "$file" | tr -d '\n' | tr -d '\r' | jq -Rs .)
 
@@ -539,7 +572,7 @@ jobs:
             echo "Generated JSON mapping:"
             cat /tmp/url_mapping.json
 
-            total_urls=$(find /tmp/storage-urls -type f -name "storage_url.txt" | wc -l)
+            total_urls=$(find /tmp/storage-urls -type f -name "storage_url-*.txt" | wc -l)
             echo "Total storage URL files processed: $total_urls"
           else
             echo "No storage URL artifacts found"
@@ -557,13 +590,12 @@ jobs:
             echo "{" > /tmp/error_mapping.json
             first_entry=true
 
-            find /tmp/error-files -type f -name "error.txt" | while read file; do
-              dir_name=$(basename $(dirname "$file"))
-              run_id=$(echo "$dir_name" | rev | cut -d'-' -f1 | rev)
-              test_plan=$(echo "$dir_name" | sed "s/^error-file-//" | sed "s/-${run_id}$//")
-              case_run_id="${test_plan}-${run_id}"
+            find /tmp/error-files -type f -name "error-*.txt" | while read file; do
+              # Identity is encoded in the file name (error-<test_plan>-<run_id>.txt),
+              # which survives both the nested and flattened download-artifact layouts.
+              case_run_id=$(basename "$file" | sed "s/^error-//" | sed "s/\.txt$//")
 
-              echo "Processing error: dir_name=$dir_name, test_plan=$test_plan, run_id=$run_id, case_run_id=$case_run_id"
+              echo "Processing error: file=$file, case_run_id=$case_run_id"
 
               content_json=$(cat "$file" | tr -d '\n' | tr -d '\r' | jq -Rs .)
 

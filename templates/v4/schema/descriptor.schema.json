@@ -1,0 +1,124 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aka.ms/m365atk/v4/descriptor.schema.json",
+  "title": "v4 descriptor.json",
+  "description": "Authoring-time schema for a v4 template's descriptor (proposal §3.1): identity, language axis, engine-compat gate, Q2 optionsSchema, and the replaceMap render context. One schema covers both create and modify templates; modify adds the optional kind and entry fields. The field whitelist here is the single machine-readable source of truth; the §3.1 prose is its human gloss.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "name", "languages", "minEngineVersion", "optionsSchema", "replaceMap"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "id": {
+      "type": "string",
+      "description": "Template identity. Routing references this via selector.json routes[].templateId."
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable display name."
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["create", "modify"],
+      "description": "Routing / telemetry label only (proposal §13.1). Loader-validation that the package sits in the correct namespace; never a dispatch key. Optional; modify templates set 'modify'."
+    },
+    "languages": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "enum": ["typescript", "javascript", "python", "csharp", "common"]
+      },
+      "description": "Closed set of language variants the template offers (proposal §3.1.0). 'common' is the reserved single-member value for language-agnostic templates and makes Q0 auto-skip the language prompt."
+    },
+    "minEngineVersion": {
+      "type": "string",
+      "description": "Engine <-> package compatibility gate (proposal §5.2). An older fx-core meeting a higher minEngineVersion raises an explicit upgrade error (no silent fallback)."
+    },
+    "spec": {
+      "type": "string",
+      "description": "Tooling-only, NOT read at runtime. Design-first gate (invariant 13, CI-warn): resolves to a scenario spec under docs/03-specs/scenarios/ containing an '## Acceptance Criteria' table. AC rows are the source of T3 assertions."
+    },
+    "requiresNetwork": {
+      "type": "boolean",
+      "default": false,
+      "description": "Offline-by-default declaration (proposal §3.1.1, CI invariant 14). Default false; openapi/search-api/kiota templates flip true."
+    },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Optional CLI entry contract (modify templates). Names option ids that a pre-filled CLI arg / URL can supply to skip the matching question.",
+      "properties": {
+        "params": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "comment": { "type": "string" }
+      }
+    },
+    "optionsSchema": {
+      "type": "object",
+      "description": "JSON Schema for the Q2 options contract. Used for input validation and as the identifier-resolution domain for replaceMap expr entries."
+    },
+    "replaceMap": {
+      "type": "array",
+      "description": "Render context as a closed DSL: each entry is exactly one of {const} / {from} / {when,value} / {expr} (proposal §3.1). var MUST NOT name a caller-injected identifier.",
+      "items": { "$ref": "#/$defs/replaceMapEntry" }
+    }
+  },
+  "$defs": {
+    "replaceMapEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["var"],
+      "properties": {
+        "var": { "type": "string" },
+        "const": { "type": "string" },
+        "from": { "type": "string" },
+        "when": { "type": "string" },
+        "value": { "type": "string" },
+        "expr": { "type": "string" }
+      },
+      "oneOf": [
+        {
+          "comment": "{const}: literal value.",
+          "required": ["const"],
+          "not": { "anyOf": [
+            { "required": ["from"] },
+            { "required": ["when"] },
+            { "required": ["value"] },
+            { "required": ["expr"] }
+          ] }
+        },
+        {
+          "comment": "{from}: copy an option value verbatim.",
+          "required": ["from"],
+          "not": { "anyOf": [
+            { "required": ["const"] },
+            { "required": ["when"] },
+            { "required": ["value"] },
+            { "required": ["expr"] }
+          ] }
+        },
+        {
+          "comment": "{when,value}: conditional literal.",
+          "required": ["when", "value"],
+          "not": { "anyOf": [
+            { "required": ["const"] },
+            { "required": ["from"] },
+            { "required": ["expr"] }
+          ] }
+        },
+        {
+          "comment": "{expr}: whitelist-function expression.",
+          "required": ["expr"],
+          "not": { "anyOf": [
+            { "required": ["const"] },
+            { "required": ["from"] },
+            { "required": ["when"] },
+            { "required": ["value"] }
+          ] }
+        }
+      ]
+    }
+  }
+}

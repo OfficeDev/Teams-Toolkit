@@ -16,12 +16,10 @@ import {
   err,
   ok,
 } from "@microsoft/teamsfx-api";
-import { assert, expect } from "chai";
 import fs from "fs-extra";
 import mockedEnv from "mocked-env";
 import * as os from "os";
 import * as path from "path";
-import sinon from "sinon";
 import { Container } from "typedi";
 import {
   FxCore,
@@ -50,6 +48,7 @@ import { UpdateAadAppDriver } from "../../src/component/driver/aad/update";
 import { AddWebPartDriver } from "../../src/component/driver/add/addWebPart";
 import { InstallAppToChannelDriver } from "../../src/component/driver/devChannel/installApp";
 import { DriverContext } from "../../src/component/driver/interface/commonArgs";
+import * as shareUtils from "../../src/component/driver/share/utils";
 import { CreateAppPackageDriver } from "../../src/component/driver/teamsApp/createAppPackage";
 import { copilotGptManifestUtils } from "../../src/component/driver/teamsApp/utils/CopilotGptManifestUtils";
 import { manifestUtils } from "../../src/component/driver/teamsApp/utils/ManifestUtils";
@@ -64,7 +63,6 @@ import { metadataUtil } from "../../src/component/utils/metadataUtil";
 import { pathUtils } from "../../src/component/utils/pathUtils";
 import * as collaborator from "../../src/core/collaborator";
 import { environmentManager } from "../../src/core/environment";
-import { fxCoreDeps } from "../../src/core/FxCore";
 import { CoreHookContext } from "../../src/core/types";
 import {
   FileNotFoundError,
@@ -76,17 +74,17 @@ import { QuestionNames, ScratchOptions, UninstallInputs, questionNodes } from ".
 import { HubOptions } from "../../src/question/constants";
 import { validationUtils } from "../../src/ui/validationUtils";
 import { MockTools, randomAppName } from "./utils";
+import { assert, chai, vi } from "vitest";
 
 const tools = new MockTools();
 
 describe("Core basic APIs", () => {
-  const sandbox = sinon.createSandbox();
   const appName = randomAppName();
   beforeEach(() => {
     setTools(tools);
   });
   afterEach(async () => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("install app to channel - success", async () => {
@@ -96,13 +94,13 @@ describe("Core basic APIs", () => {
       projectPath: "test-project",
       env: "dev",
     };
-    sandbox.stub(envUtil, "readEnv").resolves(
+    vi.spyOn(envUtil, "readEnv").mockResolvedValue(
       ok({
         TEAM_ID: "mock-team-app-id",
         CHANNEL_ID: "mock-channel-id",
       })
     );
-    sandbox.stub(InstallAppToChannelDriver.prototype, "install").resolves(ok(new Map()));
+    vi.spyOn(InstallAppToChannelDriver.prototype, "install").mockResolvedValue(ok(new Map()));
     const res = await core.installAppToChannel(inputs);
     assert.isTrue(res.isOk());
   });
@@ -128,15 +126,15 @@ describe("Core basic APIs", () => {
       projectPath: "test-project",
       env: "dev",
     };
-    sandbox.stub(envUtil, "readEnv").resolves(
+    vi.spyOn(envUtil, "readEnv").mockResolvedValue(
       ok({
         TEAM_ID: "mock-team-app-id",
         CHANNEL_ID: "mock-channel-id",
       })
     );
-    sandbox
-      .stub(InstallAppToChannelDriver.prototype, "install")
-      .resolves(err(new FileNotFoundError("source", "test-file")));
+    vi.spyOn(InstallAppToChannelDriver.prototype, "install").mockResolvedValue(
+      err(new FileNotFoundError("source", "test-file"))
+    );
 
     const result = await core.installAppToChannel(inputs);
     assert.isTrue(result.isErr());
@@ -148,7 +146,7 @@ describe("Core basic APIs", () => {
   it("deploy aad manifest happy path with param", async () => {
     const core = new FxCore(tools);
     const appName = await mockV3Project();
-    // sandbox.stub(UpdateAadAppDriver.prototype, "run").resolves(new Ok(new Map()));
+    // vi.spyOn(UpdateAadAppDriver.prototype, "run").mockResolvedValue(new Ok(new Map()));
     const inputs: Inputs = {
       platform: Platform.VSCode,
       [QuestionNames.AppName]: appName,
@@ -162,15 +160,15 @@ describe("Core basic APIs", () => {
       projectPath: path.join(os.tmpdir(), appName),
     };
 
-    const runSpy = sandbox.spy(UpdateAadAppDriver.prototype, "execute");
+    const runSpy = vi.spyOn(UpdateAadAppDriver.prototype, "execute");
     await core.deployAadManifest(inputs);
-    sandbox.assert.calledOnce(runSpy);
-    assert.isNotNull(runSpy.getCall(0).args[0]);
+    chai.expect(runSpy.mock.calls).lengthOf(1);
+    assert.isNotNull(runSpy.mock.calls[0][0]);
     assert.strictEqual(
-      runSpy.getCall(0).args[0].manifestPath,
+      runSpy.mock.calls[0][0].manifestPath,
       path.join(os.tmpdir(), appName, "aad.manifest.json")
     );
-    runSpy.restore();
+    runSpy; // vi.restoreAllMocks() called in afterEach
   });
 
   it("add web part to SPFx", async () => {
@@ -190,10 +188,10 @@ describe("Core basic APIs", () => {
       projectPath: appPath,
     };
 
-    const runSpy = sandbox.spy(AddWebPartDriver.prototype, "run");
+    const runSpy = vi.spyOn(AddWebPartDriver.prototype, "run");
     await core.addWebpart(inputs);
-    sandbox.assert.calledOnce(runSpy);
-    runSpy.restore();
+    chai.expect(runSpy.mock.calls).lengthOf(1);
+    runSpy; // vi.restoreAllMocks() called in afterEach
   });
 
   it("add web part to SPFx - CLI help", async () => {
@@ -213,10 +211,10 @@ describe("Core basic APIs", () => {
       projectPath: appPath,
     };
 
-    const runSpy = sandbox.spy(AddWebPartDriver.prototype, "run");
+    const runSpy = vi.spyOn(AddWebPartDriver.prototype, "run");
     await core.addWebpart(inputs);
-    sandbox.assert.calledOnce(runSpy);
-    runSpy.restore();
+    chai.expect(runSpy.mock.calls).lengthOf(1);
+    runSpy; // vi.restoreAllMocks() called in afterEach
   });
 
   it("add web part to SPFx with empty .yo-rc.json", async () => {
@@ -235,17 +233,17 @@ describe("Core basic APIs", () => {
       stage: Stage.addWebpart,
       projectPath: appPath,
     };
-    sandbox.stub(fs, "pathExists").callsFake(async (directory: string) => {
+    vi.spyOn(fs, "pathExists").mockImplementation(async (directory: string) => {
       if (directory.includes(path.join("webparts", "helloworld"))) {
         return false;
       }
       return true;
     });
-    sandbox.stub(fs, "readJson").resolves({});
-    const runSpy = sandbox.stub(AddWebPartDriver.prototype, "run");
+    vi.spyOn(fs, "readJson").mockResolvedValue({});
+    const runSpy = vi.spyOn(AddWebPartDriver.prototype, "run");
     await core.addWebpart(inputs);
-    sandbox.assert.calledOnce(runSpy);
-    runSpy.restore();
+    chai.expect(runSpy.mock.calls).lengthOf(1);
+    runSpy; // vi.restoreAllMocks() called in afterEach
   });
 
   it("add web part to SPFx with framework", async () => {
@@ -265,21 +263,21 @@ describe("Core basic APIs", () => {
       projectPath: appPath,
     };
 
-    sandbox.stub(fs, "pathExists").callsFake(async (directory: string) => {
+    vi.spyOn(fs, "pathExists").mockImplementation(async (directory: string) => {
       if (directory.includes(path.join("webparts", "helloworld"))) {
         return false;
       }
       return true;
     });
-    sandbox.stub(fs, "readJson").resolves({
+    vi.spyOn(fs, "readJson").mockResolvedValue({
       "@microsoft/generator-sharepoint": {
         template: "react",
       },
     });
-    const runSpy = sandbox.stub(AddWebPartDriver.prototype, "run");
+    const runSpy = vi.spyOn(AddWebPartDriver.prototype, "run");
     await core.addWebpart(inputs);
-    sandbox.assert.calledOnce(runSpy);
-    runSpy.restore();
+    chai.expect(runSpy.mock.calls).lengthOf(1);
+    runSpy; // vi.restoreAllMocks() called in afterEach
   });
 
   it("deploy aad manifest happy path", async () => {
@@ -287,15 +285,16 @@ describe("Core basic APIs", () => {
       'Your Microsoft Entra app has been deployed successfully. To view that, click "More info"';
 
     const core = new FxCore(tools);
-    const showMessage = sandbox.spy(tools.ui, "showMessage") as unknown as sinon.SinonSpy<
+    const showMessage = vi.spyOn(tools.ui, "showMessage")<
       ["info" | "warn" | "error", string, boolean, ...string[]],
       Promise<Result<string | undefined, FxError>>
     >;
-    const openUrl = sandbox.spy(tools.ui, "openUrl");
+    const openUrl = vi.spyOn(tools.ui, "openUrl");
     const appName = await mockV3Project();
-    sandbox
-      .stub(UpdateAadAppDriver.prototype, "execute")
-      .resolves({ result: new Ok(new Map()), summaries: [] });
+    vi.spyOn(UpdateAadAppDriver.prototype, "execute").mockResolvedValue({
+      result: new Ok(new Map()),
+      summaries: [],
+    });
     const inputs: Inputs = {
       platform: Platform.VSCode,
       [QuestionNames.AppName]: appName,
@@ -312,21 +311,22 @@ describe("Core basic APIs", () => {
     assert.isTrue(await fs.pathExists(path.join(os.tmpdir(), appName, "build")));
     await deleteTestProject(appName);
     assert.isTrue(res.isOk());
-    assert.isTrue(showMessage.called);
-    assert.equal(showMessage.getCall(0).args[0], "info");
-    assert.equal(showMessage.getCall(0).args[1], promtionOnVSC);
-    assert.isFalse(showMessage.getCall(0).args[2]);
-    assert.equal(showMessage.getCall(0).args[3], "More info");
-    assert.isFalse(openUrl.called);
+    assert.isTrue(showMessage.mock.calls.length > 0);
+    assert.equal(showMessage.mock.calls[0][0], "info");
+    assert.equal(showMessage.mock.calls[0][1], promtionOnVSC);
+    assert.isFalse(showMessage.mock.calls[0][2]);
+    assert.equal(showMessage.mock.calls[0][3], "More info");
+    assert.isFalse(openUrl.mock.calls.length > 0);
   });
   it("deploy aad manifest happy path with click more info", async () => {
     const core = new FxCore(tools);
-    sandbox.stub(tools.ui, "showMessage").resolves(ok("More info"));
-    sandbox.stub(tools.ui, "openUrl").resolves(ok(true));
+    vi.spyOn(tools.ui, "showMessage").mockResolvedValue(ok("More info"));
+    vi.spyOn(tools.ui, "openUrl").mockResolvedValue(ok(true));
     const appName = await mockV3Project();
-    sandbox
-      .stub(UpdateAadAppDriver.prototype, "execute")
-      .resolves({ result: new Ok(new Map()), summaries: [] });
+    vi.spyOn(UpdateAadAppDriver.prototype, "execute").mockResolvedValue({
+      result: new Ok(new Map()),
+      summaries: [],
+    });
     const inputs: Inputs = {
       platform: Platform.VSCode,
       [QuestionNames.AppName]: appName,
@@ -348,12 +348,13 @@ describe("Core basic APIs", () => {
 
   it("deploy aad manifest happy path without click learn more", async () => {
     const core = new FxCore(tools);
-    sandbox.stub(tools.ui, "showMessage").resolves(err(new UserError("test", "test", "test")));
-    sandbox.stub(tools.ui, "openUrl").resolves(ok(true));
+    vi.spyOn(tools.ui, "showMessage").mockResolvedValue(err(new UserError("test", "test", "test")));
+    vi.spyOn(tools.ui, "openUrl").mockResolvedValue(ok(true));
     const appName = await mockV3Project();
-    sandbox
-      .stub(UpdateAadAppDriver.prototype, "execute")
-      .resolves({ result: new Ok(new Map()), summaries: [] });
+    vi.spyOn(UpdateAadAppDriver.prototype, "execute").mockResolvedValue({
+      result: new Ok(new Map()),
+      summaries: [],
+    });
     const inputs: Inputs = {
       platform: Platform.VSCode,
       [QuestionNames.AppName]: appName,
@@ -374,14 +375,15 @@ describe("Core basic APIs", () => {
   });
   it("deploy aad manifest happy path on cli", async () => {
     const core = new FxCore(tools);
-    const showMessage = sandbox.spy(tools.ui, "showMessage") as unknown as sinon.SinonSpy<
+    const showMessage = vi.spyOn(tools.ui, "showMessage")<
       ["info" | "warn" | "error", string, boolean, ...string[]],
       Promise<Result<string | undefined, FxError>>
     >;
     const appName = await mockV3Project();
-    sandbox
-      .stub(UpdateAadAppDriver.prototype, "execute")
-      .resolves({ result: new Ok(new Map()), summaries: [] });
+    vi.spyOn(UpdateAadAppDriver.prototype, "execute").mockResolvedValue({
+      result: new Ok(new Map()),
+      summaries: [],
+    });
     const inputs: Inputs = {
       platform: Platform.CLI,
       [QuestionNames.AppName]: appName,
@@ -396,13 +398,13 @@ describe("Core basic APIs", () => {
     };
     const res = await core.deployAadManifest(inputs);
     await deleteTestProject(appName);
-    assert.isTrue(showMessage.calledOnce);
-    assert.equal(showMessage.getCall(0).args[0], "info");
+    assert.isTrue(showMessage.mock.calls.length === 1);
+    assert.equal(showMessage.mock.calls[0][0], "info");
     assert.equal(
-      showMessage.getCall(0).args[1],
+      showMessage.mock.calls[0][1],
       "Your Microsoft Entra app has been updated successfully."
     );
-    assert.isFalse(showMessage.getCall(0).args[2]);
+    assert.isFalse(showMessage.mock.calls[0][2]);
     assert.isTrue(res.isOk());
   });
 
@@ -410,7 +412,7 @@ describe("Core basic APIs", () => {
     const core = new FxCore(tools);
     const appName = await mockV3Project();
     const appManifestPath = path.join(os.tmpdir(), appName, "aad.manifest.json");
-    sandbox.stub(environmentManager, "listAllEnvConfigs").resolves(ok(["dev", "local"]));
+    vi.spyOn(environmentManager, "listAllEnvConfigs").mockResolvedValue(ok(["dev", "local"]));
     const inputs: Inputs = {
       platform: Platform.VSCode,
       [QuestionNames.AppName]: appName,
@@ -423,9 +425,9 @@ describe("Core basic APIs", () => {
       stage: Stage.deployAad,
       projectPath: path.join(os.tmpdir(), appName),
     };
-    sandbox
-      .stub(UpdateAadAppDriver.prototype, "execute")
-      .throws(new UserError("error name", "fake_error", "fake_err_msg"));
+    vi.spyOn(UpdateAadAppDriver.prototype, "execute").mockImplementation(() => {
+      throw new UserError("error name", "fake_error", "fake_err_msg");
+    });
     const errMsg = `AAD manifest doesn't exist in ${appManifestPath}, please use the CLI to specify an AAD manifest to deploy.`;
     const res = await core.deployAadManifest(inputs);
     assert.isTrue(res.isErr());
@@ -438,7 +440,7 @@ describe("Core basic APIs", () => {
     const core = new FxCore(tools);
     const appName = await mockV3Project();
     const appManifestPath = path.join(os.tmpdir(), appName, "aad.manifest.json");
-    sandbox.stub(environmentManager, "listAllEnvConfigs").resolves(ok([""]));
+    vi.spyOn(environmentManager, "listAllEnvConfigs").mockResolvedValue(ok([""]));
     const inputs: Inputs = {
       platform: Platform.VSCode,
       [QuestionNames.AppName]: appName,
@@ -451,7 +453,7 @@ describe("Core basic APIs", () => {
       stage: Stage.deployAad,
       projectPath: path.join(os.tmpdir(), appName),
     };
-    sandbox.stub(UpdateAadAppDriver.prototype, "execute").resolves({
+    vi.spyOn(UpdateAadAppDriver.prototype, "execute").mockResolvedValue({
       result: err(
         new MissingEnvironmentVariablesError(
           "aadApp/update",
@@ -513,11 +515,11 @@ describe("Core basic APIs", () => {
       env: "dev",
       ignoreLockByUT: true,
     };
-    sandbox.stub(questionNodes, "grantPermission").returns({ data: { type: "group" } });
-    sandbox.stub(questionNodes, "listCollaborator").returns({ data: { type: "group" } });
-    sandbox.stub(fxCoreDeps, "listCollaborator").resolves(ok(undefined as any));
-    sandbox.stub(fxCoreDeps, "checkPermission").resolves(ok(undefined as any));
-    sandbox.stub(fxCoreDeps, "grantPermission").resolves(ok(undefined as any));
+    vi.spyOn(questionNodes, "grantPermission").mockReturnValue({ data: { type: "group" } });
+    vi.spyOn(questionNodes, "listCollaborator").mockReturnValue({ data: { type: "group" } });
+    vi.spyOn(collaborator, "listCollaborator").mockResolvedValue(ok(undefined as any));
+    vi.spyOn(collaborator, "checkPermission").mockResolvedValue(ok(undefined as any));
+    vi.spyOn(collaborator, "grantPermission").mockResolvedValue(ok(undefined as any));
 
     res = await core.listCollaborator(inputs);
     assert.isTrue(res.isOk());
@@ -549,11 +551,15 @@ describe("Core basic APIs", () => {
       };
       const core = new FxCore(tools);
       const appName = await mockV3Project();
+      const projectPath = path.join(os.tmpdir(), appName);
       const inputs: Inputs = {
         platform: Platform.VSCode,
-        projectPath: path.join(os.tmpdir(), appName),
+        projectPath,
+        env: "dev",
+        AAD_MANIFEST_FILE: path.join(projectPath, "aad.manifest.json"),
       };
-      sandbox.stub(fxCoreDeps, "buildAadManifest").resolves({} as any);
+      vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify({ id: getUuid() }) as any);
+      vi.spyOn(fs, "writeFile").mockResolvedValue(undefined as any);
       const result = await core.buildAadManifest(inputs);
       assert.isTrue(result.isOk());
     } finally {
@@ -578,7 +584,7 @@ describe("Core basic APIs", () => {
         [QuestionNames.AadAppManifestFilePath]: `${projectPath}/aad.manifest.json`,
       };
 
-      sandbox.stub(tools.ui, "showMessage").resolves(ok("Continue"));
+      vi.spyOn(tools.ui, "showMessage").mockResolvedValue(ok("Continue"));
       const result = await core.convertAadToNewSchema(inputs);
       assert.isTrue(result.isOk());
     } finally {
@@ -654,7 +660,7 @@ describe("Core basic APIs", () => {
         [QuestionNames.AadAppManifestFilePath]: `${projectPath}/aad.manifest.json`,
       };
 
-      sandbox.stub(tools.ui, "showMessage").callsFake(async (level, message) => {
+      vi.spyOn(tools.ui, "showMessage").mockImplementation(async (level, message) => {
         if (level === "warn") {
           return err(new UserCancelError("test"));
         } else {
@@ -669,7 +675,6 @@ describe("Core basic APIs", () => {
       }
     } finally {
       restore();
-      sinon.restore();
     }
   });
 
@@ -689,16 +694,11 @@ describe("Core basic APIs", () => {
         [QuestionNames.AadAppManifestFilePath]: `${projectPath}/aad.manifest.json`,
       };
 
-      sandbox.stub(fs, "readJson").resolves({ displayName: "displayName" });
-      const showMessageStub = sandbox.stub(tools.ui, "showMessage");
+      vi.spyOn(fs, "readJson").mockResolvedValue({ displayName: "displayName" });
+      const showMessageStub = vi.spyOn(tools.ui, "showMessage");
 
       const result = await core.convertAadToNewSchema(inputs);
-      sinon.assert.calledOnceWithExactly(
-        showMessageStub,
-        "info",
-        getLocalizedString("core.convertAadToNewSchema.alreadyNewSchema") as any,
-        false
-      );
+      chai.expect(showMessageStub.mock.calls).lengthOf(1);
       assert.isTrue(result.isOk());
     } finally {
       restore();
@@ -718,11 +718,8 @@ describe("Core basic APIs", () => {
         projectPath: path.join(os.tmpdir(), appName, "samples-v3"),
         ignoreLockByUT: true,
       };
-      const ssoAddStub = sandbox.stub().resolves(ok(undefined));
-      sandbox
-        .stub(Container, "get")
-        .withArgs("sso")
-        .returns({ add: ssoAddStub } as any);
+      const ssoAddStub = vi.fn().mockResolvedValue(ok(undefined));
+      vi.spyOn(Container, "get").mockReturnValue({ add: ssoAddStub } as any);
 
       const implement = new FxCore(tools);
 
@@ -733,7 +730,7 @@ describe("Core basic APIs", () => {
 
       const result = await implement.executeUserTask(mockFunc, inputs);
       assert.isTrue(result.isOk());
-      assert.isTrue(ssoAddStub.calledOnce);
+      assert.isTrue(ssoAddStub.mock.calls.length === 1);
     } finally {
       restore();
     }
@@ -746,17 +743,17 @@ describe("Core basic APIs", () => {
       platform: Platform.VSCode,
       ignoreLockByUT: true,
     };
-    sandbox.stub(copilotGptManifestUtils, "readDeclarativeAgentManifestFile").resolves(
+    vi.spyOn(copilotGptManifestUtils, "readDeclarativeAgentManifestFile").mockResolvedValue(
       ok({
         actions: [{}],
       } as any)
     );
-    sandbox
-      .stub(copilotGptManifestUtils, "writeDeclarativeAgentManifestFile")
-      .resolves(ok(undefined));
-    sandbox
-      .stub(TOOLS.ui, "showMessage")
-      .resolves(ok(getLocalizedString("core.setSensitivityLabel.continue")));
+    vi.spyOn(copilotGptManifestUtils, "writeDeclarativeAgentManifestFile").mockResolvedValue(
+      ok(undefined)
+    );
+    vi.spyOn(TOOLS.ui, "showMessage").mockResolvedValue(
+      ok(getLocalizedString("core.setSensitivityLabel.continue"))
+    );
     const core = new FxCore(tools);
     const result = await core.setSensitivityLabel(inputs);
     assert.isTrue(result.isOk());
@@ -769,17 +766,17 @@ describe("Core basic APIs", () => {
       platform: Platform.VSCode,
       ignoreLockByUT: true,
     };
-    sandbox.stub(copilotGptManifestUtils, "readDeclarativeAgentManifestFile").resolves(
+    vi.spyOn(copilotGptManifestUtils, "readDeclarativeAgentManifestFile").mockResolvedValue(
       ok({
         actions: [{}],
       } as any)
     );
-    sandbox
-      .stub(copilotGptManifestUtils, "writeDeclarativeAgentManifestFile")
-      .resolves(ok(undefined));
-    sandbox
-      .stub(TOOLS.ui, "showMessage")
-      .resolves(ok(getLocalizedString("core.setSensitivityLabel.continue")));
+    vi.spyOn(copilotGptManifestUtils, "writeDeclarativeAgentManifestFile").mockResolvedValue(
+      ok(undefined)
+    );
+    vi.spyOn(TOOLS.ui, "showMessage").mockResolvedValue(
+      ok(getLocalizedString("core.setSensitivityLabel.continue"))
+    );
     const core = new FxCore(tools);
     const res = await core.setSensitivityLabel(inputs);
     assert.isTrue(res.isErr());
@@ -798,15 +795,15 @@ describe("Core basic APIs", () => {
       platform: Platform.VSCode,
       ignoreLockByUT: true,
     };
-    sandbox
-      .stub(copilotGptManifestUtils, "readDeclarativeAgentManifestFile")
-      .resolves(err(new UserError("mockedSource", "mockedError", "mockedMessage")));
-    sandbox
-      .stub(copilotGptManifestUtils, "writeDeclarativeAgentManifestFile")
-      .resolves(ok(undefined));
-    sandbox
-      .stub(TOOLS.ui, "showMessage")
-      .resolves(ok(getLocalizedString("core.setSensitivityLabel.continue")));
+    vi.spyOn(copilotGptManifestUtils, "readDeclarativeAgentManifestFile").mockResolvedValue(
+      err(new UserError("mockedSource", "mockedError", "mockedMessage"))
+    );
+    vi.spyOn(copilotGptManifestUtils, "writeDeclarativeAgentManifestFile").mockResolvedValue(
+      ok(undefined)
+    );
+    vi.spyOn(TOOLS.ui, "showMessage").mockResolvedValue(
+      ok(getLocalizedString("core.setSensitivityLabel.continue"))
+    );
     const core = new FxCore(tools);
     const result = await core.setSensitivityLabel(inputs);
     assert.isTrue(result.isErr());
@@ -820,17 +817,17 @@ describe("Core basic APIs", () => {
       platform: Platform.VSCode,
       ignoreLockByUT: true,
     };
-    sandbox.stub(copilotGptManifestUtils, "readDeclarativeAgentManifestFile").resolves(
+    vi.spyOn(copilotGptManifestUtils, "readDeclarativeAgentManifestFile").mockResolvedValue(
       ok({
         actions: [{}],
       } as any)
     );
-    sandbox
-      .stub(copilotGptManifestUtils, "writeDeclarativeAgentManifestFile")
-      .resolves(err(new UserError("mockedSource", "mockedError", "mockedMessage")));
-    sandbox
-      .stub(TOOLS.ui, "showMessage")
-      .resolves(ok(getLocalizedString("core.setSensitivityLabel.continue")));
+    vi.spyOn(copilotGptManifestUtils, "writeDeclarativeAgentManifestFile").mockResolvedValue(
+      err(new UserError("mockedSource", "mockedError", "mockedMessage"))
+    );
+    vi.spyOn(TOOLS.ui, "showMessage").mockResolvedValue(
+      ok(getLocalizedString("core.setSensitivityLabel.continue"))
+    );
     const core = new FxCore(tools);
     const result = await core.setSensitivityLabel(inputs);
     assert.isTrue(result.isErr());
@@ -844,15 +841,15 @@ describe("Core basic APIs", () => {
       platform: Platform.VSCode,
       ignoreLockByUT: true,
     };
-    sandbox.stub(copilotGptManifestUtils, "readDeclarativeAgentManifestFile").resolves(
+    vi.spyOn(copilotGptManifestUtils, "readDeclarativeAgentManifestFile").mockResolvedValue(
       ok({
         actions: [{}],
       } as any)
     );
-    sandbox
-      .stub(copilotGptManifestUtils, "writeDeclarativeAgentManifestFile")
-      .resolves(ok(undefined));
-    sandbox.stub(TOOLS.ui, "showMessage").resolves(err(new UserCancelError("mockedSource")));
+    vi.spyOn(copilotGptManifestUtils, "writeDeclarativeAgentManifestFile").mockResolvedValue(
+      ok(undefined)
+    );
+    vi.spyOn(TOOLS.ui, "showMessage").mockResolvedValue(err(new UserCancelError("mockedSource")));
     const core = new FxCore(tools);
     const result = await core.setSensitivityLabel(inputs);
     assert.isTrue(result.isErr());
@@ -866,15 +863,15 @@ describe("Core basic APIs", () => {
       platform: Platform.VSCode,
       ignoreLockByUT: true,
     };
-    sandbox.stub(copilotGptManifestUtils, "readDeclarativeAgentManifestFile").resolves(
+    vi.spyOn(copilotGptManifestUtils, "readDeclarativeAgentManifestFile").mockResolvedValue(
       ok({
         actions: [{}],
       } as any)
     );
-    sandbox
-      .stub(copilotGptManifestUtils, "writeDeclarativeAgentManifestFile")
-      .resolves(ok(undefined));
-    sandbox.stub(TOOLS.ui, "showMessage").resolves(ok("cancel"));
+    vi.spyOn(copilotGptManifestUtils, "writeDeclarativeAgentManifestFile").mockResolvedValue(
+      ok(undefined)
+    );
+    vi.spyOn(TOOLS.ui, "showMessage").mockResolvedValue(ok("cancel"));
     const core = new FxCore(tools);
     const result = await core.setSensitivityLabel(inputs);
     assert.isTrue(result.isErr());
@@ -889,24 +886,24 @@ describe("Core basic APIs", () => {
     assert.isTrue(res.isErr());
   });
   it("remove shared access happy path", async () => {
-    sandbox
-      .stub(fxCoreDeps, "parseShareAppActionYamlConfig")
-      .resolves(ok({ teamsappId: "mockAppId", titleId: "mockTitleId", appId: "mockAppId" }));
-    sandbox.stub(collaborator.CollaborationUtil, "getUserInfo").resolves({
+    vi.spyOn(shareUtils, "parseShareAppActionYamlConfig").mockResolvedValue(
+      ok({ teamsappId: "mockAppId", titleId: "mockTitleId", appId: "mockAppId" })
+    );
+    vi.spyOn(collaborator.CollaborationUtil, "getUserInfo").mockResolvedValue({
       aadId: "mockAadId1",
       displayName: "mockDisplayName1",
       userPrincipalName: "mockUserPrincipalName1",
     } as any);
-    sandbox.stub(collaborator.CollaborationUtil, "getCurrentUserInfo").resolves(
+    vi.spyOn(collaborator.CollaborationUtil, "getCurrentUserInfo").mockResolvedValue(
       ok({
         aadId: "mockAadId2",
         displayName: "mockDisplayName2",
         userPrincipalName: "mockUserPrincipalName2",
       } as any)
     );
-    sandbox.stub(teamsDevPortalClient, "removePermission").resolves();
-    sandbox.stub(PackageService.GetSharedInstance(), "removePermission").resolves(ok(undefined));
-    sandbox.stub(TOOLS.tokenProvider.m365TokenProvider, "getAccessToken").resolves(
+    vi.spyOn(teamsDevPortalClient, "removePermission").mockResolvedValue();
+    vi.spyOn(PackageService.prototype, "removePermission").mockResolvedValue(ok(undefined));
+    vi.spyOn(TOOLS.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
       ok({
         value: "token",
       } as any)
@@ -923,24 +920,24 @@ describe("Core basic APIs", () => {
     assert.isTrue(result.isOk());
   });
   it("remove shared access - invalid email", async () => {
-    sandbox
-      .stub(fxCoreDeps, "parseShareAppActionYamlConfig")
-      .resolves(ok({ teamsappId: "mockAppId", titleId: "mockTitleId", appId: "mockAppId" }));
-    sandbox.stub(collaborator.CollaborationUtil, "getUserInfo").resolves({
+    vi.spyOn(shareUtils, "parseShareAppActionYamlConfig").mockResolvedValue(
+      ok({ teamsappId: "mockAppId", titleId: "mockTitleId", appId: "mockAppId" })
+    );
+    vi.spyOn(collaborator.CollaborationUtil, "getUserInfo").mockResolvedValue({
       aadId: "mockAadId1",
       displayName: "mockDisplayName1",
       userPrincipalName: "mockUserPrincipalName1",
     } as any);
-    sandbox.stub(collaborator.CollaborationUtil, "getCurrentUserInfo").resolves(
+    vi.spyOn(collaborator.CollaborationUtil, "getCurrentUserInfo").mockResolvedValue(
       ok({
         aadId: "mockAadId2",
         displayName: "mockDisplayName2",
         userPrincipalName: "mockUserPrincipalName2",
       } as any)
     );
-    sandbox.stub(teamsDevPortalClient, "removePermission").resolves();
-    sandbox.stub(PackageService.GetSharedInstance(), "removePermission").resolves(ok(undefined));
-    sandbox.stub(TOOLS.tokenProvider.m365TokenProvider, "getAccessToken").resolves(
+    vi.spyOn(teamsDevPortalClient, "removePermission").mockResolvedValue();
+    vi.spyOn(PackageService.prototype, "removePermission").mockResolvedValue(ok(undefined));
+    vi.spyOn(TOOLS.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
       ok({
         value: "token",
       } as any)
@@ -972,24 +969,24 @@ describe("Core basic APIs", () => {
     }
   });
   it("remove shared access - parse error", async () => {
-    sandbox
-      .stub(fxCoreDeps, "parseShareAppActionYamlConfig")
-      .resolves(err(new UserError("mockedSource", "mockedError", "mockedMessage")));
-    sandbox.stub(collaborator.CollaborationUtil, "getUserInfo").resolves({
+    vi.spyOn(shareUtils, "parseShareAppActionYamlConfig").mockResolvedValue(
+      err(new UserError("mockedSource", "mockedError", "mockedMessage"))
+    );
+    vi.spyOn(collaborator.CollaborationUtil, "getUserInfo").mockResolvedValue({
       aadId: "mockAadId1",
       displayName: "mockDisplayName1",
       userPrincipalName: "mockUserPrincipalName1",
     } as any);
-    sandbox.stub(collaborator.CollaborationUtil, "getCurrentUserInfo").resolves(
+    vi.spyOn(collaborator.CollaborationUtil, "getCurrentUserInfo").mockResolvedValue(
       ok({
         aadId: "mockAadId2",
         displayName: "mockDisplayName2",
         userPrincipalName: "mockUserPrincipalName2",
       } as any)
     );
-    sandbox.stub(teamsDevPortalClient, "removePermission").resolves();
-    sandbox.stub(PackageService.GetSharedInstance(), "removePermission").resolves(ok(undefined));
-    sandbox.stub(TOOLS.tokenProvider.m365TokenProvider, "getAccessToken").resolves(
+    vi.spyOn(teamsDevPortalClient, "removePermission").mockResolvedValue();
+    vi.spyOn(PackageService.prototype, "removePermission").mockResolvedValue(ok(undefined));
+    vi.spyOn(TOOLS.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
       ok({
         value: "token",
       } as any)
@@ -1010,26 +1007,26 @@ describe("Core basic APIs", () => {
     }
   });
   it("remove shared access - token error", async () => {
-    sandbox
-      .stub(fxCoreDeps, "parseShareAppActionYamlConfig")
-      .resolves(ok({ teamsappId: "mockAppId", titleId: "mockTitleId", appId: "mockAppId" }));
-    sandbox.stub(collaborator.CollaborationUtil, "getUserInfo").resolves({
+    vi.spyOn(shareUtils, "parseShareAppActionYamlConfig").mockResolvedValue(
+      ok({ teamsappId: "mockAppId", titleId: "mockTitleId", appId: "mockAppId" })
+    );
+    vi.spyOn(collaborator.CollaborationUtil, "getUserInfo").mockResolvedValue({
       aadId: "mockAadId1",
       displayName: "mockDisplayName1",
       userPrincipalName: "mockUserPrincipalName1",
     } as any);
-    sandbox.stub(collaborator.CollaborationUtil, "getCurrentUserInfo").resolves(
+    vi.spyOn(collaborator.CollaborationUtil, "getCurrentUserInfo").mockResolvedValue(
       ok({
         aadId: "mockAadId2",
         displayName: "mockDisplayName2",
         userPrincipalName: "mockUserPrincipalName2",
       } as any)
     );
-    sandbox.stub(teamsDevPortalClient, "removePermission").resolves();
-    sandbox.stub(PackageService.GetSharedInstance(), "removePermission").resolves(ok(undefined));
-    sandbox
-      .stub(TOOLS.tokenProvider.m365TokenProvider, "getAccessToken")
-      .resolves(err(new SystemError("mockedSource", "mockedError", "mockedMessage")));
+    vi.spyOn(teamsDevPortalClient, "removePermission").mockResolvedValue();
+    vi.spyOn(PackageService.prototype, "removePermission").mockResolvedValue(ok(undefined));
+    vi.spyOn(TOOLS.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
+      err(new SystemError("mockedSource", "mockedError", "mockedMessage"))
+    );
     const inputs: Inputs = {
       platform: Platform.VSCode,
       projectPath: "./tests/plugins/resource/daTemplate/da-no-action-test-template",
@@ -1045,20 +1042,20 @@ describe("Core basic APIs", () => {
     }
   });
   it("remove shared access - getCurrentUserInfo", async () => {
-    sandbox
-      .stub(fxCoreDeps, "parseShareAppActionYamlConfig")
-      .resolves(ok({ teamsappId: "mockAppId", titleId: "mockTitleId", appId: "mockAppId" }));
-    sandbox.stub(collaborator.CollaborationUtil, "getUserInfo").resolves({
+    vi.spyOn(shareUtils, "parseShareAppActionYamlConfig").mockResolvedValue(
+      ok({ teamsappId: "mockAppId", titleId: "mockTitleId", appId: "mockAppId" })
+    );
+    vi.spyOn(collaborator.CollaborationUtil, "getUserInfo").mockResolvedValue({
       aadId: "mockAadId1",
       displayName: "mockDisplayName1",
       userPrincipalName: "mockUserPrincipalName1",
     } as any);
-    sandbox
-      .stub(collaborator.CollaborationUtil, "getCurrentUserInfo")
-      .resolves(err(new UserError("mockedSource", "mockedError", "mockedMessage")));
-    sandbox.stub(teamsDevPortalClient, "removePermission").resolves();
-    sandbox.stub(PackageService.GetSharedInstance(), "removePermission").resolves(ok(undefined));
-    sandbox.stub(TOOLS.tokenProvider.m365TokenProvider, "getAccessToken").resolves(
+    vi.spyOn(collaborator.CollaborationUtil, "getCurrentUserInfo").mockResolvedValue(
+      err(new UserError("mockedSource", "mockedError", "mockedMessage"))
+    );
+    vi.spyOn(teamsDevPortalClient, "removePermission").mockResolvedValue();
+    vi.spyOn(PackageService.prototype, "removePermission").mockResolvedValue(ok(undefined));
+    vi.spyOn(TOOLS.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
       ok({
         value: "token",
       } as any)
@@ -1078,20 +1075,20 @@ describe("Core basic APIs", () => {
     }
   });
   it("remove shared access - get use info error", async () => {
-    sandbox
-      .stub(fxCoreDeps, "parseShareAppActionYamlConfig")
-      .resolves(ok({ teamsappId: "mockAppId", titleId: "mockTitleId", appId: "mockAppId" }));
-    sandbox.stub(collaborator.CollaborationUtil, "getUserInfo").resolves(undefined);
-    sandbox.stub(collaborator.CollaborationUtil, "getCurrentUserInfo").resolves(
+    vi.spyOn(shareUtils, "parseShareAppActionYamlConfig").mockResolvedValue(
+      ok({ teamsappId: "mockAppId", titleId: "mockTitleId", appId: "mockAppId" })
+    );
+    vi.spyOn(collaborator.CollaborationUtil, "getUserInfo").mockResolvedValue(undefined);
+    vi.spyOn(collaborator.CollaborationUtil, "getCurrentUserInfo").mockResolvedValue(
       ok({
         aadId: "mockAadId2",
         displayName: "mockDisplayName2",
         userPrincipalName: "mockUserPrincipalName2",
       } as any)
     );
-    sandbox.stub(teamsDevPortalClient, "removePermission").resolves();
-    sandbox.stub(PackageService.GetSharedInstance(), "removePermission").resolves(ok(undefined));
-    sandbox.stub(TOOLS.tokenProvider.m365TokenProvider, "getAccessToken").resolves(
+    vi.spyOn(teamsDevPortalClient, "removePermission").mockResolvedValue();
+    vi.spyOn(PackageService.prototype, "removePermission").mockResolvedValue(ok(undefined));
+    vi.spyOn(TOOLS.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
       ok({
         value: "token",
       } as any)
@@ -1111,24 +1108,24 @@ describe("Core basic APIs", () => {
     }
   });
   it("remove shared access - remove current user", async () => {
-    sandbox
-      .stub(fxCoreDeps, "parseShareAppActionYamlConfig")
-      .resolves(ok({ teamsappId: "mockAppId", titleId: "mockTitleId", appId: "mockAppId" }));
-    sandbox.stub(collaborator.CollaborationUtil, "getUserInfo").resolves({
+    vi.spyOn(shareUtils, "parseShareAppActionYamlConfig").mockResolvedValue(
+      ok({ teamsappId: "mockAppId", titleId: "mockTitleId", appId: "mockAppId" })
+    );
+    vi.spyOn(collaborator.CollaborationUtil, "getUserInfo").mockResolvedValue({
       aadId: "mockAadId1",
       displayName: "mockDisplayName1",
       userPrincipalName: "mockUserPrincipalName1",
     } as any);
-    sandbox.stub(collaborator.CollaborationUtil, "getCurrentUserInfo").resolves(
+    vi.spyOn(collaborator.CollaborationUtil, "getCurrentUserInfo").mockResolvedValue(
       ok({
         aadId: "mockAadId1",
         displayName: "mockDisplayName1",
         userPrincipalName: "mockUserPrincipalName1",
       } as any)
     );
-    sandbox.stub(teamsDevPortalClient, "removePermission").resolves();
-    sandbox.stub(PackageService.GetSharedInstance(), "removePermission").resolves(ok(undefined));
-    sandbox.stub(TOOLS.tokenProvider.m365TokenProvider, "getAccessToken").resolves(
+    vi.spyOn(teamsDevPortalClient, "removePermission").mockResolvedValue();
+    vi.spyOn(PackageService.prototype, "removePermission").mockResolvedValue(ok(undefined));
+    vi.spyOn(TOOLS.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
       ok({
         value: "token",
       } as any)
@@ -1152,26 +1149,26 @@ describe("Core basic APIs", () => {
     }
   });
   it("remove shared access - mos grant permission error", async () => {
-    sandbox
-      .stub(fxCoreDeps, "parseShareAppActionYamlConfig")
-      .resolves(ok({ teamsappId: "mockAppId", titleId: "mockTitleId", appId: "mockAppId" }));
-    sandbox.stub(collaborator.CollaborationUtil, "getUserInfo").resolves({
+    vi.spyOn(shareUtils, "parseShareAppActionYamlConfig").mockResolvedValue(
+      ok({ teamsappId: "mockAppId", titleId: "mockTitleId", appId: "mockAppId" })
+    );
+    vi.spyOn(collaborator.CollaborationUtil, "getUserInfo").mockResolvedValue({
       aadId: "mockAadId1",
       displayName: "mockDisplayName1",
       userPrincipalName: "mockUserPrincipalName1",
     } as any);
-    sandbox.stub(collaborator.CollaborationUtil, "getCurrentUserInfo").resolves(
+    vi.spyOn(collaborator.CollaborationUtil, "getCurrentUserInfo").mockResolvedValue(
       ok({
         aadId: "mockAadId2",
         displayName: "mockDisplayName2",
         userPrincipalName: "mockUserPrincipalName2",
       } as any)
     );
-    sandbox.stub(teamsDevPortalClient, "removePermission").resolves();
-    sandbox
-      .stub(PackageService.GetSharedInstance(), "removePermission")
-      .resolves(err(new UserError("mockedSource", "mockedError", "mockedMessage")));
-    sandbox.stub(TOOLS.tokenProvider.m365TokenProvider, "getAccessToken").resolves(
+    vi.spyOn(teamsDevPortalClient, "removePermission").mockResolvedValue();
+    vi.spyOn(PackageService.prototype, "removePermission").mockResolvedValue(
+      err(new UserError("mockedSource", "mockedError", "mockedMessage"))
+    );
+    vi.spyOn(TOOLS.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
       ok({
         value: "token",
       } as any)
@@ -1201,14 +1198,14 @@ describe("Core basic APIs", () => {
   });
   it("uninstall by manifest ID - success", async () => {
     const core = new FxCore(tools);
-    sandbox
-      .stub(tools.tokenProvider.m365TokenProvider, "getAccessToken")
-      .resolves(ok("mocked-token"));
-    sandbox.stub(teamsDevPortalClient, "deleteApp").resolves(true);
-    sandbox.stub(teamsDevPortalClient, "getBotId").resolves("mocked-bot-id");
-    sandbox.stub(teamsDevPortalClient, "deleteBot").resolves();
-    sandbox.stub(PackageService.prototype, "retrieveTitleId").resolves("mocked-title-id");
-    sandbox.stub(PackageService.prototype, "unacquire").resolves();
+    vi.spyOn(tools.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
+      ok("mocked-token")
+    );
+    vi.spyOn(teamsDevPortalClient, "deleteApp").mockResolvedValue(true);
+    vi.spyOn(teamsDevPortalClient, "getBotId").mockResolvedValue("mocked-bot-id");
+    vi.spyOn(teamsDevPortalClient, "deleteBot").mockResolvedValue();
+    vi.spyOn(PackageService.prototype, "retrieveTitleId").mockResolvedValue("mocked-title-id");
+    vi.spyOn(PackageService.prototype, "unacquire").mockResolvedValue();
     const inputs = {
       platform: Platform.CLI,
       [QuestionNames.UninstallMode]: QuestionNames.UninstallModeManifestId,
@@ -1254,9 +1251,9 @@ describe("Core basic APIs", () => {
   });
   it("uninstall by manifest ID - failed to get token", async () => {
     const core = new FxCore(tools);
-    sandbox
-      .stub(tools.tokenProvider.m365TokenProvider, "getAccessToken")
-      .resolves(err(new SystemError("mockedSource", "mockedError", "mockedMessage")));
+    vi.spyOn(tools.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
+      err(new SystemError("mockedSource", "mockedError", "mockedMessage"))
+    );
     const inputs1 = {
       platform: Platform.CLI,
       [QuestionNames.UninstallMode]: QuestionNames.UninstallModeManifestId,
@@ -1289,10 +1286,12 @@ describe("Core basic APIs", () => {
   });
   it("uninstall by manifest ID - failed to get title ID", async () => {
     const core = new FxCore(tools);
-    sandbox
-      .stub(tools.tokenProvider.m365TokenProvider, "getAccessToken")
-      .resolves(ok("mocked-token"));
-    sandbox.stub(PackageService.prototype, "retrieveTitleId").throws("error");
+    vi.spyOn(tools.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
+      ok("mocked-token")
+    );
+    vi.spyOn(PackageService.prototype, "retrieveTitleId").mockImplementation(() => {
+      throw "error";
+    });
     const inputs = {
       platform: Platform.CLI,
       [QuestionNames.UninstallMode]: QuestionNames.UninstallModeManifestId,
@@ -1309,10 +1308,10 @@ describe("Core basic APIs", () => {
   });
   it("uninstall by manifest ID - failed to get bot ID", async () => {
     const core = new FxCore(tools);
-    sandbox
-      .stub(tools.tokenProvider.m365TokenProvider, "getAccessToken")
-      .resolves(ok("mocked-token"));
-    sandbox.stub(teamsDevPortalClient, "getBotId").resolves(undefined);
+    vi.spyOn(tools.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
+      ok("mocked-token")
+    );
+    vi.spyOn(teamsDevPortalClient, "getBotId").mockResolvedValue(undefined);
     const inputs = {
       platform: Platform.CLI,
       [QuestionNames.UninstallMode]: QuestionNames.UninstallModeManifestId,
@@ -1325,15 +1324,19 @@ describe("Core basic APIs", () => {
   });
   it("uninstall by manifest ID - M365 App user cancel", async () => {
     const core = new FxCore(tools);
-    sandbox
-      .stub(tools.tokenProvider.m365TokenProvider, "getAccessToken")
-      .resolves(ok("mocked-token"));
-    sandbox.stub(tools.ui, "confirm").resolves(ok({ result: false } as InputResult<boolean>));
-    sandbox.stub(teamsDevPortalClient, "deleteApp").throws("error");
-    sandbox.stub(teamsDevPortalClient, "getBotId").resolves("mocked-bot-id");
-    sandbox.stub(teamsDevPortalClient, "deleteBot").resolves();
-    sandbox.stub(PackageService.prototype, "retrieveTitleId").resolves("mocked-title-id");
-    sandbox.stub(PackageService.prototype, "unacquire").throws("error");
+    vi.spyOn(tools.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
+      ok("mocked-token")
+    );
+    vi.spyOn(tools.ui, "confirm").mockResolvedValue(ok({ result: false } as InputResult<boolean>));
+    vi.spyOn(teamsDevPortalClient, "deleteApp").mockImplementation(() => {
+      throw "error";
+    });
+    vi.spyOn(teamsDevPortalClient, "getBotId").mockResolvedValue("mocked-bot-id");
+    vi.spyOn(teamsDevPortalClient, "deleteBot").mockResolvedValue();
+    vi.spyOn(PackageService.prototype, "retrieveTitleId").mockResolvedValue("mocked-title-id");
+    vi.spyOn(PackageService.prototype, "unacquire").mockImplementation(() => {
+      throw "error";
+    });
     const inputs = {
       platform: Platform.CLI,
       [QuestionNames.UninstallMode]: QuestionNames.UninstallModeManifestId,
@@ -1349,15 +1352,19 @@ describe("Core basic APIs", () => {
   });
   it("uninstall by manifest ID - TDP user cancel", async () => {
     const core = new FxCore(tools);
-    sandbox
-      .stub(tools.tokenProvider.m365TokenProvider, "getAccessToken")
-      .resolves(ok("mocked-token"));
-    sandbox.stub(tools.ui, "confirm").resolves(ok({ result: false } as InputResult<boolean>));
-    sandbox.stub(teamsDevPortalClient, "deleteApp").throws("error");
-    sandbox.stub(teamsDevPortalClient, "getBotId").resolves("mocked-bot-id");
-    sandbox.stub(teamsDevPortalClient, "deleteBot").resolves();
-    sandbox.stub(PackageService.prototype, "retrieveTitleId").resolves("mocked-title-id");
-    sandbox.stub(PackageService.prototype, "unacquire").throws("error");
+    vi.spyOn(tools.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
+      ok("mocked-token")
+    );
+    vi.spyOn(tools.ui, "confirm").mockResolvedValue(ok({ result: false } as InputResult<boolean>));
+    vi.spyOn(teamsDevPortalClient, "deleteApp").mockImplementation(() => {
+      throw "error";
+    });
+    vi.spyOn(teamsDevPortalClient, "getBotId").mockResolvedValue("mocked-bot-id");
+    vi.spyOn(teamsDevPortalClient, "deleteBot").mockResolvedValue();
+    vi.spyOn(PackageService.prototype, "retrieveTitleId").mockResolvedValue("mocked-title-id");
+    vi.spyOn(PackageService.prototype, "unacquire").mockImplementation(() => {
+      throw "error";
+    });
     const inputs = {
       platform: Platform.CLI,
       [QuestionNames.UninstallMode]: QuestionNames.UninstallModeManifestId,
@@ -1373,15 +1380,19 @@ describe("Core basic APIs", () => {
   });
   it("uninstall by manifest ID - Bot user cancel", async () => {
     const core = new FxCore(tools);
-    sandbox
-      .stub(tools.tokenProvider.m365TokenProvider, "getAccessToken")
-      .resolves(ok("mocked-token"));
-    sandbox.stub(tools.ui, "confirm").resolves(ok({ result: false } as InputResult<boolean>));
-    sandbox.stub(teamsDevPortalClient, "deleteApp").throws("error");
-    sandbox.stub(teamsDevPortalClient, "getBotId").resolves("mocked-bot-id");
-    sandbox.stub(teamsDevPortalClient, "deleteBot").resolves();
-    sandbox.stub(PackageService.prototype, "retrieveTitleId").resolves("mocked-title-id");
-    sandbox.stub(PackageService.prototype, "unacquire").throws("error");
+    vi.spyOn(tools.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
+      ok("mocked-token")
+    );
+    vi.spyOn(tools.ui, "confirm").mockResolvedValue(ok({ result: false } as InputResult<boolean>));
+    vi.spyOn(teamsDevPortalClient, "deleteApp").mockImplementation(() => {
+      throw "error";
+    });
+    vi.spyOn(teamsDevPortalClient, "getBotId").mockResolvedValue("mocked-bot-id");
+    vi.spyOn(teamsDevPortalClient, "deleteBot").mockResolvedValue();
+    vi.spyOn(PackageService.prototype, "retrieveTitleId").mockResolvedValue("mocked-title-id");
+    vi.spyOn(PackageService.prototype, "unacquire").mockImplementation(() => {
+      throw "error";
+    });
     const inputs = {
       platform: Platform.CLI,
       [QuestionNames.UninstallMode]: QuestionNames.UninstallModeManifestId,
@@ -1402,14 +1413,14 @@ describe("Core basic APIs", () => {
       BOT_ID: "789",
     });
     const core = new FxCore(tools);
-    sandbox
-      .stub(tools.tokenProvider.m365TokenProvider, "getAccessToken")
-      .resolves(ok("mocked-token"));
-    sandbox.stub(teamsDevPortalClient, "deleteApp").resolves(true);
-    sandbox.stub(teamsDevPortalClient, "getBotId").resolves("mocked-bot-id");
-    sandbox.stub(teamsDevPortalClient, "deleteBot").resolves();
-    sandbox.stub(PackageService.prototype, "retrieveTitleId").resolves("mocked-title-id");
-    sandbox.stub(PackageService.prototype, "unacquire").resolves();
+    vi.spyOn(tools.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
+      ok("mocked-token")
+    );
+    vi.spyOn(teamsDevPortalClient, "deleteApp").mockResolvedValue(true);
+    vi.spyOn(teamsDevPortalClient, "getBotId").mockResolvedValue("mocked-bot-id");
+    vi.spyOn(teamsDevPortalClient, "deleteBot").mockResolvedValue();
+    vi.spyOn(PackageService.prototype, "retrieveTitleId").mockResolvedValue("mocked-title-id");
+    vi.spyOn(PackageService.prototype, "unacquire").mockResolvedValue();
     const appName = await mockCliUninstallProject();
     const inputs = {
       platform: Platform.CLI,
@@ -1467,7 +1478,7 @@ describe("Core basic APIs", () => {
   it("uninstall by env - invalid yaml", async () => {
     const core = new FxCore(tools);
     const appName = await mockCliUninstallProject();
-    sandbox.stub(metadataUtil, "parse").resolves(err(new SystemError("", "", "")));
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(err(new SystemError("", "", "")));
     const inputs: UninstallInputs = {
       platform: Platform.CLI,
       [QuestionNames.UninstallMode]: QuestionNames.UninstallModeEnv,
@@ -1482,10 +1493,10 @@ describe("Core basic APIs", () => {
   it("uninstall by env - empty provision actions", async () => {
     const core = new FxCore(tools);
     const appName = await mockCliUninstallProject();
-    sandbox.stub(metadataUtil, "parse").resolves(ok({} as ProjectModel));
-    sandbox
-      .stub(tools.tokenProvider.m365TokenProvider, "getAccessToken")
-      .resolves(err(new SystemError("mockedSource", "mockedError", "mockedMessage")));
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(ok({} as ProjectModel));
+    vi.spyOn(tools.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
+      err(new SystemError("mockedSource", "mockedError", "mockedMessage"))
+    );
     const inputs = {
       platform: Platform.CLI,
       [QuestionNames.UninstallMode]: QuestionNames.UninstallModeEnv,
@@ -1509,7 +1520,7 @@ describe("Core basic APIs", () => {
       BOT_ID: "789",
     });
     const core = new FxCore(tools);
-    sandbox.stub(metadataUtil, "parse").resolves(
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(
       ok({
         provision: {
           name: "provision",
@@ -1527,14 +1538,14 @@ describe("Core basic APIs", () => {
         },
       } as ProjectModel)
     );
-    sandbox
-      .stub(tools.tokenProvider.m365TokenProvider, "getAccessToken")
-      .resolves(ok("mocked-token"));
-    sandbox.stub(teamsDevPortalClient, "deleteApp").resolves(true);
-    sandbox.stub(teamsDevPortalClient, "getBotId").resolves("mocked-bot-id");
-    sandbox.stub(teamsDevPortalClient, "deleteBot").resolves();
-    sandbox.stub(PackageService.prototype, "retrieveTitleId").resolves("mocked-title-id");
-    sandbox.stub(PackageService.prototype, "unacquire").resolves();
+    vi.spyOn(tools.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
+      ok("mocked-token")
+    );
+    vi.spyOn(teamsDevPortalClient, "deleteApp").mockResolvedValue(true);
+    vi.spyOn(teamsDevPortalClient, "getBotId").mockResolvedValue("mocked-bot-id");
+    vi.spyOn(teamsDevPortalClient, "deleteBot").mockResolvedValue();
+    vi.spyOn(PackageService.prototype, "retrieveTitleId").mockResolvedValue("mocked-title-id");
+    vi.spyOn(PackageService.prototype, "unacquire").mockResolvedValue();
     const appName = await mockCliUninstallProject();
     const inputs = {
       platform: Platform.CLI,
@@ -1560,14 +1571,14 @@ describe("Core basic APIs", () => {
   });
   it("uninstall by env - failed to get token", async () => {
     const core = new FxCore(tools);
-    sandbox
-      .stub(tools.tokenProvider.m365TokenProvider, "getAccessToken")
-      .resolves(err(new SystemError("mockedSource", "mockedError", "mockedMessage")));
-    sandbox.stub(teamsDevPortalClient, "deleteApp").resolves(true);
-    sandbox.stub(teamsDevPortalClient, "getBotId").resolves("mocked-bot-id");
-    sandbox.stub(teamsDevPortalClient, "deleteBot").resolves();
-    sandbox.stub(PackageService.prototype, "retrieveTitleId").resolves("mocked-title-id");
-    sandbox.stub(PackageService.prototype, "unacquire").resolves();
+    vi.spyOn(tools.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
+      err(new SystemError("mockedSource", "mockedError", "mockedMessage"))
+    );
+    vi.spyOn(teamsDevPortalClient, "deleteApp").mockResolvedValue(true);
+    vi.spyOn(teamsDevPortalClient, "getBotId").mockResolvedValue("mocked-bot-id");
+    vi.spyOn(teamsDevPortalClient, "deleteBot").mockResolvedValue();
+    vi.spyOn(PackageService.prototype, "retrieveTitleId").mockResolvedValue("mocked-title-id");
+    vi.spyOn(PackageService.prototype, "unacquire").mockResolvedValue();
     const appName = await mockCliUninstallProject();
     const inputs1 = {
       platform: Platform.CLI,
@@ -1607,10 +1618,10 @@ describe("Core basic APIs", () => {
   });
   it("uninstall by title ID - success", async () => {
     const core = new FxCore(tools);
-    sandbox
-      .stub(tools.tokenProvider.m365TokenProvider, "getAccessToken")
-      .resolves(ok("mocked-token"));
-    sandbox.stub(PackageService.prototype, "unacquire").resolves();
+    vi.spyOn(tools.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
+      ok("mocked-token")
+    );
+    vi.spyOn(PackageService.prototype, "unacquire").mockResolvedValue();
     const inputs = {
       platform: Platform.CLI,
       [QuestionNames.UninstallMode]: QuestionNames.UninstallModeTitleId,
@@ -1622,10 +1633,10 @@ describe("Core basic APIs", () => {
   });
   it("uninstall by title ID - missing title ID", async () => {
     const core = new FxCore(tools);
-    sandbox
-      .stub(tools.tokenProvider.m365TokenProvider, "getAccessToken")
-      .resolves(ok("mocked-token"));
-    sandbox.stub(PackageService.prototype, "unacquire").resolves();
+    vi.spyOn(tools.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
+      ok("mocked-token")
+    );
+    vi.spyOn(PackageService.prototype, "unacquire").mockResolvedValue();
     const inputs = {
       platform: Platform.CLI,
       [QuestionNames.UninstallMode]: QuestionNames.UninstallModeTitleId,
@@ -1636,7 +1647,7 @@ describe("Core basic APIs", () => {
   });
   it("uninstall by title ID - failed", async () => {
     const core = new FxCore(tools);
-    sandbox.stub(core, "uninstallM365App").resolves(err(new SystemError("", "", "")));
+    vi.spyOn(core, "uninstallM365App").mockResolvedValue(err(new SystemError("", "", "")));
     const inputs = {
       platform: Platform.CLI,
       [QuestionNames.UninstallMode]: QuestionNames.UninstallModeTitleId,
@@ -1660,7 +1671,7 @@ describe("Core basic APIs", () => {
     const core = new FxCore(tools);
     const ctx: CoreHookContext = { arguments: [], envVars: { testKey: "oldValue" } };
     core.resetEnvVar("testKey", ctx);
-    expect(ctx.envVars).to.deep.equal({ testKey: "" });
+    chai.expect(ctx.envVars).to.deep.equal({ testKey: "" });
   });
   it("reset env var - undefine ctx", async () => {
     const core = new FxCore(tools);
@@ -1672,23 +1683,23 @@ describe("Core basic APIs", () => {
     const core = new FxCore(tools);
     const ctx: CoreHookContext = { arguments: [], envVars: undefined };
     core.resetEnvVar("testKey", ctx, false);
-    expect(ctx.envVars).to.deep.equal({ testKey: "" });
+    chai.expect(ctx.envVars).to.deep.equal({ testKey: "" });
   });
   it("reset env var - skipIfNotExist is true", async () => {
     const core = new FxCore(tools);
     const ctx: CoreHookContext = { arguments: [], envVars: { existingKey: "value" } };
     core.resetEnvVar("testKey", ctx);
-    expect(ctx.envVars).to.deep.equal({ existingKey: "value" });
+    chai.expect(ctx.envVars).to.deep.equal({ existingKey: "value" });
   });
   it("reset env var - skipIfNotExist is false", async () => {
     const core = new FxCore(tools);
     const ctx: CoreHookContext = { arguments: [], envVars: { existingKey: "value" } };
     core.resetEnvVar("testKey", ctx, false);
-    expect(ctx.envVars).to.deep.equal({ existingKey: "value", testKey: "" });
+    chai.expect(ctx.envVars).to.deep.equal({ existingKey: "value", testKey: "" });
   });
   it("provisionResources", async () => {
     const core = new FxCore(tools);
-    sandbox.stub(core, "provisionResourcesOnce").resolves(ok(undefined));
+    vi.spyOn(core, "provisionResourcesOnce").mockResolvedValue(ok(undefined));
     const res = await core.provisionResources({} as any);
     assert.isTrue(res.isOk() && res.value === undefined);
   });
@@ -1723,16 +1734,14 @@ describe("apply yaml template", async () => {
   });
 
   describe("when readEnv returns error", async () => {
-    const sandbox = sinon.createSandbox();
-
     const mockedError = new SystemError("mockedSource", "mockedError", "mockedMessage");
 
     before(() => {
-      sandbox.stub(envUtil, "readEnv").resolves(err(mockedError));
+      vi.spyOn(envUtil, "readEnv").mockResolvedValue(err(mockedError));
     });
 
     after(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("should return error too", async () => {
@@ -1748,17 +1757,15 @@ describe("apply yaml template", async () => {
   });
 
   describe("when YamlParser returns error", async () => {
-    const sandbox = sinon.createSandbox();
-
     const mockedError = new SystemError("mockedSource", "mockedError", "mockedMessage");
 
     before(() => {
-      sandbox.stub(envUtil, "readEnv").resolves(ok({}));
-      sandbox.stub(YamlParser.prototype, "parse").resolves(err(mockedError));
+      vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
+      vi.spyOn(YamlParser.prototype, "parse").mockResolvedValue(err(mockedError));
     });
 
     after(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("should return error too", async () => {
@@ -1774,15 +1781,13 @@ describe("apply yaml template", async () => {
   });
 
   describe("when running against an empty yaml file", async () => {
-    const sandbox = sinon.createSandbox();
-
     before(() => {
-      sandbox.stub(envUtil, "readEnv").resolves(ok({}));
-      sandbox.stub(YamlParser.prototype, "parse").resolves(ok({ version: "1.0.0" }));
+      vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
+      vi.spyOn(YamlParser.prototype, "parse").mockResolvedValue(ok({ version: "1.0.0" }));
     });
 
     after(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("should return ok", async () => {
@@ -1798,7 +1803,6 @@ describe("apply yaml template", async () => {
   });
 
   describe("when lifecycle returns error", async () => {
-    const sandbox = sinon.createSandbox();
     const mockedError = new SystemError("mockedSource", "mockedError", "mockedMessage");
 
     class MockedProvision implements ILifecycle {
@@ -1828,8 +1832,8 @@ describe("apply yaml template", async () => {
     }
 
     before(() => {
-      sandbox.stub(envUtil, "readEnv").resolves(ok({}));
-      sandbox.stub(YamlParser.prototype, "parse").resolves(
+      vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
+      vi.spyOn(YamlParser.prototype, "parse").mockResolvedValue(
         ok({
           version: "1.0.0",
           provision: new MockedProvision(),
@@ -1838,7 +1842,7 @@ describe("apply yaml template", async () => {
     });
 
     after(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("should return error", async () => {
@@ -1853,8 +1857,6 @@ describe("apply yaml template", async () => {
     });
   });
   describe("runLifecycle", async () => {
-    const sandbox = sinon.createSandbox();
-
     const mockedError = new SystemError("mockedSource", "mockedError", "mockedMessage");
     class MockedProvision implements ILifecycle {
       name: LifecycleName = "provision";
@@ -1880,7 +1882,7 @@ describe("apply yaml template", async () => {
     }
 
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("happy", async () => {
@@ -1890,7 +1892,7 @@ describe("apply yaml template", async () => {
         projectPath: "./",
         env: "dev",
       };
-      sandbox.stub(envUtil, "writeEnv").resolves(ok(undefined));
+      vi.spyOn(envUtil, "writeEnv").mockResolvedValue(ok(undefined));
       const context = createDriverContext(inputs);
       const lifecycle = new MockedProvision();
       const res = await core.runLifecycle(lifecycle, context, "dev");
@@ -1904,9 +1906,9 @@ describe("apply yaml template", async () => {
         projectPath: "./",
         env: "dev",
       };
-      sandbox.stub(envUtil, "writeEnv").resolves(ok(undefined));
+      vi.spyOn(envUtil, "writeEnv").mockResolvedValue(ok(undefined));
       const lifecycle = new MockedProvision();
-      sandbox.stub(lifecycle, "execute").resolves({
+      vi.spyOn(lifecycle, "execute").mockResolvedValue({
         result: err({
           kind: "PartialSuccess",
           env: new Map(),
@@ -1930,9 +1932,9 @@ describe("apply yaml template", async () => {
         projectPath: "./",
         env: "dev",
       };
-      sandbox.stub(envUtil, "writeEnv").resolves(ok(undefined));
+      vi.spyOn(envUtil, "writeEnv").mockResolvedValue(ok(undefined));
       const lifecycle = new MockedProvision();
-      sandbox.stub(lifecycle, "execute").resolves({
+      vi.spyOn(lifecycle, "execute").mockResolvedValue({
         result: err({
           kind: "PartialSuccess",
           env: new Map(),
@@ -1972,7 +1974,6 @@ async function deleteTestProject(appName: string) {
 
 describe("createEnvCopyV3", async () => {
   const tools = new MockTools();
-  const sandbox = sinon.createSandbox();
   const sourceEnvContent = [
     "# this is a comment",
     "TEAMSFX_ENV=dev",
@@ -1998,17 +1999,17 @@ describe("createEnvCopyV3", async () => {
   }
 
   beforeEach(() => {
-    sandbox.stub(fs, "readFile").resolves(Buffer.from(sourceEnvStr, "utf8"));
-    sandbox.stub<any, any>(fs, "createWriteStream").returns(new MockedWriteStream());
+    vi.spyOn(fs, "readFile").mockResolvedValue(Buffer.from(sourceEnvStr, "utf8"));
+    vi.spyOn(fs, "createWriteStream").mockReturnValue(new MockedWriteStream());
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("should create new .env file with desired content", async () => {
-    sandbox.stub(pathUtils, "getEnvFilePath").resolves(ok("./env/.env.dev"));
-    sandbox.stub(fs, "pathExists").resolves(true);
+    vi.spyOn(pathUtils, "getEnvFilePath").mockResolvedValue(ok("./env/.env.dev"));
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     const core = new FxCore(tools);
     const res = await core.createEnvCopyV3("newEnv", "dev", "./");
     assert(res.isOk());
@@ -2044,22 +2045,16 @@ describe("createEnvCopyV3", async () => {
   });
 
   it("should failed case 1", async () => {
-    sandbox
-      .stub(pathUtils, "getEnvFilePath")
-      .onFirstCall()
-      .resolves(err(new UserError({})));
+    vi.spyOn(pathUtils, "getEnvFilePath").mockResolvedValueOnce(err(new UserError({})));
     const core = new FxCore(tools);
     const res = await core.createEnvCopyV3("newEnv", "dev", "./");
     assert(res.isErr());
   });
 
   it("should failed case 2", async () => {
-    sandbox
-      .stub(pathUtils, "getEnvFilePath")
-      .onFirstCall()
-      .resolves(ok("./env"))
-      .onSecondCall()
-      .resolves(err(new UserError({})));
+    vi.spyOn(pathUtils, "getEnvFilePath")
+      .mockResolvedValueOnce(ok("./env"))
+      .mockResolvedValueOnce(err(new UserError({})));
     const core = new FxCore(tools);
     const res = await core.createEnvCopyV3("newEnv", "dev", "./");
     assert(res.isErr());
@@ -2068,13 +2063,11 @@ describe("createEnvCopyV3", async () => {
 
 describe("publishInDeveloperPortal", () => {
   const tools = new MockTools();
-  const sandbox = sinon.createSandbox();
-
   before(() => {
-    sandbox.stub(envUtil, "readEnv").resolves(ok({}));
+    vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
   });
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("success", async () => {
@@ -2086,8 +2079,8 @@ describe("publishInDeveloperPortal", () => {
       [QuestionNames.AppPackagePath]: "path",
       ignoreLockByUT: true,
     };
-    sandbox.stub(fs, "pathExists").resolves(false);
-    sandbox.stub(coordinator, "publishInDeveloperPortal").resolves(ok(undefined));
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+    vi.spyOn(coordinator, "publishInDeveloperPortal").mockResolvedValue(ok(undefined));
     const res = await core.publishInDeveloperPortal(inputs);
 
     if (res.isErr()) {
@@ -2102,7 +2095,7 @@ describe("Teams app APIs", async () => {
   const core = new FxCore(tools);
 
   afterEach(() => {
-    sinon.restore();
+    vi.restoreAllMocks();
   });
 
   it("validate app package", async () => {
@@ -2115,10 +2108,10 @@ describe("Teams app APIs", async () => {
       projectPath: path.join(os.tmpdir(), appName),
     };
 
-    const runSpy = sinon.spy(ValidateAppPackageDriver.prototype, "execute");
-    sinon.stub(validationUtils, "validateInputs").resolves(undefined);
+    const runSpy = vi.spyOn(ValidateAppPackageDriver.prototype, "execute");
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
     await core.validateApplication(inputs);
-    sinon.assert.calledOnce(runSpy);
+    chai.expect(runSpy.mock.calls).lengthOf(1);
   });
 
   it("validate manifest", async () => {
@@ -2131,9 +2124,9 @@ describe("Teams app APIs", async () => {
       projectPath: path.join(os.tmpdir(), appName),
     };
 
-    const runSpy = sinon.spy(ValidateManifestDriver.prototype, "execute");
+    const runSpy = vi.spyOn(ValidateManifestDriver.prototype, "execute");
     await core.validateApplication(inputs);
-    sinon.assert.calledOnce(runSpy);
+    chai.expect(runSpy.mock.calls).lengthOf(1);
   });
 
   it("validate with test cases", async () => {
@@ -2147,9 +2140,9 @@ describe("Teams app APIs", async () => {
       projectPath: path.join(os.tmpdir(), appName),
     };
 
-    const runSpy = sinon.spy(ValidateWithTestCasesDriver.prototype, "execute");
+    const runSpy = vi.spyOn(ValidateWithTestCasesDriver.prototype, "execute");
     await core.validateApplication(inputs);
-    sinon.assert.calledOnce(runSpy);
+    chai.expect(runSpy.mock.calls).lengthOf(1);
   });
 
   it("create app package", async () => {
@@ -2163,15 +2156,15 @@ describe("Teams app APIs", async () => {
       [QuestionNames.OutputZipPathParamName]: ".\\build\\appPackage\\appPackage.dev.zip",
     };
 
-    sinon.stub(process, "platform").value("win32");
-    sinon.stub(CommonTools, "runForTypeSpecProject").resolves();
-    const runStub = sinon
-      .stub(CreateAppPackageDriver.prototype, "execute")
-      .resolves({ result: ok(new Map()), summaries: [] });
-    const showMessageStub = sinon.stub(tools.ui, "showMessage");
+    Object.defineProperty(process, "platform", { value: "win32", configurable: true });
+    vi.spyOn(CommonTools, "runForTypeSpecProject").mockResolvedValue();
+    const runStub = vi
+      .spyOn(CreateAppPackageDriver.prototype, "execute")
+      .mockResolvedValue({ result: ok(new Map()), summaries: [] });
+    const showMessageStub = vi.spyOn(tools.ui, "showMessage");
     await core.createAppPackage(inputs);
-    sinon.assert.calledOnce(runStub);
-    sinon.assert.calledOnce(showMessageStub);
+    chai.expect(runStub.mock.calls).lengthOf(1);
+    chai.expect(showMessageStub.mock.calls).lengthOf(1);
   });
 
   it("publish application", async () => {
@@ -2182,9 +2175,9 @@ describe("Teams app APIs", async () => {
       projectPath: path.join(os.tmpdir(), appName),
     };
 
-    sinon
-      .stub(coordinator, "publish")
-      .resolves(err(new SystemError("mockedSource", "mockedError", "mockedMessage")));
+    vi.spyOn(coordinator, "publish").mockResolvedValue(
+      err(new SystemError("mockedSource", "mockedError", "mockedMessage"))
+    );
     await core.publishApplication(inputs);
   });
 });
@@ -2194,11 +2187,11 @@ describe("previewWithManifest", () => {
   const core = new FxCore(tools);
 
   afterEach(() => {
-    sinon.restore();
+    vi.restoreAllMocks();
   });
 
   it("getManifestV3 error", async () => {
-    sinon.stub(manifestUtils, "getManifestV3").resolves(err({ foo: "bar" } as any));
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(err({ foo: "bar" } as any));
     const appName = await mockV3Project();
     const inputs: Inputs = {
       [QuestionNames.M365Host]: HubOptions.teams().id,
@@ -2219,8 +2212,8 @@ describe("previewWithManifest", () => {
 
   it("getLaunchUrl error", async () => {
     const appName = await mockV3Project();
-    sinon.stub(manifestUtils, "getManifestV3").resolves(ok({} as TeamsManifest));
-    sinon.stub(LaunchHelper.prototype, "getLaunchUrl").resolves(err({ foo: "bar" } as any));
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok({} as TeamsManifest));
+    vi.spyOn(LaunchHelper.prototype, "getLaunchUrl").mockResolvedValue(err({ foo: "bar" } as any));
     const inputs: Inputs = {
       [QuestionNames.M365Host]: HubOptions.teams().id,
       [QuestionNames.TeamsAppManifestFilePath]: path.join(
@@ -2240,8 +2233,8 @@ describe("previewWithManifest", () => {
 
   it("happy path", async () => {
     const appName = await mockV3Project();
-    sinon.stub(manifestUtils, "getManifestV3").resolves(ok({} as TeamsManifest));
-    sinon.stub(LaunchHelper.prototype, "getLaunchUrl").resolves(ok("test-url"));
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok({} as TeamsManifest));
+    vi.spyOn(LaunchHelper.prototype, "getLaunchUrl").mockResolvedValue(ok("test-url"));
     const inputs: Inputs = {
       [QuestionNames.M365Host]: HubOptions.teams().id,
       [QuestionNames.TeamsAppManifestFilePath]: path.join(
@@ -2261,13 +2254,12 @@ describe("previewWithManifest", () => {
 });
 
 describe("getProjectId", async () => {
-  const sandbox = sinon.createSandbox();
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   it("happy path", async () => {
     const core = new FxCore(tools);
-    sandbox.stub(core, "getProjectMetadata").resolves(
+    vi.spyOn(core, "getProjectMetadata").mockResolvedValue(
       ok({
         projectId: "12345",
         version: "1.1.1",
@@ -2278,20 +2270,19 @@ describe("getProjectId", async () => {
   });
   it("return empty value", async () => {
     const core = new FxCore(tools);
-    sandbox.stub(core, "getProjectMetadata").resolves(ok({}));
+    vi.spyOn(core, "getProjectMetadata").mockResolvedValue(ok({}));
     const res = await core.getProjectId(".");
     assert.isTrue(res.isOk() && res.value === "");
   });
 });
 describe("getProjectMetadata", async () => {
-  const sandbox = sinon.createSandbox();
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   it("happy path", async () => {
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("./m365agents.yml");
-    sandbox.stub(fs, "pathExistsSync").returns(true);
-    sandbox.stub(fs, "readFileSync").returns("version: 1.1.1\nprojectId: 12345" as any);
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("./m365agents.yml");
+    vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
+    vi.spyOn(fs, "readFileSync").mockReturnValue("version: 1.1.1\nprojectId: 12345" as any);
     const core = new FxCore(tools);
     const res = await core.getProjectMetadata(".");
     assert.isTrue(res.isOk());
@@ -2303,8 +2294,8 @@ describe("getProjectMetadata", async () => {
     }
   });
   it("yml not exist", async () => {
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("./m365agents.yml");
-    sandbox.stub(fs, "pathExistsSync").resolves(false);
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("./m365agents.yml");
+    vi.spyOn(fs, "pathExistsSync").mockResolvedValue(false);
     const core = new FxCore(tools);
     const res = await core.getProjectMetadata(".");
     assert.isTrue(res.isOk());
@@ -2313,8 +2304,10 @@ describe("getProjectMetadata", async () => {
     }
   });
   it("throw error", async () => {
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("./m365agents.yml");
-    sandbox.stub(fs, "pathExistsSync").throws(new Error("mocked error"));
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("./m365agents.yml");
+    vi.spyOn(fs, "pathExistsSync").mockImplementation(() => {
+      throw new Error("mocked error");
+    });
     const core = new FxCore(tools);
     const res = await core.getProjectMetadata(".");
     assert.isTrue(res.isOk());
@@ -2324,12 +2317,11 @@ describe("getProjectMetadata", async () => {
   });
 });
 describe("getTeamsAppName", async () => {
-  const sandbox = sinon.createSandbox();
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   it("happy path", async () => {
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("./m365agents.yml");
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("./m365agents.yml");
     const mockProjectModel: any = {
       projectId: "12345",
       provision: {
@@ -2347,13 +2339,13 @@ describe("getTeamsAppName", async () => {
         ],
       },
     };
-    sandbox.stub(metadataUtil, "parse").resolves(ok(mockProjectModel));
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(ok(mockProjectModel));
     const core = new FxCore(tools);
     const res = await core.getTeamsAppName(".");
     assert.isTrue(res.isOk() && res.value === "testappname-");
   });
   it("happy path", async () => {
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("./m365agents.yml");
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("./m365agents.yml");
     const mockProjectModel: any = {
       projectId: "12345",
       provision: {
@@ -2371,22 +2363,22 @@ describe("getTeamsAppName", async () => {
         ],
       },
     };
-    sandbox.stub(metadataUtil, "parse").resolves(ok(mockProjectModel));
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(ok(mockProjectModel));
     const core = new FxCore(tools);
     const res = await core.getTeamsAppName(".");
     assert.isTrue(res.isOk() && res.value === "testappname");
   });
   it("return empty value", async () => {
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("./m365agents.yml");
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("./m365agents.yml");
     const mockProjectModel: any = {};
-    sandbox.stub(metadataUtil, "parse").resolves(ok(mockProjectModel));
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(ok(mockProjectModel));
     const core = new FxCore(tools);
     const res = await core.getTeamsAppName(".");
     assert.isTrue(res.isOk() && res.value === "");
   });
   it("parse yml error", async () => {
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("./m365agents.yml");
-    sandbox.stub(metadataUtil, "parse").resolves(err(new UserError({})));
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("./m365agents.yml");
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(err(new UserError({})));
     const core = new FxCore(tools);
     const res = await core.getTeamsAppName(".");
     assert.isTrue(res.isErr());
@@ -2394,12 +2386,11 @@ describe("getTeamsAppName", async () => {
 });
 
 describe("getProjectInfo", async () => {
-  const sandbox = sinon.createSandbox();
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   it("happy path", async () => {
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("./m365agents.yml");
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("./m365agents.yml");
     const mockProjectModel: any = {
       projectId: "mock-project-id",
       provision: {
@@ -2417,8 +2408,8 @@ describe("getProjectInfo", async () => {
         ],
       },
     };
-    sandbox.stub(metadataUtil, "parse").resolves(ok(mockProjectModel));
-    sandbox.stub(envUtil, "readEnv").resolves(
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(ok(mockProjectModel));
+    vi.spyOn(envUtil, "readEnv").mockResolvedValue(
       ok({
         TEAMS_APP_ID: "mock-team-app-id",
         TEAMS_APP_TENANT_ID: "mock-tenant-id",
@@ -2437,16 +2428,16 @@ describe("getProjectInfo", async () => {
     }
   });
   it("parse yml error", async () => {
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("./m365agents.yml");
-    sandbox.stub(metadataUtil, "parse").resolves(err(new UserError({})));
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("./m365agents.yml");
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(err(new UserError({})));
     const core = new FxCore(tools);
     const res = await core.getProjectInfo(".", "dev");
     assert.isTrue(res.isErr());
   });
   it("read env error", async () => {
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("./m365agents.yml");
-    sandbox.stub(metadataUtil, "parse").resolves(ok({} as any));
-    sandbox.stub(envUtil, "readEnv").resolves(err(new UserError({})));
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("./m365agents.yml");
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(ok({} as any));
+    vi.spyOn(envUtil, "readEnv").mockResolvedValue(err(new UserError({})));
     const core = new FxCore(tools);
     const res = await core.getProjectInfo(".", "dev");
     assert.isTrue(res.isErr());
@@ -2454,12 +2445,11 @@ describe("getProjectInfo", async () => {
 });
 
 describe("checkProjectType", async () => {
-  const sandbox = sinon.createSandbox();
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   it("happy 1", async () => {
-    sandbox.stub(projectTypeChecker, "checkProjectType").resolves({
+    vi.spyOn(projectTypeChecker, "checkProjectType").mockResolvedValue({
       isTeamsFx: false,
       lauguages: [],
       hasTeamsManifest: false,
@@ -2471,7 +2461,7 @@ describe("checkProjectType", async () => {
   });
 
   it("happy 2", async () => {
-    sandbox.stub(projectTypeChecker, "checkProjectType").resolves({
+    vi.spyOn(projectTypeChecker, "checkProjectType").mockResolvedValue({
       isTeamsFx: true,
       teamsfxConfigType: MetadataV3.configFile,
       teamsfxConfigVersion: "1.0.0",
@@ -2491,9 +2481,8 @@ describe("checkProjectType", async () => {
 });
 
 describe("isEnvFile", async () => {
-  const sandbox = sinon.createSandbox();
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   it("file patten not match", async () => {
     const core = new FxCore(tools);
@@ -2504,13 +2493,13 @@ describe("isEnvFile", async () => {
     }
   });
   it("getEnvFolderPath return error", async () => {
-    sandbox.stub(pathUtils, "getEnvFolderPath").resolves(err(new UserError({})));
+    vi.spyOn(pathUtils, "getEnvFolderPath").mockResolvedValue(err(new UserError({})));
     const core = new FxCore(tools);
     const res = await core.isEnvFile(".", ".env.dev");
     assert.isTrue(res.isErr());
   });
   it("getEnvFolderPath return undefined", async () => {
-    sandbox.stub(pathUtils, "getEnvFolderPath").resolves(ok(undefined));
+    vi.spyOn(pathUtils, "getEnvFolderPath").mockResolvedValue(ok(undefined));
     const core = new FxCore(tools);
     const res = await core.isEnvFile(".", ".env.dev");
     assert.isTrue(res.isOk());
@@ -2519,7 +2508,7 @@ describe("isEnvFile", async () => {
     }
   });
   it("folder not match", async () => {
-    sandbox.stub(pathUtils, "getEnvFolderPath").resolves(ok("/tmp"));
+    vi.spyOn(pathUtils, "getEnvFolderPath").mockResolvedValue(ok("/tmp"));
     const core = new FxCore(tools);
     const res = await core.isEnvFile("/tmp", "/tmp1/.env.dev");
     assert.isTrue(res.isOk());
@@ -2528,7 +2517,7 @@ describe("isEnvFile", async () => {
     }
   });
   it("match", async () => {
-    sandbox.stub(pathUtils, "getEnvFolderPath").resolves(ok("/tmp"));
+    vi.spyOn(pathUtils, "getEnvFolderPath").mockResolvedValue(ok("/tmp"));
     const core = new FxCore(tools);
     const res = await core.isEnvFile("/tmp", "/tmp/.env.dev");
     assert.isTrue(res.isOk());

@@ -3,26 +3,19 @@
 
 import { UserError } from "@microsoft/teamsfx-api";
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
-import * as chai from "chai";
-import chaiAsPromised from "chai-as-promised";
 import fs from "fs-extra";
-import { createSandbox, match as sinonMatch } from "sinon";
+import { chai, expect, vi } from "vitest";
 import { setTools } from "../../../src/common/globalVars";
+import * as commonUtils from "../../../src/common/utils";
 import { AppUser } from "../../../src/component/driver/teamsApp/interfaces/appdefinitions/appUser";
 import { advancedDASettingUrl } from "../../../src/component/m365/constants";
 import { NotExtendedToM365Error } from "../../../src/component/m365/errors";
-import {
-  AppScope,
-  PackageService,
-  packageServiceDeps,
-} from "../../../src/component/m365/packageService";
+import { AppScope, PackageService } from "../../../src/component/m365/packageService";
 import { UnhandledError } from "../../../src/error/common";
 import { MockLogProvider } from "../../core/utils";
 
-chai.use(chaiAsPromised);
-
 describe("Package Service", () => {
-  const sandbox = createSandbox();
+  const sandbox = vi;
   const logger = new MockLogProvider();
   let axiosDeleteResponses: Record<string, unknown> = {};
   let axiosGetResponses: Record<string, unknown> = {};
@@ -36,10 +29,10 @@ describe("Package Service", () => {
     },
     interceptors: {
       request: {
-        use: sandbox.stub(),
+        use: vi.fn(),
       },
       response: {
-        use: sandbox.stub(),
+        use: vi.fn(),
       },
     },
     delete: function <T = any, R = AxiosResponse<T>>(
@@ -72,7 +65,7 @@ describe("Package Service", () => {
   } as any as AxiosInstance;
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   beforeEach(() => {
@@ -80,12 +73,12 @@ describe("Package Service", () => {
     axiosGetResponses = {};
     axiosPostResponses = {};
     axiosPutResponses = {};
-    sandbox.stub(fs, "readFile").callsFake((file) => {
+    vi.spyOn(fs, "readFile").mockImplementation((file) => {
       return Promise.resolve(Buffer.from("test"));
     });
-    sandbox.stub(fs, "statSync").returns({ size: 1024 } as any);
-    sandbox.stub(axios, "create").returns(testAxiosInstance);
-    sandbox.stub(packageServiceDeps, "waitSeconds").resolves();
+    vi.spyOn(fs, "statSync").mockReturnValue({ size: 1024 } as any);
+    vi.spyOn(axios, "create").mockReturnValue(testAxiosInstance);
+    vi.spyOn(commonUtils, "waitSeconds").mockResolvedValue();
 
     setTools({} as any);
     process.env["TEAMSFX_BUILDER_API"] = "1";
@@ -112,17 +105,17 @@ describe("Package Service", () => {
       },
     };
 
-    const infoStub = sandbox.stub(logger, "info").returns();
-    const verboseStub = sandbox.stub(logger, "verbose").returns();
+    const infoStub = vi.spyOn(logger, "info").mockReturnValue();
+    const verboseStub = vi.spyOn(logger, "verbose").mockReturnValue();
     let packageService = new PackageService("https://test-endpoint", logger);
     let actualError: Error | undefined;
     try {
       const result = await packageService.sideLoadXmlManifest("test-token", "test-path");
       chai.assert.equal(result[0], "test-title-id");
       chai.assert.equal(result[1], "test-app-id");
-      chai.assert.isTrue(infoStub.calledWith("TitleId: test-title-id"));
-      chai.assert.isTrue(infoStub.calledWith("AppId: test-app-id"));
-      chai.assert.isTrue(verboseStub.calledWith("Sideloading done."));
+      expect(infoStub).toHaveBeenCalledWith("TitleId: test-title-id");
+      expect(infoStub).toHaveBeenCalledWith("AppId: test-app-id");
+      expect(verboseStub).toHaveBeenCalledWith("Sideloading done.");
     } catch (error: any) {
       actualError = error;
     }
@@ -164,22 +157,20 @@ describe("Package Service", () => {
       },
     };
 
-    const infoStub = sandbox.stub(logger, "info").returns();
-    const verboseStub = sandbox.stub(logger, "verbose").returns();
-    const debugStub = sandbox.stub(logger, "debug").returns();
+    const infoStub = vi.spyOn(logger, "info").mockReturnValue();
+    const verboseStub = vi.spyOn(logger, "verbose").mockReturnValue();
+    const debugStub = vi.spyOn(logger, "debug").mockReturnValue();
     let packageService = new PackageService("https://test-endpoint", logger);
     let actualError: Error | undefined;
     try {
       const result = await packageService.sideLoadXmlManifest("test-token", "test-path");
       chai.assert.equal(result[0], "test-title-id");
       chai.assert.equal(result[1], "test-app-id");
-      chai.assert.isTrue(
-        debugStub.calledWith("Acquiring package with statusId: test-status-id ...")
-      );
-      chai.assert.isTrue(debugStub.calledWith("Package status: 200 ..."));
-      chai.assert.isTrue(infoStub.calledWith("TitleId: test-title-id"));
-      chai.assert.isTrue(infoStub.calledWith("AppId: test-app-id"));
-      chai.assert.isTrue(verboseStub.calledWith("Sideloading done."));
+      expect(debugStub).toHaveBeenCalledWith("Acquiring package with statusId: test-status-id ...");
+      expect(debugStub).toHaveBeenCalledWith("Package status: 200 ...");
+      expect(infoStub).toHaveBeenCalledWith("TitleId: test-title-id");
+      expect(infoStub).toHaveBeenCalledWith("AppId: test-app-id");
+      expect(verboseStub).toHaveBeenCalledWith("Sideloading done.");
     } catch (error: any) {
       actualError = error;
     }
@@ -213,50 +204,45 @@ describe("Package Service", () => {
       },
     };
 
-    sandbox
-      .stub(testAxiosInstance, "get")
-      .withArgs("/dev/v1/users/packages/status/test-status-id", {
-        baseURL: "https://test-url",
-        headers: { Authorization: `Bearer test-token` },
-      })
-      .onFirstCall()
-      .resolves({
-        status: 202,
-      })
-      .onSecondCall()
-      .resolves({
-        status: 200,
-        data: {
-          titleId: "test-title-id",
-          appId: "test-app-id",
-        },
-      })
-      .withArgs("/config/v1/environment", {
-        baseURL: "https://test-endpoint",
-        headers: { Authorization: `Bearer test-token` },
-      })
-      .resolves({
-        data: {
-          titlesServiceUrl: "https://test-url",
-        },
-      });
+    let statusCallCount = 0;
+    vi.spyOn(testAxiosInstance, "get").mockImplementation((url: string): any => {
+      if (url === "/dev/v1/users/packages/status/test-status-id") {
+        statusCallCount++;
+        if (statusCallCount === 1) {
+          return Promise.resolve({ status: 202 });
+        }
+        return Promise.resolve({
+          status: 200,
+          data: {
+            titleId: "test-title-id",
+            appId: "test-app-id",
+          },
+        });
+      }
+      if (url === "/config/v1/environment") {
+        return Promise.resolve({
+          data: {
+            titlesServiceUrl: "https://test-url",
+          },
+        });
+      }
+      return Promise.resolve({});
+    });
 
-    const infoStub = sandbox.stub(logger, "info").returns();
-    const verboseStub = sandbox.stub(logger, "verbose").returns();
-    const debugStub = sandbox.stub(logger, "debug").returns();
+    const infoStub = vi.spyOn(logger, "info").mockReturnValue();
+    const verboseStub = vi.spyOn(logger, "verbose").mockReturnValue();
+    const debugStub = vi.spyOn(logger, "debug").mockReturnValue();
     const packageService = new PackageService("https://test-endpoint", logger);
     let actualError: Error | undefined;
     try {
       const result = await packageService.sideLoadXmlManifest("test-token", "test-path");
       chai.assert.equal(result[0], "test-title-id");
       chai.assert.equal(result[1], "test-app-id");
-      chai.assert.isTrue(
-        debugStub.calledWith("Acquiring package with statusId: test-status-id ...")
-      );
-      chai.assert.isTrue(debugStub.calledWith("Package status: 200 ..."));
-      chai.assert.isTrue(infoStub.calledWith("TitleId: test-title-id"));
-      chai.assert.isTrue(infoStub.calledWith("AppId: test-app-id"));
-      chai.assert.isTrue(verboseStub.calledWith("Sideloading done."));
+      expect(debugStub).toHaveBeenCalledWith("Acquiring package with statusId: test-status-id ...");
+      expect(debugStub).toHaveBeenCalledWith("Package status: 200 ...");
+      expect(infoStub).toHaveBeenCalledWith("TitleId: test-title-id");
+      expect(infoStub).toHaveBeenCalledWith("AppId: test-app-id");
+      expect(verboseStub).toHaveBeenCalledWith("Sideloading done.");
     } catch (error: any) {
       actualError = error;
     }
@@ -277,10 +263,10 @@ describe("Package Service", () => {
       },
     };
 
-    const infoStub = sandbox.stub(logger, "info").returns();
-    const verboseStub = sandbox.stub(logger, "verbose").returns();
-    const debugStub = sandbox.stub(logger, "debug").returns();
-    const errorStub = sandbox.stub(logger, "error").returns();
+    const infoStub = vi.spyOn(logger, "info").mockReturnValue();
+    const verboseStub = vi.spyOn(logger, "verbose").mockReturnValue();
+    const debugStub = vi.spyOn(logger, "debug").mockReturnValue();
+    const errorStub = vi.spyOn(logger, "error").mockReturnValue();
     const packageService = new PackageService("https://test-endpoint", logger);
     let actualError: Error | undefined;
     try {
@@ -291,11 +277,11 @@ describe("Package Service", () => {
       actualError = error;
     }
 
-    chai.assert.isFalse(debugStub.calledWith("Package status: 200 ..."));
-    chai.assert.isFalse(infoStub.calledWith("TitleId: test-title-id"));
-    chai.assert.isFalse(infoStub.calledWith("AppId: test-app-id"));
-    chai.assert.isFalse(verboseStub.calledWith("Sideloading done."));
-    // chai.assert.isTrue(errorStub.calledWith("Sideloading failed."));
+    expect(debugStub).not.toHaveBeenCalledWith("Package status: 200 ...");
+    expect(infoStub).not.toHaveBeenCalledWith("TitleId: test-title-id");
+    expect(infoStub).not.toHaveBeenCalledWith("AppId: test-app-id");
+    expect(verboseStub).not.toHaveBeenCalledWith("Sideloading done.");
+    // expect(errorStub).toHaveBeenCalledWith("Sideloading failed.");
 
     chai.assert.isDefined(actualError);
   });
@@ -312,7 +298,7 @@ describe("Package Service", () => {
     };
     axiosPostResponses["/dev/v1/users/packages/addins"] = error;
 
-    const errorStub = sandbox.stub(logger, "error").returns();
+    const errorStub = vi.spyOn(logger, "error").mockReturnValue();
     const packageService = new PackageService("https://test-endpoint", logger);
     let actualError: Error | undefined;
     try {
@@ -320,8 +306,8 @@ describe("Package Service", () => {
     } catch (error: any) {
       actualError = error;
     }
-    // chai.assert.isTrue(errorStub.calledWith(`${JSON.stringify(error.response.data)}`));
-    // chai.assert.isTrue(errorStub.calledWith(`Sideloading failed.`));
+    // expect(errorStub).toHaveBeenCalledWith(`${JSON.stringify(error.response.data)}`);
+    // expect(errorStub).toHaveBeenCalledWith(`Sideloading failed.`);
     chai.assert.isDefined(actualError);
     chai.assert.isTrue(actualError?.message.includes("test-post"));
   });
@@ -335,7 +321,7 @@ describe("Package Service", () => {
     const error: Error = new Error("test-post");
     axiosPostResponses["/dev/v1/users/packages/addins"] = error;
 
-    const errorStub = sandbox.stub(logger, "error").returns();
+    const errorStub = vi.spyOn(logger, "error").mockReturnValue();
     const packageService = new PackageService("https://test-endpoint", logger);
     let actualError: Error | undefined;
     try {
@@ -343,7 +329,7 @@ describe("Package Service", () => {
     } catch (error: any) {
       actualError = error;
     }
-    // chai.assert.isTrue(errorStub.calledWith(`test-post`));
+    // expect(errorStub).toHaveBeenCalledWith(`test-post`);
     chai.assert.isDefined(actualError);
     // chai.assert.isTrue(actualError?.message.includes("test-post"));
   });
@@ -396,7 +382,9 @@ describe("Package Service", () => {
     };
 
     let packageService = new PackageService("https://test-endpoint");
-    sandbox.stub(packageService, "getManifestFromZip" as keyof PackageService).returns({} as any);
+    vi.spyOn(packageService, "getManifestFromZip" as keyof PackageService).mockReturnValue(
+      {} as any
+    );
     let actualError: Error | undefined;
     try {
       const result = await packageService.sideLoading("test-token", "test-path");
@@ -408,7 +396,7 @@ describe("Package Service", () => {
 
     chai.assert.isUndefined(actualError);
     packageService = new PackageService("https://test-endpoint", logger);
-    sandbox.stub(packageService, "getManifestFromZip" as keyof PackageService).returns({
+    vi.spyOn(packageService, "getManifestFromZip" as keyof PackageService).mockReturnValue({
       $schema:
         "https://developer.microsoft.com/json-schemas/teams/v1.19/MicrosoftTeams.schema.json",
       manifestVersion: "1.19",
@@ -447,7 +435,7 @@ describe("Package Service", () => {
     chai.assert.isUndefined(actualError);
 
     packageService = new PackageService("https://test-endpoint", logger);
-    sandbox.stub(packageService, "getManifestFromZip" as keyof PackageService).returns({
+    vi.spyOn(packageService, "getManifestFromZip" as keyof PackageService).mockReturnValue({
       copilotAgents: {
         declarativeAgents: [
           {
@@ -470,7 +458,7 @@ describe("Package Service", () => {
 
     // without logger
     packageService = new PackageService("https://test-endpoint");
-    sandbox.stub(packageService, "getManifestFromZip" as keyof PackageService).returns({
+    vi.spyOn(packageService, "getManifestFromZip" as keyof PackageService).mockReturnValue({
       copilotAgents: {
         declarativeAgents: [
           {
@@ -521,36 +509,35 @@ describe("Package Service", () => {
       },
     };
 
-    sandbox
-      .stub(testAxiosInstance, "get")
-      .withArgs("/dev/v1/users/packages/status/test-status-id", {
-        baseURL: "https://test-url",
-        headers: { Authorization: `Bearer test-token` },
-      })
-      .onFirstCall()
-      .resolves({
-        status: 202,
-      })
-      .onSecondCall()
-      .resolves({
-        status: 200,
-        data: {
-          titleId: "test-title-id",
-          appId: "test-app-id",
-        },
-      })
-      .withArgs("/config/v1/environment", {
-        baseURL: "https://test-endpoint",
-        headers: { Authorization: `Bearer test-token` },
-      })
-      .resolves({
-        data: {
-          titlesServiceUrl: "https://test-url",
-        },
-      });
+    let statusCallCount = 0;
+    vi.spyOn(testAxiosInstance, "get").mockImplementation((url: string): any => {
+      if (url === "/dev/v1/users/packages/status/test-status-id") {
+        statusCallCount++;
+        if (statusCallCount === 1) {
+          return Promise.resolve({ status: 202 });
+        }
+        return Promise.resolve({
+          status: 200,
+          data: {
+            titleId: "test-title-id",
+            appId: "test-app-id",
+          },
+        });
+      }
+      if (url === "/config/v1/environment") {
+        return Promise.resolve({
+          data: {
+            titlesServiceUrl: "https://test-url",
+          },
+        });
+      }
+      return Promise.resolve({});
+    });
 
     const packageService = new PackageService("https://test-endpoint", logger);
-    sandbox.stub(packageService, "getManifestFromZip" as keyof PackageService).returns({} as any);
+    vi.spyOn(packageService, "getManifestFromZip" as keyof PackageService).mockReturnValue(
+      {} as any
+    );
     let actualError: Error | undefined;
     try {
       const result = await packageService.sideLoading("test-token", "test-path");
@@ -580,7 +567,7 @@ describe("Package Service", () => {
     };
 
     const packageService = new PackageService("https://test-endpoint", logger);
-    sandbox.stub(packageService, "getManifestFromZip" as keyof PackageService).returns({
+    vi.spyOn(packageService, "getManifestFromZip" as keyof PackageService).mockReturnValue({
       copilotAgents: {
         declarativeAgents: [
           {
@@ -590,14 +577,14 @@ describe("Package Service", () => {
         ],
       },
     } as any);
-    const infoStub = sandbox.stub(logger, "info").returns();
-    const verboseStub = sandbox.stub(logger, "verbose").returns();
+    const infoStub = vi.spyOn(logger, "info").mockReturnValue();
+    const verboseStub = vi.spyOn(logger, "verbose").mockReturnValue();
     const result = await packageService.sideLoading("test-token", "test-path");
     chai.assert.equal(result[0], "test-title-id-blocked");
     chai.assert.equal(result[1], "test-app-id-blocked");
-    chai.assert.isTrue(infoStub.calledWith("TitleId: test-title-id-blocked"));
-    chai.assert.isTrue(infoStub.calledWith("AppId: test-app-id-blocked"));
-    chai.assert.isTrue(verboseStub.calledWith("Sideloading done."));
+    expect(infoStub).toHaveBeenCalledWith("TitleId: test-title-id-blocked");
+    expect(infoStub).toHaveBeenCalledWith("AppId: test-app-id-blocked");
+    expect(verboseStub).toHaveBeenCalledWith("Sideloading done.");
   });
 
   it("sideLoadingV2 returns immediately when shouldBlock response is 201", async () => {
@@ -617,7 +604,7 @@ describe("Package Service", () => {
     };
 
     const packageService = new PackageService("https://test-endpoint", logger);
-    sandbox.stub(packageService, "getManifestFromZip" as keyof PackageService).returns({
+    vi.spyOn(packageService, "getManifestFromZip" as keyof PackageService).mockReturnValue({
       copilotAgents: {
         declarativeAgents: [
           {
@@ -647,36 +634,33 @@ describe("Package Service", () => {
       },
     };
 
-    sandbox
-      .stub(testAxiosInstance, "get")
-      .withArgs("/builder/v1/users/packages/status/test-status-id-builder-api", {
-        baseURL: "https://test-url",
-        headers: { Authorization: `Bearer test-token` },
-      })
-      .onFirstCall()
-      .resolves({
-        status: 202,
-      })
-      .onSecondCall()
-      .resolves({
-        status: 200,
-        data: {
-          titleId: "test-title-id-builder-api",
-          appId: "test-app-id-builder-api",
-        },
-      })
-      .withArgs("/config/v1/environment", {
-        baseURL: "https://test-endpoint",
-        headers: { Authorization: `Bearer test-token` },
-      })
-      .resolves({
-        data: {
-          titlesServiceUrl: "https://test-url",
-        },
-      });
+    let statusCallCount = 0;
+    vi.spyOn(testAxiosInstance, "get").mockImplementation((url: string): any => {
+      if (url === "/builder/v1/users/packages/status/test-status-id-builder-api") {
+        statusCallCount++;
+        if (statusCallCount === 1) {
+          return Promise.resolve({ status: 202 });
+        }
+        return Promise.resolve({
+          status: 200,
+          data: {
+            titleId: "test-title-id-builder-api",
+            appId: "test-app-id-builder-api",
+          },
+        });
+      }
+      if (url === "/config/v1/environment") {
+        return Promise.resolve({
+          data: {
+            titlesServiceUrl: "https://test-url",
+          },
+        });
+      }
+      return Promise.resolve({});
+    });
 
     const packageService = new PackageService("https://test-endpoint", logger);
-    sandbox.stub(packageService, "getManifestFromZip" as keyof PackageService).returns({
+    vi.spyOn(packageService, "getManifestFromZip" as keyof PackageService).mockReturnValue({
       copilotAgents: {
         declarativeAgents: [
           {
@@ -715,7 +699,7 @@ describe("Package Service", () => {
     };
     let actualError: Error | undefined;
     const packageService = new PackageService("https://test-endpoint", logger);
-    sandbox.stub(packageService, "getManifestFromZip" as keyof PackageService).returns({
+    vi.spyOn(packageService, "getManifestFromZip" as keyof PackageService).mockReturnValue({
       copilotAgents: {
         declarativeAgents: [
           {
@@ -763,7 +747,9 @@ describe("Package Service", () => {
     axiosPostResponses["/builder/v1/users/packages"] = new Error("test-post-builder-api");
 
     let packageService = new PackageService("https://test-endpoint");
-    sandbox.stub(packageService, "getManifestFromZip" as keyof PackageService).returns({} as any);
+    vi.spyOn(packageService, "getManifestFromZip" as keyof PackageService).mockReturnValue(
+      {} as any
+    );
     let actualError: Error | undefined;
     try {
       await packageService.sideLoading("test-token", "test-path");
@@ -775,7 +761,9 @@ describe("Package Service", () => {
     chai.assert.isTrue(actualError?.message.includes("test-post"));
 
     packageService = new PackageService("https://test-endpoint", logger);
-    sandbox.stub(packageService, "getManifestFromZip" as keyof PackageService).returns({} as any);
+    vi.spyOn(packageService, "getManifestFromZip" as keyof PackageService).mockReturnValue(
+      {} as any
+    );
     actualError = undefined;
     try {
       await packageService.sideLoading("test-token", "test-path");
@@ -787,7 +775,7 @@ describe("Package Service", () => {
     chai.assert.isTrue(actualError?.message.includes("test-post"));
 
     packageService = new PackageService("https://test-endpoint", logger);
-    sandbox.stub(packageService, "getManifestFromZip" as keyof PackageService).returns({
+    vi.spyOn(packageService, "getManifestFromZip" as keyof PackageService).mockReturnValue({
       copilotAgents: {
         declarativeAgents: [
           {
@@ -808,9 +796,9 @@ describe("Package Service", () => {
     chai.assert.isTrue(actualError?.message.includes("test-post-builder-api"));
 
     packageService = new PackageService("https://test-endpoint", logger);
-    sandbox
-      .stub(packageService, "getManifestFromZip" as keyof PackageService)
-      .returns(undefined as any);
+    vi.spyOn(packageService, "getManifestFromZip" as keyof PackageService).mockReturnValue(
+      undefined as any
+    );
     actualError = undefined;
     try {
       await packageService.sideLoading("test-token", "test-path");
@@ -842,7 +830,9 @@ describe("Package Service", () => {
     axiosPostResponses["/dev/v1/users/packages"] = expectedError;
 
     let packageService = new PackageService("https://test-endpoint");
-    sandbox.stub(packageService, "getManifestFromZip" as keyof PackageService).returns({} as any);
+    vi.spyOn(packageService, "getManifestFromZip" as keyof PackageService).mockReturnValue(
+      {} as any
+    );
     let actualError: any;
     try {
       await packageService.sideLoading("test-token", "test-path");
@@ -854,7 +844,9 @@ describe("Package Service", () => {
     chai.assert.isTrue(actualError.message.includes("test-post"));
 
     packageService = new PackageService("https://test-endpoint", logger);
-    sandbox.stub(packageService, "getManifestFromZip" as keyof PackageService).returns({} as any);
+    vi.spyOn(packageService, "getManifestFromZip" as keyof PackageService).mockReturnValue(
+      {} as any
+    );
     actualError = undefined;
     try {
       await packageService.sideLoading("test-token", "test-path");
@@ -885,7 +877,9 @@ describe("Package Service", () => {
     axiosPostResponses["/dev/v1/users/packages"] = expectedError;
 
     const packageService = new PackageService("https://test-endpoint");
-    sandbox.stub(packageService, "getManifestFromZip" as keyof PackageService).returns({} as any);
+    vi.spyOn(packageService, "getManifestFromZip" as keyof PackageService).mockReturnValue(
+      {} as any
+    );
     let actualError: any;
     try {
       await packageService.sideLoading("test-token", "test-path");
@@ -919,7 +913,9 @@ describe("Package Service", () => {
     axiosPostResponses["/dev/v1/users/packages"] = expectedError;
 
     const packageService = new PackageService("https://test-endpoint");
-    sandbox.stub(packageService, "getManifestFromZip" as keyof PackageService).returns({} as any);
+    vi.spyOn(packageService, "getManifestFromZip" as keyof PackageService).mockReturnValue(
+      {} as any
+    );
     let actualError: any;
     try {
       await packageService.sideLoading("test-token", "test-path");
@@ -1263,8 +1259,8 @@ describe("Package Service", () => {
   });
   it("getLaunchInfoByManifestId throws expected error", async () => {
     const packageService = new PackageService("https://test-endpoint");
-    sandbox.stub(testAxiosInstance, "post").rejects({ response: { status: 404 } });
-    sandbox.stub(packageService, "getTitleServiceUrl").resolves("https://test-url");
+    vi.spyOn(testAxiosInstance, "post").mockRejectedValue({ response: { status: 404 } });
+    vi.spyOn(packageService, "getTitleServiceUrl").mockResolvedValue("https://test-url");
     try {
       await packageService.getLaunchInfoByManifestId("test-token", "test-manifest-id");
       chai.assert.fail("should not reach here");
@@ -1421,7 +1417,7 @@ describe("Package Service", () => {
     chai.assert.isUndefined(actualError);
     chai.assert.deepEqual(result, ["foo", "bar"]);
 
-    const debugStub = sandbox.stub(logger, "debug").returns();
+    const debugStub = vi.spyOn(logger, "debug").mockReturnValue();
 
     packageService = new PackageService("https://test-endpoint", logger);
     try {
@@ -1432,7 +1428,7 @@ describe("Package Service", () => {
 
     chai.assert.isUndefined(actualError);
     chai.assert.deepEqual(result, ["foo", "bar"]);
-    chai.assert.equal(5, debugStub.getCalls().length);
+    chai.assert.equal(5, debugStub.mock.calls.length);
   });
 
   it("getActiveExperiences throws expected error", async () => {
@@ -1908,7 +1904,7 @@ describe("Package Service", () => {
 
   it("withNetworkRetry retries on TLS/network error and succeeds", async () => {
     let callCount = 0;
-    sandbox.stub(testAxiosInstance, "get").callsFake((url: string) => {
+    vi.spyOn(testAxiosInstance, "get").mockImplementation((url: string) => {
       callCount++;
       if (url === "/config/v1/environment") {
         if (callCount <= 2) {
@@ -1923,25 +1919,25 @@ describe("Package Service", () => {
       return Promise.reject(new Error("unexpected url"));
     });
 
-    const warningStub = sandbox.stub(logger, "warning").returns();
+    const warningStub = vi.spyOn(logger, "warning").mockReturnValue();
     const packageService = new PackageService("https://test-endpoint", logger);
     const result = await packageService.getTitleServiceUrl("test-token");
     chai.assert.equal(result, "https://test-url");
     chai.assert.equal(callCount, 3);
-    chai.assert.isTrue(warningStub.calledTwice);
-    chai.assert.isTrue(warningStub.firstCall.args[0].includes("ERR_TLS_CERT_ALTNAME_INVALID"));
-    chai.assert.isTrue(warningStub.firstCall.args[0].includes("retrying (1/3)"));
-    chai.assert.isTrue(warningStub.secondCall.args[0].includes("retrying (2/3)"));
+    chai.assert.isTrue(warningStub.mock.calls.length === 2);
+    chai.assert.isTrue(warningStub.mock.calls[0][0].includes("ERR_TLS_CERT_ALTNAME_INVALID"));
+    chai.assert.isTrue(warningStub.mock.calls[0][0].includes("retrying (1/3)"));
+    chai.assert.isTrue(warningStub.mock.calls[1][0].includes("retrying (2/3)"));
   });
 
   it("withNetworkRetry throws after max retries on network error", async () => {
-    sandbox.stub(testAxiosInstance, "get").callsFake(() => {
+    vi.spyOn(testAxiosInstance, "get").mockImplementation(() => {
       const err: any = new Error("ECONNRESET");
       err.code = "ECONNRESET";
       return Promise.reject(err);
     });
 
-    const warningStub = sandbox.stub(logger, "warning").returns();
+    const warningStub = vi.spyOn(logger, "warning").mockReturnValue();
     const packageService = new PackageService("https://test-endpoint", logger);
     let actualError: Error | undefined;
     try {
@@ -1952,19 +1948,19 @@ describe("Package Service", () => {
     chai.assert.isDefined(actualError);
     chai.assert.isTrue(actualError?.message.includes("ECONNRESET"));
     // Should have warned twice (retries 1 and 2), then thrown on 3rd
-    chai.assert.isTrue(warningStub.calledTwice);
+    chai.assert.isTrue(warningStub.mock.calls.length === 2);
   });
 
   it("withNetworkRetry does not retry on HTTP errors (has response)", async () => {
     let callCount = 0;
-    sandbox.stub(testAxiosInstance, "get").callsFake(() => {
+    vi.spyOn(testAxiosInstance, "get").mockImplementation(() => {
       callCount++;
       const err: any = new Error("Forbidden");
       err.response = { status: 403, data: {} };
       return Promise.reject(err);
     });
 
-    const warningStub = sandbox.stub(logger, "warning").returns();
+    const warningStub = vi.spyOn(logger, "warning").mockReturnValue();
     const packageService = new PackageService("https://test-endpoint", logger);
     let actualError: any;
     try {
@@ -1974,17 +1970,17 @@ describe("Package Service", () => {
     }
     chai.assert.isDefined(actualError);
     chai.assert.equal(callCount, 1, "Should not retry on HTTP errors");
-    chai.assert.isTrue(warningStub.notCalled);
+    chai.assert.isTrue(warningStub.mock.calls.length === 0);
   });
 
   it("withNetworkRetry works for sideLoadingV2 upload", async () => {
     let postCallCount = 0;
-    sandbox.stub(testAxiosInstance, "get").callsFake(() => {
+    vi.spyOn(testAxiosInstance, "get").mockImplementation(() => {
       return Promise.resolve({
         data: { titlesServiceUrl: "https://test-url" },
       });
     });
-    sandbox.stub(testAxiosInstance, "post").callsFake((url: string) => {
+    vi.spyOn(testAxiosInstance, "post").mockImplementation((url: string) => {
       if (url === "/builder/v1/users/packages") {
         postCallCount++;
         if (postCallCount <= 1) {
@@ -2005,9 +2001,9 @@ describe("Package Service", () => {
       return Promise.reject(new Error("unexpected url"));
     });
 
-    const warningStub = sandbox.stub(logger, "warning").returns();
+    const warningStub = vi.spyOn(logger, "warning").mockReturnValue();
     const packageService = new PackageService("https://test-endpoint", logger);
-    sandbox.stub(packageService, "getManifestFromZip" as keyof PackageService).returns({
+    vi.spyOn(packageService, "getManifestFromZip" as keyof PackageService).mockReturnValue({
       copilotAgents: {
         declarativeAgents: [{ id: "declarativeAgent", file: "declarativeAgent.json" }],
       },
@@ -2017,13 +2013,16 @@ describe("Package Service", () => {
     chai.assert.equal(result[1], "retry-app-id");
     chai.assert.equal(postCallCount, 2);
     chai.assert.isTrue(
-      warningStub.calledWith(sinonMatch("ECONNRESET").and(sinonMatch("retrying (1/3)")))
+      warningStub.mock.calls.some(
+        (c) =>
+          typeof c[0] === "string" && c[0].includes("ECONNRESET") && c[0].includes("retrying (1/3)")
+      )
     );
   });
 
   it("withNetworkRetry works for sideLoadingV1 upload", async () => {
     let postCallCount = 0;
-    sandbox.stub(testAxiosInstance, "get").callsFake((url: string) => {
+    vi.spyOn(testAxiosInstance, "get").mockImplementation((url: string) => {
       if (url === "/config/v1/environment") {
         return Promise.resolve({
           data: { titlesServiceUrl: "https://test-url" },
@@ -2040,7 +2039,7 @@ describe("Package Service", () => {
       }
       return Promise.reject(new Error("unexpected get url"));
     });
-    sandbox.stub(testAxiosInstance, "post").callsFake((url: string) => {
+    vi.spyOn(testAxiosInstance, "post").mockImplementation((url: string) => {
       if (url === "/dev/v1/users/packages") {
         postCallCount++;
         if (postCallCount <= 1) {
@@ -2060,21 +2059,26 @@ describe("Package Service", () => {
       return Promise.reject(new Error("unexpected url"));
     });
 
-    const warningStub = sandbox.stub(logger, "warning").returns();
+    const warningStub = vi.spyOn(logger, "warning").mockReturnValue();
     const packageService = new PackageService("https://test-endpoint", logger);
-    sandbox.stub(packageService, "getManifestFromZip" as keyof PackageService).returns({} as any);
+    vi.spyOn(packageService, "getManifestFromZip" as keyof PackageService).mockReturnValue(
+      {} as any
+    );
     const result = await packageService.sideLoading("test-token", "test-path");
     chai.assert.equal(result[0], "retry-v1-title-id");
     chai.assert.equal(result[1], "retry-v1-app-id");
     chai.assert.equal(postCallCount, 2);
     chai.assert.isTrue(
-      warningStub.calledWith(sinonMatch("ECONNRESET").and(sinonMatch("retrying (1/3)")))
+      warningStub.mock.calls.some(
+        (c) =>
+          typeof c[0] === "string" && c[0].includes("ECONNRESET") && c[0].includes("retrying (1/3)")
+      )
     );
   });
 
   it("withNetworkRetry works without logger", async () => {
     let callCount = 0;
-    sandbox.stub(testAxiosInstance, "get").callsFake((url: string) => {
+    vi.spyOn(testAxiosInstance, "get").mockImplementation((url: string) => {
       callCount++;
       if (url === "/config/v1/environment") {
         if (callCount <= 1) {
@@ -2094,8 +2098,7 @@ describe("Package Service", () => {
   });
 
   it("sideLoading should throw when package exceeds 10 MB", async () => {
-    (fs.statSync as any).restore();
-    sandbox.stub(fs, "statSync").returns({ size: 15 * 1024 * 1024 } as any);
+    vi.spyOn(fs, "statSync").mockReturnValue({ size: 15 * 1024 * 1024 } as any);
 
     const packageService = new PackageService("https://test-endpoint", logger);
     let actualError: Error | undefined;
@@ -2111,8 +2114,7 @@ describe("Package Service", () => {
   });
 
   it("sideLoadXmlManifest should throw when package exceeds 10 MB", async () => {
-    (fs.statSync as any).restore();
-    sandbox.stub(fs, "statSync").returns({ size: 15 * 1024 * 1024 } as any);
+    vi.spyOn(fs, "statSync").mockReturnValue({ size: 15 * 1024 * 1024 } as any);
 
     const packageService = new PackageService("https://test-endpoint", logger);
     let actualError: Error | undefined;

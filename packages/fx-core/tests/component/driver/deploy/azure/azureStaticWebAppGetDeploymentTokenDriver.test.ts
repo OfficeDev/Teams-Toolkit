@@ -4,34 +4,35 @@
  * @author Siglud <siglud@gmail.com>
  */
 import * as appService from "@azure/arm-appservice";
-import { expect } from "chai";
-import * as sinon from "sinon";
-import {
-  AzureStaticWebAppGetDeploymentTokenDriver,
-  azureStaticWebAppGetTokenDeps,
-} from "../../../../../src/component/driver/deploy/azure/azureStaticWebAppGetDeploymentTokenDriver";
+import { chai, vi } from "vitest";
+import { AzureStaticWebAppGetDeploymentTokenDriver } from "../../../../../src/component/driver/deploy/azure/azureStaticWebAppGetDeploymentTokenDriver";
+import * as azureResourceOperation from "../../../../../src/component/utils/azureResourceOperation";
 
 describe("AzureStaticWebAppGetDeploymentTokenDriver", () => {
   let driver: AzureStaticWebAppGetDeploymentTokenDriver;
-  let clientStub: sinon.SinonStubbedInstance<appService.WebSiteManagementClient>;
+  let clientStub: appService.WebSiteManagementClient;
+  let createClientSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     driver = new AzureStaticWebAppGetDeploymentTokenDriver();
-    clientStub = sinon.createStubInstance(appService.WebSiteManagementClient);
-    sinon.stub(azureStaticWebAppGetTokenDeps, "createWebSiteManagementClient").returns(clientStub);
-    clientStub.staticSites = {
-      listStaticSiteSecrets: () => {},
+    clientStub = {
+      staticSites: {
+        listStaticSiteSecrets: vi.fn(),
+      },
     } as any;
-    sinon.stub(azureStaticWebAppGetTokenDeps, "getAzureAccountCredential").resolves({} as any);
+    createClientSpy = vi
+      .spyOn(AzureStaticWebAppGetDeploymentTokenDriver, "createWebSiteManagementClient")
+      .mockReturnValue(clientStub as any);
+    vi.spyOn(azureResourceOperation, "getAzureAccountCredential").mockResolvedValue({} as any);
   });
 
   afterEach(() => {
-    sinon.restore();
+    vi.restoreAllMocks();
   });
 
   it("should get deployment token", async () => {
     const secrets = { properties: { apiKey: "testKey" } };
-    sinon.stub(clientStub.staticSites, "listStaticSiteSecrets").resolves(secrets);
+    vi.mocked(clientStub.staticSites.listStaticSiteSecrets as any).mockResolvedValue(secrets);
 
     const result = await driver.execute(
       {
@@ -42,21 +43,24 @@ describe("AzureStaticWebAppGetDeploymentTokenDriver", () => {
       new Map([["deploymentToken", "SECRET_TAB_SWA_DEPLOYMENT_TOKEN"]])
     );
 
-    expect(result.result.isOk()).to.be.true;
-    expect(result.result.unwrapOr(new Map()).get("SECRET_TAB_SWA_DEPLOYMENT_TOKEN")).to.equal(
-      "testKey"
-    );
+    chai.expect(result.result.isOk()).to.be.true;
+    chai
+      .expect(result.result.unwrapOr(new Map()).get("SECRET_TAB_SWA_DEPLOYMENT_TOKEN"))
+      .to.equal("testKey");
   });
 
-  it("azureStaticWebAppGetTokenDeps should create management client", async () => {
-    (azureStaticWebAppGetTokenDeps.createWebSiteManagementClient as sinon.SinonStub).restore();
-    const client = azureStaticWebAppGetTokenDeps.createWebSiteManagementClient({} as any, "sub-id");
-    expect(client).to.be.instanceOf(appService.WebSiteManagementClient);
+  it("createWebSiteManagementClient should create management client", async () => {
+    createClientSpy.mockRestore();
+    const client = AzureStaticWebAppGetDeploymentTokenDriver.createWebSiteManagementClient(
+      {} as any,
+      "sub-id"
+    );
+    chai.expect(client).to.be.instanceOf(appService.WebSiteManagementClient);
   });
 
   it("should get deployment token use default settings", async () => {
     const secrets = { properties: { apiKey: "testKey" } };
-    sinon.stub(clientStub.staticSites, "listStaticSiteSecrets").resolves(secrets);
+    vi.mocked(clientStub.staticSites.listStaticSiteSecrets as any).mockResolvedValue(secrets);
 
     const result = await driver.execute(
       {
@@ -67,14 +71,16 @@ describe("AzureStaticWebAppGetDeploymentTokenDriver", () => {
       new Map([["deploymentToken", ""]])
     );
 
-    expect(result.result.isOk()).to.be.true;
-    expect(result.result.unwrapOr(new Map()).get("SECRET_TAB_SWA_DEPLOYMENT_TOKEN")).to.equal(
-      undefined
-    );
+    chai.expect(result.result.isOk()).to.be.true;
+    chai
+      .expect(result.result.unwrapOr(new Map()).get("SECRET_TAB_SWA_DEPLOYMENT_TOKEN"))
+      .to.equal(undefined);
   });
 
   it("should handle error when getting deployment token", async () => {
-    sinon.stub(clientStub.staticSites, "listStaticSiteSecrets").throws(new Error("test error"));
+    vi.mocked(clientStub.staticSites.listStaticSiteSecrets as any).mockImplementation(() => {
+      throw new Error("test error");
+    });
 
     const result = await driver.execute(
       { resourceId: "testResourceId" },
@@ -82,7 +88,7 @@ describe("AzureStaticWebAppGetDeploymentTokenDriver", () => {
       new Map([["deploymentToken", "SECRET_TAB_SWA_DEPLOYMENT_TOKEN"]])
     );
 
-    expect(result.result.isErr()).to.be.true;
+    chai.expect(result.result.isErr()).to.be.true;
   });
 
   it("should handle error when no output env var name", async () => {
@@ -90,7 +96,7 @@ describe("AzureStaticWebAppGetDeploymentTokenDriver", () => {
       azureAccountProvider: {},
     } as any);
 
-    expect(result.result.isErr()).to.be.true;
+    chai.expect(result.result.isErr()).to.be.true;
   });
 
   it("should handle error when no deployment token output env var name", async () => {
@@ -100,6 +106,6 @@ describe("AzureStaticWebAppGetDeploymentTokenDriver", () => {
       new Map([["test", "test"]])
     );
 
-    expect(result.result.isErr()).to.be.true;
+    chai.expect(result.result.isErr()).to.be.true;
   });
 });

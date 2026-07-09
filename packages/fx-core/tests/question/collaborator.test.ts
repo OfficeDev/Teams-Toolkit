@@ -11,8 +11,6 @@ import {
   err,
   ok,
 } from "@microsoft/teamsfx-api";
-import { assert } from "chai";
-import sinon from "sinon";
 import { CollaborationConstants, CollaborationUtil } from "../../src/core/collaborator";
 import {
   envQuestionCondition,
@@ -20,12 +18,13 @@ import {
   listCollaboratorQuestionNode,
 } from "../../src/question/collaborator";
 import { QuestionNames } from "../../src/question/constants";
+import { assert, vi } from "vitest";
 
 describe("Collaboration Question Node Tests", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   describe("grantPermissionQuestionNode", () => {
@@ -153,7 +152,7 @@ describe("Collaboration Question Node Tests", () => {
     });
 
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("should return false when required manifest paths are missing", async () => {
@@ -172,16 +171,16 @@ describe("Collaboration Question Node Tests", () => {
       inputs[CollaborationConstants.AppType] = [CollaborationConstants.TeamsAppQuestionId];
       inputs[QuestionNames.TeamsAppManifestFilePath] = "path/to/manifest.json";
 
-      const loadManifestStub = sandbox.stub(CollaborationUtil, "loadManifestId");
-      loadManifestStub.resolves(ok("static-id"));
+      const loadManifestStub = vi.spyOn(CollaborationUtil, "loadManifestId");
+      loadManifestStub.mockResolvedValue(ok("static-id"));
 
-      const requireEnvStub = sandbox.stub(CollaborationUtil, "requireEnvQuestion");
-      requireEnvStub.returns(false);
+      const requireEnvStub = vi.spyOn(CollaborationUtil, "requireEnvQuestion");
+      requireEnvStub.mockReturnValue(false);
 
       const result = await envQuestionCondition(inputs);
       assert.isFalse(result);
-      assert.isTrue(loadManifestStub.calledOnce);
-      assert.isTrue(requireEnvStub.calledOnce);
+      assert.isTrue(loadManifestStub.mock.calls.length === 1);
+      assert.isTrue(requireEnvStub.mock.calls.length === 1);
     });
 
     it("should return true when Teams manifest ID requires env vars", async () => {
@@ -189,16 +188,16 @@ describe("Collaboration Question Node Tests", () => {
       inputs[CollaborationConstants.AppType] = [CollaborationConstants.TeamsAppQuestionId];
       inputs[QuestionNames.TeamsAppManifestFilePath] = "path/to/manifest.json";
 
-      const loadManifestStub = sandbox.stub(CollaborationUtil, "loadManifestId");
-      loadManifestStub.resolves(ok("${{TEAMS_APP_ID}}"));
+      const loadManifestStub = vi.spyOn(CollaborationUtil, "loadManifestId");
+      loadManifestStub.mockResolvedValue(ok("${{TEAMS_APP_ID}}"));
 
-      const requireEnvStub = sandbox.stub(CollaborationUtil, "requireEnvQuestion");
-      requireEnvStub.returns(true);
+      const requireEnvStub = vi.spyOn(CollaborationUtil, "requireEnvQuestion");
+      requireEnvStub.mockReturnValue(true);
 
       const result = await envQuestionCondition(inputs);
       assert.isTrue(result);
-      assert.isTrue(loadManifestStub.calledOnce);
-      assert.isTrue(requireEnvStub.calledOnce);
+      assert.isTrue(loadManifestStub.mock.calls.length === 1);
+      assert.isTrue(requireEnvStub.mock.calls.length === 1);
     });
 
     it("should return false when Teams manifest ID loading fails", async () => {
@@ -206,8 +205,8 @@ describe("Collaboration Question Node Tests", () => {
       inputs[CollaborationConstants.AppType] = [CollaborationConstants.TeamsAppQuestionId];
       inputs[QuestionNames.TeamsAppManifestFilePath] = "path/to/manifest.json";
 
-      const loadManifestStub = sandbox.stub(CollaborationUtil, "loadManifestId");
-      loadManifestStub.resolves(
+      const loadManifestStub = vi.spyOn(CollaborationUtil, "loadManifestId");
+      loadManifestStub.mockResolvedValue(
         err(
           new UserError({
             name: "FailedToLoadManifestId",
@@ -218,7 +217,7 @@ describe("Collaboration Question Node Tests", () => {
 
       const result = await envQuestionCondition(inputs);
       assert.isFalse(result);
-      assert.isTrue(loadManifestStub.calledOnce);
+      assert.isTrue(loadManifestStub.mock.calls.length === 1);
     });
 
     it("should return true when AAD manifest ID requires env vars", async () => {
@@ -226,16 +225,16 @@ describe("Collaboration Question Node Tests", () => {
       inputs[CollaborationConstants.AppType] = [CollaborationConstants.AadAppQuestionId];
       inputs[QuestionNames.AadAppManifestFilePath] = "path/to/aad.manifest.json";
 
-      const loadManifestStub = sandbox.stub(CollaborationUtil, "loadManifestId");
-      loadManifestStub.resolves(ok("${{AAD_APP_ID}}"));
+      const loadManifestStub = vi.spyOn(CollaborationUtil, "loadManifestId");
+      loadManifestStub.mockResolvedValue(ok("${{AAD_APP_ID}}"));
 
-      const requireEnvStub = sandbox.stub(CollaborationUtil, "requireEnvQuestion");
-      requireEnvStub.returns(true);
+      const requireEnvStub = vi.spyOn(CollaborationUtil, "requireEnvQuestion");
+      requireEnvStub.mockReturnValue(true);
 
       const result = await envQuestionCondition(inputs);
       assert.isTrue(result);
-      assert.isTrue(loadManifestStub.calledOnce);
-      assert.isTrue(requireEnvStub.calledOnce);
+      assert.isTrue(loadManifestStub.mock.calls.length === 1);
+      assert.isTrue(requireEnvStub.mock.calls.length === 1);
     });
 
     it("should return false when AAD manifest ID loading fails", async () => {
@@ -243,8 +242,8 @@ describe("Collaboration Question Node Tests", () => {
       inputs[CollaborationConstants.AppType] = [CollaborationConstants.AadAppQuestionId];
       inputs[QuestionNames.AadAppManifestFilePath] = "path/to/aad.manifest.json";
 
-      const loadManifestStub = sandbox.stub(CollaborationUtil, "loadManifestId");
-      loadManifestStub.resolves(
+      const loadManifestStub = vi.spyOn(CollaborationUtil, "loadManifestId");
+      loadManifestStub.mockResolvedValue(
         err(
           new UserError({
             name: "FailedToLoadManifestId",
@@ -255,7 +254,7 @@ describe("Collaboration Question Node Tests", () => {
 
       const result = await envQuestionCondition(inputs);
       assert.isFalse(result);
-      assert.isTrue(loadManifestStub.calledOnce);
+      assert.isTrue(loadManifestStub.mock.calls.length === 1);
     });
 
     it("should check both manifest types when both app types are selected", async () => {
@@ -267,20 +266,20 @@ describe("Collaboration Question Node Tests", () => {
       inputs[QuestionNames.TeamsAppManifestFilePath] = "path/to/manifest.json";
       inputs[QuestionNames.AadAppManifestFilePath] = "path/to/aad.manifest.json";
 
-      const loadManifestStub = sandbox.stub(CollaborationUtil, "loadManifestId");
+      const loadManifestStub = vi.spyOn(CollaborationUtil, "loadManifestId");
       // First call for Teams app returns false for requiring env
-      loadManifestStub.onFirstCall().resolves(ok("static-id"));
+      loadManifestStub.mockResolvedValueOnce(ok("static-id"));
       // Second call for AAD app returns true for requiring env
-      loadManifestStub.onSecondCall().resolves(ok("${{AAD_APP_ID}}"));
+      loadManifestStub.mockResolvedValueOnce(ok("${{AAD_APP_ID}}"));
 
-      const requireEnvStub = sandbox.stub(CollaborationUtil, "requireEnvQuestion");
-      requireEnvStub.onFirstCall().returns(false);
-      requireEnvStub.onSecondCall().returns(true);
+      const requireEnvStub = vi.spyOn(CollaborationUtil, "requireEnvQuestion");
+      requireEnvStub.mockReturnValueOnce(false);
+      requireEnvStub.mockReturnValueOnce(true);
 
       const result = await envQuestionCondition(inputs);
       assert.isTrue(result);
-      assert.isTrue(loadManifestStub.calledTwice);
-      assert.isTrue(requireEnvStub.calledTwice);
+      assert.isTrue(loadManifestStub.mock.calls.length === 2);
+      assert.isTrue(requireEnvStub.mock.calls.length === 2);
     });
   });
 });

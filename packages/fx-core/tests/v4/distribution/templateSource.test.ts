@@ -1,14 +1,15 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { assert } from "chai";
 import { SystemError, UserError } from "@microsoft/teamsfx-api";
+import { assert } from "vitest";
 import {
   BundledFloor,
   CachedPackage,
   TagEntry,
   TemplateSourcePort,
   computeDigest,
+  resolveLocalTemplateSource,
   resolveTemplateSource,
 } from "../../../src/v4/distribution/templateSource";
 
@@ -401,5 +402,92 @@ describe("resolveTemplateSource (v4)", () => {
     const res = await resolveTemplateSource({ range: "~6.11", bundled: false, port });
     assert.isTrue(res.isErr());
     assert.strictEqual(res._unsafeUnwrapErr().name, "TemplateDigestMismatch");
+  });
+});
+
+describe("resolveLocalTemplateSource (v4)", () => {
+  const floor: BundledFloor = {
+    version: "6.10.1",
+    digest: "sha256:floor",
+    location: "bundled://6.10.1",
+  };
+
+  it("AC-T1: TEMPLATE_VERSION=local resolves the floor, ignoring a higher cached version, no network", () => {
+    const port = new FakePort({
+      env: { TEMPLATE_VERSION: "local" },
+      cache: [{ version: "6.10.5", digest: "sha256:c5", bytes: bytesFor("6.10.5") }],
+      floor,
+    });
+    const src = resolveLocalTemplateSource({ range: "~6.10", port });
+    assert.strictEqual(src.origin, "bundled");
+    assert.strictEqual(src.version, "6.10.1");
+    assert.strictEqual(src.digest, "sha256:floor");
+    assert.strictEqual(port.httpCalls, 0);
+    assert.deepEqual(port.downloads, []);
+  });
+
+  it("AC-T2: no TEMPLATE_VERSION and an empty cache resolves the satisfying floor, no network", () => {
+    const port = new FakePort({ floor });
+    const src = resolveLocalTemplateSource({ range: "~6.10", port });
+    assert.strictEqual(src.origin, "bundled");
+    assert.strictEqual(src.version, "6.10.1");
+    assert.strictEqual(port.httpCalls, 0);
+  });
+
+  it("AC-T3: a cached version above the floor satisfying the range wins, no network", () => {
+    const port = new FakePort({
+      cache: [{ version: "6.10.5", digest: "sha256:c5", bytes: bytesFor("6.10.5") }],
+      floor,
+    });
+    const src = resolveLocalTemplateSource({ range: "~6.10", port });
+    assert.strictEqual(src.origin, "cache");
+    assert.strictEqual(src.version, "6.10.5");
+    assert.strictEqual(src.digest, "sha256:c5");
+    assert.strictEqual(port.httpCalls, 0);
+    assert.deepEqual(port.downloads, []);
+  });
+
+  it("AC-T4: a cached version outside the range is ignored and the floor is resolved (INV-5)", () => {
+    const port = new FakePort({
+      cache: [{ version: "6.9.0", digest: "sha256:c9", bytes: bytesFor("6.9.0") }],
+      floor,
+    });
+    const src = resolveLocalTemplateSource({ range: "~6.10", port });
+    assert.strictEqual(src.origin, "bundled");
+    assert.strictEqual(src.version, "6.10.1");
+    assert.strictEqual(port.httpCalls, 0);
+  });
+
+  it("AC-T5: a cached version equal to the floor is a tie that resolves the floor (decision #2), no network", () => {
+    const port = new FakePort({
+      cache: [{ version: "6.10.1", digest: "sha256:c-tie", bytes: bytesFor("6.10.1") }],
+      floor,
+    });
+    const src = resolveLocalTemplateSource({ range: "~6.10", port });
+    assert.strictEqual(src.origin, "bundled");
+    assert.strictEqual(src.version, "6.10.1");
+    assert.strictEqual(src.digest, "sha256:floor");
+    assert.strictEqual(port.httpCalls, 0);
+  });
+
+  it("AC-T6: local resolution never sets the offline fallback warning", () => {
+    const floorPort = new FakePort({ floor });
+    assert.isUndefined(resolveLocalTemplateSource({ range: "~6.10", port: floorPort }).warning);
+    const cachePort = new FakePort({
+      cache: [{ version: "6.10.5", digest: "sha256:c5", bytes: bytesFor("6.10.5") }],
+      floor,
+    });
+    assert.isUndefined(resolveLocalTemplateSource({ range: "~6.10", port: cachePort }).warning);
+  });
+
+  it("AC-T7: two resolutions of the same state return the identical source (determinism, INV-6)", () => {
+    const port = new FakePort({
+      cache: [{ version: "6.10.5", digest: "sha256:c5", bytes: bytesFor("6.10.5") }],
+      floor,
+    });
+    const first = resolveLocalTemplateSource({ range: "~6.10", port });
+    const second = resolveLocalTemplateSource({ range: "~6.10", port });
+    assert.deepEqual(first, second);
+    assert.strictEqual(port.httpCalls, 0);
   });
 });

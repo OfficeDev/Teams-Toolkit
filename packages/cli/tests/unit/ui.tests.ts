@@ -15,17 +15,16 @@ import {
   ok,
 } from "@microsoft/teamsfx-api";
 import { SelectSubscriptionError, UserCancelError } from "@microsoft/teamsfx-core";
-import sinon from "sinon";
 import { logger } from "../../src/commonlib/logger";
 import * as customizedPrompts from "../../src/prompts";
 import UI, { inquirerPrompts } from "../../src/userInteraction";
 import { expect } from "./utils";
 import mockedEnv from "mocked-env";
-
+import { vi } from "vitest";
 describe("User Interaction Tests", function () {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   describe("selectOption", async () => {
@@ -40,7 +39,7 @@ describe("User Interaction Tests", function () {
     });
 
     it("(Hardcode) Subscription: only one sub", async () => {
-      sandbox.stub(logger, "warning").returns();
+      vi.spyOn(logger, "warning").mockReturnValue();
       const config: SingleSelectConfig = {
         name: "subscription",
         title: "Select a subscription",
@@ -131,8 +130,8 @@ describe("User Interaction Tests", function () {
         title: "test",
         options: [{ id: "id1", description: "some description", label: "label" }],
       };
-      sandbox.stub(UI, "loadSelectDynamicData").resolves(ok({} as any));
-      sandbox.stub(UI, "singleSelect").resolves(ok("id1"));
+      vi.spyOn(UI, "loadSelectDynamicData").mockResolvedValue(ok({} as any));
+      vi.spyOn(UI, "singleSelect").mockResolvedValue(ok("id1"));
       const result = await UI.selectOption(config);
       expect(result.isOk());
       if (result.isOk()) {
@@ -146,8 +145,8 @@ describe("User Interaction Tests", function () {
         title: "test",
         options: [{ id: "id1", label: "label" }],
       };
-      sandbox.stub(UI, "loadSelectDynamicData").resolves(ok({} as any));
-      sandbox.stub(UI, "singleSelect").resolves(ok("id1"));
+      vi.spyOn(UI, "loadSelectDynamicData").mockResolvedValue(ok({} as any));
+      vi.spyOn(UI, "singleSelect").mockResolvedValue(ok("id1"));
       const result = await UI.selectOption(config);
       expect(result.isOk());
       if (result.isOk()) {
@@ -156,7 +155,7 @@ describe("User Interaction Tests", function () {
     });
 
     it("invalid option", async () => {
-      sandbox.stub(UI, "singleSelect").resolves(ok("c"));
+      vi.spyOn(UI, "singleSelect").mockResolvedValue(ok("c"));
       const config: SingleSelectConfig = {
         name: "test",
         title: "test",
@@ -249,7 +248,7 @@ describe("User Interaction Tests", function () {
     });
 
     it("invalid options", async () => {
-      sandbox.stub(UI, "multiSelect").resolves(ok(["c"]));
+      vi.spyOn(UI, "multiSelect").mockResolvedValue(ok(["c"]));
       const config: MultiSelectConfig = {
         name: "test",
         title: "test",
@@ -265,11 +264,13 @@ describe("User Interaction Tests", function () {
 
   describe("multiSelect", async () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
     it("interactive", async () => {
-      sandbox.stub(UI, "interactive").value(true);
-      sandbox.stub(customizedPrompts, "checkbox").value(() => ["id1", "id2"]);
+      vi.spyOn(UI, "interactive", "get").mockReturnValue(true);
+      vi.spyOn(customizedPrompts as any, "checkbox").mockImplementation(
+        () => ["id1", "id2"] as any
+      );
       const choices = [1, 2, 3].map((x) => ({
         id: `id${x}`,
         title: `title ${x}`,
@@ -280,7 +281,7 @@ describe("User Interaction Tests", function () {
     });
 
     it("non-interactive", async () => {
-      sandbox.stub(UI, "interactive").value(false);
+      vi.spyOn(UI, "interactive", "get").mockReturnValue(false);
       const choices = [1, 2, 3].map((x) => ({
         id: `id${x}`,
         title: `title ${x}`,
@@ -291,7 +292,7 @@ describe("User Interaction Tests", function () {
     });
 
     it("non-interactive - no default value", async () => {
-      sandbox.stub(UI, "interactive").value(false);
+      vi.spyOn(UI, "interactive", "get").mockReturnValue(false);
       const choices = [1, 2, 3].map((x) => ({
         id: `id${x}`,
         title: `title ${x}`,
@@ -304,11 +305,11 @@ describe("User Interaction Tests", function () {
 
   describe("singleSelect", async () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
     it("interactive", async () => {
-      sandbox.stub(UI, "interactive").value(true);
-      sandbox.stub(customizedPrompts, "select").value(() => "id1");
+      vi.spyOn(UI, "interactive", "get").mockReturnValue(true);
+      vi.spyOn(customizedPrompts as any, "select").mockImplementation(() => "id1" as any);
       const choices = [1, 2, 3].map((x) => ({
         id: `id${x}`,
         title: `title ${x}`,
@@ -318,7 +319,7 @@ describe("User Interaction Tests", function () {
       expect(result.isOk() ? result.value : result.error).to.be.deep.equals("id1");
     });
     it("non-interactive", async () => {
-      sandbox.stub(UI, "interactive").value(false);
+      vi.spyOn(UI, "interactive", "get").mockReturnValue(false);
       const choices = [1, 2, 3].map((x) => ({
         id: `id${x}`,
         title: `title ${x}`,
@@ -328,7 +329,7 @@ describe("User Interaction Tests", function () {
       expect(result.isOk() ? result.value : result.error).to.be.deep.equals("id1");
     });
     it("non-interactive - no default value", async () => {
-      sandbox.stub(UI, "interactive").value(false);
+      vi.spyOn(UI, "interactive", "get").mockReturnValue(false);
       const choices = [1, 2, 3].map((x) => ({
         id: `id${x}`,
         title: `title ${x}`,
@@ -340,31 +341,31 @@ describe("User Interaction Tests", function () {
   });
   describe("_confirm", async () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
     it("interactive", async () => {
-      sandbox.stub(UI, "interactive").value(true);
-      sandbox.stub(inquirerPrompts, "confirm").resolves(false);
+      vi.spyOn(UI, "interactive", "get").mockReturnValue(true);
+      vi.spyOn(inquirerPrompts, "confirm").mockResolvedValue(false);
       const result = await UI._confirm("Select a string", false);
       expect(result.isOk() ? result.value : result.error).to.be.equals(false);
     });
     it("non-interactive", async () => {
-      sandbox.stub(UI, "interactive").value(false);
+      vi.spyOn(UI, "interactive", "get").mockReturnValue(false);
       const result = await UI._confirm("Select a string", false);
       expect(result.isOk() ? result.value : result.error).to.be.equals(false);
     });
     it("non-interactive - no default value", async () => {
-      sandbox.stub(UI, "interactive").value(false);
+      vi.spyOn(UI, "interactive", "get").mockReturnValue(false);
       const result = await UI._confirm("Select a string");
       expect(result.isOk() ? result.value : result.error).to.be.equals(true);
     });
   });
   describe("confirm", async () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
     it("load default error", async () => {
-      sandbox.stub(UI, "loadDefaultValue").resolves(err(new UserCancelError()));
+      vi.spyOn(UI, "loadDefaultValue").mockResolvedValue(err(new UserCancelError()));
       const result = await UI.confirm({
         name: "test",
         title: "test",
@@ -373,7 +374,7 @@ describe("User Interaction Tests", function () {
       expect(result.isErr());
     });
     it("_confirm error", async () => {
-      sandbox.stub(UI, "_confirm").resolves(err(new UserCancelError()));
+      vi.spyOn(UI, "_confirm").mockResolvedValue(err(new UserCancelError()));
       const result = await UI.confirm({
         name: "test",
         title: "test",
@@ -381,7 +382,7 @@ describe("User Interaction Tests", function () {
       expect(result.isErr());
     });
     it("confirm: yes", async () => {
-      sandbox.stub(UI, "_confirm").resolves(ok(true));
+      vi.spyOn(UI, "_confirm").mockResolvedValue(ok(true));
       const result = await UI.confirm({
         name: "test",
         title: "test",
@@ -389,7 +390,7 @@ describe("User Interaction Tests", function () {
       expect(result.isOk());
     });
     it("confirm: no", async () => {
-      sandbox.stub(UI, "_confirm").resolves(ok(false));
+      vi.spyOn(UI, "_confirm").mockResolvedValue(ok(false));
       const result = await UI.confirm({
         name: "test",
         title: "test",
@@ -399,42 +400,42 @@ describe("User Interaction Tests", function () {
   });
   describe("input", async () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
     it("interactive", async () => {
-      sandbox.stub(UI, "interactive").value(true);
-      sandbox.stub(inquirerPrompts, "input").resolves("abc");
+      vi.spyOn(UI, "interactive", "get").mockReturnValue(true);
+      vi.spyOn(inquirerPrompts, "input").mockResolvedValue("abc");
       const result = await UI.input("test", "Input the password", "default string");
       expect(result.isOk() ? result.value : result.error).equals("abc");
     });
     it("non-interactive", async () => {
-      sandbox.stub(UI, "interactive").value(false);
+      vi.spyOn(UI, "interactive", "get").mockReturnValue(false);
       const result = await UI.input("test", "Input the password", "default string");
       expect(result.isOk() ? result.value : result.error).equals("default string");
     });
     it("non-interactive - no default value", async () => {
-      sandbox.stub(UI, "interactive").value(false);
+      vi.spyOn(UI, "interactive", "get").mockReturnValue(false);
       const result = await UI.input("test", "Input the password");
       expect(result.isOk() ? result.value : result.error).equals("");
     });
   });
   describe("password", async () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
     it("interactive", async () => {
-      sandbox.stub(UI, "interactive").value(true);
-      sandbox.stub(inquirerPrompts, "password").resolves("Password Result");
+      vi.spyOn(UI, "interactive", "get").mockReturnValue(true);
+      vi.spyOn(inquirerPrompts, "password").mockResolvedValue("Password Result");
       const result = await UI.password("test", "Input the password");
       expect(result.isOk() ? result.value : result.error).equals("Password Result");
     });
     it("non-interactive", async () => {
-      sandbox.stub(UI, "interactive").value(false);
+      vi.spyOn(UI, "interactive", "get").mockReturnValue(false);
       const result = await UI.password("test", "Input the password", "default string");
       expect(result.isOk() ? result.value : result.error).equals("default string");
     });
     it("non-interactive - no default value", async () => {
-      sandbox.stub(UI, "interactive").value(false);
+      vi.spyOn(UI, "interactive", "get").mockReturnValue(false);
       const result = await UI.password("test", "Input the password");
       expect(result.isOk() ? result.value : result.error).equals("");
     });
@@ -442,7 +443,7 @@ describe("User Interaction Tests", function () {
 
   describe("other", async () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
     it("interactive = true", async () => {
       const mockedEnvRestore = mockedEnv({
@@ -466,7 +467,7 @@ describe("User Interaction Tests", function () {
     });
 
     it("Single Select File", async () => {
-      sandbox.stub(UI, "inputText").resolves(ok({ type: "success", result: "./" }));
+      vi.spyOn(UI, "inputText").mockResolvedValue(ok({ type: "success", result: "./" }));
       const config: SelectFileConfig = {
         name: "path",
         title: "Select a path",
@@ -476,7 +477,7 @@ describe("User Interaction Tests", function () {
     });
 
     it("Multi Select Files", async () => {
-      sandbox.stub(UI, "inputText").resolves(ok({ type: "success", result: "./;./" }));
+      vi.spyOn(UI, "inputText").mockResolvedValue(ok({ type: "success", result: "./;./" }));
       const config: SelectFilesConfig = {
         name: "paths",
         title: "Select a path",
@@ -486,7 +487,7 @@ describe("User Interaction Tests", function () {
     });
 
     it("Select Folder", async () => {
-      sandbox.stub(UI, "inputText").resolves(ok({ type: "success", result: "./" }));
+      vi.spyOn(UI, "inputText").mockResolvedValue(ok({ type: "success", result: "./" }));
       const config: SelectFolderConfig = {
         name: "folder",
         title: "Select a folder",
@@ -495,8 +496,8 @@ describe("User Interaction Tests", function () {
       expect(result.isOk() ? result.value.result : result.error).deep.equals("./");
     });
     it("Input text", async () => {
-      sandbox.stub(inquirerPrompts, "input").resolves("abc");
-      sandbox.stub(UI, "interactive").value(true);
+      vi.spyOn(inquirerPrompts, "input").mockResolvedValue("abc");
+      vi.spyOn(UI, "interactive", "get").mockReturnValue(true);
       const config: InputTextConfig = {
         name: "folder",
         title: "Select a folder",
@@ -514,9 +515,9 @@ describe("User Interaction Tests", function () {
 
   describe("Show Message", () => {
     beforeEach(() => {
-      sandbox.stub(logger, "info").returns();
-      sandbox.stub(logger, "warning").returns();
-      sandbox.stub(logger, "error").returns();
+      vi.spyOn(logger, "info").mockReturnValue();
+      vi.spyOn(logger, "warning").mockReturnValue();
+      vi.spyOn(logger, "error").mockReturnValue();
     });
     const levels: ["info" | "warn" | "error", LogLevel][] = [
       ["info", LogLevel.Info],
@@ -540,32 +541,32 @@ describe("User Interaction Tests", function () {
       }
     });
     it("items.length is equal to 1 - confirm returns true", async () => {
-      sandbox.stub(UI, "_confirm").resolves(ok(true));
+      vi.spyOn(UI, "_confirm").mockResolvedValue(ok(true));
       const result = await UI.showMessage("info", msg1, true, items[0]);
       expect(result.isOk() && result.value === items[0]).to.be.true;
     });
     it("items.length is equal to 1 - confirm returns false", async () => {
-      sandbox.stub(UI, "_confirm").resolves(ok(false));
+      vi.spyOn(UI, "_confirm").mockResolvedValue(ok(false));
       const result = await UI.showMessage("info", msg1, true, items[0]);
       expect(result.isOk() && result.value === undefined).to.be.true;
     });
     it("items.length is equal to 1 - confirm returns error", async () => {
-      sandbox.stub(UI, "_confirm").resolves(err(new UserCancelError()));
+      vi.spyOn(UI, "_confirm").mockResolvedValue(err(new UserCancelError()));
       const result = await UI.showMessage("info", msg1, true, items[0]);
       expect(result.isErr()).to.be.true;
     });
     it("items.length is bigger than 1 - returns value", async () => {
-      sandbox.stub(UI, "singleSelect").resolves(ok(items[0]));
+      vi.spyOn(UI, "singleSelect").mockResolvedValue(ok(items[0]));
       const result = await UI.showMessage("info", msg1, false, items[0], items[1]);
       expect(result.isOk() && result.value === items[0]).to.be.true;
     });
     it("items.length is bigger than 1 - returns cancel", async () => {
-      sandbox.stub(UI, "singleSelect").resolves(ok("Cancel"));
+      vi.spyOn(UI, "singleSelect").mockResolvedValue(ok("Cancel"));
       const result = await UI.showMessage("info", msg1, true, items[0], items[1]);
       expect(result.isOk() && result.value === undefined).to.be.true;
     });
     it("items.length is bigger than 1 - returns error", async () => {
-      sandbox.stub(UI, "singleSelect").resolves(err(new UserCancelError()));
+      vi.spyOn(UI, "singleSelect").mockResolvedValue(err(new UserCancelError()));
       const result = await UI.showMessage("info", msg1, true, items[0], items[1]);
       expect(result.isErr()).to.be.true;
     });

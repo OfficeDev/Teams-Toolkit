@@ -1,0 +1,27 @@
+{
+  "$schema": "../../../schema/descriptor.schema.json",
+  "id": "da/graph-connector",
+  "name": "Declarative Agent with Graph Connector",
+  "languages": ["common"],
+  "minEngineVersion": "5.20.0",
+  "spec": "docs/03-specs/scenarios/da/create-graph-connector.md",
+  "requiresNetwork": false,
+
+  "optionsSchema": {
+    "type": "object",
+    "required": ["graphConnectorName", "graphConnectorConnectionId"],
+    "properties": {
+      "graphConnectorName": { "type": "string" },
+      "graphConnectorConnectionId": { "type": "string" }
+    },
+    "additionalProperties": false
+  },
+
+  "replaceMap": [
+    { "var": "DeclarativeCopilot", "const": "true" },
+    { "var": "CopilotConnector", "const": "true" },
+    { "var": "SafeProjectNameLowerCase", "expr": "safeProjectNameLowerCase(appName)" },
+    { "var": "gcName", "from": "graphConnectorName" },
+    { "var": "gcConnectionId", "from": "graphConnectorConnectionId" }
+  ]
+}

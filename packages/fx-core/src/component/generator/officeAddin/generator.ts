@@ -30,7 +30,6 @@ import { DefaultTemplateGenerator } from "../defaultGenerator";
 import { TemplateInfo } from "../templates/templateInfo";
 import { TemplateNames } from "../templates/templateNames";
 import { HelperMethods } from "./helperMethods";
-import { MetaOSHelper } from "./metaOSHelper";
 
 export const officeAddinGeneratorDeps = {
   convertProject: officeAddinProject.convertProject,
@@ -188,8 +187,6 @@ export class OfficeAddinGeneratorNew extends DefaultTemplateGenerator {
       TemplateNames.WXPTaskpane,
       TemplateNames.ExcelCFShortcut,
       TemplateNames.OfficeAddinCommon,
-      TemplateNames.DeclarativeAgentMetaOSNewProject,
-      TemplateNames.DeclarativeAgentMetaOSUpgradeProject,
     ].includes(templateName);
   }
 
@@ -200,24 +197,6 @@ export class OfficeAddinGeneratorNew extends DefaultTemplateGenerator {
     actionContext?: ActionContext
   ): Promise<Result<TemplateInfo[], FxError>> {
     const templateName = inputs[QuestionNames.TemplateName];
-
-    // Handle the Declarative Agent MetaOS project
-    // Handle upgrade - NO scaffolding needed
-    if (templateName === TemplateNames.DeclarativeAgentMetaOSUpgradeProject) {
-      return Promise.resolve(ok([]));
-    }
-
-    // Handle new project - needs scaffolding
-    if (templateName === TemplateNames.DeclarativeAgentMetaOSNewProject) {
-      return Promise.resolve(
-        ok([
-          {
-            templateName: templateName,
-            language: inputs[QuestionNames.ProgrammingLanguage] as ProgrammingLanguage,
-          },
-        ])
-      );
-    }
 
     // Hanlde the MetaOS Project
     const res = await OfficeAddinGenerator.doScaffolding(context, inputs, destinationPath);
@@ -239,26 +218,6 @@ export class OfficeAddinGeneratorNew extends DefaultTemplateGenerator {
     destinationPath: string,
     actionContext?: ActionContext
   ): Promise<Result<GeneratorResult, FxError>> {
-    // Handle the Declarative Agent MetaOS project
-    if (TemplateNames.DeclarativeAgentMetaOSUpgradeProject === inputs[QuestionNames.TemplateName]) {
-      try {
-        await MetaOSHelper.copyExistMetaOSProject(
-          inputs[QuestionNames.OfficeAddinFolder],
-          destinationPath
-        );
-        await MetaOSHelper.extendToDA(destinationPath, inputs[QuestionNames.AppName]);
-        await MetaOSHelper.unifyProjectID(destinationPath);
-        return ok({});
-      } catch (e) {
-        return err(e.message);
-      }
-    } else if (
-      TemplateNames.DeclarativeAgentMetaOSNewProject === inputs[QuestionNames.TemplateName]
-    ) {
-      await MetaOSHelper.unifyProjectID(destinationPath);
-      return ok({});
-    }
-
     // Hanlde the MetaOS Project import
     const fromFolder = inputs[QuestionNames.OfficeAddinFolder];
     if (fromFolder) {

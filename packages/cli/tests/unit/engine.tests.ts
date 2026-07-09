@@ -9,6 +9,8 @@ import {
   SystemError,
 } from "@microsoft/teamsfx-api";
 import {
+  featureFlagManager,
+  FeatureFlags,
   FxCore,
   IncompatibleProjectError,
   InputValidationError,
@@ -16,10 +18,8 @@ import {
   UserCancelError,
   VersionState,
 } from "@microsoft/teamsfx-core";
-import { assert } from "chai";
 import mockedEnv from "mocked-env";
-import * as sinon from "sinon";
-import { vi } from "vitest";
+import { assert, vi } from "vitest";
 import * as activate from "../../src/activate";
 import { getFxCore, resetFxCore } from "../../src/activate";
 import { engine } from "../../src/commands/engine";
@@ -31,6 +31,7 @@ import {
 } from "../../src/commands/models";
 import { getCreateCommand } from "../../src/commands/models/create";
 import { createSampleCommand } from "../../src/commands/models/createSample";
+import * as listTemplatesModule from "../../src/commands/models/listTemplates";
 import { rootCommand } from "../../src/commands/models/root";
 import { logger } from "../../src/commonlib/logger";
 import { CliTelemetryReporter } from "../../src/commonlib/telemetry";
@@ -94,12 +95,12 @@ vi.mock("applicationinsights", async (importOriginal) => {
 });
 
 describe("CLI Engine", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   const stdoutWrite = process.stdout.write.bind(process.stdout);
   const stderrWrite = process.stderr.write.bind(process.stderr);
 
   beforeEach(() => {
-    sandbox.stub(process.stdout, "write").callsFake(((chunk: any, ...args: any[]) => {
+    vi.spyOn(process.stdout, "write").mockImplementation(((chunk: any, ...args: any[]) => {
       const text = typeof chunk === "string" ? chunk : chunk?.toString?.() ?? "";
       if (
         text.includes("Usage: atk list templates") ||
@@ -111,7 +112,7 @@ describe("CLI Engine", () => {
       }
       return stdoutWrite(chunk, ...args);
     }) as any);
-    sandbox.stub(process.stderr, "write").callsFake(((chunk: any, ...args: any[]) => {
+    vi.spyOn(process.stderr, "write").mockImplementation(((chunk: any, ...args: any[]) => {
       const text = typeof chunk === "string" ? chunk : chunk?.toString?.() ?? "";
       if (
         text.includes("Some arguments/options are useless because the interactive mode is opened.")
@@ -120,12 +121,12 @@ describe("CLI Engine", () => {
       }
       return stderrWrite(chunk, ...args);
     }) as any);
-    sandbox.stub(process, "exit");
-    sandbox.stub(CliTelemetry, "flush").resolves();
+    vi.spyOn(process, "exit").mockImplementation((() => undefined) as any);
+    vi.spyOn(CliTelemetry, "flush").mockResolvedValue();
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   describe("findCommand", async () => {
@@ -224,6 +225,39 @@ describe("CLI Engine", () => {
       const result = engine.parseArgs(ctx, rootCommand, ["--option1=a,b,c"]);
       assert.isTrue(result.isOk());
       assert.deepEqual(ctx.optionValues["option1"], ["a", "b", "c"]);
+    });
+    it("rejects v4 primary create flags because atk new keeps the v3 option surface", async () => {
+      vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation(
+        (flag) => flag.name === FeatureFlags.V4Enabled.name
+      );
+      vi.spyOn(listTemplatesModule, "listAllTemplates").mockReturnValue([] as any);
+      const command: CLIFoundCommand = { ...getCreateCommand(), fullName: "new" };
+      const ctx: CLIContext = {
+        command,
+        optionValues: {},
+        globalOptionValues: {},
+        argumentValues: [],
+        telemetryProperties: {},
+      };
+
+      const parseResult = engine.parseArgs(ctx, rootCommand, [
+        "--project-type",
+        "copilot-agent-type",
+        "--da-template",
+        "add-action",
+        "--action-source",
+        "mcp",
+        "--app-name",
+        "myagent",
+        "--interactive",
+        "false",
+      ]);
+
+      assert.isTrue(parseResult.isErr());
+      assert.isUndefined(ctx.optionValues.projectType);
+      assert.isUndefined(ctx.optionValues.daTemplate);
+      assert.isUndefined(ctx.optionValues.actionSource);
+      assert.isUndefined(ctx.optionValues.capabilities);
     });
     it("array type argument", async () => {
       const command: CLIFoundCommand = {
@@ -385,10 +419,10 @@ describe("CLI Engine", () => {
   });
   describe("processResult", async () => {
     it("sendTelemetryErrorEvent", async () => {
-      const sendTelemetryErrorEventStub = sandbox
-        .stub(CliTelemetry, "sendTelemetryErrorEvent")
-        .returns();
-      sandbox.stub(logger, "outputError").returns();
+      const sendTelemetryErrorEventStub = vi
+        .spyOn(CliTelemetry, "sendTelemetryErrorEvent")
+        .mockReturnValue();
+      vi.spyOn(logger, "outputError").mockReturnValue();
       const ctx: CLIContext = {
         command: { ...getCreateCommand(), fullName: "abc" },
         optionValues: {},
@@ -397,10 +431,10 @@ describe("CLI Engine", () => {
         telemetryProperties: {},
       };
       await engine.processResult(ctx, new InputValidationError("test", "no reason"));
-      assert.isTrue(sendTelemetryErrorEventStub.calledOnce);
+      assert.isTrue(sendTelemetryErrorEventStub.mock.calls.length === 1);
     });
     it("sendTelemetryEvent", async () => {
-      const sendTelemetryEventStub = sandbox.stub(CliTelemetry, "sendTelemetryEvent").returns();
+      const sendTelemetryEventStub = vi.spyOn(CliTelemetry, "sendTelemetryEvent").mockReturnValue();
       const ctx: CLIContext = {
         command: { ...getCreateCommand(), fullName: "abc" },
         optionValues: { env: "dev" },
@@ -409,12 +443,12 @@ describe("CLI Engine", () => {
         telemetryProperties: {},
       };
       await engine.processResult(ctx, undefined);
-      assert.isTrue(sendTelemetryEventStub.calledOnce);
+      assert.isTrue(sendTelemetryEventStub.mock.calls.length === 1);
     });
     it("skip telemetry when reporter is disabled", async () => {
       CliTelemetry.reporter = new CliTelemetryReporter("real", "real", "real", "real");
       CliTelemetry.enable = false;
-      const spy = sandbox.spy(CliTelemetry.reporter.reporter, "sendTelemetryEvent");
+      const spy = vi.spyOn(CliTelemetry.reporter.reporter, "sendTelemetryEvent");
       const ctx: CLIContext = {
         command: { ...getCreateCommand(), fullName: "abc" },
         optionValues: {},
@@ -423,19 +457,19 @@ describe("CLI Engine", () => {
         telemetryProperties: {},
       };
       await engine.processResult(ctx, undefined);
-      assert.isTrue(spy.notCalled);
+      assert.isTrue(spy.mock.calls.length === 0);
     });
     it("skip telemetry when context is undefined", async () => {
       CliTelemetry.reporter = new CliTelemetryReporter("real", "real", "real", "real");
       CliTelemetry.enable = false;
-      const spy = sandbox.spy(CliTelemetry.reporter.reporter, "sendTelemetryEvent");
+      const spy = vi.spyOn(CliTelemetry.reporter.reporter, "sendTelemetryEvent");
       await engine.processResult(undefined, undefined);
-      assert.isTrue(spy.notCalled);
+      assert.isTrue(spy.mock.calls.length === 0);
     });
     it("skip telemetry when command telemetry is undefined", async () => {
       CliTelemetry.reporter = new CliTelemetryReporter("real", "real", "real", "real");
       CliTelemetry.enable = false;
-      const spy = sandbox.spy(CliTelemetry.reporter.reporter, "sendTelemetryEvent");
+      const spy = vi.spyOn(CliTelemetry.reporter.reporter, "sendTelemetryEvent");
       const command: CLICommand = {
         name: "test",
         description: "test",
@@ -448,91 +482,101 @@ describe("CLI Engine", () => {
         telemetryProperties: {},
       };
       await engine.processResult(ctx, undefined);
-      assert.isTrue(spy.notCalled);
+      assert.isTrue(spy.mock.calls.length === 0);
     });
   });
   describe("start", async () => {
     it("command not found", async () => {
-      sandbox.stub(process, "argv").value(["node", "cli", "abc123"]);
-      const stub = sandbox.stub(engine, "printError").returns();
+      process.argv = ["node", "cli", "abc123"] as any;
+      const stub = vi.spyOn(engine, "printError").mockReturnValue();
       await engine.start(rootCommand);
-      assert.isTrue(stub.called);
+      assert.isTrue(stub.mock.calls.length > 0);
     });
     it("command has no handler", async () => {
-      sandbox.stub(process, "argv").value(["node", "cli", "list", "templates"]);
-      sandbox.stub(listTemplatesCommand, "handler").value(undefined);
+      process.argv = ["node", "cli", "list", "templates"] as any;
+      (listTemplatesCommand as any).handler = undefined;
       await engine.start(rootCommand);
     });
     it("parseArg return error", async () => {
-      sandbox.stub(process, "argv").value(["node", "cli", "new", "--xxx"]);
+      process.argv = ["node", "cli", "new", "--xxx"] as any;
       let error;
-      sandbox.stub(engine, "processResult").callsFake(async (ctx, fxError) => {
+      vi.spyOn(engine, "processResult").mockImplementation(async (ctx, fxError) => {
         error = fxError;
       });
       await engine.start(rootCommand);
       assert.instanceOf(error, UnknownOptionError);
     });
     it("should display version", async () => {
-      sandbox.stub(process, "argv").value(["node", "cli", "--version"]);
-      const loggerStub = sandbox.stub(logger, "info");
+      process.argv = ["node", "cli", "--version"] as any;
+      const loggerStub = vi.spyOn(logger, "info");
       await engine.start(rootCommand);
-      assert.isTrue(loggerStub.called);
+      assert.isTrue(loggerStub.mock.calls.length > 0);
     });
     it("should display help message", async () => {
-      sandbox.stub(process, "argv").value(["node", "cli", "-h"]);
-      const loggerStub = sandbox.stub(logger, "info");
+      process.argv = ["node", "cli", "-h"] as any;
+      const loggerStub = vi.spyOn(logger, "info");
       await engine.start(rootCommand);
-      assert.isTrue(loggerStub.called);
+      assert.isTrue(loggerStub.mock.calls.length > 0);
     });
     it("should validation failed for capability", async () => {
-      sandbox
-        .stub(process, "argv")
-        .value(["node", "cli", "new", "-c", "da", "-n", "myapp", "-i", "false"]);
+      process.argv = ["node", "cli", "new", "-c", "da", "-n", "myapp", "-i", "false"] as any;
       let error: any = {};
-      sandbox.stub(engine, "processResult").callsFake(async (context, fxError) => {
+      vi.spyOn(engine, "processResult").mockImplementation(async (context, fxError) => {
         error = fxError;
       });
       await engine.start(rootCommand);
       assert.isTrue(error && error instanceof InvalidChoiceError);
     });
     it("should run command with argument success", async () => {
-      sandbox.stub(activate, "getFxCore").returns(new FxCore({} as any));
-      sandbox.stub(FxCore.prototype, "createSampleProject").resolves(ok({ projectPath: "..." }));
-      sandbox
-        .stub(process, "argv")
-        .value(["node", "cli", "new", "sample", "hello-world-tab-with-backend", "-i", "false"]);
-      const loggerStub = sandbox.stub(logger, "info");
+      vi.spyOn(activate, "getFxCore").mockReturnValue(new FxCore({} as any));
+      vi.spyOn(FxCore.prototype, "createSampleProject").mockResolvedValue(
+        ok({ projectPath: "..." })
+      );
+      process.argv = [
+        "node",
+        "cli",
+        "new",
+        "sample",
+        "hello-world-tab-with-backend",
+        "-i",
+        "false",
+      ] as any;
+      const loggerStub = vi.spyOn(logger, "info");
       await engine.start(rootCommand);
-      assert.isTrue(loggerStub.calledOnce);
+      assert.isTrue(loggerStub.mock.calls.length === 1);
     });
     it("should validate argument failed", async () => {
-      sandbox.stub(createSampleCommand, "arguments").value([
+      (createSampleCommand as any).arguments = [
         {
           type: "string",
           name: "sample",
           description: "Select a sample app to create",
           choices: ["a", "b", "c"],
         },
-      ]);
-      sandbox.stub(FxCore.prototype, "createSampleProject").resolves(ok({ projectPath: "..." }));
-      sandbox.stub(process, "argv").value(["node", "cli", "new", "sample", "d", "-i", "false"]);
+      ];
+      vi.spyOn(FxCore.prototype, "createSampleProject").mockResolvedValue(
+        ok({ projectPath: "..." })
+      );
+      process.argv = ["node", "cli", "new", "sample", "d", "-i", "false"] as any;
       let error: any = {};
-      sandbox.stub(engine, "processResult").callsFake(async (context, fxError) => {
+      vi.spyOn(engine, "processResult").mockImplementation(async (context, fxError) => {
         error = fxError;
       });
-      sandbox.stub(logger, "info");
+      vi.spyOn(logger, "info");
       await engine.start(rootCommand);
       assert.isTrue(error instanceof InvalidChoiceError);
     });
     it("should discard useless args and options for interactive mode", async () => {
-      sandbox.stub(FxCore.prototype, "createSampleProject").resolves(ok({ projectPath: "..." }));
-      sandbox.stub(process, "argv").value(["node", "cli", "new", "sample", "abc"]);
-      const stub = sandbox.stub(logger, "info");
+      vi.spyOn(FxCore.prototype, "createSampleProject").mockResolvedValue(
+        ok({ projectPath: "..." })
+      );
+      process.argv = ["node", "cli", "new", "sample", "abc"] as any;
+      const stub = vi.spyOn(logger, "info");
       await engine.start(rootCommand);
-      assert.isTrue(stub.called);
+      assert.isTrue(stub.mock.calls.length > 0);
     });
     it("should run handler return error", async () => {
-      sandbox.stub(process, "argv").value(["node", "cli"]);
+      process.argv = ["node", "cli"] as any;
       const command: CLIFoundCommand = {
         name: "test",
         description: "test",
@@ -540,14 +584,14 @@ describe("CLI Engine", () => {
         handler: async () => err(new UserCancelError()),
       };
       let error: any = {};
-      sandbox.stub(engine, "processResult").callsFake(async (context, fxError) => {
+      vi.spyOn(engine, "processResult").mockImplementation(async (context, fxError) => {
         error = fxError;
       });
       await engine.start(command);
       assert.isTrue(error instanceof UserCancelError);
     });
     it("should run handler throw error", async () => {
-      sandbox.stub(process, "argv").value(["node", "cli"]);
+      process.argv = ["node", "cli"] as any;
       const command: CLIFoundCommand = {
         name: "test",
         description: "test",
@@ -557,24 +601,26 @@ describe("CLI Engine", () => {
         },
       };
       let error: any = {};
-      sandbox.stub(engine, "processResult").callsFake(async (context, fxError) => {
+      vi.spyOn(engine, "processResult").mockImplementation(async (context, fxError) => {
         error = fxError;
       });
       await engine.start(command);
       assert.isTrue(error instanceof UserCancelError);
     });
     it("run version check and return error", async () => {
-      sandbox.stub(FxCore.prototype, "projectVersionCheck").resolves(err(new UserCancelError()));
-      sandbox.stub(process, "argv").value(["node", "cli", "provision", "--folder", "abc"]);
+      vi.spyOn(FxCore.prototype, "projectVersionCheck").mockResolvedValue(
+        err(new UserCancelError())
+      );
+      process.argv = ["node", "cli", "provision", "--folder", "abc"] as any;
       let error: any = {};
-      sandbox.stub(engine, "processResult").callsFake(async (context, fxError) => {
+      vi.spyOn(engine, "processResult").mockImplementation(async (context, fxError) => {
         error = fxError;
       });
       await engine.start(rootCommand);
       assert.isTrue(error instanceof UserCancelError);
     });
     it("run version check and return upgradeable", async () => {
-      sandbox.stub(FxCore.prototype, "projectVersionCheck").resolves(
+      vi.spyOn(FxCore.prototype, "projectVersionCheck").mockResolvedValue(
         ok({
           isSupport: VersionState.upgradeable,
           currentVersion: "1",
@@ -582,16 +628,16 @@ describe("CLI Engine", () => {
           versionSource: "1",
         })
       );
-      sandbox.stub(process, "argv").value(["node", "cli", "provision", "--folder", "abc"]);
+      process.argv = ["node", "cli", "provision", "--folder", "abc"] as any;
       let error: any = {};
-      sandbox.stub(engine, "processResult").callsFake(async (context, fxError) => {
+      vi.spyOn(engine, "processResult").mockImplementation(async (context, fxError) => {
         error = fxError;
       });
       await engine.start(rootCommand);
       assert.isTrue(error instanceof IncompatibleProjectError);
     });
     it("run version check and return unsupported", async () => {
-      sandbox.stub(FxCore.prototype, "projectVersionCheck").resolves(
+      vi.spyOn(FxCore.prototype, "projectVersionCheck").mockResolvedValue(
         ok({
           isSupport: VersionState.unsupported,
           currentVersion: "1",
@@ -599,39 +645,39 @@ describe("CLI Engine", () => {
           versionSource: "1",
         })
       );
-      sandbox.stub(process, "argv").value(["node", "cli", "provision", "--folder", "abc"]);
+      process.argv = ["node", "cli", "provision", "--folder", "abc"] as any;
       let error: any = {};
-      sandbox.stub(engine, "processResult").callsFake(async (context, fxError) => {
+      vi.spyOn(engine, "processResult").mockImplementation(async (context, fxError) => {
         error = fxError;
       });
       await engine.start(rootCommand);
       assert.isTrue(error instanceof IncompatibleProjectError);
     });
     it("skip options in interactive mode", async () => {
-      sandbox.stub(FxCore.prototype, "createProject").resolves(ok({} as any));
-      sandbox.stub(process, "argv").value(["node", "cli", "new", "--folder", "abc"]);
+      vi.spyOn(FxCore.prototype, "createProject").mockResolvedValue(ok({} as any));
+      process.argv = ["node", "cli", "new", "--folder", "abc"] as any;
       let error: any = undefined;
-      sandbox.stub(engine, "processResult").callsFake(async (context, fxError) => {
+      vi.spyOn(engine, "processResult").mockImplementation(async (context, fxError) => {
         error = fxError;
       });
       await engine.start(rootCommand);
       assert.isUndefined(undefined);
     });
     it("skip arguments in interactive mode", async () => {
-      sandbox.stub(FxCore.prototype, "createSampleProject").resolves(ok({} as any));
-      sandbox.stub(process, "argv").value(["node", "cli", "new", "sample", "abc"]);
+      vi.spyOn(FxCore.prototype, "createSampleProject").mockResolvedValue(ok({} as any));
+      process.argv = ["node", "cli", "new", "sample", "abc"] as any;
       let error: any = undefined;
-      sandbox.stub(engine, "processResult").callsFake(async (context, fxError) => {
+      vi.spyOn(engine, "processResult").mockImplementation(async (context, fxError) => {
         error = fxError;
       });
       await engine.start(rootCommand);
       assert.isUndefined(undefined);
     });
     it("no need to skip options or arguments in interactive mode", async () => {
-      sandbox.stub(FxCore.prototype, "createProject").resolves(ok({} as any));
-      sandbox.stub(process, "argv").value(["node", "cli", "new"]);
+      vi.spyOn(FxCore.prototype, "createProject").mockResolvedValue(ok({} as any));
+      process.argv = ["node", "cli", "new"] as any;
       let error: any = undefined;
-      sandbox.stub(engine, "processResult").callsFake(async (context, fxError) => {
+      vi.spyOn(engine, "processResult").mockImplementation(async (context, fxError) => {
         error = fxError;
       });
       await engine.start(rootCommand);
@@ -639,10 +685,10 @@ describe("CLI Engine", () => {
     });
     it("use defaultInteractiveOption", async () => {
       const comand = listSamplesCommand;
-      sandbox.stub(comand, "handler").resolves(ok(undefined));
-      sandbox.stub(process, "argv").value(["node", "cli", "list", "samples"]);
+      vi.spyOn(comand, "handler").mockResolvedValue(ok(undefined));
+      process.argv = ["node", "cli", "list", "samples"] as any;
       let error: any = undefined;
-      sandbox.stub(engine, "processResult").callsFake(async (context, fxError) => {
+      vi.spyOn(engine, "processResult").mockImplementation(async (context, fxError) => {
         error = fxError;
       });
       await engine.start(rootCommand);
@@ -651,15 +697,15 @@ describe("CLI Engine", () => {
   });
   describe("index.start", async () => {
     it("happy path", async () => {
-      sandbox.stub(main, "initTelemetryReporter").returns();
-      sandbox.stub(engine, "start").resolves();
+      vi.spyOn(main, "initTelemetryReporter").mockReturnValue();
+      vi.spyOn(engine, "start").mockResolvedValue();
       await start("atk");
       assert.isTrue(true);
     });
   });
   describe("getFxCore", async () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
     it("new logger", async () => {
       resetFxCore();
@@ -668,24 +714,24 @@ describe("CLI Engine", () => {
   });
   describe("printError", async () => {
     it("happy path user error", async () => {
-      sandbox.stub(logger, "info").resolves();
-      sandbox.stub(logger, "debug").resolves();
-      const stub = sandbox.stub(logger, "outputError").returns();
+      vi.spyOn(logger, "info").mockResolvedValue();
+      vi.spyOn(logger, "debug").mockResolvedValue();
+      const stub = vi.spyOn(logger, "outputError").mockReturnValue();
       engine.printError(new MissingEnvironmentVariablesError("test", "test"));
-      assert.isTrue(stub.called);
+      assert.isTrue(stub.mock.calls.length > 0);
     });
     it("happy path system error", async () => {
-      sandbox.stub(logger, "logLevel").value(LogLevel.Debug);
-      const stub = sandbox.stub(logger, "debug").resolves();
-      sandbox.stub(logger, "outputError").returns();
+      (logger as any).logLevel = LogLevel.Debug;
+      const stub = vi.spyOn(logger, "debug").mockResolvedValue();
+      vi.spyOn(logger, "outputError").mockReturnValue();
       const error = new SystemError({ issueLink: "http://aka.ms/teamsfx-cli-help" });
       engine.printError(error);
-      assert.isTrue(stub.called);
+      assert.isTrue(stub.mock.calls.length > 0);
     });
     it("happy path inner error", async () => {
-      sandbox.stub(logger, "logLevel").value(LogLevel.Debug);
-      const stub = sandbox.stub(logger, "debug").resolves();
-      sandbox.stub(logger, "outputError").returns();
+      (logger as any).logLevel = LogLevel.Debug;
+      const stub = vi.spyOn(logger, "debug").mockResolvedValue();
+      vi.spyOn(logger, "outputError").mockReturnValue();
       const error = new SystemError({ issueLink: "http://aka.ms/teamsfx-cli-help" });
       const innerError = new Error("test");
       error.innerError = innerError;
@@ -694,12 +740,12 @@ describe("CLI Engine", () => {
       engine.printError(error);
       innerError.stack = undefined;
       engine.printError(error);
-      assert.isTrue(stub.called);
+      assert.isTrue(stub.mock.calls.length > 0);
     });
     it("canceled", async () => {
-      const stub = sandbox.stub(logger, "info").resolves();
+      const stub = vi.spyOn(logger, "info").mockResolvedValue();
       engine.printError(new UserCancelError("test"));
-      assert.isTrue(stub.called);
+      assert.isTrue(stub.mock.calls.length > 0);
     });
   });
   describe("ATK_CLI_SKILL env var", () => {
@@ -743,6 +789,118 @@ describe("CLI Engine", () => {
       const result = engine.parseArgs(ctx, rootCommand, []);
       assert.isTrue(result.isOk());
       assert.notProperty(ctx.telemetryProperties, TelemetryProperty.Skill);
+      mockedEnvRestore();
+    });
+  });
+
+  describe("ATK_CALLER env var", () => {
+    it("sets CallerSource to a known caller from ATK_CALLER", async () => {
+      const mockedEnvRestore = mockedEnv({
+        ATK_CALLER: "  WIQD  ",
+      });
+      const command: CLIFoundCommand = {
+        name: "test",
+        fullName: "test",
+        description: "test command",
+      };
+      const ctx: CLIContext = {
+        command: command,
+        optionValues: {},
+        globalOptionValues: {},
+        argumentValues: [],
+        telemetryProperties: {},
+      };
+      const result = engine.parseArgs(ctx, rootCommand, []);
+      assert.isTrue(result.isOk());
+      assert.equal(ctx.telemetryProperties[TelemetryProperty.CallerSource], "wiqd");
+      mockedEnvRestore();
+    });
+
+    it("does not set CallerSource when ATK_CALLER is not set", async () => {
+      const mockedEnvRestore = mockedEnv({
+        ATK_CALLER: undefined,
+      });
+      const command: CLIFoundCommand = {
+        name: "test",
+        fullName: "test",
+        description: "test command",
+      };
+      const ctx: CLIContext = {
+        command: command,
+        optionValues: {},
+        globalOptionValues: {},
+        argumentValues: [],
+        telemetryProperties: {},
+      };
+      const result = engine.parseArgs(ctx, rootCommand, []);
+      assert.isTrue(result.isOk());
+      assert.notProperty(ctx.telemetryProperties, TelemetryProperty.CallerSource);
+      mockedEnvRestore();
+    });
+
+    it('maps an unknown ATK_CALLER to "other"', async () => {
+      const mockedEnvRestore = mockedEnv({
+        ATK_CALLER: "johnsmith",
+      });
+      const command: CLIFoundCommand = {
+        name: "test",
+        fullName: "test",
+        description: "test command",
+      };
+      const ctx: CLIContext = {
+        command: command,
+        optionValues: {},
+        globalOptionValues: {},
+        argumentValues: [],
+        telemetryProperties: {},
+      };
+      const result = engine.parseArgs(ctx, rootCommand, []);
+      assert.isTrue(result.isOk());
+      assert.equal(ctx.telemetryProperties[TelemetryProperty.CallerSource], "other");
+      mockedEnvRestore();
+    });
+
+    it('maps a near-miss of a known caller to "other" (no partial matching)', async () => {
+      const mockedEnvRestore = mockedEnv({
+        ATK_CALLER: "wiqd-cli",
+      });
+      const command: CLIFoundCommand = {
+        name: "test",
+        fullName: "test",
+        description: "test command",
+      };
+      const ctx: CLIContext = {
+        command: command,
+        optionValues: {},
+        globalOptionValues: {},
+        argumentValues: [],
+        telemetryProperties: {},
+      };
+      const result = engine.parseArgs(ctx, rootCommand, []);
+      assert.isTrue(result.isOk());
+      assert.equal(ctx.telemetryProperties[TelemetryProperty.CallerSource], "other");
+      mockedEnvRestore();
+    });
+
+    it("does not set CallerSource when ATK_CALLER is blank", async () => {
+      const mockedEnvRestore = mockedEnv({
+        ATK_CALLER: "   ",
+      });
+      const command: CLIFoundCommand = {
+        name: "test",
+        fullName: "test",
+        description: "test command",
+      };
+      const ctx: CLIContext = {
+        command: command,
+        optionValues: {},
+        globalOptionValues: {},
+        argumentValues: [],
+        telemetryProperties: {},
+      };
+      const result = engine.parseArgs(ctx, rootCommand, []);
+      assert.isTrue(result.isOk());
+      assert.notProperty(ctx.telemetryProperties, TelemetryProperty.CallerSource);
       mockedEnvRestore();
     });
   });

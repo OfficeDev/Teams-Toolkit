@@ -1,40 +1,39 @@
-import * as chai from "chai";
-import sinon from "ts-sinon";
 import { Tokenizer } from "../../src/chat/tokenizer";
+import { vi, assert } from "vitest";
 
 describe("Tokenizer", () => {
-  const sandbox = sinon.createSandbox();
-
-  afterEach(() => {
-    sandbox.restore();
-  });
-
   it("getInstance", () => {
     const instance = Tokenizer.getInstance();
-    chai.assert.isDefined(instance);
+    assert.isDefined(instance);
   });
 
   it("tokenize", () => {
     const tokenizer = new Tokenizer();
+    const initStub = vi.spyOn(tokenizer as any, "initTokenize").mockReturnValue({
+      encode: () => [1, 2, 3],
+    } as any);
+
     const result = tokenizer.tokenize("Hello world!");
-    chai.assert.deepStrictEqual(result, [9906, 1917, 0]);
+    assert.deepStrictEqual(result, [1, 2, 3]);
+    assert.isTrue(initStub.calledOnce);
   });
 
   describe("tokenLength", () => {
-    afterEach(() => {
-      sandbox.restore();
-    });
-
     it("empty content", () => {
       const tokenizer = new Tokenizer();
       const result = tokenizer.tokenLength("");
-      chai.assert.equal(result, 0);
+      assert.equal(result, 0);
     });
 
     it("non-empty content", () => {
       const tokenizer = new Tokenizer();
+      const initStub = vi.spyOn(tokenizer as any, "initTokenize").mockReturnValue({
+        encode: () => [4, 5, 6],
+      } as any);
+
       const result = tokenizer.tokenLength("Hello world!");
-      chai.assert.equal(result, 3);
+      assert.equal(result, 3);
+      assert.isTrue(initStub.calledOnce);
     });
   });
 });

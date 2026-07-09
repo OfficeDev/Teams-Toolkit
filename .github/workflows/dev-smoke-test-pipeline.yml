@@ -13,6 +13,12 @@ on:
         type: string
         default: ""
 
+# Cancel an in-progress smoke run (and let its children cancel too) when a newer
+# run starts for the same branch. Distinct branches (different PRs) never collide.
+concurrency:
+  group: dev-smoke-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
 jobs:
   run-cd:
     runs-on: ubuntu-latest
@@ -44,16 +50,18 @@ jobs:
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const sourceBranch = '${{ github.head_ref || github.ref_name }}';
-            const cdDispatchBranch = 'neil/cdprivatepipeline';
 
-            // Trigger CD workflow on private CD branch, build sourceBranch via external_ref
+            // Trigger CD workflow directly on the reference (source) branch
             await github.rest.actions.createWorkflowDispatch({
               owner,
               repo,
               workflow_id: 'cd.yml',
-              ref: cdDispatchBranch,
+              ref: sourceBranch,
               inputs: {
-                external_ref: sourceBranch
+                preid: 'alpha',
+                skipmarkdowncheck: 'true',
+                SkipBranchCheck: 'true',
+                skipdockerbuild: 'true'
               }
             });
 
@@ -63,7 +71,7 @@ jobs:
               owner,
               repo,
               workflow_id: 'cd.yml',
-              branch: cdDispatchBranch,
+              branch: sourceBranch,
               per_page: 5
             });
 
@@ -133,7 +141,8 @@ jobs:
               ref: 'dev',
               inputs: {
                 tag: '${{ needs.run-cd.outputs.tag_name }}',
-                run_id: '${{ needs.run-cd.outputs.run_id }}'
+                run_id: '${{ needs.run-cd.outputs.run_id }}',
+                source_ref: '${{ github.head_ref || github.ref_name }}'
               }
             });
 
@@ -224,12 +233,13 @@ jobs:
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
+            const sourceBranch = '${{ github.head_ref || github.ref_name }}';
 
             await github.rest.actions.createWorkflowDispatch({
               owner,
               repo,
               workflow_id: 'ui-test-vscuse-template.yml',
-              ref: 'dev',
+              ref: sourceBranch,
               inputs: {
                 image_tag: '${{ needs.run-cd.outputs.tag_name }}',
                 'email-receiver': '${{ inputs.email }}',
@@ -244,7 +254,7 @@ jobs:
               owner,
               repo,
               workflow_id: 'ui-test-vscuse-template.yml',
-              branch: 'dev',
+              branch: sourceBranch,
               per_page: 5
             });
 

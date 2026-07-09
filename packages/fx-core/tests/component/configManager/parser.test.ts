@@ -5,9 +5,8 @@
  * @author yefuwang@microsoft.com
  */
 
-import chai from "chai";
 import path from "path";
-import sinon from "sinon";
+import { chai, vi } from "vitest";
 import { YamlParser } from "../../../src/component/configManager/parser";
 import fs from "fs-extra";
 
@@ -15,13 +14,12 @@ const assert: typeof chai.assert = chai.assert;
 
 describe("v3 yaml parser", () => {
   describe("when parsing an invalid path", () => {
-    const sandbox = sinon.createSandbox();
     before(() => {
-      sandbox.stub(fs, "readFile").rejects(new Error("file not found"));
+      vi.spyOn(fs, "readFile").mockRejectedValue(new Error("file not found"));
     });
 
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
     it("should return InvalidYamlSchemaError", async () => {
       const parser = new YamlParser();
@@ -31,13 +29,12 @@ describe("v3 yaml parser", () => {
   });
 
   describe("when parsing an empty file", () => {
-    const sandbox = sinon.createSandbox();
     before(async () => {
-      sandbox.stub<any, any>(fs, "readFile").resolves("");
+      vi.spyOn(fs, "readFile").mockResolvedValue("");
     });
 
     after(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("should return InvalidYamlSchemaError", async () => {

@@ -1,20 +1,17 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-import * as sinon from "sinon";
-import mockedEnv, { RestoreFn } from "mocked-env";
-import chai from "chai";
-import chaiAsPromised from "chai-as-promised";
-import { UpdateAadAppDriver } from "../../../../src/component/driver/aad/update";
-import {
-  MockedLogProvider,
-  MockedTelemetryReporter,
-  MockedUserInteraction,
-} from "../../../plugins/solution/util";
-import { AadAppClient } from "../../../../src/client/aadAppClient";
-import path from "path";
+import { Platform } from "@microsoft/teamsfx-api";
 import * as fs from "fs-extra";
-import { MissingFieldInManifestUserError } from "../../../../src/component/driver/aad/error/invalidFieldInManifestError";
+import mockedEnv, { RestoreFn } from "mocked-env";
+import path from "path";
 import { cwd } from "process";
+import { chai, expect, vi } from "vitest";
+import { AadAppClient } from "../../../../src/client/aadAppClient";
+import { MissingFieldInManifestUserError } from "../../../../src/component/driver/aad/error/invalidFieldInManifestError";
+import { AADApplication } from "../../../../src/component/driver/aad/interface/AADApplication";
+import { AADManifest } from "../../../../src/component/driver/aad/interface/AADManifest";
+import { UpdateAadAppDriver } from "../../../../src/component/driver/aad/update";
+import { AadManifestHelper } from "../../../../src/component/driver/aad/utility/aadManifestHelper";
 import {
   FileNotFoundError,
   HttpClientError,
@@ -24,14 +21,12 @@ import {
   MissingEnvironmentVariablesError,
   UnhandledError,
 } from "../../../../src/error/common";
-import { Platform, ok, err } from "@microsoft/teamsfx-api";
 import { MockedM365Provider } from "../../../core/utils";
-import { AADManifest } from "../../../../src/component/driver/aad/interface/AADManifest";
-import { AADApplication } from "../../../../src/component/driver/aad/interface/AADApplication";
-import { getLocalizedString } from "../../../../src/common/localizeUtils";
-import { AadManifestHelper } from "../../../../src/component/driver/aad/utility/aadManifestHelper";
-chai.use(chaiAsPromised);
-const expect = chai.expect;
+import {
+  MockedLogProvider,
+  MockedTelemetryReporter,
+  MockedUserInteraction,
+} from "../../../plugins/solution/util";
 
 const outputKeys = {
   AAD_APP_ACCESS_AS_USER_PERMISSION_ID: "AAD_APP_ACCESS_AS_USER_PERMISSION_ID",
@@ -57,7 +52,7 @@ describe("aadAppUpdate", async () => {
   let envRestore: RestoreFn | undefined;
 
   afterEach(async () => {
-    sinon.restore();
+    vi.restoreAllMocks();
     if (envRestore) {
       envRestore();
       envRestore = undefined;
@@ -141,7 +136,7 @@ describe("aadAppUpdate", async () => {
   });
 
   it("should success with valid manifest", async () => {
-    sinon.stub(AadAppClient.prototype, "updateAadApp").resolves();
+    vi.spyOn(AadAppClient.prototype, "updateAadApp").mockResolvedValue();
     envRestore = mockedEnv({
       AAD_APP_OBJECT_ID: expectedObjectId,
       AAD_APP_CLIENT_ID: expectedClientId,
@@ -152,10 +147,10 @@ describe("aadAppUpdate", async () => {
       manifestPath: path.join(testAssetsRoot, "manifest.json"),
       outputFilePath: outputPath,
     };
-    const informationSpy = sinon.spy(mockedDriverContext.logProvider, "info");
+    const informationSpy = vi.spyOn(mockedDriverContext.logProvider, "info");
     const result = await updateAadAppDriver.execute(args, mockedDriverContext);
-    chai.assert.isTrue(informationSpy.called);
-    chai.assert.equal(informationSpy.getCall(0).args[0], "Executing action aadApp/update");
+    chai.assert.isTrue(informationSpy.mock.calls.length > 0);
+    chai.assert.equal(informationSpy.mock.calls[0][0], "Executing action aadApp/update");
     const manifestOutputFilePath = path.join(
       mockedDriverContext.projectPath,
       outputRoot,
@@ -163,15 +158,15 @@ describe("aadAppUpdate", async () => {
     );
     const manifestPath = path.join(testAssetsRoot, "manifest.json");
     chai.assert.equal(
-      informationSpy.getCall(1).args[0],
+      informationSpy.mock.calls[1][0],
       `Build Microsoft Entra app manifest completed, and app manifest content is written to ${manifestOutputFilePath}`
     );
     chai.assert.equal(
-      informationSpy.getCall(2).args[0],
+      informationSpy.mock.calls[2][0],
       `Applied manifest ${manifestPath} to Microsoft Entra application with object id 00000000-0000-0000-0000-000000000000`
     );
     chai.assert.equal(
-      informationSpy.getCall(3).args[0],
+      informationSpy.mock.calls[3][0],
       `Action aadApp/update executed successfully`
     );
     expect(result.result.isOk()).to.be.true;
@@ -199,7 +194,7 @@ describe("aadAppUpdate", async () => {
   });
 
   it("should call showWarningIfManifestIsOutdated", async () => {
-    sinon.stub(AadAppClient.prototype, "updateAadApp").resolves();
+    vi.spyOn(AadAppClient.prototype, "updateAadApp").mockResolvedValue();
     envRestore = mockedEnv({
       AAD_APP_OBJECT_ID: expectedObjectId,
       AAD_APP_CLIENT_ID: expectedClientId,
@@ -211,16 +206,16 @@ describe("aadAppUpdate", async () => {
       outputFilePath: outputPath,
     };
 
-    const AadManifestHelperStub = sinon
-      .stub(AadManifestHelper, "showWarningIfManifestIsOutdated")
-      .resolves();
+    const AadManifestHelperStub = vi
+      .spyOn(AadManifestHelper, "showWarningIfManifestIsOutdated")
+      .mockResolvedValue();
 
     await updateAadAppDriver.execute(args, mockedDriverContext);
-    chai.assert.isTrue(AadManifestHelperStub.calledOnce);
+    chai.assert.isTrue(AadManifestHelperStub.mock.calls.length === 1);
   });
 
   it("should success with valid manifest on cli", async () => {
-    sinon.stub(AadAppClient.prototype, "updateAadApp").resolves();
+    vi.spyOn(AadAppClient.prototype, "updateAadApp").mockResolvedValue();
     envRestore = mockedEnv({
       AAD_APP_OBJECT_ID: expectedObjectId,
       AAD_APP_CLIENT_ID: expectedClientId,
@@ -236,7 +231,7 @@ describe("aadAppUpdate", async () => {
     expect(result.result.isOk()).to.be.true;
   });
   it("should success while context ui not support on cli", async () => {
-    sinon.stub(AadAppClient.prototype, "updateAadApp").resolves();
+    vi.spyOn(AadAppClient.prototype, "updateAadApp").mockResolvedValue();
     envRestore = mockedEnv({
       AAD_APP_OBJECT_ID: expectedObjectId,
       AAD_APP_CLIENT_ID: expectedClientId,
@@ -258,7 +253,7 @@ describe("aadAppUpdate", async () => {
     const manifestPath = path.join(cwd(), testAssetsRoot, "manifest.json");
     process.chdir("tests"); // change cwd for test
     try {
-      sinon.stub(AadAppClient.prototype, "updateAadApp").resolves();
+      vi.spyOn(AadAppClient.prototype, "updateAadApp").mockResolvedValue();
       envRestore = mockedEnv({
         AAD_APP_OBJECT_ID: expectedObjectId,
         AAD_APP_CLIENT_ID: expectedClientId,
@@ -280,7 +275,7 @@ describe("aadAppUpdate", async () => {
   it("should add project path to relative path in args", async () => {
     process.chdir("tests"); // change cwd for test
     try {
-      sinon.stub(AadAppClient.prototype, "updateAadApp").resolves();
+      vi.spyOn(AadAppClient.prototype, "updateAadApp").mockResolvedValue();
       envRestore = mockedEnv({
         AAD_APP_OBJECT_ID: expectedObjectId,
         AAD_APP_CLIENT_ID: expectedClientId,
@@ -300,7 +295,7 @@ describe("aadAppUpdate", async () => {
   });
 
   it("should throw error if manifest does not contain id", async () => {
-    sinon.stub(AadAppClient.prototype, "updateAadApp").resolves();
+    vi.spyOn(AadAppClient.prototype, "updateAadApp").mockResolvedValue();
     envRestore = mockedEnv({
       AAD_APP_CLIENT_ID: expectedClientId,
     });
@@ -332,12 +327,9 @@ describe("aadAppUpdate", async () => {
   });
 
   it("should only call MS Graph API once if manifest does not have preAuthorizedApplications", async () => {
-    sinon
-      .stub(AadAppClient.prototype, "updateAadApp")
-      .onCall(0)
-      .resolves()
-      .onCall(1)
-      .rejects("updateAadApp should not be called twice");
+    vi.spyOn(AadAppClient.prototype, "updateAadApp")
+      .mockResolvedValueOnce()
+      .mockRejectedValueOnce("updateAadApp should not be called twice");
 
     envRestore = mockedEnv({
       AAD_APP_OBJECT_ID: expectedObjectId,
@@ -356,15 +348,12 @@ describe("aadAppUpdate", async () => {
 
   it("should call MS Graph API twice if manifest has preAuthorizedApplications", async () => {
     let requestCount = 0;
-    sinon
-      .stub(AadAppClient.prototype, "updateAadApp")
-      .onCall(0)
-      .callsFake(async (manifest) => {
+    vi.spyOn(AadAppClient.prototype, "updateAadApp")
+      .mockImplementationOnce(async (manifest) => {
         requestCount++;
         expect((manifest as AADManifest).preAuthorizedApplications.length).to.equal(0); // should have no preAuthorizedApplication in first request
       })
-      .onCall(1)
-      .callsFake(async (manifest) => {
+      .mockImplementationOnce(async (manifest) => {
         requestCount++;
         expect((manifest as AADManifest).preAuthorizedApplications.length).to.greaterThan(0); // should have preAuthorizedApplication in second request
       });
@@ -387,15 +376,12 @@ describe("aadAppUpdate", async () => {
 
   it("should call MS Graph API twice if manifest has preAuthorizedApplications for new schema", async () => {
     let requestCount = 0;
-    sinon
-      .stub(AadAppClient.prototype, "updateAadApp")
-      .onCall(0)
-      .callsFake(async (manifest) => {
+    vi.spyOn(AadAppClient.prototype, "updateAadApp")
+      .mockImplementationOnce(async (manifest) => {
         requestCount++;
         expect((manifest as AADApplication).api.preAuthorizedApplications.length).to.equal(0); // should have no preAuthorizedApplication in first request
       })
-      .onCall(1)
-      .callsFake(async (manifest) => {
+      .mockImplementationOnce(async (manifest) => {
         requestCount++;
         expect((manifest as AADApplication).api.preAuthorizedApplications.length).to.greaterThan(0); // should have preAuthorizedApplication in second request
       });
@@ -417,12 +403,9 @@ describe("aadAppUpdate", async () => {
   });
 
   it("should only call MS Graph API once if manifest does not have preAuthorizedApplications for new schema", async () => {
-    sinon
-      .stub(AadAppClient.prototype, "updateAadApp")
-      .onCall(0)
-      .resolves()
-      .onCall(1)
-      .rejects("updateAadApp should not be called twice");
+    vi.spyOn(AadAppClient.prototype, "updateAadApp")
+      .mockResolvedValueOnce()
+      .mockRejectedValueOnce("updateAadApp should not be called twice");
 
     envRestore = mockedEnv({
       AAD_APP_OBJECT_ID: expectedObjectId,
@@ -440,7 +423,7 @@ describe("aadAppUpdate", async () => {
   });
 
   it("should not generate new permission id if the value already exists", async () => {
-    sinon.stub(AadAppClient.prototype, "updateAadApp").resolves();
+    vi.spyOn(AadAppClient.prototype, "updateAadApp").mockResolvedValue();
     envRestore = mockedEnv({
       AAD_APP_OBJECT_ID: expectedObjectId,
       AAD_APP_CLIENT_ID: expectedClientId,
@@ -466,7 +449,7 @@ describe("aadAppUpdate", async () => {
   });
 
   it("should not generate new permission id if manifest does not need it", async () => {
-    sinon.stub(AadAppClient.prototype, "updateAadApp").resolves();
+    vi.spyOn(AadAppClient.prototype, "updateAadApp").mockResolvedValue();
     envRestore = mockedEnv({
       AAD_APP_OBJECT_ID: expectedObjectId,
       AAD_APP_CLIENT_ID: expectedClientId,
@@ -489,7 +472,7 @@ describe("aadAppUpdate", async () => {
   });
 
   it("should throw user error when AadAppClient failed with 4xx error", async () => {
-    sinon.stub(AadAppClient.prototype, "updateAadApp").rejects({
+    vi.spyOn(AadAppClient.prototype, "updateAadApp").mockRejectedValue({
       isAxiosError: true,
       response: {
         status: 400,
@@ -524,7 +507,7 @@ describe("aadAppUpdate", async () => {
   });
 
   it("should throw system error when AadAppClient failed with non 4xx error", async () => {
-    sinon.stub(AadAppClient.prototype, "updateAadApp").rejects({
+    vi.spyOn(AadAppClient.prototype, "updateAadApp").mockRejectedValue({
       isAxiosError: true,
       response: {
         status: 500,
@@ -558,7 +541,7 @@ describe("aadAppUpdate", async () => {
   });
 
   it("should throw unhandled error when axios error contains no response", async () => {
-    sinon.stub(AadAppClient.prototype, "updateAadApp").rejects({
+    vi.spyOn(AadAppClient.prototype, "updateAadApp").mockRejectedValue({
       isAxiosError: true,
     });
     envRestore = mockedEnv({
@@ -586,24 +569,21 @@ describe("aadAppUpdate", async () => {
     const mockedTelemetryReporter = new MockedTelemetryReporter();
     let startTelemetry: any, endTelemetry: any;
 
-    sinon.stub(AadAppClient.prototype, "updateAadApp").resolves();
+    vi.spyOn(AadAppClient.prototype, "updateAadApp").mockResolvedValue();
     envRestore = mockedEnv({
       AAD_APP_OBJECT_ID: expectedObjectId,
       AAD_APP_CLIENT_ID: expectedClientId,
     });
 
-    sinon
-      .stub(mockedTelemetryReporter, "sendTelemetryEvent")
-      .onFirstCall()
-      .callsFake((eventName, properties, measurements) => {
+    vi.spyOn(mockedTelemetryReporter, "sendTelemetryEvent")
+      .mockImplementationOnce((eventName, properties, measurements) => {
         startTelemetry = {
           eventName,
           properties,
           measurements,
         };
       })
-      .onSecondCall()
-      .callsFake((eventName, properties, measurements) => {
+      .mockImplementationOnce((eventName, properties, measurements) => {
         endTelemetry = {
           eventName,
           properties,
@@ -637,29 +617,27 @@ describe("aadAppUpdate", async () => {
     const mockedTelemetryReporter = new MockedTelemetryReporter();
     let startTelemetry: any, endTelemetry: any;
 
-    sinon
-      .stub(mockedTelemetryReporter, "sendTelemetryEvent")
-      .onFirstCall()
-      .callsFake((eventName, properties, measurements) => {
+    vi.spyOn(mockedTelemetryReporter, "sendTelemetryEvent").mockImplementationOnce(
+      (eventName, properties, measurements) => {
         startTelemetry = {
           eventName,
           properties,
           measurements,
         };
-      });
+      }
+    );
 
-    sinon
-      .stub(mockedTelemetryReporter, "sendTelemetryErrorEvent")
-      .onFirstCall()
-      .callsFake((eventName, properties, measurements) => {
+    vi.spyOn(mockedTelemetryReporter, "sendTelemetryErrorEvent").mockImplementationOnce(
+      (eventName, properties, measurements) => {
         endTelemetry = {
           eventName,
           properties,
           measurements,
         };
-      });
+      }
+    );
 
-    sinon.stub(AadAppClient.prototype, "updateAadApp").rejects({
+    vi.spyOn(AadAppClient.prototype, "updateAadApp").mockRejectedValue({
       isAxiosError: true,
       response: {
         status: 500,
@@ -703,7 +681,7 @@ describe("aadAppUpdate", async () => {
   });
 
   it("should throw error when missing required environment variable in manifest", async () => {
-    sinon.stub(AadAppClient.prototype, "updateAadApp").resolves();
+    vi.spyOn(AadAppClient.prototype, "updateAadApp").mockResolvedValue();
     envRestore = mockedEnv({
       AAD_APP_OBJECT_ID: expectedObjectId,
       AAD_APP_CLIENT_ID: expectedClientId,

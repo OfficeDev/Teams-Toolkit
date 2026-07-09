@@ -3,10 +3,8 @@
 
 import { err, ok, TeamsAppManifest, UserError } from "@microsoft/teamsfx-api";
 import AdmZip from "adm-zip";
-import chai from "chai";
 import fs from "fs-extra";
 import mockedEnv from "mocked-env";
-import * as sinon from "sinon";
 import { v4 as uuid } from "uuid";
 import { teamsDevPortalClient } from "../../../../src/client/teamsDevPortalClient";
 import { SovereignCloudEnvironment } from "../../../../src/common/accountUtils";
@@ -19,6 +17,7 @@ import { MockedLogProvider, MockedUserInteraction } from "../../../plugins/solut
 import { Constants } from "./../../../../src/component/driver/teamsApp/constants";
 import { AppDefinition } from "./../../../../src/component/driver/teamsApp/interfaces/appdefinitions/appDefinition";
 import { MockedM365Provider } from "../../../core/utils";
+import { chai, expect, vi } from "vitest";
 
 describe("teamsApp/create", async () => {
   const teamsAppDriver = new CreateTeamsAppDriver();
@@ -38,7 +37,7 @@ describe("teamsApp/create", async () => {
   };
 
   afterEach(() => {
-    sinon.restore();
+    vi.restoreAllMocks();
     restoreEnv?.();
     restoreEnv = undefined;
   });
@@ -47,8 +46,8 @@ describe("teamsApp/create", async () => {
     restoreEnv = mockedEnv({
       [FeatureFlagName.SovereignCloudEnvironment]: SovereignCloudEnvironment.GCCH,
     });
-    const importAppSpy = sinon.spy(teamsDevPortalClient, "importApp");
-    const readFileStub = sinon.stub(fs, "readFile");
+    const importAppSpy = vi.spyOn(teamsDevPortalClient, "importApp");
+    const readFileStub = vi.spyOn(fs, "readFile");
 
     const args: CreateTeamsAppArgs = {
       name: appDef.appName!,
@@ -56,16 +55,16 @@ describe("teamsApp/create", async () => {
 
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
     chai.assert(result.isOk());
-    sinon.assert.notCalled(importAppSpy);
-    sinon.assert.notCalled(readFileStub);
+    expect(importAppSpy).not.toHaveBeenCalled();
+    expect(readFileStub).not.toHaveBeenCalled();
   });
 
   it("skip create in DoD", async () => {
     restoreEnv = mockedEnv({
       [FeatureFlagName.SovereignCloudEnvironment]: SovereignCloudEnvironment.DOD,
     });
-    const importAppSpy = sinon.spy(teamsDevPortalClient, "importApp");
-    const readFileStub = sinon.stub(fs, "readFile");
+    const importAppSpy = vi.spyOn(teamsDevPortalClient, "importApp");
+    const readFileStub = vi.spyOn(fs, "readFile");
 
     const args: CreateTeamsAppArgs = {
       name: appDef.appName!,
@@ -73,8 +72,8 @@ describe("teamsApp/create", async () => {
 
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
     chai.assert(result.isOk());
-    sinon.assert.notCalled(importAppSpy);
-    sinon.assert.notCalled(readFileStub);
+    expect(importAppSpy).not.toHaveBeenCalled();
+    expect(readFileStub).not.toHaveBeenCalled();
   });
 
   it("invalid param error", async () => {
@@ -100,11 +99,13 @@ describe("teamsApp/create", async () => {
       summaries: [],
       result: ok(new Map([["TEAMS_APP_PACKAGE_PATH", zipFileName]])),
     };
-    sinon.stub(CreateAppPackageDriver.prototype, "execute").resolves(stubResult);
-    sinon.stub(teamsDevPortalClient, "getApp").throws(new Error("404"));
-    sinon.stub(teamsDevPortalClient, "importApp").resolves(appDef);
-    sinon.stub(fs, "pathExists").resolves(true);
-    sinon.stub(fs, "readFile").callsFake(async () => {
+    vi.spyOn(CreateAppPackageDriver.prototype, "execute").mockResolvedValue(stubResult);
+    vi.spyOn(teamsDevPortalClient, "getApp").mockImplementation(() => {
+      throw new Error("404");
+    });
+    vi.spyOn(teamsDevPortalClient, "importApp").mockResolvedValue(appDef);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockImplementation(async () => {
       const zip = new AdmZip();
       zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(new TeamsAppManifest())));
       zip.addFile("color.png", Buffer.from(""));
@@ -129,7 +130,7 @@ describe("teamsApp/create", async () => {
     };
 
     restoreEnv = mockedEnv({ TEAMS_APP_ID: uuid() });
-    sinon.stub(teamsDevPortalClient, "getApp").resolves(appDef);
+    vi.spyOn(teamsDevPortalClient, "getApp").mockResolvedValue(appDef);
 
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
     console.log(JSON.stringify(result));
@@ -140,9 +141,13 @@ describe("teamsApp/create", async () => {
     const args: CreateTeamsAppArgs = {
       name: appDef.appName!,
     };
-    sinon.stub(teamsDevPortalClient, "getApp").throws(new Error("404"));
-    sinon.stub(teamsDevPortalClient, "importApp").throws(new Error("409"));
-    sinon.stub(fs, "pathExists").resolves(true);
+    vi.spyOn(teamsDevPortalClient, "getApp").mockImplementation(() => {
+      throw new Error("404");
+    });
+    vi.spyOn(teamsDevPortalClient, "importApp").mockImplementation(() => {
+      throw new Error("409");
+    });
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
 
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
     chai.assert.isTrue(result.isErr());
@@ -152,7 +157,9 @@ describe("teamsApp/create", async () => {
     const args: CreateTeamsAppArgs = {
       name: appDef.appName!,
     };
-    sinon.stub(MockedM365Provider.prototype, "getAccessToken").resolves(err(new UserError({})));
+    vi.spyOn(MockedM365Provider.prototype, "getAccessToken").mockResolvedValue(
+      err(new UserError({}))
+    );
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
     chai.assert.isTrue(result.isErr());
   });
@@ -162,9 +169,11 @@ describe("teamsApp/create", async () => {
       name: appDef.appName!,
     };
 
-    sinon.stub(teamsDevPortalClient, "getApp").throws(new Error("404"));
-    sinon.stub(teamsDevPortalClient, "importApp").resolves(appDef);
-    sinon.stub(fs, "readFile").callsFake(async () => {
+    vi.spyOn(teamsDevPortalClient, "getApp").mockImplementation(() => {
+      throw new Error("404");
+    });
+    vi.spyOn(teamsDevPortalClient, "importApp").mockResolvedValue(appDef);
+    vi.spyOn(fs, "readFile").mockImplementation(async () => {
       const zip = new AdmZip();
       zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(new TeamsAppManifest())));
       zip.addFile("color.png", Buffer.from(""));
@@ -194,9 +203,11 @@ describe("teamsApp/create", async () => {
       name: appDef.appName!,
     };
 
-    sinon.stub(teamsDevPortalClient, "getApp").throws(new Error("404"));
-    sinon.stub(teamsDevPortalClient, "importApp").resolves(appDef);
-    sinon.stub(fs, "readFile").callsFake(async () => {
+    vi.spyOn(teamsDevPortalClient, "getApp").mockImplementation(() => {
+      throw new Error("404");
+    });
+    vi.spyOn(teamsDevPortalClient, "importApp").mockResolvedValue(appDef);
+    vi.spyOn(fs, "readFile").mockImplementation(async () => {
       const zip = new AdmZip();
       zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(new TeamsAppManifest())));
       zip.addFile("color.png", Buffer.from(""));

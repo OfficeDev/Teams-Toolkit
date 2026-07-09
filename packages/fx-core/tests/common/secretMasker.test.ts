@@ -1,15 +1,13 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { assert } from "chai";
-import sinon from "sinon";
+import { afterEach, assert } from "vitest";
 import { dictMatcher } from "../../src/common/secretmasker/dict";
 import { secretMasker } from "../../src/common/secretmasker/masker";
 
 describe("secret masker", () => {
-  const sandbox = sinon.createSandbox();
   afterEach(async () => {
-    sandbox.restore();
+    // Cleanup if needed
   });
   describe("dictMatcher", () => {
     it("exact", async () => {

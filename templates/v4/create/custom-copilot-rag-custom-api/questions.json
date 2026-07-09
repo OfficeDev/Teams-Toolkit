@@ -1,0 +1,38 @@
+{
+  "$schema": "../../schema/questions.schema.json",
+  "questions": [
+    {
+      "name": "apiSpecLocation",
+      "type": "singleFileOrText",
+      "title": "OpenAPI Document",
+      "placeholder": "Enter OpenAPI Document URL",
+      "inputOptionItem": {
+        "id": "input",
+        "label": "$(cloud) Enter OpenAPI Document URL"
+      },
+      "inputBoxConfig": {
+        "name": "input-api-spec-url",
+        "title": "OpenAPI Document",
+        "placeholder": "Enter OpenAPI Document URL",
+        "validation": "openapiUrl"
+      },
+      "filters": {
+        "files": ["json", "yml", "yaml"]
+      },
+      "cliShortName": "a",
+      "cliDescription": "OpenAPI description document location."
+    },
+    {
+      "name": "apiOperations",
+      "type": "multiSelect",
+      "title": "Select Operation(s) Teams Can Interact with",
+      "keyPrefix": "core.createProjectQuestion.apiSpec.operation",
+      "optionsFrom": "openapi.operations",
+      "optionsFromParams": {
+        "apiSpecLocation": { "expr": "apiSpecLocation" }
+      },
+      "cliDescription": "API operations to include in the custom API agent."
+    },
+    { "use": "llm-service" }
+  ]
+}

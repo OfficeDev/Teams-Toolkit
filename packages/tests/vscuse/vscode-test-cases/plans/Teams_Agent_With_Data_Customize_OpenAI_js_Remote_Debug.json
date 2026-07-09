@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 5,
+    "total_steps": 4,
     "created_at": "2026-02-24T14:29:16.193947",
     "name": "Teams Agent With Data Customize OpenAI js Remote Debug",
     "description": {
@@ -19,7 +19,7 @@
     "generated_at": "2026-02-24T14:29:16.193947",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_8ba377d3",
+      "plan_r_0624_024810",
       "step_cdb740e9",
       "step_4e81d501",
       "step_95f6e2d4",
@@ -38,37 +38,6 @@
     "updated_at": "2026-02-24T14:34:16.617594"
   },
   "steps": [
-    {
-      "step_id": "step_8ba377d3",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "dx": null,
-        "dy": null,
-        "key": null,
-        "keys": null,
-        "text": null,
-        "x": 335,
-        "y": 225
-      },
-      "description": "Click on the \"Teams Agents and Apps\" option in the \"New Project\" dropdown menu within the Microsoft 365 Agents Toolkit interface in Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "0",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:335:225:16:5:000010a14c634bcb",
-        "dhash:335:225:96:5:363285d512468716",
-        "dhash:335:225:0:10:c8c88094b0717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_8ba377d3",
-      "created_at": "2026-02-24T14:29:16.205736",
-      "plan_id": "plan_3db4a923"
-    },
     {
       "step_id": "step_cdb740e9",
       "agent": "interaction",

@@ -52,7 +52,7 @@ import { Lifecycle } from "../configManager/lifecycle";
 import { CoordinatorSource } from "../constants";
 import { deployUtils } from "../deployUtils";
 import { DriverContext } from "../driver/interface/commonArgs";
-import { updateTeamsAppV3ForPublish } from "../driver/teamsApp/appStudio";
+import * as appStudio from "../driver/teamsApp/appStudio";
 import { Constants } from "../driver/teamsApp/constants";
 import { manifestUtils } from "../driver/teamsApp/utils/ManifestUtils";
 import { Generator } from "../generator/generator";
@@ -77,10 +77,6 @@ const M365Actions = [
 ];
 const AzureActions = ["arm/deploy"];
 const needTenantCheckActions = ["botAadApp/create", "aadApp/create", "botFramework/create"];
-
-export const coordinatorDeps = {
-  updateTeamsAppV3ForPublish,
-};
 
 class Coordinator {
   @hooks([
@@ -290,7 +286,7 @@ class Coordinator {
       projectModel.registerApp,
       projectModel.provision,
       projectModel.configureApp,
-    ].filter((c) => c !== undefined) as ILifecycle[];
+    ].filter((c) => c !== undefined);
 
     // 2. check each cycle
     for (const cycle of cycles) {
@@ -334,9 +330,7 @@ class Coordinator {
       return err(maybeProjectModel.error);
     }
     const projectModel = maybeProjectModel.value;
-    const cycles: ILifecycle[] = [projectModel.provision].filter(
-      (c) => c !== undefined
-    ) as ILifecycle[];
+    const cycles: ILifecycle[] = [projectModel.provision].filter((c) => c !== undefined);
 
     let unresolvedPlaceholders: string[] = [];
     // 2. check each cycle
@@ -902,7 +896,7 @@ class Coordinator {
     if (!inputs[QuestionNames.AppPackagePath]) {
       return err(new InputValidationError("appPackagePath", "undefined"));
     }
-    const updateRes = await coordinatorDeps.updateTeamsAppV3ForPublish(ctx, inputs);
+    const updateRes = await appStudio.updateTeamsAppV3ForPublish(ctx, inputs);
 
     if (updateRes.isErr()) {
       return err(updateRes.error);

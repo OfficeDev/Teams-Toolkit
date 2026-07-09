@@ -2,16 +2,15 @@
 // Licensed under the MIT license.
 
 import { ok } from "@microsoft/teamsfx-api";
-import { expect } from "chai";
 import fs from "fs-extra";
 import * as os from "os";
 import * as path from "path";
-import sinon from "sinon";
 import { setTools } from "../../../../src/common/globalVars";
 import { Generator } from "../../../../src/component/generator/generator";
 import { importOpenPlugin } from "../../../../src/component/generator/openPlugin/importer";
 import { MockTools } from "../../../core/utils";
 import { scaffoldOpenPluginTemplateFromSource } from "./testTemplateScaffold";
+import { chai, vi } from "vitest";
 
 async function tmp(prefix: string): Promise<string> {
   return await fs.mkdtemp(path.join(os.tmpdir(), prefix));
@@ -50,14 +49,14 @@ describe("openPlugin.importOpenPlugin", () => {
   setTools(new MockTools());
   let pluginDir: string;
   let outDir: string;
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   beforeEach(async () => {
     pluginDir = await tmp("op-conv-plugin-");
     outDir = await tmp("op-conv-out-");
     await fs.remove(outDir); // must be absent for the success path
     await seedSamplePlugin(pluginDir);
-    sandbox.stub(Generator, "generateTemplate").callsFake(async (ctx, dest) => {
+    vi.spyOn(Generator, "generateTemplate").mockImplementation(async (ctx, dest) => {
       const appName = ctx.templateVariables?.appName ?? "";
       await scaffoldOpenPluginTemplateFromSource(dest, { appName });
       return ok(undefined);
@@ -65,7 +64,7 @@ describe("openPlugin.importOpenPlugin", () => {
   });
 
   afterEach(async () => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     await fs.remove(pluginDir);
     await fs.remove(outDir);
   });
@@ -80,7 +79,7 @@ describe("openPlugin.importOpenPlugin", () => {
     if (res.isErr()) {
       throw new Error(`importOpenPlugin failed: ${res.error.message}`);
     }
-    expect(res.value.projectPath).to.equal(path.resolve(outDir));
+    chai.expect(res.value.projectPath).to.equal(path.resolve(outDir));
 
     const expected = [
       "appPackage/manifest.json",
@@ -98,7 +97,7 @@ describe("openPlugin.importOpenPlugin", () => {
       "README.md",
     ];
     for (const rel of expected) {
-      expect(await fs.pathExists(path.join(outDir, rel)), `missing ${rel}`).to.equal(true);
+      chai.expect(await fs.pathExists(path.join(outDir, rel)), `missing ${rel}`).to.equal(true);
     }
   });
 
@@ -115,21 +114,20 @@ describe("openPlugin.importOpenPlugin", () => {
     const manifest = (await fs.readJSON(
       path.join(outDir, "appPackage", "manifest.json")
     )) as Record<string, any>;
-    expect(manifest.agentSkills).to.deep.equal([
-      { folder: "./skills/alpha-skill" },
-      { folder: "./skills/beta-skill" },
-    ]);
-    expect(manifest.agentConnectors).to.have.length(1);
-    expect(manifest.agentConnectors[0]).to.include({
+    chai
+      .expect(manifest.agentSkills)
+      .to.deep.equal([{ folder: "./skills/alpha-skill" }, { folder: "./skills/beta-skill" }]);
+    chai.expect(manifest.agentConnectors).to.have.length(1);
+    chai.expect(manifest.agentConnectors[0]).to.include({
       id: "web",
       displayName: "web MCP Server",
     });
-    expect(manifest.agentConnectors[0].toolSource.remoteMcpServer.mcpServerUrl).to.equal(
-      "https://web.example.com/api"
-    );
-    expect(manifest.agentConnectors[0].toolSource.remoteMcpServer.authorization.type).to.equal(
-      "OAuthPluginVault"
-    );
+    chai
+      .expect(manifest.agentConnectors[0].toolSource.remoteMcpServer.mcpServerUrl)
+      .to.equal("https://web.example.com/api");
+    chai
+      .expect(manifest.agentConnectors[0].toolSource.remoteMcpServer.authorization.type)
+      .to.equal("OAuthPluginVault");
   });
 
   it("surfaces a warning for stdio MCP servers", async () => {
@@ -140,7 +138,7 @@ describe("openPlugin.importOpenPlugin", () => {
       termsUrl: "https://example.com/terms",
     });
     if (res.isErr()) throw new Error(res.error.message);
-    expect(res.value.warnings.some((w) => w.includes("stdioOnly"))).to.equal(true);
+    chai.expect(res.value.warnings.some((w) => w.includes("stdioOnly"))).to.equal(true);
   });
 
   it("produces byte-identical manifests across the three manifest path locations", async () => {
@@ -174,7 +172,7 @@ describe("openPlugin.importOpenPlugin", () => {
         path.join(claudeOut, "appPackage", "manifest.json"),
         "utf8"
       );
-      expect(secondManifest).to.equal(firstManifest);
+      chai.expect(secondManifest).to.equal(firstManifest);
     } finally {
       await fs.remove(claudeDir);
       await fs.remove(claudeOut);
@@ -190,9 +188,9 @@ describe("openPlugin.importOpenPlugin", () => {
       privacyUrl: "https://example.com/privacy",
       termsUrl: "https://example.com/terms",
     });
-    expect(res.isErr()).to.equal(true);
+    chai.expect(res.isErr()).to.equal(true);
     if (res.isErr()) {
-      expect(res.error.name).to.equal("OutputDirectoryNotEmpty");
+      chai.expect(res.error.name).to.equal("OutputDirectoryNotEmpty");
     }
   });
 
@@ -203,7 +201,7 @@ describe("openPlugin.importOpenPlugin", () => {
       privacyUrl: "https://example.com/privacy",
       termsUrl: "https://example.com/terms",
     });
-    expect(res.isErr()).to.equal(true);
+    chai.expect(res.isErr()).to.equal(true);
   });
 
   it("returns MissingPluginPath when path is empty", async () => {
@@ -213,9 +211,9 @@ describe("openPlugin.importOpenPlugin", () => {
       privacyUrl: "https://example.com/privacy",
       termsUrl: "https://example.com/terms",
     });
-    expect(res.isErr()).to.equal(true);
+    chai.expect(res.isErr()).to.equal(true);
     if (res.isErr()) {
-      expect(res.error.name).to.equal("MissingPluginPath");
+      chai.expect(res.error.name).to.equal("MissingPluginPath");
     }
   });
 
@@ -228,15 +226,21 @@ describe("openPlugin.importOpenPlugin", () => {
     });
     if (res.isErr()) throw new Error(res.error.message);
     const colorBuf = await fs.readFile(path.join(outDir, "appPackage", "color.png"));
-    expect(
-      colorBuf.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
-    ).to.equal(true);
+    chai
+      .expect(
+        colorBuf
+          .subarray(0, 8)
+          .equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+      )
+      .to.equal(true);
     const outlineBuf = await fs.readFile(path.join(outDir, "appPackage", "outline.png"));
-    expect(
-      outlineBuf
-        .subarray(0, 8)
-        .equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
-    ).to.equal(true);
+    chai
+      .expect(
+        outlineBuf
+          .subarray(0, 8)
+          .equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+      )
+      .to.equal(true);
   });
 
   it("uses cwd-based default output when --output is not provided", async () => {
@@ -250,7 +254,7 @@ describe("openPlugin.importOpenPlugin", () => {
         termsUrl: "https://example.com/terms",
       });
       if (res.isErr()) throw new Error(res.error.message);
-      expect(res.value.projectPath).to.equal(path.join(cwdDir, "demo-plugin"));
+      chai.expect(res.value.projectPath).to.equal(path.join(cwdDir, "demo-plugin"));
     } finally {
       process.chdir(savedCwd);
       await fs.remove(cwdDir);

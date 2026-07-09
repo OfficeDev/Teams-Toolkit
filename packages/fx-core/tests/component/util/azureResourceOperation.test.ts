@@ -1,7 +1,5 @@
 import { ListAccountSasResponse, StorageAccounts } from "@azure/arm-storage";
-import chai from "chai";
-import chaiAsPromised from "chai-as-promised";
-import * as sinon from "sinon";
+import { expect, vi } from "vitest";
 import * as tools from "../../../src/common/utils";
 import {
   generateSasToken,
@@ -9,23 +7,21 @@ import {
 } from "../../../src/component/utils/azureResourceOperation";
 import { MockedAzureAccountProvider } from "../../core/utils";
 
-chai.use(chaiAsPromised);
-
 describe("Azure Resource Operation test", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   beforeEach(async () => {
-    sandbox.stub(tools, "waitSeconds").resolves();
+    vi.spyOn(tools, "waitSeconds").mockResolvedValue();
   });
 
   afterEach(async () => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("should get Azure account credential error", async () => {
     const tokenProvider = new MockedAzureAccountProvider();
-    sandbox.stub(tokenProvider, "getIdentityCredentialAsync").resolves(undefined);
-    await chai.expect(getAzureAccountCredential(tokenProvider)).to.be.eventually.rejectedWith("");
+    vi.spyOn(tokenProvider, "getIdentityCredentialAsync").mockResolvedValue(undefined);
+    await expect(getAzureAccountCredential(tokenProvider)).rejects.toThrow();
   });
 
   it("should generate Sas token error", async () => {
@@ -36,10 +32,10 @@ describe("Azure Resource Operation test", () => {
         };
       },
     } as unknown as StorageAccounts;
-    sandbox.stub(storageAccounts, "listAccountSAS").throws(new Error("error"));
-    await chai
-      .expect(generateSasToken(storageAccounts, "test", "test"))
-      .to.be.eventually.rejectedWith("");
+    vi.spyOn(storageAccounts, "listAccountSAS").mockImplementation(() => {
+      throw new Error("error");
+    });
+    await expect(generateSasToken(storageAccounts, "test", "test")).rejects.toThrow();
   });
 
   it("should generate Sas token with empty response", async () => {
@@ -50,8 +46,6 @@ describe("Azure Resource Operation test", () => {
         };
       },
     } as unknown as StorageAccounts;
-    await chai
-      .expect(generateSasToken(storageAccounts, "test", "test"))
-      .to.be.eventually.rejectedWith("");
+    await expect(generateSasToken(storageAccounts, "test", "test")).rejects.toThrow();
   });
 });

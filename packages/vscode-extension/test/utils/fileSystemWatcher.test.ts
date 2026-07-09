@@ -1,120 +1,117 @@
-import * as sinon from "sinon";
-import * as chai from "chai";
-import * as globalVariables from "../../src/globalVariables";
-import fs from "fs-extra";
+import { assert, expect, vi } from "vitest";
 import * as vscode from "vscode";
+import * as globalVariables from "../../src/globalVariables";
 import { ExtTelemetry } from "../../src/telemetry/extTelemetry";
+import TreeViewManagerInstance from "../../src/treeview/treeViewManager";
+
+vi.mock("@microsoft/teamsfx-core/build/common/projectSettingsHelper", async (importOriginal) => {
+  const actual =
+    await importOriginal<
+      typeof import("@microsoft/teamsfx-core/build/common/projectSettingsHelper")
+    >();
+  return { ...actual };
+});
+
+import * as teamsfxCore from "@microsoft/teamsfx-core";
 import {
   addFileSystemWatcher,
+  fileSystemWatcherOps,
   refreshSPFxTreeOnFileChanged,
   sendSDKVersionTelemetry,
 } from "../../src/utils/fileSystemWatcher";
-import TreeViewManagerInstance from "../../src/treeview/treeViewManager";
-import * as projectSettingsHelper from "@microsoft/teamsfx-core/build/common/projectSettingsHelper";
+vi.mock("@microsoft/teamsfx-core", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@microsoft/teamsfx-core")>();
+  return { ...actual };
+});
+
+const fileSystemWatcherDeps = fileSystemWatcherOps;
 
 describe("FileSystemWatcher", function () {
   describe("addFileSystemWatcher", function () {
-    const sandbox = sinon.createSandbox();
-
-    afterEach(() => {
-      sandbox.restore();
-    });
-
     it("addFileSystemWatcher detect SPFx project", async () => {
       const workspacePath = "test";
-      sandbox.stub(projectSettingsHelper, "isValidProject").returns(true);
-      sandbox.stub(globalVariables, "initializeGlobalVariables");
-      sandbox.stub(TreeViewManagerInstance, "updateDevelopmentTreeView");
+      vi.spyOn(teamsfxCore, "isValidProject").mockReturnValue(true);
+      vi.spyOn(globalVariables, "initializeGlobalVariables").mockImplementation(() => {});
+      vi.spyOn(TreeViewManagerInstance, "updateDevelopmentTreeView").mockResolvedValue();
 
       const watcher = {
         onDidCreate: () => ({ dispose: () => undefined }),
         onDidChange: () => ({ dispose: () => undefined }),
         onDidDelete: () => ({ dispose: () => undefined }),
       } as any;
-      const createWatcher = sandbox
-        .stub(vscode.workspace, "createFileSystemWatcher")
-        .returns(watcher);
-      const createListener = sandbox
-        .stub(watcher, "onDidCreate")
-        .callsFake((...args: unknown[]) => {
-          (args as any)[0]();
+      const createWatcher = vi
+        .spyOn(vscode.workspace, "createFileSystemWatcher")
+        .mockReturnValue(watcher);
+      const createListener = vi
+        .spyOn(watcher, "onDidCreate")
+        .mockImplementation((...args: unknown[]) => {
+          (args as any)[0]({ fsPath: "test/package-lock.json" });
+          return { dispose: () => undefined };
         });
-      const changeListener = sandbox
-        .stub(watcher, "onDidChange")
-        .callsFake((...args: unknown[]) => {
-          (args as any)[0]();
+      const changeListener = vi
+        .spyOn(watcher, "onDidChange")
+        .mockImplementation((...args: unknown[]) => {
+          (args as any)[0]({ fsPath: "test/package-lock.json" });
+          return { dispose: () => undefined };
         });
-      sandbox.stub(watcher, "onDidDelete").callsFake((...args: unknown[]) => {
-        (args as any)[0]();
+      vi.spyOn(watcher, "onDidDelete").mockImplementation((...args: unknown[]) => {
+        return { dispose: () => undefined };
       });
-      sandbox.stub(ExtTelemetry, "sendTelemetryEvent").callsFake(() => {});
+      vi.spyOn(ExtTelemetry, "sendTelemetryEvent").mockImplementation(() => {});
 
       addFileSystemWatcher(workspacePath);
 
-      chai.assert.equal(createWatcher.callCount, 2);
-      chai.assert.equal(createListener.callCount, 2);
-      chai.assert.isTrue(changeListener.calledTwice);
+      assert.equal(createWatcher.callCount, 2);
+      assert.equal(createListener.callCount, 2);
+      assert.isTrue(changeListener.calledTwice);
     });
 
     it("addFileSystemWatcher in invalid project", async () => {
       const workspacePath = "test";
-      sandbox.stub(projectSettingsHelper, "isValidProject").returns(false);
+      vi.spyOn(teamsfxCore, "isValidProject").mockReturnValue(false);
 
       const watcher = {
         onDidCreate: () => ({ dispose: () => undefined }),
         onDidChange: () => ({ dispose: () => undefined }),
       } as any;
-      const createWatcher = sandbox
-        .stub(vscode.workspace, "createFileSystemWatcher")
-        .returns(watcher);
-      const createListener = sandbox.stub(watcher, "onDidCreate").resolves();
-      const changeListener = sandbox.stub(watcher, "onDidChange").resolves();
+      const createWatcher = vi.spyOn(vscode.workspace, "createFileSystemWatcher");
+      const createListener = vi.spyOn(watcher, "onDidCreate").mockResolvedValue();
+      const changeListener = vi.spyOn(watcher, "onDidChange").mockResolvedValue();
 
       addFileSystemWatcher(workspacePath);
 
-      chai.assert.isTrue(createWatcher.notCalled);
-      chai.assert.isTrue(createListener.notCalled);
-      chai.assert.isTrue(changeListener.notCalled);
+      assert.isTrue(createWatcher.notCalled);
+      assert.isTrue(createListener.notCalled);
+      assert.isTrue(changeListener.notCalled);
     });
   });
 
   describe("refreshSPFxTreeOnFileChanged", function () {
-    const sandbox = sinon.createSandbox();
-
-    afterEach(() => {
-      sandbox.restore();
-    });
-
     it("refreshSPFxTreeOnFileChanged", () => {
-      const initGlobalVariables = sandbox.stub(globalVariables, "initializeGlobalVariables");
-      const updateDevelopmentTreeView = sandbox
-
-        .stub(TreeViewManagerInstance, "updateDevelopmentTreeView")
-        .resolves();
+      const initGlobalVariables = vi
+        .spyOn(globalVariables, "initializeGlobalVariables")
+        .mockImplementation(() => {});
+      const updateDevelopmentTreeView = vi
+        .spyOn(TreeViewManagerInstance, "updateDevelopmentTreeView")
+        .mockResolvedValue();
 
       refreshSPFxTreeOnFileChanged();
 
-      chai.expect(initGlobalVariables.calledOnce).to.be.true;
-      chai.expect(updateDevelopmentTreeView.calledOnce).to.be.true;
+      expect(initGlobalVariables.calledOnce).to.be.true;
+      expect(updateDevelopmentTreeView.calledOnce).to.be.true;
     });
   });
 
   describe("sendSDKVersionTelemetry", function () {
-    const sandbox = sinon.createSandbox();
-
-    afterEach(() => {
-      sandbox.restore();
-    });
-
     it("happy path", async () => {
       const filePath = "test/package-lock.json";
 
-      const readJsonFunc = sandbox.stub(fs, "readJson").resolves();
-      sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
+      const readJsonFunc = vi.spyOn(fileSystemWatcherDeps, "readJson").mockResolvedValue();
+      vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
 
       sendSDKVersionTelemetry(filePath);
 
-      chai.assert.isTrue(readJsonFunc.calledOnce);
+      assert.isTrue(readJsonFunc.calledOnce);
     });
   });
 });

@@ -1,0 +1,54 @@
+{
+    "issues": [
+        {
+            "title": "Lorem ipsum dolor sit amet",
+            "description": "Consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+        },
+        {
+            "title": "Ut enim ad minim veniam",
+            "description": "Quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+        },
+        {
+            "title": "Duis aute irure dolor in reprehenderit",
+            "description": "In voluptate velit esse cillum dolore eu fugiat nulla pariatur."
+        },
+        {
+            "title": "Excepteur sint occaecat cupidatat non proident",
+            "description": "Sunt in culpa qui officia deserunt mollit anim id est laborum."
+        },
+        {
+            "title": "Sed ut perspiciatis unde omnis iste natus",
+            "description": "Error sit voluptatem accusantium doloremque laudantium, totam rem aperiam."
+        },
+        {
+            "title": "Eaque ipsa quae ab illo inventore veritatis",
+            "description": "Et quasi architecto beatae vitae dicta sunt explicabo."
+        },
+        {
+            "title": "Nemo enim ipsam voluptatem quia voluptas",
+            "description": "Sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos."
+        },
+        {
+            "title": "Neque porro quisquam est",
+            "description": "Qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit."
+        },
+        {
+            "title": "Ut enim ad minima veniam",
+            "description": "Quis nostrum exercitationem ullam corporis suscipit laboriosam."
+        },
+        {
+            "title": "Quis autem vel eum iure reprehenderit",
+            "description": "Qui in ea voluptate velit esse quam nihil molestiae consequatur."
+        }
+    ],
+    "users": [
+        {
+            "username": "<sample_github_user>"
+        }
+    ],
+    "repos": [
+        {
+            "name": "<sample_github_repo>"
+        }
+    ]
+}

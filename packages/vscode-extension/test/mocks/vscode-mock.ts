@@ -16,6 +16,8 @@ const mockedVSCode: Partial<VSCode> = {};
 const mockedVSCodeNamespaces: { [P in keyof VSCode]?: TypeMoq.IMock<VSCode[P]> } = {};
 const originalLoad = Module._load;
 
+export { mockedVSCode };
+
 class MockClipboard {
   private text = "";
   public readText(): Promise<string> {
@@ -27,16 +29,15 @@ class MockClipboard {
 }
 
 export function initialize() {
-  generateMock("debug");
   const debugConsole = {};
   Object.defineProperty(debugConsole, "appendLine", {
     value: function () {},
     writable: true,
     configurable: true,
   });
-  mockedVSCodeNamespaces
-    .debug!.setup((x) => x.activeDebugConsole)
-    .returns(() => debugConsole as any);
+  (mockedVSCode as any).debug = {
+    activeDebugConsole: debugConsole,
+  };
   generateMock("scm");
   generateNotebookMocks();
 
@@ -48,8 +49,8 @@ export function initialize() {
     if (request === "@vscode/extension-telemetry") {
       return { default: vscMockTelemetryReporter as any };
     }
-    // Mock keytar to prevent native module loading issues on Linux
-    if (request === "keytar") {
+    // Mock keytar to prevent native module loading issues on Linux.
+    if (typeof request === "string" && request.includes("keytar")) {
       return {
         getPassword: async () => null,
         setPassword: async () => {},
@@ -132,11 +133,18 @@ mockedVSCode.TextDocumentSaveReason = vscodeMocks.TextDocumentSaveReason;
   activeTextEditor: undefined,
   activeTerminal: undefined,
   terminals: [],
-  showInformationMessage: () => {},
-  showErrorMessage: () => {
-    return Promise.resolve("success");
+  showInformationMessage: (...args: any[]) => {
+    // Return Promise<undefined> by default; tests can stub with actual button
+    return Promise.resolve(undefined);
   },
-  showWarningMessage: () => {},
+  showErrorMessage: (...args: any[]) => {
+    // Return Promise<undefined> by default; tests can stub with actual button
+    return Promise.resolve(undefined);
+  },
+  showWarningMessage: (...args: any[]) => {
+    // Return Promise<undefined> by default; tests can stub with actual button
+    return Promise.resolve(undefined);
+  },
   createOutputChannel: () => {},
   registerTreeDataProvider: () => {},
   withProgress: async (options: any, task: (progress: any, token: any) => Promise<any>) => {

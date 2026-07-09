@@ -1,0 +1,28 @@
+{
+  "$schema": "../../../schema/descriptor.schema.json",
+  "id": "da/mcp-server-static",
+  "name": "Declarative Agent with Static MCP Tools",
+  "languages": ["common"],
+  "minEngineVersion": "5.20.0",
+  "spec": "docs/03-specs/scenarios/da/create-mcp-server-static.md",
+  "requiresNetwork": false,
+
+  "optionsSchema": {
+    "type": "object",
+    "required": ["mcpServerUrl"],
+    "properties": {
+      "mcpServerUrl": { "type": "string", "format": "uri" },
+      "mcpToolsFilePath": { "type": "string" },
+      "mcpToolsJson": { "type": "string" },
+      "selectedMcpTools": { "type": "array", "items": { "type": "string" } }
+    },
+    "additionalProperties": false
+  },
+
+  "replaceMap": [
+    { "var": "DeclarativeCopilot", "const": "true" },
+    { "var": "MCPForDAServerUrl", "from": "mcpServerUrl" },
+    { "var": "MCPNamespace", "expr": "safeProjectNameLowerCase(appName)" },
+    { "var": "MCPServerName", "expr": "mcpNamespace(mcpServerUrl)" }
+  ]
+}

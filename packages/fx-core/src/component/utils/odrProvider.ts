@@ -1,14 +1,16 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { exec } from "child_process";
+import * as childProcess from "child_process";
 import { promisify } from "util";
 
 export const odrProviderDeps = {
-  exec,
   getPlatform: (): string => process.platform,
+  exec: childProcess.exec,
   logError: (...args: any[]): void => console.error(...args),
 };
+
+export const logError = (...args: any[]): void => odrProviderDeps.logError(...args);
 
 export interface ODRServer {
   name: string;

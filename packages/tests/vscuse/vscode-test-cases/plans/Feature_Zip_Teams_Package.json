@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 20,
+    "total_steps": 19,
     "created_at": "2026-02-10T03:16:21.939158",
     "name": "Feature Zip Teams Package",
     "description": {
@@ -19,7 +19,7 @@
     "generated_at": "2026-02-10T03:16:21.939158",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_e5ec3349",
+      "plan_r_0624_024810",
       "step_ad00b72b",
       "step_d1c4aaf4",
       "step_2fad8889",
@@ -48,37 +48,6 @@
     "updated_at": "2026-02-10T03:51:13.956331"
   },
   "steps": [
-    {
-      "step_id": "step_e5ec3349",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "dx": null,
-        "dy": null,
-        "key": null,
-        "keys": null,
-        "text": null,
-        "x": 372,
-        "y": 212
-      },
-      "description": "Click the \"Teams Agents and apps\" option in the \"New Project\" dropdown menu within the Microsoft 365 Agents Toolkit interface in Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "0",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:372:212:16:5:da96959d9d09f509",
-        "dhash:372:212:96:5:24b223684cb60900",
-        "dhash:372:212:0:10:c8c88094b0717c6f"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_e5ec3349",
-      "created_at": "2026-02-10T03:16:21.945800",
-      "plan_id": "plan_d8e9996b"
-    },
     {
       "step_id": "step_ad00b72b",
       "agent": "interaction",

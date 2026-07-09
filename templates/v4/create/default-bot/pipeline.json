@@ -1,0 +1,9 @@
+{
+  "pipeline": "default",
+  "comment": "Teams simple bot create package: pure render. The require-empty-target step guards the create contract so render writes the selected language subtree without post-render injection.",
+  "steps": [
+    {
+      "step": "require-empty-target"
+    }
+  ]
+}

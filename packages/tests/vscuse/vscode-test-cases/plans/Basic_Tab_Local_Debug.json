@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 12,
+    "total_steps": 11,
     "created_at": "2026-01-14T23:52:29.782030",
     "name": "Basic Tab Local Debug",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2026-01-14T23:52:29.782030",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_2f7da668",
+      "plan_r_0624_024810",
       "step_22fed58e",
       "step_5e22e913",
       "step_09a396bb",
@@ -41,32 +41,6 @@
     "updated_at": "2026-01-14T23:55:32.454050"
   },
   "steps": [
-    {
-      "step_id": "step_2f7da668",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 361,
-        "y": 229
-      },
-      "description": "Click on the \"Declarative Agent\" option within the \"New Project\" dropdown menu to create an agent using instructions and actions.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:361:229:16:5:53ccc35ac8d2730c",
-        "dhash:361:229:96:5:959834d2da1409c8",
-        "dhash:361:229:0:10:c8c88094b0717c6f"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_2f7da668",
-      "created_at": "2026-01-14T23:52:29.798506",
-      "plan_id": "plan_17f090b5"
-    },
     {
       "step_id": "step_22fed58e",
       "agent": "interaction",

@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 5,
+    "total_steps": 4,
     "created_at": "2026-02-12T06:24:49.719526",
     "name": "Teams Agent With Data AI Search Azure OpenAI py Remote Debug",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2026-02-12T06:24:49.719526",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_fd1d3a30",
+      "plan_r_0624_024810",
       "step_a5dbdf91",
       "step_5871948d",
       "plan_r_0930_054245",
@@ -40,32 +40,6 @@
     "updated_at": "2026-02-12T06:40:39.381074"
   },
   "steps": [
-    {
-      "step_id": "step_fd1d3a30",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 326,
-        "y": 221
-      },
-      "description": "Click the \"Teams Agents and Apps\" option from the dropdown menu in the \"New Project\" window.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:326:221:16:5:5aa55108164a1bb3",
-        "dhash:326:221:96:5:911b524299adc295",
-        "dhash:326:221:0:10:c8c88094b2717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_fd1d3a30",
-      "created_at": "2026-02-12T06:24:49.727931",
-      "plan_id": "plan_ec48f68b"
-    },
     {
       "step_id": "step_a5dbdf91",
       "agent": "interaction",

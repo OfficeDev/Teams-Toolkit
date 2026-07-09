@@ -1,37 +1,30 @@
-import * as chai from "chai";
-import * as sinon from "sinon";
+import { vi, assert } from "vitest";
 
 import { TreeViewCommand } from "../../src/treeview/treeViewCommand";
 import { CommandsTreeViewProvider } from "../../src/treeview/commandsTreeViewProvider";
 
 describe("CommandsTreeViewProvider", () => {
-  const sandbox = sinon.createSandbox();
-
-  afterEach(() => {
-    sandbox.restore();
-  });
-
   it("getCommands", async () => {
     const provider = new CommandsTreeViewProvider([new TreeViewCommand("test", "test")]);
     const commands = provider.getCommands();
 
-    chai.assert.equal(commands.length, 1);
-    chai.assert.equal(commands[0].label, "test");
+    assert.equal(commands.length, 1);
+    assert.equal(commands[0].label, "test");
   });
 
   it("getTreeItem", async () => {
     const provider = new CommandsTreeViewProvider([]);
     const command = provider.getTreeItem(new TreeViewCommand("test", "test"));
 
-    chai.assert.equal(command.label, "test");
+    assert.equal(command.label, "test");
   });
 
   it("getChildren", async () => {
     const provider = new CommandsTreeViewProvider([new TreeViewCommand("test", "test")]);
     const commands = await provider.getChildren();
 
-    chai.assert.equal(commands.length, 1);
-    chai.assert.equal(commands[0].label, "test");
+    assert.equal(commands.length, 1);
+    assert.equal(commands[0].label, "test");
   });
 
   it("accessibility tests", async () => {
@@ -39,16 +32,16 @@ describe("CommandsTreeViewProvider", () => {
     const command = new TreeViewCommand("testLabel", "testTooltip");
     let treeItem = provider.getTreeItem(command);
 
-    chai.assert.equal(treeItem.accessibilityInformation?.label, "testLabel. testTooltip");
+    assert.equal(treeItem.accessibilityInformation?.label, "testLabel. testTooltip");
 
     command.label = undefined;
     command.tooltip = undefined;
     treeItem = provider.getTreeItem(command);
-    chai.assert.equal(treeItem.accessibilityInformation?.label, ".");
+    assert.equal(treeItem.accessibilityInformation?.label, ".");
 
     command.label = { label: "testLabel" };
     command.tooltip = { value: "testTooltip" } as any;
     treeItem = provider.getTreeItem(command);
-    chai.assert.equal(treeItem.accessibilityInformation?.label, "testLabel. testTooltip");
+    assert.equal(treeItem.accessibilityInformation?.label, "testLabel. testTooltip");
   });
 });

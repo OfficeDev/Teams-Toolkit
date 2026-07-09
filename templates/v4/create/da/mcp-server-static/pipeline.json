@@ -1,0 +1,22 @@
+{
+  "pipeline": "default",
+  "comment": "Render produces the base DA project files. On CLI, the static MCP step materializes selected tools into appPackage/mcp-tools-1.json and rewrites appPackage/ai-plugin.json to the legacy static RemoteMCPServer runtime shape. VS Code create skips static tool materialization and leaves tool fetch/update to the MCP CodeLens flow.",
+  "steps": [
+    {
+      "step": "require-empty-target",
+      "comment": "Guards the create contract before render so a non-empty target writes nothing."
+    },
+    {
+      "step": "mcp-static/materialize-tools",
+      "when": "surface == 'cli'",
+      "with": {
+        "pluginPath": "appPackage/ai-plugin.json",
+        "toolsPath": "appPackage/mcp-tools-1.json",
+        "mcpServerUrl": "{{MCPForDAServerUrl}}",
+        "toolsFilePath": "{{mcpToolsFilePath}}",
+        "toolsJson": "{{mcpToolsJson}}",
+        "selected": "{{selectedMcpTools}}"
+      }
+    }
+  ]
+}

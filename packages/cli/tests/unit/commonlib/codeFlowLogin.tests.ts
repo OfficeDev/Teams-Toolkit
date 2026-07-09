@@ -2,13 +2,12 @@
 // Licensed under the MIT license.
 
 import { AccountInfo } from "@azure/msal-node";
-import sinon from "sinon";
 import { CodeFlowLogin } from "../../../src/commonlib/codeFlowLogin";
 import CliTelemetry from "../../../src/telemetry/cliTelemetry";
 import { expect } from "../utils";
-
+import { vi } from "vitest";
 describe("CodeFlowLogin.loginWithBroker", function () {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   // A minimal JWT-like token: header.payload.signature
   // payload = base64({"oid":"fake-oid","upn":"test@test.com"})
@@ -36,21 +35,23 @@ describe("CodeFlowLogin.loginWithBroker", function () {
   };
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   function setupLogin(accountName: string) {
-    sandbox.stub(CliTelemetry, "sendTelemetryEvent");
+    vi.spyOn(CliTelemetry, "sendTelemetryEvent");
 
     const codeFlowLogin = new CodeFlowLogin([], config, 0, accountName);
     let capturedRequest: any;
-    sandbox.stub(codeFlowLogin.pca, "acquireTokenInteractive").callsFake(async (request: any) => {
-      capturedRequest = request;
-      return fakeResponse as any;
-    });
-    sandbox.stub(codeFlowLogin as any, "mutex").value({
+    vi.spyOn(codeFlowLogin.pca, "acquireTokenInteractive").mockImplementation(
+      async (request: any) => {
+        capturedRequest = request;
+        return fakeResponse as any;
+      }
+    );
+    (codeFlowLogin as any as any).mutex = {
       runExclusive: async (fn: any) => fn(),
-    });
+    };
 
     return { codeFlowLogin, getCapturedRequest: () => capturedRequest };
   }
@@ -81,7 +82,7 @@ describe("CodeFlowLogin.loginWithBroker", function () {
 });
 
 describe("CodeFlowLogin.logout", function () {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   const config = {
     auth: {
@@ -91,7 +92,7 @@ describe("CodeFlowLogin.logout", function () {
   };
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   function createMockAccount(homeAccountId: string): Pick<AccountInfo, "homeAccountId"> {
@@ -105,20 +106,21 @@ describe("CodeFlowLogin.logout", function () {
     const accountA = createMockAccount("account-a");
     const accountB = createMockAccount("account-b");
 
-    sandbox.stub(codeFlowLogin as any, "loadAccountIdFromCache").resolves("account-b");
-    sandbox.stub(codeFlowLogin as any, "clearAccountCache").resolves();
-    sandbox.stub(codeFlowLogin as any, "saveAccountIdToCache").resolves();
-    sandbox.stub(codeFlowLogin as any, "saveTenantIdToCache").resolves();
-    sandbox
-      .stub(codeFlowLogin.pca, "getAllAccounts")
-      .resolves([accountA, accountB] as AccountInfo[]);
-    const signOutStub = sandbox.stub(codeFlowLogin.pca, "signOut").resolves();
+    vi.spyOn(codeFlowLogin as any, "loadAccountIdFromCache").mockResolvedValue("account-b");
+    vi.spyOn(codeFlowLogin as any, "clearAccountCache").mockResolvedValue();
+    vi.spyOn(codeFlowLogin as any, "saveAccountIdToCache").mockResolvedValue();
+    vi.spyOn(codeFlowLogin as any, "saveTenantIdToCache").mockResolvedValue();
+    vi.spyOn(codeFlowLogin.pca, "getAllAccounts").mockResolvedValue([
+      accountA,
+      accountB,
+    ] as AccountInfo[]);
+    const signOutStub = vi.spyOn(codeFlowLogin.pca, "signOut").mockResolvedValue();
 
     const result = await codeFlowLogin.logout();
 
     expect(result).to.equal(true);
-    expect(signOutStub.calledOnce).to.equal(true);
-    expect(signOutStub.firstCall.firstArg.account.homeAccountId).to.equal(accountB.homeAccountId);
+    expect(signOutStub.mock.calls.length === 1).to.equal(true);
+    expect(signOutStub.mock.calls[0][0].account.homeAccountId).to.equal(accountB.homeAccountId);
   });
 
   it("should sign out all accounts when broker is not available", async () => {
@@ -128,19 +130,20 @@ describe("CodeFlowLogin.logout", function () {
     const accountA = createMockAccount("account-a");
     const accountB = createMockAccount("account-b");
 
-    sandbox.stub(codeFlowLogin as any, "clearAccountCache").resolves();
-    sandbox.stub(codeFlowLogin as any, "saveAccountIdToCache").resolves();
-    sandbox.stub(codeFlowLogin as any, "saveTenantIdToCache").resolves();
-    sandbox
-      .stub(codeFlowLogin.pca, "getAllAccounts")
-      .resolves([accountA, accountB] as AccountInfo[]);
-    const signOutStub = sandbox.stub(codeFlowLogin.pca, "signOut").resolves();
+    vi.spyOn(codeFlowLogin as any, "clearAccountCache").mockResolvedValue();
+    vi.spyOn(codeFlowLogin as any, "saveAccountIdToCache").mockResolvedValue();
+    vi.spyOn(codeFlowLogin as any, "saveTenantIdToCache").mockResolvedValue();
+    vi.spyOn(codeFlowLogin.pca, "getAllAccounts").mockResolvedValue([
+      accountA,
+      accountB,
+    ] as AccountInfo[]);
+    const signOutStub = vi.spyOn(codeFlowLogin.pca, "signOut").mockResolvedValue();
 
     const result = await codeFlowLogin.logout();
 
     expect(result).to.equal(true);
-    expect(signOutStub.callCount).to.equal(2);
-    expect(signOutStub.firstCall.firstArg.account.homeAccountId).to.equal(accountA.homeAccountId);
-    expect(signOutStub.secondCall.firstArg.account.homeAccountId).to.equal(accountB.homeAccountId);
+    expect(signOutStub.mock.calls.length).to.equal(2);
+    expect(signOutStub.mock.calls[0][0].account.homeAccountId).to.equal(accountA.homeAccountId);
+    expect(signOutStub.mock.calls[1][0].account.homeAccountId).to.equal(accountB.homeAccountId);
   });
 });

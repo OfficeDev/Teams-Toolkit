@@ -1,7 +1,7 @@
 import { Inputs, Platform } from "@microsoft/teamsfx-api";
-import { assert } from "chai";
 import path from "path";
-import sinon, { createSandbox } from "sinon";
+import { assert, vi } from "vitest";
+import { featureFlagManager, FeatureFlags } from "../../../src/common/featureFlags";
 import { createContext, setTools } from "../../../src/common/globalVars";
 import { DefaultTemplateGenerator } from "../../../src/component/generator/defaultGenerator";
 import { Generator } from "../../../src/component/generator/generator";
@@ -36,13 +36,13 @@ describe("TemplateGenerator", () => {
   setTools(new MockTools());
   const ctx = createContext();
   const destinationPath = path.join(__dirname, "tmp");
-  const sandbox = createSandbox();
-  let scaffoldingSpy: sinon.SinonSpy;
+  const sandbox = vi;
+  let scaffoldingSpy: any;
   let inputs: Inputs;
 
   beforeEach(() => {
-    scaffoldingSpy = sandbox.spy(DefaultTemplateGenerator.prototype, "scaffolding" as any);
-    sandbox.stub(Generator, "generate").resolves();
+    scaffoldingSpy = vi.spyOn(DefaultTemplateGenerator.prototype, "scaffolding" as any);
+    vi.spyOn(Generator, "generate").mockResolvedValue();
     inputs = {
       platform: Platform.VS,
       [QuestionNames.AppName]: randomAppName(),
@@ -51,7 +51,7 @@ describe("TemplateGenerator", () => {
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   testInputsToTemplateName.forEach(async (templateName, _inputs) => {
@@ -64,12 +64,35 @@ describe("TemplateGenerator", () => {
       );
 
       assert.isTrue(res?.isOk());
-      assert.isTrue(scaffoldingSpy.calledOnce);
-      assert.equal((scaffoldingSpy.args[0][2] as TemplateInfo).templateName, templateName);
+      assert.isTrue(scaffoldingSpy.mock.calls.length === 1);
+      assert.equal((scaffoldingSpy.mock.calls[0][2] as TemplateInfo).templateName, templateName);
       assert.equal(
-        (scaffoldingSpy.args[0][2] as TemplateInfo).language,
+        (scaffoldingSpy.mock.calls[0][2] as TemplateInfo).language,
         inputs?.[QuestionNames.ProgrammingLanguage] || ProgrammingLanguage.JS
       );
     });
+  });
+
+  it("keeps Platform.VS on the v3 channel when TEAMSFX_V4_ENABLED is on", async () => {
+    const realGetBooleanValue = featureFlagManager.getBooleanValue.bind(featureFlagManager);
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation(
+      (f) => f.name === FeatureFlags.V4Enabled.name || realGetBooleanValue(f)
+    );
+    inputs = {
+      ...inputs,
+      [QuestionNames.Capabilities]: TabCapabilityOptions.nonSsoTab().id,
+      [QuestionNames.ProgrammingLanguage]: ProgrammingLanguage.CSharp,
+      [QuestionNames.TemplateName]: TemplateNames.TabSSR,
+      targetFramework: "net8.0",
+    } as Inputs;
+
+    const res = await Generators.find((g) => g.activate(ctx, inputs))?.run(
+      ctx,
+      inputs,
+      destinationPath
+    );
+
+    assert.isTrue(res?.isOk());
+    assert.isTrue((Generator.generate as any).mock.calls.length > 0);
   });
 });

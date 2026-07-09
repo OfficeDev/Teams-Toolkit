@@ -2,9 +2,8 @@
 // Licensed under the MIT license.
 
 import axios, { AxiosInstance } from "axios";
-import * as chai from "chai";
-import * as sinon from "sinon";
 import { v4 as uuid } from "uuid";
+import { afterEach, beforeEach, chai, expect, vi } from "vitest";
 import { TEAMS_GRAPH_API_NAMES } from "../../src/client/teamsGraphClient";
 import { getResourceServiceEndpoint, ResourceServiceType } from "../../src/common/constants";
 import { setTools } from "../../src/common/globalVars";
@@ -24,21 +23,21 @@ describe("Wrapped Axios Client Test", () => {
   });
 
   afterEach(() => {
-    sinon.restore();
+    vi.restoreAllMocks();
   });
 
   it("create", async () => {
     const testAxiosInstance = {
       interceptors: {
         request: {
-          use: sinon.stub(),
+          use: vi.fn(),
         },
         response: {
-          use: sinon.stub(),
+          use: vi.fn(),
         },
       },
     } as any as AxiosInstance;
-    sinon.stub(axios, "create").returns(testAxiosInstance);
+    vi.spyOn(axios, "create").mockReturnValue(testAxiosInstance);
     WrappedAxiosClient.create();
   });
 
@@ -148,10 +147,10 @@ describe("Wrapped Axios Client Test", () => {
       status: 200,
       data: {},
     } as any;
-    const telemetryChecker = sinon.spy(mockTools.telemetryReporter, "sendTelemetryEvent");
+    const telemetryChecker = vi.spyOn(mockTools.telemetryReporter, "sendTelemetryEvent");
 
     WrappedAxiosClient.onRequest(mockedRequest);
-    chai.expect(telemetryChecker.calledOnce).to.be.true;
+    expect(telemetryChecker).toHaveBeenCalledOnce();
   });
 
   it("Dependency API start telemetry", async () => {
@@ -163,10 +162,10 @@ describe("Wrapped Axios Client Test", () => {
       status: 200,
       data: {},
     } as any;
-    const telemetryChecker = sinon.spy(mockTools.telemetryReporter, "sendTelemetryEvent");
+    const telemetryChecker = vi.spyOn(mockTools.telemetryReporter, "sendTelemetryEvent");
 
     WrappedAxiosClient.onRequest(mockedRequest);
-    chai.expect(telemetryChecker.calledOnce).to.be.true;
+    expect(telemetryChecker).toHaveBeenCalledOnce();
   });
 
   it("Teams Graph API start telemetry", async () => {
@@ -178,15 +177,15 @@ describe("Wrapped Axios Client Test", () => {
       status: 200,
       data: {},
     } as any;
-    const telemetryChecker = sinon.spy(mockTools.telemetryReporter, "sendTelemetryEvent");
+    const telemetryChecker = vi.spyOn(mockTools.telemetryReporter, "sendTelemetryEvent");
 
     WrappedAxiosClient.onRequest(mockedRequest);
-    chai.expect(telemetryChecker.calledOnce).to.be.true;
+    expect(telemetryChecker).toHaveBeenCalledOnce();
     chai
-      .expect(telemetryChecker.firstCall.args[0])
+      .expect(telemetryChecker.mock.calls[0][0])
       .to.equal(`${TelemetryEvent.TeamsGraphApi}-start`);
     chai
-      .expect((telemetryChecker.firstCall.args[1] as any).url)
+      .expect((telemetryChecker.mock.calls[0][1] as any).url)
       .to.equal(`<${TEAMS_GRAPH_API_NAMES.CREATE_API_KEY}-url>`);
   });
 
@@ -203,10 +202,10 @@ describe("Wrapped Axios Client Test", () => {
       status: 200,
       data: {},
     } as any;
-    const telemetryChecker = sinon.spy(mockTools.telemetryReporter, "sendTelemetryEvent");
+    const telemetryChecker = vi.spyOn(mockTools.telemetryReporter, "sendTelemetryEvent");
 
     WrappedAxiosClient.onResponse(mockedResponse);
-    chai.expect(telemetryChecker.calledOnce).to.be.true;
+    expect(telemetryChecker).toHaveBeenCalledOnce();
   });
 
   it("Dependency API success response", async () => {
@@ -222,10 +221,10 @@ describe("Wrapped Axios Client Test", () => {
       status: 200,
       data: {},
     } as any;
-    const telemetryChecker = sinon.spy(mockTools.telemetryReporter, "sendTelemetryEvent");
+    const telemetryChecker = vi.spyOn(mockTools.telemetryReporter, "sendTelemetryEvent");
 
     WrappedAxiosClient.onResponse(mockedResponse);
-    chai.expect(telemetryChecker.calledOnce).to.be.true;
+    expect(telemetryChecker).toHaveBeenCalledOnce();
   });
 
   it("Teams Graph API success response", async () => {
@@ -241,13 +240,13 @@ describe("Wrapped Axios Client Test", () => {
       status: 200,
       data: {},
     } as any;
-    const telemetryChecker = sinon.spy(mockTools.telemetryReporter, "sendTelemetryEvent");
+    const telemetryChecker = vi.spyOn(mockTools.telemetryReporter, "sendTelemetryEvent");
 
     WrappedAxiosClient.onResponse(mockedResponse);
-    chai.expect(telemetryChecker.calledOnce).to.be.true;
-    chai.expect(telemetryChecker.firstCall.args[0]).to.equal(TelemetryEvent.TeamsGraphApi);
+    expect(telemetryChecker).toHaveBeenCalledOnce();
+    chai.expect(telemetryChecker.mock.calls[0][0]).to.equal(TelemetryEvent.TeamsGraphApi);
     chai
-      .expect((telemetryChecker.firstCall.args[1] as any).url)
+      .expect((telemetryChecker.mock.calls[0][1] as any).url)
       .to.equal(`<${TEAMS_GRAPH_API_NAMES.GET_OAUTH}-url>`);
   });
 
@@ -267,10 +266,10 @@ describe("Wrapped Axios Client Test", () => {
         },
       },
     } as any;
-    const telemetryChecker = sinon.spy(mockTools.telemetryReporter, "sendTelemetryErrorEvent");
+    const telemetryChecker = vi.spyOn(mockTools.telemetryReporter, "sendTelemetryErrorEvent");
 
     await WrappedAxiosClient.onRejected(mockedError).catch(() => undefined);
-    chai.expect(telemetryChecker.calledOnce).to.be.true;
+    expect(telemetryChecker).toHaveBeenCalledOnce();
   });
 
   it("Dependency API error response", async () => {
@@ -287,10 +286,10 @@ describe("Wrapped Axios Client Test", () => {
         status: 400,
       },
     } as any;
-    const telemetryChecker = sinon.spy(mockTools.telemetryReporter, "sendTelemetryErrorEvent");
+    const telemetryChecker = vi.spyOn(mockTools.telemetryReporter, "sendTelemetryErrorEvent");
 
     await WrappedAxiosClient.onRejected(mockedError).catch(() => undefined);
-    chai.expect(telemetryChecker.calledOnce).to.be.true;
+    expect(telemetryChecker).toHaveBeenCalledOnce();
   });
 
   it("Teams Graph API error response logs fallback correlation id headers", async () => {
@@ -310,14 +309,14 @@ describe("Wrapped Axios Client Test", () => {
         },
       },
     } as any;
-    const telemetryChecker = sinon.spy(mockTools.telemetryReporter, "sendTelemetryErrorEvent");
+    const telemetryChecker = vi.spyOn(mockTools.telemetryReporter, "sendTelemetryErrorEvent");
 
     let rejected: any;
     await WrappedAxiosClient.onRejected(mockedError).catch((e) => (rejected = e));
 
     chai.expect(rejected).to.equal(mockedError);
-    chai.expect(telemetryChecker.calledOnce).to.be.true;
-    const props = telemetryChecker.firstCall.args[1] as Record<string, string>;
+    expect(telemetryChecker).toHaveBeenCalledOnce();
+    const props = telemetryChecker.mock.calls[0][1] as Record<string, string>;
     chai.expect(props["teams-graph-trace-id"]).to.equal(fallbackCorrelationId);
   });
 
@@ -340,14 +339,14 @@ describe("Wrapped Axios Client Test", () => {
         },
       },
     } as any;
-    const telemetryChecker = sinon.spy(mockTools.telemetryReporter, "sendTelemetryErrorEvent");
+    const telemetryChecker = vi.spyOn(mockTools.telemetryReporter, "sendTelemetryErrorEvent");
 
     let rejected: any;
     await WrappedAxiosClient.onRejected(mockedError).catch((e) => (rejected = e));
 
     chai.expect(rejected).to.equal(mockedError);
-    chai.expect(telemetryChecker.calledOnce).to.be.true;
-    const props = telemetryChecker.firstCall.args[1] as Record<string, string>;
+    expect(telemetryChecker).toHaveBeenCalledOnce();
+    const props = telemetryChecker.mock.calls[0][1] as Record<string, string>;
     chai.expect(props["teams-graph-trace-id"]).to.equal(xCorrelationId);
   });
 
@@ -368,14 +367,14 @@ describe("Wrapped Axios Client Test", () => {
         },
       },
     } as any;
-    const telemetryChecker = sinon.spy(mockTools.telemetryReporter, "sendTelemetryErrorEvent");
+    const telemetryChecker = vi.spyOn(mockTools.telemetryReporter, "sendTelemetryErrorEvent");
 
     let rejected: any;
     await WrappedAxiosClient.onRejected(mockedError).catch((e) => (rejected = e));
 
     chai.expect(rejected).to.equal(mockedError);
-    chai.expect(telemetryChecker.calledOnce).to.be.true;
-    const props = telemetryChecker.firstCall.args[1] as Record<string, string>;
+    expect(telemetryChecker).toHaveBeenCalledOnce();
+    const props = telemetryChecker.mock.calls[0][1] as Record<string, string>;
     chai.expect(props["teams-graph-trace-id"]).to.equal(msRequestId);
   });
 
@@ -396,9 +395,9 @@ describe("Wrapped Axios Client Test", () => {
         },
       },
     } as any;
-    const telemetryChecker = sinon.spy(mockTools.telemetryReporter, "sendTelemetryErrorEvent");
+    const telemetryChecker = vi.spyOn(mockTools.telemetryReporter, "sendTelemetryErrorEvent");
     await WrappedAxiosClient.onRejected(mockedError).catch(() => undefined);
-    chai.expect(telemetryChecker.calledOnce).to.be.true;
+    expect(telemetryChecker).toHaveBeenCalledOnce();
   });
 
   it("MOS API error response url not classified", async () => {
@@ -418,9 +417,9 @@ describe("Wrapped Axios Client Test", () => {
         },
       },
     } as any;
-    const telemetryChecker = sinon.spy(mockTools.telemetryReporter, "sendTelemetryErrorEvent");
+    const telemetryChecker = vi.spyOn(mockTools.telemetryReporter, "sendTelemetryErrorEvent");
     await WrappedAxiosClient.onRejected(mockedError).catch(() => undefined);
-    chai.expect(telemetryChecker.calledOnce).to.be.true;
+    expect(telemetryChecker).toHaveBeenCalledOnce();
   });
 
   // Regression tests for AB#37640864: telemetry must never throw / mask the
@@ -438,13 +437,13 @@ describe("Wrapped Axios Client Test", () => {
       },
       // no `response` property -> transport failure
     } as any;
-    const telemetryChecker = sinon.spy(mockTools.telemetryReporter, "sendTelemetryErrorEvent");
+    const telemetryChecker = vi.spyOn(mockTools.telemetryReporter, "sendTelemetryErrorEvent");
 
     let rejected: any;
     await WrappedAxiosClient.onRejected(transportError).catch((e) => (rejected = e));
 
     chai.expect(rejected).to.equal(transportError);
-    chai.expect(telemetryChecker.calledOnce).to.be.true;
+    expect(telemetryChecker).toHaveBeenCalledOnce();
   });
 
   it("error with no request object does not throw", async () => {
@@ -477,13 +476,13 @@ describe("Wrapped Axios Client Test", () => {
         headers: { traceresponse: "trace-123" },
       },
     } as any;
-    const telemetryChecker = sinon.spy(mockTools.telemetryReporter, "sendTelemetryErrorEvent");
+    const telemetryChecker = vi.spyOn(mockTools.telemetryReporter, "sendTelemetryErrorEvent");
 
     let rejected: any;
     await WrappedAxiosClient.onRejected(mockedError).catch((e) => (rejected = e));
 
     chai.expect(rejected).to.equal(mockedError);
-    chai.expect(telemetryChecker.calledOnce).to.be.true;
+    expect(telemetryChecker).toHaveBeenCalledOnce();
   });
 
   it("convertUrlToApiName handles undefined method", () => {
@@ -517,13 +516,13 @@ describe("Wrapped Axios Client Test", () => {
         // headers intentionally omitted
       },
     } as any;
-    const telemetryChecker = sinon.spy(mockTools.telemetryReporter, "sendTelemetryErrorEvent");
+    const telemetryChecker = vi.spyOn(mockTools.telemetryReporter, "sendTelemetryErrorEvent");
 
     let rejected: any;
     await WrappedAxiosClient.onRejected(mockedError).catch((e) => (rejected = e));
 
     chai.expect(rejected).to.equal(mockedError);
-    chai.expect(telemetryChecker.calledOnce).to.be.true;
+    expect(telemetryChecker).toHaveBeenCalledOnce();
   });
 
   it("MOS API error with nested response.data.error is surfaced", async () => {
@@ -544,14 +543,14 @@ describe("Wrapped Axios Client Test", () => {
         headers: { traceresponse: "trace-xyz" },
       },
     } as any;
-    const telemetryChecker = sinon.spy(mockTools.telemetryReporter, "sendTelemetryErrorEvent");
+    const telemetryChecker = vi.spyOn(mockTools.telemetryReporter, "sendTelemetryErrorEvent");
 
     let rejected: any;
     await WrappedAxiosClient.onRejected(mockedError).catch((e) => (rejected = e));
 
     chai.expect(rejected).to.equal(mockedError);
-    chai.expect(telemetryChecker.calledOnce).to.be.true;
-    const props = telemetryChecker.firstCall.args[1] as any;
+    expect(telemetryChecker).toHaveBeenCalledOnce();
+    const props = telemetryChecker.mock.calls[0][1] as any;
     chai.expect(props["err-message"]).to.contain("Conflict");
     chai.expect(props["err-message"]).to.contain("Already exists");
     chai.expect(props["err-message"]).to.contain("trace-xyz");
@@ -564,9 +563,9 @@ describe("Wrapped Axios Client Test", () => {
       config: { baseURL: "https://example.com", url: "/x" },
     } as any;
     // Force the telemetry reporter itself to throw, exercising the outer catch.
-    sinon
-      .stub(mockTools.telemetryReporter, "sendTelemetryErrorEvent")
-      .throws(new Error("telemetry exploded"));
+    vi.spyOn(mockTools.telemetryReporter, "sendTelemetryErrorEvent").mockImplementation(() => {
+      throw new Error("telemetry exploded");
+    });
 
     let rejected: any;
     await WrappedAxiosClient.onRejected(mockedError).catch((e) => (rejected = e));
@@ -583,13 +582,13 @@ describe("Wrapped Axios Client Test", () => {
         path: "/dev/v1/users/packages",
       },
     } as any;
-    const telemetryChecker = sinon.spy(mockTools.telemetryReporter, "sendTelemetryErrorEvent");
+    const telemetryChecker = vi.spyOn(mockTools.telemetryReporter, "sendTelemetryErrorEvent");
 
     let rejected: any;
     await WrappedAxiosClient.onRejected(mockedError).catch((e) => (rejected = e));
 
     chai.expect(rejected).to.equal(mockedError);
-    chai.expect(telemetryChecker.calledOnce).to.be.true;
+    expect(telemetryChecker).toHaveBeenCalledOnce();
   });
 
   it("MOS API error with response.data.error missing fields uses fallback", async () => {
@@ -611,14 +610,14 @@ describe("Wrapped Axios Client Test", () => {
         headers: {},
       },
     } as any;
-    const telemetryChecker = sinon.spy(mockTools.telemetryReporter, "sendTelemetryErrorEvent");
+    const telemetryChecker = vi.spyOn(mockTools.telemetryReporter, "sendTelemetryErrorEvent");
 
     let rejected: any;
     await WrappedAxiosClient.onRejected(mockedError).catch((e) => (rejected = e));
 
     chai.expect(rejected).to.equal(mockedError);
-    chai.expect(telemetryChecker.calledOnce).to.be.true;
-    const props = telemetryChecker.firstCall.args[1] as any;
+    expect(telemetryChecker).toHaveBeenCalledOnce();
+    const props = telemetryChecker.mock.calls[0][1] as any;
     chai.expect(props["err-message"]).to.contain("Server Error");
     chai.expect(props["err-message"]).to.contain("undefined"); // tracingId fallback
   });
@@ -634,10 +633,10 @@ describe("Wrapped Axios Client Test", () => {
         botId: "fakeId",
       },
     } as any;
-    const telemetryChecker = sinon.spy(mockTools.telemetryReporter, "sendTelemetryEvent");
+    const telemetryChecker = vi.spyOn(mockTools.telemetryReporter, "sendTelemetryEvent");
 
     WrappedAxiosClient.onRequest(mockedRequest);
-    chai.expect(telemetryChecker.calledOnce).to.be.true;
+    expect(telemetryChecker).toHaveBeenCalledOnce();
   });
 
   it("Update bot API start telemetry", async () => {
@@ -649,10 +648,10 @@ describe("Wrapped Axios Client Test", () => {
       status: 200,
       data: {},
     } as any;
-    const telemetryChecker = sinon.spy(mockTools.telemetryReporter, "sendTelemetryEvent");
+    const telemetryChecker = vi.spyOn(mockTools.telemetryReporter, "sendTelemetryEvent");
 
     WrappedAxiosClient.onRequest(mockedRequest);
-    chai.expect(telemetryChecker.calledOnce).to.be.true;
+    expect(telemetryChecker).toHaveBeenCalledOnce();
   });
 
   it("Convert API name", async () => {
@@ -1041,12 +1040,12 @@ describe("Wrapped Axios Client Test", () => {
         status: 200,
         data: {},
       } as any;
-      const telemetryChecker = sinon.spy(mockTools.telemetryReporter, "sendTelemetryEvent");
+      const telemetryChecker = vi.spyOn(mockTools.telemetryReporter, "sendTelemetryEvent");
 
       WrappedAxiosClient.onResponse(mockedResponse);
 
-      chai.expect(telemetryChecker.calledOnce).to.be.true;
-      chai.expect(telemetryChecker.firstCall.args[0]).to.equal(TelemetryEvent.TeamsGraphApi);
+      expect(telemetryChecker).toHaveBeenCalledOnce();
+      chai.expect(telemetryChecker.mock.calls[0][0]).to.equal(TelemetryEvent.TeamsGraphApi);
     });
 
     it("Teams Graph API error response is classified as teams-graph-api, not dependency-api", async () => {
@@ -1066,13 +1065,13 @@ describe("Wrapped Axios Client Test", () => {
           headers: { "x-correlation-id": correlationId },
         },
       } as any;
-      const telemetryChecker = sinon.spy(mockTools.telemetryReporter, "sendTelemetryErrorEvent");
+      const telemetryChecker = vi.spyOn(mockTools.telemetryReporter, "sendTelemetryErrorEvent");
 
       await WrappedAxiosClient.onRejected(mockedError).catch(() => undefined);
 
-      chai.expect(telemetryChecker.calledOnce).to.be.true;
-      chai.expect(telemetryChecker.firstCall.args[0]).to.equal(TelemetryEvent.TeamsGraphApi);
-      const props = telemetryChecker.firstCall.args[1] as Record<string, string>;
+      expect(telemetryChecker).toHaveBeenCalledOnce();
+      chai.expect(telemetryChecker.mock.calls[0][0]).to.equal(TelemetryEvent.TeamsGraphApi);
+      const props = telemetryChecker.mock.calls[0][1] as Record<string, string>;
       chai.expect(props["teams-graph-trace-id"]).to.equal(correlationId);
     });
 
@@ -1093,13 +1092,13 @@ describe("Wrapped Axios Client Test", () => {
           headers: { traceresponse: "trace-reg" },
         },
       } as any;
-      const telemetryChecker = sinon.spy(mockTools.telemetryReporter, "sendTelemetryErrorEvent");
+      const telemetryChecker = vi.spyOn(mockTools.telemetryReporter, "sendTelemetryErrorEvent");
 
       await WrappedAxiosClient.onRejected(mockedError).catch(() => undefined);
 
-      chai.expect(telemetryChecker.calledOnce).to.be.true;
-      chai.expect(telemetryChecker.firstCall.args[0]).to.equal(TelemetryEvent.MOSApi);
-      const props = telemetryChecker.firstCall.args[1] as any;
+      expect(telemetryChecker).toHaveBeenCalledOnce();
+      chai.expect(telemetryChecker.mock.calls[0][0]).to.equal(TelemetryEvent.MOSApi);
+      const props = telemetryChecker.mock.calls[0][1] as any;
       chai.expect(props["err-message"]).to.contain("trace-reg");
     });
   });

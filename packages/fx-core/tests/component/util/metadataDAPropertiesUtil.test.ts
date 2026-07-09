@@ -1,6 +1,4 @@
 import { FxError, LogProvider, ok, Result } from "@microsoft/teamsfx-api";
-import { assert } from "chai";
-import sinon from "sinon";
 import fs from "fs-extra";
 import {
   DriverInstance,
@@ -14,6 +12,7 @@ import { ExecutionResult as DriverResult } from "../../../src/component/driver/i
 import { ProjectTypeProps } from "../../../src/common/telemetry";
 import { metadataDAPropertiesUtil } from "../../../src/component/utils/metadataDAProperties";
 import { manifestUtils } from "../../../src/component/driver/teamsApp/utils/ManifestUtils";
+import { assert, vi } from "vitest";
 
 function mockedResolveDriverInstances(log: LogProvider): Result<DriverInstance[], FxError> {
   return ok([
@@ -33,7 +32,7 @@ describe("metadata rsc permission util", () => {
   const manifestContent = `
   
   `;
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   const readAppManifestRes = {
     $schema: "https://developer.microsoft.com/json-schemas/teams/v1.19/MicrosoftTeams.schema.json",
@@ -80,14 +79,14 @@ describe("metadata rsc permission util", () => {
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("parseManifest happy path", async () => {
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(readAppManifestRes as any));
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(readAppManifestRes as any));
 
-    sandbox.stub(fs, "readJSON").callsFake(async (path: string) => {
+    vi.spyOn(fs, "readJSON").mockImplementation(async (path: string) => {
       if (path.endsWith("declarativeAgent.json")) {
         return {
           capabilities: [
@@ -150,7 +149,7 @@ describe("metadata rsc permission util", () => {
   });
 
   it("parseManifest no manifest", async () => {
-    sandbox.stub(fs, "pathExists").resolves(false);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
     const props: any = {};
     await metadataDAPropertiesUtil.parseManifest(
       ymlPath,
@@ -180,17 +179,17 @@ describe("metadata rsc permission util", () => {
   });
 
   it("parseManifest read manfiest error", async () => {
-    sandbox.stub(fs, "pathExists").resolves(false);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
     const props: any = {};
     await metadataDAPropertiesUtil.parseManifest(ymlPath, mockProjectModel, props);
     assert(props[ProjectTypeProps.TeamsManifestVersion] === undefined);
   });
 
   it("parseManifest no capabilities and actions", async () => {
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(readAppManifestRes as any));
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(readAppManifestRes as any));
 
-    sandbox.stub(fs, "readJSON").callsFake(async (path: string) => {
+    vi.spyOn(fs, "readJSON").mockImplementation(async (path: string) => {
       if (path.endsWith("declarativeAgent.json")) {
         return {};
       }
@@ -206,8 +205,8 @@ describe("metadata rsc permission util", () => {
   });
 
   it("parseManifest no copilotAgents", async () => {
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(
       ok({
         $schema:
           "https://developer.microsoft.com/json-schemas/teams/v1.19/MicrosoftTeams.schema.json",
@@ -222,8 +221,8 @@ describe("metadata rsc permission util", () => {
   });
 
   it("parseManifest no declarativeAgents", async () => {
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(
       ok({
         $schema:
           "https://developer.microsoft.com/json-schemas/teams/v1.19/MicrosoftTeams.schema.json",

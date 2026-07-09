@@ -1,0 +1,8 @@
+{
+  "$schema": "https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/nodemon.json",
+  "watch": ["./src/**"],
+  "ext": "ts,tsx",
+  "exec": "npm run build && node -r dotenv/config .",
+  "signal": "SIGINT",
+  "delay": 2
+}

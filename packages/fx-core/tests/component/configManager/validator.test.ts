@@ -5,13 +5,12 @@
  * @author yefuwang@microsoft.com
  */
 
-import chai from "chai";
 import { Validator } from "../../../src/component/configManager/validator";
-import * as sinon from "sinon";
+import { chai, vi } from "vitest";
 describe("yaml validator", () => {
   const validator = new Validator();
   afterEach(() => {
-    sinon.restore();
+    vi.restoreAllMocks();
   });
 
   it("should not support invalid versions", () => {

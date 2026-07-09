@@ -43,7 +43,7 @@ const tokenCredentials: TokenCredentials = {
 const credentialOptions = config.MicrosoftAppType === "UserAssignedMsi" ? { ...tokenCredentials } : undefined;
 
 // Create the main App instance
-const app = new App({...credentialOptions});
+const app = new App({...credentialOptions, skipAuth: !process.env.CLIENT_ID});
 
 const instructions = getAIInstructions();
 

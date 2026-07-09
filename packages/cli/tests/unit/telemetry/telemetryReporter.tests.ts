@@ -5,9 +5,7 @@ import { featureFlagManager, FeatureFlags } from "@microsoft/teamsfx-core";
 import { TelemetryClient } from "applicationinsights";
 import log4js from "log4js";
 import os from "os";
-import sinon from "sinon";
 import { vi } from "vitest";
-
 import Logger from "../../../src/commonlib/log";
 import Reporter from "../../../src/telemetry/telemetryReporter";
 import { expect } from "../utils";
@@ -62,10 +60,10 @@ vi.mock("applicationinsights", async (importOriginal) => {
 });
 
 describe("Telemetry Reporter", function () {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("getCommonProperties", () => {
@@ -98,12 +96,12 @@ describe("Telemetry Reporter", function () {
   });
 
   describe("anonymizeFilePaths", () => {
-    const sandbox = sinon.createSandbox();
+    const sandbox = vi;
 
     before(() => {});
 
     after(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("No stack", () => {
@@ -132,12 +130,12 @@ describe("Telemetry Reporter", function () {
   });
 
   describe("removePropertiesWithPossibleUserInfo", () => {
-    const sandbox = sinon.createSandbox();
+    const sandbox = vi;
 
     before(() => {});
 
     after(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("undefined", () => {
@@ -172,62 +170,64 @@ describe("Telemetry Reporter", function () {
   });
 
   it("sendTelemetryEvent", () => {
-    sandbox.stub(TelemetryClient.prototype, "trackEvent");
-    sandbox.stub(Logger, "debug");
+    vi.spyOn(TelemetryClient.prototype, "trackEvent");
+    vi.spyOn(Logger, "debug");
     const reporter = new Reporter("real", "real", "real", "real");
     reporter["appInsightsClient"] = new TelemetryClient("123");
     reporter.sendTelemetryEvent("eventName", { a: "real" });
   });
 
   it("sendTelemetryErrorEvent", () => {
-    sandbox.stub(TelemetryClient.prototype, "trackEvent");
-    sandbox.stub(Logger, "debug");
+    vi.spyOn(TelemetryClient.prototype, "trackEvent");
+    vi.spyOn(Logger, "debug");
     const reporter = new Reporter("real", "real", "real", "real");
     reporter["appInsightsClient"] = new TelemetryClient("123");
     reporter.sendTelemetryErrorEvent("eventName", { a: "real" });
   });
 
   it("sendTelemetryException", () => {
-    sandbox.stub(TelemetryClient.prototype, "trackEvent");
-    sandbox.stub(Logger, "debug");
+    vi.spyOn(TelemetryClient.prototype, "trackEvent");
+    vi.spyOn(Logger, "debug");
     const reporter = new Reporter("real", "real", "real", "real");
     reporter["appInsightsClient"] = new TelemetryClient("123");
     reporter.sendTelemetryException(new Error("test error"), { a: "real" });
   });
 
   it("flush", async () => {
-    sandbox.stub(TelemetryClient.prototype, "flush").callsFake((op) => {
+    vi.spyOn(TelemetryClient.prototype, "flush").mockImplementation((op) => {
       op?.callback?.("");
     });
-    sandbox.stub(Logger, "debug");
+    vi.spyOn(Logger, "debug");
     const reporter = new Reporter("real", "real", "real", "real");
     reporter["appInsightsClient"] = new TelemetryClient("123");
     await reporter.flush();
   });
 
   describe("log4js integration (debug on)", () => {
-    let getBooleanStub: sinon.SinonStub;
-    let configureStub: sinon.SinonStub;
-    let getLoggerStub: sinon.SinonStub;
-    let homedirStub: sinon.SinonStub;
+    let getBooleanStub: any;
+    let configureStub: any;
+    let getLoggerStub: any;
+    let homedirStub: any;
     const fakeLogger = {
-      info: sandbox.stub(),
-      error: sandbox.stub(),
+      info: vi.fn(),
+      error: vi.fn(),
     } as unknown as log4js.Logger;
 
     beforeEach(() => {
-      getBooleanStub = sandbox
-        .stub(featureFlagManager, "getBooleanValue")
-        .callsFake((flag: FeatureFlags) => (flag === FeatureFlags.TelemetryTest ? true : false));
-      configureStub = sandbox.stub(log4js, "configure");
-      getLoggerStub = sandbox.stub(log4js, "getLogger").returns(fakeLogger);
-      homedirStub = sandbox.stub(os, "homedir").returns("C:/home");
-      sandbox.stub(TelemetryClient.prototype, "trackEvent");
-      sandbox.stub(TelemetryClient.prototype, "trackException");
+      getBooleanStub = vi
+        .spyOn(featureFlagManager, "getBooleanValue")
+        .mockImplementation((flag: FeatureFlags) =>
+          flag === FeatureFlags.TelemetryTest ? true : false
+        );
+      configureStub = vi.spyOn(log4js, "configure");
+      getLoggerStub = vi.spyOn(log4js, "getLogger").mockReturnValue(fakeLogger);
+      homedirStub = vi.spyOn(os, "homedir").mockReturnValue("C:/home");
+      vi.spyOn(TelemetryClient.prototype, "trackEvent");
+      vi.spyOn(TelemetryClient.prototype, "trackException");
     });
 
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("sendTelemetryEvent logs to log4js", () => {
@@ -236,8 +236,8 @@ describe("Telemetry Reporter", function () {
       (reporter as any)["log4jsLogger"] = fakeLogger;
       reporter["appInsightsClient"] = new TelemetryClient("123");
       reporter.sendTelemetryEvent("unit-test-event", { a: "b" }, { m: 1 });
-      expect((fakeLogger.info as sinon.SinonStub).called).to.be.true;
-      const msg = (fakeLogger.info as sinon.SinonStub).lastCall.args[0] as string;
+      expect((fakeLogger.info as any).mock.calls.length > 0).to.be.true;
+      const msg = (fakeLogger.info as any).mock.lastCall[0] as string;
       expect(msg).to.contain("Event: atk/unit-test-event");
     });
 
@@ -247,8 +247,8 @@ describe("Telemetry Reporter", function () {
       (reporter as any)["log4jsLogger"] = fakeLogger;
       reporter["appInsightsClient"] = new TelemetryClient("123");
       reporter.sendTelemetryErrorEvent("unit-test-error", { x: "y" });
-      expect((fakeLogger.info as sinon.SinonStub).called).to.be.true;
-      const msg = (fakeLogger.info as sinon.SinonStub).lastCall.args[0] as string;
+      expect((fakeLogger.info as any).mock.calls.length > 0).to.be.true;
+      const msg = (fakeLogger.info as any).mock.lastCall[0] as string;
       expect(msg).to.contain("ErrorEvent: atk/unit-test-error");
     });
 
@@ -258,8 +258,8 @@ describe("Telemetry Reporter", function () {
       (reporter as any)["log4jsLogger"] = fakeLogger;
       reporter["appInsightsClient"] = new TelemetryClient("123");
       reporter.sendTelemetryException(new Error("boom"), { z: "w" });
-      expect((fakeLogger.error as sinon.SinonStub).called).to.be.true;
-      const msg = (fakeLogger.error as sinon.SinonStub).lastCall.args[0] as string;
+      expect((fakeLogger.error as any).mock.calls.length > 0).to.be.true;
+      const msg = (fakeLogger.error as any).mock.lastCall[0] as string;
       expect(msg).to.contain("Exception: atk/Error boom");
     });
   });

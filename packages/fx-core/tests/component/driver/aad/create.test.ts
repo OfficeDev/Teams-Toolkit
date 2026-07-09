@@ -1,34 +1,29 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-import * as sinon from "sinon";
+import { err, ok, UserError } from "@microsoft/teamsfx-api";
 import mockedEnv, { RestoreFn } from "mocked-env";
-import { CreateAadAppDriver } from "../../../../src/component/driver/aad/create";
-import {
-  MockedLogProvider,
-  MockedTelemetryReporter,
-  MockedUserInteraction,
-} from "../../../plugins/solution/util";
-import * as chai from "chai";
-import chaiAsPromised from "chai-as-promised";
+import { expect, vi } from "vitest";
 import { AadAppClient } from "../../../../src/client/aadAppClient";
-import { AADApplication } from "../../../../src/component/driver/aad/interface/AADApplication";
+import { TeamsDevPortalClient } from "../../../../src/client/teamsDevPortalClient";
+import { getLocalizedString } from "../../../../src/common/localizeUtils";
+import { CreateAadAppDriver } from "../../../../src/component/driver/aad/create";
+import { AadAppNameTooLongError } from "../../../../src/component/driver/aad/error/aadAppNameTooLongError";
 import { MissingEnvUserError } from "../../../../src/component/driver/aad/error/missingEnvError";
+import { AADApplication } from "../../../../src/component/driver/aad/interface/AADApplication";
+import { constants } from "../../../../src/component/driver/aad/utility/constants";
+import { OutputEnvironmentVariableUndefinedError } from "../../../../src/component/driver/error/outputEnvironmentVariableUndefinedError";
 import {
   HttpClientError,
   HttpServerError,
   InvalidActionInputError,
   UserCancelError,
 } from "../../../../src/error/common";
-import { err, ok, UserError } from "@microsoft/teamsfx-api";
-import { OutputEnvironmentVariableUndefinedError } from "../../../../src/component/driver/error/outputEnvironmentVariableUndefinedError";
-import { AadAppNameTooLongError } from "../../../../src/component/driver/aad/error/aadAppNameTooLongError";
 import { MockedM365Provider } from "../../../core/utils";
-import { getLocalizedString } from "../../../../src/common/localizeUtils";
-import { constants } from "../../../../src/component/driver/aad/utility/constants";
-import { TeamsDevPortalClient } from "../../../../src/client/teamsDevPortalClient";
-
-chai.use(chaiAsPromised);
-const expect = chai.expect;
+import {
+  MockedLogProvider,
+  MockedTelemetryReporter,
+  MockedUserInteraction,
+} from "../../../plugins/solution/util";
 
 const outputKeys = {
   clientId: "AAD_APP_CLIENT_ID",
@@ -56,7 +51,7 @@ describe("aadAppCreate", async () => {
   let envRestore: RestoreFn | undefined;
 
   afterEach(() => {
-    sinon.restore();
+    vi.restoreAllMocks();
     if (envRestore) {
       envRestore();
       envRestore = undefined;
@@ -140,16 +135,16 @@ describe("aadAppCreate", async () => {
       TTK_DEFAULT_SERVICE_MANAGEMENT_REFERENCE: expectedServiceManagementReference,
     });
 
-    sinon
-      .stub(AadAppClient.prototype, "createAadApp")
-      .callsFake(async (displayName, signInAudience, serviceManagementReference) => {
+    vi.spyOn(AadAppClient.prototype, "createAadApp").mockImplementation(
+      async (displayName, signInAudience, serviceManagementReference) => {
         expect(serviceManagementReference).to.equal(expectedServiceManagementReference);
         return {
           id: expectedObjectId,
           displayName: expectedDisplayName,
           appId: expectedClientId,
         } as AADApplication;
-      });
+      }
+    );
 
     const args: any = {
       name: "test",
@@ -162,13 +157,13 @@ describe("aadAppCreate", async () => {
   });
 
   it("should create new Microsoft Entra app and client secret with empty .env", async () => {
-    sinon.stub(AadAppClient.prototype, "createAadApp").resolves({
+    vi.spyOn(AadAppClient.prototype, "createAadApp").mockResolvedValue({
       id: expectedObjectId,
       displayName: expectedDisplayName,
       appId: expectedClientId,
     } as AADApplication);
 
-    sinon.stub(AadAppClient.prototype, "generateClientSecret").resolves(expectedSecretText);
+    vi.spyOn(AadAppClient.prototype, "generateClientSecret").mockResolvedValue(expectedSecretText);
 
     const args: any = {
       name: "test",
@@ -199,24 +194,24 @@ describe("aadAppCreate", async () => {
   });
 
   it("shouldd set default values for client secret expire time, description, and service management reference", async () => {
-    sinon
-      .stub(AadAppClient.prototype, "createAadApp")
-      .callsFake(async (displayName, signInAudience, serviceManagementReference) => {
+    vi.spyOn(AadAppClient.prototype, "createAadApp").mockImplementation(
+      async (displayName, signInAudience, serviceManagementReference) => {
         expect(serviceManagementReference).to.be.undefined;
         return {
           id: expectedObjectId,
           displayName: expectedDisplayName,
           appId: expectedClientId,
         } as AADApplication;
-      });
+      }
+    );
 
-    sinon
-      .stub(AadAppClient.prototype, "generateClientSecret")
-      .callsFake(async (objectId, clientSecretExpireDays, clientSecretDescription) => {
+    vi.spyOn(AadAppClient.prototype, "generateClientSecret").mockImplementation(
+      async (objectId, clientSecretExpireDays, clientSecretDescription) => {
         expect(clientSecretExpireDays).to.equal(180);
         expect(clientSecretDescription).to.equal("default");
         return expectedSecretText;
-      });
+      }
+    );
 
     const args: any = {
       name: "test",
@@ -231,24 +226,24 @@ describe("aadAppCreate", async () => {
     const expectedServiceManagementReference = "00000000-0000-0000-0000-000000000000";
     const expectedExpireTime = 90;
     const expectedDescription = "custom";
-    sinon
-      .stub(AadAppClient.prototype, "createAadApp")
-      .callsFake(async (displayName, signInAudience, serviceManagementReference) => {
+    vi.spyOn(AadAppClient.prototype, "createAadApp").mockImplementation(
+      async (displayName, signInAudience, serviceManagementReference) => {
         expect(serviceManagementReference).to.equal(expectedServiceManagementReference);
         return {
           id: expectedObjectId,
           displayName: expectedDisplayName,
           appId: expectedClientId,
         } as AADApplication;
-      });
+      }
+    );
 
-    sinon
-      .stub(AadAppClient.prototype, "generateClientSecret")
-      .callsFake(async (objectId, clientSecretExpireDays, clientSecretDescription) => {
+    vi.spyOn(AadAppClient.prototype, "generateClientSecret").mockImplementation(
+      async (objectId, clientSecretExpireDays, clientSecretDescription) => {
         expect(clientSecretExpireDays).to.equal(expectedExpireTime);
         expect(clientSecretDescription).to.equal(expectedDescription);
         return expectedSecretText;
-      });
+      }
+    );
 
     const args: any = {
       name: "test",
@@ -263,13 +258,13 @@ describe("aadAppCreate", async () => {
   });
 
   it("should output to specific environment variable based on writeToEnvironmentFile declaration", async () => {
-    sinon.stub(AadAppClient.prototype, "createAadApp").resolves({
+    vi.spyOn(AadAppClient.prototype, "createAadApp").mockResolvedValue({
       id: expectedObjectId,
       displayName: expectedDisplayName,
       appId: expectedClientId,
     } as AADApplication);
 
-    sinon.stub(AadAppClient.prototype, "generateClientSecret").resolves(expectedSecretText);
+    vi.spyOn(AadAppClient.prototype, "generateClientSecret").mockResolvedValue(expectedSecretText);
 
     const args: any = {
       name: "test",
@@ -310,8 +305,10 @@ describe("aadAppCreate", async () => {
   });
 
   it("should use existing Microsoft Entra app and generate new secret when AAD_APP_CLIENT_ID exists and only output generated client secret", async () => {
-    sinon.stub(AadAppClient.prototype, "createAadApp").rejects("createAadApp should not be called");
-    sinon.stub(AadAppClient.prototype, "generateClientSecret").resolves(expectedSecretText);
+    vi.spyOn(AadAppClient.prototype, "createAadApp").mockRejectedValue(
+      "createAadApp should not be called"
+    );
+    vi.spyOn(AadAppClient.prototype, "generateClientSecret").mockResolvedValue(expectedSecretText);
 
     envRestore = mockedEnv({
       [outputKeys.clientId]: "existing value",
@@ -334,10 +331,12 @@ describe("aadAppCreate", async () => {
   });
 
   it("should do nothing when AAD_APP_CLIENT_ID and SECRET_AAD_APP_CLIENT_SECRET exists", async () => {
-    sinon.stub(AadAppClient.prototype, "createAadApp").rejects("createAadApp should not be called");
-    sinon
-      .stub(AadAppClient.prototype, "generateClientSecret")
-      .rejects("generateClientSecret should not be called");
+    vi.spyOn(AadAppClient.prototype, "createAadApp").mockRejectedValue(
+      "createAadApp should not be called"
+    );
+    vi.spyOn(AadAppClient.prototype, "generateClientSecret").mockRejectedValue(
+      "generateClientSecret should not be called"
+    );
 
     envRestore = mockedEnv({
       [outputKeys.clientId]: "existing value",
@@ -357,15 +356,15 @@ describe("aadAppCreate", async () => {
   });
 
   it("should not generate client secret when generateClientSecret is false and output nothing", async () => {
-    sinon.stub(AadAppClient.prototype, "createAadApp").resolves({
+    vi.spyOn(AadAppClient.prototype, "createAadApp").mockResolvedValue({
       id: expectedObjectId,
       displayName: expectedDisplayName,
       appId: expectedClientId,
     } as AADApplication);
 
-    sinon
-      .stub(AadAppClient.prototype, "generateClientSecret")
-      .rejects("generateClientSecret should not be called");
+    vi.spyOn(AadAppClient.prototype, "generateClientSecret").mockRejectedValue(
+      "generateClientSecret should not be called"
+    );
 
     const args: any = {
       name: "test",
@@ -412,7 +411,7 @@ describe("aadAppCreate", async () => {
   });
 
   it("should throw user error when AadAppClient failed with 4xx error", async () => {
-    sinon.stub(AadAppClient.prototype, "createAadApp").rejects({
+    vi.spyOn(AadAppClient.prototype, "createAadApp").mockRejectedValue({
       isAxiosError: true,
       response: {
         status: 400,
@@ -442,7 +441,7 @@ describe("aadAppCreate", async () => {
   });
 
   it("should throw system error when AadAppClient failed with non 4xx error", async () => {
-    sinon.stub(AadAppClient.prototype, "createAadApp").rejects({
+    vi.spyOn(AadAppClient.prototype, "createAadApp").mockRejectedValue({
       isAxiosError: true,
       response: {
         status: 500,
@@ -480,7 +479,7 @@ describe("aadAppCreate", async () => {
       m365TokenProvider: new MockedM365Provider(),
       telemetryReporter: new MockedTelemetryReporter(),
     };
-    sinon.stub(TeamsDevPortalClient.prototype, "createAADApp").resolves({
+    vi.spyOn(TeamsDevPortalClient.prototype, "createAADApp").mockResolvedValue({
       id: expectedObjectId,
       displayName: expectedDisplayName,
       appId: expectedClientId,
@@ -501,8 +500,10 @@ describe("aadAppCreate", async () => {
       m365TokenProvider: new MockedM365Provider(),
       telemetryReporter: new MockedTelemetryReporter(),
     };
-    sinon.stub(MockedM365Provider.prototype, "getAccessToken").resolves(err(new UserCancelError()));
-    sinon.stub(TeamsDevPortalClient.prototype, "createAADApp").resolves({
+    vi.spyOn(MockedM365Provider.prototype, "getAccessToken").mockResolvedValue(
+      err(new UserCancelError())
+    );
+    vi.spyOn(TeamsDevPortalClient.prototype, "createAADApp").mockResolvedValue({
       id: expectedObjectId,
       displayName: expectedDisplayName,
       appId: expectedClientId,
@@ -517,26 +518,23 @@ describe("aadAppCreate", async () => {
     const mockedTelemetryReporter = new MockedTelemetryReporter();
     let startTelemetry: any, endTelemetry: any;
 
-    sinon.stub(AadAppClient.prototype, "createAadApp").resolves({
+    vi.spyOn(AadAppClient.prototype, "createAadApp").mockResolvedValue({
       id: expectedObjectId,
       displayName: expectedDisplayName,
       appId: expectedClientId,
     } as AADApplication);
 
-    sinon.stub(AadAppClient.prototype, "generateClientSecret").resolves(expectedSecretText);
+    vi.spyOn(AadAppClient.prototype, "generateClientSecret").mockResolvedValue(expectedSecretText);
 
-    sinon
-      .stub(mockedTelemetryReporter, "sendTelemetryEvent")
-      .onFirstCall()
-      .callsFake((eventName, properties, measurements) => {
+    vi.spyOn(mockedTelemetryReporter, "sendTelemetryEvent")
+      .mockImplementationOnce((eventName, properties, measurements) => {
         startTelemetry = {
           eventName,
           properties,
           measurements,
         };
       })
-      .onSecondCall()
-      .callsFake((eventName, properties, measurements) => {
+      .mockImplementationOnce((eventName, properties, measurements) => {
         endTelemetry = {
           eventName,
           properties,
@@ -568,18 +566,15 @@ describe("aadAppCreate", async () => {
     const mockedTelemetryReporter = new MockedTelemetryReporter();
     let startTelemetry: any, endTelemetry: any;
 
-    sinon
-      .stub(mockedTelemetryReporter, "sendTelemetryEvent")
-      .onFirstCall()
-      .callsFake((eventName, properties, measurements) => {
+    vi.spyOn(mockedTelemetryReporter, "sendTelemetryEvent")
+      .mockImplementationOnce((eventName, properties, measurements) => {
         startTelemetry = {
           eventName,
           properties,
           measurements,
         };
       })
-      .onSecondCall()
-      .callsFake((eventName, properties, measurements) => {
+      .mockImplementationOnce((eventName, properties, measurements) => {
         endTelemetry = {
           eventName,
           properties,
@@ -617,7 +612,7 @@ describe("aadAppCreate", async () => {
     const mockedTelemetryReporter = new MockedTelemetryReporter();
     let startTelemetry: any, endTelemetry: any;
 
-    sinon.stub(AadAppClient.prototype, "createAadApp").rejects({
+    vi.spyOn(AadAppClient.prototype, "createAadApp").mockRejectedValue({
       isAxiosError: true,
       response: {
         status: 400,
@@ -631,27 +626,25 @@ describe("aadAppCreate", async () => {
       },
     });
 
-    sinon
-      .stub(mockedTelemetryReporter, "sendTelemetryEvent")
-      .onFirstCall()
-      .callsFake((eventName, properties, measurements) => {
+    vi.spyOn(mockedTelemetryReporter, "sendTelemetryEvent").mockImplementationOnce(
+      (eventName, properties, measurements) => {
         startTelemetry = {
           eventName,
           properties,
           measurements,
         };
-      });
+      }
+    );
 
-    sinon
-      .stub(mockedTelemetryReporter, "sendTelemetryErrorEvent")
-      .onFirstCall()
-      .callsFake((eventName, properties, measurements) => {
+    vi.spyOn(mockedTelemetryReporter, "sendTelemetryErrorEvent").mockImplementationOnce(
+      (eventName, properties, measurements) => {
         endTelemetry = {
           eventName,
           properties,
           measurements,
         };
-      });
+      }
+    );
 
     const args: any = {
       name: "test",
@@ -681,33 +674,31 @@ describe("aadAppCreate", async () => {
     const mockedTelemetryReporter = new MockedTelemetryReporter();
     let startTelemetry: any, endTelemetry: any;
 
-    sinon.stub(AadAppClient.prototype, "createAadApp").callsFake(() => {
+    vi.spyOn(AadAppClient.prototype, "createAadApp").mockImplementation(() => {
       const error = new Error("fake error");
       error.stack = "fake stack";
       throw error;
     });
 
-    sinon
-      .stub(mockedTelemetryReporter, "sendTelemetryEvent")
-      .onFirstCall()
-      .callsFake((eventName, properties, measurements) => {
+    vi.spyOn(mockedTelemetryReporter, "sendTelemetryEvent").mockImplementationOnce(
+      (eventName, properties, measurements) => {
         startTelemetry = {
           eventName,
           properties,
           measurements,
         };
-      });
+      }
+    );
 
-    sinon
-      .stub(mockedTelemetryReporter, "sendTelemetryErrorEvent")
-      .onFirstCall()
-      .callsFake((eventName, properties, measurements) => {
+    vi.spyOn(mockedTelemetryReporter, "sendTelemetryErrorEvent").mockImplementationOnce(
+      (eventName, properties, measurements) => {
         endTelemetry = {
           eventName,
           properties,
           measurements,
         };
-      });
+      }
+    );
 
     const args: any = {
       name: "test",
@@ -731,18 +722,18 @@ describe("aadAppCreate", async () => {
   });
 
   it("should use input signInAudience when provided", async () => {
-    sinon
-      .stub(AadAppClient.prototype, "createAadApp")
-      .callsFake(async (displayName, signInAudience) => {
+    vi.spyOn(AadAppClient.prototype, "createAadApp").mockImplementation(
+      async (displayName, signInAudience) => {
         expect(signInAudience).to.equal("AzureADMultipleOrgs");
         return {
           id: expectedObjectId,
           displayName: expectedDisplayName,
           appId: expectedClientId,
         } as AADApplication;
-      });
+      }
+    );
 
-    sinon.stub(AadAppClient.prototype, "generateClientSecret").resolves(expectedSecretText);
+    vi.spyOn(AadAppClient.prototype, "generateClientSecret").mockResolvedValue(expectedSecretText);
 
     const args: any = {
       name: "test",
@@ -790,16 +781,16 @@ describe("aadAppCreate", async () => {
   });
 
   it("should output delete aad information when using microsoft tenant", async () => {
-    sinon
-      .stub(mockedDriverContext.m365TokenProvider, "getJsonObject")
-      .resolves(ok({ unique_name: "test@microsoft.com" }));
-    sinon.stub(AadAppClient.prototype, "createAadApp").resolves({
+    vi.spyOn(mockedDriverContext.m365TokenProvider, "getJsonObject").mockResolvedValue(
+      ok({ unique_name: "test@microsoft.com" })
+    );
+    vi.spyOn(AadAppClient.prototype, "createAadApp").mockResolvedValue({
       id: expectedObjectId,
       displayName: expectedDisplayName,
       appId: expectedClientId,
     } as AADApplication);
 
-    sinon.stub(AadAppClient.prototype, "generateClientSecret").resolves(expectedSecretText);
+    vi.spyOn(AadAppClient.prototype, "generateClientSecret").mockResolvedValue(expectedSecretText);
 
     const args: any = {
       name: "test",
@@ -834,16 +825,16 @@ describe("aadAppCreate", async () => {
   });
 
   it("should not output delete aad information when using non microsoft tenant", async () => {
-    sinon
-      .stub(mockedDriverContext.m365TokenProvider, "getJsonObject")
-      .resolves(ok({ unique_name: "test@test.com" }));
-    sinon.stub(AadAppClient.prototype, "createAadApp").resolves({
+    vi.spyOn(mockedDriverContext.m365TokenProvider, "getJsonObject").mockResolvedValue(
+      ok({ unique_name: "test@test.com" })
+    );
+    vi.spyOn(AadAppClient.prototype, "createAadApp").mockResolvedValue({
       id: expectedObjectId,
       displayName: expectedDisplayName,
       appId: expectedClientId,
     } as AADApplication);
 
-    sinon.stub(AadAppClient.prototype, "generateClientSecret").resolves(expectedSecretText);
+    vi.spyOn(AadAppClient.prototype, "generateClientSecret").mockResolvedValue(expectedSecretText);
 
     const args: any = {
       name: "test",
@@ -883,16 +874,16 @@ describe("aadAppCreate", async () => {
   });
 
   it("should not output delete aad information when return non login information", async () => {
-    sinon
-      .stub(mockedDriverContext.m365TokenProvider, "getJsonObject")
-      .resolves(err(new Error("Test error")));
-    sinon.stub(AadAppClient.prototype, "createAadApp").resolves({
+    vi.spyOn(mockedDriverContext.m365TokenProvider, "getJsonObject").mockResolvedValue(
+      err(new Error("Test error"))
+    );
+    vi.spyOn(AadAppClient.prototype, "createAadApp").mockResolvedValue({
       id: expectedObjectId,
       displayName: expectedDisplayName,
       appId: expectedClientId,
     } as AADApplication);
 
-    sinon.stub(AadAppClient.prototype, "generateClientSecret").resolves(expectedSecretText);
+    vi.spyOn(AadAppClient.prototype, "generateClientSecret").mockResolvedValue(expectedSecretText);
 
     const args: any = {
       name: "test",
@@ -915,7 +906,7 @@ describe("aadAppCreate", async () => {
   });
 
   it("should continue when AadAppClient failed with insufficient permission but provide input", async () => {
-    sinon.stub(AadAppClient.prototype, "createAadApp").rejects({
+    vi.spyOn(AadAppClient.prototype, "createAadApp").mockRejectedValue({
       isAxiosError: true,
       response: {
         status: 403,
@@ -927,9 +918,9 @@ describe("aadAppCreate", async () => {
         },
       },
     });
-    sinon
-      .stub(createAadAppDriver, "askForAADAppIdAndSecret")
-      .resolves(ok(new Map<string, string>()));
+    vi.spyOn(createAadAppDriver, "askForAADAppIdAndSecret").mockResolvedValue(
+      ok(new Map<string, string>())
+    );
 
     const args: any = {
       name: "test",
@@ -945,7 +936,7 @@ describe("aadAppCreate", async () => {
   });
 
   it("should failed when AadAppClient failed with insufficient permission and not provide input", async () => {
-    sinon.stub(AadAppClient.prototype, "createAadApp").rejects({
+    vi.spyOn(AadAppClient.prototype, "createAadApp").mockRejectedValue({
       isAxiosError: true,
       response: {
         status: 403,
@@ -957,9 +948,9 @@ describe("aadAppCreate", async () => {
         },
       },
     });
-    sinon
-      .stub(createAadAppDriver, "askForAADAppIdAndSecret")
-      .resolves(err(new UserCancelError("test")));
+    vi.spyOn(createAadAppDriver, "askForAADAppIdAndSecret").mockResolvedValue(
+      err(new UserCancelError("test"))
+    );
 
     const args: any = {
       name: "test",
@@ -995,19 +986,19 @@ describe("askForAADAppIdAndSecret", () => {
   });
 
   afterEach(() => {
-    sinon.restore();
+    vi.restoreAllMocks();
   });
 
   it("should return user input when user proceeds", async () => {
-    sinon.stub(context.ui!, "inputText").resolves(ok({ result: "test-input" }));
-    sinon.stub(context.ui!, "showMessage").resolves(ok("Proceed"));
+    vi.spyOn(context.ui!, "inputText").mockResolvedValue(ok({ result: "test-input" }));
+    vi.spyOn(context.ui!, "showMessage").mockResolvedValue(ok("Proceed"));
 
     const result = await driver.askForAADAppIdAndSecret(context, aadAppState, outputEnvVarNames);
     expect(result.isOk()).to.be.true;
   });
 
   it("should return UserCancelError when user cancels", async () => {
-    sinon.stub(context.ui!, "showMessage").resolves(ok("Cancel"));
+    vi.spyOn(context.ui!, "showMessage").mockResolvedValue(ok("Cancel"));
 
     const result = await driver.askForAADAppIdAndSecret(context, aadAppState, outputEnvVarNames);
 
@@ -1018,8 +1009,8 @@ describe("askForAADAppIdAndSecret", () => {
   });
 
   it("should return UserCancelError if user cancels input for aadAppId", async () => {
-    sinon.stub(context.ui!, "showMessage").resolves(ok("Proceed"));
-    sinon.stub(context.ui!, "inputText").resolves(err(new UserCancelError("test")));
+    vi.spyOn(context.ui!, "showMessage").mockResolvedValue(ok("Proceed"));
+    vi.spyOn(context.ui!, "inputText").mockResolvedValue(err(new UserCancelError("test")));
 
     const result = await driver.askForAADAppIdAndSecret(context, aadAppState, outputEnvVarNames);
 
@@ -1031,13 +1022,10 @@ describe("askForAADAppIdAndSecret", () => {
   });
 
   it("should return UserCancelError if user cancels input for aadAppSecret", async () => {
-    sinon.stub(context.ui!, "showMessage").resolves(ok("Proceed"));
-    sinon
-      .stub(context.ui!, "inputText")
-      .onFirstCall()
-      .resolves(ok({ result: "test-input" }))
-      .onSecondCall()
-      .resolves(err(new UserCancelError("test")));
+    vi.spyOn(context.ui!, "showMessage").mockResolvedValue(ok("Proceed"));
+    vi.spyOn(context.ui!, "inputText")
+      .mockResolvedValueOnce(ok({ result: "test-input" }))
+      .mockResolvedValueOnce(err(new UserCancelError("test")));
 
     const result = await driver.askForAADAppIdAndSecret(context, aadAppState, outputEnvVarNames);
 
@@ -1048,8 +1036,8 @@ describe("askForAADAppIdAndSecret", () => {
   });
 
   it("should return UserCancelError if user cancels input for aadAppObjectId", async () => {
-    sinon.stub(context.ui!, "showMessage").resolves(ok("Proceed"));
-    sinon.stub(context.ui!, "inputText").callsFake(async (options: any) => {
+    vi.spyOn(context.ui!, "showMessage").mockResolvedValue(ok("Proceed"));
+    vi.spyOn(context.ui!, "inputText").mockImplementation(async (options: any) => {
       if (options.name === "aadAppObjectId") {
         return err(new UserCancelError("test"));
       } else {
@@ -1067,8 +1055,8 @@ describe("askForAADAppIdAndSecret", () => {
   });
 
   it("should validate aadAppId input and return error if input is empty", async () => {
-    sinon.stub(context.ui!, "showMessage").resolves(ok("Proceed"));
-    sinon.stub(context.ui!, "inputText").callsFake(async (options: any) => {
+    vi.spyOn(context.ui!, "showMessage").mockResolvedValue(ok("Proceed"));
+    vi.spyOn(context.ui!, "inputText").mockImplementation(async (options: any) => {
       if (options.name === "aadAppId") {
         const validationResult = (options as any).validation!(""); // Simulate empty input
         expect(validationResult).equal(getLocalizedString("driver.aadApp.question.id.validation"));
@@ -1081,8 +1069,8 @@ describe("askForAADAppIdAndSecret", () => {
   });
 
   it("should validate aadAppSecret input and return error if input is empty", async () => {
-    sinon.stub(context.ui!, "showMessage").resolves(ok("Proceed"));
-    sinon.stub(context.ui!, "inputText").callsFake(async (options: any) => {
+    vi.spyOn(context.ui!, "showMessage").mockResolvedValue(ok("Proceed"));
+    vi.spyOn(context.ui!, "inputText").mockImplementation(async (options: any) => {
       if (options.name === "aadAppSecret") {
         const validationResult = (options as any).validation!(""); // Simulate empty input
         expect(validationResult).equal(
@@ -1097,8 +1085,8 @@ describe("askForAADAppIdAndSecret", () => {
   });
 
   it("should validate aadAppSecret input and return error if input is empty", async () => {
-    sinon.stub(context.ui!, "showMessage").resolves(ok("Proceed"));
-    sinon.stub(context.ui!, "inputText").callsFake(async (options: any) => {
+    vi.spyOn(context.ui!, "showMessage").mockResolvedValue(ok("Proceed"));
+    vi.spyOn(context.ui!, "inputText").mockImplementation(async (options: any) => {
       if (options.name === "aadAppObjectId") {
         const validationResult = (options as any).validation!(""); // Simulate empty input
         expect(validationResult).equal(

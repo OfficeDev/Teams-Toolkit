@@ -11,7 +11,6 @@ import {
   err,
   Err,
   FxError,
-  ManifestUtil,
   ok,
   Ok,
   Platform,
@@ -19,12 +18,11 @@ import {
   SystemError,
   UserError,
 } from "@microsoft/teamsfx-api";
-import chai from "chai";
 import fs from "fs-extra";
 import mockedEnv, { RestoreFn } from "mocked-env";
 import path from "path";
-import * as sinon from "sinon";
-import { featureFlagManager, FeatureFlags } from "../../../../src";
+import { chai, expect, vi } from "vitest";
+import { featureFlagManager } from "../../../../src";
 import { createContext, setTools } from "../../../../src/common/globalVars";
 import { generateDriverContext } from "../../../../src/common/utils";
 import { EmbeddedKnowledgeLocalDirectoryName } from "../../../../src/component/driver/teamsApp/constants";
@@ -44,11 +42,11 @@ import { MockTools } from "../../../core/utils";
 import { MockedLogProvider, MockedTelemetryReporter } from "../../../plugins/solution/util";
 
 describe("copilotGptManifestUtils", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   let mockedEnvRestore: RestoreFn;
 
   afterEach(async () => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     if (mockedEnvRestore) {
       mockedEnvRestore();
     }
@@ -61,8 +59,8 @@ describe("copilotGptManifestUtils", () => {
 
   describe("add plugin", async () => {
     it("add plugin without appending conversation starters success", async () => {
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readFile").resolves(
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readFile").mockResolvedValue(
         JSON.stringify({
           name: "name${{APP_NAME_SUFFIX}}",
           description: "description",
@@ -73,8 +71,8 @@ describe("copilotGptManifestUtils", () => {
           ],
         }) as any
       );
-      sandbox.stub(fs, "writeFile").resolves();
-      sandbox.stub(fs, "readJson").resolves({} as any);
+      vi.spyOn(fs, "writeFile").mockResolvedValue();
+      vi.spyOn(fs, "readJson").mockResolvedValue({} as any);
 
       const res = await copilotGptManifestUtils.addAction("testPath", "testId", "testFile");
 
@@ -95,10 +93,10 @@ describe("copilotGptManifestUtils", () => {
     });
 
     it("add plugin success - use conversation_starters in action file", async () => {
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readFile").resolves(JSON.stringify(gptManifest) as any);
-      sandbox.stub(fs, "writeFile").resolves();
-      sandbox.stub(fs, "readJson").resolves({
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify(gptManifest) as any);
+      vi.spyOn(fs, "writeFile").mockResolvedValue();
+      vi.spyOn(fs, "readJson").mockResolvedValue({
         capabilities: {
           conversation_starters: [
             {
@@ -127,14 +125,11 @@ describe("copilotGptManifestUtils", () => {
     });
 
     it("add plugin success - parse conversation_starters in open api spec file", async () => {
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox
-        .stub(featureFlagManager, "getBooleanValue")
-        .withArgs(FeatureFlags.KiotaNPMIntegration)
-        .returns(false);
-      sandbox.stub(fs, "readFile").resolves(JSON.stringify(gptManifest) as any);
-      sandbox.stub(fs, "writeFile").resolves();
-      sandbox.stub(fs, "readJson").resolves({
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+      vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify(gptManifest) as any);
+      vi.spyOn(fs, "writeFile").mockResolvedValue();
+      vi.spyOn(fs, "readJson").mockResolvedValue({
         capabilities: {
           conversation_starters: [],
         },
@@ -170,7 +165,7 @@ describe("copilotGptManifestUtils", () => {
         ],
       } as any);
 
-      sandbox.stub(SpecParser.prototype, "list").resolves({
+      vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
         APIs: [
           {
             api: "GET /repairs",
@@ -241,10 +236,10 @@ describe("copilotGptManifestUtils", () => {
     });
 
     it("add plugin success - parse conversation_starters in open api spec file with undefined existing conversation starter", async () => {
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readFile").resolves(JSON.stringify(gptManifest) as any);
-      sandbox.stub(fs, "writeFile").resolves();
-      sandbox.stub(fs, "readJson").resolves({
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify(gptManifest) as any);
+      vi.spyOn(fs, "writeFile").mockResolvedValue();
+      vi.spyOn(fs, "readJson").mockResolvedValue({
         capabilities: {},
         runtimes: [
           {
@@ -265,12 +260,9 @@ describe("copilotGptManifestUtils", () => {
           },
         ],
       } as any);
-      sandbox
-        .stub(featureFlagManager, "getBooleanValue")
-        .withArgs(FeatureFlags.KiotaNPMIntegration)
-        .returns(false);
+      vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
 
-      sandbox.stub(SpecParser.prototype, "list").resolves({
+      vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
         APIs: [
           {
             api: "GET /repairs",
@@ -304,8 +296,8 @@ describe("copilotGptManifestUtils", () => {
     });
 
     it("add plugin and append conversation starters success - use conversation_starters in action file", async () => {
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readFile").resolves(
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readFile").mockResolvedValue(
         JSON.stringify({
           name: "name${{APP_NAME_SUFFIX}}",
           description: "description",
@@ -322,8 +314,8 @@ describe("copilotGptManifestUtils", () => {
           ],
         }) as any
       );
-      sandbox.stub(fs, "writeFile").resolves();
-      sandbox.stub(fs, "readJson").resolves({
+      vi.spyOn(fs, "writeFile").mockResolvedValue();
+      vi.spyOn(fs, "readJson").mockResolvedValue({
         capabilities: {
           conversation_starters: [
             {
@@ -359,8 +351,8 @@ describe("copilotGptManifestUtils", () => {
     });
 
     it("conversation starters count should less than 6", async () => {
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readFile").resolves(
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readFile").mockResolvedValue(
         JSON.stringify({
           name: "name${{APP_NAME_SUFFIX}}",
           description: "description",
@@ -377,8 +369,8 @@ describe("copilotGptManifestUtils", () => {
           ],
         }) as any
       );
-      sandbox.stub(fs, "writeFile").resolves();
-      sandbox.stub(fs, "readJson").resolves({
+      vi.spyOn(fs, "writeFile").mockResolvedValue();
+      vi.spyOn(fs, "readJson").mockResolvedValue({
         capabilities: {
           conversation_starters: [
             {
@@ -441,8 +433,8 @@ describe("copilotGptManifestUtils", () => {
     });
 
     it("conversation starters should unique", async () => {
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readFile").resolves(
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readFile").mockResolvedValue(
         JSON.stringify({
           name: "name${{APP_NAME_SUFFIX}}",
           description: "description",
@@ -459,8 +451,8 @@ describe("copilotGptManifestUtils", () => {
           ],
         }) as any
       );
-      sandbox.stub(fs, "writeFile").resolves();
-      sandbox.stub(fs, "readJson").resolves({
+      vi.spyOn(fs, "writeFile").mockResolvedValue();
+      vi.spyOn(fs, "readJson").mockResolvedValue({
         capabilities: {
           conversation_starters: [
             {
@@ -499,7 +491,7 @@ describe("copilotGptManifestUtils", () => {
     });
 
     it("add plugin error: read manifest error", async () => {
-      sandbox.stub(fs, "pathExists").resolves(false);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
       const res = await copilotGptManifestUtils.addAction("testPath", "testId", "testFile");
       chai.assert.isTrue(res.isErr());
       if (res.isErr()) {
@@ -508,10 +500,12 @@ describe("copilotGptManifestUtils", () => {
     });
 
     it("add plugin error: write file error", async () => {
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readFile").resolves(JSON.stringify(gptManifest) as any);
-      sandbox.stub(fs, "writeFile").throws("some error");
-      sandbox.stub(fs, "readJson").resolves({} as any);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify(gptManifest) as any);
+      vi.spyOn(fs, "writeFile").mockImplementation(() => {
+        throw "some error";
+      });
+      vi.spyOn(fs, "readJson").mockResolvedValue({} as any);
       const res = await copilotGptManifestUtils.addAction("testPath", "testId", "testFile");
       chai.assert.isTrue(res.isErr());
       if (res.isErr()) {
@@ -531,8 +525,8 @@ describe("copilotGptManifestUtils", () => {
       mockedEnvRestore = mockedEnv({
         ["APP_NAME_SUFFIX"]: "test",
       });
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readFile").resolves(JSON.stringify(gptManifest) as any);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify(gptManifest) as any);
 
       const res = await copilotGptManifestUtils.getManifest("testPath", mockedContex);
 
@@ -543,7 +537,7 @@ describe("copilotGptManifestUtils", () => {
     });
 
     it("get manifest error: file not found", async () => {
-      sandbox.stub(fs, "pathExists").resolves(false);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
       const res = await copilotGptManifestUtils.getManifest("testPath", mockedContex);
       chai.assert.isTrue(res.isErr());
       if (res.isErr()) {
@@ -552,8 +546,8 @@ describe("copilotGptManifestUtils", () => {
     });
 
     it("get manifest error: unresolved env error", async () => {
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readFile").resolves(JSON.stringify(gptManifest) as any);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify(gptManifest) as any);
 
       const res = await copilotGptManifestUtils.getManifest("testPath", mockedContex);
 
@@ -584,10 +578,10 @@ describe("copilotGptManifestUtils", () => {
       mockedEnvRestore = mockedEnv({
         ["APP_NAME_SUFFIX"]: "test",
       });
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readFile").resolves(JSON.stringify(manifest) as any);
-      sandbox.stub(AppManifestUtils, "validateAgainstSchema").resolves([]);
-      sandbox.stub(pluginManifestUtils, "validateAgainstSchema").resolves(
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify(manifest) as any);
+      vi.spyOn(AppManifestUtils, "validateAgainstSchema").mockResolvedValue([]);
+      vi.spyOn(pluginManifestUtils, "validateAgainstSchema").mockResolvedValue(
         ok({
           id: "1",
           filePath: "testFile",
@@ -631,12 +625,12 @@ describe("copilotGptManifestUtils", () => {
       mockedEnvRestore = mockedEnv({
         ["APP_NAME_SUFFIX"]: "test",
       });
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readFile").resolves(JSON.stringify(manifest) as any);
-      sandbox.stub(AppManifestUtils, "validateAgainstSchema").resolves([]);
-      sandbox
-        .stub(pluginManifestUtils, "validateAgainstSchema")
-        .resolves(err(new SystemError("error", "error", "error", "error")));
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify(manifest) as any);
+      vi.spyOn(AppManifestUtils, "validateAgainstSchema").mockResolvedValue([]);
+      vi.spyOn(pluginManifestUtils, "validateAgainstSchema").mockResolvedValue(
+        err(new SystemError("error", "error", "error", "error"))
+      );
 
       const res = await copilotGptManifestUtils.validateAgainstSchema(
         { id: "1", file: "file" },
@@ -662,9 +656,11 @@ describe("copilotGptManifestUtils", () => {
       mockedEnvRestore = mockedEnv({
         ["APP_NAME_SUFFIX"]: "test",
       });
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readFile").resolves(JSON.stringify(gptManifest) as any);
-      sandbox.stub(AppManifestUtils, "validateAgainstSchema").throws("error");
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify(gptManifest) as any);
+      vi.spyOn(AppManifestUtils, "validateAgainstSchema").mockImplementation(() => {
+        throw "error";
+      });
 
       const res = await copilotGptManifestUtils.validateAgainstSchema(
         { id: "1", file: "file" },
@@ -678,7 +674,7 @@ describe("copilotGptManifestUtils", () => {
     });
 
     it("error: cannot get manifest", async () => {
-      sandbox.stub(fs, "pathExists").resolves(false);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
 
       const res = await copilotGptManifestUtils.validateAgainstSchema(
         { id: "1", file: "file" },
@@ -963,7 +959,7 @@ describe("copilotGptManifestUtils", () => {
     });
 
     it("get manifest success", async () => {
-      sandbox.stub(manifestUtils, "_readAppManifest").resolves(
+      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(
         ok({
           copilotExtensions: {
             declarativeCopilots: [
@@ -975,8 +971,8 @@ describe("copilotGptManifestUtils", () => {
           },
         } as any)
       );
-      sandbox.stub(path, "dirname").returns("testFolder");
-      sandbox.stub(path, "resolve").returns("testFolder/test");
+      vi.spyOn(path, "dirname").mockReturnValue("testFolder");
+      vi.spyOn(path, "resolve").mockReturnValue("testFolder/test");
 
       const res = await copilotGptManifestUtils.getManifestPath("testPath");
 
@@ -987,7 +983,7 @@ describe("copilotGptManifestUtils", () => {
     });
 
     it("get manifest success - copilot agent", async () => {
-      sandbox.stub(manifestUtils, "_readAppManifest").resolves(
+      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(
         ok({
           copilotAgents: {
             declarativeAgents: [
@@ -999,8 +995,8 @@ describe("copilotGptManifestUtils", () => {
           },
         } as any)
       );
-      sandbox.stub(path, "dirname").returns("testFolder");
-      sandbox.stub(path, "resolve").returns("testFolder/test");
+      vi.spyOn(path, "dirname").mockReturnValue("testFolder");
+      vi.spyOn(path, "resolve").mockReturnValue("testFolder/test");
 
       const res = await copilotGptManifestUtils.getManifestPath("testPath");
 
@@ -1011,7 +1007,7 @@ describe("copilotGptManifestUtils", () => {
     });
 
     it("declarativeAgents error 1", async () => {
-      sandbox.stub(manifestUtils, "_readAppManifest").resolves(
+      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(
         ok({
           copilotAgents: {},
         } as any)
@@ -1024,7 +1020,7 @@ describe("copilotGptManifestUtils", () => {
     });
 
     it("declarativeAgents error 2", async () => {
-      sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok({} as any));
+      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok({} as any));
       const res = await copilotGptManifestUtils.getManifestPath("testPath");
       chai.assert.isTrue(res.isErr());
       if (res.isErr()) {
@@ -1033,7 +1029,7 @@ describe("copilotGptManifestUtils", () => {
     });
 
     it("declarativeCopilots error 1", async () => {
-      sandbox.stub(manifestUtils, "_readAppManifest").resolves(
+      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(
         ok({
           copilotExtensions: {},
         } as any)
@@ -1046,9 +1042,9 @@ describe("copilotGptManifestUtils", () => {
     });
 
     it("read Teams manifest error", async () => {
-      sandbox
-        .stub(manifestUtils, "_readAppManifest")
-        .resolves(err(new UserError("readError", "readError", "", "")));
+      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(
+        err(new UserError("readError", "readError", "", ""))
+      );
 
       const res = await copilotGptManifestUtils.getManifestPath("testPath");
 
@@ -1059,7 +1055,7 @@ describe("copilotGptManifestUtils", () => {
     });
 
     it("missing file property", async () => {
-      sandbox.stub(manifestUtils, "_readAppManifest").resolves(
+      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(
         ok({
           copilotExtensions: {
             declarativeCopilots: [
@@ -1088,20 +1084,16 @@ describe("copilotGptManifestUtils", () => {
     });
 
     it("Success on second try", async () => {
-      sandbox
-        .stub(fs, "pathExists")
-        .onFirstCall()
-        .resolves(true)
-        .onSecondCall()
-        .resolves(true)
-        .onThirdCall()
-        .resolves(false);
+      vi.spyOn(fs, "pathExists")
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce(false);
       const res = await copilotGptManifestUtils.getDefaultNextAvailablePluginManifestPath("test");
       chai.assert.equal(res, path.join("test", "ai-plugin_2.json"));
     });
 
     it("Success on first try", async () => {
-      sandbox.stub(fs, "pathExists").onFirstCall().resolves(true).onSecondCall().resolves(false);
+      vi.spyOn(fs, "pathExists").mockResolvedValueOnce(true).mockResolvedValueOnce(false);
       const res = await copilotGptManifestUtils.getDefaultNextAvailablePluginManifestPath("test");
       chai.assert.equal(res, path.join("test", "ai-plugin_1.json"));
     });
@@ -1118,9 +1110,9 @@ describe("copilotGptManifestUtils", () => {
     let manifestRes: Result<DeclarativeCopilotManifestSchema, FxError>;
 
     it("happy path", async () => {
-      sandbox
-        .stub(copilotGptManifestUtils, "writeCopilotGptManifestFile")
-        .resolves(new Ok(undefined));
+      vi.spyOn(copilotGptManifestUtils, "writeCopilotGptManifestFile").mockResolvedValue(
+        new Ok(undefined)
+      );
       const connectionIds = ["connectionId1", "connectionId2"];
       const manifest: DeclarativeCopilotManifestSchema = {
         name: "name${{APP_NAME_SUFFIX}}",
@@ -1167,9 +1159,9 @@ describe("copilotGptManifestUtils", () => {
     });
 
     it("duplicated id", async () => {
-      sandbox
-        .stub(copilotGptManifestUtils, "writeCopilotGptManifestFile")
-        .resolves(new Ok(undefined));
+      vi.spyOn(copilotGptManifestUtils, "writeCopilotGptManifestFile").mockResolvedValue(
+        new Ok(undefined)
+      );
       const connectionIds = ["123"];
       const manifest: DeclarativeCopilotManifestSchema = {
         name: "name${{APP_NAME_SUFFIX}}",
@@ -1210,9 +1202,9 @@ describe("copilotGptManifestUtils", () => {
     });
 
     it("empty capability", async () => {
-      sandbox
-        .stub(copilotGptManifestUtils, "writeCopilotGptManifestFile")
-        .resolves(new Ok(undefined));
+      vi.spyOn(copilotGptManifestUtils, "writeCopilotGptManifestFile").mockResolvedValue(
+        new Ok(undefined)
+      );
       const connectionIds = ["123"];
       const manifest: DeclarativeCopilotManifestSchema = {
         name: "name${{APP_NAME_SUFFIX}}",
@@ -1263,13 +1255,17 @@ describe("copilotGptManifestUtils", () => {
       const resolvedManifestPath = "test/resolvedManifest.json";
       const manifest: any = {};
 
-      sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok(resolvedManifestPath));
-      sandbox.stub(copilotGptManifestUtils, "readCopilotGptManifestFile").resolves(ok(manifest));
-      const writeStub = sandbox
-        .stub(copilotGptManifestUtils, "writeCopilotGptManifestFile")
-        .resolves(ok(undefined));
-      const ensureDirStub = sandbox.stub(fs, "ensureDir").resolves();
-      const copyFileStub = sandbox.stub(fs, "copyFile").resolves();
+      vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+        ok(resolvedManifestPath)
+      );
+      vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+        ok(manifest)
+      );
+      const writeStub = vi
+        .spyOn(copilotGptManifestUtils, "writeCopilotGptManifestFile")
+        .mockResolvedValue(ok(undefined));
+      const ensureDirStub = vi.spyOn(fs, "ensureDir").mockResolvedValue();
+      const copyFileStub = vi.spyOn(fs, "copyFile").mockResolvedValue();
 
       const filePathList = ["dummy.txt"];
       const result = await copilotGptManifestUtils.addEmbeddedKnowledgeFiles(
@@ -1282,7 +1278,7 @@ describe("copilotGptManifestUtils", () => {
         path.dirname(manifestFilePath),
         EmbeddedKnowledgeLocalDirectoryName
       );
-      sinon.assert.calledWith(ensureDirStub, expectedDir);
+      expect(ensureDirStub).toHaveBeenCalledWith(expectedDir);
 
       const expectedSavedPath = path.resolve(
         path.dirname(manifestFilePath),
@@ -1301,7 +1297,7 @@ describe("copilotGptManifestUtils", () => {
         .replace(/\\/g, "/");
       chai.assert.equal(capability.files[0].file, expectedRelativePath);
 
-      sinon.assert.calledWith(writeStub, manifest, resolvedManifestPath);
+      expect(writeStub).toHaveBeenCalledWith(manifest, resolvedManifestPath);
     });
 
     it("should add embedded knowledge files successfully - declarative agent manifest with knowledge", async () => {
@@ -1316,13 +1312,17 @@ describe("copilotGptManifestUtils", () => {
         ],
       };
 
-      sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok(resolvedManifestPath));
-      sandbox.stub(copilotGptManifestUtils, "readCopilotGptManifestFile").resolves(ok(manifest));
-      const writeStub = sandbox
-        .stub(copilotGptManifestUtils, "writeCopilotGptManifestFile")
-        .resolves(ok(undefined));
-      const ensureDirStub = sandbox.stub(fs, "ensureDir").resolves();
-      const copyFileStub = sandbox.stub(fs, "copyFile").resolves();
+      vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+        ok(resolvedManifestPath)
+      );
+      vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+        ok(manifest)
+      );
+      const writeStub = vi
+        .spyOn(copilotGptManifestUtils, "writeCopilotGptManifestFile")
+        .mockResolvedValue(ok(undefined));
+      const ensureDirStub = vi.spyOn(fs, "ensureDir").mockResolvedValue();
+      const copyFileStub = vi.spyOn(fs, "copyFile").mockResolvedValue();
 
       const filePathList = ["dummy.txt"];
       const result = await copilotGptManifestUtils.addEmbeddedKnowledgeFiles(
@@ -1335,7 +1335,7 @@ describe("copilotGptManifestUtils", () => {
         path.dirname(manifestFilePath),
         EmbeddedKnowledgeLocalDirectoryName
       );
-      sinon.assert.calledWith(ensureDirStub, expectedDir);
+      expect(ensureDirStub).toHaveBeenCalledWith(expectedDir);
 
       const expectedSavedPath = path.resolve(
         path.dirname(manifestFilePath),
@@ -1355,12 +1355,12 @@ describe("copilotGptManifestUtils", () => {
         .relative(path.dirname(manifestFilePath), expectedSavedPath)
         .replace(/\\/g, "/");
       chai.assert.equal(capability.files[1].file, expectedRelativePath);
-      sinon.assert.calledWith(writeStub, manifest, resolvedManifestPath);
+      expect(writeStub).toHaveBeenCalledWith(manifest, resolvedManifestPath);
     });
 
     it("should return error if getManifestPath fails", async () => {
       const fackeErr = new SystemError("FakeError", "getManifestPath failed", "test", "");
-      sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(err(fackeErr));
+      vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(err(fackeErr));
       const result = await copilotGptManifestUtils.addEmbeddedKnowledgeFiles("test/manifest.json", [
         "dummy.txt",
       ]);
@@ -1371,14 +1371,18 @@ describe("copilotGptManifestUtils", () => {
     });
     it("should return error if readCopilotGptManifestFile fails", async () => {
       const resolvedManifestPath = "test/resolvedManifest.json";
-      sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok(resolvedManifestPath));
+      vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+        ok(resolvedManifestPath)
+      );
       const fackeErr = new SystemError(
         "FakeError",
         "readCopilotGptManifestFile failed",
         "test",
         ""
       );
-      sandbox.stub(copilotGptManifestUtils, "readCopilotGptManifestFile").resolves(err(fackeErr));
+      vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+        err(fackeErr)
+      );
       const result = await copilotGptManifestUtils.addEmbeddedKnowledgeFiles("test/manifest.json", [
         "dummy.txt",
       ]);
@@ -1395,7 +1399,7 @@ describe("copilotGptManifestUtils", () => {
       if (await fs.pathExists("fake agent manifest path")) {
         await fs.unlink("fake agent manifest path");
       }
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("happy path: manifestRes has no capabilities for addOrUpdateCapability ", async () => {
@@ -1451,9 +1455,9 @@ describe("copilotGptManifestUtils", () => {
         ],
       };
 
-      sandbox
-        .stub(copilotGptManifestUtils, "writeCopilotGptManifestFile")
-        .resolves(err(new UserError("fake error", "fake error", "fake error", "fake error")));
+      vi.spyOn(copilotGptManifestUtils, "writeCopilotGptManifestFile").mockResolvedValue(
+        err(new UserError("fake error", "fake error", "fake error", "fake error"))
+      );
       const res = await copilotGptManifestUtils.addOrUpdateCapability(
         "fake agent manifest path",
         DeclarativeCopilotCapabilityName.WebSearch,
@@ -1470,8 +1474,8 @@ describe("copilotGptManifestUtils", () => {
         name: "name${{APP_NAME_SUFFIX}}",
         description: "description",
       };
-      sandbox.stub(fs, "pathExistsSync").returns(true);
-      sandbox.stub(fs, "readFileSync").returns(JSON.stringify(manifest));
+      vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
+      vi.spyOn(fs, "readFileSync").mockReturnValue(JSON.stringify(manifest));
 
       const res = copilotGptManifestUtils.readCopilotGptManifestFileSync("testPath");
 
@@ -1482,7 +1486,7 @@ describe("copilotGptManifestUtils", () => {
     });
 
     it("should return FileNotFoundError if file does not exist", () => {
-      sandbox.stub(fs, "pathExistsSync").returns(false);
+      vi.spyOn(fs, "pathExistsSync").mockReturnValue(false);
 
       const res = copilotGptManifestUtils.readCopilotGptManifestFileSync("testPath");
 
@@ -1493,8 +1497,8 @@ describe("copilotGptManifestUtils", () => {
     });
 
     it("should return JSONSyntaxError if JSON parse fails", () => {
-      sandbox.stub(fs, "pathExistsSync").returns(true);
-      sandbox.stub(fs, "readFileSync").returns("invalid json");
+      vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
+      vi.spyOn(fs, "readFileSync").mockReturnValue("invalid json");
 
       const res = copilotGptManifestUtils.readCopilotGptManifestFileSync("testPath");
 
@@ -1514,8 +1518,8 @@ describe("copilotGptManifestUtils", () => {
         description: "test",
         capabilities: { name: "CodeInterpreter" },
       };
-      sandbox.stub(fs, "pathExistsSync").returns(true);
-      sandbox.stub(fs, "readFileSync").returns(JSON.stringify(badManifest));
+      vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
+      vi.spyOn(fs, "readFileSync").mockReturnValue(JSON.stringify(badManifest));
 
       const res = copilotGptManifestUtils.readCopilotGptManifestFileSync("testPath");
 
@@ -1532,9 +1536,11 @@ describe("copilotGptManifestUtils", () => {
         schema: "schema",
         description: "description",
       } as any;
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readFile").resolves(JSON.stringify(manifest) as any);
-      sandbox.stub(DeclarativeAgentManifestConverter, "jsonToManifest").returns(manifest as any);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify(manifest) as any);
+      vi.spyOn(DeclarativeAgentManifestConverter, "jsonToManifest").mockReturnValue(
+        manifest as any
+      );
 
       const res = await copilotGptManifestUtils.readDeclarativeAgentManifestFile("testPath");
 
@@ -1545,7 +1551,7 @@ describe("copilotGptManifestUtils", () => {
     });
 
     it("should return FileNotFoundError if file does not exist", async () => {
-      sandbox.stub(fs, "pathExists").resolves(false);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
 
       const res = await copilotGptManifestUtils.readDeclarativeAgentManifestFile("testPath");
 
@@ -1556,8 +1562,8 @@ describe("copilotGptManifestUtils", () => {
     });
 
     it("should return JSONSyntaxError if manifest conversion fails", async () => {
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readFile").resolves("invalid json" as any);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readFile").mockResolvedValue("invalid json" as any);
 
       const res = await copilotGptManifestUtils.readDeclarativeAgentManifestFile("testPath");
 
@@ -1571,9 +1577,11 @@ describe("copilotGptManifestUtils", () => {
         schema: "schema",
         description: "description",
       } as any;
-      sandbox.stub(fs, "pathExistsSync").returns(true);
-      sandbox.stub(fs, "readFileSync").returns(JSON.stringify(manifest));
-      sandbox.stub(DeclarativeAgentManifestConverter, "jsonToManifest").returns(manifest as any);
+      vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
+      vi.spyOn(fs, "readFileSync").mockReturnValue(JSON.stringify(manifest));
+      vi.spyOn(DeclarativeAgentManifestConverter, "jsonToManifest").mockReturnValue(
+        manifest as any
+      );
 
       const res = copilotGptManifestUtils.readDeclarativeAgentManifestFileSync("testPath");
 
@@ -1584,7 +1592,7 @@ describe("copilotGptManifestUtils", () => {
     });
 
     it("should return FileNotFoundError if file does not exist", () => {
-      sandbox.stub(fs, "pathExistsSync").returns(false);
+      vi.spyOn(fs, "pathExistsSync").mockReturnValue(false);
 
       const res = copilotGptManifestUtils.readDeclarativeAgentManifestFileSync("testPath");
 
@@ -1595,8 +1603,8 @@ describe("copilotGptManifestUtils", () => {
     });
 
     it("should return JSONSyntaxError if manifest conversion fails", () => {
-      sandbox.stub(fs, "pathExistsSync").returns(true);
-      sandbox.stub(fs, "readFileSync").returns("invalid json");
+      vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
+      vi.spyOn(fs, "readFileSync").mockReturnValue("invalid json");
 
       const res = copilotGptManifestUtils.readDeclarativeAgentManifestFileSync("testPath");
 
@@ -1611,8 +1619,8 @@ describe("copilotGptManifestUtils", () => {
         description: "description",
       };
       const convertedJson = '{"schema":"schema","description":"description"}';
-      sandbox.stub(DeclarativeAgentManifestConverter, "manifestToJson").returns(convertedJson);
-      sandbox.stub(fs, "writeFile").resolves();
+      vi.spyOn(DeclarativeAgentManifestConverter, "manifestToJson").mockReturnValue(convertedJson);
+      vi.spyOn(fs, "writeFile").mockResolvedValue();
 
       const res = await copilotGptManifestUtils.writeDeclarativeAgentManifestFile(
         manifest as any,
@@ -1628,8 +1636,10 @@ describe("copilotGptManifestUtils", () => {
         description: "description",
       };
       const convertedJson = '{"schema":"schema","description":"description"}';
-      sandbox.stub(DeclarativeAgentManifestConverter, "manifestToJson").returns(convertedJson);
-      sandbox.stub(fs, "writeFile").throws("some error");
+      vi.spyOn(DeclarativeAgentManifestConverter, "manifestToJson").mockReturnValue(convertedJson);
+      vi.spyOn(fs, "writeFile").mockImplementation(() => {
+        throw "some error";
+      });
 
       const res = await copilotGptManifestUtils.writeDeclarativeAgentManifestFile(
         manifest as any,
@@ -1649,8 +1659,12 @@ describe("copilotGptManifestUtils", () => {
         name: "test-agent",
         description: "description",
       };
-      sandbox.stub(copilotGptManifestUtils, "readCopilotGptManifestFile").resolves(ok(manifest));
-      sandbox.stub(copilotGptManifestUtils, "writeCopilotGptManifestFile").resolves(ok(undefined));
+      vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+        ok(manifest)
+      );
+      vi.spyOn(copilotGptManifestUtils, "writeCopilotGptManifestFile").mockResolvedValue(
+        ok(undefined)
+      );
 
       const res = await copilotGptManifestUtils.addSkill("testPath", "./skills/mySkill");
 
@@ -1671,10 +1685,12 @@ describe("copilotGptManifestUtils", () => {
         description: "description",
         agent_skills: [{ folder: "./skills/mySkill" }],
       };
-      sandbox
-        .stub(copilotGptManifestUtils, "readCopilotGptManifestFile")
-        .resolves(ok(manifest as DeclarativeCopilotManifestSchema));
-      sandbox.stub(copilotGptManifestUtils, "writeCopilotGptManifestFile").resolves(ok(undefined));
+      vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+        ok(manifest as DeclarativeCopilotManifestSchema)
+      );
+      vi.spyOn(copilotGptManifestUtils, "writeCopilotGptManifestFile").mockResolvedValue(
+        ok(undefined)
+      );
 
       const res = await copilotGptManifestUtils.addSkill("testPath", "./skills/mySkill");
 
@@ -1686,9 +1702,9 @@ describe("copilotGptManifestUtils", () => {
     });
 
     it("returns error when readCopilotGptManifestFile fails", async () => {
-      sandbox
-        .stub(copilotGptManifestUtils, "readCopilotGptManifestFile")
-        .resolves(err(new UserError("test", "test", "test", "test")));
+      vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+        err(new UserError("test", "test", "test", "test"))
+      );
 
       const res = await copilotGptManifestUtils.addSkill("testPath", "./skills/mySkill");
 
@@ -1700,10 +1716,12 @@ describe("copilotGptManifestUtils", () => {
         name: "test-agent",
         description: "description",
       };
-      sandbox.stub(copilotGptManifestUtils, "readCopilotGptManifestFile").resolves(ok(manifest));
-      sandbox
-        .stub(copilotGptManifestUtils, "writeCopilotGptManifestFile")
-        .resolves(err(new UserError("test", "test", "test", "test")));
+      vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+        ok(manifest)
+      );
+      vi.spyOn(copilotGptManifestUtils, "writeCopilotGptManifestFile").mockResolvedValue(
+        err(new UserError("test", "test", "test", "test"))
+      );
 
       const res = await copilotGptManifestUtils.addSkill("testPath", "./skills/mySkill");
 
@@ -1726,14 +1744,14 @@ describe("copilotGptManifestUtils", () => {
         agent_skills: [{ folder: "./skills/missing" }],
       };
       mockedEnvRestore = mockedEnv({ ["APP_NAME_SUFFIX"]: "test" });
-      sandbox.stub(fs, "pathExists").callsFake(async (p: string) => {
+      vi.spyOn(fs, "pathExists").mockImplementation(async (p: string) => {
         if (typeof p === "string" && p.includes("missing")) {
           return false;
         }
         return true;
       });
-      sandbox.stub(fs, "readFile").resolves(JSON.stringify(manifest) as any);
-      sandbox.stub(AppManifestUtils, "validateAgainstSchema").resolves([]);
+      vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify(manifest) as any);
+      vi.spyOn(AppManifestUtils, "validateAgainstSchema").mockResolvedValue([]);
 
       const res = await copilotGptManifestUtils.validateAgainstSchema(
         { id: "1", file: "file" },
@@ -1759,14 +1777,14 @@ describe("copilotGptManifestUtils", () => {
         agent_skills: [{ folder: "./skills/noSkillMd" }],
       };
       mockedEnvRestore = mockedEnv({ ["APP_NAME_SUFFIX"]: "test" });
-      sandbox.stub(fs, "pathExists").callsFake(async (p: string) => {
+      vi.spyOn(fs, "pathExists").mockImplementation(async (p: string) => {
         if (typeof p === "string" && p.includes("SKILL.md")) {
           return false;
         }
         return true;
       });
-      sandbox.stub(fs, "readFile").resolves(JSON.stringify(manifest) as any);
-      sandbox.stub(AppManifestUtils, "validateAgainstSchema").resolves([]);
+      vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify(manifest) as any);
+      vi.spyOn(AppManifestUtils, "validateAgainstSchema").mockResolvedValue([]);
 
       const res = await copilotGptManifestUtils.validateAgainstSchema(
         { id: "1", file: "file" },
@@ -1792,17 +1810,17 @@ describe("copilotGptManifestUtils", () => {
         agent_skills: [{ folder: "./skills/mySkill" }],
       };
       mockedEnvRestore = mockedEnv({ ["APP_NAME_SUFFIX"]: "test" });
-      sandbox.stub(fs, "pathExists").resolves(true);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
 
       const skillMdContent = "---\ndescription: some desc\n---\n# content";
-      const readFileStub = sandbox.stub(fs, "readFile");
-      readFileStub.callsFake(async (p: any, _opts?: any) => {
+      const readFileStub = vi.spyOn(fs, "readFile");
+      readFileStub.mockImplementation(async (p: any, _opts?: any) => {
         if (typeof p === "string" && p.includes("SKILL.md")) {
           return skillMdContent as any;
         }
         return JSON.stringify(manifest) as any;
       });
-      sandbox.stub(AppManifestUtils, "validateAgainstSchema").resolves([]);
+      vi.spyOn(AppManifestUtils, "validateAgainstSchema").mockResolvedValue([]);
 
       const res = await copilotGptManifestUtils.validateAgainstSchema(
         { id: "1", file: "file" },
@@ -1828,17 +1846,17 @@ describe("copilotGptManifestUtils", () => {
         agent_skills: [{ folder: "./skills/mySkill" }],
       };
       mockedEnvRestore = mockedEnv({ ["APP_NAME_SUFFIX"]: "test" });
-      sandbox.stub(fs, "pathExists").resolves(true);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
 
       const skillMdContent = "---\nname: mySkill\n---\n# content";
-      const readFileStub = sandbox.stub(fs, "readFile");
-      readFileStub.callsFake(async (p: any, _opts?: any) => {
+      const readFileStub = vi.spyOn(fs, "readFile");
+      readFileStub.mockImplementation(async (p: any, _opts?: any) => {
         if (typeof p === "string" && p.includes("SKILL.md")) {
           return skillMdContent as any;
         }
         return JSON.stringify(manifest) as any;
       });
-      sandbox.stub(AppManifestUtils, "validateAgainstSchema").resolves([]);
+      vi.spyOn(AppManifestUtils, "validateAgainstSchema").mockResolvedValue([]);
 
       const res = await copilotGptManifestUtils.validateAgainstSchema(
         { id: "1", file: "file" },
@@ -1864,17 +1882,17 @@ describe("copilotGptManifestUtils", () => {
         agent_skills: [{ folder: "./skills/mySkill" }],
       };
       mockedEnvRestore = mockedEnv({ ["APP_NAME_SUFFIX"]: "test" });
-      sandbox.stub(fs, "pathExists").resolves(true);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
 
       const skillMdContent = "---\nname: mySkill\ndescription: A valid skill\n---\n# content";
-      const readFileStub = sandbox.stub(fs, "readFile");
-      readFileStub.callsFake(async (p: any, _opts?: any) => {
+      const readFileStub = vi.spyOn(fs, "readFile");
+      readFileStub.mockImplementation(async (p: any, _opts?: any) => {
         if (typeof p === "string" && p.includes("SKILL.md")) {
           return skillMdContent as any;
         }
         return JSON.stringify(manifest) as any;
       });
-      sandbox.stub(AppManifestUtils, "validateAgainstSchema").resolves([]);
+      vi.spyOn(AppManifestUtils, "validateAgainstSchema").mockResolvedValue([]);
 
       const res = await copilotGptManifestUtils.validateAgainstSchema(
         { id: "1", file: "file" },
@@ -1895,9 +1913,9 @@ describe("copilotGptManifestUtils", () => {
         description: "description",
       };
       mockedEnvRestore = mockedEnv({ ["APP_NAME_SUFFIX"]: "test" });
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readFile").resolves(JSON.stringify(manifest) as any);
-      sandbox.stub(AppManifestUtils, "validateAgainstSchema").resolves([]);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify(manifest) as any);
+      vi.spyOn(AppManifestUtils, "validateAgainstSchema").mockResolvedValue([]);
 
       const res = await copilotGptManifestUtils.validateAgainstSchema(
         { id: "1", file: "file" },
@@ -1918,18 +1936,18 @@ describe("copilotGptManifestUtils", () => {
         agent_skills: [{ folder: "./skills/mySkill" }],
       };
       mockedEnvRestore = mockedEnv({ ["APP_NAME_SUFFIX"]: "test" });
-      sandbox.stub(fs, "pathExists").resolves(true);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
 
       const skillMdContent =
         "---\nname: mySkill\ndescription: My great skill\nauthor: test\n---\n# Skill";
-      const readFileStub = sandbox.stub(fs, "readFile");
-      readFileStub.callsFake(async (p: any, _opts?: any) => {
+      const readFileStub = vi.spyOn(fs, "readFile");
+      readFileStub.mockImplementation(async (p: any, _opts?: any) => {
         if (typeof p === "string" && p.includes("SKILL.md")) {
           return skillMdContent as any;
         }
         return JSON.stringify(manifest) as any;
       });
-      sandbox.stub(AppManifestUtils, "validateAgainstSchema").resolves([]);
+      vi.spyOn(AppManifestUtils, "validateAgainstSchema").mockResolvedValue([]);
 
       const res = await copilotGptManifestUtils.validateAgainstSchema(
         { id: "1", file: "file" },
@@ -1950,17 +1968,17 @@ describe("copilotGptManifestUtils", () => {
         agent_skills: [{ folder: "./skills/mySkill" }],
       };
       mockedEnvRestore = mockedEnv({ ["APP_NAME_SUFFIX"]: "test" });
-      sandbox.stub(fs, "pathExists").resolves(true);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
 
       const skillMdContent = "# Just some markdown\nNo frontmatter here";
-      const readFileStub = sandbox.stub(fs, "readFile");
-      readFileStub.callsFake(async (p: any, _opts?: any) => {
+      const readFileStub = vi.spyOn(fs, "readFile");
+      readFileStub.mockImplementation(async (p: any, _opts?: any) => {
         if (typeof p === "string" && p.includes("SKILL.md")) {
           return skillMdContent as any;
         }
         return JSON.stringify(manifest) as any;
       });
-      sandbox.stub(AppManifestUtils, "validateAgainstSchema").resolves([]);
+      vi.spyOn(AppManifestUtils, "validateAgainstSchema").mockResolvedValue([]);
 
       const res = await copilotGptManifestUtils.validateAgainstSchema(
         { id: "1", file: "file" },
@@ -1992,18 +2010,18 @@ describe("copilotGptManifestUtils", () => {
         agent_skills: [{ folder: "./skills/mySkill" }],
       };
       mockedEnvRestore = mockedEnv({ ["APP_NAME_SUFFIX"]: "test" });
-      sandbox.stub(fs, "pathExists").resolves(true);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
 
       // Frontmatter with opening --- but no closing ---
       const skillMdContent = "---\nname: mySkill\ndescription: test\n# No closing delimiter";
-      const readFileStub = sandbox.stub(fs, "readFile");
-      readFileStub.callsFake(async (p: any, _opts?: any) => {
+      const readFileStub = vi.spyOn(fs, "readFile");
+      readFileStub.mockImplementation(async (p: any, _opts?: any) => {
         if (typeof p === "string" && p.includes("SKILL.md")) {
           return skillMdContent as any;
         }
         return JSON.stringify(manifest) as any;
       });
-      sandbox.stub(AppManifestUtils, "validateAgainstSchema").resolves([]);
+      vi.spyOn(AppManifestUtils, "validateAgainstSchema").mockResolvedValue([]);
 
       const res = await copilotGptManifestUtils.validateAgainstSchema(
         { id: "1", file: "file" },

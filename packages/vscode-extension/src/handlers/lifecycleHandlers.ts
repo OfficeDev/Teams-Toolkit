@@ -8,7 +8,6 @@ import {
   ok,
   Result,
   Stage,
-  UserError,
 } from "@microsoft/teamsfx-api";
 import {
   ActionStartOptions,
@@ -23,11 +22,9 @@ import {
   QuestionNames,
   teamsDevPortalClient,
 } from "@microsoft/teamsfx-core";
-import * as stringUtil from "util";
 import * as vscode from "vscode";
-import VsCodeLogInstance from "../commonlib/log";
 import M365TokenInstance from "../commonlib/m365Login";
-import { ExtensionSource } from "../error/error";
+import { tools } from "../globalVariables";
 import { VS_CODE_UI } from "../qm/vsc_ui";
 import { ExtTelemetry } from "../telemetry/extTelemetry";
 import {
@@ -39,11 +36,9 @@ import envTreeProviderInstance from "../treeview/environmentTreeViewProvider";
 import { localize } from "../utils/localizeUtils";
 import { getSystemInputs } from "../utils/systemEnvUtils";
 import { getTriggerFromProperty } from "../utils/telemetryUtils";
-import * as versionUtil from "../utils/versionUtil";
 import { openFolder, openOfficeDevFolder } from "../utils/workspaceUtils";
 import { invokeTeamsAgent } from "./copilotChatHandlers";
 import { runCommand } from "./sharedOpts";
-import { tools } from "../globalVariables";
 
 export async function createNewProjectHandler(...args: any[]): Promise<Result<any, FxError>> {
   ExtTelemetry.sendTelemetryEvent(TelemetryEvent.CreateProjectStart, getTriggerFromProperty(args));
@@ -91,7 +86,7 @@ export async function provisionHandler(...args: unknown[]): Promise<Result<unkno
   if (result.isErr() && isUserCancelError(result.error)) {
     return result;
   } else {
-    // refresh env tree except provision cancelled.
+    // refresh env tree except provision cancelled
     await envTreeProviderInstance.reloadEnvironments();
     return result;
   }
@@ -153,22 +148,6 @@ export async function addPluginHandler(...args: unknown[]) {
     const { openWorkspaceMCPConfigHandler } = await import("./readmeHandlers");
     await openWorkspaceMCPConfigHandler(TelemetryTriggerFrom.Auto);
   }
-  return result;
-}
-
-export async function metaOSExtendToDAHandler(...args: unknown[]) {
-  ExtTelemetry.sendTelemetryEvent(
-    TelemetryEvent.MetaOSExtendToDAStart,
-    getTriggerFromProperty(args)
-  );
-
-  const result = await runCommand(Stage.metaOSExtendToDA);
-  if (result.isErr()) {
-    return err(result.error);
-  }
-
-  const projectPathUri = vscode.Uri.file(result.value.projectPath);
-  await openFolder(projectPathUri, true, result.value.warnings);
   return result;
 }
 
@@ -240,7 +219,9 @@ export async function scaffoldFromDeveloperPortalHandler(
 
     if (!isSovereignHigh()) {
       // set region
-      const AuthSvcTokenRes = await M365TokenInstance.getAccessToken({ scopes: AuthSvcScopes() });
+      const AuthSvcTokenRes = await M365TokenInstance.getAccessToken({
+        scopes: AuthSvcScopes(),
+      });
       if (AuthSvcTokenRes.isOk()) {
         await teamsDevPortalClient.setRegionEndpointByToken(AuthSvcTokenRes.value);
       }

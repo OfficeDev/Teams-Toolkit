@@ -2,7 +2,7 @@
 
 This document indexes all available VscUse (VS Code UI automation) test plans under `vscode-test-cases/plans/`.
 
-> **PR-triggered test runs:** Add label `atk-vsuse-test` to a PR. GitHub Copilot will auto-select relevant plans based on the PR title, description, and changed files, then run the full pipeline (VSIX build -> Docker image -> UI tests). See [`.github/workflows/pr-vscuse-test.yml`](../../.github/workflows/pr-vscuse-test.yml).
+> **PR-triggered test runs:** Add label `atk-vsuse-test` to a PR. GitHub Copilot will auto-select relevant plans based on the PR title, description, and changed files, then run the full pipeline (VSIX build -> Docker image -> UI tests). If the PR changes a test plan file under `vscode-test-cases/plans/`, that plan is automatically selected and run as an **impacted** case. See [`.github/workflows/pr-vscuse-test.yml`](../../.github/workflows/pr-vscuse-test.yml).
 
 ---
 

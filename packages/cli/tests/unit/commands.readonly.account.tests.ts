@@ -4,36 +4,35 @@
 import { CLIContext, err, ok, signedIn, signedOut } from "@microsoft/teamsfx-api";
 import { UserCancelError } from "@microsoft/teamsfx-core";
 import * as tools from "@microsoft/teamsfx-core/build/common/tools";
-import { assert } from "chai";
 import mockedEnv, { RestoreFn } from "mocked-env";
-import * as sinon from "sinon";
 import { accountLogoutCommand, accountShowCommand, accountUtils } from "../../src/commands/models";
 import AzureTokenProvider from "../../src/commonlib/azureLogin";
 import AzureTokenCIProvider from "../../src/commonlib/azureLoginCI";
 import { AzureSpCrypto } from "../../src/commonlib/cacheAccess";
 import { logger } from "../../src/commonlib/logger";
 import M365TokenProvider from "../../src/commonlib/M365TokenProviderWrapper";
+import { assert, expect, vi } from "vitest";
 
 describe("CLI read-only commands account", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   let messages: string[] = [];
 
   beforeEach(() => {
-    sandbox.stub(process.stdout, "write").returns(true as any);
-    sandbox.stub(process.stderr, "write").returns(true as any);
-    sandbox.stub(logger, "info").callsFake(async (message: string) => {
+    vi.spyOn(process.stdout, "write").mockReturnValue(true as any);
+    vi.spyOn(process.stderr, "write").mockReturnValue(true as any);
+    vi.spyOn(logger, "info").mockImplementation(async (message: string) => {
       messages.push(message);
       return true;
     });
-    sandbox.stub(logger, "error").callsFake(async (message: string) => {
+    vi.spyOn(logger, "error").mockImplementation(async (message: string) => {
       messages.push(message);
       return true;
     });
-    sandbox.stub(logger, "outputInfo").callsFake(async (message: string) => {
+    vi.spyOn(logger, "outputInfo").mockImplementation(async (message: string) => {
       messages.push(message);
       return true;
     });
-    sandbox.stub(logger, "outputError").callsFake(async (message: string) => {
+    vi.spyOn(logger, "outputError").mockImplementation(async (message: string) => {
       messages.push(message);
       return true;
     });
@@ -41,7 +40,7 @@ describe("CLI read-only commands account", () => {
 
   afterEach(() => {
     messages = [];
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   describe("AccountUtils", async () => {
@@ -50,8 +49,8 @@ describe("CLI read-only commands account", () => {
       assert.isTrue(res);
     });
     it("outputM365Info login success", async () => {
-      sandbox.stub(M365TokenProvider, "getJsonObject").resolves(ok({ upn: "fakename" }));
-      sandbox.stub(M365TokenProvider, "getTenant").resolves(undefined);
+      vi.spyOn(M365TokenProvider, "getJsonObject").mockResolvedValue(ok({ upn: "fakename" }));
+      vi.spyOn(M365TokenProvider, "getTenant").mockResolvedValue(undefined);
       const res = await accountUtils.outputM365Info("login");
       assert.isTrue(res);
     });
@@ -59,8 +58,10 @@ describe("CLI read-only commands account", () => {
       let mocks: RestoreFn;
       beforeEach(() => {
         mocks = mockedEnv({ TEAMSFX_MULTI_TENANT: "true" });
-        sandbox.stub(M365TokenProvider, "getJsonObject").resolves(ok({ unique_name: "fakename" }));
-        sandbox.stub(M365TokenProvider, "getTenant").resolves("faked_tenant_id");
+        vi.spyOn(M365TokenProvider, "getJsonObject").mockResolvedValue(
+          ok({ unique_name: "fakename" })
+        );
+        vi.spyOn(M365TokenProvider, "getTenant").mockResolvedValue("faked_tenant_id");
       });
 
       afterEach(() => {
@@ -68,160 +69,165 @@ describe("CLI read-only commands account", () => {
       });
 
       it("specified tenant name displayed", async () => {
-        sandbox.stub(M365TokenProvider, "getAccessToken").resolves(ok("token"));
-        sandbox
-          .stub(tools, "listAllTenants")
-          .resolves([
-            { tenantId: "faked_tid_1" },
-            { tenantId: "faked_tenant_id", displayName: "Test tenant" },
-          ]);
+        vi.spyOn(M365TokenProvider, "getAccessToken").mockResolvedValue(ok("token"));
+        vi.spyOn(tools, "listAllTenants").mockResolvedValue([
+          { tenantId: "faked_tid_1" },
+          { tenantId: "faked_tenant_id", displayName: "Test tenant" },
+        ]);
         const res = await accountUtils.outputM365Info("login", "faked_tenant_id");
         assert.isTrue(res);
       });
 
       it("specified tenant not match", async () => {
-        sandbox.stub(M365TokenProvider, "getAccessToken").resolves(ok("token"));
-        sandbox
-          .stub(tools, "listAllTenants")
-          .resolves([{ tenantId: "faked_tid_1" }, { tenantId: "faked_tid_2" }]);
+        vi.spyOn(M365TokenProvider, "getAccessToken").mockResolvedValue(ok("token"));
+        vi.spyOn(tools, "listAllTenants").mockResolvedValue([
+          { tenantId: "faked_tid_1" },
+          { tenantId: "faked_tid_2" },
+        ]);
         const res = await accountUtils.outputM365Info("login", "faked_tenant_id");
         assert.isTrue(res);
       });
 
       it("failed to retrieve access token", async () => {
-        sandbox
-          .stub(M365TokenProvider, "getAccessToken")
-          .resolves(err("failed to get access token" as any));
+        vi.spyOn(M365TokenProvider, "getAccessToken").mockResolvedValue(
+          err("failed to get access token" as any)
+        );
         const res = await accountUtils.outputM365Info("login", "faked_tenant_id");
         assert.isTrue(res);
       });
     });
     it("outputM365Info login fail", async () => {
-      sandbox.stub(M365TokenProvider, "getJsonObject").resolves(err(new UserCancelError()));
+      vi.spyOn(M365TokenProvider, "getJsonObject").mockResolvedValue(err(new UserCancelError()));
       const res = await accountUtils.outputM365Info("login");
       assert.isFalse(res);
     });
     it("outputM365Info show success", async () => {
-      sandbox.stub(M365TokenProvider, "getJsonObject").resolves(ok({ upn: "fakename" }));
-      sandbox.stub(M365TokenProvider, "getTenant").resolves("faked_tenant_id");
-      sandbox.stub(M365TokenProvider, "getAccessToken").resolves(ok("token"));
-      sandbox
-        .stub(tools, "listAllTenants")
-        .resolves([{ tenantId: "faked_tid_1" }, { tenantId: "faked_tenant_id" }]);
+      vi.spyOn(M365TokenProvider, "getJsonObject").mockResolvedValue(ok({ upn: "fakename" }));
+      vi.spyOn(M365TokenProvider, "getTenant").mockResolvedValue("faked_tenant_id");
+      vi.spyOn(M365TokenProvider, "getAccessToken").mockResolvedValue(ok("token"));
+      vi.spyOn(tools, "listAllTenants").mockResolvedValue([
+        { tenantId: "faked_tid_1" },
+        { tenantId: "faked_tenant_id" },
+      ]);
       const res = await accountUtils.outputM365Info("show");
       assert.isTrue(res);
     });
     it("outputM365Info show fail", async () => {
-      sandbox.stub(M365TokenProvider, "getJsonObject").resolves(err(new UserCancelError()));
+      vi.spyOn(M365TokenProvider, "getJsonObject").mockResolvedValue(err(new UserCancelError()));
       const res = await accountUtils.outputM365Info("show");
       assert.isFalse(res);
     });
     it("outputAzureInfo login", async () => {
-      sandbox.stub(AzureTokenCIProvider, "load").resolves();
-      sandbox.stub(AzureTokenCIProvider, "init").resolves();
-      sandbox.stub(AzureTokenCIProvider, "getJsonObject").resolves({ upn: "test" });
-      sandbox.stub(AzureTokenCIProvider, "listSubscriptions").resolves([]);
+      vi.spyOn(AzureTokenCIProvider, "load").mockResolvedValue();
+      vi.spyOn(AzureTokenCIProvider, "init").mockResolvedValue();
+      vi.spyOn(AzureTokenCIProvider, "getJsonObject").mockResolvedValue({ upn: "test" });
+      vi.spyOn(AzureTokenCIProvider, "listSubscriptions").mockResolvedValue([]);
       const res = await accountUtils.outputAzureInfo("login", undefined, true);
       assert.isTrue(res);
     });
     it("outputAzureInfo login with tenant parameter", async () => {
       const mockedEnvRestore = mockedEnv({ TEAMSFX_MULTI_TENANT: "true" });
-      sandbox.stub(AzureTokenCIProvider, "load").resolves();
-      sandbox.stub(AzureTokenCIProvider, "init").resolves();
-      sandbox.stub(AzureTokenCIProvider, "switchTenant").resolves();
-      sandbox.stub(AzureTokenCIProvider, "getJsonObject").resolves({ unique_name: "test" });
-      sandbox.stub(AzureTokenCIProvider, "listSubscriptions").resolves([]);
-      sandbox.stub(AzureTokenCIProvider, "getTenant").resolves("faked_tenant_id");
-      sandbox.stub(AzureTokenCIProvider, "getIdentityCredentialAsync").resolves({
+      vi.spyOn(AzureTokenCIProvider, "load").mockResolvedValue();
+      vi.spyOn(AzureTokenCIProvider, "init").mockResolvedValue();
+      vi.spyOn(AzureTokenCIProvider, "switchTenant").mockResolvedValue();
+      vi.spyOn(AzureTokenCIProvider, "getJsonObject").mockResolvedValue({ unique_name: "test" });
+      vi.spyOn(AzureTokenCIProvider, "listSubscriptions").mockResolvedValue([]);
+      vi.spyOn(AzureTokenCIProvider, "getTenant").mockResolvedValue("faked_tenant_id");
+      vi.spyOn(AzureTokenCIProvider, "getIdentityCredentialAsync").mockResolvedValue({
         getToken: async () => {
           return Promise.resolve({ token: "faked_token" });
         },
       } as any);
-      sandbox
-        .stub(tools, "listAllTenants")
-        .resolves([{ tenantId: "faked_tid_1" }, { tenantId: "faked_tenant_id" }]);
+      vi.spyOn(tools, "listAllTenants").mockResolvedValue([
+        { tenantId: "faked_tid_1" },
+        { tenantId: "faked_tenant_id" },
+      ]);
       const res = await accountUtils.outputAzureInfo("login", "faked_tenant_id", true);
       assert.isTrue(res);
       mockedEnvRestore();
     });
     it("outputAzureInfo login fail with tenant parameter - invalid token", async () => {
       const mockedEnvRestore = mockedEnv({ TEAMSFX_MULTI_TENANT: "true" });
-      sandbox.stub(AzureTokenCIProvider, "load").resolves();
-      sandbox.stub(AzureTokenCIProvider, "init").resolves();
-      sandbox.stub(AzureTokenCIProvider, "switchTenant").resolves();
-      sandbox.stub(AzureTokenCIProvider, "getJsonObject").resolves({ unique_name: "test" });
-      sandbox.stub(AzureTokenCIProvider, "listSubscriptions").resolves([]);
-      sandbox.stub(AzureTokenCIProvider, "getTenant").resolves("faked_tenant_id");
-      sandbox.stub(AzureTokenCIProvider, "getIdentityCredentialAsync").resolves(undefined);
+      vi.spyOn(AzureTokenCIProvider, "load").mockResolvedValue();
+      vi.spyOn(AzureTokenCIProvider, "init").mockResolvedValue();
+      vi.spyOn(AzureTokenCIProvider, "switchTenant").mockResolvedValue();
+      vi.spyOn(AzureTokenCIProvider, "getJsonObject").mockResolvedValue({ unique_name: "test" });
+      vi.spyOn(AzureTokenCIProvider, "listSubscriptions").mockResolvedValue([]);
+      vi.spyOn(AzureTokenCIProvider, "getTenant").mockResolvedValue("faked_tenant_id");
+      vi.spyOn(AzureTokenCIProvider, "getIdentityCredentialAsync").mockResolvedValue(undefined);
       const res = await accountUtils.outputAzureInfo("login", "faked_tenant_id", true);
       assert.isTrue(res);
       mockedEnvRestore();
     });
     it("outputAzureInfo login fail with tenant parameter - tenant mismatch", async () => {
       const mockedEnvRestore = mockedEnv({ TEAMSFX_MULTI_TENANT: "true" });
-      sandbox.stub(AzureTokenCIProvider, "load").resolves();
-      sandbox.stub(AzureTokenCIProvider, "init").resolves();
-      sandbox.stub(AzureTokenCIProvider, "switchTenant").resolves();
-      sandbox.stub(AzureTokenCIProvider, "getJsonObject").resolves({ unique_name: "test" });
-      sandbox.stub(AzureTokenCIProvider, "listSubscriptions").resolves([]);
-      sandbox.stub(AzureTokenCIProvider, "getTenant").resolves("faked_tenant_id");
-      sandbox.stub(AzureTokenCIProvider, "getIdentityCredentialAsync").resolves({
+      vi.spyOn(AzureTokenCIProvider, "load").mockResolvedValue();
+      vi.spyOn(AzureTokenCIProvider, "init").mockResolvedValue();
+      vi.spyOn(AzureTokenCIProvider, "switchTenant").mockResolvedValue();
+      vi.spyOn(AzureTokenCIProvider, "getJsonObject").mockResolvedValue({ unique_name: "test" });
+      vi.spyOn(AzureTokenCIProvider, "listSubscriptions").mockResolvedValue([]);
+      vi.spyOn(AzureTokenCIProvider, "getTenant").mockResolvedValue("faked_tenant_id");
+      vi.spyOn(AzureTokenCIProvider, "getIdentityCredentialAsync").mockResolvedValue({
         getToken: async () => {
           return Promise.resolve({ token: "faked_token" });
         },
       } as any);
-      sandbox
-        .stub(tools, "listAllTenants")
-        .resolves([{ tenantId: "faked_tid_1" }, { tenantId: "faked_tid_2" }]);
+      vi.spyOn(tools, "listAllTenants").mockResolvedValue([
+        { tenantId: "faked_tid_1" },
+        { tenantId: "faked_tid_2" },
+      ]);
       const res = await accountUtils.outputAzureInfo("login", "faked_tenant_id", true);
       assert.isTrue(res);
       mockedEnvRestore();
     });
     it("outputAzureInfo login fail", async () => {
-      sandbox.stub(AzureTokenProvider, "getJsonObject").resolves(undefined);
+      vi.spyOn(AzureTokenProvider, "getJsonObject").mockResolvedValue(undefined);
       const res = await accountUtils.outputAzureInfo("login");
       assert.isFalse(res);
     });
     it("outputAzureInfo show", async () => {
-      sandbox.stub(AzureTokenProvider, "getJsonObject").resolves({ upn: "test" });
-      sandbox.stub(AzureTokenProvider, "listSubscriptions").resolves([]);
+      vi.spyOn(AzureTokenProvider, "getJsonObject").mockResolvedValue({ upn: "test" });
+      vi.spyOn(AzureTokenProvider, "listSubscriptions").mockResolvedValue([]);
       const res = await accountUtils.outputAzureInfo("show");
       assert.isTrue(res);
     });
     it("outputAzureInfo show fail", async () => {
-      sandbox.stub(AzureTokenProvider, "getJsonObject").resolves(undefined);
+      vi.spyOn(AzureTokenProvider, "getJsonObject").mockResolvedValue(undefined);
       const res = await accountUtils.outputAzureInfo("show");
       assert.isFalse(res);
     });
     it("outputAzureInfo show with sp login", async () => {
-      sandbox.stub(AzureSpCrypto, "checkAzureSPFile").resolves(true);
-      sandbox.stub(AzureTokenCIProvider, "load").resolves();
-      sandbox.stub(AzureTokenCIProvider, "init").resolves();
-      sandbox.stub(AzureTokenCIProvider, "switchTenant").resolves();
-      sandbox.stub(AzureTokenCIProvider, "getJsonObject").resolves({ unique_name: "test" });
-      sandbox.stub(AzureTokenCIProvider, "listSubscriptions").resolves([]);
-      sandbox.stub(AzureTokenCIProvider, "getTenant").resolves("faked_tenant_id");
+      vi.spyOn(AzureSpCrypto, "checkAzureSPFile").mockResolvedValue(true);
+      vi.spyOn(AzureTokenCIProvider, "load").mockResolvedValue();
+      vi.spyOn(AzureTokenCIProvider, "init").mockResolvedValue();
+      vi.spyOn(AzureTokenCIProvider, "switchTenant").mockResolvedValue();
+      vi.spyOn(AzureTokenCIProvider, "getJsonObject").mockResolvedValue({ unique_name: "test" });
+      vi.spyOn(AzureTokenCIProvider, "listSubscriptions").mockResolvedValue([]);
+      vi.spyOn(AzureTokenCIProvider, "getTenant").mockResolvedValue("faked_tenant_id");
       const getTokenFake = {
         getToken: async (scope: string) => {
           return Promise.resolve({ token: "faked_token" });
         },
       };
-      const getTokenSpy = sandbox.spy(getTokenFake, "getToken");
-      sandbox
-        .stub(AzureTokenCIProvider, "getIdentityCredentialAsync")
-        .resolves(getTokenFake as any);
-      sandbox
-        .stub(tools, "listAllTenants")
-        .resolves([{ tenantId: "faked_tid_1" }, { tenantId: "faked_tid_2" }]);
+      const getTokenSpy = vi.spyOn(getTokenFake, "getToken");
+      vi.spyOn(AzureTokenCIProvider, "getIdentityCredentialAsync").mockResolvedValue(
+        getTokenFake as any
+      );
+      vi.spyOn(tools, "listAllTenants").mockResolvedValue([
+        { tenantId: "faked_tid_1" },
+        { tenantId: "faked_tid_2" },
+      ]);
       const res = await accountUtils.outputAzureInfo("login", "faked_tenant_id", true);
       assert.isTrue(res);
-      assert.isTrue(getTokenSpy.calledOnceWith("https://management.core.windows.net/.default"));
+      expect(getTokenSpy).toHaveBeenCalledExactlyOnceWith(
+        "https://management.core.windows.net/.default"
+      );
     });
   });
   describe("accountShowCommand", async () => {
     it("both signedOut", async () => {
-      sandbox.stub(M365TokenProvider, "getStatus").resolves(ok({ status: signedOut }));
-      sandbox.stub(AzureTokenProvider, "getStatus").resolves({ status: signedOut });
+      vi.spyOn(M365TokenProvider, "getStatus").mockResolvedValue(ok({ status: signedOut }));
+      vi.spyOn(AzureTokenProvider, "getStatus").mockResolvedValue({ status: signedOut });
       messages = [];
       const ctx: CLIContext = {
         command: {
@@ -237,11 +243,11 @@ describe("CLI read-only commands account", () => {
       assert.isTrue(res.isOk());
     });
     it("both signedIn and checkIsOnline = true", async () => {
-      sandbox.stub(M365TokenProvider, "getStatus").resolves(ok({ status: signedIn }));
-      sandbox.stub(AzureTokenProvider, "getStatus").resolves({ status: signedIn });
-      sandbox.stub(accountUtils, "checkIsOnline").resolves(true);
-      const outputM365Info = sandbox.stub(accountUtils, "outputM365Info").resolves();
-      const outputAzureInfo = sandbox.stub(accountUtils, "outputAzureInfo").resolves();
+      vi.spyOn(M365TokenProvider, "getStatus").mockResolvedValue(ok({ status: signedIn }));
+      vi.spyOn(AzureTokenProvider, "getStatus").mockResolvedValue({ status: signedIn });
+      vi.spyOn(accountUtils, "checkIsOnline").mockResolvedValue(true);
+      const outputM365Info = vi.spyOn(accountUtils, "outputM365Info").mockResolvedValue();
+      const outputAzureInfo = vi.spyOn(accountUtils, "outputAzureInfo").mockResolvedValue();
       messages = [];
       const ctx: CLIContext = {
         command: {
@@ -255,18 +261,19 @@ describe("CLI read-only commands account", () => {
       };
       const res = await accountShowCommand.handler!(ctx);
       assert.isTrue(res.isOk());
-      assert.isTrue(outputM365Info.calledOnce);
-      assert.isTrue(outputAzureInfo.calledOnce);
+      assert.isTrue(outputM365Info.mock.calls.length === 1);
+      assert.isTrue(outputAzureInfo.mock.calls.length === 1);
     });
     it("both signedIn and checkIsOnline = false", async () => {
-      sandbox
-        .stub(M365TokenProvider, "getStatus")
-        .resolves(ok({ status: signedIn, accountInfo: { upn: "xxx" } }));
-      sandbox
-        .stub(AzureTokenProvider, "getStatus")
-        .resolves({ status: signedIn, accountInfo: { upn: "xxx" } });
-      sandbox.stub(accountUtils, "checkIsOnline").resolves(false);
-      const outputAccountInfoOffline = sandbox.stub(accountUtils, "outputAccountInfoOffline");
+      vi.spyOn(M365TokenProvider, "getStatus").mockResolvedValue(
+        ok({ status: signedIn, accountInfo: { upn: "xxx" } })
+      );
+      vi.spyOn(AzureTokenProvider, "getStatus").mockResolvedValue({
+        status: signedIn,
+        accountInfo: { upn: "xxx" },
+      });
+      vi.spyOn(accountUtils, "checkIsOnline").mockResolvedValue(false);
+      const outputAccountInfoOffline = vi.spyOn(accountUtils, "outputAccountInfoOffline");
       messages = [];
       const ctx: CLIContext = {
         command: {
@@ -280,10 +287,10 @@ describe("CLI read-only commands account", () => {
       };
       const res = await accountShowCommand.handler!(ctx);
       assert.isTrue(res.isOk());
-      assert.isTrue(outputAccountInfoOffline.calledTwice);
+      assert.isTrue(outputAccountInfoOffline.mock.calls.length === 2);
     });
     it("M365TokenProvider.getStatus() returns error", async () => {
-      sandbox.stub(M365TokenProvider, "getStatus").resolves(err(new UserCancelError()));
+      vi.spyOn(M365TokenProvider, "getStatus").mockResolvedValue(err(new UserCancelError()));
       messages = [];
       const ctx: CLIContext = {
         command: {
@@ -302,7 +309,7 @@ describe("CLI read-only commands account", () => {
 
   describe("accountLogoutCommand", async () => {
     it("azure success", async () => {
-      sandbox.stub(AzureTokenProvider, "signout").resolves(true);
+      vi.spyOn(AzureTokenProvider, "signout").mockResolvedValue(true);
       const ctx: CLIContext = {
         command: {
           ...accountLogoutCommand,
@@ -318,7 +325,7 @@ describe("CLI read-only commands account", () => {
       assert.isTrue(res.isOk());
     });
     it("azure fail", async () => {
-      sandbox.stub(AzureTokenProvider, "signout").resolves(false);
+      vi.spyOn(AzureTokenProvider, "signout").mockResolvedValue(false);
       const ctx: CLIContext = {
         command: {
           ...accountLogoutCommand,
@@ -334,7 +341,7 @@ describe("CLI read-only commands account", () => {
       assert.isTrue(res.isOk());
     });
     it("m365 success", async () => {
-      sandbox.stub(M365TokenProvider, "signout").resolves(true);
+      vi.spyOn(M365TokenProvider, "signout").mockResolvedValue(true);
       const ctx: CLIContext = {
         command: {
           ...accountLogoutCommand,
@@ -349,7 +356,7 @@ describe("CLI read-only commands account", () => {
       assert.isTrue(res.isOk());
     });
     it("m365 fail", async () => {
-      sandbox.stub(M365TokenProvider, "signout").resolves(false);
+      vi.spyOn(M365TokenProvider, "signout").mockResolvedValue(false);
       const ctx: CLIContext = {
         command: {
           ...accountLogoutCommand,

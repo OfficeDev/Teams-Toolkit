@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 41,
+    "total_steps": 40,
     "created_at": "2026-05-13T05:42:38.963703",
     "name": "Feature Publish to Teams Build Package If Not Provision",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2026-05-13T05:42:38.963675",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_09c4bd9e",
+      "plan_r_0624_024810",
       "step_38526dcc",
       "step_3d3607ef",
       "step_772d29b4",
@@ -69,32 +69,6 @@
     "updated_at": "2026-05-13T07:25:29.770623"
   },
   "steps": [
-    {
-      "step_id": "step_09c4bd9e",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 389,
-        "y": 223
-      },
-      "description": "Click on the \"Teams Agents and Apps\" option within the dropdown menu under the \"New Project\" dialog in the Microsoft 365 Agents Toolkit interface.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:389:223:16:5:9c9d2494b56a6a34",
-        "dhash:389:223:96:5:cccca1b15b42a045",
-        "dhash:389:223:0:10:c8c88094b2717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_09c4bd9e",
-      "created_at": "2026-05-13T05:42:38.976659",
-      "plan_id": "plan_080d52d2"
-    },
     {
       "step_id": "step_38526dcc",
       "agent": "interaction",

@@ -1,0 +1,29 @@
+{
+  "name": "tab",
+  "license": "MIT",
+  "private": true,
+  "main": "bin/index",
+  "types": "bin/index",
+  "files": [
+    "bin",
+    "README.md"
+  ],
+  "scripts": {
+    "clean": "npx rimraf ./bin",
+    "build": "npx vite build"
+  },
+  "dependencies": {
+    "@microsoft/teams.client": "^2.0.0",
+    "@microsoft/teams.common": "^2.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.4.5",
+    "vite": "^6.3.6",
+    "@types/react": "^19.1.13",
+    "@types/react-dom": "^19.1.9"
+  }
+}

@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 4,
+    "total_steps": 3,
     "created_at": "2026-02-24T08:22:47.230017",
     "name": "General Teams Agent OpenAI js Local Debug",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2026-02-24T08:22:47.230017",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_da80d556",
+      "plan_r_0624_024810",
       "step_f968279e",
       "plan_r_1124_081758",
       "step_f669943b",
@@ -34,32 +34,6 @@
     "updated_at": "2026-02-24T08:38:44.487798"
   },
   "steps": [
-    {
-      "step_id": "step_da80d556",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 378,
-        "y": 220
-      },
-      "description": "Click on the \"Teams Agents and Apps\" option within the dropdown menu under the \"New Project\" interface in the Microsoft 365 Agents Toolkit.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:378:220:16:5:6bcdca2210ab4dca",
-        "dhash:378:220:96:5:a66254582cad5240",
-        "dhash:378:220:0:10:c8c88094b2717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_da80d556",
-      "created_at": "2026-02-24T08:22:47.236589",
-      "plan_id": "plan_2545a770"
-    },
     {
       "step_id": "step_f968279e",
       "agent": "interaction",

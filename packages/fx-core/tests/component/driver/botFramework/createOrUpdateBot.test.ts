@@ -1,8 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import * as chai from "chai";
-import * as sinon from "sinon";
 import * as util from "util";
 import { teamsDevPortalClient } from "../../../../src/client/teamsDevPortalClient";
 import * as localizeUtils from "../../../../src/common/localizeUtils";
@@ -11,6 +9,7 @@ import { IBotRegistration } from "../../../../src/component/resource/botService/
 import { InvalidActionInputError, UnhandledError } from "../../../../src/error/common";
 import { MockedLogProvider } from "../../../plugins/solution/util";
 import { MockedM365Provider } from "../../../core/utils";
+import { chai, vi } from "vitest";
 
 describe("CreateOrUpdateM365BotDriver", () => {
   const mockedDriverContext: any = {
@@ -20,7 +19,7 @@ describe("CreateOrUpdateM365BotDriver", () => {
   const driver = new CreateOrUpdateBotFrameworkBotDriver();
 
   beforeEach(() => {
-    sinon.stub(localizeUtils, "getDefaultString").callsFake((key, ...params) => {
+    vi.spyOn(localizeUtils, "getDefaultString").mockImplementation((key, ...params) => {
       if (key === "error.yaml.InvalidActionInputError") {
         return util.format(
           "Following parameter is missing or invalid for %s action: %s.",
@@ -35,13 +34,13 @@ describe("CreateOrUpdateM365BotDriver", () => {
       }
       return "";
     });
-    sinon
-      .stub(localizeUtils, "getLocalizedString")
-      .callsFake((key, ...params) => localizeUtils.getDefaultString(key, ...params));
+    vi.spyOn(localizeUtils, "getLocalizedString").mockImplementation((key, ...params) =>
+      localizeUtils.getDefaultString(key, ...params)
+    );
   });
 
   afterEach(() => {
-    sinon.restore();
+    vi.restoreAllMocks();
   });
 
   describe("run", () => {
@@ -161,7 +160,9 @@ describe("CreateOrUpdateM365BotDriver", () => {
     });
 
     it("exception", async () => {
-      sinon.stub(teamsDevPortalClient, "getBotRegistration").throws(new Error("exception"));
+      vi.spyOn(teamsDevPortalClient, "getBotRegistration").mockImplementation(() => {
+        throw new Error("exception");
+      });
       const args: any = {
         botId: "550e8400-e29b-41d4-a716-446655440000",
         name: "test-bot",
@@ -177,13 +178,15 @@ describe("CreateOrUpdateM365BotDriver", () => {
     });
 
     it("happy path: create", async () => {
-      sinon.stub(teamsDevPortalClient, "getBotRegistration").returns(Promise.resolve(undefined));
+      vi.spyOn(teamsDevPortalClient, "getBotRegistration").mockReturnValue(
+        Promise.resolve(undefined)
+      );
       let createBotRegistrationCalled = false;
-      sinon.stub(teamsDevPortalClient, "createBotRegistration").callsFake(async () => {
+      vi.spyOn(teamsDevPortalClient, "createBotRegistration").mockImplementation(async () => {
         createBotRegistrationCalled = true;
       });
       let updateBotRegistrationCalled = false;
-      sinon.stub(teamsDevPortalClient, "updateBotRegistration").callsFake(async () => {
+      vi.spyOn(teamsDevPortalClient, "updateBotRegistration").mockImplementation(async () => {
         updateBotRegistrationCalled = true;
       });
       const args: any = {
@@ -218,15 +221,17 @@ describe("CreateOrUpdateM365BotDriver", () => {
         iconUrl: "",
         callingEndpoint: "",
       };
-      sinon.stub(teamsDevPortalClient, "getBotRegistration").callsFake(async (token, botId) => {
-        return botId === botRegistration.botId ? botRegistration : undefined;
-      });
+      vi.spyOn(teamsDevPortalClient, "getBotRegistration").mockImplementation(
+        async (token, botId) => {
+          return botId === botRegistration.botId ? botRegistration : undefined;
+        }
+      );
       let createBotRegistrationCalled = false;
-      sinon.stub(teamsDevPortalClient, "createBotRegistration").callsFake(async () => {
+      vi.spyOn(teamsDevPortalClient, "createBotRegistration").mockImplementation(async () => {
         createBotRegistrationCalled = true;
       });
       let updateBotRegistrationCalled = false;
-      sinon.stub(teamsDevPortalClient, "updateBotRegistration").callsFake(async () => {
+      vi.spyOn(teamsDevPortalClient, "updateBotRegistration").mockImplementation(async () => {
         updateBotRegistrationCalled = true;
       });
       const args: any = {
@@ -248,13 +253,15 @@ describe("CreateOrUpdateM365BotDriver", () => {
 
   describe("execute", () => {
     it("happy path: create", async () => {
-      sinon.stub(teamsDevPortalClient, "getBotRegistration").returns(Promise.resolve(undefined));
+      vi.spyOn(teamsDevPortalClient, "getBotRegistration").mockReturnValue(
+        Promise.resolve(undefined)
+      );
       let createBotRegistrationCalled = false;
-      sinon.stub(teamsDevPortalClient, "createBotRegistration").callsFake(async () => {
+      vi.spyOn(teamsDevPortalClient, "createBotRegistration").mockImplementation(async () => {
         createBotRegistrationCalled = true;
       });
       let updateBotRegistrationCalled = false;
-      sinon.stub(teamsDevPortalClient, "updateBotRegistration").callsFake(async () => {
+      vi.spyOn(teamsDevPortalClient, "updateBotRegistration").mockImplementation(async () => {
         updateBotRegistrationCalled = true;
       });
       const args: any = {
@@ -285,15 +292,17 @@ describe("CreateOrUpdateM365BotDriver", () => {
         iconUrl: "",
         callingEndpoint: "",
       };
-      sinon.stub(teamsDevPortalClient, "getBotRegistration").callsFake(async (token, botId) => {
-        return botId === botRegistration.botId ? botRegistration : undefined;
-      });
+      vi.spyOn(teamsDevPortalClient, "getBotRegistration").mockImplementation(
+        async (token, botId) => {
+          return botId === botRegistration.botId ? botRegistration : undefined;
+        }
+      );
       let createBotRegistrationCalled = false;
-      sinon.stub(teamsDevPortalClient, "createBotRegistration").callsFake(async () => {
+      vi.spyOn(teamsDevPortalClient, "createBotRegistration").mockImplementation(async () => {
         createBotRegistrationCalled = true;
       });
       let updateBotRegistrationCalled = false;
-      sinon.stub(teamsDevPortalClient, "updateBotRegistration").callsFake(async () => {
+      vi.spyOn(teamsDevPortalClient, "updateBotRegistration").mockImplementation(async () => {
         updateBotRegistrationCalled = true;
       });
       const args: any = {
@@ -339,13 +348,15 @@ describe("CreateOrUpdateM365BotDriver", () => {
         logProvider: undefined,
         m365TokenProvider: new MockedM365Provider(),
       };
-      sinon.stub(teamsDevPortalClient, "getBotRegistration").returns(Promise.resolve(undefined));
+      vi.spyOn(teamsDevPortalClient, "getBotRegistration").mockReturnValue(
+        Promise.resolve(undefined)
+      );
       let createBotRegistrationCalled = false;
-      sinon.stub(teamsDevPortalClient, "createBotRegistration").callsFake(async () => {
+      vi.spyOn(teamsDevPortalClient, "createBotRegistration").mockImplementation(async () => {
         createBotRegistrationCalled = true;
       });
       let updateBotRegistrationCalled = false;
-      sinon.stub(teamsDevPortalClient, "updateBotRegistration").callsFake(async () => {
+      vi.spyOn(teamsDevPortalClient, "updateBotRegistration").mockImplementation(async () => {
         updateBotRegistrationCalled = true;
       });
       const args: any = {
@@ -372,15 +383,17 @@ describe("CreateOrUpdateM365BotDriver", () => {
         iconUrl: "",
         callingEndpoint: "",
       };
-      sinon.stub(teamsDevPortalClient, "getBotRegistration").callsFake(async (token, botId) => {
-        return botId === botRegistration.botId ? botRegistration : undefined;
-      });
+      vi.spyOn(teamsDevPortalClient, "getBotRegistration").mockImplementation(
+        async (token, botId) => {
+          return botId === botRegistration.botId ? botRegistration : undefined;
+        }
+      );
       let createBotRegistrationCalled = false;
-      sinon.stub(teamsDevPortalClient, "createBotRegistration").callsFake(async () => {
+      vi.spyOn(teamsDevPortalClient, "createBotRegistration").mockImplementation(async () => {
         createBotRegistrationCalled = true;
       });
       let updateBotRegistrationCalled = false;
-      sinon.stub(teamsDevPortalClient, "updateBotRegistration").callsFake(async () => {
+      vi.spyOn(teamsDevPortalClient, "updateBotRegistration").mockImplementation(async () => {
         updateBotRegistrationCalled = true;
       });
       const args: any = {

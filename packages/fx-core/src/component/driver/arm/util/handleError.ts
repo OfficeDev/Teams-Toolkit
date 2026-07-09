@@ -9,11 +9,6 @@ import { DeployArmError, GetArmDeploymentError } from "../../../../error/arm";
 import { ResourceGroupNotExistError } from "../../../../error/azure";
 import * as innerHandleError from "./innerHandleError";
 
-export const armErrorHandleDeps = {
-  innerGetDeploymentError: innerHandleError.innerGetDeploymentError,
-  innerGetDeploymentOperations: innerHandleError.innerGetDeploymentOperations,
-};
-
 // constant string
 const ErrorCodes = {
   InvalidTemplate: "InvalidTemplate",
@@ -139,7 +134,7 @@ export namespace ArmErrorHandle {
   ): Promise<any> {
     let deployment;
     try {
-      deployment = await armErrorHandleDeps.innerGetDeploymentError(
+      deployment = await innerHandleError.innerGetDeploymentError(
         deployCtx.client,
         resourceGroupName,
         deploymentName
@@ -171,7 +166,7 @@ export namespace ArmErrorHandle {
       error: deployment.properties?.error,
     };
     const operations = [];
-    const deploymentOperations = await armErrorHandleDeps.innerGetDeploymentOperations(
+    const deploymentOperations = await innerHandleError.innerGetDeploymentOperations(
       deployCtx.client,
       resourceGroupName,
       deploymentName

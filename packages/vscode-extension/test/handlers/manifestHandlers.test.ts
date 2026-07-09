@@ -1,10 +1,10 @@
 import { err, FxError, Inputs, ok, Result, Stage, UserError } from "@microsoft/teamsfx-api";
 import { QuestionNames, UserCancelError } from "@microsoft/teamsfx-core";
-import { assert } from "chai";
 import fs from "fs-extra";
-import * as sinon from "sinon";
 import * as vscode from "vscode";
 import * as globalVariables from "../../src/globalVariables";
+import { vi, assert } from "vitest";
+import { mockValue } from "../mocks/vitestMockUtils";
 import {
   buildPackageHandler,
   publishInDeveloperPortalHandler,
@@ -17,46 +17,41 @@ import * as vsc_ui from "../../src/qm/vsc_ui";
 import { ExtTelemetry } from "../../src/telemetry/extTelemetry";
 import { MockCore } from "../mocks/mockCore";
 describe("Manifest handlers", () => {
-  const sandbox = sinon.createSandbox();
-
   beforeEach(() => {
-    sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-    sandbox.stub(ExtTelemetry, "sendTelemetryErrorEvent");
+    vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+    vi.spyOn(ExtTelemetry, "sendTelemetryErrorEvent");
   });
 
-  afterEach(() => {
-    sandbox.restore();
-  });
   describe("validateManifestHandler", () => {
     it("happy", async () => {
-      sandbox.stub(shared, "runCommand").resolves(ok(undefined));
+      vi.spyOn(shared, "runCommand").mockResolvedValue(ok(undefined));
       const res = await validateManifestHandler();
       assert.isTrue(res.isOk());
     });
   });
   describe("buildPackageHandler", function () {
     it("happy()", async () => {
-      sandbox.stub(shared, "runCommand").resolves(ok(undefined));
+      vi.spyOn(shared, "runCommand").mockResolvedValue(ok(undefined));
       const res = await buildPackageHandler();
       assert.isTrue(res.isOk());
     });
   });
   describe("publishInDeveloperPortalHandler", async () => {
     beforeEach(() => {
-      sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.file("path"));
+      mockValue(globalVariables, "workspaceUri", vscode.Uri.file("path"));
     });
     it("publish in developer portal - success", async () => {
-      sandbox.stub(vsc_ui, "VS_CODE_UI").value(new vsc_ui.VsCodeUI(<vscode.ExtensionContext>{}));
-      sandbox
-        .stub(vsc_ui.VS_CODE_UI, "selectFile")
-        .resolves(ok({ type: "success", result: "test.zip" }));
-      sandbox.stub(shared, "runCommand").resolves(ok(undefined));
-      sandbox
-        .stub(vsc_ui.VS_CODE_UI, "selectOption")
-        .resolves(ok({ type: "success", result: "test.zip" }));
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readdir").resolves(["test.zip", "test.json"] as any);
-      sandbox.stub(fs, "existsSync").returns(true);
+      mockValue(vsc_ui, "VS_CODE_UI", new vsc_ui.VsCodeUI(<vscode.ExtensionContext>{}));
+      vi.spyOn(vsc_ui.VS_CODE_UI, "selectFile").mockResolvedValue(
+        ok({ type: "success", result: "test.zip" })
+      );
+      vi.spyOn(shared, "runCommand").mockResolvedValue(ok(undefined));
+      vi.spyOn(vsc_ui.VS_CODE_UI, "selectOption").mockResolvedValue(
+        ok({ type: "success", result: "test.zip" })
+      );
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readdir").mockResolvedValue(["test.zip", "test.json"] as any);
+      vi.spyOn(fs, "existsSync").mockReturnValue(true);
       const res = await publishInDeveloperPortalHandler();
       assert.isTrue(res.isOk());
       const res2 = await publishInDeveloperPortalHandler();
@@ -64,35 +59,37 @@ describe("Manifest handlers", () => {
     });
 
     it("publish in developer portal - cancelled", async () => {
-      sandbox.stub(vsc_ui, "VS_CODE_UI").value(new vsc_ui.VsCodeUI(<vscode.ExtensionContext>{}));
-      sandbox
-        .stub(vsc_ui.VS_CODE_UI, "selectFile")
-        .resolves(ok({ type: "success", result: "test2.zip" }));
-      sandbox.stub(vsc_ui.VS_CODE_UI, "selectOption").resolves(err(new UserCancelError("VSC")));
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readdir").resolves(["test.zip", "test.json"] as any);
+      mockValue(vsc_ui, "VS_CODE_UI", new vsc_ui.VsCodeUI(<vscode.ExtensionContext>{}));
+      vi.spyOn(vsc_ui.VS_CODE_UI, "selectFile").mockResolvedValue(
+        ok({ type: "success", result: "test2.zip" })
+      );
+      vi.spyOn(vsc_ui.VS_CODE_UI, "selectOption").mockResolvedValue(
+        err(new UserCancelError("VSC"))
+      );
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readdir").mockResolvedValue(["test.zip", "test.json"] as any);
       const res = await publishInDeveloperPortalHandler();
       assert.isTrue(res.isOk());
     });
     it("select file error", async () => {
-      sandbox.stub(vsc_ui, "VS_CODE_UI").value(new vsc_ui.VsCodeUI(<vscode.ExtensionContext>{}));
-      sandbox.stub(vsc_ui.VS_CODE_UI, "selectFile").resolves(err(new UserCancelError("VSC")));
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readdir").resolves(["test.zip", "test.json"] as any);
+      mockValue(vsc_ui, "VS_CODE_UI", new vsc_ui.VsCodeUI(<vscode.ExtensionContext>{}));
+      vi.spyOn(vsc_ui.VS_CODE_UI, "selectFile").mockResolvedValue(err(new UserCancelError("VSC")));
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readdir").mockResolvedValue(["test.zip", "test.json"] as any);
       const res = await publishInDeveloperPortalHandler();
       assert.isTrue(res.isOk());
     });
     it("runCommand error", async () => {
-      sandbox.stub(vsc_ui, "VS_CODE_UI").value(new vsc_ui.VsCodeUI(<vscode.ExtensionContext>{}));
-      sandbox
-        .stub(vsc_ui.VS_CODE_UI, "selectFile")
-        .resolves(ok({ type: "success", result: "test.zip" }));
-      sandbox.stub(shared, "runCommand").resolves(err(new UserCancelError("VSC")));
-      sandbox
-        .stub(vsc_ui.VS_CODE_UI, "selectOption")
-        .resolves(ok({ type: "success", result: "test.zip" }));
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readdir").resolves(["test.zip", "test.json"] as any);
+      mockValue(vsc_ui, "VS_CODE_UI", new vsc_ui.VsCodeUI(<vscode.ExtensionContext>{}));
+      vi.spyOn(vsc_ui.VS_CODE_UI, "selectFile").mockResolvedValue(
+        ok({ type: "success", result: "test.zip" })
+      );
+      vi.spyOn(shared, "runCommand").mockResolvedValue(err(new UserCancelError("VSC")));
+      vi.spyOn(vsc_ui.VS_CODE_UI, "selectOption").mockResolvedValue(
+        ok({ type: "success", result: "test.zip" })
+      );
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readdir").mockResolvedValue(["test.zip", "test.json"] as any);
       const res = await publishInDeveloperPortalHandler();
       assert.isTrue(res.isErr());
     });
@@ -100,38 +97,40 @@ describe("Manifest handlers", () => {
 
   describe("updatePreviewManifest", () => {
     it("happy", async () => {
-      sandbox.stub(globalVariables, "core").value(new MockCore());
-      const openTextDocumentStub = sandbox
-        .stub(vscode.workspace, "openTextDocument")
-        .returns(Promise.resolve("" as any));
-      sandbox.stub(shared, "runCommand").resolves(ok(undefined));
+      mockValue(globalVariables, "core", new MockCore());
+      const openTextDocumentStub = vi
+        .spyOn(vscode.workspace, "openTextDocument")
+        .mockReturnValue(Promise.resolve("" as any));
+      vi.spyOn(shared, "runCommand").mockResolvedValue(ok(undefined));
       await updatePreviewManifest([]);
       assert.isTrue(openTextDocumentStub.calledOnce);
     });
     it("getSelectedEnv error", async () => {
       const core = new MockCore();
-      sandbox.stub(globalVariables, "core").value(core);
-      sandbox.stub(core, "getSelectedEnv").resolves(err(new UserCancelError("VSC")));
-      sandbox.stub(shared, "runCommand").resolves(ok(undefined));
+      mockValue(globalVariables, "core", core);
+      vi.spyOn(core, "getSelectedEnv").mockResolvedValue(err(new UserCancelError("VSC")));
+      vi.spyOn(shared, "runCommand").mockResolvedValue(ok(undefined));
       const res = await updatePreviewManifest([]);
       assert.isTrue(res.isErr());
     });
   });
   describe("syncManifest", () => {
     it("happy", async () => {
-      const runCommandStub = sandbox.stub(shared, "runCommand").resolves(ok(undefined));
+      const runCommandStub = vi.spyOn(shared, "runCommand").mockResolvedValue(ok(undefined));
       await syncManifestHandler();
       assert.isTrue(runCommandStub.calledOnce);
     });
     it("teams app id in the input", async () => {
-      const runCommandStub = sandbox
-        .stub(shared, "runCommand")
-        .callsFake((stage: Stage, inputs: Inputs | undefined): Promise<Result<any, FxError>> => {
-          if (inputs && inputs[QuestionNames.TeamsAppId] === "teamsAppId") {
-            return Promise.resolve(ok(undefined));
+      const runCommandStub = vi
+        .spyOn(shared, "runCommand")
+        .mockImplementation(
+          (stage: Stage, inputs: Inputs | undefined): Promise<Result<any, FxError>> => {
+            if (inputs && inputs[QuestionNames.TeamsAppId] === "teamsAppId") {
+              return Promise.resolve(ok(undefined));
+            }
+            return Promise.resolve(err(new UserError("ut", "error", "", "")));
           }
-          return Promise.resolve(err(new UserError("ut", "error", "", "")));
-        });
+        );
       const res = await syncManifestHandler("teamsAppId");
       assert.isTrue(runCommandStub.calledOnce);
       assert.isTrue(res.isOk());

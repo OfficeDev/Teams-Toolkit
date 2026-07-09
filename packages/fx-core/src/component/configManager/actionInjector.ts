@@ -384,7 +384,7 @@ export class ActionInjector {
           with: {
             name: `${authName}`,
             appId: `\${{${teamsAppIdEnvName}}}`,
-            applicableToApps: "SpecificApp",
+            applicableToApps: "AnyApp",
             targetAudience: "HomeTenant",
             wellKnownAuthorizationServer: wellKnownAuthorizationServer,
             targetUrlsShouldStartWith: [mcpServerUrl],

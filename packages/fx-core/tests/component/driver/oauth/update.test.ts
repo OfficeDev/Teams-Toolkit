@@ -3,15 +3,14 @@
 
 import { SpecParser } from "@microsoft/m365-spec-parser";
 import { ConfirmConfig, err, ok, UserError } from "@microsoft/teamsfx-api";
-import * as chai from "chai";
-import chaiAsPromised from "chai-as-promised";
 import { RestoreFn } from "mocked-env";
-import * as sinon from "sinon";
+import { chai, vi } from "vitest";
 import { featureFlagManager, FeatureFlags } from "../../../../src";
 import { teamsGraphClient } from "../../../../src/client/teamsGraphClient";
 import { setTools } from "../../../../src/common/globalVars";
 import { UpdateOauthArgs } from "../../../../src/component/driver/oauth/interface/updateOauthArgs";
-import { oauthUpdateDeps, UpdateOauthDriver } from "../../../../src/component/driver/oauth/update";
+import { UpdateOauthDriver } from "../../../../src/component/driver/oauth/update";
+import * as oauthUtility from "../../../../src/component/driver/oauth/utility/utility";
 import {
   OauthRegistrationAppType,
   OauthRegistrationTargetAudience,
@@ -20,7 +19,6 @@ import {
 import { MockedAzureAccountProvider, MockedM365Provider } from "../../../core/utils";
 import { MockedLogProvider, MockedUserInteraction } from "../../../plugins/solution/util";
 
-chai.use(chaiAsPromised);
 const expect = chai.expect;
 
 describe("UpdateOauthDriver", () => {
@@ -44,7 +42,8 @@ describe("UpdateOauthDriver", () => {
   });
 
   afterEach(() => {
-    sinon.restore();
+    vi.restoreAllMocks();
+    vi.clearAllMocks();
     if (envRestore) {
       envRestore();
       envRestore = undefined;
@@ -52,7 +51,7 @@ describe("UpdateOauthDriver", () => {
   });
 
   it("happy path: update all fields", async () => {
-    sinon.stub(teamsGraphClient, "updateOauthRegistration").resolves({
+    vi.spyOn(teamsGraphClient, "updateOauthRegistration").mockResolvedValue({
       description: "mockedDescription",
       targetUrlsShouldStartWith: ["https://test2"],
       applicableToApps: OauthRegistrationAppType.SpecificApp,
@@ -66,7 +65,7 @@ describe("UpdateOauthDriver", () => {
       tokenExchangeMethodType: TokenExchangeMethodType.PostRequestBody,
       isPKCEEnabled: true,
     });
-    sinon.stub(teamsGraphClient, "getOauthRegistrationById").resolves({
+    vi.spyOn(teamsGraphClient, "getOauthRegistrationById").mockResolvedValue({
       oAuthConfigId: "mockedRegistrationId",
       description: "mockedDescription",
       targetUrlsShouldStartWith: ["https://test"],
@@ -80,7 +79,7 @@ describe("UpdateOauthDriver", () => {
       tokenExchangeMethodType: TokenExchangeMethodType.BasicAuthorizationHeader,
       isPKCEEnabled: false,
     });
-    sinon.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",
@@ -131,7 +130,7 @@ describe("UpdateOauthDriver", () => {
       allAPICount: 1,
       validAPICount: 1,
     });
-    sinon.stub(mockedDriverContext.ui, "confirm").callsFake(async (config) => {
+    vi.spyOn(mockedDriverContext.ui, "confirm").mockImplementation(async (config) => {
       expect((config as ConfirmConfig).title.includes("description")).to.be.true;
       expect((config as ConfirmConfig).title.includes("applicableToApps")).to.be.true;
       expect((config as ConfirmConfig).title.includes("m365AppId")).to.be.true;
@@ -144,10 +143,9 @@ describe("UpdateOauthDriver", () => {
       expect((config as ConfirmConfig).title.includes("tokenExchangeMethodType")).to.be.true;
       return ok({ type: "success", value: true });
     });
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag: any) =>
+      flag === FeatureFlags.KiotaNPMIntegration ? false : false
+    );
 
     const args: UpdateOauthArgs = {
       name: "test2",
@@ -169,7 +167,7 @@ describe("UpdateOauthDriver", () => {
   });
 
   it("happy path: update all fields without apiSpecPath", async () => {
-    sinon.stub(teamsGraphClient, "updateOauthRegistration").resolves({
+    vi.spyOn(teamsGraphClient, "updateOauthRegistration").mockResolvedValue({
       description: "mockedDescription",
       targetUrlsShouldStartWith: ["https://test2"],
       applicableToApps: OauthRegistrationAppType.SpecificApp,
@@ -183,7 +181,7 @@ describe("UpdateOauthDriver", () => {
       tokenExchangeMethodType: TokenExchangeMethodType.PostRequestBody,
       isPKCEEnabled: true,
     });
-    sinon.stub(teamsGraphClient, "getOauthRegistrationById").resolves({
+    vi.spyOn(teamsGraphClient, "getOauthRegistrationById").mockResolvedValue({
       oAuthConfigId: "mockedRegistrationId",
       description: "mockedDescription",
       targetUrlsShouldStartWith: ["https://test"],
@@ -197,7 +195,7 @@ describe("UpdateOauthDriver", () => {
       tokenExchangeMethodType: TokenExchangeMethodType.BasicAuthorizationHeader,
       isPKCEEnabled: false,
     });
-    sinon.stub(mockedDriverContext.ui, "confirm").callsFake(async (config) => {
+    vi.spyOn(mockedDriverContext.ui, "confirm").mockImplementation(async (config) => {
       expect((config as ConfirmConfig).title.includes("description")).to.be.true;
       expect((config as ConfirmConfig).title.includes("applicableToApps")).to.be.true;
       expect((config as ConfirmConfig).title.includes("m365AppId")).to.be.true;
@@ -236,11 +234,10 @@ describe("UpdateOauthDriver", () => {
   });
 
   it("happy path: update all fields with apiSpecPath and baseUrl", async () => {
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon.stub(teamsGraphClient, "updateOauthRegistration").resolves({
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag: any) =>
+      flag === FeatureFlags.KiotaNPMIntegration ? false : false
+    );
+    vi.spyOn(teamsGraphClient, "updateOauthRegistration").mockResolvedValue({
       description: "mockedDescription",
       targetUrlsShouldStartWith: ["https://test2"],
       applicableToApps: OauthRegistrationAppType.SpecificApp,
@@ -254,7 +251,7 @@ describe("UpdateOauthDriver", () => {
       tokenExchangeMethodType: TokenExchangeMethodType.PostRequestBody,
       isPKCEEnabled: true,
     });
-    sinon.stub(teamsGraphClient, "getOauthRegistrationById").resolves({
+    vi.spyOn(teamsGraphClient, "getOauthRegistrationById").mockResolvedValue({
       oAuthConfigId: "mockedRegistrationId",
       description: "mockedDescription",
       targetUrlsShouldStartWith: ["https://test"],
@@ -268,7 +265,7 @@ describe("UpdateOauthDriver", () => {
       tokenExchangeMethodType: TokenExchangeMethodType.BasicAuthorizationHeader,
       isPKCEEnabled: false,
     });
-    sinon.stub(mockedDriverContext.ui, "confirm").callsFake(async (config) => {
+    vi.spyOn(mockedDriverContext.ui, "confirm").mockImplementation(async (config) => {
       expect((config as ConfirmConfig).title.includes("description")).to.be.true;
       expect((config as ConfirmConfig).title.includes("applicableToApps")).to.be.true;
       expect((config as ConfirmConfig).title.includes("m365AppId")).to.be.true;
@@ -282,7 +279,7 @@ describe("UpdateOauthDriver", () => {
       return ok({ type: "success", value: true });
     });
 
-    sinon.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",
@@ -357,7 +354,7 @@ describe("UpdateOauthDriver", () => {
   });
 
   it("happy path: skip confirm for only clientId changes", async () => {
-    sinon.stub(teamsGraphClient, "updateOauthRegistration").resolves({
+    vi.spyOn(teamsGraphClient, "updateOauthRegistration").mockResolvedValue({
       description: "mockedDescription",
       targetUrlsShouldStartWith: ["https://test"],
       applicableToApps: OauthRegistrationAppType.AnyApp,
@@ -371,7 +368,7 @@ describe("UpdateOauthDriver", () => {
       tokenExchangeMethodType: TokenExchangeMethodType.BasicAuthorizationHeader,
       isPKCEEnabled: false,
     });
-    sinon.stub(teamsGraphClient, "getOauthRegistrationById").resolves({
+    vi.spyOn(teamsGraphClient, "getOauthRegistrationById").mockResolvedValue({
       oAuthConfigId: "mockedRegistrationId",
       description: "mockedDescription",
       targetUrlsShouldStartWith: ["https://test"],
@@ -385,7 +382,7 @@ describe("UpdateOauthDriver", () => {
       tokenExchangeMethodType: TokenExchangeMethodType.BasicAuthorizationHeader,
       isPKCEEnabled: false,
     });
-    sinon.stub(mockedDriverContext.ui, "confirm").callsFake(async (config) => {
+    vi.spyOn(mockedDriverContext.ui, "confirm").mockImplementation(async (config) => {
       throw new Error("Should not call confirm");
     });
 
@@ -404,7 +401,7 @@ describe("UpdateOauthDriver", () => {
   });
 
   it("happy path: update fields without apiSpecPath and baseUrl", async () => {
-    sinon.stub(teamsGraphClient, "updateOauthRegistration").resolves({
+    vi.spyOn(teamsGraphClient, "updateOauthRegistration").mockResolvedValue({
       description: "mockedDescription",
       targetUrlsShouldStartWith: ["https://test2"],
       applicableToApps: OauthRegistrationAppType.SpecificApp,
@@ -418,7 +415,7 @@ describe("UpdateOauthDriver", () => {
       tokenExchangeMethodType: TokenExchangeMethodType.PostRequestBody,
       isPKCEEnabled: true,
     });
-    sinon.stub(teamsGraphClient, "getOauthRegistrationById").resolves({
+    vi.spyOn(teamsGraphClient, "getOauthRegistrationById").mockResolvedValue({
       oAuthConfigId: "mockedRegistrationId",
       description: "mockedDescription",
       targetUrlsShouldStartWith: ["https://test"],
@@ -432,7 +429,7 @@ describe("UpdateOauthDriver", () => {
       tokenExchangeMethodType: TokenExchangeMethodType.BasicAuthorizationHeader,
       isPKCEEnabled: false,
     });
-    sinon.stub(mockedDriverContext.ui, "confirm").callsFake(async (config) => {
+    vi.spyOn(mockedDriverContext.ui, "confirm").mockImplementation(async (config) => {
       expect((config as ConfirmConfig).title.includes("description")).to.be.true;
       expect((config as ConfirmConfig).title.includes("applicableToApps")).to.be.true;
       expect((config as ConfirmConfig).title.includes("m365AppId")).to.be.true;
@@ -470,11 +467,10 @@ describe("UpdateOauthDriver", () => {
   });
 
   it("happy path: update all fields for Entra SSO", async () => {
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon.stub(teamsGraphClient, "updateOauthRegistration").resolves({
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag: any) =>
+      flag === FeatureFlags.KiotaNPMIntegration ? false : false
+    );
+    vi.spyOn(teamsGraphClient, "updateOauthRegistration").mockResolvedValue({
       description: "mockedDescription",
       targetUrlsShouldStartWith: ["https://test2"],
       applicableToApps: OauthRegistrationAppType.SpecificApp,
@@ -484,7 +480,7 @@ describe("UpdateOauthDriver", () => {
       identityProvider: "MicrosoftEntra",
       isPKCEEnabled: false,
     } as any);
-    sinon.stub(teamsGraphClient, "getOauthRegistrationById").resolves({
+    vi.spyOn(teamsGraphClient, "getOauthRegistrationById").mockResolvedValue({
       oAuthConfigId: "mockedRegistrationId",
       description: "mockedDescription",
       targetUrlsShouldStartWith: ["https://test"],
@@ -494,7 +490,7 @@ describe("UpdateOauthDriver", () => {
       identityProvider: "MicrosoftEntra",
       isPKCEEnabled: false,
     } as any);
-    sinon.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",
@@ -545,7 +541,7 @@ describe("UpdateOauthDriver", () => {
       allAPICount: 1,
       validAPICount: 1,
     });
-    sinon.stub(mockedDriverContext.ui, "confirm").callsFake(async (config) => {
+    vi.spyOn(mockedDriverContext.ui, "confirm").mockImplementation(async (config) => {
       expect((config as ConfirmConfig).title.includes("description")).to.be.true;
       expect((config as ConfirmConfig).title.includes("applicableToApps")).to.be.true;
       expect((config as ConfirmConfig).title.includes("m365AppId")).to.be.true;
@@ -574,7 +570,7 @@ describe("UpdateOauthDriver", () => {
   });
 
   it("should throw error if try to disable PKCE", async () => {
-    sinon.stub(teamsGraphClient, "getOauthRegistrationById").resolves({
+    vi.spyOn(teamsGraphClient, "getOauthRegistrationById").mockResolvedValue({
       oAuthConfigId: "mockedRegistrationId",
       description: "mockedDescription",
       targetUrlsShouldStartWith: ["https://test"],
@@ -587,11 +583,10 @@ describe("UpdateOauthDriver", () => {
       scopes: ["mockedScope"],
       isPKCEEnabled: true,
     });
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag: any) =>
+      flag === FeatureFlags.KiotaNPMIntegration ? false : false
+    );
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",
@@ -660,7 +655,7 @@ describe("UpdateOauthDriver", () => {
   });
 
   it("happy path: does not update when no changes", async () => {
-    sinon.stub(teamsGraphClient, "getOauthRegistrationById").resolves({
+    vi.spyOn(teamsGraphClient, "getOauthRegistrationById").mockResolvedValue({
       oAuthConfigId: "mockedRegistrationId",
       description: "test",
       targetUrlsShouldStartWith: ["https://test"],
@@ -672,11 +667,10 @@ describe("UpdateOauthDriver", () => {
       tokenExchangeEndpoint: "mockedTokenExchangeEndpoint",
       scopes: ["mockedScopes"],
     });
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag: any) =>
+      flag === FeatureFlags.KiotaNPMIntegration ? false : false
+    );
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",
@@ -745,7 +739,7 @@ describe("UpdateOauthDriver", () => {
   });
 
   it("happy path: should not show confirm when only devtunnel url is different", async () => {
-    sinon.stub(teamsGraphClient, "updateOauthRegistration").resolves({
+    vi.spyOn(teamsGraphClient, "updateOauthRegistration").mockResolvedValue({
       description: "mockedDescription",
       targetUrlsShouldStartWith: ["https://test2.asse.devtunnels.ms"],
       applicableToApps: OauthRegistrationAppType.SpecificApp,
@@ -757,11 +751,10 @@ describe("UpdateOauthDriver", () => {
       tokenExchangeEndpoint: "mockedTokenExchangeEndpoint",
       scopes: ["mockedScope"],
     });
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon.stub(teamsGraphClient, "getOauthRegistrationById").resolves({
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag: any) =>
+      flag === FeatureFlags.KiotaNPMIntegration ? false : false
+    );
+    vi.spyOn(teamsGraphClient, "getOauthRegistrationById").mockResolvedValue({
       oAuthConfigId: "mockedRegistrationId",
       description: "test",
       targetUrlsShouldStartWith: ["https://test.asse.devtunnels.ms"],
@@ -773,7 +766,7 @@ describe("UpdateOauthDriver", () => {
       tokenExchangeEndpoint: "mockedTokenExchangeEndpoint",
       scopes: ["mockedScopes"],
     });
-    sinon.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",
@@ -824,9 +817,9 @@ describe("UpdateOauthDriver", () => {
       validAPICount: 1,
     });
 
-    const confirmStub = sinon
-      .stub(mockedDriverContext.ui, "confirm")
-      .resolves(ok({ type: "success", value: true }));
+    const confirmStub = vi
+      .spyOn(mockedDriverContext.ui, "confirm")
+      .mockResolvedValue(ok({ type: "success", value: true }));
 
     const args: UpdateOauthArgs = {
       name: "test",
@@ -843,11 +836,11 @@ describe("UpdateOauthDriver", () => {
       expect(result.result.value.size).to.equal(0);
       expect(result.summaries.length).to.equal(1);
     }
-    expect(confirmStub.notCalled).to.be.true;
+    expect(confirmStub.mock.calls.length === 0).to.be.true;
   });
 
   it("should throw error when user canel", async () => {
-    sinon.stub(teamsGraphClient, "getOauthRegistrationById").resolves({
+    vi.spyOn(teamsGraphClient, "getOauthRegistrationById").mockResolvedValue({
       oAuthConfigId: "mockedRegistrationId",
       description: "mockedDescription",
       targetUrlsShouldStartWith: ["https://test"],
@@ -859,11 +852,10 @@ describe("UpdateOauthDriver", () => {
       tokenExchangeEndpoint: "mockedTokenExchangeEndpoint",
       scopes: ["mockedScope"],
     });
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag: any) =>
+      flag === FeatureFlags.KiotaNPMIntegration ? false : false
+    );
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",
@@ -914,9 +906,9 @@ describe("UpdateOauthDriver", () => {
       validAPICount: 1,
     });
 
-    sinon
-      .stub(mockedDriverContext.ui, "confirm")
-      .returns(err(new UserError("source", "userCancelled", "Cancel by user")));
+    vi.spyOn(mockedDriverContext.ui, "confirm").mockReturnValue(
+      err(new UserError("source", "userCancelled", "Cancel by user"))
+    );
     const args: UpdateOauthArgs = {
       name: "test2",
       appId: "mockedAppId",
@@ -959,8 +951,8 @@ describe("UpdateOauthDriver", () => {
       identityProvider: "Custom",
       configurationId: "mockedRegistrationId",
     };
-    sinon.stub(oauthUpdateDeps, "getAuthInfo").resolves({} as any);
-    sinon.stub(teamsGraphClient, "getOauthRegistrationById").resolves(
+    vi.spyOn(oauthUtility, "getAuthInfo").mockResolvedValue({} as any);
+    vi.spyOn(teamsGraphClient, "getOauthRegistrationById").mockResolvedValue(
       ok({
         identityProvider: "Custom",
       }) as any
@@ -980,8 +972,8 @@ describe("UpdateOauthDriver", () => {
       applicableToApps: "SpecificApp",
       configurationId: "mockedRegistrationId",
     };
-    sinon.stub(oauthUpdateDeps, "getAuthInfo").resolves({} as any);
-    sinon.stub(teamsGraphClient, "getOauthRegistrationById").resolves(ok({}) as any);
+    vi.spyOn(oauthUtility, "getAuthInfo").mockResolvedValue({} as any);
+    vi.spyOn(teamsGraphClient, "getOauthRegistrationById").mockResolvedValue(ok({}) as any);
 
     const result = await updateOauthDriver.execute(args, mockedDriverContext);
     expect(result.result.isErr()).to.be.true;
@@ -1004,13 +996,13 @@ describe("UpdateOauthDriver", () => {
       clientSecret: 123,
       configurationId: "mockedRegistrationId",
     };
-    sinon.stub(oauthUpdateDeps, "getAuthInfo").resolves({} as any);
-    sinon.stub(teamsGraphClient, "getOauthRegistrationById").resolves(
+    vi.spyOn(oauthUtility, "getAuthInfo").mockResolvedValue({} as any);
+    vi.spyOn(teamsGraphClient, "getOauthRegistrationById").mockResolvedValue(
       ok({
         identityProvider: "Custom",
       }) as any
     );
-    sinon.stub(MockedM365Provider.prototype, "getAccessToken").resolves(ok({}) as any);
+    vi.spyOn(MockedM365Provider.prototype, "getAccessToken").mockResolvedValue(ok({}) as any);
 
     const result = await updateOauthDriver.execute(args, mockedDriverContext);
     expect(result.result.isErr()).to.be.true;
@@ -1134,12 +1126,13 @@ describe("UpdateOauthDriver", () => {
   });
 
   it("should throw error when unhandled error", async () => {
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon.stub(MockedM365Provider.prototype, "getAccessToken").throws(new Error("unhandled error"));
-    sinon.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag: any) =>
+      flag === FeatureFlags.KiotaNPMIntegration ? false : false
+    );
+    vi.spyOn(MockedM365Provider.prototype, "getAccessToken").mockImplementation(() => {
+      throw new Error("unhandled error");
+    });
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",
@@ -1206,7 +1199,7 @@ describe("UpdateOauthDriver", () => {
   });
 
   it("should not update if tokenRefreshEndpoint and scopes are undefined", async () => {
-    sinon.stub(teamsGraphClient, "updateOauthRegistration").resolves({
+    vi.spyOn(teamsGraphClient, "updateOauthRegistration").mockResolvedValue({
       description: "mockedDescription",
       targetUrlsShouldStartWith: ["https://test2"],
       applicableToApps: OauthRegistrationAppType.SpecificApp,
@@ -1219,7 +1212,7 @@ describe("UpdateOauthDriver", () => {
       scopes: ["mockedScope"],
       isPKCEEnabled: true,
     });
-    sinon.stub(teamsGraphClient, "getOauthRegistrationById").resolves({
+    vi.spyOn(teamsGraphClient, "getOauthRegistrationById").mockResolvedValue({
       oAuthConfigId: "mockedRegistrationId",
       description: "mockedDescription",
       targetUrlsShouldStartWith: ["https://test"],
@@ -1234,7 +1227,7 @@ describe("UpdateOauthDriver", () => {
       isPKCEEnabled: false,
     });
 
-    sinon.stub(mockedDriverContext.ui, "confirm").callsFake(async (config) => {
+    vi.spyOn(mockedDriverContext.ui, "confirm").mockImplementation(async (config) => {
       expect((config as ConfirmConfig).title.includes("description")).to.be.true;
       expect((config as ConfirmConfig).title.includes("applicableToApps")).to.be.true;
       expect((config as ConfirmConfig).title.includes("m365AppId")).to.be.true;

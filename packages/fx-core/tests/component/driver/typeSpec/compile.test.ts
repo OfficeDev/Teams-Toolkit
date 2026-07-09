@@ -8,21 +8,17 @@ import {
   SystemError,
   TeamsAppManifest,
 } from "@microsoft/teamsfx-api";
-import * as chai from "chai";
-import chaiAsPromised from "chai-as-promised";
 import fs from "fs-extra";
 import mockedEnv, { RestoreFn } from "mocked-env";
-import * as sinon from "sinon";
-import {
-  typeSpecCompileDeps,
-  TypeSpecCompileDriver,
-} from "../../../../src/component/driver/typeSpec/compile";
+import { expect, vi } from "vitest";
+import * as daSpecParser from "../../../../src/common/daSpecParser";
+import * as kiotaClient from "../../../../src/common/kiotaClient";
+import { TypeSpecCompileDriver } from "../../../../src/component/driver/typeSpec/compile";
 import { TypeSpecCompileArgs } from "../../../../src/component/driver/typeSpec/interface/typeSpecCompileArgs";
+import * as openApiSpecHelper from "../../../../src/component/generator/openApiSpec/helper";
 import { MockedM365Provider, MockLogProvider, MockTools } from "../../../core/utils";
 import { MockedUserInteraction } from "../../../plugins/solution/util";
 
-chai.use(chaiAsPromised);
-const expect = chai.expect;
 const tools = new MockTools();
 const mockedDriverContext: any = {
   m365TokenProvider: new MockedM365Provider(),
@@ -38,7 +34,7 @@ mockedDriverContext.logProvider.outputChannel = {
 };
 
 describe("typeSpecCompilt", async () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   let envRestore: RestoreFn | undefined;
   const typeSpecCompileDriver = new TypeSpecCompileDriver();
   const manifest: TeamsAppManifest = {
@@ -74,7 +70,8 @@ describe("typeSpecCompilt", async () => {
 
   afterEach(() => {
     mockedDriverContext.platform = Platform.VSCode;
-    sandbox.restore();
+    vi.restoreAllMocks();
+    vi.restoreAllMocks();
     if (envRestore) {
       envRestore();
     }
@@ -99,40 +96,31 @@ describe("typeSpecCompilt", async () => {
       ],
     };
 
-    sandbox.stub(fs, "existsSync").returns(true);
-    sandbox.stub(fs, "rmSync").returns();
-    sandbox.stub(mockedDriverContext.ui, "runCommand").resolves(ok("mockedCommandResult"));
-    sandbox
-      .stub(fs, "readdirSync")
-      .onFirstCall()
-      .returns([
+    vi.spyOn(fs, "existsSync").mockReturnValue(true);
+    vi.spyOn(fs, "rmSync").mockReturnValue();
+    vi.spyOn(mockedDriverContext.ui, "runCommand").mockResolvedValue(ok("mockedCommandResult"));
+    vi.spyOn(fs, "readdirSync")
+      .mockReturnValueOnce([
         "test-openapi.yaml",
         "test-apiplugin.json",
         "declarativeAgent.json",
         "manifest.json",
         "specs",
       ] as any)
-      .onSecondCall()
-      .returns(["openapi.yaml"] as any)
-      .onThirdCall()
-      .returns([
+      .mockReturnValueOnce(["openapi.yaml"] as any)
+      .mockReturnValueOnce([
         "test-openapi.yaml",
         "test-apiplugin.json",
         "declarativeAgent.json",
         "manifest.json",
         "specs",
       ] as any);
-    sandbox
-      .stub(fs, "readJSON")
-      .onFirstCall()
-      .resolves(pluginManifest)
-      .onSecondCall()
-      .resolves(manifest);
-    sandbox.stub(fs, "writeJSON").callsFake((path: string, data: any) => {
+    vi.spyOn(fs, "readJSON").mockResolvedValueOnce(pluginManifest).mockResolvedValueOnce(manifest);
+    vi.spyOn(fs, "writeJSON").mockImplementation((path: string, data: any) => {
       const dataToWrite = JSON.stringify(data);
       expect(dataToWrite.includes("declarativeAgent.json")).to.be.true;
     });
-    sandbox.stub(typeSpecCompileDeps, "parseAndUpdatePluginManifestForKiota").resolves([
+    vi.spyOn(daSpecParser, "parseAndUpdatePluginManifestForKiota").mockResolvedValue([
       {
         authName: "mockedAuthName",
         specPath: "mockedSpecPath",
@@ -140,8 +128,8 @@ describe("typeSpecCompilt", async () => {
         authType: "apiKey",
       },
     ]);
-    sandbox.stub(typeSpecCompileDeps, "injectAuthAction").resolves(undefined);
-    sandbox.stub(typeSpecCompileDeps, "kiotageneratePlugin").resolves({
+    vi.spyOn(openApiSpecHelper, "injectAuthAction").mockResolvedValue(undefined);
+    vi.spyOn(kiotaClient, "kiotageneratePlugin").mockResolvedValue({
       aiPlugin: "mocked-ai-plugin",
       openAPISpec: "mocked-openapi-spec",
       isSuccess: true,
@@ -170,40 +158,31 @@ describe("typeSpecCompilt", async () => {
       ],
     };
 
-    sandbox.stub(fs, "existsSync").returns(true);
-    sandbox.stub(fs, "rmSync").returns();
-    sandbox.stub(mockedDriverContext.ui, "runCommand").resolves(ok("mockedCommandResult"));
-    sandbox
-      .stub(fs, "readdirSync")
-      .onFirstCall()
-      .returns([
+    vi.spyOn(fs, "existsSync").mockReturnValue(true);
+    vi.spyOn(fs, "rmSync").mockReturnValue();
+    vi.spyOn(mockedDriverContext.ui, "runCommand").mockResolvedValue(ok("mockedCommandResult"));
+    vi.spyOn(fs, "readdirSync")
+      .mockReturnValueOnce([
         "test-openapi.yaml",
         "test-apiplugin.json",
         "declarativeAgent.json",
         "manifest.json",
         "specs",
       ] as any)
-      .onSecondCall()
-      .returns(["openapi.yaml"] as any)
-      .onThirdCall()
-      .returns([
+      .mockReturnValueOnce(["openapi.yaml"] as any)
+      .mockReturnValueOnce([
         "test-openapi.yaml",
         "test-apiplugin.json",
         "declarativeAgent.json",
         "manifest.json",
         "specs",
       ] as any);
-    sandbox
-      .stub(fs, "readJSON")
-      .onFirstCall()
-      .resolves(pluginManifest)
-      .onSecondCall()
-      .resolves(manifest);
-    sandbox.stub(fs, "writeJSON").callsFake((path: string, data: any) => {
+    vi.spyOn(fs, "readJSON").mockResolvedValueOnce(pluginManifest).mockResolvedValueOnce(manifest);
+    vi.spyOn(fs, "writeJSON").mockImplementation((path: string, data: any) => {
       const dataToWrite = JSON.stringify(data);
       expect(dataToWrite.includes("declarativeAgent.json")).to.be.true;
     });
-    sandbox.stub(typeSpecCompileDeps, "parseAndUpdatePluginManifestForKiota").resolves([
+    vi.spyOn(daSpecParser, "parseAndUpdatePluginManifestForKiota").mockResolvedValue([
       {
         authName: "mockedAuthName",
         specPath: "mockedSpecPath",
@@ -211,8 +190,8 @@ describe("typeSpecCompilt", async () => {
         authType: "oauth2",
       },
     ]);
-    sandbox.stub(typeSpecCompileDeps, "injectAuthAction").resolves(undefined);
-    sandbox.stub(typeSpecCompileDeps, "kiotageneratePlugin").resolves({
+    vi.spyOn(openApiSpecHelper, "injectAuthAction").mockResolvedValue(undefined);
+    vi.spyOn(kiotaClient, "kiotageneratePlugin").mockResolvedValue({
       aiPlugin: "mocked-ai-plugin",
       openAPISpec: "mocked-openapi-spec",
       isSuccess: true,
@@ -241,40 +220,31 @@ describe("typeSpecCompilt", async () => {
       ],
     };
 
-    sandbox.stub(fs, "existsSync").returns(true);
-    sandbox.stub(fs, "rmSync").returns();
-    sandbox.stub(mockedDriverContext.ui, "runCommand").resolves(ok("mockedCommandResult"));
-    sandbox
-      .stub(fs, "readdirSync")
-      .onFirstCall()
-      .returns([
+    vi.spyOn(fs, "existsSync").mockReturnValue(true);
+    vi.spyOn(fs, "rmSync").mockReturnValue();
+    vi.spyOn(mockedDriverContext.ui, "runCommand").mockResolvedValue(ok("mockedCommandResult"));
+    vi.spyOn(fs, "readdirSync")
+      .mockReturnValueOnce([
         "test-openapi.yaml",
         "test-apiplugin.json",
         "declarativeAgent.json",
         "manifest.json",
         "specs",
       ] as any)
-      .onSecondCall()
-      .returns(["openapi.yaml"] as any)
-      .onThirdCall()
-      .returns([
+      .mockReturnValueOnce(["openapi.yaml"] as any)
+      .mockReturnValueOnce([
         "test-openapi.yaml",
         "test-apiplugin.json",
         "declarativeAgent.json",
         "manifest.json",
         "specs",
       ] as any);
-    sandbox
-      .stub(fs, "readJSON")
-      .onFirstCall()
-      .resolves(pluginManifest)
-      .onSecondCall()
-      .resolves(manifest);
-    sandbox.stub(fs, "writeJSON").callsFake((path: string, data: any) => {
+    vi.spyOn(fs, "readJSON").mockResolvedValueOnce(pluginManifest).mockResolvedValueOnce(manifest);
+    vi.spyOn(fs, "writeJSON").mockImplementation((path: string, data: any) => {
       const dataToWrite = JSON.stringify(data);
       expect(dataToWrite.includes("declarativeAgent.json")).to.be.true;
     });
-    sandbox.stub(typeSpecCompileDeps, "parseAndUpdatePluginManifestForKiota").resolves([
+    vi.spyOn(daSpecParser, "parseAndUpdatePluginManifestForKiota").mockResolvedValue([
       {
         authName: "mockedAuthName",
         specPath: "mockedSpecPath",
@@ -282,11 +252,11 @@ describe("typeSpecCompilt", async () => {
         authType: "apiKey",
       },
     ]);
-    sandbox.stub(typeSpecCompileDeps, "injectAuthAction").resolves({
+    vi.spyOn(openApiSpecHelper, "injectAuthAction").mockResolvedValue({
       defaultRegistrationIdEnvName: "mockedDefaultRegistrationIdEnvName",
       registrationIdEnvName: "mockedRegistrationIdEnvName",
     });
-    sandbox.stub(typeSpecCompileDeps, "kiotageneratePlugin").resolves({
+    vi.spyOn(kiotaClient, "kiotageneratePlugin").mockResolvedValue({
       aiPlugin: "mocked-ai-plugin",
       openAPISpec: "mocked-openapi-spec",
       isSuccess: true,
@@ -318,22 +288,17 @@ describe("typeSpecCompilt", async () => {
       ],
     };
 
-    sandbox.stub(fs, "existsSync").returns(true);
-    sandbox.stub(fs, "rmSync").returns();
-    sandbox.stub(mockedDriverContext.ui, "runCommand").resolves(ok("mockedCommandResult"));
-    sandbox.stub(fs, "readdirSync").returns(["openapi.yaml"] as any);
-    sandbox
-      .stub(fs, "readJSON")
-      .onFirstCall()
-      .resolves(pluginManifest)
-      .onSecondCall()
-      .resolves(manifest);
-    sandbox.stub(fs, "writeJSON").callsFake((path: string, data: any) => {
+    vi.spyOn(fs, "existsSync").mockReturnValue(true);
+    vi.spyOn(fs, "rmSync").mockReturnValue();
+    vi.spyOn(mockedDriverContext.ui, "runCommand").mockResolvedValue(ok("mockedCommandResult"));
+    vi.spyOn(fs, "readdirSync").mockReturnValue(["openapi.yaml"] as any);
+    vi.spyOn(fs, "readJSON").mockResolvedValueOnce(pluginManifest).mockResolvedValueOnce(manifest);
+    vi.spyOn(fs, "writeJSON").mockImplementation((path: string, data: any) => {
       const dataToWrite = JSON.stringify(data);
       expect(dataToWrite.includes("declarativeAgent.json")).to.be.true;
     });
     mockedDriverContext.platform = Platform.CLI;
-    sandbox.stub(typeSpecCompileDeps, "kiotageneratePlugin").resolves({
+    vi.spyOn(kiotaClient, "kiotageneratePlugin").mockResolvedValue({
       aiPlugin: "mocked-ai-plugin",
       openAPISpec: "mocked-openapi-spec",
       isSuccess: true,
@@ -366,25 +331,21 @@ describe("typeSpecCompilt", async () => {
       ],
     };
 
-    sandbox.stub(fs, "existsSync").returns(true);
-    sandbox.stub(fs, "rmSync").returns();
-    const runCommandStub = sandbox
-      .stub(mockedDriverContext.ui, "runCommand")
-      .resolves(ok("mockedCommandResult"));
-    sandbox
-      .stub(fs, "readdirSync")
-      .returns(["openapi.mockedAction1.yaml", "openapi.mockedAction2.yaml"] as any);
-    sandbox
-      .stub(fs, "readJSON")
-      .onFirstCall()
-      .resolves(pluginManifest)
-      .onSecondCall()
-      .resolves(manifest);
-    sandbox.stub(fs, "writeJSON").callsFake((path: string, data: any) => {
+    vi.spyOn(fs, "existsSync").mockReturnValue(true);
+    vi.spyOn(fs, "rmSync").mockReturnValue();
+    const runCommandStub = vi
+      .spyOn(mockedDriverContext.ui, "runCommand")
+      .mockResolvedValue(ok("mockedCommandResult"));
+    vi.spyOn(fs, "readdirSync").mockReturnValue([
+      "openapi.mockedAction1.yaml",
+      "openapi.mockedAction2.yaml",
+    ] as any);
+    vi.spyOn(fs, "readJSON").mockResolvedValueOnce(pluginManifest).mockResolvedValueOnce(manifest);
+    vi.spyOn(fs, "writeJSON").mockImplementation((path: string, data: any) => {
       const dataToWrite = JSON.stringify(data);
       expect(dataToWrite.includes("declarativeAgent.json")).to.be.true;
     });
-    sandbox.stub(typeSpecCompileDeps, "kiotageneratePlugin").resolves({
+    vi.spyOn(kiotaClient, "kiotageneratePlugin").mockResolvedValue({
       aiPlugin: "mocked-ai-plugin",
       openAPISpec: "mocked-openapi-spec",
       isSuccess: true,
@@ -392,7 +353,7 @@ describe("typeSpecCompilt", async () => {
     });
     const result = await typeSpecCompileDriver.execute(args, mockedDriverContext);
     expect(result.result.isOk()).to.be.true;
-    expect(runCommandStub.callCount).to.equal(1);
+    expect(runCommandStub.mock.calls.length).to.equal(1);
   });
 
   it("should throw error if missing input", async () => {
@@ -460,19 +421,14 @@ describe("typeSpecCompilt", async () => {
       ],
     };
 
-    sandbox.stub(fs, "existsSync").returns(true);
-    sandbox.stub(fs, "rmSync").returns();
-    sandbox
-      .stub(mockedDriverContext.ui, "runCommand")
-      .returns(err(new SystemError("mockedSource", "mockedError", "mockedErrorMessage")));
-    sandbox.stub(fs, "readdirSync").returns(["openapi.yaml"] as any);
-    sandbox
-      .stub(fs, "readJSON")
-      .onFirstCall()
-      .resolves(pluginManifest)
-      .onSecondCall()
-      .resolves(manifest);
-    sandbox.stub(fs, "writeJSON").callsFake((path: string, data: any) => {
+    vi.spyOn(fs, "existsSync").mockReturnValue(true);
+    vi.spyOn(fs, "rmSync").mockReturnValue();
+    vi.spyOn(mockedDriverContext.ui, "runCommand").mockReturnValue(
+      err(new SystemError("mockedSource", "mockedError", "mockedErrorMessage"))
+    );
+    vi.spyOn(fs, "readdirSync").mockReturnValue(["openapi.yaml"] as any);
+    vi.spyOn(fs, "readJSON").mockResolvedValueOnce(pluginManifest).mockResolvedValueOnce(manifest);
+    vi.spyOn(fs, "writeJSON").mockImplementation((path: string, data: any) => {
       const dataToWrite = JSON.stringify(data);
       expect(dataToWrite.includes("declarativeAgent.json")).to.be.true;
     });
@@ -493,9 +449,9 @@ describe("typeSpecCompilt", async () => {
 
     // existsSync returns false for all calls: output folder doesn't exist before compile,
     // and openApiSpecsFolderPath doesn't exist after compile (compile failed silently)
-    sandbox.stub(fs, "existsSync").returns(false);
+    vi.spyOn(fs, "existsSync").mockReturnValue(false);
     // runCommand returns ok() even though the compile failed (e.g. exit code masked by pipe)
-    sandbox.stub(mockedDriverContext.ui, "runCommand").resolves(ok(tspCompilerOutput));
+    vi.spyOn(mockedDriverContext.ui, "runCommand").mockResolvedValue(ok(tspCompilerOutput));
 
     const result = await typeSpecCompileDriver.execute(args, mockedDriverContext);
     expect(result.result.isErr()).to.be.true;
@@ -524,12 +480,12 @@ describe("typeSpecCompilt", async () => {
       ],
     };
 
-    sandbox.stub(fs, "existsSync").returns(true);
-    sandbox.stub(fs, "rmSync").returns();
-    sandbox.stub(mockedDriverContext.ui, "runCommand").resolves(ok("mockedCommandResult"));
-    sandbox.stub(fs, "readdirSync").returns([] as any);
-    sandbox.stub(fs, "readJSON").resolves(pluginManifest);
-    sandbox.stub(fs, "writeJSON").callsFake((path: string, data: any) => {
+    vi.spyOn(fs, "existsSync").mockReturnValue(true);
+    vi.spyOn(fs, "rmSync").mockReturnValue();
+    vi.spyOn(mockedDriverContext.ui, "runCommand").mockResolvedValue(ok("mockedCommandResult"));
+    vi.spyOn(fs, "readdirSync").mockReturnValue([] as any);
+    vi.spyOn(fs, "readJSON").mockResolvedValue(pluginManifest);
+    vi.spyOn(fs, "writeJSON").mockImplementation((path: string, data: any) => {
       const dataToWrite = JSON.stringify(data);
       expect(dataToWrite.includes("declarativeAgent.json")).to.be.true;
     });
@@ -553,20 +509,20 @@ describe("typeSpecCompilt", async () => {
       description: "mockedDescription",
     };
 
-    sandbox.stub(fs, "existsSync").returns(true);
-    sandbox.stub(fs, "rmSync").returns();
-    const runCommandStub = sandbox
-      .stub(mockedDriverContext.ui, "runCommand")
-      .resolves(ok("mockedCommandResult"));
-    sandbox.stub(fs, "readdirSync").returns(["openapi.yaml"] as any);
-    sandbox.stub(fs, "readJSON").resolves(pluginManifest);
-    sandbox.stub(fs, "writeJSON").callsFake((path: string, data: any) => {
+    vi.spyOn(fs, "existsSync").mockReturnValue(true);
+    vi.spyOn(fs, "rmSync").mockReturnValue();
+    const runCommandStub = vi
+      .spyOn(mockedDriverContext.ui, "runCommand")
+      .mockResolvedValue(ok("mockedCommandResult"));
+    vi.spyOn(fs, "readdirSync").mockReturnValue(["openapi.yaml"] as any);
+    vi.spyOn(fs, "readJSON").mockResolvedValue(pluginManifest);
+    vi.spyOn(fs, "writeJSON").mockImplementation((path: string, data: any) => {
       const dataToWrite = JSON.stringify(data);
       expect(dataToWrite.includes("declarativeAgent.json")).to.be.true;
     });
     const result = await typeSpecCompileDriver.execute(args, mockedDriverContext);
     expect(result.result.isOk()).to.be.true;
-    expect(runCommandStub.calledOnce).to.be.true;
+    expect(runCommandStub.mock.calls.length === 1).to.be.true;
   });
 
   it("shoult throw error if action number > 1 in da manifest", async () => {
@@ -592,12 +548,12 @@ describe("typeSpecCompilt", async () => {
       ],
     };
 
-    sandbox.stub(fs, "existsSync").returns(true);
-    sandbox.stub(fs, "rmSync").returns();
-    sandbox.stub(mockedDriverContext.ui, "runCommand").resolves(ok("mockedCommandResult"));
-    sandbox.stub(fs, "readdirSync").returns(["openapi.yaml"] as any);
-    sandbox.stub(fs, "readJSON").resolves(pluginManifest);
-    sandbox.stub(fs, "writeJSON").callsFake((path: string, data: any) => {
+    vi.spyOn(fs, "existsSync").mockReturnValue(true);
+    vi.spyOn(fs, "rmSync").mockReturnValue();
+    vi.spyOn(mockedDriverContext.ui, "runCommand").mockResolvedValue(ok("mockedCommandResult"));
+    vi.spyOn(fs, "readdirSync").mockReturnValue(["openapi.yaml"] as any);
+    vi.spyOn(fs, "readJSON").mockResolvedValue(pluginManifest);
+    vi.spyOn(fs, "writeJSON").mockImplementation((path: string, data: any) => {
       const dataToWrite = JSON.stringify(data);
       expect(dataToWrite.includes("declarativeAgent.json")).to.be.true;
     });
@@ -627,17 +583,14 @@ describe("typeSpecCompilt", async () => {
       ],
     };
 
-    sandbox.stub(fs, "existsSync").returns(true);
-    sandbox.stub(fs, "rmSync").returns();
-    sandbox.stub(mockedDriverContext.ui, "runCommand").throws(new Error("mockedError"));
-    sandbox.stub(fs, "readdirSync").returns(["openapi.yaml"] as any);
-    sandbox
-      .stub(fs, "readJSON")
-      .onFirstCall()
-      .resolves(pluginManifest)
-      .onSecondCall()
-      .resolves(manifest);
-    sandbox.stub(fs, "writeJSON").callsFake((path: string, data: any) => {
+    vi.spyOn(fs, "existsSync").mockReturnValue(true);
+    vi.spyOn(fs, "rmSync").mockReturnValue();
+    vi.spyOn(mockedDriverContext.ui, "runCommand").mockImplementation(() => {
+      throw new Error("mockedError");
+    });
+    vi.spyOn(fs, "readdirSync").mockReturnValue(["openapi.yaml"] as any);
+    vi.spyOn(fs, "readJSON").mockResolvedValueOnce(pluginManifest).mockResolvedValueOnce(manifest);
+    vi.spyOn(fs, "writeJSON").mockImplementation((path: string, data: any) => {
       const dataToWrite = JSON.stringify(data);
       expect(dataToWrite.includes("declarativeAgent.json")).to.be.true;
     });

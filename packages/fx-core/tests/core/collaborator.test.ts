@@ -10,14 +10,14 @@ import {
   err,
   ok,
 } from "@microsoft/teamsfx-api";
-import { assert } from "chai";
 import fs from "fs-extra";
 import mockedEnv from "mocked-env";
 import os from "os";
 import * as path from "path";
-import sinon from "sinon";
+import { assert, beforeEach, describe, it, vi } from "vitest";
 import { CollaborationState } from "../../src/common/permissionInterface";
 import { SolutionError } from "../../src/component/constants";
+import * as shareUtils from "../../src/component/driver/share/utils";
 import {
   AadCollaboration,
   AgentCollaboration,
@@ -27,7 +27,6 @@ import {
   CollaborationConstants,
   CollaborationUtil,
   checkPermission,
-  collaboratorDeps,
   grantPermission,
   listCollaborator,
 } from "../../src/core/collaborator";
@@ -36,7 +35,6 @@ import { MockedV2Context } from "../plugins/solution/util";
 import { MockedAzureAccountProvider, MockedM365Provider, randomAppName } from "./utils";
 
 describe("Collaborator APIs for V3", () => {
-  const sandbox = sinon.createSandbox();
   const ctx = new MockedV2Context() as Context;
   const inputs: InputsWithProjectPath = {
     platform: Platform.VSCode,
@@ -49,7 +47,7 @@ describe("Collaborator APIs for V3", () => {
   ctx.tokenProvider = tokenProvider;
   beforeEach(() => {});
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   describe("listCollaborator", () => {
@@ -61,10 +59,10 @@ describe("Collaborator APIs for V3", () => {
       };
     });
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
     it("should return NotProvisioned state if Teamsfx project hasn't been provisioned", async () => {
-      sandbox.stub(CollaborationUtil, "getUserInfo").resolves({
+      vi.spyOn(CollaborationUtil, "getUserInfo").mockResolvedValue({
         tenantId: "fake_tid",
         aadId: "fake_oid",
         userPrincipalName: "fake_unique_name",
@@ -75,13 +73,13 @@ describe("Collaborator APIs for V3", () => {
       assert.isTrue(result.isOk());
     });
     it("should return error if cannot get user info", async () => {
-      sandbox.stub(tokenProvider.m365TokenProvider, "getJsonObject").resolves(undefined);
+      vi.spyOn(tokenProvider.m365TokenProvider, "getJsonObject").mockResolvedValue(undefined);
       const result = await listCollaborator(ctx, inputs, tokenProvider);
       assert.isTrue(result.isErr() && result.error.name === SolutionError.FailedToRetrieveUserInfo);
     });
 
     it("should return M365TenantNotMatch state if tenant is not match", async () => {
-      sandbox.stub(tokenProvider.m365TokenProvider, "getJsonObject").resolves(
+      vi.spyOn(tokenProvider.m365TokenProvider, "getJsonObject").mockResolvedValue(
         ok({
           tid: "fake_tid",
           oid: "fake_oid",
@@ -94,7 +92,7 @@ describe("Collaborator APIs for V3", () => {
     });
 
     it("should return error if list collaborator failed", async () => {
-      sandbox.stub(tokenProvider.m365TokenProvider, "getJsonObject").resolves(
+      vi.spyOn(tokenProvider.m365TokenProvider, "getJsonObject").mockResolvedValue(
         ok({
           tid: "mock_project_tenant_id",
           oid: "fake_oid",
@@ -102,24 +100,18 @@ describe("Collaborator APIs for V3", () => {
           name: "fake_name",
         })
       );
-      sandbox
-        .stub(TeamsCollaboration.prototype, "listCollaborator")
-        .resolves(
-          err(
-            new UserError(
-              "AppStudioPlugin",
-              "FailedToListCollaborator",
-              "List collaborator failed."
-            )
-          )
-        );
+      vi.spyOn(TeamsCollaboration.prototype, "listCollaborator").mockResolvedValue(
+        err(
+          new UserError("AppStudioPlugin", "FailedToListCollaborator", "List collaborator failed.")
+        )
+      );
       inputs.platform = Platform.CLI;
       const result = await listCollaborator(ctx, inputs, tokenProvider);
       assert.isTrue(result.isOk());
     });
 
     it("happy path", async () => {
-      sandbox.stub(tokenProvider.m365TokenProvider, "getJsonObject").resolves(
+      vi.spyOn(tokenProvider.m365TokenProvider, "getJsonObject").mockResolvedValue(
         ok({
           tid: "mock_project_tenant_id",
           oid: "fake_oid",
@@ -127,7 +119,7 @@ describe("Collaborator APIs for V3", () => {
           name: "fake_name",
         })
       );
-      sandbox.stub(TeamsCollaboration.prototype, "listCollaborator").resolves(
+      vi.spyOn(TeamsCollaboration.prototype, "listCollaborator").mockResolvedValue(
         ok([
           {
             userObjectId: "fake-aad-user-object-id",
@@ -137,7 +129,7 @@ describe("Collaborator APIs for V3", () => {
           },
         ])
       );
-      sandbox.stub(AadCollaboration.prototype, "listCollaborator").resolves(
+      vi.spyOn(AadCollaboration.prototype, "listCollaborator").mockResolvedValue(
         ok([
           {
             userObjectId: "fake-aad-user-object-id",
@@ -152,7 +144,7 @@ describe("Collaborator APIs for V3", () => {
     });
 
     it("happy path without aad", async () => {
-      sandbox.stub(tokenProvider.m365TokenProvider, "getJsonObject").resolves(
+      vi.spyOn(tokenProvider.m365TokenProvider, "getJsonObject").mockResolvedValue(
         ok({
           tid: "mock_project_tenant_id",
           oid: "fake_oid",
@@ -160,7 +152,7 @@ describe("Collaborator APIs for V3", () => {
           name: "fake_name",
         })
       );
-      sandbox.stub(TeamsCollaboration.prototype, "listCollaborator").resolves(
+      vi.spyOn(TeamsCollaboration.prototype, "listCollaborator").mockResolvedValue(
         ok([
           {
             userObjectId: "fake-aad-user-object-id",
@@ -175,7 +167,7 @@ describe("Collaborator APIs for V3", () => {
     });
 
     it("happy path with agent", async () => {
-      sandbox.stub(tokenProvider.m365TokenProvider, "getJsonObject").resolves(
+      vi.spyOn(tokenProvider.m365TokenProvider, "getJsonObject").mockResolvedValue(
         ok({
           tid: "mock_project_tenant_id",
           oid: "fake_oid",
@@ -184,10 +176,10 @@ describe("Collaborator APIs for V3", () => {
         })
       );
       const expectedTitleId = "test-agent-title";
-      sandbox
-        .stub(collaboratorDeps, "parseShareAppActionYamlConfig")
-        .resolves(ok({ titleId: expectedTitleId, teamsappId: "", appId: "" }));
-      sandbox.stub(AgentCollaboration.prototype, "listCollaborator").resolves(
+      vi.spyOn(shareUtils, "parseShareAppActionYamlConfig").mockResolvedValueOnce(
+        ok({ titleId: expectedTitleId, teamsappId: "", appId: "" })
+      );
+      vi.spyOn(AgentCollaboration.prototype, "listCollaborator").mockResolvedValue(
         ok([
           {
             userObjectId: "fake-agent-user-id",
@@ -203,7 +195,7 @@ describe("Collaborator APIs for V3", () => {
     });
 
     it("should handle failed agent config parse", async () => {
-      sandbox.stub(tokenProvider.m365TokenProvider, "getJsonObject").resolves(
+      vi.spyOn(tokenProvider.m365TokenProvider, "getJsonObject").mockResolvedValue(
         ok({
           tid: "mock_project_tenant_id",
           oid: "fake_oid",
@@ -212,15 +204,15 @@ describe("Collaborator APIs for V3", () => {
         })
       );
       inputs[QuestionNames.collaborationAppType] = [CollaborationConstants.AgentOptionId];
-      sandbox
-        .stub(collaboratorDeps, "parseShareAppActionYamlConfig")
-        .resolves(err(new UserError("source", "name", "Failed to parse config")));
+      vi.spyOn(shareUtils, "parseShareAppActionYamlConfig").mockResolvedValueOnce(
+        err(new UserError("source", "name", "Failed to parse config"))
+      );
       const result = await listCollaborator(ctx, inputs, tokenProvider);
       assert.isTrue(result.isErr());
     });
 
     it("happy path with agent", async () => {
-      sandbox.stub(tokenProvider.m365TokenProvider, "getJsonObject").resolves(
+      vi.spyOn(tokenProvider.m365TokenProvider, "getJsonObject").mockResolvedValue(
         ok({
           tid: "mock_project_tenant_id",
           oid: "fake_oid",
@@ -229,7 +221,7 @@ describe("Collaborator APIs for V3", () => {
         })
       );
       inputs[QuestionNames.collaborationAppType] = [CollaborationConstants.AgentOptionId];
-      sandbox.stub(TeamsCollaboration.prototype, "listCollaborator").resolves(
+      vi.spyOn(TeamsCollaboration.prototype, "listCollaborator").mockResolvedValue(
         ok([
           {
             userObjectId: "fake-aad-user-object-id",
@@ -240,10 +232,10 @@ describe("Collaborator APIs for V3", () => {
         ])
       );
       const expectedTitleId = "test-agent-title";
-      sandbox
-        .stub(collaboratorDeps, "parseShareAppActionYamlConfig")
-        .resolves(ok({ titleId: expectedTitleId, teamsappId: "", appId: "" }));
-      sandbox.stub(AgentCollaboration.prototype, "listCollaborator").resolves(
+      vi.spyOn(shareUtils, "parseShareAppActionYamlConfig").mockResolvedValueOnce(
+        ok({ titleId: expectedTitleId, teamsappId: "", appId: "" })
+      );
+      vi.spyOn(AgentCollaboration.prototype, "listCollaborator").mockResolvedValue(
         ok([
           {
             userObjectId: "fake-agent-user-id",
@@ -258,7 +250,7 @@ describe("Collaborator APIs for V3", () => {
     });
 
     it("should handle agent config parse error", async () => {
-      sandbox.stub(tokenProvider.m365TokenProvider, "getJsonObject").resolves(
+      vi.spyOn(tokenProvider.m365TokenProvider, "getJsonObject").mockResolvedValue(
         ok({
           tid: "mock_project_tenant_id",
           oid: "fake_oid",
@@ -267,15 +259,15 @@ describe("Collaborator APIs for V3", () => {
         })
       );
       inputs[QuestionNames.collaborationAppType] = [CollaborationConstants.AgentOptionId];
-      sandbox
-        .stub(collaboratorDeps, "parseShareAppActionYamlConfig")
-        .resolves(err(new UserError("source", "name", "Failed to parse agent config")));
+      vi.spyOn(shareUtils, "parseShareAppActionYamlConfig").mockResolvedValueOnce(
+        err(new UserError("source", "name", "Failed to parse agent config"))
+      );
       const result = await listCollaborator(ctx, inputs, tokenProvider);
       assert.isTrue(result.isErr());
     });
 
     it("should handle agent list collaborator error", async () => {
-      sandbox.stub(tokenProvider.m365TokenProvider, "getJsonObject").resolves(
+      vi.spyOn(tokenProvider.m365TokenProvider, "getJsonObject").mockResolvedValue(
         ok({
           tid: "mock_project_tenant_id",
           oid: "fake_oid",
@@ -285,12 +277,12 @@ describe("Collaborator APIs for V3", () => {
       );
       inputs[QuestionNames.collaborationAppType] = [CollaborationConstants.AgentOptionId];
       const expectedTitleId = "test-agent-title";
-      sandbox
-        .stub(collaboratorDeps, "parseShareAppActionYamlConfig")
-        .resolves(ok({ titleId: expectedTitleId, teamsappId: "", appId: "" }));
-      sandbox
-        .stub(AgentCollaboration.prototype, "listCollaborator")
-        .resolves(err(new UserError("source", "name", "Failed to list agent collaborators")));
+      vi.spyOn(shareUtils, "parseShareAppActionYamlConfig").mockResolvedValueOnce(
+        ok({ titleId: expectedTitleId, teamsappId: "", appId: "" })
+      );
+      vi.spyOn(AgentCollaboration.prototype, "listCollaborator").mockResolvedValue(
+        err(new UserError("source", "name", "Failed to list agent collaborators"))
+      );
       const result = await listCollaborator(ctx, inputs, tokenProvider);
       assert.isTrue(result.isErr());
     });
@@ -298,7 +290,7 @@ describe("Collaborator APIs for V3", () => {
 
   describe("checkPermission", () => {
     it("should return NotProvisioned state if Teamsfx project hasn't been provisioned", async () => {
-      sandbox.stub(CollaborationUtil, "getUserInfo").resolves({
+      vi.spyOn(CollaborationUtil, "getUserInfo").mockResolvedValue({
         tenantId: "fake_tid",
         aadId: "fake_oid",
         userPrincipalName: "fake_unique_name",
@@ -310,15 +302,15 @@ describe("Collaborator APIs for V3", () => {
     });
 
     it("should return error if cannot get user info", async () => {
-      sandbox
-        .stub(tokenProvider.m365TokenProvider, "getJsonObject")
-        .resolves(err(new UserError("source", "name", "message")));
+      vi.spyOn(tokenProvider.m365TokenProvider, "getJsonObject").mockResolvedValue(
+        err(new UserError("source", "name", "message"))
+      );
       const result = await checkPermission(ctx, inputs, tokenProvider);
       assert.isTrue(result.isErr() && result.error.name === SolutionError.FailedToRetrieveUserInfo);
     });
 
     it("should return M365TenantNotMatch state if tenant is not match", async () => {
-      sandbox.stub(tokenProvider.m365TokenProvider, "getJsonObject").resolves(
+      vi.spyOn(tokenProvider.m365TokenProvider, "getJsonObject").mockResolvedValue(
         ok({
           tid: "fake_tid",
           oid: "fake_oid",
@@ -331,7 +323,7 @@ describe("Collaborator APIs for V3", () => {
     });
 
     it("should return error if check permission failed", async () => {
-      sandbox.stub(tokenProvider.m365TokenProvider, "getJsonObject").resolves(
+      vi.spyOn(tokenProvider.m365TokenProvider, "getJsonObject").mockResolvedValue(
         ok({
           tid: "mock_project_tenant_id",
           oid: "fake_oid",
@@ -339,18 +331,16 @@ describe("Collaborator APIs for V3", () => {
           name: "fake_name",
         })
       );
-      sandbox
-        .stub(TeamsCollaboration.prototype, "checkPermission")
-        .resolves(
-          err(
-            new UserError("AppStudioPlugin", "FailedToCheckPermission", "List collaborator failed.")
-          )
-        );
+      vi.spyOn(TeamsCollaboration.prototype, "checkPermission").mockResolvedValue(
+        err(
+          new UserError("AppStudioPlugin", "FailedToCheckPermission", "List collaborator failed.")
+        )
+      );
       const result = await checkPermission(ctx, inputs, tokenProvider);
       assert.isTrue(result.isOk());
     });
     it("happy path", async () => {
-      sandbox.stub(tokenProvider.m365TokenProvider, "getJsonObject").resolves(
+      vi.spyOn(tokenProvider.m365TokenProvider, "getJsonObject").mockResolvedValue(
         ok({
           tid: "mock_project_tenant_id",
           oid: "fake_oid",
@@ -358,7 +348,7 @@ describe("Collaborator APIs for V3", () => {
           name: "fake_name",
         })
       );
-      sandbox.stub(TeamsCollaboration.prototype, "checkPermission").resolves(
+      vi.spyOn(TeamsCollaboration.prototype, "checkPermission").mockResolvedValue(
         ok([
           {
             name: "teams_app",
@@ -368,7 +358,7 @@ describe("Collaborator APIs for V3", () => {
           },
         ])
       );
-      sandbox.stub(AadCollaboration.prototype, "checkPermission").resolves(
+      vi.spyOn(AadCollaboration.prototype, "checkPermission").mockResolvedValue(
         ok([
           {
             name: "aad_app",
@@ -393,7 +383,7 @@ describe("Collaborator APIs for V3", () => {
       };
     });
     it("should return NotProvisioned state if Teamsfx project hasn't been provisioned", async () => {
-      sandbox.stub(CollaborationUtil, "getUserInfo").resolves({
+      vi.spyOn(CollaborationUtil, "getUserInfo").mockResolvedValue({
         tenantId: "fake_tid",
         aadId: "fake_oid",
         userPrincipalName: "fake_unique_name",
@@ -404,14 +394,14 @@ describe("Collaborator APIs for V3", () => {
       assert.isTrue(result.isErr());
     });
     it("should return error if cannot get current user info", async () => {
-      sandbox
-        .stub(tokenProvider.m365TokenProvider, "getJsonObject")
-        .resolves(err(new UserError("source", "name", "message")));
+      vi.spyOn(tokenProvider.m365TokenProvider, "getJsonObject").mockResolvedValue(
+        err(new UserError("source", "name", "message"))
+      );
       const result = await grantPermission(ctx, inputs, tokenProvider);
       assert.isTrue(result.isErr() && result.error.name === SolutionError.FailedToRetrieveUserInfo);
     });
     it("should return M365TenantNotMatch state if tenant is not match", async () => {
-      sandbox.stub(tokenProvider.m365TokenProvider, "getJsonObject").resolves(
+      vi.spyOn(tokenProvider.m365TokenProvider, "getJsonObject").mockResolvedValue(
         ok({
           tid: "fake_tid",
           oid: "fake_oid",
@@ -423,10 +413,8 @@ describe("Collaborator APIs for V3", () => {
       assert.isTrue(result.isErr());
     });
     it("should return error if user email is undefined", async () => {
-      sandbox
-        .stub(tokenProvider.m365TokenProvider, "getJsonObject")
-        .onCall(0)
-        .resolves(
+      vi.spyOn(tokenProvider.m365TokenProvider, "getJsonObject")
+        .mockResolvedValueOnce(
           ok({
             tid: "mock_project_tenant_id",
             oid: "fake_oid",
@@ -434,16 +422,13 @@ describe("Collaborator APIs for V3", () => {
             name: "fake_name",
           })
         )
-        .onCall(1)
-        .resolves(undefined);
+        .mockResolvedValueOnce(undefined);
       const result = await grantPermission(ctx, inputs, tokenProvider);
       assert.isTrue(result.isErr() && result.error.name === SolutionError.EmailCannotBeEmptyOrSame);
     });
     it("should return error if cannot find user from email", async () => {
-      sandbox
-        .stub(tokenProvider.m365TokenProvider, "getJsonObject")
-        .onCall(0)
-        .resolves(
+      vi.spyOn(tokenProvider.m365TokenProvider, "getJsonObject")
+        .mockResolvedValueOnce(
           ok({
             tid: "mock_project_tenant_id",
             oid: "fake_oid",
@@ -451,8 +436,7 @@ describe("Collaborator APIs for V3", () => {
             name: "fake_name",
           })
         )
-        .onCall(1)
-        .resolves(undefined);
+        .mockResolvedValueOnce(undefined);
       inputs.email = "your_collaborator@yourcompany.com";
       const result = await grantPermission(ctx, inputs, tokenProvider);
       assert.isTrue(
@@ -460,10 +444,8 @@ describe("Collaborator APIs for V3", () => {
       );
     });
     it("should return error if grant permission failed", async () => {
-      sandbox
-        .stub(tokenProvider.m365TokenProvider, "getJsonObject")
-        .onCall(0)
-        .resolves(
+      vi.spyOn(tokenProvider.m365TokenProvider, "getJsonObject")
+        .mockResolvedValueOnce(
           ok({
             tid: "mock_project_tenant_id",
             oid: "fake_oid",
@@ -471,8 +453,7 @@ describe("Collaborator APIs for V3", () => {
             name: "fake_name",
           })
         )
-        .onCall(1)
-        .resolves(
+        .mockResolvedValueOnce(
           ok({
             tid: "mock_project_tenant_id",
             oid: "fake_oid_2",
@@ -481,18 +462,15 @@ describe("Collaborator APIs for V3", () => {
           })
         );
 
-      sandbox
-        .stub(CollaborationUtil, "getUserInfo")
-        .onCall(0)
-        .resolves({
+      vi.spyOn(CollaborationUtil, "getUserInfo")
+        .mockResolvedValueOnce({
           tenantId: "mock_project_tenant_id",
           aadId: "aadId",
           userPrincipalName: "userPrincipalName",
           displayName: "displayName",
           isAdministrator: true,
         })
-        .onCall(1)
-        .resolves({
+        .mockResolvedValueOnce({
           tenantId: "mock_project_tenant_id",
           aadId: "aadId",
           userPrincipalName: "userPrincipalName2",
@@ -500,37 +478,30 @@ describe("Collaborator APIs for V3", () => {
           isAdministrator: true,
         });
 
-      sandbox
-        .stub(TeamsCollaboration.prototype, "grantPermission")
-        .resolves(
-          err(
-            new UserError("AppStudioPlugin", "FailedToGrantPermission", "Grant permission failed.")
-          )
-        );
+      vi.spyOn(TeamsCollaboration.prototype, "grantPermission").mockResolvedValue(
+        err(new UserError("AppStudioPlugin", "FailedToGrantPermission", "Grant permission failed."))
+      );
       inputs.email = "your_collaborator@yourcompany.com";
       const result = await grantPermission(ctx, inputs, tokenProvider);
       assert.isTrue(result.isOk());
     });
     it("happy path", async () => {
-      sandbox
-        .stub(CollaborationUtil, "getUserInfo")
-        .onCall(0)
-        .resolves({
+      vi.spyOn(CollaborationUtil, "getUserInfo")
+        .mockResolvedValueOnce({
           tenantId: "mock_project_tenant_id",
           aadId: "aadId",
           userPrincipalName: "userPrincipalName",
           displayName: "displayName",
           isAdministrator: true,
         })
-        .onCall(1)
-        .resolves({
+        .mockResolvedValueOnce({
           tenantId: "mock_project_tenant_id",
           aadId: "aadId",
           userPrincipalName: "userPrincipalName2",
           displayName: "displayName2",
           isAdministrator: true,
         });
-      sandbox.stub(TeamsCollaboration.prototype, "grantPermission").resolves(
+      vi.spyOn(TeamsCollaboration.prototype, "grantPermission").mockResolvedValue(
         ok([
           {
             name: "aad_app",
@@ -540,7 +511,7 @@ describe("Collaborator APIs for V3", () => {
           },
         ])
       );
-      sandbox.stub(AadCollaboration.prototype, "grantPermission").resolves(
+      vi.spyOn(AadCollaboration.prototype, "grantPermission").mockResolvedValue(
         ok([
           {
             name: "teams_app",
@@ -557,25 +528,22 @@ describe("Collaborator APIs for V3", () => {
     });
 
     it("happy path without aad", async () => {
-      sandbox
-        .stub(CollaborationUtil, "getUserInfo")
-        .onCall(0)
-        .resolves({
+      vi.spyOn(CollaborationUtil, "getUserInfo")
+        .mockResolvedValueOnce({
           tenantId: "mock_project_tenant_id",
           aadId: "aadId",
           userPrincipalName: "userPrincipalName",
           displayName: "displayName",
           isAdministrator: true,
         })
-        .onCall(1)
-        .resolves({
+        .mockResolvedValueOnce({
           tenantId: "mock_project_tenant_id",
           aadId: "aadId",
           userPrincipalName: "userPrincipalName2",
           displayName: "displayName2",
           isAdministrator: true,
         });
-      sandbox.stub(TeamsCollaboration.prototype, "grantPermission").resolves(
+      vi.spyOn(TeamsCollaboration.prototype, "grantPermission").mockResolvedValue(
         ok([
           {
             name: "aad_app",
@@ -591,18 +559,15 @@ describe("Collaborator APIs for V3", () => {
     });
 
     it("happy path with agent permission", async () => {
-      sandbox
-        .stub(CollaborationUtil, "getUserInfo")
-        .onCall(0)
-        .resolves({
+      vi.spyOn(CollaborationUtil, "getUserInfo")
+        .mockResolvedValueOnce({
           tenantId: "mock_project_tenant_id",
           aadId: "aadId",
           userPrincipalName: "userPrincipalName",
           displayName: "displayName",
           isAdministrator: true,
         })
-        .onCall(1)
-        .resolves({
+        .mockResolvedValueOnce({
           tenantId: "mock_project_tenant_id",
           aadId: "aadId2",
           userPrincipalName: "userPrincipalName2",
@@ -615,10 +580,10 @@ describe("Collaborator APIs for V3", () => {
       inputs.platform = Platform.CLI;
       inputs[QuestionNames.collaborationAppType] = [CollaborationConstants.AgentOptionId];
 
-      sandbox
-        .stub(collaboratorDeps, "parseShareAppActionYamlConfig")
-        .resolves(ok({ titleId: expectedTitleId, teamsappId: "", appId: "" }));
-      sandbox.stub(AgentCollaboration.prototype, "grantPermission").resolves(
+      vi.spyOn(shareUtils, "parseShareAppActionYamlConfig").mockResolvedValueOnce(
+        ok({ titleId: expectedTitleId, teamsappId: "", appId: "" })
+      );
+      vi.spyOn(AgentCollaboration.prototype, "grantPermission").mockResolvedValue(
         ok([
           {
             name: "agent_app",
@@ -639,18 +604,15 @@ describe("Collaborator APIs for V3", () => {
     });
 
     it("should handle agent config parse error in grant permission", async () => {
-      sandbox
-        .stub(CollaborationUtil, "getUserInfo")
-        .onCall(0)
-        .resolves({
+      vi.spyOn(CollaborationUtil, "getUserInfo")
+        .mockResolvedValueOnce({
           tenantId: "mock_project_tenant_id",
           aadId: "aadId",
           userPrincipalName: "userPrincipalName",
           displayName: "displayName",
           isAdministrator: true,
         })
-        .onCall(1)
-        .resolves({
+        .mockResolvedValueOnce({
           tenantId: "mock_project_tenant_id",
           aadId: "aadId2",
           userPrincipalName: "userPrincipalName2",
@@ -661,9 +623,9 @@ describe("Collaborator APIs for V3", () => {
       inputs.email = "your_collaborator@yourcompany.com";
       inputs[QuestionNames.collaborationAppType] = [CollaborationConstants.AgentOptionId];
 
-      sandbox
-        .stub(collaboratorDeps, "parseShareAppActionYamlConfig")
-        .resolves(err(new UserError("source", "name", "Failed to parse agent config")));
+      vi.spyOn(shareUtils, "parseShareAppActionYamlConfig").mockResolvedValueOnce(
+        err(new UserError("source", "name", "Failed to parse agent config"))
+      );
 
       const result = await grantPermission(ctx, inputs, tokenProvider);
       assert.isTrue(result.isErr());
@@ -672,17 +634,15 @@ describe("Collaborator APIs for V3", () => {
 
   describe("loadDotEnvFile v3", () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
     it("happy path", async () => {
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox
-        .stub(fs, "readFile")
-        .resolves(
-          Buffer.from(
-            "AAD_APP_OBJECT_ID=aadObjectId\n TEAMS_APP_ID=teamsAppId\n TEAMS_APP_TENANT_ID=tenantId"
-          )
-        );
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readFile").mockResolvedValue(
+        Buffer.from(
+          "AAD_APP_OBJECT_ID=aadObjectId\n TEAMS_APP_ID=teamsAppId\n TEAMS_APP_TENANT_ID=tenantId"
+        )
+      );
 
       const result = await CollaborationUtil.loadDotEnvFile("filePath");
       assert.isTrue(result.isOk());
@@ -694,7 +654,7 @@ describe("Collaborator APIs for V3", () => {
     });
 
     it("file path error", async () => {
-      sandbox.stub(fs, "pathExists").resolves(false);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
       const result = await CollaborationUtil.loadDotEnvFile("filepath");
       assert.isTrue(result.isErr());
       if (result.isErr()) {
@@ -703,8 +663,10 @@ describe("Collaborator APIs for V3", () => {
     });
 
     it("load env failed", async () => {
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readFile").throws(new Error("failed to load env"));
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readFile").mockImplementation(() => {
+        throw new Error("failed to load env");
+      });
       const result = await CollaborationUtil.loadDotEnvFile("filepath");
       if (result.isErr()) {
         assert.equal(result.error.name, SolutionError.FailedToLoadDotEnvFile);
@@ -714,7 +676,7 @@ describe("Collaborator APIs for V3", () => {
 
   describe("getTeamsAppIdAndAadObjectId v3", () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("happy path vsc", async () => {
@@ -724,16 +686,16 @@ describe("Collaborator APIs for V3", () => {
       ];
       inputs[QuestionNames.AadAppManifestFilePath] = "aadManifestPath";
       inputs[QuestionNames.TeamsAppManifestFilePath] = "teamsAppManifestPath";
-      sandbox
-        .stub(CollaborationUtil, "loadManifestId")
-        .callsFake(async (manifestFilePath: string) => {
+      vi.spyOn(CollaborationUtil, "loadManifestId").mockImplementation(
+        async (manifestFilePath: string) => {
           if (manifestFilePath == "aadManifestPath") {
             return ok("aadObjectId");
           } else {
             return ok("teamsAppId");
           }
-        });
-      sandbox.stub(CollaborationUtil, "parseManifestId").callsFake((appId) => {
+        }
+      );
+      vi.spyOn(CollaborationUtil, "parseManifestId").mockImplementation((appId) => {
         return appId;
       });
       const result = await CollaborationUtil.getTeamsAppIdAndAadObjectId(inputs);
@@ -767,7 +729,7 @@ describe("Collaborator APIs for V3", () => {
         projectPath: path.join(os.tmpdir(), randomAppName()),
         dotEnvFilePath: "filePath",
       };
-      sandbox.stub(CollaborationUtil, "loadDotEnvFile").resolves(
+      vi.spyOn(CollaborationUtil, "loadDotEnvFile").mockResolvedValue(
         ok({
           [CollaborationConstants.TeamsAppIdEnv]: "teamsAppId",
           [CollaborationConstants.AadObjectIdEnv]: "aadObjectId",
@@ -794,16 +756,16 @@ describe("Collaborator APIs for V3", () => {
       ];
       inputsCli[QuestionNames.AadAppManifestFilePath] = "aadManifestPath";
       inputsCli[QuestionNames.TeamsAppManifestFilePath] = "teamsAppManifestPath";
-      sandbox
-        .stub(CollaborationUtil, "loadManifestId")
-        .callsFake(async (manifestFilePath: string) => {
+      vi.spyOn(CollaborationUtil, "loadManifestId").mockImplementation(
+        async (manifestFilePath: string) => {
           if (manifestFilePath == "aadManifestPath") {
             return ok("aadObjectId");
           } else {
             return ok("teamsAppId");
           }
-        });
-      sandbox.stub(CollaborationUtil, "parseManifestId").callsFake((appId) => {
+        }
+      );
+      vi.spyOn(CollaborationUtil, "parseManifestId").mockImplementation((appId) => {
         return appId;
       });
       const result = await CollaborationUtil.getTeamsAppIdAndAadObjectId(inputsCli);
@@ -821,9 +783,9 @@ describe("Collaborator APIs for V3", () => {
         projectPath: path.join(os.tmpdir(), randomAppName()),
         dotEnvFilePath: "filePath",
       };
-      sandbox
-        .stub(CollaborationUtil, "loadDotEnvFile")
-        .resolves(err(new UserError("source", "errorName", "errorMessage")));
+      vi.spyOn(CollaborationUtil, "loadDotEnvFile").mockResolvedValue(
+        err(new UserError("source", "errorName", "errorMessage"))
+      );
       const result = await CollaborationUtil.getTeamsAppIdAndAadObjectId(inputsCli);
       assert.isTrue(result.isErr());
       if (result.isErr()) {
@@ -838,9 +800,9 @@ describe("Collaborator APIs for V3", () => {
       ];
       inputs[QuestionNames.AadAppManifestFilePath] = "aadManifestPath";
       inputs[QuestionNames.TeamsAppManifestFilePath] = "teamsAppManifestPath";
-      sandbox
-        .stub(CollaborationUtil, "loadManifestId")
-        .resolves(err(new UserError("source", "name", "message")));
+      vi.spyOn(CollaborationUtil, "loadManifestId").mockResolvedValue(
+        err(new UserError("source", "name", "message"))
+      );
       const result = await CollaborationUtil.getTeamsAppIdAndAadObjectId(inputs);
       assert.isTrue(result.isErr());
     });
@@ -848,9 +810,9 @@ describe("Collaborator APIs for V3", () => {
     it("load manifest failed in aad app", async () => {
       inputs[CollaborationConstants.AppType] = [CollaborationConstants.AadAppQuestionId];
       inputs[QuestionNames.AadAppManifestFilePath] = "aadManifestPath";
-      sandbox
-        .stub(CollaborationUtil, "loadManifestId")
-        .resolves(err(new UserError("source", "name", "message")));
+      vi.spyOn(CollaborationUtil, "loadManifestId").mockResolvedValue(
+        err(new UserError("source", "name", "message"))
+      );
       const result = await CollaborationUtil.getTeamsAppIdAndAadObjectId(inputs);
       assert.isTrue(result.isErr());
     });
@@ -858,16 +820,16 @@ describe("Collaborator APIs for V3", () => {
     it("load empty manifest id in Teams app", async () => {
       inputs[CollaborationConstants.AppType] = [CollaborationConstants.TeamsAppQuestionId];
       inputs[QuestionNames.TeamsAppManifestFilePath] = "teamsAppManifestPath";
-      sandbox
-        .stub(CollaborationUtil, "loadManifestId")
-        .callsFake(async (manifestFilePath: string) => {
+      vi.spyOn(CollaborationUtil, "loadManifestId").mockImplementation(
+        async (manifestFilePath: string) => {
           if (manifestFilePath == "aadManifestPath") {
             return ok("aadObjectId");
           } else {
             return ok("teamsAppId");
           }
-        });
-      sandbox.stub(CollaborationUtil, "parseManifestId").callsFake((appId) => {
+        }
+      );
+      vi.spyOn(CollaborationUtil, "parseManifestId").mockImplementation((appId) => {
         return undefined;
       });
       const result = await CollaborationUtil.getTeamsAppIdAndAadObjectId(inputs);
@@ -877,16 +839,16 @@ describe("Collaborator APIs for V3", () => {
     it("load empty manifest id in aad app", async () => {
       inputs[CollaborationConstants.AppType] = [CollaborationConstants.AadAppQuestionId];
       inputs[QuestionNames.AadAppManifestFilePath] = "aadAppManifestPath";
-      sandbox
-        .stub(CollaborationUtil, "loadManifestId")
-        .callsFake(async (manifestFilePath: string) => {
+      vi.spyOn(CollaborationUtil, "loadManifestId").mockImplementation(
+        async (manifestFilePath: string) => {
           if (manifestFilePath == "aadManifestPath") {
             return ok("aadObjectId");
           } else {
             return ok("teamsAppId");
           }
-        });
-      sandbox.stub(CollaborationUtil, "parseManifestId").callsFake((appId) => {
+        }
+      );
+      vi.spyOn(CollaborationUtil, "parseManifestId").mockImplementation((appId) => {
         return undefined;
       });
       const result = await CollaborationUtil.getTeamsAppIdAndAadObjectId(inputs);
@@ -896,7 +858,7 @@ describe("Collaborator APIs for V3", () => {
 
   describe("collaboration v3", () => {
     beforeEach(() => {
-      sandbox.stub(tokenProvider.m365TokenProvider, "getJsonObject").resolves(
+      vi.spyOn(tokenProvider.m365TokenProvider, "getJsonObject").mockResolvedValue(
         ok({
           tid: "mock_project_tenant_id",
           oid: "fake_oid",
@@ -906,11 +868,11 @@ describe("Collaborator APIs for V3", () => {
       );
     });
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("listCollaborator: happy path", async () => {
-      sandbox.stub(TeamsCollaboration.prototype, "listCollaborator").resolves(
+      vi.spyOn(TeamsCollaboration.prototype, "listCollaborator").mockResolvedValue(
         ok([
           {
             userObjectId: "fake-aad-user-object-id",
@@ -920,7 +882,7 @@ describe("Collaborator APIs for V3", () => {
           },
         ])
       );
-      sandbox.stub(AadCollaboration.prototype, "listCollaborator").resolves(
+      vi.spyOn(AadCollaboration.prototype, "listCollaborator").mockResolvedValue(
         ok([
           {
             userObjectId: "fake-aad-user-object-id",
@@ -930,7 +892,7 @@ describe("Collaborator APIs for V3", () => {
           },
         ])
       );
-      sandbox.stub(CollaborationUtil, "getTeamsAppIdAndAadObjectId").resolves(
+      vi.spyOn(CollaborationUtil, "getTeamsAppIdAndAadObjectId").mockResolvedValue(
         ok({
           teamsAppId: "teamsAppId",
           aadObjectId: "aadObjectId",
@@ -945,7 +907,7 @@ describe("Collaborator APIs for V3", () => {
     });
 
     it("listCollaborator: happy path with Teams only", async () => {
-      sandbox.stub(TeamsCollaboration.prototype, "listCollaborator").resolves(
+      vi.spyOn(TeamsCollaboration.prototype, "listCollaborator").mockResolvedValue(
         ok([
           {
             userObjectId: "fake-aad-user-object-id",
@@ -955,7 +917,7 @@ describe("Collaborator APIs for V3", () => {
           },
         ])
       );
-      sandbox.stub(AadCollaboration.prototype, "listCollaborator").resolves(
+      vi.spyOn(AadCollaboration.prototype, "listCollaborator").mockResolvedValue(
         ok([
           {
             userObjectId: "fake-aad-user-object-id",
@@ -965,7 +927,7 @@ describe("Collaborator APIs for V3", () => {
           },
         ])
       );
-      sandbox.stub(CollaborationUtil, "getTeamsAppIdAndAadObjectId").resolves(
+      vi.spyOn(CollaborationUtil, "getTeamsAppIdAndAadObjectId").mockResolvedValue(
         ok({
           teamsAppId: "teamsAppId",
           aadObjectId: undefined,
@@ -980,7 +942,7 @@ describe("Collaborator APIs for V3", () => {
     });
 
     it("listCollaborator: happy path with AAD only", async () => {
-      sandbox.stub(TeamsCollaboration.prototype, "listCollaborator").resolves(
+      vi.spyOn(TeamsCollaboration.prototype, "listCollaborator").mockResolvedValue(
         ok([
           {
             userObjectId: "fake-aad-user-object-id",
@@ -990,7 +952,7 @@ describe("Collaborator APIs for V3", () => {
           },
         ])
       );
-      sandbox.stub(AadCollaboration.prototype, "listCollaborator").resolves(
+      vi.spyOn(AadCollaboration.prototype, "listCollaborator").mockResolvedValue(
         ok([
           {
             userObjectId: "fake-aad-user-object-id",
@@ -1000,7 +962,7 @@ describe("Collaborator APIs for V3", () => {
           },
         ])
       );
-      sandbox.stub(CollaborationUtil, "getTeamsAppIdAndAadObjectId").resolves(
+      vi.spyOn(CollaborationUtil, "getTeamsAppIdAndAadObjectId").mockResolvedValue(
         ok({
           teamsAppId: undefined,
           aadObjectId: "aadObjectId",
@@ -1015,7 +977,7 @@ describe("Collaborator APIs for V3", () => {
     });
 
     it("list collaborator: failed to read teams app id", async () => {
-      sandbox.stub(TeamsCollaboration.prototype, "listCollaborator").resolves(
+      vi.spyOn(TeamsCollaboration.prototype, "listCollaborator").mockResolvedValue(
         ok([
           {
             userObjectId: "fake-aad-user-object-id",
@@ -1025,7 +987,7 @@ describe("Collaborator APIs for V3", () => {
           },
         ])
       );
-      sandbox.stub(AadCollaboration.prototype, "listCollaborator").resolves(
+      vi.spyOn(AadCollaboration.prototype, "listCollaborator").mockResolvedValue(
         ok([
           {
             userObjectId: "fake-aad-user-object-id",
@@ -1035,9 +997,9 @@ describe("Collaborator APIs for V3", () => {
           },
         ])
       );
-      sandbox
-        .stub(CollaborationUtil, "getTeamsAppIdAndAadObjectId")
-        .resolves(err(new UserError("source", "errorName", "errorMessage")));
+      vi.spyOn(CollaborationUtil, "getTeamsAppIdAndAadObjectId").mockResolvedValue(
+        err(new UserError("source", "errorName", "errorMessage"))
+      );
 
       inputs.platform == Platform.CLI;
       inputs.env = "dev";
@@ -1047,7 +1009,7 @@ describe("Collaborator APIs for V3", () => {
     });
 
     it("grantPermission: happy path", async () => {
-      sandbox.stub(TeamsCollaboration.prototype, "grantPermission").resolves(
+      vi.spyOn(TeamsCollaboration.prototype, "grantPermission").mockResolvedValue(
         ok([
           {
             name: "aad_app",
@@ -1057,7 +1019,7 @@ describe("Collaborator APIs for V3", () => {
           },
         ])
       );
-      sandbox.stub(AadCollaboration.prototype, "grantPermission").resolves(
+      vi.spyOn(AadCollaboration.prototype, "grantPermission").mockResolvedValue(
         ok([
           {
             name: "teams_app",
@@ -1067,24 +1029,21 @@ describe("Collaborator APIs for V3", () => {
           },
         ])
       );
-      sandbox.stub(CollaborationUtil, "getTeamsAppIdAndAadObjectId").resolves(
+      vi.spyOn(CollaborationUtil, "getTeamsAppIdAndAadObjectId").mockResolvedValue(
         ok({
           teamsAppId: "teamsAppId",
           aadObjectId: "aadObjectId",
         })
       );
-      sandbox
-        .stub(CollaborationUtil, "getUserInfo")
-        .onCall(0)
-        .resolves({
+      vi.spyOn(CollaborationUtil, "getUserInfo")
+        .mockResolvedValueOnce({
           tenantId: "mock_project_tenant_id",
           aadId: "aadId",
           userPrincipalName: "userPrincipalName",
           displayName: "displayName",
           isAdministrator: true,
         })
-        .onCall(1)
-        .resolves({
+        .mockResolvedValueOnce({
           tenantId: "mock_project_tenant_id",
           aadId: "aadId",
           userPrincipalName: "userPrincipalName2",
@@ -1101,7 +1060,7 @@ describe("Collaborator APIs for V3", () => {
     });
 
     it("grantPermission: happy path with Teams only", async () => {
-      sandbox.stub(TeamsCollaboration.prototype, "grantPermission").resolves(
+      vi.spyOn(TeamsCollaboration.prototype, "grantPermission").mockResolvedValue(
         ok([
           {
             name: "aad_app",
@@ -1111,7 +1070,7 @@ describe("Collaborator APIs for V3", () => {
           },
         ])
       );
-      sandbox.stub(AadCollaboration.prototype, "grantPermission").resolves(
+      vi.spyOn(AadCollaboration.prototype, "grantPermission").mockResolvedValue(
         ok([
           {
             name: "teams_app",
@@ -1121,24 +1080,21 @@ describe("Collaborator APIs for V3", () => {
           },
         ])
       );
-      sandbox.stub(CollaborationUtil, "getTeamsAppIdAndAadObjectId").resolves(
+      vi.spyOn(CollaborationUtil, "getTeamsAppIdAndAadObjectId").mockResolvedValue(
         ok({
           teamsAppId: "teamsAppId",
           aadObjectId: undefined,
         })
       );
-      sandbox
-        .stub(CollaborationUtil, "getUserInfo")
-        .onCall(0)
-        .resolves({
+      vi.spyOn(CollaborationUtil, "getUserInfo")
+        .mockResolvedValueOnce({
           tenantId: "mock_project_tenant_id",
           aadId: "aadId",
           userPrincipalName: "userPrincipalName",
           displayName: "displayName",
           isAdministrator: true,
         })
-        .onCall(1)
-        .resolves({
+        .mockResolvedValueOnce({
           tenantId: "mock_project_tenant_id",
           aadId: "aadId",
           userPrincipalName: "userPrincipalName2",
@@ -1155,7 +1111,7 @@ describe("Collaborator APIs for V3", () => {
     });
 
     it("grantPermission: happy path with AAD only", async () => {
-      sandbox.stub(TeamsCollaboration.prototype, "grantPermission").resolves(
+      vi.spyOn(TeamsCollaboration.prototype, "grantPermission").mockResolvedValue(
         ok([
           {
             name: "aad_app",
@@ -1165,7 +1121,7 @@ describe("Collaborator APIs for V3", () => {
           },
         ])
       );
-      sandbox.stub(AadCollaboration.prototype, "grantPermission").resolves(
+      vi.spyOn(AadCollaboration.prototype, "grantPermission").mockResolvedValue(
         ok([
           {
             name: "teams_app",
@@ -1175,24 +1131,21 @@ describe("Collaborator APIs for V3", () => {
           },
         ])
       );
-      sandbox.stub(CollaborationUtil, "getTeamsAppIdAndAadObjectId").resolves(
+      vi.spyOn(CollaborationUtil, "getTeamsAppIdAndAadObjectId").mockResolvedValue(
         ok({
           teamsAppId: undefined,
           aadObjectId: "aadObjectId",
         })
       );
-      sandbox
-        .stub(CollaborationUtil, "getUserInfo")
-        .onCall(0)
-        .resolves({
+      vi.spyOn(CollaborationUtil, "getUserInfo")
+        .mockResolvedValueOnce({
           tenantId: "mock_project_tenant_id",
           aadId: "aadId",
           userPrincipalName: "userPrincipalName",
           displayName: "displayName",
           isAdministrator: true,
         })
-        .onCall(1)
-        .resolves({
+        .mockResolvedValueOnce({
           tenantId: "mock_project_tenant_id",
           aadId: "aadId",
           userPrincipalName: "userPrincipalName2",
@@ -1209,7 +1162,7 @@ describe("Collaborator APIs for V3", () => {
     });
 
     it("grantPermission: failed to read teams app id", async () => {
-      sandbox.stub(TeamsCollaboration.prototype, "grantPermission").resolves(
+      vi.spyOn(TeamsCollaboration.prototype, "grantPermission").mockResolvedValue(
         ok([
           {
             name: "aad_app",
@@ -1219,7 +1172,7 @@ describe("Collaborator APIs for V3", () => {
           },
         ])
       );
-      sandbox.stub(AadCollaboration.prototype, "grantPermission").resolves(
+      vi.spyOn(AadCollaboration.prototype, "grantPermission").mockResolvedValue(
         ok([
           {
             name: "teams_app",
@@ -1229,21 +1182,18 @@ describe("Collaborator APIs for V3", () => {
           },
         ])
       );
-      sandbox
-        .stub(CollaborationUtil, "getTeamsAppIdAndAadObjectId")
-        .resolves(err(new UserError("source", "errorName", "errorMessage")));
-      sandbox
-        .stub(CollaborationUtil, "getUserInfo")
-        .onCall(0)
-        .resolves({
+      vi.spyOn(CollaborationUtil, "getTeamsAppIdAndAadObjectId").mockResolvedValue(
+        err(new UserError("source", "errorName", "errorMessage"))
+      );
+      vi.spyOn(CollaborationUtil, "getUserInfo")
+        .mockResolvedValueOnce({
           tenantId: "mock_project_tenant_id",
           aadId: "aadId",
           userPrincipalName: "userPrincipalName",
           displayName: "displayName",
           isAdministrator: true,
         })
-        .onCall(1)
-        .resolves({
+        .mockResolvedValueOnce({
           tenantId: "mock_project_tenant_id",
           aadId: "aadId",
           userPrincipalName: "userPrincipalName2",
@@ -1260,7 +1210,7 @@ describe("Collaborator APIs for V3", () => {
     });
 
     it("checkPermission: happy path", async () => {
-      sandbox.stub(TeamsCollaboration.prototype, "checkPermission").resolves(
+      vi.spyOn(TeamsCollaboration.prototype, "checkPermission").mockResolvedValue(
         ok([
           {
             name: "teams_app",
@@ -1270,7 +1220,7 @@ describe("Collaborator APIs for V3", () => {
           },
         ])
       );
-      sandbox.stub(AadCollaboration.prototype, "checkPermission").resolves(
+      vi.spyOn(AadCollaboration.prototype, "checkPermission").mockResolvedValue(
         ok([
           {
             name: "aad_app",
@@ -1280,24 +1230,21 @@ describe("Collaborator APIs for V3", () => {
           },
         ])
       );
-      sandbox.stub(CollaborationUtil, "getTeamsAppIdAndAadObjectId").resolves(
+      vi.spyOn(CollaborationUtil, "getTeamsAppIdAndAadObjectId").mockResolvedValue(
         ok({
           teamsAppId: "teamsAppId",
           aadObjectId: "aadObjectId",
         })
       );
-      sandbox
-        .stub(CollaborationUtil, "getUserInfo")
-        .onCall(0)
-        .resolves({
+      vi.spyOn(CollaborationUtil, "getUserInfo")
+        .mockResolvedValueOnce({
           tenantId: "mock_project_tenant_id",
           aadId: "aadId",
           userPrincipalName: "userPrincipalName",
           displayName: "displayName",
           isAdministrator: true,
         })
-        .onCall(1)
-        .resolves({
+        .mockResolvedValueOnce({
           tenantId: "mock_project_tenant_id",
           aadId: "aadId",
           userPrincipalName: "userPrincipalName2",
@@ -1313,7 +1260,7 @@ describe("Collaborator APIs for V3", () => {
     });
 
     it("checkPermission: happy path with Teams only", async () => {
-      sandbox.stub(TeamsCollaboration.prototype, "checkPermission").resolves(
+      vi.spyOn(TeamsCollaboration.prototype, "checkPermission").mockResolvedValue(
         ok([
           {
             name: "teams_app",
@@ -1323,7 +1270,7 @@ describe("Collaborator APIs for V3", () => {
           },
         ])
       );
-      sandbox.stub(AadCollaboration.prototype, "checkPermission").resolves(
+      vi.spyOn(AadCollaboration.prototype, "checkPermission").mockResolvedValue(
         ok([
           {
             name: "aad_app",
@@ -1333,24 +1280,21 @@ describe("Collaborator APIs for V3", () => {
           },
         ])
       );
-      sandbox.stub(CollaborationUtil, "getTeamsAppIdAndAadObjectId").resolves(
+      vi.spyOn(CollaborationUtil, "getTeamsAppIdAndAadObjectId").mockResolvedValue(
         ok({
           teamsAppId: "teamsAppId",
           aadObjectId: undefined,
         })
       );
-      sandbox
-        .stub(CollaborationUtil, "getUserInfo")
-        .onCall(0)
-        .resolves({
+      vi.spyOn(CollaborationUtil, "getUserInfo")
+        .mockResolvedValueOnce({
           tenantId: "mock_project_tenant_id",
           aadId: "aadId",
           userPrincipalName: "userPrincipalName",
           displayName: "displayName",
           isAdministrator: true,
         })
-        .onCall(1)
-        .resolves({
+        .mockResolvedValueOnce({
           tenantId: "mock_project_tenant_id",
           aadId: "aadId",
           userPrincipalName: "userPrincipalName2",
@@ -1366,7 +1310,7 @@ describe("Collaborator APIs for V3", () => {
     });
 
     it("checkPermission: happy path with AAD only", async () => {
-      sandbox.stub(TeamsCollaboration.prototype, "checkPermission").resolves(
+      vi.spyOn(TeamsCollaboration.prototype, "checkPermission").mockResolvedValue(
         ok([
           {
             name: "teams_app",
@@ -1376,7 +1320,7 @@ describe("Collaborator APIs for V3", () => {
           },
         ])
       );
-      sandbox.stub(AadCollaboration.prototype, "checkPermission").resolves(
+      vi.spyOn(AadCollaboration.prototype, "checkPermission").mockResolvedValue(
         ok([
           {
             name: "aad_app",
@@ -1386,24 +1330,21 @@ describe("Collaborator APIs for V3", () => {
           },
         ])
       );
-      sandbox.stub(CollaborationUtil, "getTeamsAppIdAndAadObjectId").resolves(
+      vi.spyOn(CollaborationUtil, "getTeamsAppIdAndAadObjectId").mockResolvedValue(
         ok({
           teamsAppId: undefined,
           aadObjectId: "aadObjectId",
         })
       );
-      sandbox
-        .stub(CollaborationUtil, "getUserInfo")
-        .onCall(0)
-        .resolves({
+      vi.spyOn(CollaborationUtil, "getUserInfo")
+        .mockResolvedValueOnce({
           tenantId: "mock_project_tenant_id",
           aadId: "aadId",
           userPrincipalName: "userPrincipalName",
           displayName: "displayName",
           isAdministrator: true,
         })
-        .onCall(1)
-        .resolves({
+        .mockResolvedValueOnce({
           tenantId: "mock_project_tenant_id",
           aadId: "aadId",
           userPrincipalName: "userPrincipalName2",
@@ -1419,7 +1360,7 @@ describe("Collaborator APIs for V3", () => {
     });
 
     it("checkPermission: failed to read teams app id", async () => {
-      sandbox.stub(TeamsCollaboration.prototype, "checkPermission").resolves(
+      vi.spyOn(TeamsCollaboration.prototype, "checkPermission").mockResolvedValue(
         ok([
           {
             name: "teams_app",
@@ -1429,7 +1370,7 @@ describe("Collaborator APIs for V3", () => {
           },
         ])
       );
-      sandbox.stub(AadCollaboration.prototype, "checkPermission").resolves(
+      vi.spyOn(AadCollaboration.prototype, "checkPermission").mockResolvedValue(
         ok([
           {
             name: "aad_app",
@@ -1439,21 +1380,18 @@ describe("Collaborator APIs for V3", () => {
           },
         ])
       );
-      sandbox
-        .stub(CollaborationUtil, "getTeamsAppIdAndAadObjectId")
-        .resolves(err(new UserError("source", "errorName", "errorMessage")));
-      sandbox
-        .stub(CollaborationUtil, "getUserInfo")
-        .onCall(0)
-        .resolves({
+      vi.spyOn(CollaborationUtil, "getTeamsAppIdAndAadObjectId").mockResolvedValue(
+        err(new UserError("source", "errorName", "errorMessage"))
+      );
+      vi.spyOn(CollaborationUtil, "getUserInfo")
+        .mockResolvedValueOnce({
           tenantId: "mock_project_tenant_id",
           aadId: "aadId",
           userPrincipalName: "userPrincipalName",
           displayName: "displayName",
           isAdministrator: true,
         })
-        .onCall(1)
-        .resolves({
+        .mockResolvedValueOnce({
           tenantId: "mock_project_tenant_id",
           aadId: "aadId",
           userPrincipalName: "userPrincipalName2",
@@ -1471,35 +1409,37 @@ describe("Collaborator APIs for V3", () => {
 
   describe("loadManifestId v3", () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("happy path", async () => {
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox
-        .stub(fs, "readJson")
-        .resolves(JSON.parse('{"id":"00000000-0000-0000-0000-000000000000"}'));
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readJson").mockResolvedValue(
+        JSON.parse('{"id":"00000000-0000-0000-0000-000000000000"}')
+      );
       const res = await CollaborationUtil.loadManifestId("manifest");
       assert.isTrue(res.isOk() && res.value === "00000000-0000-0000-0000-000000000000");
     });
 
     it("manifest not exist", async () => {
-      sandbox.stub(fs, "pathExists").resolves(false);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
       const res = await CollaborationUtil.loadManifestId("manifest");
       assert.isTrue(res.isErr() && res.error.name == "FileNotFoundError");
     });
 
     it("manifestFileNotValid", async () => {
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox
-        .stub(fs, "readJson")
-        .resolves(JSON.parse('{"test":"00000000-0000-0000-0000-000000000000"}'));
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readJson").mockResolvedValue(
+        JSON.parse('{"test":"00000000-0000-0000-0000-000000000000"}')
+      );
       const res = await CollaborationUtil.loadManifestId("manifest");
       assert.isTrue(res.isErr() && res.error.name == "InvalidManifestError");
     });
 
     it("unexpected error", async () => {
-      sandbox.stub(fs, "pathExists").throws(new Error("error"));
+      vi.spyOn(fs, "pathExists").mockImplementation(() => {
+        throw new Error("error");
+      });
       const res = await CollaborationUtil.loadManifestId("manifest");
       assert.isTrue(res.isErr() && res.error.name == "FailedToLoadManifestFile");
     });
@@ -1507,7 +1447,7 @@ describe("Collaborator APIs for V3", () => {
 
   describe("requireEnvQuestion", () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("happy path", () => {
@@ -1528,7 +1468,7 @@ describe("Collaborator APIs for V3", () => {
 
   describe("parseManifestId", () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("happy path: hardcode", async () => {

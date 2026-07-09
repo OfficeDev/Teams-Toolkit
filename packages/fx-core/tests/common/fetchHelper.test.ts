@@ -1,23 +1,20 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-import { assert } from "chai";
-import sinon from "sinon";
+import { assert, vi } from "vitest";
 import * as fetchHelper from "../../src/common/fetchHelper";
 
 describe("fetchHelper", () => {
-  const sandbox = sinon.createSandbox();
-
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("should export a default function", () => {
     assert.isFunction(fetchHelper.default);
   });
 
-  it("should be stubbable via sinon", async () => {
+  it("should be stubbable via vitest", async () => {
     const fakeResponse = { ok: true, status: 200, json: async () => ({ key: "value" }) };
-    sandbox.stub(globalThis, "fetch").resolves(fakeResponse as any);
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(fakeResponse as any);
 
     const result = await fetchHelper.default("https://example.com");
     assert.strictEqual(result.ok, true);
@@ -26,15 +23,15 @@ describe("fetchHelper", () => {
     assert.deepStrictEqual(json, { key: "value" });
   });
 
-  it("should pass url and init to the stubbed function", async () => {
-    const stub = sandbox.stub(globalThis, "fetch").resolves({ ok: true } as any);
+  it("should pass url and init to the mocked function", async () => {
+    const mockFetch = vi.spyOn(globalThis, "fetch").mockResolvedValue({ ok: true } as any);
 
     const init = { method: "POST", headers: { "Content-Type": "application/json" } };
     await fetchHelper.default("https://example.com/api", init as any);
 
-    assert.isTrue(stub.calledOnce);
-    assert.strictEqual(stub.firstCall.args[0], "https://example.com/api");
-    assert.deepStrictEqual(stub.firstCall.args[1], init);
+    assert.isTrue(mockFetch.mock.calls.length === 1);
+    assert.strictEqual(mockFetch.mock.calls[0][0], "https://example.com/api");
+    assert.deepStrictEqual(mockFetch.mock.calls[0][1], init);
   });
 
   it("should call real fetch when not stubbed", async () => {
@@ -52,21 +49,16 @@ describe("fetchHelper", () => {
   });
 
   it("should use globalThis.fetch when available", async () => {
-    const originalFetch = globalThis.fetch;
-    try {
-      const fakeResponse = { ok: true, status: 200 };
-      globalThis.fetch = sandbox.stub().resolves(fakeResponse) as any;
-      const result = await fetchHelper.default("https://example.com");
-      assert.strictEqual(result.ok, true);
-      assert.strictEqual(result.status, 200);
-      assert.isTrue((globalThis.fetch as sinon.SinonStub).calledOnce);
-      assert.strictEqual(
-        (globalThis.fetch as sinon.SinonStub).firstCall.args[0],
-        "https://example.com"
-      );
-    } finally {
-      globalThis.fetch = originalFetch;
-    }
+    const fakeResponse = { ok: true, status: 200 };
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(fakeResponse as any);
+
+    const result = await fetchHelper.default("https://example.com");
+    assert.strictEqual(result.ok, true);
+    assert.strictEqual(result.status, 200);
+
+    const mockFetch = vi.mocked(globalThis.fetch);
+    assert.isTrue(mockFetch.mock.calls.length === 1);
+    assert.strictEqual(mockFetch.mock.calls[0][0], "https://example.com");
   });
 
   it("should fall back to node-fetch when globalThis.fetch is unavailable", async () => {
@@ -110,20 +102,13 @@ describe("fetchHelper", () => {
   });
 
   it("should accept a URL object", async () => {
-    const originalFetch = globalThis.fetch;
-    try {
-      const fakeResponse = { ok: true, status: 200 };
-      globalThis.fetch = sandbox.stub().resolves(fakeResponse) as any;
-      const urlObj = new URL("https://example.com/path");
-      const result = await fetchHelper.default(urlObj);
-      assert.strictEqual(result.ok, true);
-      assert.isTrue((globalThis.fetch as sinon.SinonStub).calledOnce);
-      assert.strictEqual(
-        (globalThis.fetch as sinon.SinonStub).firstCall.args[0],
-        "https://example.com/path"
-      );
-    } finally {
-      globalThis.fetch = originalFetch;
-    }
+    const fakeResponse = { ok: true, status: 200 };
+    const mockFetch = vi.spyOn(globalThis, "fetch").mockResolvedValue(fakeResponse as any);
+
+    const urlObj = new URL("https://example.com/path");
+    const result = await fetchHelper.default(urlObj);
+    assert.strictEqual(result.ok, true);
+    assert.isTrue(mockFetch.mock.calls.length === 1);
+    assert.strictEqual(mockFetch.mock.calls[0][0], "https://example.com/path");
   });
 });

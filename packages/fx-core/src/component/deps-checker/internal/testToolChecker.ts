@@ -27,16 +27,6 @@ import * as downloadHelper from "../util/downloadHelper";
 import * as fileHelper from "../util/fileHelper";
 import { isWindows } from "../util/system";
 
-export const testToolCheckerDeps = {
-  fetch: fetchHelper.default,
-  downloadToTempFile: downloadHelper.downloadToTempFile,
-  unzip: downloadHelper.unzip,
-  cleanup: fileHelper.cleanup,
-  createSymlink: fileHelper.createSymlink,
-  rename: fileHelper.rename,
-  unlinkSymlink: fileHelper.unlinkSymlink,
-};
-
 enum InstallType {
   Global = "global",
   Portable = "portable",
@@ -107,7 +97,7 @@ export class TestToolChecker implements DepsChecker {
       } else {
         this.telemetryProperties[TelemetryProperties.SymlinkTestToolVersionError] =
           versionRes.error.message;
-        await testToolCheckerDeps.unlinkSymlink(symlinkDir, true);
+        await fileHelper.unlinkSymlink(symlinkDir, true);
       }
     }
 
@@ -123,7 +113,7 @@ export class TestToolChecker implements DepsChecker {
       );
       this.telemetryProperties[TelemetryProperties.SelectedPortableTestToolVersion] = version;
       if (symlinkDir) {
-        await testToolCheckerDeps.createSymlink(portablePath, symlinkDir, true);
+        await fileHelper.createSymlink(portablePath, symlinkDir, true);
         return await this.getSuccessDepsInfo(version, symlinkDir);
       } else {
         return await this.getSuccessDepsInfo(version, portablePath);
@@ -221,7 +211,7 @@ export class TestToolChecker implements DepsChecker {
         knownBinaryVersion
       );
       if (!fallbackVersion || !semver.satisfies(fallbackVersion, versionRange)) {
-        await testToolCheckerDeps.cleanup(tmpPath);
+        await fileHelper.cleanup(tmpPath);
         this.telemetryProperties[TelemetryProperties.InstallTestToolError] =
           versionRes.error.message;
         throw new DepsCheckerError(
@@ -239,10 +229,10 @@ export class TestToolChecker implements DepsChecker {
     this.telemetryProperties[TelemetryProperties.InstalledTestToolVersion] = actualVersion;
 
     const portablePath = this.getPortableInstallPath(releaseType, actualVersion);
-    await testToolCheckerDeps.rename(tmpPath, portablePath);
+    await fileHelper.rename(tmpPath, portablePath);
 
     if (symlinkDir) {
-      await testToolCheckerDeps.createSymlink(portablePath, symlinkDir, true);
+      await fileHelper.createSymlink(portablePath, symlinkDir, true);
     }
 
     await this.writeInstallInfoFile(projectPath);
@@ -371,7 +361,7 @@ export class TestToolChecker implements DepsChecker {
     } catch {
       // ignore invalid installation info file
     }
-    await testToolCheckerDeps.cleanup(installInfoPath);
+    await fileHelper.cleanup(installInfoPath);
     return undefined;
   }
 
@@ -591,7 +581,7 @@ export class TestToolChecker implements DepsChecker {
         "--no-audit"
       );
     } catch (error: any) {
-      await testToolCheckerDeps.cleanup(prefix);
+      await fileHelper.cleanup(prefix);
       // @ is incorrectly identified as an email format.
       const packageName = this.getPackageName(symlinkDir);
       this.telemetryProperties[TelemetryProperties.InstallTestToolError] = (error.message as string)
@@ -652,7 +642,7 @@ export class TestToolChecker implements DepsChecker {
     }
     const release = releases.find((value) => value.version === targetVersion) as GitHubRelease;
 
-    await testToolCheckerDeps.downloadToTempFile(
+    await downloadHelper.downloadToTempFile(
       release.url,
       {
         timeout: InstallTimeout,
@@ -661,7 +651,7 @@ export class TestToolChecker implements DepsChecker {
         },
       },
       async (filePath: string) => {
-        await testToolCheckerDeps.unzip(filePath, installPath);
+        await downloadHelper.unzip(filePath, installPath);
       }
     );
     return targetVersion;
@@ -794,7 +784,7 @@ export class GitHubHelpers {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), InstallTimeout);
     try {
-      const response = await testToolCheckerDeps.fetch(
+      const response = await fetchHelper.default(
         "https://api.github.com/repos/OfficeDev/microsoft-365-agents-toolkit/releases",
         {
           headers: {

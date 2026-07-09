@@ -2,15 +2,14 @@
 // Licensed under the MIT license.
 
 import { ConfigFolderName, err, ok } from "@microsoft/teamsfx-api";
-import { assert } from "chai";
 import fs from "fs-extra";
 import os from "os";
 import path from "path";
-import * as sinon from "sinon";
 import stream, { Readable } from "stream";
 import { getLocalizedString } from "../../../../src/common/localizeUtils";
 import { NodeChecker } from "../../../../src/component/deps-checker/internal/nodeChecker";
-import { httpClient, httpClientDeps } from "../../../../src/component/driver/devTool/httpClient";
+import * as httpClientDeps from "../../../../src/component/driver/devTool/httpClient";
+import { httpClient } from "../../../../src/component/driver/devTool/httpClient";
 import {
   NodeDownloadMirror,
   nodejsInstaller,
@@ -19,9 +18,10 @@ import {
 import { UserCancelError } from "../../../../src/error";
 import { InstallNodeJSError } from "../../../../src/error/depCheck";
 import { MockedLogProvider, MockedUserInteraction } from "../../../plugins/solution/util";
+import { assert, vi } from "vitest";
 
 describe("NodeJS Installer", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   function createMockResponse(
     body: Readable | undefined,
@@ -40,12 +40,15 @@ describe("NodeJS Installer", () => {
 
   describe("HttpClient", () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     describe("get", () => {
       it("fetch return 500", async () => {
-        sandbox.stub(httpClientDeps, "fetch").resolves({ ok: false, status: 500 } as any);
+        vi.spyOn(httpClientDeps.httpClientDeps, "fetch").mockResolvedValue({
+          ok: false,
+          status: 500,
+        } as any);
         try {
           await httpClient.get("https://test.com");
         } catch (e: any) {
@@ -58,7 +61,7 @@ describe("NodeJS Installer", () => {
         const fakeResponse = createMockResponse(Readable.from(buffer), 200, {
           "content-type": "application/json",
         });
-        sandbox.stub(httpClientDeps, "fetch").resolves(fakeResponse);
+        vi.spyOn(httpClientDeps.httpClientDeps, "fetch").mockResolvedValue(fakeResponse);
         const result = await httpClient.get("https://test.com", { progress: () => {} });
         assert.equal(result.toString(), "chunk1");
       });
@@ -66,25 +69,29 @@ describe("NodeJS Installer", () => {
       it("should pass AbortSignal to fetch", async () => {
         const buffer = Buffer.from("data");
         const fakeResponse = createMockResponse(Readable.from(buffer), 200);
-        const stub = sandbox.stub(httpClientDeps, "fetch").resolves(fakeResponse);
+        const stub = vi
+          .spyOn(httpClientDeps.httpClientDeps, "fetch")
+          .mockResolvedValue(fakeResponse);
         await httpClient.get("https://test.com", { timeout: 5000 });
-        assert.isTrue(stub.calledOnce);
-        const init = stub.firstCall.args[1] as any;
+        assert.isTrue(stub.mock.calls.length === 1);
+        const init = stub.mock.calls[0][1] as any;
         assert.isDefined(init.signal, "signal should be passed to fetch");
         assert.instanceOf(init.signal, AbortSignal);
       });
 
       it("should abort on timeout", async () => {
-        const stub = sandbox.stub(httpClientDeps, "fetch").callsFake(async (_url, init) => {
-          // Wait longer than the timeout
-          await new Promise((resolve, reject) => {
-            (init as any).signal.addEventListener("abort", () =>
-              reject(new Error("The operation was aborted"))
-            );
-            setTimeout(resolve, 5000);
+        const stub = vi
+          .spyOn(httpClientDeps.httpClientDeps, "fetch")
+          .mockImplementation(async (_url, init) => {
+            // Wait longer than the timeout
+            await new Promise((resolve, reject) => {
+              (init as any).signal.addEventListener("abort", () =>
+                reject(new Error("The operation was aborted"))
+              );
+              setTimeout(resolve, 5000);
+            });
+            return createMockResponse(undefined, 200);
           });
-          return createMockResponse(undefined, 200);
-        });
         try {
           await httpClient.get("https://test.com", { timeout: 50 });
           assert.fail("Expected abort error");
@@ -95,14 +102,17 @@ describe("NodeJS Installer", () => {
     });
 
     it("getText", async () => {
-      sandbox.stub(httpClient, "get").resolves(Buffer.from("chunk1chunk2"));
+      vi.spyOn(httpClient, "get").mockResolvedValue(Buffer.from("chunk1chunk2"));
       const result = await httpClient.getText("https://test.com");
       assert.equal(result, "chunk1chunk2");
     });
 
     describe("headTime", () => {
       it("fetch return 500", async () => {
-        sandbox.stub(httpClientDeps, "fetch").resolves({ ok: false, status: 500 } as any);
+        vi.spyOn(httpClientDeps.httpClientDeps, "fetch").mockResolvedValue({
+          ok: false,
+          status: 500,
+        } as any);
         try {
           await httpClient.headTime("https://test.com");
         } catch (e: any) {
@@ -114,17 +124,19 @@ describe("NodeJS Installer", () => {
         const fakeResponse = createMockResponse(undefined, 200, {
           "content-type": "application/json",
         });
-        sandbox.stub(httpClientDeps, "fetch").resolves(fakeResponse);
+        vi.spyOn(httpClientDeps.httpClientDeps, "fetch").mockResolvedValue(fakeResponse);
         const result = await httpClient.headTime("https://test.com");
         assert.isDefined(result);
       });
 
       it("should pass AbortSignal to fetch for HEAD requests", async () => {
         const fakeResponse = createMockResponse(undefined, 200);
-        const stub = sandbox.stub(httpClientDeps, "fetch").resolves(fakeResponse);
+        const stub = vi
+          .spyOn(httpClientDeps.httpClientDeps, "fetch")
+          .mockResolvedValue(fakeResponse);
         await httpClient.headTime("https://test.com", { timeout: 5000 });
-        assert.isTrue(stub.calledOnce);
-        const init = stub.firstCall.args[1] as any;
+        assert.isTrue(stub.mock.calls.length === 1);
+        const init = stub.mock.calls[0][1] as any;
         assert.isDefined(init.signal, "signal should be passed to fetch");
         assert.instanceOf(init.signal, AbortSignal);
         assert.equal(init.method, "HEAD");
@@ -134,34 +146,34 @@ describe("NodeJS Installer", () => {
 
   describe("NodejsInstaller", () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     describe("getNameAndExt", () => {
       it("darwin-arm64", async () => {
-        sandbox.stub(os, "platform").returns("darwin");
-        sandbox.stub(os, "arch").returns("arm64");
+        vi.spyOn(os, "platform").mockReturnValue("darwin");
+        vi.spyOn(os, "arch").mockReturnValue("arm64");
         const { name, ext } = nodejsInstaller.getNameAndExt();
         assert.equal(name, "darwin-arm64");
         assert.equal(ext, ".tar.xz");
       });
       it("linux-x64", async () => {
-        sandbox.stub(os, "platform").returns("linux");
-        sandbox.stub(os, "arch").returns("x64");
+        vi.spyOn(os, "platform").mockReturnValue("linux");
+        vi.spyOn(os, "arch").mockReturnValue("x64");
         const { name, ext } = nodejsInstaller.getNameAndExt();
         assert.equal(name, "linux-x64");
         assert.equal(ext, ".tar.xz");
       });
       it("win-x64", async () => {
-        sandbox.stub(os, "platform").returns("win32");
-        sandbox.stub(os, "arch").returns("x64");
+        vi.spyOn(os, "platform").mockReturnValue("win32");
+        vi.spyOn(os, "arch").mockReturnValue("x64");
         const { name, ext } = nodejsInstaller.getNameAndExt();
         assert.equal(name, "win-x64");
         assert.equal(ext, ".zip");
       });
       it("aix-x64", async () => {
-        sandbox.stub(os, "platform").returns("aix");
-        sandbox.stub(os, "arch").returns("x64");
+        vi.spyOn(os, "platform").mockReturnValue("aix");
+        vi.spyOn(os, "arch").mockReturnValue("x64");
         const { name, ext } = nodejsInstaller.getNameAndExt();
         assert.equal(name, "aix-x64");
         assert.equal(ext, ".tar.gz");
@@ -215,10 +227,10 @@ describe("NodeJS Installer", () => {
 
   describe("fetchJSON", () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
     it("happy", async () => {
-      sandbox.stub(httpClient, "getText").resolves(JSON.stringify({ version: "v22.0.0" }));
+      vi.spyOn(httpClient, "getText").mockResolvedValue(JSON.stringify({ version: "v22.0.0" }));
       const jsonRes = await nodejsInstaller.fetchJSON("test url");
       assert.isTrue(jsonRes.isOk());
       if (jsonRes.isOk()) {
@@ -227,7 +239,7 @@ describe("NodeJS Installer", () => {
     });
 
     it("error", async () => {
-      sandbox.stub(httpClient, "getText").rejects(new Error("test error"));
+      vi.spyOn(httpClient, "getText").mockRejectedValue(new Error("test error"));
       const jsonRes = await nodejsInstaller.fetchJSON("test url");
       assert.isTrue(jsonRes.isErr());
       if (jsonRes.isErr()) {
@@ -238,10 +250,10 @@ describe("NodeJS Installer", () => {
 
   describe("fetchString", () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
     it("happy", async () => {
-      sandbox.stub(httpClient, "getText").resolves("abcd");
+      vi.spyOn(httpClient, "getText").mockResolvedValue("abcd");
       const textRes = await nodejsInstaller.fetchString("test url");
       assert.isTrue(textRes.isOk());
       if (textRes.isOk()) {
@@ -250,7 +262,7 @@ describe("NodeJS Installer", () => {
     });
 
     it("error", async () => {
-      sandbox.stub(httpClient, "getText").rejects(new Error("test error"));
+      vi.spyOn(httpClient, "getText").mockRejectedValue(new Error("test error"));
       const textRes = await nodejsInstaller.fetchString("test url");
       assert.isTrue(textRes.isErr());
       if (textRes.isErr()) {
@@ -261,10 +273,10 @@ describe("NodeJS Installer", () => {
 
   describe("fetchBinary", () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
     it("happy", async () => {
-      sandbox.stub(httpClient, "get").resolves(Buffer.from("abcd"));
+      vi.spyOn(httpClient, "get").mockResolvedValue(Buffer.from("abcd"));
       const binRes = await nodejsInstaller.fetchBinary("test url");
       assert.isTrue(binRes.isOk());
       if (binRes.isOk()) {
@@ -278,7 +290,7 @@ describe("NodeJS Installer", () => {
         "content-type": "application/json",
         "content-length": `${buffer.length}`,
       });
-      sandbox.stub(httpClientDeps, "fetch").resolves(fakeResponse);
+      vi.spyOn(httpClientDeps.httpClientDeps, "fetch").mockResolvedValue(fakeResponse);
       const binRes = await nodejsInstaller.fetchBinary("test url", 1000, (process: string) => {});
       assert.isTrue(binRes.isOk());
       if (binRes.isOk()) {
@@ -287,7 +299,7 @@ describe("NodeJS Installer", () => {
     });
 
     it("error", async () => {
-      sandbox.stub(httpClient, "get").rejects(new Error("test error"));
+      vi.spyOn(httpClient, "get").mockRejectedValue(new Error("test error"));
       const binRes = await nodejsInstaller.fetchBinary("test url");
       assert.isTrue(binRes.isErr());
       if (binRes.isErr()) {
@@ -323,10 +335,10 @@ describe("NodeJS Installer", () => {
 
   describe("testMirrorSpeed", () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
     it("error", async () => {
-      sandbox.stub(httpClient, "getText").rejects(new Error("test error"));
+      vi.spyOn(httpClient, "getText").mockRejectedValue(new Error("test error"));
       const mirror: NodeDownloadMirror = {
         url: "https://nodejs.org/dist",
         name: "test mirror",
@@ -337,7 +349,7 @@ describe("NodeJS Installer", () => {
       assert.isUndefined(res.indexJson);
     });
     it("no lts version", async () => {
-      sandbox.stub(httpClient, "getText").resolves("[]");
+      vi.spyOn(httpClient, "getText").mockResolvedValue("[]");
       const mirror: NodeDownloadMirror = {
         url: "https://nodejs.org/dist",
         name: "test mirror",
@@ -349,12 +361,12 @@ describe("NodeJS Installer", () => {
       assert.isUndefined(res.version);
     });
     // it("get download url fail", async () => {
-    //   sandbox.stub(httpClient, "headTime").resolves(1000);
-    //   sandbox.stub(httpClient, "getText").resolves("[]");
-    //   sandbox.stub(nodejsInstaller, "getLatestLTSVersion").returns("v22.14.0");
+    //   vi.spyOn(httpClient, "headTime").mockResolvedValue(1000);
+    //   vi.spyOn(httpClient, "getText").mockResolvedValue("[]");
+    //   vi.spyOn(nodejsInstaller, "getLatestLTSVersion").mockReturnValue("v22.14.0");
     //   sandbox
     //     .stub(nodejsInstaller, "getDownloadUrl")
-    //     .resolves(err(new InstallNodeJSError("test error")));
+    //     .mockResolvedValue(err(new InstallNodeJSError("test error")));
     //   const mirror: NodeDownloadMirror = {
     //     url: "https://nodejs.org/dist",
     //     name: "test mirror",
@@ -368,12 +380,12 @@ describe("NodeJS Installer", () => {
     // });
 
     it("success", async () => {
-      sandbox.stub(httpClient, "headTime").resolves(1000);
-      sandbox.stub(httpClient, "getText").resolves("[]");
-      sandbox.stub(nodejsInstaller, "getLatestLTSVersion").returns("v22.14.0");
+      vi.spyOn(httpClient, "headTime").mockResolvedValue(1000);
+      vi.spyOn(httpClient, "getText").mockResolvedValue("[]");
+      vi.spyOn(nodejsInstaller, "getLatestLTSVersion").mockReturnValue("v22.14.0");
       // sandbox
       //   .stub(nodejsInstaller, "getDownloadUrl")
-      //   .resolves(ok("https://node-v22.14.0-win-x64.zip"));
+      //   .mockResolvedValue(ok("https://node-v22.14.0-win-x64.zip"));
       const res = await nodejsInstaller.testMirrorSpeed(NodejsMirrors[0], "win-x64", ".zip", 1000);
       assert.deepEqual(res.indexJson, []);
       assert.equal(res.version, "v22.14.0");
@@ -386,7 +398,7 @@ describe("NodeJS Installer", () => {
 
   describe("getBestMirror", () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
     // it("FirstPriorityMirror success", async () => {
     //   const mirror: NodeDownloadMirror = {
@@ -396,7 +408,7 @@ describe("NodeJS Installer", () => {
     //     packageUrlTpl: FirstPriorityMirror.packageUrlTpl,
     //     packageUrl: "https://nodejs.org/dist/v22.14.0/node-v22.14.0-win-x64.zip",
     //   };
-    //   sandbox.stub(nodejsInstaller, "testMirrorSpeed").resolves(mirror);
+    //   vi.spyOn(nodejsInstaller, "testMirrorSpeed").mockResolvedValue(mirror);
     //   const resultMirror = await nodejsInstaller.getBestMirror("win-x64", ".zip");
     //   assert.equal(resultMirror, mirror);
     // });
@@ -409,7 +421,7 @@ describe("NodeJS Installer", () => {
         packageUrl: "https://nodejs.org/dist/v22.14.0/node-v22.14.0-win-x64.zip",
         packageUrlTpl: NodejsMirrors[0].packageUrlTpl,
       };
-      sandbox.stub(nodejsInstaller, "testMirrorSpeed").resolves(successMirror);
+      vi.spyOn(nodejsInstaller, "testMirrorSpeed").mockResolvedValue(successMirror);
       const resultMirror = await nodejsInstaller.getBestMirror("win-x64", ".zip");
       assert.equal(resultMirror, successMirror);
     });
@@ -421,7 +433,7 @@ describe("NodeJS Installer", () => {
         indexJsonUrl: "https://nodejs.org/dist/index.json",
         packageUrlTpl: NodejsMirrors[0].packageUrlTpl,
       };
-      sandbox.stub(nodejsInstaller, "testMirrorSpeed").resolves(failMirror);
+      vi.spyOn(nodejsInstaller, "testMirrorSpeed").mockResolvedValue(failMirror);
       const resultMirror = await nodejsInstaller.getBestMirror("win-x64", ".zip");
       assert.isUndefined(resultMirror);
     });
@@ -429,7 +441,7 @@ describe("NodeJS Installer", () => {
 
   describe("parseHtmlToGetUrl", () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
     it("found", async () => {
       const packageUrl = nodejsInstaller.parseHtmlToGetUrl(
@@ -451,23 +463,23 @@ describe("NodeJS Installer", () => {
 
   describe("extractPackage", () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
     it("extractZip", async () => {
-      sandbox.stub(nodejsInstaller, "getAdmZip").returns({
+      vi.spyOn(nodejsInstaller, "getAdmZip").mockReturnValue({
         extractAllTo: () => {},
       } as any);
       nodejsInstaller.extractZip(Buffer.from(""), "/path/to/dest");
     });
     it("extractTar", async () => {
-      sandbox.stub(stream.PassThrough.prototype, "end").returns({} as any);
-      sandbox.stub(stream.PassThrough.prototype, "pipe").returns({} as any);
+      vi.spyOn(stream.PassThrough.prototype, "end").mockReturnValue({} as any);
+      vi.spyOn(stream.PassThrough.prototype, "pipe").mockReturnValue({} as any);
       nodejsInstaller.extractTar(Buffer.from(""), "test.tar.gz", "/path/to/dest");
       nodejsInstaller.extractTar(Buffer.from(""), "test.tar.xz", "/path/to/dest");
     });
     it("extractPackage", async () => {
-      sandbox.stub(nodejsInstaller, "extractZip").returns();
-      sandbox.stub(nodejsInstaller, "extractTar").returns();
+      vi.spyOn(nodejsInstaller, "extractZip").mockReturnValue();
+      vi.spyOn(nodejsInstaller, "extractTar").mockReturnValue();
       nodejsInstaller.extractPackage(Buffer.from(""), "test.tar.gz", "/path/to/dest");
       nodejsInstaller.extractPackage(Buffer.from(""), "test.tar.xz", "/path/to/dest");
       nodejsInstaller.extractPackage(Buffer.from(""), "test.zip", "/path/to/dest");
@@ -476,7 +488,7 @@ describe("NodeJS Installer", () => {
 
   describe("getDownloadUrl", () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
     it("happy", async () => {
       const downloadUrl = await nodejsInstaller.getDownloadUrl(
@@ -498,13 +510,15 @@ describe("NodeJS Installer", () => {
       ui: new MockedUserInteraction(),
     };
     beforeEach(() => {
-      sandbox.stub(fs, "ensureDir").resolves();
+      vi.spyOn(fs, "ensureDir").mockResolvedValue();
     });
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
     it("system installed", async () => {
-      sandbox.stub(NodeChecker, "getInstalledNodeVersion").resolves({ version: "v22.14.0" } as any);
+      vi.spyOn(NodeChecker, "getInstalledNodeVersion").mockResolvedValue({
+        version: "v22.14.0",
+      } as any);
       const res = await nodejsInstaller.ensureNodeJS(context, true, true);
       assert.isTrue(res.isOk());
       if (res.isOk()) {
@@ -512,9 +526,9 @@ describe("NodeJS Installer", () => {
       }
     });
     it("system not installed, user folder installed", async () => {
-      sandbox.stub(NodeChecker, "getInstalledNodeVersion").resolves(null);
-      sandbox.stub(nodejsInstaller, "getNameAndExt").returns({ name: "win-x64", ext: ".zip" });
-      sandbox.stub(fs, "readdir").resolves(["node-v22.14.0-win-x64"] as any);
+      vi.spyOn(NodeChecker, "getInstalledNodeVersion").mockResolvedValue(null);
+      vi.spyOn(nodejsInstaller, "getNameAndExt").mockReturnValue({ name: "win-x64", ext: ".zip" });
+      vi.spyOn(fs, "readdir").mockResolvedValue(["node-v22.14.0-win-x64"] as any);
       const downloadDir = path.join(os.homedir(), `.${ConfigFolderName}`, "bin", "nodejs");
       const targetDir = path.join(downloadDir, "node-v22.14.0-win-x64");
       const res = await nodejsInstaller.ensureNodeJS(context, true, true);
@@ -525,10 +539,10 @@ describe("NodeJS Installer", () => {
     });
 
     it("getBestMirror fail", async () => {
-      sandbox.stub(NodeChecker, "getInstalledNodeVersion").resolves(null);
-      sandbox.stub(nodejsInstaller, "getNameAndExt").returns({ name: "win-x64", ext: ".zip" });
-      sandbox.stub(fs, "readdir").resolves([""] as any);
-      sandbox.stub(nodejsInstaller, "getBestMirror").resolves(undefined);
+      vi.spyOn(NodeChecker, "getInstalledNodeVersion").mockResolvedValue(null);
+      vi.spyOn(nodejsInstaller, "getNameAndExt").mockReturnValue({ name: "win-x64", ext: ".zip" });
+      vi.spyOn(fs, "readdir").mockResolvedValue([""] as any);
+      vi.spyOn(nodejsInstaller, "getBestMirror").mockResolvedValue(undefined);
       const res = await nodejsInstaller.ensureNodeJS(context, true, true);
       assert.isTrue(res.isErr());
       if (res.isErr()) {
@@ -548,11 +562,11 @@ describe("NodeJS Installer", () => {
         version: "v22.14.0",
         packageUrlTpl: NodejsMirrors[0].packageUrlTpl,
       };
-      sandbox.stub(NodeChecker, "getInstalledNodeVersion").resolves(null);
-      sandbox.stub(nodejsInstaller, "getNameAndExt").returns({ name: "win-x64", ext: ".zip" });
-      sandbox.stub(fs, "readdir").resolves([""] as any);
-      sandbox.stub(nodejsInstaller, "getBestMirror").resolves(NpmMirror);
-      sandbox.stub(context.ui, "confirm").resolves(err(new UserCancelError()));
+      vi.spyOn(NodeChecker, "getInstalledNodeVersion").mockResolvedValue(null);
+      vi.spyOn(nodejsInstaller, "getNameAndExt").mockReturnValue({ name: "win-x64", ext: ".zip" });
+      vi.spyOn(fs, "readdir").mockResolvedValue([""] as any);
+      vi.spyOn(nodejsInstaller, "getBestMirror").mockResolvedValue(NpmMirror);
+      vi.spyOn(context.ui, "confirm").mockResolvedValue(err(new UserCancelError()));
       const res = await nodejsInstaller.ensureNodeJS(context, true, true);
       assert.isTrue(res.isErr());
       if (res.isErr()) {
@@ -569,14 +583,14 @@ describe("NodeJS Installer", () => {
         version: "v22.14.0",
         packageUrlTpl: NodejsMirrors[0].packageUrlTpl,
       };
-      sandbox.stub(NodeChecker, "getInstalledNodeVersion").resolves(null);
-      sandbox.stub(nodejsInstaller, "getNameAndExt").returns({ name: "win-x64", ext: ".zip" });
-      sandbox.stub(fs, "readdir").resolves([""] as any);
-      sandbox.stub(nodejsInstaller, "getBestMirror").resolves(NpmMirror);
-      sandbox.stub(context.ui, "confirm").resolves(ok({ type: "success", result: true }));
-      sandbox
-        .stub(nodejsInstaller, "fetchBinary")
-        .resolves(err(new InstallNodeJSError("test error")));
+      vi.spyOn(NodeChecker, "getInstalledNodeVersion").mockResolvedValue(null);
+      vi.spyOn(nodejsInstaller, "getNameAndExt").mockReturnValue({ name: "win-x64", ext: ".zip" });
+      vi.spyOn(fs, "readdir").mockResolvedValue([""] as any);
+      vi.spyOn(nodejsInstaller, "getBestMirror").mockResolvedValue(NpmMirror);
+      vi.spyOn(context.ui, "confirm").mockResolvedValue(ok({ type: "success", result: true }));
+      vi.spyOn(nodejsInstaller, "fetchBinary").mockResolvedValue(
+        err(new InstallNodeJSError("test error"))
+      );
       const res = await nodejsInstaller.ensureNodeJS(context, true, true);
       assert.isTrue(res.isErr());
     });
@@ -590,13 +604,13 @@ describe("NodeJS Installer", () => {
         packageUrlTpl: NodejsMirrors[0].packageUrlTpl,
         version: "v22.14.0",
       };
-      sandbox.stub(NodeChecker, "getInstalledNodeVersion").resolves(null);
-      sandbox.stub(nodejsInstaller, "getNameAndExt").returns({ name: "win-x64", ext: ".zip" });
-      sandbox.stub(fs, "readdir").resolves([""] as any);
-      sandbox.stub(nodejsInstaller, "getBestMirror").resolves(NpmMirror);
-      sandbox.stub(context.ui, "confirm").resolves(ok({ type: "success", result: true }));
-      sandbox.stub(nodejsInstaller, "fetchBinary").resolves(ok(Buffer.from("test buffer")));
-      sandbox.stub(nodejsInstaller, "extractPackage").returns();
+      vi.spyOn(NodeChecker, "getInstalledNodeVersion").mockResolvedValue(null);
+      vi.spyOn(nodejsInstaller, "getNameAndExt").mockReturnValue({ name: "win-x64", ext: ".zip" });
+      vi.spyOn(fs, "readdir").mockResolvedValue([""] as any);
+      vi.spyOn(nodejsInstaller, "getBestMirror").mockResolvedValue(NpmMirror);
+      vi.spyOn(context.ui, "confirm").mockResolvedValue(ok({ type: "success", result: true }));
+      vi.spyOn(nodejsInstaller, "fetchBinary").mockResolvedValue(ok(Buffer.from("test buffer")));
+      vi.spyOn(nodejsInstaller, "extractPackage").mockReturnValue();
       const downloadDir = path.join(os.homedir(), `.${ConfigFolderName}`, "bin", "nodejs");
       const targetDir = path.join(downloadDir, "node-v22.14.0-win-x64");
       const res = await nodejsInstaller.ensureNodeJS(context, true, true);
@@ -616,13 +630,13 @@ describe("NodeJS Installer", () => {
         packageUrlTpl: NodejsMirrors[0].packageUrlTpl,
         version: "v22.14.0",
       };
-      sandbox.stub(NodeChecker, "getInstalledNodeVersion").resolves(null);
-      sandbox.stub(nodejsInstaller, "getNameAndExt").returns({ name: "win-x64", ext: ".zip" });
-      sandbox.stub(fs, "readdir").resolves([""] as any);
-      sandbox.stub(nodejsInstaller, "getBestMirror").resolves(NpmMirror);
-      sandbox.stub(context.ui, "confirm").resolves(ok({ type: "success", result: true }));
-      sandbox.stub(nodejsInstaller, "fetchBinary").resolves(ok(Buffer.from("test buffer")));
-      sandbox.stub(nodejsInstaller, "extractPackage").returns();
+      vi.spyOn(NodeChecker, "getInstalledNodeVersion").mockResolvedValue(null);
+      vi.spyOn(nodejsInstaller, "getNameAndExt").mockReturnValue({ name: "win-x64", ext: ".zip" });
+      vi.spyOn(fs, "readdir").mockResolvedValue([""] as any);
+      vi.spyOn(nodejsInstaller, "getBestMirror").mockResolvedValue(NpmMirror);
+      vi.spyOn(context.ui, "confirm").mockResolvedValue(ok({ type: "success", result: true }));
+      vi.spyOn(nodejsInstaller, "fetchBinary").mockResolvedValue(ok(Buffer.from("test buffer")));
+      vi.spyOn(nodejsInstaller, "extractPackage").mockReturnValue();
       const downloadDir = path.join(os.homedir(), `.${ConfigFolderName}`, "bin", "nodejs");
       const targetDir = path.join(downloadDir, "node-v22.14.0-win-x64");
       const res = await nodejsInstaller.ensureNodeJS(context, true, true);

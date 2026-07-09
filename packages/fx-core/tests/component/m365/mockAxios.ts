@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
+import { vi } from "vitest";
 
 export class MockAxios {
   public axiosDeleteResponses: Record<string, unknown> = {};
@@ -11,7 +12,7 @@ export class MockAxios {
   public data: Record<string, unknown> = {};
   public instance: AxiosInstance;
 
-  constructor(private sandbox: sinon.SinonSandbox) {
+  constructor(private sandbox: any) {
     this.instance = {
       defaults: {
         headers: {
@@ -20,10 +21,10 @@ export class MockAxios {
       },
       interceptors: {
         request: {
-          use: this.sandbox.stub(),
+          use: vi.fn(),
         },
         response: {
-          use: this.sandbox.stub(),
+          use: vi.fn(),
         },
       },
       delete: <T = unknown, R = AxiosResponse<T>>(

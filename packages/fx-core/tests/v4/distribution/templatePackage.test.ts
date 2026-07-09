@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { assert } from "chai";
 import AdmZip from "adm-zip";
 import { openTemplatePackage } from "../../../src/v4/distribution/templatePackage";
+import { assert } from "vitest";
 
 /** Build an in-memory zip from a `{ entryName: contents }` map. */
 function zipOf(files: Record<string, string | Buffer>): Buffer {

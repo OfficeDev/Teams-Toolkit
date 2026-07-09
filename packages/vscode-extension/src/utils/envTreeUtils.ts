@@ -5,9 +5,8 @@ import { SubscriptionInfo } from "@microsoft/teamsfx-api";
 import { getProvisionResultJson } from "./fileSystemUtils";
 import { workspaceUri } from "../globalVariables";
 import { getV3TeamsAppId } from "./appDefinitionUtils";
+import { fsAdapter, envParseAdapter } from "../common/npmPackageDeps";
 import path from "path";
-import fs from "fs-extra";
-import { dotenvUtil } from "@microsoft/teamsfx-core/build/component/utils/envUtil";
 
 export async function getSubscriptionInfoFromEnv(
   env: string
@@ -37,10 +36,10 @@ export async function getSubscriptionInfoFromEnv(
 }
 
 export async function getM365TenantFromEnv(env: string): Promise<string | undefined> {
-  const projectPath = workspaceUri!.fsPath;
+  const projectPath = workspaceUri?.fsPath || "";
   const envFile = path.resolve(projectPath, "env", `.env.${env}`);
-  if (await fs.pathExists(envFile)) {
-    const envData = dotenvUtil.deserialize(fs.readFileSync(envFile, "utf-8"));
+  if (await fsAdapter.pathExists(envFile)) {
+    const envData = envParseAdapter.deserializeDotenv(fsAdapter.readFileSync(envFile, "utf-8"));
     return envData.obj["TEAMS_APP_TENANT_ID"];
   }
   return undefined;
@@ -66,7 +65,7 @@ export async function getResourceGroupNameFromEnv(env: string): Promise<string |
 export async function getProvisionSucceedFromEnv(env: string): Promise<boolean | undefined> {
   // If TEAMS_APP_ID is set, it's highly possible that the project is provisioned.
   try {
-    const teamsAppId = await getV3TeamsAppId(workspaceUri!.fsPath, env);
+    const teamsAppId = await getV3TeamsAppId(workspaceUri?.fsPath || "", env);
     return teamsAppId !== "";
   } catch (error) {
     return false;

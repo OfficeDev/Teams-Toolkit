@@ -1,0 +1,9 @@
+{
+  "pipeline": "default",
+  "comment": "Blank app create package: pure render. The require-empty-target step guards the create contract so render writes the minimal Microsoft 365 app project structure without post-render injection.",
+  "steps": [
+    {
+      "step": "require-empty-target"
+    }
+  ]
+}

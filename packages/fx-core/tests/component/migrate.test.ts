@@ -1,5 +1,5 @@
-import { assert } from "chai";
 import { convertProjectSettingsV2ToV3 } from "../../src/component/migrate";
+import { assert } from "vitest";
 
 describe("convertProjectSettingsV2ToV3", () => {
   it("happy", async () => {

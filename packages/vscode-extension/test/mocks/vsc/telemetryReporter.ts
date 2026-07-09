@@ -7,4 +7,16 @@ export class vscMockTelemetryReporter {
   public sendTelemetryEvent(): void {
     // Noop.
   }
+
+  public sendTelemetryErrorEvent(): void {
+    // Noop.
+  }
+
+  public sendTelemetryException(): void {
+    // Noop.
+  }
+
+  public async dispose(): Promise<void> {
+    // Noop.
+  }
 }

@@ -1,24 +1,23 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { expect } from "chai";
-import sinon from "sinon";
 import { TextType, colorize, replaceTemplateString } from "../../src/colorize";
 import ScreenManager from "../../src/console/screen";
+import { chai, vi } from "vitest";
 
 describe("colorize", () => {
-  const sandox = sinon.createSandbox();
+  const sandox = vi;
   let message = "";
   let isTTY: boolean;
   beforeEach(() => {
     isTTY = process.stdout.isTTY;
     process.stdout.isTTY = true;
-    sandox.stub(ScreenManager, "writeLine").callsFake((msg: string) => (message += msg));
+    vi.spyOn(ScreenManager, "writeLine").mockImplementation((msg: string) => (message += msg));
   });
 
   afterEach(() => {
     process.stdout.isTTY = isTTY;
-    sandox.restore();
+    vi.restoreAllMocks();
     message = "";
   });
 
@@ -59,6 +58,6 @@ describe("colorize", () => {
   it("replace template string", async () => {
     const template = "test %s";
     const result = replaceTemplateString(template, "test");
-    expect(result).to.equal("test test");
+    chai.expect(result).to.equal("test test");
   });
 });

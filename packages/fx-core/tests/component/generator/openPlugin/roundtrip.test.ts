@@ -2,17 +2,16 @@
 // Licensed under the MIT license.
 
 import { ok } from "@microsoft/teamsfx-api";
-import { expect } from "chai";
 import fs from "fs-extra";
 import * as os from "os";
 import * as path from "path";
-import sinon from "sinon";
 import { setTools } from "../../../../src/common/globalVars";
 import { Generator } from "../../../../src/component/generator/generator";
 import { exportOpenPlugin } from "../../../../src/component/generator/openPlugin/exporter";
 import { importOpenPlugin } from "../../../../src/component/generator/openPlugin/importer";
 import { MockTools } from "../../../core/utils";
 import { scaffoldOpenPluginTemplateFromSource } from "./testTemplateScaffold";
+import { chai, vi } from "vitest";
 
 async function tmp(prefix: string): Promise<string> {
   return await fs.mkdtemp(path.join(os.tmpdir(), prefix));
@@ -39,10 +38,10 @@ async function seedSamplePlugin(root: string): Promise<void> {
 
 describe("openPlugin.roundtrip (import → export → import)", () => {
   setTools(new MockTools());
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   beforeEach(() => {
-    sandbox.stub(Generator, "generateTemplate").callsFake(async (ctx, dest) => {
+    vi.spyOn(Generator, "generateTemplate").mockImplementation(async (ctx, dest) => {
       const appName = ctx.templateVariables?.appName ?? "";
       await scaffoldOpenPluginTemplateFromSource(dest, { appName });
       return ok(undefined);
@@ -50,11 +49,11 @@ describe("openPlugin.roundtrip (import → export → import)", () => {
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("round-trips losslessly without needing --privacy-url/--terms-url the second time", async () => {
-    expect(importOpenPlugin).to.be.a("function");
-    expect(exportOpenPlugin).to.be.a("function");
+    chai.expect(importOpenPlugin).to.be.a("function");
+    chai.expect(exportOpenPlugin).to.be.a("function");
   });
 });

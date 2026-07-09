@@ -1,22 +1,21 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { expect } from "chai";
-import { createSandbox } from "sinon";
 import axios from "axios";
 import mockedEnv from "mocked-env";
 import { CreateDevChannelDriver } from "../../../../src/component/driver/devChannel/create";
 import { GraphClient } from "../../../../src/client/graphClient";
 import { MockedM365Provider, MockLogProvider } from "../../../core/utils";
 import { WrapDriverContext } from "../../../../src/component/driver/util/wrapUtil";
+import { chai, vi } from "vitest";
 
 describe("CreateDevChannelDriver", () => {
-  const sandbox = createSandbox();
+  const sandbox = vi;
   const mockTokenProvider = new MockedM365Provider();
   const mockContext: WrapDriverContext = {
     m365TokenProvider: mockTokenProvider,
     logProvider: new MockLogProvider(),
-    addSummary: sandbox.stub(),
+    addSummary: vi.fn(),
     summaries: [],
   } as unknown as WrapDriverContext;
 
@@ -25,7 +24,7 @@ describe("CreateDevChannelDriver", () => {
   beforeEach(() => {});
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("should skip creation if team and channel already exist", async () => {
@@ -45,12 +44,12 @@ describe("CreateDevChannelDriver", () => {
       CHANNEL_ID: "exisitng-channel-id",
     });
 
-    sandbox.stub(GraphClient.prototype, "GetChannelDeeplinkAsync").resolves("fake-deeplink");
+    vi.spyOn(GraphClient.prototype, "GetChannelDeeplinkAsync").mockResolvedValue("fake-deeplink");
     const result = await driver.execute(args, mockContext, outputEnvVarNames);
 
-    expect(result.result.isOk()).to.be.true;
+    chai.expect(result.result.isOk()).to.be.true;
     if (result.result.isOk()) {
-      expect(result.result.value.size).to.equal(3);
+      chai.expect(result.result.value.size).to.equal(3);
     }
     restore();
   });
@@ -71,15 +70,17 @@ describe("CreateDevChannelDriver", () => {
       channelId: "fake-channel-id",
     };
 
-    sandbox.stub(GraphClient.prototype, "CreateTeamAndChannelAsync").resolves(mockGraphResponse);
-    sandbox.stub(GraphClient.prototype, "GetChannelDeeplinkAsync").resolves("fake-deeplink");
+    vi.spyOn(GraphClient.prototype, "CreateTeamAndChannelAsync").mockResolvedValue(
+      mockGraphResponse
+    );
+    vi.spyOn(GraphClient.prototype, "GetChannelDeeplinkAsync").mockResolvedValue("fake-deeplink");
 
     const result = await driver.create(args, mockContext, outputEnvVarNames);
 
-    expect(result.isOk()).to.be.true;
+    chai.expect(result.isOk()).to.be.true;
     if (result.isOk()) {
-      expect(result.value.get("TEAM_ID")).to.equal("fake-team-id");
-      expect(result.value.get("CHANNEL_ID")).to.equal("fake-channel-id");
+      chai.expect(result.value.get("TEAM_ID")).to.equal("fake-team-id");
+      chai.expect(result.value.get("CHANNEL_ID")).to.equal("fake-channel-id");
     }
   });
 
@@ -95,17 +96,19 @@ describe("CreateDevChannelDriver", () => {
     ]);
 
     const fakeAxiosInstance = axios.create();
-    sandbox.stub(axios, "create").returns(fakeAxiosInstance);
-    sandbox.stub(axios, "isAxiosError").returns(true);
+    vi.spyOn(axios, "create").mockReturnValue(fakeAxiosInstance);
+    vi.spyOn(axios, "isAxiosError").mockReturnValue(true);
     const error = {
       response: {
         status: 409,
       },
     };
-    sandbox.stub(fakeAxiosInstance, "post").throws(error);
+    vi.spyOn(fakeAxiosInstance, "post").mockImplementation(() => {
+      throw error;
+    });
 
     const result = await driver.create(args, mockContext, outputEnvVarNames);
 
-    expect(result.isErr()).to.be.true;
+    chai.expect(result.isErr()).to.be.true;
   });
 });

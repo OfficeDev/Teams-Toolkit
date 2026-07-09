@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 41,
+    "total_steps": 40,
     "created_at": "2026-06-09T02:21:30.398009",
     "name": "Feature  Recommend TTK",
     "description": {
@@ -30,7 +30,7 @@
       "step_4aa7738e",
       "step_8198e896",
       "step_5be1bb91",
-      "step_72979469",
+      "plan_r_0624_024810",
       "step_45e5c755",
       "step_0fc2ed5c",
       "step_9bd25bc8",
@@ -342,32 +342,6 @@
       "tags": [],
       "screenshot": "step_5be1bb91",
       "created_at": "2026-06-09T02:21:30.472285",
-      "plan_id": "plan_r_0107_063004"
-    },
-    {
-      "step_id": "step_72979469",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 397,
-        "y": 220
-      },
-      "description": "Click the \"Teams Agents and Apps\" option within the \"New Project\" dialog in the Microsoft 365 Agents Toolkit extension for Visual Studio Code. This selects the template for creating agents, chat bots, or web apps in Microsoft 365, as highlighted by the red crosshair.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:397:220:16:5:93c786912d9646c5",
-        "dhash:397:220:96:5:c989d26292934800",
-        "dhash:397:220:0:10:c0c9808684a46179"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_72979469",
-      "created_at": "2026-06-09T02:21:30.477368",
       "plan_id": "plan_r_0107_063004"
     },
     {

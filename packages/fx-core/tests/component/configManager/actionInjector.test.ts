@@ -1,7 +1,6 @@
-import { assert } from "chai";
-import sinon from "sinon";
-import fs from "fs-extra";
 import { Utils } from "@microsoft/m365-spec-parser";
+import fs from "fs-extra";
+import { assert, vi } from "vitest";
 import { ActionInjector } from "../../../src/component/configManager/actionInjector";
 import {
   InjectAPIKeyActionFailedError,
@@ -21,7 +20,6 @@ describe("ActionInjector", () => {
     return count;
   }
   describe("injectCreateOAuthAction", () => {
-    const sandbox = sinon.createSandbox();
     const sampleAuthAction = {
       uses: "oauth/register",
       with: {
@@ -34,13 +32,13 @@ describe("ActionInjector", () => {
         configurationId: "TEST_AUTH_CONFIGURATION_ID",
       },
     };
-    let writeStub: sinon.SinonStub;
+    let writeStub: any;
 
     beforeEach(() => {
-      writeStub = sandbox.stub(fs, "writeFile").resolves();
+      writeStub = vi.spyOn(fs, "writeFile").mockResolvedValue();
     });
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("generateAuthAction should return correct result for microsoft entra", () => {
@@ -139,10 +137,10 @@ describe("ActionInjector", () => {
               name: oAuth2AuthCode
       `;
 
-      sandbox.stub(fs, "readFile").resolves(ymlContent as any);
-      sandbox.stub(Utils, "getSafeRegistrationIdEnvName").returns("TEST_AUTH_CONFIGURATION_ID");
-      sandbox.stub(ActionInjector, "getTeamsAppIdEnvName").returns("TEAMS_APP_ID");
-      sandbox.stub(ActionInjector, "generateAuthAction").returns(sampleAuthAction);
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
+      vi.spyOn(Utils, "getSafeRegistrationIdEnvName").mockReturnValue("TEST_AUTH_CONFIGURATION_ID");
+      vi.spyOn(ActionInjector, "getTeamsAppIdEnvName").mockReturnValue("TEAMS_APP_ID");
+      vi.spyOn(ActionInjector, "generateAuthAction").mockReturnValue(sampleAuthAction);
 
       const result = await ActionInjector.injectCreateOAuthAction(
         ymlPath,
@@ -156,8 +154,8 @@ describe("ActionInjector", () => {
         defaultRegistrationIdEnvName: "TEST_AUTH_CONFIGURATION_ID",
         registrationIdEnvName: "TEST_AUTH_CONFIGURATION_ID",
       });
-      assert.isTrue(writeStub.args[0][1].includes("oauth/register"));
-      assert.isTrue(writeStub.args[0][1].includes("oauthName"));
+      assert.isTrue(writeStub.mock.calls[0][1].includes("oauth/register"));
+      assert.isTrue(writeStub.mock.calls[0][1].includes("oauthName"));
     });
 
     it("should inject OAuth action successfully if configuration id set in input", async () => {
@@ -186,10 +184,10 @@ describe("ActionInjector", () => {
               name: oAuth2AuthCode
       `;
 
-      sandbox.stub(fs, "readFile").resolves(ymlContent as any);
-      sandbox.stub(Utils, "getSafeRegistrationIdEnvName").returns("TEST_AUTH_CONFIGURATION_ID");
-      sandbox.stub(ActionInjector, "getTeamsAppIdEnvName").returns("TEAMS_APP_ID");
-      sandbox.stub(ActionInjector, "generateAuthAction").returns(sampleAuthAction);
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
+      vi.spyOn(Utils, "getSafeRegistrationIdEnvName").mockReturnValue("TEST_AUTH_CONFIGURATION_ID");
+      vi.spyOn(ActionInjector, "getTeamsAppIdEnvName").mockReturnValue("TEAMS_APP_ID");
+      vi.spyOn(ActionInjector, "generateAuthAction").mockReturnValue(sampleAuthAction);
 
       const result = await ActionInjector.injectCreateOAuthAction(
         ymlPath,
@@ -205,8 +203,8 @@ describe("ActionInjector", () => {
         defaultRegistrationIdEnvName: "TEST_AUTH_CONFIGURATION_ID",
         registrationIdEnvName: "INPUT_REGISTRATION_ID",
       });
-      assert.isTrue(writeStub.args[0][1].includes("oauth/register"));
-      assert.isTrue(writeStub.args[0][1].includes("oauthName"));
+      assert.isTrue(writeStub.mock.calls[0][1].includes("oauth/register"));
+      assert.isTrue(writeStub.mock.calls[0][1].includes("oauthName"));
     });
 
     it("should inject OAuth action successfully if no existing env names for configuration id exists with pkce enabled", async () => {
@@ -227,10 +225,10 @@ describe("ActionInjector", () => {
               teamsAppId: TEAMS_APP_ID
       `;
 
-      sandbox.stub(fs, "readFile").resolves(ymlContent as any);
-      sandbox.stub(Utils, "getSafeRegistrationIdEnvName").returns("TEST_AUTH_CONFIGURATION_ID");
-      sandbox.stub(ActionInjector, "getTeamsAppIdEnvName").returns("TEAMS_APP_ID");
-      sandbox.stub(ActionInjector, "generateAuthAction").returns({
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
+      vi.spyOn(Utils, "getSafeRegistrationIdEnvName").mockReturnValue("TEST_AUTH_CONFIGURATION_ID");
+      vi.spyOn(ActionInjector, "getTeamsAppIdEnvName").mockReturnValue("TEAMS_APP_ID");
+      vi.spyOn(ActionInjector, "generateAuthAction").mockReturnValue({
         uses: "oauth/register",
         with: {
           name: "testAuth",
@@ -257,8 +255,8 @@ describe("ActionInjector", () => {
         defaultRegistrationIdEnvName: "TEST_AUTH_CONFIGURATION_ID",
         registrationIdEnvName: "TEST_AUTH_CONFIGURATION_ID",
       });
-      assert.isTrue(writeStub.args[0][1].includes("oauth/register"));
-      assert.isTrue(writeStub.args[0][1].includes("isPKCEEnabled"));
+      assert.isTrue(writeStub.mock.calls[0][1].includes("oauth/register"));
+      assert.isTrue(writeStub.mock.calls[0][1].includes("isPKCEEnabled"));
     });
 
     it("should throw InjectOAuthActionFailedError if provision node is missing", async () => {
@@ -272,8 +270,8 @@ describe("ActionInjector", () => {
           - uses: teamsApp/create
       `;
 
-      sandbox.stub(fs, "readFile").resolves(ymlContent as any);
-      sandbox.stub(ActionInjector, "generateAuthAction").returns(sampleAuthAction);
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
+      vi.spyOn(ActionInjector, "generateAuthAction").mockReturnValue(sampleAuthAction);
 
       try {
         await ActionInjector.injectCreateOAuthAction(
@@ -300,10 +298,10 @@ describe("ActionInjector", () => {
           - uses: otherAction
       `;
 
-      sandbox.stub(fs, "readFile").resolves(ymlContent as any);
-      sandbox.stub(ActionInjector, "hasActionWithName").returns(false);
-      sandbox.stub(ActionInjector, "getTeamsAppIdEnvName").returns(undefined);
-      sandbox.stub(ActionInjector, "generateAuthAction").returns(sampleAuthAction);
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
+      vi.spyOn(ActionInjector, "hasActionWithName").mockReturnValue(false);
+      vi.spyOn(ActionInjector, "getTeamsAppIdEnvName").mockReturnValue(undefined);
+      vi.spyOn(ActionInjector, "generateAuthAction").mockReturnValue(sampleAuthAction);
 
       try {
         await ActionInjector.injectCreateOAuthAction(
@@ -346,12 +344,12 @@ describe("ActionInjector", () => {
           - uses: apiKey/register
       `;
 
-      sandbox.stub(fs, "readFile").resolves(ymlContent as any);
-      sandbox
-        .stub(Utils, "getSafeRegistrationIdEnvName")
-        .returns("OAUTH2AUTHCODE_CONFIGURATION_ID");
-      sandbox.stub(ActionInjector, "getTeamsAppIdEnvName").returns("TEAMS_APP_ID");
-      sandbox.stub(ActionInjector, "generateAuthAction").returns(sampleAuthAction);
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
+      vi.spyOn(Utils, "getSafeRegistrationIdEnvName").mockReturnValue(
+        "OAUTH2AUTHCODE_CONFIGURATION_ID"
+      );
+      vi.spyOn(ActionInjector, "getTeamsAppIdEnvName").mockReturnValue("TEAMS_APP_ID");
+      vi.spyOn(ActionInjector, "generateAuthAction").mockReturnValue(sampleAuthAction);
 
       const result = await ActionInjector.injectCreateOAuthAction(
         ymlPath,
@@ -365,9 +363,9 @@ describe("ActionInjector", () => {
         defaultRegistrationIdEnvName: "OAUTH2AUTHCODE_CONFIGURATION_ID",
         registrationIdEnvName: "OAUTH2AUTHCODE_CONFIGURATION_ID1",
       });
-      assert.isTrue(writeStub.args[0][1].includes("apiKey/register"));
+      assert.isTrue(writeStub.mock.calls[0][1].includes("apiKey/register"));
 
-      assert.equal(countOccurrences(writeStub.args[0][1], "oauth/register"), 2);
+      assert.equal(countOccurrences(writeStub.mock.calls[0][1], "oauth/register"), 2);
     });
 
     it("should check for authName and specPath in existing OAuth actions", async () => {
@@ -410,12 +408,12 @@ describe("ActionInjector", () => {
           - uses: apiKey/register
       `;
 
-      sandbox.stub(fs, "readFile").resolves(ymlContent as any);
-      sandbox
-        .stub(Utils, "getSafeRegistrationIdEnvName")
-        .returns("OAUTH2AUTHCODE_CONFIGURATION_ID");
-      sandbox.stub(ActionInjector, "getTeamsAppIdEnvName").returns("TEAMS_APP_ID");
-      sandbox.stub(ActionInjector, "generateAuthAction").returns(sampleAuthAction);
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
+      vi.spyOn(Utils, "getSafeRegistrationIdEnvName").mockReturnValue(
+        "OAUTH2AUTHCODE_CONFIGURATION_ID"
+      );
+      vi.spyOn(ActionInjector, "getTeamsAppIdEnvName").mockReturnValue("TEAMS_APP_ID");
+      vi.spyOn(ActionInjector, "generateAuthAction").mockReturnValue(sampleAuthAction);
 
       const result = await ActionInjector.injectCreateOAuthAction(
         ymlPath,
@@ -425,8 +423,8 @@ describe("ActionInjector", () => {
         false
       );
 
-      assert.isTrue(writeStub.args[0][1].includes("apiKey/register"));
-      assert.equal(countOccurrences(writeStub.args[0][1], "oauth/register"), 5);
+      assert.isTrue(writeStub.mock.calls[0][1].includes("apiKey/register"));
+      assert.equal(countOccurrences(writeStub.mock.calls[0][1], "oauth/register"), 5);
     });
 
     it("should skip if same authName and specPath exists in existing OAuth actions", async () => {
@@ -455,12 +453,12 @@ describe("ActionInjector", () => {
           - uses: apiKey/register
       `;
 
-      sandbox.stub(fs, "readFile").resolves(ymlContent as any);
-      sandbox
-        .stub(Utils, "getSafeRegistrationIdEnvName")
-        .returns("OAUTH2AUTHCODE_CONFIGURATION_ID");
-      sandbox.stub(ActionInjector, "getTeamsAppIdEnvName").returns("TEAMS_APP_ID");
-      sandbox.stub(ActionInjector, "generateAuthAction").returns(sampleAuthAction);
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
+      vi.spyOn(Utils, "getSafeRegistrationIdEnvName").mockReturnValue(
+        "OAUTH2AUTHCODE_CONFIGURATION_ID"
+      );
+      vi.spyOn(ActionInjector, "getTeamsAppIdEnvName").mockReturnValue("TEAMS_APP_ID");
+      vi.spyOn(ActionInjector, "generateAuthAction").mockReturnValue(sampleAuthAction);
 
       const result = await ActionInjector.injectCreateOAuthAction(
         ymlPath,
@@ -470,12 +468,11 @@ describe("ActionInjector", () => {
         false
       );
 
-      assert.isTrue(writeStub.notCalled);
+      assert.isTrue(writeStub.mock.calls.length === 0);
     });
   });
 
   describe("injectCreateAPIKeyAction", () => {
-    const sandbox = sinon.createSandbox();
     const sampleAPIKeyAction = {
       uses: "apiKey/register",
       with: {
@@ -487,15 +484,15 @@ describe("ActionInjector", () => {
         registrationId: "TEST_AUTH_CONFIGURATION_ID",
       },
     };
-    let writeStub: sinon.SinonStub;
+    let writeStub: any;
 
     beforeEach(() => {
-      writeStub = sandbox.stub(fs, "writeFile").resolves();
-      sandbox.stub(ActionInjector, "generateAuthAction").returns(sampleAPIKeyAction);
+      writeStub = vi.spyOn(fs, "writeFile").mockResolvedValue();
+      vi.spyOn(ActionInjector, "generateAuthAction").mockReturnValue(sampleAPIKeyAction);
     });
 
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("should inject APIKey action successfully if no existing env names for configuration id exists", async () => {
@@ -517,10 +514,10 @@ describe("ActionInjector", () => {
         - uses: oauth/register
     `;
 
-      sandbox.stub(fs, "readFile").resolves(ymlContent as any);
-      sandbox.stub(ActionInjector, "hasActionWithName").returns(false);
-      sandbox.stub(Utils, "getSafeRegistrationIdEnvName").returns("TEST_AUTH_CONFIGURATION_ID");
-      sandbox.stub(ActionInjector, "getTeamsAppIdEnvName").returns("TEAMS_APP_ID");
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
+      vi.spyOn(ActionInjector, "hasActionWithName").mockReturnValue(false);
+      vi.spyOn(Utils, "getSafeRegistrationIdEnvName").mockReturnValue("TEST_AUTH_CONFIGURATION_ID");
+      vi.spyOn(ActionInjector, "getTeamsAppIdEnvName").mockReturnValue("TEAMS_APP_ID");
 
       const result = await ActionInjector.injectCreateAPIKeyAction(
         ymlPath,
@@ -533,7 +530,7 @@ describe("ActionInjector", () => {
         defaultRegistrationIdEnvName: "TEST_AUTH_CONFIGURATION_ID",
         registrationIdEnvName: "TEST_AUTH_CONFIGURATION_ID",
       });
-      assert.isTrue(writeStub.args[0][1].includes("apiKey/register"));
+      assert.isTrue(writeStub.mock.calls[0][1].includes("apiKey/register"));
     });
 
     it("should inject APIKey action successfully if registrtion id set in input", async () => {
@@ -555,10 +552,10 @@ describe("ActionInjector", () => {
         - uses: oauth/register
     `;
 
-      sandbox.stub(fs, "readFile").resolves(ymlContent as any);
-      sandbox.stub(ActionInjector, "hasActionWithName").returns(false);
-      sandbox.stub(Utils, "getSafeRegistrationIdEnvName").returns("TEST_AUTH_CONFIGURATION_ID");
-      sandbox.stub(ActionInjector, "getTeamsAppIdEnvName").returns("TEAMS_APP_ID");
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
+      vi.spyOn(ActionInjector, "hasActionWithName").mockReturnValue(false);
+      vi.spyOn(Utils, "getSafeRegistrationIdEnvName").mockReturnValue("TEST_AUTH_CONFIGURATION_ID");
+      vi.spyOn(ActionInjector, "getTeamsAppIdEnvName").mockReturnValue("TEAMS_APP_ID");
 
       const result = await ActionInjector.injectCreateAPIKeyAction(
         ymlPath,
@@ -572,7 +569,7 @@ describe("ActionInjector", () => {
         defaultRegistrationIdEnvName: "TEST_AUTH_CONFIGURATION_ID",
         registrationIdEnvName: "INPUT_REGISTRATION_ID",
       });
-      assert.isTrue(writeStub.args[0][1].includes("apiKey/register"));
+      assert.isTrue(writeStub.mock.calls[0][1].includes("apiKey/register"));
     });
 
     it("should throw InjectAPIKeyActionFailedError if provision node is missing", async () => {
@@ -586,7 +583,7 @@ describe("ActionInjector", () => {
           - uses: teamsApp/create
       `;
 
-      sandbox.stub(fs, "readFile").resolves(ymlContent as any);
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
 
       try {
         await ActionInjector.injectCreateAPIKeyAction(
@@ -612,9 +609,9 @@ describe("ActionInjector", () => {
           - uses: otherAction
       `;
 
-      sandbox.stub(fs, "readFile").resolves(ymlContent as any);
-      sandbox.stub(ActionInjector, "hasActionWithName").returns(false);
-      sandbox.stub(ActionInjector, "getTeamsAppIdEnvName").returns(undefined);
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
+      vi.spyOn(ActionInjector, "hasActionWithName").mockReturnValue(false);
+      vi.spyOn(ActionInjector, "getTeamsAppIdEnvName").mockReturnValue(undefined);
 
       try {
         await ActionInjector.injectCreateAPIKeyAction(
@@ -654,9 +651,9 @@ describe("ActionInjector", () => {
                 registrationId: BEARERAUTH_REGISTRATION_ID
         `;
 
-      sandbox.stub(fs, "readFile").resolves(ymlContent as any);
-      sandbox.stub(Utils, "getSafeRegistrationIdEnvName").returns("BEARERAUTH_REGISTRATION_ID");
-      sandbox.stub(ActionInjector, "getTeamsAppIdEnvName").returns("TEAMS_APP_ID");
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
+      vi.spyOn(Utils, "getSafeRegistrationIdEnvName").mockReturnValue("BEARERAUTH_REGISTRATION_ID");
+      vi.spyOn(ActionInjector, "getTeamsAppIdEnvName").mockReturnValue("TEAMS_APP_ID");
 
       const result = await ActionInjector.injectCreateAPIKeyAction(
         ymlPath,
@@ -670,7 +667,7 @@ describe("ActionInjector", () => {
         registrationIdEnvName: "BEARERAUTH_REGISTRATION_ID1",
       });
 
-      assert.equal(countOccurrences(writeStub.args[0][1], "apiKey/register"), 2);
+      assert.equal(countOccurrences(writeStub.mock.calls[0][1], "apiKey/register"), 2);
     });
 
     it("should check for authName and specPath in existing OAuth actions", async () => {
@@ -713,11 +710,11 @@ describe("ActionInjector", () => {
           - uses: oauth/register
       `;
 
-      sandbox.stub(fs, "readFile").resolves(ymlContent as any);
-      sandbox
-        .stub(Utils, "getSafeRegistrationIdEnvName")
-        .returns("OAUTH2AUTHCODE_CONFIGURATION_ID");
-      sandbox.stub(ActionInjector, "getTeamsAppIdEnvName").returns("TEAMS_APP_ID");
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
+      vi.spyOn(Utils, "getSafeRegistrationIdEnvName").mockReturnValue(
+        "OAUTH2AUTHCODE_CONFIGURATION_ID"
+      );
+      vi.spyOn(ActionInjector, "getTeamsAppIdEnvName").mockReturnValue("TEAMS_APP_ID");
 
       const result = await ActionInjector.injectCreateAPIKeyAction(
         ymlPath,
@@ -726,8 +723,8 @@ describe("ActionInjector", () => {
         false
       );
 
-      assert.isTrue(writeStub.args[0][1].includes("oauth/register"));
-      assert.equal(countOccurrences(writeStub.args[0][1], "apiKey/register"), 5);
+      assert.isTrue(writeStub.mock.calls[0][1].includes("oauth/register"));
+      assert.equal(countOccurrences(writeStub.mock.calls[0][1], "apiKey/register"), 5);
     });
 
     it("should skip if same authName and specPath exists in existing OAuth actions", async () => {
@@ -756,11 +753,11 @@ describe("ActionInjector", () => {
           - uses: oauth/register
       `;
 
-      sandbox.stub(fs, "readFile").resolves(ymlContent as any);
-      sandbox
-        .stub(Utils, "getSafeRegistrationIdEnvName")
-        .returns("OAUTH2AUTHCODE_CONFIGURATION_ID");
-      sandbox.stub(ActionInjector, "getTeamsAppIdEnvName").returns("TEAMS_APP_ID");
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
+      vi.spyOn(Utils, "getSafeRegistrationIdEnvName").mockReturnValue(
+        "OAUTH2AUTHCODE_CONFIGURATION_ID"
+      );
+      vi.spyOn(ActionInjector, "getTeamsAppIdEnvName").mockReturnValue("TEAMS_APP_ID");
 
       const result = await ActionInjector.injectCreateAPIKeyAction(
         ymlPath,
@@ -769,20 +766,19 @@ describe("ActionInjector", () => {
         false
       );
 
-      assert.isTrue(writeStub.notCalled);
+      assert.isTrue(writeStub.mock.calls.length === 0);
     });
   });
 
   describe("injectCreateOAuthActionForMCP", () => {
-    const sandbox = sinon.createSandbox();
-    let writeStub: sinon.SinonStub;
+    let writeStub: any;
 
     beforeEach(() => {
-      writeStub = sandbox.stub(fs, "writeFile").resolves();
+      writeStub = vi.spyOn(fs, "writeFile").mockResolvedValue();
     });
 
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("should inject OAuth action for MCP with oauth authType successfully", async () => {
@@ -805,8 +801,8 @@ describe("ActionInjector", () => {
           - uses: apiKey/register
       `;
 
-      sandbox.stub(fs, "readFile").resolves(ymlContent as any);
-      sandbox.stub(ActionInjector, "getTeamsAppIdEnvName").returns("TEAMS_APP_ID");
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
+      vi.spyOn(ActionInjector, "getTeamsAppIdEnvName").mockReturnValue("TEAMS_APP_ID");
 
       const result = await ActionInjector.injectCreateOAuthActionForMCP(
         ymlPath,
@@ -824,7 +820,7 @@ describe("ActionInjector", () => {
         registrationIdEnvName: registrationId,
       });
 
-      const writtenContent = writeStub.args[0][1];
+      const writtenContent = writeStub.mock.calls[0][1];
       assert.isTrue(writtenContent.includes("oauth/register"));
       assert.isTrue(writtenContent.includes(authName));
       assert.isTrue(writtenContent.includes(registrationId));
@@ -851,8 +847,8 @@ describe("ActionInjector", () => {
           - uses: apiKey/register
       `;
 
-      sandbox.stub(fs, "readFile").resolves(ymlContent as any);
-      sandbox.stub(ActionInjector, "getTeamsAppIdEnvName").returns("TEAMS_APP_ID");
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
+      vi.spyOn(ActionInjector, "getTeamsAppIdEnvName").mockReturnValue("TEAMS_APP_ID");
 
       const result = await ActionInjector.injectCreateOAuthActionForMCP(
         ymlPath,
@@ -867,7 +863,7 @@ describe("ActionInjector", () => {
         registrationIdEnvName: registrationId,
       });
 
-      const writtenContent = writeStub.args[0][1];
+      const writtenContent = writeStub.mock.calls[0][1];
       assert.isTrue(writtenContent.includes("oauth/register"));
       assert.isTrue(writtenContent.includes(authName));
       assert.isTrue(writtenContent.includes(registrationId));
@@ -895,8 +891,8 @@ describe("ActionInjector", () => {
               teamsAppId: TEAMS_APP_ID
       `;
 
-      sandbox.stub(fs, "readFile").resolves(ymlContent as any);
-      sandbox.stub(ActionInjector, "getTeamsAppIdEnvName").returns("TEAMS_APP_ID");
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
+      vi.spyOn(ActionInjector, "getTeamsAppIdEnvName").mockReturnValue("TEAMS_APP_ID");
 
       const result = await ActionInjector.injectCreateOAuthActionForMCP(
         ymlPath,
@@ -913,7 +909,7 @@ describe("ActionInjector", () => {
         registrationIdEnvName: registrationId,
       });
 
-      const writtenContent = writeStub.args[0][1];
+      const writtenContent = writeStub.mock.calls[0][1];
       assert.isTrue(writtenContent.includes(authorizationUrl));
       assert.isTrue(writtenContent.includes(tokenUrl));
       assert.isFalse(writtenContent.includes("refreshUrl"));
@@ -940,8 +936,8 @@ describe("ActionInjector", () => {
               configurationId: ${registrationId}
       `;
 
-      sandbox.stub(fs, "readFile").resolves(ymlContent as any);
-      sandbox.stub(ActionInjector, "getTeamsAppIdEnvName").returns("TEAMS_APP_ID");
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
+      vi.spyOn(ActionInjector, "getTeamsAppIdEnvName").mockReturnValue("TEAMS_APP_ID");
 
       const result = await ActionInjector.injectCreateOAuthActionForMCP(
         ymlPath,
@@ -952,7 +948,7 @@ describe("ActionInjector", () => {
       );
 
       assert.isUndefined(result);
-      assert.isTrue(writeStub.notCalled);
+      assert.isTrue(writeStub.mock.calls.length === 0);
     });
 
     it("should throw InjectOAuthActionFailedError if provision node is missing", async () => {
@@ -967,7 +963,7 @@ describe("ActionInjector", () => {
           - uses: teamsApp/create
       `;
 
-      sandbox.stub(fs, "readFile").resolves(ymlContent as any);
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
 
       try {
         await ActionInjector.injectCreateOAuthActionForMCP(
@@ -995,8 +991,8 @@ describe("ActionInjector", () => {
           - uses: otherAction
       `;
 
-      sandbox.stub(fs, "readFile").resolves(ymlContent as any);
-      sandbox.stub(ActionInjector, "getTeamsAppIdEnvName").returns(undefined);
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
+      vi.spyOn(ActionInjector, "getTeamsAppIdEnvName").mockReturnValue(undefined);
 
       try {
         await ActionInjector.injectCreateOAuthActionForMCP(
@@ -1030,8 +1026,8 @@ describe("ActionInjector", () => {
           - uses: existingAction2
       `;
 
-      sandbox.stub(fs, "readFile").resolves(ymlContent as any);
-      sandbox.stub(ActionInjector, "getTeamsAppIdEnvName").returns("TEAMS_APP_ID");
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
+      vi.spyOn(ActionInjector, "getTeamsAppIdEnvName").mockReturnValue("TEAMS_APP_ID");
 
       const result = await ActionInjector.injectCreateOAuthActionForMCP(
         ymlPath,
@@ -1043,7 +1039,7 @@ describe("ActionInjector", () => {
 
       assert.isNotNull(result);
 
-      const writtenContent = writeStub.args[0][1];
+      const writtenContent = writeStub.mock.calls[0][1];
       const teamsAppCreateIndex = writtenContent.indexOf("teamsApp/create");
       const oauthRegisterIndex = writtenContent.indexOf("oauth/register");
       const existingAction1Index = writtenContent.indexOf("existingAction1");
@@ -1071,8 +1067,8 @@ describe("ActionInjector", () => {
           - uses: validAction
       `;
 
-      sandbox.stub(fs, "readFile").resolves(ymlContent as any);
-      sandbox.stub(ActionInjector, "getTeamsAppIdEnvName").returns("TEAMS_APP_ID");
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
+      vi.spyOn(ActionInjector, "getTeamsAppIdEnvName").mockReturnValue("TEAMS_APP_ID");
 
       const result = await ActionInjector.injectCreateOAuthActionForMCP(
         ymlPath,
@@ -1084,7 +1080,7 @@ describe("ActionInjector", () => {
 
       assert.isNotNull(result);
 
-      const writtenContent = writeStub.args[0][1];
+      const writtenContent = writeStub.mock.calls[0][1];
       assert.isTrue(writtenContent.includes("teamsApp/create"));
       assert.isTrue(writtenContent.includes("oauth/register"));
       assert.isTrue(writtenContent.includes("validAction"));
@@ -1100,8 +1096,8 @@ describe("ActionInjector", () => {
               teamsAppId: TEAMS_APP_ID
       `;
 
-      sandbox.stub(fs, "readFile").resolves(ymlContent as any);
-      sandbox.stub(ActionInjector, "getTeamsAppIdEnvName").returns("TEAMS_APP_ID");
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
+      vi.spyOn(ActionInjector, "getTeamsAppIdEnvName").mockReturnValue("TEAMS_APP_ID");
 
       await ActionInjector.injectCreateOAuthActionForMCP(
         ymlPath,
@@ -1119,7 +1115,7 @@ describe("ActionInjector", () => {
         }
       );
 
-      const writtenContent: string = writeStub.args[0][1];
+      const writtenContent: string = writeStub.mock.calls[0][1];
       assert.isTrue(writtenContent.includes("${{MCP_DA_OAUTH_CLIENT_ID_SERVER1}}"));
       assert.isTrue(writtenContent.includes("${{SECRET_MCP_DA_OAUTH_CLIENT_SECRET_SERVER1}}"));
       assert.isTrue(writtenContent.includes("${{MCP_DA_OAUTH_SCOPE_SERVER1}}"));
@@ -1134,8 +1130,8 @@ describe("ActionInjector", () => {
               teamsAppId: TEAMS_APP_ID
       `;
 
-      sandbox.stub(fs, "readFile").resolves(ymlContent as any);
-      sandbox.stub(ActionInjector, "getTeamsAppIdEnvName").returns("TEAMS_APP_ID");
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
+      vi.spyOn(ActionInjector, "getTeamsAppIdEnvName").mockReturnValue("TEAMS_APP_ID");
 
       await ActionInjector.injectCreateOAuthActionForMCP(
         ymlPath,
@@ -1151,7 +1147,7 @@ describe("ActionInjector", () => {
         }
       );
 
-      const writtenContent: string = writeStub.args[0][1];
+      const writtenContent: string = writeStub.mock.calls[0][1];
       assert.isTrue(writtenContent.includes("${{MCP_DA_OAUTH_CLIENT_ID_SERVER1}}"));
       assert.isFalse(writtenContent.includes("clientSecret"));
       assert.isFalse(writtenContent.includes("scope:"));
@@ -1159,15 +1155,14 @@ describe("ActionInjector", () => {
   });
 
   describe("injectCreateDcrActionForMCP", () => {
-    const sandbox = sinon.createSandbox();
-    let writeStub: sinon.SinonStub;
+    let writeStub: any;
 
     beforeEach(() => {
-      writeStub = sandbox.stub(fs, "writeFile").resolves();
+      writeStub = vi.spyOn(fs, "writeFile").mockResolvedValue();
     });
 
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("should inject dcr/register action successfully", async () => {
@@ -1186,8 +1181,8 @@ describe("ActionInjector", () => {
               teamsAppId: TEAMS_APP_ID
       `;
 
-      sandbox.stub(fs, "readFile").resolves(ymlContent as any);
-      sandbox.stub(ActionInjector, "getTeamsAppIdEnvName").returns("TEAMS_APP_ID");
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
+      vi.spyOn(ActionInjector, "getTeamsAppIdEnvName").mockReturnValue("TEAMS_APP_ID");
 
       const result = await ActionInjector.injectCreateDcrActionForMCP(
         ymlPath,
@@ -1202,13 +1197,13 @@ describe("ActionInjector", () => {
         registrationIdEnvName: registrationId,
       });
 
-      const writtenContent = writeStub.args[0][1];
+      const writtenContent = writeStub.mock.calls[0][1];
       assert.isTrue(writtenContent.includes("dcr/register"));
       assert.isTrue(writtenContent.includes(authName));
       assert.isTrue(writtenContent.includes(registrationId));
       assert.isTrue(writtenContent.includes(mcpServerUrl));
       assert.isTrue(writtenContent.includes(wellKnownUrl));
-      assert.isTrue(writtenContent.includes("applicableToApps: SpecificApp"));
+      assert.isTrue(writtenContent.includes("applicableToApps: AnyApp"));
       assert.isTrue(writtenContent.includes("targetAudience: HomeTenant"));
     });
 
@@ -1231,7 +1226,7 @@ describe("ActionInjector", () => {
               configurationId: MCP_DA_AUTH_ID_APIGITHUBC
       `;
 
-      sandbox.stub(fs, "readFile").resolves(ymlContent as any);
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
 
       const result = await ActionInjector.injectCreateDcrActionForMCP(
         ymlPath,
@@ -1242,14 +1237,14 @@ describe("ActionInjector", () => {
       );
 
       assert.isUndefined(result);
-      assert.equal(writeStub.callCount, 0);
+      assert.equal(writeStub.mock.calls.length, 0);
     });
 
     it("should throw InjectOAuthActionFailedError when provision node is missing", async () => {
       const ymlPath = "path/to/yml";
       const ymlContent = "deploy:\n  - uses: noop\n";
 
-      sandbox.stub(fs, "readFile").resolves(ymlContent as any);
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
 
       try {
         await ActionInjector.injectCreateDcrActionForMCP(
@@ -1272,8 +1267,8 @@ describe("ActionInjector", () => {
           - uses: someOther/action
       `;
 
-      sandbox.stub(fs, "readFile").resolves(ymlContent as any);
-      sandbox.stub(ActionInjector, "getTeamsAppIdEnvName").returns(undefined);
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
+      vi.spyOn(ActionInjector, "getTeamsAppIdEnvName").mockReturnValue(undefined);
 
       try {
         await ActionInjector.injectCreateDcrActionForMCP(
@@ -1299,8 +1294,8 @@ provision:
       teamsAppId: TEAMS_APP_ID
 `;
 
-      sandbox.stub(fs, "readFile").resolves(ymlContent as any);
-      sandbox.stub(ActionInjector, "getTeamsAppIdEnvName").returns("TEAMS_APP_ID");
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
+      vi.spyOn(ActionInjector, "getTeamsAppIdEnvName").mockReturnValue("TEAMS_APP_ID");
 
       await ActionInjector.injectCreateDcrActionForMCP(
         ymlPath,
@@ -1310,7 +1305,7 @@ provision:
         "https://auth.example.com/.well-known/oauth-authorization-server"
       );
 
-      const writtenContent: string = writeStub.args[0][1];
+      const writtenContent: string = writeStub.mock.calls[0][1];
       assert.isTrue(writtenContent.includes("version: v1.13"));
       assert.isFalse(/^version: v1\.12$/m.test(writtenContent));
     });
@@ -1324,8 +1319,8 @@ provision:
       teamsAppId: TEAMS_APP_ID
 `;
 
-      sandbox.stub(fs, "readFile").resolves(ymlContent as any);
-      sandbox.stub(ActionInjector, "getTeamsAppIdEnvName").returns("TEAMS_APP_ID");
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
+      vi.spyOn(ActionInjector, "getTeamsAppIdEnvName").mockReturnValue("TEAMS_APP_ID");
 
       await ActionInjector.injectCreateDcrActionForMCP(
         ymlPath,
@@ -1335,7 +1330,7 @@ provision:
         "https://auth.example.com/.well-known/oauth-authorization-server"
       );
 
-      const writtenContent: string = writeStub.args[0][1];
+      const writtenContent: string = writeStub.mock.calls[0][1];
       assert.isTrue(writtenContent.includes("version: v1.14"));
       assert.isFalse(writtenContent.includes("version: v1.13"));
     });
@@ -1349,8 +1344,8 @@ provision:
       teamsAppId: TEAMS_APP_ID
 `;
 
-      sandbox.stub(fs, "readFile").resolves(ymlContent as any);
-      sandbox.stub(ActionInjector, "getTeamsAppIdEnvName").returns("TEAMS_APP_ID");
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
+      vi.spyOn(ActionInjector, "getTeamsAppIdEnvName").mockReturnValue("TEAMS_APP_ID");
 
       await ActionInjector.injectCreateDcrActionForMCP(
         ymlPath,
@@ -1360,7 +1355,7 @@ provision:
         "https://auth.example.com/.well-known/oauth-authorization-server"
       );
 
-      const writtenContent: string = writeStub.args[0][1];
+      const writtenContent: string = writeStub.mock.calls[0][1];
       assert.isTrue(writtenContent.includes("version: notAVersion"));
       assert.isTrue(writtenContent.includes("dcr/register"));
     });

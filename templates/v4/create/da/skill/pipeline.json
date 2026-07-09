@@ -1,0 +1,9 @@
+{
+  "pipeline": "default",
+  "comment": "Declarative agent with a local agent skill: pure render. The single require-empty-target step guards the create contract so render writes every file. No post-render injection - the skill is declared in declarativeAgent.json and lives under appPackage/skills/hello-atk.",
+  "steps": [
+    {
+      "step": "require-empty-target"
+    }
+  ]
+}

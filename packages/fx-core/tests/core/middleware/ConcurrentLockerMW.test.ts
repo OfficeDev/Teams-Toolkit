@@ -12,17 +12,14 @@ import {
   Result,
   SettingsFolderName,
 } from "@microsoft/teamsfx-api";
-import { assert, expect } from "chai";
 import fs from "fs-extra";
 import * as os from "os";
 import * as path from "path";
-import * as sinon from "sinon";
+import { assert, chai, vi } from "vitest";
+import * as projectSettingsHelper from "../../../src/common/projectSettingsHelper";
+import * as commonUtils from "../../../src/common/utils";
 import { CallbackRegistry } from "../../../src/core/callback";
-import {
-  concurrentLockerDeps,
-  ConcurrentLockerMW,
-  getLockFolder,
-} from "../../../src/core/middleware/concurrentLocker";
+import { ConcurrentLockerMW, getLockFolder } from "../../../src/core/middleware/concurrentLocker";
 import { CoreSource, NoProjectOpenedError } from "../../../src/error";
 import {
   ConcurrentError,
@@ -34,7 +31,7 @@ import { randomAppName } from "../utils";
 
 describe("Middleware - ConcurrentLockerMW", () => {
   afterEach(() => {
-    sinon.restore();
+    vi.restoreAllMocks();
   });
 
   it("check lock file existence", async () => {
@@ -93,7 +90,7 @@ describe("Middleware - ConcurrentLockerMW", () => {
 
   it("sequence: ok", async () => {
     const inputs: Inputs = { platform: Platform.VSCode };
-    sinon.stub(concurrentLockerDeps, "isValidProjectV3").returns(true);
+    vi.spyOn(projectSettingsHelper, "isValidProjectV3").mockReturnValue(true);
     inputs.projectPath = path.join(os.tmpdir(), randomAppName());
     try {
       const settingDir = path.join(inputs.projectPath, `.${ConfigFolderName}`, "configs");
@@ -145,6 +142,8 @@ describe("Middleware - ConcurrentLockerMW", () => {
     const inputs: Inputs = { platform: Platform.VSCode };
     inputs.projectPath = path.join(os.tmpdir(), randomAppName());
     try {
+      // Ensure isValidProjectV3 returns false for this test
+      vi.spyOn(projectSettingsHelper, "isValidProjectV3").mockReturnValue(false);
       await fs.ensureDir(inputs.projectPath);
       const res = await my.methodReturnOK(inputs);
       assert.isTrue(res.isErr() && res.error instanceof InvalidProjectError);
@@ -157,10 +156,10 @@ describe("Middleware - ConcurrentLockerMW", () => {
   it("concurrent: fail to get lock", async () => {
     const inputs: Inputs = { platform: Platform.VSCode };
     const my = new MyClass();
-    sinon.stub(concurrentLockerDeps, "waitSeconds").resolves();
+    vi.spyOn(commonUtils, "waitSeconds").mockResolvedValue(undefined);
     try {
       inputs.projectPath = path.join(os.tmpdir(), randomAppName());
-      sinon.stub(concurrentLockerDeps, "isValidProjectV3").returns(true);
+      vi.spyOn(projectSettingsHelper, "isValidProjectV3").mockReturnValue(true);
       await fs.ensureDir(inputs.projectPath);
       await fs.ensureDir(path.join(inputs.projectPath, `${SettingsFolderName}`));
       await my.methodCallSelf(inputs);
@@ -198,12 +197,12 @@ describe("Middleware - ConcurrentLockerMW", () => {
     const inputs: Inputs = { platform: Platform.VSCode };
     inputs.projectPath = path.join(os.tmpdir(), randomAppName());
     try {
-      sinon.stub(concurrentLockerDeps, "isValidProjectV3").returns(true);
+      vi.spyOn(projectSettingsHelper, "isValidProjectV3").mockReturnValue(true);
       await fs.ensureDir(inputs.projectPath);
       await fs.ensureDir(path.join(inputs.projectPath, `.${ConfigFolderName}`));
       await my.myMethod(inputs);
-      expect(d).eql(1);
-      expect(functionName).eql("myMethod");
+      chai.expect(d).eql(1);
+      chai.expect(functionName).eql("myMethod");
     } finally {
       await fs.remove(inputs.projectPath!);
     }

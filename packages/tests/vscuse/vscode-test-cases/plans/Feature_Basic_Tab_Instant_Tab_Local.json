@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 16,
+    "total_steps": 15,
     "created_at": "2026-06-08T01:55:22.439694",
     "name": "Feature Basic Tab Instant Tab Local",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2026-06-08T01:55:22.439694",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_72a90a9b",
+      "plan_r_0624_024810",
       "step_1b71352b",
       "step_6d91716e",
       "step_ebacafb5",
@@ -44,32 +44,6 @@
     "updated_at": "2026-06-08T02:57:50.602978"
   },
   "steps": [
-    {
-      "step_id": "step_72a90a9b",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 361,
-        "y": 229
-      },
-      "description": "Click on the \"Declarative Agent\" option within the \"New Project\" dropdown menu to create an agent using instructions and actions.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:361:229:16:5:20d2ccc34a58d273",
-        "dhash:361:229:96:5:91993492d2070ee6",
-        "dhash:361:229:0:10:c0c88094b2717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_72a90a9b",
-      "created_at": "2026-06-08T02:30:19.902623",
-      "plan_id": "plan_c475af6c"
-    },
     {
       "step_id": "step_1b71352b",
       "agent": "interaction",

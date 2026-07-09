@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 10,
+    "total_steps": 9,
     "created_at": "2025-12-29T09:35:45.175130",
     "name": "Teams Agent With Data Custom API Azure OpenAI ts Local Debug",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2025-12-29T09:35:45.175130",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_ebf34a2e",
+      "plan_r_0624_024810",
       "step_dd4614a1",
       "step_d754525c",
       "step_a862fe90",
@@ -41,32 +41,6 @@
     "updated_at": "2025-12-29T09:45:57.631688"
   },
   "steps": [
-    {
-      "step_id": "step_ebf34a2e",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 326,
-        "y": 221
-      },
-      "description": "Click the \"Teams Agents and Apps\" option from the dropdown menu in the \"New Project\" window.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:326:221:16:5:5aa55108164a1bb3",
-        "dhash:326:221:96:5:911b524299aec784",
-        "dhash:326:221:0:10:c8c88094b0717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_ebf34a2e",
-      "created_at": "2025-12-29T09:35:45.194740",
-      "plan_id": "plan_5405cbbc"
-    },
     {
       "step_id": "step_dd4614a1",
       "agent": "interaction",

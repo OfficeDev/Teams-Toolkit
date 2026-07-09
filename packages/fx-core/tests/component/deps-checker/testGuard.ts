@@ -2,19 +2,28 @@
 // Licensed under the MIT license.
 
 import path from "path";
-import { afterEach, beforeEach, expect } from "vitest";
-import { testToolCheckerDeps } from "../../../src/component/deps-checker/internal/testToolChecker";
+import { afterEach, beforeEach, expect, vi } from "vitest";
+import * as fetchHelper from "../../../src/common/fetchHelper";
 import { cpUtils } from "../../../src/component/deps-checker/util/cpUtils";
+import * as downloadHelper from "../../../src/component/deps-checker/util/downloadHelper";
 
-const originalExecuteCommand = cpUtils.executeCommand;
-const originalFetch = testToolCheckerDeps.fetch;
-const originalDownloadToTempFile = testToolCheckerDeps.downloadToTempFile;
-const originalUnzip = testToolCheckerDeps.unzip;
+// Store references to spies so tests can reconfigure them
+export const depsCheckerSpies = {
+  executeCommand: null as any,
+  fetch: null as any,
+  downloadToTempFile: null as any,
+  unzip: null as any,
+};
 
 function isDepsCheckerTestFile(): boolean {
   const testPath = expect.getState().testPath ?? "";
   const marker = `${path.sep}tests${path.sep}component${path.sep}deps-checker${path.sep}`;
   return testPath.includes(marker);
+}
+
+function isGitHubHelpersTest(): boolean {
+  const testName = expect.getState().currentTestName ?? "";
+  return testName.includes("GitHubHelpers");
 }
 
 function createUnmockedDependencyError(name: string): Error {
@@ -29,21 +38,23 @@ beforeEach(() => {
     return;
   }
 
-  cpUtils.executeCommand = (async () => {
-    throw createUnmockedDependencyError("cpUtils.executeCommand");
-  }) as typeof cpUtils.executeCommand;
+  depsCheckerSpies.executeCommand = vi
+    .spyOn(cpUtils, "executeCommand")
+    .mockRejectedValue(createUnmockedDependencyError("cpUtils.executeCommand"));
 
-  testToolCheckerDeps.fetch = (async () => {
-    throw createUnmockedDependencyError("testToolCheckerDeps.fetch");
-  }) as typeof testToolCheckerDeps.fetch;
+  if (!isGitHubHelpersTest()) {
+    depsCheckerSpies.fetch = vi
+      .spyOn(fetchHelper, "default")
+      .mockRejectedValue(createUnmockedDependencyError("fetchHelper.default"));
+  }
 
-  testToolCheckerDeps.downloadToTempFile = (async () => {
-    throw createUnmockedDependencyError("testToolCheckerDeps.downloadToTempFile");
-  }) as typeof testToolCheckerDeps.downloadToTempFile;
+  depsCheckerSpies.downloadToTempFile = vi
+    .spyOn(downloadHelper, "downloadToTempFile")
+    .mockRejectedValue(createUnmockedDependencyError("downloadHelper.downloadToTempFile"));
 
-  testToolCheckerDeps.unzip = (async () => {
-    throw createUnmockedDependencyError("testToolCheckerDeps.unzip");
-  }) as typeof testToolCheckerDeps.unzip;
+  depsCheckerSpies.unzip = vi
+    .spyOn(downloadHelper, "unzip")
+    .mockRejectedValue(createUnmockedDependencyError("downloadHelper.unzip"));
 });
 
 afterEach(() => {
@@ -51,8 +62,5 @@ afterEach(() => {
     return;
   }
 
-  cpUtils.executeCommand = originalExecuteCommand;
-  testToolCheckerDeps.fetch = originalFetch;
-  testToolCheckerDeps.downloadToTempFile = originalDownloadToTempFile;
-  testToolCheckerDeps.unzip = originalUnzip;
+  vi.restoreAllMocks();
 });

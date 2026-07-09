@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 18,
+    "total_steps": 17,
     "created_at": "2026-01-29T08:55:17.395274",
     "name": "Feature Provision Without Account",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2026-01-29T08:55:17.395274",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_2652c2f3",
+      "plan_r_0624_024810",
       "step_a60e64d9",
       "step_4f022cc4",
       "step_a8f39118",
@@ -46,32 +46,6 @@
     "updated_at": "2026-01-29T09:57:58.043149"
   },
   "steps": [
-    {
-      "step_id": "step_2652c2f3",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 361,
-        "y": 229
-      },
-      "description": "Click on the \"Declarative Agent\" option within the \"New Project\" dropdown menu to create an agent using instructions and actions.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:361:229:16:5:53ccc35ac8d2730c",
-        "dhash:361:229:96:5:959834d2da1409c8",
-        "dhash:361:229:0:10:c8c88094b0717c6f"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_2652c2f3",
-      "created_at": "2026-01-29T08:55:17.411589",
-      "plan_id": "plan_9603bf77"
-    },
     {
       "step_id": "step_a60e64d9",
       "agent": "interaction",

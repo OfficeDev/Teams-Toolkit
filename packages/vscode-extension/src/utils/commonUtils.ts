@@ -1,34 +1,29 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { exec } from "child_process";
-import fs from "fs-extra";
-import * as os from "os";
-import path from "path";
-import * as vscode from "vscode";
 import { format } from "util";
+import * as vscode from "vscode";
 import { Result, SystemError, err, ok } from "@microsoft/teamsfx-api";
-import { glob } from "glob";
 import { core, workspaceUri } from "../globalVariables";
 import { localize } from "./localizeUtils";
 import { ExtensionSource, ExtensionErrors } from "../error/error";
-import { isTestToolEnabledProject } from "@microsoft/teamsfx-core";
+import { processAdapter, globAdapter, fsAdapter, envParseAdapter } from "../common/npmPackageDeps";
 
 export function isWindows() {
-  return os.type() === "Windows_NT";
+  return processAdapter.type() === "Windows_NT";
 }
 
 export function isMacOS() {
-  return os.type() === "Darwin";
+  return processAdapter.type() === "Darwin";
 }
 
 export function isLinux() {
-  return os.type() === "Linux";
+  return processAdapter.type() === "Linux";
 }
 
 export function openFolderInExplorer(folderPath: string): void {
   const command = format('start "" "%s"', folderPath);
-  exec(command);
+  processAdapter.exec(command);
 }
 
 export function delay(ms: number) {
@@ -45,15 +40,15 @@ export async function hasAdaptiveCardInWorkspace(): Promise<boolean> {
   const fileSizeLimit = 1024 * 1024;
 
   if (workspaceUri) {
-    const files = await glob(workspaceUri.path + "/**/*.json", {
+    const files = await globAdapter.glob(workspaceUri.path + "/**/*.json", {
       ignore: ["**/node_modules/**", "./node_modules/**"],
     });
     for (const file of files) {
       let content = "";
       let fd = -1;
       try {
-        fd = await fs.open(file, "r");
-        const stat = await fs.fstat(fd);
+        fd = await fsAdapter.open(file, "r");
+        const stat = await fsAdapter.fstat(fd);
         // limit file size to prevent performance impact
         if (stat.size > fileSizeLimit) {
           continue;
@@ -61,14 +56,14 @@ export async function hasAdaptiveCardInWorkspace(): Promise<boolean> {
 
         // avoid security issue
         const buffer = new Uint8Array(fileSizeLimit);
-        const { bytesRead } = await fs.read(fd, buffer, 0, buffer.byteLength, 0);
+        const { bytesRead } = await fsAdapter.read(fd, buffer, 0, buffer.byteLength, 0);
         content = new TextDecoder().decode(buffer.slice(0, bytesRead));
       } catch (e) {
         // skip invalid files
         continue;
       } finally {
         if (fd >= 0) {
-          fs.close(fd).catch(() => {});
+          fsAdapter.close(fd).catch(() => {});
         }
       }
 
@@ -86,10 +81,11 @@ function isAdaptiveCard(content: string): boolean {
   return pattern.test(content);
 }
 
-export function getLocalDebugMessageTemplate(isWindows: boolean): string {
-  const enabledTestTool = workspaceUri?.fsPath && isTestToolEnabledProject(workspaceUri.fsPath);
+export function getLocalDebugMessageTemplate(isWindowsOS: boolean): string {
+  const enabledTestTool =
+    workspaceUri?.fsPath && envParseAdapter.isTestToolEnabledProject(workspaceUri.fsPath);
 
-  if (isWindows) {
+  if (isWindowsOS) {
     return enabledTestTool
       ? localize("teamstoolkit.handlers.localDebugDescription.enabledTestTool")
       : localize("teamstoolkit.handlers.localDebugDescription");

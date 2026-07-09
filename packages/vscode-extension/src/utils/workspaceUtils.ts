@@ -3,7 +3,7 @@
 
 import { Uri, commands } from "vscode";
 import { Warning } from "@microsoft/teamsfx-api";
-import { globalStateUpdate } from "@microsoft/teamsfx-core";
+import * as teamsfxCore from "@microsoft/teamsfx-core";
 import { GlobalKey } from "../constants";
 import { ExtTelemetry } from "../telemetry/extTelemetry";
 import {
@@ -21,18 +21,18 @@ export async function openOfficeDevFolder(
   args?: any[]
 ) {
   // current the welcome walkthrough is not supported for wxp add in
-  await globalStateUpdate(GlobalKey.OpenWalkThrough, false);
-  await globalStateUpdate(GlobalKey.AutoInstallDependency, true);
+  await teamsfxCore.globalStateUpdate(GlobalKey.OpenWalkThrough, false);
+  await teamsfxCore.globalStateUpdate(GlobalKey.AutoInstallDependency, true);
   if (isTriggerFromWalkThrough(args)) {
-    await globalStateUpdate(GlobalKey.OpenReadMe, "");
+    await teamsfxCore.globalStateUpdate(GlobalKey.OpenReadMe, "");
   } else {
-    await globalStateUpdate(GlobalKey.OpenReadMe, folderPath.fsPath);
+    await teamsfxCore.globalStateUpdate(GlobalKey.OpenReadMe, folderPath.fsPath);
   }
   if (showLocalDebugMessage) {
-    await globalStateUpdate(GlobalKey.ShowLocalDebugMessage, true);
+    await teamsfxCore.globalStateUpdate(GlobalKey.ShowLocalDebugMessage, true);
   }
   if (warnings?.length) {
-    await globalStateUpdate(GlobalKey.CreateWarnings, JSON.stringify(warnings));
+    await teamsfxCore.globalStateUpdate(GlobalKey.CreateWarnings, JSON.stringify(warnings));
   }
   ExtTelemetry.sendTelemetryEvent(TelemetryEvent.openNewOfficeAddInProject, {
     [TelemetryProperty.VscWindow]: VSCodeWindowChoice.NewWindowByDefault,

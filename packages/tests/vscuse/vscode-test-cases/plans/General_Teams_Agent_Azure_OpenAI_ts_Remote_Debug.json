@@ -9,7 +9,7 @@
       "precondition_retry_interval": 1,
       "step_retry_count": 0
     },
-    "total_steps": 4,
+    "total_steps": 3,
     "created_at": "2026-01-27T01:28:04.978659",
     "name": "General Teams Agent Azure OpenAI ts Remote Debug",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2026-01-27T01:28:04.978659",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_1be932a4",
+      "plan_r_0624_024810",
       "step_fa6eb347",
       "plan_r_0930_054245",
       "step_99f16afe",
@@ -37,32 +37,6 @@
     "updated_at": "2026-01-27T02:41:32.850656"
   },
   "steps": [
-    {
-      "step_id": "step_1be932a4",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 444,
-        "y": 217
-      },
-      "description": "Click the \"Declarative Agent\" option in the \"New Project\" dropdown menu to select it.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:444:217:16:5:00000000000000a4",
-        "dhash:444:217:96:5:ac8c110a35658800",
-        "dhash:444:217:0:10:c8c88094b2717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_1be932a4",
-      "created_at": "2026-01-27T02:41:13.710299",
-      "plan_id": "plan_2a5d5939"
-    },
     {
       "step_id": "step_fa6eb347",
       "agent": "interaction",

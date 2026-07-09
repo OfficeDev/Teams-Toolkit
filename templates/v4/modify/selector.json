@@ -1,0 +1,78 @@
+{
+  "$schema": "../schema/selector.schema.json",
+  "questions": [
+    {
+      "name": "addCapability",
+      "type": "singleSelect",
+      "title": "Add to Agent",
+      "placeholder": "Select a capability to add",
+      "keyPrefix": "core.modifySelector.addCapability",
+      "staticOptions": [
+        { "id": "add-action",
+          "label": "Action",
+          "detail": "Add an action to your declarative agent",
+          "keyPrefix": "core.modifySelector.addCapability.action" },
+        { "id": "add-knowledge",
+          "label": "Knowledge",
+          "detail": "Add a knowledge source to your declarative agent",
+          "keyPrefix": "core.modifySelector.addCapability.knowledge" },
+        { "id": "add-auth",
+          "label": "Authentication",
+          "detail": "Add authentication to a plugin action",
+          "keyPrefix": "core.modifySelector.addCapability.auth" },
+        { "id": "add-spfx-web-part",
+          "label": "SPFx Web Part",
+          "detail": "Add a web part to your SharePoint Framework solution",
+          "keyPrefix": "core.modifySelector.addCapability.spfxWebPart" }
+      ]
+    },
+    {
+      "name": "actionSource",
+      "type": "singleSelect",
+      "title": "Add an Action",
+      "placeholder": "Select how to add an action",
+      "keyPrefix": "template.createProjectQuestion.createApiPlugin",
+      "condition": { "expr": "addCapability == 'add-action'" },
+      "staticOptions": [
+        { "id": "api-spec",
+          "label": "Start with an OpenAPI Description Document",
+          "detail": "Create an action from your existing API",
+          "keyPrefix": "template.createProjectQuestion.capability.copilotPluginApiSpecOption" },
+        { "id": "mcp",
+          "label": "Start with a MCP server",
+          "detail": "Create an action from your existing MCP server",
+          "keyPrefix": "template.createProjectQuestion.mcpForDa" }
+      ]
+    },
+    {
+      "name": "knowledgeSource",
+      "type": "singleSelect",
+      "title": "Add Knowledge",
+      "placeholder": "Select a knowledge source",
+      "keyPrefix": "core.createProjectQuestion.capability.knowledge",
+      "condition": { "expr": "addCapability == 'add-knowledge'" },
+      "staticOptions": [
+        { "id": "web-search",
+          "label": "Web Search",
+          "keyPrefix": "core.createProjectQuestion.capability.knowledgeWebSearch" },
+        { "id": "oneDrive-sharePoint",
+          "label": "OneDrive and SharePoint",
+          "keyPrefix": "core.createProjectQuestion.capability.knowledgeOneDriveSharePoint" },
+        { "id": "graph-connector",
+          "label": "Copilot Connector",
+          "keyPrefix": "core.createProjectQuestion.capability.knowledgeGraphConnector" },
+        { "id": "embedded-knowledge",
+          "label": "Embedded Knowledge",
+          "keyPrefix": "core.createProjectQuestion.capability.knowledgeEmbeddedKnowledge" }
+      ]
+    }
+  ],
+
+  "routes": [
+    {
+      "when": "addCapability=='add-action' && actionSource=='mcp'",
+      "templateId": "add-mcp-server",
+      "engine": "v4"
+    }
+  ]
+}

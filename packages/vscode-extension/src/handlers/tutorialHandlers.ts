@@ -11,7 +11,7 @@ import {
   err,
   ok,
 } from "@microsoft/teamsfx-api";
-import { getDefaultTemplatesOnPlatform } from "@microsoft/teamsfx-core/build/component/generator/templates/metadata";
+import * as templatesMetadata from "@microsoft/teamsfx-core/build/component/generator/templates/metadata";
 import { PanelType } from "../controls/PanelType";
 import { WebviewPanel } from "../controls/webviewPanel";
 import { TreatmentVariableValue } from "../exp/treatmentVariables";
@@ -339,7 +339,7 @@ export function openTutorialHandler(args?: any[]): Promise<Result<unknown, FxErr
     return Promise.resolve(ok(null));
   }
   // find help link from template metadata
-  const templates = getDefaultTemplatesOnPlatform(Platform.VSCode);
+  const templates = templatesMetadata.getDefaultTemplatesOnPlatform(Platform.VSCode);
   const template = templates.find((t) => t.name === option.data);
   if (template?.link) {
     return VS_CODE_UI.openUrl(template.link);

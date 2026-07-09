@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 10,
+    "total_steps": 9,
     "created_at": "2026-01-28T02:45:01.730427",
     "name": "Feature Deploy Triggered Codelens Support",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2026-01-28T02:45:01.730427",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_1e4b44c9",
+      "plan_r_0624_024810",
       "step_b1c7bf35",
       "step_0be4ea59",
       "step_dafef1b7",
@@ -36,32 +36,6 @@
     "updated_at": "2026-02-02T09:33:57.765381"
   },
   "steps": [
-    {
-      "step_id": "step_1e4b44c9",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 361,
-        "y": 229
-      },
-      "description": "Click on the \"Declarative Agent\" option within the \"New Project\" dropdown menu to create an agent using instructions and actions.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:361:229:16:5:53ccc35ac8d2730c",
-        "dhash:361:229:96:5:959834d2da1409c8",
-        "dhash:361:229:0:10:c8c88094b0717c6f"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_1e4b44c9",
-      "created_at": "2026-02-02T09:22:29.457526",
-      "plan_id": "plan_724df082"
-    },
     {
       "step_id": "step_b1c7bf35",
       "agent": "interaction",

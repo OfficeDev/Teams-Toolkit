@@ -21,19 +21,18 @@ export class MockCore {
     return ok({ projectPath: "" });
   }
 
+  // Mirrors FxCore's composition root: with V4 off the front door is a pure
+  // pass-through to createProject, which is what the surfaces' tests spy on.
+  async createProjectFrontDoor(inputs: Inputs): Promise<Result<CreateProjectResult, FxError>> {
+    return this.createProject(inputs);
+  }
+
   async createProjectFromTdp(inputs: Inputs): Promise<Result<CreateProjectResult, FxError>> {
     return ok({ projectPath: "" });
   }
 
   async createSampleProject(inputs: Inputs): Promise<Result<CreateProjectResult, FxError>> {
     return ok({ projectPath: "" });
-  }
-
-  async metaOSExtendToDA(
-    inputs: Inputs,
-    workDir: string
-  ): Promise<Result<undefined | any, FxError>> {
-    return ok(undefined);
   }
 
   async provisionResources(inputs: Inputs): Promise<Result<undefined, FxError>> {

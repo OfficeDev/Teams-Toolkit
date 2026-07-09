@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 4,
+    "total_steps": 3,
     "created_at": "2025-12-18T01:57:12.432716",
     "name": "Teams Agent With Data Customize Azure OpenAI js Playground Debug",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2025-12-18T01:57:12.432716",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_184fa5c2",
+      "plan_r_0624_024810",
       "step_3e8406d6",
       "step_9dea823d",
       "plan_r_0930_054245",
@@ -34,32 +34,6 @@
     "updated_at": "2025-12-18T02:35:33.794512"
   },
   "steps": [
-    {
-      "step_id": "step_184fa5c2",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 334,
-        "y": 216
-      },
-      "description": "Click on the \"Teams Agent and Apps\" option within the \"New Project\" dropdown list in the Microsoft 365 Agents Toolkit extension of Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:334:216:16:5:584e6e2cd3285464",
-        "dhash:334:216:96:5:5832b6c5921a8584",
-        "dhash:334:216:0:10:c8c88094b2717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_184fa5c2",
-      "created_at": "2025-12-18T02:34:55.493988",
-      "plan_id": "plan_b654f73c"
-    },
     {
       "step_id": "step_3e8406d6",
       "agent": "interaction",

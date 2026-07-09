@@ -1,10 +1,8 @@
 import { ok, TeamsAppManifest } from "@microsoft/teamsfx-api";
-import { featureFlagManager, manifestUtils } from "@microsoft/teamsfx-core";
-import * as projectSettingsHelper from "@microsoft/teamsfx-core/build/common/projectSettingsHelper";
-import * as chai from "chai";
+import * as teamsfxCore from "@microsoft/teamsfx-core";
 import fs from "fs-extra";
 import * as path from "path";
-import * as sinon from "sinon";
+import { assert, expect, vi } from "vitest";
 import * as vscode from "vscode";
 import { PanelType } from "../../src/controls/PanelType";
 import { WebviewPanel } from "../../src/controls/webviewPanel";
@@ -25,86 +23,94 @@ import {
 } from "../../src/telemetry/extTelemetryEvents";
 import * as commonUtils from "../../src/utils/commonUtils";
 import { getDefaultString } from "../../src/utils/localizeUtils";
+import { mockValue } from "../mocks/vitestMockUtils";
+
+vi.mock("@microsoft/teamsfx-core", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@microsoft/teamsfx-core")>();
+  return { ...actual };
+});
 
 describe("Control Handlers", () => {
   describe("openWelcomeHandler", () => {
-    const sandbox = sinon.createSandbox();
-
-    afterEach(() => {
-      sandbox.restore();
-    });
-
     it("opens intelligent app walkthrough for API plugin apps", async () => {
-      sandbox.stub(featureFlagManager, "getBooleanValue").returns(false);
-      sandbox.stub(manifestUtils, "readAppManifest").resolves(ok({} as TeamsAppManifest));
-      sandbox.stub(manifestUtils, "getCapabilities").returns(["copilotGpt"]);
-      sandbox.stub(globalVariables, "workspaceUri").value({ fsPath: "/test" });
-      const executeCommands = sandbox.stub(vscode.commands, "executeCommand");
-      const sendTelemetryEvent = sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
+      vi.spyOn(teamsfxCore.featureFlagManager, "getBooleanValue").mockReturnValue(false);
+      vi.spyOn(teamsfxCore.manifestUtils, "readAppManifest").mockResolvedValue(
+        ok({} as TeamsAppManifest)
+      );
+      vi.spyOn(teamsfxCore.manifestUtils, "getCapabilities").mockReturnValue(["copilotGpt"]);
+      mockValue(globalVariables, "workspaceUri", { fsPath: "/test" });
+      const executeCommands = vi.spyOn(vscode.commands, "executeCommand");
+      const sendTelemetryEvent = vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
 
       await openWelcomeHandler("invalidArgs");
 
-      sandbox.assert.calledOnceWithExactly(
-        executeCommands,
+      expect(executeCommands).toHaveBeenCalledTimes(1);
+      expect(executeCommands).toHaveBeenCalledWith(
         "workbench.action.openWalkthrough",
         "TeamsDevApp.ms-teams-vscode-extension#buildIntelligentApps"
       );
     });
 
     it("opens intelligent app walkthrough with chat for API plugin apps", async () => {
-      sandbox.stub(featureFlagManager, "getBooleanValue").returns(true);
-      sandbox.stub(manifestUtils, "readAppManifest").resolves(ok({} as TeamsAppManifest));
-      sandbox.stub(manifestUtils, "getCapabilities").returns(["copilotGpt"]);
-      sandbox.stub(globalVariables, "workspaceUri").value({ fsPath: "/test" });
-      const executeCommands = sandbox.stub(vscode.commands, "executeCommand");
-      const sendTelemetryEvent = sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
+      vi.spyOn(teamsfxCore.featureFlagManager, "getBooleanValue").mockReturnValue(true);
+      vi.spyOn(teamsfxCore.manifestUtils, "readAppManifest").mockResolvedValue(
+        ok({} as TeamsAppManifest)
+      );
+      vi.spyOn(teamsfxCore.manifestUtils, "getCapabilities").mockReturnValue(["copilotGpt"]);
+      mockValue(globalVariables, "workspaceUri", { fsPath: "/test" });
+      const executeCommands = vi.spyOn(vscode.commands, "executeCommand");
+      const sendTelemetryEvent = vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
 
       await openWelcomeHandler("invalidArgs");
 
-      sandbox.assert.calledOnceWithExactly(
-        executeCommands,
+      expect(executeCommands).toHaveBeenCalledTimes(1);
+      expect(executeCommands).toHaveBeenCalledWith(
         "workbench.action.openWalkthrough",
         "TeamsDevApp.ms-teams-vscode-extension#buildIntelligentApps"
       );
     });
 
     it("opens intelligent app walkthrough for JS/TS custom engine copilot apps", async () => {
-      sandbox.stub(featureFlagManager, "getBooleanValue").returns(false);
-      sandbox.stub(manifestUtils, "readAppManifest").resolves(ok({} as TeamsAppManifest));
-      sandbox.stub(manifestUtils, "getCapabilities").returns(["bot"]);
-      sandbox.stub(globalVariables, "workspaceUri").value({ fsPath: "/test" });
-      sandbox.stub(fs, "pathExists").callsFake(async (path: string) => {
+      vi.spyOn(teamsfxCore.featureFlagManager, "getBooleanValue").mockReturnValue(false);
+      vi.spyOn(teamsfxCore.manifestUtils, "readAppManifest").mockResolvedValue(
+        ok({} as TeamsAppManifest)
+      );
+      vi.spyOn(teamsfxCore.manifestUtils, "getCapabilities").mockReturnValue(["bot"]);
+      mockValue(globalVariables, "workspaceUri", { fsPath: "/test" });
+      vi.spyOn(fs, "pathExists").mockImplementation(async (path: string) => {
         return path.includes("package.json");
       });
-      sandbox.stub(fs, "readFile").resolves(Buffer.from('"@microsoft/teams-ai"'));
-      const executeCommands = sandbox.stub(vscode.commands, "executeCommand");
-      const sendTelemetryEvent = sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
+      vi.spyOn(fs, "readFile").mockResolvedValue(Buffer.from('"@microsoft/teams-ai"'));
+      const executeCommands = vi.spyOn(vscode.commands, "executeCommand");
+      const sendTelemetryEvent = vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
 
       await openWelcomeHandler();
 
-      sandbox.assert.calledOnceWithExactly(
-        executeCommands,
+      expect(executeCommands).toHaveBeenCalledTimes(1);
+      expect(executeCommands).toHaveBeenCalledWith(
         "workbench.action.openWalkthrough",
         "TeamsDevApp.ms-teams-vscode-extension#buildIntelligentApps"
       );
     });
 
     it("opens intelligent app walkthrough for python custom engine copilot apps", async () => {
-      sandbox.stub(featureFlagManager, "getBooleanValue").returns(false);
-      sandbox.stub(manifestUtils, "readAppManifest").resolves(ok({} as TeamsAppManifest));
-      sandbox.stub(manifestUtils, "getCapabilities").returns(["bot"]);
-      sandbox.stub(globalVariables, "workspaceUri").value({ fsPath: "/test" });
-      sandbox.stub(fs, "pathExists").callsFake(async (path: string) => {
+      vi.spyOn(teamsfxCore.featureFlagManager, "getBooleanValue").mockReturnValue(false);
+      vi.spyOn(teamsfxCore.manifestUtils, "readAppManifest").mockResolvedValue(
+        ok({} as TeamsAppManifest)
+      );
+      vi.spyOn(teamsfxCore.manifestUtils, "getCapabilities").mockReturnValue(["bot"]);
+      mockValue(globalVariables, "workspaceUri", { fsPath: "/test" });
+      vi.spyOn(fs, "pathExists").mockImplementation(async (path: string) => {
         return path.includes("requirements.txt");
       });
-      sandbox.stub(fs, "readFile").resolves(Buffer.from("teams-ai"));
-      const executeCommands = sandbox.stub(vscode.commands, "executeCommand");
-      const sendTelemetryEvent = sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
+      vi.spyOn(fs, "readFile").mockResolvedValue(Buffer.from("teams-ai"));
+      const executeCommands = vi.spyOn(vscode.commands, "executeCommand");
+      const sendTelemetryEvent = vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
 
       await openWelcomeHandler();
 
-      sandbox.assert.calledOnceWithExactly(
-        executeCommands,
+      expect(executeCommands).toHaveBeenCalledTimes(1);
+      expect(executeCommands).toHaveBeenCalledWith(
         "workbench.action.openWalkthrough",
         "TeamsDevApp.ms-teams-vscode-extension#buildIntelligentApps"
       );
@@ -112,197 +118,173 @@ describe("Control Handlers", () => {
   });
 
   describe("openSamplesHandler", () => {
-    const sandbox = sinon.createSandbox();
-
-    afterEach(() => {
-      sandbox.restore();
-    });
-
     it("openSamplesHandler", async () => {
-      const createOrShow = sandbox.stub(WebviewPanel, "createOrShow");
-      const sendTelemetryEvent = sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
+      const createOrShow = vi
+        .spyOn(WebviewPanel, "createOrShow")
+        .mockImplementation(() => undefined);
+      const sendTelemetryEvent = vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
 
       await openSamplesHandler();
 
-      sandbox.assert.calledOnceWithExactly(createOrShow, PanelType.SampleGallery, []);
+      expect(createOrShow).toHaveBeenCalledTimes(1);
+      expect(createOrShow).toHaveBeenCalledWith(PanelType.SampleGallery, []);
     });
   });
 
   describe("openFolderHandler", () => {
-    const sandbox = sinon.createSandbox();
-
-    afterEach(() => {
-      sandbox.restore();
-    });
-
     it("empty args", async () => {
-      const sendTelemetryStub = sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
+      const sendTelemetryStub = vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
 
       const result = await openFolderHandler();
 
-      chai.assert.isTrue(sendTelemetryStub.called);
-      chai.assert.isTrue(result.isOk());
+      assert.isTrue(sendTelemetryStub.called);
+      assert.isTrue(result.isOk());
     });
 
     it("happy path", async () => {
-      const sendTelemetryStub = sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-      const openFolderInExplorerStub = sandbox.stub(commonUtils, "openFolderInExplorer");
+      const sendTelemetryStub = vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+      const openFolderInExplorerStub = vi
+        .spyOn(commonUtils, "openFolderInExplorer")
+        .mockImplementation(() => {
+          return;
+        });
 
       const result = await openFolderHandler("file://path/to/folder");
 
       const expectedPath = "/path/to/folder".split("/").join(path.sep);
-      chai.assert.isTrue(sendTelemetryStub.called);
-      chai.assert.isTrue(openFolderInExplorerStub.calledOnceWith(expectedPath));
-      chai.assert.isTrue(result.isOk());
+      assert.isTrue(sendTelemetryStub.called);
+      assert.isTrue(openFolderInExplorerStub.calledOnceWith(expectedPath));
+      assert.isTrue(result.isOk());
     });
   });
 
   describe("saveTextDocumentHandler", () => {
-    const sandbox = sinon.createSandbox();
-
-    afterEach(() => {
-      sandbox.restore();
-    });
-
     it("non valid project", () => {
-      const isValidProjectStub = sandbox
-        .stub(projectSettingsHelper, "isValidProject")
-        .returns(false);
-      sandbox.stub(globalVariables, "workspaceUri").value({ fsPath: "/path/to/workspace" });
+      const isValidProjectStub = vi.spyOn(teamsfxCore, "isValidProject").mockReturnValue(false);
+      mockValue(globalVariables, "workspaceUri", { fsPath: "/path/to/workspace" });
 
       saveTextDocumentHandler({ document: {} } as any);
 
-      chai.assert.isTrue(isValidProjectStub.calledOnceWith("/path/to/workspace"));
+      assert.isTrue(isValidProjectStub.calledOnceWith("/path/to/workspace"));
     });
 
     it("manual save reason", () => {
-      const isValidProjectStub = sandbox
-        .stub(projectSettingsHelper, "isValidProject")
-        .returns(true);
-      const sendTelemetryEventStub = sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-      sandbox.stub(globalVariables, "workspaceUri").value({ fsPath: "/path/to/workspace" });
+      const isValidProjectStub = vi.spyOn(teamsfxCore, "isValidProject").mockReturnValue(true);
+      const sendTelemetryEventStub = vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+      mockValue(globalVariables, "workspaceUri", { fsPath: "/path/to/workspace" });
 
       saveTextDocumentHandler({
         document: { fileName: "/dirname/fileName" },
         reason: vscode.TextDocumentSaveReason.Manual,
       } as vscode.TextDocumentWillSaveEvent);
 
-      chai.assert.isTrue(isValidProjectStub.calledTwice);
-      chai.assert.equal(isValidProjectStub.getCall(0).args[0], "/path/to/workspace");
-      chai.assert.equal(isValidProjectStub.getCall(1).args[0], "/dirname");
-      chai.assert.equal(sendTelemetryEventStub.getCall(0).args[0], TelemetryEvent.UpdateTeamsApp);
-      chai.assert.deepEqual(sendTelemetryEventStub.getCall(0).args[1], {
-        [TelemetryProperty.UpdateTeamsAppReason]: TelemetryUpdateAppReason.Manual,
-      });
+      assert.isTrue(isValidProjectStub.calledTwice);
+      assert.equal(isValidProjectStub.getCall(0).args[0], "/path/to/workspace");
+      assert.equal(isValidProjectStub.getCall(1).args[0], "/dirname");
+      assert.equal(sendTelemetryEventStub.getCall(0).args[0], TelemetryEvent.UpdateTeamsApp);
+      assert.equal(
+        sendTelemetryEventStub.getCall(0).args[1][TelemetryProperty.UpdateTeamsAppReason],
+        TelemetryUpdateAppReason.Manual
+      );
     });
 
     it("after delay save reason", () => {
-      const isValidProjectStub = sandbox
-        .stub(projectSettingsHelper, "isValidProject")
-        .returns(true);
-      const sendTelemetryEventStub = sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-      sandbox.stub(globalVariables, "workspaceUri").value({ fsPath: "/path/to/workspace" });
+      const isValidProjectStub = vi.spyOn(teamsfxCore, "isValidProject").mockReturnValue(true);
+      const sendTelemetryEventStub = vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+      mockValue(globalVariables, "workspaceUri", { fsPath: "/path/to/workspace" });
 
       saveTextDocumentHandler({
         document: { fileName: "/dirname/fileName" },
         reason: vscode.TextDocumentSaveReason.AfterDelay,
       } as vscode.TextDocumentWillSaveEvent);
 
-      chai.assert.isTrue(isValidProjectStub.calledTwice);
-      chai.assert.equal(isValidProjectStub.getCall(0).args[0], "/path/to/workspace");
-      chai.assert.equal(isValidProjectStub.getCall(1).args[0], "/dirname");
-      chai.assert.equal(sendTelemetryEventStub.getCall(0).args[0], TelemetryEvent.UpdateTeamsApp);
-      chai.assert.deepEqual(sendTelemetryEventStub.getCall(0).args[1], {
-        [TelemetryProperty.UpdateTeamsAppReason]: TelemetryUpdateAppReason.AfterDelay,
-      });
+      assert.isTrue(isValidProjectStub.calledTwice);
+      assert.equal(isValidProjectStub.getCall(0).args[0], "/path/to/workspace");
+      assert.equal(isValidProjectStub.getCall(1).args[0], "/dirname");
+      assert.equal(sendTelemetryEventStub.getCall(0).args[0], TelemetryEvent.UpdateTeamsApp);
+      assert.equal(
+        sendTelemetryEventStub.getCall(0).args[1][TelemetryProperty.UpdateTeamsAppReason],
+        TelemetryUpdateAppReason.AfterDelay
+      );
     });
 
     it("focus out save reason", () => {
       const dirname = "/dirname";
       const parentDir = path.join(dirname, "..");
-      const isValidProjectStub = sandbox
-        .stub(projectSettingsHelper, "isValidProject")
-        .callsFake((p: string | undefined) => {
+      const isValidProjectStub = vi
+        .spyOn(teamsfxCore, "isValidProject")
+        .mockImplementation((p: string | undefined) => {
           return p !== dirname;
         });
-      const sendTelemetryEventStub = sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-      sandbox.stub(globalVariables, "workspaceUri").value({ fsPath: "/path/to/workspace" });
+      const sendTelemetryEventStub = vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+      mockValue(globalVariables, "workspaceUri", { fsPath: "/path/to/workspace" });
 
       saveTextDocumentHandler({
         document: { fileName: "/dirname/fileName" },
         reason: vscode.TextDocumentSaveReason.FocusOut,
       } as vscode.TextDocumentWillSaveEvent);
 
-      chai.assert.isTrue(isValidProjectStub.calledThrice);
-      chai.assert.equal(isValidProjectStub.getCall(0).args[0], "/path/to/workspace");
-      chai.assert.equal(isValidProjectStub.getCall(1).args[0], dirname);
-      chai.assert.equal(isValidProjectStub.getCall(2).args[0], parentDir);
-      chai.assert.equal(sendTelemetryEventStub.getCall(0).args[0], TelemetryEvent.UpdateTeamsApp);
-      chai.assert.deepEqual(sendTelemetryEventStub.getCall(0).args[1], {
-        [TelemetryProperty.UpdateTeamsAppReason]: TelemetryUpdateAppReason.FocusOut,
-      });
+      assert.isTrue(isValidProjectStub.calledThrice);
+      assert.equal(isValidProjectStub.getCall(0).args[0], "/path/to/workspace");
+      assert.equal(isValidProjectStub.getCall(1).args[0], dirname);
+      assert.equal(isValidProjectStub.getCall(2).args[0], parentDir);
+      assert.equal(sendTelemetryEventStub.getCall(0).args[0], TelemetryEvent.UpdateTeamsApp);
+      assert.equal(
+        sendTelemetryEventStub.getCall(0).args[1][TelemetryProperty.UpdateTeamsAppReason],
+        TelemetryUpdateAppReason.FocusOut
+      );
     });
   });
 
   describe("openLifecycleTreeview", () => {
-    const sandbox = sinon.createSandbox();
-
-    afterEach(() => {
-      sandbox.restore();
-    });
-
     it("TeamsFx Project", async () => {
-      sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-      sandbox.stub(globalVariables, "isTeamsFxProject").value(true);
-      const executeCommandStub = sandbox.stub(vscode.commands, "executeCommand");
+      vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+      mockValue(globalVariables, "isTeamsFxProject", true);
+      const executeCommandStub = vi.spyOn(vscode.commands, "executeCommand");
 
       await openLifecycleTreeview();
 
-      chai.assert.isTrue(executeCommandStub.calledWith("teamsfx-lifecycle.focus"));
+      assert.isTrue(executeCommandStub.calledWith("teamsfx-lifecycle.focus"));
     });
 
     it("non-TeamsFx Project", async () => {
-      sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-      sandbox.stub(globalVariables, "isTeamsFxProject").value(false);
-      const executeCommandStub = sandbox.stub(vscode.commands, "executeCommand");
+      vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+      mockValue(globalVariables, "isTeamsFxProject", false);
+      const executeCommandStub = vi.spyOn(vscode.commands, "executeCommand");
 
       await openLifecycleTreeview();
 
-      chai.assert.isTrue(executeCommandStub.calledWith("workbench.view.extension.teamsfx"));
+      assert.isTrue(executeCommandStub.calledWith("workbench.view.extension.teamsfx"));
     });
   });
 
   describe("selectWalkthrough", () => {
-    let quickPickStub: sinon.SinonStub;
-    let executeCommandStub: sinon.SinonStub;
+    let quickPickStub: ReturnType<typeof vi.spyOn>;
+    let executeCommandStub: ReturnType<typeof vi.spyOn>;
 
     beforeEach(() => {
       // Stubbing VS Code APIs
-      quickPickStub = sinon.stub(vscode.window, "showQuickPick");
-      executeCommandStub = sinon.stub(vscode.commands, "executeCommand");
-    });
-
-    afterEach(() => {
-      sinon.restore();
+      quickPickStub = vi.spyOn(vscode.window, "showQuickPick");
+      executeCommandStub = vi.spyOn(vscode.commands, "executeCommand");
     });
 
     it("should select the declarative agent walkthrough", async () => {
-      quickPickStub.resolves({
+      quickPickStub.mockResolvedValue({
         label: getDefaultString("teamstoolkit.walkthroughs.buildIntelligentApps.title"),
         detail: "Some description",
       });
 
-      executeCommandStub.callsFake((command: string, ...args: any[]) => {
-        chai.assert(command, "workbench.action.openWalkthrough");
-        chai.assert(args[0], "TeamsDevApp.ms-teams-vscode-extension#buildIntelligentApps");
+      executeCommandStub.mockImplementation((command: string, ...args: any[]) => {
+        assert(command, "workbench.action.openWalkthrough");
+        assert(args[0], "TeamsDevApp.ms-teams-vscode-extension#buildIntelligentApps");
         return "Success";
       });
 
       const result = await selectWalkthrough();
 
-      chai.assert.isTrue(quickPickStub.calledOnce);
-      chai.assert.isTrue(executeCommandStub.calledOnce);
-      chai.assert.isTrue(result.isOk());
+      assert.isTrue(quickPickStub.calledOnce);
+      assert.isTrue(executeCommandStub.calledOnce);
+      assert.isTrue(result.isOk());
     });
   });
 });

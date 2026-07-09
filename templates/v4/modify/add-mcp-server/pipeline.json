@@ -1,0 +1,32 @@
+{
+  "pipeline": "default",
+  "comment": "DT-on draft 'add MCP action'. The NEW action manifest is RENDERED, not built in code: its content (manifest skeleton + dynamic-discovery RemoteMCPServer runtime + auth field) is pure (host-derived namespace via mcpNamespace, reference_id via mcpAuthRef), so it lives in content/appPackage/ai-plugin-{{MCPNamespace}}.json.tpl. Rendering keeps the manifest schema_version in the template (the unit of evolution) instead of duplicating a JSON skeleton in engine code -- a future manifest bump edits the .tpl, never a step. The dynamic filename ({{MCPNamespace}}, host-derived & filesystem-safe) avoids fixed-name collisions with any existing ai-plugin.json; a same-host re-add collapses to the same path and is backstopped by the render-phase skip+warning. ONLY operations that touch EXISTING files are steps: (1) registering the rendered plugin as an action in the DA manifest (path derived from the Teams app manifest's declarativeAgents[0].file, never hardcoded), and (2/3) the auth wiring, which reuses the SAME shared steps as create (mcp-auth/* -> mcpAuthScaffolder) so create and add never drift. No .vscode/mcp.json write and no static tools list: those belong to the DT-off shipped path (core.addPlugin + fetch-mcp-tools CodeLens), routed separately in selector.json. See proposal §13.1.",
+  "steps": [
+    {
+      "step": "da-action/register-plugin-manifest",
+      "comment": "Mutation of the EXISTING declarativeAgent.json: registers the just-rendered plugin manifest as an action (local action id, intentionally not aligned to provisioning per §13.1). The DA manifest path is NOT hardcoded: the step DERIVES it at runtime by reading the Teams app manifest's declarativeAgents[0].file (same getManifestPath contract the shipped core.addPlugin / updateActionWithMCP use), so projects that renamed or relocated the DA manifest (or use the legacy copilotExtensions.declarativeCopilots[0].file shape) still resolve correctly -- a fixed 'appPackage/declarativeAgent.json' would only ever match the default template layout. teamsManifestPath defaults to appPackage/manifest.json and is overridable to match the user-selectable ManifestPath in the CLI add flow. Desired-state / upsert by pluginManifestPath so re-runs are no-ops.",
+      "with": {
+        "teamsManifestPath": "{{#teamsManifestPath}}{{teamsManifestPath}}{{/teamsManifestPath}}{{^teamsManifestPath}}appPackage/manifest.json{{/teamsManifestPath}}",
+        "pluginManifestPath": "appPackage/ai-plugin-{{MCPNamespace}}.json"
+      }
+    },
+    {
+      "step": "mcp-auth/inject-yml-action",
+      "when": "authType != 'none'",
+      "with": {
+        "ymlPath": "m365agents.yml",
+        "authType": "{{authType}}",
+        "mcpServerUrl": "{{MCPForDAServerUrl}}",
+        "includeCredentialRefs": true
+      }
+    },
+    {
+      "step": "mcp-auth/persist-credential-env",
+      "when": "authType == 'oauth' || authType == 'entra-sso'",
+      "with": {
+        "authType": "{{authType}}",
+        "mcpServerUrl": "{{MCPForDAServerUrl}}"
+      }
+    }
+  ]
+}

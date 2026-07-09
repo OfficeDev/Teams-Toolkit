@@ -1,21 +1,17 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import * as vscode from "vscode";
 import { FxError, Stage } from "@microsoft/teamsfx-api";
-import {
-  Correlator,
-  telemetryUtils,
-  globalStateGet,
-  globalStateUpdate,
-} from "@microsoft/teamsfx-core";
+import * as teamsfxCore from "@microsoft/teamsfx-core";
+import * as vscode from "vscode";
 import * as extensionPackage from "../../package.json";
-import { VSCodeTelemetryReporter } from "./vscodeTelemetryReporter";
 import * as globalVariables from "../globalVariables";
-import { getProjectId } from "../utils/telemetryUtils";
+import * as telemetryUtilsModule from "../utils/telemetryUtils";
 import { TelemetryComponentType, TelemetryEvent, TelemetryProperty } from "./extTelemetryEvents";
+import { VSCodeTelemetryReporter } from "./vscodeTelemetryReporter";
 
 const TelemetryCacheKey = "TelemetryEvents";
+
 // export for UT
 export let lastCorrelationId: string | undefined = undefined;
 
@@ -86,8 +82,6 @@ export namespace ExtTelemetry {
         return TelemetryEvent.AddPlugin;
       case Stage.RegeneratePlugin:
         return TelemetryEvent.RegenerateAction;
-      case Stage.metaOSExtendToDA:
-        return TelemetryEvent.MetaOSExtendToDA;
       case Stage.addAuthAction:
         return TelemetryEvent.AddAuthAction;
       case Stage.addKnowledge:
@@ -107,7 +101,7 @@ export namespace ExtTelemetry {
     measurements?: { [p: string]: number }
   ): void {
     setHasSentTelemetry(eventName);
-    lastCorrelationId = Correlator.getId();
+    lastCorrelationId = teamsfxCore.Correlator.getId();
     if (!properties) {
       properties = {};
     }
@@ -146,7 +140,7 @@ export namespace ExtTelemetry {
 
     properties[TelemetryProperty.IsExistingUser] = globalVariables.isExistingUser;
 
-    telemetryUtils.fillInErrorProperties(properties, error);
+    teamsfxCore.telemetryUtils.fillInErrorProperties(properties, error);
 
     if (globalVariables.workspaceUri) {
       properties[TelemetryProperty.IsSpfx] = globalVariables.isSPFxProject.toString();
@@ -193,17 +187,19 @@ export namespace ExtTelemetry {
       eventName: eventName,
       properties: {
         [TelemetryProperty.CorrelationId]: lastCorrelationId,
-        [TelemetryProperty.ProjectId]: await getProjectId(),
+        [TelemetryProperty.ProjectId]: await telemetryUtilsModule.getProjectId(),
         [TelemetryProperty.Timestamp]: new Date().toISOString(),
         ...properties,
       },
     };
     const newValue = JSON.stringify(telemetryEvents);
-    await globalStateUpdate(TelemetryCacheKey, newValue);
+    await teamsfxCore.globalStateUpdate(TelemetryCacheKey, newValue);
   }
 
   export async function sendCachedTelemetryEventsAsync() {
-    const existingValue = (await globalStateGet(TelemetryCacheKey)) as string | undefined;
+    const existingValue = (await teamsfxCore.globalStateGet(TelemetryCacheKey)) as
+      | string
+      | undefined;
     if (existingValue) {
       try {
         const telemetryEvent = JSON.parse(existingValue) as {
@@ -212,7 +208,7 @@ export namespace ExtTelemetry {
         };
         reporter.sendTelemetryEvent(telemetryEvent.eventName, telemetryEvent.properties);
       } catch (e) {}
-      await globalStateUpdate(TelemetryCacheKey, undefined);
+      await teamsfxCore.globalStateUpdate(TelemetryCacheKey, undefined);
     }
   }
 

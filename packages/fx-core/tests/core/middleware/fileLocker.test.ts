@@ -1,28 +1,35 @@
-import { assert } from "chai";
 import * as fs from "fs-extra";
 import path from "path";
-import * as sinon from "sinon";
-import { fileLockerDeps, withFileLock } from "../../../src/core/middleware/fileLocker";
+import { afterEach, assert, beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("proper-lockfile");
+vi.mock("../../../src/common/utils");
+
+import * as properLock from "proper-lockfile";
+import * as commonUtils from "../../../src/common/utils";
+import { withFileLock } from "../../../src/core/middleware/fileLocker";
 
 describe("withFileLock", () => {
-  const sandbox = sinon.createSandbox();
   const testFilePath = path.join(__dirname, "test.lock");
 
   beforeEach(async () => {
     await fs.ensureFile(testFilePath);
+    vi.clearAllMocks();
   });
 
   afterEach(async () => {
-    sandbox.restore();
     await fs.remove(testFilePath);
+    vi.restoreAllMocks();
   });
 
   it("should execute the callback when lock is acquired", async () => {
-    const callback = sandbox.stub().resolves("success");
+    const releaseStub = vi.fn().mockResolvedValue(undefined);
+    (properLock.lock as any).mockResolvedValue(releaseStub);
+    const callback = vi.fn().mockResolvedValue("success");
 
     const result = await withFileLock(testFilePath, callback);
 
-    assert.isTrue(callback.calledOnce);
+    expect(callback).toHaveBeenCalled();
     assert.strictEqual(result, "success");
   });
 
@@ -33,69 +40,69 @@ describe("withFileLock", () => {
       await withFileLock(testFilePath, async () => "should not reach here");
       assert.fail("Expected error was not thrown");
     } catch (error) {
-      assert.strictEqual(error.message, `File not found: ${testFilePath}`);
+      assert.strictEqual((error as Error).message, `File not found: ${testFilePath}`);
     }
 
     await fs.ensureFile(testFilePath);
   });
 
   it("should retry acquiring the lock if it is already locked", async () => {
-    const callback = sandbox.stub().resolves("success");
-    const lockStub = sandbox
-      .stub()
-      .onFirstCall()
-      .throws({ code: "ELOCKED" })
-      .onSecondCall()
-      .resolves(async () => {});
+    const callback = vi.fn().mockResolvedValue("success");
+    const releaseStub = vi.fn().mockResolvedValue(undefined);
+    let callCount = 0;
 
-    sandbox.stub(fileLockerDeps, "lock").callsFake(lockStub as any);
-    sandbox.stub(fileLockerDeps, "waitSeconds").resolves();
+    (properLock.lock as any).mockImplementation(async () => {
+      callCount++;
+      if (callCount === 1) {
+        throw { code: "ELOCKED" };
+      }
+      return releaseStub;
+    });
+    (commonUtils.waitSeconds as any).mockResolvedValue(undefined);
 
     const result = await withFileLock(testFilePath, callback);
 
-    assert.isTrue(callback.calledOnce);
+    expect(callback).toHaveBeenCalled();
     assert.strictEqual(result, "success");
-    assert.strictEqual(lockStub.callCount, 2);
+    assert.strictEqual(callCount, 2);
   });
 
   it("should throw an error if lock cannot be acquired after retries", async () => {
-    const lockStub = sandbox.stub().throws({ code: "ELOCKED" });
-    sandbox.stub(fileLockerDeps, "lock").callsFake(lockStub as any);
-    sandbox.stub(fileLockerDeps, "waitSeconds").resolves();
+    (properLock.lock as any).mockRejectedValue({ code: "ELOCKED" });
+    (commonUtils.waitSeconds as any).mockResolvedValue(undefined);
 
     try {
       await withFileLock(testFilePath, async () => "should not reach here");
       assert.fail("Expected error was not thrown");
     } catch (error) {
       assert.strictEqual(
-        error.message,
+        (error as Error).message,
         `Failed to acquire lock on ${testFilePath} after 10 seconds.`
       );
     }
   });
 
   it("should throw an error if lock fails for a reason other than ELOCKED", async () => {
-    const lockStub = sandbox.stub().throws(new Error("Some other error"));
-    sandbox.stub(fileLockerDeps, "lock").callsFake(lockStub as any);
+    (properLock.lock as any).mockRejectedValue(new Error("Some other error"));
+
     try {
       await withFileLock(testFilePath, async () => "should not reach here");
       assert.fail("Expected error was not thrown");
     } catch (error) {
-      assert.strictEqual(error.message, "Some other error");
+      assert.strictEqual((error as Error).message, "Some other error");
     }
   });
 
   it("should release the lock after the callback is executed", async () => {
-    const releaseStub = sandbox.stub().resolves();
-    const lockStub = sandbox.stub().resolves(releaseStub);
-    sandbox.stub(fileLockerDeps, "lock").callsFake(lockStub as any);
+    const releaseStub = vi.fn().mockResolvedValue(undefined);
+    (properLock.lock as any).mockResolvedValue(releaseStub);
 
-    const callback = sandbox.stub().resolves("success");
+    const callback = vi.fn().mockResolvedValue("success");
 
     const result = await withFileLock(testFilePath, callback);
 
-    assert.isTrue(callback.calledOnce);
+    expect(callback).toHaveBeenCalled();
     assert.strictEqual(result, "success");
-    assert.isTrue(releaseStub.calledOnce);
+    expect(releaseStub).toHaveBeenCalled();
   });
 });

@@ -9,11 +9,6 @@ import { commands } from "../../resource";
 import { TelemetryEvent } from "../../telemetry/cliTelemetryEvents";
 import { ProjectFolderOption } from "../common";
 
-export const envAddDeps = {
-  isValidProjectV3: (projectPath?: string) => settingHelper.isValidProjectV3(projectPath ?? ""),
-  getFxCore: () => activate.getFxCore(),
-};
-
 export const envAddCommand: CLICommand = {
   name: "add",
   description: commands["env.add"].description,
@@ -25,10 +20,10 @@ export const envAddCommand: CLICommand = {
   defaultInteractiveOption: false,
   handler: async (ctx) => {
     const inputs = ctx.optionValues as CreateEnvInputs & InputsWithProjectPath;
-    if (!envAddDeps.isValidProjectV3(inputs.projectPath)) {
+    if (!settingHelper.isValidProjectV3(inputs.projectPath ?? "")) {
       return err(WorkspaceNotSupported(inputs.projectPath));
     }
-    const core = envAddDeps.getFxCore();
+    const core = activate.getFxCore();
     const result = await core.createEnv(inputs);
     return result;
   },

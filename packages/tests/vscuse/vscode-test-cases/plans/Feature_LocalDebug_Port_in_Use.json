@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 28,
+    "total_steps": 26,
     "created_at": "2026-04-30T07:31:08.802500",
     "name": "Feature LocalDebug Port in Use",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2026-04-30T07:31:08.802496",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_c38c9de2",
+      "plan_r_0624_024810",
       "step_ff8f068a",
       "step_e97e1265",
       "step_a043f2ba",
@@ -36,7 +36,7 @@
       "step_ee1ef15f",
       "step_e8cb12a9",
       "step_7cb9bf9e",
-      "step_2801cf83",
+      "plan_r_0624_024810",
       "step_ca5717cf",
       "step_714cdffc",
       "step_436231ac",
@@ -55,32 +55,6 @@
     "updated_at": "2026-04-30T07:46:52.932832"
   },
   "steps": [
-    {
-      "step_id": "step_c38c9de2",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 361,
-        "y": 229
-      },
-      "description": "Click on the \"Declarative Agent\" option within the \"New Project\" dropdown menu to create an agent using instructions and actions.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:361:229:16:5:53ccc35ac8d2730c",
-        "dhash:361:229:96:5:959834d2da1409c8",
-        "dhash:361:229:0:10:c8c88094b0717c6f"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_c38c9de2",
-      "created_at": "2026-04-30T07:31:08.809166",
-      "plan_id": "plan_f092a0c2"
-    },
     {
       "step_id": "step_ff8f068a",
       "agent": "interaction",
@@ -387,32 +361,6 @@
       "tags": [],
       "screenshot": "step_7cb9bf9e",
       "created_at": "2026-04-30T07:31:08.892084",
-      "plan_id": "plan_f092a0c2"
-    },
-    {
-      "step_id": "step_2801cf83",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 302,
-        "y": 222
-      },
-      "description": "Click on the \"Teams Agents and Apps\" option in the \"New Project\" dropdown menu within Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:302:222:16:5:2786108e61dc8a2a",
-        "dhash:302:222:96:5:a666501a632613e6",
-        "dhash:302:222:0:10:c8c84062aae324a0"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_2801cf83",
-      "created_at": "2026-04-30T07:31:08.897659",
       "plan_id": "plan_f092a0c2"
     },
     {

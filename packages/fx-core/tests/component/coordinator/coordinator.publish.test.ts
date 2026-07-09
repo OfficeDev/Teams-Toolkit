@@ -1,7 +1,5 @@
-import { assert } from "chai";
 import { DotenvParseOutput } from "dotenv";
 import fs from "fs-extra";
-import * as sinon from "sinon";
 
 import {
   err,
@@ -29,21 +27,22 @@ import { setTools } from "../../../src/common/globalVars";
 import * as v3MigrationUtils from "../../../src/core/middleware/utils/v3MigrationUtils";
 import { MockTools } from "../../core/utils";
 import { mockedResolveDriverInstances } from "./coordinator.test";
+import { assert, expect, vi } from "vitest";
 
 const versionInfo: VersionInfo = {
   version: MetadataV3.projectVersion,
   source: VersionSource.teamsapp,
 };
 describe("component coordinator test", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   const tools = new MockTools();
   setTools(tools);
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   beforeEach(() => {
-    sandbox.stub(v3MigrationUtils, "getProjectVersion").resolves(versionInfo);
+    vi.spyOn(v3MigrationUtils, "getProjectVersion").mockResolvedValue(versionInfo);
   });
   it("publish happy path", async () => {
     const mockProjectModel: ProjectModel = {
@@ -60,35 +59,35 @@ describe("component coordinator test", () => {
         resolveDriverInstances: mockedResolveDriverInstances,
       },
     };
-    sandbox.stub(metadataUtil, "parse").resolves(ok(mockProjectModel));
-    sandbox.stub(envUtil, "listEnv").resolves(ok(["dev", "prod"]));
-    sandbox.stub(envUtil, "readEnv").resolves(ok({}));
-    sandbox.stub(envUtil, "writeEnv").resolves(ok(undefined));
-    sandbox.stub(tools.ui, "selectOption").callsFake(async (config) => {
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(ok(mockProjectModel));
+    vi.spyOn(envUtil, "listEnv").mockResolvedValue(ok(["dev", "prod"]));
+    vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
+    vi.spyOn(envUtil, "writeEnv").mockResolvedValue(ok(undefined));
+    vi.spyOn(tools.ui, "selectOption").mockImplementation(async (config) => {
       if (config.name === "env") {
         return ok({ type: "success", result: "dev" });
       } else {
         return ok({ type: "success", result: "" });
       }
     });
-    const progressStartStub = sandbox.stub();
-    const progressEndStub = sandbox.stub();
-    sandbox.stub(tools.ui, "createProgressBar").returns({
+    const progressStartStub = vi.fn();
+    const progressEndStub = vi.fn();
+    vi.spyOn(tools.ui, "createProgressBar").mockReturnValue({
       start: progressStartStub,
       end: progressEndStub,
     } as any as IProgressHandler);
-    const showMessageStub = sandbox
-      .stub(tools.ui, "showMessage")
-      .callsFake(async (level, msg, modal, ...items) => {
+    const showMessageStub = vi
+      .spyOn(tools.ui, "showMessage")
+      .mockImplementation(async (level, msg, modal, ...items) => {
         if (items.length > 0 && items[0].includes("admin portal")) {
           return ok(items[0]);
         }
         return ok("");
       });
-    const openUrlStub = sandbox.stub(tools.ui, "openUrl").resolves(ok(true));
-    sandbox.stub(pathUtils, "getEnvFilePath").resolves(ok("."));
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-    sandbox.stub(fs, "pathExistsSync").onFirstCall().returns(false).onSecondCall().returns(true);
+    const openUrlStub = vi.spyOn(tools.ui, "openUrl").mockResolvedValue(ok(true));
+    vi.spyOn(pathUtils, "getEnvFilePath").mockResolvedValue(ok("."));
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+    vi.spyOn(fs, "pathExistsSync").mockReturnValueOnce(false).mockReturnValueOnce(true);
     const inputs: Inputs = {
       platform: Platform.VSCode,
       projectPath: ".",
@@ -97,10 +96,10 @@ describe("component coordinator test", () => {
     const fxCore = new FxCore(tools);
     const res = await fxCore.publishApplication(inputs);
     assert.isTrue(res.isOk());
-    assert.isTrue(showMessageStub.calledOnce);
-    assert.isTrue(progressStartStub.calledOnce);
-    assert.isTrue(progressEndStub.calledOnceWithExactly(true));
-    assert.isTrue(openUrlStub.calledOnce);
+    assert.isTrue(showMessageStub.mock.calls.length === 1);
+    assert.isTrue(progressStartStub.mock.calls.length === 1);
+    expect(progressEndStub).toHaveBeenCalledExactlyOnceWith(true);
+    assert.isTrue(openUrlStub.mock.calls.length === 1);
   });
   it("publish happy path - CLI", async () => {
     const mockProjectModel: ProjectModel = {
@@ -123,26 +122,26 @@ describe("component coordinator test", () => {
         resolveDriverInstances: mockedResolveDriverInstances,
       },
     };
-    sandbox.stub(metadataUtil, "parse").resolves(ok(mockProjectModel));
-    sandbox.stub(envUtil, "listEnv").resolves(ok(["dev", "prod"]));
-    sandbox.stub(envUtil, "readEnv").resolves(ok({}));
-    sandbox.stub(envUtil, "writeEnv").resolves(ok(undefined));
-    sandbox.stub(tools.ui, "selectOption").callsFake(async (config) => {
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(ok(mockProjectModel));
+    vi.spyOn(envUtil, "listEnv").mockResolvedValue(ok(["dev", "prod"]));
+    vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
+    vi.spyOn(envUtil, "writeEnv").mockResolvedValue(ok(undefined));
+    vi.spyOn(tools.ui, "selectOption").mockImplementation(async (config) => {
       if (config.name === "env") {
         return ok({ type: "success", result: "dev" });
       } else {
         return ok({ type: "success", result: "" });
       }
     });
-    const progressStartStub = sandbox.stub();
-    const progressEndStub = sandbox.stub();
-    sandbox.stub(tools.ui, "createProgressBar").returns({
+    const progressStartStub = vi.fn();
+    const progressEndStub = vi.fn();
+    vi.spyOn(tools.ui, "createProgressBar").mockReturnValue({
       start: progressStartStub,
       end: progressEndStub,
     } as any as IProgressHandler);
-    sandbox.stub(pathUtils, "getEnvFilePath").resolves(ok("."));
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-    sandbox.stub(fs, "pathExistsSync").onFirstCall().returns(false).onSecondCall().returns(true);
+    vi.spyOn(pathUtils, "getEnvFilePath").mockResolvedValue(ok("."));
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+    vi.spyOn(fs, "pathExistsSync").mockReturnValueOnce(false).mockReturnValueOnce(true);
     const inputs: Inputs = {
       platform: Platform.CLI,
       projectPath: ".",
@@ -152,8 +151,8 @@ describe("component coordinator test", () => {
     const res = await fxCore.publishApplication(inputs);
     assert.isTrue(res.isErr());
     assert.deepEqual(inputs.envVars, {} as DotenvParseOutput);
-    assert.isTrue(progressStartStub.calledOnce);
-    assert.isTrue(progressEndStub.calledOnceWithExactly(false));
+    assert.isTrue(progressStartStub.mock.calls.length === 1);
+    expect(progressEndStub).toHaveBeenCalledExactlyOnceWith(false);
   });
   it("publish happy path - no ui", async () => {
     const mockProjectModel: ProjectModel = {
@@ -172,13 +171,13 @@ describe("component coordinator test", () => {
     };
     const mockTools = new MockTools();
     mockTools.ui = undefined as any;
-    sandbox.stub(metadataUtil, "parse").resolves(ok(mockProjectModel));
-    sandbox.stub(envUtil, "listEnv").resolves(ok(["dev", "prod"]));
-    sandbox.stub(envUtil, "readEnv").resolves(ok({}));
-    sandbox.stub(envUtil, "writeEnv").resolves(ok(undefined));
-    sandbox.stub(pathUtils, "getEnvFilePath").resolves(ok("."));
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-    sandbox.stub(fs, "pathExistsSync").onFirstCall().returns(false).onSecondCall().returns(true);
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(ok(mockProjectModel));
+    vi.spyOn(envUtil, "listEnv").mockResolvedValue(ok(["dev", "prod"]));
+    vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
+    vi.spyOn(envUtil, "writeEnv").mockResolvedValue(ok(undefined));
+    vi.spyOn(pathUtils, "getEnvFilePath").mockResolvedValue(ok("."));
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+    vi.spyOn(fs, "pathExistsSync").mockReturnValueOnce(false).mockReturnValueOnce(true);
     const inputs: Inputs = {
       platform: Platform.VSCode,
       projectPath: ".",
@@ -206,13 +205,13 @@ describe("component coordinator test", () => {
     };
     const mockTools = new MockTools();
     mockTools.ui = undefined as any;
-    sandbox.stub(metadataUtil, "parse").resolves(ok(mockProjectModel));
-    sandbox.stub(envUtil, "listEnv").resolves(ok(["dev", "prod"]));
-    sandbox.stub(envUtil, "readEnv").resolves(ok({}));
-    sandbox.stub(envUtil, "writeEnv").resolves(ok(undefined));
-    sandbox.stub(pathUtils, "getEnvFilePath").resolves(ok("."));
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-    sandbox.stub(fs, "pathExistsSync").onFirstCall().returns(false).onSecondCall().returns(true);
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(ok(mockProjectModel));
+    vi.spyOn(envUtil, "listEnv").mockResolvedValue(ok(["dev", "prod"]));
+    vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
+    vi.spyOn(envUtil, "writeEnv").mockResolvedValue(ok(undefined));
+    vi.spyOn(pathUtils, "getEnvFilePath").mockResolvedValue(ok("."));
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+    vi.spyOn(fs, "pathExistsSync").mockReturnValueOnce(false).mockReturnValueOnce(true);
     const inputs: Inputs = {
       platform: Platform.VS,
       projectPath: ".",
@@ -244,26 +243,26 @@ describe("component coordinator test", () => {
         resolveDriverInstances: mockedResolveDriverInstances,
       },
     };
-    sandbox.stub(metadataUtil, "parse").resolves(ok(mockProjectModel));
-    sandbox.stub(envUtil, "listEnv").resolves(ok(["dev", "prod"]));
-    sandbox.stub(envUtil, "readEnv").resolves(ok({}));
-    sandbox.stub(envUtil, "writeEnv").resolves(ok(undefined));
-    sandbox.stub(tools.ui, "selectOption").callsFake(async (config) => {
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(ok(mockProjectModel));
+    vi.spyOn(envUtil, "listEnv").mockResolvedValue(ok(["dev", "prod"]));
+    vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
+    vi.spyOn(envUtil, "writeEnv").mockResolvedValue(ok(undefined));
+    vi.spyOn(tools.ui, "selectOption").mockImplementation(async (config) => {
       if (config.name === "env") {
         return ok({ type: "success", result: "dev" });
       } else {
         return ok({ type: "success", result: "" });
       }
     });
-    const progressStartStub = sandbox.stub();
-    const progressEndStub = sandbox.stub();
-    sandbox.stub(tools.ui, "createProgressBar").returns({
+    const progressStartStub = vi.fn();
+    const progressEndStub = vi.fn();
+    vi.spyOn(tools.ui, "createProgressBar").mockReturnValue({
       start: progressStartStub,
       end: progressEndStub,
     } as any as IProgressHandler);
-    sandbox.stub(pathUtils, "getEnvFilePath").resolves(ok("."));
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-    sandbox.stub(fs, "pathExistsSync").onFirstCall().returns(false).onSecondCall().returns(true);
+    vi.spyOn(pathUtils, "getEnvFilePath").mockResolvedValue(ok("."));
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+    vi.spyOn(fs, "pathExistsSync").mockReturnValueOnce(false).mockReturnValueOnce(true);
     const inputs: Inputs = {
       platform: Platform.VSCode,
       projectPath: ".",
@@ -273,8 +272,8 @@ describe("component coordinator test", () => {
     const res = await fxCore.publishApplication(inputs);
     assert.isTrue(res.isErr());
     assert.deepEqual(inputs.envVars, {} as DotenvParseOutput);
-    assert.isTrue(progressStartStub.calledOnce);
-    assert.isTrue(progressEndStub.calledOnceWithExactly(false));
+    assert.isTrue(progressStartStub.mock.calls.length === 1);
+    expect(progressEndStub).toHaveBeenCalledExactlyOnceWith(false);
   });
   it("publish without progress bar", async () => {
     const mockProjectModel: ProjectModel = {
@@ -291,24 +290,24 @@ describe("component coordinator test", () => {
         resolveDriverInstances: mockedResolveDriverInstances,
       },
     };
-    sandbox.stub(metadataUtil, "parse").resolves(ok(mockProjectModel));
-    sandbox.stub(envUtil, "listEnv").resolves(ok(["dev", "prod"]));
-    sandbox.stub(envUtil, "readEnv").resolves(ok({}));
-    sandbox.stub(envUtil, "writeEnv").resolves(ok(undefined));
-    sandbox.stub(tools.ui, "selectOption").callsFake(async (config) => {
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(ok(mockProjectModel));
+    vi.spyOn(envUtil, "listEnv").mockResolvedValue(ok(["dev", "prod"]));
+    vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
+    vi.spyOn(envUtil, "writeEnv").mockResolvedValue(ok(undefined));
+    vi.spyOn(tools.ui, "selectOption").mockImplementation(async (config) => {
       if (config.name === "env") {
         return ok({ type: "success", result: "dev" });
       } else {
         return ok({ type: "success", result: "" });
       }
     });
-    const progressStartStub = sandbox.stub();
-    const progressEndStub = sandbox.stub();
-    sandbox.stub(tools.ui, "createProgressBar").returns(undefined as any as IProgressHandler);
-    const showMessageStub = sandbox.stub(tools.ui, "showMessage").resolves(ok(""));
-    sandbox.stub(pathUtils, "getEnvFilePath").resolves(ok("."));
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-    sandbox.stub(fs, "pathExistsSync").onFirstCall().returns(false).onSecondCall().returns(true);
+    const progressStartStub = vi.fn();
+    const progressEndStub = vi.fn();
+    vi.spyOn(tools.ui, "createProgressBar").mockReturnValue(undefined as any as IProgressHandler);
+    const showMessageStub = vi.spyOn(tools.ui, "showMessage").mockResolvedValue(ok(""));
+    vi.spyOn(pathUtils, "getEnvFilePath").mockResolvedValue(ok("."));
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+    vi.spyOn(fs, "pathExistsSync").mockReturnValueOnce(false).mockReturnValueOnce(true);
     const inputs: Inputs = {
       platform: Platform.VSCode,
       projectPath: ".",
@@ -317,16 +316,16 @@ describe("component coordinator test", () => {
     const fxCore = new FxCore(tools);
     const res = await fxCore.publishApplication(inputs);
     assert.isTrue(res.isOk());
-    assert.isTrue(showMessageStub.called);
-    assert.isTrue(progressStartStub.notCalled);
-    assert.isTrue(progressEndStub.notCalled);
+    assert.isTrue(showMessageStub.mock.calls.length > 0);
+    assert.isTrue(progressStartStub.mock.calls.length === 0);
+    assert.isTrue(progressEndStub.mock.calls.length === 0);
   });
   it("provision lifecycle undefined", async () => {
     const mockProjectModel: ProjectModel = {
       version: "1.0.0",
     };
-    sandbox.stub(metadataUtil, "parse").resolves(ok(mockProjectModel));
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(ok(mockProjectModel));
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
     const inputs: InputsWithProjectPath = {
       platform: Platform.VSCode,
       projectPath: ".",
@@ -341,8 +340,8 @@ describe("component coordinator test", () => {
     const mockProjectModel: ProjectModel = {
       version: "1.0.0",
     };
-    sandbox.stub(metadataUtil, "parse").resolves(ok(mockProjectModel));
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(ok(mockProjectModel));
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
     const inputs: InputsWithProjectPath = {
       platform: Platform.VSCode,
       projectPath: ".",
@@ -357,8 +356,8 @@ describe("component coordinator test", () => {
     const mockProjectModel: ProjectModel = {
       version: "1.0.0",
     };
-    sandbox.stub(metadataUtil, "parse").resolves(ok(mockProjectModel));
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(ok(mockProjectModel));
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
     const inputs: InputsWithProjectPath = {
       platform: Platform.VSCode,
       projectPath: ".",
@@ -384,35 +383,35 @@ describe("component coordinator test", () => {
         resolveDriverInstances: mockedResolveDriverInstances,
       },
     };
-    sandbox.stub(metadataUtil, "parse").resolves(ok(mockProjectModel));
-    sandbox.stub(envUtil, "listEnv").resolves(ok(["dev", "prod"]));
-    sandbox.stub(envUtil, "readEnv").resolves(ok({}));
-    sandbox.stub(envUtil, "writeEnv").resolves(ok(undefined));
-    sandbox.stub(tools.ui, "selectOption").callsFake(async (config) => {
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(ok(mockProjectModel));
+    vi.spyOn(envUtil, "listEnv").mockResolvedValue(ok(["dev", "prod"]));
+    vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
+    vi.spyOn(envUtil, "writeEnv").mockResolvedValue(ok(undefined));
+    vi.spyOn(tools.ui, "selectOption").mockImplementation(async (config) => {
       if (config.name === "env") {
         return ok({ type: "success", result: "dev" });
       } else {
         return ok({ type: "success", result: "" });
       }
     });
-    const progressStartStub = sandbox.stub();
-    const progressEndStub = sandbox.stub();
-    sandbox.stub(tools.ui, "createProgressBar").returns({
+    const progressStartStub = vi.fn();
+    const progressEndStub = vi.fn();
+    vi.spyOn(tools.ui, "createProgressBar").mockReturnValue({
       start: progressStartStub,
       end: progressEndStub,
     } as any as IProgressHandler);
-    const showMessageStub = sandbox
-      .stub(tools.ui, "showMessage")
-      .callsFake(async (level, msg, modal, ...items) => {
+    const showMessageStub = vi
+      .spyOn(tools.ui, "showMessage")
+      .mockImplementation(async (level, msg, modal, ...items) => {
         if (items.length > 0 && items[0].includes("admin portal")) {
           return ok(items[0]);
         }
         return ok("");
       });
-    const openUrlStub = sandbox.stub(tools.ui, "openUrl").resolves(ok(true));
-    sandbox.stub(pathUtils, "getEnvFilePath").resolves(ok("."));
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-    sandbox.stub(fs, "pathExistsSync").onFirstCall().returns(false).onSecondCall().returns(true);
+    const openUrlStub = vi.spyOn(tools.ui, "openUrl").mockResolvedValue(ok(true));
+    vi.spyOn(pathUtils, "getEnvFilePath").mockResolvedValue(ok("."));
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+    vi.spyOn(fs, "pathExistsSync").mockReturnValueOnce(false).mockReturnValueOnce(true);
     const inputs: Inputs = {
       platform: Platform.VSCode,
       projectPath: ".",
@@ -421,10 +420,10 @@ describe("component coordinator test", () => {
     const fxCore = new FxCore(tools);
     const res = await fxCore.publishApplication(inputs);
     assert.isTrue(res.isOk());
-    assert.isTrue(showMessageStub.calledOnce);
-    assert.isTrue(progressStartStub.calledOnce);
-    assert.isTrue(progressEndStub.calledOnceWithExactly(true));
-    assert.isTrue(openUrlStub.calledOnce);
-    assert.isTrue(openUrlStub.calledWith("https://aka.ms/atk-mac"));
+    assert.isTrue(showMessageStub.mock.calls.length === 1);
+    assert.isTrue(progressStartStub.mock.calls.length === 1);
+    expect(progressEndStub).toHaveBeenCalledExactlyOnceWith(true);
+    assert.isTrue(openUrlStub.mock.calls.length === 1);
+    expect(openUrlStub).toHaveBeenCalledWith("https://aka.ms/atk-mac");
   });
 });

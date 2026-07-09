@@ -1,7 +1,6 @@
 ﻿name: PR VscUse Test Plan Selector
 
 # Triggered automatically on every PR open/sync/reopen/ready_for_review,
-# when the 'atk-vsuse-test' label is added to a PR,
 # OR manually via workflow_dispatch with a pr_number input.
 #
 # IMPORTANT: this workflow is INFORMATIONAL ONLY — it must NEVER block merge.
@@ -11,16 +10,17 @@
 #   * Results are surfaced via PR comments; use them as guidance, not a gate.
 #
 # This workflow:
-#   1. Resolves PR context (works for label, auto, and manual triggers)
+#   1. Resolves PR context (works for both automatic and manual triggers)
 #   2. Gets the diff between the PR branch and the target branch
-#   3. Calls GitHub Copilot CLI (Claude Sonnet 4.6) to select relevant VscUse test plans
+#   3. Selects test plans — a changed test plan file is run as an "impacted" case;
+#      for product-code changes GitHub Copilot CLI (Claude Sonnet 4.6) picks relevant plans
 #   4. Posts a PR comment listing the selected plans
 #   5. Dispatches dev-smoke-test-pipeline.yml with those plans
 #   6. Resolves (edits) the PR comment with the final pass/fail result
 
 on:
   pull_request:
-    types: [labeled, opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
     inputs:
       pr_number:
@@ -41,13 +41,10 @@ permissions:
 
 jobs:
   select-plans-and-run:
-    # Run for: label add (atk-vsuse-test), automatic PR events (skip drafts), or manual dispatch.
+    # Run for: automatic PR events (skip drafts) or manual dispatch.
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'pull_request' && (
-        (github.event.action == 'labeled' && github.event.label.name == 'atk-vsuse-test') ||
-        (github.event.action != 'labeled' && github.event.pull_request.draft == false)
-      ))
+      (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
     runs-on: ubuntu-latest
 
     steps:
@@ -154,7 +151,7 @@ jobs:
           PR_NUMBER: ${{ steps.pr-context.outputs.pr_number }}
         with:
           script: |
-            const { data: files } = await github.rest.pulls.listFiles({
+            const files = await github.paginate(github.rest.pulls.listFiles, {
               owner:        context.repo.owner,
               repo:         context.repo.repo,
               pull_number:  parseInt(process.env.PR_NUMBER),
@@ -183,16 +180,35 @@ jobs:
               NON_CODE_SUFFIXES.some(s => f.endsWith(s))   ||
               NON_CODE_EXACT.includes(f);
 
+            // Impacted test plans: an added / modified / renamed plan JSON maps 1:1 to a
+            // runnable plan (basename == plan name). Removed plans cannot be run.
+            const PLAN_DIR = 'packages/tests/vscuse/vscode-test-cases/plans/';
+            const changedPlans = files
+              .filter(f => f.filename.startsWith(PLAN_DIR) &&
+                           f.filename.endsWith('.json')    &&
+                           f.status !== 'removed')
+              .map(f => f.filename.slice(PLAN_DIR.length).replace(/\.json$/, ''));
+
             const allFiles   = files.map(f => f.filename);
             const codeFiles  = allFiles.filter(f => !isNonCode(f));
-            const skipDispatch = codeFiles.length === 0;
+            // Run when product code changed OR a test plan itself changed (impacted plans).
+            const skipDispatch = codeFiles.length === 0 && changedPlans.length === 0;
 
-            core.setOutput('skip_dispatch', String(skipDispatch));
+            core.setOutput('skip_dispatch',      String(skipDispatch));
+            core.setOutput('has_code_files',     String(codeFiles.length > 0));
+            core.setOutput('changed_plans_json', JSON.stringify(changedPlans));
+
             if (skipDispatch) {
               console.log(`All ${allFiles.length} changed files are test/doc/ci — skipping vscuse dispatch.`);
             } else {
-              console.log(`${codeFiles.length} code file(s) changed — vscuse dispatch required.`);
-              codeFiles.forEach(f => console.log(`  code: ${f}`));
+              if (codeFiles.length) {
+                console.log(`${codeFiles.length} code file(s) changed — vscuse dispatch required.`);
+                codeFiles.forEach(f => console.log(`  code: ${f}`));
+              }
+              if (changedPlans.length) {
+                console.log(`${changedPlans.length} impacted test plan(s) changed:`);
+                changedPlans.forEach(p => console.log(`  plan: ${p}`));
+              }
             }
 
       # ── 2c. Post skip comment when non-code-only ───────────────────────
@@ -224,7 +240,7 @@ jobs:
       # ── 3. Get git diff summary between PR branch and target branch ────
       - name: Get git diff summary
         id: diff-summary
-        if: steps.code-check.outputs.skip_dispatch != 'true'
+        if: steps.code-check.outputs.skip_dispatch != 'true' && steps.code-check.outputs.has_code_files == 'true'
         env:
           BASE_REF: ${{ steps.pr-context.outputs.base_ref }}
           HEAD_REF: ${{ steps.pr-context.outputs.head_ref }}
@@ -239,12 +255,12 @@ jobs:
 
       # ── 3b. Install Copilot CLI ───────────────────────────────────────
       - uses: actions/setup-node@v4
-        if: steps.code-check.outputs.skip_dispatch != 'true'
+        if: steps.code-check.outputs.skip_dispatch != 'true' && steps.code-check.outputs.has_code_files == 'true'
         with:
           node-version: '22'
 
       - name: Install Copilot CLI
-        if: steps.code-check.outputs.skip_dispatch != 'true'
+        if: steps.code-check.outputs.skip_dispatch != 'true' && steps.code-check.outputs.has_code_files == 'true'
         run: |
           npm install -g @github/copilot@1.0.44
           copilot --version
@@ -261,8 +277,48 @@ jobs:
           BASE_BRANCH:          ${{ steps.pr-context.outputs.base_ref }}
           HEAD_BRANCH:          ${{ steps.pr-context.outputs.head_ref }}
           USER_HINT:            ${{ steps.user-hint.outputs.hint }}
+          CHANGED_PLANS_JSON:   ${{ steps.code-check.outputs.changed_plans_json }}
+          HAS_CODE_FILES:       ${{ steps.code-check.outputs.has_code_files }}
         run: |
           set -euo pipefail
+
+          # ── Impacted plans: changed test plan files map 1:1 to runnable plans. ──
+          IMPACTED_PLANS='[]'
+          if [ -n "${CHANGED_PLANS_JSON:-}" ] && [ "${CHANGED_PLANS_JSON:-}" != "[]" ]; then
+            while IFS= read -r plan; do
+              [ -z "$plan" ] && continue
+              if [ -f "packages/tests/vscuse/vscode-test-cases/plans/${plan}.json" ]; then
+                IMPACTED_PLANS=$(echo "$IMPACTED_PLANS" | jq --arg p "$plan" '. + [$p]')
+              else
+                echo "Warning: changed plan not found on disk, skipping: $plan"
+              fi
+            done < <(echo "$CHANGED_PLANS_JSON" | jq -r '.[]' 2>/dev/null || true)
+          fi
+          IMPACTED_COUNT=$(echo "$IMPACTED_PLANS" | jq 'length')
+          echo "Impacted plans (${IMPACTED_COUNT}): $IMPACTED_PLANS"
+
+          # ── Plan-only PR (no product code changed): run exactly the impacted plans. ──
+          # The Copilot CLI is intentionally not installed for this path (the install
+          # steps are gated on has_code_files), so we must not invoke it here.
+          if [ "${HAS_CODE_FILES:-true}" != "true" ]; then
+            if [ "$IMPACTED_COUNT" -gt 0 ]; then
+              PLANS_CSV=$(echo "$IMPACTED_PLANS" | jq -r 'join(",")')
+              echo "test_plans=${PLANS_CSV}" >> "$GITHUB_OUTPUT"
+              echo "reason=Selected ${IMPACTED_COUNT} impacted test plan(s) changed in this PR (no product code modified)." >> "$GITHUB_OUTPUT"
+              echo "ai_source=impacted-plans" >> "$GITHUB_OUTPUT"
+              echo "is_fallback=false" >> "$GITHUB_OUTPUT"
+              echo "Selected impacted plans only: $PLANS_CSV"
+            else
+              SMOKE_PLANS=$(jq -c '[.smokeTestCases[]]' packages/tests/vscuse/smoking-test-cases.json)
+              PLANS_CSV=$(echo "$SMOKE_PLANS" | jq -r 'join(",")')
+              echo "test_plans=${PLANS_CSV}" >> "$GITHUB_OUTPUT"
+              echo "reason=No runnable changed plans found; using smoke test cases as fallback." >> "$GITHUB_OUTPUT"
+              echo "ai_source=smoke-fallback" >> "$GITHUB_OUTPUT"
+              echo "is_fallback=true" >> "$GITHUB_OUTPUT"
+              echo "Fallback to smoke plans: $PLANS_CSV"
+            fi
+            exit 0
+          fi
 
           # List every available plan name (one per line)
           PLANS_TEXT=$(find packages/tests/vscuse/vscode-test-cases/plans \
@@ -327,7 +383,19 @@ jobs:
             done < <(echo "$AI_PLANS" | jq -r '.[]' 2>/dev/null || true)
           fi
 
-          # Fallback to smoke tests if AI produced nothing usable
+          # Force-include impacted plans: a changed test plan must always run, on top
+          # of the AI's code-based picks (order-preserving dedup).
+          if [ "$IMPACTED_COUNT" -gt 0 ]; then
+            VALID_PLANS=$(jq -cn --argjson a "$VALID_PLANS" --argjson b "$IMPACTED_PLANS" \
+              'reduce ($a + $b)[] as $p ([]; if index($p) then . else . + [$p] end)')
+            if [ -n "$AI_REASON" ]; then
+              AI_REASON="${AI_REASON} (Also running ${IMPACTED_COUNT} impacted test plan(s) changed in this PR.)"
+            else
+              AI_REASON="Running ${IMPACTED_COUNT} impacted test plan(s) changed in this PR."
+            fi
+          fi
+
+          # Fallback to smoke tests if neither AI nor impacted plans produced anything usable
           IS_FALLBACK="false"
           if [ "$(echo "$VALID_PLANS" | jq 'length')" -eq 0 ]; then
             echo "No valid AI plans — falling back to smoke test cases."
@@ -542,10 +610,10 @@ jobs:
             // link straight to the real test report instead of the smoke wrapper.
             const extractUiTestUrl = async () => {
               try {
-                const { data: jobs } = await github.rest.actions.listJobsForWorkflowRun({
+                const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun, {
                   owner, repo, run_id: runId, per_page: 100,
                 });
-                const uiJob = jobs.jobs.find(j => j.name === 'run-ui-test');
+                const uiJob = jobs.find(j => j.name === 'run-ui-test');
                 if (!uiJob) {
                   console.log('run-ui-test job not found on smoke pipeline.');
                   return '';
@@ -578,12 +646,15 @@ jobs:
               const idMatch = (uiUrl || '').match(/\/runs\/(\d+)/);
               if (!idMatch) return '';
               try {
-                const { data: uiJobs } = await github.rest.actions.listJobsForWorkflowRun({
+                // Paginate: a UI-test run has one matrix job per selected test plan and
+                // can exceed 100 jobs. The report job is near the end, so a single
+                // per_page=100 page would miss it and drop the report link.
+                const uiJobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun, {
                   owner, repo, run_id: parseInt(idMatch[1]), per_page: 100,
                 });
                 // The report job is invoked via a reusable workflow, so its rendered
                 // name is typically "<caller_job> / report". Match the trailing token.
-                const reportJob = (uiJobs.jobs || []).find(j =>
+                const reportJob = uiJobs.find(j =>
                   /(^|\/\s*)report$/.test((j.name || '').trim())
                 );
                 if (!reportJob) { console.log('report job not found on UI test run.'); return ''; }
@@ -601,6 +672,43 @@ jobs:
               }
             };
 
+            // Count per-plan (matrix) job outcomes on the UI test run. Each selected
+            // plan renders as a "<caller_job> / Case-<plan>" job (see ui-test-vscuse-common.yml
+            // job `main`, name "Case-${{ matrix.test_plan }}"). Retries re-run failed jobs as
+            // new run attempts, so list with filter=all and keep the latest attempt per plan
+            // to reflect each plan's final pass/fail status.
+            const extractTestCounts = async (uiUrl) => {
+              const idMatch = (uiUrl || '').match(/\/runs\/(\d+)/);
+              if (!idMatch) return null;
+              try {
+                const uiJobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun, {
+                  owner, repo, run_id: parseInt(idMatch[1]), filter: 'all', per_page: 100,
+                });
+                // Keep the newest attempt for each distinct Case-<plan> job.
+                const latestByName = new Map();
+                for (const j of uiJobs) {
+                  const name = (j.name || '').trim();
+                  if (!/(?:^|\/\s*)Case-[^/]+$/.test(name)) continue;
+                  const prev = latestByName.get(name);
+                  if (!prev || (j.run_attempt || 0) >= (prev.run_attempt || 0)) {
+                    latestByName.set(name, j);
+                  }
+                }
+                let passed = 0, failed = 0;
+                for (const j of latestByName.values()) {
+                  if (j.conclusion === 'success') passed++;
+                  else if (j.conclusion === 'skipped' || j.conclusion == null) continue;
+                  else failed++;
+                }
+                const total = passed + failed;
+                console.log(`Test-plan results: ${passed} passed, ${failed} failed (of ${total} plans).`);
+                return { passed, failed, total };
+              } catch (err) {
+                console.log(`Failed to compute test-plan counts: ${err.message}`);
+                return null;
+              }
+            };
+
             while (Date.now() - start < EIGHT_HOURS) {
               const { data: run } = await github.rest.actions.getWorkflowRun({ owner, repo, run_id: runId });
               console.log(`Smoke pipeline: ${run.status} / ${run.conclusion}`);
@@ -610,6 +718,10 @@ jobs:
                 const uiUrl = await extractUiTestUrl();
                 core.setOutput('ui_test_url', uiUrl);
                 core.setOutput('report_url',  await extractReportUrl(uiUrl));
+                const counts = await extractTestCounts(uiUrl);
+                core.setOutput('passed_count', counts ? String(counts.passed) : '');
+                core.setOutput('failed_count', counts ? String(counts.failed) : '');
+                core.setOutput('total_count',  counts ? String(counts.total)  : '');
                 return;
               }
               await new Promise(r => setTimeout(r, 60000));
@@ -618,6 +730,10 @@ jobs:
             const uiUrl = await extractUiTestUrl();
             core.setOutput('ui_test_url', uiUrl);
             core.setOutput('report_url',  await extractReportUrl(uiUrl));
+            const counts = await extractTestCounts(uiUrl);
+            core.setOutput('passed_count', counts ? String(counts.passed) : '');
+            core.setOutput('failed_count', counts ? String(counts.failed) : '');
+            core.setOutput('total_count',  counts ? String(counts.total)  : '');
             console.log('Smoke pipeline timed out after 8 hours — reporting as timed_out (workflow stays green; this run is informational only).');
 
       # ── 8. Resolve PR comment with final result ────────────────────────
@@ -632,6 +748,9 @@ jobs:
           SMOKE_URL:   ${{ steps.wait-smoke.outputs.run_url }}
           UI_TEST_URL: ${{ steps.wait-smoke.outputs.ui_test_url }}
           REPORT_URL:  ${{ steps.wait-smoke.outputs.report_url }}
+          PASSED_COUNT: ${{ steps.wait-smoke.outputs.passed_count }}
+          FAILED_COUNT: ${{ steps.wait-smoke.outputs.failed_count }}
+          TOTAL_COUNT:  ${{ steps.wait-smoke.outputs.total_count }}
           PR_NUMBER:   ${{ steps.pr-context.outputs.pr_number }}
           HEAD_REF:    ${{ steps.pr-context.outputs.head_ref }}
           BASE_REF:    ${{ steps.pr-context.outputs.base_ref }}
@@ -650,9 +769,20 @@ jobs:
             const baseRef    = process.env.BASE_REF;
             const planList   = plans.map(p => `- \`${p}\``).join('\n');
 
+            const passedCount = process.env.PASSED_COUNT || '';
+            const failedCount = process.env.FAILED_COUNT || '';
+            const totalCount  = process.env.TOTAL_COUNT  || '';
+            const hasCounts   = passedCount !== '' && failedCount !== '' && Number(totalCount) > 0;
+            const resultsLine = hasCounts
+              ? `**Results:** ✅ ${passedCount} passed · ❌ ${failedCount} failed (of ${totalCount} plans)`
+              : '';
+
             const succeeded  = conclusion === 'success';
             const icon       = succeeded ? '✅' : '❌';
             const statusText = succeeded ? 'All tests passed' : `Tests ${conclusion}`;
+            const stepThreeText = hasCounts
+              ? `${icon} ${statusText} (${passedCount}/${totalCount} passed)`
+              : `${icon} ${statusText}`;
 
             const body = [
               `## ${icon} VscUse Test Plan — ${statusText}`,
@@ -660,6 +790,8 @@ jobs:
               `**Why these tests:** ${reason}`,
               '',
               `**Branch diff:** \`${headRef}\` → \`${baseRef}\``,
+              '',
+              resultsLine,
               '',
               '**Plans run:**',
               planList,
@@ -669,7 +801,7 @@ jobs:
               '|------|--------|',
               '| 1️⃣ Build VSIX (CD) | ✅ Done |',
               '| 2️⃣ Build Docker image | ✅ Done |',
-              `| 3️⃣ Run UI tests | ${icon} ${statusText} |`,
+              `| 3️⃣ Run UI tests | ${stepThreeText} |`,
               '',
               uiTestUrl ? `> 🎯 [Actual UI test run](${uiTestUrl})` : '',
               smokeUrl  ? `> 🔗 [Full pipeline results](${smokeUrl})`  : '',
@@ -697,55 +829,4 @@ jobs:
             // The PR comment carries the result; merge gating must not depend on this run.
             if (!succeeded) {
               console.log(`VscUse tests concluded: ${conclusion}. See: ${smokeUrl}`);
-            }
-      # ── 9. Remove atk-vsuse-test label (signals completion) ───────────
-      - name: Remove atk-vsuse-test label
-        if: always()
-        uses: actions/github-script@v6
-        env:
-          PR_NUMBER: ${{ steps.pr-context.outputs.pr_number }}
-        with:
-          script: |
-            const prNumber = parseInt(process.env.PR_NUMBER);
-            if (!prNumber) { console.log('No PR number — skipping label removal'); return; }
-            try {
-              await github.rest.issues.removeLabel({
-                owner:        context.repo.owner,
-                repo:         context.repo.repo,
-                issue_number: prNumber,
-                name:         'atk-vsuse-test',
-              });
-              console.log(`Removed label 'atk-vsuse-test' from PR #${prNumber}`);
-            } catch (err) {
-              if (err.status === 404) {
-                console.log('Label not present, nothing to remove');
-              } else {
-                throw err;
-              }
-            }
-
-      # ── 9. Remove trigger label to indicate completion ────────────────
-      - name: Remove atk-vsuse-test label
-        if: always()
-        uses: actions/github-script@v6
-        env:
-          PR_NUMBER: ${{ steps.pr-context.outputs.pr_number }}
-        with:
-          script: |
-            const prNumber = parseInt(process.env.PR_NUMBER);
-            if (!prNumber) { console.log('No PR number — skipping label removal'); return; }
-            try {
-              await github.rest.issues.removeLabel({
-                owner:       context.repo.owner,
-                repo:        context.repo.repo,
-                issue_number: prNumber,
-                name:        'atk-vsuse-test',
-              });
-              console.log(`Removed label 'atk-vsuse-test' from PR #${prNumber}`);
-            } catch (err) {
-              if (err.status === 404) {
-                console.log('Label not present — nothing to remove');
-              } else {
-                throw err;
-              }
             }

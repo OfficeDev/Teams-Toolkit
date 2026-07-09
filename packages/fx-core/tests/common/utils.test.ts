@@ -1,6 +1,5 @@
-import chai from "chai";
 import fs from "fs-extra";
-import sinon from "sinon";
+import { afterEach, beforeEach, chai } from "vitest";
 import { jsonUtils } from "../../src/common/jsonUtils";
 import { convertToAlphanumericOnly } from "../../src/common/stringUtils";
 import {
@@ -34,7 +33,6 @@ describe("convert to valid AppName in ProjectSetting", () => {
 });
 
 describe("JSONUtils", () => {
-  const sandbox = sinon.createSandbox();
   const tempDir = ".tmp-json-utils-tests";
 
   beforeEach(() => {
@@ -42,7 +40,6 @@ describe("JSONUtils", () => {
   });
 
   afterEach(() => {
-    sandbox.restore();
     fs.removeSync(tempDir);
   });
 
@@ -76,9 +73,8 @@ describe("JSONUtils", () => {
 });
 
 describe("Errors", () => {
-  const sandbox = sinon.createSandbox();
   afterEach(() => {
-    sandbox.restore();
+    // Cleanup if needed
   });
   it("WriteFileError", () => {
     const error = new WriteFileError(new Error("write file error"), "common");

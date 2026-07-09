@@ -26,11 +26,6 @@ import { OauthInfo, getAuthInfo, validateSecret, validateUrl } from "./utility/u
 const actionName = "oauth/update"; // DO NOT MODIFY the name
 const helpLink = "https://aka.ms/teamsfx-actions/oauth-update";
 
-export const oauthUpdateDeps = {
-  getAuthInfo,
-  assembleError,
-};
-
 @Service(actionName)
 export class UpdateOauthDriver implements StepDriver {
   description = getLocalizedString("driver.oauth.description.create");
@@ -54,7 +49,7 @@ export class UpdateOauthDriver implements StepDriver {
         throw new InvalidActionInputError(actionName, invalidParameters, helpLink);
       }
 
-      const authInfo = await oauthUpdateDeps.getAuthInfo(args, context, actionName);
+      const authInfo = await getAuthInfo(args, context, actionName);
 
       const appStudioTokenRes = await context.m365TokenProvider.getAccessToken({
         scopes: TeamsGraphScopes(),
@@ -160,7 +155,7 @@ export class UpdateOauthDriver implements StepDriver {
         getLocalizedString(logMessageKeys.failedExecuteDriver, actionName, message)
       );
       return {
-        result: err(oauthUpdateDeps.assembleError(error as Error, actionName)),
+        result: err(assembleError(error as Error, actionName)),
         summaries: summaries,
       };
     }

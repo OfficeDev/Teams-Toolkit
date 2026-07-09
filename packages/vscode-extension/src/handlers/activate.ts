@@ -1,49 +1,49 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import path from "path";
 import {
-  Result,
-  Void,
-  FxError,
-  ok,
-  M365TokenProvider,
+  ConfigFolderName,
   CoreCallbackEvent,
   err,
-  ConfigFolderName,
+  FxError,
+  M365TokenProvider,
+  ok,
+  Result,
   signedIn,
   signedOut,
+  Void,
 } from "@microsoft/teamsfx-api";
 import {
-  isValidProject,
-  getProjectMetadata,
   AppStudioScopes,
   FxCore,
+  getProjectMetadata,
   GraphScopes,
   isSovereignHigh,
+  isValidProject,
 } from "@microsoft/teamsfx-core";
-import { workspace, window, Uri, FileRenameEvent } from "vscode";
+import path from "path";
+import { FileRenameEvent, Uri, window, workspace } from "vscode";
+import commandController from "../commandController";
 import azureAccountManager from "../commonlib/azureLogin";
 import VsCodeLogInstance from "../commonlib/log";
 import M365TokenInstance from "../commonlib/m365Login";
-import commandController from "../commandController";
 import { showError } from "../error/common";
 import { ExtensionSource } from "../error/error";
+import { getExpService } from "../exp/index";
 import {
   core,
-  workspaceUri,
-  setTools,
-  setCore,
-  tools,
   setCommandIsRunning,
+  setCore,
+  setTools,
+  tools,
+  workspaceUri,
 } from "../globalVariables";
 import { VS_CODE_UI } from "../qm/vsc_ui";
 import { ExtTelemetry } from "../telemetry/extTelemetry";
-import envTreeProviderInstance from "../treeview/environmentTreeViewProvider";
-import { localize } from "../utils/localizeUtils";
 import { TelemetryEvent, TelemetryProperty } from "../telemetry/extTelemetryEvents";
-import { getExpService } from "../exp/index";
+import envTreeProviderInstance from "../treeview/environmentTreeViewProvider";
 import { addFileSystemWatcher } from "../utils/fileSystemWatcher";
+import { localize } from "../utils/localizeUtils";
 
 export function activate(): Result<Void, FxError> {
   const result: Result<Void, FxError> = ok(Void);

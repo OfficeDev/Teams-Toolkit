@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "setup": "pnpm install && npm run build",
+    "setup": "pnpm install && pnpm run build",
     "setup:e2e": "pnpm install && pnpm --filter templates --filter @microsoft/teamsfx-test... build",
     "setup:cli": "pnpm install && pnpm --filter templates --filter @microsoft/m365agentstoolkit-cli... build",
     "setup:vsc": "pnpm install && pnpm --filter templates --filter ms-teams-vscode-extension... build",
@@ -17,7 +17,6 @@
   "devDependencies": {
     "@commitlint/cli": "^17.7.1",
     "@commitlint/config-conventional": "^12.0.1",
-    "codecov": "^3.8.3",
     "codeowners": "^5.1.1",
     "dotenv": "^10.0.0",
     "husky": "^6.0.0",

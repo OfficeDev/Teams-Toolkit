@@ -1,0 +1,96 @@
+{
+  "$schema": "../../../schema/questions.schema.json",
+  "questions": [
+    {
+      "name": "openApiSpecType",
+      "type": "singleSelect",
+      "title": "OpenAPI Spec Document",
+      "cliDescription": "The type of the API spec.",
+      "condition": { "expr": "apiSpecLocation == null" },
+      "staticOptions": [
+        {
+          "id": "enter-url",
+          "label": "Enter OpenAPI Document URL",
+          "keyPrefix": "core.createProjectQuestion.capability.selectOpenAPISpecFromUrl"
+        },
+        {
+          "id": "open-file",
+          "label": "Browse to Open File",
+          "keyPrefix": "core.createProjectQuestion.capability.selectOpenAPISpecFromFile"
+        },
+        {
+          "id": "search-api",
+          "label": "Search OpenAPI Document",
+          "keyPrefix": "core.createProjectQuestion.capability.selectOpenAPISpecFromSearch"
+        }
+      ]
+    },
+    {
+      "name": "apiSpecLocation",
+      "type": "text",
+      "title": "OpenAPI Document",
+      "placeholder": "Enter OpenAPI Document URL",
+      "keyPrefix": "core.createProjectQuestion.apiSpec",
+      "validation": "openapiUrl",
+      "cliShortName": "a",
+      "cliDescription": "OpenAPI description document URL.",
+      "condition": { "expr": "openApiSpecType == 'enter-url'" }
+    },
+    {
+      "name": "apiSpecLocation",
+      "type": "singleFile",
+      "title": "OpenAPI Document",
+      "filters": {
+        "OpenAPI Description Document": ["json", "yml", "yaml"]
+      },
+      "cliShortName": "a",
+      "cliDescription": "OpenAPI description document location.",
+      "condition": { "expr": "openApiSpecType == 'open-file'" }
+    },
+    {
+      "name": "searchOpenApiSpecQuery",
+      "type": "text",
+      "title": "Search OpenAPI Document",
+      "placeholder": "Input text to search OpenAPI description document",
+      "keyPrefix": "core.createProjectQuestion.capability.searchOpenAPISpecQueryQuestion",
+      "cliDescription": "Search OpenAPI Document",
+      "condition": { "expr": "openApiSpecType == 'search-api'" }
+    },
+    {
+      "name": "selectOpenApiSpec",
+      "type": "singleSelect",
+      "title": "Select OpenAPI Document",
+      "keyPrefix": "core.createProjectQuestion.capability.selectOpenAPISpecQuestion",
+      "optionsFrom": "openapi.search",
+      "optionsFromParams": {
+        "query": { "expr": "searchOpenApiSpecQuery" }
+      },
+      "cliDescription": "Select OpenAPI Document",
+      "condition": { "expr": "openApiSpecType == 'search-api'" }
+    },
+    {
+      "name": "apiOperations",
+      "type": "multiSelect",
+      "title": "Select Operation(s) Copilot Can Interact with",
+      "keyPrefix": "core.createProjectQuestion.apiSpec.copilotOperation",
+      "optionsFrom": "openapi.operations",
+      "optionsFromParams": {
+        "apiSpecLocation": { "expr": "apiSpecLocation" }
+      },
+      "cliDescription": "API operations to include in the plugin.",
+      "condition": { "expr": "selectOpenApiSpec == null" }
+    },
+    {
+      "name": "apiOperations",
+      "type": "multiSelect",
+      "title": "Select Operation(s) Copilot Can Interact with",
+      "keyPrefix": "core.createProjectQuestion.apiSpec.copilotOperation",
+      "optionsFrom": "openapi.operations",
+      "optionsFromParams": {
+        "apiSpecLocation": { "expr": "selectOpenApiSpec" }
+      },
+      "cliDescription": "API operations to include in the plugin.",
+      "condition": { "expr": "selectOpenApiSpec != null" }
+    }
+  ]
+}

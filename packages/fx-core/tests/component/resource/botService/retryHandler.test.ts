@@ -1,20 +1,22 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-import * as chai from "chai";
+import { chai, vi } from "vitest";
+import { Retry } from "../../../../src/component/resource/botService/constants";
 import { RetryHandler } from "../../../../src/component/resource/botService/retryHandler";
 import { Messages } from "./messages";
-import * as sinon from "sinon";
-import { Retry } from "../../../../src/component/resource/botService/constants";
 
 describe("Test retry handler", () => {
   const maxTry = 3;
-  const sandbox = sinon.createSandbox();
+  const originalBackoff = Retry.BACKOFF_TIME_MS;
+  const originalRetryTimes = Retry.RETRY_TIMES;
   beforeEach(() => {
-    sandbox.stub(Retry, "BACKOFF_TIME_MS").value(0);
-    sandbox.stub(Retry, "RETRY_TIMES").value(maxTry);
+    (Retry as any).BACKOFF_TIME_MS = 0;
+    (Retry as any).RETRY_TIMES = maxTry;
   });
   afterEach(() => {
-    sandbox.restore();
+    (Retry as any).BACKOFF_TIME_MS = originalBackoff;
+    (Retry as any).RETRY_TIMES = originalRetryTimes;
+    vi.restoreAllMocks();
   });
   it("fn resolve", async () => {
     const res = await RetryHandler.Retry(async () => true);

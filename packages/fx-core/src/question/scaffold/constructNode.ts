@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 import { IQTreeNode, OptionItem, Platform, SingleSelectQuestion } from "@microsoft/teamsfx-api";
-import { featureFlagManager } from "../../common/featureFlags";
+import { FeatureFlag, FeatureFlags, featureFlagManager } from "../../common/featureFlags";
 import { getLocalizedString } from "../../common/localizeUtils";
 import {
   apiSpecNode,
@@ -16,7 +16,11 @@ import { GCConnectionIdQuestion, GCNameQuestion } from "../create";
 import { QuestionNames } from "../questionNames";
 
 function isFeatureEnabled(flagName: string): boolean {
-  return featureFlagManager.getBooleanValue({ name: flagName, defaultValue: "false" });
+  const flag = (Object.values(FeatureFlags) as FeatureFlag[]).find((f) => f.name === flagName) ?? {
+    name: flagName,
+    defaultValue: "false",
+  };
+  return featureFlagManager.getBooleanValue(flag);
 }
 
 export function constructNode(
@@ -117,7 +121,6 @@ function resolveNodeReference(
 
     // TypeScript-defined complex nodes (lazy import to avoid circular dependency)
     case "mcpServerTypeNode": {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { MCPServerTypeNode } = require("./vsc/teamsProjectTypeNode");
       node = MCPServerTypeNode();
       break;

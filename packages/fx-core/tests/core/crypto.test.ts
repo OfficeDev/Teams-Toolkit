@@ -1,14 +1,12 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { assert } from "chai";
-import { createSandbox } from "sinon";
-import Cryptr from "cryptr";
-import { LocalCrypto } from "../../src/core/crypto";
 import { SystemError } from "@microsoft/teamsfx-api";
+import Cryptr from "cryptr";
+import { assert, vi } from "vitest";
+import { LocalCrypto } from "../../src/core/crypto";
 
 describe("LocalCrypto", () => {
-  const sandbox = createSandbox();
   const testProjectId = "test-project-123";
   const testPlaintext = "sensitive-data-to-encrypt";
   const prefix = "crypto_";
@@ -24,7 +22,7 @@ describe("LocalCrypto", () => {
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   describe("encrypt", () => {

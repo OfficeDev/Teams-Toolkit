@@ -30,13 +30,6 @@ import {
 import { CallbackRegistry } from "../callback";
 import { shouldIgnored } from "./projectSettingsLoader";
 
-export const concurrentLockerDeps = {
-  isValidProjectV3: projectSettingsHelper.isValidProjectV3,
-  lock: properLock.lock,
-  unlock: properLock.unlock,
-  waitSeconds: commonUtils.waitSeconds,
-};
-
 let doingTask: string | undefined = undefined;
 export const ConcurrentLockerMW: Middleware = async (ctx: HookContext, next: NextFunction) => {
   const inputs = ctx.arguments[ctx.arguments.length - 1] as Inputs;
@@ -53,7 +46,7 @@ export const ConcurrentLockerMW: Middleware = async (ctx: HookContext, next: Nex
     return;
   }
   let configFolder = "";
-  if (concurrentLockerDeps.isValidProjectV3(inputs.projectPath)) {
+  if (projectSettingsHelper.isValidProjectV3(inputs.projectPath)) {
     configFolder = path.join(inputs.projectPath);
   } else {
     ctx.result = err(new InvalidProjectError(inputs.projectPath));
@@ -73,7 +66,7 @@ export const ConcurrentLockerMW: Middleware = async (ctx: HookContext, next: Nex
   let retryNum = 0;
   for (let i = 0; i < 10; ++i) {
     try {
-      await concurrentLockerDeps.lock(configFolder, { lockfilePath: lockfilePath });
+      await properLock.lock(configFolder, { lockfilePath: lockfilePath });
       acquired = true;
       for (const f of CallbackRegistry.get(CoreCallbackEvent.lock)) {
         await f(taskName);
@@ -92,7 +85,7 @@ export const ConcurrentLockerMW: Middleware = async (ctx: HookContext, next: Nex
         }
         await next();
       } finally {
-        await concurrentLockerDeps.unlock(configFolder, { lockfilePath: lockfilePath });
+        await properLock.unlock(configFolder, { lockfilePath: lockfilePath });
         for (const f of CallbackRegistry.get(CoreCallbackEvent.unlock)) {
           await f(taskName);
         }
@@ -101,7 +94,7 @@ export const ConcurrentLockerMW: Middleware = async (ctx: HookContext, next: Nex
       break;
     } catch (e) {
       if (e["code"] === "ELOCKED") {
-        await concurrentLockerDeps.waitSeconds(1);
+        await commonUtils.waitSeconds(1);
         ++retryNum;
         continue;
       }

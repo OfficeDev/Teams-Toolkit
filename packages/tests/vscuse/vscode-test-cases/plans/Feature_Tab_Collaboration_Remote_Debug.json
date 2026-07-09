@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 42,
+    "total_steps": 41,
     "created_at": "2026-06-09T00:21:06.499210",
     "name": "Feature Tab Collaboration Remote Debug",
     "description": {
@@ -19,7 +19,7 @@
     "generated_at": "2026-06-09T00:21:06.499210",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_08fac04c",
+      "plan_r_0624_024810",
       "step_b64c09ad",
       "step_54fccd1f",
       "step_711a056c",
@@ -75,37 +75,6 @@
     "updated_at": "2026-06-09T00:42:35.931245"
   },
   "steps": [
-    {
-      "step_id": "step_08fac04c",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "dx": null,
-        "dy": null,
-        "key": null,
-        "keys": null,
-        "text": null,
-        "x": 372,
-        "y": 212
-      },
-      "description": "Click the \"Teams Agents and apps\" option in the \"New Project\" dropdown menu within the Microsoft 365 Agents Toolkit interface in Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "0",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:372:212:16:5:da96959d9d09f509",
-        "dhash:372:212:96:5:24b223684cb60900",
-        "dhash:372:212:0:10:c8c88094b0717c6f"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_08fac04c",
-      "created_at": "2026-06-09T00:21:06.525723",
-      "plan_id": "plan_17745f0d"
-    },
     {
       "step_id": "step_b64c09ad",
       "agent": "interaction",

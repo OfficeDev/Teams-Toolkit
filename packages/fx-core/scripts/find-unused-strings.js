@@ -1,8 +1,8 @@
 const fs = require("fs");
 const path = require("path");
 const AhoCorasick = require("ahocorasick");
-const dirPath = process.argv[3];
 const jsonFilePath = process.argv[2];
+const dirPaths = process.argv.slice(3);
 const json = require(path.resolve(jsonFilePath));
 const patterns = [];
 const allKeys = Object.keys(json).filter((key) => !key.startsWith("_"));
@@ -16,7 +16,7 @@ const ac = new AhoCorasick(patterns);
 function traverseDirectory(dirPath) {
   fs.readdirSync(dirPath).forEach(function (file) {
     const filePath = path.join(dirPath, file);
-    if (file.endsWith(".ts")) {
+    if (file.endsWith(".ts") || file.endsWith(".json")) {
       const content = fs.readFileSync(filePath, "utf8");
       const results = ac.search(content);
       for (const result of results) {
@@ -31,7 +31,9 @@ function traverseDirectory(dirPath) {
   });
 }
 const foundKeySet = new Set();
-traverseDirectory(dirPath);
+for (const dirPath of dirPaths) {
+  traverseDirectory(dirPath);
+}
 const unusedKeys = [];
 for (const key of allKeySet.values()) {
   if (!foundKeySet.has(key)) {

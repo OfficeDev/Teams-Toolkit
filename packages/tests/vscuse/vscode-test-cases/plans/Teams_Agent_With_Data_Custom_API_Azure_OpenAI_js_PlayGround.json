@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 9,
+    "total_steps": 8,
     "created_at": "2025-12-18T03:09:40.976661",
     "name": "Teams Agent With Data Custom API Azure OpenAI js PlayGround",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2025-12-18T03:09:40.976661",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_7e3b6981",
+      "plan_r_0624_024810",
       "step_c4837869",
       "step_60218d01",
       "step_025a505e",
@@ -39,32 +39,6 @@
     "updated_at": "2025-12-18T03:55:04.377513"
   },
   "steps": [
-    {
-      "step_id": "step_7e3b6981",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 326,
-        "y": 221
-      },
-      "description": "Click the \"Teams Agents and Apps\" option from the dropdown menu in the \"New Project\" window.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:326:221:16:5:5aa55108164a1bb3",
-        "dhash:326:221:96:5:911b524299aec784",
-        "dhash:326:221:0:10:c8c88094b0717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_7e3b6981",
-      "created_at": "2025-12-18T03:55:00.641831",
-      "plan_id": "plan_43836b26"
-    },
     {
       "step_id": "step_c4837869",
       "agent": "interaction",

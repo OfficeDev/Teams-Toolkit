@@ -30,7 +30,7 @@ const credentialOptions =
   config.MicrosoftAppType === "UserAssignedMsi" ? { ...tokenCredentials } : undefined;
 
 // Create the app with logger
-const app = new App({ ...credentialOptions });
+const app = new App({ ...credentialOptions, skipAuth: !process.env.CLIENT_ID });
 
 // Initialize command handlers
 const helloworldCommandHandler = new HelloWorldCommandHandler();

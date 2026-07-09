@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 5,
+    "total_steps": 4,
     "created_at": "2025-11-10T03:09:13.198894",
     "name": "Simple Bot js Local Debug",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2025-11-10T03:09:13.198877",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_c0a69177",
+      "plan_r_0624_024810",
       "step_b00fb136",
       "step_a241277c",
       "step_d7075b66",
@@ -34,32 +34,6 @@
     "updated_at": "2025-11-14T06:37:57.446603"
   },
   "steps": [
-    {
-      "step_id": "step_c0a69177",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 325,
-        "y": 230
-      },
-      "description": "Click the \"Teams Agents and Apps\" option in the \"New Project\" dropdown menu within the Microsoft 365 Agents Toolkit interface.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:325:230:16:5:b3a959b331598230",
-        "dhash:325:230:96:5:995342c98d47c696",
-        "dhash:325:230:0:10:c8c88094b0717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_c0a69177",
-      "created_at": "2025-11-14T06:26:06.445502",
-      "plan_id": "plan_832d85ef"
-    },
     {
       "step_id": "step_b00fb136",
       "agent": "interaction",

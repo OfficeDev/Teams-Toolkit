@@ -1,26 +1,22 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-import * as sinon from "sinon";
-import { AadAppClient } from "../../../../src/client/aadAppClient";
-import chai from "chai";
-import chaiAsPromised from "chai-as-promised";
-import axios, { AxiosInstance, isAxiosError } from "axios";
-import { MockedLogProvider } from "../../../plugins/solution/util";
-import axiosRetry from "axios-retry";
-import MockAdapter from "axios-mock-adapter";
 import { SystemError, err } from "@microsoft/teamsfx-api";
-import { AADManifest } from "../../../../src/component/driver/aad/interface/AADManifest";
-import { SignInAudience } from "../../../../src/component/driver/aad/interface/signInAudience";
+import axios, { AxiosInstance, isAxiosError } from "axios";
+import MockAdapter from "axios-mock-adapter";
+import axiosRetry from "axios-retry";
+import { expect, vi } from "vitest";
+import { AadAppClient } from "../../../../src/client/aadAppClient";
 import {
   DeleteOrUpdatePermissionFailedError,
   HostNameNotOnVerifiedDomainError,
 } from "../../../../src/component/driver/aad/error/aadManifestError";
-import { CredentialInvalidLifetimeError } from "../../../../src/component/driver/aad/error/credentialInvalidLifetimeError";
 import { ClientSecretNotAllowedError } from "../../../../src/component/driver/aad/error/clientSecretNotAllowedError";
-import { MockedM365Provider } from "../../../core/utils";
+import { CredentialInvalidLifetimeError } from "../../../../src/component/driver/aad/error/credentialInvalidLifetimeError";
 import { SignInAudienceNotAllowedError } from "../../../../src/component/driver/aad/error/signInAudienceNotAllowedError";
-chai.use(chaiAsPromised);
-const expect = chai.expect;
+import { AADManifest } from "../../../../src/component/driver/aad/interface/AADManifest";
+import { SignInAudience } from "../../../../src/component/driver/aad/interface/signInAudience";
+import { MockedM365Provider } from "../../../core/utils";
+import { MockedLogProvider } from "../../../plugins/solution/util";
 
 describe("AadAppClient", async () => {
   const expectedObjectId = "00000000-0000-0000-0000-000000000000";
@@ -52,7 +48,7 @@ describe("AadAppClient", async () => {
     });
 
     afterEach(() => {
-      sinon.restore();
+      vi.restoreAllMocks();
     });
 
     it("should throw error if cannot get token", async () => {
@@ -63,10 +59,10 @@ describe("AadAppClient", async () => {
       );
       const mockedM365TokenProvider = new MockedM365Provider();
       const mockedLogProvider = new MockedLogProvider();
-      sinon.stub(mockedM365TokenProvider, "getAccessToken").resolves(err(expectedError));
+      vi.spyOn(mockedM365TokenProvider, "getAccessToken").mockResolvedValue(err(expectedError));
       const aadAppClient = new AadAppClient(mockedM365TokenProvider, mockedLogProvider);
 
-      await expect(aadAppClient.createAadApp(expectedDisplayName)).to.be.eventually.rejectedWith(
+      await expect(aadAppClient.createAadApp(expectedDisplayName)).rejects.toThrow(
         "Get token failed"
       );
     });
@@ -113,7 +109,7 @@ describe("AadAppClient", async () => {
     });
 
     afterEach(() => {
-      sinon.restore();
+      vi.restoreAllMocks();
     });
 
     it("should return app instance when request success", async () => {
@@ -139,11 +135,9 @@ describe("AadAppClient", async () => {
       const mock = new MockAdapter(axiosInstance);
       mock.onPost(`https://graph.microsoft.com/v1.0/applications`).reply(400, expectedError);
 
-      await expect(aadAppClient.createAadApp(""))
-        .to.eventually.be.rejectedWith("Request failed with status code 400")
-        .then((error) => {
-          expect(error.response.data).to.deep.equal(expectedError);
-        });
+      const error: any = await aadAppClient.createAadApp("").catch((e) => e);
+      expect(String(error.message)).to.contain("Request failed with status code 400");
+      expect(error.response.data).to.deep.equal(expectedError);
     });
 
     it("should use input signInAudience", async () => {
@@ -204,7 +198,7 @@ describe("AadAppClient", async () => {
       });
       const debugLogs: string[] = [];
 
-      sinon.stub(MockedLogProvider.prototype, "debug").callsFake((log: string) => {
+      vi.spyOn(MockedLogProvider.prototype, "debug").mockImplementation((log: string) => {
         debugLogs.push(log);
       });
 
@@ -229,17 +223,16 @@ describe("AadAppClient", async () => {
       const mock = new MockAdapter(axiosInstance);
       mock.onPost(`https://graph.microsoft.com/v1.0/applications`).reply(400, expectedError);
 
-      await expect(
-        aadAppClient.createAadApp("test", SignInAudience.AzureADMultipleOrgs, undefined, true)
-      ).to.eventually.be.rejected.then((err) => {
-        expect(err instanceof SignInAudienceNotAllowedError).to.be.true;
-        expect(err.source).equals("AadAppClient");
-        expect(err.name).equals("SignInAudienceNotAllowed");
-        expect(err.message).equals(
-          "Your tenant doesn't allow creating a Microsoft Entra app with specified signInAudience value. Error: The tenant admin has disabled creation of apps with multi-tenant sign-in audience."
-        );
-        expect(err.helpLink).equals("https://aka.ms/teams-toolkit-sni-guide");
-      });
+      const err: any = await aadAppClient
+        .createAadApp("test", SignInAudience.AzureADMultipleOrgs, undefined, true)
+        .catch((e) => e);
+      expect(err instanceof SignInAudienceNotAllowedError).to.be.true;
+      expect(err.source).equals("AadAppClient");
+      expect(err.name).equals("SignInAudienceNotAllowed");
+      expect(err.message).equals(
+        "Your tenant doesn't allow creating a Microsoft Entra app with specified signInAudience value. Error: The tenant admin has disabled creation of apps with multi-tenant sign-in audience."
+      );
+      expect(err.helpLink).equals("https://aka.ms/teams-toolkit-sni-guide");
     });
 
     it("should throw SignInAudienceNotAllowedError with default help link for non-Microsoft user", async () => {
@@ -254,17 +247,16 @@ describe("AadAppClient", async () => {
       const mock = new MockAdapter(axiosInstance);
       mock.onPost(`https://graph.microsoft.com/v1.0/applications`).reply(400, expectedError);
 
-      await expect(
-        aadAppClient.createAadApp("test", SignInAudience.AzureADMultipleOrgs, undefined, false)
-      ).to.eventually.be.rejected.then((err) => {
-        expect(err instanceof SignInAudienceNotAllowedError).to.be.true;
-        expect(err.source).equals("AadAppClient");
-        expect(err.name).equals("SignInAudienceNotAllowed");
-        expect(err.message).equals(
-          "Your tenant doesn't allow creating a Microsoft Entra app with specified signInAudience value. Error: The tenant admin has disabled creation of apps with multi-tenant sign-in audience."
-        );
-        expect(err.helpLink).equals("https://aka.ms/teamsfx-actions/aadapp-create");
-      });
+      const err: any = await aadAppClient
+        .createAadApp("test", SignInAudience.AzureADMultipleOrgs, undefined, false)
+        .catch((e) => e);
+      expect(err instanceof SignInAudienceNotAllowedError).to.be.true;
+      expect(err.source).equals("AadAppClient");
+      expect(err.name).equals("SignInAudienceNotAllowed");
+      expect(err.message).equals(
+        "Your tenant doesn't allow creating a Microsoft Entra app with specified signInAudience value. Error: The tenant admin has disabled creation of apps with multi-tenant sign-in audience."
+      );
+      expect(err.helpLink).equals("https://aka.ms/teamsfx-actions/aadapp-create");
     });
   });
 
@@ -278,7 +270,7 @@ describe("AadAppClient", async () => {
     });
 
     afterEach(() => {
-      sinon.restore();
+      vi.restoreAllMocks();
     });
 
     it("happy", async () => {
@@ -299,7 +291,7 @@ describe("AadAppClient", async () => {
     });
 
     afterEach(() => {
-      sinon.restore();
+      vi.restoreAllMocks();
     });
 
     it("should return secret when request success", async () => {
@@ -349,7 +341,7 @@ describe("AadAppClient", async () => {
       };
 
       // do not use nock to avoid retry
-      sinon.stub(axiosInstance, "post").rejects({
+      vi.spyOn(axiosInstance, "post").mockRejectedValue({
         message: "Request failed with status code 404",
         response: {
           status: 400,
@@ -357,11 +349,9 @@ describe("AadAppClient", async () => {
         },
       });
 
-      await expect(aadAppClient.generateClientSecret(expectedObjectId))
-        .to.eventually.be.rejectedWith("Request failed with status code 404")
-        .then((error) => {
-          expect(error.response.data).to.deep.equal(expectedError);
-        });
+      const error: any = await aadAppClient.generateClientSecret(expectedObjectId).catch((e) => e);
+      expect(String(error.message)).to.contain("Request failed with status code 404");
+      expect(error.response.data).to.deep.equal(expectedError);
     });
 
     it("should throw error when CredentialInvalidLifetimeAsPerAppPolicy error happens", async () => {
@@ -376,17 +366,14 @@ describe("AadAppClient", async () => {
         .onPost(`https://graph.microsoft.com/v1.0/applications/${expectedObjectId}/addPassword`)
         .reply(400, expectedError);
 
-      await expect(
-        aadAppClient.generateClientSecret(expectedObjectId)
-      ).to.eventually.be.rejected.then((err) => {
-        expect(err instanceof CredentialInvalidLifetimeError).to.be.true;
-        expect(err.source).equals("AadAppClient");
-        expect(err.name).equals("CredentialInvalidLifetime");
-        expect(err.message).equals(
-          "The client secret lifetime is too long for your tenant. Use a shorter value with the clientSecretExpireDays parameter."
-        );
-        expect(err.helpLink).equals("https://aka.ms/teamsfx-actions/aadapp-create");
-      });
+      const err: any = await aadAppClient.generateClientSecret(expectedObjectId).catch((e) => e);
+      expect(err instanceof CredentialInvalidLifetimeError).to.be.true;
+      expect(err.source).equals("AadAppClient");
+      expect(err.name).equals("CredentialInvalidLifetime");
+      expect(err.message).equals(
+        "The client secret lifetime is too long for your tenant. Use a shorter value with the clientSecretExpireDays parameter."
+      );
+      expect(err.helpLink).equals("https://aka.ms/teamsfx-actions/aadapp-create");
     });
 
     it("should throw error when CredentialTypeNotAllowedAsPerAppPolicy error happens", async () => {
@@ -401,17 +388,14 @@ describe("AadAppClient", async () => {
         .onPost(`https://graph.microsoft.com/v1.0/applications/${expectedObjectId}/addPassword`)
         .reply(400, expectedError);
 
-      await expect(
-        aadAppClient.generateClientSecret(expectedObjectId)
-      ).to.eventually.be.rejected.then((err) => {
-        expect(err instanceof ClientSecretNotAllowedError).to.be.true;
-        expect(err.source).equals("AadAppClient");
-        expect(err.name).equals("ClientSecretNotAllowed");
-        expect(err.message).equals(
-          "Your tenant doesn't allow creating a client secret for Microsoft Entra app. Create and configure the app manually."
-        );
-        expect(err.helpLink).equals("https://aka.ms/teamsfx-actions/aadapp-create");
-      });
+      const err: any = await aadAppClient.generateClientSecret(expectedObjectId).catch((e) => e);
+      expect(err instanceof ClientSecretNotAllowedError).to.be.true;
+      expect(err.source).equals("AadAppClient");
+      expect(err.name).equals("ClientSecretNotAllowed");
+      expect(err.message).equals(
+        "Your tenant doesn't allow creating a client secret for Microsoft Entra app. Create and configure the app manually."
+      );
+      expect(err.helpLink).equals("https://aka.ms/teamsfx-actions/aadapp-create");
     });
 
     it("should throw ClientSecretNotAllowedError with proper help link when Microsoft user and CredentialTypeNotAllowedAsPerAppPolicy error happens", async () => {
@@ -426,17 +410,16 @@ describe("AadAppClient", async () => {
         .onPost(`https://graph.microsoft.com/v1.0/applications/${expectedObjectId}/addPassword`)
         .reply(400, expectedError);
 
-      await expect(
-        aadAppClient.generateClientSecret(expectedObjectId, undefined, undefined, true)
-      ).to.eventually.be.rejected.then((err) => {
-        expect(err instanceof ClientSecretNotAllowedError).to.be.true;
-        expect(err.source).equals("AadAppClient");
-        expect(err.name).equals("ClientSecretNotAllowed");
-        expect(err.message).equals(
-          "Your tenant doesn't allow creating a client secret for Microsoft Entra app. Create and configure the app manually."
-        );
-        expect(err.helpLink).equals("https://aka.ms/teams-toolkit-sni-guide");
-      });
+      const err: any = await aadAppClient
+        .generateClientSecret(expectedObjectId, undefined, undefined, true)
+        .catch((e) => e);
+      expect(err instanceof ClientSecretNotAllowedError).to.be.true;
+      expect(err.source).equals("AadAppClient");
+      expect(err.name).equals("ClientSecretNotAllowed");
+      expect(err.message).equals(
+        "Your tenant doesn't allow creating a client secret for Microsoft Entra app. Create and configure the app manually."
+      );
+      expect(err.helpLink).equals("https://aka.ms/teams-toolkit-sni-guide");
     });
 
     it("should throw ClientSecretNotAllowedError with default help link when non-Microsoft user and CredentialTypeNotAllowedAsPerAppPolicy error happens", async () => {
@@ -451,17 +434,16 @@ describe("AadAppClient", async () => {
         .onPost(`https://graph.microsoft.com/v1.0/applications/${expectedObjectId}/addPassword`)
         .reply(400, expectedError);
 
-      await expect(
-        aadAppClient.generateClientSecret(expectedObjectId, undefined, undefined, false)
-      ).to.eventually.be.rejected.then((err) => {
-        expect(err instanceof ClientSecretNotAllowedError).to.be.true;
-        expect(err.source).equals("AadAppClient");
-        expect(err.name).equals("ClientSecretNotAllowed");
-        expect(err.message).equals(
-          "Your tenant doesn't allow creating a client secret for Microsoft Entra app. Create and configure the app manually."
-        );
-        expect(err.helpLink).equals("https://aka.ms/teamsfx-actions/aadapp-create");
-      });
+      const err: any = await aadAppClient
+        .generateClientSecret(expectedObjectId, undefined, undefined, false)
+        .catch((e) => e);
+      expect(err instanceof ClientSecretNotAllowedError).to.be.true;
+      expect(err.source).equals("AadAppClient");
+      expect(err.name).equals("ClientSecretNotAllowed");
+      expect(err.message).equals(
+        "Your tenant doesn't allow creating a client secret for Microsoft Entra app. Create and configure the app manually."
+      );
+      expect(err.helpLink).equals("https://aka.ms/teamsfx-actions/aadapp-create");
     });
 
     it("should send debug log when sending request and receiving response", async () => {
@@ -473,7 +455,7 @@ describe("AadAppClient", async () => {
         });
       const debugLogs: string[] = [];
 
-      sinon.stub(MockedLogProvider.prototype, "debug").callsFake((log: string) => {
+      vi.spyOn(MockedLogProvider.prototype, "debug").mockImplementation((log: string) => {
         debugLogs.push(log);
       });
 
@@ -561,7 +543,7 @@ describe("AadAppClient", async () => {
     });
 
     afterEach(() => {
-      sinon.restore();
+      vi.restoreAllMocks();
     });
 
     it("should success when request success", async () => {
@@ -569,7 +551,7 @@ describe("AadAppClient", async () => {
       mock
         .onPatch(`https://graph.microsoft.com/v1.0/applications/${expectedObjectId}`)
         .reply(204, "success");
-      await expect(aadAppClient.updateAadApp(mockedManifest)).to.eventually.be.not.rejected;
+      await aadAppClient.updateAadApp(mockedManifest);
     });
 
     it("should throw error when request failed with CannotDeleteOrUpdateEnabledEntitlement", async () => {
@@ -579,22 +561,19 @@ describe("AadAppClient", async () => {
         },
       };
 
-      sinon.stub(axiosInstance, "patch").rejects({
+      vi.spyOn(axiosInstance, "patch").mockRejectedValue({
         isAxiosError: true,
         response: {
           status: 400,
           data: expectedError,
         },
       });
-      await expect(aadAppClient.updateAadApp(mockedManifest)).to.eventually.be.rejected.then(
-        (err) => {
-          expect(err instanceof DeleteOrUpdatePermissionFailedError).to.be.true;
-          expect(err.source).equals("AadAppClient");
-          expect(err.name).equals("DeleteOrUpdatePermissionFailed");
-          expect(err.message).equals(
-            "Unable to update or delete an enabled permission. It may be because the ACCESS_AS_USER_PERMISSION_ID environment variable is changed for selected environment. Make sure your permission id(s) match the actual Microsoft Entra application and try again.\n"
-          );
-        }
+      const err: any = await aadAppClient.updateAadApp(mockedManifest).catch((e) => e);
+      expect(err instanceof DeleteOrUpdatePermissionFailedError).to.be.true;
+      expect(err.source).equals("AadAppClient");
+      expect(err.name).equals("DeleteOrUpdatePermissionFailed");
+      expect(err.message).equals(
+        "Unable to update or delete an enabled permission. It may be because the ACCESS_AS_USER_PERMISSION_ID environment variable is changed for selected environment. Make sure your permission id(s) match the actual Microsoft Entra application and try again.\n"
       );
     });
 
@@ -606,41 +585,35 @@ describe("AadAppClient", async () => {
         },
       };
 
-      sinon.stub(axiosInstance, "patch").rejects({
+      vi.spyOn(axiosInstance, "patch").mockRejectedValue({
         isAxiosError: true,
         response: {
           status: 400,
           data: expectedError,
         },
       });
-      await expect(aadAppClient.updateAadApp(mockedManifest)).to.eventually.be.rejected.then(
-        (err) => {
-          expect(err instanceof HostNameNotOnVerifiedDomainError).to.be.true;
-          expect(err.source).equals("AadAppClient");
-          expect(err.name).equals("HostNameNotOnVerifiedDomain");
-          expect(err.message).equals(
-            "Unable to set identifierUri because the value is not on verified domain: Mocked error message"
-          );
-          expect(err.helpLink).equals("https://aka.ms/teamsfx-multi-tenant");
-        }
+      const err: any = await aadAppClient.updateAadApp(mockedManifest).catch((e) => e);
+      expect(err instanceof HostNameNotOnVerifiedDomainError).to.be.true;
+      expect(err.source).equals("AadAppClient");
+      expect(err.name).equals("HostNameNotOnVerifiedDomain");
+      expect(err.message).equals(
+        "Unable to set identifierUri because the value is not on verified domain: Mocked error message"
       );
+      expect(err.helpLink).equals("https://aka.ms/teamsfx-multi-tenant");
     });
 
     it("should throw error when request failed with no error property", async () => {
       const expectedError = {};
 
-      sinon.stub(axiosInstance, "patch").rejects({
+      vi.spyOn(axiosInstance, "patch").mockRejectedValue({
         isAxiosError: true,
         response: {
           status: 400,
           data: expectedError,
         },
       });
-      await expect(aadAppClient.updateAadApp(mockedManifest)).to.eventually.be.rejected.then(
-        (err) => {
-          expect(isAxiosError(err)).to.be.true;
-        }
-      );
+      const err: any = await aadAppClient.updateAadApp(mockedManifest).catch((e) => e);
+      expect(isAxiosError(err)).to.be.true;
     });
 
     it("should throw error when request fail", async () => {
@@ -655,11 +628,9 @@ describe("AadAppClient", async () => {
         .onPatch(`https://graph.microsoft.com/v1.0/applications/${expectedObjectId}`)
         .reply(400, expectedError);
 
-      await expect(aadAppClient.updateAadApp(mockedManifest))
-        .to.eventually.be.rejectedWith("Request failed with status code 400")
-        .then((error) => {
-          expect(error.response.data).to.deep.equal(expectedError);
-        });
+      const error: any = await aadAppClient.updateAadApp(mockedManifest).catch((e) => e);
+      expect(String(error.message)).to.contain("Request failed with status code 400");
+      expect(error.response.data).to.deep.equal(expectedError);
     });
 
     it("should send debug log when sending request and receiving response", async () => {
@@ -669,7 +640,7 @@ describe("AadAppClient", async () => {
         .reply(204, "success");
       const debugLogs: string[] = [];
 
-      sinon.stub(MockedLogProvider.prototype, "debug").callsFake((log: string) => {
+      vi.spyOn(MockedLogProvider.prototype, "debug").mockImplementation((log: string) => {
         debugLogs.push(log);
       });
 
@@ -713,7 +684,7 @@ describe("AadAppClient", async () => {
     });
 
     afterEach(() => {
-      sinon.restore();
+      vi.restoreAllMocks();
     });
 
     it("should return user info when request success", async () => {
@@ -745,7 +716,7 @@ describe("AadAppClient", async () => {
       };
 
       // do not use nock to avoid retry
-      sinon.stub(axiosInstance, "get").rejects({
+      vi.spyOn(axiosInstance, "get").mockRejectedValue({
         message: "Request failed with status code 404",
         response: {
           status: 400,
@@ -753,11 +724,9 @@ describe("AadAppClient", async () => {
         },
       });
 
-      await expect(aadAppClient.getOwners(expectedObjectId))
-        .to.eventually.be.rejectedWith("Request failed with status code 404")
-        .then((error) => {
-          expect(error.response.data).to.deep.equal(expectedError);
-        });
+      const error: any = await aadAppClient.getOwners(expectedObjectId).catch((e) => e);
+      expect(String(error.message)).to.contain("Request failed with status code 404");
+      expect(error.response.data).to.deep.equal(expectedError);
     });
 
     it("should send debug log when sending request and receiving response", async () => {
@@ -775,7 +744,7 @@ describe("AadAppClient", async () => {
         });
       const debugLogs: string[] = [];
 
-      sinon.stub(MockedLogProvider.prototype, "debug").callsFake((log: string) => {
+      vi.spyOn(MockedLogProvider.prototype, "debug").mockImplementation((log: string) => {
         debugLogs.push(log);
       });
 
@@ -817,17 +786,16 @@ describe("AadAppClient", async () => {
     });
 
     afterEach(() => {
-      sinon.restore();
+      vi.restoreAllMocks();
     });
 
     it("should return user info when request success", async () => {
       const mock = new MockAdapter(axiosInstance);
       mock
-        .onPatch(`https://graph.microsoft.com/v1.0/applications/${expectedObjectId}/owners/$ref`)
+        .onPost(`https://graph.microsoft.com/v1.0/applications/${expectedObjectId}/owners/$ref`)
         .reply(200);
 
-      await expect(aadAppClient.addOwner(expectedObjectId, mockedUserObjectId)).to.eventually.be.not
-        .rejected;
+      await aadAppClient.addOwner(expectedObjectId, mockedUserObjectId);
     });
 
     it("should throw error when request fail", async () => {
@@ -839,7 +807,7 @@ describe("AadAppClient", async () => {
       };
 
       // do not use nock to avoid retry
-      sinon.stub(axiosInstance, "post").rejects({
+      vi.spyOn(axiosInstance, "post").mockRejectedValue({
         message: "Request failed with status code 404",
         response: {
           status: 400,
@@ -847,11 +815,11 @@ describe("AadAppClient", async () => {
         },
       });
 
-      await expect(aadAppClient.addOwner(expectedObjectId, mockedUserObjectId))
-        .to.eventually.be.rejectedWith("Request failed with status code 404")
-        .then((error) => {
-          expect(error.response.data).to.deep.equal(expectedError);
-        });
+      const error: any = await aadAppClient
+        .addOwner(expectedObjectId, mockedUserObjectId)
+        .catch((e) => e);
+      expect(String(error.message)).to.contain("Request failed with status code 404");
+      expect(error.response.data).to.deep.equal(expectedError);
     });
 
     it("should send debug log when sending request and receiving response", async () => {
@@ -861,7 +829,7 @@ describe("AadAppClient", async () => {
         .reply(200);
       const debugLogs: string[] = [];
 
-      sinon.stub(MockedLogProvider.prototype, "debug").callsFake((log: string) => {
+      vi.spyOn(MockedLogProvider.prototype, "debug").mockImplementation((log: string) => {
         debugLogs.push(log);
       });
 
@@ -901,10 +869,10 @@ function mockAxiosCreate() {
   const fakeAxiosInstance = axios.create({
     baseURL: "https://graph.microsoft.com/v1.0",
   });
-  sinon.stub(axios, "create").returns(fakeAxiosInstance);
+  vi.spyOn(axios, "create").mockReturnValue(fakeAxiosInstance);
   return fakeAxiosInstance;
 }
 
 function doNotWaitBetweenEachRetry() {
-  sinon.stub(axiosRetry, "exponentialDelay").returns(0); // always delay 0 ms
+  vi.spyOn(axiosRetry, "exponentialDelay").mockReturnValue(0); // always delay 0 ms
 }

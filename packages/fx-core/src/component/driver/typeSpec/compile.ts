@@ -36,13 +36,6 @@ import { TypeSpecCompileArgs } from "./interface/typeSpecCompileArgs";
 
 const actionName = "typeSpec/compile"; // DO NOT MODIFY the name
 
-export const typeSpecCompileDeps = {
-  kiotageneratePlugin: kiotaClient.kiotageneratePlugin,
-  patchOpenApiExtensionsIntoPluginManifest: daSpecParser.patchOpenApiExtensionsIntoPluginManifest,
-  parseAndUpdatePluginManifestForKiota: daSpecParser.parseAndUpdatePluginManifestForKiota,
-  injectAuthAction: openApiSpecHelper.injectAuthAction,
-};
-
 @Service(actionName) // DO NOT MODIFY the service name
 export class TypeSpecCompileDriver implements StepDriver {
   description = getLocalizedString("driver.typeSpec.compile.description");
@@ -122,7 +115,7 @@ export class TypeSpecCompileDriver implements StepDriver {
             }
 
             const pluginManifestName = actions[0].id;
-            await typeSpecCompileDeps.kiotageneratePlugin(
+            await kiotaClient.kiotageneratePlugin(
               `${openApiSpecsFolderPath}/${spec}`,
               `${outputFolderPath}`,
               `${pluginManifestName}`,
@@ -133,7 +126,7 @@ export class TypeSpecCompileDriver implements StepDriver {
               undefined,
               true
             );
-            await typeSpecCompileDeps.patchOpenApiExtensionsIntoPluginManifest(
+            await daSpecParser.patchOpenApiExtensionsIntoPluginManifest(
               `${openApiSpecsFolderPath}/${spec}`,
               path.join(outputFolderPath, `${pluginManifestName.toLowerCase()}-apiplugin.json`)
             );
@@ -150,7 +143,7 @@ export class TypeSpecCompileDriver implements StepDriver {
                 continue;
               }
               const pluginManifestName = action.id;
-              await typeSpecCompileDeps.kiotageneratePlugin(
+              await kiotaClient.kiotageneratePlugin(
                 `${openApiSpecsFolderPath}/${spec}`,
                 `${outputFolderPath}`,
                 `${pluginManifestName}`,
@@ -161,7 +154,7 @@ export class TypeSpecCompileDriver implements StepDriver {
                 undefined,
                 true
               );
-              await typeSpecCompileDeps.patchOpenApiExtensionsIntoPluginManifest(
+              await daSpecParser.patchOpenApiExtensionsIntoPluginManifest(
                 `${openApiSpecsFolderPath}/${spec}`,
                 path.join(outputFolderPath, `${pluginManifestName.toLowerCase()}-apiplugin.json`)
               );
@@ -192,12 +185,12 @@ export class TypeSpecCompileDriver implements StepDriver {
         for (const file of generatedFolder) {
           if (file.match(/[^-]+\-apiplugin\.json/)) {
             const pluginManifestPath = path.join(outputFolderPath, file);
-            const authData = await typeSpecCompileDeps.parseAndUpdatePluginManifestForKiota(
+            const authData = await daSpecParser.parseAndUpdatePluginManifestForKiota(
               pluginManifestPath,
               true
             );
             for (const authInfo of authData) {
-              const addAuthRes = await typeSpecCompileDeps.injectAuthAction(
+              const addAuthRes = await openApiSpecHelper.injectAuthAction(
                 ctx.projectPath,
                 authInfo.authName,
                 undefined,

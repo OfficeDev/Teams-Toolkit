@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 17,
+    "total_steps": 16,
     "created_at": "2026-03-10T01:23:58.760223",
     "name": "Feature LocalDebug Second Press F5 for Bot",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2026-03-10T01:23:58.760223",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_62ae0853",
+      "plan_r_0624_024810",
       "step_e66219bc",
       "step_b3053f39",
       "step_76876922",
@@ -46,32 +46,6 @@
     "updated_at": "2026-03-10T02:29:29.909490"
   },
   "steps": [
-    {
-      "step_id": "step_62ae0853",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 325,
-        "y": 230
-      },
-      "description": "Click the \"Teams Agents and Apps\" option in the \"New Project\" dropdown menu within the Microsoft 365 Agents Toolkit interface.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:325:230:16:5:b3a959b331598230",
-        "dhash:325:230:96:5:995342c98d47c696",
-        "dhash:325:230:0:10:c8c88094b0717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_62ae0853",
-      "created_at": "2026-03-10T01:23:58.768165",
-      "plan_id": "plan_96b2e7e3"
-    },
     {
       "step_id": "step_e66219bc",
       "agent": "interaction",

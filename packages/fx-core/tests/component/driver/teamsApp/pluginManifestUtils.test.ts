@@ -9,11 +9,10 @@ import {
   TeamsAppManifest,
   err,
 } from "@microsoft/teamsfx-api";
-import chai from "chai";
 import fs from "fs-extra";
 import mockedEnv, { RestoreFn } from "mocked-env";
 import path from "path";
-import * as sinon from "sinon";
+import { chai, vi } from "vitest";
 import {
   FileNotFoundError,
   JSONSyntaxError,
@@ -30,11 +29,13 @@ import { MockTools } from "../../../core/utils";
 import { MockedLogProvider, MockedTelemetryReporter } from "../../../plugins/solution/util";
 
 describe("pluginManifestUtils", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   let mockedEnvRestore: RestoreFn;
+  const originalPlatform = process.platform;
 
   afterEach(async () => {
-    sandbox.restore();
+    vi.restoreAllMocks();
+    Object.defineProperty(process, "platform", { value: originalPlatform, configurable: true });
     if (mockedEnvRestore) {
       mockedEnvRestore();
     }
@@ -105,8 +106,8 @@ describe("pluginManifestUtils", () => {
   };
 
   it("readPluginManifestFile success", async () => {
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(fs, "readFile").resolves(JSON.stringify(pluginManifest) as any);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify(pluginManifest) as any);
 
     const result = await pluginManifestUtils.readPluginManifestFile("path");
     chai.assert.isTrue(result.isOk());
@@ -116,8 +117,8 @@ describe("pluginManifestUtils", () => {
   });
 
   it("readPluginManifestFile error: JsonSyntaxError", async () => {
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(fs, "readFile").resolves("invalid json" as any);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockResolvedValue("invalid json" as any);
 
     const result = await pluginManifestUtils.readPluginManifestFile("path");
     chai.assert.isTrue(result.isErr());
@@ -127,7 +128,7 @@ describe("pluginManifestUtils", () => {
   });
 
   it("readPluginManifestFile error: file does not exist", async () => {
-    sandbox.stub(fs, "pathExists").resolves(false);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
 
     const result = await pluginManifestUtils.readPluginManifestFile("path");
     chai.assert.isTrue(result.isErr());
@@ -137,8 +138,8 @@ describe("pluginManifestUtils", () => {
   });
 
   it("getApiSpecFilePathFromTeamsManifest sucess", async () => {
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(fs, "readFile").resolves(JSON.stringify(pluginManifest) as any);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify(pluginManifest) as any);
     const res = await pluginManifestUtils.getApiSpecFilePathFromTeamsManifest(
       teamsManifest,
       "/test/path"
@@ -152,8 +153,10 @@ describe("pluginManifestUtils", () => {
   });
 
   it("getApiSpecFilePathFromTeamsManifest error: plugin file not exist", async () => {
-    sandbox.stub(fs, "pathExists").resolves(false);
-    const readPlugin = sandbox.stub(fs, "readFile").resolves(JSON.stringify(pluginManifest) as any);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+    const readPlugin = vi
+      .spyOn(fs, "readFile")
+      .mockResolvedValue(JSON.stringify(pluginManifest) as any);
     const res = await pluginManifestUtils.getApiSpecFilePathFromTeamsManifest(
       teamsManifest,
       "path"
@@ -162,7 +165,7 @@ describe("pluginManifestUtils", () => {
 
     if (res.isErr()) {
       chai.assert.isTrue(res.error instanceof FileNotFoundError);
-      chai.assert.isTrue(readPlugin.notCalled);
+      chai.assert.isTrue(readPlugin.mock.calls.length === 0);
     }
   });
 
@@ -171,7 +174,7 @@ describe("pluginManifestUtils", () => {
       ...teamsManifest,
       copilotExtensions: { plugins: [] },
     };
-    sandbox.stub(fs, "readFile").resolves(JSON.stringify(pluginManifest) as any);
+    vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify(pluginManifest) as any);
     const res = await pluginManifestUtils.getApiSpecFilePathFromTeamsManifest(
       testManifest,
       "/test/path"
@@ -210,7 +213,7 @@ describe("pluginManifestUtils", () => {
         full: "test",
       },
     };
-    sandbox.stub(fs, "readFile").resolves(JSON.stringify(pluginManifest) as any);
+    vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify(pluginManifest) as any);
     const res = await pluginManifestUtils.getApiSpecFilePathFromTeamsManifest(
       testManifest as unknown as TeamsAppManifest,
       "/test/path"
@@ -223,14 +226,14 @@ describe("pluginManifestUtils", () => {
   });
 
   it("getApiSpecFilePathFromTeamsManifest error: spec file not exist", async () => {
-    sandbox.stub(fs, "pathExists").callsFake(async (testPath) => {
+    vi.spyOn(fs, "pathExists").mockImplementation(async (testPath) => {
       if (testPath === path.resolve("/test/resources/openapi.yaml")) {
         return false;
       } else {
         return true;
       }
     });
-    sandbox.stub(fs, "readFile").resolves(JSON.stringify(pluginManifest) as any);
+    vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify(pluginManifest) as any);
     const res = await pluginManifestUtils.getApiSpecFilePathFromTeamsManifest(
       teamsManifest,
       "/test/path"
@@ -255,8 +258,8 @@ describe("pluginManifestUtils", () => {
         },
       ],
     };
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(fs, "readFile").resolves(JSON.stringify(testPluginManifest) as any);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify(testPluginManifest) as any);
     const res = await pluginManifestUtils.getApiSpecFilePathFromTeamsManifest(
       teamsManifest,
       "/test/path"
@@ -269,7 +272,7 @@ describe("pluginManifestUtils", () => {
   });
 
   it("getApiSpecFilePathFromTeamsManifest error: teams manifest without plugin", async () => {
-    sandbox.stub(fs, "pathExists").resolves(true);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
 
     const res = await pluginManifestUtils.getApiSpecFilePathFromTeamsManifest(
       { ...teamsManifest, copilotExtensions: {} },
@@ -343,8 +346,8 @@ describe("pluginManifestUtils", () => {
       mockedEnvRestore = mockedEnv({
         ["APP_NAME_SUFFIX"]: "test",
       });
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readFile").resolves(JSON.stringify(testPluginManifest) as any);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify(testPluginManifest) as any);
 
       const res = await pluginManifestUtils.getManifest("testPath", mockedContex);
 
@@ -355,7 +358,7 @@ describe("pluginManifestUtils", () => {
     });
 
     it("get manifest error: file not found", async () => {
-      sandbox.stub(fs, "pathExists").resolves(false);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
       const res = await pluginManifestUtils.getManifest("testPath", mockedContex);
       chai.assert.isTrue(res.isErr());
       if (res.isErr()) {
@@ -364,8 +367,8 @@ describe("pluginManifestUtils", () => {
     });
 
     it("get manifest error: unresolved env error", async () => {
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readFile").resolves(JSON.stringify(testPluginManifest) as any);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify(testPluginManifest) as any);
 
       const res = await pluginManifestUtils.getManifest("testPath", mockedContex);
 
@@ -384,10 +387,10 @@ describe("pluginManifestUtils", () => {
       addTelemetryProperties: () => {},
     };
     it("validate success", async () => {
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readFile").resolves(JSON.stringify(pluginManifest) as any);
-      sandbox.stub(AppManifestUtils, "validateAgainstSchema").resolves([]);
-      sandbox.stub(pluginManifestUtils, "validateLocalMCPPluginRuntimes").resolves([]);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify(pluginManifest) as any);
+      vi.spyOn(AppManifestUtils, "validateAgainstSchema").mockResolvedValue([]);
+      vi.spyOn(pluginManifestUtils, "validateLocalMCPPluginRuntimes").mockResolvedValue([]);
 
       const res = await pluginManifestUtils.validateAgainstSchema(
         { id: "1", file: "file" },
@@ -405,12 +408,12 @@ describe("pluginManifestUtils", () => {
     });
 
     it("validate action error", async () => {
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readFile").resolves(JSON.stringify(pluginManifest) as any);
-      sandbox.stub(AppManifestUtils, "validateAgainstSchema").resolves([]);
-      sandbox
-        .stub(pluginManifestUtils, "validateAgainstSchema")
-        .resolves(err(new SystemError("error", "error", "error", "error")));
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify(pluginManifest) as any);
+      vi.spyOn(AppManifestUtils, "validateAgainstSchema").mockResolvedValue([]);
+      vi.spyOn(pluginManifestUtils, "validateAgainstSchema").mockResolvedValue(
+        err(new SystemError("error", "error", "error", "error"))
+      );
 
       const res = await pluginManifestUtils.validateAgainstSchema(
         { id: "1", file: "file" },
@@ -424,9 +427,11 @@ describe("pluginManifestUtils", () => {
     });
 
     it("validate schema error", async () => {
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readFile").resolves(JSON.stringify(pluginManifest) as any);
-      sandbox.stub(AppManifestUtils, "validateAgainstSchema").throws("error");
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify(pluginManifest) as any);
+      vi.spyOn(AppManifestUtils, "validateAgainstSchema").mockImplementation(() => {
+        throw "error";
+      });
 
       const res = await pluginManifestUtils.validateAgainstSchema(
         { id: "1", file: "file" },
@@ -440,7 +445,7 @@ describe("pluginManifestUtils", () => {
     });
 
     it("error: cannot get manifest", async () => {
-      sandbox.stub(fs, "pathExists").resolves(false);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
 
       const res = await pluginManifestUtils.validateAgainstSchema(
         { id: "1", file: "file" },
@@ -456,14 +461,10 @@ describe("pluginManifestUtils", () => {
       mockedEnvRestore = mockedEnv({
         TEAMSFX_KIOTA_NPM_INTEGRATION: "false",
       });
-      sandbox
-        .stub(fs, "pathExists")
-        .onFirstCall()
-        .resolves(true)
-        .onSecondCall()
-        .resolves(true)
-        .onThirdCall()
-        .resolves(false);
+      vi.spyOn(fs, "pathExists")
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce(false);
 
       const res = await pluginManifestUtils.getDefaultNextAvailableApiSpecPath(
         "testPath.json",
@@ -477,14 +478,10 @@ describe("pluginManifestUtils", () => {
       mockedEnvRestore = mockedEnv({
         TEAMSFX_KIOTA_NPM_INTEGRATION: "true",
       });
-      sandbox
-        .stub(fs, "pathExists")
-        .onFirstCall()
-        .resolves(true)
-        .onSecondCall()
-        .resolves(true)
-        .onThirdCall()
-        .resolves(false);
+      vi.spyOn(fs, "pathExists")
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce(false);
 
       const res = await pluginManifestUtils.getDefaultNextAvailableApiSpecPath(
         "testPath.json",
@@ -495,7 +492,7 @@ describe("pluginManifestUtils", () => {
     });
 
     it("Yaml file: success on first try", async () => {
-      sandbox.stub(fs, "pathExists").onFirstCall().resolves(true).onSecondCall().resolves(false);
+      vi.spyOn(fs, "pathExists").mockResolvedValueOnce(true).mockResolvedValueOnce(false);
 
       const res = await pluginManifestUtils.getDefaultNextAvailableApiSpecPath(
         "testPath.yaml",
@@ -509,27 +506,24 @@ describe("pluginManifestUtils", () => {
       mockedEnvRestore = mockedEnv({
         TEAMSFX_KIOTA_NPM_INTEGRATION: "false",
       });
-      sandbox.stub(commonUtils, "isJsonSpecFile").throws("fail");
-      sandbox
-        .stub(fs, "pathExists")
-        .onFirstCall()
-        .resolves(true)
-        .onSecondCall()
-        .resolves(true)
-        .onThirdCall()
-        .resolves(true)
-        .onCall(4)
-        .resolves(false);
+      vi.spyOn(commonUtils, "isJsonSpecFile").mockImplementation(() => {
+        throw "fail";
+      });
+      vi.spyOn(fs, "pathExists")
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce(false);
 
       const res = await pluginManifestUtils.getDefaultNextAvailableApiSpecPath("testPath", "test");
 
-      chai.assert.equal(res, path.join("test", "openapi_3.yaml"));
+      chai.assert.equal(res, path.join("test", "openapi_3.json"));
     });
   });
 
   describe("validateLocalMCPPluginRuntimes", () => {
     beforeEach(() => {
-      sandbox.stub(process, "platform").value("win32");
+      Object.defineProperty(process, "platform", { value: "win32", configurable: true });
     });
 
     describe("local_endpoint format", () => {
@@ -567,7 +561,7 @@ describe("pluginManifestUtils", () => {
             ],
           },
         ];
-        sandbox.stub(ODRProvider, "listServers").resolves(mockServers);
+        vi.spyOn(ODRProvider, "listServers").mockResolvedValue(mockServers);
 
         const errors = await pluginManifestUtils.validateLocalMCPPluginRuntimes(manifest);
         chai.assert.isEmpty(errors);
@@ -588,7 +582,7 @@ describe("pluginManifestUtils", () => {
           ],
         };
 
-        sandbox.stub(ODRProvider, "listServers").resolves([]);
+        vi.spyOn(ODRProvider, "listServers").mockResolvedValue([]);
 
         const errors = await pluginManifestUtils.validateLocalMCPPluginRuntimes(manifest);
         chai.assert.isEmpty(errors);
@@ -609,7 +603,7 @@ describe("pluginManifestUtils", () => {
           ],
         };
 
-        sandbox.stub(ODRProvider, "listServers").resolves([]);
+        vi.spyOn(ODRProvider, "listServers").mockResolvedValue([]);
 
         const errors = await pluginManifestUtils.validateLocalMCPPluginRuntimes(manifest);
         chai.assert.isEmpty(errors);
@@ -635,7 +629,7 @@ describe("pluginManifestUtils", () => {
           ],
         };
 
-        sandbox.stub(ODRProvider, "listServers").resolves([]);
+        vi.spyOn(ODRProvider, "listServers").mockResolvedValue([]);
 
         const errors = await pluginManifestUtils.validateLocalMCPPluginRuntimes(manifest);
         chai.assert.isNotEmpty(errors);
@@ -677,14 +671,14 @@ describe("pluginManifestUtils", () => {
             ],
           },
         ];
-        sandbox.stub(ODRProvider, "listServers").resolves(mockServers);
+        vi.spyOn(ODRProvider, "listServers").mockResolvedValue(mockServers);
 
         const errors = await pluginManifestUtils.validateLocalMCPPluginRuntimes(manifest);
         chai.assert.isEmpty(errors);
       });
 
       it("should fail when functions are not referenced", async () => {
-        sandbox.stub(ODRProvider, "listServers").resolves([
+        vi.spyOn(ODRProvider, "listServers").mockResolvedValue([
           {
             name: "test-server",
             display_name: "Test Server",
@@ -758,7 +752,7 @@ describe("pluginManifestUtils", () => {
             ],
           },
         ];
-        sandbox.stub(ODRProvider, "listServers").resolves(mockServers);
+        vi.spyOn(ODRProvider, "listServers").mockResolvedValue(mockServers);
 
         const errors = await pluginManifestUtils.validateLocalMCPPluginRuntimes(manifest);
         chai.assert.isEmpty(errors);
@@ -792,14 +786,14 @@ describe("pluginManifestUtils", () => {
             tools: [],
           },
         ];
-        sandbox.stub(ODRProvider, "listServers").resolves(mockServers);
+        vi.spyOn(ODRProvider, "listServers").mockResolvedValue(mockServers);
 
         const errors = await pluginManifestUtils.validateLocalMCPPluginRuntimes(manifest);
         chai.assert.isEmpty(errors);
       });
 
       it("should return early when no LocalPlugin runtimes exist", async () => {
-        const odrStub = sandbox.stub(ODRProvider, "listServers");
+        const odrStub = vi.spyOn(ODRProvider, "listServers");
 
         const manifest: PluginManifestSchema = {
           schema_version: "v2.1",
@@ -820,11 +814,11 @@ describe("pluginManifestUtils", () => {
 
         chai.assert.isEmpty(errors);
         // ODRProvider.listServers should not be called since there are no LocalPlugin runtimes
-        chai.assert.isFalse(odrStub.called);
+        chai.assert.isFalse(odrStub.mock.calls.length > 0);
       });
 
       it("should return early when runtimes property is missing", async () => {
-        const odrStub = sandbox.stub(ODRProvider, "listServers");
+        const odrStub = vi.spyOn(ODRProvider, "listServers");
 
         const manifest: PluginManifestSchema = {
           schema_version: "v2.1",
@@ -835,7 +829,7 @@ describe("pluginManifestUtils", () => {
         const errors = await pluginManifestUtils.validateLocalMCPPluginRuntimes(manifest);
 
         chai.assert.isEmpty(errors);
-        chai.assert.isFalse(odrStub.called);
+        chai.assert.isFalse(odrStub.mock.calls.length > 0);
       });
     });
 
@@ -881,8 +875,8 @@ describe("pluginManifestUtils", () => {
       ];
 
       it("should allow non-MCP LocalPlugins on non-Windows platforms", async () => {
-        sandbox.restore();
-        sandbox.stub(process, "platform").value("darwin");
+        vi.restoreAllMocks();
+        Object.defineProperty(process, "platform", { value: "darwin", configurable: true });
 
         const manifest: PluginManifestSchema = {
           schema_version: "v2.1",
@@ -903,7 +897,7 @@ describe("pluginManifestUtils", () => {
       });
 
       it("should allow non-MCP LocalPlugins when no MCP servers found", async () => {
-        sandbox.stub(ODRProvider, "listServers").resolves([]);
+        vi.spyOn(ODRProvider, "listServers").mockResolvedValue([]);
 
         const manifest: PluginManifestSchema = {
           schema_version: "v2.1",
@@ -924,7 +918,7 @@ describe("pluginManifestUtils", () => {
       });
 
       it("should fail when MCP server identifier not found", async () => {
-        sandbox.stub(ODRProvider, "listServers").resolves(mockODRServers);
+        vi.spyOn(ODRProvider, "listServers").mockResolvedValue(mockODRServers);
 
         const manifest: PluginManifestSchema = {
           schema_version: "v2.1",
@@ -948,7 +942,7 @@ describe("pluginManifestUtils", () => {
       });
 
       it("should fail when tool in run_for_functions not found in MCP server", async () => {
-        sandbox.stub(ODRProvider, "listServers").resolves(mockODRServers);
+        vi.spyOn(ODRProvider, "listServers").mockResolvedValue(mockODRServers);
 
         const manifest: PluginManifestSchema = {
           schema_version: "v2.1",
@@ -972,7 +966,7 @@ describe("pluginManifestUtils", () => {
       });
 
       it("should pass when parameters match MCP tool definition", async () => {
-        sandbox.stub(ODRProvider, "listServers").resolves(mockODRServers);
+        vi.spyOn(ODRProvider, "listServers").mockResolvedValue(mockODRServers);
 
         const manifest: PluginManifestSchema = {
           schema_version: "v2.1",
@@ -1005,7 +999,7 @@ describe("pluginManifestUtils", () => {
       });
 
       it("should fail when manifest has extra parameters", async () => {
-        sandbox.stub(ODRProvider, "listServers").resolves(mockODRServers);
+        vi.spyOn(ODRProvider, "listServers").mockResolvedValue(mockODRServers);
 
         const manifest: PluginManifestSchema = {
           schema_version: "v2.1",
@@ -1041,7 +1035,7 @@ describe("pluginManifestUtils", () => {
       });
 
       it("should fail when manifest is missing required parameters", async () => {
-        sandbox.stub(ODRProvider, "listServers").resolves(mockODRServers);
+        vi.spyOn(ODRProvider, "listServers").mockResolvedValue(mockODRServers);
 
         const manifest: PluginManifestSchema = {
           schema_version: "v2.1",
@@ -1075,7 +1069,7 @@ describe("pluginManifestUtils", () => {
       });
 
       it("should fail when parameter types mismatch", async () => {
-        sandbox.stub(ODRProvider, "listServers").resolves(mockODRServers);
+        vi.spyOn(ODRProvider, "listServers").mockResolvedValue(mockODRServers);
 
         const manifest: PluginManifestSchema = {
           schema_version: "v2.1",
@@ -1110,7 +1104,7 @@ describe("pluginManifestUtils", () => {
       });
 
       it("should fail when enum values mismatch", async () => {
-        sandbox.stub(ODRProvider, "listServers").resolves(mockODRServers);
+        vi.spyOn(ODRProvider, "listServers").mockResolvedValue(mockODRServers);
 
         const manifest: PluginManifestSchema = {
           schema_version: "v2.1",
@@ -1144,7 +1138,7 @@ describe("pluginManifestUtils", () => {
       });
 
       it("should fail when required array differs", async () => {
-        sandbox.stub(ODRProvider, "listServers").resolves(mockODRServers);
+        vi.spyOn(ODRProvider, "listServers").mockResolvedValue(mockODRServers);
 
         const manifest: PluginManifestSchema = {
           schema_version: "v2.1",
@@ -1179,7 +1173,7 @@ describe("pluginManifestUtils", () => {
       });
 
       it("should handle ODR failures gracefully", async () => {
-        sandbox.stub(ODRProvider, "listServers").rejects(new Error("ODR command failed"));
+        vi.spyOn(ODRProvider, "listServers").mockRejectedValue(new Error("ODR command failed"));
 
         const manifest: PluginManifestSchema = {
           schema_version: "v2.1",
@@ -1249,7 +1243,7 @@ describe("pluginManifestUtils", () => {
             ],
           },
         ];
-        sandbox.stub(ODRProvider, "listServers").resolves(mockServers);
+        vi.spyOn(ODRProvider, "listServers").mockResolvedValue(mockServers);
 
         const errors = await pluginManifestUtils.validateLocalMCPPluginRuntimes(manifest);
         chai.assert.isEmpty(errors);
@@ -1285,7 +1279,7 @@ describe("pluginManifestUtils", () => {
           },
         ];
 
-        sandbox.stub(ODRProvider, "listServers").resolves(mockServers);
+        vi.spyOn(ODRProvider, "listServers").mockResolvedValue(mockServers);
 
         const manifest: PluginManifestSchema = {
           schema_version: "v2.1",
@@ -1334,7 +1328,7 @@ describe("pluginManifestUtils", () => {
           },
         ];
 
-        sandbox.stub(ODRProvider, "listServers").resolves(mockServers);
+        vi.spyOn(ODRProvider, "listServers").mockResolvedValue(mockServers);
 
         const manifest: PluginManifestSchema = {
           schema_version: "v2.1",

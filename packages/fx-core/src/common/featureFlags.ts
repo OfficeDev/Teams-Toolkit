@@ -129,7 +129,7 @@ export class FeatureFlags {
   };
   static readonly MCPForDADCR = {
     name: FeatureFlagName.MCPForDADCR,
-    defaultValue: "false",
+    defaultValue: "true",
   };
   static readonly GenerateConfigFiles = {
     name: FeatureFlagName.GenerateConfigFiles,
@@ -146,6 +146,12 @@ export class FeatureFlagManager {
     return isFeatureFlagEnabled(
       featureFlag.name,
       featureFlag.defaultValue === "true" || featureFlag.defaultValue === "1"
+    );
+  }
+  getBooleanValueByName(featureFlagName: string, defaultValue = false): boolean {
+    const featureFlag = this.list().find((flag) => flag.name === featureFlagName);
+    return this.getBooleanValue(
+      featureFlag ?? { name: featureFlagName, defaultValue: defaultValue ? "true" : "false" }
     );
   }
   setBooleanValue(featureFlag: FeatureFlag, value: boolean): void {
@@ -165,3 +171,7 @@ export class FeatureFlagManager {
 }
 
 export const featureFlagManager = new FeatureFlagManager();
+
+export function readBooleanFeatureFlag(featureFlagName: string, defaultValue = false): boolean {
+  return featureFlagManager.getBooleanValueByName(featureFlagName, defaultValue);
+}

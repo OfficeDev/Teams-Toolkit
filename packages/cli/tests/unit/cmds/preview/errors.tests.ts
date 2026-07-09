@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import * as chai from "chai";
 import { Browser } from "../../../../src/cmds/preview/constants";
 import * as errors from "../../../../src/cmds/preview/errors";
+import { chai } from "vitest";
 
 describe("errors", () => {
   describe("WorkSpaceNotSupported", () => {

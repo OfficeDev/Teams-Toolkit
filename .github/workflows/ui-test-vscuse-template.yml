@@ -17,6 +17,10 @@ on:
         required: false
         type: string
         default: "latest"
+      template_version:
+        description: "Template version to inject into VSCUSE config.yaml. Version of the template used in the image, e.g. 0.0.0-rc."
+        required: false
+        type: string
       email-receiver:
         description: "email notification receiver"
         required: false
@@ -34,6 +38,13 @@ on:
 permissions:
   actions: read
 
+# Production runs (dev / release/*) use a unique group so concurrency is a no-op (nightly is
+# never cancelled); feature/PR branches dispatched by the smoke pipeline are grouped per-branch
+# so a re-dispatch cancels the stale UI-test run.
+concurrency:
+  group: ${{ format('uitest-vscuse-template-{0}', (github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/heads/release/')) && github.run_id || github.ref_name) }}
+  cancel-in-progress: true
+
 jobs:
   run:
     uses: ./.github/workflows/ui-test-vscuse-common.yml
@@ -48,6 +59,7 @@ jobs:
       test_plan: ${{ github.event.inputs.test_plan }}
       image_tag: ${{ github.event.inputs.image_tag }}
       vscuse_version: ${{ github.event.inputs.vscuse_version }}
+      template_version: ${{ github.event.inputs.template_version }}
       email_receiver: ${{ github.event.inputs.email-receiver }}
       max_retries: ${{ fromJson(github.event.inputs.max_retries || '7') }}
       schedule_trigger: ${{ github.event.inputs.schedule_trigger == 'true' }}

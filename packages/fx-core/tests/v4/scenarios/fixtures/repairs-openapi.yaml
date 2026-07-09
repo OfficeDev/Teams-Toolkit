@@ -1,0 +1,29 @@
+openapi: 3.0.1
+info:
+  title: Repairs API
+  version: 1.0.0
+servers:
+  - url: https://api.example.com
+paths:
+  /repairs:
+    get:
+      operationId: listRepairs
+      summary: List repairs
+      description: Returns a list of repairs with their details and images.
+      responses:
+        "200":
+          description: Repairs returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        title:
+                          type: string

@@ -4,7 +4,11 @@
 "use strict";
 
 import { AadManager, ResourceGroupManager } from "../commonlib";
-import { BASE_APP_NAME_PREFIX, getAppNamePrefix } from "./commonUtils";
+import {
+  BASE_APP_NAME_PREFIX,
+  getAppNamePrefix,
+  normalizeAppNamePrefix,
+} from "./commonUtils";
 
 export async function cleanUpAad(
   contains: string,
@@ -42,18 +46,23 @@ export async function cleanUpResourceGroup(
 }
 
 (async () => {
-  const prefix = process.env.E2E_CLEANUP_PREFIX || getAppNamePrefix();
+  const rawPrefix = process.env.E2E_CLEANUP_PREFIX || getAppNamePrefix();
+  const prefixList = Array.from(
+    new Set([normalizeAppNamePrefix(rawPrefix), rawPrefix]),
+  );
 
-  const promise1 = cleanUpAad(prefix);
-  const promise2 = cleanUpResourceGroup(prefix);
+  const promises = prefixList.flatMap((prefix) => [
+    cleanUpAad(prefix),
+    cleanUpResourceGroup(prefix),
+  ]);
 
   // Only clean legacy prefixes during broad (scheduled) cleanup
-  if (prefix === BASE_APP_NAME_PREFIX) {
+  if (prefixList.includes(BASE_APP_NAME_PREFIX)) {
     const promise3 = cleanUpResourceGroup("fx_e_2_e_");
     const promise4 = cleanUpResourceGroup("teamsfxt_");
     const promise5 = cleanUpResourceGroup("fx_");
-    await Promise.all([promise1, promise2, promise3, promise4, promise5]);
+    await Promise.all([...promises, promise3, promise4, promise5]);
   } else {
-    await Promise.all([promise1, promise2]);
+    await Promise.all(promises);
   }
 })();

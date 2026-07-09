@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 45,
+    "total_steps": 44,
     "created_at": "2026-06-16T00:23:52.020366",
     "name": "Feature Bot Collaboration Remote Debug",
     "description": {
@@ -19,7 +19,7 @@
     "generated_at": "2026-06-16T00:23:52.020366",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_c15bff46",
+      "plan_r_0624_024810",
       "step_b52069d4",
       "step_e7ac618c",
       "step_40bbe6d8",
@@ -76,32 +76,6 @@
     "updated_at": "2026-06-16T00:59:51.207608"
   },
   "steps": [
-    {
-      "step_id": "step_c15bff46",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 290,
-        "y": 230
-      },
-      "description": "Click the \"Teams Agents and Apps\" option in the \"New Project\" modal dropdown within the Microsoft 365 Agents Toolkit interface, as indicated by the red crosshair at coordinates (290, 230).",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:290:230:16:5:a09ae36b4a4a3bf0",
-        "dhash:290:230:96:5:932bcc9db1c7c216",
-        "dhash:290:230:0:10:c0c9808694a46179"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_c15bff46",
-      "created_at": "2026-06-16T00:23:52.043661",
-      "plan_id": "plan_52912e24"
-    },
     {
       "step_id": "step_b52069d4",
       "agent": "interaction",

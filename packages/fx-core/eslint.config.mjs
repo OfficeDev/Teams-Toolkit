@@ -31,6 +31,12 @@ export default [
       "import-x/namespace": "off",
     },
   },
+  {
+    files: ["src/**/index.ts"],
+    rules: {
+      "import-x/export": "off",
+    },
+  },
   { files: ["src/**/*.ts"], ...header },
   { files: ["src/**/*.ts"], ...promise },
   { files: ["src/**/*.ts"], ...typeConfig },

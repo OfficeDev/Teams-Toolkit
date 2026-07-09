@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 49,
+    "total_steps": 47,
     "created_at": "2026-05-14T06:21:13.240499",
     "name": "Feature Reusing Simple Bot",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2026-05-14T06:21:13.240499",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_2007e546",
+      "plan_r_0624_024810",
       "step_df22bdaa",
       "step_346c2c5d",
       "step_4c4bab26",
@@ -31,7 +31,7 @@
       "step_7947b59c",
       "step_696b2e5b",
       "step_c53c3658",
-      "step_413ef99a",
+      "plan_r_0624_024810",
       "step_06323817",
       "step_2c225008",
       "step_b5a3e431",
@@ -79,32 +79,6 @@
     "updated_at": "2026-05-14T11:35:38.006730"
   },
   "steps": [
-    {
-      "step_id": "step_2007e546",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 325,
-        "y": 230
-      },
-      "description": "Click the \"Teams Agents and Apps\" option in the \"New Project\" dropdown menu within the Microsoft 365 Agents Toolkit interface.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:325:230:16:5:b3a959b331598230",
-        "dhash:325:230:96:5:995342c98d47c696",
-        "dhash:325:230:0:10:c8c88094b0717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_2007e546",
-      "created_at": "2026-05-14T06:21:13.253443",
-      "plan_id": "plan_90eba645"
-    },
     {
       "step_id": "step_df22bdaa",
       "agent": "interaction",
@@ -285,32 +259,6 @@
       "tags": [],
       "screenshot": "step_c53c3658",
       "created_at": "2026-05-14T07:22:57.342692",
-      "plan_id": "plan_90eba645"
-    },
-    {
-      "step_id": "step_413ef99a",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 345,
-        "y": 215
-      },
-      "description": "Click the “Teams Agent and Apps” dropdown option in the “New Project” dialog within the Microsoft 365 Agents Toolkit interface, as indicated by the red crosshair at (345, 215).",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:345:215:16:5:0c2e3e9a3ac50800",
-        "dhash:345:215:96:5:a866640ba9258208",
-        "dhash:345:215:0:10:c0c8809292b17075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_413ef99a",
-      "created_at": "2026-05-14T07:23:54.980867",
       "plan_id": "plan_90eba645"
     },
     {

@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 11,
+    "total_steps": 10,
     "created_at": "2026-02-24T07:20:20.174329",
     "name": "Teams Agent With Data Custom API OpenAI py Remote Debug",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2026-02-24T07:20:20.174329",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_8e27a81a",
+      "plan_r_0624_024810",
       "step_3da1142e",
       "step_9d89eee6",
       "step_ed95f866",
@@ -44,37 +44,6 @@
     "updated_at": "2026-02-24T07:32:19.856105"
   },
   "steps": [
-    {
-      "step_id": "step_8e27a81a",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "dx": null,
-        "dy": null,
-        "key": null,
-        "keys": null,
-        "text": null,
-        "x": 378,
-        "y": 219
-      },
-      "description": "Click on the \"Teams Agents and Apps\" option within the \"New Project\" dropdown menu.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "0",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:378:219:16:5:6a694f32449225db",
-        "dhash:378:219:96:5:a66264582cad5240",
-        "dhash:378:219:0:10:c8c88094b2717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_8e27a81a",
-      "created_at": "2026-02-24T07:20:20.182944",
-      "plan_id": "plan_1a551e3b"
-    },
     {
       "step_id": "step_3da1142e",
       "agent": "interaction",

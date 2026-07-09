@@ -333,7 +333,7 @@ export class DotnetChecker implements DepsChecker {
       const dotnetSdks: DotnetSDK[] = await this.searchDotnetSdks(dotnetExecPath);
       const installedVersions = dotnetSdks
         .map((sdk) => DotnetChecker.parseDotnetVersion(sdk.version))
-        .filter((version) => version !== null) as string[];
+        .filter((version) => version !== null);
       return this.isDotnetVersionsInstalled(installedVersions);
     } catch (error) {
       const errorMessage = `validate private install failed, error = '${

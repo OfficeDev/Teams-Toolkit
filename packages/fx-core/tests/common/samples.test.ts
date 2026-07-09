@@ -1,6 +1,5 @@
 import axios from "axios";
-import * as chai from "chai";
-import * as sinon from "sinon";
+import { chai, vi } from "vitest";
 
 import { err } from "@microsoft/teamsfx-api";
 
@@ -9,13 +8,12 @@ import {
   SampleConfigTag,
   sampleProvider,
 } from "../../src/common/samples";
-import sampleConfigV3 from "./samples-config-v3.json";
 import { AccessGithubError } from "../../src/error/common";
+import sampleConfigV3 from "./samples-config-v3.json";
 
 const packageJson = require("../../package.json");
 
 describe("Samples", () => {
-  const sandbox = sinon.createSandbox();
   const fakedSampleConfig = {
     filterOptions: {
       capabilities: ["Tab"],
@@ -40,21 +38,21 @@ describe("Samples", () => {
   };
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     sampleProvider["sampleCollection"] = undefined;
     process.env["TEAMSFX_SAMPLE_CONFIG_BRANCH"] = undefined;
   });
 
   describe("fetchSampleConfig", () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
       sampleProvider["sampleCollection"] = undefined;
       process.env["TEAMSFX_SAMPLE_CONFIG_BRANCH"] = undefined;
     });
 
     it("download sample config on 'dev' branch in alpha version", async () => {
       packageJson.version = "2.0.4-alpha.888a35067.0";
-      sandbox.stub(axios, "get").callsFake(async (url: string, config) => {
+      vi.spyOn(axios, "get").mockImplementation(async (url: string, config) => {
         if (
           url ===
           "https://raw.githubusercontent.com/OfficeDev/TeamsFx-Samples/dev/.config/samples-config-v3.json"
@@ -79,7 +77,7 @@ describe("Samples", () => {
 
     it("download sample config of prerelease branch in prerelease(beta) version", async () => {
       packageJson.version = "2.0.4-beta.0";
-      sandbox.stub(axios, "get").callsFake(async (url: string, config) => {
+      vi.spyOn(axios, "get").mockImplementation(async (url: string, config) => {
         if (
           url ===
           `https://raw.githubusercontent.com/OfficeDev/TeamsFx-Samples/${SampleConfigBranchForPrerelease}/.config/samples-config-v3.json`
@@ -102,7 +100,7 @@ describe("Samples", () => {
 
     it("download sample config of rc tag in rc version", async () => {
       packageJson.version = "2.0.3-rc.1";
-      sandbox.stub(axios, "get").callsFake(async (url: string, config) => {
+      vi.spyOn(axios, "get").mockImplementation(async (url: string, config) => {
         if (
           url ===
           `https://raw.githubusercontent.com/OfficeDev/TeamsFx-Samples/${SampleConfigTag}/.config/samples-config-v3.json`
@@ -125,7 +123,7 @@ describe("Samples", () => {
 
     it("download sample config of release tag in stable version", async () => {
       packageJson.version = "2.0.3";
-      sandbox.stub(axios, "get").callsFake(async (url: string, config) => {
+      vi.spyOn(axios, "get").mockImplementation(async (url: string, config) => {
         if (
           url ===
           `https://raw.githubusercontent.com/OfficeDev/TeamsFx-Samples/${SampleConfigTag}/.config/samples-config-v3.json`
@@ -150,7 +148,7 @@ describe("Samples", () => {
       packageJson.version = "2.0.3";
       process.env["TEAMSFX_SAMPLE_CONFIG_BRANCH"] = "v2.0.0";
       process.env["TEAMSFX_OFFICE_SAMPLE_CONFIG_BRANCH"] = "v0.0.1";
-      sandbox.stub(axios, "get").callsFake(async (url: string, config) => {
+      vi.spyOn(axios, "get").mockImplementation(async (url: string, config) => {
         if (
           url ===
           `https://raw.githubusercontent.com/OfficeDev/TeamsFx-Samples/v2.0.0/.config/samples-config-v3.json`
@@ -174,7 +172,7 @@ describe("Samples", () => {
     it("download bundled sample config if feature flag branch is unavailable in stable version", async () => {
       packageJson.version = "2.0.3";
       process.env["TEAMSFX_SAMPLE_CONFIG_BRANCH"] = "v2.0.0";
-      sandbox.stub(axios, "get").callsFake(async (url: string, config) => {
+      vi.spyOn(axios, "get").mockImplementation(async (url: string, config) => {
         if (
           url ===
           `https://raw.githubusercontent.com/OfficeDev/TeamsFx-Samples/${SampleConfigTag}/.config/samples-config-v3.json`
@@ -201,7 +199,7 @@ describe("Samples", () => {
 
     it("has empty sample collection if network in disconnected", async () => {
       packageJson.version = "2.0.3";
-      sandbox.stub(axios, "get").callsFake(async (url: string, config) => {
+      vi.spyOn(axios, "get").mockImplementation(async (url: string, config) => {
         throw err(undefined);
       });
 
@@ -216,12 +214,12 @@ describe("Samples", () => {
 
   describe("getSampleReadmeHtml", () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("calls GitHub API to get html response", async () => {
       let requestUrl = "";
-      sandbox.stub(axios, "get").callsFake(async (url: string, config) => {
+      vi.spyOn(axios, "get").mockImplementation(async (url: string, config) => {
         requestUrl = url;
         return { data: "html content", status: 200 };
       });
@@ -256,7 +254,7 @@ describe("Samples", () => {
 
     it("returns empty string when content is empty", async () => {
       let requestUrl = "";
-      sandbox.stub(axios, "get").callsFake(async (url: string, config) => {
+      vi.spyOn(axios, "get").mockImplementation(async (url: string, config) => {
         requestUrl = url;
         return { status: 200 };
       });
@@ -290,7 +288,7 @@ describe("Samples", () => {
     });
 
     it("throws error when no network connection", async () => {
-      sandbox.stub(axios, "get").callsFake(async (url: string, config) => {
+      vi.spyOn(axios, "get").mockImplementation(async (url: string, config) => {
         throw err(undefined);
       });
 
@@ -341,7 +339,7 @@ describe("Samples", () => {
     };
     sampleConfigV3.samples.push(fakedExternalSample as any);
 
-    sandbox.stub(axios, "get").callsFake(async () => {
+    vi.spyOn(axios, "get").mockImplementation(async () => {
       return { data: sampleConfigV3, status: 200 };
     });
     const samples = (await sampleProvider.SampleCollection).samples;
@@ -351,10 +349,11 @@ describe("Samples", () => {
     chai.expect(faked?.gifUrl).equals(undefined);
 
     sampleConfigV3.samples.splice(sampleConfigV3.samples.length - 1, 1);
+    vi.restoreAllMocks();
   });
 
   it("fetchSampleConfig - online sample config returns undefined when failed to fetch", async () => {
-    sandbox.stub(axios, "get").callsFake(async (url: string, config) => {
+    vi.spyOn(axios, "get").mockImplementation(async (url: string, config) => {
       if (
         url ===
         "https://raw.githubusercontent.com/OfficeDev/TeamsFx-Samples/v2.2.0/.config/samples-config-v3.json"

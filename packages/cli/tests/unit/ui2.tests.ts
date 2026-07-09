@@ -10,17 +10,16 @@ import {
   ok,
 } from "@microsoft/teamsfx-api";
 import { SelectSubscriptionError, UnhandledError } from "@microsoft/teamsfx-core";
-import { assert } from "chai";
 import child_process from "child_process";
-import * as sinon from "sinon";
 import { logger } from "../../src/commonlib/logger";
 import UI from "../../src/userInteraction";
+import { assert, vi } from "vitest";
 
 describe("UserInteraction(CLI) 2", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   beforeEach(() => {
-    sandbox.stub(UI, "createProgressBar").returns({
+    vi.spyOn(UI, "createProgressBar").mockReturnValue({
       start: async (s) => {},
       next: async (s) => {},
       end: async (s) => {},
@@ -28,7 +27,7 @@ describe("UserInteraction(CLI) 2", () => {
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   describe("loadSelectDynamicData", async () => {
@@ -105,7 +104,7 @@ describe("UserInteraction(CLI) 2", () => {
 
   describe("selectOptions", () => {
     it("loadSelectDynamicData throw error", async () => {
-      sandbox.stub(UI, "loadSelectDynamicData").resolves(err(new UserError({})));
+      vi.spyOn(UI, "loadSelectDynamicData").mockResolvedValue(err(new UserError({})));
       const config: MultiSelectConfig = {
         name: "test",
         title: "test",
@@ -117,7 +116,7 @@ describe("UserInteraction(CLI) 2", () => {
       assert.isTrue(result.isErr());
     });
     it("success with default=all", async () => {
-      sandbox.stub(UI, "multiSelect").resolves(ok(["a", "b", "c"]));
+      vi.spyOn(UI, "multiSelect").mockResolvedValue(ok(["a", "b", "c"]));
       const config: MultiSelectConfig = {
         name: "test",
         title: "test",
@@ -130,7 +129,7 @@ describe("UserInteraction(CLI) 2", () => {
       assert.isTrue(result.isOk());
     });
     it("success with default=all", async () => {
-      sandbox.stub(UI, "multiSelect").resolves(ok(["a", "b"]));
+      vi.spyOn(UI, "multiSelect").mockResolvedValue(ok(["a", "b"]));
       const config: MultiSelectConfig = {
         name: "test",
         title: "test",
@@ -146,7 +145,7 @@ describe("UserInteraction(CLI) 2", () => {
       assert.isTrue(result.isOk());
     });
     it("success with default=none", async () => {
-      sandbox.stub(UI, "multiSelect").resolves(ok([]));
+      vi.spyOn(UI, "multiSelect").mockResolvedValue(ok([]));
       const config: MultiSelectConfig = {
         name: "test",
         title: "test",
@@ -162,7 +161,7 @@ describe("UserInteraction(CLI) 2", () => {
 
   describe("selectOption", () => {
     it("loadSelectDynamicData throw error", async () => {
-      sandbox.stub(UI, "loadSelectDynamicData").resolves(err(new UserError({})));
+      vi.spyOn(UI, "loadSelectDynamicData").mockResolvedValue(err(new UserError({})));
       const config: SingleSelectConfig = {
         name: "test",
         title: "test",
@@ -191,7 +190,7 @@ describe("UserInteraction(CLI) 2", () => {
         title: "test",
         options: ["a", "b"],
       };
-      sandbox.stub(UI, "singleSelect").resolves(ok("a"));
+      vi.spyOn(UI, "singleSelect").mockResolvedValue(ok("a"));
       const result = await UI.selectOption(config);
       assert.isTrue(result.isOk());
       if (result.isOk()) {
@@ -202,7 +201,7 @@ describe("UserInteraction(CLI) 2", () => {
 
   describe("inputText", () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
     it("load default value error", async () => {
       const res = await UI.inputText({
@@ -215,7 +214,7 @@ describe("UserInteraction(CLI) 2", () => {
       assert.isTrue(res.isErr());
     });
     it("UnhandledError", async () => {
-      sandbox.stub(UI, "input").resolves(err(new UnhandledError(new Error("test"))));
+      vi.spyOn(UI, "input").mockResolvedValue(err(new UnhandledError(new Error("test"))));
       const config: InputTextConfig = {
         name: "testInput",
         title: "input text",
@@ -269,7 +268,7 @@ describe("UserInteraction(CLI) 2", () => {
 
   describe("selectFileOrInput", () => {
     it("happy path", async () => {
-      sandbox.stub(UI, "input").resolves(ok("somevalue"));
+      vi.spyOn(UI, "input").mockResolvedValue(ok("somevalue"));
       const res = await UI.selectFileOrInput({
         name: "test",
         title: "test",
@@ -310,83 +309,83 @@ describe("UserInteraction(CLI) 2", () => {
 });
 
 describe("runCommand", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   it("happy path win32", async () => {
     const mockChildProcess = {
-      on: sandbox.stub().callsFake((event, callback) => {
+      on: vi.fn().mockImplementation((event, callback) => {
         if (event === "close") {
           callback(0); // Simulate successful execution
         }
       }),
     };
-    sandbox.stub(process, "platform").value("win32");
-    sandbox.stub(logger, "info").returns();
-    const spawnStub = sandbox.stub(child_process, "spawn").returns(mockChildProcess as any);
+    Object.defineProperty(process, "platform", { value: "win32", configurable: true });
+    vi.spyOn(logger, "info").mockReturnValue();
+    const spawnStub = vi.spyOn(child_process, "spawn").mockReturnValue(mockChildProcess as any);
     const res = await UI.runCommand({ cmd: 'echo "Hello"' });
     assert.isTrue(res.isOk());
-    assert.isTrue(spawnStub.calledOnce);
-    assert.equal(spawnStub.firstCall.args[0], "cmd.exe");
+    assert.isTrue(spawnStub.mock.calls.length === 1);
+    assert.equal(spawnStub.mock.calls[0][0], "cmd.exe");
   });
   it("uses custom shell", async () => {
     const mockChildProcess = {
-      on: sandbox.stub().callsFake((event, callback) => {
+      on: vi.fn().mockImplementation((event, callback) => {
         if (event === "close") {
           callback(0);
         }
       }),
     };
-    sandbox.stub(process, "platform").value("win32");
-    sandbox.stub(logger, "info").returns();
-    const spawnStub = sandbox.stub(child_process, "spawn").returns(mockChildProcess as any);
+    Object.defineProperty(process, "platform", { value: "win32", configurable: true });
+    vi.spyOn(logger, "info").mockReturnValue();
+    const spawnStub = vi.spyOn(child_process, "spawn").mockReturnValue(mockChildProcess as any);
     const res = await UI.runCommand({ cmd: "echo hello", shell: "powershell.exe" });
     assert.isTrue(res.isOk());
-    assert.isTrue(spawnStub.calledOnce);
-    assert.equal(spawnStub.firstCall.args[0], "powershell.exe");
+    assert.isTrue(spawnStub.mock.calls.length === 1);
+    assert.equal(spawnStub.mock.calls[0][0], "powershell.exe");
   });
   it("error linux", async () => {
     const mockChildProcess = {
-      on: sandbox.stub().callsFake((event, callback) => {
+      on: vi.fn().mockImplementation((event, callback) => {
         if (event === "close") {
           callback(1); // Simulate successful execution
         }
       }),
     };
-    sandbox.stub(process, "platform").value("linux");
-    sandbox.stub(logger, "info").returns();
-    sandbox.stub(logger, "error").returns();
-    const spawnStub = sandbox.stub(child_process, "spawn").returns(mockChildProcess as any);
+    Object.defineProperty(process, "platform", { value: "linux", configurable: true });
+    vi.spyOn(logger, "info").mockReturnValue();
+    vi.spyOn(logger, "error").mockReturnValue();
+    const spawnStub = vi.spyOn(child_process, "spawn").mockReturnValue(mockChildProcess as any);
     const res = await UI.runCommand({ cmd: 'echo "Hello"' });
     assert.isTrue(res.isErr());
-    assert.isTrue(spawnStub.calledOnce);
-    assert.equal(spawnStub.firstCall.args[0], "/bin/bash");
+    assert.isTrue(spawnStub.mock.calls.length === 1);
+    assert.equal(spawnStub.mock.calls[0][0], "/bin/bash");
   });
   it("captures stdout data", async () => {
     const stdoutData = "Output from stdout";
     const mockChildProcess = {
       stdout: {
-        on: sandbox.stub().callsFake((event, callback) => {
+        on: vi.fn().mockImplementation((event, callback) => {
           if (event === "data") {
             callback(Buffer.from(stdoutData));
           }
         }),
       },
       stderr: {
-        on: sandbox.stub(),
+        on: vi.fn(),
       },
-      on: sandbox.stub().callsFake((event, callback) => {
+      on: vi.fn().mockImplementation((event, callback) => {
         if (event === "close") {
           callback(0);
         }
       }),
     };
-    sandbox.stub(process, "platform").value("win32");
-    sandbox.stub(logger, "info").returns();
-    sandbox.stub(process.stdout, "write").returns(true);
-    sandbox.stub(process.stderr, "write").returns(true);
-    sandbox.stub(child_process, "spawn").returns(mockChildProcess as any);
+    Object.defineProperty(process, "platform", { value: "win32", configurable: true });
+    vi.spyOn(logger, "info").mockReturnValue();
+    vi.spyOn(process.stdout, "write").mockReturnValue(true);
+    vi.spyOn(process.stderr, "write").mockReturnValue(true);
+    vi.spyOn(child_process, "spawn").mockReturnValue(mockChildProcess as any);
     const res = await UI.runCommand({ cmd: 'echo "test"' });
     assert.isTrue(res.isOk());
     if (res.isOk()) {
@@ -397,26 +396,26 @@ describe("runCommand", () => {
     const stderrData = "Error from stderr";
     const mockChildProcess = {
       stdout: {
-        on: sandbox.stub(),
+        on: vi.fn(),
       },
       stderr: {
-        on: sandbox.stub().callsFake((event, callback) => {
+        on: vi.fn().mockImplementation((event, callback) => {
           if (event === "data") {
             callback(Buffer.from(stderrData));
           }
         }),
       },
-      on: sandbox.stub().callsFake((event, callback) => {
+      on: vi.fn().mockImplementation((event, callback) => {
         if (event === "close") {
           callback(0);
         }
       }),
     };
-    sandbox.stub(process, "platform").value("linux");
-    sandbox.stub(logger, "info").returns();
-    sandbox.stub(process.stdout, "write").returns(true);
-    sandbox.stub(process.stderr, "write").returns(true);
-    sandbox.stub(child_process, "spawn").returns(mockChildProcess as any);
+    Object.defineProperty(process, "platform", { value: "linux", configurable: true });
+    vi.spyOn(logger, "info").mockReturnValue();
+    vi.spyOn(process.stdout, "write").mockReturnValue(true);
+    vi.spyOn(process.stderr, "write").mockReturnValue(true);
+    vi.spyOn(child_process, "spawn").mockReturnValue(mockChildProcess as any);
     const res = await UI.runCommand({ cmd: 'echo "test"' });
     assert.isTrue(res.isOk());
     if (res.isOk()) {
@@ -428,30 +427,30 @@ describe("runCommand", () => {
     const stderrData = "Error from stderr\n";
     const mockChildProcess = {
       stdout: {
-        on: sandbox.stub().callsFake((event, callback) => {
+        on: vi.fn().mockImplementation((event, callback) => {
           if (event === "data") {
             callback(Buffer.from(stdoutData));
           }
         }),
       },
       stderr: {
-        on: sandbox.stub().callsFake((event, callback) => {
+        on: vi.fn().mockImplementation((event, callback) => {
           if (event === "data") {
             callback(Buffer.from(stderrData));
           }
         }),
       },
-      on: sandbox.stub().callsFake((event, callback) => {
+      on: vi.fn().mockImplementation((event, callback) => {
         if (event === "close") {
           callback(0);
         }
       }),
     };
-    sandbox.stub(process, "platform").value("linux");
-    sandbox.stub(logger, "info").returns();
-    sandbox.stub(process.stdout, "write").returns(true);
-    sandbox.stub(process.stderr, "write").returns(true);
-    sandbox.stub(child_process, "spawn").returns(mockChildProcess as any);
+    Object.defineProperty(process, "platform", { value: "linux", configurable: true });
+    vi.spyOn(logger, "info").mockReturnValue();
+    vi.spyOn(process.stdout, "write").mockReturnValue(true);
+    vi.spyOn(process.stderr, "write").mockReturnValue(true);
+    vi.spyOn(child_process, "spawn").mockReturnValue(mockChildProcess as any);
     const res = await UI.runCommand({ cmd: 'echo "test"' });
     assert.isTrue(res.isOk());
     if (res.isOk()) {
@@ -461,92 +460,92 @@ describe("runCommand", () => {
   it("passes workingDirectory to spawn", async () => {
     const workingDir = "/path/to/working/dir";
     const mockChildProcess = {
-      stdout: { on: sandbox.stub() },
-      stderr: { on: sandbox.stub() },
-      on: sandbox.stub().callsFake((event, callback) => {
+      stdout: { on: vi.fn() },
+      stderr: { on: vi.fn() },
+      on: vi.fn().mockImplementation((event, callback) => {
         if (event === "close") {
           callback(0);
         }
       }),
     };
-    sandbox.stub(process, "platform").value("linux");
-    sandbox.stub(logger, "info").returns();
-    sandbox.stub(process.stdout, "write").returns(true);
-    sandbox.stub(process.stderr, "write").returns(true);
-    const spawnStub = sandbox.stub(child_process, "spawn").returns(mockChildProcess as any);
+    Object.defineProperty(process, "platform", { value: "linux", configurable: true });
+    vi.spyOn(logger, "info").mockReturnValue();
+    vi.spyOn(process.stdout, "write").mockReturnValue(true);
+    vi.spyOn(process.stderr, "write").mockReturnValue(true);
+    const spawnStub = vi.spyOn(child_process, "spawn").mockReturnValue(mockChildProcess as any);
     const res = await UI.runCommand({ cmd: "pwd", workingDirectory: workingDir });
     assert.isTrue(res.isOk());
-    assert.isTrue(spawnStub.calledOnce);
-    const spawnOptions = spawnStub.firstCall.args[2];
+    assert.isTrue(spawnStub.mock.calls.length === 1);
+    const spawnOptions = spawnStub.mock.calls[0][2];
     assert.equal(spawnOptions.cwd, workingDir);
   });
   it("passes timeout to spawn", async () => {
     const timeout = 5000;
     const mockChildProcess = {
-      stdout: { on: sandbox.stub() },
-      stderr: { on: sandbox.stub() },
-      on: sandbox.stub().callsFake((event, callback) => {
+      stdout: { on: vi.fn() },
+      stderr: { on: vi.fn() },
+      on: vi.fn().mockImplementation((event, callback) => {
         if (event === "close") {
           callback(0);
         }
       }),
     };
-    sandbox.stub(process, "platform").value("linux");
-    sandbox.stub(logger, "info").returns();
-    sandbox.stub(process.stdout, "write").returns(true);
-    sandbox.stub(process.stderr, "write").returns(true);
-    const spawnStub = sandbox.stub(child_process, "spawn").returns(mockChildProcess as any);
+    Object.defineProperty(process, "platform", { value: "linux", configurable: true });
+    vi.spyOn(logger, "info").mockReturnValue();
+    vi.spyOn(process.stdout, "write").mockReturnValue(true);
+    vi.spyOn(process.stderr, "write").mockReturnValue(true);
+    const spawnStub = vi.spyOn(child_process, "spawn").mockReturnValue(mockChildProcess as any);
     const res = await UI.runCommand({ cmd: "sleep 1", timeout: timeout });
     assert.isTrue(res.isOk());
-    assert.isTrue(spawnStub.calledOnce);
-    const spawnOptions = spawnStub.firstCall.args[2];
+    assert.isTrue(spawnStub.mock.calls.length === 1);
+    const spawnOptions = spawnStub.mock.calls[0][2];
     assert.equal(spawnOptions.timeout, timeout);
   });
   it("passes env variables to spawn", async () => {
     const envVars = { TEST_VAR: "test_value", ANOTHER_VAR: "another_value" };
     const mockChildProcess = {
-      stdout: { on: sandbox.stub() },
-      stderr: { on: sandbox.stub() },
-      on: sandbox.stub().callsFake((event, callback) => {
+      stdout: { on: vi.fn() },
+      stderr: { on: vi.fn() },
+      on: vi.fn().mockImplementation((event, callback) => {
         if (event === "close") {
           callback(0);
         }
       }),
     };
-    sandbox.stub(process, "platform").value("win32");
-    sandbox.stub(logger, "info").returns();
-    sandbox.stub(process.stdout, "write").returns(true);
-    sandbox.stub(process.stderr, "write").returns(true);
-    const spawnStub = sandbox.stub(child_process, "spawn").returns(mockChildProcess as any);
+    Object.defineProperty(process, "platform", { value: "win32", configurable: true });
+    vi.spyOn(logger, "info").mockReturnValue();
+    vi.spyOn(process.stdout, "write").mockReturnValue(true);
+    vi.spyOn(process.stderr, "write").mockReturnValue(true);
+    const spawnStub = vi.spyOn(child_process, "spawn").mockReturnValue(mockChildProcess as any);
     const res = await UI.runCommand({ cmd: "echo %TEST_VAR%", env: envVars });
     assert.isTrue(res.isOk());
-    assert.isTrue(spawnStub.calledOnce);
-    const spawnOptions = spawnStub.firstCall.args[2];
+    assert.isTrue(spawnStub.mock.calls.length === 1);
+    const spawnOptions = spawnStub.mock.calls[0][2];
     assert.deepEqual(spawnOptions.env, envVars);
   });
   it("handles non-zero exit code with output", async () => {
     const errorOutput = "Command failed with error";
     const mockChildProcess = {
       stdout: {
-        on: sandbox.stub().callsFake((event, callback) => {
+        on: vi.fn().mockImplementation((event, callback) => {
           if (event === "data") {
             callback(Buffer.from(errorOutput));
           }
         }),
       },
-      stderr: { on: sandbox.stub() },
-      on: sandbox.stub().callsFake((event, callback) => {
+      stderr: { on: vi.fn() },
+      on: vi.fn().mockImplementation((event, callback) => {
         if (event === "close") {
           callback(2); // Non-zero exit code
         }
       }),
     };
-    sandbox.stub(process, "platform").value("linux");
-    sandbox.stub(logger, "info").returns();
-    sandbox.stub(logger, "error").returns();
-    sandbox.stub(process.stdout, "write").returns(true);
-    sandbox.stub(process.stderr, "write").returns(true);
-    sandbox.stub(child_process, "spawn").returns(mockChildProcess as any);
+    Object.defineProperty(process, "platform", { value: "linux", configurable: true });
+    vi.spyOn(logger, "info").mockReturnValue();
+    vi.spyOn(logger, "error").mockReturnValue();
+    vi.spyOn(process.stdout, "write").mockReturnValue(true);
+    vi.spyOn(process.stderr, "write").mockReturnValue(true);
+    vi.spyOn(child_process, "spawn").mockReturnValue(mockChildProcess as any);
     const res = await UI.runCommand({ cmd: "invalid-command" });
     assert.isTrue(res.isErr());
     if (res.isErr()) {

@@ -1,0 +1,53 @@
+{
+  "$schema": "../../../schema/descriptor.schema.json",
+  "id": "da/mcp-server",
+  "name": "Declarative Agent with MCP Server",
+  "languages": ["common"],
+  "minEngineVersion": "5.20.0",
+  "spec": "docs/03-specs/scenarios/da/create-mcp-server.md",
+  "requiresNetwork": false,
+
+  "optionsSchema": {
+    "type": "object",
+    "required": ["mcpServerType"],
+    "properties": {
+      "mcpServerType": { "enum": ["local", "remote"], "default": "remote" },
+      "mcpServerUrl": { "type": "string", "format": "uri" },
+      "authType": { "enum": ["none", "oauth", "entra-sso", "oauth-dynamic"], "default": "none" },
+      "oauthClientId": { "type": "string" },
+      "oauthClientSecret": { "type": "string" },
+      "oauthScopes": { "type": "string" },
+      "entraClientId": { "type": "string" },
+      "selectedLocalServers": { "type": "array", "items": { "type": "string" } }
+    },
+    "allOf": [
+      {
+        "if": { "properties": { "mcpServerType": { "const": "remote" } } },
+        "then": { "required": ["mcpServerUrl", "authType"] }
+      },
+      {
+        "if": { "properties": { "mcpServerType": { "const": "local" } } },
+        "then": { "required": ["selectedLocalServers"] }
+      },
+      {
+        "if": { "properties": { "authType": { "const": "oauth" } } },
+        "then": { "required": ["oauthClientId", "oauthClientSecret"] }
+      },
+      {
+        "if": { "properties": { "authType": { "const": "entra-sso" } } },
+        "then": { "required": ["entraClientId"] }
+      }
+    ],
+    "additionalProperties": false
+  },
+
+  "replaceMap": [
+    { "var": "DeclarativeCopilot", "const": "true" },
+    { "var": "MCPForDAServerUrl", "from": "mcpServerUrl" },
+    { "var": "IsLocalMCP", "when": "mcpServerType == 'local'", "value": "true" },
+    { "var": "IsNoAuth", "when": "authType == 'none'", "value": "true" },
+    { "var": "MicrosoftEntra", "when": "authType == 'entra-sso'", "value": "true" },
+    { "var": "MCPNamespace", "expr": "mcpNamespace(mcpServerUrl)" },
+    { "var": "MCPAuthRefId", "expr": "mcpAuthRef(mcpServerUrl)" }
+  ]
+}

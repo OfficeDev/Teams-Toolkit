@@ -2,11 +2,10 @@
 // Licensed under the MIT license.
 
 import { SpecParser } from "@microsoft/m365-spec-parser";
-import { ConfirmConfig, UserError, err, ok } from "@microsoft/teamsfx-api";
-import * as chai from "chai";
-import chaiAsPromised from "chai-as-promised";
+import { ConfirmConfig, err, ok, UserError } from "@microsoft/teamsfx-api";
 import { RestoreFn } from "mocked-env";
-import * as sinon from "sinon";
+import { expect, vi } from "vitest";
+import { featureFlagManager } from "../../../../src";
 import { teamsGraphClient } from "../../../../src/client/teamsGraphClient";
 import { setTools } from "../../../../src/common/globalVars";
 import { UpdateApiKeyArgs } from "../../../../src/component/driver/apiKey/interface/updateApiKeyArgs";
@@ -15,12 +14,8 @@ import {
   ApiSecretRegistrationAppType,
   ApiSecretRegistrationTargetAudience,
 } from "../../../../src/component/driver/teamsApp/interfaces/ApiSecretRegistration";
-import { MockedLogProvider, MockedUserInteraction } from "../../../plugins/solution/util";
 import { MockedAzureAccountProvider, MockedM365Provider } from "../../../core/utils";
-import { featureFlagManager, FeatureFlags } from "../../../../src";
-
-chai.use(chaiAsPromised);
-const expect = chai.expect;
+import { MockedLogProvider, MockedUserInteraction } from "../../../plugins/solution/util";
 
 describe("UpdateApiKeyDriver", () => {
   const mockedDriverContext: any = {
@@ -43,7 +38,7 @@ describe("UpdateApiKeyDriver", () => {
   });
 
   afterEach(() => {
-    sinon.restore();
+    vi.restoreAllMocks();
     if (envRestore) {
       envRestore();
       envRestore = undefined;
@@ -51,18 +46,15 @@ describe("UpdateApiKeyDriver", () => {
   });
 
   it("happy path: update all fields", async () => {
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon.stub(teamsGraphClient, "updateApiKeyRegistration").resolves({
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+    vi.spyOn(teamsGraphClient, "updateApiKeyRegistration").mockResolvedValue({
       description: "mockedDescription",
       targetUrlsShouldStartWith: ["https://test2"],
       applicableToApps: ApiSecretRegistrationAppType.SpecificApp,
       targetAudience: ApiSecretRegistrationTargetAudience.HomeTenant,
       specificAppId: "mockedAppId",
     });
-    sinon.stub(teamsGraphClient, "getApiKeyRegistrationById").resolves({
+    vi.spyOn(teamsGraphClient, "getApiKeyRegistrationById").mockResolvedValue({
       id: "mockedRegistrationId",
       description: "mockedDescription",
       clientSecrets: [],
@@ -70,7 +62,7 @@ describe("UpdateApiKeyDriver", () => {
       applicableToApps: ApiSecretRegistrationAppType.AnyApp,
       targetAudience: ApiSecretRegistrationTargetAudience.AnyTenant,
     });
-    sinon.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",
@@ -105,7 +97,7 @@ describe("UpdateApiKeyDriver", () => {
       validAPICount: 1,
     });
 
-    sinon.stub(mockedDriverContext.ui, "confirm").callsFake(async (config) => {
+    vi.spyOn(mockedDriverContext.ui, "confirm").mockImplementation(async (config) => {
       expect((config as ConfirmConfig).title.includes("description")).to.be.true;
       expect((config as ConfirmConfig).title.includes("applicableToApps")).to.be.true;
       expect((config as ConfirmConfig).title.includes("specificAppId")).to.be.true;
@@ -131,14 +123,14 @@ describe("UpdateApiKeyDriver", () => {
   });
 
   it("happy path: update all fields with baseURL", async () => {
-    sinon.stub(teamsGraphClient, "updateApiKeyRegistration").resolves({
+    vi.spyOn(teamsGraphClient, "updateApiKeyRegistration").mockResolvedValue({
       description: "mockedDescription",
       targetUrlsShouldStartWith: ["https://test2"],
       applicableToApps: ApiSecretRegistrationAppType.SpecificApp,
       targetAudience: ApiSecretRegistrationTargetAudience.HomeTenant,
       specificAppId: "mockedAppId",
     });
-    sinon.stub(teamsGraphClient, "getApiKeyRegistrationById").resolves({
+    vi.spyOn(teamsGraphClient, "getApiKeyRegistrationById").mockResolvedValue({
       id: "mockedRegistrationId",
       description: "mockedDescription",
       clientSecrets: [],
@@ -147,7 +139,7 @@ describe("UpdateApiKeyDriver", () => {
       targetAudience: ApiSecretRegistrationTargetAudience.AnyTenant,
     });
 
-    sinon.stub(mockedDriverContext.ui, "confirm").callsFake(async (config) => {
+    vi.spyOn(mockedDriverContext.ui, "confirm").mockImplementation(async (config) => {
       expect((config as ConfirmConfig).title.includes("description")).to.be.true;
       expect((config as ConfirmConfig).title.includes("applicableToApps")).to.be.true;
       expect((config as ConfirmConfig).title.includes("specificAppId")).to.be.true;
@@ -173,7 +165,7 @@ describe("UpdateApiKeyDriver", () => {
   });
 
   it("happy path: does not update when no changes", async () => {
-    sinon.stub(teamsGraphClient, "getApiKeyRegistrationById").resolves({
+    vi.spyOn(teamsGraphClient, "getApiKeyRegistrationById").mockResolvedValue({
       id: "test",
       description: "test",
       clientSecrets: [],
@@ -181,11 +173,8 @@ describe("UpdateApiKeyDriver", () => {
       applicableToApps: ApiSecretRegistrationAppType.AnyApp,
       targetAudience: ApiSecretRegistrationTargetAudience.AnyTenant,
     });
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",
@@ -236,17 +225,14 @@ describe("UpdateApiKeyDriver", () => {
   });
 
   it("happy path: should not show confirm when only devtunnel url is different", async () => {
-    sinon.stub(teamsGraphClient, "updateApiKeyRegistration").resolves({
+    vi.spyOn(teamsGraphClient, "updateApiKeyRegistration").mockResolvedValue({
       description: "test",
       targetUrlsShouldStartWith: ["https://test2.asse.devtunnels.ms"],
       applicableToApps: ApiSecretRegistrationAppType.AnyApp,
       targetAudience: ApiSecretRegistrationTargetAudience.AnyTenant,
     });
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon.stub(teamsGraphClient, "getApiKeyRegistrationById").resolves({
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+    vi.spyOn(teamsGraphClient, "getApiKeyRegistrationById").mockResolvedValue({
       id: "test",
       description: "test",
       clientSecrets: [],
@@ -254,7 +240,7 @@ describe("UpdateApiKeyDriver", () => {
       applicableToApps: ApiSecretRegistrationAppType.AnyApp,
       targetAudience: ApiSecretRegistrationTargetAudience.AnyTenant,
     });
-    sinon.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",
@@ -275,9 +261,9 @@ describe("UpdateApiKeyDriver", () => {
       validAPICount: 1,
     });
 
-    const confirmStub = sinon
-      .stub(mockedDriverContext.ui, "confirm")
-      .resolves(ok({ type: "success", value: true }));
+    const confirmStub = vi
+      .spyOn(mockedDriverContext.ui, "confirm")
+      .mockResolvedValue(ok({ type: "success", value: true }));
 
     const args: UpdateApiKeyArgs = {
       name: "test",
@@ -294,15 +280,12 @@ describe("UpdateApiKeyDriver", () => {
       expect(result.result.value.size).to.equal(0);
       expect(result.summaries.length).to.equal(1);
     }
-    expect(confirmStub.notCalled).to.be.true;
+    expect(confirmStub.mock.calls.length === 0).to.be.true;
   });
 
   it("should throw error when user canel", async () => {
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon.stub(teamsGraphClient, "getApiKeyRegistrationById").resolves({
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+    vi.spyOn(teamsGraphClient, "getApiKeyRegistrationById").mockResolvedValue({
       id: "mockedRegistrationId",
       description: "mockedDescription",
       clientSecrets: [],
@@ -310,7 +293,7 @@ describe("UpdateApiKeyDriver", () => {
       applicableToApps: ApiSecretRegistrationAppType.AnyApp,
       targetAudience: ApiSecretRegistrationTargetAudience.AnyTenant,
     });
-    sinon.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",
@@ -345,9 +328,9 @@ describe("UpdateApiKeyDriver", () => {
       validAPICount: 1,
     });
 
-    sinon
-      .stub(mockedDriverContext.ui, "confirm")
-      .returns(err(new UserError("source", "userCancelled", "Cancel by user")));
+    vi.spyOn(mockedDriverContext.ui, "confirm").mockReturnValue(
+      err(new UserError("source", "userCancelled", "Cancel by user"))
+    );
 
     const args: UpdateApiKeyArgs = {
       name: "test2",
@@ -482,8 +465,10 @@ describe("UpdateApiKeyDriver", () => {
   });
 
   it("should throw error when unhandled error", async () => {
-    sinon.stub(MockedM365Provider.prototype, "getAccessToken").throws(new Error("unhandled error"));
-    sinon.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(MockedM365Provider.prototype, "getAccessToken").mockImplementation(() => {
+      throw new Error("unhandled error");
+    });
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",
@@ -517,10 +502,7 @@ describe("UpdateApiKeyDriver", () => {
       allAPICount: 1,
       validAPICount: 1,
     });
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
 
     const args: UpdateApiKeyArgs = {
       name: "test2",

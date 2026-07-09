@@ -1,12 +1,19 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import fs from "fs-extra";
-import "mocha";
+import SwaggerParser from "@apidevtools/swagger-parser";
 import { expect } from "chai";
+import { createHash } from "crypto";
+import fs from "fs-extra";
+import jsyaml from "js-yaml";
+import "mocha";
+import mockedEnv, { RestoreFn } from "mocked-env";
+import { OpenAPI, OpenAPIV3 } from "openapi-types";
+import path from "path";
 import sinon from "sinon";
 import converter from "swagger2openapi";
-import { SpecParser } from "../src/specParser";
+import { AdaptiveCardGenerator } from "../src/adaptiveCardGenerator";
+import { ConstantString } from "../src/constants";
 import {
   AdaptiveCardUpdateStrategy,
   ErrorType,
@@ -14,21 +21,13 @@ import {
   ValidationStatus,
   WarningType,
 } from "../src/interfaces";
-import SwaggerParser from "@apidevtools/swagger-parser";
-import { SpecParserError } from "../src/specParserError";
-import { ConstantString } from "../src/constants";
-import { OpenAPI, OpenAPIV3 } from "openapi-types";
-import { SpecFilter } from "../src/specFilter";
 import { ManifestUpdater } from "../src/manifestUpdater";
-import { AdaptiveCardGenerator } from "../src/adaptiveCardGenerator";
+import { SpecFilter } from "../src/specFilter";
+import { SpecParser } from "../src/specParser";
+import { SpecParserError } from "../src/specParserError";
 import { Utils } from "../src/utils";
-import jsyaml from "js-yaml";
-import mockedEnv, { RestoreFn } from "mocked-env";
 import { SMEValidator } from "../src/validators/smeValidator";
 import { ValidatorFactory } from "../src/validators/validatorFactory";
-import { createHash } from "crypto";
-import { JsonDataGenerator } from "../src/jsonDataGenerator";
-import path from "path";
 
 describe("SpecParser", () => {
   afterEach(() => {
@@ -386,7 +385,13 @@ describe("SpecParser", () => {
       } as OpenAPIV3.Document;
       const specPath = "path/to/spec";
       const specParser = new SpecParser(spec as any);
+      const parseStub = sinon.stub(specParser.parser, "parse").resolves(spec as any);
+      const dereferenceStub = sinon.stub(specParser.parser, "dereference").resolves(spec as any);
       const validateStub = sinon.stub(specParser.parser, "validate").resolves(spec as any);
+      // Mock the $refs.paths() to return multiple paths (indicating remote references)
+      sinon
+        .stub(specParser.parser.$refs, "paths")
+        .returns([specPath, "https://petstore3.swagger.io/api/v3/openapi.json"]);
       const result = await specParser.validate();
 
       expect(result.errors[0].type).equal(ErrorType.RemoteRefNotSupported);

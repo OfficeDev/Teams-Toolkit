@@ -6,22 +6,14 @@ import { Result, err, ok } from "neverthrow";
 import * as crypto from "crypto";
 import semver from "semver";
 
-/**
- * The v4 template-distribution resolution operation.
- *
- * Spec: docs/03-specs/operations/scaffolding/resolve-template-source.md
- * Decision: docs/02-architecture/adr/ADR-0006-template-distribution-channel.md
- *
- * This module is part of the v4 world. It imports no v3 symbol; v3 code may
- * call `resolveTemplateSource`, but nothing here is tailored for v3.
- */
+/** v4 template-distribution resolution. See resolve-template-source spec and ADR-0006. */
 
 const SOURCE = "Scaffold";
 
 /** Where the resolved template-package bytes come from. */
 export type TemplateOrigin = "bundled" | "online" | "cache" | "bundled-fallback";
 
-/** A single channel-published version paired with its expected content digest (model A). */
+/** A channel-published version paired with its expected content digest. */
 export interface TagEntry {
   version: string;
   digest: string;
@@ -40,17 +32,13 @@ export interface BundledFloor {
   location: string;
 }
 
-/**
- * The narrow port `resolveTemplateSource` depends on (interface-segregation).
- * The full `ScaffoldRuntime` composes this later; this operation never reaches
- * for faces it does not use.
- */
+/** Narrow template-source port. */
 export interface TemplateSourcePort {
   /** Read an environment variable (e.g. `TEMPLATE_VERSION`). */
   env(name: string): string | undefined;
   /** The channel's published `{ version, digest }` entries. */
   tagList(): Promise<TagEntry[]>;
-  /** Download a package's bytes for a version (verified against `expectedDigest` by the caller). */
+  /** Download a package's bytes for a version. */
   packages(version: string, expectedDigest: string): Promise<Buffer>;
   /** The local digest-keyed package cache. */
   cache: {
@@ -68,15 +56,22 @@ export interface TemplateSource {
   version: string;
   digest: string;
   location: string;
-  /** Set when the resolved source diverged from the intended online source (observable, never silent). */
+  /** Set when the resolved source diverged from the intended online source. */
   warning?: string;
 }
 
 export interface ResolveTemplateSourceInput {
   /** SemVer range the build is permitted to resolve within. */
   range: string;
-  /** `true` for test/offline/daily builds (bundled floor); `false` for shipped builds (release channel). */
+  /** `true` for bundled floor resolution; `false` for release-channel resolution. */
   bundled: boolean;
+  port: TemplateSourcePort;
+}
+
+/** Inputs for the no-network local-first resolver. */
+export interface ResolveLocalTemplateSourceInput {
+  /** SemVer range the build is permitted to resolve within. */
+  range: string;
   port: TemplateSourcePort;
 }
 
@@ -85,12 +80,7 @@ export function computeDigest(bytes: Buffer): string {
   return "sha256:" + crypto.createHash("sha256").update(bytes).digest("hex");
 }
 
-/**
- * Resolve `(range, bundled, port)` to exactly one `TemplateSource` before any
- * template is read or rendered. Pure with respect to its inputs and the
- * current tag-list state (INV-6). Returns `Result` rather than throwing,
- * consistent with the toolkit-wide neverthrow rule.
- */
+/** Resolve to exactly one `TemplateSource` before any template is read. */
 export async function resolveTemplateSource(
   input: ResolveTemplateSourceInput
 ): Promise<Result<TemplateSource, FxError>> {
@@ -98,15 +88,38 @@ export async function resolveTemplateSource(
 
   const templateVersion = port.env("TEMPLATE_VERSION");
   if (templateVersion === "local") {
-    return ok(floorSource(port.floor)); // AC-02 (override beats bundled=false)
+    return ok(floorSource(port.floor));
   }
   if (templateVersion) {
-    return pinnedOnline(templateVersion, port); // AC-03
+    return pinnedOnline(templateVersion, port);
   }
   if (bundled) {
-    return ok(floorSource(port.floor)); // AC-01, AC-12 (never sniff package.json#version)
+    return ok(floorSource(port.floor));
   }
   return resolveOnline(range, port);
+}
+
+/** Resolve a local source without touching the network. */
+export function resolveLocalTemplateSource(input: ResolveLocalTemplateSourceInput): TemplateSource {
+  const { range, port } = input;
+  if (port.env("TEMPLATE_VERSION") === "local") {
+    return floorSource(port.floor);
+  }
+  const highestCached = highestCachedAboveFloor(range, port);
+  if (highestCached) {
+    const cached = port.cache.get(highestCached);
+    /* istanbul ignore else -- highestCached is drawn from cache.keys(); a miss
+       means the cache mutated mid-resolution, so we degrade to the floor. */
+    if (cached) {
+      return {
+        origin: "cache",
+        version: highestCached,
+        digest: cached.digest,
+        location: cacheLocation(highestCached),
+      };
+    }
+  }
+  return floorSource(port.floor);
 }
 
 function floorSource(floor: BundledFloor): TemplateSource {
@@ -126,8 +139,7 @@ async function pinnedOnline(
   try {
     tags = await port.tagList();
   } catch (e) {
-    // A pin never falls back (AC-16 intent): surface the channel failure as a
-    // Result instead of letting the rejection escape (neverthrow contract).
+    // A pin never falls back; keep channel failures inside the Result contract.
     return err(asTagListError(e));
   }
   const entry = tags.find((t) => t.version === version);
@@ -151,24 +163,22 @@ async function resolveOnline(
   try {
     tags = await port.tagList();
   } catch (e) {
-    // A malformed channel document is a hard error (spec decision #7 / AC-17),
-    // distinct from an unreachable channel: it must never be masked as an
-    // offline fallback. Only a genuine reachability failure falls back.
+    // Malformed channel data is a hard error; only reachability failures fall back.
     if (isMalformedTagList(e)) {
       return err(e);
     }
-    return ok(offlineFallback(range, port)); // AC-07, AC-08 (unreachable only)
+    return ok(offlineFallback(range, port));
   }
 
   const picked = semver.maxSatisfying(
     tags.map((t) => t.version),
     range
-  ); // AC-09 (stable excludes -beta), AC-10 (range names -beta)
+  );
 
   if (!picked) {
-    // Channel reachable but no version satisfies range (AC-14 / AC-15).
+    // Reachable channel with no satisfying version is a compatibility problem.
     if (semver.satisfies(port.floor.version, range)) {
-      return ok(floorFallback(port.floor)); // AC-14
+      return ok(floorFallback(port.floor));
     }
     return err(
       new UserError({
@@ -176,11 +186,11 @@ async function resolveOnline(
         name: "TemplateVersionMismatch",
         message: `No published template version satisfies range "${range}", and the bundled floor "${port.floor.version}" does not satisfy it either. The engine and template versions are incompatible.`,
       })
-    ); // AC-15
+    );
   }
 
   if (picked === port.floor.version) {
-    return ok(floorSource(port.floor)); // AC-05 (floor is highest satisfier; no download)
+    return ok(floorSource(port.floor));
   }
 
   const entry = tags.find((t) => t.version === picked);
@@ -195,15 +205,15 @@ async function resolveOnline(
       })
     );
   }
-  return fetchVerify(entry, port, "online"); // AC-04, AC-06, AC-11
+  return fetchVerify(entry, port, "online");
 }
 
-/** A malformed channel tag-list (decision #7) is a hard error, distinct from an unreachable channel. */
+/** Malformed channel tag-lists are hard errors, distinct from unreachable channels. */
 function isMalformedTagList(e: unknown): e is SystemError {
   return e instanceof SystemError && e.name === "TemplateTagListMalformed";
 }
 
-/** Preserve an existing FxError; wrap any other tag-list failure as a SystemError (neverthrow contract). */
+/** Preserve an existing FxError; wrap other tag-list failures as SystemError. */
 function asTagListError(e: unknown): FxError {
   if (e instanceof UserError || e instanceof SystemError) {
     return e;
@@ -218,7 +228,7 @@ function asTagListError(e: unknown): FxError {
   });
 }
 
-/** Preserve an existing FxError; wrap any other download failure as a SystemError (neverthrow contract). */
+/** Preserve an existing FxError; wrap other download failures as SystemError. */
 function asDownloadError(e: unknown, version: string): FxError {
   if (e instanceof UserError || e instanceof SystemError) {
     return e;
@@ -245,15 +255,14 @@ async function fetchVerify(
       version: entry.version,
       digest: entry.digest,
       location: cacheLocation(entry.version),
-    }); // AC-06 (zero download)
+    });
   }
 
   let bytes: Buffer;
   try {
     bytes = await port.packages(entry.version, entry.digest);
   } catch (e) {
-    // The download (sendRequestWithRetry) can reject; surface it as a Result
-    // rather than letting it escape resolveTemplateSource (neverthrow contract).
+    // Keep download rejections inside the Result contract.
     return err(asDownloadError(e, entry.version));
   }
   const computed = computeDigest(bytes);
@@ -264,7 +273,7 @@ async function fetchVerify(
         name: "TemplateDigestMismatch",
         message: `Downloaded template "${entry.version}" failed integrity check: expected ${entry.digest}, got ${computed}.`,
       })
-    ); // AC-11 (cache not written, corrupt bytes never returned)
+    );
   }
 
   port.cache.put(entry.version, entry.digest, bytes);
@@ -273,17 +282,24 @@ async function fetchVerify(
     version: entry.version,
     digest: entry.digest,
     location: cacheLocation(entry.version),
-  }); // AC-04
+  });
 }
 
-/** Reached when the channel is unreachable: max(highest cached satisfying range, floor). */
-function offlineFallback(range: string, port: TemplateSourcePort): TemplateSource {
+/** Highest cached version satisfying `range` that strictly beats the floor. */
+function highestCachedAboveFloor(range: string, port: TemplateSourcePort): string | undefined {
   const cachedSatisfying = port.cache.keys().filter((v) => semver.satisfies(v, range));
   const highestCached = semver.maxSatisfying(cachedSatisfying, range);
   const floorSatisfies = semver.satisfies(port.floor.version, range);
-
-  // Cache wins only when strictly higher than the floor; a tie goes to the floor (decision #2).
   if (highestCached && (!floorSatisfies || semver.gt(highestCached, port.floor.version))) {
+    return highestCached;
+  }
+  return undefined;
+}
+
+/** Reached when the channel is unreachable. */
+function offlineFallback(range: string, port: TemplateSourcePort): TemplateSource {
+  const highestCached = highestCachedAboveFloor(range, port);
+  if (highestCached) {
     const cached = port.cache.get(highestCached);
     /* istanbul ignore else -- highestCached is drawn from cache.keys(); a miss
        means the cache mutated mid-resolution, so we degrade to the floor. */
@@ -294,11 +310,11 @@ function offlineFallback(range: string, port: TemplateSourcePort): TemplateSourc
         digest: cached.digest,
         location: cacheLocation(highestCached),
         warning: offlineWarning(range),
-      }; // AC-07
+      };
     }
   }
 
-  return { ...floorFallback(port.floor), warning: offlineWarning(range) }; // AC-08
+  return { ...floorFallback(port.floor), warning: offlineWarning(range) };
 }
 
 function floorFallback(floor: BundledFloor): TemplateSource {

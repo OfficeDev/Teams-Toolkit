@@ -3,12 +3,10 @@
 
 import { ok, Platform } from "@microsoft/teamsfx-api";
 import AdmZip from "adm-zip";
-import { expect } from "chai";
 import fs from "fs-extra";
 import mockedEnv, { RestoreFn } from "mocked-env";
 import * as os from "os";
 import * as path from "path";
-import sinon from "sinon";
 import { setTools } from "../../../../src/common/globalVars";
 import { CreateAppPackageDriver } from "../../../../src/component/driver/teamsApp/createAppPackage";
 import { CreateAppPackageArgs } from "../../../../src/component/driver/teamsApp/interfaces/CreateAppPackageArgs";
@@ -18,6 +16,7 @@ import { importOpenPlugin } from "../../../../src/component/generator/openPlugin
 import { MockedM365Provider, MockTools } from "../../../core/utils";
 import { MockedLogProvider, MockedUserInteraction } from "../../../plugins/solution/util";
 import { scaffoldOpenPluginTemplateFromSource } from "./testTemplateScaffold";
+import { chai, vi } from "vitest";
 
 const FIXTURE = path.join(__dirname, "fixtures", "contoso-helper");
 const FAKE_LOGO_BYTES = Buffer.from([
@@ -31,12 +30,12 @@ async function tmp(prefix: string): Promise<string> {
 describe("openPlugin fixture conversion (Contoso Helper)", () => {
   setTools(new MockTools());
   let outDir: string;
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   beforeEach(async () => {
     outDir = await tmp("op-fix-contoso-");
     await fs.remove(outDir); // converter requires the target to be empty
-    sandbox.stub(Generator, "generateTemplate").callsFake(async (ctx, dest) => {
+    vi.spyOn(Generator, "generateTemplate").mockImplementation(async (ctx, dest) => {
       const appName = ctx.templateVariables?.appName ?? "";
       await scaffoldOpenPluginTemplateFromSource(dest, { appName });
       return ok(undefined);
@@ -44,7 +43,7 @@ describe("openPlugin fixture conversion (Contoso Helper)", () => {
   });
 
   afterEach(async () => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     await fs.remove(outDir);
   });
 
@@ -61,7 +60,7 @@ describe("openPlugin fixture conversion (Contoso Helper)", () => {
     const manifest = await fs.readJSON(path.join(outDir, "appPackage", "manifest.json"));
 
     // 1. Full manifest deep-equal against the expected literal.
-    expect(manifest).to.deep.equal({
+    chai.expect(manifest).to.deep.equal({
       $schema:
         "https://developer.microsoft.com/json-schemas/teams/vDevPreview/MicrosoftTeams.schema.json",
       manifestVersion: "devPreview",
@@ -136,42 +135,50 @@ describe("openPlugin fixture conversion (Contoso Helper)", () => {
       "README.md",
     ];
     for (const rel of expectedFiles) {
-      expect(await fs.pathExists(path.join(outDir, rel)), `missing ${rel}`).to.equal(true);
+      chai.expect(await fs.pathExists(path.join(outDir, rel)), `missing ${rel}`).to.equal(true);
     }
 
     // 3. color.png was copied from the fixture's `logo` field, not generated.
     const colorBytes = await fs.readFile(path.join(outDir, "appPackage", "color.png"));
-    expect(colorBytes.equals(FAKE_LOGO_BYTES)).to.equal(true);
+    chai.expect(colorBytes.equals(FAKE_LOGO_BYTES)).to.equal(true);
 
     // 4. outline.png was generated (real PNG signature, non-trivial size).
     const outlineBytes = await fs.readFile(path.join(outDir, "appPackage", "outline.png"));
-    expect(
-      outlineBytes
-        .subarray(0, 8)
-        .equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
-    ).to.equal(true);
-    expect(outlineBytes.length).to.be.greaterThan(32);
+    chai
+      .expect(
+        outlineBytes
+          .subarray(0, 8)
+          .equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+      )
+      .to.equal(true);
+    chai.expect(outlineBytes.length).to.be.greaterThan(32);
 
     // 5. Warnings: stdio MCP skipped, unmapped Open Plugin fields surfaced.
     const warnings = res.value.warnings;
-    expect(
-      warnings.some((w) => w.includes("stdio-only") && w.includes("no URL")),
-      "expected stdio MCP warning"
-    ).to.equal(true);
-    expect(
-      warnings.some((w) => w.includes("'agents'") && w.includes("not supported")),
-      "expected agents-field warning"
-    ).to.equal(true);
-    expect(
-      warnings.some((w) => w.includes("'hooks'") && w.includes("not supported")),
-      "expected hooks-field warning"
-    ).to.equal(true);
+    chai
+      .expect(
+        warnings.some((w) => w.includes("stdio-only") && w.includes("no URL")),
+        "expected stdio MCP warning"
+      )
+      .to.equal(true);
+    chai
+      .expect(
+        warnings.some((w) => w.includes("'agents'") && w.includes("not supported")),
+        "expected agents-field warning"
+      )
+      .to.equal(true);
+    chai
+      .expect(
+        warnings.some((w) => w.includes("'hooks'") && w.includes("not supported")),
+        "expected hooks-field warning"
+      )
+      .to.equal(true);
 
     // 6. Renders the appName into m365agents.yml and README.
     const yml = await fs.readFile(path.join(outDir, "m365agents.yml"), "utf8");
-    expect(yml).to.include("name: contoso-helper${{APP_NAME_SUFFIX}}");
+    chai.expect(yml).to.include("name: contoso-helper${{APP_NAME_SUFFIX}}");
     const readme = await fs.readFile(path.join(outDir, "README.md"), "utf8");
-    expect(readme).to.include("# contoso-helper");
+    chai.expect(readme).to.include("# contoso-helper");
   });
 
   it("packages the scaffolded project end-to-end with skills included in the zip", async () => {
@@ -211,17 +218,17 @@ describe("openPlugin fixture conversion (Contoso Helper)", () => {
       const entries = zip.getEntries().map((e) => e.entryName.replace(/\\/g, "/"));
 
       // Manifest + icons always present.
-      expect(entries).to.include("manifest.json");
-      expect(entries).to.include("color.png");
-      expect(entries).to.include("outline.png");
+      chai.expect(entries).to.include("manifest.json");
+      chai.expect(entries).to.include("color.png");
+      chai.expect(entries).to.include("outline.png");
 
       // Every SKILL.md is in the zip under skills/<name>/SKILL.md.
       for (const name of ["code-reviewer", "doc-writer", "task-runner"]) {
-        expect(entries).to.include(`skills/${name}/SKILL.md`);
+        chai.expect(entries).to.include(`skills/${name}/SKILL.md`);
       }
 
       // commands/ is deliberately NOT swept into the zip (no manifest contract for it yet).
-      expect(entries.some((e) => e.startsWith("commands/"))).to.equal(false);
+      chai.expect(entries.some((e) => e.startsWith("commands/"))).to.equal(false);
     } finally {
       if (envRestore) envRestore();
     }

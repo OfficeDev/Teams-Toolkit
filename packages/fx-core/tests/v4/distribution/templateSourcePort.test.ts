@@ -1,13 +1,16 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { assert } from "chai";
 import axios, { AxiosResponse } from "axios";
 import * as fs from "fs-extra";
 import os from "os";
 import * as path from "path";
-import sinon from "sinon";
-import { BundledFloor, computeDigest } from "../../../src/v4/distribution/templateSource";
+import { assert, vi } from "vitest";
+import {
+  BundledFloor,
+  computeDigest,
+  TemplateSource,
+} from "../../../src/v4/distribution/templateSource";
 import {
   V4_TAG_PREFIX,
   ZIP_EXT,
@@ -17,7 +20,6 @@ import {
   parseTagList,
   templateZipUrl,
 } from "../../../src/v4/distribution/templateSourcePort";
-import { TemplateSource } from "../../../src/v4/distribution/templateSource";
 
 describe("templateSourcePort pure helpers (v4)", () => {
   describe("parseTagList (NDJSON, decision #7)", () => {
@@ -47,21 +49,21 @@ describe("templateSourcePort pure helpers (v4)", () => {
 
     it("throws a hard error on a non-JSON line (no silent skip)", () => {
       const ndjson = `{"version":"6.11.0","digest":"sha256:aaa"}\nnot-json`;
-      assert.throws(() => parseTagList(ndjson), /Malformed.*line 2/);
+      expect(() => parseTagList(ndjson)).toThrow(/Malformed.*line 2/);
     });
 
     it("throws a hard error when version or digest is missing", () => {
-      assert.throws(() => parseTagList(`{"version":"6.11.0"}`), /Malformed/);
-      assert.throws(() => parseTagList(`{"digest":"sha256:aaa"}`), /Malformed/);
+      expect(() => parseTagList(`{"version":"6.11.0"}`)).toThrow(/Malformed/);
+      expect(() => parseTagList(`{"digest":"sha256:aaa"}`)).toThrow(/Malformed/);
     });
 
     it("throws when a field has the wrong type", () => {
-      assert.throws(() => parseTagList(`{"version":6,"digest":"sha256:aaa"}`), /Malformed/);
+      expect(() => parseTagList(`{"version":6,"digest":"sha256:aaa"}`)).toThrow(/Malformed/);
     });
 
     it("throws when a line is valid JSON but not an object (number / null)", () => {
-      assert.throws(() => parseTagList(`123`), /Malformed/);
-      assert.throws(() => parseTagList(`null`), /Malformed/);
+      expect(() => parseTagList(`123`)).toThrow(/Malformed/);
+      expect(() => parseTagList(`null`)).toThrow(/Malformed/);
     });
   });
 
@@ -87,7 +89,7 @@ describe("templateSourcePort pure helpers (v4)", () => {
 // real temp cache directory (os.homedir stubbed to the boundary; only the
 // network edge is stubbed), not by mock-heavy micro-units.
 describe("createTemplateSourcePort (v4, integration over real fs)", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   const floor: BundledFloor = {
     version: "6.10.1",
     digest: "sha256:floor",
@@ -105,11 +107,11 @@ describe("createTemplateSourcePort (v4, integration over real fs)", () => {
       os.tmpdir(),
       `v4-port-${Date.now()}-${Math.random().toString(36).slice(2)}`
     );
-    sandbox.stub(os, "homedir").returns(tmpHome);
+    vi.spyOn(os, "homedir").mockReturnValue(tmpHome);
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     fs.removeSync(tmpHome);
   });
 
@@ -150,7 +152,7 @@ describe("createTemplateSourcePort (v4, integration over real fs)", () => {
 
   it("tagList fetches and parses the NDJSON channel document", async () => {
     const ndjson = `{"version":"6.11.0","digest":"sha256:aaa"}`;
-    sandbox.stub(axios, "get").resolves({ status: 200, data: ndjson } as AxiosResponse);
+    vi.spyOn(axios, "get").mockResolvedValue({ status: 200, data: ndjson } as AxiosResponse);
     const port = createTemplateSourcePort(config, floor);
     const tags = await port.tagList();
     assert.deepEqual(tags, [{ version: "6.11.0", digest: "sha256:aaa" }]);
@@ -158,7 +160,7 @@ describe("createTemplateSourcePort (v4, integration over real fs)", () => {
 
   it("packages downloads the version zip as a Buffer", async () => {
     const payload = Buffer.from("zip-payload");
-    sandbox.stub(axios, "get").resolves({ status: 200, data: payload } as AxiosResponse);
+    vi.spyOn(axios, "get").mockResolvedValue({ status: 200, data: payload } as AxiosResponse);
     const port = createTemplateSourcePort(config, floor);
     const buf = await port.packages("6.11.0", "sha256:aaa");
     assert.isTrue(Buffer.isBuffer(buf));
@@ -174,7 +176,7 @@ describe("createTemplateSourcePort (v4, integration over real fs)", () => {
 // filesystem (ADR-0013), not mock-heavy micro-units. It must never reach the
 // network — an online/cache source is already cached by resolution.
 describe("loadResolvedPackage (v4, integration over real fs)", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   let tmpHome: string;
   let tmpDir: string;
 
@@ -188,11 +190,11 @@ describe("loadResolvedPackage (v4, integration over real fs)", () => {
     tmpDir = path.join(os.tmpdir(), `v4-load-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     tmpHome = path.join(tmpDir, "home");
     fs.ensureDirSync(tmpDir);
-    sandbox.stub(os, "homedir").returns(tmpHome);
+    vi.spyOn(os, "homedir").mockReturnValue(tmpHome);
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     fs.removeSync(tmpDir);
   });
 
@@ -253,7 +255,7 @@ describe("loadResolvedPackage (v4, integration over real fs)", () => {
   it("returns cached bytes for an online source without any network call", () => {
     const floorBytes = Buffer.from("floor");
     const port = createTemplateSourcePort(config, floorFor(floorBytes));
-    const axiosGet = sandbox.stub(axios, "get");
+    const axiosGet = vi.spyOn(axios, "get");
     const bytes = Buffer.from("online-zip-6.11.2");
     const digest = computeDigest(bytes);
     port.cache.put("6.11.2", digest, bytes);
@@ -265,13 +267,13 @@ describe("loadResolvedPackage (v4, integration over real fs)", () => {
     };
     const res = loadResolvedPackage(source, port);
     assert.strictEqual(res._unsafeUnwrap().toString(), "online-zip-6.11.2");
-    assert.isTrue(axiosGet.notCalled);
+    assert.isTrue(axiosGet.mock.calls.length === 0);
   });
 
   it("errors (never re-downloads) when a cache source is not present in the cache", () => {
     const floorBytes = Buffer.from("floor");
     const port = createTemplateSourcePort(config, floorFor(floorBytes));
-    const axiosGet = sandbox.stub(axios, "get");
+    const axiosGet = vi.spyOn(axios, "get");
     const source: TemplateSource = {
       origin: "cache",
       version: "6.11.9",
@@ -281,7 +283,7 @@ describe("loadResolvedPackage (v4, integration over real fs)", () => {
     const res = loadResolvedPackage(source, port);
     assert.isTrue(res.isErr());
     assert.strictEqual(res._unsafeUnwrapErr().name, "TemplatePackageNotCached");
-    assert.isTrue(axiosGet.notCalled);
+    assert.isTrue(axiosGet.mock.calls.length === 0);
   });
 
   it("errors when the loaded bytes do not match source.digest (integrity)", () => {

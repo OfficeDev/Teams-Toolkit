@@ -1,17 +1,24 @@
-import * as chai from "chai";
-import * as sinon from "sinon";
-import fs from "fs-extra";
-import * as globalVariables from "../../src/globalVariables";
 import { Uri } from "vscode";
-import { envUtil, metadataUtil, pathUtils } from "@microsoft/teamsfx-core";
 import * as envTreeUtils from "../../src/utils/envTreeUtils";
-import { ok } from "@microsoft/teamsfx-api";
+import { vi, afterEach, expect } from "vitest";
+import { mockValue } from "../mocks/vitestMockUtils";
+
+// ✅ Mock internal modules
+vi.mock("../../src/utils/fileSystemUtils");
+vi.mock("../../src/utils/appDefinitionUtils");
+vi.mock("../../src/globalVariables");
+
 import * as fileSystemUtils from "../../src/utils/fileSystemUtils";
+import * as appDefinitionUtils from "../../src/utils/appDefinitionUtils";
+import * as globalVariables from "../../src/globalVariables";
+import { fsAdapter, envParseAdapter } from "../../src/common/npmPackageDeps";
 
 describe("EnvTreeUtils", () => {
-  // eslint-disable-next-line no-secrets/no-secrets
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   describe("getSubscriptionInfoFromEnv", () => {
-    const sandbox = sinon.createSandbox();
     const subscriptionInfo = {
       subscriptionName: "subscriptionName",
       subscriptionId: "subscriptionId",
@@ -21,72 +28,70 @@ describe("EnvTreeUtils", () => {
       solution: subscriptionInfo,
     };
 
-    afterEach(() => {
-      sandbox.restore();
-    });
-
     it("returns subscription info successfully", async () => {
-      sandbox.stub(fileSystemUtils, "getProvisionResultJson").resolves(provisionResult);
+      // ✅ Mock internal module
+      vi.mocked(fileSystemUtils.getProvisionResultJson).mockResolvedValue(provisionResult);
       const result = await envTreeUtils.getSubscriptionInfoFromEnv("test");
-      chai.expect(result).deep.equals(subscriptionInfo);
+      expect(result).deep.equals(subscriptionInfo);
     });
 
     it("returns undefined if get provision result throws error", async () => {
-      sandbox.stub(fileSystemUtils, "getProvisionResultJson").rejects(new Error());
+      vi.mocked(fileSystemUtils.getProvisionResultJson).mockRejectedValue(new Error());
       const result = await envTreeUtils.getSubscriptionInfoFromEnv("test");
-      chai.expect(result).is.undefined;
+      expect(result).is.undefined;
     });
 
     it("returns undefined if get provision result is undefined", async () => {
-      sandbox.stub(fileSystemUtils, "getProvisionResultJson").resolves(undefined);
+      vi.mocked(fileSystemUtils.getProvisionResultJson).mockResolvedValue(undefined);
       const result = await envTreeUtils.getSubscriptionInfoFromEnv("test");
-      chai.expect(result).is.undefined;
+      expect(result).is.undefined;
     });
 
     it("returns undefined if get provision result does not contain subscriptionId", async () => {
-      sandbox.stub(fileSystemUtils, "getProvisionResultJson").resolves({ solution: {} } as any);
+      vi.mocked(fileSystemUtils.getProvisionResultJson).mockResolvedValue({
+        solution: {},
+      } as any);
       const result = await envTreeUtils.getSubscriptionInfoFromEnv("test");
-      chai.expect(result).is.undefined;
+      expect(result).is.undefined;
     });
   });
 
   describe("getM365TenantFromEnv", () => {
-    const sandbox = sinon.createSandbox();
-    const m365TenantId = {
-      teamsAppTenantId: "fakeTenantId",
-    };
-
     beforeEach(() => {
-      sandbox.stub(globalVariables, "workspaceUri").value({ fsPath: "/test" });
-    });
-
-    afterEach(() => {
-      sandbox.restore();
+      mockValue(globalVariables, "workspaceUri", Uri.file("/test"));
     });
 
     it("returns m365 tenantId successfully", async () => {
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readFileSync").returns("TEAMS_APP_TENANT_ID=fakeTenantId\n");
+      // ✅ Mock npm packages via adapters
+      vi.spyOn(fsAdapter, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fsAdapter, "readFileSync").mockReturnValue("TEAMS_APP_TENANT_ID=fakeTenantId\n");
+      vi.spyOn(envParseAdapter, "deserializeDotenv").mockReturnValue({
+        obj: { TEAMS_APP_TENANT_ID: "fakeTenantId" },
+      } as any);
+
       const result = await envTreeUtils.getM365TenantFromEnv("test");
-      chai.expect(result).equal("fakeTenantId");
+      expect(result).equal("fakeTenantId");
     });
 
     it("returns undefined if env file doesn't exist", async () => {
-      sandbox.stub(fs, "pathExists").resolves(false);
+      vi.spyOn(fsAdapter, "pathExists").mockResolvedValue(false);
       const result = await envTreeUtils.getM365TenantFromEnv("test");
-      chai.expect(result).equal(undefined);
+      expect(result).equal(undefined);
     });
 
     it("returns undefined if tenant id doesn't exist in env file", async () => {
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readFileSync").returns("");
+      vi.spyOn(fsAdapter, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fsAdapter, "readFileSync").mockReturnValue("");
+      vi.spyOn(envParseAdapter, "deserializeDotenv").mockReturnValue({
+        obj: {},
+      } as any);
+
       const result = await envTreeUtils.getM365TenantFromEnv("test");
-      chai.expect(result).equal(undefined);
+      expect(result).equal(undefined);
     });
   });
 
   describe("getResourceGroupNameFromEnv", () => {
-    const sandbox = sinon.createSandbox();
     const resourceGroupName = {
       resourceGroupName: "fakeResourceGroupName",
     };
@@ -94,78 +99,53 @@ describe("EnvTreeUtils", () => {
       solution: resourceGroupName,
     };
 
-    afterEach(() => {
-      sandbox.restore();
-    });
-
     it("returns resource group name successfully", async () => {
-      sandbox.stub(fileSystemUtils, "getProvisionResultJson").resolves(provisionResult);
+      vi.mocked(fileSystemUtils.getProvisionResultJson).mockResolvedValue(provisionResult);
       const result = await envTreeUtils.getResourceGroupNameFromEnv("test");
-      chai.expect(result).equal("fakeResourceGroupName");
+      expect(result).equal("fakeResourceGroupName");
     });
 
     it("returns undefined if get provision result throws error", async () => {
-      sandbox.stub(fileSystemUtils, "getProvisionResultJson").rejects(new Error());
+      vi.mocked(fileSystemUtils.getProvisionResultJson).mockRejectedValue(new Error());
       const result = await envTreeUtils.getResourceGroupNameFromEnv("test");
-      chai.expect(result).is.undefined;
+      expect(result).is.undefined;
     });
 
     it("returns undefined if get provision result returns undefined", async () => {
-      sandbox.stub(fileSystemUtils, "getProvisionResultJson").resolves(undefined);
+      vi.mocked(fileSystemUtils.getProvisionResultJson).mockResolvedValue(undefined);
       const result = await envTreeUtils.getResourceGroupNameFromEnv("test");
-      chai.expect(result).is.undefined;
+      expect(result).is.undefined;
     });
 
     it("returns undefined if get provision result does not contain solution", async () => {
-      sandbox.stub(fileSystemUtils, "getProvisionResultJson").resolves({});
+      vi.mocked(fileSystemUtils.getProvisionResultJson).mockResolvedValue({});
       const result = await envTreeUtils.getResourceGroupNameFromEnv("test");
-      chai.expect(result).is.undefined;
+      expect(result).is.undefined;
     });
   });
 
   describe("getProvisionSucceedFromEnv", () => {
-    const sandbox = sinon.createSandbox();
-
-    afterEach(() => {
-      sandbox.restore();
+    beforeEach(() => {
+      mockValue(globalVariables, "workspaceUri", Uri.file("test"));
     });
 
     it("returns false if teamsAppId is empty", async () => {
-      sandbox.stub(globalVariables, "workspaceUri").value(Uri.file("test"));
-      sandbox.stub(envUtil, "readEnv").resolves(
-        ok({
-          TEAMS_APP_ID: "",
-        })
-      );
-
+      // ✅ Mock internal module
+      vi.mocked(appDefinitionUtils.getV3TeamsAppId).mockResolvedValue("");
       const result = await envTreeUtils.getProvisionSucceedFromEnv("test");
-
-      chai.expect(result).equals(false);
+      expect(result).equals(false);
     });
 
     it("returns true if teamsAppId is not empty", async () => {
-      sandbox.stub(globalVariables, "workspaceUri").value(Uri.file("test"));
-      sandbox.stub(envUtil, "readEnv").resolves(
-        ok({
-          TEAMS_APP_ID: "xxx",
-        })
-      );
-      sandbox.stub(globalVariables, "workspaceUri").value(Uri.file("test"));
-      sandbox.stub(pathUtils, "getYmlFilePath");
-      sandbox.stub(metadataUtil, "parse").resolves(ok({} as any));
-
+      vi.mocked(appDefinitionUtils.getV3TeamsAppId).mockResolvedValue("xxx");
       const result = await envTreeUtils.getProvisionSucceedFromEnv("test");
-
-      chai.expect(result).equals(true);
+      expect(result).equals(true);
     });
 
     it("returns false if teamsAppId has error", async () => {
-      sandbox.stub(globalVariables, "workspaceUri").value(Uri.file("test"));
-      sandbox.stub(envUtil, "readEnv").resolves(ok({}));
-
+      vi.mocked(appDefinitionUtils.getV3TeamsAppId).mockRejectedValue(new Error());
       const result = await envTreeUtils.getProvisionSucceedFromEnv("test");
-
-      chai.expect(result).equals(false);
+      expect(result).equals(false);
     });
   });
 });

@@ -1,19 +1,12 @@
-import * as chai from "chai";
-import * as sinon from "sinon";
 import * as vscode from "vscode";
+import { vi, assert } from "vitest";
 
 import { CommandStatus, TreeViewCommand } from "../../src/treeview/treeViewCommand";
 import * as localizeUtils from "../../src/utils/localizeUtils";
 
 describe("TreeViewCommand", () => {
-  const sandbox = sinon.createSandbox();
-
-  afterEach(() => {
-    sandbox.restore();
-  });
-
   it("setStatus", async () => {
-    sandbox.stub(localizeUtils, "localize").callsFake((key: string) => {
+    vi.spyOn(localizeUtils, "localize").mockImplementation((key: string) => {
       if (key === "teamstoolkit.commandsTreeViewProvider.key.running") {
         return "test running";
       } else if (key === "teamstoolkit.commandsTreeViewProvider.key.blockTooltip") {
@@ -25,14 +18,14 @@ describe("TreeViewCommand", () => {
     const command = new TreeViewCommand("label", "tooltip", "command", "key");
 
     command.setStatus(CommandStatus.Ready);
-    chai.assert.equal(command.label, "label");
-    chai.assert.equal(command.tooltip, "tooltip");
+    assert.equal(command.label, "label");
+    assert.equal(command.tooltip, "tooltip");
 
     command.setStatus(CommandStatus.Running);
-    chai.assert.equal(command.label, "test running");
-    chai.assert.deepEqual(command.iconPath, new vscode.ThemeIcon("loading~spin"));
+    assert.equal(command.label, "test running");
+    assert.deepEqual(command.iconPath, new vscode.ThemeIcon("loading~spin"));
 
     command.setStatus(CommandStatus.Blocked, command.getBlockingTooltip());
-    chai.assert.equal(command.tooltip, "blocked tooltip");
+    assert.equal(command.tooltip, "blocked tooltip");
   });
 });

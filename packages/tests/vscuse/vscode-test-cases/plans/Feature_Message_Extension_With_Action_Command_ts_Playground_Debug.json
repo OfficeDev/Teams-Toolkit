@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 48,
+    "total_steps": 47,
     "created_at": "2026-03-31T06:19:07.221065",
     "name": "Feature Message Extension With Action Command ts Playground Debug",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2026-03-31T06:19:07.221065",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_d5f5f9bb",
+      "plan_r_0624_024810",
       "step_07d1cb49",
       "step_4c882a5b",
       "step_8a71edaf",
@@ -75,32 +75,6 @@
     "updated_at": "2026-03-31T07:45:43.530631"
   },
   "steps": [
-    {
-      "step_id": "step_d5f5f9bb",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 404,
-        "y": 212
-      },
-      "description": "Click on the \"Teams Agents and Apps\" option within the \"New Project\" dropdown menu.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:404:212:16:5:9a60443272649ca2",
-        "dhash:404:212:96:5:229a184465364a01",
-        "dhash:404:212:0:10:c8c88094b2717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_d5f5f9bb",
-      "created_at": "2026-03-31T06:19:07.231319",
-      "plan_id": "plan_0315cf6f"
-    },
     {
       "step_id": "step_07d1cb49",
       "agent": "interaction",

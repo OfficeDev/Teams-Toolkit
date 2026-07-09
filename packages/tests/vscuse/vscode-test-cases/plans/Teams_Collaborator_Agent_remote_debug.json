@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 11,
+    "total_steps": 10,
     "created_at": "2025-11-11T04:27:11.498862",
     "name": "Teams Collaborator Agent Remote Debug",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2025-11-11T04:27:11.498855",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_1841bd38",
+      "plan_r_0624_024810",
       "step_12d7e58b",
       "step_46f750b2",
       "step_288a8d0e",
@@ -41,32 +41,6 @@
     "updated_at": "2025-11-13T03:40:54.580957"
   },
   "steps": [
-    {
-      "step_id": "step_1841bd38",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 358,
-        "y": 216
-      },
-      "description": "Click the \"Apps for Microsoft 365\" option in the dropdown menu under the \"New Project\" modal.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:358:216:16:5:5a5a5a0bc854a8b4",
-        "dhash:358:216:96:5:69d999164acb1410",
-        "dhash:358:216:0:10:c8c88094b2717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_1841bd38",
-      "created_at": "2025-11-13T03:21:37.637924",
-      "plan_id": "plan_9e16162e"
-    },
     {
       "step_id": "step_12d7e58b",
       "agent": "interaction",

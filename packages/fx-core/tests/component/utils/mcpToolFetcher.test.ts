@@ -2,10 +2,8 @@
 // Licensed under the MIT license.
 
 import axios from "axios";
-import { assert } from "chai";
 import fs from "fs-extra";
-import * as sinon from "sinon";
-import { vi } from "vitest";
+import { assert, vi } from "vitest";
 import {
   fetchMCPTools,
   probeMCPServerAuth,
@@ -40,15 +38,13 @@ vi.mock("@modelcontextprotocol/sdk/client/sse.js", () => ({
 }));
 
 describe("mcpToolFetcher", () => {
-  const sandbox = sinon.createSandbox();
-
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   describe("fetchMCPTools", () => {
     it("should return requiresAuth=true when server returns 401", async () => {
-      sandbox.stub(axios, "get").rejects({
+      vi.spyOn(axios, "get").mockRejectedValue({
         response: {
           status: 401,
           headers: {},
@@ -61,7 +57,7 @@ describe("mcpToolFetcher", () => {
     });
 
     it("should extract authMetadataUrl from WWW-Authenticate header on 401", async () => {
-      sandbox.stub(axios, "get").rejects({
+      vi.spyOn(axios, "get").mockRejectedValue({
         response: {
           status: 401,
           headers: {
@@ -77,7 +73,7 @@ describe("mcpToolFetcher", () => {
 
     it("should return empty tools when MCP SDK import fails", async () => {
       // Simulate non-401 error from initial GET
-      sandbox.stub(axios, "get").rejects(new Error("Connection refused"));
+      vi.spyOn(axios, "get").mockRejectedValue(new Error("Connection refused"));
 
       const result = await fetchMCPTools("invalid-url");
       // When SDK imports fail, should return empty tools
@@ -88,7 +84,7 @@ describe("mcpToolFetcher", () => {
 
   describe("readMCPToolsFromFile", () => {
     it("should throw when file does not exist", async () => {
-      sandbox.stub(fs, "pathExists").resolves(false);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
 
       try {
         await readMCPToolsFromFile("/nonexistent/tools.json");
@@ -99,8 +95,8 @@ describe("mcpToolFetcher", () => {
     });
 
     it("should parse tools from { tools: [...] } format", async () => {
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readJSON").resolves({
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readJSON").mockResolvedValue({
         tools: [
           {
             name: "tool1",
@@ -127,8 +123,8 @@ describe("mcpToolFetcher", () => {
     });
 
     it("should parse tools from raw array format", async () => {
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readJSON").resolves([
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readJSON").mockResolvedValue([
         {
           name: "myTool",
           description: "A tool",
@@ -142,8 +138,8 @@ describe("mcpToolFetcher", () => {
     });
 
     it("should throw on invalid format (not array and no tools property)", async () => {
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readJSON").resolves({ name: "not-tools" });
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readJSON").mockResolvedValue({ name: "not-tools" });
 
       try {
         await readMCPToolsFromFile("/some/bad.json");
@@ -154,8 +150,8 @@ describe("mcpToolFetcher", () => {
     });
 
     it("should throw when a tool is missing name property", async () => {
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readJSON").resolves({
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readJSON").mockResolvedValue({
         tools: [{ description: "no name", inputSchema: {} }],
       });
 
@@ -168,8 +164,8 @@ describe("mcpToolFetcher", () => {
     });
 
     it("should default description to empty string when not provided", async () => {
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readJSON").resolves({
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readJSON").mockResolvedValue({
         tools: [{ name: "tool1" }],
       });
 
@@ -178,8 +174,8 @@ describe("mcpToolFetcher", () => {
     });
 
     it("should default inputSchema when not provided", async () => {
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readJSON").resolves({
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readJSON").mockResolvedValue({
         tools: [{ name: "tool1" }],
       });
 
@@ -188,8 +184,8 @@ describe("mcpToolFetcher", () => {
     });
 
     it("should accept input_schema as alternative to inputSchema", async () => {
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readJSON").resolves({
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readJSON").mockResolvedValue({
         tools: [
           {
             name: "tool1",
@@ -208,7 +204,7 @@ describe("mcpToolFetcher", () => {
 
   describe("probeMCPServerAuth", () => {
     it("should return requiresAuth=false when server responds 200", async () => {
-      sandbox.stub(axios, "post").resolves({ status: 200 });
+      vi.spyOn(axios, "post").mockResolvedValue({ status: 200 });
 
       const result = await probeMCPServerAuth("https://example.com/mcp");
       assert.isFalse(result.requiresAuth);
@@ -216,7 +212,7 @@ describe("mcpToolFetcher", () => {
     });
 
     it("should return requiresAuth=true when server responds 401", async () => {
-      sandbox.stub(axios, "post").rejects({
+      vi.spyOn(axios, "post").mockRejectedValue({
         response: {
           status: 401,
           headers: {},
@@ -229,7 +225,7 @@ describe("mcpToolFetcher", () => {
     });
 
     it("should extract authMetadataUrl from WWW-Authenticate header", async () => {
-      sandbox.stub(axios, "post").rejects({
+      vi.spyOn(axios, "post").mockRejectedValue({
         response: {
           status: 401,
           headers: {
@@ -245,14 +241,14 @@ describe("mcpToolFetcher", () => {
     });
 
     it("should return requiresAuth=false on non-401 errors", async () => {
-      sandbox.stub(axios, "post").rejects(new Error("ECONNREFUSED"));
+      vi.spyOn(axios, "post").mockRejectedValue(new Error("ECONNREFUSED"));
 
       const result = await probeMCPServerAuth("https://down.example.com/mcp");
       assert.isFalse(result.requiresAuth);
     });
 
     it("should handle 401 via error.status (no response object)", async () => {
-      sandbox.stub(axios, "post").rejects({ status: 401 });
+      vi.spyOn(axios, "post").mockRejectedValue({ status: 401 });
 
       const result = await probeMCPServerAuth("https://secure.example.com/mcp");
       assert.isTrue(result.requiresAuth);
@@ -261,16 +257,16 @@ describe("mcpToolFetcher", () => {
 
   describe("resolveMCPOAuthMetadata", () => {
     it("should resolve metadata via authMetadataUrl", async () => {
-      const getStub = sandbox.stub(axios, "get");
+      const getStub = vi.spyOn(axios, "get");
       // First call: resource metadata
-      getStub.onFirstCall().resolves({
+      getStub.mockResolvedValueOnce({
         status: 200,
         data: {
           authorization_servers: ["https://auth.example.com/oauth"],
         },
       });
       // Second call: well-known endpoint
-      getStub.onSecondCall().resolves({
+      getStub.mockResolvedValueOnce({
         data: {
           authorization_endpoint: "https://auth.example.com/authorize",
           token_endpoint: "https://auth.example.com/token",
@@ -287,9 +283,9 @@ describe("mcpToolFetcher", () => {
     });
 
     it("should use wellKnownUrl directly when provided", async () => {
-      const getStub = sandbox.stub(axios, "get");
+      const getStub = vi.spyOn(axios, "get");
       // Only one call: the well-known endpoint directly
-      getStub.resolves({
+      getStub.mockResolvedValue({
         data: {
           authorization_endpoint: "https://auth.example.com/authorize",
           token_endpoint: "https://auth.example.com/token",
@@ -304,7 +300,7 @@ describe("mcpToolFetcher", () => {
       assert.equal(result.tokenUrl, "https://auth.example.com/token");
       assert.isUndefined(result.refreshUrl);
       // Should only call once — skip resource metadata
-      assert.isTrue(getStub.calledOnce);
+      assert.isTrue(getStub.mock.calls.length === 1);
     });
 
     it("should throw when both authMetadataUrl and wellKnownUrl are undefined", async () => {
@@ -317,7 +313,7 @@ describe("mcpToolFetcher", () => {
     });
 
     it("should throw when authorization_servers is missing in resource metadata", async () => {
-      sandbox.stub(axios, "get").resolves({
+      vi.spyOn(axios, "get").mockResolvedValue({
         status: 200,
         data: {},
       });
@@ -331,7 +327,7 @@ describe("mcpToolFetcher", () => {
     });
 
     it("should throw when authorization_servers is empty array", async () => {
-      sandbox.stub(axios, "get").resolves({
+      vi.spyOn(axios, "get").mockResolvedValue({
         status: 200,
         data: { authorization_servers: [] },
       });
@@ -345,12 +341,12 @@ describe("mcpToolFetcher", () => {
     });
 
     it("should throw when authorization_endpoint is missing from well-known", async () => {
-      const getStub = sandbox.stub(axios, "get");
-      getStub.onFirstCall().resolves({
+      const getStub = vi.spyOn(axios, "get");
+      getStub.mockResolvedValueOnce({
         status: 200,
         data: { authorization_servers: ["https://auth.example.com/oauth"] },
       });
-      getStub.onSecondCall().resolves({
+      getStub.mockResolvedValueOnce({
         data: {
           token_endpoint: "https://auth.example.com/token",
           // Missing authorization_endpoint
@@ -366,12 +362,12 @@ describe("mcpToolFetcher", () => {
     });
 
     it("should throw when token_endpoint is missing from well-known", async () => {
-      const getStub = sandbox.stub(axios, "get");
-      getStub.onFirstCall().resolves({
+      const getStub = vi.spyOn(axios, "get");
+      getStub.mockResolvedValueOnce({
         status: 200,
         data: { authorization_servers: ["https://auth.example.com/oauth"] },
       });
-      getStub.onSecondCall().resolves({
+      getStub.mockResolvedValueOnce({
         data: {
           authorization_endpoint: "https://auth.example.com/authorize",
           // Missing token_endpoint
@@ -387,14 +383,14 @@ describe("mcpToolFetcher", () => {
     });
 
     it("should construct correct well-known URL from authorization_servers[0]", async () => {
-      const getStub = sandbox.stub(axios, "get");
-      getStub.onFirstCall().resolves({
+      const getStub = vi.spyOn(axios, "get");
+      getStub.mockResolvedValueOnce({
         status: 200,
         data: {
           authorization_servers: ["https://auth.example.com/tenant/v2"],
         },
       });
-      getStub.onSecondCall().resolves({
+      getStub.mockResolvedValueOnce({
         data: {
           authorization_endpoint: "https://auth.example.com/authorize",
           token_endpoint: "https://auth.example.com/token",
@@ -404,15 +400,47 @@ describe("mcpToolFetcher", () => {
       await resolveMCPOAuthMetadata("https://example.com/.well-known/oauth-protected-resource");
 
       // Verify well-known URL follows RFC 8414 format
-      const wellKnownCallUrl = getStub.secondCall.args[0];
+      const wellKnownCallUrl = getStub.mock.calls[1][0];
       assert.equal(
         wellKnownCallUrl,
         "https://auth.example.com/.well-known/oauth-authorization-server/tenant/v2"
       );
     });
 
+    it("should not append a trailing slash for a host-only issuer (e.g. Notion)", async () => {
+      const getStub = vi.spyOn(axios, "get");
+      // Resource metadata returns a host-only issuer (no path); new URL().pathname is "/".
+      getStub.mockResolvedValueOnce({
+        status: 200,
+        data: {
+          authorization_servers: ["https://mcp.notion.com"],
+        },
+      });
+      getStub.mockResolvedValueOnce({
+        data: {
+          authorization_endpoint: "https://mcp.notion.com/authorize",
+          token_endpoint: "https://mcp.notion.com/token",
+        },
+      });
+
+      const result = await resolveMCPOAuthMetadata(
+        "https://mcp.notion.com/.well-known/oauth-protected-resource/mcp"
+      );
+
+      // Must NOT have a trailing slash — Notion returns 404 for ".../oauth-authorization-server/".
+      const wellKnownCallUrl = getStub.mock.calls[1][0];
+      assert.equal(
+        wellKnownCallUrl,
+        "https://mcp.notion.com/.well-known/oauth-authorization-server"
+      );
+      assert.equal(
+        result.wellKnownUrl,
+        "https://mcp.notion.com/.well-known/oauth-authorization-server"
+      );
+    });
+
     it("should throw when only token_endpoint is present (missing authorization_endpoint)", async () => {
-      sandbox.stub(axios, "get").resolves({
+      vi.spyOn(axios, "get").mockResolvedValue({
         data: {
           token_endpoint: "https://auth.example.com/token",
           // Missing authorization_endpoint intentionally
@@ -431,7 +459,7 @@ describe("mcpToolFetcher", () => {
     });
 
     it("should throw when only authorization_endpoint is present (missing token_endpoint)", async () => {
-      sandbox.stub(axios, "get").resolves({
+      vi.spyOn(axios, "get").mockResolvedValue({
         data: {
           authorization_endpoint: "https://auth.example.com/authorize",
           // Missing token_endpoint intentionally

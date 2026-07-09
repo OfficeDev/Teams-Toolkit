@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 11,
+    "total_steps": 10,
     "created_at": "2025-11-26T14:44:03.437749",
     "name": "Teams Agent With Data Custom API Azure OpenAI py Remote Debug",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2025-11-26T14:44:03.437749",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_330d505c",
+      "plan_r_0624_024810",
       "step_97217741",
       "step_610fe951",
       "step_40f8d8f4",
@@ -45,32 +45,6 @@
     "updated_at": "2025-11-27T08:26:58.074598"
   },
   "steps": [
-    {
-      "step_id": "step_330d505c",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 415,
-        "y": 233
-      },
-      "description": "Click the \"Teams Agents and Apps\" option within the dropdown menu under the \"New Project\" dialog in the Microsoft 365 Agents Toolkit interface.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:415:233:16:5:0c9dcd8d2d4d9224",
-        "dhash:415:233:96:5:35888b6c448f2696",
-        "dhash:415:233:0:10:c8c89094b0717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_330d505c",
-      "created_at": "2025-11-27T08:25:37.258126",
-      "plan_id": "plan_9ed004c0"
-    },
     {
       "step_id": "step_97217741",
       "agent": "interaction",

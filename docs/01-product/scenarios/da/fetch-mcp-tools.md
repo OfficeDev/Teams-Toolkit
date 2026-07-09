@@ -22,6 +22,10 @@ Success means: a single MCP server is resolved from `.vscode/mcp.json`; a non-em
 - The MCP server entry must be reachable: for a remote (`http`) server, VS Code must be able to start and contact it; for a local (`stdio`) server, the command and any required runtime (for example `odr.exe`) must be installed on the user's machine. The toolkit cannot run this scenario before the server is reported as running by the built-in CodeLens.
 - Produces: an updated action manifest (existing `ai-plugin.json` or a newly created one) and an updated `declarativeAgent.json` with the new action wired in. When the chosen server requires authentication, the toolkit also writes the OAuth registration follow-up actions so provisioning can complete.
 
+## Feature flags
+
+- `TEAMSFX_MCP_FOR_DA_DCR` — gates only the `OAuth (with dynamic registration)` auth-type option in step 6 and the matching `dcr/register` action in `m365agents.yml`. When the flag is off, the fetch-tools auth picker keeps the shipped options only.
+
 ## Surfaces
 
 - VS Code built-in CodeLens: VS Code's MCP runtime owns the `Start`, `tools`, `prompts`, and `More...` actions on each server entry in `.vscode/mcp.json`. Pressing `Start` brings the server up and populates the tools/prompts counts shown next to the server.
@@ -40,7 +44,7 @@ Success means: a single MCP server is resolved from `.vscode/mcp.json`; a non-em
 - Manifest selection: ATK shows a Quick Pick titled `Select the action manifest you want to update`. The list contains the action manifest files already wired into the declarative agent, a `Create a new ai-plugin.json` row, and the `Browse…` row.
 - Name new manifest: when the user picks `Create a new ai-plugin.json`, ATK shows the text input `Name the new action manifest file` with default `ai-plugin.json`. Validation rejects empty input, names without the `.json` extension, absolute or nested paths, and names that already exist in `appPackage/`.
 - Operation selection: the Quick Pick titled `Select Operation(s) Copilot can interact with` lists the operations the toolkit fetched from the server. When the user is updating a manifest that already references this MCP server, the operations already wired in are pre-selected.
-- Auth type selection: when the MCP server requires authentication, the Quick Pick titled `Select Authentication Type` is shown with `OAuth (with static registration)` and `Entra SSO` options. Unauthenticated servers skip this step.
+- Auth type selection: when the MCP server requires authentication, the Quick Pick titled `Select Authentication Type` is shown with `OAuth (with static registration)` and `Entra SSO` options. When `TEAMSFX_MCP_FOR_DA_DCR` is enabled, `OAuth (with dynamic registration)` is inserted as the first option. The option details match the code-backed picker strings: `OAuth (with dynamic registration)` says `MCP server registers a client at runtime; no extra details needed.`, `OAuth (with static registration)` says `Use a pre-registered OAuth client. The toolkit will ask for client id, client secret, and optional scopes.`, and `Entra SSO` says `Use a Microsoft Entra app for single sign-on. The toolkit will ask for the Entra app client id.` Unauthenticated servers skip this step.
 - Success: ATK shows `The operations selected from your MCP server are successfully added for Copilot to interact with. You can go to the 'ai-plugin.json' to check on details. Now you are able to provision your declarative agent to continue.` with `Provision` as the action.
 - Recoverable: tools not found. When the server returns no tools, ATK shows the error notification `No tools found for the MCP server. Please run the server first.` (source: Microsoft 365 Agents Toolkit) and the flow stops before the manifest picker appears. The user starts the server (or fixes the tools file) and re-clicks `⚡ ATK: Fetch action from MCP`.
 - Recoverable: prerequisites missing. When `.vscode/mcp.json` is missing, malformed, has no servers, or the selected server entry is incomplete (no URL for an `http` server, no command for a `stdio` server), ATK shows an error notification describing the missing piece and stops before any picker opens. The user fixes the file and retries.
@@ -79,7 +83,7 @@ This scenario updates an existing DA project; there is no template boilerplate t
 
 - `appPackage/<chosen action manifest>.json` (default `ai-plugin.json`) — created when the user picks `Create a new ai-plugin.json` (file name from the `Name the new action manifest file` input), modified otherwise. The operations selected in `Select Operation(s) Copilot can interact with` are written under `functions` and referenced from the MCP server runtime's `run_for_functions`. When the server requires authentication, the runtime's `auth` block is written to point at the OAuth configuration injected into `m365agents.yml`. When the user is updating a manifest that already references this MCP server, existing operations remain in place; only added/removed operations from the multi-select change the file.
 - `appPackage/declarativeAgent.json` — modified only when a new action manifest was created in step 3. A new entry is appended to `actions` with an `id` that does not collide with existing actions (`action`, `action_2`, ...) and `file` set to the new manifest's basename. When an existing action manifest is reused, this file is not touched.
-- `m365agents.yml` — modified only when the user selected an authentication type for this MCP server runtime and the matching registration step is not already present. The toolkit injects the OAuth registration follow-up step at the same shape and ordering used by `SCN-DA-CREATE-WITH-MCP-SERVER` and `SCN-DA-ADD-MCP-ACTION-TO-DA`, so the manifest's `auth.reference_id` resolves at provision time.
+- `m365agents.yml` — modified only when the user selected an authentication type for this MCP server runtime and the matching registration step is not already present. The toolkit injects `oauth/register` for `OAuth (with static registration)` and `Entra SSO`, or `dcr/register` for `OAuth (with dynamic registration)`, at the same shape and ordering used by `SCN-DA-CREATE-WITH-MCP-SERVER` and `SCN-DA-ADD-MCP-ACTION-TO-DA`, so the manifest's `auth.reference_id` resolves at provision time.
 
 ### Notifications
 
@@ -93,7 +97,7 @@ This scenario updates an existing DA project; there is no template boilerplate t
 
 ### Environment and secret writes
 
-- The injected OAuth registration step in `m365agents.yml` reserves a configuration id that is written into the project's environment files when the provision lifecycle runs. The scenario itself does not write to `env/.env.*` at picker time; auth secret collection in VS Code follows the same convention as `SCN-DA-CREATE-WITH-MCP-SERVER` and `SCN-DA-ADD-MCP-ACTION-TO-DA` and is deferred to those scenarios.
+- The injected `oauth/register` or `dcr/register` step in `m365agents.yml` reserves a configuration id that is written into the project's environment files when the provision lifecycle runs. The scenario itself does not write to `env/.env.*` at picker time; auth secret collection in VS Code follows the same convention as `SCN-DA-CREATE-WITH-MCP-SERVER` and `SCN-DA-ADD-MCP-ACTION-TO-DA` and is deferred to those scenarios.
 
 ### External side effects
 

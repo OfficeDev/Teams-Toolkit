@@ -16,7 +16,7 @@ import { RecommendedOperations } from "../debug/common/debugConstants";
 import { isLoginFailureError, showError, wrapError } from "../error/common";
 import { ExtensionErrors, ExtensionSource } from "../error/error";
 import { TreatmentVariableValue } from "../exp/treatmentVariables";
-import { core, workspaceUri } from "../globalVariables";
+import { core } from "../globalVariables";
 import { ExtTelemetry } from "../telemetry/extTelemetry";
 import {
   TelemetryEvent,
@@ -27,6 +27,19 @@ import { checkCoreNotEmpty } from "../utils/commonUtils";
 import { localize } from "../utils/localizeUtils";
 import { getSystemInputs } from "../utils/systemEnvUtils";
 import { getTeamsAppTelemetryInfoByEnv } from "../utils/telemetryUtils";
+
+type FxCoreWithAddWebpart = {
+  addWebpart(inputs: Inputs): Promise<Result<undefined, FxError>>;
+};
+
+function hasAddWebpart(
+  coreInstance: typeof core
+): coreInstance is typeof core & FxCoreWithAddWebpart {
+  return (
+    "addWebpart" in coreInstance &&
+    typeof (coreInstance as FxCoreWithAddWebpart).addWebpart === "function"
+  );
+}
 
 export async function runCommand(
   stage: Stage,
@@ -73,7 +86,7 @@ export async function runCommand(
       case Stage.create: {
         inputs.projectId = inputs.projectId ?? uuid.v4();
         inputs["mcp-da-available-tools"] = vscode.lm.tools;
-        const tmpResult = await core.createProject(inputs);
+        const tmpResult = await core.createProjectFrontDoor(inputs);
         if (tmpResult.isErr()) {
           result = err(tmpResult.error);
         } else {
@@ -151,7 +164,15 @@ export async function runCommand(
         break;
       }
       case Stage.addWebpart: {
-        result = await core.addWebpart(inputs);
+        if (hasAddWebpart(core)) {
+          result = await core.addWebpart(inputs);
+          break;
+        }
+        throw new SystemError(
+          ExtensionSource,
+          ExtensionErrors.UnsupportedOperation,
+          util.format(localize("teamstoolkit.handlers.operationNotSupport"), stage)
+        );
         break;
       }
       case Stage.validateApplication: {
@@ -172,10 +193,6 @@ export async function runCommand(
       }
       case Stage.addPlugin: {
         result = await core.addPlugin(inputs);
-        break;
-      }
-      case Stage.metaOSExtendToDA: {
-        result = await core.metaOSExtendToDA(inputs, workspaceUri!.fsPath);
         break;
       }
       case Stage.RegeneratePlugin: {

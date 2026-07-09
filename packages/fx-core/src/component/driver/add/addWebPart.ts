@@ -22,13 +22,6 @@ import { NoConfigurationError } from "./error/noConfigurationError";
 import { AddWebPartArgs } from "./interface/AddWebPartArgs";
 import { Constants } from "./utility/constants";
 
-export const addWebPartDeps = {
-  pathExists: fs.pathExists,
-  createContext,
-  doYeomanScaffold: SPFxGenerator.doYeomanScaffold,
-  addCapabilities: manifestUtils.addCapabilities.bind(manifestUtils),
-};
-
 @Service(Constants.ActionName)
 export class AddWebPartDriver implements StepDriver {
   description = getLocalizedString("driver.spfx.add.description");
@@ -61,7 +54,7 @@ export class AddWebPartDriver implements StepDriver {
 
     const yorcPath = path.join(spfxFolder, Constants.YO_RC_FILE);
     context.logProvider.verbose(`Checking configuration file under ${yorcPath}...`);
-    if (!(await addWebPartDeps.pathExists(yorcPath))) {
+    if (!(await fs.pathExists(yorcPath))) {
       throw new NoConfigurationError();
     }
     context.logProvider.verbose(`Configuration file exists.`);
@@ -78,8 +71,8 @@ export class AddWebPartDriver implements StepDriver {
       `SPFx web part name: ${webpartName}, SPFx folder: ${spfxFolder}, manifest path: ${manifestPath}, local manifest path: ${localManifestPath}`
     );
 
-    const SPFxContext = addWebPartDeps.createContext();
-    const yeomanRes = await addWebPartDeps.doYeomanScaffold(
+    const SPFxContext = createContext();
+    const yeomanRes = await SPFxGenerator.doYeomanScaffold(
       SPFxContext,
       inputs,
       context.projectPath
@@ -114,7 +107,7 @@ export class AddWebPartDriver implements StepDriver {
     context.logProvider.verbose(
       `Exposing web part with component id ${componentId} to local manifest file under ${localManifestPath}...`
     );
-    const localRes = await addWebPartDeps.addCapabilities(
+    const localRes = await manifestUtils.addCapabilities.bind(manifestUtils)(
       { ...inputs, projectPath: context.projectPath },
       [{ name: "staticTab", snippet: localStaticSnippet }]
     );
@@ -125,7 +118,7 @@ export class AddWebPartDriver implements StepDriver {
     context.logProvider.verbose(
       `Exposing web part with component id ${componentId} to remote manifest file under ${manifestPath}...`
     );
-    const remoteRes = await addWebPartDeps.addCapabilities(
+    const remoteRes = await manifestUtils.addCapabilities.bind(manifestUtils)(
       { ...inputs, projectPath: context.projectPath },
       [{ name: "staticTab", snippet: remoteStaticSnippet }]
     );

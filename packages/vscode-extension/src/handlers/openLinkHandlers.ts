@@ -31,8 +31,8 @@ import {
 import { TreeViewCommand } from "../treeview/treeViewCommand";
 import { getTriggerFromProperty } from "../utils/telemetryUtils";
 import { ExtensionSource, ExtensionErrors } from "../error/error";
-import { getSubscriptionInfoFromEnv, getResourceGroupNameFromEnv } from "../utils/envTreeUtils";
-import { localize } from "../utils/localizeUtils";
+import * as envTreeUtils from "../utils/envTreeUtils";
+import * as localizeUtils from "../utils/localizeUtils";
 import { commands, Uri } from "vscode";
 
 export async function openEnvLinkHandler(args: any[]): Promise<Result<unknown, FxError>> {
@@ -188,7 +188,7 @@ export async function openSubscriptionInPortal(env: string): Promise<Result<Void
   const telemetryProperties: { [p: string]: string } = {};
   telemetryProperties[TelemetryProperty.Env] = getHashedEnv(env);
 
-  const subscriptionInfo = await getSubscriptionInfoFromEnv(env);
+  const subscriptionInfo = await envTreeUtils.getSubscriptionInfoFromEnv(env);
   if (subscriptionInfo) {
     ExtTelemetry.sendTelemetryEvent(TelemetryEvent.OpenSubscriptionInPortal, telemetryProperties);
 
@@ -201,7 +201,7 @@ export async function openSubscriptionInPortal(env: string): Promise<Result<Void
       ExtensionSource,
       ExtensionErrors.EnvResourceInfoNotFoundError,
       util.format(
-        localize("teamstoolkit.handlers.resourceInfoNotFound"),
+        localizeUtils.localize("teamstoolkit.handlers.resourceInfoNotFound"),
         ResourceInfo.Subscription,
         env
       )
@@ -220,8 +220,8 @@ export async function openResourceGroupInPortal(env: string): Promise<Result<Voi
   const telemetryProperties: { [p: string]: string } = {};
   telemetryProperties[TelemetryProperty.Env] = getHashedEnv(env);
 
-  const subscriptionInfo = await getSubscriptionInfoFromEnv(env);
-  const resourceGroupName = await getResourceGroupNameFromEnv(env);
+  const subscriptionInfo = await envTreeUtils.getSubscriptionInfoFromEnv(env);
+  const resourceGroupName = await envTreeUtils.getResourceGroupNameFromEnv(env);
 
   if (subscriptionInfo && resourceGroupName) {
     ExtTelemetry.sendTelemetryEvent(TelemetryEvent.OpenResourceGroupInPortal, telemetryProperties);
@@ -234,19 +234,19 @@ export async function openResourceGroupInPortal(env: string): Promise<Result<Voi
     let errorMessage = "";
     if (subscriptionInfo) {
       errorMessage = util.format(
-        localize("teamstoolkit.handlers.resourceInfoNotFound"),
+        localizeUtils.localize("teamstoolkit.handlers.resourceInfoNotFound"),
         ResourceInfo.ResourceGroup,
         env
       );
     } else if (resourceGroupName) {
       errorMessage = util.format(
-        localize("teamstoolkit.handlers.resourceInfoNotFound"),
+        localizeUtils.localize("teamstoolkit.handlers.resourceInfoNotFound"),
         ResourceInfo.Subscription,
         env
       );
     } else {
       errorMessage = util.format(
-        localize("teamstoolkit.handlers.resourceInfoNotFound"),
+        localizeUtils.localize("teamstoolkit.handlers.resourceInfoNotFound"),
         `${ResourceInfo.Subscription} and ${ResourceInfo.ResourceGroup}`,
         env
       );

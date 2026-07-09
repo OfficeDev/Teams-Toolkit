@@ -8,10 +8,8 @@ import {
   TeamsManifest,
   TeamsManifestV1D14,
 } from "@microsoft/teamsfx-api";
-import * as chai from "chai";
 import fs from "fs-extra";
 import "reflect-metadata";
-import sinon from "sinon";
 import * as uuid from "uuid";
 import { createContext, setTools } from "../../../../src/common/globalVars";
 import { generateDriverContext } from "../../../../src/common/utils";
@@ -23,9 +21,10 @@ import {
 } from "../../../../src/error/common";
 import { MockTools } from "../../../core/utils";
 import { newEnvInfoV3 } from "../../../helpers";
+import { chai, vi } from "vitest";
 
 describe("getManifest V3", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   let inputs: InputsWithProjectPath;
   let manifest: TeamsManifest;
   const manifestTemplate = `{
@@ -82,15 +81,15 @@ describe("getManifest V3", () => {
   });
 
   afterEach(async () => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("getManifestV3 MissingEnvironmentVariablesError", async () => {
     const envInfo = newEnvInfoV3();
     envInfo.envName = "dev";
     manifest.name.short = "${{MY_APP_NAME}}";
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(AppManifestUtils, "readTeamsManifest").resolves(manifest);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(AppManifestUtils, "readTeamsManifest").mockResolvedValue(manifest);
     const res = await manifestUtils.getManifestV3("", context);
     chai.assert.isTrue(res.isErr() && res.error instanceof MissingEnvironmentVariablesError);
   });
@@ -99,7 +98,7 @@ describe("getManifest V3", () => {
     const envInfo = newEnvInfoV3();
     envInfo.envName = "dev";
     manifest.name.short = "${{MY_APP_NAME}}";
-    sandbox.stub(fs, "pathExists").resolves(false);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
     const res = await manifestUtils.getManifestV3("", context);
     chai.assert.isTrue(res.isErr() && res.error instanceof FileNotFoundError);
   });
@@ -108,16 +107,18 @@ describe("getManifest V3", () => {
     const envInfo = newEnvInfoV3();
     envInfo.envName = "dev";
     manifest.name.short = "${{MY_APP_NAME}}";
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(AppManifestUtils, "readTeamsManifest").throws(new Error());
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(AppManifestUtils, "readTeamsManifest").mockImplementation(() => {
+      throw new Error();
+    });
     const res = await manifestUtils.getManifestV3("", context);
     chai.assert.isTrue(res.isErr() && res.error instanceof JSONSyntaxError);
   });
 
   it("getManifestV3 teams app id resolved", async () => {
     manifest.id = uuid.v4();
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(AppManifestUtils, "readTeamsManifest").resolves(manifest);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(AppManifestUtils, "readTeamsManifest").mockResolvedValue(manifest);
     const res = await manifestUtils.getManifestV3("", context);
     chai.assert.isTrue(res.isOk());
   });
@@ -141,13 +142,13 @@ describe("getManifest V3", () => {
 });
 
 describe("_readAppManifest", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   it("JSONSyntaxError", async () => {
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(fs, "readFile").resolves("invalid json" as any);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockResolvedValue("invalid json" as any);
     const res = await manifestUtils._readAppManifest("invalid json");
     chai.assert.isTrue(res.isErr() && res.error instanceof JSONSyntaxError);
   });

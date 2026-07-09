@@ -1,0 +1,48 @@
+{
+  "$schema": "../../schema/descriptor.schema.json",
+  "id": "add-mcp-server",
+  "name": "Add MCP Server Action",
+  "kind": "modify",
+  "languages": ["common"],
+  "minEngineVersion": "5.20.0",
+  "spec": "docs/03-specs/scenarios/da/add-mcp-server.md",
+  "requiresNetwork": false,
+
+  "entry": {
+    "params": ["mcpServerUrl", "teamsManifestPath"],
+    "comment": "CLI / a pre-filled URL skips the mcpServerUrl question (when-skip on mcpServerUrl == null). teamsManifestPath lets the product entry pass the selected Teams manifest instead of assuming appPackage/manifest.json. The DT-on draft captures NO static tool list (dynamic discovery at runtime), so unlike the shipped flow there is no `tools` entry param."
+  },
+
+  "optionsSchema": {
+    "type": "object",
+    "required": ["mcpServerUrl", "authType"],
+    "properties": {
+      "mcpServerUrl": { "type": "string", "format": "uri" },
+      "teamsManifestPath": { "type": "string", "default": "appPackage/manifest.json" },
+      "authType": { "enum": ["none", "oauth", "entra-sso", "oauth-dynamic"], "default": "none" },
+      "oauthClientId": { "type": "string" },
+      "oauthClientSecret": { "type": "string" },
+      "oauthScopes": { "type": "string" },
+      "entraClientId": { "type": "string" }
+    },
+    "allOf": [
+      {
+        "if": { "properties": { "authType": { "const": "oauth" } } },
+        "then": { "required": ["oauthClientId", "oauthClientSecret"] }
+      },
+      {
+        "if": { "properties": { "authType": { "const": "entra-sso" } } },
+        "then": { "required": ["entraClientId"] }
+      }
+    ],
+    "additionalProperties": false
+  },
+
+  "replaceMap": [
+    { "var": "MCPForDAServerUrl", "from": "mcpServerUrl" },
+    { "var": "IsNoAuth", "when": "authType == 'none'", "value": "true" },
+    { "var": "MicrosoftEntra", "when": "authType == 'entra-sso'", "value": "true" },
+    { "var": "MCPNamespace", "expr": "mcpNamespace(mcpServerUrl)" },
+    { "var": "MCPAuthRefId", "expr": "mcpAuthRef(mcpServerUrl)" }
+  ]
+}

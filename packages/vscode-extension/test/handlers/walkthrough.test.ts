@@ -1,51 +1,44 @@
-import * as handlers from "../../src/handlers/sharedOpts";
-import * as environmentUtils from "../../src/utils/systemEnvUtils";
 import * as vscode from "vscode";
 import { ExtTelemetry } from "../../src/telemetry/extTelemetry";
+import { expect, vi } from "vitest";
 import {
   createProjectFromWalkthroughHandler,
   openBuildIntelligentAppsWalkthroughHandler,
 } from "../../src/handlers/walkthrough";
-import * as sinon from "sinon";
-import { expect } from "chai";
 import { Inputs, ok } from "@microsoft/teamsfx-api";
+import * as systemEnvUtils from "../../src/utils/systemEnvUtils";
+import * as sharedOpts from "../../src/handlers/sharedOpts";
 
 describe("walkthrough", () => {
-  const sandbox = sinon.createSandbox();
-
-  afterEach(() => {
-    sandbox.restore();
-  });
-
   it("create proejct from walkthrough", async () => {
-    const sendTelemetryEventStub = sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
+    const sendTelemetryEventStub = vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
     const inputs = {} as Inputs;
-    const systemInputsStub = sandbox.stub(environmentUtils, "getSystemInputs").callsFake(() => {
-      return inputs;
-    });
+    const systemInputsStub = vi
+      .spyOn(systemEnvUtils, "getSystemInputs")
+      .mockImplementation(() => inputs);
 
-    const runCommandStub = sandbox.stub(handlers, "runCommand").resolves(ok(null));
+    const runCommandStub = vi.spyOn(sharedOpts, "runCommand").mockResolvedValue(ok(null));
 
     await createProjectFromWalkthroughHandler([
       "walkthrough",
       { "project-type": "custom-copilot-type", capabilities: "cutsom-copilot-agent" },
     ]);
 
-    sandbox.assert.calledOnce(sendTelemetryEventStub);
-    sandbox.assert.calledOnce(systemInputsStub);
-    sandbox.assert.calledOnce(runCommandStub);
+    expect(sendTelemetryEventStub).toHaveBeenCalledTimes(1);
+    expect(systemInputsStub).toHaveBeenCalledTimes(1);
+    expect(runCommandStub).toHaveBeenCalledTimes(1);
 
     expect(Object.keys(inputs)).lengthOf(2);
   });
 
   it("build intelligent apps", async () => {
-    const sendTelemetryEventStub = sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-    const executeCommands = sandbox.stub(vscode.commands, "executeCommand");
+    const sendTelemetryEventStub = vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+    const executeCommands = vi.spyOn(vscode.commands, "executeCommand");
 
     await openBuildIntelligentAppsWalkthroughHandler();
-    sandbox.assert.calledOnce(sendTelemetryEventStub);
-    sandbox.assert.calledOnceWithExactly(
-      executeCommands,
+    expect(sendTelemetryEventStub).toHaveBeenCalledTimes(1);
+    expect(executeCommands).toHaveBeenCalledTimes(1);
+    expect(executeCommands).toHaveBeenCalledWith(
       "workbench.action.openWalkthrough",
       "TeamsDevApp.ms-teams-vscode-extension#buildIntelligentApps"
     );

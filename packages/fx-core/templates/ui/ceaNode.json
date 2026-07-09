@@ -1,0 +1,30 @@
+{
+  "condition": {
+    "equals": "custom-engine-agent-type"
+  },
+  "data": {
+    "title": "template.customEngineAgent.title",
+    "name": "capabilities",
+    "type": "singleSelect",
+    "options": [
+      {
+        "id": "basic-custom-engine-agent",
+        "label": "template.customEngineAgent.basic.label",
+        "detail": "template.customEngineAgent.basic.detail",
+        "data": "basic-custom-engine-agent"
+      },
+      {
+        "id": "weather-agent",
+        "label": "template.customEngineAgent.weather.label",
+        "detail": "template.customEngineAgent.weather.detail",
+        "data": "weather-agent"
+      }
+    ],
+    "placeholder": "template.customEngineAgent.placeholder"
+  },
+  "children": [
+    {
+      "node": "llmServiceNode"
+    }
+  ]
+}

@@ -3,14 +3,13 @@
 
 import { ok } from "@microsoft/teamsfx-api";
 import axios from "axios";
-import { assert } from "chai";
 import fs from "fs-extra";
-import { createSandbox } from "sinon";
 import { setTools } from "../../../../src/common/globalVars";
 import { ArmDeployDriver } from "../../../../src/component/driver/arm/deploy";
 import { ArmDeployImpl } from "../../../../src/component/driver/arm/deployImpl";
 import { azureClientHelper } from "../../../../src/component/utils/azureClient";
 import { cpUtils } from "../../../../src/component/utils/depsChecker/cpUtils";
+import { assert, vi } from "vitest";
 import {
   MockedAzureAccountProvider,
   MockedM365Provider,
@@ -21,7 +20,7 @@ import {
 } from "../../../core/utils";
 
 describe("Arm driver deploy", () => {
-  const sandbox = createSandbox();
+  const sandbox = vi;
   const tools = new MockTools();
   setTools(tools);
   const mockedDriverContext: any = {
@@ -38,25 +37,25 @@ describe("Arm driver deploy", () => {
   beforeEach(() => {});
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   for (const actionMethod of ["run", "execute"]) {
     it(`happy path for ${actionMethod}`, async () => {
-      sandbox.stub(fs, "readFile").resolves("{}" as any);
-      sandbox.stub(cpUtils, "executeCommand").resolves("{}" as any);
+      vi.spyOn(fs, "readFile").mockResolvedValue("{}" as any);
+      vi.spyOn(cpUtils, "executeCommand").mockResolvedValue("{}" as any);
       const deployRes = ok({
         mockKey: {
           type: "string",
           value: "mockValue",
         },
       });
-      sandbox.stub(azureClientHelper, "createRmClient").resolves({} as any);
-      sandbox.stub(ArmDeployImpl.prototype, "executeDeployment").resolves(deployRes as any);
-      sandbox.stub(ArmDeployImpl.prototype, "ensureBicepCli").resolves("bicep");
+      vi.spyOn(azureClientHelper, "createRmClient").mockResolvedValue({} as any);
+      vi.spyOn(ArmDeployImpl.prototype, "executeDeployment").mockResolvedValue(deployRes as any);
+      vi.spyOn(ArmDeployImpl.prototype, "ensureBicepCli").mockResolvedValue("bicep");
       const fakeAxiosInstance = axios.create();
-      sandbox.stub(axios, "create").returns(fakeAxiosInstance);
-      sandbox.stub(fakeAxiosInstance, "get").resolves({
+      vi.spyOn(axios, "create").mockReturnValue(fakeAxiosInstance);
+      vi.spyOn(fakeAxiosInstance, "get").mockResolvedValue({
         status: 200,
         data: "",
       });
@@ -109,8 +108,8 @@ describe("Arm driver deploy", () => {
   }
 
   it("invalid parameters", async () => {
-    sandbox.stub(fs, "readFile").resolves("{}" as any);
-    sandbox.stub(cpUtils, "executeCommand").resolves("{}" as any);
+    vi.spyOn(fs, "readFile").mockResolvedValue("{}" as any);
+    vi.spyOn(cpUtils, "executeCommand").mockResolvedValue("{}" as any);
     let deployArgs = {
       subscriptionId: "",
       resourceGroupName: "",
@@ -152,12 +151,12 @@ describe("Arm driver deploy", () => {
   });
 
   it("deploy error", async () => {
-    sandbox.stub(fs, "readFile").resolves("{}" as any);
-    sandbox.stub(cpUtils, "executeCommand").resolves("{}" as any);
-    sandbox
-      .stub(ArmDeployImpl.prototype, "innerExecuteDeployment")
-      .rejects(new Error("mocked deploy error"));
-    sandbox.stub(ArmDeployImpl.prototype, "ensureBicepCli").resolves();
+    vi.spyOn(fs, "readFile").mockResolvedValue("{}" as any);
+    vi.spyOn(cpUtils, "executeCommand").mockResolvedValue("{}" as any);
+    vi.spyOn(ArmDeployImpl.prototype, "innerExecuteDeployment").mockRejectedValue(
+      new Error("mocked deploy error")
+    );
+    vi.spyOn(ArmDeployImpl.prototype, "ensureBicepCli").mockResolvedValue();
     const deployArgs = {
       subscriptionId: "00000000-0000-0000-0000-000000000000",
       resourceGroupName: "mock-group",
@@ -181,7 +180,9 @@ describe("Arm driver deploy", () => {
   });
 
   it("error handle", async () => {
-    sandbox.stub(ArmDeployImpl.prototype, "run").throws("mocked deploy error");
+    vi.spyOn(ArmDeployImpl.prototype, "run").mockImplementation(() => {
+      throw "mocked deploy error";
+    });
 
     const res = await driver.execute({} as any, mockedDriverContext);
     assert.isTrue(res.result.isErr());

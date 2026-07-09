@@ -37,10 +37,6 @@ import { advancedDASettingUrl, M365HelpLink } from "./constants";
 import { NotExtendedToM365Error } from "./errors";
 import { M365AppDefinition, M365AppEntity } from "./interface";
 
-export const packageServiceDeps = {
-  waitSeconds,
-};
-
 const M365ErrorSource = "M365";
 const M365ErrorComponent = "PackageService";
 
@@ -97,7 +93,7 @@ export class PackageService {
         this.logger?.warning(
           `Request failed with ${e.code ?? e.message}, retrying (${i + 1}/${retries})...`
         );
-        await packageServiceDeps.waitSeconds(1);
+        await waitSeconds(1);
       }
     }
     throw new Error("Unexpected: retry loop exited");
@@ -177,7 +173,7 @@ export class PackageService {
             this.logger?.verbose("Sideloading done.");
             return [titleId, appId];
           } else {
-            await packageServiceDeps.waitSeconds(2);
+            await waitSeconds(2);
           }
         } while (true);
       } else {
@@ -288,7 +284,7 @@ export class PackageService {
           this.logger?.verbose("Sideloading done.");
           return [titleId, appId];
         } else {
-          await packageServiceDeps.waitSeconds(7);
+          await waitSeconds(7);
         }
       } while (true);
     } catch (error: any) {
@@ -382,7 +378,7 @@ export class PackageService {
           this.logger?.verbose("Sideloading done.");
           return [titleId, appId];
         } else {
-          await packageServiceDeps.waitSeconds(7);
+          await waitSeconds(7);
         }
       } while (true);
     } catch (error: any) {
@@ -578,7 +574,7 @@ export class PackageService {
       // Short nextInterval means cache is refreshing
       if (ensureUpToDate && nextInterval > 0 && nextInterval < 10) {
         this.logger?.debug(`Active experiences is refreshing, wait for ${nextInterval} seconds.`);
-        await packageServiceDeps.waitSeconds(nextInterval);
+        await waitSeconds(nextInterval);
         response = await this.axiosInstance.get("/catalog/v1/users/uitypes", {
           baseURL: serviceUrl,
           headers: {

@@ -2,13 +2,7 @@
 // Licensed under the MIT license.
 
 import { FxError, Result, ok } from "@microsoft/teamsfx-api";
-import {
-  featureFlagManager,
-  FeatureFlags,
-  isValidProject,
-  manifestUtils,
-} from "@microsoft/teamsfx-core";
-import fs from "fs-extra";
+import * as teamsfxCore from "@microsoft/teamsfx-core";
 import path from "path";
 import * as vscode from "vscode";
 import { PanelType } from "../controls/PanelType";
@@ -21,9 +15,9 @@ import {
   TelemetryTriggerFrom,
   TelemetryUpdateAppReason,
 } from "../telemetry/extTelemetryEvents";
-import { openFolderInExplorer } from "../utils/commonUtils";
-import { getTriggerFromProperty } from "../utils/telemetryUtils";
+import * as commonUtils from "../utils/commonUtils";
 import { getDefaultString } from "../utils/localizeUtils";
+import { getTriggerFromProperty } from "../utils/telemetryUtils";
 import { getBuildIntelligentAppsWalkthroughID } from "./walkthrough";
 
 export async function openLifecycleTreeview(args?: any[]) {
@@ -91,13 +85,13 @@ export function openFolderHandler(...args: unknown[]): Promise<Result<unknown, F
       path = path.substring(scheme.length);
     }
     const uri = vscode.Uri.file(path);
-    openFolderInExplorer(uri.fsPath);
+    commonUtils.openFolderInExplorer(uri.fsPath);
   }
   return Promise.resolve(ok(null));
 }
 
 export function saveTextDocumentHandler(document: vscode.TextDocumentWillSaveEvent) {
-  if (!isValidProject(workspaceUri?.fsPath)) {
+  if (!teamsfxCore.isValidProject(workspaceUri?.fsPath)) {
     return;
   }
 
@@ -116,7 +110,7 @@ export function saveTextDocumentHandler(document: vscode.TextDocumentWillSaveEve
 
   let curDirectory = path.dirname(document.document.fileName);
   while (curDirectory) {
-    if (isValidProject(curDirectory)) {
+    if (teamsfxCore.isValidProject(curDirectory)) {
       ExtTelemetry.sendTelemetryEvent(TelemetryEvent.UpdateTeamsApp, {
         [TelemetryProperty.UpdateTeamsAppReason]: reason,
       });

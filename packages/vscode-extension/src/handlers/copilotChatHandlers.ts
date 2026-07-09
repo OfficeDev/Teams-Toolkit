@@ -4,7 +4,7 @@ import * as util from "util";
 import * as vscode from "vscode";
 
 import { FxError, Result, SystemError, UserError, err, ok } from "@microsoft/teamsfx-api";
-import { assembleError, globalStateUpdate } from "@microsoft/teamsfx-core";
+import * as teamsfxCore from "@microsoft/teamsfx-core";
 import VsCodeLogInstance from "../commonlib/log";
 import { ExtTelemetry } from "../telemetry/extTelemetry";
 import {
@@ -96,7 +96,7 @@ export async function openGithubCopilotChat(args?: any[]): Promise<Result<null, 
     VsCodeLogInstance.error(error.message);
     ExtTelemetry.sendTelemetryErrorEvent(eventName, error, telemtryProperties);
 
-    const assembledError = assembleError(e);
+    const assembledError = teamsfxCore.assembleError(e);
     if (assembledError.message) {
       VsCodeLogInstance.error(assembledError.message);
     }
@@ -146,7 +146,7 @@ export async function installGithubCopilotChatExtension(
     VsCodeLogInstance.error(error.message);
     ExtTelemetry.sendTelemetryErrorEvent(eventName, error, telemetryProperties);
 
-    const assembledError = assembleError(e);
+    const assembledError = teamsfxCore.assembleError(e);
     if (assembledError.message) {
       VsCodeLogInstance.error(assembledError.message);
     }
@@ -177,10 +177,10 @@ export async function markTeamsAgentInstallationDone(args?: any[]) {
   ExtTelemetry.sendTelemetryEvent(startEventName);
 
   try {
-    await globalStateUpdate(GlobalKey.TeamsAgentInstalled, true);
+    await teamsfxCore.globalStateUpdate(GlobalKey.TeamsAgentInstalled, true);
     ExtTelemetry.sendTelemetryEvent(eventName);
   } catch (e) {
-    ExtTelemetry.sendTelemetryErrorEvent(eventName, assembleError(e));
+    ExtTelemetry.sendTelemetryErrorEvent(eventName, teamsfxCore.assembleError(e));
   }
 }
 

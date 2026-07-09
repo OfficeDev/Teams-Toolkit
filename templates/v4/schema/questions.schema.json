@@ -1,0 +1,134 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aka.ms/m365atk/v4/questions.schema.json",
+  "title": "v4 questions.json",
+  "description": "Authoring-time schema for a v4 template's Q2 questions (proposal §4). The field whitelist here is the single machine-readable source of truth; the §4 prose table is its human gloss.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["questions"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "questions": {
+      "type": "array",
+      "items": {
+        "oneOf": [{ "$ref": "#/$defs/question" }, { "$ref": "#/$defs/useRef" }]
+      }
+    }
+  },
+  "$defs": {
+    "useRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["use"],
+      "properties": { "use": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9-]*$" } }
+    },
+    "question": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "type"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9]*$" },
+        "type": {
+          "type": "string",
+          "enum": ["singleSelect", "multiSelect", "text", "confirm", "singleFile", "folder", "singleFileOrText"]
+        },
+        "title": { "type": "string" },
+        "placeholder": { "type": "string" },
+        "prompt": { "type": "string" },
+        "default": {},
+        "password": { "type": "boolean" },
+        "filters": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "inputOptionItem": { "$ref": "#/$defs/option" },
+        "inputBoxConfig": { "$ref": "#/$defs/inputBoxConfig" },
+        "validation": { "$ref": "#/$defs/validation" },
+        "staticOptions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/option" }
+        },
+        "optionsFrom": { "type": "string" },
+        "optionsFromParams": { "type": "object" },
+        "skipSingleOption": { "type": "boolean" },
+        "optional": { "type": "boolean" },
+        "cliName": { "type": "string" },
+        "cliShortName": { "type": "string" },
+        "cliType": { "type": "string" },
+        "cliDescription": { "type": "string" },
+        "cliChoiceListCommand": { "type": "string" },
+        "cliHidden": { "type": "boolean" },
+        "condition": { "$ref": "#/$defs/condition" },
+        "fallbackValue": {},
+        "keyPrefix": { "type": "string" }
+      },
+      "comment": "Exactly one of staticOptions / optionsFrom may be present (proposal §4).",
+      "not": {
+        "required": ["staticOptions", "optionsFrom"]
+      }
+    },
+    "inputBoxConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string" },
+        "title": { "type": "string" },
+        "placeholder": { "type": "string" },
+        "prompt": { "type": "string" },
+        "default": {},
+        "step": { "type": "number" },
+        "keyPrefix": { "type": "string" },
+        "validation": { "$ref": "#/$defs/validation" }
+      }
+    },
+    "option": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string" },
+        "label": { "type": "string" },
+        "description": { "type": "string" },
+        "detail": { "type": "string" },
+        "groupName": { "type": "string" },
+        "iconPath": { "type": "string" },
+        "condition": { "$ref": "#/$defs/condition" },
+        "keyPrefix": { "type": "string" }
+      }
+    },
+    "validation": {
+      "comment": "Engine-registered validator (proposal §6.4). Shorthand string = validator name; object = { use, params }.",
+      "oneOf": [
+        { "type": "string" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["use"],
+          "properties": {
+            "use": { "type": "string" },
+            "params": { "type": "object" }
+          }
+        }
+      ]
+    },
+    "condition": {
+      "comment": "Closed-form expression DSL — one evaluator (proposal §4.3). Applies to both questions and options.",
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "maxProperties": 1,
+      "properties": {
+        "expr": { "type": "string" },
+        "equals": { "type": "object" },
+        "enum": { "type": "object" },
+        "anyOf": { "type": "array", "items": { "$ref": "#/$defs/condition" } },
+        "featureFlag": { "type": "string" },
+        "capability": { "type": "string" }
+      }
+    }
+  }
+}

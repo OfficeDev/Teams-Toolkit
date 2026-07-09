@@ -4,27 +4,26 @@
  * @author Xiaofu Huang <xiaofhua@microsoft.com>
  */
 
-import chai from "chai";
 import spies from "chai-spies";
 import * as fs from "fs-extra";
 import * as os from "os";
 import * as path from "path";
 import semver from "semver";
-import * as sinon from "sinon";
 import * as uuid from "uuid";
 import { FuncToolChecker } from "../../../../src/component/deps-checker/internal/funcToolChecker";
 import { isLinux } from "../../../../src/component/deps-checker/util/system";
 import * as funcUtils from "../utils/funcTool";
+import { assert, chai, expect, vi } from "vitest";
 
 chai.use(spies);
 const expect = chai.expect;
 const assert: Chai.AssertStatic = chai.assert;
 
 describe("FuncToolChecker E2E Test", async () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   let baseFolder: string | undefined = undefined;
   beforeEach(async function () {
-    sandbox.restore();
+    vi.restoreAllMocks();
     baseFolder = path.join(os.homedir(), "func-e2e", uuid.v4().substring(0, 6));
   });
 
@@ -35,9 +34,9 @@ describe("FuncToolChecker E2E Test", async () => {
   });
 
   const mockFunc = (homeDir: string): FuncToolChecker => {
-    sandbox
-      .stub(FuncToolChecker, "getDefaultInstallPath" as any)
-      .returns(path.join(homeDir, "./.fx/bin/azfunc")) as unknown as FuncToolChecker;
+    vi
+      .spyOn(FuncToolChecker, "getDefaultInstallPath" as any)
+      .mockReturnValue(path.join(homeDir, "./.fx/bin/azfunc")) as unknown as FuncToolChecker;
     return new FuncToolChecker();
   };
 
@@ -51,7 +50,7 @@ describe("FuncToolChecker E2E Test", async () => {
     const homePath = path.join(baseFolder!, "Aarón García", "for test");
     await fs.ensureDir(homePath);
     const funcToolChecker = mockFunc(homePath);
-    const spyChecker = sandbox.spy(funcToolChecker, "getInstallationInfo");
+    const spyChecker = vi.spyOn(funcToolChecker, "getInstallationInfo");
 
     const installOptions = {
       projectPath: projectPath,
@@ -62,7 +61,7 @@ describe("FuncToolChecker E2E Test", async () => {
     if (res.error) {
       console.log(res.error);
     }
-    assert.isTrue(spyChecker.calledOnce);
+    assert.isTrue(spyChecker.mock.calls.length === 1);
 
     expect(res.isInstalled).to.be.equal(true);
     expect(res.details.binFolders?.length).to.be.equal(1);
@@ -86,7 +85,7 @@ describe("FuncToolChecker E2E Test", async () => {
     const homePath = path.join(baseFolder!, "homeDir");
     const funcToolChecker = mockFunc(homePath);
     await fs.ensureFile(path.join(homePath, ".fx/bin/azfunc"));
-    const spyChecker = sandbox.spy(funcToolChecker, "getInstallationInfo");
+    const spyChecker = vi.spyOn(funcToolChecker, "getInstallationInfo");
 
     const installOptions = {
       projectPath: projectPath,
@@ -175,7 +174,7 @@ describe("FuncToolChecker E2E Test", async () => {
     const homePath = path.join(baseFolder!, "homeDir");
     const funcToolChecker = mockFunc(homePath);
 
-    const spyChecker = sandbox.spy(funcToolChecker, "getInstallationInfo");
+    const spyChecker = vi.spyOn(funcToolChecker, "getInstallationInfo");
     const installOptions = {
       projectPath: projectPath,
       symlinkDir: "./devTools/func",
@@ -185,7 +184,7 @@ describe("FuncToolChecker E2E Test", async () => {
     if (res.error) {
       console.log(res.error);
     }
-    assert.isTrue(spyChecker.calledOnce);
+    assert.isTrue(spyChecker.mock.calls.length === 1);
     assert.isTrue(res.isInstalled);
     assert.equal(res.details.binFolders?.length, 1);
     assert.equal(res.details.binFolders?.[0], symlinkPath);
@@ -209,7 +208,7 @@ describe("FuncToolChecker E2E Test", async () => {
     const homePath = path.join(baseFolder!, "homeDir");
     const funcToolChecker = mockFunc(homePath);
 
-    const spyChecker = sandbox.spy(funcToolChecker, "getInstallationInfo");
+    const spyChecker = vi.spyOn(funcToolChecker, "getInstallationInfo");
     const installOptions = {
       projectPath: projectPath,
       symlinkDir: "./devTools/func",
@@ -219,7 +218,7 @@ describe("FuncToolChecker E2E Test", async () => {
     if (res.error) {
       console.log(res.error);
     }
-    assert.isTrue(spyChecker.calledOnce);
+    assert.isTrue(spyChecker.mock.calls.length === 1);
     assert.isTrue(res.isInstalled);
     assert.equal(res.details.binFolders, undefined);
 

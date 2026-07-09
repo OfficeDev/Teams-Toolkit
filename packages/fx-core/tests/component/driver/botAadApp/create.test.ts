@@ -1,28 +1,24 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-import * as sinon from "sinon";
-import mockedEnv, { RestoreFn } from "mocked-env";
-import { CreateBotAadAppDriver } from "../../../../src/component/driver/botAadApp/create";
-import { MockedLogProvider, MockedTelemetryReporter } from "../../../plugins/solution/util";
-import * as chai from "chai";
-import chaiAsPromised from "chai-as-promised";
 import { err, ok, UserError } from "@microsoft/teamsfx-api";
+import mockedEnv, { RestoreFn } from "mocked-env";
+import { chai, vi } from "vitest";
 import {
   HttpClientError,
   HttpServerError,
   InvalidActionInputError,
   UnhandledError,
-  UnhandledUserError,
 } from "../../../../src";
 import { AadAppClient } from "../../../../src/client/aadAppClient";
-import { AADApplication } from "../../../../src/component/driver/aad/interface/AADApplication";
-import { OutputEnvironmentVariableUndefinedError } from "../../../../src/component/driver/error/outputEnvironmentVariableUndefinedError";
 import { AadAppNameTooLongError } from "../../../../src/component/driver/aad/error/aadAppNameTooLongError";
-import { MockedM365Provider } from "../../../core/utils";
 import { ClientSecretNotAllowedError } from "../../../../src/component/driver/aad/error/clientSecretNotAllowedError";
 import { SignInAudienceNotAllowedError } from "../../../../src/component/driver/aad/error/signInAudienceNotAllowedError";
+import { AADApplication } from "../../../../src/component/driver/aad/interface/AADApplication";
+import { CreateBotAadAppDriver } from "../../../../src/component/driver/botAadApp/create";
+import { OutputEnvironmentVariableUndefinedError } from "../../../../src/component/driver/error/outputEnvironmentVariableUndefinedError";
+import { MockedM365Provider } from "../../../core/utils";
+import { MockedLogProvider, MockedTelemetryReporter } from "../../../plugins/solution/util";
 
-chai.use(chaiAsPromised);
 const expect = chai.expect;
 
 const outputKeys = {
@@ -47,7 +43,7 @@ describe("botAadAppCreate", async () => {
   let envRestore: RestoreFn | undefined;
 
   afterEach(() => {
-    sinon.restore();
+    vi.restoreAllMocks();
     if (envRestore) {
       envRestore();
       envRestore = undefined;
@@ -56,18 +52,24 @@ describe("botAadAppCreate", async () => {
 
   it("should throw error if argument property is missing", async () => {
     const args: any = {};
-    await expect(
-      createBotAadAppDriver.handler(args, mockedDriverContext, outputEnvVarNames)
-    ).to.rejectedWith(InvalidActionInputError);
+    try {
+      await createBotAadAppDriver.handler(args, mockedDriverContext, outputEnvVarNames);
+      expect.fail("should have thrown");
+    } catch (e: any) {
+      expect(e instanceof InvalidActionInputError).to.be.true;
+    }
   });
 
   it("should throw error if argument property is invalid", async () => {
     const args: any = {
       name: "",
     };
-    await expect(
-      createBotAadAppDriver.handler(args, mockedDriverContext, outputEnvVarNames)
-    ).to.rejectedWith(InvalidActionInputError);
+    try {
+      await createBotAadAppDriver.handler(args, mockedDriverContext, outputEnvVarNames);
+      expect.fail("should have thrown");
+    } catch (e: any) {
+      expect(e instanceof InvalidActionInputError).to.be.true;
+    }
   });
 
   it("should throw error if Microsoft Entra app name exceeds 120 characters", async () => {
@@ -89,9 +91,12 @@ describe("botAadAppCreate", async () => {
       name: "test",
     };
 
-    await expect(createBotAadAppDriver.handler(args, mockedDriverContext)).to.rejectedWith(
-      OutputEnvironmentVariableUndefinedError
-    );
+    try {
+      await createBotAadAppDriver.handler(args, mockedDriverContext);
+      expect.fail("should have thrown");
+    } catch (e: any) {
+      expect(e instanceof OutputEnvironmentVariableUndefinedError).to.be.true;
+    }
   });
 
   it("happy path with handler", async () => {
@@ -99,13 +104,13 @@ describe("botAadAppCreate", async () => {
       name: expectedDisplayName,
     };
 
-    sinon.stub(AadAppClient.prototype, "createAadApp").resolves({
+    vi.spyOn(AadAppClient.prototype, "createAadApp").mockResolvedValue({
       id: expectedObjectId,
       displayName: expectedDisplayName,
       appId: expectedClientId,
     } as AADApplication);
 
-    sinon.stub(AadAppClient.prototype, "generateClientSecret").resolves(expectedSecretText);
+    vi.spyOn(AadAppClient.prototype, "generateClientSecret").mockResolvedValue(expectedSecretText);
 
     const result = await createBotAadAppDriver.handler(
       args,
@@ -124,13 +129,13 @@ describe("botAadAppCreate", async () => {
       name: expectedDisplayName,
     };
 
-    sinon.stub(AadAppClient.prototype, "createAadApp").resolves({
+    vi.spyOn(AadAppClient.prototype, "createAadApp").mockResolvedValue({
       id: expectedObjectId,
       displayName: expectedDisplayName,
       appId: expectedClientId,
     } as AADApplication);
 
-    sinon.stub(AadAppClient.prototype, "generateClientSecret").resolves(expectedSecretText);
+    vi.spyOn(AadAppClient.prototype, "generateClientSecret").mockResolvedValue(expectedSecretText);
 
     const result = await createBotAadAppDriver.execute(
       args,
@@ -147,7 +152,7 @@ describe("botAadAppCreate", async () => {
   });
 
   it("should throw user error when GraphClient failed with 4xx error", async () => {
-    sinon.stub(AadAppClient.prototype, "createAadApp").rejects({
+    vi.spyOn(AadAppClient.prototype, "createAadApp").mockRejectedValue({
       isAxiosError: true,
       response: {
         status: 400,
@@ -165,18 +170,19 @@ describe("botAadAppCreate", async () => {
       name: expectedDisplayName,
     };
 
-    await expect(
-      createBotAadAppDriver.handler(args, mockedDriverContext, outputEnvVarNames)
-    ).to.be.rejected.then((error) => {
+    try {
+      await createBotAadAppDriver.handler(args, mockedDriverContext, outputEnvVarNames);
+      expect.fail("should have thrown");
+    } catch (error: any) {
       expect(error instanceof HttpClientError).to.be.true;
       expect(error.message).contains(
         'A http client error occurred while performing the botAadApp/create task. The error response is: {"error":{"code":"Request_BadRequest","message":"Invalid value specified for property \'displayName\' of resource \'Application\'."}}'
       );
-    });
+    }
   });
 
   it("should throw system error when GraphClient failed with non 4xx error", async () => {
-    sinon.stub(AadAppClient.prototype, "createAadApp").rejects({
+    vi.spyOn(AadAppClient.prototype, "createAadApp").mockRejectedValue({
       isAxiosError: true,
       response: {
         status: 500,
@@ -193,26 +199,30 @@ describe("botAadAppCreate", async () => {
       name: expectedDisplayName,
     };
 
-    await expect(
-      createBotAadAppDriver.handler(args, mockedDriverContext, outputEnvVarNames)
-    ).to.be.rejected.then((error) => {
+    try {
+      await createBotAadAppDriver.handler(args, mockedDriverContext, outputEnvVarNames);
+      expect.fail("should have thrown");
+    } catch (error: any) {
       expect(error instanceof HttpServerError).to.be.true;
       expect(error.message).equals(
         'A http server error occurred while performing the botAadApp/create task. Try again later. The error response is: {"error":{"code":"InternalServerError","message":"Internal server error"}}'
       );
-    });
+    }
   });
 
   it("should throw error when GraphClient throws errors", async () => {
-    sinon.stub(AadAppClient.prototype, "createAadApp").throwsException();
+    vi.spyOn(AadAppClient.prototype, "createAadApp").mockImplementation(() => {
+      throw new Error();
+    });
     const args: any = {
       name: expectedDisplayName,
     };
-    await expect(
-      createBotAadAppDriver.handler(args, mockedDriverContext, outputEnvVarNames)
-    ).to.be.rejected.then((error) => {
+    try {
+      await createBotAadAppDriver.handler(args, mockedDriverContext, outputEnvVarNames);
+      expect.fail("should have thrown");
+    } catch (error: any) {
       expect(error instanceof UnhandledError).to.be.true;
-    });
+    }
   });
 
   it("should throw UnexpectedEmptyBotPasswordError when bot password is empty", async () => {
@@ -225,11 +235,15 @@ describe("botAadAppCreate", async () => {
       name: expectedDisplayName,
     };
 
-    await expect(createBotAadAppDriver.handler(args, mockedDriverContext, outputEnvVarNames))
-      .to.be.eventually.rejectedWith(
+    try {
+      await createBotAadAppDriver.handler(args, mockedDriverContext, outputEnvVarNames);
+      expect.fail("should have thrown");
+    } catch (error: any) {
+      expect(error.message).to.contain(
         "Bot password is empty. Add it in env file or clear bot id to have bot id/password pair regenerated. action: botAadApp/create."
-      )
-      .and.is.instanceOf(UserError);
+      );
+      expect(error instanceof UserError).to.be.true;
+    }
   });
 
   it("should use service management reference value from environment variable when set", async () => {
@@ -244,18 +258,18 @@ describe("botAadAppCreate", async () => {
       name: expectedDisplayName,
     };
 
-    sinon
-      .stub(AadAppClient.prototype, "createAadApp")
-      .callsFake(async (displayName, signInAudience, serviceManagementReference) => {
+    vi.spyOn(AadAppClient.prototype, "createAadApp").mockImplementation(
+      async (displayName, signInAudience, serviceManagementReference) => {
         expect(serviceManagementReference).to.equal(expectedServiceManagementReference);
         return {
           id: expectedObjectId,
           displayName: expectedDisplayName,
           appId: expectedClientId,
         } as AADApplication;
-      });
+      }
+    );
 
-    sinon.stub(AadAppClient.prototype, "generateClientSecret").resolves(expectedSecretText);
+    vi.spyOn(AadAppClient.prototype, "generateClientSecret").mockResolvedValue(expectedSecretText);
 
     const result = await createBotAadAppDriver.execute(
       args,
@@ -294,20 +308,20 @@ describe("botAadAppCreate", async () => {
       name: expectedDisplayName,
     };
     const progressBar = {
-      next: sinon.stub(),
+      next: vi.fn(),
     };
     const mockedDriverContextWithNoLogProvider: any = {
       m365TokenProvider: new MockedM365Provider(),
       telemetryReporter: new MockedTelemetryReporter(),
     };
 
-    sinon.stub(AadAppClient.prototype, "createAadApp").resolves({
+    vi.spyOn(AadAppClient.prototype, "createAadApp").mockResolvedValue({
       id: expectedObjectId,
       displayName: expectedDisplayName,
       appId: expectedClientId,
     } as AADApplication);
 
-    sinon.stub(AadAppClient.prototype, "generateClientSecret").resolves(expectedSecretText);
+    vi.spyOn(AadAppClient.prototype, "generateClientSecret").mockResolvedValue(expectedSecretText);
 
     mockedDriverContextWithNoLogProvider.progressBar = progressBar;
 
@@ -324,14 +338,16 @@ describe("botAadAppCreate", async () => {
       name: expectedDisplayName,
     };
     const progressBar = {
-      next: sinon.stub(),
+      next: vi.fn(),
     };
     const mockedDriverContextWithNoLogProvider: any = {
       m365TokenProvider: new MockedM365Provider(),
       telemetryReporter: new MockedTelemetryReporter(),
     };
 
-    sinon.stub(createBotAadAppDriver, "validateArgs").throws({ name: "AadCreateAppError" });
+    vi.spyOn(createBotAadAppDriver, "validateArgs").mockImplementation(() => {
+      throw { name: "AadCreateAppError" };
+    });
 
     mockedDriverContextWithNoLogProvider.progressBar = progressBar;
 
@@ -353,20 +369,20 @@ describe("botAadAppCreate", async () => {
       TTK_DEFAULT_SERVICE_MANAGEMENT_REFERENCE: "00000000-0000-0000-0000-000000000000",
     });
 
-    sinon
-      .stub(mockedDriverContext.m365TokenProvider, "getJsonObject")
-      .resolves(ok({ unique_name: "test@microsoft.com" }));
+    vi.spyOn(mockedDriverContext.m365TokenProvider, "getJsonObject").mockResolvedValue(
+      ok({ unique_name: "test@microsoft.com" })
+    );
     const args: any = {
       name: expectedDisplayName,
     };
 
-    sinon.stub(AadAppClient.prototype, "createAadApp").resolves({
+    vi.spyOn(AadAppClient.prototype, "createAadApp").mockResolvedValue({
       id: expectedObjectId,
       displayName: expectedDisplayName,
       appId: expectedClientId,
     } as AADApplication);
 
-    sinon.stub(AadAppClient.prototype, "generateClientSecret").resolves(expectedSecretText);
+    vi.spyOn(AadAppClient.prototype, "generateClientSecret").mockResolvedValue(expectedSecretText);
 
     const result = await createBotAadAppDriver.handler(
       args,
@@ -382,20 +398,20 @@ describe("botAadAppCreate", async () => {
   });
 
   it("should not output delete aad information when using non microsoft tenant", async () => {
-    sinon
-      .stub(mockedDriverContext.m365TokenProvider, "getJsonObject")
-      .resolves(ok({ unique_name: "test@test.com" }));
+    vi.spyOn(mockedDriverContext.m365TokenProvider, "getJsonObject").mockResolvedValue(
+      ok({ unique_name: "test@test.com" })
+    );
     const args: any = {
       name: expectedDisplayName,
     };
 
-    sinon.stub(AadAppClient.prototype, "createAadApp").resolves({
+    vi.spyOn(AadAppClient.prototype, "createAadApp").mockResolvedValue({
       id: expectedObjectId,
       displayName: expectedDisplayName,
       appId: expectedClientId,
     } as AADApplication);
 
-    sinon.stub(AadAppClient.prototype, "generateClientSecret").resolves(expectedSecretText);
+    vi.spyOn(AadAppClient.prototype, "generateClientSecret").mockResolvedValue(expectedSecretText);
 
     const result = await createBotAadAppDriver.handler(
       args,
@@ -411,20 +427,20 @@ describe("botAadAppCreate", async () => {
   });
 
   it("should not output delete aad information when using non login information", async () => {
-    sinon
-      .stub(mockedDriverContext.m365TokenProvider, "getJsonObject")
-      .resolves(err(new Error("Test error")));
+    vi.spyOn(mockedDriverContext.m365TokenProvider, "getJsonObject").mockResolvedValue(
+      err(new Error("Test error"))
+    );
     const args: any = {
       name: expectedDisplayName,
     };
 
-    sinon.stub(AadAppClient.prototype, "createAadApp").resolves({
+    vi.spyOn(AadAppClient.prototype, "createAadApp").mockResolvedValue({
       id: expectedObjectId,
       displayName: expectedDisplayName,
       appId: expectedClientId,
     } as AADApplication);
 
-    sinon.stub(AadAppClient.prototype, "generateClientSecret").resolves(expectedSecretText);
+    vi.spyOn(AadAppClient.prototype, "generateClientSecret").mockResolvedValue(expectedSecretText);
 
     const result = await createBotAadAppDriver.handler(
       args,
@@ -440,134 +456,138 @@ describe("botAadAppCreate", async () => {
   });
 
   it("should throw ClientSecretNotAllowedError with proper help link for Microsoft user", async () => {
-    sinon
-      .stub(mockedDriverContext.m365TokenProvider, "getJsonObject")
-      .resolves(ok({ unique_name: "test@microsoft.com" }));
+    vi.spyOn(mockedDriverContext.m365TokenProvider, "getJsonObject").mockResolvedValue(
+      ok({ unique_name: "test@microsoft.com" })
+    );
 
-    sinon.stub(AadAppClient.prototype, "createAadApp").resolves({
+    vi.spyOn(AadAppClient.prototype, "createAadApp").mockResolvedValue({
       id: expectedObjectId,
       displayName: expectedDisplayName,
       appId: expectedClientId,
     } as AADApplication);
 
-    sinon
-      .stub(AadAppClient.prototype, "generateClientSecret")
-      .callsFake(async (objectId, days, description, isMicrosoftUser) => {
+    vi.spyOn(AadAppClient.prototype, "generateClientSecret").mockImplementation(
+      async (objectId, days, description, isMicrosoftUser) => {
         throw new ClientSecretNotAllowedError("botAadApp/create", isMicrosoftUser);
-      });
+      }
+    );
 
     const args: any = {
       name: expectedDisplayName,
     };
 
-    await expect(createBotAadAppDriver.handler(args, mockedDriverContext, outputEnvVarNames))
-      .to.be.rejectedWith(
+    try {
+      await createBotAadAppDriver.handler(args, mockedDriverContext, outputEnvVarNames);
+      expect.fail("should have thrown");
+    } catch (error: any) {
+      expect(error.message).to.contain(
         "Your tenant doesn't allow creating a client secret for Microsoft Entra app. Create and configure the app manually."
-      )
-      .then((error) => {
-        expect(error instanceof ClientSecretNotAllowedError).to.be.true;
-        expect(error.source).equals("botAadApp/create");
-        expect(error.name).equals("ClientSecretNotAllowed");
-        expect(error.helpLink).equals("https://aka.ms/teams-toolkit-sni-guide");
-      });
+      );
+      expect(error instanceof ClientSecretNotAllowedError).to.be.true;
+      expect(error.source).equals("botAadApp/create");
+      expect(error.name).equals("ClientSecretNotAllowed");
+      expect(error.helpLink).equals("https://aka.ms/teams-toolkit-sni-guide");
+    }
   });
 
   it("should throw ClientSecretNotAllowedError with default help link for non-Microsoft user", async () => {
-    sinon
-      .stub(mockedDriverContext.m365TokenProvider, "getJsonObject")
-      .resolves(ok({ unique_name: "test@test.com" }));
+    vi.spyOn(mockedDriverContext.m365TokenProvider, "getJsonObject").mockResolvedValue(
+      ok({ unique_name: "test@test.com" })
+    );
 
-    sinon.stub(AadAppClient.prototype, "createAadApp").resolves({
+    vi.spyOn(AadAppClient.prototype, "createAadApp").mockResolvedValue({
       id: expectedObjectId,
       displayName: expectedDisplayName,
       appId: expectedClientId,
     } as AADApplication);
 
-    sinon
-      .stub(AadAppClient.prototype, "generateClientSecret")
-      .callsFake(async (objectId, days, description, isMicrosoftUser) => {
+    vi.spyOn(AadAppClient.prototype, "generateClientSecret").mockImplementation(
+      async (objectId, days, description, isMicrosoftUser) => {
         throw new ClientSecretNotAllowedError("botAadApp/create", isMicrosoftUser);
-      });
+      }
+    );
 
     const args: any = {
       name: expectedDisplayName,
     };
 
-    await expect(createBotAadAppDriver.handler(args, mockedDriverContext, outputEnvVarNames))
-      .to.be.rejectedWith(
+    try {
+      await createBotAadAppDriver.handler(args, mockedDriverContext, outputEnvVarNames);
+      expect.fail("should have thrown");
+    } catch (error: any) {
+      expect(error.message).to.contain(
         "Your tenant doesn't allow creating a client secret for Microsoft Entra app. Create and configure the app manually."
-      )
-      .then((error) => {
-        expect(error instanceof ClientSecretNotAllowedError).to.be.true;
-        expect(error.source).equals("botAadApp/create");
-        expect(error.name).equals("ClientSecretNotAllowed");
-        expect(error.helpLink).equals("https://aka.ms/teamsfx-actions/aadapp-create");
-      });
+      );
+      expect(error instanceof ClientSecretNotAllowedError).to.be.true;
+      expect(error.source).equals("botAadApp/create");
+      expect(error.name).equals("ClientSecretNotAllowed");
+      expect(error.helpLink).equals("https://aka.ms/teamsfx-actions/aadapp-create");
+    }
   });
 
   it("should throw SignInAudienceNotAllowedError with proper help link for Microsoft user", async () => {
-    sinon
-      .stub(mockedDriverContext.m365TokenProvider, "getJsonObject")
-      .resolves(ok({ unique_name: "test@microsoft.com" }));
+    vi.spyOn(mockedDriverContext.m365TokenProvider, "getJsonObject").mockResolvedValue(
+      ok({ unique_name: "test@microsoft.com" })
+    );
 
-    sinon
-      .stub(AadAppClient.prototype, "createAadApp")
-      .callsFake(
-        async (displayName, signInAudience, serviceManagementReference, isMicrosoftUser) => {
-          throw new SignInAudienceNotAllowedError(
-            "botAadApp/create",
-            "The tenant admin has disabled creation of apps with multi-tenant sign-in audience",
-            isMicrosoftUser
-          );
-        }
-      );
+    vi.spyOn(AadAppClient.prototype, "createAadApp").mockImplementation(
+      async (displayName, signInAudience, serviceManagementReference, isMicrosoftUser) => {
+        throw new SignInAudienceNotAllowedError(
+          "botAadApp/create",
+          "The tenant admin has disabled creation of apps with multi-tenant sign-in audience",
+          isMicrosoftUser
+        );
+      }
+    );
 
     const args: any = {
       name: expectedDisplayName,
     };
 
-    await expect(createBotAadAppDriver.handler(args, mockedDriverContext, outputEnvVarNames))
-      .to.be.rejectedWith(
+    try {
+      await createBotAadAppDriver.handler(args, mockedDriverContext, outputEnvVarNames);
+      expect.fail("should have thrown");
+    } catch (error: any) {
+      expect(error.message).to.contain(
         "The tenant admin has disabled creation of apps with multi-tenant sign-in audience"
-      )
-      .then((error) => {
-        expect(error instanceof SignInAudienceNotAllowedError).to.be.true;
-        expect(error.source).equals("botAadApp/create");
-        expect(error.name).equals("SignInAudienceNotAllowed");
-        expect(error.helpLink).equals("https://aka.ms/teams-toolkit-sni-guide");
-      });
+      );
+      expect(error instanceof SignInAudienceNotAllowedError).to.be.true;
+      expect(error.source).equals("botAadApp/create");
+      expect(error.name).equals("SignInAudienceNotAllowed");
+      expect(error.helpLink).equals("https://aka.ms/teams-toolkit-sni-guide");
+    }
   });
 
   it("should throw SignInAudienceNotAllowedError with default help link for non-Microsoft user", async () => {
-    sinon
-      .stub(mockedDriverContext.m365TokenProvider, "getJsonObject")
-      .resolves(ok({ unique_name: "test@test.com" }));
+    vi.spyOn(mockedDriverContext.m365TokenProvider, "getJsonObject").mockResolvedValue(
+      ok({ unique_name: "test@test.com" })
+    );
 
-    sinon
-      .stub(AadAppClient.prototype, "createAadApp")
-      .callsFake(
-        async (displayName, signInAudience, serviceManagementReference, isMicrosoftUser) => {
-          throw new SignInAudienceNotAllowedError(
-            "botAadApp/create",
-            "The tenant admin has disabled creation of apps with multi-tenant sign-in audience",
-            isMicrosoftUser
-          );
-        }
-      );
+    vi.spyOn(AadAppClient.prototype, "createAadApp").mockImplementation(
+      async (displayName, signInAudience, serviceManagementReference, isMicrosoftUser) => {
+        throw new SignInAudienceNotAllowedError(
+          "botAadApp/create",
+          "The tenant admin has disabled creation of apps with multi-tenant sign-in audience",
+          isMicrosoftUser
+        );
+      }
+    );
 
     const args: any = {
       name: expectedDisplayName,
     };
 
-    await expect(createBotAadAppDriver.handler(args, mockedDriverContext, outputEnvVarNames))
-      .to.be.rejectedWith(
+    try {
+      await createBotAadAppDriver.handler(args, mockedDriverContext, outputEnvVarNames);
+      expect.fail("should have thrown");
+    } catch (error: any) {
+      expect(error.message).to.contain(
         "The tenant admin has disabled creation of apps with multi-tenant sign-in audience"
-      )
-      .then((error) => {
-        expect(error instanceof SignInAudienceNotAllowedError).to.be.true;
-        expect(error.source).equals("botAadApp/create");
-        expect(error.name).equals("SignInAudienceNotAllowed");
-        expect(error.helpLink).equals("https://aka.ms/teamsfx-actions/aadapp-create");
-      });
+      );
+      expect(error instanceof SignInAudienceNotAllowedError).to.be.true;
+      expect(error.source).equals("botAadApp/create");
+      expect(error.name).equals("SignInAudienceNotAllowed");
+      expect(error.helpLink).equals("https://aka.ms/teamsfx-actions/aadapp-create");
+    }
   });
 });

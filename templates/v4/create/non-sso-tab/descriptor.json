@@ -1,0 +1,19 @@
+{
+  "$schema": "../../schema/descriptor.schema.json",
+  "id": "non-sso-tab",
+  "name": "Teams Tab",
+  "languages": ["typescript"],
+  "minEngineVersion": "5.20.0",
+  "spec": "docs/03-specs/scenarios/teams/create-non-sso-tab.md",
+  "requiresNetwork": false,
+
+  "optionsSchema": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+
+  "replaceMap": [
+    { "var": "SafeProjectNameLowerCase", "expr": "safeProjectNameLowerCase(appName)" }
+  ]
+}

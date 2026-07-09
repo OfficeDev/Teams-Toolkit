@@ -3,25 +3,21 @@
 
 import { IProgressHandler } from "@microsoft/teamsfx-api";
 import { LocalEnvManager } from "@microsoft/teamsfx-core";
-import * as sinon from "sinon";
 import { createTaskStopCb } from "../../../../src/cmds/preview/commonUtils";
 import cliLogger from "../../../../src/commonlib/log";
 import cliTelemetry from "../../../../src/telemetry/cliTelemetry";
 import { expect } from "../../utils";
-
+import { vi } from "vitest";
 describe("commonUtils createTaskStopCb npm install", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("npm install failure path", async () => {
-    const getNpmInstallLogInfoStub = sandbox.stub(
-      LocalEnvManager.prototype,
-      "getNpmInstallLogInfo"
-    );
-    getNpmInstallLogInfoStub.resolves({
+    const getNpmInstallLogInfoStub = vi.spyOn(LocalEnvManager.prototype, "getNpmInstallLogInfo");
+    getNpmInstallLogInfoStub.mockResolvedValue({
       cwd: "c:/tmp/app",
       exitCode: 1,
       timestamp: new Date(),
@@ -29,10 +25,10 @@ describe("commonUtils createTaskStopCb npm install", () => {
       npmVersion: "9.0.0",
       errorMessage: "install failed",
     });
-    sandbox.stub(cliTelemetry, "sendTelemetryErrorEvent").callsFake(() => {});
-    sandbox.stub(cliLogger, "necessaryLog").callsFake(() => {});
+    vi.spyOn(cliTelemetry, "sendTelemetryErrorEvent").mockImplementation(() => {});
+    vi.spyOn(cliLogger, "necessaryLog").mockImplementation(() => {});
 
-    const progressHandler = sandbox.createStubInstance(MockProgressHandler);
+    const progressHandler = vi.mockObject(new MockProgressHandler());
     const taskStopCallback = createTaskStopCb(progressHandler, { k: "v" });
     await taskStopCallback("npm install", false, {
       command: "command",
@@ -41,8 +37,8 @@ describe("commonUtils createTaskStopCb npm install", () => {
       stderr: [],
       exitCode: 1,
     });
-    expect(progressHandler.end.calledOnce).to.be.true;
-    expect(getNpmInstallLogInfoStub.calledOnce).to.be.true;
+    expect(progressHandler.end.mock.calls.length === 1).to.be.true;
+    expect(getNpmInstallLogInfoStub.mock.calls.length === 1).to.be.true;
   });
 });
 

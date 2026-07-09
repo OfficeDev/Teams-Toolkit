@@ -1,24 +1,28 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { assert } from "chai";
-import * as sinon from "sinon";
-import { ODRProvider, odrProviderDeps } from "../../../src/component/utils/odrProvider";
+import { ODRProvider } from "../../../src/component/utils/odrProvider";
 
+import { assert, expect, vi } from "vitest";
+import * as odrProviderDeps from "../../../src/component/utils/odrProvider";
 describe("ODRProvider", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
+  const originalPlatformDescriptor = Object.getOwnPropertyDescriptor(process, "platform");
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
+    if (originalPlatformDescriptor) {
+      Object.defineProperty(process, "platform", originalPlatformDescriptor);
+    }
   });
 
   describe("isODRServer", () => {
     it("odrProviderDeps.logError should delegate to console.error", () => {
-      const errorStub = sandbox.stub(console, "error");
+      const errorStub = vi.spyOn(console, "error");
 
       odrProviderDeps.logError("odr", "failed");
 
-      assert.isTrue(errorStub.calledOnceWithExactly("odr", "failed"));
+      expect(errorStub).toHaveBeenCalledExactlyOnceWith("odr", "failed");
     });
 
     it("should return true for ODR server with lowercase odr command", () => {
@@ -62,14 +66,14 @@ describe("ODRProvider", () => {
 
   describe("listServers", () => {
     it("should return empty array on non-Windows platform", async () => {
-      sandbox.stub(process, "platform").value("darwin"); // macOS
-      const execStub = sandbox.stub(require("child_process"), "exec");
+      Object.defineProperty(process, "platform", { value: "darwin", configurable: true }); // macOS
+      const execStub = vi.spyOn(require("child_process"), "exec");
 
       const servers = await ODRProvider.listServers();
 
       assert.isArray(servers);
       assert.equal(servers.length, 0);
-      assert.isFalse(execStub.called);
+      assert.isFalse(execStub.mock.calls.length > 0);
     });
   });
 
@@ -721,7 +725,7 @@ describe("ODRProvider", () => {
         },
       ];
 
-      sandbox.stub(ODRProvider, "listServers").resolves(mockServers);
+      vi.spyOn(ODRProvider, "listServers").mockResolvedValue(mockServers);
 
       const tools = await ODRProvider.getToolsForODRServer("odr", ["run", "my-server"]);
 
@@ -746,7 +750,7 @@ describe("ODRProvider", () => {
         },
       ];
 
-      sandbox.stub(ODRProvider, "listServers").resolves(mockServers);
+      vi.spyOn(ODRProvider, "listServers").mockResolvedValue(mockServers);
 
       const tools = await ODRProvider.getToolsForODRServer("odr", ["run", "different-server"]);
 
@@ -769,7 +773,7 @@ describe("ODRProvider", () => {
         },
       ];
 
-      sandbox.stub(ODRProvider, "listServers").resolves(mockServers);
+      vi.spyOn(ODRProvider, "listServers").mockResolvedValue(mockServers);
 
       const tools = await ODRProvider.getToolsForODRServer("odr", []);
 
@@ -792,7 +796,7 @@ describe("ODRProvider", () => {
         },
       ];
 
-      sandbox.stub(ODRProvider, "listServers").resolves(mockServers);
+      vi.spyOn(ODRProvider, "listServers").mockResolvedValue(mockServers);
 
       const tools = await ODRProvider.getToolsForODRServer("odr");
 

@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 15,
+    "total_steps": 14,
     "created_at": "2026-04-30T08:06:43.559899",
     "name": "Feature LocalDebug with Workbench",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2026-04-30T08:06:43.559894",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_a305b5f4",
+      "plan_r_0624_024810",
       "step_de1bfbdb",
       "step_a0cd024b",
       "step_bc22586d",
@@ -43,32 +43,6 @@
     "updated_at": "2026-04-30T08:07:59.205812"
   },
   "steps": [
-    {
-      "step_id": "step_a305b5f4",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 325,
-        "y": 230
-      },
-      "description": "Click the \"Teams Agents and Apps\" option in the \"New Project\" dropdown menu within the Microsoft 365 Agents Toolkit interface.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:325:230:16:5:b3a959b331598230",
-        "dhash:325:230:96:5:995342c98d47c696",
-        "dhash:325:230:0:10:c8c88094b0717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_a305b5f4",
-      "created_at": "2026-04-30T08:06:43.567478",
-      "plan_id": "plan_fb453bdc"
-    },
     {
       "step_id": "step_de1bfbdb",
       "agent": "interaction",

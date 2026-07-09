@@ -10,6 +10,7 @@ import {
   IGenerator,
   Inputs,
   ok,
+  Platform,
   Result,
 } from "@microsoft/teamsfx-api";
 import { merge } from "lodash";
@@ -154,7 +155,11 @@ export class DefaultTemplateGenerator implements IGenerator {
 
     await actionContext?.progressBar?.next(ProgressMessages.generateTemplate);
     context.logProvider.debug(`Downloading app template "${templateName}" to ${destinationPath}`);
-    const useV4Channel = featureFlagManager.getBooleanValue(FeatureFlags.V4Enabled);
+    // VS keeps its own v3 `templates-vs@` channel: the v4 floor is built from
+    // templates/vsc only (no `csharp/`), so a V4Enabled flip must never route a
+    // VS scaffold through it. Mirrors the metadata guard (`platform !== Platform.VS`).
+    const useV4Channel =
+      featureFlagManager.getBooleanValue(FeatureFlags.V4Enabled) && inputs.platform !== Platform.VS;
     merge(actionContext?.telemetryProps, {
       [TelemetryProperty.TemplateChannel]: useV4Channel ? "v4" : "v3",
     });

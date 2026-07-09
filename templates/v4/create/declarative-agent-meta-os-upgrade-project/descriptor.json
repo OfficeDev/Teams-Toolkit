@@ -1,0 +1,22 @@
+{
+  "$schema": "../../schema/descriptor.schema.json",
+  "id": "declarative-agent-meta-os-upgrade-project",
+  "name": "Extend an Existing Office Add-in with Declarative Agent Actions",
+  "languages": ["common"],
+  "minEngineVersion": "5.20.0",
+  "spec": "docs/03-specs/scenarios/da/create-metaos-upgrade-project.md",
+  "requiresNetwork": false,
+
+  "optionsSchema": {
+    "type": "object",
+    "properties": {
+      "officeAddinFolder": { "type": "string" }
+    },
+    "required": ["officeAddinFolder"],
+    "additionalProperties": false
+  },
+
+  "replaceMap": [
+    { "var": "OfficeAddinFolder", "from": "officeAddinFolder" }
+  ]
+}

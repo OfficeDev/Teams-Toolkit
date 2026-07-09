@@ -29,6 +29,7 @@ const credentialOptions =
   config.MicrosoftAppType === "UserAssignedMsi" ? { ...tokenCredentials } : undefined;
 export const app = new App({
   ...credentialOptions,
+  skipAuth: !process.env.CLIENT_ID,
 });
 
 // Initialize command handlers

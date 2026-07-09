@@ -1,0 +1,36 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "resourceBaseName": {
+      "value": "copilotconnect${{RESOURCE_SUFFIX}}"
+    },
+    "functionAppSKU": {
+      "value": "S1"
+    },
+    "clientId": {
+      "value": "${{AAD_APP_CLIENT_ID}}"
+    },
+    "tenantId": {
+      "value": "${{AAD_APP_TENANT_ID}}"
+    },
+    "clientSecret": {
+      "value": "${{SECRET_AAD_APP_CLIENT_SECRET}}"
+    },
+    "connectorId": {
+      "value": "${{CONNECTOR_ID}}"
+    },
+    "connectorName": {
+      "value": "${{CONNECTOR_NAME}}"
+    },
+    "connectorDescription": {
+      "value": "${{CONNECTOR_DESCRIPTION}}"
+    },
+    "connectorRepos": {
+      "value": "${{CONNECTOR_REPOS}}"
+    },
+    "teamsfxEnv": {
+      "value": "${{TEAMSFX_ENV}}"
+    }
+  }
+}

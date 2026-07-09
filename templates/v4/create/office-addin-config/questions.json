@@ -1,0 +1,17 @@
+{
+  "$schema": "../../schema/questions.schema.json",
+  "questions": [
+    {
+      "name": "officeAddinFolder",
+      "type": "folder",
+      "title": "Existing add-in project folder",
+      "placeholder": "Path to an existing Office Add-in project"
+    },
+    {
+      "name": "officeAddinManifest",
+      "type": "singleFile",
+      "title": "Select import project manifest file",
+      "placeholder": "Path to manifest.json or manifest.xml"
+    }
+  ]
+}

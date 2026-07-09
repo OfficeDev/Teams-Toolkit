@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 import {
   ConditionFunc,
+  ConfigFolderName,
   Inputs,
   LocalFunc,
   OptionItem,
@@ -9,9 +10,7 @@ import {
   SingleSelectQuestion,
   StringValidation,
 } from "@microsoft/teamsfx-api";
-import { assert } from "chai";
-import sinon from "sinon";
-import { featureFlagManager, FeatureFlags } from "../../src/common/featureFlags";
+import { featureFlagManager, FeatureFlagName, FeatureFlags } from "../../src/common/featureFlags";
 import { getLocalizedString } from "../../src/common/localizeUtils";
 import { AppDefinition } from "../../src/component/driver/teamsApp/interfaces/appdefinitions/appDefinition";
 import { Bot } from "../../src/component/driver/teamsApp/interfaces/appdefinitions/bot";
@@ -27,7 +26,16 @@ import {
 } from "../../src/question/scaffold/commonNodes";
 import { constructNode } from "../../src/question/scaffold/constructNode";
 import { scaffoldQuestionForVS } from "../../src/question/scaffold/vs/createRootNode";
-import { ActionStartOptions } from "../../src/question/scaffold/vsc/CapabilityOptions";
+import {
+  ActionStartOptions,
+  BotCapabilityOptions,
+  CustomCopilotRagOptions,
+  MeArchitectureOptions,
+  MeCapabilityOptions,
+  NotificationBotOptions,
+  TabCapabilityOptions,
+  TeamsAgentCapabilityOptions,
+} from "../../src/question/scaffold/vsc/CapabilityOptions";
 import { ProjectTypeOptions } from "../../src/question/scaffold/vsc/ProjectTypeOptions";
 import {
   createFromTdpNode,
@@ -39,6 +47,7 @@ import {
   scaffoldQuestionForVSCode,
 } from "../../src/question/scaffold/vsc/createRootNode";
 import { daProjectTypeNode } from "../../src/question/scaffold/vsc/daProjectTypeNode";
+import * as templateHelper from "../../src/component/generator/templateHelper";
 import {
   getRootProjectTypeNode,
   getTdpProjectTypeNode,
@@ -46,16 +55,8 @@ import {
 
 import { AppPackageFolderName } from "@microsoft/teamsfx-api";
 import fs from "fs-extra";
-import * as templateHelper from "../../src/component/generator/templateHelper";
-import {
-  BotCapabilityOptions,
-  CustomCopilotRagOptions,
-  MeArchitectureOptions,
-  MeCapabilityOptions,
-  NotificationBotOptions,
-  TabCapabilityOptions,
-  TeamsAgentCapabilityOptions,
-} from "../../src/question/scaffold/vsc/CapabilityOptions";
+import path from "path";
+import { assert, vi } from "vitest";
 import {
   botProjectTypeNode,
   CreateNewPluginManifestSentinel,
@@ -77,16 +78,16 @@ import {
 } from "../../src/question/scaffold/vsc/teamsProjectTypeNode";
 
 describe("vsc", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   it("scaffoldQuestionForVSCode", () => {
-    sandbox.stub(featureFlagManager, "getBooleanValue").returns(true);
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(true);
     assert.isFunction(scaffoldQuestionForVSCode);
   });
   it("scaffoldQuestionForVSCode", () => {
-    sandbox.stub(featureFlagManager, "getBooleanValue").returns(false);
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
     assert.isFunction(scaffoldQuestionForVSCode);
   });
   it("createFromTdpNode", () => {
@@ -101,9 +102,9 @@ describe("vs", () => {
 });
 
 describe("getTemplateName", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   const validBot: Bot = {
     botId: "botId",
@@ -213,10 +214,10 @@ describe("getTemplateName", () => {
 });
 
 describe("daProjectTypeNode", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("daProjectTypeNode basic structure", () => {
@@ -228,7 +229,7 @@ describe("daProjectTypeNode", () => {
   });
 
   it("should return apiSpecWithSearchNode when KiotaNPMIntegration is enabled", () => {
-    sandbox.stub(featureFlagManager, "getBooleanValue").callsFake((flag) => {
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) => {
       if (flag === FeatureFlags.KiotaNPMIntegration) {
         return true;
       }
@@ -255,7 +256,7 @@ describe("daProjectTypeNode", () => {
   });
 
   it("should return apiSpecNode when KiotaNPMIntegration is disabled", () => {
-    sandbox.stub(featureFlagManager, "getBooleanValue").callsFake((flag) => {
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) => {
       if (flag === FeatureFlags.KiotaNPMIntegration) {
         return false;
       }
@@ -358,13 +359,13 @@ describe("teamsProjectTypeNode", () => {
 });
 
 describe("MCPForDAAuthTypeStaticOptions", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("hides oauth-dynamic by default", () => {
-    sandbox.stub(featureFlagManager, "getBooleanValue").returns(false);
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
     const options = MCPForDAAuthTypeStaticOptions();
     assert.lengthOf(options, 3);
     assert.sameMembers(
@@ -374,7 +375,7 @@ describe("MCPForDAAuthTypeStaticOptions", () => {
   });
 
   it("surfaces oauth-dynamic when both DT and DCR flags are on", () => {
-    sandbox.stub(featureFlagManager, "getBooleanValue").callsFake((flag) => {
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) => {
       return flag === FeatureFlags.MCPForDADT || flag === FeatureFlags.MCPForDADCR;
     });
     const options = MCPForDAAuthTypeStaticOptions();
@@ -386,7 +387,7 @@ describe("MCPForDAAuthTypeStaticOptions", () => {
   });
 
   it("hides oauth-dynamic when only DT flag is on", () => {
-    sandbox.stub(featureFlagManager, "getBooleanValue").callsFake((flag) => {
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) => {
       return flag === FeatureFlags.MCPForDADT;
     });
     const options = MCPForDAAuthTypeStaticOptions();
@@ -488,9 +489,9 @@ describe("MCPForDAAuthCredentialNodes", () => {
 });
 
 describe("MCPServerTypeNode auth-type gating", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   function getAuthTypeCondition(): ConditionFunc {
@@ -501,19 +502,19 @@ describe("MCPServerTypeNode auth-type gating", () => {
   }
 
   it("always shows auth-type pick for CLI", () => {
-    sandbox.stub(featureFlagManager, "getBooleanValue").returns(false);
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
     const cond = getAuthTypeCondition();
     assert.isTrue(cond({ platform: Platform.CLI } as Inputs));
   });
 
   it("hides auth-type pick for VS Code when DT flag is off", () => {
-    sandbox.stub(featureFlagManager, "getBooleanValue").returns(false);
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
     const cond = getAuthTypeCondition();
     assert.isFalse(cond({ platform: Platform.VSCode } as Inputs));
   });
 
   it("shows auth-type pick for VS Code when DT flag is on", () => {
-    sandbox.stub(featureFlagManager, "getBooleanValue").callsFake((flag) => {
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) => {
       return flag === FeatureFlags.MCPForDADT;
     });
     const cond = getAuthTypeCondition();
@@ -522,9 +523,9 @@ describe("MCPServerTypeNode auth-type gating", () => {
 });
 
 describe("m365ProjectTypeNode", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   it("apiSpecNode", () => {
     const node = apiSpecNode({ equals: "a" });
@@ -552,7 +553,7 @@ describe("m365ProjectTypeNode", () => {
     const res2 = condition2?.(inputs);
     assert.isTrue(res2);
 
-    sandbox.stub(featureFlagManager, "getBooleanValue").callsFake((flag) => {
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) => {
       if (flag === FeatureFlags.KiotaNPMIntegration) {
         return true;
       }
@@ -567,36 +568,47 @@ describe("m365ProjectTypeNode", () => {
 });
 
 describe("ProjectTypeOptions", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   it("officeMetaOS - VSC", () => {
-    sandbox.stub(featureFlagManager, "getBooleanValue").returns(true);
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(true);
     const option = ProjectTypeOptions.officeAddin(Platform.VSCode);
     assert.equal(option.id, ProjectTypeOptions.officeMetaOSOptionId);
   });
   it("officeMetaOS - CLI", () => {
-    sandbox.stub(featureFlagManager, "getBooleanValue").returns(true);
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(true);
     const option = ProjectTypeOptions.officeAddin(Platform.CLI);
     assert.equal(option.id, ProjectTypeOptions.officeMetaOSOptionId);
   });
+  it("blankApp - VSC", () => {
+    const option = ProjectTypeOptions.blankApp(Platform.VSCode);
+    assert.equal(option.id, ProjectTypeOptions.blankAppOptionId);
+    assert.include(option.label, "$(file)");
+    assert.isDefined(option.detail);
+  });
+  it("blankApp - CLI", () => {
+    const option = ProjectTypeOptions.blankApp(Platform.CLI);
+    assert.equal(option.id, ProjectTypeOptions.blankAppOptionId);
+    assert.notInclude(option.label, "$(file)");
+  });
   it("start with github copilot", () => {
-    sandbox.stub(featureFlagManager, "getBooleanValue").returns(false);
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
     const option = ProjectTypeOptions.startWithGithubCopilot();
     assert.notEqual(option.description, undefined);
   });
   it("start with github copilot with preview", () => {
-    sandbox.stub(featureFlagManager, "getBooleanValue").returns(true);
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(true);
     const option = ProjectTypeOptions.startWithGithubCopilot();
     assert.isUndefined(option.description);
   });
 });
 
 describe("TeamsProjectTypeOptions", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   it("CLI label", () => {
     const tab = TeamsProjectTypeOptions.tab(Platform.CLI);
@@ -779,9 +791,9 @@ describe("m365SearchMeSubNode", () => {
 });
 
 describe("MCPToolsFileNode", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("condition returns false for Platform.VSCode", () => {
@@ -819,7 +831,7 @@ describe("MCPToolsFileNode", () => {
     assert.isUndefined(result);
   });
   it("validFunc returns error string when file not found", async () => {
-    sandbox.stub(teamsProjectTypeDeps, "pathExists").resolves(false);
+    vi.spyOn(teamsProjectTypeDeps, "pathExists").mockResolvedValue(false);
     const node = MCPToolsFileNode();
     const data = node.data as any;
     const validFunc = data.additionalValidationOnAccept.validFunc;
@@ -828,9 +840,9 @@ describe("MCPToolsFileNode", () => {
     assert.isTrue((result as string).length > 0);
   });
   it("validFunc populates inputs and returns undefined on success", async () => {
-    sandbox.stub(teamsProjectTypeDeps, "pathExists").resolves(true);
+    vi.spyOn(teamsProjectTypeDeps, "pathExists").mockResolvedValue(true);
     const mockTools = [{ name: "tool1", description: "desc", inputSchema: {} }];
-    sandbox.stub(teamsProjectTypeDeps, "readMCPToolsFromFile").resolves(mockTools as any);
+    vi.spyOn(teamsProjectTypeDeps, "readMCPToolsFromFile").mockResolvedValue(mockTools as any);
     const node = MCPToolsFileNode();
     const data = node.data as any;
     const validFunc = data.additionalValidationOnAccept.validFunc;
@@ -840,10 +852,10 @@ describe("MCPToolsFileNode", () => {
     assert.deepEqual(inputs[QuestionNames.MCPForDAAvailableTools], mockTools);
   });
   it("validFunc returns error message when readMCPToolsFromFile throws", async () => {
-    sandbox.stub(teamsProjectTypeDeps, "pathExists").resolves(true);
-    sandbox
-      .stub(teamsProjectTypeDeps, "readMCPToolsFromFile")
-      .rejects(new Error("bad json format"));
+    vi.spyOn(teamsProjectTypeDeps, "pathExists").mockResolvedValue(true);
+    vi.spyOn(teamsProjectTypeDeps, "readMCPToolsFromFile").mockRejectedValue(
+      new Error("bad json format")
+    );
     const node = MCPToolsFileNode();
     const data = node.data as any;
     const validFunc = data.additionalValidationOnAccept.validFunc;
@@ -904,9 +916,9 @@ describe("MCPCliPreFetchToolsNode", () => {
 });
 
 describe("MCPForDAServerUrlNode", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("validFunc returns undefined for empty value", async () => {
@@ -924,17 +936,20 @@ describe("MCPForDAServerUrlNode", () => {
     assert.isUndefined(result);
   });
   it("validFunc returns undefined without calling fetchMCPTools on VSCode", async () => {
-    const fetchStub = sandbox.stub(teamsProjectTypeDeps, "fetchMCPTools");
+    const fetchStub = vi.spyOn(teamsProjectTypeDeps, "fetchMCPTools");
     const node = MCPForDAServerUrlNode();
     const data = node.data as any;
     const validFunc = data.additionalValidationOnAccept.validFunc;
     const inputs: Inputs = { platform: Platform.VSCode };
     const result = await validFunc("https://example.com", inputs);
     assert.isUndefined(result);
-    assert.isTrue(fetchStub.notCalled);
+    assert.isTrue(fetchStub.mock.calls.length === 0);
   });
   it("validFunc sets auth inputs when requiresAuth=true and no authMetadataUrl", async () => {
-    sandbox.stub(teamsProjectTypeDeps, "fetchMCPTools").resolves({ requiresAuth: true, tools: [] });
+    vi.spyOn(teamsProjectTypeDeps, "fetchMCPTools").mockResolvedValue({
+      requiresAuth: true,
+      tools: [],
+    });
     const node = MCPForDAServerUrlNode();
     const data = node.data as any;
     const validFunc = data.additionalValidationOnAccept.validFunc;
@@ -947,7 +962,7 @@ describe("MCPForDAServerUrlNode", () => {
     assert.isUndefined(inputs[QuestionNames.MCPForDAAuthMetadataUrl]);
   });
   it("validFunc sets authMetadataUrl when requiresAuth=true and authMetadataUrl present", async () => {
-    sandbox.stub(teamsProjectTypeDeps, "fetchMCPTools").resolves({
+    vi.spyOn(teamsProjectTypeDeps, "fetchMCPTools").mockResolvedValue({
       requiresAuth: true,
       tools: [],
       authMetadataUrl: "https://auth.example.com/.well-known/oauth",
@@ -965,9 +980,10 @@ describe("MCPForDAServerUrlNode", () => {
   });
   it("validFunc sets tools, tool mode, and NoneAuth when tools are returned", async () => {
     const mockTools = [{ name: "t1" }, { name: "t2" }];
-    sandbox
-      .stub(teamsProjectTypeDeps, "fetchMCPTools")
-      .resolves({ requiresAuth: false, tools: mockTools as any });
+    vi.spyOn(teamsProjectTypeDeps, "fetchMCPTools").mockResolvedValue({
+      requiresAuth: false,
+      tools: mockTools as any,
+    });
     const node = MCPForDAServerUrlNode();
     const data = node.data as any;
     const validFunc = data.additionalValidationOnAccept.validFunc;
@@ -978,9 +994,10 @@ describe("MCPForDAServerUrlNode", () => {
     assert.equal(inputs[QuestionNames.MCPForDAAuth], "NoneAuth");
   });
   it("validFunc sets empty tools and NoneAuth when no tools and no auth", async () => {
-    sandbox
-      .stub(teamsProjectTypeDeps, "fetchMCPTools")
-      .resolves({ requiresAuth: false, tools: [] });
+    vi.spyOn(teamsProjectTypeDeps, "fetchMCPTools").mockResolvedValue({
+      requiresAuth: false,
+      tools: [],
+    });
     const node = MCPForDAServerUrlNode();
     const data = node.data as any;
     const validFunc = data.additionalValidationOnAccept.validFunc;
@@ -990,7 +1007,7 @@ describe("MCPForDAServerUrlNode", () => {
     assert.equal(inputs[QuestionNames.MCPForDAAuth], "NoneAuth");
   });
   it("validFunc sets empty tools and NoneAuth when fetchMCPTools throws", async () => {
-    sandbox.stub(teamsProjectTypeDeps, "fetchMCPTools").rejects(new Error("network error"));
+    vi.spyOn(teamsProjectTypeDeps, "fetchMCPTools").mockRejectedValue(new Error("network error"));
     const node = MCPForDAServerUrlNode();
     const data = node.data as any;
     const validFunc = data.additionalValidationOnAccept.validFunc;
@@ -1002,9 +1019,9 @@ describe("MCPForDAServerUrlNode", () => {
 });
 
 describe("updateActionWithMCP", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("has type singleFile and correct name", () => {
@@ -1055,8 +1072,8 @@ describe("updateActionWithMCP", () => {
         },
       ],
     };
-    sandbox.stub(teamsProjectTypeDeps, "pathExists").resolves(true);
-    sandbox.stub(teamsProjectTypeDeps, "readJSON").resolves(mockManifest);
+    vi.spyOn(teamsProjectTypeDeps, "pathExists").mockResolvedValue(true);
+    vi.spyOn(teamsProjectTypeDeps, "readJSON").mockResolvedValue(mockManifest);
     const node = updateActionWithMCP();
     const child1 = node.children![1];
     const data = child1.data as any;
@@ -1097,12 +1114,18 @@ describe("updateActionWithMCP", () => {
     const inputs: Inputs = { platform: Platform.CLI, [QuestionNames.MCPForDAAuth]: "NoneAuth" };
     assert.isFalse(condition(inputs));
   });
+  it("child[2] (auth type) has no credential follow-up questions", () => {
+    const node = updateActionWithMCP();
+    const child2 = node.children![2];
+    assert.equal((child2.data as any).name, QuestionNames.MCPForDAAuthType);
+    assert.deepEqual(child2.children ?? [], []);
+  });
 });
 
 describe("languageNode", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   it("csharp", () => {
     const node = languageNode();
@@ -1135,9 +1158,9 @@ describe("languageNode", () => {
 });
 
 describe("folderAndAppNameCondition", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   it("ApiPluginManifestPath", () => {
     const inputs: Inputs = {
@@ -1339,10 +1362,10 @@ describe("foundryEndpointQuestion and foundryAgentIdQuestion", () => {
 });
 
 describe("rootNode", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("should use cached JSON path when not using local template and cached file exists", () => {
@@ -1392,9 +1415,9 @@ describe("rootNode", () => {
   });
 
   it("should load bundled UI node when v4 channel forces bundled metadata even if cache exists", () => {
-    sandbox.stub(templateHelper, "useLocalTemplate").returns(false);
-    sandbox.stub(featureFlagManager, "getBooleanValue").returns(true);
-    sandbox.stub(fs, "pathExistsSync").callsFake((p: fs.PathLike) => {
+    vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(false);
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(true);
+    vi.spyOn(fs, "pathExistsSync").mockImplementation((p: fs.PathLike) => {
       const value = String(p);
       // Simulate v4 channel with no downloaded v4 cache marker.
       if (value.endsWith("template-version-v4.txt")) {
@@ -1402,22 +1425,59 @@ describe("rootNode", () => {
       }
       return true;
     });
-    const readFileSyncStub = sandbox
-      .stub(fs, "readFileSync")
-      .returns(JSON.stringify({ data: { type: "group", name: "root" } }));
+    const readFileSyncStub = vi
+      .spyOn(fs, "readFileSync")
+      .mockReturnValue(JSON.stringify({ data: { type: "group", name: "root" } }));
 
     getRootProjectTypeNode(Platform.VSCode);
 
-    const readPath = readFileSyncStub.firstCall.args[0] as string;
+    const readPath = readFileSyncStub.mock.calls[0][0] as string;
     assert.notInclude(readPath, `.fx`);
+  });
+
+  it("ignores a downloaded ~/.fx/ui cache and loads bundled when v4 is enabled (regression: action question asked twice)", () => {
+    // Regression for the v4 double-ask. Once a v4 download lands, the marker
+    // template-version-v4.txt exists and the old logic read ~/.fx/ui/wizardNode.json.
+    // A cache that drifts from this fx-core (its action node no longer named
+    // QuestionNames.ActionType) defeats the front-door pre-fill, so the "add an
+    // action" question is asked a second time. The v4 channel must always pin the
+    // UI tree to the bundled artifact, even when every cached path exists.
+    vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(false);
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(true);
+    vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
+    const readFileSyncStub = vi
+      .spyOn(fs, "readFileSync")
+      .mockReturnValue(JSON.stringify({ data: { type: "group", name: "root" } }));
+
+    getRootProjectTypeNode(Platform.VSCode);
+
+    const readPath = String(readFileSyncStub.mock.calls[0][0]);
+    assert.notInclude(readPath, `.${String(ConfigFolderName)}`);
+    assert.include(readPath, path.join("ui", "wizardNode.json"));
+  });
+
+  it("uses the ~/.fx/ui cache on the v3 channel when the cached file exists", () => {
+    // Guards that the fix does not change v3 behavior: with v4 disabled and a
+    // published (non-local) template version, the downloaded cache is still used.
+    vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(false);
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+    vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
+    const readFileSyncStub = vi
+      .spyOn(fs, "readFileSync")
+      .mockReturnValue(JSON.stringify({ data: { type: "group", name: "root" } }));
+
+    getRootProjectTypeNode(Platform.VSCode);
+
+    const readPath = String(readFileSyncStub.mock.calls[0][0]);
+    assert.include(readPath, path.join(`.${String(ConfigFolderName)}`, "ui", "wizardNode.json"));
   });
 });
 
 describe("constructNode", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("should construct a singleSelect node from JSON", () => {
@@ -1514,7 +1574,7 @@ describe("constructNode", () => {
   });
 
   it("should filter out feature-flagged options when flag is disabled", () => {
-    sandbox.stub(featureFlagManager, "getBooleanValue").returns(false);
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
 
     const json = JSON.stringify({
       data: {
@@ -1536,7 +1596,7 @@ describe("constructNode", () => {
   });
 
   it("should include feature-flagged options when flag is enabled", () => {
-    sandbox.stub(featureFlagManager, "getBooleanValue").returns(true);
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(true);
 
     const json = JSON.stringify({
       data: {
@@ -1554,6 +1614,123 @@ describe("constructNode", () => {
     const data = node.data as SingleSelectQuestion;
     const options = data.staticOptions as OptionItem[];
     assert.equal(options.length, 2);
+  });
+
+  it("should include a true-default feature-flagged option when env var is unset", () => {
+    delete process.env[FeatureFlagName.OpenPluginImportExport];
+    const json = JSON.stringify({
+      data: {
+        title: "test.title",
+        name: "test",
+        type: "singleSelect",
+        options: [
+          { id: "always-visible", label: "Always" },
+          { id: "flagged", label: "Flagged", featureFlag: FeatureFlagName.OpenPluginImportExport },
+        ],
+      },
+    });
+
+    const node = constructNode(json);
+    const data = node.data as SingleSelectQuestion;
+    const options = data.staticOptions as OptionItem[];
+    assert.equal(options.length, 2);
+    assert.isTrue(options.some((o) => o.id === "flagged"));
+  });
+
+  it("should exclude a false-default feature-flagged option when env var is unset", () => {
+    delete process.env[FeatureFlagName.AgentSkillsManifest];
+    const json = JSON.stringify({
+      data: {
+        title: "test.title",
+        name: "test",
+        type: "singleSelect",
+        options: [
+          { id: "always-visible", label: "Always" },
+          { id: "flagged", label: "Flagged", featureFlag: FeatureFlagName.AgentSkillsManifest },
+        ],
+      },
+    });
+
+    const node = constructNode(json);
+    const data = node.data as SingleSelectQuestion;
+    const options = data.staticOptions as OptionItem[];
+    assert.equal(options.length, 1);
+    assert.equal(options[0].id, "always-visible");
+  });
+
+  it("should let an explicit env override win for a true-default flag", () => {
+    process.env[FeatureFlagName.OpenPluginImportExport] = "false";
+    try {
+      const json = JSON.stringify({
+        data: {
+          title: "test.title",
+          name: "test",
+          type: "singleSelect",
+          options: [
+            { id: "always-visible", label: "Always" },
+            {
+              id: "flagged",
+              label: "Flagged",
+              featureFlag: FeatureFlagName.OpenPluginImportExport,
+            },
+          ],
+        },
+      });
+
+      const node = constructNode(json);
+      const data = node.data as SingleSelectQuestion;
+      const options = data.staticOptions as OptionItem[];
+      assert.equal(options.length, 1);
+      assert.equal(options[0].id, "always-visible");
+    } finally {
+      delete process.env[FeatureFlagName.OpenPluginImportExport];
+    }
+  });
+
+  it("should let an explicit env override win for a false-default flag", () => {
+    process.env[FeatureFlagName.AgentSkillsManifest] = "true";
+    try {
+      const json = JSON.stringify({
+        data: {
+          title: "test.title",
+          name: "test",
+          type: "singleSelect",
+          options: [
+            { id: "always-visible", label: "Always" },
+            { id: "flagged", label: "Flagged", featureFlag: FeatureFlagName.AgentSkillsManifest },
+          ],
+        },
+      });
+
+      const node = constructNode(json);
+      const data = node.data as SingleSelectQuestion;
+      const options = data.staticOptions as OptionItem[];
+      assert.equal(options.length, 2);
+      assert.isTrue(options.some((o) => o.id === "flagged"));
+    } finally {
+      delete process.env[FeatureFlagName.AgentSkillsManifest];
+    }
+  });
+
+  it("should exclude an unknown feature flag when env var is unset", () => {
+    delete process.env["TEAMSFX_UNKNOWN_FLAG"];
+    const json = JSON.stringify({
+      data: {
+        title: "test.title",
+        name: "test",
+        type: "singleSelect",
+        options: [
+          { id: "always-visible", label: "Always" },
+          { id: "flagged", label: "Flagged", featureFlag: "TEAMSFX_UNKNOWN_FLAG" },
+        ],
+      },
+    });
+
+    const node = constructNode(json);
+    const data = node.data as SingleSelectQuestion;
+    const options = data.staticOptions as OptionItem[];
+    assert.equal(options.length, 1);
+    assert.equal(options[0].id, "always-visible");
   });
 
   it("should handle group type nodes", () => {
@@ -1641,7 +1818,7 @@ describe("constructNode", () => {
       node: "nonExistentNode",
     });
 
-    assert.throws(() => constructNode(json), /Unknown node reference: nonExistentNode/);
+    expect(() => constructNode(json)).toThrow(/Unknown node reference: nonExistentNode/);
   });
 
   it("should set data property on options", () => {
@@ -1837,13 +2014,13 @@ describe("getTdpProjectTypeNode", () => {
 });
 
 describe("updateActionWithMCP question node", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("possibleFiles always appends the create-new sentinel item", async () => {
-    sandbox.stub(teamsProjectTypeDeps, "pathExists").resolves(false);
+    vi.spyOn(teamsProjectTypeDeps, "pathExists").mockResolvedValue(false);
     const node = updateActionWithMCP();
     const data = node.data as any;
     const inputs: Inputs = { platform: Platform.VSCode, projectPath: "/proj" };
@@ -1866,8 +2043,8 @@ describe("updateActionWithMCP question node", () => {
         { id: "a4" },
       ],
     };
-    sandbox.stub(teamsProjectTypeDeps, "pathExists").resolves(true);
-    sandbox.stub(teamsProjectTypeDeps, "readJSON").callsFake((p: string) => {
+    vi.spyOn(teamsProjectTypeDeps, "pathExists").mockResolvedValue(true);
+    vi.spyOn(teamsProjectTypeDeps, "readJSON").mockImplementation((p: string) => {
       if (p.endsWith("manifest.json")) return Promise.resolve(teamsManifest);
       return Promise.resolve(da);
     });
@@ -1885,8 +2062,8 @@ describe("updateActionWithMCP question node", () => {
   });
 
   it("possibleFiles returns just the sentinel when manifest read throws", async () => {
-    sandbox.stub(teamsProjectTypeDeps, "pathExists").resolves(true);
-    sandbox.stub(teamsProjectTypeDeps, "readJSON").rejects(new Error("boom"));
+    vi.spyOn(teamsProjectTypeDeps, "pathExists").mockResolvedValue(true);
+    vi.spyOn(teamsProjectTypeDeps, "readJSON").mockRejectedValue(new Error("boom"));
     const node = updateActionWithMCP();
     const data = node.data as any;
     const inputs: Inputs = { platform: Platform.VSCode, projectPath: "/proj" };
@@ -1896,8 +2073,8 @@ describe("updateActionWithMCP question node", () => {
   });
 
   it("possibleFiles returns just the sentinel when no declarative agent referenced", async () => {
-    sandbox.stub(teamsProjectTypeDeps, "pathExists").resolves(true);
-    sandbox.stub(teamsProjectTypeDeps, "readJSON").resolves({});
+    vi.spyOn(teamsProjectTypeDeps, "pathExists").mockResolvedValue(true);
+    vi.spyOn(teamsProjectTypeDeps, "readJSON").mockResolvedValue({});
     const node = updateActionWithMCP();
     const data = node.data as any;
     const inputs: Inputs = { platform: Platform.VSCode, projectPath: "/proj" };
@@ -1967,7 +2144,7 @@ describe("updateActionWithMCP question node", () => {
     });
 
     it("validation rejects when target file already exists", async () => {
-      sandbox.stub(teamsProjectTypeDeps, "pathExists").resolves(true);
+      vi.spyOn(teamsProjectTypeDeps, "pathExists").mockResolvedValue(true);
       const child = getChild();
       const validFunc = (child.data as any).validation.validFunc;
       const result = await validFunc("ai-plugin.json", {
@@ -1979,7 +2156,7 @@ describe("updateActionWithMCP question node", () => {
     });
 
     it("validation passes for a fresh valid file name", async () => {
-      sandbox.stub(teamsProjectTypeDeps, "pathExists").resolves(false);
+      vi.spyOn(teamsProjectTypeDeps, "pathExists").mockResolvedValue(false);
       const child = getChild();
       const validFunc = (child.data as any).validation.validFunc;
       const result = await validFunc("new-plugin.json", {
@@ -2022,7 +2199,7 @@ describe("updateActionWithMCP question node", () => {
     });
 
     it("returns [] when path does not exist on disk", async () => {
-      sandbox.stub(teamsProjectTypeDeps, "pathExists").resolves(false);
+      vi.spyOn(teamsProjectTypeDeps, "pathExists").mockResolvedValue(false);
       const data = getPreFetch();
       const result = await data.default({
         platform: Platform.VSCode,
@@ -2032,8 +2209,8 @@ describe("updateActionWithMCP question node", () => {
     });
 
     it("returns matching runtime tool ids when manifest exists", async () => {
-      sandbox.stub(teamsProjectTypeDeps, "pathExists").resolves(true);
-      sandbox.stub(teamsProjectTypeDeps, "readJSON").resolves({
+      vi.spyOn(teamsProjectTypeDeps, "pathExists").mockResolvedValue(true);
+      vi.spyOn(teamsProjectTypeDeps, "readJSON").mockResolvedValue({
         runtimes: [
           {
             type: "RemoteMCPServer",

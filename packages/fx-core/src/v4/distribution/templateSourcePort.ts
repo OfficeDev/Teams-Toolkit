@@ -17,15 +17,7 @@ import {
   computeDigest,
 } from "./templateSource";
 
-/**
- * Production wiring of the narrow {@link TemplateSourcePort} over real
- * environment / network / filesystem. The pure helpers (`parseTagList`,
- * `templateZipUrl`, `cacheDir`) are exported and unit-tested; the IO faces
- * are thin wrappers around them.
- *
- * Spec: docs/03-specs/operations/scaffolding/resolve-template-source.md
- * (decisions #6 digest = sha256 of zip bytes, #7 NDJSON tag list).
- */
+/** Production wiring of {@link TemplateSourcePort}. See resolve-template-source spec. */
 
 const SOURCE = "Scaffold";
 
@@ -43,11 +35,7 @@ export interface TemplateChannelConfig {
   tryLimits: number;
 }
 
-/**
- * Parse the model-A NDJSON tag list: one `{ version, digest }` object per
- * line. Blank lines and trailing `\r` are ignored; a malformed line is a hard
- * error (no silent skip) — spec decision #7.
- */
+/** Parse the NDJSON tag list; malformed nonblank lines are hard errors. */
 export function parseTagList(ndjson: string): TagEntry[] {
   const entries: TagEntry[] = [];
   const lines = ndjson.split("\n");
@@ -101,18 +89,14 @@ export function cacheFile(version: string): string {
   return path.join(cacheDir(), `${V4_TAG_PREFIX}${version}${ZIP_EXT}`);
 }
 
-/**
- * Build the production port. `floor` is injected (it comes from the engine's
- * baked bundled package); this factory does not fabricate it.
- */
+/** Build the production port; the bundled floor is injected. */
 export function createTemplateSourcePort(
   config: TemplateChannelConfig,
   floor: BundledFloor
 ): TemplateSourcePort {
   const memo = new Map<string, CachedPackage>();
 
-  // Warm the in-memory index from disk so `keys()` reflects prior downloads
-  // for the offline `max(cache, floor)` fallback.
+  // Warm disk cache once so offline resolution sees prior downloads.
   let warmed = false;
   const warm = (): void => {
     if (warmed) {
@@ -182,23 +166,7 @@ export function createTemplateSourcePort(
   };
 }
 
-/**
- * Load the bytes for an already-resolved {@link TemplateSource}.
- *
- * `resolveTemplateSource` decides *which* package a scaffold run uses but
- * returns only the descriptor; this is the companion IO step that produces the
- * bytes, the boundary the v3 chokepoint calls before `openTemplatePackage`.
- *
- * It never reaches the network: an `online`/`cache` source was already
- * downloaded, verified, and cached during resolution, so re-downloading here
- * would defeat the digest-keyed cache and reintroduce the v3 re-fetch churn. A
- * cache miss is therefore an invariant violation (hard error), not a silent
- * re-fetch. Every path re-checks the bytes against `source.digest` so
- * `computeDigest` stays the single integrity authority and a corrupt package is
- * never handed back.
- *
- * Spec: docs/03-specs/operations/scaffolding/resolve-template-source.md
- */
+/** Load bytes for an already-resolved source; never re-download here. */
 export function loadResolvedPackage(
   source: TemplateSource,
   port: TemplateSourcePort

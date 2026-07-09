@@ -3,24 +3,23 @@
 
 import { CLICommandOption } from "@microsoft/teamsfx-api";
 import { FeatureFlags, featureFlagManager } from "@microsoft/teamsfx-core";
-import { assert } from "chai";
-import * as sinon from "sinon";
 import { gateMCPDAAuthTypeChoices, gateMCPDACredentialOptions } from "../../../src/commands/common";
+import { assert, vi } from "vitest";
 
 describe("commands/common MCP-for-DA gating", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   type FeatureFlagLike = { name: string };
 
   function stubEnabledFlags(enabled: FeatureFlagLike[]) {
     const enabledNames = new Set(enabled.map((f) => f.name));
-    sandbox
-      .stub(featureFlagManager, "getBooleanValue")
-      .callsFake((flag: FeatureFlagLike) => enabledNames.has(flag.name));
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag: FeatureFlagLike) =>
+      enabledNames.has(flag.name)
+    );
   }
 
   function authTypeOption(): CLICommandOption {
@@ -105,7 +104,7 @@ describe("commands/common MCP-for-DA gating", () => {
     it("removes previously-injected credential options when DT flag flips off", () => {
       stubEnabledFlags([FeatureFlags.MCPForDADT]);
       const withCreds = gateMCPDACredentialOptions(baseOptions());
-      sandbox.restore();
+      vi.restoreAllMocks();
       stubEnabledFlags([]);
       const withoutCreds = gateMCPDACredentialOptions(withCreds);
       for (const name of credentialNames) {

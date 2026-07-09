@@ -56,10 +56,23 @@ jobs:
   parse-schedule:
     runs-on: ubuntu-latest
     if: ${{ github.event_name != 'pull_request' }}
+    env:
+      APP_GITHUB_APP_ID: ${{ vars.APP_GITHUB_APP_ID }}
+      APP_GITHUB_APP_PRIVATE_KEY: ${{ secrets.APP_GITHUB_APP_PRIVATE_KEY }}
     outputs:
       releases: ${{ steps.parse.outputs.releases }}
       releases_count: ${{ steps.parse.outputs.releases_count }}
     steps:
+      - id: generate-token
+        if: ${{ env.APP_GITHUB_APP_ID != '' && env.APP_GITHUB_APP_PRIVATE_KEY != '' }}
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ env.APP_GITHUB_APP_ID }}
+          private-key: ${{ env.APP_GITHUB_APP_PRIVATE_KEY }}
+          owner: microsoft
+          repositories: |
+            Microsoft-365-Agents-Toolkit-Release-Schedule
+
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
@@ -70,7 +83,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: ${{ env.SCHEDULE_REPO }}
-          token: ${{ secrets.RELEASE_AUTOMATION_TOKEN }}
+          token: ${{ steps.generate-token.outputs.token || github.token }}
           path: schedule-repo
           sparse-checkout: |
             ${{ env.SCHEDULE_FILE }}
@@ -393,7 +406,7 @@ jobs:
         if: ${{ steps.check_branch.outputs.exists == 'true' && env.DRY_RUN == 'false' && env.RERUN_CD_ONLY == 'false' && steps.config.outputs.is_prerelease == 'true' }}
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.RELEASE_AUTOMATION_TOKEN || github.token }}
+          github-token: ${{ steps.generate-token.outputs.token || github.token }}
           script: |
             const product = '${{ steps.config.outputs.product }}';
             const version = '${{ steps.config.outputs.version }}';
@@ -505,7 +518,7 @@ jobs:
         if: ${{ env.DRY_RUN == 'false' && env.RERUN_CD_ONLY == 'false' && steps.config.outputs.is_hotfix != 'true' }}
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.RELEASE_AUTOMATION_TOKEN || github.token }}
+          github-token: ${{ steps.generate-token.outputs.token || github.token }}
           script: |
             const owner = 'OfficeDev';
             const repo = 'microsoft-365-agents-toolkit-samples';
@@ -648,7 +661,7 @@ jobs:
         if: ${{ steps.version_bump_pr.outputs.bump_branch != '' }}
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.RELEASE_AUTOMATION_TOKEN || github.token }}
+          github-token: ${{ steps.generate-token.outputs.token || github.token }}
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
@@ -884,12 +897,20 @@ jobs:
           script: |
             console.log('No release scheduled for tomorrow. Triggering default CD on dev.');
 
+            const now = new Date();
+            const utc8 = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+            const series = `${utc8.getUTCFullYear()}${String(utc8.getUTCMonth() + 1).padStart(2, '0')}${String(utc8.getUTCDate()).padStart(2, '0')}`;
+            console.log(`  series: ${series}`);
+
             await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'cd.yml',
               ref: 'dev',
-              inputs: {}
+              inputs: {
+                series: series,
+                run_test_cases: 'true'
+              }
             });
 
             core.summary
@@ -953,7 +974,7 @@ jobs:
                 vsrelease: vsrelease.toString(),
                 vstemplate: 'false',
                 goproduct: goproduct.toString(),
-                run_test_cases: 'true',
+                run_test_cases: (!goproduct).toString(),
                 skipmarkdowncheck: goproduct.toString()
               }
             });
@@ -977,12 +998,22 @@ jobs:
       series: ${{ steps.trigger.outputs.series }}
       vsrelease: ${{ steps.trigger.outputs.vsrelease }}
       goproduct: ${{ steps.trigger.outputs.goproduct }}
+    env:
+      APP_GITHUB_APP_ID: ${{ vars.APP_GITHUB_APP_ID }}
+      APP_GITHUB_APP_PRIVATE_KEY: ${{ secrets.APP_GITHUB_APP_PRIVATE_KEY }}
     steps:
+      - id: generate-token
+        if: ${{ env.APP_GITHUB_APP_ID != '' && env.APP_GITHUB_APP_PRIVATE_KEY != '' }}
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ env.APP_GITHUB_APP_ID }}
+          private-key: ${{ env.APP_GITHUB_APP_PRIVATE_KEY }}
+
       - name: Trigger CD on automation sync PR merge
         id: trigger
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.RELEASE_AUTOMATION_TOKEN || github.token }}
+          github-token: ${{ steps.generate-token.outputs.token || github.token }}
           script: |
             const pr = context.payload.pull_request;
             const base = pr.base?.ref;

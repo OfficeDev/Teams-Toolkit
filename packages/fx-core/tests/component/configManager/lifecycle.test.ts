@@ -5,31 +5,30 @@
  * @author yefuwang@microsoft.com
  */
 
-import { assert } from "chai";
+import {
+  err,
+  FxError,
+  IProgressHandler,
+  ok,
+  Platform,
+  Result,
+  SystemError,
+} from "@microsoft/teamsfx-api";
 import mockedEnv, { RestoreFn } from "mocked-env";
-import sinon from "sinon";
-import { Lifecycle } from "../../../src/component/configManager/lifecycle";
 import Container from "typedi";
+import { assert, vi } from "vitest";
+import { SummaryConstant } from "../../../src/component/configManager/constant";
 import { DriverDefinition } from "../../../src/component/configManager/interface";
+import { Lifecycle } from "../../../src/component/configManager/lifecycle";
+import { DriverContext } from "../../../src/component/driver/interface/commonArgs";
+import { ExecutionResult, StepDriver } from "../../../src/component/driver/interface/stepDriver";
+import { envUtil } from "../../../src/component/utils/envUtil";
+import { MockedAzureAccountProvider, MockedM365Provider } from "../../core/utils";
 import {
   MockedLogProvider,
   MockedTelemetryReporter,
   MockedUserInteraction,
 } from "../../plugins/solution/util";
-import { DriverContext } from "../../../src/component/driver/interface/commonArgs";
-import {
-  Platform,
-  Result,
-  FxError,
-  ok,
-  err,
-  SystemError,
-  IProgressHandler,
-} from "@microsoft/teamsfx-api";
-import { ExecutionResult, StepDriver } from "../../../src/component/driver/interface/stepDriver";
-import { SummaryConstant } from "../../../src/component/configManager/constant";
-import { MockedAzureAccountProvider, MockedM365Provider } from "../../core/utils";
-import { envUtil } from "../../../src/component/utils/envUtil";
 
 const mockedDriverContext: DriverContext = {
   m365TokenProvider: new MockedM365Provider(),
@@ -166,13 +165,12 @@ class DriverThatUsesWriteToEnvironmentFileField implements StepDriver {
 
 describe("v3 lifecyle", () => {
   describe("when driver name not found", () => {
-    const sandbox = sinon.createSandbox();
     before(() => {
-      sandbox.stub(Container, "has").returns(false);
+      vi.spyOn(Container, "has").mockReturnValue(false);
     });
 
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
     it("should return error", async () => {
       const driverDefs: DriverDefinition[] = [];
@@ -196,25 +194,26 @@ describe("v3 lifecyle", () => {
   });
 
   describe("when run/execute with multiple drivers", () => {
-    const sandbox = sinon.createSandbox();
     before(() => {
-      sandbox
-        .stub(Container, "has")
-        .withArgs(sandbox.match("DriverA"))
-        .returns(true)
-        .withArgs(sandbox.match("DriverB"))
-        .returns(true);
-      sandbox
-        .stub(Container, "get")
-        .withArgs(sandbox.match("DriverA"))
-        .returns(new DriverA())
-        .withArgs(sandbox.match("DriverB"))
-        .returns(new DriverB());
+      vi.spyOn(Container, "has").mockImplementation((token: unknown) => {
+        const name = String(token);
+        return name.includes("DriverA") || name.includes("DriverB");
+      });
+      vi.spyOn(Container, "get").mockImplementation((token: unknown) => {
+        const name = String(token);
+        if (name.includes("DriverA")) {
+          return new DriverA();
+        }
+        if (name.includes("DriverB")) {
+          return new DriverB();
+        }
+        return undefined as unknown as object;
+      });
     });
 
     after(() => {
       mockedDriverContext.progressBar = undefined;
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("should return combined output", async () => {
@@ -231,7 +230,7 @@ describe("v3 lifecyle", () => {
       });
 
       const lifecycle = new Lifecycle("configureApp", driverDefs, "1.0.0");
-      const nextStub = sandbox.stub();
+      const nextStub = vi.fn();
       mockedDriverContext.progressBar = {
         next: nextStub,
       } as unknown as IProgressHandler;
@@ -249,30 +248,33 @@ describe("v3 lifecyle", () => {
         "summary list should have 2 empty items, since DriverA and DriverB doesn't implement execute()"
       );
 
-      assert.isTrue(nextStub.calledTwice);
+      assert.isTrue(nextStub.mock.calls.length === 2);
     });
   });
 
   describe("when run/execute with valid placeholders", async () => {
-    const sandbox = sinon.createSandbox();
     let restoreFn: RestoreFn | undefined = undefined;
 
     before(() => {
       restoreFn = mockedEnv({
         SOME_ENV_VAR: "xxx",
       });
-      sandbox.stub(Container, "has").withArgs(sandbox.match("DriverThatCapitalize")).returns(true);
-      sandbox
-        .stub(Container, "get")
-        .withArgs(sandbox.match("DriverThatCapitalize"))
-        .returns(new DriverThatCapitalize());
+      vi.spyOn(Container, "has").mockImplementation((token: unknown) => {
+        return String(token).includes("DriverThatCapitalize");
+      });
+      vi.spyOn(Container, "get").mockImplementation((token: unknown) => {
+        if (String(token).includes("DriverThatCapitalize")) {
+          return new DriverThatCapitalize();
+        }
+        return undefined as unknown as object;
+      });
     });
 
     after(() => {
       if (restoreFn) {
         restoreFn();
       }
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("should replace all placeholders", async () => {
@@ -293,7 +295,6 @@ describe("v3 lifecyle", () => {
   });
 
   describe("when dealing with multiple valid placeholders", async () => {
-    const sandbox = sinon.createSandbox();
     let restoreFn: RestoreFn | undefined = undefined;
 
     before(() => {
@@ -301,33 +302,38 @@ describe("v3 lifecyle", () => {
         SOME_ENV_VAR: "xxx",
         OTHER_ENV_VAR: "yyy",
       });
-      sandbox
-        .stub(Container, "has")
-        .withArgs(sandbox.match("DriverThatCapitalize"))
-        .returns(true)
-        .withArgs(sandbox.match("DriverThatLowercase"))
-        .returns(true)
-        .withArgs(sandbox.match("DriverThatHasNestedArgs"))
-        .returns(true)
-        .withArgs(sandbox.match("DriverThatUsesEnvField"))
-        .returns(true);
-      sandbox
-        .stub(Container, "get")
-        .withArgs(sandbox.match("DriverThatCapitalize"))
-        .returns(new DriverThatCapitalize())
-        .withArgs(sandbox.match("DriverThatLowercase"))
-        .returns(new DriverThatLowercase())
-        .withArgs(sandbox.match("DriverThatHasNestedArgs"))
-        .returns(new DriverThatHasNestedArgs())
-        .withArgs(sandbox.match("DriverThatUsesEnvField"))
-        .returns(new DriverThatUsesEnvField());
+      vi.spyOn(Container, "has").mockImplementation((token: unknown) => {
+        const name = String(token);
+        return (
+          name.includes("DriverThatCapitalize") ||
+          name.includes("DriverThatLowercase") ||
+          name.includes("DriverThatHasNestedArgs") ||
+          name.includes("DriverThatUsesEnvField")
+        );
+      });
+      vi.spyOn(Container, "get").mockImplementation((token: unknown) => {
+        const name = String(token);
+        if (name.includes("DriverThatCapitalize")) {
+          return new DriverThatCapitalize();
+        }
+        if (name.includes("DriverThatLowercase")) {
+          return new DriverThatLowercase();
+        }
+        if (name.includes("DriverThatHasNestedArgs")) {
+          return new DriverThatHasNestedArgs();
+        }
+        if (name.includes("DriverThatUsesEnvField")) {
+          return new DriverThatUsesEnvField();
+        }
+        return undefined as unknown as object;
+      });
     });
 
     after(() => {
       if (restoreFn) {
         restoreFn();
       }
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("should replace all placeholders for a single driver", async () => {
@@ -453,31 +459,35 @@ describe("v3 lifecyle", () => {
   });
 
   describe("when dealing with unresolved placeholders", async () => {
-    const sandbox = sinon.createSandbox();
     let restoreFn: RestoreFn | undefined = undefined;
 
     before(() => {
-      sandbox
-        .stub(Container, "has")
-        .withArgs(sandbox.match("DriverThatCapitalize"))
-        .returns(true)
-        .withArgs(sandbox.match("DriverThatLowercase"))
-        .returns(true)
-        .withArgs(sandbox.match("DriverThatUsesEnvField"))
-        .returns(true);
-      sandbox
-        .stub(Container, "get")
-        .withArgs(sandbox.match("DriverThatCapitalize"))
-        .returns(new DriverThatCapitalize())
-        .withArgs(sandbox.match("DriverThatLowercase"))
-        .returns(new DriverThatLowercase())
-        .withArgs(sandbox.match("DriverThatUsesEnvField"))
-        .returns(new DriverThatUsesEnvField());
+      vi.spyOn(Container, "has").mockImplementation((token: unknown) => {
+        const name = String(token);
+        return (
+          name.includes("DriverThatCapitalize") ||
+          name.includes("DriverThatLowercase") ||
+          name.includes("DriverThatUsesEnvField")
+        );
+      });
+      vi.spyOn(Container, "get").mockImplementation((token: unknown) => {
+        const name = String(token);
+        if (name.includes("DriverThatCapitalize")) {
+          return new DriverThatCapitalize();
+        }
+        if (name.includes("DriverThatLowercase")) {
+          return new DriverThatLowercase();
+        }
+        if (name.includes("DriverThatUsesEnvField")) {
+          return new DriverThatUsesEnvField();
+        }
+        return undefined as unknown as object;
+      });
     });
 
     after(() => {
       mockedDriverContext.progressBar = undefined;
-      sandbox.restore();
+      vi.restoreAllMocks();
       if (restoreFn) {
         restoreFn();
       }
@@ -604,7 +614,7 @@ describe("v3 lifecyle", () => {
         });
 
         const lifecycle = new Lifecycle("configureApp", driverDefs, "1.0.0");
-        const nextStub = sandbox.stub();
+        const nextStub = vi.fn();
         mockedDriverContext.progressBar = {
           next: nextStub,
         } as unknown as IProgressHandler;
@@ -623,42 +633,46 @@ describe("v3 lifecyle", () => {
             summaries[0][0].includes("Unresolved placeholders")
         );
 
-        assert.isTrue(nextStub.calledOnce);
+        assert.isTrue(nextStub.mock.calls.length === 1);
       });
     });
   });
 });
 
 describe("Summary", () => {
-  const sandbox = sinon.createSandbox();
   const restoreFn = mockedEnv({});
 
   before(() => {
-    sandbox
-      .stub(Container, "has")
-      .withArgs(sandbox.match("DriverAWithSummary"))
-      .returns(true)
-      .withArgs(sandbox.match("DriverBWithSummary"))
-      .returns(true)
-      .withArgs(sandbox.match("DriverThatCapitalizeWithSummary"))
-      .returns(true)
-      .withArgs(sandbox.match("DriverThatReturnsErrorWithSummary"))
-      .returns(true);
+    vi.spyOn(Container, "has").mockImplementation((token: unknown) => {
+      const name = String(token);
+      return (
+        name.includes("DriverAWithSummary") ||
+        name.includes("DriverBWithSummary") ||
+        name.includes("DriverThatCapitalizeWithSummary") ||
+        name.includes("DriverThatReturnsErrorWithSummary")
+      );
+    });
 
-    sandbox
-      .stub(Container, "get")
-      .withArgs(sandbox.match("DriverAWithSummary"))
-      .returns(new DriverAWithSummary())
-      .withArgs(sandbox.match("DriverBWithSummary"))
-      .returns(new DriverBWithSummary())
-      .withArgs(sandbox.match("DriverThatCapitalizeWithSummary"))
-      .returns(new DriverThatCapitalizeWithSummary())
-      .withArgs(sandbox.match("DriverThatReturnsErrorWithSummary"))
-      .returns(new DriverThatReturnsErrorWithSummary());
+    vi.spyOn(Container, "get").mockImplementation((token: unknown) => {
+      const name = String(token);
+      if (name.includes("DriverAWithSummary")) {
+        return new DriverAWithSummary();
+      }
+      if (name.includes("DriverBWithSummary")) {
+        return new DriverBWithSummary();
+      }
+      if (name.includes("DriverThatCapitalizeWithSummary")) {
+        return new DriverThatCapitalizeWithSummary();
+      }
+      if (name.includes("DriverThatReturnsErrorWithSummary")) {
+        return new DriverThatReturnsErrorWithSummary();
+      }
+      return undefined as unknown as object;
+    });
   });
 
   after(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     if (restoreFn) {
       restoreFn();
     }
@@ -780,23 +794,23 @@ describe("Summary", () => {
 });
 
 describe("writeToEnvironmentFile", () => {
-  const sandbox = sinon.createSandbox();
   const restoreFn = mockedEnv({});
 
   before(() => {
-    sandbox
-      .stub(Container, "has")
-      .withArgs(sandbox.match("DriverThatUsesWriteToEnvironmentFileField"))
-      .returns(true);
+    vi.spyOn(Container, "has").mockImplementation((token: unknown) => {
+      return String(token).includes("DriverThatUsesWriteToEnvironmentFileField");
+    });
 
-    sandbox
-      .stub(Container, "get")
-      .withArgs(sandbox.match("DriverThatUsesWriteToEnvironmentFileField"))
-      .returns(new DriverThatUsesWriteToEnvironmentFileField());
+    vi.spyOn(Container, "get").mockImplementation((token: unknown) => {
+      if (String(token).includes("DriverThatUsesWriteToEnvironmentFileField")) {
+        return new DriverThatUsesWriteToEnvironmentFileField();
+      }
+      return undefined as unknown as object;
+    });
   });
 
   after(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     if (restoreFn) {
       restoreFn();
     }
@@ -828,29 +842,30 @@ describe("writeToEnvironmentFile", () => {
 });
 
 describe("env flush to disk between actions", () => {
-  const sandbox = sinon.createSandbox();
   let restoreFn: RestoreFn | undefined = undefined;
   const driverAInstance = new DriverA();
   const driverBInstance = new DriverB();
 
   before(() => {
     restoreFn = mockedEnv({ TEAMSFX_ENV: "local" });
-    sandbox
-      .stub(Container, "has")
-      .withArgs(sandbox.match("DriverA"))
-      .returns(true)
-      .withArgs(sandbox.match("DriverB"))
-      .returns(true);
-    sandbox
-      .stub(Container, "get")
-      .withArgs(sandbox.match("DriverA"))
-      .returns(driverAInstance)
-      .withArgs(sandbox.match("DriverB"))
-      .returns(driverBInstance);
+    vi.spyOn(Container, "has").mockImplementation((token: unknown) => {
+      const name = String(token);
+      return name.includes("DriverA") || name.includes("DriverB");
+    });
+    vi.spyOn(Container, "get").mockImplementation((token: unknown) => {
+      const name = String(token);
+      if (name.includes("DriverA")) {
+        return driverAInstance;
+      }
+      if (name.includes("DriverB")) {
+        return driverBInstance;
+      }
+      return undefined as unknown as object;
+    });
   });
 
   after(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     if (restoreFn) {
       restoreFn();
     }
@@ -858,7 +873,7 @@ describe("env flush to disk between actions", () => {
 
   it("should flush env to disk after each driver execution", async () => {
     const writeEnvCalls: Array<{ env: string; envs: Record<string, string> }> = [];
-    sandbox.stub(envUtil, "writeEnv").callsFake(async (_projectPath, env, envs) => {
+    vi.spyOn(envUtil, "writeEnv").mockImplementation(async (_projectPath, env, envs) => {
       writeEnvCalls.push({ env, envs: { ...envs } });
       return ok(undefined);
     });
@@ -892,7 +907,6 @@ describe("env flush to disk between actions", () => {
 //   if (result.value.size > 0 && ctx.projectPath && process.env.TEAMSFX_ENV) { ... }
 // and for the writeEnv error path / warning logging.
 describe("env flush to disk between actions - edge cases", () => {
-  const sandbox = sinon.createSandbox();
   let restoreFn: RestoreFn | undefined = undefined;
 
   // Driver that returns success with an empty env map; flush must NOT happen.
@@ -916,26 +930,29 @@ describe("env flush to disk between actions - edge cases", () => {
   const driverErrInstance = new DriverErr();
 
   beforeEach(() => {
-    sandbox
-      .stub(Container, "has")
-      .withArgs(sandbox.match("DriverA"))
-      .returns(true)
-      .withArgs(sandbox.match("DriverEmptyOk"))
-      .returns(true)
-      .withArgs(sandbox.match("DriverErr"))
-      .returns(true);
-    sandbox
-      .stub(Container, "get")
-      .withArgs(sandbox.match("DriverA"))
-      .returns(driverAInstance)
-      .withArgs(sandbox.match("DriverEmptyOk"))
-      .returns(driverEmptyInstance)
-      .withArgs(sandbox.match("DriverErr"))
-      .returns(driverErrInstance);
+    vi.spyOn(Container, "has").mockImplementation((token: unknown) => {
+      const name = String(token);
+      return (
+        name.includes("DriverA") || name.includes("DriverEmptyOk") || name.includes("DriverErr")
+      );
+    });
+    vi.spyOn(Container, "get").mockImplementation((token: unknown) => {
+      const name = String(token);
+      if (name.includes("DriverA")) {
+        return driverAInstance;
+      }
+      if (name.includes("DriverEmptyOk")) {
+        return driverEmptyInstance;
+      }
+      if (name.includes("DriverErr")) {
+        return driverErrInstance;
+      }
+      return undefined as unknown as object;
+    });
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     if (restoreFn) {
       restoreFn();
       restoreFn = undefined;
@@ -944,7 +961,7 @@ describe("env flush to disk between actions - edge cases", () => {
 
   it("should not flush when driver returns empty env map", async () => {
     restoreFn = mockedEnv({ TEAMSFX_ENV: "local" });
-    const writeEnvSpy = sandbox.stub(envUtil, "writeEnv").resolves(ok(undefined));
+    const writeEnvSpy = vi.spyOn(envUtil, "writeEnv").mockResolvedValue(ok(undefined));
 
     const lifecycle = new Lifecycle("provision", [{ uses: "DriverEmptyOk", with: {} }], "1.0.0");
     const { result } = await lifecycle.execute({
@@ -953,12 +970,16 @@ describe("env flush to disk between actions - edge cases", () => {
     });
 
     assert(result.isOk(), "lifecycle should succeed");
-    assert.equal(writeEnvSpy.callCount, 0, "writeEnv should not be called for empty output");
+    assert.equal(
+      writeEnvSpy.mock.calls.length,
+      0,
+      "writeEnv should not be called for empty output"
+    );
   });
 
   it("should not flush when ctx.projectPath is empty", async () => {
     restoreFn = mockedEnv({ TEAMSFX_ENV: "local" });
-    const writeEnvSpy = sandbox.stub(envUtil, "writeEnv").resolves(ok(undefined));
+    const writeEnvSpy = vi.spyOn(envUtil, "writeEnv").mockResolvedValue(ok(undefined));
 
     const lifecycle = new Lifecycle("provision", [{ uses: "DriverA", with: {} }], "1.0.0");
     const { result } = await lifecycle.execute({
@@ -968,7 +989,7 @@ describe("env flush to disk between actions - edge cases", () => {
 
     assert(result.isOk(), "lifecycle should succeed");
     assert.equal(
-      writeEnvSpy.callCount,
+      writeEnvSpy.mock.calls.length,
       0,
       "writeEnv should not be called when projectPath is empty"
     );
@@ -976,7 +997,7 @@ describe("env flush to disk between actions - edge cases", () => {
 
   it("should not flush when TEAMSFX_ENV is not set", async () => {
     restoreFn = mockedEnv({ TEAMSFX_ENV: undefined });
-    const writeEnvSpy = sandbox.stub(envUtil, "writeEnv").resolves(ok(undefined));
+    const writeEnvSpy = vi.spyOn(envUtil, "writeEnv").mockResolvedValue(ok(undefined));
 
     const lifecycle = new Lifecycle("provision", [{ uses: "DriverA", with: {} }], "1.0.0");
     const { result } = await lifecycle.execute({
@@ -986,7 +1007,7 @@ describe("env flush to disk between actions - edge cases", () => {
 
     assert(result.isOk(), "lifecycle should succeed");
     assert.equal(
-      writeEnvSpy.callCount,
+      writeEnvSpy.mock.calls.length,
       0,
       "writeEnv should not be called when TEAMSFX_ENV is not set"
     );
@@ -994,9 +1015,9 @@ describe("env flush to disk between actions - edge cases", () => {
 
   it("should log a warning but continue when writeEnv returns an error", async () => {
     restoreFn = mockedEnv({ TEAMSFX_ENV: "local" });
-    const writeEnvSpy = sandbox.stub(envUtil, "writeEnv").resolves(err(mockedError));
+    const writeEnvSpy = vi.spyOn(envUtil, "writeEnv").mockResolvedValue(err(mockedError));
     const logProvider = new MockedLogProvider();
-    const warningSpy = sandbox.spy(logProvider, "warning");
+    const warningSpy = vi.spyOn(logProvider, "warning");
 
     const lifecycle = new Lifecycle("provision", [{ uses: "DriverA", with: {} }], "1.0.0");
     const { result } = await lifecycle.execute({
@@ -1006,9 +1027,9 @@ describe("env flush to disk between actions - edge cases", () => {
     });
 
     assert(result.isOk(), "lifecycle should still succeed when flush fails");
-    assert.equal(writeEnvSpy.callCount, 1, "writeEnv should be attempted once");
-    assert.equal(warningSpy.callCount, 1, "warning should be logged exactly once");
-    const warningMsg = String(warningSpy.firstCall.args[0]);
+    assert.equal(writeEnvSpy.mock.calls.length, 1, "writeEnv should be attempted once");
+    assert.equal(warningSpy.mock.calls.length, 1, "warning should be logged exactly once");
+    const warningMsg = String(warningSpy.mock.calls[0][0]);
     assert(
       warningMsg.includes("Failed to flush env output to disk"),
       `warning message should describe the flush failure, got: ${warningMsg}`
@@ -1024,9 +1045,9 @@ describe("env flush to disk between actions - edge cases", () => {
     // Simulate the defensive `error?.message ?? String(error)` branch by returning a
     // non-Error-shaped value as the error.
     const oddError = "string-error" as unknown as FxError;
-    const writeEnvSpy = sandbox.stub(envUtil, "writeEnv").resolves(err(oddError));
+    const writeEnvSpy = vi.spyOn(envUtil, "writeEnv").mockResolvedValue(err(oddError));
     const logProvider = new MockedLogProvider();
-    const warningSpy = sandbox.spy(logProvider, "warning");
+    const warningSpy = vi.spyOn(logProvider, "warning");
 
     const lifecycle = new Lifecycle("provision", [{ uses: "DriverA", with: {} }], "1.0.0");
     const { result } = await lifecycle.execute({
@@ -1036,9 +1057,9 @@ describe("env flush to disk between actions - edge cases", () => {
     });
 
     assert(result.isOk());
-    assert.equal(writeEnvSpy.callCount, 1);
-    assert.equal(warningSpy.callCount, 1);
-    const warningMsg = String(warningSpy.firstCall.args[0]);
+    assert.equal(writeEnvSpy.mock.calls.length, 1);
+    assert.equal(warningSpy.mock.calls.length, 1);
+    const warningMsg = String(warningSpy.mock.calls[0][0]);
     assert(
       warningMsg.includes("string-error"),
       `warning message should fall back to String(error), got: ${warningMsg}`
@@ -1047,7 +1068,7 @@ describe("env flush to disk between actions - edge cases", () => {
 
   it("should not flush after a driver that returns an error", async () => {
     restoreFn = mockedEnv({ TEAMSFX_ENV: "local" });
-    const writeEnvSpy = sandbox.stub(envUtil, "writeEnv").resolves(ok(undefined));
+    const writeEnvSpy = vi.spyOn(envUtil, "writeEnv").mockResolvedValue(ok(undefined));
 
     // DriverA succeeds (and flushes once), then DriverErr fails (no flush for it).
     const lifecycle = new Lifecycle(
@@ -1065,12 +1086,12 @@ describe("env flush to disk between actions - edge cases", () => {
 
     assert(result.isErr(), "lifecycle should fail because of DriverErr");
     assert.equal(
-      writeEnvSpy.callCount,
+      writeEnvSpy.mock.calls.length,
       1,
       "writeEnv should only be called once (for the successful DriverA)"
     );
-    assert.equal(writeEnvSpy.firstCall.args[1], "local");
-    const flushedEnvs = writeEnvSpy.firstCall.args[2] as Record<string, string>;
+    assert.equal(writeEnvSpy.mock.calls[0][1], "local");
+    const flushedEnvs = writeEnvSpy.mock.calls[0][2] as Record<string, string>;
     assert.equal(flushedEnvs["OUTPUT_A"], "VALUE_A");
   });
 });

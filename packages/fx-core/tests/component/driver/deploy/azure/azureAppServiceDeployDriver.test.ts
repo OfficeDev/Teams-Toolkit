@@ -7,12 +7,11 @@
 import * as appService from "@azure/arm-appservice";
 import * as Models from "@azure/arm-appservice/src/models";
 import { IProgressHandler } from "@microsoft/teamsfx-api";
-import { assert, expect } from "chai";
 import fs from "fs-extra";
 import * as os from "os";
 import * as path from "path";
-import * as sinon from "sinon";
 import * as uuid from "uuid";
+import { assert, chai, vi } from "vitest";
 import * as tools from "../../../../../src/common/utils";
 import { DeployConstant } from "../../../../../src/component/constant/deployConstant";
 import { AzureAppServiceDeployDriver } from "../../../../../src/component/driver/deploy/azure/azureAppServiceDeployDriver";
@@ -28,7 +27,7 @@ import {
 import { TestLogProvider } from "../../../util/logProviderMock";
 
 describe("Azure App Service Deploy Driver test", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   const sysTmp = os.tmpdir();
   const folder = uuid.v4();
   const testFolder = path.join(sysTmp, folder);
@@ -40,10 +39,10 @@ describe("Azure App Service Deploy Driver test", () => {
       flag: "a",
     });
     await fs.writeFile(path.join(testFolder, "test.txt"), "test");
-    sandbox.stub(fs, "mkdirs").resolves();
-    sandbox.stub(fs, "removeSync");
-    sandbox.stub(fs, "readdirSync").returns([new fs.Dirent(), new fs.Dirent()]);
-    sandbox.stub(fs, "readFileSync").resolves("test");
+    vi.spyOn(fs, "mkdirs").mockResolvedValue();
+    vi.spyOn(fs, "removeSync");
+    vi.spyOn(fs, "readdirSync").mockReturnValue([new fs.Dirent(), new fs.Dirent()]);
+    vi.spyOn(fs, "readFileSync").mockResolvedValue("test");
   });
 
   after(async () => {
@@ -59,18 +58,18 @@ describe("Azure App Service Deploy Driver test", () => {
   });
 
   beforeEach(async () => {
-    sandbox.stub(fileOpt.fileOperationDeps, "createReadStream").returns({
-      pipe: sandbox.stub().returns({
-        pipe: sandbox.stub().returns({
-          pipe: sandbox.stub().returns("responseMock"),
+    vi.spyOn(fileOpt.fileOperationDeps, "createReadStream").mockReturnValue({
+      pipe: vi.fn().mockReturnValue({
+        pipe: vi.fn().mockReturnValue({
+          pipe: vi.fn().mockReturnValue("responseMock"),
         }),
       }),
-      on: sandbox.spy(() => true),
-      destroy: sandbox.spy(() => true),
+      on: vi.fn(() => true),
+      destroy: vi.fn(() => true),
     } as any);
-    sandbox.stub(tools, "waitSeconds").resolves();
-    const fetchStub = sandbox.stub(global, "fetch");
-    fetchStub.callsFake((input: any) => {
+    vi.spyOn(tools, "waitSeconds").mockResolvedValue();
+    const fetchStub = vi.spyOn(global, "fetch");
+    fetchStub.mockImplementation((input: any) => {
       const url: string = typeof input === "string" ? input : input.url;
       const info = url.split(/[\/|?]/);
       return Promise.resolve(
@@ -90,7 +89,7 @@ describe("Azure App Service Deploy Driver test", () => {
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("deploy happy path", async () => {
@@ -109,7 +108,7 @@ describe("Azure App Service Deploy Driver test", () => {
       end: async (): Promise<void> => {},
     };
     const ui = new MockUserInteraction();
-    const progressNextCaller = sandbox.stub(progressHandler, "next").resolves();
+    const progressNextCaller = vi.spyOn(progressHandler, "next").mockResolvedValue();
 
     const context = {
       azureAccountProvider: new MockedAzureAccountProvider(),
@@ -119,32 +118,36 @@ describe("Azure App Service Deploy Driver test", () => {
       progressBar: progressHandler,
     } as any;
     const credential = new MyTokenCredential();
-    sandbox.stub(credential, "getToken").resolves(undefined);
-    sandbox.stub(context.azureAccountProvider, "getIdentityCredentialAsync").resolves(credential);
+    vi.spyOn(credential, "getToken").mockResolvedValue(undefined);
+    vi.spyOn(context.azureAccountProvider, "getIdentityCredentialAsync").mockResolvedValue(
+      credential
+    );
     // ignore file
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(fs, "readFile").callsFake((file) => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockImplementation((file) => {
       if (file.toString().indexOf("ignore") >= 0) {
         return Promise.resolve(Buffer.from("node_modules"));
       }
       return Promise.resolve(Buffer.from("any other content"));
     });
     const client = new appService.WebSiteManagementClient(credential, "z");
-    sandbox.stub(appService, "WebSiteManagementClient").returns(client);
-    sandbox.stub(client.webApps, "beginListPublishingCredentialsAndWait").resolves({
+    vi.spyOn(appService, "WebSiteManagementClient").mockImplementation(function () {
+      return client;
+    } as any);
+    vi.spyOn(client.webApps, "beginListPublishingCredentialsAndWait").mockResolvedValue({
       publishingUserName: "test-username",
       publishingPassword: "test-password",
     } as Models.WebAppsListPublishingCredentialsResponse);
     // mock klaw
-    // sandbox.stub(fileOpt, "forEachFileAndDir").resolves(undefined);
-    // sandbox.stub(fileOpt, "forEachFileAndDir").resolves(undefined);
-    sandbox.stub(AzureDeployImpl.AXIOS_INSTANCE, "post").resolves({
+    // vi.spyOn(fileOpt, "forEachFileAndDir").mockResolvedValue(undefined);
+    // vi.spyOn(fileOpt, "forEachFileAndDir").mockResolvedValue(undefined);
+    vi.spyOn(AzureDeployImpl.AXIOS_INSTANCE, "post").mockResolvedValue({
       status: 200,
       headers: {
         location: "/api/123",
       },
     });
-    sandbox.stub(AzureDeployImpl.AXIOS_INSTANCE, "get").resolves({
+    vi.spyOn(AzureDeployImpl.AXIOS_INSTANCE, "get").mockResolvedValue({
       status: 200,
       data: {
         status: 4,
@@ -159,11 +162,11 @@ describe("Azure App Service Deploy Driver test", () => {
         site_name: "new_name",
       },
     });
-    sandbox.stub(client.webApps, "restart").resolves();
+    vi.spyOn(client.webApps, "restart").mockResolvedValue();
     const rex = await deploy.execute(args, context);
-    expect(rex.result.unwrapOr(new Map([["a", "a"]])).size).to.equal(0);
+    chai.expect(rex.result.unwrapOr(new Map([["a", "a"]])).size).to.equal(0);
     // progress bar have 6 steps
-    expect(progressNextCaller.callCount).to.equal(1);
+    chai.expect(progressNextCaller.mock.calls.length).to.equal(1);
   });
 
   it("deploy happy path with response data is empty", async () => {
@@ -182,7 +185,7 @@ describe("Azure App Service Deploy Driver test", () => {
       end: async (): Promise<void> => {},
     };
     const ui = new MockUserInteraction();
-    const progressNextCaller = sandbox.stub(progressHandler, "next").resolves();
+    const progressNextCaller = vi.spyOn(progressHandler, "next").mockResolvedValue();
 
     const context = {
       azureAccountProvider: new MockedAzureAccountProvider(),
@@ -192,33 +195,37 @@ describe("Azure App Service Deploy Driver test", () => {
       progressBar: progressHandler,
     } as any;
     const credential = new MyTokenCredential();
-    sandbox.stub(credential, "getToken").resolves(undefined);
-    sandbox.stub(context.azureAccountProvider, "getIdentityCredentialAsync").resolves(credential);
+    vi.spyOn(credential, "getToken").mockResolvedValue(undefined);
+    vi.spyOn(context.azureAccountProvider, "getIdentityCredentialAsync").mockResolvedValue(
+      credential
+    );
     // ignore file
     const client = new appService.WebSiteManagementClient(credential, "z");
-    sandbox.stub(appService, "WebSiteManagementClient").returns(client);
-    sandbox.stub(client.webApps, "beginListPublishingCredentialsAndWait").resolves({
+    vi.spyOn(appService, "WebSiteManagementClient").mockImplementation(function () {
+      return client;
+    } as any);
+    vi.spyOn(client.webApps, "beginListPublishingCredentialsAndWait").mockResolvedValue({
       publishingUserName: "test-username",
       publishingPassword: "test-password",
     } as Models.WebAppsListPublishingCredentialsResponse);
     // mock klaw
-    // sandbox.stub(fileOpt, "forEachFileAndDir").resolves(undefined);
-    sandbox.stub(fileOpt, "forEachFileAndDir").resolves(undefined);
-    sandbox.stub(AzureDeployImpl.AXIOS_INSTANCE, "post").resolves({
+    // vi.spyOn(fileOpt, "forEachFileAndDir").mockResolvedValue(undefined);
+    vi.spyOn(fileOpt, "forEachFileAndDir").mockResolvedValue(undefined);
+    vi.spyOn(AzureDeployImpl.AXIOS_INSTANCE, "post").mockResolvedValue({
       status: 200,
       headers: {
         location: "/api/123",
       },
     });
-    sandbox.stub(AzureDeployImpl.AXIOS_INSTANCE, "get").resolves({
+    vi.spyOn(AzureDeployImpl.AXIOS_INSTANCE, "get").mockResolvedValue({
       status: 200,
       data: {},
     });
-    sandbox.stub(client.webApps, "restart").resolves();
+    vi.spyOn(client.webApps, "restart").mockResolvedValue();
     const rex = await deploy.execute(args, context);
-    expect(rex.result.unwrapOr(new Map([["a", "a"]])).size).to.equal(0);
+    chai.expect(rex.result.unwrapOr(new Map([["a", "a"]])).size).to.equal(0);
     // progress bar have 6 steps
-    expect(progressNextCaller.callCount).to.equal(1);
+    chai.expect(progressNextCaller.mock.calls.length).to.equal(1);
   });
 
   it("resource id error", async () => {
@@ -268,37 +275,42 @@ describe("Azure App Service Deploy Driver test", () => {
       logProvider: new TestLogProvider(),
       telemetryReporter: new MockTelemetryReporter(),
     } as any;
-    sandbox
-      .stub(context.azureAccountProvider, "getIdentityCredentialAsync")
-      .resolves(new MyTokenCredential());
+    vi.spyOn(context.azureAccountProvider, "getIdentityCredentialAsync").mockResolvedValue(
+      new MyTokenCredential()
+    );
 
     const client = new appService.WebSiteManagementClient(new MyTokenCredential(), "z");
-    sandbox.stub(appService, "WebSiteManagementClient").returns(client);
-    sandbox.stub(client.webApps, "beginListPublishingCredentialsAndWait").resolves({
+    vi.spyOn(appService, "WebSiteManagementClient").mockImplementation(function () {
+      return client;
+    } as any);
+    vi.spyOn(client.webApps, "beginListPublishingCredentialsAndWait").mockResolvedValue({
       publishingUserName: "test-username",
       publishingPassword: "test-password",
     } as Models.WebAppsListPublishingCredentialsResponse);
-    sandbox.stub(AzureDeployImpl.AXIOS_INSTANCE, "post").resolves({
+    vi.spyOn(AzureDeployImpl.AXIOS_INSTANCE, "post").mockResolvedValue({
       status: 200,
       headers: {
         location: "/api/123",
       },
     });
-    sandbox.stub(AzureDeployImpl.AXIOS_INSTANCE, "get").resolves({
+    vi.spyOn(AzureDeployImpl.AXIOS_INSTANCE, "get").mockResolvedValue({
       status: 200,
     });
-    sandbox.stub(client.webApps, "restart").resolves();
+    vi.spyOn(client.webApps, "restart").mockResolvedValue();
     // read deploy zip file error
-    sandbox
-      .stub(fs, "readFile")
-      .withArgs(
+    vi.spyOn(fs, "readFile").mockImplementation(((p: any) => {
+      if (
+        p ===
         `./${DeployConstant.DEPLOYMENT_TMP_FOLDER}/${DeployConstant.DEPLOYMENT_ZIP_CACHE_FILE}`
-      )
-      .throws(new Error("test"));
+      ) {
+        throw new Error("test");
+      }
+      return undefined;
+    }) as any);
     // mock klaw
-    sandbox.stub(fileOpt, "forEachFileAndDir").resolves(undefined);
+    vi.spyOn(fileOpt, "forEachFileAndDir").mockResolvedValue(undefined);
     const res = await deploy.execute(args, context);
-    expect(res.result.unwrapOr(new Map([["a", "b"]])).size).to.equal(0);
+    chai.expect(res.result.unwrapOr(new Map([["a", "b"]])).size).to.equal(0);
   });
 
   it("zip deploy to azure error", async () => {
@@ -314,29 +326,33 @@ describe("Azure App Service Deploy Driver test", () => {
       azureAccountProvider: new MockedAzureAccountProvider(),
       logProvider: new TestLogProvider(),
     } as any;
-    sandbox
-      .stub(context.azureAccountProvider, "getIdentityCredentialAsync")
-      .resolves(new MyTokenCredential());
+    vi.spyOn(context.azureAccountProvider, "getIdentityCredentialAsync").mockResolvedValue(
+      new MyTokenCredential()
+    );
     // ignore file
-    sandbox.stub(fs, "pathExists").resolves(true);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     const client = new appService.WebSiteManagementClient(new MyTokenCredential(), "z");
-    sandbox.stub(client.webApps, "beginListPublishingCredentialsAndWait").resolves({
+    vi.spyOn(client.webApps, "beginListPublishingCredentialsAndWait").mockResolvedValue({
       publishingUserName: "test-username",
       publishingPassword: "test-password",
     } as Models.WebAppsListPublishingCredentialsResponse);
-    sandbox.stub(appService, "WebSiteManagementClient").returns(client);
-    sandbox.stub(fs, "readFileSync").resolves("test");
+    vi.spyOn(appService, "WebSiteManagementClient").mockImplementation(function () {
+      return client;
+    } as any);
+    vi.spyOn(fs, "readFileSync").mockResolvedValue("test");
     // read deploy zip file error
-    sandbox.stub(fs, "readFile").callsFake((file) => {
+    vi.spyOn(fs, "readFile").mockImplementation((file) => {
       if (file === "ignore") {
         return Promise.resolve(Buffer.from("node_modules"));
       }
       throw new Error("not found");
     });
     // mock klaw
-    sandbox.stub(fileOpt, "forEachFileAndDir").resolves(undefined);
-    sandbox.stub(AzureDeployImpl.AXIOS_INSTANCE, "post").throws(new Error("test"));
-    sandbox.stub(AzureDeployImpl.AXIOS_INSTANCE, "get").resolves({
+    vi.spyOn(fileOpt, "forEachFileAndDir").mockResolvedValue(undefined);
+    vi.spyOn(AzureDeployImpl.AXIOS_INSTANCE, "post").mockImplementation(() => {
+      throw new Error("test");
+    });
+    vi.spyOn(AzureDeployImpl.AXIOS_INSTANCE, "get").mockResolvedValue({
       status: 200,
     });
     const res = await deploy.execute(args, context);
@@ -356,34 +372,38 @@ describe("Azure App Service Deploy Driver test", () => {
       azureAccountProvider: new MockedAzureAccountProvider(),
       logProvider: new TestLogProvider(),
     } as any;
-    sandbox
-      .stub(context.azureAccountProvider, "getIdentityCredentialAsync")
-      .resolves(new MyTokenCredential());
+    vi.spyOn(context.azureAccountProvider, "getIdentityCredentialAsync").mockResolvedValue(
+      new MyTokenCredential()
+    );
     // ignore file
-    sandbox.stub(fs, "pathExists").resolves(true);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     const client = new appService.WebSiteManagementClient(new MyTokenCredential(), "z");
-    sandbox.stub(client.webApps, "beginListPublishingCredentialsAndWait").resolves({
+    vi.spyOn(client.webApps, "beginListPublishingCredentialsAndWait").mockResolvedValue({
       publishingUserName: "test-username",
       publishingPassword: "test-password",
     } as Models.WebAppsListPublishingCredentialsResponse);
-    sandbox.stub(appService, "WebSiteManagementClient").returns(client);
-    sandbox.stub(fs, "readFileSync").resolves("test");
+    vi.spyOn(appService, "WebSiteManagementClient").mockImplementation(function () {
+      return client;
+    } as any);
+    vi.spyOn(fs, "readFileSync").mockResolvedValue("test");
     // read deploy zip file error
-    sandbox.stub(fs, "readFile").callsFake((file) => {
+    vi.spyOn(fs, "readFile").mockImplementation((file) => {
       if (file === "ignore") {
         return Promise.resolve(Buffer.from("node_modules"));
       }
       throw new Error("not found");
     });
     // mock klaw
-    sandbox.stub(fileOpt, "forEachFileAndDir").resolves(undefined);
-    sandbox.stub(AzureDeployImpl.AXIOS_INSTANCE, "post").throws({
-      response: {
-        status: 503,
-      },
-      isAxiosError: true,
+    vi.spyOn(fileOpt, "forEachFileAndDir").mockResolvedValue(undefined);
+    vi.spyOn(AzureDeployImpl.AXIOS_INSTANCE, "post").mockImplementation(() => {
+      throw {
+        response: {
+          status: 503,
+        },
+        isAxiosError: true,
+      };
     });
-    sandbox.stub(AzureDeployImpl.AXIOS_INSTANCE, "get").resolves({
+    vi.spyOn(AzureDeployImpl.AXIOS_INSTANCE, "get").mockResolvedValue({
       status: 200,
     });
     const res = await deploy.execute(args, context);
@@ -403,34 +423,38 @@ describe("Azure App Service Deploy Driver test", () => {
       azureAccountProvider: new MockedAzureAccountProvider(),
       logProvider: new TestLogProvider(),
     } as any;
-    sandbox
-      .stub(context.azureAccountProvider, "getIdentityCredentialAsync")
-      .resolves(new MyTokenCredential());
+    vi.spyOn(context.azureAccountProvider, "getIdentityCredentialAsync").mockResolvedValue(
+      new MyTokenCredential()
+    );
     // ignore file
-    sandbox.stub(fs, "pathExists").resolves(true);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     const client = new appService.WebSiteManagementClient(new MyTokenCredential(), "z");
-    sandbox.stub(client.webApps, "beginListPublishingCredentialsAndWait").resolves({
+    vi.spyOn(client.webApps, "beginListPublishingCredentialsAndWait").mockResolvedValue({
       publishingUserName: "test-username",
       publishingPassword: "test-password",
     } as Models.WebAppsListPublishingCredentialsResponse);
-    sandbox.stub(appService, "WebSiteManagementClient").returns(client);
-    sandbox.stub(fs, "readFileSync").resolves("test");
+    vi.spyOn(appService, "WebSiteManagementClient").mockImplementation(function () {
+      return client;
+    } as any);
+    vi.spyOn(fs, "readFileSync").mockResolvedValue("test");
     // read deploy zip file error
-    sandbox.stub(fs, "readFile").callsFake((file) => {
+    vi.spyOn(fs, "readFile").mockImplementation((file) => {
       if (file === "ignore") {
         return Promise.resolve(Buffer.from("node_modules"));
       }
       throw new Error("not found");
     });
     // mock klaw
-    sandbox.stub(fileOpt, "forEachFileAndDir").resolves(undefined);
-    sandbox.stub(AzureDeployImpl.AXIOS_INSTANCE, "post").throws({
-      response: {
-        status: 404,
-      },
-      isAxiosError: true,
+    vi.spyOn(fileOpt, "forEachFileAndDir").mockResolvedValue(undefined);
+    vi.spyOn(AzureDeployImpl.AXIOS_INSTANCE, "post").mockImplementation(() => {
+      throw {
+        response: {
+          status: 404,
+        },
+        isAxiosError: true,
+      };
     });
-    sandbox.stub(AzureDeployImpl.AXIOS_INSTANCE, "get").resolves({
+    vi.spyOn(AzureDeployImpl.AXIOS_INSTANCE, "get").mockResolvedValue({
       status: 200,
     });
     const res = await deploy.execute(args, context);
@@ -477,7 +501,7 @@ describe("Azure App Service Deploy Driver test", () => {
       end: async (): Promise<void> => {},
     };
     const ui = new MockUserInteraction();
-    const progressNextCaller = sandbox.stub(progressHandler, "next").resolves();
+    const progressNextCaller = vi.spyOn(progressHandler, "next").mockResolvedValue();
 
     const context = {
       azureAccountProvider: new MockedAzureAccountProvider(),
@@ -485,37 +509,39 @@ describe("Azure App Service Deploy Driver test", () => {
       ui: ui,
       progressBar: progressHandler,
     } as any;
-    sandbox
-      .stub(context.azureAccountProvider, "getIdentityCredentialAsync")
-      .resolves(new MyTokenCredential());
+    vi.spyOn(context.azureAccountProvider, "getIdentityCredentialAsync").mockResolvedValue(
+      new MyTokenCredential()
+    );
     // ignore file
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(fs, "readFile").callsFake((file) => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockImplementation((file) => {
       if (file === "ignore") {
         return Promise.resolve(Buffer.from("node_modules"));
       }
       return Promise.resolve(Buffer.from("any other content"));
     });
     const client = new appService.WebSiteManagementClient(new MyTokenCredential(), "z");
-    sandbox.stub(appService, "WebSiteManagementClient").returns(client);
-    sandbox.stub(client.webApps, "beginListPublishingCredentialsAndWait").resolves({
+    vi.spyOn(appService, "WebSiteManagementClient").mockImplementation(function () {
+      return client;
+    } as any);
+    vi.spyOn(client.webApps, "beginListPublishingCredentialsAndWait").mockResolvedValue({
       publishingUserName: "test-username",
       publishingPassword: "test-password",
     } as Models.WebAppsListPublishingCredentialsResponse);
-    sandbox.stub(fs, "readFileSync").resolves("test");
+    vi.spyOn(fs, "readFileSync").mockResolvedValue("test");
     // mock klaw
-    // sandbox.stub(fileOpt, "forEachFileAndDir").resolves(undefined);
-    sandbox.stub(fileOpt, "forEachFileAndDir").resolves(undefined);
-    sandbox.stub(AzureDeployImpl.AXIOS_INSTANCE, "post").resolves({
+    // vi.spyOn(fileOpt, "forEachFileAndDir").mockResolvedValue(undefined);
+    vi.spyOn(fileOpt, "forEachFileAndDir").mockResolvedValue(undefined);
+    vi.spyOn(AzureDeployImpl.AXIOS_INSTANCE, "post").mockResolvedValue({
       status: 200,
       headers: {
         location: "/api/123",
       },
     });
-    sandbox.stub(AzureDeployImpl.AXIOS_INSTANCE, "get").resolves({
+    vi.spyOn(AzureDeployImpl.AXIOS_INSTANCE, "get").mockResolvedValue({
       status: 200,
     });
-    sandbox.stub(client.webApps, "restart").resolves();
+    vi.spyOn(client.webApps, "restart").mockResolvedValue();
     const res = await deploy.execute(args, context);
     assert.equal(res.result.isOk(), true);
     const tmpFile = path.join(sysTmp, "./.deployment/deployment.zip");
@@ -524,7 +550,7 @@ describe("Azure App Service Deploy Driver test", () => {
       `Deployment preparations are completed. You can find the package in \`${tmpFile}\``
     );
     // dry run will have only one progress step
-    assert.equal(progressNextCaller.callCount, 1);
+    assert.equal(progressNextCaller.mock.calls.length, 1);
   });
 
   it("list credential error", async () => {
@@ -551,34 +577,38 @@ describe("Azure App Service Deploy Driver test", () => {
     credential.getToken = async () => {
       return null;
     };
-    sandbox.stub(context.azureAccountProvider, "getIdentityCredentialAsync").resolves(credential);
+    vi.spyOn(context.azureAccountProvider, "getIdentityCredentialAsync").mockResolvedValue(
+      credential
+    );
     // ignore file
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(fs, "readFile").callsFake((file) => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockImplementation((file) => {
       if (file === "ignore") {
         return Promise.resolve(Buffer.from("node_modules"));
       }
       throw new Error("not found");
     });
     const client = new appService.WebSiteManagementClient(credential, "z");
-    sandbox.stub(appService, "WebSiteManagementClient").returns(client);
-    sandbox
-      .stub(client.webApps, "beginListPublishingCredentialsAndWait")
-      .throws(new Error("error"));
-    sandbox.stub(fs, "readFileSync").resolves("test");
+    vi.spyOn(appService, "WebSiteManagementClient").mockImplementation(function () {
+      return client;
+    } as any);
+    vi.spyOn(client.webApps, "beginListPublishingCredentialsAndWait").mockImplementation(() => {
+      throw new Error("error");
+    });
+    vi.spyOn(fs, "readFileSync").mockResolvedValue("test");
     // mock klaw
-    // sandbox.stub(fileOpt, "forEachFileAndDir").resolves(undefined);
-    sandbox.stub(fileOpt, "forEachFileAndDir").resolves(undefined);
-    sandbox.stub(AzureDeployImpl.AXIOS_INSTANCE, "post").resolves({
+    // vi.spyOn(fileOpt, "forEachFileAndDir").mockResolvedValue(undefined);
+    vi.spyOn(fileOpt, "forEachFileAndDir").mockResolvedValue(undefined);
+    vi.spyOn(AzureDeployImpl.AXIOS_INSTANCE, "post").mockResolvedValue({
       status: 200,
       headers: {
         location: "/api/123",
       },
     });
-    sandbox.stub(AzureDeployImpl.AXIOS_INSTANCE, "get").resolves({
+    vi.spyOn(AzureDeployImpl.AXIOS_INSTANCE, "get").mockResolvedValue({
       status: 200,
     });
-    sandbox.stub(client.webApps, "restart").resolves();
+    vi.spyOn(client.webApps, "restart").mockResolvedValue();
     const res = await deploy.execute(args, context);
     assert.equal(res.result.isOk(), false);
   });

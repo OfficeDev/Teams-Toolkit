@@ -15,11 +15,9 @@ import {
   ok,
 } from "@microsoft/teamsfx-api";
 import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from "axios";
-import { assert } from "chai";
 import fs from "fs-extra";
 import mockedEnv, { RestoreFn } from "mocked-env";
 import * as path from "path";
-import sinon from "sinon";
 import * as utils from "../../src/common/globalVars";
 import { setTools } from "../../src/common/globalVars";
 import { getLocalizedString } from "../../src/common/localizeUtils";
@@ -35,7 +33,9 @@ import {
   SpecNotFoundError,
   UserCancelError,
 } from "../../src/error";
+import * as createQuestionDeps from "../../src/question/create";
 
+import { assert, vi } from "vitest";
 import { manifestUtils } from "../../src";
 import { pluginManifestUtils } from "../../src/component/driver/teamsApp/utils/PluginManifestUtils";
 import * as daHelper from "../../src/component/generator/declarativeAgent/helper";
@@ -64,15 +64,14 @@ import {
   selectOpenAPISpecFromPluginQuestion,
   webContentQuestion,
 } from "../../src/question";
-import { createQuestionDeps } from "../../src/question/create";
 import { DACapabilityOptions } from "../../src/question/scaffold/vsc/CapabilityOptions";
 import { MockTools, MockUserInteraction, randomAppName } from "../core/utils";
 import { MockedLogProvider, MockedUserInteraction } from "../plugins/solution/util";
 
 describe("scaffold question", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   describe("appNameQuestion", () => {
     const question = appNameQuestion();
@@ -82,7 +81,7 @@ describe("scaffold question", () => {
       const appName = "1234";
       let validRes = await validFunc(appName, inputs);
       assert.isTrue(validRes === getLocalizedString("core.QuestionAppName.validation.pattern"));
-      sandbox.stub<any, any>(fs, "pathExists").resolves(true);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
       inputs.appName = randomAppName();
       inputs.folder = "./";
       validRes = await validFunc(inputs.appName, inputs);
@@ -91,40 +90,40 @@ describe("scaffold question", () => {
         path.resolve(inputs.folder, inputs.appName)
       );
       assert.equal(validRes, expected);
-      sandbox.restore();
-      sandbox.stub<any, any>(fs, "pathExists").resolves(false);
+      vi.restoreAllMocks();
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
       validRes = await validFunc(inputs.appName, inputs);
       assert.isTrue(validRes === undefined);
     });
 
     it("app name has 25 length - VSC", async () => {
       const mockedUI = new MockedUserInteraction();
-      sandbox.stub(createQuestionDeps, "createContext").returns({
+      vi.spyOn(createQuestionDeps.createQuestionDeps, "createContext").mockReturnValue({
         userInteraction: mockedUI,
       } as Context);
-      const showMessageStub = sandbox.stub(mockedUI, "showMessage");
+      const showMessageStub = vi.spyOn(mockedUI, "showMessage");
 
       const input = "abcdefghijklmnopqrstuvwxy";
       await validFunc(input, { platform: Platform.VSCode });
 
-      assert.isTrue(showMessageStub.calledOnce);
+      assert.isTrue(showMessageStub.mock.calls.length === 1);
     });
 
     it("app name has 25 length - VS", async () => {
       const mockedLogProvider = new MockedLogProvider();
-      sandbox.stub(createQuestionDeps, "createContext").returns({
+      vi.spyOn(createQuestionDeps.createQuestionDeps, "createContext").mockReturnValue({
         logProvider: mockedLogProvider as LogProvider,
       } as Context);
-      const warningStub = sandbox.stub(mockedLogProvider, "warning");
+      const warningStub = vi.spyOn(mockedLogProvider, "warning");
 
       const input = "abcdefghijklmnopqrstuvwxy";
       await validFunc(input, { platform: Platform.VS });
 
-      assert.isTrue(warningStub.calledOnce);
+      assert.isTrue(warningStub.mock.calls.length === 1);
 
       await validFunc(input);
 
-      assert.isTrue(warningStub.calledTwice);
+      assert.isTrue(warningStub.mock.calls.length === 2);
     });
 
     it("app name exceed maxlength of 30", async () => {
@@ -221,7 +220,7 @@ describe("scaffold question", () => {
 
   describe("folderQuestion", () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
     it("should find taskpane template", () => {
       const inputs: Inputs = {
@@ -236,13 +235,13 @@ describe("scaffold question", () => {
   });
 
   describe("getSolutionName", () => {
-    const sandbox = sinon.createSandbox();
+    const sandbox = vi;
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
     it("happy path", async () => {
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readJson").resolves({
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readJson").mockResolvedValue({
         "@microsoft/generator-sharepoint": {
           solutionName: "testSolutionName",
         },
@@ -252,7 +251,7 @@ describe("scaffold question", () => {
     });
 
     it("FileNotFoundError", async () => {
-      sandbox.stub(fs, "pathExists").resolves(false);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
       try {
         await getSolutionName(".");
         assert.fail("should throw");
@@ -262,8 +261,8 @@ describe("scaffold question", () => {
     });
 
     it("undefined", async () => {
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readJson").resolves({});
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readJson").mockResolvedValue({});
       const res = await getSolutionName("");
       assert.isUndefined(res);
     });
@@ -372,7 +371,7 @@ describe("scaffold question", () => {
     const tools = new MockTools();
     setTools(tools);
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     describe("Web Content", () => {
@@ -426,9 +425,9 @@ describe("scaffold question", () => {
           platform: Platform.VSCode,
         };
         const fakeAxiosInstance = axios.create();
-        sandbox.stub(axios, "create").returns(fakeAxiosInstance);
-        const axiosGetStub = sandbox.stub(fakeAxiosInstance, "get");
-        axiosGetStub.onCall(0).resolves({
+        vi.spyOn(axios, "create").mockReturnValue(fakeAxiosInstance);
+        const axiosGetStub = vi.spyOn(fakeAxiosInstance, "get");
+        axiosGetStub.mockResolvedValueOnce({
           status: 200,
           data: {
             id: "fakeId",
@@ -459,12 +458,12 @@ describe("scaffold question", () => {
           platform: Platform.VSCode,
         };
         const fakeAxiosInstance = axios.create();
-        sandbox.stub(axios, "create").returns(fakeAxiosInstance);
-        const axiosGetStub = sandbox.stub(fakeAxiosInstance, "get");
-        axiosGetStub
-          .onCall(0)
-          .resolves(err(new UserError("fakeError", "fakeError", "fakeError", "fakeError")));
-        axiosGetStub.onCall(1).resolves({
+        vi.spyOn(axios, "create").mockReturnValue(fakeAxiosInstance);
+        const axiosGetStub = vi.spyOn(fakeAxiosInstance, "get");
+        axiosGetStub.mockResolvedValueOnce(
+          err(new UserError("fakeError", "fakeError", "fakeError", "fakeError"))
+        );
+        axiosGetStub.mockResolvedValueOnce({
           status: 200,
           data: {
             id: "fakeId",
@@ -523,9 +522,9 @@ describe("scaffold question", () => {
         const inputs: Inputs = {
           platform: Platform.VSCode,
         };
-        sandbox
-          .stub(tools.tokenProvider.m365TokenProvider, "getAccessToken")
-          .resolves(err(new UserError("fakeError", "fakeError", "fakeError", "fakeError")));
+        vi.spyOn(tools.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
+          err(new UserError("fakeError", "fakeError", "fakeError", "fakeError"))
+        );
 
         const validationSchema = question.additionalValidationOnAccept as FuncValidation<string>;
         const res = await validationSchema.validFunc?.("http://fakeUrl.com", inputs);
@@ -568,9 +567,9 @@ describe("scaffold question", () => {
           config: config,
           request: request,
         };
-        sandbox
-          .stub(oneDriveSharePointHandler, "createGraphClientWithToken")
-          .throws(new AxiosError("fake error", "FAKE_ERROR", config, request, response));
+        vi.spyOn(oneDriveSharePointHandler, "createGraphClientWithToken").mockImplementation(() => {
+          throw new AxiosError("fake error", "FAKE_ERROR", config, request, response);
+        });
         const validationSchema = question.additionalValidationOnAccept as FuncValidation<string>;
         const res = await validationSchema.validFunc?.("https://test.com", inputs);
         assert.isNotNull(res);
@@ -581,9 +580,9 @@ describe("scaffold question", () => {
         const inputs: Inputs = {
           platform: Platform.VSCode,
         };
-        sandbox
-          .stub(oneDriveSharePointHandler, "createGraphClientWithToken")
-          .throws(new UserError("test", "test", "test", "test"));
+        vi.spyOn(oneDriveSharePointHandler, "createGraphClientWithToken").mockImplementation(() => {
+          throw new UserError("test", "test", "test", "test");
+        });
         const validationSchema = question.additionalValidationOnAccept as FuncValidation<string>;
         const res = await validationSchema.validFunc?.("https://test.com", inputs);
         assert.isNotNull(res);
@@ -593,9 +592,9 @@ describe("scaffold question", () => {
     describe("Copilot connectors", () => {
       it("happy path", async () => {
         const fakeAxiosInstance = axios.create();
-        sandbox.stub(axios, "create").returns(fakeAxiosInstance);
-        const axiosGetStub = sandbox.stub(fakeAxiosInstance, "get");
-        axiosGetStub.onCall(0).resolves({
+        vi.spyOn(axios, "create").mockReturnValue(fakeAxiosInstance);
+        const axiosGetStub = vi.spyOn(fakeAxiosInstance, "get");
+        axiosGetStub.mockResolvedValueOnce({
           status: 200,
           data: {
             value: [
@@ -612,7 +611,7 @@ describe("scaffold question", () => {
       });
 
       it("getAccessToken error", async () => {
-        sandbox.stub(utils, "createContext").returns({
+        vi.spyOn(utils, "createContext").mockReturnValue({
           tokenProvider: {
             m365TokenProvider: {
               getAccessToken: async () => {
@@ -631,13 +630,13 @@ describe("scaffold question", () => {
 
       it("api error", async () => {
         const fakeAxiosInstance = axios.create();
-        sandbox.stub(axios, "create").returns(fakeAxiosInstance);
-        const axiosGetStub = sandbox.stub(fakeAxiosInstance, "get");
-        axiosGetStub.onCall(0).rejects({
+        vi.spyOn(axios, "create").mockReturnValue(fakeAxiosInstance);
+        const axiosGetStub = vi.spyOn(fakeAxiosInstance, "get");
+        axiosGetStub.mockRejectedValueOnce({
           status: 404,
           error: "fakeError",
         });
-        axiosGetStub.onCall(1).rejects(new Error("fakeError"));
+        axiosGetStub.mockRejectedValueOnce(new Error("fakeError"));
         try {
           await generatorHelper.getGraphConnectors();
           assert.fail("Should throw error");
@@ -655,9 +654,9 @@ describe("scaffold question", () => {
 
       it("api 403 error", async () => {
         const fakeAxiosInstance = axios.create();
-        sandbox.stub(axios, "create").returns(fakeAxiosInstance);
-        const axiosGetStub = sandbox.stub(fakeAxiosInstance, "get");
-        axiosGetStub.onCall(0).rejects({
+        vi.spyOn(axios, "create").mockReturnValue(fakeAxiosInstance);
+        const axiosGetStub = vi.spyOn(fakeAxiosInstance, "get");
+        axiosGetStub.mockRejectedValueOnce({
           response: {
             status: 403,
             error: "fakeError",
@@ -772,20 +771,22 @@ describe("scaffold question", () => {
 
   describe("pluginManifestQuestion", () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
     it("readPluginManifestFile fail", async () => {
-      sandbox
-        .stub(pluginManifestUtils, "readPluginManifestFile")
-        .resolves(err(new UserCancelError()));
+      vi.spyOn(pluginManifestUtils, "readPluginManifestFile").mockResolvedValue(
+        err(new UserCancelError())
+      );
       const question = pluginManifestQuestion();
       const validFunc = (question.validation as any).validFunc;
       const res = validFunc("test", {} as any);
       assert.isDefined(res);
     });
     it("validateSourcePluginManifest fail", async () => {
-      sandbox.stub(pluginManifestUtils, "readPluginManifestFile").resolves(ok({} as any));
-      sandbox.stub(daHelper, "validateSourcePluginManifest").resolves(err(new UserCancelError()));
+      vi.spyOn(pluginManifestUtils, "readPluginManifestFile").mockResolvedValue(ok({} as any));
+      vi.spyOn(daHelper, "validateSourcePluginManifest").mockReturnValue(
+        err(new UserCancelError())
+      );
       const question = pluginManifestQuestion();
       const validFunc = (question.validation as any).validFunc;
       const res = validFunc("test", {} as any);
@@ -794,10 +795,10 @@ describe("scaffold question", () => {
   });
 
   describe("selectExistingPluginManifestQuestion", () => {
-    const sandbox = sinon.createSandbox();
+    const sandbox = vi;
 
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("dynamicOptions: should throw error when projectPath is undefined", async () => {
@@ -815,7 +816,7 @@ describe("scaffold question", () => {
       const inputs = { projectPath: "test-path" };
       const error = new Error("manifest read error");
 
-      sandbox.stub(manifestUtils, "_readAppManifest").resolves(err(error as any));
+      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(err(error as any));
 
       try {
         await question.dynamicOptions!(inputs as any);
@@ -830,7 +831,7 @@ describe("scaffold question", () => {
       const inputs = { projectPath: "test-path" };
       const manifest = {};
 
-      sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest as any));
+      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest as any));
 
       try {
         await question.dynamicOptions!(inputs as any);
@@ -850,8 +851,8 @@ describe("scaffold question", () => {
       };
       const agentJson = {};
 
-      sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest as any));
-      sandbox.stub(fs, "readJSON").resolves(agentJson);
+      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest as any));
+      vi.spyOn(fs, "readJSON").mockResolvedValue(agentJson);
 
       try {
         await question.dynamicOptions!(inputs as any);
@@ -871,8 +872,8 @@ describe("scaffold question", () => {
       };
       const agentJson = { actions: [] };
 
-      sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest as any));
-      sandbox.stub(fs, "readJSON").resolves(agentJson);
+      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest as any));
+      vi.spyOn(fs, "readJSON").mockResolvedValue(agentJson);
 
       try {
         await question.dynamicOptions!(inputs as any);
@@ -897,8 +898,8 @@ describe("scaffold question", () => {
         ],
       };
 
-      sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest as any));
-      sandbox.stub(fs, "readJSON").resolves(agentJson);
+      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest as any));
+      vi.spyOn(fs, "readJSON").mockResolvedValue(agentJson);
 
       const result: any = await question!.dynamicOptions!(inputs as any);
 
@@ -939,10 +940,10 @@ describe("scaffold question", () => {
   });
 
   describe("selectOpenAPISpecFromPluginQuestion", () => {
-    const sandbox = sinon.createSandbox();
+    const sandbox = vi;
 
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("should have correct properties", () => {
@@ -993,7 +994,7 @@ describe("scaffold question", () => {
         ],
       };
 
-      sandbox.stub(fs, "readJSON").resolves(pluginManifest);
+      vi.spyOn(fs, "readJSON").mockResolvedValue(pluginManifest);
 
       const result: any = await question.dynamicOptions!(inputs);
 
@@ -1028,7 +1029,7 @@ describe("scaffold question", () => {
         ],
       };
 
-      sandbox.stub(fs, "readJSON").resolves(pluginManifest);
+      vi.spyOn(fs, "readJSON").mockResolvedValue(pluginManifest);
 
       const result: any = await question.dynamicOptions!(inputs);
 
@@ -1054,7 +1055,7 @@ describe("scaffold question", () => {
         ],
       };
 
-      sandbox.stub(fs, "readJSON").resolves(pluginManifest);
+      vi.spyOn(fs, "readJSON").mockResolvedValue(pluginManifest);
 
       const result: any = await question.dynamicOptions!(inputs);
 
@@ -1074,7 +1075,7 @@ describe("scaffold question", () => {
         runtimes: [],
       };
 
-      sandbox.stub(fs, "readJSON").resolves(pluginManifest);
+      vi.spyOn(fs, "readJSON").mockResolvedValue(pluginManifest);
 
       try {
         await question.dynamicOptions!(inputs);
@@ -1093,7 +1094,7 @@ describe("scaffold question", () => {
 
       const pluginManifest = {};
 
-      sandbox.stub(fs, "readJSON").resolves(pluginManifest);
+      vi.spyOn(fs, "readJSON").mockResolvedValue(pluginManifest);
 
       try {
         await question.dynamicOptions!(inputs);
@@ -1105,10 +1106,10 @@ describe("scaffold question", () => {
   });
 
   describe("selectApiOperationForRegenerateQuestion", () => {
-    const sandbox = sinon.createSandbox();
+    const sandbox = vi;
 
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("should have correct properties", () => {
@@ -1195,7 +1196,7 @@ describe("scaffold question", () => {
         [QuestionNames.SelectOpenAPISpecFromPlugin]: "path/to/spec",
       };
 
-      sandbox.stub(fs, "pathExists").resolves(false);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
 
       try {
         await question.dynamicOptions!(inputs);
@@ -1214,9 +1215,13 @@ describe("scaffold question", () => {
       const errorMessage = "List operations failed";
       const mockError = [new Error(errorMessage)];
 
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(createQuestionDeps, "createContext").returns({} as Context);
-      sandbox.stub(createQuestionDeps, "listOperations").resolves(err(mockError as any));
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(createQuestionDeps.createQuestionDeps, "createContext").mockReturnValue(
+        {} as Context
+      );
+      vi.spyOn(createQuestionDeps.createQuestionDeps, "listOperations").mockResolvedValue(
+        err(mockError as any)
+      );
 
       try {
         await question.dynamicOptions!(inputs);
@@ -1232,9 +1237,11 @@ describe("scaffold question", () => {
         [QuestionNames.SelectOpenAPISpecFromPlugin]: "path/to/spec",
       };
 
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(createQuestionDeps, "createContext").returns({} as Context);
-      sandbox.stub(createQuestionDeps, "listOperations").resolves(ok([]));
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(createQuestionDeps.createQuestionDeps, "createContext").mockReturnValue(
+        {} as Context
+      );
+      vi.spyOn(createQuestionDeps.createQuestionDeps, "listOperations").mockResolvedValue(ok([]));
 
       try {
         await question.dynamicOptions!(inputs);
@@ -1265,9 +1272,13 @@ describe("scaffold question", () => {
         },
       ];
 
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(createQuestionDeps, "createContext").returns({} as Context);
-      sandbox.stub(createQuestionDeps, "listOperations").resolves(ok(operations as any));
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(createQuestionDeps.createQuestionDeps, "createContext").mockReturnValue(
+        {} as Context
+      );
+      vi.spyOn(createQuestionDeps.createQuestionDeps, "listOperations").mockResolvedValue(
+        ok(operations as any)
+      );
 
       const result = await question.dynamicOptions!(inputs);
 
@@ -1342,7 +1353,9 @@ describe("scaffold question", () => {
       const question = apiSpecUrlQuestion();
       const inputs: Inputs = { platform: Platform.VSCode };
       const mockOperations = [{ id: "op1", label: "GET /pets", data: {} }];
-      sandbox.stub(createQuestionDeps, "listOperations").resolves(ok(mockOperations as any));
+      vi.spyOn(createQuestionDeps.createQuestionDeps, "listOperations").mockResolvedValue(
+        ok(mockOperations as any)
+      );
       const validFunc = (question as any).additionalValidationOnAccept.validFunc;
       const result = await validFunc("https://example.com/api.yaml", inputs);
       assert.isUndefined(result);
@@ -1353,7 +1366,9 @@ describe("scaffold question", () => {
       const question = apiSpecUrlQuestion();
       const inputs: Inputs = { platform: Platform.VSCode };
       const mockErrors = [{ type: 0, content: "Spec parse error" }];
-      sandbox.stub(createQuestionDeps, "listOperations").resolves(err(mockErrors as any));
+      vi.spyOn(createQuestionDeps.createQuestionDeps, "listOperations").mockResolvedValue(
+        err(mockErrors as any)
+      );
       const validFunc = (question as any).additionalValidationOnAccept.validFunc;
       const result = await validFunc("https://example.com/api.yaml", inputs);
       assert.equal(result, "Spec parse error");
@@ -1366,7 +1381,9 @@ describe("scaffold question", () => {
         { type: 0, content: "Error 1" },
         { type: 0, content: "Error 2" },
       ];
-      sandbox.stub(createQuestionDeps, "listOperations").resolves(err(mockErrors as any));
+      vi.spyOn(createQuestionDeps.createQuestionDeps, "listOperations").mockResolvedValue(
+        err(mockErrors as any)
+      );
       const validFunc = (question as any).additionalValidationOnAccept.validFunc;
       const result = await validFunc("https://example.com/api.yaml", inputs);
       assert.equal(result, "Error 1\nError 2");
@@ -1380,7 +1397,9 @@ describe("scaffold question", () => {
         { type: 0, content: longError },
         { type: 0, content: "Error 2" },
       ];
-      sandbox.stub(createQuestionDeps, "listOperations").resolves(err(mockErrors as any));
+      vi.spyOn(createQuestionDeps.createQuestionDeps, "listOperations").mockResolvedValue(
+        err(mockErrors as any)
+      );
       const validFunc = (question as any).additionalValidationOnAccept.validFunc;
       const result = await validFunc("https://example.com/api.yaml", inputs);
       assert.equal(
@@ -1422,7 +1441,7 @@ describe("scaffold question", () => {
       const question = apiSpecFileQuestion();
       const validFunc = (question.validation as FuncValidation<string>).validFunc;
       const inputs: Inputs = { platform: Platform.VSCode };
-      sandbox.stub(fs, "pathExists").resolves(false);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
       const result = await validFunc("nonexistent.yaml", inputs);
       assert.isDefined(result);
       assert.include(result as string, "File not found");
@@ -1433,8 +1452,10 @@ describe("scaffold question", () => {
       const validFunc = (question.validation as FuncValidation<string>).validFunc;
       const inputs: Inputs = { platform: Platform.VSCode };
       const mockOperations = [{ id: "op1", label: "GET /pets", data: {} }];
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(createQuestionDeps, "listOperations").resolves(ok(mockOperations as any));
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(createQuestionDeps.createQuestionDeps, "listOperations").mockResolvedValue(
+        ok(mockOperations as any)
+      );
       const result = await validFunc("test.yaml", inputs);
       assert.isUndefined(result);
       assert.deepEqual(inputs.supportedApisFromApiSpec, mockOperations);
@@ -1445,8 +1466,10 @@ describe("scaffold question", () => {
       const validFunc = (question.validation as FuncValidation<string>).validFunc;
       const inputs: Inputs = { platform: Platform.VSCode };
       const mockErrors = [{ type: 0, content: "Invalid spec" }];
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(createQuestionDeps, "listOperations").resolves(err(mockErrors as any));
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(createQuestionDeps.createQuestionDeps, "listOperations").mockResolvedValue(
+        err(mockErrors as any)
+      );
       const result = await validFunc("test.yaml", inputs);
       assert.equal(result, "Invalid spec");
     });
@@ -1459,8 +1482,10 @@ describe("scaffold question", () => {
         { type: 0, content: "Error 1" },
         { type: 0, content: "Error 2" },
       ];
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(createQuestionDeps, "listOperations").resolves(err(mockErrors as any));
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(createQuestionDeps.createQuestionDeps, "listOperations").mockResolvedValue(
+        err(mockErrors as any)
+      );
       const result = await validFunc("test.yaml", inputs);
       assert.equal(result, "Error 1\nError 2");
     });
@@ -1512,7 +1537,9 @@ describe("scaffold question", () => {
       const validFunc = (question.validation as FuncValidation<string>).validFunc;
       const inputs: Inputs = { platform: Platform.VSCode };
       const mockOperations = [{ id: "op1", label: "GET /pets", data: {} }];
-      sandbox.stub(createQuestionDeps, "listOperations").resolves(ok(mockOperations as any));
+      vi.spyOn(createQuestionDeps.createQuestionDeps, "listOperations").mockResolvedValue(
+        ok(mockOperations as any)
+      );
       const result = await validFunc("https://example.com/api.yaml", inputs);
       assert.isUndefined(result);
       assert.deepEqual(inputs.supportedApisFromApiSpec, mockOperations);
@@ -1522,7 +1549,7 @@ describe("scaffold question", () => {
       const question = apiSpecLocationQuestion();
       const validFunc = (question.validation as FuncValidation<string>).validFunc;
       const inputs: Inputs = { platform: Platform.VSCode };
-      sandbox.stub(fs, "pathExists").resolves(false);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
       const result = await validFunc("nonexistent.yaml", inputs);
       assert.isDefined(result);
       assert.include(result as string, "valid HTTP URL");

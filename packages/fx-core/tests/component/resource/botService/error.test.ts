@@ -4,7 +4,6 @@
 /**
  * @author zhijie <zhihuan@microsoft.com>
  */
-import { assert } from "chai";
 import { getDefaultString } from "../../../../src/common/localizeUtils";
 import { ErrorNames } from "../../../../src/component/resource/botService/constants";
 import {
@@ -13,6 +12,7 @@ import {
   ConfigUpdatingError,
 } from "../../../../src/component/resource/botService/errors";
 import { Messages } from "../../../../src/component/resource/botService/messages";
+import { assert } from "vitest";
 
 describe("wrap error", () => {
   it("Increase UT - BotFrameworkNotAllowedToAcquireTokenError", () => {

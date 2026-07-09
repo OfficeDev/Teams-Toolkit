@@ -1,0 +1,35 @@
+{
+  "$schema": "../../../schema/questions.schema.json",
+  "questions": [
+    {
+      "name": "mcpServerUrl",
+      "type": "text",
+      "title": "MCP Server URL",
+      "keyPrefix": "core.createProjectQuestion.mcpForDa.ServerUrl",
+      "validation": "uri"
+    },
+    {
+      "name": "mcpToolsFilePath",
+      "type": "text",
+      "title": "MCP Tools Definition File",
+      "keyPrefix": "core.MCPForDA.toolsFilePath",
+      "cliDescription": "Path to a JSON file containing MCP tool definitions.",
+      "optional": true,
+      "condition": { "expr": "surface == 'cli' && nonInteractive != 'true' && mcpToolsJson == null" }
+    },
+    {
+      "name": "selectedMcpTools",
+      "type": "multiSelect",
+      "title": "Select Operation(s) Copilot can interact with",
+      "keyPrefix": "core.createProjectQuestion.mcpForDa.PreFetchTools",
+      "optionsFrom": "mcp.tools",
+      "optionsFromParams": {
+        "toolsJson": { "expr": "mcpToolsJson" },
+        "toolsFilePath": { "expr": "mcpToolsFilePath" },
+        "serverUrl": { "expr": "mcpServerUrl" }
+      },
+      "cliDescription": "MCP tools to include in the action.",
+      "condition": { "expr": "surface == 'cli' && nonInteractive != 'true'" }
+    }
+  ]
+}

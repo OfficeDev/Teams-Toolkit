@@ -1,6 +1,6 @@
 ---
 name: vibe-coding
-description: "End-to-end workflow for agent-driven changes that add or modify behavior in the toolkit packages. Use when: adding or changing a behavior (anything that warrants an Acceptance Criteria row); refactoring toward a structural shape governed by ADRs in `docs/02-architecture/`; adding a behavior-changing CLI or VS Code action. Codifies the design-first → tests-from-AC → implement → verify → self-review → docs-when-needed cycle that keeps contributions safe to merge."
+description: "End-to-end workflow for agent-driven changes that add or modify behavior in the toolkit packages. Use when: adding or changing a behavior (anything that warrants an Acceptance Criteria row); refactoring toward a structural shape governed by ADRs in `docs/02-architecture/`; changing v4 scaffolding architecture, removing duplicate Q1/Q2/Q3 logic, extracting shared engines, or moving logic into providers/validators/steps; adding a behavior-changing CLI or VS Code action. Codifies the design-first → tests-from-AC → implement → verify → self-review → docs-when-needed cycle that keeps contributions safe to merge."
 argument-hint: "Describe the behavior change or structural-shape work"
 ---
 
@@ -30,10 +30,10 @@ The non-negotiable gates per PR:
 
 1. **Requirements first** — start from a GitHub Issue, ADO Work Item, chat request, or [`prd-ux-design`](../prd-ux-design/SKILL.md) handoff; confirm approved PRD + scenario artifacts exist before specs. If PRD or scenario work is needed, complete `prd-ux-design` first.
 2. **Spec first after requirements are clear** — Operation Spec / Domain Spec / ADR / data-model entity in [`docs/03-specs/`](../../../docs/03-specs/README.md) written or located **before** any code is touched.
-3. **Tests next** — every required test is derived 1:1 from the spec's `## Acceptance Criteria` table and includes the AC ID in its name (`it("AC-01: ...")`). Each AC row is tagged with its tier (L1 / L2 / L3); L2 CLI E2E and L3 VS Code UI tests are documented but not hard PR gates yet.
+3. **Tests next** — every required test is derived 1:1 from the spec's `## Acceptance Criteria` table and includes the AC ID in its name (`it("AC-01: ...")`). Each AC row is tagged with its runtime tier (L1 / L2 / L3), purpose tier, gate, and harness; L2 CLI E2E and L3 VS Code UI tests are documented but not hard PR gates yet unless the touched behavior is the surface itself. For the purpose axis (operation-integration / scenario / compatibility / file-unit / surface), see [ADR-0013](../../../docs/02-architecture/adr/ADR-0013-test-tiering-and-coverage-gate.md) and the [test-tiers section](../../../docs/03-specs/README.md).
 4. **Architectural and per-package rules followed** — implementation respects the ADRs in [`docs/02-architecture/`](../../../docs/02-architecture/README.md) and the matching files under [`.github/instructions/`](../../instructions/) for every path touched. Specifics (composition pattern, error model, input validation, registries, context propagation) live in those documents, not in this skill.
-5. **New Template added to the template registry has a scaffold integration test**; CLI E2E coverage is documented as L2 but not a hard PR gate yet.
-6. **Lint clean, format clean, 80% coverage gate green.**
+5. **Changed user-visible workflows have scenario coverage** — a new template, lifecycle flow, migration path, CLI command behavior, VS Code command behavior, or other feature workflow has a Scenario Spec and a scenario-tier test for every required L1 AC row; L2/L3 surface coverage is documented and becomes a required gate when the changed behavior is the surface itself.
+6. **Lint clean, format clean, coverage gate green.** "Coverage green" means every Acceptance-Criteria row has its owning AC-derived test (operation-integration, scenario, or compatibility), complex pure logic may add optional file-unit tests, and every thin adapter / glue / barrel is covered by one real integration test **or** carries a justified `/* istanbul ignore next -- <reason> */`. The numeric line floor is a backstop, not the definition of done — see [ADR-0013](../../../docs/02-architecture/adr/ADR-0013-test-tiering-and-coverage-gate.md) and the [test-tiers section](../../../docs/03-specs/README.md). Mock-heavy micro-units added solely to lift a file's line % are a review red flag.
 7. **Conventional Commits** (`feat(<scope>):`, `fix(<scope>):` where `<scope>` is the package or domain touched, e.g. `feat(fx-core):`, `fix(cli):`).
 8. **Downstream docs that describe shape** (template registry, driver catalogue, CLI surface) updated **in the same PR** when shape changes.
 
@@ -78,6 +78,7 @@ For any non-trivial change, locate or write the spec **after requirements are cl
 | Change kind | Where the spec lives |
 |-------------|---------------------|
 | New / changed Operation, driver, or lifecycle stage | `docs/03-specs/operations/<domain>/<operation>.md` (see [`docs/03-specs/`](../../../docs/03-specs/README.md)) |
+| New / changed user-visible workflow | `docs/03-specs/scenarios/<group>/<slug>.md` (feature workflow; scaffold template is one subtype) |
 | New Domain or domain boundary change | `docs/03-specs/domains/<nn>-<domain>.md` (see [`docs/03-specs/`](../../../docs/03-specs/README.md)) |
 | Architectural decision | New ADR under [`docs/02-architecture/`](../../../docs/02-architecture/README.md) (see that folder for the ADR convention) |
 | New / changed data contract or entity | `docs/03-specs/data-model/entities/` (see [`docs/03-specs/`](../../../docs/03-specs/README.md)) |
@@ -136,11 +137,17 @@ it("AC-01: returns clientId and objectId on success", ...)
 it("AC-03: returns UserError(AadAppNameTooLong) when name exceeds limit", ...)
 ```
 
-**Each AC row in the spec carries a Tier**:
+**Each AC row in the spec carries a Runtime, Purpose, Gate, and Harness**:
 
 - **L1 — Engine** (unit + integration; per-PR, fast). Within L1, integration is weighted over unit for lifecycle code.
 - **L2 — E2E** (real CLI against real M365 + Azure). **Documented but not a hard PR gate yet.**
 - **L3 — UI** (VS Code wizard / command palette / webview flows). **Documented but not a hard PR gate yet.**
+
+Purpose and harness decide what the test protects and how it runs. Use the
+smallest harness that can falsify the AC: operation port, in-memory workflow,
+temp dir, driver fake, CLI command harness, VS Code command harness, Playwright,
+or compatibility diff harness. Compatibility AC rows are required whenever the
+spec promises v3/v4, old/new, or migration parity.
 
 The ADRs that formalize the tiering and the inverted lifecycle test pyramid live under [`docs/02-architecture/`](../../../docs/02-architecture/README.md) as they land.
 
@@ -150,9 +157,11 @@ Map from what you'll implement to what test it needs:
 |---|---|---|
 | Pure function (no I/O) | Unit test (`tests/unit/<area>/`) | L1 (unit) |
 | Engine action with side effects (operation, driver, lifecycle stage) | Integration test exercising full pipeline (`tests/integration/`) — mock only outermost HTTP | L1 (integration) |
-| New Template added to the template registry | Scaffold integration test; document L2 E2E scenario if applicable | L1 (integration); L2 documented |
-| New CLI action | CLI integration test; document L2 E2E scenario if it writes resources | L1 (integration); L2 documented |
-| New VS Code command / wizard | Handler unit test; document L3 UI scenario if user-visible | L1 (unit); L3 documented |
+| New or changed feature workflow | Scenario-tier integration test asserting observable workflow outcomes | L1 (scenario) |
+| New Template added to the template registry | Scenario-tier scaffold test; document L2 CLI matrix case if applicable | L1 (scenario); L2 documented |
+| Compatibility or migration promise | Normalized old/new or v3/v4 diff test | L1/L2 (compatibility) |
+| New CLI action | CLI integration test; document L2 E2E scenario if it writes resources | L1/L2, depending on boundary |
+| New VS Code command / wizard | Handler or command-level test; document L3 UI scenario if user-visible | L1 command; L3 documented |
 
 A unit test that only re-mocks what an integration test already covers is a delete signal.
 
@@ -207,6 +216,7 @@ Mechanical gates do not catch quality. Before claiming done, audit the diff agai
 1. **ADRs in [`docs/02-architecture/`](../../../docs/02-architecture/README.md)** — every new file/function must respect them. Common slips show up in file size, in module-scoped runtime state, and in error-handling shape.
 2. **Matching `.github/instructions/*`** — for each touched file path, the instruction file whose `applyTo` matches should be re-checked. Common slips: copyright header missing, `as` cast snuck in, raw user-facing string instead of `getLocalizedString`, secret not masked.
 3. **The Anti-patterns list at the bottom of this skill** — flag any match and fix before PR.
+4. **Single source of truth / no transient-doc rot** — if the diff added or touched a doc: (a) it must not restate a fact that already has an owner elsewhere — link to the owner instead; (b) any time-bound page it added (a `*.current-state.md`, an ADR-decomposition proposal) must carry an `Expires-when:` header naming the ADRs whose all-`Accepted` state retires it. See the conventions in [`docs/02-architecture/`](../../../docs/02-architecture/README.md).
 
 Output of this phase is either "all checks pass" or a list of concrete fixes → loop back to Phase 3.
 
@@ -233,7 +243,9 @@ CODEOWNERS will auto-assign reviewers. Reviewers will check:
 - ✅ Spec exists in `docs/03-specs/` and is referenced in the PR.
 - ✅ Tests carry AC IDs and trace 1:1 to AC rows.
 - ✅ Integration test exists for any new engine action with side effects (operation, driver, lifecycle stage).
-- ✅ Scaffold integration test for any new template registered in the template registry; L2 E2E scenario documented when applicable.
+- ✅ Scenario-tier test exists for every changed user-visible workflow AC; scaffold templates are covered as workflow scenarios, not a special exception.
+- ✅ Compatibility diff test exists for any migration, v3/v4, or old/new parity promise.
+- ✅ Surface smoke is documented for changed CLI / VS Code behavior and required when the surface behavior itself changed.
 - ✅ ADRs in [`docs/02-architecture/`](../../../docs/02-architecture/README.md) and matching `.github/instructions/*` followed for every path touched.
 - ✅ Lint / format / coverage gates green.
 - ✅ Downstream docs updated where the drift checklist required.
@@ -251,7 +263,9 @@ CODEOWNERS will auto-assign reviewers. Reviewers will check:
 ## Anti-patterns to flag in self-review
 
 - A new engine action with side effects but no integration test — required.
-- A new template in the template registry without a scaffold integration test.
+- A changed user-visible workflow without a Scenario Spec and scenario-tier test.
+- A new template in the template registry without a scenario-tier scaffold test.
+- A migration promise without a normalized compatibility diff test.
 - A test name without an AC ID prefix — required if the test maps to a spec.
 - A "TODO: add tests later" comment — not allowed; tests are written in Phase 3.
 - A "TODO: add docs later" comment — not allowed; this is the doc-PR.

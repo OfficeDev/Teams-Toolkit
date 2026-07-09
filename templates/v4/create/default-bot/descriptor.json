@@ -1,0 +1,21 @@
+{
+  "$schema": "../../schema/descriptor.schema.json",
+  "id": "default-bot",
+  "name": "Teams Simple Bot",
+  "languages": ["typescript", "javascript", "python"],
+  "minEngineVersion": "5.20.0",
+  "spec": "docs/03-specs/scenarios/teams/create-default-bot.md",
+  "requiresNetwork": false,
+
+  "optionsSchema": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+
+  "replaceMap": [
+    { "var": "SafeProjectNameLowerCase", "expr": "safeProjectNameLowerCase(appName)" },
+    { "var": "SandBoxedTeam", "when": "featureFlag('TEAMSFX_SANDBOXED_TEAM')", "value": "true" },
+    { "var": "pathDelimiter", "expr": "pathDelimiter()" }
+  ]
+}

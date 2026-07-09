@@ -8,7 +8,7 @@ import * as util from "util";
 import { ProgressLocation, window } from "vscode";
 
 import { IProgressHandler, ok } from "@microsoft/teamsfx-api";
-import { localize } from "../utils/localizeUtils";
+import * as localizeUtils from "../utils/localizeUtils";
 
 export class ProgressHandler implements IProgressHandler {
   private totalSteps: number;
@@ -36,21 +36,21 @@ export class ProgressHandler implements IProgressHandler {
     let tail = "";
     if (this.view === "output") {
       tail = ` ${util.format(
-        localize("teamstoolkit.progressHandler.showOutputLink"),
+        localizeUtils.localize("teamstoolkit.progressHandler.showOutputLink"),
         "command:fx-extension.showOutputChannel"
       )}`;
     } else if (this.view === "terminal") {
       tail = ` ${util.format(
-        localize("teamstoolkit.progressHandler.showTerminalLink"),
+        localizeUtils.localize("teamstoolkit.progressHandler.showTerminalLink"),
         "command:workbench.action.terminal.focus"
       )}`;
     }
     const detail = this.detail
       ? ` ${this.detail}`
-      : localize("teamstoolkit.progressHandler.prepareTask");
+      : localizeUtils.localize("teamstoolkit.progressHandler.prepareTask");
 
     return util.format(
-      localize("teamstoolkit.progressHandler.reloadNotice"),
+      localizeUtils.localize("teamstoolkit.progressHandler.reloadNotice"),
       `${head}: ${step}`,
       detail,
       tail

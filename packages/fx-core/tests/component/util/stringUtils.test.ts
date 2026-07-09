@@ -3,8 +3,8 @@
 /**
  * @author Siglud <siglud@gmail.com>
  */
-import { assert } from "chai";
 import { maskSecretFromEnv } from "../../../src/common/stringUtils";
+import { assert } from "vitest";
 
 describe("stringUtils.maskSecretFromEnv", () => {
   afterEach(() => {

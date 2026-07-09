@@ -19,6 +19,13 @@
         "icon": "$(teamsfx-custom-copilot)"
       },
       {
+        "id": "blank-app-type",
+        "label": "template.createProjectQuestion.projectType.blankApp.label",
+        "detail": "template.createProjectQuestion.projectType.blankApp.detail",
+        "groupName": "template.createProjectQuestion.projectType.createGroup.m365Apps",
+        "icon": "$(file)"
+      },
+      {
         "id": "graph-connector-type",
         "label": "template.createProjectQuestion.createGraphConnector.label",
         "detail": "template.createProjectQuestion.createGraphConnector.detail",
@@ -129,13 +136,6 @@
                     "label": "template.createProjectQuestion.capability.copilotPluginApiSpecOption.label",
                     "detail": "template.createProjectQuestion.capability.copilotPluginApiSpecOption.detail",
                     "data": "api-plugin-from-existing-api"
-                  },
-                  {
-                    "id": "da-meta-os",
-                    "label": "template.createProjectQuestion.capability.DAMetaOS.label",
-                    "detail": "template.createProjectQuestion.capability.DAMetaOS.detail",
-                    "data": "declarative-agent-meta-os-new-project",
-                    "featureFlag": "TEAMSFX_DA_METAOS"
                   },
                   {
                     "id": "mcp",
@@ -391,12 +391,6 @@
             "featureFlag": "TEAMSFX_CF_SHORTCUT_METAOS"
           },
           {
-            "id": "office-da-meta-os",
-            "label": "template.createProjectQuestion.DAMetaOS.label",
-            "detail": "template.createProjectQuestion.DAMetaOS.detail",
-            "featureFlag": "TEAMSFX_DA_METAOS"
-          },
-          {
             "id": "office-addin-import",
             "label": "template.importOfficeAddin.label",
             "detail": "template.importAddin.detail",
@@ -407,39 +401,6 @@
       "children": [
         {
           "condition": {
-            "equals": "office-da-meta-os"
-          },
-          "data": {
-            "name": "da-meta-os-capability",
-            "title": "template.createProjectQuestion.DAMetaOS.capability.title",
-            "type": "singleSelect",
-            "placeholder": "template.createCapabilityQuestion.placeholder",
-            "options": [
-              {
-                "id": "da-meta-os-new-project",
-                "label": "template.createProjectQuestion.DAMetaOS.capability.newProject.label",
-                "detail": "template.createProjectQuestion.DAMetaOS.capability.newProject.detail",
-                "data": "declarative-agent-meta-os-new-project"
-              },
-              {
-                "id": "da-meta-os-upgrade-existing-project",
-                "label": "template.createProjectQuestion.DAMetaOS.capability.upgradeProject.label",
-                "detail": "template.createProjectQuestion.DAMetaOS.capability.upgradeProject.detail",
-                "data": "declarative-agent-meta-os-upgrade-project"
-              }
-            ]
-          },
-          "children": [
-            {
-              "node": "officeAddinFolderNode",
-              "condition": {
-                "equals": "da-meta-os-upgrade-existing-project"
-              }
-            }
-          ]
-        },
-        {
-          "condition": {
             "equals": "office-addin-import"
           },
           "node": "officeAddinImportNode"
@@ -447,6 +408,25 @@
       ],
       "condition": {
         "equals": "office-meta-os-type"
+      }
+    },
+    {
+      "data": {
+        "title": "template.createProjectQuestion.projectType.blankApp.title",
+        "name": "capabilities",
+        "type": "singleSelect",
+        "skipSingleOption": true,
+        "options": [
+          {
+            "id": "blank-app",
+            "label": "template.createProjectQuestion.projectType.blankApp.label",
+            "detail": "template.createProjectQuestion.projectType.blankApp.detail",
+            "data": "blank-app"
+          }
+        ]
+      },
+      "condition": {
+        "equals": "blank-app-type"
       }
     }
   ]

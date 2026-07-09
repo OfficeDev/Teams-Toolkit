@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/descriptor.schema.json",
+  "id": "teams-collaborator-agent",
+  "name": "Teams Collaborator Agent",
+  "languages": ["typescript"],
+  "minEngineVersion": "5.20.0",
+  "spec": "docs/03-specs/scenarios/teams/create-teams-collaborator-agent.md",
+  "requiresNetwork": false,
+
+  "optionsSchema": {
+    "type": "object",
+    "properties": {
+      "azureOpenAIKey": { "type": "string" },
+      "azureOpenAIEndpoint": { "type": "string" },
+      "azureOpenAIDeploymentName": { "type": "string" }
+    },
+    "additionalProperties": false
+  },
+
+  "replaceMap": [
+    { "var": "SafeProjectNameLowerCase", "expr": "safeProjectNameLowerCase(appName)" },
+    { "var": "SandBoxedTeam", "when": "featureFlag('TEAMSFX_SANDBOXED_TEAM')", "value": "true" },
+    { "var": "CEAEnabled", "when": "featureFlag('TEAMSFX_CEA_ENABLED')", "value": "true" },
+    { "var": "pathDelimiter", "expr": "pathDelimiter()" },
+    { "var": "useOpenAI", "const": "" },
+    { "var": "useAzureOpenAI", "const": "true" },
+    { "var": "openAIKey", "const": "" },
+    { "var": "originalOpenAIKey", "const": "" },
+    { "var": "azureOpenAIKey", "from": "azureOpenAIKey" },
+    { "var": "originalAzureOpenAIKey", "from": "azureOpenAIKey" },
+    { "var": "azureOpenAIEndpoint", "from": "azureOpenAIEndpoint" },
+    { "var": "azureOpenAIDeploymentName", "from": "azureOpenAIDeploymentName" },
+    { "var": "openAIModel", "const": "" }
+  ]
+}

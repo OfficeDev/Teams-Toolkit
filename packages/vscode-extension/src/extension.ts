@@ -120,7 +120,6 @@ import {
   createNewProjectHandler,
   deployHandler,
   m365PreAuthHandler,
-  metaOSExtendToDAHandler,
   provisionHandler,
   publishHandler,
   regeneratePluginHandler,
@@ -596,14 +595,6 @@ function registerTreeViewCommandsInDevelopment(context: vscode.ExtensionContext)
   registerInCommandController(context, "fx-extension.addWebpart", addWebpartHandler, "addWebpart");
 
   registerInCommandController(context, "fx-extension.addPlugin", addPluginHandler, "addPlugin");
-
-  featureFlagManager.getBooleanValue(FeatureFlags.DAMetaOS) &&
-    registerInCommandController(
-      context,
-      "fx-extension.metaOSExtendToDA",
-      metaOSExtendToDAHandler,
-      "metaOSExtendToDA"
-    );
 
   registerInCommandController(
     context,

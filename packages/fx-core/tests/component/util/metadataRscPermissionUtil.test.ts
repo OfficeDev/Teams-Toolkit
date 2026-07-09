@@ -1,6 +1,4 @@
 import { err, FxError, LogProvider, ok, Result } from "@microsoft/teamsfx-api";
-import { assert } from "chai";
-import sinon from "sinon";
 import fs from "fs-extra";
 import {
   DriverInstance,
@@ -21,6 +19,7 @@ import {
   metadataRscPermissionUtil,
 } from "../../../src/component/utils/metadataRscPermission";
 import { manifestUtils } from "../../../src/component/driver/teamsApp/utils/ManifestUtils";
+import { vi } from "vitest";
 
 function mockedResolveDriverInstances(log: LogProvider): Result<DriverInstance[], FxError> {
   return ok([
@@ -143,7 +142,7 @@ describe("metadata rsc permission util", () => {
       applicationPermissions: ["ChatSettings.Read.Chat"],
     },
   };
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   const mockProjectModel: ProjectModel = {
     version: "1.0.0",
     provision: {
@@ -175,12 +174,12 @@ describe("metadata rsc permission util", () => {
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("parseManifest happy path", async () => {
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(readAppManifestRes as any));
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(readAppManifestRes as any));
     let props: any = {};
     await metadataRscPermissionUtil.parseManifest(ymlPath, mockProjectModel, props);
     assert(props[ProjectTypeProps.TeamsManifestVersion] === "1.16");
@@ -198,7 +197,7 @@ describe("metadata rsc permission util", () => {
   });
 
   it("parseManifest no manifest", async () => {
-    sandbox.stub(fs, "pathExists").resolves(false);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
     const props: any = {};
     await metadataRscPermissionUtil.parseManifest(ymlPath, mockProjectModel, props);
     assert(props[ProjectTypeProps.TeamsManifestVersion] === undefined);

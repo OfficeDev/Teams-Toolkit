@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 5,
+    "total_steps": 4,
     "created_at": "2025-12-08T08:49:48.834051",
     "name": "Message Extension py Remote Debug ",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2025-11-06T02:36:11.462675",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_24473757",
+      "plan_r_0624_024810",
       "step_ba03d6aa",
       "step_d5ef874f",
       "step_3290b204",
@@ -38,32 +38,6 @@
     "updated_at": "2025-12-08T08:52:50.252030"
   },
   "steps": [
-    {
-      "step_id": "step_24473757",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 364,
-        "y": 214
-      },
-      "description": "Click the \"Teams Agents and Apps\" option in the \"New Project\" popup within the Microsoft 365 Agents Toolkit extension for Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:364:214:16:5:34a4a494d0a7a050",
-        "dhash:364:214:96:5:6399912ca6d32820",
-        "dhash:364:214:0:10:c8c88094b0717c6f"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_24473757",
-      "created_at": "2025-12-08T08:49:48.848026",
-      "plan_id": "plan_d4fc40d0"
-    },
     {
       "step_id": "step_ba03d6aa",
       "agent": "interaction",

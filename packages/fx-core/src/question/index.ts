@@ -7,8 +7,8 @@ import { createSampleProjectQuestionNode } from "./create";
 import {
   addAuthActionQuestion,
   addKnowledgeQuestionNode,
-  addSkillQuestionNode,
   addPluginQuestionNode,
+  addSkillQuestionNode,
   addWebPartQuestionNode,
   apiSpecApiKeyQuestion,
   convertAadToNewSchemaQuestionNode,
@@ -16,7 +16,6 @@ import {
   createNewEnvQuestionNode,
   deployAadManifestQuestionNode,
   kiotaRegenerateQuestion,
-  metaOSExtendToDAQuestionNode,
   oauthQuestion,
   previewWithTeamsAppManifestQuestionNode,
   regeneratePluginNode,
@@ -29,8 +28,8 @@ import {
 import { scaffoldQuestionForVS } from "./scaffold/vs/createRootNode";
 import { createFromTdpNode } from "./scaffold/vsc/createFromTdpNode";
 import { scaffoldQuestionForVSCode } from "./scaffold/vsc/createRootNode";
-import { removeSharedAccessNode, shareNode } from "./share";
 import { updateActionWithMCP } from "./scaffold/vsc/teamsProjectTypeNode";
+import { removeSharedAccessNode, shareNode } from "./share";
 export * from "./constants";
 export * from "./create";
 export * from "./inputs";
@@ -88,9 +87,6 @@ export class QuestionNodes {
   }
   regeneratePlugin(): IQTreeNode {
     return regeneratePluginNode();
-  }
-  metaOSExtendToDA(): IQTreeNode {
-    return metaOSExtendToDAQuestionNode();
   }
   uninstall(): IQTreeNode {
     return uninstallQuestionNode();

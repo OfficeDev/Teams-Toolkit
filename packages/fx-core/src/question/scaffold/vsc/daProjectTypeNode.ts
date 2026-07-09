@@ -1,10 +1,9 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { Inputs, IQTreeNode, OptionItem } from "@microsoft/teamsfx-api";
+import { Inputs, IQTreeNode } from "@microsoft/teamsfx-api";
 import { featureFlagManager, FeatureFlags } from "../../../common/featureFlags";
 import { getLocalizedString } from "../../../common/localizeUtils";
-import { ProgrammingLanguage } from "../../constants";
 import { QuestionNames } from "../../questionNames";
 import { apiSpecNode, apiSpecWithSearchNode } from "../commonNodes";
 import {
@@ -65,9 +64,6 @@ export function daProjectTypeNode(
                 featureFlagManager.getBooleanValue(FeatureFlags.KiotaNPMIntegration)
                   ? ActionStartOptions.apiSpecWithSearch()
                   : ActionStartOptions.apiSpec(),
-                ...(featureFlagManager.getBooleanValue(FeatureFlags.DAMetaOS)
-                  ? [ActionStartOptions.DAMetaOS()]
-                  : []),
                 ActionStartOptions.mcp(),
               ],
               default: ActionStartOptions.newApi().id,

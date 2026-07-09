@@ -1,35 +1,12 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { hooks } from "@feathersjs/hooks/lib";
-import {
-  ConfigFolderName,
-  CoreCallbackEvent,
-  FxError,
-  Inputs,
-  ok,
-  Platform,
-  Result,
-  SettingsFolderName,
-} from "@microsoft/teamsfx-api";
-import { assert, expect } from "chai";
-import fs from "fs-extra";
-import * as os from "os";
-import * as path from "path";
-import * as sinon from "sinon";
-import * as projectSettingsHelper from "../../../src/common/projectSettingsHelper";
-import * as tools from "../../../src/common/utils";
-import { CallbackRegistry } from "../../../src/core/callback";
-import { runWithRetry } from "../../../src/core/middleware/retry";
-import { CoreSource, NoProjectOpenedError } from "../../../src/error";
-import {
-  ConcurrentError,
-  FileNotFoundError,
-  InvalidProjectError,
-  UserCancelError,
-} from "../../../src/error/common";
-import { MockTools, randomAppName } from "../utils";
+import { ok } from "@microsoft/teamsfx-api";
 import { setTools } from "../../../src/common/globalVars";
+import { runWithRetry } from "../../../src/core/middleware/retry";
+import { UserCancelError } from "../../../src/error/common";
+import { MockTools } from "../utils";
+import { assert } from "vitest";
 
 describe("runWithRetry", () => {
   const tools = new MockTools();

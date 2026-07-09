@@ -1,46 +1,42 @@
+import { vi, assert } from "vitest";
+import { mockValue } from "../mocks/vitestMockUtils";
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 /**
  * @author Xiaofu Huang <xiaofhua@microsoft.com>
  */
-
-import * as chai from "chai";
-import chaiAsPromised from "chai-as-promised";
 import fs from "fs-extra";
 import path from "path";
-import * as sinon from "sinon";
 import * as uuid from "uuid";
 import * as vscode from "vscode";
 import { DevTunnelStateManager } from "../../src/debug/taskTerminal/utils/devTunnelStateManager";
 import * as globalVariables from "../../src/globalVariables";
-chai.use(chaiAsPromised);
 
 describe("devTunnelStateManager", () => {
-  const sandbox = sinon.createSandbox();
   const baseDir = path.resolve(__dirname, "data", "devTunnelStateManager");
   beforeEach(async () => {
     const filePath = path.resolve(baseDir, uuid.v4().substring(0, 6));
     await fs.ensureDir(filePath);
-    sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.parse(filePath));
-    sandbox.stub(process, "env").value({ TEAMSFX_DEV_TUNNEL_TEST: "true" });
+    mockValue(globalVariables, "workspaceUri", vscode.Uri.parse(filePath));
+    mockValue(process, "env", { TEAMSFX_DEV_TUNNEL_TEST: "true" });
   });
 
   afterEach(async () => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     await fs.remove(baseDir);
   });
 
   it("happy path", async () => {
     const devTunnelStateManager = DevTunnelStateManager.create();
     let states = await devTunnelStateManager.listDevTunnelStates();
-    chai.assert.isEmpty(states);
+    assert.isEmpty(states);
     await devTunnelStateManager.setTunnelState({
       tunnelId: "id1",
       clusterId: "cluster1",
       sessionId: "test-session",
     });
     states = await devTunnelStateManager.listDevTunnelStates();
-    chai.assert.deepEqual(states, [
+    assert.deepEqual(states, [
       { tunnelId: "id1", clusterId: "cluster1", sessionId: "test-session" },
     ]);
     await devTunnelStateManager.setTunnelState({
@@ -49,18 +45,18 @@ describe("devTunnelStateManager", () => {
       sessionId: "test-session",
     });
     states = await devTunnelStateManager.listDevTunnelStates();
-    chai.assert.deepEqual(states, [
+    assert.deepEqual(states, [
       { tunnelId: "id1", clusterId: "cluster1", sessionId: "test-session" },
       { tunnelId: "id2", clusterId: "cluster2", sessionId: "test-session" },
     ]);
     await devTunnelStateManager.deleteTunnelState({ tunnelId: "id1", clusterId: "cluster1" });
     states = await devTunnelStateManager.listDevTunnelStates();
-    chai.assert.deepEqual(states, [
+    assert.deepEqual(states, [
       { tunnelId: "id2", clusterId: "cluster2", sessionId: "test-session" },
     ]);
     await devTunnelStateManager.deleteTunnelState({ tunnelId: "id2", clusterId: "cluster2" });
     states = await devTunnelStateManager.listDevTunnelStates();
-    chai.assert.isEmpty(states);
+    assert.isEmpty(states);
   });
 
   it("concurrency", async () => {
@@ -73,10 +69,10 @@ describe("devTunnelStateManager", () => {
       const devTunnelStateManager = DevTunnelStateManager.create();
       await devTunnelStateManager.setTunnelState(testData);
       let states = await devTunnelStateManager.listDevTunnelStates();
-      chai.assert.deepInclude(states, testData);
+      assert.deepInclude(states, testData);
       await devTunnelStateManager.deleteTunnelState(testData);
       states = await devTunnelStateManager.listDevTunnelStates();
-      chai.assert.notInclude(states, testData);
+      assert.notInclude(states, testData);
     };
 
     const promises = [randomOperation(), randomOperation(), randomOperation()];
@@ -86,9 +82,9 @@ describe("devTunnelStateManager", () => {
   it("delete a non-existent item", async () => {
     const devTunnelStateManager = DevTunnelStateManager.create();
     let states = await devTunnelStateManager.listDevTunnelStates();
-    chai.assert.isEmpty(states);
+    assert.isEmpty(states);
     await devTunnelStateManager.deleteTunnelState({ tunnelId: "id1", clusterId: "cluster1" });
     states = await devTunnelStateManager.listDevTunnelStates();
-    chai.assert.isEmpty(states);
+    assert.isEmpty(states);
   });
 });

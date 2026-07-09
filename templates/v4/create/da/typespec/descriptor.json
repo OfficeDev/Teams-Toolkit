@@ -1,0 +1,20 @@
+{
+  "$schema": "../../../schema/descriptor.schema.json",
+  "id": "da/typespec",
+  "name": "Declarative Agent with TypeSpec",
+  "languages": ["common"],
+  "minEngineVersion": "5.20.0",
+  "spec": "docs/03-specs/scenarios/da/create-typespec.md",
+  "requiresNetwork": false,
+
+  "optionsSchema": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+
+  "replaceMap": [
+    { "var": "SafeProjectNameLowerCase", "expr": "safeProjectNameLowerCase(appName)" },
+    { "var": "TypeSpecAgentName", "expr": "safeProjectNameLowerCase(appName)" }
+  ]
+}

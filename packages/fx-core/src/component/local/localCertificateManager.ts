@@ -28,7 +28,6 @@ export const localCertificateManagerDeps = {
   writeFile: fs.writeFile,
   homedir: os.homedir,
   osType: os.type,
-  osEol: os.EOL,
   execPowerShell: ps.execPowerShell,
   execShell: ps.execShell,
   localize: getLocalizedString,
@@ -48,7 +47,7 @@ const trustCertificateCancelError = () =>
     name: "TrustCertificateCancelError",
     helpLink: learnMoreUrl,
     message: getDefaultString("error.TrustCertificateCancelError"),
-    displayMessage: getLocalizedString("error.TrustCertificateCancelError"),
+    displayMessage: localCertificateManagerDeps.localize("error.TrustCertificateCancelError"),
   });
 export interface LocalCertificate {
   certPath: string;
@@ -444,7 +443,7 @@ export class LocalCertificateManager {
             `Signature = "$Windows NT$"`,
             "[Properties]",
             `11 = {text}${friendlyName}`,
-          ].join(localCertificateManagerDeps.osEol)
+          ].join(os.EOL)
         );
         const friendlyNameCommand = `certutil -user -repairstore root ${thumbprint} "${certInfPath}"`;
         await localCertificateManagerDeps.execShell(friendlyNameCommand);

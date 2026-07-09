@@ -1,13 +1,18 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import * as vscode from "vscode";
-import fs from "fs-extra";
 import { isValidProject } from "@microsoft/teamsfx-core";
-import { initializeGlobalVariables, context } from "../globalVariables";
+import fs from "fs-extra";
+import * as vscode from "vscode";
+import { context, initializeGlobalVariables } from "../globalVariables";
 import { ExtTelemetry } from "../telemetry/extTelemetry";
 import { TelemetryEvent, TelemetryProperty } from "../telemetry/extTelemetryEvents";
 import TreeViewManagerInstance from "../treeview/treeViewManager";
+
+export const fileSystemWatcherOps = {
+  readJson: (filePath: string) => fs.readJson(filePath),
+};
+const fileSystemWatcherDeps = fileSystemWatcherOps;
 
 export function addFileSystemWatcher(workspacePath: string) {
   if (isValidProject(workspacePath)) {
@@ -22,13 +27,13 @@ export function addFileSystemWatcher(workspacePath: string) {
     });
 
     const yorcFileWatcher = vscode.workspace.createFileSystemWatcher("**/.yo-rc.json");
-    yorcFileWatcher.onDidCreate((event) => {
+    yorcFileWatcher.onDidCreate((_event) => {
       refreshSPFxTreeOnFileChanged();
     });
-    yorcFileWatcher.onDidChange((event) => {
+    yorcFileWatcher.onDidChange((_event) => {
       refreshSPFxTreeOnFileChanged();
     });
-    yorcFileWatcher.onDidDelete((event) => {
+    yorcFileWatcher.onDidDelete((_event) => {
       refreshSPFxTreeOnFileChanged();
     });
   }
@@ -40,7 +45,7 @@ export function refreshSPFxTreeOnFileChanged() {
 }
 
 export async function sendSDKVersionTelemetry(filePath: string) {
-  const packageLockFile = (await fs.readJson(filePath).catch(() => {})) as {
+  const packageLockFile = (await fileSystemWatcherDeps.readJson(filePath).catch(() => {})) as {
     dependencies: { [key: string]: { version: string } };
   };
   ExtTelemetry.sendTelemetryEvent(TelemetryEvent.UpdateSDKPackages, {

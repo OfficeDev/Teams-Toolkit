@@ -216,4 +216,8 @@ export class MockTelemetryReporter implements TelemetryReporter {
   ): void {
     // do nothing
   }
+
+  async dispose(): Promise<void> {
+    // do nothing
+  }
 }

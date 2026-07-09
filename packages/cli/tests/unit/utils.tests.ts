@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 
 import fs from "fs-extra";
-import sinon from "sinon";
 
 import * as apis from "@microsoft/teamsfx-api";
 import * as core from "@microsoft/teamsfx-core";
@@ -16,16 +15,16 @@ import {
   toLocaleLowerCase,
 } from "../../src/utils";
 import { expect } from "./utils";
-
+import { vi } from "vitest";
 describe("Utils Tests", function () {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   beforeEach(() => {
-    sandbox.stub(fs, "readJsonSync").returns({ version: "2.0.0" });
+    vi.spyOn(fs, "readJsonSync").mockReturnValue({ version: "2.0.0" });
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("toLocaleLowerCase", () => {
@@ -61,12 +60,12 @@ describe("Utils Tests", function () {
 
   describe("getTemplates", async () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("filters samples have maximum cli verion", async () => {
       const utils = require("../../src/utils");
-      sandbox.stub(core.sampleProvider, "SampleCollection").value(
+      vi.spyOn(core.sampleProvider, "SampleCollection", "get").mockReturnValue(
         Promise.resolve({
           filterOptions: {
             capabilities: ["Tab"],
@@ -122,7 +121,7 @@ describe("Utils Tests", function () {
 
     it("filters samples have minimum cli verion", async () => {
       const utils = require("../../src/utils");
-      sandbox.stub(core.sampleProvider, "SampleCollection").value(
+      vi.spyOn(core.sampleProvider, "SampleCollection", "get").mockReturnValue(
         Promise.resolve({
           filterOptions: {
             capabilities: ["Tab"],
@@ -179,12 +178,14 @@ describe("Utils Tests", function () {
 });
 
 describe("activate", async () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   it("UnhandledError", async () => {
-    sandbox.stub(AzureAccountManager, "setRootPath").throws(new Error("error"));
+    vi.spyOn(AzureAccountManager, "setRootPath").mockImplementation(() => {
+      throw new Error("error");
+    });
     const res = await activate(".", false);
     expect(res.isErr()).equals(true);
     if (res.isErr()) {

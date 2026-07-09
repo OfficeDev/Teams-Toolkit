@@ -1,16 +1,13 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-import * as chai from "chai";
-import chaiAsPromised from "chai-as-promised";
 import detectPort from "detect-port";
-import { afterEach, beforeEach, vi } from "vitest";
+import { afterEach, beforeEach, chai, vi } from "vitest";
 import { getPortsInUse } from "../../../src/component/local/portChecker";
 
 vi.mock("detect-port", () => ({
   default: vi.fn(),
 }));
 
-chai.use(chaiAsPromised);
 describe("portChecker", () => {
   const detectPortMock = vi.mocked(detectPort);
 

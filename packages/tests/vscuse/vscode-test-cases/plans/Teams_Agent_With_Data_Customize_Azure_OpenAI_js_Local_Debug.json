@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 5,
+    "total_steps": 4,
     "created_at": "2025-11-05T10:00:56.307772",
     "name": "Teams Agent With Data Customize Azure OpenAI js Local Debug",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2025-11-05T10:00:56.307762",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_bd3c9df1",
+      "plan_r_0624_024810",
       "step_5596aace",
       "step_5d3b4384",
       "plan_r_0930_054245",
@@ -35,37 +35,6 @@
     "updated_at": "2025-11-14T04:32:25.452144"
   },
   "steps": [
-    {
-      "step_id": "step_bd3c9df1",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "dx": null,
-        "dy": null,
-        "key": null,
-        "keys": null,
-        "text": null,
-        "x": 378,
-        "y": 219
-      },
-      "description": "Click on the \"Teams Agents and Apps\" option within the \"New Project\" dropdown menu.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "0",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:378:219:16:5:69cf324a942ad8c3",
-        "dhash:378:219:96:5:b66250582cad5211",
-        "dhash:378:219:0:10:c8c88094b2717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_bd3c9df1",
-      "created_at": "2025-11-14T04:27:50.734978",
-      "plan_id": "plan_a1d862ad"
-    },
     {
       "step_id": "step_5596aace",
       "agent": "interaction",

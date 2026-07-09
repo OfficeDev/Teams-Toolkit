@@ -5,21 +5,15 @@ import { SystemError } from "@microsoft/teamsfx-api";
 import * as fs from "fs-extra";
 import * as path from "path";
 import { getTemplatesFolder } from "../../folder";
+import {
+  BundledTemplateArtifacts,
+  TemplateArtifactKind,
+  artifactFileName,
+  computeArtifactDigest,
+} from "./templateArtifacts";
 import { BundledFloor, computeDigest } from "./templateSource";
 
-/**
- * The bundled floor: the v4 template package baked into the engine so the
- * scaffold never depends on the network being reachable (offline-by-default).
- *
- * The build step drops two files under `<floor dir>`:
- *   - `floor.json`    → `{ "version": "<semver>" }` (the baked version)
- *   - `templates.zip` → the package bytes
- *
- * The digest is NOT baked: it is computed from the bytes at load time so
- * `computeDigest` stays the single authority (spec decision #6 / INV-3).
- *
- * Spec: docs/03-specs/operations/scaffolding/resolve-template-source.md
- */
+/** Bundled v4 template floor for offline-by-default resolution. */
 
 const SOURCE = "Scaffold";
 
@@ -45,11 +39,7 @@ function isFloorManifest(value: unknown): value is FloorManifest {
   );
 }
 
-/**
- * Load the floor baked under `floorDir` (defaults to {@link bundledFloorDir}).
- * Missing/malformed bake artifacts are a hard error — a build without a floor
- * cannot scaffold offline, so we refuse rather than silently degrade.
- */
+/** Load the baked floor; missing or malformed artifacts are hard errors. */
 export function loadBundledFloor(floorDir: string = bundledFloorDir()): BundledFloor {
   const manifestPath = path.join(floorDir, "floor.json");
   const zipPath = path.join(floorDir, "templates.zip");
@@ -84,4 +74,55 @@ export function loadBundledFloor(floorDir: string = bundledFloorDir()): BundledF
   }
 
   return bundledFloorFrom(manifest.version, bytes, zipPath);
+}
+
+function bundledArtifactDigest(floorDir: string, kind: TemplateArtifactKind): string {
+  const location = path.join(floorDir, artifactFileName(kind));
+  try {
+    return computeArtifactDigest(fs.readFileSync(location));
+  } catch {
+    throw new SystemError({
+      source: SOURCE,
+      name: "BundledTemplateArtifactMissing",
+      message: `The bundled v4 template artifact is missing or unreadable at "${location}".`,
+    });
+  }
+}
+
+/** Load the baked staged artifacts used by the final v4 distribution resolver. */
+export function loadBundledTemplateArtifacts(
+  floorDir: string = bundledFloorDir()
+): BundledTemplateArtifacts {
+  const floor = loadBundledFloor(floorDir);
+  const createSelectorFile = artifactFileName("create-selector");
+  const modifySelectorFile = artifactFileName("modify-selector");
+  const metadataFile = artifactFileName("metadata");
+  const templatesFile = artifactFileName("templates");
+  return {
+    version: floor.version,
+    artifacts: {
+      "create-selector": {
+        kind: "create-selector",
+        file: createSelectorFile,
+        digest: bundledArtifactDigest(floorDir, "create-selector"),
+      },
+      "modify-selector": {
+        kind: "modify-selector",
+        file: modifySelectorFile,
+        digest: bundledArtifactDigest(floorDir, "modify-selector"),
+      },
+      metadata: {
+        kind: "metadata",
+        file: metadataFile,
+        digest: bundledArtifactDigest(floorDir, "metadata"),
+      },
+      templates: { kind: "templates", file: templatesFile, digest: floor.digest },
+    },
+    locations: {
+      "create-selector": path.join(floorDir, createSelectorFile),
+      "modify-selector": path.join(floorDir, modifySelectorFile),
+      metadata: path.join(floorDir, metadataFile),
+      templates: floor.location,
+    },
+  };
 }

@@ -1,26 +1,25 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { assert } from "chai";
 import fs from "fs-extra";
 import os from "os";
 import path from "path";
-import { createSandbox, SinonSandbox } from "sinon";
 import { mergeJsonFile } from "../../../../src/component/generator/configFiles/jsonMerger";
+import { assert, vi } from "vitest";
 
 // Note: these tests exercise the on-disk merge behavior (fs + comment-json) to validate the rules.
 describe("mergeJsonFile", () => {
-  let sandbox: SinonSandbox;
+  let sandbox: any;
   let tempDir: string;
 
   beforeEach(async () => {
-    sandbox = createSandbox();
+    sandbox = vi;
     tempDir = path.join(os.tmpdir(), `json-merge-${Date.now()}`);
     await fs.ensureDir(tempDir);
   });
 
   afterEach(async () => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     await fs.remove(tempDir);
   });
 

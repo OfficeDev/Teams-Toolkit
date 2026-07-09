@@ -34,6 +34,7 @@ const credentialOptions =
 const app = new App({
   ...credentialOptions,
   storage,
+  skipAuth: !process.env.CLIENT_ID,
 });
 
 // Interface for conversation state

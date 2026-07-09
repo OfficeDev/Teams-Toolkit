@@ -1,9 +1,8 @@
+import { vi, expect, assert } from "vitest";
+import { mockValue } from "../mocks/vitestMockUtils";
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
-"use strict";
-import chai from "chai";
-import spies from "chai-spies";
-import * as sinon from "sinon";
+("use strict");
 import * as vscode from "vscode";
 
 import { ExtensionContext } from "vscode";
@@ -12,8 +11,6 @@ import { ExtTelemetry } from "../../src/telemetry/extTelemetry";
 import { ReleaseNote } from "../../src/utils/releaseNote";
 import * as versionUtil from "../../src/utils/versionUtil";
 
-chai.use(spies);
-const spy = chai.spy;
 function gloablStateKeys(): readonly string[] {
   return ["PrereleaseState.Version"];
 }
@@ -21,24 +18,15 @@ function globalStateGet(key: string): string {
   return "0.0.0";
 }
 function globalStateUpdate(key: string, value: any): any {}
-const reporterSpy = spy.interface({
-  sendTelemetryEvent(
-    eventName: string,
-    properties?: { [p: string]: string },
-    measurements?: { [p: string]: number }
-  ): void {},
-});
+const reporterSpy = {
+  sendTelemetryEvent: vi.fn(),
+};
 const ShowWhatIsNewNotification = "show-what-is-new-notification";
 describe("Release Note", () => {
-  afterEach(() => {
-    sinon.restore();
-  });
-
   describe("stable version shows changelog", () => {
-    const sandbox = sinon.createSandbox();
     let context: vscode.ExtensionContext;
-    let telemetryStub: sinon.SinonStub;
-    let openDocumentStub: sinon.SinonStub;
+    let telemetryStub: ReturnType<typeof vi.spyOn>;
+    let openDocumentStub: ReturnType<typeof vi.spyOn>;
     const mockGlobalState: vscode.Memento = {
       keys: gloablStateKeys,
       get: globalStateGet,
@@ -49,8 +37,8 @@ describe("Release Note", () => {
         subscriptions: [],
         globalState: mockGlobalState,
       } as unknown as vscode.ExtensionContext;
-      sandbox.stub(versionUtil, "getExtensionId").returns("");
-      sandbox.stub(vscode.extensions, "getExtension").returns({
+      vi.spyOn(versionUtil, "getExtensionId").mockReturnValue("");
+      vi.spyOn(vscode.extensions, "getExtension").mockReturnValue({
         packageJSON: { version: "6.2.0" },
         id: "",
         extensionPath: "",
@@ -62,62 +50,60 @@ describe("Release Note", () => {
           return Promise.resolve();
         },
       });
-      telemetryStub = sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-      openDocumentStub = sandbox.stub(vscode.workspace, "openTextDocument").resolves();
-      sandbox.stub(globalVariables, "context").value({ extensionPath: "" });
-    });
-    afterEach(() => {
-      sandbox.restore();
+      telemetryStub = vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+      openDocumentStub = vi.spyOn(vscode.workspace, "openTextDocument").mockResolvedValue();
+      mockValue(globalVariables, "context", { extensionPath: "" });
     });
     it("show changelog notification when user has upgraded from previous version", async () => {
-      const stateUpdateSpy = sandbox.spy(context.globalState, "update");
-      sandbox.stub(context.globalState, "get").returns("6.0.0");
+      const stateUpdateSpy = vi.spyOn(context.globalState, "update");
+      vi.spyOn(context.globalState, "get").mockReturnValue("6.0.0");
       let title = "";
-      sandbox
-        .stub(vscode.window, "showInformationMessage")
-        .callsFake((_message: string, option: any, ...items: vscode.MessageItem[]) => {
+      vi.spyOn(vscode.window, "showInformationMessage").mockImplementation(
+        (_message: string, option: any, ...items: vscode.MessageItem[]) => {
           title = option.title;
           return Promise.resolve(option);
-        });
+        }
+      );
       const instance = new ReleaseNote(context);
       await instance.show();
-      chai.assert(title === "Changelog");
-      chai.assert(stateUpdateSpy.callCount == 2);
-      chai.assert(openDocumentStub.calledOnce);
-      chai.assert(telemetryStub.calledWith("show-what-is-new-notification"));
+      assert(title === "Changelog");
+      assert(stateUpdateSpy.callCount == 2);
+      assert(openDocumentStub.calledOnce);
+      assert(telemetryStub.calledWith("show-what-is-new-notification"));
     });
     it("should not show changelog if button is not clicked", async () => {
-      const stateUpdateSpy = sandbox.spy(context.globalState, "update");
-      sandbox.stub(context.globalState, "get").returns("6.0.0");
-      sandbox.stub(vscode.window, "showInformationMessage").resolves(undefined);
+      const stateUpdateSpy = vi.spyOn(context.globalState, "update");
+      vi.spyOn(context.globalState, "get").mockReturnValue("6.0.0");
+      vi.spyOn(vscode.window, "showInformationMessage").mockResolvedValue(undefined);
       const instance = new ReleaseNote(context);
       await instance.show();
-      chai.assert(stateUpdateSpy.callCount == 2);
-      chai.assert(telemetryStub.calledOnce);
-      chai.assert(openDocumentStub.notCalled);
+      assert(stateUpdateSpy.callCount == 2);
+      assert(telemetryStub.calledOnce);
+      assert(openDocumentStub.notCalled);
     });
     it("should not show changelog when version is not changed", async () => {
-      const stateUpdateSpy = sandbox.spy(context.globalState, "update");
-      sandbox.stub(context.globalState, "get").returns("6.2.0");
-      sandbox.stub(vscode.window, "showInformationMessage").resolves();
+      const stateUpdateSpy = vi.spyOn(context.globalState, "update");
+      vi.spyOn(context.globalState, "get").mockReturnValue("6.2.0");
+      vi.spyOn(vscode.window, "showInformationMessage").mockResolvedValue();
       const instance = new ReleaseNote(context);
       await instance.show();
-      chai.assert(stateUpdateSpy.calledOnce);
-      chai.assert(telemetryStub.notCalled);
-      chai.assert(openDocumentStub.notCalled);
+      assert(stateUpdateSpy.calledOnce);
+      assert(telemetryStub.notCalled);
+      assert(openDocumentStub.notCalled);
     });
     it("should show changelog when it's a fresh install", async () => {
-      const stateUpdateSpy = sandbox.spy(context.globalState, "update");
-      sandbox.stub(context.globalState, "get").returns(undefined);
-      const showInformationStub = sandbox.stub(vscode.window, "showInformationMessage").resolves();
+      const stateUpdateSpy = vi.spyOn(context.globalState, "update");
+      vi.spyOn(context.globalState, "get").mockReturnValue(undefined);
+      const showInformationStub = vi
+        .spyOn(vscode.window, "showInformationMessage")
+        .mockResolvedValue();
       const instance = new ReleaseNote(context);
       await instance.show();
-      chai.assert(showInformationStub.calledOnce);
+      assert(showInformationStub.calledOnce);
     });
   });
 
   describe("prerelease version shows prerelease note", () => {
-    const sandbox = sinon.createSandbox();
     let context: ExtensionContext;
     const mockGlobalState: vscode.Memento = {
       keys: gloablStateKeys,
@@ -125,21 +111,18 @@ describe("Release Note", () => {
       update: globalStateUpdate,
     };
     before(() => {
-      chai.util.addProperty(ExtTelemetry, "reporter", () => reporterSpy);
+      mockValue(ExtTelemetry, "reporter", reporterSpy as any);
     });
     beforeEach(() => {
-      sandbox.stub(vscode.workspace, "openTextDocument").resolves();
-      sandbox.stub(vscode.commands, "executeCommand").resolves();
+      vi.spyOn(vscode.workspace, "openTextDocument").mockResolvedValue();
+      vi.spyOn(vscode.commands, "executeCommand").mockResolvedValue();
       context = {
         subscriptions: [],
         globalState: mockGlobalState,
       } as unknown as ExtensionContext;
     });
-    afterEach(() => {
-      sandbox.restore();
-    });
     it("success", async () => {
-      sandbox.stub(vscode.extensions, "getExtension").returns({
+      vi.spyOn(vscode.extensions, "getExtension").mockReturnValue({
         packageJSON: { version: "5.1.2023072000" },
         id: "",
         extensionPath: "",
@@ -151,18 +134,16 @@ describe("Release Note", () => {
           return Promise.resolve();
         },
       });
-      sandbox.stub(context.globalState, "get").returns("5.0.1");
+      vi.spyOn(context.globalState, "get").mockReturnValue("5.0.1");
       const instance = new ReleaseNote(context);
-      const spyChecker = sandbox.spy(context.globalState, "update");
+      const spyChecker = vi.spyOn(context.globalState, "update");
       await instance.show();
-      chai.assert(spyChecker.callCount == 1);
-      chai
-        .expect(reporterSpy.sendTelemetryEvent)
-        .to.have.been.called.with(ShowWhatIsNewNotification);
+      assert(spyChecker.callCount == 1);
+      expect(reporterSpy.sendTelemetryEvent.mock.calls[0][0]).toBe(ShowWhatIsNewNotification);
       spyChecker.restore();
     });
     it("returns prerelease version undefined", async () => {
-      sandbox.stub(vscode.extensions, "getExtension").returns({
+      vi.spyOn(vscode.extensions, "getExtension").mockReturnValue({
         packageJSON: { version: "5.1.2023072000" },
         id: "",
         extensionPath: "",
@@ -174,18 +155,16 @@ describe("Release Note", () => {
           return Promise.resolve();
         },
       });
-      sandbox.stub(context.globalState, "get").returns(undefined);
+      vi.spyOn(context.globalState, "get").mockReturnValue(undefined);
       const instance = new ReleaseNote(context);
-      const spyChecker = sandbox.spy(context.globalState, "update");
-      chai
-        .expect(reporterSpy.sendTelemetryEvent)
-        .to.have.been.called.with(ShowWhatIsNewNotification);
+      const spyChecker = vi.spyOn(context.globalState, "update");
+      expect(reporterSpy.sendTelemetryEvent.mock.calls[0][0]).toBe(ShowWhatIsNewNotification);
       await instance.show();
-      chai.assert(spyChecker.callCount == 1);
+      assert(spyChecker.callCount == 1);
       spyChecker.restore();
     });
     it("has same version", async () => {
-      sandbox.stub(vscode.extensions, "getExtension").returns({
+      vi.spyOn(vscode.extensions, "getExtension").mockReturnValue({
         packageJSON: { version: "5.1.2023072000" },
         id: "",
         extensionPath: "",
@@ -197,20 +176,20 @@ describe("Release Note", () => {
           return Promise.resolve();
         },
       });
-      sandbox.stub(context.globalState, "get").returns("5.1.2023072000");
+      vi.spyOn(context.globalState, "get").mockReturnValue("5.1.2023072000");
       const instance = new ReleaseNote(context);
-      const spyChecker = sandbox.spy(context.globalState, "update");
+      const spyChecker = vi.spyOn(context.globalState, "update");
       await instance.show();
-      chai.assert(spyChecker.callCount == 0);
+      assert(spyChecker.callCount == 0);
       spyChecker.restore();
     });
     it("has undefined version", async () => {
-      sandbox.stub(vscode.extensions, "getExtension").returns(undefined);
-      sandbox.stub(context.globalState, "get").returns("5.0.0");
+      vi.spyOn(vscode.extensions, "getExtension").mockReturnValue(undefined);
+      vi.spyOn(context.globalState, "get").mockReturnValue("5.0.0");
       const instance = new ReleaseNote(context);
-      const spyChecker = sandbox.spy(context.globalState, "update");
+      const spyChecker = vi.spyOn(context.globalState, "update");
       await instance.show();
-      chai.assert(spyChecker.callCount == 0);
+      assert(spyChecker.callCount == 0);
       spyChecker.restore();
     });
   });

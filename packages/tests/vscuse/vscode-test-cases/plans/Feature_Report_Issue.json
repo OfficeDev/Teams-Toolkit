@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 27,
+    "total_steps": 26,
     "created_at": "2026-05-21T02:04:47.485648",
     "name": "Feature Report Issue",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2026-05-21T02:04:47.485636",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_942590d8",
+      "plan_r_0624_024810",
       "step_581e233b",
       "step_90e7c07a",
       "step_287f0fcb",
@@ -54,32 +54,6 @@
     "updated_at": "2026-05-21T05:24:12.239796"
   },
   "steps": [
-    {
-      "step_id": "step_942590d8",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 325,
-        "y": 230
-      },
-      "description": "Click the \"Teams Agents and Apps\" option in the \"New Project\" dropdown menu within the Microsoft 365 Agents Toolkit interface.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:325:230:16:5:b3a959b331598230",
-        "dhash:325:230:96:5:995342c98d47c696",
-        "dhash:325:230:0:10:c8c88094b0717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_942590d8",
-      "created_at": "2026-05-21T02:04:47.493898",
-      "plan_id": "plan_9edb8886"
-    },
     {
       "step_id": "step_581e233b",
       "agent": "interaction",

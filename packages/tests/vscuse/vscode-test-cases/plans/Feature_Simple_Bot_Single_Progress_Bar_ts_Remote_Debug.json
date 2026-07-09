@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 30,
+    "total_steps": 29,
     "created_at": "2026-04-28T07:51:13.636339",
     "name": "Feature Simple Bot Single Progress Bar ts Remote Debug",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2026-04-28T07:51:13.636339",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_2c8d3ed1",
+      "plan_r_0624_024810",
       "step_20baf5f0",
       "step_5c383d9b",
       "step_037cd6f8",
@@ -60,32 +60,6 @@
     "updated_at": "2026-04-28T09:48:26.722689"
   },
   "steps": [
-    {
-      "step_id": "step_2c8d3ed1",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 389,
-        "y": 223
-      },
-      "description": "Click on the \"Teams Agents and Apps\" option within the dropdown menu under the \"New Project\" dialog in the Microsoft 365 Agents Toolkit interface.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:389:223:16:5:9c9d2494b56a6a34",
-        "dhash:389:223:96:5:cccca1b05b46af46",
-        "dhash:389:223:0:10:c8c89094b0717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_2c8d3ed1",
-      "created_at": "2026-04-28T07:51:13.662726",
-      "plan_id": "plan_1c4ca2a1"
-    },
     {
       "step_id": "step_20baf5f0",
       "agent": "interaction",

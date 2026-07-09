@@ -5,7 +5,6 @@ import * as fs from "fs-extra";
 import * as os from "os";
 import * as path from "path";
 import { vi } from "vitest";
-
 import { ConfigFolderName } from "@microsoft/teamsfx-api";
 
 import { ServiceLogWriter } from "../../../../src/cmds/preview/serviceLogWriter";

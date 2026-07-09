@@ -1,0 +1,34 @@
+{
+  "$schema": "../../schema/descriptor.schema.json",
+  "id": "basic-custom-engine-agent",
+  "name": "Basic Custom Engine Agent",
+  "languages": ["typescript", "javascript", "python"],
+  "minEngineVersion": "5.20.0",
+  "spec": "docs/03-specs/scenarios/teams/create-basic-custom-engine-agent.md",
+  "requiresNetwork": false,
+
+  "optionsSchema": {
+    "type": "object",
+    "properties": {
+      "llmService": { "type": "string" },
+      "openAIKey": { "type": "string" },
+      "azureOpenAIKey": { "type": "string" },
+      "azureOpenAIEndpoint": { "type": "string" },
+      "azureOpenAIDeploymentName": { "type": "string" }
+    },
+    "additionalProperties": false
+  },
+
+  "replaceMap": [
+    { "var": "SafeProjectNameLowerCase", "expr": "safeProjectNameLowerCase(appName)" },
+    { "var": "SandBoxedTeam", "when": "featureFlag('TEAMSFX_SANDBOXED_TEAM')", "value": "true" },
+    { "var": "CEAEnabled", "when": "featureFlag('TEAMSFX_CEA_ENABLED')", "value": "true" },
+    { "var": "pathDelimiter", "expr": "pathDelimiter()" },
+    { "var": "useOpenAI", "when": "llmService == 'llm-service-openai'", "value": "true" },
+    { "var": "useAzureOpenAI", "when": "llmService != 'llm-service-openai'", "value": "true" },
+    { "var": "openAIKey", "from": "openAIKey" },
+    { "var": "azureOpenAIKey", "from": "azureOpenAIKey" },
+    { "var": "azureOpenAIEndpoint", "from": "azureOpenAIEndpoint" },
+    { "var": "azureOpenAIDeploymentName", "from": "azureOpenAIDeploymentName" }
+  ]
+}

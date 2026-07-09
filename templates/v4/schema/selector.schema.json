@@ -1,0 +1,79 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aka.ms/m365atk/v4/selector.schema.json",
+  "title": "v4 selector.json",
+  "description": "Authoring-time schema for a v4 kind's Q1 selector tree + routing table (proposal §5). Questions reuse the §4 QuestionSpec but are single-select only (each a closed staticOptions routing dimension); routes declare the engine that handles each leaf.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["questions", "routes"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "questions": {
+      "type": "array",
+      "items": {
+        "comment": "A Q1 selector question is single-select only: it presents a closed staticOptions set and routes to exactly one template. The other input kinds (text / confirm / singleFile / folder / singleFileOrText / multiSelect) are Q2 (template) or general-input concerns, not routing dimensions, and the Q1 walk only renders staticOptions picks.",
+        "allOf": [
+          { "$ref": "./questions.schema.json#/$defs/question" },
+          { "properties": { "type": { "const": "singleSelect" } } }
+        ]
+      }
+    },
+    "routes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/route" }
+    }
+  },
+  "$defs": {
+    "route": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["when", "engine"],
+      "properties": {
+        "when": { "type": "string" },
+        "engine": { "type": "string", "enum": ["v4", "v3-core-method", "surface-action"] },
+        "templateId": { "type": "string" },
+        "coreMethod": { "type": "string" },
+        "action": { "type": "string" },
+        "surfaces": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["vscode", "cli", "vs", "server"] }
+        }
+      },
+      "allOf": [
+        {
+          "comment": "engine v4 → templateId required; no v3/surface keys.",
+          "if": { "properties": { "engine": { "const": "v4" } } },
+          "then": {
+            "required": ["templateId"],
+            "not": { "anyOf": [
+              { "required": ["coreMethod"] },
+              { "required": ["action"] }
+            ] }
+          }
+        },
+        {
+          "comment": "engine v3-core-method → coreMethod (an fx-core method like addPlugin, not an IGenerator) required. The modify seam: shipped add-* paths are core methods/drivers, not generators. No templateId / surface key.",
+          "if": { "properties": { "engine": { "const": "v3-core-method" } } },
+          "then": {
+            "required": ["coreMethod"],
+            "not": { "anyOf": [
+              { "required": ["templateId"] },
+              { "required": ["action"] }
+            ] }
+          }
+        },
+        {
+          "comment": "engine surface-action → action required; scaffolds nothing (no templateId / core-method key).",
+          "if": { "properties": { "engine": { "const": "surface-action" } } },
+          "then": {
+            "required": ["action"],
+            "not": { "anyOf": [
+              { "required": ["templateId"] },
+              { "required": ["coreMethod"] }
+            ] }
+          }
+        }
+      ]
+    }
+  }
+}

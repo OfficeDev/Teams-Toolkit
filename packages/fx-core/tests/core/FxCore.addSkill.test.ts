@@ -10,10 +10,9 @@ import {
   TeamsAppManifest,
   UserError,
 } from "@microsoft/teamsfx-api";
-import { assert } from "chai";
 import fs from "fs-extra";
 import * as path from "path";
-import sinon from "sinon";
+import { assert, vi } from "vitest";
 import { featureFlagManager, FeatureFlagName } from "../../src/common/featureFlags";
 import { setTools } from "../../src/common/globalVars";
 import { copilotGptManifestUtils } from "../../src/component/driver/teamsApp/utils/CopilotGptManifestUtils";
@@ -26,19 +25,17 @@ import { MockTools, MockUserInteraction } from "./utils";
 const tools = new MockTools();
 
 describe("addSkill", () => {
-  const sandbox = sinon.createSandbox();
-
   beforeEach(() => {
     setTools(tools);
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(featureFlagManager, "getBooleanValue").callsFake((flag: any) => {
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag: any) => {
       if (flag.name === FeatureFlagName.AgentSkillsManifest) return true;
       return false;
     });
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   function createManifestWithDA(): TeamsAppManifest {
@@ -68,10 +65,10 @@ describe("addSkill", () => {
   }
 
   it("returns AgentSkillsDisabled error when TEAMSFX_AGENT_SKILLS is off", async () => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     setTools(tools);
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(featureFlagManager, "getBooleanValue").returns(false);
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
 
     const inputs = createBaseInputs();
     const core = new FxCore(tools);
@@ -88,17 +85,17 @@ describe("addSkill", () => {
     const inputs = createBaseInputs();
     const manifest = createManifestWithDA();
 
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox
-      .stub(copilotGptManifestUtils, "getManifestPath")
-      .resolves(ok(path.resolve("test-project", "appPackage", "declarativeAgent.json")));
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok(path.resolve("test-project", "appPackage", "declarativeAgent.json"))
+    );
 
-    sandbox.stub(MockUserInteraction.prototype, "showMessage").resolves(ok("Add"));
+    vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok("Add"));
 
-    const ensureDirStub = sandbox.stub(fs, "ensureDir").resolves();
-    const writeFileStub = sandbox.stub(fs, "writeFile").resolves();
+    const ensureDirStub = vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    const writeFileStub = vi.spyOn(fs, "writeFile").mockResolvedValue();
 
-    sandbox.stub(copilotGptManifestUtils, "addSkill").resolves(
+    vi.spyOn(copilotGptManifestUtils, "addSkill").mockResolvedValue(
       ok({
         name: "test-agent",
         description: "description",
@@ -109,11 +106,11 @@ describe("addSkill", () => {
     const result = await core.addSkill(inputs);
 
     assert.isTrue(result.isOk());
-    assert.isTrue(ensureDirStub.calledOnce);
-    assert.isTrue(writeFileStub.calledOnce);
+    assert.equal(ensureDirStub.mock.calls.length, 1);
+    assert.equal(writeFileStub.mock.calls.length, 1);
 
     // Verify SKILL.md content
-    const writtenContent = writeFileStub.firstCall.args[1] as string;
+    const writtenContent = writeFileStub.mock.calls[0][1] as string;
     assert.include(writtenContent, "name: mySkill");
     assert.include(writtenContent, "description: A test skill");
     assert.include(writtenContent, "---");
@@ -126,18 +123,18 @@ describe("addSkill", () => {
     });
     const manifest = createManifestWithDA();
 
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox
-      .stub(copilotGptManifestUtils, "getManifestPath")
-      .resolves(ok(path.resolve(appPackageFolder, "declarativeAgent.json")));
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok(path.resolve(appPackageFolder, "declarativeAgent.json"))
+    );
 
-    sandbox.stub(MockUserInteraction.prototype, "showMessage").resolves(ok("Add"));
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox
-      .stub(fs, "readFile")
-      .resolves("---\nname: existingSkill\ndescription: A skill\n---\n# existingSkill\n" as any);
+    vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok("Add"));
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockResolvedValue(
+      "---\nname: existingSkill\ndescription: A skill\n---\n# existingSkill\n" as any
+    );
 
-    const addSkillStub = sandbox.stub(copilotGptManifestUtils, "addSkill").resolves(
+    const addSkillStub = vi.spyOn(copilotGptManifestUtils, "addSkill").mockResolvedValue(
       ok({
         name: "test-agent",
         description: "description",
@@ -148,7 +145,7 @@ describe("addSkill", () => {
     const result = await core.addSkill(inputs);
 
     assert.isTrue(result.isOk());
-    assert.isTrue(addSkillStub.calledOnce);
+    assert.equal(addSkillStub.mock.calls.length, 1);
   });
 
   it("existing skill: errors when folder name has invalid characters", async () => {
@@ -158,11 +155,11 @@ describe("addSkill", () => {
     });
     const manifest = createManifestWithDA();
 
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox
-      .stub(copilotGptManifestUtils, "getManifestPath")
-      .resolves(ok(path.resolve(appPackageFolder, "declarativeAgent.json")));
-    sandbox.stub(MockUserInteraction.prototype, "showMessage").resolves(ok("Add"));
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok(path.resolve(appPackageFolder, "declarativeAgent.json"))
+    );
+    vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok("Add"));
 
     const core = new FxCore(tools);
     const result = await core.addSkill(inputs);
@@ -180,15 +177,15 @@ describe("addSkill", () => {
     });
     const manifest = createManifestWithDA();
 
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox
-      .stub(copilotGptManifestUtils, "getManifestPath")
-      .resolves(ok(path.resolve(appPackageFolder, "declarativeAgent.json")));
-    sandbox.stub(MockUserInteraction.prototype, "showMessage").resolves(ok("Add"));
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox
-      .stub(fs, "readFile")
-      .resolves("---\nname: differentName\ndescription: A skill\n---\n" as any);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok(path.resolve(appPackageFolder, "declarativeAgent.json"))
+    );
+    vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok("Add"));
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockResolvedValue(
+      "---\nname: differentName\ndescription: A skill\n---\n" as any
+    );
 
     const core = new FxCore(tools);
     const result = await core.addSkill(inputs);
@@ -203,16 +200,16 @@ describe("addSkill", () => {
     const inputs = createBaseInputs();
     const manifest = createManifestWithDA();
 
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox
-      .stub(copilotGptManifestUtils, "getManifestPath")
-      .resolves(ok(path.resolve("test-project", "appPackage", "declarativeAgent.json")));
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok(path.resolve("test-project", "appPackage", "declarativeAgent.json"))
+    );
 
-    sandbox.stub(MockUserInteraction.prototype, "showMessage").resolves(ok("Add"));
-    sandbox.stub(fs, "ensureDir").resolves();
-    sandbox.stub(fs, "writeFile").resolves();
+    vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok("Add"));
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    vi.spyOn(fs, "writeFile").mockResolvedValue();
 
-    const addSkillStub = sandbox.stub(copilotGptManifestUtils, "addSkill").resolves(
+    const addSkillStub = vi.spyOn(copilotGptManifestUtils, "addSkill").mockResolvedValue(
       ok({
         name: "test-agent",
         description: "description",
@@ -223,9 +220,9 @@ describe("addSkill", () => {
     const result = await core.addSkill(inputs);
 
     assert.isTrue(result.isOk());
-    assert.isTrue(addSkillStub.calledOnce);
+    assert.equal(addSkillStub.mock.calls.length, 1);
     // Verify the folder argument passed to addSkill
-    const folderArg = addSkillStub.firstCall.args[1] as string;
+    const folderArg = addSkillStub.mock.calls[0][1] as string;
     assert.include(folderArg, "skills/mySkill");
   });
 
@@ -234,7 +231,7 @@ describe("addSkill", () => {
     const manifest = new TeamsAppManifest();
     // No copilotAgents/declarativeAgents set
 
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
 
     const core = new FxCore(tools);
     const result = await core.addSkill(inputs);
@@ -249,14 +246,14 @@ describe("addSkill", () => {
     });
     const manifest = createManifestWithDA();
 
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox
-      .stub(copilotGptManifestUtils, "getManifestPath")
-      .resolves(ok(path.resolve(appPackageFolder, "declarativeAgent.json")));
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok(path.resolve(appPackageFolder, "declarativeAgent.json"))
+    );
 
     // SKILL.md does not exist
-    sandbox.stub(MockUserInteraction.prototype, "showMessage").resolves(ok("Add"));
-    sandbox.stub(fs, "pathExists").resolves(false);
+    vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok("Add"));
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
 
     const core = new FxCore(tools);
     const result = await core.addSkill(inputs);
@@ -270,9 +267,9 @@ describe("addSkill", () => {
   it("errors when reading manifest fails", async () => {
     const inputs = createBaseInputs();
 
-    sandbox
-      .stub(manifestUtils, "_readAppManifest")
-      .resolves(err(new UserError("test", "ManifestReadError", "Failed to read")));
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(
+      err(new UserError("test", "ManifestReadError", "Failed to read"))
+    );
 
     const core = new FxCore(tools);
     const result = await core.addSkill(inputs);
@@ -284,10 +281,10 @@ describe("addSkill", () => {
     const inputs = createBaseInputs();
     const manifest = createManifestWithDA();
 
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox
-      .stub(copilotGptManifestUtils, "getManifestPath")
-      .resolves(err(new UserError("test", "PathError", "Cannot get path")));
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      err(new UserError("test", "PathError", "Cannot get path"))
+    );
 
     const core = new FxCore(tools);
     const result = await core.addSkill(inputs);
@@ -299,18 +296,18 @@ describe("addSkill", () => {
     const inputs = createBaseInputs();
     const manifest = createManifestWithDA();
 
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox
-      .stub(copilotGptManifestUtils, "getManifestPath")
-      .resolves(ok(path.resolve("test-project", "appPackage", "declarativeAgent.json")));
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok(path.resolve("test-project", "appPackage", "declarativeAgent.json"))
+    );
 
-    sandbox.stub(MockUserInteraction.prototype, "showMessage").resolves(ok("Add"));
-    sandbox.stub(fs, "ensureDir").resolves();
-    sandbox.stub(fs, "writeFile").resolves();
+    vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok("Add"));
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    vi.spyOn(fs, "writeFile").mockResolvedValue();
 
-    sandbox
-      .stub(copilotGptManifestUtils, "addSkill")
-      .resolves(err(new UserError("test", "AddSkillError", "Failed to add")));
+    vi.spyOn(copilotGptManifestUtils, "addSkill").mockResolvedValue(
+      err(new UserError("test", "AddSkillError", "Failed to add"))
+    );
 
     const core = new FxCore(tools);
     const result = await core.addSkill(inputs);
@@ -322,16 +319,16 @@ describe("addSkill", () => {
     const inputs = createBaseInputs({ platform: Platform.CLI });
     const manifest = createManifestWithDA();
 
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox
-      .stub(copilotGptManifestUtils, "getManifestPath")
-      .resolves(ok(path.resolve("test-project", "appPackage", "declarativeAgent.json")));
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok(path.resolve("test-project", "appPackage", "declarativeAgent.json"))
+    );
 
-    sandbox.stub(MockUserInteraction.prototype, "showMessage").resolves(ok("Add"));
-    sandbox.stub(fs, "ensureDir").resolves();
-    sandbox.stub(fs, "writeFile").resolves();
+    vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok("Add"));
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    vi.spyOn(fs, "writeFile").mockResolvedValue();
 
-    sandbox.stub(copilotGptManifestUtils, "addSkill").resolves(
+    vi.spyOn(copilotGptManifestUtils, "addSkill").mockResolvedValue(
       ok({
         name: "test-agent",
         description: "description",
@@ -348,13 +345,13 @@ describe("addSkill", () => {
     const inputs = createBaseInputs();
     const manifest = createManifestWithDA();
 
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox
-      .stub(copilotGptManifestUtils, "getManifestPath")
-      .resolves(ok(path.resolve("test-project", "appPackage", "declarativeAgent.json")));
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok(path.resolve("test-project", "appPackage", "declarativeAgent.json"))
+    );
 
     // User dismisses the confirm dialog (returns undefined)
-    sandbox.stub(MockUserInteraction.prototype, "showMessage").resolves(ok(undefined));
+    vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok(undefined));
 
     const core = new FxCore(tools);
     const result = await core.addSkill(inputs);
@@ -377,16 +374,16 @@ describe("addSkill", () => {
       ],
     };
 
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox
-      .stub(copilotGptManifestUtils, "getManifestPath")
-      .resolves(ok(path.resolve("test-project", "appPackage", "declarativeAgent.json")));
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok(path.resolve("test-project", "appPackage", "declarativeAgent.json"))
+    );
 
-    sandbox.stub(MockUserInteraction.prototype, "showMessage").resolves(ok("Add"));
-    sandbox.stub(fs, "ensureDir").resolves();
-    sandbox.stub(fs, "writeFile").resolves();
+    vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok("Add"));
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    vi.spyOn(fs, "writeFile").mockResolvedValue();
 
-    sandbox.stub(copilotGptManifestUtils, "addSkill").resolves(
+    vi.spyOn(copilotGptManifestUtils, "addSkill").mockResolvedValue(
       ok({
         name: "test-agent",
         description: "description",
@@ -406,11 +403,11 @@ describe("addSkill", () => {
     });
     const manifest = createManifestWithDA();
 
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox
-      .stub(copilotGptManifestUtils, "getManifestPath")
-      .resolves(ok(path.resolve(appPackageFolder, "declarativeAgent.json")));
-    sandbox.stub(MockUserInteraction.prototype, "showMessage").resolves(ok("Add"));
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok(path.resolve(appPackageFolder, "declarativeAgent.json"))
+    );
+    vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok("Add"));
 
     const core = new FxCore(tools);
     const result = await core.addSkill(inputs);
@@ -428,16 +425,18 @@ describe("addSkill", () => {
     });
     const manifest = createManifestWithDA();
 
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox
-      .stub(copilotGptManifestUtils, "getManifestPath")
-      .resolves(ok(path.resolve(appPackageFolder, "declarativeAgent.json")));
-    sandbox.stub(MockUserInteraction.prototype, "showMessage").resolves(ok("Add"));
-    sandbox.stub(fs, "pathExists").resolves(true);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok(path.resolve(appPackageFolder, "declarativeAgent.json"))
+    );
+    vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok("Add"));
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     // SKILL.md without name in frontmatter
-    sandbox.stub(fs, "readFile").resolves("# Just a markdown file\nNo frontmatter here.\n" as any);
+    vi.spyOn(fs, "readFile").mockResolvedValue(
+      "# Just a markdown file\nNo frontmatter here.\n" as any
+    );
 
-    const addSkillStub = sandbox.stub(copilotGptManifestUtils, "addSkill").resolves(
+    const addSkillStub = vi.spyOn(copilotGptManifestUtils, "addSkill").mockResolvedValue(
       ok({
         name: "test-agent",
         description: "description",
@@ -448,21 +447,21 @@ describe("addSkill", () => {
     const result = await core.addSkill(inputs);
 
     assert.isTrue(result.isOk());
-    assert.isTrue(addSkillStub.calledOnce);
+    assert.equal(addSkillStub.mock.calls.length, 1);
   });
 
   it("errors when showMessage returns error", async () => {
     const inputs = createBaseInputs();
     const manifest = createManifestWithDA();
 
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox
-      .stub(copilotGptManifestUtils, "getManifestPath")
-      .resolves(ok(path.resolve("test-project", "appPackage", "declarativeAgent.json")));
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok(path.resolve("test-project", "appPackage", "declarativeAgent.json"))
+    );
 
-    sandbox
-      .stub(MockUserInteraction.prototype, "showMessage")
-      .resolves(err(new UserError("test", "ShowMessageError", "Dialog error")));
+    vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(
+      err(new UserError("test", "ShowMessageError", "Dialog error"))
+    );
 
     const core = new FxCore(tools);
     const result = await core.addSkill(inputs);
@@ -485,7 +484,7 @@ describe("addSkill", () => {
       ],
     };
 
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
 
     const core = new FxCore(tools);
     const result = await core.addSkill(inputs);
@@ -497,28 +496,28 @@ describe("addSkill", () => {
     const inputs = createBaseInputs();
     const manifest = createManifestWithDA();
 
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox
-      .stub(copilotGptManifestUtils, "getManifestPath")
-      .resolves(ok(path.resolve("test-project", "appPackage", "declarativeAgent.json")));
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok(path.resolve("test-project", "appPackage", "declarativeAgent.json"))
+    );
 
     // First call: confirmation dialog returns "Add"
     // Second call: success message returns "View agent manifest" button
-    const showMessageStub = sandbox.stub(MockUserInteraction.prototype, "showMessage");
-    showMessageStub.onFirstCall().resolves(ok("Add"));
-    showMessageStub.onSecondCall().resolves(ok("View agent manifest"));
+    const showMessageStub = vi.spyOn(MockUserInteraction.prototype, "showMessage");
+    showMessageStub.mockResolvedValueOnce(ok("Add"));
+    showMessageStub.mockResolvedValueOnce(ok("View agent manifest"));
 
-    sandbox.stub(fs, "ensureDir").resolves();
-    sandbox.stub(fs, "writeFile").resolves();
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    vi.spyOn(fs, "writeFile").mockResolvedValue();
 
-    sandbox.stub(copilotGptManifestUtils, "addSkill").resolves(
+    vi.spyOn(copilotGptManifestUtils, "addSkill").mockResolvedValue(
       ok({
         name: "test-agent",
         description: "description",
       } as DeclarativeCopilotManifestSchema)
     );
 
-    const openFileStub = sandbox.stub(tools.ui, "openFile").resolves(ok(true));
+    const openFileStub = vi.spyOn(tools.ui, "openFile").mockResolvedValue(ok(true));
 
     const core = new FxCore(tools);
     const result = await core.addSkill(inputs);
@@ -526,26 +525,26 @@ describe("addSkill", () => {
     assert.isTrue(result.isOk());
     // Wait for fire-and-forget .then() to resolve
     await new Promise((resolve) => setTimeout(resolve, 10));
-    assert.isTrue(openFileStub.calledOnce);
+    assert.equal(openFileStub.mock.calls.length, 1);
   });
 
   it("CLI platform: shows success message without View button", async () => {
     const inputs = createBaseInputs({ platform: Platform.CLI });
     const manifest = createManifestWithDA();
 
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox
-      .stub(copilotGptManifestUtils, "getManifestPath")
-      .resolves(ok(path.resolve("test-project", "appPackage", "declarativeAgent.json")));
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok(path.resolve("test-project", "appPackage", "declarativeAgent.json"))
+    );
 
-    const showMessageStub = sandbox.stub(MockUserInteraction.prototype, "showMessage");
-    showMessageStub.onFirstCall().resolves(ok("Add"));
-    showMessageStub.onSecondCall().resolves(ok(undefined));
+    const showMessageStub = vi.spyOn(MockUserInteraction.prototype, "showMessage");
+    showMessageStub.mockResolvedValueOnce(ok("Add"));
+    showMessageStub.mockResolvedValueOnce(ok(undefined));
 
-    sandbox.stub(fs, "ensureDir").resolves();
-    sandbox.stub(fs, "writeFile").resolves();
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    vi.spyOn(fs, "writeFile").mockResolvedValue();
 
-    sandbox.stub(copilotGptManifestUtils, "addSkill").resolves(
+    vi.spyOn(copilotGptManifestUtils, "addSkill").mockResolvedValue(
       ok({
         name: "test-agent",
         description: "description",
@@ -557,7 +556,7 @@ describe("addSkill", () => {
 
     assert.isTrue(result.isOk());
     // Second showMessage should be "info" for CLI, no "View agent manifest" button
-    assert.isTrue(showMessageStub.secondCall.args[0] === "info");
+    assert.isTrue(showMessageStub.mock.calls[1][0] === "info");
   });
 
   it("expose-to-copilot: writes agentSkills to Teams manifest when enabled", async () => {
@@ -566,16 +565,16 @@ describe("addSkill", () => {
     });
     const manifest = createManifestWithDA();
 
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox
-      .stub(copilotGptManifestUtils, "getManifestPath")
-      .resolves(ok(path.resolve("test-project", "appPackage", "declarativeAgent.json")));
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok(path.resolve("test-project", "appPackage", "declarativeAgent.json"))
+    );
 
-    sandbox.stub(MockUserInteraction.prototype, "showMessage").resolves(ok("Add"));
-    sandbox.stub(fs, "ensureDir").resolves();
-    const writeFileStub = sandbox.stub(fs, "writeFile").resolves();
+    vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok("Add"));
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    const writeFileStub = vi.spyOn(fs, "writeFile").mockResolvedValue();
 
-    sandbox.stub(copilotGptManifestUtils, "addSkill").resolves(
+    vi.spyOn(copilotGptManifestUtils, "addSkill").mockResolvedValue(
       ok({
         name: "test-agent",
         description: "description",
@@ -587,15 +586,15 @@ describe("addSkill", () => {
 
     assert.isTrue(result.isOk());
     // writeFile should be called twice: once for SKILL.md, once for Teams manifest
-    assert.isTrue(writeFileStub.callCount >= 2);
+    assert.isTrue(writeFileStub.mock.calls.length >= 2);
 
     // Find the Teams manifest write call
-    const teamsManifestWriteCall = writeFileStub.getCalls().find((call) => {
-      const filePath = call.args[0] as string;
+    const teamsManifestWriteCall = writeFileStub.mock.calls.find((call) => {
+      const filePath = call[0] as string;
       return filePath.includes("manifest.json");
     });
     assert.isDefined(teamsManifestWriteCall);
-    const writtenManifest = JSON.parse(teamsManifestWriteCall!.args[1] as string);
+    const writtenManifest = JSON.parse(teamsManifestWriteCall![1] as string);
     assert.isArray(writtenManifest.agentSkills);
     assert.equal(writtenManifest.agentSkills.length, 1);
     assert.include(writtenManifest.agentSkills[0].folder, "skills/mySkill");
@@ -607,16 +606,16 @@ describe("addSkill", () => {
     });
     const manifest = createManifestWithDA();
 
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox
-      .stub(copilotGptManifestUtils, "getManifestPath")
-      .resolves(ok(path.resolve("test-project", "appPackage", "declarativeAgent.json")));
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok(path.resolve("test-project", "appPackage", "declarativeAgent.json"))
+    );
 
-    sandbox.stub(MockUserInteraction.prototype, "showMessage").resolves(ok("Add"));
-    sandbox.stub(fs, "ensureDir").resolves();
-    const writeFileStub = sandbox.stub(fs, "writeFile").resolves();
+    vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok("Add"));
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    const writeFileStub = vi.spyOn(fs, "writeFile").mockResolvedValue();
 
-    sandbox.stub(copilotGptManifestUtils, "addSkill").resolves(
+    vi.spyOn(copilotGptManifestUtils, "addSkill").mockResolvedValue(
       ok({
         name: "test-agent",
         description: "description",
@@ -627,12 +626,12 @@ describe("addSkill", () => {
     const result = await core.addSkill(inputs);
 
     assert.isTrue(result.isOk());
-    const teamsManifestWriteCall = writeFileStub.getCalls().find((call) => {
-      const filePath = call.args[0] as string;
+    const teamsManifestWriteCall = writeFileStub.mock.calls.find((call) => {
+      const filePath = call[0] as string;
       return filePath.includes("manifest.json");
     });
     assert.isDefined(teamsManifestWriteCall);
-    const writtenManifest = JSON.parse(teamsManifestWriteCall!.args[1] as string);
+    const writtenManifest = JSON.parse(teamsManifestWriteCall![1] as string);
     assert.isArray(writtenManifest.agentSkills);
     assert.equal(writtenManifest.agentSkills.length, 1);
     assert.include(writtenManifest.agentSkills[0].folder, "skills/mySkill");
@@ -645,16 +644,16 @@ describe("addSkill", () => {
     const manifest = createManifestWithDA();
     manifest.agentSkills = [{ folder: "skills/mySkill" }];
 
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox
-      .stub(copilotGptManifestUtils, "getManifestPath")
-      .resolves(ok(path.resolve("test-project", "appPackage", "declarativeAgent.json")));
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok(path.resolve("test-project", "appPackage", "declarativeAgent.json"))
+    );
 
-    sandbox.stub(MockUserInteraction.prototype, "showMessage").resolves(ok("Add"));
-    sandbox.stub(fs, "ensureDir").resolves();
-    const writeFileStub = sandbox.stub(fs, "writeFile").resolves();
+    vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok("Add"));
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    const writeFileStub = vi.spyOn(fs, "writeFile").mockResolvedValue();
 
-    sandbox.stub(copilotGptManifestUtils, "addSkill").resolves(
+    vi.spyOn(copilotGptManifestUtils, "addSkill").mockResolvedValue(
       ok({
         name: "test-agent",
         description: "description",
@@ -665,12 +664,12 @@ describe("addSkill", () => {
     const result = await core.addSkill(inputs);
 
     assert.isTrue(result.isOk());
-    const teamsManifestWriteCall = writeFileStub.getCalls().find((call) => {
-      const filePath = call.args[0] as string;
+    const teamsManifestWriteCall = writeFileStub.mock.calls.find((call) => {
+      const filePath = call[0] as string;
       return filePath.includes("manifest.json");
     });
     assert.isDefined(teamsManifestWriteCall);
-    const writtenManifest = JSON.parse(teamsManifestWriteCall!.args[1] as string);
+    const writtenManifest = JSON.parse(teamsManifestWriteCall![1] as string);
     assert.isArray(writtenManifest.agentSkills);
     assert.equal(writtenManifest.agentSkills.length, 1);
     assert.equal(writtenManifest.agentSkills[0].folder, "skills/mySkill");
@@ -682,16 +681,16 @@ describe("addSkill", () => {
     });
     const manifest = createManifestWithDA();
 
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox
-      .stub(copilotGptManifestUtils, "getManifestPath")
-      .resolves(ok(path.resolve("test-project", "appPackage", "declarativeAgent.json")));
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok(path.resolve("test-project", "appPackage", "declarativeAgent.json"))
+    );
 
-    sandbox.stub(MockUserInteraction.prototype, "showMessage").resolves(ok("Add"));
-    sandbox.stub(fs, "ensureDir").resolves();
-    const writeFileStub = sandbox.stub(fs, "writeFile").resolves();
+    vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok("Add"));
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    const writeFileStub = vi.spyOn(fs, "writeFile").mockResolvedValue();
 
-    sandbox.stub(copilotGptManifestUtils, "addSkill").resolves(
+    vi.spyOn(copilotGptManifestUtils, "addSkill").mockResolvedValue(
       ok({
         name: "test-agent",
         description: "description",
@@ -703,8 +702,8 @@ describe("addSkill", () => {
 
     assert.isTrue(result.isOk());
     // writeFile should only be called for SKILL.md, NOT Teams manifest
-    const teamsManifestWriteCall = writeFileStub.getCalls().find((call) => {
-      const filePath = call.args[0] as string;
+    const teamsManifestWriteCall = writeFileStub.mock.calls.find((call) => {
+      const filePath = call[0] as string;
       return filePath.includes("manifest.json");
     });
     assert.isUndefined(teamsManifestWriteCall);
@@ -766,19 +765,15 @@ describe("addSkill", () => {
       const inputs = createZipInputs(zipPath);
       const manifest = createManifestWithDA();
 
-      sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-      sandbox
-        .stub(copilotGptManifestUtils, "getManifestPath")
-        .resolves(ok(path.resolve(appPackageFolder, "declarativeAgent.json")));
-      sandbox.stub(MockUserInteraction.prototype, "showMessage").resolves(ok("Add"));
+      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+      vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+        ok(path.resolve(appPackageFolder, "declarativeAgent.json"))
+      );
+      vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok("Add"));
 
       // Mock fs operations for zip import
-      const pathExistsStub = sandbox.stub(fs, "pathExists");
-      pathExistsStub.withArgs(zipPath).resolves(true);
-      pathExistsStub
-        .withArgs(path.join(appPackageFolder, "skills", "myImportedSkill"))
-        .resolves(false);
-      pathExistsStub.callsFake(async (p: string) => {
+      const pathExistsStub = vi.spyOn(fs, "pathExists");
+      pathExistsStub.mockImplementation(async (p: string) => {
         if (p === zipPath) return true;
         if (p.includes("myImportedSkill") && p.includes("skills")) return false;
         if (p.includes("SKILL.md")) return true;
@@ -788,7 +783,7 @@ describe("addSkill", () => {
       // Stub AdmZip constructor
       const AdmZip = require("adm-zip");
       const fakeZip = new AdmZip(zipBuffer);
-      sandbox.stub(FxCore.prototype as any, "importSkillFromZip").callsFake(async function (
+      vi.spyOn(FxCore.prototype as any, "importSkillFromZip").mockImplementation(async function (
         this: any,
         ...args: unknown[]
       ) {
@@ -796,7 +791,7 @@ describe("addSkill", () => {
         return ok("skills/myImportedSkill");
       });
 
-      sandbox.stub(copilotGptManifestUtils, "addSkill").resolves(
+      vi.spyOn(copilotGptManifestUtils, "addSkill").mockResolvedValue(
         ok({
           name: "test-agent",
           description: "description",
@@ -818,17 +813,17 @@ describe("addSkill", () => {
       });
       const manifest = createManifestWithDA();
 
-      sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-      sandbox
-        .stub(copilotGptManifestUtils, "getManifestPath")
-        .resolves(ok(path.resolve(appPackageFolder, "declarativeAgent.json")));
-      sandbox.stub(MockUserInteraction.prototype, "showMessage").resolves(ok("Add"));
+      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+      vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+        ok(path.resolve(appPackageFolder, "declarativeAgent.json"))
+      );
+      vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok("Add"));
 
-      sandbox.stub(FxCore.prototype as any, "importSkillFromZip").callsFake(async function () {
+      vi.spyOn(FxCore.prototype as any, "importSkillFromZip").mockImplementation(async function () {
         return ok("skills/myImportedSkill");
       });
 
-      sandbox.stub(copilotGptManifestUtils, "addSkill").resolves(
+      vi.spyOn(copilotGptManifestUtils, "addSkill").mockResolvedValue(
         ok({
           name: "test-agent",
           description: "description",
@@ -848,12 +843,12 @@ describe("addSkill", () => {
       const inputs = createZipInputs(zipPath);
       const manifest = createManifestWithDA();
 
-      sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-      sandbox
-        .stub(copilotGptManifestUtils, "getManifestPath")
-        .resolves(ok(path.resolve(appPackageFolder, "declarativeAgent.json")));
-      sandbox.stub(MockUserInteraction.prototype, "showMessage").resolves(ok("Add"));
-      sandbox.stub(fs, "pathExists").resolves(false);
+      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+      vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+        ok(path.resolve(appPackageFolder, "declarativeAgent.json"))
+      );
+      vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok("Add"));
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
 
       const core = new FxCore(tools);
       const result = await core.addSkill(inputs);
@@ -890,11 +885,11 @@ describe("addSkill", () => {
       const traversalInputs = createZipInputs(tempZipPath);
       const manifest = createManifestWithDA();
 
-      sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-      sandbox
-        .stub(copilotGptManifestUtils, "getManifestPath")
-        .resolves(ok(path.resolve(appPackageFolder, "declarativeAgent.json")));
-      sandbox.stub(MockUserInteraction.prototype, "showMessage").resolves(ok("Add"));
+      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+      vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+        ok(path.resolve(appPackageFolder, "declarativeAgent.json"))
+      );
+      vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok("Add"));
 
       const core = new FxCore(tools);
       const result = await core.addSkill(traversalInputs);
@@ -921,11 +916,11 @@ describe("addSkill", () => {
       const manifest = createManifestWithDA();
       const appPackageFolder = path.resolve("test-project", "appPackage");
 
-      sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-      sandbox
-        .stub(copilotGptManifestUtils, "getManifestPath")
-        .resolves(ok(path.resolve(appPackageFolder, "declarativeAgent.json")));
-      sandbox.stub(MockUserInteraction.prototype, "showMessage").resolves(ok("Add"));
+      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+      vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+        ok(path.resolve(appPackageFolder, "declarativeAgent.json"))
+      );
+      vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok("Add"));
 
       const core = new FxCore(tools);
       const result = await core.addSkill(inputs);
@@ -950,15 +945,15 @@ describe("addSkill", () => {
       const manifest = createManifestWithDA();
       const appPackageFolder = path.resolve("test-project", "appPackage");
 
-      sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-      sandbox
-        .stub(copilotGptManifestUtils, "getManifestPath")
-        .resolves(ok(path.resolve(appPackageFolder, "declarativeAgent.json")));
-      sandbox.stub(MockUserInteraction.prototype, "showMessage").resolves(ok("Add"));
+      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+      vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+        ok(path.resolve(appPackageFolder, "declarativeAgent.json"))
+      );
+      vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok("Add"));
 
       // Target folder already exists
       const origPathExists = fs.pathExists;
-      sandbox.stub(fs, "pathExists").callsFake(async (p: string) => {
+      vi.spyOn(fs, "pathExists").mockImplementation(async (p: string) => {
         if (p === tempZipPath) return true;
         if (
           p === path.join(appPackageFolder, "skills", "existingSkill") ||
@@ -994,17 +989,17 @@ describe("addSkill", () => {
       const appPackageFolder = path.resolve("test-project", "appPackage");
       const manifest = createManifestWithDA();
 
-      sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-      sandbox
-        .stub(copilotGptManifestUtils, "getManifestPath")
-        .resolves(ok(path.resolve(appPackageFolder, "declarativeAgent.json")));
-      sandbox.stub(MockUserInteraction.prototype, "showMessage").resolves(ok("Add"));
+      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+      vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+        ok(path.resolve(appPackageFolder, "declarativeAgent.json"))
+      );
+      vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok("Add"));
 
       // Mock fs for the target side but allow temp operations
       const targetSkillDir = path.join(appPackageFolder, "skills", "myNewSkill");
 
       const origPathExists = fs.pathExists.bind(fs);
-      sandbox.stub(fs, "pathExists").callsFake(async (p: string) => {
+      vi.spyOn(fs, "pathExists").mockImplementation(async (p: string) => {
         if (p === tempZipPath) return true;
         if (typeof p === "string" && p.includes("myNewSkill") && p.includes(appPackageFolder)) {
           return false;
@@ -1015,13 +1010,13 @@ describe("addSkill", () => {
         return origPathExists(p);
       });
 
-      const ensureDirStub = sandbox.stub(fs, "ensureDir").resolves();
-      const writeFileStub = sandbox.stub(fs, "writeFile").resolves();
-      const moveStub = sandbox.stub(fs, "move").resolves();
-      const readFileStub = sandbox.stub(fs, "readFile").resolves(skillMd as any);
-      sandbox.stub(fs, "remove").resolves();
+      const ensureDirStub = vi.spyOn(fs, "ensureDir").mockResolvedValue();
+      const writeFileStub = vi.spyOn(fs, "writeFile").mockResolvedValue();
+      const moveStub = vi.spyOn(fs, "move").mockResolvedValue();
+      const readFileStub = vi.spyOn(fs, "readFile").mockResolvedValue(skillMd as any);
+      vi.spyOn(fs, "remove").mockResolvedValue();
 
-      sandbox.stub(copilotGptManifestUtils, "addSkill").resolves(
+      vi.spyOn(copilotGptManifestUtils, "addSkill").mockResolvedValue(
         ok({
           name: "test-agent",
           description: "description",
@@ -1049,11 +1044,11 @@ describe("addSkill", () => {
       const manifest = createManifestWithDA();
       const appPackageFolder = path.resolve("test-project", "appPackage");
 
-      sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-      sandbox
-        .stub(copilotGptManifestUtils, "getManifestPath")
-        .resolves(ok(path.resolve(appPackageFolder, "declarativeAgent.json")));
-      sandbox.stub(MockUserInteraction.prototype, "showMessage").resolves(ok("Add"));
+      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+      vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+        ok(path.resolve(appPackageFolder, "declarativeAgent.json"))
+      );
+      vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok("Add"));
 
       const core = new FxCore(tools);
       const result = await core.addSkill(inputs);

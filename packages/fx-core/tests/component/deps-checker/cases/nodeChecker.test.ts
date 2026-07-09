@@ -1,31 +1,28 @@
-import * as chai from "chai";
-import chaiAsPromised from "chai-as-promised";
 import * as path from "path";
-import * as sinon from "sinon";
 import { DepsType, EmptyLogger, EmptyTelemetry } from "../../../../src/component/deps-checker";
+import { chai, vi } from "vitest";
 import {
   NodeChecker,
   ProjectNodeChecker,
 } from "../../../../src/component/deps-checker/internal/nodeChecker";
 
-chai.use(chaiAsPromised);
-
 const nodeVersionFolder = path.resolve(__dirname, "../data/node-version/");
 const noNodeVersionFolder = path.resolve(__dirname, "../data/node-version/");
 describe("NodeChecker", () => {
   describe("ProjectNodeChecker", () => {
-    const sandbox = sinon.createSandbox();
+    const sandbox = vi;
 
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("No node engine property specified", async () => {
       const nodeChecker = new ProjectNodeChecker(new EmptyLogger(), new EmptyTelemetry());
 
-      sandbox
-        .stub(NodeChecker, "getInstalledNodeVersion")
-        .resolves({ version: "v14.17.6", majorVersion: "14" });
+      vi.spyOn(NodeChecker, "getInstalledNodeVersion").mockResolvedValue({
+        version: "v14.17.6",
+        majorVersion: "14",
+      });
 
       const res = await nodeChecker.resolve({ projectPath: noNodeVersionFolder });
       chai.assert.deepEqual(res, {
@@ -45,9 +42,10 @@ describe("NodeChecker", () => {
     it("Lower node version", async () => {
       const nodeChecker = new ProjectNodeChecker(new EmptyLogger(), new EmptyTelemetry());
 
-      sandbox
-        .stub(NodeChecker, "getInstalledNodeVersion")
-        .resolves({ version: "v12.20.0", majorVersion: "12" });
+      vi.spyOn(NodeChecker, "getInstalledNodeVersion").mockResolvedValue({
+        version: "v12.20.0",
+        majorVersion: "12",
+      });
 
       const res = await nodeChecker.resolve({ projectPath: nodeVersionFolder });
       chai.assert.equal(res.command, "node");
@@ -65,9 +63,10 @@ describe("NodeChecker", () => {
     it("Higher node version", async () => {
       const nodeChecker = new ProjectNodeChecker(new EmptyLogger(), new EmptyTelemetry());
 
-      sandbox
-        .stub(NodeChecker, "getInstalledNodeVersion")
-        .resolves({ version: "v18.9.0", majorVersion: "18" });
+      vi.spyOn(NodeChecker, "getInstalledNodeVersion").mockResolvedValue({
+        version: "v18.9.0",
+        majorVersion: "18",
+      });
 
       const res = await nodeChecker.resolve({ projectPath: nodeVersionFolder });
       chai.assert.equal(res.command, "node");
@@ -85,9 +84,10 @@ describe("NodeChecker", () => {
     it("Supported node version", async () => {
       const nodeChecker = new ProjectNodeChecker(new EmptyLogger(), new EmptyTelemetry());
 
-      sandbox
-        .stub(NodeChecker, "getInstalledNodeVersion")
-        .resolves({ version: "v14.17.5", majorVersion: "14" });
+      vi.spyOn(NodeChecker, "getInstalledNodeVersion").mockResolvedValue({
+        version: "v14.17.5",
+        majorVersion: "14",
+      });
 
       const res = await nodeChecker.resolve({ projectPath: nodeVersionFolder });
       chai.assert.deepEqual(res, {

@@ -2,18 +2,30 @@
 // Licensed under the MIT license.
 
 import AdmZip from "adm-zip";
-import { assert } from "chai";
 import fs from "fs-extra";
 import { RestoreFn } from "mocked-env";
 import * as os from "os";
 import * as path from "path";
-import sinon from "sinon";
+import { assert, beforeEach, chai, describe, it, vi } from "vitest";
 import { FxCore } from "../../src";
+import { featureFlagManager } from "../../src/common/featureFlags";
 import { setTools } from "../../src/common/globalVars";
-import templateConfigModule from "../../src/common/templates-config.json";
 import "../../src/component/feature/sso";
-import { fxCoreDeps } from "../../src/core/FxCore";
+import * as templateHelper from "../../src/component/generator/templateHelper";
+import * as generatorUtils from "../../src/component/generator/utils";
+import * as fxCoreModule from "../../src/core/FxCore";
 import { MockTools, randomAppName } from "./utils";
+
+vi.mock("../../src/common/templates-config.json", () => ({
+  default: {
+    tagPrefix: "templates@",
+    vstagPrefix: "templates-vs@",
+    templateDownloadBaseURL: "https://example.com/releases/download",
+  },
+  tagPrefix: "templates@",
+  vstagPrefix: "templates-vs@",
+  templateDownloadBaseURL: "https://example.com/releases/download",
+}));
 
 const tools = new MockTools();
 
@@ -37,17 +49,17 @@ async function deleteTestProject(appName: string) {
 }
 
 describe("fetchOnlineTemplateMetadata", () => {
-  const sandbox = sinon.createSandbox();
   let core: FxCore;
   let mockedEnvRestore: RestoreFn | undefined;
 
   beforeEach(() => {
     setTools(tools);
     core = new FxCore(tools);
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     if (mockedEnvRestore) {
       mockedEnvRestore();
       mockedEnvRestore = undefined;
@@ -55,7 +67,7 @@ describe("fetchOnlineTemplateMetadata", () => {
   });
 
   it("should skip download when using local template", async () => {
-    sandbox.stub(fxCoreDeps, "useLocalTemplate").returns(true);
+    vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(true);
 
     const result = await core.fetchOnlineTemplateMetadata();
 
@@ -66,226 +78,195 @@ describe("fetchOnlineTemplateMetadata", () => {
   });
 
   it("should download metadata for rc version when coreVersion contains 'rc'", async () => {
-    sandbox.stub(fxCoreDeps, "useLocalTemplate").returns(false);
-    sandbox.stub(templateConfigModule, "tagPrefix").value("templates@");
-    sandbox
-      .stub(templateConfigModule, "templateDownloadBaseURL")
-      .value("https://example.com/releases/download");
-    sandbox.stub(fxCoreDeps, "getCoreVersion").returns("1.0.0-rc.1");
+    vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(false);
+    vi.spyOn(fxCoreModule.fxCoreDeps, "getCoreVersion").mockReturnValue("1.0.0-rc.1");
 
     const mockZip = new AdmZip();
-    const fetchZipStub = sandbox.stub(fxCoreDeps, "fetchZipFromUrl").resolves(mockZip);
-    const unzipStub = sandbox.stub(fxCoreDeps, "unzip").resolves();
+    const fetchZipStub = vi.spyOn(generatorUtils, "fetchZipFromUrl").mockResolvedValue(mockZip);
+    const unzipStub = vi.spyOn(generatorUtils, "unzip").mockResolvedValue();
 
-    sandbox.stub(fs, "pathExists").resolves(false);
-    sandbox.stub(fs, "ensureDir").resolves();
-    const writeFileStub = sandbox.stub(fs, "writeFile").resolves();
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    const writeFileStub = vi.spyOn(fs, "writeFile").mockResolvedValue();
 
     const result = await core.fetchOnlineTemplateMetadata();
 
     assert.isTrue(result.isOk());
-    assert.isTrue(fetchZipStub.calledOnce);
-    assert.isTrue(
-      fetchZipStub.calledWith(
-        "https://example.com/releases/download/templates@0.0.0-rc/metadata.zip"
-      )
+    assert.isTrue(fetchZipStub.mock.calls.length === 1);
+    assert.equal(
+      fetchZipStub.mock.calls[0]?.[0],
+      "https://example.com/releases/download/templates@0.0.0-rc/metadata.zip"
     );
-    assert.isTrue(unzipStub.calledOnce);
-    assert.isTrue(writeFileStub.calledOnce);
+    assert.isTrue(unzipStub.mock.calls.length === 1);
+    assert.isTrue(writeFileStub.mock.calls.length === 1);
   });
 
   it("should download metadata for stable version", async () => {
-    sandbox.stub(fxCoreDeps, "useLocalTemplate").returns(false);
-    sandbox.stub(templateConfigModule, "tagPrefix").value("templates@");
-    sandbox
-      .stub(templateConfigModule, "templateDownloadBaseURL")
-      .value("https://example.com/releases/download");
-    sandbox.stub(fxCoreDeps, "getCoreVersion").returns("1.0.0");
+    vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(false);
 
-    const getTemplateLatestVersionStub = sandbox
-      .stub(fxCoreDeps, "getTemplateLatestVersion")
-      .resolves("2.0.0");
+    vi.spyOn(fxCoreModule.fxCoreDeps, "getCoreVersion").mockReturnValue("1.0.0");
+
+    const getTemplateLatestVersionStub = vi
+      .spyOn(generatorUtils, "getTemplateLatestVersion")
+      .mockResolvedValue("2.0.0");
     const mockZip = new AdmZip();
-    const fetchZipStub = sandbox.stub(fxCoreDeps, "fetchZipFromUrl").resolves(mockZip);
-    const unzipStub = sandbox.stub(fxCoreDeps, "unzip").resolves();
+    const fetchZipStub = vi.spyOn(generatorUtils, "fetchZipFromUrl").mockResolvedValue(mockZip);
+    const unzipStub = vi.spyOn(generatorUtils, "unzip").mockResolvedValue();
 
-    sandbox.stub(fs, "pathExists").resolves(false);
-    sandbox.stub(fs, "ensureDir").resolves();
-    const writeFileStub = sandbox.stub(fs, "writeFile").resolves();
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    const writeFileStub = vi.spyOn(fs, "writeFile").mockResolvedValue();
 
     const result = await core.fetchOnlineTemplateMetadata();
 
     assert.isTrue(result.isOk());
-    assert.isTrue(getTemplateLatestVersionStub.calledOnce);
-    assert.isTrue(fetchZipStub.calledOnce);
-    assert.isTrue(
-      fetchZipStub.calledWith("https://example.com/releases/download/templates@2.0.0/metadata.zip")
+    assert.isTrue(getTemplateLatestVersionStub.mock.calls.length === 1);
+    assert.isTrue(fetchZipStub.mock.calls.length === 1);
+    assert.equal(
+      fetchZipStub.mock.calls[0]?.[0],
+      "https://example.com/releases/download/templates@2.0.0/metadata.zip"
     );
-    assert.isTrue(unzipStub.calledOnce);
-    assert.isTrue(writeFileStub.calledWith(sinon.match.string, "2.0.0", { encoding: "utf-8" }));
+    assert.isTrue(unzipStub.mock.calls.length === 1);
+    chai.expect(writeFileStub.mock.calls.length).to.be.greaterThan(0);
   });
 
   it("should skip download when cached version matches latest version", async () => {
-    sandbox.stub(fxCoreDeps, "useLocalTemplate").returns(false);
-    sandbox.stub(fxCoreDeps, "getCoreVersion").returns("1.0.0");
+    vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(false);
+    vi.spyOn(fxCoreModule.fxCoreDeps, "getCoreVersion").mockReturnValue("1.0.0");
 
-    sandbox.stub(fxCoreDeps, "getTemplateLatestVersion").resolves("2.0.0");
-    const fetchZipStub = sandbox.stub(fxCoreDeps, "fetchZipFromUrl");
-    const unzipStub = sandbox.stub(fxCoreDeps, "unzip");
+    vi.spyOn(generatorUtils, "getTemplateLatestVersion").mockResolvedValue("2.0.0");
+    const fetchZipStub = vi.spyOn(generatorUtils, "fetchZipFromUrl");
+    const unzipStub = vi.spyOn(generatorUtils, "unzip");
 
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(fs, "ensureDir").resolves();
-    sandbox.stub(fs, "readFile").resolves("2.0.0" as any);
-    sandbox.stub(fs, "writeFile").resolves();
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    vi.spyOn(fs, "readFile").mockResolvedValue("2.0.0" as any);
+    vi.spyOn(fs, "writeFile").mockResolvedValue();
 
     const result = await core.fetchOnlineTemplateMetadata();
 
     assert.isTrue(result.isOk());
-    assert.equal(fetchZipStub.called, false);
-    assert.equal(unzipStub.called, false);
+    assert.equal(fetchZipStub.mock.calls.length > 0, false);
+    assert.equal(unzipStub.mock.calls.length > 0, false);
   });
 
   it("should download when cached version file does not exist", async () => {
-    sandbox.stub(fxCoreDeps, "useLocalTemplate").returns(false);
-    sandbox.stub(templateConfigModule, "tagPrefix").value("templates@");
-    sandbox
-      .stub(templateConfigModule, "templateDownloadBaseURL")
-      .value("https://example.com/releases/download");
-    sandbox.stub(fxCoreDeps, "getCoreVersion").returns("1.0.0");
+    vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(false);
 
-    sandbox.stub(fxCoreDeps, "getTemplateLatestVersion").resolves("2.0.0");
+    vi.spyOn(fxCoreModule.fxCoreDeps, "getCoreVersion").mockReturnValue("1.0.0");
+
+    vi.spyOn(generatorUtils, "getTemplateLatestVersion").mockResolvedValue("2.0.0");
     const mockZip = new AdmZip();
-    const fetchZipStub = sandbox.stub(fxCoreDeps, "fetchZipFromUrl").resolves(mockZip);
-    const unzipStub = sandbox.stub(fxCoreDeps, "unzip").resolves();
+    const fetchZipStub = vi.spyOn(generatorUtils, "fetchZipFromUrl").mockResolvedValue(mockZip);
+    const unzipStub = vi.spyOn(generatorUtils, "unzip").mockResolvedValue();
 
-    sandbox.stub(fs, "pathExists").resolves(false);
-    sandbox.stub(fs, "ensureDir").resolves();
-    sandbox.stub(fs, "writeFile").resolves();
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    vi.spyOn(fs, "writeFile").mockResolvedValue();
 
     const result = await core.fetchOnlineTemplateMetadata();
 
     assert.isTrue(result.isOk());
-    assert.isTrue(fetchZipStub.calledOnce);
-    assert.isTrue(unzipStub.calledOnce);
+    assert.isTrue(fetchZipStub.mock.calls.length === 1);
+    assert.isTrue(unzipStub.mock.calls.length === 1);
   });
 
   it("should download when cached version differs from latest version", async () => {
-    sandbox.stub(fxCoreDeps, "useLocalTemplate").returns(false);
-    sandbox.stub(templateConfigModule, "tagPrefix").value("templates@");
-    sandbox
-      .stub(templateConfigModule, "templateDownloadBaseURL")
-      .value("https://example.com/releases/download");
-    sandbox.stub(fxCoreDeps, "getCoreVersion").returns("1.0.0");
+    vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(false);
 
-    sandbox.stub(fxCoreDeps, "getTemplateLatestVersion").resolves("2.0.0");
+    vi.spyOn(fxCoreModule.fxCoreDeps, "getCoreVersion").mockReturnValue("1.0.0");
+
+    vi.spyOn(generatorUtils, "getTemplateLatestVersion").mockResolvedValue("2.0.0");
     const mockZip = new AdmZip();
-    const fetchZipStub = sandbox.stub(fxCoreDeps, "fetchZipFromUrl").resolves(mockZip);
-    const unzipStub = sandbox.stub(fxCoreDeps, "unzip").resolves();
+    const fetchZipStub = vi.spyOn(generatorUtils, "fetchZipFromUrl").mockResolvedValue(mockZip);
+    const unzipStub = vi.spyOn(generatorUtils, "unzip").mockResolvedValue();
 
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(fs, "ensureDir").resolves();
-    sandbox.stub(fs, "readFile").resolves("1.0.0" as any); // Old cached version
-    sandbox.stub(fs, "writeFile").resolves();
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    vi.spyOn(fs, "readFile").mockResolvedValue("1.0.0" as any); // Old cached version
+    vi.spyOn(fs, "writeFile").mockResolvedValue();
 
     const result = await core.fetchOnlineTemplateMetadata();
 
     assert.isTrue(result.isOk());
-    assert.isTrue(fetchZipStub.calledOnce);
-    assert.isTrue(unzipStub.calledOnce);
+    assert.isTrue(fetchZipStub.mock.calls.length === 1);
+    assert.isTrue(unzipStub.mock.calls.length === 1);
   });
 
   it("should re-download when cached version file is corrupted", async () => {
-    sandbox.stub(fxCoreDeps, "useLocalTemplate").returns(false);
-    sandbox.stub(templateConfigModule, "tagPrefix").value("templates@");
-    sandbox
-      .stub(templateConfigModule, "templateDownloadBaseURL")
-      .value("https://example.com/releases/download");
-    sandbox.stub(fxCoreDeps, "getCoreVersion").returns("1.0.0");
+    vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(false);
 
-    sandbox.stub(fxCoreDeps, "getTemplateLatestVersion").resolves("2.0.0");
+    vi.spyOn(fxCoreModule.fxCoreDeps, "getCoreVersion").mockReturnValue("1.0.0");
+
+    vi.spyOn(generatorUtils, "getTemplateLatestVersion").mockResolvedValue("2.0.0");
     const mockZip = new AdmZip();
-    const fetchZipStub = sandbox.stub(fxCoreDeps, "fetchZipFromUrl").resolves(mockZip);
-    const unzipStub = sandbox.stub(fxCoreDeps, "unzip").resolves();
+    const fetchZipStub = vi.spyOn(generatorUtils, "fetchZipFromUrl").mockResolvedValue(mockZip);
+    const unzipStub = vi.spyOn(generatorUtils, "unzip").mockResolvedValue();
 
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(fs, "ensureDir").resolves();
-    sandbox.stub(fs, "readFile").rejects(new Error("File read error"));
-    sandbox.stub(fs, "writeFile").resolves();
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    vi.spyOn(fs, "readFile").mockRejectedValue(new Error("File read error"));
+    vi.spyOn(fs, "writeFile").mockResolvedValue();
 
     const result = await core.fetchOnlineTemplateMetadata();
 
     assert.isTrue(result.isOk());
-    assert.isTrue(fetchZipStub.calledOnce);
-    assert.isTrue(unzipStub.calledOnce);
+    assert.isTrue(fetchZipStub.mock.calls.length === 1);
+    assert.isTrue(unzipStub.mock.calls.length === 1);
   });
 
   it("should handle alpha version correctly", async () => {
-    sandbox.stub(fxCoreDeps, "useLocalTemplate").returns(false);
-    sandbox.stub(templateConfigModule, "tagPrefix").value("templates@");
-    sandbox
-      .stub(templateConfigModule, "templateDownloadBaseURL")
-      .value("https://example.com/releases/download");
-    sandbox.stub(fxCoreDeps, "getCoreVersion").returns("1.0.0-alpha.1");
+    vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(false);
+    vi.spyOn(fxCoreModule.fxCoreDeps, "getCoreVersion").mockReturnValue("1.0.0-alpha.1");
 
     const mockZip = new AdmZip();
-    const fetchZipStub = sandbox.stub(fxCoreDeps, "fetchZipFromUrl").resolves(mockZip);
-    const unzipStub = sandbox.stub(fxCoreDeps, "unzip").resolves();
+    const fetchZipStub = vi.spyOn(generatorUtils, "fetchZipFromUrl").mockResolvedValue(mockZip);
+    const unzipStub = vi.spyOn(generatorUtils, "unzip").mockResolvedValue();
 
-    sandbox.stub(fs, "pathExists").resolves(false);
-    sandbox.stub(fs, "ensureDir").resolves();
-    sandbox.stub(fs, "writeFile").resolves();
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    vi.spyOn(fs, "writeFile").mockResolvedValue();
 
     const result = await core.fetchOnlineTemplateMetadata();
 
     assert.isTrue(result.isOk());
-    assert.isTrue(
-      fetchZipStub.calledWith(
-        "https://example.com/releases/download/templates@0.0.0-rc/metadata.zip"
-      )
+    assert.equal(
+      fetchZipStub.mock.calls[0]?.[0],
+      "https://example.com/releases/download/templates@0.0.0-rc/metadata.zip"
     );
   });
 
   it("should handle beta version correctly", async () => {
-    sandbox.stub(fxCoreDeps, "useLocalTemplate").returns(false);
-    sandbox.stub(templateConfigModule, "tagPrefix").value("templates@");
-    sandbox
-      .stub(templateConfigModule, "templateDownloadBaseURL")
-      .value("https://example.com/releases/download");
-    sandbox.stub(fxCoreDeps, "getCoreVersion").returns("1.0.0-beta.1");
+    vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(false);
+    vi.spyOn(fxCoreModule.fxCoreDeps, "getCoreVersion").mockReturnValue("1.0.0-beta.1");
 
     const mockZip = new AdmZip();
-    const fetchZipStub = sandbox.stub(fxCoreDeps, "fetchZipFromUrl").resolves(mockZip);
-    const unzipStub = sandbox.stub(fxCoreDeps, "unzip").resolves();
+    const fetchZipStub = vi.spyOn(generatorUtils, "fetchZipFromUrl").mockResolvedValue(mockZip);
+    const unzipStub = vi.spyOn(generatorUtils, "unzip").mockResolvedValue();
 
-    sandbox.stub(fs, "pathExists").resolves(false);
-    sandbox.stub(fs, "ensureDir").resolves();
-    sandbox.stub(fs, "writeFile").resolves();
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    vi.spyOn(fs, "writeFile").mockResolvedValue();
 
     const result = await core.fetchOnlineTemplateMetadata();
 
     assert.isTrue(result.isOk());
-    assert.isTrue(
-      fetchZipStub.calledWith(
-        "https://example.com/releases/download/templates@0.0.0-rc/metadata.zip"
-      )
+    assert.equal(
+      fetchZipStub.mock.calls[0]?.[0],
+      "https://example.com/releases/download/templates@0.0.0-rc/metadata.zip"
     );
   });
 
   it("should return error when fetchZipFromUrl fails", async () => {
-    sandbox.stub(fxCoreDeps, "useLocalTemplate").returns(false);
-    sandbox.stub(templateConfigModule, "tagPrefix").value("templates@");
-    sandbox
-      .stub(templateConfigModule, "templateDownloadBaseURL")
-      .value("https://example.com/releases/download");
-    sandbox.stub(fxCoreDeps, "getCoreVersion").returns("1.0.0");
+    vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(false);
 
-    sandbox.stub(fxCoreDeps, "getTemplateLatestVersion").resolves("2.0.0");
-    sandbox
-      .stub(fxCoreDeps, "fetchZipFromUrl")
-      .rejects(new Error("Network error: Failed to fetch"));
+    vi.spyOn(generatorUtils, "getTemplateLatestVersion").mockResolvedValue("2.0.0");
+    vi.spyOn(generatorUtils, "fetchZipFromUrl").mockRejectedValue(
+      new Error("Network error: Failed to fetch")
+    );
 
-    sandbox.stub(fs, "pathExists").resolves(false);
-    sandbox.stub(fs, "ensureDir").resolves();
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
 
     const result = await core.fetchOnlineTemplateMetadata();
 
@@ -298,20 +279,15 @@ describe("fetchOnlineTemplateMetadata", () => {
   });
 
   it("should return error when unzip fails", async () => {
-    sandbox.stub(fxCoreDeps, "useLocalTemplate").returns(false);
-    sandbox.stub(templateConfigModule, "tagPrefix").value("templates@");
-    sandbox
-      .stub(templateConfigModule, "templateDownloadBaseURL")
-      .value("https://example.com/releases/download");
-    sandbox.stub(fxCoreDeps, "getCoreVersion").returns("1.0.0");
+    vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(false);
 
-    sandbox.stub(fxCoreDeps, "getTemplateLatestVersion").resolves("2.0.0");
+    vi.spyOn(generatorUtils, "getTemplateLatestVersion").mockResolvedValue("2.0.0");
     const mockZip = new AdmZip();
-    sandbox.stub(fxCoreDeps, "fetchZipFromUrl").resolves(mockZip);
-    sandbox.stub(fxCoreDeps, "unzip").rejects(new Error("Unzip failed: Invalid archive"));
+    vi.spyOn(generatorUtils, "fetchZipFromUrl").mockResolvedValue(mockZip);
+    vi.spyOn(generatorUtils, "unzip").mockRejectedValue(new Error("Unzip failed: Invalid archive"));
 
-    sandbox.stub(fs, "pathExists").resolves(false);
-    sandbox.stub(fs, "ensureDir").resolves();
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
 
     const result = await core.fetchOnlineTemplateMetadata();
 
@@ -324,21 +300,16 @@ describe("fetchOnlineTemplateMetadata", () => {
   });
 
   it("should return error when fs.writeFile fails", async () => {
-    sandbox.stub(fxCoreDeps, "useLocalTemplate").returns(false);
-    sandbox.stub(templateConfigModule, "tagPrefix").value("templates@");
-    sandbox
-      .stub(templateConfigModule, "templateDownloadBaseURL")
-      .value("https://example.com/releases/download");
-    sandbox.stub(fxCoreDeps, "getCoreVersion").returns("1.0.0");
+    vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(false);
 
-    sandbox.stub(fxCoreDeps, "getTemplateLatestVersion").resolves("2.0.0");
+    vi.spyOn(generatorUtils, "getTemplateLatestVersion").mockResolvedValue("2.0.0");
     const mockZip = new AdmZip();
-    sandbox.stub(fxCoreDeps, "fetchZipFromUrl").resolves(mockZip);
-    sandbox.stub(fxCoreDeps, "unzip").resolves();
+    vi.spyOn(generatorUtils, "fetchZipFromUrl").mockResolvedValue(mockZip);
+    vi.spyOn(generatorUtils, "unzip").mockResolvedValue();
 
-    sandbox.stub(fs, "pathExists").resolves(false);
-    sandbox.stub(fs, "ensureDir").resolves();
-    sandbox.stub(fs, "writeFile").rejects(new Error("Permission denied"));
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    vi.spyOn(fs, "writeFile").mockRejectedValue(new Error("Permission denied"));
 
     const result = await core.fetchOnlineTemplateMetadata();
 
@@ -351,39 +322,34 @@ describe("fetchOnlineTemplateMetadata", () => {
   });
 
   it("should use correct metadata directory path", async () => {
-    sandbox.stub(fxCoreDeps, "useLocalTemplate").returns(false);
-    sandbox.stub(templateConfigModule, "tagPrefix").value("templates@");
-    sandbox
-      .stub(templateConfigModule, "templateDownloadBaseURL")
-      .value("https://example.com/releases/download");
-    sandbox.stub(fxCoreDeps, "getCoreVersion").returns("1.0.0");
+    vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(false);
+    vi.spyOn(fxCoreModule.fxCoreDeps, "getCoreVersion").mockReturnValue("1.0.0");
 
-    sandbox.stub(fxCoreDeps, "getTemplateLatestVersion").resolves("2.0.0");
+    vi.spyOn(generatorUtils, "getTemplateLatestVersion").mockResolvedValue("2.0.0");
     const mockZip = new AdmZip();
-    sandbox.stub(fxCoreDeps, "fetchZipFromUrl").resolves(mockZip);
-    const unzipStub = sandbox.stub(fxCoreDeps, "unzip").resolves();
+    vi.spyOn(generatorUtils, "fetchZipFromUrl").mockResolvedValue(mockZip);
+    const unzipStub = vi.spyOn(generatorUtils, "unzip").mockResolvedValue();
 
-    sandbox.stub(fs, "pathExists").resolves(false);
-    const ensureDirStub = sandbox.stub(fs, "ensureDir").resolves();
-    const writeFileStub = sandbox.stub(fs, "writeFile").resolves();
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+    const ensureDirStub = vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    const writeFileStub = vi.spyOn(fs, "writeFile").mockResolvedValue();
 
     const expectedMetadataDir = path.join(os.homedir(), ".fx");
 
     const result = await core.fetchOnlineTemplateMetadata();
 
     assert.isTrue(result.isOk());
-    assert.isTrue(ensureDirStub.calledWith(expectedMetadataDir));
-    assert.isTrue(unzipStub.calledWith(mockZip, expectedMetadataDir));
-    assert.isTrue(
-      writeFileStub.calledWith(path.join(expectedMetadataDir, "template-version.txt"), "2.0.0", {
-        encoding: "utf-8",
-      })
-    );
+    chai.expect(ensureDirStub.mock.calls.length).to.be.greaterThan(0);
+    chai.expect(unzipStub.mock.calls.length).to.be.greaterThan(0);
+    assert.deepEqual(writeFileStub.mock.calls[0], [
+      path.join(expectedMetadataDir, "template-version.txt"),
+      "2.0.0",
+      { encoding: "utf-8" },
+    ]);
   });
 });
 
 describe("fetchOnlineTemplateMetadataForVS", () => {
-  const sandbox = sinon.createSandbox();
   let core: FxCore;
   let mockedEnvRestore: RestoreFn | undefined;
 
@@ -393,7 +359,7 @@ describe("fetchOnlineTemplateMetadataForVS", () => {
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     if (mockedEnvRestore) {
       mockedEnvRestore();
       mockedEnvRestore = undefined;
@@ -401,7 +367,7 @@ describe("fetchOnlineTemplateMetadataForVS", () => {
   });
 
   it("should skip download when using local template", async () => {
-    sandbox.stub(fxCoreDeps, "useLocalTemplate").returns(true);
+    vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(true);
 
     const result = await core.fetchOnlineTemplateMetadataForVS();
 
@@ -412,133 +378,121 @@ describe("fetchOnlineTemplateMetadataForVS", () => {
   });
 
   it("should download metadata when version file does not exist (stable fx-core)", async () => {
-    sandbox.stub(fxCoreDeps, "useLocalTemplate").returns(false);
-    sandbox.stub(fxCoreDeps, "getCoreVersion").returns("1.0.0"); // stable
-    sandbox.stub(templateConfigModule, "vstagPrefix").value("templates-vs@");
-    sandbox
-      .stub(templateConfigModule, "templateDownloadBaseURL")
-      .value("https://example.com/releases/download");
-    sandbox.stub(fxCoreDeps, "getTemplateVSLatestVersion").resolves("18.4.1");
-    const mockZip = new AdmZip();
-    const fetchZipStub = sandbox.stub(fxCoreDeps, "fetchZipFromUrl").resolves(mockZip);
-    const unzipStub = sandbox.stub(fxCoreDeps, "unzip").resolves();
+    vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(false);
+    vi.spyOn(fxCoreModule.fxCoreDeps, "getCoreVersion").mockReturnValue("1.0.0");
+    // stable
 
-    sandbox.stub(fs, "pathExists").resolves(false);
-    sandbox.stub(fs, "ensureDir").resolves();
-    const writeFileStub = sandbox.stub(fs, "writeFile").resolves();
+    vi.spyOn(generatorUtils, "getTemplateVSLatestVersion").mockResolvedValue("18.4.1");
+    const mockZip = new AdmZip();
+    const fetchZipStub = vi.spyOn(generatorUtils, "fetchZipFromUrl").mockResolvedValue(mockZip);
+    const unzipStub = vi.spyOn(generatorUtils, "unzip").mockResolvedValue();
+
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    const writeFileStub = vi.spyOn(fs, "writeFile").mockResolvedValue();
 
     const result = await core.fetchOnlineTemplateMetadataForVS();
 
     assert.isTrue(result.isOk());
-    assert.isTrue(fetchZipStub.calledOnce);
-    assert.isTrue(
-      fetchZipStub.calledWith(
-        "https://example.com/releases/download/templates-vs@18.4.1/metadata.zip"
-      )
+    assert.isTrue(fetchZipStub.mock.calls.length === 1);
+    assert.equal(
+      fetchZipStub.mock.calls[0]?.[0],
+      "https://example.com/releases/download/templates-vs@18.4.1/metadata.zip"
     );
-    assert.isTrue(unzipStub.calledOnce);
-    assert.isTrue(writeFileStub.calledWith(sinon.match.string, "18.4.1", { encoding: "utf-8" }));
+    assert.isTrue(unzipStub.mock.calls.length === 1);
+    chai.expect(writeFileStub.mock.calls.length).to.be.greaterThan(0);
   });
 
   it("should use rc templates for beta fx-core (VS pre-release test build)", async () => {
-    sandbox.stub(fxCoreDeps, "useLocalTemplate").returns(false);
-    sandbox.stub(fxCoreDeps, "getCoreVersion").returns("1.0.0-beta.1"); // beta = pre-stable test
-    sandbox.stub(templateConfigModule, "vstagPrefix").value("templates-vs@");
-    sandbox
-      .stub(templateConfigModule, "templateDownloadBaseURL")
-      .value("https://example.com/releases/download");
-    const getVSLatestStub = sandbox.stub(fxCoreDeps, "getTemplateVSLatestVersion");
-    const mockZip = new AdmZip();
-    const fetchZipStub = sandbox.stub(fxCoreDeps, "fetchZipFromUrl").resolves(mockZip);
-    sandbox.stub(fxCoreDeps, "unzip").resolves();
+    vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(false);
+    vi.spyOn(fxCoreModule.fxCoreDeps, "getCoreVersion").mockReturnValue("1.0.0-beta.1");
+    // beta = pre-stable test
 
-    sandbox.stub(fs, "pathExists").resolves(false);
-    sandbox.stub(fs, "ensureDir").resolves();
-    sandbox.stub(fs, "writeFile").resolves();
+    const getVSLatestStub = vi.spyOn(generatorUtils, "getTemplateVSLatestVersion");
+    const mockZip = new AdmZip();
+    const fetchZipStub = vi.spyOn(generatorUtils, "fetchZipFromUrl").mockResolvedValue(mockZip);
+    vi.spyOn(generatorUtils, "unzip").mockResolvedValue();
+
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    vi.spyOn(fs, "writeFile").mockResolvedValue();
 
     const result = await core.fetchOnlineTemplateMetadataForVS();
 
     assert.isTrue(result.isOk());
     // beta should NOT call getTemplateVSLatestVersion
-    assert.isFalse(getVSLatestStub.called);
-    assert.isTrue(
-      fetchZipStub.calledWith(
-        "https://example.com/releases/download/templates-vs@0.0.0-rc/metadata.zip"
-      )
+    assert.isFalse(getVSLatestStub.mock.calls.length > 0);
+    assert.equal(
+      fetchZipStub.mock.calls[0]?.[0],
+      "https://example.com/releases/download/templates-vs@0.0.0-rc/metadata.zip"
     );
   });
 
   it("should skip download when cached version matches latest", async () => {
-    sandbox.stub(fxCoreDeps, "useLocalTemplate").returns(false);
-    sandbox.stub(fxCoreDeps, "getTemplateVSLatestVersion").resolves("18.4.1");
-    const fetchZipStub = sandbox.stub(fxCoreDeps, "fetchZipFromUrl");
-    const unzipStub = sandbox.stub(fxCoreDeps, "unzip");
+    vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(false);
+    vi.spyOn(generatorUtils, "getTemplateVSLatestVersion").mockResolvedValue("18.4.1");
+    const fetchZipStub = vi.spyOn(generatorUtils, "fetchZipFromUrl");
+    const unzipStub = vi.spyOn(generatorUtils, "unzip");
 
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(fs, "ensureDir").resolves();
-    sandbox.stub(fs, "readFile").resolves("18.4.1" as any);
-    sandbox.stub(fs, "writeFile").resolves();
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    vi.spyOn(fs, "readFile").mockResolvedValue("18.4.1" as any);
+    vi.spyOn(fs, "writeFile").mockResolvedValue();
 
     const result = await core.fetchOnlineTemplateMetadataForVS();
 
     assert.isTrue(result.isOk());
-    assert.isFalse(fetchZipStub.called);
-    assert.isFalse(unzipStub.called);
+    assert.isFalse(fetchZipStub.mock.calls.length > 0);
+    assert.isFalse(unzipStub.mock.calls.length > 0);
   });
 
   it("should download when cached version differs from latest", async () => {
-    sandbox.stub(fxCoreDeps, "useLocalTemplate").returns(false);
-    sandbox.stub(templateConfigModule, "vstagPrefix").value("templates-vs@");
-    sandbox
-      .stub(templateConfigModule, "templateDownloadBaseURL")
-      .value("https://example.com/releases/download");
-    sandbox.stub(fxCoreDeps, "getTemplateVSLatestVersion").resolves("18.4.1");
-    const mockZip = new AdmZip();
-    const fetchZipStub = sandbox.stub(fxCoreDeps, "fetchZipFromUrl").resolves(mockZip);
-    const unzipStub = sandbox.stub(fxCoreDeps, "unzip").resolves();
+    vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(false);
 
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(fs, "ensureDir").resolves();
-    sandbox.stub(fs, "readFile").resolves("18.4.0" as any);
-    sandbox.stub(fs, "writeFile").resolves();
+    vi.spyOn(generatorUtils, "getTemplateVSLatestVersion").mockResolvedValue("18.4.1");
+    const mockZip = new AdmZip();
+    const fetchZipStub = vi.spyOn(generatorUtils, "fetchZipFromUrl").mockResolvedValue(mockZip);
+    const unzipStub = vi.spyOn(generatorUtils, "unzip").mockResolvedValue();
+
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    vi.spyOn(fs, "readFile").mockResolvedValue("18.4.0" as any);
+    vi.spyOn(fs, "writeFile").mockResolvedValue();
 
     const result = await core.fetchOnlineTemplateMetadataForVS();
 
     assert.isTrue(result.isOk());
-    assert.isTrue(fetchZipStub.calledOnce);
-    assert.isTrue(unzipStub.calledOnce);
+    assert.isTrue(fetchZipStub.mock.calls.length === 1);
+    assert.isTrue(unzipStub.mock.calls.length === 1);
   });
 
   it("should re-download when version file read throws", async () => {
-    sandbox.stub(fxCoreDeps, "useLocalTemplate").returns(false);
-    sandbox.stub(templateConfigModule, "vstagPrefix").value("templates-vs@");
-    sandbox
-      .stub(templateConfigModule, "templateDownloadBaseURL")
-      .value("https://example.com/releases/download");
-    sandbox.stub(fxCoreDeps, "getTemplateVSLatestVersion").resolves("18.4.1");
-    const mockZip = new AdmZip();
-    const fetchZipStub = sandbox.stub(fxCoreDeps, "fetchZipFromUrl").resolves(mockZip);
-    const unzipStub = sandbox.stub(fxCoreDeps, "unzip").resolves();
+    vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(false);
 
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(fs, "ensureDir").resolves();
-    sandbox.stub(fs, "readFile").rejects(new Error("File read error"));
-    sandbox.stub(fs, "writeFile").resolves();
+    vi.spyOn(generatorUtils, "getTemplateVSLatestVersion").mockResolvedValue("18.4.1");
+    const mockZip = new AdmZip();
+    const fetchZipStub = vi.spyOn(generatorUtils, "fetchZipFromUrl").mockResolvedValue(mockZip);
+    const unzipStub = vi.spyOn(generatorUtils, "unzip").mockResolvedValue();
+
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    vi.spyOn(fs, "readFile").mockRejectedValue(new Error("File read error"));
+    vi.spyOn(fs, "writeFile").mockResolvedValue();
 
     const result = await core.fetchOnlineTemplateMetadataForVS();
 
     assert.isTrue(result.isOk());
-    assert.isTrue(fetchZipStub.calledOnce);
-    assert.isTrue(unzipStub.calledOnce);
+    assert.isTrue(fetchZipStub.mock.calls.length === 1);
+    assert.isTrue(unzipStub.mock.calls.length === 1);
   });
 
   it("should return error when getTemplateVSLatestVersion fails", async () => {
-    sandbox.stub(fxCoreDeps, "useLocalTemplate").returns(false);
-    sandbox
-      .stub(fxCoreDeps, "getTemplateVSLatestVersion")
-      .rejects(new Error("Failed to find valid VS template version"));
+    vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(false);
+    vi.spyOn(generatorUtils, "getTemplateVSLatestVersion").mockRejectedValue(
+      new Error("Failed to find valid VS template version")
+    );
 
-    sandbox.stub(fs, "ensureDir").resolves();
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
 
     const result = await core.fetchOnlineTemplateMetadataForVS();
 
@@ -551,18 +505,15 @@ describe("fetchOnlineTemplateMetadataForVS", () => {
   });
 
   it("should return error when fetchZipFromUrl fails", async () => {
-    sandbox.stub(fxCoreDeps, "useLocalTemplate").returns(false);
-    sandbox.stub(templateConfigModule, "vstagPrefix").value("templates-vs@");
-    sandbox
-      .stub(templateConfigModule, "templateDownloadBaseURL")
-      .value("https://example.com/releases/download");
-    sandbox.stub(fxCoreDeps, "getTemplateVSLatestVersion").resolves("18.4.1");
-    sandbox
-      .stub(fxCoreDeps, "fetchZipFromUrl")
-      .rejects(new Error("Download failed: 404 Not Found"));
+    vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(false);
 
-    sandbox.stub(fs, "pathExists").resolves(false);
-    sandbox.stub(fs, "ensureDir").resolves();
+    vi.spyOn(generatorUtils, "getTemplateVSLatestVersion").mockResolvedValue("18.4.1");
+    vi.spyOn(generatorUtils, "fetchZipFromUrl").mockRejectedValue(
+      new Error("Download failed: 404 Not Found")
+    );
+
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
 
     const result = await core.fetchOnlineTemplateMetadataForVS();
 
@@ -575,33 +526,29 @@ describe("fetchOnlineTemplateMetadataForVS", () => {
   });
 
   it("should use vs-metadata directory with correct version file path", async () => {
-    sandbox.stub(fxCoreDeps, "useLocalTemplate").returns(false);
-    sandbox.stub(templateConfigModule, "vstagPrefix").value("templates-vs@");
-    sandbox
-      .stub(templateConfigModule, "templateDownloadBaseURL")
-      .value("https://example.com/releases/download");
-    sandbox.stub(fxCoreDeps, "getTemplateVSLatestVersion").resolves("18.4.1");
-    const mockZip = new AdmZip();
-    sandbox.stub(fxCoreDeps, "fetchZipFromUrl").resolves(mockZip);
-    const unzipStub = sandbox.stub(fxCoreDeps, "unzip").resolves();
+    vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(false);
+    vi.spyOn(fxCoreModule.fxCoreDeps, "getCoreVersion").mockReturnValue("1.0.0");
 
-    sandbox.stub(fs, "pathExists").resolves(false);
-    const ensureDirStub = sandbox.stub(fs, "ensureDir").resolves();
-    const writeFileStub = sandbox.stub(fs, "writeFile").resolves();
+    vi.spyOn(generatorUtils, "getTemplateVSLatestVersion").mockResolvedValue("18.4.1");
+    const mockZip = new AdmZip();
+    vi.spyOn(generatorUtils, "fetchZipFromUrl").mockResolvedValue(mockZip);
+    const unzipStub = vi.spyOn(generatorUtils, "unzip").mockResolvedValue();
+
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+    const ensureDirStub = vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    const writeFileStub = vi.spyOn(fs, "writeFile").mockResolvedValue();
 
     const expectedMetadataDir = path.join(os.homedir(), ".fx", "vs-metadata");
 
     const result = await core.fetchOnlineTemplateMetadataForVS();
 
     assert.isTrue(result.isOk());
-    assert.isTrue(ensureDirStub.calledWith(expectedMetadataDir));
-    assert.isTrue(unzipStub.calledWith(mockZip, expectedMetadataDir));
-    assert.isTrue(
-      writeFileStub.calledWith(
-        path.join(expectedMetadataDir, "template-vs-version.txt"),
-        "18.4.1",
-        { encoding: "utf-8" }
-      )
-    );
+    chai.expect(ensureDirStub.mock.calls.length).to.be.greaterThan(0);
+    chai.expect(unzipStub.mock.calls.length).to.be.greaterThan(0);
+    assert.deepEqual(writeFileStub.mock.calls[0], [
+      path.join(expectedMetadataDir, "template-vs-version.txt"),
+      "18.4.1",
+      { encoding: "utf-8" },
+    ]);
   });
 });

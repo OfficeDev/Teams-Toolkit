@@ -16,14 +16,14 @@ export enum TemplateNames {
   DeclarativeAgentWithActionFromMCP = "declarative-agent-with-action-from-mcp", // handled by DeclarativeAgentGenerator
   DeclarativeAgentWithSkill = "declarative-agent-with-skill", // handled by DeclarativeAgentGenerator
 
-  DeclarativeAgentMetaOSNewProject = "declarative-agent-meta-os-new-project", // handled by OfficeAddinGeneratorNew
-  DeclarativeAgentMetaOSUpgradeProject = "declarative-agent-meta-os-upgrade-project", // handled by OfficeAddinGeneratorNew
-
   // custom engine agent
   BasicCustomEngineAgent = "basic-custom-engine-agent",
   WeatherAgent = "weather-agent",
   TravelAgent = "travel-agent",
   FoundryProxyAgent = "foundry-proxy-agent",
+
+  // blank
+  BlankApp = "blank-app",
 
   // agent for Teams
   CustomCopilotBasic = "custom-copilot-basic",

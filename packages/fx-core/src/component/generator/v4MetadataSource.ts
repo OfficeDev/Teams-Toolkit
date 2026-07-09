@@ -5,40 +5,37 @@ import { FxError } from "@microsoft/teamsfx-api";
 import { Result } from "neverthrow";
 import templateConfig from "../../common/templates-config.json";
 import * as bundledFloor from "../../v4/distribution/bundledFloor";
-import * as templateSource from "../../v4/distribution/templateSource";
-import * as templateSourcePort from "../../v4/distribution/templateSourcePort";
+import {
+  TemplateArtifactSnapshot,
+  createTemplateArtifactPort,
+  resolveTemplateArtifactSnapshot,
+} from "../../v4/distribution/templateArtifacts";
 import { defaultTryLimits } from "./constant";
 
 /**
- * Resolve which v4 template release the metadata should come from, using the
- * SAME single decision point as the template package:
- * `resolveTemplateSource((v4.range, v4.bundled, port))`.
+ * Resolve and warm the v4 metadata artifact using the same staged artifact
+ * resolver as create/modify front doors.
  *
- * `bundled` is CD-baked (= !goproduct), so goproduct builds (stable AND
- * prerelease) resolve to an `online`/`cache` source while non-goproduct/daily
- * builds resolve to the bundled floor. The metadata.zip asset lives in the same
- * `templates-v4@<version>` release as the resolved package, so the resolved
- * version names the release that `fetchOnlineTemplateMetadata` pulls metadata
- * from. Resolving here also downloads, verifies, and caches the template
- * package, so a later content scaffold reuses it with no re-download.
+ * The final v4 channel publishes `templates-metadata.zip`, not the legacy v3
+ * `metadata.zip`. Resolving this snapshot downloads, verifies, and caches the
+ * metadata artifact without writing the legacy `~/.fx` metadata directory.
  *
  * An unreachable channel resolves to a bundled-fallback origin (not an error);
  * only a malformed tag list or a digest mismatch surfaces as `Result.err`.
- *
- * Transitional: remove once selector.json drives metadata distribution.
  */
-export function resolveV4MetadataSource(): Promise<Result<templateSource.TemplateSource, FxError>> {
-  const port = templateSourcePort.createTemplateSourcePort(
+export function resolveV4MetadataSource(): Promise<Result<TemplateArtifactSnapshot, FxError>> {
+  const port = createTemplateArtifactPort(
     {
       templatesV4TagListURL: templateConfig.templatesV4TagListURL,
       templateDownloadBaseURL: templateConfig.templateDownloadBaseURL,
       tryLimits: defaultTryLimits,
     },
-    bundledFloor.loadBundledFloor()
+    bundledFloor.loadBundledTemplateArtifacts()
   );
-  return templateSource.resolveTemplateSource({
+  return resolveTemplateArtifactSnapshot({
     range: templateConfig.v4.range,
     bundled: templateConfig.v4.bundled,
+    requiredKind: "metadata",
     port,
   });
 }

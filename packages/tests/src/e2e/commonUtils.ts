@@ -56,14 +56,36 @@ export function getTestFolder(): string {
 }
 
 export const BASE_APP_NAME_PREFIX = "fxE2E";
+const maxTeamsAppNameLength = 30;
+const maxAppNameSuffixLength = "sandbox".length;
+export const MAX_APP_NAME_LENGTH =
+  maxTeamsAppNameLength - maxAppNameSuffixLength;
+
+const uniqueAppNameTimestampLength = 13;
+const uniqueAppNameRandomLength = 2;
+const maxAppNamePrefixLength =
+  MAX_APP_NAME_LENGTH -
+  uniqueAppNameTimestampLength -
+  uniqueAppNameRandomLength;
+
+export function normalizeAppNamePrefix(prefix: string): string {
+  return prefix.slice(0, maxAppNamePrefixLength);
+}
 
 export function getAppNamePrefix(): string {
   const runId = process.env.E2E_RUN_ID;
-  return runId ? `${BASE_APP_NAME_PREFIX}${runId}` : BASE_APP_NAME_PREFIX;
+  const prefix = runId
+    ? `${BASE_APP_NAME_PREFIX}${runId}`
+    : BASE_APP_NAME_PREFIX;
+  return normalizeAppNamePrefix(prefix);
 }
 
 export function getUniqueAppName(): string {
-  return getAppNamePrefix() + Date.now().toString() + uuidv4().slice(0, 2);
+  return (
+    getAppNamePrefix() +
+    Date.now().toString() +
+    uuidv4().slice(0, uniqueAppNameRandomLength)
+  );
 }
 
 export function convertToAlphanumericOnly(appName: string): string {

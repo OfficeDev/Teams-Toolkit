@@ -10,10 +10,10 @@ import {
   err,
   ok,
 } from "@microsoft/teamsfx-api";
-import { assert } from "chai";
-import * as sinon from "sinon";
+import { assert, describe, it, vi } from "vitest";
 import * as teamsDevPortalClientModule from "../../src/client/teamsDevPortalClient";
 import { TOOLS, setTools } from "../../src/common/globalVars";
+import * as shareUtils from "../../src/component/driver/share/utils";
 import { AppUser } from "../../src/component/driver/teamsApp/interfaces/appdefinitions/appUser";
 import * as collaborator from "../../src/core/collaborator";
 import { InputValidationError } from "../../src/error/common";
@@ -25,15 +25,14 @@ import {
   removeSharedAccessNode,
   selectUsersToRemoveSharedAccess,
   shareNode,
-  shareQuestionDeps,
 } from "../../src/question/share";
 import { MockTools } from "../core/utils";
 
 describe("shareNode", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   setTools(new MockTools());
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("shareNode should return IQTreeNode with correct children", () => {
@@ -138,11 +137,11 @@ describe("shareNode", () => {
 });
 
 describe("selectUsersToRemoveSharedAccess", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   setTools(new MockTools());
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("should return a MultiSelectQuestion with correct properties", () => {
@@ -176,9 +175,9 @@ describe("selectUsersToRemoveSharedAccess", () => {
     const mockError = new InputValidationError("test", "Token error");
 
     // Mock token provider to return error
-    sandbox
-      .stub(TOOLS.tokenProvider.m365TokenProvider, "getAccessToken")
-      .resolves(err(mockError as FxError));
+    vi.spyOn(TOOLS.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
+      err(mockError as FxError)
+    );
 
     try {
       await dynamicOptions({ projectPath: "path/to/project" } as unknown as Inputs);
@@ -194,12 +193,14 @@ describe("selectUsersToRemoveSharedAccess", () => {
     const mockError = new InputValidationError("test", "Config error");
 
     // Mock token provider to return success
-    sandbox.stub(TOOLS.tokenProvider.m365TokenProvider, "getAccessToken").resolves(ok("token"));
+    vi.spyOn(TOOLS.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
+      ok("token")
+    );
 
     // Mock parseShareAppActionYamlConfig to return error
-    sandbox
-      .stub(shareQuestionDeps, "parseShareAppActionYamlConfig")
-      .resolves(err(mockError as FxError));
+    vi.spyOn(shareUtils, "parseShareAppActionYamlConfig").mockResolvedValueOnce(
+      err(mockError as FxError)
+    );
 
     try {
       await dynamicOptions({ projectPath: "path/to/project" } as unknown as Inputs);
@@ -214,17 +215,19 @@ describe("selectUsersToRemoveSharedAccess", () => {
     const dynamicOptions = question.dynamicOptions as DynamicOptions;
 
     // Mock token provider
-    sandbox.stub(TOOLS.tokenProvider.m365TokenProvider, "getAccessToken").resolves(ok("token"));
+    vi.spyOn(TOOLS.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
+      ok("token")
+    );
 
     // Mock parseShareAppActionYamlConfig
-    sandbox
-      .stub(shareQuestionDeps, "parseShareAppActionYamlConfig")
-      .resolves(ok({ teamsappId: "mockAppId", titleId: "mockTitleId", appId: "mockAppId" }));
+    vi.spyOn(shareUtils, "parseShareAppActionYamlConfig").mockResolvedValueOnce(
+      ok({ teamsappId: "mockAppId", titleId: "mockTitleId", appId: "mockAppId" })
+    );
 
     // Mock teamsDevPortalClient instance
-    sandbox.stub(teamsDevPortalClientModule, "teamsDevPortalClient").value({
-      getApp: sandbox.stub().resolves({ userList: [] }),
-    });
+    vi.spyOn(teamsDevPortalClientModule.teamsDevPortalClient, "getApp").mockResolvedValue({
+      userList: [],
+    } as any);
 
     try {
       await dynamicOptions({ projectPath: "path/to/project" } as unknown as Inputs);
@@ -240,26 +243,24 @@ describe("selectUsersToRemoveSharedAccess", () => {
     const mockError = new InputValidationError("test", "Current user info error");
 
     // Mock token provider
-    sandbox.stub(TOOLS.tokenProvider.m365TokenProvider, "getAccessToken").resolves(ok("token"));
+    vi.spyOn(TOOLS.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
+      ok("token")
+    );
 
     // Mock parseShareAppActionYamlConfig
-    sandbox
-      .stub(shareQuestionDeps, "parseShareAppActionYamlConfig")
-      .resolves(ok({ teamsappId: "mockAppId", titleId: "mockTitleId", appId: "mockAppId" }));
+    vi.spyOn(shareUtils, "parseShareAppActionYamlConfig").mockResolvedValueOnce(
+      ok({ teamsappId: "mockAppId", titleId: "mockTitleId", appId: "mockAppId" })
+    );
 
     // Mock teamsDevPortalClient instance
-    sandbox.stub(teamsDevPortalClientModule, "teamsDevPortalClient").value({
-      getApp: sandbox.stub().resolves({
-        userList: [
-          { aadId: "user1", displayName: "User 1", userPrincipalName: "user1@example.com" },
-        ],
-      }),
-    });
+    vi.spyOn(teamsDevPortalClientModule.teamsDevPortalClient, "getApp").mockResolvedValue({
+      userList: [{ aadId: "user1", displayName: "User 1", userPrincipalName: "user1@example.com" }],
+    } as any);
 
     // Mock getCurrentUserInfo to return error
-    sandbox
-      .stub(collaborator.CollaborationUtil, "getCurrentUserInfo")
-      .resolves(err(mockError as FxError));
+    vi.spyOn(collaborator.CollaborationUtil, "getCurrentUserInfo").mockResolvedValue(
+      err(mockError as FxError)
+    );
 
     try {
       await dynamicOptions({ projectPath: "path/to/project" } as unknown as Inputs);
@@ -274,12 +275,14 @@ describe("selectUsersToRemoveSharedAccess", () => {
     const dynamicOptions = question.dynamicOptions as DynamicOptions;
 
     // Mock token provider
-    sandbox.stub(TOOLS.tokenProvider.m365TokenProvider, "getAccessToken").resolves(ok("token"));
+    vi.spyOn(TOOLS.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
+      ok("token")
+    );
 
     // Mock parseShareAppActionYamlConfig
-    sandbox
-      .stub(shareQuestionDeps, "parseShareAppActionYamlConfig")
-      .resolves(ok({ teamsappId: "mockAppId", titleId: "mockTitleId", appId: "mockAppId" }));
+    vi.spyOn(shareUtils, "parseShareAppActionYamlConfig").mockResolvedValueOnce(
+      ok({ teamsappId: "mockAppId", titleId: "mockTitleId", appId: "mockAppId" })
+    );
 
     // Mock app users including current user
     const mockUsers = [
@@ -293,12 +296,12 @@ describe("selectUsersToRemoveSharedAccess", () => {
     ];
 
     // Mock teamsDevPortalClient instance
-    sandbox.stub(teamsDevPortalClientModule, "teamsDevPortalClient").value({
-      getApp: sandbox.stub().resolves({ userList: mockUsers }),
-    });
+    vi.spyOn(teamsDevPortalClientModule.teamsDevPortalClient, "getApp").mockResolvedValue({
+      userList: mockUsers,
+    } as any);
 
     // Mock getCurrentUserInfo to return current user
-    sandbox.stub(collaborator.CollaborationUtil, "getCurrentUserInfo").resolves(
+    vi.spyOn(collaborator.CollaborationUtil, "getCurrentUserInfo").mockResolvedValue(
       ok({
         aadId: "currentUser",
         displayName: "Current User",
@@ -326,10 +329,10 @@ describe("selectUsersToRemoveSharedAccess", () => {
   });
 });
 
-describe("shareQuestionDeps", () => {
-  it("should execute dependency wrapper and surface parser error", async () => {
+describe("parseShareAppActionYamlConfig", () => {
+  it("should surface parser error when config file is missing", async () => {
     try {
-      await shareQuestionDeps.parseShareAppActionYamlConfig("path/to/project");
+      await shareUtils.parseShareAppActionYamlConfig("path/to/project");
       assert.fail("Expected function to throw");
     } catch (error) {
       assert.include((error as Error).message, "Missing required file");

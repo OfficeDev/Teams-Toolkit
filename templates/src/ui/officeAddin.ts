@@ -26,12 +26,6 @@ export const officeAddinNode = {
         featureFlag: "TEAMSFX_CF_SHORTCUT_METAOS",
       },
       {
-        id: "office-da-meta-os",
-        label: "template.createProjectQuestion.DAMetaOS.label",
-        detail: "template.createProjectQuestion.DAMetaOS.detail",
-        featureFlag: "TEAMSFX_DA_METAOS",
-      },
-      {
         id: "office-addin-import",
         label: "template.importOfficeAddin.label",
         detail: "template.importAddin.detail",
@@ -40,35 +34,6 @@ export const officeAddinNode = {
     ],
   },
   children: [
-    {
-      condition: { equals: "office-da-meta-os" },
-      data: {
-        name: "da-meta-os-capability",
-        title: "template.createProjectQuestion.DAMetaOS.capability.title",
-        type: "singleSelect",
-        placeholder: "template.createCapabilityQuestion.placeholder",
-        options: [
-          {
-            id: "da-meta-os-new-project",
-            label: "template.createProjectQuestion.DAMetaOS.capability.newProject.label",
-            detail: "template.createProjectQuestion.DAMetaOS.capability.newProject.detail",
-            data: "declarative-agent-meta-os-new-project",
-          },
-          {
-            id: "da-meta-os-upgrade-existing-project",
-            label: "template.createProjectQuestion.DAMetaOS.capability.upgradeProject.label",
-            detail: "template.createProjectQuestion.DAMetaOS.capability.upgradeProject.detail",
-            data: "declarative-agent-meta-os-upgrade-project",
-          },
-        ],
-      },
-      children: [
-        {
-          node: "officeAddinFolderNode",
-          condition: { equals: "da-meta-os-upgrade-existing-project" },
-        },
-      ],
-    },
     {
       condition: { equals: "office-addin-import" },
       node: "officeAddinImportNode",

@@ -1,0 +1,38 @@
+{
+  "$schema": "../../schema/descriptor.schema.json",
+  "id": "custom-copilot-rag-custom-api",
+  "name": "Teams Agent with Data from Custom API using OpenAPI Spec",
+  "languages": ["typescript", "javascript", "python"],
+  "minEngineVersion": "5.20.0",
+  "spec": "docs/03-specs/scenarios/teams/create-custom-copilot-rag-custom-api.md",
+  "requiresNetwork": false,
+
+  "optionsSchema": {
+    "type": "object",
+    "properties": {
+      "llmService": { "type": "string" },
+      "openAIKey": { "type": "string" },
+      "azureOpenAIKey": { "type": "string" },
+      "azureOpenAIEndpoint": { "type": "string" },
+      "azureOpenAIDeploymentName": { "type": "string" },
+      "apiSpecLocation": { "type": "string" },
+      "apiOperations": { "type": "array", "items": { "type": "string" } }
+    },
+    "additionalProperties": false
+  },
+
+  "replaceMap": [
+    { "var": "SafeProjectNameLowerCase", "expr": "safeProjectNameLowerCase(appName)" },
+    { "var": "SandBoxedTeam", "when": "featureFlag('TEAMSFX_SANDBOXED_TEAM')", "value": "true" },
+    { "var": "CEAEnabled", "when": "featureFlag('TEAMSFX_CEA_ENABLED')", "value": "true" },
+    { "var": "pathDelimiter", "expr": "pathDelimiter()" },
+    { "var": "useOpenAI", "when": "llmService == 'llm-service-openai'", "value": "true" },
+    { "var": "useAzureOpenAI", "when": "llmService != 'llm-service-openai'", "value": "true" },
+    { "var": "openAIKey", "from": "openAIKey" },
+    { "var": "originalOpenAIKey", "from": "openAIKey" },
+    { "var": "azureOpenAIKey", "from": "azureOpenAIKey" },
+    { "var": "originalAzureOpenAIKey", "from": "azureOpenAIKey" },
+    { "var": "azureOpenAIEndpoint", "from": "azureOpenAIEndpoint" },
+    { "var": "azureOpenAIDeploymentName", "from": "azureOpenAIDeploymentName" }
+  ]
+}

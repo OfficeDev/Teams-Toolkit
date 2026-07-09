@@ -1,5 +1,3 @@
-import * as chai from "chai";
-import * as sinon from "sinon";
 import { SPFxPackageSelectQuestion, SPFxWebpartNameQuestion } from "../../src/question/create";
 import mockedEnv, { RestoreFn } from "mocked-env";
 import {
@@ -17,6 +15,7 @@ import fs from "fs-extra";
 import { Utils } from "../../src/component/generator/spfx/utils/utils";
 import { getValidationFunction } from "../../src/ui/validationUtils";
 import { SPFxVersionOptionIds } from "../../src";
+import { chai, vi } from "vitest";
 describe("SPFx question-helpers", () => {
   describe("SPFxWebpartNameQuestion", () => {
     let mockedEnvRestore: RestoreFn;
@@ -61,7 +60,7 @@ describe("SPFx question-helpers", () => {
     it("Returns undefined when web part name pattern duplicated in create stage", async () => {
       previousInputs.stage = Stage.create;
       const input = "helloworld";
-      sinon.stub(fs, "pathExists").callsFake(async (directory) => {
+      vi.spyOn(fs, "pathExists").mockImplementation(async (directory) => {
         if (
           directory === path.join(previousInputs!.projectPath!, "SPFx", "src", "webparts", input)
         ) {
@@ -74,13 +73,13 @@ describe("SPFx question-helpers", () => {
       ).validFunc(input, previousInputs);
 
       chai.expect(res).equal(undefined);
-      sinon.restore();
+      vi.restoreAllMocks();
     });
 
     it("Returns undefined when web part name not duplicated in addFeature stage", async () => {
       previousInputs.stage = Stage.addFeature;
       const input = "helloworld";
-      sinon.stub(fs, "pathExists").callsFake(async (directory) => {
+      vi.spyOn(fs, "pathExists").mockImplementation(async (directory) => {
         if (
           directory === path.join(previousInputs!.projectPath!, "SPFx", "src", "webparts", input)
         ) {
@@ -93,7 +92,7 @@ describe("SPFx question-helpers", () => {
       ).validFunc(input, previousInputs);
 
       chai.expect(res).equal(undefined);
-      sinon.restore();
+      vi.restoreAllMocks();
     });
 
     it("Returns not match pattern when web part name pattern mismatch in addFeature stage", async () => {
@@ -118,7 +117,7 @@ describe("SPFx question-helpers", () => {
     it("Returns duplicated when web part name pattern duplicated in addFeature stage", async () => {
       previousInputs.stage = Stage.addFeature;
       const input = "helloworld";
-      sinon.stub(fs, "pathExists").callsFake(async (directory) => {
+      vi.spyOn(fs, "pathExists").mockImplementation(async (directory) => {
         if (
           directory === path.join(previousInputs!.projectPath!, "SPFx", "src", "webparts", input)
         ) {
@@ -138,15 +137,15 @@ describe("SPFx question-helpers", () => {
             path.join(previousInputs!.projectPath!, "SPFx", "src", "webparts", input)
           )
         );
-      sinon.restore();
+      vi.restoreAllMocks();
     });
   });
 
   describe("SPFxPackageSelectQuestion", async () => {
-    const sandbox = sinon.createSandbox();
+    const sandbox = vi;
 
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("return undefined if choosing to install locally", async () => {
@@ -214,8 +213,8 @@ describe("SPFx question-helpers", () => {
     });
 
     it("returns two options with package versions after loading", async () => {
-      sandbox.stub(Utils, "findGloballyInstalledVersion").resolves("1.17.0");
-      sandbox.stub(Utils, "findLatestVersion").resolves("1.17.4");
+      vi.spyOn(Utils, "findGloballyInstalledVersion").mockResolvedValue("1.17.0");
+      vi.spyOn(Utils, "findLatestVersion").mockResolvedValue("1.17.4");
 
       const question = SPFxPackageSelectQuestion();
       const options = await question.dynamicOptions!({ platform: Platform.VSCode });
@@ -225,8 +224,8 @@ describe("SPFx question-helpers", () => {
     });
 
     it("returns two options without package versions after loading", async () => {
-      sandbox.stub(Utils, "findGloballyInstalledVersion").resolves(undefined);
-      sandbox.stub(Utils, "findLatestVersion").resolves(undefined);
+      vi.spyOn(Utils, "findGloballyInstalledVersion").mockResolvedValue(undefined);
+      vi.spyOn(Utils, "findLatestVersion").mockResolvedValue(undefined);
 
       const question = SPFxPackageSelectQuestion();
       const options = await question.dynamicOptions!({ platform: Platform.VSCode });

@@ -22,11 +22,7 @@ import { addStartAndEndTelemetry } from "../middleware/addStartAndEndTelemetry";
 
 const ACTION_NAME = "script";
 
-export const scriptDriverDeps = {
-  getSystemEncoding,
-  defaultShell,
-  exec: (...args: Parameters<typeof child_process.exec>) => child_process.exec(...args),
-};
+const exec = (...args: Parameters<typeof child_process.exec>) => child_process.exec(...args);
 
 interface ScriptDriverArgs {
   run: string;
@@ -131,11 +127,11 @@ export async function executeCommand(
     return ok([outputString, outputObject]);
   }
 
-  let systemEncoding = await scriptDriverDeps.getSystemEncoding(command);
+  let systemEncoding = await getSystemEncoding(command);
   if (command.startsWith("dotnet ")) {
     systemEncoding = "utf-8";
   }
-  const dshell = await scriptDriverDeps.defaultShell();
+  const dshell = await defaultShell();
   return new Promise((resolve) => {
     const finalShell = shell || dshell;
     const finalCmd = command;
@@ -157,12 +153,12 @@ export async function executeCommand(
     const allOutputStrings: string[] = [];
     const stderrStrings: string[] = [];
     process.env.VSLANG = undefined; // Workaroud to disable VS environment variable to void charset encoding issue for non-English characters
-    const cp = scriptDriverDeps.exec(
+    const cp = exec(
       finalCmd,
       {
         shell: finalShell,
         cwd: workingDir,
-        encoding: "buffer",
+        encoding: null,
         env: { ...process.env, ...env },
         timeout: timeout,
       },

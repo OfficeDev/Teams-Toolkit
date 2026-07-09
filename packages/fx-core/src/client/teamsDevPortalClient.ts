@@ -8,12 +8,7 @@ import { getResourceServiceEndpoint, HelpLinks, ResourceServiceType } from "../c
 import { ErrorContextMW, TOOLS } from "../common/globalVars";
 import { getDefaultString, getLocalizedString } from "../common/localizeUtils";
 import { RetryHandler } from "../common/retryHandler";
-import {
-  sendTelemetryErrorEvent,
-  sendTelemetryEvent,
-  TelemetryEvent,
-  TelemetryProperty,
-} from "../common/telemetry";
+import * as telemetry from "../common/telemetry";
 import { WrappedAxiosClient } from "../common/wrappedAxiosClient";
 import { HttpStatusCode } from "../component/constant/commonConstant";
 import { SignInAudienceNotAllowedError } from "../component/driver/aad/error/signInAudienceNotAllowedError";
@@ -701,17 +696,17 @@ export class TeamsDevPortalClient {
       }
 
       if (result !== undefined) {
-        teamsDevPortalClientDeps.sendTelemetryEvent(
+        telemetry.sendTelemetryEvent(
           "TeamsDevPortalClient",
-          TelemetryEvent.CheckSideloading,
+          telemetry.TelemetryEvent.CheckSideloading,
           {
-            [TelemetryProperty.IsSideloadingAllowed]: result.toString() + "",
+            [telemetry.TelemetryProperty.IsSideloadingAllowed]: result.toString() + "",
           }
         );
       } else {
-        teamsDevPortalClientDeps.sendTelemetryErrorEvent(
+        telemetry.sendTelemetryErrorEvent(
           "TeamsDevPortalClient",
-          TelemetryEvent.CheckSideloading,
+          telemetry.TelemetryEvent.CheckSideloading,
           new SystemError(
             "M365Account",
             "UnknownValue",
@@ -719,18 +714,20 @@ export class TeamsDevPortalClient {
             `AppStudio response code: ${response.status}, body: ${response.data}`
           ),
           {
-            [TelemetryProperty.CheckSideloadingStatusCode]: `${response.status as string}`,
-            [TelemetryProperty.CheckSideloadingMethod]: "get",
-            [TelemetryProperty.CheckSideloadingUrl]: apiName,
+            [telemetry.TelemetryProperty.CheckSideloadingStatusCode]: `${
+              response.status as string
+            }`,
+            [telemetry.TelemetryProperty.CheckSideloadingMethod]: "get",
+            [telemetry.TelemetryProperty.CheckSideloadingUrl]: apiName,
           }
         );
       }
 
       return result;
     } catch (error: any) {
-      teamsDevPortalClientDeps.sendTelemetryErrorEvent(
+      telemetry.sendTelemetryErrorEvent(
         "TeamsDevPortalClient",
-        TelemetryEvent.CheckSideloading,
+        telemetry.TelemetryEvent.CheckSideloading,
         new CheckSideloadingPermissionFailedError(
           error,
           error.response?.headers?.[Constants.CORRELATION_ID] ?? "",
@@ -741,9 +738,9 @@ export class TeamsDevPortalClient {
           )
         ),
         {
-          [TelemetryProperty.CheckSideloadingStatusCode]: `${error?.response?.status}`,
-          [TelemetryProperty.CheckSideloadingMethod]: "get",
-          [TelemetryProperty.CheckSideloadingUrl]: apiName,
+          [telemetry.TelemetryProperty.CheckSideloadingStatusCode]: `${error?.response?.status}`,
+          [telemetry.TelemetryProperty.CheckSideloadingMethod]: "get",
+          [telemetry.TelemetryProperty.CheckSideloadingUrl]: apiName,
         }
       );
     }
@@ -1073,10 +1070,5 @@ export class TeamsDevPortalClient {
     return error;
   }
 }
-
-export const teamsDevPortalClientDeps = {
-  sendTelemetryEvent,
-  sendTelemetryErrorEvent,
-};
 
 export const teamsDevPortalClient = new TeamsDevPortalClient();

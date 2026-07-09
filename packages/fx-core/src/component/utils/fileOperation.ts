@@ -8,23 +8,25 @@ import klaw from "klaw";
 import path from "path";
 import { CacheFileInUse, DeployEmptyFolderError, ZipFileError } from "../../error/deploy";
 
+const createZip = () => new AdmZip();
+const writeZip = async (zip: AdmZip, cache: string) =>
+  await new Promise((resolve, reject) => {
+    zip.writeZip(cache, (err) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve({});
+      }
+    });
+  });
+
 export const fileOperationDeps = {
+  createZip,
+  writeZip,
   existsSync: fs.existsSync,
   remove: fs.remove,
   mkdirs: fs.mkdirs,
-  readFile: fs.readFile,
   createReadStream: fs.createReadStream,
-  createZip: () => new AdmZip(),
-  writeZip: async (zip: AdmZip, cache: string) =>
-    await new Promise((resolve, reject) => {
-      zip.writeZip(cache, (err) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve({});
-        }
-      });
-    }),
 };
 
 /**
@@ -59,7 +61,7 @@ export async function zipFolderAsync(
     zipPath: string,
     stats?: fs.Stats
   ) => {
-    const content = await fileOperationDeps.readFile(filePath);
+    const content = await fs.readFile(filePath);
     zp.addFile(zipPath, content);
     if (stats) {
       (zp.getEntry(zipPath)?.header as EntryHeader).time = stats.mtime;

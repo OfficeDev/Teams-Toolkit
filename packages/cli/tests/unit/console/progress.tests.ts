@@ -1,15 +1,13 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import sinon from "sinon";
-
+import { vi } from "vitest";
 import Progress from "../../../src/console/progress";
 import ScreenManager, { Row } from "../../../src/console/screen";
 import * as Utils from "../../../src/utils";
 import { expect } from "../utils";
-
 describe("Progress", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   beforeEach(() => {
     Progress["instances"] = [];
@@ -18,76 +16,76 @@ describe("Progress", () => {
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("static add", () => {
-    sandbox.stub(ScreenManager, "addProgress").returns(new Row(() => "Test static add"));
+    vi.spyOn(ScreenManager, "addProgress").mockReturnValue(new Row(() => "Test static add"));
     const instance = new Progress("Test static add", 3);
     Progress["add"](instance);
     expect(Progress["instances"]).deep.equals([instance]);
   });
 
   it("static finish", () => {
-    const updateStub = sandbox.stub(Row.prototype, "update");
-    const romoveCBStub = sandbox.stub(Row.prototype, "removeCB");
-    const freezeStub = sandbox.stub(Row.prototype, "freeze");
+    const updateStub = vi.spyOn(Row.prototype, "update");
+    const romoveCBStub = vi.spyOn(Row.prototype, "removeCB");
+    const freezeStub = vi.spyOn(Row.prototype, "freeze");
     const instance = new Progress("Test static finish", 3);
     const row = new Row(() => "Test static finish");
     Progress["instances"] = [instance];
     Progress["rows"] = [row];
     Progress["finish"](instance);
-    sinon.assert.calledOnce(updateStub);
-    sinon.assert.calledOnce(romoveCBStub);
-    sinon.assert.calledOnce(freezeStub);
+    expect(updateStub.mock.calls.length === 1).to.be.true;
+    expect(romoveCBStub.mock.calls.length === 1).to.be.true;
+    expect(freezeStub.mock.calls.length === 1).to.be.true;
     expect(Progress["instances"]).deep.equals([]);
     expect(Progress["rows"]).deep.equals([]);
     expect(Progress["finishedRows"]).deep.equals([]);
   });
 
   it("static finish hide", () => {
-    const updateStub = sandbox.stub(Row.prototype, "update");
-    const romoveCBStub = sandbox.stub(Row.prototype, "removeCB");
-    const freezeStub = sandbox.stub(Row.prototype, "freeze");
+    const updateStub = vi.spyOn(Row.prototype, "update");
+    const romoveCBStub = vi.spyOn(Row.prototype, "removeCB");
+    const freezeStub = vi.spyOn(Row.prototype, "freeze");
     const instance = new Progress("Test static finish", 3);
     const row = new Row(() => "Test static finish");
     Progress["instances"] = [instance];
     Progress["rows"] = [row];
     Progress["finish"](instance, true);
-    sinon.assert.calledOnce(updateStub);
-    sinon.assert.calledOnce(romoveCBStub);
-    // sinon.assert.calledOnce(freezeStub);
+    expect(updateStub.mock.calls.length === 1).to.be.true;
+    expect(romoveCBStub.mock.calls.length === 1).to.be.true;
+    // expect(freezeStub.mock.calls.length === 1).to.be.true;
     expect(Progress["instances"]).deep.equals([]);
     expect(Progress["rows"]).deep.equals([]);
     expect(Progress["finishedRows"]).deep.equals([]);
   });
 
   it("static end", () => {
-    const endStub = sandbox.stub(Progress.prototype, "end");
+    const endStub = vi.spyOn(Progress.prototype, "end").mockReturnValue(undefined as any);
     const instance = new Progress("Test static end", 3);
     Progress["instances"] = [instance];
     Progress["end"](true);
-    sinon.assert.calledOnce(endStub);
+    expect(endStub.mock.calls.length === 1).to.be.true;
   });
 
   it("start", async () => {
-    const addStub = sandbox.stub<any, any>(Progress, "add");
+    const addStub = vi.spyOn(Progress, "add").mockReturnValue(undefined as any);
     const instance = new Progress("Test start", 3);
     await instance.start();
     expect(instance["status"]).equals("running");
     expect(instance["detail"]).equals(undefined);
     expect(instance["currentStep"]).equals(0);
-    sinon.assert.calledOnce(addStub);
+    expect(addStub.mock.calls.length === 1).to.be.true;
   });
 
   it("end", async () => {
-    const finishStub = sandbox.stub<any, any>(Progress, "finish");
+    const finishStub = vi.spyOn(Progress, "finish").mockReturnValue(undefined as any);
     const instance = new Progress("Test finish", 3);
     Progress["instances"] = [instance];
     await instance.end(true);
     expect(instance["status"]).equals("done");
     expect(instance["currentPercentage"]).equals(100);
-    sinon.assert.calledOnce(finishStub);
+    expect(finishStub.mock.calls.length === 1).to.be.true;
   });
 
   it("next", async () => {
@@ -115,10 +113,10 @@ describe("Progress", () => {
   });
 
   it("wholeMessage", () => {
-    sandbox.stub(Utils, "getColorizedString").callsFake((messages) => {
+    vi.spyOn(Utils, "getColorizedString").mockImplementation((messages) => {
       return messages.map((m) => m.content).join("");
     });
-    sandbox.stub<any, any>(Progress.prototype, "updatePercentage");
+    vi.spyOn(Progress.prototype, "updatePercentage");
     const instance = new Progress("Test next", 3);
     instance["status"] = "running";
     expect(instance.wholeMessage()).not.contains("Failed");

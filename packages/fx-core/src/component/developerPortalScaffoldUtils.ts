@@ -43,15 +43,6 @@ const colorFileName = "color.png";
 const outlineFileName = "outline.png";
 const manifestFileName = "manifest.json";
 
-export const developerPortalScaffoldUtilsDeps = {
-  getAppPackage: appStudio.getAppPackage,
-  readAppManifest: manifestUtils._readAppManifest,
-  writeFile: fs.writeFile,
-  pathExists: fs.pathExists,
-  getEnvFilePath: pathUtils.getEnvFilePath,
-  writeEnv: envUtil.writeEnv,
-};
-
 export const answerToRepaceBotId = "bot";
 export const answerToReplaceMessageExtensionBotId = "messageExtension";
 
@@ -93,7 +84,7 @@ async function updateManifest(
   appDefinition: AppDefinition,
   inputs: Inputs
 ): Promise<Result<undefined, FxError>> {
-  const res = await developerPortalScaffoldUtilsDeps.getAppPackage(
+  const res = await appStudio.getAppPackage(
     appDefinition.teamsAppId!,
     ctx.tokenProvider!.m365TokenProvider,
     ctx.logProvider
@@ -119,7 +110,8 @@ async function updateManifest(
     appPackageFolderName,
     manifestFileName
   );
-  const manifestRes = await developerPortalScaffoldUtilsDeps.readAppManifest(manifestTemplatePath);
+  const manifestRes =
+    await manifestUtils._readAppManifest.bind(manifestUtils)(manifestTemplatePath);
   if (manifestRes.isErr()) {
     return err(manifestRes.error);
   }
@@ -133,11 +125,11 @@ async function updateManifest(
   const icons = appPackage.icons;
   if (icons) {
     if (icons.color) {
-      await developerPortalScaffoldUtilsDeps.writeFile(colorFilePath, icons.color);
+      await fs.writeFile(colorFilePath, icons.color);
     }
 
     if (icons.outline) {
-      await developerPortalScaffoldUtilsDeps.writeFile(outlineFilePath, icons.outline);
+      await fs.writeFile(outlineFilePath, icons.outline);
     }
   }
 
@@ -287,11 +279,7 @@ async function updateManifest(
     }
   }
 
-  await developerPortalScaffoldUtilsDeps.writeFile(
-    manifestTemplatePath,
-    JSON.stringify(manifest, null, "\t"),
-    "utf-8"
-  );
+  await fs.writeFile(manifestTemplatePath, JSON.stringify(manifest, null, "\t"), "utf-8");
 
   // languages
   const languages = appPackage.languages;
@@ -299,11 +287,7 @@ async function updateManifest(
     for (const code in languages) {
       const content = JSON.parse(languages[code].toString("utf8"));
       const languageFilePath = path.join(inputs.projectPath!, appPackageFolderName, `${code}.json`);
-      await developerPortalScaffoldUtilsDeps.writeFile(
-        languageFilePath,
-        JSON.stringify(content, null, "\t"),
-        "utf-8"
-      );
+      await fs.writeFile(languageFilePath, JSON.stringify(content, null, "\t"), "utf-8");
     }
   }
   return ok(undefined);
@@ -314,20 +298,14 @@ export async function updateEnv(
   appId: string,
   projectPath: string
 ): Promise<Result<undefined, FxError>> {
-  const localEnvFilePathRes = await developerPortalScaffoldUtilsDeps.getEnvFilePath(
-    projectPath,
-    "local"
-  );
+  const localEnvFilePathRes = await pathUtils.getEnvFilePath.bind(pathUtils)(projectPath, "local");
   if (localEnvFilePathRes.isErr()) return err(localEnvFilePathRes.error);
-  if (
-    !!localEnvFilePathRes.value &&
-    (await developerPortalScaffoldUtilsDeps.pathExists(localEnvFilePathRes.value))
-  ) {
-    return await developerPortalScaffoldUtilsDeps.writeEnv(projectPath, "local", {
+  if (!!localEnvFilePathRes.value && (await fs.pathExists(localEnvFilePathRes.value))) {
+    return await envUtil.writeEnv.bind(envUtil)(projectPath, "local", {
       TEAMS_APP_ID: appId,
     });
   } else {
-    return await developerPortalScaffoldUtilsDeps.writeEnv(projectPath, "dev", {
+    return await envUtil.writeEnv.bind(envUtil)(projectPath, "dev", {
       TEAMS_APP_ID: appId,
     });
   }

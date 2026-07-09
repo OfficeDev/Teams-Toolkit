@@ -6,24 +6,23 @@
  */
 
 import { err, Inputs, ok, Platform } from "@microsoft/teamsfx-api";
-import * as chai from "chai";
-import * as sinon from "sinon";
 import { createContext, setTools } from "../../../src/common/globalVars";
 import { developerPortalScaffoldUtils } from "../../../src/component/developerPortalScaffoldUtils";
 import { TdpGenerator } from "../../../src/component/generator/other/tdpGenerator";
 import { InputValidationError, UserCancelError } from "../../../src/error";
 import { ProgrammingLanguage, QuestionNames } from "../../../src/question";
 import { MockTools } from "../../core/utils";
+import { chai, vi } from "vitest";
 
 describe("TdpGenerator", function () {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   beforeEach(() => {
     setTools(new MockTools());
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   describe("activate()", () => {
@@ -87,9 +86,9 @@ describe("TdpGenerator", function () {
         projectPath: ".",
         teamsAppFromTdp: {},
       };
-      sandbox
-        .stub(developerPortalScaffoldUtils, "updateFilesForTdp")
-        .resolves(err(new UserCancelError()));
+      vi.spyOn(developerPortalScaffoldUtils, "updateFilesForTdp").mockResolvedValue(
+        err(new UserCancelError())
+      );
       const context = createContext();
       const generator = new TdpGenerator();
       const res = await generator.post(context, inputs, ".");
@@ -101,7 +100,7 @@ describe("TdpGenerator", function () {
         projectPath: ".",
         teamsAppFromTdp: {},
       };
-      sandbox.stub(developerPortalScaffoldUtils, "updateFilesForTdp").resolves(ok(undefined));
+      vi.spyOn(developerPortalScaffoldUtils, "updateFilesForTdp").mockResolvedValue(ok(undefined));
       const context = createContext();
       const generator = new TdpGenerator();
       const res = await generator.post(context, inputs, ".");

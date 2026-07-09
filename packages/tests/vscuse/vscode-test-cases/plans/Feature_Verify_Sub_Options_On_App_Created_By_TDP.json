@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2.0,
       "step_retry_timeout": 0.0
     },
-    "total_steps": 42,
+    "total_steps": 41,
     "created_at": "2026-05-22T02:08:41.815155",
     "name": "Feature Verify Sub Options On App Created By TDP",
     "description": {
@@ -61,7 +61,7 @@
       "step_fc8f526a",
       "step_6d1c1308",
       "step_68414277",
-      "step_a27c6dcb",
+      "plan_r_0624_024810",
       "step_1c5748dd"
     ],
     "tags": [],
@@ -1034,32 +1034,6 @@
       "tags": [],
       "screenshot": "step_68414277",
       "created_at": "2026-05-22T02:44:53.636081",
-      "plan_id": "plan_dcd102cb"
-    },
-    {
-      "step_id": "step_a27c6dcb",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 363,
-        "y": 173
-      },
-      "description": "Click the \"Teams Agents and Apps\" option within the \"New Project\" dialog in Visual Studio Code to select the template for creating a bot, web, or Teams app.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:363:173:16:5:9454d4dc23ca01a2",
-        "dhash:363:173:96:5:1066c92496d32c00",
-        "dhash:363:173:0:10:c4c8448684848001"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_a27c6dcb",
-      "created_at": "2026-05-22T02:44:53.649485",
       "plan_id": "plan_dcd102cb"
     },
     {

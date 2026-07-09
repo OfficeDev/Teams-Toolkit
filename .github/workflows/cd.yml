@@ -45,10 +45,21 @@ on:
         type: boolean
         default: false
         description: "[Dev/Testing only] Skip branch validation."
+      skipdockerbuild:
+        type: boolean
+        default: false
+        description: "Skip triggering the VscUse ATK docker build after CD (e.g. when the caller builds its own image)."
 
 permissions:
   actions: write
   contents: write
+
+# Production CD runs (dev / release/*) use a unique group so concurrency is a no-op and
+# real releases / nightly are never cancelled or queued. Other refs (feature/PR branches
+# used by the smoke pipeline) are grouped per-branch so a re-dispatch cancels the stale run.
+concurrency:
+  group: ${{ format('cd-{0}', (github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/heads/release/')) && github.run_id || github.ref_name) }}
+  cancel-in-progress: true
 
 jobs:
   cd:
@@ -56,6 +67,8 @@ jobs:
     outputs:
       markdown-check-result: ${{ steps.markdown-check.outcome }}
       markdown-check-samples-result: ${{ steps.markdown-check-samples.outcome }}
+      extension-version: ${{ steps.version-change.outputs.EXTENSION_VERSION }}
+      vsix-version: ${{ steps.version-change.outputs.VSIX_VERSION }}
     env:
       CI: true
       PREID: ${{ github.event.inputs.preid }}
@@ -230,6 +243,10 @@ jobs:
           echo "CHANGED=$(git tag --points-at HEAD | xargs)" >> $GITHUB_OUTPUT
           echo "TEMPLATE_VERSION=$(git tag --points-at HEAD | grep templates)" >> $GITHUB_OUTPUT
           echo "EXTENSION_VERSION=$(git tag --points-at HEAD | grep ms-teams-vscode-extension@)" >> $GITHUB_OUTPUT
+          # Final vsix version from package.json (after vsc-version.sh rewrites the
+          # preview/beta lerna version to its timestamped form). Use THIS for the
+          # release pipeline trigger, not the intermediate lerna tag version.
+          echo "VSIX_VERSION=$(jq -r .version ./packages/vscode-extension/package.json)" >> $GITHUB_OUTPUT
           git tag --points-at HEAD | grep templates | grep rc | xargs -r git push -d origin
 
       # v4 channel (isolated from the v3 steps above). The v4 distribution config
@@ -306,22 +323,17 @@ jobs:
       # the v4-owned releases; the v3 templates@ channel above is untouched.
       - name: Publish v4 template channel
         if: ${{ contains(steps.version-change.outputs.CHANGED, 'templates@') && github.event_name == 'workflow_dispatch' && github.event.inputs.goproduct == 'true' }}
-        # continue-on-error is intentional ONLY while no shipped engine consumes
-        # the v4 channel yet (generator wiring is pending, plan item #7): a v4
-        # publish failure here has zero production impact and must not block the
-        # v3 CD. Remove this line once the v4 generator goes live, so a failed
-        # channel update fails the shipping build instead of silently leaving
-        # the channel behind the engine config.
-        continue-on-error: true
         env:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
         run: |
           bash .github/scripts/v4/publish-v4-channel.sh \
             "${{ steps.version-change.outputs.TEMPLATE_VERSION }}" \
+            "${{ github.workspace }}/templates/build/v4/create-selector.json" \
+            "${{ github.workspace }}/templates/build/v4/modify-selector.json" \
+            "${{ github.workspace }}/templates/build/v4/templates-metadata.zip" \
             "${{ github.workspace }}/templates/build/v4/templates.zip" \
             "${{ runner.temp }}" \
-            "${{ github.sha }}" \
-            "${{ github.workspace }}/templates/build/metadata.zip"
+            "${{ github.sha }}"
 
       - name: Release RC VS templates to GitHub
         if: ${{ contains(steps.version-change.outputs.CHANGED, 'templates@') && github.event_name == 'workflow_dispatch' && github.event.inputs.vsrelease == 'true' }}
@@ -570,7 +582,7 @@ jobs:
 
   trigger-docker-build:
     needs: cd
-    if: ${{ success() }}
+    if: ${{ success() && !inputs.skipdockerbuild }}
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Docker Build Workflow
@@ -583,3 +595,62 @@ jobs:
             -f run_id=${{ github.run_id }} \
             -f tag=${{ inputs.series == '' && 'latest' || inputs.series }} \
             -f run_test_cases=${{ github.event_name == 'schedule' || inputs.run_test_cases }}
+
+  trigger-sync-release-runs:
+    needs: cd
+    if: ${{ success() && startsWith(github.ref, 'refs/heads/release/') && github.event.inputs.preid != 'alpha' }}
+    runs-on: ubuntu-latest
+    steps:
+      - id: generate-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.APP_GITHUB_APP_ID }}
+          private-key: ${{ secrets.APP_GITHUB_APP_PRIVATE_KEY }}
+          owner: OfficeDev
+          repositories: microsoft-365-agents-toolkit-test
+
+      - name: Derive release inputs
+        id: derive
+        env:
+          EXTENSION_VERSION: ${{ needs.cd.outputs.extension-version }}
+          VSIX_VERSION: ${{ needs.cd.outputs.vsix-version }}
+          SERIES: ${{ inputs.series }}
+        run: |
+          # EXTENSION_VERSION is the lerna git tag (e.g. ms-teams-vscode-extension@6.11.0-beta.2026061712);
+          # empty when no extension was released. VSIX_VERSION is the FINAL packaged
+          # version from package.json (e.g. 6.11.2026061712 after vsc-version.sh) — use
+          # that for the pipeline, not the intermediate lerna tag.
+          if [ -z "$EXTENSION_VERSION" ]; then
+            echo "No extension version released; skipping sync dispatch."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Sidecar requires series (used as docker image tag for ui-test correlation).
+          if [ -z "$SERIES" ]; then
+            echo "No series provided; skipping sync dispatch."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          minor="$(echo "$VSIX_VERSION" | cut -d. -f2)"
+          if [ $(( minor % 2 )) -eq 1 ]; then
+            release_type=prerelease
+          else
+            release_type=stablerelease
+          fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          echo "release_version=$VSIX_VERSION" >> "$GITHUB_OUTPUT"
+          echo "release_type=$release_type" >> "$GITHUB_OUTPUT"
+
+      - name: Trigger Sync Release Runs Workflow
+        if: ${{ steps.derive.outputs.skip == 'false' }}
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+        run: |
+          gh workflow run sync-release-runs.yml \
+            --repo OfficeDev/microsoft-365-agents-toolkit-test \
+            --ref main \
+            -f release_type=${{ steps.derive.outputs.release_type }} \
+            -f release_version=${{ steps.derive.outputs.release_version }} \
+            -f series=${{ inputs.series }} \
+            -f cd_run_id=${{ github.run_id }} \
+            -f commit=${{ github.sha }}

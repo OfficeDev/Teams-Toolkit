@@ -10,10 +10,6 @@ import { commands } from "../../resource";
 import { TelemetryEvent } from "../../telemetry/cliTelemetryEvents";
 import { ProjectFolderOption } from "../common";
 
-export const envListDeps = {
-  isValidProjectV3: (projectPath?: string) => settingHelper.isValidProjectV3(projectPath ?? ""),
-};
-
 export const envListCommand: CLICommand = {
   name: "list",
   description: commands["env.list"].description,
@@ -23,7 +19,7 @@ export const envListCommand: CLICommand = {
   },
   handler: async (ctx) => {
     const inputs = ctx.optionValues as InputsWithProjectPath;
-    if (!envListDeps.isValidProjectV3(inputs.projectPath)) {
+    if (!settingHelper.isValidProjectV3(inputs.projectPath ?? "")) {
       return err(WorkspaceNotSupported(inputs.projectPath));
     }
     const envListRes = await envUtil.listEnv(inputs.projectPath, true);

@@ -9,14 +9,13 @@ import {
   StringValidation,
   VsCodeEnv,
 } from "@microsoft/teamsfx-api";
-import { assert } from "chai";
-import sinon from "sinon";
 import { validate, validationUtils } from "../../src/ui/validationUtils";
+import { assert, vi } from "vitest";
 
 describe("ValidationUtils", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   describe("validateInputForMultipleSelectQuestion", () => {
     it("should return undefined", async () => {

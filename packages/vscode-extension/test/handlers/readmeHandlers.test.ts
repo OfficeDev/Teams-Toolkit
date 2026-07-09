@@ -1,53 +1,47 @@
-import * as vscode from "vscode";
-import * as sinon from "sinon";
-import fs from "fs-extra";
-import * as chai from "chai";
 import { featureFlagManager, FeatureFlags } from "@microsoft/teamsfx-core";
-import * as globalVariables from "../../src/globalVariables";
-import * as extTelemetryEvents from "../../src/telemetry/extTelemetryEvents";
-import { ExtTelemetry } from "../../src/telemetry/extTelemetry";
+import fs from "fs-extra";
+import { assert, expect, vi } from "vitest";
+import * as vscode from "vscode";
 import { PanelType } from "../../src/controls/PanelType";
-import { TreatmentVariableValue } from "../../src/exp/treatmentVariables";
 import { WebviewPanel } from "../../src/controls/webviewPanel";
+import { TreatmentVariableValue } from "../../src/exp/treatmentVariables";
+import * as globalVariables from "../../src/globalVariables";
 import {
   openReadMeHandler,
   openSampleReadmeHandler,
   openWorkspaceMCPConfigHandler,
 } from "../../src/handlers/readmeHandlers";
+import { ExtTelemetry } from "../../src/telemetry/extTelemetry";
+import * as extTelemetryEvents from "../../src/telemetry/extTelemetryEvents";
+import { mockValue } from "../mocks/vitestMockUtils";
 
 describe("readmeHandlers", () => {
   describe("openReadMeHandler", () => {
-    const sandbox = sinon.createSandbox();
-
-    afterEach(() => {
-      sandbox.restore();
-    });
-
     it("Happy Path", async () => {
-      sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-      sandbox.stub(globalVariables, "isTeamsFxProject").value(true);
-      const executeCommands = sandbox.stub(vscode.commands, "executeCommand");
-      sandbox
-        .stub(vscode.workspace, "workspaceFolders")
-        .value([{ uri: { fsPath: "readmeTestFolder" } }]);
-      sandbox.stub(fs, "pathExists").resolves(true);
-      const openTextDocumentStub = sandbox
-        .stub(vscode.workspace, "openTextDocument")
-        .resolves({} as any as vscode.TextDocument);
+      vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+      mockValue(globalVariables, "isTeamsFxProject", true);
+      const executeCommands = vi.spyOn(vscode.commands, "executeCommand");
+      vi.spyOn(vscode.workspace, "workspaceFolders").value([
+        { uri: { fsPath: "readmeTestFolder" } },
+      ]);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      const openTextDocumentStub = vi
+        .spyOn(vscode.workspace, "openTextDocument")
+        .mockResolvedValue({} as any as vscode.TextDocument);
 
       await openReadMeHandler([extTelemetryEvents.TelemetryTriggerFrom.Auto]);
 
-      chai.assert.isTrue(openTextDocumentStub.calledOnce);
-      chai.assert.isTrue(executeCommands.calledOnce);
+      assert.isTrue(openTextDocumentStub.calledOnce);
+      assert.isTrue(executeCommands.calledOnce);
     });
 
     it("Create Project", async () => {
-      sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-      sandbox.stub(globalVariables, "isTeamsFxProject").value(false);
-      sandbox.stub(globalVariables, "core").value(undefined);
-      const showMessageStub = sandbox
-        .stub(vscode.window, "showInformationMessage")
-        .callsFake(
+      vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+      mockValue(globalVariables, "isTeamsFxProject", false);
+      mockValue(globalVariables, "core", undefined);
+      const showMessageStub = vi
+        .spyOn(vscode.window, "showInformationMessage")
+        .mockImplementation(
           (title: string, options: vscode.MessageOptions, ...items: vscode.MessageItem[]) => {
             return Promise.resolve({
               title: "Yes",
@@ -57,17 +51,17 @@ describe("readmeHandlers", () => {
         );
       await openReadMeHandler([extTelemetryEvents.TelemetryTriggerFrom.Auto]);
 
-      chai.assert.isTrue(showMessageStub.calledOnce);
+      assert.isTrue(showMessageStub.calledOnce);
     });
 
     it("Open Folder", async () => {
-      sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-      sandbox.stub(globalVariables, "isTeamsFxProject").value(false);
-      sandbox.stub(globalVariables, "core").value(undefined);
-      const executeCommandStub = sandbox.stub(vscode.commands, "executeCommand");
-      const showMessageStub = sandbox
-        .stub(vscode.window, "showInformationMessage")
-        .callsFake(
+      vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+      mockValue(globalVariables, "isTeamsFxProject", false);
+      mockValue(globalVariables, "core", undefined);
+      const executeCommandStub = vi.spyOn(vscode.commands, "executeCommand");
+      const showMessageStub = vi
+        .spyOn(vscode.window, "showInformationMessage")
+        .mockImplementation(
           (title: string, options: vscode.MessageOptions, ...items: vscode.MessageItem[]) => {
             return Promise.resolve({
               title: "Yes",
@@ -77,161 +71,151 @@ describe("readmeHandlers", () => {
         );
       await openReadMeHandler([extTelemetryEvents.TelemetryTriggerFrom.Auto]);
 
-      chai.assert.isTrue(executeCommandStub.calledOnce);
+      assert.isTrue(executeCommandStub.calledOnce);
     });
 
     it("Function Notification Bot Template", async () => {
-      sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-      sandbox.stub(globalVariables, "isTeamsFxProject").value(true);
-      sandbox
-        .stub(vscode.workspace, "workspaceFolders")
-        .value([{ uri: { fsPath: "readmeTestFolder" } }]);
-      sandbox.stub(TreatmentVariableValue, "inProductDoc").value(true);
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox
-        .stub(fs, "readFile")
-        .resolves(Buffer.from("## Get Started with the Notification bot"));
-      const createOrShow = sandbox.stub(WebviewPanel, "createOrShow");
+      vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+      mockValue(globalVariables, "isTeamsFxProject", true);
+      vi.spyOn(vscode.workspace, "workspaceFolders").value([
+        { uri: { fsPath: "readmeTestFolder" } },
+      ]);
+      mockValue(TreatmentVariableValue, "inProductDoc", true);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readFile").mockResolvedValue(
+        Buffer.from("## Get Started with the Notification bot")
+      );
+      const createOrShow = vi
+        .spyOn(WebviewPanel, "createOrShow")
+        .mockImplementation(() => undefined);
 
       await openReadMeHandler([extTelemetryEvents.TelemetryTriggerFrom.Auto]);
 
-      sandbox.assert.calledOnceWithExactly(
-        createOrShow,
-        PanelType.FunctionBasedNotificationBotReadme
-      );
+      expect(createOrShow).toHaveBeenCalledTimes(1);
+      expect(createOrShow).toHaveBeenCalledWith(PanelType.FunctionBasedNotificationBotReadme);
     });
 
     it("Express Notification Bot Template", async () => {
-      sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-      sandbox.stub(globalVariables, "isTeamsFxProject").value(true);
-      sandbox
-        .stub(vscode.workspace, "workspaceFolders")
-        .value([{ uri: { fsPath: "readmeTestFolder" } }]);
-      sandbox.stub(TreatmentVariableValue, "inProductDoc").value(true);
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox
-        .stub(fs, "readFile")
-        .resolves(Buffer.from("## Get Started with the Notification bot express"));
-      const createOrShow = sandbox.stub(WebviewPanel, "createOrShow");
+      vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+      mockValue(globalVariables, "isTeamsFxProject", true);
+      vi.spyOn(vscode.workspace, "workspaceFolders").value([
+        { uri: { fsPath: "readmeTestFolder" } },
+      ]);
+      mockValue(TreatmentVariableValue, "inProductDoc", true);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readFile").mockResolvedValue(
+        Buffer.from("## Get Started with the Notification bot express")
+      );
+      const createOrShow = vi
+        .spyOn(WebviewPanel, "createOrShow")
+        .mockImplementation(() => undefined);
 
       await openReadMeHandler([extTelemetryEvents.TelemetryTriggerFrom.Auto]);
 
-      sandbox.assert.calledOnceWithExactly(
-        createOrShow,
-        PanelType.ExpressServerNotificationBotReadme
-      );
+      expect(createOrShow).toHaveBeenCalledTimes(1);
+      expect(createOrShow).toHaveBeenCalledWith(PanelType.ExpressServerNotificationBotReadme);
     });
   });
 
   describe("openSampleReadmeHandler", () => {
-    const sandbox = sinon.createSandbox();
-
-    afterEach(() => {
-      sandbox.restore();
-    });
-
     it("Trigger from Walkthrough", async () => {
-      sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: vscode.Uri.file("test") }]);
-      sandbox.stub(vscode.workspace, "openTextDocument");
-      const executeCommandStub = sandbox.stub(vscode.commands, "executeCommand");
+      mockValue(vscode.workspace, "workspaceFolders", [{ uri: vscode.Uri.file("test") }]);
+      vi.spyOn(vscode.workspace, "openTextDocument");
+      const executeCommandStub = vi.spyOn(vscode.commands, "executeCommand");
 
       await openSampleReadmeHandler(["WalkThrough"]);
 
-      chai.assert.isTrue(executeCommandStub.calledOnce);
+      assert.isTrue(executeCommandStub.calledOnce);
     });
   });
 
   describe("openWorkspaceMCPConfigHandler", () => {
-    const sandbox = sinon.createSandbox();
-
-    afterEach(() => {
-      sandbox.restore();
-    });
-
     it("no workspace folder - returns ok without opening", async () => {
-      sandbox.stub(vscode.workspace, "workspaceFolders").value(undefined);
-      const openTextDocumentStub = sandbox.stub(vscode.workspace, "openTextDocument");
+      mockValue(vscode.workspace, "workspaceFolders", undefined);
+      const openTextDocumentStub = vi.spyOn(vscode.workspace, "openTextDocument");
 
       const res = await openWorkspaceMCPConfigHandler();
 
-      chai.assert.isTrue(res.isOk());
-      chai.assert.isTrue(openTextDocumentStub.notCalled);
+      assert.isTrue(res.isOk());
+      assert.isTrue(openTextDocumentStub.notCalled);
     });
 
     it("config file missing - returns ok without opening", async () => {
-      sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: vscode.Uri.file("test") }]);
-      sandbox.stub(fs, "pathExists").resolves(false);
-      const openTextDocumentStub = sandbox.stub(vscode.workspace, "openTextDocument");
+      mockValue(vscode.workspace, "workspaceFolders", [{ uri: vscode.Uri.file("test") }]);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+      const openTextDocumentStub = vi.spyOn(vscode.workspace, "openTextDocument");
 
       const res = await openWorkspaceMCPConfigHandler();
 
-      chai.assert.isTrue(res.isOk());
-      chai.assert.isTrue(openTextDocumentStub.notCalled);
+      assert.isTrue(res.isOk());
+      assert.isTrue(openTextDocumentStub.notCalled);
     });
 
     it("DT flag off - shows Fetch Action notification and opens mcp.json", async () => {
-      sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: vscode.Uri.file("test") }]);
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(featureFlagManager, "getBooleanValue").returns(false);
-      const openTextDocumentStub = sandbox
-        .stub(vscode.workspace, "openTextDocument")
-        .resolves({} as vscode.TextDocument);
-      sandbox.stub(vscode.window, "showTextDocument").resolves();
-      const showMessageStub = sandbox
-        .stub(vscode.window, "showInformationMessage")
-        .resolves("Fetch Action" as any);
-      const executeCommandStub = sandbox.stub(vscode.commands, "executeCommand");
+      mockValue(vscode.workspace, "workspaceFolders", [{ uri: vscode.Uri.file("test") }]);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+      const openTextDocumentStub = vi
+        .spyOn(vscode.workspace, "openTextDocument")
+        .mockResolvedValue({} as vscode.TextDocument);
+      vi.spyOn(vscode.window, "showTextDocument").mockResolvedValue(undefined as any);
+      const showMessageStub = vi
+        .spyOn(vscode.window, "showInformationMessage")
+        .mockResolvedValue("Fetch Action" as any);
+      const executeCommandStub = vi.spyOn(vscode.commands, "executeCommand");
 
       const res = await openWorkspaceMCPConfigHandler();
 
-      chai.assert.isTrue(res.isOk());
-      chai.assert.isTrue(showMessageStub.calledOnce);
-      chai.assert.isTrue(openTextDocumentStub.calledOnce);
+      assert.isTrue(res.isOk());
+      assert.isTrue(showMessageStub.calledOnce);
+      assert.isTrue(openTextDocumentStub.calledOnce);
       // Fetch Action selection wires the updateActionWithMCP command.
       await Promise.resolve();
-      chai.assert.isTrue(executeCommandStub.calledWith("fx-extension.updateActionWithMCP"));
+      expect(executeCommandStub).toHaveBeenCalledWith("fx-extension.updateActionWithMCP");
     });
 
     it("DT flag on - opens ai-plugin.json without Fetch Action notification", async () => {
-      sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: vscode.Uri.file("test") }]);
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox
-        .stub(featureFlagManager, "getBooleanValue")
-        .callsFake((flag) => flag === FeatureFlags.MCPForDADT);
-      const openTextDocumentStub = sandbox
-        .stub(vscode.workspace, "openTextDocument")
-        .resolves({} as vscode.TextDocument);
-      sandbox.stub(vscode.window, "showTextDocument").resolves();
-      const showMessageStub = sandbox.stub(vscode.window, "showInformationMessage");
+      mockValue(vscode.workspace, "workspaceFolders", [{ uri: vscode.Uri.file("test") }]);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation(
+        (flag) => flag === FeatureFlags.MCPForDADT
+      );
+      const openTextDocumentStub = vi
+        .spyOn(vscode.workspace, "openTextDocument")
+        .mockResolvedValue({} as vscode.TextDocument);
+      vi.spyOn(vscode.window, "showTextDocument").mockResolvedValue(undefined as any);
+      const showMessageStub = vi
+        .spyOn(vscode.window, "showInformationMessage")
+        .mockResolvedValue(undefined);
 
       const res = await openWorkspaceMCPConfigHandler();
 
-      chai.assert.isTrue(res.isOk());
-      chai.assert.isTrue(showMessageStub.notCalled);
-      chai.assert.isTrue(openTextDocumentStub.calledOnce);
+      assert.isTrue(res.isOk());
+      assert.isTrue(showMessageStub.notCalled);
+      assert.isTrue(openTextDocumentStub.calledOnce);
       const openedUri = openTextDocumentStub.firstCall.args[0] as vscode.Uri;
-      chai.assert.isTrue(openedUri.fsPath.endsWith("ai-plugin.json"));
+      assert.isTrue(openedUri.fsPath.endsWith("ai-plugin.json"));
     });
 
     it("DT flag on but ai-plugin.json missing - falls back to mcp.json", async () => {
-      sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: vscode.Uri.file("test") }]);
-      sandbox
-        .stub(fs, "pathExists")
-        .callsFake((p: string) => Promise.resolve(p.endsWith("mcp.json")) as any);
-      sandbox
-        .stub(featureFlagManager, "getBooleanValue")
-        .callsFake((flag) => flag === FeatureFlags.MCPForDADT);
-      const openTextDocumentStub = sandbox
-        .stub(vscode.workspace, "openTextDocument")
-        .resolves({} as vscode.TextDocument);
-      sandbox.stub(vscode.window, "showTextDocument").resolves();
+      mockValue(vscode.workspace, "workspaceFolders", [{ uri: vscode.Uri.file("test") }]);
+      vi.spyOn(fs, "pathExists").mockImplementation(async (p: string | Buffer | URL) =>
+        String(p).endsWith("mcp.json")
+      );
+      vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation(
+        (flag) => flag === FeatureFlags.MCPForDADT
+      );
+      const openTextDocumentStub = vi
+        .spyOn(vscode.workspace, "openTextDocument")
+        .mockResolvedValue({} as vscode.TextDocument);
+      vi.spyOn(vscode.window, "showTextDocument").mockResolvedValue(undefined as any);
 
       const res = await openWorkspaceMCPConfigHandler();
 
-      chai.assert.isTrue(res.isOk());
-      chai.assert.isTrue(openTextDocumentStub.calledOnce);
+      assert.isTrue(res.isOk());
+      assert.isTrue(openTextDocumentStub.calledOnce);
       const openedUri = openTextDocumentStub.firstCall.args[0] as vscode.Uri;
-      chai.assert.isTrue(openedUri.fsPath.endsWith("mcp.json"));
+      assert.isTrue(openedUri.fsPath.endsWith("mcp.json"));
     });
   });
 });

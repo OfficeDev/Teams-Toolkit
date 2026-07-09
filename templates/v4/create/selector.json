@@ -1,0 +1,374 @@
+{
+  "$schema": "../schema/selector.schema.json",
+  "questions": [
+    {
+      "name": "projectType",
+      "type": "singleSelect",
+      "title": "New Project",
+      "placeholder": "Select an option",
+      "keyPrefix": "template.createProjectQuestion",
+      "staticOptions": [
+        { "id": "copilot-agent-type",
+          "label": "Declarative Agent",
+          "detail": "Create your own agent by declaring instructions, actions, & knowledge to suit your needs.",
+          "groupName": "Agents for Microsoft 365 Copilot",
+          "iconPath": "teamsfx-agent",
+          "keyPrefix": "template.createProjectQuestion.projectType.declarativeAgent" },
+        { "id": "custom-engine-agent-type",
+          "label": "Custom Engine Agent",
+          "detail": "Build intelligent agent where you manage orchestration and provide your own LLM",
+          "groupName": "Agents for Microsoft 365 Copilot",
+          "iconPath": "teamsfx-custom-copilot",
+          "keyPrefix": "template.createProjectQuestion.projectType.customCopilot" },
+        { "id": "graph-connector-type",
+          "label": "Copilot connectors",
+          "detail": "Embed your organization data to make it searchable in Microsoft 365 Copilot",
+          "groupName": "Agents for Microsoft 365 Copilot",
+          "iconPath": "teamsfx-graph-connector",
+          "keyPrefix": "template.createProjectQuestion.createGraphConnector" },
+        { "id": "blank-app-type",
+          "label": "Blank Copilot app/agent",
+          "detail": "A minimal app with just a manifest, icons, and environment files. Build any M365 capability from scratch.",
+          "groupName": "Apps for Microsoft 365",
+          "iconPath": "file",
+          "keyPrefix": "template.createProjectQuestion.projectType.blankApp" },
+        { "id": "teams-agent-and-app-type",
+          "label": "Teams Agents and Apps",
+          "detail": "Create agent, chat bot, web pages or other apps in Microsoft Teams using Microsoft Teams SDK.",
+          "groupName": "Apps for Microsoft 365",
+          "iconPath": "microsoft365-agents-toolkit-teams",
+          "keyPrefix": "template.createProjectQuestion.projectType.teamsAgentsAndApps" },
+        { "id": "office-meta-os-type",
+          "label": "Office Add-in",
+          "detail": "Extend Office applications to interact with content in Office documents and Outlook items",
+          "groupName": "Apps for Microsoft 365",
+          "iconPath": "microsoft365-agents-office",
+          "keyPrefix": "template.createProjectQuestion.projectType.officeAddin" },
+        { "id": "start-with-github-copilot",
+          "label": "Don't know how to start? Use GitHub Copilot Chat",
+          "detail": "Chat with GitHub Copilot and get step-by-step instructions to develop your app or Microsoft 365 Copilot agent.",
+          "groupName": "Use GitHub Copilot",
+          "iconPath": "question",
+          "condition": { "expr": "surface == 'vscode' && featureFlag('TEAMSFX_CHAT_PARTICIPANT_ENTRIES')" },
+          "keyPrefix": "template.createProjectQuestion.projectType.copilotHelp" }
+      ]
+    },
+    {
+      "name": "daTemplate",
+      "type": "singleSelect",
+      "title": "Create Declarative Agent",
+      "placeholder": "Add an action to your declarative agent",
+      "keyPrefix": "template.createProjectQuestion.declarativeCopilot",
+      "condition": { "expr": "projectType == 'copilot-agent-type'" },
+      "staticOptions": [
+        { "id": "no-action",
+          "label": "No Action",
+          "detail": "Create declarative agent only",
+          "keyPrefix": "template.createProjectQuestion.noPlugin" },
+        { "id": "add-action",
+          "label": "Add an Action",
+          "detail": "Create a declarative agent with an action",
+          "keyPrefix": "template.createProjectQuestion.addPlugin" },
+        { "id": "graph-connector",
+          "label": "Add a Copilot connector",
+          "detail": "Create a declarative agent with a Copilot connector",
+          "keyPrefix": "template.createProjectQuestion.addGC" },
+        { "id": "skill",
+          "label": "Add an Agent Skill",
+          "detail": "Create a declarative agent with an agent skill",
+          "condition": { "featureFlag": "TEAMSFX_AGENT_SKILLS" },
+          "keyPrefix": "template.createProjectQuestion.addSkill" },
+        { "id": "typespec",
+          "label": "Start with TypeSpec for Microsoft 365 Copilot",
+          "detail": "Create a declarative agent with or without an action using TypeSpec for Microsoft 365 Copilot",
+          "keyPrefix": "template.createProjectQuestion.apiPlugin.typeSpec" }
+      ]
+    },
+    {
+      "name": "actionSource",
+      "type": "singleSelect",
+      "title": "Create an Action",
+      "placeholder": "Select how to add an action",
+      "keyPrefix": "template.createProjectQuestion.createApiPlugin",
+      "condition": { "expr": "daTemplate == 'add-action'" },
+      "staticOptions": [
+        { "id": "new-api",
+          "label": "Start with a New API",
+          "detail": "Create an action with a new API from Azure Functions",
+          "keyPrefix": "template.createProjectQuestion.capability.copilotPluginNewApiOption" },
+        { "id": "openapi",
+          "label": "Start with an OpenAPI Description Document",
+          "detail": "Create an action from your existing API",
+          "keyPrefix": "template.createProjectQuestion.capability.copilotPluginApiSpecOption" },
+        { "id": "mcp",
+          "label": "Start with a MCP server",
+          "detail": "Create an action from your existing MCP server",
+          "keyPrefix": "template.createProjectQuestion.mcpForDa" }
+      ]
+    },
+    {
+      "name": "apiAuth",
+      "type": "singleSelect",
+      "title": "Authentication Type",
+      "placeholder": "Select an authentication type",
+      "keyPrefix": "template.createProjectQuestion.apiMessageExtensionAuth",
+      "condition": { "expr": "actionSource == 'new-api'" },
+      "staticOptions": [
+        { "id": "none", "label": "None" },
+        { "id": "api-key", "label": "API Key" },
+        { "id": "microsoft-entra", "label": "Microsoft Entra" },
+        { "id": "oauth", "label": "OAuth" }
+      ]
+    },
+    {
+      "name": "customEngineAgent",
+      "type": "singleSelect",
+      "title": "App Features Using Microsoft 365 Agents SDK",
+      "placeholder": "Select an option",
+      "keyPrefix": "template.customEngineAgent",
+      "condition": { "expr": "projectType == 'custom-engine-agent-type'" },
+      "staticOptions": [
+        { "id": "basic-custom-engine-agent",
+          "label": "Basic Custom Engine Agent",
+          "detail": "Intelligent agent that is built with Microsoft 365 Agents SDK and connects to your LLM",
+          "keyPrefix": "template.customEngineAgent.basic" },
+        { "id": "weather-agent",
+          "label": "Weather Agent",
+          "detail": "A weather forecast agent that is built with Microsoft 365 Agents SDK and LangChain",
+          "keyPrefix": "template.customEngineAgent.weather" }
+      ]
+    },
+    {
+      "name": "teamsApp",
+      "type": "singleSelect",
+      "title": "Teams Agent or App Using Microsoft Teams SDK",
+      "placeholder": "Select an option",
+      "keyPrefix": "template.teams",
+      "condition": { "expr": "projectType == 'teams-agent-and-app-type'" },
+      "staticOptions": [
+        { "id": "custom-copilot-basic",
+          "label": "General Teams Agent",
+          "detail": "Agent that chats with users in Teams built with Teams AI Library and connects to LLMs",
+          "keyPrefix": "template.teams.general" },
+        { "id": "rag",
+          "label": "Teams Agent with Data",
+          "detail": "Agent that uses your content and knowledge to accurately answer domain-specific questions",
+          "keyPrefix": "template.teams.rag" },
+        { "id": "teams-collaborator-agent",
+          "label": "Teams Collaborator Agent",
+          "detail": "Agent that enhances collaboration in group chat, channels or meetings through summarization, task management, and conversation search",
+          "keyPrefix": "template.teams.collaboratorAgent" },
+        { "id": "other",
+          "label": "Other Teams Capabilities",
+          "detail": "App that uses tab, bot and message extension",
+          "keyPrefix": "template.teams.others" }
+      ]
+    },
+    {
+      "name": "customCopilotRagType",
+      "type": "singleSelect",
+      "title": "Teams Agent with Data",
+      "placeholder": "Select an option to load your data",
+      "keyPrefix": "template.teams.rag.source",
+      "condition": { "expr": "teamsApp == 'rag'" },
+      "staticOptions": [
+        { "id": "custom-copilot-rag-customize",
+          "label": "Customize",
+          "detail": "Decide how to load your data",
+          "keyPrefix": "template.teams.rag.source.customize" },
+        { "id": "custom-copilot-rag-azure-ai-search",
+          "label": "Azure AI Search",
+          "detail": "Load your data from Azure AI Search service",
+          "keyPrefix": "template.teams.rag.source.azureAISearch" },
+        { "id": "custom-copilot-rag-custom-api",
+          "label": "Custom API",
+          "detail": "Load your data from custom APIs based on OpenAPI description document",
+          "keyPrefix": "template.teams.rag.source.customApi" }
+      ]
+    },
+    {
+      "name": "teamsOtherAppType",
+      "type": "singleSelect",
+      "title": "Teams Capability",
+      "placeholder": "Select an option",
+      "keyPrefix": "template.teams.others.capability",
+      "condition": { "expr": "teamsApp == 'other'" },
+      "staticOptions": [
+        { "id": "non-sso-tab",
+          "label": "Tab",
+          "detail": "A simple implementation of a web app that's ready to customize",
+          "keyPrefix": "template.teams.others.tab" },
+        { "id": "default-message-extension",
+          "label": "Message Extension",
+          "detail": "Receive user input, process it, and send customized results",
+          "keyPrefix": "template.teams.others.messageExtension" },
+        { "id": "default-bot",
+          "label": "Simple Bot",
+          "detail": "A simple implementation of an echo bot that's ready for customization",
+          "keyPrefix": "template.teams.others.bot" }
+      ]
+    },
+    {
+      "name": "officeAddinCapability",
+      "type": "singleSelect",
+      "title": "Office Add-in",
+      "placeholder": "Select a capability",
+      "keyPrefix": "template.createProjectQuestion.projectType.officeAddin",
+      "condition": { "expr": "projectType == 'office-meta-os-type'" },
+      "staticOptions": [
+        { "id": "office-addin-wxpo-taskpane",
+          "label": "Task pane",
+          "detail": "Customize the ribbon with a button and embed content in the task pane",
+          "keyPrefix": "template.newTaskpaneAddin" },
+        { "id": "office-addin-excel-cfshortcut",
+          "label": "Custom Function and Shortcut",
+          "detail": "Task pane add-in with custom function and shortcut",
+          "condition": { "featureFlag": "TEAMSFX_CF_SHORTCUT_METAOS" },
+          "keyPrefix": "template.newCFShortcut" },
+        { "id": "office-addin-config",
+          "label": "Upgrade an Existing Office Add-in",
+          "detail": "Upgrade an add-in project to the latest app manifest and project structure",
+          "keyPrefix": "template.importOfficeAddin" }
+      ]
+    }
+  ],
+
+  "routes": [
+    {
+      "when": "projectType=='start-with-github-copilot'",
+      "engine": "surface-action",
+      "action": "open-github-copilot-chat",
+      "surfaces": ["vscode"]
+    },
+    {
+      "when": "projectType=='blank-app-type'",
+      "templateId": "blank-app",
+      "engine": "v4"
+    },
+    {
+      "when": "projectType=='custom-engine-agent-type' && customEngineAgent=='basic-custom-engine-agent'",
+      "templateId": "basic-custom-engine-agent",
+      "engine": "v4"
+    },
+    {
+      "when": "projectType=='custom-engine-agent-type' && customEngineAgent=='weather-agent'",
+      "templateId": "weather-agent",
+      "engine": "v4"
+    },
+    {
+      "when": "projectType=='graph-connector-type'",
+      "templateId": "graph-connector",
+      "engine": "v4"
+    },
+    {
+      "when": "projectType=='teams-agent-and-app-type' && teamsApp=='custom-copilot-basic'",
+      "templateId": "custom-copilot-basic",
+      "engine": "v4"
+    },
+    {
+      "when": "projectType=='teams-agent-and-app-type' && teamsApp=='rag' && customCopilotRagType=='custom-copilot-rag-customize'",
+      "templateId": "custom-copilot-rag-customize",
+      "engine": "v4"
+    },
+    {
+      "when": "projectType=='teams-agent-and-app-type' && teamsApp=='rag' && customCopilotRagType=='custom-copilot-rag-azure-ai-search'",
+      "templateId": "custom-copilot-rag-azure-ai-search",
+      "engine": "v4"
+    },
+    {
+      "when": "projectType=='teams-agent-and-app-type' && teamsApp=='rag' && customCopilotRagType=='custom-copilot-rag-custom-api'",
+      "templateId": "custom-copilot-rag-custom-api",
+      "engine": "v4"
+    },
+    {
+      "when": "projectType=='teams-agent-and-app-type' && teamsApp=='teams-collaborator-agent'",
+      "templateId": "teams-collaborator-agent",
+      "engine": "v4"
+    },
+    {
+      "when": "projectType=='teams-agent-and-app-type' && teamsApp=='other' && teamsOtherAppType=='non-sso-tab'",
+      "templateId": "non-sso-tab",
+      "engine": "v4"
+    },
+    {
+      "when": "projectType=='teams-agent-and-app-type' && teamsApp=='other' && teamsOtherAppType=='default-message-extension'",
+      "templateId": "default-message-extension",
+      "engine": "v4"
+    },
+    {
+      "when": "projectType=='teams-agent-and-app-type' && teamsApp=='other' && teamsOtherAppType=='default-bot'",
+      "templateId": "default-bot",
+      "engine": "v4"
+    },
+    {
+      "when": "projectType=='office-meta-os-type' && officeAddinCapability=='office-addin-wxpo-taskpane'",
+      "templateId": "office-addin-wxpo-taskpane",
+      "engine": "v4"
+    },
+    {
+      "when": "projectType=='office-meta-os-type' && officeAddinCapability=='office-addin-excel-cfshortcut'",
+      "templateId": "office-addin-excel-cfshortcut",
+      "engine": "v4"
+    },
+    {
+      "when": "projectType=='office-meta-os-type' && officeAddinCapability=='office-addin-config'",
+      "templateId": "office-addin-config",
+      "engine": "v4"
+    },
+    {
+      "when": "projectType=='copilot-agent-type' && daTemplate=='no-action'",
+      "templateId": "da/no-action",
+      "engine": "v4"
+    },
+    {
+      "when": "projectType=='copilot-agent-type' && daTemplate=='graph-connector'",
+      "templateId": "da/graph-connector",
+      "engine": "v4"
+    },
+    {
+      "when": "projectType=='copilot-agent-type' && daTemplate=='typespec'",
+      "templateId": "da/typespec",
+      "engine": "v4"
+    },
+    {
+      "when": "projectType=='copilot-agent-type' && daTemplate=='skill' && featureFlag('TEAMSFX_AGENT_SKILLS')",
+      "templateId": "da/skill",
+      "engine": "v4"
+    },
+    {
+      "when": "projectType=='copilot-agent-type' && daTemplate=='add-action' && actionSource=='new-api' && apiAuth=='none'",
+      "templateId": "da/api-plugin-from-scratch",
+      "engine": "v4"
+    },
+    {
+      "when": "projectType=='copilot-agent-type' && daTemplate=='add-action' && actionSource=='new-api' && apiAuth=='api-key'",
+      "templateId": "da/api-plugin-from-scratch-bearer",
+      "engine": "v4"
+    },
+    {
+      "when": "projectType=='copilot-agent-type' && daTemplate=='add-action' && actionSource=='new-api' && apiAuth=='microsoft-entra'",
+      "templateId": "da/api-plugin-from-scratch-oauth",
+      "engine": "v4"
+    },
+    {
+      "when": "projectType=='copilot-agent-type' && daTemplate=='add-action' && actionSource=='new-api' && apiAuth=='oauth'",
+      "templateId": "da/api-plugin-from-scratch-oauth",
+      "engine": "v4"
+    },
+    {
+      "when": "projectType=='copilot-agent-type' && daTemplate=='add-action' && actionSource=='openapi'",
+      "templateId": "da/api-plugin-from-existing-api",
+      "engine": "v4"
+    },
+    {
+      "when": "projectType=='copilot-agent-type' && daTemplate=='add-action' && actionSource=='mcp' && !featureFlag('TEAMSFX_MCP_FOR_DA_DT')",
+      "templateId": "da/mcp-server-static",
+      "engine": "v4"
+    },
+    {
+      "when": "projectType=='copilot-agent-type' && daTemplate=='add-action' && actionSource=='mcp' && featureFlag('TEAMSFX_MCP_FOR_DA_DT')",
+      "templateId": "da/mcp-server",
+      "engine": "v4"
+    }
+  ]
+}

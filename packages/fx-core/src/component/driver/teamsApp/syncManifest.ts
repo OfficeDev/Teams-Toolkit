@@ -21,17 +21,6 @@ import { manifestUtils } from "./utils/ManifestUtils";
 
 const actionName = "teamsApp/syncManifest";
 
-export const syncManifestDeps = {
-  getAppPackage: appStudio.getAppPackage,
-  readAppManifest: manifestUtils._readAppManifest,
-  readEnv: envUtil.readEnv,
-  writeEnv: envUtil.writeEnv,
-  getYmlFilePath: pathUtils.getYmlFilePath,
-  parseProjectModel: metadataUtil.parse,
-  mkdir: fs.mkdir,
-  writeFile: fs.writeFile,
-};
-
 @Service(actionName)
 export class SyncManifestDriver implements StepDriver {
   description?: string | undefined;
@@ -69,7 +58,7 @@ export class SyncManifestDriver implements StepDriver {
 
     const manifestTemplatePath = res.value.get("manifestTemplatePath")!;
 
-    const appPackageRes = await syncManifestDeps.getAppPackage(
+    const appPackageRes = await appStudio.getAppPackage(
       teamsAppId,
       context.m365TokenProvider,
       context.logProvider
@@ -94,11 +83,11 @@ export class SyncManifestDriver implements StepDriver {
     const manifestFileName = `manifest.${args.env}.${teamsAppId}.json`;
     const dirPath = path.join(args.projectPath, "appPackage", "syncHistory", timeStamp);
     const filePath = path.join(dirPath, manifestFileName);
-    await syncManifestDeps.mkdir(dirPath, { recursive: true });
-    await syncManifestDeps.writeFile(filePath, JSON.stringify(newManifest, null, "\t"));
+    await fs.mkdir(dirPath, { recursive: true });
+    await fs.writeFile(filePath, JSON.stringify(newManifest, null, "\t"));
     context.logProvider.info(getLocalizedString("core.syncManifest.saveManifestSuccess", filePath));
 
-    const currentManifestRes = await syncManifestDeps.readAppManifest(manifestTemplatePath);
+    const currentManifestRes = await manifestUtils._readAppManifest(manifestTemplatePath);
     if (currentManifestRes.isErr()) {
       return err(currentManifestRes.error);
     }
@@ -151,7 +140,7 @@ export class SyncManifestDriver implements StepDriver {
       context.logProvider.info(getLocalizedString("core.syncManifest.noDiff"));
       return ok(new Map<string, string>());
     }
-    const currentEnvRes = await syncManifestDeps.readEnv(args.projectPath, args.env);
+    const currentEnvRes = await envUtil.readEnv(args.projectPath, args.env);
     if (currentEnvRes.isErr()) {
       return err(currentEnvRes.error);
     }
@@ -163,7 +152,7 @@ export class SyncManifestDriver implements StepDriver {
       }
     }
     if (Object.keys(envToUpdate).length > 0) {
-      const res = await syncManifestDeps.writeEnv(args.projectPath, args.env, envToUpdate);
+      const res = await envUtil.writeEnv(args.projectPath, args.env, envToUpdate);
       if (res.isErr()) {
         return err(res.error);
       }
@@ -180,12 +169,12 @@ export class SyncManifestDriver implements StepDriver {
   private async getTeamsAppIdAndManifestTemplatePath(
     args: SyncManifestArgs
   ): Promise<Result<Map<string, string>, FxError>> {
-    const envRes = await syncManifestDeps.readEnv(args.projectPath, args.env);
+    const envRes = await envUtil.readEnv(args.projectPath, args.env);
     if (envRes.isErr()) {
       return err(envRes.error);
     }
-    const teamsappYamlPath = syncManifestDeps.getYmlFilePath(args.projectPath, args.env) as string;
-    const yamlProjectModel = await syncManifestDeps.parseProjectModel(teamsappYamlPath);
+    const teamsappYamlPath = pathUtils.getYmlFilePath(args.projectPath, args.env) as string;
+    const yamlProjectModel = await metadataUtil.parse(teamsappYamlPath);
     if (yamlProjectModel.isErr()) {
       return err(yamlProjectModel.error);
     }

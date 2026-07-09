@@ -2,11 +2,11 @@
 // Licensed under the MIT license.
 
 import { Warning } from "@microsoft/teamsfx-api";
-import { globalStateUpdate } from "@microsoft/teamsfx-core";
+import * as globalState from "@microsoft/teamsfx-core/build/common/globalState";
 import { Uri } from "vscode";
 import { GlobalKey } from "../constants";
-import { checkIsSPFx } from "../globalVariables";
-import { isTriggerFromWalkThrough } from "./telemetryUtils";
+import * as globalVariables from "../globalVariables";
+import * as telemetryUtils from "./telemetryUtils";
 
 export async function updateAutoOpenGlobalKey(
   showLocalDebugMessage: boolean,
@@ -14,23 +14,23 @@ export async function updateAutoOpenGlobalKey(
   warnings: Warning[] | undefined,
   args?: any[]
 ): Promise<void> {
-  if (isTriggerFromWalkThrough(args)) {
-    await globalStateUpdate(GlobalKey.OpenWalkThrough, true);
-    await globalStateUpdate(GlobalKey.OpenReadMe, "");
+  if (telemetryUtils.isTriggerFromWalkThrough(args)) {
+    await globalState.globalStateUpdate(GlobalKey.OpenWalkThrough, true);
+    await globalState.globalStateUpdate(GlobalKey.OpenReadMe, "");
   } else {
-    await globalStateUpdate(GlobalKey.OpenWalkThrough, false);
-    await globalStateUpdate(GlobalKey.OpenReadMe, projectUri.fsPath);
+    await globalState.globalStateUpdate(GlobalKey.OpenWalkThrough, false);
+    await globalState.globalStateUpdate(GlobalKey.OpenReadMe, projectUri.fsPath);
   }
 
   if (showLocalDebugMessage) {
-    await globalStateUpdate(GlobalKey.ShowLocalDebugMessage, true);
+    await globalState.globalStateUpdate(GlobalKey.ShowLocalDebugMessage, true);
   }
 
   if (warnings?.length) {
-    await globalStateUpdate(GlobalKey.CreateWarnings, JSON.stringify(warnings));
+    await globalState.globalStateUpdate(GlobalKey.CreateWarnings, JSON.stringify(warnings));
   }
 
-  if (checkIsSPFx(projectUri.fsPath)) {
-    void globalStateUpdate(GlobalKey.AutoInstallDependency, true);
+  if (globalVariables.checkIsSPFx(projectUri.fsPath)) {
+    void globalState.globalStateUpdate(GlobalKey.AutoInstallDependency, true);
   }
 }

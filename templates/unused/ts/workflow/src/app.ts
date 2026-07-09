@@ -34,6 +34,7 @@ const credentialOptions =
 // Create the app
 export const app = new App({
   ...credentialOptions,
+  skipAuth: !process.env.CLIENT_ID,
 });
 
 // Initialize command handlers

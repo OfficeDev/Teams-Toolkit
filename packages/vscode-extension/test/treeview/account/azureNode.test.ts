@@ -1,25 +1,18 @@
-import * as chai from "chai";
-import * as sinon from "sinon";
 import * as vscode from "vscode";
+import { vi, assert } from "vitest";
 
 import { AzureAccountManager } from "../../../src/commonlib/azureLogin";
 import { AzureAccountNode } from "../../../src/treeview/account/azureNode";
 import { AccountItemStatus, azureIcon, loadingIcon } from "../../../src/treeview/account/common";
 import { DynamicNode } from "../../../src/treeview/dynamicNode";
-import { featureFlagManager } from "@microsoft/teamsfx-core";
 import * as tools from "@microsoft/teamsfx-core/build/common/tools";
 import { localize } from "../../../src/utils/localizeUtils";
 
 describe("AzureNode", () => {
-  const sandbox = sinon.createSandbox();
   const eventEmitter = new vscode.EventEmitter<DynamicNode | undefined | void>();
 
   before(() => {
-    Object.setPrototypeOf(AzureAccountManager, sandbox.stub());
-  });
-
-  afterEach(() => {
-    sandbox.restore();
+    Object.setPrototypeOf(AzureAccountManager, vi.fn());
   });
 
   it("setSignedIn", async () => {
@@ -27,11 +20,11 @@ describe("AzureNode", () => {
     await azureNode.setSignedIn("", "", "test upn");
     const treeItem = await azureNode.getTreeItem();
 
-    chai.assert.equal(treeItem.iconPath, azureIcon);
-    chai.assert.equal(treeItem.collapsibleState, vscode.TreeItemCollapsibleState.None);
-    chai.assert.equal(treeItem.label, "test upn");
-    chai.assert.equal(treeItem.contextValue, "signedinAzure");
-    chai.assert.equal(treeItem.command, undefined);
+    assert.equal(treeItem.iconPath, azureIcon);
+    assert.equal(treeItem.collapsibleState, vscode.TreeItemCollapsibleState.None);
+    assert.equal(treeItem.label, "test upn");
+    assert.equal(treeItem.contextValue, "signedinAzure");
+    assert.equal(treeItem.command, undefined);
   });
 
   it("setSignedIn with same account", async () => {
@@ -40,11 +33,11 @@ describe("AzureNode", () => {
     await azureNode.setSignedIn("", "", "test upn");
     const treeItem = await azureNode.getTreeItem();
 
-    chai.assert.equal(treeItem.iconPath, azureIcon);
-    chai.assert.equal(treeItem.collapsibleState, vscode.TreeItemCollapsibleState.None);
-    chai.assert.equal(treeItem.label, "test upn");
-    chai.assert.equal(treeItem.contextValue, "signedinAzure");
-    chai.assert.equal(treeItem.command, undefined);
+    assert.equal(treeItem.iconPath, azureIcon);
+    assert.equal(treeItem.collapsibleState, vscode.TreeItemCollapsibleState.None);
+    assert.equal(treeItem.label, "test upn");
+    assert.equal(treeItem.contextValue, "signedinAzure");
+    assert.equal(treeItem.command, undefined);
   });
 
   it("setSignedIn with different account", async () => {
@@ -53,16 +46,15 @@ describe("AzureNode", () => {
     await azureNode.setSignedIn("", "", "test upn2");
     const treeItem = await azureNode.getTreeItem();
 
-    chai.assert.equal(treeItem.iconPath, azureIcon);
-    chai.assert.equal(treeItem.collapsibleState, vscode.TreeItemCollapsibleState.None);
-    chai.assert.equal(treeItem.label, "test upn2");
-    chai.assert.equal(treeItem.contextValue, "signedinAzure");
-    chai.assert.equal(treeItem.command, undefined);
+    assert.equal(treeItem.iconPath, azureIcon);
+    assert.equal(treeItem.collapsibleState, vscode.TreeItemCollapsibleState.None);
+    assert.equal(treeItem.label, "test upn2");
+    assert.equal(treeItem.contextValue, "signedinAzure");
+    assert.equal(treeItem.command, undefined);
   });
 
   it("setSignedIn with multi-tenant", async () => {
-    sandbox.stub(featureFlagManager, "getBooleanValue").returns(true);
-    sandbox.stub(tools, "listAllTenants").resolves([
+    vi.spyOn(tools, "listAllTenants").mockResolvedValue([
       {
         tenantId: "0022fd51-06f5-4557-8a34-69be98de6e20",
         displayName: "MSFT",
@@ -76,11 +68,11 @@ describe("AzureNode", () => {
     await azureNode.setSignedIn("token", "0022fd51-06f5-4557-8a34-69be98de6e20", "test upn");
     const treeItem = await azureNode.getTreeItem();
 
-    chai.assert.equal(treeItem.iconPath, azureIcon);
-    chai.assert.equal(treeItem.collapsibleState, vscode.TreeItemCollapsibleState.None);
-    chai.assert.equal(treeItem.label, "test upn (MSFT)");
-    chai.assert.equal(treeItem.contextValue, "signedinAzure");
-    chai.assert.equal(treeItem.command, undefined);
+    assert.equal(treeItem.iconPath, azureIcon);
+    assert.equal(treeItem.collapsibleState, vscode.TreeItemCollapsibleState.None);
+    assert.equal(treeItem.label, "test upn (MSFT)");
+    assert.equal(treeItem.contextValue, "signedinAzure");
+    assert.equal(treeItem.command, undefined);
   });
 
   it("setSigningIn", async () => {
@@ -88,9 +80,9 @@ describe("AzureNode", () => {
     azureNode.setSigningIn();
     const treeItem = await azureNode.getTreeItem();
 
-    chai.assert.equal(treeItem.iconPath, loadingIcon);
-    chai.assert.equal(treeItem.collapsibleState, vscode.TreeItemCollapsibleState.None);
-    chai.assert.equal(treeItem.contextValue, "");
+    assert.equal(treeItem.iconPath, loadingIcon);
+    assert.equal(treeItem.collapsibleState, vscode.TreeItemCollapsibleState.None);
+    assert.equal(treeItem.contextValue, "");
   });
 
   it("setSignedOut", async () => {
@@ -99,14 +91,14 @@ describe("AzureNode", () => {
     await azureNode.setSignedOut();
     const treeItem = await azureNode.getTreeItem();
 
-    chai.assert.equal(treeItem.iconPath, azureIcon);
-    chai.assert.equal(treeItem.collapsibleState, vscode.TreeItemCollapsibleState.None);
-    chai.assert.equal(treeItem.contextValue, "signinAzure");
+    assert.equal(treeItem.iconPath, azureIcon);
+    assert.equal(treeItem.collapsibleState, vscode.TreeItemCollapsibleState.None);
+    assert.equal(treeItem.contextValue, "signinAzure");
   });
 
   it("getChildren", () => {
     const azureNode = new AzureAccountNode(eventEmitter);
-    chai.assert.isNull(azureNode.getChildren());
+    assert.isNull(azureNode.getChildren());
   });
 
   it("accessibility test for azure node", async () => {
@@ -114,21 +106,21 @@ describe("AzureNode", () => {
     await azureNode.setSignedIn("token", "", "test upn");
     const treeItem = await azureNode.getTreeItem();
 
-    chai.assert.equal(
+    assert.equal(
       treeItem.accessibilityInformation?.label,
       "test upn. " + localize("teamstoolkit.accountTree.azureAccountTooltip")
     );
 
     azureNode.label = undefined;
     const treeItem2 = await azureNode.getTreeItem();
-    chai.assert.equal(
+    assert.equal(
       treeItem2.accessibilityInformation?.label,
       ". " + localize("teamstoolkit.accountTree.azureAccountTooltip")
     );
 
     azureNode.label = { label: "test label" };
     const treeItem3 = await azureNode.getTreeItem();
-    chai.assert.equal(
+    assert.equal(
       treeItem3.accessibilityInformation?.label,
       "test label. " + localize("teamstoolkit.accountTree.azureAccountTooltip")
     );

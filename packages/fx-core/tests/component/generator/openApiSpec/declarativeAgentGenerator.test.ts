@@ -1,10 +1,8 @@
 import { ProjectType, SpecParser, ValidationStatus } from "@microsoft/m365-spec-parser";
 import { ApiOperation, Inputs, Platform, SystemError } from "@microsoft/teamsfx-api";
-import { assert } from "chai";
 import fs from "fs-extra";
 import { RestoreFn } from "mocked-env";
 import { err, ok } from "neverthrow";
-import * as sinon from "sinon";
 import { featureFlagManager, FeatureFlagName } from "../../../../src/common/featureFlags";
 import { createContext, setTools } from "../../../../src/common/globalVars";
 import { EmbeddedKnowledgeLocalDirectoryName } from "../../../../src/component/driver/teamsApp/constants";
@@ -17,16 +15,17 @@ import { ActionStartOptions, ProgrammingLanguage, QuestionNames } from "../../..
 import { DACapabilityOptions } from "../../../../src/question/scaffold/vsc/CapabilityOptions";
 import { MockTools } from "../../../core/utils";
 import { teamsManifest } from "./fakeData";
+import { assert, vi } from "vitest";
 
 const tools = new MockTools();
 
 describe("DeclarativeAgentWithExistingApiSpecGenerator", async () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   before(() => {
     setTools(tools);
   });
   after(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   describe("activate", async () => {
     it("should activate and get correct template name", async () => {
@@ -43,10 +42,10 @@ describe("DeclarativeAgentWithExistingApiSpecGenerator", async () => {
   });
 
   describe("getTemplateInfos", async () => {
-    const sandbox = sinon.createSandbox();
+    const sandbox = vi;
     let mockedEnvRestore: RestoreFn | undefined;
     afterEach(async () => {
-      sandbox.restore();
+      vi.restoreAllMocks();
       if (mockedEnvRestore) {
         mockedEnvRestore();
       }
@@ -90,7 +89,9 @@ describe("DeclarativeAgentWithExistingApiSpecGenerator", async () => {
       inputs.apiAuthData = [
         { serverUrl: "https://test.com", authName: "test", authType: "apiKey" },
       ];
-      sandbox.stub(JSON, "parse").throws();
+      vi.spyOn(JSON, "parse").mockImplementation(() => {
+        throw new Error();
+      });
       const res = await generator.getTemplateInfos(context, inputs, ".", { telemetryProps: {} });
       assert.isTrue(res.isOk());
       if (res.isOk()) {
@@ -102,7 +103,7 @@ describe("DeclarativeAgentWithExistingApiSpecGenerator", async () => {
   });
 
   describe("post", function () {
-    const sandbox = sinon.createSandbox();
+    const sandbox = vi;
     let mockedEnvRestore: RestoreFn | undefined;
 
     const apiOperations: ApiOperation[] = [
@@ -130,7 +131,7 @@ describe("DeclarativeAgentWithExistingApiSpecGenerator", async () => {
     });
 
     afterEach(async () => {
-      sandbox.restore();
+      vi.restoreAllMocks();
       if (mockedEnvRestore) {
         mockedEnvRestore();
       }
@@ -154,23 +155,25 @@ describe("DeclarativeAgentWithExistingApiSpecGenerator", async () => {
         },
       };
       const context = createContext();
-      sandbox.stub(featureFlagManager, "getBooleanValue").returns(false);
-      sandbox
-        .stub(SpecParser.prototype, "validate")
-        .resolves({ status: ValidationStatus.Valid, errors: [], warnings: [] });
-      sandbox.stub(fs, "ensureDir").resolves();
-      sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(teamsManifest));
-      const generateBasedOnSpec = sandbox
-        .stub(SpecParser.prototype, "generateForCopilot")
-        .resolves({ allSuccess: true, warnings: [] });
-      sandbox.stub(copilotGptManifestUtils, "updateDeclarativeAgentManifest").resolves(ok(""));
-      sandbox.stub(helper, "generateScaffoldingSummary").resolves("");
+      vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+      vi.spyOn(SpecParser.prototype, "validate").mockResolvedValue({
+        status: ValidationStatus.Valid,
+        errors: [],
+        warnings: [],
+      });
+      vi.spyOn(fs, "ensureDir").mockResolvedValue();
+      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(teamsManifest));
+      const generateBasedOnSpec = vi
+        .spyOn(SpecParser.prototype, "generateForCopilot")
+        .mockResolvedValue({ allSuccess: true, warnings: [] });
+      vi.spyOn(copilotGptManifestUtils, "updateDeclarativeAgentManifest").mockResolvedValue(ok(""));
+      vi.spyOn(helper, "generateScaffoldingSummary").mockResolvedValue("");
 
       const generator = new DeclarativeAgentWithExistingApiSpecGenerator();
       const result = await generator.post(context, inputs, "projectPath");
 
       assert.isTrue(result.isOk());
-      assert.isTrue(generateBasedOnSpec.calledOnce);
+      assert.isTrue(generateBasedOnSpec.mock.calls.length === 1);
     });
 
     it("generate for oauth: success", async () => {
@@ -205,22 +208,24 @@ describe("DeclarativeAgentWithExistingApiSpecGenerator", async () => {
       };
       const context = createContext();
 
-      sandbox.stub(featureFlagManager, "getBooleanValue").returns(false);
-      sandbox
-        .stub(SpecParser.prototype, "validate")
-        .resolves({ status: ValidationStatus.Valid, errors: [], warnings: [] });
-      sandbox.stub(fs, "ensureDir").resolves();
-      sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(teamsManifest));
-      sandbox.stub(copilotGptManifestUtils, "updateDeclarativeAgentManifest").resolves(ok(""));
-      const generateBasedOnSpec = sandbox
-        .stub(SpecParser.prototype, "generateForCopilot")
-        .resolves({ allSuccess: true, warnings: [] });
-      sandbox.stub(helper, "generateScaffoldingSummary").resolves("");
+      vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+      vi.spyOn(SpecParser.prototype, "validate").mockResolvedValue({
+        status: ValidationStatus.Valid,
+        errors: [],
+        warnings: [],
+      });
+      vi.spyOn(fs, "ensureDir").mockResolvedValue();
+      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(teamsManifest));
+      vi.spyOn(copilotGptManifestUtils, "updateDeclarativeAgentManifest").mockResolvedValue(ok(""));
+      const generateBasedOnSpec = vi
+        .spyOn(SpecParser.prototype, "generateForCopilot")
+        .mockResolvedValue({ allSuccess: true, warnings: [] });
+      vi.spyOn(helper, "generateScaffoldingSummary").mockResolvedValue("");
 
       const generator = new DeclarativeAgentWithExistingApiSpecGenerator();
       const result = await generator.post(context, inputs, "projectPath");
       assert.isTrue(result.isOk());
-      assert.isTrue(generateBasedOnSpec.calledOnce);
+      assert.isTrue(generateBasedOnSpec.mock.calls.length === 1);
     });
 
     it("declarative copilot with plugin success", async function () {
@@ -241,24 +246,28 @@ describe("DeclarativeAgentWithExistingApiSpecGenerator", async () => {
         },
       };
       const context = createContext();
-      sandbox.stub(featureFlagManager, "getBooleanValue").returns(false);
-      sandbox
-        .stub(SpecParser.prototype, "validate")
-        .resolves({ status: ValidationStatus.Valid, errors: [], warnings: [] });
-      sandbox.stub(fs, "ensureDir").resolves();
-      sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(teamsManifest));
-      const addAction = sandbox.stub(copilotGptManifestUtils, "addAction").resolves(ok({} as any));
-      const generateBasedOnSpec = sandbox
-        .stub(SpecParser.prototype, "generateForCopilot")
-        .resolves({ allSuccess: true, warnings: [] });
-      sandbox.stub(helper, "generateScaffoldingSummary").resolves("");
+      vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+      vi.spyOn(SpecParser.prototype, "validate").mockResolvedValue({
+        status: ValidationStatus.Valid,
+        errors: [],
+        warnings: [],
+      });
+      vi.spyOn(fs, "ensureDir").mockResolvedValue();
+      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(teamsManifest));
+      const addAction = vi
+        .spyOn(copilotGptManifestUtils, "addAction")
+        .mockResolvedValue(ok({} as any));
+      const generateBasedOnSpec = vi
+        .spyOn(SpecParser.prototype, "generateForCopilot")
+        .mockResolvedValue({ allSuccess: true, warnings: [] });
+      vi.spyOn(helper, "generateScaffoldingSummary").mockResolvedValue("");
 
       const generator = new DeclarativeAgentWithExistingApiSpecGenerator();
       const result = await generator.post(context, inputs, "projectPath");
 
       assert.isTrue(result.isOk());
-      assert.isTrue(generateBasedOnSpec.calledOnce);
-      assert.isTrue(addAction.calledOnce);
+      assert.isTrue(generateBasedOnSpec.mock.calls.length === 1);
+      assert.isTrue(addAction.mock.calls.length === 1);
     });
 
     it("declarative copilot with plugin error", async function () {
@@ -279,25 +288,27 @@ describe("DeclarativeAgentWithExistingApiSpecGenerator", async () => {
         },
       };
       const context = createContext();
-      sandbox.stub(featureFlagManager, "getBooleanValue").returns(false);
-      sandbox
-        .stub(SpecParser.prototype, "validate")
-        .resolves({ status: ValidationStatus.Valid, errors: [], warnings: [] });
-      sandbox.stub(fs, "ensureDir").resolves();
-      sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(teamsManifest));
-      const addAction = sandbox
-        .stub(copilotGptManifestUtils, "addAction")
-        .resolves(err(new SystemError("test", "test", "test", "test")));
-      const generateBasedOnSpec = sandbox
-        .stub(SpecParser.prototype, "generateForCopilot")
-        .resolves({ allSuccess: true, warnings: [] });
+      vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+      vi.spyOn(SpecParser.prototype, "validate").mockResolvedValue({
+        status: ValidationStatus.Valid,
+        errors: [],
+        warnings: [],
+      });
+      vi.spyOn(fs, "ensureDir").mockResolvedValue();
+      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(teamsManifest));
+      const addAction = vi
+        .spyOn(copilotGptManifestUtils, "addAction")
+        .mockResolvedValue(err(new SystemError("test", "test", "test", "test")));
+      const generateBasedOnSpec = vi
+        .spyOn(SpecParser.prototype, "generateForCopilot")
+        .mockResolvedValue({ allSuccess: true, warnings: [] });
 
       const generator = new DeclarativeAgentWithExistingApiSpecGenerator();
       const result = await generator.post(context, inputs, "projectPath");
 
       assert.isTrue(result.isErr() && result.error.name === "test");
-      assert.isTrue(generateBasedOnSpec.calledOnce);
-      assert.isTrue(addAction.calledOnce);
+      assert.isTrue(generateBasedOnSpec.mock.calls.length === 1);
+      assert.isTrue(addAction.mock.calls.length === 1);
     });
 
     it("add embedded knowledge folder success - CLI", async function () {
@@ -318,17 +329,19 @@ describe("DeclarativeAgentWithExistingApiSpecGenerator", async () => {
         },
       };
       const context = createContext();
-      sandbox.stub(featureFlagManager, "getBooleanValue").returns(false);
-      sandbox
-        .stub(SpecParser.prototype, "validate")
-        .resolves({ status: ValidationStatus.Valid, errors: [], warnings: [] });
-      sandbox.stub(fs, "ensureDir").resolves();
-      sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(teamsManifest));
-      const generateBasedOnSpec = sandbox
-        .stub(SpecParser.prototype, "generateForCopilot")
-        .resolves({ allSuccess: true, warnings: [] });
-      sandbox.stub(copilotGptManifestUtils, "updateDeclarativeAgentManifest").resolves(ok(""));
-      sandbox.stub(helper, "generateScaffoldingSummary").resolves("");
+      vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+      vi.spyOn(SpecParser.prototype, "validate").mockResolvedValue({
+        status: ValidationStatus.Valid,
+        errors: [],
+        warnings: [],
+      });
+      vi.spyOn(fs, "ensureDir").mockResolvedValue();
+      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(teamsManifest));
+      const generateBasedOnSpec = vi
+        .spyOn(SpecParser.prototype, "generateForCopilot")
+        .mockResolvedValue({ allSuccess: true, warnings: [] });
+      vi.spyOn(copilotGptManifestUtils, "updateDeclarativeAgentManifest").mockResolvedValue(ok(""));
+      vi.spyOn(helper, "generateScaffoldingSummary").mockResolvedValue("");
       const generator = new DeclarativeAgentWithExistingApiSpecGenerator();
       const result = await generator.post(context, inputs, "projectPath");
 
@@ -353,17 +366,19 @@ describe("DeclarativeAgentWithExistingApiSpecGenerator", async () => {
         },
       };
       const context = createContext();
-      sandbox.stub(featureFlagManager, "getBooleanValue").returns(false);
-      sandbox
-        .stub(SpecParser.prototype, "validate")
-        .resolves({ status: ValidationStatus.Valid, errors: [], warnings: [] });
-      sandbox.stub(fs, "ensureDir").resolves();
-      sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(teamsManifest));
-      const generateBasedOnSpec = sandbox
-        .stub(SpecParser.prototype, "generateForCopilot")
-        .resolves({ allSuccess: true, warnings: [] });
-      sandbox.stub(copilotGptManifestUtils, "updateDeclarativeAgentManifest").resolves(ok(""));
-      sandbox.stub(helper, "generateScaffoldingSummary").resolves("");
+      vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+      vi.spyOn(SpecParser.prototype, "validate").mockResolvedValue({
+        status: ValidationStatus.Valid,
+        errors: [],
+        warnings: [],
+      });
+      vi.spyOn(fs, "ensureDir").mockResolvedValue();
+      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(teamsManifest));
+      const generateBasedOnSpec = vi
+        .spyOn(SpecParser.prototype, "generateForCopilot")
+        .mockResolvedValue({ allSuccess: true, warnings: [] });
+      vi.spyOn(copilotGptManifestUtils, "updateDeclarativeAgentManifest").mockResolvedValue(ok(""));
+      vi.spyOn(helper, "generateScaffoldingSummary").mockResolvedValue("");
       const generator = new DeclarativeAgentWithExistingApiSpecGenerator();
       const result = await generator.post(context, inputs, "projectPath");
 
@@ -388,22 +403,24 @@ describe("DeclarativeAgentWithExistingApiSpecGenerator", async () => {
         },
       };
       const context = createContext();
-      sandbox.stub(featureFlagManager, "getBooleanValue").returns(false);
-      sandbox
-        .stub(SpecParser.prototype, "validate")
-        .resolves({ status: ValidationStatus.Valid, errors: [], warnings: [] });
-      sandbox.stub(fs, "ensureDir").callsFake((path) => {
+      vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+      vi.spyOn(SpecParser.prototype, "validate").mockResolvedValue({
+        status: ValidationStatus.Valid,
+        errors: [],
+        warnings: [],
+      });
+      vi.spyOn(fs, "ensureDir").mockImplementation((path) => {
         if (path.includes(EmbeddedKnowledgeLocalDirectoryName)) {
           throw new Error("fail");
         }
         return Promise.resolve();
       });
-      sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(teamsManifest));
-      const generateBasedOnSpec = sandbox
-        .stub(SpecParser.prototype, "generateForCopilot")
-        .resolves({ allSuccess: true, warnings: [] });
-      sandbox.stub(copilotGptManifestUtils, "updateDeclarativeAgentManifest").resolves(ok(""));
-      sandbox.stub(helper, "generateScaffoldingSummary").resolves("");
+      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(teamsManifest));
+      const generateBasedOnSpec = vi
+        .spyOn(SpecParser.prototype, "generateForCopilot")
+        .mockResolvedValue({ allSuccess: true, warnings: [] });
+      vi.spyOn(copilotGptManifestUtils, "updateDeclarativeAgentManifest").mockResolvedValue(ok(""));
+      vi.spyOn(helper, "generateScaffoldingSummary").mockResolvedValue("");
       const generator = new DeclarativeAgentWithExistingApiSpecGenerator();
       const result = await generator.post(context, inputs, "projectPath");
 

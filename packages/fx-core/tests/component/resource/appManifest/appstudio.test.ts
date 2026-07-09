@@ -13,11 +13,10 @@ import {
   ok,
 } from "@microsoft/teamsfx-api";
 import AdmZip from "adm-zip";
-import * as chai from "chai";
 import fs from "fs-extra";
 import { RestoreFn } from "mocked-env";
-import sinon from "sinon";
 import Container from "typedi";
+import { chai, vi } from "vitest";
 import { teamsDevPortalClient } from "../../../../src/client/teamsDevPortalClient";
 import { createContext, setTools } from "../../../../src/common/globalVars";
 import { ExecutionResult } from "../../../../src/component/driver/interface/stepDriver";
@@ -45,19 +44,19 @@ import { getAzureProjectRoot } from "../../../plugins/resource/appstudio/helper"
 describe.skip("appStudio", () => {
   const tools = new MockTools();
   setTools(tools);
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   describe("checkIfAppInDifferentAcountSameTenant", () => {
     const logger = new MockLogProvider();
     const teamsAppId = "teams";
     const m365TokenProvider = new MockedM365Provider();
 
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("get app successfully: returns false", async () => {
-      m365TokenProvider.getAccessToken = sandbox.stub().returns(ok("token"));
-      sandbox.stub(teamsDevPortalClient, "getApp").resolves();
+      m365TokenProvider.getAccessToken = vi.fn().mockReturnValue(ok("token"));
+      vi.spyOn(teamsDevPortalClient, "getApp").mockResolvedValue();
 
       const res = await checkIfAppInDifferentAcountSameTenant(
         teamsAppId,
@@ -72,9 +71,9 @@ describe.skip("appStudio", () => {
     });
 
     it("get token error: returns error", async () => {
-      m365TokenProvider.getAccessToken = sandbox
-        .stub()
-        .returns(err(new UserError("token", "token", "", "")));
+      m365TokenProvider.getAccessToken = vi
+        .fn()
+        .mockReturnValue(err(new UserError("token", "token", "", "")));
 
       const res = await checkIfAppInDifferentAcountSameTenant(
         teamsAppId,
@@ -88,9 +87,11 @@ describe.skip("appStudio", () => {
     });
 
     it("app in tenant but different account: returns true", async () => {
-      m365TokenProvider.getAccessToken = sandbox.stub().returns(ok("token"));
-      sandbox.stub(teamsDevPortalClient, "getApp").throws({ message: "404" });
-      sandbox.stub(teamsDevPortalClient, "checkExistsInTenant").returns(Promise.resolve(true));
+      m365TokenProvider.getAccessToken = vi.fn().mockReturnValue(ok("token"));
+      vi.spyOn(teamsDevPortalClient, "getApp").mockImplementation(() => {
+        throw { message: "404" };
+      });
+      vi.spyOn(teamsDevPortalClient, "checkExistsInTenant").mockReturnValue(Promise.resolve(true));
       const res = await checkIfAppInDifferentAcountSameTenant(
         teamsAppId,
         m365TokenProvider,
@@ -104,8 +105,10 @@ describe.skip("appStudio", () => {
     });
 
     it("get app error (not 404): returns false", async () => {
-      m365TokenProvider.getAccessToken = sandbox.stub().returns(ok("token"));
-      sandbox.stub(teamsDevPortalClient, "getApp").throws({ message: "401" });
+      m365TokenProvider.getAccessToken = vi.fn().mockReturnValue(ok("token"));
+      vi.spyOn(teamsDevPortalClient, "getApp").mockImplementation(() => {
+        throw { message: "401" };
+      });
       const res = await checkIfAppInDifferentAcountSameTenant(
         teamsAppId,
         m365TokenProvider,
@@ -125,18 +128,18 @@ describe.skip("appStudio", () => {
     const m365TokenProvider = new MockedM365Provider();
 
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("get package successfully", async () => {
-      m365TokenProvider.getAccessToken = sandbox.stub().returns(ok("token"));
+      m365TokenProvider.getAccessToken = vi.fn().mockReturnValue(ok("token"));
       const zip = new AdmZip();
       zip.addFile("manifest.json", Buffer.from(""));
       zip.addFile("color.png", Buffer.from(""));
       zip.addFile("outline.png", Buffer.from(""));
       zip.addFile("zh-cn.json", Buffer.from(""));
       const archivedFile = zip.toBuffer();
-      sandbox.stub(RetryHandler, "Retry").resolves({
+      vi.spyOn(RetryHandler, "Retry").mockResolvedValue({
         data: archivedFile,
       });
 
@@ -153,31 +156,31 @@ describe.skip("appStudio", () => {
     });
 
     it("get package successfully with unsupported file", async () => {
-      m365TokenProvider.getAccessToken = sandbox.stub().returns(ok("token"));
+      m365TokenProvider.getAccessToken = vi.fn().mockReturnValue(ok("token"));
       const zip = new AdmZip();
       zip.addFile("manifest.json", Buffer.from(""));
       zip.addFile("color.png", Buffer.from(""));
       zip.addFile("outline.png", Buffer.from(""));
       zip.addFile("idk.json", Buffer.from(""));
       const archivedFile = zip.toBuffer();
-      sandbox.stub(RetryHandler, "Retry").resolves({
+      vi.spyOn(RetryHandler, "Retry").mockResolvedValue({
         data: archivedFile,
       });
-      const loggerSpy = sandbox.stub(logger, "warning").resolves();
+      const loggerSpy = vi.spyOn(logger, "warning").mockResolvedValue();
 
       const res = await getAppPackage(teamsAppId, m365TokenProvider, logger);
       chai.assert.isTrue(res.isOk());
 
       if (res.isOk()) {
-        chai.assert.isTrue(loggerSpy.called);
+        chai.assert.isTrue(loggerSpy.mock.calls.length > 0);
         chai.assert.isUndefined(res.value.languages);
       }
     });
 
     it("get token error: returns error", async () => {
-      m365TokenProvider.getAccessToken = sandbox
-        .stub()
-        .returns(err(new UserError("token", "token", "", "")));
+      m365TokenProvider.getAccessToken = vi
+        .fn()
+        .mockReturnValue(err(new UserError("token", "token", "", "")));
 
       const res = await getAppPackage(teamsAppId, m365TokenProvider, logger);
       chai.assert.isTrue(res.isErr());
@@ -187,18 +190,20 @@ describe.skip("appStudio", () => {
     });
 
     it("get package failed due to api", async () => {
-      m365TokenProvider.getAccessToken = sandbox.stub().returns(ok("token"));
+      m365TokenProvider.getAccessToken = vi.fn().mockReturnValue(ok("token"));
 
-      sandbox.stub(RetryHandler, "Retry").throws();
+      vi.spyOn(RetryHandler, "Retry").mockImplementation(() => {
+        throw new Error();
+      });
 
       const res = await getAppPackage(teamsAppId, m365TokenProvider, logger);
       chai.assert.isTrue(res.isErr());
     });
 
     it("get package empty response", async () => {
-      m365TokenProvider.getAccessToken = sandbox.stub().returns(ok("token"));
+      m365TokenProvider.getAccessToken = vi.fn().mockReturnValue(ok("token"));
 
-      sandbox.stub(RetryHandler, "Retry").resolves({});
+      vi.spyOn(RetryHandler, "Retry").mockResolvedValue({});
 
       const res = await getAppPackage(teamsAppId, m365TokenProvider, logger);
       chai.assert.isTrue(res.isErr());
@@ -208,7 +213,7 @@ describe.skip("appStudio", () => {
   describe("updateTeamsAppV3ForPublish", () => {
     let mockedEnvRestore: RestoreFn | undefined;
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
       if (mockedEnvRestore) {
         mockedEnvRestore();
       }
@@ -334,7 +339,7 @@ describe.skip("appStudio", () => {
       };
 
       const errors: string[] = ["error1"];
-      sandbox.stub(AppManifestUtils, "validateAgainstSchema").resolves(errors);
+      vi.spyOn(AppManifestUtils, "validateAgainstSchema").mockResolvedValue(errors);
 
       const res = await updateTeamsAppV3ForPublish(ctx, inputs);
       chai.assert.isTrue(res.isErr());
@@ -353,7 +358,7 @@ describe.skip("appStudio", () => {
       const zip = new AdmZip();
       zip.addFile("manifest.json", Buffer.from(JSON.stringify(json)));
       const info = zip.toBuffer();
-      sandbox.stub(AppManifestUtils, "validateAgainstSchema").resolves([]);
+      vi.spyOn(AppManifestUtils, "validateAgainstSchema").mockResolvedValue([]);
 
       const inputs: InputsWithProjectPath = {
         [QuestionNames.AppPackagePath]: info,
@@ -361,16 +366,17 @@ describe.skip("appStudio", () => {
         projectPath: "projectPath",
       };
       const updateDriver = new ConfigureTeamsAppDriver();
-      sandbox.stub(Container, "get").callsFake((name) => {
+      vi.spyOn(Container, "get").mockImplementation((name) => {
         if ((name as any) === "teamsApp/update") {
           return updateDriver;
         } else {
           throw new Error("not implemented");
         }
       });
-      sandbox
-        .stub(updateDriver, "execute")
-        .resolves({ result: err(new UserError("apiError", "apiError", "", "")), summaries: [] });
+      vi.spyOn(updateDriver, "execute").mockResolvedValue({
+        result: err(new UserError("apiError", "apiError", "", "")),
+        summaries: [],
+      });
 
       const res = await updateTeamsAppV3ForPublish(ctx, inputs);
       chai.assert.isTrue(res.isErr());
@@ -388,7 +394,7 @@ describe.skip("appStudio", () => {
       const zip = new AdmZip();
       zip.addFile("manifest.json", Buffer.from(JSON.stringify(json)));
       const info = zip.toBuffer();
-      sandbox.stub(AppManifestUtils, "validateAgainstSchema").resolves([]);
+      vi.spyOn(AppManifestUtils, "validateAgainstSchema").mockResolvedValue([]);
 
       const inputs: InputsWithProjectPath = {
         [QuestionNames.AppPackagePath]: info,
@@ -396,14 +402,17 @@ describe.skip("appStudio", () => {
         projectPath: "projectPath",
       };
       const updateDriver = new ConfigureTeamsAppDriver();
-      sandbox.stub(Container, "get").callsFake((name) => {
+      vi.spyOn(Container, "get").mockImplementation((name) => {
         if ((name as any) === "teamsApp/update") {
           return updateDriver;
         } else {
           throw new Error("not implemented");
         }
       });
-      sandbox.stub(updateDriver, "execute").resolves({ result: ok(new Map([])), summaries: [] });
+      vi.spyOn(updateDriver, "execute").mockResolvedValue({
+        result: ok(new Map([])),
+        summaries: [],
+      });
 
       const res = await updateTeamsAppV3ForPublish(ctx, inputs);
       chai.assert.isTrue(res.isOk());
@@ -412,14 +421,14 @@ describe.skip("appStudio", () => {
 });
 
 describe("updateTeamsAppV3ForPublish - validateAgainstSchema", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   beforeEach(() => {
     setTools(new MockTools());
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("should call AppManifestUtils.validateAgainstSchema and return error when validation fails", async () => {
@@ -432,7 +441,7 @@ describe("updateTeamsAppV3ForPublish - validateAgainstSchema", () => {
     zip.addFile("manifest.json", Buffer.from(JSON.stringify(json)));
     const info = zip.toBuffer();
     const errors: string[] = ["error1"];
-    sandbox.stub(AppManifestUtils, "validateAgainstSchema").resolves(errors);
+    vi.spyOn(AppManifestUtils, "validateAgainstSchema").mockResolvedValue(errors);
 
     const inputs: InputsWithProjectPath = {
       [QuestionNames.AppPackagePath]: info,
@@ -457,7 +466,7 @@ describe("updateTeamsAppV3ForPublish - validateAgainstSchema", () => {
     const zip = new AdmZip();
     zip.addFile("manifest.json", Buffer.from(JSON.stringify(json)));
     const info = zip.toBuffer();
-    sandbox.stub(AppManifestUtils, "validateAgainstSchema").resolves([]);
+    vi.spyOn(AppManifestUtils, "validateAgainstSchema").mockResolvedValue([]);
 
     const inputs: InputsWithProjectPath = {
       [QuestionNames.AppPackagePath]: info,
@@ -465,14 +474,14 @@ describe("updateTeamsAppV3ForPublish - validateAgainstSchema", () => {
       projectPath: "projectPath",
     };
     const updateDriver = new ConfigureTeamsAppDriver();
-    sandbox.stub(Container, "get").callsFake((name) => {
+    vi.spyOn(Container, "get").mockImplementation((name) => {
       if ((name as any) === "teamsApp/update") {
         return updateDriver;
       } else {
         throw new Error("not implemented");
       }
     });
-    sandbox.stub(updateDriver, "execute").resolves({ result: ok(new Map([])), summaries: [] });
+    vi.spyOn(updateDriver, "execute").mockResolvedValue({ result: ok(new Map([])), summaries: [] });
 
     const res = await updateTeamsAppV3ForPublish(ctx, inputs);
     chai.assert.isTrue(res.isOk());
@@ -480,7 +489,7 @@ describe("updateTeamsAppV3ForPublish - validateAgainstSchema", () => {
 });
 
 describe("App-manifest Component - v3", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   const tools = new MockTools();
   const appName = randomAppName();
   const inputs: InputsWithProjectPath = {
@@ -501,8 +510,10 @@ describe("App-manifest Component - v3", () => {
 
   beforeEach(() => {
     context = createContext();
-    sandbox.stub(tools.tokenProvider.m365TokenProvider, "getAccessToken").resolves(ok("fakeToken"));
-    sandbox.stub(tools.tokenProvider.m365TokenProvider, "getJsonObject").resolves(
+    vi.spyOn(tools.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
+      ok("fakeToken")
+    );
+    vi.spyOn(tools.tokenProvider.m365TokenProvider, "getJsonObject").mockResolvedValue(
       ok({
         unique_name: "fakename",
       })
@@ -513,17 +524,20 @@ describe("App-manifest Component - v3", () => {
       m365TokenProvider: new MockedM365Provider(),
       azureAccountProvider: new MockedAzureAccountProvider(),
     };
-    sandbox
-      .stub(Container, "get")
-      .withArgs(sandbox.match("teamsApp/zipAppPackage"))
-      .returns(new CreateAppPackageDriver())
-      .withArgs(sandbox.match("teamsApp/update"))
-      .returns(new ConfigureTeamsAppDriver());
-    sandbox.stub(envUtil, "readEnv").resolves();
+    vi.spyOn(Container, "get").mockImplementation((token: any) => {
+      if (String(token).includes("teamsApp/zipAppPackage")) {
+        return new CreateAppPackageDriver();
+      }
+      if (String(token).includes("teamsApp/update")) {
+        return new ConfigureTeamsAppDriver();
+      }
+      return undefined as any;
+    });
+    vi.spyOn(envUtil, "readEnv").mockResolvedValue();
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("updateManifestV3 - preview only", async function () {
@@ -533,14 +547,16 @@ describe("App-manifest Component - v3", () => {
     manifest.icons.outline = "resources/outline.png";
     const updatedManifest = { ...manifest };
     updatedManifest.version = "2.0.0";
-    sandbox.stub(manifestUtils, "readAppManifest").resolves(ok(manifest));
-    sandbox.stub(manifestUtils, "getManifestV3").resolves(ok(manifest as unknown as TeamsManifest));
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(fs, "readJSON").resolves(updatedManifest);
-    sandbox.stub(fs, "readFile").resolves(Buffer.from(JSON.stringify(manifest)));
-    sandbox.stub(context.userInteraction, "showMessage").resolves(ok("Preview only"));
-    sandbox.stub(ConfigureTeamsAppDriver.prototype, "execute").resolves(mockDriverRes);
-    sandbox.stub(CreateAppPackageDriver.prototype, "execute").resolves(mockDriverRes);
+    vi.spyOn(manifestUtils, "readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(
+      ok(manifest as unknown as TeamsManifest)
+    );
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readJSON").mockResolvedValue(updatedManifest);
+    vi.spyOn(fs, "readFile").mockResolvedValue(Buffer.from(JSON.stringify(manifest)));
+    vi.spyOn(context.userInteraction, "showMessage").mockResolvedValue(ok("Preview only"));
+    vi.spyOn(ConfigureTeamsAppDriver.prototype, "execute").mockResolvedValue(mockDriverRes);
+    vi.spyOn(CreateAppPackageDriver.prototype, "execute").mockResolvedValue(mockDriverRes);
 
     await updateManifestV3(context, cliInputs);
   });
@@ -550,13 +566,17 @@ describe("App-manifest Component - v3", () => {
     manifest.id = "";
     manifest.icons.color = "resources/color.png";
     manifest.icons.outline = "resources/outline.png";
-    sandbox.stub(manifestUtils, "readAppManifest").resolves(ok(manifest));
-    sandbox.stub(manifestUtils, "getManifestV3").resolves(ok(manifest as unknown as TeamsManifest));
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(fs, "readJSON").resolves(manifest);
-    sandbox.stub(fs, "readFile").resolves(Buffer.from(JSON.stringify(manifest)));
-    sandbox.stub(context.userInteraction, "showMessage").resolves(ok("View in Developer Portal"));
-    sandbox.stub(ConfigureTeamsAppDriver.prototype, "execute").resolves();
+    vi.spyOn(manifestUtils, "readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(
+      ok(manifest as unknown as TeamsManifest)
+    );
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readJSON").mockResolvedValue(manifest);
+    vi.spyOn(fs, "readFile").mockResolvedValue(Buffer.from(JSON.stringify(manifest)));
+    vi.spyOn(context.userInteraction, "showMessage").mockResolvedValue(
+      ok("View in Developer Portal")
+    );
+    vi.spyOn(ConfigureTeamsAppDriver.prototype, "execute").mockResolvedValue();
 
     await updateManifestV3(context, inputs);
   });
@@ -568,21 +588,23 @@ describe("App-manifest Component - v3", () => {
     manifest.icons.outline = "resources/outline.png";
     const updatedManifest = { ...manifest };
     updatedManifest.version = "2.0.0";
-    sandbox.stub(manifestUtils, "readAppManifest").resolves(ok(manifest));
-    sandbox.stub(manifestUtils, "getManifestV3").resolves(ok(manifest as unknown as TeamsManifest));
-    sandbox.stub(fs, "pathExists").resolves(false);
-    sandbox.stub(fs, "readJSON").resolves(updatedManifest);
-    sandbox.stub(fs, "readFile").resolves(Buffer.from(JSON.stringify(manifest)));
-    sandbox.stub(context.userInteraction, "showMessage").resolves(ok("Preview and update"));
-    sandbox.stub(ConfigureTeamsAppDriver.prototype, "execute").resolves(mockDriverRes);
-    sandbox.stub(CreateAppPackageDriver.prototype, "execute").resolves(mockDriverRes);
+    vi.spyOn(manifestUtils, "readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(
+      ok(manifest as unknown as TeamsManifest)
+    );
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+    vi.spyOn(fs, "readJSON").mockResolvedValue(updatedManifest);
+    vi.spyOn(fs, "readFile").mockResolvedValue(Buffer.from(JSON.stringify(manifest)));
+    vi.spyOn(context.userInteraction, "showMessage").mockResolvedValue(ok("Preview and update"));
+    vi.spyOn(ConfigureTeamsAppDriver.prototype, "execute").mockResolvedValue(mockDriverRes);
+    vi.spyOn(CreateAppPackageDriver.prototype, "execute").mockResolvedValue(mockDriverRes);
 
     await updateManifestV3(context, inputs);
   });
 
   it("updateManifestV3 - getManifestV3 Error", async () => {
-    sandbox.stub(manifestUtils, "getTeamsAppManifestPath").resolves("");
-    sandbox.stub(manifestUtils, "getManifestV3").resolves(err(new UserError({})));
+    vi.spyOn(manifestUtils, "getTeamsAppManifestPath").mockResolvedValue("");
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(err(new UserError({})));
     const ctx = createContext();
     const inputs: InputsWithProjectPath = {
       platform: Platform.VSCode,

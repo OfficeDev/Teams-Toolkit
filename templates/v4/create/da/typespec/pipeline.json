@@ -1,0 +1,9 @@
+{
+  "pipeline": "default",
+  "comment": "Declarative agent TypeSpec project: pure render. The project yaml runs TypeSpec compile later; scaffold only guards the empty create target and writes files.",
+  "steps": [
+    {
+      "step": "require-empty-target"
+    }
+  ]
+}

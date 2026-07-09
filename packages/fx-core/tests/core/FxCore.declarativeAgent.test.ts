@@ -13,11 +13,10 @@ import {
   ok,
 } from "@microsoft/teamsfx-api";
 import axios from "axios";
-import { assert } from "chai";
 import fs from "fs-extra";
 import * as os from "os";
 import * as path from "path";
-import sinon from "sinon";
+import { assert, vi } from "vitest";
 import { FxCore, getLocalizedString } from "../../src";
 import { FeatureFlags, featureFlagManager } from "../../src/common/featureFlags";
 import { setTools } from "../../src/common/globalVars";
@@ -30,7 +29,6 @@ import { manifestUtils } from "../../src/component/driver/teamsApp/utils/Manifes
 import * as declarativeAgentHelper from "../../src/component/generator/declarativeAgent/helper";
 import * as openApiSpecHelper from "../../src/component/generator/openApiSpec/helper";
 import { pathUtils } from "../../src/component/utils/pathUtils";
-import { fxCoreDeclarativeAgentDeps } from "../../src/core/FxCore.declarativeAgent";
 import { NotImplementedError, UserCancelError } from "../../src/error/common";
 import { QuestionNames } from "../../src/question";
 import { ActionStartOptions } from "../../src/question/constants";
@@ -39,7 +37,6 @@ import { MockTools, randomAppName } from "./utils";
 
 describe("updateActionWithMCP", () => {
   const tools = new MockTools();
-  const sandbox = sinon.createSandbox();
   const projectPath = "/test/project";
   const pluginManifestPath = "/test/project/ai-plugin.json";
   const mcpServerUrl = "https://example.com/mcp";
@@ -50,7 +47,7 @@ describe("updateActionWithMCP", () => {
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("should successfully update action with MCP without auth", async () => {
@@ -82,23 +79,23 @@ describe("updateActionWithMCP", () => {
       runtimes: [],
     };
 
-    sandbox.stub(fs, "pathExists").callsFake(async (filePath: string) => {
+    vi.spyOn(fs, "pathExists").mockImplementation(async (filePath: string) => {
       // Return false for mcp-tools.json to avoid infinite loop, true for ai-plugin.json
       return !filePath.includes("mcp-tools");
     });
-    sandbox.stub(fs, "readJSON").resolves(existingPlugin);
-    const writeJSONStub = sandbox.stub(fs, "writeJSON").resolves();
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("/test/project/teamsapp.yml");
+    vi.spyOn(fs, "readJSON").mockResolvedValue(existingPlugin);
+    const writeJSONStub = vi.spyOn(fs, "writeJSON").mockResolvedValue();
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("/test/project/teamsapp.yml");
 
-    const showMessageStub = sandbox.stub(tools.ui, "showMessage").resolves(ok("OK"));
-    const openFileStub = sandbox.stub(tools.ui, "openFile").resolves();
+    const showMessageStub = vi.spyOn(tools.ui, "showMessage").mockResolvedValue(ok("OK"));
+    const openFileStub = vi.spyOn(tools.ui, "openFile").mockResolvedValue();
 
     const result = await core.updateActionWithMCP(inputs);
 
     assert.isTrue(result.isOk());
-    assert.isTrue(writeJSONStub.calledTwice); // mcp-tools.json and ai-plugin.json
-    assert.isTrue(showMessageStub.calledOnce);
-    assert.isTrue(openFileStub.calledOnce);
+    assert.isTrue(writeJSONStub.mock.calls.length === 2); // mcp-tools.json and ai-plugin.json
+    assert.isTrue(showMessageStub.mock.calls.length === 1);
+    assert.isTrue(openFileStub.mock.calls.length === 1);
   });
 
   it("should create default mcp-tools.json when mcpFile is undefined (no matched runtime)", async () => {
@@ -135,15 +132,15 @@ describe("updateActionWithMCP", () => {
     let writtenMcpToolsData: any;
     let writtenPluginData: any;
 
-    sandbox.stub(fs, "pathExists").callsFake(async (filePath: string) => {
+    vi.spyOn(fs, "pathExists").mockImplementation(async (filePath: string) => {
       // Return false for mcp-tools.json so it uses the default name
       if (filePath.includes("mcp-tools")) {
         return false;
       }
       return true; // ai-plugin.json exists
     });
-    sandbox.stub(fs, "readJSON").resolves(existingPlugin);
-    sandbox.stub(fs, "writeJSON").callsFake((filePath: string, data) => {
+    vi.spyOn(fs, "readJSON").mockResolvedValue(existingPlugin);
+    vi.spyOn(fs, "writeJSON").mockImplementation((filePath: string, data) => {
       if (filePath.includes("mcp-tools")) {
         writtenMcpToolsPath = filePath;
         writtenMcpToolsData = data;
@@ -152,10 +149,10 @@ describe("updateActionWithMCP", () => {
       }
       return Promise.resolve();
     });
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("/test/project/teamsapp.yml");
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("/test/project/teamsapp.yml");
 
-    sandbox.stub(tools.ui, "showMessage").resolves(ok("OK"));
-    sandbox.stub(tools.ui, "openFile").resolves();
+    vi.spyOn(tools.ui, "showMessage").mockResolvedValue(ok("OK"));
+    vi.spyOn(tools.ui, "openFile").mockResolvedValue();
 
     const result = await core.updateActionWithMCP(inputs);
 
@@ -229,9 +226,9 @@ describe("updateActionWithMCP", () => {
     let writtenMcpToolsPath = "";
     let writtenPluginData: any;
 
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(fs, "readJSON").resolves(existingPlugin);
-    sandbox.stub(fs, "writeJSON").callsFake((filePath: string, data) => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readJSON").mockResolvedValue(existingPlugin);
+    vi.spyOn(fs, "writeJSON").mockImplementation((filePath: string, data) => {
       if (filePath.includes("mcp-tools") || filePath.includes("existing-mcp-tools")) {
         writtenMcpToolsPath = filePath;
       } else {
@@ -239,10 +236,10 @@ describe("updateActionWithMCP", () => {
       }
       return Promise.resolve();
     });
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("/test/project/teamsapp.yml");
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("/test/project/teamsapp.yml");
 
-    sandbox.stub(tools.ui, "showMessage").resolves(ok("OK"));
-    sandbox.stub(tools.ui, "openFile").resolves();
+    vi.spyOn(tools.ui, "showMessage").mockResolvedValue(ok("OK"));
+    vi.spyOn(tools.ui, "openFile").mockResolvedValue();
 
     const result = await core.updateActionWithMCP(inputs);
 
@@ -257,6 +254,70 @@ describe("updateActionWithMCP", () => {
     );
     assert.isDefined(mcpRuntime);
     assert.equal(mcpRuntime.spec.mcp_tool_description.file, "existing-mcp-tools.json");
+  });
+
+  it("should update DT runtime when functions are omitted and run_for_functions is wildcard", async () => {
+    const core = new FxCore(tools);
+    const inputs: Inputs = {
+      projectPath,
+      platform: Platform.VSCode,
+      [QuestionNames.PluginManifestFilePath]: pluginManifestPath,
+      [QuestionNames.MCPForDAServerUrl]: mcpServerUrl,
+      [QuestionNames.MCPForDAServerName]: serverName,
+      [QuestionNames.MCPForDAAuth]: "None",
+      [QuestionNames.MCPForDAAvailableTools]: [
+        {
+          name: "newTool",
+          description: "New tool description",
+          inputSchema: {
+            type: "object",
+            properties: { param1: { type: "string" } },
+            required: ["param1"],
+          },
+        },
+      ],
+      [QuestionNames.MCPForDAPreFetchTools]: ["newTool"],
+      ignoreLockByUT: true,
+    };
+
+    const existingPlugin = {
+      runtimes: [
+        {
+          type: "RemoteMCPServer",
+          spec: {
+            url: mcpServerUrl,
+          },
+          run_for_functions: ["*"],
+        },
+      ],
+    };
+
+    let writtenPluginData: any;
+    vi.spyOn(fs, "pathExists").mockImplementation(async (filePath: string) => {
+      return !filePath.includes("mcp-tools");
+    });
+    vi.spyOn(fs, "readJSON").mockResolvedValue(existingPlugin);
+    vi.spyOn(fs, "writeJSON").mockImplementation((filePath: string, data) => {
+      if (!filePath.includes("mcp-tools")) {
+        writtenPluginData = data;
+      }
+      return Promise.resolve();
+    });
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("/test/project/teamsapp.yml");
+
+    vi.spyOn(tools.ui, "showMessage").mockResolvedValue(ok("OK"));
+    vi.spyOn(tools.ui, "openFile").mockResolvedValue();
+
+    const result = await core.updateActionWithMCP(inputs);
+
+    assert.isTrue(result.isOk());
+    assert.deepEqual(writtenPluginData.functions, [
+      {
+        name: "newTool",
+        description: "New tool description",
+      },
+    ]);
+    assert.deepEqual(writtenPluginData.runtimes[0].run_for_functions, ["newTool"]);
   });
 
   it("should successfully update action with OAuth authentication", async () => {
@@ -300,28 +361,28 @@ describe("updateActionWithMCP", () => {
       refresh_endpoint: "https://example.com/oauth/refresh",
     };
 
-    sandbox.stub(fs, "pathExists").callsFake(async (filePath: string) => {
+    vi.spyOn(fs, "pathExists").mockImplementation(async (filePath: string) => {
       // Return false for mcp-tools.json to avoid infinite loop, true for ai-plugin.json
       return !filePath.includes("mcp-tools");
     });
-    sandbox.stub(fs, "readJSON").resolves(existingPlugin);
-    const writeJSONStub = sandbox.stub(fs, "writeJSON").resolves();
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("/test/project/teamsapp.yml");
-    sandbox.stub(axios, "get").resolves({ status: 200, data: oauthMetadata });
-    const injectOAuthStub = sandbox
-      .stub(ActionInjector, "injectCreateOAuthActionForMCP")
-      .resolves();
+    vi.spyOn(fs, "readJSON").mockResolvedValue(existingPlugin);
+    const writeJSONStub = vi.spyOn(fs, "writeJSON").mockResolvedValue();
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("/test/project/teamsapp.yml");
+    vi.spyOn(axios, "get").mockResolvedValue({ status: 200, data: oauthMetadata });
+    const injectOAuthStub = vi
+      .spyOn(ActionInjector, "injectCreateOAuthActionForMCP")
+      .mockResolvedValue();
 
-    const showMessageStub = sandbox.stub(tools.ui, "showMessage").resolves(ok("OK"));
-    const openFileStub = sandbox.stub(tools.ui, "openFile").resolves();
+    const showMessageStub = vi.spyOn(tools.ui, "showMessage").mockResolvedValue(ok("OK"));
+    const openFileStub = vi.spyOn(tools.ui, "openFile").mockResolvedValue();
 
     const result = await core.updateActionWithMCP(inputs);
 
     assert.isTrue(result.isOk());
-    assert.isTrue(injectOAuthStub.calledOnce);
-    assert.isTrue(writeJSONStub.calledTwice); // mcp-tools.json and ai-plugin.json
-    assert.isTrue(showMessageStub.calledOnce);
-    assert.isTrue(openFileStub.calledOnce);
+    assert.isTrue(injectOAuthStub.mock.calls.length === 1);
+    assert.isTrue(writeJSONStub.mock.calls.length === 2); // mcp-tools.json and ai-plugin.json
+    assert.isTrue(showMessageStub.mock.calls.length === 1);
+    assert.isTrue(openFileStub.mock.calls.length === 1);
   });
 
   it("should successfully update action with OAuth authentication using metadata URL", async () => {
@@ -368,33 +429,114 @@ describe("updateActionWithMCP", () => {
       refresh_endpoint: "https://example.com/oauth/refresh",
     };
 
-    sandbox.stub(fs, "pathExists").callsFake(async (filePath: string) => {
+    vi.spyOn(fs, "pathExists").mockImplementation(async (filePath: string) => {
       // Return false for mcp-tools.json to avoid infinite loop, true for ai-plugin.json
       return !filePath.includes("mcp-tools");
     });
-    sandbox.stub(fs, "readJSON").resolves(existingPlugin);
-    const writeJSONStub = sandbox.stub(fs, "writeJSON").resolves();
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("/test/project/teamsapp.yml");
-    sandbox
-      .stub(axios, "get")
-      .onFirstCall()
-      .resolves({ status: 200, data: mcpMetadata })
-      .onSecondCall()
-      .resolves({ status: 200, data: oauthMetadata });
-    const injectOAuthStub = sandbox
-      .stub(ActionInjector, "injectCreateOAuthActionForMCP")
-      .resolves();
+    vi.spyOn(fs, "readJSON").mockResolvedValue(existingPlugin);
+    const writeJSONStub = vi.spyOn(fs, "writeJSON").mockResolvedValue();
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("/test/project/teamsapp.yml");
+    vi.spyOn(axios, "get")
+      .mockResolvedValueOnce({ status: 200, data: mcpMetadata })
+      .mockResolvedValueOnce({ status: 200, data: oauthMetadata });
+    const injectOAuthStub = vi
+      .spyOn(ActionInjector, "injectCreateOAuthActionForMCP")
+      .mockResolvedValue();
 
-    const showMessageStub = sandbox.stub(tools.ui, "showMessage").resolves(ok("OK"));
-    const openFileStub = sandbox.stub(tools.ui, "openFile").resolves();
+    const showMessageStub = vi.spyOn(tools.ui, "showMessage").mockResolvedValue(ok("OK"));
+    const openFileStub = vi.spyOn(tools.ui, "openFile").mockResolvedValue();
 
     const result = await core.updateActionWithMCP(inputs);
 
     assert.isTrue(result.isOk());
-    assert.isTrue(injectOAuthStub.calledOnce);
-    assert.isTrue(writeJSONStub.calledTwice); // mcp-tools.json and ai-plugin.json
-    assert.isTrue(showMessageStub.calledOnce);
-    assert.isTrue(openFileStub.calledOnce);
+    assert.isTrue(injectOAuthStub.mock.calls.length === 1);
+    assert.isTrue(writeJSONStub.mock.calls.length === 2); // mcp-tools.json and ai-plugin.json
+    assert.isTrue(showMessageStub.mock.calls.length === 1);
+    assert.isTrue(openFileStub.mock.calls.length === 1);
+  });
+
+  it("should inject DCR action when updating action with OAuth dynamic registration", async () => {
+    const core = new FxCore(tools);
+    const inputs: Inputs = {
+      projectPath,
+      platform: Platform.VSCode,
+      [QuestionNames.PluginManifestFilePath]: pluginManifestPath,
+      [QuestionNames.MCPForDAServerUrl]: mcpServerUrl,
+      [QuestionNames.MCPForDAServerName]: serverName,
+      [QuestionNames.MCPForDAAuth]: "OAuthPluginVault",
+      [QuestionNames.MCPForDAAuthType]: "oauth-dynamic",
+      [QuestionNames.MCPForDAAuthWellKnownUrl]:
+        "https://example.com/.well-known/oauth-authorization-server",
+      [QuestionNames.MCPForDAAvailableTools]: [
+        {
+          name: "testTool",
+          description: "Test tool description",
+          inputSchema: {
+            type: "object",
+            properties: { param1: { type: "string" } },
+            required: ["param1"],
+          },
+        },
+      ],
+      [QuestionNames.MCPForDAPreFetchTools]: ["testTool"],
+      ignoreLockByUT: true,
+    };
+
+    const existingPlugin = {
+      functions: [],
+      runtimes: [],
+    };
+
+    vi.spyOn(fs, "pathExists").mockImplementation(async (filePath: string) => {
+      return !filePath.includes("mcp-tools");
+    });
+    vi.spyOn(fs, "readJSON").mockResolvedValue(existingPlugin);
+    let writtenPluginData: any;
+    vi.spyOn(fs, "writeJSON").mockImplementation((filePath: string, data) => {
+      if (!filePath.includes("mcp-tools")) {
+        writtenPluginData = data;
+      }
+      return Promise.resolve();
+    });
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("/test/project/m365agents.yml");
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) => {
+      return flag === FeatureFlags.MCPForDADCR;
+    });
+    vi.spyOn(axios, "get").mockResolvedValue({
+      status: 200,
+      data: {
+        authorization_endpoint: "https://example.com/oauth/authorize",
+        token_endpoint: "https://example.com/oauth/token",
+      },
+    });
+    const injectDcrStub = vi
+      .spyOn(ActionInjector, "injectCreateDcrActionForMCP")
+      .mockResolvedValue();
+    const injectOAuthStub = vi
+      .spyOn(ActionInjector, "injectCreateOAuthActionForMCP")
+      .mockResolvedValue();
+
+    vi.spyOn(tools.ui, "showMessage").mockResolvedValue(ok("OK"));
+    vi.spyOn(tools.ui, "openFile").mockResolvedValue();
+
+    const result = await core.updateActionWithMCP(inputs);
+
+    if (result.isErr()) {
+      assert.fail(result.error.message);
+    }
+    assert.deepEqual(writtenPluginData.runtimes[0].auth, {
+      type: "OAuthPluginVault",
+      reference_id: `\${{MCP_DA_AUTH_ID_${serverName.toUpperCase()}}}`,
+    });
+    assert.equal(injectOAuthStub.mock.calls.length, 0);
+    assert.equal(injectDcrStub.mock.calls.length, 1);
+    assert.deepEqual(injectDcrStub.mock.calls[0], [
+      "/test/project/m365agents.yml",
+      serverName,
+      `MCP_DA_AUTH_ID_${serverName.toUpperCase()}`,
+      mcpServerUrl,
+      "https://example.com/.well-known/oauth-authorization-server",
+    ]);
   });
 
   it("should return error when plugin manifest file does not exist", async () => {
@@ -408,7 +550,7 @@ describe("updateActionWithMCP", () => {
       ignoreLockByUT: true,
     };
 
-    sandbox.stub(fs, "pathExists").resolves(false);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
 
     const result = await core.updateActionWithMCP(inputs);
 
@@ -461,8 +603,8 @@ describe("updateActionWithMCP", () => {
       runtimes: [],
     };
 
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(fs, "readJSON").resolves(existingPlugin);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readJSON").mockResolvedValue(existingPlugin);
 
     const result = await core.updateActionWithMCP(inputs);
 
@@ -529,12 +671,12 @@ describe("updateActionWithMCP", () => {
 
     let writtenPlugin: any;
     let writtenMcpTools: any;
-    sandbox.stub(fs, "pathExists").callsFake(async (filePath: string) => {
+    vi.spyOn(fs, "pathExists").mockImplementation(async (filePath: string) => {
       // Return false for mcp-tools.json to avoid infinite loop, true for ai-plugin.json
       return !filePath.includes("mcp-tools");
     });
-    sandbox.stub(fs, "readJSON").resolves(existingPlugin);
-    sandbox.stub(fs, "writeJSON").callsFake((filePath: string, data) => {
+    vi.spyOn(fs, "readJSON").mockResolvedValue(existingPlugin);
+    vi.spyOn(fs, "writeJSON").mockImplementation((filePath: string, data) => {
       if (filePath.includes("mcp-tools")) {
         writtenMcpTools = data;
       } else {
@@ -542,10 +684,10 @@ describe("updateActionWithMCP", () => {
       }
       return Promise.resolve();
     });
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("/test/project/teamsapp.yml");
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("/test/project/teamsapp.yml");
 
-    const showMessageStub = sandbox.stub(tools.ui, "showMessage").resolves(ok("OK"));
-    const openFileStub = sandbox.stub(tools.ui, "openFile").resolves();
+    const showMessageStub = vi.spyOn(tools.ui, "showMessage").mockResolvedValue(ok("OK"));
+    const openFileStub = vi.spyOn(tools.ui, "openFile").mockResolvedValue();
 
     const result = await core.updateActionWithMCP(inputs);
 
@@ -608,29 +750,29 @@ describe("updateActionWithMCP", () => {
       runtimes: [],
     };
 
-    sandbox.stub(fs, "pathExists").callsFake(async (filePath: string) => {
+    vi.spyOn(fs, "pathExists").mockImplementation(async (filePath: string) => {
       // Return false for mcp-tools.json to avoid infinite loop, true for ai-plugin.json
       return !filePath.includes("mcp-tools");
     });
-    sandbox.stub(fs, "readJSON").resolves(existingPlugin);
-    const writeJSONStub = sandbox.stub(fs, "writeJSON").resolves();
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("/test/project/teamsapp.yml");
+    vi.spyOn(fs, "readJSON").mockResolvedValue(existingPlugin);
+    const writeJSONStub = vi.spyOn(fs, "writeJSON").mockResolvedValue();
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("/test/project/teamsapp.yml");
 
     // Mock the showMessage to return "Provision" to trigger provision call
-    const showMessageStub = sandbox.stub(tools.ui, "showMessage").resolves(ok("Provision"));
-    const openFileStub = sandbox.stub(tools.ui, "openFile").resolves();
-    const provisionStub = sandbox.stub(core, "provisionResources").resolves(ok(undefined));
+    const showMessageStub = vi.spyOn(tools.ui, "showMessage").mockResolvedValue(ok("Provision"));
+    const openFileStub = vi.spyOn(tools.ui, "openFile").mockResolvedValue();
+    const provisionStub = vi.spyOn(core, "provisionResources").mockResolvedValue(ok(undefined));
 
     const result = await core.updateActionWithMCP(inputs);
 
     assert.isTrue(result.isOk());
-    assert.isTrue(showMessageStub.calledOnce);
-    assert.isTrue(openFileStub.calledOnce);
-    assert.isTrue(writeJSONStub.calledTwice); // mcp-tools.json and ai-plugin.json
+    assert.isTrue(showMessageStub.mock.calls.length === 1);
+    assert.isTrue(openFileStub.mock.calls.length === 1);
+    assert.isTrue(writeJSONStub.mock.calls.length === 2); // mcp-tools.json and ai-plugin.json
 
     // Wait a bit for the async provision call
     await new Promise((resolve) => setTimeout(resolve, 10));
-    assert.isTrue(provisionStub.calledOnce);
+    assert.isTrue(provisionStub.mock.calls.length === 1);
   });
 
   it("should generate unique mcp-tools filename when default already exists", async () => {
@@ -663,7 +805,7 @@ describe("updateActionWithMCP", () => {
     };
 
     // Simulate mcp-tools.json and mcp-tools-1.json already exist
-    sandbox.stub(fs, "pathExists").callsFake(async (filePath: string) => {
+    vi.spyOn(fs, "pathExists").mockImplementation(async (filePath: string) => {
       if (filePath.includes("mcp-tools.json") && !filePath.includes("mcp-tools-")) {
         return true; // mcp-tools.json exists
       }
@@ -675,18 +817,18 @@ describe("updateActionWithMCP", () => {
       }
       return true; // ai-plugin.json exists
     });
-    sandbox.stub(fs, "readJSON").resolves(existingPlugin);
+    vi.spyOn(fs, "readJSON").mockResolvedValue(existingPlugin);
     let writtenMcpToolsPath = "";
-    sandbox.stub(fs, "writeJSON").callsFake((filePath: string, data) => {
+    vi.spyOn(fs, "writeJSON").mockImplementation((filePath: string, data) => {
       if (filePath.includes("mcp-tools")) {
         writtenMcpToolsPath = filePath;
       }
       return Promise.resolve();
     });
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("/test/project/teamsapp.yml");
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("/test/project/teamsapp.yml");
 
-    sandbox.stub(tools.ui, "showMessage").resolves(ok("OK"));
-    sandbox.stub(tools.ui, "openFile").resolves();
+    vi.spyOn(tools.ui, "showMessage").mockResolvedValue(ok("OK"));
+    vi.spyOn(tools.ui, "openFile").mockResolvedValue();
 
     const result = await core.updateActionWithMCP(inputs);
 
@@ -729,16 +871,16 @@ describe("updateActionWithMCP", () => {
       runtimes: [],
     };
 
-    sandbox.stub(fs, "pathExists").callsFake(async (filePath: string) => {
+    vi.spyOn(fs, "pathExists").mockImplementation(async (filePath: string) => {
       return !filePath.includes("mcp-tools");
     });
-    sandbox.stub(fs, "readJSON").resolves(existingPlugin);
-    sandbox.stub(fs, "writeJSON").resolves();
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("/test/project/teamsapp.yml");
-    sandbox.stub(ActionInjector, "injectCreateOAuthActionForMCP").resolves();
+    vi.spyOn(fs, "readJSON").mockResolvedValue(existingPlugin);
+    vi.spyOn(fs, "writeJSON").mockResolvedValue();
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("/test/project/teamsapp.yml");
+    vi.spyOn(ActionInjector, "injectCreateOAuthActionForMCP").mockResolvedValue();
 
-    const showMessageStub = sandbox.stub(tools.ui, "showMessage").resolves(ok("OK"));
-    sandbox.stub(tools.ui, "openFile").resolves();
+    const showMessageStub = vi.spyOn(tools.ui, "showMessage").mockResolvedValue(ok("OK"));
+    vi.spyOn(tools.ui, "openFile").mockResolvedValue();
 
     const result = await core.updateActionWithMCP(inputs);
 
@@ -786,17 +928,17 @@ describe("updateActionWithMCP", () => {
       // authorization_servers is missing
     };
 
-    sandbox.stub(fs, "pathExists").callsFake(async (filePath: string) => {
+    vi.spyOn(fs, "pathExists").mockImplementation(async (filePath: string) => {
       return !filePath.includes("mcp-tools");
     });
-    sandbox.stub(fs, "readJSON").resolves(existingPlugin);
-    sandbox.stub(fs, "writeJSON").resolves();
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("/test/project/teamsapp.yml");
-    sandbox.stub(axios, "get").resolves({ status: 200, data: mcpMetadataWithoutAuthServers });
-    sandbox.stub(ActionInjector, "injectCreateOAuthActionForMCP").resolves();
+    vi.spyOn(fs, "readJSON").mockResolvedValue(existingPlugin);
+    vi.spyOn(fs, "writeJSON").mockResolvedValue();
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("/test/project/teamsapp.yml");
+    vi.spyOn(axios, "get").mockResolvedValue({ status: 200, data: mcpMetadataWithoutAuthServers });
+    vi.spyOn(ActionInjector, "injectCreateOAuthActionForMCP").mockResolvedValue();
 
-    sandbox.stub(tools.ui, "showMessage").resolves(ok("OK"));
-    sandbox.stub(tools.ui, "openFile").resolves();
+    vi.spyOn(tools.ui, "showMessage").mockResolvedValue(ok("OK"));
+    vi.spyOn(tools.ui, "openFile").mockResolvedValue();
 
     const result = await core.updateActionWithMCP(inputs);
 
@@ -844,17 +986,20 @@ describe("updateActionWithMCP", () => {
       authorization_servers: [],
     };
 
-    sandbox.stub(fs, "pathExists").callsFake(async (filePath: string) => {
+    vi.spyOn(fs, "pathExists").mockImplementation(async (filePath: string) => {
       return !filePath.includes("mcp-tools");
     });
-    sandbox.stub(fs, "readJSON").resolves(existingPlugin);
-    sandbox.stub(fs, "writeJSON").resolves();
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("/test/project/teamsapp.yml");
-    sandbox.stub(axios, "get").resolves({ status: 200, data: mcpMetadataWithEmptyAuthServers });
-    sandbox.stub(ActionInjector, "injectCreateOAuthActionForMCP").resolves();
+    vi.spyOn(fs, "readJSON").mockResolvedValue(existingPlugin);
+    vi.spyOn(fs, "writeJSON").mockResolvedValue();
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("/test/project/teamsapp.yml");
+    vi.spyOn(axios, "get").mockResolvedValue({
+      status: 200,
+      data: mcpMetadataWithEmptyAuthServers,
+    });
+    vi.spyOn(ActionInjector, "injectCreateOAuthActionForMCP").mockResolvedValue();
 
-    sandbox.stub(tools.ui, "showMessage").resolves(ok("OK"));
-    sandbox.stub(tools.ui, "openFile").resolves();
+    vi.spyOn(tools.ui, "showMessage").mockResolvedValue(ok("OK"));
+    vi.spyOn(tools.ui, "openFile").mockResolvedValue();
 
     const result = await core.updateActionWithMCP(inputs);
 
@@ -904,17 +1049,17 @@ describe("updateActionWithMCP", () => {
       refresh_endpoint: "https://example.com/oauth/refresh",
     };
 
-    sandbox.stub(fs, "pathExists").callsFake(async (filePath: string) => {
+    vi.spyOn(fs, "pathExists").mockImplementation(async (filePath: string) => {
       return !filePath.includes("mcp-tools");
     });
-    sandbox.stub(fs, "readJSON").resolves(existingPlugin);
-    sandbox.stub(fs, "writeJSON").resolves();
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("/test/project/teamsapp.yml");
-    sandbox.stub(axios, "get").resolves({ status: 200, data: incompleteOAuthMetadata });
-    sandbox.stub(ActionInjector, "injectCreateOAuthActionForMCP").resolves();
+    vi.spyOn(fs, "readJSON").mockResolvedValue(existingPlugin);
+    vi.spyOn(fs, "writeJSON").mockResolvedValue();
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("/test/project/teamsapp.yml");
+    vi.spyOn(axios, "get").mockResolvedValue({ status: 200, data: incompleteOAuthMetadata });
+    vi.spyOn(ActionInjector, "injectCreateOAuthActionForMCP").mockResolvedValue();
 
-    sandbox.stub(tools.ui, "showMessage").resolves(ok("OK"));
-    sandbox.stub(tools.ui, "openFile").resolves();
+    vi.spyOn(tools.ui, "showMessage").mockResolvedValue(ok("OK"));
+    vi.spyOn(tools.ui, "openFile").mockResolvedValue();
 
     const result = await core.updateActionWithMCP(inputs);
 
@@ -946,7 +1091,6 @@ describe("updateActionWithMCP", () => {
 
 describe("updateActionWithMCP - Local MCP Support", () => {
   const tools = new MockTools();
-  const sandbox = sinon.createSandbox();
   const projectPath = "/test/project";
   const pluginManifestPath = "/test/project/ai-plugin.json";
   const serverName = "testLocalServer";
@@ -957,7 +1101,7 @@ describe("updateActionWithMCP - Local MCP Support", () => {
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("should successfully update action with local MCP server", async () => {
@@ -989,21 +1133,21 @@ describe("updateActionWithMCP - Local MCP Support", () => {
       runtimes: [],
     };
 
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(fs, "readJSON").resolves(existingPlugin);
-    const writeJSONStub = sandbox.stub(fs, "writeJSON").resolves();
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("/test/project/teamsapp.yml");
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readJSON").mockResolvedValue(existingPlugin);
+    const writeJSONStub = vi.spyOn(fs, "writeJSON").mockResolvedValue();
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("/test/project/teamsapp.yml");
 
-    const showMessageStub = sandbox.stub(tools.ui, "showMessage").resolves(ok("OK"));
-    const openFileStub = sandbox.stub(tools.ui, "openFile").resolves();
+    const showMessageStub = vi.spyOn(tools.ui, "showMessage").mockResolvedValue(ok("OK"));
+    const openFileStub = vi.spyOn(tools.ui, "openFile").mockResolvedValue();
 
     const result = await core.updateActionWithMCP(inputs);
 
     assert.isTrue(result.isOk());
 
     // Verify the local MCP runtime was added correctly
-    assert.isTrue(writeJSONStub.calledOnce);
-    const writtenData = writeJSONStub.getCall(0).args[1];
+    assert.isTrue(writeJSONStub.mock.calls.length === 1);
+    const writtenData = writeJSONStub.mock.calls[0][1];
     const runtimes = writtenData.runtimes as any[];
 
     assert.equal(runtimes.length, 1);
@@ -1011,8 +1155,8 @@ describe("updateActionWithMCP - Local MCP Support", () => {
     assert.equal(runtimes[0].spec.local_endpoint, LocalMcpPrefix + localServerIdentifier);
     assert.deepEqual(runtimes[0].run_for_functions, ["localTool"]);
 
-    assert.isTrue(showMessageStub.calledOnce);
-    assert.isTrue(openFileStub.calledOnce);
+    assert.isTrue(showMessageStub.mock.calls.length === 1);
+    assert.isTrue(openFileStub.mock.calls.length === 1);
 
     const localFunctions = writtenData.functions as any[];
     assert.equal(localFunctions.length, 1);
@@ -1071,16 +1215,16 @@ describe("updateActionWithMCP - Local MCP Support", () => {
     };
 
     let writtenPlugin: any;
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(fs, "readJSON").resolves(existingPlugin);
-    sandbox.stub(fs, "writeJSON").callsFake((path, data) => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readJSON").mockResolvedValue(existingPlugin);
+    vi.spyOn(fs, "writeJSON").mockImplementation((path, data) => {
       writtenPlugin = data;
       return Promise.resolve();
     });
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("/test/project/teamsapp.yml");
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("/test/project/teamsapp.yml");
 
-    const showMessageStub = sandbox.stub(tools.ui, "showMessage").resolves(ok("OK"));
-    const openFileStub = sandbox.stub(tools.ui, "openFile").resolves();
+    const showMessageStub = vi.spyOn(tools.ui, "showMessage").mockResolvedValue(ok("OK"));
+    const openFileStub = vi.spyOn(tools.ui, "openFile").mockResolvedValue();
 
     const result = await core.updateActionWithMCP(inputs);
 
@@ -1140,16 +1284,16 @@ describe("updateActionWithMCP - Local MCP Support", () => {
     };
 
     let writtenPlugin: any;
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(fs, "readJSON").resolves(existingPlugin);
-    sandbox.stub(fs, "writeJSON").callsFake((path, data) => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readJSON").mockResolvedValue(existingPlugin);
+    vi.spyOn(fs, "writeJSON").mockImplementation((path, data) => {
       writtenPlugin = data;
       return Promise.resolve();
     });
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("/test/project/teamsapp.yml");
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("/test/project/teamsapp.yml");
 
-    const showMessageStub = sandbox.stub(tools.ui, "showMessage").resolves(ok("OK"));
-    const openFileStub = sandbox.stub(tools.ui, "openFile").resolves();
+    const showMessageStub = vi.spyOn(tools.ui, "showMessage").mockResolvedValue(ok("OK"));
+    const openFileStub = vi.spyOn(tools.ui, "openFile").mockResolvedValue();
 
     const result = await core.updateActionWithMCP(inputs);
 
@@ -1198,17 +1342,17 @@ describe("updateActionWithMCP - Local MCP Support", () => {
 
     const existingPlugin = { functions: [], runtimes: [] };
 
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(fs, "readJSON").resolves(existingPlugin);
-    const writeJSONStub = sandbox.stub(fs, "writeJSON").resolves();
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("/test/project/teamsapp.yml");
-    sandbox.stub(tools.ui, "showMessage").resolves(ok("OK"));
-    sandbox.stub(tools.ui, "openFile").resolves();
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readJSON").mockResolvedValue(existingPlugin);
+    const writeJSONStub = vi.spyOn(fs, "writeJSON").mockResolvedValue();
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("/test/project/teamsapp.yml");
+    vi.spyOn(tools.ui, "showMessage").mockResolvedValue(ok("OK"));
+    vi.spyOn(tools.ui, "openFile").mockResolvedValue();
 
     const result = await core.updateActionWithMCP(inputs);
 
     assert.isTrue(result.isOk());
-    const writtenData = writeJSONStub.getCall(0).args[1];
+    const writtenData = writeJSONStub.mock.calls[0][1];
     const func = writtenData.functions[0];
     // type falls back to "object", required falls back to []
     assert.equal(func.parameters.type, "object");
@@ -1226,14 +1370,12 @@ async function mockV3Project(): Promise<string> {
 }
 
 describe("addPlugin", async () => {
-  const sandbox = sinon.createSandbox();
-
   beforeEach(() => {
     setTools(addPluginTools);
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("from API spec: add action success", async () => {
@@ -1256,15 +1398,12 @@ describe("addPlugin", async () => {
         },
       ],
     };
-    sandbox
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(manifestUtils, "_writeAppManifest").resolves(ok(undefined));
-    sandbox.stub(fxCoreDeclarativeAgentDeps, "generateScaffoldingSummary").resolves("");
-    sandbox.stub(fs, "pathExists").callsFake(async (path: string) => {
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(manifestUtils, "_writeAppManifest").mockResolvedValue(ok(undefined));
+    vi.spyOn(openApiSpecHelper, "generateScaffoldingSummary").mockResolvedValue("");
+    vi.spyOn(fs, "pathExists").mockImplementation(async (path: string) => {
       if (path.endsWith("openapi_1.yaml")) {
         return true;
       }
@@ -1279,15 +1418,17 @@ describe("addPlugin", async () => {
       }
       return true;
     });
-    sandbox.stub(copilotGptManifestUtils, "readCopilotGptManifestFile").resolves(ok({} as any));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("dcManifest.json"));
-    sandbox
-      .stub(copilotGptManifestUtils, "addAction")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as any)
+    );
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "addAction").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
 
     const core = new FxCore(addPluginTools);
-    sandbox.stub(fxCoreDeclarativeAgentDeps, "generateFromApiSpec").resolves(ok({ warnings: [] }));
-    sandbox.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(openApiSpecHelper, "generateFromApiSpec").mockResolvedValue(ok({ warnings: [] }));
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "GET /user/{userId}",
@@ -1301,9 +1442,9 @@ describe("addPlugin", async () => {
       validAPICount: 1,
     });
 
-    const showMessageStub = sandbox
-      .stub(addPluginTools.ui, "showMessage")
-      .callsFake((level, message, modal, items) => {
+    const showMessageStub = vi
+      .spyOn(addPluginTools.ui, "showMessage")
+      .mockImplementation((level, message, modal, items) => {
         if (level == "info") {
           return Promise.resolve(
             ok(getLocalizedString("core.addPlugin.success.viewPluginManifest"))
@@ -1315,15 +1456,15 @@ describe("addPlugin", async () => {
         }
       });
 
-    const openFileStub = sandbox.stub(addPluginTools.ui, "openFile").resolves();
+    const openFileStub = vi.spyOn(addPluginTools.ui, "openFile").mockResolvedValue();
 
     const result = await core.addPlugin(inputs);
     if (result.isErr()) {
       console.log(result.error);
     }
     assert.isTrue(result.isOk());
-    assert.isTrue(showMessageStub.calledTwice);
-    assert.isTrue(openFileStub.calledOnce);
+    assert.isTrue(showMessageStub.mock.calls.length === 2);
+    assert.isTrue(openFileStub.mock.calls.length === 1);
 
     if (await fs.pathExists(inputs.projectPath!)) {
       await fs.remove(inputs.projectPath!);
@@ -1350,17 +1491,14 @@ describe("addPlugin", async () => {
         },
       ],
     };
-    sandbox
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(manifestUtils, "_writeAppManifest").resolves(ok(undefined));
-    sandbox.stub(fxCoreDeclarativeAgentDeps, "generateScaffoldingSummary").resolves("");
-    sandbox.stub(fs, "writeFile").resolves();
-    sandbox.stub(fs, "readFile").resolves("{{test}}" as any);
-    sandbox.stub(fs, "pathExists").callsFake(async (path: string) => {
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(manifestUtils, "_writeAppManifest").mockResolvedValue(ok(undefined));
+    vi.spyOn(openApiSpecHelper, "generateScaffoldingSummary").mockResolvedValue("");
+    vi.spyOn(fs, "writeFile").mockResolvedValue();
+    vi.spyOn(fs, "readFile").mockResolvedValue("{{test}}" as any);
+    vi.spyOn(fs, "pathExists").mockImplementation(async (path: string) => {
       if (path.endsWith("openapi_1.yaml")) {
         return true;
       }
@@ -1378,22 +1516,23 @@ describe("addPlugin", async () => {
       }
       return true;
     });
-    sandbox
-      .stub(copilotGptManifestUtils, "readCopilotGptManifestFile")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("dcManifest.json"));
-    sandbox
-      .stub(copilotGptManifestUtils, "addAction")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "addAction").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
 
     const core = new FxCore(addPluginTools);
-    sandbox.stub(fxCoreDeclarativeAgentDeps, "generateFromApiSpec").resolves(ok({ warnings: [] }));
-    sandbox.stub(ActionInjector, "injectCreateAPIKeyAction").resolves();
-    sandbox
-      .stub(openApiSpecHelper, "injectAuthAction")
-      .resolves({ defaultRegistrationIdEnvName: "test", registrationIdEnvName: "test2" });
+    vi.spyOn(openApiSpecHelper, "generateFromApiSpec").mockResolvedValue(ok({ warnings: [] }));
+    vi.spyOn(ActionInjector, "injectCreateAPIKeyAction").mockResolvedValue();
+    vi.spyOn(openApiSpecHelper, "injectAuthAction").mockResolvedValue({
+      defaultRegistrationIdEnvName: "test",
+      registrationIdEnvName: "test2",
+    });
 
-    sandbox.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "GET /user/{userId}",
@@ -1414,9 +1553,9 @@ describe("addPlugin", async () => {
       validAPICount: 1,
     });
 
-    const showMessageStub = sandbox
-      .stub(addPluginTools.ui, "showMessage")
-      .callsFake((level, message, modal, items) => {
+    const showMessageStub = vi
+      .spyOn(addPluginTools.ui, "showMessage")
+      .mockImplementation((level, message, modal, items) => {
         if (level == "info") {
           return Promise.resolve(
             ok(getLocalizedString("core.addPlugin.success.viewPluginManifest"))
@@ -1428,15 +1567,15 @@ describe("addPlugin", async () => {
         }
       });
 
-    const openFileStub = sandbox.stub(addPluginTools.ui, "openFile").resolves();
+    const openFileStub = vi.spyOn(addPluginTools.ui, "openFile").mockResolvedValue();
 
     const result = await core.addPlugin(inputs);
     if (result.isErr()) {
       console.log(result.error);
     }
     assert.isTrue(result.isOk());
-    assert.isTrue(showMessageStub.calledTwice);
-    assert.isTrue(openFileStub.calledOnce);
+    assert.isTrue(showMessageStub.mock.calls.length === 2);
+    assert.isTrue(openFileStub.mock.calls.length === 1);
 
     if (await fs.pathExists(inputs.projectPath!)) {
       await fs.remove(inputs.projectPath!);
@@ -1463,17 +1602,14 @@ describe("addPlugin", async () => {
         },
       ],
     };
-    sandbox
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(manifestUtils, "_writeAppManifest").resolves(ok(undefined));
-    sandbox.stub(fxCoreDeclarativeAgentDeps, "generateScaffoldingSummary").resolves("");
-    sandbox.stub(fs, "writeFile").resolves();
-    sandbox.stub(fs, "readFile").resolves("{{test}}" as any);
-    sandbox.stub(fs, "pathExists").callsFake(async (path: string) => {
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(manifestUtils, "_writeAppManifest").mockResolvedValue(ok(undefined));
+    vi.spyOn(openApiSpecHelper, "generateScaffoldingSummary").mockResolvedValue("");
+    vi.spyOn(fs, "writeFile").mockResolvedValue();
+    vi.spyOn(fs, "readFile").mockResolvedValue("{{test}}" as any);
+    vi.spyOn(fs, "pathExists").mockImplementation(async (path: string) => {
       if (path.endsWith("openapi_1.yaml")) {
         return true;
       }
@@ -1491,22 +1627,23 @@ describe("addPlugin", async () => {
       }
       return true;
     });
-    sandbox
-      .stub(copilotGptManifestUtils, "readCopilotGptManifestFile")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("dcManifest.json"));
-    sandbox
-      .stub(copilotGptManifestUtils, "addAction")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "addAction").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
 
     const core = new FxCore(addPluginTools);
-    sandbox.stub(fxCoreDeclarativeAgentDeps, "generateFromApiSpec").resolves(ok({ warnings: [] }));
-    sandbox.stub(ActionInjector, "injectCreateOAuthAction").resolves();
-    sandbox
-      .stub(openApiSpecHelper, "injectAuthAction")
-      .resolves({ defaultRegistrationIdEnvName: "test", registrationIdEnvName: "test2" });
+    vi.spyOn(openApiSpecHelper, "generateFromApiSpec").mockResolvedValue(ok({ warnings: [] }));
+    vi.spyOn(ActionInjector, "injectCreateOAuthAction").mockResolvedValue();
+    vi.spyOn(openApiSpecHelper, "injectAuthAction").mockResolvedValue({
+      defaultRegistrationIdEnvName: "test",
+      registrationIdEnvName: "test2",
+    });
 
-    sandbox.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "GET /user/{userId}",
@@ -1535,9 +1672,9 @@ describe("addPlugin", async () => {
       validAPICount: 1,
     });
 
-    const showMessageStub = sandbox
-      .stub(addPluginTools.ui, "showMessage")
-      .callsFake((level, message, modal, items) => {
+    const showMessageStub = vi
+      .spyOn(addPluginTools.ui, "showMessage")
+      .mockImplementation((level, message, modal, items) => {
         if (level == "info") {
           return Promise.resolve(
             ok(getLocalizedString("core.addPlugin.success.viewPluginManifest"))
@@ -1549,15 +1686,15 @@ describe("addPlugin", async () => {
         }
       });
 
-    const openFileStub = sandbox.stub(addPluginTools.ui, "openFile").resolves();
+    const openFileStub = vi.spyOn(addPluginTools.ui, "openFile").mockResolvedValue();
 
     const result = await core.addPlugin(inputs);
     if (result.isErr()) {
       console.log(result.error);
     }
     assert.isTrue(result.isOk());
-    assert.isTrue(showMessageStub.calledTwice);
-    assert.isTrue(openFileStub.calledOnce);
+    assert.isTrue(showMessageStub.mock.calls.length === 2);
+    assert.isTrue(openFileStub.mock.calls.length === 1);
 
     if (await fs.pathExists(inputs.projectPath!)) {
       await fs.remove(inputs.projectPath!);
@@ -1577,11 +1714,11 @@ describe("addPlugin", async () => {
     };
     const manifest = new TeamsAppManifest();
     manifest.copilotExtensions = {};
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(manifestUtils, "_writeAppManifest").resolves(ok(undefined));
-    sandbox.stub(fxCoreDeclarativeAgentDeps, "generateScaffoldingSummary").resolves("");
-    sandbox.stub(fs, "pathExists").callsFake(async (path: string) => {
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(manifestUtils, "_writeAppManifest").mockResolvedValue(ok(undefined));
+    vi.spyOn(openApiSpecHelper, "generateScaffoldingSummary").mockResolvedValue("");
+    vi.spyOn(fs, "pathExists").mockImplementation(async (path: string) => {
       if (path.endsWith("openapi_1.yaml")) {
         return true;
       }
@@ -1596,20 +1733,20 @@ describe("addPlugin", async () => {
       }
       return true;
     });
-    sandbox
-      .stub(copilotGptManifestUtils, "readCopilotGptManifestFile")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("dcManifest.json"));
-    sandbox
-      .stub(copilotGptManifestUtils, "addAction")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "addAction").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
 
     const core = new FxCore(addPluginTools);
-    sandbox.stub(fxCoreDeclarativeAgentDeps, "generateFromApiSpec").resolves(ok({ warnings: [] }));
+    vi.spyOn(openApiSpecHelper, "generateFromApiSpec").mockResolvedValue(ok({ warnings: [] }));
 
-    const showMessageStub = sandbox
-      .stub(addPluginTools.ui, "showMessage")
-      .callsFake((level, message, modal, items) => {
+    const showMessageStub = vi
+      .spyOn(addPluginTools.ui, "showMessage")
+      .mockImplementation((level, message, modal, items) => {
         if (level == "info") {
           return Promise.resolve(
             ok(getLocalizedString("core.addPlugin.success.viewPluginManifest"))
@@ -1621,7 +1758,7 @@ describe("addPlugin", async () => {
         }
       });
 
-    const openFileStub = sandbox.stub(addPluginTools.ui, "openFile").resolves();
+    const openFileStub = vi.spyOn(addPluginTools.ui, "openFile").mockResolvedValue();
 
     const result = await core.addPlugin(inputs);
     assert.isTrue(result.isErr());
@@ -1645,11 +1782,11 @@ describe("addPlugin", async () => {
     manifest.copilotExtensions = {
       declarativeCopilots: [],
     };
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(manifestUtils, "_writeAppManifest").resolves(ok(undefined));
-    sandbox.stub(fxCoreDeclarativeAgentDeps, "generateScaffoldingSummary").resolves("");
-    sandbox.stub(fs, "pathExists").callsFake(async (path: string) => {
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(manifestUtils, "_writeAppManifest").mockResolvedValue(ok(undefined));
+    vi.spyOn(openApiSpecHelper, "generateScaffoldingSummary").mockResolvedValue("");
+    vi.spyOn(fs, "pathExists").mockImplementation(async (path: string) => {
       if (path.endsWith("openapi_1.yaml")) {
         return true;
       }
@@ -1664,20 +1801,20 @@ describe("addPlugin", async () => {
       }
       return true;
     });
-    sandbox
-      .stub(copilotGptManifestUtils, "readCopilotGptManifestFile")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("dcManifest.json"));
-    sandbox
-      .stub(copilotGptManifestUtils, "addAction")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "addAction").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
 
     const core = new FxCore(addPluginTools);
-    sandbox.stub(fxCoreDeclarativeAgentDeps, "generateFromApiSpec").resolves(ok({ warnings: [] }));
+    vi.spyOn(openApiSpecHelper, "generateFromApiSpec").mockResolvedValue(ok({ warnings: [] }));
 
-    const showMessageStub = sandbox
-      .stub(addPluginTools.ui, "showMessage")
-      .callsFake((level, message, modal, items) => {
+    const showMessageStub = vi
+      .spyOn(addPluginTools.ui, "showMessage")
+      .mockImplementation((level, message, modal, items) => {
         if (level == "info") {
           return Promise.resolve(
             ok(getLocalizedString("core.addPlugin.success.viewPluginManifest"))
@@ -1689,7 +1826,7 @@ describe("addPlugin", async () => {
         }
       });
 
-    const openFileStub = sandbox.stub(addPluginTools.ui, "openFile").resolves();
+    const openFileStub = vi.spyOn(addPluginTools.ui, "openFile").mockResolvedValue();
 
     const result = await core.addPlugin(inputs);
     assert.isTrue(result.isErr());
@@ -1718,15 +1855,12 @@ describe("addPlugin", async () => {
         },
       ],
     };
-    sandbox
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(manifestUtils, "_writeAppManifest").resolves(ok(undefined));
-    sandbox.stub(fxCoreDeclarativeAgentDeps, "generateScaffoldingSummary").resolves("");
-    sandbox.stub(fs, "pathExists").callsFake(async (path: string) => {
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(manifestUtils, "_writeAppManifest").mockResolvedValue(ok(undefined));
+    vi.spyOn(openApiSpecHelper, "generateScaffoldingSummary").mockResolvedValue("");
+    vi.spyOn(fs, "pathExists").mockImplementation(async (path: string) => {
       if (path.endsWith("openapi_1.yaml")) {
         return true;
       }
@@ -1741,17 +1875,17 @@ describe("addPlugin", async () => {
       }
       return true;
     });
-    sandbox
-      .stub(copilotGptManifestUtils, "readCopilotGptManifestFile")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("dcManifest.json"));
-    sandbox
-      .stub(copilotGptManifestUtils, "addAction")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "addAction").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
 
     const core = new FxCore(addPluginTools);
-    sandbox.stub(fxCoreDeclarativeAgentDeps, "generateFromApiSpec").resolves(ok({ warnings: [] }));
-    sandbox.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(openApiSpecHelper, "generateFromApiSpec").mockResolvedValue(ok({ warnings: [] }));
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "GET /user/{userId}",
@@ -1765,9 +1899,9 @@ describe("addPlugin", async () => {
       validAPICount: 1,
     });
 
-    const showMessageStub = sandbox
-      .stub(addPluginTools.ui, "showMessage")
-      .callsFake((level, message, modal, items) => {
+    const showMessageStub = vi
+      .spyOn(addPluginTools.ui, "showMessage")
+      .mockImplementation((level, message, modal, items) => {
         if (level == "info") {
           return Promise.resolve(
             ok(getLocalizedString("core.addPlugin.success.viewPluginManifest"))
@@ -1779,15 +1913,15 @@ describe("addPlugin", async () => {
         }
       });
 
-    const openFileStub = sandbox.stub(addPluginTools.ui, "openFile").resolves();
+    const openFileStub = vi.spyOn(addPluginTools.ui, "openFile").mockResolvedValue();
 
     const result = await core.addPlugin(inputs);
     if (result.isErr()) {
       console.log(result.error);
     }
     assert.isTrue(result.isOk());
-    assert.isTrue(showMessageStub.calledTwice);
-    assert.isTrue(openFileStub.calledOnce);
+    assert.isTrue(showMessageStub.mock.calls.length === 2);
+    assert.isTrue(openFileStub.mock.calls.length === 1);
 
     if (await fs.pathExists(inputs.projectPath!)) {
       await fs.remove(inputs.projectPath!);
@@ -1814,17 +1948,12 @@ describe("addPlugin", async () => {
         },
       ],
     };
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(manifestUtils, "_writeAppManifest").resolves(ok(undefined));
-    sandbox
-      .stub(fxCoreDeclarativeAgentDeps, "generateScaffoldingSummary")
-      .resolves("warning message");
-    sandbox
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sandbox.stub(fs, "pathExists").callsFake(async (path: string) => {
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(manifestUtils, "_writeAppManifest").mockResolvedValue(ok(undefined));
+    vi.spyOn(openApiSpecHelper, "generateScaffoldingSummary").mockResolvedValue("warning message");
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+    vi.spyOn(fs, "pathExists").mockImplementation(async (path: string) => {
       if (path.endsWith("openapi_1.yaml")) {
         return true;
       }
@@ -1839,14 +1968,14 @@ describe("addPlugin", async () => {
       }
       return true;
     });
-    sandbox
-      .stub(copilotGptManifestUtils, "readCopilotGptManifestFile")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("dcManifest.json"));
-    sandbox
-      .stub(copilotGptManifestUtils, "addAction")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
-    sandbox.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "addAction").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "GET /user/{userId}",
@@ -1861,17 +1990,15 @@ describe("addPlugin", async () => {
     });
 
     const core = new FxCore(addPluginTools);
-    sandbox
-      .stub(fxCoreDeclarativeAgentDeps, "generateFromApiSpec")
-      .resolves(
-        ok({ warnings: [{ type: WarningType.OperationOnlyContainsOptionalParam, content: "" }] })
-      );
+    vi.spyOn(openApiSpecHelper, "generateFromApiSpec").mockResolvedValue(
+      ok({ warnings: [{ type: WarningType.OperationOnlyContainsOptionalParam, content: "" }] })
+    );
 
-    const showMessageStub = sandbox.stub(addPluginTools.ui, "showMessage").resolves(ok("Add"));
+    const showMessageStub = vi.spyOn(addPluginTools.ui, "showMessage").mockResolvedValue(ok("Add"));
     const result = await core.addPlugin(inputs);
 
     assert.isTrue(result.isOk());
-    assert.isTrue(showMessageStub.calledTwice);
+    assert.isTrue(showMessageStub.mock.calls.length === 2);
     if (await fs.pathExists(inputs.projectPath!)) {
       await fs.remove(inputs.projectPath!);
     }
@@ -1897,31 +2024,28 @@ describe("addPlugin", async () => {
         },
       ],
     };
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(manifestUtils, "_writeAppManifest").resolves(ok(undefined));
-    sandbox
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sandbox
-      .stub(copilotGptManifestUtils, "readCopilotGptManifestFile")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("dcManifest.json"));
-    sandbox
-      .stub(fxCoreDeclarativeAgentDeps, "addExistingPlugin")
-      .resolves(ok({ destinationPluginManifestPath: "ai-plugin.json", warnings: [] }));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(manifestUtils, "_writeAppManifest").mockResolvedValue(ok(undefined));
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(declarativeAgentHelper, "addExistingPlugin").mockResolvedValue(
+      ok({ destinationPluginManifestPath: "ai-plugin.json", warnings: [] })
+    );
 
     const core = new FxCore(addPluginTools);
 
-    const showMessageStub = sandbox.stub(addPluginTools.ui, "showMessage").resolves(ok("Add"));
+    const showMessageStub = vi.spyOn(addPluginTools.ui, "showMessage").mockResolvedValue(ok("Add"));
     const result = await core.addPlugin(inputs);
     if (result.isErr()) {
       console.log(result.error);
     }
 
     assert.isTrue(result.isOk());
-    assert.isTrue(showMessageStub.calledTwice);
+    assert.isTrue(showMessageStub.mock.calls.length === 2);
     if (await fs.pathExists(inputs.projectPath!)) {
       await fs.remove(inputs.projectPath!);
     }
@@ -1947,22 +2071,19 @@ describe("addPlugin", async () => {
         },
       ],
     };
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(manifestUtils, "_writeAppManifest").resolves(ok(undefined));
-    sandbox
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sandbox
-      .stub(copilotGptManifestUtils, "readCopilotGptManifestFile")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("dcManifest.json"));
-    sandbox
-      .stub(fxCoreDeclarativeAgentDeps, "addExistingPlugin")
-      .resolves(err(new SystemError("fakeError", "fakeError", "", "")));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(manifestUtils, "_writeAppManifest").mockResolvedValue(ok(undefined));
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(declarativeAgentHelper, "addExistingPlugin").mockResolvedValue(
+      err(new SystemError("fakeError", "fakeError", "", ""))
+    );
 
-    sandbox.stub(addPluginTools.ui, "showMessage").resolves(ok("Add"));
+    vi.spyOn(addPluginTools.ui, "showMessage").mockResolvedValue(ok("Add"));
 
     const core = new FxCore(addPluginTools);
 
@@ -1997,7 +2118,7 @@ describe("addPlugin", async () => {
         },
       ],
     };
-    sandbox.stub(fs, "pathExists").callsFake(async (path: string) => {
+    vi.spyOn(fs, "pathExists").mockImplementation(async (path: string) => {
       if (path.endsWith("openapi_1.json")) {
         return false;
       }
@@ -2006,21 +2127,18 @@ describe("addPlugin", async () => {
       }
       return true;
     });
-    sandbox
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("dcManifest.json"));
-    sandbox
-      .stub(copilotGptManifestUtils, "readCopilotGptManifestFile")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
-    sandbox.stub(addPluginTools.ui, "showMessage").resolves(ok("Add"));
-    sandbox
-      .stub(fxCoreDeclarativeAgentDeps, "generateFromApiSpec")
-      .resolves(err(new SystemError("", "", "", "")));
-    sandbox.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(addPluginTools.ui, "showMessage").mockResolvedValue(ok("Add"));
+    vi.spyOn(openApiSpecHelper, "generateFromApiSpec").mockResolvedValue(
+      err(new SystemError("", "", "", ""))
+    );
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "GET /user/{userId}",
@@ -2058,7 +2176,7 @@ describe("addPlugin", async () => {
         },
       ],
     };
-    sandbox.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "GET /user/{userId}",
@@ -2071,14 +2189,11 @@ describe("addPlugin", async () => {
       allAPICount: 1,
       validAPICount: 1,
     });
-    sandbox
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(manifestUtils, "_writeAppManifest").resolves(ok(undefined));
-    sandbox.stub(fs, "pathExists").callsFake(async (path: string) => {
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(manifestUtils, "_writeAppManifest").mockResolvedValue(ok(undefined));
+    vi.spyOn(fs, "pathExists").mockImplementation(async (path: string) => {
       if (path.endsWith("openapi_1.json")) {
         return false;
       }
@@ -2087,18 +2202,18 @@ describe("addPlugin", async () => {
       }
       return true;
     });
-    sandbox
-      .stub(copilotGptManifestUtils, "readCopilotGptManifestFile")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("dcManifest.json"));
-    sandbox
-      .stub(copilotGptManifestUtils, "addAction")
-      .resolves(err(new SystemError("addActionError", "addActionError", "", "")));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "addAction").mockResolvedValue(
+      err(new SystemError("addActionError", "addActionError", "", ""))
+    );
 
     const core = new FxCore(addPluginTools);
-    sandbox.stub(fxCoreDeclarativeAgentDeps, "generateFromApiSpec").resolves(ok({ warnings: [] }));
+    vi.spyOn(openApiSpecHelper, "generateFromApiSpec").mockResolvedValue(ok({ warnings: [] }));
 
-    sandbox.stub(addPluginTools.ui, "showMessage").resolves(ok("Add"));
+    vi.spyOn(addPluginTools.ui, "showMessage").mockResolvedValue(ok("Add"));
     const result = await core.addPlugin(inputs);
     assert.isTrue(result.isErr());
     if (result.isErr()) {
@@ -2129,10 +2244,10 @@ describe("addPlugin", async () => {
         },
       ],
     };
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox
-      .stub(manifestUtils, "_readAppManifest")
-      .resolves(err(new SystemError("manifestError", "manifestError", "", "")));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(
+      err(new SystemError("manifestError", "manifestError", "", ""))
+    );
     const core = new FxCore(addPluginTools);
     const result = await core.addPlugin(inputs);
     assert.isTrue(result.isErr());
@@ -2161,11 +2276,11 @@ describe("addPlugin", async () => {
         },
       ],
     };
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox
-      .stub(copilotGptManifestUtils, "getManifestPath")
-      .resolves(err(new SystemError("getError", "getError", "", "")));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      err(new SystemError("getError", "getError", "", ""))
+    );
     const core = new FxCore(addPluginTools);
     const result = await core.addPlugin(inputs);
     assert.isTrue(result.isErr());
@@ -2197,12 +2312,12 @@ describe("addPlugin", async () => {
         },
       ],
     };
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("dcManifest.json"));
-    sandbox
-      .stub(copilotGptManifestUtils, "readCopilotGptManifestFile")
-      .resolves(err(new SystemError("readError", "readError", "", "")));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      err(new SystemError("readError", "readError", "", ""))
+    );
     const core = new FxCore(addPluginTools);
     const result = await core.addPlugin(inputs);
     assert.isTrue(result.isErr());
@@ -2227,8 +2342,8 @@ describe("addPlugin", async () => {
     };
     const manifest = new TeamsAppManifest();
 
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
     const core = new FxCore(addPluginTools);
     const result = await core.addPlugin(inputs);
     assert.isTrue(result.isErr());
@@ -2260,7 +2375,7 @@ describe("addPlugin", async () => {
         },
       ],
     };
-    sandbox.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "GET /user/{userId}",
@@ -2273,17 +2388,14 @@ describe("addPlugin", async () => {
       allAPICount: 1,
       validAPICount: 1,
     });
-    sandbox
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("dcManifest.json"));
-    sandbox
-      .stub(copilotGptManifestUtils, "readCopilotGptManifestFile")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
-    sandbox.stub(addPluginTools.ui, "showMessage").resolves(ok("Cancel"));
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(addPluginTools.ui, "showMessage").mockResolvedValue(ok("Cancel"));
     const core = new FxCore(addPluginTools);
     const result = await core.addPlugin(inputs);
     assert.isTrue(result.isErr());
@@ -2315,7 +2427,7 @@ describe("addPlugin", async () => {
         },
       ],
     };
-    sandbox.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "GET /user/{userId}",
@@ -2328,19 +2440,16 @@ describe("addPlugin", async () => {
       allAPICount: 1,
       validAPICount: 1,
     });
-    sandbox
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox
-      .stub(copilotGptManifestUtils, "readCopilotGptManifestFile")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("dcManifest.json"));
-    sandbox
-      .stub(addPluginTools.ui, "showMessage")
-      .resolves(err(new SystemError("uiError", "uiError", "", "")));
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(addPluginTools.ui, "showMessage").mockResolvedValue(
+      err(new SystemError("uiError", "uiError", "", ""))
+    );
     const core = new FxCore(addPluginTools);
     const result = await core.addPlugin(inputs);
     assert.isTrue(result.isErr());
@@ -2375,33 +2484,34 @@ describe("addPlugin", async () => {
       declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
     };
 
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("dcManifest.json"));
-    sandbox
-      .stub(copilotGptManifestUtils, "readCopilotGptManifestFile")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
-    sandbox
-      .stub(copilotGptManifestUtils, "getDefaultNextAvailablePluginManifestPath")
-      .resolves("ai-plugin_1.json");
-    const addActionStub = sandbox
-      .stub(copilotGptManifestUtils, "addAction")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(
+      copilotGptManifestUtils,
+      "getDefaultNextAvailablePluginManifestPath"
+    ).mockResolvedValue("ai-plugin_1.json");
+    const addActionStub = vi
+      .spyOn(copilotGptManifestUtils, "addAction")
+      .mockResolvedValue(ok({} as DeclarativeCopilotManifestSchema));
 
-    sandbox.stub(addPluginTools.ui, "showMessage").callsFake((level) => {
+    vi.spyOn(addPluginTools.ui, "showMessage").mockImplementation((level) => {
       if (level === "warn") return Promise.resolve(ok("Add"));
       return Promise.resolve(ok(""));
     });
 
-    sandbox.stub(fs, "ensureFile").resolves();
-    const writeJSONStub = sandbox.stub(fs, "writeJSON").resolves();
+    vi.spyOn(fs, "ensureFile").mockResolvedValue();
+    const writeJSONStub = vi.spyOn(fs, "writeJSON").mockResolvedValue();
 
     const core = new FxCore(addPluginTools);
     const result = await core.addPlugin(inputs);
 
     assert.isTrue(result.isOk());
     // mcp-tools file and plugin manifest both written
-    assert.isTrue(writeJSONStub.callCount >= 2);
+    assert.isTrue(writeJSONStub.mock.calls.length >= 2);
 
     if (await fs.pathExists(projectPath)) {
       await fs.remove(projectPath);
@@ -2434,26 +2544,27 @@ describe("addPlugin", async () => {
       declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
     };
 
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("dcManifest.json"));
-    sandbox
-      .stub(copilotGptManifestUtils, "readCopilotGptManifestFile")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
-    sandbox
-      .stub(copilotGptManifestUtils, "getDefaultNextAvailablePluginManifestPath")
-      .resolves("ai-plugin_1.json");
-    sandbox
-      .stub(copilotGptManifestUtils, "addAction")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(
+      copilotGptManifestUtils,
+      "getDefaultNextAvailablePluginManifestPath"
+    ).mockResolvedValue("ai-plugin_1.json");
+    vi.spyOn(copilotGptManifestUtils, "addAction").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
 
-    sandbox.stub(addPluginTools.ui, "showMessage").callsFake((level) => {
+    vi.spyOn(addPluginTools.ui, "showMessage").mockImplementation((level) => {
       if (level === "warn") return Promise.resolve(ok("Add"));
       return Promise.resolve(ok(""));
     });
 
-    sandbox.stub(fs, "ensureFile").resolves();
-    sandbox.stub(fs, "writeJSON").resolves();
+    vi.spyOn(fs, "ensureFile").mockResolvedValue();
+    vi.spyOn(fs, "writeJSON").mockResolvedValue();
 
     const core = new FxCore(addPluginTools);
     const result = await core.addPlugin(inputs);
@@ -2491,50 +2602,52 @@ describe("addPlugin", async () => {
       declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
     };
 
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("dcManifest.json"));
-    sandbox
-      .stub(copilotGptManifestUtils, "readCopilotGptManifestFile")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
-    sandbox
-      .stub(copilotGptManifestUtils, "getDefaultNextAvailablePluginManifestPath")
-      .resolves("ai-plugin_1.json");
-    sandbox
-      .stub(copilotGptManifestUtils, "addAction")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(
+      copilotGptManifestUtils,
+      "getDefaultNextAvailablePluginManifestPath"
+    ).mockResolvedValue("ai-plugin_1.json");
+    vi.spyOn(copilotGptManifestUtils, "addAction").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
 
-    sandbox.stub(addPluginTools.ui, "showMessage").callsFake((level) => {
+    vi.spyOn(addPluginTools.ui, "showMessage").mockImplementation((level) => {
       if (level === "warn") return Promise.resolve(ok("Add"));
       return Promise.resolve(ok(""));
     });
 
     const mcpAuthScaffolderModule = await import("../../src/component/utils/mcpAuthScaffolder");
-    sandbox
-      .stub(mcpAuthScaffolderModule.mcpAuthScaffolderDeps, "resolveMCPOAuthMetadata")
-      .resolves({
-        authorizationUrl: "https://example.com/oauth/authorize",
-        tokenUrl: "https://example.com/oauth/token",
-        refreshUrl: "https://example.com/oauth/token",
-        wellKnownUrl: "https://example.com/.well-known/oauth-authorization-server",
-      });
+    vi.spyOn(
+      mcpAuthScaffolderModule.mcpAuthScaffolderDeps,
+      "resolveMCPOAuthMetadata"
+    ).mockResolvedValue({
+      authorizationUrl: "https://example.com/oauth/authorize",
+      tokenUrl: "https://example.com/oauth/token",
+      refreshUrl: "https://example.com/oauth/token",
+      wellKnownUrl: "https://example.com/.well-known/oauth-authorization-server",
+    });
 
     const actionInjectorModule = await import("../../src/component/configManager/actionInjector");
-    const injectStub = sandbox
-      .stub(actionInjectorModule.ActionInjector, "injectCreateOAuthActionForMCP")
-      .resolves();
+    const injectStub = vi
+      .spyOn(actionInjectorModule.ActionInjector, "injectCreateOAuthActionForMCP")
+      .mockResolvedValue();
 
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-    sandbox.stub(fs, "ensureFile").resolves();
-    sandbox.stub(fs, "writeJSON").resolves();
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+    vi.spyOn(fs, "ensureFile").mockResolvedValue();
+    vi.spyOn(fs, "writeJSON").mockResolvedValue();
 
     const core = new FxCore(addPluginTools);
     const result = await core.addPlugin(inputs);
 
     assert.isTrue(result.isOk());
-    assert.isTrue(injectStub.calledOnce);
+    assert.isTrue(injectStub.mock.calls.length === 1);
     // Verify registration ID pattern
-    const registrationId = injectStub.firstCall.args[3];
+    const registrationId = injectStub.mock.calls[0][3];
     assert.equal(registrationId, "MCP_DA_AUTH_ID_ACTION_1");
 
     if (await fs.pathExists(projectPath)) {
@@ -2565,48 +2678,49 @@ describe("addPlugin", async () => {
       declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
     };
 
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("dcManifest.json"));
-    sandbox
-      .stub(copilotGptManifestUtils, "readCopilotGptManifestFile")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
-    sandbox
-      .stub(copilotGptManifestUtils, "getDefaultNextAvailablePluginManifestPath")
-      .resolves("ai-plugin_1.json");
-    sandbox
-      .stub(copilotGptManifestUtils, "addAction")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(
+      copilotGptManifestUtils,
+      "getDefaultNextAvailablePluginManifestPath"
+    ).mockResolvedValue("ai-plugin_1.json");
+    vi.spyOn(copilotGptManifestUtils, "addAction").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
 
-    sandbox.stub(addPluginTools.ui, "showMessage").callsFake((level) => {
+    vi.spyOn(addPluginTools.ui, "showMessage").mockImplementation((level) => {
       if (level === "warn") return Promise.resolve(ok("Add"));
       return Promise.resolve(ok(""));
     });
 
     const actionInjectorModule = await import("../../src/component/configManager/actionInjector");
-    const injectStub = sandbox
-      .stub(actionInjectorModule.ActionInjector, "injectCreateOAuthActionForMCP")
-      .resolves();
+    const injectStub = vi
+      .spyOn(actionInjectorModule.ActionInjector, "injectCreateOAuthActionForMCP")
+      .mockResolvedValue();
 
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-    sandbox.stub(fs, "ensureFile").resolves();
-    sandbox.stub(fs, "writeJSON").resolves();
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+    vi.spyOn(fs, "ensureFile").mockResolvedValue();
+    vi.spyOn(fs, "writeJSON").mockResolvedValue();
 
     const core = new FxCore(addPluginTools);
     const result = await core.addPlugin(inputs);
 
     assert.isTrue(result.isOk());
-    assert.isTrue(injectStub.calledOnce);
+    assert.isTrue(injectStub.mock.calls.length === 1);
     // authType is forwarded; "entra-sso" routes the injector to the Entra branch
     // (no resolveMCPOAuthMetadata call)
-    assert.equal(injectStub.firstCall.args[1], "entra-sso");
+    assert.equal(injectStub.mock.calls[0][1], "entra-sso");
 
     if (await fs.pathExists(projectPath)) {
       await fs.remove(projectPath);
     }
   });
 
-  it("from MCP (DT flag on): writes dynamic-discovery plugin and injects oauth action", async () => {
+  it("from MCP (DT flag on): scaffolds the v4 add-mcp-server modify package", async () => {
     const appName = await mockV3Project();
     const projectPath = path.join(os.tmpdir(), appName);
     const inputs: Inputs = {
@@ -2631,64 +2745,93 @@ describe("addPlugin", async () => {
       declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
     };
 
-    sandbox.stub(featureFlagManager, "getBooleanValue").callsFake((flag) => {
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) => {
       return flag === FeatureFlags.MCPForDADT;
     });
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("dcManifest.json"));
-    sandbox
-      .stub(copilotGptManifestUtils, "readCopilotGptManifestFile")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
-    sandbox
-      .stub(copilotGptManifestUtils, "getDefaultNextAvailablePluginManifestPath")
-      .resolves("ai-plugin_1.json");
-    sandbox
-      .stub(copilotGptManifestUtils, "addAction")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(
+      copilotGptManifestUtils,
+      "getDefaultNextAvailablePluginManifestPath"
+    ).mockResolvedValue("ai-plugin_1.json");
+    vi.spyOn(copilotGptManifestUtils, "addAction").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    const declarativeAgentModule = await import("../../src/core/FxCore.declarativeAgent");
+    const scaffoldV4Stub = vi
+      .spyOn(declarativeAgentModule.fxCoreDeclarativeAgentDeps, "scaffoldAddMcpServerFromV4")
+      .mockResolvedValue(ok(undefined));
+    const modifyFrontDoorStub = vi
+      .spyOn(declarativeAgentModule.fxCoreDeclarativeAgentDeps, "modifyProjectFrontDoor")
+      .mockImplementation(async (_inputs, selectorPrefill, entryParams, deps) => {
+        return deps.scaffoldV4(
+          inputs,
+          { templateId: "add-mcp-server", engine: "v4", answers: selectorPrefill },
+          entryParams
+        );
+      });
 
-    sandbox.stub(addPluginTools.ui, "showMessage").callsFake((level) => {
+    vi.spyOn(addPluginTools.ui, "showMessage").mockImplementation((level) => {
       if (level === "warn") return Promise.resolve(ok("Add"));
       return Promise.resolve(ok(""));
     });
 
     const mcpAuthScaffolderModule = await import("../../src/component/utils/mcpAuthScaffolder");
-    sandbox
-      .stub(mcpAuthScaffolderModule.mcpAuthScaffolderDeps, "resolveMCPOAuthMetadata")
-      .resolves({
-        authorizationUrl: "https://example.com/oauth/authorize",
-        tokenUrl: "https://example.com/oauth/token",
-        refreshUrl: "https://example.com/oauth/token",
-        wellKnownUrl: "https://example.com/.well-known/oauth-authorization-server",
-      });
+    vi.spyOn(
+      mcpAuthScaffolderModule.mcpAuthScaffolderDeps,
+      "resolveMCPOAuthMetadata"
+    ).mockResolvedValue({
+      authorizationUrl: "https://example.com/oauth/authorize",
+      tokenUrl: "https://example.com/oauth/token",
+      refreshUrl: "https://example.com/oauth/token",
+      wellKnownUrl: "https://example.com/.well-known/oauth-authorization-server",
+    });
 
     const actionInjectorModule = await import("../../src/component/configManager/actionInjector");
-    const injectStub = sandbox
-      .stub(actionInjectorModule.ActionInjector, "injectCreateOAuthActionForMCP")
-      .resolves();
+    const injectStub = vi
+      .spyOn(actionInjectorModule.ActionInjector, "injectCreateOAuthActionForMCP")
+      .mockResolvedValue();
 
     const envUtilModule = await import("../../src/component/utils/envUtil");
-    sandbox.stub(envUtilModule.envUtil, "listEnv").resolves(ok(["dev"]));
-    const writeEnvStub = sandbox.stub(envUtilModule.envUtil, "writeEnv").resolves(ok(undefined));
+    vi.spyOn(envUtilModule.envUtil, "listEnv").mockResolvedValue(ok(["dev"]));
+    const writeEnvStub = vi
+      .spyOn(envUtilModule.envUtil, "writeEnv")
+      .mockResolvedValue(ok(undefined));
 
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-    sandbox.stub(fs, "ensureFile").resolves();
-    const writeJSONStub = sandbox.stub(fs, "writeJSON").resolves();
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+    vi.spyOn(fs, "ensureFile").mockResolvedValue();
+    const writeJSONStub = vi.spyOn(fs, "writeJSON").mockResolvedValue();
 
     const core = new FxCore(addPluginTools);
     const result = await core.addPlugin(inputs);
 
     assert.isTrue(result.isOk());
-    assert.isTrue(injectStub.calledOnce);
-    assert.isTrue(writeEnvStub.called);
-    // DT branch writes a RemoteMCPServer runtime with dynamic discovery and
-    // a namespace derived from the MCP server host (alphanumeric, lowercase).
-    // Dynamic discovery is signalled by a spec carrying only `url` (no
-    // `mcp_tool_description`) per the v2.4 plugin schema.
-    const pluginManifest = writeJSONStub.firstCall.args[1];
-    assert.equal(pluginManifest.namespace, "examplecom");
-    assert.deepEqual(pluginManifest.runtimes[0].spec, { url: "https://example.com/mcp" });
-    assert.deepEqual(pluginManifest.runtimes[0].run_for_functions, ["*"]);
+    assert.isTrue(modifyFrontDoorStub.mock.calls.length === 1);
+    assert.deepEqual(modifyFrontDoorStub.mock.calls[0][1], {
+      addCapability: "add-action",
+      actionSource: "mcp",
+    });
+    assert.deepInclude(modifyFrontDoorStub.mock.calls[0][2], {
+      mcpServerUrl: "https://example.com/mcp",
+      teamsManifestPath: "manifest.json",
+      authType: "oauth",
+    });
+    assert.isTrue(scaffoldV4Stub.mock.calls.length === 1);
+    assert.deepInclude(scaffoldV4Stub.mock.calls[0][0], {
+      templateId: "add-mcp-server",
+      projectPath,
+      teamsManifestPath: "manifest.json",
+      appName: "My MCP App",
+      mcpServerUrl: "https://example.com/mcp",
+      authType: "oauth",
+    });
+    assert.isTrue(injectStub.mock.calls.length === 0);
+    assert.isTrue(writeEnvStub.mock.calls.length === 0);
+    assert.isTrue(writeJSONStub.mock.calls.length === 0);
 
     if (await fs.pathExists(projectPath)) {
       await fs.remove(projectPath);
@@ -2714,42 +2857,63 @@ describe("addPlugin", async () => {
       declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
     };
 
-    sandbox.stub(featureFlagManager, "getBooleanValue").callsFake((flag) => {
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) => {
       return flag === FeatureFlags.MCPForDADT;
     });
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("dcManifest.json"));
-    sandbox
-      .stub(copilotGptManifestUtils, "readCopilotGptManifestFile")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
-    sandbox
-      .stub(copilotGptManifestUtils, "getDefaultNextAvailablePluginManifestPath")
-      .resolves("ai-plugin_1.json");
-    sandbox
-      .stub(copilotGptManifestUtils, "addAction")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(
+      copilotGptManifestUtils,
+      "getDefaultNextAvailablePluginManifestPath"
+    ).mockResolvedValue("ai-plugin_1.json");
+    vi.spyOn(copilotGptManifestUtils, "addAction").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    const declarativeAgentModule = await import("../../src/core/FxCore.declarativeAgent");
+    const scaffoldV4Stub = vi
+      .spyOn(declarativeAgentModule.fxCoreDeclarativeAgentDeps, "scaffoldAddMcpServerFromV4")
+      .mockResolvedValue(ok(undefined));
+    const modifyFrontDoorStub = vi
+      .spyOn(declarativeAgentModule.fxCoreDeclarativeAgentDeps, "modifyProjectFrontDoor")
+      .mockImplementation(async (_inputs, selectorPrefill, entryParams, deps) => {
+        return deps.scaffoldV4(
+          inputs,
+          { templateId: "add-mcp-server", engine: "v4", answers: selectorPrefill },
+          entryParams
+        );
+      });
 
-    sandbox.stub(addPluginTools.ui, "showMessage").callsFake((level) => {
+    vi.spyOn(addPluginTools.ui, "showMessage").mockImplementation((level) => {
       if (level === "warn") return Promise.resolve(ok("Add"));
       return Promise.resolve(ok(""));
     });
 
     const actionInjectorModule = await import("../../src/component/configManager/actionInjector");
-    const injectStub = sandbox
-      .stub(actionInjectorModule.ActionInjector, "injectCreateOAuthActionForMCP")
-      .resolves();
+    const injectStub = vi
+      .spyOn(actionInjectorModule.ActionInjector, "injectCreateOAuthActionForMCP")
+      .mockResolvedValue();
 
-    sandbox.stub(fs, "ensureFile").resolves();
-    const writeJSONStub = sandbox.stub(fs, "writeJSON").resolves();
+    vi.spyOn(fs, "ensureFile").mockResolvedValue();
+    const writeJSONStub = vi.spyOn(fs, "writeJSON").mockResolvedValue();
 
     const core = new FxCore(addPluginTools);
     const result = await core.addPlugin(inputs);
 
     assert.isTrue(result.isOk());
-    assert.isTrue(injectStub.notCalled);
-    const pluginManifest = writeJSONStub.firstCall.args[1];
-    assert.deepEqual(pluginManifest.runtimes[0].auth, { type: "None" });
+    assert.isTrue(injectStub.mock.calls.length === 0);
+    assert.isTrue(modifyFrontDoorStub.mock.calls.length === 1);
+    assert.isTrue(scaffoldV4Stub.mock.calls.length === 1);
+    assert.deepInclude(scaffoldV4Stub.mock.calls[0][0], {
+      templateId: "add-mcp-server",
+      projectPath,
+      mcpServerUrl: "https://example.com/mcp",
+      authType: "none",
+    });
+    assert.isTrue(writeJSONStub.mock.calls.length === 0);
 
     if (await fs.pathExists(projectPath)) {
       await fs.remove(projectPath);
@@ -2777,14 +2941,14 @@ describe("addPlugin", async () => {
       declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
     };
 
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("dcManifest.json"));
-    sandbox
-      .stub(copilotGptManifestUtils, "readCopilotGptManifestFile")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
 
-    sandbox.stub(addPluginTools.ui, "showMessage").callsFake((level) => {
+    vi.spyOn(addPluginTools.ui, "showMessage").mockImplementation((level) => {
       if (level === "warn") return Promise.resolve(ok("Add"));
       return Promise.resolve(ok(""));
     });
@@ -2824,23 +2988,24 @@ describe("addPlugin", async () => {
       declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
     };
 
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("dcManifest.json"));
-    sandbox
-      .stub(copilotGptManifestUtils, "readCopilotGptManifestFile")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
-    sandbox
-      .stub(copilotGptManifestUtils, "getDefaultNextAvailablePluginManifestPath")
-      .resolves("ai-plugin_1.json");
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(
+      copilotGptManifestUtils,
+      "getDefaultNextAvailablePluginManifestPath"
+    ).mockResolvedValue("ai-plugin_1.json");
 
-    sandbox.stub(addPluginTools.ui, "showMessage").callsFake((level) => {
+    vi.spyOn(addPluginTools.ui, "showMessage").mockImplementation((level) => {
       if (level === "warn") return Promise.resolve(ok("Add"));
       return Promise.resolve(ok(""));
     });
 
-    sandbox.stub(fs, "ensureFile").resolves();
-    sandbox.stub(fs, "writeJSON").resolves();
+    vi.spyOn(fs, "ensureFile").mockResolvedValue();
+    vi.spyOn(fs, "writeJSON").mockResolvedValue();
 
     const core = new FxCore(addPluginTools);
     const result = await core.addPlugin(inputs);
@@ -2876,21 +3041,21 @@ describe("addPlugin", async () => {
       declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
     };
 
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("dcManifest.json"));
-    sandbox
-      .stub(copilotGptManifestUtils, "readCopilotGptManifestFile")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
 
-    sandbox.stub(addPluginTools.ui, "showMessage").callsFake((level) => {
+    vi.spyOn(addPluginTools.ui, "showMessage").mockImplementation((level) => {
       if (level === "warn") return Promise.resolve(ok("Add"));
       return Promise.resolve(ok(""));
     });
 
     // Auto-fetch returns auth-required with no tools
     const mcpToolFetcherModule = await import("../../src/component/utils/mcpToolFetcher");
-    sandbox.stub(mcpToolFetcherModule, "fetchMCPTools").resolves({
+    vi.spyOn(mcpToolFetcherModule, "fetchMCPTools").mockResolvedValue({
       requiresAuth: false,
       tools: [],
     });
@@ -2926,26 +3091,27 @@ describe("addPlugin", async () => {
       declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
     };
 
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("dcManifest.json"));
-    sandbox
-      .stub(copilotGptManifestUtils, "readCopilotGptManifestFile")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
-    sandbox
-      .stub(copilotGptManifestUtils, "getDefaultNextAvailablePluginManifestPath")
-      .resolves("ai-plugin_1.json");
-    sandbox
-      .stub(copilotGptManifestUtils, "addAction")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(
+      copilotGptManifestUtils,
+      "getDefaultNextAvailablePluginManifestPath"
+    ).mockResolvedValue("ai-plugin_1.json");
+    vi.spyOn(copilotGptManifestUtils, "addAction").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
 
-    sandbox.stub(addPluginTools.ui, "showMessage").callsFake((level) => {
+    vi.spyOn(addPluginTools.ui, "showMessage").mockImplementation((level) => {
       if (level === "warn") return Promise.resolve(ok("Add"));
       return Promise.resolve(ok(""));
     });
 
-    sandbox.stub(fs, "ensureFile").resolves();
-    sandbox.stub(fs, "writeJSON").resolves();
+    vi.spyOn(fs, "ensureFile").mockResolvedValue();
+    vi.spyOn(fs, "writeJSON").mockResolvedValue();
 
     const core = new FxCore(addPluginTools);
     const result = await core.addPlugin(inputs);
@@ -2972,25 +3138,25 @@ describe("addPlugin", async () => {
       projectPath,
     };
 
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
     const realEnsureDir = fs.ensureDir.bind(fs);
-    const ensureDirStub = sandbox.stub(fs, "ensureDir").callsFake(async (p: any) => {
+    const ensureDirStub = vi.spyOn(fs, "ensureDir").mockImplementation(async (p: any) => {
       if (typeof p === "string" && p.includes(".vscode")) {
         return;
       }
       return (realEnsureDir as any)(p);
     });
     const realWriteJSON = fs.writeJSON.bind(fs);
-    const writeJSONStub = sandbox
-      .stub(fs, "writeJSON")
-      .callsFake(async (p: any, data: any, opts?: any) => {
+    const writeJSONStub = vi
+      .spyOn(fs, "writeJSON")
+      .mockImplementation(async (p: any, data: any, opts?: any) => {
         if (typeof p === "string" && p.includes("mcp.json")) {
           return;
         }
         return (realWriteJSON as any)(p, data, opts);
       });
-    const showMessageStub = sandbox.stub(addPluginTools.ui, "showMessage");
-    const openFileStub = sandbox.stub(addPluginTools.ui, "openFile").resolves();
+    const showMessageStub = vi.spyOn(addPluginTools.ui, "showMessage");
+    const openFileStub = vi.spyOn(addPluginTools.ui, "openFile").mockResolvedValue();
 
     const core = new FxCore(addPluginTools);
     const result = await core.addPlugin(inputs);
@@ -3002,10 +3168,10 @@ describe("addPlugin", async () => {
     }
     // VS Code MCP add-action flow defers manifest creation to "Update action with MCP".
     // It should only write .vscode/mcp.json and surface no UI prompts itself.
-    assert.isTrue(ensureDirStub.getCalls().some((c) => String(c.args[0]).includes(".vscode")));
-    assert.isTrue(writeJSONStub.getCalls().some((c) => String(c.args[0]).includes("mcp.json")));
-    assert.isTrue(showMessageStub.notCalled);
-    assert.isTrue(openFileStub.notCalled);
+    assert.isTrue(ensureDirStub.mock.calls.some((c) => String(c[0]).includes(".vscode")));
+    assert.isTrue(writeJSONStub.mock.calls.some((c) => String(c[0]).includes("mcp.json")));
+    assert.isTrue(showMessageStub.mock.calls.length === 0);
+    assert.isTrue(openFileStub.mock.calls.length === 0);
 
     if (await fs.pathExists(projectPath)) {
       await fs.remove(projectPath);
@@ -3024,8 +3190,8 @@ describe("addPlugin", async () => {
       projectPath,
     };
 
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(addPluginTools.ui, "showMessage");
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(addPluginTools.ui, "showMessage");
 
     const core = new FxCore(addPluginTools);
     const result = await core.addPlugin(inputs);
@@ -3052,27 +3218,27 @@ describe("addPlugin", async () => {
       projectPath,
     };
 
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(fs, "readJSON").resolves({
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readJSON").mockResolvedValue({
       servers: { existingServer: { type: "http", url: "https://existing.com/mcp" } },
       otherTopLevel: "preserved",
     });
     const realEnsureDir = fs.ensureDir.bind(fs);
-    sandbox.stub(fs, "ensureDir").callsFake(async (p: any) => {
+    vi.spyOn(fs, "ensureDir").mockImplementation(async (p: any) => {
       if (typeof p === "string" && p.includes(".vscode")) return;
       return (realEnsureDir as any)(p);
     });
     let writtenConfig: any = undefined;
     const realWriteJSON = fs.writeJSON.bind(fs);
-    sandbox.stub(fs, "writeJSON").callsFake(async (p: any, data: any, opts?: any) => {
+    vi.spyOn(fs, "writeJSON").mockImplementation(async (p: any, data: any, opts?: any) => {
       if (typeof p === "string" && p.includes("mcp.json")) {
         writtenConfig = data;
         return;
       }
       return (realWriteJSON as any)(p, data, opts);
     });
-    sandbox.stub(addPluginTools.ui, "showMessage");
+    vi.spyOn(addPluginTools.ui, "showMessage");
 
     const core = new FxCore(addPluginTools);
     const result = await core.addPlugin(inputs);
@@ -3113,29 +3279,29 @@ describe("addPlugin", async () => {
       projectPath,
     };
 
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(fs, "readJSON").resolves({
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readJSON").mockResolvedValue({
       servers: {
         [baseName]: { type: "http", url: "https://other.com/mcp" },
         [`${baseName}1`]: { type: "http", url: "https://another.com/mcp" },
       },
     });
     const realEnsureDir = fs.ensureDir.bind(fs);
-    sandbox.stub(fs, "ensureDir").callsFake(async (p: any) => {
+    vi.spyOn(fs, "ensureDir").mockImplementation(async (p: any) => {
       if (typeof p === "string" && p.includes(".vscode")) return;
       return (realEnsureDir as any)(p);
     });
     let writtenConfig: any = undefined;
     const realWriteJSON = fs.writeJSON.bind(fs);
-    sandbox.stub(fs, "writeJSON").callsFake(async (p: any, data: any, opts?: any) => {
+    vi.spyOn(fs, "writeJSON").mockImplementation(async (p: any, data: any, opts?: any) => {
       if (typeof p === "string" && p.includes("mcp.json")) {
         writtenConfig = data;
         return;
       }
       return (realWriteJSON as any)(p, data, opts);
     });
-    sandbox.stub(addPluginTools.ui, "showMessage");
+    vi.spyOn(addPluginTools.ui, "showMessage");
 
     const core = new FxCore(addPluginTools);
     const result = await core.addPlugin(inputs);
@@ -3165,24 +3331,24 @@ describe("addPlugin", async () => {
       projectPath,
     };
 
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(fs, "readJSON").rejects(new Error("invalid JSON"));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readJSON").mockRejectedValue(new Error("invalid JSON"));
     const realEnsureDir = fs.ensureDir.bind(fs);
-    sandbox.stub(fs, "ensureDir").callsFake(async (p: any) => {
+    vi.spyOn(fs, "ensureDir").mockImplementation(async (p: any) => {
       if (typeof p === "string" && p.includes(".vscode")) return;
       return (realEnsureDir as any)(p);
     });
     let writtenConfig: any = undefined;
     const realWriteJSON = fs.writeJSON.bind(fs);
-    sandbox.stub(fs, "writeJSON").callsFake(async (p: any, data: any, opts?: any) => {
+    vi.spyOn(fs, "writeJSON").mockImplementation(async (p: any, data: any, opts?: any) => {
       if (typeof p === "string" && p.includes("mcp.json")) {
         writtenConfig = data;
         return;
       }
       return (realWriteJSON as any)(p, data, opts);
     });
-    sandbox.stub(addPluginTools.ui, "showMessage");
+    vi.spyOn(addPluginTools.ui, "showMessage");
 
     const core = new FxCore(addPluginTools);
     const result = await core.addPlugin(inputs);
@@ -3212,25 +3378,25 @@ describe("addPlugin", async () => {
       projectPath,
     };
 
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(fs, "pathExists").resolves(true);
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     // Existing file is valid JSON but missing the `servers` field.
-    sandbox.stub(fs, "readJSON").resolves({ inputs: {} });
+    vi.spyOn(fs, "readJSON").mockResolvedValue({ inputs: {} });
     const realEnsureDir = fs.ensureDir.bind(fs);
-    sandbox.stub(fs, "ensureDir").callsFake(async (p: any) => {
+    vi.spyOn(fs, "ensureDir").mockImplementation(async (p: any) => {
       if (typeof p === "string" && p.includes(".vscode")) return;
       return (realEnsureDir as any)(p);
     });
     let writtenConfig: any = undefined;
     const realWriteJSON = fs.writeJSON.bind(fs);
-    sandbox.stub(fs, "writeJSON").callsFake(async (p: any, data: any, opts?: any) => {
+    vi.spyOn(fs, "writeJSON").mockImplementation(async (p: any, data: any, opts?: any) => {
       if (typeof p === "string" && p.includes("mcp.json")) {
         writtenConfig = data;
         return;
       }
       return (realWriteJSON as any)(p, data, opts);
     });
-    sandbox.stub(addPluginTools.ui, "showMessage");
+    vi.spyOn(addPluginTools.ui, "showMessage");
 
     const core = new FxCore(addPluginTools);
     const result = await core.addPlugin(inputs);
@@ -3264,23 +3430,27 @@ describe("addPlugin", async () => {
       declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
     };
 
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("dcManifest.json"));
-    sandbox
-      .stub(copilotGptManifestUtils, "readCopilotGptManifestFile")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
 
-    sandbox.stub(addPluginTools.ui, "showMessage").callsFake((level) => {
+    vi.spyOn(addPluginTools.ui, "showMessage").mockImplementation((level) => {
       if (level === "warn") return Promise.resolve(ok("Add"));
       return Promise.resolve(ok(""));
     });
 
     // readMCPToolsFromFile throws → mcpToolsFileReadError
     const mcpToolFetcherModule = await import("../../src/component/utils/mcpToolFetcher");
-    sandbox.stub(mcpToolFetcherModule, "readMCPToolsFromFile").rejects(new Error("bad format"));
+    vi.spyOn(mcpToolFetcherModule, "readMCPToolsFromFile").mockRejectedValue(
+      new Error("bad format")
+    );
     // fetchMCPTools also fails so no tools are loaded
-    sandbox.stub(mcpToolFetcherModule, "fetchMCPTools").rejects(new Error("connection failed"));
+    vi.spyOn(mcpToolFetcherModule, "fetchMCPTools").mockRejectedValue(
+      new Error("connection failed")
+    );
 
     const core = new FxCore(addPluginTools);
     const result = await core.addPlugin(inputs);
@@ -3311,21 +3481,21 @@ describe("addPlugin", async () => {
       declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
     };
 
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("dcManifest.json"));
-    sandbox
-      .stub(copilotGptManifestUtils, "readCopilotGptManifestFile")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
 
-    sandbox.stub(addPluginTools.ui, "showMessage").callsFake((level) => {
+    vi.spyOn(addPluginTools.ui, "showMessage").mockImplementation((level) => {
       if (level === "warn") return Promise.resolve(ok("Add"));
       return Promise.resolve(ok(""));
     });
 
     // fetchMCPTools returns empty tools, no auth
     const mcpToolFetcherModule = await import("../../src/component/utils/mcpToolFetcher");
-    sandbox.stub(mcpToolFetcherModule, "fetchMCPTools").resolves({
+    vi.spyOn(mcpToolFetcherModule, "fetchMCPTools").mockResolvedValue({
       requiresAuth: false,
       tools: [],
     });
@@ -3359,21 +3529,21 @@ describe("addPlugin", async () => {
       declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
     };
 
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("dcManifest.json"));
-    sandbox
-      .stub(copilotGptManifestUtils, "readCopilotGptManifestFile")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
 
-    sandbox.stub(addPluginTools.ui, "showMessage").callsFake((level) => {
+    vi.spyOn(addPluginTools.ui, "showMessage").mockImplementation((level) => {
       if (level === "warn") return Promise.resolve(ok("Add"));
       return Promise.resolve(ok(""));
     });
 
     // fetchMCPTools throws
     const mcpToolFetcherModule = await import("../../src/component/utils/mcpToolFetcher");
-    sandbox.stub(mcpToolFetcherModule, "fetchMCPTools").rejects(new Error("network error"));
+    vi.spyOn(mcpToolFetcherModule, "fetchMCPTools").mockRejectedValue(new Error("network error"));
 
     const core = new FxCore(addPluginTools);
     const result = await core.addPlugin(inputs);
@@ -3406,37 +3576,36 @@ describe("addPlugin", async () => {
       declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
     };
 
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("dcManifest.json"));
-    sandbox
-      .stub(copilotGptManifestUtils, "readCopilotGptManifestFile")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
-    sandbox
-      .stub(copilotGptManifestUtils, "getDefaultNextAvailablePluginManifestPath")
-      .resolves("ai-plugin_1.json");
-    sandbox
-      .stub(copilotGptManifestUtils, "addAction")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(
+      copilotGptManifestUtils,
+      "getDefaultNextAvailablePluginManifestPath"
+    ).mockResolvedValue("ai-plugin_1.json");
+    vi.spyOn(copilotGptManifestUtils, "addAction").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
 
-    sandbox.stub(addPluginTools.ui, "showMessage").callsFake((level) => {
+    vi.spyOn(addPluginTools.ui, "showMessage").mockImplementation((level) => {
       if (level === "warn") return Promise.resolve(ok("Add"));
       return Promise.resolve(ok(""));
     });
 
-    sandbox.stub(fs, "ensureFile").resolves();
-    const writeJSONStub = sandbox.stub(fs, "writeJSON").resolves();
+    vi.spyOn(fs, "ensureFile").mockResolvedValue();
+    const writeJSONStub = vi.spyOn(fs, "writeJSON").mockResolvedValue();
 
     const core = new FxCore(addPluginTools);
     const result = await core.addPlugin(inputs);
 
     assert.isTrue(result.isOk());
     // Verify the plugin manifest was written with empty description
-    const pluginCall = writeJSONStub
-      .getCalls()
-      .find((c) => (c.args[1] as any)?.functions !== undefined);
+    const pluginCall = writeJSONStub.mock.calls.find((c) => (c[1] as any)?.functions !== undefined);
     assert.isDefined(pluginCall);
-    assert.equal(pluginCall!.args[1].functions[0].description, "");
+    assert.equal((pluginCall![1] as any).functions[0].description, "");
 
     if (await fs.pathExists(projectPath)) {
       await fs.remove(projectPath);
@@ -3470,33 +3639,35 @@ describe("addPlugin", async () => {
       declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
     };
 
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("dcManifest.json"));
-    sandbox
-      .stub(copilotGptManifestUtils, "readCopilotGptManifestFile")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
-    sandbox
-      .stub(copilotGptManifestUtils, "getDefaultNextAvailablePluginManifestPath")
-      .resolves("ai-plugin_1.json");
-    sandbox
-      .stub(copilotGptManifestUtils, "addAction")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(
+      copilotGptManifestUtils,
+      "getDefaultNextAvailablePluginManifestPath"
+    ).mockResolvedValue("ai-plugin_1.json");
+    vi.spyOn(copilotGptManifestUtils, "addAction").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
 
-    sandbox.stub(addPluginTools.ui, "showMessage").callsFake((level) => {
+    vi.spyOn(addPluginTools.ui, "showMessage").mockImplementation((level) => {
       if (level === "warn") return Promise.resolve(ok("Add"));
       return Promise.resolve(ok(""));
     });
 
     // resolveMCPOAuthMetadata throws
     const mcpAuthScaffolderModule = await import("../../src/component/utils/mcpAuthScaffolder");
-    sandbox
-      .stub(mcpAuthScaffolderModule.mcpAuthScaffolderDeps, "resolveMCPOAuthMetadata")
-      .rejects(new Error("metadata fetch failed"));
+    vi.spyOn(
+      mcpAuthScaffolderModule.mcpAuthScaffolderDeps,
+      "resolveMCPOAuthMetadata"
+    ).mockRejectedValue(new Error("metadata fetch failed"));
 
-    sandbox.stub(fs, "ensureFile").resolves();
-    sandbox.stub(fs, "writeJSON").resolves();
-    sandbox.stub(pathUtils, "getYmlFilePath").returns(path.join(projectPath, "m365agents.yml"));
+    vi.spyOn(fs, "ensureFile").mockResolvedValue();
+    vi.spyOn(fs, "writeJSON").mockResolvedValue();
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue(path.join(projectPath, "m365agents.yml"));
 
     const core = new FxCore(addPluginTools);
     const result = await core.addPlugin(inputs);
@@ -3531,26 +3702,27 @@ describe("addPlugin", async () => {
       declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
     };
 
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("dcManifest.json"));
-    sandbox
-      .stub(copilotGptManifestUtils, "readCopilotGptManifestFile")
-      .resolves(ok({} as DeclarativeCopilotManifestSchema));
-    sandbox
-      .stub(copilotGptManifestUtils, "getDefaultNextAvailablePluginManifestPath")
-      .resolves("ai-plugin_1.json");
-    sandbox
-      .stub(copilotGptManifestUtils, "addAction")
-      .resolves(err(new UserError("test", "AddActionFailed", "failed", "failed")));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(
+      copilotGptManifestUtils,
+      "getDefaultNextAvailablePluginManifestPath"
+    ).mockResolvedValue("ai-plugin_1.json");
+    vi.spyOn(copilotGptManifestUtils, "addAction").mockResolvedValue(
+      err(new UserError("test", "AddActionFailed", "failed", "failed"))
+    );
 
-    sandbox.stub(addPluginTools.ui, "showMessage").callsFake((level) => {
+    vi.spyOn(addPluginTools.ui, "showMessage").mockImplementation((level) => {
       if (level === "warn") return Promise.resolve(ok("Add"));
       return Promise.resolve(ok(""));
     });
 
-    sandbox.stub(fs, "ensureFile").resolves();
-    sandbox.stub(fs, "writeJSON").resolves();
+    vi.spyOn(fs, "ensureFile").mockResolvedValue();
+    vi.spyOn(fs, "writeJSON").mockResolvedValue();
 
     const core = new FxCore(addPluginTools);
     const result = await core.addPlugin(inputs);
@@ -3587,7 +3759,6 @@ describe("addPlugin", async () => {
 
 describe("updateActionWithMCP - create new ai-plugin.json", () => {
   const tools = new MockTools();
-  const sandbox = sinon.createSandbox();
   const projectPath = "/test/project";
   const mcpServerUrl = "https://example.com/mcp";
   const serverName = "testServer";
@@ -3597,7 +3768,7 @@ describe("updateActionWithMCP - create new ai-plugin.json", () => {
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("creates a new plugin manifest, registers it as an action, and continues update flow", async () => {
@@ -3626,17 +3797,17 @@ describe("updateActionWithMCP - create new ai-plugin.json", () => {
     (teamsManifest as any).copilotAgents = {
       declarativeAgents: [{ id: "da", file: "declarativeAgent.json" }],
     };
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(teamsManifest));
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(teamsManifest));
 
     let created = false;
-    const createStub = sandbox
-      .stub(fxCoreDeclarativeAgentDeps, "createNewActionPluginManifest")
-      .callsFake(async () => {
+    const createStub = vi
+      .spyOn(declarativeAgentHelper, "createNewActionPluginManifest")
+      .mockImplementation(async () => {
         created = true;
         return ok({ pluginManifestPath: newPluginPath, actionId: "ai-plugin" });
       });
 
-    sandbox.stub(fs, "pathExists").callsFake(async (filePath: string) => {
+    vi.spyOn(fs, "pathExists").mockImplementation(async (filePath: string) => {
       if (filePath.includes("mcp-tools")) return false;
       // Validator runs before createNewActionPluginManifest fires; the new
       // file should not exist yet so validation passes. Once createStub has
@@ -3644,17 +3815,17 @@ describe("updateActionWithMCP - create new ai-plugin.json", () => {
       if (path.basename(filePath) === "ai-plugin-new.json") return created;
       return true;
     });
-    sandbox.stub(fs, "readJSON").resolves({ functions: [], runtimes: [] });
-    sandbox.stub(fs, "writeJSON").resolves();
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("/test/project/teamsapp.yml");
-    sandbox.stub(tools.ui, "showMessage").resolves(ok("OK"));
-    sandbox.stub(tools.ui, "openFile").resolves();
+    vi.spyOn(fs, "readJSON").mockResolvedValue({ functions: [], runtimes: [] });
+    vi.spyOn(fs, "writeJSON").mockResolvedValue();
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("/test/project/teamsapp.yml");
+    vi.spyOn(tools.ui, "showMessage").mockResolvedValue(ok("OK"));
+    vi.spyOn(tools.ui, "openFile").mockResolvedValue();
 
     const core = new FxCore(tools);
     const result = await core.updateActionWithMCP(inputs);
 
     assert.isTrue(result.isOk(), JSON.stringify((result as any).error));
-    assert.isTrue(createStub.calledOnce);
+    assert.isTrue(createStub.mock.calls.length === 1);
     assert.equal(
       inputs[QuestionNames.PluginManifestFilePath],
       newPluginPath,
@@ -3677,10 +3848,10 @@ describe("updateActionWithMCP - create new ai-plugin.json", () => {
       ignoreLockByUT: true,
     };
 
-    sandbox
-      .stub(manifestUtils, "_readAppManifest")
-      .resolves(err(new SystemError("test", "ReadFailed", "msg", "msg")));
-    sandbox.stub(fs, "pathExists").callsFake(async (filePath: string) => {
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(
+      err(new SystemError("test", "ReadFailed", "msg", "msg"))
+    );
+    vi.spyOn(fs, "pathExists").mockImplementation(async (filePath: string) => {
       if (path.basename(filePath) === "ai-plugin-new.json") {
         return false;
       }
@@ -3712,8 +3883,8 @@ describe("updateActionWithMCP - create new ai-plugin.json", () => {
     };
 
     const teamsManifest = new TeamsAppManifest();
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(teamsManifest));
-    sandbox.stub(fs, "pathExists").callsFake(async (filePath: string) => {
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(teamsManifest));
+    vi.spyOn(fs, "pathExists").mockImplementation(async (filePath: string) => {
       if (path.basename(filePath) === "ai-plugin-new.json") {
         return false;
       }
@@ -3748,11 +3919,11 @@ describe("updateActionWithMCP - create new ai-plugin.json", () => {
     (teamsManifest as any).copilotAgents = {
       declarativeAgents: [{ id: "da", file: "declarativeAgent.json" }],
     };
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(teamsManifest));
-    sandbox
-      .stub(fxCoreDeclarativeAgentDeps, "createNewActionPluginManifest")
-      .resolves(err(new SystemError("test", "CreateFailed", "msg", "msg")));
-    sandbox.stub(fs, "pathExists").callsFake(async (filePath: string) => {
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(teamsManifest));
+    vi.spyOn(declarativeAgentHelper, "createNewActionPluginManifest").mockResolvedValue(
+      err(new SystemError("test", "CreateFailed", "msg", "msg"))
+    );
+    vi.spyOn(fs, "pathExists").mockImplementation(async (filePath: string) => {
       if (path.basename(filePath) === "ai-plugin-new.json") {
         return false;
       }
@@ -3787,33 +3958,35 @@ describe("updateActionWithMCP - create new ai-plugin.json", () => {
     (teamsManifest as any).copilotAgents = {
       declarativeAgents: [{ id: "da", file: "declarativeAgent.json" }],
     };
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(teamsManifest));
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(teamsManifest));
 
     let created = false;
-    const createStub = sandbox
-      .stub(fxCoreDeclarativeAgentDeps, "createNewActionPluginManifest")
-      .callsFake(async () => {
+    const createStub = vi
+      .spyOn(declarativeAgentHelper, "createNewActionPluginManifest")
+      .mockImplementation(async () => {
         created = true;
         return ok({ pluginManifestPath: newPluginPath, actionId: "ai-plugin" });
       });
 
-    sandbox.stub(fs, "pathExists").callsFake(async (filePath: string) => {
+    vi.spyOn(fs, "pathExists").mockImplementation(async (filePath: string) => {
       if (filePath.includes("mcp-tools")) return false;
       if (path.basename(filePath) === "ai-plugin.json") return created;
       return true;
     });
-    sandbox.stub(fs, "readJSON").resolves({ functions: [], runtimes: [] });
-    sandbox.stub(fs, "writeJSON").resolves();
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("/test/project/teamsapp.yml");
-    sandbox.stub(tools.ui, "showMessage").resolves(ok("OK"));
-    sandbox.stub(tools.ui, "openFile").resolves();
-    sandbox.stub(tools.ui, "inputText").resolves(ok({ type: "success", result: "ai-plugin.json" }));
+    vi.spyOn(fs, "readJSON").mockResolvedValue({ functions: [], runtimes: [] });
+    vi.spyOn(fs, "writeJSON").mockResolvedValue();
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("/test/project/teamsapp.yml");
+    vi.spyOn(tools.ui, "showMessage").mockResolvedValue(ok("OK"));
+    vi.spyOn(tools.ui, "openFile").mockResolvedValue();
+    vi.spyOn(tools.ui, "inputText").mockResolvedValue(
+      ok({ type: "success", result: "ai-plugin.json" })
+    );
 
     const core = new FxCore(tools);
     const result = await core.updateActionWithMCP(inputs);
 
     assert.isTrue(result.isOk(), JSON.stringify((result as any).error));
-    assert.isTrue(createStub.calledOnce);
-    assert.equal(createStub.firstCall.args[1], "ai-plugin.json");
+    assert.isTrue(createStub.mock.calls.length === 1);
+    assert.equal(createStub.mock.calls[0][1], "ai-plugin.json");
   });
 });

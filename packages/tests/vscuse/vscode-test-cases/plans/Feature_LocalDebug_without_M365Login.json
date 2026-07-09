@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 10,
+    "total_steps": 9,
     "created_at": "2026-02-10T06:14:22.746101",
     "name": "Feature LocalDebug without M365Login",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2026-02-10T06:14:22.746101",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_da7d6d4c",
+      "plan_r_0624_024810",
       "step_a3620737",
       "step_d0590887",
       "step_63753a55",
@@ -36,32 +36,6 @@
     "updated_at": "2026-02-10T06:27:53.876093"
   },
   "steps": [
-    {
-      "step_id": "step_da7d6d4c",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 361,
-        "y": 229
-      },
-      "description": "Click on the \"Declarative Agent\" option within the \"New Project\" dropdown menu to create an agent using instructions and actions.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:361:229:16:5:53ccc35ac8d2730c",
-        "dhash:361:229:96:5:959834d2da1409c8",
-        "dhash:361:229:0:10:c8c88094b0717c6f"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_da7d6d4c",
-      "created_at": "2026-02-10T06:14:22.760909",
-      "plan_id": "plan_40d67caa"
-    },
     {
       "step_id": "step_a3620737",
       "agent": "interaction",

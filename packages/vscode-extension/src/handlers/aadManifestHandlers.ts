@@ -13,12 +13,8 @@ import {
   ok,
   SystemError,
 } from "@microsoft/teamsfx-api";
-import {
-  isValidProject,
-  InvalidProjectError,
-  MetadataV3,
-  QuestionNames,
-} from "@microsoft/teamsfx-core";
+import { InvalidProjectError, MetadataV3, QuestionNames } from "@microsoft/teamsfx-core";
+import * as projectSettingsHelper from "@microsoft/teamsfx-core/build/common/projectSettingsHelper";
 import { showError } from "../error/common";
 import { ExtensionSource } from "../error/error";
 import { workspaceUri } from "../globalVariables";
@@ -40,7 +36,7 @@ export async function openPreviewAadFileHandler(args: any[]): Promise<Result<any
     getTriggerFromProperty(args)
   );
   const workspacePath = workspaceUri?.fsPath;
-  const validProject = isValidProject(workspacePath);
+  const validProject = projectSettingsHelper.isValidProject(workspacePath);
   if (!validProject) {
     ExtTelemetry.sendTelemetryErrorEvent(
       TelemetryEvent.PreviewAadManifestFile,

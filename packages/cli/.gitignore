@@ -45,3 +45,4 @@ resource
 templates
 json-schemas
 *.tgz
+tsconfig.tsbuildinfo

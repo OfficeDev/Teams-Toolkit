@@ -11,8 +11,7 @@ import {
   TeamsManifestV1D19,
   TeamsManifestVDevPreview,
 } from "@microsoft/teamsfx-api";
-import chai from "chai";
-import * as sinon from "sinon";
+import { chai, vi } from "vitest";
 import { AppStudioError } from "../../../../src/component/driver/teamsApp/errors";
 import { ValidateManifestArgs } from "../../../../src/component/driver/teamsApp/interfaces/ValidateManifestArgs";
 import { copilotGptManifestUtils } from "../../../../src/component/driver/teamsApp/utils/CopilotGptManifestUtils";
@@ -33,7 +32,7 @@ describe("teamsApp/validateManifest", async () => {
   };
 
   afterEach(() => {
-    sinon.restore();
+    vi.restoreAllMocks();
   });
 
   it("file not found - manifest", async () => {
@@ -179,12 +178,11 @@ describe("teamsApp/validateManifest", async () => {
   });
 
   it("validation error - download failed", async () => {
-    sinon
-      .stub(AppManifestUtils, "validateAgainstSchema")
-      .onFirstCall()
-      .resolves([])
-      .onSecondCall()
-      .throws(new Error("error"));
+    vi.spyOn(AppManifestUtils, "validateAgainstSchema")
+      .mockResolvedValueOnce([])
+      .mockImplementationOnce(() => {
+        throw new Error("error");
+      });
     const args: ValidateManifestArgs = {
       manifestPath:
         "./tests/plugins/resource/appstudio/resources-multi-env/templates/appPackage/v3.manifest.template.json",
@@ -200,9 +198,9 @@ describe("teamsApp/validateManifest", async () => {
   });
 
   it("validation error - localization file validation failed", async () => {
-    sinon
-      .stub(AppManifestUtils, "validateAgainstSchema")
-      .throws(new Error(`Failed to get manifest at url due to: unknown error`));
+    vi.spyOn(AppManifestUtils, "validateAgainstSchema").mockImplementation(() => {
+      throw new Error(`Failed to get manifest at url due to: unknown error`);
+    });
     const args: ValidateManifestArgs = {
       manifestPath:
         "./tests/plugins/resource/appstudio/resources-multi-env/templates/appPackage/v3.manifest.template.json",
@@ -224,7 +222,7 @@ describe("teamsApp/validateManifest", async () => {
     };
 
     afterEach(() => {
-      sinon.restore();
+      vi.restoreAllMocks();
     });
 
     it("should return ok when no additionalLanguages in manifest", async () => {
@@ -268,9 +266,9 @@ describe("teamsApp/validateManifest", async () => {
         },
       } as unknown as TeamsManifestV1D19.TeamsManifestV1D19;
 
-      sinon
-        .stub(manifestUtils, "resolveLocFile")
-        .resolves(err(new SystemError("error", "error", "", "")));
+      vi.spyOn(manifestUtils, "resolveLocFile").mockResolvedValue(
+        err(new SystemError("error", "error", "", ""))
+      );
 
       const result = await teamsAppDriver.validateLocalizatoinFiles(
         args,
@@ -296,10 +294,9 @@ describe("teamsApp/validateManifest", async () => {
     //       "https://developer.microsoft.com/en-us/json-schemas/teams/v1.16/MicrosoftTeams.Localization.schema.json",
     //   };
 
-    //   sinon
-    //     .stub(manifestUtils, "resolveLocFile")
-    //     .resolves(ok(JSON.stringify(fakeLocalizationFile)));
-    //   sinon.stub(ManifestUtil, "validateManifestAgainstSchema").resolves(["Validation error"]);
+    //   vi.spyOn(manifestUtils, "resolveLocFile")
+    //     .mockResolvedValue(ok(JSON.stringify(fakeLocalizationFile)));
+    //   vi.spyOn(ManifestUtil, "validateManifestAgainstSchema").mockResolvedValue(["Validation error"]);
 
     //   const result = await teamsAppDriver.validateLocalizatoinFiles(
     //     args,
@@ -371,12 +368,12 @@ describe("teamsApp/validateManifest", async () => {
       } as unknown as TeamsManifestV1D19.TeamsManifestV1D19;
       const fakeLocalizationFile = {};
 
-      sinon
-        .stub(manifestUtils, "resolveLocFile")
-        .resolves(ok(JSON.stringify(fakeLocalizationFile)));
-      sinon
-        .stub(ManifestUtil, "validateManifestAgainstSchema")
-        .throws(new Error("validation exception"));
+      vi.spyOn(manifestUtils, "resolveLocFile").mockResolvedValue(
+        ok(JSON.stringify(fakeLocalizationFile))
+      );
+      vi.spyOn(ManifestUtil, "validateManifestAgainstSchema").mockImplementation(() => {
+        throw new Error("validation exception");
+      });
 
       const result = await teamsAppDriver.validateLocalizatoinFiles(
         args,
@@ -392,9 +389,9 @@ describe("teamsApp/validateManifest", async () => {
     it("should not throw error if schema does not have patternProperties", async () => {
       const args: ValidateManifestArgs = { manifestPath: "fakepath" };
       const manifest = { localizationInfo: { additionalLanguages: [{ file: "filePath" }] } } as any;
-      sinon.stub(ManifestUtil, "fetchSchema").resolves({} as any);
-      sinon.stub(manifestUtils, "resolveLocFile").resolves(ok("{}"));
-      sinon.stub(ManifestUtil, "validateManifestAgainstSchema").resolves([] as any);
+      vi.spyOn(ManifestUtil, "fetchSchema").mockResolvedValue({} as any);
+      vi.spyOn(manifestUtils, "resolveLocFile").mockResolvedValue(ok("{}"));
+      vi.spyOn(ManifestUtil, "validateManifestAgainstSchema").mockResolvedValue([] as any);
       const result = await teamsAppDriver.validateLocalizatoinFiles(
         args,
         mockedDriverContext,
@@ -417,9 +414,9 @@ describe("teamsApp/validateManifest", async () => {
         "activities.activityTypes[0].description": "aa",
       };
 
-      sinon
-        .stub(manifestUtils, "resolveLocFile")
-        .resolves(ok(JSON.stringify(fakeLocalizationFile)));
+      vi.spyOn(manifestUtils, "resolveLocFile").mockResolvedValue(
+        ok(JSON.stringify(fakeLocalizationFile))
+      );
       const result = await teamsAppDriver.validateLocalizatoinFiles(
         args,
         mockedDriverContext,
@@ -443,18 +440,18 @@ describe("teamsApp/validateManifest", async () => {
         ],
       };
 
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(teamsManifest));
-      sinon.stub(AppManifestUtils, "validateAgainstSchema").resolves([]);
-      sinon.stub(pluginManifestUtils, "validateAgainstSchema").resolves(
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(teamsManifest));
+      vi.spyOn(AppManifestUtils, "validateAgainstSchema").mockResolvedValue([]);
+      vi.spyOn(pluginManifestUtils, "validateAgainstSchema").mockResolvedValue(
         ok({
           id: "fakeId",
           filePath: "fakeFile",
           validationResult: ["error1"],
         })
       );
-      sinon.stub(pluginManifestUtils, "logValidationErrors").returns("errorMessage1");
+      vi.spyOn(pluginManifestUtils, "logValidationErrors").mockReturnValue("errorMessage1");
 
-      sinon.stub(copilotGptManifestUtils, "validateAgainstSchema").resolves(
+      vi.spyOn(copilotGptManifestUtils, "validateAgainstSchema").mockResolvedValue(
         ok({
           id: "fakeId",
           filePath: "fakeFile",
@@ -469,7 +466,7 @@ describe("teamsApp/validateManifest", async () => {
           skillValidationResult: [],
         })
       );
-      sinon.stub(copilotGptManifestUtils, "logValidationErrors").returns("errorMessage2");
+      vi.spyOn(copilotGptManifestUtils, "logValidationErrors").mockReturnValue("errorMessage2");
 
       const args: ValidateManifestArgs = {
         manifestPath:
@@ -502,18 +499,18 @@ describe("teamsApp/validateManifest", async () => {
         ],
       };
 
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(teamsManifest));
-      sinon.stub(AppManifestUtils, "validateAgainstSchema").resolves([]);
-      sinon.stub(pluginManifestUtils, "validateAgainstSchema").resolves(
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(teamsManifest));
+      vi.spyOn(AppManifestUtils, "validateAgainstSchema").mockResolvedValue([]);
+      vi.spyOn(pluginManifestUtils, "validateAgainstSchema").mockResolvedValue(
         ok({
           id: "fakeId",
           filePath: "fakeFile",
           validationResult: ["error1"],
         })
       );
-      sinon.stub(pluginManifestUtils, "logValidationErrors").returns("errorMessage1");
+      vi.spyOn(pluginManifestUtils, "logValidationErrors").mockReturnValue("errorMessage1");
 
-      sinon.stub(copilotGptManifestUtils, "validateAgainstSchema").resolves(
+      vi.spyOn(copilotGptManifestUtils, "validateAgainstSchema").mockResolvedValue(
         ok({
           id: "fakeId",
           filePath: "fakeFile",
@@ -528,7 +525,7 @@ describe("teamsApp/validateManifest", async () => {
           skillValidationResult: [],
         })
       );
-      sinon.stub(copilotGptManifestUtils, "logValidationErrors").returns("errorMessage2");
+      vi.spyOn(copilotGptManifestUtils, "logValidationErrors").mockReturnValue("errorMessage2");
 
       const args: ValidateManifestArgs = {
         manifestPath:
@@ -561,18 +558,18 @@ describe("teamsApp/validateManifest", async () => {
         ],
       };
 
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(teamsManifest));
-      sinon.stub(AppManifestUtils, "validateAgainstSchema").resolves([]);
-      sinon.stub(pluginManifestUtils, "validateAgainstSchema").resolves(
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(teamsManifest));
+      vi.spyOn(AppManifestUtils, "validateAgainstSchema").mockResolvedValue([]);
+      vi.spyOn(pluginManifestUtils, "validateAgainstSchema").mockResolvedValue(
         ok({
           id: "fakeId",
           filePath: "fakeFile",
           validationResult: ["error1"],
         })
       );
-      sinon.stub(pluginManifestUtils, "logValidationErrors").returns("errorMessage1");
+      vi.spyOn(pluginManifestUtils, "logValidationErrors").mockReturnValue("errorMessage1");
 
-      sinon.stub(copilotGptManifestUtils, "validateAgainstSchema").resolves(
+      vi.spyOn(copilotGptManifestUtils, "validateAgainstSchema").mockResolvedValue(
         ok({
           id: "fakeId",
           filePath: "fakeFile",
@@ -587,7 +584,7 @@ describe("teamsApp/validateManifest", async () => {
           skillValidationResult: [],
         })
       );
-      sinon.stub(copilotGptManifestUtils, "logValidationErrors").returns("errorMessage2");
+      vi.spyOn(copilotGptManifestUtils, "logValidationErrors").mockReturnValue("errorMessage2");
 
       const args: ValidateManifestArgs = {
         manifestPath:
@@ -620,18 +617,18 @@ describe("teamsApp/validateManifest", async () => {
         ],
       };
 
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(teamsManifest));
-      sinon.stub(ManifestUtil, "validateManifest").resolves([]);
-      sinon.stub(pluginManifestUtils, "validateAgainstSchema").resolves(
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(teamsManifest));
+      vi.spyOn(ManifestUtil, "validateManifest").mockResolvedValue([]);
+      vi.spyOn(pluginManifestUtils, "validateAgainstSchema").mockResolvedValue(
         ok({
           id: "fakeId",
           filePath: "fakeFile",
           validationResult: ["error1"],
         })
       );
-      sinon.stub(pluginManifestUtils, "logValidationErrors").returns("errorMessage1");
+      vi.spyOn(pluginManifestUtils, "logValidationErrors").mockReturnValue("errorMessage1");
 
-      sinon.stub(copilotGptManifestUtils, "validateAgainstSchema").resolves(
+      vi.spyOn(copilotGptManifestUtils, "validateAgainstSchema").mockResolvedValue(
         ok({
           id: "fakeId",
           filePath: "fakeFile",
@@ -646,7 +643,7 @@ describe("teamsApp/validateManifest", async () => {
           ],
         })
       );
-      sinon.stub(copilotGptManifestUtils, "logValidationErrors").returns("errorMessage2");
+      vi.spyOn(copilotGptManifestUtils, "logValidationErrors").mockReturnValue("errorMessage2");
 
       const args: ValidateManifestArgs = {
         manifestPath:
@@ -671,18 +668,18 @@ describe("teamsApp/validateManifest", async () => {
         manifestVersion: "1.19",
       } as TeamsManifestV1D19.TeamsManifestV1D19;
 
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(teamsManifest));
-      sinon.stub(AppManifestUtils, "validateAgainstSchema").resolves([]);
-      sinon.stub(pluginManifestUtils, "validateAgainstSchema").resolves(
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(teamsManifest));
+      vi.spyOn(AppManifestUtils, "validateAgainstSchema").mockResolvedValue([]);
+      vi.spyOn(pluginManifestUtils, "validateAgainstSchema").mockResolvedValue(
         ok({
           id: "fakeId",
           filePath: "fakeFile",
           validationResult: ["error1"],
         })
       );
-      sinon.stub(pluginManifestUtils, "logValidationErrors").returns("errorMessage1");
+      vi.spyOn(pluginManifestUtils, "logValidationErrors").mockReturnValue("errorMessage1");
 
-      sinon.stub(copilotGptManifestUtils, "validateAgainstSchema").resolves(
+      vi.spyOn(copilotGptManifestUtils, "validateAgainstSchema").mockResolvedValue(
         ok({
           id: "fakeId",
           filePath: "fakeFile",
@@ -697,7 +694,7 @@ describe("teamsApp/validateManifest", async () => {
           skillValidationResult: [],
         })
       );
-      sinon.stub(copilotGptManifestUtils, "logValidationErrors").returns("errorMessage2");
+      vi.spyOn(copilotGptManifestUtils, "logValidationErrors").mockReturnValue("errorMessage2");
 
       const args: ValidateManifestArgs = {
         manifestPath:
@@ -727,21 +724,21 @@ describe("teamsApp/validateManifest", async () => {
         ],
       };
 
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(teamsManifest));
-      sinon.stub(AppManifestUtils, "validateAgainstSchema").resolves([]);
-      sinon.stub(pluginManifestUtils, "validateAgainstSchema").resolves(
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(teamsManifest));
+      vi.spyOn(AppManifestUtils, "validateAgainstSchema").mockResolvedValue([]);
+      vi.spyOn(pluginManifestUtils, "validateAgainstSchema").mockResolvedValue(
         ok({
           id: "fakeId",
           filePath: "fakeFile",
           validationResult: ["error1"],
         })
       );
-      sinon.stub(pluginManifestUtils, "logValidationErrors").returns("errorMessage1");
+      vi.spyOn(pluginManifestUtils, "logValidationErrors").mockReturnValue("errorMessage1");
 
-      sinon
-        .stub(copilotGptManifestUtils, "validateAgainstSchema")
-        .resolves(err(new SystemError("testError", "testError", "", "")));
-      sinon.stub(copilotGptManifestUtils, "logValidationErrors").returns("errorMessage2");
+      vi.spyOn(copilotGptManifestUtils, "validateAgainstSchema").mockResolvedValue(
+        err(new SystemError("testError", "testError", "", ""))
+      );
+      vi.spyOn(copilotGptManifestUtils, "logValidationErrors").mockReturnValue("errorMessage2");
 
       const args: ValidateManifestArgs = {
         manifestPath:

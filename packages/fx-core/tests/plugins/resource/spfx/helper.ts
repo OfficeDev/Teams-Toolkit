@@ -24,8 +24,8 @@ import {
   ok,
 } from "@microsoft/teamsfx-api";
 import faker from "faker";
-import sinon from "sinon";
 import { QuestionNames } from "../../../../src/question";
+import { vi } from "vitest";
 
 export class TestHelper {
   static getFakePluginContext(
@@ -116,7 +116,7 @@ export function mockM365TokenProvider(): M365TokenProvider {
     tid: faker.datatype.uuid(),
   };
 
-  provider.getAccessToken = sinon.stub().returns(ok("token"));
-  provider.getJsonObject = sinon.stub().returns(ok(mockTokenObject));
+  provider.getAccessToken = vi.fn().mockReturnValue(ok("token"));
+  provider.getJsonObject = vi.fn().mockReturnValue(ok(mockTokenObject));
   return provider;
 }

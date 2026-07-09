@@ -1,0 +1,74 @@
+[
+  {
+    "name": "title",
+    "type": "String",
+    "isQueryable": "true",
+    "isSearchable": "true",
+    "isRetrievable": "true",
+    "labels": ["title"]
+  },
+  {
+    "name": "owner",
+    "type": "String",
+    "isQueryable": "true",
+    "isSearchable": "true",
+    "isRetrievable": "true"
+  },
+  {
+    "name": "repo",
+    "type": "String",
+    "isQueryable": "true",
+    "isSearchable": "true",
+    "isRetrievable": "true"
+  },
+  {
+    "name": "assignedTo",
+    "type": "String",
+    "isQueryable": "true",
+    "isSearchable": "true",
+    "isRetrievable": "true"
+  },
+  {
+    "name": "issueNumber",
+    "type": "String",
+    "isQueryable": "true",
+    "isSearchable": "true",
+    "isRetrievable": "true"
+  },
+  {
+    "name": "state",
+    "type": "String",
+    "isQueryable": "true",
+    "isSearchable": "true",
+    "isRetrievable": "true"
+  },
+  {
+    "name": "abstract",
+    "type": "String",
+    "isQueryable": "true",
+    "isSearchable": "true",
+    "isRetrievable": "true"
+  },
+  {
+    "name": "author",
+    "type": "String",
+    "isQueryable": "true",
+    "isRetrievable": "true",
+    "isSearchable": "true",
+    "labels": ["createdBy"]
+  },
+  {
+    "name": "lastModified",
+    "type": "dateTime",
+    "isRetrievable": "true",
+    "labels": ["lastModifiedDateTime"]
+  },
+  {
+    "name": "url",
+    "type": "String",
+    "isRetrievable": "true",
+    "isQueryable": "true",
+    "isSearchable": "true",
+    "labels": ["url"]
+  }
+]

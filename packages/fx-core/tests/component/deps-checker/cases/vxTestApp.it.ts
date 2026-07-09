@@ -2,12 +2,10 @@
 // Licensed under the MIT license.
 
 // Use require so we can mock it
-import * as chai from "chai";
 import fs from "fs-extra";
 import mockFs from "mock-fs";
 import * as os from "os";
 import * as path from "path";
-import * as sinon from "sinon";
 import * as tmp from "tmp";
 import { CheckerFactory } from "../../../../src/component/deps-checker/checkerFactory";
 import { DepsType } from "../../../../src/component/deps-checker/depsChecker";
@@ -15,6 +13,7 @@ import { VxTestAppChecker } from "../../../../src/component/deps-checker/interna
 import { isMacOS, isWindows } from "../../../../src/component/deps-checker/util";
 import { TestLogger } from "../adapters/testLogger";
 import { TestTelemetry } from "../adapters/testTelemetry";
+import { chai, vi } from "vitest";
 
 describe("VxTestAppChecker E2E Test", async () => {
   const fakeProjectPath = "fake project path";
@@ -23,14 +22,14 @@ describe("VxTestAppChecker E2E Test", async () => {
     : isMacOS()
       ? "video-extensibility-test-app.app"
       : "video-extensibility-test-app";
-  let sandbox: sinon.SinonSandbox;
+  let sandbox: any;
 
   beforeEach(() => {
-    sandbox = sinon.createSandbox();
+    sandbox = vi;
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     mockFs.restore();
   });
 

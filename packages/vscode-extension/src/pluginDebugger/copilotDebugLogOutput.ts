@@ -304,7 +304,7 @@ export class CopilotDebugLog {
     const functionsSelectedForInvocationCount = this.functionsSelectedForInvocation?.length ?? 0;
     const failedActionExecutionsCount =
       this.functionExecutions?.filter(
-        (execution) => execution.executionStatus.responseStatus >= 400
+        (execution) => (execution?.executionStatus?.responseStatus ?? 0) >= 400
       )?.length ?? 0;
     const successfulActionExecutionsCount =
       (this.functionExecutions?.length ?? 0) - failedActionExecutionsCount;

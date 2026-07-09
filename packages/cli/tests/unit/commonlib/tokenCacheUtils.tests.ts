@@ -2,8 +2,8 @@
 // Licensed under the MIT license.
 
 import { AccountInfo } from "@azure/msal-node";
-import * as chai from "chai";
 import { getAccountByHomeId } from "../../../src/commonlib/common/tokenCacheUtils";
+import { chai } from "vitest";
 
 describe("tokenCacheUtils", () => {
   describe("getAccountByHomeId", () => {

@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 53,
+    "total_steps": 52,
     "created_at": "2026-05-25T02:15:11.183298",
     "name": "Feature Publish to Teams",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2026-05-25T02:15:11.183284",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_c934390d",
+      "plan_r_0624_024810",
       "step_3996ba97",
       "step_db6aacec",
       "step_2d2eb814",
@@ -83,32 +83,6 @@
     "updated_at": "2026-05-25T02:58:10.915889"
   },
   "steps": [
-    {
-      "step_id": "step_c934390d",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 389,
-        "y": 223
-      },
-      "description": "Click on the \"Teams Agents and Apps\" option within the dropdown menu under the \"New Project\" dialog in the Microsoft 365 Agents Toolkit interface.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:389:223:16:5:9c9d2494b56a6a34",
-        "dhash:389:223:96:5:cccca1b15b42a045",
-        "dhash:389:223:0:10:c8c88094b2717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_c934390d",
-      "created_at": "2026-05-25T02:15:11.192884",
-      "plan_id": "plan_a945d127"
-    },
     {
       "step_id": "step_3996ba97",
       "agent": "interaction",

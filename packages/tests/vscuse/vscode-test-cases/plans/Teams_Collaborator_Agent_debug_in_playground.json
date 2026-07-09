@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 16,
+    "total_steps": 15,
     "created_at": "2025-10-24T09:45:44.673927",
     "name": "Teams Collaborator Agent debug in playground",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2025-10-24T09:45:44.673927",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_84ed81dc",
+      "plan_r_0624_024810",
       "step_857cb570",
       "step_6063f1fc",
       "step_a2796d72",
@@ -43,32 +43,6 @@
     "updated_at": "2025-11-18T02:23:17.208466"
   },
   "steps": [
-    {
-      "step_id": "step_84ed81dc",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 358,
-        "y": 216
-      },
-      "description": "Click the \"Apps for Microsoft 365\" option in the dropdown menu under the \"New Project\" modal.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:358:216:16:5:5a5a5a53ac342874",
-        "dhash:358:216:96:5:61dd99144acb1410",
-        "dhash:358:216:0:10:c0c8809290b17071"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_84ed81dc",
-      "created_at": "2025-11-18T01:35:23.802101",
-      "plan_id": "plan_1d45d435"
-    },
     {
       "step_id": "step_857cb570",
       "agent": "interaction",

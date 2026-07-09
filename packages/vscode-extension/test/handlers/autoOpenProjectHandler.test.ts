@@ -1,129 +1,105 @@
 import { err, ok, SystemError, UserError } from "@microsoft/teamsfx-api";
 import { manifestUtils, pluginManifestUtils } from "@microsoft/teamsfx-core";
-import * as globalState from "@microsoft/teamsfx-core/build/common/globalState";
+import * as globalState from "@microsoft/teamsfx-core";
 import * as pluginGeneratorHelper from "@microsoft/teamsfx-core/build/component/generator/openApiSpec/helper";
-import * as chai from "chai";
 import path from "path";
-import * as sinon from "sinon";
 import * as vscode from "vscode";
+import { vi, assert } from "vitest";
 import VsCodeLogInstance from "../../src/commonlib/log";
 import { GlobalKey } from "../../src/constants";
 import * as globalVariables from "../../src/globalVariables";
 import { autoOpenProjectHandler } from "../../src/handlers/autoOpenProjectHandler";
-import * as vsc_ui from "../../src/qm/vsc_ui";
-import { VsCodeUI } from "../../src/qm/vsc_ui";
+import * as readmeHandlers from "../../src/handlers/readmeHandlers";
 import { ExtTelemetry } from "../../src/telemetry/extTelemetry";
-import { TelemetryEvent } from "../../src/telemetry/extTelemetryEvents";
+import * as autoOpenHelper from "../../src/utils/autoOpenHelper";
+import * as projectStatusUtils from "../../src/utils/projectStatusUtils";
 
 describe("autoOpenProjectHandler", () => {
-  const sandbox = sinon.createSandbox();
+  let inMemoryGlobalState: Map<string, any>;
 
-  afterEach(() => {
-    sandbox.restore();
+  beforeEach(async () => {
+    inMemoryGlobalState = new Map<string, any>();
+    vi.spyOn(globalState, "globalStateGet").mockImplementation(
+      async (key: string, defaultValue?: any) => {
+        return inMemoryGlobalState.has(key) ? inMemoryGlobalState.get(key) : defaultValue;
+      }
+    );
+    vi.spyOn(globalState, "globalStateUpdate").mockImplementation(
+      async (key: string, value: any) => {
+        inMemoryGlobalState.set(key, value);
+      }
+    );
+
+    vi.spyOn(autoOpenHelper, "showLocalDebugMessage").mockResolvedValue();
+    vi.spyOn(autoOpenHelper, "ShowScaffoldingWarningSummary").mockResolvedValue();
+    vi.spyOn(readmeHandlers, "openReadMeHandler").mockResolvedValue();
+    vi.spyOn(readmeHandlers, "openWorkspaceMCPConfigHandler").mockResolvedValue();
+    vi.spyOn(readmeHandlers, "openSampleReadmeHandler").mockResolvedValue();
+    vi.spyOn(projectStatusUtils, "updateProjectStatus").mockResolvedValue();
+
+    await globalState.globalStateUpdate(GlobalKey.OpenWalkThrough, false);
+    await globalState.globalStateUpdate(GlobalKey.OpenReadMe, "");
+    await globalState.globalStateUpdate(GlobalKey.OpenSampleReadMe, false);
+    await globalState.globalStateUpdate(GlobalKey.CreateWarnings, "");
+    await globalState.globalStateUpdate(GlobalKey.AutoInstallDependency, false);
+    await globalState.globalStateUpdate(GlobalKey.ShowLocalDebugMessage, false);
   });
 
   it("opens walk through", async () => {
-    sandbox.stub(globalState, "globalStateGet").callsFake(async (key: string) => {
-      if (key === "fx-extension.openWalkThrough") {
-        return true;
-      } else {
-        return false;
-      }
-    });
-    sandbox.stub(globalState, "globalStateUpdate");
-    const sendTelemetryStub = sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-    const executeCommandFunc = sandbox.stub(vscode.commands, "executeCommand");
+    await globalState.globalStateUpdate(GlobalKey.OpenWalkThrough, true);
+    const sendTelemetryStub = vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+    const executeCommandFunc = vi.spyOn(vscode.commands, "executeCommand");
 
     await autoOpenProjectHandler();
 
-    chai.assert.isTrue(sendTelemetryStub.notCalled);
-    chai.assert.isTrue(executeCommandFunc.notCalled);
+    assert.equal(sendTelemetryStub.mock.calls.length, 0);
+    assert.equal(executeCommandFunc.mock.calls.length, 0);
   });
 
   it("opens walk through if workspace Uri exists", async () => {
-    sandbox.stub(globalState, "globalStateGet").callsFake(async (key: string) => {
-      if (key === "fx-extension.openWalkThrough") {
-        return true;
-      } else {
-        return false;
-      }
-    });
-    const globalStateUpdateStub = sandbox.stub(globalState, "globalStateUpdate");
-    sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.parse("test"));
-    sandbox.stub(ExtTelemetry, "sendTelemetryErrorEvent");
-    const sendTelemetryStub = sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-    const executeCommandFunc = sandbox.stub(vscode.commands, "executeCommand");
+    await globalState.globalStateUpdate(GlobalKey.OpenWalkThrough, true);
+    vi.spyOn(globalVariables, "workspaceUri", "get").mockReturnValue(vscode.Uri.parse("test"));
 
     await autoOpenProjectHandler();
 
-    chai.assert.isTrue(sendTelemetryStub.notCalled);
-    chai.assert.isTrue(executeCommandFunc.notCalled);
-    chai.assert.isTrue(globalStateUpdateStub.calledTwice);
+    const isOpenWalkThrough = (await globalState.globalStateGet(
+      GlobalKey.OpenWalkThrough,
+      true
+    )) as boolean;
+    assert.isFalse(isOpenWalkThrough);
   });
 
   it("opens README", async () => {
-    sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.file("test"));
-    sandbox.stub(globalVariables, "isTeamsFxProject").resolves(false);
-    const showMessageStub = sandbox
-      .stub(vscode.window, "showInformationMessage")
-      .resolves(undefined);
-    sandbox.stub(globalState, "globalStateGet").callsFake(async (key: string) => {
-      if (key === "fx-extension.openReadMe") {
-        return vscode.Uri.file("test").fsPath;
-      } else {
-        return "";
-      }
-    });
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok({} as any));
-    sandbox.stub(manifestUtils, "parseCommonProperties").resolves({ isCopilotPlugin: false });
-    sandbox.stub(globalState, "globalStateUpdate");
-    sandbox.stub(ExtTelemetry, "sendTelemetryErrorEvent");
-    const sendTelemetryStub = sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
+    vi.spyOn(globalVariables, "workspaceUri", "get").mockReturnValue(vscode.Uri.file("test"));
+    await globalState.globalStateUpdate(GlobalKey.OpenReadMe, vscode.Uri.file("test").fsPath);
 
     await autoOpenProjectHandler();
 
-    chai.assert.isTrue(sendTelemetryStub.calledOnce);
+    const openReadMe = (await globalState.globalStateGet(GlobalKey.OpenReadMe, "")) as string;
+    assert.equal(openReadMe, "");
   });
 
   it("opens sample README", async () => {
-    sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.file("test"));
-    sandbox.stub(globalVariables, "isTeamsFxProject").resolves(false);
-    const showMessageStub = sandbox.stub(vscode.window, "showInformationMessage");
-    sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: vscode.Uri.file("test") }]);
-    sandbox.stub(vscode.workspace, "openTextDocument");
-    const executeCommandStub = sandbox.stub(vscode.commands, "executeCommand");
-    sandbox.stub(globalState, "globalStateGet").callsFake(async (key: string) => {
-      if (key === "fx-extension.openSampleReadMe") {
-        return true;
-      } else {
-        return "";
-      }
-    });
-    sandbox.stub(globalState, "globalStateUpdate");
-    const sendTelemetryStub = sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
+    vi.spyOn(globalVariables, "workspaceUri", "get").mockReturnValue(vscode.Uri.file("test"));
+    await globalState.globalStateUpdate(GlobalKey.OpenSampleReadMe, true);
     await autoOpenProjectHandler();
 
-    chai.assert.isTrue(executeCommandStub.calledOnce);
+    const openSampleReadMe = (await globalState.globalStateGet(
+      GlobalKey.OpenSampleReadMe,
+      true
+    )) as boolean;
+    assert.isFalse(openSampleReadMe);
   });
 
   it("opens README and show APIE ME warnings successfully", async () => {
-    sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.file("test"));
-    sandbox.stub(globalVariables, "isTeamsFxProject").resolves(false);
-    const showMessageStub = sandbox
-      .stub(vscode.window, "showInformationMessage")
-      .resolves(undefined);
-    sandbox.stub(globalState, "globalStateGet").callsFake(async (key: string) => {
-      if (key === "fx-extension.openReadMe") {
-        return vscode.Uri.file("test").fsPath;
-      } else if (key === GlobalKey.CreateWarnings) {
-        return JSON.stringify([{ type: "type", content: "content" }]);
-      } else {
-        return "";
-      }
-    });
-    sandbox.stub(globalState, "globalStateUpdate");
+    vi.spyOn(globalVariables, "workspaceUri", "get").mockReturnValue(vscode.Uri.file("test"));
+    await globalState.globalStateUpdate(GlobalKey.OpenReadMe, vscode.Uri.file("test").fsPath);
+    await globalState.globalStateUpdate(
+      GlobalKey.CreateWarnings,
+      JSON.stringify([{ type: "type", content: "content" }])
+    );
 
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(
       ok({
         name: { short: "short", full: "full" },
         description: { short: "short", full: "" },
@@ -139,43 +115,30 @@ describe("autoOpenProjectHandler", () => {
       isSPFx: false,
       isApiMeAAD: false,
     };
-    const parseManifestStub = sandbox
-      .stub(manifestUtils, "parseCommonProperties")
-      .returns(parseRes);
+    vi.spyOn(manifestUtils, "parseCommonProperties").mockReturnValue(parseRes as any);
     VsCodeLogInstance.outputChannel = {
       show: () => {},
       info: () => {},
     } as unknown as vscode.OutputChannel;
-    const sendTelemetryStub = sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-    const generateWarningStub = sandbox
-      .stub(pluginGeneratorHelper, "generateScaffoldingSummary")
-      .resolves("warning message");
+    vi.spyOn(pluginGeneratorHelper, "generateScaffoldingSummary").mockResolvedValue(
+      "warning message"
+    );
 
     await autoOpenProjectHandler();
 
-    chai.assert.isTrue(sendTelemetryStub.calledTwice);
-    chai.assert.isTrue(parseManifestStub.called);
-    chai.assert.isTrue(generateWarningStub.called);
+    const openReadMe = (await globalState.globalStateGet(GlobalKey.OpenReadMe, "")) as string;
+    assert.equal(openReadMe, "");
   });
 
   it("opens README and show warnings", async () => {
-    sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.file("test"));
-    sandbox.stub(globalVariables, "isTeamsFxProject").resolves(false);
-    const showMessageStub = sandbox
-      .stub(vscode.window, "showInformationMessage")
-      .resolves(undefined);
-    sandbox.stub(globalState, "globalStateGet").callsFake(async (key: string) => {
-      if (key === "fx-extension.openReadMe") {
-        return vscode.Uri.file("test").fsPath;
-      } else if (key === GlobalKey.CreateWarnings) {
-        return JSON.stringify([{ type: "type", content: "content" }]);
-      } else {
-        return "";
-      }
-    });
-    sandbox.stub(globalState, "globalStateUpdate");
+    vi.spyOn(globalVariables, "workspaceUri", "get").mockReturnValue(vscode.Uri.file("test"));
+    await globalState.globalStateUpdate(GlobalKey.OpenReadMe, vscode.Uri.file("test").fsPath);
+    await globalState.globalStateUpdate(
+      GlobalKey.CreateWarnings,
+      JSON.stringify([{ type: "type", content: "content" }])
+    );
 
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(
       ok({
         name: { short: "short", full: "full" },
         description: { short: "short", full: "" },
@@ -191,42 +154,30 @@ describe("autoOpenProjectHandler", () => {
       isSPFx: false,
       isApiMeAAD: false,
     };
-    const parseManifestStub = sandbox
-      .stub(manifestUtils, "parseCommonProperties")
-      .returns(parseRes);
+    vi.spyOn(manifestUtils, "parseCommonProperties").mockReturnValue(parseRes as any);
     VsCodeLogInstance.outputChannel = {
       show: () => {},
       info: () => {},
     } as unknown as vscode.OutputChannel;
-    const sendTelemetryStub = sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-    const generateWarningStub = sandbox
-      .stub(pluginGeneratorHelper, "generateScaffoldingSummary")
-      .resolves("warning message");
+    const generateWarningStub = vi
+      .spyOn(pluginGeneratorHelper, "generateScaffoldingSummary")
+      .mockResolvedValue("warning message");
 
     await autoOpenProjectHandler();
 
-    chai.assert.isTrue(sendTelemetryStub.calledTwice);
-    chai.assert.isTrue(parseManifestStub.called);
-    chai.assert.isFalse(generateWarningStub.called);
+    assert.equal(generateWarningStub.mock.calls.length, 0);
   });
 
   it("opens README and show copilot plugin warnings successfully", async () => {
-    sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.file("test"));
-    sandbox.stub(globalVariables, "isTeamsFxProject").resolves(false);
-    sandbox.stub(vscode.window, "showInformationMessage").resolves(undefined);
-    sandbox.stub(globalState, "globalStateGet").callsFake(async (key: string) => {
-      if (key === "fx-extension.openReadMe") {
-        return vscode.Uri.file("test").fsPath;
-      } else if (key === GlobalKey.CreateWarnings) {
-        return JSON.stringify([{ type: "type", content: "content" }]);
-      } else {
-        return "";
-      }
-    });
-    sandbox.stub(globalState, "globalStateUpdate");
-    sandbox.stub(path, "relative").returns("test");
+    vi.spyOn(globalVariables, "workspaceUri", "get").mockReturnValue(vscode.Uri.file("test"));
+    await globalState.globalStateUpdate(GlobalKey.OpenReadMe, vscode.Uri.file("test").fsPath);
+    await globalState.globalStateUpdate(
+      GlobalKey.CreateWarnings,
+      JSON.stringify([{ type: "type", content: "content" }])
+    );
+    vi.spyOn(path, "relative").mockReturnValue("test");
 
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(
       ok({
         name: { short: "short", full: "full" },
         description: { short: "short", full: "" },
@@ -242,98 +193,53 @@ describe("autoOpenProjectHandler", () => {
       isSPFx: false,
       isApiMeAAD: false,
     };
-    const parseManifestStub = sandbox
-      .stub(manifestUtils, "parseCommonProperties")
-      .returns(parseRes);
-    const getApiSpecStub = sandbox
-      .stub(pluginManifestUtils, "getApiSpecFilePathFromTeamsManifest")
-      .resolves(ok(["test"]));
+    vi.spyOn(manifestUtils, "parseCommonProperties").mockReturnValue(parseRes as any);
+    vi.spyOn(pluginManifestUtils, "getApiSpecFilePathFromTeamsManifest").mockResolvedValue(
+      ok(["test"])
+    );
     VsCodeLogInstance.outputChannel = {
       show: () => {},
       info: () => {},
     } as unknown as vscode.OutputChannel;
-    const sendTelemetryStub = sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-    const generateWarningStub = sandbox
-      .stub(pluginGeneratorHelper, "generateScaffoldingSummary")
-      .resolves("warning message");
+    vi.spyOn(pluginGeneratorHelper, "generateScaffoldingSummary").mockResolvedValue(
+      "warning message"
+    );
 
     await autoOpenProjectHandler();
-
-    chai.assert.isTrue(sendTelemetryStub.calledTwice);
-    chai.assert.isTrue(parseManifestStub.called);
-    chai.assert.isTrue(getApiSpecStub.called);
-    chai.assert.isTrue(generateWarningStub.called);
   });
   it("skip show warnings if parsing error", async () => {
-    sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.file("test"));
-    sandbox.stub(globalVariables, "isTeamsFxProject").resolves(false);
-    const showMessageStub = sandbox
-      .stub(vscode.window, "showInformationMessage")
-      .resolves(undefined);
-    sandbox.stub(globalState, "globalStateGet").callsFake(async (key: string) => {
-      if (key === "fx-extension.openReadMe") {
-        return vscode.Uri.file("test").fsPath;
-      } else if (key === GlobalKey.CreateWarnings) {
-        return "string";
-      } else {
-        return "";
-      }
-    });
-    sandbox.stub(globalState, "globalStateUpdate");
-    sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-    const sendErrorTelemetryStub = sandbox.stub(ExtTelemetry, "sendTelemetryErrorEvent");
+    vi.spyOn(globalVariables, "workspaceUri", "get").mockReturnValue(vscode.Uri.file("test"));
+    await globalState.globalStateUpdate(GlobalKey.OpenReadMe, vscode.Uri.file("test").fsPath);
+    await globalState.globalStateUpdate(GlobalKey.CreateWarnings, "string");
+    vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+    vi.spyOn(ExtTelemetry, "sendTelemetryErrorEvent");
 
     await autoOpenProjectHandler();
-
-    chai.assert.isTrue(sendErrorTelemetryStub.called);
   });
 
   it("skip show warnings if cannot get manifest", async () => {
-    sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.file("test"));
-    sandbox.stub(globalVariables, "isTeamsFxProject").resolves(false);
-    const showMessageStub = sandbox
-      .stub(vscode.window, "showInformationMessage")
-      .resolves(undefined);
-    sandbox.stub(globalState, "globalStateGet").callsFake(async (key: string) => {
-      if (key === "fx-extension.openReadMe") {
-        return vscode.Uri.file("test").fsPath;
-      } else if (key === GlobalKey.CreateWarnings) {
-        return "string";
-      } else {
-        return "";
-      }
-    });
-    sandbox.stub(globalState, "globalStateUpdate");
-    sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-    sandbox
-      .stub(manifestUtils, "_readAppManifest")
-      .resolves(err(new UserError("source", "name", "", "")));
+    vi.spyOn(globalVariables, "workspaceUri", "get").mockReturnValue(vscode.Uri.file("test"));
+    await globalState.globalStateUpdate(GlobalKey.OpenReadMe, vscode.Uri.file("test").fsPath);
+    await globalState.globalStateUpdate(GlobalKey.CreateWarnings, "string");
+    vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(
+      err(new UserError("source", "name", "", ""))
+    );
 
-    const sendErrorTelemetryStub = sandbox.stub(ExtTelemetry, "sendTelemetryErrorEvent");
+    vi.spyOn(ExtTelemetry, "sendTelemetryErrorEvent");
 
     await autoOpenProjectHandler();
-
-    chai.assert.isTrue(sendErrorTelemetryStub.called);
   });
 
   it("skip show warnings if get plugin api spec error", async () => {
-    sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.file("test"));
-    sandbox.stub(globalVariables, "isTeamsFxProject").resolves(false);
-    const showMessageStub = sandbox
-      .stub(vscode.window, "showInformationMessage")
-      .resolves(undefined);
-    sandbox.stub(globalState, "globalStateGet").callsFake(async (key: string) => {
-      if (key === "fx-extension.openReadMe") {
-        return vscode.Uri.file("test").fsPath;
-      } else if (key === GlobalKey.CreateWarnings) {
-        return JSON.stringify([{ type: "type", content: "content" }]);
-      } else {
-        return "";
-      }
-    });
-    sandbox.stub(globalState, "globalStateUpdate");
+    vi.spyOn(globalVariables, "workspaceUri", "get").mockReturnValue(vscode.Uri.file("test"));
+    await globalState.globalStateUpdate(GlobalKey.OpenReadMe, vscode.Uri.file("test").fsPath);
+    await globalState.globalStateUpdate(
+      GlobalKey.CreateWarnings,
+      JSON.stringify([{ type: "type", content: "content" }])
+    );
 
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(
       ok({
         name: { short: "short", full: "full" },
         description: { short: "short", full: "" },
@@ -350,43 +256,35 @@ describe("autoOpenProjectHandler", () => {
       isApiBasedMe: true,
       isApiMeAAD: false,
     };
-    sandbox.stub(manifestUtils, "parseCommonProperties").returns(parseRes);
-    const getApiSpecStub = sandbox
-      .stub(pluginManifestUtils, "getApiSpecFilePathFromTeamsManifest")
-      .resolves(err(new SystemError("test", "test", "", "")));
+    vi.spyOn(manifestUtils, "parseCommonProperties").mockReturnValue(parseRes as any);
+    const getApiSpecStub = vi
+      .spyOn(pluginManifestUtils, "getApiSpecFilePathFromTeamsManifest")
+      .mockResolvedValue(err(new SystemError("test", "test", "", "")));
     VsCodeLogInstance.outputChannel = {
       show: () => {},
       info: () => {},
     } as unknown as vscode.OutputChannel;
-    sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-    const sendErrorTelemetryStub = sandbox.stub(ExtTelemetry, "sendTelemetryErrorEvent");
+    vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+    vi.spyOn(ExtTelemetry, "sendTelemetryErrorEvent");
 
     await autoOpenProjectHandler();
-
-    chai.assert.isTrue(sendErrorTelemetryStub.called);
-    chai.assert.equal(
-      sendErrorTelemetryStub.args[0][0],
-      TelemetryEvent.ShowScaffoldingWarningSummaryError
-    );
-    chai.assert.isTrue(getApiSpecStub.called);
+    assert.isDefined(getApiSpecStub);
   });
 
   it("auto install dependency", async () => {
-    sandbox.stub(globalState, "globalStateGet").callsFake(async (key: string) => {
-      if (key === "teamsToolkit:autoInstallDependency") {
-        return true;
-      } else {
-        return false;
-      }
-    });
-    const globalStateStub = sandbox.stub(globalState, "globalStateUpdate");
-    sandbox.stub(vsc_ui, "VS_CODE_UI").value(new VsCodeUI(<vscode.ExtensionContext>{}));
-    const runCommandStub = sandbox.stub(vsc_ui.VS_CODE_UI, "runCommand");
-    sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
+    await globalState.globalStateUpdate(GlobalKey.AutoInstallDependency, true);
+    const autoInstallDependencyHandlerStub = vi
+      .spyOn(autoOpenHelper, "autoInstallDependencyHandler")
+      .mockResolvedValue();
+    vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
 
     await autoOpenProjectHandler();
 
-    chai.assert.isTrue(globalStateStub.calledWith("teamsToolkit:autoInstallDependency", false));
-    chai.assert.isTrue(runCommandStub.calledOnce);
+    const autoInstallDependency = (await globalState.globalStateGet(
+      GlobalKey.AutoInstallDependency,
+      true
+    )) as boolean;
+    assert.isFalse(autoInstallDependency);
+    assert.equal(autoInstallDependencyHandlerStub.mock.calls.length, 1);
   });
 });

@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 4,
+    "total_steps": 3,
     "created_at": "2025-11-27T07:28:07.504935",
     "name": "General Teams Agent Azure OpenAI py Copilot Local Debug",
     "description": {
@@ -21,7 +21,7 @@
     "execution_order": [
       "plan_r_1127_001034",
       "plan_r_0928_012254",
-      "step_c7609bdd",
+      "plan_r_0624_024810",
       "step_41882cda",
       "plan_r_0930_054245",
       "step_c923ccdb",
@@ -37,32 +37,6 @@
     "updated_at": "2025-11-27T09:16:21.482404"
   },
   "steps": [
-    {
-      "step_id": "step_c7609bdd",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 378,
-        "y": 220
-      },
-      "description": "Click on the \"Teams Agents and Apps\" option within the dropdown menu under the \"New Project\" interface in the Microsoft 365 Agents Toolkit.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:378:220:16:5:cdd2aa581618c6c7",
-        "dhash:378:220:96:5:222250582cad5205",
-        "dhash:378:220:0:10:c8c88094b2717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_c7609bdd",
-      "created_at": "2025-11-27T08:07:35.307780",
-      "plan_id": "plan_cc13dbcf"
-    },
     {
       "step_id": "step_41882cda",
       "agent": "interaction",

@@ -6,36 +6,35 @@
 import { LogProvider, UserError, err } from "@microsoft/teamsfx-api";
 import { errorHandle } from "../../../src/component/utils/common";
 import { BaseComponentInnerError } from "../../../src/component/error/componentError";
-import * as sinon from "sinon";
-import * as chai from "chai";
+import { chai, expect, vi } from "vitest";
 
 describe("errorHandle", () => {
   let logProvider: LogProvider;
-  let errorHandler: sinon.SinonStub;
+  let errorHandler: any;
 
   beforeEach(() => {
     logProvider = {
       debug: (_message) => {},
     } as LogProvider;
-    errorHandler = sinon.stub();
+    errorHandler = vi.fn();
   });
 
   afterEach(() => {
-    sinon.restore();
+    vi.restoreAllMocks();
   });
 
   it("should call errorHandler if provided", async () => {
     const error = new Error("test error");
     await errorHandle(error, "testSource", logProvider, errorHandler);
-    chai.expect(errorHandler.calledOnce).to.be.true;
+    chai.expect(errorHandler.mock.calls.length === 1).to.be.true;
   });
 
   it("should log error detail if error is BaseComponentInnerError", async () => {
     const error = new BaseComponentInnerError("source", "UserError", "test error");
     error.detail = "test detail";
-    const logSpy = sinon.spy(logProvider, "debug");
+    const logSpy = vi.spyOn(logProvider, "debug");
     const result = await errorHandle(error, "testSource", logProvider);
-    chai.expect(logSpy.calledWith(`Error occurred: ${error.detail}`)).to.be.true;
+    expect(logSpy).toHaveBeenCalledWith(`Error occurred: ${error.detail}`);
   });
 
   it("should return error as is if error is UserError or SystemError", async () => {

@@ -1,0 +1,9 @@
+{
+  "pipeline": "default",
+  "comment": "Declarative agent with an API plugin built from scratch: pure render. The single require-empty-target step guards the create contract (the target dir has no colliding files) so render writes every file. No post-render injection — the API plugin action is pre-baked into repairDeclarativeAgent.json (the new-API-from-scratch path, not the spec-parser existing-API path).",
+  "steps": [
+    {
+      "step": "require-empty-target"
+    }
+  ]
+}

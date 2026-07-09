@@ -252,8 +252,13 @@ export async function resolveMCPOAuthMetadata(
       const mcpServerMetadataUrl = response.data.authorization_servers[0];
       // Transform to RFC 8414 well-known endpoint:
       // https://{domain}/.well-known/oauth-authorization-server{path}
+      // The WHATWG URL parser normalizes a path-less issuer (e.g. "https://mcp.notion.com")
+      // to pathname "/". Appending that "/" would produce a trailing-slash URL
+      // (".../oauth-authorization-server/") that servers like Notion reject with 404, so treat
+      // the root path as empty per RFC 8414.
       const serverUrl = new URL(mcpServerMetadataUrl);
-      resolvedWellKnownUrl = `${serverUrl.protocol}//${serverUrl.host}/.well-known/oauth-authorization-server${serverUrl.pathname}`;
+      const serverPath = serverUrl.pathname === "/" ? "" : serverUrl.pathname;
+      resolvedWellKnownUrl = `${serverUrl.protocol}//${serverUrl.host}/.well-known/oauth-authorization-server${serverPath}`;
     } else {
       throw new Error(getLocalizedString("core.MCPForDA.mcpServerMetadataUrlNotFound"));
     }

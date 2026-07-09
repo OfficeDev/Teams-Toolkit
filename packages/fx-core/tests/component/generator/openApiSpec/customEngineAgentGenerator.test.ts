@@ -1,8 +1,6 @@
 import { ErrorType, ProjectType, SpecParserError } from "@microsoft/m365-spec-parser";
 import { Inputs, ok, Platform, SystemError } from "@microsoft/teamsfx-api";
-import { assert } from "chai";
 import { RestoreFn } from "mocked-env";
-import * as sinon from "sinon";
 import { createContext, setTools } from "../../../../src/common/globalVars";
 import {
   customEngineAgentGeneratorDeps,
@@ -12,16 +10,17 @@ import { TemplateNames } from "../../../../src/component/generator/templates/tem
 import { ActionStartOptions, ProgrammingLanguage, QuestionNames } from "../../../../src/question";
 import { TeamsAgentCapabilityOptions } from "../../../../src/question/scaffold/vsc/CapabilityOptions";
 import { MockTools } from "../../../core/utils";
+import { assert, expect, vi } from "vitest";
 
 const tools = new MockTools();
 
 describe("CustomEngineAgentWithExistingApiSpecGenerator", async () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   before(() => {
     setTools(tools);
   });
   after(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   describe("activate", async () => {
     it("should activate and get correct template name", async () => {
@@ -40,7 +39,7 @@ describe("CustomEngineAgentWithExistingApiSpecGenerator", async () => {
   describe("getTemplateInfos", async () => {
     let mockedEnvRestore: RestoreFn | undefined;
     afterEach(async () => {
-      sandbox.restore();
+      vi.restoreAllMocks();
       if (mockedEnvRestore) {
         mockedEnvRestore();
       }
@@ -71,7 +70,7 @@ describe("CustomEngineAgentWithExistingApiSpecGenerator", async () => {
   });
 
   describe("post", function () {
-    const sandbox = sinon.createSandbox();
+    const sandbox = vi;
     let mockedEnvRestore: RestoreFn | undefined;
 
     before(() => {
@@ -79,7 +78,7 @@ describe("CustomEngineAgentWithExistingApiSpecGenerator", async () => {
     });
 
     afterEach(async () => {
-      sandbox.restore();
+      vi.restoreAllMocks();
       if (mockedEnvRestore) {
         mockedEnvRestore();
       }
@@ -101,15 +100,15 @@ describe("CustomEngineAgentWithExistingApiSpecGenerator", async () => {
         },
       };
       const context = createContext();
-      const generateBasedOnSpec = sandbox
-        .stub(customEngineAgentGeneratorDeps, "generateFilesFromApiSpec")
-        .resolves(ok({}));
+      const generateBasedOnSpec = vi
+        .spyOn(customEngineAgentGeneratorDeps, "generateFilesFromApiSpec")
+        .mockResolvedValue(ok({}));
 
       const generator = new CustomEngineAgentWithExistingApiSpecGenerator();
       const result = await generator.post(context, inputs, "projectPath");
 
       assert.isTrue(result.isOk());
-      assert.isTrue(generateBasedOnSpec.calledOnce);
+      assert.isTrue(generateBasedOnSpec.mock.calls.length === 1);
     });
 
     it("generateCustomCopilot for csharp: success", async () => {
@@ -128,15 +127,15 @@ describe("CustomEngineAgentWithExistingApiSpecGenerator", async () => {
         },
       };
       const context = createContext();
-      const generateBasedOnSpec = sandbox
-        .stub(customEngineAgentGeneratorDeps, "generateFilesFromApiSpec")
-        .resolves(ok({}));
+      const generateBasedOnSpec = vi
+        .spyOn(customEngineAgentGeneratorDeps, "generateFilesFromApiSpec")
+        .mockResolvedValue(ok({}));
 
       const generator = new CustomEngineAgentWithExistingApiSpecGenerator();
       const result = await generator.post(context, inputs, "projectPath");
 
       assert.isTrue(result.isOk());
-      assert.isTrue(generateBasedOnSpec.calledOnce);
+      assert.isTrue(generateBasedOnSpec.mock.calls.length === 1);
     });
 
     it("generateCustomCopilot: CLI with warning", async () => {
@@ -155,15 +154,15 @@ describe("CustomEngineAgentWithExistingApiSpecGenerator", async () => {
         },
       };
       const context = createContext();
-      const generateBasedOnSpec = sandbox
-        .stub(customEngineAgentGeneratorDeps, "generateFilesFromApiSpec")
-        .resolves(ok({}));
+      const generateBasedOnSpec = vi
+        .spyOn(customEngineAgentGeneratorDeps, "generateFilesFromApiSpec")
+        .mockResolvedValue(ok({}));
 
       const generator = new CustomEngineAgentWithExistingApiSpecGenerator();
       const result = await generator.post(context, inputs, "projectPath");
 
       assert.isTrue(result.isOk());
-      assert.isTrue(generateBasedOnSpec.calledOnce);
+      assert.isTrue(generateBasedOnSpec.mock.calls.length === 1);
     });
 
     it("generateCustomCopilot: error", async () => {
@@ -182,18 +181,18 @@ describe("CustomEngineAgentWithExistingApiSpecGenerator", async () => {
         },
       };
       const context = createContext();
-      sandbox
-        .stub(customEngineAgentGeneratorDeps, "generateFilesFromApiSpec")
-        .rejects(new Error("test"));
-      const assembleErrorStub = sandbox
-        .stub(customEngineAgentGeneratorDeps, "assembleError")
-        .returns(new SystemError("ut", "test", "", ""));
+      vi.spyOn(customEngineAgentGeneratorDeps, "generateFilesFromApiSpec").mockRejectedValue(
+        new Error("test")
+      );
+      const assembleErrorStub = vi
+        .spyOn(customEngineAgentGeneratorDeps, "assembleError")
+        .mockReturnValue(new SystemError("ut", "test", "", ""));
 
       const generator = new CustomEngineAgentWithExistingApiSpecGenerator();
       const result = await generator.post(context, inputs, "projectPath");
 
       assert.isTrue(result.isErr());
-      assert.isTrue(assembleErrorStub.calledOnce);
+      assert.isTrue(assembleErrorStub.mock.calls.length === 1);
     });
 
     it("generateCustomCopilot: SpecParserError", async () => {
@@ -213,16 +212,18 @@ describe("CustomEngineAgentWithExistingApiSpecGenerator", async () => {
       };
       const context = createContext();
       const specError = new SpecParserError("test", ErrorType.Unknown);
-      sandbox.stub(customEngineAgentGeneratorDeps, "generateFilesFromApiSpec").rejects(specError);
-      const convertStub = sandbox
-        .stub(customEngineAgentGeneratorDeps, "convertSpecParserErrorToFxError")
-        .returns(new SystemError("ut", "spec-parser", "", ""));
+      vi.spyOn(customEngineAgentGeneratorDeps, "generateFilesFromApiSpec").mockRejectedValue(
+        specError
+      );
+      const convertStub = vi
+        .spyOn(customEngineAgentGeneratorDeps, "convertSpecParserErrorToFxError")
+        .mockReturnValue(new SystemError("ut", "spec-parser", "", ""));
 
       const generator = new CustomEngineAgentWithExistingApiSpecGenerator();
       const result = await generator.post(context, inputs, "projectPath");
 
       assert.isTrue(result.isErr());
-      assert.isTrue(convertStub.calledOnceWithExactly(specError));
+      expect(convertStub).toHaveBeenCalledExactlyOnceWith(specError);
     });
   });
 });

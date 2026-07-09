@@ -34,7 +34,7 @@
     "lint-staged": "^10.5.4",
     "mocha": "^11.0.0",
     "nyc": "^17.1.0",
-    "prettier": "^2.4.1",
+    "prettier": "^3.3.3",
     "quicktype-core-jayzhang": "18.0.16-beta.2025042501",
     "rimraf": "^3.0.0",
     "sinon": "^19.0.0",
@@ -53,7 +53,6 @@
     "test:unit": "npx nyc mocha --no-timeouts --require ts-node/register \"test/**/*.test.ts\"",
     "lint": "eslint \"**/*.ts\"",
     "precommit": "lint-staged",
-    "lint:staged": "lint-staged",
     "convert": "node convert.js"
   },
   "files": [
@@ -64,7 +63,8 @@
   },
   "lint-staged": {
     "*.{js,jsx,css,ts,tsx}": [
-      "npx eslint --cache --fix --quiet"
+      "eslint --cache --fix --quiet",
+      "prettier --cache --write --ignore-unknown"
     ]
   }
 }

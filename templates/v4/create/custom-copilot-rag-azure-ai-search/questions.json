@@ -1,0 +1,6 @@
+{
+  "$schema": "../../schema/questions.schema.json",
+  "questions": [
+    { "use": "llm-service" }
+  ]
+}

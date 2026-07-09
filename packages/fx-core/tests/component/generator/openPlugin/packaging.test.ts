@@ -3,12 +3,10 @@
 
 import { ok, Platform } from "@microsoft/teamsfx-api";
 import AdmZip from "adm-zip";
-import { expect } from "chai";
 import fs from "fs-extra";
 import mockedEnv, { RestoreFn } from "mocked-env";
 import * as os from "os";
 import * as path from "path";
-import sinon from "sinon";
 import { featureFlagManager, FeatureFlags } from "../../../../src/common/featureFlags";
 import { setTools } from "../../../../src/common/globalVars";
 import { CreateAppPackageDriver } from "../../../../src/component/driver/teamsApp/createAppPackage";
@@ -18,6 +16,7 @@ import { importOpenPlugin } from "../../../../src/component/generator/openPlugin
 import { MockedM365Provider, MockTools } from "../../../core/utils";
 import { MockedLogProvider, MockedUserInteraction } from "../../../plugins/solution/util";
 import { scaffoldOpenPluginTemplateFromSource } from "./testTemplateScaffold";
+import { chai, vi } from "vitest";
 
 async function tmp(prefix: string): Promise<string> {
   return await fs.mkdtemp(path.join(os.tmpdir(), prefix));
@@ -47,7 +46,7 @@ describe("openPlugin → teamsApp/zipAppPackage end-to-end", () => {
   let pluginDir: string;
   let projectDir: string;
   let envRestore: RestoreFn | undefined;
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   beforeEach(async () => {
     pluginDir = await tmp("op-pkg-plugin-");
@@ -58,7 +57,7 @@ describe("openPlugin → teamsApp/zipAppPackage end-to-end", () => {
       TEAMSFX_ENV: "dev",
       TEAMS_APP_ID: "00000000-0000-0000-0000-000000000000",
     });
-    sandbox.stub(Generator, "generateTemplate").callsFake(async (ctx, dest) => {
+    vi.spyOn(Generator, "generateTemplate").mockImplementation(async (ctx, dest) => {
       const appName = ctx.templateVariables?.appName ?? "";
       await scaffoldOpenPluginTemplateFromSource(dest, { appName });
       return ok(undefined);
@@ -66,7 +65,7 @@ describe("openPlugin → teamsApp/zipAppPackage end-to-end", () => {
   });
 
   afterEach(async () => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     await fs.remove(pluginDir);
     await fs.remove(projectDir);
     if (envRestore) {
@@ -102,17 +101,19 @@ describe("openPlugin → teamsApp/zipAppPackage end-to-end", () => {
 
     const zip = new AdmZip(args.outputZipPath);
     const entries = zip.getEntries().map((e) => e.entryName);
-    expect(entries).to.include("manifest.json");
-    expect(entries).to.include("color.png");
-    expect(entries).to.include("outline.png");
-    expect(
-      entries.some((e) => e === "skills/hello/SKILL.md" || e === "skills\\hello\\SKILL.md")
-    ).to.equal(true);
-    expect(
-      entries.some(
-        (e) => e === "skills/hello/nested/helper.md" || e === "skills\\hello\\nested\\helper.md"
+    chai.expect(entries).to.include("manifest.json");
+    chai.expect(entries).to.include("color.png");
+    chai.expect(entries).to.include("outline.png");
+    chai
+      .expect(entries.some((e) => e === "skills/hello/SKILL.md" || e === "skills\\hello\\SKILL.md"))
+      .to.equal(true);
+    chai
+      .expect(
+        entries.some(
+          (e) => e === "skills/hello/nested/helper.md" || e === "skills\\hello\\nested\\helper.md"
+        )
       )
-    ).to.equal(true);
+      .to.equal(true);
   });
 
   it("zips skill folders even when TEAMSFX_AGENT_SKILLS is off (Teams manifest agentSkills is unconditional)", async () => {
@@ -145,9 +146,11 @@ describe("openPlugin → teamsApp/zipAppPackage end-to-end", () => {
 
       const zip = new AdmZip(args.outputZipPath);
       const entries = zip.getEntries().map((e) => e.entryName);
-      expect(
-        entries.some((e) => e === "skills/hello/SKILL.md" || e === "skills\\hello\\SKILL.md")
-      ).to.equal(true);
+      chai
+        .expect(
+          entries.some((e) => e === "skills/hello/SKILL.md" || e === "skills\\hello\\SKILL.md")
+        )
+        .to.equal(true);
     } finally {
       featureFlagManager.setBooleanValue(FeatureFlags.AgentSkillsManifest, wasEnabled);
     }
@@ -181,7 +184,7 @@ describe("openPlugin → teamsApp/zipAppPackage end-to-end", () => {
       addTelemetryProperties: () => {},
     };
     const buildRes = (await driver.execute(args, ctx)).result;
-    expect(buildRes.isErr()).to.equal(true);
+    chai.expect(buildRes.isErr()).to.equal(true);
   });
 
   it("returns error when agentSkills folder does not exist", async () => {
@@ -212,6 +215,6 @@ describe("openPlugin → teamsApp/zipAppPackage end-to-end", () => {
       addTelemetryProperties: () => {},
     };
     const buildRes = (await driver.execute(args, ctx)).result;
-    expect(buildRes.isErr()).to.equal(true);
+    chai.expect(buildRes.isErr()).to.equal(true);
   });
 });

@@ -40,9 +40,8 @@ import {
   err,
   ok,
 } from "@microsoft/teamsfx-api";
-import { assert } from "chai";
-import mockedEnv, { RestoreFn } from "mocked-env";
-import sinon from "sinon";
+import { RestoreFn } from "mocked-env";
+import { assert, vi } from "vitest";
 import { setTools } from "../../src/common/globalVars";
 import {
   EmptyOptionError,
@@ -154,22 +153,22 @@ class MockUserInteraction implements UserInteraction {
 const mockUI = new MockUserInteraction();
 
 describe("Question Model - Visitor Test", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   describe("traverse()", () => {
     beforeEach(() => {});
 
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("fail: user cancel", async () => {
       const num = 10;
       const cancelNum = 5;
       const actualSequence: string[] = [];
-      sandbox.stub(mockUI, "inputText").callsFake(async (config: InputTextConfig) => {
+      vi.spyOn(mockUI, "inputText").mockImplementation(async (config: InputTextConfig) => {
         const actualStep = Number(config.name);
         if (actualStep === cancelNum) {
           return err(new UserCancelError());
@@ -199,7 +198,7 @@ describe("Question Model - Visitor Test", () => {
 
     it("success: flat sequence", async () => {
       const actualSequence: string[] = [];
-      sandbox.stub(mockUI, "inputText").callsFake(async (config: InputTextConfig) => {
+      vi.spyOn(mockUI, "inputText").mockImplementation(async (config: InputTextConfig) => {
         actualSequence.push(config.name);
         const actualStep = Number(config.name);
         assert(config.step === actualStep);
@@ -226,7 +225,7 @@ describe("Question Model - Visitor Test", () => {
 
     it("success: auto skip single option select", async () => {
       const actualSequence: string[] = [];
-      sandbox.stub(mockUI, "selectOption").callsFake(async (config: SingleSelectConfig) => {
+      vi.spyOn(mockUI, "selectOption").mockImplementation(async (config: SingleSelectConfig) => {
         actualSequence.push(config.name);
         return ok({ type: "success", result: `mocked value of ${config.name}` });
       });
@@ -258,7 +257,7 @@ describe("Question Model - Visitor Test", () => {
 
     it("success: auto skip single option select with skipSingleOption being a function ", async () => {
       const actualSequence: string[] = [];
-      sandbox.stub(mockUI, "selectOption").callsFake(async (config: SingleSelectConfig) => {
+      vi.spyOn(mockUI, "selectOption").mockImplementation(async (config: SingleSelectConfig) => {
         actualSequence.push(config.name);
         return ok({ type: "success", result: `mocked value of ${config.name}` });
       });
@@ -294,18 +293,16 @@ describe("Question Model - Visitor Test", () => {
       const actualSequence: string[] = [];
       let backed = false;
       const inputs = createInputs();
-      sandbox
-        .stub(mockUI, "selectOption")
-        .callsFake(
-          async (config: SingleSelectConfig): Promise<Result<SingleSelectResult, FxError>> => {
-            actualSequence.push(config.name);
-            if (config.name === "3" && !backed) {
-              backed = true;
-              return ok({ type: "back" });
-            }
-            return ok({ type: "success", result: `mocked value of ${config.name}` });
+      vi.spyOn(mockUI, "selectOption").mockImplementation(
+        async (config: SingleSelectConfig): Promise<Result<SingleSelectResult, FxError>> => {
+          actualSequence.push(config.name);
+          if (config.name === "3" && !backed) {
+            backed = true;
+            return ok({ type: "back" });
           }
-        );
+          return ok({ type: "success", result: `mocked value of ${config.name}` });
+        }
+      );
       const root: IQTreeNode = {
         data: { type: "group" },
         children: [
@@ -330,18 +327,16 @@ describe("Question Model - Visitor Test", () => {
       const actualSequence: string[] = [];
       const inputs = createInputs();
       let count = 0;
-      sandbox
-        .stub(mockUI, "selectOption")
-        .callsFake(
-          async (config: SingleSelectConfig): Promise<Result<SingleSelectResult, FxError>> => {
-            actualSequence.push(config.name);
-            count++;
-            if (count >= 3) {
-              return ok({ type: "back" });
-            }
-            return ok({ type: "success", result: `mocked value of ${config.name}` });
+      vi.spyOn(mockUI, "selectOption").mockImplementation(
+        async (config: SingleSelectConfig): Promise<Result<SingleSelectResult, FxError>> => {
+          actualSequence.push(config.name);
+          count++;
+          if (count >= 3) {
+            return ok({ type: "back" });
           }
-        );
+          return ok({ type: "success", result: `mocked value of ${config.name}` });
+        }
+      );
       const expectedSequence: string[] = ["1", "2", "3", "2", "1"];
       const root: IQTreeNode = {
         data: { type: "group" },
@@ -367,22 +362,20 @@ describe("Question Model - Visitor Test", () => {
       const actualSequence: string[] = [];
       const inputs = createInputs();
       let backed = false;
-      sandbox
-        .stub(mockUI, "selectOption")
-        .callsFake(
-          async (config: SingleSelectConfig): Promise<Result<SingleSelectResult, FxError>> => {
-            actualSequence.push(config.name);
-            if (config.name === "3") {
-              if (backed) {
-                return ok({ type: "success", result: "1" });
-              } else {
-                backed = true;
-                return ok({ type: "back" });
-              }
+      vi.spyOn(mockUI, "selectOption").mockImplementation(
+        async (config: SingleSelectConfig): Promise<Result<SingleSelectResult, FxError>> => {
+          actualSequence.push(config.name);
+          if (config.name === "3") {
+            if (backed) {
+              return ok({ type: "success", result: "1" });
+            } else {
+              backed = true;
+              return ok({ type: "back" });
             }
-            return ok({ type: "success", result: "1" });
           }
-        );
+          return ok({ type: "success", result: "1" });
+        }
+      );
       const expectedSequence: string[] = ["1", "3", "1", "3"];
       const question2 = createSingleSelectQuestion("2", ["1"]);
       question2.skipSingleOption = true;
@@ -409,25 +402,21 @@ describe("Question Model - Visitor Test", () => {
     it("success: SingleSelectQuestion, MultiSelectQuestion", async () => {
       const actualSequence: string[] = [];
       const inputs = createInputs();
-      sandbox
-        .stub(mockUI, "selectOption")
-        .callsFake(
-          async (config: SingleSelectConfig): Promise<Result<SingleSelectResult, FxError>> => {
-            actualSequence.push(config.name);
-            return ok({ type: "success", result: (config.options as StaticOptions)[0] });
-          }
-        );
-      sandbox
-        .stub(mockUI, "selectOptions")
-        .callsFake(
-          async (config: MultiSelectConfig): Promise<Result<MultiSelectResult, FxError>> => {
-            actualSequence.push(config.name);
-            return ok({
-              type: "success",
-              result: [(config.options as StaticOptions)[0] as OptionItem],
-            });
-          }
-        );
+      vi.spyOn(mockUI, "selectOption").mockImplementation(
+        async (config: SingleSelectConfig): Promise<Result<SingleSelectResult, FxError>> => {
+          actualSequence.push(config.name);
+          return ok({ type: "success", result: (config.options as StaticOptions)[0] });
+        }
+      );
+      vi.spyOn(mockUI, "selectOptions").mockImplementation(
+        async (config: MultiSelectConfig): Promise<Result<MultiSelectResult, FxError>> => {
+          actualSequence.push(config.name);
+          return ok({
+            type: "success",
+            result: [(config.options as StaticOptions)[0] as OptionItem],
+          });
+        }
+      );
       const root: IQTreeNode = {
         data: { type: "group" },
         children: [],
@@ -474,28 +463,24 @@ describe("Question Model - Visitor Test", () => {
     it("success: node condition", async () => {
       const actualSequence: string[] = [];
       const inputs = createInputs();
-      sandbox
-        .stub(mockUI, "selectOption")
-        .callsFake(
-          async (config: SingleSelectConfig): Promise<Result<SingleSelectResult, FxError>> => {
-            actualSequence.push(config.name);
-            return ok({
-              type: "success",
-              result: (config.options as StaticOptions)[0] as OptionItem,
-            });
-          }
-        );
-      sandbox
-        .stub(mockUI, "selectOptions")
-        .callsFake(
-          async (config: MultiSelectConfig): Promise<Result<MultiSelectResult, FxError>> => {
-            actualSequence.push(config.name);
-            return ok({
-              type: "success",
-              result: [(config.options as StaticOptions)[0] as OptionItem],
-            });
-          }
-        );
+      vi.spyOn(mockUI, "selectOption").mockImplementation(
+        async (config: SingleSelectConfig): Promise<Result<SingleSelectResult, FxError>> => {
+          actualSequence.push(config.name);
+          return ok({
+            type: "success",
+            result: (config.options as StaticOptions)[0] as OptionItem,
+          });
+        }
+      );
+      vi.spyOn(mockUI, "selectOptions").mockImplementation(
+        async (config: MultiSelectConfig): Promise<Result<MultiSelectResult, FxError>> => {
+          actualSequence.push(config.name);
+          return ok({
+            type: "success",
+            result: [(config.options as StaticOptions)[0] as OptionItem],
+          });
+        }
+      );
 
       const expectedSequence: string[] = ["1"];
 
@@ -525,28 +510,24 @@ describe("Question Model - Visitor Test", () => {
     it("success: node condition on OptionItem", async () => {
       const actualSequence: string[] = [];
       const inputs = createInputs();
-      sandbox
-        .stub(mockUI, "selectOption")
-        .callsFake(
-          async (config: SingleSelectConfig): Promise<Result<SingleSelectResult, FxError>> => {
-            actualSequence.push(config.name);
-            return ok({
-              type: "success",
-              result: (config.options as StaticOptions)[0] as OptionItem,
-            });
-          }
-        );
-      sandbox
-        .stub(mockUI, "selectOptions")
-        .callsFake(
-          async (config: MultiSelectConfig): Promise<Result<MultiSelectResult, FxError>> => {
-            actualSequence.push(config.name);
-            return ok({
-              type: "success",
-              result: [(config.options as StaticOptions)[0] as OptionItem],
-            });
-          }
-        );
+      vi.spyOn(mockUI, "selectOption").mockImplementation(
+        async (config: SingleSelectConfig): Promise<Result<SingleSelectResult, FxError>> => {
+          actualSequence.push(config.name);
+          return ok({
+            type: "success",
+            result: (config.options as StaticOptions)[0] as OptionItem,
+          });
+        }
+      );
+      vi.spyOn(mockUI, "selectOptions").mockImplementation(
+        async (config: MultiSelectConfig): Promise<Result<MultiSelectResult, FxError>> => {
+          actualSequence.push(config.name);
+          return ok({
+            type: "success",
+            result: [(config.options as StaticOptions)[0] as OptionItem],
+          });
+        }
+      );
 
       const expectedSequence: string[] = ["1"];
 
@@ -578,17 +559,15 @@ describe("Question Model - Visitor Test", () => {
     it("pre-defined question will not be count as one step", async () => {
       const actualSequence: string[] = [];
       const inputs = createInputs();
-      sandbox
-        .stub(mockUI, "selectOption")
-        .callsFake(
-          async (config: SingleSelectConfig): Promise<Result<SingleSelectResult, FxError>> => {
-            actualSequence.push(config.name);
-            return ok({ type: "success", result: (config.options as StaticOptions)[0] });
-          }
-        );
-      const multiSelect = sandbox
-        .stub(mockUI, "selectOptions")
-        .callsFake(
+      vi.spyOn(mockUI, "selectOption").mockImplementation(
+        async (config: SingleSelectConfig): Promise<Result<SingleSelectResult, FxError>> => {
+          actualSequence.push(config.name);
+          return ok({ type: "success", result: (config.options as StaticOptions)[0] });
+        }
+      );
+      const multiSelect = vi
+        .spyOn(mockUI, "selectOptions")
+        .mockImplementation(
           async (config: MultiSelectConfig): Promise<Result<MultiSelectResult, FxError>> => {
             actualSequence.push(config.name);
             return ok({
@@ -620,14 +599,14 @@ describe("Question Model - Visitor Test", () => {
       };
       const res = await traverse(root, inputs, mockUI);
       assert.isTrue(res.isOk());
-      assert.equal((multiSelect.lastCall.args[0] as MultiSelectConfig).step, 1);
+      assert.equal((multiSelect.mock.lastCall![0] as MultiSelectConfig).step, 1);
     });
 
     it("success: complex go back", async () => {
       const actualSequence: string[] = [];
       const inputs = createInputs();
       let skiped = false;
-      sandbox.stub(mockUI, "inputText").callsFake(async (config: InputTextConfig) => {
+      vi.spyOn(mockUI, "inputText").mockImplementation(async (config: InputTextConfig) => {
         actualSequence.push(config.name);
         if (config.name === "3" && !skiped) {
           skiped = true;
@@ -662,7 +641,7 @@ describe("Question Model - Visitor Test", () => {
     });
 
     it("single selection", async () => {
-      sandbox.stub(mockUI, "selectOption").resolves(ok({ type: "success", result: "1" }));
+      vi.spyOn(mockUI, "selectOption").mockResolvedValue(ok({ type: "success", result: "1" }));
       const question: SingleSelectQuestion = {
         type: "singleSelect",
         name: "test",
@@ -677,7 +656,7 @@ describe("Question Model - Visitor Test", () => {
     });
 
     it("single selection empty options", async () => {
-      sandbox.stub(mockUI, "selectOption").resolves(ok({ type: "success", result: "1" }));
+      vi.spyOn(mockUI, "selectOption").mockResolvedValue(ok({ type: "success", result: "1" }));
       const question: SingleSelectQuestion = {
         type: "singleSelect",
         name: "test",
@@ -693,7 +672,9 @@ describe("Question Model - Visitor Test", () => {
     });
 
     it("single file or input", async () => {
-      sandbox.stub(mockUI, "selectFileOrInput").resolves(ok({ type: "success", result: "file" }));
+      vi.spyOn(mockUI, "selectFileOrInput").mockResolvedValue(
+        ok({ type: "success", result: "file" })
+      );
       const question: SingleFileOrInputQuestion = {
         type: "singleFileOrText",
         name: "test",
@@ -715,7 +696,9 @@ describe("Question Model - Visitor Test", () => {
     });
 
     it("single file or input with validation and additional validation", async () => {
-      sandbox.stub(mockUI, "selectFileOrInput").resolves(ok({ type: "success", result: "file" }));
+      vi.spyOn(mockUI, "selectFileOrInput").mockResolvedValue(
+        ok({ type: "success", result: "file" })
+      );
       const validation: StringValidation = {
         equals: "test",
       };
@@ -742,7 +725,7 @@ describe("Question Model - Visitor Test", () => {
 
     it("the order of condition visit should be in DFS order", async () => {
       const actualSequence: string[] = [];
-      sandbox.stub(mockUI, "inputText").callsFake(async (config: InputTextConfig) => {
+      vi.spyOn(mockUI, "inputText").mockImplementation(async (config: InputTextConfig) => {
         actualSequence.push(config.name);
         return ok({ type: "success", result: config.name });
       });
@@ -795,7 +778,7 @@ describe("Question Model - Visitor Test", () => {
       let firstVisit5 = true;
       let firstCheck4 = true;
       let visit3Num = 1;
-      sandbox.stub(mockUI, "inputText").callsFake(async (config: InputTextConfig) => {
+      vi.spyOn(mockUI, "inputText").mockImplementation(async (config: InputTextConfig) => {
         actualSequence.push(config.name);
         if (config.name === "5" && firstVisit5) {
           firstVisit5 = false;
@@ -857,7 +840,7 @@ describe("Question Model - Visitor Test", () => {
     const mockedEnvRestore: RestoreFn = () => {};
     afterEach(() => {
       mockedEnvRestore();
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
     it("should return MissingRequiredInputError for non-interactive mode", async () => {
       const question: TextInputQuestion = {
@@ -950,7 +933,7 @@ describe("Question Model - Visitor Test", () => {
       assert.isTrue(res.isErr() && res.error instanceof InputValidationError);
     });
     it("selectFiles", async () => {
-      sandbox.stub(tools.ui, "selectFiles").resolves(ok({ type: "success", result: ["a"] }));
+      vi.spyOn(tools.ui, "selectFiles").mockResolvedValue(ok({ type: "success", result: ["a"] }));
       const question: MultiFileQuestion = {
         type: "multiFile",
         name: "test",
@@ -963,9 +946,9 @@ describe("Question Model - Visitor Test", () => {
       assert.isTrue(res.isOk() && res.value.type === "success");
     });
     it("selectFile", async () => {
-      const uiStub = sandbox
-        .stub(tools.ui, "selectFile")
-        .resolves(ok({ type: "success", result: "a" }));
+      const uiStub = vi
+        .spyOn(tools.ui, "selectFile")
+        .mockResolvedValue(ok({ type: "success", result: "a" }));
       const question: SingleFileQuestion = {
         type: "singleFile",
         name: "test",
@@ -979,7 +962,7 @@ describe("Question Model - Visitor Test", () => {
         platform: Platform.VSCode,
       };
       let res = await questionVisitor(question, tools.ui, inputs);
-      assert.isTrue(uiStub.args[0][0].defaultFolder === "./");
+      assert.isTrue(uiStub.mock.calls[0][0].defaultFolder === "./");
       assert.isTrue(res.isOk() && res.value.type === "success");
 
       question.defaultFolder = (inputs: Inputs) => {
@@ -988,14 +971,14 @@ describe("Question Model - Visitor Test", () => {
       res = await questionVisitor(question, tools.ui, inputs);
       assert.isTrue(res.isOk() && res.value.type === "success");
       assert.isTrue(
-        typeof uiStub.args[1][0].defaultFolder === "function" &&
-          (await uiStub.args[1][0].defaultFolder()) === "test"
+        typeof uiStub.mock.calls[1][0].defaultFolder === "function" &&
+          (await uiStub.mock.calls[1][0].defaultFolder()) === "test"
       );
     });
     it("selectFile forwards static possibleFiles to UI", async () => {
-      const uiStub = sandbox
-        .stub(tools.ui, "selectFile")
-        .resolves(ok({ type: "success", result: "a" }));
+      const uiStub = vi
+        .spyOn(tools.ui, "selectFile")
+        .mockResolvedValue(ok({ type: "success", result: "a" }));
       const possibleFiles = [
         { id: "/abs/foo.json", label: "$(file) foo.json", description: "/abs" },
       ];
@@ -1008,12 +991,12 @@ describe("Question Model - Visitor Test", () => {
       const inputs: Inputs = { platform: Platform.VSCode };
       const res = await questionVisitor(question, tools.ui, inputs);
       assert.isTrue(res.isOk());
-      assert.deepEqual(uiStub.args[0][0].possibleFiles, possibleFiles);
+      assert.deepEqual(uiStub.mock.calls[0][0].possibleFiles, possibleFiles);
     });
     it("selectFile resolves async possibleFiles function", async () => {
-      const uiStub = sandbox
-        .stub(tools.ui, "selectFile")
-        .resolves(ok({ type: "success", result: "a" }));
+      const uiStub = vi
+        .spyOn(tools.ui, "selectFile")
+        .mockResolvedValue(ok({ type: "success", result: "a" }));
       const dynamic = [
         { id: "id1", label: "label1" },
         { id: "id2", label: "label2", description: "d" },
@@ -1027,12 +1010,12 @@ describe("Question Model - Visitor Test", () => {
       const inputs: Inputs = { platform: Platform.VSCode };
       const res = await questionVisitor(question, tools.ui, inputs);
       assert.isTrue(res.isOk());
-      assert.deepEqual(uiStub.args[0][0].possibleFiles, dynamic);
+      assert.deepEqual(uiStub.mock.calls[0][0].possibleFiles, dynamic);
     });
     it("selectFile leaves possibleFiles undefined when not provided", async () => {
-      const uiStub = sandbox
-        .stub(tools.ui, "selectFile")
-        .resolves(ok({ type: "success", result: "a" }));
+      const uiStub = vi
+        .spyOn(tools.ui, "selectFile")
+        .mockResolvedValue(ok({ type: "success", result: "a" }));
       const question: SingleFileQuestion = {
         type: "singleFile",
         name: "test",
@@ -1041,10 +1024,10 @@ describe("Question Model - Visitor Test", () => {
       const inputs: Inputs = { platform: Platform.VSCode };
       const res = await questionVisitor(question, tools.ui, inputs);
       assert.isTrue(res.isOk());
-      assert.isUndefined(uiStub.args[0][0].possibleFiles);
+      assert.isUndefined(uiStub.mock.calls[0][0].possibleFiles);
     });
     it("selectFolder", async () => {
-      sandbox.stub(tools.ui, "selectFolder").resolves(ok({ type: "success", result: "a" }));
+      vi.spyOn(tools.ui, "selectFolder").mockResolvedValue(ok({ type: "success", result: "a" }));
       const question: FolderQuestion = {
         type: "folder",
         name: "test",
@@ -1058,7 +1041,9 @@ describe("Question Model - Visitor Test", () => {
       assert.isTrue(res.isOk() && res.value.type === "success");
     });
     it("selectFileOrInput", async () => {
-      sandbox.stub(tools.ui, "selectFileOrInput").resolves(ok({ type: "success", result: "a" }));
+      vi.spyOn(tools.ui, "selectFileOrInput").mockResolvedValue(
+        ok({ type: "success", result: "a" })
+      );
       const question: SingleFileOrInputQuestion = {
         type: "singleFileOrText",
         name: "test",
@@ -1077,7 +1062,7 @@ describe("Question Model - Visitor Test", () => {
       assert.isTrue(res.isOk() && res.value.type === "success");
     });
     it("confirm", async () => {
-      sandbox.stub(tools.ui, "confirm").resolves(ok({ type: "success", result: true }));
+      vi.spyOn(tools.ui, "confirm").mockResolvedValue(ok({ type: "success", result: true }));
       const question: ConfirmQuestion = {
         type: "confirm",
         name: "test",
@@ -1097,14 +1082,14 @@ describe("Question Model - Visitor Test", () => {
         staticOptions: ["a"],
         onDidSelection: () => {},
       };
-      const stub = sandbox.stub(question, "onDidSelection");
+      const stub = vi.spyOn(question, "onDidSelection");
       const inputs: Inputs = {
         platform: Platform.VSCode,
         test: "a",
       };
       const res = await questionVisitor(question, tools.ui, inputs);
       assert.isTrue(res.isOk() && res.value.type === "skip");
-      assert.isTrue(stub.calledOnce);
+      assert.isTrue(stub.mock.calls.length === 1);
     });
     it("skip single select will trigger onDidSelection in non-interactive mode", async () => {
       const question: SingleSelectQuestion = {
@@ -1115,14 +1100,14 @@ describe("Question Model - Visitor Test", () => {
         onDidSelection: () => {},
         skipSingleOption: true,
       };
-      const stub = sandbox.stub(question, "onDidSelection");
+      const stub = vi.spyOn(question, "onDidSelection");
       const inputs: Inputs = {
         platform: Platform.CLI,
         nonInteractive: true,
       };
       const res = await questionVisitor(question, tools.ui, inputs);
       assert.isTrue(res.isOk() && res.value.type === "skip");
-      assert.isTrue(stub.calledOnce);
+      assert.isTrue(stub.mock.calls.length === 1);
     });
     it("skip single select will trigger onDidSelection in interactive mode", async () => {
       const question: SingleSelectQuestion = {
@@ -1133,13 +1118,13 @@ describe("Question Model - Visitor Test", () => {
         onDidSelection: () => {},
         skipSingleOption: true,
       };
-      const stub = sandbox.stub(question, "onDidSelection");
+      const stub = vi.spyOn(question, "onDidSelection");
       const inputs: Inputs = {
         platform: Platform.CLI,
       };
       const res = await questionVisitor(question, tools.ui, inputs);
       assert.isTrue(res.isOk() && res.value.type === "skip");
-      assert.isTrue(stub.calledOnce);
+      assert.isTrue(stub.mock.calls.length === 1);
     });
     it("select default value will trigger onDidSelection", async () => {
       const question: SingleSelectQuestion = {
@@ -1150,14 +1135,14 @@ describe("Question Model - Visitor Test", () => {
         default: "a",
         onDidSelection: () => {},
       };
-      const stub = sandbox.stub(question, "onDidSelection");
+      const stub = vi.spyOn(question, "onDidSelection");
       const inputs: Inputs = {
         platform: Platform.CLI,
         nonInteractive: true,
       };
       const res = await questionVisitor(question, tools.ui, inputs);
       assert.isTrue(res.isOk() && res.value.type === "skip");
-      assert.isTrue(stub.calledOnce);
+      assert.isTrue(stub.mock.calls.length === 1);
     });
   });
   describe("getSingleOption", () => {
@@ -1200,9 +1185,9 @@ describe("Question Model - Visitor Test", () => {
         platform: Platform.VSCode,
         test: "a",
       };
-      const stub = sandbox.stub(question, "onDidSelection");
+      const stub = vi.spyOn(question, "onDidSelection");
       singleSelectCallback(question, { id: "a", label: "" }, inputs, ["a"]);
-      assert.isTrue(stub.calledOnce);
+      assert.isTrue(stub.mock.calls.length === 1);
     });
     it("option is string[]", async () => {
       const question: SingleSelectQuestion = {
@@ -1216,9 +1201,9 @@ describe("Question Model - Visitor Test", () => {
         platform: Platform.VSCode,
         test: "a",
       };
-      const stub = sandbox.stub(question, "onDidSelection");
+      const stub = vi.spyOn(question, "onDidSelection");
       singleSelectCallback(question, "a", inputs, ["a"]);
-      assert.isTrue(stub.calledOnce);
+      assert.isTrue(stub.mock.calls.length === 1);
     });
     it("option is OptionItem[]", async () => {
       const question: SingleSelectQuestion = {
@@ -1232,9 +1217,9 @@ describe("Question Model - Visitor Test", () => {
         platform: Platform.VSCode,
         test: "a",
       };
-      const stub = sandbox.stub(question, "onDidSelection");
+      const stub = vi.spyOn(question, "onDidSelection");
       singleSelectCallback(question, "a", inputs, [{ id: "a", label: "" }]);
-      assert.isTrue(stub.calledOnce);
+      assert.isTrue(stub.mock.calls.length === 1);
     });
     it("answer not match in options", async () => {
       const question: SingleSelectQuestion = {
@@ -1248,9 +1233,9 @@ describe("Question Model - Visitor Test", () => {
         platform: Platform.VSCode,
         test: "a",
       };
-      const stub = sandbox.stub(question, "onDidSelection");
+      const stub = vi.spyOn(question, "onDidSelection");
       singleSelectCallback(question, "b", inputs, ["a"]);
-      assert.isTrue(stub.notCalled);
+      assert.isTrue(stub.mock.calls.length === 0);
     });
   });
 

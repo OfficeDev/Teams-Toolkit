@@ -1,10 +1,9 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { assert } from "chai";
 import os from "os";
 import path from "path";
-import { vi } from "vitest";
+import { assert, vi } from "vitest";
 
 vi.mock("@microsoft/kiota", () => ({
   setKiotaConfig: vi.fn(),

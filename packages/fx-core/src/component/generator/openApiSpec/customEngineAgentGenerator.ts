@@ -16,10 +16,9 @@ import { generateFilesFromApiSpec, getTemplateInfosFromApiSpec } from "./common"
 import { convertSpecParserErrorToFxError } from "./helper";
 
 export const customEngineAgentGeneratorDeps = {
-  assembleError,
-  convertSpecParserErrorToFxError,
   generateFilesFromApiSpec,
-  getTemplateInfosFromApiSpec,
+  convertSpecParserErrorToFxError,
+  assembleError,
 };
 
 export class CustomEngineAgentWithExistingApiSpecGenerator extends DefaultTemplateGenerator {
@@ -35,12 +34,7 @@ export class CustomEngineAgentWithExistingApiSpecGenerator extends DefaultTempla
     destinationPath: string,
     actionContext?: ActionContext
   ): Promise<Result<TemplateInfo[], FxError>> {
-    return customEngineAgentGeneratorDeps.getTemplateInfosFromApiSpec(
-      context,
-      inputs,
-      ProjectType.TeamsAi,
-      actionContext
-    );
+    return getTemplateInfosFromApiSpec(context, inputs, ProjectType.TeamsAi, actionContext);
   }
 
   public override async post(

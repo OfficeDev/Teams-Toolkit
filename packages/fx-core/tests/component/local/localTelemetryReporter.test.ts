@@ -2,16 +2,12 @@
 // Licensed under the MIT license.
 
 import { FxError, UserError, err, ok } from "@microsoft/teamsfx-api";
-import * as chai from "chai";
-import chaiAsPromised from "chai-as-promised";
 import { performance } from "perf_hooks";
-import * as sinon from "sinon";
+import { chai, vi } from "vitest";
 import {
   LocalTelemetryReporter,
   TelemetryContext,
 } from "../../../src/component/local/localTelemetryReporter";
-
-chai.use(chaiAsPromised);
 
 async function sleep(ms: number) {
   await new Promise((resolve) => setTimeout(resolve, ms));
@@ -235,14 +231,14 @@ describe("localTelemetryReporter", () => {
       const durationSeconds = 0.08;
       const startMillis = 1000;
       const endMillis = startMillis + durationSeconds * 1000;
-      const nowStub = sinon.stub(performance, "now");
+      const nowStub = vi.spyOn(performance, "now");
       try {
         // runWithTelemetryGeneric() calls performance.now four times in this path:
         // start -> start event emit -> end -> end event emit.
-        nowStub.onCall(0).returns(startMillis);
-        nowStub.onCall(1).returns(startMillis + 1);
-        nowStub.onCall(2).returns(endMillis);
-        nowStub.onCall(3).returns(endMillis + 1);
+        nowStub.mockReturnValueOnce(startMillis);
+        nowStub.mockReturnValueOnce(startMillis + 1);
+        nowStub.mockReturnValueOnce(endMillis);
+        nowStub.mockReturnValueOnce(endMillis + 1);
 
         await reporter.runWithTelemetry(testEventName, async () => {
           return ok(undefined);
@@ -252,7 +248,7 @@ describe("localTelemetryReporter", () => {
           .expect(mockedEvents[1].measurements?.["duration"])
           .to.be.closeTo(durationSeconds, 0.000001);
       } finally {
-        nowStub.restore();
+        nowStub.mockRestore();
       }
     });
 
@@ -263,21 +259,21 @@ describe("localTelemetryReporter", () => {
       const event2Start = "event2-start";
 
       // Act
-      const clock = sinon.useFakeTimers();
+      vi.useFakeTimers();
       try {
         const promise1 = reporter.runWithTelemetry(event1, async () => {
           return ok(undefined);
         });
 
-        clock.tick(1);
+        vi.advanceTimersByTime(1);
         await promise1;
 
-        clock.tick(2);
+        vi.advanceTimersByTime(2);
         const promise2 = reporter.runWithTelemetry(event2, async () => {
           return ok(undefined);
         });
 
-        clock.tick(3);
+        vi.advanceTimersByTime(3);
         await promise2;
 
         // Assert
@@ -286,7 +282,7 @@ describe("localTelemetryReporter", () => {
         chai.assert.isTrue(eventTime[event2Start] > eventTime[event1]);
         chai.assert.isTrue(eventTime[event2] > eventTime[event2Start]);
       } finally {
-        clock.restore();
+        vi.useRealTimers();
       }
     });
   });

@@ -1,7 +1,8 @@
+import { vi, assert } from "vitest";
+import { mockValue } from "../mocks/vitestMockUtils";
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import * as sinon from "sinon";
 import * as vscode from "vscode";
 import fs from "fs-extra";
 import { deleteAad } from "../../src/debug/deleteAadHelper";
@@ -10,157 +11,148 @@ import M365TokenInstance from "../../src/commonlib/m365Login";
 import { ok } from "@microsoft/teamsfx-api";
 import { ExtTelemetry } from "../../src/telemetry/extTelemetry";
 import axios from "axios";
-import * as chai from "chai";
 
 describe("delete aad helper", () => {
-  const sandbox = sinon.createSandbox();
-
-  afterEach(() => {
-    sandbox.restore();
-  });
-
   describe("delete aad", () => {
     it("file does not exist", async () => {
-      sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.file("path"));
-      sandbox.stub(fs, "existsSync").returns(false);
+      mockValue(globalVariables, "workspaceUri", vscode.Uri.file("path"));
+      vi.spyOn(fs, "existsSync").mockReturnValue(false);
       const res = await deleteAad();
-      chai.assert.isTrue(res);
+      assert.isTrue(res);
     });
 
     it("no aad id", async () => {
-      sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.file("path"));
-      sandbox.stub(fs, "existsSync").returns(true);
-      sandbox.stub(fs, "readFileSync").returns("{}");
+      mockValue(globalVariables, "workspaceUri", vscode.Uri.file("path"));
+      vi.spyOn(fs, "existsSync").mockReturnValue(true);
+      vi.spyOn(fs, "readFileSync").mockReturnValue("{}");
       const res = await deleteAad();
-      chai.assert.isTrue(res);
+      assert.isTrue(res);
     });
 
     it("normal test account", async () => {
-      sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.file("path"));
-      sandbox.stub(fs, "existsSync").returns(true);
-      sandbox.stub(fs, "readFileSync").returns("BOT_ID=botId\n");
-      sandbox.stub(M365TokenInstance, "getCachedAccountInfo").returns({
+      mockValue(globalVariables, "workspaceUri", vscode.Uri.file("path"));
+      vi.spyOn(fs, "existsSync").mockReturnValue(true);
+      vi.spyOn(fs, "readFileSync").mockReturnValue("BOT_ID=botId\n");
+      vi.spyOn(M365TokenInstance, "getCachedAccountInfo").mockReturnValue({
         username: "test.email.com",
         homeAccountId: "homeAccountId",
         environment: "test",
         tenantId: "tenantId",
         localAccountId: "localAccountId",
       });
-      sandbox
-        .stub(M365TokenInstance, "getAccessToken")
-        .resolves(
-          ok(
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwidW5pcXVlX25hbWUiOiJKb2huIERvZSIsImlhdCI6MTUxNjIzOTAyMn0.Y7_rghuQEaTILkMN_421Cut4myfHIhk3hpvHVbpOvnQ"
-          )
-        );
+      vi.spyOn(M365TokenInstance, "getAccessToken").mockResolvedValue(
+        ok(
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwidW5pcXVlX25hbWUiOiJKb2huIERvZSIsImlhdCI6MTUxNjIzOTAyMn0.Y7_rghuQEaTILkMN_421Cut4myfHIhk3hpvHVbpOvnQ"
+        )
+      );
       const res = await deleteAad();
-      chai.assert.isTrue(res);
+      assert.isTrue(res);
     });
 
     it("no telemetry handler", async () => {
-      sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.file("path"));
-      sandbox.stub(fs, "existsSync").returns(true);
-      sandbox.stub(fs, "readFileSync").returns("BOT_ID=botId\n");
-      sandbox.stub(M365TokenInstance, "getCachedAccountInfo").resolves({ upn: "test.email.com" });
-      sandbox
-        .stub(M365TokenInstance, "getAccessToken")
-        .resolves(
-          ok(
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwidW5pcXVlX25hbWUiOiJ0ZXN0QG1pY3Jvc29mdC5jb20iLCJpYXQiOjE1MTYyMzkwMjJ9.Rejz-cPndtObAYVa3k3Q7BaltQGXY8KRDxRYKyUoHDw"
-          )
-        );
-      sandbox.stub(ExtTelemetry, "sendTelemetryEvent").throws(new Error("test error"));
-      sandbox.stub(ExtTelemetry, "sendTelemetryErrorEvent");
+      mockValue(globalVariables, "workspaceUri", vscode.Uri.file("path"));
+      vi.spyOn(fs, "existsSync").mockReturnValue(true);
+      vi.spyOn(fs, "readFileSync").mockReturnValue("BOT_ID=botId\n");
+      vi.spyOn(M365TokenInstance, "getCachedAccountInfo").mockReturnValue({
+        upn: "test.email.com",
+      });
+      vi.spyOn(M365TokenInstance, "getAccessToken").mockResolvedValue(
+        ok(
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwidW5pcXVlX25hbWUiOiJ0ZXN0QG1pY3Jvc29mdC5jb20iLCJpYXQiOjE1MTYyMzkwMjJ9.Rejz-cPndtObAYVa3k3Q7BaltQGXY8KRDxRYKyUoHDw"
+        )
+      );
+      vi.spyOn(ExtTelemetry, "sendTelemetryEvent").throws(new Error("test error"));
+      vi.spyOn(ExtTelemetry, "sendTelemetryErrorEvent");
       const res = await deleteAad();
-      chai.assert.isFalse(res);
+      assert.isFalse(res);
     });
 
     it("happy path for bot id", async () => {
-      sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.file("path"));
-      sandbox.stub(fs, "existsSync").returns(true);
-      sandbox.stub(fs, "readFileSync").returns("BOT_ID=botId\n");
-      sandbox.stub(fs, "writeFileSync");
-      sandbox.stub(M365TokenInstance, "getCachedAccountInfo").resolves({ upn: "test.email.com" });
-      sandbox
-        .stub(M365TokenInstance, "getAccessToken")
-        .resolves(
-          ok(
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwidW5pcXVlX25hbWUiOiJ0ZXN0QG1pY3Jvc29mdC5jb20iLCJpYXQiOjE1MTYyMzkwMjJ9.Rejz-cPndtObAYVa3k3Q7BaltQGXY8KRDxRYKyUoHDw"
-          )
-        );
-      sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-      sandbox.stub(ExtTelemetry, "sendTelemetryErrorEvent");
+      mockValue(globalVariables, "workspaceUri", vscode.Uri.file("path"));
+      vi.spyOn(fs, "existsSync").mockReturnValue(true);
+      vi.spyOn(fs, "readFileSync").mockReturnValue("BOT_ID=botId\n");
+      vi.spyOn(fs, "writeFileSync").mockImplementation(() => undefined);
+      vi.spyOn(M365TokenInstance, "getCachedAccountInfo").mockResolvedValue({
+        upn: "test.email.com",
+      });
+      vi.spyOn(M365TokenInstance, "getAccessToken").mockResolvedValue(
+        ok(
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwidW5pcXVlX25hbWUiOiJ0ZXN0QG1pY3Jvc29mdC5jb20iLCJpYXQiOjE1MTYyMzkwMjJ9.Rejz-cPndtObAYVa3k3Q7BaltQGXY8KRDxRYKyUoHDw"
+        )
+      );
+      vi.spyOn(ExtTelemetry, "sendTelemetryEvent").mockImplementation(() => {});
+      vi.spyOn(ExtTelemetry, "sendTelemetryErrorEvent").mockImplementation(() => {});
       const fakeAxiosInstance = axios.create();
-      sandbox.stub(axios, "create").returns(fakeAxiosInstance);
-      sandbox.stub(fakeAxiosInstance, "delete").resolves({ data: { status: 204 } });
+      vi.spyOn(axios, "create").mockReturnValue(fakeAxiosInstance);
+      vi.spyOn(fakeAxiosInstance, "delete").mockResolvedValue({ data: { status: 204 } });
       const res = await deleteAad();
-      chai.assert.isTrue(res);
+      assert.isTrue(res);
     });
 
     it("happy path for sso id", async () => {
-      sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.file("path"));
-      sandbox.stub(fs, "existsSync").returns(true);
-      sandbox.stub(fs, "readFileSync").returns("AAD_APP_CLIENT_ID=clientId\n");
-      sandbox.stub(fs, "writeFileSync");
-      sandbox.stub(M365TokenInstance, "getCachedAccountInfo").resolves({ upn: "test.email.com" });
-      sandbox
-        .stub(M365TokenInstance, "getAccessToken")
-        .resolves(
-          ok(
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwidW5pcXVlX25hbWUiOiJ0ZXN0QG1pY3Jvc29mdC5jb20iLCJpYXQiOjE1MTYyMzkwMjJ9.Rejz-cPndtObAYVa3k3Q7BaltQGXY8KRDxRYKyUoHDw"
-          )
-        );
-      sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-      sandbox.stub(ExtTelemetry, "sendTelemetryErrorEvent");
+      mockValue(globalVariables, "workspaceUri", vscode.Uri.file("path"));
+      vi.spyOn(fs, "existsSync").mockReturnValue(true);
+      vi.spyOn(fs, "readFileSync").mockReturnValue("AAD_APP_CLIENT_ID=clientId\n");
+      vi.spyOn(fs, "writeFileSync").mockImplementation(() => undefined);
+      vi.spyOn(M365TokenInstance, "getCachedAccountInfo").mockReturnValue({
+        upn: "test.email.com",
+      });
+      vi.spyOn(M365TokenInstance, "getAccessToken").mockResolvedValue(
+        ok(
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwidW5pcXVlX25hbWUiOiJ0ZXN0QG1pY3Jvc29mdC5jb20iLCJpYXQiOjE1MTYyMzkwMjJ9.Rejz-cPndtObAYVa3k3Q7BaltQGXY8KRDxRYKyUoHDw"
+        )
+      );
+      vi.spyOn(ExtTelemetry, "sendTelemetryEvent").mockImplementation(() => {});
+      vi.spyOn(ExtTelemetry, "sendTelemetryErrorEvent").mockImplementation(() => {});
       const fakeAxiosInstance = axios.create();
-      sandbox.stub(axios, "create").returns(fakeAxiosInstance);
-      sandbox.stub(fakeAxiosInstance, "delete").resolves({ data: { status: 204 } });
+      vi.spyOn(axios, "create").mockReturnValue(fakeAxiosInstance);
+      vi.spyOn(fakeAxiosInstance, "delete").mockResolvedValue({ data: { status: 204 } });
       const res = await deleteAad();
-      chai.assert.isTrue(res);
+      assert.isTrue(res);
     });
 
     it("happy path for bot id and sso id", async () => {
-      sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.file("path"));
-      sandbox.stub(fs, "existsSync").returns(true);
-      sandbox.stub(fs, "readFileSync").returns("BOT_ID=botId\nAAD_APP_CLIENT_ID=clientId\n");
-      sandbox.stub(fs, "writeFileSync");
-      sandbox.stub(M365TokenInstance, "getCachedAccountInfo").resolves({ upn: "test.email.com" });
-      sandbox
-        .stub(M365TokenInstance, "getAccessToken")
-        .resolves(
-          ok(
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwidW5pcXVlX25hbWUiOiJ0ZXN0QG1pY3Jvc29mdC5jb20iLCJpYXQiOjE1MTYyMzkwMjJ9.Rejz-cPndtObAYVa3k3Q7BaltQGXY8KRDxRYKyUoHDw"
-          )
-        );
-      sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-      sandbox.stub(ExtTelemetry, "sendTelemetryErrorEvent");
+      mockValue(globalVariables, "workspaceUri", vscode.Uri.file("path"));
+      vi.spyOn(fs, "existsSync").mockReturnValue(true);
+      vi.spyOn(fs, "readFileSync").mockReturnValue("BOT_ID=botId\nAAD_APP_CLIENT_ID=clientId\n");
+      vi.spyOn(fs, "writeFileSync").mockImplementation(() => undefined);
+      vi.spyOn(M365TokenInstance, "getCachedAccountInfo").mockReturnValue({
+        upn: "test.email.com",
+      });
+      vi.spyOn(M365TokenInstance, "getAccessToken").mockResolvedValue(
+        ok(
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwidW5pcXVlX25hbWUiOiJ0ZXN0QG1pY3Jvc29mdC5jb20iLCJpYXQiOjE1MTYyMzkwMjJ9.Rejz-cPndtObAYVa3k3Q7BaltQGXY8KRDxRYKyUoHDw"
+        )
+      );
+      vi.spyOn(ExtTelemetry, "sendTelemetryEvent").mockImplementation(() => {});
+      vi.spyOn(ExtTelemetry, "sendTelemetryErrorEvent").mockImplementation(() => {});
       const fakeAxiosInstance = axios.create();
-      sandbox.stub(axios, "create").returns(fakeAxiosInstance);
-      sandbox.stub(fakeAxiosInstance, "delete").resolves({ data: { status: 204 } });
+      vi.spyOn(axios, "create").mockReturnValue(fakeAxiosInstance);
+      vi.spyOn(fakeAxiosInstance, "delete").mockResolvedValue({ data: { status: 204 } });
       const res = await deleteAad();
-      chai.assert.isTrue(res);
+      assert.isTrue(res);
     });
 
     it("axios handler error", async () => {
-      sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.file("path"));
-      sandbox.stub(fs, "existsSync").returns(true);
-      sandbox.stub(fs, "readFileSync").returns("BOT_ID=botId\n");
-      sandbox.stub(fs, "writeFileSync");
-      sandbox.stub(M365TokenInstance, "getCachedAccountInfo").resolves({ upn: "test.email.com" });
-      sandbox
-        .stub(M365TokenInstance, "getAccessToken")
-        .resolves(
-          ok(
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwidW5pcXVlX25hbWUiOiJ0ZXN0QG1pY3Jvc29mdC5jb20iLCJpYXQiOjE1MTYyMzkwMjJ9.Rejz-cPndtObAYVa3k3Q7BaltQGXY8KRDxRYKyUoHDw"
-          )
-        );
-      sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-      sandbox.stub(ExtTelemetry, "sendTelemetryErrorEvent");
+      mockValue(globalVariables, "workspaceUri", vscode.Uri.file("path"));
+      vi.spyOn(fs, "existsSync").mockReturnValue(true);
+      vi.spyOn(fs, "readFileSync").mockReturnValue("BOT_ID=botId\n");
+      vi.spyOn(fs, "writeFileSync").mockImplementation(() => undefined);
+      vi.spyOn(M365TokenInstance, "getCachedAccountInfo").mockReturnValue({
+        upn: "test.email.com",
+      });
+      vi.spyOn(M365TokenInstance, "getAccessToken").mockResolvedValue(
+        ok(
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwidW5pcXVlX25hbWUiOiJ0ZXN0QG1pY3Jvc29mdC5jb20iLCJpYXQiOjE1MTYyMzkwMjJ9.Rejz-cPndtObAYVa3k3Q7BaltQGXY8KRDxRYKyUoHDw"
+        )
+      );
+      vi.spyOn(ExtTelemetry, "sendTelemetryEvent").mockImplementation(() => {});
+      vi.spyOn(ExtTelemetry, "sendTelemetryErrorEvent").mockImplementation(() => {});
       const fakeAxiosInstance = axios.create();
-      sandbox.stub(axios, "create").returns(fakeAxiosInstance);
-      sandbox.stub(fakeAxiosInstance, "delete").rejects(new Error("error"));
+      vi.spyOn(axios, "create").mockReturnValue(fakeAxiosInstance);
+      vi.spyOn(fakeAxiosInstance, "delete").mockRejectedValue(new Error("error"));
       const res = await deleteAad();
-      chai.assert.isTrue(res);
+      assert.isTrue(res);
     });
   });
 });

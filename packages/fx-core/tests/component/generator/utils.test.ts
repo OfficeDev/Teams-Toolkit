@@ -1,10 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 import { DeclarativeAgentManifest, Platform, err, ok, signedIn } from "@microsoft/teamsfx-api";
-import { assert } from "chai";
 import mockedEnv from "mocked-env";
-import * as sinon from "sinon";
-import { vi } from "vitest";
+import { assert, expect, vi } from "vitest";
 import packageJson from "../../../package.json";
 import { GraphClient } from "../../../src/client/graphClient";
 import { createContext, setTools } from "../../../src/common/globalVars";
@@ -21,12 +19,12 @@ import {
 import { MockTools } from "../../core/utils";
 
 describe("utils unit test cases", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   const originalPackageVersion = (packageJson as any).version;
   const originalTemplateConfig = JSON.parse(JSON.stringify(templateConfig));
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     vi.restoreAllMocks();
     (packageJson as any).version = originalPackageVersion;
     Object.assign(templateConfig, originalTemplateConfig);
@@ -193,49 +191,65 @@ describe("utils unit test cases", () => {
     assert.isUndefined(result);
   });
 
+  it("should return undefined for getTemplateVSCUrl when useLocalTemplate flag is true even if latest is higher", async () => {
+    (packageJson as any).version = "3.0.0";
+    Object.assign(templateConfig, {
+      useLocalTemplate: true,
+      localVersion: "5.0.0",
+      tagPrefix: "templates@",
+    });
+    const getLatestVersion = () => Promise.resolve("6.0.0");
+    const result = await getTemplateUrl("ts", getLatestVersion, Platform.VSCode);
+    assert.isUndefined(result);
+  });
+
   it("setGeneralSensitivityLabel happy path", async () => {
     const gtools = new MockTools();
     setTools(gtools);
     const context = createContext();
     const manifestPath = "test/manifest.json";
 
-    const tokenStub = sandbox.stub(context.tokenProvider!.m365TokenProvider, "getStatus").resolves(
-      ok({
-        status: signedIn,
-        token: "fake-token",
-      })
-    );
-    const getLabelStub = sandbox.stub(GraphClient.prototype, "getGeneralSentivityLabel").resolves(
-      ok({
-        id: "general-label-id",
-        displayName: "General",
-        name: "General Label",
-        description: "General Label Description",
-      })
-    );
+    const tokenStub = vi
+      .spyOn(context.tokenProvider!.m365TokenProvider, "getStatus")
+      .mockResolvedValue(
+        ok({
+          status: signedIn,
+          token: "fake-token",
+        })
+      );
+    const getLabelStub = vi
+      .spyOn(GraphClient.prototype, "getGeneralSentivityLabel")
+      .mockResolvedValue(
+        ok({
+          id: "general-label-id",
+          displayName: "General",
+          name: "General Label",
+          description: "General Label Description",
+        })
+      );
     const DAManifest = {
       version: "v1.4" as const,
       name: "test-agent",
       description: "test agent description",
     };
 
-    const readStub = sandbox
-      .stub(copilotGptManifestUtils, "readDeclarativeAgentManifestFile")
-      .resolves(ok(DAManifest as DeclarativeAgentManifest));
+    const readStub = vi
+      .spyOn(copilotGptManifestUtils, "readDeclarativeAgentManifestFile")
+      .mockResolvedValue(ok(DAManifest as DeclarativeAgentManifest));
 
-    const writeStub = sandbox
-      .stub(copilotGptManifestUtils, "writeDeclarativeAgentManifestFile")
-      .resolves(ok(undefined));
+    const writeStub = vi
+      .spyOn(copilotGptManifestUtils, "writeDeclarativeAgentManifestFile")
+      .mockResolvedValue(ok(undefined));
 
     await setGeneralSensitivityLabel(context, manifestPath);
 
-    assert.isTrue(tokenStub.calledOnce);
-    assert.isTrue(getLabelStub.calledOnceWith("fake-token"));
-    assert.isTrue(readStub.calledOnceWith(manifestPath));
-    assert.isTrue(writeStub.calledOnce);
+    assert.isTrue(tokenStub.mock.calls.length === 1);
+    expect(getLabelStub).toHaveBeenCalledExactlyOnceWith("fake-token");
+    expect(readStub).toHaveBeenCalledExactlyOnceWith(manifestPath);
+    assert.isTrue(writeStub.mock.calls.length === 1);
 
     // Verify the manifest was updated by checking the writeStub was called correctly
-    assert.equal(writeStub.firstCall.args[1], manifestPath);
+    assert.equal(writeStub.mock.calls[0][1], manifestPath);
 
     const sensitivityLabel = (DAManifest as any).sensitivity_label;
     assert.equal(sensitivityLabel?.id, "general-label-id");
@@ -247,28 +261,28 @@ describe("utils unit test cases", () => {
     const context = createContext();
     const manifestPath = "test/manifest.json";
 
-    sandbox.stub(context, "tokenProvider").value(undefined);
-    const getLabelStub = sandbox
-      .stub(GraphClient.prototype, "getGeneralSentivityLabel")
-      .resolves(err(new Error("Failed to get label") as any));
+    (context as any).tokenProvider = undefined;
+    const getLabelStub = vi
+      .spyOn(GraphClient.prototype, "getGeneralSentivityLabel")
+      .mockResolvedValue(err(new Error("Failed to get label") as any));
     const DAManifest = {
       version: "v1.4" as const,
       name: "test-agent",
       description: "test agent description",
     };
 
-    const readStub = sandbox
-      .stub(copilotGptManifestUtils, "readDeclarativeAgentManifestFile")
-      .resolves(ok(DAManifest as DeclarativeAgentManifest));
+    const readStub = vi
+      .spyOn(copilotGptManifestUtils, "readDeclarativeAgentManifestFile")
+      .mockResolvedValue(ok(DAManifest as DeclarativeAgentManifest));
 
-    const writeStub = sandbox
-      .stub(copilotGptManifestUtils, "writeDeclarativeAgentManifestFile")
-      .resolves(ok(undefined));
+    const writeStub = vi
+      .spyOn(copilotGptManifestUtils, "writeDeclarativeAgentManifestFile")
+      .mockResolvedValue(ok(undefined));
 
     await setGeneralSensitivityLabel(context, manifestPath);
 
-    assert.isTrue(readStub.notCalled);
-    assert.isTrue(writeStub.notCalled);
+    assert.isTrue(readStub.mock.calls.length === 0);
+    assert.isTrue(writeStub.mock.calls.length === 0);
 
     const sensitivityLabel = (DAManifest as any).sensitivity_label;
     assert.isUndefined(sensitivityLabel);
@@ -277,65 +291,53 @@ describe("utils unit test cases", () => {
 
 describe("templateHelper unit test cases", () => {
   const originalPackageVersion = (packageJson as any).version;
+  const originalTemplateConfig = JSON.parse(JSON.stringify(templateConfig));
 
   afterEach(() => {
     (packageJson as any).version = originalPackageVersion;
+    Object.assign(templateConfig, originalTemplateConfig);
   });
 
   it("should return true when TEMPLATE_VERSION is set to local", () => {
     const restore = mockedEnv({
       TEMPLATE_VERSION: "local",
     });
+    // local override wins even when the config flag is off.
+    (templateConfig as any).useLocalTemplate = false;
     const result = useLocalTemplate();
     assert.isTrue(result);
     restore();
   });
 
-  it("should return false when TEMPLATE_VERSION is not set to local", () => {
+  it("should return false when an explicit non-local TEMPLATE_VERSION is set", () => {
     const restore = mockedEnv({
       TEMPLATE_VERSION: "1.0.0",
     });
     (packageJson as any).version = "3.0.0";
+    (templateConfig as any).useLocalTemplate = true;
+    // An explicit version override forces a download regardless of the flag.
     const result = useLocalTemplate();
     assert.isFalse(result);
     restore();
   });
 
-  it("should return true when package version contains alpha", () => {
-    const restore = mockedEnv({
-      TEMPLATE_VERSION: "",
-    });
-    (packageJson as any).version = "3.0.0-alpha.1";
-    const result = useLocalTemplate();
-    assert.isFalse(result);
-    restore();
-  });
-
-  it("should return false when package version is stable and TEMPLATE_VERSION is not local", () => {
+  it("should return true when the useLocalTemplate config flag is true", () => {
     const restore = mockedEnv({
       TEMPLATE_VERSION: "",
     });
     (packageJson as any).version = "3.0.0";
+    (templateConfig as any).useLocalTemplate = true;
     const result = useLocalTemplate();
-    assert.isFalse(result);
+    assert.isTrue(result);
     restore();
   });
 
-  it("should return false when package version contains beta", () => {
+  it("should return false when the useLocalTemplate config flag is false", () => {
     const restore = mockedEnv({
       TEMPLATE_VERSION: "",
     });
-    (packageJson as any).version = "3.0.0-beta.1";
-    const result = useLocalTemplate();
-    assert.isFalse(result);
-    restore();
-  });
-
-  it("should return false when package version contains rc", () => {
-    const restore = mockedEnv({
-      TEMPLATE_VERSION: "",
-    });
-    (packageJson as any).version = "3.0.0-rc.1";
+    (packageJson as any).version = "3.0.0";
+    (templateConfig as any).useLocalTemplate = false;
     const result = useLocalTemplate();
     assert.isFalse(result);
     restore();
@@ -343,10 +345,10 @@ describe("templateHelper unit test cases", () => {
 });
 
 describe("getTemplateVSLatestVersion", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("should return the max satisfying version matching vsVersionPattern", async () => {

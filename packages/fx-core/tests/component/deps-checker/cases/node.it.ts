@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import * as chai from "chai";
 import * as fs from "fs-extra";
 import * as path from "path";
 import semver from "semver";
@@ -13,6 +12,7 @@ import {
 } from "../../../../src/component/deps-checker/internal/nodeChecker";
 import { TestLogger } from "../adapters/testLogger";
 import { TestTelemetry } from "../adapters/testTelemetry";
+import { chai } from "vitest";
 
 const ltsNodeRange = "22 || 24";
 

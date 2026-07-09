@@ -9,7 +9,7 @@
       "precondition_retry_interval": 1,
       "step_retry_count": 0
     },
-    "total_steps": 4,
+    "total_steps": 3,
     "created_at": "2025-11-27T07:17:13.894553",
     "name": "General Teams Agent Azure OpenAI js Copilot Remote Debug",
     "description": {
@@ -21,7 +21,7 @@
     "execution_order": [
       "plan_r_1127_001034",
       "plan_r_0928_012254",
-      "step_88fa9284",
+      "plan_r_0624_024810",
       "step_803fa1cc",
       "plan_r_0930_054245",
       "step_7e94a24a",
@@ -37,32 +37,6 @@
     "updated_at": "2025-11-28T02:20:42.833796"
   },
   "steps": [
-    {
-      "step_id": "step_88fa9284",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 444,
-        "y": 217
-      },
-      "description": "Click the \"Declarative Agent\" option in the \"New Project\" dropdown menu to select it.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:444:217:16:5:00000000000000a4",
-        "dhash:444:217:96:5:ac8c110a35658800",
-        "dhash:444:217:0:10:c8c88094b0717c6f"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_88fa9284",
-      "created_at": "2025-11-28T02:17:48.616717",
-      "plan_id": "plan_ea2d8716"
-    },
     {
       "step_id": "step_803fa1cc",
       "agent": "interaction",

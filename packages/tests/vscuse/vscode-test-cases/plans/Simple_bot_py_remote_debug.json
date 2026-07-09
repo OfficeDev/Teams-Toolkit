@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 9,
+    "total_steps": 8,
     "created_at": "2025-12-01T01:48:25.016295",
     "name": "Simple bot py remote debug",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2025-12-01T01:48:25.016295",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_a809a3dc",
+      "plan_r_0624_024810",
       "step_1523bb1e",
       "step_212fd133",
       "step_968633a1",
@@ -39,32 +39,6 @@
     "updated_at": "2025-12-01T01:48:48.642373"
   },
   "steps": [
-    {
-      "step_id": "step_a809a3dc",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 364,
-        "y": 214
-      },
-      "description": "Click the \"Teams Agents and Apps\" option in the \"New Project\" popup within the Microsoft 365 Agents Toolkit extension for Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:364:214:16:5:34a4a494d0a7a050",
-        "dhash:364:214:96:5:6399912ca6d32820",
-        "dhash:364:214:0:10:c8c88094b2717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_a809a3dc",
-      "created_at": "2025-12-01T01:48:25.037411",
-      "plan_id": "plan_7e56c81b"
-    },
     {
       "step_id": "step_1523bb1e",
       "agent": "interaction",

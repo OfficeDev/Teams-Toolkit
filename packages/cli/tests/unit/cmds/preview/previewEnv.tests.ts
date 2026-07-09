@@ -18,7 +18,6 @@ import * as packageJson from "@microsoft/teamsfx-core/build/component/local/pack
 import fs from "fs-extra";
 import { RestoreFn } from "mocked-env";
 import * as path from "path";
-import sinon from "sinon";
 import * as commonUtils from "../../../../src/cmds/preview/commonUtils";
 import * as constants from "../../../../src/cmds/preview/constants";
 import * as launch from "../../../../src/cmds/preview/launch";
@@ -30,9 +29,9 @@ import M365TokenInstance from "../../../../src/commonlib/M365TokenProviderWrappe
 import cliTelemetry from "../../../../src/telemetry/cliTelemetry";
 import CLIUIInstance from "../../../../src/userInteraction";
 import { expect } from "../../utils";
-
+import { vi } from "vitest";
 describe("Preview --env", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   let mockedEnvRestore: RestoreFn = () => {};
   let options: string[] = [];
   let defaultOptions: { [k: string]: any } = {};
@@ -45,28 +44,28 @@ describe("Preview --env", () => {
     defaultOptions = { folder: "./", env: "local" };
     logs = [];
     telemetries = [];
-    sandbox.stub(process, "exit");
-    sandbox.stub(cliLogger, "necessaryLog").callsFake((lv, msg, white) => {
+    vi.spyOn(process, "exit");
+    vi.spyOn(cliLogger, "necessaryLog").mockImplementation((lv, msg, white) => {
       logs.push(msg);
     });
-    sandbox.stub(cliLogger, "outputInfo").callsFake((message: string) => {
+    vi.spyOn(cliLogger, "outputInfo").mockImplementation((message: string) => {
       logs.push(message);
     });
-    sandbox.stub(cliLogger, "outputError").callsFake((message: string) => {
+    vi.spyOn(cliLogger, "outputError").mockImplementation((message: string) => {
       logs.push(message);
     });
-    sandbox.stub(cliLogger, "outputSuccess").callsFake((message: string) => {
+    vi.spyOn(cliLogger, "outputSuccess").mockImplementation((message: string) => {
       logs.push(message);
     });
-    sandbox.stub(cliTelemetry, "sendTelemetryEvent").callsFake((eventName, properties) => {
+    vi.spyOn(cliTelemetry, "sendTelemetryEvent").mockImplementation((eventName, properties) => {
       telemetries.push([eventName, properties]);
     });
-    sandbox
-      .stub(cliTelemetry, "sendTelemetryErrorEvent")
-      .callsFake((eventName, error, properties) => {
+    vi.spyOn(cliTelemetry, "sendTelemetryErrorEvent").mockImplementation(
+      (eventName, error, properties) => {
         telemetries.push([eventName, error, properties]);
-      });
-    sandbox.stub(FxCore.prototype, "projectVersionCheck").resolves(
+      }
+    );
+    vi.spyOn(FxCore.prototype, "projectVersionCheck").mockResolvedValue(
       ok<VersionCheckRes, FxError>({
         isSupport: VersionState.compatible,
         versionSource: "",
@@ -77,18 +76,18 @@ describe("Preview --env", () => {
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     mockedEnvRestore();
   });
 
   it("Preview Command Running - Default", async () => {
-    sandbox.stub(PreviewEnv.prototype as any, "isValidProjectV3").returns(true);
-    sandbox.stub(envUtil, "readEnv").resolves(ok({}));
-    sandbox.stub(PreviewEnv.prototype, <any>"checkM365Account").resolves(ok({}));
-    sandbox.stub(PreviewEnv.prototype, <any>"previewWithManifest").resolves(ok("test-url"));
-    sandbox.stub(PreviewEnv.prototype, <any>"detectRunCommand").resolves(ok({}));
-    sandbox.stub(PreviewEnv.prototype, <any>"runCommandAsTask").resolves(ok(null));
-    sandbox.stub(PreviewEnv.prototype, <any>"launchBrowser").resolves(ok(null));
+    vi.spyOn(PreviewEnv.prototype as any, "isValidProjectV3").mockReturnValue(true);
+    vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
+    vi.spyOn(PreviewEnv.prototype, <any>"checkM365Account").mockResolvedValue(ok({}));
+    vi.spyOn(PreviewEnv.prototype, <any>"previewWithManifest").mockResolvedValue(ok("test-url"));
+    vi.spyOn(PreviewEnv.prototype, <any>"detectRunCommand").mockResolvedValue(ok({}));
+    vi.spyOn(PreviewEnv.prototype, <any>"runCommandAsTask").mockResolvedValue(ok(null));
+    vi.spyOn(PreviewEnv.prototype, <any>"launchBrowser").mockResolvedValue(ok(null));
     const cmd = new PreviewEnv();
     await cmd.runCommand(defaultOptions);
     expect(logs.length >= 1).to.be.true;
@@ -96,13 +95,13 @@ describe("Preview --env", () => {
   });
 
   it("Preview Command Running - outlook", async () => {
-    sandbox.stub(PreviewEnv.prototype as any, "isValidProjectV3").returns(true);
-    sandbox.stub(envUtil, "readEnv").resolves(ok({}));
-    sandbox.stub(PreviewEnv.prototype, <any>"checkM365Account").resolves(ok({}));
-    sandbox.stub(PreviewEnv.prototype, <any>"previewWithManifest").resolves(ok("test-url"));
-    sandbox.stub(PreviewEnv.prototype, <any>"detectRunCommand").resolves(ok({}));
-    sandbox.stub(PreviewEnv.prototype, <any>"runCommandAsTask").resolves(ok(null));
-    sandbox.stub(PreviewEnv.prototype, <any>"launchBrowser").resolves(ok(null));
+    vi.spyOn(PreviewEnv.prototype as any, "isValidProjectV3").mockReturnValue(true);
+    vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
+    vi.spyOn(PreviewEnv.prototype, <any>"checkM365Account").mockResolvedValue(ok({}));
+    vi.spyOn(PreviewEnv.prototype, <any>"previewWithManifest").mockResolvedValue(ok("test-url"));
+    vi.spyOn(PreviewEnv.prototype, <any>"detectRunCommand").mockResolvedValue(ok({}));
+    vi.spyOn(PreviewEnv.prototype, <any>"runCommandAsTask").mockResolvedValue(ok(null));
+    vi.spyOn(PreviewEnv.prototype, <any>"launchBrowser").mockResolvedValue(ok(null));
     const cmd = new PreviewEnv();
     await cmd.runCommand({
       ...defaultOptions,
@@ -114,13 +113,13 @@ describe("Preview --env", () => {
   });
 
   it("Preview Command Running - office", async () => {
-    sandbox.stub(PreviewEnv.prototype as any, "isValidProjectV3").returns(true);
-    sandbox.stub(envUtil, "readEnv").resolves(ok({}));
-    sandbox.stub(PreviewEnv.prototype, <any>"checkM365Account").resolves(ok({}));
-    sandbox.stub(PreviewEnv.prototype, <any>"previewWithManifest").resolves(ok("test-url"));
-    sandbox.stub(PreviewEnv.prototype, <any>"detectRunCommand").resolves(ok({}));
-    sandbox.stub(PreviewEnv.prototype, <any>"runCommandAsTask").resolves(ok(null));
-    sandbox.stub(PreviewEnv.prototype, <any>"launchBrowser").resolves(ok(null));
+    vi.spyOn(PreviewEnv.prototype as any, "isValidProjectV3").mockReturnValue(true);
+    vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
+    vi.spyOn(PreviewEnv.prototype, <any>"checkM365Account").mockResolvedValue(ok({}));
+    vi.spyOn(PreviewEnv.prototype, <any>"previewWithManifest").mockResolvedValue(ok("test-url"));
+    vi.spyOn(PreviewEnv.prototype, <any>"detectRunCommand").mockResolvedValue(ok({}));
+    vi.spyOn(PreviewEnv.prototype, <any>"runCommandAsTask").mockResolvedValue(ok(null));
+    vi.spyOn(PreviewEnv.prototype, <any>"launchBrowser").mockResolvedValue(ok(null));
 
     const cmd = new PreviewEnv();
     await cmd.runCommand({
@@ -134,7 +133,7 @@ describe("Preview --env", () => {
   });
 
   it("Preview Command Running - workspace not supported error", async () => {
-    sandbox.stub(PreviewEnv.prototype as any, "isValidProjectV3").returns(false);
+    vi.spyOn(PreviewEnv.prototype as any, "isValidProjectV3").mockReturnValue(false);
 
     const cmd = new PreviewEnv();
     const result = await cmd.runCommand(defaultOptions);
@@ -144,8 +143,8 @@ describe("Preview --env", () => {
   });
 
   it("Preview Command Running - load envs error", async () => {
-    sandbox.stub(PreviewEnv.prototype as any, "isValidProjectV3").returns(true);
-    sandbox.stub(envUtil, "readEnv").resolves(err({ foo: "bar" } as any));
+    vi.spyOn(PreviewEnv.prototype as any, "isValidProjectV3").mockReturnValue(true);
+    vi.spyOn(envUtil, "readEnv").mockResolvedValue(err({ foo: "bar" } as any));
 
     const cmd = new PreviewEnv();
     const result = await cmd.runCommand(defaultOptions);
@@ -155,11 +154,11 @@ describe("Preview --env", () => {
   });
 
   it("Preview Command Running - check account error", async () => {
-    sandbox.stub(PreviewEnv.prototype as any, "isValidProjectV3").returns(true);
-    sandbox.stub(envUtil, "readEnv").resolves(ok({}));
-    sandbox
-      .stub(PreviewEnv.prototype, <any>"checkM365Account")
-      .resolves(err({ foo: "bar" } as any));
+    vi.spyOn(PreviewEnv.prototype as any, "isValidProjectV3").mockReturnValue(true);
+    vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
+    vi.spyOn(PreviewEnv.prototype, <any>"checkM365Account").mockResolvedValue(
+      err({ foo: "bar" } as any)
+    );
 
     const cmd = new PreviewEnv();
     const result = await cmd.runCommand(defaultOptions);
@@ -169,12 +168,12 @@ describe("Preview --env", () => {
   });
 
   it("Preview Command Running - previewWithManifest error", async () => {
-    sandbox.stub(PreviewEnv.prototype as any, "isValidProjectV3").returns(true);
-    sandbox.stub(envUtil, "readEnv").resolves(ok({}));
-    sandbox.stub(PreviewEnv.prototype, <any>"checkM365Account").resolves(ok({}));
-    sandbox
-      .stub(PreviewEnv.prototype, <any>"previewWithManifest")
-      .resolves(err({ foo: "bar" } as any));
+    vi.spyOn(PreviewEnv.prototype as any, "isValidProjectV3").mockReturnValue(true);
+    vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
+    vi.spyOn(PreviewEnv.prototype, <any>"checkM365Account").mockResolvedValue(ok({}));
+    vi.spyOn(PreviewEnv.prototype, <any>"previewWithManifest").mockResolvedValue(
+      err({ foo: "bar" } as any)
+    );
 
     const cmd = new PreviewEnv();
     const result = await cmd.runCommand(defaultOptions);
@@ -184,13 +183,13 @@ describe("Preview --env", () => {
   });
 
   it("Preview Command Running - detect run command error", async () => {
-    sandbox.stub(PreviewEnv.prototype as any, "isValidProjectV3").returns(true);
-    sandbox.stub(envUtil, "readEnv").resolves(ok({}));
-    sandbox.stub(PreviewEnv.prototype, <any>"checkM365Account").resolves(ok({}));
-    sandbox.stub(PreviewEnv.prototype, <any>"previewWithManifest").resolves(ok("test-url"));
-    sandbox
-      .stub(PreviewEnv.prototype, <any>"detectRunCommand")
-      .resolves(err({ foo: "bar" } as any));
+    vi.spyOn(PreviewEnv.prototype as any, "isValidProjectV3").mockReturnValue(true);
+    vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
+    vi.spyOn(PreviewEnv.prototype, <any>"checkM365Account").mockResolvedValue(ok({}));
+    vi.spyOn(PreviewEnv.prototype, <any>"previewWithManifest").mockResolvedValue(ok("test-url"));
+    vi.spyOn(PreviewEnv.prototype, <any>"detectRunCommand").mockResolvedValue(
+      err({ foo: "bar" } as any)
+    );
 
     const cmd = new PreviewEnv();
     const result = await cmd.runCommand(defaultOptions);
@@ -200,16 +199,16 @@ describe("Preview --env", () => {
   });
 
   it("Preview Command Running - run task error", async () => {
-    sandbox.stub(PreviewEnv.prototype as any, "isValidProjectV3").returns(true);
-    sandbox.stub(envUtil, "readEnv").resolves(ok({}));
-    sandbox.stub(PreviewEnv.prototype, <any>"checkM365Account").resolves(ok({}));
-    sandbox.stub(PreviewEnv.prototype, <any>"previewWithManifest").resolves(ok("test-url"));
-    sandbox
-      .stub(PreviewEnv.prototype, <any>"detectRunCommand")
-      .resolves(ok({ runCommand: "npm start" }));
-    sandbox
-      .stub(PreviewEnv.prototype, <any>"runCommandAsTask")
-      .resolves(err({ foo: "bar" } as any));
+    vi.spyOn(PreviewEnv.prototype as any, "isValidProjectV3").mockReturnValue(true);
+    vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
+    vi.spyOn(PreviewEnv.prototype, <any>"checkM365Account").mockResolvedValue(ok({}));
+    vi.spyOn(PreviewEnv.prototype, <any>"previewWithManifest").mockResolvedValue(ok("test-url"));
+    vi.spyOn(PreviewEnv.prototype, <any>"detectRunCommand").mockResolvedValue(
+      ok({ runCommand: "npm start" })
+    );
+    vi.spyOn(PreviewEnv.prototype, <any>"runCommandAsTask").mockResolvedValue(
+      err({ foo: "bar" } as any)
+    );
 
     const cmd = new PreviewEnv();
     const result = await cmd.runCommand(defaultOptions);
@@ -218,13 +217,15 @@ describe("Preview --env", () => {
   });
 
   it("Preview Command Running - launch browser error", async () => {
-    sandbox.stub(PreviewEnv.prototype as any, "isValidProjectV3").returns(true);
-    sandbox.stub(envUtil, "readEnv").resolves(ok({}));
-    sandbox.stub(PreviewEnv.prototype, <any>"checkM365Account").resolves(ok({}));
-    sandbox.stub(PreviewEnv.prototype, <any>"previewWithManifest").resolves(ok("test-url"));
-    sandbox.stub(PreviewEnv.prototype, <any>"detectRunCommand").resolves(ok({}));
-    sandbox.stub(PreviewEnv.prototype, <any>"runCommandAsTask").resolves(ok(null));
-    sandbox.stub(PreviewEnv.prototype, <any>"launchBrowser").resolves(err({ foo: "bar" } as any));
+    vi.spyOn(PreviewEnv.prototype as any, "isValidProjectV3").mockReturnValue(true);
+    vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
+    vi.spyOn(PreviewEnv.prototype, <any>"checkM365Account").mockResolvedValue(ok({}));
+    vi.spyOn(PreviewEnv.prototype, <any>"previewWithManifest").mockResolvedValue(ok("test-url"));
+    vi.spyOn(PreviewEnv.prototype, <any>"detectRunCommand").mockResolvedValue(ok({}));
+    vi.spyOn(PreviewEnv.prototype, <any>"runCommandAsTask").mockResolvedValue(ok(null));
+    vi.spyOn(PreviewEnv.prototype, <any>"launchBrowser").mockResolvedValue(
+      err({ foo: "bar" } as any)
+    );
     const cmd = new PreviewEnv();
     const result = await cmd.runCommand(defaultOptions);
     expect(result.isErr()).to.be.true;
@@ -233,7 +234,7 @@ describe("Preview --env", () => {
 });
 
 describe("PreviewEnv Steps", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   let mockedEnvRestore: RestoreFn = () => {};
   let logs: string[] = [];
   let telemetries: any[] = [];
@@ -351,22 +352,22 @@ describe("PreviewEnv Steps", () => {
     mockedEnvRestore = () => {};
     logs = [];
     telemetries = [];
-    sandbox.stub(cliLogger, "necessaryLog").callsFake((lv, msg, white) => {
+    vi.spyOn(cliLogger, "necessaryLog").mockImplementation((lv, msg, white) => {
       logs.push(msg);
     });
-    sandbox.stub(cliTelemetry, "sendTelemetryEvent").callsFake((eventName, properties) => {
+    vi.spyOn(cliTelemetry, "sendTelemetryEvent").mockImplementation((eventName, properties) => {
       telemetries.push([eventName, properties]);
     });
-    sandbox
-      .stub(cliTelemetry, "sendTelemetryErrorEvent")
-      .callsFake((eventName, error, properties) => {
+    vi.spyOn(cliTelemetry, "sendTelemetryErrorEvent").mockImplementation(
+      (eventName, error, properties) => {
         telemetries.push([eventName, error, properties]);
-      });
-    sandbox.stub(CLIUIInstance, "createProgressBar").returns(new MockProgressHandler());
+      }
+    );
+    vi.spyOn(CLIUIInstance, "createProgressBar").mockReturnValue(new MockProgressHandler());
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     mockedEnvRestore();
   });
 
@@ -374,7 +375,7 @@ describe("PreviewEnv Steps", () => {
     const token = "test-token";
     const tenantId = "test-tenant-id";
     const upn = "test-user";
-    sandbox.stub(M365TokenInstance, "getStatus").returns(
+    vi.spyOn(M365TokenInstance, "getStatus").mockReturnValue(
       Promise.resolve(
         ok({
           status: signedIn,
@@ -386,7 +387,7 @@ describe("PreviewEnv Steps", () => {
         })
       )
     );
-    sandbox.stub(PreviewEnvTest.prototype as any, "getSideloadingStatus").resolves(true);
+    vi.spyOn(PreviewEnvTest.prototype as any, "getSideloadingStatus").mockResolvedValue(true);
 
     const previewEnv = new PreviewEnvTest();
     const accountRes = await previewEnv.checkM365Account(undefined);
@@ -400,13 +401,13 @@ describe("PreviewEnv Steps", () => {
     const token = "test-token";
     const tenantId = "test-tenant-id";
     const upn = "test-user";
-    const getStatusStub = sandbox.stub(M365TokenInstance, "getStatus");
-    getStatusStub.onCall(0).resolves(
+    const getStatusStub = vi.spyOn(M365TokenInstance, "getStatus");
+    getStatusStub.mockResolvedValueOnce(
       ok({
         status: signedOut,
       })
     );
-    getStatusStub.onCall(1).resolves(
+    getStatusStub.mockResolvedValueOnce(
       ok({
         status: signedIn,
         token: token,
@@ -416,8 +417,8 @@ describe("PreviewEnv Steps", () => {
         },
       })
     );
-    sandbox.stub(M365TokenInstance, "getAccessToken").resolves(ok(token));
-    sandbox.stub(PreviewEnvTest.prototype as any, "getSideloadingStatus").resolves(true);
+    vi.spyOn(M365TokenInstance, "getAccessToken").mockResolvedValue(ok(token));
+    vi.spyOn(PreviewEnvTest.prototype as any, "getSideloadingStatus").mockResolvedValue(true);
 
     const previewEnv = new PreviewEnvTest();
     const accountRes = await previewEnv.checkM365Account(undefined);
@@ -431,7 +432,7 @@ describe("PreviewEnv Steps", () => {
     const token = "test-token";
     const tenantId = "test-tenant-id";
     const upn = "test-user";
-    sandbox.stub(M365TokenInstance, "getStatus").returns(
+    vi.spyOn(M365TokenInstance, "getStatus").mockReturnValue(
       Promise.resolve(
         ok({
           status: signedIn,
@@ -443,7 +444,7 @@ describe("PreviewEnv Steps", () => {
         })
       )
     );
-    sandbox.stub(PreviewEnvTest.prototype as any, "getSideloadingStatus").resolves(false);
+    vi.spyOn(PreviewEnvTest.prototype as any, "getSideloadingStatus").mockResolvedValue(false);
 
     const previewEnv = new PreviewEnvTest();
     const accountRes = await previewEnv.checkM365Account(undefined);
@@ -455,10 +456,10 @@ describe("PreviewEnv Steps", () => {
   });
 
   it("detectRunCommand - node", async () => {
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(fs, "readdir").resolves([]);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readdir").mockResolvedValue([]);
     // eslint-disable-next-line no-secrets/no-secrets
-    sandbox.stub(PreviewEnvTest.prototype as any, "loadTeamsFxDevScript").resolves("test");
+    vi.spyOn(PreviewEnvTest.prototype as any, "loadTeamsFxDevScript").mockResolvedValue("test");
 
     const previewEnv = new PreviewEnvTest();
     const runCommandRes = await previewEnv.detectRunCommand("./");
@@ -468,9 +469,9 @@ describe("PreviewEnv Steps", () => {
   });
 
   it("detectRunCommand - .net web", async () => {
-    sandbox.stub(fs, "pathExists").resolves(false);
-    sandbox.stub(fs, "readdir").resolves(["test.csproj"]);
-    sandbox.stub(fs, "readFile").resolves(
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+    vi.spyOn(fs, "readdir").mockResolvedValue(["test.csproj"]);
+    vi.spyOn(fs, "readFile").mockResolvedValue(
       Buffer.from(
         `
   <Project Sdk="Microsoft.NET.Sdk.Web">
@@ -493,9 +494,9 @@ describe("PreviewEnv Steps", () => {
   });
 
   it("detectRunCommand - .net func", async () => {
-    sandbox.stub(fs, "pathExists").resolves(false);
-    sandbox.stub(fs, "readdir").resolves(["test.csproj"]);
-    sandbox.stub(fs, "readFile").resolves(
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+    vi.spyOn(fs, "readdir").mockResolvedValue(["test.csproj"]);
+    vi.spyOn(fs, "readFile").mockResolvedValue(
       Buffer.from(
         // eslint-disable-next-line no-secrets/no-secrets
         `
@@ -522,7 +523,7 @@ describe("PreviewEnv Steps", () => {
   });
 
   it("previewWithManifest - previewWithManifest error", async () => {
-    sandbox.stub(FxCore.prototype, "previewWithManifest").resolves(err({ foo: "bar" } as any));
+    vi.spyOn(FxCore.prototype, "previewWithManifest").mockResolvedValue(err({ foo: "bar" } as any));
 
     const previewEnv = new PreviewEnvTest();
     const result = await previewEnv.previewWithManifest(
@@ -536,7 +537,7 @@ describe("PreviewEnv Steps", () => {
   });
 
   it("previewWithManifest - ok", async () => {
-    sandbox.stub(FxCore.prototype, "previewWithManifest").resolves(ok("test-url"));
+    vi.spyOn(FxCore.prototype, "previewWithManifest").mockResolvedValue(ok("test-url"));
 
     const previewEnv = new PreviewEnvTest();
     const result = await previewEnv.previewWithManifest(
@@ -549,14 +550,14 @@ describe("PreviewEnv Steps", () => {
   });
 
   it("runCommandAsTask - ok", async () => {
-    sandbox
-      .stub(PreviewEnvTest.prototype as any, "createTaskStartCb")
-      .returns((a0: any, a1: any) => new Promise((res, rej) => res()));
-    sandbox
-      .stub(PreviewEnvTest.prototype as any, "createTaskStopCb")
-      .returns((a0: any, a1: any, a2: any, a3: any) => new Promise((res, rej) => res(null)));
-    sandbox.stub(ServiceLogWriter.prototype, "init").resolves();
-    sandbox.stub(Task.prototype, "waitFor").resolves(ok({ foo: "bar" } as any));
+    vi.spyOn(PreviewEnvTest.prototype as any, "createTaskStartCb").mockReturnValue(
+      (a0: any, a1: any) => new Promise((res, rej) => res())
+    );
+    vi.spyOn(PreviewEnvTest.prototype as any, "createTaskStopCb").mockReturnValue(
+      (a0: any, a1: any, a2: any, a3: any) => new Promise((res, rej) => res(null))
+    );
+    vi.spyOn(ServiceLogWriter.prototype, "init").mockResolvedValue();
+    vi.spyOn(Task.prototype, "waitFor").mockResolvedValue(ok({ foo: "bar" } as any));
 
     const previewEnv = new PreviewEnvTest();
     const taskRes = await previewEnv.runCommandAsTask(
@@ -573,14 +574,14 @@ describe("PreviewEnv Steps", () => {
   });
 
   it("runCommandAsTask - customize exec path", async () => {
-    sandbox
-      .stub(PreviewEnvTest.prototype as any, "createTaskStartCb")
-      .returns((a0: any, a1: any) => new Promise((res, rej) => res()));
-    sandbox
-      .stub(PreviewEnvTest.prototype as any, "createTaskStopCb")
-      .returns((a0: any, a1: any, a2: any, a3: any) => new Promise((res, rej) => res(null)));
-    sandbox.stub(ServiceLogWriter.prototype, "init").resolves();
-    sandbox.stub(Task.prototype, "waitFor").resolves(ok({ foo: "bar" } as any));
+    vi.spyOn(PreviewEnvTest.prototype as any, "createTaskStartCb").mockReturnValue(
+      (a0: any, a1: any) => new Promise((res, rej) => res())
+    );
+    vi.spyOn(PreviewEnvTest.prototype as any, "createTaskStopCb").mockReturnValue(
+      (a0: any, a1: any, a2: any, a3: any) => new Promise((res, rej) => res(null))
+    );
+    vi.spyOn(ServiceLogWriter.prototype, "init").mockResolvedValue();
+    vi.spyOn(Task.prototype, "waitFor").mockResolvedValue(ok({ foo: "bar" } as any));
 
     const previewEnv = new PreviewEnvTest();
     const taskRes = await previewEnv.runCommandAsTask(
@@ -602,7 +603,7 @@ describe("PreviewEnv Steps", () => {
   });
 
   it("launchBrowser - teams", async () => {
-    sandbox.stub(PreviewEnvTest.prototype as any, "openHubWebClientNew").resolves();
+    vi.spyOn(PreviewEnvTest.prototype as any, "openHubWebClientNew").mockResolvedValue();
 
     const previewEnv = new PreviewEnvTest();
     const openRes = await previewEnv.launchBrowser(
@@ -617,7 +618,7 @@ describe("PreviewEnv Steps", () => {
   });
 
   it("launchBrowser: outlook", async () => {
-    sandbox.stub(PreviewEnvTest.prototype as any, "openHubWebClientNew").resolves();
+    vi.spyOn(PreviewEnvTest.prototype as any, "openHubWebClientNew").mockResolvedValue();
 
     const previewEnv = new PreviewEnvTest();
     const openRes = await previewEnv.launchBrowser(
@@ -632,8 +633,8 @@ describe("PreviewEnv Steps", () => {
   });
 
   it("launchDesktopClient - without accountInfo", async () => {
-    sandbox.stub(PreviewEnvTest.prototype as any, "openTeamsDesktopClient").resolves();
-    sandbox.stub(M365TokenInstance, "getStatus").returns(
+    vi.spyOn(PreviewEnvTest.prototype as any, "openTeamsDesktopClient").mockResolvedValue();
+    vi.spyOn(M365TokenInstance, "getStatus").mockReturnValue(
       Promise.resolve(
         ok({
           status: signedIn,
@@ -653,8 +654,8 @@ describe("PreviewEnv Steps", () => {
   });
 
   it("launchDesktopClient - without unique_name", async () => {
-    sandbox.stub(PreviewEnvTest.prototype as any, "openTeamsDesktopClient").resolves();
-    sandbox.stub(M365TokenInstance, "getStatus").returns(
+    vi.spyOn(PreviewEnvTest.prototype as any, "openTeamsDesktopClient").mockResolvedValue();
+    vi.spyOn(M365TokenInstance, "getStatus").mockReturnValue(
       Promise.resolve(
         ok({
           status: signedIn,
@@ -678,8 +679,8 @@ describe("PreviewEnv Steps", () => {
   });
 
   it("launchDesktopClient - happy path", async () => {
-    sandbox.stub(PreviewEnvTest.prototype as any, "openTeamsDesktopClient").resolves();
-    sandbox.stub(M365TokenInstance, "getStatus").returns(
+    vi.spyOn(PreviewEnvTest.prototype as any, "openTeamsDesktopClient").mockResolvedValue();
+    vi.spyOn(M365TokenInstance, "getStatus").mockReturnValue(
       Promise.resolve(
         ok({
           status: signedIn,
@@ -704,8 +705,8 @@ describe("PreviewEnv Steps", () => {
   });
 
   it("launchDesktopClient - without user information", async () => {
-    sandbox.stub(PreviewEnvTest.prototype as any, "openTeamsDesktopClient").resolves();
-    sandbox.stub(M365TokenInstance, "getStatus").resolves(err(new UserError("", "", "", "")));
+    vi.spyOn(PreviewEnvTest.prototype as any, "openTeamsDesktopClient").mockResolvedValue();
+    vi.spyOn(M365TokenInstance, "getStatus").mockResolvedValue(err(new UserError("", "", "", "")));
 
     const previewEnv = new PreviewEnvTest();
     const openRes = await previewEnv.launchDesktopClient(
@@ -718,17 +719,17 @@ describe("PreviewEnv Steps", () => {
   });
 
   it("delegates wrapper methods to dependencies", async () => {
-    sandbox.stub(settingHelper, "isValidProjectV3").returns(true);
-    sandbox.stub(tools, "getSideloadingStatus").resolves(undefined);
-    sandbox.stub(packageJson, "loadTeamsFxDevScript").resolves("npm run dev:teamsfx");
+    vi.spyOn(settingHelper, "isValidProjectV3").mockReturnValue(true);
+    vi.spyOn(tools, "getSideloadingStatus").mockResolvedValue(undefined);
+    vi.spyOn(packageJson, "loadTeamsFxDevScript").mockResolvedValue("npm run dev:teamsfx");
 
-    const startCb = sinon.stub().resolves();
-    const stopCb = sinon.stub().resolves(null);
-    sandbox.stub(commonUtils, "createTaskStartCb").returns(startCb as any);
-    sandbox.stub(commonUtils, "createTaskStopCb").returns(stopCb as any);
+    const startCb = vi.fn().mockResolvedValue();
+    const stopCb = vi.fn().mockResolvedValue(null);
+    vi.spyOn(commonUtils, "createTaskStartCb").mockReturnValue(startCb as any);
+    vi.spyOn(commonUtils, "createTaskStopCb").mockReturnValue(stopCb as any);
 
-    sandbox.stub(launch, "openHubWebClientNew").resolves();
-    sandbox.stub(launch, "openTeamsDesktopClient").resolves();
+    vi.spyOn(launch, "openHubWebClientNew").mockResolvedValue();
+    vi.spyOn(launch, "openTeamsDesktopClient").mockResolvedValue();
 
     const previewEnv = new PreviewEnvTest();
 

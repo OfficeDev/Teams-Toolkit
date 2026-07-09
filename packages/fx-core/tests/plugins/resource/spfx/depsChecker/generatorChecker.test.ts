@@ -2,9 +2,8 @@
 // Licensed under the MIT license.
 
 import { LogLevel, LogProvider, UserError } from "@microsoft/teamsfx-api";
-import chai from "chai";
 import fs from "fs-extra";
-import { restore, stub } from "sinon";
+import { chai, vi } from "vitest";
 import { createContext, setTools } from "../../../../../src/common/globalVars";
 import { cpUtils } from "../../../../../src/component/deps-checker/util/cpUtils";
 import { GeneratorChecker } from "../../../../../src/component/generator/spfx/depsChecker/generatorChecker";
@@ -42,47 +41,51 @@ class StubLogger implements LogProvider {
 describe("generator checker", () => {
   setTools(new MockTools());
   beforeEach(() => {
-    stub(telemetryHelper, "sendSuccessEvent").callsFake(() => {
+    vi.spyOn(telemetryHelper, "sendSuccessEvent").mockImplementation(() => {
       console.log("success event");
       return;
     });
-    stub(telemetryHelper, "sendErrorEvent").callsFake(() => {
+    vi.spyOn(telemetryHelper, "sendErrorEvent").mockImplementation(() => {
       console.log("error event");
       return;
     });
   });
 
   afterEach(() => {
-    restore();
+    vi.restoreAllMocks();
   });
 
   describe("getDependencyInfo", async () => {
     it("install", async () => {
       const generatorChecker = new GeneratorChecker(new StubLogger());
-      const cleanStub = stub(GeneratorChecker.prototype, "cleanup" as any).callsFake(async () => {
-        console.log("stub cleanup");
-        return;
-      });
-      stub(cpUtils, "executeCommand").resolves();
-      stub(fs, "pathExists").callsFake(async () => {
+      const cleanStub = vi
+        .spyOn(GeneratorChecker.prototype, "cleanup" as any)
+        .mockImplementation(async () => {
+          console.log("stub cleanup");
+          return;
+        });
+      vi.spyOn(cpUtils, "executeCommand").mockResolvedValue();
+      vi.spyOn(fs, "pathExists").mockImplementation(async () => {
         return true;
       });
 
       try {
         await generatorChecker.install("1.18.2");
       } catch {
-        chai.expect(cleanStub.callCount).equal(2);
+        chai.expect(cleanStub.mock.calls.length).equal(2);
       }
     });
 
     it("install error", async () => {
       const generatorChecker = new GeneratorChecker(new StubLogger());
-      stub(GeneratorChecker.prototype, "cleanup" as any).callsFake(async () => {
+      vi.spyOn(GeneratorChecker.prototype, "cleanup" as any).mockImplementation(async () => {
         console.log("stub cleanup");
         return;
       });
-      stub(cpUtils, "executeCommand").throws(new Error("unknown"));
-      stub(fs, "pathExists").callsFake(async () => {
+      vi.spyOn(cpUtils, "executeCommand").mockImplementation(() => {
+        throw new Error("unknown");
+      });
+      vi.spyOn(fs, "pathExists").mockImplementation(async () => {
         return true;
       });
 
@@ -99,7 +102,7 @@ describe("generator checker", () => {
 
     it("findGloballyInstalledVersion: returns version", async () => {
       const generatorChecker = new GeneratorChecker(new StubLogger());
-      stub(cpUtils, "executeCommand").resolves(
+      vi.spyOn(cpUtils, "executeCommand").mockResolvedValue(
         "C:\\Roaming\\npm\n`-- @microsoft/generator-sharepoint@1.16.1\n\n"
       );
 
@@ -109,7 +112,7 @@ describe("generator checker", () => {
 
     it("findGloballyInstalledVersion: regex error", async () => {
       const generatorChecker = new GeneratorChecker(new StubLogger());
-      stub(cpUtils, "executeCommand").resolves(
+      vi.spyOn(cpUtils, "executeCommand").mockResolvedValue(
         "C:\\Roaming\\npm\n`-- @microsoft/generator-sharepoint@empty\n\n"
       );
 
@@ -119,7 +122,9 @@ describe("generator checker", () => {
 
     it("findGloballyInstalledVersion: exeute commmand error", async () => {
       const generatorChecker = new GeneratorChecker(new StubLogger());
-      stub(cpUtils, "executeCommand").throws("run command error");
+      vi.spyOn(cpUtils, "executeCommand").mockImplementation(() => {
+        throw "run command error";
+      });
       let error = undefined;
 
       try {
@@ -132,7 +137,7 @@ describe("generator checker", () => {
 
     it("findLatestVersion: returns version", async () => {
       const generatorChecker = new GeneratorChecker(new StubLogger());
-      stub(cpUtils, "executeCommand").resolves("1.16.1");
+      vi.spyOn(cpUtils, "executeCommand").mockResolvedValue("1.16.1");
 
       const res = await generatorChecker.findLatestVersion(1);
       chai.expect(res).equal("1.16.1");
@@ -140,7 +145,7 @@ describe("generator checker", () => {
 
     it("findLatestVersion: regex error", async () => {
       const generatorChecker = new GeneratorChecker(new StubLogger());
-      stub(cpUtils, "executeCommand").resolves("empty");
+      vi.spyOn(cpUtils, "executeCommand").mockResolvedValue("empty");
 
       const res = await generatorChecker.findLatestVersion(1);
       chai.expect(res).to.be.undefined;
@@ -148,7 +153,9 @@ describe("generator checker", () => {
 
     it("findLatestVersion: exeute commmand error", async () => {
       const generatorChecker = new GeneratorChecker(new StubLogger());
-      stub(cpUtils, "executeCommand").throws("run command error");
+      vi.spyOn(cpUtils, "executeCommand").mockImplementation(() => {
+        throw "run command error";
+      });
 
       const res = await generatorChecker.findLatestVersion();
       chai.expect(res).to.be.undefined;
@@ -158,20 +165,22 @@ describe("generator checker", () => {
   describe("isLatestInstalled", () => {
     it("is latest installed", async () => {
       const checker = new GeneratorChecker(new StubLogger());
-      stub(fs, "pathExists").callsFake(async () => {
+      vi.spyOn(fs, "pathExists").mockImplementation(async () => {
         console.log("stub pathExists");
         return true;
       });
 
-      stub(GeneratorChecker.prototype, "queryVersion" as any).callsFake(async () => {
+      vi.spyOn(GeneratorChecker.prototype, "queryVersion" as any).mockImplementation(async () => {
         console.log("stub queryversion");
         return "latest";
       });
 
-      stub(GeneratorChecker.prototype, "findLatestVersion" as any).callsFake(async () => {
-        console.log("stub findLatestVersion");
-        return "latest";
-      });
+      vi.spyOn(GeneratorChecker.prototype, "findLatestVersion" as any).mockImplementation(
+        async () => {
+          console.log("stub findLatestVersion");
+          return "latest";
+        }
+      );
 
       const result = await checker.isLatestInstalled("latest");
       chai.expect(result).is.true;
@@ -179,13 +188,17 @@ describe("generator checker", () => {
 
     it("miss sentinel version", async () => {
       const checker = new GeneratorChecker(new StubLogger());
-      stub(GeneratorChecker.prototype, "findLocalInstalledVersion" as any).callsFake(async () => {
-        return undefined;
-      });
+      vi.spyOn(GeneratorChecker.prototype, "findLocalInstalledVersion" as any).mockImplementation(
+        async () => {
+          return undefined;
+        }
+      );
 
-      stub(GeneratorChecker.prototype, "findLatestVersion" as any).callsFake(async () => {
-        return "latest";
-      });
+      vi.spyOn(GeneratorChecker.prototype, "findLatestVersion" as any).mockImplementation(
+        async () => {
+          return "latest";
+        }
+      );
 
       const result = await checker.isLatestInstalled("latest");
       chai.expect(result).is.false;
@@ -193,20 +206,22 @@ describe("generator checker", () => {
 
     it("latest not installed", async () => {
       const checker = new GeneratorChecker(new StubLogger());
-      stub(fs, "pathExists").callsFake(async () => {
+      vi.spyOn(fs, "pathExists").mockImplementation(async () => {
         console.log("stub pathExists");
         return true;
       });
 
-      stub(GeneratorChecker.prototype, "queryVersion" as any).callsFake(async () => {
+      vi.spyOn(GeneratorChecker.prototype, "queryVersion" as any).mockImplementation(async () => {
         console.log("stub queryversion");
         return "lower version";
       });
 
-      stub(GeneratorChecker.prototype, "findLatestVersion" as any).callsFake(async () => {
-        console.log("stub findLatestVersion");
-        return "latest";
-      });
+      vi.spyOn(GeneratorChecker.prototype, "findLatestVersion" as any).mockImplementation(
+        async () => {
+          console.log("stub findLatestVersion");
+          return "latest";
+        }
+      );
 
       const result = await checker.isLatestInstalled(undefined);
       chai.expect(result).is.false;
@@ -214,13 +229,17 @@ describe("generator checker", () => {
 
     it("throw error", async () => {
       const checker = new GeneratorChecker(new StubLogger());
-      stub(fs, "pathExists").callsFake(async () => {
+      vi.spyOn(fs, "pathExists").mockImplementation(async () => {
         console.log("stub pathExists");
         return true;
       });
 
-      stub(GeneratorChecker.prototype, "queryVersion" as any).throws("error");
-      stub(GeneratorChecker.prototype, "findLatestVersion" as any).throws("error");
+      vi.spyOn(GeneratorChecker.prototype, "queryVersion" as any).mockImplementation(() => {
+        throw "error";
+      });
+      vi.spyOn(GeneratorChecker.prototype, "findLatestVersion" as any).mockImplementation(() => {
+        throw "error";
+      });
 
       const result = await checker.isLatestInstalled(undefined);
       chai.expect(result).is.false;
@@ -231,7 +250,7 @@ describe("generator checker", () => {
     it("install successfully", async () => {
       const checker = new GeneratorChecker(new StubLogger());
 
-      stub(GeneratorChecker.prototype, "install" as any).callsFake(async () => {
+      vi.spyOn(GeneratorChecker.prototype, "install" as any).mockImplementation(async () => {
         console.log("installing");
       });
 
@@ -244,7 +263,7 @@ describe("generator checker", () => {
     it("install error", async () => {
       const checker = new GeneratorChecker(new StubLogger());
 
-      stub(GeneratorChecker.prototype, "install" as any).callsFake(async () => {
+      vi.spyOn(GeneratorChecker.prototype, "install" as any).mockImplementation(async () => {
         throw new UserError("source", "name", "msg", "msg");
       });
 

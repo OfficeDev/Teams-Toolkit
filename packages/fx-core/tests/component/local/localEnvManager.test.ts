@@ -1,12 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import * as chai from "chai";
-import chaiAsPromised from "chai-as-promised";
 import mockfs from "mock-fs";
 import path from "path";
 import { LocalEnvManager } from "../../../src/component/local/localEnvManager";
-chai.use(chaiAsPromised);
+import { chai } from "vitest";
 
 describe("localEnvManager", () => {
   describe("getTestToolLogInfo", () => {

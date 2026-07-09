@@ -16,12 +16,8 @@ import {
   err,
   ok,
 } from "@microsoft/teamsfx-api";
-import {
-  isValidProject,
-  InvalidProjectError,
-  environmentManager,
-  pathUtils,
-} from "@microsoft/teamsfx-core";
+import { InvalidProjectError, environmentManager, pathUtils } from "@microsoft/teamsfx-core";
+import * as projectSettingsHelper from "@microsoft/teamsfx-core/build/common/projectSettingsHelper";
 import { ExtTelemetry } from "../telemetry/extTelemetry";
 import {
   TelemetryEvent,
@@ -75,7 +71,7 @@ export async function openConfigStateFile(args: any[]): Promise<any> {
     return err(noOpenWorkspaceError);
   }
 
-  if (!isValidProject(workspacePath)) {
+  if (!projectSettingsHelper.isValidProject(workspacePath)) {
     const invalidProjectError = new UserError(
       ExtensionSource,
       ExtensionErrors.InvalidProject,
@@ -141,7 +137,7 @@ export async function openConfigStateFile(args: any[]): Promise<any> {
  */
 export async function askTargetEnvironment(): Promise<Result<string, FxError>> {
   const projectPath = workspaceUri?.fsPath;
-  if (!isValidProject(projectPath)) {
+  if (!projectSettingsHelper.isValidProject(projectPath)) {
     return err(new InvalidProjectError(projectPath || ""));
   }
   const envProfilesResult = await environmentManager.listAllEnvConfigs(projectPath!);

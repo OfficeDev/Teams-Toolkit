@@ -1,14 +1,7 @@
-import {
-  err,
-  FxError,
-  LogProvider,
-  ok,
-  Result,
-  SystemError,
-  TeamsAppManifest,
-} from "@microsoft/teamsfx-api";
-import { assert } from "chai";
-import sinon from "sinon";
+import { err, FxError, LogProvider, ok, Result, SystemError } from "@microsoft/teamsfx-api";
+import { createHash, Hash } from "crypto";
+import { assert, expect, vi } from "vitest";
+import { setTools } from "../../../src/common/globalVars";
 import { TelemetryEvent, TelemetryProperty } from "../../../src/common/telemetry";
 import {
   DriverInstance,
@@ -17,13 +10,11 @@ import {
 } from "../../../src/component/configManager/interface";
 import { yamlParser } from "../../../src/component/configManager/parser";
 import { DriverContext } from "../../../src/component/driver/interface/commonArgs";
-import { metadataUtil } from "../../../src/component/utils/metadataUtil";
-import { setTools } from "../../../src/common/globalVars";
-import { MockTools } from "../../core/utils";
-import { createHash, Hash } from "crypto";
 import { ExecutionResult as DriverResult } from "../../../src/component/driver/interface/stepDriver";
 import { metadataGraphPermissionUtil } from "../../../src/component/utils/metadataGraphPermssion";
+import { metadataUtil } from "../../../src/component/utils/metadataUtil";
 import { pathUtils } from "../../../src/component/utils/pathUtils";
+import { MockTools } from "../../core/utils";
 
 function mockedResolveDriverInstances(log: LogProvider): Result<DriverInstance[], FxError> {
   return ok([
@@ -40,7 +31,7 @@ function mockedResolveDriverInstances(log: LogProvider): Result<DriverInstance[]
 }
 
 describe("metadata util", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   const mockedError = new SystemError("mockedSource", "mockedError", "mockedMessage");
   const mockProjectModel: ProjectModel = {
     version: "1.0.0",
@@ -74,147 +65,137 @@ describe("metadata util", () => {
   beforeEach(() => {
     tools = new MockTools();
     setTools(tools);
-    sandbox.stub(metadataGraphPermissionUtil, "parseAadManifest").resolves();
-    sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
+    vi.spyOn(metadataGraphPermissionUtil, "parseAadManifest").mockResolvedValue();
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("should return YamlParsingError", async () => {
-    sandbox.stub(yamlParser, "parse").resolves(err(mockedError));
+    vi.spyOn(yamlParser, "parse").mockResolvedValue(err(mockedError));
     const result = await metadataUtil.parse("m365agents.yml");
     assert(result.isErr() && result.error.name === "mockedError");
   });
 
   it("local config file", async () => {
-    sandbox.stub(yamlParser, "parse").resolves(ok(mockProjectModel));
-    const spy = sandbox.spy(tools.telemetryReporter, "sendTelemetryEvent");
+    vi.spyOn(yamlParser, "parse").mockResolvedValue(ok(mockProjectModel));
+    const spy = vi.spyOn(tools.telemetryReporter, "sendTelemetryEvent");
     const result = await metadataUtil.parse("m365agents.local.yml");
-    assert.isTrue(
-      spy.calledOnceWith(TelemetryEvent.MetaData, {
-        [TelemetryProperty.YmlSchemaVersion]: "1.0.0",
-        "configureApp.actions": "",
-        "deploy.actions": "",
-        "share.actions": "",
-        "provision.actions": "",
-        "publish.actions": "",
-        "registerApp.actions": "armdeploy,teamsAppcreate",
-        [TelemetryProperty.YmlName]: "m365agentslocalyml",
-        [TelemetryProperty.SampleAppName]: "testRepo:testSample",
-      })
-    );
+    expect(spy).toHaveBeenCalledExactlyOnceWith(TelemetryEvent.MetaData, {
+      [TelemetryProperty.YmlSchemaVersion]: "1.0.0",
+      "configureApp.actions": "",
+      "deploy.actions": "",
+      "share.actions": "",
+      "provision.actions": "",
+      "publish.actions": "",
+      "registerApp.actions": "armdeploy,teamsAppcreate",
+      [TelemetryProperty.YmlName]: "m365agentslocalyml",
+      [TelemetryProperty.SampleAppName]: "testRepo:testSample",
+    });
     assert(result.isOk());
   });
 
   it("dev config file", async () => {
-    sandbox.stub(yamlParser, "parse").resolves(ok(mockProjectModel));
-    const spy = sandbox.spy(tools.telemetryReporter, "sendTelemetryEvent");
+    vi.spyOn(yamlParser, "parse").mockResolvedValue(ok(mockProjectModel));
+    const spy = vi.spyOn(tools.telemetryReporter, "sendTelemetryEvent");
     const result = await metadataUtil.parse("m365agents.yml");
-    assert.isTrue(
-      spy.calledOnceWith(TelemetryEvent.MetaData, {
-        [TelemetryProperty.YmlSchemaVersion]: "1.0.0",
-        "configureApp.actions": "",
-        "deploy.actions": "",
-        "share.actions": "",
-        "provision.actions": "",
-        "publish.actions": "",
-        "registerApp.actions": "armdeploy,teamsAppcreate",
-        [TelemetryProperty.YmlName]: "m365agentsyml",
-        [TelemetryProperty.SampleAppName]: "testRepo:testSample",
-      })
-    );
+    expect(spy).toHaveBeenCalledExactlyOnceWith(TelemetryEvent.MetaData, {
+      [TelemetryProperty.YmlSchemaVersion]: "1.0.0",
+      "configureApp.actions": "",
+      "deploy.actions": "",
+      "share.actions": "",
+      "provision.actions": "",
+      "publish.actions": "",
+      "registerApp.actions": "armdeploy,teamsAppcreate",
+      [TelemetryProperty.YmlName]: "m365agentsyml",
+      [TelemetryProperty.SampleAppName]: "testRepo:testSample",
+    });
     assert(result.isOk());
   });
 
   it("should normalize @/\\. in sampleTag", async () => {
-    sandbox.stub(yamlParser, "parse").resolves(
+    vi.spyOn(yamlParser, "parse").mockResolvedValue(
       ok({
         ...mockProjectModel,
         additionalMetadata: { sampleTag: "Hello@world/this\\is.a.sample" },
       })
     );
-    const spy = sandbox.spy(tools.telemetryReporter, "sendTelemetryEvent");
+    const spy = vi.spyOn(tools.telemetryReporter, "sendTelemetryEvent");
     const result = await metadataUtil.parse("m365agents.yml");
-    assert.isTrue(
-      spy.calledOnceWith(TelemetryEvent.MetaData, {
-        [TelemetryProperty.YmlSchemaVersion]: "1.0.0",
-        "configureApp.actions": "",
-        "deploy.actions": "",
-        "share.actions": "",
-        "provision.actions": "",
-        "publish.actions": "",
-        "registerApp.actions": "armdeploy,teamsAppcreate",
-        [TelemetryProperty.YmlName]: "m365agentsyml",
-        [TelemetryProperty.SampleAppName]: "Hello_world_this_is_a_sample",
-      })
-    );
+    expect(spy).toHaveBeenCalledExactlyOnceWith(TelemetryEvent.MetaData, {
+      [TelemetryProperty.YmlSchemaVersion]: "1.0.0",
+      "configureApp.actions": "",
+      "deploy.actions": "",
+      "share.actions": "",
+      "provision.actions": "",
+      "publish.actions": "",
+      "registerApp.actions": "armdeploy,teamsAppcreate",
+      [TelemetryProperty.YmlName]: "m365agentsyml",
+      [TelemetryProperty.SampleAppName]: "Hello_world_this_is_a_sample",
+    });
     assert(result.isOk());
   });
 
   it("should send empty sample-app-name if additionalMetadata is undefined", async () => {
-    sandbox.stub(yamlParser, "parse").resolves(
+    vi.spyOn(yamlParser, "parse").mockResolvedValue(
       ok({
         ...mockProjectModel,
         additionalMetadata: undefined,
       })
     );
-    const spy = sandbox.spy(tools.telemetryReporter, "sendTelemetryEvent");
+    const spy = vi.spyOn(tools.telemetryReporter, "sendTelemetryEvent");
     const result = await metadataUtil.parse("m365agents.yml");
-    assert.isTrue(
-      spy.calledOnceWith(TelemetryEvent.MetaData, {
-        [TelemetryProperty.YmlSchemaVersion]: "1.0.0",
-        "configureApp.actions": "",
-        "deploy.actions": "",
-        "share.actions": "",
-        "provision.actions": "",
-        "publish.actions": "",
-        "registerApp.actions": "armdeploy,teamsAppcreate",
-        [TelemetryProperty.YmlName]: "m365agentsyml",
-        [TelemetryProperty.SampleAppName]: "",
-      })
-    );
+    expect(spy).toHaveBeenCalledExactlyOnceWith(TelemetryEvent.MetaData, {
+      [TelemetryProperty.YmlSchemaVersion]: "1.0.0",
+      "configureApp.actions": "",
+      "deploy.actions": "",
+      "share.actions": "",
+      "provision.actions": "",
+      "publish.actions": "",
+      "registerApp.actions": "armdeploy,teamsAppcreate",
+      [TelemetryProperty.YmlName]: "m365agentsyml",
+      [TelemetryProperty.SampleAppName]: "",
+    });
     assert(result.isOk());
   });
 
   it("no sample tag", async () => {
-    sandbox.stub(yamlParser, "parse").resolves(ok({ ...mockProjectModel, additionalMetadata: {} }));
-    const spy = sandbox.spy(tools.telemetryReporter, "sendTelemetryEvent");
-    const result = await metadataUtil.parse("m365agents.yml");
-    assert.isTrue(
-      spy.calledOnceWith(TelemetryEvent.MetaData, {
-        [TelemetryProperty.YmlSchemaVersion]: "1.0.0",
-        "configureApp.actions": "",
-        "deploy.actions": "",
-        "share.actions": "",
-        "provision.actions": "",
-        "publish.actions": "",
-        "registerApp.actions": "armdeploy,teamsAppcreate",
-        [TelemetryProperty.YmlName]: "m365agentsyml",
-        [TelemetryProperty.SampleAppName]: "",
-      })
+    vi.spyOn(yamlParser, "parse").mockResolvedValue(
+      ok({ ...mockProjectModel, additionalMetadata: {} })
     );
+    const spy = vi.spyOn(tools.telemetryReporter, "sendTelemetryEvent");
+    const result = await metadataUtil.parse("m365agents.yml");
+    expect(spy).toHaveBeenCalledExactlyOnceWith(TelemetryEvent.MetaData, {
+      [TelemetryProperty.YmlSchemaVersion]: "1.0.0",
+      "configureApp.actions": "",
+      "deploy.actions": "",
+      "share.actions": "",
+      "provision.actions": "",
+      "publish.actions": "",
+      "registerApp.actions": "armdeploy,teamsAppcreate",
+      [TelemetryProperty.YmlName]: "m365agentsyml",
+      [TelemetryProperty.SampleAppName]: "",
+    });
     assert(result.isOk());
   });
 
   it("parseManifest with empty manifest", () => {
-    const spy = sandbox.spy(tools.telemetryReporter, "sendTelemetryEvent");
+    const spy = vi.spyOn(tools.telemetryReporter, "sendTelemetryEvent");
     metadataUtil.parseManifest({} as any);
 
-    assert.isTrue(
-      spy.calledOnceWith(TelemetryEvent.MetaData, {
-        "manifest.id": "",
-        "manifest.version": "",
-        "manifest.manifestVersion": "",
-        "manifest.bots": "",
-        "manifest.composeExtensions": "",
-        "manifest.staticTabs.contentUrl": "",
-        "manifest.configurableTabs.configurationUrl": "",
-        "manifest.webApplicationInfo.id": "",
-        "manifest.extensions": "false",
-      })
-    );
+    expect(spy).toHaveBeenCalledExactlyOnceWith(TelemetryEvent.MetaData, {
+      "manifest.id": "",
+      "manifest.version": "",
+      "manifest.manifestVersion": "",
+      "manifest.bots": "",
+      "manifest.composeExtensions": "",
+      "manifest.staticTabs.contentUrl": "",
+      "manifest.configurableTabs.configurationUrl": "",
+      "manifest.webApplicationInfo.id": "",
+      "manifest.extensions": "false",
+    });
   });
 
   it("parseManifest with full manifest", () => {
@@ -232,93 +213,90 @@ describe("metadata util", () => {
       webApplicationInfo: { id: "web-app-id" },
       extensions: [{}],
     };
-    const spy = sandbox.spy(tools.telemetryReporter, "sendTelemetryEvent");
+    const spy = vi.spyOn(tools.telemetryReporter, "sendTelemetryEvent");
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    const hashSpy = sandbox.spy(Hash.prototype);
+    const hashSpy = {
+      update: vi.spyOn(Hash.prototype, "update"),
+      digest: vi.spyOn(Hash.prototype, "digest"),
+    };
 
     manifest.extensions = [{}];
     metadataUtil.parseManifest(manifest as any);
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    assert.isTrue(hashSpy.update.called);
+    assert.isTrue(hashSpy.update.mock.calls.length > 0);
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    assert.isTrue(hashSpy.digest.calledWith("hex"));
-    assert.isTrue(
-      spy.calledOnceWith(TelemetryEvent.MetaData, {
-        "manifest.id": "test-id",
-        "manifest.version": "1.0",
-        "manifest.manifestVersion": "1.0",
-        "manifest.bots": "bot1,bot2",
-        "manifest.composeExtensions": "bot1,bot2",
-        "manifest.staticTabs.contentUrl": `${[
-          createHash("sha256").update(manifest.staticTabs[0].contentUrl).digest("hex"),
-          createHash("sha256").update(manifest.staticTabs[1].contentUrl).digest("hex"),
-        ].toString()}`,
-        "manifest.configurableTabs.configurationUrl": `${createHash("sha256")
-          .update(manifest.configurableTabs[0].configurationUrl)
-          .digest("hex")}`,
-        "manifest.webApplicationInfo.id": "web-app-id",
-        "manifest.extensions": "true",
-      })
-    );
+    expect(hashSpy.digest).toHaveBeenCalledWith("hex");
+    expect(spy).toHaveBeenCalledExactlyOnceWith(TelemetryEvent.MetaData, {
+      "manifest.id": "test-id",
+      "manifest.version": "1.0",
+      "manifest.manifestVersion": "1.0",
+      "manifest.bots": "bot1,bot2",
+      "manifest.composeExtensions": "bot1,bot2",
+      "manifest.staticTabs.contentUrl": `${[
+        createHash("sha256").update(manifest.staticTabs[0].contentUrl).digest("hex"),
+        createHash("sha256").update(manifest.staticTabs[1].contentUrl).digest("hex"),
+      ].toString()}`,
+      "manifest.configurableTabs.configurationUrl": `${createHash("sha256")
+        .update(manifest.configurableTabs[0].configurationUrl)
+        .digest("hex")}`,
+      "manifest.webApplicationInfo.id": "web-app-id",
+      "manifest.extensions": "true",
+    });
 
     // If extensions is empty, it should report false in telemetry event
     manifest.extensions = [];
     metadataUtil.parseManifest(manifest as any);
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    assert.isTrue(hashSpy.update.called);
+    assert.isTrue(hashSpy.update.mock.calls.length > 0);
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    assert.isTrue(hashSpy.digest.calledWith("hex"));
-    assert.isTrue(
-      spy.calledWith(TelemetryEvent.MetaData, {
-        "manifest.id": "test-id",
-        "manifest.version": "1.0",
-        "manifest.manifestVersion": "1.0",
-        "manifest.bots": "bot1,bot2",
-        "manifest.composeExtensions": "bot1,bot2",
-        "manifest.staticTabs.contentUrl": `${[
-          createHash("sha256").update(manifest.staticTabs[0].contentUrl).digest("hex"),
-          createHash("sha256").update(manifest.staticTabs[1].contentUrl).digest("hex"),
-        ].toString()}`,
-        "manifest.configurableTabs.configurationUrl": `${createHash("sha256")
-          .update(manifest.configurableTabs[0].configurationUrl)
-          .digest("hex")}`,
-        "manifest.webApplicationInfo.id": "web-app-id",
-        "manifest.extensions": "false",
-      })
-    );
+    expect(hashSpy.digest).toHaveBeenCalledWith("hex");
+    expect(spy).toHaveBeenCalledWith(TelemetryEvent.MetaData, {
+      "manifest.id": "test-id",
+      "manifest.version": "1.0",
+      "manifest.manifestVersion": "1.0",
+      "manifest.bots": "bot1,bot2",
+      "manifest.composeExtensions": "bot1,bot2",
+      "manifest.staticTabs.contentUrl": `${[
+        createHash("sha256").update(manifest.staticTabs[0].contentUrl).digest("hex"),
+        createHash("sha256").update(manifest.staticTabs[1].contentUrl).digest("hex"),
+      ].toString()}`,
+      "manifest.configurableTabs.configurationUrl": `${createHash("sha256")
+        .update(manifest.configurableTabs[0].configurationUrl)
+        .digest("hex")}`,
+      "manifest.webApplicationInfo.id": "web-app-id",
+      "manifest.extensions": "false",
+    });
 
     // If extensions is undefined, it should report false in telemetry event
     manifest.extensions = undefined;
     metadataUtil.parseManifest(manifest as any);
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    assert.isTrue(hashSpy.update.called);
+    assert.isTrue(hashSpy.update.mock.calls.length > 0);
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    assert.isTrue(hashSpy.digest.calledWith("hex"));
-    assert.isTrue(
-      spy.calledWith(TelemetryEvent.MetaData, {
-        "manifest.id": "test-id",
-        "manifest.version": "1.0",
-        "manifest.manifestVersion": "1.0",
-        "manifest.bots": "bot1,bot2",
-        "manifest.composeExtensions": "bot1,bot2",
-        "manifest.staticTabs.contentUrl": `${[
-          createHash("sha256").update(manifest.staticTabs[0].contentUrl).digest("hex"),
-          createHash("sha256").update(manifest.staticTabs[1].contentUrl).digest("hex"),
-        ].toString()}`,
-        "manifest.configurableTabs.configurationUrl": `${createHash("sha256")
-          .update(manifest.configurableTabs[0].configurationUrl)
-          .digest("hex")}`,
-        "manifest.webApplicationInfo.id": "web-app-id",
-        "manifest.extensions": "false",
-      })
-    );
+    expect(hashSpy.digest).toHaveBeenCalledWith("hex");
+    expect(spy).toHaveBeenCalledWith(TelemetryEvent.MetaData, {
+      "manifest.id": "test-id",
+      "manifest.version": "1.0",
+      "manifest.manifestVersion": "1.0",
+      "manifest.bots": "bot1,bot2",
+      "manifest.composeExtensions": "bot1,bot2",
+      "manifest.staticTabs.contentUrl": `${[
+        createHash("sha256").update(manifest.staticTabs[0].contentUrl).digest("hex"),
+        createHash("sha256").update(manifest.staticTabs[1].contentUrl).digest("hex"),
+      ].toString()}`,
+      "manifest.configurableTabs.configurationUrl": `${createHash("sha256")
+        .update(manifest.configurableTabs[0].configurationUrl)
+        .digest("hex")}`,
+      "manifest.webApplicationInfo.id": "web-app-id",
+      "manifest.extensions": "false",
+    });
   });
 
   it("parseManifest with undefined urls", () => {
@@ -332,30 +310,31 @@ describe("metadata util", () => {
       configurableTabs: [{ configurationUrl: undefined }],
       webApplicationInfo: { id: "web-app-id" },
     };
-    const spy = sandbox.spy(tools.telemetryReporter, "sendTelemetryEvent");
+    const spy = vi.spyOn(tools.telemetryReporter, "sendTelemetryEvent");
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    const hashSpy = sandbox.spy(Hash.prototype);
+    const hashSpy = {
+      update: vi.spyOn(Hash.prototype, "update"),
+      digest: vi.spyOn(Hash.prototype, "digest"),
+    };
 
     metadataUtil.parseManifest(manifest as any);
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    assert.isTrue(hashSpy.update.notCalled);
+    assert.isTrue(hashSpy.update.mock.calls.length === 0);
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    assert.isTrue(hashSpy.digest.notCalled);
-    assert.isTrue(
-      spy.calledOnceWith(TelemetryEvent.MetaData, {
-        "manifest.id": "test-id",
-        "manifest.version": "1.0",
-        "manifest.manifestVersion": "1.0",
-        "manifest.bots": "bot1,bot2",
-        "manifest.composeExtensions": "bot1,bot2",
-        "manifest.staticTabs.contentUrl": "undefined,undefined",
-        "manifest.configurableTabs.configurationUrl": "undefined",
-        "manifest.webApplicationInfo.id": "web-app-id",
-        "manifest.extensions": "false",
-      })
-    );
+    assert.isTrue(hashSpy.digest.mock.calls.length === 0);
+    expect(spy).toHaveBeenCalledExactlyOnceWith(TelemetryEvent.MetaData, {
+      "manifest.id": "test-id",
+      "manifest.version": "1.0",
+      "manifest.manifestVersion": "1.0",
+      "manifest.bots": "bot1,bot2",
+      "manifest.composeExtensions": "bot1,bot2",
+      "manifest.staticTabs.contentUrl": "undefined,undefined",
+      "manifest.configurableTabs.configurationUrl": "undefined",
+      "manifest.webApplicationInfo.id": "web-app-id",
+      "manifest.extensions": "false",
+    });
   });
 });

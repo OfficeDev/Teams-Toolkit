@@ -1,10 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { isValidProject } from "@microsoft/teamsfx-core";
-import { workspaceUri, core } from "../globalVariables";
+import * as teamsfxCore from "@microsoft/teamsfx-core";
+import * as globalVariables from "../globalVariables";
 import { TelemetryProperty, TelemetryTriggerFrom } from "../telemetry/extTelemetryEvents";
-import { getSystemInputs } from "./systemEnvUtils";
+import * as systemEnvUtils from "./systemEnvUtils";
 
 export function getPackageVersion(versionStr: string): string {
   if (versionStr.includes("alpha")) {
@@ -23,12 +23,13 @@ export function getPackageVersion(versionStr: string): string {
 }
 
 export async function getProjectId(): Promise<string | undefined> {
-  if (!workspaceUri) {
+  const workspacePath = globalVariables.workspaceUri?.fsPath;
+  const currentCore = globalVariables.core;
+  if (!workspacePath || !currentCore) {
     return undefined;
   }
   try {
-    const ws = workspaceUri.fsPath;
-    const projInfoRes = await core.getProjectId(ws);
+    const projInfoRes = await currentCore.getProjectId(workspacePath);
     if (projInfoRes.isOk()) {
       return projInfoRes.value;
     }
@@ -109,12 +110,14 @@ export interface TeamsAppTelemetryInfo {
 }
 
 export async function getTeamsAppTelemetryInfoByEnv(
-  env: string
+  env: string,
+  isValidProjectFn: (workspacePath: string) => boolean = teamsfxCore.isValidProject
 ): Promise<TeamsAppTelemetryInfo | undefined> {
   try {
-    const ws = workspaceUri!.fsPath;
-    if (isValidProject(ws)) {
-      const projectInfoRes = await core.getProjectInfo(ws, env);
+    const ws = globalVariables.workspaceUri?.fsPath;
+    const currentCore = globalVariables.core;
+    if (ws && currentCore && isValidProjectFn(ws)) {
+      const projectInfoRes = await currentCore.getProjectInfo(ws, env);
       if (projectInfoRes.isOk()) {
         const projectInfo = projectInfoRes.value;
         return {
@@ -128,7 +131,7 @@ export async function getTeamsAppTelemetryInfoByEnv(
 }
 
 export async function getSettingsVersion(): Promise<string | undefined> {
-  if (core) {
+  if (globalVariables.core) {
     const versionCheckResult = await projectVersionCheck();
 
     if (versionCheckResult.isOk()) {
@@ -139,5 +142,5 @@ export async function getSettingsVersion(): Promise<string | undefined> {
 }
 
 export async function projectVersionCheck() {
-  return await core.projectVersionCheck(getSystemInputs());
+  return await globalVariables.core.projectVersionCheck(systemEnvUtils.getSystemInputs());
 }

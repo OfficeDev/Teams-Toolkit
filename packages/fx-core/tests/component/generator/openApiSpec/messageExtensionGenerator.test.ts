@@ -15,10 +15,9 @@ import {
   ResponseTemplatesFolderName,
   SystemError,
 } from "@microsoft/teamsfx-api";
-import { assert } from "chai";
 import fs from "fs-extra";
 import { RestoreFn } from "mocked-env";
-import * as sinon from "sinon";
+import { assert, vi } from "vitest";
 import { createContext, setTools } from "../../../../src/common/globalVars";
 import { manifestUtils } from "../../../../src/component/driver/teamsApp/utils/ManifestUtils";
 import * as helper from "../../../../src/component/generator/openApiSpec/helper";
@@ -31,12 +30,12 @@ import { teamsManifest } from "./fakeData";
 const tools = new MockTools();
 
 describe("MessageExtensionWithExistingApiSpecGenerator", async () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   before(() => {
     setTools(tools);
   });
   after(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   describe("activate", async () => {
     it("should activate and get correct template name", async () => {
@@ -53,10 +52,10 @@ describe("MessageExtensionWithExistingApiSpecGenerator", async () => {
   });
 
   describe("getTemplateInfos", async () => {
-    const sandbox = sinon.createSandbox();
+    const sandbox = vi;
     let mockedEnvRestore: RestoreFn | undefined;
     afterEach(async () => {
-      sandbox.restore();
+      vi.restoreAllMocks();
       if (mockedEnvRestore) {
         mockedEnvRestore();
       }
@@ -87,7 +86,7 @@ describe("MessageExtensionWithExistingApiSpecGenerator", async () => {
   });
 
   describe("post", function () {
-    const sandbox = sinon.createSandbox();
+    const sandbox = vi;
     let mockedEnvRestore: RestoreFn | undefined;
 
     const apiOperations: ApiOperation[] = [
@@ -115,7 +114,7 @@ describe("MessageExtensionWithExistingApiSpecGenerator", async () => {
     });
 
     afterEach(async () => {
-      sandbox.restore();
+      vi.restoreAllMocks();
       if (mockedEnvRestore) {
         mockedEnvRestore();
       }
@@ -137,15 +136,17 @@ describe("MessageExtensionWithExistingApiSpecGenerator", async () => {
         },
       };
       const context = createContext();
-      sandbox
-        .stub(SpecParser.prototype, "validate")
-        .resolves({ status: ValidationStatus.Valid, errors: [], warnings: [] });
-      sandbox.stub(fs, "ensureDir").resolves();
-      sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(teamsManifest));
-      const generateBasedOnSpec = sandbox
-        .stub(SpecParser.prototype, "generate")
-        .resolves({ allSuccess: true, warnings: [] });
-      sandbox.stub(helper, "generateScaffoldingSummary").resolves("");
+      vi.spyOn(SpecParser.prototype, "validate").mockResolvedValue({
+        status: ValidationStatus.Valid,
+        errors: [],
+        warnings: [],
+      });
+      vi.spyOn(fs, "ensureDir").mockResolvedValue();
+      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(teamsManifest));
+      const generateBasedOnSpec = vi
+        .spyOn(SpecParser.prototype, "generate")
+        .mockResolvedValue({ allSuccess: true, warnings: [] });
+      vi.spyOn(helper, "generateScaffoldingSummary").mockResolvedValue("");
 
       const generator = new MessageExtensionWithExistingApiSpecGenerator();
       const result = await generator.post(context, inputs, "projectPath", {
@@ -155,7 +156,7 @@ describe("MessageExtensionWithExistingApiSpecGenerator", async () => {
       });
 
       assert.isTrue(result.isOk());
-      assert.isTrue(generateBasedOnSpec.calledOnce);
+      assert.isTrue(generateBasedOnSpec.mock.calls.length === 1);
     });
 
     it("success with API Key authentication", async function () {
@@ -181,21 +182,23 @@ describe("MessageExtensionWithExistingApiSpecGenerator", async () => {
         },
       };
       const context = createContext();
-      sandbox
-        .stub(SpecParser.prototype, "validate")
-        .resolves({ status: ValidationStatus.Valid, errors: [], warnings: [] });
-      sandbox.stub(fs, "ensureDir").resolves();
-      sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(teamsManifest));
-      const generateBasedOnSpec = sandbox
-        .stub(SpecParser.prototype, "generate")
-        .resolves({ allSuccess: true, warnings: [] });
-      sandbox.stub(helper, "generateScaffoldingSummary").resolves("");
+      vi.spyOn(SpecParser.prototype, "validate").mockResolvedValue({
+        status: ValidationStatus.Valid,
+        errors: [],
+        warnings: [],
+      });
+      vi.spyOn(fs, "ensureDir").mockResolvedValue();
+      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(teamsManifest));
+      const generateBasedOnSpec = vi
+        .spyOn(SpecParser.prototype, "generate")
+        .mockResolvedValue({ allSuccess: true, warnings: [] });
+      vi.spyOn(helper, "generateScaffoldingSummary").mockResolvedValue("");
 
       const generator = new MessageExtensionWithExistingApiSpecGenerator();
       const result = await generator.post(context, inputs, "projectPath");
 
       assert.isTrue(result.isOk());
-      assert.isTrue(generateBasedOnSpec.calledOnce);
+      assert.isTrue(generateBasedOnSpec.mock.calls.length === 1);
     });
 
     it("success with api spec warning and generate warnings", async function () {
@@ -215,7 +218,7 @@ describe("MessageExtensionWithExistingApiSpecGenerator", async () => {
         },
       };
       const context = createContext();
-      sandbox.stub(SpecParser.prototype, "validate").resolves({
+      vi.spyOn(SpecParser.prototype, "validate").mockResolvedValue({
         status: ValidationStatus.Warning,
         errors: [],
         warnings: [
@@ -231,9 +234,9 @@ describe("MessageExtensionWithExistingApiSpecGenerator", async () => {
         ],
         specHash: "xxx",
       });
-      sandbox.stub(fs, "ensureDir").resolves();
-      sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok({ ...teamsManifest }));
-      const generateParser = sandbox.stub(SpecParser.prototype, "generate").resolves({
+      vi.spyOn(fs, "ensureDir").mockResolvedValue();
+      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok({ ...teamsManifest }));
+      const generateParser = vi.spyOn(SpecParser.prototype, "generate").mockResolvedValue({
         allSuccess: true,
         warnings: [
           { type: WarningType.GenerateCardFailed, content: "test", data: "getPets" },
@@ -244,7 +247,7 @@ describe("MessageExtensionWithExistingApiSpecGenerator", async () => {
           },
         ],
       });
-      sandbox.stub(helper, "generateScaffoldingSummary").resolves("warning message");
+      vi.spyOn(helper, "generateScaffoldingSummary").mockResolvedValue("warning message");
 
       const generator = new MessageExtensionWithExistingApiSpecGenerator();
       const result = await generator.post(context, inputs, "projectPath");
@@ -261,7 +264,7 @@ describe("MessageExtensionWithExistingApiSpecGenerator", async () => {
           WarningType.OperationOnlyContainsOptionalParam
         );
         assert.equal(result.value.warnings![3].content, "");
-        assert.isTrue(generateParser.args[0][3]?.includes(ResponseTemplatesFolderName));
+        assert.isTrue(generateParser.mock.calls[0][3]?.includes(ResponseTemplatesFolderName));
       }
     });
 
@@ -282,7 +285,7 @@ describe("MessageExtensionWithExistingApiSpecGenerator", async () => {
         },
       };
       const context = createContext();
-      sandbox.stub(SpecParser.prototype, "validate").resolves({
+      vi.spyOn(SpecParser.prototype, "validate").mockResolvedValue({
         status: ValidationStatus.Warning,
         errors: [],
         warnings: [
@@ -290,9 +293,12 @@ describe("MessageExtensionWithExistingApiSpecGenerator", async () => {
         ],
         specHash: "xxx",
       });
-      sandbox.stub(fs, "ensureDir").resolves();
-      sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok({ ...teamsManifest }));
-      sandbox.stub(SpecParser.prototype, "generate").resolves({ allSuccess: true, warnings: [] });
+      vi.spyOn(fs, "ensureDir").mockResolvedValue();
+      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok({ ...teamsManifest }));
+      vi.spyOn(SpecParser.prototype, "generate").mockResolvedValue({
+        allSuccess: true,
+        warnings: [],
+      });
 
       const generator = new MessageExtensionWithExistingApiSpecGenerator();
       const result = await generator.post(context, inputs, "projectPath");
@@ -320,18 +326,21 @@ describe("MessageExtensionWithExistingApiSpecGenerator", async () => {
         },
       };
       const context = createContext();
-      sandbox.stub(SpecParser.prototype, "validate").resolves({
+      vi.spyOn(SpecParser.prototype, "validate").mockResolvedValue({
         status: ValidationStatus.Warning,
         errors: [],
         warnings: [{ type: WarningType.OperationIdMissing, content: "warning" }],
         specHash: "xxx",
       });
-      sandbox.stub(fs, "ensureDir").resolves();
-      sandbox
-        .stub(manifestUtils, "_readAppManifest")
-        .resolves(ok({ ...teamsManifest, name: { short: "", full: "" } }));
-      sandbox.stub(SpecParser.prototype, "generate").resolves({ allSuccess: true, warnings: [] });
-      sandbox.stub(helper, "generateScaffoldingSummary").resolves("warn message");
+      vi.spyOn(fs, "ensureDir").mockResolvedValue();
+      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(
+        ok({ ...teamsManifest, name: { short: "", full: "" } })
+      );
+      vi.spyOn(SpecParser.prototype, "generate").mockResolvedValue({
+        allSuccess: true,
+        warnings: [],
+      });
+      vi.spyOn(helper, "generateScaffoldingSummary").mockResolvedValue("warn message");
 
       const generator = new MessageExtensionWithExistingApiSpecGenerator();
       const result = await generator.post(context, inputs, "projectPath");
@@ -355,14 +364,14 @@ describe("MessageExtensionWithExistingApiSpecGenerator", async () => {
         },
       };
       const context = createContext();
-      sandbox.stub(SpecParser.prototype, "validate").resolves({
+      vi.spyOn(SpecParser.prototype, "validate").mockResolvedValue({
         status: ValidationStatus.Error,
         errors: [{ type: ErrorType.NoServerInformation, content: "" }],
         warnings: [],
         specHash: "xxx",
       });
 
-      sandbox.stub(SpecParser.prototype, "generate").resolves();
+      vi.spyOn(SpecParser.prototype, "generate").mockResolvedValue();
 
       const generator = new MessageExtensionWithExistingApiSpecGenerator();
       const result = await generator.post(context, inputs, "projectPath");
@@ -389,14 +398,19 @@ describe("MessageExtensionWithExistingApiSpecGenerator", async () => {
         },
       };
       const context = createContext();
-      sandbox
-        .stub(SpecParser.prototype, "validate")
-        .resolves({ status: ValidationStatus.Valid, errors: [], warnings: [] });
-      sandbox.stub(fs, "ensureDir").resolves();
-      sandbox
-        .stub(manifestUtils, "_readAppManifest")
-        .resolves(err(new SystemError("readManifest", "name", "", "")));
-      sandbox.stub(SpecParser.prototype, "generate").resolves({ allSuccess: true, warnings: [] });
+      vi.spyOn(SpecParser.prototype, "validate").mockResolvedValue({
+        status: ValidationStatus.Valid,
+        errors: [],
+        warnings: [],
+      });
+      vi.spyOn(fs, "ensureDir").mockResolvedValue();
+      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(
+        err(new SystemError("readManifest", "name", "", ""))
+      );
+      vi.spyOn(SpecParser.prototype, "generate").mockResolvedValue({
+        allSuccess: true,
+        warnings: [],
+      });
 
       const generator = new MessageExtensionWithExistingApiSpecGenerator();
       const result = await generator.post(context, inputs, "projectPath");
@@ -422,7 +436,9 @@ describe("MessageExtensionWithExistingApiSpecGenerator", async () => {
         },
       };
       const context = createContext();
-      sandbox.stub(SpecParser.prototype, "validate").throws(new Error("test"));
+      vi.spyOn(SpecParser.prototype, "validate").mockImplementation(() => {
+        throw new Error("test");
+      });
 
       const generator = new MessageExtensionWithExistingApiSpecGenerator();
       const result = await generator.post(context, inputs, "projectPath");
@@ -446,14 +462,16 @@ describe("MessageExtensionWithExistingApiSpecGenerator", async () => {
         },
       };
       const context = createContext();
-      sandbox
-        .stub(SpecParser.prototype, "validate")
-        .resolves({ status: ValidationStatus.Valid, errors: [], warnings: [] });
-      sandbox.stub(fs, "ensureDir").resolves();
-      sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(teamsManifest));
-      sandbox
-        .stub(SpecParser.prototype, "generate")
-        .throws(new SpecParserError("test", ErrorType.Unknown));
+      vi.spyOn(SpecParser.prototype, "validate").mockResolvedValue({
+        status: ValidationStatus.Valid,
+        errors: [],
+        warnings: [],
+      });
+      vi.spyOn(fs, "ensureDir").mockResolvedValue();
+      vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(teamsManifest));
+      vi.spyOn(SpecParser.prototype, "generate").mockImplementation(() => {
+        throw new SpecParserError("test", ErrorType.Unknown);
+      });
       const generator = new MessageExtensionWithExistingApiSpecGenerator();
       const result = await generator.post(context, inputs, "projectPath");
 

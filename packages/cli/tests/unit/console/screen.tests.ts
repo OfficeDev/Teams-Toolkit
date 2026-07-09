@@ -1,11 +1,9 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import sinon from "sinon";
-
 import ScreenManager, { Row } from "../../../src/console/screen";
 import { expect } from "../utils";
-
+import { vi } from "vitest";
 describe("Row", () => {
   it("create with an string.", () => {
     const row = new Row("Test");
@@ -40,7 +38,7 @@ describe("Row", () => {
 });
 
 describe("Screen Manager", function () {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   beforeEach(() => {
     ScreenManager["rows"] = [];
@@ -51,14 +49,14 @@ describe("Screen Manager", function () {
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("add progress", () => {
-    const refreshStub = sandbox.stub(ScreenManager, "refresh");
+    const refreshStub = vi.spyOn(ScreenManager, "refresh");
     const row = ScreenManager.addProgress(() => "Test add progress");
     expect(ScreenManager["rows"]).deep.equals([row]);
-    sinon.assert.calledOnce(refreshStub);
+    expect(refreshStub.mock.calls.length === 1).to.be.true;
   });
 
   it("write when paused", () => {
@@ -68,41 +66,41 @@ describe("Screen Manager", function () {
   });
 
   it("write and write line (out stream)", () => {
-    const clearScreenStub = sandbox.stub<any, any>(ScreenManager, "clearScreen");
-    const renderScreenStub = sandbox.stub<any, any>(ScreenManager, "renderScreen");
-    const outWriteStub = sandbox.stub(process.stdout, "write");
+    const clearScreenStub = vi.spyOn(ScreenManager, "clearScreen");
+    const renderScreenStub = vi.spyOn(ScreenManager, "renderScreen");
+    const outWriteStub = vi.spyOn(process.stdout, "write");
     ScreenManager.writeLine("Test out");
-    sinon.assert.calledOnce(clearScreenStub);
-    sinon.assert.calledOnce(renderScreenStub);
-    sinon.assert.calledOnce(outWriteStub);
+    expect(clearScreenStub.mock.calls.length === 1).to.be.true;
+    expect(renderScreenStub.mock.calls.length === 1).to.be.true;
+    expect(outWriteStub.mock.calls.length === 1).to.be.true;
   });
 
   it("write and write line (err stream)", () => {
-    const clearScreenStub = sandbox.stub<any, any>(ScreenManager, "clearScreen");
-    const renderScreenStub = sandbox.stub<any, any>(ScreenManager, "renderScreen");
-    const errWriteStub = sandbox.stub(process.stderr, "write");
+    const clearScreenStub = vi.spyOn(ScreenManager, "clearScreen");
+    const renderScreenStub = vi.spyOn(ScreenManager, "renderScreen");
+    const errWriteStub = vi.spyOn(process.stderr, "write");
     ScreenManager.writeLine("Test err", true);
-    sinon.assert.calledOnce(clearScreenStub);
-    sinon.assert.calledOnce(renderScreenStub);
-    sinon.assert.calledOnce(errWriteStub);
+    expect(clearScreenStub.mock.calls.length === 1).to.be.true;
+    expect(renderScreenStub.mock.calls.length === 1).to.be.true;
+    expect(errWriteStub.mock.calls.length === 1).to.be.true;
   });
 
   it("refresh", () => {
-    const clearTimerStub = sandbox.stub<any, any>(ScreenManager, "clearTimer");
-    const renderScreenStub = sandbox.stub<any, any>(ScreenManager, "renderScreen");
-    const setTimerStub = sandbox.stub<any, any>(ScreenManager, "setTimer");
+    const clearTimerStub = vi.spyOn(ScreenManager, "clearTimer");
+    const renderScreenStub = vi.spyOn(ScreenManager, "renderScreen");
+    const setTimerStub = vi.spyOn(ScreenManager, "setTimer");
     ScreenManager.refresh();
-    sinon.assert.calledOnce(clearTimerStub);
-    sinon.assert.calledOnce(renderScreenStub);
-    sinon.assert.calledOnce(setTimerStub);
+    expect(clearTimerStub.mock.calls.length === 1).to.be.true;
+    expect(renderScreenStub.mock.calls.length === 1).to.be.true;
+    expect(setTimerStub.mock.calls.length === 1).to.be.true;
   });
 
   it("freeze", () => {
-    const writeLineStub = sandbox.stub(ScreenManager, "writeLine");
+    const writeLineStub = vi.spyOn(ScreenManager, "writeLine");
     const row = new Row(() => "Test freeze");
     ScreenManager["rows"] = [row];
     ScreenManager.freeze(row);
-    sinon.assert.calledOnce(writeLineStub);
+    expect(writeLineStub.mock.calls.length === 1).to.be.true;
     expect(ScreenManager["rows"].length).equals(0);
   });
 
@@ -114,9 +112,9 @@ describe("Screen Manager", function () {
   });
 
   it("pause", () => {
-    const clearScreenStub = sandbox.stub<any, any>(ScreenManager, "clearScreen");
+    const clearScreenStub = vi.spyOn(ScreenManager, "clearScreen");
     ScreenManager.pause();
-    sinon.assert.calledOnce(clearScreenStub);
+    expect(clearScreenStub.mock.calls.length === 1).to.be.true;
     expect(ScreenManager["paused"]).equals(true);
   });
 
@@ -127,7 +125,7 @@ describe("Screen Manager", function () {
   });
 
   it("set timer", () => {
-    sandbox.stub(ScreenManager, "refresh");
+    vi.spyOn(ScreenManager, "refresh");
     const row = new Row(() => "Test freeze");
     ScreenManager["rows"] = [row];
     ScreenManager["setTimer"]();

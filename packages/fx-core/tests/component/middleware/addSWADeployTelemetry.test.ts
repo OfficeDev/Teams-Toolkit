@@ -5,27 +5,26 @@
  */
 import { HookContext, NextFunction } from "@feathersjs/hooks";
 import { FxError } from "@microsoft/teamsfx-api";
-import { expect } from "chai";
-import * as sinon from "sinon";
+import { chai, vi } from "vitest";
 import { addSWADeployTelemetry } from "../../../src/component/driver/middleware/addSWADeployTelemetry";
 
 describe("addSWADeployTelemetry", () => {
-  let clock: sinon.SinonFakeTimers;
+  let clock: any;
   let next: NextFunction;
   let ctx: HookContext;
   let telemetryReporter: {
-    sendTelemetryEvent: sinon.SinonSpy;
-    sendTelemetryErrorEvent: sinon.SinonSpy;
+    sendTelemetryEvent: any;
+    sendTelemetryErrorEvent: any;
   };
 
   beforeEach(() => {
-    clock = sinon.useFakeTimers();
-    next = sinon.spy(() => {
+    clock = vi.useFakeTimers();
+    next = vi.fn(() => {
       return Promise.resolve(12);
-    }) as NextFunction;
+    }) as unknown as NextFunction;
     telemetryReporter = {
-      sendTelemetryEvent: sinon.spy(),
-      sendTelemetryErrorEvent: sinon.spy(),
+      sendTelemetryEvent: vi.fn(),
+      sendTelemetryErrorEvent: vi.fn(),
     };
     ctx = {
       arguments: [
@@ -35,27 +34,27 @@ describe("addSWADeployTelemetry", () => {
         "",
         "deploy to Azure Static Web Apps",
       ],
-      result: { isOk: sinon.fake.returns(true) },
+      result: { isOk: vi.fn().mockReturnValue(true) },
     } as HookContext;
   });
 
   afterEach(() => {
-    clock.restore();
-    sinon.restore();
+    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   it("should not add telemetry for script", async () => {
     const middleware = addSWADeployTelemetry("testEvent");
     const res = await middleware(ctx, next);
-    expect(res).to.equal(undefined);
+    chai.expect(res).to.equal(undefined);
   });
 
   it("should add telemetry for non-script", async () => {
     const middleware = addSWADeployTelemetry("testEvent");
     await middleware(ctx, next);
-    clock.tick(1000); // Simulate time passing
-    expect(telemetryReporter.sendTelemetryEvent.called).to.be.true;
-    expect(telemetryReporter.sendTelemetryErrorEvent.called).to.be.false;
+    vi.advanceTimersByTime(1000); // Simulate time passing
+    chai.expect(telemetryReporter.sendTelemetryEvent.mock.calls.length > 0).to.be.true;
+    chai.expect(telemetryReporter.sendTelemetryErrorEvent.mock.calls.length > 0).to.be.false;
   });
 
   it("When name is not deploy to Azure Static Web Apps", async () => {
@@ -67,13 +66,13 @@ describe("addSWADeployTelemetry", () => {
         "",
         "Anything else",
       ],
-      result: { isOk: sinon.fake.returns(true) },
+      result: { isOk: vi.fn().mockReturnValue(true) },
     } as HookContext;
     const middleware = addSWADeployTelemetry("testEvent");
     const res = await middleware(ctx, next);
-    expect(res).to.equal(undefined);
-    expect(telemetryReporter.sendTelemetryEvent.called).to.be.false;
-    expect(telemetryReporter.sendTelemetryErrorEvent.called).to.be.false;
+    chai.expect(res).to.equal(undefined);
+    chai.expect(telemetryReporter.sendTelemetryEvent.mock.calls.length > 0).to.be.false;
+    chai.expect(telemetryReporter.sendTelemetryErrorEvent.mock.calls.length > 0).to.be.false;
   });
 
   it("When return value is not ok", async () => {
@@ -86,11 +85,11 @@ describe("addSWADeployTelemetry", () => {
         "",
         "deploy to Azure Static Web Apps",
       ],
-      result: { isOk: sinon.fake.returns(false), error: err },
+      result: { isOk: vi.fn().mockReturnValue(false), error: err },
     } as HookContext;
     const middleware = addSWADeployTelemetry("testEvent");
     await middleware(ctx, next);
-    expect(telemetryReporter.sendTelemetryEvent.called).to.be.true;
-    expect(telemetryReporter.sendTelemetryErrorEvent.called).to.be.true;
+    chai.expect(telemetryReporter.sendTelemetryEvent.mock.calls.length > 0).to.be.true;
+    chai.expect(telemetryReporter.sendTelemetryErrorEvent.mock.calls.length > 0).to.be.true;
   });
 });

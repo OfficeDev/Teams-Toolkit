@@ -158,9 +158,10 @@ runs:
         5) packages/sdk/** or packages/api/** -> teamsApp/*
         6) templates/** -> match by template name: bot->teamsApp/basicBot*, tab->teamsApp/basicTab*, message-extension->teamsApp/basicMessageExtension*, custom-copilot->teamsAgent/DebugCustomCopilot*, declarative->declarativeAgent/*
         7) packages/tests/src/e2e/** -> return the changed test files themselves
-        8) .github/**, docs/**, *.md, package.json (root only), .eslintrc* -> return empty array (infra/docs only, no tests needed)
-        9) vs/** (Visual Studio .NET templates) -> vs/*
-        10) If changes span multiple areas, include tests for all affected areas.
+        8) packages/tests/vscuse/** (VS Code UI / vscuse test cases and plans) -> return empty array (these are vscuse UI tests, NOT e2e tests; they run in a separate vscuse pipeline)
+        9) .github/**, docs/**, *.md, package.json (root only), .eslintrc* -> return empty array (infra/docs only, no tests needed)
+        10) vs/** (Visual Studio .NET templates) -> vs/*
+        11) If changes span multiple areas, include tests for all affected areas.
 
         IMPORTANT RULES:
         - Only return test cases from the available list. Never invent test file names.

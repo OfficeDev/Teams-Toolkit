@@ -1,6 +1,5 @@
-import * as sinon from "sinon";
-import * as chai from "chai";
 import { ok } from "@microsoft/teamsfx-api";
+import { vi, assert } from "vitest";
 import {
   refreshCopilotCallback,
   refreshSideloadingCallback,
@@ -10,72 +9,60 @@ import accountTreeViewProviderInstance from "../../../src/treeview/account/accou
 
 describe("refreshAccessHandlers", () => {
   describe("refreshSideloadingCallback", async () => {
-    const sandbox = sinon.createSandbox();
-
-    afterEach(() => {
-      sandbox.restore();
-    });
-
     it("Happy path", async () => {
       const status = {
         status: "success",
         token: "test-token",
       };
-      sandbox.stub(M365TokenInstance, "getStatus").resolves(ok(status));
-      const updateChecksStub = sandbox.stub(
+      vi.spyOn(M365TokenInstance, "getStatus").mockResolvedValue(ok(status));
+      const updateChecksStub = vi.spyOn(
         accountTreeViewProviderInstance.m365AccountNode,
         "updateChecks"
       );
       await refreshSideloadingCallback();
-      chai.assert(updateChecksStub.calledOnceWithExactly("test-token", true, false));
+      assert(updateChecksStub.calledOnceWithExactly("test-token", true, false));
     });
 
     it("No token", async () => {
       const status = {
         status: "success",
       };
-      sandbox.stub(M365TokenInstance, "getStatus").resolves(ok(status));
-      const updateChecksStub = sandbox.stub(
+      vi.spyOn(M365TokenInstance, "getStatus").mockResolvedValue(ok(status));
+      const updateChecksStub = vi.spyOn(
         accountTreeViewProviderInstance.m365AccountNode,
         "updateChecks"
       );
       await refreshSideloadingCallback();
-      chai.assert(updateChecksStub.notCalled);
+      assert(updateChecksStub.notCalled);
     });
   });
 
   describe("refreshCopilotCallback", async () => {
-    const sandbox = sinon.createSandbox();
-
-    afterEach(() => {
-      sandbox.restore();
-    });
-
     it("Happy path", async () => {
       const status = {
         status: "success",
         token: "test-token",
       };
-      sandbox.stub(M365TokenInstance, "getStatus").resolves(ok(status));
-      const updateChecksStub = sandbox.stub(
+      vi.spyOn(M365TokenInstance, "getStatus").mockResolvedValue(ok(status));
+      const updateChecksStub = vi.spyOn(
         accountTreeViewProviderInstance.m365AccountNode,
         "updateChecks"
       );
       await refreshCopilotCallback();
-      chai.assert(updateChecksStub.calledOnceWithExactly("test-token", false, true));
+      assert(updateChecksStub.calledOnceWithExactly("test-token", false, true));
     });
 
     it("No token", async () => {
       const status = {
         status: "success",
       };
-      sandbox.stub(M365TokenInstance, "getStatus").resolves(ok(status));
-      const updateChecksStub = sandbox.stub(
+      vi.spyOn(M365TokenInstance, "getStatus").mockResolvedValue(ok(status));
+      const updateChecksStub = vi.spyOn(
         accountTreeViewProviderInstance.m365AccountNode,
         "updateChecks"
       );
       await refreshCopilotCallback();
-      chai.assert(updateChecksStub.notCalled);
+      assert(updateChecksStub.notCalled);
     });
   });
 });

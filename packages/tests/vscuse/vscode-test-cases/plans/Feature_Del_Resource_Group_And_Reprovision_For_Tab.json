@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 12,
+    "total_steps": 11,
     "created_at": "2026-03-16T08:20:40.499725",
     "name": "Feature Del Resource Group And Reprovision For tab",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2026-03-16T08:20:40.499718",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_1570f129",
+      "plan_r_0624_024810",
       "step_0f3abd6d",
       "step_2c440fea",
       "step_f27138f4",
@@ -41,32 +41,6 @@
     "updated_at": "2026-03-16T08:22:42.990293"
   },
   "steps": [
-    {
-      "step_id": "step_1570f129",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 361,
-        "y": 229
-      },
-      "description": "Click on the \"Declarative Agent\" option within the \"New Project\" dropdown menu to create an agent using instructions and actions.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:361:229:16:5:53ccc35ac8d2730c",
-        "dhash:361:229:96:5:959834d2da1409c8",
-        "dhash:361:229:0:10:c8c88094b0717c6f"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_1570f129",
-      "created_at": "2026-03-16T08:20:40.549702",
-      "plan_id": "plan_82a790fb"
-    },
     {
       "step_id": "step_0f3abd6d",
       "agent": "interaction",

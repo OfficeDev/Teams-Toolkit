@@ -3,12 +3,11 @@
 
 import { err, TeamsAppManifest } from "@microsoft/teamsfx-api";
 import AdmZip from "adm-zip";
-import chai from "chai";
 import fs from "fs-extra";
 import os from "os";
 import path from "path";
 import { v4 as uuid } from "uuid";
-import { vi } from "vitest";
+import { chai, vi } from "vitest";
 import { CopilotAgentPublishArgs } from "../../../../src/component/driver/copilotAgent/interfaces/PublishArgs";
 import { CopilotAgentPublishDriver } from "../../../../src/component/driver/copilotAgent/publish";
 import { Constants } from "../../../../src/component/driver/teamsApp/constants";

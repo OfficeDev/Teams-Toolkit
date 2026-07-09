@@ -2,9 +2,7 @@
 // Licensed under the MIT license.
 
 import { InputsWithProjectPath, Platform, Stage } from "@microsoft/teamsfx-api";
-import { assert } from "chai";
 import fs from "fs-extra";
-import { createSandbox } from "sinon";
 import { Container } from "typedi";
 import * as utils from "../../../src/common/globalVars";
 import { setTools } from "../../../src/common/globalVars";
@@ -12,15 +10,16 @@ import "../../../src/component/feature/sso";
 import * as templateUtils from "../../../src/component/generator/utils";
 import { ComponentNames } from "../../../src/component/migrate";
 import { MockTools, randomAppName } from "../../core/utils";
+import { assert, vi } from "vitest";
 
 describe("SSO can add in VS V3 project", () => {
-  const sandbox = createSandbox();
+  const sandbox = vi;
   const tools = new MockTools();
   setTools(tools);
   const appName = `unittest${randomAppName()}`;
   const context = utils.createContext();
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("happy path for VS v3 project", async () => {
@@ -38,7 +37,7 @@ describe("SSO can add in VS V3 project", () => {
       stage: Stage.addFeature,
     };
 
-    sandbox.stub(fs, "pathExists").resolves(false);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
     const ssoRes = await component.add(context, inputs);
     assert.isTrue(ssoRes.isErr() && ssoRes.error.name === "FileNotFoundError");
   });
@@ -53,10 +52,12 @@ describe("SSO can add in VS V3 project", () => {
       stage: Stage.addFeature,
     };
 
-    sandbox.stub(fs, "pathExists").onFirstCall().resolves(true).onSecondCall().resolves(false);
-    sandbox.stub(fs, "ensureDir").rejects(new Error("errorMessage"));
-    sandbox.stub(fs, "remove").resolves();
-    sandbox.stub(templateUtils, "unzip").throws(new Error("errorMessage"));
+    vi.spyOn(fs, "pathExists").mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+    vi.spyOn(fs, "ensureDir").mockRejectedValue(new Error("errorMessage"));
+    vi.spyOn(fs, "remove").mockResolvedValue();
+    vi.spyOn(templateUtils, "unzip").mockImplementation(() => {
+      throw new Error("errorMessage");
+    });
     const ssoRes = await component.add(context, inputs);
     assert.isTrue(ssoRes.isErr() && ssoRes.error.name === "FailedToCreateAuthFiles");
   });

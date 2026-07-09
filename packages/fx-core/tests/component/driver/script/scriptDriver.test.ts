@@ -2,11 +2,10 @@
 // Licensed under the MIT license.
 
 import { err, IProgressHandler, ok } from "@microsoft/teamsfx-api";
-import { assert } from "chai";
 import child_process from "child_process";
 import fs from "fs-extra";
 import os from "os";
-import * as sinon from "sinon";
+import { assert, vi } from "vitest";
 import * as tools from "../../../../src/common/utils";
 import {
   convertScriptErrorToFxError,
@@ -15,9 +14,8 @@ import {
   getStderrHandler,
   parseSetOutputCommand,
   scriptDriver,
-  scriptDriverDeps,
 } from "../../../../src/component/driver/script/scriptDriver";
-import { DefaultEncoding, getSystemEncoding } from "../../../../src/component/utils/charsetUtils";
+import * as charsetUtils from "../../../../src/component/utils/charsetUtils";
 import { UserCancelError } from "../../../../src/error";
 import { ScriptExecutionError, ScriptTimeoutError } from "../../../../src/error/script";
 import {
@@ -28,16 +26,15 @@ import {
 import { TestLogProvider } from "../../util/logProviderMock";
 
 describe("Script Driver test", () => {
-  const sandbox = sinon.createSandbox();
   const ui = new MockUserInteraction();
   beforeEach(() => {
-    sandbox.stub(tools, "waitSeconds").resolves();
+    vi.spyOn(tools, "waitSeconds").mockResolvedValue();
   });
   afterEach(async () => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   it("ui not provided - execute success: set-output and append to file", async () => {
-    const appendFileSyncStub = sandbox.stub(fs, "appendFileSync");
+    const appendFileSyncStub = vi.spyOn(fs, "appendFileSync");
     const args = {
       workingDirectory: "./",
       run: `echo '::set-output MY_KEY=MY_VALUE'`,
@@ -54,17 +51,17 @@ describe("Script Driver test", () => {
       } as IProgressHandler,
       projectPath: "./",
     } as any;
-    sandbox.stub(ui, "runCommand").resolves(ok("::set-output MY_KEY=MY_VALUE"));
+    vi.spyOn(ui, "runCommand").mockResolvedValue(ok("::set-output MY_KEY=MY_VALUE"));
     const res = await scriptDriver.execute(args, context);
     assert.isTrue(res.result.isOk());
     if (res.result.isOk()) {
       const output = res.result.value;
       assert.equal(output.get("MY_KEY"), "MY_VALUE");
     }
-    sinon.assert.notCalled(appendFileSyncStub);
+    assert.equal(appendFileSyncStub.mock.calls.length, 0);
   });
   it("ui not provided - execute success: set-output and not append to file", async () => {
-    const appendFileSyncStub = sandbox.stub(fs, "appendFileSync");
+    const appendFileSyncStub = vi.spyOn(fs, "appendFileSync");
     const args = {
       workingDirectory: "./",
       run: `echo '::set-output MY_KEY=MY_VALUE'`,
@@ -80,19 +77,24 @@ describe("Script Driver test", () => {
       } as IProgressHandler,
       projectPath: "./",
     } as any;
-    sandbox.stub(ui, "runCommand").value(undefined);
+    (ui as any).runCommand = undefined;
     const res = await scriptDriver.execute(args, context);
+    delete (ui as any).runCommand;
     assert.isTrue(res.result.isOk());
     if (res.result.isOk()) {
       const output = res.result.value;
       assert.equal(output.get("MY_KEY"), "MY_VALUE");
     }
-    sinon.assert.notCalled(appendFileSyncStub);
+    assert.equal(appendFileSyncStub.mock.calls.length, 0);
   });
   it("ui not provided - execute failed: child_process.exec return error", async () => {
     const error = new Error("test error");
-    sandbox.stub(scriptDriverDeps, "getSystemEncoding").resolves("utf-8");
-    sandbox.stub(child_process, "exec").yields(error);
+    vi.spyOn(charsetUtils, "getSystemEncoding").mockResolvedValue("utf-8");
+    vi.spyOn(child_process, "exec").mockImplementation((...args: any[]) => {
+      const callback = args[2];
+      callback(error);
+      return {} as any;
+    });
     const args = {
       workingDirectory: "./",
       run: "echo '::set-output MY_KEY=MY_VALUE'",
@@ -103,8 +105,9 @@ describe("Script Driver test", () => {
       ui: ui,
       projectPath: "./",
     } as any;
-    sandbox.stub(ui, "runCommand").value(undefined);
+    (ui as any).runCommand = undefined;
     const res = await scriptDriver.execute(args, context);
+    delete (ui as any).runCommand;
     assert.isTrue(res.result.isErr());
   });
   it("ui provided - execute - success", async () => {
@@ -123,7 +126,7 @@ describe("Script Driver test", () => {
       } as IProgressHandler,
       projectPath: "./",
     } as any;
-    sandbox.stub(ui, "runCommand").resolves(ok("::set-output MY_KEY=MY_VALUE"));
+    vi.spyOn(ui, "runCommand").mockResolvedValue(ok("::set-output MY_KEY=MY_VALUE"));
     const res = await scriptDriver.execute(args, context);
     assert.isTrue(res.result.isOk());
     if (res.result.isOk()) {
@@ -147,7 +150,7 @@ describe("Script Driver test", () => {
       } as IProgressHandler,
       projectPath: "./",
     } as any;
-    sandbox.stub(ui, "runCommand").resolves(ok(""));
+    vi.spyOn(ui, "runCommand").mockResolvedValue(ok(""));
     const res = await scriptDriver.execute(args, context);
     assert.isTrue(res.result.isOk());
     if (res.result.isOk()) {
@@ -171,7 +174,7 @@ describe("Script Driver test", () => {
       } as IProgressHandler,
       projectPath: "./",
     } as any;
-    sandbox.stub(ui, "runCommand").resolves(err(new UserCancelError()));
+    vi.spyOn(ui, "runCommand").mockResolvedValue(err(new UserCancelError()));
     const res = await scriptDriver.execute(args, context);
     assert.isTrue(res.result.isErr());
   });
@@ -188,39 +191,41 @@ describe("Script Driver test", () => {
 });
 describe("executeCommand", () => {
   const ui = new MockUserInteraction();
-  const sandbox = sinon.createSandbox();
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   it("dotnet command", async () => {
-    sandbox.stub(scriptDriverDeps, "getSystemEncoding").resolves("utf-8");
-    const stub = sandbox.stub(child_process, "exec").returns({} as any);
-    stub.yields(null);
+    vi.spyOn(charsetUtils, "getSystemEncoding").mockResolvedValue("utf-8");
+    const stub = vi.spyOn(child_process, "exec").mockImplementation((...args: any[]) => {
+      const callback = args[2];
+      callback(null);
+      return {} as any;
+    });
     await executeCommand(
       "dotnet test && echo '::set-output MY_KEY=MY_VALUE'",
       "./",
       new TestLogProvider(),
       undefined
     );
-    assert.isTrue(stub.calledOnce);
+    assert.isTrue(stub.mock.calls.length === 1);
   });
   // it("call ui.runCommand", async () => {
   //   const ui = new MockUserInteraction();
-  //   const spyRunCommand = sandbox.spy(ui, "runCommand");
-  //   const stub = sandbox.stub(child_process, "exec").returns({} as any);
+  //   const spyRunCommand = vi.spyOn(ui, "runCommand");
+  //   const stub = vi.spyOn(child_process, "exec").mockReturnValue({} as any);
   //   await executeCommand("abc", "./", new TestLogProvider(), ui);
-  //   assert.isTrue(spyRunCommand.calledOnce);
-  //   assert.isFalse(stub.calledOnce);
+  //   assert.isTrue(spyRunCommand.mock.calls.length === 1);
+  //   assert.isFalse(stub.mock.calls.length === 1);
   // });
   it("call ui.runCommand error", async () => {
-    sandbox.stub(ui, "runCommand").resolves(err(new UserCancelError()));
-    sandbox.stub(child_process, "exec").returns({} as any);
+    vi.spyOn(ui, "runCommand").mockResolvedValue(err(new UserCancelError()));
+    vi.spyOn(child_process, "exec").mockReturnValue({} as any);
     const res = await executeCommand("abc", "./", new TestLogProvider(), ui);
     assert.isTrue(res.isErr());
   });
   it("call ui.runCommand with output", async () => {
-    sandbox.stub(ui, "runCommand").resolves(ok("::set-teamsfx-env MY_KEY=MY_VALUE"));
-    sandbox.stub(child_process, "exec").returns({} as any);
+    vi.spyOn(ui, "runCommand").mockResolvedValue(ok("::set-teamsfx-env MY_KEY=MY_VALUE"));
+    vi.spyOn(child_process, "exec").mockReturnValue({} as any);
     const res = await executeCommand(
       "echo '::set-teamsfx-env MY_KEY=MY_VALUE'",
       "./",
@@ -234,66 +239,89 @@ describe("executeCommand", () => {
   });
 });
 describe("getSystemEncoding", () => {
-  const sandbox = sinon.createSandbox();
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   it("should return a string", async () => {
-    const result = await getSystemEncoding();
+    const result = await charsetUtils.getSystemEncoding();
     assert.isTrue(typeof result === "string");
   });
   it("should return default encoding on other platform", async () => {
-    sandbox.stub(os, "platform").returns("netbsd");
-    const result = await getSystemEncoding();
+    vi.spyOn(os, "platform").mockReturnValue("netbsd");
+    const result = await charsetUtils.getSystemEncoding();
     assert.equal(result, "utf-8");
   });
 
   it("should return gb2312 on win32 platform", async () => {
-    sandbox.stub(os, "platform").returns("win32");
-    sandbox.stub(child_process, "exec").callsArgWith(2, null, "Active code page: 936");
-    const result = await getSystemEncoding();
+    vi.spyOn(os, "platform").mockReturnValue("win32");
+    vi.spyOn(child_process, "exec").mockImplementation((...args: any[]) => {
+      const callback = args[2];
+      callback(null, "Active code page: 936");
+      return {} as any;
+    });
+    const result = await charsetUtils.getSystemEncoding();
     assert.equal(result, "gb2312");
   });
 
   it("should return utf-8 on linux platform", async () => {
-    sandbox.stub(os, "platform").returns("linux");
-    sandbox.stub(child_process, "exec").callsArgWith(2, null, "UTF-8");
-    const result = await getSystemEncoding();
+    vi.spyOn(os, "platform").mockReturnValue("linux");
+    vi.spyOn(child_process, "exec").mockImplementation((...args: any[]) => {
+      const callback = args[2];
+      callback(null, "UTF-8");
+      return {} as any;
+    });
+    const result = await charsetUtils.getSystemEncoding();
     assert.equal(result, "utf-8");
   });
 
   it("should return utf-8 on darwin platform", async () => {
-    sandbox.stub(os, "platform").returns("darwin");
-    sandbox.stub(child_process, "exec").callsArgWith(2, null, "zh_CN.UTF-8");
-    const result = await getSystemEncoding();
+    vi.spyOn(os, "platform").mockReturnValue("darwin");
+    vi.spyOn(child_process, "exec").mockImplementation((...args: any[]) => {
+      const callback = args[2];
+      callback(null, "zh_CN.UTF-8");
+      return {} as any;
+    });
+    const result = await charsetUtils.getSystemEncoding();
     assert.equal(result, "utf-8");
   });
 
   it("should return default encoding when Error happens on win32 platform", async () => {
-    sandbox.stub(os, "platform").returns("win32");
+    vi.spyOn(os, "platform").mockReturnValue("win32");
     const error = new Error("test error");
-    sandbox.stub(child_process, "exec").callsArgWith(2, error, "");
-    const result = await getSystemEncoding();
-    assert.equal(result, DefaultEncoding);
+    vi.spyOn(child_process, "exec").mockImplementation((...args: any[]) => {
+      const callback = args[2];
+      callback(error, "");
+      return {} as any;
+    });
+    const result = await charsetUtils.getSystemEncoding();
+    assert.equal(result, charsetUtils.DefaultEncoding);
   });
 
   it("should return default encoding when Error happens on linux platform", async () => {
-    sandbox.stub(os, "platform").returns("linux");
+    vi.spyOn(os, "platform").mockReturnValue("linux");
     const error = new Error("test error");
-    sandbox.stub(child_process, "exec").callsArgWith(2, error, "");
-    const result = await getSystemEncoding();
-    assert.equal(result, DefaultEncoding);
+    vi.spyOn(child_process, "exec").mockImplementation((...args: any[]) => {
+      const callback = args[2];
+      callback(error, "");
+      return {} as any;
+    });
+    const result = await charsetUtils.getSystemEncoding();
+    assert.equal(result, charsetUtils.DefaultEncoding);
   });
 
   it("should return default encoding when Error happens on darwin platform", async () => {
-    sandbox.stub(os, "platform").returns("darwin");
+    vi.spyOn(os, "platform").mockReturnValue("darwin");
     const error = new Error("test error");
-    sandbox.stub(child_process, "exec").callsArgWith(2, error, "");
-    const result = await getSystemEncoding();
-    assert.equal(result, DefaultEncoding);
+    vi.spyOn(child_process, "exec").mockImplementation((...args: any[]) => {
+      const callback = args[2];
+      callback(error, "");
+      return {} as any;
+    });
+    const result = await charsetUtils.getSystemEncoding();
+    assert.equal(result, charsetUtils.DefaultEncoding);
   });
   it("should return utf8 for azure cli", async () => {
-    const result = await getSystemEncoding("@azure/static-web-apps-cli");
+    const result = await charsetUtils.getSystemEncoding("@azure/static-web-apps-cli");
     assert.equal(result, "utf8");
   });
 });
@@ -327,10 +355,9 @@ describe("parseSetOutputCommand", () => {
 });
 
 describe("getStderrHandler", () => {
-  const sandbox = sinon.createSandbox();
   beforeEach(() => {});
   afterEach(async () => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   it("happy path", async () => {
     const logProvider = new MockLogProvider();
@@ -348,62 +375,61 @@ describe("getStderrHandler", () => {
 });
 
 describe("defaultShell", () => {
-  const sandbox = sinon.createSandbox();
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   it("SHELL", async () => {
-    sandbox.stub(process, "env").value({ SHELL: "/bin/bash" });
+    vi.spyOn(process, "env", "get").mockReturnValue({ SHELL: "/bin/bash" } as any);
     const result = await defaultShell();
     assert.equal(result, "/bin/bash");
   });
   it("darwin - /bin/zsh", async () => {
-    sandbox.stub(process, "env").value({});
-    sandbox.stub(process, "platform").value("darwin");
-    sandbox.stub(fs, "pathExists").resolves(true);
+    vi.spyOn(process, "env", "get").mockReturnValue({} as any);
+    vi.spyOn(process, "platform", "get").mockReturnValue("darwin");
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     const result = await defaultShell();
     assert.equal(result, "/bin/zsh");
   });
   it("darwin - /bin/bash", async () => {
-    sandbox.stub(process, "env").value({});
-    sandbox.stub(process, "platform").value("darwin");
-    sandbox.stub(fs, "pathExists").onFirstCall().resolves(false).onSecondCall().resolves(true);
+    vi.spyOn(process, "env", "get").mockReturnValue({} as any);
+    vi.spyOn(process, "platform", "get").mockReturnValue("darwin");
+    vi.spyOn(fs, "pathExists").mockResolvedValueOnce(false).mockResolvedValueOnce(true);
     const result = await defaultShell();
     assert.equal(result, "/bin/bash");
   });
   it("darwin - undefined", async () => {
-    sandbox.stub(process, "env").value({});
-    sandbox.stub(process, "platform").value("darwin");
-    sandbox.stub(fs, "pathExists").resolves(false);
+    vi.spyOn(process, "env", "get").mockReturnValue({} as any);
+    vi.spyOn(process, "platform", "get").mockReturnValue("darwin");
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
     const result = await defaultShell();
     assert.isUndefined(result);
   });
 
   it("win32 - ComSpec", async () => {
-    sandbox.stub(process, "platform").value("win32");
-    sandbox.stub(process, "env").value({ ComSpec: "cmd.exe" });
+    vi.spyOn(process, "platform", "get").mockReturnValue("win32");
+    vi.spyOn(process, "env", "get").mockReturnValue({ ComSpec: "cmd.exe" } as any);
     const result = await defaultShell();
     assert.equal(result, "cmd.exe");
   });
   it("win32 - cmd.exe", async () => {
-    sandbox.stub(process, "platform").value("win32");
-    sandbox.stub(process, "env").value({});
+    vi.spyOn(process, "platform", "get").mockReturnValue("win32");
+    vi.spyOn(process, "env", "get").mockReturnValue({} as any);
     const result = await defaultShell();
     assert.equal(result, "cmd.exe");
   });
 
   it("other OS - /bin/sh", async () => {
-    sandbox.stub(process, "env").value({});
-    sandbox.stub(process, "platform").value("other");
-    sandbox.stub(fs, "pathExists").resolves(true);
+    vi.spyOn(process, "env", "get").mockReturnValue({} as any);
+    vi.spyOn(process, "platform", "get").mockReturnValue("other");
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     const result = await defaultShell();
     assert.equal(result, "/bin/sh");
   });
 
   it("other OS - undefined", async () => {
-    sandbox.stub(process, "env").value({});
-    sandbox.stub(process, "platform").value("other");
-    sandbox.stub(fs, "pathExists").resolves(false);
+    vi.spyOn(process, "env", "get").mockReturnValue({} as any);
+    vi.spyOn(process, "platform", "get").mockReturnValue("other");
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
     const result = await defaultShell();
     assert.isUndefined(result);
   });

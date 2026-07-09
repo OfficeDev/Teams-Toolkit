@@ -1,13 +1,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
 import { FuncValidation, Inputs, Platform, Stage, TextInputQuestion } from "@microsoft/teamsfx-api";
-import * as chai from "chai";
 import fs from "fs-extra";
 import mockedEnv, { RestoreFn } from "mocked-env";
 import * as path from "path";
-import * as sinon from "sinon";
 import { getLocalizedString } from "../../../../../src/common/localizeUtils";
 import { cpUtils } from "../../../../../src/component/deps-checker/util/cpUtils";
 import { Utils } from "../../../../../src/component/generator/spfx/utils/utils";
+import { chai, vi } from "vitest";
 import {
   QuestionNames,
   SPFxWebpartNameQuestion,
@@ -16,7 +15,7 @@ import {
 
 describe("utils", () => {
   afterEach(async () => {
-    sinon.restore();
+    vi.restoreAllMocks();
   });
 
   describe("webpart name", () => {
@@ -62,7 +61,7 @@ describe("utils", () => {
     it("Returns undefined when web part name pattern duplicated in create stage", async () => {
       previousInputs.stage = Stage.create;
       const input = "helloworld";
-      sinon.stub(fs, "pathExists").callsFake(async (directory) => {
+      vi.spyOn(fs, "pathExists").mockImplementation(async (directory) => {
         if (
           directory === path.join(previousInputs?.projectPath!, "SPFx", "src", "webparts", input)
         ) {
@@ -75,13 +74,13 @@ describe("utils", () => {
       ).validFunc(input, previousInputs);
 
       chai.expect(res).equal(undefined);
-      sinon.restore();
+      vi.restoreAllMocks();
     });
 
     it("Returns undefined when web part name not duplicated in addFeature stage", async () => {
       previousInputs.stage = Stage.addFeature;
       const input = "helloworld";
-      sinon.stub(fs, "pathExists").callsFake(async (directory) => {
+      vi.spyOn(fs, "pathExists").mockImplementation(async (directory) => {
         if (
           directory === path.join(previousInputs?.projectPath!, "SPFx", "src", "webparts", input)
         ) {
@@ -94,7 +93,7 @@ describe("utils", () => {
       ).validFunc(input, previousInputs);
 
       chai.expect(res).equal(undefined);
-      sinon.restore();
+      vi.restoreAllMocks();
     });
 
     it("Returns not match pattern when web part name pattern mismatch in addFeature stage", async () => {
@@ -119,7 +118,7 @@ describe("utils", () => {
     it("Returns duplicated when web part name pattern duplicated in addFeature stage", async () => {
       previousInputs.stage = Stage.addFeature;
       const input = "helloworld";
-      sinon.stub(fs, "pathExists").callsFake(async (directory) => {
+      vi.spyOn(fs, "pathExists").mockImplementation(async (directory) => {
         if (
           directory === path.join(previousInputs?.projectPath!, "SPFx", "src", "webparts", input)
         ) {
@@ -139,19 +138,23 @@ describe("utils", () => {
             path.join(previousInputs?.projectPath!, "SPFx", "src", "webparts", input)
           )
         );
-      sinon.restore();
+      vi.restoreAllMocks();
     });
   });
 
   it("findLatestVersion: exeute commmand error with undefined logger", async () => {
-    sinon.stub(cpUtils, "executeCommand").throws("run command error");
+    vi.spyOn(cpUtils, "executeCommand").mockImplementation(() => {
+      throw "run command error";
+    });
 
     const res = await Utils.findLatestVersion(undefined, "name", 0);
     chai.expect(res).to.be.undefined;
   });
 
   it("findGloballyInstalledVersion: exeute commmand error with undefined logger", async () => {
-    sinon.stub(cpUtils, "executeCommand").throws("run command error");
+    vi.spyOn(cpUtils, "executeCommand").mockImplementation(() => {
+      throw "run command error";
+    });
     let error = undefined;
 
     try {
@@ -163,7 +166,9 @@ describe("utils", () => {
   });
 
   it("findGloballyInstalledVersion: exeute commmand error but not throw error", async () => {
-    sinon.stub(cpUtils, "executeCommand").throws("run command error");
+    vi.spyOn(cpUtils, "executeCommand").mockImplementation(() => {
+      throw "run command error";
+    });
 
     const res = await Utils.findGloballyInstalledVersion(undefined, "name", 0, false);
 
@@ -177,10 +182,10 @@ describe("utils", () => {
       [QuestionNames.SPFxFolder]: "c:\\test",
       [QuestionNames.SPFxSolution]: "import",
     };
-    sinon
-      .stub(fs, "readJson")
-      .resolves({ "@microsoft/generator-sharepoint": { solutionName: "fakedSolutionName" } });
-    sinon.stub(fs, "pathExists").resolves(true);
+    vi.spyOn(fs, "readJson").mockResolvedValue({
+      "@microsoft/generator-sharepoint": { solutionName: "fakedSolutionName" },
+    });
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
 
     const defaultName = await (appNameQuestion() as any).default(inputs);
     chai.expect(defaultName).equal("fakedSolutionName");
@@ -189,14 +194,14 @@ describe("utils", () => {
   describe("configure", () => {
     it("replaces content in a single file when path is a file", async () => {
       const filePath = "c:\\test\\config.json";
-      sinon.stub(fs, "lstatSync").returns({ isFile: () => true } as any);
-      sinon.stub(fs, "readFile").resolves(Buffer.from("hello OLD world"));
-      const writeStub = sinon.stub(fs, "writeFile").resolves();
+      vi.spyOn(fs, "lstatSync").mockReturnValue({ isFile: () => true } as any);
+      vi.spyOn(fs, "readFile").mockResolvedValue(Buffer.from("hello OLD world"));
+      const writeStub = vi.spyOn(fs, "writeFile").mockResolvedValue();
 
       await Utils.configure(filePath, new Map([["OLD", "NEW"]]));
 
-      chai.expect(writeStub.calledOnce).to.be.true;
-      chai.expect(writeStub.firstCall.args[1]).to.equal("hello NEW world");
+      chai.expect(writeStub.mock.calls.length === 1).to.be.true;
+      chai.expect(writeStub.mock.calls[0][1]).to.equal("hello NEW world");
     });
 
     it("replaces content in files found by glob when path is a directory", async () => {

@@ -1,0 +1,19 @@
+{
+  "$schema": "../../../schema/descriptor.schema.json",
+  "id": "da/no-action",
+  "name": "Declarative Agent",
+  "languages": ["common"],
+  "minEngineVersion": "5.20.0",
+  "spec": "docs/03-specs/scenarios/da/create-no-action.md",
+  "requiresNetwork": false,
+
+  "optionsSchema": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+
+  "replaceMap": [
+    { "var": "DeclarativeCopilot", "const": "true" }
+  ]
+}

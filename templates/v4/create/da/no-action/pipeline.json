@@ -1,0 +1,9 @@
+{
+  "pipeline": "default",
+  "comment": "Basic declarative agent (no action): pure render. The single require-empty-target step guards the create contract (the target dir has no colliding files) so render writes every file. No post-render injection — basic DA has no MCP / auth / connector wiring.",
+  "steps": [
+    {
+      "step": "require-empty-target"
+    }
+  ]
+}

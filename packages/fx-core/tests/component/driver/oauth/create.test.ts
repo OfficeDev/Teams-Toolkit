@@ -3,10 +3,7 @@
 
 import { SpecParser } from "@microsoft/m365-spec-parser";
 import { SystemError, err } from "@microsoft/teamsfx-api";
-import * as chai from "chai";
-import chaiAsPromised from "chai-as-promised";
 import mockedEnv, { RestoreFn } from "mocked-env";
-import * as sinon from "sinon";
 import { teamsGraphClient } from "../../../../src/client/teamsGraphClient";
 import { setTools } from "../../../../src/common/globalVars";
 import { CreateOauthDriver } from "../../../../src/component/driver/oauth/create";
@@ -18,8 +15,8 @@ import {
 import { MockedLogProvider, MockedUserInteraction } from "../../../plugins/solution/util";
 import { MockedAzureAccountProvider, MockedM365Provider } from "../../../core/utils";
 import { featureFlagManager, FeatureFlags } from "../../../../src";
+import { chai, vi } from "vitest";
 
-chai.use(chaiAsPromised);
 const expect = chai.expect;
 
 const outputKeys = {
@@ -48,7 +45,7 @@ describe("CreateOauthDriver", () => {
   });
 
   afterEach(() => {
-    sinon.restore();
+    vi.restoreAllMocks();
     if (envRestore) {
       envRestore();
       envRestore = undefined;
@@ -56,13 +53,11 @@ describe("CreateOauthDriver", () => {
   });
 
   it("happy path: read clientSecret, refreshurl from input ", async () => {
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon
-      .stub(teamsGraphClient, "createOauthRegistration")
-      .callsFake(async (token, oauthRegistration) => {
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag: any) =>
+      flag === FeatureFlags.KiotaNPMIntegration ? false : false
+    );
+    vi.spyOn(teamsGraphClient, "createOauthRegistration").mockImplementation(
+      async (token, oauthRegistration) => {
         expect(oauthRegistration.clientId).to.equals("mockedClientId");
         expect(oauthRegistration.clientSecret).to.equals("mockedClientSecret");
         expect(oauthRegistration.description).to.equals("test");
@@ -84,8 +79,9 @@ describe("CreateOauthDriver", () => {
           },
           resourceIdentifierUri: "mockedResourceIdentifierUri",
         };
-      });
-    sinon.stub(SpecParser.prototype, "list").resolves({
+      }
+    );
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",
@@ -134,9 +130,8 @@ describe("CreateOauthDriver", () => {
   });
 
   it("happy path: use parameters for auth info without apiSpecPath", async () => {
-    sinon
-      .stub(teamsGraphClient, "createOauthRegistration")
-      .callsFake(async (token, oauthRegistration) => {
+    vi.spyOn(teamsGraphClient, "createOauthRegistration").mockImplementation(
+      async (token, oauthRegistration) => {
         expect(oauthRegistration.clientId).to.equals("mockedClientId");
         expect(oauthRegistration.clientSecret).to.equals("mockedClientSecret");
         expect(oauthRegistration.description).to.equals("test");
@@ -158,7 +153,8 @@ describe("CreateOauthDriver", () => {
           },
           resourceIdentifierUri: "mockedResourceIdentifierUri",
         };
-      });
+      }
+    );
 
     const args: any = {
       name: "test",
@@ -185,9 +181,8 @@ describe("CreateOauthDriver", () => {
   });
 
   it("happy path: use parameters for auth info without apiSpecPath, and identityProvider is MicrosoftEntra", async () => {
-    sinon
-      .stub(teamsGraphClient, "createOauthRegistration")
-      .callsFake(async (token, oauthRegistration) => {
+    vi.spyOn(teamsGraphClient, "createOauthRegistration").mockImplementation(
+      async (token, oauthRegistration) => {
         expect(oauthRegistration.clientId).to.equals("mockedClientId");
         expect(oauthRegistration.description).to.equals("test");
         expect(oauthRegistration.targetUrlsShouldStartWith[0]).to.equals("https://test");
@@ -203,7 +198,8 @@ describe("CreateOauthDriver", () => {
           },
           resourceIdentifierUri: "mockedResourceIdentifierUri",
         };
-      });
+      }
+    );
 
     const args: any = {
       name: "test",
@@ -225,13 +221,11 @@ describe("CreateOauthDriver", () => {
   });
 
   it("happy path: secret is not needed when PKCE enabled", async () => {
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon
-      .stub(teamsGraphClient, "createOauthRegistration")
-      .callsFake(async (token, oauthRegistration) => {
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag: any) =>
+      flag === FeatureFlags.KiotaNPMIntegration ? false : false
+    );
+    vi.spyOn(teamsGraphClient, "createOauthRegistration").mockImplementation(
+      async (token, oauthRegistration) => {
         expect(oauthRegistration.clientId).to.equals("mockedClientId");
         expect(oauthRegistration.description).to.equals("test");
         expect(oauthRegistration.authorizationEndpoint).to.equals("mockedAuthorizationUrl");
@@ -251,8 +245,9 @@ describe("CreateOauthDriver", () => {
           },
           resourceIdentifierUri: "mockedResourceIdentifierUri",
         };
-      });
-    sinon.stub(SpecParser.prototype, "list").resolves({
+      }
+    );
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",
@@ -299,13 +294,11 @@ describe("CreateOauthDriver", () => {
   });
 
   it("happy path: secret is not needed when identityProvider is MicrosoftEntra", async () => {
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon
-      .stub(teamsGraphClient, "createOauthRegistration")
-      .callsFake(async (token, oauthRegistration) => {
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag: any) =>
+      flag === FeatureFlags.KiotaNPMIntegration ? false : false
+    );
+    vi.spyOn(teamsGraphClient, "createOauthRegistration").mockImplementation(
+      async (token, oauthRegistration) => {
         expect(oauthRegistration.clientId).to.equals("mockedClientId");
         expect(oauthRegistration.description).to.equals("test");
         expect(oauthRegistration.targetUrlsShouldStartWith[0]).to.equals("https://test");
@@ -321,8 +314,9 @@ describe("CreateOauthDriver", () => {
           },
           resourceIdentifierUri: "mockedResourceIdentifierUri",
         };
-      });
-    sinon.stub(SpecParser.prototype, "list").resolves({
+      }
+    );
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",
@@ -352,7 +346,9 @@ describe("CreateOauthDriver", () => {
       allAPICount: 1,
       validAPICount: 1,
     });
-    const showMessageStub = sinon.stub(MockedUserInteraction.prototype, "showMessage").resolves();
+    const showMessageStub = vi
+      .spyOn(MockedUserInteraction.prototype, "showMessage")
+      .mockResolvedValue();
 
     const args: any = {
       name: "test",
@@ -370,18 +366,16 @@ describe("CreateOauthDriver", () => {
       expect(result.result.value.get(outputKeys.configurationId)).to.equal("mockedRegistrationId");
       expect(result.result.value.get("APPLICATION_ID_URI")).to.equal("mockedResourceIdentifierUri");
       expect(result.summaries.length).to.equal(1);
-      expect(showMessageStub.calledOnce).to.be.true;
+      expect(showMessageStub.mock.calls.length === 1).to.be.true;
     }
   });
 
   it("happy path: secret is needed when identityProvider is Custom", async () => {
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon
-      .stub(teamsGraphClient, "createOauthRegistration")
-      .callsFake(async (token, oauthRegistration) => {
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag: any) =>
+      flag === FeatureFlags.KiotaNPMIntegration ? false : false
+    );
+    vi.spyOn(teamsGraphClient, "createOauthRegistration").mockImplementation(
+      async (token, oauthRegistration) => {
         expect(oauthRegistration.clientId).to.equals("mockedClientId");
         expect(oauthRegistration.description).to.equals("test");
         expect(oauthRegistration.targetUrlsShouldStartWith[0]).to.equals("https://test");
@@ -397,8 +391,9 @@ describe("CreateOauthDriver", () => {
           },
           resourceIdentifierUri: "mockedResourceIdentifierUri",
         };
-      });
-    sinon.stub(SpecParser.prototype, "list").resolves({
+      }
+    );
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",
@@ -447,13 +442,11 @@ describe("CreateOauthDriver", () => {
   });
 
   it("happy path: read clientSecret, refreshurl from input with invalid api", async () => {
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon
-      .stub(teamsGraphClient, "createOauthRegistration")
-      .callsFake(async (token, oauthRegistration) => {
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag: any) =>
+      flag === FeatureFlags.KiotaNPMIntegration ? false : false
+    );
+    vi.spyOn(teamsGraphClient, "createOauthRegistration").mockImplementation(
+      async (token, oauthRegistration) => {
         expect(oauthRegistration.clientId).to.equals("mockedClientId");
         expect(oauthRegistration.clientSecret).to.equals("mockedClientSecret");
         expect(oauthRegistration.description).to.equals("test");
@@ -475,8 +468,9 @@ describe("CreateOauthDriver", () => {
           },
           resourceIdentifierUri: "mockedResourceIdentifierUri",
         };
-      });
-    sinon.stub(SpecParser.prototype, "list").resolves({
+      }
+    );
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",
@@ -525,13 +519,11 @@ describe("CreateOauthDriver", () => {
   });
 
   it("should throw error is identityProvider is Custom but the authorization url is not Microsoft Entra endpoint", async () => {
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon
-      .stub(teamsGraphClient, "createOauthRegistration")
-      .callsFake(async (token, oauthRegistration) => {
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag: any) =>
+      flag === FeatureFlags.KiotaNPMIntegration ? false : false
+    );
+    vi.spyOn(teamsGraphClient, "createOauthRegistration").mockImplementation(
+      async (token, oauthRegistration) => {
         expect(oauthRegistration.clientId).to.equals("mockedClientId");
         expect(oauthRegistration.description).to.equals("test");
         expect(oauthRegistration.targetUrlsShouldStartWith[0]).to.equals("https://test");
@@ -547,8 +539,9 @@ describe("CreateOauthDriver", () => {
           },
           resourceIdentifierUri: "mockedResourceIdentifierUri",
         };
-      });
-    sinon.stub(SpecParser.prototype, "list").resolves({
+      }
+    );
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",
@@ -594,13 +587,11 @@ describe("CreateOauthDriver", () => {
   });
 
   it("happy path: read refreshurl from input, client and clientSecret from env", async () => {
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon
-      .stub(teamsGraphClient, "createOauthRegistration")
-      .callsFake(async (token, oauthRegistration) => {
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag: any) =>
+      flag === FeatureFlags.KiotaNPMIntegration ? false : false
+    );
+    vi.spyOn(teamsGraphClient, "createOauthRegistration").mockImplementation(
+      async (token, oauthRegistration) => {
         expect(oauthRegistration.clientId).to.equals("mockedClientId");
         expect(oauthRegistration.clientSecret).to.equals("mockedClientSecret");
         expect(oauthRegistration.description).to.equals("test");
@@ -620,8 +611,9 @@ describe("CreateOauthDriver", () => {
           },
           resourceIdentifierUri: "mockedResourceIdentifierUri",
         };
-      });
-    sinon.stub(SpecParser.prototype, "list").resolves({
+      }
+    );
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",
@@ -672,13 +664,11 @@ describe("CreateOauthDriver", () => {
   });
 
   it("happy path: read clientSecret from input and refreshurl from spec", async () => {
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon
-      .stub(teamsGraphClient, "createOauthRegistration")
-      .callsFake(async (token, oauthRegistration) => {
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag: any) =>
+      flag === FeatureFlags.KiotaNPMIntegration ? false : false
+    );
+    vi.spyOn(teamsGraphClient, "createOauthRegistration").mockImplementation(
+      async (token, oauthRegistration) => {
         expect(oauthRegistration.clientId).to.equals("mockedClientId");
         expect(oauthRegistration.clientSecret).to.equals("mockedClientSecret");
         expect(oauthRegistration.description).to.equals("test");
@@ -698,8 +688,9 @@ describe("CreateOauthDriver", () => {
           },
           resourceIdentifierUri: "mockedResourceIdentifierUri",
         };
-      });
-    sinon.stub(SpecParser.prototype, "list").resolves({
+      }
+    );
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",
@@ -747,13 +738,11 @@ describe("CreateOauthDriver", () => {
   });
 
   it("happy path: read applicableToApps, tokenExchangeMethodType, targetAudience from input", async () => {
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon
-      .stub(teamsGraphClient, "createOauthRegistration")
-      .callsFake(async (token, oauthRegistration) => {
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag: any) =>
+      flag === FeatureFlags.KiotaNPMIntegration ? false : false
+    );
+    vi.spyOn(teamsGraphClient, "createOauthRegistration").mockImplementation(
+      async (token, oauthRegistration) => {
         expect(oauthRegistration.clientId).to.equals("mockedClientId");
         expect(oauthRegistration.clientSecret).to.equals("mockedClientSecret");
         expect(oauthRegistration.description).to.equals("test");
@@ -774,8 +763,9 @@ describe("CreateOauthDriver", () => {
           },
           resourceIdentifierUri: "mockedResourceIdentifierUri",
         };
-      });
-    sinon.stub(SpecParser.prototype, "list").resolves({
+      }
+    );
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",
@@ -825,7 +815,7 @@ describe("CreateOauthDriver", () => {
   });
 
   it("happy path: registration id exists in env", async () => {
-    sinon.stub(teamsGraphClient, "getOauthRegistrationById").resolves({
+    vi.spyOn(teamsGraphClient, "getOauthRegistrationById").mockResolvedValue({
       oAuthConfigId: "mockedId",
       clientId: "mockedClientId",
       clientSecret: "mockedClientSecret",
@@ -928,9 +918,9 @@ describe("CreateOauthDriver", () => {
   });
 
   it("should throw error when failed to get app studio token", async () => {
-    sinon
-      .stub(MockedM365Provider.prototype, "getAccessToken")
-      .resolves(err(new SystemError("source", "name", "message")));
+    vi.spyOn(MockedM365Provider.prototype, "getAccessToken").mockResolvedValue(
+      err(new SystemError("source", "name", "message"))
+    );
     const args: any = {
       name: "test",
       appId: "mockedAppId",
@@ -948,9 +938,9 @@ describe("CreateOauthDriver", () => {
   });
 
   it("should show warning if registration id exists and failed to get Oauth registration", async () => {
-    sinon
-      .stub(teamsGraphClient, "getOauthRegistrationById")
-      .throws(new SystemError("source", "name", "message"));
+    vi.spyOn(teamsGraphClient, "getOauthRegistrationById").mockImplementation(() => {
+      throw new SystemError("source", "name", "message");
+    });
 
     const args: any = {
       name: "test",
@@ -1094,12 +1084,11 @@ describe("CreateOauthDriver", () => {
       refreshUrl: "mockedRefreshUrl",
     };
 
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag: any) =>
+      flag === FeatureFlags.KiotaNPMIntegration ? false : false
+    );
 
-    sinon.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",
@@ -1158,13 +1147,14 @@ describe("CreateOauthDriver", () => {
   });
 
   it("should throw error if list api is empty and domain = 0", async () => {
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon
-      .stub(SpecParser.prototype, "list")
-      .resolves({ APIs: [], validAPICount: 0, allAPICount: 1 });
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag: any) =>
+      flag === FeatureFlags.KiotaNPMIntegration ? false : false
+    );
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
+      APIs: [],
+      validAPICount: 0,
+      allAPICount: 1,
+    });
     const args: any = {
       name: "test",
       appId: "mockedAppId",
@@ -1185,11 +1175,10 @@ describe("CreateOauthDriver", () => {
   });
 
   it("should throw error if list api contains no auth and domain = 0", async () => {
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag: any) =>
+      flag === FeatureFlags.KiotaNPMIntegration ? false : false
+    );
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",
@@ -1222,11 +1211,10 @@ describe("CreateOauthDriver", () => {
   });
 
   it("should throw error if list api contains auth but server info is null ", async () => {
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag: any) =>
+      flag === FeatureFlags.KiotaNPMIntegration ? false : false
+    );
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",
@@ -1296,11 +1284,10 @@ describe("CreateOauthDriver", () => {
   });
 
   it("should throw error if multiple auth schema", async () => {
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag: any) =>
+      flag === FeatureFlags.KiotaNPMIntegration ? false : false
+    );
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",
@@ -1370,14 +1357,13 @@ describe("CreateOauthDriver", () => {
   });
 
   it("should throw error if failed to create Oauth registration", async () => {
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon
-      .stub(teamsGraphClient, "createOauthRegistration")
-      .throws(new SystemError("source", "name", "message"));
-    sinon.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag: any) =>
+      flag === FeatureFlags.KiotaNPMIntegration ? false : false
+    );
+    vi.spyOn(teamsGraphClient, "createOauthRegistration").mockImplementation(() => {
+      throw new SystemError("source", "name", "message");
+    });
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",
@@ -1423,12 +1409,13 @@ describe("CreateOauthDriver", () => {
   });
 
   it("should throw unhandled error if error is not SystemError or UserError", async () => {
-    sinon
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
-    sinon.stub(teamsGraphClient, "createOauthRegistration").throws(new Error("error"));
-    sinon.stub(SpecParser.prototype, "list").resolves({
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag: any) =>
+      flag === FeatureFlags.KiotaNPMIntegration ? false : false
+    );
+    vi.spyOn(teamsGraphClient, "createOauthRegistration").mockImplementation(() => {
+      throw new Error("error");
+    });
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
       APIs: [
         {
           api: "api",

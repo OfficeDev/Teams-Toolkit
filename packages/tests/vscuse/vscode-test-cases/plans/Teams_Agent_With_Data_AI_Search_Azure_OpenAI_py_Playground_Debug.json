@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 5,
+    "total_steps": 4,
     "created_at": "2025-12-18T09:43:44.816482",
     "name": "Teams Agent With Data AI Search Azure OpenAI py Playground Debug",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2025-12-18T09:43:44.816482",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_3f8a623f",
+      "plan_r_0624_024810",
       "step_7ae02caa",
       "step_ec90c7a4",
       "plan_r_0930_054245",
@@ -36,32 +36,6 @@
     "updated_at": "2025-12-18T09:54:05.997873"
   },
   "steps": [
-    {
-      "step_id": "step_3f8a623f",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 326,
-        "y": 221
-      },
-      "description": "Click the \"Teams Agents and Apps\" option from the dropdown menu in the \"New Project\" window.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:326:221:16:5:5aa55108164a1bb3",
-        "dhash:326:221:96:5:911b524299adc295",
-        "dhash:326:221:0:10:c8c88094b2717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_3f8a623f",
-      "created_at": "2025-12-18T09:43:44.834341",
-      "plan_id": "plan_b003fd4d"
-    },
     {
       "step_id": "step_7ae02caa",
       "agent": "interaction",

@@ -38,14 +38,13 @@ import { DefaultTemplateGenerator } from "../defaultGenerator";
 import { Generator } from "../generator";
 import { TemplateInfo } from "../templates/templateInfo";
 import { TemplateNames } from "../templates/templateNames";
-import * as generatorUtils from "../utils";
 import * as declarativeAgentHelper from "./helper";
 
 export const declarativeAgentGeneratorDeps = {
-  setGeneralSensitivityLabel: generatorUtils.setGeneralSensitivityLabel,
-  addExistingPlugin: declarativeAgentHelper.addExistingPlugin,
   deriveMCPServerNameFromUrl: declarativeAgentHelper.deriveMCPServerNameFromUrl,
+  setGeneralSensitivityLabel: declarativeAgentHelper.setGeneralSensitivityLabel,
   generateForMCPForDA: declarativeAgentHelper.generateForMCPForDA,
+  addExistingPlugin: declarativeAgentHelper.addExistingPlugin,
 };
 
 const enum telemetryProperties {

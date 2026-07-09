@@ -1,15 +1,14 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import sinon, { SinonStub } from "sinon";
-import chai from "chai";
 import { decodeClaimsChallenge, parseChallenges } from "../../../src/commonlib/common/utils";
+import { chai, vi } from "vitest";
 
 describe("test utils", () => {
-  const sandbox: sinon.SinonSandbox = sinon.createSandbox();
+  const sandbox: any = vi;
 
   beforeEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("parseChallenges", () => {

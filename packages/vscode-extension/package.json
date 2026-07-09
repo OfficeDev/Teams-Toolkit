@@ -894,12 +894,6 @@
         "category": "Microsoft 365 Agents"
       },
       {
-        "command": "fx-extension.metaOSExtendToDA",
-        "title": "%teamstoolkit.commandsTreeViewProvider.metaOSExtendToDA%",
-        "enablement": "fx-extension.isTeamsFx && isWorkspaceTrusted && !fx-extension.commandLocked && !fx-extension.isDeclarativeCopilotApp && fx-extension.isMetaOSAddinProject",
-        "category": "Microsoft 365 Agents"
-      },
-      {
         "command": "fx-extension.regeneratePlugin",
         "title": "Regenerate Action",
         "enablement": "fx-extension.isTeamsFx && isWorkspaceTrusted && !fx-extension.commandLocked && fx-extension.isDeclarativeCopilotApp && fx-extension.isKiotaNPMIntegrationEnabled",
@@ -1553,7 +1547,6 @@
     ]
   },
   "scripts": {
-    "lint:staged": "lint-staged",
     "vscode:prepublish": "rimraf out && npm run package",
     "package": "npm run check-types && npm run vite && node esbuild.mjs --production",
     "build": "npm run check-types && npm run vite && node esbuild.mjs",
@@ -1564,8 +1557,9 @@
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
     "watch:vite": "vite build --config vite.config.mts --watch",
     "build:test": "tsc --project tsconfig.test.json --incremental",
-    "test:unit": "npm run build:test && nyc mocha --config .mocharc.json \"test/**/*.test.ts\"",
-    "test:debug": "npm run build:test && nyc mocha --config .mocharc.json \"test/pluginDebugger/*.test.ts\"",
+    "test:unit": "vitest run --coverage --config vitest.config.ts",
+    "test:unit:vitest": "vitest run --config vitest.config.ts",
+    "test:debug": "vitest run --config vitest.config.ts \"test/pluginDebugger/*.test.ts\"",
     "test:integration": "echo 'to be implementd'",
     "test:e2e": "echo 'to be implementd'",
     "check-format": "prettier --list-different --config .prettierrc.js --ignore-path .prettierignore \"src/**/*.ts\" \"test/**/*.ts\" \"*.{js,json}\"",
@@ -1584,16 +1578,12 @@
     "@azure/ms-rest-azure-env": "^2.0.0",
     "@fluentui/react-components": "^9.74.1",
     "@fluentui/react-icons": "^2.0.328",
-    "@istanbuljs/nyc-config-typescript": "^1.0.2",
-    "@types/chai": "^4.2.14",
-    "@types/chai-as-promised": "^7.1.3",
-    "@types/chai-spies": "^1.0.3",
+    "@vitest/coverage-istanbul": "^4.1.8",
     "@types/chrome-remote-interface": "^0.31.14",
     "@types/express": "^5.0.0",
     "@types/fs-extra": "^9.0.5",
     "@types/jscodeshift": "^0.11.2",
     "@types/lodash": "^4.14.181",
-    "@types/mocha": "^10.0.10",
     "@types/mock-fs": "^4.13.1",
     "@types/node": "^22.15.0",
     "@types/react": "^17.0.3",
@@ -1602,7 +1592,6 @@
     "@types/react-router-dom": "^5.1.7",
     "@types/react-syntax-highlighter": "^15.5.5",
     "@types/semver": "^7.3.4",
-    "@types/sinon": "^17.0.0",
     "@types/string-similarity": "^4.0.2",
     "@types/tmp": "^0.2.0",
     "@types/uuid": "^8.3.0",
@@ -1611,9 +1600,6 @@
     "@vitejs/plugin-react": "^4.3.1",
     "@vscode/codicons": "0.0.33",
     "ast-types": "^0.14.2",
-    "chai": "^4.2.0",
-    "chai-as-promised": "^7.1.1",
-    "chai-spies": "^1.0.0",
     "dompurify": "^3.0.6",
     "esbuild": "^0.23.0",
     "esbuild-copy-static-files": "^0.1.0",
@@ -1628,12 +1614,9 @@
     "lint-staged": "^11.2.6",
     "lodash": "^4.17.21",
     "mermaid": "^10.9.0",
-    "mocha": "^11.0.0",
-    "mocha-multi-reporters": "^1.5.1",
     "mock-fs": "^5.2.0",
     "mocked-env": "^1.3.5",
-    "nyc": "^17.1.0",
-    "prettier": "^2.4.1",
+    "prettier": "^3.3.3",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-intl": "^5.13.5",
@@ -1641,16 +1624,15 @@
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "sass": "^1.77.6",
-    "sinon": "^19.0.0",
     "svgtofont": "^3.23.1",
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
-    "ts-sinon": "^2.0.2",
     "typemoq": "^1.3.1",
     "typescript": "~5.9.0",
     "typescript-eslint": "^8.56.0",
+    "vitest": "^4.1.8",
     "uuid": "^8.3.2",
-    "vite": "^5.3.6",
+    "vite": "^6.4.1",
     "vite-plugin-svgr": "^4.2.0"
   },
   "dependencies": {
@@ -1712,16 +1694,11 @@
   },
   "lint-staged": {
     "*.{js,jsx,css,ts,tsx}": [
-      "npx eslint --cache --fix --quiet"
+      "eslint --cache --fix --quiet",
+      "prettier --cache --write --ignore-unknown"
     ],
     "*.json": [
-      "npx prettier --cache --write --ignore-unknown"
+      "prettier --cache --write --ignore-unknown"
     ]
-  },
-  "pnpm": {
-    "overrides": {
-      "hono@<4.12.16": "^4.12.16",
-      "ip-address@<10.1.1": "^10.1.1"
-    }
   }
 }

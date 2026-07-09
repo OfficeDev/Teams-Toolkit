@@ -1,0 +1,13 @@
+{
+  "pipeline": "default",
+  "comment": "Office DA MetaOS upgrade: render lifecycle baseline, copy an existing Office Add-in project, extend it with DA action files, append command handlers, upgrade debugging dependency, and unify the Teams app id.",
+  "steps": [
+    {
+      "step": "metaos/upgrade-existing-project",
+      "with": {
+        "sourceFolder": "{{OfficeAddinFolder}}",
+        "appName": "{{appName}}"
+      }
+    }
+  ]
+}

@@ -2,12 +2,10 @@
 // Licensed under the MIT license.
 
 import { Context, err, Inputs, ok, Platform, Stage, SystemError } from "@microsoft/teamsfx-api";
-import * as chai from "chai";
 import fs from "fs-extra";
 import mockedEnv, { RestoreFn } from "mocked-env";
 import os from "os";
 import * as path from "path";
-import * as sinon from "sinon";
 import * as uuid from "uuid";
 import { createContext, setTools } from "../../../src/common/globalVars";
 import { getLocalizedString } from "../../../src/common/localizeUtils";
@@ -29,6 +27,7 @@ import { TabCapabilityOptions } from "../../../src/question/scaffold/vsc/Capabil
 import { ProjectTypeOptions } from "../../../src/question/scaffold/vsc/ProjectTypeOptions";
 import { TeamsProjectTypeOptions } from "../../../src/question/scaffold/vsc/teamsProjectTypeNode";
 import { MockTools } from "../../core/utils";
+import { chai, vi } from "vitest";
 
 describe("SPFxGenerator", function () {
   const testFolder = path.resolve("./tmp");
@@ -41,21 +40,19 @@ describe("SPFxGenerator", function () {
     context = createContext();
 
     await fs.ensureDir(testFolder);
-    sinon.stub(Utils, "configure");
+    vi.spyOn(Utils, "configure");
 
     const manifestId = uuid.v4();
-    sinon
-      .stub(fs, "readFile")
-      .resolves(
-        Buffer.from(
-          `{"id": "${manifestId}", "preconfiguredEntries": [{"title": {"default": "helloworld"}}]}`
-        )
-      );
-    sinon.stub(fs, "writeFile").resolves();
-    sinon.stub(fs, "rename").resolves();
-    sinon.stub(fs, "copyFile").resolves();
-    sinon.stub(fs, "remove").resolves();
-    sinon.stub(fs, "readJson").callsFake((directory: string) => {
+    vi.spyOn(fs, "readFile").mockResolvedValue(
+      Buffer.from(
+        `{"id": "${manifestId}", "preconfiguredEntries": [{"title": {"default": "helloworld"}}]}`
+      )
+    );
+    vi.spyOn(fs, "writeFile").mockResolvedValue();
+    vi.spyOn(fs, "rename").mockResolvedValue();
+    vi.spyOn(fs, "copyFile").mockResolvedValue();
+    vi.spyOn(fs, "remove").mockResolvedValue();
+    vi.spyOn(fs, "readJson").mockImplementation((directory: string) => {
       if (directory.includes("teams")) {
         return {
           $schema:
@@ -83,13 +80,13 @@ describe("SPFxGenerator", function () {
         return { id: "fakedid", preconfiguredEntries: [{ title: { default: "helloworld" } }] };
       }
     });
-    sinon.stub(fs, "ensureFile").resolves();
-    sinon.stub(fs, "writeJSON").resolves();
-    sinon.stub(fs, "ensureDir").resolves();
+    vi.spyOn(fs, "ensureFile").mockResolvedValue();
+    vi.spyOn(fs, "writeJSON").mockResolvedValue();
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
   });
 
   afterEach(async () => {
-    sinon.restore();
+    vi.restoreAllMocks();
     if (mockedEnvRestore) {
       mockedEnvRestore();
     }
@@ -105,25 +102,25 @@ describe("SPFxGenerator", function () {
       "app-name": "spfxTestApp",
       "spfx-solution": "new",
     };
-    const doYeomanScaffoldStub = sinon
-      .stub(SPFxGenerator, "doYeomanScaffold" as any)
-      .resolves(ok(undefined));
-    const generateTemplateStub = sinon
-      .stub(Generator, "generateTemplate" as any)
-      .resolves(ok(undefined));
-    sinon.stub(cpUtils, "executeCommand").resolves("succeed");
+    const doYeomanScaffoldStub = vi
+      .spyOn(SPFxGenerator, "doYeomanScaffold" as any)
+      .mockResolvedValue(ok(undefined));
+    const generateTemplateStub = vi
+      .spyOn(Generator, "generateTemplate" as any)
+      .mockResolvedValue(ok(undefined));
+    vi.spyOn(cpUtils, "executeCommand").mockResolvedValue("succeed");
 
     const result = await SPFxGenerator.generate(context, inputs, testFolder);
 
     chai.expect(result.isOk()).to.eq(true);
-    chai.expect(doYeomanScaffoldStub.calledOnce).to.be.true;
-    chai.expect(generateTemplateStub.calledOnce).to.be.true;
+    chai.expect(doYeomanScaffoldStub.mock.calls.length === 1).to.be.true;
+    chai.expect(generateTemplateStub.mock.calls.length === 1).to.be.true;
   });
 
   it("scaffold SPFx project without framework", async function () {
-    sinon.stub(fs, "pathExists").resolves(true);
-    sinon.stub(Generator, "generateTemplate" as any).resolves(ok(undefined));
-    sinon.stub(cpUtils, "executeCommand").resolves("succeed");
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(Generator, "generateTemplate" as any).mockResolvedValue(ok(undefined));
+    vi.spyOn(cpUtils, "executeCommand").mockResolvedValue("succeed");
     const inputs: Inputs = {
       platform: Platform.CLI,
       projectPath: testFolder,
@@ -139,9 +136,9 @@ describe("SPFxGenerator", function () {
   });
 
   it("scaffold SPFx project with react framework", async function () {
-    sinon.stub(fs, "pathExists").resolves(true);
-    sinon.stub(cpUtils, "executeCommand").resolves("succeed");
-    sinon.stub(Generator, "generateTemplate" as any).resolves(ok(undefined));
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(cpUtils, "executeCommand").mockResolvedValue("succeed");
+    vi.spyOn(Generator, "generateTemplate" as any).mockResolvedValue(ok(undefined));
     const inputs: Inputs = {
       platform: Platform.CLI,
       projectPath: testFolder,
@@ -157,9 +154,9 @@ describe("SPFxGenerator", function () {
   });
 
   it("scaffold SPFx project with minimal framework", async function () {
-    sinon.stub(fs, "pathExists").resolves(true);
-    sinon.stub(cpUtils, "executeCommand").resolves("succeed");
-    sinon.stub(Generator, "generateTemplate" as any).resolves(ok(undefined));
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(cpUtils, "executeCommand").mockResolvedValue("succeed");
+    vi.spyOn(Generator, "generateTemplate" as any).mockResolvedValue(ok(undefined));
     const inputs: Inputs = {
       platform: Platform.CLI,
       projectPath: testFolder,
@@ -175,9 +172,9 @@ describe("SPFxGenerator", function () {
   });
 
   it("scaffold SPFx project with extremely long webpart name", async function () {
-    sinon.stub(fs, "pathExists").resolves(true);
-    sinon.stub(cpUtils, "executeCommand").resolves("succeed");
-    sinon.stub(Generator, "generateTemplate" as any).resolves(ok(undefined));
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(cpUtils, "executeCommand").mockResolvedValue("succeed");
+    vi.spyOn(Generator, "generateTemplate" as any).mockResolvedValue(ok(undefined));
     const inputs: Inputs = {
       platform: Platform.CLI,
       projectPath: testFolder,
@@ -201,19 +198,19 @@ describe("SPFxGenerator", function () {
       [QuestionNames.SPFxInstallPackage]: SPFxVersionOptionIds.installLocally,
       [QuestionNames.SPFxSolution]: "new",
     };
-    sinon.stub(YoChecker.prototype, "isLatestInstalled").resolves(true);
-    sinon.stub(GeneratorChecker.prototype, "isLatestInstalled").resolves(true);
-    sinon.stub(cpUtils, "executeCommand").resolves("succeed");
+    vi.spyOn(YoChecker.prototype, "isLatestInstalled").mockResolvedValue(true);
+    vi.spyOn(GeneratorChecker.prototype, "isLatestInstalled").mockResolvedValue(true);
+    vi.spyOn(cpUtils, "executeCommand").mockResolvedValue("succeed");
 
-    const generateTemplateStub = sinon
-      .stub(Generator, "generateTemplate" as any)
-      .resolves(ok(undefined));
+    const generateTemplateStub = vi
+      .spyOn(Generator, "generateTemplate" as any)
+      .mockResolvedValue(ok(undefined));
 
     const result = await SPFxGenerator.generate(context, inputs, testFolder);
 
     chai.expect(result.isOk()).to.eq(true);
 
-    chai.expect(generateTemplateStub.calledOnce).to.be.true;
+    chai.expect(generateTemplateStub.mock.calls.length === 1).to.be.true;
   });
 
   it("select to install locally and install only sp", async function () {
@@ -224,25 +221,27 @@ describe("SPFxGenerator", function () {
       [QuestionNames.SPFxInstallPackage]: SPFxVersionOptionIds.installLocally,
       [QuestionNames.SPFxSolution]: "new",
     };
-    sinon.stub(YoChecker.prototype, "isLatestInstalled").resolves(true);
-    sinon.stub(cpUtils, "executeCommand").resolves("succeed");
-    sinon.stub(GeneratorChecker.prototype, "isLatestInstalled").resolves(false);
-    const yoInstaller = sinon.stub(YoChecker.prototype, "ensureDependency").resolves(ok(true));
-    const generatorInstaller = sinon
-      .stub(GeneratorChecker.prototype, "ensureDependency")
-      .resolves(ok(true));
+    vi.spyOn(YoChecker.prototype, "isLatestInstalled").mockResolvedValue(true);
+    vi.spyOn(cpUtils, "executeCommand").mockResolvedValue("succeed");
+    vi.spyOn(GeneratorChecker.prototype, "isLatestInstalled").mockResolvedValue(false);
+    const yoInstaller = vi
+      .spyOn(YoChecker.prototype, "ensureDependency")
+      .mockResolvedValue(ok(true));
+    const generatorInstaller = vi
+      .spyOn(GeneratorChecker.prototype, "ensureDependency")
+      .mockResolvedValue(ok(true));
 
-    const generateTemplateStub = sinon
-      .stub(Generator, "generateTemplate" as any)
-      .resolves(ok(undefined));
+    const generateTemplateStub = vi
+      .spyOn(Generator, "generateTemplate" as any)
+      .mockResolvedValue(ok(undefined));
 
     const result = await SPFxGenerator.generate(context, inputs, testFolder);
 
     chai.expect(result.isOk()).to.eq(true);
 
-    chai.expect(generateTemplateStub.calledOnce).to.be.true;
-    chai.expect(yoInstaller.calledOnce).to.be.false;
-    chai.expect(generatorInstaller.calledOnce).to.be.true;
+    chai.expect(generateTemplateStub.mock.calls.length === 1).to.be.true;
+    chai.expect(yoInstaller.mock.calls.length === 1).to.be.false;
+    chai.expect(generatorInstaller.mock.calls.length === 1).to.be.true;
   });
 
   it("select to install locally and install only yo", async function () {
@@ -253,25 +252,27 @@ describe("SPFxGenerator", function () {
       [QuestionNames.SPFxInstallPackage]: SPFxVersionOptionIds.installLocally,
       [QuestionNames.SPFxSolution]: "new",
     };
-    sinon.stub(YoChecker.prototype, "isLatestInstalled").resolves(false);
-    sinon.stub(GeneratorChecker.prototype, "isLatestInstalled").resolves(true);
-    sinon.stub(cpUtils, "executeCommand").resolves("succeed");
-    const yoInstaller = sinon.stub(YoChecker.prototype, "ensureDependency").resolves(ok(true));
-    const generatorInstaller = sinon
-      .stub(GeneratorChecker.prototype, "ensureDependency")
-      .resolves(ok(true));
+    vi.spyOn(YoChecker.prototype, "isLatestInstalled").mockResolvedValue(false);
+    vi.spyOn(GeneratorChecker.prototype, "isLatestInstalled").mockResolvedValue(true);
+    vi.spyOn(cpUtils, "executeCommand").mockResolvedValue("succeed");
+    const yoInstaller = vi
+      .spyOn(YoChecker.prototype, "ensureDependency")
+      .mockResolvedValue(ok(true));
+    const generatorInstaller = vi
+      .spyOn(GeneratorChecker.prototype, "ensureDependency")
+      .mockResolvedValue(ok(true));
 
-    const generateTemplateStub = sinon
-      .stub(Generator, "generateTemplate" as any)
-      .resolves(ok(undefined));
+    const generateTemplateStub = vi
+      .spyOn(Generator, "generateTemplate" as any)
+      .mockResolvedValue(ok(undefined));
 
     const result = await SPFxGenerator.generate(context, inputs, testFolder);
 
     chai.expect(result.isOk()).to.eq(true);
 
-    chai.expect(generateTemplateStub.calledOnce).to.be.true;
-    chai.expect(yoInstaller.calledOnce).to.be.true;
-    chai.expect(generatorInstaller.calledOnce).to.be.false;
+    chai.expect(generateTemplateStub.mock.calls.length === 1).to.be.true;
+    chai.expect(yoInstaller.mock.calls.length === 1).to.be.true;
+    chai.expect(generatorInstaller.mock.calls.length === 1).to.be.false;
   });
 
   it("select to install locally and install sp error", async function () {
@@ -282,12 +283,12 @@ describe("SPFxGenerator", function () {
       [QuestionNames.SPFxInstallPackage]: SPFxVersionOptionIds.installLocally,
       [QuestionNames.SPFxSolution]: "new",
     };
-    sinon.stub(YoChecker.prototype, "isLatestInstalled").resolves(true);
-    sinon.stub(GeneratorChecker.prototype, "isLatestInstalled").resolves(false);
-    sinon.stub(YoChecker.prototype, "ensureDependency").resolves(ok(true));
-    sinon
-      .stub(GeneratorChecker.prototype, "ensureDependency")
-      .resolves(err(new SystemError("source", "name", "msg", "msg")));
+    vi.spyOn(YoChecker.prototype, "isLatestInstalled").mockResolvedValue(true);
+    vi.spyOn(GeneratorChecker.prototype, "isLatestInstalled").mockResolvedValue(false);
+    vi.spyOn(YoChecker.prototype, "ensureDependency").mockResolvedValue(ok(true));
+    vi.spyOn(GeneratorChecker.prototype, "ensureDependency").mockResolvedValue(
+      err(new SystemError("source", "name", "msg", "msg"))
+    );
 
     const result = await SPFxGenerator.generate(context, inputs, testFolder);
 
@@ -305,11 +306,11 @@ describe("SPFxGenerator", function () {
       [QuestionNames.SPFxInstallPackage]: SPFxVersionOptionIds.installLocally,
       [QuestionNames.SPFxSolution]: "new",
     };
-    sinon.stub(YoChecker.prototype, "isLatestInstalled").resolves(false);
-    sinon.stub(GeneratorChecker.prototype, "isLatestInstalled").resolves(true);
-    sinon
-      .stub(YoChecker.prototype, "ensureDependency")
-      .resolves(err(new SystemError("source", "name", "msg", "msg")));
+    vi.spyOn(YoChecker.prototype, "isLatestInstalled").mockResolvedValue(false);
+    vi.spyOn(GeneratorChecker.prototype, "isLatestInstalled").mockResolvedValue(true);
+    vi.spyOn(YoChecker.prototype, "ensureDependency").mockResolvedValue(
+      err(new SystemError("source", "name", "msg", "msg"))
+    );
 
     const result = await SPFxGenerator.generate(context, inputs, testFolder);
 
@@ -327,10 +328,12 @@ describe("SPFxGenerator", function () {
       [QuestionNames.SPFxInstallPackage]: SPFxVersionOptionIds.installLocally,
       [QuestionNames.SPFxSolution]: "new",
     };
-    sinon.stub(YoChecker.prototype, "isLatestInstalled").resolves(true);
-    sinon.stub(GeneratorChecker.prototype, "isLatestInstalled").resolves(true);
-    sinon.stub(cpUtils, "executeCommand").throws(new Error("errorMessage"));
-    sinon.stub(Generator, "generateTemplate" as any).resolves(ok(undefined));
+    vi.spyOn(YoChecker.prototype, "isLatestInstalled").mockResolvedValue(true);
+    vi.spyOn(GeneratorChecker.prototype, "isLatestInstalled").mockResolvedValue(true);
+    vi.spyOn(cpUtils, "executeCommand").mockImplementation(() => {
+      throw new Error("errorMessage");
+    });
+    vi.spyOn(Generator, "generateTemplate" as any).mockResolvedValue(ok(undefined));
 
     const result = await SPFxGenerator.generate(context, inputs, testFolder);
 
@@ -345,11 +348,15 @@ describe("SPFxGenerator", function () {
       [QuestionNames.SPFxInstallPackage]: SPFxVersionOptionIds.installLocally,
       [QuestionNames.SPFxSolution]: "new",
     };
-    sinon.stub(YoChecker.prototype, "isLatestInstalled").resolves(false);
-    sinon.stub(GeneratorChecker.prototype, "isLatestInstalled").resolves(true);
-    sinon.stub(cpUtils, "executeCommand").throws(new Error("errorMessage"));
-    sinon.stub(Generator, "generateTemplate" as any).resolves(ok(undefined));
-    sinon.stub(YoChecker.prototype, "ensureDependency").throws(new Error("unknown"));
+    vi.spyOn(YoChecker.prototype, "isLatestInstalled").mockResolvedValue(false);
+    vi.spyOn(GeneratorChecker.prototype, "isLatestInstalled").mockResolvedValue(true);
+    vi.spyOn(cpUtils, "executeCommand").mockImplementation(() => {
+      throw new Error("errorMessage");
+    });
+    vi.spyOn(Generator, "generateTemplate" as any).mockResolvedValue(ok(undefined));
+    vi.spyOn(YoChecker.prototype, "ensureDependency").mockImplementation(() => {
+      throw new Error("unknown");
+    });
 
     const result = await SPFxGenerator.generate(context, inputs, testFolder);
 
@@ -370,19 +377,19 @@ describe("SPFxGenerator", function () {
       [QuestionNames.SPFxInstallPackage]: SPFxVersionOptionIds.installLocally,
       [QuestionNames.SPFxSolution]: "new",
     };
-    sinon.stub(YoChecker.prototype, "isLatestInstalled").resolves(true);
-    sinon.stub(GeneratorChecker.prototype, "isLatestInstalled").resolves(true);
-    sinon.stub(cpUtils, "executeCommand").resolves("succeed");
+    vi.spyOn(YoChecker.prototype, "isLatestInstalled").mockResolvedValue(true);
+    vi.spyOn(GeneratorChecker.prototype, "isLatestInstalled").mockResolvedValue(true);
+    vi.spyOn(cpUtils, "executeCommand").mockResolvedValue("succeed");
 
-    const generateTemplateStub = sinon
-      .stub(Generator, "generateTemplate" as any)
-      .resolves(ok(undefined));
+    const generateTemplateStub = vi
+      .spyOn(Generator, "generateTemplate" as any)
+      .mockResolvedValue(ok(undefined));
 
     const result = await SPFxGenerator.generate(context, inputs, testFolder);
 
     chai.expect(result.isOk()).to.eq(true);
 
-    chai.expect(generateTemplateStub.calledOnce).to.be.true;
+    chai.expect(generateTemplateStub.mock.calls.length === 1).to.be.true;
   });
 
   it("use global packages and use path", async function () {
@@ -397,19 +404,19 @@ describe("SPFxGenerator", function () {
       [QuestionNames.SPFxSolution]: "new",
       globalSpfxPackageVersion: "1.17.0",
     };
-    sinon.stub(YoChecker.prototype, "isLatestInstalled").resolves(true);
-    sinon.stub(GeneratorChecker.prototype, "isLatestInstalled").resolves(true);
-    sinon.stub(cpUtils, "executeCommand").resolves("succeed");
+    vi.spyOn(YoChecker.prototype, "isLatestInstalled").mockResolvedValue(true);
+    vi.spyOn(GeneratorChecker.prototype, "isLatestInstalled").mockResolvedValue(true);
+    vi.spyOn(cpUtils, "executeCommand").mockResolvedValue("succeed");
 
-    const generateTemplateStub = sinon
-      .stub(Generator, "generateTemplate" as any)
-      .resolves(ok(undefined));
+    const generateTemplateStub = vi
+      .spyOn(Generator, "generateTemplate" as any)
+      .mockResolvedValue(ok(undefined));
 
     const result = await SPFxGenerator.generate(context, inputs, testFolder);
 
     chai.expect(result.isOk()).to.eq(true);
 
-    chai.expect(generateTemplateStub.calledOnce).to.be.true;
+    chai.expect(generateTemplateStub.mock.calls.length === 1).to.be.true;
   });
 
   it("No web part in imported SPFx solution", async () => {
@@ -421,9 +428,9 @@ describe("SPFxGenerator", function () {
       [QuestionNames.SPFxFolder]: "c:\\test",
     };
 
-    sinon.stub(fs, "pathExists").resolves(true);
-    sinon.stub(fs, "readdir").resolves([]);
-    sinon.stub(fs, "copy").resolves();
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readdir").mockResolvedValue([]);
+    vi.spyOn(fs, "copy").mockResolvedValue();
 
     const result = await SPFxGenerator.generate(context, inputs, testFolder);
 
@@ -442,8 +449,8 @@ describe("SPFxGenerator", function () {
       "spfx-folder": "c:\\test",
     };
 
-    sinon.stub(fs, "pathExists").resolves(true);
-    sinon.stub(fs, "readdir").callsFake((directory: any) => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readdir").mockImplementation((directory: any) => {
       if (directory === path.join("c:\\test", "teams")) {
         return ["1_color.png", "1_outline.png"] as any;
       } else if (directory === path.join("c:\\test", "src", "webparts")) {
@@ -452,12 +459,12 @@ describe("SPFxGenerator", function () {
         return [];
       }
     });
-    sinon.stub(fs, "statSync").returns({
+    vi.spyOn(fs, "statSync").mockReturnValue({
       isDirectory: () => {
         return true;
       },
     } as any);
-    sinon.stub(fs, "copy").resolves();
+    vi.spyOn(fs, "copy").mockResolvedValue();
 
     const result = await SPFxGenerator.generate(context, inputs, testFolder);
 
@@ -476,9 +483,11 @@ describe("SPFxGenerator", function () {
       "spfx-folder": "c:\\test",
     };
 
-    sinon.stub(fs, "pathExists").resolves(true);
-    sinon.stub(fs, "readdir").resolves([]);
-    sinon.stub(fs, "copy").throwsException("Failed to copy");
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readdir").mockResolvedValue([]);
+    vi.spyOn(fs, "copy").mockImplementation(() => {
+      throw "Failed to copy";
+    });
 
     const result = await SPFxGenerator.generate(context, inputs, testFolder);
 
@@ -497,8 +506,8 @@ describe("SPFxGenerator", function () {
       "spfx-folder": "c:\\test",
     };
 
-    sinon.stub(fs, "pathExists").resolves(true);
-    sinon.stub(fs, "readdir").callsFake((directory: any) => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readdir").mockImplementation((directory: any) => {
       if (directory === path.join("c:\\test", "teams")) {
         return ["1_color.png", "1_outline.png"] as any;
       } else if (directory === path.join("c:\\test", "src", "webparts")) {
@@ -507,16 +516,16 @@ describe("SPFxGenerator", function () {
         return ["HelloWorldWebPart.manifest.json"] as any;
       }
     });
-    sinon.stub(fs, "statSync").returns({
+    vi.spyOn(fs, "statSync").mockReturnValue({
       isDirectory: () => {
         return true;
       },
     } as any);
-    sinon.stub(fs, "copy").resolves();
-    sinon.stub(Generator, "generateTemplate" as any).resolves(ok(undefined));
-    sinon
-      .stub(ManifestUtils.prototype, "_readAppManifest")
-      .throwsException("Failed to read manifest");
+    vi.spyOn(fs, "copy").mockResolvedValue();
+    vi.spyOn(Generator, "generateTemplate" as any).mockResolvedValue(ok(undefined));
+    vi.spyOn(ManifestUtils.prototype, "_readAppManifest").mockImplementation(() => {
+      throw "Failed to read manifest";
+    });
 
     const result = await SPFxGenerator.generate(context, inputs, testFolder);
 
@@ -535,8 +544,8 @@ describe("SPFxGenerator", function () {
       [QuestionNames.SPFxFolder]: "c:\\test",
     };
 
-    sinon.stub(fs, "pathExists").resolves(true);
-    sinon.stub(fs, "readdir").callsFake((directory: any) => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readdir").mockImplementation((directory: any) => {
       if (directory === path.join("c:\\test", "teams")) {
         return ["1_color.png", "1_outline.png"] as any;
       } else if (directory === path.join("c:\\test", "src", "webparts")) {
@@ -547,35 +556,35 @@ describe("SPFxGenerator", function () {
         return [] as any;
       }
     });
-    sinon.stub(fs, "statSync").returns({
+    vi.spyOn(fs, "statSync").mockReturnValue({
       isDirectory: () => {
         return true;
       },
     } as any);
-    const generateTemplateStub = sinon
-      .stub(Generator, "generateTemplate" as any)
-      .resolves(ok(undefined));
+    const generateTemplateStub = vi
+      .spyOn(Generator, "generateTemplate" as any)
+      .mockResolvedValue(ok(undefined));
     const fakedManifest = {
       name: { short: "thisisaverylongappnametotestifitwillbetruncated" },
       staticTabs: [{ name: "default" }],
     };
-    const readAppManifestStub = sinon
-      .stub(ManifestUtils.prototype, "_readAppManifest")
-      .resolves(ok(fakedManifest as any));
-    const writeAppManifestStub = sinon
-      .stub(ManifestUtils.prototype, "_writeAppManifest")
-      .resolves();
-    const writeEnvStub = sinon.stub(envUtil, "writeEnv");
-    sinon.stub(fs, "copy").resolves();
+    const readAppManifestStub = vi
+      .spyOn(ManifestUtils.prototype, "_readAppManifest")
+      .mockResolvedValue(ok(fakedManifest as any));
+    const writeAppManifestStub = vi
+      .spyOn(ManifestUtils.prototype, "_writeAppManifest")
+      .mockResolvedValue();
+    const writeEnvStub = vi.spyOn(envUtil, "writeEnv").mockResolvedValue(ok(undefined));
+    vi.spyOn(fs, "copy").mockResolvedValue();
 
     const result = await SPFxGenerator.generate(context, inputs, testFolder);
 
     chai.expect(result.isOk()).to.eq(true);
     chai.expect(fakedManifest.staticTabs.length).to.eq(1);
-    chai.expect(generateTemplateStub.calledOnce).to.eq(true);
-    chai.expect(writeEnvStub.calledOnce).to.eq(true);
-    chai.expect(readAppManifestStub.calledTwice).to.eq(true);
-    chai.expect(writeAppManifestStub.calledTwice).to.eq(true);
+    chai.expect(generateTemplateStub.mock.calls.length === 1).to.eq(true);
+    chai.expect(writeEnvStub.mock.calls.length === 1).to.eq(true);
+    chai.expect(readAppManifestStub.mock.calls.length === 2).to.eq(true);
+    chai.expect(writeAppManifestStub.mock.calls.length === 2).to.eq(true);
   });
 
   it("Generate template fail when import SPFx solution", async () => {
@@ -587,8 +596,8 @@ describe("SPFxGenerator", function () {
       [QuestionNames.SPFxFolder]: "c:\\test",
     };
 
-    sinon.stub(fs, "pathExists").resolves(true);
-    sinon.stub(fs, "readdir").callsFake((directory: any) => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readdir").mockImplementation((directory: any) => {
       if (directory === path.join("c:\\test", "teams")) {
         return ["1_color.png", "1_outline.png"] as any;
       } else if (directory === path.join("c:\\test", "src", "webparts")) {
@@ -597,20 +606,20 @@ describe("SPFxGenerator", function () {
         return ["HelloWorldWebPart.manifest.json"] as any;
       }
     });
-    sinon.stub(fs, "statSync").returns({
+    vi.spyOn(fs, "statSync").mockReturnValue({
       isDirectory: () => {
         return true;
       },
     } as any);
-    const generateTemplateStub = sinon
-      .stub(Generator, "generateTemplate" as any)
-      .resolves(err(undefined));
-    sinon.stub(fs, "copy").resolves();
+    const generateTemplateStub = vi
+      .spyOn(Generator, "generateTemplate" as any)
+      .mockResolvedValue(err(undefined));
+    vi.spyOn(fs, "copy").mockResolvedValue();
 
     const result = await SPFxGenerator.generate(context, inputs, testFolder);
 
     chai.expect(result.isErr()).to.eq(true);
-    chai.expect(generateTemplateStub.calledOnce).to.eq(true);
+    chai.expect(generateTemplateStub.mock.calls.length === 1).to.eq(true);
   });
 
   it("Teams manifest staticTabs is updated if imported SPFx solution has multiple web parts", async () => {
@@ -622,8 +631,8 @@ describe("SPFxGenerator", function () {
       [QuestionNames.SPFxFolder]: "c:\\test",
     };
 
-    sinon.stub(fs, "pathExists").resolves(true);
-    sinon.stub(fs, "readdir").callsFake((directory: any) => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readdir").mockImplementation((directory: any) => {
       if (directory === path.join("c:\\test", "teams")) {
         return ["1_color.png", "1_outline.png"] as any;
       } else if (directory === path.join("c:\\test", "src", "webparts")) {
@@ -632,35 +641,35 @@ describe("SPFxGenerator", function () {
         return ["HelloWorldWebPart.manifest.json"] as any;
       }
     });
-    sinon.stub(fs, "statSync").returns({
+    vi.spyOn(fs, "statSync").mockReturnValue({
       isDirectory: () => {
         return true;
       },
     } as any);
-    const generateTemplateStub = sinon
-      .stub(Generator, "generateTemplate" as any)
-      .resolves(ok(undefined));
+    const generateTemplateStub = vi
+      .spyOn(Generator, "generateTemplate" as any)
+      .mockResolvedValue(ok(undefined));
     const fakedManifest = {
       name: { short: "thisisaverylongappnametotestifitwillbetruncated" },
       staticTabs: [{ name: "default" }],
     };
-    const readAppManifestStub = sinon
-      .stub(ManifestUtils.prototype, "_readAppManifest")
-      .resolves(ok(fakedManifest as any));
-    const writeAppManifestStub = sinon
-      .stub(ManifestUtils.prototype, "_writeAppManifest")
-      .resolves();
-    const writeEnvStub = sinon.stub(envUtil, "writeEnv");
-    sinon.stub(fs, "copy").resolves();
+    const readAppManifestStub = vi
+      .spyOn(ManifestUtils.prototype, "_readAppManifest")
+      .mockResolvedValue(ok(fakedManifest as any));
+    const writeAppManifestStub = vi
+      .spyOn(ManifestUtils.prototype, "_writeAppManifest")
+      .mockResolvedValue();
+    const writeEnvStub = vi.spyOn(envUtil, "writeEnv").mockResolvedValue(ok(undefined));
+    vi.spyOn(fs, "copy").mockResolvedValue();
 
     const result = await SPFxGenerator.generate(context, inputs, testFolder);
 
     chai.expect(result.isOk()).to.eq(true);
     chai.expect(fakedManifest.staticTabs.length).to.eq(3);
-    chai.expect(generateTemplateStub.calledOnce).to.eq(true);
-    chai.expect(writeEnvStub.calledOnce).to.eq(true);
-    chai.expect(readAppManifestStub.calledTwice).to.eq(true);
-    chai.expect(writeAppManifestStub.calledTwice).to.eq(true);
+    chai.expect(generateTemplateStub.mock.calls.length === 1).to.eq(true);
+    chai.expect(writeEnvStub.mock.calls.length === 1).to.eq(true);
+    chai.expect(readAppManifestStub.mock.calls.length === 2).to.eq(true);
+    chai.expect(writeAppManifestStub.mock.calls.length === 2).to.eq(true);
   });
 
   it("Teams manifest staticTabs is updated if imported SPFx solution has multiple web parts - SPFx higher than 1.21.0", async () => {
@@ -672,8 +681,8 @@ describe("SPFxGenerator", function () {
       [QuestionNames.SPFxFolder]: "c:\\test",
     };
 
-    sinon.stub(fs, "pathExists").resolves(true);
-    sinon.stub(fs, "readdir").callsFake((directory: any) => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readdir").mockImplementation((directory: any) => {
       if (directory === path.join("c:\\test", "teams")) {
         return ["1_color.png", "1_outline.png"] as any;
       } else if (directory === path.join("c:\\test", "src", "webparts")) {
@@ -682,27 +691,27 @@ describe("SPFxGenerator", function () {
         return ["HelloWorldWebPart.manifest.json"] as any;
       }
     });
-    sinon.stub(fs, "statSync").returns({
+    vi.spyOn(fs, "statSync").mockReturnValue({
       isDirectory: () => {
         return true;
       },
     } as any);
-    const generateTemplateStub = sinon
-      .stub(Generator, "generateTemplate" as any)
-      .resolves(ok(undefined));
+    const generateTemplateStub = vi
+      .spyOn(Generator, "generateTemplate" as any)
+      .mockResolvedValue(ok(undefined));
     const fakedManifest = {
       name: { short: "thisisaverylongappnametotestifitwillbetruncated" },
       staticTabs: [{ name: "default" }],
     };
-    const readAppManifestStub = sinon
-      .stub(ManifestUtils.prototype, "_readAppManifest")
-      .resolves(ok(fakedManifest as any));
-    const writeAppManifestStub = sinon
-      .stub(ManifestUtils.prototype, "_writeAppManifest")
-      .resolves();
-    const writeEnvStub = sinon.stub(envUtil, "writeEnv");
-    sinon.stub(fs, "copy").resolves();
-    sinon.stub(SPFxGenerator, "getSolutionVersion").resolves("1.21.0");
+    const readAppManifestStub = vi
+      .spyOn(ManifestUtils.prototype, "_readAppManifest")
+      .mockResolvedValue(ok(fakedManifest as any));
+    const writeAppManifestStub = vi
+      .spyOn(ManifestUtils.prototype, "_writeAppManifest")
+      .mockResolvedValue();
+    const writeEnvStub = vi.spyOn(envUtil, "writeEnv").mockResolvedValue(ok(undefined));
+    vi.spyOn(fs, "copy").mockResolvedValue();
+    vi.spyOn(SPFxGenerator, "getSolutionVersion").mockResolvedValue("1.21.0");
     if (context) {
       context.templateVariables = context.templateVariables || {};
       context.templateVariables["useNewDevUrl"] = "true";
@@ -712,24 +721,24 @@ describe("SPFxGenerator", function () {
 
     chai.expect(result.isOk()).to.eq(true);
     chai.expect(fakedManifest.staticTabs.length).to.eq(3);
-    chai.expect(generateTemplateStub.calledOnce).to.eq(true);
-    chai.expect(writeEnvStub.calledOnce).to.eq(true);
-    chai.expect(readAppManifestStub.calledTwice).to.eq(true);
-    chai.expect(writeAppManifestStub.calledTwice).to.eq(true);
+    chai.expect(generateTemplateStub.mock.calls.length === 1).to.eq(true);
+    chai.expect(writeEnvStub.mock.calls.length === 1).to.eq(true);
+    chai.expect(readAppManifestStub.mock.calls.length === 2).to.eq(true);
+    chai.expect(writeAppManifestStub.mock.calls.length === 2).to.eq(true);
   });
 
   describe("get node versions from SPFx package.json", async () => {
     it("found node version", async () => {
-      sinon.stub(fs, "pathExists").resolves(true);
-      sinon.stub(fs, "readJSON").callsFake((directory: string) => {
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readJSON").mockImplementation((directory: string) => {
         if (directory.includes("package.json")) {
           return { engines: { node: ">= 10.13.0 < 11.0.0" } };
         } else {
           return "";
         }
       });
-      sinon.stub(Generator, "generateTemplate" as any).resolves(ok(undefined));
-      sinon.stub(cpUtils, "executeCommand").resolves("succeed");
+      vi.spyOn(Generator, "generateTemplate" as any).mockResolvedValue(ok(undefined));
+      vi.spyOn(cpUtils, "executeCommand").mockResolvedValue("succeed");
       const inputs: Inputs = {
         platform: Platform.CLI,
         projectPath: testFolder,
@@ -746,16 +755,16 @@ describe("SPFxGenerator", function () {
     });
 
     it("cannot found engine", async () => {
-      sinon.stub(fs, "pathExists").resolves(true);
-      sinon.stub(fs, "readJSON").callsFake((directory: string) => {
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readJSON").mockImplementation((directory: string) => {
         if (directory.includes("package.json")) {
           return {};
         } else {
           return "";
         }
       });
-      sinon.stub(Generator, "generateTemplate" as any).resolves(ok(undefined));
-      sinon.stub(cpUtils, "executeCommand").resolves("succeed");
+      vi.spyOn(Generator, "generateTemplate" as any).mockResolvedValue(ok(undefined));
+      vi.spyOn(cpUtils, "executeCommand").mockResolvedValue("succeed");
       const inputs: Inputs = {
         platform: Platform.CLI,
         projectPath: testFolder,
@@ -772,16 +781,16 @@ describe("SPFxGenerator", function () {
     });
 
     it("cannot found engines.node", async () => {
-      sinon.stub(fs, "pathExists").resolves(true);
-      sinon.stub(fs, "readJSON").callsFake((directory: string) => {
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readJSON").mockImplementation((directory: string) => {
         if (directory.includes("package.json")) {
           return { engines: {} };
         } else {
           return "";
         }
       });
-      sinon.stub(Generator, "generateTemplate" as any).resolves(ok(undefined));
-      sinon.stub(cpUtils, "executeCommand").resolves("succeed");
+      vi.spyOn(Generator, "generateTemplate" as any).mockResolvedValue(ok(undefined));
+      vi.spyOn(cpUtils, "executeCommand").mockResolvedValue("succeed");
       const inputs: Inputs = {
         platform: Platform.CLI,
         projectPath: testFolder,
@@ -810,14 +819,20 @@ describe("SPFxGenerator", function () {
         stage: Stage.addWebpart,
       };
 
-      sinon.stub(GeneratorChecker.prototype, "findGloballyInstalledVersion").resolves("1.17.4");
-      sinon.stub(GeneratorChecker.prototype, "findLocalInstalledVersion").resolves(undefined);
-      sinon.stub(fs, "pathExists").resolves(true);
-      sinon.stub(cpUtils, "executeCommand").resolves("succeed");
-      const yoInstaller = sinon.stub(YoChecker.prototype, "ensureDependency").resolves(ok(true));
-      const generatorInstaller = sinon
-        .stub(GeneratorChecker.prototype, "ensureDependency")
-        .resolves(ok(true));
+      vi.spyOn(GeneratorChecker.prototype, "findGloballyInstalledVersion").mockResolvedValue(
+        "1.17.4"
+      );
+      vi.spyOn(GeneratorChecker.prototype, "findLocalInstalledVersion").mockResolvedValue(
+        undefined
+      );
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(cpUtils, "executeCommand").mockResolvedValue("succeed");
+      const yoInstaller = vi
+        .spyOn(YoChecker.prototype, "ensureDependency")
+        .mockResolvedValue(ok(true));
+      const generatorInstaller = vi
+        .spyOn(GeneratorChecker.prototype, "ensureDependency")
+        .mockResolvedValue(ok(true));
 
       const result = await SPFxGenerator.doYeomanScaffold(context, inputs, testFolder);
       if (result.isErr()) {
@@ -826,8 +841,8 @@ describe("SPFxGenerator", function () {
 
       chai.expect(result.isOk()).to.eq(true);
 
-      chai.expect(yoInstaller.called).to.be.false;
-      chai.expect(generatorInstaller.called).to.be.false;
+      chai.expect(yoInstaller.mock.calls.length > 0).to.be.false;
+      chai.expect(generatorInstaller.mock.calls.length > 0).to.be.false;
     });
 
     it("add web part with global package - SPFx higher than 1.21", async () => {
@@ -840,15 +855,21 @@ describe("SPFxGenerator", function () {
         stage: Stage.addWebpart,
       };
 
-      sinon.stub(GeneratorChecker.prototype, "findGloballyInstalledVersion").resolves("1.21.0");
-      sinon.stub(GeneratorChecker.prototype, "findLocalInstalledVersion").resolves(undefined);
-      sinon.stub(fs, "pathExists").resolves(true);
-      sinon.stub(cpUtils, "executeCommand").resolves("succeed");
-      const yoInstaller = sinon.stub(YoChecker.prototype, "ensureDependency").resolves(ok(true));
-      const generatorInstaller = sinon
-        .stub(GeneratorChecker.prototype, "ensureDependency")
-        .resolves(ok(true));
-      sinon.stub(SPFxGenerator, "shouldAddWebPartWithLocalDependencies").resolves(false);
+      vi.spyOn(GeneratorChecker.prototype, "findGloballyInstalledVersion").mockResolvedValue(
+        "1.21.0"
+      );
+      vi.spyOn(GeneratorChecker.prototype, "findLocalInstalledVersion").mockResolvedValue(
+        undefined
+      );
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(cpUtils, "executeCommand").mockResolvedValue("succeed");
+      const yoInstaller = vi
+        .spyOn(YoChecker.prototype, "ensureDependency")
+        .mockResolvedValue(ok(true));
+      const generatorInstaller = vi
+        .spyOn(GeneratorChecker.prototype, "ensureDependency")
+        .mockResolvedValue(ok(true));
+      vi.spyOn(SPFxGenerator, "shouldAddWebPartWithLocalDependencies").mockResolvedValue(false);
 
       const result = await SPFxGenerator.doYeomanScaffold(context, inputs, testFolder);
       if (result.isErr()) {
@@ -857,8 +878,8 @@ describe("SPFxGenerator", function () {
 
       chai.expect(result.isOk()).to.eq(true);
 
-      chai.expect(yoInstaller.called).to.be.false;
-      chai.expect(generatorInstaller.called).to.be.false;
+      chai.expect(yoInstaller.mock.calls.length > 0).to.be.false;
+      chai.expect(generatorInstaller.mock.calls.length > 0).to.be.false;
     });
 
     it("add web part with local package", async () => {
@@ -872,17 +893,21 @@ describe("SPFxGenerator", function () {
         stage: Stage.addWebpart,
       };
 
-      sinon.stub(GeneratorChecker.prototype, "findGloballyInstalledVersion").resolves(undefined);
-      sinon.stub(GeneratorChecker.prototype, "findLocalInstalledVersion").resolves("1.17.4");
-      const localYoChecker = sinon
-        .stub(YoChecker.prototype, "findLocalInstalledVersion")
-        .resolves("4.3.1");
-      sinon.stub(fs, "pathExists").resolves(true);
-      sinon.stub(cpUtils, "executeCommand").resolves("succeed");
-      const yoInstaller = sinon.stub(YoChecker.prototype, "ensureDependency").resolves(ok(true));
-      const generatorInstaller = sinon
-        .stub(GeneratorChecker.prototype, "ensureDependency")
-        .resolves(ok(true));
+      vi.spyOn(GeneratorChecker.prototype, "findGloballyInstalledVersion").mockResolvedValue(
+        undefined
+      );
+      vi.spyOn(GeneratorChecker.prototype, "findLocalInstalledVersion").mockResolvedValue("1.17.4");
+      const localYoChecker = vi
+        .spyOn(YoChecker.prototype, "findLocalInstalledVersion")
+        .mockResolvedValue("4.3.1");
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(cpUtils, "executeCommand").mockResolvedValue("succeed");
+      const yoInstaller = vi
+        .spyOn(YoChecker.prototype, "ensureDependency")
+        .mockResolvedValue(ok(true));
+      const generatorInstaller = vi
+        .spyOn(GeneratorChecker.prototype, "ensureDependency")
+        .mockResolvedValue(ok(true));
 
       const result = await SPFxGenerator.doYeomanScaffold(context, inputs, testFolder);
       if (result.isErr()) {
@@ -891,9 +916,9 @@ describe("SPFxGenerator", function () {
 
       chai.expect(result.isOk()).to.eq(true);
 
-      chai.expect(yoInstaller.called).to.be.false;
-      chai.expect(generatorInstaller.called).to.be.false;
-      chai.expect(localYoChecker.called).to.be.true;
+      chai.expect(yoInstaller.mock.calls.length > 0).to.be.false;
+      chai.expect(generatorInstaller.mock.calls.length > 0).to.be.false;
+      chai.expect(localYoChecker.mock.calls.length > 0).to.be.true;
     });
 
     it("add web part with installing yo and SPFx locally", async () => {
@@ -907,20 +932,26 @@ describe("SPFxGenerator", function () {
         stage: Stage.addWebpart,
       };
 
-      sinon.stub(GeneratorChecker.prototype, "findGloballyInstalledVersion").resolves("1.17.0");
-      sinon.stub(GeneratorChecker.prototype, "findLocalInstalledVersion").resolves(undefined);
-      const localYoChecker = sinon
-        .stub(YoChecker.prototype, "findLocalInstalledVersion")
-        .resolves(undefined);
-      sinon.stub(fs, "pathExists").resolves(true);
-      sinon.stub(cpUtils, "executeCommand").resolves("succeed");
-      const yoInstaller = sinon.stub(YoChecker.prototype, "ensureDependency").resolves(ok(true));
-      const generatorInstaller = sinon
-        .stub(GeneratorChecker.prototype, "ensureDependency")
-        .resolves(ok(true));
-      const userConfirm = sinon
-        .stub(context.userInteraction, "showMessage")
-        .resolves(ok(getLocalizedString("plugins.spfx.addWebPart.install")));
+      vi.spyOn(GeneratorChecker.prototype, "findGloballyInstalledVersion").mockResolvedValue(
+        "1.17.0"
+      );
+      vi.spyOn(GeneratorChecker.prototype, "findLocalInstalledVersion").mockResolvedValue(
+        undefined
+      );
+      const localYoChecker = vi
+        .spyOn(YoChecker.prototype, "findLocalInstalledVersion")
+        .mockResolvedValue(undefined);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(cpUtils, "executeCommand").mockResolvedValue("succeed");
+      const yoInstaller = vi
+        .spyOn(YoChecker.prototype, "ensureDependency")
+        .mockResolvedValue(ok(true));
+      const generatorInstaller = vi
+        .spyOn(GeneratorChecker.prototype, "ensureDependency")
+        .mockResolvedValue(ok(true));
+      const userConfirm = vi
+        .spyOn(context.userInteraction, "showMessage")
+        .mockResolvedValue(ok(getLocalizedString("plugins.spfx.addWebPart.install")));
 
       const result = await SPFxGenerator.doYeomanScaffold(context, inputs, testFolder);
       if (result.isErr()) {
@@ -929,10 +960,10 @@ describe("SPFxGenerator", function () {
 
       chai.expect(result.isOk()).to.eq(true);
 
-      chai.expect(yoInstaller.called).to.be.true;
-      chai.expect(generatorInstaller.called).to.be.true;
-      chai.expect(localYoChecker.called).to.be.true;
-      chai.expect(userConfirm.called).to.be.true;
+      chai.expect(yoInstaller.mock.calls.length > 0).to.be.true;
+      chai.expect(generatorInstaller.mock.calls.length > 0).to.be.true;
+      chai.expect(localYoChecker.mock.calls.length > 0).to.be.true;
+      chai.expect(userConfirm.mock.calls.length > 0).to.be.true;
     });
 
     it("add web part with upgrading SPFx locally", async () => {
@@ -946,29 +977,33 @@ describe("SPFxGenerator", function () {
         stage: Stage.addWebpart,
       };
 
-      sinon.stub(GeneratorChecker.prototype, "findGloballyInstalledVersion").resolves("1.17.0");
-      sinon.stub(GeneratorChecker.prototype, "findLocalInstalledVersion").resolves("1.16.1");
-      const localYoChecker = sinon
-        .stub(YoChecker.prototype, "findLocalInstalledVersion")
-        .resolves("4.3.1");
-      sinon.stub(fs, "pathExists").resolves(true);
-      sinon.stub(cpUtils, "executeCommand").resolves("succeed");
-      const yoInstaller = sinon.stub(YoChecker.prototype, "ensureDependency").resolves(ok(true));
-      const generatorInstaller = sinon
-        .stub(GeneratorChecker.prototype, "ensureDependency")
-        .resolves(ok(true));
-      const userConfirm = sinon
-        .stub(context.userInteraction, "showMessage")
-        .resolves(ok(getLocalizedString("plugins.spfx.addWebPart.upgrade")));
+      vi.spyOn(GeneratorChecker.prototype, "findGloballyInstalledVersion").mockResolvedValue(
+        "1.17.0"
+      );
+      vi.spyOn(GeneratorChecker.prototype, "findLocalInstalledVersion").mockResolvedValue("1.16.1");
+      const localYoChecker = vi
+        .spyOn(YoChecker.prototype, "findLocalInstalledVersion")
+        .mockResolvedValue("4.3.1");
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(cpUtils, "executeCommand").mockResolvedValue("succeed");
+      const yoInstaller = vi
+        .spyOn(YoChecker.prototype, "ensureDependency")
+        .mockResolvedValue(ok(true));
+      const generatorInstaller = vi
+        .spyOn(GeneratorChecker.prototype, "ensureDependency")
+        .mockResolvedValue(ok(true));
+      const userConfirm = vi
+        .spyOn(context.userInteraction, "showMessage")
+        .mockResolvedValue(ok(getLocalizedString("plugins.spfx.addWebPart.upgrade")));
 
       const result = await SPFxGenerator.doYeomanScaffold(context, inputs, testFolder);
 
       chai.expect(result.isOk()).to.eq(true);
 
-      chai.expect(yoInstaller.called).to.be.false;
-      chai.expect(generatorInstaller.called).to.be.true;
-      chai.expect(localYoChecker.called).to.be.true;
-      chai.expect(userConfirm.called).to.be.true;
+      chai.expect(yoInstaller.mock.calls.length > 0).to.be.false;
+      chai.expect(generatorInstaller.mock.calls.length > 0).to.be.true;
+      chai.expect(localYoChecker.mock.calls.length > 0).to.be.true;
+      chai.expect(userConfirm.mock.calls.length > 0).to.be.true;
     });
 
     it("add web part with mismatch SPFx version locally. click 'help' first and then 'continue'", async () => {
@@ -982,34 +1017,40 @@ describe("SPFxGenerator", function () {
         stage: Stage.addWebpart,
       };
 
-      sinon.stub(GeneratorChecker.prototype, "findGloballyInstalledVersion").resolves("1.17.0");
-      sinon.stub(GeneratorChecker.prototype, "findLocalInstalledVersion").resolves("1.18.2");
-      const localYoChecker = sinon
-        .stub(YoChecker.prototype, "findLocalInstalledVersion")
-        .resolves("4.3.1");
-      sinon.stub(fs, "pathExists").resolves(true);
-      sinon.stub(cpUtils, "executeCommand").resolves("succeed");
-      const yoInstaller = sinon.stub(YoChecker.prototype, "ensureDependency").resolves(ok(true));
-      const generatorInstaller = sinon
-        .stub(GeneratorChecker.prototype, "ensureDependency")
-        .resolves(ok(true));
-      const userConfirm = sinon
-        .stub(context.userInteraction, "showMessage")
-        .onFirstCall()
-        .resolves(ok(getLocalizedString("plugins.spfx.addWebPart.versionMismatch.help")))
-        .onSecondCall()
-        .resolves(ok(getLocalizedString("plugins.spfx.addWebPart.versionMismatch.continue")));
-      const openUrl = sinon.stub(context.userInteraction, "openUrl").resolves(ok(true));
+      vi.spyOn(GeneratorChecker.prototype, "findGloballyInstalledVersion").mockResolvedValue(
+        "1.17.0"
+      );
+      vi.spyOn(GeneratorChecker.prototype, "findLocalInstalledVersion").mockResolvedValue("1.18.2");
+      const localYoChecker = vi
+        .spyOn(YoChecker.prototype, "findLocalInstalledVersion")
+        .mockResolvedValue("4.3.1");
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(cpUtils, "executeCommand").mockResolvedValue("succeed");
+      const yoInstaller = vi
+        .spyOn(YoChecker.prototype, "ensureDependency")
+        .mockResolvedValue(ok(true));
+      const generatorInstaller = vi
+        .spyOn(GeneratorChecker.prototype, "ensureDependency")
+        .mockResolvedValue(ok(true));
+      const userConfirm = vi
+        .spyOn(context.userInteraction, "showMessage")
+        .mockResolvedValueOnce(
+          ok(getLocalizedString("plugins.spfx.addWebPart.versionMismatch.help"))
+        )
+        .mockResolvedValueOnce(
+          ok(getLocalizedString("plugins.spfx.addWebPart.versionMismatch.continue"))
+        );
+      const openUrl = vi.spyOn(context.userInteraction, "openUrl").mockResolvedValue(ok(true));
 
       const result = await SPFxGenerator.doYeomanScaffold(context, inputs, testFolder);
 
       chai.expect(result.isOk()).to.eq(true);
 
-      chai.expect(yoInstaller.called).to.be.false;
-      chai.expect(generatorInstaller.called).to.be.false;
-      chai.expect(localYoChecker.called).to.be.true;
-      chai.expect(userConfirm.called).to.be.true;
-      chai.expect(openUrl.called).to.be.true;
+      chai.expect(yoInstaller.mock.calls.length > 0).to.be.false;
+      chai.expect(generatorInstaller.mock.calls.length > 0).to.be.false;
+      chai.expect(localYoChecker.mock.calls.length > 0).to.be.true;
+      chai.expect(userConfirm.mock.calls.length > 0).to.be.true;
+      chai.expect(openUrl.mock.calls.length > 0).to.be.true;
     });
 
     it("add web part with installing SPFx cancel", async () => {
@@ -1023,29 +1064,33 @@ describe("SPFxGenerator", function () {
         stage: Stage.addWebpart,
       };
 
-      sinon.stub(GeneratorChecker.prototype, "findGloballyInstalledVersion").resolves("1.17.0");
-      sinon.stub(GeneratorChecker.prototype, "findLocalInstalledVersion").resolves("1.16.1");
-      const localYoChecker = sinon
-        .stub(YoChecker.prototype, "findLocalInstalledVersion")
-        .resolves("4.3.1");
-      sinon.stub(fs, "pathExists").resolves(true);
-      sinon.stub(cpUtils, "executeCommand").resolves("succeed");
-      const yoInstaller = sinon.stub(YoChecker.prototype, "ensureDependency").resolves(ok(true));
-      const generatorInstaller = sinon
-        .stub(GeneratorChecker.prototype, "ensureDependency")
-        .resolves(ok(true));
-      const userConfirm = sinon
-        .stub(context.userInteraction, "showMessage")
-        .resolves(ok(undefined));
+      vi.spyOn(GeneratorChecker.prototype, "findGloballyInstalledVersion").mockResolvedValue(
+        "1.17.0"
+      );
+      vi.spyOn(GeneratorChecker.prototype, "findLocalInstalledVersion").mockResolvedValue("1.16.1");
+      const localYoChecker = vi
+        .spyOn(YoChecker.prototype, "findLocalInstalledVersion")
+        .mockResolvedValue("4.3.1");
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(cpUtils, "executeCommand").mockResolvedValue("succeed");
+      const yoInstaller = vi
+        .spyOn(YoChecker.prototype, "ensureDependency")
+        .mockResolvedValue(ok(true));
+      const generatorInstaller = vi
+        .spyOn(GeneratorChecker.prototype, "ensureDependency")
+        .mockResolvedValue(ok(true));
+      const userConfirm = vi
+        .spyOn(context.userInteraction, "showMessage")
+        .mockResolvedValue(ok(undefined));
 
       const result = await SPFxGenerator.doYeomanScaffold(context, inputs, testFolder);
 
       chai.expect(result.isErr()).to.eq(true);
 
-      chai.expect(yoInstaller.called).to.be.false;
-      chai.expect(generatorInstaller.called).to.be.false;
-      chai.expect(localYoChecker.called).to.be.false;
-      chai.expect(userConfirm.called).to.be.true;
+      chai.expect(yoInstaller.mock.calls.length > 0).to.be.false;
+      chai.expect(generatorInstaller.mock.calls.length > 0).to.be.false;
+      chai.expect(localYoChecker.mock.calls.length > 0).to.be.false;
+      chai.expect(userConfirm.mock.calls.length > 0).to.be.true;
     });
 
     it("add web part with upgrading SPFx cancel", async () => {
@@ -1059,29 +1104,33 @@ describe("SPFxGenerator", function () {
         stage: Stage.addWebpart,
       };
 
-      sinon.stub(GeneratorChecker.prototype, "findGloballyInstalledVersion").resolves("1.17.0");
-      sinon.stub(GeneratorChecker.prototype, "findLocalInstalledVersion").resolves("1.16.1");
-      const localYoChecker = sinon
-        .stub(YoChecker.prototype, "findLocalInstalledVersion")
-        .resolves("4.3.1");
-      sinon.stub(fs, "pathExists").resolves(true);
-      sinon.stub(cpUtils, "executeCommand").resolves("succeed");
-      const yoInstaller = sinon.stub(YoChecker.prototype, "ensureDependency").resolves(ok(true));
-      const generatorInstaller = sinon
-        .stub(GeneratorChecker.prototype, "ensureDependency")
-        .resolves(ok(true));
-      const userConfirm = sinon
-        .stub(context.userInteraction, "showMessage")
-        .resolves(ok(undefined));
+      vi.spyOn(GeneratorChecker.prototype, "findGloballyInstalledVersion").mockResolvedValue(
+        "1.17.0"
+      );
+      vi.spyOn(GeneratorChecker.prototype, "findLocalInstalledVersion").mockResolvedValue("1.16.1");
+      const localYoChecker = vi
+        .spyOn(YoChecker.prototype, "findLocalInstalledVersion")
+        .mockResolvedValue("4.3.1");
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(cpUtils, "executeCommand").mockResolvedValue("succeed");
+      const yoInstaller = vi
+        .spyOn(YoChecker.prototype, "ensureDependency")
+        .mockResolvedValue(ok(true));
+      const generatorInstaller = vi
+        .spyOn(GeneratorChecker.prototype, "ensureDependency")
+        .mockResolvedValue(ok(true));
+      const userConfirm = vi
+        .spyOn(context.userInteraction, "showMessage")
+        .mockResolvedValue(ok(undefined));
 
       const result = await SPFxGenerator.doYeomanScaffold(context, inputs, testFolder);
 
       chai.expect(result.isErr()).to.eq(true);
 
-      chai.expect(yoInstaller.called).to.be.false;
-      chai.expect(generatorInstaller.called).to.be.false;
-      chai.expect(localYoChecker.called).to.be.false;
-      chai.expect(userConfirm.called).to.be.true;
+      chai.expect(yoInstaller.mock.calls.length > 0).to.be.false;
+      chai.expect(generatorInstaller.mock.calls.length > 0).to.be.false;
+      chai.expect(localYoChecker.mock.calls.length > 0).to.be.false;
+      chai.expect(userConfirm.mock.calls.length > 0).to.be.true;
     });
 
     it("Cancel adding web part due to mismatch SPFx version locally. ", async () => {
@@ -1095,20 +1144,24 @@ describe("SPFxGenerator", function () {
         stage: Stage.addWebpart,
       };
 
-      sinon.stub(GeneratorChecker.prototype, "findGloballyInstalledVersion").resolves("1.17.0");
-      sinon.stub(GeneratorChecker.prototype, "findLocalInstalledVersion").resolves("1.18.2");
-      const localYoChecker = sinon
-        .stub(YoChecker.prototype, "findLocalInstalledVersion")
-        .resolves("4.3.1");
-      sinon.stub(fs, "pathExists").resolves(true);
-      sinon.stub(cpUtils, "executeCommand").resolves("succeed");
-      const yoInstaller = sinon.stub(YoChecker.prototype, "ensureDependency").resolves(ok(true));
-      const generatorInstaller = sinon
-        .stub(GeneratorChecker.prototype, "ensureDependency")
-        .resolves(ok(true));
-      const userConfirm = sinon
-        .stub(context.userInteraction, "showMessage")
-        .resolves(ok(undefined));
+      vi.spyOn(GeneratorChecker.prototype, "findGloballyInstalledVersion").mockResolvedValue(
+        "1.17.0"
+      );
+      vi.spyOn(GeneratorChecker.prototype, "findLocalInstalledVersion").mockResolvedValue("1.18.2");
+      const localYoChecker = vi
+        .spyOn(YoChecker.prototype, "findLocalInstalledVersion")
+        .mockResolvedValue("4.3.1");
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(cpUtils, "executeCommand").mockResolvedValue("succeed");
+      const yoInstaller = vi
+        .spyOn(YoChecker.prototype, "ensureDependency")
+        .mockResolvedValue(ok(true));
+      const generatorInstaller = vi
+        .spyOn(GeneratorChecker.prototype, "ensureDependency")
+        .mockResolvedValue(ok(true));
+      const userConfirm = vi
+        .spyOn(context.userInteraction, "showMessage")
+        .mockResolvedValue(ok(undefined));
 
       const result = await SPFxGenerator.doYeomanScaffold(context, inputs, testFolder);
 
@@ -1118,10 +1171,10 @@ describe("SPFxGenerator", function () {
         chai.expect(result.error.name).equal("UserCancel");
       }
 
-      chai.expect(yoInstaller.called).to.be.false;
-      chai.expect(generatorInstaller.called).to.be.false;
-      chai.expect(localYoChecker.called).to.be.false;
-      chai.expect(userConfirm.called).to.be.true;
+      chai.expect(yoInstaller.mock.calls.length > 0).to.be.false;
+      chai.expect(generatorInstaller.mock.calls.length > 0).to.be.false;
+      chai.expect(localYoChecker.mock.calls.length > 0).to.be.false;
+      chai.expect(userConfirm.mock.calls.length > 0).to.be.true;
     });
 
     it("failed to install yo", async () => {
@@ -1135,27 +1188,31 @@ describe("SPFxGenerator", function () {
         stage: Stage.addWebpart,
       };
 
-      sinon.stub(GeneratorChecker.prototype, "findGloballyInstalledVersion").resolves("1.17.0");
-      sinon.stub(GeneratorChecker.prototype, "findLocalInstalledVersion").resolves(undefined);
-      const localYoChecker = sinon
-        .stub(YoChecker.prototype, "findLocalInstalledVersion")
-        .resolves(undefined);
-      sinon.stub(fs, "pathExists").resolves(true);
-      sinon.stub(cpUtils, "executeCommand").resolves("succeed");
-      const yoInstaller = sinon
-        .stub(YoChecker.prototype, "ensureDependency")
-        .resolves(err(new SystemError("error", "error", "", "")));
-      const userConfirm = sinon
-        .stub(context.userInteraction, "showMessage")
-        .resolves(ok(getLocalizedString("plugins.spfx.addWebPart.install")));
+      vi.spyOn(GeneratorChecker.prototype, "findGloballyInstalledVersion").mockResolvedValue(
+        "1.17.0"
+      );
+      vi.spyOn(GeneratorChecker.prototype, "findLocalInstalledVersion").mockResolvedValue(
+        undefined
+      );
+      const localYoChecker = vi
+        .spyOn(YoChecker.prototype, "findLocalInstalledVersion")
+        .mockResolvedValue(undefined);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(cpUtils, "executeCommand").mockResolvedValue("succeed");
+      const yoInstaller = vi
+        .spyOn(YoChecker.prototype, "ensureDependency")
+        .mockResolvedValue(err(new SystemError("error", "error", "", "")));
+      const userConfirm = vi
+        .spyOn(context.userInteraction, "showMessage")
+        .mockResolvedValue(ok(getLocalizedString("plugins.spfx.addWebPart.install")));
 
       const result = await SPFxGenerator.doYeomanScaffold(context, inputs, testFolder);
 
       chai.expect(result.isOk()).to.eq(false);
 
-      chai.expect(yoInstaller.called).to.be.true;
-      chai.expect(localYoChecker.called).to.be.true;
-      chai.expect(userConfirm.called).to.be.true;
+      chai.expect(yoInstaller.mock.calls.length > 0).to.be.true;
+      chai.expect(localYoChecker.mock.calls.length > 0).to.be.true;
+      chai.expect(userConfirm.mock.calls.length > 0).to.be.true;
     });
 
     it("failed to install SPFx generator", async () => {
@@ -1169,25 +1226,27 @@ describe("SPFxGenerator", function () {
         stage: Stage.addWebpart,
       };
 
-      sinon.stub(GeneratorChecker.prototype, "findGloballyInstalledVersion").resolves("1.17.0");
-      sinon.stub(GeneratorChecker.prototype, "findLocalInstalledVersion").resolves("1.16.1");
-      const localYoChecker = sinon
-        .stub(YoChecker.prototype, "findLocalInstalledVersion")
-        .resolves("4.3.1");
-      sinon.stub(fs, "pathExists").resolves(true);
-      sinon.stub(cpUtils, "executeCommand").resolves("succeed");
-      const generatorInstaller = sinon
-        .stub(GeneratorChecker.prototype, "ensureDependency")
-        .resolves(err(new SystemError("error", "error", "", "")));
-      const userConfirm = sinon
-        .stub(context.userInteraction, "showMessage")
-        .resolves(ok(getLocalizedString("plugins.spfx.addWebPart.upgrade")));
+      vi.spyOn(GeneratorChecker.prototype, "findGloballyInstalledVersion").mockResolvedValue(
+        "1.17.0"
+      );
+      vi.spyOn(GeneratorChecker.prototype, "findLocalInstalledVersion").mockResolvedValue("1.16.1");
+      const localYoChecker = vi
+        .spyOn(YoChecker.prototype, "findLocalInstalledVersion")
+        .mockResolvedValue("4.3.1");
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(cpUtils, "executeCommand").mockResolvedValue("succeed");
+      const generatorInstaller = vi
+        .spyOn(GeneratorChecker.prototype, "ensureDependency")
+        .mockResolvedValue(err(new SystemError("error", "error", "", "")));
+      const userConfirm = vi
+        .spyOn(context.userInteraction, "showMessage")
+        .mockResolvedValue(ok(getLocalizedString("plugins.spfx.addWebPart.upgrade")));
 
       const result = await SPFxGenerator.doYeomanScaffold(context, inputs, testFolder);
       chai.expect(result.isOk()).to.eq(false);
-      chai.expect(generatorInstaller.called).to.be.true;
-      chai.expect(localYoChecker.called).to.be.true;
-      chai.expect(userConfirm.called).to.be.true;
+      chai.expect(generatorInstaller.mock.calls.length > 0).to.be.true;
+      chai.expect(localYoChecker.mock.calls.length > 0).to.be.true;
+      chai.expect(userConfirm.mock.calls.length > 0).to.be.true;
     });
 
     it("Cannot find version in .yo-rc.json file", async () => {
@@ -1200,9 +1259,9 @@ describe("SPFxGenerator", function () {
         [QuestionNames.SPFxWebpartName]: "hello",
         stage: Stage.addWebpart,
       };
-      sinon.restore();
-      sinon.stub(fs, "pathExists").resolves(true);
-      sinon.stub(fs, "readJson").resolves({
+      vi.restoreAllMocks();
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readJson").mockResolvedValue({
         "@microsoft/generator-sharepoint": {
           solutionName: "fakedSolutionName",
         },
@@ -1225,9 +1284,9 @@ describe("SPFxGenerator", function () {
         [QuestionNames.SPFxWebpartName]: "hello",
         stage: Stage.addWebpart,
       };
-      sinon.restore();
-      sinon.stub(fs, "pathExists").resolves(true);
-      sinon.stub(fs, "readJson").resolves({});
+      vi.restoreAllMocks();
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readJson").mockResolvedValue({});
 
       const result = await SPFxGenerator.doYeomanScaffold(context, inputs, testFolder);
       chai.expect(result.isErr()).to.eq(true);
@@ -1246,8 +1305,8 @@ describe("SPFxGenerator", function () {
         [QuestionNames.SPFxWebpartName]: "hello",
         stage: Stage.addWebpart,
       };
-      sinon.restore();
-      sinon.stub(fs, "pathExists").resolves(false);
+      vi.restoreAllMocks();
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
 
       const result = await SPFxGenerator.doYeomanScaffold(context, inputs, testFolder);
       chai.expect(result.isErr()).to.eq(true);
@@ -1283,20 +1342,20 @@ describe("Utils", () => {
   });
 
   describe("getShellOptionValue", () => {
-    const sandbox = sinon.createSandbox();
+    const sandbox = vi;
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("windows", () => {
-      sandbox.stub(os, "type").returns("Windows_NT");
+      vi.spyOn(os, "type").mockReturnValue("Windows_NT");
       const res = getShellOptionValue();
 
       chai.expect(res).equal("cmd.exe");
     });
 
     it("non windowns", () => {
-      sandbox.stub(os, "type").returns("Linux");
+      vi.spyOn(os, "type").mockReturnValue("Linux");
       const res = getShellOptionValue();
 
       chai.expect(res).true;
@@ -1324,12 +1383,12 @@ describe("SPFxGeneratorNew", () => {
     });
   });
   describe("getTemplateInfos", () => {
-    const sandbox = sinon.createSandbox();
+    const sandbox = vi;
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
     it("happy path", async () => {
-      sandbox.stub(SPFxGenerator, "doYeomanScaffold").resolves(ok(""));
+      vi.spyOn(SPFxGenerator, "doYeomanScaffold").mockResolvedValue(ok(""));
       const inputs: Inputs = {
         platform: Platform.CLI,
         projectPath: "./",
@@ -1342,7 +1401,7 @@ describe("SPFxGeneratorNew", () => {
       chai.expect(res.isOk()).to.be.true;
     });
     it("doYeomanScaffold error", async () => {
-      sandbox.stub(SPFxGenerator, "doYeomanScaffold").resolves(err(new UserCancelError()));
+      vi.spyOn(SPFxGenerator, "doYeomanScaffold").mockResolvedValue(err(new UserCancelError()));
       const inputs: Inputs = {
         platform: Platform.CLI,
         projectPath: "./",
@@ -1377,18 +1436,18 @@ describe("SPFxGeneratorImport", () => {
     });
   });
   describe("getTemplateInfos", () => {
-    const sandbox = sinon.createSandbox();
+    const sandbox = vi;
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
     it("happy path", async () => {
-      sandbox.stub(SPFxGenerator, "copySPFxSolution").resolves();
-      sandbox.stub(SPFxGenerator, "getWebpartManifest").resolves({
+      vi.spyOn(SPFxGenerator, "copySPFxSolution").mockResolvedValue();
+      vi.spyOn(SPFxGenerator, "getWebpartManifest").mockResolvedValue({
         id: "test-id",
         preconfiguredEntries: [{ title: { default: "defaultTitle" } }],
       });
-      sandbox.stub(SPFxGenerator, "getNodeVersion").resolves("18.0");
-      sandbox.stub(SPFxGenerator, "getSolutionVersion").resolves("1.21.0");
+      vi.spyOn(SPFxGenerator, "getNodeVersion").mockResolvedValue("18.0");
+      vi.spyOn(SPFxGenerator, "getSolutionVersion").mockResolvedValue("1.21.0");
       const inputs: Inputs = {
         platform: Platform.CLI,
         projectPath: "./",
@@ -1404,13 +1463,13 @@ describe("SPFxGeneratorImport", () => {
     });
 
     it("happy path - SPFx lower than 1.21", async () => {
-      sandbox.stub(SPFxGenerator, "copySPFxSolution").resolves();
-      sandbox.stub(SPFxGenerator, "getWebpartManifest").resolves({
+      vi.spyOn(SPFxGenerator, "copySPFxSolution").mockResolvedValue();
+      vi.spyOn(SPFxGenerator, "getWebpartManifest").mockResolvedValue({
         id: "test-id",
         preconfiguredEntries: [{ title: { default: "defaultTitle" } }],
       });
-      sandbox.stub(SPFxGenerator, "getNodeVersion").resolves("18.0");
-      sandbox.stub(SPFxGenerator, "getSolutionVersion").resolves("1.17.0");
+      vi.spyOn(SPFxGenerator, "getNodeVersion").mockResolvedValue("18.0");
+      vi.spyOn(SPFxGenerator, "getSolutionVersion").mockResolvedValue("1.17.0");
       const inputs: Inputs = {
         platform: Platform.CLI,
         projectPath: "./",
@@ -1426,7 +1485,7 @@ describe("SPFxGeneratorImport", () => {
     });
 
     it("throw error", async () => {
-      sandbox.stub(SPFxGenerator, "copySPFxSolution").rejects(new Error());
+      vi.spyOn(SPFxGenerator, "copySPFxSolution").mockRejectedValue(new Error());
       const inputs: Inputs = {
         platform: Platform.CLI,
         projectPath: "./",
@@ -1441,7 +1500,7 @@ describe("SPFxGeneratorImport", () => {
     });
 
     it("throw FxError", async () => {
-      sandbox.stub(SPFxGenerator, "copySPFxSolution").rejects(new UserCancelError());
+      vi.spyOn(SPFxGenerator, "copySPFxSolution").mockRejectedValue(new UserCancelError());
       const inputs: Inputs = {
         platform: Platform.CLI,
         projectPath: "./",
@@ -1456,9 +1515,9 @@ describe("SPFxGeneratorImport", () => {
     });
 
     it("RetrieveSPFxInfoError", async () => {
-      sandbox.stub(SPFxGenerator, "copySPFxSolution").resolves();
-      sandbox.stub(SPFxGenerator, "getWebpartManifest").resolves({});
-      sandbox.stub(SPFxGenerator, "getNodeVersion").resolves("18.0");
+      vi.spyOn(SPFxGenerator, "copySPFxSolution").mockResolvedValue();
+      vi.spyOn(SPFxGenerator, "getWebpartManifest").mockResolvedValue({});
+      vi.spyOn(SPFxGenerator, "getNodeVersion").mockResolvedValue("18.0");
       const inputs: Inputs = {
         platform: Platform.CLI,
         projectPath: "./",
@@ -1474,12 +1533,12 @@ describe("SPFxGeneratorImport", () => {
   });
 
   describe("post", () => {
-    const sandbox = sinon.createSandbox();
+    const sandbox = vi;
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
     it("happy path", async () => {
-      sandbox.stub(SPFxGenerator, "updateSPFxTemplate").resolves();
+      vi.spyOn(SPFxGenerator, "updateSPFxTemplate").mockResolvedValue();
       const inputs: Inputs = {
         platform: Platform.CLI,
         projectPath: "./",
@@ -1494,7 +1553,7 @@ describe("SPFxGeneratorImport", () => {
     });
 
     it("happy path with template variables not exist", async () => {
-      sandbox.stub(SPFxGenerator, "updateSPFxTemplate").resolves();
+      vi.spyOn(SPFxGenerator, "updateSPFxTemplate").mockResolvedValue();
       context.templateVariables = undefined;
 
       const inputs: Inputs = {
@@ -1511,7 +1570,7 @@ describe("SPFxGeneratorImport", () => {
     });
 
     it("throw error", async () => {
-      sandbox.stub(SPFxGenerator, "updateSPFxTemplate").rejects(new Error());
+      vi.spyOn(SPFxGenerator, "updateSPFxTemplate").mockRejectedValue(new Error());
       const inputs: Inputs = {
         platform: Platform.CLI,
         projectPath: "./",
@@ -1526,7 +1585,7 @@ describe("SPFxGeneratorImport", () => {
     });
 
     it("throw FxError", async () => {
-      sandbox.stub(SPFxGenerator, "updateSPFxTemplate").rejects(new UserCancelError());
+      vi.spyOn(SPFxGenerator, "updateSPFxTemplate").mockRejectedValue(new UserCancelError());
       const inputs: Inputs = {
         platform: Platform.CLI,
         projectPath: "./",

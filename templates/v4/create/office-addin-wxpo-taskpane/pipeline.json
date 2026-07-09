@@ -1,0 +1,9 @@
+{
+  "pipeline": "default",
+  "comment": "Office task pane create package: pure render. The require-empty-target step guards the create contract so render writes the TypeScript add-in project without post-render injection.",
+  "steps": [
+    {
+      "step": "require-empty-target"
+    }
+  ]
+}

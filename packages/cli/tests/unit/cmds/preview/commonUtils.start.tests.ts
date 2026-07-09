@@ -2,22 +2,21 @@
 // Licensed under the MIT license.
 
 import { IProgressHandler } from "@microsoft/teamsfx-api";
-import * as sinon from "sinon";
 import { createTaskStartCb } from "../../../../src/cmds/preview/commonUtils";
 import { expect } from "../../utils";
-
+import { vi } from "vitest";
 describe("commonUtils createTaskStartCb", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("happy path", async () => {
-    const progressHandler = sandbox.createStubInstance(MockProgressHandler);
+    const progressHandler = vi.mockObject(new MockProgressHandler());
     const taskStartCallback = createTaskStartCb(progressHandler, "start message");
     await taskStartCallback("start", true);
-    expect(progressHandler.start.calledOnce).to.be.true;
+    expect(progressHandler.start.mock.calls.length === 1).to.be.true;
   });
 });
 

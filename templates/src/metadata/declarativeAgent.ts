@@ -138,20 +138,6 @@ export const declarativeAgentTemplates: Template[] = [
     description: "Declarative Agent with action from an existing API specification",
   },
   {
-    id: "declarative-agent-meta-os-new-project",
-    name: TemplateNames.DeclarativeAgentMetaOSNewProject,
-    language: "common",
-    displayName: "Declarative Agent for MetaOS (New Project)",
-    description: "Declarative Agent for MetaOS - new project",
-  },
-  {
-    id: "declarative-agent-meta-os-upgrade-project",
-    name: TemplateNames.DeclarativeAgentMetaOSUpgradeProject,
-    language: "common",
-    displayName: "Declarative Agent for MetaOS (Upgrade Project)",
-    description: "Declarative Agent for MetaOS - upgrade existing project",
-  },
-  {
     id: "declarative-agent-with-action-from-mcp",
     name: TemplateNames.DeclarativeAgentWithActionFromMCP,
     language: "common",

@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 5,
+    "total_steps": 4,
     "created_at": "2025-12-17T09:11:50.745561",
     "name": "Message Extension ts Playground Debug",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2025-12-17T09:11:50.745561",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_a96857cc",
+      "plan_r_0624_024810",
       "step_3c04595d",
       "step_bda81ecc",
       "step_18d13a9a",
@@ -33,32 +33,6 @@
     "updated_at": "2025-12-17T09:52:31.483305"
   },
   "steps": [
-    {
-      "step_id": "step_a96857cc",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 404,
-        "y": 212
-      },
-      "description": "Click on the \"Teams Agents and Apps\" option within the \"New Project\" dropdown menu.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:404:212:16:5:9a60443272649ca2",
-        "dhash:404:212:96:5:229a184465364a01",
-        "dhash:404:212:0:10:c8c88094b2717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_a96857cc",
-      "created_at": "2025-12-17T09:52:18.004917",
-      "plan_id": "plan_7c9ad3b3"
-    },
     {
       "step_id": "step_3c04595d",
       "agent": "interaction",

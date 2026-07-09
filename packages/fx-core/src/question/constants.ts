@@ -1,8 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { Inputs, OptionItem, Platform } from "@microsoft/teamsfx-api";
-import { FeatureFlags, featureFlagManager } from "../common/featureFlags";
+import { Inputs, OptionItem } from "@microsoft/teamsfx-api";
 import { getLocalizedString } from "../common/localizeUtils";
 export { QuestionNames } from "./questionNames";
 

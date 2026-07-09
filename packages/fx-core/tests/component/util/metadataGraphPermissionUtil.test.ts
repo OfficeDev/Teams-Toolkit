@@ -1,7 +1,5 @@
 import { FxError, LogProvider, ok, Result } from "@microsoft/teamsfx-api";
-import { assert } from "chai";
 import fs from "fs-extra";
-import sinon from "sinon";
 import { setTools } from "../../../src/common/globalVars";
 import { TelemetryProperty } from "../../../src/common/telemetry";
 import {
@@ -16,6 +14,7 @@ import {
   metadataGraphPermissionUtil,
 } from "../../../src/component/utils/metadataGraphPermssion";
 import { MockTools } from "../../core/utils";
+import { vi } from "vitest";
 
 function mockedResolveDriverInstances(log: LogProvider): Result<DriverInstance[], FxError> {
   return ok([
@@ -54,7 +53,7 @@ describe("metadata graph permission util", () => {
     ]
 }
   `;
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   const mockProjectModel: ProjectModel = {
     version: "1.0.0",
     provision: {
@@ -86,12 +85,12 @@ describe("metadata graph permission util", () => {
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("parseAadManifest happy path", async () => {
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(fs, "readFile").resolves(Buffer.from(manifestContent));
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockResolvedValue(Buffer.from(manifestContent));
     let props: any = {};
     await metadataGraphPermissionUtil.parseAadManifest(ymlPath, mockProjectModel, props);
     assert(props[TelemetryProperty.GraphPermission] === "true");
@@ -115,7 +114,7 @@ describe("metadata graph permission util", () => {
   });
 
   it("parseAadManifest no manifest", async () => {
-    sandbox.stub(fs, "pathExists").resolves(false);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
     const props: any = {};
     await metadataGraphPermissionUtil.parseAadManifest(ymlPath, mockProjectModel, props);
     assert(props[TelemetryProperty.GraphPermissionHasRole] === undefined);
@@ -126,7 +125,7 @@ describe("metadata graph permission util", () => {
   });
 
   it("getPermissionSummary no graph permission map", async () => {
-    sandbox.stub(metadataGraphPermissionDeps, "getDetailedGraphPermissionMap").returns(null);
+    vi.spyOn(metadataGraphPermissionDeps, "getDetailedGraphPermissionMap").mockReturnValue(null);
     const manifest = JSON.parse(manifestContent);
     const res = metadataGraphPermissionUtil.summary(manifest);
     assert(res === undefined);

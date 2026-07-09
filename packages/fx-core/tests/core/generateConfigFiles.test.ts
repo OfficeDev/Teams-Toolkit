@@ -9,18 +9,16 @@ import {
   TeamsManifest,
   UserInteraction,
 } from "@microsoft/teamsfx-api";
-import { assert } from "chai";
-import { createSandbox, SinonSandbox, SinonStub } from "sinon";
+import { assert, vi } from "vitest";
 import { setTools, TOOLS } from "../../src/common/globalVars";
 import { configGenerator } from "../../src/component/generator/configFiles/configGenerator";
 import { generateConfigFiles } from "../../src/core/generateConfigFiles";
 import { MockTools } from "./utils";
 
 describe("generateConfigFiles", () => {
-  let sandbox: SinonSandbox;
-  let runStub: SinonStub;
-  let readManifestStub: SinonStub;
-  let showMessageStub: SinonStub;
+  let runStub: any;
+  let readManifestStub: any;
+  let showMessageStub: any;
   let mockTools: MockTools;
   const manifestPath = "appPackage/manifest.json";
   const projectPath = "/tmp/project";
@@ -28,18 +26,17 @@ describe("generateConfigFiles", () => {
   const originalTools = TOOLS;
 
   beforeEach(() => {
-    sandbox = createSandbox();
     type RunResult = Awaited<ReturnType<typeof configGenerator.run>>;
-    readManifestStub = sandbox.stub(AppManifestUtils, "readTeamsManifest");
-    runStub = sandbox.stub(configGenerator, "run").resolves(ok({}) as unknown as RunResult);
-    showMessageStub = sandbox.stub();
+    readManifestStub = vi.spyOn(AppManifestUtils, "readTeamsManifest");
+    runStub = vi.spyOn(configGenerator, "run").mockResolvedValue(ok({}) as unknown as RunResult);
+    showMessageStub = vi.fn();
     mockTools = new MockTools();
     mockTools.ui = { showMessage: showMessageStub } as unknown as UserInteraction;
     setTools(mockTools);
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     setTools(originalTools);
   });
 
@@ -65,7 +62,7 @@ describe("generateConfigFiles", () => {
         },
       ],
     } as unknown as TeamsManifest;
-    readManifestStub.resolves(manifest);
+    readManifestStub.mockResolvedValue(manifest);
 
     await generateConfigFiles(
       createInputs({
@@ -77,8 +74,8 @@ describe("generateConfigFiles", () => {
       })
     );
 
-    assert.isTrue(runStub.calledOnce);
-    const args = runStub.firstCall.args;
+    assert.isTrue(runStub.mock.calls.length === 1);
+    const args = runStub.mock.calls[0];
     const components = args[2];
     assert.deepEqual(components, [
       { name: "playground", programmingLanguage },
@@ -87,7 +84,7 @@ describe("generateConfigFiles", () => {
     const features = args[3];
     assert.deepInclude(features, { hasBot: true, hasTab: true });
     assert.equal(features.appName, "MyApp");
-    assert.isTrue(showMessageStub.notCalled);
+    assert.isTrue(showMessageStub.mock.calls.length === 0);
   });
 
   it("skips playground and warns when bot missing", async () => {
@@ -96,7 +93,7 @@ describe("generateConfigFiles", () => {
       staticTabs: [],
       bots: [],
     } as unknown as TeamsManifest;
-    readManifestStub.resolves(manifest);
+    readManifestStub.mockResolvedValue(manifest);
 
     await generateConfigFiles(
       createInputs({
@@ -108,11 +105,11 @@ describe("generateConfigFiles", () => {
       })
     );
 
-    assert.isTrue(runStub.calledOnce);
-    const components = runStub.firstCall.args[2];
+    assert.isTrue(runStub.mock.calls.length === 1);
+    const components = runStub.mock.calls[0][2];
     assert.deepEqual(components, [{ name: "local", programmingLanguage }]);
-    assert.isTrue(showMessageStub.calledOnce);
-    assert.equal(showMessageStub.firstCall.args[0], "warn");
+    assert.isTrue(showMessageStub.mock.calls.length === 1);
+    assert.equal(showMessageStub.mock.calls[0][0], "warn");
   });
 
   it("generates only playground when include-local is false", async () => {
@@ -120,7 +117,7 @@ describe("generateConfigFiles", () => {
       name: { short: "PlaygroundOnly" },
       bots: [{ botId: "bot-id", scopes: ["team"] }],
     } as unknown as TeamsManifest;
-    readManifestStub.resolves(manifest);
+    readManifestStub.mockResolvedValue(manifest);
 
     await generateConfigFiles(
       createInputs({
@@ -132,7 +129,7 @@ describe("generateConfigFiles", () => {
       })
     );
 
-    const components = runStub.firstCall.args[2];
+    const components = runStub.mock.calls[0][2];
     assert.deepEqual(components, [{ name: "playground", programmingLanguage }]);
   });
 
@@ -142,7 +139,7 @@ describe("generateConfigFiles", () => {
       bots: [{ botId: "bot-id", scopes: ["team"] }],
       copilotAgents: [{ id: "agent1" }],
     } as unknown as TeamsManifest;
-    readManifestStub.resolves(manifest);
+    readManifestStub.mockResolvedValue(manifest);
 
     await generateConfigFiles(
       createInputs({
@@ -154,7 +151,7 @@ describe("generateConfigFiles", () => {
       })
     );
 
-    const features = runStub.firstCall.args[3] as Record<string, unknown>;
+    const features = runStub.mock.calls[0][3] as Record<string, unknown>;
     assert.isTrue(features.hasCopilot as boolean);
   });
 
@@ -164,7 +161,7 @@ describe("generateConfigFiles", () => {
       staticTabs: [],
       bots: [],
     } as unknown as TeamsManifest;
-    readManifestStub.resolves(manifest);
+    readManifestStub.mockResolvedValue(manifest);
 
     await generateConfigFiles(
       createInputs({
@@ -176,8 +173,8 @@ describe("generateConfigFiles", () => {
       })
     );
 
-    assert.isTrue(runStub.calledOnce);
-    const components = runStub.firstCall.args[2];
+    assert.isTrue(runStub.mock.calls.length === 1);
+    const components = runStub.mock.calls[0][2];
     assert.deepEqual(components, [{ name: "remote", programmingLanguage }]);
   });
 
@@ -195,7 +192,7 @@ describe("generateConfigFiles", () => {
         },
       ],
     } as unknown as TeamsManifest;
-    readManifestStub.resolves(manifest);
+    readManifestStub.mockResolvedValue(manifest);
 
     await generateConfigFiles(
       createInputs({
@@ -207,8 +204,8 @@ describe("generateConfigFiles", () => {
       })
     );
 
-    assert.isTrue(runStub.calledOnce);
-    const components = runStub.firstCall.args[2];
+    assert.isTrue(runStub.mock.calls.length === 1);
+    const components = runStub.mock.calls[0][2];
     assert.deepEqual(components, [
       { name: "playground", programmingLanguage },
       { name: "local", programmingLanguage },
@@ -221,7 +218,7 @@ describe("generateConfigFiles", () => {
       name: { short: "LocalOnlyApp" },
       bots: [{ botId: "bot-id", scopes: ["team"] }],
     } as unknown as TeamsManifest;
-    readManifestStub.resolves(manifest);
+    readManifestStub.mockResolvedValue(manifest);
 
     await generateConfigFiles(
       createInputs({
@@ -233,7 +230,7 @@ describe("generateConfigFiles", () => {
       })
     );
 
-    const components = runStub.firstCall.args[2];
+    const components = runStub.mock.calls[0][2];
     assert.deepEqual(components, [
       { name: "playground", programmingLanguage },
       { name: "local", programmingLanguage },

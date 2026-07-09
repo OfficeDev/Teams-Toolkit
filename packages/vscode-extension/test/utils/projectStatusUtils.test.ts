@@ -1,80 +1,65 @@
-import * as chai from "chai";
-import chaiPromised from "chai-as-promised";
 import fs from "fs-extra";
-import * as sinon from "sinon";
 import * as projectStatusUtils from "../../src/utils/projectStatusUtils";
 import { err, ok } from "@microsoft/teamsfx-api";
 import * as helper from "../../src/chat/commands/nextstep/helper";
-import * as glob from "glob";
+import * as os from "os";
+import * as path from "path";
 import { UserCancelError } from "@microsoft/teamsfx-core";
-
-chai.use(chaiPromised);
+import { vi, expect, assert } from "vitest";
 
 describe("project status utils", () => {
-  const sandbox = sinon.createSandbox();
-
-  afterEach(() => {
-    sandbox.restore();
-  });
-
   describe("func: getProjectStatus", () => {
-    afterEach(() => {
-      sandbox.restore();
-    });
-
     it("project state file deos not exist", async () => {
-      sandbox.stub(Date, "now").returns(1711987200000);
-      sandbox.stub(fs, "pathExists").resolves(false);
-      await chai
-        .expect(projectStatusUtils.getProjectStatus("test-id"))
-        .to.eventually.deep.equal(projectStatusUtils.emptyProjectStatus());
+      vi.spyOn(Date, "now").mockReturnValue(1711987200000);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+      await expect(projectStatusUtils.getProjectStatus("test-id")).resolves.toEqual(
+        projectStatusUtils.emptyProjectStatus()
+      );
     });
 
     it("project state file exists - not a json file", async () => {
-      sandbox.stub(Date, "now").returns(1711987200000);
-      sandbox.stub(fs, "pathExists").resolves(false);
-      sandbox.stub(fs, "readFile").resolves(Buffer.from("not a json file"));
-      await chai
-        .expect(projectStatusUtils.getProjectStatus("test-id"))
-        .to.eventually.deep.equal(projectStatusUtils.emptyProjectStatus());
+      vi.spyOn(Date, "now").mockReturnValue(1711987200000);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+      vi.spyOn(fs, "readFile").mockResolvedValue(Buffer.from("not a json file") as any);
+      await expect(projectStatusUtils.getProjectStatus("test-id")).resolves.toEqual(
+        projectStatusUtils.emptyProjectStatus()
+      );
     });
 
     it("project state file exists - a json file", async () => {
-      sandbox.stub(Date, "now").returns(1711987200000);
+      vi.spyOn(Date, "now").mockReturnValue(1711987200000);
       const status = projectStatusUtils.emptyProjectStatus();
       status["fx-extension.provision"] = {
         result: "success",
         time: new Date(1711987200000 + 3600000),
       };
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readFile").resolves(Buffer.from(JSON.stringify({ "test-id": status })));
-      await chai
-        .expect(projectStatusUtils.getProjectStatus("test-id"))
-        .to.eventually.deep.equal(status);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readFile").mockResolvedValue(
+        Buffer.from(JSON.stringify({ "test-id": status })) as any
+      );
+      await expect(projectStatusUtils.getProjectStatus("test-id")).resolves.toEqual(status);
     });
   });
 
   describe("func: updateProjectStatus", () => {
-    afterEach(() => {
-      sandbox.restore();
-    });
-
     it("command name is not in RecordedActions", async () => {
-      sandbox.stub(helper, "getProjectMetadata").returns(undefined);
+      vi.spyOn(helper, "getProjectMetadata").mockReturnValue(undefined as any);
       await projectStatusUtils.updateProjectStatus("test-path", "test-command", ok(undefined));
     });
 
     it("command name is in RecordedActions - project state file not exist", async () => {
-      sandbox.stub(helper, "getProjectMetadata").returns({ projectId: "test-id" });
-      sandbox.stub(Date, "now").returns(1711987200000);
-      sandbox.stub(fs, "pathExists").resolves(false);
-      const writeFileStub = sandbox.stub(fs, "writeFile").resolves();
+      vi.spyOn(helper, "getProjectMetadata").mockReturnValue({
+        projectId: "test-id",
+      } as any);
+      vi.spyOn(Date, "now").mockReturnValue(1711987200000);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+      const writeFileStub = vi.spyOn(fs, "writeFile").mockResolvedValue();
       await projectStatusUtils.updateProjectStatus(
         "test-path",
         projectStatusUtils.RecordedActions[0],
         ok(undefined)
       );
-      chai.assert.equal(
+      assert.equal(
         writeFileStub.getCall(0).args[1],
         JSON.stringify(
           {
@@ -93,20 +78,22 @@ describe("project status utils", () => {
     });
 
     it("command name is not in RecordedActions but forced - not json", async () => {
-      sandbox.stub(helper, "getProjectMetadata").returns({ projectId: "test-id" });
-      sandbox.stub(Date, "now").returns(1711987200000);
-      sandbox.stub(fs, "pathExists").callsFake(async (path: string) => {
+      vi.spyOn(helper, "getProjectMetadata").mockReturnValue({
+        projectId: "test-id",
+      } as any);
+      vi.spyOn(Date, "now").mockReturnValue(1711987200000);
+      vi.spyOn(fs, "pathExists").mockImplementation(async (path: string) => {
         return path === projectStatusUtils.projectStatusFilePath;
       });
-      sandbox.stub(fs, "readFile").resolves(Buffer.from("not a json file"));
-      const writeFileStub = sandbox.stub(fs, "writeFile").resolves();
+      vi.spyOn(fs, "readFile").mockResolvedValue(Buffer.from("not a json file") as any);
+      const writeFileStub = vi.spyOn(fs, "writeFile").mockResolvedValue();
       await projectStatusUtils.updateProjectStatus(
         "test-path",
         "test-command",
         err(new UserCancelError()),
         true
       );
-      chai.assert.equal(
+      assert.equal(
         writeFileStub.getCall(0).args[1],
         JSON.stringify(
           {
@@ -125,20 +112,22 @@ describe("project status utils", () => {
     });
 
     it("command name is not in RecordedActions but forced - json", async () => {
-      sandbox.stub(helper, "getProjectMetadata").returns({ projectId: "test-id" });
-      sandbox.stub(Date, "now").returns(1711987200000);
-      sandbox.stub(fs, "pathExists").callsFake(async (path: string) => {
+      vi.spyOn(helper, "getProjectMetadata").mockReturnValue({
+        projectId: "test-id",
+      } as any);
+      vi.spyOn(Date, "now").mockReturnValue(1711987200000);
+      vi.spyOn(fs, "pathExists").mockImplementation(async (path: string) => {
         return path === projectStatusUtils.projectStatusFilePath;
       });
-      sandbox.stub(fs, "readFile").resolves(Buffer.from("{}"));
-      const writeFileStub = sandbox.stub(fs, "writeFile").resolves();
+      vi.spyOn(fs, "readFile").mockResolvedValue(Buffer.from("{}") as any);
+      const writeFileStub = vi.spyOn(fs, "writeFile").mockResolvedValue();
       await projectStatusUtils.updateProjectStatus(
         "test-path",
         "test-command",
         ok(undefined),
         true
       );
-      chai.assert.equal(
+      assert.equal(
         writeFileStub.getCall(0).args[1],
         JSON.stringify(
           {
@@ -158,60 +147,51 @@ describe("project status utils", () => {
   });
 
   it("func: getFileModifiedTime", async () => {
-    sandbox.stub(glob, "glob").resolves(["test-file1", "test-file2"]);
-    const statInstance1 = sandbox.createStubInstance(fs.Stats);
-    statInstance1.mtime = new Date(1711987200000);
-    const statInstance2 = sandbox.createStubInstance(fs.Stats);
-    statInstance2.mtime = new Date(1711987200000 - 3600000);
-    sandbox.stub(fs, "stat").callsFake(async (path: fs.PathLike) => {
-      if (path === "test-file1") {
-        return statInstance1;
-      } else {
-        return statInstance2;
-      }
-    });
-    await chai
-      .expect(projectStatusUtils.getFileModifiedTime("test-pattern"))
-      .to.eventually.deep.equal(new Date(1711987200000));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "project-status-test-"));
+    const file1 = path.join(tempDir, "test-file1.txt");
+    const file2 = path.join(tempDir, "test-file2.txt");
+    const latestTime = new Date(1711987200000);
+    const oldTime = new Date(1711987200000 - 3600000);
+
+    await fs.writeFile(file1, "test1");
+    await fs.writeFile(file2, "test2");
+    await fs.utimes(file1, latestTime, latestTime);
+    await fs.utimes(file2, oldTime, oldTime);
+
+    const pattern = `${tempDir.replace(/\\/g, "/")}/*.txt`;
+    const result = await projectStatusUtils.getFileModifiedTime(pattern);
+    expect(result.getTime()).equals(latestTime.getTime());
+
+    await fs.remove(tempDir);
   });
 
   describe("func: getREADME", () => {
-    afterEach(() => {
-      sandbox.restore();
-    });
-
     it("file not exist", async () => {
-      sandbox.stub(fs, "pathExists").resolves(false);
-      await chai.expect(projectStatusUtils.getREADME("test-folder")).to.eventually.equal(undefined);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+      await expect(projectStatusUtils.getREADME("test-folder")).resolves.toEqual(undefined);
     });
 
     it("file exists", async () => {
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readFile").resolves(Buffer.from("123"));
-      await chai
-        .expect(projectStatusUtils.getREADME("test-folder"))
-        .to.eventually.deep.equal(Buffer.from("123"));
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readFile").mockResolvedValue(Buffer.from("123") as any);
+      await expect(projectStatusUtils.getREADME("test-folder")).resolves.toEqual(
+        Buffer.from("123")
+      );
     });
   });
 
   describe("func: getLaunchJSON", () => {
-    afterEach(() => {
-      sandbox.restore();
-    });
-
     it("file not exist", async () => {
-      sandbox.stub(fs, "pathExists").resolves(false);
-      await chai
-        .expect(projectStatusUtils.getLaunchJSON("test-folder"))
-        .to.eventually.equal(undefined);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+      await expect(projectStatusUtils.getLaunchJSON("test-folder")).resolves.toEqual(undefined);
     });
 
     it("file exists", async () => {
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readFile").resolves(Buffer.from("123"));
-      await chai
-        .expect(projectStatusUtils.getLaunchJSON("test-folder"))
-        .to.eventually.deep.equal(Buffer.from("123"));
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readFile").mockResolvedValue(Buffer.from("123") as any);
+      await expect(projectStatusUtils.getLaunchJSON("test-folder")).resolves.toEqual(
+        Buffer.from("123")
+      );
     });
   });
 });

@@ -8,11 +8,6 @@ import * as properLock from "proper-lockfile";
 import * as commonUtils from "../../common/utils";
 import { getLockFolder } from "./concurrentLocker";
 
-export const fileLockerDeps = {
-  lock: properLock.lock,
-  waitSeconds: commonUtils.waitSeconds,
-};
-
 export async function withFileLock<T>(filePath: string, callback: () => Promise<T>): Promise<T> {
   if (!(await fs.pathExists(filePath))) {
     throw new Error(`File not found: ${filePath}`);
@@ -25,11 +20,11 @@ export async function withFileLock<T>(filePath: string, callback: () => Promise<
   let release: (() => Promise<void>) | null = null;
   for (let i = 0; i < 10; i++) {
     try {
-      release = await fileLockerDeps.lock(filePath, { lockfilePath: lockfilePath });
+      release = await properLock.lock(filePath, { lockfilePath: lockfilePath });
       break;
     } catch (e) {
       if (e.code === "ELOCKED") {
-        await fileLockerDeps.waitSeconds(1);
+        await commonUtils.waitSeconds(1);
       } else {
         throw e;
       }

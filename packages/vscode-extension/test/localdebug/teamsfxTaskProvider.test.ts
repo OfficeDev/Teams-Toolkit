@@ -1,7 +1,6 @@
+import { expect } from "vitest";
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-
-import * as chai from "chai";
 import * as vscode from "vscode";
 
 import { TeamsfxTaskProvider } from "../../src/debug/teamsfxTaskProvider";
@@ -22,7 +21,7 @@ describe("[debug > teamsfxTaskProvider]", () => {
         "teamsfx"
       );
       const resolvedTask = await taskProvider.resolveTask(inputTask);
-      chai.expect(resolvedTask).to.be.undefined;
+      expect(resolvedTask).to.be.undefined;
     });
   });
 });

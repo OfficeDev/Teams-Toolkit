@@ -2,33 +2,29 @@
 // Licensed under the MIT license.
 
 import axios from "axios";
-import * as chai from "chai";
-import chaiAsPromised from "chai-as-promised";
 import fs from "fs-extra";
-import { createSandbox } from "sinon";
 import { setTools } from "../../../src/common/globalVars";
 import { M365AppEntity, M365EntityType } from "../../../src/component/m365/interface";
 import { PackageService } from "../../../src/component/m365/packageService";
 import { MockLogProvider } from "../../core/utils";
 import { MockAxios } from "./mockAxios";
-
-chai.use(chaiAsPromised);
+import { chai, vi } from "vitest";
 
 describe("Package Service", () => {
-  const sandbox = createSandbox();
+  const sandbox = vi;
   const logger = new MockLogProvider();
   const mockAxios: MockAxios = new MockAxios(sandbox);
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   beforeEach(() => {
     mockAxios.reset();
-    sandbox.stub(fs, "readFile").callsFake((file) => {
+    vi.spyOn(fs, "readFile").mockImplementation((file) => {
       return Promise.resolve(Buffer.from("test"));
     });
-    sandbox.stub(axios, "create").returns(mockAxios.instance);
+    vi.spyOn(axios, "create").mockReturnValue(mockAxios.instance);
 
     setTools({} as any);
     process.env["TEAMSFX_BUILDER_API"] = "1";

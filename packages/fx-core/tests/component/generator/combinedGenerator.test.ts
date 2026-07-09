@@ -6,25 +6,26 @@
  */
 
 import { err, Inputs, ok, OptionItem, Platform, UserError } from "@microsoft/teamsfx-api";
-import { assert } from "chai";
 import fs from "fs-extra";
 import { RestoreFn } from "mocked-env";
-import sinon from "sinon";
 import { createContext, setTools } from "../../../src/common/globalVars";
 import { developerPortalScaffoldUtils } from "../../../src/component/developerPortalScaffoldUtils";
 import { CombinedProjectGenerator } from "../../../src/component/generator/combinedProject/generator";
 import { TemplateNames } from "../../../src/component/generator/templates/templateNames";
 import { ApiAuthOptions, ProgrammingLanguage, QuestionNames } from "../../../src/question";
-import { DACapabilityOptions } from "../../../src/question/scaffold/vsc/CapabilityOptions";
-import { setTemplateNameAndGC } from "../../../src/question/scaffold/vsc/CapabilityOptions";
+import {
+  DACapabilityOptions,
+  setTemplateNameAndGC,
+} from "../../../src/question/scaffold/vsc/CapabilityOptions";
 import { MockTools } from "../../core/utils";
+import { assert, vi } from "vitest";
 
 describe("combined generator", async () => {
   setTools(new MockTools());
   let mockedEnvRestore: RestoreFn | undefined;
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     if (mockedEnvRestore) {
       mockedEnvRestore();
     }
@@ -66,8 +67,8 @@ describe("combined generator", async () => {
         [QuestionNames.AppName]: "app",
       };
 
-      sandbox.stub(fs, "copySync").returns();
-      sandbox.stub(fs, "removeSync").returns();
+      vi.spyOn(fs, "copySync").mockReturnValue();
+      vi.spyOn(fs, "removeSync").mockReturnValue();
 
       const res = await generator.post(context, inputs, "");
       assert.isTrue(res.isOk());
@@ -84,9 +85,9 @@ describe("combined generator", async () => {
         teamsAppFromTdp: { teamsAppId: "fake-id" },
       };
 
-      sandbox.stub(fs, "copySync").returns();
-      sandbox.stub(fs, "removeSync").returns();
-      sandbox.stub(developerPortalScaffoldUtils, "updateFilesForTdp").resolves(ok(undefined));
+      vi.spyOn(fs, "copySync").mockReturnValue();
+      vi.spyOn(fs, "removeSync").mockReturnValue();
+      vi.spyOn(developerPortalScaffoldUtils, "updateFilesForTdp").mockResolvedValue(ok(undefined));
 
       const res = await generator.post(context, inputs, "");
       assert.isTrue(res.isOk());
@@ -103,11 +104,11 @@ describe("combined generator", async () => {
         teamsAppFromTdp: { teamsAppId: "fake-id" },
       };
 
-      sandbox.stub(fs, "copySync").returns();
-      sandbox.stub(fs, "removeSync").returns();
-      sandbox
-        .stub(developerPortalScaffoldUtils, "updateFilesForTdp")
-        .resolves(err(new UserError("fakeSource", "fakeError", "fakeError")));
+      vi.spyOn(fs, "copySync").mockReturnValue();
+      vi.spyOn(fs, "removeSync").mockReturnValue();
+      vi.spyOn(developerPortalScaffoldUtils, "updateFilesForTdp").mockResolvedValue(
+        err(new UserError("fakeSource", "fakeError", "fakeError"))
+      );
 
       const res = await generator.post(context, inputs, "");
       assert.isTrue(res.isErr() && res.error.name === "fakeError");

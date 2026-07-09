@@ -4,12 +4,10 @@
 /**
  * @author xzf0587 <zhaofengxu@microsoft.com>
  */
-import * as sinon from "sinon";
 import * as tools from "../../../../../src/common/utils";
 import { AzureStorageDeployDriver } from "../../../../../src/component/driver/deploy/azure/azureStorageDeployDriver";
 import { DeployArgs } from "../../../../../src/component/driver/interface/buildAndDeployArgs";
 import { TestLogProvider } from "../../../util/logProviderMock";
-import { assert } from "chai";
 import {
   ListAccountSasResponse,
   StorageAccounts,
@@ -31,8 +29,8 @@ import * as os from "os";
 import * as uuid from "uuid";
 import * as path from "path";
 import * as fs from "fs-extra";
-import * as chai from "chai";
 import { IProgressHandler } from "@microsoft/teamsfx-api";
+import { assert, chai, vi } from "vitest";
 
 function getMockStorageAccount1() {
   return {
@@ -45,7 +43,7 @@ function getMockStorageAccount1() {
 }
 
 describe("Azure Storage Deploy Driver test", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   const sysTmp = os.tmpdir();
   const folder = uuid.v4();
   const testFolder = path.join(sysTmp, folder);
@@ -59,11 +57,11 @@ describe("Azure Storage Deploy Driver test", () => {
   });
 
   beforeEach(() => {
-    sandbox.stub(tools, "waitSeconds").resolves();
+    vi.spyOn(tools, "waitSeconds").mockResolvedValue();
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("deploy to storage happy path", async () => {
@@ -85,30 +83,30 @@ describe("Azure Storage Deploy Driver test", () => {
         end: async (): Promise<void> => {},
       } as IProgressHandler,
     } as any;
-    sandbox
-      .stub(context.azureAccountProvider, "getIdentityCredentialAsync")
-      .resolves(new MyTokenCredential());
-    const clientStub = sandbox.createStubInstance(StorageManagementClient);
-    clientStub.storageAccounts = {} as StorageAccounts;
+    vi.spyOn(context.azureAccountProvider, "getIdentityCredentialAsync").mockResolvedValue(
+      new MyTokenCredential()
+    );
     const mockStorageManagementClient = new StorageManagementClient(new MyTokenCredential(), "id");
     mockStorageManagementClient.storageAccounts = getMockStorageAccount1() as any;
-    sandbox.stub(armStorage, "StorageManagementClient").returns(mockStorageManagementClient);
-    sandbox.stub(ContainerClient.prototype, "exists").resolves(false);
-    sandbox.stub(ContainerClient.prototype, "create").resolves();
-    sandbox.stub(ContainerClient.prototype, "listBlobsFlat").returns([
+    vi.spyOn(armStorage, "StorageManagementClient").mockImplementation(function () {
+      return mockStorageManagementClient;
+    } as any);
+    vi.spyOn(ContainerClient.prototype, "exists").mockResolvedValue(false);
+    vi.spyOn(ContainerClient.prototype, "create").mockResolvedValue();
+    vi.spyOn(ContainerClient.prototype, "listBlobsFlat").mockReturnValue([
       {
         properties: {
           contentLength: 1,
         },
       },
     ] as any);
-    //sandbox.stub(ContainerClient.prototype, "listBlobsFlat").resolves();
-    sandbox
-      .stub(ContainerClient.prototype, "deleteBlob")
-      .resolves({ errorCode: undefined } as BlobDeleteResponse);
-    /*const calls = sandbox.stub().callsFake(() => clientStub);
+    //vi.spyOn(ContainerClient.prototype, "listBlobsFlat").mockResolvedValue();
+    vi.spyOn(ContainerClient.prototype, "deleteBlob").mockResolvedValue({
+      errorCode: undefined,
+    } as BlobDeleteResponse);
+    /*const calls = vi.fn().mockImplementation(() => clientStub);
     Object.setPrototypeOf(StorageManagementClient, calls);*/
-    sandbox.stub(ContainerClient.prototype, "getBlockBlobClient").returns({
+    vi.spyOn(ContainerClient.prototype, "getBlockBlobClient").mockReturnValue({
       uploadFile: async (filePath: string, options?: BlockBlobParallelUploadOptions) => {
         return {};
       },
@@ -136,29 +134,29 @@ describe("Azure Storage Deploy Driver test", () => {
         end: async (): Promise<void> => {},
       } as IProgressHandler,
     } as any;
-    sandbox
-      .stub(context.azureAccountProvider, "getIdentityCredentialAsync")
-      .resolves(new MyTokenCredential());
-    const clientStub = sandbox.createStubInstance(StorageManagementClient);
-    clientStub.storageAccounts = {} as StorageAccounts;
+    vi.spyOn(context.azureAccountProvider, "getIdentityCredentialAsync").mockResolvedValue(
+      new MyTokenCredential()
+    );
     const mockStorageManagementClient = new StorageManagementClient(new MyTokenCredential(), "id");
     mockStorageManagementClient.storageAccounts = getMockStorageAccount1() as any;
-    sandbox.stub(armStorage, "StorageManagementClient").returns(mockStorageManagementClient);
-    sandbox.stub(ContainerClient.prototype, "exists").resolves(true);
-    sandbox.stub(ContainerClient.prototype, "listBlobsFlat").returns([
+    vi.spyOn(armStorage, "StorageManagementClient").mockImplementation(function () {
+      return mockStorageManagementClient;
+    } as any);
+    vi.spyOn(ContainerClient.prototype, "exists").mockResolvedValue(true);
+    vi.spyOn(ContainerClient.prototype, "listBlobsFlat").mockReturnValue([
       {
         properties: {
           contentLengthNo: 1,
         },
       },
     ] as any);
-    //sandbox.stub(ContainerClient.prototype, "listBlobsFlat").resolves();
-    sandbox
-      .stub(ContainerClient.prototype, "deleteBlob")
-      .resolves({ errorCode: undefined } as BlobDeleteResponse);
-    /*const calls = sandbox.stub().callsFake(() => clientStub);
+    //vi.spyOn(ContainerClient.prototype, "listBlobsFlat").mockResolvedValue();
+    vi.spyOn(ContainerClient.prototype, "deleteBlob").mockResolvedValue({
+      errorCode: undefined,
+    } as BlobDeleteResponse);
+    /*const calls = vi.fn().mockImplementation(() => clientStub);
     Object.setPrototypeOf(StorageManagementClient, calls);*/
-    sandbox.stub(ContainerClient.prototype, "getBlockBlobClient").returns({
+    vi.spyOn(ContainerClient.prototype, "getBlockBlobClient").mockReturnValue({
       uploadFile: async (filePath: string, options?: BlockBlobParallelUploadOptions) => {
         return {};
       },
@@ -180,9 +178,9 @@ describe("Azure Storage Deploy Driver test", () => {
       azureAccountProvider: new MockedAzureAccountProvider(),
       logProvider: new TestLogProvider(),
     } as any;
-    sandbox
-      .stub(context.azureAccountProvider, "getIdentityCredentialAsync")
-      .throws(new Error("error"));
+    vi.spyOn(context.azureAccountProvider, "getIdentityCredentialAsync").mockImplementation(() => {
+      throw new Error("error");
+    });
 
     const res = await deploy.execute(args, context);
     assert.equal(res.result.isErr(), true);
@@ -194,11 +192,9 @@ describe("Azure Storage Deploy Driver test", () => {
       logProvider: new TestLogProvider(),
     } as any;
     const deploy = new AzureStorageDeployDriver();
-    sandbox
-      .stub(context.azureAccountProvider, "getIdentityCredentialAsync")
-      .resolves(new MyTokenCredential());
-    const clientStub = sandbox.createStubInstance(StorageManagementClient);
-    clientStub.storageAccounts = {} as StorageAccounts;
+    vi.spyOn(context.azureAccountProvider, "getIdentityCredentialAsync").mockResolvedValue(
+      new MyTokenCredential()
+    );
 
     const mockStorageManagementClient = new StorageManagementClient(new MyTokenCredential(), "id");
     mockStorageManagementClient.storageAccounts = getMockStorageAccount1() as any;
@@ -208,20 +204,22 @@ describe("Azure Storage Deploy Driver test", () => {
       resourceId:
         "/subscriptions/e24d88be-bbbb-1234-ba25-aa11aaaa1aa1/resourceGroups/hoho-rg/providers/Microsoft.Storage/storageAccounts/some-server-farm",
     } as DeployArgs;
-    sandbox.stub(armStorage, "StorageManagementClient").returns(mockStorageManagementClient);
-    sandbox.stub(ContainerClient.prototype, "exists").resolves(false);
-    sandbox.stub(ContainerClient.prototype, "create").resolves();
-    sandbox.stub(ContainerClient.prototype, "listBlobsFlat").returns([
+    vi.spyOn(armStorage, "StorageManagementClient").mockImplementation(function () {
+      return mockStorageManagementClient;
+    } as any);
+    vi.spyOn(ContainerClient.prototype, "exists").mockResolvedValue(false);
+    vi.spyOn(ContainerClient.prototype, "create").mockResolvedValue();
+    vi.spyOn(ContainerClient.prototype, "listBlobsFlat").mockReturnValue([
       {
         properties: {
           contentLength: 1,
         },
       },
     ] as any);
-    //sandbox.stub(ContainerClient.prototype, "listBlobsFlat").resolves();
-    sandbox
-      .stub(ContainerClient.prototype, "deleteBlob")
-      .resolves({ errorCode: "403" } as BlobDeleteResponse);
+    //vi.spyOn(ContainerClient.prototype, "listBlobsFlat").mockResolvedValue();
+    vi.spyOn(ContainerClient.prototype, "deleteBlob").mockResolvedValue({
+      errorCode: "403",
+    } as BlobDeleteResponse);
     const res = await deploy.execute(args, context);
     assert.equal(res.result.isErr(), true);
     chai.assert.equal(res.result._unsafeUnwrapErr().name, "AzureStorageClearBlobsError");
@@ -233,11 +231,9 @@ describe("Azure Storage Deploy Driver test", () => {
       logProvider: new TestLogProvider(),
     } as any;
     const deploy = new AzureStorageDeployDriver();
-    sandbox
-      .stub(context.azureAccountProvider, "getIdentityCredentialAsync")
-      .resolves(new MyTokenCredential());
-    const clientStub = sandbox.createStubInstance(StorageManagementClient);
-    clientStub.storageAccounts = {} as StorageAccounts;
+    vi.spyOn(context.azureAccountProvider, "getIdentityCredentialAsync").mockResolvedValue(
+      new MyTokenCredential()
+    );
 
     const mockStorageManagementClient = new StorageManagementClient(new MyTokenCredential(), "id");
     mockStorageManagementClient.storageAccounts = getMockStorageAccount1() as any;
@@ -247,20 +243,23 @@ describe("Azure Storage Deploy Driver test", () => {
       resourceId:
         "/subscriptions/e24d88be-bbbb-1234-ba25-aa11aaaa1aa1/resourceGroups/hoho-rg/providers/Microsoft.Storage/storageAccounts/some-server-farm",
     } as DeployArgs;
-    sandbox.stub(armStorage, "StorageManagementClient").returns(mockStorageManagementClient);
-    sandbox.stub(ContainerClient.prototype, "exists").resolves(false);
-    sandbox.stub(ContainerClient.prototype, "create").resolves();
-    sandbox.stub(ContainerClient.prototype, "listBlobsFlat").returns([
+    vi.spyOn(armStorage, "StorageManagementClient").mockImplementation(function () {
+      return mockStorageManagementClient;
+    } as any);
+    vi.spyOn(ContainerClient.prototype, "exists").mockResolvedValue(false);
+    vi.spyOn(ContainerClient.prototype, "create").mockResolvedValue();
+    vi.spyOn(ContainerClient.prototype, "listBlobsFlat").mockReturnValue([
       {
         properties: {
           contentLength: 1,
         },
       },
     ] as any);
-    //sandbox.stub(ContainerClient.prototype, "listBlobsFlat").resolves();
-    sandbox
-      .stub(ContainerClient.prototype, "deleteBlob")
-      .resolves({ errorCode: "error", _response: { status: 500 } } as BlobDeleteResponse);
+    //vi.spyOn(ContainerClient.prototype, "listBlobsFlat").mockResolvedValue();
+    vi.spyOn(ContainerClient.prototype, "deleteBlob").mockResolvedValue({
+      errorCode: "error",
+      _response: { status: 500 },
+    } as BlobDeleteResponse);
     const res = await deploy.execute(args, context);
     assert.equal(res.result.isErr(), true);
     chai.assert.equal(res.result._unsafeUnwrapErr().name, "AzureStorageClearBlobsError");
@@ -280,30 +279,30 @@ describe("Azure Storage Deploy Driver test", () => {
       ui: new MockUserInteraction(),
       logProvider: new TestLogProvider(),
     } as any;
-    sandbox
-      .stub(context.azureAccountProvider, "getIdentityCredentialAsync")
-      .resolves(new MyTokenCredential());
-    const clientStub = sandbox.createStubInstance(StorageManagementClient);
-    clientStub.storageAccounts = {} as StorageAccounts;
+    vi.spyOn(context.azureAccountProvider, "getIdentityCredentialAsync").mockResolvedValue(
+      new MyTokenCredential()
+    );
     const mockStorageManagementClient = new StorageManagementClient(new MyTokenCredential(), "id");
     mockStorageManagementClient.storageAccounts = getMockStorageAccount1() as any;
-    sandbox.stub(armStorage, "StorageManagementClient").returns(mockStorageManagementClient);
-    sandbox.stub(ContainerClient.prototype, "exists").resolves(false);
-    sandbox.stub(ContainerClient.prototype, "create").resolves();
-    sandbox.stub(ContainerClient.prototype, "listBlobsFlat").returns([
+    vi.spyOn(armStorage, "StorageManagementClient").mockImplementation(function () {
+      return mockStorageManagementClient;
+    } as any);
+    vi.spyOn(ContainerClient.prototype, "exists").mockResolvedValue(false);
+    vi.spyOn(ContainerClient.prototype, "create").mockResolvedValue();
+    vi.spyOn(ContainerClient.prototype, "listBlobsFlat").mockReturnValue([
       {
         properties: {
           contentLength: 1,
         },
       },
     ] as any);
-    //sandbox.stub(ContainerClient.prototype, "listBlobsFlat").resolves();
-    sandbox
-      .stub(ContainerClient.prototype, "deleteBlob")
-      .resolves({ errorCode: undefined } as BlobDeleteResponse);
-    /*const calls = sandbox.stub().callsFake(() => clientStub);
+    //vi.spyOn(ContainerClient.prototype, "listBlobsFlat").mockResolvedValue();
+    vi.spyOn(ContainerClient.prototype, "deleteBlob").mockResolvedValue({
+      errorCode: undefined,
+    } as BlobDeleteResponse);
+    /*const calls = vi.fn().mockImplementation(() => clientStub);
     Object.setPrototypeOf(StorageManagementClient, calls);*/
-    sandbox.stub(ContainerClient.prototype, "getBlockBlobClient").returns({
+    vi.spyOn(ContainerClient.prototype, "getBlockBlobClient").mockReturnValue({
       uploadFile: async (filePath: string, options?: BlockBlobParallelUploadOptions) => {
         return { errorCode: "error" };
       },
@@ -327,30 +326,30 @@ describe("Azure Storage Deploy Driver test", () => {
       ui: new MockUserInteraction(),
       logProvider: new TestLogProvider(),
     } as any;
-    sandbox
-      .stub(context.azureAccountProvider, "getIdentityCredentialAsync")
-      .resolves(new MyTokenCredential());
-    const clientStub = sandbox.createStubInstance(StorageManagementClient);
-    clientStub.storageAccounts = {} as StorageAccounts;
+    vi.spyOn(context.azureAccountProvider, "getIdentityCredentialAsync").mockResolvedValue(
+      new MyTokenCredential()
+    );
     const mockStorageManagementClient = new StorageManagementClient(new MyTokenCredential(), "id");
     mockStorageManagementClient.storageAccounts = getMockStorageAccount1() as any;
-    sandbox.stub(armStorage, "StorageManagementClient").returns(mockStorageManagementClient);
-    sandbox.stub(ContainerClient.prototype, "exists").resolves(false);
-    sandbox.stub(ContainerClient.prototype, "create").resolves();
-    sandbox.stub(ContainerClient.prototype, "listBlobsFlat").returns([
+    vi.spyOn(armStorage, "StorageManagementClient").mockImplementation(function () {
+      return mockStorageManagementClient;
+    } as any);
+    vi.spyOn(ContainerClient.prototype, "exists").mockResolvedValue(false);
+    vi.spyOn(ContainerClient.prototype, "create").mockResolvedValue();
+    vi.spyOn(ContainerClient.prototype, "listBlobsFlat").mockReturnValue([
       {
         properties: {
           contentLength: 1,
         },
       },
     ] as any);
-    //sandbox.stub(ContainerClient.prototype, "listBlobsFlat").resolves();
-    sandbox
-      .stub(ContainerClient.prototype, "deleteBlob")
-      .resolves({ errorCode: undefined } as BlobDeleteResponse);
-    /*const calls = sandbox.stub().callsFake(() => clientStub);
+    //vi.spyOn(ContainerClient.prototype, "listBlobsFlat").mockResolvedValue();
+    vi.spyOn(ContainerClient.prototype, "deleteBlob").mockResolvedValue({
+      errorCode: undefined,
+    } as BlobDeleteResponse);
+    /*const calls = vi.fn().mockImplementation(() => clientStub);
     Object.setPrototypeOf(StorageManagementClient, calls);*/
-    sandbox.stub(ContainerClient.prototype, "getBlockBlobClient").returns({
+    vi.spyOn(ContainerClient.prototype, "getBlockBlobClient").mockReturnValue({
       uploadFile: async (filePath: string, options?: BlockBlobParallelUploadOptions) => {
         return { errorCode: "error", _response: { status: 500 } };
       },
@@ -374,16 +373,18 @@ describe("Azure Storage Deploy Driver test", () => {
       ui: new MockUserInteraction(),
       logProvider: new TestLogProvider(),
     } as any;
-    sandbox
-      .stub(context.azureAccountProvider, "getIdentityCredentialAsync")
-      .resolves(new MyTokenCredential());
-    const clientStub = sandbox.createStubInstance(StorageManagementClient);
-    clientStub.storageAccounts = {} as StorageAccounts;
+    vi.spyOn(context.azureAccountProvider, "getIdentityCredentialAsync").mockResolvedValue(
+      new MyTokenCredential()
+    );
     const mockStorageManagementClient = new StorageManagementClient(new MyTokenCredential(), "id");
     mockStorageManagementClient.storageAccounts = getMockStorageAccount1() as any;
-    sandbox.stub(armStorage, "StorageManagementClient").returns(mockStorageManagementClient);
-    sandbox.stub(ContainerClient.prototype, "exists").throws({ statusCode: 500 });
-    sandbox.stub(ContainerClient.prototype, "getBlockBlobClient").returns({
+    vi.spyOn(armStorage, "StorageManagementClient").mockImplementation(function () {
+      return mockStorageManagementClient;
+    } as any);
+    vi.spyOn(ContainerClient.prototype, "exists").mockImplementation(() => {
+      throw { statusCode: 500 };
+    });
+    vi.spyOn(ContainerClient.prototype, "getBlockBlobClient").mockReturnValue({
       uploadFile: async (filePath: string, options?: BlockBlobParallelUploadOptions) => {
         return {};
       },
@@ -407,16 +408,18 @@ describe("Azure Storage Deploy Driver test", () => {
       ui: new MockUserInteraction(),
       logProvider: new TestLogProvider(),
     } as any;
-    sandbox
-      .stub(context.azureAccountProvider, "getIdentityCredentialAsync")
-      .resolves(new MyTokenCredential());
-    const clientStub = sandbox.createStubInstance(StorageManagementClient);
-    clientStub.storageAccounts = {} as StorageAccounts;
+    vi.spyOn(context.azureAccountProvider, "getIdentityCredentialAsync").mockResolvedValue(
+      new MyTokenCredential()
+    );
     const mockStorageManagementClient = new StorageManagementClient(new MyTokenCredential(), "id");
     mockStorageManagementClient.storageAccounts = getMockStorageAccount1() as any;
-    sandbox.stub(armStorage, "StorageManagementClient").returns(mockStorageManagementClient);
-    sandbox.stub(ContainerClient.prototype, "exists").throws({ statusCode: 400 });
-    sandbox.stub(ContainerClient.prototype, "getBlockBlobClient").returns({
+    vi.spyOn(armStorage, "StorageManagementClient").mockImplementation(function () {
+      return mockStorageManagementClient;
+    } as any);
+    vi.spyOn(ContainerClient.prototype, "exists").mockImplementation(() => {
+      throw { statusCode: 400 };
+    });
+    vi.spyOn(ContainerClient.prototype, "getBlockBlobClient").mockReturnValue({
       uploadFile: async (filePath: string, options?: BlockBlobParallelUploadOptions) => {
         return {};
       },

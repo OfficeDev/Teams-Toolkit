@@ -34,7 +34,7 @@ constraint in this folder should be traceable to an ADR that explains *why*.
 
 ## What does NOT live here
 
-- Per-feature behavior, AC tables, operation specs, data-model entities — [`docs/03-specs/`](../03-specs/README.md).
+- Per-feature behavior, AC tables, operation specs, scenario specs — [`docs/03-specs/`](../03-specs/README.md).
 - Product intent, scenarios, surface UX — [`docs/01-product/`](../01-product/README.md).
 - Per-package coding conventions (file headers, lint rules, naming) — [`.github/instructions/`](../../.github/instructions/).
 
@@ -46,12 +46,47 @@ constraint in this folder should be traceable to an ADR that explains *why*.
   sovereign clouds, service endpoints). Inputs to architecture decisions, not
   decisions themselves.
 
+## Topic pages
+
+Engine-internal subsystem topic pages live at the root of this folder. Each
+topic page lists the subsystem's essential capabilities and cross-cutting
+properties, links to the relevant fact pages for the upstream contracts it
+binds to, and links to `Proposed` ADRs for any open structural questions.
+Topic pages have up to two siblings:
+
+- `<topic>.code-map.md` — navigation aid mapping each capability / property
+  to current source; not part of the contract; expected to churn.
+- `<topic>.current-state.md` — *optional*, time-bound. Observed costs of
+  the current implementation, organized to inform ADR proposals and to
+  give AI agents a written floor of context. Not a contract, not a
+  decision, not a navigation aid. Carries an `Expires-when:` header (see
+  [Conventions](#conventions)) and is rewritten, deleted, or explicitly marked
+  historical once that condition is met. Add one only when (a) the subsystem has
+  open structural questions being worked through ADRs and (b) those ADRs share a
+  common backdrop worth writing down once rather than restating in every ADR's
+  Context section.
+
+| Topic | Page | Code map | Historical context |
+|---|---|---|---|
+| Scaffolding subsystem (create / import → on-disk project skeleton) | [`scaffolding.md`](scaffolding.md) | [`scaffolding.code-map.md`](scaffolding.code-map.md) | [`scaffolding.current-state.md`](scaffolding.current-state.md) |
+
 ## Conventions
 
 - ADRs are Markdown, English, numbered sequentially, and never edited after they
   are accepted. To change an accepted decision, add a new ADR whose status is
   `Accepted` and update the old one's status to `Superseded by ADR-NNNN`.
-- Architecture pages reference ADRs by number rather than restating them.
+- **Single source of truth.** A fact lives in exactly one page; every other page
+  links to its owner rather than restating it. Architecture pages reference ADRs
+  by number rather than restating them; the same rule holds between any two
+  pages. Restating a fact that already has an owner is a review reject.
+- **Time-bound pages carry an `Expires-when:` header.** Any page meant to die —
+  a `*.current-state.md` assessment, an ADR-decomposition *proposal* — opens with
+  a blockquote naming its death condition: the ADR ids (or a link to the section
+  listing them) whose all-`Accepted` state retires the page, plus any human
+  clause that is not machine-checkable (for example, **Expires-when:** ADR-0014 –
+  ADR-0019 all `Accepted`). CI flags such a page (soft, not a hard fail) once its
+  listed ADRs are all `Accepted`, prompting a human to collapse it to a pointer
+  or delete it. A time-bound page without this header is a review reject.
 - Specific architectural choices (e.g. composition pattern, error type, registry
   vs class hierarchy) belong in ADRs, not in this README — this page is a
   contents page, not a decision log.
@@ -60,6 +95,7 @@ constraint in this folder should be traceable to an ADR that explains *why*.
 
 ADRs live under [`adr/`](adr/README.md). Open backlog items (status
 `Proposed`) are seeded from open questions on
-[`external-dependencies/`](external-dependencies/README.md) fact pages.
-This folder is otherwise being populated; until topic subpages exist,
-individual ADRs are the authoritative source as they land.
+[`external-dependencies/`](external-dependencies/README.md) fact pages and
+from open structural questions on the topic pages above. This folder is
+being populated incrementally; topic pages and ADRs together are the
+authoritative source as they land.

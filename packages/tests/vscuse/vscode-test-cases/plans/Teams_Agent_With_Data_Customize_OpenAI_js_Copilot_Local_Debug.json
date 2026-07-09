@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 6,
+    "total_steps": 5,
     "created_at": "2025-11-27T00:16:09.250199",
     "name": "Teams Agent With Data Customize OpenAI js Copilot Local Debug",
     "description": {
@@ -21,7 +21,7 @@
     "execution_order": [
       "plan_r_1127_001034",
       "plan_r_0928_012254",
-      "step_90504450",
+      "plan_r_0624_024810",
       "step_dea7e3dd",
       "step_5b4fa681",
       "step_01e1f255",
@@ -38,37 +38,6 @@
     "updated_at": "2025-11-28T04:00:56.006394"
   },
   "steps": [
-    {
-      "step_id": "step_90504450",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "dx": null,
-        "dy": null,
-        "key": null,
-        "keys": null,
-        "text": null,
-        "x": 378,
-        "y": 219
-      },
-      "description": "Click on the \"Teams Agents and Apps\" option within the \"New Project\" dropdown menu.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "0",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:378:219:16:5:694f2a5a942ad5c3",
-        "dhash:378:219:96:5:266254582cad5251",
-        "dhash:378:219:0:10:c0c88094b2717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_90504450",
-      "created_at": "2025-11-28T04:00:03.017558",
-      "plan_id": "plan_4fac1aa9"
-    },
     {
       "step_id": "step_dea7e3dd",
       "agent": "interaction",

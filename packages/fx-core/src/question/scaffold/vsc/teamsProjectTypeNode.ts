@@ -12,8 +12,8 @@ import {
 } from "@microsoft/teamsfx-api";
 import * as fs from "fs-extra";
 import path from "path";
-import { getLocalizedString } from "../../../common/localizeUtils";
 import { featureFlagManager, FeatureFlags } from "../../../common/featureFlags";
+import { getLocalizedString } from "../../../common/localizeUtils";
 import { fetchMCPTools, readMCPToolsFromFile } from "../../../component/utils/mcpToolFetcher";
 import { ODRProvider, ODRServer } from "../../../component/utils/odrProvider";
 import {
@@ -40,10 +40,10 @@ import {
 import { getRootProjectTypeNode } from "./rootNode";
 
 export const teamsProjectTypeDeps = {
-  fetchMCPTools,
-  readMCPToolsFromFile,
   pathExists: fs.pathExists,
   readJSON: fs.readJSON,
+  fetchMCPTools,
+  readMCPToolsFromFile,
 };
 
 /**
@@ -513,6 +513,30 @@ export function MCPForDAAuthTypeStaticOptions(): OptionItem[] {
   return options;
 }
 
+export function MCPForDAFetchAuthTypeStaticOptions(): OptionItem[] {
+  const options: OptionItem[] = [];
+  if (featureFlagManager.getBooleanValue(FeatureFlags.MCPForDADCR)) {
+    options.push({
+      id: "oauth-dynamic",
+      label: getLocalizedString("core.createProjectQuestion.mcpForDa.Auth.OAuthDynamic"),
+      detail: getLocalizedString("core.createProjectQuestion.mcpForDa.Auth.OAuthDynamic.Detail"),
+    });
+  }
+  options.push(
+    {
+      id: "oauth",
+      label: getLocalizedString("core.createProjectQuestion.mcpForDa.Auth.OAuth"),
+      detail: getLocalizedString("core.createProjectQuestion.mcpForDa.Auth.OAuth.Detail"),
+    },
+    {
+      id: "entra-sso",
+      label: getLocalizedString("core.createProjectQuestion.mcpForDa.Auth.EntraSSO"),
+      detail: getLocalizedString("core.createProjectQuestion.mcpForDa.Auth.EntraSSO.Detail"),
+    }
+  );
+  return options;
+}
+
 /**
  * Follow-up question nodes shown after the user picks an `mcp-da-auth-type`
  * value. Unconditional per SCN-DA-CREATE-WITH-MCP-SERVER step 6a/6b: the
@@ -792,10 +816,12 @@ export function updateActionWithMCP(): IQTreeNode {
           type: "singleSelect",
           name: QuestionNames.MCPForDAAuthType,
           title: getLocalizedString("core.createProjectQuestion.mcpForDa.AuthType.title"),
-          staticOptions: MCPForDAAuthTypeStaticOptions(),
-          default: "oauth",
+          staticOptions: MCPForDAFetchAuthTypeStaticOptions(),
+          default: featureFlagManager.getBooleanValue(FeatureFlags.MCPForDADCR)
+            ? "oauth-dynamic"
+            : "oauth",
         },
-        children: MCPForDAAuthCredentialNodes(),
+        children: [],
       },
     ],
   };

@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 13,
+    "total_steps": 12,
     "created_at": "2026-03-16T02:29:54.921930",
     "name": "Feature Publish to Teams from Codelens",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2026-03-16T02:29:54.921930",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_165acd1e",
+      "plan_r_0624_024810",
       "step_1f6021de",
       "step_6f3905e1",
       "step_e0e44542",
@@ -43,32 +43,6 @@
     "updated_at": "2026-03-16T02:55:54.311531"
   },
   "steps": [
-    {
-      "step_id": "step_165acd1e",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 389,
-        "y": 223
-      },
-      "description": "Click on the \"Teams Agents and Apps\" option within the dropdown menu under the \"New Project\" dialog in the Microsoft 365 Agents Toolkit interface.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:389:223:16:5:9c9d2494b56a6a34",
-        "dhash:389:223:96:5:cccca1b15b42a045",
-        "dhash:389:223:0:10:c8c88094b2717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_165acd1e",
-      "created_at": "2026-03-16T02:29:54.928793",
-      "plan_id": "plan_1658052d"
-    },
     {
       "step_id": "step_1f6021de",
       "agent": "interaction",

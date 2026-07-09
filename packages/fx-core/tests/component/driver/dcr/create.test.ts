@@ -2,10 +2,7 @@
 // Licensed under the MIT license.
 
 import { SystemError, err } from "@microsoft/teamsfx-api";
-import * as chai from "chai";
-import chaiAsPromised from "chai-as-promised";
 import mockedEnv, { RestoreFn } from "mocked-env";
-import * as sinon from "sinon";
 import { teamsGraphClient } from "../../../../src/client/teamsGraphClient";
 import { setTools } from "../../../../src/common/globalVars";
 import { CreateDcrDriver } from "../../../../src/component/driver/dcr/create";
@@ -15,8 +12,8 @@ import {
 } from "../../../../src/component/driver/teamsApp/interfaces/OauthRegistration";
 import { MockedLogProvider, MockedUserInteraction } from "../../../plugins/solution/util";
 import { MockedAzureAccountProvider, MockedM365Provider } from "../../../core/utils";
+import { chai, expect, vi } from "vitest";
 
-chai.use(chaiAsPromised);
 const expect = chai.expect;
 
 const outputKeys = {
@@ -55,7 +52,7 @@ describe("CreateDcrDriver", () => {
   });
 
   afterEach(() => {
-    sinon.restore();
+    vi.restoreAllMocks();
     if (envRestore) {
       envRestore();
       envRestore = undefined;
@@ -64,9 +61,9 @@ describe("CreateDcrDriver", () => {
 
   // Test #1 — Happy path
   it("happy path: should call createDcrRegistration with expected body and return oAuthConfigId", async () => {
-    const stub = sinon
-      .stub(teamsGraphClient, "createDcrRegistration")
-      .callsFake(async (token, dcrRegistration) => {
+    const stub = vi
+      .spyOn(teamsGraphClient, "createDcrRegistration")
+      .mockImplementation(async (token, dcrRegistration) => {
         // Assert the body fields match the input
         expect(dcrRegistration.clientName).to.equal("cloudflare-radar-dcr");
         expect(dcrRegistration.wellKnownAuthorizationServer).to.equal(
@@ -96,14 +93,14 @@ describe("CreateDcrDriver", () => {
     if (result.result.isOk()) {
       expect(result.result.value.get(outputKeys.configurationId)).to.equal(fakeOauthConfigId);
     }
-    expect(stub.calledOnce).to.be.true;
+    expect(stub.mock.calls.length === 1).to.be.true;
   });
 
   // Test #2 — Idempotency: env var already set => no POST, empty outputs
   it("idempotency: should skip POST when configurationId already exists in env", async () => {
-    const stub = sinon
-      .stub(teamsGraphClient, "createDcrRegistration")
-      .resolves(fakeCreateDcrResponse);
+    const stub = vi
+      .spyOn(teamsGraphClient, "createDcrRegistration")
+      .mockResolvedValue(fakeCreateDcrResponse);
 
     envRestore = mockedEnv({
       [outputKeys.configurationId]: "existing-id",
@@ -125,7 +122,7 @@ describe("CreateDcrDriver", () => {
       expect(result.result.value.size).to.equal(0);
     }
     // The stub must NOT have been called
-    expect(stub.called).to.be.false;
+    expect(stub.mock.calls.length > 0).to.be.false;
   });
 
   // Test #3 — Missing `name`
@@ -167,7 +164,7 @@ describe("CreateDcrDriver", () => {
 
   // Test #3c — Missing `appId` when applicableToApps is AnyApp (default) => no error
   it("should succeed when appId is omitted and applicableToApps defaults to AnyApp", async () => {
-    sinon.stub(teamsGraphClient, "createDcrRegistration").resolves(fakeCreateDcrResponse);
+    vi.spyOn(teamsGraphClient, "createDcrRegistration").mockResolvedValue(fakeCreateDcrResponse);
 
     const args: any = {
       name: "cloudflare-radar-dcr",
@@ -235,9 +232,9 @@ describe("CreateDcrDriver", () => {
 
   // Test #7a — TGS throws SystemError => passes through unchanged
   it("should propagate SystemError thrown by createDcrRegistration", async () => {
-    sinon
-      .stub(teamsGraphClient, "createDcrRegistration")
-      .throws(new SystemError("TeamsGraph", "DcrCallFailed", "TGS returned 4xx"));
+    vi.spyOn(teamsGraphClient, "createDcrRegistration").mockImplementation(() => {
+      throw new SystemError("TeamsGraph", "DcrCallFailed", "TGS returned 4xx");
+    });
 
     const args: any = {
       name: "cloudflare-radar-dcr",
@@ -257,9 +254,9 @@ describe("CreateDcrDriver", () => {
 
   // Test #7b — TGS throws generic Error => wrapped via assembleError
   it("should wrap generic Error thrown by createDcrRegistration via assembleError", async () => {
-    sinon
-      .stub(teamsGraphClient, "createDcrRegistration")
-      .throws(new Error("unexpected TGS failure"));
+    vi.spyOn(teamsGraphClient, "createDcrRegistration").mockImplementation(() => {
+      throw new Error("unexpected TGS failure");
+    });
 
     const args: any = {
       name: "cloudflare-radar-dcr",
@@ -280,9 +277,9 @@ describe("CreateDcrDriver", () => {
 
   // Test #8 — Token-provider error => propagated
   it("should propagate error when m365TokenProvider.getAccessToken returns err", async () => {
-    sinon
-      .stub(MockedM365Provider.prototype, "getAccessToken")
-      .resolves(err(new SystemError("M365Provider", "TokenFetchFailed", "token error")));
+    vi.spyOn(MockedM365Provider.prototype, "getAccessToken").mockResolvedValue(
+      err(new SystemError("M365Provider", "TokenFetchFailed", "token error"))
+    );
 
     const args: any = {
       name: "cloudflare-radar-dcr",
@@ -320,9 +317,9 @@ describe("CreateDcrDriver", () => {
 
   // Test #10 — applicableToApps === "SpecificApp" => m365AppId set to args.appId
   it("should set m365AppId to args.appId when applicableToApps is SpecificApp", async () => {
-    const stub = sinon
-      .stub(teamsGraphClient, "createDcrRegistration")
-      .callsFake(async (token, dcrRegistration) => {
+    const stub = vi
+      .spyOn(teamsGraphClient, "createDcrRegistration")
+      .mockImplementation(async (token, dcrRegistration) => {
         expect(dcrRegistration.applicableToApps).to.equal(OauthRegistrationAppType.SpecificApp);
         // Branch: applicableToApps === SpecificApp => m365AppId must equal args.appId
         expect(dcrRegistration.m365AppId).to.equal("mocked-teams-app-id");
@@ -344,7 +341,7 @@ describe("CreateDcrDriver", () => {
     if (result.result.isOk()) {
       expect(result.result.value.get(outputKeys.configurationId)).to.equal(fakeOauthConfigId);
     }
-    expect(stub.calledOnce).to.be.true;
+    expect(stub.mock.calls.length === 1).to.be.true;
   });
 
   // Test #11 — applicableToApps with an invalid enum value

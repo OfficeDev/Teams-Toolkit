@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 40,
+    "total_steps": 39,
     "created_at": "2026-05-27T02:00:01.490765",
     "name": "Feature Simple Bot ts Local Debug With Different Account",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2026-05-27T02:00:01.490765",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_559bc142",
+      "plan_r_0624_024810",
       "step_e768085e",
       "step_93c30ff4",
       "step_4f1f4dd6",
@@ -69,32 +69,6 @@
     "updated_at": "2026-05-27T02:22:55.717858"
   },
   "steps": [
-    {
-      "step_id": "step_559bc142",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 325,
-        "y": 230
-      },
-      "description": "Click the \"Teams Agents and Apps\" option in the \"New Project\" dropdown menu within the Microsoft 365 Agents Toolkit interface.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:325:230:16:5:b3a959b331598230",
-        "dhash:325:230:96:5:995342c98d47c696",
-        "dhash:325:230:0:10:c8c88094b0717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_559bc142",
-      "created_at": "2026-05-27T02:00:01.500026",
-      "plan_id": "plan_68e70b6d"
-    },
     {
       "step_id": "step_e768085e",
       "agent": "interaction",

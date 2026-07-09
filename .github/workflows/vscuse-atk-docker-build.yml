@@ -28,9 +28,19 @@ on:
         description: 'Whether to trigger UI test after build'
         type: boolean
         default: false
+      source_ref:
+        description: 'Source branch this build belongs to. Used only to group concurrency so a re-dispatch for the same branch cancels the stale build. Leave empty for release/manual builds.'
+        required: false
+        default: ''
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: officedev/vscuse-atk-vscode
+
+# When dispatched with a source_ref (smoke pipeline) group per-branch so a re-dispatch cancels
+# the stale build. Without it (CD / manual / release) the run_id keeps the group unique → no-op.
+concurrency:
+  group: ${{ format('vscuse-atk-docker-{0}', github.event.inputs.source_ref || github.run_id) }}
+  cancel-in-progress: true
 
 jobs:
   build-and-push:

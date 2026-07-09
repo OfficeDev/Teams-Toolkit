@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2.0,
       "step_retry_timeout": 0.0
     },
-    "total_steps": 5,
+    "total_steps": 4,
     "created_at": "2026-01-04T05:31:05.492842",
     "name": "Feature Validate Manifest",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2026-01-04T05:31:05.492842",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_2fbba40e",
+      "plan_r_0624_024810",
       "step_13cc1955",
       "step_17e4cf6a",
       "step_33fc08d6",
@@ -37,32 +37,6 @@
     "updated_at": "2026-01-04T12:11:21.413476"
   },
   "steps": [
-    {
-      "step_id": "step_2fbba40e",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 377,
-        "y": 221
-      },
-      "description": "Click on the \"Apps for Microsoft 365\" option in the dropdown menu under \"New Project\" to select it.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:377:221:16:5:e79b4b5225c84545",
-        "dhash:377:221:96:5:322250582ca54f94",
-        "dhash:377:221:0:10:c0c89094b0717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_2fbba40e",
-      "created_at": "2026-01-04T12:09:13.677314",
-      "plan_id": "plan_19f92a12"
-    },
     {
       "step_id": "step_13cc1955",
       "agent": "interaction",

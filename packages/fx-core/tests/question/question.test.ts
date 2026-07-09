@@ -18,11 +18,10 @@ import {
   err,
   ok,
 } from "@microsoft/teamsfx-api";
-import { assert } from "chai";
 import fs from "fs-extra";
 import mockedEnv, { RestoreFn } from "mocked-env";
 import * as path from "path";
-import sinon from "sinon";
+import { assert, vi } from "vitest";
 import { FeatureFlags, featureFlagManager } from "../../src";
 import { setTools } from "../../src/common/globalVars";
 import { manifestUtils } from "../../src/component/driver/teamsApp/utils/ManifestUtils";
@@ -92,9 +91,9 @@ export async function callFuncs(question: Question, inputs: Inputs, answer?: str
 }
 describe("none scaffold questions", () => {
   const mockedEnvRestore: RestoreFn = () => {};
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     mockedEnvRestore();
   });
   describe("addWebpart", async () => {
@@ -265,10 +264,10 @@ describe("none scaffold questions", () => {
 });
 
 describe("listCollaborator", async () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   afterEach(async () => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   it("CLI_HELP", async () => {
     const inputs: Inputs = {
@@ -294,13 +293,13 @@ describe("listCollaborator", async () => {
       platform: Platform.VSCode,
       projectPath: ".",
     };
-    sandbox.stub(CollaborationUtil, "loadManifestId").callsFake(async (manifestFilePath) => {
+    vi.spyOn(CollaborationUtil, "loadManifestId").mockImplementation(async (manifestFilePath) => {
       return manifestFilePath == "teamsAppManifest" ? ok("teamsAppId") : ok("aadAppId");
     });
-    sandbox.stub(CollaborationUtil, "requireEnvQuestion").resolves(true);
-    sandbox.stub(fs, "pathExistsSync").returns(true);
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(envUtil, "listEnv").resolves(ok(["dev", "local"]));
+    vi.spyOn(CollaborationUtil, "requireEnvQuestion").mockResolvedValue(true);
+    vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(envUtil, "listEnv").mockResolvedValue(ok(["dev", "local"]));
     const questionNames: string[] = [];
     const visitor: QuestionTreeVisitor = async (
       question: Question,
@@ -348,13 +347,13 @@ describe("listCollaborator", async () => {
       platform: Platform.VSCode,
       projectPath: ".",
     };
-    sandbox.stub(CollaborationUtil, "loadManifestId").callsFake(async (manifestFilePath) => {
+    vi.spyOn(CollaborationUtil, "loadManifestId").mockImplementation(async (manifestFilePath) => {
       return manifestFilePath == "teamsAppManifest" ? ok("teamsAppId") : ok("aadAppId");
     });
-    sandbox.stub(CollaborationUtil, "requireEnvQuestion").resolves(true);
-    sandbox.stub(fs, "pathExistsSync").returns(true);
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(envUtil, "listEnv").resolves(ok(["dev", "local"]));
+    vi.spyOn(CollaborationUtil, "requireEnvQuestion").mockResolvedValue(true);
+    vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(envUtil, "listEnv").mockResolvedValue(ok(["dev", "local"]));
     const questionNames: string[] = [];
     const visitor: QuestionTreeVisitor = async (
       question: Question,
@@ -390,10 +389,10 @@ describe("listCollaborator", async () => {
   });
 });
 describe("grantPermission", async () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   afterEach(async () => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   it("CLI_HELP", async () => {
     const inputs: Inputs = {
@@ -420,16 +419,16 @@ describe("grantPermission", async () => {
       platform: Platform.VSCode,
       projectPath: ".",
     };
-    sandbox.stub(CollaborationUtil, "loadManifestId").callsFake(async (manifestFilePath) => {
+    vi.spyOn(CollaborationUtil, "loadManifestId").mockImplementation(async (manifestFilePath) => {
       return manifestFilePath == "teamsAppManifest" ? ok("teamsAppId") : ok("aadAppId");
     });
-    sandbox.stub(CollaborationUtil, "requireEnvQuestion").resolves(true);
-    sandbox.stub(fs, "pathExistsSync").returns(true);
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(envUtil, "listEnv").resolves(ok(["dev", "test"]));
+    vi.spyOn(CollaborationUtil, "requireEnvQuestion").mockResolvedValue(true);
+    vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(envUtil, "listEnv").mockResolvedValue(ok(["dev", "test"]));
     const tools = new MockTools();
     setTools(tools);
-    sandbox.stub(tools.tokenProvider.m365TokenProvider, "getJsonObject").resolves(
+    vi.spyOn(tools.tokenProvider.m365TokenProvider, "getJsonObject").mockResolvedValue(
       ok({
         tid: "mock_project_tenant_id",
         oid: "fake_oid",
@@ -485,10 +484,10 @@ describe("grantPermission", async () => {
 });
 
 describe("convertAadToNewSchemaQuestionNode", async () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   afterEach(async () => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("happy path", async () => {
@@ -496,9 +495,9 @@ describe("convertAadToNewSchemaQuestionNode", async () => {
       platform: Platform.VSCode,
       projectPath: ".",
     };
-    sandbox.stub(fs, "pathExistsSync").returns(true);
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(fs, "readFile").resolves(Buffer.from("${{fake_placeHolder}}"));
+    vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockResolvedValue(Buffer.from("${{fake_placeHolder}}"));
     const questions: string[] = [];
     const visitor: QuestionTreeVisitor = async (
       question: Question,
@@ -526,10 +525,10 @@ describe("convertAadToNewSchemaQuestionNode", async () => {
 });
 
 describe("deployAadManifest", async () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   afterEach(async () => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   it("CLI_HELP", async () => {
     const inputs: Inputs = {
@@ -574,10 +573,10 @@ describe("deployAadManifest", async () => {
       platform: Platform.VSCode,
       projectPath: ".",
     };
-    sandbox.stub(fs, "pathExistsSync").returns(true);
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(fs, "readFile").resolves(Buffer.from("${{fake_placeHolder}}"));
-    sandbox.stub(envUtil, "listEnv").resolves(ok(["dev", "local"]));
+    vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockResolvedValue(Buffer.from("${{fake_placeHolder}}"));
+    vi.spyOn(envUtil, "listEnv").mockResolvedValue(ok(["dev", "local"]));
     const questions: string[] = [];
     const visitor: QuestionTreeVisitor = async (
       question: Question,
@@ -608,10 +607,10 @@ describe("deployAadManifest", async () => {
       platform: Platform.VSCode,
       projectPath: ".",
     };
-    sandbox.stub(fs, "pathExistsSync").returns(true);
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(fs, "readFile").resolves(Buffer.from("${{fake_placeHolder}}"));
-    sandbox.stub(envUtil, "listEnv").resolves(err(new UserError({})));
+    vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockResolvedValue(Buffer.from("${{fake_placeHolder}}"));
+    vi.spyOn(envUtil, "listEnv").mockResolvedValue(err(new UserError({})));
     const questions: string[] = [];
     const visitor: QuestionTreeVisitor = async (
       question: Question,
@@ -649,8 +648,8 @@ describe("deployAadManifest", async () => {
       "sampleV3",
       "aad.manifest.json"
     );
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(fs, "readFile").resolves(Buffer.from("${{fake_placeHolder}}"));
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockResolvedValue(Buffer.from("${{fake_placeHolder}}"));
     const res = await isAadMainifestContainsPlaceholder(inputs);
     assert.isTrue(res);
   });
@@ -660,17 +659,17 @@ describe("deployAadManifest", async () => {
       projectPath: ".",
     };
     inputs[QuestionNames.AadAppManifestFilePath] = "aadAppManifest";
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(fs, "readFile").resolves(Buffer.from("test"));
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockResolvedValue(Buffer.from("test"));
     const res = await isAadMainifestContainsPlaceholder(inputs);
     assert.isFalse(res);
   });
 });
 
 describe("resourceGroupQuestionNode", async () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   it("validateResourceGroupName invalid pattern", () => {
     const res = validateResourceGroupName("!!!!!", { platform: Platform.VSCode });
@@ -684,13 +683,13 @@ describe("resourceGroupQuestionNode", async () => {
     assert.isTrue(res !== undefined);
   });
   it("create new resource group success", async () => {
-    sandbox.stub(resourceGroupHelper, "listResourceGroups").resolves(
+    vi.spyOn(resourceGroupHelper, "listResourceGroups").mockResolvedValue(
       ok([
         ["g1", "East US"],
         ["g2", "Center US"],
       ])
     );
-    sandbox.stub(resourceGroupHelper, "getLocations").resolves(ok(["East US", "Center US"]));
+    vi.spyOn(resourceGroupHelper, "getLocations").mockResolvedValue(ok(["East US", "Center US"]));
     const mockSubscriptionId = "mockSub";
     const defaultRG = "defaultRG";
     const accountProvider = new MockedAzureAccountProvider();
@@ -699,7 +698,7 @@ describe("resourceGroupQuestionNode", async () => {
       mockToken as TokenCredential,
       mockSubscriptionId
     );
-    sandbox.stub(azureClientHelper, "createRmClient").resolves(mockRmClient);
+    vi.spyOn(azureClientHelper, "createRmClient").mockResolvedValue(mockRmClient);
     const node = resourceGroupQuestionNode(accountProvider, mockSubscriptionId, defaultRG);
     assert.isTrue(node !== undefined);
     const inputs: Inputs = {
@@ -738,7 +737,7 @@ describe("resourceGroupQuestionNode", async () => {
   });
 
   it("select existing resource group", async () => {
-    sandbox.stub(resourceGroupHelper, "listResourceGroups").resolves(
+    vi.spyOn(resourceGroupHelper, "listResourceGroups").mockResolvedValue(
       ok([
         ["g1", "East US"],
         ["g2", "Center US"],
@@ -752,7 +751,7 @@ describe("resourceGroupQuestionNode", async () => {
       mockToken as TokenCredential,
       mockSubscriptionId
     );
-    sandbox.stub(azureClientHelper, "createRmClient").resolves(mockRmClient);
+    vi.spyOn(azureClientHelper, "createRmClient").mockResolvedValue(mockRmClient);
     const node = resourceGroupQuestionNode(accountProvider, mockSubscriptionId, defaultRG);
     assert.isTrue(node !== undefined);
     const inputs: Inputs = {
@@ -783,9 +782,9 @@ describe("resourceGroupQuestionNode", async () => {
 });
 
 describe("createNewEnvQuestionNode", async () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   it("createNewEnv", () => {
     const res = questionNodes.createNewEnv();
@@ -802,7 +801,7 @@ describe("createNewEnvQuestionNode", async () => {
     assert.isTrue(res !== undefined);
   });
   it("newEnvNameValidation exists", () => {
-    sandbox.stub(envUtil, "listEnv").resolves(ok(["dev1", "dev2"]));
+    vi.spyOn(envUtil, "listEnv").mockResolvedValue(ok(["dev1", "dev2"]));
     const res = newEnvNameValidation("dev1", {
       platform: Platform.VSCode,
       projectPath: ".",
@@ -810,7 +809,7 @@ describe("createNewEnvQuestionNode", async () => {
     assert.isTrue(res !== undefined);
   });
   it("newEnvNameValidation listEnv return error", () => {
-    sandbox.stub(envUtil, "listEnv").resolves(err(new UserError({})));
+    vi.spyOn(envUtil, "listEnv").mockResolvedValue(err(new UserError({})));
     const res = newEnvNameValidation("dev1", {
       platform: Platform.VSCode,
       projectPath: ".",
@@ -818,7 +817,7 @@ describe("createNewEnvQuestionNode", async () => {
     assert.isTrue(res !== undefined);
   });
   it("happy path", async () => {
-    sandbox.stub(envUtil, "listEnv").resolves(ok(["dev1", "dev2"]));
+    vi.spyOn(envUtil, "listEnv").mockResolvedValue(ok(["dev1", "dev2"]));
     const node = createNewEnvQuestionNode();
     assert.isTrue(node !== undefined);
     const inputs: Inputs = {
@@ -849,7 +848,7 @@ describe("createNewEnvQuestionNode", async () => {
 
 describe("copilotPluginQuestions", async () => {
   afterEach(() => {
-    sinon.restore();
+    vi.restoreAllMocks();
   });
 
   it("happy path", async () => {
@@ -905,9 +904,9 @@ describe("selectTeamsAppManifestQuestion", async () => {
 });
 
 describe("selectLocalTeamsAppManifestQuestion", async () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   it("default for CLI_HELP", async () => {
     const question = selectLocalTeamsAppManifestQuestion();
@@ -917,7 +916,7 @@ describe("selectLocalTeamsAppManifestQuestion", async () => {
     }
   });
   it("default for vsc, path exists", async () => {
-    sandbox.stub(fs, "pathExistsSync").returns(true);
+    vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
     const question = selectLocalTeamsAppManifestQuestion();
     if (typeof question.default === "function") {
       const res = await question.default({ platform: Platform.VSCode, projectPath: "./" });
@@ -926,10 +925,10 @@ describe("selectLocalTeamsAppManifestQuestion", async () => {
   });
 });
 describe("selectAadManifestQuestion", async () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   let mockedEnvRestore: RestoreFn = () => {};
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     mockedEnvRestore();
   });
   it("default for CLI_HELP", async () => {
@@ -940,7 +939,7 @@ describe("selectAadManifestQuestion", async () => {
     }
   });
   it("default for VSCode", async () => {
-    sandbox.stub(fs, "pathExistsSync").returns(false);
+    vi.spyOn(fs, "pathExistsSync").mockReturnValue(false);
     const question = selectAadManifestQuestion();
     if (typeof question.default === "function") {
       const res = await question.default({ platform: Platform.VSCode, projectPath: "./" });
@@ -957,10 +956,10 @@ describe("selectAadManifestQuestion", async () => {
 });
 
 describe("apiKeyQuestion", async () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   let mockedEnvRestore: RestoreFn = () => {};
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     mockedEnvRestore();
   });
 
@@ -1020,10 +1019,10 @@ describe("apiKeyQuestion", async () => {
 });
 
 describe("oauthQuestion", async () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   let mockedEnvRestore: RestoreFn = () => {};
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     mockedEnvRestore();
   });
 
@@ -1217,17 +1216,17 @@ describe("oauthQuestion", async () => {
 });
 
 describe("addPluginQuestionNode", async () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   const mockedEnvRestore: RestoreFn = () => {};
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     mockedEnvRestore();
   });
 
   it("should include inputOrSearchAPISpecNode when KiotaNPMIntegration is enabled", async () => {
-    const sandbox = sinon.createSandbox();
+    const sandbox = vi;
     try {
-      sandbox.stub(featureFlagManager, "getBooleanValue").callsFake((flag) => {
+      vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) => {
         if (flag === FeatureFlags.KiotaNPMIntegration) {
           return true;
         }
@@ -1254,13 +1253,13 @@ describe("addPluginQuestionNode", async () => {
         QuestionNames.TeamsAppManifestFilePath
       );
     } finally {
-      sandbox.restore();
+      vi.restoreAllMocks();
     }
   });
 
   it("success: can add a plugin from api spec", async () => {
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok({} as TeamsAppManifest));
-    sandbox.stub(manifestUtils, "parseCommonProperties").returns({
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok({} as TeamsAppManifest));
+    vi.spyOn(manifestUtils, "parseCommonProperties").mockReturnValue({
       capabilities: ["copilotGpt"],
       isApiME: false,
       isSPFx: false,
@@ -1269,10 +1268,9 @@ describe("addPluginQuestionNode", async () => {
       manifestVersion: "",
       isApiMeAAD: false,
     });
-    sandbox
-      .stub(featureFlagManager, "getBooleanValue")
-      .withArgs(FeatureFlags.KiotaNPMIntegration)
-      .returns(false);
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) =>
+      flag === FeatureFlags.KiotaNPMIntegration ? false : false
+    );
     const inputs: Inputs = {
       platform: Platform.VSCode,
       projectPath: "./test",
@@ -1318,10 +1316,10 @@ describe("addPluginQuestionNode", async () => {
 });
 
 describe("addKnowledgeQuestionNode", async () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   const mockedEnvRestore: RestoreFn = () => {};
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     mockedEnvRestore();
   });
 
@@ -1499,10 +1497,10 @@ describe("addKnowledgeQuestionNode", async () => {
 });
 
 describe("scaffold Copilot connector", async () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   const mockedEnvRestore: RestoreFn = () => {};
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     mockedEnvRestore();
   });
 
@@ -1565,10 +1563,10 @@ describe("scaffold Copilot connector", async () => {
 });
 
 describe("updateActionWithMCP", async () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("should return updateActionWithMCP question node", () => {
@@ -1682,8 +1680,8 @@ describe("updateActionWithMCP", async () => {
     };
 
     // Mock deps used by updateActionWithMCP
-    sandbox.stub(teamsProjectTypeDeps, "pathExists").resolves(true);
-    sandbox.stub(teamsProjectTypeDeps, "readJSON").resolves(mockPluginManifest as any);
+    vi.spyOn(teamsProjectTypeDeps, "pathExists").mockResolvedValue(true);
+    vi.spyOn(teamsProjectTypeDeps, "readJSON").mockResolvedValue(mockPluginManifest as any);
 
     const testInputs: Inputs = {
       platform: Platform.VSCode,
@@ -1735,34 +1733,34 @@ describe("updateActionWithMCP", async () => {
     };
     assert.isTrue(conditionFunc(inputsVSCode));
 
-    // Test static options - by default oauth-dynamic is hidden behind two flags.
+    // Test static options - by default oauth-dynamic is surfaced first.
     const staticOptions = (authTypeNode?.data as any)?.staticOptions;
     assert.isArray(staticOptions);
-    assert.lengthOf(staticOptions, 3);
+    assert.deepEqual(
+      staticOptions.map((opt: any) => opt.id),
+      ["oauth-dynamic", "oauth", "entra-sso"]
+    );
+    assert.equal((authTypeNode?.data as any)?.default, "oauth-dynamic");
 
-    assert.isDefined(staticOptions?.find((opt: any) => opt.id === "oauth"));
-    assert.isDefined(staticOptions?.find((opt: any) => opt.id === "entra-sso"));
-    assert.isDefined(staticOptions?.find((opt: any) => opt.id === "none"));
-    assert.isUndefined(staticOptions?.find((opt: any) => opt.id === "oauth-dynamic"));
-    assert.equal((authTypeNode?.data as any)?.default, "oauth");
-
-    // When both TEAMSFX_MCP_FOR_DA_DT and TEAMSFX_MCP_FOR_DA_DCR are enabled,
-    // the dynamic-registration option is surfaced.
-    const flagSandbox = sinon.createSandbox();
+    // When TEAMSFX_MCP_FOR_DA_DCR is disabled, the dynamic-registration option is hidden.
+    const flagSandbox = vi;
     try {
-      flagSandbox.stub(featureFlagManager, "getBooleanValue").callsFake((flag) => {
-        if (flag === FeatureFlags.MCPForDADT || flag === FeatureFlags.MCPForDADCR) {
-          return true;
-        }
-        return false;
+      vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) => {
+        return flag !== FeatureFlags.MCPForDADCR;
       });
       const optionsWithFlags = (questionNodes.updateActionWithMCP().children?.[2]?.data as any)
         ?.staticOptions;
       assert.isArray(optionsWithFlags);
-      assert.lengthOf(optionsWithFlags, 4);
-      assert.isDefined(optionsWithFlags?.find((opt: any) => opt.id === "oauth-dynamic"));
+      assert.deepEqual(
+        optionsWithFlags.map((opt: any) => opt.id),
+        ["oauth", "entra-sso"]
+      );
+      assert.equal(
+        (questionNodes.updateActionWithMCP().children?.[2]?.data as any)?.default,
+        "oauth"
+      );
     } finally {
-      flagSandbox.restore();
+      vi.restoreAllMocks();
     }
   });
 
@@ -1771,8 +1769,8 @@ describe("updateActionWithMCP", async () => {
     const preFetchToolsNode = res.children?.[1];
 
     // Mock deps used by updateActionWithMCP default
-    sandbox.stub(teamsProjectTypeDeps, "pathExists").resolves(true);
-    sandbox.stub(teamsProjectTypeDeps, "readJSON").rejects(new Error("File not found"));
+    vi.spyOn(teamsProjectTypeDeps, "pathExists").mockResolvedValue(true);
+    vi.spyOn(teamsProjectTypeDeps, "readJSON").mockRejectedValue(new Error("File not found"));
 
     const testInputs: Inputs = {
       platform: Platform.VSCode,
@@ -1815,8 +1813,8 @@ describe("updateActionWithMCP", async () => {
       ],
     };
 
-    sandbox.stub(teamsProjectTypeDeps, "pathExists").resolves(true);
-    sandbox.stub(teamsProjectTypeDeps, "readJSON").resolves(mockPluginManifest as any);
+    vi.spyOn(teamsProjectTypeDeps, "pathExists").mockResolvedValue(true);
+    vi.spyOn(teamsProjectTypeDeps, "readJSON").mockResolvedValue(mockPluginManifest as any);
 
     const testInputs: Inputs = {
       platform: Platform.VSCode,
@@ -1836,9 +1834,9 @@ describe("updateActionWithMCP", async () => {
 });
 
 describe("ActionStartOptions", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   describe("all()", () => {

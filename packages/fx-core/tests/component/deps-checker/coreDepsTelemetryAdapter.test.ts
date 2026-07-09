@@ -6,27 +6,26 @@
  */
 
 import { TelemetryReporter } from "@microsoft/teamsfx-api";
-import chai from "chai";
 import os from "os";
-import * as sinon from "sinon";
 import { DepsCheckerEvent } from "../../../src/component/deps-checker/constant";
 import { CoreDepsTelemetryAdapter } from "../../../src/component/deps-checker/coreDepsTelemetryAdapter";
+import { chai, expect, vi } from "vitest";
 
 describe("CoreDepsTelemetryAdapter", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   beforeEach(() => {
-    sandbox.stub(os, "arch").returns("mock");
-    sandbox.stub(os, "release").returns("mock");
+    vi.spyOn(os, "arch").mockReturnValue("mock");
+    vi.spyOn(os, "release").mockReturnValue("mock");
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("sendEvent", () => {
     // Arrange
-    const stub = sandbox.stub();
+    const stub = vi.fn();
     const reporter = { sendTelemetryEvent: stub } as any as TelemetryReporter;
 
     // Act
@@ -34,8 +33,7 @@ describe("CoreDepsTelemetryAdapter", () => {
     adapter.sendEvent(DepsCheckerEvent.dotnetAlreadyInstalled, { property1: "value1" }, 42);
 
     // Assert
-    sinon.assert.calledWith(
-      stub,
+    expect(stub).toHaveBeenCalledWith(
       DepsCheckerEvent.dotnetAlreadyInstalled,
       {
         component: "core:debug:envchecker",

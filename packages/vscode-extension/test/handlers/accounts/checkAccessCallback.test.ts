@@ -1,11 +1,12 @@
 import { ok } from "@microsoft/teamsfx-api";
-import * as chai from "chai";
-import * as sinon from "sinon";
 import * as vscode from "vscode";
 import { PanelType } from "../../../src/controls/PanelType";
 import { WebviewPanel } from "../../../src/controls/webviewPanel";
+import { vi, expect } from "vitest";
+import { mockValue } from "../../mocks/vitestMockUtils";
 import {
   checkCopilotCallback,
+  checkSandboxCallback,
   checkSideloadingCallback,
 } from "../../../src/handlers/accounts/checkAccessCallback";
 import * as vsc_ui from "../../../src/qm/vsc_ui";
@@ -14,100 +15,133 @@ import * as localizeUtils from "../../../src/utils/localizeUtils";
 
 describe("checkAccessCallback", () => {
   describe("checkCopilotCallback", () => {
-    const sandbox = sinon.createSandbox();
-
-    afterEach(() => {
-      sandbox.restore();
-    });
-
     beforeEach(() => {
-      sandbox.stub(vsc_ui, "VS_CODE_UI").value(new vsc_ui.VsCodeUI(<vscode.ExtensionContext>{}));
+      mockValue(vsc_ui, "VS_CODE_UI", new vsc_ui.VsCodeUI(<vscode.ExtensionContext>{}));
     });
 
     it("checkCopilotCallback() and open url", async () => {
-      sandbox.stub(localizeUtils, "localize").returns("Enroll");
-      sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-      const showMessageStub = sandbox.stub(vsc_ui.VS_CODE_UI, "showMessage").resolves(ok("Enroll"));
-      const openUrlStub = sandbox.stub(vsc_ui.VS_CODE_UI, "openUrl");
+      vi.spyOn(localizeUtils, "localize").mockReturnValue("Enroll");
+      vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+      const showMessageStub = vi
+        .spyOn(vsc_ui.VS_CODE_UI, "showMessage")
+        .mockResolvedValue(ok("Enroll"));
+      const openUrlStub = vi.spyOn(vsc_ui.VS_CODE_UI, "openUrl");
 
       await checkCopilotCallback();
 
-      chai.expect(showMessageStub.callCount).to.be.equal(1);
-      chai.expect(openUrlStub.callCount).to.be.equal(1);
+      expect(showMessageStub.callCount).to.be.equal(1);
+      expect(openUrlStub.callCount).to.be.equal(1);
     });
 
     it("checkCopilotCallback() and fail to open url", async () => {
-      sandbox.stub(localizeUtils, "localize").returns("");
-      sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-      const showMessageStub = sandbox.stub(vsc_ui.VS_CODE_UI, "showMessage").resolves(ok("Enroll"));
-      const openUrlStub = sandbox.stub(vsc_ui.VS_CODE_UI, "openUrl");
+      vi.spyOn(localizeUtils, "localize").mockReturnValue("");
+      vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+      const showMessageStub = vi
+        .spyOn(vsc_ui.VS_CODE_UI, "showMessage")
+        .mockResolvedValue(ok("Enroll"));
+      const openUrlStub = vi.spyOn(vsc_ui.VS_CODE_UI, "openUrl");
 
       await checkCopilotCallback();
 
-      chai.expect(showMessageStub.callCount).to.be.equal(1);
-      chai.expect(openUrlStub.callCount).to.be.equal(0);
+      expect(showMessageStub.callCount).to.be.equal(1);
+      expect(openUrlStub.callCount).to.be.equal(0);
     });
 
     it("checkCopilotCallback() and fail to show message", async () => {
-      const localizeStub = sandbox.stub(localizeUtils, "localize").returns("");
-      sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-      const showMessageStub = sandbox
-        .stub(vsc_ui.VS_CODE_UI, "showMessage")
-        .rejects(new Error("error"));
+      const localizeStub = vi.spyOn(localizeUtils, "localize").mockReturnValue("");
+      vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+      const showMessageStub = vi
+        .spyOn(vsc_ui.VS_CODE_UI, "showMessage")
+        .mockRejectedValue(new Error("error"));
 
       await checkCopilotCallback();
 
-      chai.expect(showMessageStub.callCount).to.be.equal(1);
-      chai.expect(localizeStub.callCount).to.be.equal(2);
+      expect(showMessageStub.callCount).to.be.equal(1);
+      expect(localizeStub.callCount).to.be.equal(2);
     });
   });
 
   describe("CheckSideloading", () => {
-    const sandbox = sinon.createSandbox();
-    let clock: sinon.SinonFakeTimers;
+    let clock: ReturnType<typeof vi.useFakeTimers>;
 
     afterEach(() => {
       if (clock) {
         clock.restore();
       }
       clock.restore();
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     beforeEach(() => {
-      sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-      sandbox.stub(vsc_ui, "VS_CODE_UI").value(new vsc_ui.VsCodeUI(<vscode.ExtensionContext>{}));
+      vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+      mockValue(vsc_ui, "VS_CODE_UI", new vsc_ui.VsCodeUI(<vscode.ExtensionContext>{}));
     });
 
     it("checkSideloadingCallback() - click enable custom app upload button", async () => {
-      const showMessageStub = sandbox
-        .stub(vsc_ui.VS_CODE_UI, "showMessage")
-        .resolves(ok("Enable Custom App Upload"));
-      const openUrlStub = sandbox.stub(vsc_ui.VS_CODE_UI, "openUrl");
+      const showMessageStub = vi
+        .spyOn(vsc_ui.VS_CODE_UI, "showMessage")
+        .mockResolvedValue(ok("Enable Custom App Upload"));
+      const openUrlStub = vi.spyOn(vsc_ui.VS_CODE_UI, "openUrl");
 
-      clock = sandbox.useFakeTimers();
+      clock = vi.useFakeTimers();
       await checkSideloadingCallback();
       await clock.tickAsync(5000);
 
-      sinon.assert.calledOnce(showMessageStub);
-      sinon.assert.calledOnceWithExactly(
-        openUrlStub,
+      expect(showMessageStub).toHaveBeenCalledTimes(1);
+      expect(openUrlStub).toHaveBeenCalledTimes(1);
+      expect(openUrlStub).toHaveBeenCalledWith(
         "https://learn.microsoft.com/en-us/microsoftteams/platform/toolkit/tools-prerequisites#enable-custom-app-upload-using-admin-center"
       );
     });
 
     it("checkSideloadingCallback() - click use test tenant button", async () => {
-      const showMessageStub = sandbox
-        .stub(vsc_ui.VS_CODE_UI, "showMessage")
-        .resolves(ok("Use Test Tenant"));
-      const createOrShow = sandbox.stub(WebviewPanel, "createOrShow");
+      const showMessageStub = vi
+        .spyOn(vsc_ui.VS_CODE_UI, "showMessage")
+        .mockResolvedValue(ok("Use Test Tenant"));
+      const createOrShow = vi.spyOn(WebviewPanel, "createOrShow");
 
-      clock = sandbox.useFakeTimers();
+      clock = vi.useFakeTimers();
       await checkSideloadingCallback();
       await clock.tickAsync(5000);
 
-      sinon.assert.calledOnce(showMessageStub);
-      sinon.assert.calledOnceWithExactly(createOrShow, PanelType.AccountHelp);
+      expect(showMessageStub).toHaveBeenCalledTimes(1);
+      expect(createOrShow).toHaveBeenCalledTimes(1);
+      expect(createOrShow).toHaveBeenCalledWith(PanelType.AccountHelp);
+    });
+  });
+
+  describe("checkSandboxCallback", () => {
+    beforeEach(() => {
+      mockValue(vsc_ui, "VS_CODE_UI", new vsc_ui.VsCodeUI(<vscode.ExtensionContext>{}));
+    });
+
+    it("executes quick open command when user confirms", async () => {
+      vi.spyOn(localizeUtils, "localize").mockImplementation((key: string) => {
+        if (key === "teamstoolkit.accountTree.sandboxedTeam.button") {
+          return "Debug in Sandbox";
+        }
+        return key;
+      });
+      vi.spyOn(vsc_ui.VS_CODE_UI, "showMessage").mockResolvedValue(ok("Debug in Sandbox"));
+      const executeCommandStub = vi
+        .spyOn(vscode.commands, "executeCommand")
+        .mockResolvedValue(undefined as any);
+
+      await checkSandboxCallback();
+
+      expect(executeCommandStub.calledOnce).to.be.true;
+    });
+
+    it("does not execute command when user skips", async () => {
+      vi.spyOn(localizeUtils, "localize").mockReturnValue("Debug in Sandbox");
+      vi.spyOn(vsc_ui.VS_CODE_UI, "showMessage").mockResolvedValue(ok("Skip"));
+      const executeCommandStub = vi
+        .spyOn(vscode.commands, "executeCommand")
+        .mockResolvedValue(undefined as any);
+
+      await checkSandboxCallback();
+
+      expect(executeCommandStub.called).to.be.false;
     });
   });
 });

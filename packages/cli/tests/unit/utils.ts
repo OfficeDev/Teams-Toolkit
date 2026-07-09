@@ -2,17 +2,14 @@
 // Licensed under the MIT license.
 
 import { FxError, LogLevel } from "@microsoft/teamsfx-api";
-import chai from "chai";
-import chaiAsPromised from "chai-as-promised";
 import fs from "fs-extra";
 import os from "os";
 import path from "path";
-import { SinonSandbox } from "sinon";
 import { replaceTemplateString } from "../../src/colorize";
 import LogProvider from "../../src/commonlib/log";
 import CLITelemetry from "../../src/telemetry/cliTelemetry";
+import { chai, vi } from "vitest";
 
-chai.use(chaiAsPromised);
 export const expect = chai.expect;
 
 export const TestFolder = path.join(os.homedir(), "test-folder");
@@ -44,41 +41,47 @@ export function getDirFiles(folder: string): string[] {
 }
 
 export function mockTelemetry(
-  sandbox: SinonSandbox,
+  sandbox: any,
   events: string[],
   options: { [_: string]: string } = {}
 ) {
-  sandbox.stub(CLITelemetry, "withRootFolder").returns(CLITelemetry);
-  sandbox
-    .stub(CLITelemetry, "sendTelemetryEvent")
-    .callsFake((eventName: string, opts?: { [_: string]: string }) => {
+  vi.spyOn(CLITelemetry, "withRootFolder").mockReturnValue(CLITelemetry);
+  vi.spyOn(CLITelemetry, "sendTelemetryEvent").mockImplementation(
+    (eventName: string, opts?: { [_: string]: string }) => {
       events.push(eventName);
       Object.assign(options, opts || {});
-    });
-  sandbox
-    .stub(CLITelemetry, "sendTelemetryErrorEvent")
-    .callsFake((eventName: string, error: FxError) => {
+    }
+  );
+  vi.spyOn(CLITelemetry, "sendTelemetryErrorEvent").mockImplementation(
+    (eventName: string, error: FxError) => {
       events.push(eventName);
-    });
+    }
+  );
 }
 
-export function mockLogProvider(sandbox: SinonSandbox, messages: string[] = []) {
-  sandbox.stub(LogProvider, "necessaryLog").callsFake((level: LogLevel, message: string) => {
+export function mockLogProvider(sandbox: any, messages: string[] = []) {
+  vi.spyOn(LogProvider, "necessaryLog").mockImplementation((level: LogLevel, message: string) => {
     messages.push(message);
   });
-  sandbox.stub(LogProvider, "outputInfo").callsFake((message: string, ...args: string[]) => {
+  vi.spyOn(LogProvider, "outputInfo").mockImplementation((message: string, ...args: string[]) => {
     messages.push(replaceTemplateString(message, ...args));
   });
-  sandbox.stub(LogProvider, "outputWarning").callsFake((message: string, ...args: string[]) => {
+  vi.spyOn(LogProvider, "outputWarning").mockImplementation(
+    (message: string, ...args: string[]) => {
+      messages.push(replaceTemplateString(message, ...args));
+    }
+  );
+  vi.spyOn(LogProvider, "outputError").mockImplementation((message: string, ...args: string[]) => {
     messages.push(replaceTemplateString(message, ...args));
   });
-  sandbox.stub(LogProvider, "outputError").callsFake((message: string, ...args: string[]) => {
-    messages.push(replaceTemplateString(message, ...args));
-  });
-  sandbox.stub(LogProvider, "outputSuccess").callsFake((message: string, ...args: string[]) => {
-    messages.push(replaceTemplateString(message, ...args));
-  });
-  sandbox.stub(LogProvider, "outputDetails").callsFake((message: string, ...args: string[]) => {
-    messages.push(replaceTemplateString(message, ...args));
-  });
+  vi.spyOn(LogProvider, "outputSuccess").mockImplementation(
+    (message: string, ...args: string[]) => {
+      messages.push(replaceTemplateString(message, ...args));
+    }
+  );
+  vi.spyOn(LogProvider, "outputDetails").mockImplementation(
+    (message: string, ...args: string[]) => {
+      messages.push(replaceTemplateString(message, ...args));
+    }
+  );
 }

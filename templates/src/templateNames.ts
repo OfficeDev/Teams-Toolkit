@@ -16,9 +16,6 @@ export enum TemplateNames {
   DeclarativeAgentWithActionFromMCP = "declarative-agent-with-action-from-mcp", // handled by DeclarativeAgentGenerator
   DeclarativeAgentWithSkill = "declarative-agent-with-skill", // handled by DeclarativeAgentGenerator
 
-  DeclarativeAgentMetaOSNewProject = "declarative-agent-meta-os-new-project", // handled by OfficeAddinGeneratorNew
-  DeclarativeAgentMetaOSUpgradeProject = "declarative-agent-meta-os-upgrade-project", // handled by OfficeAddinGeneratorNew
-
   // custom engine agent
   BasicCustomEngineAgent = "basic-custom-engine-agent",
   WeatherAgent = "weather-agent",
@@ -78,6 +75,9 @@ export enum TemplateNames {
   FoundryAgent = "foundry-agent-to-m365",
   FoundryProxyAgent = "foundry-proxy-agent",
 
+  // blank
+  BlankApp = "blank-app",
+
   // openplugin import — baseline files scaffolded by 'atk import openplugin'
   OpenPluginImport = "open-plugin-import",
 }
@@ -111,4 +111,7 @@ export enum TemplateAlias {
 
   // messaging extension
   DefaultMessageExtension = "message-extension",
+
+  // blank
+  BlankApp = "blank",
 }

@@ -76,9 +76,11 @@
         <article class="vscode-flow-card" data-kind="action" aria-labelledby="auth-type-title">
           <h3 id="auth-type-title">6. Select Authentication Type <span class="vscode-flow-card__hint">only when MCP server requires auth</span></h3>
           <vscode-single-select title="Select Authentication Type" placeholder="Type to filter authentication types">
-            <vscode-option label="OAuth (with static registration)" selected></vscode-option>
-            <vscode-option label="Entra SSO"></vscode-option>
+            <vscode-option label="OAuth (with dynamic registration)" description="MCP server registers a client at runtime; no extra details needed."></vscode-option>
+            <vscode-option label="OAuth (with static registration)" description="Use a pre-registered OAuth client. The toolkit will ask for client id, client secret, and optional scopes." selected></vscode-option>
+            <vscode-option label="Entra SSO" description="Use a Microsoft Entra app for single sign-on. The toolkit will ask for the Entra app client id."></vscode-option>
           </vscode-single-select>
+          <p class="caption"><code>OAuth (with dynamic registration)</code> is shown only when <code>TEAMSFX_MCP_FOR_DA_DCR</code> is enabled.</p>
         </article>
 
         <article class="vscode-flow-card" data-kind="outcome" data-severity="success" aria-labelledby="success-state-title">
@@ -115,7 +117,7 @@
           <ul class="vscode-flow-card__note">
             <li><code>appPackage/&lt;chosen action manifest&gt;.json</code> &mdash; created when step 3 picks <code>Create a new ai-plugin.json</code> (name from step 4), modified otherwise. Operations from step 5 are written under <code>functions</code> and referenced from the MCP server runtime's <code>run_for_functions</code>; the runtime's <code>auth</code> block is written when step 6 selects an authentication type.</li>
             <li><code>appPackage/declarativeAgent.json</code> &mdash; modified only when a new manifest was created in step 3. A new entry is appended to <code>actions</code> with a non-colliding <code>id</code> (<code>action</code>, <code>action_2</code>, ...) and <code>file</code> set to the new manifest's basename.</li>
-            <li><code>m365agents.yml</code> &mdash; modified only when an authentication type is selected and the matching registration step is not already present. The injected step shape and ordering match <a href="create-da-with-mcp-server.html">SCN-DA-CREATE-WITH-MCP-SERVER</a> and <a href="add-mcp-action-to-da.html">SCN-DA-ADD-MCP-ACTION-TO-DA</a>.</li>
+            <li><code>m365agents.yml</code> &mdash; modified only when an authentication type is selected and the matching registration step is not already present. Static OAuth and Entra SSO inject <code>oauth/register</code>; dynamic OAuth injects <code>dcr/register</code>. The injected step shape and ordering match <a href="create-da-with-mcp-server.html">SCN-DA-CREATE-WITH-MCP-SERVER</a> and <a href="add-mcp-action-to-da.html">SCN-DA-ADD-MCP-ACTION-TO-DA</a>.</li>
           </ul>
         </article>
 
@@ -135,7 +137,7 @@
 
         <article class="vscode-flow-card" data-kind="note" aria-labelledby="outputs-env-title">
           <h3 id="outputs-env-title">Environment and secret writes</h3>
-          <p class="vscode-flow-card__note">The OAuth registration step injected into <code>m365agents.yml</code> reserves a configuration id that is written into <code>env/.env.*</code> when the provision lifecycle runs. This scenario does not write to <code>env/.env.*</code> at picker time; auth secret collection in VS Code follows the convention defined in <a href="create-da-with-mcp-server.html">SCN-DA-CREATE-WITH-MCP-SERVER</a> and <a href="add-mcp-action-to-da.html">SCN-DA-ADD-MCP-ACTION-TO-DA</a>.</p>
+          <p class="vscode-flow-card__note">The <code>oauth/register</code> or <code>dcr/register</code> step injected into <code>m365agents.yml</code> reserves a configuration id that is written into <code>env/.env.*</code> when the provision lifecycle runs. This scenario does not write to <code>env/.env.*</code> at picker time; auth secret collection in VS Code follows the convention defined in <a href="create-da-with-mcp-server.html">SCN-DA-CREATE-WITH-MCP-SERVER</a> and <a href="add-mcp-action-to-da.html">SCN-DA-ADD-MCP-ACTION-TO-DA</a>.</p>
         </article>
 
         <article class="vscode-flow-card" data-kind="note" aria-labelledby="outputs-external-title">

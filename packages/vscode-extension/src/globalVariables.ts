@@ -5,16 +5,16 @@ import fs from "fs-extra";
 import path from "path";
 import * as vscode from "vscode";
 
-import { UserState } from "./constants";
-import {
-  FxCore,
-  isValidProject,
-  isValidOfficeAddInProject,
-  isManifestOnlyOfficeAddinProject,
-  manifestUtils,
-  copilotGptManifestUtils,
-} from "@microsoft/teamsfx-core";
 import { TeamsAppManifest, Tools } from "@microsoft/teamsfx-api";
+import {
+  copilotGptManifestUtils,
+  FxCore,
+  isManifestOnlyOfficeAddinProject,
+  isValidOfficeAddInProject,
+  isValidProject,
+  manifestUtils,
+} from "@microsoft/teamsfx-core";
+import { UserState } from "./constants";
 
 /**
  * Common variables used throughout the extension. They must be initialized in the activate() method of extension.ts
@@ -70,11 +70,12 @@ if (vscode.workspace && vscode.workspace.workspaceFolders) {
 export function initializeGlobalVariables(ctx: vscode.ExtensionContext): void {
   context = ctx;
   outputTroubleshootNotificationCount = 0;
+  const workspacePath = workspaceUri?.fsPath;
   isExistingUser = context.globalState.get<string>(UserState.IsExisting) || "no";
-  isTeamsFxProject = isValidProject(workspaceUri?.fsPath);
-  isOfficeAddInProject = isValidOfficeAddInProject(workspaceUri?.fsPath);
-  if (isOfficeAddInProject) {
-    isOfficeManifestOnlyProject = isManifestOnlyOfficeAddinProject(workspaceUri?.fsPath);
+  isTeamsFxProject = isValidProject(workspacePath);
+  isOfficeAddInProject = workspacePath ? isValidOfficeAddInProject(workspacePath) : false;
+  if (isOfficeAddInProject && workspacePath) {
+    isOfficeManifestOnlyProject = isManifestOnlyOfficeAddinProject(workspacePath);
   }
   // Default Extension log path
   // eslint-disable-next-line no-secrets/no-secrets
@@ -111,18 +112,53 @@ export function checkIsMetaOSAddinProject(directory: string): boolean {
 }
 
 export function checkIsSPFx(directory: string): boolean {
-  const files = fs.readdirSync(directory);
-  for (const file of files) {
-    if (file === ".yo-rc.json") {
-      const content = fs.readJsonSync(path.join(directory, file)) as Record<string, unknown>;
-      if (content["@microsoft/generator-sharepoint"]) {
-        return true;
-      }
-    } else if (fs.lstatSync(path.join(directory, file)).isDirectory()) {
-      if (checkIsSPFx(path.join(directory, file))) return true;
-    }
+  const root = path.parse(directory).root;
+  if (!directory || directory === root) {
+    return false;
   }
-  return false;
+
+  const visited = new Set<string>();
+  const maxDepth = 6;
+
+  const check = (currentDir: string, depth: number): boolean => {
+    if (depth > maxDepth || visited.has(currentDir)) {
+      return false;
+    }
+    visited.add(currentDir);
+
+    let files: string[] = [];
+    try {
+      files = fs.readdirSync(currentDir);
+    } catch {
+      return false;
+    }
+
+    for (const file of files) {
+      if (file === ".yo-rc.json") {
+        try {
+          const content = fs.readJsonSync(path.join(currentDir, file)) as Record<string, unknown>;
+          if (content["@microsoft/generator-sharepoint"]) {
+            return true;
+          }
+        } catch {
+          continue;
+        }
+      } else {
+        const childPath = path.join(currentDir, file);
+        try {
+          if (fs.lstatSync(childPath).isDirectory()) {
+            if (check(childPath, depth + 1)) return true;
+          }
+        } catch {
+          continue;
+        }
+      }
+    }
+
+    return false;
+  };
+
+  return check(directory, 0);
 }
 
 export function checkIsDeclarativeCopilotApp(directory: string): boolean {

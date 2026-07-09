@@ -1,0 +1,19 @@
+{
+  "$schema": "../../schema/descriptor.schema.json",
+  "id": "office-addin-wxpo-taskpane",
+  "name": "Office Task Pane Add-in",
+  "languages": ["typescript"],
+  "minEngineVersion": "5.20.0",
+  "spec": "docs/03-specs/scenarios/office/create-wxpo-taskpane.md",
+  "requiresNetwork": false,
+
+  "optionsSchema": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+
+  "replaceMap": [
+    { "var": "SafeProjectNameLowerCase", "expr": "safeProjectNameLowerCase(appName)" }
+  ]
+}

@@ -12,20 +12,18 @@ import {
   UserError,
 } from "@microsoft/teamsfx-api";
 import AdmZip from "adm-zip";
-import chai from "chai";
 import fs from "fs-extra";
 import mockedEnv, { RestoreFn } from "mocked-env";
 import * as path from "path";
-import * as sinon from "sinon";
+import { chai, vi } from "vitest";
 import { featureFlagManager, FeatureFlagName } from "../../../../src/common/featureFlags";
 import { DriverContext } from "../../../../src/component/driver/interface/commonArgs";
-import {
-  createAppPackageDeps,
-  CreateAppPackageDriver,
-} from "../../../../src/component/driver/teamsApp/createAppPackage";
+import { CreateAppPackageDriver } from "../../../../src/component/driver/teamsApp/createAppPackage";
 import { CreateAppPackageArgs } from "../../../../src/component/driver/teamsApp/interfaces/CreateAppPackageArgs";
 import { copilotGptManifestUtils } from "../../../../src/component/driver/teamsApp/utils/CopilotGptManifestUtils";
 import { manifestUtils } from "../../../../src/component/driver/teamsApp/utils/ManifestUtils";
+import * as driverUtils from "../../../../src/component/driver/util/utils";
+import * as envFunctionUtils from "../../../../src/component/utils/envFunctionUtils";
 import { ManifestType } from "../../../../src/component/utils/envFunctionUtils";
 import { FileNotFoundError, JSONSyntaxError } from "../../../../src/error/common";
 import {
@@ -57,7 +55,8 @@ describe("teamsApp/createAppPackage", async () => {
   });
 
   afterEach(() => {
-    sinon.restore();
+    vi.restoreAllMocks();
+    vi.restoreAllMocks();
     if (mockedEnvRestore) {
       mockedEnvRestore();
     }
@@ -93,12 +92,12 @@ describe("teamsApp/createAppPackage", async () => {
         ],
       },
     } as TeamsManifest;
-    sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-    sinon.stub(fs, "chmod").callsFake(async () => {});
-    sinon.stub(fs, "existsSync").returns(true);
-    sinon.stub(fs, "pathExists").resolves(true);
-    sinon.stub(createAppPackageDeps, "updateVersionForTeamsAppYamlFile").resolves();
-    const writeFileStub = sinon.stub(fs, "writeFile").callsFake(async () => {});
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+    vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+    vi.spyOn(fs, "existsSync").mockReturnValue(true);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(driverUtils, "updateVersionForTeamsAppYamlFile").mockResolvedValue();
+    const writeFileStub = vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
 
     const driverContext: any = {
       m365TokenProvider: new MockedM365Provider(),
@@ -147,18 +146,18 @@ describe("teamsApp/createAppPackage", async () => {
         ],
       },
     } as TeamsManifest;
-    sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-    sinon.stub(fs, "chmod").callsFake(async () => {});
-    sinon.stub(fs, "existsSync").returns(true);
-    sinon.stub(fs, "pathExists").callsFake((filePath) => {
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+    vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+    vi.spyOn(fs, "existsSync").mockReturnValue(true);
+    vi.spyOn(fs, "pathExists").mockImplementation((filePath) => {
       if (filePath.includes("adaptiveCards") && !filePath.includes(".generated")) {
         return false;
       } else {
         return true;
       }
     });
-    sinon.stub(createAppPackageDeps, "updateVersionForTeamsAppYamlFile").resolves();
-    const writeFileStub = sinon.stub(fs, "writeFile").callsFake(async () => {});
+    vi.spyOn(driverUtils, "updateVersionForTeamsAppYamlFile").mockResolvedValue();
+    const writeFileStub = vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
 
     const driverContext: any = {
       m365TokenProvider: new MockedM365Provider(),
@@ -183,7 +182,7 @@ describe("teamsApp/createAppPackage", async () => {
       outputZipPath: "fakePath",
       outputJsonPath: "fakePath",
     };
-    sinon.stub(manifestUtils, "getManifestV3").resolves(
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(
       ok({
         manifestVersion: "1.0",
         icons: {
@@ -192,7 +191,7 @@ describe("teamsApp/createAppPackage", async () => {
         },
       } as TeamsManifest)
     );
-    sinon.stub(fs, "pathExists").onFirstCall().resolves(false);
+    vi.spyOn(fs, "pathExists").mockResolvedValueOnce(false);
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
     chai.assert(result.isErr());
     if (result.isErr()) {
@@ -206,7 +205,7 @@ describe("teamsApp/createAppPackage", async () => {
       outputZipPath: "fakePath",
       outputJsonPath: "fakePath",
     };
-    sinon.stub(manifestUtils, "getManifestV3").resolves(
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(
       ok({
         manifestVersion: "1.0",
         icons: {
@@ -215,7 +214,7 @@ describe("teamsApp/createAppPackage", async () => {
         },
       } as TeamsManifest)
     );
-    sinon.stub(fs, "pathExists").onFirstCall().resolves(true).onSecondCall().resolves(false);
+    vi.spyOn(fs, "pathExists").mockResolvedValueOnce(true).mockResolvedValueOnce(false);
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
     chai.assert(result.isErr());
     if (result.isErr()) {
@@ -240,15 +239,11 @@ describe("teamsApp/createAppPackage", async () => {
         defaultLanguageTag: "en",
       },
     } as TeamsManifest;
-    sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-    sinon
-      .stub(fs, "pathExists")
-      .onFirstCall()
-      .resolves(true)
-      .onSecondCall()
-      .resolves(true)
-      .onThirdCall()
-      .resolves(false);
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+    vi.spyOn(fs, "pathExists")
+      .mockResolvedValueOnce(true)
+      .mockResolvedValueOnce(true)
+      .mockResolvedValueOnce(false);
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
     chai.assert(result.isErr());
     if (result.isErr()) {
@@ -270,8 +265,8 @@ describe("teamsApp/createAppPackage", async () => {
         color32x32: "notExist.png",
       },
     } as TeamsManifest;
-    sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-    sinon.stub(fs, "pathExists").callsFake((filePath) => {
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+    vi.spyOn(fs, "pathExists").mockImplementation((filePath) => {
       if (filePath.includes("notExist.png")) {
         return false;
       }
@@ -315,9 +310,9 @@ describe("teamsApp/createAppPackage", async () => {
         outline: "resources/outline.png",
       },
     } as TeamsManifest;
-    sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
 
-    sinon.stub(fs, "pathExists").callsFake((filePath) => {
+    vi.spyOn(fs, "pathExists").mockImplementation((filePath) => {
       if (filePath.includes("openai.yml")) {
         return false;
       } else {
@@ -340,7 +335,7 @@ describe("teamsApp/createAppPackage", async () => {
       outputJsonPath:
         "./tests/plugins/resource/appstudio/resources-multi-env/build/appPackage/manifest.dev.json",
     };
-    sinon.stub(fs, "pathExists").callsFake((filePath) => {
+    vi.spyOn(fs, "pathExists").mockImplementation((filePath) => {
       if (filePath.includes("repairs.json")) {
         return false;
       } else {
@@ -369,7 +364,7 @@ describe("teamsApp/createAppPackage", async () => {
         outline: "resources/outline.png",
       },
     } as TeamsManifest;
-    sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
 
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
     chai.assert(result.isErr());
@@ -387,7 +382,7 @@ describe("teamsApp/createAppPackage", async () => {
       outputJsonPath:
         "./tests/plugins/resource/appstudio/resources-multi-env/build/appPackage/manifest.dev.json",
     };
-    sinon.stub(fs, "pathExists").callsFake((filePath) => {
+    vi.spyOn(fs, "pathExists").mockImplementation((filePath) => {
       if (filePath.includes("fake.json")) {
         return false;
       } else {
@@ -407,7 +402,7 @@ describe("teamsApp/createAppPackage", async () => {
         defaultLanguageFile: "fake.json",
       },
     } as TeamsManifest;
-    sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
 
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
     chai.assert(result.isErr());
@@ -469,14 +464,14 @@ describe("teamsApp/createAppPackage", async () => {
         outline: "resources/outline.png",
       },
     } as TeamsManifest;
-    sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
 
-    sinon.stub(fs, "chmod").callsFake(async () => {});
-    const writeFileStub = sinon.stub(fs, "writeFile").callsFake(async () => {});
+    vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+    const writeFileStub = vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
 
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
     chai.assert(result.isOk());
-    chai.assert(writeFileStub.calledOnce);
+    chai.assert(writeFileStub.mock.calls.length === 1);
     if (await fs.pathExists(args.outputZipPath)) {
       const zip = new AdmZip(args.outputZipPath);
 
@@ -543,14 +538,14 @@ describe("teamsApp/createAppPackage", async () => {
         outline: "resources/outline.png",
       },
     } as TeamsManifest;
-    sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
 
-    sinon.stub(fs, "chmod").callsFake(async () => {});
-    const writeFileStub = sinon.stub(fs, "writeFile").callsFake(async () => {});
+    vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+    const writeFileStub = vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
 
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
     chai.assert(result.isOk());
-    chai.assert(writeFileStub.calledOnce);
+    chai.assert(writeFileStub.mock.calls.length === 1);
     if (await fs.pathExists(args.outputZipPath)) {
       const zip = new AdmZip(args.outputZipPath);
 
@@ -616,10 +611,10 @@ describe("teamsApp/createAppPackage", async () => {
         outline: "resources/outline.png",
       },
     } as TeamsManifest;
-    sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
 
-    sinon.stub(fs, "chmod").callsFake(async () => {});
-    sinon.stub(fs, "writeFile").callsFake(async () => {});
+    vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+    vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
 
     delete process.env[openapiServerPlaceholder];
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
@@ -673,10 +668,10 @@ describe("teamsApp/createAppPackage", async () => {
       color: "resources/color.png",
       outline: "resources/outline.png",
     };
-    sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
 
-    sinon.stub(fs, "chmod").callsFake(async () => {});
-    sinon.stub(fs, "writeFile").callsFake(async () => {});
+    vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+    vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
 
     const result = (await teamsAppDriver.execute(args, mockedCliDriverContext)).result;
     chai.assert(result.isOk());
@@ -725,10 +720,10 @@ describe("teamsApp/createAppPackage", async () => {
         },
       ],
     };
-    sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
 
-    sinon.stub(fs, "chmod").callsFake(async () => {});
-    sinon.stub(fs, "writeFile").callsFake(async () => {});
+    vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+    vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
 
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
     chai.assert(result.isOk());
@@ -779,10 +774,10 @@ describe("teamsApp/createAppPackage", async () => {
         },
       ],
     };
-    sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
 
-    sinon.stub(fs, "chmod").callsFake(async () => {});
-    sinon.stub(fs, "writeFile").callsFake(async () => {});
+    vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+    vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
 
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
     chai.assert(result.isOk());
@@ -818,9 +813,9 @@ describe("teamsApp/createAppPackage", async () => {
       color: "resources/color.png",
       outline: "resources/outline.png",
     };
-    sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-    sinon.stub(fs, "chmod").callsFake(async () => {});
-    const writeFileStub = sinon.stub(fs, "writeFile").callsFake(async () => {});
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+    vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+    const writeFileStub = vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
 
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
     if (result.isErr()) {
@@ -829,7 +824,7 @@ describe("teamsApp/createAppPackage", async () => {
     chai.assert.isTrue(result.isOk());
     const outputExist = await fs.pathExists(args.outputZipPath);
     chai.assert.isTrue(outputExist);
-    chai.assert.isTrue(writeFileStub.calledTwice);
+    chai.assert.isTrue(writeFileStub.mock.calls.length === 2);
     if (outputExist) {
       const zip = new AdmZip(args.outputZipPath);
       const openapiContent = "";
@@ -874,9 +869,9 @@ describe("teamsApp/createAppPackage", async () => {
       color: "resources/color.png",
       outline: "resources/outline.png",
     };
-    sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-    sinon.stub(fs, "chmod").callsFake(async () => {});
-    const writeFileStub = sinon.stub(fs, "writeFile").callsFake(async () => {});
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+    vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+    const writeFileStub = vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
 
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
     if (result.isErr()) {
@@ -885,7 +880,7 @@ describe("teamsApp/createAppPackage", async () => {
     chai.assert.isTrue(result.isOk());
     const outputExist = await fs.pathExists(args.outputZipPath);
     chai.assert.isTrue(outputExist);
-    chai.assert.isTrue(writeFileStub.calledThrice);
+    chai.assert.isTrue(writeFileStub.mock.calls.length === 3);
     if (outputExist) {
       const zip = new AdmZip(args.outputZipPath);
       let aiPluginContent = "";
@@ -951,28 +946,26 @@ describe("teamsApp/createAppPackage", async () => {
       outline: "resources/outline.png",
     };
 
-    sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-    sinon.stub(fs, "chmod").callsFake(async () => {});
-    sinon.stub(fs, "writeFile").callsFake(async () => {});
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+    vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+    vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
 
-    sinon
-      .stub(createAppPackageDeps, "expandVariableWithFunction")
-      .callsFake(
-        async (
-          content: string,
-          ctx: DriverContext,
-          envs: { [key in string]: string } | undefined,
-          isJson: boolean,
-          manifestType: ManifestType,
-          fromPath: string
-        ) => {
-          if (fromPath.endsWith("ai-plugin-with-underscore-namespace.json")) {
-            return err(new UserError("source", "name", "message"));
-          } else {
-            return ok(content);
-          }
+    vi.spyOn(envFunctionUtils, "expandVariableWithFunction").mockImplementation(
+      async (
+        content: string,
+        ctx: DriverContext,
+        envs: { [key in string]: string } | undefined,
+        isJson: boolean,
+        manifestType: ManifestType,
+        fromPath: string
+      ) => {
+        if (fromPath.endsWith("ai-plugin-with-underscore-namespace.json")) {
+          return err(new UserError("source", "name", "message"));
+        } else {
+          return ok(content);
         }
-      );
+      }
+    );
 
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
     chai.assert.isTrue(result.isErr());
@@ -1004,9 +997,9 @@ describe("teamsApp/createAppPackage", async () => {
       color: "resources/color.png",
       outline: "resources/outline.png",
     };
-    sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-    sinon.stub(fs, "chmod").callsFake(async () => {});
-    const writeFileStub = sinon.stub(fs, "writeFile").callsFake(async () => {});
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+    vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+    const writeFileStub = vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
 
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
     if (result.isErr()) {
@@ -1015,7 +1008,7 @@ describe("teamsApp/createAppPackage", async () => {
     chai.assert.isTrue(result.isOk());
     const outputExist = await fs.pathExists(args.outputZipPath);
     chai.assert.isTrue(outputExist);
-    chai.assert.isTrue(writeFileStub.calledThrice);
+    chai.assert.isTrue(writeFileStub.mock.calls.length === 3);
     if (outputExist) {
       const zip = new AdmZip(args.outputZipPath);
       let aiPluginContent = "";
@@ -1050,6 +1043,11 @@ describe("teamsApp/createAppPackage", async () => {
       );
       chai.assert(openapiContent.search("APP_NAME_SUFFIX") < 0, "APP_NAME_SUFFIX not replaced");
       chai.assert(aiPluginContent.search("file") < 0, "file not replaced");
+      const aiPlugin = JSON.parse(aiPluginContent);
+      chai.assert.isUndefined(
+        aiPlugin.functions[2].capabilities.response_semantics.static_template,
+        "invalid external adaptive card reference should not leave an empty static_template"
+      );
 
       await fs.remove(args.outputZipPath);
     }
@@ -1111,24 +1109,26 @@ describe("teamsApp/createAppPackage", async () => {
       ],
     };
 
-    sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-    sinon.stub(fs, "chmod").callsFake(async () => {});
-    sinon.stub(fs, "writeFile").callsFake(async () => {});
-    sinon.stub(copilotGptManifestUtils, "getManifest").resolves(ok(declarativeAgentManifest));
-    sinon.stub(fs, "readJSON").callsFake(async () => {
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+    vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+    vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+    vi.spyOn(copilotGptManifestUtils, "getManifest").mockResolvedValue(
+      ok(declarativeAgentManifest)
+    );
+    vi.spyOn(fs, "readJSON").mockImplementation(async () => {
       return mcpPluginContent;
     });
-    sinon.stub(fs, "stat").callsFake(async () => {
+    vi.spyOn(fs, "stat").mockImplementation(async () => {
       return { mode: 0o644 } as any;
     });
-    sinon.stub(fs, "readFile").callsFake((async (filePath: any, options?: any) => {
+    vi.spyOn(fs, "readFile").mockImplementation((async (filePath: any, options?: any) => {
       const content = JSON.stringify(mcpPluginContent);
       if (options === "utf8" || options?.encoding === "utf8") {
         return content;
       }
       return Buffer.from(content);
     }) as any);
-    sinon.stub(fs, "pathExists").callsFake(async (filePath: string) => {
+    vi.spyOn(fs, "pathExists").mockImplementation(async (filePath: string) => {
       if (filePath.toString().includes("mcp-tool-description.json")) {
         return false;
       }
@@ -1209,20 +1209,22 @@ describe("teamsApp/createAppPackage", async () => {
       ],
     };
 
-    sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-    sinon.stub(fs, "chmod").callsFake(async () => {});
-    sinon.stub(fs, "writeFile").callsFake(async () => {});
-    sinon.stub(copilotGptManifestUtils, "getManifest").resolves(ok(declarativeAgentManifest));
-    sinon.stub(fs, "readJSON").callsFake(async (filePath: string) => {
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+    vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+    vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+    vi.spyOn(copilotGptManifestUtils, "getManifest").mockResolvedValue(
+      ok(declarativeAgentManifest)
+    );
+    vi.spyOn(fs, "readJSON").mockImplementation(async (filePath: string) => {
       if (filePath.toString().includes("ai-plugin")) {
         return mcpPluginContent;
       }
       return mcpToolDescriptionContent;
     });
-    sinon.stub(fs, "stat").callsFake(async () => {
+    vi.spyOn(fs, "stat").mockImplementation(async () => {
       return { mode: 0o644 } as any;
     });
-    sinon.stub(fs, "readFile").callsFake((async (filePath: any, options?: any) => {
+    vi.spyOn(fs, "readFile").mockImplementation((async (filePath: any, options?: any) => {
       let content: string;
       if (filePath.toString().includes("ai-plugin")) {
         content = JSON.stringify(mcpPluginContent);
@@ -1238,17 +1240,17 @@ describe("teamsApp/createAppPackage", async () => {
       }
       return Buffer.from(content);
     }) as any);
-    sinon.stub(fs, "pathExists").resolves(true);
-    sinon.stub(fs, "realpath").callsFake(async (p: any) => p);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "realpath").mockImplementation(async (p: any) => p);
 
     // Create a new driver instance and stub addFileInZip to track calls and prevent actual file read
     const testDriver = new CreateAppPackageDriver();
     const addedFiles: string[] = [];
-    sinon
-      .stub(testDriver as any, "addFileInZip")
-      .callsFake((_zip: unknown, _zipPath: unknown, filePath: unknown) => {
+    vi.spyOn(testDriver as any, "addFileInZip").mockImplementation(
+      (_zip: unknown, _zipPath: unknown, filePath: unknown) => {
         addedFiles.push(filePath as string);
-      });
+      }
+    );
 
     const result = (await testDriver.execute(args, mockedDriverContext)).result;
     if (result.isErr()) {
@@ -1280,11 +1282,11 @@ describe("teamsApp/createAppPackage", async () => {
       color: "../color.png",
       outline: "resources/outline.png",
     };
-    sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-    sinon.stub(fs, "pathExists").callsFake(() => {
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+    vi.spyOn(fs, "pathExists").mockImplementation(() => {
       return true;
     });
-    sinon.stub(fs, "realpath").callsFake(async (p: any) => p);
+    vi.spyOn(fs, "realpath").mockImplementation(async (p: any) => p);
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
     chai.assert(result.isErr());
     if (result.isErr()) {
@@ -1309,11 +1311,11 @@ describe("teamsApp/createAppPackage", async () => {
       color: "resources/color.png",
       outline: "../outline.png",
     };
-    sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-    sinon.stub(fs, "pathExists").callsFake((filePath) => {
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+    vi.spyOn(fs, "pathExists").mockImplementation((filePath) => {
       return true;
     });
-    sinon.stub(fs, "realpath").callsFake(async (p: any) => p);
+    vi.spyOn(fs, "realpath").mockImplementation(async (p: any) => p);
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
     chai.assert(result.isErr());
     if (result.isErr()) {
@@ -1353,11 +1355,11 @@ describe("teamsApp/createAppPackage", async () => {
       outline: "resources/outline.png",
     };
 
-    sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-    sinon.stub(fs, "pathExists").callsFake((filePath) => {
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+    vi.spyOn(fs, "pathExists").mockImplementation((filePath) => {
       return true;
     });
-    sinon.stub(fs, "realpath").callsFake(async (p: any) => p);
+    vi.spyOn(fs, "realpath").mockImplementation(async (p: any) => p);
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
     chai.assert(result.isErr());
     if (result.isErr()) {
@@ -1397,11 +1399,11 @@ describe("teamsApp/createAppPackage", async () => {
       outline: "resources/outline.png",
     };
 
-    sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-    sinon.stub(fs, "pathExists").callsFake((filePath) => {
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+    vi.spyOn(fs, "pathExists").mockImplementation((filePath) => {
       return true;
     });
-    sinon.stub(fs, "realpath").callsFake(async (p: any) => p);
+    vi.spyOn(fs, "realpath").mockImplementation(async (p: any) => p);
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
     chai.assert(result.isErr());
     if (result.isErr()) {
@@ -1426,10 +1428,10 @@ describe("teamsApp/createAppPackage", async () => {
       color: "symlinked/color.png",
       outline: "resources/outline.png",
     };
-    sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-    sinon.stub(fs, "pathExists").resolves(true);
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     const appDir = path.resolve(path.dirname(args.manifestPath));
-    sinon.stub(fs, "realpath").callsFake(async (p: any) => {
+    vi.spyOn(fs, "realpath").mockImplementation(async (p: any) => {
       const resolved = String(p);
       if (resolved.includes("symlinked")) {
         return path.resolve("/outside-secrets/color.png");
@@ -1468,9 +1470,9 @@ describe("teamsApp/createAppPackage", async () => {
       color: "resources/color.png",
       outline: "resources/outline.png",
     };
-    sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-    sinon.stub(fs, "pathExists").resolves(true);
-    sinon.stub(fs, "realpath").callsFake(async (p: any) => {
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "realpath").mockImplementation(async (p: any) => {
       const resolved = String(p);
       if (resolved.includes("api")) {
         return path.resolve("/outside-secrets/openapi.yaml");
@@ -1502,16 +1504,16 @@ describe("teamsApp/createAppPackage", async () => {
       color: "resources/color.png",
       outline: "resources/outline.png",
     };
-    sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-    sinon.stub(fs, "pathExists").resolves(true);
-    sinon.stub(fs, "realpath").callsFake(async (p: any) => {
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "realpath").mockImplementation(async (p: any) => {
       const resolved = String(p);
       if (resolved.includes("skills")) {
         return path.resolve("/outside-secrets/skills");
       }
       return resolved;
     });
-    sinon.stub(featureFlagManager, "getBooleanValue").callsFake((flag: any) => {
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag: any) => {
       if (flag.name === "TEAMSFX_AGENT_SKILLS") return true;
       return false;
     });
@@ -1523,8 +1525,8 @@ describe("teamsApp/createAppPackage", async () => {
   });
 
   it("addLocalFolderRecursive skips symlink entries", async () => {
-    sinon.stub(fs, "realpath").callsFake(async (p: any) => p);
-    sinon.stub(fs, "readdir").callsFake(async () => {
+    vi.spyOn(fs, "realpath").mockImplementation(async (p: any) => p);
+    vi.spyOn(fs, "readdir").mockImplementation(async () => {
       return [
         {
           name: "symlinked-file.txt",
@@ -1566,14 +1568,14 @@ describe("teamsApp/createAppPackage", async () => {
   });
 
   it("addLocalFolderRecursive skips files whose realpath is outside app directory", async () => {
-    sinon.stub(fs, "realpath").callsFake(async (p: any) => {
+    vi.spyOn(fs, "realpath").mockImplementation(async (p: any) => {
       const resolved = String(p);
       if (resolved.includes("leaked-file")) {
         return path.resolve("/outside-secrets/leaked-file.txt");
       }
       return resolved;
     });
-    sinon.stub(fs, "readdir").callsFake(async () => {
+    vi.spyOn(fs, "readdir").mockImplementation(async () => {
       return [
         {
           name: "leaked-file.txt",
@@ -1630,16 +1632,16 @@ describe("teamsApp/createAppPackage", async () => {
         color: "resources/color.png",
         outline: "resources/outline.png",
       };
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-      sinon.stub(fs, "chmod").callsFake(async () => {});
-      const writeFileStub = sinon.stub(fs, "writeFile").callsFake(async () => {});
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+      vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+      const writeFileStub = vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
 
       const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
       if (result.isErr()) {
         console.log(result.error);
       }
       chai.assert.isTrue(result.isOk());
-      chai.assert.isTrue(writeFileStub.calledOnce);
+      chai.assert.isTrue(writeFileStub.mock.calls.length === 1);
       const outputExist = await fs.pathExists(args.outputZipPath);
       chai.assert.isTrue(outputExist);
       if (outputExist) {
@@ -1698,16 +1700,16 @@ describe("teamsApp/createAppPackage", async () => {
         color: "resources/color.png",
         outline: "resources/outline.png",
       };
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-      sinon.stub(fs, "chmod").callsFake(async () => {});
-      const writeFileStub = sinon.stub(fs, "writeFile").callsFake(async () => {});
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+      vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+      const writeFileStub = vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
 
       const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
       if (result.isErr()) {
         console.log(result.error);
       }
       chai.assert.isTrue(result.isOk());
-      chai.assert.isTrue(writeFileStub.calledThrice);
+      chai.assert.isTrue(writeFileStub.mock.calls.length === 3);
       const outputExist = await fs.pathExists(args.outputZipPath);
       chai.assert.isTrue(outputExist);
       if (outputExist) {
@@ -1767,10 +1769,10 @@ describe("teamsApp/createAppPackage", async () => {
         color: "resources/color.png",
         outline: "resources/outline.png",
       };
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-      sinon.stub(fs, "chmod").callsFake(async () => {});
-      sinon.stub(fs, "writeFile").callsFake(async () => {});
-      sinon.stub(fs, "pathExists").callsFake(async (path: string) => {
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+      vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+      vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+      vi.spyOn(fs, "pathExists").mockImplementation(async (path: string) => {
         if (path.endsWith("gpt.json")) {
           return false;
         } else {
@@ -1813,10 +1815,10 @@ describe("teamsApp/createAppPackage", async () => {
         color: "resources/color.png",
         outline: "resources/outline.png",
       };
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-      sinon.stub(fs, "chmod").callsFake(async () => {});
-      sinon.stub(fs, "writeFile").callsFake(async () => {});
-      sinon.stub(fs, "readFile").callsFake(async (file: fs.PathLike | number) => {
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+      vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+      vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+      vi.spyOn(fs, "readFile").mockImplementation(async (file: fs.PathLike | number) => {
         if (file.toString().includes("gpt.json")) {
           return "" as any;
         } else {
@@ -1841,7 +1843,7 @@ describe("teamsApp/createAppPackage", async () => {
         outputJsonPath:
           "./tests/plugins/resource/appstudio/resources-multi-env/build/appPackage/manifest.dev.json",
       };
-      sinon.stub(fs, "pathExists").callsFake((filePath) => {
+      vi.spyOn(fs, "pathExists").mockImplementation((filePath) => {
         return true;
       });
 
@@ -1860,9 +1862,9 @@ describe("teamsApp/createAppPackage", async () => {
           },
         ],
       };
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-      sinon.stub(fs, "chmod").callsFake(async () => {});
-      sinon.stub(fs, "writeFile").callsFake(async () => {});
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+      vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+      vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
 
       delete process.env["APP_NAME_SUFFIX"];
       const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
@@ -1899,9 +1901,9 @@ describe("teamsApp/createAppPackage", async () => {
         color: "resources/color.png",
         outline: "resources/outline.png",
       };
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-      sinon.stub(fs, "chmod").callsFake(async () => {});
-      sinon.stub(fs, "writeFile").callsFake(async () => {});
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+      vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+      vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
       delete process.env[openapiServerPlaceholder];
 
       const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
@@ -1942,11 +1944,11 @@ describe("teamsApp/createAppPackage", async () => {
         color: "resources/color.png",
         outline: "resources/outline.png",
       };
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-      sinon.stub(fs, "pathExists").resolves(true);
-      sinon.stub(fs, "chmod").callsFake(async () => {});
-      sinon.stub(fs, "realpath").callsFake(async (p: any) => p);
-      const writeFileStub = sinon.stub(fs, "writeFile").callsFake(async () => {});
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+      vi.spyOn(fs, "realpath").mockImplementation(async (p: any) => p);
+      const writeFileStub = vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
 
       const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
       if (result.isErr()) {
@@ -1980,14 +1982,14 @@ describe("teamsApp/createAppPackage", async () => {
         color: "resources/color.png",
         outline: "resources/outline.png",
       };
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-      sinon.stub(fs, "pathExists").resolves(true);
-      sinon.stub(fs, "chmod").callsFake(async () => {});
-      sinon.stub(fs, "writeFile").callsFake(async () => {});
-      sinon.stub(fs, "realpath").callsFake(async (p: any) => p);
-      sinon
-        .stub(manifestUtils, "resolveLocFile")
-        .resolves(err(new FileNotFoundError("teamsapp", "faked_loc_path")));
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+      vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+      vi.spyOn(fs, "realpath").mockImplementation(async (p: any) => p);
+      vi.spyOn(manifestUtils, "resolveLocFile").mockResolvedValue(
+        err(new FileNotFoundError("teamsapp", "faked_loc_path"))
+      );
 
       const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
       if (result.isErr()) {
@@ -2021,12 +2023,12 @@ describe("teamsApp/createAppPackage", async () => {
         color: "resources/color.png",
         outline: "resources/outline.png",
       };
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-      sinon.stub(fs, "pathExists").resolves(true);
-      sinon.stub(fs, "chmod").callsFake(async () => {});
-      sinon.stub(fs, "writeFile").callsFake(async () => {});
-      sinon.stub(fs, "realpath").callsFake(async (p: any) => p);
-      sinon.stub(manifestUtils, "resolveLocFile").callsFake(async (path) => {
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+      vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+      vi.spyOn(fs, "realpath").mockImplementation(async (p: any) => p);
+      vi.spyOn(manifestUtils, "resolveLocFile").mockImplementation(async (path) => {
         if (path.includes("migrate.manifest.json")) {
           return ok("{}");
         } else {
@@ -2066,11 +2068,11 @@ describe("teamsApp/createAppPackage", async () => {
         color: "resources/color.png",
         outline: "resources/outline.png",
       };
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-      sinon.stub(fs, "pathExists").resolves(true);
-      sinon.stub(fs, "chmod").callsFake(async () => {});
-      sinon.stub(fs, "realpath").callsFake(async (p: any) => p);
-      const writeFileStub = sinon.stub(fs, "writeFile").callsFake(async () => {});
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+      vi.spyOn(fs, "realpath").mockImplementation(async (p: any) => p);
+      const writeFileStub = vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
 
       const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
       if (result.isErr()) {
@@ -2118,15 +2120,15 @@ describe("teamsApp/createAppPackage", async () => {
         ],
         defaultLanguageFile: "de.json",
       };
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
 
-      sinon.stub(fs, "chmod").callsFake(async () => {});
-      const writeFileStub = sinon.stub(fs, "writeFile").callsFake(async () => {});
-      sinon.stub(manifestUtils, "resolveLocFile").resolves(ok("{}"));
+      vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+      const writeFileStub = vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+      vi.spyOn(manifestUtils, "resolveLocFile").mockResolvedValue(ok("{}"));
 
       const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
       chai.assert(result.isOk());
-      chai.assert(writeFileStub.calledOnce);
+      chai.assert(writeFileStub.mock.calls.length === 1);
       if (await fs.pathExists(args.outputZipPath)) {
         const zip = new AdmZip(args.outputZipPath);
 
@@ -2187,11 +2189,13 @@ describe("teamsApp/createAppPackage", async () => {
         ],
       } as DeclarativeCopilotManifestSchema;
 
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-      sinon.stub(fs, "chmod").callsFake(async () => {});
-      sinon.stub(fs, "writeFile").callsFake(async () => {});
-      sinon.stub(copilotGptManifestUtils, "getManifest").resolves(ok(declarativeAgentManifest));
-      sinon.stub(fs, "pathExists").callsFake(async (filePath) => {
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+      vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+      vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+      vi.spyOn(copilotGptManifestUtils, "getManifest").mockResolvedValue(
+        ok(declarativeAgentManifest)
+      );
+      vi.spyOn(fs, "pathExists").mockImplementation(async (filePath) => {
         // Return true for all required files including declarativeAgent.json, color/outline files and knowledge file.
         if (
           filePath.includes("knowledge.docx") ||
@@ -2259,11 +2263,13 @@ describe("teamsApp/createAppPackage", async () => {
         ],
       } as DeclarativeCopilotManifestSchema;
 
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-      sinon.stub(fs, "chmod").callsFake(async () => {});
-      sinon.stub(fs, "writeFile").callsFake(async () => {});
-      sinon.stub(copilotGptManifestUtils, "getManifest").resolves(ok(declarativeAgentManifest));
-      sinon.stub(fs, "pathExists").callsFake(async (filePath) => {
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+      vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+      vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+      vi.spyOn(copilotGptManifestUtils, "getManifest").mockResolvedValue(
+        ok(declarativeAgentManifest)
+      );
+      vi.spyOn(fs, "pathExists").mockImplementation(async (filePath) => {
         // Return true for all required files including declarativeAgent.json, color/outline files and knowledge file.
         if (
           filePath.includes("knowledge.docx") ||
@@ -2330,11 +2336,13 @@ describe("teamsApp/createAppPackage", async () => {
         ],
       } as DeclarativeCopilotManifestSchema;
 
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-      sinon.stub(fs, "chmod").callsFake(async () => {});
-      sinon.stub(fs, "writeFile").callsFake(async () => {});
-      sinon.stub(copilotGptManifestUtils, "getManifest").resolves(ok(declarativeAgentManifest));
-      sinon.stub(fs, "pathExists").callsFake(async (filePath) => {
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+      vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+      vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+      vi.spyOn(copilotGptManifestUtils, "getManifest").mockResolvedValue(
+        ok(declarativeAgentManifest)
+      );
+      vi.spyOn(fs, "pathExists").mockImplementation(async (filePath) => {
         // Return true for all required files including declarativeAgent.json, color/outline files.
         if (
           filePath.includes("declarativeAgent.json") ||
@@ -2397,11 +2405,13 @@ describe("teamsApp/createAppPackage", async () => {
         ],
       } as DeclarativeCopilotManifestSchema;
 
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-      sinon.stub(fs, "chmod").callsFake(async () => {});
-      sinon.stub(fs, "writeFile").callsFake(async () => {});
-      sinon.stub(copilotGptManifestUtils, "getManifest").resolves(ok(declarativeAgentManifest));
-      sinon.stub(fs, "pathExists").callsFake(async (filePath) => {
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+      vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+      vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+      vi.spyOn(copilotGptManifestUtils, "getManifest").mockResolvedValue(
+        ok(declarativeAgentManifest)
+      );
+      vi.spyOn(fs, "pathExists").mockImplementation(async (filePath) => {
         // Return true for all required files including declarativeAgent.json, color/outline files.
         if (
           filePath.includes("declarativeAgent.json") ||
@@ -2464,12 +2474,14 @@ describe("teamsApp/createAppPackage", async () => {
         ],
       } as DeclarativeCopilotManifestSchema;
 
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-      sinon.stub(fs, "chmod").callsFake(async () => {});
-      sinon.stub(fs, "writeFile").callsFake(async () => {});
-      sinon.stub(copilotGptManifestUtils, "getManifest").resolves(ok(declarativeAgentManifest));
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+      vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+      vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+      vi.spyOn(copilotGptManifestUtils, "getManifest").mockResolvedValue(
+        ok(declarativeAgentManifest)
+      );
       // Simulate missing knowledge file.
-      sinon.stub(fs, "pathExists").callsFake(async (filePath) => {
+      vi.spyOn(fs, "pathExists").mockImplementation(async (filePath) => {
         if (filePath.toString().includes("knowledgeMissing.docx")) {
           return false;
         }
@@ -2510,26 +2522,24 @@ describe("teamsApp/createAppPackage", async () => {
         outline: "resources/outline.png",
       };
 
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-      sinon.stub(fs, "chmod").callsFake(async () => {});
-      sinon.stub(fs, "writeFile").callsFake(async () => {});
-      sinon.stub(fs, "pathExists").resolves(true);
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+      vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+      vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
       // Simulate the typed converter rejecting a non-array `capabilities` field —
       // this is exactly what `readCopilotGptManifestFile` now produces for the
       // user's manifest in #15837.
-      sinon
-        .stub(copilotGptManifestUtils, "getManifest")
-        .resolves(
-          err(
-            new JSONSyntaxError(
-              "declarativeAgent.json",
-              new Error(
-                'Invalid value for key "capabilities". Expected array but got {"name":"CodeInterpreter"}'
-              ),
-              "CopilotGptManifestUtils"
-            )
+      vi.spyOn(copilotGptManifestUtils, "getManifest").mockResolvedValue(
+        err(
+          new JSONSyntaxError(
+            "declarativeAgent.json",
+            new Error(
+              'Invalid value for key "capabilities". Expected array but got {"name":"CodeInterpreter"}'
+            ),
+            "CopilotGptManifestUtils"
           )
-        );
+        )
+      );
 
       const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
 
@@ -2571,11 +2581,11 @@ describe("teamsApp/createAppPackage", async () => {
         capabilities: [],
       } as DeclarativeCopilotManifestSchema;
 
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-      sinon.stub(fs, "chmod").callsFake(async () => {});
-      sinon.stub(fs, "writeFile").callsFake(async () => {});
-      sinon.stub(fs, "pathExists").resolves(true);
-      sinon.stub(copilotGptManifestUtils, "getManifest").resolves(ok(malformedManifest));
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+      vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+      vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(copilotGptManifestUtils, "getManifest").mockResolvedValue(ok(malformedManifest));
 
       const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
       chai.assert.isTrue(result.isErr(), "build should reject non-array actions");
@@ -2621,11 +2631,11 @@ describe("teamsApp/createAppPackage", async () => {
         capabilities: { name: "CodeInterpreter" } as any,
       } as DeclarativeCopilotManifestSchema;
 
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-      sinon.stub(fs, "chmod").callsFake(async () => {});
-      sinon.stub(fs, "writeFile").callsFake(async () => {});
-      sinon.stub(fs, "pathExists").resolves(true);
-      sinon.stub(copilotGptManifestUtils, "getManifest").resolves(ok(malformedManifest));
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+      vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+      vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(copilotGptManifestUtils, "getManifest").mockResolvedValue(ok(malformedManifest));
 
       // Must reject non-array capabilities with a descriptive error, not crash
       // with a raw TypeError (#15837).
@@ -2652,7 +2662,7 @@ describe("teamsApp/createAppPackage", async () => {
     };
 
     beforeEach(() => {
-      sinon.stub(featureFlagManager, "getBooleanValue").callsFake((flag: any) => {
+      vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag: any) => {
         if (flag.name === FeatureFlagName.AgentSkillsManifest) return true;
         return false;
       });
@@ -2681,11 +2691,13 @@ describe("teamsApp/createAppPackage", async () => {
         agent_skills: [{ folder: "skills/skill1" }],
       } as any;
 
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-      sinon.stub(fs, "chmod").callsFake(async () => {});
-      sinon.stub(fs, "writeFile").callsFake(async () => {});
-      sinon.stub(copilotGptManifestUtils, "getManifest").resolves(ok(declarativeAgentManifest));
-      sinon.stub(fs, "pathExists").resolves(true);
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+      vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+      vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+      vi.spyOn(copilotGptManifestUtils, "getManifest").mockResolvedValue(
+        ok(declarativeAgentManifest)
+      );
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
 
       const result = (await teamsAppDriver.execute(skillArgs, mockedDriverContext)).result;
       chai.assert.isTrue(result.isOk());
@@ -2709,11 +2721,13 @@ describe("teamsApp/createAppPackage", async () => {
         agent_skills: [{ folder: "skills/nonexistent" }],
       } as any;
 
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-      sinon.stub(fs, "chmod").callsFake(async () => {});
-      sinon.stub(fs, "writeFile").callsFake(async () => {});
-      sinon.stub(copilotGptManifestUtils, "getManifest").resolves(ok(declarativeAgentManifest));
-      sinon.stub(fs, "pathExists").callsFake(async (filePath) => {
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+      vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+      vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+      vi.spyOn(copilotGptManifestUtils, "getManifest").mockResolvedValue(
+        ok(declarativeAgentManifest)
+      );
+      vi.spyOn(fs, "pathExists").mockImplementation(async (filePath) => {
         if (filePath.toString().includes("nonexistent")) {
           return false;
         }
@@ -2736,11 +2750,13 @@ describe("teamsApp/createAppPackage", async () => {
         agent_skills: [{ folder: "skills/skill1" }],
       } as any;
 
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-      sinon.stub(fs, "chmod").callsFake(async () => {});
-      sinon.stub(fs, "writeFile").callsFake(async () => {});
-      sinon.stub(copilotGptManifestUtils, "getManifest").resolves(ok(declarativeAgentManifest));
-      sinon.stub(fs, "pathExists").callsFake(async (filePath) => {
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+      vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+      vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+      vi.spyOn(copilotGptManifestUtils, "getManifest").mockResolvedValue(
+        ok(declarativeAgentManifest)
+      );
+      vi.spyOn(fs, "pathExists").mockImplementation(async (filePath) => {
         if (filePath.toString().includes("SKILL.md")) {
           return false;
         }
@@ -2764,12 +2780,14 @@ describe("teamsApp/createAppPackage", async () => {
         agent_skills: [{ folder: "../../../outside" }],
       } as any;
 
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-      sinon.stub(fs, "chmod").callsFake(async () => {});
-      sinon.stub(fs, "writeFile").callsFake(async () => {});
-      sinon.stub(copilotGptManifestUtils, "getManifest").resolves(ok(declarativeAgentManifest));
-      sinon.stub(fs, "pathExists").resolves(true);
-      sinon.stub(fs, "realpath").callsFake(async (p: any) => p);
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+      vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+      vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+      vi.spyOn(copilotGptManifestUtils, "getManifest").mockResolvedValue(
+        ok(declarativeAgentManifest)
+      );
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "realpath").mockImplementation(async (p: any) => p);
 
       const result = (await teamsAppDriver.execute(skillArgs, mockedDriverContext)).result;
       chai.assert.isTrue(result.isErr());
@@ -2787,11 +2805,13 @@ describe("teamsApp/createAppPackage", async () => {
         agent_skills: [],
       } as any;
 
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-      sinon.stub(fs, "chmod").callsFake(async () => {});
-      sinon.stub(fs, "writeFile").callsFake(async () => {});
-      sinon.stub(copilotGptManifestUtils, "getManifest").resolves(ok(declarativeAgentManifest));
-      sinon.stub(fs, "pathExists").resolves(true);
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+      vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+      vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+      vi.spyOn(copilotGptManifestUtils, "getManifest").mockResolvedValue(
+        ok(declarativeAgentManifest)
+      );
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
 
       const result = (await teamsAppDriver.execute(skillArgs, mockedDriverContext)).result;
       chai.assert.isTrue(result.isOk());
@@ -2820,11 +2840,13 @@ describe("teamsApp/createAppPackage", async () => {
         agent_skills: [{ folder: "skills/skill1" }, { folder: "skills/skill2" }],
       } as any;
 
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-      sinon.stub(fs, "chmod").callsFake(async () => {});
-      sinon.stub(fs, "writeFile").callsFake(async () => {});
-      sinon.stub(copilotGptManifestUtils, "getManifest").resolves(ok(declarativeAgentManifest));
-      sinon.stub(fs, "pathExists").resolves(true);
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+      vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+      vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+      vi.spyOn(copilotGptManifestUtils, "getManifest").mockResolvedValue(
+        ok(declarativeAgentManifest)
+      );
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
 
       const result = (await teamsAppDriver.execute(skillArgs, mockedDriverContext)).result;
       chai.assert.isTrue(result.isOk());
@@ -2895,22 +2917,22 @@ describe("teamsApp/createAppPackage", async () => {
         actions: [],
       } as any;
 
-      sinon.stub(featureFlagManager, "getBooleanValue").returns(false);
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-      sinon.stub(fs, "chmod").callsFake(async () => {});
-      sinon.stub(fs, "writeFile").callsFake(async () => {});
-      sinon.stub(copilotGptManifestUtils, "getManifest").resolves(ok(declarativeAgentManifest));
-      const pathExistsStub = sinon.stub(fs, "pathExists").resolves(true);
+      vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+      vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+      vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+      vi.spyOn(copilotGptManifestUtils, "getManifest").mockResolvedValue(
+        ok(declarativeAgentManifest)
+      );
+      const pathExistsStub = vi.spyOn(fs, "pathExists").mockResolvedValue(true);
 
       const result = (
         await teamsAppDriver.execute(teamsManifestAgentSkillsArgs, mockedDriverContext)
       ).result;
       chai.assert.isTrue(result.isOk());
-      const skillMdChecks = pathExistsStub
-        .getCalls()
-        .filter((call) =>
-          call.args[0].toString().includes(path.join("skills", "skill1", "SKILL.md"))
-        );
+      const skillMdChecks = pathExistsStub.mock.calls.filter((call) =>
+        call[0].toString().includes(path.join("skills", "skill1", "SKILL.md"))
+      );
       chai.assert.lengthOf(skillMdChecks, 1);
 
       if (await fs.pathExists(teamsManifestAgentSkillsArgs.outputZipPath)) {
@@ -2931,15 +2953,17 @@ describe("teamsApp/createAppPackage", async () => {
         agent_skills: [{ folder: "skills/skill1" }],
       } as any;
 
-      sinon.stub(featureFlagManager, "getBooleanValue").callsFake((flag: any) => {
+      vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag: any) => {
         if (flag.name === FeatureFlagName.AgentSkillsManifest) return true;
         return false;
       });
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-      sinon.stub(fs, "chmod").callsFake(async () => {});
-      sinon.stub(fs, "writeFile").callsFake(async () => {});
-      sinon.stub(copilotGptManifestUtils, "getManifest").resolves(ok(declarativeAgentManifest));
-      sinon.stub(fs, "pathExists").resolves(true);
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+      vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+      vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+      vi.spyOn(copilotGptManifestUtils, "getManifest").mockResolvedValue(
+        ok(declarativeAgentManifest)
+      );
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
 
       const result = (
         await teamsAppDriver.execute(teamsManifestAgentSkillsArgs, mockedDriverContext)
@@ -2965,11 +2989,13 @@ describe("teamsApp/createAppPackage", async () => {
         actions: [],
       } as any;
 
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-      sinon.stub(fs, "chmod").callsFake(async () => {});
-      sinon.stub(fs, "writeFile").callsFake(async () => {});
-      sinon.stub(copilotGptManifestUtils, "getManifest").resolves(ok(declarativeAgentManifest));
-      sinon.stub(fs, "pathExists").callsFake(async (filePath) => {
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+      vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+      vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+      vi.spyOn(copilotGptManifestUtils, "getManifest").mockResolvedValue(
+        ok(declarativeAgentManifest)
+      );
+      vi.spyOn(fs, "pathExists").mockImplementation(async (filePath) => {
         if (filePath.toString().includes(path.join("skills", "skill1", "SKILL.md"))) {
           return false;
         }
@@ -2996,14 +3022,14 @@ describe("teamsApp/createAppPackage", async () => {
           outline: "resources/outline.png",
         },
       } as TeamsManifest;
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-      sinon.stub(fs, "chmod").callsFake(async () => {});
-      sinon.stub(fs, "existsSync").returns(false);
-      sinon.stub(fs, "pathExists").resolves(true);
-      sinon.stub(createAppPackageDeps, "updateVersionForTeamsAppYamlFile").resolves();
-      sinon.stub(fs, "writeFile").callsFake(async () => {});
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+      vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+      vi.spyOn(fs, "existsSync").mockReturnValue(false);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(driverUtils, "updateVersionForTeamsAppYamlFile").mockResolvedValue();
+      vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
       // Stub fs.stat to return a large file size
-      sinon.stub(fs, "stat").resolves({ size: 20 * 1024 * 1024, mode: 0o644 } as any);
+      vi.spyOn(fs, "stat").mockResolvedValue({ size: 20 * 1024 * 1024, mode: 0o644 } as any);
 
       const args: CreateAppPackageArgs = {
         manifestPath:
@@ -3030,14 +3056,14 @@ describe("teamsApp/createAppPackage", async () => {
           outline: "resources/outline.png",
         },
       } as TeamsManifest;
-      sinon.stub(manifestUtils, "getManifestV3").resolves(ok(manifest));
-      sinon.stub(fs, "chmod").callsFake(async () => {});
-      sinon.stub(fs, "existsSync").returns(false);
-      sinon.stub(fs, "pathExists").resolves(true);
-      sinon.stub(createAppPackageDeps, "updateVersionForTeamsAppYamlFile").resolves();
-      sinon.stub(fs, "writeFile").callsFake(async () => {});
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+      vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+      vi.spyOn(fs, "existsSync").mockReturnValue(false);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(driverUtils, "updateVersionForTeamsAppYamlFile").mockResolvedValue();
+      vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
       // Stub fs.stat to return a small file size
-      sinon.stub(fs, "stat").resolves({ size: 1024 * 1024, mode: 0o644 } as any);
+      vi.spyOn(fs, "stat").mockResolvedValue({ size: 1024 * 1024, mode: 0o644 } as any);
 
       const args: CreateAppPackageArgs = {
         manifestPath:

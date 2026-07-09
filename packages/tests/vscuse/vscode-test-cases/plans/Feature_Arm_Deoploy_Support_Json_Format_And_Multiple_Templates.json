@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 11,
+    "total_steps": 10,
     "created_at": "2026-02-24T08:28:56.925328",
     "name": "Feature Arm Deoploy Support Json Format And Multiple Templates",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2026-02-24T08:28:56.925322",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_2ce46bd8",
+      "plan_r_0624_024810",
       "step_358153f5",
       "step_000e4b45",
       "step_5b224d45",
@@ -40,32 +40,6 @@
     "updated_at": "2026-02-24T10:32:08.480978"
   },
   "steps": [
-    {
-      "step_id": "step_2ce46bd8",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 385,
-        "y": 220
-      },
-      "description": "Click the \"Teams Agents and Apps\" option in the \"New Project\" dropdown menu within the Microsoft 365 Agents Toolkit interface in Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:385:220:16:5:b5d5a3270cb3c4aa",
-        "dhash:385:220:96:5:2444e9914949a400",
-        "dhash:385:220:0:10:c8c88094b2717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_2ce46bd8",
-      "created_at": "2026-02-24T10:07:51.320620",
-      "plan_id": "plan_5c08ded4"
-    },
     {
       "step_id": "step_358153f5",
       "agent": "interaction",

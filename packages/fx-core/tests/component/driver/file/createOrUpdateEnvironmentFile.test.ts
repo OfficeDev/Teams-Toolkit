@@ -1,11 +1,9 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import * as chai from "chai";
 import fs from "fs-extra";
 import * as os from "os";
 import * as path from "path";
-import * as sinon from "sinon";
 import * as util from "util";
 
 import { err, ok } from "@microsoft/teamsfx-api";
@@ -19,6 +17,7 @@ import {
   UserCancelError,
 } from "../../../../src/error/common";
 import { MockedLogProvider, MockedUserInteraction } from "../../../plugins/solution/util";
+import { chai, vi } from "vitest";
 
 describe("CreateOrUpdateEnvironmentFileDriver", () => {
   const mockedDriverContexts = [
@@ -34,7 +33,7 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
   const driver = new CreateOrUpdateEnvironmentFileDriver();
 
   beforeEach(() => {
-    sinon.stub(localizeUtils, "getDefaultString").callsFake((key, ...params) => {
+    vi.spyOn(localizeUtils, "getDefaultString").mockImplementation((key, ...params) => {
       if (key === "error.yaml.InvalidActionInputError") {
         return util.format("error.yaml.InvalidActionInputError. %s. %s.", ...params);
       } else if (key === "error.common.UnhandledError") {
@@ -46,13 +45,13 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
       }
       return "";
     });
-    sinon
-      .stub(localizeUtils, "getLocalizedString")
-      .callsFake((key, ...params) => localizeUtils.getDefaultString(key, ...params));
+    vi.spyOn(localizeUtils, "getLocalizedString").mockImplementation((key, ...params) =>
+      localizeUtils.getDefaultString(key, ...params)
+    );
   });
 
   afterEach(() => {
-    sinon.restore();
+    vi.restoreAllMocks();
   });
 
   describe("run", () => {
@@ -101,7 +100,9 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
       });
 
       it("exception", async () => {
-        sinon.stub(fs, "ensureFile").throws(new Error("exception"));
+        vi.spyOn(fs, "ensureFile").mockImplementation(() => {
+          throw new Error("exception");
+        });
         const args: any = {
           target: "path",
           envs: {
@@ -128,11 +129,11 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
         let content = Object.entries(existingEnvs)
           .map(([key, value]) => `${key}=${value}`)
           .join(os.EOL);
-        sinon.stub(fs, "ensureFile").resolves();
-        sinon.stub(fs, "readFile").callsFake(async (path) => {
+        vi.spyOn(fs, "ensureFile").mockResolvedValue();
+        vi.spyOn(fs, "readFile").mockImplementation(async (path) => {
           return Buffer.from(content);
         });
-        sinon.stub(fs, "writeFile").callsFake(async (path, data) => {
+        vi.spyOn(fs, "writeFile").mockImplementation(async (path, data) => {
           content = data;
         });
         const args: any = {
@@ -143,7 +144,7 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
             key3: "value3",
           },
         };
-        sinon.stub(pathUtils, "getEnvFilePath").resolves(ok(target));
+        vi.spyOn(pathUtils, "getEnvFilePath").mockResolvedValue(ok(target));
         const result = await driver.run(args, mockedDriverContext);
         chai.assert(result.isOk());
         if (result.isOk()) {
@@ -163,11 +164,11 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
         let content = Object.entries(existingEnvs)
           .map(([key, value]) => `${key}=${value}`)
           .join(os.EOL);
-        sinon.stub(fs, "ensureFile").resolves();
-        sinon.stub(fs, "readFile").callsFake(async (path) => {
+        vi.spyOn(fs, "ensureFile").mockResolvedValue();
+        vi.spyOn(fs, "readFile").mockImplementation(async (path) => {
           return Buffer.from(content);
         });
-        sinon.stub(fs, "writeFile").callsFake(async (path, data) => {
+        vi.spyOn(fs, "writeFile").mockImplementation(async (path, data) => {
           content = data;
         });
         const args: any = {
@@ -178,7 +179,7 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
             key3: "value3",
           },
         };
-        sinon.stub(pathUtils, "getEnvFilePath").resolves(ok("fake-path"));
+        vi.spyOn(pathUtils, "getEnvFilePath").mockResolvedValue(ok("fake-path"));
         const result = await driver.run(args, mockedDriverContext);
         chai.assert(result.isOk());
         if (result.isOk()) {
@@ -198,11 +199,11 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
         let content = Object.entries(existingEnvs)
           .map(([key, value]) => `${key}=${value}`)
           .join(os.EOL);
-        sinon.stub(fs, "ensureFile").resolves();
-        sinon.stub(fs, "readFile").callsFake(async (path) => {
+        vi.spyOn(fs, "ensureFile").mockResolvedValue();
+        vi.spyOn(fs, "readFile").mockImplementation(async (path) => {
           return Buffer.from(content);
         });
-        sinon.stub(fs, "writeFile").callsFake(async (path, data) => {
+        vi.spyOn(fs, "writeFile").mockImplementation(async (path, data) => {
           content = data;
         });
         const args: any = {
@@ -213,7 +214,7 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
             key3: "value3",
           },
         };
-        sinon.stub(pathUtils, "getEnvFilePath").resolves(err(new UserCancelError()));
+        vi.spyOn(pathUtils, "getEnvFilePath").mockResolvedValue(err(new UserCancelError()));
         const result = await driver.run(args, mockedDriverContext);
         chai.assert(result.isOk());
         if (result.isOk()) {
@@ -247,18 +248,18 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
         let content = Object.entries(existingEnvs)
           .map(([key, value]) => `${key}=${value}`)
           .join(os.EOL);
-        sinon.stub(fs, "ensureFile").callsFake(async (path) => {
+        vi.spyOn(fs, "ensureFile").mockImplementation(async (path) => {
           if (path !== target) {
             content = "";
           }
         });
-        sinon.stub(fs, "readFile").callsFake(async (path) => {
+        vi.spyOn(fs, "readFile").mockImplementation(async (path) => {
           if (path === target) {
             return Buffer.from(content);
           }
           return Buffer.from("");
         });
-        sinon.stub(fs, "writeFile").callsFake(async (path, data) => {
+        vi.spyOn(fs, "writeFile").mockImplementation(async (path, data) => {
           if (path === target) {
             content = data;
           }
@@ -271,7 +272,7 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
             key3: "value3",
           },
         };
-        sinon.stub(pathUtils, "getEnvFilePath").resolves(ok(target));
+        vi.spyOn(pathUtils, "getEnvFilePath").mockResolvedValue(ok(target));
         const executionResult = await driver.execute(args, mockedDriverContext);
         chai.assert(executionResult.result.isOk());
         if (executionResult.result.isOk()) {
@@ -301,7 +302,7 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
     });
 
     afterEach(() => {
-      sinon.restore();
+      vi.restoreAllMocks();
     });
 
     it("Environment variables provided", async () => {
@@ -334,7 +335,9 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
           AZURE_OPENAI_API_KEY: "${{ AZURE_OPENAI_API_KEY }}",
         },
       };
-      sinon.stub(mockedDriverContext.ui!, "inputText").resolves(ok({ result: "fakeApiKey" }));
+      vi.spyOn(mockedDriverContext.ui!, "inputText").mockResolvedValue(
+        ok({ result: "fakeApiKey" })
+      );
 
       const result = await driver.askForOpenAIEnvironmentVariables(
         mockedDriverContext,
@@ -353,9 +356,9 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
           AZURE_OPENAI_ENDPOINT: "${{ AZURE_OPENAI_ENDPOINT }}",
         },
       };
-      sinon
-        .stub(mockedDriverContext.ui!, "inputText")
-        .resolves(ok({ result: "https://fakeEndpoint" }));
+      vi.spyOn(mockedDriverContext.ui!, "inputText").mockResolvedValue(
+        ok({ result: "https://fakeEndpoint" })
+      );
 
       const result = await driver.askForOpenAIEnvironmentVariables(
         mockedDriverContext,
@@ -374,9 +377,9 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
           AZURE_OPENAI_DEPLOYMENT_NAME: "${{ AZURE_OPENAI_DEPLOYMENT_NAME }}",
         },
       };
-      sinon
-        .stub(mockedDriverContext.ui!, "inputText")
-        .resolves(ok({ result: "fakeDeploymentName" }));
+      vi.spyOn(mockedDriverContext.ui!, "inputText").mockResolvedValue(
+        ok({ result: "fakeDeploymentName" })
+      );
 
       const result = await driver.askForOpenAIEnvironmentVariables(
         mockedDriverContext,
@@ -395,9 +398,9 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
           AZURE_OPENAI_MODEL_DEPLOYMENT_NAME: "${{ AZURE_OPENAI_MODEL_DEPLOYMENT_NAME }}",
         },
       };
-      sinon
-        .stub(mockedDriverContext.ui!, "inputText")
-        .resolves(ok({ result: "fakeModelDeploymentName" }));
+      vi.spyOn(mockedDriverContext.ui!, "inputText").mockResolvedValue(
+        ok({ result: "fakeModelDeploymentName" })
+      );
 
       const result = await driver.askForOpenAIEnvironmentVariables(
         mockedDriverContext,
@@ -419,7 +422,9 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
           OPENAI_API_KEY: "${{ OPENAI_API_KEY }}",
         },
       };
-      sinon.stub(mockedDriverContext.ui!, "inputText").resolves(ok({ result: "fakeOpenAIKey" }));
+      vi.spyOn(mockedDriverContext.ui!, "inputText").mockResolvedValue(
+        ok({ result: "fakeOpenAIKey" })
+      );
 
       const result = await driver.askForOpenAIEnvironmentVariables(
         mockedDriverContext,
@@ -438,7 +443,9 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
           OPENAI_ASSISTANT_ID: "${{ OPENAI_ASSISTANT_ID }}",
         },
       };
-      sinon.stub(mockedDriverContext.ui!, "inputText").resolves(ok({ result: "fakeAssistantId" }));
+      vi.spyOn(mockedDriverContext.ui!, "inputText").mockResolvedValue(
+        ok({ result: "fakeAssistantId" })
+      );
 
       const result = await driver.askForOpenAIEnvironmentVariables(
         mockedDriverContext,
@@ -457,9 +464,9 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
           AZURE_OPENAI_ASSISTANT_ID: "${{ AZURE_OPENAI_ASSISTANT_ID }}",
         },
       };
-      sinon
-        .stub(mockedDriverContext.ui!, "inputText")
-        .resolves(ok({ result: "fakeAzureAssistantId" }));
+      vi.spyOn(mockedDriverContext.ui!, "inputText").mockResolvedValue(
+        ok({ result: "fakeAzureAssistantId" })
+      );
 
       const result = await driver.askForOpenAIEnvironmentVariables(
         mockedDriverContext,
@@ -478,9 +485,9 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
           AZURE_OPENAI_EMBEDDING_DEPLOYMENT: "${{ AZURE_OPENAI_EMBEDDING_DEPLOYMENT }}",
         },
       };
-      sinon
-        .stub(mockedDriverContext.ui!, "inputText")
-        .resolves(ok({ result: "fakeEmbeddingDeploymentName" }));
+      vi.spyOn(mockedDriverContext.ui!, "inputText").mockResolvedValue(
+        ok({ result: "fakeEmbeddingDeploymentName" })
+      );
 
       const result = await driver.askForOpenAIEnvironmentVariables(
         mockedDriverContext,
@@ -505,9 +512,9 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
           GENERAL_ENV_VAR: "${{ GENERAL_ENV_VAR }}",
         },
       };
-      sinon
-        .stub(mockedDriverContext.ui!, "inputText")
-        .resolves(ok({ result: "fakeGeneralEnvVarValue" }));
+      vi.spyOn(mockedDriverContext.ui!, "inputText").mockResolvedValue(
+        ok({ result: "fakeGeneralEnvVarValue" })
+      );
 
       const result = await driver.askForOpenAIEnvironmentVariables(
         mockedDriverContext,
@@ -527,7 +534,7 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
         },
         target: ".env.teamsfx.local",
       };
-      sinon.stub(mockedDriverContext.ui!, "inputText").resolves(err(new UserCancelError()));
+      vi.spyOn(mockedDriverContext.ui!, "inputText").mockResolvedValue(err(new UserCancelError()));
       const existingEnvs = {
         existing1: "value1",
         existing2: "value2",
@@ -535,8 +542,8 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
       const content = Object.entries(existingEnvs)
         .map(([key, value]) => `${key}=${value}`)
         .join(os.EOL);
-      sinon.stub(fs, "ensureFile").resolves();
-      sinon.stub(fs, "readFile").callsFake(async (path) => {
+      vi.spyOn(fs, "ensureFile").mockResolvedValue();
+      vi.spyOn(fs, "readFile").mockImplementation(async (path) => {
         return Buffer.from(content);
       });
 
@@ -551,7 +558,7 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
           AZURE_OPENAI_ENDPOINT: "${{ AZURE_OPENAI_ENDPOINT }}",
         },
       };
-      sinon.stub(mockedDriverContext.ui!, "inputText").resolves(err(new UserCancelError()));
+      vi.spyOn(mockedDriverContext.ui!, "inputText").mockResolvedValue(err(new UserCancelError()));
 
       const result = await driver.askForOpenAIEnvironmentVariables(
         mockedDriverContext,
@@ -568,7 +575,7 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
           AZURE_OPENAI_DEPLOYMENT_NAME: "${{ AZURE_OPENAI_DEPLOYMENT_NAME }}",
         },
       };
-      sinon.stub(mockedDriverContext.ui!, "inputText").resolves(err(new UserCancelError()));
+      vi.spyOn(mockedDriverContext.ui!, "inputText").mockResolvedValue(err(new UserCancelError()));
 
       const result = await driver.askForOpenAIEnvironmentVariables(
         mockedDriverContext,
@@ -585,7 +592,7 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
           AZURE_OPENAI_MODEL_DEPLOYMENT_NAME: "${{ AZURE_OPENAI_MODEL_DEPLOYMENT_NAME }}",
         },
       };
-      sinon.stub(mockedDriverContext.ui!, "inputText").resolves(err(new UserCancelError()));
+      vi.spyOn(mockedDriverContext.ui!, "inputText").mockResolvedValue(err(new UserCancelError()));
 
       const result = await driver.askForOpenAIEnvironmentVariables(
         mockedDriverContext,
@@ -602,7 +609,7 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
           OPENAI_API_KEY: "${{ OPENAI_API_KEY }}",
         },
       };
-      sinon.stub(mockedDriverContext.ui!, "inputText").resolves(err(new UserCancelError()));
+      vi.spyOn(mockedDriverContext.ui!, "inputText").mockResolvedValue(err(new UserCancelError()));
 
       const result = await driver.askForOpenAIEnvironmentVariables(
         mockedDriverContext,
@@ -619,7 +626,7 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
           OPENAI_ASSISTANT_ID: "${{ OPENAI_ASSISTANT_ID }}",
         },
       };
-      sinon.stub(mockedDriverContext.ui!, "inputText").resolves(err(new UserCancelError()));
+      vi.spyOn(mockedDriverContext.ui!, "inputText").mockResolvedValue(err(new UserCancelError()));
 
       const result = await driver.askForOpenAIEnvironmentVariables(
         mockedDriverContext,
@@ -636,7 +643,7 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
           AZURE_OPENAI_ASSISTANT_ID: "${{ AZURE_OPENAI_ASSISTANT_ID }}",
         },
       };
-      sinon.stub(mockedDriverContext.ui!, "inputText").resolves(err(new UserCancelError()));
+      vi.spyOn(mockedDriverContext.ui!, "inputText").mockResolvedValue(err(new UserCancelError()));
 
       const result = await driver.askForOpenAIEnvironmentVariables(
         mockedDriverContext,
@@ -653,7 +660,7 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
           AZURE_OPENAI_EMBEDDING_DEPLOYMENT: "${{ AZURE_OPENAI_EMBEDDING_DEPLOYMENT }}",
         },
       };
-      sinon.stub(mockedDriverContext.ui!, "inputText").resolves(err(new UserCancelError()));
+      vi.spyOn(mockedDriverContext.ui!, "inputText").mockResolvedValue(err(new UserCancelError()));
 
       const result = await driver.askForOpenAIEnvironmentVariables(
         mockedDriverContext,
@@ -670,7 +677,7 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
           GENERAL_ENV_VAR: "${{ GENERAL_ENV_VAR }}",
         },
       };
-      sinon.stub(mockedDriverContext.ui!, "inputText").resolves(err(new UserCancelError()));
+      vi.spyOn(mockedDriverContext.ui!, "inputText").mockResolvedValue(err(new UserCancelError()));
 
       const result = await driver.askForOpenAIEnvironmentVariables(
         mockedDriverContext,
@@ -687,7 +694,7 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
           OPENAI_API_KEY: "${{ OPENAI_API_KEY }}",
         },
       };
-      sinon.stub(mockedDriverContext.ui!, "inputText").callsFake(async (options) => {
+      vi.spyOn(mockedDriverContext.ui!, "inputText").mockImplementation(async (options) => {
         const validationResult = (options as any).validation!(""); // Simulate empty input
         chai.assert.equal(
           validationResult,
@@ -711,7 +718,7 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
           AZURE_OPENAI_API_KEY: "${{ AZURE_OPENAI_API_KEY }}",
         },
       };
-      sinon.stub(mockedDriverContext.ui!, "inputText").callsFake(async (options) => {
+      vi.spyOn(mockedDriverContext.ui!, "inputText").mockImplementation(async (options) => {
         const validationResult = (options as any).validation!(""); // Simulate empty input
         chai.assert.equal(
           validationResult,
@@ -735,7 +742,7 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
           AZURE_OPENAI_ENDPOINT: "${{ AZURE_OPENAI_ENDPOINT }}",
         },
       };
-      sinon.stub(mockedDriverContext.ui!, "inputText").callsFake(async (options) => {
+      vi.spyOn(mockedDriverContext.ui!, "inputText").mockImplementation(async (options) => {
         const validationResult = (options as any).validation!(""); // Simulate empty input
         chai.assert.equal(
           validationResult,
@@ -761,7 +768,7 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
           AZURE_OPENAI_DEPLOYMENT_NAME: "${{ AZURE_OPENAI_DEPLOYMENT_NAME }}",
         },
       };
-      sinon.stub(mockedDriverContext.ui!, "inputText").callsFake(async (options) => {
+      vi.spyOn(mockedDriverContext.ui!, "inputText").mockImplementation(async (options) => {
         const validationResult = (options as any).validation!(""); // Simulate empty input
         chai.assert.equal(
           validationResult,
@@ -787,7 +794,7 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
           AZURE_OPENAI_MODEL_DEPLOYMENT_NAME: "${{ AZURE_OPENAI_MODEL_DEPLOYMENT_NAME }}",
         },
       };
-      sinon.stub(mockedDriverContext.ui!, "inputText").callsFake(async (options) => {
+      vi.spyOn(mockedDriverContext.ui!, "inputText").mockImplementation(async (options) => {
         const validationResult = (options as any).validation!(""); // Simulate empty input
         chai.assert.equal(
           validationResult,
@@ -813,7 +820,7 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
           OPENAI_ASSISTANT_ID: "${{ OPENAI_ASSISTANT_ID }}",
         },
       };
-      sinon.stub(mockedDriverContext.ui!, "inputText").callsFake(async (options) => {
+      vi.spyOn(mockedDriverContext.ui!, "inputText").mockImplementation(async (options) => {
         const validationResult = (options as any).validation!(""); // Simulate empty input
         chai.assert.equal(
           validationResult,
@@ -839,7 +846,7 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
           AZURE_OPENAI_ASSISTANT_ID: "${{ AZURE_OPENAI_ASSISTANT_ID }}",
         },
       };
-      sinon.stub(mockedDriverContext.ui!, "inputText").callsFake(async (options) => {
+      vi.spyOn(mockedDriverContext.ui!, "inputText").mockImplementation(async (options) => {
         const validationResult = (options as any).validation!(""); // Simulate empty input
         chai.assert.equal(
           validationResult,
@@ -865,7 +872,7 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
           AZURE_OPENAI_EMBEDDING_DEPLOYMENT: "${{ AZURE_OPENAI_EMBEDDING_DEPLOYMENT }}",
         },
       };
-      sinon.stub(mockedDriverContext.ui!, "inputText").callsFake(async (options) => {
+      vi.spyOn(mockedDriverContext.ui!, "inputText").mockImplementation(async (options) => {
         const validationResult = (options as any).validation!(""); // Simulate empty input
         chai.assert.equal(
           validationResult,
@@ -891,7 +898,7 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
           GENERAL_ENV_VAR: "${{ GENERAL_ENV_VAR }}",
         },
       };
-      sinon.stub(mockedDriverContext.ui!, "inputText").callsFake(async (options) => {
+      vi.spyOn(mockedDriverContext.ui!, "inputText").mockImplementation(async (options) => {
         const validationResult = (options as any).validation!(""); // Simulate empty input
         chai.assert.equal(
           validationResult,
@@ -949,7 +956,7 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
           AZURE_OPENAI_API_KEY: "${{ AZURE_OPENAI_API_KEY }}",
         },
       };
-      sinon.stub(mockedDriverContext.ui!, "inputText").resolves(ok({ result: "" }));
+      vi.spyOn(mockedDriverContext.ui!, "inputText").mockResolvedValue(ok({ result: "" }));
 
       const resultWithEmptyValue = await driver.askForOpenAIEnvironmentVariables(
         mockedDriverContext,
@@ -971,7 +978,7 @@ describe("CreateOrUpdateEnvironmentFileDriver", () => {
           AZURE_OPENAI_ENDPOINT: "${{ AZURE_OPENAI_ENDPOINT }}",
         },
       };
-      sinon.stub(mockedDriverContext.ui!, "inputText").callsFake(async (options) => {
+      vi.spyOn(mockedDriverContext.ui!, "inputText").mockImplementation(async (options) => {
         const validationResult = (options as any).validation!("ftp://invalid-endpoint"); // Simulate invalid endpoint
         chai.assert.equal(
           validationResult,

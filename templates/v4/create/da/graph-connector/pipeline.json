@@ -1,0 +1,9 @@
+{
+  "pipeline": "default",
+  "comment": "Declarative agent with Graph connector: static combined output flattened into one v4 package. No post-render copy step is needed because the fresh create target writes the connector project and DA appPackage together.",
+  "steps": [
+    {
+      "step": "require-empty-target"
+    }
+  ]
+}

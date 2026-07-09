@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 4,
+    "total_steps": 3,
     "created_at": "2026-02-24T10:18:33.958489",
     "name": "General Teams Agent Azure OpenAI js Local Playground",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2026-02-24T10:18:33.958489",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_e266a94e",
+      "plan_r_0624_024810",
       "step_b6d44862",
       "plan_r_0930_054245",
       "step_8f6b9daf",
@@ -33,32 +33,6 @@
     "updated_at": "2026-02-24T10:27:17.111598"
   },
   "steps": [
-    {
-      "step_id": "step_e266a94e",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 378,
-        "y": 220
-      },
-      "description": "Click on the \"Teams Agents and Apps\" option within the dropdown menu under the \"New Project\" interface in the Microsoft 365 Agents Toolkit.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:378:220:16:5:6bcdca2210ab4dca",
-        "dhash:378:220:96:5:a66254582cad5240",
-        "dhash:378:220:0:10:c8c88094b2717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_e266a94e",
-      "created_at": "2026-02-24T10:18:33.965475",
-      "plan_id": "plan_9326a440"
-    },
     {
       "step_id": "step_b6d44862",
       "agent": "interaction",

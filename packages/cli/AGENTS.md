@@ -7,6 +7,12 @@
 - Make sure changed code is covered by unit tests before completion. Unit tests can be skipped only during temporary developing/validating iterations.
 - Keep code cross-platform (Windows, Linux, and macOS).
 
+## Build scope guidance
+- **When only cli is changed**: Run `pnpm run build` in the cli package directory only. Do NOT rebuild the entire monorepo.
+- **When cli and other packages are changed**: Run `pnpm run setup` from the monorepo root to build all affected packages.
+- **For dependent packages**: If vscode-extension or other packages depend on cli changes, rebuild those packages in their respective directories AFTER cli builds successfully.
+- **Agent instruction**: When presented with changes to a specific package folder, execute build commands scoped to that package directory only to optimize build time and reduce unnecessary compilation.
+
 ## Code style and testability
 - Prefer namespace imports for internal modules when functions may need stubbing in UT. Example: use `import * as templateHelper from "..."` and call `templateHelper.useLocalTemplate()` instead of destructuring imports.
 - Avoid binding external/static dependencies directly at call sites when behavior needs to be mocked. Route them through a deps object or a small wrapper function in the same module.

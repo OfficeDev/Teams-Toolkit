@@ -1,11 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { expect } from "chai";
 import fs from "fs-extra";
 import * as os from "os";
 import * as path from "path";
 import { readOpenPluginDir } from "../../../../src/component/generator/openPlugin/parser";
+import { chai } from "vitest";
 
 async function makeTempDir(): Promise<string> {
   return await fs.mkdtemp(path.join(os.tmpdir(), "op-parser-"));
@@ -74,27 +74,27 @@ describe("openPlugin.readOpenPluginDir", () => {
     } catch (e) {
       caught = e as Error;
     }
-    expect(caught).to.exist;
-    expect(caught!.message).to.match(/No Open Plugin manifest/);
+    chai.expect(caught).to.exist;
+    chai.expect(caught!.message).to.match(/No Open Plugin manifest/);
   });
 
   it("finds vendor-neutral .plugin/plugin.json", async () => {
     await seedPlugin(tempDir);
     const parsed = await readOpenPluginDir(tempDir);
-    expect(parsed.manifestKind).to.equal("open-plugin");
-    expect(parsed.manifest.name).to.equal("demo-plugin");
+    chai.expect(parsed.manifestKind).to.equal("open-plugin");
+    chai.expect(parsed.manifest.name).to.equal("demo-plugin");
   });
 
   it("finds .claude-plugin/plugin.json when .plugin/ absent", async () => {
     await seedPlugin(tempDir, { manifestRel: ".claude-plugin/plugin.json" });
     const parsed = await readOpenPluginDir(tempDir);
-    expect(parsed.manifestKind).to.equal("claude-plugin");
+    chai.expect(parsed.manifestKind).to.equal("claude-plugin");
   });
 
   it("finds .cursor-plugin/plugin.json as last fallback", async () => {
     await seedPlugin(tempDir, { manifestRel: ".cursor-plugin/plugin.json" });
     const parsed = await readOpenPluginDir(tempDir);
-    expect(parsed.manifestKind).to.equal("cursor-plugin");
+    chai.expect(parsed.manifestKind).to.equal("cursor-plugin");
   });
 
   it("prefers .plugin/ over .claude-plugin/ when both exist", async () => {
@@ -104,8 +104,8 @@ describe("openPlugin.readOpenPluginDir", () => {
       name: "claude-variant",
     });
     const parsed = await readOpenPluginDir(tempDir);
-    expect(parsed.manifestKind).to.equal("open-plugin");
-    expect(parsed.manifest.name).to.equal("demo-plugin");
+    chai.expect(parsed.manifestKind).to.equal("open-plugin");
+    chai.expect(parsed.manifest.name).to.equal("demo-plugin");
   });
 
   it("reads wrapped form of .mcp.json", async () => {
@@ -118,7 +118,7 @@ describe("openPlugin.readOpenPluginDir", () => {
       },
     });
     const parsed = await readOpenPluginDir(tempDir);
-    expect(Object.keys(parsed.mcpServers).sort()).to.deep.equal(["alpha", "beta"]);
+    chai.expect(Object.keys(parsed.mcpServers).sort()).to.deep.equal(["alpha", "beta"]);
   });
 
   it("reads bare-object form of .mcp.json", async () => {
@@ -126,7 +126,7 @@ describe("openPlugin.readOpenPluginDir", () => {
       mcpJson: { gamma: { url: "https://gamma.example.com" } },
     });
     const parsed = await readOpenPluginDir(tempDir);
-    expect(Object.keys(parsed.mcpServers)).to.deep.equal(["gamma"]);
+    chai.expect(Object.keys(parsed.mcpServers)).to.deep.equal(["gamma"]);
   });
 
   it("discovers skill folders with SKILL.md and warns on invalid names", async () => {
@@ -135,14 +135,14 @@ describe("openPlugin.readOpenPluginDir", () => {
       invalidSkillNames: ["Bad Name"],
     });
     const parsed = await readOpenPluginDir(tempDir);
-    expect(parsed.skills).to.deep.equal(["alpha-skill", "beta_skill"]);
-    expect(parsed.warnings.some((w) => w.includes("Bad Name"))).to.equal(true);
+    chai.expect(parsed.skills).to.deep.equal(["alpha-skill", "beta_skill"]);
+    chai.expect(parsed.warnings.some((w) => w.includes("Bad Name"))).to.equal(true);
   });
 
   it("discovers commands/*.md", async () => {
     await seedPlugin(tempDir, { commands: ["foo.md", "bar.md"] });
     const parsed = await readOpenPluginDir(tempDir);
-    expect(parsed.commands).to.deep.equal(["bar.md", "foo.md"]);
+    chai.expect(parsed.commands).to.deep.equal(["bar.md", "foo.md"]);
   });
 
   it("warns on unmapped Open Plugin fields", async () => {
@@ -154,8 +154,8 @@ describe("openPlugin.readOpenPluginDir", () => {
       },
     });
     const parsed = await readOpenPluginDir(tempDir);
-    expect(parsed.warnings.some((w) => w.includes("agents"))).to.equal(true);
-    expect(parsed.warnings.some((w) => w.includes("hooks"))).to.equal(true);
+    chai.expect(parsed.warnings.some((w) => w.includes("agents"))).to.equal(true);
+    chai.expect(parsed.warnings.some((w) => w.includes("hooks"))).to.equal(true);
   });
 
   it("rejects non-string component path override", async () => {
@@ -168,8 +168,8 @@ describe("openPlugin.readOpenPluginDir", () => {
     } catch (e) {
       caught = e as Error;
     }
-    expect(caught).to.exist;
-    expect(caught!.message).to.match(/single-string form/);
+    chai.expect(caught).to.exist;
+    chai.expect(caught!.message).to.match(/single-string form/);
   });
 
   it("requires a 'name' field", async () => {
@@ -180,8 +180,8 @@ describe("openPlugin.readOpenPluginDir", () => {
     } catch (e) {
       caught = e as Error;
     }
-    expect(caught).to.exist;
-    expect(caught!.message).to.match(/required 'name'/);
+    chai.expect(caught).to.exist;
+    chai.expect(caught!.message).to.match(/required 'name'/);
   });
 
   it("uses a string override for the skills path", async () => {
@@ -194,21 +194,21 @@ describe("openPlugin.readOpenPluginDir", () => {
       "---\nname: my-skill\n---\nbody"
     );
     const parsed = await readOpenPluginDir(tempDir);
-    expect(parsed.skills).to.deep.equal(["my-skill"]);
+    chai.expect(parsed.skills).to.deep.equal(["my-skill"]);
   });
 
   it("skips non-directory entries in the skills folder", async () => {
     await seedPlugin(tempDir, { skills: ["valid-skill"] });
     await fs.writeFile(path.join(tempDir, "skills", "README.md"), "# not a skill");
     const parsed = await readOpenPluginDir(tempDir);
-    expect(parsed.skills).to.deep.equal(["valid-skill"]);
+    chai.expect(parsed.skills).to.deep.equal(["valid-skill"]);
   });
 
   it("detects color.png and outline.png when present", async () => {
     await seedPlugin(tempDir, { hasColor: true, hasOutline: true });
     const parsed = await readOpenPluginDir(tempDir);
-    expect(parsed.hasColorPng).to.equal(true);
-    expect(parsed.hasOutlinePng).to.equal(true);
+    chai.expect(parsed.hasColorPng).to.equal(true);
+    chai.expect(parsed.hasOutlinePng).to.equal(true);
   });
 
   it("throws when the plugin directory does not exist", async () => {
@@ -218,7 +218,7 @@ describe("openPlugin.readOpenPluginDir", () => {
     } catch (e) {
       caught = e as Error;
     }
-    expect(caught).to.exist;
-    expect(caught!.message).to.match(/Plugin directory not found/);
+    chai.expect(caught).to.exist;
+    chai.expect(caught!.message).to.match(/Plugin directory not found/);
   });
 });

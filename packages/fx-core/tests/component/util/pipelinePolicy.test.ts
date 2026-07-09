@@ -1,21 +1,17 @@
-import chai from "chai";
-import chaiAsPromised from "chai-as-promised";
-import * as sinon from "sinon";
 import { MockedAzureAccountProvider } from "../../core/utils";
 import { azureClientHelper } from "../../../src/component/utils/azureClient";
 import { InvalidAzureCredentialError } from "../../../src/error";
 import { BearerChallengePolicy } from "../../../src/component/utils/pipelinePolicy";
 import { get, head } from "lodash";
-
-chai.use(chaiAsPromised);
+import { chai, vi } from "vitest";
 
 describe("BearerChallengePolicy test", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   beforeEach(async () => {});
 
   afterEach(async () => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("returns 401 error and trigger challenge retrieval", async () => {

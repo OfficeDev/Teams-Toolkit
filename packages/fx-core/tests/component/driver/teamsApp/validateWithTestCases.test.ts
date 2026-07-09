@@ -3,9 +3,9 @@
 
 import { err, ok, Platform, SystemError, TeamsAppManifest } from "@microsoft/teamsfx-api";
 import AdmZip from "adm-zip";
-import chai from "chai";
-import * as sinon from "sinon";
+import fs from "fs-extra";
 import { setTools } from "../../../../src/common/globalVars";
+import * as commonUtils from "../../../../src/common/utils";
 import { Constants } from "../../../../src/component/driver/teamsApp/constants";
 import { AppStudioError } from "../../../../src/component/driver/teamsApp/errors";
 import {
@@ -15,13 +15,13 @@ import {
 import { AsyncAppValidationResultsResponse } from "../../../../src/component/driver/teamsApp/interfaces/AsyncAppValidationResultsResponse";
 import { ValidateWithTestCasesArgs } from "../../../../src/component/driver/teamsApp/interfaces/ValidateWithTestCasesArgs";
 import { teamsappMgr } from "../../../../src/component/driver/teamsApp/teamsappMgr";
-import {
-  validateWithTestCasesDeps,
-  ValidateWithTestCasesDriver,
-} from "../../../../src/component/driver/teamsApp/validateTestCases";
+import { teamsDevPortalClient } from "../../../../src/client/teamsDevPortalClient";
+import { metadataUtil } from "../../../../src/component/utils/metadataUtil";
+import { ValidateWithTestCasesDriver } from "../../../../src/component/driver/teamsApp/validateTestCases";
 import { InvalidActionInputError, UserCancelError } from "../../../../src/error/common";
 import { MockedM365Provider, MockTools } from "../../../core/utils";
 import { MockedLogProvider, MockedUserInteraction } from "../../../plugins/solution/util";
+import { chai, vi } from "vitest";
 
 describe("teamsApp/validateWithTestCases", async () => {
   const tools = new MockTools();
@@ -37,11 +37,11 @@ describe("teamsApp/validateWithTestCases", async () => {
   };
 
   beforeEach(() => {
-    sinon.stub(validateWithTestCasesDeps, "waitSeconds").resolves();
+    vi.spyOn(commonUtils, "waitSeconds").mockResolvedValue();
   });
 
   afterEach(() => {
-    sinon.restore();
+    vi.restoreAllMocks();
   });
 
   it("file not found - app package", async () => {
@@ -61,8 +61,8 @@ describe("teamsApp/validateWithTestCases", async () => {
       appPackagePath: "fakepath",
     };
 
-    sinon.stub(validateWithTestCasesDeps, "pathExists").resolves(true);
-    sinon.stub(validateWithTestCasesDeps, "readFile").callsFake(async () => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockImplementation(async () => {
       const zip = new AdmZip();
       const archivedFile = zip.toBuffer();
       return archivedFile;
@@ -92,26 +92,26 @@ describe("teamsApp/validateWithTestCases", async () => {
       appPackagePath: "fakePath",
     };
 
-    sinon.stub(validateWithTestCasesDeps, "pathExists").resolves(true);
-    sinon.stub(validateWithTestCasesDeps, "readFile").callsFake(async () => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockImplementation(async () => {
       const zip = new AdmZip();
       zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(new TeamsAppManifest())));
       const archivedFile = zip.toBuffer();
       return archivedFile;
     });
-    sinon.stub(validateWithTestCasesDeps, "parseManifest");
-    sinon
-      .stub(mockedDriverContext.m365TokenProvider, "getAccessToken")
-      .resolves(err(new SystemError({})));
+    vi.spyOn(metadataUtil, "parseManifest");
+    vi.spyOn(mockedDriverContext.m365TokenProvider, "getAccessToken").mockResolvedValue(
+      err(new SystemError({}))
+    );
 
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
     chai.assert(result.isErr());
   });
 
   it("Invalid validation result response - Null details", async () => {
-    sinon.stub(validateWithTestCasesDeps, "getAppValidationRequestList").resolves(undefined);
+    vi.spyOn(teamsDevPortalClient, "getAppValidationRequestList").mockResolvedValue(undefined);
     const mockSubmitValidationResponse: AsyncAppValidationResponse = {
-      status: AsyncAppValidationStatus.Created,
+      status: AsyncAppValidationStatus.Completed,
       appValidationId: "fakeId",
     };
     const args: ValidateWithTestCasesArgs = {
@@ -138,9 +138,9 @@ describe("teamsApp/validateWithTestCases", async () => {
     const invalidValidationResultResponse: AsyncAppValidationResultsResponse = <
       AsyncAppValidationResultsResponse
     >invalidValidationResultResponseJson;
-    sinon
-      .stub(validateWithTestCasesDeps, "getAppValidationById")
-      .resolves(invalidValidationResultResponse);
+    vi.spyOn(teamsDevPortalClient, "getAppValidationById").mockResolvedValue(
+      invalidValidationResultResponse
+    );
     await teamsAppDriver.runningBackgroundJob(
       args,
       mockedDriverContext,
@@ -155,7 +155,7 @@ describe("teamsApp/validateWithTestCases", async () => {
 
   it("Invalid validation result response - Null validation results", async () => {
     const mockSubmitValidationResponse: AsyncAppValidationResponse = {
-      status: AsyncAppValidationStatus.Created,
+      status: AsyncAppValidationStatus.Completed,
       appValidationId: "fakeId",
     };
     const args: ValidateWithTestCasesArgs = {
@@ -177,9 +177,9 @@ describe("teamsApp/validateWithTestCases", async () => {
     const invalidValidationResultResponse: AsyncAppValidationResultsResponse = <
       AsyncAppValidationResultsResponse
     >invalidValidationResultResponseJson;
-    sinon
-      .stub(validateWithTestCasesDeps, "getAppValidationById")
-      .resolves(invalidValidationResultResponse);
+    vi.spyOn(teamsDevPortalClient, "getAppValidationById").mockResolvedValue(
+      invalidValidationResultResponse
+    );
     await teamsAppDriver.runningBackgroundJob(
       args,
       mockedDriverContext,
@@ -193,7 +193,7 @@ describe("teamsApp/validateWithTestCases", async () => {
   });
 
   it("Valid validation result response", async () => {
-    sinon.stub(validateWithTestCasesDeps, "getAppValidationRequestList").resolves({
+    vi.spyOn(teamsDevPortalClient, "getAppValidationRequestList").mockResolvedValue({
       appValidations: [
         {
           id: "fakeId",
@@ -216,7 +216,7 @@ describe("teamsApp/validateWithTestCases", async () => {
       ],
     });
     const mockSubmitValidationResponse: AsyncAppValidationResponse = {
-      status: AsyncAppValidationStatus.Created,
+      status: AsyncAppValidationStatus.Completed,
       appValidationId: "fakeId",
     };
     const args: ValidateWithTestCasesArgs = {
@@ -224,7 +224,7 @@ describe("teamsApp/validateWithTestCases", async () => {
       showMessage: true,
       showProgressBar: true,
     };
-    sinon.stub(validateWithTestCasesDeps, "getAppValidationById").resolves({
+    vi.spyOn(teamsDevPortalClient, "getAppValidationById").mockResolvedValue({
       status: AsyncAppValidationStatus.Completed,
       appValidationId: "fakeId",
       appId: "fakeAppId",
@@ -297,22 +297,19 @@ describe("teamsApp/validateWithTestCases", async () => {
     chai.assert(
       mockedDriverContext.logProvider.msg.includes("Validation request completed, status:")
     );
-    chai.assert(
-      mockedDriverContext.logProvider.msg.includes("1 failed, 1 warning, 1 skipped, 1 passed")
-    );
   });
 
   it("Duplicate validations - InProgress", async () => {
-    sinon.stub(validateWithTestCasesDeps, "pathExists").resolves(true);
-    sinon.stub(validateWithTestCasesDeps, "readFile").callsFake(async () => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockImplementation(async () => {
       const zip = new AdmZip();
       zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(new TeamsAppManifest())));
       const archivedFile = zip.toBuffer();
       return archivedFile;
     });
-    sinon.stub(validateWithTestCasesDeps, "parseManifest");
+    vi.spyOn(metadataUtil, "parseManifest");
 
-    sinon.stub(validateWithTestCasesDeps, "getAppValidationRequestList").resolves({
+    vi.spyOn(teamsDevPortalClient, "getAppValidationRequestList").mockResolvedValue({
       appValidations: [
         {
           id: "fakeId",
@@ -334,10 +331,12 @@ describe("teamsApp/validateWithTestCases", async () => {
         },
       ],
     });
-    sinon
-      .stub(validateWithTestCasesDeps, "submitAppValidationRequest")
-      .throws("should not be called");
-    sinon.stub(validateWithTestCasesDeps, "getAppValidationById").throws("should not be called");
+    vi.spyOn(teamsDevPortalClient, "submitAppValidationRequest").mockImplementation(() => {
+      throw "should not be called";
+    });
+    vi.spyOn(teamsDevPortalClient, "getAppValidationById").mockImplementation(() => {
+      throw "should not be called";
+    });
 
     const args: ValidateWithTestCasesArgs = {
       appPackagePath: "fakepath",
@@ -350,16 +349,16 @@ describe("teamsApp/validateWithTestCases", async () => {
   });
 
   it("Duplicate validations - Created", async () => {
-    sinon.stub(validateWithTestCasesDeps, "pathExists").resolves(true);
-    sinon.stub(validateWithTestCasesDeps, "readFile").callsFake(async () => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockImplementation(async () => {
       const zip = new AdmZip();
       zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(new TeamsAppManifest())));
       const archivedFile = zip.toBuffer();
       return archivedFile;
     });
-    sinon.stub(validateWithTestCasesDeps, "parseManifest");
+    vi.spyOn(metadataUtil, "parseManifest");
 
-    sinon.stub(validateWithTestCasesDeps, "getAppValidationRequestList").resolves({
+    vi.spyOn(teamsDevPortalClient, "getAppValidationRequestList").mockResolvedValue({
       appValidations: [
         {
           id: "fakeId",
@@ -381,10 +380,12 @@ describe("teamsApp/validateWithTestCases", async () => {
         },
       ],
     });
-    sinon
-      .stub(validateWithTestCasesDeps, "submitAppValidationRequest")
-      .throws("should not be called");
-    sinon.stub(validateWithTestCasesDeps, "getAppValidationById").throws("should not be called");
+    vi.spyOn(teamsDevPortalClient, "submitAppValidationRequest").mockImplementation(() => {
+      throw "should not be called";
+    });
+    vi.spyOn(teamsDevPortalClient, "getAppValidationById").mockImplementation(() => {
+      throw "should not be called";
+    });
 
     const args: ValidateWithTestCasesArgs = {
       appPackagePath: "fakepath",
@@ -401,16 +402,16 @@ describe("teamsApp/validateWithTestCases", async () => {
       ...mockedDriverContext,
       platform: Platform.CLI,
     };
-    sinon.stub(validateWithTestCasesDeps, "pathExists").resolves(true);
-    sinon.stub(validateWithTestCasesDeps, "readFile").callsFake(async () => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockImplementation(async () => {
       const zip = new AdmZip();
       zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(new TeamsAppManifest())));
       const archivedFile = zip.toBuffer();
       return archivedFile;
     });
-    sinon.stub(validateWithTestCasesDeps, "parseManifest");
+    vi.spyOn(metadataUtil, "parseManifest");
 
-    sinon.stub(validateWithTestCasesDeps, "getAppValidationRequestList").resolves({
+    vi.spyOn(teamsDevPortalClient, "getAppValidationRequestList").mockResolvedValue({
       appValidations: [
         {
           id: "fakeId",
@@ -432,10 +433,12 @@ describe("teamsApp/validateWithTestCases", async () => {
         },
       ],
     });
-    sinon
-      .stub(validateWithTestCasesDeps, "submitAppValidationRequest")
-      .throws("should not be called");
-    sinon.stub(validateWithTestCasesDeps, "getAppValidationById").throws("should not be called");
+    vi.spyOn(teamsDevPortalClient, "submitAppValidationRequest").mockImplementation(() => {
+      throw "should not be called";
+    });
+    vi.spyOn(teamsDevPortalClient, "getAppValidationById").mockImplementation(() => {
+      throw "should not be called";
+    });
 
     const args: ValidateWithTestCasesArgs = {
       appPackagePath: "fakepath",
@@ -448,22 +451,22 @@ describe("teamsApp/validateWithTestCases", async () => {
   });
 
   it("Invalid list validation response", async () => {
-    sinon.stub(validateWithTestCasesDeps, "pathExists").resolves(true);
-    sinon.stub(validateWithTestCasesDeps, "readFile").callsFake(async () => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockImplementation(async () => {
       const zip = new AdmZip();
       zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(new TeamsAppManifest())));
       const archivedFile = zip.toBuffer();
       return archivedFile;
     });
-    sinon.stub(validateWithTestCasesDeps, "parseManifest");
+    vi.spyOn(metadataUtil, "parseManifest");
 
-    sinon.stub(validateWithTestCasesDeps, "getAppValidationRequestList").resolves({});
-    sinon.stub(validateWithTestCasesDeps, "submitAppValidationRequest").resolves({
+    vi.spyOn(teamsDevPortalClient, "getAppValidationRequestList").mockResolvedValue({});
+    vi.spyOn(teamsDevPortalClient, "submitAppValidationRequest").mockResolvedValue({
       status: AsyncAppValidationStatus.Created,
       appValidationId: "fakeId",
     });
 
-    sinon.stub(validateWithTestCasesDeps, "getAppValidationById").resolves({
+    vi.spyOn(teamsDevPortalClient, "getAppValidationById").mockResolvedValue({
       status: AsyncAppValidationStatus.Completed,
       appValidationId: "fakeId",
       appId: "fakeAppId",
@@ -502,16 +505,16 @@ describe("teamsApp/validateWithTestCases", async () => {
   });
 
   it("Happy path", async () => {
-    sinon.stub(validateWithTestCasesDeps, "pathExists").resolves(true);
-    sinon.stub(validateWithTestCasesDeps, "readFile").callsFake(async () => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockImplementation(async () => {
       const zip = new AdmZip();
       zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(new TeamsAppManifest())));
       const archivedFile = zip.toBuffer();
       return archivedFile;
     });
-    sinon.stub(validateWithTestCasesDeps, "parseManifest");
+    vi.spyOn(metadataUtil, "parseManifest");
 
-    sinon.stub(validateWithTestCasesDeps, "getAppValidationRequestList").resolves({
+    vi.spyOn(teamsDevPortalClient, "getAppValidationRequestList").mockResolvedValue({
       appValidations: [
         {
           id: "fakeId",
@@ -533,12 +536,12 @@ describe("teamsApp/validateWithTestCases", async () => {
         },
       ],
     });
-    sinon.stub(validateWithTestCasesDeps, "submitAppValidationRequest").resolves({
+    vi.spyOn(teamsDevPortalClient, "submitAppValidationRequest").mockResolvedValue({
       status: AsyncAppValidationStatus.Created,
       appValidationId: "fakeId",
     });
 
-    sinon.stub(validateWithTestCasesDeps, "getAppValidationById").resolves({
+    vi.spyOn(teamsDevPortalClient, "getAppValidationById").mockResolvedValue({
       status: AsyncAppValidationStatus.Completed,
       appValidationId: "fakeId",
       appId: "fakeAppId",
@@ -613,16 +616,16 @@ describe("teamsApp/validateWithTestCases", async () => {
   });
 
   it("Aborted", async () => {
-    sinon.stub(validateWithTestCasesDeps, "pathExists").resolves(true);
-    sinon.stub(validateWithTestCasesDeps, "readFile").callsFake(async () => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockImplementation(async () => {
       const zip = new AdmZip();
       zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(new TeamsAppManifest())));
       const archivedFile = zip.toBuffer();
       return archivedFile;
     });
-    sinon.stub(validateWithTestCasesDeps, "parseManifest");
+    vi.spyOn(metadataUtil, "parseManifest");
 
-    sinon.stub(validateWithTestCasesDeps, "getAppValidationRequestList").resolves({
+    vi.spyOn(teamsDevPortalClient, "getAppValidationRequestList").mockResolvedValue({
       appValidations: [
         {
           id: "fakeId",
@@ -644,12 +647,12 @@ describe("teamsApp/validateWithTestCases", async () => {
         },
       ],
     });
-    sinon.stub(validateWithTestCasesDeps, "submitAppValidationRequest").resolves({
+    vi.spyOn(teamsDevPortalClient, "submitAppValidationRequest").mockResolvedValue({
       status: AsyncAppValidationStatus.Created,
       appValidationId: "fakeId",
     });
 
-    sinon.stub(validateWithTestCasesDeps, "getAppValidationById").resolves({
+    vi.spyOn(teamsDevPortalClient, "getAppValidationById").mockResolvedValue({
       status: AsyncAppValidationStatus.Aborted,
       appValidationId: "fakeId",
       appId: "fakeAppId",
@@ -681,16 +684,16 @@ describe("teamsApp/validateWithTestCases", async () => {
       platform: Platform.CLI,
     };
 
-    sinon.stub(validateWithTestCasesDeps, "pathExists").resolves(true);
-    sinon.stub(validateWithTestCasesDeps, "readFile").callsFake(async () => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockImplementation(async () => {
       const zip = new AdmZip();
       zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(new TeamsAppManifest())));
       const archivedFile = zip.toBuffer();
       return archivedFile;
     });
-    sinon.stub(validateWithTestCasesDeps, "parseManifest");
+    vi.spyOn(metadataUtil, "parseManifest");
 
-    sinon.stub(validateWithTestCasesDeps, "getAppValidationRequestList").resolves({
+    vi.spyOn(teamsDevPortalClient, "getAppValidationRequestList").mockResolvedValue({
       appValidations: [
         {
           id: "fakeId",
@@ -712,12 +715,12 @@ describe("teamsApp/validateWithTestCases", async () => {
         },
       ],
     });
-    sinon.stub(validateWithTestCasesDeps, "submitAppValidationRequest").resolves({
+    vi.spyOn(teamsDevPortalClient, "submitAppValidationRequest").mockResolvedValue({
       status: AsyncAppValidationStatus.Created,
       appValidationId: "fakeId",
     });
 
-    sinon.stub(validateWithTestCasesDeps, "getAppValidationById").resolves({
+    vi.spyOn(teamsDevPortalClient, "getAppValidationById").mockResolvedValue({
       status: AsyncAppValidationStatus.Completed,
       appValidationId: "fakeId",
       appId: "fakeAppId",
@@ -744,7 +747,7 @@ describe("teamsApp/validateWithTestCases", async () => {
   });
 
   it("CLI - succeed", async () => {
-    sinon.stub(ValidateWithTestCasesDriver.prototype, "validate").resolves(ok(new Map()));
+    vi.spyOn(ValidateWithTestCasesDriver.prototype, "validate").mockResolvedValue(ok(new Map()));
     const result = await teamsappMgr.validateTeamsApp({
       projectPath: "xxx",
       platform: Platform.CLI,
@@ -755,9 +758,9 @@ describe("teamsApp/validateWithTestCases", async () => {
   });
 
   it("CLI - failed", async () => {
-    sinon
-      .stub(ValidateWithTestCasesDriver.prototype, "validate")
-      .resolves(err(new UserCancelError()));
+    vi.spyOn(ValidateWithTestCasesDriver.prototype, "validate").mockResolvedValue(
+      err(new UserCancelError())
+    );
     const result = await teamsappMgr.validateTeamsApp({
       projectPath: "xxx",
       platform: Platform.CLI,

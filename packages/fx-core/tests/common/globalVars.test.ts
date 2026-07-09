@@ -1,22 +1,20 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { assert } from "chai";
-import sinon from "sinon";
-import "../../src/component/feature/sso";
-import { ErrorContextMW, globalVars, setErrorContext, setTools } from "../../src/common/globalVars";
-import { MockTools } from "../core/utils";
 import { hooks } from "@feathersjs/hooks";
+import { assert, vi } from "vitest";
+import { ErrorContextMW, globalVars, setErrorContext, setTools } from "../../src/common/globalVars";
+import "../../src/component/feature/sso";
+import { MockTools } from "../core/utils";
 
 const tools = new MockTools();
 
 describe("globalVars", () => {
-  const sandbox = sinon.createSandbox();
   beforeEach(() => {
     setTools(tools);
   });
   afterEach(async () => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   describe("setErrorContext", () => {

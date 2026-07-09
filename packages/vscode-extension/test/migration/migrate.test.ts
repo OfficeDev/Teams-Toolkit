@@ -1,4 +1,4 @@
-import * as chai from "chai";
+import { assert } from "vitest";
 import path from "path";
 import fs from "fs-extra";
 import transformJs from "../../src/migration/migrationTool/replaceSDK";
@@ -35,7 +35,7 @@ describe("Migrate", async () => {
         },
         { parser: "js" }
       );
-      chai.assert.equal(output, normalizeLineEnds(expectedOutput).trimEnd());
+      assert.equal(output, normalizeLineEnds(expectedOutput).trimEnd());
     });
   });
 
@@ -59,7 +59,7 @@ describe("Migrate", async () => {
         },
         { parser: "tsx" }
       );
-      chai.assert.equal(output, normalizeLineEnds(expectedOutput).trimEnd());
+      assert.equal(output, normalizeLineEnds(expectedOutput).trimEnd());
     });
   });
 });

@@ -16,15 +16,14 @@ import {
   Platform,
   SystemError,
 } from "@microsoft/teamsfx-api";
-import * as chai from "chai";
 import fs from "fs";
 import fse from "fs-extra";
 import mockfs from "mock-fs";
 import mockedEnv, { RestoreFn } from "mocked-env";
 import { OfficeAddinManifest } from "office-addin-manifest";
 import * as path from "path";
-import * as sinon from "sinon";
 import * as uuid from "uuid";
+import { chai, vi } from "vitest";
 import { createContext, setTools } from "../../../src/common/globalVars";
 import { cpUtils } from "../../../src/component/deps-checker/";
 import { manifestUtils } from "../../../src/component/driver/teamsApp/utils/ManifestUtils";
@@ -57,17 +56,17 @@ describe("OfficeAddinGenerator for Outlook Addin", function () {
     context = createContext();
 
     await fse.ensureDir(testFolder);
-    sinon.stub(fs, "stat").resolves();
-    sinon.stub(cpUtils, "executeCommand").resolves("succeed");
+    vi.spyOn(fs, "stat").mockResolvedValue();
+    vi.spyOn(cpUtils, "executeCommand").mockResolvedValue("succeed");
     const manifestId = uuid.v4();
-    sinon.stub(fs, "readFile").resolves(Buffer.from(`{"id": "${manifestId}"}`));
-    sinon.stub(fs, "writeFile").resolves();
-    sinon.stub(fs, "rename").resolves();
-    sinon.stub(fs, "copyFile").resolves();
-    sinon.stub(fse, "remove").resolves();
-    sinon.stub(fse, "readJson").resolves({});
-    sinon.stub(fse, "ensureFile").resolves();
-    sinon.stub(fse, "writeJSON").resolves();
+    vi.spyOn(fs, "readFile").mockResolvedValue(Buffer.from(`{"id": "${manifestId}"}`));
+    vi.spyOn(fs, "writeFile").mockResolvedValue();
+    vi.spyOn(fs, "rename").mockResolvedValue();
+    vi.spyOn(fs, "copyFile").mockResolvedValue();
+    vi.spyOn(fse, "remove").mockResolvedValue();
+    vi.spyOn(fse, "readJson").mockResolvedValue({});
+    vi.spyOn(fse, "ensureFile").mockResolvedValue();
+    vi.spyOn(fse, "writeJSON").mockResolvedValue();
   });
 
   it("should scaffold taskpane successfully on happy path if project-type is outlookAddin", async () => {
@@ -80,8 +79,8 @@ describe("OfficeAddinGenerator for Outlook Addin", function () {
     inputs[QuestionNames.Capabilities] = "json-taskpane";
     inputs[QuestionNames.OfficeAddinFolder] = undefined;
     inputs[QuestionNames.ProgrammingLanguage] = "typescript";
-    sinon.stub(HelperMethods, "fetchAndUnzip").resolves(ok(undefined));
-    sinon.stub(OfficeAddinManifest, "modifyManifestFile").resolves({});
+    vi.spyOn(HelperMethods, "fetchAndUnzip").mockResolvedValue(ok(undefined));
+    vi.spyOn(OfficeAddinManifest, "modifyManifestFile").mockResolvedValue({});
     const result = await OfficeAddinGenerator.doScaffolding(context, inputs, testFolder);
 
     chai.expect(result.isOk()).to.eq(true);
@@ -97,8 +96,8 @@ describe("OfficeAddinGenerator for Outlook Addin", function () {
     inputs[QuestionNames.Capabilities] = "json-taskpane";
     inputs[QuestionNames.OfficeAddinFolder] = undefined;
     inputs[QuestionNames.ProgrammingLanguage] = "typescript";
-    sinon.stub(HelperMethods, "fetchAndUnzip").rejects(new UserCancelError());
-    sinon.stub(OfficeAddinManifest, "modifyManifestFile").resolves({});
+    vi.spyOn(HelperMethods, "fetchAndUnzip").mockRejectedValue(new UserCancelError());
+    vi.spyOn(OfficeAddinManifest, "modifyManifestFile").mockResolvedValue({});
     const result = await OfficeAddinGenerator.doScaffolding(context, inputs, testFolder);
 
     chai.expect(result.isOk()).to.eq(true);
@@ -116,18 +115,18 @@ describe("OfficeAddinGenerator for Outlook Addin", function () {
     inputs[QuestionNames.ProgrammingLanguage] = "typescript";
     inputs[QuestionNames.OfficeAddinManifest] = "manifest.json";
 
-    const copyAddinFilesStub = sinon
-      .stub(HelperMethods, "copyAddinFiles")
-      .callsFake((from: string, to: string) => {
+    const copyAddinFilesStub = vi
+      .spyOn(HelperMethods, "copyAddinFiles")
+      .mockImplementation((from: string, to: string) => {
         return;
       });
-    const updateManifestStub = sinon
-      .stub(HelperMethods, "updateManifest")
-      .callsFake(async (destination: string, manifestPath: string) => {
+    const updateManifestStub = vi
+      .spyOn(HelperMethods, "updateManifest")
+      .mockImplementation(async (destination: string, manifestPath: string) => {
         return;
       });
 
-    sinon.stub<any, any>(ManifestUtil, "loadFromPath").resolves({
+    vi.spyOn(ManifestUtil, "loadFromPath").mockResolvedValue({
       extensions: [
         {
           requirements: {
@@ -135,13 +134,13 @@ describe("OfficeAddinGenerator for Outlook Addin", function () {
           },
         },
       ],
-    });
+    } as any);
 
     const result = await OfficeAddinGenerator.doScaffolding(context, inputs, testFolder);
 
     chai.expect(result.isOk()).to.eq(true);
-    chai.expect(copyAddinFilesStub.calledOnce).to.be.true;
-    chai.expect(updateManifestStub.calledOnce).to.be.true;
+    chai.expect(copyAddinFilesStub.mock.calls.length === 1).to.be.true;
+    chai.expect(updateManifestStub.mock.calls.length === 1).to.be.true;
     chai.expect(inputs[QuestionNames.OfficeAddinHost]).to.eq("Outlook");
 
     const hostResult = await getHost(inputs[QuestionNames.OfficeAddinFolder]);
@@ -163,42 +162,46 @@ describe("OfficeAddinGenerator for Outlook Addin", function () {
     let progressBarStartCalled = 0;
     let progressBarNextCalled = 0;
     let progessBarEndCalled = 0;
-    const createProgressBarStub = sinon.stub(context.userInteraction, "createProgressBar").returns({
-      start: async () => {
-        progressBarStartCalled++;
-      },
-      next: async () => {
-        progressBarNextCalled++;
-      },
-      end: async () => {
-        progessBarEndCalled++;
-      },
-    });
+    const createProgressBarStub = vi
+      .spyOn(context.userInteraction, "createProgressBar")
+      .mockReturnValue({
+        start: async () => {
+          progressBarStartCalled++;
+        },
+        next: async () => {
+          progressBarNextCalled++;
+        },
+        end: async () => {
+          progessBarEndCalled++;
+        },
+      });
 
-    const copyAddinFilesStub = sinon
-      .stub(HelperMethods, "copyAddinFiles")
-      .callsFake((from: string, to: string) => {
+    const copyAddinFilesStub = vi
+      .spyOn(HelperMethods, "copyAddinFiles")
+      .mockImplementation((from: string, to: string) => {
         return;
       });
-    const updateManifestStub = sinon
-      .stub(HelperMethods, "updateManifest")
-      .callsFake(async (destination: string, manifestPath: string) => {
+    const updateManifestStub = vi
+      .spyOn(HelperMethods, "updateManifest")
+      .mockImplementation(async (destination: string, manifestPath: string) => {
         return;
       });
-    const convertProjectStub = sinon
-      .stub()
-      .callsFake(async (manifestPath?: string, backupPath?: string) => {
+    const convertProjectStub = vi
+      .fn()
+      .mockImplementation(async (manifestPath?: string, backupPath?: string) => {
         return;
       });
 
     // The new validation in doScaffolding checks for `package.json` in the
     // source folder before invoking convertProject. Pretend it exists so the
     // test still exercises the convertProject path.
-    sinon.stub(fse, "pathExists").resolves(true as any);
+    vi.spyOn(fse, "pathExists").mockResolvedValue(true as any);
 
-    sinon.stub(officeAddinGeneratorDeps, "convertProject").callsFake(convertProjectStub as any);
+    vi.spyOn(officeAddinGeneratorDeps, "convertProject").mockImplementation(
+      convertProjectStub as any
+    );
 
-    sinon.stub<any, any>(ManifestUtil, "loadFromPath").resolves({
+    vi.spyOn(ManifestUtil, "loadFromPath").mockResolvedValue({
       extensions: [
         {
           requirements: {
@@ -206,14 +209,14 @@ describe("OfficeAddinGenerator for Outlook Addin", function () {
           },
         },
       ],
-    });
+    } as any);
 
     const result = await OfficeAddinGenerator.doScaffolding(context, inputs, testFolder);
 
     chai.expect(result.isOk()).to.eq(true);
-    chai.expect(copyAddinFilesStub.calledOnce).to.be.true;
-    chai.expect(updateManifestStub.calledOnce).to.be.true;
-    chai.expect(convertProjectStub.calledOnce).to.be.true;
+    chai.expect(copyAddinFilesStub.mock.calls.length === 1).to.be.true;
+    chai.expect(updateManifestStub.mock.calls.length === 1).to.be.true;
+    chai.expect(convertProjectStub.mock.calls.length === 1).to.be.true;
     chai.expect(inputs[QuestionNames.OfficeAddinHost]).to.eq("Outlook");
     chai.expect(progressBarStartCalled).to.eq(1);
     chai.expect(progressBarNextCalled).to.eq(3);
@@ -235,19 +238,21 @@ describe("OfficeAddinGenerator for Outlook Addin", function () {
     inputs[QuestionNames.ProgrammingLanguage] = "typescript";
     inputs[QuestionNames.OfficeAddinManifest] = "manifest.xml";
 
-    sinon.stub(context.userInteraction, "createProgressBar").returns({
+    vi.spyOn(context.userInteraction, "createProgressBar").mockReturnValue({
       start: async () => {},
       next: async () => {},
       end: async () => {},
     } as any);
 
     // Simulate a manifest-only source project: no package.json on disk.
-    sinon.stub(fse, "pathExists").resolves(false as any);
+    vi.spyOn(fse, "pathExists").mockResolvedValue(false as any);
 
-    const copyAddinFilesStub = sinon.stub(HelperMethods, "copyAddinFiles");
-    const convertProjectStub = sinon.stub();
+    const copyAddinFilesStub = vi.spyOn(HelperMethods, "copyAddinFiles");
+    const convertProjectStub = vi.fn();
 
-    sinon.stub(officeAddinGeneratorDeps, "convertProject").callsFake(convertProjectStub as any);
+    vi.spyOn(officeAddinGeneratorDeps, "convertProject").mockImplementation(
+      convertProjectStub as any
+    );
 
     const result = await OfficeAddinGenerator.doScaffolding(context, inputs, testFolder);
 
@@ -255,12 +260,12 @@ describe("OfficeAddinGenerator for Outlook Addin", function () {
     if (result.isErr()) {
       chai.expect(result.error.name).to.eq("ManifestOnlyAddinNotSupported");
     }
-    chai.expect(copyAddinFilesStub.called).to.be.false;
-    chai.expect(convertProjectStub.called).to.be.false;
+    chai.expect(copyAddinFilesStub.mock.calls.length > 0).to.be.false;
+    chai.expect(convertProjectStub.mock.calls.length > 0).to.be.false;
   });
 
   afterEach(async () => {
-    sinon.restore();
+    vi.restoreAllMocks();
     mockedEnvRestore();
     if (await fse.pathExists(testFolder)) {
       await fse.remove(testFolder);
@@ -270,13 +275,13 @@ describe("OfficeAddinGenerator for Outlook Addin", function () {
 
 describe("HelperMethods", async () => {
   describe("updateManifest", () => {
-    const sandbox = sinon.createSandbox();
+    const sandbox = vi;
     const manifestPath = "manifestPath";
     const manifestTemplatePath = "manifestTemplatePath";
     let writePathResult: DevPreviewSchema | undefined = undefined;
 
     beforeEach(() => {
-      sandbox.stub(ManifestUtil, "loadFromPath").callsFake(async (path) => {
+      vi.spyOn(ManifestUtil, "loadFromPath").mockImplementation(async (path) => {
         if (path === manifestPath) {
           return {
             extensions: [],
@@ -296,21 +301,21 @@ describe("HelperMethods", async () => {
         throw new Error("Invalid path");
       });
 
-      sandbox.stub(ManifestUtil, "writeToPath").callsFake(async (path, manifest) => {
+      vi.spyOn(ManifestUtil, "writeToPath").mockImplementation(async (path, manifest) => {
         writePathResult = manifest as DevPreviewSchema;
         return;
       });
 
-      sandbox.stub(manifestUtils, "getTeamsAppManifestPath").returns(manifestTemplatePath);
+      vi.spyOn(manifestUtils, "getTeamsAppManifestPath").mockReturnValue(manifestTemplatePath);
     });
 
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
       writePathResult = undefined;
     });
 
     it("should update manifest's extenstions and authorization", async () => {
-      sandbox.stub(fse, "pathExists").resolves(true);
+      vi.spyOn(fse, "pathExists").mockResolvedValue(true);
       await HelperMethods.updateManifest("", manifestPath);
 
       chai.assert.isDefined(writePathResult);
@@ -319,7 +324,7 @@ describe("HelperMethods", async () => {
     });
 
     it("should early return if there's no appPackage folder", async () => {
-      sandbox.stub(fse, "pathExists").resolves(false);
+      vi.spyOn(fse, "pathExists").mockResolvedValue(false);
       await HelperMethods.updateManifest("", manifestPath);
 
       chai.assert.isUndefined(writePathResult, "writeToPath should not be called");
@@ -450,17 +455,17 @@ describe("OfficeAddinGenerator for Office Addin", function () {
     context = createContext();
 
     await fse.ensureDir(testFolder);
-    sinon.stub(fs, "stat").resolves();
-    sinon.stub(cpUtils, "executeCommand").resolves("succeed");
+    vi.spyOn(fs, "stat").mockResolvedValue();
+    vi.spyOn(cpUtils, "executeCommand").mockResolvedValue("succeed");
     const manifestId = uuid.v4();
-    sinon.stub(fs, "readFile").resolves(Buffer.from(`{"id": "${manifestId}"}`));
-    sinon.stub(fs, "writeFile").resolves();
-    sinon.stub(fs, "rename").resolves();
-    sinon.stub(fs, "copyFile").resolves();
-    sinon.stub(fse, "remove").resolves();
-    sinon.stub(fse, "readJson").resolves({});
-    sinon.stub(fse, "ensureFile").resolves();
-    sinon.stub(fse, "writeJSON").resolves();
+    vi.spyOn(fs, "readFile").mockResolvedValue(Buffer.from(`{"id": "${manifestId}"}`));
+    vi.spyOn(fs, "writeFile").mockResolvedValue();
+    vi.spyOn(fs, "rename").mockResolvedValue();
+    vi.spyOn(fs, "copyFile").mockResolvedValue();
+    vi.spyOn(fse, "remove").mockResolvedValue();
+    vi.spyOn(fse, "readJson").mockResolvedValue({});
+    vi.spyOn(fse, "ensureFile").mockResolvedValue();
+    vi.spyOn(fse, "writeJSON").mockResolvedValue();
   });
 
   it("should scaffold taskpane successfully on happy path if project-type is officeAddin and capability is json-taskpane", async () => {
@@ -477,7 +482,7 @@ describe("OfficeAddinGenerator for Office Addin", function () {
     chai.expect(result.isOk()).to.eq(true);
   });
   afterEach(async () => {
-    sinon.restore();
+    vi.restoreAllMocks();
     mockedEnvRestore();
     if (await fse.pathExists(testFolder)) {
       await fse.remove(testFolder);
@@ -490,7 +495,7 @@ describe("OfficeAddinGeneratorNew", () => {
   setTools(gtools);
   const generator = new OfficeAddinGeneratorNew();
   const context = createContext();
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   describe("active()", () => {
     it(`should return true`, async () => {
       const inputs: Inputs = {
@@ -516,10 +521,10 @@ describe("OfficeAddinGeneratorNew", () => {
 
   describe("getTemplateInfos()", () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
     it(`should return office-addin-config template officeMetaOS`, async () => {
-      sandbox.stub(OfficeAddinGenerator, "doScaffolding").resolves(ok(undefined));
+      vi.spyOn(OfficeAddinGenerator, "doScaffolding").mockResolvedValue(ok(undefined));
       const inputs: Inputs = {
         platform: Platform.CLI,
         projectPath: "./",
@@ -538,32 +543,8 @@ describe("OfficeAddinGeneratorNew", () => {
       }
     });
 
-    it(`should return specific template for MetaOS DA Support`, async () => {
-      const inputs: Inputs = {
-        platform: Platform.VSCode,
-        [QuestionNames.TemplateName]: TemplateNames.DeclarativeAgentMetaOSNewProject,
-      };
-
-      const res = await generator.getTemplateInfos(context, inputs, "path");
-      chai.assert.isTrue(res.isOk());
-    });
-
-    it("getTemplateInfos: DeclarativeAgentMetaOSNewProject should return empty array", async () => {
-      const inputs: Inputs = {
-        platform: Platform.VSCode,
-        projectPath: "./",
-      };
-      inputs[QuestionNames.TemplateName] = TemplateNames.DeclarativeAgentMetaOSUpgradeProject;
-      const result = await generator.getTemplateInfos(context, inputs, "destinationPath");
-      chai.assert.isTrue(result.isOk());
-      if (result.isOk()) {
-        // Should return empty array because upgrade doesn't need scaffolding
-        chai.assert.equal(result.value.length, 0);
-      }
-    });
-
     it(`should return office-addin-config template outlookAddin`, async () => {
-      sandbox.stub(OfficeAddinGenerator, "doScaffolding").resolves(ok(undefined));
+      vi.spyOn(OfficeAddinGenerator, "doScaffolding").mockResolvedValue(ok(undefined));
       const inputs: Inputs = {
         platform: Platform.CLI,
         projectPath: "./",
@@ -583,7 +564,7 @@ describe("OfficeAddinGeneratorNew", () => {
     });
 
     it(`should return office-addin-outlook-taskpane template`, async () => {
-      sandbox.stub(OfficeAddinGenerator, "doScaffolding").resolves(ok(undefined));
+      vi.spyOn(OfficeAddinGenerator, "doScaffolding").mockResolvedValue(ok(undefined));
       const inputs: Inputs = {
         platform: Platform.CLI,
         projectPath: "./",
@@ -602,7 +583,7 @@ describe("OfficeAddinGeneratorNew", () => {
       }
     });
     it(`should return office-addin-outlook-taskpane template`, async () => {
-      sandbox.stub(OfficeAddinGenerator, "doScaffolding").resolves(ok(undefined));
+      vi.spyOn(OfficeAddinGenerator, "doScaffolding").mockResolvedValue(ok(undefined));
       const inputs: Inputs = {
         platform: Platform.CLI,
         projectPath: "./",
@@ -625,7 +606,7 @@ describe("OfficeAddinGeneratorNew", () => {
         platform: Platform.CLI,
         projectPath: "./",
       };
-      sandbox.stub(OfficeAddinGenerator, "doScaffolding").resolves(err(new UserCancelError()));
+      vi.spyOn(OfficeAddinGenerator, "doScaffolding").mockResolvedValue(err(new UserCancelError()));
       const res = await generator.getTemplateInfos(context, inputs, "./");
       chai.assert.isTrue(res.isErr());
     });
@@ -633,11 +614,11 @@ describe("OfficeAddinGeneratorNew", () => {
 
   describe("post()", () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
     it(`happy`, async () => {
-      sandbox.stub(envUtil, "listEnv").resolves(ok(["dev", "dev2"]));
-      const reset = sandbox.stub(envUtil, "resetEnv").resolves();
+      vi.spyOn(envUtil, "listEnv").mockResolvedValue(ok(["dev", "dev2"]));
+      const reset = vi.spyOn(envUtil, "resetEnv").mockResolvedValue();
       const inputs: Inputs = {
         platform: Platform.CLI,
         projectPath: "./",
@@ -645,63 +626,28 @@ describe("OfficeAddinGeneratorNew", () => {
       inputs[QuestionNames.OfficeAddinFolder] = "testfolder";
       const res = await generator.post(context, inputs, "./");
       chai.assert.isTrue(res.isOk());
-      chai.assert.isTrue(reset.calledTwice);
-    });
-    it(`da: upgrade`, async () => {
-      sandbox.stub(MetaOSHelper, "copyExistMetaOSProject").resolves();
-      sandbox.stub(MetaOSHelper, "extendToDA").resolves();
-      sandbox.stub(MetaOSHelper, "unifyProjectID").resolves();
-      const inputs: Inputs = {
-        platform: Platform.VSCode,
-        [QuestionNames.TemplateName]: TemplateNames.DeclarativeAgentMetaOSUpgradeProject,
-        [QuestionNames.OfficeAddinFolder]: "testfolder",
-        [QuestionNames.AppName]: "testapp",
-      };
-      const res = await generator.post(context, inputs, "path");
-      chai.assert.isTrue(res.isOk());
-    });
-    it(`da: upgrade error`, async () => {
-      sandbox.stub(MetaOSHelper, "copyExistMetaOSProject").rejects(new Error("error"));
-      const inputs: Inputs = {
-        platform: Platform.VSCode,
-        [QuestionNames.TemplateName]: TemplateNames.DeclarativeAgentMetaOSUpgradeProject,
-        [QuestionNames.OfficeAddinFolder]: "testfolder",
-        [QuestionNames.AppName]: "testapp",
-      };
-      const res = await generator.post(context, inputs, "path");
-      chai.assert.isTrue(res.isErr());
-    });
-    it(`da: create new`, async () => {
-      sandbox.stub(MetaOSHelper, "unifyProjectID").resolves();
-      const inputs: Inputs = {
-        platform: Platform.VSCode,
-        [QuestionNames.TemplateName]: TemplateNames.DeclarativeAgentMetaOSNewProject,
-        [QuestionNames.OfficeAddinFolder]: "testfolder",
-        [QuestionNames.AppName]: "testapp",
-      };
-      const res = await generator.post(context, inputs, "path");
-      chai.assert.isTrue(res.isOk());
+      chai.assert.isTrue(reset.mock.calls.length === 2);
     });
     it(`not import`, async () => {
-      const reset = sandbox.stub(envUtil, "resetEnv").resolves();
+      const reset = vi.spyOn(envUtil, "resetEnv").mockResolvedValue();
       const inputs: Inputs = {
         platform: Platform.CLI,
         projectPath: "./",
       };
       const res = await generator.post(context, inputs, "./");
       chai.assert.isTrue(res.isOk());
-      chai.assert.isTrue(reset.notCalled);
+      chai.assert.isTrue(reset.mock.calls.length === 0);
     });
     it(`list env error`, async () => {
-      sandbox.stub(envUtil, "listEnv").resolves(err(new UserCancelError()));
-      const reset = sandbox.stub(envUtil, "resetEnv").resolves();
+      vi.spyOn(envUtil, "listEnv").mockResolvedValue(err(new UserCancelError()));
+      const reset = vi.spyOn(envUtil, "resetEnv").mockResolvedValue();
       const inputs: Inputs = {
         platform: Platform.CLI,
         projectPath: "./",
       };
       const res = await generator.post(context, inputs, "./");
       chai.assert.isTrue(res.isOk());
-      chai.assert.isTrue(reset.notCalled);
+      chai.assert.isTrue(reset.mock.calls.length === 0);
     });
   });
 });
@@ -724,9 +670,9 @@ describe("doScaffolding()", () => {
 });
 
 describe("MetaOSHelper", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("copyFilterFn", () => {
@@ -736,9 +682,9 @@ describe("MetaOSHelper", () => {
   });
 
   it("copyExistMetaOSProject", async () => {
-    const fseCopy = sandbox.stub(fse, "copy").resolves();
+    const fseCopy = vi.spyOn(fse, "copy").mockResolvedValue();
     await MetaOSHelper.copyExistMetaOSProject("source", "target");
-    chai.assert.isTrue(fseCopy.calledOnce);
+    chai.assert.isTrue(fseCopy.mock.calls.length === 1);
   });
 
   it("getNameWithSuffix", () => {
@@ -756,51 +702,51 @@ describe("MetaOSHelper", () => {
   });
 
   it("ensureFileNameIsNotExist", () => {
-    sandbox.stub(fse, "existsSync").onFirstCall().returns(true).onSecondCall().returns(false);
+    vi.spyOn(fse, "existsSync").mockReturnValueOnce(true).mockReturnValueOnce(false);
     const result = MetaOSHelper.ensureFileNameIsNotExist("path", "test", ".json");
     chai.assert.equal(result, "test1.json");
   });
 
   it("unifyProjectID", async () => {
-    const readManifestStub = sandbox.stub(AppManifestUtils, "readTeamsManifest").resolves({
+    const readManifestStub = vi.spyOn(AppManifestUtils, "readTeamsManifest").mockResolvedValue({
       id: "test",
     } as any);
-    const writeManifestStub = sandbox.stub(AppManifestUtils, "writeTeamsManifest").resolves();
-    const readFileStub = sandbox.stub(fse, "readFile").resolves(Buffer.from(`{"id": "test"}`));
-    const writeFileStub = sandbox.stub(fse, "writeFile").resolves();
-    const pathExistsStub = sandbox.stub(fse, "pathExists").resolves(true);
-    const deserializeStub = sandbox.stub(dotenvUtil, "deserialize").returns({ obj: {} } as any);
-    const serializeStub = sandbox.stub(dotenvUtil, "serialize").returns("test");
+    const writeManifestStub = vi.spyOn(AppManifestUtils, "writeTeamsManifest").mockResolvedValue();
+    const readFileStub = vi.spyOn(fse, "readFile").mockResolvedValue(Buffer.from(`{"id": "test"}`));
+    const writeFileStub = vi.spyOn(fse, "writeFile").mockResolvedValue();
+    const pathExistsStub = vi.spyOn(fse, "pathExists").mockResolvedValue(true);
+    const deserializeStub = vi.spyOn(dotenvUtil, "deserialize").mockReturnValue({ obj: {} } as any);
+    const serializeStub = vi.spyOn(dotenvUtil, "serialize").mockReturnValue("test");
 
     await MetaOSHelper.unifyProjectID("projectFolder");
 
-    chai.assert.isTrue(readManifestStub.calledOnce);
-    chai.assert.isTrue(writeManifestStub.calledOnce);
-    chai.assert.isTrue(readFileStub.calledOnce);
-    chai.assert.isTrue(writeFileStub.calledOnce);
-    chai.assert.isTrue(pathExistsStub.calledOnce);
-    chai.assert.isTrue(deserializeStub.calledOnce);
-    chai.assert.isTrue(serializeStub.calledOnce);
+    chai.assert.isTrue(readManifestStub.mock.calls.length === 1);
+    chai.assert.isTrue(writeManifestStub.mock.calls.length === 1);
+    chai.assert.isTrue(readFileStub.mock.calls.length === 1);
+    chai.assert.isTrue(writeFileStub.mock.calls.length === 1);
+    chai.assert.isTrue(pathExistsStub.mock.calls.length === 1);
+    chai.assert.isTrue(deserializeStub.mock.calls.length === 1);
+    chai.assert.isTrue(serializeStub.mock.calls.length === 1);
   });
 
   it("extendToDA", async () => {
-    sandbox.stub(MetaOSHelper, "ensureFileNameIsNotExist").returns("test");
-    sandbox.stub(MetaOSHelper, "modifyManifest").resolves({ w: "w", x: "x", p: "p" });
-    const generateDAFile = sandbox.stub(MetaOSHelper, "generateDAFile").resolves();
-    const generateActionFile = sandbox.stub(MetaOSHelper, "generateActionFile").resolves();
-    const addCodeToCommands = sandbox.stub(MetaOSHelper, "addCodeToCommands").resolves();
-    const upgradePkg = sandbox.stub(MetaOSHelper, "upgradeOfficeAddInDebugging").resolves();
+    vi.spyOn(MetaOSHelper, "ensureFileNameIsNotExist").mockReturnValue("test");
+    vi.spyOn(MetaOSHelper, "modifyManifest").mockResolvedValue({ w: "w", x: "x", p: "p" });
+    const generateDAFile = vi.spyOn(MetaOSHelper, "generateDAFile").mockResolvedValue();
+    const generateActionFile = vi.spyOn(MetaOSHelper, "generateActionFile").mockResolvedValue();
+    const addCodeToCommands = vi.spyOn(MetaOSHelper, "addCodeToCommands").mockResolvedValue();
+    const upgradePkg = vi.spyOn(MetaOSHelper, "upgradeOfficeAddInDebugging").mockResolvedValue();
 
     await MetaOSHelper.extendToDA("projectFolder", "appName");
-    chai.assert.isTrue(generateDAFile.calledOnce);
-    chai.assert.isTrue(generateActionFile.calledOnce);
-    chai.assert.isTrue(addCodeToCommands.calledOnce);
-    chai.assert.isTrue(upgradePkg.calledOnce);
+    chai.assert.isTrue(generateDAFile.mock.calls.length === 1);
+    chai.assert.isTrue(generateActionFile.mock.calls.length === 1);
+    chai.assert.isTrue(addCodeToCommands.mock.calls.length === 1);
+    chai.assert.isTrue(upgradePkg.mock.calls.length === 1);
   });
 
   it("modifyManifest: condition 1", async () => {
-    sandbox.stub(MetaOSHelper, "ensureFunctionNameIsNotExist").returns("test");
-    sandbox.stub(AppManifestUtils, "readTeamsManifest").resolves({
+    vi.spyOn(MetaOSHelper, "ensureFunctionNameIsNotExist").mockReturnValue("test");
+    vi.spyOn(AppManifestUtils, "readTeamsManifest").mockResolvedValue({
       extensions: [
         {
           runtimes: [
@@ -814,29 +760,29 @@ describe("MetaOSHelper", () => {
         },
       ],
     } as any);
-    sandbox.stub(AppManifestUtils, "writeTeamsManifest").resolves();
+    vi.spyOn(AppManifestUtils, "writeTeamsManifest").mockResolvedValue();
 
     const result = await MetaOSHelper.modifyManifest("projectFolder", "DAFilename");
     chai.assert.isNotNull(result);
   });
 
   it("modifyManifest: condition 2", async () => {
-    sandbox.stub(MetaOSHelper, "ensureFunctionNameIsNotExist").returns("test");
-    sandbox.stub(AppManifestUtils, "readTeamsManifest").resolves({
+    vi.spyOn(MetaOSHelper, "ensureFunctionNameIsNotExist").mockReturnValue("test");
+    vi.spyOn(AppManifestUtils, "readTeamsManifest").mockResolvedValue({
       extensions: [
         {
           runtimes: [{ code: { script: "commands.js" }, actions: [] }],
         },
       ],
     } as any);
-    sandbox.stub(AppManifestUtils, "writeTeamsManifest").resolves();
+    vi.spyOn(AppManifestUtils, "writeTeamsManifest").mockResolvedValue();
 
     const result = await MetaOSHelper.modifyManifest("projectFolder", "DAFilename");
     chai.assert.isNotNull(result);
   });
 
   it("modifyManifest: error 1", async () => {
-    sandbox.stub(AppManifestUtils, "readTeamsManifest").resolves({
+    vi.spyOn(AppManifestUtils, "readTeamsManifest").mockResolvedValue({
       extensions: [
         {
           runtimes: [{ code: { scirpt: "" } }],
@@ -851,7 +797,7 @@ describe("MetaOSHelper", () => {
   });
 
   it("modifyManifest: error 2", async () => {
-    sandbox.stub(AppManifestUtils, "readTeamsManifest").resolves({
+    vi.spyOn(AppManifestUtils, "readTeamsManifest").mockResolvedValue({
       extensions: [{}],
     } as any);
     try {
@@ -862,7 +808,7 @@ describe("MetaOSHelper", () => {
   });
 
   it("modifyManifest: error 3", async () => {
-    sandbox.stub(AppManifestUtils, "readTeamsManifest").resolves({} as any);
+    vi.spyOn(AppManifestUtils, "readTeamsManifest").mockResolvedValue({} as any);
     try {
       await MetaOSHelper.modifyManifest("projectFolder", "DAFilename");
     } catch (e) {
@@ -871,7 +817,9 @@ describe("MetaOSHelper", () => {
   });
 
   it("modifyManifest: error 4", async () => {
-    sandbox.stub(AppManifestUtils, "readTeamsManifest").resolves({ extensions: undefined } as any);
+    vi.spyOn(AppManifestUtils, "readTeamsManifest").mockResolvedValue({
+      extensions: undefined,
+    } as any);
     try {
       await MetaOSHelper.modifyManifest("projectFolder", "DAFilename");
     } catch (e) {
@@ -880,9 +828,9 @@ describe("MetaOSHelper", () => {
   });
 
   it("modifyManifest: error 5", async () => {
-    sandbox
-      .stub(AppManifestUtils, "readTeamsManifest")
-      .resolves({ extensions: [undefined] } as any);
+    vi.spyOn(AppManifestUtils, "readTeamsManifest").mockResolvedValue({
+      extensions: [undefined],
+    } as any);
     try {
       await MetaOSHelper.modifyManifest("projectFolder", "DAFilename");
     } catch (e) {
@@ -891,23 +839,25 @@ describe("MetaOSHelper", () => {
   });
 
   it("generateDAFile", async () => {
-    const writeFileFn = sandbox.stub(AppManifestUtils, "writeDeclarativeAgentManifest").resolves();
+    const writeFileFn = vi
+      .spyOn(AppManifestUtils, "writeDeclarativeAgentManifest")
+      .mockResolvedValue();
     await MetaOSHelper.generateDAFile("projectFolder", "filename", "test", "test");
-    chai.assert.isTrue(writeFileFn.calledOnce);
+    chai.assert.isTrue(writeFileFn.mock.calls.length === 1);
   });
 
   it("generateActionFile", async () => {
-    const writeFileFn = sandbox.stub(fse, "writeJSON").resolves();
+    const writeFileFn = vi.spyOn(fse, "writeJSON").mockResolvedValue();
     await MetaOSHelper.generateActionFile("projectFolder", "filename", "test", {
       w: "w",
       x: "x",
       p: "p",
     });
-    chai.assert.isTrue(writeFileFn.calledOnce);
+    chai.assert.isTrue(writeFileFn.mock.calls.length === 1);
   });
 
   it("addCodeToCommands: error", async () => {
-    sandbox.stub(fse, "existsSync").resolves(false);
+    vi.spyOn(fse, "existsSync").mockResolvedValue(false);
     try {
       await MetaOSHelper.addCodeToCommands("projectFolder", { w: "w", x: "x", p: "p" });
     } catch (e) {
@@ -916,26 +866,26 @@ describe("MetaOSHelper", () => {
   });
 
   it("addCodeToCommands", async () => {
-    sandbox.stub(fse, "existsSync").resolves(true);
-    const writeFileFn = sandbox.stub(fse, "appendFile").resolves();
+    vi.spyOn(fse, "existsSync").mockResolvedValue(true);
+    const writeFileFn = vi.spyOn(fse, "appendFile").mockResolvedValue();
     await MetaOSHelper.addCodeToCommands("projectFolder", { w: "w", x: "x", p: "p" });
-    chai.assert.isTrue(writeFileFn.calledOnce);
+    chai.assert.isTrue(writeFileFn.mock.calls.length === 1);
   });
 
   it("upgradeOfficeAddInDebugging: success", async () => {
-    sandbox.stub(fse, "existsSync").resolves(true);
-    const readJsonStub = sandbox
-      .stub(fse, "readJSON")
-      .resolves({ devDependencies: { "office-addin-debugging": "1.0.0" } });
-    const writeJsonStub = sandbox.stub(fse, "writeJSON").resolves();
+    vi.spyOn(fse, "existsSync").mockResolvedValue(true);
+    const readJsonStub = vi
+      .spyOn(fse, "readJSON")
+      .mockResolvedValue({ devDependencies: { "office-addin-debugging": "1.0.0" } });
+    const writeJsonStub = vi.spyOn(fse, "writeJSON").mockResolvedValue();
 
     await MetaOSHelper.upgradeOfficeAddInDebugging("projectFolder");
-    chai.assert.isTrue(readJsonStub.calledOnce);
-    chai.assert.isTrue(writeJsonStub.calledOnce);
+    chai.assert.isTrue(readJsonStub.mock.calls.length === 1);
+    chai.assert.isTrue(writeJsonStub.mock.calls.length === 1);
   });
 
   it("upgradeOfficeAddInDebugging: failed", async () => {
-    sandbox.stub(fse, "existsSync").resolves(false);
+    vi.spyOn(fse, "existsSync").mockResolvedValue(false);
 
     try {
       await MetaOSHelper.upgradeOfficeAddInDebugging("projectFolder");
@@ -945,21 +895,21 @@ describe("MetaOSHelper", () => {
   });
 
   it("unifyProjectID: env file doesn't exist", async () => {
-    const readManifestStub = sandbox.stub(AppManifestUtils, "readTeamsManifest").resolves({
+    const readManifestStub = vi.spyOn(AppManifestUtils, "readTeamsManifest").mockResolvedValue({
       id: "test",
     } as any);
-    const writeManifestStub = sandbox.stub(AppManifestUtils, "writeTeamsManifest").resolves();
-    const writeFileStub = sandbox.stub(fse, "writeFile").resolves();
-    const pathExistsStub = sandbox.stub(fse, "pathExists").resolves(false); // File doesn't exist
-    const ensureDirStub = sandbox.stub(fse, "ensureDir").resolves();
+    const writeManifestStub = vi.spyOn(AppManifestUtils, "writeTeamsManifest").mockResolvedValue();
+    const writeFileStub = vi.spyOn(fse, "writeFile").mockResolvedValue();
+    const pathExistsStub = vi.spyOn(fse, "pathExists").mockResolvedValue(false); // File doesn't exist
+    const ensureDirStub = vi.spyOn(fse, "ensureDir").mockResolvedValue();
     await MetaOSHelper.unifyProjectID("projectFolder");
-    chai.assert.isTrue(readManifestStub.calledOnce);
-    chai.assert.isTrue(writeManifestStub.calledOnce);
-    chai.assert.isTrue(pathExistsStub.calledOnce);
-    chai.assert.isTrue(ensureDirStub.calledOnce);
-    chai.assert.isTrue(writeFileStub.calledOnce);
+    chai.assert.isTrue(readManifestStub.mock.calls.length === 1);
+    chai.assert.isTrue(writeManifestStub.mock.calls.length === 1);
+    chai.assert.isTrue(pathExistsStub.mock.calls.length === 1);
+    chai.assert.isTrue(ensureDirStub.mock.calls.length === 1);
+    chai.assert.isTrue(writeFileStub.mock.calls.length === 1);
     // Verify that the env file content contains TEAMS_APP_ID
-    const writeFileCall = writeFileStub.getCall(0);
-    chai.assert.include(writeFileCall.args[1], "TEAMS_APP_ID=");
+    const writeFileCall = writeFileStub.mock.calls[0];
+    chai.assert.include(writeFileCall[1], "TEAMS_APP_ID=");
   });
 });

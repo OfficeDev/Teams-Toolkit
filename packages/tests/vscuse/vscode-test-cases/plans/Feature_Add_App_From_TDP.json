@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2.0,
       "step_retry_timeout": 0.0
     },
-    "total_steps": 13,
+    "total_steps": 12,
     "created_at": "2026-05-18T02:19:09.515002",
     "name": "Feature Add App From TDP",
     "description": {
@@ -26,7 +26,7 @@
       "step_ba470b19",
       "step_5e71293c",
       "plan_a4d84624",
-      "step_7e6b08a7",
+      "plan_r_0624_024810",
       "step_22498d6e",
       "step_b3327844",
       "step_43412fab",
@@ -113,34 +113,6 @@
       "tags": [],
       "screenshot": "step_5e71293c",
       "created_at": "2026-05-18T02:19:09.562153",
-      "plan_id": "plan_06dbd424"
-    },
-    {
-      "step_id": "step_7e6b08a7",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 354,
-        "y": 172
-      },
-      "description": "Click on the \"Apps for Microsoft 365\" option within the dropdown list under the \"New Project\" dialog.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:354:172:16:5:52525292e9556b14",
-        "dhash:354:172:96:5:8a3245164b699400",
-        "dhash:354:172:0:10:c8c09090b2726261"
-      ],
-      "postconditions": [],
-      "tags": [
-        "step_retry_timeout:60"
-      ],
-      "screenshot": "step_7e6b08a7",
-      "created_at": "2026-05-18T02:19:09.568280",
       "plan_id": "plan_06dbd424"
     },
     {

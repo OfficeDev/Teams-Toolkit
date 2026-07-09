@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 5,
+    "total_steps": 4,
     "created_at": "2025-11-14T06:38:17.490721",
     "name": "Simple Bot js Remote Debug",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2025-11-14T06:38:17.490712",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_46f13fa8",
+      "plan_r_0624_024810",
       "step_c04dcfd7",
       "step_3aeb7c27",
       "step_f8d640c8",
@@ -37,32 +37,6 @@
     "updated_at": "2025-11-14T06:40:24.212846"
   },
   "steps": [
-    {
-      "step_id": "step_46f13fa8",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 389,
-        "y": 223
-      },
-      "description": "Click on the \"Teams Agents and Apps\" option within the dropdown menu under the \"New Project\" dialog in the Microsoft 365 Agents Toolkit interface.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:389:223:16:5:9c9d2494b56a6a34",
-        "dhash:389:223:96:5:cccca1b15b42a045",
-        "dhash:389:223:0:10:c8c88094b2717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_46f13fa8",
-      "created_at": "2025-11-14T06:38:17.505810",
-      "plan_id": "plan_ec322e24"
-    },
     {
       "step_id": "step_c04dcfd7",
       "agent": "interaction",

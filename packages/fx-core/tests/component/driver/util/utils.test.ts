@@ -1,14 +1,13 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
+import fs from "fs-extra";
 import mockedEnv, { RestoreFn } from "mocked-env";
+import { chai, vi } from "vitest";
 import {
   loadStateFromEnv,
   mapStateToEnv,
   updateVersionForTeamsAppYamlFile,
 } from "../../../../src/component/driver/util/utils";
-import fs from "fs-extra";
-import { expect } from "chai";
-import sinon from "sinon";
 
 describe("loadStateFromEnv", () => {
   let envRestore: RestoreFn | undefined;
@@ -23,7 +22,7 @@ describe("loadStateFromEnv", () => {
   it("should return empty object when outputEnvVarNames is empty", () => {
     const outputEnvVarNames: Map<string, string> = new Map<string, string>();
     const result = loadStateFromEnv(outputEnvVarNames);
-    expect(Object.entries(result).length).to.equal(0);
+    chai.expect(Object.entries(result).length).to.equal(0);
   });
 
   it("should return state object with value from env", () => {
@@ -39,9 +38,9 @@ describe("loadStateFromEnv", () => {
     );
 
     const result = loadStateFromEnv(outputEnvVarNames);
-    expect(Object.entries(result).length).to.equal(2);
-    expect(result.envA).to.equal("ENV_A value");
-    expect(result.envB).to.equal("ENV_B value");
+    chai.expect(Object.entries(result).length).to.equal(2);
+    chai.expect(result.envA).to.equal("ENV_A value");
+    chai.expect(result.envB).to.equal("ENV_B value");
   });
 
   it("should return state object with undefined property if env does not exist", () => {
@@ -56,9 +55,9 @@ describe("loadStateFromEnv", () => {
     );
 
     const result = loadStateFromEnv(outputEnvVarNames);
-    expect(Object.entries(result).length).to.equal(2);
-    expect(result.envA).to.equal("ENV_A value");
-    expect(result.envB).to.be.undefined;
+    chai.expect(Object.entries(result).length).to.equal(2);
+    chai.expect(result.envA).to.equal("ENV_A value");
+    chai.expect(result.envB).to.be.undefined;
   });
 });
 
@@ -74,8 +73,8 @@ describe("mapStateToEnv", async () => {
       })
     );
     let result = mapStateToEnv(state, outputEnvVarNames);
-    expect(result.size).to.equal(1);
-    expect(result.get("ENV_A")).to.equal("ENV_A value");
+    chai.expect(result.size).to.equal(1);
+    chai.expect(result.get("ENV_A")).to.equal("ENV_A value");
 
     outputEnvVarNames = new Map(
       Object.entries({
@@ -84,13 +83,13 @@ describe("mapStateToEnv", async () => {
       })
     );
     result = mapStateToEnv(state, outputEnvVarNames);
-    expect(result.size).to.equal(2);
-    expect(result.get("ENV_A")).to.equal("ENV_A value");
-    expect(result.get("ENV_B")).to.equal("ENV_B value");
+    chai.expect(result.size).to.equal(2);
+    chai.expect(result.get("ENV_A")).to.equal("ENV_A value");
+    chai.expect(result.get("ENV_B")).to.equal("ENV_B value");
 
     outputEnvVarNames = new Map();
     result = mapStateToEnv(state, outputEnvVarNames);
-    expect(result.size).to.equal(0);
+    chai.expect(result.size).to.equal(0);
   });
 
   it("should convert state to env and exclude given properties", () => {
@@ -105,28 +104,31 @@ describe("mapStateToEnv", async () => {
       })
     );
     const result = mapStateToEnv(state, outputEnvVarNames, ["envB"]);
-    expect(result.size).to.equal(1);
-    expect(result.get("ENV_A")).to.equal("ENV_A value");
+    chai.expect(result.size).to.equal(1);
+    chai.expect(result.get("ENV_A")).to.equal("ENV_A value");
   });
 });
 
 describe("updateVersionForTeamsAppYamlFile", async () => {
+  beforeEach(() => {
+    vi.spyOn(fs, "writeFile").mockResolvedValue(undefined as any);
+  });
   afterEach(() => {
-    sinon.restore();
+    vi.restoreAllMocks();
   });
   it("updateVersionForTeamsAppYamlFile should works fine", async () => {
     const teamsAppYaml = "version: v1.7";
     const expectedTeamsAppYaml = "version: v1.8";
 
-    sinon.stub(fs, "pathExists").resolves(true);
-    sinon.stub(fs, "readFile").resolves(teamsAppYaml as any);
-    const writeFileStub = sinon.stub(fs, "writeFile");
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockResolvedValue(teamsAppYaml as any);
+    const writeFileStub = vi.spyOn(fs, "writeFile");
 
     await updateVersionForTeamsAppYamlFile("fake-project-path");
 
-    const writtenContent = writeFileStub.getCall(0).args[1];
+    const writtenContent = writeFileStub.mock.calls[0][1];
     // use epect instead
-    expect(writtenContent).to.include(expectedTeamsAppYaml);
+    chai.expect(writtenContent).to.include(expectedTeamsAppYaml);
   });
 
   it("updateVersionForTeamsAppYamlFile should works fine when yaml contains schema url", async () => {
@@ -139,14 +141,14 @@ version: v1.7`;
 # Visit https://aka.ms/teamsfx-actions for details on actions
 version: v1.8`;
 
-    sinon.stub(fs, "pathExists").resolves(true);
-    sinon.stub(fs, "readFile").resolves(teamsAppYaml as any);
-    const writeFileStub = sinon.stub(fs, "writeFile");
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockResolvedValue(teamsAppYaml as any);
+    const writeFileStub = vi.spyOn(fs, "writeFile");
 
     await updateVersionForTeamsAppYamlFile("fake-project-path");
 
-    const writtenContent = writeFileStub.getCall(0).args[1];
-    expect(writtenContent).to.include(expectedTeamsAppYaml);
+    const writtenContent = writeFileStub.mock.calls[0][1];
+    chai.expect(writtenContent).to.include(expectedTeamsAppYaml);
   });
 
   it("updateVersionForTeamsAppYamlFile should works fine when yaml contains schema url for old version style", async () => {
@@ -159,14 +161,14 @@ version: 1.0.0`;
 # Visit https://aka.ms/teamsfx-actions for details on actions
 version: v1.8`;
 
-    sinon.stub(fs, "pathExists").resolves(true);
-    sinon.stub(fs, "readFile").resolves(teamsAppYaml as any);
-    const writeFileStub = sinon.stub(fs, "writeFile");
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockResolvedValue(teamsAppYaml as any);
+    const writeFileStub = vi.spyOn(fs, "writeFile");
 
     await updateVersionForTeamsAppYamlFile("fake-project-path");
 
-    const writtenContent = writeFileStub.getCall(0).args[1];
-    expect(writtenContent).to.include(expectedTeamsAppYaml);
+    const writtenContent = writeFileStub.mock.calls[0][1];
+    chai.expect(writtenContent).to.include(expectedTeamsAppYaml);
   });
 
   it("should convert outputJsonPath to outputFolder in provision and publish sections if original version <= v1.6", async () => {
@@ -187,18 +189,18 @@ version: v1.8`;
         outputZipPath: ./appPackage/build/appPackage.dev.zip
         outputJsonPath: ./appPackage/build/manifest.dev.json`;
 
-    sinon.stub(fs, "pathExists").resolves(true);
-    sinon.stub(fs, "readFile").resolves(teamsAppYaml as any);
-    const writeFileStub = sinon.stub(fs, "writeFile");
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockResolvedValue(teamsAppYaml as any);
+    const writeFileStub = vi.spyOn(fs, "writeFile");
 
     await updateVersionForTeamsAppYamlFile("fake-project-path");
 
-    const writtenContent = writeFileStub.getCall(0).args[1] as string;
-    expect(writtenContent).to.include("version: v1.8");
-    expect(writtenContent).to.include("https://aka.ms/teams-toolkit/v1.8/yaml.schema.json");
-    expect(writtenContent).to.include("outputFolder: ./appPackage/build");
-    expect(writtenContent).to.not.include("outputJsonPath");
-    expect(writtenContent).to.include("# Path to manifest template");
+    const writtenContent = writeFileStub.mock.calls[0][1] as string;
+    chai.expect(writtenContent).to.include("version: v1.8");
+    chai.expect(writtenContent).to.include("https://aka.ms/teams-toolkit/v1.8/yaml.schema.json");
+    chai.expect(writtenContent).to.include("outputFolder: ./appPackage/build");
+    chai.expect(writtenContent).to.not.include("outputJsonPath");
+    chai.expect(writtenContent).to.include("# Path to manifest template");
   });
 
   it("should not convert if version >=v1.8", async () => {
@@ -207,13 +209,13 @@ version: v1.8`;
   provision:
     - uses: unknown/action`;
 
-    sinon.stub(fs, "pathExists").resolves(true);
-    sinon.stub(fs, "readFile").resolves(teamsAppYaml as any);
-    const writeFileStub = sinon.stub(fs, "writeFile");
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockResolvedValue(teamsAppYaml as any);
+    const writeFileStub = vi.spyOn(fs, "writeFile");
 
     await updateVersionForTeamsAppYamlFile("fake-project-path");
 
-    expect(writeFileStub.notCalled).to.be.true;
+    chai.expect(writeFileStub.mock.calls.length === 0).to.be.true;
   });
 
   it("should not convert outputJsonPath to outputFolder in provision and publish sections if original version <= v1.6 and no outputJsonPath", async () => {
@@ -233,19 +235,19 @@ version: v1.8`;
         manifestPath: ./appPackage/manifest.json
         outputZipPath: ./appPackage/build/appPackage.dev.zip`;
 
-    sinon.stub(fs, "pathExists").resolves(true);
-    sinon.stub(fs, "readFile").resolves(teamsAppYaml as any);
-    const writeFileStub = sinon.stub(fs, "writeFile");
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockResolvedValue(teamsAppYaml as any);
+    const writeFileStub = vi.spyOn(fs, "writeFile");
 
     await updateVersionForTeamsAppYamlFile("fake-project-path");
 
-    const writtenContent = writeFileStub.getCall(0).args[1] as string;
-    expect(writtenContent).to.include("version: v1.8");
-    expect(writtenContent).to.include("https://aka.ms/teams-toolkit/v1.8/yaml.schema.json");
-    expect(writtenContent).to.not.include("outputFolder: ./appPackage/build");
-    expect(writtenContent).to.not.include("outputJsonPath");
-    expect(writtenContent).to.include("# Path to manifest template");
-    expect(writtenContent).to.include("unknown/action");
+    const writtenContent = writeFileStub.mock.calls[0][1] as string;
+    chai.expect(writtenContent).to.include("version: v1.8");
+    chai.expect(writtenContent).to.include("https://aka.ms/teams-toolkit/v1.8/yaml.schema.json");
+    chai.expect(writtenContent).to.not.include("outputFolder: ./appPackage/build");
+    chai.expect(writtenContent).to.not.include("outputJsonPath");
+    chai.expect(writtenContent).to.include("# Path to manifest template");
+    chai.expect(writtenContent).to.include("unknown/action");
   });
 
   it("should convert clientSecret to primaryClientSecret in provision and publish sections if original version == v1.3", async () => {
@@ -267,18 +269,18 @@ version: v1.8`;
       writeToEnvironmentFile:
         registrationId: APIKEY_REGISTRATION_ID`;
 
-    sinon.stub(fs, "pathExists").resolves(true);
-    sinon.stub(fs, "readFile").resolves(teamsAppYaml as any);
-    const writeFileStub = sinon.stub(fs, "writeFile");
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockResolvedValue(teamsAppYaml as any);
+    const writeFileStub = vi.spyOn(fs, "writeFile");
 
     await updateVersionForTeamsAppYamlFile("fake-project-path");
 
-    const writtenContent = writeFileStub.getCall(0).args[1] as string;
-    expect(writtenContent).to.include("version: v1.8");
-    expect(writtenContent).to.include("https://aka.ms/teams-toolkit/v1.8/yaml.schema.json");
-    expect(writtenContent).to.include("primaryClientSecret: xxxx");
-    expect(writtenContent).to.not.include("clientSecret");
-    expect(writtenContent).to.include("# Path to OpenAPI description document");
+    const writtenContent = writeFileStub.mock.calls[0][1] as string;
+    chai.expect(writtenContent).to.include("version: v1.8");
+    chai.expect(writtenContent).to.include("https://aka.ms/teams-toolkit/v1.8/yaml.schema.json");
+    chai.expect(writtenContent).to.include("primaryClientSecret: xxxx");
+    chai.expect(writtenContent).to.not.include("clientSecret");
+    chai.expect(writtenContent).to.include("# Path to OpenAPI description document");
   });
 
   it("should not convert apiKey/register action in provision and publish sections if original version == v1.3 and no client secret", async () => {
@@ -298,17 +300,17 @@ version: v1.8`;
       writeToEnvironmentFile:
         registrationId: APIKEY_REGISTRATION_ID`;
 
-    sinon.stub(fs, "pathExists").resolves(true);
-    sinon.stub(fs, "readFile").resolves(teamsAppYaml as any);
-    const writeFileStub = sinon.stub(fs, "writeFile");
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockResolvedValue(teamsAppYaml as any);
+    const writeFileStub = vi.spyOn(fs, "writeFile");
 
     await updateVersionForTeamsAppYamlFile("fake-project-path");
 
-    const writtenContent = writeFileStub.getCall(0).args[1] as string;
-    expect(writtenContent).to.include("version: v1.8");
-    expect(writtenContent).to.include("https://aka.ms/teams-toolkit/v1.8/yaml.schema.json");
-    expect(writtenContent).to.not.include("primaryClientSecret: xxxx");
-    expect(writtenContent).to.not.include("clientSecret");
-    expect(writtenContent).to.include("# Path to OpenAPI description document");
+    const writtenContent = writeFileStub.mock.calls[0][1] as string;
+    chai.expect(writtenContent).to.include("version: v1.8");
+    chai.expect(writtenContent).to.include("https://aka.ms/teams-toolkit/v1.8/yaml.schema.json");
+    chai.expect(writtenContent).to.not.include("primaryClientSecret: xxxx");
+    chai.expect(writtenContent).to.not.include("clientSecret");
+    chai.expect(writtenContent).to.include("# Path to OpenAPI description document");
   });
 });

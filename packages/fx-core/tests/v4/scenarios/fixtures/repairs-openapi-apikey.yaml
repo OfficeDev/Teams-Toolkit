@@ -1,0 +1,36 @@
+openapi: 3.0.1
+info:
+  title: Repairs API With API Key
+  version: 1.0.0
+servers:
+  - url: https://api.example.com
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+paths:
+  /repairs:
+    get:
+      operationId: listRepairs
+      summary: List repairs
+      security:
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: Repairs returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        title:
+                          type: string

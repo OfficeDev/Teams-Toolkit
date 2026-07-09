@@ -1,19 +1,18 @@
 import { CLICommand, ok } from "@microsoft/teamsfx-api";
-import { assert } from "chai";
 import { cloneDeep } from "lodash";
-import * as sinon from "sinon";
 import { helper } from "../../src/commands/helper";
 import { getCreateCommand } from "../../src/commands/models/create";
 import { createSampleCommand } from "../../src/commands/models/createSample";
 import * as listTemplatesModule from "../../src/commands/models/listTemplates";
 import { rootCommand } from "../../src/commands/models/root";
 import { envAddCommand } from "../../src/commands/models/envAdd";
+import { assert, vi } from "vitest";
 
 describe("CLI helper", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   describe("formatOptionName", async () => {
@@ -204,7 +203,7 @@ describe("CLI helper", () => {
 
   describe("formatItem", async () => {
     it("happy path", async () => {
-      sandbox.stub(helper, "termWidth").value(40);
+      (helper as any).termWidth = 40;
       const res = helper.formatItem(
         "--capability -c        [Required]",
         `Specifies the app feature. Allowed value: ["bot", "notification", "command-bot", etc.]. Use 'help --list-capabilities' to see all available options.`
@@ -261,7 +260,7 @@ describe("CLI helper", () => {
   });
   describe("formatHelp", async () => {
     it("happy path for 'new -h'", async () => {
-      sandbox.stub(listTemplatesModule, "listAllTemplates").returns([
+      vi.spyOn(listTemplatesModule, "listAllTemplates").mockReturnValue([
         {
           name: "bot",
           alias: "bot",

@@ -1,0 +1,21 @@
+{
+  "$schema": "../../schema/descriptor.schema.json",
+  "id": "default-message-extension",
+  "name": "Teams Message Extension",
+  "languages": ["typescript", "python"],
+  "minEngineVersion": "5.20.0",
+  "spec": "docs/03-specs/scenarios/teams/create-message-extension.md",
+  "requiresNetwork": false,
+
+  "optionsSchema": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+
+  "replaceMap": [
+    { "var": "SafeProjectNameLowerCase", "expr": "safeProjectNameLowerCase(appName)" },
+    { "var": "SandBoxedTeam", "when": "featureFlag('TEAMSFX_SANDBOXED_TEAM')", "value": "true" },
+    { "var": "pathDelimiter", "expr": "pathDelimiter()" }
+  ]
+}

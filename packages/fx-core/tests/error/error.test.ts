@@ -12,7 +12,6 @@ import {
   SystemError,
   UserError,
 } from "@microsoft/teamsfx-api";
-import { assert } from "chai";
 import { convertError, ErrorHandlerMW } from "../../src/core/middleware/errorHandler";
 import {
   assembleError,
@@ -43,6 +42,7 @@ import {
 } from "../../src/error/teamsApp";
 import { ScriptExecutionError } from "../../src/error/script";
 import { maskSecret } from "../../src/common/stringUtils";
+import { assert } from "vitest";
 
 describe("Middleware - ErrorHandlerMW", () => {
   const inputs: Inputs = { platform: Platform.VSCode };

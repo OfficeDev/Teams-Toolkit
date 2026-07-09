@@ -7,8 +7,6 @@ export default [
       "vsc/ts/office-addin-wxpo-taskpane/**",
       "vsc/ts/office-addin-outlook-taskpane/**",
       "vsc/ts/office-addin-excel-cfshortcut/**",
-      "vsc/common/declarative-agent-meta-os-new-project/**",
-      "vsc/common/declarative-agent-meta-os-upgrade-project/**",
     ],
   },
   ...shared,

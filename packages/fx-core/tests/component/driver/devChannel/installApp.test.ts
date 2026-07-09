@@ -1,8 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { expect } from "chai";
-import { createSandbox } from "sinon";
 import axios from "axios";
 import mockedEnv from "mocked-env";
 import fs from "fs-extra";
@@ -20,17 +18,18 @@ import {
 } from "../../../../src/error/common";
 import { Constants } from "./../../../../src/component/driver/teamsApp/constants";
 import { InstallAppArgs } from "../../../../build/component/driver/devChannel/interfaces/InstallAppArgs";
+import { chai, vi } from "vitest";
 
 describe("InstallAppToChannelDriver", () => {
-  const sandbox = createSandbox();
+  const sandbox = vi;
   const mockTokenProvider = new MockedM365Provider();
   const mockContext: WrapDriverContext = {
     m365TokenProvider: mockTokenProvider,
     logProvider: new MockLogProvider(),
-    addSummary: sandbox.stub(),
+    addSummary: vi.fn(),
     summaries: [],
     projectPath: "fake/project/path",
-    addTelemetryProperties: sandbox.stub(),
+    addTelemetryProperties: vi.fn(),
   } as unknown as WrapDriverContext;
 
   const driver = new InstallAppToChannelDriver();
@@ -47,7 +46,7 @@ describe("InstallAppToChannelDriver", () => {
   beforeEach(() => {});
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("should return error if teamId or channelId is missing", async () => {
@@ -56,16 +55,16 @@ describe("InstallAppToChannelDriver", () => {
 
     const result = await driver.install(args, mockContext, outputEnvVarNames);
 
-    expect(result.isErr()).to.be.true;
+    chai.expect(result.isErr()).to.be.true;
     if (result.isErr()) {
-      expect(result.error).to.be.instanceOf(InvalidActionInputError);
-      expect(result.error.message).to.include("teamId");
-      expect(result.error.message).to.include("channelId");
+      chai.expect(result.error).to.be.instanceOf(InvalidActionInputError);
+      chai.expect(result.error.message).to.include("teamId");
+      chai.expect(result.error.message).to.include("channelId");
     }
   });
 
   it("should return error if app package file does not exist", async () => {
-    sandbox.stub(fs, "pathExists").resolves(false);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
 
     const args = {
       appPackagePath: "fake/path/app.zip",
@@ -76,18 +75,18 @@ describe("InstallAppToChannelDriver", () => {
 
     const result = await driver.install(args, mockContext, outputEnvVarNames);
 
-    expect(result.isErr()).to.be.true;
+    chai.expect(result.isErr()).to.be.true;
     if (result.isErr()) {
-      expect(result.error).to.be.instanceOf(FileNotFoundError);
+      chai.expect(result.error).to.be.instanceOf(FileNotFoundError);
     }
   });
 
   it("should return error if manifest does not exist", async () => {
-    sandbox.stub(fs, "readFile").callsFake(async () => {
+    vi.spyOn(fs, "readFile").mockImplementation(async () => {
       const emptyFile = new AdmZip().toBuffer();
       return emptyFile;
     });
-    sandbox.stub(fs, "pathExists").resolves(true);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
 
     const args = {
       appPackagePath: "fake/path/app.zip",
@@ -98,19 +97,19 @@ describe("InstallAppToChannelDriver", () => {
 
     const result = await driver.install(args, mockContext, outputEnvVarNames);
 
-    expect(result.isErr()).to.be.true;
+    chai.expect(result.isErr()).to.be.true;
     if (result.isErr()) {
-      expect(result.error).to.be.instanceOf(FileNotFoundError);
+      chai.expect(result.error).to.be.instanceOf(FileNotFoundError);
     }
   });
 
   it("should install app to channel successfully", async () => {
-    sandbox.stub(fs, "readFile").callsFake(async () => {
+    vi.spyOn(fs, "readFile").mockImplementation(async () => {
       return archivedFile;
     });
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(GraphClient.prototype, "InstallAppToChannelAsync").resolves();
-    sandbox.stub(GraphClient.prototype, "GetAppInstallationForTeam").resolves([]);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(GraphClient.prototype, "InstallAppToChannelAsync").mockResolvedValue();
+    vi.spyOn(GraphClient.prototype, "GetAppInstallationForTeam").mockResolvedValue([]);
 
     const args: InstallAppArgs = {
       appPackagePath: "fake/path/app.zip",
@@ -121,17 +120,17 @@ describe("InstallAppToChannelDriver", () => {
 
     const result = await driver.install(args, mockContext, outputEnvVarNames);
 
-    expect(result.isOk()).to.be.true;
+    chai.expect(result.isOk()).to.be.true;
     if (result.isOk()) {
-      expect(result.value.size).to.equal(0);
+      chai.expect(result.value.size).to.equal(0);
     }
   });
 
   it("should handle axios error during app installation", async () => {
-    sandbox.stub(fs, "readFile").callsFake(async () => {
+    vi.spyOn(fs, "readFile").mockImplementation(async () => {
       return archivedFile;
     });
-    sandbox.stub(fs, "pathExists").resolves(true);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
 
     const axiosError = {
       response: {
@@ -139,9 +138,11 @@ describe("InstallAppToChannelDriver", () => {
       },
       isAxiosError: true,
     };
-    sandbox.stub(GraphClient.prototype, "InstallAppToChannelAsync").throws(axiosError);
-    sandbox.stub(GraphClient.prototype, "GetAppInstallationForTeam").resolves([]);
-    sandbox.stub(axios, "isAxiosError").returns(true);
+    vi.spyOn(GraphClient.prototype, "InstallAppToChannelAsync").mockImplementation(() => {
+      throw axiosError;
+    });
+    vi.spyOn(GraphClient.prototype, "GetAppInstallationForTeam").mockResolvedValue([]);
+    vi.spyOn(axios, "isAxiosError").mockReturnValue(true);
 
     const args: InstallAppArgs = {
       appPackagePath: "fake/path/app.zip",
@@ -152,18 +153,18 @@ describe("InstallAppToChannelDriver", () => {
 
     const result = await driver.install(args, mockContext, outputEnvVarNames);
 
-    expect(result.isErr()).to.be.true;
+    chai.expect(result.isErr()).to.be.true;
     if (result.isErr()) {
-      expect(result.error).to.be.instanceOf(HttpClientError);
-      expect(result.error.message).to.include("installation failed");
+      chai.expect(result.error).to.be.instanceOf(HttpClientError);
+      chai.expect(result.error.message).to.include("installation failed");
     }
   });
 
   it("should handle App installed outside sandbox error during app installation", async () => {
-    sandbox.stub(fs, "readFile").callsFake(async () => {
+    vi.spyOn(fs, "readFile").mockImplementation(async () => {
       return archivedFile;
     });
-    sandbox.stub(fs, "pathExists").resolves(true);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
 
     const axiosError = {
       response: {
@@ -175,9 +176,11 @@ describe("InstallAppToChannelDriver", () => {
       },
       isAxiosError: true,
     };
-    sandbox.stub(GraphClient.prototype, "InstallAppToChannelAsync").throws(axiosError);
-    sandbox.stub(GraphClient.prototype, "GetAppInstallationForTeam").resolves([]);
-    sandbox.stub(axios, "isAxiosError").returns(true);
+    vi.spyOn(GraphClient.prototype, "InstallAppToChannelAsync").mockImplementation(() => {
+      throw axiosError;
+    });
+    vi.spyOn(GraphClient.prototype, "GetAppInstallationForTeam").mockResolvedValue([]);
+    vi.spyOn(axios, "isAxiosError").mockReturnValue(true);
 
     const args: InstallAppArgs = {
       appPackagePath: "fake/path/app.zip",
@@ -188,22 +191,24 @@ describe("InstallAppToChannelDriver", () => {
 
     const result = await driver.install(args, mockContext, outputEnvVarNames);
 
-    expect(result.isErr()).to.be.true;
+    chai.expect(result.isErr()).to.be.true;
     if (result.isErr()) {
-      expect(result.error.message).to.include("Unable to install app outside sandboxed Team");
+      chai.expect(result.error.message).to.include("Unable to install app outside sandboxed Team");
     }
   });
 
   it("should handle general error during app installation", async () => {
-    sandbox.stub(fs, "readFile").callsFake(async () => {
+    vi.spyOn(fs, "readFile").mockImplementation(async () => {
       return archivedFile;
     });
-    sandbox.stub(fs, "pathExists").resolves(true);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
 
     const generalError = new Error("general error");
-    sandbox.stub(GraphClient.prototype, "InstallAppToChannelAsync").throws(generalError);
-    sandbox.stub(GraphClient.prototype, "GetAppInstallationForTeam").resolves([]);
-    sandbox.stub(axios, "isAxiosError").returns(false);
+    vi.spyOn(GraphClient.prototype, "InstallAppToChannelAsync").mockImplementation(() => {
+      throw generalError;
+    });
+    vi.spyOn(GraphClient.prototype, "GetAppInstallationForTeam").mockResolvedValue([]);
+    vi.spyOn(axios, "isAxiosError").mockReturnValue(false);
 
     const args: InstallAppArgs = {
       appPackagePath: "fake/path/app.zip",
@@ -214,21 +219,21 @@ describe("InstallAppToChannelDriver", () => {
 
     const result = await driver.install(args, mockContext, outputEnvVarNames);
 
-    expect(result.isErr()).to.be.true;
+    chai.expect(result.isErr()).to.be.true;
     if (result.isErr()) {
-      expect(result.error.message).to.equal("general error");
+      chai.expect(result.error.message).to.equal("general error");
     }
   });
 
   it("should delete existing installed app", async () => {
-    sandbox.stub(fs, "readFile").callsFake(async () => {
+    vi.spyOn(fs, "readFile").mockImplementation(async () => {
       return archivedFile;
     });
-    sandbox.stub(fs, "pathExists").resolves(true);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
 
-    sandbox.stub(GraphClient.prototype, "InstallAppToChannelAsync").resolves();
-    const deleteStub = sandbox.stub(GraphClient.prototype, "DeleteInstalledApp").resolves();
-    sandbox.stub(GraphClient.prototype, "GetAppInstallationForTeam").resolves([
+    vi.spyOn(GraphClient.prototype, "InstallAppToChannelAsync").mockResolvedValue();
+    const deleteStub = vi.spyOn(GraphClient.prototype, "DeleteInstalledApp").mockResolvedValue();
+    vi.spyOn(GraphClient.prototype, "GetAppInstallationForTeam").mockResolvedValue([
       {
         id: "installation-id",
         teamsApp: {
@@ -249,7 +254,7 @@ describe("InstallAppToChannelDriver", () => {
 
     const result = await driver.execute(args, mockContext, outputEnvVarNames);
 
-    expect(result.result.isOk()).to.be.true;
-    expect(deleteStub.calledOnce).to.be.true;
+    chai.expect(result.result.isOk()).to.be.true;
+    chai.expect(deleteStub.mock.calls.length === 1).to.be.true;
   });
 });

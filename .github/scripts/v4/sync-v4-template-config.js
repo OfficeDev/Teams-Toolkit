@@ -48,21 +48,22 @@ function computeBundled(goproduct) {
   return !goproduct;
 }
 
-// Clean, suffix-free version published to the v4 channel: odd minor (prerelease)
-// stamps the build date into the patch (6.11.<date>, read from the -beta.<date>
-// preid); even minor (stable) uses major.minor.patch as-is.
+// Clean, suffix-free version published to the v4 channel: mirrors the VSIX
+// version vsc-version.sh mints. A preview (-beta.<date> suffix) targets the
+// odd-minor line, date-stamped patch (6.11.<date>) — an even-minor stable base
+// bumps to the next odd minor, like the VSIX; stable (no date) is as-is.
 function computeV4PublishVersion(version) {
   const parsed = semver.parse(version);
   if (parsed === null) {
     throw new Error(`Cannot compute v4 publish version: "${version}" is not valid SemVer.`);
   }
-  if (parsed.minor % 2 === 1) {
-    const dateStamp = parsed.prerelease.find(
-      (segment) => typeof segment === "number" && segment >= 1000000000
-    );
-    if (dateStamp !== undefined) {
-      return `${parsed.major}.${parsed.minor}.${dateStamp}`;
-    }
+  const dateStamp =
+    parsed.prerelease[0] === "beta"
+      ? parsed.prerelease.find((segment) => typeof segment === "number" && segment >= 1000000000)
+      : undefined;
+  if (dateStamp !== undefined) {
+    const minor = parsed.minor % 2 === 0 ? parsed.minor + 1 : parsed.minor;
+    return `${parsed.major}.${minor}.${dateStamp}`;
   }
   return `${parsed.major}.${parsed.minor}.${parsed.patch}`;
 }
@@ -79,10 +80,11 @@ function computeRange(version, previousRange) {
 }
 
 function computeV4TemplateConfig(input) {
+  const localVersion = computeV4PublishVersion(input.version);
   return {
-    range: computeRange(input.version, input.previousRange),
+    range: computeRange(localVersion, input.previousRange),
     bundled: computeBundled(input.goproduct),
-    localVersion: computeV4PublishVersion(input.version),
+    localVersion,
   };
 }
 

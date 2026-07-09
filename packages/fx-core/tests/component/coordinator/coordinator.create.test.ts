@@ -1,9 +1,7 @@
 import { err, Inputs, ok, Platform, SystemError, UserError } from "@microsoft/teamsfx-api";
-import { assert } from "chai";
 import fs from "fs-extra";
 import { glob } from "glob";
 import { RestoreFn } from "mocked-env";
-import * as sinon from "sinon";
 import { createContext, setTools } from "../../../src/common/globalVars";
 import { coordinator } from "../../../src/component/coordinator";
 import { AppDefinition } from "../../../src/component/driver/teamsApp/interfaces/appdefinitions/appDefinition";
@@ -33,34 +31,35 @@ import { ProjectTypeOptions } from "../../../src/question/scaffold/vsc/ProjectTy
 import { validationUtils } from "../../../src/ui/validationUtils";
 import { MockTools, randomAppName } from "../../core/utils";
 import { MockedUserInteraction } from "../../plugins/solution/util";
+import { assert, vi } from "vitest";
 
 describe("coordinator create", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   const tools = new MockTools();
-  let generator: sinon.SinonStub;
+  let generator: any;
   setTools(tools);
   let mockedEnvRestore: RestoreFn | undefined;
   beforeEach(() => {
-    sandbox.stub(fs, "ensureDir").resolves();
-    sandbox.stub(manifestUtils, "trimManifestShortName").resolves(ok(undefined));
-    generator = sandbox
-      .stub(DefaultTemplateGenerator.prototype, "scaffolding" as any)
-      .resolves(ok(undefined));
+    vi.spyOn(fs, "ensureDir").mockResolvedValue();
+    vi.spyOn(manifestUtils, "trimManifestShortName").mockResolvedValue(ok(undefined));
+    generator = vi
+      .spyOn(DefaultTemplateGenerator.prototype, "scaffolding" as any)
+      .mockResolvedValue(ok(undefined));
   });
   afterEach(() => {
     if (mockedEnvRestore) {
       mockedEnvRestore();
     }
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   describe("createSampleProject", () => {
     beforeEach(() => {
-      sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
     });
     it("create project from sample", async () => {
-      sandbox.stub(Generator, "generateSample").resolves(ok(undefined));
-      sandbox.stub(fs, "pathExists").resolves(false);
+      vi.spyOn(Generator, "generateSample").mockResolvedValue(ok(undefined));
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
       const inputs: CreateSampleProjectInputs = {
         platform: Platform.CLI,
         folder: ".",
@@ -71,11 +70,11 @@ describe("coordinator create", () => {
       assert.isTrue(res.isOk());
     });
     it("create project from sample: todo-list-SPFx", async () => {
-      sandbox.stub(Generator, "generateSample").resolves(ok(undefined));
-      sandbox.stub(fs, "pathExists").resolves(false);
-      sandbox.stub(glob, "glob").resolves();
-      sandbox.stub(fs, "readFile").resolves("test" as any);
-      sandbox.stub(fs, "writeFile").resolves("");
+      vi.spyOn(Generator, "generateSample").mockResolvedValue(ok(undefined));
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+      vi.spyOn(glob, "glob").mockResolvedValue();
+      vi.spyOn(fs, "readFile").mockResolvedValue("test" as any);
+      vi.spyOn(fs, "writeFile").mockResolvedValue("");
       const inputs: CreateSampleProjectInputs = {
         platform: Platform.CLI,
         folder: ".",
@@ -86,8 +85,8 @@ describe("coordinator create", () => {
       assert.isTrue(res.isOk());
     });
     it("fail to create project from sample", async () => {
-      sandbox.stub(Generator, "generateSample").resolves(err(new UserError({})));
-      sandbox.stub(fs, "pathExists").resolves(false);
+      vi.spyOn(Generator, "generateSample").mockResolvedValue(err(new UserError({})));
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
       const inputs: CreateSampleProjectInputs = {
         platform: Platform.CLI,
         folder: ".",
@@ -98,21 +97,14 @@ describe("coordinator create", () => {
       assert.isTrue(res.isErr());
     });
     it("create project from sample rename folder", async () => {
-      sandbox.stub(Generator, "generateSample").resolves(ok(undefined));
-      sandbox
-        .stub(fs, "pathExists")
-        .onFirstCall()
-        .resolves(true)
-        .onSecondCall()
-        .resolves(false)
-        .onThirdCall()
-        .resolves(false);
-      sandbox
-        .stub(fs, "readdir")
-        .onFirstCall()
-        .resolves(["abc"] as any)
-        .onSecondCall()
-        .resolves([]);
+      vi.spyOn(Generator, "generateSample").mockResolvedValue(ok(undefined));
+      vi.spyOn(fs, "pathExists")
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce(false)
+        .mockResolvedValueOnce(false);
+      vi.spyOn(fs, "readdir")
+        .mockResolvedValueOnce(["abc"] as any)
+        .mockResolvedValueOnce([]);
       const inputs: CreateSampleProjectInputs = {
         platform: Platform.CLI,
         folder: ".",
@@ -181,7 +173,7 @@ describe("coordinator create", () => {
       }
     });
     it("fail to create SPFx project", async () => {
-      sandbox.stub(SPFxGeneratorNew.prototype, "run").resolves(err(new UserError({})));
+      vi.spyOn(SPFxGeneratorNew.prototype, "run").mockResolvedValue(err(new UserError({})));
       const inputs: Inputs = {
         platform: Platform.VSCode,
         folder: ".",
@@ -198,9 +190,9 @@ describe("coordinator create", () => {
     });
 
     it("ensureTrackingId fails", async () => {
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(SPFxGeneratorNew.prototype, "run").resolves(ok({}));
-      sandbox.stub(coordinator, "ensureTrackingId").resolves(err(new UserError({})));
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(SPFxGeneratorNew.prototype, "run").mockResolvedValue(ok({}));
+      vi.spyOn(coordinator, "ensureTrackingId").mockResolvedValue(err(new UserError({})));
       const inputs: Inputs = {
         platform: Platform.VSCode,
         folder: ".",
@@ -216,10 +208,10 @@ describe("coordinator create", () => {
       assert.isTrue(res.isErr());
     });
     it("success", async () => {
-      sandbox.stub(SPFxGeneratorNew.prototype, "run").resolves(ok({}));
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-      sandbox.stub(coordinator, "ensureTrackingId").resolves(ok("mock-id"));
+      vi.spyOn(SPFxGeneratorNew.prototype, "run").mockResolvedValue(ok({}));
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+      vi.spyOn(coordinator, "ensureTrackingId").mockResolvedValue(ok("mock-id"));
       const inputs: Inputs = {
         platform: Platform.VSCode,
         folder: ".",
@@ -236,9 +228,9 @@ describe("coordinator create", () => {
     });
 
     it("create project for app with tab features from Developer Portal", async () => {
-      sandbox.stub(coordinator, "ensureTrackingId").resolves(ok("mock-id"));
-      sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-      sandbox.stub(TdpGenerator.prototype, "run").resolves(ok({}));
+      vi.spyOn(coordinator, "ensureTrackingId").mockResolvedValue(ok("mock-id"));
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+      vi.spyOn(TdpGenerator.prototype, "run").mockResolvedValue(ok({}));
       const appDefinition: AppDefinition = {
         teamsAppId: "mock-id",
         appId: "mock-id",
@@ -268,10 +260,10 @@ describe("coordinator create", () => {
       assert.isTrue(res.isOk());
     });
     it("create project for app with bot feature from Developer Portal with updating files failed", async () => {
-      sandbox.stub(coordinator, "ensureTrackingId").resolves(ok("mock-id"));
-      sandbox
-        .stub(TdpGenerator.prototype, "run")
-        .resolves(err(new UserError("coordinator", "error", "msg", "msg")));
+      vi.spyOn(coordinator, "ensureTrackingId").mockResolvedValue(ok("mock-id"));
+      vi.spyOn(TdpGenerator.prototype, "run").mockResolvedValue(
+        err(new UserError("coordinator", "error", "msg", "msg"))
+      );
       const appDefinition: AppDefinition = {
         teamsAppId: "mock-id",
         appId: "mock-id",
@@ -308,9 +300,9 @@ describe("coordinator create", () => {
       }
     });
     it("create project for app with tab and bot features from Developer Portal", async () => {
-      sandbox.stub(coordinator, "ensureTrackingId").resolves(ok("mock-id"));
-      sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-      sandbox.stub(TdpGenerator.prototype, "run").resolves(ok({}));
+      vi.spyOn(coordinator, "ensureTrackingId").mockResolvedValue(ok("mock-id"));
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+      vi.spyOn(TdpGenerator.prototype, "run").mockResolvedValue(ok({}));
       const appDefinition: AppDefinition = {
         teamsAppId: "mock-id",
         appId: "mock-id",
@@ -357,9 +349,9 @@ describe("coordinator create", () => {
     });
 
     it("create non-sso tab from .NET 8", async () => {
-      sandbox.stub(SsrTabGenerator.prototype, "run").resolves(ok({}));
-      sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-      sandbox.stub(fs, "pathExists").resolves(false);
+      vi.spyOn(SsrTabGenerator.prototype, "run").mockResolvedValue(ok({}));
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
       const v3ctx = createContext();
       v3ctx.userInteraction = new MockedUserInteraction();
       const inputs: Inputs = {
@@ -377,9 +369,9 @@ describe("coordinator create", () => {
 
     it("create sso tab from .NET 8", async () => {
       const v3ctx = createContext();
-      sandbox.stub(SsrTabGenerator.prototype, "run").resolves(ok({}));
-      sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-      sandbox.stub(fs, "pathExists").resolves(false);
+      vi.spyOn(SsrTabGenerator.prototype, "run").mockResolvedValue(ok({}));
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
       v3ctx.userInteraction = new MockedUserInteraction();
       const inputs: Inputs = {
         platform: Platform.VS,
@@ -411,10 +403,12 @@ describe("coordinator create", () => {
         [QuestionNames.LLMService]: "llm-service-openAI",
         [QuestionNames.OpenAIKey]: "mockedopenaikey",
       };
-      sandbox.stub(CustomEngineAgentWithExistingApiSpecGenerator.prototype, "run").resolves(ok({}));
-      sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-      sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-      sandbox.stub(fs, "pathExists").resolves(false);
+      vi.spyOn(CustomEngineAgentWithExistingApiSpecGenerator.prototype, "run").mockResolvedValue(
+        ok({})
+      );
+      vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
       const res = await coordinator.create(v3ctx, inputs);
       assert.isTrue(res.isOk());
     });
@@ -437,10 +431,12 @@ describe("coordinator create", () => {
         [QuestionNames.AzureOpenAIEndpoint]: "mockedAzureOpenAIEndpoint",
         [QuestionNames.AzureOpenAIDeploymentName]: "mockedAzureOpenAIDeploymentName",
       };
-      sandbox.stub(CustomEngineAgentWithExistingApiSpecGenerator.prototype, "run").resolves(ok({}));
-      sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-      sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-      sandbox.stub(fs, "pathExists").resolves(false);
+      vi.spyOn(CustomEngineAgentWithExistingApiSpecGenerator.prototype, "run").mockResolvedValue(
+        ok({})
+      );
+      vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
       const res = await coordinator.create(v3ctx, inputs);
       assert.isTrue(res.isOk());
     });
@@ -462,10 +458,10 @@ describe("coordinator create", () => {
     //     [QuestionNames.AzureOpenAIEndpoint]: "mockedAzureOpenAIEndpoint",
     //     [QuestionNames.AzureOpenAIDeploymentName]: "mockedAzureOpenAIDeploymentName",
     //   };
-    //   sandbox.stub(DefaultTemplateGenerator.prototype, "run").resolves(ok({}));
-    //   sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    //   sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-    //   sandbox.stub(fs, "pathExists").resolves(false);
+    //   vi.spyOn(DefaultTemplateGenerator.prototype, "run").mockResolvedValue(ok({}));
+    //   vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    //   vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+    //   vi.spyOn(fs, "pathExists").mockResolvedValue(false);
     //   const res = await coordinator.create(v3ctx, inputs);
 
     //   assert.isTrue(res.isOk());
@@ -487,10 +483,10 @@ describe("coordinator create", () => {
         [QuestionNames.LLMService]: "llm-service-openAI",
         [QuestionNames.OpenAIKey]: "mockedopenaikey",
       };
-      sandbox
-        .stub(CustomEngineAgentWithExistingApiSpecGenerator.prototype, "run")
-        .resolves(err(new SystemError("test", "test", "test")));
-      sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
+      vi.spyOn(CustomEngineAgentWithExistingApiSpecGenerator.prototype, "run").mockResolvedValue(
+        err(new SystemError("test", "test", "test"))
+      );
+      vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
 
       const res = await coordinator.create(v3ctx, inputs);
 
@@ -500,9 +496,9 @@ describe("coordinator create", () => {
     it("create API Plugin with No authentication (feature flag enabled)", async () => {
       const v3ctx = createContext();
       v3ctx.userInteraction = new MockedUserInteraction();
-      sandbox.stub(DeclarativeAgentGenerator.prototype, "run").resolves(ok({}));
-      sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-      sandbox.stub(fs, "pathExists").resolves(false);
+      vi.spyOn(DeclarativeAgentGenerator.prototype, "run").mockResolvedValue(ok({}));
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
       const inputs: Inputs = {
         platform: Platform.VSCode,
         folder: ".",
@@ -522,9 +518,9 @@ describe("coordinator create", () => {
     it("create API Plugin with api-key auth (feature flag enabled)", async () => {
       const v3ctx = createContext();
       v3ctx.userInteraction = new MockedUserInteraction();
-      sandbox.stub(DeclarativeAgentGenerator.prototype, "run").resolves(ok({}));
-      sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-      sandbox.stub(fs, "pathExists").resolves(false);
+      vi.spyOn(DeclarativeAgentGenerator.prototype, "run").mockResolvedValue(ok({}));
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
       const inputs: Inputs = {
         platform: Platform.VSCode,
         folder: ".",
@@ -544,9 +540,9 @@ describe("coordinator create", () => {
     it("create API Plugin with OAuth (feature flag enabled)", async () => {
       const v3ctx = createContext();
       v3ctx.userInteraction = new MockedUserInteraction();
-      sandbox.stub(DeclarativeAgentGenerator.prototype, "run").resolves(ok({}));
-      sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-      sandbox.stub(fs, "pathExists").resolves(false);
+      vi.spyOn(DeclarativeAgentGenerator.prototype, "run").mockResolvedValue(ok({}));
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
       const inputs: Inputs = {
         platform: Platform.VSCode,
         folder: ".",
@@ -566,9 +562,9 @@ describe("coordinator create", () => {
     it("should scaffold taskpane successfully", async () => {
       const v3ctx = createContext();
       v3ctx.userInteraction = new MockedUserInteraction();
-      sandbox.stub(fs, "pathExists").resolves(false);
-      sandbox.stub(OfficeAddinGeneratorNew.prototype, "run").resolves(ok({}));
-      sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+      vi.spyOn(OfficeAddinGeneratorNew.prototype, "run").mockResolvedValue(ok({}));
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
       const inputs: Inputs = {
         platform: Platform.VSCode,
         folder: ".",
@@ -585,11 +581,11 @@ describe("coordinator create", () => {
       const v3ctx = createContext();
       v3ctx.userInteraction = new MockedUserInteraction();
 
-      sandbox
-        .stub(DefaultTemplateGenerator.prototype, "run")
-        .resolves(ok({ warnings: [{ type: "", content: "", data: {} } as any] }));
-      sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-      sandbox.stub(fs, "pathExists").resolves(false);
+      vi.spyOn(DefaultTemplateGenerator.prototype, "run").mockResolvedValue(
+        ok({ warnings: [{ type: "", content: "", data: {} } as any] })
+      );
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
       const inputs: Inputs = {
         platform: Platform.VSCode,
         folder: ".",
@@ -608,9 +604,9 @@ describe("coordinator create", () => {
       const v3ctx = createContext();
       v3ctx.userInteraction = new MockedUserInteraction();
 
-      sandbox
-        .stub(CustomEngineAgentWithExistingApiSpecGenerator.prototype, "run")
-        .resolves(err(new SystemError("mockedSource", "mockedError", "mockedMessage", "")));
+      vi.spyOn(CustomEngineAgentWithExistingApiSpecGenerator.prototype, "run").mockResolvedValue(
+        err(new SystemError("mockedSource", "mockedError", "mockedMessage", ""))
+      );
       const inputs: Inputs = {
         platform: Platform.VSCode,
         folder: ".",

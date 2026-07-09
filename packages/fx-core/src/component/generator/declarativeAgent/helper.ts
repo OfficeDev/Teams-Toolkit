@@ -24,24 +24,25 @@ import {
   getResourceServiceEndpoint,
   ResourceServiceType,
 } from "../../../common/constants";
+import { featureFlagManager, FeatureFlags } from "../../../common/featureFlags";
 import { createContext } from "../../../common/globalVars";
 import { getDefaultString, getLocalizedString } from "../../../common/localizeUtils";
 import { sendTelemetryErrorEvent } from "../../../common/telemetry";
 import { assembleError } from "../../../error";
 import { QuestionNames } from "../../../question/questionNames";
-import { featureFlagManager, FeatureFlags } from "../../../common/featureFlags";
 import { copilotGptManifestUtils } from "../../driver/teamsApp/utils/CopilotGptManifestUtils";
 import { pluginManifestUtils } from "../../driver/teamsApp/utils/PluginManifestUtils";
 import { normalizePath } from "../../driver/teamsApp/utils/utils";
 import { getEnvironmentVariables } from "../../utils/common";
-import * as mcpToolFetcher from "../../utils/mcpToolFetcher";
-import { pathUtils } from "../../utils/pathUtils";
 import {
   deriveMCPManifestOAuth,
   injectMCPAuthActionToYml,
   persistMCPAuthCredentialEnvVars,
   resolveMCPAuthEndpoints,
 } from "../../utils/mcpAuthScaffolder";
+import * as mcpToolFetcher from "../../utils/mcpToolFetcher";
+import { pathUtils } from "../../utils/pathUtils";
+import * as generatorUtils from "../utils";
 import * as oneDriveSharePointHandler from "./oneDriveSharePointHandler";
 import { ItemMetadata } from "./oneDriveSharePointHandler";
 
@@ -53,17 +54,6 @@ const logMessageKeys = {
   failValidateOneDriveSharePointItem:
     "core.createProjectQuestion.log.fail.validateOneDriveSharePointItem",
   invalidOneDriveSharePointURL: "core.createProjectQuestion.log.fail.invalidOneDriveSharePointURL",
-};
-
-export const declarativeAgentHelperDeps = {
-  createGraphClientWithToken: oneDriveSharePointHandler.createGraphClientWithToken,
-  getSharePointSiteByRelativePath: oneDriveSharePointHandler.getSharePointSiteByRelativePath,
-  encodeSharePointUrl: oneDriveSharePointHandler.encodeSharePointUrl,
-  getDriveItemInfo: oneDriveSharePointHandler.getDriveItemInfo,
-  fetchMCPTools: mcpToolFetcher.fetchMCPTools,
-  probeMCPServerAuth: mcpToolFetcher.probeMCPServerAuth,
-  readMCPToolsFromFile: mcpToolFetcher.readMCPToolsFromFile,
-  getEnvironmentVariables,
 };
 
 /**
@@ -209,7 +199,7 @@ export async function addExistingPlugin(
 
   const runtimes = pluginManifest.runtimes!; // have validated that the value exists.
   const destinationApiSpecRelativePath = runtimes.find((runtime) => runtime.type === "OpenApi")!
-    .spec.url as string; // have validated that the value exists.
+    .spec.url; // have validated that the value exists.
 
   const outputFolder = path.dirname(declarativeCopilotManifestPath);
 
@@ -259,9 +249,7 @@ export async function addExistingPlugin(
   }
 
   const warnings: Warning[] = [];
-  const pluginManifestVariables = declarativeAgentHelperDeps.getEnvironmentVariables(
-    JSON.stringify(pluginManifest)
-  );
+  const pluginManifestVariables = getEnvironmentVariables(JSON.stringify(pluginManifest));
   if (pluginManifestVariables.length > 0) {
     warnings.push({
       type: pluginManifestPlaceholderWarning,
@@ -274,7 +262,7 @@ export async function addExistingPlugin(
 
   try {
     const apiSpecContent = await fs.readFile(destinationApiSpecPath, "utf8");
-    const apiSpecVariables = declarativeAgentHelperDeps.getEnvironmentVariables(apiSpecContent);
+    const apiSpecVariables = getEnvironmentVariables(apiSpecContent);
     if (apiSpecVariables.length > 0) {
       warnings.push({
         type: apiSpecPlaceholderWarning,
@@ -376,6 +364,29 @@ export function validateSourcePluginManifest(
   return ok(undefined);
 }
 
+export async function setGeneralSensitivityLabel(
+  context: Context,
+  manifestPath: string
+): Promise<void> {
+  await generatorUtils.setGeneralSensitivityLabel(context, manifestPath);
+}
+
+export async function createGraphClientWithToken(context: Context) {
+  return oneDriveSharePointHandler.createGraphClientWithToken(context);
+}
+
+export async function getSharePointSiteByRelativePath(graphClient: any, itemUrl: string) {
+  return oneDriveSharePointHandler.getSharePointSiteByRelativePath(graphClient, itemUrl);
+}
+
+export function encodeSharePointUrl(itemUrl: string): string {
+  return oneDriveSharePointHandler.encodeSharePointUrl(itemUrl);
+}
+
+export async function getDriveItemInfo(graphClient: any, encodedUrl: string) {
+  return oneDriveSharePointHandler.getDriveItemInfo(graphClient, encodedUrl);
+}
+
 export async function getODSPItemInfo(
   context: Context,
   itemUrl: string | undefined
@@ -387,13 +398,13 @@ export async function getODSPItemInfo(
   }
 
   try {
-    const graphClientResult = await declarativeAgentHelperDeps.createGraphClientWithToken(context);
+    const graphClientResult = await oneDriveSharePointHandler.createGraphClientWithToken(context);
     if (graphClientResult.isErr()) {
       return err(graphClientResult.error);
     }
     const graphClient = graphClientResult.value;
 
-    const siteResult = await declarativeAgentHelperDeps.getSharePointSiteByRelativePath(
+    const siteResult = await oneDriveSharePointHandler.getSharePointSiteByRelativePath(
       graphClient,
       itemUrl
     );
@@ -409,8 +420,8 @@ export async function getODSPItemInfo(
       ]);
     }
 
-    const encodedUrl = declarativeAgentHelperDeps.encodeSharePointUrl(itemUrl);
-    const driveItem = await declarativeAgentHelperDeps.getDriveItemInfo(graphClient, encodedUrl);
+    const encodedUrl = oneDriveSharePointHandler.encodeSharePointUrl(itemUrl);
+    const driveItem = await oneDriveSharePointHandler.getDriveItemInfo(graphClient, encodedUrl);
 
     return ok([
       {
@@ -497,6 +508,18 @@ export async function generateForMCPForDA(
   destinationPath: string,
   inputs: Inputs
 ): Promise<Result<GeneratorResult, FxError>> {
+  const mcpServerUrl = inputs[QuestionNames.MCPForDAServerUrl];
+  if (!mcpServerUrl) {
+    return err(
+      new UserError({
+        source: "Scaffold",
+        name: "InputValidationFailed",
+        message: "mcpServerUrl is required when --api-plugin-type is mcp.",
+        displayMessage: getLocalizedString("core.MCPForDA.missingServerUrl"),
+      })
+    );
+  }
+
   // 1. Get ai-plugin.json
   const aiPluginFilePath = path.join(
     destinationPath,
@@ -527,7 +550,6 @@ export async function generateForMCPForDA(
     return generateForMCPForDAWithAuth(destinationPath, aiPluginFilePath, inputs);
   }
 
-  const mcpServerUrl = inputs[QuestionNames.MCPForDAServerUrl];
   const serverName = inputs[QuestionNames.MCPForDAServerName];
   const warnings: Warning[] = [];
 
@@ -536,7 +558,7 @@ export async function generateForMCPForDA(
   const existingTools = inputs[QuestionNames.MCPForDAAvailableTools];
   if (toolsFilePath && (!existingTools || existingTools.length === 0)) {
     try {
-      const fileTools = await declarativeAgentHelperDeps.readMCPToolsFromFile(toolsFilePath);
+      const fileTools = await mcpToolFetcher.readMCPToolsFromFile(toolsFilePath);
       inputs[QuestionNames.MCPForDAAvailableTools] = fileTools;
       if (!inputs[QuestionNames.MCPForDAPreFetchTools]) {
         inputs[QuestionNames.MCPForDAPreFetchTools] = fileTools.map((t: any) => t.name);
@@ -560,7 +582,7 @@ export async function generateForMCPForDA(
     mcpServerUrl
   ) {
     try {
-      const authProbe = await declarativeAgentHelperDeps.probeMCPServerAuth(mcpServerUrl);
+      const authProbe = await mcpToolFetcher.probeMCPServerAuth(mcpServerUrl);
       if (authProbe.requiresAuth) {
         inputs[QuestionNames.MCPForDAAuth] = "OAuthPluginVault";
         if (authProbe.authMetadataUrl) {
@@ -576,7 +598,7 @@ export async function generateForMCPForDA(
   const currentTools = inputs[QuestionNames.MCPForDAAvailableTools];
   if ((!currentTools || currentTools.length === 0) && mcpServerUrl) {
     try {
-      const result = await declarativeAgentHelperDeps.fetchMCPTools(mcpServerUrl);
+      const result = await mcpToolFetcher.fetchMCPTools(mcpServerUrl);
       if (!result.requiresAuth && result.tools.length > 0) {
         inputs[QuestionNames.MCPForDAAvailableTools] = result.tools;
         if (!inputs[QuestionNames.MCPForDAPreFetchTools]) {
@@ -795,7 +817,7 @@ async function generateForMCPForDAWithAuth(
       // branch skips tool fetch, so we need an explicit probe here. Best-effort.
       if (!inputs[QuestionNames.MCPForDAAuthMetadataUrl]) {
         try {
-          const authProbe = await declarativeAgentHelperDeps.probeMCPServerAuth(mcpServerUrl);
+          const authProbe = await mcpToolFetcher.probeMCPServerAuth(mcpServerUrl);
           if (authProbe.authMetadataUrl) {
             inputs[QuestionNames.MCPForDAAuthMetadataUrl] = authProbe.authMetadataUrl;
           }

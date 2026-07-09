@@ -5,28 +5,27 @@
 
 import { CLIContext, err, ok, SystemError } from "@microsoft/teamsfx-api";
 import { FxCore, UserCancelError } from "@microsoft/teamsfx-core";
-import { assert } from "chai";
-import * as sinon from "sinon";
 import { initCommand } from "../../../../../src/commands/models/init/init";
 import { logger } from "../../../../../src/commonlib/logger";
+import { assert, expect, vi } from "vitest";
 
 describe("init command", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   beforeEach(() => {
-    sandbox.stub(logger, "info").resolves(true);
-    sandbox.stub(logger, "error").resolves(true);
+    vi.spyOn(logger, "info").mockResolvedValue(true);
+    vi.spyOn(logger, "error").mockResolvedValue(true);
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   describe("handler", () => {
     it("should successfully generate config files with all options", async () => {
-      const generateConfigFilesStub = sandbox
-        .stub(FxCore.prototype, "generateConfigFiles")
-        .resolves(ok(undefined));
+      const generateConfigFilesStub = vi
+        .spyOn(FxCore.prototype, "generateConfigFiles")
+        .mockResolvedValue(ok(undefined));
 
       const ctx: CLIContext = {
         command: { ...initCommand, fullName: "init" },
@@ -46,13 +45,13 @@ describe("init command", () => {
       const result = await initCommand.handler!(ctx);
 
       assert.isTrue(result.isOk());
-      assert.isTrue(generateConfigFilesStub.calledOnceWith(ctx.optionValues as any));
+      expect(generateConfigFilesStub).toHaveBeenCalledExactlyOnceWith(ctx.optionValues as any);
     });
 
     it("should successfully generate config files with default options", async () => {
-      const generateConfigFilesStub = sandbox
-        .stub(FxCore.prototype, "generateConfigFiles")
-        .resolves(ok(undefined));
+      const generateConfigFilesStub = vi
+        .spyOn(FxCore.prototype, "generateConfigFiles")
+        .mockResolvedValue(ok(undefined));
 
       const ctx: CLIContext = {
         command: { ...initCommand, fullName: "init" },
@@ -71,12 +70,12 @@ describe("init command", () => {
       const result = await initCommand.handler!(ctx);
 
       assert.isTrue(result.isOk());
-      assert.isTrue(generateConfigFilesStub.calledOnceWith(ctx.optionValues as any));
+      expect(generateConfigFilesStub).toHaveBeenCalledExactlyOnceWith(ctx.optionValues as any);
     });
 
     it("should return error when generateConfigFiles fails with UserCancelError", async () => {
       const expectedError = new UserCancelError();
-      sandbox.stub(FxCore.prototype, "generateConfigFiles").resolves(err(expectedError));
+      vi.spyOn(FxCore.prototype, "generateConfigFiles").mockResolvedValue(err(expectedError));
 
       const ctx: CLIContext = {
         command: { ...initCommand, fullName: "init" },
@@ -102,7 +101,7 @@ describe("init command", () => {
 
     it("should return error when generateConfigFiles fails with SystemError", async () => {
       const expectedError = new SystemError("TestSource", "TestError", "Test error message");
-      sandbox.stub(FxCore.prototype, "generateConfigFiles").resolves(err(expectedError));
+      vi.spyOn(FxCore.prototype, "generateConfigFiles").mockResolvedValue(err(expectedError));
 
       const ctx: CLIContext = {
         command: { ...initCommand, fullName: "init" },
@@ -128,9 +127,9 @@ describe("init command", () => {
     });
 
     it("should pass correct inputs to generateConfigFiles", async () => {
-      const generateConfigFilesStub = sandbox
-        .stub(FxCore.prototype, "generateConfigFiles")
-        .resolves(ok(undefined));
+      const generateConfigFilesStub = vi
+        .spyOn(FxCore.prototype, "generateConfigFiles")
+        .mockResolvedValue(ok(undefined));
 
       const expectedInputs = {
         playground: false,
@@ -152,8 +151,8 @@ describe("init command", () => {
       const result = await initCommand.handler!(ctx);
 
       assert.isTrue(result.isOk());
-      assert.isTrue(generateConfigFilesStub.calledOnce);
-      const actualInputs = generateConfigFilesStub.firstCall.args[0];
+      assert.isTrue(generateConfigFilesStub.mock.calls.length === 1);
+      const actualInputs = generateConfigFilesStub.mock.calls[0][0];
       assert.equal(actualInputs.playground, expectedInputs.playground);
       assert.equal(actualInputs.local, expectedInputs.local);
       assert.equal(actualInputs.remote, expectedInputs.remote);
@@ -163,7 +162,7 @@ describe("init command", () => {
     });
 
     it("should handle empty option values", async () => {
-      sandbox.stub(FxCore.prototype, "generateConfigFiles").resolves(ok(undefined));
+      vi.spyOn(FxCore.prototype, "generateConfigFiles").mockResolvedValue(ok(undefined));
 
       const ctx: CLIContext = {
         command: { ...initCommand, fullName: "init" },

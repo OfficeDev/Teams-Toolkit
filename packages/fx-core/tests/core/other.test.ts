@@ -1,12 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { assert } from "chai";
 import fs from "fs-extra";
 import mockedEnv from "mocked-env";
 import os from "os";
 import * as path from "path";
-import sinon from "sinon";
+import { assert, vi } from "vitest";
 import { isFeatureFlagEnabled } from "../../src/common/featureFlags";
 import {
   isValidOfficeAddInProject,
@@ -19,10 +18,8 @@ import { cpUtils } from "../../src/component/utils/depsChecker/cpUtils";
 import { randomAppName } from "./utils";
 
 describe("Other test case", () => {
-  const sandbox = sinon.createSandbox();
-
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("isFeatureFlagEnabled: return true when related environment variable is set to 1 or true", () => {
@@ -140,7 +137,7 @@ describe("Other test case", () => {
     }
   });
   it("isValidProject: true", async () => {
-    sandbox.stub(fs, "pathExistsSync").returns(true);
+    vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
     const isValid = isValidProject("aaa");
     assert.isTrue(isValid);
   });
@@ -149,7 +146,7 @@ describe("Other test case", () => {
       TEAMSFX_V3: "true",
     });
     try {
-      sandbox.stub(fs, "pathExistsSync").returns(true);
+      vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
       const isValid = isValidProject("aaa");
       assert.isTrue(isValid);
     } finally {
@@ -164,7 +161,7 @@ describe("Other test case", () => {
       const settings: any = {
         version: "1.0.0",
       };
-      sandbox.stub(fs, "readJsonSync").returns(settings);
+      vi.spyOn(fs, "readJsonSync").mockReturnValue(settings);
       const isValid = isValidProject("aaa");
       assert.isFalse(isValid);
     } finally {
@@ -179,7 +176,7 @@ describe("Other test case", () => {
       const settings: any = {
         projectId: "123",
       };
-      sandbox.stub(fs, "readJsonSync").returns(settings);
+      vi.spyOn(fs, "readJsonSync").mockReturnValue(settings);
       const isValid = isValidProject("aaa");
       assert.isFalse(isValid);
     } finally {
@@ -187,13 +184,13 @@ describe("Other test case", () => {
     }
   });
   it("projectSettingsHelper - isValidProjectV3 - should return true when yaml exists", () => {
-    sandbox.stub(fs, "pathExistsSync").callsFake((filePath: fs.PathLike) => {
+    vi.spyOn(fs, "pathExistsSync").mockImplementation((filePath: fs.PathLike) => {
       return filePath.toString().endsWith("m365agents.yml");
     });
     assert.equal(isValidProjectV3("test"), true);
   });
   it("projectSettingsHelper - isValidOfficeAddInProject - metaos add-in", () => {
-    sandbox.stub(fs, "readdirSync").returns(["manifest.json", "manifest.xml"] as any);
+    vi.spyOn(fs, "readdirSync").mockReturnValue(["manifest.json", "manifest.xml"] as any);
     assert.equal(isValidOfficeAddInProject("test"), false);
   });
 });

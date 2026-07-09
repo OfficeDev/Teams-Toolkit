@@ -2,13 +2,11 @@
 // Licensed under the MIT license.
 import { M365TokenProvider, ok, Platform } from "@microsoft/teamsfx-api";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
-import chai from "chai";
-import chaiAsPromised from "chai-as-promised";
 import faker from "faker";
 import fs from "fs-extra";
 import os from "os";
 import path from "path";
-import { vi } from "vitest";
+import { chai, vi } from "vitest";
 
 import * as Tools from "../../../../../src/common/tools";
 import { SPFxDeployDriver } from "../../../../../src/component/driver/deploy/spfx/deployDriver";
@@ -27,8 +25,18 @@ import { FileNotFoundError } from "../../../../../src/error/common";
 import { MockedM365Provider } from "../../../../core/utils";
 import { MockedLogProvider, MockedUserInteraction } from "../../../../plugins/solution/util";
 
-chai.use(chaiAsPromised);
 const expect = chai.expect;
+
+async function assertRejected(promise: Promise<any>, errorType: any): Promise<void> {
+  let error: any;
+  try {
+    await promise;
+  } catch (e) {
+    error = e;
+  }
+  chai.assert.isDefined(error, "Expected promise to be rejected");
+  chai.assert.instanceOf(error, errorType);
+}
 
 describe("SPFx Deploy Driver", async () => {
   const tempDir = path.join(os.tmpdir(), "fx-core-spfx-deploy-tests");
@@ -254,15 +262,13 @@ describe("SPFx Deploy Driver", async () => {
         return Promise.resolve({ data: { webUrl: "fakeWebUrl" } } as any);
       },
     } as any);
-    await expect(deployDriver.getTenant(mockM365TokenProvider())).to.eventually.equal("fakeWebUrl");
+    expect(await deployDriver.getTenant(mockM365TokenProvider())).to.equal("fakeWebUrl");
   });
 
   it("fail to tenant from M365TokenProvider - GetGraphTokenFailedError", async () => {
     const mockedM365TokenProvider = mockM365TokenProvider();
     (mockedM365TokenProvider as any).getAccessToken = vi.fn().mockReturnValue(ok(undefined));
-    await expect(deployDriver.getTenant(mockedM365TokenProvider)).to.be.rejectedWith(
-      GetGraphTokenFailedError
-    );
+    await assertRejected(deployDriver.getTenant(mockedM365TokenProvider), GetGraphTokenFailedError);
   });
 
   it("fail to get tenant from M365TokenProvider - GetTenantFailedError", async () => {
@@ -275,9 +281,7 @@ describe("SPFx Deploy Driver", async () => {
         return Promise.resolve(undefined as any);
       },
     } as any);
-    await expect(deployDriver.getTenant(mockM365TokenProvider())).to.be.rejectedWith(
-      GetTenantFailedError
-    );
+    await assertRejected(deployDriver.getTenant(mockM365TokenProvider()), GetTenantFailedError);
   });
 
   it("fail to get tenant from M365TokenProvider - GetTenantFailedError", async () => {
@@ -290,9 +294,7 @@ describe("SPFx Deploy Driver", async () => {
         throw new Error();
       },
     } as any);
-    await expect(deployDriver.getTenant(mockM365TokenProvider())).to.be.rejectedWith(
-      GetTenantFailedError
-    );
+    await assertRejected(deployDriver.getTenant(mockM365TokenProvider()), GetTenantFailedError);
   });
 
   it("get package path from solutionConfigPath", async () => {
@@ -300,29 +302,29 @@ describe("SPFx Deploy Driver", async () => {
     vi.spyOn(fs, "readJson").mockResolvedValue({
       paths: { zippedPackage: "solution/a.zip" },
     } as any);
-    await expect(
-      deployDriver.getPackagePath("C://test/config/package-solution.json")
-    ).to.eventually.equal(path.resolve("C://test/sharepoint/solution/a.zip"));
+    expect(await deployDriver.getPackagePath("C://test/config/package-solution.json")).to.equal(
+      path.resolve("C://test/sharepoint/solution/a.zip")
+    );
   });
 
   it("fail to get package path from solutionConfigPath - PathNotExistsError", async () => {
     vi.spyOn(fs, "pathExists").mockResolvedValue(false);
-    await expect(
-      deployDriver.getPackagePath("C://test/config/package-solution.json")
-    ).to.be.rejectedWith(FileNotFoundError);
+    await assertRejected(
+      deployDriver.getPackagePath("C://test/config/package-solution.json"),
+      FileNotFoundError
+    );
   });
 
   it("get app id from solutionConfigPath", async () => {
     vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     vi.spyOn(fs, "readJson").mockResolvedValue({ solution: { id: "fakeID" } } as any);
-    await expect(
-      deployDriver.getAppID("C://test/config/package-solution.json")
-    ).to.eventually.equal("fakeID");
+    expect(await deployDriver.getAppID("C://test/config/package-solution.json")).to.equal("fakeID");
   });
 
   it("fail to get app id from solutionConfigPath - PathNotExistsError", async () => {
     vi.spyOn(fs, "pathExists").mockResolvedValue(false);
-    await expect(deployDriver.getAppID("C://test/config/package-solution.json")).to.be.rejectedWith(
+    await assertRejected(
+      deployDriver.getAppID("C://test/config/package-solution.json"),
       FileNotFoundError
     );
   });

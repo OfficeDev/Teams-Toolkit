@@ -593,15 +593,6 @@ export class ActionStartOptions {
     };
   }
 
-  static DAMetaOS(): OptionItem {
-    return {
-      id: "da-meta-os",
-      label: getLocalizedString("template.createProjectQuestion.capability.DAMetaOS.label"),
-      detail: getLocalizedString("template.createProjectQuestion.capability.DAMetaOS.detail"),
-      data: TemplateNames.DeclarativeAgentMetaOSNewProject,
-    };
-  }
-
   static existingPlugin(): OptionItem {
     return {
       id: "existing-plugin",
@@ -618,33 +609,6 @@ export class ActionStartOptions {
       detail: getLocalizedString("template.createProjectQuestion.mcpForDa.detail"),
       // description: getLocalizedString("core.createProjectQuestion.option.description.preview"),
       data: TemplateNames.DeclarativeAgentWithActionFromMCP,
-    };
-  }
-}
-
-export class DAMetaOSCapabilityOptions {
-  static newDAMetaOSProject(): OptionItem {
-    return {
-      id: "da-meta-os-new-project",
-      label: getLocalizedString(
-        "template.createProjectQuestion.DAMetaOS.capability.newProject.label"
-      ),
-      detail: getLocalizedString(
-        "template.createProjectQuestion.DAMetaOS.capability.newProject.detail"
-      ),
-      data: TemplateNames.DeclarativeAgentMetaOSNewProject,
-    };
-  }
-  static upgradeExistingProject(): OptionItem {
-    return {
-      id: "da-meta-os-upgrade-existing-project",
-      label: getLocalizedString(
-        "template.createProjectQuestion.DAMetaOS.capability.upgradeProject.label"
-      ),
-      detail: getLocalizedString(
-        "template.createProjectQuestion.DAMetaOS.capability.upgradeProject.detail"
-      ),
-      data: TemplateNames.DeclarativeAgentMetaOSUpgradeProject,
     };
   }
 }

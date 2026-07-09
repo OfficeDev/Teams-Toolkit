@@ -1,12 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { assert } from "chai";
 import * as fs from "fs-extra";
 import * as os from "os";
 import * as path from "path";
 import * as process from "process";
-import * as sinon from "sinon";
 import { CheckerFactory } from "../../../../src/component/deps-checker/checkerFactory";
 import { DepsChecker, DepsType } from "../../../../src/component/deps-checker/depsChecker";
 import {
@@ -23,16 +21,17 @@ import {
   setExecutionPolicyForCurrentUser,
 } from "../utils/common";
 import * as dotnetUtils from "../utils/dotnet";
+import { assert, vi } from "vitest";
 
 describe("DotnetChecker E2E Test - first run", async () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   beforeEach(async function () {
     // cleanup to make sure the environment is clean before test
     await dotnetUtils.cleanup();
   });
   afterEach(async function () {
-    sandbox.restore();
+    vi.restoreAllMocks();
     // cleanup to make sure the environment is clean
     await dotnetUtils.cleanup();
   });
@@ -52,10 +51,10 @@ describe("DotnetChecker E2E Test - first run", async () => {
     assert.isFalse(depsInfo.isInstalled, ".NET is not installed, but isInstalled() return true");
     assert.isFalse(depsInfo.details.isLinuxSupported, "Linux should not support .NET");
 
-    const spyChecker = sandbox.spy(dotnetChecker, "getInstallationInfo");
+    const spyChecker = vi.spyOn(dotnetChecker, "getInstallationInfo");
     const res = await dotnetChecker.resolve();
     assert.isTrue(res.isInstalled);
-    assert.isTrue(spyChecker.calledTwice);
+    assert.isTrue(spyChecker.mock.calls.length === 2);
     await verifyPrivateInstallation(dotnetChecker);
   });
 
@@ -74,11 +73,11 @@ describe("DotnetChecker E2E Test - first run", async () => {
         logger,
         new TestTelemetry()
       ) as DotnetChecker;
-      sinon.stub(dotnetChecker, "getResourceDir").returns(resourceDir);
-      const getInstallationInfoSpy = sinon.spy(dotnetChecker, "getInstallationInfo");
+      vi.spyOn(dotnetChecker, "getResourceDir").mockReturnValue(resourceDir);
+      const getInstallationInfoSpy = vi.spyOn(dotnetChecker, "getInstallationInfo");
       const res = await dotnetChecker.resolve();
       assert.isTrue(res.isInstalled);
-      assert.isTrue(getInstallationInfoSpy.calledTwice);
+      assert.isTrue(getInstallationInfoSpy.mock.calls.length === 2);
       await verifyPrivateInstallation(dotnetChecker);
     } finally {
       cleanupCallback();
@@ -146,9 +145,9 @@ describe("DotnetChecker E2E Test - first run", async () => {
       new TestTelemetry()
     ) as DotnetChecker;
 
-    const spyChecker = sandbox.spy(dotnetChecker, "getInstallationInfo");
+    const spyChecker = vi.spyOn(dotnetChecker, "getInstallationInfo");
     const res = await dotnetChecker.resolve();
-    assert.isTrue(spyChecker.calledTwice);
+    assert.isTrue(spyChecker.mock.calls.length === 2);
 
     assert.isTrue(res.isInstalled);
     await verifyPrivateInstallation(dotnetChecker);
@@ -166,16 +165,16 @@ describe("DotnetChecker E2E Test - first run", async () => {
       new TestTelemetry()
     ) as DotnetChecker;
     const correctResourceDir = dotnetChecker.getResourceDir();
-    sinon.stub(dotnetChecker, "getResourceDir").returns(getErrorResourceDir());
+    vi.spyOn(dotnetChecker, "getResourceDir").mockReturnValue(getErrorResourceDir());
 
     const res = await dotnetChecker.resolve();
 
     assert.isFalse(res.isInstalled);
     await verifyInstallationFailed(dotnetChecker);
 
-    sinon.restore();
+    vi.restoreAllMocks();
     // DotnetChecker with correct dotnet-install script
-    sinon.stub(dotnetChecker, "getResourceDir").returns(correctResourceDir);
+    vi.spyOn(dotnetChecker, "getResourceDir").mockReturnValue(correctResourceDir);
 
     // user manually install
     await dotnetUtils.withDotnet(
@@ -205,7 +204,7 @@ describe("DotnetChecker E2E Test - first run", async () => {
 });
 
 describe("DotnetChecker E2E Test - second run", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   beforeEach(async function () {
     await dotnetUtils.cleanup();
@@ -214,7 +213,7 @@ describe("DotnetChecker E2E Test - second run", () => {
 
   afterEach(async function () {
     // cleanup to make sure the environment is clean
-    sandbox.restore();
+    vi.restoreAllMocks();
     await dotnetUtils.cleanup();
   });
 
@@ -253,9 +252,9 @@ describe("DotnetChecker E2E Test - second run", () => {
           }
         );
 
-        const spyChecker = sandbox.spy(dotnetChecker, "getInstallationInfo");
+        const spyChecker = vi.spyOn(dotnetChecker, "getInstallationInfo");
         const res = await dotnetChecker.resolve();
-        assert.isTrue(spyChecker.calledOnce);
+        assert.isTrue(spyChecker.mock.calls.length === 1);
 
         const dotnetExecPath = await dotnetChecker.command();
 
@@ -291,9 +290,9 @@ describe("DotnetChecker E2E Test - second run", () => {
       logger,
       new TestTelemetry()
     );
-    const spyChecker = sandbox.spy(dotnetChecker, "getInstallationInfo");
+    const spyChecker = vi.spyOn(dotnetChecker, "getInstallationInfo");
     const res = await dotnetChecker.resolve();
-    assert.isTrue(spyChecker.calledTwice);
+    assert.isTrue(spyChecker.mock.calls.length === 2);
 
     assert.isTrue(res.isInstalled);
     await verifyPrivateInstallation(dotnetChecker);
@@ -328,9 +327,9 @@ describe("DotnetChecker E2E Test - second run", () => {
           }
         );
 
-        const spyChecker = sandbox.spy(dotnetChecker, "getInstallationInfo");
+        const spyChecker = vi.spyOn(dotnetChecker, "getInstallationInfo");
         const res = await dotnetChecker.resolve();
-        assert.isTrue(spyChecker.calledOnce);
+        assert.isTrue(spyChecker.mock.calls.length === 1);
 
         const dotnetExecPath = await dotnetChecker.command();
         const dotnetExecPathFromConfig = await dotnetUtils.getDotnetExecPathFromConfig(

@@ -3,19 +3,17 @@
 
 import { err, ok, UserError } from "@microsoft/teamsfx-api";
 import axios from "axios";
-import * as chai from "chai";
-import chaiAsPromised from "chai-as-promised";
 import fs from "fs-extra";
 import mockFs from "mock-fs";
 import * as path from "path";
-import Sinon, * as sinon from "sinon";
+import { afterEach, beforeEach, chai, vi } from "vitest";
 import { pathUtils } from "../../src";
 import { GraphClient } from "../../src/client/graphClient";
 import { teamsDevPortalClient } from "../../src/client/teamsDevPortalClient";
 import { setTools } from "../../src/common/globalVars";
 import { getProjectMetadata } from "../../src/common/projectSettingsHelper";
+import * as projectTypeChecker from "../../src/common/projectTypeChecker";
 import {
-  commonToolsDeps,
   getSideloadingStatus,
   getSPFxToken,
   getTypeSpecArgs,
@@ -33,20 +31,20 @@ import { isVideoFilterProject } from "../../src/core/middleware/videoFilterAppBl
 import { isUserCancelError } from "../../src/error/common";
 import { MockedM365Provider, MockLogProvider, MockTools } from "../core/utils";
 
-chai.use(chaiAsPromised);
+vi.mock("../../src/common/projectTypeChecker");
 
 describe("tools", () => {
   describe("getSideloadingStatus()", () => {
     beforeEach(() => {
-      sinon.restore();
+      vi.restoreAllMocks();
     });
 
     afterEach(() => {
-      sinon.restore();
+      vi.restoreAllMocks();
     });
 
     it("sideloading enabled", async () => {
-      sinon.stub(commonToolsDeps, "getSideloadingStatus").resolves(true);
+      vi.spyOn(teamsDevPortalClient, "getSideloadingStatus").mockResolvedValue(true);
 
       const result = await getSideloadingStatus("fake-token");
 
@@ -55,7 +53,7 @@ describe("tools", () => {
     });
 
     it("sideloading not enabled", async () => {
-      sinon.stub(commonToolsDeps, "getSideloadingStatus").resolves(false);
+      vi.spyOn(teamsDevPortalClient, "getSideloadingStatus").mockResolvedValue(false);
 
       const result = await getSideloadingStatus("fake-token");
 
@@ -64,7 +62,7 @@ describe("tools", () => {
     });
 
     it("sideloading unknown", async () => {
-      sinon.stub(commonToolsDeps, "getSideloadingStatus").resolves(undefined);
+      vi.spyOn(teamsDevPortalClient, "getSideloadingStatus").mockResolvedValue(undefined);
 
       const result = await getSideloadingStatus("fake-token");
 
@@ -72,36 +70,26 @@ describe("tools", () => {
     });
 
     it("error and retry", async () => {
-      sinon.stub(commonToolsDeps, "getSideloadingStatus").resolves(undefined);
+      vi.spyOn(teamsDevPortalClient, "getSideloadingStatus").mockResolvedValue(undefined);
       const result = await getSideloadingStatus("fake-token");
 
       chai.assert.isUndefined(result);
     });
-
-    it("commonToolsDeps wrapper delegates to teamsDevPortalClient", async () => {
-      const statusStub = sinon.stub(teamsDevPortalClient, "getSideloadingStatus").resolves(true);
-
-      const result = await commonToolsDeps.getSideloadingStatus("wrapper-token");
-
-      chai.assert.isTrue(result);
-      chai.assert.isTrue(statusStub.calledOnceWithExactly("wrapper-token"));
-    });
   });
 
   describe("isSandboxedEnabled", () => {
-    const sandbox = sinon.createSandbox();
     const tokenProvider = new MockedM365Provider();
 
     beforeEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("should return true when sandbox sensitivity label matches", async () => {
-      sandbox.stub(GraphClient.prototype, "GetTeamsAppSettingsAsync").resolves({
+      vi.spyOn(GraphClient.prototype, "GetTeamsAppSettingsAsync").mockResolvedValue({
         sandboxingConfiguration: {
           isSideloadingEnabled: false,
           sensitivityLabelUsedToIdentifySandboxedContainers: "0fcfd0ff-1cda-407e-bc2b-a350307bd1d5",
@@ -113,10 +101,8 @@ describe("tools", () => {
   });
 
   describe("listAllTenants", () => {
-    const sandbox = sinon.createSandbox();
-
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("returns empty for invalid token", async () => {
@@ -126,7 +112,9 @@ describe("tools", () => {
     });
 
     it("returns empty when API call failure", async () => {
-      sandbox.stub(axios, "get").throws({ name: 404, message: "failed" });
+      vi.spyOn(axios, "get").mockImplementation(() => {
+        throw { name: 404, message: "failed" };
+      });
 
       const tenants = await listAllTenants("faked token");
 
@@ -150,7 +138,7 @@ describe("tools", () => {
           ],
         },
       };
-      sandbox.stub(axios, "get").resolves(fakedTenants);
+      vi.spyOn(axios, "get").mockResolvedValue(fakedTenants);
 
       const tenants = await listAllTenants("faked token");
 
@@ -162,11 +150,13 @@ describe("tools", () => {
     const tools = new MockTools();
     beforeEach(() => {
       setTools(tools);
-      sinon.restore();
+      vi.restoreAllMocks();
     });
 
     it("copilot status unknown", async () => {
-      sinon.stub(PackageService.GetSharedInstance(), "getCopilotStatus").resolves(undefined as any);
+      vi.spyOn(PackageService.GetSharedInstance(), "getCopilotStatus").mockResolvedValue(
+        undefined as any
+      );
 
       const result = await PackageService.GetSharedInstance().getCopilotStatus("fake-token");
 
@@ -175,19 +165,17 @@ describe("tools", () => {
   });
 
   describe("getProjectMetadata", () => {
-    const sandbox = sinon.createSandbox();
-
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("happy path V3", async () => {
       try {
-        sandbox.stub<any, any>(fs, "readFileSync").callsFake(() => {
+        vi.spyOn(fs, "readFileSync").mockImplementation(() => {
           return `version: 1.0.0
 projectId: 00000000-0000-0000-0000-000000000000`;
         });
-        sandbox.stub<any, any>(fs, "pathExistsSync").callsFake(() => {
+        vi.spyOn(fs, "pathExistsSync").mockImplementation(() => {
           return true;
         });
         const result = getProjectMetadata("root-path");
@@ -198,7 +186,7 @@ projectId: 00000000-0000-0000-0000-000000000000`;
     });
 
     it("project settings not exists", async () => {
-      sandbox.stub<any, any>(fs, "pathExistsSync").callsFake(() => {
+      vi.spyOn(fs, "pathExistsSync").mockImplementation(() => {
         return false;
       });
       const result = getProjectMetadata("root-path");
@@ -206,7 +194,7 @@ projectId: 00000000-0000-0000-0000-000000000000`;
     });
 
     it("throw error", async () => {
-      sandbox.stub<any, any>(fs, "pathExistsSync").callsFake(() => {
+      vi.spyOn(fs, "pathExistsSync").mockImplementation(() => {
         throw new Error("new error");
       });
       const result = getProjectMetadata("root-path");
@@ -220,13 +208,11 @@ projectId: 00000000-0000-0000-0000-000000000000`;
   });
 
   describe("isVideoFilterProject", async () => {
-    let sandbox: Sinon.SinonSandbox;
+    let sandbox: any;
     const mockProjectRoot = "video-filter";
-    beforeEach(() => {
-      sandbox = sinon.createSandbox();
-    });
+    beforeEach(() => {});
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
       mockFs.restore();
     });
 
@@ -316,21 +302,22 @@ projectId: 00000000-0000-0000-0000-000000000000`;
 
   describe("getSPFxToken", async () => {
     afterEach(() => {
-      sinon.restore();
+      vi.restoreAllMocks();
     });
 
     it("happy path", async () => {
       const mockTools = new MockTools();
-      sinon.stub(mockTools.tokenProvider.m365TokenProvider, "getAccessToken").resolves(ok("xxx"));
-      sinon.stub(axios, "get").resolves({ data: { webUrl: "122" } });
+      vi.spyOn(mockTools.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
+        ok("xxx")
+      );
+      vi.spyOn(axios, "get").mockResolvedValue({ data: { webUrl: "122" } });
       const res = await getSPFxToken(mockTools.tokenProvider.m365TokenProvider);
     });
   });
 
   describe("listDevTunnels", () => {
-    const sandbox = sinon.createSandbox();
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("should return an error when the API call fails", async () => {
@@ -342,9 +329,8 @@ projectId: 00000000-0000-0000-0000-000000000000`;
   });
 
   describe("listDevTunnels using github token", () => {
-    const sandbox = sinon.createSandbox();
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("should return an error when the API call fails", async () => {
@@ -364,31 +350,29 @@ projectId: 00000000-0000-0000-0000-000000000000`;
   });
 
   describe("isTestToolEnabledProject", () => {
-    const sandbox = sinon.createSandbox();
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
     it("should return true if test tool YAML file exists", () => {
-      sandbox.stub(fs, "pathExistsSync").returns(true);
+      vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
       const result = isTestToolEnabledProject("test-project-path");
       chai.expect(result).to.be.true;
     });
 
     it("should return false if test tool YAML file does not exist", () => {
-      sandbox.stub(fs, "pathExistsSync").returns(false);
+      vi.spyOn(fs, "pathExistsSync").mockReturnValue(false);
       const result = isTestToolEnabledProject("test-project-path");
       chai.expect(result).to.be.false;
     });
   });
 
   describe("getTypeSpecArgs", () => {
-    const sandbox = sinon.createSandbox();
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("should return default args if no yaml file", () => {
-      sandbox.stub(pathUtils, "getYmlFilePath").returns(undefined);
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue(undefined);
       const result = getTypeSpecArgs("test-project-path");
       chai.expect(result).to.deep.equal({
         path: "./main.tsp",
@@ -399,8 +383,8 @@ projectId: 00000000-0000-0000-0000-000000000000`;
     });
 
     it("should return default args if no provision node", () => {
-      sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-      sandbox.stub(fs, "readFileSync").returns("version: 1.0.0");
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+      vi.spyOn(fs, "readFileSync").mockReturnValue("version: 1.0.0");
       const result = getTypeSpecArgs("test-project-path");
       chai.expect(result).to.deep.equal({
         path: "./main.tsp",
@@ -411,8 +395,8 @@ projectId: 00000000-0000-0000-0000-000000000000`;
     });
 
     it("should return default args if no tspCompileAction", () => {
-      sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-      sandbox.stub(fs, "readFileSync").returns("provision: []");
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+      vi.spyOn(fs, "readFileSync").mockReturnValue("provision: []");
       const result = getTypeSpecArgs("test-project-path");
       chai.expect(result).to.deep.equal({
         path: "./main.tsp",
@@ -423,12 +407,10 @@ projectId: 00000000-0000-0000-0000-000000000000`;
     });
 
     it("should return args from tspCompileAction", () => {
-      sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-      sandbox
-        .stub(fs, "readFileSync")
-        .returns(
-          "provision:\n  - uses: typeSpec/compile\n    with:\n      path: ./custom.tsp\n      manifestPath: ./customManifest.json\n      outputDir: ./customOutputDir\n      typeSpecConfigPath: ./customTspconfig.yaml"
-        );
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+      vi.spyOn(fs, "readFileSync").mockReturnValue(
+        "provision:\n  - uses: typeSpec/compile\n    with:\n      path: ./custom.tsp\n      manifestPath: ./customManifest.json\n      outputDir: ./customOutputDir\n      typeSpecConfigPath: ./customTspconfig.yaml"
+      );
       const result = getTypeSpecArgs("test-project-path");
       chai.expect(result).to.deep.equal({
         path: "./custom.tsp",
@@ -439,12 +421,10 @@ projectId: 00000000-0000-0000-0000-000000000000`;
     });
 
     it("should return args from default if missing parameter", () => {
-      sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-      sandbox
-        .stub(fs, "readFileSync")
-        .returns(
-          "provision:\n  - uses: typeSpec/compile\n    with:\n      path2: ./custom.tsp\n      manifestPath2: ./customManifest.json\n      outputDir2: ./customOutputDir\n      typeSpecConfigPath2: ./customTspconfig.yaml"
-        );
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+      vi.spyOn(fs, "readFileSync").mockReturnValue(
+        "provision:\n  - uses: typeSpec/compile\n    with:\n      path2: ./custom.tsp\n      manifestPath2: ./customManifest.json\n      outputDir2: ./customOutputDir\n      typeSpecConfigPath2: ./customTspconfig.yaml"
+      );
       const result = getTypeSpecArgs("test-project-path");
       chai.expect(result).to.deep.equal({
         path: "./main.tsp",
@@ -456,61 +436,58 @@ projectId: 00000000-0000-0000-0000-000000000000`;
   });
 
   describe("runForTypeSpecProject", () => {
-    const sandbox = sinon.createSandbox();
     let mockContext: WrapDriverContext;
     beforeEach(() => {
       mockContext = {
         m365TokenProvider: new MockedM365Provider(),
         logProvider: new MockLogProvider(),
-        addSummary: sandbox.stub(),
+        addSummary: vi.fn(),
         summaries: [],
       } as unknown as WrapDriverContext;
     });
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("should call npm install and typeSpec compile for TypeSpec project", async () => {
       const mockProjectPath = "mock-project-path";
-      const npmInstallStub = sandbox
-        .stub(NpmBuildDriver.prototype, "execute")
-        .resolves({ result: ok(new Map()), summaries: [] });
-      const typeSpecCompileStub = sandbox
-        .stub(TypeSpecCompileDriver.prototype, "execute")
-        .resolves({ result: ok(new Map()), summaries: [] });
-      sandbox.stub(commonToolsDeps, "isTypeSpecProject").returns(true);
-      sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-      sandbox
-        .stub(fs, "readFileSync")
-        .returns(
-          "provision:\n  - uses: typeSpec/compile\n    with:\n      path: ./custom.tsp\n      manifestPath: ./customManifest.json\n      outputDir: ./customOutputDir\n      typeSpecConfigPath: ./customTspconfig.yaml"
-        );
+      const npmInstallStub = vi
+        .spyOn(NpmBuildDriver.prototype, "execute")
+        .mockResolvedValue({ result: ok(new Map()), summaries: [] });
+      const typeSpecCompileStub = vi
+        .spyOn(TypeSpecCompileDriver.prototype, "execute")
+        .mockResolvedValue({ result: ok(new Map()), summaries: [] });
+      vi.mocked(projectTypeChecker.isTypeSpecProject).mockReturnValue(true);
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+      vi.spyOn(fs, "readFileSync").mockReturnValue(
+        "provision:\n  - uses: typeSpec/compile\n    with:\n      path: ./custom.tsp\n      manifestPath: ./customManifest.json\n      outputDir: ./customOutputDir\n      typeSpecConfigPath: ./customTspconfig.yaml"
+      );
       await runForTypeSpecProject(mockProjectPath, mockContext);
-      chai.expect(npmInstallStub.calledOnce).to.be.true;
-      chai.expect(typeSpecCompileStub.calledOnce).to.be.true;
+      chai.expect(npmInstallStub.mock.calls).lengthOf(1);
+      chai.expect(typeSpecCompileStub.mock.calls).lengthOf(1);
     });
 
     it("should skip for not TypeSpec project", async () => {
       const mockProjectPath = "mock-project-path";
-      const npmInstallStub = sandbox
-        .stub(NpmBuildDriver.prototype, "execute")
-        .resolves({ result: ok(new Map()), summaries: [] });
-      const typeSpecCompileStub = sandbox
-        .stub(TypeSpecCompileDriver.prototype, "execute")
-        .resolves({ result: ok(new Map()), summaries: [] });
-      sandbox.stub(commonToolsDeps, "isTypeSpecProject").returns(false);
+      const npmInstallStub = vi
+        .spyOn(NpmBuildDriver.prototype, "execute")
+        .mockResolvedValue({ result: ok(new Map()), summaries: [] });
+      const typeSpecCompileStub = vi
+        .spyOn(TypeSpecCompileDriver.prototype, "execute")
+        .mockResolvedValue({ result: ok(new Map()), summaries: [] });
+      vi.mocked(projectTypeChecker.isTypeSpecProject).mockReturnValue(false);
       await runForTypeSpecProject(mockProjectPath, mockContext);
-      chai.expect(npmInstallStub.notCalled).to.be.true;
-      chai.expect(typeSpecCompileStub.notCalled).to.be.true;
+      chai.expect(npmInstallStub.mock.calls.length === 0).to.be.true;
+      chai.expect(typeSpecCompileStub.mock.calls.length === 0).to.be.true;
     });
 
     it("should throw error if npm install fails", async () => {
       const mockProjectPath = "mock-project-path";
-      sandbox.stub(commonToolsDeps, "isTypeSpecProject").returns(true);
-      const typeSpecCompileStub = sandbox
-        .stub(TypeSpecCompileDriver.prototype, "execute")
-        .resolves({ result: ok(new Map()), summaries: [] });
-      const npmInstallStub = sandbox.stub(NpmBuildDriver.prototype, "execute").resolves({
+      vi.mocked(projectTypeChecker.isTypeSpecProject).mockReturnValue(true);
+      const typeSpecCompileStub = vi
+        .spyOn(TypeSpecCompileDriver.prototype, "execute")
+        .mockResolvedValue({ result: ok(new Map()), summaries: [] });
+      const npmInstallStub = vi.spyOn(NpmBuildDriver.prototype, "execute").mockResolvedValue({
         result: err(new UserError("source", "NpmInstallError", "NPM install failed")),
         summaries: [],
       });
@@ -523,22 +500,20 @@ projectId: 00000000-0000-0000-0000-000000000000`;
 
     it("should throw error if typespec compile fails", async () => {
       const mockProjectPath = "mock-project-path";
-      sandbox.stub(commonToolsDeps, "isTypeSpecProject").returns(true);
-      sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-      sandbox
-        .stub(fs, "readFileSync")
-        .returns(
-          "provision:\n  - uses: typeSpec/compile\n    with:\n      path: ./custom.tsp\n      manifestPath: ./customManifest.json\n      outputDir: ./customOutputDir\n      typeSpecConfigPath: ./customTspconfig.yaml"
-        );
-      const typeSpecCompileStub = sandbox
-        .stub(TypeSpecCompileDriver.prototype, "execute")
-        .resolves({
+      vi.mocked(projectTypeChecker.isTypeSpecProject).mockReturnValue(true);
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+      vi.spyOn(fs, "readFileSync").mockReturnValue(
+        "provision:\n  - uses: typeSpec/compile\n    with:\n      path: ./custom.tsp\n      manifestPath: ./customManifest.json\n      outputDir: ./customOutputDir\n      typeSpecConfigPath: ./customTspconfig.yaml"
+      );
+      const typeSpecCompileStub = vi
+        .spyOn(TypeSpecCompileDriver.prototype, "execute")
+        .mockResolvedValue({
           result: err(new UserError("source", "TypeSpecCompileError", "TypeSpec compile failed")),
           summaries: [],
         });
-      const npmInstallStub = sandbox
-        .stub(NpmBuildDriver.prototype, "execute")
-        .resolves({ result: ok(new Map()), summaries: [] });
+      const npmInstallStub = vi
+        .spyOn(NpmBuildDriver.prototype, "execute")
+        .mockResolvedValue({ result: ok(new Map()), summaries: [] });
       try {
         await runForTypeSpecProject(mockProjectPath, mockContext);
       } catch (error) {

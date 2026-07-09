@@ -1,9 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import * as chai from "chai";
 import fs from "fs-extra";
-import * as sinon from "sinon";
 import * as util from "util";
 
 import * as commentJson from "comment-json";
@@ -11,6 +9,7 @@ import * as localizeUtils from "../../../../src/common/localizeUtils";
 import { CreateOrUpdateJsonFileDriver } from "../../../../src/component/driver/file/createOrUpdateJsonFile";
 import { InvalidActionInputError } from "../../../../src/error/common";
 import { MockedLogProvider } from "../../../plugins/solution/util";
+import { chai, vi } from "vitest";
 
 describe("CreateOrUpdateJsonFileDriver", () => {
   const mockedDriverContext = {
@@ -19,7 +18,7 @@ describe("CreateOrUpdateJsonFileDriver", () => {
   const driver = new CreateOrUpdateJsonFileDriver();
 
   beforeEach(() => {
-    sinon.stub(localizeUtils, "getDefaultString").callsFake((key, ...params) => {
+    vi.spyOn(localizeUtils, "getDefaultString").mockImplementation((key, ...params) => {
       if (key === "error.yaml.InvalidActionInputError") {
         return util.format("error.yaml.InvalidActionInputError. %s. %s.", ...params);
       } else if (key === "error.common.UnhandledError") {
@@ -27,11 +26,11 @@ describe("CreateOrUpdateJsonFileDriver", () => {
       }
       return "";
     });
-    sinon.stub(localizeUtils, "getLocalizedString").returns("");
+    vi.spyOn(localizeUtils, "getLocalizedString").mockReturnValue("");
   });
 
   afterEach(() => {
-    sinon.restore();
+    vi.restoreAllMocks();
   });
 
   describe("run", () => {
@@ -63,8 +62,8 @@ describe("CreateOrUpdateJsonFileDriver", () => {
     });
 
     it("exception", async () => {
-      sinon.stub(fs, "pathExists").resolves(true);
-      sinon.stub(fs, "readFile").rejects(new Error("exception"));
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readFile").mockRejectedValue(new Error("exception"));
       const args: any = {
         target: "path",
         appsettings: {
@@ -83,18 +82,18 @@ describe("CreateOrUpdateJsonFileDriver", () => {
         BOT_ID: "$botId$",
         BOT_PASSWORD: "$bot-password$",
       };
-      sinon.stub(fs, "ensureFile").callsFake(async (path) => {
+      vi.spyOn(fs, "ensureFile").mockImplementation(async (path) => {
         return;
       });
-      sinon.stub(fs, "readFile").callsFake(async (path) => {
+      vi.spyOn(fs, "readFile").mockImplementation(async (path) => {
         return Buffer.from(JSON.stringify(appsettings));
       });
-      sinon.stub(fs, "writeFile").callsFake(async (path, data) => {
+      vi.spyOn(fs, "writeFile").mockImplementation(async (path, data) => {
         content = data;
         return;
       });
-      sinon.stub(fs, "pathExists").resolves(true);
-      sinon.stub(fs, "existsSync").callsFake((path) => {
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "existsSync").mockImplementation((path) => {
         return true;
       });
       const args: any = {
@@ -118,18 +117,18 @@ describe("CreateOrUpdateJsonFileDriver", () => {
         BOT_ID: "$botId$",
         BOT_PASSWORD: "$bot-password$",
       };
-      sinon.stub(fs, "ensureFile").callsFake(async (path) => {
+      vi.spyOn(fs, "ensureFile").mockImplementation(async (path) => {
         return;
       });
-      sinon.stub(fs, "readFile").callsFake(async (path) => {
+      vi.spyOn(fs, "readFile").mockImplementation(async (path) => {
         return Buffer.from(JSON.stringify(appsettings));
       });
-      sinon.stub(fs, "writeFile").callsFake(async (path, data) => {
+      vi.spyOn(fs, "writeFile").mockImplementation(async (path, data) => {
         content = data;
         return;
       });
-      sinon.stub(fs, "pathExists").resolves(true);
-      sinon.stub(fs, "existsSync").callsFake((path) => {
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "existsSync").mockImplementation((path) => {
         return true;
       });
       const args: any = {
@@ -156,18 +155,18 @@ describe("CreateOrUpdateJsonFileDriver", () => {
           Foo: "Bar",
         },
       };
-      sinon.stub(fs, "ensureFile").callsFake(async (path) => {
+      vi.spyOn(fs, "ensureFile").mockImplementation(async (path) => {
         return;
       });
-      sinon.stub(fs, "readFile").callsFake(async (path) => {
+      vi.spyOn(fs, "readFile").mockImplementation(async (path) => {
         return Buffer.from(JSON.stringify(appsettings));
       });
-      sinon.stub(fs, "writeFile").callsFake(async (path, data) => {
+      vi.spyOn(fs, "writeFile").mockImplementation(async (path, data) => {
         content = data;
         return;
       });
-      sinon.stub(fs, "pathExists").resolves(true);
-      sinon.stub(fs, "existsSync").callsFake((path) => {
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "existsSync").mockImplementation((path) => {
         return true;
       });
       const args: any = {
@@ -195,29 +194,29 @@ describe("CreateOrUpdateJsonFileDriver", () => {
         BOT_ID: "$botId$",
         BOT_PASSWORD: "$bot-password$",
       };
-      sinon.stub(fs, "ensureFile").callsFake(async (path) => {
+      vi.spyOn(fs, "ensureFile").mockImplementation(async (path) => {
         return;
       });
-      sinon.stub(fs, "readFile").callsFake(async (path) => {
+      vi.spyOn(fs, "readFile").mockImplementation(async (path) => {
         return Buffer.from(JSON.stringify(appsettings));
       });
-      sinon.stub(fs, "writeFile").callsFake(async (path, data) => {
+      vi.spyOn(fs, "writeFile").mockImplementation(async (path, data) => {
         content = data;
         return;
       });
-      sinon.stub(fs, "pathExists").callsFake(async (path: fs.PathLike) => {
+      vi.spyOn(fs, "pathExists").mockImplementation(async (path: fs.PathLike) => {
         if (path.toString().indexOf(target) >= 0) {
           return false;
         }
         return true;
       });
-      sinon.stub(fs, "existsSync").callsFake((path) => {
+      vi.spyOn(fs, "existsSync").mockImplementation((path) => {
         if (path.toString().indexOf(target) >= 0) {
           return false;
         }
         return true;
       });
-      sinon.stub(fs, "copyFile").callsFake(async (p1, p2) => {
+      vi.spyOn(fs, "copyFile").mockImplementation(async (p1, p2) => {
         return;
       });
       const args: any = {
@@ -242,21 +241,21 @@ describe("CreateOrUpdateJsonFileDriver", () => {
       BOT_ID: "$botId$",
       BOT_PASSWORD: "$bot-password$",
     };
-    sinon.stub(fs, "ensureFile").callsFake(async (path) => {
+    vi.spyOn(fs, "ensureFile").mockImplementation(async (path) => {
       return;
     });
-    sinon.stub(fs, "readFile").callsFake(async (path) => {
+    vi.spyOn(fs, "readFile").mockImplementation(async (path) => {
       return Buffer.from(JSON.stringify(appsettings));
     });
-    sinon.stub(fs, "writeFile").callsFake(async (path, data) => {
+    vi.spyOn(fs, "writeFile").mockImplementation(async (path, data) => {
       content = data;
       return;
     });
-    sinon.stub(fs, "pathExists").resolves(false);
-    sinon.stub(fs, "existsSync").callsFake((path) => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+    vi.spyOn(fs, "existsSync").mockImplementation((path) => {
       return false;
     });
-    sinon.stub(fs, "copyFile").callsFake(async (p1, p2) => {
+    vi.spyOn(fs, "copyFile").mockImplementation(async (p1, p2) => {
       return;
     });
     const args: any = {
@@ -283,21 +282,21 @@ describe("CreateOrUpdateJsonFileDriver", () => {
       "FOO": "BAR"
       // comment string 2
     }`);
-    sinon.stub(fs, "ensureFile").callsFake(async (path) => {
+    vi.spyOn(fs, "ensureFile").mockImplementation(async (path) => {
       return;
     });
-    sinon.stub(fs, "readFile").callsFake(async (path) => {
+    vi.spyOn(fs, "readFile").mockImplementation(async (path) => {
       return Buffer.from(commentJson.stringify(jsonContent, null, "\t"));
     });
-    sinon.stub(fs, "writeFile").callsFake(async (path, data) => {
+    vi.spyOn(fs, "writeFile").mockImplementation(async (path, data) => {
       content = data;
       return;
     });
-    sinon.stub(fs, "pathExists").resolves(false);
-    sinon.stub(fs, "existsSync").callsFake((path) => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+    vi.spyOn(fs, "existsSync").mockImplementation((path) => {
       return false;
     });
-    sinon.stub(fs, "copyFile").callsFake(async (p1, p2) => {
+    vi.spyOn(fs, "copyFile").mockImplementation(async (p1, p2) => {
       return;
     });
     const args: any = {
@@ -329,21 +328,21 @@ describe("CreateOrUpdateJsonFileDriver", () => {
       "FOO2": true,
       // comment string 2
     }`);
-    sinon.stub(fs, "ensureFile").callsFake(async (path) => {
+    vi.spyOn(fs, "ensureFile").mockImplementation(async (path) => {
       return;
     });
-    sinon.stub(fs, "readFile").callsFake(async (path) => {
+    vi.spyOn(fs, "readFile").mockImplementation(async (path) => {
       return Buffer.from(commentJson.stringify(jsonContent, null, "\t"));
     });
-    sinon.stub(fs, "writeFile").callsFake(async (path, data) => {
+    vi.spyOn(fs, "writeFile").mockImplementation(async (path, data) => {
       content = data;
       return;
     });
-    sinon.stub(fs, "pathExists").resolves(false);
-    sinon.stub(fs, "existsSync").callsFake((path) => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+    vi.spyOn(fs, "existsSync").mockImplementation((path) => {
       return false;
     });
-    sinon.stub(fs, "copyFile").callsFake(async (p1, p2) => {
+    vi.spyOn(fs, "copyFile").mockImplementation(async (p1, p2) => {
       return;
     });
     const args: any = {
@@ -372,29 +371,29 @@ describe("CreateOrUpdateJsonFileDriver", () => {
       BOT_ID: "$botId$",
       BOT_PASSWORD: "$bot-password$",
     };
-    sinon.stub(fs, "ensureFile").callsFake(async (path) => {
+    vi.spyOn(fs, "ensureFile").mockImplementation(async (path) => {
       return;
     });
-    sinon.stub(fs, "readFile").callsFake(async (path) => {
+    vi.spyOn(fs, "readFile").mockImplementation(async (path) => {
       return Buffer.from(JSON.stringify(jsonContent));
     });
-    sinon.stub(fs, "writeFile").callsFake(async (path, data) => {
+    vi.spyOn(fs, "writeFile").mockImplementation(async (path, data) => {
       content = data;
       return;
     });
-    sinon.stub(fs, "pathExists").callsFake(async (path: fs.PathLike) => {
+    vi.spyOn(fs, "pathExists").mockImplementation(async (path: fs.PathLike) => {
       if (path.toString().indexOf(target) >= 0) {
         return false;
       }
       return true;
     });
-    sinon.stub(fs, "existsSync").callsFake((path) => {
+    vi.spyOn(fs, "existsSync").mockImplementation((path) => {
       if (path.toString().indexOf(target) >= 0) {
         return false;
       }
       return true;
     });
-    sinon.stub(fs, "copyFile").callsFake(async (p1, p2) => {
+    vi.spyOn(fs, "copyFile").mockImplementation(async (p1, p2) => {
       return;
     });
     const args: any = {
@@ -419,21 +418,21 @@ describe("CreateOrUpdateJsonFileDriver", () => {
     const jsonContent = {
       FOO: {},
     };
-    sinon.stub(fs, "ensureFile").callsFake(async (path) => {
+    vi.spyOn(fs, "ensureFile").mockImplementation(async (path) => {
       return;
     });
-    sinon.stub(fs, "readFile").callsFake(async (path) => {
+    vi.spyOn(fs, "readFile").mockImplementation(async (path) => {
       return Buffer.from(JSON.stringify(jsonContent));
     });
-    sinon.stub(fs, "writeFile").callsFake(async (path, data) => {
+    vi.spyOn(fs, "writeFile").mockImplementation(async (path, data) => {
       content = data;
       return;
     });
-    sinon.stub(fs, "pathExists").resolves(false);
-    sinon.stub(fs, "existsSync").callsFake((path) => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+    vi.spyOn(fs, "existsSync").mockImplementation((path) => {
       return false;
     });
-    sinon.stub(fs, "copyFile").callsFake(async (p1, p2) => {
+    vi.spyOn(fs, "copyFile").mockImplementation(async (p1, p2) => {
       return;
     });
     const args: any = {
@@ -462,21 +461,21 @@ describe("CreateOrUpdateJsonFileDriver", () => {
     const jsonContent = {
       BOT_ID: "$botId$",
     };
-    sinon.stub(fs, "ensureFile").callsFake(async (path) => {
+    vi.spyOn(fs, "ensureFile").mockImplementation(async (path) => {
       return;
     });
-    sinon.stub(fs, "readFile").callsFake(async (path) => {
+    vi.spyOn(fs, "readFile").mockImplementation(async (path) => {
       return Buffer.from(JSON.stringify(jsonContent));
     });
-    sinon.stub(fs, "writeFile").callsFake(async (path, data) => {
+    vi.spyOn(fs, "writeFile").mockImplementation(async (path, data) => {
       content = data;
       return;
     });
-    sinon.stub(fs, "pathExists").resolves(false);
-    sinon.stub(fs, "existsSync").callsFake((path) => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+    vi.spyOn(fs, "existsSync").mockImplementation((path) => {
       return false;
     });
-    sinon.stub(fs, "copyFile").callsFake(async (p1, p2) => {
+    vi.spyOn(fs, "copyFile").mockImplementation(async (p1, p2) => {
       return;
     });
     const args: any = {
@@ -504,21 +503,21 @@ describe("CreateOrUpdateJsonFileDriver", () => {
     const jsonContent = {
       BOT_ID: "$botId$",
     };
-    sinon.stub(fs, "ensureFile").callsFake(async (path) => {
+    vi.spyOn(fs, "ensureFile").mockImplementation(async (path) => {
       return;
     });
-    sinon.stub(fs, "readFile").callsFake(async (path) => {
+    vi.spyOn(fs, "readFile").mockImplementation(async (path) => {
       return Buffer.from(JSON.stringify(jsonContent));
     });
-    sinon.stub(fs, "writeFile").callsFake(async (path, data) => {
+    vi.spyOn(fs, "writeFile").mockImplementation(async (path, data) => {
       content = data;
       return;
     });
-    sinon.stub(fs, "pathExists").resolves(false);
-    sinon.stub(fs, "existsSync").callsFake((path) => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+    vi.spyOn(fs, "existsSync").mockImplementation((path) => {
       return false;
     });
-    sinon.stub(fs, "copyFile").callsFake(async (p1, p2) => {
+    vi.spyOn(fs, "copyFile").mockImplementation(async (p1, p2) => {
       return;
     });
     const args: any = {
@@ -540,21 +539,21 @@ describe("CreateOrUpdateJsonFileDriver", () => {
     const jsonContent = {
       BOT_ID: "$botId$",
     };
-    sinon.stub(fs, "ensureFile").callsFake(async (path) => {
+    vi.spyOn(fs, "ensureFile").mockImplementation(async (path) => {
       return;
     });
-    sinon.stub(fs, "readFile").callsFake(async (path) => {
+    vi.spyOn(fs, "readFile").mockImplementation(async (path) => {
       return Buffer.from(JSON.stringify(jsonContent));
     });
-    sinon.stub(fs, "writeFile").callsFake(async (path, data) => {
+    vi.spyOn(fs, "writeFile").mockImplementation(async (path, data) => {
       content = data;
       return;
     });
-    sinon.stub(fs, "pathExists").resolves(false);
-    sinon.stub(fs, "existsSync").callsFake((path) => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+    vi.spyOn(fs, "existsSync").mockImplementation((path) => {
       return false;
     });
-    sinon.stub(fs, "copyFile").callsFake(async (p1, p2) => {
+    vi.spyOn(fs, "copyFile").mockImplementation(async (p1, p2) => {
       return;
     });
     const args: any = {
@@ -570,21 +569,21 @@ describe("CreateOrUpdateJsonFileDriver", () => {
     const jsonContent = {
       BOT_ID: "$botId$",
     };
-    sinon.stub(fs, "ensureFile").callsFake(async (path) => {
+    vi.spyOn(fs, "ensureFile").mockImplementation(async (path) => {
       return;
     });
-    sinon.stub(fs, "readFile").callsFake(async (path) => {
+    vi.spyOn(fs, "readFile").mockImplementation(async (path) => {
       return Buffer.from(JSON.stringify(jsonContent));
     });
-    sinon.stub(fs, "writeFile").callsFake(async (path, data) => {
+    vi.spyOn(fs, "writeFile").mockImplementation(async (path, data) => {
       content = data;
       return;
     });
-    sinon.stub(fs, "pathExists").resolves(false);
-    sinon.stub(fs, "existsSync").callsFake((path) => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+    vi.spyOn(fs, "existsSync").mockImplementation((path) => {
       return false;
     });
-    sinon.stub(fs, "copyFile").callsFake(async (p1, p2) => {
+    vi.spyOn(fs, "copyFile").mockImplementation(async (p1, p2) => {
       return;
     });
     const args: any = {

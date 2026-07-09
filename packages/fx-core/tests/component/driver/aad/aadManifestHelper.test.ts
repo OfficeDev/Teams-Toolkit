@@ -1,21 +1,20 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-import * as chai from "chai";
 import { AadManifestHelper } from "../../../../src/component/driver/aad/utility/aadManifestHelper";
 import { AadManifestErrorMessage } from "../../../../src/component/driver/aad/error/aadManifestError";
 import { AADManifest } from "../../../../src/component/driver/aad/interface/AADManifest";
-import * as sinon from "sinon";
 import { MockTools } from "../../../core/utils";
 import { setTools, TOOLS } from "../../../../src/common/globalVars";
 import { ok } from "@microsoft/teamsfx-api";
 import fs from "fs-extra";
+import { chai, vi } from "vitest";
 
 describe("Microsoft Entra manifest helper Test", () => {
   const tools = new MockTools();
   setTools(tools);
 
   beforeEach(() => {
-    sinon.restore();
+    vi.restoreAllMocks();
   });
   it("manifestToApplication", async () => {
     const aadApp = AadManifestHelper.manifestToApplication(fakeAadManifest);
@@ -86,20 +85,20 @@ describe("Microsoft Entra manifest helper Test", () => {
   });
 
   it("showWarningIfManifestIsOutdated should work if user confirm", async () => {
-    sinon.stub(TOOLS.ui, "showMessage").resolves(ok("Upgrade"));
-    sinon.stub(fs, "readJson").resolves(fakeAadManifest);
-    const convertManifestToNewSchemaAndOverrideStub = sinon
-      .stub(AadManifestHelper, "convertManifestToNewSchemaAndOverride")
-      .resolves();
+    vi.spyOn(TOOLS.ui, "showMessage").mockResolvedValue(ok("Upgrade"));
+    vi.spyOn(fs, "readJson").mockResolvedValue(fakeAadManifest);
+    const convertManifestToNewSchemaAndOverrideStub = vi
+      .spyOn(AadManifestHelper, "convertManifestToNewSchemaAndOverride")
+      .mockResolvedValue();
     await AadManifestHelper.showWarningIfManifestIsOutdated("fake-path", "fake-project-path");
   });
 
   it("showWarningIfManifestIsOutdated should work if user cancel", async () => {
-    sinon.stub(TOOLS.ui, "showMessage").resolves(ok(""));
-    sinon.stub(fs, "readJson").resolves(fakeAadManifest);
-    const convertManifestToNewSchemaAndOverrideStub = sinon
-      .stub(AadManifestHelper, "convertManifestToNewSchemaAndOverride")
-      .resolves();
+    vi.spyOn(TOOLS.ui, "showMessage").mockResolvedValue(ok(""));
+    vi.spyOn(fs, "readJson").mockResolvedValue(fakeAadManifest);
+    const convertManifestToNewSchemaAndOverrideStub = vi
+      .spyOn(AadManifestHelper, "convertManifestToNewSchemaAndOverride")
+      .mockResolvedValue();
     await AadManifestHelper.showWarningIfManifestIsOutdated("fake-path", "fake-project-path");
   });
 

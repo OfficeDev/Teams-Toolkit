@@ -51,8 +51,6 @@ import {
   apiOperationQuestion,
   apiPluginStartQuestion,
   apiSpecLocationQuestion,
-  appNameQuestion,
-  folderQuestion,
   oneDriveSharePointItemConfirmQuestion,
   oneDriveSharePointItemQuestion,
   pluginManifestQuestion,
@@ -773,22 +771,6 @@ export function addPluginQuestionNode(): IQTreeNode {
   };
 }
 
-export function metaOSExtendToDAQuestionNode(): IQTreeNode {
-  return {
-    data: {
-      type: "group",
-    },
-    children: [
-      {
-        data: folderQuestion(),
-      },
-      {
-        data: appNameQuestion(),
-      },
-    ],
-  };
-}
-
 // add Knowledge to a declarative Copilot project
 export function addKnowledgeQuestionNode(): IQTreeNode {
   return {
@@ -1150,7 +1132,7 @@ export function apiSpecFromPluginManifestQuestion(): SingleSelectQuestion {
       const pluginManifest = (await fs.readJson(pluginManifestPath)) as PluginManifestSchema;
       const specs = pluginManifest
         .runtimes!.filter((runtime) => runtime.type === "OpenApi")
-        .map((runtime) => runtime.spec.url as string);
+        .map((runtime) => runtime.spec.url);
       return [...new Set(specs)];
     },
   };

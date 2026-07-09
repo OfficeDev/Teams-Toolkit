@@ -84,13 +84,6 @@ export const daNode = {
                 data: "api-plugin-from-existing-api",
               },
               {
-                id: "da-meta-os",
-                label: "template.createProjectQuestion.capability.DAMetaOS.label",
-                detail: "template.createProjectQuestion.capability.DAMetaOS.detail",
-                data: "declarative-agent-meta-os-new-project",
-                featureFlag: "TEAMSFX_DA_METAOS",
-              },
-              {
                 id: "mcp",
                 label: "template.createProjectQuestion.mcpForDa.label",
                 detail: "template.createProjectQuestion.mcpForDa.detail",

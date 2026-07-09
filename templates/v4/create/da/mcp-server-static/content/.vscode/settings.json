@@ -1,0 +1,12 @@
+{
+  "debug.onTaskErrors": "abort",
+  "json.schemas": [
+    {
+      "fileMatch": ["/aad.*.json"],
+      "schema": {}
+    }
+  ],
+  "files.readonlyInclude": {
+    "appPackage/.generated/**/*": true
+  }
+}

@@ -9,13 +9,12 @@ import {
   ManifestTemplateFileName,
   Warning,
 } from "@microsoft/teamsfx-api";
+import * as teamsfxCore from "@microsoft/teamsfx-core";
 import {
   assembleError,
   featureFlagManager,
   FeatureFlags,
   generateScaffoldingSummary,
-  globalStateGet,
-  globalStateUpdate,
   JSONSyntaxError,
   manifestUtils,
   outputScaffoldingWarningMessage,
@@ -27,9 +26,9 @@ import * as util from "util";
 import * as vscode from "vscode";
 import VsCodeLogInstance from "../commonlib/log";
 import { CommandKey, GlobalKey } from "../constants";
-import { selectAndDebug } from "../debug/runIconHandler";
-import { isDeclarativeCopilotApp, isSensitivityLabelSet, workspaceUri } from "../globalVariables";
-import { openReadMeHandler } from "../handlers/readmeHandlers";
+import * as runIconHandlers from "../debug/runIconHandler";
+import * as globalVariables from "../globalVariables";
+import * as readmeHandlers from "../handlers/readmeHandlers";
 import { VS_CODE_UI } from "../qm/vsc_ui";
 import { ExtTelemetry } from "../telemetry/extTelemetry";
 import { TelemetryEvent, TelemetryTriggerFrom } from "../telemetry/extTelemetryEvents";
@@ -38,7 +37,7 @@ import { getLocalDebugMessageTemplate } from "./commonUtils";
 import { localize } from "./localizeUtils";
 
 export async function showLocalDebugMessage() {
-  const shouldShowLocalDebugMessage = (await globalStateGet(
+  const shouldShowLocalDebugMessage = (await teamsfxCore.globalStateGet(
     GlobalKey.ShowLocalDebugMessage,
     false
   )) as boolean;
@@ -46,24 +45,28 @@ export async function showLocalDebugMessage() {
   if (!shouldShowLocalDebugMessage) {
     return;
   } else {
-    await globalStateUpdate(GlobalKey.ShowLocalDebugMessage, false);
+    await teamsfxCore.globalStateUpdate(GlobalKey.ShowLocalDebugMessage, false);
   }
 
   const hasLocalEnv =
-    (await fs.pathExists(path.join(workspaceUri!.fsPath, "teamsapp.local.yml"))) ||
-    (await fs.pathExists(path.join(workspaceUri!.fsPath, "m365agents.local.yml")));
-  const hasKeyGenJsFile = await fs.pathExists(path.join(workspaceUri!.fsPath, "/src/keyGen.js"));
-  const hasKeyGenTsFile = await fs.pathExists(path.join(workspaceUri!.fsPath, "/src/keyGen.ts"));
+    (await fs.pathExists(path.join(globalVariables.workspaceUri!.fsPath, "teamsapp.local.yml"))) ||
+    (await fs.pathExists(path.join(globalVariables.workspaceUri!.fsPath, "m365agents.local.yml")));
+  const hasKeyGenJsFile = await fs.pathExists(
+    path.join(globalVariables.workspaceUri!.fsPath, "/src/keyGen.js")
+  );
+  const hasKeyGenTsFile = await fs.pathExists(
+    path.join(globalVariables.workspaceUri!.fsPath, "/src/keyGen.ts")
+  );
 
   const appName = (await getAppName()) ?? localize("teamstoolkit.handlers.fallbackAppName");
   const isWindows = process.platform === "win32";
-  const folderLink = encodeURI(workspaceUri!.toString());
+  const folderLink = encodeURI(globalVariables.workspaceUri!.toString());
   const openFolderCommand = `command:fx-extension.openFolder?%5B%22${folderLink}%22%5D`;
 
   if (
     featureFlagManager.getBooleanValue(FeatureFlags.SensitivityLabelEnabled) &&
-    isDeclarativeCopilotApp &&
-    !isSensitivityLabelSet
+    globalVariables.isDeclarativeCopilotApp &&
+    !globalVariables.isSensitivityLabelSet
   ) {
     showSetSensitivityLabelMessage();
   }
@@ -72,7 +75,7 @@ export async function showLocalDebugMessage() {
     const openReadMe = {
       title: localize("teamstoolkit.handlers.manualStepRequiredTitle"),
       run: async (): Promise<void> => {
-        await openReadMeHandler([TelemetryTriggerFrom.Notification]);
+        await readmeHandlers.openReadMeHandler([TelemetryTriggerFrom.Notification]);
       },
     };
     ExtTelemetry.sendTelemetryEvent(TelemetryEvent.ShowManualStepRequiredNotification);
@@ -85,7 +88,7 @@ export async function showLocalDebugMessage() {
       : util.format(
           localize("teamstoolkit.handlers.manualStepRequired.fallback"),
           appName,
-          workspaceUri?.fsPath
+          globalVariables.workspaceUri?.fsPath
         );
     void vscode.window.showInformationMessage(message, openReadMe).then((selection) => {
       if (selection?.title === localize("teamstoolkit.handlers.manualStepRequiredTitle")) {
@@ -98,7 +101,7 @@ export async function showLocalDebugMessage() {
     ExtTelemetry.sendTelemetryEvent(TelemetryEvent.ShowLocalDebugNotification);
 
     let messageTemplate = getLocalDebugMessageTemplate(isWindows);
-    if (isDeclarativeCopilotApp) {
+    if (globalVariables.isDeclarativeCopilotApp) {
       messageTemplate = isWindows
         ? localize("teamstoolkit.handlers.localPreviewDescription")
         : localize("teamstoolkit.handlers.localPreviewDescription.fallback");
@@ -107,11 +110,11 @@ export async function showLocalDebugMessage() {
     const localDebug = {
       title: title,
       run: async (): Promise<void> => {
-        await selectAndDebug();
+        await runIconHandlers.selectAndDebug();
       },
     };
 
-    let message = util.format(messageTemplate, appName, workspaceUri?.fsPath);
+    let message = util.format(messageTemplate, appName, globalVariables.workspaceUri?.fsPath);
     if (isWindows) {
       message = util.format(messageTemplate, appName, openFolderCommand);
     }
@@ -128,7 +131,7 @@ export async function showLocalDebugMessage() {
     // emitted by the DA-with-MCP scaffold.
     const isDaWithMcpDt =
       featureFlagManager.getBooleanValue(FeatureFlags.MCPForDADT) &&
-      (await fs.pathExists(path.join(workspaceUri!.fsPath, ".vscode", "mcp.json")));
+      (await fs.pathExists(path.join(globalVariables.workspaceUri!.fsPath, ".vscode", "mcp.json")));
     const provision = {
       title: localize("teamstoolkit.handlers.provisionTitle"),
       run: async (): Promise<void> => {
@@ -151,7 +154,7 @@ export async function showLocalDebugMessage() {
         : util.format(
             localize("teamstoolkit.handlers.provisionDescription.fallback"),
             appName,
-            workspaceUri?.fsPath
+            globalVariables.workspaceUri?.fsPath
           );
     }
     void vscode.window.showInformationMessage(message, provision).then((selection) => {

@@ -5,23 +5,22 @@
 
 import { CLIContext, ok } from "@microsoft/teamsfx-api";
 import { FxCore } from "@microsoft/teamsfx-core";
-import { assert } from "chai";
 import "mocha";
-import * as sinon from "sinon";
 import * as activate from "../../../../src/activate";
 import { addSkillCommand } from "../../../../src/commands/models/addSkill";
+import { assert, expect, vi } from "vitest";
 
 describe("addSkill command", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("should call FxCore.addSkill with command inputs", async () => {
     const mockCore = new FxCore({} as any);
-    const addSkillStub = sandbox.stub(mockCore, "addSkill").resolves(ok(undefined));
-    sandbox.stub(activate, "getFxCore").returns(mockCore);
+    const addSkillStub = vi.spyOn(mockCore, "addSkill").mockResolvedValue(ok(undefined));
+    vi.spyOn(activate, "getFxCore").mockReturnValue(mockCore);
 
     const ctx: CLIContext = {
       command: { ...addSkillCommand, fullName: "add skill" },
@@ -38,6 +37,6 @@ describe("addSkill command", () => {
     const result = await addSkillCommand.handler!(ctx);
 
     assert.isTrue(result.isOk());
-    assert.isTrue(addSkillStub.calledOnceWith(ctx.optionValues));
+    expect(addSkillStub).toHaveBeenCalledExactlyOnceWith(ctx.optionValues);
   });
 });

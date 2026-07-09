@@ -6,10 +6,9 @@ import {
   SystemError,
   UserError,
 } from "@microsoft/teamsfx-api";
-import chai from "chai";
 import { assert } from "console";
 import mockedEnv, { RestoreFn } from "mocked-env";
-import * as sinon from "sinon";
+import { chai, expect, vi } from "vitest";
 import { SovereignCloudEnvironment } from "../../src/common/accountUtils";
 import { GraphScopes } from "../../src/common/constants";
 import { FeatureFlagName } from "../../src/common/featureFlags";
@@ -31,7 +30,10 @@ describe("provisionUtils", () => {
   setTools(tools);
 
   describe("ensureSubscription", () => {
-    const mocker = sinon.createSandbox();
+    const mocker = {
+      stub: (obj: any, method: any) => vi.spyOn(obj, method),
+      restore: () => vi.restoreAllMocks(),
+    };
     beforeEach(() => {
       setTools(tools);
     });
@@ -42,8 +44,8 @@ describe("provisionUtils", () => {
       const azureAccountProvider = new MockedAzureAccountProvider();
       mocker
         .stub(azureAccountProvider, "getIdentityCredentialAsync")
-        .resolves(new MyTokenCredential());
-      mocker.stub(azureAccountProvider, "getSelectedSubscription").resolves(undefined);
+        .mockResolvedValue(new MyTokenCredential());
+      mocker.stub(azureAccountProvider, "getSelectedSubscription").mockResolvedValue(undefined);
       const res = await provisionUtils.ensureSubscription(azureAccountProvider);
       assert(res.isErr());
     });
@@ -51,8 +53,8 @@ describe("provisionUtils", () => {
       const azureAccountProvider = new MockedAzureAccountProvider();
       mocker
         .stub(azureAccountProvider, "getIdentityCredentialAsync")
-        .resolves(new MyTokenCredential());
-      mocker.stub(azureAccountProvider, "getSelectedSubscription").resolves({
+        .mockResolvedValue(new MyTokenCredential());
+      mocker.stub(azureAccountProvider, "getSelectedSubscription").mockResolvedValue({
         subscriptionId: "mockSubId",
         tenantId: "mockTenantId",
         subscriptionName: "mockSubName",
@@ -64,8 +66,8 @@ describe("provisionUtils", () => {
       const azureAccountProvider = new MockedAzureAccountProvider();
       mocker
         .stub(azureAccountProvider, "getIdentityCredentialAsync")
-        .resolves(new MyTokenCredential());
-      mocker.stub(azureAccountProvider, "listSubscriptions").resolves([
+        .mockResolvedValue(new MyTokenCredential());
+      mocker.stub(azureAccountProvider, "listSubscriptions").mockResolvedValue([
         {
           subscriptionId: "mockSubId",
           tenantId: "mockTenantId",
@@ -79,8 +81,8 @@ describe("provisionUtils", () => {
       const azureAccountProvider = new MockedAzureAccountProvider();
       mocker
         .stub(azureAccountProvider, "getIdentityCredentialAsync")
-        .resolves(new MyTokenCredential());
-      mocker.stub(azureAccountProvider, "listSubscriptions").resolves([
+        .mockResolvedValue(new MyTokenCredential());
+      mocker.stub(azureAccountProvider, "listSubscriptions").mockResolvedValue([
         {
           subscriptionId: "mockSubId2",
           tenantId: "mockTenantId",
@@ -93,13 +95,16 @@ describe("provisionUtils", () => {
   });
 
   describe("ensureResourceGroup", () => {
-    const mocker = sinon.createSandbox();
+    const mocker = {
+      stub: (obj: any, method: any) => vi.spyOn(obj, method),
+      restore: () => vi.restoreAllMocks(),
+    };
     afterEach(() => {
       mocker.restore();
     });
     it("fail: azure token undefined", async () => {
       const azureAccountProvider = new MockedAzureAccountProvider();
-      mocker.stub(azureAccountProvider, "getIdentityCredentialAsync").resolves(undefined);
+      mocker.stub(azureAccountProvider, "getIdentityCredentialAsync").mockResolvedValue(undefined);
       const res = await provisionUtils.ensureResourceGroup(
         { platform: Platform.VSCode, projectPath: "" },
         azureAccountProvider,
@@ -111,9 +116,9 @@ describe("provisionUtils", () => {
       const azureAccountProvider = new MockedAzureAccountProvider();
       mocker
         .stub(azureAccountProvider, "getIdentityCredentialAsync")
-        .resolves(new MyTokenCredential());
+        .mockResolvedValue(new MyTokenCredential());
       mocker.stub(azureAccountProvider, "setSubscription");
-      mocker.stub(resourceGroupHelper, "getResourceGroupInfo").resolves(ok(undefined));
+      mocker.stub(resourceGroupHelper, "getResourceGroupInfo").mockResolvedValue(ok(undefined));
       const res = await provisionUtils.ensureResourceGroup(
         { platform: Platform.VSCode, projectPath: "" },
         azureAccountProvider,
@@ -126,11 +131,13 @@ describe("provisionUtils", () => {
       const azureAccountProvider = new MockedAzureAccountProvider();
       mocker
         .stub(azureAccountProvider, "getIdentityCredentialAsync")
-        .resolves(new MyTokenCredential());
+        .mockResolvedValue(new MyTokenCredential());
       mocker.stub(azureAccountProvider, "setSubscription");
       mocker
         .stub(resourceGroupHelper, "getResourceGroupInfo")
-        .resolves(err(new UserError({ source: "src", name: "TestError", message: "test" })));
+        .mockResolvedValue(
+          err(new UserError({ source: "src", name: "TestError", message: "test" }))
+        );
       const res = await provisionUtils.ensureResourceGroup(
         { platform: Platform.VSCode, projectPath: "" },
         azureAccountProvider,
@@ -143,9 +150,9 @@ describe("provisionUtils", () => {
       const azureAccountProvider = new MockedAzureAccountProvider();
       mocker
         .stub(azureAccountProvider, "getIdentityCredentialAsync")
-        .resolves(new MyTokenCredential());
+        .mockResolvedValue(new MyTokenCredential());
       mocker.stub(azureAccountProvider, "setSubscription");
-      mocker.stub(resourceGroupHelper, "getResourceGroupInfo").resolves(
+      mocker.stub(resourceGroupHelper, "getResourceGroupInfo").mockResolvedValue(
         ok({
           createNewResourceGroup: true,
           name: "test-rg",
@@ -164,9 +171,9 @@ describe("provisionUtils", () => {
       const azureAccountProvider = new MockedAzureAccountProvider();
       mocker
         .stub(azureAccountProvider, "getIdentityCredentialAsync")
-        .resolves(new MyTokenCredential());
+        .mockResolvedValue(new MyTokenCredential());
       mocker.stub(azureAccountProvider, "setSubscription");
-      mocker.stub(resourceGroupHelper, "getResourceGroupInfo").resolves(ok(undefined));
+      mocker.stub(resourceGroupHelper, "getResourceGroupInfo").mockResolvedValue(ok(undefined));
       const res = await provisionUtils.ensureResourceGroup(
         { platform: Platform.VSCode, projectPath: "" },
         azureAccountProvider,
@@ -182,16 +189,16 @@ describe("provisionUtils", () => {
       const azureAccountProvider = new MockedAzureAccountProvider();
       mocker
         .stub(azureAccountProvider, "getIdentityCredentialAsync")
-        .resolves(new MyTokenCredential());
+        .mockResolvedValue(new MyTokenCredential());
       mocker.stub(azureAccountProvider, "setSubscription");
-      mocker.stub(resourceGroupHelper, "askResourceGroupInfoV3").resolves(
+      mocker.stub(resourceGroupHelper, "askResourceGroupInfoV3").mockResolvedValue(
         ok({
           createNewResourceGroup: true,
           name: "test-rg",
           location: "East US",
         })
       );
-      mocker.stub(resourceGroupHelper, "createNewResourceGroup").resolves(ok("mockRG"));
+      mocker.stub(resourceGroupHelper, "createNewResourceGroup").mockResolvedValue(ok("mockRG"));
       const res = await provisionUtils.ensureResourceGroup(
         { platform: Platform.VSCode, projectPath: "" },
         azureAccountProvider,
@@ -204,16 +211,16 @@ describe("provisionUtils", () => {
       const azureAccountProvider = new MockedAzureAccountProvider();
       mocker
         .stub(azureAccountProvider, "getIdentityCredentialAsync")
-        .resolves(new MyTokenCredential());
+        .mockResolvedValue(new MyTokenCredential());
       mocker.stub(azureAccountProvider, "setSubscription");
-      mocker.stub(resourceGroupHelper, "askResourceGroupInfoV3").resolves(
+      mocker.stub(resourceGroupHelper, "askResourceGroupInfoV3").mockResolvedValue(
         ok({
           createNewResourceGroup: true,
           name: "test-rg",
           location: "East US",
         })
       );
-      mocker.stub(resourceGroupHelper, "createNewResourceGroup").resolves(ok("mockRG"));
+      mocker.stub(resourceGroupHelper, "createNewResourceGroup").mockResolvedValue(ok("mockRG"));
       const res = await provisionUtils.ensureResourceGroup(
         { platform: Platform.VSCode, projectPath: "" },
         azureAccountProvider,
@@ -224,7 +231,10 @@ describe("provisionUtils", () => {
   });
 
   describe("askForProvisionConsentV3", () => {
-    const mocker = sinon.createSandbox();
+    const mocker = {
+      stub: (obj: any, method: any) => vi.spyOn(obj, method),
+      restore: () => vi.restoreAllMocks(),
+    };
     afterEach(() => {
       mocker.restore();
     });
@@ -235,9 +245,11 @@ describe("provisionUtils", () => {
         azureAccountProvider: new MockedAzureAccountProvider(),
         telemetryReporter: new MockTelemetryReporter(),
       };
-      mocker.stub(ctx.azureAccountProvider, "getJsonObject").resolves({ unique_name: "name" });
-      mocker.stub(ctx.ui, "showMessage").resolves(ok("Provision"));
-      mocker.stub(ctx.telemetryReporter, "sendTelemetryEvent").resolves();
+      mocker
+        .stub(ctx.azureAccountProvider, "getJsonObject")
+        .mockResolvedValue({ unique_name: "name" });
+      mocker.stub(ctx.ui, "showMessage").mockResolvedValue(ok("Provision"));
+      mocker.stub(ctx.telemetryReporter, "sendTelemetryEvent").mockResolvedValue();
       const azureSubInfo: SubscriptionInfo = {
         subscriptionName: "sub",
         subscriptionId: "sub-id",
@@ -264,9 +276,11 @@ describe("provisionUtils", () => {
         azureAccountProvider: new MockedAzureAccountProvider(),
         telemetryReporter: new MockTelemetryReporter(),
       };
-      mocker.stub(ctx.azureAccountProvider, "getJsonObject").resolves({ unique_name: "name" });
-      const ui = mocker.stub(ctx.ui, "showMessage").resolves(ok("Provision"));
-      mocker.stub(ctx.telemetryReporter, "sendTelemetryEvent").resolves();
+      mocker
+        .stub(ctx.azureAccountProvider, "getJsonObject")
+        .mockResolvedValue({ unique_name: "name" });
+      const ui = mocker.stub(ctx.ui, "showMessage").mockResolvedValue(ok("Provision"));
+      mocker.stub(ctx.telemetryReporter, "sendTelemetryEvent").mockResolvedValue();
       const azureSubInfo: SubscriptionInfo = {
         subscriptionName: "sub",
         subscriptionId: "sub-id",
@@ -279,7 +293,7 @@ describe("provisionUtils", () => {
         "test"
       );
 
-      chai.assert.isFalse((ui.args[0][1] as string).includes("365"));
+      chai.assert.isFalse((ui.mock.calls[0][1] as string).includes("365"));
       chai.assert.isTrue(res.isOk());
     });
 
@@ -289,9 +303,11 @@ describe("provisionUtils", () => {
         azureAccountProvider: new MockedAzureAccountProvider(),
         telemetryReporter: new MockTelemetryReporter(),
       };
-      mocker.stub(ctx.azureAccountProvider, "getJsonObject").resolves({ unique_name: "name" });
-      mocker.stub(ctx.ui, "showMessage").resolves(ok("Cancel"));
-      mocker.stub(ctx.telemetryReporter, "sendTelemetryEvent").resolves();
+      mocker
+        .stub(ctx.azureAccountProvider, "getJsonObject")
+        .mockResolvedValue({ unique_name: "name" });
+      mocker.stub(ctx.ui, "showMessage").mockResolvedValue(ok("Cancel"));
+      mocker.stub(ctx.telemetryReporter, "sendTelemetryEvent").mockResolvedValue();
       const azureSubInfo: SubscriptionInfo = {
         subscriptionName: "sub",
         subscriptionId: "sub-id",
@@ -321,9 +337,13 @@ describe("provisionUtils", () => {
         azureAccountProvider: new MockedAzureAccountProvider(),
         telemetryReporter: new MockTelemetryReporter(),
       };
-      mocker.stub(ctx.azureAccountProvider, "getJsonObject").resolves({ unique_name: "name" });
-      mocker.stub(ctx.ui, "showMessage").resolves(err(new SystemError("error", "error", "", "")));
-      mocker.stub(ctx.telemetryReporter, "sendTelemetryEvent").resolves();
+      mocker
+        .stub(ctx.azureAccountProvider, "getJsonObject")
+        .mockResolvedValue({ unique_name: "name" });
+      mocker
+        .stub(ctx.ui, "showMessage")
+        .mockResolvedValue(err(new SystemError("error", "error", "", "")));
+      mocker.stub(ctx.telemetryReporter, "sendTelemetryEvent").mockResolvedValue();
       const azureSubInfo: SubscriptionInfo = {
         subscriptionName: "sub",
         subscriptionId: "sub-id",
@@ -448,7 +468,10 @@ describe("provisionUtils", () => {
   });
   describe("getM365TenantId", () => {
     let mockedEnvRestore: RestoreFn | undefined;
-    const mocker = sinon.createSandbox();
+    const mocker = {
+      stub: (obj: any, method: any) => vi.spyOn(obj, method),
+      restore: () => vi.restoreAllMocks(),
+    };
     afterEach(() => {
       if (mockedEnvRestore) {
         mockedEnvRestore();
@@ -456,10 +479,12 @@ describe("provisionUtils", () => {
       mocker.restore();
     });
     it("M365TokenJSONNotFoundError", async () => {
-      mocker.stub(tools.tokenProvider.m365TokenProvider, "getAccessToken").resolves(ok(""));
+      mocker
+        .stub(tools.tokenProvider.m365TokenProvider, "getAccessToken")
+        .mockResolvedValue(ok(""));
       mocker
         .stub(tools.tokenProvider.m365TokenProvider, "getJsonObject")
-        .resolves(err(new UserError({})));
+        .mockResolvedValue(err(new UserError({})));
       const res = await provisionUtils.getM365TenantId(tools.tokenProvider.m365TokenProvider);
       chai.assert.isTrue(res.isErr());
       if (res.isErr()) {
@@ -468,8 +493,10 @@ describe("provisionUtils", () => {
     });
 
     it("M365TenantIdNotFoundInTokenError", async () => {
-      mocker.stub(tools.tokenProvider.m365TokenProvider, "getAccessToken").resolves(ok(""));
-      mocker.stub(tools.tokenProvider.m365TokenProvider, "getJsonObject").resolves(ok({}));
+      mocker
+        .stub(tools.tokenProvider.m365TokenProvider, "getAccessToken")
+        .mockResolvedValue(ok(""));
+      mocker.stub(tools.tokenProvider.m365TokenProvider, "getJsonObject").mockResolvedValue(ok({}));
       const res = await provisionUtils.getM365TenantId(tools.tokenProvider.m365TokenProvider);
       chai.assert.isTrue(res.isErr());
       if (res.isErr()) {
@@ -478,10 +505,12 @@ describe("provisionUtils", () => {
     });
 
     it("happy pass - upn", async () => {
-      mocker.stub(tools.tokenProvider.m365TokenProvider, "getAccessToken").resolves(ok(""));
+      mocker
+        .stub(tools.tokenProvider.m365TokenProvider, "getAccessToken")
+        .mockResolvedValue(ok(""));
       mocker
         .stub(tools.tokenProvider.m365TokenProvider, "getJsonObject")
-        .resolves(ok({ tid: "faked id", upn: "faked upn" }));
+        .mockResolvedValue(ok({ tid: "faked id", upn: "faked upn" }));
       const res = await provisionUtils.getM365TenantId(tools.tokenProvider.m365TokenProvider);
       chai.assert.isTrue(res.isOk());
       if (res.isOk()) {
@@ -493,10 +522,12 @@ describe("provisionUtils", () => {
     });
 
     it("happy pass - unique_name", async () => {
-      mocker.stub(tools.tokenProvider.m365TokenProvider, "getAccessToken").resolves(ok(""));
+      mocker
+        .stub(tools.tokenProvider.m365TokenProvider, "getAccessToken")
+        .mockResolvedValue(ok(""));
       mocker
         .stub(tools.tokenProvider.m365TokenProvider, "getJsonObject")
-        .resolves(ok({ tid: "faked id", unique_name: "faked unique name" }));
+        .mockResolvedValue(ok({ tid: "faked id", unique_name: "faked unique name" }));
       const res = await provisionUtils.getM365TenantId(tools.tokenProvider.m365TokenProvider);
       chai.assert.isTrue(res.isOk());
       if (res.isOk()) {
@@ -513,21 +544,24 @@ describe("provisionUtils", () => {
       });
       const getAccessTokenStub = mocker
         .stub(tools.tokenProvider.m365TokenProvider, "getAccessToken")
-        .resolves(ok(""));
+        .mockResolvedValue(ok(""));
       const getJsonObjectStub = mocker
         .stub(tools.tokenProvider.m365TokenProvider, "getJsonObject")
-        .resolves(ok({ tid: "faked id", upn: "faked upn" }));
+        .mockResolvedValue(ok({ tid: "faked id", upn: "faked upn" }));
 
       const res = await provisionUtils.getM365TenantId(tools.tokenProvider.m365TokenProvider);
 
       chai.assert.isTrue(res.isOk());
-      sinon.assert.calledWith(getAccessTokenStub, { scopes: GraphScopes });
-      sinon.assert.calledWith(getJsonObjectStub, { scopes: GraphScopes });
+      expect(getAccessTokenStub).toHaveBeenCalledWith({ scopes: GraphScopes });
+      expect(getJsonObjectStub).toHaveBeenCalledWith({ scopes: GraphScopes });
     });
   });
   describe("arm", () => {
     let mockedEnvRestore: RestoreFn | undefined;
-    const mocker = sinon.createSandbox();
+    const mocker = {
+      stub: (obj: any, method: any) => vi.spyOn(obj, method),
+      restore: () => vi.restoreAllMocks(),
+    };
     afterEach(() => {
       if (mockedEnvRestore) {
         mockedEnvRestore();

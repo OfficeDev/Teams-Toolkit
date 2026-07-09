@@ -1,31 +1,24 @@
-import * as chai from "chai";
 import mockFs from "mock-fs";
-import * as sinon from "sinon";
+import { chai, vi } from "vitest";
 import * as projectSettingsHelper from "../../src/common/projectSettingsHelper";
 import { OfficeManifestType } from "../../src/common/projectSettingsHelper";
 
 describe("validateIsOfficeAddInProject", () => {
-  const sandbox = sinon.createSandbox();
-  let fetchManifestListStub: any;
-
-  beforeEach(() => {
-    fetchManifestListStub = sinon.stub(projectSettingsHelper, "fetchManifestList");
-  });
-
   afterEach(() => {
-    fetchManifestListStub.restore();
+    vi.restoreAllMocks();
     mockFs.restore();
-    sandbox.restore();
   });
 
   it("should return true if manifest list is not empty", () => {
-    fetchManifestListStub.callsFake((workspace: string, type: OfficeManifestType) => {
-      if (type == OfficeManifestType.XmlAddIn) {
-        return ["manifest.xml"];
-      } else {
-        return [];
+    vi.spyOn(projectSettingsHelper, "fetchManifestList").mockImplementation(
+      (workspace: string, type: OfficeManifestType) => {
+        if (type == OfficeManifestType.XmlAddIn) {
+          return ["manifest.xml"];
+        } else {
+          return [];
+        }
       }
-    });
+    );
     mockFs({
       "/test/manifest.xml": "",
     });
@@ -33,7 +26,7 @@ describe("validateIsOfficeAddInProject", () => {
   });
 
   it("should return false if no manifest file", () => {
-    fetchManifestListStub.returns([]);
+    vi.spyOn(projectSettingsHelper, "fetchManifestList").mockReturnValue([]);
     mockFs({
       "/test/useless.xml": "",
     });
@@ -41,20 +34,24 @@ describe("validateIsOfficeAddInProject", () => {
   });
 
   it("should return false if fetchManifestList throws an error", () => {
-    fetchManifestListStub.throws(new Error("Error fetching manifest list"));
+    vi.spyOn(projectSettingsHelper, "fetchManifestList").mockImplementation(() => {
+      throw new Error("Error fetching manifest list");
+    });
     chai.expect(projectSettingsHelper.isValidOfficeAddInProject("")).to.be.false;
   });
 
   it("should return false if both manifest.xml and manifest.json exist", () => {
-    fetchManifestListStub.callsFake((workspace: string, type: OfficeManifestType) => {
-      if (type == OfficeManifestType.XmlAddIn) {
-        return ["manifest.xml"];
-      } else if (type == OfficeManifestType.MetaOsAddIn) {
-        return ["manifest.json"];
-      } else {
-        return [];
+    vi.spyOn(projectSettingsHelper, "fetchManifestList").mockImplementation(
+      (workspace: string, type: OfficeManifestType) => {
+        if (type == OfficeManifestType.XmlAddIn) {
+          return ["manifest.xml"];
+        } else if (type == OfficeManifestType.MetaOsAddIn) {
+          return ["manifest.json"];
+        } else {
+          return [];
+        }
       }
-    });
+    );
     mockFs({
       "/test/manifest.xml": "",
       "/test/manifest.json": "",
@@ -65,7 +62,7 @@ describe("validateIsOfficeAddInProject", () => {
 
 describe("fetchManifestList", () => {
   afterEach(() => {
-    sinon.restore();
+    vi.restoreAllMocks();
     mockFs.restore();
   });
 

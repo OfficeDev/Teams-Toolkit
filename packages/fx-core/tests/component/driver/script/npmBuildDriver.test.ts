@@ -4,9 +4,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 import { err, ok, UserError } from "@microsoft/teamsfx-api";
-import * as chai from "chai";
-import { assert } from "chai";
-import * as sinon from "sinon";
+import { assert, chai, vi } from "vitest";
 import * as tools from "../../../../src/common/utils";
 import { NpmBuildDriver } from "../../../../src/component/driver/script/npmBuildDriver";
 import * as utils from "../../../../src/component/driver/script/scriptDriver";
@@ -14,14 +12,12 @@ import { MockedAzureAccountProvider, MockUserInteraction } from "../../../core/u
 import { TestLogProvider } from "../../util/logProviderMock";
 
 describe("NPM Build Driver test", () => {
-  const sandbox = sinon.createSandbox();
-
   beforeEach(() => {
-    sandbox.stub(tools, "waitSeconds").resolves();
+    vi.spyOn(tools, "waitSeconds").mockResolvedValue();
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("NPM build happy path", async () => {
@@ -36,7 +32,7 @@ describe("NPM Build Driver test", () => {
       ui: new MockUserInteraction(),
       projectPath: "./",
     } as any;
-    sandbox.stub(utils, "executeCommand").resolves(ok(["", {}]));
+    vi.spyOn(utils, "executeCommand").mockResolvedValue(ok(["", {}]));
     const res = await driver.execute(args, context);
     chai.assert.equal(res.result.isOk(), true);
 
@@ -51,7 +47,7 @@ describe("NPM Build Driver test", () => {
       env: { a: "HELLO" },
     };
     const ui = new MockUserInteraction();
-    sandbox.stub(ui, "runCommand").resolves(err(new UserError({})));
+    vi.spyOn(ui, "runCommand").mockResolvedValue(err(new UserError({})));
     const context = {
       azureAccountProvider: new MockedAzureAccountProvider(),
       logProvider: new TestLogProvider(),

@@ -2,54 +2,64 @@
 // Licensed under the MIT license.
 
 import { ok } from "@microsoft/teamsfx-api";
-import { globalStateGet, globalStateUpdate } from "@microsoft/teamsfx-core";
+import * as teamsfxCore from "@microsoft/teamsfx-core";
 import { GlobalKey, CommandKey } from "../constants";
-import { workspaceUri } from "../globalVariables";
+import * as globalVariables from "../globalVariables";
 import { TelemetryTriggerFrom } from "../telemetry/extTelemetryEvents";
-import {
-  autoInstallDependencyHandler,
-  showLocalDebugMessage,
-  ShowScaffoldingWarningSummary,
-} from "../utils/autoOpenHelper";
-import { updateProjectStatus } from "../utils/projectStatusUtils";
-import {
-  openReadMeHandler,
-  openSampleReadmeHandler,
-  openWorkspaceMCPConfigHandler,
-} from "./readmeHandlers";
+import * as autoOpenHelper from "../utils/autoOpenHelper";
+import * as projectStatusUtils from "../utils/projectStatusUtils";
+import * as readmeHandlers from "./readmeHandlers";
 
 export async function autoOpenProjectHandler(): Promise<void> {
-  const isOpenWalkThrough = (await globalStateGet(GlobalKey.OpenWalkThrough, false)) as boolean;
-  const isOpenReadMe = (await globalStateGet(GlobalKey.OpenReadMe, "")) as string;
-  const isOpenSampleReadMe = (await globalStateGet(GlobalKey.OpenSampleReadMe, false)) as boolean;
-  const createWarnings = (await globalStateGet(GlobalKey.CreateWarnings, "")) as string;
-  const autoInstallDependency = (await globalStateGet(GlobalKey.AutoInstallDependency)) as boolean;
+  const isOpenWalkThrough = (await teamsfxCore.globalStateGet(
+    GlobalKey.OpenWalkThrough,
+    false
+  )) as boolean;
+  const isOpenReadMe = (await teamsfxCore.globalStateGet(GlobalKey.OpenReadMe, "")) as string;
+  const isOpenSampleReadMe = (await teamsfxCore.globalStateGet(
+    GlobalKey.OpenSampleReadMe,
+    false
+  )) as boolean;
+  const createWarnings = (await teamsfxCore.globalStateGet(GlobalKey.CreateWarnings, "")) as string;
+  const autoInstallDependency = (await teamsfxCore.globalStateGet(
+    GlobalKey.AutoInstallDependency
+  )) as boolean;
   if (isOpenWalkThrough) {
-    await showLocalDebugMessage();
-    await globalStateUpdate(GlobalKey.OpenWalkThrough, false);
+    await autoOpenHelper.showLocalDebugMessage();
+    await teamsfxCore.globalStateUpdate(GlobalKey.OpenWalkThrough, false);
 
-    if (workspaceUri?.fsPath) {
-      await ShowScaffoldingWarningSummary(workspaceUri.fsPath, createWarnings);
-      await globalStateUpdate(GlobalKey.CreateWarnings, "");
+    if (globalVariables.workspaceUri?.fsPath) {
+      await autoOpenHelper.ShowScaffoldingWarningSummary(
+        globalVariables.workspaceUri.fsPath,
+        createWarnings
+      );
+      await teamsfxCore.globalStateUpdate(GlobalKey.CreateWarnings, "");
     }
   }
-  if (isOpenReadMe === workspaceUri?.fsPath) {
-    await showLocalDebugMessage();
-    await openReadMeHandler(TelemetryTriggerFrom.Auto);
-    await openWorkspaceMCPConfigHandler(TelemetryTriggerFrom.Auto);
-    await updateProjectStatus(workspaceUri.fsPath, CommandKey.OpenReadMe, ok(null));
-    await globalStateUpdate(GlobalKey.OpenReadMe, "");
+  if (isOpenReadMe === globalVariables.workspaceUri?.fsPath) {
+    await autoOpenHelper.showLocalDebugMessage();
+    await readmeHandlers.openReadMeHandler(TelemetryTriggerFrom.Auto);
+    await readmeHandlers.openWorkspaceMCPConfigHandler(TelemetryTriggerFrom.Auto);
+    await projectStatusUtils.updateProjectStatus(
+      globalVariables.workspaceUri.fsPath,
+      CommandKey.OpenReadMe,
+      ok(null)
+    );
+    await teamsfxCore.globalStateUpdate(GlobalKey.OpenReadMe, "");
 
-    await ShowScaffoldingWarningSummary(workspaceUri.fsPath, createWarnings);
-    await globalStateUpdate(GlobalKey.CreateWarnings, "");
+    await autoOpenHelper.ShowScaffoldingWarningSummary(
+      globalVariables.workspaceUri.fsPath,
+      createWarnings
+    );
+    await teamsfxCore.globalStateUpdate(GlobalKey.CreateWarnings, "");
   }
   if (isOpenSampleReadMe) {
-    await showLocalDebugMessage();
-    await openSampleReadmeHandler([TelemetryTriggerFrom.Auto]);
-    await globalStateUpdate(GlobalKey.OpenSampleReadMe, false);
+    await autoOpenHelper.showLocalDebugMessage();
+    await readmeHandlers.openSampleReadmeHandler([TelemetryTriggerFrom.Auto]);
+    await teamsfxCore.globalStateUpdate(GlobalKey.OpenSampleReadMe, false);
   }
   if (autoInstallDependency) {
-    await autoInstallDependencyHandler();
-    await globalStateUpdate(GlobalKey.AutoInstallDependency, false);
+    await autoOpenHelper.autoInstallDependencyHandler();
+    await teamsfxCore.globalStateUpdate(GlobalKey.AutoInstallDependency, false);
   }
 }

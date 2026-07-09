@@ -9,318 +9,368 @@ import {
   UserError,
 } from "@microsoft/teamsfx-api";
 import { UserCancelError, VersionState } from "@microsoft/teamsfx-core";
-import * as chai from "chai";
-import * as sinon from "sinon";
 import * as uuid from "uuid";
+import { assert, expect, vi } from "vitest";
 import * as vscode from "vscode";
 import { RecommendedOperations } from "../../src/debug/common/debugConstants";
 import * as globalVariables from "../../src/globalVariables";
 import { processResult, runCommand } from "../../src/handlers/sharedOpts";
 import { ExtTelemetry } from "../../src/telemetry/extTelemetry";
-import { TelemetryEvent } from "../../src/telemetry/extTelemetryEvents";
+import { TelemetryEvent, TelemetryProperty } from "../../src/telemetry/extTelemetryEvents";
 import * as systemEnvUtils from "../../src/utils/systemEnvUtils";
 import * as telemetryUtils from "../../src/utils/telemetryUtils";
 import { MockCore } from "../mocks/mockCore";
+import { mockValue } from "../mocks/vitestMockUtils";
 
 describe("SharedOpts", () => {
   describe("runCommand()", function () {
-    const sandbox = sinon.createSandbox();
-
     beforeEach(() => {
-      sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-      sandbox.stub(ExtTelemetry, "sendTelemetryErrorEvent");
-    });
-
-    afterEach(() => {
-      sandbox.restore();
+      vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+      vi.spyOn(ExtTelemetry, "sendTelemetryErrorEvent");
     });
 
     it("create sample with projectid", async () => {
-      sandbox.restore();
-      sandbox.stub(globalVariables, "core").value(new MockCore());
-      const sendTelemetryEvent = sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-      sandbox.stub(ExtTelemetry, "sendTelemetryErrorEvent");
-      const createProject = sandbox.spy(globalVariables.core, "createProject");
-      sandbox.stub(vscode.commands, "executeCommand");
+      vi.restoreAllMocks();
+      mockValue(globalVariables, "core", new MockCore());
+      const sendTelemetryEvent = vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+      vi.spyOn(ExtTelemetry, "sendTelemetryErrorEvent");
+      const createProject = vi.spyOn(globalVariables.core, "createProject");
+      vi.spyOn(vscode.commands, "executeCommand");
       const inputs = { projectId: uuid.v4(), platform: Platform.VSCode };
 
       await runCommand(Stage.create, inputs);
 
-      sinon.assert.calledOnce(createProject);
-      chai.assert.isTrue(createProject.args[0][0].projectId != undefined);
-      chai.assert.isTrue(sendTelemetryEvent.args[0][1]!["new-project-id"] != undefined);
+      expect(createProject).toHaveBeenCalledTimes(1);
+      assert.isTrue(createProject.args[0][0].projectId != undefined);
+      assert.isTrue(sendTelemetryEvent.args[0][1]!["new-project-id"] != undefined);
     });
 
     it("create from scratch without projectid", async () => {
-      sandbox.restore();
-      sandbox.stub(globalVariables, "core").value(new MockCore());
-      const sendTelemetryEvent = sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-      sandbox.stub(ExtTelemetry, "sendTelemetryErrorEvent");
-      const createProject = sandbox.spy(globalVariables.core, "createProject");
-      sandbox.stub(vscode.commands, "executeCommand");
+      vi.restoreAllMocks();
+      mockValue(globalVariables, "core", new MockCore());
+      const sendTelemetryEvent = vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+      vi.spyOn(ExtTelemetry, "sendTelemetryErrorEvent");
+      const createProject = vi.spyOn(globalVariables.core, "createProject");
+      vi.spyOn(vscode.commands, "executeCommand");
 
       await runCommand(Stage.create);
-      sinon.assert.calledOnce(createProject);
-      chai.assert.isTrue(createProject.args[0][0].projectId != undefined);
-      chai.assert.isTrue(sendTelemetryEvent.args[0][1]!["new-project-id"] != undefined);
-    });
-
-    it("metaOSExtendToDA", async () => {
-      sandbox.stub(globalVariables, "core").value(new MockCore());
-      sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.file("path"));
-      const metaOSExtendToDA = sandbox.spy(globalVariables.core, "metaOSExtendToDA");
-
-      await runCommand(Stage.metaOSExtendToDA);
-      sinon.assert.calledOnce(metaOSExtendToDA);
+      expect(createProject).toHaveBeenCalledTimes(1);
+      assert.isTrue(createProject.args[0][0].projectId != undefined);
+      assert.isTrue(sendTelemetryEvent.args[0][1]!["new-project-id"] != undefined);
     });
 
     it("provisionResources", async () => {
-      sandbox.stub(globalVariables, "core").value(new MockCore());
-      const provisionResources = sandbox.spy(globalVariables.core, "provisionResources");
+      mockValue(globalVariables, "core", new MockCore());
+      const provisionResources = vi.spyOn(globalVariables.core, "provisionResources");
 
       await runCommand(Stage.provision);
-      sinon.assert.calledOnce(provisionResources);
+      expect(provisionResources).toHaveBeenCalledTimes(1);
     });
 
     it("version check - unsupported should stop stage execution", async () => {
       const mockCore = new MockCore();
-      const projectVersionCheck = sandbox
-        .stub(mockCore, "projectVersionCheck")
-        .resolves(ok({ isSupport: VersionState.unsupported }));
-      const provisionResources = sandbox.spy(mockCore, "provisionResources");
-      sandbox.stub(globalVariables, "core").value(mockCore);
+      const projectVersionCheck = vi
+        .spyOn(mockCore, "projectVersionCheck")
+        .mockResolvedValue(ok({ isSupport: VersionState.unsupported }));
+      const provisionResources = vi.spyOn(mockCore, "provisionResources");
+      mockValue(globalVariables, "core", mockCore);
 
       const result = await runCommand(Stage.provision, {
         platform: Platform.VSCode,
         projectPath: "test-project",
       } as Inputs);
 
-      chai.assert.isTrue(result.isErr());
+      assert.isTrue(result.isErr());
       if (result.isErr()) {
-        chai.assert.equal(result.error.name, "IncompatibleProject");
-        chai.assert.include(result.error.message, "cannot be upgraded");
+        assert.equal(result.error.name, "IncompatibleProject");
+        assert.include(result.error.message, "cannot be upgraded");
       }
-      sinon.assert.calledOnce(projectVersionCheck);
-      chai.assert.equal(projectVersionCheck.args[0][0].ignoreEnvInfo, true);
-      sinon.assert.notCalled(provisionResources);
+      expect(projectVersionCheck).toHaveBeenCalledTimes(1);
+      assert.equal(projectVersionCheck.args[0][0].ignoreEnvInfo, true);
+      expect(provisionResources).not.toHaveBeenCalled();
     });
 
     it("version check - upgradeable should stop stage execution", async () => {
       const mockCore = new MockCore();
-      const projectVersionCheck = sandbox
-        .stub(mockCore, "projectVersionCheck")
-        .resolves(ok({ isSupport: VersionState.upgradeable }));
-      const deployArtifacts = sandbox.spy(mockCore, "deployArtifacts");
-      sandbox.stub(globalVariables, "core").value(mockCore);
+      const projectVersionCheck = vi
+        .spyOn(mockCore, "projectVersionCheck")
+        .mockResolvedValue(ok({ isSupport: VersionState.upgradeable }));
+      const deployArtifacts = vi.spyOn(mockCore, "deployArtifacts");
+      mockValue(globalVariables, "core", mockCore);
 
       const result = await runCommand(Stage.deploy, {
         platform: Platform.VSCode,
         projectPath: "test-project",
       } as Inputs);
 
-      chai.assert.isTrue(result.isErr());
+      assert.isTrue(result.isErr());
       if (result.isErr()) {
-        chai.assert.equal(result.error.name, "IncompatibleProject");
-        chai.assert.include(result.error.message, "can be upgraded");
+        assert.equal(result.error.name, "IncompatibleProject");
+        assert.include(result.error.message, "can be upgraded");
       }
-      sinon.assert.calledOnce(projectVersionCheck);
-      chai.assert.equal(projectVersionCheck.args[0][0].ignoreEnvInfo, true);
-      sinon.assert.notCalled(deployArtifacts);
+      expect(projectVersionCheck).toHaveBeenCalledTimes(1);
+      assert.equal(projectVersionCheck.args[0][0].ignoreEnvInfo, true);
+      expect(deployArtifacts).not.toHaveBeenCalled();
     });
 
     it("version check - compatible should continue stage execution", async () => {
       const mockCore = new MockCore();
-      const projectVersionCheck = sandbox
-        .stub(mockCore, "projectVersionCheck")
-        .resolves(ok({ isSupport: VersionState.compatible }));
-      const deployArtifacts = sandbox.spy(mockCore, "deployArtifacts");
-      sandbox.stub(globalVariables, "core").value(mockCore);
+      const projectVersionCheck = vi
+        .spyOn(mockCore, "projectVersionCheck")
+        .mockResolvedValue(ok({ isSupport: VersionState.compatible }));
+      const deployArtifacts = vi.spyOn(mockCore, "deployArtifacts");
+      mockValue(globalVariables, "core", mockCore);
 
       const result = await runCommand(Stage.deploy, {
         platform: Platform.VSCode,
         projectPath: "test-project",
       } as Inputs);
 
-      chai.assert.isTrue(result.isOk());
-      sinon.assert.calledOnce(projectVersionCheck);
-      chai.assert.equal(projectVersionCheck.args[0][0].ignoreEnvInfo, true);
-      sinon.assert.calledOnce(deployArtifacts);
+      assert.isTrue(result.isOk());
+      expect(projectVersionCheck).toHaveBeenCalledTimes(1);
+      assert.equal(projectVersionCheck.args[0][0].ignoreEnvInfo, true);
+      expect(deployArtifacts).toHaveBeenCalledTimes(1);
+    });
+
+    it("version check error should stop stage execution", async () => {
+      const mockCore = new MockCore();
+      const versionError = new UserError("test", "versionCheck", "version check failed");
+      const projectVersionCheck = vi
+        .spyOn(mockCore, "projectVersionCheck")
+        .mockResolvedValue(err(versionError));
+      const deployArtifacts = vi.spyOn(mockCore, "deployArtifacts");
+      mockValue(globalVariables, "core", mockCore);
+
+      const result = await runCommand(Stage.deploy, {
+        platform: Platform.VSCode,
+        projectPath: "test-project",
+      } as Inputs);
+
+      assert.isTrue(result.isErr());
+      if (result.isErr()) {
+        assert.equal(result.error, versionError);
+      }
+      expect(projectVersionCheck).toHaveBeenCalledTimes(1);
+      expect(deployArtifacts).not.toHaveBeenCalled();
     });
 
     it("deployTeamsManifest", async () => {
-      sandbox.stub(globalVariables, "core").value(new MockCore());
-      const deployTeamsManifest = sandbox.spy(globalVariables.core, "deployTeamsManifest");
+      mockValue(globalVariables, "core", new MockCore());
+      const deployTeamsManifest = vi.spyOn(globalVariables.core, "deployTeamsManifest");
 
       await runCommand(Stage.deployTeams);
-      sinon.assert.calledOnce(deployTeamsManifest);
+      expect(deployTeamsManifest).toHaveBeenCalledTimes(1);
     });
     it("addWebpart", async () => {
-      sandbox.stub(globalVariables, "core").value(new MockCore());
-      const addWebpart = sandbox.spy(globalVariables.core, "addWebpart");
+      mockValue(globalVariables, "core", new MockCore());
+      const addWebpart = vi.spyOn(globalVariables.core, "addWebpart");
 
       await runCommand(Stage.addWebpart);
-      sinon.assert.calledOnce(addWebpart);
+      expect(addWebpart).toHaveBeenCalledTimes(1);
     });
     it("createAppPackage", async () => {
-      sandbox.stub(globalVariables, "core").value(new MockCore());
-      const createAppPackage = sandbox.spy(globalVariables.core, "createAppPackage");
+      mockValue(globalVariables, "core", new MockCore());
+      const createAppPackage = vi.spyOn(globalVariables.core, "createAppPackage");
 
       await runCommand(Stage.createAppPackage);
-      sinon.assert.calledOnce(createAppPackage);
+      expect(createAppPackage).toHaveBeenCalledTimes(1);
     });
     it("error", async () => {
-      sandbox.stub(globalVariables, "core").value(new MockCore());
+      mockValue(globalVariables, "core", new MockCore());
       try {
         await runCommand("none" as any);
-        sinon.assert.fail("should not reach here");
+        assert.fail("should not reach here");
       } catch (e) {}
     });
     it("provisionResources - local", async () => {
       const mockCore = new MockCore();
-      const mockCoreStub = sandbox
-        .stub(mockCore, "provisionResources")
-        .resolves(err(new UserError("test", "test", "test")));
-      sandbox.stub(globalVariables, "core").value(mockCore);
+      const mockCoreStub = vi
+        .spyOn(mockCore, "provisionResources")
+        .mockResolvedValue(err(new UserError("test", "test", "test")));
+      mockValue(globalVariables, "core", mockCore);
 
       const res = await runCommand(Stage.provision, {
         platform: Platform.VSCode,
         env: "local",
       } as Inputs);
-      chai.assert.isTrue(res.isErr());
+      assert.isTrue(res.isErr());
       if (res.isErr()) {
-        chai.assert.equal(res.error.recommendedOperation, RecommendedOperations.DebugInTestTool);
+        assert.equal(res.error.recommendedOperation, RecommendedOperations.DebugInTestTool);
       }
-      sinon.assert.calledOnce(mockCoreStub);
+      expect(mockCoreStub).toHaveBeenCalledTimes(1);
     });
 
     it("deployArtifacts", async () => {
-      sandbox.stub(globalVariables, "core").value(new MockCore());
-      const deployArtifacts = sandbox.spy(globalVariables.core, "deployArtifacts");
+      mockValue(globalVariables, "core", new MockCore());
+      const deployArtifacts = vi.spyOn(globalVariables.core, "deployArtifacts");
 
       await runCommand(Stage.deploy);
-      sinon.assert.calledOnce(deployArtifacts);
+      expect(deployArtifacts).toHaveBeenCalledTimes(1);
     });
 
     it("deployArtifacts - local", async () => {
       const mockCore = new MockCore();
-      const mockCoreStub = sandbox
-        .stub(mockCore, "deployArtifacts")
-        .resolves(err(new UserError("test", "test", "test")));
-      sandbox.stub(globalVariables, "core").value(mockCore);
+      const mockCoreStub = vi
+        .spyOn(mockCore, "deployArtifacts")
+        .mockResolvedValue(err(new UserError("test", "test", "test")));
+      mockValue(globalVariables, "core", mockCore);
 
       await runCommand(Stage.deploy, {
         platform: Platform.VSCode,
         env: "local",
       } as Inputs);
-      sinon.assert.calledOnce(mockCoreStub);
+      expect(mockCoreStub).toHaveBeenCalledTimes(1);
     });
 
     it("deployAadManifest", async () => {
-      sandbox.stub(globalVariables, "core").value(new MockCore());
-      const deployAadManifest = sandbox.spy(globalVariables.core, "deployAadManifest");
+      mockValue(globalVariables, "core", new MockCore());
+      const deployAadManifest = vi.spyOn(globalVariables.core, "deployAadManifest");
       const input: Inputs = systemEnvUtils.getSystemInputs();
       await runCommand(Stage.deployAad, input);
 
-      sandbox.assert.calledOnce(deployAadManifest);
+      expect(deployAadManifest).toHaveBeenCalledTimes(1);
     });
 
     it("deployAadManifest happy path", async () => {
-      sandbox.stub(globalVariables, "core").value(new MockCore());
-      sandbox.stub(globalVariables.core, "deployAadManifest").resolves(ok(undefined));
+      mockValue(globalVariables, "core", new MockCore());
+      vi.spyOn(globalVariables.core, "deployAadManifest").mockResolvedValue(ok(undefined));
       const input: Inputs = systemEnvUtils.getSystemInputs();
       const res = await runCommand(Stage.deployAad, input);
-      chai.assert.isTrue(res.isOk());
+      assert.isTrue(res.isOk());
       if (res.isOk()) {
-        chai.assert.strictEqual(res.value, undefined);
+        assert.strictEqual(res.value, undefined);
       }
     });
 
     it("localDebug", async () => {
-      sandbox.stub(globalVariables, "core").value(new MockCore());
+      mockValue(globalVariables, "core", new MockCore());
 
       let ignoreEnvInfo: boolean | undefined = undefined;
       let localDebugCalled = 0;
-      sandbox
-        .stub(globalVariables.core, "localDebug")
-        .callsFake(async (inputs: Inputs): Promise<Result<undefined, FxError>> => {
+      vi.spyOn(globalVariables.core, "localDebug").mockImplementation(
+        async (inputs: Inputs): Promise<Result<undefined, FxError>> => {
           ignoreEnvInfo = inputs.ignoreEnvInfo;
           localDebugCalled += 1;
           return ok(undefined);
-        });
+        }
+      );
 
       await runCommand(Stage.debug);
-      chai.expect(ignoreEnvInfo).to.equal(false);
-      chai.expect(localDebugCalled).equals(1);
+      expect(ignoreEnvInfo).to.equal(false);
+      expect(localDebugCalled).equals(1);
     });
 
     it("publishApplication", async () => {
-      sandbox.stub(globalVariables, "core").value(new MockCore());
-      const publishApplication = sandbox.spy(globalVariables.core, "publishApplication");
+      mockValue(globalVariables, "core", new MockCore());
+      const publishApplication = vi.spyOn(globalVariables.core, "publishApplication");
 
       await runCommand(Stage.publish);
-      sinon.assert.calledOnce(publishApplication);
+      expect(publishApplication).toHaveBeenCalledTimes(1);
     });
 
     it("createEnv", async () => {
-      sandbox.stub(globalVariables, "core").value(new MockCore());
-      const createEnv = sandbox.spy(globalVariables.core, "createEnv");
-      sandbox.stub(vscode.commands, "executeCommand");
+      mockValue(globalVariables, "core", new MockCore());
+      const createEnv = vi.spyOn(globalVariables.core, "createEnv");
+      vi.spyOn(vscode.commands, "executeCommand");
 
       await runCommand(Stage.createEnv);
-      sinon.assert.calledOnce(createEnv);
+      expect(createEnv).toHaveBeenCalledTimes(1);
     });
     it("syncManifest", async () => {
-      sandbox.stub(globalVariables, "core").value(new MockCore());
-      const syncManifest = sandbox.spy(globalVariables.core, "syncManifest");
-      sandbox.stub(vscode.commands, "executeCommand");
+      mockValue(globalVariables, "core", new MockCore());
+      const syncManifest = vi.spyOn(globalVariables.core, "syncManifest");
+      vi.spyOn(vscode.commands, "executeCommand");
 
       await runCommand(Stage.syncManifest);
-      sinon.assert.calledOnce(syncManifest);
+      expect(syncManifest).toHaveBeenCalledTimes(1);
     });
     it("setSensitivityLabel", async () => {
-      sandbox.stub(globalVariables, "core").value(new MockCore());
-      const setSensitivityLabel = sandbox.spy(globalVariables.core, "setSensitivityLabel");
-      sandbox.stub(vscode.commands, "executeCommand");
+      mockValue(globalVariables, "core", new MockCore());
+      const setSensitivityLabel = vi.spyOn(globalVariables.core, "setSensitivityLabel");
+      vi.spyOn(vscode.commands, "executeCommand");
       await runCommand(Stage.setSensitivityLabel);
-      sinon.assert.calledOnce(setSensitivityLabel);
+      expect(setSensitivityLabel).toHaveBeenCalledTimes(1);
     });
     it("share", async () => {
-      sandbox.stub(globalVariables, "core").value(new MockCore());
-      const shareApplication = sandbox.spy(globalVariables.core, "shareApplication");
-      sandbox.stub(vscode.commands, "executeCommand");
+      mockValue(globalVariables, "core", new MockCore());
+      const shareApplication = vi.spyOn(globalVariables.core, "shareApplication");
+      vi.spyOn(vscode.commands, "executeCommand");
       await runCommand(Stage.share);
-      sinon.assert.calledOnce(shareApplication);
+      expect(shareApplication).toHaveBeenCalledTimes(1);
     });
     it("shareRemove", async () => {
-      sandbox.stub(globalVariables, "core").value(new MockCore());
-      const removeSharedAccess = sandbox.spy(globalVariables.core, "removeSharedAccess");
-      sandbox.stub(vscode.commands, "executeCommand");
+      mockValue(globalVariables, "core", new MockCore());
+      const removeSharedAccess = vi.spyOn(globalVariables.core, "removeSharedAccess");
+      vi.spyOn(vscode.commands, "executeCommand");
       await runCommand(Stage.shareRemove);
-      sinon.assert.calledOnce(removeSharedAccess);
+      expect(removeSharedAccess).toHaveBeenCalledTimes(1);
     });
     it("installApp", async () => {
-      sandbox.stub(globalVariables, "core").value(new MockCore());
-      const installAppStub = sandbox.spy(globalVariables.core, "installAppToChannel");
-      sandbox.stub(vscode.commands, "executeCommand");
+      mockValue(globalVariables, "core", new MockCore());
+      const installAppStub = vi.spyOn(globalVariables.core, "installAppToChannel");
+      vi.spyOn(vscode.commands, "executeCommand");
       await runCommand(Stage.installApp);
-      sinon.assert.calledOnce(installAppStub);
+      expect(installAppStub).toHaveBeenCalledTimes(1);
     });
   });
 
   describe("processResult", () => {
-    const sandbox = sinon.createSandbox();
-
     beforeEach(() => {
-      sandbox.stub(ExtTelemetry, "sendTelemetryEvent");
-      sandbox.stub(ExtTelemetry, "sendTelemetryErrorEvent");
+      vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+      vi.spyOn(ExtTelemetry, "sendTelemetryErrorEvent");
     });
 
-    afterEach(() => {
-      sandbox.restore();
+    it("CreateProject includes M365 telemetry", async () => {
+      const sendTelemetryEvent = vi.spyOn(ExtTelemetry, "sendTelemetryEvent");
+
+      await processResult(TelemetryEvent.CreateProject, ok(null), {
+        platform: Platform.VSCode,
+        projectId: "project-id",
+        isM365: true,
+      });
+
+      expect(sendTelemetryEvent).toHaveBeenCalledWith(
+        TelemetryEvent.CreateProject,
+        expect.objectContaining({
+          [TelemetryProperty.NewProjectId]: "project-id",
+          [TelemetryProperty.IsCreatingM365]: "true",
+        })
+      );
+    });
+
+    it("Deploy remaps to DeployAadManifest when aad manifest is included", async () => {
+      const sendTelemetryErrorEvent = vi.spyOn(ExtTelemetry, "sendTelemetryErrorEvent");
+      const deployError = new UserError("test", "deploy", "deploy failed");
+
+      await processResult(TelemetryEvent.Deploy, err(deployError), {
+        platform: Platform.VSCode,
+        env: "dev",
+        "include-aad-manifest": "yes",
+      } as Inputs);
+
+      expect(sendTelemetryErrorEvent).toHaveBeenCalledWith(
+        TelemetryEvent.DeployAadManifest,
+        deployError,
+        expect.any(Object)
+      );
+    });
+
+    it("login failure shows login failed message", async () => {
+      const showErrorMessage = vi
+        .spyOn(vscode.window, "showErrorMessage")
+        .mockResolvedValue(undefined);
+
+      await processResult(
+        TelemetryEvent.Deploy,
+        err(new UserError("test", "login", "Cannot get user login information")),
+        { platform: Platform.VSCode } as Inputs
+      );
+
+      expect(showErrorMessage).toHaveBeenCalledTimes(1);
     });
 
     it("UserCancelError", async () => {
-      sandbox.stub(telemetryUtils, "getTeamsAppTelemetryInfoByEnv").resolves({
+      vi.spyOn(telemetryUtils, "getTeamsAppTelemetryInfoByEnv").mockResolvedValue({
         appId: "mockId",
         tenantId: "mockTenantId",
       });
@@ -335,6 +385,19 @@ describe("SharedOpts", () => {
         sourceEnvName: "dev",
         targetEnvName: "dev1",
       });
+    });
+
+    it("addWebpart throws when core does not have addWebpart method", async () => {
+      const coreWithoutAddWebpart = { ...new MockCore() };
+      delete (coreWithoutAddWebpart as any).addWebpart;
+      mockValue(globalVariables, "core", coreWithoutAddWebpart);
+      const sendTelemetryErrorEvent = vi.spyOn(ExtTelemetry, "sendTelemetryErrorEvent");
+
+      const result = await runCommand(Stage.addWebpart);
+
+      expect(result.isErr()).to.be.true;
+      expect(result.isErr() && result.error).to.have.property("name");
+      expect(sendTelemetryErrorEvent).toHaveBeenCalledTimes(1);
     });
   });
 });

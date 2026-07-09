@@ -1,16 +1,10 @@
 import { LocalEnvManager } from "@microsoft/teamsfx-core";
-import * as chai from "chai";
-import * as sinon from "sinon";
 import * as globalVariables from "../../src/globalVariables";
 import { getNpmInstallLogInfo, getTestToolLogInfo } from "../../src/utils/localEnvManagerUtils";
+import { vi, expect } from "vitest";
+import { mockValue } from "../mocks/vitestMockUtils";
 
 describe("LocalEnvUtils", () => {
-  const sandbox = sinon.createSandbox();
-
-  afterEach(() => {
-    sandbox.restore();
-  });
-
   it("Get NPM Install Log Info", async () => {
     const fakeNpmInstallLogInfo = {
       logFile: "NPM Install Log File",
@@ -21,24 +15,30 @@ describe("LocalEnvUtils", () => {
       exitCode: undefined,
       errorMessage: undefined,
     };
-    sandbox.stub(LocalEnvManager.prototype, "getNpmInstallLogInfo").resolves(fakeNpmInstallLogInfo);
+    vi.spyOn(LocalEnvManager.prototype, "getNpmInstallLogInfo").mockResolvedValue(
+      fakeNpmInstallLogInfo
+    );
     const result = await getNpmInstallLogInfo();
-    chai.expect(result).to.deep.equal(fakeNpmInstallLogInfo);
+    expect(result).to.deep.equal(fakeNpmInstallLogInfo);
   });
 
   it("Get Test Tool Log Info", async () => {
     const fakeTestToolLogInfo = "Test Tool Log Info";
-    sandbox.stub(globalVariables, "workspaceUri").value({ fsPath: "fakePath" });
-    sandbox.stub(LocalEnvManager.prototype, "getTestToolLogInfo").resolves(fakeTestToolLogInfo);
+    mockValue(globalVariables, "workspaceUri", { fsPath: "C:\\fakePath" });
+    vi.spyOn(LocalEnvManager.prototype, "getTestToolLogInfo").mockResolvedValue(
+      fakeTestToolLogInfo
+    );
     const result = await getTestToolLogInfo();
-    chai.expect(result).to.equal(fakeTestToolLogInfo);
+    expect(result).to.equal(fakeTestToolLogInfo);
   });
 
   it("Get Test Tool Log Info and Return Undefined", async () => {
     const fakeTestToolLogInfo = "Test Tool Log Info";
-    sandbox.stub(globalVariables, "workspaceUri");
-    sandbox.stub(LocalEnvManager.prototype, "getTestToolLogInfo").resolves(fakeTestToolLogInfo);
+    mockValue(globalVariables, "workspaceUri", undefined);
+    vi.spyOn(LocalEnvManager.prototype, "getTestToolLogInfo").mockResolvedValue(
+      fakeTestToolLogInfo
+    );
     const result = await getTestToolLogInfo();
-    chai.expect(result).to.be.undefined;
+    expect(result).to.be.undefined;
   });
 });

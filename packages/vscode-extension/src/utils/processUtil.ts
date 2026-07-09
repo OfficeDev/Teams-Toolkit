@@ -1,23 +1,13 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-import { exec } from "child_process";
-import * as os from "os";
-import kill from "tree-kill";
-
-export const execModule = {
-  exec: exec,
-};
-
-export const killModule = {
-  killTree: kill,
-};
+import { processAdapter } from "../common/npmPackageDeps";
 
 class ProcessUtil {
   // kill process and its child processes
   async killProcess(pid: number, timeout = 5000, silent = true): Promise<void> {
     const tPromise = timeoutPromise(timeout);
     const killPromise = new Promise<void>((resolve, reject) => {
-      killModule.killTree(pid, "SIGTERM", (err) => {
+      processAdapter.killTree(pid, "SIGTERM", (err) => {
         if (err && !silent) {
           reject(err);
         } else {
@@ -29,7 +19,7 @@ class ProcessUtil {
   }
 
   async getProcessIdsByPort(port: number): Promise<number[]> {
-    const platform = os.platform();
+    const platform = processAdapter.platform();
     let command: string;
     if (platform === "win32") {
       command = `netstat -ano | findstr LISTENING | findstr :${port}`;
@@ -40,7 +30,7 @@ class ProcessUtil {
     }
 
     return new Promise<number[]>((resolve) => {
-      execModule.exec(command, { timeout: 5000 }, (error, stdout) => {
+      processAdapter.execWithOptions(command, { timeout: 5000 }, (error, stdout) => {
         if (error || !stdout.trim()) {
           resolve([]);
           return;

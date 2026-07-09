@@ -2,9 +2,8 @@
 // Licensed under the MIT license.
 
 import { err, ok, UserError } from "@microsoft/teamsfx-api";
-import chai from "chai";
 import fs from "fs-extra";
-import * as sinon from "sinon";
+import { chai, expect, vi } from "vitest";
 import { getLocalizedString } from "../../../../src/common/localizeUtils";
 import { DepsType, TestToolReleaseType } from "../../../../src/component/deps-checker/depsChecker";
 import { DotnetChecker } from "../../../../src/component/deps-checker/internal/dotnetChecker";
@@ -26,7 +25,7 @@ import {
 import { MockedLogProvider, MockedUserInteraction } from "../../../plugins/solution/util";
 
 describe("Tools Install Driver test", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   const toolsInstallDriver = new ToolsInstallDriver();
   const mockedDriverContext: any = {
     logProvider: new MockedLogProvider(),
@@ -36,11 +35,11 @@ describe("Tools Install Driver test", () => {
 
   describe("Trust Cert test (run)", () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("TEST1", async () => {
-      sandbox.stub(LocalCertificateManager.prototype, "setupCertificate").resolves({
+      vi.spyOn(LocalCertificateManager.prototype, "setupCertificate").mockResolvedValue({
         certPath: "testCertPath",
         keyPath: "testKeyPath",
         isTrusted: true,
@@ -54,7 +53,7 @@ describe("Tools Install Driver test", () => {
     });
 
     it("Already trust local certificate", async () => {
-      sandbox.stub(LocalCertificateManager.prototype, "setupCertificate").resolves({
+      vi.spyOn(LocalCertificateManager.prototype, "setupCertificate").mockResolvedValue({
         certPath: "testCertPath",
         keyPath: "testKeyPath",
         isTrusted: true,
@@ -68,7 +67,7 @@ describe("Tools Install Driver test", () => {
     });
 
     it("Skip trust new local certificate", async () => {
-      sandbox.stub(LocalCertificateManager.prototype, "setupCertificate").resolves({
+      vi.spyOn(LocalCertificateManager.prototype, "setupCertificate").mockResolvedValue({
         certPath: "testCertPath",
         keyPath: "testKeyPath",
         isTrusted: undefined,
@@ -82,7 +81,7 @@ describe("Tools Install Driver test", () => {
     });
 
     it("Failed to trust new local certificate", async () => {
-      sandbox.stub(LocalCertificateManager.prototype, "setupCertificate").resolves({
+      vi.spyOn(LocalCertificateManager.prototype, "setupCertificate").mockResolvedValue({
         certPath: "testCertPath",
         keyPath: "testKeyPath",
         isTrusted: false,
@@ -107,11 +106,11 @@ describe("Tools Install Driver test", () => {
 
   describe("Func installation test (run)", () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("Install func", async () => {
-      sandbox.stub(FuncToolChecker.prototype, "resolve").resolves({
+      vi.spyOn(FuncToolChecker.prototype, "resolve").mockResolvedValue({
         name: "Azure Functions Core Tools",
         type: DepsType.FuncCoreTools,
         isInstalled: true,
@@ -134,7 +133,7 @@ describe("Tools Install Driver test", () => {
     });
 
     it("Install func without symlinkDir", async () => {
-      sandbox.stub(FuncToolChecker.prototype, "resolve").resolves({
+      vi.spyOn(FuncToolChecker.prototype, "resolve").mockResolvedValue({
         name: "Azure Functions Core Tools",
         type: DepsType.FuncCoreTools,
         isInstalled: true,
@@ -154,7 +153,7 @@ describe("Tools Install Driver test", () => {
     });
 
     it("Failed to install func", async () => {
-      sandbox.stub(FuncToolChecker.prototype, "resolve").resolves({
+      vi.spyOn(FuncToolChecker.prototype, "resolve").mockResolvedValue({
         name: "Azure Functions Core Tools",
         type: DepsType.FuncCoreTools,
         isInstalled: false,
@@ -178,7 +177,7 @@ describe("Tools Install Driver test", () => {
     });
 
     it("Install func with warning", async () => {
-      sandbox.stub(FuncToolChecker.prototype, "resolve").resolves({
+      vi.spyOn(FuncToolChecker.prototype, "resolve").mockResolvedValue({
         name: "Azure Functions Core Tools",
         type: DepsType.FuncCoreTools,
         isInstalled: true,
@@ -217,7 +216,7 @@ describe("Tools Install Driver test", () => {
     ];
     invalidParams.forEach((invalidParam: any) => {
       it(`Invalid parameter - ${JSON.stringify(invalidParam)}`, async () => {
-        sandbox.stub(FuncToolChecker.prototype, "resolve").resolves({
+        vi.spyOn(FuncToolChecker.prototype, "resolve").mockResolvedValue({
           name: "Azure Functions Core Tools",
           type: DepsType.FuncCoreTools,
           isInstalled: true,
@@ -240,11 +239,11 @@ describe("Tools Install Driver test", () => {
 
   describe("Dotnet installation test (run)", () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("Install dotnet", async () => {
-      sandbox.stub(DotnetChecker.prototype, "resolve").resolves({
+      vi.spyOn(DotnetChecker.prototype, "resolve").mockResolvedValue({
         name: ".NET Core SDK",
         type: DepsType.Dotnet,
         isInstalled: true,
@@ -264,7 +263,7 @@ describe("Tools Install Driver test", () => {
     });
 
     it("Install dotnet: empty bin folders", async () => {
-      sandbox.stub(DotnetChecker.prototype, "resolve").resolves({
+      vi.spyOn(DotnetChecker.prototype, "resolve").mockResolvedValue({
         name: ".NET Core SDK",
         type: DepsType.Dotnet,
         isInstalled: true,
@@ -284,7 +283,7 @@ describe("Tools Install Driver test", () => {
     });
 
     it("Install dotnet: undefined bin folders", async () => {
-      sandbox.stub(DotnetChecker.prototype, "resolve").resolves({
+      vi.spyOn(DotnetChecker.prototype, "resolve").mockResolvedValue({
         name: ".NET Core SDK",
         type: DepsType.Dotnet,
         isInstalled: true,
@@ -304,7 +303,7 @@ describe("Tools Install Driver test", () => {
     });
 
     it("Failed to install dotnet", async () => {
-      sandbox.stub(DotnetChecker.prototype, "resolve").resolves({
+      vi.spyOn(DotnetChecker.prototype, "resolve").mockResolvedValue({
         name: ".NET Core SDK",
         type: DepsType.Dotnet,
         isInstalled: false,
@@ -335,11 +334,11 @@ describe("Tools Install Driver test", () => {
 
   describe("Test Tool installation test (run)", () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("Install test tool", async () => {
-      const resolveStub = sandbox.stub(TestToolChecker.prototype, "resolve").resolves({
+      const resolveStub = vi.spyOn(TestToolChecker.prototype, "resolve").mockResolvedValue({
         name: "Microsoft 365 Agents Playground",
         type: DepsType.TestTool,
         isInstalled: true,
@@ -351,9 +350,9 @@ describe("Tools Install Driver test", () => {
           binFolders: ["./devTools/testTool"],
         },
       });
-      const ensureNodeStub = sandbox
-        .stub(nodejsInstaller, "ensureNodeJS")
-        .resolves(ok({ status: "ignore" }));
+      const ensureNodeStub = vi
+        .spyOn(nodejsInstaller, "ensureNodeJS")
+        .mockResolvedValue(ok({ status: "ignore" }));
 
       const res = await toolsInstallDriver.run(
         {
@@ -366,19 +365,17 @@ describe("Tools Install Driver test", () => {
       if (res.isOk()) {
         chai.assert.isEmpty(res.value);
       }
-      chai.assert.isTrue(
-        resolveStub.calledWith({
-          versionRange: "~0.1.0",
-          symlinkDir: "./devTools/testTool",
-          releaseType: TestToolReleaseType.Npm,
-          projectPath: mockedDriverContext.projectPath,
-        })
-      );
-      chai.assert.isTrue(ensureNodeStub.calledOnce);
+      expect(resolveStub).toHaveBeenCalledWith({
+        versionRange: "~0.1.0",
+        symlinkDir: "./devTools/testTool",
+        releaseType: TestToolReleaseType.Npm,
+        projectPath: mockedDriverContext.projectPath,
+      });
+      chai.assert.isTrue(ensureNodeStub.mock.calls.length === 1);
     });
 
     // it("Install test tool failed without error", async () => {
-    //   sandbox.stub(TestToolChecker.prototype, "resolve").resolves({
+    //   vi.spyOn(TestToolChecker.prototype, "resolve").mockResolvedValue({
     //     name: "Microsoft 365 Agents Playground",
     //     type: DepsType.TestTool,
     //     isInstalled: false,
@@ -397,7 +394,7 @@ describe("Tools Install Driver test", () => {
     //   chai.assert.isTrue(res.isErr());
     // });
     // it("Install test tool failed with error", async () => {
-    //   sandbox.stub(TestToolChecker.prototype, "resolve").resolves({
+    //   vi.spyOn(TestToolChecker.prototype, "resolve").mockResolvedValue({
     //     name: "Microsoft 365 Agents Playground",
     //     type: DepsType.TestTool,
     //     isInstalled: false,
@@ -437,7 +434,7 @@ describe("Tools Install Driver test", () => {
     ];
     for (const c of cases) {
       it("Install test tool args check " + c.name, async () => {
-        sandbox.stub(TestToolChecker.prototype, "resolve").resolves({
+        vi.spyOn(TestToolChecker.prototype, "resolve").mockResolvedValue({
           name: "Microsoft 365 Agents Playground",
           type: DepsType.TestTool,
           isInstalled: true,
@@ -457,11 +454,11 @@ describe("Tools Install Driver test", () => {
 
   describe("Trust Cert test (execute)", () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("Create and trust new local certificate", async () => {
-      sandbox.stub(LocalCertificateManager.prototype, "setupCertificate").resolves({
+      vi.spyOn(LocalCertificateManager.prototype, "setupCertificate").mockResolvedValue({
         certPath: "testCertPath",
         keyPath: "testKeyPath",
         isTrusted: true,
@@ -487,7 +484,7 @@ describe("Tools Install Driver test", () => {
     });
 
     it("Create and trust new local certificate: empty outputEnvVarNames", async () => {
-      sandbox.stub(LocalCertificateManager.prototype, "setupCertificate").resolves({
+      vi.spyOn(LocalCertificateManager.prototype, "setupCertificate").mockResolvedValue({
         certPath: "testCertPath",
         keyPath: "testKeyPath",
         isTrusted: true,
@@ -507,7 +504,7 @@ describe("Tools Install Driver test", () => {
     });
 
     it("Already trust local certificate", async () => {
-      sandbox.stub(LocalCertificateManager.prototype, "setupCertificate").resolves({
+      vi.spyOn(LocalCertificateManager.prototype, "setupCertificate").mockResolvedValue({
         certPath: "testCertPath",
         keyPath: "testKeyPath",
         isTrusted: true,
@@ -533,7 +530,7 @@ describe("Tools Install Driver test", () => {
     });
 
     it("Skip trust new local certificate", async () => {
-      sandbox.stub(LocalCertificateManager.prototype, "setupCertificate").resolves({
+      vi.spyOn(LocalCertificateManager.prototype, "setupCertificate").mockResolvedValue({
         certPath: "testCertPath",
         keyPath: "testKeyPath",
         isTrusted: undefined,
@@ -556,7 +553,7 @@ describe("Tools Install Driver test", () => {
     });
 
     it("Failed to trust new local certificate", async () => {
-      sandbox.stub(LocalCertificateManager.prototype, "setupCertificate").resolves({
+      vi.spyOn(LocalCertificateManager.prototype, "setupCertificate").mockResolvedValue({
         certPath: "testCertPath",
         keyPath: "testKeyPath",
         isTrusted: false,
@@ -596,11 +593,11 @@ describe("Tools Install Driver test", () => {
 
   describe("Func installation test (execute)", () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("Install func", async () => {
-      sandbox.stub(FuncToolChecker.prototype, "resolve").resolves({
+      vi.spyOn(FuncToolChecker.prototype, "resolve").mockResolvedValue({
         name: "Azure Functions Core Tools",
         type: DepsType.FuncCoreTools,
         isInstalled: true,
@@ -628,7 +625,7 @@ describe("Tools Install Driver test", () => {
     });
 
     it("Install func without symlinkDir", async () => {
-      sandbox.stub(FuncToolChecker.prototype, "resolve").resolves({
+      vi.spyOn(FuncToolChecker.prototype, "resolve").mockResolvedValue({
         name: "Azure Functions Core Tools",
         type: DepsType.FuncCoreTools,
         isInstalled: true,
@@ -654,7 +651,7 @@ describe("Tools Install Driver test", () => {
     });
 
     it("Install func: empty outputEnvVarNames", async () => {
-      sandbox.stub(FuncToolChecker.prototype, "resolve").resolves({
+      vi.spyOn(FuncToolChecker.prototype, "resolve").mockResolvedValue({
         name: "Azure Functions Core Tools",
         type: DepsType.FuncCoreTools,
         isInstalled: true,
@@ -680,7 +677,7 @@ describe("Tools Install Driver test", () => {
     });
 
     it("Failed to install func", async () => {
-      sandbox.stub(FuncToolChecker.prototype, "resolve").resolves({
+      vi.spyOn(FuncToolChecker.prototype, "resolve").mockResolvedValue({
         name: "Azure Functions Core Tools",
         type: DepsType.FuncCoreTools,
         isInstalled: false,
@@ -707,7 +704,7 @@ describe("Tools Install Driver test", () => {
     });
 
     it("Install func with warning", async () => {
-      sandbox.stub(FuncToolChecker.prototype, "resolve").resolves({
+      vi.spyOn(FuncToolChecker.prototype, "resolve").mockResolvedValue({
         name: "Azure Functions Core Tools",
         type: DepsType.FuncCoreTools,
         isInstalled: true,
@@ -748,7 +745,7 @@ describe("Tools Install Driver test", () => {
     ];
     invalidParams.forEach((invalidParam: any) => {
       it(`Invalid parameter - ${JSON.stringify(invalidParam)}`, async () => {
-        sandbox.stub(FuncToolChecker.prototype, "resolve").resolves({
+        vi.spyOn(FuncToolChecker.prototype, "resolve").mockResolvedValue({
           name: "Azure Functions Core Tools",
           type: DepsType.FuncCoreTools,
           isInstalled: true,
@@ -774,11 +771,11 @@ describe("Tools Install Driver test", () => {
 
   describe("Dotnet installation test (execute)", () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("Install dotnet", async () => {
-      sandbox.stub(DotnetChecker.prototype, "resolve").resolves({
+      vi.spyOn(DotnetChecker.prototype, "resolve").mockResolvedValue({
         name: ".NET Core SDK",
         type: DepsType.Dotnet,
         isInstalled: true,
@@ -806,7 +803,7 @@ describe("Tools Install Driver test", () => {
     });
 
     it("Install dotnet: empty outputEnvVarNames", async () => {
-      sandbox.stub(DotnetChecker.prototype, "resolve").resolves({
+      vi.spyOn(DotnetChecker.prototype, "resolve").mockResolvedValue({
         name: ".NET Core SDK",
         type: DepsType.Dotnet,
         isInstalled: true,
@@ -832,7 +829,7 @@ describe("Tools Install Driver test", () => {
     });
 
     it("Install dotnet: empty bin folders", async () => {
-      sandbox.stub(DotnetChecker.prototype, "resolve").resolves({
+      vi.spyOn(DotnetChecker.prototype, "resolve").mockResolvedValue({
         name: ".NET Core SDK",
         type: DepsType.Dotnet,
         isInstalled: true,
@@ -860,7 +857,7 @@ describe("Tools Install Driver test", () => {
     });
 
     it("Install dotnet: undefined details", async () => {
-      sandbox.stub(DotnetChecker.prototype, "resolve").resolves({
+      vi.spyOn(DotnetChecker.prototype, "resolve").mockResolvedValue({
         name: ".NET Core SDK",
         type: DepsType.Dotnet,
         isInstalled: true,
@@ -881,7 +878,7 @@ describe("Tools Install Driver test", () => {
     });
 
     it("Install dotnet: undefined bin folders", async () => {
-      sandbox.stub(DotnetChecker.prototype, "resolve").resolves({
+      vi.spyOn(DotnetChecker.prototype, "resolve").mockResolvedValue({
         name: ".NET Core SDK",
         type: DepsType.Dotnet,
         isInstalled: true,
@@ -907,7 +904,7 @@ describe("Tools Install Driver test", () => {
     });
 
     it("Failed to install dotnet", async () => {
-      sandbox.stub(DotnetChecker.prototype, "resolve").resolves({
+      vi.spyOn(DotnetChecker.prototype, "resolve").mockResolvedValue({
         name: ".NET Core SDK",
         type: DepsType.Dotnet,
         isInstalled: false,
@@ -987,7 +984,7 @@ describe("Tools Install Driver test", () => {
 
   describe("ToolsInstallDriverImpl.resolveNodeJS", () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
     const context: any = {
       logProvider: new MockedLogProvider(),
@@ -999,43 +996,36 @@ describe("Tools Install Driver test", () => {
     };
     const impl = new ToolsInstallDriverImpl(context);
     it("success to install in user folder", async () => {
-      sandbox
-        .stub(nodejsInstaller, "ensureNodeJS")
-        .resolves(ok({ status: "installed", installPath: "/path/to/nodejs" }));
-      sandbox.stub(fs, "lstat").rejects({ code: "ENOENT" });
-      sandbox.stub(fs, "pathExists").resolves(false);
-      sandbox.stub(fs, "ensureSymlink").resolves();
-      const addSummary = sandbox.stub(context, "addSummary");
+      vi.spyOn(nodejsInstaller, "ensureNodeJS").mockResolvedValue(
+        ok({ status: "installed", installPath: "/path/to/nodejs" })
+      );
+      vi.spyOn(fs, "lstat").mockRejectedValue({ code: "ENOENT" });
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+      vi.spyOn(fs, "ensureSymlink").mockResolvedValue();
+      const addSummary = vi.spyOn(context, "addSummary");
       await impl.resolveNodeJS("./devTool/nodejs");
-      chai.assert.isTrue(
-        addSummary.calledWith(
-          getLocalizedString(
-            "action.devTool.nodeInstaller.Summary.installInPath",
-            "/path/to/nodejs"
-          )
-        )
+      expect(addSummary).toHaveBeenCalledWith(
+        getLocalizedString("action.devTool.nodeInstaller.Summary.installInPath", "/path/to/nodejs")
       );
     });
     it("already installed in system", async () => {
-      sandbox.stub(nodejsInstaller, "ensureNodeJS").resolves(ok({ status: "ignore" }));
-      const addSummary = sandbox.stub(context, "addSummary");
+      vi.spyOn(nodejsInstaller, "ensureNodeJS").mockResolvedValue(ok({ status: "ignore" }));
+      const addSummary = vi.spyOn(context, "addSummary");
       await impl.resolveNodeJS("./devTool/nodejs");
-      chai.assert.isTrue(
-        addSummary.calledWith(
-          getLocalizedString("action.devTool.nodeInstaller.Summary.installInSystem")
-        )
+      expect(addSummary).toHaveBeenCalledWith(
+        getLocalizedString("action.devTool.nodeInstaller.Summary.installInSystem")
       );
     });
     it("error", async () => {
-      sandbox.stub(nodejsInstaller, "ensureNodeJS").resolves(err(new InstallNodeJSError("")));
-      const addSummary = sandbox.stub(context, "addSummary");
+      vi.spyOn(nodejsInstaller, "ensureNodeJS").mockResolvedValue(err(new InstallNodeJSError("")));
+      const addSummary = vi.spyOn(context, "addSummary");
       try {
         await impl.resolveNodeJS("./devTool/nodejs");
         chai.assert.fail("should throw error");
       } catch (e: any) {
         chai.assert.isTrue(e instanceof InstallNodeJSError);
       }
-      chai.assert.isTrue(addSummary.notCalled);
+      chai.assert.isTrue(addSummary.mock.calls.length === 0);
     });
     it("throw error");
   });

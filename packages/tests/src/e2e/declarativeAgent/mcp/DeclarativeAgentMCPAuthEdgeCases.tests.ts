@@ -6,11 +6,14 @@
  */
 
 import { ProgrammingLanguage } from "@microsoft/teamsfx-core";
+import { it } from "@microsoft/extra-shot-mocha";
 import { expect } from "chai";
 import * as fs from "fs-extra";
 import * as path from "path";
+import { execAsync } from "../../../utils/commonUtils";
 import { Capability } from "../../../utils/constants";
 import { CaseFactory } from "../../caseFactory";
+import { getTestFolder, getUniqueAppName } from "../../commonUtils";
 
 // Case 2 & 5: With learn.microsoft.com/api/mcp (a public no-auth server that
 // returns tools), these cases verify the server-URL-only flow produces a valid
@@ -68,21 +71,51 @@ class DeclarativeAgentMCPNoAuthTypeNeeded extends CaseFactory {
 
 // Case 10: Missing server URL — should fail or skip MCP generation
 class DeclarativeAgentMCPMissingServerUrl extends CaseFactory {
-  public override async onAfter(projectPath: string): Promise<void> {
-    await fs.remove(projectPath);
-  }
+  public override test() {
+    const {
+      capability,
+      testPlanCaseId,
+      author,
+      programmingLanguage,
+      custimized,
+    } = this;
+    describe(`template Test: ${capability} - ${programmingLanguage}`, function () {
+      const testFolder = getTestFolder();
+      const appName = getUniqueAppName();
+      const projectPath = path.resolve(testFolder, appName);
 
-  public override async onAfterCreate(projectPath: string): Promise<void> {
-    // Without server URL, the MCP generation should produce template defaults
-    const appPackage = path.join(projectPath, "appPackage");
-    const aiPluginPath = path.join(appPackage, "ai-plugin.json");
-    if (fs.pathExistsSync(aiPluginPath)) {
-      const aiPlugin = await fs.readJSON(aiPluginPath);
-      // Should have no runtime with the MCP server URL
-      if (aiPlugin.runtimes && aiPlugin.runtimes.length > 0) {
-        expect(aiPlugin.runtimes[0].spec?.url).to.be.undefined;
-      }
-    }
+      after(async function () {
+        await fs.remove(projectPath);
+      });
+
+      it(capability, { testPlanCaseId, author }, async function () {
+        const languageParam =
+          programmingLanguage !== undefined &&
+          programmingLanguage !== ProgrammingLanguage.None
+            ? `--programming-language ${programmingLanguage}`
+            : "";
+        const customParams = Object.entries(custimized ?? {})
+          .map(([key, value]) => `--${key} ${value}`)
+          .join(" ");
+        const command =
+          `atk new --interactive false --debug --app-name ${appName} ` +
+          `--capability ${capability} ${languageParam} ${customParams}`;
+
+        try {
+          console.log(`[Start] "${command}" in ${testFolder}.`);
+          await execAsync(command, { cwd: testFolder, env: process.env });
+          expect.fail("Expected MCP scaffold without mcpServerUrl to fail.");
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : String(error);
+          console.log(
+            `[Failed] "${command}" in ${testFolder} with error: ${message}`,
+          );
+          expect(message).to.include("Scaffold.InputValidationFailed");
+          expect(message).to.include("mcpServerUrl");
+        }
+      });
+    });
   }
 }
 

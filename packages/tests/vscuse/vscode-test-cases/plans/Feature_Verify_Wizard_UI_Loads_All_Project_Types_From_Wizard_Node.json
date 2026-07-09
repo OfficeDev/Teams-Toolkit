@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 23,
+    "total_steps": 22,
     "created_at": "2026-06-01T01:59:19.909528",
     "name": "Feature Verify Wizard UI Loads All Project Types From Wizard Node",
     "description": {
@@ -29,7 +29,7 @@
       "step_2a36b80f",
       "step_f7b63663",
       "step_4c45cf70",
-      "step_e0c916fc",
+      "plan_r_0624_024810",
       "step_b601ae6e",
       "step_6961ad46",
       "step_2b58b65d",
@@ -45,7 +45,7 @@
       "step_2c108401"
     ],
     "tags": [],
-    "updated_at": "2026-06-01T02:43:30.740856"
+    "updated_at": "2026-07-01T14:16:35.515000"
   },
   "steps": [
     {
@@ -259,32 +259,6 @@
       "plan_id": "plan_5015aa7b"
     },
     {
-      "step_id": "step_e0c916fc",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 333,
-        "y": 220
-      },
-      "description": "Click the \"Teams Agent and Apps\" dropdown option in the New Project selection dialog within Visual Studio Code, under the Microsoft 365 Agents Toolkit extension interface.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:333:220:16:5:aea6b44b34483424",
-        "dhash:333:220:96:5:2932b7c5121a8584",
-        "dhash:333:220:0:10:c0c8809292b17075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_e0c916fc",
-      "created_at": "2026-06-01T02:22:35.199069",
-      "plan_id": "plan_5015aa7b"
-    },
-    {
       "step_id": "step_b601ae6e",
       "agent": "assertion",
       "tool": "",
@@ -335,7 +309,7 @@
       "parameters": {
         "button": "left",
         "x": 326,
-        "y": 259
+        "y": 300
       },
       "description": "Click the \"Office Add-in\" option in the \"New Project\" dropdown menu within the Microsoft 365 Agents Toolkit interface, as indicated by the red crosshair.",
       "content_refs": [],
@@ -343,11 +317,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:326:259:16:5:6c6a2b6ba941084b",
-        "dhash:326:259:96:5:42998d42859912ed",
-        "dhash:326:259:0:10:c4c8809092b17075"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_2b58b65d",
@@ -359,7 +329,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion \"Task pane\", \"Custom Function and Shortcut\", \"Create Declarative Agent with Office Add-in Action\" and \"Upgrade an Existing Office Add-in\" exist.",
+      "description": "@assertion \"Task pane\", \"Custom Function and Shortcut\" and \"Upgrade an Existing Office Add-in\" exist.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

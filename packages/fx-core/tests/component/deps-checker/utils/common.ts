@@ -1,10 +1,10 @@
-import * as chai from "chai";
 import * as fs from "fs-extra";
 
 import * as tmp from "tmp";
 import { cpUtils } from "../../../../src/component/deps-checker/util/cpUtils";
 import { isWindows } from "../../../../src/component/deps-checker/util/system";
 import { logger } from "../adapters/testLogger";
+import { chai } from "vitest";
 
 export async function commandExistsInPath(command: string): Promise<boolean> {
   try {

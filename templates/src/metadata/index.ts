@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+import { blankTemplates } from "./blank";
 import { customEngineAgentTemplates } from "./customEngineAgent";
 import { declarativeAgentTemplates } from "./declarativeAgent";
 import { graphConnectorTemplates } from "./graphConnector";
@@ -21,6 +22,7 @@ export const allTemplates: Template[] = [
   ...customEngineAgentTemplates,
   ...graphConnectorTemplates,
   ...teamsAgentsAndAppsTemplates,
+  ...blankTemplates,
   ...wxpTemplates,
   ...specialTemplates,
   ...vsOnlyTemplates,
@@ -33,6 +35,7 @@ export const defaultGeneratorTemplates: Template[] = [
   ...chatWithYourDataTemplates,
   ...collaboratorAgentTemplates,
   ...teamsOtherTemplates,
+  ...blankTemplates,
   ...vsOnlyTemplates,
   ...graphConnectorTemplates,
   foundryAgentTemplate,

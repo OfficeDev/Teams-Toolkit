@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 9,
+    "total_steps": 8,
     "created_at": "2026-04-14T12:27:54.004755",
     "name": "Teams Agent With Data AI Search OpenAI js Local Debug",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2026-04-14T12:27:54.004755",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_9c2189b7",
+      "plan_r_0624_024810",
       "step_341b26ef",
       "step_190e99b1",
       "plan_r_1124_081758",
@@ -39,32 +39,6 @@
     "updated_at": "2026-04-14T12:35:47.942542"
   },
   "steps": [
-    {
-      "step_id": "step_9c2189b7",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 326,
-        "y": 221
-      },
-      "description": "Click the \"Teams Agents and Apps\" option from the dropdown menu in the \"New Project\" window.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:326:221:16:5:5a5aa5520894423b",
-        "dhash:326:221:96:5:b51b52421989c2c0",
-        "dhash:326:221:0:10:c4c88094b2717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_9c2189b7",
-      "created_at": "2026-04-14T12:27:54.012361",
-      "plan_id": "plan_01ed5e7e"
-    },
     {
       "step_id": "step_341b26ef",
       "agent": "interaction",

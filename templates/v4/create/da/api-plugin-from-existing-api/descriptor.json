@@ -1,0 +1,24 @@
+{
+  "$schema": "../../../schema/descriptor.schema.json",
+  "id": "da/api-plugin-from-existing-api",
+  "name": "Declarative Agent with API Plugin from OpenAPI",
+  "kind": "create",
+  "languages": ["common"],
+  "minEngineVersion": "5.20.0",
+  "spec": "docs/03-specs/scenarios/da/create-api-plugin-from-existing-api.md",
+  "requiresNetwork": false,
+  "optionsSchema": {
+    "type": "object",
+    "properties": {
+      "openApiSpecType": { "type": "string" },
+      "searchOpenApiSpecQuery": { "type": "string" },
+      "selectOpenApiSpec": { "type": "string" },
+      "apiSpecLocation": { "type": "string" },
+      "apiOperations": { "type": "array", "items": { "type": "string" } }
+    },
+    "additionalProperties": false
+  },
+  "replaceMap": [
+    { "var": "ApiSpecPath", "const": "./appPackage/apiSpecificationFile/openapi.yaml" }
+  ]
+}

@@ -1,10 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { assert } from "chai";
 import fs from "fs-extra";
 import path from "path";
-import sinon from "sinon";
+import { assert, chai, vi } from "vitest";
+import { IsDeclarativeAgentManifest } from "../../build/common/projectTypeChecker";
 import {
   ProjectTypeResult,
   SPFxKey,
@@ -14,15 +14,11 @@ import {
   projectTypeChecker,
 } from "../../src/common/projectTypeChecker";
 import { MetadataV2, MetadataV3 } from "../../src/common/versionMetadata";
-import { IsDeclarativeAgentManifest } from "../../build/common/projectTypeChecker";
 import { pathUtils } from "../../src/component/utils/pathUtils";
-import * as chai from "chai";
 
 describe("ProjectTypeChecker", () => {
-  const sandbox = sinon.createSandbox();
-
   afterEach(async () => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   describe("scanFolder", () => {
     it("file in ignore list", async () => {
@@ -52,7 +48,7 @@ describe("ProjectTypeChecker", () => {
       assert.isFalse(res);
     });
     it("is dir and reach max depth", async () => {
-      sandbox.stub(fs, "stat").resolves({ isDirectory: () => true } as any);
+      vi.spyOn(fs, "stat").mockResolvedValue({ isDirectory: () => true } as any);
       const result: ProjectTypeResult = {
         isTeamsFx: false,
         hasTeamsManifest: false,
@@ -66,8 +62,8 @@ describe("ProjectTypeChecker", () => {
       assert.isTrue(res);
     });
     it("is dir and sub-call return false", async () => {
-      sandbox.stub(fs, "readdir").resolves(["sub-dir"] as any);
-      sandbox.stub(fs, "stat").resolves({ isDirectory: () => true } as any);
+      vi.spyOn(fs, "readdir").mockResolvedValue(["sub-dir"] as any);
+      vi.spyOn(fs, "stat").mockResolvedValue({ isDirectory: () => true } as any);
       const result: ProjectTypeResult = {
         isTeamsFx: false,
         hasTeamsManifest: false,
@@ -87,8 +83,8 @@ describe("ProjectTypeChecker", () => {
       assert.isFalse(res);
     });
     it("is dir and sub-call return true", async () => {
-      sandbox.stub(fs, "readdir").resolves(["sub-dir"] as any);
-      sandbox.stub(fs, "stat").resolves({ isDirectory: () => true } as any);
+      vi.spyOn(fs, "readdir").mockResolvedValue(["sub-dir"] as any);
+      vi.spyOn(fs, "stat").mockResolvedValue({ isDirectory: () => true } as any);
       const result: ProjectTypeResult = {
         isTeamsFx: false,
         hasTeamsManifest: false,
@@ -159,7 +155,7 @@ describe("ProjectTypeChecker", () => {
   });
   describe("findManifestCallback", () => {
     it("found", async () => {
-      sandbox.stub(fs, "readFile").resolves(
+      vi.spyOn(fs, "readFile").mockResolvedValue(
         JSON.stringify({
           $schema:
             "https://developer.microsoft.com/en-us/json-schemas/teams/MicrosoftTeams.schema.json",
@@ -177,7 +173,7 @@ describe("ProjectTypeChecker", () => {
     });
 
     it("file name match, but schema is not correct", async () => {
-      sandbox.stub(fs, "readFile").resolves(JSON.stringify({}) as any);
+      vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify({}) as any);
       const result: ProjectTypeResult = {
         isTeamsFx: false,
         hasTeamsManifest: false,
@@ -190,7 +186,7 @@ describe("ProjectTypeChecker", () => {
     });
 
     it("file name match, but throw error", async () => {
-      sandbox.stub(fs, "readFile").rejects(new Error("error"));
+      vi.spyOn(fs, "readFile").mockRejectedValue(new Error("error"));
       const result: ProjectTypeResult = {
         isTeamsFx: false,
         hasTeamsManifest: false,
@@ -215,8 +211,8 @@ describe("ProjectTypeChecker", () => {
       assert.deepEqual(result.lauguages, ["ts"]);
     });
     it("ts", async () => {
-      sandbox.stub(fs, "readFile").resolves(JSON.stringify({}) as any);
-      sandbox.stub(fs, "pathExists").resolves(true);
+      vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify({}) as any);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
       const result: ProjectTypeResult = {
         isTeamsFx: false,
         hasTeamsManifest: false,
@@ -228,8 +224,8 @@ describe("ProjectTypeChecker", () => {
       assert.deepEqual(result.lauguages, ["ts"]);
     });
     it("js", async () => {
-      sandbox.stub(fs, "readFile").resolves(JSON.stringify({}) as any);
-      sandbox.stub(fs, "pathExists").resolves(false);
+      vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify({}) as any);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
       const result: ProjectTypeResult = {
         isTeamsFx: false,
         hasTeamsManifest: false,
@@ -241,7 +237,7 @@ describe("ProjectTypeChecker", () => {
       assert.deepEqual(result.lauguages, ["js"]);
     });
     it("read package.json throw error", async () => {
-      sandbox.stub(fs, "readFile").rejects(new Error());
+      vi.spyOn(fs, "readFile").mockRejectedValue(new Error());
       const result: ProjectTypeResult = {
         isTeamsFx: false,
         hasTeamsManifest: false,
@@ -330,8 +326,8 @@ describe("ProjectTypeChecker", () => {
   });
   describe("findTeamsFxCallback", () => {
     it("isTeamsFx < v5 but invalid projectSettings.json", async () => {
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readJson").resolves({
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readJson").mockResolvedValue({
         version: "1.0.0",
         projectId: "xxx-xxx-xxx",
       });
@@ -350,8 +346,8 @@ describe("ProjectTypeChecker", () => {
       assert.equal(result.teamsfxVersionState, TeamsfxVersionState.Invalid);
     });
     it("isTeamsFx < v5 but version state is unsupported", async () => {
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readJson").resolves({
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readJson").mockResolvedValue({
         solutionSettings: {
           activeResourcePlugins: [],
         },
@@ -373,8 +369,8 @@ describe("ProjectTypeChecker", () => {
       assert.equal(result.teamsfxVersionState, TeamsfxVersionState.Unsupported);
     });
     it("isTeamsFx < v5 but version state is upgradable", async () => {
-      sandbox.stub(fs, "pathExists").resolves(true);
-      sandbox.stub(fs, "readJson").resolves({
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readJson").mockResolvedValue({
         solutionSettings: {
           activeResourcePlugins: [],
         },
@@ -402,7 +398,7 @@ describe("ProjectTypeChecker", () => {
       version: 2.0.0
       projectId: xxx-xxx-xxx
       `;
-      sandbox.stub(fs, "readFile").resolves(mockYamlContent as any);
+      vi.spyOn(fs, "readFile").mockResolvedValue(mockYamlContent as any);
       const result: ProjectTypeResult = {
         isTeamsFx: false,
         hasTeamsManifest: false,
@@ -461,7 +457,7 @@ describe("ProjectTypeChecker", () => {
       assert.isFalse(result.isSPFx);
     });
     it("found", async () => {
-      sandbox.stub(fs, "readJson").resolves({
+      vi.spyOn(fs, "readJson").mockResolvedValue({
         [SPFxKey]: "xxx-xxx-xxx",
       });
       const result: ProjectTypeResult = {
@@ -479,40 +475,36 @@ describe("ProjectTypeChecker", () => {
 
   describe("checkProjectType", () => {
     it("has manifest and depends on teams-js", async () => {
-      sandbox
-        .stub(projectTypeChecker, "scanFolder")
-        .callsFake(
-          async (
-            currentPath: string,
-            ignoreFolderName: string[],
-            data: ProjectTypeResult,
-            fileCallback: (filePath: string, data: ProjectTypeResult) => Promise<boolean>,
-            maxDepth: number
-          ) => {
-            data.hasTeamsManifest = true;
-            data.dependsOnTeamsJs = true;
-            return true;
-          }
-        );
+      vi.spyOn(projectTypeChecker, "scanFolder").mockImplementation(
+        async (
+          currentPath: string,
+          ignoreFolderName: string[],
+          data: ProjectTypeResult,
+          fileCallback: (filePath: string, data: ProjectTypeResult) => Promise<boolean>,
+          maxDepth: number
+        ) => {
+          data.hasTeamsManifest = true;
+          data.dependsOnTeamsJs = true;
+          return true;
+        }
+      );
 
       const res = await projectTypeChecker.checkProjectType(path.join("./abc.json"));
       assert.isTrue(res.hasTeamsManifest);
       assert.isTrue(res.dependsOnTeamsJs);
     });
     it("has no manifest and not depend on teams-js", async () => {
-      sandbox
-        .stub(projectTypeChecker, "scanFolder")
-        .callsFake(
-          async (
-            currentPath: string,
-            ignoreFolderName: string[],
-            data: ProjectTypeResult,
-            fileCallback: (filePath: string, data: ProjectTypeResult) => Promise<boolean>,
-            maxDepth: number
-          ) => {
-            return true;
-          }
-        );
+      vi.spyOn(projectTypeChecker, "scanFolder").mockImplementation(
+        async (
+          currentPath: string,
+          ignoreFolderName: string[],
+          data: ProjectTypeResult,
+          fileCallback: (filePath: string, data: ProjectTypeResult) => Promise<boolean>,
+          maxDepth: number
+        ) => {
+          return true;
+        }
+      );
 
       const res = await projectTypeChecker.checkProjectType(path.join("./abc.json"));
       assert.isFalse(res.hasTeamsManifest);
@@ -551,14 +543,13 @@ describe("ProjectTypeChecker", () => {
   });
 
   describe("isTypeSpecProject", () => {
-    const sandbox = sinon.createSandbox();
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("should return true if TypeSpec project", () => {
-      sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-      sandbox.stub(fs, "readFileSync").returns("provision: typeSpec/compile with: []");
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+      vi.spyOn(fs, "readFileSync").mockReturnValue("provision: typeSpec/compile with: []");
       const result = isTypeSpecProject("test-project-path");
       chai.expect(result).to.be.true;
     });
@@ -569,14 +560,14 @@ describe("ProjectTypeChecker", () => {
     });
 
     it("should return false if no yaml file", () => {
-      sandbox.stub(pathUtils, "getYmlFilePath").returns(undefined);
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue(undefined);
       const result = isTypeSpecProject("test-project-path");
       chai.expect(result).to.be.false;
     });
 
     it("should return false if not TypeSpec project", () => {
-      sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-      sandbox.stub(fs, "readFileSync").returns("provision: aadApp/create with: []");
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+      vi.spyOn(fs, "readFileSync").mockReturnValue("provision: aadApp/create with: []");
       const result = isTypeSpecProject("test-project-path");
       chai.expect(result).to.be.false;
     });

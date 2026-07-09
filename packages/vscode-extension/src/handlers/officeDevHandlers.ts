@@ -7,7 +7,7 @@
 "use strict";
 
 import { FxError, Result, ok } from "@microsoft/teamsfx-api";
-import { globalStateGet, globalStateUpdate } from "@microsoft/teamsfx-core";
+import * as teamsfxCore from "@microsoft/teamsfx-core";
 import * as vscode from "vscode";
 import { GlobalKey } from "../constants";
 import { OfficeDevTerminal, TriggerCmdType } from "../debug/taskTerminal/officeDevTerminal";
@@ -178,24 +178,30 @@ export function generateManifestGUID(args?: any[]): Promise<Result<null, FxError
 }
 
 export async function autoOpenOfficeDevProjectHandler(): Promise<void> {
-  const isOpenWalkThrough = (await globalStateGet(GlobalKey.OpenWalkThrough, false)) as boolean;
-  const isOpenReadMe = (await globalStateGet(GlobalKey.OpenReadMe, "")) as string;
-  const isOpenSampleReadMe = (await globalStateGet(GlobalKey.OpenSampleReadMe, false)) as boolean;
-  const createWarnings = (await globalStateGet(GlobalKey.CreateWarnings, "")) as string;
+  const isOpenWalkThrough = (await teamsfxCore.globalStateGet(
+    GlobalKey.OpenWalkThrough,
+    false
+  )) as boolean;
+  const isOpenReadMe = (await teamsfxCore.globalStateGet(GlobalKey.OpenReadMe, "")) as string;
+  const isOpenSampleReadMe = (await teamsfxCore.globalStateGet(
+    GlobalKey.OpenSampleReadMe,
+    false
+  )) as boolean;
+  const createWarnings = (await teamsfxCore.globalStateGet(GlobalKey.CreateWarnings, "")) as string;
   if (isOpenWalkThrough) {
     // current the welcome walkthrough is not supported for wxp add in
-    await globalStateUpdate(GlobalKey.OpenWalkThrough, false);
+    await teamsfxCore.globalStateUpdate(GlobalKey.OpenWalkThrough, false);
   }
   if (isOpenReadMe === globalVariables.workspaceUri?.fsPath) {
     await openReadMeHandler([TelemetryTriggerFrom.Auto]);
-    await globalStateUpdate(GlobalKey.OpenReadMe, "");
+    await teamsfxCore.globalStateUpdate(GlobalKey.OpenReadMe, "");
 
     await ShowScaffoldingWarningSummary(globalVariables.workspaceUri.fsPath, createWarnings);
-    await globalStateUpdate(GlobalKey.CreateWarnings, "");
+    await teamsfxCore.globalStateUpdate(GlobalKey.CreateWarnings, "");
   }
   if (isOpenSampleReadMe) {
     await showLocalDebugMessage();
     await openSampleReadmeHandler([TelemetryTriggerFrom.Auto]);
-    await globalStateUpdate(GlobalKey.OpenSampleReadMe, false);
+    await teamsfxCore.globalStateUpdate(GlobalKey.OpenSampleReadMe, false);
   }
 }

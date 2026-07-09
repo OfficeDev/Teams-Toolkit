@@ -1,12 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { assert } from "chai";
 import fs from "fs-extra";
 import os from "os";
 import path from "path";
-import { createSandbox, SinonSandbox } from "sinon";
 
+import { assert, expect, vi } from "vitest";
 import { featureFlagManager, FeatureFlags } from "../../../../src/common/featureFlags";
 import { createContext, setTools } from "../../../../src/common/globalVars";
 import { ProjectTypeProps, TelemetryEvent } from "../../../../src/common/telemetry";
@@ -15,13 +14,13 @@ import * as folderUtils from "../../../../src/folder";
 import { MockTools } from "../../../core/utils";
 
 describe("ConfigGenerator", () => {
-  let sandbox: SinonSandbox;
+  let sandbox: any;
   let tempRoot: string;
   let templatesRoot: string;
   let destination: string;
 
   beforeEach(async () => {
-    sandbox = createSandbox();
+    sandbox = vi;
     tempRoot = path.join(os.tmpdir(), `cfg-gen-${Date.now()}`);
     templatesRoot = path.join(tempRoot, "templates");
     destination = path.join(tempRoot, "dest");
@@ -29,7 +28,7 @@ describe("ConfigGenerator", () => {
     await fs.ensureDir(destination);
 
     // Point template lookup to our temp templates root
-    sandbox.stub(folderUtils, "getTemplatesFolder").returns(templatesRoot);
+    vi.spyOn(folderUtils, "getTemplatesFolder").mockReturnValue(templatesRoot);
 
     // Enable GenerateConfigFiles so settingsUtil reads newly generated m365agents.*.yml
     featureFlagManager.setBooleanValue(FeatureFlags.GenerateConfigFiles, true);
@@ -40,7 +39,7 @@ describe("ConfigGenerator", () => {
   });
 
   afterEach(async () => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     // Reset flag to default
     featureFlagManager.setBooleanValue(FeatureFlags.GenerateConfigFiles, false);
     await fs.remove(tempRoot);
@@ -77,8 +76,8 @@ describe("ConfigGenerator", () => {
     const tools = new MockTools();
     setTools(tools);
     const context = createContext();
-    const telemetryStub = sandbox.stub(context.telemetryReporter, "sendTelemetryEvent");
-    const showMsgStub = sandbox.stub(context.userInteraction, "showMessage");
+    const telemetryStub = vi.spyOn(context.telemetryReporter, "sendTelemetryEvent");
+    const showMsgStub = vi.spyOn(context.userInteraction, "showMessage");
 
     // Act
     const res = await configGenerator.run(
@@ -95,18 +94,18 @@ describe("ConfigGenerator", () => {
     assert.isTrue(res.isOk(), "run should succeed when at least one component succeeds");
 
     // Conflict warning shown
-    assert.isTrue(showMsgStub.calledWith("warn"));
+    expect(showMsgStub.mock.calls.some((c) => c[0] === "warn")).to.be.true;
 
     // Playground yaml exists, local yaml not generated due to conflict
     assert.isTrue(await fs.pathExists(path.join(destination, "m365agents.playground.yml")));
     assert.isFalse(await fs.pathExists(path.join(destination, "m365agents.local.yml")));
 
     // Telemetry summary shows success/failed components and capabilities
-    const summaryCall = telemetryStub
-      .getCalls()
-      .find((c) => c.args[0] === TelemetryEvent.GenerateConfigSummary);
+    const summaryCall = telemetryStub.mock.calls.find(
+      (c) => c[0] === TelemetryEvent.GenerateConfigSummary
+    );
     assert.isOk(summaryCall);
-    const props = summaryCall!.args[1] as Record<string, string>;
+    const props = summaryCall![1] as Record<string, string>;
     assert.include(props.successComponents, "playground-typescript");
     assert.include(props.failedComponents, "local-typescript");
     assert.equal(props[ProjectTypeProps.TeamsManifestCapabilities], "Bot");

@@ -154,6 +154,10 @@ async function runWithCheckResultTelemetryProperties(
 
 export type KillPortsResult = "killed" | "cancelled" | "copilot" | "no-pids";
 
+export function waitAfterKill(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export async function killProcessesOnPorts(portsInUse: number[]): Promise<KillPortsResult> {
   try {
     const port2pids = new Map<number, number[]>();
@@ -214,7 +218,7 @@ export async function killProcessesOnPorts(portsInUse: number[]): Promise<KillPo
 
     await Promise.all(Array.from(allPids).map((pid) => processUtil.killProcess(pid)));
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await waitAfterKill(1000);
     return "killed";
   } catch (e) {
     VsCodeLogInstance.warning(`Failed to kill processes on ports: ${(e as Error).message}`);
@@ -247,7 +251,9 @@ async function checkPort(
         } else if (result === "copilot") {
           const error = new PortsConflictError(ports, portsInUse, ExtensionSource);
           VsCodeLogInstance.error(
-            `[Ext.PortsConflictError] ${error.message} Ports expected: ${formatPortStr(ports)}. Ports occupied: ${formatPortStr(portsInUse)}.`
+            `[Ext.PortsConflictError] ${error.message} Ports expected: ${formatPortStr(
+              ports
+            )}. Ports occupied: ${formatPortStr(portsInUse)}.`
           );
           void vscode.commands.executeCommand(
             "fx-extension.teamsAgentTroubleshootError",

@@ -7,10 +7,7 @@ import { FxError, ok, Result } from "@microsoft/teamsfx-api";
 import { Service } from "typedi";
 import { getLocalizedString } from "../../../../common/localizeUtils";
 import { TelemetryConstant } from "../../../constant/commonConstant";
-import {
-  getAzureAccountCredential,
-  parseAzureResourceId,
-} from "../../../utils/azureResourceOperation";
+import * as azureResourceOperation from "../../../utils/azureResourceOperation";
 import { asFactory, asString, errorHandle } from "../../../utils/common";
 import { DriverContext } from "../../interface/commonArgs";
 import { AzureStaticWebAppConfigArgs } from "../../interface/provisionArgs";
@@ -19,16 +16,13 @@ import { addStartAndEndTelemetry } from "../../middleware/addStartAndEndTelemetr
 
 const ACTION_NAME = "azureStaticWebApps/getDeploymentToken";
 
-export const azureStaticWebAppGetTokenDeps = {
-  getAzureAccountCredential,
-  parseAzureResourceId,
-  createWebSiteManagementClient: (credential: any, subscriptionId: string) =>
-    new WebSiteManagementClient(credential, subscriptionId),
-};
-
 @Service(ACTION_NAME)
 export class AzureStaticWebAppGetDeploymentTokenDriver implements StepDriver {
   readonly description: string = getLocalizedString("driver.deploy.getSWADeploymentToken");
+
+  static createWebSiteManagementClient(credential: any, subscriptionId: string) {
+    return new WebSiteManagementClient(credential, subscriptionId);
+  }
 
   protected static readonly STORAGE_CONFIG_ARGS = asFactory<AzureStaticWebAppConfigArgs>({
     resourceId: asString,
@@ -63,14 +57,14 @@ export class AzureStaticWebAppGetDeploymentTokenDriver implements StepDriver {
     const outputKey = !outputEnvVarNames?.get("deploymentToken")
       ? "SECRET_TAB_SWA_DEPLOYMENT_TOKEN"
       : outputEnvVarNames.get("deploymentToken")!;
-    const resourceInfo = azureStaticWebAppGetTokenDeps.parseAzureResourceId(
+    const resourceInfo = azureResourceOperation.parseAzureResourceId(
       input.resourceId,
       AzureStaticWebAppGetDeploymentTokenDriver.RESOURCE_PATTERN
     );
-    const azureTokenCredential = await azureStaticWebAppGetTokenDeps.getAzureAccountCredential(
+    const azureTokenCredential = await azureResourceOperation.getAzureAccountCredential(
       ctx.azureAccountProvider
     );
-    const client = azureStaticWebAppGetTokenDeps.createWebSiteManagementClient(
+    const client = AzureStaticWebAppGetDeploymentTokenDriver.createWebSiteManagementClient(
       azureTokenCredential,
       resourceInfo.subscriptionId
     );

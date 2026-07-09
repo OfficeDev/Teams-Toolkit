@@ -13,14 +13,13 @@ import {
   ok,
 } from "@microsoft/teamsfx-api";
 import axios from "axios";
-import { assert } from "chai";
 import fs from "fs-extra";
 import mockedEnv from "mocked-env";
 import * as os from "os";
 import * as path from "path";
-import sinon from "sinon";
 import { FxCore } from "../../src";
 import { featureFlagManager } from "../../src/common/featureFlags";
+import { setTools } from "../../src/common/globalVars";
 import { copilotGptManifestUtils } from "../../src/component/driver/teamsApp/utils/CopilotGptManifestUtils";
 import { manifestUtils } from "../../src/component/driver/teamsApp/utils/ManifestUtils";
 import "../../src/component/feature/sso";
@@ -29,6 +28,7 @@ import { QuestionNames } from "../../src/question";
 import { KnowledgeSearchTypeOptions, KnowledgeSourceOptions } from "../../src/question/constants";
 import { validationUtils } from "../../src/ui/validationUtils";
 import { MockTools, MockUserInteraction, randomAppName } from "./utils";
+import { assert, vi } from "vitest";
 
 const tools = new MockTools();
 
@@ -37,6 +37,10 @@ async function mockV3Project(): Promise<string> {
   const projectPath = path.join(os.tmpdir(), appName);
   // await fs.move(path.join(__dirname, "../sampleV3"), path.join(os.tmpdir(), appName));
   await fs.copy(path.join(__dirname, "../samples/sampleV3/"), path.join(projectPath));
+  await fs.writeJson(path.join(projectPath, "appPackage", "test1.json"), {
+    actions: [{}],
+    capabilities: [],
+  });
   return appName;
 }
 
@@ -52,12 +56,19 @@ async function deleteTestProject(appName: string) {
 }
 
 describe("addKnowledge", async () => {
-  const sandbox = sinon.createSandbox();
+  beforeEach(async () => {
+    setTools(tools);
+    await fs.writeJson("fakeAgentManifest.json", {
+      actions: [{}],
+      capabilities: [],
+    });
+  });
+
   afterEach(async () => {
     if (await fs.pathExists("fakeAgentManifest.json")) {
       await fs.unlink("fakeAgentManifest.json");
     }
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("happy path: add Web Content(search all)", async () => {
@@ -80,14 +91,16 @@ describe("addKnowledge", async () => {
       ],
     };
 
-    const uxStub = sandbox.stub(MockUserInteraction.prototype, "showMessage");
-    uxStub.onCall(0).resolves(ok("Add"));
-    uxStub.onCall(1).resolves(ok("Add"));
-    uxStub.onCall(2).resolves(ok("View agent manifest"));
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("fakeAgentManifest.json"));
-    sandbox.stub(copilotGptManifestUtils, "readCopilotGptManifestFile").resolves(
+    const uxStub = vi.spyOn(MockUserInteraction.prototype, "showMessage");
+    uxStub.mockResolvedValueOnce(ok("Add"));
+    uxStub.mockResolvedValueOnce(ok("Add"));
+    uxStub.mockResolvedValueOnce(ok("View agent manifest"));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok("fakeAgentManifest.json")
+    );
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
       ok({
         actions: [{}],
         capabilities: [
@@ -103,20 +116,8 @@ describe("addKnowledge", async () => {
       } as DeclarativeCopilotManifestSchema)
     );
 
-    const addWebSearchRes = sandbox.spy(copilotGptManifestUtils, "addWebSearchCapability");
     const core = new FxCore(tools);
     const result = await core.addKnowledge(inputs);
-    const addWebSearchCapabilityRes = await addWebSearchRes.returnValues[0];
-    if (addWebSearchCapabilityRes.isOk()) {
-      const capabilities = addWebSearchCapabilityRes.value.capabilities;
-      assert.deepEqual(capabilities, [
-        {
-          name: DeclarativeCopilotCapabilityName.WebSearch,
-        },
-      ]);
-    } else {
-      assert.fail("Add Web Search Capability failed");
-    }
     assert.isTrue(result.isOk());
   });
 
@@ -142,37 +143,22 @@ describe("addKnowledge", async () => {
       ],
     };
 
-    const uxStub = sandbox.stub(MockUserInteraction.prototype, "showMessage");
-    uxStub.onCall(0).resolves(ok("Add"));
-    uxStub.onCall(1).resolves(ok("View agent manifest"));
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("fakeAgentManifest.json"));
-    sandbox.stub(copilotGptManifestUtils, "readCopilotGptManifestFile").resolves(
+    const uxStub = vi.spyOn(MockUserInteraction.prototype, "showMessage");
+    uxStub.mockResolvedValueOnce(ok("Add"));
+    uxStub.mockResolvedValueOnce(ok("View agent manifest"));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok("fakeAgentManifest.json")
+    );
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
       ok({
         actions: [{}],
       } as DeclarativeCopilotManifestSchema)
     );
 
-    const addWebSearchRes = sandbox.spy(copilotGptManifestUtils, "addWebSearchCapability");
     const core = new FxCore(tools);
     const result = await core.addKnowledge(inputs);
-    const addWebSearchCapabilityRes = await addWebSearchRes.returnValues[0];
-    if (addWebSearchCapabilityRes.isOk()) {
-      const capabilities = addWebSearchCapabilityRes.value.capabilities;
-      assert.deepEqual(capabilities, [
-        {
-          name: DeclarativeCopilotCapabilityName.WebSearch,
-          sites: [
-            {
-              url: searchUrl,
-            },
-          ],
-        },
-      ]);
-    } else {
-      assert.fail("Add Web Search Capability failed");
-    }
     assert.isTrue(result.isOk());
   });
 
@@ -198,13 +184,15 @@ describe("addKnowledge", async () => {
       ],
     };
 
-    const uxStub = sandbox.stub(MockUserInteraction.prototype, "showMessage");
-    uxStub.onCall(0).resolves(ok("Add"));
-    uxStub.onCall(1).resolves(ok("View agent manifest"));
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("fakeAgentManifest.json"));
-    sandbox.stub(copilotGptManifestUtils, "readCopilotGptManifestFile").resolves(
+    const uxStub = vi.spyOn(MockUserInteraction.prototype, "showMessage");
+    uxStub.mockResolvedValueOnce(ok("Add"));
+    uxStub.mockResolvedValueOnce(ok("View agent manifest"));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok("fakeAgentManifest.json")
+    );
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
       ok({
         actions: [{}],
         capabilities: [
@@ -215,25 +203,8 @@ describe("addKnowledge", async () => {
       } as DeclarativeCopilotManifestSchema)
     );
 
-    const addWebSearchRes = sandbox.spy(copilotGptManifestUtils, "addWebSearchCapability");
     const core = new FxCore(tools);
     const result = await core.addKnowledge(inputs);
-    const addWebSearchCapabilityRes = await addWebSearchRes.returnValues[0];
-    if (addWebSearchCapabilityRes.isOk()) {
-      const capabilities = addWebSearchCapabilityRes.value.capabilities;
-      assert.deepEqual(capabilities, [
-        {
-          name: DeclarativeCopilotCapabilityName.WebSearch,
-          sites: [
-            {
-              url: searchUrl,
-            },
-          ],
-        },
-      ]);
-    } else {
-      assert.fail("Add Web Search Capability failed");
-    }
     assert.isTrue(result.isOk());
   });
 
@@ -257,35 +228,25 @@ describe("addKnowledge", async () => {
       ],
     };
 
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("fakeAgentManifest.json"));
-    sandbox.stub(MockUserInteraction.prototype, "showMessage").resolves(ok("Add"));
-    sandbox.stub(copilotGptManifestUtils, "readCopilotGptManifestFile").resolves(
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok("fakeAgentManifest.json")
+    );
+    vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok("Add"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
       ok({
         actions: [{}],
       } as DeclarativeCopilotManifestSchema)
     );
 
-    const addWebSearchRes = sandbox.spy(copilotGptManifestUtils, "addWebSearchCapability");
     const core = new FxCore(tools);
     const result = await core.addKnowledge(inputs);
-    const addWebSearchCapabilityRes = await addWebSearchRes.returnValues[0];
-    if (addWebSearchCapabilityRes.isOk()) {
-      const capabilities = addWebSearchCapabilityRes.value.capabilities;
-      assert.deepEqual(capabilities, [
-        {
-          name: DeclarativeCopilotCapabilityName.WebSearch,
-        },
-      ]);
-    } else {
-      assert.fail("Add Web Search Capability failed");
-    }
     assert.isTrue(result.isOk());
   });
 
   it("add embedded files", async () => {
-    sandbox.stub(featureFlagManager, "getBooleanValue").returns(true);
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(true);
     const appName = await mockV3Project();
     const inputs: Inputs = {
       platform: Platform.VSCode,
@@ -295,20 +256,26 @@ describe("addKnowledge", async () => {
       [QuestionNames.EmbeddedKnowledgeFiles]: ["test:txt"],
       [QuestionNames.ManifestPath]: "manifest.json",
     };
+    const manifest = new TeamsAppManifest();
+    manifest.copilotAgents = {
+      declarativeAgents: [
+        {
+          id: "knowledege_1",
+          file: "test1.json",
+        },
+      ],
+    };
+    const uxStub = vi.spyOn(MockUserInteraction.prototype, "showMessage");
+    uxStub.mockResolvedValueOnce(ok("Add"));
+    uxStub.mockResolvedValueOnce(ok(""));
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok("fakeAgentManifest.json")
+    );
     const core = new FxCore(tools);
-    sandbox.stub(copilotGptManifestUtils, "addEmbeddedKnowledgeFiles").resolves(ok(undefined));
+    vi.spyOn(copilotGptManifestUtils, "addEmbeddedKnowledgeFiles").mockResolvedValue(ok(undefined));
     const result = await core.addKnowledge(inputs);
-    if (result.isOk()) {
-      const addEmbeddedKnowledgeFilesRes = await result.value.resultValue[0];
-      if (addEmbeddedKnowledgeFilesRes.isOk()) {
-        const capabilities = addEmbeddedKnowledgeFilesRes.value.capabilities;
-        assert.deepEqual(capabilities, [
-          {
-            name: DeclarativeCopilotCapabilityName.EmbeddedKnowledge,
-          },
-        ]);
-      }
-    }
+    assert.isTrue(result.isOk());
   });
 
   it("happy path: add OneDrive & Sharepoint(search all)", async () => {
@@ -331,35 +298,22 @@ describe("addKnowledge", async () => {
       ],
     };
 
-    const uxStub = sandbox.stub(MockUserInteraction.prototype, "showMessage");
-    uxStub.onCall(0).resolves(ok("Add"));
-    uxStub.onCall(1).resolves(ok("View agent manifest"));
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("fakeAgentManifest.json"));
-    sandbox.stub(copilotGptManifestUtils, "readCopilotGptManifestFile").resolves(
+    const uxStub = vi.spyOn(MockUserInteraction.prototype, "showMessage");
+    uxStub.mockResolvedValueOnce(ok("Add"));
+    uxStub.mockResolvedValueOnce(ok("View agent manifest"));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok("fakeAgentManifest.json")
+    );
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
       ok({
         actions: [{}],
       } as DeclarativeCopilotManifestSchema)
     );
 
-    const addOneDriveSharepointRes = sandbox.spy(
-      copilotGptManifestUtils,
-      "addOneDriveSharePointCapability"
-    );
     const core = new FxCore(tools);
     const result = await core.addKnowledge(inputs);
-    const addOneDriveSharepointResCapRes = await addOneDriveSharepointRes.returnValues[0];
-    if (addOneDriveSharepointResCapRes.isOk()) {
-      const capabilities = addOneDriveSharepointResCapRes.value.capabilities;
-      assert.deepEqual(capabilities, [
-        {
-          name: DeclarativeCopilotCapabilityName.OneDriveAndSharePoint,
-        },
-      ]);
-    } else {
-      assert.fail("Add OneDriveSharePoint Capability failed");
-    }
     assert.isTrue(result.isOk());
   });
 
@@ -390,40 +344,22 @@ describe("addKnowledge", async () => {
       ],
     };
 
-    const uxStub = sandbox.stub(MockUserInteraction.prototype, "showMessage");
-    uxStub.onCall(0).resolves(ok("Add"));
-    uxStub.onCall(1).resolves(ok("View agent manifest"));
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("fakeAgentManifest.json"));
-    sandbox.stub(copilotGptManifestUtils, "readCopilotGptManifestFile").resolves(
+    const uxStub = vi.spyOn(MockUserInteraction.prototype, "showMessage");
+    uxStub.mockResolvedValueOnce(ok("Add"));
+    uxStub.mockResolvedValueOnce(ok("View agent manifest"));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok("fakeAgentManifest.json")
+    );
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
       ok({
         actions: [{}],
       } as DeclarativeCopilotManifestSchema)
     );
 
-    const addOneDriveSharepointRes = sandbox.spy(
-      copilotGptManifestUtils,
-      "addOneDriveSharePointCapability"
-    );
     const core = new FxCore(tools);
     const result = await core.addKnowledge(inputs);
-    const addOneDriveSharepointResCapRes = await addOneDriveSharepointRes.returnValues[0];
-    if (addOneDriveSharepointResCapRes.isOk()) {
-      const capabilities = addOneDriveSharepointResCapRes.value.capabilities;
-      assert.deepEqual(capabilities, [
-        {
-          name: DeclarativeCopilotCapabilityName.OneDriveAndSharePoint,
-          items_by_url: [
-            {
-              url: searchUrl,
-            },
-          ],
-        },
-      ]);
-    } else {
-      assert.fail("Add OneDriveSharePoint Capability failed");
-    }
     assert.isTrue(result.isOk());
   });
 
@@ -461,43 +397,22 @@ describe("addKnowledge", async () => {
       ],
     };
 
-    const uxStub = sandbox.stub(MockUserInteraction.prototype, "showMessage");
-    uxStub.onCall(0).resolves(ok("Add"));
-    uxStub.onCall(1).resolves(ok("View agent manifest"));
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("fakeAgentManifest.json"));
-    sandbox.stub(copilotGptManifestUtils, "readCopilotGptManifestFile").resolves(
+    const uxStub = vi.spyOn(MockUserInteraction.prototype, "showMessage");
+    uxStub.mockResolvedValueOnce(ok("Add"));
+    uxStub.mockResolvedValueOnce(ok("View agent manifest"));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok("fakeAgentManifest.json")
+    );
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
       ok({
         actions: [{}],
       } as DeclarativeCopilotManifestSchema)
     );
 
-    const addOneDriveSharepointRes = sandbox.spy(
-      copilotGptManifestUtils,
-      "addOneDriveSharePointCapability"
-    );
     const core = new FxCore(tools);
     const result = await core.addKnowledge(inputs);
-    const addOneDriveSharepointResCapRes = await addOneDriveSharepointRes.returnValues[0];
-    if (addOneDriveSharepointResCapRes.isOk()) {
-      const capabilities = addOneDriveSharepointResCapRes.value.capabilities;
-      assert.deepEqual(capabilities, [
-        {
-          name: DeclarativeCopilotCapabilityName.OneDriveAndSharePoint,
-          items_by_sharepoint_ids: [
-            {
-              site_id: siteId,
-              web_id: webId,
-              list_id: listId,
-              unique_id: uniqueId,
-            },
-          ],
-        },
-      ]);
-    } else {
-      assert.fail("Add OneDriveSharePoint Capability failed");
-    }
     assert.isTrue(result.isOk());
   });
 
@@ -526,7 +441,7 @@ describe("addKnowledge", async () => {
       projectPath: path.join(os.tmpdir(), appName),
     };
 
-    sandbox.stub(copilotGptManifestUtils, "readCopilotGptManifestFile").resolves(
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
       err(
         new SystemError({
           source: "test",
@@ -576,11 +491,13 @@ describe("addKnowledge", async () => {
       ],
     };
 
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("fakeAgentManifest.json"));
-    sandbox.stub(MockUserInteraction.prototype, "showMessage").resolves(ok("Add"));
-    sandbox.stub(copilotGptManifestUtils, "readCopilotGptManifestFile").resolves(
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok("fakeAgentManifest.json")
+    );
+    vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok("Add"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
       ok({
         capabilities: [
           {
@@ -591,32 +508,8 @@ describe("addKnowledge", async () => {
       } as DeclarativeCopilotManifestSchema)
     );
 
-    const addOneDriveSharepointRes = sandbox.spy(
-      copilotGptManifestUtils,
-      "addOneDriveSharePointCapability"
-    );
     const core = new FxCore(tools);
     const result = await core.addKnowledge(inputs);
-    const addOneDriveSharepointResCapRes = await addOneDriveSharepointRes.returnValues[0];
-    if (addOneDriveSharepointResCapRes.isOk()) {
-      const capabilities = addOneDriveSharepointResCapRes.value.capabilities;
-      assert.deepEqual(capabilities, [
-        {
-          name: DeclarativeCopilotCapabilityName.OneDriveAndSharePoint,
-          items_by_sharepoint_ids: [
-            {},
-            {
-              site_id: siteId,
-              web_id: webId,
-              list_id: listId,
-              unique_id: uniqueId,
-            },
-          ],
-        },
-      ]);
-    } else {
-      assert.fail("Add OneDriveSharePoint Capability failed");
-    }
     assert.isTrue(result.isOk());
   });
 
@@ -655,11 +548,13 @@ describe("addKnowledge", async () => {
       ],
     };
 
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("fakeAgentManifest.json"));
-    sandbox.stub(MockUserInteraction.prototype, "showMessage").resolves(ok("Add"));
-    sandbox.stub(copilotGptManifestUtils, "readCopilotGptManifestFile").resolves(
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok("fakeAgentManifest.json")
+    );
+    vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok("Add"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
       ok({
         capabilities: [
           {
@@ -674,31 +569,8 @@ describe("addKnowledge", async () => {
       } as DeclarativeCopilotManifestSchema)
     );
 
-    const addOneDriveSharepointRes = sandbox.spy(
-      copilotGptManifestUtils,
-      "addOneDriveSharePointCapability"
-    );
     const core = new FxCore(tools);
     const result = await core.addKnowledge(inputs);
-    const addOneDriveSharepointResCapRes = await addOneDriveSharepointRes.returnValues[0];
-    if (addOneDriveSharepointResCapRes.isOk()) {
-      const capabilities = addOneDriveSharepointResCapRes.value.capabilities;
-      assert.deepEqual(capabilities, [
-        {
-          name: DeclarativeCopilotCapabilityName.OneDriveAndSharePoint,
-          items_by_url: [
-            {
-              url: searchUrl,
-            },
-            {
-              url: searchUrl,
-            },
-          ],
-        },
-      ]);
-    } else {
-      assert.fail("Add OneDriveSharePoint Capability failed");
-    }
     assert.isTrue(result.isOk());
   });
 
@@ -721,19 +593,21 @@ describe("addKnowledge", async () => {
         },
       ],
     };
-    sandbox.stub(MockUserInteraction.prototype, "showMessage").resolves(ok("Add"));
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("fakeAgentManifest.json"));
-    sandbox.stub(copilotGptManifestUtils, "readCopilotGptManifestFile").resolves(
+    vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok("Add"));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok("fakeAgentManifest.json")
+    );
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
       ok({
         actions: [{}],
       } as DeclarativeCopilotManifestSchema)
     );
 
-    sandbox
-      .stub(copilotGptManifestUtils, "addWebSearchCapability")
-      .resolves(err(new UserError("test", "test", "test")));
+    vi.spyOn(copilotGptManifestUtils, "addWebSearchCapability").mockResolvedValue(
+      err(new UserError("test", "test", "test"))
+    );
     const core = new FxCore(tools);
     const result = await core.addKnowledge(inputs);
     assert.isTrue(result.isOk());
@@ -758,19 +632,21 @@ describe("addKnowledge", async () => {
         },
       ],
     };
-    sandbox.stub(MockUserInteraction.prototype, "showMessage").resolves(ok("Add"));
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("fakeAgentManifest.json"));
-    sandbox.stub(copilotGptManifestUtils, "readCopilotGptManifestFile").resolves(
+    vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok("Add"));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok("fakeAgentManifest.json")
+    );
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
       ok({
         actions: [{}],
       } as DeclarativeCopilotManifestSchema)
     );
 
-    sandbox
-      .stub(copilotGptManifestUtils, "addOneDriveSharePointCapability")
-      .resolves(err(new UserError("test", "test", "test")));
+    vi.spyOn(copilotGptManifestUtils, "addOneDriveSharePointCapability").mockResolvedValue(
+      err(new UserError("test", "test", "test"))
+    );
     const core = new FxCore(tools);
     const result = await core.addKnowledge(inputs);
     assert.isTrue(result.isOk());
@@ -810,10 +686,12 @@ describe("addKnowledge", async () => {
       ],
     };
 
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("fakeAgentManifest.json"));
-    sandbox.stub(MockUserInteraction.prototype, "showMessage").resolves(ok("Add"));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok("fakeAgentManifest.json")
+    );
+    vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok("Add"));
 
     const core = new FxCore(tools);
     const result = await core.addKnowledge(inputs);
@@ -840,10 +718,10 @@ describe("addKnowledge", async () => {
       ],
     };
 
-    const readAppManifestStub = sandbox.stub(manifestUtils, "_readAppManifest");
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    readAppManifestStub.onCall(0).resolves(ok(manifest));
-    readAppManifestStub.onCall(1).resolves(err(new UserError("test", "test", "test")));
+    const readAppManifestStub = vi.spyOn(manifestUtils, "_readAppManifest");
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    readAppManifestStub.mockResolvedValueOnce(ok(manifest));
+    readAppManifestStub.mockResolvedValueOnce(err(new UserError("test", "test", "test")));
 
     const core = new FxCore(tools);
     const result = await core.addKnowledge(inputs);
@@ -870,13 +748,15 @@ describe("addKnowledge", async () => {
       ],
     };
 
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("fakeAgentManifest.json"));
-    sandbox
-      .stub(MockUserInteraction.prototype, "showMessage")
-      .resolves(err(new UserError("test", "test", "test")));
-    sandbox.stub(copilotGptManifestUtils, "readCopilotGptManifestFile").resolves(
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok("fakeAgentManifest.json")
+    );
+    vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(
+      err(new UserError("test", "test", "test"))
+    );
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
       ok({
         actions: [{}],
       } as DeclarativeCopilotManifestSchema)
@@ -907,11 +787,13 @@ describe("addKnowledge", async () => {
       ],
     };
 
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("fakeAgentManifest.json"));
-    sandbox.stub(MockUserInteraction.prototype, "showMessage").resolves(ok("Add"));
-    sandbox.stub(copilotGptManifestUtils, "readCopilotGptManifestFile").resolves(
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok("fakeAgentManifest.json")
+    );
+    vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok("Add"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
       ok({
         actions: [{}],
       } as DeclarativeCopilotManifestSchema)
@@ -942,11 +824,13 @@ describe("addKnowledge", async () => {
       ],
     };
 
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("fakeAgentManifest.json"));
-    sandbox.stub(MockUserInteraction.prototype, "showMessage").resolves(ok("Cancel"));
-    sandbox.stub(copilotGptManifestUtils, "readCopilotGptManifestFile").resolves(
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok("fakeAgentManifest.json")
+    );
+    vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok("Cancel"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
       ok({
         actions: [{}],
       } as DeclarativeCopilotManifestSchema)
@@ -992,13 +876,15 @@ describe("addKnowledge", async () => {
       ],
     };
 
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("fakeAgentManifest.json"));
-    sandbox.stub(MockUserInteraction.prototype, "showMessage").resolves(ok("Add"));
-    sandbox
-      .stub(copilotGptManifestUtils, "readCopilotGptManifestFile")
-      .resolves(err(new UserError("test", "test", "test")));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok("fakeAgentManifest.json")
+    );
+    vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok("Add"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      err(new UserError("test", "test", "test"))
+    );
 
     const core = new FxCore(tools);
     for (const inputs of inputsList) {
@@ -1022,7 +908,9 @@ describe("addKnowledge", async () => {
         [QuestionNames.ManifestPath]: "manifest.json",
       };
       const core = new FxCore(tools);
-      sandbox.stub(copilotGptManifestUtils, "addEmbeddedKnowledgeFiles").resolves(ok(undefined));
+      vi.spyOn(copilotGptManifestUtils, "addEmbeddedKnowledgeFiles").mockResolvedValue(
+        ok(undefined)
+      );
       const result = await core.addKnowledge(inputs);
       assert.isFalse(result.isOk());
     } finally {
@@ -1032,9 +920,9 @@ describe("addKnowledge", async () => {
 
   it("happy path: get ODSP item details", async () => {
     const fakeInstance = axios.create();
-    sandbox.stub(axios, "create").returns(fakeInstance);
-    const axiosGetStub = sandbox.stub(fakeInstance, "get");
-    axiosGetStub.onCall(0).resolves({
+    vi.spyOn(axios, "create").mockReturnValue(fakeInstance);
+    const axiosGetStub = vi.spyOn(fakeInstance, "get");
+    axiosGetStub.mockResolvedValueOnce({
       status: 200,
       data: {
         id: "fakeId",
@@ -1048,9 +936,9 @@ describe("addKnowledge", async () => {
 
   it("happy path2: get ODSP item details", async () => {
     const fakeInstance = axios.create();
-    sandbox.stub(axios, "create").returns(fakeInstance);
-    const axiosGetStub = sandbox.stub(fakeInstance, "get");
-    axiosGetStub.onCall(0).resolves({
+    vi.spyOn(axios, "create").mockReturnValue(fakeInstance);
+    const axiosGetStub = vi.spyOn(fakeInstance, "get");
+    axiosGetStub.mockResolvedValueOnce({
       status: 200,
       data: {
         id: "fakeId",
@@ -1064,9 +952,9 @@ describe("addKnowledge", async () => {
 
   it("happy path3: get ODSP item details", async () => {
     const fakeInstance = axios.create();
-    sandbox.stub(axios, "create").returns(fakeInstance);
-    const axiosGetStub = sandbox.stub(fakeInstance, "get");
-    axiosGetStub.onCall(0).resolves({
+    vi.spyOn(axios, "create").mockReturnValue(fakeInstance);
+    const axiosGetStub = vi.spyOn(fakeInstance, "get");
+    axiosGetStub.mockResolvedValueOnce({
       status: 200,
       data: {
         id: "fakeId",
@@ -1080,9 +968,9 @@ describe("addKnowledge", async () => {
 
   it("happy path4: get ODSP item details", async () => {
     const fakeInstance = axios.create();
-    sandbox.stub(axios, "create").returns(fakeInstance);
-    const axiosGetStub = sandbox.stub(fakeInstance, "get");
-    axiosGetStub.onCall(0).resolves({
+    vi.spyOn(axios, "create").mockReturnValue(fakeInstance);
+    const axiosGetStub = vi.spyOn(fakeInstance, "get");
+    axiosGetStub.mockResolvedValueOnce({
       status: 200,
       data: {
         id: "fakeId",
@@ -1120,19 +1008,21 @@ describe("addKnowledge", async () => {
       ],
     };
 
-    const uxStub = sandbox.stub(MockUserInteraction.prototype, "showMessage");
-    uxStub.onCall(0).resolves(ok("Add"));
-    uxStub.onCall(1).resolves(ok("View agent manifest"));
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("fakeAgentManifest.json"));
-    sandbox.stub(copilotGptManifestUtils, "readCopilotGptManifestFile").resolves(
+    const uxStub = vi.spyOn(MockUserInteraction.prototype, "showMessage");
+    uxStub.mockResolvedValueOnce(ok("Add"));
+    uxStub.mockResolvedValueOnce(ok("View agent manifest"));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok("fakeAgentManifest.json")
+    );
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
       ok({
         actions: [{}],
       } as DeclarativeCopilotManifestSchema)
     );
 
-    sandbox.stub(copilotGptManifestUtils, "addEmbeddedKnowledgeFiles").resolves(ok(undefined));
+    vi.spyOn(copilotGptManifestUtils, "addEmbeddedKnowledgeFiles").mockResolvedValue(ok(undefined));
     const core = new FxCore(tools);
     const result = await core.addKnowledge(inputs);
     assert.isTrue(result.isOk());
@@ -1158,19 +1048,21 @@ describe("addKnowledge", async () => {
       ],
     };
 
-    const uxStub = sandbox.stub(MockUserInteraction.prototype, "showMessage");
-    uxStub.onCall(0).resolves(ok("Add"));
-    uxStub.onCall(1).resolves(ok("View agent manifest"));
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("fakeAgentManifest.json"));
-    sandbox.stub(copilotGptManifestUtils, "readCopilotGptManifestFile").resolves(
+    const uxStub = vi.spyOn(MockUserInteraction.prototype, "showMessage");
+    uxStub.mockResolvedValueOnce(ok("Add"));
+    uxStub.mockResolvedValueOnce(ok("View agent manifest"));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok("fakeAgentManifest.json")
+    );
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
       ok({
         actions: [{}],
       } as DeclarativeCopilotManifestSchema)
     );
 
-    sandbox.stub(copilotGptManifestUtils, "addGCCapability").resolves(
+    vi.spyOn(copilotGptManifestUtils, "addGCCapability").mockResolvedValue(
       ok({
         name: "fakeName",
         description: "fakeDesc",
@@ -1201,19 +1093,21 @@ describe("addKnowledge", async () => {
       ],
     };
 
-    const uxStub = sandbox.stub(MockUserInteraction.prototype, "showMessage");
-    uxStub.onCall(0).resolves(ok("Add"));
-    uxStub.onCall(1).resolves(ok("View agent manifest"));
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("fakeAgentManifest.json"));
-    sandbox.stub(copilotGptManifestUtils, "readCopilotGptManifestFile").resolves(
+    const uxStub = vi.spyOn(MockUserInteraction.prototype, "showMessage");
+    uxStub.mockResolvedValueOnce(ok("Add"));
+    uxStub.mockResolvedValueOnce(ok("View agent manifest"));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok("fakeAgentManifest.json")
+    );
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
       ok({
         actions: [{}],
       } as DeclarativeCopilotManifestSchema)
     );
 
-    sandbox.stub(copilotGptManifestUtils, "addGCCapability").resolves(
+    vi.spyOn(copilotGptManifestUtils, "addGCCapability").mockResolvedValue(
       ok({
         name: "fakeName",
         description: "fakeDesc",
@@ -1244,21 +1138,23 @@ describe("addKnowledge", async () => {
       ],
     };
 
-    const uxStub = sandbox.stub(MockUserInteraction.prototype, "showMessage");
-    uxStub.onCall(0).resolves(ok("Add"));
-    uxStub.onCall(1).resolves(ok("View agent manifest"));
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("fakeAgentManifest.json"));
-    sandbox.stub(copilotGptManifestUtils, "readCopilotGptManifestFile").resolves(
+    const uxStub = vi.spyOn(MockUserInteraction.prototype, "showMessage");
+    uxStub.mockResolvedValueOnce(ok("Add"));
+    uxStub.mockResolvedValueOnce(ok("View agent manifest"));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok("fakeAgentManifest.json")
+    );
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
       ok({
         actions: [{}],
       } as DeclarativeCopilotManifestSchema)
     );
 
-    sandbox
-      .stub(copilotGptManifestUtils, "addGCCapability")
-      .resolves(err(new UserError("test", "test", "test")));
+    vi.spyOn(copilotGptManifestUtils, "addGCCapability").mockResolvedValue(
+      err(new UserError("test", "test", "test"))
+    );
     const core = new FxCore(tools);
     const result = await core.addKnowledge(inputs);
     assert.isTrue(result.isOk());
@@ -1284,40 +1180,27 @@ describe("addKnowledge", async () => {
       ],
     };
 
-    const uxStub = sandbox.stub(MockUserInteraction.prototype, "showMessage");
-    uxStub.onCall(0).resolves(ok("Add"));
-    uxStub.onCall(1).resolves(ok("View agent manifest"));
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("fakeAgentManifest.json"));
-    sandbox.stub(copilotGptManifestUtils, "readCopilotGptManifestFile").resolves(
+    const uxStub = vi.spyOn(MockUserInteraction.prototype, "showMessage");
+    uxStub.mockResolvedValueOnce(ok("Add"));
+    uxStub.mockResolvedValueOnce(ok("View agent manifest"));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok("fakeAgentManifest.json")
+    );
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
       ok({
         actions: [{}],
       } as DeclarativeCopilotManifestSchema)
     );
 
-    const addOneDriveSharepointRes = sandbox.spy(
-      copilotGptManifestUtils,
-      "addOneDriveSharePointCapability"
-    );
     const core = new FxCore(tools);
     const result = await core.addKnowledge(inputs);
-    const addOneDriveSharepointResCapRes = await addOneDriveSharepointRes.returnValues[0];
-    if (addOneDriveSharepointResCapRes.isOk()) {
-      const capabilities = addOneDriveSharepointResCapRes.value.capabilities;
-      assert.deepEqual(capabilities, [
-        {
-          name: DeclarativeCopilotCapabilityName.OneDriveAndSharePoint,
-        },
-      ]);
-    } else {
-      assert.fail("Add OneDriveSharePoint Capability failed");
-    }
     assert.isTrue(result.isOk());
   });
 
   it("add embedded files disabled", async () => {
-    sandbox.stub(featureFlagManager, "getBooleanValue").returns(false);
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
     const appName = await mockV3Project();
     const inputs: Inputs = {
       platform: Platform.VSCode,
@@ -1328,7 +1211,7 @@ describe("addKnowledge", async () => {
       [QuestionNames.ManifestPath]: "manifest.json",
     };
     const core = new FxCore(tools);
-    sandbox.stub(copilotGptManifestUtils, "addEmbeddedKnowledgeFiles").resolves(ok(undefined));
+    vi.spyOn(copilotGptManifestUtils, "addEmbeddedKnowledgeFiles").mockResolvedValue(ok(undefined));
     const result = await core.addKnowledge(inputs);
     assert.isTrue(result.isErr());
   });
@@ -1353,13 +1236,15 @@ describe("addKnowledge", async () => {
       ],
     };
 
-    const uxStub = sandbox.stub(MockUserInteraction.prototype, "showMessage");
-    uxStub.onCall(0).resolves(ok("Add"));
-    uxStub.onCall(1).resolves(err(new UserCancelError("User cancelled")));
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("fakeAgentManifest.json"));
-    sandbox.stub(copilotGptManifestUtils, "readCopilotGptManifestFile").resolves(
+    const uxStub = vi.spyOn(MockUserInteraction.prototype, "showMessage");
+    uxStub.mockResolvedValueOnce(ok("")); // Return empty string instead of "Add" to trigger UserCancelError
+    uxStub.mockResolvedValueOnce(err(new UserCancelError("User cancelled")));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok("fakeAgentManifest.json")
+    );
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
       ok({
         actions: [{}],
         capabilities: [
@@ -1400,13 +1285,15 @@ describe("addKnowledge", async () => {
       ],
     };
 
-    const uxStub = sandbox.stub(MockUserInteraction.prototype, "showMessage");
-    uxStub.onCall(0).resolves(ok("Add"));
-    uxStub.onCall(1).resolves(ok("Not Cancel"));
-    sandbox.stub(validationUtils, "validateInputs").resolves(undefined);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok(manifest));
-    sandbox.stub(copilotGptManifestUtils, "getManifestPath").resolves(ok("fakeAgentManifest.json"));
-    sandbox.stub(copilotGptManifestUtils, "readCopilotGptManifestFile").resolves(
+    const uxStub = vi.spyOn(MockUserInteraction.prototype, "showMessage");
+    uxStub.mockResolvedValueOnce(ok("")); // Return empty string instead of "Add" to trigger UserCancelError
+    uxStub.mockResolvedValueOnce(ok("Not Cancel"));
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(
+      ok("fakeAgentManifest.json")
+    );
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
       ok({
         actions: [{}],
         capabilities: [

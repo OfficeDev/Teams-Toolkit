@@ -117,24 +117,6 @@
       "plan_id": "plan_a2ec261d"
     },
     {
-      "step_id": "step_664a3cd9",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion \"Start with an Office Add-in Action\" exists.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": null,
-      "created_at": "2026-05-28T08:02:17.206934",
-      "plan_id": "plan_a2ec261d"
-    },
-    {
       "step_id": "step_854db6c6",
       "agent": "interaction",
       "tool": "key_press",
@@ -324,24 +306,6 @@
       "tags": [],
       "screenshot": "step_0a8c26bd",
       "created_at": "2026-05-28T08:05:53.184141",
-      "plan_id": "plan_a2ec261d"
-    },
-    {
-      "step_id": "step_406ba110",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion \"Start with an Office Add-in Action\" doesn't exist.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": null,
-      "created_at": "2026-05-28T08:05:16.289587",
       "plan_id": "plan_a2ec261d"
     }
   ],

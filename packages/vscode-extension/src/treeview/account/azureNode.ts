@@ -4,11 +4,10 @@
 import * as vscode from "vscode";
 
 import { TelemetryTriggerFrom } from "../../telemetry/extTelemetryEvents";
-import { localize } from "../../utils/localizeUtils";
+import * as localizeUtils from "../../utils/localizeUtils";
 import { DynamicNode } from "../dynamicNode";
 import { AccountItemStatus, azureIcon, loadingIcon } from "./common";
-import { featureFlagManager, FeatureFlags } from "@microsoft/teamsfx-core";
-import { listAllTenants } from "@microsoft/teamsfx-core/build/common/tools";
+import * as tools from "@microsoft/teamsfx-core/build/common/tools";
 
 export class AzureAccountNode extends DynamicNode {
   public status: AccountItemStatus;
@@ -25,7 +24,7 @@ export class AzureAccountNode extends DynamicNode {
     }
     this.status = AccountItemStatus.SignedIn;
     this.label = upn;
-    const tenants = await listAllTenants(token);
+    const tenants = await tools.listAllTenants(token);
     for (const tenant of tenants) {
       if (tenant.tenantId === tid && tenant.displayName) {
         this.label = `${upn} (${tenant.displayName as string})`;
@@ -71,9 +70,9 @@ export class AzureAccountNode extends DynamicNode {
       this.collapsibleState = vscode.TreeItemCollapsibleState.None;
       this.command = undefined;
     } else if (this.status === AccountItemStatus.SigningIn) {
-      this.label = localize("teamstoolkit.accountTree.signingInAzure");
+      this.label = localizeUtils.localize("teamstoolkit.accountTree.signingInAzure");
     } else {
-      this.label = localize("teamstoolkit.handlers.signInAzure");
+      this.label = localizeUtils.localize("teamstoolkit.handlers.signInAzure");
       this.collapsibleState = vscode.TreeItemCollapsibleState.None;
       this.command = {
         title: this.label,
@@ -82,13 +81,13 @@ export class AzureAccountNode extends DynamicNode {
       };
     }
     this.tooltip = new vscode.MarkdownString(
-      localize("teamstoolkit.accountTree.azureAccountTooltip")
+      localizeUtils.localize("teamstoolkit.accountTree.azureAccountTooltip")
     );
     this.accessibilityInformation = {
       label:
         (this.label ? (typeof this.label === "string" ? this.label : this.label.label) : "") +
         ". " +
-        localize("teamstoolkit.accountTree.azureAccountTooltip"),
+        localizeUtils.localize("teamstoolkit.accountTree.azureAccountTooltip"),
     };
     return this;
   }

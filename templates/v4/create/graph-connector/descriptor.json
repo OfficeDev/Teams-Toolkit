@@ -1,0 +1,25 @@
+{
+  "$schema": "../../schema/descriptor.schema.json",
+  "id": "graph-connector",
+  "name": "Graph Connector",
+  "languages": ["typescript"],
+  "minEngineVersion": "5.20.0",
+  "spec": "docs/03-specs/scenarios/graph-connector/create-graph-connector.md",
+  "requiresNetwork": false,
+
+  "optionsSchema": {
+    "type": "object",
+    "required": ["graphConnectorName", "graphConnectorConnectionId"],
+    "properties": {
+      "graphConnectorName": { "type": "string" },
+      "graphConnectorConnectionId": { "type": "string" }
+    },
+    "additionalProperties": false
+  },
+
+  "replaceMap": [
+    { "var": "SafeProjectNameLowerCase", "expr": "safeProjectNameLowerCase(appName)" },
+    { "var": "gcName", "from": "graphConnectorName" },
+    { "var": "gcConnectionId", "from": "graphConnectorConnectionId" }
+  ]
+}

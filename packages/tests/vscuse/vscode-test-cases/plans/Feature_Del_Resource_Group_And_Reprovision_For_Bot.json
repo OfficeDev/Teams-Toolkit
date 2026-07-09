@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 12,
+    "total_steps": 11,
     "created_at": "2026-03-27T06:54:58.865746",
     "name": "Feature Del Resource Group And Reprovision For Bot",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2026-03-27T06:54:58.865746",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_103d786f",
+      "plan_r_0624_024810",
       "step_57c72fa8",
       "step_852d9d17",
       "step_14d9943c",
@@ -41,32 +41,6 @@
     "updated_at": "2026-03-27T06:55:53.813278"
   },
   "steps": [
-    {
-      "step_id": "step_103d786f",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 311,
-        "y": 223
-      },
-      "description": "Click the \"Teams Agents and Apps\" option in the \"New Project\" dropdown menu to select the template for creating chat bots, web pages, or other apps in Microsoft Teams, within the Visual Studio Code Microsoft 365 Agents Toolkit extension.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:311:223:16:5:76e5ca28ccb29153",
-        "dhash:311:223:96:5:4d4ca135464637e4",
-        "dhash:311:223:0:10:c0c88094b0717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_103d786f",
-      "created_at": "2026-03-27T06:54:58.878418",
-      "plan_id": "plan_0fbdd53e"
-    },
     {
       "step_id": "step_57c72fa8",
       "agent": "interaction",

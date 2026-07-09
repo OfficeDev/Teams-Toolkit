@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 
 import { SystemError, UserError } from "@microsoft/teamsfx-api";
-import sinon from "sinon";
 
 import { CliTelemetryReporter } from "../../../src/commonlib/telemetry";
 import cliTelemetry from "../../../src/telemetry/cliTelemetry";
@@ -13,15 +12,15 @@ import {
   TelemetrySuccess,
 } from "../../../src/telemetry/cliTelemetryEvents";
 import { expect } from "../utils";
-
+import { vi } from "vitest";
 const validInstrumentationKey = "00000000-0000-0000-0000-000000000000";
 
 describe("Telemetry", function () {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   const stderrWrite = process.stderr.write.bind(process.stderr);
 
   beforeEach(() => {
-    sandbox.stub(process.stderr, "write").callsFake(((chunk: any, ...args: any[]) => {
+    vi.spyOn(process.stderr, "write").mockImplementation(((chunk: any, ...args: any[]) => {
       const text = typeof chunk === "string" ? chunk : chunk?.toString?.() ?? "";
       if (text.includes("ApplicationInsights:An invalid instrumentation key was provided.")) {
         return true;
@@ -31,7 +30,7 @@ describe("Telemetry", function () {
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("withRootFolder", () => {
@@ -40,25 +39,24 @@ describe("Telemetry", function () {
   });
 
   it("sendTelemetryEvent", () => {
-    sandbox
-      .stub(CliTelemetryReporter.prototype, "sendTelemetryEvent")
-      .callsFake((eventName: string, properties?: any) => {
+    vi.spyOn(CliTelemetryReporter.prototype, "sendTelemetryEvent").mockImplementation(
+      (eventName: string, properties?: any) => {
         expect(eventName).equals("eventName");
         expect(properties[TelemetryProperty.Component]).equals(TelemetryComponentType);
         expect(properties[TelemetryProperty.AppId]).equals(undefined);
-      });
+      }
+    );
     const reporter = new CliTelemetryReporter(validInstrumentationKey, "real", "real", "real");
     cliTelemetry.reporter = reporter;
     cliTelemetry.sendTelemetryEvent("eventName");
   });
 
   describe("sendTelemetryEvent", () => {
-    const sandbox = sinon.createSandbox();
+    const sandbox = vi;
 
     before(() => {
-      sandbox
-        .stub(CliTelemetryReporter.prototype, "sendTelemetryErrorEvent")
-        .callsFake((eventName: string, properties?: any) => {
+      vi.spyOn(CliTelemetryReporter.prototype, "sendTelemetryErrorEvent").mockImplementation(
+        (eventName: string, properties?: any) => {
           expect(properties[TelemetryProperty.Component]).equals(TelemetryComponentType);
           expect(properties[TelemetryProperty.AppId]).equals(undefined);
           expect(properties[TelemetryProperty.Success]).equals(TelemetrySuccess.No);
@@ -71,13 +69,14 @@ describe("Telemetry", function () {
             expect(properties[TelemetryProperty.ErrorCode]).equals("ut.system");
             // expect(properties[TelemetryProperty.ErrorMessage]).equals("SystemError");
           }
-        });
+        }
+      );
       const reporter = new CliTelemetryReporter(validInstrumentationKey, "real", "real", "real");
       cliTelemetry.reporter = reporter;
     });
 
     after(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("UserError", () => {
@@ -92,20 +91,20 @@ describe("Telemetry", function () {
   });
 
   it("sendTelemetryException", () => {
-    sandbox
-      .stub(CliTelemetryReporter.prototype, "sendTelemetryException")
-      .callsFake((error: Error, properties?: any) => {
+    vi.spyOn(CliTelemetryReporter.prototype, "sendTelemetryException").mockImplementation(
+      (error: Error, properties?: any) => {
         expect(error.message).equals("exception");
         expect(properties[TelemetryProperty.Component]).equals(TelemetryComponentType);
         expect(properties[TelemetryProperty.AppId]).equals(undefined);
-      });
+      }
+    );
     const reporter = new CliTelemetryReporter(validInstrumentationKey, "real", "real", "real");
     cliTelemetry.reporter = reporter;
     cliTelemetry.sendTelemetryException(new Error("exception"));
   });
 
   it("flush", async () => {
-    sandbox.stub(CliTelemetryReporter.prototype, "flush");
+    vi.spyOn(CliTelemetryReporter.prototype, "flush");
     const reporter = new CliTelemetryReporter(validInstrumentationKey, "real", "real", "real");
     cliTelemetry.reporter = reporter;
     await cliTelemetry.flush();

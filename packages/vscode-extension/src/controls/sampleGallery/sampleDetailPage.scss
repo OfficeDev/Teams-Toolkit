@@ -121,6 +121,14 @@
         margin: 45px 0 0 0;
         padding: 0;
     }
+
+    h2:focus-visible,
+    .tags .tag span:focus-visible,
+    .readme:focus-visible,
+    .readme :focus-visible {
+        outline: 2px solid var(--vscode-focusBorder, #007FD4);
+        outline-offset: 2px;
+    }
 }
 
 body.vscode-light {
@@ -131,6 +139,55 @@ body.vscode-light {
 
     .upgrade-banner {
         background-color: #F0F0F0;
+    }
+
+    /* TC-007: Focus indicator contrast >= 3:1 on the sample detail (readme) page.
+     * --vscode-focusBorder resolves to ~2.26:1 on the white readme background in
+     * Light 2026; override with #005FB8 (~6.3:1 on white) to meet WCAG non-text 3:1. */
+    .sample-detail-page {
+        h2:focus-visible,
+        .tags .tag span:focus-visible,
+        .readme:focus-visible,
+        .readme :focus-visible {
+            outline-color: #005FB8;
+        }
+
+        /* TC-008: README link text contrast >= 4.5:1 in Light 2026.
+         * --vscode-textLink-foreground is ~2.53:1 on white; #005B9E gives ~7:1. */
+        .readme a {
+            color: #005B9E;
+
+            &:hover,
+            &:focus,
+            &:active {
+                color: #004480;
+            }
+        }
+
+        /* TC-009: .env snippet syntax colors must keep >= 4.5:1 on light backgrounds.
+         * The default dark-theme GitHub token palette in github.scss uses low-contrast
+         * colors on white (for example #ff7b72 / #a5d6ff). Override key token colors
+         * in sample detail README rendering with light-theme accessible alternatives. */
+        .readme .pl-k {
+            color: #B42318;
+        }
+
+        .readme .pl-c1,
+        .readme .pl-s .pl-v,
+        .readme .pl-s,
+        .readme .pl-pds,
+        .readme .pl-s .pl-pse .pl-s1,
+        .readme .pl-sr,
+        .readme .pl-sr .pl-sre,
+        .readme .pl-sr .pl-sra,
+        .readme .pl-corl {
+            color: #0550AE;
+        }
+
+        .readme .pl-v,
+        .readme .pl-smw {
+            color: #953800;
+        }
     }
 }
 

@@ -2,11 +2,10 @@
 // Licensed under the MIT license.
 
 import { Inputs, Platform, ok } from "@microsoft/teamsfx-api";
-import { assert } from "chai";
 import fs from "fs-extra";
 import * as os from "os";
 import * as path from "path";
-import sinon from "sinon";
+import { assert, vi } from "vitest";
 import { teamsDevPortalClient } from "../../src";
 import { PackageService } from "../../src/component/m365/packageService";
 import { envUtil } from "../../src/component/utils/envUtil";
@@ -30,22 +29,20 @@ async function deleteTestProject(appName: string) {
 }
 
 describe("FxCore.uninstall by env", () => {
-  const sandbox = sinon.createSandbox();
-
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("uninstall by env - success", async () => {
     const core = new FxCore(tools);
-    sandbox
-      .stub(tools.tokenProvider.m365TokenProvider, "getAccessToken")
-      .resolves(ok("mocked-token"));
-    sandbox.stub(teamsDevPortalClient, "deleteApp").resolves(true);
-    sandbox.stub(teamsDevPortalClient, "getBotId").resolves("mocked-bot-id");
-    sandbox.stub(teamsDevPortalClient, "deleteBot").resolves();
-    sandbox.stub(PackageService.prototype, "retrieveTitleId").resolves("mocked-title-id");
-    sandbox.stub(PackageService.prototype, "unacquire").resolves();
+    vi.spyOn(tools.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
+      ok("mocked-token")
+    );
+    vi.spyOn(teamsDevPortalClient, "deleteApp").mockResolvedValue(true);
+    vi.spyOn(teamsDevPortalClient, "getBotId").mockResolvedValue("mocked-bot-id");
+    vi.spyOn(teamsDevPortalClient, "deleteBot").mockResolvedValue(undefined);
+    vi.spyOn(PackageService.prototype, "retrieveTitleId").mockResolvedValue("mocked-title-id");
+    vi.spyOn(PackageService.prototype, "unacquire").mockResolvedValue(undefined);
 
     const appName = await mockCliUninstallProject();
     const inputs: Inputs = {
@@ -72,7 +69,7 @@ describe("FxCore.uninstall by env", () => {
 
   it("uninstall by env - empty env key name", async () => {
     const core = new FxCore(tools);
-    sandbox.stub(metadataUtil, "parse").resolves(
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(
       ok({
         provision: {
           name: "provision",
@@ -84,14 +81,14 @@ describe("FxCore.uninstall by env", () => {
         },
       } as any)
     );
-    sandbox
-      .stub(tools.tokenProvider.m365TokenProvider, "getAccessToken")
-      .resolves(ok("mocked-token"));
-    sandbox.stub(teamsDevPortalClient, "deleteApp").resolves(true);
-    sandbox.stub(teamsDevPortalClient, "getBotId").resolves("mocked-bot-id");
-    sandbox.stub(teamsDevPortalClient, "deleteBot").resolves();
-    sandbox.stub(PackageService.prototype, "retrieveTitleId").resolves("mocked-title-id");
-    sandbox.stub(PackageService.prototype, "unacquire").resolves();
+    vi.spyOn(tools.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
+      ok("mocked-token")
+    );
+    vi.spyOn(teamsDevPortalClient, "deleteApp").mockResolvedValue(true);
+    vi.spyOn(teamsDevPortalClient, "getBotId").mockResolvedValue("mocked-bot-id");
+    vi.spyOn(teamsDevPortalClient, "deleteBot").mockResolvedValue(undefined);
+    vi.spyOn(PackageService.prototype, "retrieveTitleId").mockResolvedValue("mocked-title-id");
+    vi.spyOn(PackageService.prototype, "unacquire").mockResolvedValue(undefined);
 
     const appName = await mockCliUninstallProject();
     const inputs: Inputs = {

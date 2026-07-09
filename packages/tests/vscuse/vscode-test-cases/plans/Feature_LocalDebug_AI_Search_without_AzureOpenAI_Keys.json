@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 22,
+    "total_steps": 21,
     "created_at": "2026-04-30T06:59:07.793321",
     "name": "Feature LocalDebug AI Search without AzureOpenAI Keys",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2026-04-30T06:59:07.793315",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_618576b9",
+      "plan_r_0624_024810",
       "step_446bee87",
       "step_dea0dde0",
       "step_2833eb07",
@@ -53,32 +53,6 @@
     "updated_at": "2026-04-30T07:25:07.290315"
   },
   "steps": [
-    {
-      "step_id": "step_618576b9",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 352,
-        "y": 227
-      },
-      "description": "Click the \"Teams Agents and Apps\" option in the \"New Project\" popup within the Microsoft 365 Agents Toolkit interface in Visual Studio Code, selecting the template for creating agents, bots, web pages, or apps for Microsoft Teams.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:352:227:16:5:004126cac6425a46",
-        "dhash:352:227:96:5:c8c81a5369161175",
-        "dhash:352:227:0:10:c0c88094b2717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_618576b9",
-      "created_at": "2026-04-30T07:23:59.658482",
-      "plan_id": "plan_feedd4e6"
-    },
     {
       "step_id": "step_446bee87",
       "agent": "interaction",

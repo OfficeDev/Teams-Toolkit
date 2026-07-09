@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 12,
+    "total_steps": 11,
     "created_at": "2026-01-29T06:31:33.988171",
     "name": "Feature  Test Bot AAD",
     "description": {
@@ -20,7 +20,7 @@
     "generated_at": "2026-01-29T06:31:33.988171",
     "execution_order": [
       "plan_r_0928_012254",
-      "step_e0a20c72",
+      "plan_r_0624_024810",
       "step_93ef0ea5",
       "step_6dd2a0c8",
       "step_9c1b28c0",
@@ -39,32 +39,6 @@
     "updated_at": "2026-01-29T06:56:35.402198"
   },
   "steps": [
-    {
-      "step_id": "step_e0a20c72",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 325,
-        "y": 230
-      },
-      "description": "Click the \"Teams Agents and Apps\" option in the \"New Project\" dropdown menu within the Microsoft 365 Agents Toolkit interface.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:325:230:16:5:b3a959b331598230",
-        "dhash:325:230:96:5:995342c98d47c696",
-        "dhash:325:230:0:10:c8c88094b0717075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_e0a20c72",
-      "created_at": "2026-01-29T06:41:47.220541",
-      "plan_id": "plan_67ff691d"
-    },
     {
       "step_id": "step_93ef0ea5",
       "agent": "interaction",

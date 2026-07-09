@@ -7,6 +7,12 @@
 - Make sure all of the changed codes are covered by unit tests in completed status. Unit test can be ignored in developing/validating status.
 - Code should work both on Windows, Linux and macOS.
 
+## Build scope guidance
+- **When only fx-core is changed**: Run `pnpm run build` or `tsc -p ./ --incremental` **only in the fx-core package directory**. Do NOT rebuild the entire monorepo.
+- **When fx-core and other packages are changed**: Run `pnpm run setup` from the monorepo root to build all affected packages.
+- **For dependent packages**: If vscode-extension depends on fx-core changes, rebuild vscode-extension in its directory (`packages/vscode-extension`) AFTER fx-core builds successfully.
+- **Agent instruction**: When presented with changes to a specific package folder, execute build commands scoped to that package directory only to optimize build time and reduce unnecessary compilation.
+
 ## Code style and testability
 - Prefer namespace imports for internal modules when functions may need stubbing in UT. Example: use `import * as templateHelper from "..."` and call `templateHelper.useLocalTemplate()` instead of destructuring imports.
 - Avoid binding external/static dependencies directly at call sites when behavior needs to be mocked. Route them through a deps object (for example `fxCoreDeps`) or a small wrapper function.

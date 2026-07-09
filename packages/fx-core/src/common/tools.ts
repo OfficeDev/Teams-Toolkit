@@ -27,13 +27,8 @@ import {
 import { isTypeSpecProject } from "./projectTypeChecker";
 import { MetadataV3, MetadataV4 } from "./versionMetadata";
 
-export const commonToolsDeps = {
-  getSideloadingStatus: (token: string) => teamsDevPortalClient.getSideloadingStatus(token),
-  isTypeSpecProject,
-};
-
 export async function getSideloadingStatus(token: string): Promise<boolean | undefined> {
-  return commonToolsDeps.getSideloadingStatus(token);
+  return teamsDevPortalClient.getSideloadingStatus(token);
 }
 
 export async function isSandboxedEnabled(tokenProvider: M365TokenProvider): Promise<boolean> {
@@ -174,7 +169,7 @@ export async function runForTypeSpecProject(
   projectPath: string | undefined,
   context: DriverContext
 ): Promise<void> {
-  const isTspProject = commonToolsDeps.isTypeSpecProject(projectPath);
+  const isTspProject = isTypeSpecProject(projectPath);
   if (isTspProject) {
     // Call npm/install
     const npmInstallDriver: NpmBuildDriver = Container.get("cli/runNpmCommand");

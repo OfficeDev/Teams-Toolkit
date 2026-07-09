@@ -29,6 +29,13 @@ export const rootNode = {
         icon: "$(teamsfx-custom-copilot)",
       },
       {
+        id: "blank-app-type",
+        label: "template.createProjectQuestion.projectType.blankApp.label",
+        detail: "template.createProjectQuestion.projectType.blankApp.detail",
+        groupName: "template.createProjectQuestion.projectType.createGroup.m365Apps",
+        icon: "$(file)",
+      },
+      {
         id: "graph-connector-type",
         label: "template.createProjectQuestion.createGraphConnector.label",
         detail: "template.createProjectQuestion.createGraphConnector.detail",
@@ -65,5 +72,6 @@ export const rootNode = {
     { node: "graphConnectorNode", condition: { equals: "graph-connector-type" } },
     { node: "teamsNode", condition: { equals: "teams-agent-and-app-type" } },
     { node: "officeAddinNode", condition: { equals: "office-meta-os-type" } },
+    { node: "blankNode", condition: { equals: "blank-app-type" } },
   ],
 };

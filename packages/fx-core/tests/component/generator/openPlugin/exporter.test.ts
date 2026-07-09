@@ -1,11 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { assert, expect } from "chai";
 import fs from "fs-extra";
 import * as os from "os";
 import * as path from "path";
 import { exportOpenPlugin } from "../../../../src/component/generator/openPlugin/exporter";
+import { assert, chai } from "vitest";
 
 const ATK_EXTENSION_KEY = "x-microsoft-365-agents-toolkit";
 
@@ -94,21 +94,21 @@ describe("openPlugin.exportOpenPlugin", () => {
       string,
       any
     >;
-    expect(plugin.name).to.equal("demo-plugin");
-    expect(plugin.version).to.equal("1.2.3");
-    expect(plugin.author).to.deep.equal({ name: "Jane Doe", url: "https://example.com" });
-    expect(plugin.homepage).to.equal("https://example.com");
+    chai.expect(plugin.name).to.equal("demo-plugin");
+    chai.expect(plugin.version).to.equal("1.2.3");
+    chai.expect(plugin.author).to.deep.equal({ name: "Jane Doe", url: "https://example.com" });
+    chai.expect(plugin.homepage).to.equal("https://example.com");
     const ext = plugin[ATK_EXTENSION_KEY];
-    expect(ext).to.exist;
-    expect(ext.manifestVersion).to.equal("devPreview");
-    expect(ext.id).to.equal("12345678-1234-1234-1234-123456789abc");
-    expect(ext.packageName).to.equal("com.example.demo-plugin");
-    expect(ext.accentColor).to.equal("#4A90D9");
-    expect(ext.developer.privacyUrl).to.equal("https://example.com/privacy");
-    expect(ext.developer.termsOfUseUrl).to.equal("https://example.com/terms");
-    expect(ext.name.full).to.equal("Demo Plugin");
-    expect(ext.description.full).to.equal("a longer description");
-    expect(ext.agentConnectors.web.authorization).to.deep.equal({
+    chai.expect(ext).to.exist;
+    chai.expect(ext.manifestVersion).to.equal("devPreview");
+    chai.expect(ext.id).to.equal("12345678-1234-1234-1234-123456789abc");
+    chai.expect(ext.packageName).to.equal("com.example.demo-plugin");
+    chai.expect(ext.accentColor).to.equal("#4A90D9");
+    chai.expect(ext.developer.privacyUrl).to.equal("https://example.com/privacy");
+    chai.expect(ext.developer.termsOfUseUrl).to.equal("https://example.com/terms");
+    chai.expect(ext.name.full).to.equal("Demo Plugin");
+    chai.expect(ext.description.full).to.equal("a longer description");
+    chai.expect(ext.agentConnectors.web.authorization).to.deep.equal({
       type: "OAuthPluginVault",
       referenceId: "demo-plugin/web",
     });
@@ -118,12 +118,12 @@ describe("openPlugin.exportOpenPlugin", () => {
     const res = await exportOpenPlugin({ path: projectDir, output: outDir });
     if (res.isErr()) throw new Error(res.error.message);
     const mcp = (await fs.readJSON(path.join(outDir, ".mcp.json"))) as Record<string, any>;
-    expect(mcp.mcpServers.web).to.deep.equal({
+    chai.expect(mcp.mcpServers.web).to.deep.equal({
       type: "http",
       url: "https://web.example.com/api",
     });
-    expect(mcp.mcpServers.stdioOnly).to.be.undefined;
-    expect(res.value.warnings.some((w) => w.includes("stdioOnly"))).to.equal(true);
+    chai.expect(mcp.mcpServers.stdioOnly).to.be.undefined;
+    chai.expect(res.value.warnings.some((w) => w.includes("stdioOnly"))).to.equal(true);
   });
 
   it("copies skill folders, commands, and icons", async () => {
@@ -136,7 +136,7 @@ describe("openPlugin.exportOpenPlugin", () => {
       "color.png",
       "outline.png",
     ]) {
-      expect(await fs.pathExists(path.join(outDir, rel)), `missing ${rel}`).to.equal(true);
+      chai.expect(await fs.pathExists(path.join(outDir, rel)), `missing ${rel}`).to.equal(true);
     }
   });
 
@@ -147,8 +147,10 @@ describe("openPlugin.exportOpenPlugin", () => {
       manifestKind: "claude-plugin",
     });
     if (res.isErr()) throw new Error(res.error.message);
-    expect(await fs.pathExists(path.join(outDir, ".claude-plugin", "plugin.json"))).to.equal(true);
-    expect(await fs.pathExists(path.join(outDir, ".plugin", "plugin.json"))).to.equal(false);
+    chai
+      .expect(await fs.pathExists(path.join(outDir, ".claude-plugin", "plugin.json")))
+      .to.equal(true);
+    chai.expect(await fs.pathExists(path.join(outDir, ".plugin", "plugin.json"))).to.equal(false);
   });
 
   it("supports --manifest-kind cursor-plugin", async () => {
@@ -158,7 +160,9 @@ describe("openPlugin.exportOpenPlugin", () => {
       manifestKind: "cursor-plugin",
     });
     if (res.isErr()) throw new Error(res.error.message);
-    expect(await fs.pathExists(path.join(outDir, ".cursor-plugin", "plugin.json"))).to.equal(true);
+    chai
+      .expect(await fs.pathExists(path.join(outDir, ".cursor-plugin", "plugin.json")))
+      .to.equal(true);
   });
 
   it("returns ManifestNotFound when appPackage/manifest.json is missing", async () => {

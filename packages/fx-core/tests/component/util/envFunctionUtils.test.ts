@@ -1,7 +1,5 @@
-import { assert } from "chai";
 import fs from "fs-extra";
 import mockedEnv, { RestoreFn } from "mocked-env";
-import sinon from "sinon";
 import { setTools } from "../../../src/common/globalVars";
 import { MockTools } from "../../core/utils";
 import {
@@ -12,11 +10,12 @@ import { MockedLogProvider, MockedTelemetryReporter } from "../../plugins/soluti
 import { FileNotFoundError } from "../../../src/error";
 import { FeatureFlagName } from "../../../src/common/featureFlags";
 import { Platform } from "@microsoft/teamsfx-api";
+import { assert, vi } from "vitest";
 
 describe("expandVariableWithFunction", async () => {
   const tools = new MockTools();
   setTools(tools);
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   const context = {
     logProvider: new MockedLogProvider(),
     telemetryReporter: new MockedTelemetryReporter(),
@@ -26,7 +25,7 @@ describe("expandVariableWithFunction", async () => {
 
   let mockedEnvRestore: RestoreFn | undefined;
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     if (mockedEnvRestore) {
       mockedEnvRestore();
     }
@@ -53,8 +52,8 @@ describe("expandVariableWithFunction", async () => {
     });
     const content =
       "description:\"$[file('testfile1.md')]\",description2:\"$[file( file( 'C://testfile2.txt' ))] $[file(${{FILE_PATH}})]\"";
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(fs, "readFile").callsFake((file: number | fs.PathLike) => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockImplementation((file: number | fs.PathLike) => {
       if (file.toString().endsWith("testfile1.txt")) {
         return Promise.resolve("description in ${{TEST_ENV}}" as any);
       } else if (file.toString().endsWith("testfile2.txt")) {
@@ -158,8 +157,8 @@ describe("expandVariableWithFunction", async () => {
     });
     const content = "description:\"$[ file('testfile1.txt')]\"C://test";
 
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(fs, "readFile").callsFake((file: number | fs.PathLike) => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockImplementation((file: number | fs.PathLike) => {
       throw new Error("not support " + file);
     });
 
@@ -195,8 +194,8 @@ describe("expandVariableWithFunction", async () => {
     });
     const content = "description:\"$[ file(file('testfile1.txt'))]\"C://test";
 
-    sandbox.stub(fs, "pathExists").resolves(true);
-    sandbox.stub(fs, "readFile").callsFake((file: number | fs.PathLike) => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockImplementation((file: number | fs.PathLike) => {
       throw new Error("not support " + file);
     });
 
@@ -233,7 +232,7 @@ describe("expandVariableWithFunction", async () => {
     });
     const content = "description:\"$[ file('testfile1.txt')]\"C://test";
 
-    sandbox.stub(fs, "pathExists").resolves(false);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
 
     const res = await expandVariableWithFunction(
       content,

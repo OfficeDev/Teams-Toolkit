@@ -2,17 +2,16 @@
 // Licensed under the MIT license.
 
 import fs from "fs-extra";
-import sinon from "sinon";
 import { expect } from "./utils";
-
-const sandbox = sinon.createSandbox();
+import { vi } from "vitest";
+const sandbox = vi;
 
 beforeEach(() => {
-  sandbox.stub(fs, "readJsonSync").returns({ version: "2.0.0" });
+  vi.spyOn(fs, "readJsonSync").mockReturnValue({ version: "2.0.0" });
 });
 
 afterEach(() => {
-  sandbox.restore();
+  vi.restoreAllMocks();
 });
 
 it("getVersion", async () => {

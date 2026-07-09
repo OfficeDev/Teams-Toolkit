@@ -15,28 +15,27 @@ import {
   TeamsAppManifest,
   TextInputQuestion,
 } from "@microsoft/teamsfx-api";
-import { assert } from "chai";
 import fs from "fs-extra";
 import path from "path";
-import * as sinon from "sinon";
+import { assert, vi } from "vitest";
 import { manifestUtils } from "../../src";
 import { GraphClient } from "../../src/client/graphClient";
-import { getLocalizedString } from "../../src/common/localizeUtils";
 import { setTools, TOOLS } from "../../src/common/globalVars";
+import { getLocalizedString } from "../../src/common/localizeUtils";
 import { environmentNameManager } from "../../src/core/environmentName";
 import { QuestionNames } from "../../src/question/constants";
 import {
   addAuthActionQuestion,
+  addSkillQuestionNode,
   apiFromPluginManifestQuestion,
   apiSpecFromPluginManifestQuestion,
   authNameQuestion,
   kiotaRegenerateQuestion,
   oauthAuthorizationUrlQuestion,
   oauthRefreshUrlQuestion,
-  oauthScopeQuestion,
   oauthScopeCustomQuestion,
+  oauthScopeQuestion,
   oauthTokenUrlQuestion,
-  addSkillQuestionNode,
   selectDeclarativeAgentManifestQuestion,
   selectTargetEnvQuestion,
   setSensitivityLabelNode,
@@ -80,10 +79,10 @@ describe("kiotaRegenerate question", () => {
 });
 
 describe("addAuthActionQuestion", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("apiSpecFromPluginManifestQuestion", async () => {
@@ -91,7 +90,7 @@ describe("addAuthActionQuestion", () => {
       platform: Platform.VSCode,
       [QuestionNames.PluginManifestFilePath]: "test",
     };
-    sandbox.stub(fs, "readJson").resolves({
+    vi.spyOn(fs, "readJson").mockResolvedValue({
       schema_version: "1.0",
       name_for_human: "test",
       description_for_human: "test",
@@ -136,7 +135,7 @@ describe("addAuthActionQuestion", () => {
       platform: Platform.VSCode,
       [QuestionNames.PluginManifestFilePath]: "test",
     };
-    sandbox.stub(fs, "readJson").resolves({
+    vi.spyOn(fs, "readJson").mockResolvedValue({
       schema_version: "1.0",
       name_for_human: "test",
       description_for_human: "test",
@@ -164,7 +163,7 @@ describe("addAuthActionQuestion", () => {
     const inputs = {
       platform: Platform.VSCode,
     };
-    sandbox.stub(fs, "readJson").resolves({
+    vi.spyOn(fs, "readJson").mockResolvedValue({
       schema_version: "1.0",
       name_for_human: "test",
       description_for_human: "test",
@@ -193,7 +192,7 @@ describe("addAuthActionQuestion", () => {
       platform: Platform.VSCode,
       [QuestionNames.PluginManifestFilePath]: "test",
     };
-    sandbox.stub(fs, "readJson").resolves({
+    vi.spyOn(fs, "readJson").mockResolvedValue({
       schema_version: "1.0",
       name_for_human: "test",
       description_for_human: "test",
@@ -239,7 +238,7 @@ describe("addAuthActionQuestion", () => {
       [QuestionNames.PluginManifestFilePath]: "test",
       [QuestionNames.ApiSpecLocation]: "spec.yaml",
     };
-    sandbox.stub(fs, "readJson").resolves({
+    vi.spyOn(fs, "readJson").mockResolvedValue({
       schema_version: "1.0",
       name_for_human: "test",
       description_for_human: "test",
@@ -285,7 +284,7 @@ describe("addAuthActionQuestion", () => {
       [QuestionNames.PluginManifestFilePath]: "test",
       [QuestionNames.ApiSpecLocation]: "spec.yaml",
     };
-    sandbox.stub(fs, "readJson").resolves({
+    vi.spyOn(fs, "readJson").mockResolvedValue({
       schema_version: "1.0",
       name_for_human: "test",
       description_for_human: "test",
@@ -331,7 +330,7 @@ describe("addAuthActionQuestion", () => {
       [QuestionNames.PluginManifestFilePath]: "test",
       [QuestionNames.ApiSpecLocation]: "spec.yaml",
     };
-    sandbox.stub(fs, "readJson").resolves({
+    vi.spyOn(fs, "readJson").mockResolvedValue({
       schema_version: "1.0",
       name_for_human: "test",
       description_for_human: "test",
@@ -359,7 +358,7 @@ describe("addAuthActionQuestion", () => {
     const inputs = {
       platform: Platform.VSCode,
     };
-    sandbox.stub(fs, "readJson").resolves({
+    vi.spyOn(fs, "readJson").mockResolvedValue({
       schema_version: "1.0",
       name_for_human: "test",
       description_for_human: "test",
@@ -599,7 +598,7 @@ describe("addAuthActionQuestion", () => {
 });
 
 describe("setSensitivityLabelNode", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   setTools({
     tokenProvider: {
       m365TokenProvider: {
@@ -610,7 +609,7 @@ describe("setSensitivityLabelNode", () => {
     },
   } as any);
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("should have correct structure", () => {
@@ -629,9 +628,11 @@ describe("setSensitivityLabelNode", () => {
       { id: "1", displayName: "Label1" },
       { id: "2", displayName: "Label2" },
     ];
-    sandbox.stub(GraphClient.prototype, "listSensitivityLabels").resolves(ok(mockLabels));
+    vi.spyOn(GraphClient.prototype, "listSensitivityLabels").mockResolvedValue(ok(mockLabels));
     // mock token provider
-    sandbox.stub(TOOLS.tokenProvider.m365TokenProvider, "getAccessToken").resolves(ok("mockToken"));
+    vi.spyOn(TOOLS.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
+      ok("mockToken")
+    );
     const options = await sensitivityLabelQuestion?.dynamicOptions?.(inputs);
     assert.equal(options?.length, 2);
     assert.equal((options?.[0] as any).id, "1");
@@ -645,9 +646,11 @@ describe("setSensitivityLabelNode", () => {
       platform: Platform.VSCode,
     };
     const mockLabels = [{}, {}] as unknown as SensitivityLabel[];
-    sandbox.stub(GraphClient.prototype, "listSensitivityLabels").resolves(ok(mockLabels));
+    vi.spyOn(GraphClient.prototype, "listSensitivityLabels").mockResolvedValue(ok(mockLabels));
     // mock token provider
-    sandbox.stub(TOOLS.tokenProvider.m365TokenProvider, "getAccessToken").resolves(ok("mockToken"));
+    vi.spyOn(TOOLS.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
+      ok("mockToken")
+    );
     const options = await sensitivityLabelQuestion?.dynamicOptions?.(inputs);
     assert.equal(options?.length, 2);
     assert.equal((options?.[0] as any).id, "");
@@ -660,11 +663,13 @@ describe("setSensitivityLabelNode", () => {
     const inputs: Inputs = {
       platform: Platform.VSCode,
     };
-    sandbox
-      .stub(GraphClient.prototype, "listSensitivityLabels")
-      .throws(new Error("Graph API error"));
+    vi.spyOn(GraphClient.prototype, "listSensitivityLabels").mockImplementation(() => {
+      throw new Error("Graph API error");
+    });
     // mock token provider
-    sandbox.stub(TOOLS.tokenProvider.m365TokenProvider, "getAccessToken").resolves(ok("mockToken"));
+    vi.spyOn(TOOLS.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
+      ok("mockToken")
+    );
     let exception = undefined;
     try {
       await sensitivityLabelQuestion?.dynamicOptions?.(inputs);
@@ -680,14 +685,14 @@ describe("setSensitivityLabelNode", () => {
     const inputs: Inputs = {
       platform: Platform.VSCode,
     };
-    sandbox
-      .stub(TOOLS.tokenProvider.m365TokenProvider, "getAccessToken")
-      .resolves(err(new SystemError("TestSource", "TestError", "Test error message")));
+    vi.spyOn(TOOLS.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
+      err(new SystemError("TestSource", "TestError", "Test error message"))
+    );
     const mockLabels = [
       { id: "1", displayName: "Label1" },
       { id: "2", displayName: "Label2" },
     ];
-    sandbox.stub(GraphClient.prototype, "listSensitivityLabels").resolves(ok(mockLabels));
+    vi.spyOn(GraphClient.prototype, "listSensitivityLabels").mockResolvedValue(ok(mockLabels));
 
     let exception = undefined;
     try {
@@ -704,7 +709,7 @@ describe("setSensitivityLabelNode", () => {
     const inputs: Inputs = {
       platform: Platform.VSCode,
     };
-    sandbox.stub(GraphClient.prototype, "listSensitivityLabels").resolves(
+    vi.spyOn(GraphClient.prototype, "listSensitivityLabels").mockResolvedValue(
       err(
         new SystemError({
           name: "TestError",
@@ -737,8 +742,8 @@ describe("setSensitivityLabelNode", () => {
       platform: Platform.VSCode,
       projectPath: "./testProject",
     };
-    sandbox.stub(fs, "pathExistsSync").returns(true);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(
+    vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(
       ok({
         copilotAgents: {
           declarativeAgents: [
@@ -778,8 +783,8 @@ describe("setSensitivityLabelNode", () => {
       platform: Platform.VSCode,
       projectPath: "./testProject",
     };
-    sandbox.stub(fs, "pathExistsSync").returns(true);
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(ok({} as any));
+    vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok({} as any));
     const question = selectDeclarativeAgentManifestQuestion() as SingleFileQuestion;
     const defaultPath = await ((question?.default as any)(inputs) as Promise<string | undefined>);
     assert.isUndefined(defaultPath);
@@ -790,10 +795,10 @@ describe("setSensitivityLabelNode", () => {
       platform: Platform.VSCode,
       projectPath: "./testProject",
     };
-    sandbox.stub(fs, "pathExistsSync").returns(true);
-    sandbox
-      .stub(manifestUtils, "_readAppManifest")
-      .resolves(err(new SystemError("TestError", "Test error message", "TestSource")));
+    vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(
+      err(new SystemError("TestError", "Test error message", "TestSource"))
+    );
     const question = selectDeclarativeAgentManifestQuestion() as SingleFileQuestion;
     const defaultPath = await ((question?.default as any)(inputs) as Promise<string | undefined>);
     assert.isUndefined(defaultPath);
@@ -804,13 +809,13 @@ describe("setSensitivityLabelNode", () => {
       platform: Platform.VSCode,
       projectPath: "./testProject",
     };
-    sandbox.stub(fs, "pathExistsSync").callsFake((path: string) => {
+    vi.spyOn(fs, "pathExistsSync").mockImplementation((path: string) => {
       if (path.includes("manifest")) {
         return true;
       }
       return false;
     });
-    sandbox.stub(manifestUtils, "_readAppManifest").resolves(
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(
       ok({
         copilotAgents: {
           declarativeAgents: [
@@ -828,10 +833,10 @@ describe("setSensitivityLabelNode", () => {
 });
 
 describe("addSkillQuestionNode", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("should return a group node with 6 children", () => {
@@ -884,7 +889,7 @@ describe("addSkillQuestionNode", () => {
     const question = nameChild.data as TextInputQuestion;
     const validFunc = (question.validation as FuncValidation<string>).validFunc;
 
-    sandbox.stub(fs, "pathExistsSync").returns(true);
+    vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
     const inputs: Inputs = {
       platform: Platform.VSCode,
       projectPath: "/test/project",
@@ -909,7 +914,7 @@ describe("addSkillQuestionNode", () => {
     const question = nameChild.data as TextInputQuestion;
     const validFunc = (question.validation as FuncValidation<string>).validFunc;
 
-    const pathExistsStub = sandbox.stub(fs, "pathExistsSync").returns(false);
+    const pathExistsStub = vi.spyOn(fs, "pathExistsSync").mockReturnValue(false);
     const inputs: Inputs = {
       platform: Platform.VSCode,
       projectPath: "/test/project",
@@ -918,8 +923,8 @@ describe("addSkillQuestionNode", () => {
     const result = validFunc("my-skill", inputs);
     assert.isUndefined(result);
     // Verify it checked the correct path using custom manifest location
-    assert.isTrue(
-      pathExistsStub.calledWith(path.join("/test/project/custom", "skills", "my-skill"))
+    expect(pathExistsStub).toHaveBeenCalledWith(
+      path.join("/test/project/custom", "skills", "my-skill")
     );
   });
 

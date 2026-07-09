@@ -34,8 +34,10 @@ import { azureClientHelper } from "./azureClient";
 const MsResources = "Microsoft.Resources";
 const ResourceGroups = "resourceGroups";
 
+const createSubscriptionClient = (token: any) => new SubscriptionClient(token);
+
 export const resourceGroupHelperDeps = {
-  createSubscriptionClient: (token: any) => new SubscriptionClient(token),
+  createSubscriptionClient,
 };
 
 export type ResourceGroupInfo = {

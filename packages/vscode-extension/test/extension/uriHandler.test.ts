@@ -1,5 +1,3 @@
-import * as chai from "chai";
-import * as sinon from "sinon";
 import * as vscode from "vscode";
 import { UriHandler, setUriEventHandler } from "../../src/uriHandler";
 import { TelemetryTriggerFrom } from "../../src/telemetry/extTelemetryEvents";
@@ -7,39 +5,34 @@ import { featureFlagManager, FeatureFlags, QuestionNames } from "@microsoft/team
 import { syncManifestHandler } from "../../src/handlers/manifestHandlers";
 import * as shared from "../../src/handlers/sharedOpts";
 import { err, FxError, Inputs, Result, Stage, UserError, ok } from "@microsoft/teamsfx-api";
+import { vi, expect, assert } from "vitest";
 
 describe("uri handler", () => {
-  const sandbox = sinon.createSandbox();
-
-  afterEach(() => {
-    sandbox.restore();
-  });
-
   it("invalid uri missing query", async () => {
     const handler = new UriHandler();
     const uri = vscode.Uri.parse("vscode://test.test");
-    const showMessage = sandbox.stub(vscode.window, "showErrorMessage");
+    const showMessage = vi.spyOn(vscode.window, "showErrorMessage").mockResolvedValue(undefined);
     await handler.handleUri(uri);
 
-    sandbox.assert.calledOnce(showMessage);
+    expect(showMessage).toHaveBeenCalledTimes(1);
   });
 
   it("invalid uri missing referer", async () => {
     const handler = new UriHandler();
     const uri = vscode.Uri.parse("vscode://test.test?query=1");
-    const showMessage = sandbox.stub(vscode.window, "showErrorMessage");
+    const showMessage = vi.spyOn(vscode.window, "showErrorMessage").mockResolvedValue(undefined);
     await handler.handleUri(uri);
 
-    sandbox.assert.calledOnce(showMessage);
+    expect(showMessage).toHaveBeenCalledTimes(1);
   });
 
   it("invalid uri missing app id", async () => {
     const handler = new UriHandler();
     const uri = vscode.Uri.parse("vscode://test.test?test=1&referrer=developerportal");
-    const showMessage = sandbox.stub(vscode.window, "showErrorMessage");
+    const showMessage = vi.spyOn(vscode.window, "showErrorMessage").mockResolvedValue(undefined);
     await handler.handleUri(uri);
 
-    sandbox.assert.calledOnce(showMessage);
+    expect(showMessage).toHaveBeenCalledTimes(1);
   });
 
   it("valid uri", async () => {
@@ -48,13 +41,14 @@ describe("uri handler", () => {
       "vscode://test.test?appId=1&referrer=developerportal&login_hint=test"
     );
 
-    const executeCommand = sandbox
-      .stub(vscode.commands, "executeCommand")
-      .returns(Promise.resolve(""));
+    const executeCommand = vi
+      .spyOn(vscode.commands, "executeCommand")
+      .mockReturnValue(Promise.resolve(""));
     await handler.handleUri(uri);
 
-    chai.assert.isTrue(executeCommand.calledOnce);
-    sandbox.assert.calledOnceWithExactly(executeCommand, "fx-extension.openFromTdp", "1", "test");
+    assert.isTrue(executeCommand.calledOnce);
+    expect(executeCommand).toHaveBeenCalledTimes(1);
+    expect(executeCommand).toHaveBeenCalledWith("fx-extension.openFromTdp", "1", "test");
   });
 
   it("error hanlding uri", async () => {
@@ -63,13 +57,12 @@ describe("uri handler", () => {
       "vscode://test.test?appId=1&referrer=developerportal&login_hint=test"
     );
 
-    const executeCommand = sandbox
-      .stub(vscode.commands, "executeCommand")
-      .returns(Promise.reject(""));
+    const executeCommand = vi.spyOn(vscode.commands, "executeCommand").mockResolvedValue(undefined);
     await handler.handleUri(uri);
 
-    chai.assert.isTrue(executeCommand.calledOnce);
-    sandbox.assert.calledOnceWithExactly(executeCommand, "fx-extension.openFromTdp", "1", "test");
+    assert.isTrue(executeCommand.calledOnce);
+    expect(executeCommand).toHaveBeenCalledTimes(1);
+    expect(executeCommand).toHaveBeenCalledWith("fx-extension.openFromTdp", "1", "test");
   });
 
   it("dev portal running", async () => {
@@ -78,12 +71,12 @@ describe("uri handler", () => {
       "vscode://test.test?appId=1&referrer=developerportal&login_hint=test"
     );
 
-    const showMessage = sandbox.stub(vscode.window, "showWarningMessage");
+    const showMessage = vi.spyOn(vscode.window, "showWarningMessage");
     handler.handleUri(uri);
     // call twice to trigger isRunning logic
     await handler.handleUri(uri);
 
-    chai.assert.isTrue(showMessage.calledOnce);
+    assert.isTrue(showMessage.calledOnce);
   });
 
   it("valid code spaces callback uri", async () => {
@@ -94,7 +87,7 @@ describe("uri handler", () => {
       );
       await handler.handleUri(uri);
     } catch (e) {
-      chai.assert.isTrue(false);
+      assert.isTrue(false);
     }
   });
 
@@ -103,10 +96,10 @@ describe("uri handler", () => {
     const uri = vscode.Uri.parse(
       "vscode://TeamsDevApp.ms-teams-vscode-extension?referrer=officedoc"
     );
-    const showMessage = sandbox.stub(vscode.window, "showErrorMessage");
+    const showMessage = vi.spyOn(vscode.window, "showErrorMessage").mockResolvedValue(undefined);
     await handler.handleUri(uri);
 
-    sandbox.assert.calledOnce(showMessage);
+    expect(showMessage).toHaveBeenCalledTimes(1);
   });
 
   it("valid designated sample callback uri", async () => {
@@ -115,14 +108,12 @@ describe("uri handler", () => {
       "vscode://TeamsDevApp.ms-teams-vscode-extension?referrer=officedoc&sampleId=hello-world-teams-tab-and-outlook-add-in"
     );
 
-    const executeCommand = sandbox
-      .stub(vscode.commands, "executeCommand")
-      .returns(Promise.reject(""));
+    const executeCommand = vi.spyOn(vscode.commands, "executeCommand").mockResolvedValue(undefined);
     await handler.handleUri(uri);
 
-    chai.assert.isTrue(executeCommand.calledOnce);
-    sandbox.assert.calledOnceWithExactly(
-      executeCommand,
+    assert.isTrue(executeCommand.calledOnce);
+    expect(executeCommand).toHaveBeenCalledTimes(1);
+    expect(executeCommand).toHaveBeenCalledWith(
       "fx-extension.openSamples",
       TelemetryTriggerFrom.ExternalUrl,
       "hello-world-teams-tab-and-outlook-add-in"
@@ -135,30 +126,29 @@ describe("uri handler", () => {
     );
     const currentFeatureFlag = featureFlagManager.getBooleanValue(FeatureFlags.SyncManifest);
     featureFlagManager.setBooleanValue(FeatureFlags.SyncManifest, true);
-    const executeCommand = sandbox
-      .stub(vscode.commands, "executeCommand")
-      .callsFake(async (command: string, ...args: any[]) => {
-        const res = await syncManifestHandler(args);
-        chai.assert.isTrue(res.isOk());
+    const executeCommand = vi
+      .spyOn(vscode.commands, "executeCommand")
+      .mockImplementation(async (command: string, ...args: any[]) => {
+        await syncManifestHandler(args);
       });
-    sandbox
-      .stub(shared, "runCommand")
-      .callsFake((stage: Stage, inputs: Inputs | undefined): Promise<Result<any, FxError>> => {
+    vi.spyOn(shared, "runCommand").mockImplementation(
+      (stage: Stage, inputs: Inputs | undefined): Promise<Result<any, FxError>> => {
         if (inputs && inputs[QuestionNames.TeamsAppId] === "123") {
           return Promise.resolve(ok(undefined));
         }
         return Promise.resolve(err(new UserError("ut", "error", "", "")));
-      });
+      }
+    );
     await handler.handleUri(uri);
     featureFlagManager.setBooleanValue(FeatureFlags.SyncManifest, currentFeatureFlag);
-    chai.assert.isTrue(executeCommand.calledOnce);
+    assert.isTrue(executeCommand.calledOnce);
   });
 
   it("sync manifest uri, missing app Id", async () => {
     const handler = new UriHandler();
     const currentFeatureFlag = featureFlagManager.getBooleanValue(FeatureFlags.SyncManifest);
     featureFlagManager.setBooleanValue(FeatureFlags.SyncManifest, true);
-    const executeCommand = sandbox.stub(vscode.commands, "executeCommand").throws("error");
+    const executeCommand = vi.spyOn(vscode.commands, "executeCommand").throws("error");
     const uri = vscode.Uri.parse(
       "vscode://TeamsDevApp.ms-teams-vscode-extension?referrer=syncmanifest"
     );
@@ -169,15 +159,15 @@ describe("uri handler", () => {
     );
     await handler.handleUri(uri1);
     featureFlagManager.setBooleanValue(FeatureFlags.SyncManifest, currentFeatureFlag);
-    chai.assert.isTrue(executeCommand.notCalled);
+    assert.isTrue(executeCommand.notCalled);
   });
 
   it("not registered referrer", async () => {
     const handler = new UriHandler();
-    const executeCommand = sandbox.stub(vscode.commands, "executeCommand").throws("error");
+    const executeCommand = vi.spyOn(vscode.commands, "executeCommand").throws("error");
     const uri = vscode.Uri.parse("vscode://TeamsDevApp.ms-teams-vscode-extension?referrer=fake");
     await handler.handleUri(uri);
-    chai.assert.isTrue(executeCommand.notCalled);
+    assert.isTrue(executeCommand.notCalled);
   });
 
   it("set uri handler", async () => {

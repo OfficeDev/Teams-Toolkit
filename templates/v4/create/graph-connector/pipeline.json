@@ -1,0 +1,9 @@
+{
+  "pipeline": "default",
+  "comment": "Standalone Graph connector: static TypeScript template rendered as a language-partitioned v4 package. No post-render mutation step is needed.",
+  "steps": [
+    {
+      "step": "require-empty-target"
+    }
+  ]
+}

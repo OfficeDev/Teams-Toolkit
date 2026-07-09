@@ -2,18 +2,14 @@
 // Licensed under the MIT license.
 
 import { ConfigFolderName, FxError, Result, UserInteraction, ok } from "@microsoft/teamsfx-api";
-import * as chai from "chai";
-import chaiAsPromised from "chai-as-promised";
 import fs from "fs-extra";
 import { asn1, md, pki } from "node-forge";
 import * as path from "path";
-import * as sinon from "sinon";
+import { chai, vi } from "vitest";
 import {
   LocalCertificateManager,
   localCertificateManagerDeps,
 } from "../../../src/component/local/localCertificateManager";
-
-chai.use(chaiAsPromised);
 
 const lightweightCertPair = createLightweightCertPair();
 
@@ -35,35 +31,36 @@ describe("certificate", () => {
 
     beforeEach(() => {
       files = {};
-      sinon.restore();
-      sinon
-        .stub(LocalCertificateManager.prototype, "generateCertificate")
-        .callsFake(async (certFile: string, keyFile: string) => {
+      vi.restoreAllMocks();
+      vi.spyOn(LocalCertificateManager.prototype, "generateCertificate").mockImplementation(
+        async (certFile: string, keyFile: string) => {
           files[path.resolve(certFile)] = lightweightCertPair.certPem;
           files[path.resolve(keyFile)] = lightweightCertPair.keyPem;
           return lightweightCertPair.thumbprint;
-        });
-      sinon.stub(localCertificateManagerDeps, "ensureDir").callsFake(async (dir: string) => {
+        }
+      );
+      vi.spyOn(localCertificateManagerDeps, "ensureDir").mockImplementation(async (dir: string) => {
         return Promise.resolve();
       });
-      sinon.stub(localCertificateManagerDeps, "pathExists").callsFake(async (file: string) => {
-        return Promise.resolve(files[path.resolve(file)] !== undefined);
-      });
-      sinon
-        .stub(localCertificateManagerDeps, "readFile")
-        .callsFake(async (file: fs.PathLike | number, options?: any) => {
+      vi.spyOn(localCertificateManagerDeps, "pathExists").mockImplementation(
+        async (file: string) => {
+          return Promise.resolve(files[path.resolve(file)] !== undefined);
+        }
+      );
+      vi.spyOn(localCertificateManagerDeps, "readFile").mockImplementation(
+        async (file: fs.PathLike | number, options?: any) => {
           return Promise.resolve(files[path.resolve(file as string)]);
-        });
-      sinon
-        .stub(localCertificateManagerDeps, "writeFile")
-        .callsFake(async (file: fs.PathLike | number, data: any, options?: any) => {
+        }
+      );
+      vi.spyOn(localCertificateManagerDeps, "writeFile").mockImplementation(
+        async (file: fs.PathLike | number, data: any, options?: any) => {
           files[path.resolve(file as string)] = data;
           return Promise.resolve();
-        });
-      sinon.stub(localCertificateManagerDeps, "homedir").callsFake(() => fakeHomeDir);
-      sinon
-        .stub(localCertificateManagerDeps, "execPowerShell")
-        .callsFake(async (command: string) => {
+        }
+      );
+      vi.spyOn(localCertificateManagerDeps, "homedir").mockImplementation(() => fakeHomeDir);
+      vi.spyOn(localCertificateManagerDeps, "execPowerShell").mockImplementation(
+        async (command: string) => {
           if (command.startsWith("Get-ChildItem")) {
             // Command: `Get-ChildItem -Path Cert:\\CurrentUser\\Root | Where-Object { $_.Thumbprint -match '${thumbprint}' }`
             return command.split("'")[1];
@@ -73,12 +70,13 @@ describe("certificate", () => {
           } else {
             return "";
           }
-        });
+        }
+      );
       certManager = new LocalCertificateManager();
     });
 
     afterEach(() => {
-      sinon.restore();
+      vi.restoreAllMocks();
     });
 
     [
@@ -86,7 +84,7 @@ describe("certificate", () => {
       { osType: "Linux", isTrusted: undefined },
     ].forEach((data) => {
       it(`happy path ${data.osType}`, async () => {
-        sinon.stub(localCertificateManagerDeps, "osType").returns(data.osType);
+        vi.spyOn(localCertificateManagerDeps, "osType").mockReturnValue(data.osType);
         const res = await certManager.setupCertificate(true);
 
         chai.assert.equal(
@@ -117,7 +115,7 @@ describe("certificate", () => {
       { osType: "Linux", isTrusted: undefined },
     ].forEach((data) => {
       it(`skip trust ${data.osType}`, async () => {
-        sinon.stub(localCertificateManagerDeps, "osType").returns(data.osType);
+        vi.spyOn(localCertificateManagerDeps, "osType").mockReturnValue(data.osType);
         const res = await certManager.setupCertificate(false);
 
         const certContent = files[path.resolve(expectedCertFile)];
@@ -139,7 +137,7 @@ describe("certificate", () => {
       { osType: "Linux", isTrusted: undefined },
     ].forEach((data) => {
       it(`existing verified cert ${data.osType}`, async () => {
-        sinon.stub(localCertificateManagerDeps, "osType").returns(data.osType);
+        vi.spyOn(localCertificateManagerDeps, "osType").mockReturnValue(data.osType);
         let res = await certManager.setupCertificate(true);
         const certContent1 = files[path.resolve(expectedCertFile)];
         chai.assert.isDefined(certContent1);
@@ -164,51 +162,55 @@ describe("certificate", () => {
 
     beforeEach(() => {
       files = {};
-      sinon.restore();
-      sinon
-        .stub(LocalCertificateManager.prototype, "generateCertificate")
-        .callsFake(async (certFile: string, keyFile: string) => {
+      vi.restoreAllMocks();
+      vi.spyOn(LocalCertificateManager.prototype, "generateCertificate").mockImplementation(
+        async (certFile: string, keyFile: string) => {
           files[path.resolve(certFile)] = lightweightCertPair.certPem;
           files[path.resolve(keyFile)] = lightweightCertPair.keyPem;
           return lightweightCertPair.thumbprint;
-        });
-      sinon.stub(localCertificateManagerDeps, "osType").returns("Windows_NT");
-      sinon.stub(localCertificateManagerDeps, "ensureDir").resolves();
-      sinon.stub(localCertificateManagerDeps, "pathExists").callsFake(async (file: string) => {
-        return Promise.resolve(files[path.resolve(file)] !== undefined);
-      });
-      sinon
-        .stub(localCertificateManagerDeps, "readFile")
-        .callsFake(async (file: fs.PathLike | number, options?: any) => {
+        }
+      );
+      vi.spyOn(localCertificateManagerDeps, "osType").mockReturnValue("Windows_NT");
+      vi.spyOn(localCertificateManagerDeps, "ensureDir").mockResolvedValue();
+      vi.spyOn(localCertificateManagerDeps, "pathExists").mockImplementation(
+        async (file: string) => {
+          return Promise.resolve(files[path.resolve(file)] !== undefined);
+        }
+      );
+      vi.spyOn(localCertificateManagerDeps, "readFile").mockImplementation(
+        async (file: fs.PathLike | number, options?: any) => {
           return Promise.resolve(files[path.resolve(file as string)]);
-        });
-      sinon
-        .stub(localCertificateManagerDeps, "writeFile")
-        .callsFake(async (file: fs.PathLike | number, data: any, options?: any) => {
+        }
+      );
+      vi.spyOn(localCertificateManagerDeps, "writeFile").mockImplementation(
+        async (file: fs.PathLike | number, data: any, options?: any) => {
           files[path.resolve(file as string)] = data;
           return Promise.resolve();
-        });
-      sinon.stub(localCertificateManagerDeps, "homedir").callsFake(() => fakeHomeDir);
-      sinon.stub(localCertificateManagerDeps, "execPowerShell").rejects();
-      sinon.stub(localCertificateManagerDeps, "execShell").callsFake(async (command: string) => {
-        if (command.startsWith("certutil -user -verifystore")) {
-          // Command: `certutil -user -verifystore root ${thumbprint}`
-          return "Not Found";
-        } else if (command.startsWith("certutil -user -addstore")) {
-          // Command: `certutil -user -addstore root "${localCert.certPath}"`
-          return "addstore";
-        } else if (command.startsWith("certutil -user -repairstore")) {
-          // Command: `certutil -user -repairstore root ${thumbprint} "${certInfPath}"`
-          return "repairstore";
-        } else {
-          return "";
         }
-      });
+      );
+      vi.spyOn(localCertificateManagerDeps, "homedir").mockImplementation(() => fakeHomeDir);
+      vi.spyOn(localCertificateManagerDeps, "execPowerShell").mockRejectedValue();
+      vi.spyOn(localCertificateManagerDeps, "execShell").mockImplementation(
+        async (command: string) => {
+          if (command.startsWith("certutil -user -verifystore")) {
+            // Command: `certutil -user -verifystore root ${thumbprint}`
+            return "Not Found";
+          } else if (command.startsWith("certutil -user -addstore")) {
+            // Command: `certutil -user -addstore root "${localCert.certPath}"`
+            return "addstore";
+          } else if (command.startsWith("certutil -user -repairstore")) {
+            // Command: `certutil -user -repairstore root ${thumbprint} "${certInfPath}"`
+            return "repairstore";
+          } else {
+            return "";
+          }
+        }
+      );
       certManager = new LocalCertificateManager();
     });
 
     afterEach(() => {
-      sinon.restore();
+      vi.restoreAllMocks();
     });
 
     it(`happy path windows`, async () => {
@@ -243,15 +245,15 @@ describe("certificate", () => {
     let certManager: LocalCertificateManager;
 
     beforeEach(() => {
-      sinon.restore();
+      vi.restoreAllMocks();
     });
 
     afterEach(() => {
-      sinon.restore();
+      vi.restoreAllMocks();
     });
 
     it("waitForUserConfirm once", async () => {
-      sinon.stub(localCertificateManagerDeps, "localize").callsFake((key, ...params) => {
+      vi.spyOn(localCertificateManagerDeps, "localize").mockImplementation((key, ...params) => {
         if (key === "debug.install") {
           return "install";
         }
@@ -274,7 +276,7 @@ describe("certificate", () => {
     });
 
     it("waitForUserConfirm twice", async () => {
-      sinon.stub(localCertificateManagerDeps, "localize").callsFake((key, ...params) => {
+      vi.spyOn(localCertificateManagerDeps, "localize").mockImplementation((key, ...params) => {
         if (key === "debug.install") {
           return "install";
         } else if (key === "core.provision.learnMore") {
@@ -304,9 +306,8 @@ describe("certificate", () => {
     });
 
     it("trustCertificateWindows", async () => {
-      sinon
-        .stub(localCertificateManagerDeps, "execPowerShell")
-        .callsFake(async (command: string) => {
+      vi.spyOn(localCertificateManagerDeps, "execPowerShell").mockImplementation(
+        async (command: string) => {
           if (command.startsWith("(Get-ChildItem")) {
             // Command: `(Get-ChildItem -Path Cert:\\CurrentUser\\Root\\${thumbprint}).FriendlyName='${friendlyName}'`
             return "friendlyname";
@@ -316,7 +317,8 @@ describe("certificate", () => {
           } else {
             return "";
           }
-        });
+        }
+      );
       const certManager = new LocalCertificateManager();
       await (certManager as any).trustCertificateWindows(
         {
@@ -329,7 +331,7 @@ describe("certificate", () => {
     });
 
     it("trustCertificate error", async () => {
-      sinon.stub(localCertificateManagerDeps, "osType").returns("Windows_NT");
+      vi.spyOn(localCertificateManagerDeps, "osType").mockReturnValue("Windows_NT");
       const certManager = new LocalCertificateManager();
       (certManager as any).waitForUserConfirm = function (): Promise<boolean> {
         return Promise.reject(new Error("test"));
@@ -349,37 +351,42 @@ describe("certificate", () => {
       const privateKey = pki.privateKeyFromPem(lightweightCertPair.keyPem);
       const publicKey = pki.certificateFromPem(lightweightCertPair.certPem).publicKey;
 
-      sinon
-        .stub(pki.rsa, "generateKeyPair")
-        .returns({ privateKey, publicKey } as unknown as pki.rsa.KeyPair);
-      const writeFileStub = sinon.stub(localCertificateManagerDeps, "writeFile").resolves();
+      vi.spyOn(pki.rsa, "generateKeyPair").mockReturnValue({
+        privateKey,
+        publicKey,
+      } as unknown as pki.rsa.KeyPair);
+      const writeFileStub = vi.spyOn(localCertificateManagerDeps, "writeFile").mockResolvedValue();
 
       const certManager = new LocalCertificateManager();
       await certManager.generateCertificate(certFile, keyFile);
 
-      chai.assert.equal(writeFileStub.callCount, 2);
-      chai.assert.equal(writeFileStub.firstCall.args[0], certFile);
-      chai.assert.equal(writeFileStub.secondCall.args[0], keyFile);
+      chai.assert.equal(writeFileStub.mock.calls.length, 2);
+      chai.assert.equal(writeFileStub.mock.calls[0][0], certFile);
+      chai.assert.equal(writeFileStub.mock.calls[1][0], keyFile);
     });
 
     it("verifyCertificateInStore on Darwin should check keychain via shell", async () => {
-      sinon.stub(localCertificateManagerDeps, "osType").returns("Darwin");
-      sinon.stub(localCertificateManagerDeps, "homedir").returns(fakeHomeDir);
-      const execShellStub = sinon
-        .stub(localCertificateManagerDeps, "execShell")
-        .resolves("SHA-1 hash: ABCDEF");
+      vi.spyOn(localCertificateManagerDeps, "osType").mockReturnValue("Darwin");
+      vi.spyOn(localCertificateManagerDeps, "homedir").mockReturnValue(fakeHomeDir);
+      const execShellStub = vi
+        .spyOn(localCertificateManagerDeps, "execShell")
+        .mockResolvedValue("SHA-1 hash: ABCDEF");
 
       const certManager = new LocalCertificateManager();
       const found = await certManager.verifyCertificateInStore("ABCDEF");
 
       chai.assert.isTrue(found);
-      chai.assert.isTrue(execShellStub.calledOnce);
+      chai.assert.isTrue(execShellStub.mock.calls.length === 1);
     });
 
     it("trustCertificate on Darwin should run add-trusted-cert", async () => {
-      sinon.stub(localCertificateManagerDeps, "osType").returns("Darwin");
-      sinon.stub(LocalCertificateManager.prototype as any, "waitForUserConfirm").resolves(true);
-      const execShellStub = sinon.stub(localCertificateManagerDeps, "execShell").resolves("ok");
+      vi.spyOn(localCertificateManagerDeps, "osType").mockReturnValue("Darwin");
+      vi.spyOn(LocalCertificateManager.prototype as any, "waitForUserConfirm").mockResolvedValue(
+        true
+      );
+      const execShellStub = vi
+        .spyOn(localCertificateManagerDeps, "execShell")
+        .mockResolvedValue("ok");
 
       const certManager = new LocalCertificateManager();
       const cert = {
@@ -389,34 +396,37 @@ describe("certificate", () => {
 
       await (certManager as any).trustCertificate(cert, "thumbprint", "friendlyname");
 
-      chai.assert.isTrue(execShellStub.calledOnce);
+      chai.assert.isTrue(execShellStub.mock.calls.length === 1);
       chai.assert.isTrue(cert.isTrusted);
     });
   });
 });
 
 describe("setupCertificate check only", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
   it("not found", async () => {
-    sandbox.stub(localCertificateManagerDeps, "ensureDir").resolves();
-    sandbox.stub(localCertificateManagerDeps, "pathExists").resolves(false);
+    vi.spyOn(localCertificateManagerDeps, "ensureDir").mockResolvedValue();
+    vi.spyOn(localCertificateManagerDeps, "pathExists").mockResolvedValue(false);
     const certManager = new LocalCertificateManager();
     const res = await certManager.setupCertificate(true, true);
     chai.assert.isFalse(res.found);
   });
   it("found but not trusted", async () => {
-    sandbox.stub(localCertificateManagerDeps, "ensureDir").resolves();
-    sandbox.stub(localCertificateManagerDeps, "pathExists").resolves(true);
-    sandbox.stub(localCertificateManagerDeps, "readFile").resolves("aaa" as any);
+    vi.spyOn(localCertificateManagerDeps, "ensureDir").mockResolvedValue();
+    vi.spyOn(localCertificateManagerDeps, "pathExists").mockResolvedValue(true);
+    vi.spyOn(localCertificateManagerDeps, "readFile").mockResolvedValue("aaa" as any);
     const certManager = new LocalCertificateManager();
-    sandbox
-      .stub(LocalCertificateManager.prototype, "verifyCertificateContent")
-      .returns(["test", true]);
-    sandbox.stub(LocalCertificateManager.prototype, "generateCertificate").resolves("test");
-    sandbox.stub(LocalCertificateManager.prototype, "verifyCertificateInStore").resolves(false);
+    vi.spyOn(LocalCertificateManager.prototype, "verifyCertificateContent").mockReturnValue([
+      "test",
+      true,
+    ]);
+    vi.spyOn(LocalCertificateManager.prototype, "generateCertificate").mockResolvedValue("test");
+    vi.spyOn(LocalCertificateManager.prototype, "verifyCertificateInStore").mockResolvedValue(
+      false
+    );
     const res = await certManager.setupCertificate(true, true);
     chai.assert.isTrue(res.found);
     chai.assert.isFalse(res.alreadyTrusted);

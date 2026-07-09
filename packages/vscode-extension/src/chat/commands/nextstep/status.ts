@@ -1,13 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import {
-  getFileModifiedTime,
-  getLaunchJSON,
-  getProjectStatus,
-  getREADME,
-} from "../../../utils/projectStatusUtils";
-import { checkCredential, getProjectMetadata, globalStateGet, globalStateUpdate } from "./helper";
+import * as projectStatusUtils from "../../../utils/projectStatusUtils";
+import * as helper from "./helper";
 import { MachineStatus, WholeStatus } from "./types";
 
 export const firstInstalledKey = "first-installation";
@@ -18,12 +13,16 @@ export async function getWholeStatus(folder?: string): Promise<WholeStatus> {
       machineStatus: await getMachineStatus(),
     };
   } else {
-    const projectSettings = getProjectMetadata(folder);
+    const projectSettings = helper.getProjectMetadata(folder);
     const projectId = projectSettings?.projectId;
-    const actionStatus = await getProjectStatus(projectId ?? folder);
+    const actionStatus = await projectStatusUtils.getProjectStatus(projectId ?? folder);
     const codeModifiedTime = {
-      source: await getFileModifiedTime(`${folder.split("\\").join("/")}/**/*.{ts,tsx,js,jsx}`),
-      infra: await getFileModifiedTime(`${folder.split("\\").join("/")}/infra/**/*`),
+      source: await projectStatusUtils.getFileModifiedTime(
+        `${folder.split("\\").join("/")}/**/*.{ts,tsx,js,jsx}`
+      ),
+      infra: await projectStatusUtils.getFileModifiedTime(
+        `${folder.split("\\").join("/")}/infra/**/*`
+      ),
     };
 
     return {
@@ -32,19 +31,19 @@ export async function getWholeStatus(folder?: string): Promise<WholeStatus> {
         path: folder,
         projectId,
         codeModifiedTime,
-        readmeContent: await getREADME(folder),
+        readmeContent: await projectStatusUtils.getREADME(folder),
         actionStatus,
-        launchJSONContent: await getLaunchJSON(folder),
+        launchJSONContent: await projectStatusUtils.getLaunchJSON(folder),
       },
     };
   }
 }
 
 export async function getMachineStatus(): Promise<MachineStatus> {
-  const firstInstalled = await globalStateGet(firstInstalledKey, true);
-  await globalStateUpdate(firstInstalledKey, false);
+  const firstInstalled = await helper.globalStateGet(firstInstalledKey, true);
+  await helper.globalStateUpdate(firstInstalledKey, false);
   return {
     firstInstalled,
-    ...(await checkCredential()),
+    ...(await helper.checkCredential()),
   };
 }

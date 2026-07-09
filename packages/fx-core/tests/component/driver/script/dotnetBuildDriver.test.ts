@@ -1,9 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 import { err, IProgressHandler, ok, UserError } from "@microsoft/teamsfx-api";
-import * as chai from "chai";
-import { assert } from "chai";
-import * as sinon from "sinon";
+import { assert, chai, vi } from "vitest";
 import * as tools from "../../../../src/common/utils";
 import { DotnetBuildDriver } from "../../../../src/component/driver/script/dotnetBuildDriver";
 import * as utils from "../../../../src/component/driver/script/scriptDriver";
@@ -11,14 +9,12 @@ import { MockedAzureAccountProvider, MockUserInteraction } from "../../../core/u
 import { TestLogProvider } from "../../util/logProviderMock";
 
 describe("Dotnet Build Driver test", () => {
-  const sandbox = sinon.createSandbox();
-
   beforeEach(() => {
-    sandbox.stub(tools, "waitSeconds").resolves();
+    vi.spyOn(tools, "waitSeconds").mockResolvedValue();
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("Dotnet build happy path", async () => {
@@ -28,7 +24,7 @@ describe("Dotnet Build Driver test", () => {
       next: async (detail?: string): Promise<void> => {},
       end: async (): Promise<void> => {},
     };
-    const progressNextCaller = sandbox.stub(progressHandler, "next").resolves();
+    const progressNextCaller = vi.spyOn(progressHandler, "next").mockResolvedValue();
     const args = {
       workingDirectory: "./",
       args: "build",
@@ -41,10 +37,10 @@ describe("Dotnet Build Driver test", () => {
       projectPath: "./",
       progressBar: progressHandler,
     } as any;
-    sandbox.stub(utils, "executeCommand").resolves(ok(["", {}]));
+    vi.spyOn(utils, "executeCommand").mockResolvedValue(ok(["", {}]));
     const res = await driver.execute(args, context);
     chai.expect(res.result.unwrapOr(new Map([["a", "b"]])).size).to.equal(0);
-    assert.equal(progressNextCaller.callCount, 1);
+    assert.equal(progressNextCaller.mock.calls.length, 1);
   });
 
   it("Dotnet build with summary happy path", async () => {
@@ -59,7 +55,7 @@ describe("Dotnet Build Driver test", () => {
       logProvider: new TestLogProvider(),
       projectPath: "./",
     } as any;
-    sandbox.stub(utils, "executeCommand").resolves(ok(["", {}]));
+    vi.spyOn(utils, "executeCommand").mockResolvedValue(ok(["", {}]));
     const res = await driver.execute(args, context);
     chai.expect(res.result.unwrapOr(new Map([["a", "b"]])).size).to.equal(0);
     // console.log(res.summaries);
@@ -72,7 +68,7 @@ describe("Dotnet Build Driver test", () => {
       args: "build",
     };
     const ui = new MockUserInteraction();
-    sandbox.stub(ui, "runCommand").resolves(err(new UserError({})));
+    vi.spyOn(ui, "runCommand").mockResolvedValue(err(new UserError({})));
     const context = {
       azureAccountProvider: new MockedAzureAccountProvider(),
       logProvider: new TestLogProvider(),

@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import * as chai from "chai";
 import { isValidHttpUrl } from "../../src/common/stringUtils";
+import { chai } from "vitest";
 
 describe("isValidHttpUrl", () => {
   it("valid https url", () => {

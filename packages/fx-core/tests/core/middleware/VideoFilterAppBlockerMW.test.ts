@@ -3,7 +3,6 @@
 
 import { hooks, NextFunction } from "@feathersjs/hooks/lib";
 import { Func, FxError, Inputs, ok, Platform, Result } from "@microsoft/teamsfx-api";
-import { assert } from "chai";
 import mockFs from "mock-fs";
 import * as path from "path";
 import { setTools } from "../../../src/common/globalVars";
@@ -11,6 +10,7 @@ import { VideoFilterAppBlockerMW } from "../../../src/core/middleware/videoFilte
 import { CoreHookContext } from "../../../src/core/types";
 import { VideoFilterAppRemoteNotSupportedError } from "../../../src/error/common";
 import { MockTools } from "../utils";
+import { assert } from "vitest";
 
 describe("Middleware - VideoFilterAppBlockerMW", () => {
   function createMock(): {

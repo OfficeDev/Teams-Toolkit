@@ -7,18 +7,21 @@ import { WebviewPanel } from "../../controls/webviewPanel";
 import { VS_CODE_UI } from "../../qm/vsc_ui";
 import { ExtTelemetry } from "../../telemetry/extTelemetry";
 import { TelemetryEvent } from "../../telemetry/extTelemetryEvents";
-import { localize } from "../../utils/localizeUtils";
+import * as localizeUtils from "../../utils/localizeUtils";
 import { commands } from "vscode";
 
 export async function checkCopilotCallback(args?: any[]): Promise<Result<null, FxError>> {
   VS_CODE_UI.showMessage(
     "warn",
-    localize("teamstoolkit.accountTree.copilotMessage"),
+    localizeUtils.localize("teamstoolkit.accountTree.copilotMessage"),
     false,
-    localize("teamstoolkit.accountTree.copilotEnroll")
+    localizeUtils.localize("teamstoolkit.accountTree.copilotEnroll")
   )
     .then(async (result) => {
-      if (result.isOk() && result.value === localize("teamstoolkit.accountTree.copilotEnroll")) {
+      if (
+        result.isOk() &&
+        result.value === localizeUtils.localize("teamstoolkit.accountTree.copilotEnroll")
+      ) {
         await VS_CODE_UI.openUrl(
           "https://learn.microsoft.com/en-us/microsoft-365-copilot/extensibility/prerequisites"
         );
@@ -32,15 +35,15 @@ export async function checkCopilotCallback(args?: any[]): Promise<Result<null, F
 export function checkSideloadingCallback(args?: any[]): Promise<Result<null, FxError>> {
   VS_CODE_UI.showMessage(
     "error",
-    localize("teamstoolkit.accountTree.sideloadingMessage"),
+    localizeUtils.localize("teamstoolkit.accountTree.sideloadingMessage"),
     false,
-    localize("teamstoolkit.accountTree.sideloadingUseTestTenant"),
-    localize("teamstoolkit.accountTree.sideloadingEnable")
+    localizeUtils.localize("teamstoolkit.accountTree.sideloadingUseTestTenant"),
+    localizeUtils.localize("teamstoolkit.accountTree.sideloadingEnable")
   )
     .then(async (result) => {
       if (
         result.isOk() &&
-        result.value === localize("teamstoolkit.accountTree.sideloadingEnable")
+        result.value === localizeUtils.localize("teamstoolkit.accountTree.sideloadingEnable")
       ) {
         await VS_CODE_UI.openUrl(
           "https://learn.microsoft.com/en-us/microsoftteams/platform/toolkit/tools-prerequisites#enable-custom-app-upload-using-admin-center"
@@ -48,7 +51,7 @@ export function checkSideloadingCallback(args?: any[]): Promise<Result<null, FxE
         ExtTelemetry.sendTelemetryEvent(TelemetryEvent.OpenTestTenantLink);
       } else if (
         result.isOk() &&
-        result.value === localize("teamstoolkit.accountTree.sideloadingUseTestTenant")
+        result.value === localizeUtils.localize("teamstoolkit.accountTree.sideloadingUseTestTenant")
       ) {
         WebviewPanel.createOrShow(PanelType.AccountHelp);
         ExtTelemetry.sendTelemetryEvent(TelemetryEvent.OpenSideloadingEnable);
@@ -66,14 +69,14 @@ export function checkSideloadingCallback(args?: any[]): Promise<Result<null, FxE
 export function checkSandboxCallback(args?: any[]): Promise<Result<null, FxError>> {
   VS_CODE_UI.showMessage(
     "warn",
-    localize("teamstoolkit.accountTree.suggestSandboxedTeam"),
+    localizeUtils.localize("teamstoolkit.accountTree.suggestSandboxedTeam"),
     false,
-    localize("teamstoolkit.accountTree.sandboxedTeam.button")
+    localizeUtils.localize("teamstoolkit.accountTree.sandboxedTeam.button")
   )
     .then(async (result) => {
       if (
         result.isOk() &&
-        result.value === localize("teamstoolkit.accountTree.sandboxedTeam.button")
+        result.value === localizeUtils.localize("teamstoolkit.accountTree.sandboxedTeam.button")
       ) {
         await commands.executeCommand(
           "workbench.action.quickOpen",

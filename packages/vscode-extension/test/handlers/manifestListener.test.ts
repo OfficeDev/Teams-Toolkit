@@ -1,5 +1,3 @@
-import * as chai from "chai";
-import * as sinon from "sinon";
 import * as vscode from "vscode";
 import * as globalVariables from "../../src/globalVariables";
 import { manifestListener } from "../../src/manifestListener";
@@ -8,40 +6,40 @@ import path from "path";
 import TreeViewManagerInstance from "../../src/treeview/treeViewManager";
 import * as projectSettingsHelper from "@microsoft/teamsfx-core/build/common/projectSettingsHelper";
 import { ExtTelemetry } from "../../src/telemetry/extTelemetry";
+import { vi, assert } from "vitest";
+import { mockValue } from "../mocks/vitestMockUtils";
 
 describe("registerManifestListener", () => {
-  const sandbox = sinon.createSandbox();
-  let clock: sinon.SinonFakeTimers;
+  let clock: ReturnType<typeof vi.useFakeTimers>;
 
   beforeEach(() => {
-    sandbox.stub(ExtTelemetry, "sendTelemetryEvent").returns();
+    vi.spyOn(ExtTelemetry, "sendTelemetryEvent").mockReturnValue();
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
     if (clock) {
       clock.restore();
     }
   });
   it("successfully refresh item", async () => {
-    clock = sandbox.useFakeTimers();
+    clock = vi.useFakeTimers();
     let handler = async (event: any) => {};
-    sandbox.stub(projectSettingsHelper, "isValidProjectV3").returns(true);
-    sandbox.stub(vscode.workspace, "onDidSaveTextDocument").callsFake((listener: any) => {
+    vi.spyOn(projectSettingsHelper, "isValidProjectV3").mockReturnValue(true);
+    vi.spyOn(vscode.workspace, "onDidSaveTextDocument").mockImplementation((listener: any) => {
       handler = listener;
       return new vscode.Disposable(() => {
         return;
       });
     });
-    sandbox.stub(globalVariables, "isDeclarativeCopilotApp").value(false);
-    sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.file("."));
-    sandbox
-      .stub(globalVariables, "updateIsDeclarativeCopilotApp")
+    mockValue(globalVariables, "isDeclarativeCopilotApp", false);
+    mockValue(globalVariables, "workspaceUri", vscode.Uri.file("."));
+    vi.spyOn(globalVariables, "updateIsDeclarativeCopilotApp")
       .onFirstCall()
-      .returns(true)
+      .mockReturnValue(true)
       .onSecondCall()
-      .returns(false);
-    sandbox.stub(TreeViewManagerInstance, "updateDevelopmentTreeView").returns();
+      .mockReturnValue(false);
+    vi.spyOn(TreeViewManagerInstance, "updateDevelopmentTreeView").mockReturnValue();
 
     const fakeDocument = {
       fileName: path.join(vscode.Uri.file(".").fsPath, "appPackage", "manifest.json"),
@@ -55,33 +53,32 @@ describe("registerManifestListener", () => {
 
     await clock.tickAsync(5000);
     let res = await job;
-    chai.assert.isTrue(res);
+    assert.isTrue(res);
 
     job = handler(fakeDocument);
     await clock.tickAsync(5000);
     res = await job;
-    chai.assert.isFalse(res);
+    assert.isFalse(res);
   });
 
   it("abort previous one", async () => {
-    clock = sandbox.useFakeTimers();
+    clock = vi.useFakeTimers();
     let handler = async (event: any) => {};
-    sandbox.stub(projectSettingsHelper, "isValidProjectV3").returns(true);
-    sandbox.stub(vscode.workspace, "onDidSaveTextDocument").callsFake((listener: any) => {
+    vi.spyOn(projectSettingsHelper, "isValidProjectV3").mockReturnValue(true);
+    vi.spyOn(vscode.workspace, "onDidSaveTextDocument").mockImplementation((listener: any) => {
       handler = listener;
       return new vscode.Disposable(() => {
         return;
       });
     });
-    sandbox.stub(globalVariables, "isDeclarativeCopilotApp").value(false);
-    sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.file("."));
-    sandbox
-      .stub(globalVariables, "updateIsDeclarativeCopilotApp")
+    mockValue(globalVariables, "isDeclarativeCopilotApp", false);
+    mockValue(globalVariables, "workspaceUri", vscode.Uri.file("."));
+    vi.spyOn(globalVariables, "updateIsDeclarativeCopilotApp")
       .onFirstCall()
-      .returns(true)
+      .mockReturnValue(true)
       .onSecondCall()
-      .returns(false);
-    sandbox.stub(TreeViewManagerInstance, "updateDevelopmentTreeView").returns();
+      .mockReturnValue(false);
+    vi.spyOn(TreeViewManagerInstance, "updateDevelopmentTreeView").mockReturnValue();
 
     const fakeDocument = {
       fileName: path.join(vscode.Uri.file(".").fsPath, "appPackage", "manifest.json"),
@@ -99,16 +96,16 @@ describe("registerManifestListener", () => {
     const res1 = await job1;
     const res2 = await job2;
 
-    chai.assert.isUndefined(res1);
-    chai.assert.isTrue(res2);
+    assert.isUndefined(res1);
+    assert.isTrue(res2);
   });
 
   it("not run if invalid project", async () => {
-    clock = sandbox.useFakeTimers();
+    clock = vi.useFakeTimers();
     let handler = async (event: any) => {};
-    sandbox.stub(projectSettingsHelper, "isValidProjectV3").returns(false);
-    sandbox.stub(globalVariables, "workspaceUri").value(vscode.Uri.file("."));
-    sandbox.stub(vscode.workspace, "onDidSaveTextDocument").callsFake((listener: any) => {
+    vi.spyOn(projectSettingsHelper, "isValidProjectV3").mockReturnValue(false);
+    mockValue(globalVariables, "workspaceUri", vscode.Uri.file("."));
+    vi.spyOn(vscode.workspace, "onDidSaveTextDocument").mockImplementation((listener: any) => {
       handler = listener;
       return new vscode.Disposable(() => {
         return;
@@ -125,15 +122,15 @@ describe("registerManifestListener", () => {
     manifestListener();
     const res = await handler(fakeDocument);
 
-    chai.assert.isUndefined(res);
+    assert.isUndefined(res);
   });
 
   it("not run if empty workspace", async () => {
-    clock = sandbox.useFakeTimers();
+    clock = vi.useFakeTimers();
     let handler = async (event: any) => {};
-    sandbox.stub(globalVariables, "workspaceUri").value("");
-    sandbox.stub(projectSettingsHelper, "isValidProjectV3").returns(false);
-    sandbox.stub(vscode.workspace, "onDidSaveTextDocument").callsFake((listener: any) => {
+    mockValue(globalVariables, "workspaceUri", "");
+    vi.spyOn(projectSettingsHelper, "isValidProjectV3").mockReturnValue(false);
+    vi.spyOn(vscode.workspace, "onDidSaveTextDocument").mockImplementation((listener: any) => {
       handler = listener;
       return new vscode.Disposable(() => {
         return;
@@ -150,15 +147,15 @@ describe("registerManifestListener", () => {
     manifestListener();
     const res = await handler(fakeDocument);
 
-    chai.assert.isUndefined(res);
+    assert.isUndefined(res);
   });
 
   it("not run if not default app manifest", async () => {
-    clock = sandbox.useFakeTimers();
+    clock = vi.useFakeTimers();
     let handler = async (event: any) => {};
-    sandbox.stub(globalVariables, "workspaceUri").value(".");
-    sandbox.stub(projectSettingsHelper, "isValidProjectV3").returns(false);
-    sandbox.stub(vscode.workspace, "onDidSaveTextDocument").callsFake((listener: any) => {
+    mockValue(globalVariables, "workspaceUri", ".");
+    vi.spyOn(projectSettingsHelper, "isValidProjectV3").mockReturnValue(false);
+    vi.spyOn(vscode.workspace, "onDidSaveTextDocument").mockImplementation((listener: any) => {
       handler = listener;
       return new vscode.Disposable(() => {
         return;
@@ -175,6 +172,6 @@ describe("registerManifestListener", () => {
     manifestListener();
     const res = await handler(fakeDocument);
 
-    chai.assert.isUndefined(res);
+    assert.isUndefined(res);
   });
 });

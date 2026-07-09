@@ -9,12 +9,11 @@ import {
   WebSiteManagementClient,
 } from "@azure/arm-appservice";
 import { RestError } from "@azure/storage-blob";
-import * as chai from "chai";
 import * as fs from "fs-extra";
 import * as os from "os";
 import * as path from "path";
-import * as sinon from "sinon";
 import { Readable } from "stream";
+import { chai, expect, vi } from "vitest";
 import * as tools from "../../../../../src/common/utils";
 import { HttpStatusCode } from "../../../../../src/component/constant/commonConstant";
 import { DeployStatus } from "../../../../../src/component/constant/deployConstant";
@@ -38,12 +37,24 @@ import {
   MyTokenCredential,
 } from "../../../../core/utils";
 import { TestLogProvider } from "../../../util/logProviderMock";
-import chaiAsPromised = require("chai-as-promised");
-chai.use(chaiAsPromised);
-
 describe("AzureDeployImpl zip deploy acceleration", () => {
-  const sandbox = sinon.createSandbox();
+  const sandbox = vi;
   const tempFile = path.join(os.tmpdir(), "test.zip");
+  const zipDeployResource: AzureResourceInfo = {
+    subscriptionId: "aaa",
+    resourceGroupName: "bbb",
+    instanceId: "ccc",
+  };
+  const zipDeployConfig: AzureUploadConfig = {
+    headers: {
+      "Content-Type": "AAA",
+      "Cache-Control": "bbb",
+      Authorization: "ccc",
+    },
+    maxContentLength: 1,
+    maxBodyLength: 2,
+    timeout: 3,
+  };
 
   before(async () => {
     fs.writeFileSync(tempFile, "test");
@@ -54,11 +65,11 @@ describe("AzureDeployImpl zip deploy acceleration", () => {
   });
 
   beforeEach(async () => {
-    sandbox.stub(tools, "waitSeconds").resolves();
+    vi.spyOn(tools, "waitSeconds").mockResolvedValue();
   });
 
   afterEach(async () => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("zip deploy need acceleration", async () => {
@@ -79,7 +90,7 @@ describe("AzureDeployImpl zip deploy acceleration", () => {
       return Promise.resolve(true);
     };
     const deploy = new AzureZipDeployImpl(args, context, "", "", [], []);
-    sandbox.stub(deploy, "zipDeploy").resolves(5_000_000);
+    vi.spyOn(deploy, "zipDeploy").mockResolvedValue(5_000_000);
     await deploy.run();
   });
 
@@ -99,8 +110,8 @@ describe("AzureDeployImpl zip deploy acceleration", () => {
       maxBodyLength: 2,
       timeout: 3,
     } as AzureUploadConfig;
-    const fetchStub = sandbox.stub(global, "fetch");
-    fetchStub.resolves(
+    const fetchStub = vi.spyOn(global, "fetch");
+    fetchStub.mockResolvedValue(
       new Response(
         JSON.stringify({
           properties: {
@@ -118,9 +129,9 @@ describe("AzureDeployImpl zip deploy acceleration", () => {
       endpoint,
       "https://ssssxx-h0gjdtbsa8bqhjhe.scm.canadacentral-01.azurewebsites.net/api/zipdeploy?isAsync=true"
     );
-    chai.expect(fetchStub.calledOnce).to.be.true;
+    await expect(fetchStub.mock.calls.length === 1).to.be.true;
     chai
-      .expect(fetchStub.firstCall.args[0])
+      .expect(fetchStub.mock.calls[0][0])
       .to.be.equal(
         "https://management.azure.com/subscriptions/aaa/resourceGroups/bbb/providers/Microsoft.Web/sites/ccc?api-version=2024-04-01"
       );
@@ -142,8 +153,8 @@ describe("AzureDeployImpl zip deploy acceleration", () => {
       maxBodyLength: 2,
       timeout: 3,
     } as AzureUploadConfig;
-    const fetchStub = sandbox.stub(global, "fetch");
-    fetchStub.resolves(
+    const fetchStub = vi.spyOn(global, "fetch");
+    fetchStub.mockResolvedValue(
       new Response(
         JSON.stringify({
           properties: {
@@ -156,17 +167,103 @@ describe("AzureDeployImpl zip deploy acceleration", () => {
         { status: 200 }
       )
     );
-    chai.expect(AzureZipDeployImpl.getZipDeployEndpoint(ar, config)).to.be.rejectedWith(Error);
-    chai.expect(fetchStub.calledOnce).to.be.true;
+    await expect(AzureZipDeployImpl.getZipDeployEndpoint(ar, config)).rejects.toThrow(Error);
+    chai.expect(fetchStub.mock.calls.length === 1).to.be.true;
     chai
-      .expect(fetchStub.firstCall.args[0])
+      .expect(fetchStub.mock.calls[0][0])
       .to.be.equal(
         "https://management.azure.com/subscriptions/aaa/resourceGroups/bbb/providers/Microsoft.Web/sites/ccc?api-version=2024-04-01"
       );
   });
 
+  it("Get zip deploy endpoint reports ARM status when resource lookup fails", async () => {
+    const ar: AzureResourceInfo = {
+      subscriptionId: "aaa",
+      resourceGroupName: "bbb",
+      instanceId: "ccc",
+    };
+    const config: AzureUploadConfig = {
+      headers: {
+        "Content-Type": "AAA",
+        "Cache-Control": "bbb",
+        Authorization: "ccc",
+      },
+      maxContentLength: 1,
+      maxBodyLength: 2,
+      timeout: 3,
+    };
+    vi.spyOn(global, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          error: {
+            code: "ResourceNotFound",
+            message: "The Resource was not found.",
+          },
+        }),
+        { status: 404 }
+      )
+    );
+
+    await expect(AzureZipDeployImpl.getZipDeployEndpoint(ar, config)).rejects.toThrow(
+      "Failed to get Azure App Service host names. Status code: 404"
+    );
+  });
+
+  it("Get zip deploy endpoint reports plain text ARM error response", async () => {
+    vi.spyOn(global, "fetch").mockResolvedValue(
+      new Response("temporary platform error", { status: 502 })
+    );
+
+    await expect(
+      AzureZipDeployImpl.getZipDeployEndpoint(zipDeployResource, zipDeployConfig)
+    ).rejects.toThrow(
+      "Failed to get Azure App Service host names. Status code: 502. Response: temporary platform error"
+    );
+  });
+
+  it("Get zip deploy endpoint reports empty success response", async () => {
+    vi.spyOn(global, "fetch").mockResolvedValue(new Response("", { status: 200 }));
+
+    await expect(
+      AzureZipDeployImpl.getZipDeployEndpoint(zipDeployResource, zipDeployConfig)
+    ).rejects.toThrow(
+      "Failed to get Azure App Service host names. Response does not contain properties.enabledHostNames. Response: "
+    );
+  });
+
+  it("Get zip deploy endpoint reports malformed enabled host names", async () => {
+    const malformedResponse = {
+      properties: {
+        enabledHostNames: ["ssssxx-h0gjdtbsa8bqhjhe.canadacentral-01.azurewebsites.net", 1],
+      },
+    };
+    vi.spyOn(global, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(malformedResponse), { status: 200 })
+    );
+
+    await expect(
+      AzureZipDeployImpl.getZipDeployEndpoint(zipDeployResource, zipDeployConfig)
+    ).rejects.toThrow(
+      `Failed to get Azure App Service host names. Response does not contain properties.enabledHostNames. Response: ${JSON.stringify(
+        malformedResponse
+      )}`
+    );
+  });
+
+  it("Get zip deploy endpoint truncates long ARM error response", async () => {
+    vi.spyOn(global, "fetch").mockResolvedValue(new Response("x".repeat(1001), { status: 500 }));
+
+    await expect(
+      AzureZipDeployImpl.getZipDeployEndpoint(zipDeployResource, zipDeployConfig)
+    ).rejects.toThrow(
+      `Failed to get Azure App Service host names. Status code: 500. Response: ${"x".repeat(
+        1000
+      )}...`
+    );
+  });
+
   it("checkDeployStatus empty response", async () => {
-    sandbox.stub(AzureDeployImpl.AXIOS_INSTANCE, "get").resolves("");
+    vi.spyOn(AzureDeployImpl.AXIOS_INSTANCE, "get").mockResolvedValue("");
     const config = {
       headers: {
         "Content-Type": "text",
@@ -196,13 +293,13 @@ describe("AzureDeployImpl zip deploy acceleration", () => {
       ["driver.deploy.azureAppServiceDeployDetailSummary"],
       ["driver.deploy.notice.deployDryRunComplete"]
     );
-    await chai
-      .expect(impl.checkDeployStatus("", config, new TestLogProvider()))
-      .to.be.rejectedWith(CheckDeploymentStatusTimeoutError);
+    await expect(impl.checkDeployStatus("", config, new TestLogProvider())).rejects.toThrow(
+      CheckDeploymentStatusTimeoutError
+    );
   });
 
   it("checkDeployStatus 500 response", async () => {
-    sandbox.stub(AzureDeployImpl.AXIOS_INSTANCE, "get").resolves({
+    vi.spyOn(AzureDeployImpl.AXIOS_INSTANCE, "get").mockResolvedValue({
       status: HttpStatusCode.INTERNAL_SERVER_ERROR,
       data: {
         status: DeployStatus.Failed,
@@ -238,13 +335,13 @@ describe("AzureDeployImpl zip deploy acceleration", () => {
       ["driver.deploy.azureAppServiceDeployDetailSummary"],
       ["driver.deploy.notice.deployDryRunComplete"]
     );
-    await chai
-      .expect(impl.checkDeployStatus("", config, new TestLogProvider()))
-      .to.be.rejectedWith(CheckDeploymentStatusError);
+    await expect(impl.checkDeployStatus("", config, new TestLogProvider())).rejects.toThrow(
+      CheckDeploymentStatusError
+    );
   });
 
   it("checkDeployStatus reject AxiosError", async () => {
-    sandbox.stub(AzureDeployImpl.AXIOS_INSTANCE, "get").rejects({
+    vi.spyOn(AzureDeployImpl.AXIOS_INSTANCE, "get").mockRejectedValue({
       isAxiosError: true,
       response: {
         status: 400,
@@ -286,12 +383,12 @@ describe("AzureDeployImpl zip deploy acceleration", () => {
       ["driver.deploy.azureAppServiceDeployDetailSummary"],
       ["driver.deploy.notice.deployDryRunComplete"]
     );
-    await chai
-      .expect(impl.checkDeployStatus("", config, new TestLogProvider()))
-      .to.be.rejectedWith(CheckDeploymentStatusError);
+    await expect(impl.checkDeployStatus("", config, new TestLogProvider())).rejects.toThrow(
+      CheckDeploymentStatusError
+    );
   });
   it("checkDeployStatus reject none AxiosError", async () => {
-    sandbox.stub(AzureDeployImpl.AXIOS_INSTANCE, "get").rejects(new Error("other error"));
+    vi.spyOn(AzureDeployImpl.AXIOS_INSTANCE, "get").mockRejectedValue(new Error("other error"));
     const config = {
       headers: {
         "Content-Type": "text",
@@ -321,12 +418,12 @@ describe("AzureDeployImpl zip deploy acceleration", () => {
       ["driver.deploy.azureAppServiceDeployDetailSummary"],
       ["driver.deploy.notice.deployDryRunComplete"]
     );
-    await chai
-      .expect(impl.checkDeployStatus("", config, new TestLogProvider()))
-      .to.be.rejectedWith(CheckDeploymentStatusError);
+    await expect(impl.checkDeployStatus("", config, new TestLogProvider())).rejects.toThrow(
+      CheckDeploymentStatusError
+    );
   });
   it("checkDeployStatus DeployRemoteStartError", async () => {
-    sandbox.stub(AzureDeployImpl.AXIOS_INSTANCE, "get").resolves({
+    vi.spyOn(AzureDeployImpl.AXIOS_INSTANCE, "get").mockResolvedValue({
       status: HttpStatusCode.OK,
       data: {
         status: DeployStatus.Failed,
@@ -367,7 +464,7 @@ describe("AzureDeployImpl zip deploy acceleration", () => {
     chai.assert.equal(res?.message, "fail to start app due to some reasons.");
   });
   it("checkDeployStatus return status 400", async () => {
-    sandbox.stub(AzureDeployImpl.AXIOS_INSTANCE, "get").resolves({
+    vi.spyOn(AzureDeployImpl.AXIOS_INSTANCE, "get").mockResolvedValue({
       status: HttpStatusCode.BAD_REQUEST,
     });
     const config = {
@@ -399,9 +496,9 @@ describe("AzureDeployImpl zip deploy acceleration", () => {
       ["driver.deploy.azureAppServiceDeployDetailSummary"],
       ["driver.deploy.notice.deployDryRunComplete"]
     );
-    await chai
-      .expect(impl.checkDeployStatus("", config, new TestLogProvider()))
-      .to.be.rejectedWith(CheckDeploymentStatusError);
+    await expect(impl.checkDeployStatus("", config, new TestLogProvider())).rejects.toThrow(
+      CheckDeploymentStatusError
+    );
   });
   it("createAzureDeployConfig GetPublishingCredentialsError", async () => {
     const args = {
@@ -434,25 +531,27 @@ describe("AzureDeployImpl zip deploy acceleration", () => {
     };
     const mockWebSiteManagementClient = new WebSiteManagementClient(new MyTokenCredential(), "sub");
     mockWebSiteManagementClient.webApps = webApps as any;
-    sandbox.stub(appService, "WebSiteManagementClient").returns(mockWebSiteManagementClient);
+    vi.spyOn(appService, "WebSiteManagementClient").mockImplementation(function () {
+      return mockWebSiteManagementClient;
+    } as any);
     const token = new MyTokenCredential();
-    sandbox.stub(token, "getToken").throws(new Error("test message"));
-    await chai
-      .expect(
-        impl.createAzureDeployConfig(
-          {
-            subscriptionId: "e24d88be-bbbb-1234-ba25-11111111111",
-            resourceGroupName: "mockGroupName",
-            instanceId: "mockAppName",
-          },
-          token
-        )
+    vi.spyOn(token, "getToken").mockImplementation(() => {
+      throw new Error("test message");
+    });
+    await expect(
+      impl.createAzureDeployConfig(
+        {
+          subscriptionId: "e24d88be-bbbb-1234-ba25-11111111111",
+          resourceGroupName: "mockGroupName",
+          instanceId: "mockAppName",
+        },
+        token
       )
-      .to.be.rejectedWith(GetPublishingCredentialsError);
+    ).rejects.toThrow(GetPublishingCredentialsError);
   });
 
   it("zipDeployPackage DeployZipPackageError throw 500", async () => {
-    sandbox.stub(AzureDeployImpl.AXIOS_INSTANCE, "post").rejects({
+    vi.spyOn(AzureDeployImpl.AXIOS_INSTANCE, "post").mockRejectedValue({
       isAxiosError: true,
       response: {
         status: 500,
@@ -493,19 +592,17 @@ describe("AzureDeployImpl zip deploy acceleration", () => {
       maxBodyLength: 200,
       timeout: 200,
     };
-    await chai
-      .expect(
-        impl.zipDeployPackage(
-          "mockEndPoint",
-          Readable.from("test") as any,
-          config,
-          new TestLogProvider()
-        )
+    await expect(
+      impl.zipDeployPackage(
+        "mockEndPoint",
+        Readable.from("test") as any,
+        config,
+        new TestLogProvider()
       )
-      .to.be.rejectedWith(DeployZipPackageError);
+    ).rejects.toThrow(DeployZipPackageError);
   });
   it("zipDeployPackage DeployZipPackageError throw 404", async () => {
-    sandbox.stub(AzureDeployImpl.AXIOS_INSTANCE, "post").rejects({
+    vi.spyOn(AzureDeployImpl.AXIOS_INSTANCE, "post").mockRejectedValue({
       isAxiosError: true,
       response: {
         status: 400,
@@ -547,19 +644,17 @@ describe("AzureDeployImpl zip deploy acceleration", () => {
       maxBodyLength: 200,
       timeout: 200,
     };
-    await chai
-      .expect(
-        impl.zipDeployPackage(
-          "mockEndPoint",
-          Readable.from("test") as any,
-          config,
-          new TestLogProvider()
-        )
+    await expect(
+      impl.zipDeployPackage(
+        "mockEndPoint",
+        Readable.from("test") as any,
+        config,
+        new TestLogProvider()
       )
-      .to.be.rejectedWith(DeployZipPackageError);
+    ).rejects.toThrow(DeployZipPackageError);
   });
   it("zipDeployPackage DeployZipPackageError return 500", async () => {
-    sandbox.stub(AzureDeployImpl.AXIOS_INSTANCE, "post").resolves({
+    vi.spyOn(AzureDeployImpl.AXIOS_INSTANCE, "post").mockResolvedValue({
       headers: {
         location: "abc",
       },
@@ -594,16 +689,14 @@ describe("AzureDeployImpl zip deploy acceleration", () => {
       maxBodyLength: 200,
       timeout: 200,
     };
-    await chai
-      .expect(
-        impl.zipDeployPackage(
-          "mockEndPoint",
-          Readable.from("test") as any,
-          config,
-          new TestLogProvider()
-        )
+    await expect(
+      impl.zipDeployPackage(
+        "mockEndPoint",
+        Readable.from("test") as any,
+        config,
+        new TestLogProvider()
       )
-      .to.be.rejectedWith(DeployZipPackageError);
+    ).rejects.toThrow(DeployZipPackageError);
   });
 
   it("throws Error when no basic auth allowed and Microsoft Entra request fail", async () => {
@@ -638,20 +731,22 @@ describe("AzureDeployImpl zip deploy acceleration", () => {
     };
     const mockWebSiteManagementClient = new WebSiteManagementClient(new MyTokenCredential(), "sub");
     mockWebSiteManagementClient.webApps = webApps as any;
-    sandbox.stub(appService, "WebSiteManagementClient").returns(mockWebSiteManagementClient);
+    vi.spyOn(appService, "WebSiteManagementClient").mockImplementation(function () {
+      return mockWebSiteManagementClient;
+    } as any);
     const token = new MyTokenCredential();
-    sandbox.stub(token, "getToken").throws(new Error("test message"));
-    await chai
-      .expect(
-        impl.createAzureDeployConfig(
-          {
-            subscriptionId: "e24d88be-bbbb-1234-ba25-11111111111",
-            resourceGroupName: "mockGroupName",
-            instanceId: "mockAppName",
-          },
-          token
-        )
+    vi.spyOn(token, "getToken").mockImplementation(() => {
+      throw new Error("test message");
+    });
+    await expect(
+      impl.createAzureDeployConfig(
+        {
+          subscriptionId: "e24d88be-bbbb-1234-ba25-11111111111",
+          resourceGroupName: "mockGroupName",
+          instanceId: "mockAppName",
+        },
+        token
       )
-      .to.be.rejectedWith(GetPublishingCredentialsError);
+    ).rejects.toThrow(GetPublishingCredentialsError);
   });
 });

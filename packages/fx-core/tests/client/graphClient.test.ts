@@ -3,8 +3,7 @@
 
 import { err, ok, SensitivityLabel, signedIn, SystemError } from "@microsoft/teamsfx-api";
 import axios from "axios";
-import { expect } from "chai";
-import { createSandbox } from "sinon";
+import { chai, vi } from "vitest";
 import { GraphClient } from "../../src/client/graphClient";
 import * as globalState from "../../src/common/globalState";
 import { setTools } from "../../src/common/globalVars";
@@ -12,53 +11,55 @@ import { RetryHandler } from "../../src/common/retryHandler";
 import { MockedM365Provider, MockTools } from "../core/utils";
 
 describe("GraphAPIClient Test", () => {
-  const sandbox = createSandbox();
+  const sandbox = vi;
   const token = "fakeToken";
 
   beforeEach(() => {
-    sandbox.stub(RetryHandler, "RETRIES").value(1);
+    RetryHandler.RETRIES = 1;
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+    RetryHandler.RETRIES = 6;
   });
 
   describe("RetryHandler", () => {
     it("Happy path", async () => {
-      const fn = sandbox.stub().resolves("success");
+      const fn = vi.fn().mockResolvedValue("success");
       const result = await RetryHandler.Retry(fn);
-      expect(result).to.equal("success");
-      expect(fn.calledOnce).to.be.true;
+      chai.expect(result).to.equal("success");
+      chai.expect(fn.mock.calls.length === 1).to.be.true;
     });
 
     it("Retry on error and succeed", async () => {
-      const clock = sandbox.useFakeTimers();
-      const fn = sandbox.stub();
-      fn.onFirstCall().rejects(new Error("Failed"));
-      fn.onSecondCall().resolves("success");
+      vi.useFakeTimers();
+      const fn = vi.fn();
+      fn.mockRejectedValueOnce(new Error("Failed"));
+      fn.mockResolvedValueOnce("success");
 
       // Set RETRIES to 2 for this test
-      sandbox.stub(RetryHandler, "RETRIES").value(2);
+      RetryHandler.RETRIES = 2;
 
       const retryPromise = RetryHandler.Retry(fn);
-      await clock.tickAsync(5000);
+      await vi.advanceTimersByTimeAsync(5000);
       const result = await retryPromise;
-      expect(result).to.equal("success");
-      expect(fn.calledTwice).to.be.true;
+      chai.expect(result).to.equal("success");
+      chai.expect(fn.mock.calls.length === 2).to.be.true;
     });
 
     it("Fail after all retries", async () => {
       const error = new Error("Failed");
-      const fn = sandbox.stub().rejects(error);
+      const fn = vi.fn().mockRejectedValue(error);
 
       try {
         await RetryHandler.Retry(fn);
-        expect.fail("Should have thrown error");
+        chai.assert.fail("Should have thrown error");
       } catch (e) {
-        expect(e).to.equal(error);
+        chai.expect(e).to.equal(error);
       }
 
-      expect(fn.calledOnce).to.be.true;
+      chai.expect(fn.mock.calls.length === 1).to.be.true;
     });
   });
 
@@ -67,8 +68,8 @@ describe("GraphAPIClient Test", () => {
     setTools(new MockTools());
     it("Happy path", async () => {
       const fakeAxiosInstance = axios.create();
-      sandbox.stub(axios, "create").returns(fakeAxiosInstance);
-      sandbox.stub(tokenProvider, "getStatus").resolves(undefined);
+      vi.spyOn(axios, "create").mockReturnValue(fakeAxiosInstance);
+      vi.spyOn(tokenProvider, "getStatus").mockResolvedValue(undefined);
       const response = {
         data: {
           value: [
@@ -88,79 +89,79 @@ describe("GraphAPIClient Test", () => {
         },
       };
 
-      sandbox.stub(fakeAxiosInstance, "get").resolves(response);
-      sandbox.stub(RetryHandler, "Retry").resolves(response);
+      vi.spyOn(fakeAxiosInstance, "get").mockResolvedValue(response);
+      vi.spyOn(RetryHandler, "Retry").mockResolvedValue(response);
 
       const graphAPIClient = new GraphClient(tokenProvider);
       const result = await graphAPIClient.listSensitivityLabels(token);
 
-      expect(result.isOk()).to.be.true;
+      chai.expect(result.isOk()).to.be.true;
       if (result.isOk()) {
-        expect(result.value.length).to.equal(2);
-        expect(result.value[0].id).to.equal("label1");
-        expect(result.value[0].displayName).to.equal("General");
-        expect(result.value[1].id).to.equal("label2");
-        expect(result.value[1].displayName).to.equal("Confidential");
+        chai.expect(result.value.length).to.equal(2);
+        chai.expect(result.value[0].id).to.equal("label1");
+        chai.expect(result.value[0].displayName).to.equal("General");
+        chai.expect(result.value[1].id).to.equal("label2");
+        chai.expect(result.value[1].displayName).to.equal("Confidential");
       }
     });
 
     it("Return error for empty response", async () => {
       const fakeAxiosInstance = axios.create();
-      sandbox.stub(axios, "create").returns(fakeAxiosInstance);
-      sandbox.stub(tokenProvider, "getStatus").resolves(undefined);
+      vi.spyOn(axios, "create").mockReturnValue(fakeAxiosInstance);
+      vi.spyOn(tokenProvider, "getStatus").mockResolvedValue(undefined);
 
       const response = {};
-      sandbox.stub(fakeAxiosInstance, "get").resolves(response);
-      sandbox.stub(RetryHandler, "Retry").resolves(response);
+      vi.spyOn(fakeAxiosInstance, "get").mockResolvedValue(response);
+      vi.spyOn(RetryHandler, "Retry").mockResolvedValue(response);
 
       const graphAPIClient = new GraphClient(tokenProvider);
       const result = await graphAPIClient.listSensitivityLabels(token);
 
-      expect(result.isErr()).to.be.true;
+      chai.expect(result.isErr()).to.be.true;
       if (result.isErr()) {
-        expect(result.error.name).to.equal("listSensitivityLabelsError");
+        chai.expect(result.error.name).to.equal("listSensitivityLabelsError");
       }
     });
 
     it("Return error for empty data", async () => {
       const fakeAxiosInstance = axios.create();
-      sandbox.stub(axios, "create").returns(fakeAxiosInstance);
-      sandbox.stub(tokenProvider, "getStatus").resolves(undefined);
+      vi.spyOn(axios, "create").mockReturnValue(fakeAxiosInstance);
+      vi.spyOn(tokenProvider, "getStatus").mockResolvedValue(undefined);
       const response = { data: {} };
-      sandbox.stub(fakeAxiosInstance, "get").resolves(response);
-      sandbox.stub(RetryHandler, "Retry").resolves(response);
+      vi.spyOn(fakeAxiosInstance, "get").mockResolvedValue(response);
+      vi.spyOn(RetryHandler, "Retry").mockResolvedValue(response);
 
       const graphAPIClient = new GraphClient(tokenProvider);
       const result = await graphAPIClient.listSensitivityLabels(token);
 
-      expect(result.isErr()).to.be.true;
+      chai.expect(result.isErr()).to.be.true;
       if (result.isErr()) {
-        expect(result.error.name).to.equal("listSensitivityLabelsError");
+        chai.expect(result.error.name).to.equal("listSensitivityLabelsError");
       }
     });
 
     it("API failure", async () => {
       const fakeAxiosInstance = axios.create();
-      sandbox.stub(axios, "create").returns(fakeAxiosInstance);
-      sandbox.stub(tokenProvider, "getStatus").resolves(undefined);
+      vi.spyOn(axios, "create").mockReturnValue(fakeAxiosInstance);
+      vi.spyOn(tokenProvider, "getStatus").mockResolvedValue(undefined);
       const error = new Error("API failed");
-      sandbox.stub(fakeAxiosInstance, "get").rejects(error);
-      sandbox.stub(RetryHandler, "Retry").rejects(error);
+      vi.spyOn(fakeAxiosInstance, "get").mockRejectedValue(error);
+      vi.spyOn(RetryHandler, "Retry").mockRejectedValue(error);
 
       const graphAPIClient = new GraphClient(tokenProvider);
       const result = await graphAPIClient.listSensitivityLabels(token);
 
-      expect(result.isErr()).to.be.true;
+      chai.expect(result.isErr()).to.be.true;
       if (result.isErr()) {
-        expect(result.error.name).to.equal("listSensitivityLabelsError");
-        expect(result.error.message).to.include("API failed");
+        chai.expect(result.error.name).to.equal("listSensitivityLabelsError");
+        chai.expect(result.error.message).to.include("API failed");
       }
     });
 
     it("Should use cache when useCache is true and cache is valid", async () => {
       const accountUniqueName = `name-${Date.now()}`;
       const tenantId = `tenant-${Date.now()}`;
-      sandbox.stub(tokenProvider, "getStatus").resolves(
+      vi.spyOn(tokenProvider, "getStatus").mockResolvedValue(
         ok({
           accountInfo: { unique_name: accountUniqueName, tid: tenantId },
           status: signedIn,
@@ -184,21 +185,21 @@ describe("GraphAPIClient Test", () => {
 
       await globalState.globalStateUpdate(cacheKey, cacheValue);
 
-      const retryStub = sandbox
-        .stub(RetryHandler, "Retry")
-        .resolves({ data: { value: [{ id: "newLabel" }] } } as any);
+      const retryStub = vi
+        .spyOn(RetryHandler, "Retry")
+        .mockResolvedValue({ data: { value: [{ id: "newLabel" }] } } as any);
 
       const result = await graphAPIClient.listSensitivityLabels(token, true);
 
-      expect(result.isOk()).to.be.true;
+      chai.expect(result.isOk()).to.be.true;
       if (result.isOk()) {
-        expect(result.value).to.deep.equal(labels);
+        chai.expect(result.value).to.deep.equal(labels);
       }
-      expect(retryStub.called).to.be.false;
+      chai.expect(retryStub.mock.calls.length > 0).to.be.false;
     });
 
     it("Should not use cache when cache is expired", async () => {
-      sandbox.stub(tokenProvider, "getStatus").resolves(
+      vi.spyOn(tokenProvider, "getStatus").mockResolvedValue(
         ok({
           accountInfo: { unique_name: "name", tid: "123" },
           status: signedIn,
@@ -206,7 +207,7 @@ describe("GraphAPIClient Test", () => {
         } as any)
       );
       const fakeAxiosInstance = axios.create();
-      sandbox.stub(axios, "create").returns(fakeAxiosInstance);
+      vi.spyOn(axios, "create").mockReturnValue(fakeAxiosInstance);
 
       const response = {
         data: {
@@ -226,24 +227,24 @@ describe("GraphAPIClient Test", () => {
         unixTimestamp: Date.now() - 1000 * 60 * 60 * 25, // 25 hours ago
       };
 
-      sandbox.stub(globalState, "globalStateGet").resolves(oldCache);
-      sandbox.stub(globalState, "globalStateUpdate").resolves();
-      sandbox.stub(fakeAxiosInstance, "get").resolves(response);
-      sandbox.stub(RetryHandler, "Retry").resolves(response);
+      vi.spyOn(globalState, "globalStateGet").mockResolvedValue(oldCache);
+      vi.spyOn(globalState, "globalStateUpdate").mockResolvedValue();
+      vi.spyOn(fakeAxiosInstance, "get").mockResolvedValue(response);
+      vi.spyOn(RetryHandler, "Retry").mockResolvedValue(response);
 
       const graphAPIClient = new GraphClient(tokenProvider);
       const result = await graphAPIClient.listSensitivityLabels(token, true);
 
-      expect(result.isOk()).to.be.true;
+      chai.expect(result.isOk()).to.be.true;
       if (result.isOk()) {
-        expect(result.value).to.deep.equal(response.data.value);
+        chai.expect(result.value).to.deep.equal(response.data.value);
       }
     });
 
     it("Should update cache after API call", async () => {
       const accountUniqueName = `name-${Date.now()}`;
       const tenantId = `tenant-${Date.now()}`;
-      sandbox.stub(tokenProvider, "getStatus").resolves(
+      vi.spyOn(tokenProvider, "getStatus").mockResolvedValue(
         ok({
           accountInfo: { unique_name: accountUniqueName, tid: tenantId },
           status: signedIn,
@@ -251,7 +252,7 @@ describe("GraphAPIClient Test", () => {
         } as any)
       );
       const fakeAxiosInstance = axios.create();
-      sandbox.stub(axios, "create").returns(fakeAxiosInstance);
+      vi.spyOn(axios, "create").mockReturnValue(fakeAxiosInstance);
 
       const response = {
         data: {
@@ -266,22 +267,22 @@ describe("GraphAPIClient Test", () => {
         },
       };
 
-      sandbox.stub(fakeAxiosInstance, "get").resolves(response);
-      sandbox.stub(RetryHandler, "Retry").resolves(response);
+      vi.spyOn(fakeAxiosInstance, "get").mockResolvedValue(response);
+      vi.spyOn(RetryHandler, "Retry").mockResolvedValue(response);
 
       const graphAPIClient = new GraphClient(tokenProvider);
       const result = await graphAPIClient.listSensitivityLabels(token, false);
       const cacheKey = `listSensitivityLabelCacheKey:${tenantId}:${accountUniqueName}`;
       const updatedCache = await globalState.globalStateGet(cacheKey);
 
-      expect(result.isOk()).to.be.true;
-      expect(updatedCache).to.not.be.undefined;
-      expect(updatedCache.labels).to.deep.equal(response.data.value);
-      expect(updatedCache.unixTimestamp).to.be.closeTo(Date.now(), 1000);
+      chai.expect(result.isOk()).to.be.true;
+      chai.expect(updatedCache).to.not.be.undefined;
+      chai.expect(updatedCache.labels).to.deep.equal(response.data.value);
+      chai.expect(updatedCache.unixTimestamp).to.be.closeTo(Date.now(), 1000);
     });
 
     it("Should not use cache when useCache is false", async () => {
-      sandbox.stub(tokenProvider, "getStatus").resolves(
+      vi.spyOn(tokenProvider, "getStatus").mockResolvedValue(
         ok({
           accountInfo: { unique_name: "name", tid: "123" },
           status: signedIn,
@@ -289,7 +290,7 @@ describe("GraphAPIClient Test", () => {
         } as any)
       );
       const fakeAxiosInstance = axios.create();
-      sandbox.stub(axios, "create").returns(fakeAxiosInstance);
+      vi.spyOn(axios, "create").mockReturnValue(fakeAxiosInstance);
 
       const response = {
         data: {
@@ -309,23 +310,23 @@ describe("GraphAPIClient Test", () => {
         unixTimestamp: Date.now(),
       };
 
-      sandbox.stub(globalState, "globalStateGet").resolves(cache);
-      sandbox.stub(fakeAxiosInstance, "get").resolves(response);
-      sandbox.stub(RetryHandler, "Retry").resolves(response);
+      vi.spyOn(globalState, "globalStateGet").mockResolvedValue(cache);
+      vi.spyOn(fakeAxiosInstance, "get").mockResolvedValue(response);
+      vi.spyOn(RetryHandler, "Retry").mockResolvedValue(response);
 
       const graphAPIClient = new GraphClient(tokenProvider);
       const result = await graphAPIClient.listSensitivityLabels(token, false);
 
-      expect(result.isOk()).to.be.true;
+      chai.expect(result.isOk()).to.be.true;
       if (result.isOk()) {
-        expect(result.value).to.deep.equal(response.data.value);
+        chai.expect(result.value).to.deep.equal(response.data.value);
       }
     });
 
     it("Should handle response with undefined or missing label properties", async () => {
       const accountUniqueName = `name-${Date.now()}`;
       const tenantId = `tenant-${Date.now()}`;
-      sandbox.stub(tokenProvider, "getStatus").resolves(
+      vi.spyOn(tokenProvider, "getStatus").mockResolvedValue(
         ok({
           accountInfo: { unique_name: accountUniqueName, tid: tenantId },
           status: signedIn,
@@ -333,7 +334,7 @@ describe("GraphAPIClient Test", () => {
         } as any)
       );
       const fakeAxiosInstance = axios.create();
-      sandbox.stub(axios, "create").returns(fakeAxiosInstance);
+      vi.spyOn(axios, "create").mockReturnValue(fakeAxiosInstance);
 
       const response = {
         data: {
@@ -357,22 +358,22 @@ describe("GraphAPIClient Test", () => {
         },
       };
 
-      sandbox.stub(fakeAxiosInstance, "get").resolves(response);
-      sandbox.stub(RetryHandler, "Retry").resolves(response);
+      vi.spyOn(fakeAxiosInstance, "get").mockResolvedValue(response);
+      vi.spyOn(RetryHandler, "Retry").mockResolvedValue(response);
 
       const graphAPIClient = new GraphClient(tokenProvider);
       const result = await graphAPIClient.listSensitivityLabels(token, false);
 
-      expect(result.isOk()).to.be.true;
+      chai.expect(result.isOk()).to.be.true;
       if (result.isOk()) {
-        expect(result.value.length).to.equal(4);
-        expect(result.value[0].id).to.be.undefined;
-        expect(result.value[0].name).to.be.undefined;
-        expect(result.value[1].id).to.be.undefined;
-        expect(result.value[1].displayName).to.be.undefined;
-        expect(result.value[2].id).to.equal("label1");
-        expect(result.value[2].displayName).to.equal("Test Label");
-        expect(result.value[2].name).to.be.undefined;
+        chai.expect(result.value.length).to.equal(4);
+        chai.expect(result.value[0].id).to.be.undefined;
+        chai.expect(result.value[0].name).to.be.undefined;
+        chai.expect(result.value[1].id).to.be.undefined;
+        chai.expect(result.value[1].displayName).to.be.undefined;
+        chai.expect(result.value[2].id).to.equal("label1");
+        chai.expect(result.value[2].displayName).to.equal("Test Label");
+        chai.expect(result.value[2].name).to.be.undefined;
       }
     });
   });
@@ -397,13 +398,13 @@ describe("GraphAPIClient Test", () => {
         },
       ];
 
-      sandbox.stub(graphAPIClient, "listSensitivityLabels").resolves(ok(labels));
+      vi.spyOn(graphAPIClient, "listSensitivityLabels").mockResolvedValue(ok(labels));
 
       const result = await graphAPIClient.getGeneralSentivityLabel(token);
 
-      expect(result.isOk()).to.be.true;
+      chai.expect(result.isOk()).to.be.true;
       if (result.isOk()) {
-        expect(result.value.id).to.equal("general-id");
+        chai.expect(result.value.id).to.equal("general-id");
       }
     });
 
@@ -419,13 +420,13 @@ describe("GraphAPIClient Test", () => {
         },
       ];
 
-      sandbox.stub(graphAPIClient, "listSensitivityLabels").resolves(ok(labels));
+      vi.spyOn(graphAPIClient, "listSensitivityLabels").mockResolvedValue(ok(labels));
 
       const result = await graphAPIClient.getGeneralSentivityLabel(token);
 
-      expect(result.isErr()).to.be.true;
+      chai.expect(result.isErr()).to.be.true;
       if (result.isErr()) {
-        expect(result.error.name).to.equal("getGeneralSentivityLabelError");
+        chai.expect(result.error.name).to.equal("getGeneralSentivityLabelError");
       }
     });
 
@@ -446,13 +447,13 @@ describe("GraphAPIClient Test", () => {
         },
       ];
 
-      sandbox.stub(graphAPIClient, "listSensitivityLabels").resolves(ok(labels));
+      vi.spyOn(graphAPIClient, "listSensitivityLabels").mockResolvedValue(ok(labels));
 
       const result = await graphAPIClient.getGeneralSentivityLabel(token);
 
-      expect(result.isErr()).to.be.true;
+      chai.expect(result.isErr()).to.be.true;
       if (result.isErr()) {
-        expect(result.error.name).to.equal("getGeneralSentivityLabelError");
+        chai.expect(result.error.name).to.equal("getGeneralSentivityLabelError");
       }
     });
 
@@ -465,7 +466,7 @@ describe("GraphAPIClient Test", () => {
         source: "GraphAPI",
       };
 
-      sandbox.stub(graphAPIClient, "listSensitivityLabels").resolves({
+      vi.spyOn(graphAPIClient, "listSensitivityLabels").mockResolvedValue({
         isErr: () => true,
         isOk: () => false,
         error: fakeError,
@@ -474,9 +475,9 @@ describe("GraphAPIClient Test", () => {
 
       const result = await graphAPIClient.getGeneralSentivityLabel(token);
 
-      expect(result.isErr()).to.be.true;
+      chai.expect(result.isErr()).to.be.true;
       if (result.isErr()) {
-        expect(result.error).to.equal(fakeError);
+        chai.expect(result.error).to.equal(fakeError);
       }
     });
   });
@@ -484,15 +485,15 @@ describe("GraphAPIClient Test", () => {
   describe("getUserInfoFromId", () => {
     const tokenProvider = new MockedM365Provider();
     const graphClient = new GraphClient(tokenProvider);
-    const sandbox = createSandbox();
+    const sandbox = vi;
     const fakeAxiosInstance = axios.create();
 
     beforeEach(() => {
-      sandbox.stub(axios, "create").returns(fakeAxiosInstance);
+      vi.spyOn(axios, "create").mockReturnValue(fakeAxiosInstance);
     });
 
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("should return user info when successful", async () => {
@@ -504,22 +505,22 @@ describe("GraphAPIClient Test", () => {
       };
       const mockResponse = { data: mockUser };
 
-      sandbox.stub(tokenProvider, "getAccessToken").resolves(ok("fake-token"));
-      sandbox.stub(fakeAxiosInstance, "get").resolves(mockResponse);
+      vi.spyOn(tokenProvider, "getAccessToken").mockResolvedValue(ok("fake-token"));
+      vi.spyOn(fakeAxiosInstance, "get").mockResolvedValue(mockResponse);
 
       const result = await graphClient.getUserInfoFromId(userId);
 
-      expect(result).to.deep.equal(mockUser);
+      chai.expect(result).to.deep.equal(mockUser);
     });
 
     it("should return undefined when response is empty", async () => {
       const userId = "test-user-id";
-      sandbox.stub(tokenProvider, "getAccessToken").resolves(ok("fake-token"));
-      sandbox.stub(fakeAxiosInstance, "get").resolves({});
+      vi.spyOn(tokenProvider, "getAccessToken").mockResolvedValue(ok("fake-token"));
+      vi.spyOn(fakeAxiosInstance, "get").mockResolvedValue({});
 
       const result = await graphClient.getUserInfoFromId(userId);
 
-      expect(result).to.be.undefined;
+      chai.expect(result).to.be.undefined;
     });
 
     it("should throw error when token acquisition fails", async () => {
@@ -529,13 +530,13 @@ describe("GraphAPIClient Test", () => {
         message: "Token acquisition failed",
         source: "GraphClient",
       });
-      sandbox.stub(tokenProvider, "getAccessToken").resolves(err(error));
+      vi.spyOn(tokenProvider, "getAccessToken").mockResolvedValue(err(error));
 
       try {
         await graphClient.getUserInfoFromId(userId);
-        expect.fail("Should have thrown error");
+        chai.assert.fail("Should have thrown error");
       } catch (e) {
-        expect(e).to.equal(error);
+        chai.expect(e).to.equal(error);
       }
     });
   });
@@ -543,15 +544,15 @@ describe("GraphAPIClient Test", () => {
   describe("getGroupInfo", () => {
     const tokenProvider = new MockedM365Provider();
     const graphClient = new GraphClient(tokenProvider);
-    const sandbox = createSandbox();
+    const sandbox = vi;
     const fakeAxiosInstance = axios.create();
 
     beforeEach(() => {
-      sandbox.stub(axios, "create").returns(fakeAxiosInstance);
+      vi.spyOn(axios, "create").mockReturnValue(fakeAxiosInstance);
     });
 
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("should return group info when successful", async () => {
@@ -567,12 +568,12 @@ describe("GraphAPIClient Test", () => {
         },
       };
 
-      sandbox.stub(tokenProvider, "getAccessToken").resolves(ok("fake-token"));
-      sandbox.stub(fakeAxiosInstance, "get").resolves(mockResponse);
+      vi.spyOn(tokenProvider, "getAccessToken").mockResolvedValue(ok("fake-token"));
+      vi.spyOn(fakeAxiosInstance, "get").mockResolvedValue(mockResponse);
 
       const result = await graphClient.getGroupInfo(email);
 
-      expect(result).to.deep.equal(mockGroup);
+      chai.expect(result).to.deep.equal(mockGroup);
     });
 
     it("should return group info with case-insensitive email matching", async () => {
@@ -588,12 +589,12 @@ describe("GraphAPIClient Test", () => {
         },
       };
 
-      sandbox.stub(tokenProvider, "getAccessToken").resolves(ok("fake-token"));
-      sandbox.stub(fakeAxiosInstance, "get").resolves(mockResponse);
+      vi.spyOn(tokenProvider, "getAccessToken").mockResolvedValue(ok("fake-token"));
+      vi.spyOn(fakeAxiosInstance, "get").mockResolvedValue(mockResponse);
 
       const result = await graphClient.getGroupInfo(email);
 
-      expect(result).to.deep.equal(mockGroup);
+      chai.expect(result).to.deep.equal(mockGroup);
     });
 
     it("should return undefined when no matching group found", async () => {
@@ -609,22 +610,22 @@ describe("GraphAPIClient Test", () => {
         },
       };
 
-      sandbox.stub(tokenProvider, "getAccessToken").resolves(ok("fake-token"));
-      sandbox.stub(fakeAxiosInstance, "get").resolves(mockResponse);
+      vi.spyOn(tokenProvider, "getAccessToken").mockResolvedValue(ok("fake-token"));
+      vi.spyOn(fakeAxiosInstance, "get").mockResolvedValue(mockResponse);
 
       const result = await graphClient.getGroupInfo(email);
 
-      expect(result).to.be.undefined;
+      chai.expect(result).to.be.undefined;
     });
 
     it("should return undefined when response is empty", async () => {
       const email = "testgroup@example.com";
-      sandbox.stub(tokenProvider, "getAccessToken").resolves(ok("fake-token"));
-      sandbox.stub(fakeAxiosInstance, "get").resolves({});
+      vi.spyOn(tokenProvider, "getAccessToken").mockResolvedValue(ok("fake-token"));
+      vi.spyOn(fakeAxiosInstance, "get").mockResolvedValue({});
 
       const result = await graphClient.getGroupInfo(email);
 
-      expect(result).to.be.undefined;
+      chai.expect(result).to.be.undefined;
     });
 
     it("should throw error when token acquisition fails", async () => {
@@ -634,13 +635,13 @@ describe("GraphAPIClient Test", () => {
         message: "Token acquisition failed",
         source: "GraphClient",
       });
-      sandbox.stub(tokenProvider, "getAccessToken").resolves(err(error));
+      vi.spyOn(tokenProvider, "getAccessToken").mockResolvedValue(err(error));
 
       try {
         await graphClient.getGroupInfo(email);
-        expect.fail("Should have thrown error");
+        chai.assert.fail("Should have thrown error");
       } catch (e) {
-        expect(e).to.equal(error);
+        chai.expect(e).to.equal(error);
       }
     });
   });
@@ -650,29 +651,29 @@ describe("GraphAPIClient Test", () => {
     const graphClient = new GraphClient(tokenProvider);
 
     beforeEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
 
     it("Should return empty strings when user is not logged in", async () => {
-      sandbox.stub(tokenProvider, "getStatus").resolves(undefined);
+      vi.spyOn(tokenProvider, "getStatus").mockResolvedValue(undefined);
 
       const result = await graphClient.getCurrentUserInfo();
 
-      expect(result).to.deep.equal(["", ""]);
+      chai.expect(result).to.deep.equal(["", ""]);
     });
 
     it("Should return empty strings when login status is error", async () => {
-      sandbox
-        .stub(tokenProvider, "getStatus")
-        .resolves(err(new SystemError("source", "name", "Failed to get status")));
+      vi.spyOn(tokenProvider, "getStatus").mockResolvedValue(
+        err(new SystemError("source", "name", "Failed to get status"))
+      );
 
       const result = await graphClient.getCurrentUserInfo();
 
-      expect(result).to.deep.equal(["", ""]);
+      chai.expect(result).to.deep.equal(["", ""]);
     });
 
     it("Should return empty strings when user is not signed in", async () => {
-      sandbox.stub(tokenProvider, "getStatus").resolves(
+      vi.spyOn(tokenProvider, "getStatus").mockResolvedValue(
         ok({
           status: "SignedOut",
           token: "token",
@@ -681,11 +682,11 @@ describe("GraphAPIClient Test", () => {
 
       const result = await graphClient.getCurrentUserInfo();
 
-      expect(result).to.deep.equal(["", ""]);
+      chai.expect(result).to.deep.equal(["", ""]);
     });
 
     it("Should return empty strings when token is not available", async () => {
-      sandbox.stub(tokenProvider, "getStatus").resolves(
+      vi.spyOn(tokenProvider, "getStatus").mockResolvedValue(
         ok({
           status: signedIn,
           token: undefined,
@@ -698,11 +699,11 @@ describe("GraphAPIClient Test", () => {
 
       const result = await graphClient.getCurrentUserInfo();
 
-      expect(result).to.deep.equal(["", ""]);
+      chai.expect(result).to.deep.equal(["", ""]);
     });
 
     it("Should return empty strings when accountInfo values are not strings", async () => {
-      sandbox.stub(tokenProvider, "getStatus").resolves(
+      vi.spyOn(tokenProvider, "getStatus").mockResolvedValue(
         ok({
           status: signedIn,
           token: "token",
@@ -715,11 +716,11 @@ describe("GraphAPIClient Test", () => {
 
       const result = await graphClient.getCurrentUserInfo();
 
-      expect(result).to.deep.equal(["", ""]);
+      chai.expect(result).to.deep.equal(["", ""]);
     });
 
     it("Should return values when all required info is available", async () => {
-      sandbox.stub(tokenProvider, "getStatus").resolves(
+      vi.spyOn(tokenProvider, "getStatus").mockResolvedValue(
         ok({
           status: signedIn,
           token: "token",
@@ -732,11 +733,11 @@ describe("GraphAPIClient Test", () => {
 
       const result = await graphClient.getCurrentUserInfo();
 
-      expect(result).to.deep.equal(["test@example.com", "test-tenant-id"]);
+      chai.expect(result).to.deep.equal(["test@example.com", "test-tenant-id"]);
     });
 
     it("Should return empty strings when accountInfo is missing", async () => {
-      sandbox.stub(tokenProvider, "getStatus").resolves(
+      vi.spyOn(tokenProvider, "getStatus").mockResolvedValue(
         ok({
           status: signedIn,
           token: "token",
@@ -745,11 +746,11 @@ describe("GraphAPIClient Test", () => {
 
       const result = await graphClient.getCurrentUserInfo();
 
-      expect(result).to.deep.equal(["", ""]);
+      chai.expect(result).to.deep.equal(["", ""]);
     });
 
     it("Should handle undefined values in accountInfo", async () => {
-      sandbox.stub(tokenProvider, "getStatus").resolves(
+      vi.spyOn(tokenProvider, "getStatus").mockResolvedValue(
         ok({
           status: signedIn,
           token: "token",
@@ -762,23 +763,23 @@ describe("GraphAPIClient Test", () => {
 
       const result = await graphClient.getCurrentUserInfo();
 
-      expect(result).to.deep.equal(["", ""]);
+      chai.expect(result).to.deep.equal(["", ""]);
     });
   });
 });
 
 describe("Teams app publish APIs", () => {
-  const sandbox = createSandbox();
+  const sandbox = vi;
   const tokenProvider = new MockedM365Provider();
   const graphClient = new GraphClient(tokenProvider);
   const fakeAxiosInstance = axios.create();
 
   beforeEach(() => {
-    sandbox.stub(axios, "create").returns(fakeAxiosInstance);
+    vi.spyOn(axios, "create").mockReturnValue(fakeAxiosInstance);
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("getStagedApp should return latest app definition", async () => {
@@ -802,24 +803,24 @@ describe("Teams app publish APIs", () => {
         ],
       },
     };
-    sandbox.stub(fakeAxiosInstance, "get").resolves(response as any);
-    sandbox.stub(RetryHandler, "Retry").resolves(response as any);
+    vi.spyOn(fakeAxiosInstance, "get").mockResolvedValue(response as any);
+    vi.spyOn(RetryHandler, "Retry").mockResolvedValue(response as any);
 
     const result = await graphClient.getStagedApp("token", "external-id");
 
-    expect(result?.teamsAppId).to.equal("catalog-app-id");
-    expect(result?.displayName).to.equal("App Name");
-    expect(result?.publishingState).to.equal("published");
+    chai.expect(result?.teamsAppId).to.equal("catalog-app-id");
+    chai.expect(result?.displayName).to.equal("App Name");
+    chai.expect(result?.publishingState).to.equal("published");
   });
 
   it("getStagedApp should return undefined when app is not found", async () => {
     const response = { data: { value: [] } };
-    sandbox.stub(fakeAxiosInstance, "get").resolves(response as any);
-    sandbox.stub(RetryHandler, "Retry").resolves(response as any);
+    vi.spyOn(fakeAxiosInstance, "get").mockResolvedValue(response as any);
+    vi.spyOn(RetryHandler, "Retry").mockResolvedValue(response as any);
 
     const result = await graphClient.getStagedApp("token", "external-id");
 
-    expect(result).to.be.undefined;
+    chai.expect(result).to.be.undefined;
   });
 
   it("getStagedApp should return undefined when app definitions are empty", async () => {
@@ -828,40 +829,40 @@ describe("Teams app publish APIs", () => {
         value: [{ id: "catalog-app-id", displayName: "App Name", appDefinitions: [] }],
       },
     };
-    const getStub = sandbox.stub(fakeAxiosInstance, "get").resolves(response as any);
-    sandbox.stub(RetryHandler, "Retry").callsFake(async (fn: any) => await fn());
+    const getStub = vi.spyOn(fakeAxiosInstance, "get").mockResolvedValue(response as any);
+    vi.spyOn(RetryHandler, "Retry").mockImplementation(async (fn: any) => await fn());
 
     const result = await graphClient.getStagedApp("token", "external-id");
 
-    expect(result).to.be.undefined;
-    expect(getStub.calledOnce).to.be.true;
+    chai.expect(result).to.be.undefined;
+    chai.expect(getStub.mock.calls.length === 1).to.be.true;
   });
 
   it("getStagedApp should return undefined when request throws", async () => {
-    sandbox.stub(fakeAxiosInstance, "get").rejects(new Error("network error"));
-    sandbox.stub(RetryHandler, "Retry").callsFake(async (fn: any) => await fn());
+    vi.spyOn(fakeAxiosInstance, "get").mockRejectedValue(new Error("network error"));
+    vi.spyOn(RetryHandler, "Retry").mockImplementation(async (fn: any) => await fn());
 
     const result = await graphClient.getStagedApp("token", "external-id");
 
-    expect(result).to.be.undefined;
+    chai.expect(result).to.be.undefined;
   });
 
   it("publishTeamsApp should return published app id", async () => {
     const response = { data: { id: "catalog-app-id" } };
-    const postStub = sandbox.stub(fakeAxiosInstance, "post").resolves(response as any);
-    sandbox.stub(RetryHandler, "Retry").callsFake(async (fn: any) => await fn());
+    const postStub = vi.spyOn(fakeAxiosInstance, "post").mockResolvedValue(response as any);
+    vi.spyOn(RetryHandler, "Retry").mockImplementation(async (fn: any) => await fn());
 
     const result = await graphClient.publishTeamsApp("token", "external-id", Buffer.from("zip"));
 
-    expect(result).to.equal("catalog-app-id");
-    expect(postStub.calledOnce).to.be.true;
-    expect(postStub.firstCall.args[0]).to.contain("/appCatalogs/teamsApps?requiresReview=true");
+    chai.expect(result).to.equal("catalog-app-id");
+    chai.expect(postStub.mock.calls.length === 1).to.be.true;
+    chai.expect(postStub.mock.calls[0][0]).to.contain("/appCatalogs/teamsApps?requiresReview=true");
   });
 
   it("publishTeamsApp should fallback to staged app id when response id is empty", async () => {
-    sandbox.stub(fakeAxiosInstance, "post").resolves({ data: {} } as any);
-    sandbox.stub(RetryHandler, "Retry").callsFake(async (fn: any) => await fn());
-    sandbox.stub(graphClient, "getStagedApp").resolves({
+    vi.spyOn(fakeAxiosInstance, "post").mockResolvedValue({ data: {} } as any);
+    vi.spyOn(RetryHandler, "Retry").mockImplementation(async (fn: any) => await fn());
+    vi.spyOn(graphClient, "getStagedApp").mockResolvedValue({
       teamsAppId: "catalog-app-id",
       displayName: "App Name",
       publishingState: "published" as any,
@@ -870,29 +871,29 @@ describe("Teams app publish APIs", () => {
 
     const result = await graphClient.publishTeamsApp("token", "external-id", Buffer.from("zip"));
 
-    expect(result).to.equal("catalog-app-id");
+    chai.expect(result).to.equal("catalog-app-id");
   });
 
   it("publishTeamsApp should throw when response id is empty and staged app is missing", async () => {
-    sandbox.stub(fakeAxiosInstance, "post").resolves({ data: {} } as any);
-    sandbox.stub(RetryHandler, "Retry").callsFake(async (fn: any) => await fn());
-    sandbox.stub(graphClient, "getStagedApp").resolves(undefined);
+    vi.spyOn(fakeAxiosInstance, "post").mockResolvedValue({ data: {} } as any);
+    vi.spyOn(RetryHandler, "Retry").mockImplementation(async (fn: any) => await fn());
+    vi.spyOn(graphClient, "getStagedApp").mockResolvedValue(undefined);
 
     try {
       await graphClient.publishTeamsApp("token", "external-id", Buffer.from("zip"));
-      expect.fail("Should throw");
+      chai.assert.fail("Should throw");
     } catch (e: any) {
-      expect(e).to.be.instanceOf(Error);
-      expect(e.message).to.include("publishTeamsApp");
-      expect(e.message).to.include("empty response");
+      chai.expect(e).to.be.instanceOf(Error);
+      chai.expect(e.message).to.include("publishTeamsApp");
+      chai.expect(e.message).to.include("empty response");
     }
   });
 
   it("publishTeamsApp should fallback to staged app on BadGateway in response body", async () => {
     const response = { data: { error: { code: "BadGateway" } } };
-    sandbox.stub(fakeAxiosInstance, "post").resolves(response as any);
-    sandbox.stub(RetryHandler, "Retry").callsFake(async (fn: any) => await fn());
-    sandbox.stub(graphClient, "getStagedApp").resolves({
+    vi.spyOn(fakeAxiosInstance, "post").mockResolvedValue(response as any);
+    vi.spyOn(RetryHandler, "Retry").mockImplementation(async (fn: any) => await fn());
+    vi.spyOn(graphClient, "getStagedApp").mockResolvedValue({
       teamsAppId: "catalog-app-id",
       displayName: "App Name",
       publishingState: "published" as any,
@@ -901,58 +902,58 @@ describe("Teams app publish APIs", () => {
 
     const result = await graphClient.publishTeamsApp("token", "external-id", Buffer.from("zip"));
 
-    expect(result).to.equal("catalog-app-id");
+    chai.expect(result).to.equal("catalog-app-id");
   });
 
   it("publishTeamsApp should call update when response body contains AppDefinitionAlreadyExists", async () => {
     const response = {
       data: { error: { code: "Conflict", innerError: { code: "AppDefinitionAlreadyExists" } } },
     };
-    sandbox.stub(fakeAxiosInstance, "post").resolves(response as any);
-    sandbox.stub(RetryHandler, "Retry").callsFake(async (fn: any) => await fn());
-    sandbox.stub(graphClient, "publishTeamsAppUpdate").resolves("updated-id");
+    vi.spyOn(fakeAxiosInstance, "post").mockResolvedValue(response as any);
+    vi.spyOn(RetryHandler, "Retry").mockImplementation(async (fn: any) => await fn());
+    vi.spyOn(graphClient, "publishTeamsAppUpdate").mockResolvedValue("updated-id");
 
     const result = await graphClient.publishTeamsApp("token", "external-id", Buffer.from("zip"));
 
-    expect(result).to.equal("updated-id");
+    chai.expect(result).to.equal("updated-id");
   });
 
   it("publishTeamsApp should call update on conflict", async () => {
-    sandbox.stub(fakeAxiosInstance, "post").rejects({ response: { status: 409 } });
-    sandbox.stub(RetryHandler, "Retry").callsFake(async (fn: any) => await fn());
-    sandbox.stub(graphClient, "publishTeamsAppUpdate").resolves("updated-id");
+    vi.spyOn(fakeAxiosInstance, "post").mockRejectedValue({ response: { status: 409 } });
+    vi.spyOn(RetryHandler, "Retry").mockImplementation(async (fn: any) => await fn());
+    vi.spyOn(graphClient, "publishTeamsAppUpdate").mockResolvedValue("updated-id");
 
     const result = await graphClient.publishTeamsApp("token", "external-id", Buffer.from("zip"));
 
-    expect(result).to.equal("updated-id");
+    chai.expect(result).to.equal("updated-id");
   });
 
   it("publishTeamsApp should throw graph API error when response contains unexpected error", async () => {
     const response = { data: { error: { code: "Forbidden", message: "forbidden" } } };
-    sandbox.stub(fakeAxiosInstance, "post").resolves(response as any);
-    sandbox.stub(RetryHandler, "Retry").callsFake(async (fn: any) => await fn());
+    vi.spyOn(fakeAxiosInstance, "post").mockResolvedValue(response as any);
+    vi.spyOn(RetryHandler, "Retry").mockImplementation(async (fn: any) => await fn());
 
     try {
       await graphClient.publishTeamsApp("token", "external-id", Buffer.from("zip"));
-      expect.fail("Should throw");
+      chai.assert.fail("Should throw");
     } catch (e: any) {
-      expect(e).to.be.instanceOf(Error);
-      expect(e.message).to.include("publishTeamsApp");
-      expect(e.message).to.include("forbidden");
+      chai.expect(e).to.be.instanceOf(Error);
+      chai.expect(e.message).to.include("publishTeamsApp");
+      chai.expect(e.message).to.include("forbidden");
     }
   });
 
   it("publishTeamsAppUpdate should post to appDefinitions with staged teamsAppId", async () => {
-    sandbox.stub(graphClient, "getStagedApp").resolves({
+    vi.spyOn(graphClient, "getStagedApp").mockResolvedValue({
       teamsAppId: "catalog-app-id",
       displayName: "App Name",
       publishingState: "published" as any,
       lastModifiedDateTime: null,
     });
-    const postStub = sandbox
-      .stub(fakeAxiosInstance, "post")
-      .resolves({ data: { teamsAppId: "catalog-app-id" } } as any);
-    sandbox.stub(RetryHandler, "Retry").callsFake(async (fn: any) => await fn());
+    const postStub = vi
+      .spyOn(fakeAxiosInstance, "post")
+      .mockResolvedValue({ data: { teamsAppId: "catalog-app-id" } } as any);
+    vi.spyOn(RetryHandler, "Retry").mockImplementation(async (fn: any) => await fn());
 
     const result = await graphClient.publishTeamsAppUpdate(
       "token",
@@ -960,22 +961,22 @@ describe("Teams app publish APIs", () => {
       Buffer.from("zip")
     );
 
-    expect(result).to.equal("catalog-app-id");
-    expect(postStub.calledOnce).to.be.true;
-    expect(postStub.firstCall.args[0]).to.contain(
-      "/appCatalogs/teamsApps/catalog-app-id/appDefinitions?requiresReview=true"
-    );
+    chai.expect(result).to.equal("catalog-app-id");
+    chai.expect(postStub.mock.calls.length === 1).to.be.true;
+    chai
+      .expect(postStub.mock.calls[0][0])
+      .to.contain("/appCatalogs/teamsApps/catalog-app-id/appDefinitions?requiresReview=true");
   });
 
   it("publishTeamsAppUpdate should return id when teamsAppId is missing", async () => {
-    sandbox.stub(graphClient, "getStagedApp").resolves({
+    vi.spyOn(graphClient, "getStagedApp").mockResolvedValue({
       teamsAppId: "catalog-app-id",
       displayName: "App Name",
       publishingState: "published" as any,
       lastModifiedDateTime: null,
     });
-    sandbox.stub(fakeAxiosInstance, "post").resolves({ data: { id: "definition-id" } } as any);
-    sandbox.stub(RetryHandler, "Retry").callsFake(async (fn: any) => await fn());
+    vi.spyOn(fakeAxiosInstance, "post").mockResolvedValue({ data: { id: "definition-id" } } as any);
+    vi.spyOn(RetryHandler, "Retry").mockImplementation(async (fn: any) => await fn());
 
     const result = await graphClient.publishTeamsAppUpdate(
       "token",
@@ -983,18 +984,18 @@ describe("Teams app publish APIs", () => {
       Buffer.from("zip")
     );
 
-    expect(result).to.equal("definition-id");
+    chai.expect(result).to.equal("definition-id");
   });
 
   it("publishTeamsAppUpdate should fallback to staged teamsAppId when response ids are missing", async () => {
-    sandbox.stub(graphClient, "getStagedApp").resolves({
+    vi.spyOn(graphClient, "getStagedApp").mockResolvedValue({
       teamsAppId: "catalog-app-id",
       displayName: "App Name",
       publishingState: "published" as any,
       lastModifiedDateTime: null,
     });
-    sandbox.stub(fakeAxiosInstance, "post").resolves({ data: {} } as any);
-    sandbox.stub(RetryHandler, "Retry").callsFake(async (fn: any) => await fn());
+    vi.spyOn(fakeAxiosInstance, "post").mockResolvedValue({ data: {} } as any);
+    vi.spyOn(RetryHandler, "Retry").mockImplementation(async (fn: any) => await fn());
 
     const result = await graphClient.publishTeamsAppUpdate(
       "token",
@@ -1002,41 +1003,41 @@ describe("Teams app publish APIs", () => {
       Buffer.from("zip")
     );
 
-    expect(result).to.equal("catalog-app-id");
+    chai.expect(result).to.equal("catalog-app-id");
   });
 
   it("publishTeamsAppUpdate should throw graph API error when staged app does not exist", async () => {
-    sandbox.stub(graphClient, "getStagedApp").resolves(undefined);
+    vi.spyOn(graphClient, "getStagedApp").mockResolvedValue(undefined);
 
     try {
       await graphClient.publishTeamsAppUpdate("token", "external-id", Buffer.from("zip"));
-      expect.fail("Should throw");
+      chai.assert.fail("Should throw");
     } catch (e: any) {
-      expect(e).to.be.instanceOf(Error);
-      expect(e.message).to.include("publishTeamsAppUpdate");
-      expect(e.message).to.include("Published app does not exist");
+      chai.expect(e).to.be.instanceOf(Error);
+      chai.expect(e.message).to.include("publishTeamsAppUpdate");
+      chai.expect(e.message).to.include("Published app does not exist");
     }
   });
 
   it("publishTeamsAppUpdate should throw graph API error when response has error", async () => {
-    sandbox.stub(graphClient, "getStagedApp").resolves({
+    vi.spyOn(graphClient, "getStagedApp").mockResolvedValue({
       teamsAppId: "catalog-app-id",
       displayName: "App Name",
       publishingState: "published" as any,
       lastModifiedDateTime: null,
     });
-    sandbox
-      .stub(fakeAxiosInstance, "post")
-      .resolves({ data: { error: { message: "invalid package" } } } as any);
-    sandbox.stub(RetryHandler, "Retry").callsFake(async (fn: any) => await fn());
+    vi.spyOn(fakeAxiosInstance, "post").mockResolvedValue({
+      data: { error: { message: "invalid package" } },
+    } as any);
+    vi.spyOn(RetryHandler, "Retry").mockImplementation(async (fn: any) => await fn());
 
     try {
       await graphClient.publishTeamsAppUpdate("token", "external-id", Buffer.from("zip"));
-      expect.fail("Should throw");
+      chai.assert.fail("Should throw");
     } catch (e: any) {
-      expect(e).to.be.instanceOf(Error);
-      expect(e.message).to.include("publishTeamsAppUpdate");
-      expect(e.message).to.include("invalid package");
+      chai.expect(e).to.be.instanceOf(Error);
+      chai.expect(e.message).to.include("publishTeamsAppUpdate");
+      chai.expect(e.message).to.include("invalid package");
     }
   });
 });
@@ -1044,15 +1045,15 @@ describe("Teams app publish APIs", () => {
 describe("Sandbox related APIs", () => {
   const tokenProvider = new MockedM365Provider();
   const graphClient = new GraphClient(tokenProvider);
-  const sandbox = createSandbox();
+  const sandbox = vi;
   const fakeAxiosInstance = axios.create();
 
   beforeEach(() => {
-    sandbox.stub(axios, "create").returns(fakeAxiosInstance);
+    vi.spyOn(axios, "create").mockReturnValue(fakeAxiosInstance);
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("GetJoinedSandboxedTeamsAsync should return joined sandboxed teams", async () => {
@@ -1064,10 +1065,10 @@ describe("Sandbox related APIs", () => {
         ],
       },
     };
-    sandbox.stub(fakeAxiosInstance, "get").resolves(mockResponse);
+    vi.spyOn(fakeAxiosInstance, "get").mockResolvedValue(mockResponse);
 
     const result = await graphClient.GetJoinedSandboxedTeamsAsync();
-    expect(result).equal(mockResponse.data.value);
+    chai.expect(result).equal(mockResponse.data.value);
   });
 
   it("GetChannelDeeplinkAsync should return channel deeplink", async () => {
@@ -1078,17 +1079,17 @@ describe("Sandbox related APIs", () => {
         webUrl: "https://teams.microsoft.com/l/channel/fake-channel",
       },
     };
-    sandbox.stub(fakeAxiosInstance, "get").resolves(mockResponse);
+    vi.spyOn(fakeAxiosInstance, "get").mockResolvedValue(mockResponse);
 
     const result = await graphClient.GetChannelDeeplinkAsync(teamId, channelId);
-    expect(result).to.equal("https://teams.microsoft.com/l/channel/fake-channel");
+    chai.expect(result).to.equal("https://teams.microsoft.com/l/channel/fake-channel");
   });
 
   it("InstallAppToChannelAsync should install app successfully", async () => {
     const teamId = "fake-team-id";
     const channelId = "fake-channel-id";
     const file = Buffer.from("fake-file-content");
-    sandbox.stub(fakeAxiosInstance, "post").resolves({ status: 200 });
+    vi.spyOn(fakeAxiosInstance, "post").mockResolvedValue({ status: 200 });
 
     let error: any = undefined;
     try {
@@ -1096,11 +1097,11 @@ describe("Sandbox related APIs", () => {
     } catch (e) {
       error = e;
     }
-    expect(error).to.be.undefined;
+    chai.expect(error).to.be.undefined;
   });
 
   it("CreateTeamAndChannelAsync should create team and channel successfully", async () => {
-    const clock = sandbox.useFakeTimers();
+    vi.useFakeTimers();
     const teamName = "Test Team";
     const description = "Test Description";
     const defaultChannelName = "General";
@@ -1108,28 +1109,30 @@ describe("Sandbox related APIs", () => {
       "/teams('dbd8de4f-5d47-48da-87f1-594bed003375')/operations('3a6fdce1-c261-48bc-89de-1cfef658c0d5')";
     const teamId = "dbd8de4f-5d47-48da-87f1-594bed003375";
 
-    sandbox.stub(fakeAxiosInstance, "post").resolves({ headers: { location: locationHeader } });
+    vi.spyOn(fakeAxiosInstance, "post").mockResolvedValue({
+      headers: { location: locationHeader },
+    });
 
-    const statusStub = sandbox.stub(fakeAxiosInstance, "get");
-    statusStub.onFirstCall().resolves({ data: { status: "inProgress" } });
-    statusStub.onSecondCall().resolves({ data: { status: "succeeded" } });
+    const statusStub = vi.spyOn(fakeAxiosInstance, "get");
+    statusStub.mockResolvedValueOnce({ data: { status: "inProgress" } });
+    statusStub.mockResolvedValueOnce({ data: { status: "succeeded" } });
 
     const channelsResponse = {
       data: {
         value: [{ id: "fake-channel-id", displayName: defaultChannelName }],
       },
     };
-    statusStub.onThirdCall().resolves(channelsResponse);
+    statusStub.mockResolvedValueOnce(channelsResponse);
 
     const createPromise = graphClient.CreateTeamAndChannelAsync(
       teamName,
       description,
       defaultChannelName
     );
-    await clock.tickAsync(5000);
+    await vi.advanceTimersByTimeAsync(5000);
     const result = await createPromise;
 
-    expect(result).to.deep.equal({
+    chai.expect(result).to.deep.equal({
       teamId: teamId,
       channelId: "fake-channel-id",
     });
@@ -1146,11 +1149,11 @@ describe("Sandbox related APIs", () => {
         webUrl: "https://teams.microsoft.com/l/channel/fake-channel-id",
       },
     };
-    sandbox.stub(fakeAxiosInstance, "post").resolves(mockResponse);
+    vi.spyOn(fakeAxiosInstance, "post").mockResolvedValue(mockResponse);
 
     const result = await graphClient.CreateChannelAsync(teamId, channelName, description);
 
-    expect(result).to.deep.equal({
+    chai.expect(result).to.deep.equal({
       id: "fake-channel-id",
       webUrl: "https://teams.microsoft.com/l/channel/fake-channel-id",
     });
@@ -1166,11 +1169,11 @@ describe("Sandbox related APIs", () => {
         ],
       },
     };
-    sandbox.stub(fakeAxiosInstance, "get").resolves(mockResponse);
+    vi.spyOn(fakeAxiosInstance, "get").mockResolvedValue(mockResponse);
 
     const result = await graphClient.GetChannelsInTeamAsync(teamId);
 
-    expect(result).to.deep.equal(mockResponse.data.value);
+    chai.expect(result).to.deep.equal(mockResponse.data.value);
   });
 
   it("GetTeamsAppSettingsAsync should return teams app settings", async () => {
@@ -1181,11 +1184,11 @@ describe("Sandbox related APIs", () => {
         },
       },
     };
-    sandbox.stub(fakeAxiosInstance, "get").resolves(mockResponse);
+    vi.spyOn(fakeAxiosInstance, "get").mockResolvedValue(mockResponse);
 
     const result = await graphClient.GetTeamsAppSettingsAsync();
 
-    expect(result).to.deep.equal(mockResponse.data);
+    chai.expect(result).to.deep.equal(mockResponse.data);
   });
 
   it("GetAppInstallationForTeam should return installed apps successfully", async () => {
@@ -1211,18 +1214,18 @@ describe("Sandbox related APIs", () => {
       },
     };
 
-    sandbox.stub(fakeAxiosInstance, "get").resolves(mockResponse);
+    vi.spyOn(fakeAxiosInstance, "get").mockResolvedValue(mockResponse);
 
     const result = await graphClient.GetAppInstallationForTeam(teamId);
 
-    expect(result).to.deep.equal(mockResponse.data.value);
+    chai.expect(result).to.deep.equal(mockResponse.data.value);
   });
 
   it("DeleteInstalledApp should delete app installation successfully", async () => {
     const teamId = "fake-team-id";
     const installationId = "fake-installation-id";
 
-    sandbox.stub(fakeAxiosInstance, "delete").resolves({ status: 204 });
+    vi.spyOn(fakeAxiosInstance, "delete").mockResolvedValue({ status: 204 });
 
     let error: any = undefined;
     try {
@@ -1231,23 +1234,23 @@ describe("Sandbox related APIs", () => {
       error = e;
     }
 
-    expect(error).to.be.undefined;
+    chai.expect(error).to.be.undefined;
   });
 });
 
 describe("Sandbox related APIs - failed token", () => {
   const tokenProvider = new MockedM365Provider();
   const graphClient = new GraphClient(tokenProvider);
-  const sandbox = createSandbox();
+  const sandbox = vi;
 
   beforeEach(() => {
-    sandbox
-      .stub(tokenProvider, "getAccessToken")
-      .resolves(err(new SystemError("GraphClient", "TokenError", "Failed to get access token")));
+    vi.spyOn(tokenProvider, "getAccessToken").mockResolvedValue(
+      err(new SystemError("GraphClient", "TokenError", "Failed to get access token"))
+    );
   });
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   it("GetJoinedSandboxedTeamsAsync failed to get access token", async () => {
@@ -1257,9 +1260,9 @@ describe("Sandbox related APIs - failed token", () => {
     } catch (e) {
       error = e;
     }
-    expect(error).to.not.be.undefined;
-    expect(error.name).to.equal("TokenError");
-    expect(error.message).to.equal("Failed to get access token");
+    chai.expect(error).to.not.be.undefined;
+    chai.expect(error.name).to.equal("TokenError");
+    chai.expect(error.message).to.equal("Failed to get access token");
   });
 
   it("GetChannelDeeplinkAsync failed to get access token", async () => {
@@ -1269,8 +1272,8 @@ describe("Sandbox related APIs - failed token", () => {
     } catch (e) {
       error = e;
     }
-    expect(error).to.not.be.undefined;
-    expect(error.name).to.equal("TokenError");
+    chai.expect(error).to.not.be.undefined;
+    chai.expect(error.name).to.equal("TokenError");
   });
 
   it("InstallAppToChannelAsync failed to get access token", async () => {
@@ -1284,8 +1287,8 @@ describe("Sandbox related APIs - failed token", () => {
     } catch (e) {
       error = e;
     }
-    expect(error).to.not.be.undefined;
-    expect(error.name).to.equal("TokenError");
+    chai.expect(error).to.not.be.undefined;
+    chai.expect(error.name).to.equal("TokenError");
   });
 
   it("CreateTeamAndChannelAsync failed to get access token", async () => {
@@ -1295,8 +1298,8 @@ describe("Sandbox related APIs - failed token", () => {
     } catch (e) {
       error = e;
     }
-    expect(error).to.not.be.undefined;
-    expect(error.name).to.equal("TokenError");
+    chai.expect(error).to.not.be.undefined;
+    chai.expect(error.name).to.equal("TokenError");
   });
 
   it("CreateChannelAsync failed to get access token", async () => {
@@ -1306,8 +1309,8 @@ describe("Sandbox related APIs - failed token", () => {
     } catch (e) {
       error = e;
     }
-    expect(error).to.not.be.undefined;
-    expect(error.name).to.equal("TokenError");
+    chai.expect(error).to.not.be.undefined;
+    chai.expect(error.name).to.equal("TokenError");
   });
 
   it("GetTeamsAppSettingsAsync failed to get access token", async () => {
@@ -1317,8 +1320,8 @@ describe("Sandbox related APIs - failed token", () => {
     } catch (e) {
       error = e;
     }
-    expect(error).to.not.be.undefined;
-    expect(error.name).to.equal("TokenError");
+    chai.expect(error).to.not.be.undefined;
+    chai.expect(error.name).to.equal("TokenError");
   });
 
   it("GetChannelsInTeamAsync failed to get access token", async () => {
@@ -1328,8 +1331,8 @@ describe("Sandbox related APIs - failed token", () => {
     } catch (e) {
       error = e;
     }
-    expect(error).to.not.be.undefined;
-    expect(error.name).to.equal("TokenError");
+    chai.expect(error).to.not.be.undefined;
+    chai.expect(error.name).to.equal("TokenError");
   });
 
   it("GetAppInstallationForTeam failed to get access token", async () => {
@@ -1339,8 +1342,8 @@ describe("Sandbox related APIs - failed token", () => {
     } catch (e) {
       error = e;
     }
-    expect(error).to.not.be.undefined;
-    expect(error.name).to.equal("TokenError");
+    chai.expect(error).to.not.be.undefined;
+    chai.expect(error.name).to.equal("TokenError");
   });
 
   it("DeleteInstalledApp failed to get access token", async () => {
@@ -1350,7 +1353,7 @@ describe("Sandbox related APIs - failed token", () => {
     } catch (e) {
       error = e;
     }
-    expect(error).to.not.be.undefined;
-    expect(error.name).to.equal("TokenError");
+    chai.expect(error).to.not.be.undefined;
+    chai.expect(error.name).to.equal("TokenError");
   });
 });

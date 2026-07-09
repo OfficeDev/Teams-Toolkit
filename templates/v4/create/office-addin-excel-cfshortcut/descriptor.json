@@ -1,0 +1,19 @@
+{
+  "$schema": "../../schema/descriptor.schema.json",
+  "id": "office-addin-excel-cfshortcut",
+  "name": "Excel Custom Function and Shortcut Add-in",
+  "languages": ["typescript"],
+  "minEngineVersion": "5.20.0",
+  "spec": "docs/03-specs/scenarios/office/create-excel-cfshortcut.md",
+  "requiresNetwork": false,
+
+  "optionsSchema": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+
+  "replaceMap": [
+    { "var": "SafeProjectNameLowerCase", "expr": "safeProjectNameLowerCase(appName)" }
+  ]
+}

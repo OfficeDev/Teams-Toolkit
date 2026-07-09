@@ -1,31 +1,22 @@
 import * as vscode from "vscode";
-import { expect } from "chai";
-import { createSandbox, SinonSandbox, SinonStub } from "sinon";
 import { SandboxNode } from "../../../src/treeview/account/sandBoxNode";
 import { passIcon, warningIcon } from "../../../src/treeview/account/common";
 import { MockedM365Provider } from "@microsoft/teamsfx-core/tests/core/utils";
 import { GraphClient } from "@microsoft/teamsfx-core";
 import { localize } from "../../../src/utils/localizeUtils";
+import { vi, expect } from "vitest";
 
 describe("SandboxNode", () => {
-  let sandbox: SinonSandbox;
-  let eventEmitterStub: vscode.EventEmitter<any>;
   let sandboxNode: SandboxNode;
   const mockTokenProvider = new MockedM365Provider();
 
   beforeEach(() => {
-    sandbox = createSandbox();
-
-    const mockEventEmitter = { fire: sandbox.stub() } as any;
+    const mockEventEmitter = { fire: vi.fn() } as any;
     sandboxNode = new SandboxNode(mockEventEmitter, "fake-token");
   });
 
-  afterEach(() => {
-    sandbox.restore();
-  });
-
   it("should show sandbox enabled info when sandbox is enabled", async () => {
-    sandbox.stub(GraphClient.prototype, "GetTeamsAppSettingsAsync").resolves({
+    vi.spyOn(GraphClient.prototype, "GetTeamsAppSettingsAsync").mockResolvedValue({
       sandboxingConfiguration: {
         isSideloadingEnabled: false,
         sensitivityLabelUsedToIdentifySandboxedContainers: "0fcfd0ff-1cda-407e-bc2b-a350307bd1d5",
@@ -39,14 +30,14 @@ describe("SandboxNode", () => {
   });
 
   it("should show sandbox disabled info when sandbox is not enabled", async () => {
-    sandbox.stub(GraphClient.prototype, "GetTeamsAppSettingsAsync").resolves({
+    vi.spyOn(GraphClient.prototype, "GetTeamsAppSettingsAsync").mockResolvedValue({
       sandboxingConfiguration: {
         isSideloadingEnabled: false,
         sensitivityLabelUsedToIdentifySandboxedContainers: "",
       },
     });
 
-    const mockEventEmitter = { fire: sandbox.stub() } as any;
+    const mockEventEmitter = { fire: vi.fn() } as any;
     sandboxNode = new SandboxNode(mockEventEmitter, "fake-token");
     await sandboxNode.getTreeItem();
 

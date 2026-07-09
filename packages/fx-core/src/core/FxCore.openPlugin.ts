@@ -43,11 +43,6 @@ export interface ExportOpenPluginCoreResult {
   warnings: Warning[];
 }
 
-export const fxCoreOpenPluginDeps = {
-  importOpenPlugin,
-  exportOpenPlugin,
-};
-
 export class FxCoreOpenPluginPart extends FxCoreDeclarativeAgentPart {
   /**
    * Import an Open Plugin (Open Plugin Spec v1.0 / Claude Code plugin /
@@ -73,7 +68,7 @@ export class FxCoreOpenPluginPart extends FxCoreDeclarativeAgentPart {
     if (validatedInputs.isErr()) {
       return err(validatedInputs.error);
     }
-    const res = await fxCoreOpenPluginDeps.importOpenPlugin(validatedInputs.value);
+    const res = await importOpenPlugin(validatedInputs.value);
     if (res.isErr()) {
       return err(res.error);
     }
@@ -108,7 +103,7 @@ export class FxCoreOpenPluginPart extends FxCoreDeclarativeAgentPart {
     if (validatedInputs.isErr()) {
       return err(validatedInputs.error);
     }
-    const res = await fxCoreOpenPluginDeps.exportOpenPlugin(validatedInputs.value);
+    const res = await exportOpenPlugin(validatedInputs.value);
     if (res.isErr()) {
       return err(res.error);
     }

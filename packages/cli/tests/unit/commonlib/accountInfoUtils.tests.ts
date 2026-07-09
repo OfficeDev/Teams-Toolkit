@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import { expect } from "../utils";
+
 import {
   getInternalFlagFromTokenClaims,
   getUsernameFromClaims,

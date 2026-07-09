@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-import * as chai from "chai";
 import * as utils from "../../../../src/component/resource/botService/common";
+import { chai } from "vitest";
 
 describe("Common Utils", () => {
   describe("isHttpCodeOkOrCreated", () => {

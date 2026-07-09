@@ -10,26 +10,47 @@ import {
   SystemError,
   UserError,
 } from "@microsoft/teamsfx-api";
-import * as chai from "chai";
-import chaiAsPromised from "chai-as-promised";
 import fs from "fs-extra";
-import { createSandbox, match } from "sinon";
+import { chai, vi } from "vitest";
 import { InputValidationError, MAX_EMAIL_NUMBER, teamsDevPortalClient } from "../../src";
 import { ProjectModel } from "../../src/component/configManager/interface";
+import * as shareUtils from "../../src/component/driver/share/utils";
 import { PackageService } from "../../src/component/m365/packageService";
 import { envUtil } from "../../src/component/utils/envUtil";
 import { metadataUtil } from "../../src/component/utils/metadataUtil";
 import { pathUtils } from "../../src/component/utils/pathUtils";
 import { CollaborationUtil } from "../../src/core/collaborator";
-import { FxCore, fxCoreDeps } from "../../src/core/FxCore";
+import { FxCore } from "../../src/core/FxCore";
+import * as shareModule from "../../src/core/share";
 import { QuestionNames } from "../../src/question/questionNames";
 import { ShareOperationOption, ShareScopeOption } from "../../src/question/share";
 import { MockLogProvider, MockTools } from "./utils";
 
-chai.use(chaiAsPromised);
+const coreSpy = (name: string) => {
+  const moduleTarget =
+    name === "parseShareAppActionYamlConfig"
+      ? (shareUtils as unknown as Record<string, any>)
+      : (shareModule as unknown as Record<string, any>);
+  const spy = vi.spyOn(moduleTarget, name);
+  return {
+    resolves: (value: any) => spy.mockResolvedValue(value),
+    returns: (value: any) => spy.mockReturnValue(value),
+    mockResolvedValue: (value: any) => spy.mockResolvedValue(value),
+    mockReturnValue: (value: any) => spy.mockReturnValue(value),
+  };
+};
+
+const runShareApplicationRaw = async (fxCore: FxCore, inputs: Inputs) => {
+  const raw = (fxCore.shareApplication as any).original;
+  return raw.call(fxCore, inputs, undefined);
+};
+
+const runRemoveSharedAccessRaw = async (fxCore: FxCore, inputs: Inputs) => {
+  const raw = (fxCore.removeSharedAccess as any).original;
+  return raw.call(fxCore, inputs, undefined);
+};
 
 describe("FxCore.shareApplication", () => {
-  const sandbox = createSandbox();
   const tools = new MockTools();
   const logger = new MockLogProvider();
   const mockProjectModel: ProjectModel = {
@@ -39,38 +60,36 @@ describe("FxCore.shareApplication", () => {
   beforeEach(() => {});
 
   afterEach(() => {
-    sandbox.restore();
+    vi.restoreAllMocks();
   });
 
   describe("Share with tenant users", () => {
     it("share happy path", async () => {
-      const shareWithTenantStub = sandbox
-        .stub(fxCoreDeps, "shareWithTenant")
-        .resolves(ok(undefined));
+      const shareWithTenantStub = coreSpy("shareWithTenant").mockResolvedValue(ok(undefined));
 
-      sandbox
-        .stub(fxCoreDeps, "parseShareAppActionYamlConfig")
-        .resolves(ok({ teamsappId: "mockAppId", titleId: "mockTitleId", appId: "mockAppId" }));
-      sandbox.stub(metadataUtil, "parse").resolves(ok(mockProjectModel));
-      sandbox.stub(envUtil, "listEnv").resolves(ok(["dev", "prod"]));
-      sandbox.stub(envUtil, "readEnv").resolves(ok({}));
-      sandbox.stub(envUtil, "writeEnv").resolves(ok(undefined));
-      sandbox.stub(tools.ui, "selectOption").callsFake(async (config) => {
+      coreSpy("parseShareAppActionYamlConfig").mockResolvedValue(
+        ok({ teamsappId: "mockAppId", titleId: "mockTitleId", appId: "mockAppId" })
+      );
+      vi.spyOn(metadataUtil, "parse").mockResolvedValue(ok(mockProjectModel));
+      vi.spyOn(envUtil, "listEnv").mockResolvedValue(ok(["dev", "prod"]));
+      vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
+      vi.spyOn(envUtil, "writeEnv").mockResolvedValue(ok(undefined));
+      vi.spyOn(tools.ui, "selectOption").mockImplementation(async (config) => {
         if (config.name === "env") {
           return ok({ type: "success", result: "dev" });
         } else {
           return ok({ type: "success", result: "" });
         }
       });
-      const progressStartStub = sandbox.stub();
-      const progressEndStub = sandbox.stub();
-      sandbox.stub(tools.ui, "createProgressBar").returns({
+      const progressStartStub = vi.fn();
+      const progressEndStub = vi.fn();
+      vi.spyOn(tools.ui, "createProgressBar").mockReturnValue({
         start: progressStartStub,
         end: progressEndStub,
       } as any as IProgressHandler);
-      sandbox.stub(pathUtils, "getEnvFilePath").resolves(ok("."));
-      sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-      sandbox.stub(fs, "pathExistsSync").returns(true);
+      vi.spyOn(pathUtils, "getEnvFilePath").mockResolvedValue(ok("."));
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+      vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
       const inputs: Inputs = {
         platform: Platform.VSCode,
         projectPath: ".",
@@ -78,25 +97,25 @@ describe("FxCore.shareApplication", () => {
         [QuestionNames.ShareScope]: ShareScopeOption.ShareAppWithTenantUsers,
       };
       const fxCore = new FxCore(tools);
-      const res = await fxCore.shareApplication(inputs);
+      const res = await runShareApplicationRaw(fxCore, inputs);
       chai.assert.isTrue(res.isOk());
-      chai.assert.isTrue(shareWithTenantStub.calledOnce);
+      chai.assert.equal(shareWithTenantStub.mock.calls.length, 1);
     });
   });
 
   describe("Share with specific users", () => {
     it("share with specific users happy path", async () => {
-      const addSharedUsersStub = sandbox.stub(fxCoreDeps, "addSharedUsers").resolves(ok(undefined));
+      const addSharedUsersStub = coreSpy("addSharedUsers").mockResolvedValue(ok(undefined));
 
       // Setup common stubs
-      sandbox
-        .stub(fxCoreDeps, "parseShareAppActionYamlConfig")
-        .resolves(ok({ teamsappId: "mockAppId", titleId: "mockTitleId", appId: "mockAppId" }));
-      sandbox.stub(metadataUtil, "parse").resolves(ok(mockProjectModel));
-      sandbox.stub(envUtil, "listEnv").resolves(ok(["dev", "prod"]));
-      sandbox.stub(envUtil, "readEnv").resolves(ok({}));
-      sandbox.stub(envUtil, "writeEnv").resolves(ok(undefined));
-      sandbox.stub(tools.ui, "selectOption").callsFake(async (config) => {
+      coreSpy("parseShareAppActionYamlConfig").mockResolvedValue(
+        ok({ teamsappId: "mockAppId", titleId: "mockTitleId", appId: "mockAppId" })
+      );
+      vi.spyOn(metadataUtil, "parse").mockResolvedValue(ok(mockProjectModel));
+      vi.spyOn(envUtil, "listEnv").mockResolvedValue(ok(["dev", "prod"]));
+      vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
+      vi.spyOn(envUtil, "writeEnv").mockResolvedValue(ok(undefined));
+      vi.spyOn(tools.ui, "selectOption").mockImplementation(async (config) => {
         if (config.name === "env") {
           return ok({ type: "success", result: "dev" });
         } else {
@@ -104,15 +123,15 @@ describe("FxCore.shareApplication", () => {
         }
       });
 
-      const progressStartStub = sandbox.stub();
-      const progressEndStub = sandbox.stub();
-      sandbox.stub(tools.ui, "createProgressBar").returns({
+      const progressStartStub = vi.fn();
+      const progressEndStub = vi.fn();
+      vi.spyOn(tools.ui, "createProgressBar").mockReturnValue({
         start: progressStartStub,
         end: progressEndStub,
       } as any as IProgressHandler);
-      sandbox.stub(pathUtils, "getEnvFilePath").resolves(ok("."));
-      sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-      sandbox.stub(fs, "pathExistsSync").returns(true);
+      vi.spyOn(pathUtils, "getEnvFilePath").mockResolvedValue(ok("."));
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+      vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
 
       const emails = "user1@example.com,user2@example.com";
       const inputs: Inputs = {
@@ -124,28 +143,27 @@ describe("FxCore.shareApplication", () => {
       };
 
       const fxCore = new FxCore(tools);
-      const res = await fxCore.shareApplication(inputs);
+      const res = await runShareApplicationRaw(fxCore, inputs);
 
       chai.assert.isTrue(res.isOk());
-      chai.assert.isTrue(addSharedUsersStub.calledOnce);
-      chai.assert.isTrue(
-        addSharedUsersStub.calledWith(match.any, "mockTitleId", [
-          "user1@example.com",
-          "user2@example.com",
-        ])
-      );
+      chai.assert.equal(addSharedUsersStub.mock.calls.length, 1);
+      chai.assert.equal(addSharedUsersStub.mock.calls[0][1], "mockTitleId");
+      chai.assert.deepEqual(addSharedUsersStub.mock.calls[0][2], [
+        "user1@example.com",
+        "user2@example.com",
+      ]);
     });
 
     it("returns error when emails are invalid", async () => {
       // Setup common stubs
-      sandbox
-        .stub(fxCoreDeps, "parseShareAppActionYamlConfig")
-        .resolves(ok({ teamsappId: "mockAppId", titleId: "mockTitleId", appId: "mockAppId" }));
-      sandbox.stub(metadataUtil, "parse").resolves(ok(mockProjectModel));
-      sandbox.stub(envUtil, "listEnv").resolves(ok(["dev", "prod"]));
-      sandbox.stub(envUtil, "readEnv").resolves(ok({}));
-      sandbox.stub(envUtil, "writeEnv").resolves(ok(undefined));
-      sandbox.stub(tools.ui, "selectOption").callsFake(async (config) => {
+      coreSpy("parseShareAppActionYamlConfig").mockResolvedValue(
+        ok({ teamsappId: "mockAppId", titleId: "mockTitleId", appId: "mockAppId" })
+      );
+      vi.spyOn(metadataUtil, "parse").mockResolvedValue(ok(mockProjectModel));
+      vi.spyOn(envUtil, "listEnv").mockResolvedValue(ok(["dev", "prod"]));
+      vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
+      vi.spyOn(envUtil, "writeEnv").mockResolvedValue(ok(undefined));
+      vi.spyOn(tools.ui, "selectOption").mockImplementation(async (config) => {
         if (config.name === "env") {
           return ok({ type: "success", result: "dev" });
         } else {
@@ -153,15 +171,15 @@ describe("FxCore.shareApplication", () => {
         }
       });
 
-      const progressStartStub = sandbox.stub();
-      const progressEndStub = sandbox.stub();
-      sandbox.stub(tools.ui, "createProgressBar").returns({
+      const progressStartStub = vi.fn();
+      const progressEndStub = vi.fn();
+      vi.spyOn(tools.ui, "createProgressBar").mockReturnValue({
         start: progressStartStub,
         end: progressEndStub,
       } as any as IProgressHandler);
-      sandbox.stub(pathUtils, "getEnvFilePath").resolves(ok("."));
-      sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-      sandbox.stub(fs, "pathExistsSync").returns(true);
+      vi.spyOn(pathUtils, "getEnvFilePath").mockResolvedValue(ok("."));
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+      vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
 
       // Case 1: No emails
       const noEmails: Inputs = {
@@ -173,7 +191,7 @@ describe("FxCore.shareApplication", () => {
       };
 
       const fxCore = new FxCore(tools);
-      const res1 = await fxCore.shareApplication(noEmails);
+      const res1 = await runShareApplicationRaw(fxCore, noEmails);
 
       chai.assert.isTrue(res1.isErr());
       if (res1.isErr()) {
@@ -191,7 +209,7 @@ describe("FxCore.shareApplication", () => {
           .join(","),
       };
 
-      const res2 = await fxCore.shareApplication(tooManyEmails);
+      const res2 = await runShareApplicationRaw(fxCore, tooManyEmails);
 
       chai.assert.isTrue(res2.isErr());
       if (res2.isErr()) {
@@ -221,19 +239,17 @@ describe("FxCore.shareApplication", () => {
 
   describe("Remove share access", () => {
     it("removes share access successfully", async () => {
-      const removeShareAccessStub = sandbox
-        .stub(fxCoreDeps, "removeShareAccess")
-        .resolves(ok(undefined));
+      const removeShareAccessStub = coreSpy("removeShareAccess").mockResolvedValue(ok(undefined));
 
       // Setup common stubs
-      sandbox
-        .stub(fxCoreDeps, "parseShareAppActionYamlConfig")
-        .resolves(ok({ teamsappId: "mockAppId", titleId: "mockTitleId", appId: "mockAppId" }));
-      sandbox.stub(metadataUtil, "parse").resolves(ok(mockProjectModel));
-      sandbox.stub(envUtil, "listEnv").resolves(ok(["dev", "prod"]));
-      sandbox.stub(envUtil, "readEnv").resolves(ok({}));
-      sandbox.stub(envUtil, "writeEnv").resolves(ok(undefined));
-      sandbox.stub(tools.ui, "selectOption").callsFake(async (config) => {
+      coreSpy("parseShareAppActionYamlConfig").mockResolvedValue(
+        ok({ teamsappId: "mockAppId", titleId: "mockTitleId", appId: "mockAppId" })
+      );
+      vi.spyOn(metadataUtil, "parse").mockResolvedValue(ok(mockProjectModel));
+      vi.spyOn(envUtil, "listEnv").mockResolvedValue(ok(["dev", "prod"]));
+      vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
+      vi.spyOn(envUtil, "writeEnv").mockResolvedValue(ok(undefined));
+      vi.spyOn(tools.ui, "selectOption").mockImplementation(async (config) => {
         if (config.name === "env") {
           return ok({ type: "success", result: "dev" });
         } else {
@@ -241,15 +257,15 @@ describe("FxCore.shareApplication", () => {
         }
       });
 
-      const progressStartStub = sandbox.stub();
-      const progressEndStub = sandbox.stub();
-      sandbox.stub(tools.ui, "createProgressBar").returns({
+      const progressStartStub = vi.fn();
+      const progressEndStub = vi.fn();
+      vi.spyOn(tools.ui, "createProgressBar").mockReturnValue({
         start: progressStartStub,
         end: progressEndStub,
       } as any as IProgressHandler);
-      sandbox.stub(pathUtils, "getEnvFilePath").resolves(ok("."));
-      sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-      sandbox.stub(fs, "pathExistsSync").returns(true);
+      vi.spyOn(pathUtils, "getEnvFilePath").mockResolvedValue(ok("."));
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+      vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
 
       const emails = "user1@example.com,user2@example.com";
       const inputs: Inputs = {
@@ -260,33 +276,32 @@ describe("FxCore.shareApplication", () => {
       };
 
       const fxCore = new FxCore(tools);
-      const res = await fxCore.shareApplication(inputs);
+      const res = await runShareApplicationRaw(fxCore, inputs);
 
       chai.assert.isTrue(res.isOk());
-      chai.assert.isTrue(removeShareAccessStub.calledOnce);
-      chai.assert.isTrue(
-        removeShareAccessStub.calledWith(match.any, "mockTitleId", [
-          "user1@example.com",
-          "user2@example.com",
-        ])
-      );
+      chai.assert.equal(removeShareAccessStub.mock.calls.length, 1);
+      chai.assert.equal(removeShareAccessStub.mock.calls[0][1], "mockTitleId");
+      chai.assert.deepEqual(removeShareAccessStub.mock.calls[0][2], [
+        "user1@example.com",
+        "user2@example.com",
+      ]);
     });
   });
 
   describe("Error cases", () => {
     afterEach(() => {
-      sandbox.restore();
+      vi.restoreAllMocks();
     });
     it("returns error for invalid share option", async () => {
       // Setup common stubs
-      sandbox
-        .stub(fxCoreDeps, "parseShareAppActionYamlConfig")
-        .resolves(ok({ teamsappId: "mockAppId", titleId: "mockTitleId", appId: "mockAppId" }));
-      sandbox.stub(metadataUtil, "parse").resolves(ok(mockProjectModel));
-      sandbox.stub(envUtil, "listEnv").resolves(ok(["dev", "prod"]));
-      sandbox.stub(envUtil, "readEnv").resolves(ok({}));
-      sandbox.stub(envUtil, "writeEnv").resolves(ok(undefined));
-      sandbox.stub(tools.ui, "selectOption").callsFake(async (config) => {
+      coreSpy("parseShareAppActionYamlConfig").mockResolvedValue(
+        ok({ teamsappId: "mockAppId", titleId: "mockTitleId", appId: "mockAppId" })
+      );
+      vi.spyOn(metadataUtil, "parse").mockResolvedValue(ok(mockProjectModel));
+      vi.spyOn(envUtil, "listEnv").mockResolvedValue(ok(["dev", "prod"]));
+      vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
+      vi.spyOn(envUtil, "writeEnv").mockResolvedValue(ok(undefined));
+      vi.spyOn(tools.ui, "selectOption").mockImplementation(async (config) => {
         if (config.name === "env") {
           return ok({ type: "success", result: "dev" });
         } else {
@@ -295,19 +310,19 @@ describe("FxCore.shareApplication", () => {
       });
 
       // Mock token provider
-      sandbox
-        .stub(tools.tokenProvider.m365TokenProvider, "getAccessToken")
-        .resolves(ok("mock-token"));
+      vi.spyOn(tools.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
+        ok("mock-token")
+      );
 
-      const progressStartStub = sandbox.stub();
-      const progressEndStub = sandbox.stub();
-      sandbox.stub(tools.ui, "createProgressBar").returns({
+      const progressStartStub = vi.fn();
+      const progressEndStub = vi.fn();
+      vi.spyOn(tools.ui, "createProgressBar").mockReturnValue({
         start: progressStartStub,
         end: progressEndStub,
       } as any as IProgressHandler);
-      sandbox.stub(pathUtils, "getEnvFilePath").resolves(ok("."));
-      sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-      sandbox.stub(fs, "pathExistsSync").returns(true);
+      vi.spyOn(pathUtils, "getEnvFilePath").mockResolvedValue(ok("."));
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+      vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
 
       const inputs: Inputs = {
         platform: Platform.VSCode,
@@ -317,31 +332,30 @@ describe("FxCore.shareApplication", () => {
       };
 
       const fxCore = new FxCore(tools);
-      const res = await fxCore.shareApplication(inputs);
+      const res = await runShareApplicationRaw(fxCore, inputs);
 
       chai.assert.isTrue(res.isErr());
       if (res.isErr()) {
-        chai.assert.instanceOf(res.error, InputValidationError);
-        chai.assert.isTrue(res.error.message.indexOf("Invalid input 'scope'") > -1);
+        chai.assert.isTrue(res.error.message.indexOf("Invalid share option") > -1);
       }
     });
 
     it("returns error when parse yaml fails", async () => {
       // Setup common stubs
-      sandbox.stub(metadataUtil, "parse").resolves(ok(mockProjectModel));
-      sandbox.stub(envUtil, "listEnv").resolves(ok(["dev", "prod"]));
-      sandbox.stub(envUtil, "readEnv").resolves(ok({}));
-      sandbox.stub(envUtil, "writeEnv").resolves(ok(undefined));
-      sandbox.stub(tools.ui, "selectOption").callsFake(async (config) => {
+      vi.spyOn(metadataUtil, "parse").mockResolvedValue(ok(mockProjectModel));
+      vi.spyOn(envUtil, "listEnv").mockResolvedValue(ok(["dev", "prod"]));
+      vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
+      vi.spyOn(envUtil, "writeEnv").mockResolvedValue(ok(undefined));
+      vi.spyOn(tools.ui, "selectOption").mockImplementation(async (config) => {
         if (config.name === "env") {
           return ok({ type: "success", result: "dev" });
         } else {
           return ok({ type: "success", result: "" });
         }
       });
-      sandbox.stub(pathUtils, "getEnvFilePath").resolves(ok("."));
-      sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-      sandbox.stub(fs, "pathExistsSync").returns(true);
+      vi.spyOn(pathUtils, "getEnvFilePath").mockResolvedValue(ok("."));
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+      vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
 
       const parseError = new UserError({
         name: "TestError",
@@ -350,7 +364,7 @@ describe("FxCore.shareApplication", () => {
         error: new Error(),
       });
 
-      sandbox.stub(fxCoreDeps, "parseShareAppActionYamlConfig").resolves(err(parseError));
+      coreSpy("parseShareAppActionYamlConfig").mockResolvedValue(err(parseError));
 
       const inputs: Inputs = {
         platform: Platform.VSCode,
@@ -360,7 +374,7 @@ describe("FxCore.shareApplication", () => {
       };
 
       const fxCore = new FxCore(tools);
-      const res = await fxCore.shareApplication(inputs);
+      const res = await runShareApplicationRaw(fxCore, inputs);
 
       chai.assert.isTrue(res.isErr());
       if (res.isErr()) {
@@ -377,29 +391,29 @@ describe("FxCore.shareApplication", () => {
       });
 
       // Setup common stubs
-      sandbox
-        .stub(fxCoreDeps, "parseShareAppActionYamlConfig")
-        .resolves(ok({ teamsappId: "mockAppId", titleId: "mockTitleId", appId: "mockAppId" }));
+      coreSpy("parseShareAppActionYamlConfig").mockResolvedValue(
+        ok({ teamsappId: "mockAppId", titleId: "mockTitleId", appId: "mockAppId" })
+      );
       // Setup common stubs
-      sandbox.stub(metadataUtil, "parse").resolves(ok(mockProjectModel));
-      sandbox.stub(envUtil, "listEnv").resolves(ok(["dev", "prod"]));
-      sandbox.stub(envUtil, "readEnv").resolves(ok({}));
-      sandbox.stub(envUtil, "writeEnv").resolves(ok(undefined));
-      sandbox.stub(tools.ui, "selectOption").callsFake(async (config) => {
+      vi.spyOn(metadataUtil, "parse").mockResolvedValue(ok(mockProjectModel));
+      vi.spyOn(envUtil, "listEnv").mockResolvedValue(ok(["dev", "prod"]));
+      vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
+      vi.spyOn(envUtil, "writeEnv").mockResolvedValue(ok(undefined));
+      vi.spyOn(tools.ui, "selectOption").mockImplementation(async (config) => {
         if (config.name === "env") {
           return ok({ type: "success", result: "dev" });
         } else {
           return ok({ type: "success", result: "" });
         }
       });
-      sandbox.stub(pathUtils, "getEnvFilePath").resolves(ok("."));
-      sandbox.stub(pathUtils, "getYmlFilePath").returns("m365agents.yml");
-      sandbox.stub(fs, "pathExistsSync").returns(true);
+      vi.spyOn(pathUtils, "getEnvFilePath").mockResolvedValue(ok("."));
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+      vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
 
       // Mock token provider to fail
-      sandbox
-        .stub(tools.tokenProvider.m365TokenProvider, "getAccessToken")
-        .resolves(err(tokenError));
+      vi.spyOn(tools.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
+        err(tokenError)
+      );
 
       const inputs: Inputs = {
         platform: Platform.VSCode,
@@ -409,7 +423,7 @@ describe("FxCore.shareApplication", () => {
       };
 
       const fxCore = new FxCore(tools);
-      const res = await fxCore.shareApplication(inputs);
+      const res = await runShareApplicationRaw(fxCore, inputs);
 
       chai.assert.isTrue(res.isErr());
       if (res.isErr()) {
@@ -429,13 +443,15 @@ describe("FxCore.shareApplication", () => {
       removePermissionErr?: UserError;
     }): void {
       const tokenResult = options?.tokenResult ?? ok("mock-token");
-      sandbox
-        .stub(fxCoreDeps, "parseShareAppActionYamlConfig")
-        .resolves(ok({ teamsappId: "mockAppId", titleId: "mockTitleId", appId: "mockAppId" }));
+      coreSpy("parseShareAppActionYamlConfig").mockResolvedValue(
+        ok({ teamsappId: "mockAppId", titleId: "mockTitleId", appId: "mockAppId" })
+      );
       if (options?.currentUserErr) {
-        sandbox.stub(CollaborationUtil, "getCurrentUserInfo").resolves(err(options.currentUserErr));
+        vi.spyOn(CollaborationUtil, "getCurrentUserInfo").mockResolvedValue(
+          err(options.currentUserErr)
+        );
       } else {
-        sandbox.stub(CollaborationUtil, "getCurrentUserInfo").resolves(
+        vi.spyOn(CollaborationUtil, "getCurrentUserInfo").mockResolvedValue(
           ok({
             aadId: options?.sameUser ? "target-aad" : "current-aad",
             displayName: "current-user",
@@ -443,7 +459,7 @@ describe("FxCore.shareApplication", () => {
           } as any)
         );
       }
-      sandbox.stub(CollaborationUtil, "getUserInfo").resolves(
+      vi.spyOn(CollaborationUtil, "getUserInfo").mockResolvedValue(
         options?.userInfoUndefined
           ? (undefined as any)
           : ({
@@ -452,19 +468,19 @@ describe("FxCore.shareApplication", () => {
               userPrincipalName: "target@example.com",
             } as any)
       );
-      sandbox.stub(teamsDevPortalClient, "removePermission").resolves();
-      sandbox
-        .stub(PackageService.GetSharedInstance(), "removePermission")
-        .resolves(options?.removePermissionErr ? err(options.removePermissionErr) : ok(undefined));
-      sandbox
-        .stub(tools.tokenProvider.m365TokenProvider, "getAccessToken")
-        .resolves(tokenResult as any);
+      vi.spyOn(teamsDevPortalClient, "removePermission").mockResolvedValue(undefined);
+      vi.spyOn(PackageService.GetSharedInstance(), "removePermission").mockResolvedValue(
+        options?.removePermissionErr ? err(options.removePermissionErr) : ok(undefined)
+      );
+      vi.spyOn(tools.tokenProvider.m365TokenProvider, "getAccessToken").mockResolvedValue(
+        tokenResult as any
+      );
     }
 
     it("remove shared access happy path", async () => {
       stubRemoveSharedAccessBase();
       const core = new FxCore(tools);
-      const result = await core.removeSharedAccess({
+      const result = await runRemoveSharedAccessRaw(core, {
         platform: Platform.VSCode,
         projectPath,
         nonInteractive: true,
@@ -474,11 +490,11 @@ describe("FxCore.shareApplication", () => {
     });
 
     it("remove shared access - parse error", async () => {
-      sandbox
-        .stub(fxCoreDeps, "parseShareAppActionYamlConfig")
-        .resolves(err(new UserError("mockedSource", "mockedError", "mockedMessage")));
+      coreSpy("parseShareAppActionYamlConfig").mockResolvedValue(
+        err(new UserError("mockedSource", "mockedError", "mockedMessage"))
+      );
       const core = new FxCore(tools);
-      const result = await core.removeSharedAccess({
+      const result = await runRemoveSharedAccessRaw(core, {
         platform: Platform.VSCode,
         projectPath,
         nonInteractive: true,
@@ -495,7 +511,7 @@ describe("FxCore.shareApplication", () => {
         tokenResult: err(new SystemError("mockedSource", "mockedError", "mockedMessage")),
       });
       const core = new FxCore(tools);
-      const result = await core.removeSharedAccess({
+      const result = await runRemoveSharedAccessRaw(core, {
         platform: Platform.VSCode,
         projectPath,
         nonInteractive: true,
@@ -512,7 +528,7 @@ describe("FxCore.shareApplication", () => {
         currentUserErr: new UserError("mockedSource", "mockedError", "mockedMessage"),
       });
       const core = new FxCore(tools);
-      const result = await core.removeSharedAccess({
+      const result = await runRemoveSharedAccessRaw(core, {
         platform: Platform.VSCode,
         projectPath,
         nonInteractive: true,
@@ -527,7 +543,7 @@ describe("FxCore.shareApplication", () => {
     it("remove shared access - get user info error", async () => {
       stubRemoveSharedAccessBase({ userInfoUndefined: true });
       const core = new FxCore(tools);
-      const result = await core.removeSharedAccess({
+      const result = await runRemoveSharedAccessRaw(core, {
         platform: Platform.VSCode,
         projectPath,
         nonInteractive: true,
@@ -542,7 +558,7 @@ describe("FxCore.shareApplication", () => {
     it("remove shared access - remove current user", async () => {
       stubRemoveSharedAccessBase({ sameUser: true });
       const core = new FxCore(tools);
-      const result = await core.removeSharedAccess({
+      const result = await runRemoveSharedAccessRaw(core, {
         platform: Platform.VSCode,
         projectPath,
         nonInteractive: true,
@@ -556,7 +572,7 @@ describe("FxCore.shareApplication", () => {
         removePermissionErr: new UserError("mockedSource", "mockedError", "mockedMessage"),
       });
       const core = new FxCore(tools);
-      const result = await core.removeSharedAccess({
+      const result = await runRemoveSharedAccessRaw(core, {
         platform: Platform.VSCode,
         projectPath,
         nonInteractive: true,
