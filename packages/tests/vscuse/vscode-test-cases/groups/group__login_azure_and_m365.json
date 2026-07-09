@@ -664,7 +664,7 @@
       "parameters": {
         "button": "left",
         "x": 633,
-        "y": 544
+        "y": 510
       },
       "description": "Click the \"Next\" button on the Microsoft sign-in page in Google Chrome after entering the account email address.",
       "content_refs": [],
@@ -680,7 +680,8 @@
       "postconditions": [],
       "tags": [
         "delay: 5",
-        "force_run:true"
+        "force_run:true",
+        "ocr:true"
       ],
       "screenshot": "step_961d5765",
       "created_at": "2026-06-11T03:17:05.837502",
