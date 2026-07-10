@@ -503,9 +503,9 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "${{env:DA_MCP_ENTRA_SSO_CLIENTID}}"
+        "text": "4cfde729-32e4-4862-a409-07e14dbfd296"
       },
-      "description": "Type ${{env:DA_MCP_ENTRA_SSO_CLIENTID}}  into the \"Enter Microsoft Entra SSO client id for registration in OpenAPI Description Document\" input field in the Visual Studio Code Microsoft 365 Agents extension modal.",
+      "description": "Type the Entra SSO client id '4cfde729-32e4-4862-a409-07e14dbfd296' into the \"Enter Microsoft Entra SSO client id for registration in OpenAPI Description Document\" input field in the Visual Studio Code Microsoft 365 Agents extension modal.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
