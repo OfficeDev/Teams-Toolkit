@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 25,
+    "total_steps": 31,
     "created_at": "2026-06-29T02:44:33.029362",
     "name": "DA MCP Entra SSO Remote",
     "description": {
@@ -24,6 +24,12 @@
       "step_7437f6e8",
       "step_03fb1bee",
       "step_0e8ca12b",
+      "step_e1a70a01",
+      "step_e1a70a02",
+      "step_e1a70a03",
+      "step_e1a70a04",
+      "step_e1a70a05",
+      "step_e1a70a06",
       "step_e02cd850",
       "plan_r_0928_014459",
       "plan_r_1021_081410",
@@ -122,6 +128,132 @@
       "tags": [],
       "screenshot": "step_0e8ca12b",
       "created_at": "2026-06-29T03:17:40.251257",
+      "plan_id": "plan_b85e52ee"
+    },
+    {
+      "step_id": "step_e1a70a01",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 317,
+        "y": 38
+      },
+      "description": "Click the search input field in the \"Select Authentication Type\" dropdown dialog of Visual Studio Code to activate it for text entry.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_e1a70a01",
+      "created_at": "2026-06-29T03:17:40.318000",
+      "plan_id": "plan_b85e52ee"
+    },
+    {
+      "step_id": "step_e1a70a02",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "entra"
+      },
+      "description": "Type 'entra' into the \"Select Authentication Type\" input field in the Visual Studio Code command palette.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_e1a70a02",
+      "created_at": "2026-06-29T03:17:40.319000",
+      "plan_id": "plan_b85e52ee"
+    },
+    {
+      "step_id": "step_e1a70a03",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 296,
+        "y": 72
+      },
+      "description": "Click the \"Entra SSO\" option in the \"Select Authentication Type\" dropdown within Visual Studio Code, after typing \"entra\" in the filter box.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_e1a70a03",
+      "created_at": "2026-06-29T03:17:40.320000",
+      "plan_id": "plan_b85e52ee"
+    },
+    {
+      "step_id": "step_e1a70a04",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 309,
+        "y": 36
+      },
+      "description": "Click the input field in the \"Enter Microsoft Entra client id\" prompt at the top of the Visual Studio Code window during declarative agent creation.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_e1a70a04",
+      "created_at": "2026-06-29T03:17:40.321000",
+      "plan_id": "plan_b85e52ee"
+    },
+    {
+      "step_id": "step_e1a70a05",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{env:DA_MCP_ENTRA_SSO_CLIENTID}}"
+      },
+      "description": "Type ${{env:DA_MCP_ENTRA_SSO_CLIENTID}} into the \"Enter Microsoft Entra client id\" input field in the Visual Studio Code Microsoft 365 Agents create declarative agent flow.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_e1a70a05",
+      "created_at": "2026-06-29T03:17:40.322000",
+      "plan_id": "plan_b85e52ee"
+    },
+    {
+      "step_id": "step_e1a70a06",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press the Enter key to confirm the Microsoft Entra client id input in the create declarative agent flow within Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_e1a70a06",
+      "created_at": "2026-06-29T03:17:40.323000",
       "plan_id": "plan_b85e52ee"
     },
     {
