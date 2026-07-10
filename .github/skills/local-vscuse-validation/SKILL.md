@@ -1,6 +1,6 @@
 ---
 name: local-vscuse-validation
-description: "Use when: setting up shared local vscuse prerequisites, credentials, runner, Docker image, local VSIX, env variables, and common rules for Microsoft 365 Agents Toolkit vscuse work. Use vscuse-case-diagnosis for running/fixing existing cases; use vscuse-scenario-authoring for docs/mockup-driven recording and plan generation."
+description: "Use when: setting up shared local vscuse prerequisites, credentials, runner, local or pinned published Docker images, local VSIX, env variables, and common rules for Microsoft 365 Agents Toolkit vscuse work. Use vscuse-case-diagnosis for running/fixing existing cases; use vscuse-scenario-authoring for docs/mockup-driven recording and plan generation."
 argument-hint: "Describe the feature/change and which vscuse plan or scenario to validate"
 ---
 
@@ -10,11 +10,11 @@ argument-hint: "Describe the feature/change and which vscuse plan or scenario to
 
 - Use `vscuse-case-diagnosis` when the task is to run an existing vscuse case, reproduce a failure, classify product bug vs test plan drift vs setup failure vs flake, repair the smallest surface, and demonstrate the run through the integrated browser/noVNC.
 - Use `vscuse-scenario-authoring` when the task starts from docs, PRDs, scenarios, mockups, or expected user flows and needs vscuse-ui recording, generated steps, replacement of existing coverage, or creation of a new plan.
-- Use this skill for shared setup: local credentials, `TEMPLATE_VERSION=local`, local VSIX/image build, vscuse runner installation, GHCR/wheel access, and common safety rules.
+- Use this skill for shared setup: local credentials, template routing, local VSIX/image build, pinned published image selection, vscuse runner installation, GHCR/wheel access, and common safety rules.
 
 ## Goal
 
-Use this skill to prepare and troubleshoot the shared local vscuse environment for this repository: credentials, runner access, local VSIX packaging, Docker image build, env variables, noVNC/vscuse-ui service expectations, and common safety rules.
+Use this skill to prepare and troubleshoot the shared local vscuse environment for this repository: credentials, runner access, local VSIX packaging, local or pinned published Docker image selection, env variables, noVNC/vscuse-ui service expectations, and common safety rules.
 
 For the actual execution workflow, load `vscuse-case-diagnosis`. For docs/mockup-driven recording or plan generation, load `vscuse-scenario-authoring`.
 
@@ -27,8 +27,9 @@ This skill is the AI-first operational entry point for local vscuse validation. 
 Use this skill when the task mentions any of these shared setup concerns:
 
 - Build a local ATK vscuse Docker image that contains the current repository's VSIX.
+- Run local or dev test-plan JSON against a pinned image produced by a specific `Build VscUse ATK Docker Image` Actions run.
 - Install or verify the external `vscuse` and `vscuse-ui` Python runner.
-- Set up repo-root `set-azure-env.ps1`, `TEMPLATE_VERSION=local`, or `VSCUSE_VSCODE_IMAGE=vscuse-atk-local:latest`.
+- Set up repo-root `set-azure-env.ps1`, `TEMPLATE_VERSION=local`, or a branch-specific local image such as `VSCUSE_VSCODE_IMAGE=vscuse-atk-6.12:local`.
 - Troubleshoot `ghcr.io/microsoft/vscuse-base`, `ghcr.io/officedev/vscuse-atk-vscode`, or `microsoft/vscuse-doc` wheel access.
 - Confirm noVNC, Docker API, and vscuse-ui local service URLs.
 
@@ -46,16 +47,22 @@ Do not use this skill for ordinary unit tests, CLI E2E tests, or non-VS Code val
 - Local vscuse credentials should live in `set-azure-env.ps1` at the repository root. This path is gitignored because it contains secrets and should stay easy to find during local validation.
 - The ATK-specific Dockerfile is `packages/tests/vscuse/docker/vscuse-atk/Dockerfile`.
 - Local VSIX files must be copied into `packages/tests/vscuse/docker/vscuse-atk/build-extensions/` before building the local image.
-- Plan JSON is read from the local filesystem at execution time. Plan edits apply on the next `vscuse execute` run and do not require rebuilding the Docker image.
+- Local images used for branch validation must be branch-specific. Do not use `latest` for current-branch proof, because stale images can silently validate the wrong VSIX. Use tags such as `vscuse-atk-dev:local` for `dev` and `vscuse-atk-6.12:local` for `release/6.12`.
+- Published images may be used to run local or dev plan JSON when the product version under test is intentionally a CI-built version. Pin the exact tag from the requested Actions run and verify its OCI revision before interpreting failures; never substitute `latest`.
+- Plan JSON is read from the local filesystem at execution time and is independent of the selected product image. Plan edits apply on the next `vscuse execute` run and do not require rebuilding or republishing the Docker image.
 - When validating with the local repository, set `TEMPLATE_VERSION=local` explicitly and verify it is present inside the vscuse VS Code container. A host PowerShell env var is not enough unless the config used to launch vscuse passes it under `docker.environment`; otherwise the run may exercise released/v3 template behavior while the investigation assumes local/v4 content.
+- When validating a pinned published image, match the originating CI run's template routing. Do not set `TEMPLATE_VERSION=local` merely because the plan file comes from the local dev checkout. Leave it unset unless the originating test run or requested scenario explicitly supplied a template version.
 - Scenario-specific feature flags must not rely on ambient shell history. vscuse plans should declare required flags in `plan_metadata.tags` using `feature_flag:<NAME>=<VALUE>`, and the execution workflow must apply those flags before vscuse starts the container and VS Code extension host.
 - Direct `vscuse execute` has no verified native case-level feature-flag field. Treat `feature_flag:*` tags as the AI-readable source of truth, not as runner-enforced behavior by themselves.
 - The Docker environment is controlled by `config.yaml` at container start. Do not add blank global pass-through entries for feature flags because unset and explicit `false` can differ in product code. Only inject the flags declared by the current plan, preferably through a temporary run config or an explicit pre-run step.
+- A host-level npm registry in `.npmrc` is not inherited by the vscuse container. Set `NPM_CONFIG_REGISTRY` before starting `vscuse` or `vscuse-ui`; `config.yaml` passes it into the container and defaults to `https://registry.npmjs.org/` when unset.
+- Some npm-compatible proxies, including `https://packagefeedproxy.microsoft.io/npm/`, do not implement `/-/ping`. Validate them with `npm view` and `npm pack`; a 404 from `npm ping` alone is not a connectivity failure.
 - Rebuild the Docker image only when the VSIX, image tooling, base image, installed extensions, or Dockerfile content changes.
 - vscuse itself is an external Python wheel obtained by CI from the `microsoft/vscuse-doc` release assets. The runner implementation is not in this repository.
 - `vscuse` is the execute-only CLI. `vscuse-ui` starts the authoring/debug UI and the recording APIs.
 - Use `vscuse-ui` as the default authoring and repair workbench for vscuse cases. Use `vscuse execute` as the clean final verifier for CI parity.
-- Verified locally with vscuse `0.2.67`: `vscuse-ui --config-file .\config.yaml --project-path .\plans` serves the Web UI/API on `http://127.0.0.1:6082`, noVNC on `http://127.0.0.1:6080`, and Docker API on `http://127.0.0.1:6081`.
+- Verified locally with vscuse `0.2.67`: start from `packages/tests/vscuse/vscode-test-cases` and run `vscuse-ui --config-file .\config.yaml --project-path .` to serve the Web UI/API on `http://127.0.0.1:6082`, noVNC on `http://127.0.0.1:6080`, and Docker API on `http://127.0.0.1:6081`.
+- For plans that reference shared groups, `vscuse-ui` must scan the `vscode-test-cases` root, not only `plans`. The UI has no `--groups-dir` option; using `--project-path .\plans` can load the plan but fail Run with `Plan <group-id> not found`.
 - Recording-to-plan generation is implemented by the `vscuse-ui` backend: start recording, stop recording, then generate an executable plan from the recording. Generated files are written under the configured `--project-path` and must be reviewed before committing.
 - Non-empty preconditions in the current vscuse plans are visual `dhash` screenshot-region checks. Treat screenshot and hash updates as behavioral evidence, not cosmetic churn.
 - Prefer keyboard-driven interactions over coordinate clicks whenever the product UI supports them. For command palettes and quick picks, use `key_press` (`f1`, `enter`, arrows, `escape`) plus `type_text` filtering instead of clicking recorded coordinates. Use clicks only for controls without a reliable keyboard path.
@@ -164,12 +171,68 @@ Get-ChildItem packages/tests/vscuse/docker/vscuse-atk/build-extensions -Filter *
 Build the image:
 
 ```powershell
+$branchName = (git branch --show-current).Trim()
+$imageBranch = $branchName -replace '^release/', '' -replace '[^A-Za-z0-9_.-]', '-'
+$localImage = "vscuse-atk-${imageBranch}:local"
 Push-Location packages/tests/vscuse/docker/vscuse-atk
-docker build --build-arg NODE_VERSION=22 -t vscuse-atk-local:latest .
+docker build --build-arg NODE_VERSION=22 -t $localImage .
 Pop-Location
 ```
 
 If the build fails while loading metadata for `ghcr.io/microsoft/vscuse-base:latest`, run the credential checks above. A `401 Unauthorized` at that step means the base image is not accessible to the current Docker login.
+
+## Use a Published Image from a Specific Actions Run
+
+Use this mode when the plan should come from the current local or dev checkout but the extension and image tooling should come from a particular successful `Build VscUse ATK Docker Image` run.
+
+Treat these as independent inputs:
+
+- **Plan source:** local files under `packages/tests/vscuse/vscode-test-cases`.
+- **Product image:** one pinned `ghcr.io/officedev/vscuse-atk-vscode:<tag>` created by the requested Actions run.
+- **Template routing:** the value used by the originating CI scenario; usually unset for a published release image unless explicitly provided.
+
+Resolve the tag from the workflow dispatch input or authenticated job log. The workflow also publishes a `teamsfx-<run_id>` tag when its `run_id` input is present. Do not infer the tag from the Docker-build run ID or branch name. If the build was triggered by `cd.yml`, its `series` input is passed as the raw image tag and appears at the end of the CD run name: `CD-<run-id>-<branch>-<preid>-<series>`.
+
+Read the public build metadata and record its `head_sha`:
+
+```powershell
+$repository = "OfficeDev/microsoft-365-agents-toolkit"
+$dockerBuildRunId = "<docker-build-run-id>"
+$headers = @{
+   "User-Agent" = "vscuse-local-validation"
+   "Accept" = "application/vnd.github+json"
+   "X-GitHub-Api-Version" = "2022-11-28"
+}
+$buildRun = Invoke-RestMethod -Headers $headers -Uri "https://api.github.com/repos/$repository/actions/runs/$dockerBuildRunId"
+$buildRun | Select-Object id,head_branch,head_sha,status,conclusion,created_at,html_url
+```
+
+Pull the resolved tag and verify that the image revision matches the Actions run before using it:
+
+```powershell
+$imageTag = "<exact-tag-from-workflow-input-or-summary>"
+$publishedImage = "ghcr.io/officedev/vscuse-atk-vscode:$imageTag"
+docker pull $publishedImage
+
+$imageInspect = (docker image inspect $publishedImage | ConvertFrom-Json)[0]
+$imageRevision = $imageInspect.Config.Labels.'org.opencontainers.image.revision'
+if ($imageRevision -ne $buildRun.head_sha) {
+   throw "Image revision $imageRevision does not match Actions run head SHA $($buildRun.head_sha)."
+}
+
+[PSCustomObject]@{
+   Image = $publishedImage
+   Id = $imageInspect.Id
+   Created = $imageInspect.Created
+   Revision = $imageRevision
+   Version = $imageInspect.Config.Labels.'org.opencontainers.image.version'
+   RepoDigests = $imageInspect.RepoDigests -join ","
+}
+$env:VSCUSE_VSCODE_IMAGE = $publishedImage
+Remove-Item Env:TEMPLATE_VERSION -ErrorAction SilentlyContinue
+```
+
+If the image tag is mutable, record the pulled repo digest from `docker image inspect` in the final report. A provenance mismatch is a setup failure; do not run the plan against a nearby tag and claim it represents the requested Actions run.
 
 ## Install or Verify the vscuse Runner
 
@@ -258,8 +321,11 @@ $dockerCliDir = "C:\Program Files\Docker\Docker\resources\bin"
 if (Test-Path (Join-Path $dockerCliDir "docker.exe")) {
    $env:PATH = "$dockerCliDir;$env:PATH"
 }
+$env:NPM_CONFIG_REGISTRY = (npm config get registry).Trim()
 $env:TEMPLATE_VERSION = "local"
-$env:VSCUSE_VSCODE_IMAGE = "vscuse-atk-local:latest"
+$branchName = (git branch --show-current).Trim()
+$imageBranch = $branchName -replace '^release/', '' -replace '[^A-Za-z0-9_.-]', '-'
+$env:VSCUSE_VSCODE_IMAGE = "vscuse-atk-${imageBranch}:local"
 vscuse execute --config-file .\config.yaml --groups-dir groups .\plans\<plan-name>.json
 Pop-Location
 ```
@@ -276,6 +342,8 @@ After the container starts, verify the non-secret routing env before interpretin
 
 ```powershell
 docker exec vscuse-container env | Select-String -Pattern '^(TEMPLATE_VERSION|TEAMSFX_.*)='
+docker exec --user vscode vscuse-container npm config get registry
+docker exec --user vscode vscuse-container npm view lodash version
 ```
 
 Before interpreting a plan failure, distinguish setup success from runtime credential readiness. A local smoke run can successfully load config, expand groups, start `vscuse-atk-local:latest`, and expose noVNC at `http://localhost:6080`, then stop before executing steps if required scenario credentials are missing. For M365 scenarios, `M365_ACCOUNT_NAME` and `M365_ACCOUNT_PASSWORD` are required by the executor even when `m365.enabled` is false in `config.yaml`; check only whether variables are set, never print their values.
@@ -292,7 +360,7 @@ For CI parity, the command shape is:
 vscuse execute --config-file .\config.yaml --groups-dir groups .\plans\<plan-name>.json
 ```
 
-`config.yaml` defaults `docker.image_name` to `${VSCUSE_VSCODE_IMAGE:ghcr.io/officedev/vscuse-atk-vscode:latest}`. Set `VSCUSE_VSCODE_IMAGE` when validating the current local VSIX.
+`config.yaml` defaults `docker.image_name` to `${VSCUSE_VSCODE_IMAGE:ghcr.io/officedev/vscuse-atk-vscode:latest}`. Always set `VSCUSE_VSCODE_IMAGE` explicitly: use a branch-specific local image for the current local VSIX, or a provenance-checked published tag for a requested CI-built product version.
 
 ## Scenario Feature Flags
 
@@ -414,9 +482,11 @@ if (Test-Path (Join-Path $dockerCliDir "docker.exe")) {
    $env:PATH = "$dockerCliDir;$env:PATH"
 }
 
-$env:VSCUSE_VSCODE_IMAGE = "vscuse-atk-local:latest"
+$branchName = (git branch --show-current).Trim()
+$imageBranch = $branchName -replace '^release/', '' -replace '[^A-Za-z0-9_.-]', '-'
+$env:VSCUSE_VSCODE_IMAGE = "vscuse-atk-${imageBranch}:local"
 $vscuseUi = Join-Path $env:APPDATA "Python\Python312\Scripts\vscuse-ui.exe"
-& $vscuseUi --config-file .\config.yaml --project-path .\plans
+& $vscuseUi --config-file .\config.yaml --project-path .
 
 Pop-Location
 ```

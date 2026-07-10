@@ -8,7 +8,7 @@ argument-hint: "Plan/case name, failing step, or feature workflow to diagnose"
 
 ## Goal
 
-Run an existing vscuse test case against the current local repository, show the real execution through the integrated browser, and classify any failure as one of:
+Run an existing local vscuse test case against an explicitly selected product image, show the real execution through the integrated browser, and classify any failure as one of:
 
 - `product bug`: the extension or generated app behavior is wrong.
 - `test plan drift`: the product behavior is correct but the vscuse plan/group/assertion/precondition is stale.
@@ -20,7 +20,7 @@ Do not make a case green by hiding the classification. The final answer must say
 ## Required Inputs
 
 - Plan name, case title, failing step id, report path, or feature workflow.
-- Whether the user expects local repository bits. For local validation, use `VSCUSE_VSCODE_IMAGE=vscuse-atk-local:latest` and `TEMPLATE_VERSION=local`.
+- Product image mode: either current local repository bits or a pinned published image from a specific successful Actions run. Local mode uses `TEMPLATE_VERSION=local` and a branch-specific image tag such as `VSCUSE_VSCODE_IMAGE=vscuse-atk-dev:local`; published mode uses an exact provenance-checked `ghcr.io/officedev/vscuse-atk-vscode:<tag>` and the originating run's template routing.
 - Any case-specific feature flags declared in `plan_metadata.tags` as `feature_flag:<NAME>=<VALUE>`, or in the docs scenario that owns the case.
 
 If local setup, image build, runner install, or credentials are missing, use the shared setup guidance in `local-vscuse-validation` first.
@@ -28,13 +28,17 @@ If local setup, image build, runner install, or credentials are missing, use the
 ## Core Rules
 
 - Use a real `vscuse execute` run. Do not mock the UI flow.
-- Prefer `vscuse-ui` for interactive repair after the first failure is classified. It is the default workbench for live inspection, recording changed steps, refreshing visual checks, and demonstrating the repaired flow.
+- After the first failure is classified, start `vscuse-ui` before any second full CLI run. It is the required workbench for live inspection, recording changed steps, refreshing visual checks, and demonstrating the repaired flow.
+- Open the integrated browser to the Web UI at `http://127.0.0.1:6082` and keep its embedded noVNC view visible while repairing. Also provide `http://127.0.0.1:6080/vnc.html` when a separate full-size live view is useful. Tell the user both URLs as soon as the services are ready.
+- Do not repeatedly run the complete create/login/provision/deploy workflow through `vscuse execute` while diagnosing plan drift. Use `Run`, `Continue`, and `Next` in `vscuse-ui` to iterate near the failing area, then use one clean CLI run for final validation.
 - Still finish with `vscuse execute`. A plan is not validated until it passes a clean CLI run or the remaining failure is explicitly classified.
 - Show the live execution through the integrated browser at `http://localhost:6080/vnc.html` when the user asks to demonstrate the process.
 - noVNC is a live view of the running container, not a replay. Open it while execution is still running.
 - Do not screenshot or print secrets, passwords, tokens, tenant secrets, or generated API keys.
 - `--start` and `--end` only work when the required UI state already exists. They do not recreate prior setup.
 - Plan/group JSON is read from disk at execution time; edits apply on the next run without rebuilding the image.
+- The local plan source and product image source are independent. It is valid to diagnose a dev plan against a pinned published image when that version is the requested product baseline.
+- Never replace a requested Actions-run image with `latest`, a branch-local image, or a guessed neighboring tag. Verify the pulled image's `org.opencontainers.image.revision` against the Actions run `head_sha` and record the digest.
 - A feature-flagged plan is not self-contained if the flags only live in a previous shell command. The plan should declare them with `feature_flag:*` tags, and the run must apply them before vscuse starts the container and VS Code extension host.
 - When the user identifies a docs scenario as the source of truth, compare the case to that doc before preserving old steps. If the doc removes a shipped sub-flow, classify the old steps as test plan drift and do not keep executing them merely because they appear in the existing plan.
 - Prefer `key_press` and `type_text` over `click` when a command palette, quick pick, focused button, or default selection can be driven by keyboard. Coordinate clicks with screenshot preconditions are more brittle under layout, zoom, focus, and tooltip changes.
@@ -53,20 +57,35 @@ Find the plan and any shared groups it expands. Prefer the smallest owning surfa
 - Edit a shared group when the drift belongs to a reused flow and should affect all consumers.
 - Edit product code when noVNC/report evidence shows the product behavior is wrong.
 
-### 2. Prepare the Local Runtime
+### 2. Prepare the Runtime and Select the Product Image
+
+Choose exactly one mode before starting the container.
+
+**Local product mode** validates the current checkout's VSIX:
 
 From the repository root:
 
 ```powershell
 .\set-azure-env.ps1 -Env atk06
 $env:TEMPLATE_VERSION = "local"
-$env:VSCUSE_VSCODE_IMAGE = "vscuse-atk-local:latest"
+$branchName = (git branch --show-current).Trim()
+$imageBranch = $branchName -replace '^release/', '' -replace '[^A-Za-z0-9_.-]', '-'
+$env:VSCUSE_VSCODE_IMAGE = "vscuse-atk-${imageBranch}:local"
 
 $dockerCliDir = "C:\Program Files\Docker\Docker\resources\bin"
 if (Test-Path (Join-Path $dockerCliDir "docker.exe")) {
    $env:PATH = "$dockerCliDir;$env:PATH"
 }
 ```
+
+**Published product mode** runs the local or dev plan files against a requested CI-built image. Resolve the exact tag and verify provenance using `local-vscuse-validation`, then set:
+
+```powershell
+$env:VSCUSE_VSCODE_IMAGE = "ghcr.io/officedev/vscuse-atk-vscode:<verified-tag>"
+Remove-Item Env:TEMPLATE_VERSION -ErrorAction SilentlyContinue
+```
+
+Only set `TEMPLATE_VERSION` in published mode when the originating CI run or scenario explicitly used it. A local plan path does not imply local template routing.
 
 If the plan declares feature flags, apply them before running `vscuse execute`:
 
@@ -118,14 +137,28 @@ Use this decision table:
 | Evidence | Classification | Next Action |
 |---|---|---|
 | Missing env vars, Docker, GHCR, vscuse wheel, noVNC, or image access | setup failure | Fix setup and rerun the same plan |
+| Pulled image tag does not resolve to the requested Actions run revision | setup failure | Resolve the exact published tag and verify OCI revision before running |
 | Plan declares feature flags but they were not applied before container/VS Code startup | setup failure | Apply plan-declared flags through the run config and rerun |
 | noVNC shows product does not match expected behavior | product bug | Fix product code, rebuild VSIX/image if needed, rerun |
 | Product behavior is correct but step text, click target, assertion, wait, or visual hash is stale | test plan drift | Repair plan/group and rerun |
 | Same behavior eventually passes; screenshot shows tooltip/toast/loading variance | flake | Stabilize hover/wait/precondition/assertion and rerun |
 
+If `execution_order` references missing step ids, inspect the plan history and current source-of-truth behavior before restoring deleted step objects. A previous UI-change commit may have intentionally removed obsolete assertions but missed the order list. If restored assertions disagree with current code or unit tests, treat them as test plan drift and update/remove the assertion instead of forcing the old expectation back into the case.
+
 ### 6. Repair the Smallest Surface with vscuse-ui First
 
-- Product bug: fix code, rebuild VSIX, rebuild the local vscuse image, then rerun.
+Before editing or starting a second full execution, launch the UI workbench from the testcase root so shared groups resolve:
+
+```powershell
+Push-Location packages/tests/vscuse/vscode-test-cases
+vscuse-ui --config-file .\config.yaml --project-path .
+Pop-Location
+```
+
+As soon as startup prints the service URLs, open `http://127.0.0.1:6082` in the integrated browser and confirm that its embedded noVNC view is connected. Do not leave the user waiting on an invisible CLI execution. Keep the UI service running while editing plan/group JSON; reload the plan or use `Restart`/`Clear` before interpreting results after an edit.
+
+- Product bug in local mode: fix code, rebuild VSIX, rebuild the local vscuse image, then rerun.
+- Product bug in published mode: preserve the pinned image as evidence and do not weaken the plan to hide the product failure. Fix product code only when requested, then validate with a new local or published image.
 - Plan drift: prefer `vscuse-ui` to inspect/re-record the affected steps, refresh screenshots, and validate the visual state interactively. Use direct JSON edits for metadata, variables, or small textual cleanups after the UI change is understood.
 - Flake: prefer stable precondition regions, tolerant assertions, and neutralizing hover/focus steps over delay-only fixes.
 - Setup failure: fix only the environment blocker before interpreting product behavior.
@@ -156,6 +189,7 @@ For `SCN-DA-CREATE-WITH-MCP-SERVER` with `TEAMSFX_MCP_FOR_DA_DT=true`, the new d
 Run the same focused plan again. Final report should include:
 
 - Plan name/path and result.
+- Product image mode, exact image reference, pulled digest, source Actions run, and provenance result.
 - Integrated browser evidence: whether noVNC showed the real live container and which step area was observed.
 - Failure classification.
 - Feature flags declared by the plan and whether they were applied.
