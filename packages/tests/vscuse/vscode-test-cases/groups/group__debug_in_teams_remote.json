@@ -303,7 +303,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion there's a \"Let's go\" dialog with a blue \"Open\" button exist.",
+      "description": "@assertion there's an \"Added successfully!\" dialog with a blue \"Open\" button exist.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -327,7 +327,7 @@
         "x": 529,
         "y": 506
       },
-      "description": "Click the blue \"Open\" button in the \"Let's go\" dialog for the app in Microsoft Teams.",
+      "description": "Click the blue \"Open\" button in the \"Added successfully!\" dialog for the app in Microsoft Teams.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
