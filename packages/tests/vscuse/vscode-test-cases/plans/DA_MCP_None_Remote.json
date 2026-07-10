@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 11,
+    "total_steps": 9,
     "created_at": "2026-06-29T03:18:43.310904",
     "name": "DA MCP None Remote",
     "description": {
@@ -23,8 +23,6 @@
       "plan_r_0629_031130",
       "step_50086579",
       "step_3564293a",
-      "step_select_none_auth_type",
-      "step_confirm_none_auth_type",
       "step_57cd1949",
       "plan_r_0928_014459",
       "step_verify_dynamic_mcp_project",
@@ -89,46 +87,6 @@
       "tags": [],
       "screenshot": "step_3564293a",
       "created_at": "2026-06-29T03:18:43.387762",
-      "plan_id": "plan_e97eedd8"
-    },
-    {
-      "step_id": "step_select_none_auth_type",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "None"
-      },
-      "description": "Type 'None' into the Select Authentication Type quick pick to filter the None authentication option.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": null,
-      "created_at": "2026-07-08T07:18:15.090813",
-      "plan_id": "plan_e97eedd8"
-    },
-    {
-      "step_id": "step_confirm_none_auth_type",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press Enter to select the None authentication type for the MCP server.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": null,
-      "created_at": "2026-07-08T07:18:15.883280",
       "plan_id": "plan_e97eedd8"
     },
     {
