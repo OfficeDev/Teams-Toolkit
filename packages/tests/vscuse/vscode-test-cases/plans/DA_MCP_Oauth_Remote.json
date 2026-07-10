@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 42,
+    "total_steps": 34,
     "created_at": "2026-06-29T03:21:51.231595",
     "name": "DA_with_MCP Server(Oauth)",
     "description": {
@@ -24,14 +24,6 @@
       "step_5f1a8731",
       "step_9c87f073",
       "step_52c22c4c",
-      "step_mcp_auth_type_static",
-      "step_mcp_auth_type_enter",
-      "step_mcp_clientid_type",
-      "step_mcp_clientid_enter",
-      "step_mcp_secret_type",
-      "step_mcp_secret_enter",
-      "step_mcp_scopes_type",
-      "step_mcp_scopes_enter",
       "step_9a8146c5",
       "plan_r_0928_014459",
       "plan_r_1021_081410",
@@ -139,166 +131,6 @@
       "tags": [],
       "screenshot": "step_52c22c4c",
       "created_at": "2026-06-29T03:21:51.277234",
-      "plan_id": "plan_r_1024_023252"
-    },
-    {
-      "step_id": "step_mcp_auth_type_static",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "static"
-      },
-      "description": "Type 'static' into the \"Select Authentication Type\" quick pick that appears inline after submitting the MCP server URL, to filter to the \"OAuth (with static registration)\" option.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": null,
-      "created_at": "2026-07-10T02:34:22.000000",
-      "plan_id": "plan_r_1024_023252"
-    },
-    {
-      "step_id": "step_mcp_auth_type_enter",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press Enter to select the \"OAuth (with static registration)\" authentication type in the \"Select Authentication Type\" quick pick.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": null,
-      "created_at": "2026-07-10T02:34:22.000000",
-      "plan_id": "plan_r_1024_023252"
-    },
-    {
-      "step_id": "step_mcp_clientid_type",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "${{env:DA_MCP_OAUTH_CLIENTID}}"
-      },
-      "description": "Type ${{env:DA_MCP_OAUTH_CLIENTID}} into the \"OAuth Client ID\" input box shown inline during declarative agent creation for the OAuth (static registration) MCP server.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": null,
-      "created_at": "2026-07-10T02:34:22.000000",
-      "plan_id": "plan_r_1024_023252"
-    },
-    {
-      "step_id": "step_mcp_clientid_enter",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press Enter to confirm the client ID for the OAuth (static registration) MCP server.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": null,
-      "created_at": "2026-07-10T02:34:22.000000",
-      "plan_id": "plan_r_1024_023252"
-    },
-    {
-      "step_id": "step_mcp_secret_type",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "${{secret:DA_MCP_OAUTH_CLIENT_SECERT}}"
-      },
-      "description": "Type ${{secret:DA_MCP_OAUTH_CLIENT_SECERT}} into the \"OAuth Client Secret\" input box shown inline during declarative agent creation for the OAuth (static registration) MCP server.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": null,
-      "created_at": "2026-07-10T02:34:22.000000",
-      "plan_id": "plan_r_1024_023252"
-    },
-    {
-      "step_id": "step_mcp_secret_enter",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press Enter to confirm the client secret for the OAuth (static registration) MCP server.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": null,
-      "created_at": "2026-07-10T02:34:22.000000",
-      "plan_id": "plan_r_1024_023252"
-    },
-    {
-      "step_id": "step_mcp_scopes_type",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "read:user"
-      },
-      "description": "Type 'read:user' into the \"OAuth Scopes (optional)\" input box shown inline during declarative agent creation for the OAuth (static registration) MCP server.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": null,
-      "created_at": "2026-07-10T02:34:22.000000",
-      "plan_id": "plan_r_1024_023252"
-    },
-    {
-      "step_id": "step_mcp_scopes_enter",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press Enter to confirm the OAuth scopes for the OAuth (static registration) MCP server.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": null,
-      "created_at": "2026-07-10T02:34:22.000000",
       "plan_id": "plan_r_1024_023252"
     },
     {
