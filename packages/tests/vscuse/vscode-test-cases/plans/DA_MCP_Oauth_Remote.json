@@ -188,7 +188,7 @@
       "parameters": {
         "text": "${{env:DA_MCP_OAUTH_CLIENTID}}"
       },
-      "description": "Type ${{env:DA_MCP_OAUTH_CLIENTID}} into the \"Enter the client ID\" input box shown inline during declarative agent creation for the OAuth (static registration) MCP server.",
+      "description": "Type ${{env:DA_MCP_OAUTH_CLIENTID}} into the \"OAuth Client ID\" input box shown inline during declarative agent creation for the OAuth (static registration) MCP server.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -228,7 +228,7 @@
       "parameters": {
         "text": "${{secret:DA_MCP_OAUTH_CLIENT_SECERT}}"
       },
-      "description": "Type ${{secret:DA_MCP_OAUTH_CLIENT_SECERT}} into the \"Enter the client secret\" input box shown inline during declarative agent creation for the OAuth (static registration) MCP server.",
+      "description": "Type ${{secret:DA_MCP_OAUTH_CLIENT_SECERT}} into the \"OAuth Client Secret\" input box shown inline during declarative agent creation for the OAuth (static registration) MCP server.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -268,7 +268,7 @@
       "parameters": {
         "text": "read:user"
       },
-      "description": "Type 'read:user' into the \"Enter the OAuth scopes\" input box shown inline during declarative agent creation for the OAuth (static registration) MCP server.",
+      "description": "Type 'read:user' into the \"OAuth Scopes (optional)\" input box shown inline during declarative agent creation for the OAuth (static registration) MCP server.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -316,11 +316,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:364:74:16:5:08146a985d551696",
-        "dhash:364:74:96:5:44232282e2068e01",
-        "dhash:364:74:0:10:f0b09494b2717075"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_9a8146c5",
