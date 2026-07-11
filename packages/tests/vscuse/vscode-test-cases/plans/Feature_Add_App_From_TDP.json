@@ -246,7 +246,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion 'TDP' is exist",
+      "description": "@assertion there's ${{var:app_name}} in the EXPLORER panel",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
