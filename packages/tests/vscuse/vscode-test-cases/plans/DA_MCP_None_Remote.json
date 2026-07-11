@@ -35,6 +35,7 @@
       "step_type_provision_command",
       "step_confirm_provision_command",
       "step_optional_select_dev_environment",
+      "plan_56359cb8",
       "plan_a85ba056",
       "step_verify_post_provision_mcp_project"
     ],
@@ -46,7 +47,7 @@
       "auth_type:none",
       "dynamic_tool_discovery"
     ],
-    "updated_at": "2026-07-11T02:40:00.000000"
+    "updated_at": "2026-07-11T03:05:00.000000"
   },
   "steps": [
     {
