@@ -246,7 +246,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion there's ${{var:app_name}} in the EXPLORER panel",
+      "description": "@assertion the EXPLORER panel shows the newly created project folder for ${{var:app_name}}. VS Code renders the root workspace folder name in uppercase and may omit underscores, so treat the comparison as case-insensitive and ignore underscores and other non-alphanumeric characters (for example, app name tdp_app_ABCDE appears in the EXPLORER header as TDPAPPABCDE).",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
