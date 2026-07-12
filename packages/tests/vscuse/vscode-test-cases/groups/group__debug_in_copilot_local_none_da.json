@@ -23,6 +23,9 @@
       "step_6861ac1e",
       "step_41dc25cd",
       "step_c923dbdb",
+      "step_e1a11071",
+      "step_e1a21072",
+      "step_e1a31073",
       "step_baa39070",
       "step_e0bd25da",
       "step_f46232aa",
@@ -168,9 +171,7 @@
         "dhash:363:400:0:10:1308f0d9d9e6e6e4"
       ],
       "postconditions": [],
-      "tags": [
-        "delay:180"
-      ],
+      "tags": [],
       "screenshot": "step_baa39070",
       "created_at": "2026-04-21T03:02:12.293313",
       "plan_id": "plan_f355465c"
@@ -315,6 +316,70 @@
       ],
       "screenshot": null,
       "created_at": "2026-04-21T03:02:12.347101",
+      "plan_id": "plan_f355465c"
+    },
+    {
+      "step_id": "step_e1a11071",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 389,
+        "y": 351
+      },
+      "description": "Click on the \"Email, phone, or Skype\" input field on the Microsoft Sign-In page within the Chrome browser to focus the email input.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay:180"
+      ],
+      "screenshot": "",
+      "created_at": "2026-04-21T03:02:12.293313",
+      "plan_id": "plan_f355465c"
+    },
+    {
+      "step_id": "step_e1a21072",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{env:M365_ACCOUNT_NAME}}"
+      },
+      "description": "Type ${{env:M365_ACCOUNT_NAME}} into the email input field on the Microsoft Sign-In page to enter the account name.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
+      "created_at": "2026-04-21T03:02:12.293313",
+      "plan_id": "plan_f355465c"
+    },
+    {
+      "step_id": "step_e1a31073",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press the \"Enter\" key to submit the email address and advance from the email-entry page to the password page on the Microsoft Sign-In page.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
+      "created_at": "2026-04-21T03:02:12.293313",
       "plan_id": "plan_f355465c"
     }
   ],
