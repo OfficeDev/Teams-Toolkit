@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 12,
+    "total_steps": 15,
     "created_at": "2026-04-21T01:53:19.292868",
     "name": "group__debug_in_copilot_local_none_da",
     "description": {
@@ -23,6 +23,9 @@
       "step_6861ac1e",
       "step_41dc25cd",
       "step_c923dbdb",
+      "step_de11a001",
+      "step_de11a002",
+      "step_de11a003",
       "step_baa39070",
       "step_e0bd25da",
       "step_f46232aa",
@@ -148,6 +151,72 @@
       "plan_id": "plan_f355465c"
     },
     {
+      "step_id": "step_de11a001",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 389,
+        "y": 351
+      },
+      "description": "Click on the \"Email or phone\" input field on the Microsoft Sign-in page in the Chrome browser to focus the cursor for credential entry.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay:180"
+      ],
+      "screenshot": "step_de11a001",
+      "created_at": "2026-04-21T03:02:12.293313",
+      "plan_id": "plan_f355465c"
+    },
+    {
+      "step_id": "step_de11a002",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{env:M365_ACCOUNT_NAME}}"
+      },
+      "description": "Type ${{env:M365_ACCOUNT_NAME}} into the email or username input field on the Microsoft Sign-in page.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_de11a002",
+      "created_at": "2026-04-21T03:02:12.293313",
+      "plan_id": "plan_f355465c"
+    },
+    {
+      "step_id": "step_de11a003",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 635,
+        "y": 487
+      },
+      "description": "Click the blue \"Next\" button on the Microsoft sign-in page to confirm the entered email and advance to the password entry step.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_de11a003",
+      "created_at": "2026-04-21T03:02:12.293313",
+      "plan_id": "plan_f355465c"
+    },
+    {
       "step_id": "step_baa39070",
       "agent": "interaction",
       "tool": "click",
@@ -162,14 +231,10 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:363:400:16:5:00000020cb9a9a69",
-        "dhash:363:400:96:5:2e2e00291b100022",
-        "dhash:363:400:0:10:1308f0d9d9e6e6e4"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
-        "delay:180"
+        "delay:3"
       ],
       "screenshot": "step_baa39070",
       "created_at": "2026-04-21T03:02:12.293313",
