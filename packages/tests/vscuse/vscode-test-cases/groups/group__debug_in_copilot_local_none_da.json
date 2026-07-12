@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 15,
+    "total_steps": 14,
     "created_at": "2026-04-21T01:53:19.292868",
     "name": "group__debug_in_copilot_local_none_da",
     "description": {
@@ -26,7 +26,6 @@
       "step_de11a001",
       "step_de11a002",
       "step_de11a003",
-      "step_baa39070",
       "step_e0bd25da",
       "step_f46232aa",
       "step_09a662a3",
@@ -165,10 +164,14 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [],
+      "preconditions": [
+        "dhash:389:351:16:5:88229c5c54dc9464",
+        "dhash:389:351:96:5:366700356588004d",
+        "dhash:389:351:0:10:0b28d0d9e7e6dae4"
+      ],
       "postconditions": [],
       "tags": [
-        "delay:180"
+        "precondition_wait_timeout: 180"
       ],
       "screenshot": "step_de11a001",
       "created_at": "2026-04-21T03:02:12.293313",
@@ -187,7 +190,9 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [],
+      "preconditions": [
+        "dhash:512:384:0:20:1b28f0d9e7e6dae4"
+      ],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_de11a002",
@@ -209,34 +214,14 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [],
+      "preconditions": [
+        "dhash:635:487:16:5:65565645259a2000",
+        "dhash:635:487:96:5:40004c62300c0000",
+        "dhash:635:487:0:10:1b28f0cbc6f6dae4"
+      ],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_de11a003",
-      "created_at": "2026-04-21T03:02:12.293313",
-      "plan_id": "plan_f355465c"
-    },
-    {
-      "step_id": "step_baa39070",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 363,
-        "y": 400
-      },
-      "description": "Click on the \"Password\" text field within the Microsoft account login page to focus and enable input.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "delay:3"
-      ],
-      "screenshot": "step_baa39070",
       "created_at": "2026-04-21T03:02:12.293313",
       "plan_id": "plan_f355465c"
     },
