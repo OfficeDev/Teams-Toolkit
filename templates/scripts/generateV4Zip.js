@@ -95,6 +95,19 @@ const BUILD_PATH = path.join(__dirname, "..", "build", "v4");
 const rawVersion = require(path.join(__dirname, "..", "package.json")).version;
 const version = computeV4PublishVersion(rawVersion);
 
+function buildValidationError(name, message) {
+  const error = new Error(message);
+  error.name = name;
+  error.source = "TemplatesBuild";
+  error.timestamp = new Date();
+  return error;
+}
+
+const buildValidationErrors = {
+  user: buildValidationError,
+  system: buildValidationError,
+};
+
 mkdirSync(BUILD_PATH, { recursive: true });
 
 const zip = new AdmZip();
@@ -130,7 +143,8 @@ const archiveBytes = zip.toBuffer();
 const validation = validateDeclarativeTemplateArchive(
   archiveBytes,
   "build",
-  CURRENT_V4_ENGINE_VERSION
+  CURRENT_V4_ENGINE_VERSION,
+  buildValidationErrors
 );
 if (validation.isErr()) {
   throw validation.error;

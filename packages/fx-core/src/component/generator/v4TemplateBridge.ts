@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+import { SystemError, UserError } from "@microsoft/teamsfx-api";
 import fs from "fs-extra";
 import { merge } from "lodash";
 import path from "path";
@@ -27,13 +28,30 @@ import { defaultTryLimits } from "./constant";
 import { TemplateOutputPathError } from "./error";
 import { GeneratorContext } from "./generatorAction";
 
+const templateArchiveErrors = {
+  user: (name: string, message: string) => new UserError({ source: "Scaffold", name, message }),
+  system: (name: string, message: string) => new SystemError({ source: "Scaffold", name, message }),
+};
+
 export const v4TemplateBridgeDeps = {
   createTemplateSourcePort: templateSourcePortMod.createTemplateSourcePort,
   loadBundledFloor: bundledFloorMod.loadBundledFloor,
   resolveLocalTemplateSource: templateSourceMod.resolveLocalTemplateSource,
   loadResolvedPackage: templateSourcePortMod.loadResolvedPackage,
   openTemplatePackage: templatePackageMod.openTemplatePackage,
-  validateDeclarativePackageArchive: templateArchiveValidationMod.validateDeclarativePackageArchive,
+  validateDeclarativePackageArchive: (
+    bytes: Buffer,
+    locator: DeclarativeLocator,
+    mode: "build" | "load",
+    engineVersion: string
+  ) =>
+    templateArchiveValidationMod.validateDeclarativePackageArchive(
+      bytes,
+      locator,
+      mode,
+      engineVersion,
+      templateArchiveErrors
+    ),
   engineVersion: (): string => CURRENT_V4_ENGINE_VERSION,
 };
 

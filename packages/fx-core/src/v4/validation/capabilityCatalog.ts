@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { CapabilityKind } from "./validateTemplatePackage";
+import type { CapabilityKind } from "./validateTemplatePackage";
 
 /** Source-owned introduction versions for every template-visible engine capability. */
 const CAPABILITY_FLOORS: Record<CapabilityKind, ReadonlyMap<string, string>> = {

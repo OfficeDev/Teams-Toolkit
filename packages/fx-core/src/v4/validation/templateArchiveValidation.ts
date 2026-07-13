@@ -1,25 +1,31 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { FxError, SystemError, UserError } from "@microsoft/teamsfx-api";
+import type { FxError } from "@microsoft/teamsfx-api";
 import AdmZip from "adm-zip";
-import Ajv, { AnySchema, ValidateFunction } from "ajv";
-import { Result, err, ok } from "neverthrow";
-import { DeclarativeLocator, TemplateFileEntry } from "../model/dataModel";
-import { LoadedPackage } from "../distribution/packageDir";
-import {
+import Ajv from "ajv";
+import type { AnySchema, ValidateFunction } from "ajv";
+import { err, ok } from "neverthrow";
+import type { Result } from "neverthrow";
+import type { LoadedPackage } from "../distribution/packageDir";
+import type { DeclarativeLocator, TemplateFileEntry } from "../model/dataModel";
+import { VALIDATE_SCHEMA, validateTemplatePackage } from "./validateTemplatePackage";
+import type {
   ContentFile,
   PackageKind,
   SchemaValidator,
-  VALIDATE_SCHEMA,
   ValidateMode,
-  validateTemplatePackage,
 } from "./validateTemplatePackage";
 import { templateCapabilityFloor, templateCapabilityOutputs } from "./capabilityCatalog";
 
-const SOURCE = "Scaffold";
 const CALLER_FLOOR = ["appName", "language"];
 const VALUE_TOKEN = /\{\{\s*[#^\/]?\s*([A-Za-z_][A-Za-z0-9_.]*)\s*\}\}/g;
+
+/** Adapt validation diagnoses to the concrete errors owned by the caller. */
+export interface TemplateArchiveErrorFactory {
+  user(name: string, message: string): FxError;
+  system(name: string, message: string): FxError;
+}
 
 interface OpenedArchive {
   zip: AdmZip;
@@ -35,12 +41,12 @@ interface CompiledSchemas {
   selector: SchemaValidator;
 }
 
-function archiveError(name: string, message: string): FxError {
-  return new SystemError({ source: SOURCE, name, message });
+function archiveError(errors: TemplateArchiveErrorFactory, name: string, message: string): FxError {
+  return errors.system(name, message);
 }
 
-function packageError(name: string, message: string): FxError {
-  return new UserError({ source: SOURCE, name, message });
+function packageError(errors: TemplateArchiveErrorFactory, name: string, message: string): FxError {
+  return errors.user(name, message);
 }
 
 function packageIdFromEntry(kind: PackageKind, name: string): string | undefined {
@@ -59,13 +65,16 @@ function packageIdFromEntry(kind: PackageKind, name: string): string | undefined
   return contentIndex > 0 ? relative.slice(0, contentIndex) : undefined;
 }
 
-function openArchive(bytes: Buffer): Result<OpenedArchive, FxError> {
+function openArchive(
+  bytes: Buffer,
+  errors: TemplateArchiveErrorFactory
+): Result<OpenedArchive, FxError> {
   let zip: AdmZip;
   try {
     zip = new AdmZip(bytes);
   } catch {
     return err(
-      archiveError("TemplatePackageCorrupt", "The template package is not a valid archive.")
+      archiveError(errors, "TemplatePackageCorrupt", "The template package is not a valid archive.")
     );
   }
 
@@ -93,7 +102,9 @@ function openArchive(bytes: Buffer): Result<OpenedArchive, FxError> {
       }
     }
   } catch {
-    return err(archiveError("TemplatePackageCorrupt", "The template package could not be read."));
+    return err(
+      archiveError(errors, "TemplatePackageCorrupt", "The template package could not be read.")
+    );
   }
   presentIds.create.sort();
   presentIds.modify.sort();
@@ -108,23 +119,32 @@ function openArchive(bytes: Buffer): Result<OpenedArchive, FxError> {
   });
 }
 
-function parseJson(data: Buffer, file: string): Result<unknown, FxError> {
+function parseJson(
+  data: Buffer,
+  file: string,
+  errors: TemplateArchiveErrorFactory
+): Result<unknown, FxError> {
   try {
     const parsed: unknown = JSON.parse(data.toString("utf8"));
     return ok(parsed);
   } catch {
     return err(
-      archiveError("PackageFileInvalid", `The template package file "${file}" is not valid JSON.`)
+      archiveError(
+        errors,
+        "PackageFileInvalid",
+        `The template package file "${file}" is not valid JSON.`
+      )
     );
   }
 }
 
 function parseOptionalJson(
   archive: OpenedArchive,
-  file: string
+  file: string,
+  errors: TemplateArchiveErrorFactory
 ): Result<unknown | undefined, FxError> {
   const data = archive.entries.get(file);
-  return data === undefined ? ok(undefined) : parseJson(data, file);
+  return data === undefined ? ok(undefined) : parseJson(data, file, errors);
 }
 
 function isAnySchema(value: unknown): value is AnySchema {
@@ -139,7 +159,10 @@ function schemaValidator(ajv: Ajv, validate: ValidateFunction): SchemaValidator 
     validate(data) ? undefined : ajv.errorsText(validate.errors, { separator: "; " });
 }
 
-function compileSchemas(archive: OpenedArchive): Result<CompiledSchemas, FxError> {
+function compileSchemas(
+  archive: OpenedArchive,
+  errors: TemplateArchiveErrorFactory
+): Result<CompiledSchemas, FxError> {
   const schemaFiles: [keyof CompiledSchemas, string][] = [
     ["descriptor", "v4/schema/descriptor.schema.json"],
     ["question", "v4/schema/questions.schema.json"],
@@ -150,15 +173,17 @@ function compileSchemas(archive: OpenedArchive): Result<CompiledSchemas, FxError
   for (const [name, file] of schemaFiles) {
     const data = archive.entries.get(file);
     if (data === undefined) {
-      return err(archiveError("PackageFileMissing", `The template package is missing "${file}".`));
+      return err(
+        archiveError(errors, "PackageFileMissing", `The template package is missing "${file}".`)
+      );
     }
-    const parsed = parseJson(data, file);
+    const parsed = parseJson(data, file, errors);
     if (parsed.isErr()) {
       return err(parsed.error);
     }
     if (!isAnySchema(parsed.value)) {
       return err(
-        archiveError("TemplateSchemaInvalid", `The template schema "${file}" is invalid.`)
+        archiveError(errors, "TemplateSchemaInvalid", `The template schema "${file}" is invalid.`)
       );
     }
     schemas[name] = parsed.value;
@@ -175,7 +200,11 @@ function compileSchemas(archive: OpenedArchive): Result<CompiledSchemas, FxError
     selector === undefined
   ) {
     return err(
-      archiveError("TemplateSchemaInvalid", "The template package schema set is incomplete.")
+      archiveError(
+        errors,
+        "TemplateSchemaInvalid",
+        "The template package schema set is incomplete."
+      )
     );
   }
 
@@ -193,7 +222,11 @@ function compileSchemas(archive: OpenedArchive): Result<CompiledSchemas, FxError
     });
   } catch {
     return err(
-      archiveError("TemplateSchemaInvalid", "The template package schemas could not be compiled.")
+      archiveError(
+        errors,
+        "TemplateSchemaInvalid",
+        "The template package schemas could not be compiled."
+      )
     );
   }
 }
@@ -214,11 +247,12 @@ function isSafeRelativePath(relativePath: string): boolean {
 
 function validateSelectors(
   archive: OpenedArchive,
-  schemas: CompiledSchemas
+  schemas: CompiledSchemas,
+  errors: TemplateArchiveErrorFactory
 ): Result<void, FxError> {
   for (const kind of ["create", "modify"] as const) {
     const file = `v4/${kind}/selector.json`;
-    const selector = parseOptionalJson(archive, file);
+    const selector = parseOptionalJson(archive, file, errors);
     if (selector.isErr()) {
       return err(selector.error);
     }
@@ -226,6 +260,7 @@ function validateSelectors(
     if (schemaError !== undefined) {
       return err(
         packageError(
+          errors,
           VALIDATE_SCHEMA,
           `${file}: selector.json failed schema validation: ${schemaError}`
         )
@@ -246,7 +281,8 @@ function extractPlaceholders(value: string, output: Set<string>): void {
 
 function loadContent(
   archive: OpenedArchive,
-  locator: DeclarativeLocator
+  locator: DeclarativeLocator,
+  errors: TemplateArchiveErrorFactory
 ): Result<{ raw: TemplateFileEntry[]; validation: ContentFile[] | undefined }, FxError> {
   const prefix = `v4/${locator.kind}/${locator.templateId}/content/`;
   const raw: TemplateFileEntry[] = [];
@@ -259,6 +295,7 @@ function loadContent(
     if (!isSafeRelativePath(relativePath)) {
       return err(
         archiveError(
+          errors,
           "TemplatePackageUnsafePath",
           `The resolved template package contains an unsafe entry path: "${name}".`
         )
@@ -282,35 +319,37 @@ function validateOpenedPackage(
   schemas: CompiledSchemas,
   locator: DeclarativeLocator,
   mode: ValidateMode,
-  engineVersion: string
+  engineVersion: string,
+  errors: TemplateArchiveErrorFactory
 ): Result<LoadedPackage, FxError> {
   const root = `v4/${locator.kind}/${locator.templateId}/`;
-  const descriptor = parseOptionalJson(archive, `${root}descriptor.json`);
+  const descriptor = parseOptionalJson(archive, `${root}descriptor.json`, errors);
   if (descriptor.isErr()) {
     return err(descriptor.error);
   }
-  const questions = parseOptionalJson(archive, `${root}questions.json`);
+  const questions = parseOptionalJson(archive, `${root}questions.json`, errors);
   if (questions.isErr()) {
     return err(questions.error);
   }
-  const pipeline = parseOptionalJson(archive, `${root}pipeline.json`);
+  const pipeline = parseOptionalJson(archive, `${root}pipeline.json`, errors);
   if (pipeline.isErr()) {
     return err(pipeline.error);
   }
-  const createSelector = parseOptionalJson(archive, "v4/create/selector.json");
+  const createSelector = parseOptionalJson(archive, "v4/create/selector.json", errors);
   if (createSelector.isErr()) {
     return err(createSelector.error);
   }
-  const modifySelector = parseOptionalJson(archive, "v4/modify/selector.json");
+  const modifySelector = parseOptionalJson(archive, "v4/modify/selector.json", errors);
   if (modifySelector.isErr()) {
     return err(modifySelector.error);
   }
-  const content = loadContent(archive, locator);
+  const content = loadContent(archive, locator, errors);
   if (content.isErr()) {
     return err(content.error);
   }
 
   const validation = validateTemplatePackage(locator.kind, locator.templateId, mode, {
+    userError: (name, message) => errors.user(name, message),
     descriptor: () => descriptor.value,
     questions: () => questions.value,
     pipeline: () => pipeline.value,
@@ -339,38 +378,40 @@ export function validateDeclarativePackageArchive(
   bytes: Buffer,
   locator: DeclarativeLocator,
   mode: ValidateMode,
-  engineVersion: string
+  engineVersion: string,
+  errors: TemplateArchiveErrorFactory
 ): Result<LoadedPackage, FxError> {
-  const archive = openArchive(bytes);
+  const archive = openArchive(bytes, errors);
   if (archive.isErr()) {
     return err(archive.error);
   }
-  const schemas = compileSchemas(archive.value);
+  const schemas = compileSchemas(archive.value, errors);
   if (schemas.isErr()) {
     return err(schemas.error);
   }
-  const selectors = validateSelectors(archive.value, schemas.value);
+  const selectors = validateSelectors(archive.value, schemas.value, errors);
   if (selectors.isErr()) {
     return err(selectors.error);
   }
-  return validateOpenedPackage(archive.value, schemas.value, locator, mode, engineVersion);
+  return validateOpenedPackage(archive.value, schemas.value, locator, mode, engineVersion, errors);
 }
 
 /** Validate every authored create/modify package in final channel archive bytes. */
 export function validateDeclarativeTemplateArchive(
   bytes: Buffer,
   mode: ValidateMode,
-  engineVersion: string
+  engineVersion: string,
+  errors: TemplateArchiveErrorFactory
 ): Result<string[], FxError> {
-  const archive = openArchive(bytes);
+  const archive = openArchive(bytes, errors);
   if (archive.isErr()) {
     return err(archive.error);
   }
-  const schemas = compileSchemas(archive.value);
+  const schemas = compileSchemas(archive.value, errors);
   if (schemas.isErr()) {
     return err(schemas.error);
   }
-  const selectors = validateSelectors(archive.value, schemas.value);
+  const selectors = validateSelectors(archive.value, schemas.value, errors);
   if (selectors.isErr()) {
     return err(selectors.error);
   }
@@ -382,7 +423,8 @@ export function validateDeclarativeTemplateArchive(
         schemas.value,
         { kind, templateId },
         mode,
-        engineVersion
+        engineVersion,
+        errors
       );
       if (result.isErr()) {
         return err(result.error);

@@ -1,14 +1,17 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { FxError, UserError } from "@microsoft/teamsfx-api";
-import { Result, err, ok } from "neverthrow";
+import type { FxError } from "@microsoft/teamsfx-api";
+import { err, ok } from "neverthrow";
+import type { Result } from "neverthrow";
 import semver from "semver";
 
 /** Pure v4 template-package validation gate. See validate-template-package spec and ADR-0015. */
 
-const SOURCE = "Scaffold";
 const MUSTACHE_VALUE = /\{\{\s*([A-Za-z_][A-Za-z0-9_.]*)\s*\}\}/g;
+
+/** Create one caller-owned, author-fixable validation failure. */
+export type TemplatePackageErrorFactory = (name: string, message: string) => FxError;
 
 /** Package namespace. */
 export type PackageKind = "create" | "modify";
@@ -30,6 +33,8 @@ export type CapabilityKind = "step" | "provider" | "validator";
 
 /** Narrow validation port; schema, package, and engine-context data stay injected. */
 export interface TemplatePackagePort {
+  /** Adapt an author-fixable diagnosis to the caller's concrete error type. */
+  userError: TemplatePackageErrorFactory;
   /** The package's parsed `descriptor.json`, or `undefined` when absent. */
   descriptor(): unknown | undefined;
   /** The package's parsed `questions.json`, or `undefined` when absent. */
@@ -90,10 +95,6 @@ export const VALIDATE_UNKNOWN_CAPABILITY = "TemplatePackageUnknownCapability";
 /** `UserError` name: `minEngineVersion` predates a referenced capability. */
 export const VALIDATE_CAPABILITY_FLOOR = "TemplatePackageCapabilityFloor";
 
-function userError(name: string, message: string): UserError {
-  return new UserError({ source: SOURCE, name, message });
-}
-
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
@@ -135,7 +136,8 @@ function v4RouteIds(selectorData: unknown): string[] {
 function validateEngineVersion(
   pkg: string,
   field: string,
-  version: string
+  version: string,
+  userError: TemplatePackageErrorFactory
 ): Result<string, FxError> {
   if (semver.valid(version) !== version) {
     return err(
@@ -236,7 +238,8 @@ export function validateMinEngineVersion(
   kind: PackageKind,
   id: string,
   descriptor: unknown,
-  engineVersion: string
+  engineVersion: string,
+  userError: TemplatePackageErrorFactory
 ): Result<string, FxError> {
   const pkg = `${kind}/${id}`;
   if (!isRecord(descriptor)) {
@@ -251,11 +254,11 @@ export function validateMinEngineVersion(
       )
     );
   }
-  const validMinimum = validateEngineVersion(pkg, "minEngineVersion", minEngineVersion);
+  const validMinimum = validateEngineVersion(pkg, "minEngineVersion", minEngineVersion, userError);
   if (validMinimum.isErr()) {
     return err(validMinimum.error);
   }
-  const validEngine = validateEngineVersion(pkg, "engineVersion", engineVersion);
+  const validEngine = validateEngineVersion(pkg, "engineVersion", engineVersion, userError);
   if (validEngine.isErr()) {
     return err(validEngine.error);
   }
@@ -278,6 +281,7 @@ export function validateTemplatePackage(
   port: TemplatePackagePort
 ): Result<ValidatedPackage, FxError> {
   const pkg = `${kind}/${id}`;
+  const userError: TemplatePackageErrorFactory = (name, message) => port.userError(name, message);
 
   // descriptor / questions / pipeline are required; `content/` is optional.
   const descriptor = port.descriptor();
@@ -332,7 +336,7 @@ export function validateTemplatePackage(
       )
     );
   }
-  const validMinimum = validateEngineVersion(pkg, "minEngineVersion", minEngineVersion);
+  const validMinimum = validateEngineVersion(pkg, "minEngineVersion", minEngineVersion, userError);
   if (validMinimum.isErr()) {
     return err(validMinimum.error);
   }
@@ -471,7 +475,7 @@ export function validateTemplatePackage(
   // The reverse gate is explicit.
   const minEngineResult =
     mode === "load"
-      ? validateMinEngineVersion(kind, id, descriptor, port.engineVersion())
+      ? validateMinEngineVersion(kind, id, descriptor, port.engineVersion(), userError)
       : ok(minEngineVersion);
   if (minEngineResult.isErr()) {
     return err(minEngineResult.error);

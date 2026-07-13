@@ -36,12 +36,13 @@ It answers two questions: _is this package well-formed?_ (four-file isomorphism
 
 ## Inputs
 
-| Input  | Type                         | Origin                                                                                                                                                         |
-| ------ | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `kind` | `create \| modify`           | selects which per-kind `selector.json` and templateId namespace                                                                                                |
-| `id`   | `templateId` string          | which `<kind>/<id>/` package to validate                                                                                                                       |
-| `mode` | `build \| load`              | `build` → a violation fails the build; `load` → a violation fails the scaffold (defense-in-depth). The _checks_ are identical; only the failure class differs. |
-| `port` | narrow `TemplatePackagePort` | injected; an in-memory fake in tests                                                                                                                           |
+| Input            | Type                             | Origin                                                                                                                                                                 |
+| ---------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `kind`           | `create \| modify`               | selects which per-kind `selector.json` and templateId namespace                                                                                                        |
+| `id`             | `templateId` string              | which `<kind>/<id>/` package to validate                                                                                                                               |
+| `mode`           | `build \| load`                  | `build` → a violation fails the build; `load` → a violation fails the scaffold (defense-in-depth). The _checks_ are identical; only the failure class differs.         |
+| `port`           | narrow `TemplatePackagePort`     | injected; includes the package-level `userError` adapter and uses an in-memory fake in tests                                                                           |
+| archive `errors` | `{ user; system }` error factory | injected by the final-archive adapter; runtime maps failures to `UserError` / `SystemError`, while build tooling may supply an engine-independent error implementation |
 
 This operation does **not** depend on the full `ScaffoldRuntime`
 (`{ fs, http, archive, clock, binaryCache }`, proposal §8). It declares the
@@ -50,6 +51,7 @@ full runtime composes later:
 
 | Port face           | Shape                                                                | Responsibility                                                                                                                                                                          |
 | ------------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `userError`         | `(name, message) => FxError`                                         | adapts an author-/user-fixable package diagnosis to the caller's concrete error type; the archive adapter derives this face from its `{ user; system }` factory                         |
 | `descriptor`        | `() => unknown \| undefined`                                         | the package's parsed `descriptor.json` (or absence)                                                                                                                                     |
 | `questions`         | `() => unknown \| undefined`                                         | the package's parsed `questions.json` (or absence)                                                                                                                                      |
 | `pipeline`          | `() => unknown \| undefined`                                         | the package's parsed `pipeline.json` (or absence)                                                                                                                                       |
@@ -112,6 +114,7 @@ On `err`:
 | AC-26 | L1   | a package content entry is absolute or drive-qualified under POSIX or Windows path rules                                                                                       | validate archive                             | `SystemError` naming the unsafe archive entry; the package is rejected before rendering or filesystem writes                                                                                                   |
 | AC-27 | L1   | one per-kind `selector.json` is malformed and the archive contains no package descriptors                                                                                      | validate archive                             | schema validation still fails; both selectors are independently validated rather than only as a side effect of package iteration                                                                               |
 | AC-28 | L1   | `descriptor.minEngineVersion` or the consuming `engineVersion` is not valid SemVer                                                                                             | validate                                     | `UserError` names the invalid version; compatibility and capability-floor comparisons never coerce malformed versions                                                                                          |
+| AC-29 | L1   | archive validation is composed by runtime or build tooling with a caller-owned error factory                                                                                   | validation rejects malformed archive bytes   | the returned failure is created by that factory; the generic validator does not load or construct product API error classes                                                                                    |
 
 ## Flow
 
@@ -188,13 +191,18 @@ This operation does **not**:
 - **INV-7 — v4-owned.** This operation and its tests live in the v4 world; it
   does **not** reuse v3's runtime `ManifestUtil` / ajv path (proposal §5.1) and
   adds no v3-specific method or fixture.
-- **INV-8 — Read-only.** Validation inspects bytes; it never mutates, rewrites,
+- **INV-8 — Caller-owned error adaptation.** Validation identifies a failure's
+  category, name, and message, while composition owns the concrete error class.
+  Build tooling can therefore run the generic validator before fx-core's API
+  dependency has been compiled; runtime composition still returns the standard
+  `UserError` / `SystemError` classes.
+- **INV-9 — Read-only.** Validation inspects bytes; it never mutates, rewrites,
   publishes, or synthesizes any package file (authored-not-generated, cluster G).
-- **INV-9 — Capability floor is source-owned.** Every template-visible step,
+- **INV-10 — Capability floor is source-owned.** Every template-visible step,
   provider, and validator has one engine introduction version. A package that
   references it declares an equal-or-higher `minEngineVersion`; artifact release
   versions never stand in for this capability floor.
-- **INV-10 — Archive roots are complete and paths are relative.** Archive
+- **INV-11 — Archive roots are complete and paths are relative.** Archive
   discovery considers every package-owned metadata/content entry, not only
   descriptors; every discovered root satisfies INV-1, both selectors are
   independently schema-valid, and content paths are relative under both POSIX

@@ -71,6 +71,7 @@ function validParts(): PackageParts {
 
 function makePort(p: PackageParts): TemplatePackagePort {
   return {
+    userError: (name, message) => new UserError({ source: "Scaffold", name, message }),
     descriptor: () => p.descriptor,
     questions: () => p.questions,
     pipeline: () => p.pipeline,

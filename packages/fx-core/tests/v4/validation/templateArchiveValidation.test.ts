@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+import { SystemError, UserError } from "@microsoft/teamsfx-api";
 import * as path from "path";
 import AdmZip from "adm-zip";
 import { assert } from "vitest";
@@ -8,6 +9,10 @@ import { validateDeclarativeTemplateArchive } from "../../../src/v4/validation/t
 
 const V4_ROOT = path.resolve(__dirname, "../../../../../templates/v4");
 let fullArchiveCache: Buffer | undefined;
+const runtimeErrors = {
+  user: (name: string, message: string) => new UserError({ source: "Scaffold", name, message }),
+  system: (name: string, message: string) => new SystemError({ source: "Scaffold", name, message }),
+};
 
 function fullArchive(): Buffer {
   if (fullArchiveCache === undefined) {
@@ -27,6 +32,38 @@ function selectorOnlyArchive(): AdmZip {
 }
 
 describe("v4/validation/templateArchiveValidation", () => {
+  it("AC-29: archive validation uses the caller-owned error factory", () => {
+    const zip = selectorOnlyArchive();
+    const selector = zip.getEntry("v4/create/selector.json");
+    if (selector === null) {
+      throw new Error("expected create selector entry");
+    }
+    selector.setData(Buffer.from(JSON.stringify({ routes: "not-an-array" }), "utf8"));
+
+    const errors = {
+      source: "TemplatesBuild",
+      user(name: string, message: string) {
+        return Object.assign(new Error(message), {
+          name,
+          source: this.source,
+          timestamp: new Date(),
+        });
+      },
+      system(name: string, message: string) {
+        return Object.assign(new Error(message), {
+          name,
+          source: this.source,
+          timestamp: new Date(),
+        });
+      },
+    };
+
+    const result = validateDeclarativeTemplateArchive(zip.toBuffer(), "build", "6.11.0", errors);
+
+    assert.isTrue(result.isErr());
+    assert.equal(result._unsafeUnwrapErr().source, "TemplatesBuild");
+  });
+
   it("AC-25: descriptor-less package metadata is not omitted from archive validation", () => {
     const zip = new AdmZip(fullArchive());
     zip.addFile(
@@ -38,7 +75,12 @@ describe("v4/validation/templateArchiveValidation", () => {
       Buffer.from(JSON.stringify({ pipeline: "default", steps: [] }), "utf8")
     );
 
-    const result = validateDeclarativeTemplateArchive(zip.toBuffer(), "build", "6.11.0");
+    const result = validateDeclarativeTemplateArchive(
+      zip.toBuffer(),
+      "build",
+      "6.11.0",
+      runtimeErrors
+    );
 
     assert.isTrue(result.isErr());
     assert.equal(result._unsafeUnwrapErr().name, "TemplatePackageRequiredFile");
@@ -50,7 +92,12 @@ describe("v4/validation/templateArchiveValidation", () => {
     const zip = new AdmZip(fullArchive());
     zip.addFile("v4/create/da/mcp-server/content/z:/payload.txt", Buffer.from("unsafe", "utf8"));
 
-    const result = validateDeclarativeTemplateArchive(zip.toBuffer(), "build", "6.11.0");
+    const result = validateDeclarativeTemplateArchive(
+      zip.toBuffer(),
+      "build",
+      "6.11.0",
+      runtimeErrors
+    );
 
     assert.isTrue(result.isErr());
     assert.equal(result._unsafeUnwrapErr().name, "TemplatePackageUnsafePath");
@@ -65,7 +112,12 @@ describe("v4/validation/templateArchiveValidation", () => {
     }
     selector.setData(Buffer.from(JSON.stringify({ routes: "not-an-array" }), "utf8"));
 
-    const result = validateDeclarativeTemplateArchive(zip.toBuffer(), "build", "6.11.0");
+    const result = validateDeclarativeTemplateArchive(
+      zip.toBuffer(),
+      "build",
+      "6.11.0",
+      runtimeErrors
+    );
 
     assert.isTrue(result.isErr());
     assert.equal(result._unsafeUnwrapErr().name, "TemplatePackageSchema");
