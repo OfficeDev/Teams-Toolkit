@@ -91,6 +91,9 @@ export class APIPluginManifestWrapper extends BaseManifest<APIPluginManifest> {
    */
   static fromJSON(json: string): APIPluginManifestWrapper {
     const data = ApiPluginManifestConverter.jsonToManifest(json);
+    if (typeof data !== "object" || data === null || Array.isArray(data)) {
+      throw new Error("API plugin manifest JSON must contain an object.");
+    }
     return new APIPluginManifestWrapper(data);
   }
 
@@ -156,6 +159,11 @@ export class APIPluginManifestWrapper extends BaseManifest<APIPluginManifest> {
    */
   get runtimes(): readonly RuntimeObject[] {
     return (this._data.runtimes as RuntimeObject[] | undefined) ?? [];
+  }
+
+  /** Returns conversation-starter text declared by the plugin. */
+  getConversationStarterTexts(): string[] {
+    return this._data.capabilities?.conversation_starters?.map((starter) => starter.text) ?? [];
   }
 
   // ============= Setters (Fluent API) =============
@@ -290,6 +298,31 @@ export class APIPluginManifestWrapper extends BaseManifest<APIPluginManifest> {
       spec: { local_endpoint: localEndpoint },
       run_for_functions: runForFunctions ?? ["*"],
     } as RuntimeObject);
+  }
+
+  /**
+   * Replaces the function and runtime lists with static tools for one Remote MCP server.
+   */
+  materializeRemoteMcpTools(
+    functions: ReadonlyArray<{ name: string; description?: string }>,
+    serverUrl: string,
+    toolDescriptionFile: string
+  ): this {
+    const runtime: RuntimeObject = {
+      type: RuntimeType.RemoteMCPServer,
+      auth: { type: "None" },
+      spec: {
+        url: serverUrl,
+        mcp_tool_description: { file: toolDescriptionFile },
+      },
+      run_for_functions: functions.map((item) => item.name),
+    };
+    this._data.functions = [];
+    this._data.runtimes = [];
+    for (const item of functions) {
+      this.addFunction(item.name, item.description);
+    }
+    return this.addRuntime(runtime);
   }
 
   /**

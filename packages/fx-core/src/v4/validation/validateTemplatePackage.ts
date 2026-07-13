@@ -3,10 +3,12 @@
 
 import { FxError, UserError } from "@microsoft/teamsfx-api";
 import { Result, err, ok } from "neverthrow";
+import semver from "semver";
 
 /** Pure v4 template-package validation gate. See validate-template-package spec and ADR-0015. */
 
 const SOURCE = "Scaffold";
+const MUSTACHE_VALUE = /\{\{\s*([A-Za-z_][A-Za-z0-9_.]*)\s*\}\}/g;
 
 /** Package namespace. */
 export type PackageKind = "create" | "modify";
@@ -23,6 +25,9 @@ export interface ContentFile {
 /** JSON-schema validator face; `undefined` means valid. */
 export type SchemaValidator = (data: unknown) => string | undefined;
 
+/** Template-visible extension-point categories with source-owned introduction versions. */
+export type CapabilityKind = "step" | "provider" | "validator";
+
 /** Narrow validation port; schema, package, and engine-context data stay injected. */
 export interface TemplatePackagePort {
   /** The package's parsed `descriptor.json`, or `undefined` when absent. */
@@ -36,7 +41,16 @@ export interface TemplatePackagePort {
   /** The per-kind `selector.json` (parsed). */
   selector(kind: PackageKind): unknown;
   /** The JSON-schema validators under `templates/v4/schema/`. */
-  schemas: { descriptor: SchemaValidator; question: SchemaValidator; selector: SchemaValidator };
+  schemas: {
+    descriptor: SchemaValidator;
+    question: SchemaValidator;
+    pipeline: SchemaValidator;
+    selector: SchemaValidator;
+  };
+  /** The engine introduction version for a named capability; `undefined` means unknown. */
+  capabilityFloor(kind: CapabilityKind, id: string): string | undefined;
+  /** Output names a capability may add to the render context. */
+  capabilityOutputs(kind: CapabilityKind, id: string): string[];
   /** The consuming engine's SemVer (the `load`-mode reverse gate). */
   engineVersion(): string;
   /** The closed caller-injected identifier names (`appName`, the `language` axis, …). */
@@ -69,6 +83,12 @@ export const VALIDATE_KIND_OVERLAP = "TemplatePackageKindOverlap";
 export const VALIDATE_MIN_ENGINE_MISSING = "TemplatePackageMinEngineVersionMissing";
 /** `UserError` name: `engineVersion < minEngineVersion` — the engine is too old. */
 export const VALIDATE_ENGINE_TOO_OLD = "TemplatePackageEngineTooOld";
+/** `UserError` name: a package or consuming engine version is not valid SemVer. */
+export const VALIDATE_ENGINE_VERSION_INVALID = "TemplatePackageEngineVersionInvalid";
+/** `UserError` name: package data references a capability absent from the engine catalogue. */
+export const VALIDATE_UNKNOWN_CAPABILITY = "TemplatePackageUnknownCapability";
+/** `UserError` name: `minEngineVersion` predates a referenced capability. */
+export const VALIDATE_CAPABILITY_FLOOR = "TemplatePackageCapabilityFloor";
 
 function userError(name: string, message: string): UserError {
   return new UserError({ source: SOURCE, name, message });
@@ -112,26 +132,142 @@ function v4RouteIds(selectorData: unknown): string[] {
   return ids;
 }
 
-/** Compare `major.minor.patch` numerically: <0 / 0 / >0. */
-function compareSemver(a: string, b: string): number {
-  const pa = parseSemver(a);
-  const pb = parseSemver(b);
-  for (let i = 0; i < 3; i++) {
-    if (pa[i] !== pb[i]) {
-      return pa[i] < pb[i] ? -1 : 1;
-    }
+function validateEngineVersion(
+  pkg: string,
+  field: string,
+  version: string
+): Result<string, FxError> {
+  if (semver.valid(version) !== version) {
+    return err(
+      userError(
+        VALIDATE_ENGINE_VERSION_INVALID,
+        `${pkg}: ${field} '${version}' is not valid SemVer`
+      )
+    );
   }
-  return 0;
+  return ok(version);
 }
 
-function parseSemver(v: string): number[] {
-  const parts = v.split(".");
-  const nums: number[] = [];
-  for (let i = 0; i < 3; i++) {
-    const n = Number.parseInt(parts[i] ?? "0", 10);
-    nums.push(Number.isNaN(n) ? 0 : n);
+interface CapabilityReference {
+  kind: CapabilityKind;
+  id: string;
+}
+
+function validatorReference(validation: unknown): CapabilityReference | undefined {
+  const id =
+    typeof validation === "string"
+      ? validation
+      : isRecord(validation)
+        ? getString(validation, "use")
+        : undefined;
+  return id === undefined ? undefined : { kind: "validator", id };
+}
+
+function capabilityReferences(questions: unknown, pipeline: unknown): CapabilityReference[] {
+  const references: CapabilityReference[] = [];
+  if (isRecord(questions)) {
+    for (const question of getArray(questions, "questions") ?? []) {
+      if (!isRecord(question)) {
+        continue;
+      }
+      const provider = getString(question, "optionsFrom");
+      if (provider !== undefined) {
+        references.push({ kind: "provider", id: provider });
+      }
+      const validator = validatorReference(question.validation);
+      if (validator !== undefined) {
+        references.push(validator);
+      }
+      const inputBoxValidator = validatorReference(
+        getRecord(question, "inputBoxConfig")?.validation
+      );
+      if (inputBoxValidator !== undefined) {
+        references.push(inputBoxValidator);
+      }
+    }
   }
-  return nums;
+  if (isRecord(pipeline)) {
+    for (const step of getArray(pipeline, "steps") ?? []) {
+      if (!isRecord(step)) {
+        continue;
+      }
+      const id = getString(step, "step");
+      if (id !== undefined) {
+        references.push({ kind: "step", id });
+      }
+    }
+  }
+  return references;
+}
+
+function pipelinePlaceholderReferences(pipeline: unknown): string[] {
+  const references = new Set<string>();
+  if (!isRecord(pipeline)) {
+    return [];
+  }
+  for (const step of getArray(pipeline, "steps") ?? []) {
+    if (!isRecord(step)) {
+      continue;
+    }
+    const withParams = getRecord(step, "with");
+    if (withParams === undefined) {
+      continue;
+    }
+    for (const value of Object.values(withParams)) {
+      const strings = typeof value === "string" ? [value] : Array.isArray(value) ? value : [];
+      for (const item of strings) {
+        if (typeof item !== "string") {
+          continue;
+        }
+        for (const match of item.matchAll(MUSTACHE_VALUE)) {
+          if (match.index !== undefined && match.index > 0 && item[match.index - 1] === "$") {
+            continue;
+          }
+          references.add(match[1]);
+        }
+      }
+    }
+  }
+  return [...references];
+}
+
+/** Apply the package's reverse engine-version gate before any content is rendered. */
+export function validateMinEngineVersion(
+  kind: PackageKind,
+  id: string,
+  descriptor: unknown,
+  engineVersion: string
+): Result<string, FxError> {
+  const pkg = `${kind}/${id}`;
+  if (!isRecord(descriptor)) {
+    return err(userError(VALIDATE_SCHEMA, `${pkg}: descriptor.json must be a JSON object`));
+  }
+  const minEngineVersion = getString(descriptor, "minEngineVersion");
+  if (minEngineVersion === undefined) {
+    return err(
+      userError(
+        VALIDATE_MIN_ENGINE_MISSING,
+        `${pkg}: descriptor.json must declare minEngineVersion (the reverse compatibility signal)`
+      )
+    );
+  }
+  const validMinimum = validateEngineVersion(pkg, "minEngineVersion", minEngineVersion);
+  if (validMinimum.isErr()) {
+    return err(validMinimum.error);
+  }
+  const validEngine = validateEngineVersion(pkg, "engineVersion", engineVersion);
+  if (validEngine.isErr()) {
+    return err(validEngine.error);
+  }
+  if (semver.lt(engineVersion, minEngineVersion)) {
+    return err(
+      userError(
+        VALIDATE_ENGINE_TOO_OLD,
+        `${pkg}: requires engine ${minEngineVersion}, but this engine is ${engineVersion}; upgrade the engine (no silent fallback)`
+      )
+    );
+  }
+  return ok(minEngineVersion);
 }
 
 /** Validate one `<kind>/<id>` package before any content is rendered. */
@@ -174,11 +310,56 @@ export function validateTemplatePackage(
       userError(VALIDATE_SCHEMA, `${pkg}: questions.json failed schema validation: ${qSchemaErr}`)
     );
   }
+  const pSchemaErr = port.schemas.pipeline(pipeline);
+  if (pSchemaErr !== undefined) {
+    return err(
+      userError(VALIDATE_SCHEMA, `${pkg}: pipeline.json failed schema validation: ${pSchemaErr}`)
+    );
+  }
   const sSchemaErr = port.schemas.selector(selectorData);
   if (sSchemaErr !== undefined) {
     return err(
       userError(VALIDATE_SCHEMA, `${pkg}: selector.json failed schema validation: ${sSchemaErr}`)
     );
+  }
+
+  const minEngineVersion = getString(descriptor, "minEngineVersion");
+  if (minEngineVersion === undefined) {
+    return err(
+      userError(
+        VALIDATE_MIN_ENGINE_MISSING,
+        `${pkg}: descriptor.json must declare minEngineVersion (the reverse compatibility signal)`
+      )
+    );
+  }
+  const validMinimum = validateEngineVersion(pkg, "minEngineVersion", minEngineVersion);
+  if (validMinimum.isErr()) {
+    return err(validMinimum.error);
+  }
+  const derivedVars: string[] = [];
+  for (const reference of capabilityReferences(questions, pipeline)) {
+    const floor = port.capabilityFloor(reference.kind, reference.id);
+    if (floor === undefined) {
+      return err(
+        userError(
+          VALIDATE_UNKNOWN_CAPABILITY,
+          `${pkg}: ${reference.kind} '${reference.id}' is not a registered template capability`
+        )
+      );
+    }
+    if (semver.lt(minEngineVersion, floor)) {
+      return err(
+        userError(
+          VALIDATE_CAPABILITY_FLOOR,
+          `${pkg}: ${reference.kind} '${reference.id}' requires minEngineVersion ${floor}, but descriptor.json declares ${minEngineVersion}`
+        )
+      );
+    }
+    if (reference.kind === "provider") {
+      for (const output of port.capabilityOutputs(reference.kind, reference.id)) {
+        derivedVars.push(`derived.${reference.id}.${output}`);
+      }
+    }
   }
 
   // Placeholder closure: every token has a producer, and every required var is consumed.
@@ -217,10 +398,26 @@ export function validateTemplatePackage(
     }
   }
 
-  const mayReference = new Set<string>([...replaceMapVars, ...answerVars, ...port.callerFloor()]);
+  const mayReference = new Set<string>([
+    ...replaceMapVars,
+    ...answerVars,
+    ...derivedVars,
+    ...port.callerFloor(),
+  ]);
 
   const contentFiles = port.content() ?? [];
   const contentTokens = new Set<string>();
+  for (const token of pipelinePlaceholderReferences(pipeline)) {
+    contentTokens.add(token);
+    if (!mayReference.has(token)) {
+      return err(
+        userError(
+          VALIDATE_PLACEHOLDER_DRIFT,
+          `${pkg}: pipeline.json references '{{${token}}}', which no replaceMap entry, question, or caller-injected identifier produces`
+        )
+      );
+    }
+  }
   for (const file of contentFiles) {
     for (const token of file.placeholders) {
       contentTokens.add(token);
@@ -239,7 +436,7 @@ export function validateTemplatePackage(
       return err(
         userError(
           VALIDATE_PLACEHOLDER_DRIFT,
-          `${pkg}: emits required render var '${v}' that no content file consumes`
+          `${pkg}: emits required render var '${v}' that no render surface consumes`
         )
       );
     }
@@ -272,24 +469,12 @@ export function validateTemplatePackage(
   }
 
   // The reverse gate is explicit.
-  const minEngineVersion = getString(descriptor, "minEngineVersion");
-  if (minEngineVersion === undefined) {
-    return err(
-      userError(
-        VALIDATE_MIN_ENGINE_MISSING,
-        `${pkg}: descriptor.json must declare minEngineVersion (the reverse compatibility signal)`
-      )
-    );
+  const minEngineResult =
+    mode === "load"
+      ? validateMinEngineVersion(kind, id, descriptor, port.engineVersion())
+      : ok(minEngineVersion);
+  if (minEngineResult.isErr()) {
+    return err(minEngineResult.error);
   }
-
-  if (mode === "load" && compareSemver(port.engineVersion(), minEngineVersion) < 0) {
-    return err(
-      userError(
-        VALIDATE_ENGINE_TOO_OLD,
-        `${pkg}: requires engine ${minEngineVersion}, but this engine is ${port.engineVersion()}; upgrade the engine (no silent fallback)`
-      )
-    );
-  }
-
-  return ok({ descriptor, minEngineVersion, contentFiles });
+  return ok({ descriptor, minEngineVersion: minEngineResult.value, contentFiles });
 }

@@ -9,6 +9,8 @@ import {
 import { StepContext } from "../../../../src/v4/pipeline/runScaffoldPipeline";
 import { STEP_REGISTRY } from "../../../../src/v4/runtime/runtimeRegistry";
 import { assert } from "vitest";
+import { ok } from "neverthrow";
+import { createInMemoryRuntime } from "../../../../src/v4/runtime/inMemoryRuntime";
 
 /** A minimal in-memory `StepContext` whose read/write share one file map. */
 function makeCtx(initial: Record<string, string> = {}): {
@@ -16,17 +18,16 @@ function makeCtx(initial: Record<string, string> = {}): {
   files: Map<string, Buffer>;
 } {
   const files = new Map<string, Buffer>();
+  const runtime = createInMemoryRuntime();
   for (const [path, body] of Object.entries(initial)) {
-    files.set(path, Buffer.from(body, "utf8"));
+    runtime.files.set(path, Buffer.from(body, "utf8"));
   }
   const ctx: StepContext = {
-    read: (path) => files.get(path),
-    write: (path, data) => {
-      files.set(path, data);
-    },
-    manifestWrapper: () => ({ addAction: () => undefined }),
+    read: runtime.port.read,
+    write: runtime.port.write,
+    manifestWrapper: runtime.port.manifestWrapper,
   };
-  return { ctx, files };
+  return { ctx, files: runtime.files };
 }
 
 function text(files: Map<string, Buffer>, path: string): string {
@@ -69,6 +70,38 @@ describe("da-action steps (v4)", () => {
           pluginManifestPath: "appPackage/ai-plugin-apigithubc.json",
         })
       );
+    });
+
+    it("AC-12: delegates path-aware mutation to the manifest wrapper without reading JSON", async () => {
+      const registrations: [string, string][] = [];
+      const wrapper = {
+        registerDeclarativeAgentAction: (teamsManifestPath: string, pluginManifestPath: string) => {
+          registrations.push([teamsManifestPath, pluginManifestPath]);
+          return ok(undefined);
+        },
+      };
+      const ctx: StepContext = {
+        read: () => {
+          throw new Error("the step must not parse manifests directly");
+        },
+        write: () => {
+          throw new Error("the step must not write manifests directly");
+        },
+        manifestWrapper: () => wrapper,
+      };
+
+      const res = await daActionRegisterPluginManifest.apply(
+        {
+          teamsManifestPath: "appPackage/manifest.json",
+          pluginManifestPath: "appPackage/ai-plugin-apigithubc.json",
+        },
+        ctx
+      );
+
+      assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
+      assert.deepEqual(registrations, [
+        ["appPackage/manifest.json", "appPackage/ai-plugin-apigithubc.json"],
+      ]);
     });
 
     it("SCN-ADD-MCP-04: derives the DA manifest path and registers the plugin manifest", async () => {

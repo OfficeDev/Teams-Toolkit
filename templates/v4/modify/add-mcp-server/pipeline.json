@@ -16,8 +16,7 @@
       "with": {
         "ymlPath": "m365agents.yml",
         "authType": "{{authType}}",
-        "mcpServerUrl": "{{MCPForDAServerUrl}}",
-        "includeCredentialRefs": true
+        "mcpServerUrl": "{{MCPForDAServerUrl}}"
       }
     },
     {

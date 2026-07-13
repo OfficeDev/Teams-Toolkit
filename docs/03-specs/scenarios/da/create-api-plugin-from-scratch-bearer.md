@@ -14,13 +14,13 @@ This is the **vertical** contract for one template: what scaffolding the
 `da/api-plugin-from-scratch-bearer` create package produces **end-to-end**, for
 each declared language. It is the **API-key sibling** of the no-auth
 [`da/api-plugin-from-scratch`](./create-api-plugin-from-scratch.md) scenario —
-same shape, same `default` pipeline (a single `require-empty-target` guard, **no**
-post-render injection), differing only in the **auth wiring** of the pre-baked
+same shape, same `default` pipeline (`require-empty-target` plus the
+feature-gated sensitivity-label step), differing only in the **auth wiring** of the pre-baked
 action: the bundled `ai-plugin.json` declares an `ApiKeyPluginVault` runtime
 keyed on `${{APIKEY_REGISTRATION_ID}}`, and the backend adds a `src/keyGen.ts`
-key generator. Like the no-auth source it is a **pure render** — the action is
-**pre-baked** into the template's `repairDeclarativeAgent.json`, not injected
-(this is the *new API from scratch* path, not the spec-parser *existing API*
+key generator. Like the no-auth source, the action is **pre-baked** into the
+template's `repairDeclarativeAgent.json`, not injected by a post-render step
+(this is the _new API from scratch_ path, not the spec-parser _existing API_
 path). It is **language-partitioned**: the package ships
 `content/{typescript,javascript}/` and the
 [`select-language-content`](../../operations/scaffolding/select-language-content.md)
@@ -31,17 +31,17 @@ whole template scaffolded under `InMemoryRuntime` (every row is **L1**).
 
 ## Acceptance Criteria
 
-| ID | Tier | Given | When | Then |
-|----|------|-------|------|------|
-| SCN-CREATE-APIPLUGIN-BEARER-01 | L1 | empty target, language `typescript` | scaffold completes | the render phase writes exactly the TypeScript backend file set (`.tpl` stripped, `typescript/` prefix stripped) — incl. `appPackage/repairDeclarativeAgent.json`, `appPackage/ai-plugin.json`, `appPackage/manifest.json`, `appPackage/apiSpecificationFile/repair.yml`, `src/functions/repairs.ts`, `src/keyGen.ts` (the API-key generator), `src/repairsData.json`, `package.json`, `tsconfig.json` — and nothing is skipped |
-| SCN-CREATE-APIPLUGIN-BEARER-02 | L1 | rendered `appPackage/repairDeclarativeAgent.json` (typescript) | render | `name == "{{appName}}${{APP_NAME_SUFFIX}}"` (the `appName` floor token rendered, the env ref preserved verbatim), `instructions == "$[file('instruction.txt')]"`, and `actions` is the single pre-baked entry `{ id: "repairPlugin", file: "ai-plugin.json" }`; **no** `sensitivity_label` block (`TEAMSFX_SENSITIVITY_LABEL` defaults off ⇒ the `{{#SensitivityLabelEnabled}}` section is omitted) |
-| SCN-CREATE-APIPLUGIN-BEARER-03 | L1 | rendered `appPackage/ai-plugin.json` (typescript) | render | `namespace == "repairs"` and `runtimes[0]` is the `OpenApi` runtime over the bundled spec (`spec.url == "apiSpecificationFile/repair.yml"`) with **`auth.type == "ApiKeyPluginVault"`** and `auth.reference_id == "${{APIKEY_REGISTRATION_ID}}"` (the env ref preserved for provision) |
-| SCN-CREATE-APIPLUGIN-BEARER-04 | L1 | rendered `appPackage/manifest.json` (typescript) | render | `manifestVersion == "1.28"`; the env refs survive render — `id == "${{TEAMS_APP_ID}}"`, `name.short == "{{appName}}${{APP_NAME_SUFFIX}}"`; `copilotAgents.declarativeAgents` is the single entry `{ id: "repairDeclarativeAgent", file: "repairDeclarativeAgent.json" }` |
-| SCN-CREATE-APIPLUGIN-BEARER-05 | L1 | empty target, language `typescript` | scaffold | the **language axis** narrows correctly — every written path is project-root-relative (no path begins with `typescript/` or `javascript/`); `src/functions/repairs.ts`, `src/keyGen.ts` and `tsconfig.json` are present, and **no** `src/functions/repair.js` is written |
-| SCN-CREATE-APIPLUGIN-BEARER-06 | L1 | empty target, language `javascript` | scaffold | the JavaScript subtree is written instead — `src/functions/repair.js` (the v3 **singular** file name, preserved verbatim) and `src/keyGen.js` are present, **no** `tsconfig.json` and **no** `src/functions/repairs.ts`; the rendered `ai-plugin.json` `ApiKeyPluginVault` shape (BEARER-03) holds identically for the JS package |
-| SCN-CREATE-APIPLUGIN-BEARER-07 | L1 | empty target | scaffold | the **only** pipeline step run is `require-empty-target` (`stepsSkipped` empty); **no** post-render injection runs — the API plugin action is pre-baked, so nothing is added after render |
-| SCN-CREATE-APIPLUGIN-BEARER-08 | L1 | non-empty target | scaffold | `require-empty-target` fails first with **`UserError`** and writes nothing (the create contract; ordering mechanism owned by `run-scaffold-pipeline`) |
-| SCN-CREATE-APIPLUGIN-BEARER-09 | L1 | identical inputs re-run (typescript) | scaffold | deterministic — identical `written` set and identical rendered agent `name` |
+| ID                             | Tier | Given                                                          | When               | Then                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ------------------------------ | ---- | -------------------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| SCN-CREATE-APIPLUGIN-BEARER-01 | L1   | empty target, language `typescript`                            | scaffold completes | the render phase writes exactly the TypeScript backend file set (`.tpl` stripped, `typescript/` prefix stripped) — incl. `appPackage/repairDeclarativeAgent.json`, `appPackage/ai-plugin.json`, `appPackage/manifest.json`, `appPackage/apiSpecificationFile/repair.yml`, `src/functions/repairs.ts`, `src/keyGen.ts` (the API-key generator), `src/repairsData.json`, `package.json`, `tsconfig.json` |
+| SCN-CREATE-APIPLUGIN-BEARER-02 | L1   | rendered `appPackage/repairDeclarativeAgent.json` (typescript) | render             | `name == "{{appName}}${{APP_NAME_SUFFIX}}"` (the `appName` floor token rendered, the env ref preserved verbatim), `instructions == "$[file('instruction.txt')]"`, and `actions` is the single pre-baked entry `{ id: "repairPlugin", file: "ai-plugin.json" }`; render does not own a `sensitivity_label` block                                                                                        |
+| SCN-CREATE-APIPLUGIN-BEARER-03 | L1   | rendered `appPackage/ai-plugin.json` (typescript)              | render             | `namespace == "repairs"` and `runtimes[0]` is the `OpenApi` runtime over the bundled spec (`spec.url == "apiSpecificationFile/repair.yml"`) with **`auth.type == "ApiKeyPluginVault"`** and `auth.reference_id == "${{APIKEY_REGISTRATION_ID}}"` (the env ref preserved for provision)                                                                                                                 |
+| SCN-CREATE-APIPLUGIN-BEARER-04 | L1   | rendered `appPackage/manifest.json` (typescript)               | render             | `manifestVersion == "1.28"`; the env refs survive render — `id == "${{TEAMS_APP_ID}}"`, `name.short == "{{appName}}${{APP_NAME_SUFFIX}}"`; `copilotAgents.declarativeAgents` is the single entry `{ id: "repairDeclarativeAgent", file: "repairDeclarativeAgent.json" }`                                                                                                                               |
+| SCN-CREATE-APIPLUGIN-BEARER-05 | L1   | empty target, language `typescript`                            | scaffold           | the **language axis** narrows correctly — every written path is project-root-relative (no path begins with `typescript/` or `javascript/`); `src/functions/repairs.ts`, `src/keyGen.ts` and `tsconfig.json` are present, and **no** `src/functions/repair.js` is written                                                                                                                               |
+| SCN-CREATE-APIPLUGIN-BEARER-06 | L1   | empty target, language `javascript`                            | scaffold           | the JavaScript subtree is written instead — `src/functions/repair.js` (the v3 **singular** file name, preserved verbatim) and `src/keyGen.js` are present, **no** `tsconfig.json` and **no** `src/functions/repairs.ts`; the rendered `ai-plugin.json` `ApiKeyPluginVault` shape (BEARER-03) holds identically for the JS package                                                                      |
+| SCN-CREATE-APIPLUGIN-BEARER-07 | L1   | empty target with `TEAMSFX_SENSITIVITY_LABEL` disabled         | scaffold           | the only pipeline step run is `require-empty-target`; `da/set-sensitivity-label` is skipped and no action injection runs — the API plugin action is pre-baked                                                                                                                                                                                                                                          |
+| SCN-CREATE-APIPLUGIN-BEARER-08 | L1   | non-empty target                                               | scaffold           | `require-empty-target` fails first with **`UserError`** and writes nothing (the create contract; ordering mechanism owned by `run-scaffold-pipeline`)                                                                                                                                                                                                                                                  |
+| SCN-CREATE-APIPLUGIN-BEARER-09 | L1   | identical inputs re-run (typescript)                           | scaffold           | deterministic — identical `written` set and identical rendered agent `name`                                                                                                                                                                                                                                                                                                                            |
 
 ## Composed operations
 
@@ -57,9 +57,9 @@ This scenario **flows through** these operation specs; their mechanics are
   — picks the `da/api-plugin-from-scratch-bearer` package and pins its
   `{version, digest}` (ADR-0006 / ADR-0015).
 - [`open-template-package`](../../operations/scaffolding/open-template-package.md)
-  + [`validate-template-package`](../../operations/scaffolding/validate-template-package.md)
-  — opens and well-formed-checks the package (ADR-0015); content is returned
-  flat, both language subtrees present.
+  - [`validate-template-package`](../../operations/scaffolding/validate-template-package.md)
+    — opens and well-formed-checks the package (ADR-0015); content is returned
+    flat, both language subtrees present.
 - [`select-language-content`](../../operations/scaffolding/select-language-content.md)
   — narrows the flat `content/**` to the Q0 language subtree
   (`content/typescript/` or `content/javascript/`), stripping the prefix
@@ -73,10 +73,15 @@ This scenario **flows through** these operation specs; their mechanics are
   them for provision to resolve later.
 - [`run-scaffold-pipeline`](../../operations/scaffolding/run-scaffold-pipeline.md)
   — the two-phase executor: its **render phase** writes the new files in
-  SCN-CREATE-APIPLUGIN-BEARER-01; its **`default` pipeline** runs the single
-  `require-empty-target` guard and nothing else (ADR-0017). The render-var floor
+  SCN-CREATE-APIPLUGIN-BEARER-01; its **`default` pipeline** runs the
+  `require-empty-target` guard and skips the feature-gated sensitivity step in
+  this scenario's baseline (ADR-0017). The render-var floor
   is owned by
   [ADR-0016](../../../02-architecture/adr/ADR-0016-declarative-template-format.md).
+- [`set-declarative-agent-sensitivity-label`](../../operations/scaffolding/set-declarative-agent-sensitivity-label.md)
+  — owns the optional post-render label mutation; its flag-on vertical behavior
+  is covered by
+  [`SCN-DA-SENSITIVITY-LABEL`](apply-general-sensitivity-label.md).
 
 ## Flow
 
@@ -102,8 +107,8 @@ This scenario does **not** assert:
   `microsoft-entra` / `oauth` sources are
   [`da/api-plugin-from-scratch-oauth`](./create-api-plugin-from-scratch-oauth.md).
   Each is its own scenario.
-- **The spec-parser / existing-API path** — this is the *new API from scratch*
-  template (a bundled sample spec, pre-baked action); the *existing API spec*
+- **The spec-parser / existing-API path** — this is the _new API from scratch_
+  template (a bundled sample spec, pre-baked action); the _existing API spec_
   path is covered by
   [`da/api-plugin-from-existing-api`](./create-api-plugin-from-existing-api.md).
 - **Provision-time API-key registration** — the `${{APIKEY_REGISTRATION_ID}}`

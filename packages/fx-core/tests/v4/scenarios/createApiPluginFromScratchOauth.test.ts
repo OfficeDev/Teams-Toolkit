@@ -216,7 +216,7 @@ describe("SCN-DA-CREATE-API-PLUGIN-FROM-SCRATCH-OAUTH (v4, T3 InMemoryRuntime)",
   it("SCN-CREATE-APIPLUGIN-OAUTH-09: the only pipeline step is require-empty-target; no post-render injection runs", async () => {
     const { outcome } = await run("typescript", "oauth");
     assert.deepStrictEqual(outcome.stepsRun, ["require-empty-target"]);
-    assert.isEmpty(outcome.stepsSkipped);
+    assert.deepStrictEqual(outcome.stepsSkipped, ["da/set-sensitivity-label"]);
   });
 
   it("SCN-CREATE-APIPLUGIN-OAUTH-10: a non-empty target fails require-empty-target first and writes nothing", async () => {

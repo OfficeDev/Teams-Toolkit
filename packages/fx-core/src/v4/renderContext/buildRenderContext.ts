@@ -62,9 +62,8 @@ export function buildRenderContext(
     if ("const" in entry) {
       renderVars[entry.var] = entry.const;
     } else if ("from" in entry) {
-      // A `{from}` of a multiSelect answer preserves the typed string[].
       const direct = answers[entry.from];
-      if (Array.isArray(direct)) {
+      if (direct !== undefined) {
         renderVars[entry.var] = direct;
       } else {
         const r = evaluateExpression({ from: entry.from }, scope, port);

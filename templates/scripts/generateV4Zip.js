@@ -16,9 +16,11 @@
  * v3 and v4 coexist; nothing here is stitched or synthesized — every byte is
  * authored (scaffolding.create.proposal.md §3 "authored, not generated").
  *
- * Outputs (both picked up by the `distribute` step → packages/fx-core/templates/v4/):
+ * Outputs (picked up by the `distribute` step → packages/fx-core/templates/v4/):
  *   - build/v4/templates.zip  — the full package
  *   - build/v4/floor.json     — { "version": <clean v4 publish version> }
+ *   - build/v4/create-selector.json / modify-selector.json
+ *   - build/v4/templates-metadata.zip
  *
  * The floor version is the SAME clean, suffix-free version published to the v4
  * channel (computeV4PublishVersion / templates-config.json v4.localVersion), not
@@ -33,9 +35,14 @@
  */
 
 const AdmZip = require("adm-zip");
-const { readdirSync, mkdirSync, writeFileSync, existsSync, copyFileSync } = require("node:fs");
+require("tsx/cjs");
+const { readdirSync, mkdirSync, writeFileSync, existsSync, readFileSync } = require("node:fs");
 const path = require("path");
 const semver = require("semver");
+const { CURRENT_V4_ENGINE_VERSION } = require("../../packages/fx-core/src/v4/engineVersion.ts");
+const {
+  validateDeclarativeTemplateArchive,
+} = require("../../packages/fx-core/src/v4/validation/templateArchiveValidation.ts");
 
 // Mirror of packages/fx-core/src/v4/distribution/templateConfig.ts
 // `computeV4PublishVersion` (canonical, unit-tested). Kept inline so the
@@ -91,6 +98,9 @@ const version = computeV4PublishVersion(rawVersion);
 mkdirSync(BUILD_PATH, { recursive: true });
 
 const zip = new AdmZip();
+let createSelectorBytes;
+let modifySelectorBytes;
+let metadataArchiveBytes;
 LANGUAGES.forEach((lang) => {
   const langPath = path.join(__dirname, "..", "vsc", lang);
   readdirSync(langPath).forEach((scenario) => {
@@ -107,22 +117,35 @@ const v4SourcePath = path.join(__dirname, "..", "v4");
 if (existsSync(v4SourcePath)) {
   zip.addLocalFolder(v4SourcePath, "v4");
 
-  copyFileSync(
-    path.join(v4SourcePath, "create", "selector.json"),
-    path.join(BUILD_PATH, "create-selector.json")
-  );
-  copyFileSync(
-    path.join(v4SourcePath, "modify", "selector.json"),
-    path.join(BUILD_PATH, "modify-selector.json")
-  );
+  createSelectorBytes = readFileSync(path.join(v4SourcePath, "create", "selector.json"));
+  modifySelectorBytes = readFileSync(path.join(v4SourcePath, "modify", "selector.json"));
 
   const metadataZip = new AdmZip();
   addV4MetadataFiles(metadataZip, v4SourcePath, "v4");
-  metadataZip.writeZip(path.join(BUILD_PATH, "templates-metadata.zip"));
+  metadataArchiveBytes = metadataZip.toBuffer();
 }
 
 console.log(`Generating v4 templates.zip (version ${version})`);
-zip.writeZip(path.join(BUILD_PATH, "templates.zip"));
+const archiveBytes = zip.toBuffer();
+const validation = validateDeclarativeTemplateArchive(
+  archiveBytes,
+  "build",
+  CURRENT_V4_ENGINE_VERSION
+);
+if (validation.isErr()) {
+  throw validation.error;
+}
+console.log(`Validated ${validation.value.length} v4 template packages`);
+if (
+  createSelectorBytes !== undefined &&
+  modifySelectorBytes !== undefined &&
+  metadataArchiveBytes !== undefined
+) {
+  writeFileSync(path.join(BUILD_PATH, "create-selector.json"), createSelectorBytes);
+  writeFileSync(path.join(BUILD_PATH, "modify-selector.json"), modifySelectorBytes);
+  writeFileSync(path.join(BUILD_PATH, "templates-metadata.zip"), metadataArchiveBytes);
+}
+writeFileSync(path.join(BUILD_PATH, "templates.zip"), archiveBytes);
 
 writeFileSync(path.join(BUILD_PATH, "floor.json"), JSON.stringify({ version }, null, 2) + "\n");
 console.log(`Wrote v4 floor.json (version ${version})`);

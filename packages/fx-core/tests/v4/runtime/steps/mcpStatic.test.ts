@@ -8,6 +8,7 @@ import {
   mcpStaticMaterializeTools,
 } from "../../../../src/v4/runtime/steps/mcpStatic";
 import { StepContext, StepParams } from "../../../../src/v4/pipeline/runScaffoldPipeline";
+import { NOOP_MANIFEST_WRAPPER } from "../../../../src/v4/runtime/runtimeRegistry";
 import fs, { removeSync, writeJsonSync } from "fs-extra";
 import os from "os";
 import path from "path";
@@ -28,7 +29,7 @@ function makeCtx(initial: Record<string, string> = {}): {
       write: (filePath, data) => {
         files.set(filePath, data);
       },
-      manifestWrapper: () => ({ addAction: () => undefined }),
+      manifestWrapper: () => NOOP_MANIFEST_WRAPPER,
     },
   };
 }
@@ -147,6 +148,7 @@ describe(`${STEP_MATERIALIZE_STATIC_MCP_TOOLS} (v4)`, () => {
     assert.deepEqual(plugin.runtimes, [
       {
         type: "RemoteMCPServer",
+        auth: { type: "None" },
         spec: {
           url: "https://api.example.com/mcp",
           mcp_tool_description: { file: "mcp-tools-1.json" },

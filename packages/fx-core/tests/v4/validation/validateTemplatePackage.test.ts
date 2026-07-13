@@ -8,6 +8,7 @@ import {
   TemplatePackagePort,
   VALIDATE_DANGLING_ROUTE,
   VALIDATE_ENGINE_TOO_OLD,
+  VALIDATE_ENGINE_VERSION_INVALID,
   VALIDATE_KIND_OVERLAP,
   VALIDATE_MIN_ENGINE_MISSING,
   VALIDATE_PLACEHOLDER_DRIFT,
@@ -35,6 +36,7 @@ interface PackageParts {
   engineVersion: string;
   schemaDescriptorError: string | undefined;
   schemaQuestionError: string | undefined;
+  schemaPipelineError: string | undefined;
   schemaSelectorError: string | undefined;
 }
 
@@ -62,6 +64,7 @@ function validParts(): PackageParts {
     engineVersion: "6.11.0",
     schemaDescriptorError: undefined,
     schemaQuestionError: undefined,
+    schemaPipelineError: undefined,
     schemaSelectorError: undefined,
   };
 }
@@ -76,8 +79,26 @@ function makePort(p: PackageParts): TemplatePackagePort {
     schemas: {
       descriptor: () => p.schemaDescriptorError,
       question: () => p.schemaQuestionError,
+      pipeline: () => p.schemaPipelineError,
       selector: () => p.schemaSelectorError,
     },
+    capabilityFloor: (kind, id) => {
+      if (kind === "step" && id === "da/set-sensitivity-label") {
+        return "6.11.0";
+      }
+      if (kind === "step" && id === "future/unknown-step") {
+        return undefined;
+      }
+      if (kind === "validator" && id === "future/validator") {
+        return "6.11.0";
+      }
+      if (kind === "validator" && id === "future/unknown-validator") {
+        return undefined;
+      }
+      return "5.20.0";
+    },
+    capabilityOutputs: (kind, id) =>
+      kind === "provider" && id === "mcp.serverTypes" ? ["catalog"] : [],
     engineVersion: () => p.engineVersion,
     callerFloor: () => p.floor,
     presentTemplateIds: (kind) => (kind === "create" ? p.presentCreate : p.presentModify),
@@ -253,6 +274,35 @@ describe("v4/validation/validateTemplatePackage", () => {
     assert.include(e.message, "src/app.ts");
   });
 
+  it("AC-11: a declared provider-derived value produces a pipeline render var", () => {
+    const parts = validParts();
+    parts.descriptor = {
+      id: "mcp-server",
+      name: "MCP Server",
+      languages: ["common"],
+      minEngineVersion: "5.20.0",
+      optionsSchema: { type: "object", properties: {} },
+      replaceMap: [],
+    };
+    parts.questions = {
+      questions: [{ name: "serverType", type: "singleSelect", optionsFrom: "mcp.serverTypes" }],
+    };
+    parts.pipeline = {
+      pipeline: "default",
+      steps: [
+        {
+          step: "require-empty-target",
+          with: { catalog: "{{derived.mcp.serverTypes.catalog}}" },
+        },
+      ],
+    };
+    parts.content = undefined;
+
+    const res = validateTemplatePackage("create", "mcp-server", "build", makePort(parts));
+
+    assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
+  });
+
   it("AC-12: required replaceMap var consumed by no content file -> UserError (orphan)", () => {
     const parts = validParts();
     parts.descriptor = {
@@ -269,6 +319,27 @@ describe("v4/validation/validateTemplatePackage", () => {
     const e = res._unsafeUnwrapErr();
     assert.equal(e.name, VALIDATE_PLACEHOLDER_DRIFT);
     assert.include(e.message, "Orphan");
+  });
+
+  it("AC-12: a pipeline with value consumes a required replaceMap var", () => {
+    const parts = validParts();
+    parts.descriptor = {
+      id: "mcp-server",
+      name: "MCP Server",
+      languages: ["common"],
+      minEngineVersion: "5.20.0",
+      optionsSchema: { type: "object", properties: {} },
+      replaceMap: [{ var: "SourceFolder", from: "sourceFolder" }],
+    };
+    parts.pipeline = {
+      pipeline: "default",
+      steps: [{ step: "require-empty-target", with: { sourceFolder: "{{SourceFolder}}" } }],
+    };
+    parts.content = undefined;
+
+    const res = validateTemplatePackage("create", "mcp-server", "build", makePort(parts));
+
+    assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
   });
 
   it("AC-13: every selector route resolves to a present descriptor -> ok", () => {
@@ -412,5 +483,124 @@ describe("v4/validation/validateTemplatePackage", () => {
     assert.isTrue(res1.isOk());
     assert.isTrue(res2.isOk());
     assert.deepEqual(res1._unsafeUnwrap(), res2._unsafeUnwrap());
+  });
+
+  it("AC-22: pipeline.json fails its schema -> UserError naming pipeline + rule", () => {
+    const parts = validParts();
+    parts.schemaPipelineError = "steps[0].step: is required";
+
+    const res = validateTemplatePackage("create", "mcp-server", "build", makePort(parts));
+
+    assert.isTrue(res.isErr());
+    const error = res._unsafeUnwrapErr();
+    assert.equal(error.name, VALIDATE_SCHEMA);
+    assert.include(error.message, "pipeline.json");
+    assert.include(error.message, "steps[0].step: is required");
+  });
+
+  it("AC-23: unknown named capability -> UserError naming the capability", () => {
+    const parts = validParts();
+    parts.pipeline = { pipeline: "default", steps: [{ step: "future/unknown-step" }] };
+
+    const res = validateTemplatePackage("create", "mcp-server", "build", makePort(parts));
+
+    assert.isTrue(res.isErr());
+    const error = res._unsafeUnwrapErr();
+    assert.equal(error.name, "TemplatePackageUnknownCapability");
+    assert.include(error.message, "future/unknown-step");
+  });
+
+  it("AC-23: unknown nested input-box validator is rejected during package validation", () => {
+    const parts = validParts();
+    parts.questions = {
+      questions: [
+        {
+          name: "apiSpecLocation",
+          type: "singleFileOrText",
+          inputOptionItem: { id: "input" },
+          inputBoxConfig: {
+            name: "input-api-spec-url",
+            validation: "future/unknown-validator",
+          },
+        },
+      ],
+    };
+
+    const res = validateTemplatePackage("create", "mcp-server", "build", makePort(parts));
+
+    assert.isTrue(res.isErr());
+    const error = res._unsafeUnwrapErr();
+    assert.equal(error.name, "TemplatePackageUnknownCapability");
+    assert.include(error.message, "future/unknown-validator");
+  });
+
+  it("AC-24: capability introduced after minEngineVersion -> UserError naming its floor", () => {
+    const parts = validParts();
+    parts.pipeline = {
+      pipeline: "default",
+      steps: [{ step: "da/set-sensitivity-label" }],
+    };
+
+    const res = validateTemplatePackage("create", "mcp-server", "build", makePort(parts));
+
+    assert.isTrue(res.isErr());
+    const error = res._unsafeUnwrapErr();
+    assert.equal(error.name, "TemplatePackageCapabilityFloor");
+    assert.include(error.message, "da/set-sensitivity-label");
+    assert.include(error.message, "6.11.0");
+  });
+
+  it("AC-24: nested input-box validator participates in capability floor checks", () => {
+    const parts = validParts();
+    parts.questions = {
+      questions: [
+        {
+          name: "apiSpecLocation",
+          type: "singleFileOrText",
+          inputOptionItem: { id: "input" },
+          inputBoxConfig: {
+            name: "input-api-spec-url",
+            validation: "future/validator",
+          },
+        },
+      ],
+    };
+
+    const res = validateTemplatePackage("create", "mcp-server", "build", makePort(parts));
+
+    assert.isTrue(res.isErr());
+    const error = res._unsafeUnwrapErr();
+    assert.equal(error.name, "TemplatePackageCapabilityFloor");
+    assert.include(error.message, "future/validator");
+    assert.include(error.message, "6.11.0");
+  });
+
+  it("AC-28: malformed minEngineVersion is rejected instead of coerced", () => {
+    const parts = validParts();
+    parts.descriptor = {
+      id: "mcp-server",
+      name: "MCP Server",
+      languages: ["common"],
+      minEngineVersion: "6.11.invalid",
+      optionsSchema: { type: "object", properties: {} },
+      replaceMap: [{ var: "MCPNamespace", const: "ns" }],
+    };
+
+    const res = validateTemplatePackage("create", "mcp-server", "load", makePort(parts));
+
+    assert.isTrue(res.isErr());
+    assert.equal(res._unsafeUnwrapErr().name, VALIDATE_ENGINE_VERSION_INVALID);
+    assert.include(res._unsafeUnwrapErr().message, "6.11.invalid");
+  });
+
+  it("AC-28: malformed consuming engineVersion is rejected instead of coerced", () => {
+    const parts = validParts();
+    parts.engineVersion = "6.11-next";
+
+    const res = validateTemplatePackage("create", "mcp-server", "load", makePort(parts));
+
+    assert.isTrue(res.isErr());
+    assert.equal(res._unsafeUnwrapErr().name, VALIDATE_ENGINE_VERSION_INVALID);
+    assert.include(res._unsafeUnwrapErr().message, "6.11-next");
   });
 });

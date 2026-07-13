@@ -1,12 +1,13 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { Inputs, Platform, UserError, err, ok } from "@microsoft/teamsfx-api";
+import { Inputs, Platform, UserError, err, ok, signedOut } from "@microsoft/teamsfx-api";
 import * as fs from "fs-extra";
 import os from "os";
 import path from "path";
 import { assert, vi } from "vitest";
 
+import { ListSensitivityLabelScope } from "../../src/common/constants";
 import { setTools } from "../../src/common/globalVars";
 import { TelemetryEvent, TelemetryProperty, TelemetrySuccess } from "../../src/common/telemetry";
 import { coordinator } from "../../src/component/coordinator";
@@ -91,6 +92,13 @@ describe("createFrontDoorAdapters", () => {
         [QuestionNames.AppName]: "MyApp",
       };
       const flagReader = (name: string): boolean => name === "TEAMSFX_TEST_FLAG";
+      const provider = tools.tokenProvider.m365TokenProvider;
+      if (provider === undefined) {
+        assert.fail("expected an M365 token provider");
+      }
+      const getStatus = vi
+        .spyOn(provider, "getStatus")
+        .mockResolvedValue(ok({ status: signedOut }));
 
       const res = await scaffoldV4(inputs, v4Target, { mcpServerType: "remote" }, flagReader);
 
@@ -101,6 +109,26 @@ describe("createFrontDoorAdapters", () => {
       assert.deepEqual(firstCall[2], { mcpServerType: "remote" });
       assert.deepEqual(firstCall[3], { appName: "MyApp", language: "common" });
       assert.strictEqual(firstCall[5], flagReader);
+      const stepRegistry = firstCall[7];
+      const sensitivityStep = stepRegistry?.get("da/set-sensitivity-label");
+      if (sensitivityStep === undefined) {
+        assert.fail("expected a registered sensitivity-label step");
+      }
+      const applyResult = await sensitivityStep.apply(
+        { manifestPath: "appPackage/declarativeAgent.json" },
+        {
+          read: (): Buffer | undefined => undefined,
+          write: (): void => undefined,
+          manifestWrapper: () => ({
+            registerDeclarativeAgentAction: () => ok(undefined),
+          }),
+        }
+      );
+      assert.isTrue(applyResult.isOk());
+      assert.deepStrictEqual(getStatus.mock.calls[0][0], {
+        scopes: [ListSensitivityLabelScope],
+        showDialog: false,
+      });
     });
 
     it("DCE-21: emits v3-compatible generate-template telemetry when v4 scaffold succeeds", async () => {
