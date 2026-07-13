@@ -14,6 +14,8 @@ import {
   VALIDATE_PLACEHOLDER_DRIFT,
   VALIDATE_REQUIRED_FILE,
   VALIDATE_SCHEMA,
+  VALIDATE_UNKNOWN_CAPABILITY,
+  validateMinEngineVersion,
   validateTemplatePackage,
 } from "../../../src/v4/validation/validateTemplatePackage";
 
@@ -107,6 +109,28 @@ function makePort(p: PackageParts): TemplatePackagePort {
 }
 
 describe("v4/validation/validateTemplatePackage", () => {
+  it("AC-02: descriptor.json absent -> UserError naming it required", () => {
+    const parts = validParts();
+    parts.descriptor = undefined;
+
+    const result = validateTemplatePackage("create", "mcp-server", "load", makePort(parts));
+
+    assert.isTrue(result.isErr());
+    assert.equal(result._unsafeUnwrapErr().name, VALIDATE_REQUIRED_FILE);
+    assert.include(result._unsafeUnwrapErr().message, "descriptor.json");
+  });
+
+  it("AC-08: descriptor.json must be a JSON object", () => {
+    const parts = validParts();
+    parts.descriptor = [];
+
+    const result = validateTemplatePackage("create", "mcp-server", "load", makePort(parts));
+
+    assert.isTrue(result.isErr());
+    assert.equal(result._unsafeUnwrapErr().name, VALIDATE_SCHEMA);
+    assert.include(result._unsafeUnwrapErr().message, "JSON object");
+  });
+
   it("AC-01: well-formed package (all four files, schema-valid) passes", () => {
     const res = validateTemplatePackage("create", "mcp-server", "load", makePort(validParts()));
     assert.isTrue(res.isOk());
@@ -304,6 +328,55 @@ describe("v4/validation/validateTemplatePackage", () => {
     assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
   });
 
+  it("AC-11: array pipeline values ignore non-strings and escaped Mustache tokens", () => {
+    const parts = validParts();
+    parts.descriptor = {
+      id: "mcp-server",
+      name: "MCP Server",
+      languages: ["common"],
+      minEngineVersion: "5.20.0",
+      optionsSchema: { type: "object", properties: {} },
+      replaceMap: [],
+    };
+    parts.pipeline = {
+      pipeline: "default",
+      steps: [
+        {
+          step: "require-empty-target",
+          with: {
+            values: [42, "${{NotATemplateToken}}", "{{appName}}"],
+            count: 3,
+          },
+        },
+      ],
+    };
+    parts.content = undefined;
+
+    const result = validateTemplatePackage("create", "mcp-server", "build", makePort(parts));
+
+    assert.isTrue(result.isOk(), result.isErr() ? result.error.message : "expected ok");
+  });
+
+  it("AC-23: object-form question validators participate in capability validation", () => {
+    const parts = validParts();
+    parts.descriptor = {
+      id: "mcp-server",
+      name: "MCP Server",
+      languages: ["common"],
+      minEngineVersion: "5.20.0",
+      optionsSchema: { type: "object", properties: { serverUrl: { type: "string" } } },
+      replaceMap: [],
+    };
+    parts.questions = {
+      questions: [{ name: "serverUrl", type: "text", validation: { use: "uri" } }],
+    };
+    parts.content = undefined;
+
+    const result = validateTemplatePackage("create", "mcp-server", "build", makePort(parts));
+
+    assert.isTrue(result.isOk(), result.isErr() ? result.error.message : "expected ok");
+  });
+
   it("AC-12: required replaceMap var consumed by no content file -> UserError (orphan)", () => {
     const parts = validParts();
     parts.descriptor = {
@@ -346,6 +419,24 @@ describe("v4/validation/validateTemplatePackage", () => {
   it("AC-13: every selector route resolves to a present descriptor -> ok", () => {
     const res = validateTemplatePackage("create", "mcp-server", "load", makePort(validParts()));
     assert.isTrue(res.isOk());
+  });
+
+  it("AC-13: non-v4 and malformed selector routes do not create descriptor obligations", () => {
+    const parts = validParts();
+    parts.selectorCreate = {
+      questions: [],
+      routes: [
+        { when: "true", engine: "v4", templateId: "mcp-server" },
+        { when: "true", engine: "v3", templateId: "legacy-only" },
+        { when: "true", engine: "v4" },
+        null,
+      ],
+    };
+    parts.selectorModify = undefined;
+
+    const result = validateTemplatePackage("create", "mcp-server", "load", makePort(parts));
+
+    assert.isTrue(result.isOk(), result.isErr() ? result.error.message : "expected ok");
   });
 
   it("AC-14: a v4 route to a templateId with no descriptor -> UserError naming the route", () => {
@@ -478,6 +569,23 @@ describe("v4/validation/validateTemplatePackage", () => {
     assert.equal(eb.message, el.message);
   });
 
+  it("conditional replaceMap vars and malformed entries do not become required outputs", () => {
+    const parts = validParts();
+    parts.descriptor = {
+      id: "mcp-server",
+      name: "MCP Server",
+      languages: ["common"],
+      minEngineVersion: "5.20.0",
+      optionsSchema: { type: "object", properties: {} },
+      replaceMap: [null, { const: "missing-var" }, { var: "Optional", const: "x", when: "false" }],
+    };
+    parts.content = undefined;
+
+    const result = validateTemplatePackage("create", "mcp-server", "build", makePort(parts));
+
+    assert.isTrue(result.isOk(), result.isErr() ? result.error.message : "expected ok");
+  });
+
   it("AC-21: identical inputs return the identical Result (pure)", () => {
     const res1 = validateTemplatePackage("create", "mcp-server", "load", makePort(validParts()));
     const res2 = validateTemplatePackage("create", "mcp-server", "load", makePort(validParts()));
@@ -507,7 +615,7 @@ describe("v4/validation/validateTemplatePackage", () => {
 
     assert.isTrue(res.isErr());
     const error = res._unsafeUnwrapErr();
-    assert.equal(error.name, "TemplatePackageUnknownCapability");
+    assert.equal(error.name, VALIDATE_UNKNOWN_CAPABILITY);
     assert.include(error.message, "future/unknown-step");
   });
 
@@ -531,7 +639,7 @@ describe("v4/validation/validateTemplatePackage", () => {
 
     assert.isTrue(res.isErr());
     const error = res._unsafeUnwrapErr();
-    assert.equal(error.name, "TemplatePackageUnknownCapability");
+    assert.equal(error.name, VALIDATE_UNKNOWN_CAPABILITY);
     assert.include(error.message, "future/unknown-validator");
   });
 
@@ -603,5 +711,46 @@ describe("v4/validation/validateTemplatePackage", () => {
     assert.isTrue(res.isErr());
     assert.equal(res._unsafeUnwrapErr().name, VALIDATE_ENGINE_VERSION_INVALID);
     assert.include(res._unsafeUnwrapErr().message, "6.11-next");
+  });
+
+  it("AC-16: reverse-gate helper rejects a non-object descriptor", () => {
+    const result = validateMinEngineVersion(
+      "create",
+      "mcp-server",
+      [],
+      "6.11.0",
+      makePort(validParts()).userError
+    );
+
+    assert.isTrue(result.isErr());
+    assert.equal(result._unsafeUnwrapErr().name, VALIDATE_SCHEMA);
+    assert.include(result._unsafeUnwrapErr().message, "JSON object");
+  });
+
+  it("AC-16: reverse-gate helper requires minEngineVersion", () => {
+    const result = validateMinEngineVersion(
+      "create",
+      "mcp-server",
+      {},
+      "6.11.0",
+      makePort(validParts()).userError
+    );
+
+    assert.isTrue(result.isErr());
+    assert.equal(result._unsafeUnwrapErr().name, VALIDATE_MIN_ENGINE_MISSING);
+  });
+
+  it("AC-28: reverse-gate helper rejects malformed minEngineVersion", () => {
+    const result = validateMinEngineVersion(
+      "create",
+      "mcp-server",
+      { minEngineVersion: "next" },
+      "6.11.0",
+      makePort(validParts()).userError
+    );
+
+    assert.isTrue(result.isErr());
+    assert.equal(result._unsafeUnwrapErr().name, VALIDATE_ENGINE_VERSION_INVALID);
+    assert.include(result._unsafeUnwrapErr().message, "next");
   });
 });
