@@ -28,7 +28,7 @@
                                                   "step_57cd1949",
                                                   "plan_r_0928_014459",
                                                   "step_verify_dynamic_mcp_project",
-                                                  "plan_r_0928_020230",
+                                                  "plan_login_m365_for_provision",
                                                   "step_start_provision_command",
                                                   "step_type_provision_command",
                                                   "step_confirm_provision_command",
@@ -125,7 +125,7 @@
 
                                      ],
                       "preconditions":  [
-
+                                            "dhash:512:384:0:20:e0c8949492b17075"
                                         ],
                       "postconditions":  [
 
@@ -155,7 +155,7 @@
 
                                      ],
                       "preconditions":  [
-
+                                            "dhash:512:384:0:20:e0b8949492b17075"
                                         ],
                       "postconditions":  [
 

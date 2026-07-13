@@ -25,6 +25,7 @@ This workflow is for authoring or refreshing vscuse coverage. For diagnosing an 
 - Prefer `vscuse-ui` for creating or repairing case steps. It is the fastest way to inspect live UI state, record changed interactions, refresh screenshots, and edit steps. Treat the CLI as the final verifier, not the primary authoring surface.
 - Use the integrated browser at `http://localhost:6080/vnc.html` as the live evidence surface.
 - Treat `vscuse-ui` generated plans as drafts until cleaned, parsed, and rerun with `vscuse execute`.
+- Archive every local `vscuse execute` using the repository-root artifact command in `local-vscuse-validation`: a unique gitignored `.local/test-reports/<timestamp>-<plan-name>/` directory containing `run.log` and `test_report.html`.
 - If product behavior does not match the docs, classify it as a product gap or bug before changing coverage.
 - When a draft scenario explicitly replaces shipped behavior, treat the draft doc as the source of truth for the covered case. Existing vscuse steps that encode the old behavior are test plan drift, even if they used to pass.
 - Do not commit empty `r_*.json` recordings or exploratory generated plans.
@@ -183,13 +184,7 @@ Parse changed JSON:
 Get-Content packages/tests/vscuse/vscode-test-cases/plans/<plan-name>.json -Raw | ConvertFrom-Json | Out-Null
 ```
 
-Then run the focused case with `vscuse execute`. This final run is required even if the flow looked correct in `vscuse-ui`, because the CLI starts from a clean container and matches CI behavior:
-
-```powershell
-Push-Location packages/tests/vscuse/vscode-test-cases
-vscuse execute --config-file .\config.yaml --groups-dir groups .\plans\<plan-name>.json
-Pop-Location
-```
+Then run the focused case with the complete repository-root artifact command under **Execute a Local Test Plan** in `local-vscuse-validation`. This final run is required even if the flow looked correct in `vscuse-ui`, because the CLI starts from a clean container and matches CI behavior. Confirm its unique run directory contains both `run.log` and `test_report.html`.
 
 Final coverage is valid only after this executable run passes or after any failure is classified and reported.
 
@@ -204,4 +199,4 @@ Report:
 - Product behavior verdict: matches docs, product bug, product gap, setup failure, or flake.
 - Plan maintenance decision: updated existing plan/group, replaced steps, or generated a new plan.
 - Cleanup performed on generated content.
-- Final `vscuse execute` result and report path.
+- Final `vscuse execute` result and repository-relative paths to the archived `run.log` and `test_report.html`.
