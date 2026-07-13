@@ -14,8 +14,10 @@ import {
   CollectInputsPort,
   INPUT_BOTH_OPTION_SOURCES,
   INPUT_FORWARD_DERIVED_REFERENCE,
+  INPUT_PROVIDER_DERIVED_SCHEMA_VIOLATION,
   INPUT_PROVIDER_FAILED,
   INPUT_VALIDATION_FAILED,
+  INPUT_UNKNOWN_PROVIDER,
   INPUT_UNKNOWN_VALIDATOR,
   INPUT_WALK_CANCELLED,
   OptionItem,
@@ -616,6 +618,27 @@ describe("collectInputs (v4)", () => {
     assert.include(res._unsafeUnwrapErr().message, "selectedLocalServers");
   });
 
+  it("a prompted static multiSelect rejects an unavailable option", async () => {
+    const questions: QuestionSpec[] = [
+      {
+        name: "selectedServers",
+        type: "multiSelect",
+        staticOptions: [{ id: "alpha" }, { id: "beta" }],
+      },
+    ];
+
+    const res = await collectInputs(
+      questions,
+      { properties: { selectedServers: { type: "array" } } },
+      {},
+      makePort({ ui: new SequencedPromptUI([{ kind: "multi", value: ["missing"] }]) })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_VALIDATION_FAILED);
+    assert.include(res._unsafeUnwrapErr().message, "selectedServers");
+  });
+
   it("INPUT-34: a provider-backed non-interactive default must be available", async () => {
     const provider = new FakeProvider({ options: [{ id: "remote" }] });
     const questions: QuestionSpec[] = [
@@ -663,6 +686,174 @@ describe("collectInputs (v4)", () => {
       mcpServerType: "remote",
       "derived.mcp.serverTypes.catalog": "available",
     });
+  });
+
+  it("INPUT-02: a prefilled static option propagates a visibility expression error", async () => {
+    const res = await collectInputs(
+      [
+        {
+          name: "authType",
+          type: "singleSelect",
+          staticOptions: [{ id: "oauth", condition: { expr: "unknownPredicate()" } }],
+        },
+      ],
+      { properties: { authType: {} } },
+      { authType: "oauth" },
+      makePort({ ui: new ScriptedUI({}) })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.instanceOf(res._unsafeUnwrapErr(), SystemError);
+  });
+
+  it("INPUT-05: a prefilled provider question rejects an unknown provider", async () => {
+    const res = await collectInputs(
+      [{ name: "server", type: "singleSelect", optionsFrom: "missing.provider" }],
+      { properties: { server: {} } },
+      { server: "remote" },
+      makePort({ ui: new ScriptedUI({}) })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_UNKNOWN_PROVIDER);
+  });
+
+  it("INPUT-05: a prefilled provider exception is wrapped as a provider failure", async () => {
+    const provider: OptionsProvider = {
+      fetch: async () => Promise.reject(new Error("provider exploded")),
+    };
+    const res = await collectInputs(
+      [{ name: "server", type: "singleSelect", optionsFrom: "mcp.servers" }],
+      { properties: { server: {} } },
+      { server: "remote" },
+      makePort({ ui: new ScriptedUI({}), providers: { "mcp.servers": provider } })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_PROVIDER_FAILED);
+    assert.include(res._unsafeUnwrapErr().message, "provider exploded");
+  });
+
+  it("INPUT-06: a prefilled provider question propagates a parameter expression error", async () => {
+    const provider = new FakeProvider({ options: [{ id: "remote" }] });
+    const res = await collectInputs(
+      [
+        {
+          name: "server",
+          type: "singleSelect",
+          optionsFrom: "mcp.servers",
+          optionsFromParams: { source: { expr: "unknownSource()" } },
+        },
+      ],
+      { properties: { server: {} } },
+      { server: "remote" },
+      makePort({ ui: new ScriptedUI({}), providers: { "mcp.servers": provider } })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.instanceOf(res._unsafeUnwrapErr(), SystemError);
+    assert.strictEqual(provider.fetchCount, 0);
+  });
+
+  it("INPUT-25: a prefilled provider question rejects undeclared derived data", async () => {
+    const provider = new FakeProvider(
+      { options: [{ id: "remote" }], derived: { undeclared: "value" } },
+      ["catalog"]
+    );
+    const res = await collectInputs(
+      [{ name: "server", type: "singleSelect", optionsFrom: "mcp.servers" }],
+      { properties: { server: {} } },
+      { server: "remote" },
+      makePort({ ui: new ScriptedUI({}), providers: { "mcp.servers": provider } })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_PROVIDER_DERIVED_SCHEMA_VIOLATION);
+    assert.include(res._unsafeUnwrapErr().message, "undeclared");
+  });
+
+  it("INPUT-25: a non-interactive provider default rejects undeclared derived data", async () => {
+    const provider = new FakeProvider(
+      { options: [{ id: "remote" }], derived: { undeclared: "value" } },
+      ["catalog"]
+    );
+    const res = await collectInputs(
+      [
+        {
+          name: "server",
+          type: "singleSelect",
+          optionsFrom: "mcp.servers",
+          default: "remote",
+        },
+      ],
+      { properties: { server: {} } },
+      { nonInteractive: "true" },
+      makePort({ ui: new ScriptedUI({}), providers: { "mcp.servers": provider } })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_PROVIDER_DERIVED_SCHEMA_VIOLATION);
+    assert.include(res._unsafeUnwrapErr().message, "undeclared");
+  });
+
+  it("INPUT-26: a prefilled singleSelect rejects a list-shaped answer", async () => {
+    const res = await collectInputs(
+      [
+        {
+          name: "authType",
+          type: "singleSelect",
+          staticOptions: [{ id: "oauth" }],
+        },
+      ],
+      { properties: { authType: {} } },
+      { authType: ["oauth"] },
+      makePort({ ui: new ScriptedUI({}) })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_VALIDATION_FAILED);
+    assert.include(res._unsafeUnwrapErr().message, "invalid answer type");
+  });
+
+  it("INPUT-29: a prefilled scalar rejects an unknown validator", async () => {
+    const res = await collectInputs(
+      [{ name: "serverUrl", type: "text", validation: "missing" }],
+      { properties: { serverUrl: {} } },
+      { serverUrl: "https://example.com/mcp" },
+      makePort({ ui: new ScriptedUI({}) })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_UNKNOWN_VALIDATOR);
+  });
+
+  it("INPUT-26: option membership is ignored for a non-select question", async () => {
+    const res = await collectInputs(
+      [{ name: "label", type: "text", staticOptions: [{ id: "unused" }] }],
+      { properties: { label: {} } },
+      { label: "free text" },
+      makePort({ ui: new ScriptedUI({}) })
+    );
+
+    assert.deepStrictEqual(res._unsafeUnwrap(), { label: "free text" });
+  });
+
+  it("INPUT-02: a prompted static option propagates a visibility expression error", async () => {
+    const res = await collectInputs(
+      [
+        {
+          name: "authType",
+          type: "singleSelect",
+          staticOptions: [{ id: "oauth", condition: { expr: "unknownPredicate()" } }],
+        },
+      ],
+      { properties: { authType: {} } },
+      {},
+      makePort({ ui: new ScriptedUI({ authType: "oauth" }) })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.instanceOf(res._unsafeUnwrapErr(), SystemError);
   });
 
   it("INPUT-06: optionsFromParams close over an answer via the shared evaluator", async () => {

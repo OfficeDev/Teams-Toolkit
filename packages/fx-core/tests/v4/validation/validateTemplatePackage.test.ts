@@ -586,6 +586,44 @@ describe("v4/validation/validateTemplatePackage", () => {
     assert.isTrue(result.isOk(), result.isErr() ? result.error.message : "expected ok");
   });
 
+  it("malformed capability entries are ignored after schema validation", () => {
+    const parts = validParts();
+    parts.questions = {
+      questions: [null, { name: "mcpServerUrl", type: "text" }],
+    };
+    parts.pipeline = {
+      pipeline: "default",
+      steps: [null, { with: { values: [null, 42] } }],
+    };
+
+    const result = validateTemplatePackage("create", "mcp-server", "build", makePort(parts));
+
+    assert.isTrue(result.isOk(), result.isErr() ? result.error.message : "expected ok");
+  });
+
+  it("a non-object pipeline has no placeholder references after schema validation", () => {
+    const parts = validParts();
+    parts.pipeline = "schema-validated elsewhere";
+
+    const result = validateTemplatePackage("create", "mcp-server", "build", makePort(parts));
+
+    assert.isTrue(result.isOk(), result.isErr() ? result.error.message : "expected ok");
+  });
+
+  it("AC-11: an unknown pipeline placeholder is rejected as drift", () => {
+    const parts = validParts();
+    parts.pipeline = {
+      pipeline: "default",
+      steps: [{ step: "require-empty-target", with: { path: "{{MissingPath}}" } }],
+    };
+
+    const result = validateTemplatePackage("create", "mcp-server", "build", makePort(parts));
+
+    assert.isTrue(result.isErr());
+    assert.equal(result._unsafeUnwrapErr().name, VALIDATE_PLACEHOLDER_DRIFT);
+    assert.include(result._unsafeUnwrapErr().message, "MissingPath");
+  });
+
   it("AC-21: identical inputs return the identical Result (pure)", () => {
     const res1 = validateTemplatePackage("create", "mcp-server", "load", makePort(validParts()));
     const res2 = validateTemplatePackage("create", "mcp-server", "load", makePort(validParts()));

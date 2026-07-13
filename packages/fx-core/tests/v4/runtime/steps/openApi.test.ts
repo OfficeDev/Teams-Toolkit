@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+import { ensureDir, mkdtemp, readJson, readdir, remove, writeJson } from "fs-extra";
+import os from "os";
 import * as path from "path";
 import { SystemError, UserError } from "@microsoft/teamsfx-api";
 import { StepContext } from "../../../../src/v4/pipeline/runScaffoldPipeline";
@@ -11,6 +13,7 @@ import {
   openApiGeneratePluginFiles,
   openApiGenerateTeamsAiCustomApiFiles,
 } from "../../../../src/v4/runtime/steps/openApi";
+import { generateTeamsAiCustomApiFiles } from "../../../../src/v4/runtime/steps/openApiCustomApi";
 import { ProgrammingLanguage } from "../../../../src/question/constants";
 import { assert, beforeEach, expect, vi } from "vitest";
 
@@ -333,6 +336,131 @@ describe("OpenAPI runtime steps (v4)", () => {
     assert.lengthOf(warnings, 1);
     assert.include(warnings[0], "getPets");
     assert.include(warnings[0], "unsupported response shape");
+  });
+
+  it("SCN-CREATE-RAG-CUSTOM-API-06: emits recoverable mock-data warnings", async () => {
+    mockGenerateAdaptiveCard.mockImplementationOnce(() => [
+      { type: "AdaptiveCard", body: [] },
+      "$",
+      {},
+      [{ content: "example data is incomplete" }],
+    ]);
+    const warnings: string[] = [];
+    const state = makeCtx({
+      "appPackage/manifest.json": JSON.stringify({ bots: [{ commandLists: [] }] }),
+      "src/app/app.ts": "// Replace with function definition code\n",
+      "src/app/handlers.ts": "// Replace with function handler code\n{{OPENAPI_SPEC_PATH}}",
+    });
+    state.ctx.warn = (message) => warnings.push(message);
+
+    const result = await openApiGenerateTeamsAiCustomApiFiles.apply(
+      {
+        apiSpecLocation: SPEC_PATH,
+        apiOperations: ["GET /pets"],
+        language: ProgrammingLanguage.TS,
+      },
+      state.ctx
+    );
+
+    assert.isTrue(result.isOk(), result.isErr() ? result.error.message : "expected ok");
+    assert.lengthOf(warnings, 1);
+    assert.include(warnings[0], "example data is incomplete");
+  });
+
+  it("SCN-CREATE-RAG-CUSTOM-API-01: filters malformed parameters and preserves array schemas", async () => {
+    mockSpecParserState.filteredSpec = {
+      info: {},
+      paths: {
+        "/ignored": undefined,
+        "/pets": {
+          get: {
+            operationId: "list-items",
+            parameters: [
+              null,
+              {
+                name: "tags",
+                in: "query",
+                schema: { type: "array", items: { type: "string" } },
+              },
+              { name: "untyped", in: "query" },
+              { name: "ignored", in: "toString", schema: { type: "string" } },
+            ],
+            responses: {},
+          },
+        },
+      },
+    };
+    const state = makeCtx({
+      "appPackage/manifest.json": JSON.stringify({ bots: [{ commandLists: [] }] }),
+      "src/app/app.ts": "// Replace with function definition code\n",
+      "src/app/handlers.ts": "// Replace with function handler code\n{{OPENAPI_SPEC_PATH}}",
+    });
+
+    const result = await openApiGenerateTeamsAiCustomApiFiles.apply(
+      {
+        apiSpecLocation: SPEC_PATH,
+        apiOperations: ["GET /pets"],
+        language: ProgrammingLanguage.TS,
+      },
+      state.ctx
+    );
+
+    assert.isTrue(result.isOk(), result.isErr() ? result.error.message : "expected ok");
+    const functions = text(state.files, "src/app/functions.json");
+    assert.include(functions, '"items": {');
+    assert.include(functions, '"untyped": {');
+    assert.notInclude(functions, '"ignored": {');
+  });
+
+  it("SCN-CREATE-RAG-CUSTOM-API-01: rejects a selected operation without an operation id", async () => {
+    mockSpecParserState.filteredSpec = {
+      info: {},
+      paths: { "/pets": { get: { responses: {} } } },
+    };
+    const state = makeCtx({
+      "appPackage/manifest.json": JSON.stringify({ bots: [{ commandLists: [] }] }),
+      "src/app/app.ts": "// Replace with function definition code\n",
+      "src/app/handlers.ts": "// Replace with function handler code\n{{OPENAPI_SPEC_PATH}}",
+    });
+
+    const result = await openApiGenerateTeamsAiCustomApiFiles.apply(
+      {
+        apiSpecLocation: SPEC_PATH,
+        apiOperations: ["GET /pets"],
+        language: ProgrammingLanguage.TS,
+      },
+      state.ctx
+    );
+
+    assert.isTrue(result.isErr());
+    assert.include(result._unsafeUnwrapErr().message, "no operationId");
+  });
+
+  it("does not generate language-specific files for an unsupported language", async () => {
+    const tempRoot = await mkdtemp(path.join(os.tmpdir(), "m365atk-openapi-custom-api-"));
+    try {
+      await ensureDir(path.join(tempRoot, "appPackage"));
+      await writeJson(path.join(tempRoot, "appPackage", "manifest.json"), {
+        bots: [{ commandLists: [] }],
+      });
+
+      const warnings = await generateTeamsAiCustomApiFiles(
+        { info: { title: "API", version: "1.0.0" }, paths: {} },
+        "csharp",
+        tempRoot,
+        "openapi.yaml"
+      );
+
+      assert.isEmpty(warnings);
+      assert.deepStrictEqual(
+        await readJson(path.join(tempRoot, "src", "app", "functions.json")),
+        {}
+      );
+      assert.deepStrictEqual(await readdir(path.join(tempRoot, "src", "app")), ["functions.json"]);
+      assert.deepStrictEqual(await readdir(path.join(tempRoot, "src")), ["app"]);
+    } finally {
+      await remove(tempRoot);
+    }
   });
 
   it("returns SystemError results for invalid resolved params and missing render output", async () => {

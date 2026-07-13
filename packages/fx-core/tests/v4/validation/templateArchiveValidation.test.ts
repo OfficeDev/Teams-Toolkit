@@ -84,6 +84,19 @@ describe("v4/validation/templateArchiveValidation", () => {
     assert.equal(result._unsafeUnwrapErr().name, "TemplatePackageCorrupt");
   });
 
+  it("rejects non-zip bytes when opening one package", () => {
+    const result = validateDeclarativePackageArchive(
+      Buffer.from("not-a-zip"),
+      { kind: "create", templateId: "da/mcp-server" },
+      "load",
+      "6.11.0",
+      runtimeErrors
+    );
+
+    assert.isTrue(result.isErr());
+    assert.equal(result._unsafeUnwrapErr().name, "TemplatePackageCorrupt");
+  });
+
   it("rejects an archive with a missing schema file", () => {
     const zip = selectorOnlyArchive();
     zip.deleteFile("v4/schema/pipeline.schema.json");
@@ -167,6 +180,47 @@ describe("v4/validation/templateArchiveValidation", () => {
     assert.equal(result._unsafeUnwrapErr().name, "PackageFileInvalid");
     assert.include(result._unsafeUnwrapErr().message, "v4/modify/selector.json");
   });
+
+  it("rejects an invalid selector when opening one package", () => {
+    const zip = selectorOnlyArchive();
+    const selector = zip.getEntry("v4/create/selector.json");
+    if (selector === null) {
+      throw new Error("expected create selector entry");
+    }
+    selector.setData(Buffer.from(JSON.stringify({ routes: "not-an-array" }), "utf8"));
+
+    const result = validateDeclarativePackageArchive(
+      zip.toBuffer(),
+      { kind: "create", templateId: "da/mcp-server" },
+      "load",
+      "6.11.0",
+      runtimeErrors
+    );
+
+    assert.isTrue(result.isErr());
+    assert.equal(result._unsafeUnwrapErr().name, "TemplatePackageSchema");
+    assert.include(result._unsafeUnwrapErr().message, "v4/create/selector.json");
+  });
+
+  it.each(["descriptor", "questions", "pipeline"])(
+    "rejects a package whose %s JSON is malformed",
+    (fileName) => {
+      const zip = new AdmZip(fullArchive());
+      zip.updateFile(`v4/create/da/mcp-server/${fileName}.json`, Buffer.from("{"));
+
+      const result = validateDeclarativePackageArchive(
+        zip.toBuffer(),
+        { kind: "create", templateId: "da/mcp-server" },
+        "load",
+        "6.11.0",
+        runtimeErrors
+      );
+
+      assert.isTrue(result.isErr());
+      assert.equal(result._unsafeUnwrapErr().name, "PackageFileInvalid");
+      assert.include(result._unsafeUnwrapErr().message, `${fileName}.json`);
+    }
+  );
 
   it("AC-26: POSIX-absolute content paths are rejected before rendering", () => {
     const zip = new AdmZip(fullArchive());

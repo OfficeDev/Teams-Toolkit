@@ -97,6 +97,66 @@ describe(STEP_SET_SENSITIVITY_LABEL, () => {
     }
   });
 
+  it("returns a distinct SystemError when the manifest is missing", async () => {
+    const stepRegistry = createStepRegistry({
+      resolveId: async (): Promise<string> => "general-label-id",
+    });
+    const port = buildPipelinePort(
+      createExpressionPort(),
+      {
+        read: (): Buffer | undefined => undefined,
+        write: (): void => undefined,
+      },
+      stepRegistry
+    );
+    const step = port.stepRegistry(STEP_SET_SENSITIVITY_LABEL);
+    if (step === undefined) {
+      assert.fail(`${STEP_SET_SENSITIVITY_LABEL} is not registered`);
+    }
+
+    const result = await step.apply(
+      { manifestPath: "appPackage/declarativeAgent.json" },
+      {
+        read: port.read,
+        write: port.write,
+        manifestWrapper: port.manifestWrapper,
+      }
+    );
+
+    assert.isTrue(result.isErr());
+    assert.strictEqual(result._unsafeUnwrapErr().name, "DaSensitivityLabelManifestMissing");
+  });
+
+  it("returns a distinct SystemError when the manifest is invalid", async () => {
+    const stepRegistry = createStepRegistry({
+      resolveId: async (): Promise<string> => "general-label-id",
+    });
+    const port = buildPipelinePort(
+      createExpressionPort(),
+      {
+        read: (): Buffer => Buffer.from("{"),
+        write: (): void => undefined,
+      },
+      stepRegistry
+    );
+    const step = port.stepRegistry(STEP_SET_SENSITIVITY_LABEL);
+    if (step === undefined) {
+      assert.fail(`${STEP_SET_SENSITIVITY_LABEL} is not registered`);
+    }
+
+    const result = await step.apply(
+      { manifestPath: "appPackage/declarativeAgent.json" },
+      {
+        read: port.read,
+        write: port.write,
+        manifestWrapper: port.manifestWrapper,
+      }
+    );
+
+    assert.isTrue(result.isErr());
+    assert.strictEqual(result._unsafeUnwrapErr().name, "DaSensitivityLabelManifestInvalid");
+  });
+
   it("returns a distinct SystemError when the manifest cannot be written", async () => {
     const stepRegistry = createStepRegistry({
       resolveId: async (): Promise<string> => "general-label-id",

@@ -108,6 +108,108 @@ describe("v4 MCP auth YAML action", () => {
     assert.strictEqual(result._unsafeUnwrapErr().name, "McpAuthInjectFailed");
   });
 
+  it("keeps the YAML unchanged when auth is disabled", () => {
+    const result = injectMcpAuthActionYaml(BASE_YML, {
+      ...BASE_ARGS,
+      authType: "none",
+      endpoints: {},
+    });
+
+    assert.deepEqual(result._unsafeUnwrap(), {
+      yaml: BASE_YML,
+      wellKnownUrlPlaceholderUsed: false,
+    });
+  });
+
+  it("rejects malformed YAML", () => {
+    const result = injectMcpAuthActionYaml("provision: [", {
+      ...BASE_ARGS,
+      authType: "oauth",
+      endpoints: {},
+    });
+
+    assert.isTrue(result.isErr());
+    assert.include(result._unsafeUnwrapErr().message, "not valid YAML");
+  });
+
+  it.each(["name: missing", "provision: invalid"])(
+    "rejects a missing or non-sequence provision section: %s",
+    (yaml) => {
+      const result = injectMcpAuthActionYaml(yaml, {
+        ...BASE_ARGS,
+        authType: "oauth",
+        endpoints: {},
+      });
+
+      assert.isTrue(result.isErr());
+      assert.include(result._unsafeUnwrapErr().message, "provision sequence");
+    }
+  );
+
+  it.each([
+    "provision:\n  - ignored\n  - uses: teamsApp/create",
+    "provision:\n  - uses: teamsApp/create\n    writeToEnvironmentFile: invalid",
+    "provision:\n  - uses: teamsApp/create\n    writeToEnvironmentFile:\n      teamsAppId: 42",
+  ])("rejects a Teams app action without a usable app id", (yaml) => {
+    const result = injectMcpAuthActionYaml(yaml, {
+      ...BASE_ARGS,
+      authType: "oauth",
+      endpoints: {},
+    });
+
+    assert.isTrue(result.isErr());
+    assert.include(result._unsafeUnwrapErr().message, "does not expose a Teams app id");
+  });
+
+  it.each(["v1.13", "v1.14", "invalid"])(
+    "preserves an existing DCR schema version: %s",
+    (version) => {
+      const result = injectMcpAuthActionYaml(BASE_YML.replace("v1.12", version), {
+        ...BASE_ARGS,
+        authType: "oauth-dynamic",
+        endpoints: {},
+      });
+
+      const output = parse(result._unsafeUnwrap().yaml);
+      assert.strictEqual(output.version, version);
+      assert.isTrue(result._unsafeUnwrap().wellKnownUrlPlaceholderUsed);
+    }
+  );
+
+  it("ignores an existing OAuth action with malformed registration output", () => {
+    const yaml = [
+      "version: v1.12",
+      "provision:",
+      "  - uses: oauth/register",
+      "    writeToEnvironmentFile: invalid",
+      "  - uses: teamsApp/create",
+      "    writeToEnvironmentFile:",
+      "      teamsAppId: TEAMS_APP_ID",
+    ].join("\n");
+
+    const result = injectMcpAuthActionYaml(yaml, {
+      ...BASE_ARGS,
+      authType: "oauth",
+      endpoints: {},
+    });
+
+    assert.lengthOf(provisionActions(result._unsafeUnwrap().yaml), 3);
+  });
+
+  it("preserves a missing schema version when injecting DCR", () => {
+    const yaml = BASE_YML.split("\n").slice(1).join("\n");
+
+    const result = injectMcpAuthActionYaml(yaml, {
+      ...BASE_ARGS,
+      authType: "oauth-dynamic",
+      endpoints: {},
+    });
+
+    const output = parse(result._unsafeUnwrap().yaml);
+    assert.isUndefined(output.version);
+    assert.isTrue(result._unsafeUnwrap().wellKnownUrlPlaceholderUsed);
+  });
+
   it("SCN-CREATE-MCP-05: is idempotent by registration id", () => {
     const args = { ...BASE_ARGS, authType: "oauth", endpoints: {} };
     const first = injectMcpAuthActionYaml(BASE_YML, args)._unsafeUnwrap();

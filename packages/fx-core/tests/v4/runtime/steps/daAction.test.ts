@@ -7,7 +7,11 @@ import {
   daActionRegisterPluginManifest,
 } from "../../../../src/v4/runtime/steps/daAction";
 import { StepContext } from "../../../../src/v4/pipeline/runScaffoldPipeline";
-import { STEP_REGISTRY } from "../../../../src/v4/runtime/runtimeRegistry";
+import {
+  NOOP_MANIFEST_WRAPPER,
+  STEP_REGISTRY,
+  buildPipelinePort,
+} from "../../../../src/v4/runtime/runtimeRegistry";
 import { assert } from "vitest";
 import { ok } from "neverthrow";
 import { createInMemoryRuntime } from "../../../../src/v4/runtime/inMemoryRuntime";
@@ -61,6 +65,16 @@ describe("da-action steps (v4)", () => {
         STEP_REGISTRY.get(STEP_REGISTER_PLUGIN_MANIFEST),
         daActionRegisterPluginManifest
       );
+    });
+
+    it("returns an explicit error when a runtime has no manifest mutation adapter", () => {
+      const result = NOOP_MANIFEST_WRAPPER.registerDeclarativeAgentAction(
+        "appPackage/manifest.json",
+        "appPackage/ai-plugin.json"
+      );
+
+      assert.isTrue(result.isErr());
+      assert.strictEqual(result._unsafeUnwrapErr().name, "ManifestMutationUnavailable");
     });
 
     it("validateParams: passes when teamsManifestPath/pluginManifestPath are strings", () => {
@@ -161,6 +175,79 @@ describe("da-action steps (v4)", () => {
       );
       assert.isTrue(res.isErr());
       assert.instanceOf(res._unsafeUnwrapErr(), SystemError);
+    });
+
+    it.each([
+      {
+        name: "missing Teams manifest",
+        initial: {},
+        errorName: "DaActionTeamsManifestMissing",
+      },
+      {
+        name: "invalid Teams manifest",
+        initial: { "appPackage/manifest.json": "{" },
+        errorName: "DaActionTeamsManifestInvalid",
+      },
+      {
+        name: "missing declarative agent manifest",
+        initial: {
+          "appPackage/manifest.json": JSON.stringify({
+            declarativeAgents: [{ file: "declarativeAgent.json" }],
+          }),
+        },
+        errorName: "DaActionManifestMissing",
+      },
+      {
+        name: "invalid declarative agent manifest",
+        initial: {
+          "appPackage/manifest.json": JSON.stringify({
+            declarativeAgents: [{ file: "declarativeAgent.json" }],
+          }),
+          "appPackage/declarativeAgent.json": "{",
+        },
+        errorName: "DaActionManifestInvalid",
+      },
+    ])("returns a distinct error for $name", async ({ initial, errorName }) => {
+      const { ctx } = makeCtx(initial);
+
+      const result = await daActionRegisterPluginManifest.apply(
+        {
+          teamsManifestPath: "appPackage/manifest.json",
+          pluginManifestPath: "appPackage/ai-plugin.json",
+        },
+        ctx
+      );
+
+      assert.isTrue(result.isErr());
+      assert.strictEqual(result._unsafeUnwrapErr().name, errorName);
+    });
+
+    it("returns a distinct error when the declarative agent manifest cannot be written", () => {
+      const runtime = createInMemoryRuntime();
+      const port = buildPipelinePort(runtime.exprPort, {
+        read: (filePath): Buffer | undefined => {
+          if (filePath === "appPackage/manifest.json") {
+            return Buffer.from(
+              JSON.stringify({ declarativeAgents: [{ file: "declarativeAgent.json" }] })
+            );
+          }
+          if (filePath === "appPackage/declarativeAgent.json") {
+            return Buffer.from(JSON.stringify({ name: "Agent" }));
+          }
+          return undefined;
+        },
+        write: (): void => {
+          throw new Error("write failed at C:\\secret\\project");
+        },
+      });
+
+      const result = port
+        .manifestWrapper()
+        .registerDeclarativeAgentAction("appPackage/manifest.json", "appPackage/ai-plugin.json");
+
+      assert.isTrue(result.isErr());
+      assert.strictEqual(result._unsafeUnwrapErr().name, "DaActionManifestWriteFailed");
+      assert.notInclude(result._unsafeUnwrapErr().message, "C:\\secret\\project");
     });
   });
 });
