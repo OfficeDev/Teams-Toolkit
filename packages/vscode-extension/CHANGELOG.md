@@ -2,13 +2,6 @@
 > Note: This changelog only includes the changes for the stable versions of Microsoft 365 Agents Toolkit (evolved from Teams Toolkit). For the changelog of pre-released versions, please refer to the [Microsoft 365 Agents Toolkit Pre-release Changelog](https://github.com/OfficeDev/TeamsFx/blob/dev/packages/vscode-extension/PRERELEASE.md).
 
 
-## Unreleased
-
-### Enhancement
-
-- Updated the [app manifest version to v1.29](https://developer.microsoft.com/json-schemas/teams/v1.29/MicrosoftTeams.schema.json). [#16186](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16186)
-
-
 ## 6.10.2 - June 9, 2026
 
 This is a hotfix version.
