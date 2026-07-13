@@ -61,8 +61,8 @@
   "template.createProjectQuestion.projectType.teamsAgentsAndApps.label": "Teams Agents and Apps",
   "template.importAddin.detail": "將增益集專案升級至最新的應用程式資訊清單和專案結構",
   "template.importOfficeAddin.label": "升級現有的 Office 載入巨集",
-  "template.newCFShortcut.detail": "Task pane add-in with custom function and shortcut",
-  "template.newCFShortcut.label": "Custom Function and Shortcut",
+  "template.newCFShortcut.detail": "Create custom functions in Excel using a shared runtime",
+  "template.newCFShortcut.label": "Excel Custom Functions (Shared Runtime)",
   "template.newTaskpaneAddin.detail": "在工作窗格中使用按鈕和內嵌內容來自訂功能區",
   "template.newTaskpaneAddin.label": "工作窗格",
   "template.officeAddin.hosts.title": "Select the Office applications to support",
@@ -70,5 +70,11 @@
   "template.officeAddin.hosts.word.label": "Word",
   "template.officeAddin.hosts.powerpoint.label": "PowerPoint",
   "template.officeAddin.hosts.outlook.label": "Outlook",
-  "template.officeAddin.hosts.excel.label": "Excel"
+  "template.officeAddin.hosts.excel.label": "Excel",
+  "template.newExcelCustomFunctions.detail": "Create custom functions in Excel using a JavaScript-only runtime",
+  "template.newExcelCustomFunctions.label": "Excel Custom Functions (JavaScript-only Runtime)",
+  "template.newSsoNaa.detail": "Task pane add-in that uses Nested App Auth for single sign-on",
+  "template.newSsoNaa.label": "Single Sign-On with Nested App Auth",
+  "template.officeAddin.naaHost.title": "Select the Office application to support",
+  "template.officeAddin.naaHost.placeholder": "Select an Office application"
 }

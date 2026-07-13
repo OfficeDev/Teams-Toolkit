@@ -82,8 +82,8 @@
   "template.createProjectQuestion.projectType.teamsAgentsAndApps.label": "Agentes y aplicaciones de Teams",
   "template.importAddin.detail": "Actualizar un proyecto de complemento al manifiesto de aplicación y la estructura del proyecto más recientes",
   "template.importOfficeAddin.label": "Actualizar un complemento de Office existente",
-  "template.newCFShortcut.detail": "Complemento del Panel de tareas con función personalizada y acceso directo",
-  "template.newCFShortcut.label": "Función personalizada y acceso directo",
+  "template.newCFShortcut.detail": "Create custom functions in Excel using a shared runtime",
+  "template.newCFShortcut.label": "Excel Custom Functions (Shared Runtime)",
   "template.newTaskpaneAddin.detail": "Personalizar la cinta de opciones con un botón e insertar contenido en el panel de tareas",
   "template.newTaskpaneAddin.label": "Panel de tareas",
   "template.officeAddin.hosts.title": "Select the Office applications to support",
@@ -91,5 +91,11 @@
   "template.officeAddin.hosts.word.label": "Word",
   "template.officeAddin.hosts.powerpoint.label": "PowerPoint",
   "template.officeAddin.hosts.outlook.label": "Outlook",
-  "template.officeAddin.hosts.excel.label": "Excel"
+  "template.officeAddin.hosts.excel.label": "Excel",
+  "template.newExcelCustomFunctions.detail": "Create custom functions in Excel using a JavaScript-only runtime",
+  "template.newExcelCustomFunctions.label": "Excel Custom Functions (JavaScript-only Runtime)",
+  "template.newSsoNaa.detail": "Task pane add-in that uses Nested App Auth for single sign-on",
+  "template.newSsoNaa.label": "Single Sign-On with Nested App Auth",
+  "template.officeAddin.naaHost.title": "Select the Office application to support",
+  "template.officeAddin.naaHost.placeholder": "Select an Office application"
 }

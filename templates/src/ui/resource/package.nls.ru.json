@@ -82,8 +82,8 @@
   "template.createProjectQuestion.projectType.teamsAgentsAndApps.label": "Агенты и приложения Teams",
   "template.importAddin.detail": "Обновить проект надстройки до последней версии манифеста приложения и структуры проекта",
   "template.importOfficeAddin.label": "Обновить существующую надстройку Office",
-  "template.newCFShortcut.detail": "Надстройка области задач с настраиваемой функцией и ярлыком",
-  "template.newCFShortcut.label": "Настраиваемая функция и ярлык",
+  "template.newCFShortcut.detail": "Create custom functions in Excel using a shared runtime",
+  "template.newCFShortcut.label": "Excel Custom Functions (Shared Runtime)",
   "template.newTaskpaneAddin.detail": "Настройка ленты с помощью кнопки и внедрение содержимого в область задач",
   "template.newTaskpaneAddin.label": "Область задач",
   "template.officeAddin.hosts.title": "Select the Office applications to support",
@@ -91,5 +91,11 @@
   "template.officeAddin.hosts.word.label": "Word",
   "template.officeAddin.hosts.powerpoint.label": "PowerPoint",
   "template.officeAddin.hosts.outlook.label": "Outlook",
-  "template.officeAddin.hosts.excel.label": "Excel"
+  "template.officeAddin.hosts.excel.label": "Excel",
+  "template.newExcelCustomFunctions.detail": "Create custom functions in Excel using a JavaScript-only runtime",
+  "template.newExcelCustomFunctions.label": "Excel Custom Functions (JavaScript-only Runtime)",
+  "template.newSsoNaa.detail": "Task pane add-in that uses Nested App Auth for single sign-on",
+  "template.newSsoNaa.label": "Single Sign-On with Nested App Auth",
+  "template.officeAddin.naaHost.title": "Select the Office application to support",
+  "template.officeAddin.naaHost.placeholder": "Select an Office application"
 }

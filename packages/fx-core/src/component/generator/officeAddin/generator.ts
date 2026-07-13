@@ -192,6 +192,14 @@ function getSelectedOfficeAddinHosts(inputs: Inputs): string[] {
   return Array.isArray(hosts) && hosts.length > 0 ? hosts : [...OFFICE_ADDIN_HOSTS];
 }
 
+// Nested App Auth SSO template supports a single Office host.
+const OFFICE_ADDIN_NAA_HOSTS = ["word", "excel", "powerpoint"] as const;
+
+function getSelectedNaaHost(inputs: Inputs): string {
+  const host = inputs[QuestionNames.OfficeAddinNaaHost];
+  return typeof host === "string" && OFFICE_ADDIN_NAA_HOSTS.includes(host as any) ? host : "word";
+}
+
 export class OfficeAddinGeneratorNew extends DefaultTemplateGenerator {
   componentName = "office-addin-generator";
 
@@ -202,6 +210,8 @@ export class OfficeAddinGeneratorNew extends DefaultTemplateGenerator {
       TemplateNames.OutlookTaskpane,
       TemplateNames.WXPTaskpane,
       TemplateNames.ExcelCFShortcut,
+      TemplateNames.ExcelCustomFunctions,
+      TemplateNames.OfficeAddinSsoNaa,
       TemplateNames.OfficeAddinCommon,
     ].includes(templateName);
   }
@@ -229,6 +239,11 @@ export class OfficeAddinGeneratorNew extends DefaultTemplateGenerator {
       replaceMap["manifestScopes"] = OFFICE_ADDIN_HOSTS.filter((host) => hosts.includes(host))
         .map((host) => `"${OFFICE_ADDIN_HOST_SCOPE[host]}"`)
         .join(",\n                    ");
+    } else if (templateName === TemplateNames.OfficeAddinSsoNaa) {
+      // NAA SSO supports a single host; its source code is host-agnostic, so only
+      // the manifest scope and the debug host reflect the selection.
+      const naaHost = getSelectedNaaHost(inputs);
+      replaceMap["manifestScope"] = `"${OFFICE_ADDIN_HOST_SCOPE[naaHost]}"`;
     }
 
     return Promise.resolve(
@@ -251,7 +266,14 @@ export class OfficeAddinGeneratorNew extends DefaultTemplateGenerator {
     // Prune everything tied to the Office hosts that the user did not select.
     if (inputs[QuestionNames.TemplateName] === TemplateNames.WXPTaskpane) {
       const hosts = getSelectedOfficeAddinHosts(inputs);
-      await pruneUnselectedOfficeAddinHosts(destinationPath, hosts);
+      await pruneUnselectedOfficeAddinHosts(destinationPath, hosts, { removeSourceFiles: true });
+    } else if (inputs[QuestionNames.TemplateName] === TemplateNames.OfficeAddinSsoNaa) {
+      // NAA source is host-agnostic (runtime host switch); only trim the debug
+      // config down to the single selected host.
+      const naaHost = getSelectedNaaHost(inputs);
+      await pruneUnselectedOfficeAddinHosts(destinationPath, [naaHost], {
+        removeSourceFiles: false,
+      });
     }
 
     // Hanlde the MetaOS Project import
@@ -271,21 +293,25 @@ export class OfficeAddinGeneratorNew extends DefaultTemplateGenerator {
 }
 
 /**
- * Remove all references to unselected Office hosts from a scaffolded WXP task
- * pane project: per-host source files, the `.vscode/launch.json` debug
+ * Remove all references to unselected Office hosts from a scaffolded add-in
+ * project: (optionally) per-host source files, the `.vscode/launch.json` debug
  * configurations/compounds (which drive the Run and Debug dropdown), and the
- * `package.json` debug scripts / default debug app.
+ * `package.json` debug scripts / default debug app. `hosts` is the set of hosts
+ * to KEEP.
  */
 async function pruneUnselectedOfficeAddinHosts(
   destinationPath: string,
-  hosts: string[]
+  hosts: string[],
+  options: { removeSourceFiles: boolean }
 ): Promise<void> {
   const unselected = OFFICE_ADDIN_HOSTS.filter((host) => !hosts.includes(host));
 
-  // 1. Per-host source files.
-  for (const host of unselected) {
-    await fse.remove(path.join(destinationPath, "src", "taskpane", `${host}.ts`));
-    await fse.remove(path.join(destinationPath, "src", "commands", `${host}.ts`));
+  // 1. Per-host source files (only for templates that ship one file per host).
+  if (options.removeSourceFiles) {
+    for (const host of unselected) {
+      await fse.remove(path.join(destinationPath, "src", "taskpane", `${host}.ts`));
+      await fse.remove(path.join(destinationPath, "src", "commands", `${host}.ts`));
+    }
   }
 
   const isSelectedHostName = (name: string): boolean => {
