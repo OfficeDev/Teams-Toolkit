@@ -14,7 +14,6 @@ import {
   UserInteraction,
 } from "@microsoft/teamsfx-api";
 import { Result, err, ok } from "neverthrow";
-import { getLocalizedString } from "../../common/localizeUtils";
 import {
   Asked,
   OptionItem,
@@ -23,38 +22,22 @@ import {
   PromptUI,
   QuestionSpec,
 } from "../collectInputs/collectInputs";
+import { localizePrefixedText } from "./localizePrompt";
 
 /** Create-Q2 prompt bridge from v4 `PromptUI` to host `UserInteraction`. */
 
 const SOURCE = "Scaffold";
 
-function localizeText(text: string | undefined): string | undefined {
-  if (text === undefined) {
-    return undefined;
-  }
-  const localized = getLocalizedString(text);
-  return localized.length > 0 ? localized : text;
-}
-
-function localizePrefixedText(
-  keyPrefix: string | undefined,
-  suffix: string,
-  fallback: string | undefined
-): string | undefined {
-  if (keyPrefix !== undefined) {
-    const localized = getLocalizedString(`${keyPrefix}.${suffix}`);
-    if (localized.length > 0) {
-      return localized;
-    }
-  }
-  return localizeText(fallback);
+function labelWithIcon(label: string, iconPath: string | undefined): string {
+  return iconPath === undefined ? label : `$(${iconPath}) ${label}`;
 }
 
 /** Map a v4 identity-only option to the surface option shape (label defaults to its id). */
 function toSurfaceOption(option: OptionItem): SurfaceOptionItem {
+  const label = localizePrefixedText(option.keyPrefix, "label", option.label) ?? option.id;
   return {
     id: option.id,
-    label: localizePrefixedText(option.keyPrefix, "label", option.label) ?? option.id,
+    label: labelWithIcon(label, option.iconPath),
     description: localizePrefixedText(option.keyPrefix, "description", option.description),
     detail: localizePrefixedText(option.keyPrefix, "detail", option.detail),
     groupName: localizePrefixedText(option.keyPrefix, "groupName", option.groupName),
@@ -138,6 +121,9 @@ export function createUiPromptUI(ui: UserInteraction): PromptUI {
         if (result.value.type === "back") {
           return ok({ kind: "back" });
         }
+        if (result.value.type === "skip") {
+          return ok({ kind: "skip", value: selectedId(result.value.result) });
+        }
         return ok({ kind: "value", value: selectedId(result.value.result) });
       }
       if (question.type === "text") {
@@ -151,6 +137,7 @@ export function createUiPromptUI(ui: UserInteraction): PromptUI {
           ),
           prompt: localizePrefixedText(question.keyPrefix, "prompt", question.prompt),
           default: question.default,
+          password: question.password,
           step,
           validation,
         };
@@ -284,6 +271,9 @@ export function createUiPromptUI(ui: UserInteraction): PromptUI {
       }
       if (result.value.type === "back") {
         return ok({ kind: "back" });
+      }
+      if (result.value.type === "skip") {
+        return ok({ kind: "skip", value: selectedIds(result.value.result) });
       }
       return ok({ kind: "value", value: selectedIds(result.value.result) });
     },

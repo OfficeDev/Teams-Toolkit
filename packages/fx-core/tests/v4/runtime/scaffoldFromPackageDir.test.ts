@@ -163,14 +163,30 @@ describe("scaffoldFromPackageDir (v4 product front-door)", () => {
     assert.strictEqual(error?.name, "ScaffoldPathEscape");
   });
 
-  it("ORCH-08: excludes sandbox env and config files when the sandboxed team flag is off", async () => {
+  it("ORCH-08: applies declared render filters when their feature flag predicate is active", async () => {
     const packageDir = path.join(tempDir, "package");
     const outputDir = path.join(tempDir, "output");
     fs.ensureDirSync(path.join(packageDir, "content", "env"));
     fs.writeFileSync(path.join(packageDir, "descriptor.json"), JSON.stringify({ replaceMap: [] }));
     fs.writeFileSync(
       path.join(packageDir, "pipeline.json"),
-      JSON.stringify({ pipeline: "default", steps: [] })
+      JSON.stringify({
+        pipeline: "default",
+        render: {
+          filters: [
+            {
+              when: "!featureFlag('TEST_SANDBOX')",
+              exclude: [
+                "m365agents.sandbox.yml",
+                "teamsapp.sandbox.yml",
+                "env/.env.sandbox",
+                "env/.env.sandbox.user",
+              ],
+            },
+          ],
+        },
+        steps: [],
+      })
     );
     fs.writeFileSync(path.join(packageDir, "content", "keep.txt"), "keep");
     fs.writeFileSync(path.join(packageDir, "content", "m365agents.sandbox.yml.tpl"), "sandbox yml");
@@ -194,14 +210,30 @@ describe("scaffoldFromPackageDir (v4 product front-door)", () => {
     assert.isFalse(fs.existsSync(path.join(outputDir, "env", ".env.sandbox.user")));
   });
 
-  it("ORCH-09: includes sandbox env and config files when the sandboxed team flag is on", async () => {
+  it("ORCH-09: ignores declared render filters when their feature flag predicate is inactive", async () => {
     const packageDir = path.join(tempDir, "package");
     const outputDir = path.join(tempDir, "output");
     fs.ensureDirSync(path.join(packageDir, "content", "env"));
     fs.writeFileSync(path.join(packageDir, "descriptor.json"), JSON.stringify({ replaceMap: [] }));
     fs.writeFileSync(
       path.join(packageDir, "pipeline.json"),
-      JSON.stringify({ pipeline: "default", steps: [] })
+      JSON.stringify({
+        pipeline: "default",
+        render: {
+          filters: [
+            {
+              when: "!featureFlag('TEST_SANDBOX')",
+              exclude: [
+                "m365agents.sandbox.yml",
+                "teamsapp.sandbox.yml",
+                "env/.env.sandbox",
+                "env/.env.sandbox.user",
+              ],
+            },
+          ],
+        },
+        steps: [],
+      })
     );
     fs.writeFileSync(path.join(packageDir, "content", "keep.txt"), "keep");
     fs.writeFileSync(path.join(packageDir, "content", "m365agents.sandbox.yml.tpl"), "sandbox yml");

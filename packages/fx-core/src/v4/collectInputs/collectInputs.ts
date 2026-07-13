@@ -3,23 +3,12 @@
 
 import { FxError, SystemError, UserError } from "@microsoft/teamsfx-api";
 import { Result, err, ok } from "neverthrow";
-import { EvalValue, ExpressionNode, NULL_VALUE, Scope } from "../expression/evaluateExpression";
+import { ConditionNode, EvalValue, NULL_VALUE, Scope } from "../expression/evaluateExpression";
 import { Answers } from "../model/dataModel";
 
 /** v4 input collection: native questions to answers. See collect-inputs spec and ADR-0016. */
 
 const SOURCE = "Scaffold";
-
-/** v4-local language labels; importing the v3 label map would break isolation. */
-const LANGUAGE_LABELS: Record<string, string> = {
-  javascript: "JavaScript",
-  typescript: "TypeScript",
-  csharp: "C#",
-  python: "Python",
-};
-
-/** An authored visibility / value guard — the same closed form the evaluator parses. */
-export type ConditionNode = ExpressionNode;
 
 /** Identity-only option; computed values flow through provider `derived.*`. */
 export interface OptionItem {
@@ -28,6 +17,7 @@ export interface OptionItem {
   description?: string;
   detail?: string;
   groupName?: string;
+  iconPath?: string;
   condition?: ConditionNode;
   keyPrefix?: string;
 }
@@ -69,6 +59,7 @@ export interface QuestionSpec {
   placeholder?: string;
   prompt?: string;
   default?: string;
+  password?: boolean;
   filters?: Record<string, string[]>;
   inputOptionItem?: OptionItem;
   inputBoxConfig?: InputBoxConfig;
@@ -109,8 +100,29 @@ export type Validator = (
 
 export type PromptValidation = (value: string) => string | undefined | Promise<string | undefined>;
 
-/** One prompt's outcome: a chosen value or the host's `back` request. */
-export type Asked<T> = { kind: "value"; value: T } | { kind: "back" };
+/** One prompt's outcome: a chosen value, a surface auto-skip, or the host's `back` request. */
+export type Asked<T> = { kind: "value"; value: T } | { kind: "skip"; value: T } | { kind: "back" };
+
+/** One resumable walk's history entry (opaque to cross-phase callers). */
+export interface WalkHistoryEntry {
+  pos: number;
+  answers: Answers;
+}
+
+/** The resumable walk's outcome: a completed answer set, or a `back` handed to the caller. */
+export type WalkOutcome =
+  | { kind: "done"; answers: Answers; history: WalkHistoryEntry[]; promptCount: number }
+  | { kind: "back"; history: WalkHistoryEntry[]; promptCount: number };
+
+/** Options for the resumable walk (the cross-phase back primitive; see collect-inputs INV-9). */
+export interface WalkOptions {
+  /** Added to the 1-based shown step so a later phase continues an earlier phase's numbering. */
+  baseStep?: number;
+  /** Resume a prior walk by re-entering its last prompted question via `back`. */
+  resume?: { history: WalkHistoryEntry[] };
+  /** When true, a `back` past the first prompt returns `{ kind: "back" }` instead of cancelling. */
+  backable?: boolean;
+}
 
 /** Surface-neutral prompt driver. */
 export interface PromptUI {
@@ -136,10 +148,6 @@ export interface CollectInputsPort {
   optionsProvider(providerId: string): OptionsProvider | undefined;
   validator(name: string): Validator | undefined;
   evaluate(node: ConditionNode, scope: Scope): Result<EvalValue, FxError>;
-}
-
-export interface CollectInputsOptions {
-  appendLanguage?: boolean;
 }
 
 /** `SystemError` names for engine-side input collection breaks. */
@@ -172,17 +180,21 @@ function missingNonInteractiveAnswer(questionName: string): UserError {
   });
 }
 
-/** Walk one template's questions into the resolved answer object. */
-export async function collectInputs(
+/**
+ * Walk one phase's questions into a resumable outcome — the shared cross-phase
+ * back primitive (collect-inputs INV-9). `baseStep` offsets the shown step so a
+ * later phase continues an earlier phase's numbering; `backable` turns a `back`
+ * past the first prompt into a `{ kind: "back" }` outcome instead of cancelling;
+ * `resume` re-enters a prior walk's history at its last prompted question.
+ */
+export async function walkInputs(
   questions: QuestionSpec[],
   optionsSchema: OptionsSchema,
   entryParams: Answers,
-  languages: string[],
   port: CollectInputsPort,
-  options: CollectInputsOptions = {}
-): Promise<Result<Answers, FxError>> {
-  // Pre-filled entry params must be visible to question conditions.
-  let answers: Answers = { ...entryParams };
+  walkOptions: WalkOptions = {}
+): Promise<Result<WalkOutcome, FxError>> {
+  const baseStep = walkOptions.baseStep ?? 0;
   const declared = Object.keys(optionsSchema.properties ?? {});
   // Cache providers by normalized params for a single run.
   const providerCache = new Map<string, Promise<ResolvedOptions>>();
@@ -190,50 +202,28 @@ export async function collectInputs(
   const resolvedProviders = new Set<string>();
 
   // Back history snapshots only prompted steps; skipped and pre-filled steps are crossed over.
-  const history: { pos: number; answers: Answers }[] = [];
+  const history: WalkHistoryEntry[] =
+    walkOptions.resume !== undefined ? [...walkOptions.resume.history] : [];
 
-  // Authored questions are asked first; the language axis is appended after Q2 by default.
-  const appendLanguage = options.appendLanguage ?? true;
-  let pos = 0;
-  while (pos < questions.length || (appendLanguage && pos === questions.length)) {
-    if (pos === questions.length) {
-      // A non-singleton language list prompts; `["common"]` has no axis.
-      if (languages.length > 1) {
-        if (typeof answers.language === "string") {
-          pos++;
-          continue;
-        }
-        const langQuestion: QuestionSpec = {
-          name: "language",
-          type: "singleSelect",
-          title: "Programming Language",
-        };
-        const asked = await port.ui.ask(
-          langQuestion,
-          languages.map((l) => ({ id: l, label: LANGUAGE_LABELS[l] ?? l })),
-          history.length + 1
-        );
-        if (asked.isErr()) {
-          return err(asked.error);
-        }
-        if (asked.value.kind === "back") {
-          const restore = history.pop();
-          if (restore === undefined) {
-            return err(walkCancelled());
-          }
-          answers = restore.answers;
-          pos = restore.pos;
-          continue;
-        }
-        history.push({ pos: 0, answers: { ...answers } });
-        answers.language = asked.value.value;
-      } else if (languages.length === 1 && languages[0] !== "common") {
-        answers.language = languages[0];
-      }
-      pos++;
-      continue;
+  let answers: Answers;
+  let pos: number;
+  if (walkOptions.resume !== undefined) {
+    // Re-enter the resumed walk at its last prompted question (one `back`).
+    const restore = history.pop();
+    if (restore === undefined) {
+      return walkOptions.backable === true
+        ? ok({ kind: "back", history: [], promptCount: 0 })
+        : err(walkCancelled());
     }
+    answers = { ...restore.answers };
+    pos = restore.pos;
+  } else {
+    // Pre-filled entry params must be visible to question conditions.
+    answers = { ...entryParams };
+    pos = 0;
+  }
 
+  while (pos < questions.length) {
     const q = questions[pos];
 
     // Keep the schema invariant guarded at runtime too.
@@ -336,13 +326,16 @@ export async function collectInputs(
 
     // multiSelect must preserve its typed string[] answer.
     if (q.type === "multiSelect") {
-      const picked = await port.ui.askMulti(q, options, history.length + 1);
+      const picked = await port.ui.askMulti(q, options, baseStep + history.length + 1);
       if (picked.isErr()) {
         return err(picked.error);
       }
       if (picked.value.kind === "back") {
         const restore = history.pop();
         if (restore === undefined) {
+          if (walkOptions.backable === true) {
+            return ok({ kind: "back", history: [], promptCount: 0 });
+          }
           return err(walkCancelled());
         }
         answers = restore.answers;
@@ -360,7 +353,10 @@ export async function collectInputs(
           return err(mergeResult.error);
         }
       }
-      history.push({ pos, answers: { ...answers } });
+      // A surface auto-skip (skipSingleOption) records the answer but is not a back-stop.
+      if (picked.value.kind === "value") {
+        history.push({ pos, answers: { ...answers } });
+      }
       answers[q.name] = picked.value.value;
       pos++;
       continue;
@@ -381,13 +377,22 @@ export async function collectInputs(
       return err(inputBoxValidationResult.error);
     }
     const inputBoxValidation = inputBoxValidationResult.value;
-    const asked = await port.ui.ask(q, options, history.length + 1, validation, inputBoxValidation);
+    const asked = await port.ui.ask(
+      q,
+      options,
+      baseStep + history.length + 1,
+      validation,
+      inputBoxValidation
+    );
     if (asked.isErr()) {
       return err(asked.error);
     }
     if (asked.value.kind === "back") {
       const restore = history.pop();
       if (restore === undefined) {
+        if (walkOptions.backable === true) {
+          return ok({ kind: "back", history: [], promptCount: 0 });
+        }
         return err(walkCancelled());
       }
       answers = restore.answers;
@@ -408,12 +413,36 @@ export async function collectInputs(
       }
     }
 
-    history.push({ pos, answers: { ...answers } });
+    // A surface auto-skip (skipSingleOption) records the answer but is not a back-stop,
+    // so `back` at a later prompt crosses over it (matching a static skipSingleOption skip).
+    if (asked.value.kind === "value") {
+      history.push({ pos, answers: { ...answers } });
+    }
     answers[q.name] = value;
     pos++;
   }
 
-  return ok(answers);
+  return ok({ kind: "done", answers, history, promptCount: history.length });
+}
+
+/**
+ * Walk one template's questions into the resolved answer object — the stable
+ * non-resumable entry over {@link walkInputs} (no step offset, no resume,
+ * `backable` off), so a `back` past the first prompt cancels (INPUT-18) and the
+ * result is the plain answer object. Preserves the pre-cross-phase contract.
+ */
+export async function collectInputs(
+  questions: QuestionSpec[],
+  optionsSchema: OptionsSchema,
+  entryParams: Answers,
+  port: CollectInputsPort
+): Promise<Result<Answers, FxError>> {
+  const outcome = await walkInputs(questions, optionsSchema, entryParams, port);
+  if (outcome.isErr()) {
+    return err(outcome.error);
+  }
+  // `backable` is off here, so the walk cancels rather than returning a top-level back.
+  return outcome.value.kind === "back" ? err(walkCancelled()) : ok(outcome.value.answers);
 }
 
 function resolveQuestionValidation(

@@ -6,14 +6,23 @@ import fs from "fs-extra";
 import os from "os";
 import path from "path";
 import { featureFlagManager, FeatureFlags } from "../../common/featureFlags";
+import templateConfig from "../../common/templates-config.json";
 
 const packageJson = require("../../../package.json");
 
 /**
- * Determines whether to use local templates based on environment variables and package version.
+ * Determines whether to use local (in-tree, bundled) templates & metadata.
  * Returns true if:
  * - TEMPLATE_VERSION env variable is set to "local", OR
- * - Package version contains "alpha" (daily build version)
+ * - Package version contains "alpha" (daily build version), OR
+ * - The build-time `useLocalTemplate` flag in templates-config.json is true.
+ *
+ * The `useLocalTemplate` flag is committed `true` on dev and only flipped to
+ * `false` for a stable production release (see
+ * `.github/scripts/fxcore-sync-up-version.js`), so dev / PR / prerelease builds
+ * always read the bundled templates & metadata, keeping every CD-built vsix
+ * self-contained. An explicit non-"local" TEMPLATE_VERSION still forces a
+ * download of that specific version.
  */
 export function useLocalTemplate(): boolean {
   const templateVersionEnv = process.env["TEMPLATE_VERSION"];
@@ -25,8 +34,12 @@ export function useLocalTemplate(): boolean {
     // daily build version
     return true;
   }
+  if (templateVersionEnv) {
+    // An explicit template version is requested → download that version.
+    return false;
+  }
 
-  return false;
+  return templateConfig.useLocalTemplate === true;
 }
 
 /**

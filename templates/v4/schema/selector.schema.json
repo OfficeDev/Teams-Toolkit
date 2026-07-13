@@ -13,7 +13,7 @@
       "items": {
         "comment": "A Q1 selector question is single-select only: it presents a closed staticOptions set and routes to exactly one template. The other input kinds (text / confirm / singleFile / folder / singleFileOrText / multiSelect) are Q2 (template) or general-input concerns, not routing dimensions, and the Q1 walk only renders staticOptions picks.",
         "allOf": [
-          { "$ref": "./question.schema.json#/$defs/question" },
+          { "$ref": "./questions.schema.json#/$defs/question" },
           { "properties": { "type": { "const": "singleSelect" } } }
         ]
       }
@@ -30,9 +30,8 @@
       "required": ["when", "engine"],
       "properties": {
         "when": { "type": "string" },
-        "engine": { "type": "string", "enum": ["v4", "v3", "v3-core-method", "surface-action"] },
+        "engine": { "type": "string", "enum": ["v4", "v3-core-method", "surface-action"] },
         "templateId": { "type": "string" },
-        "v3Adapter": { "type": "string" },
         "coreMethod": { "type": "string" },
         "action": { "type": "string" },
         "surfaces": {
@@ -47,43 +46,29 @@
           "then": {
             "required": ["templateId"],
             "not": { "anyOf": [
-              { "required": ["v3Adapter"] },
               { "required": ["coreMethod"] },
               { "required": ["action"] }
             ] }
           }
         },
         {
-          "comment": "engine v3 → v3Adapter (resolved IGenerator leaf) required; no core-method / surface-action key.",
-          "if": { "properties": { "engine": { "const": "v3" } } },
-          "then": {
-            "required": ["v3Adapter"],
-            "not": { "anyOf": [
-              { "required": ["coreMethod"] },
-              { "required": ["action"] }
-            ] }
-          }
-        },
-        {
-          "comment": "engine v3-core-method → coreMethod (an fx-core method like addPlugin, not an IGenerator) required. The modify seam: shipped add-* paths are core methods/drivers, not generators, so v3Adapter's IGenerator-class semantics don't transfer. No templateId / v3Adapter / surface key.",
+          "comment": "engine v3-core-method → coreMethod (an fx-core method like addPlugin, not an IGenerator) required. The modify seam: shipped add-* paths are core methods/drivers, not generators. No templateId / surface key.",
           "if": { "properties": { "engine": { "const": "v3-core-method" } } },
           "then": {
             "required": ["coreMethod"],
             "not": { "anyOf": [
               { "required": ["templateId"] },
-              { "required": ["v3Adapter"] },
               { "required": ["action"] }
             ] }
           }
         },
         {
-          "comment": "engine surface-action → action required; scaffolds nothing (no templateId / v3 keys).",
+          "comment": "engine surface-action → action required; scaffolds nothing (no templateId / core-method key).",
           "if": { "properties": { "engine": { "const": "surface-action" } } },
           "then": {
             "required": ["action"],
             "not": { "anyOf": [
               { "required": ["templateId"] },
-              { "required": ["v3Adapter"] },
               { "required": ["coreMethod"] }
             ] }
           }

@@ -1,54 +1,30 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import {
-  FuncValidation,
-  FxError,
-  Inputs,
-  SystemError,
-  UserError,
-  UserInteraction,
-} from "@microsoft/teamsfx-api";
-import { ListAPIInfo, Utils } from "@microsoft/m365-spec-parser";
-import fs from "fs-extra";
+import { FxError, Inputs, UserError, UserInteraction } from "@microsoft/teamsfx-api";
 import { Result, err, ok } from "neverthrow";
 import { MCPFetchResult, fetchMCPTools } from "../../component/utils/mcpToolFetcher";
 import { ODRProvider, type ODRServer } from "../../component/utils/odrProvider";
 import { readBooleanFeatureFlag } from "../../common/featureFlags";
-import { getLocalizedString } from "../../common/localizeUtils";
-import { listAPIInfo } from "../../common/daSpecParser";
 import { SearchOpenAPISpecResult, searchOpenAPISpec } from "../../common/kiotaClient";
-import { isValidHttpUrl } from "../../common/stringUtils";
 import {
   CollectInputsPort,
-  OptionItem,
   OptionsProvider,
   OptionsSchema,
-  QuestionSpec,
-  Validator,
-  collectInputs,
+  walkInputs,
 } from "../collectInputs/collectInputs";
-import { InputValidationError, MissingRequiredInputError } from "../../error/common";
-import { QuestionNames, appNameQuestion, folderQuestion } from "../../question";
 import { openDeclarativePackageMetadata } from "../distribution/declarativePackage";
 import { evaluateExpression } from "../expression/evaluateExpression";
-import { parseMcpStaticToolsJson } from "../mcp/mcpStaticTools";
 import { Answers, DeclarativeLocator } from "../model/dataModel";
+import { createDefaultCreateOptionsProviders } from "../providers/createOptionsProviders";
 import { parseDeclaredKeys } from "../runtime/packageParse";
 import { createExpressionPort } from "../runtime/whitelist";
+import { createDefaultCreateInputValidators } from "../validators/createInputValidators";
+import { createFloorTail, validateCreateFloorAnswers } from "./createFloorTail";
 import { createUiPromptUI } from "./uiPromptUI";
 
 /** Live create-path surface wiring for `collect-inputs`. See collect-create-inputs spec. */
 
-const remoteMcpServerType = { id: "remote", label: "Remote" };
-const localMcpServerType = { id: "local", label: "Local" };
-const LANGUAGE_LABELS: Record<string, string> = {
-  javascript: "JavaScript",
-  typescript: "TypeScript",
-  csharp: "C#",
-  python: "Python",
-};
-const PYTHON_LANGUAGE = "python";
 const TEAMS_AGENTS_AND_APPS_TEMPLATE_IDS = new Set([
   "custom-copilot-basic",
   "custom-copilot-rag-azure-ai-search",
@@ -60,463 +36,8 @@ const TEAMS_AGENTS_AND_APPS_TEMPLATE_IDS = new Set([
   "teams-collaborator-agent",
 ]);
 
-function languageOption(language: string, showPythonPreview: boolean): OptionItem {
-  return {
-    id: language,
-    label: LANGUAGE_LABELS[language] ?? language,
-    description:
-      showPythonPreview && language === PYTHON_LANGUAGE
-        ? getLocalizedString("core.createProjectQuestion.option.description.preview")
-        : undefined,
-  };
-}
-
 function showsPythonPreview(templateId: string): boolean {
   return TEAMS_AGENTS_AND_APPS_TEMPLATE_IDS.has(templateId);
-}
-
-function createLocalServerCache(
-  listLocalMcpServers: () => Promise<ODRServer[]>
-): () => Promise<ODRServer[]> {
-  let cached: Promise<ODRServer[]> | undefined;
-  return () => {
-    if (cached === undefined) {
-      cached = listLocalMcpServers();
-    }
-    return cached;
-  };
-}
-
-function createMcpServerTypesProvider(localServers: () => Promise<ODRServer[]>): OptionsProvider {
-  return {
-    async fetch() {
-      const servers = await localServers();
-      return {
-        options:
-          servers.length > 0 ? [remoteMcpServerType, localMcpServerType] : [remoteMcpServerType],
-      };
-    },
-  };
-}
-
-function localServerDetail(server: ODRServer): string {
-  const toolsDetail = `${server.tools.length} tools available`;
-  return server.description ? `${server.description} (${toolsDetail})` : toolsDetail;
-}
-
-function createLocalMcpServersProvider(localServers: () => Promise<ODRServer[]>): OptionsProvider {
-  return {
-    async fetch() {
-      const servers = await localServers();
-      return {
-        options: servers.map((server) => ({
-          id: server.name,
-          label: server.display_name || server.name,
-          detail: localServerDetail(server),
-        })),
-      };
-    },
-  };
-}
-
-function operationDetail(operation: ListAPIInfo): string {
-  if (!operation.auth) {
-    return "No authentication";
-  }
-  if (Utils.isBearerTokenAuth(operation.auth.authScheme)) {
-    return "API key";
-  }
-  if (Utils.isOAuthWithAuthCodeFlow(operation.auth.authScheme)) {
-    return "OAuth";
-  }
-  if (Utils.isAPIKeyAuthButNotInCookie(operation.auth.authScheme)) {
-    return "API key with header or query parameter";
-  }
-  return "Unsupported authentication";
-}
-
-function sortOperations(operations: ListAPIInfo[]): ListAPIInfo[] {
-  return [...operations].sort((left, right) => {
-    const leftParts = left.api.toLowerCase().split(" ");
-    const rightParts = right.api.toLowerCase().split(" ");
-    if (leftParts[0] < rightParts[0]) {
-      return -1;
-    }
-    if (leftParts[0] > rightParts[0]) {
-      return 1;
-    }
-    return (leftParts[1] ?? "").localeCompare(rightParts[1] ?? "");
-  });
-}
-
-const openApiOperationsProvider: OptionsProvider = {
-  async fetch(params) {
-    const apiSpecLocation = params.apiSpecLocation?.trim();
-    if (!apiSpecLocation) {
-      throw new SystemError({
-        source: "Scaffold",
-        name: "OpenApiMissingSpecLocation",
-        message: "OpenAPI operations cannot be listed without an API spec location.",
-      });
-    }
-    let listed: Awaited<ReturnType<typeof listAPIInfo>>;
-    try {
-      listed = await listAPIInfo(apiSpecLocation);
-    } catch {
-      throw new UserError({
-        source: "Scaffold",
-        name: "OpenApiSpecInvalid",
-        message: "The OpenAPI description document is invalid or contains no supported operations.",
-      });
-    }
-    const operations = sortOperations(listed.APIs).filter((operation) => operation.isValid);
-    if (operations.length === 0) {
-      throw new UserError({
-        source: "Scaffold",
-        name: "OpenApiSpecInvalid",
-        message: "The OpenAPI description document is invalid or contains no supported operations.",
-      });
-    }
-    return {
-      options: operations.map((operation) => ({
-        id: operation.api,
-        label: operation.api,
-        groupName: operation.api.toUpperCase().split(" ")[0],
-        detail: operationDetail(operation),
-      })),
-    };
-  },
-};
-
-function createOpenApiSearchProvider(
-  searchApiSpec: (query: string) => Promise<SearchOpenAPISpecResult[]>
-): OptionsProvider {
-  return {
-    async fetch(params) {
-      const query = params.query?.trim();
-      if (!query) {
-        throw new UserError({
-          source: "Scaffold",
-          name: "OpenApiSearchQueryMissing",
-          message: "Please enter a search query.",
-        });
-      }
-      const results = await searchApiSpec(query);
-      if (results.length === 0) {
-        throw new UserError({
-          source: "Scaffold",
-          name: "OpenApiSearchResultNotFound",
-          message: "No search result found.",
-        });
-      }
-      return {
-        options: results.map((api) => ({
-          id: api.url,
-          label: api.key,
-          detail: api.description,
-        })),
-      };
-    },
-  };
-}
-
-function mcpToolsJsonFromFetchResult(
-  serverUrl: string | undefined,
-  result: MCPFetchResult
-): string {
-  if (result.requiresAuth) {
-    throw new UserError({
-      source: "Scaffold",
-      name: "McpAuthRequired",
-      message: `The MCP server${serverUrl ? ` at ${serverUrl}` : ""} requires authentication.`,
-    });
-  }
-  if (result.tools.length === 0) {
-    throw new UserError({
-      source: "Scaffold",
-      name: "McpToolsNotFound",
-      message: `No tools were discovered from the MCP server${serverUrl ? ` at ${serverUrl}` : ""}.`,
-    });
-  }
-  return JSON.stringify({ tools: result.tools });
-}
-
-function createMcpToolsProvider(
-  fetchTools: (serverUrl: string) => Promise<MCPFetchResult>
-): OptionsProvider {
-  return {
-    async fetch(params) {
-      let toolsJson = params.toolsJson?.trim();
-      const toolsFilePath = params.toolsFilePath?.trim();
-      if (!toolsJson && toolsFilePath) {
-        try {
-          toolsJson = fs.readFileSync(toolsFilePath, "utf8");
-        } catch {
-          throw new UserError({
-            source: "Scaffold",
-            name: "McpToolsFileReadFailed",
-            message: "Failed to read the MCP tools file.",
-          });
-        }
-      }
-      const serverUrl = params.serverUrl?.trim();
-      if (!toolsJson && serverUrl) {
-        try {
-          toolsJson = mcpToolsJsonFromFetchResult(serverUrl, await fetchTools(serverUrl));
-        } catch (error) {
-          if (error instanceof UserError) {
-            throw error;
-          }
-          throw new UserError({
-            source: "Scaffold",
-            name: "McpToolsFetchFailed",
-            message: `Failed to fetch tools from the MCP server at ${serverUrl}.`,
-          });
-        }
-      }
-      if (!toolsJson) {
-        throw new UserError({
-          source: "Scaffold",
-          name: "McpToolsJsonMissing",
-          message: "MCP tools JSON is required before listing tools.",
-        });
-      }
-      const parsed = parseMcpStaticToolsJson(toolsJson);
-      if (!parsed.ok) {
-        throw new UserError({ source: "Scaffold", name: parsed.code, message: parsed.message });
-      }
-      return {
-        options: parsed.tools.map((tool) => ({
-          id: tool.name,
-          label: tool.name,
-          detail: tool.description,
-        })),
-        derived: { toolsJson },
-      };
-    },
-  };
-}
-
-/** Default `optionsFrom` provider registry. */
-function createDefaultProviders(
-  fetchTools: (serverUrl: string) => Promise<MCPFetchResult>,
-  listLocalMcpServers: () => Promise<ODRServer[]>,
-  searchApiSpec: (query: string) => Promise<SearchOpenAPISpecResult[]>
-): Record<string, OptionsProvider> {
-  const localServers = createLocalServerCache(listLocalMcpServers);
-  return {
-    "mcp.serverTypes": createMcpServerTypesProvider(localServers),
-    "mcp.localServers": createLocalMcpServersProvider(localServers),
-    "mcp.tools": createMcpToolsProvider(fetchTools),
-    "openapi.search": createOpenApiSearchProvider(searchApiSpec),
-    "openapi.operations": openApiOperationsProvider,
-  };
-}
-
-/** The `"uri"` validator: a value that does not parse as a URL is user-fixable. */
-const uriValidator: Validator = (value: string): string | undefined => {
-  try {
-    new URL(value);
-    return undefined;
-  } catch {
-    return "must be a valid URI";
-  }
-};
-
-/** The OpenAPI URL entry in the combined file-or-input picker accepts HTTP(S) URLs only. */
-const openApiUrlValidator: Validator = (value: string): string | undefined => {
-  return isValidHttpUrl(value.trim())
-    ? undefined
-    : getLocalizedString("core.createProjectQuestion.invalidUrl.message");
-};
-
-/** The graph connector display name cannot be empty. */
-const graphConnectorNameValidator: Validator = (value: string): string | undefined => {
-  return value.trim().length > 0 ? undefined : "must not be empty";
-};
-
-/** The Microsoft Graph external connection id rules mirrored from the v3 question. */
-const graphConnectorConnectionIdValidator: Validator = (value: string): string | undefined => {
-  const trimmed = value.trim();
-  if (trimmed.length < 3) {
-    return "must be at least 3 characters";
-  }
-  if (trimmed.length > 32) {
-    return "must be at most 32 characters";
-  }
-  if (!/^[a-zA-Z0-9]+$/.test(trimmed)) {
-    return "must contain only alphanumeric characters";
-  }
-  const reservedPrefixes = [
-    "Microsoft",
-    "None",
-    "Directory",
-    "Exchange",
-    "ExchangeArchive",
-    "LinkedIn",
-    "Mailbox",
-    "OneDriveBusiness",
-    "SharePoint",
-    "Teams",
-    "Yammer",
-    "Connectors",
-    "TaskFabric",
-    "PowerBI",
-    "Assistant",
-    "TopicEngine",
-    "MSFT_All_Connectors",
-  ];
-  const matchedPrefix = reservedPrefixes.find((prefix) =>
-    trimmed.toLowerCase().startsWith(prefix.toLowerCase())
-  );
-  return matchedPrefix === undefined ? undefined : `must not begin with '${matchedPrefix}'`;
-};
-
-/** Engine-registered validator registry. */
-const validators: Record<string, Validator> = {
-  uri: uriValidator,
-  openapiUrl: openApiUrlValidator,
-  graphConnectorName: graphConnectorNameValidator,
-  graphConnectorConnectionId: graphConnectorConnectionIdValidator,
-};
-
-interface CreateFloorTail {
-  questions: QuestionSpec[];
-  answers: Answers;
-  validators: Record<string, Validator>;
-}
-
-function isFuncValidation(value: unknown): value is FuncValidation<string> {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    typeof Reflect.get(value, "validFunc") === "function"
-  );
-}
-
-function getStringValidationFunc(
-  validation: FuncValidation<string> | object | undefined
-): FuncValidation<string>["validFunc"] | undefined {
-  return isFuncValidation(validation) ? validation.validFunc : undefined;
-}
-
-async function resolveStringValue(
-  value:
-    string | ((inputs: Inputs) => string | undefined | Promise<string | undefined>) | undefined,
-  inputs: Inputs
-): Promise<string | undefined> {
-  return typeof value === "function" ? await value(inputs) : value;
-}
-
-async function createFloorTail(
-  inputs: Inputs | undefined,
-  languages: string[],
-  showPythonPreview: boolean
-): Promise<Result<CreateFloorTail, FxError>> {
-  const questions: QuestionSpec[] = [];
-  const answers: Answers = {};
-
-  if (languages.length > 1) {
-    questions.push({
-      name: "language",
-      type: "singleSelect",
-      title: "Programming Language",
-      default: languages[0],
-      staticOptions: languages.map((language) => languageOption(language, showPythonPreview)),
-    });
-  } else if (languages.length === 1 && languages[0] !== "common") {
-    answers.language = languages[0];
-  }
-
-  if (inputs === undefined) {
-    return ok({ questions, answers, validators: {} });
-  }
-
-  const folder = folderQuestion();
-  const appName = appNameQuestion();
-
-  const existingFolder = inputs[QuestionNames.Folder];
-  if (typeof existingFolder === "string") {
-    answers[QuestionNames.Folder] = existingFolder;
-  } else {
-    const defaultFolder = await resolveStringValue(folder.default, inputs);
-    if (inputs.nonInteractive) {
-      if (defaultFolder !== undefined) {
-        answers[QuestionNames.Folder] = defaultFolder;
-      }
-    } else {
-      questions.push({
-        name: folder.name,
-        type: "folder",
-        title: (await resolveStringValue(folder.title, inputs)) ?? folder.name,
-        placeholder: await resolveStringValue(folder.placeholder, inputs),
-        prompt: await resolveStringValue(folder.prompt, inputs),
-        default: defaultFolder,
-      });
-    }
-  }
-
-  const existingAppName = inputs[QuestionNames.AppName];
-  if (typeof existingAppName === "string") {
-    answers[QuestionNames.AppName] = existingAppName;
-  } else {
-    const defaultAppName = await resolveStringValue(appName.default, inputs);
-    if (inputs.nonInteractive) {
-      if (defaultAppName === undefined) {
-        return err(new MissingRequiredInputError(QuestionNames.AppName, "createFrontDoor"));
-      }
-      answers[QuestionNames.AppName] = defaultAppName;
-    } else {
-      questions.push({
-        name: appName.name,
-        type: "text",
-        title: (await resolveStringValue(appName.title, inputs)) ?? appName.name,
-        placeholder: await resolveStringValue(appName.placeholder, inputs),
-        prompt: await resolveStringValue(appName.prompt, inputs),
-        default: defaultAppName,
-        validation: "appName",
-      });
-    }
-  }
-
-  const validateAppName = getStringValidationFunc(appName.validation);
-  const floorValidators: Record<string, Validator> = {};
-  if (validateAppName !== undefined) {
-    floorValidators.appName = (value, currentAnswers) => {
-      const validationInputs: Inputs = { ...inputs };
-      const folderAnswer = currentAnswers[QuestionNames.Folder];
-      if (typeof folderAnswer === "string") {
-        validationInputs[QuestionNames.Folder] = folderAnswer;
-      }
-      return validateAppName(value, validationInputs);
-    };
-  }
-
-  return ok({ questions, answers, validators: floorValidators });
-}
-
-async function validateCreateFloorAnswers(
-  inputs: Inputs,
-  answers: Answers
-): Promise<Result<undefined, FxError>> {
-  const appName = answers[QuestionNames.AppName];
-  if (typeof appName !== "string") {
-    return err(new MissingRequiredInputError(QuestionNames.AppName, "createFrontDoor"));
-  }
-  const validateAppName = getStringValidationFunc(appNameQuestion().validation);
-  if (validateAppName === undefined) {
-    return ok(undefined);
-  }
-  const validationInputs: Inputs = { ...inputs };
-  const folderAnswer = answers[QuestionNames.Folder];
-  if (typeof folderAnswer === "string") {
-    validationInputs[QuestionNames.Folder] = folderAnswer;
-  }
-  const message = await validateAppName(appName, validationInputs);
-  if (message !== undefined) {
-    return err(new InputValidationError(QuestionNames.AppName, message, "createFrontDoor"));
-  }
-  return ok(undefined);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -582,16 +103,28 @@ export interface CreateInputsDeps {
   listLocalMcpServers?: () => Promise<ODRServer[]>;
   /** Search public OpenAPI descriptions for the v3-compatible OpenAPI source picker. */
   searchOpenAPISpec?: (query: string) => Promise<SearchOpenAPISpecResult[]>;
+  /** Continue Q1's step numbering (its `promptCount`) so Q2's first prompt shows a Back button. */
+  baseStep?: number;
+  /** When true, a back past Q2's first prompt returns `{ kind: "back" }` (the front door re-enters Q1). */
+  backable?: boolean;
 }
 
-/** Run one create template's Q2 over the host surface. */
-export async function runCreateInputs(
+/** The create-input walk's outcome: completed answers, or a `back` for the front door's re-entry loop. */
+export type CreateInputsOutcome = { kind: "done"; answers: Answers } | { kind: "back" };
+
+/**
+ * Run one create template's Q2 + common floor over the host surface, returning a
+ * resumable outcome. `deps.baseStep` continues Q1's step numbering and
+ * `deps.backable` turns a back past the first prompt into a `{ kind: "back" }`
+ * outcome (the front door then re-enters Q1). See collect-create-inputs CCI-25/26.
+ */
+export async function runCreateInputsWalk(
   floorBytes: Buffer,
   locator: DeclarativeLocator,
   entryParams: Answers,
   ui: UserInteraction,
   deps: CreateInputsDeps = {}
-): Promise<Result<Answers, FxError>> {
+): Promise<Result<CreateInputsOutcome, FxError>> {
   const opened = openDeclarativePackageMetadata(floorBytes, locator);
   if (opened.isErr()) {
     return err(opened.error);
@@ -604,7 +137,7 @@ export async function runCreateInputs(
   );
 
   const providers = {
-    ...createDefaultProviders(
+    ...createDefaultCreateOptionsProviders(
       deps.fetchMcpTools ?? fetchMCPTools,
       deps.listLocalMcpServers ?? ODRProvider.listServers,
       deps.searchOpenAPISpec ?? searchOpenAPISpec
@@ -621,7 +154,10 @@ export async function runCreateInputs(
   if (floorTail.isErr()) {
     return err(floorTail.error);
   }
-  const validatorRegistry = { ...validators, ...floorTail.value.validators };
+  const validatorRegistry = {
+    ...createDefaultCreateInputValidators(),
+    ...floorTail.value.validators,
+  };
   const port: CollectInputsPort = {
     ui: createUiPromptUI(ui),
     optionsProvider: (providerId) => providers[providerId],
@@ -635,27 +171,61 @@ export async function runCreateInputs(
     nonInteractive: deps.inputs?.nonInteractive === true ? "true" : "false",
   };
 
-  const answers = await collectInputs(
+  const walked = await walkInputs(
     [...opened.value.questions, ...floorTail.value.questions],
     declaredOptionsSchema(descriptor),
     initialAnswers,
-    languages,
     port,
-    { appendLanguage: false }
+    { baseStep: deps.baseStep, backable: deps.backable }
   );
-  if (answers.isErr()) {
-    return err(answers.error);
+  if (walked.isErr()) {
+    return err(walked.error);
   }
-  delete answers.value.nonInteractive;
-  const selectedOpenApiSpec = answers.value.selectOpenApiSpec;
-  if (answers.value.apiSpecLocation === undefined && typeof selectedOpenApiSpec === "string") {
-    answers.value.apiSpecLocation = selectedOpenApiSpec;
+  if (walked.value.kind === "back") {
+    return ok({ kind: "back" });
+  }
+  const answers = walked.value.answers;
+  delete answers.nonInteractive;
+  const selectedOpenApiSpec = answers.selectOpenApiSpec;
+  if (answers.apiSpecLocation === undefined && typeof selectedOpenApiSpec === "string") {
+    answers.apiSpecLocation = selectedOpenApiSpec;
   }
   if (deps.inputs !== undefined) {
-    const validation = await validateCreateFloorAnswers(deps.inputs, answers.value);
+    const validation = await validateCreateFloorAnswers(deps.inputs, answers);
     if (validation.isErr()) {
       return err(validation.error);
     }
   }
-  return answers;
+  return ok({ kind: "done", answers });
+}
+
+/**
+ * Run one create template's Q2 over the host surface — the stable non-resumable
+ * entry over {@link runCreateInputsWalk} (`backable` off), so a back past the
+ * first prompt cancels and the result is the plain `Answers`.
+ */
+export async function runCreateInputs(
+  floorBytes: Buffer,
+  locator: DeclarativeLocator,
+  entryParams: Answers,
+  ui: UserInteraction,
+  deps: CreateInputsDeps = {}
+): Promise<Result<Answers, FxError>> {
+  const outcome = await runCreateInputsWalk(floorBytes, locator, entryParams, ui, {
+    ...deps,
+    backable: false,
+  });
+  if (outcome.isErr()) {
+    return err(outcome.error);
+  }
+  // `backable` is forced off here, so the walk cancels rather than returning a top-level back.
+  return outcome.value.kind === "back"
+    ? err(
+        new UserError({
+          source: "Scaffold",
+          name: "InputWalkCancelled",
+          message: "the input walk was cancelled by going back from the first question",
+        })
+      )
+    : ok(outcome.value.answers);
 }

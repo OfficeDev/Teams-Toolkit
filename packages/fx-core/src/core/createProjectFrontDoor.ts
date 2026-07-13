@@ -15,12 +15,14 @@ import { Result, err, ok } from "neverthrow";
 import {
   Answers,
   BuildTarget,
+  CreateSelectorDeps,
   DeclarativeLocator,
   TemplateArtifactKind,
   TemplateArtifactSnapshot,
+  WalkHistoryEntry,
   bundledFloorDir,
   resolveCreateTargetByTemplateId,
-  runCreateInputs,
+  runCreateInputsWalk,
   runCreateSelector,
   templateSourceFromArtifactSnapshot,
 } from "../v4";
@@ -42,10 +44,8 @@ import { QuestionNames } from "../question/questionNames";
  *   - `v4`             → run the template's own Q2 (`runCreateInputs`) over the
  *                        same floor, with the create floor appended to the same
  *                        walk, then `scaffoldV4` the authored package;
- *   - `v3`             → translate the Q1 picks onto the v3 `QuestionNames.*`
- *                        (`applyV3PreFill`, INV-5) and hand off to `createV3`,
- *                        whose `QuestionMW` then skips Q1 and asks only Q2;
  *   - `surface-action` → return the action's surface signal (no scaffold).
+ *   - `v3` / `v3-core-method` → unsupported when the v4 front door is enabled.
  * Flag off is a pure pass-through to the unmodified `createV3` (INV-1): the
  * selector is never walked, so v3 behavior is byte-identical.
  *
@@ -98,15 +98,15 @@ const NON_V4_INPUT_KEYS: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * The create front door's injected seams. `createV3` is required — it is both the
- * flag-off pass-through and the engine=v3 hand-off, and injecting it (rather than
- * importing `FxCore`) keeps this seam free of an import cycle. `scaffoldV4`,
- * `runInputs`, and `applyV3PreFill` are the flag-on hand-offs the
+ * The create front door's injected seams. `createV3` is required for the
+ * flag-off pass-through, and injecting it (rather than importing `FxCore`) keeps
+ * this seam free of an import cycle. `scaffoldV4`, `runInputs`, and the legacy
+ * `collectCreateFloor` seam are the flag-on hand-offs the
  * composition root (`FxCore`) supplies. The remaining members default to the real
  * wiring, so a production caller passes only the four handlers.
  */
 export interface CreateFrontDoorDeps {
-  /** The flag-off pass-through + the engine=v3 hand-off: the unmodified `FxCore.createProject`. */
+  /** The flag-off pass-through: the unmodified `FxCore.createProject`. */
   createV3: (inputs: Inputs) => Promise<Result<CreateProjectResult, FxError>>;
   /** The engine=v4 hand-off: build the scaffold context + run the authored declarative package. */
   scaffoldV4: (
@@ -118,8 +118,6 @@ export interface CreateFrontDoorDeps {
   ) => Promise<Result<CreateProjectResult, FxError>>;
   /** Legacy create-floor seam retained for existing composition wiring; v4 now appends floor questions inside `runInputs`. */
   collectCreateFloor: (inputs: Inputs, ui: UserInteraction) => Promise<Result<undefined, FxError>>;
-  /** The engine=v3 adapter: translate the Q1 dimension picks onto the v3 `QuestionNames.*` (INV-5). */
-  applyV3PreFill: (inputs: Inputs, target: BuildTarget) => void;
   /** The feature-flag reader (default: `featureFlagManager`-backed, so VS Code-settings flags apply). */
   flagReader?: (name: string) => boolean;
   /** The bundled-floor channel-zip reader (default: the shipped `templates.zip`; injectable for tests, INV-6). */
@@ -138,8 +136,8 @@ export interface CreateFrontDoorDeps {
   runSelector?: typeof runCreateSelector;
   /** Resolve a target directly from a preset `template-name`, bypassing Q1 (default: the real `resolveCreateTargetByTemplateId`). */
   resolveByTemplateId?: typeof resolveCreateTargetByTemplateId;
-  /** The Q2 inputs walk (default: the real `runCreateInputs`). */
-  runInputs?: typeof runCreateInputs;
+  /** The Q2 inputs walk (default: the real `runCreateInputsWalk`, returning a resumable outcome). */
+  runInputs?: typeof runCreateInputsWalk;
 }
 
 /** The default `featureFlagManager`-backed reader (a flag is on per its env var / VS Code setting). */
@@ -238,11 +236,19 @@ function dispatchSurfaceAction(target: BuildTarget): Result<CreateProjectResult,
   );
 }
 
+function unsupportedCreateTarget(target: BuildTarget): SystemError {
+  return new SystemError({
+    source: SOURCE,
+    name: "UnsupportedCreateEngine",
+    message: `The create front door does not dispatch the '${target.engine}' engine.`,
+  });
+}
+
 /**
  * Run the create front door for `inputs`, dispatching the resolved engine.
  *
- * @param inputs the v3 create inputs (carries `platform`; mutated in place by the
- *               engine=v3 pre-fill before the hand-off to `createV3`)
+ * @param inputs the create inputs (carries `platform`; mutated in place by the
+ *               v4 floor collection before the hand-off to `scaffoldV4`)
  * @param deps   the injected seams (see `CreateFrontDoorDeps`)
  * @returns the created project (drop-in for `FxCore.createProject`), or a
  *          `UserError` / `SystemError` (a surface cancellation or a route break)
@@ -264,15 +270,87 @@ export async function createProjectFrontDoor(
   let floorBytes: Buffer | undefined;
   const interactive = !inputs.nonInteractive;
 
+  // Dispatch one resolved BuildTarget by its engine (INV-3). Returns a scaffolded
+  // result, or `{ kind: "back" }` when a backable Q2 was exited at its first prompt
+  // (the caller re-enters Q1). `snapshot` / `floorBytes` are read lazily and shared.
+  async function dispatchByEngine(
+    target: BuildTarget,
+    baseStep: number,
+    backable: boolean
+  ): Promise<Result<{ kind: "result"; result: CreateProjectResult } | { kind: "back" }, FxError>> {
+    switch (target.engine) {
+      case "surface-action": {
+        const action = dispatchSurfaceAction(target);
+        return action.isErr() ? err(action.error) : ok({ kind: "result", result: action.value });
+      }
+      case "v3-core-method":
+        return err(unsupportedCreateTarget(target));
+      case "v4": {
+        inputs[QuestionNames.TemplateName] = templateNameForV4(target);
+        const runInputs = deps.runInputs ?? runCreateInputsWalk;
+        const locator: DeclarativeLocator = { kind: "create", templateId: target.templateId };
+        // Q2 + common floor, over the same floor, continuing Q1's step numbering.
+        const entryParams: Answers = {
+          ...(target.answers ?? {}),
+          ...neutralAnswersFromInputs(inputs),
+        };
+        let inputBytes: Buffer;
+        if (snapshot === undefined) {
+          inputBytes = floorBytes ?? (deps.readFloorBytes ?? readBundledFloorBytes)();
+        } else {
+          const metadataBytes = await readSnapshotBytes(snapshot, "metadata");
+          if (metadataBytes.isErr()) {
+            return err(metadataBytes.error);
+          }
+          inputBytes = metadataBytes.value;
+        }
+        const outcome = await runInputs(inputBytes, locator, entryParams, ui, {
+          flagReader,
+          surface,
+          inputs,
+          baseStep,
+          backable,
+        });
+        if (outcome.isErr()) {
+          return err(outcome.error);
+        }
+        if (outcome.value.kind === "back") {
+          return ok({ kind: "back" });
+        }
+        const answers = outcome.value.answers;
+        applyV4CreateFloorAnswers(inputs, answers);
+        // The scaffold contract is a plain BuildTarget; do not leak Q1 walk metadata.
+        const scaffoldTarget: BuildTarget = {
+          templateId: target.templateId,
+          engine: target.engine,
+          answers: target.answers,
+        };
+        if (snapshot !== undefined) {
+          const fullBytes = await readSnapshotBytes(snapshot, "templates");
+          if (fullBytes.isErr()) {
+            return err(fullBytes.error);
+          }
+          const scaffolded = await deps.scaffoldV4(inputs, scaffoldTarget, answers, flagReader, {
+            source: templateSourceFromArtifactSnapshot(snapshot),
+            bytes: fullBytes.value,
+          });
+          return scaffolded.isErr()
+            ? err(scaffolded.error)
+            : ok({ kind: "result", result: scaffolded.value });
+        }
+        const scaffolded = await deps.scaffoldV4(inputs, scaffoldTarget, answers, flagReader);
+        return scaffolded.isErr()
+          ? err(scaffolded.error)
+          : ok({ kind: "result", result: scaffolded.value });
+      }
+    }
+  }
+
   // A surface that already resolved the leaf template — the CLI in non-interactive
   // mode presets `template-name` from its `-c` capability — pins the BuildTarget by
-  // id: the Q1 selector is a *router*, so re-walking it would re-prompt, or (non-
-  // interactive) fail on a missing dimension, for a target already chosen. Resolve
-  // the engine from the template's route and reuse the v3 `traverse` short-circuit
-  // on `template-name` for the v3 hand-off. Otherwise walk Q1 (INV-2), threading
-  // `interactive` so a non-interactive surface never silently prompts.
+  // id: the Q1 selector is a *router*, so re-walking it would re-prompt. Resolve the
+  // engine from the template's route and dispatch once (no cross-phase back; INV-8).
   const presetTemplateId = inputs[QuestionNames.TemplateName];
-  let target: Result<BuildTarget, FxError>;
   if (presetTemplateId) {
     if (snapshot === undefined && deps.resolveArtifactSnapshot !== undefined) {
       const resolved = await deps.resolveArtifactSnapshot("templates");
@@ -291,33 +369,53 @@ export async function createProjectFrontDoor(
       floorBytes = fullBytes.value;
     }
     const resolveByTemplateId = deps.resolveByTemplateId ?? resolveCreateTargetByTemplateId;
-    target = resolveByTemplateId(floorBytes, presetTemplateId);
+    const target = resolveByTemplateId(floorBytes, presetTemplateId);
+    if (target.isErr()) {
+      return err(target.error);
+    }
+    const dispatched = await dispatchByEngine(target.value, 0, false);
+    if (dispatched.isErr()) {
+      return err(dispatched.error);
+    }
+    // The preset path is not backable (baseStep 0, backable false), so `done` is the live branch.
+    return dispatched.value.kind === "back"
+      ? err(unsupportedCreateTarget(target.value))
+      : ok(dispatched.value.result);
+  }
+
+  // Otherwise walk Q1 (INV-2). The selector bytes are stable across the cross-phase
+  // back re-entry loop, so resolve them once; each iteration re-walks Q1 (retaining
+  // its history for `resume`) and dispatches, re-entering Q1 on a Q2-first back so
+  // Q1 and Q2 form one continuous back-navigable wizard (INV-10). The loop is scoped
+  // below the preset check, so a prior iteration's `template-name` never short-circuits Q1.
+  if (snapshot === undefined && deps.resolveArtifactSnapshot !== undefined) {
+    const resolved = await deps.resolveArtifactSnapshot("create-selector");
+    if (resolved.isErr()) {
+      return err(resolved.error);
+    }
+    snapshot = resolved.value;
+  }
+  let selectorBytes: Buffer;
+  if (snapshot === undefined) {
+    floorBytes = (deps.readFloorBytes ?? readBundledFloorBytes)();
+    selectorBytes = floorBytes;
   } else {
-    if (snapshot === undefined && deps.resolveArtifactSnapshot !== undefined) {
-      const resolved = await deps.resolveArtifactSnapshot("create-selector");
-      if (resolved.isErr()) {
-        return err(resolved.error);
-      }
-      snapshot = resolved.value;
+    const selector = await readSnapshotBytes(snapshot, "create-selector");
+    if (selector.isErr()) {
+      return err(selector.error);
     }
-    let selectorBytes: Buffer;
-    if (snapshot === undefined) {
-      floorBytes = (deps.readFloorBytes ?? readBundledFloorBytes)();
-      selectorBytes = floorBytes;
-    } else {
-      const selector = await readSnapshotBytes(snapshot, "create-selector");
-      if (selector.isErr()) {
-        return err(selector.error);
-      }
-      selectorBytes = selector.value;
-    }
-    const runSelector = deps.runSelector ?? runCreateSelector;
-    const selectorDeps = {
+    selectorBytes = selector.value;
+  }
+  const runSelector: typeof runCreateSelector = deps.runSelector ?? runCreateSelector;
+  let resumeHistory: WalkHistoryEntry[] | undefined = undefined;
+  for (;;) {
+    const selectorDeps: CreateSelectorDeps = {
       flagReader,
       interactive,
       prefilled: selectorPrefillFromInputs(inputs),
+      resume: resumeHistory === undefined ? undefined : { history: resumeHistory },
     };
-    target =
+    const target =
       snapshot === undefined
         ? await runSelector(selectorBytes, ui, surface, selectorDeps)
         : await runSelector(selectorBytes, ui, surface, {
@@ -325,76 +423,19 @@ export async function createProjectFrontDoor(
             selectorBytesKind: "json",
             v4Registry: deps.v4Registry,
           });
-  }
-  if (target.isErr()) {
-    return err(target.error);
-  }
-
-  // INV-3: exactly one resolved BuildTarget, dispatched by its engine.
-  switch (target.value.engine) {
-    case "surface-action":
-      return dispatchSurfaceAction(target.value);
-    case "v3":
-      // INV-5: translate the Q1 picks onto the v3 inputs (a translation, not a
-      // re-ask), then hand off to createProject — its QuestionMW skips Q1. A preset
-      // `template-name` carries no Q1 picks and already short-circuits the v3
-      // traverse, so the pre-fill is skipped.
-      if (!presetTemplateId) {
-        deps.applyV3PreFill(inputs, target.value);
-      }
-      return deps.createV3(inputs);
-    case "v4": {
-      inputs[QuestionNames.TemplateName] = templateNameForV4(target.value);
-      const runInputs = deps.runInputs ?? runCreateInputs;
-      const locator: DeclarativeLocator = { kind: "create", templateId: target.value.templateId };
-      // Q2: the template's own inputs, over the same floor.
-      const entryParams: Answers = {
-        ...(target.value.answers ?? {}),
-        ...neutralAnswersFromInputs(inputs),
-      };
-      let inputBytes: Buffer;
-      if (snapshot === undefined) {
-        if (floorBytes === undefined) {
-          floorBytes = (deps.readFloorBytes ?? readBundledFloorBytes)();
-        }
-        inputBytes = floorBytes;
-      } else {
-        const metadataBytes = await readSnapshotBytes(snapshot, "metadata");
-        if (metadataBytes.isErr()) {
-          return err(metadataBytes.error);
-        }
-        inputBytes = metadataBytes.value;
-      }
-      const answers = await runInputs(inputBytes, locator, entryParams, ui, {
-        flagReader,
-        surface,
-        inputs,
-      });
-      if (answers.isErr()) {
-        return err(answers.error);
-      }
-      applyV4CreateFloorAnswers(inputs, answers.value);
-      if (snapshot !== undefined) {
-        const fullBytes = await readSnapshotBytes(snapshot, "templates");
-        if (fullBytes.isErr()) {
-          return err(fullBytes.error);
-        }
-        return deps.scaffoldV4(inputs, target.value, answers.value, flagReader, {
-          source: templateSourceFromArtifactSnapshot(snapshot),
-          bytes: fullBytes.value,
-        });
-      }
-      return deps.scaffoldV4(inputs, target.value, answers.value, flagReader);
+    if (target.isErr()) {
+      return err(target.error);
     }
-    case "v3-core-method":
-      // The shipped create selector carries no v3-core-method route; fail loudly
-      // (no silent fallback) rather than mis-route through createProject.
-      return err(
-        new SystemError({
-          source: SOURCE,
-          name: "UnsupportedCreateEngine",
-          message: `The create front door does not dispatch the '${target.value.engine}' engine.`,
-        })
-      );
+    // Q2 continues Q1's step numbering (baseStep = promptCount) and is backable: a
+    // back at its first prompt re-enters Q1 with the retained history (INV-10).
+    const dispatched = await dispatchByEngine(target.value, target.value.promptCount, true);
+    if (dispatched.isErr()) {
+      return err(dispatched.error);
+    }
+    if (dispatched.value.kind === "back") {
+      resumeHistory = target.value.history;
+      continue;
+    }
+    return ok(dispatched.value.result);
   }
 }

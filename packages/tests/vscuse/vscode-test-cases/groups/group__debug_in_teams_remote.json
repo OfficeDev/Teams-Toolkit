@@ -283,19 +283,17 @@
         "x": 265,
         "y": 214
       },
-      "description": "Click the “Add” button within the app details  in Microsoft Teams (web interface), indicated by a blue button below the app name and publisher.",
+      "description": "Click the visible blue \"Add\" or \"Open\" button in the Microsoft Teams app details dialog.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:265:214:16:5:2020202020202020",
-        "dhash:265:214:96:5:6d65604747c40096",
-        "dhash:265:214:0:10:00b4b0d8f4fcf0e8"
-      ],
+      "preconditions": [],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "ocr:true"
+      ],
       "screenshot": "step_25ce8a2f",
       "created_at": "2026-06-05T07:17:55.311011",
       "plan_id": "plan_r_0930_063548"
@@ -305,7 +303,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion there's \"Open\" blue button exist.",
+      "description": "@assertion there's an \"Added successfully!\" dialog with a blue \"Open\" button exist.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -317,7 +315,7 @@
         "step_retry_timeout: 180"
       ],
       "screenshot": null,
-      "created_at": "2026-06-05T07:17:55.318381",
+      "created_at": "2026-06-05T07:17:55.322778",
       "plan_id": "plan_r_0930_063548"
     },
     {
@@ -329,23 +327,19 @@
         "x": 529,
         "y": 506
       },
-      "description": "Click the \"Open\" button in the pop-up dialog for the  app on the Microsoft Teams web interface.",
+      "description": "Click the blue \"Open\" button in the \"Added successfully!\" dialog for the app in Microsoft Teams.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:529:506:16:5:0000a25da1929292",
-        "dhash:529:506:96:5:000058a4c4580040",
-        "dhash:529:506:0:10:3669696969697979"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
-        "precondition_wait_timeout: 200"
+        "ocr:true"
       ],
       "screenshot": "step_d491dc74",
-      "created_at": "2026-06-05T07:17:55.320306",
+      "created_at": "2026-06-05T07:17:55.328515",
       "plan_id": "plan_r_0930_063548"
     },
     {

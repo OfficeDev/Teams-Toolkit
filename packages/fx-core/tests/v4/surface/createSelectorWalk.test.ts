@@ -20,6 +20,7 @@ import {
   resolveCreateTargetByTemplateId,
   runCreateSelector,
 } from "../../../src/v4/surface/createSelectorWalk";
+import { getLocalizedString } from "../../../src/common/localizeUtils";
 
 /**
  * Tests for docs/03-specs/operations/scaffolding/walk-create-selector.md.
@@ -33,10 +34,16 @@ import {
 
 const TEMPLATES_V4_DIR = path.resolve(__dirname, "../../../../../templates/v4");
 
+let cachedFloor: Buffer | undefined;
+
 function buildFloor(): Buffer {
+  if (cachedFloor !== undefined) {
+    return Buffer.from(cachedFloor);
+  }
   const zip = new AdmZip();
   zip.addLocalFolder(TEMPLATES_V4_DIR, "v4");
-  return zip.toBuffer();
+  cachedFloor = zip.toBuffer();
+  return Buffer.from(cachedFloor);
 }
 
 /** The feature-flag reader that turns on exactly the named flags (every other flag is off). */
@@ -110,6 +117,14 @@ function offeredIds(config: SingleSelectConfig | undefined): string[] {
   return options.map((option) => option.id);
 }
 
+function offeredOption(
+  config: SingleSelectConfig | undefined,
+  id: string
+): SurfaceOptionItem | undefined {
+  const options = (config?.options ?? []) as SurfaceOptionItem[];
+  return options.find((option) => option.id === id);
+}
+
 const MCP_DA_PICKS: Record<string, string> = {
   projectType: "copilot-agent-type",
   daTemplate: "add-action",
@@ -117,7 +132,239 @@ const MCP_DA_PICKS: Record<string, string> = {
 };
 const LANGUAGE_QUESTION = ["lang", "uage"].join("");
 
+const MINIMAL_SELECTOR = {
+  questions: [
+    {
+      name: "projectType",
+      type: "singleSelect",
+      title: "Project Type",
+      staticOptions: [{ id: "minimal", label: "Minimal" }],
+    },
+  ],
+  routes: [{ when: "projectType=='minimal'", engine: "v4", templateId: "minimal" }],
+};
+
 describe("runCreateSelector (walk-create-selector)", () => {
+  it("WCS-00: selector project type options preserve authored icons", async () => {
+    const ui = new ScriptedUI({
+      projectType: "copilot-agent-type",
+      daTemplate: "no-action",
+    });
+
+    await runCreateSelector(buildFloor(), asUI(ui), "vscode", {
+      flagReader: flagsOn("TEAMSFX_CHAT_PARTICIPANT_ENTRIES"),
+    });
+
+    const projectType = ui.configByName.get("projectType");
+    // Labels localize via each option's `keyPrefix` (NLS); the authored selector
+    // literals are kept in sync with the v3 NLS, so they double as the fallback.
+    assert.deepEqual(
+      [
+        "copilot-agent-type",
+        "custom-engine-agent-type",
+        "graph-connector-type",
+        "blank-app-type",
+        "teams-agent-and-app-type",
+        "office-meta-os-type",
+        "start-with-github-copilot",
+      ].map((id) => [id, offeredOption(projectType, id)?.label]),
+      [
+        ["copilot-agent-type", "$(teamsfx-agent) Declarative Agent"],
+        ["custom-engine-agent-type", "$(teamsfx-custom-copilot) Custom Engine Agent"],
+        ["graph-connector-type", "$(teamsfx-graph-connector) Copilot connectors"],
+        ["blank-app-type", "$(file) Blank Copilot app/agent"],
+        ["teams-agent-and-app-type", "$(microsoft365-agents-toolkit-teams) Teams Agents and Apps"],
+        ["office-meta-os-type", "$(microsoft365-agents-office) Office Add-in"],
+        [
+          "start-with-github-copilot",
+          "$(question) Don't know how to start? Use GitHub Copilot Chat",
+        ],
+      ]
+    );
+  });
+
+  it("WCS-23: Q1 prompts localize title, label, and detail via keyPrefix (NLS wins over the authored literal)", async () => {
+    // A selector whose keyPrefixes point at real shipped NLS keys but whose authored
+    // literals are deliberately wrong — proving the walk renders the localized value,
+    // not the literal fallback. (The shipped selector keeps its literals in sync with
+    // the v3 NLS, so a divergent literal is constructed here to isolate the behavior.)
+    const selector = {
+      questions: [
+        {
+          name: "projectType",
+          type: "singleSelect",
+          title: "WRONG TITLE LITERAL",
+          keyPrefix: "template.createProjectQuestion",
+          staticOptions: [
+            {
+              id: "blank-app-type",
+              label: "WRONG LABEL LITERAL",
+              detail: "WRONG DETAIL LITERAL",
+              keyPrefix: "template.createProjectQuestion.projectType.blankApp",
+            },
+          ],
+        },
+      ],
+      routes: [{ when: "projectType=='blank-app-type'", engine: "v4", templateId: "x" }],
+    };
+    const ui = new ScriptedUI({ projectType: "blank-app-type" });
+
+    await runCreateSelector(Buffer.from(JSON.stringify(selector)), asUI(ui), "vscode", {
+      selectorBytesKind: "json",
+    });
+
+    const projectType = ui.configByName.get("projectType");
+    // Title resolves `<keyPrefix>.title` from the NLS bundle, overriding the wrong literal.
+    assert.equal(projectType?.title, getLocalizedString("template.createProjectQuestion.title"));
+    assert.notEqual(projectType?.title, "WRONG TITLE LITERAL");
+
+    // Option label + detail resolve `<keyPrefix>.{label,detail}`, overriding the wrong literals.
+    const blankApp = offeredOption(projectType, "blank-app-type");
+    assert.equal(
+      blankApp?.label,
+      getLocalizedString("template.createProjectQuestion.projectType.blankApp.label")
+    );
+    assert.notEqual(blankApp?.label, "WRONG LABEL LITERAL");
+    assert.equal(
+      blankApp?.detail,
+      getLocalizedString("template.createProjectQuestion.projectType.blankApp.detail")
+    );
+  });
+
+  it("WCS-00: selector JSON bytes use the selector route registry without opening packages", async () => {
+    const ui = new ScriptedUI({ projectType: "minimal" });
+
+    const res = await runCreateSelector(
+      Buffer.from(JSON.stringify(MINIMAL_SELECTOR)),
+      asUI(ui),
+      "vscode",
+      {
+        selectorBytesKind: "json",
+        flagReader: () => false,
+      }
+    );
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.equal(res.value.templateId, "minimal");
+      assert.equal(res.value.engine, "v4");
+    }
+  });
+
+  it("WCS-00: selector JSON accepts object results from the host", async () => {
+    const ui = new ScriptedUI({});
+    ui.selectOption = (
+      config: SingleSelectConfig
+    ): Promise<Result<SingleSelectResult, FxError>> => {
+      ui.selectNames.push(config.name);
+      ui.configByName.set(config.name, config);
+      return Promise.resolve(ok({ type: "success", result: { id: "minimal", label: "Minimal" } }));
+    };
+
+    const res = await runCreateSelector(
+      Buffer.from(JSON.stringify(MINIMAL_SELECTOR)),
+      asUI(ui),
+      "vscode",
+      {
+        selectorBytesKind: "json",
+        flagReader: () => false,
+      }
+    );
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.equal(res.value.templateId, "minimal");
+    }
+  });
+
+  it("WCS-00: returns option condition evaluation errors from selector JSON", async () => {
+    const ui = new ScriptedUI({ projectType: "minimal" });
+    const selector = {
+      questions: [
+        {
+          name: "projectType",
+          type: "singleSelect",
+          staticOptions: [
+            { id: "minimal", label: "Minimal", condition: { expr: "unknown == 'yes'" } },
+          ],
+        },
+      ],
+      routes: [{ when: "projectType=='minimal'", engine: "v4", templateId: "minimal" }],
+    };
+
+    const res = await runCreateSelector(Buffer.from(JSON.stringify(selector)), asUI(ui), "vscode", {
+      selectorBytesKind: "json",
+      flagReader: () => false,
+    });
+
+    assert.isTrue(res.isErr());
+    if (res.isErr()) {
+      assert.equal(res.error.name, "ExprUndeclaredIdentifier");
+    }
+  });
+
+  it("WCS-00: uses the default v3 core-method registry for selector JSON routes", async () => {
+    const ui = new ScriptedUI({ projectType: "minimal" });
+    const selector = {
+      questions: [
+        {
+          name: "projectType",
+          type: "singleSelect",
+          staticOptions: [{ id: "minimal", label: "Minimal" }],
+        },
+      ],
+      routes: [
+        {
+          when: "projectType=='minimal'",
+          engine: "v3-core-method",
+          coreMethod: "createSampleProject",
+        },
+      ],
+    };
+
+    const res = await runCreateSelector(Buffer.from(JSON.stringify(selector)), asUI(ui), "vscode", {
+      selectorBytesKind: "json",
+      flagReader: () => false,
+    });
+
+    assert.isTrue(res.isErr());
+    if (res.isErr()) {
+      assert.equal(res.error.name, ["BuildTargetUnknown", "Template"].join(""));
+    }
+  });
+
+  it("WCS-00: returns selector parse errors for invalid selector JSON bytes", async () => {
+    const ui = new ScriptedUI({});
+
+    const res = await runCreateSelector(Buffer.from("{ not json"), asUI(ui), "vscode", {
+      selectorBytesKind: "json",
+      flagReader: () => false,
+    });
+
+    assert.isTrue(res.isErr());
+    if (res.isErr()) {
+      assert.equal(res.error.name, "PackageFileInvalid");
+    }
+  });
+
+  it("WCS-00: returns selector presentation parse errors for malformed options", async () => {
+    const ui = new ScriptedUI({ projectType: "minimal" });
+    const selector = {
+      questions: [{ name: "projectType", type: "singleSelect", staticOptions: "malformed" }],
+      routes: [{ when: "projectType=='minimal'", engine: "v4", templateId: "minimal" }],
+    };
+
+    const res = await runCreateSelector(Buffer.from(JSON.stringify(selector)), asUI(ui), "vscode", {
+      selectorBytesKind: "json",
+      flagReader: () => false,
+    });
+
+    assert.isTrue(res.isErr());
+    if (res.isErr()) {
+      assert.equal(res.error.name, "BuildTargetMalformedSelector");
+    }
+  });
+
   it("WCS-00: selector-only Q1 can resolve from the selector's own v4 routes", async () => {
     const selectorBytes = fs.readFileSync(path.join(TEMPLATES_V4_DIR, "create", "selector.json"));
     const picks = {
@@ -678,6 +925,62 @@ describe("runCreateSelector (walk-create-selector)", () => {
       assert.equal(res.error.name, "BuildTargetWalkCancelled");
     }
   });
+
+  it("WCS-25: the walk result exposes the Q1 history and promptCount for the front door to retain", async () => {
+    const ui = new ScriptedUI(MCP_DA_PICKS);
+    const res = await runCreateSelector(buildFloor(), asUI(ui), "vscode", {
+      flagReader: flagsOn("TEAMSFX_MCP_FOR_DA_DT"),
+    });
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.strictEqual(res.value.templateId, "da/mcp-server");
+      // projectType, daTemplate, actionSource were all prompted.
+      assert.strictEqual(res.value.promptCount, 3);
+      assert.lengthOf(res.value.history, 3);
+    }
+  });
+
+  it("WCS-24: resuming a completed Q1 walk re-asks its last dimension with the history intact", async () => {
+    // First, walk Q1 to a done target and capture its history + promptCount.
+    const firstUi = new SequencedUI([
+      { type: "success", result: "copilot-agent-type" }, // projectType (step 1)
+      { type: "success", result: "add-action" }, // daTemplate (step 2)
+      { type: "success", result: "mcp" }, // actionSource (step 3)
+    ]);
+    const first = await runCreateSelector(buildFloor(), asUI(firstUi), "vscode", {
+      flagReader: flagsOn("TEAMSFX_MCP_FOR_DA_DT"),
+    });
+    assert.isTrue(first.isOk());
+    if (!first.isOk()) {
+      return;
+    }
+    assert.strictEqual(first.value.templateId, "da/mcp-server");
+
+    // Resume (the front door re-entering Q1 after a Q2 back): the last dimension
+    // (actionSource, step 3) is re-asked; a back crosses into daTemplate (step 2),
+    // and re-picking no-action re-routes to a different target.
+    const resumeUi = new SequencedUI([
+      { type: "back" }, // actionSource re-asked (step 3) → back
+      { type: "success", result: "no-action" }, // daTemplate re-asked (step 2)
+    ]);
+    const resumed = await runCreateSelector(buildFloor(), asUI(resumeUi), "vscode", {
+      flagReader: flagsOn("TEAMSFX_MCP_FOR_DA_DT"),
+      resume: { history: first.value.history },
+    });
+    assert.isTrue(resumed.isOk());
+    if (resumed.isOk()) {
+      assert.strictEqual(resumed.value.templateId, "da/no-action");
+      assert.deepEqual(resumed.value.answers, {
+        projectType: "copilot-agent-type",
+        daTemplate: "no-action",
+      });
+    }
+    // resume re-asks the last dimension first, then back multi-hops to daTemplate.
+    assert.deepEqual(resumeUi.calls, [
+      { name: "actionSource", step: 3 },
+      { name: "daTemplate", step: 2 },
+    ]);
+  });
 });
 
 describe("openCreateSelectorPresentation (walk-create-selector)", () => {
@@ -731,14 +1034,12 @@ describe("resolveCreateTargetByTemplateId (dispatch-create-by-engine — preset 
     }
   });
 
-  it("defaults an id with no selector route to the v3 coexistence engine (dispatch-create-by-engine DCE-12)", () => {
+  it("returns an explicit error for an id with no selector route (dispatch-create-by-engine DCE-12)", () => {
     const res = resolveCreateTargetByTemplateId(buildFloor(), "some-unrouted-template");
 
-    assert.isTrue(res.isOk());
-    if (res.isOk()) {
-      assert.equal(res.value.templateId, "some-unrouted-template");
-      assert.equal(res.value.engine, "v3");
-      assert.deepEqual(res.value.answers, {});
+    assert.isTrue(res.isErr());
+    if (res.isErr()) {
+      assert.equal(res.error.name, "BuildTargetUnknownTemplate");
     }
   });
 

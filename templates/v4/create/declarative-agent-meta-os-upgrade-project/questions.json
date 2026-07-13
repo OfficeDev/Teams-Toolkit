@@ -1,11 +1,12 @@
 {
-  "$schema": "../../schema/question.schema.json",
+  "$schema": "../../schema/questions.schema.json",
   "questions": [
     {
       "name": "officeAddinFolder",
       "type": "text",
-      "title": "Office Add-in project folder",
-      "placeholder": "Path to an existing Office Add-in project"
+      "title": "The Existing Add-in Project Folder",
+      "placeholder": "The existing MetaOS Add-in project root folder",
+      "keyPrefix": "core.createProjectQuestion.DAMetaOS.capability.upgradeProject.projectFolder"
     }
   ]
 }

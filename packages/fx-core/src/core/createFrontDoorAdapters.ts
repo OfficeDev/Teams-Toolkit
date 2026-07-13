@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 /**
- * The composition-root impl of the two flag-on `createProjectFrontDoor` seams
+ * The composition-root impl of the flag-on `createProjectFrontDoor` seams
  * (`dispatch-create-by-engine` `CreateFrontDoorDeps`). These live outside the
  * pure orchestrator so it stays injectable and I/O-free: `FxCore` wires these
  * real handlers, the orchestrator's tests wire fakes.
@@ -10,10 +10,6 @@
  * - `scaffoldV4`     — the `engine: "v4"` hand-off: build a v3 `GeneratorContext`
  *                      over the create floor and render the authored declarative
  *                      package through the v4 distribution channel.
- * - `applyV3PreFill` — the `engine: "v3"` adapter: translate the Q1 dimension
- *                      picks the v4 selector collected onto the v3
- *                      `QuestionNames.*` so `createProject`'s `QuestionMW` skips
- *                      Q1 and asks only Q2 (dispatch-create-by-engine INV-5).
  */
 
 import {
@@ -167,9 +163,7 @@ function getStringValidationFunc(
 
 async function resolveStringValue(
   value:
-    | string
-    | ((inputs: Inputs) => string | undefined | Promise<string | undefined>)
-    | undefined,
+    string | ((inputs: Inputs) => string | undefined | Promise<string | undefined>) | undefined,
   inputs: Inputs
 ): Promise<string | undefined> {
   return typeof value === "function" ? await value(inputs) : value;
@@ -191,7 +185,6 @@ async function validateAppNameInput(
   }
   return ok(undefined);
 }
-
 /**
  * The `engine: "v4"` create-floor collection. The front door owns Q1/Q2, so the
  * remaining surface floor is collected directly here instead of routing through
@@ -257,165 +250,4 @@ export async function collectCreateFloor(
     inputs[QuestionNames.AppName] = appNameResult.value.result;
   }
   return ok(undefined);
-}
-
-const COPILOT_AGENT_PROJECT_TYPE = "copilot-agent-type";
-const CUSTOM_ENGINE_AGENT_PROJECT_TYPE = "custom-engine-agent-type";
-const TEAMS_PROJECT_TYPE = "teams-agent-and-app-type";
-const OFFICE_PROJECT_TYPE = "office-meta-os-type";
-const DECLARATIVE_AGENT_CAPABILITY = "declarative-agent";
-const ADD_ACTION_DA_TEMPLATE = "add-action";
-const NEW_API_ACTION_SOURCE = "new-api";
-const TEAMS_RAG_APP = "rag";
-const TEAMS_OTHER_APP = "other";
-const OFFICE_DA_META_OS_CAPABILITY = "office-da-meta-os";
-
-/**
- * The v3 `teams-other-app-type` question has no `QuestionNames` member (the
- * wizard JSON names it inline), so the pre-fill keys it by its literal name.
- */
-const TEAMS_OTHER_APP_TYPE_QUESTION = "teams-other-app-type";
-
-/** Copilot-agent selector `daTemplate` → the v3 `with-plugin` answer. */
-const WITH_PLUGIN_BY_DA_TEMPLATE: Record<string, string> = {
-  "no-action": "no",
-  "add-action": "yes",
-  "graph-connector": "gc",
-  skill: "skill",
-  typespec: "type-spec",
-};
-
-/** Copilot-agent selector `actionSource` → the v3 `api-plugin-type` answer. */
-const ACTION_TYPE_BY_ACTION_SOURCE: Record<string, string> = {
-  "new-api": "new-api",
-  openapi: "api-spec",
-  mcp: "mcp",
-};
-
-/** Teams selector `teamsApp` → the v3 `teams-app-type` answer (ids are renamed). */
-const TEAMS_APP_TYPE_BY_TEAMS_APP: Record<string, string> = {
-  "custom-copilot-basic": "custom-copilot-basic",
-  rag: "custom-copilot-rag",
-  "teams-collaborator-agent": "teams-collaborator-agent",
-  other: "teams-other-app-type",
-};
-
-/** Office-addin selector `officeAddinCapability` → the v3 `capabilities` answer. */
-const OFFICE_CAPABILITY_BY_ADDIN_CAPABILITY: Record<string, string> = {
-  "office-addin-wxpo-taskpane": "wxp-json-taskpane",
-  "office-addin-excel-cfshortcut": "wxp-json-cf-shortcut",
-  "office-da-meta-os": "office-da-meta-os",
-  "office-addin-config": "office-addin-import",
-};
-
-/** Office-addin selector `daMetaOsCapability` → the v3 `da-meta-os-capability` answer. */
-const DA_META_OS_CAPABILITY_BY_SELECTOR: Record<string, string> = {
-  "declarative-agent-meta-os-upgrade-project": "da-meta-os-upgrade-existing-project",
-};
-
-/**
- * The `engine: "v3"` adapter (dispatch-create-by-engine INV-5). Translate the Q1
- * dimension picks the v4 selector collected (`target.answers`) onto the v3
- * `QuestionNames.*` so `createProject`'s `QuestionMW` skips Q1 and asks only Q2.
- *
- * It does **not** set `QuestionNames.TemplateName`: a preset single-select answer
- * still fires its `onDidSelection` during the v3 walk (`questionVisitor`), and
- * the deepest preset dimension's callback sets `TemplateName` to the route's
- * `templateId` — while `traverse`'s `TemplateName` short-circuit (checked only at
- * entry) does not fire, so the non-preset Q2 (app name / language / folder) is
- * still asked.
- *
- * Each `projectType` family translates its selector dimension ids onto the v3
- * `QuestionNames.*` (the ids diverge per family; the maps above own each rename).
- * `graph-connector-type` carries no capability dimension (its v3 node is a group),
- * so it pre-fills `ProjectType` only and the v3 walk asks its Q2 group. Setting
- * only `ProjectType` for any not-yet-expanded dimension is safe: the v3 walk
- * re-asks the un-preset dimensions rather than mis-scaffolding.
- */
-export function applyV3PreFill(inputs: Inputs, target: BuildTarget): void {
-  const answers = target.answers;
-  if (!answers) {
-    return;
-  }
-  const projectType = answers.projectType;
-  if (!projectType) {
-    return;
-  }
-  // The selector `projectType` ids are the v3 `ProjectTypeOptions` ids (1:1).
-  inputs[QuestionNames.ProjectType] = projectType;
-
-  if (projectType === COPILOT_AGENT_PROJECT_TYPE) {
-    preFillCopilotAgent(inputs, answers);
-  } else if (projectType === CUSTOM_ENGINE_AGENT_PROJECT_TYPE) {
-    preFillCustomEngineAgent(inputs, answers);
-  } else if (projectType === TEAMS_PROJECT_TYPE) {
-    preFillTeamsApp(inputs, answers);
-  } else if (projectType === OFFICE_PROJECT_TYPE) {
-    preFillOfficeAddin(inputs, answers);
-  }
-}
-
-/** Expand the copilot-agent Q1 picks onto the v3 declarative-agent question path. */
-function preFillCopilotAgent(inputs: Inputs, answers: Record<string, string>): void {
-  inputs[QuestionNames.Capabilities] = DECLARATIVE_AGENT_CAPABILITY;
-
-  const withPlugin = WITH_PLUGIN_BY_DA_TEMPLATE[answers.daTemplate];
-  if (withPlugin) {
-    inputs[QuestionNames.WithPlugin] = withPlugin;
-  }
-  if (answers.daTemplate !== ADD_ACTION_DA_TEMPLATE) {
-    return;
-  }
-
-  const actionType = ACTION_TYPE_BY_ACTION_SOURCE[answers.actionSource];
-  if (actionType) {
-    inputs[QuestionNames.ActionType] = actionType;
-    inputs["action-type"] = actionType; // v3 walk's `questionVisitor` looks for this alias when it visits the action-type question
-  }
-  // The api-auth dimension only applies to the new-api action source; its ids are
-  // shared verbatim between the selector and the v3 `api-auth` question.
-  if (answers.actionSource === NEW_API_ACTION_SOURCE && answers.apiAuth) {
-    inputs[QuestionNames.ApiAuth] = answers.apiAuth;
-  }
-}
-
-/** Expand the custom-engine-agent Q1 pick onto the v3 capabilities question. */
-function preFillCustomEngineAgent(inputs: Inputs, answers: Record<string, string>): void {
-  // The selector `customEngineAgent` ids are the v3 `capabilities` ids (1:1).
-  if (answers.customEngineAgent) {
-    inputs[QuestionNames.Capabilities] = answers.customEngineAgent;
-  }
-}
-
-/** Expand the teams Q1 picks onto the v3 teams-app-type question path. */
-function preFillTeamsApp(inputs: Inputs, answers: Record<string, string>): void {
-  const teamsAppType = TEAMS_APP_TYPE_BY_TEAMS_APP[answers.teamsApp];
-  if (!teamsAppType) {
-    return;
-  }
-  inputs[QuestionNames.TeamsAppType] = teamsAppType;
-
-  // The rag-source / other-capability dimension ids are shared verbatim with the
-  // v3 questions; only the parent `teamsApp` id is renamed (the map above).
-  if (answers.teamsApp === TEAMS_RAG_APP && answers.customCopilotRagType) {
-    inputs[QuestionNames.CustomCopilotRag] = answers.customCopilotRagType;
-  } else if (answers.teamsApp === TEAMS_OTHER_APP && answers.teamsOtherAppType) {
-    inputs[TEAMS_OTHER_APP_TYPE_QUESTION] = answers.teamsOtherAppType;
-  }
-}
-
-/** Expand the office-addin Q1 picks onto the v3 capabilities question path. */
-function preFillOfficeAddin(inputs: Inputs, answers: Record<string, string>): void {
-  const capability = OFFICE_CAPABILITY_BY_ADDIN_CAPABILITY[answers.officeAddinCapability];
-  if (!capability) {
-    return;
-  }
-  inputs[QuestionNames.Capabilities] = capability;
-
-  if (answers.officeAddinCapability === OFFICE_DA_META_OS_CAPABILITY) {
-    const daMetaOsCapability = DA_META_OS_CAPABILITY_BY_SELECTOR[answers.daMetaOsCapability];
-    if (daMetaOsCapability) {
-      inputs[QuestionNames.DAMetaOSCapability] = daMetaOsCapability;
-    }
-  }
 }

@@ -9,13 +9,16 @@ import {
   SelectorPresentation,
 } from "../buildTarget/parseSelector";
 import {
+  BUILD_TARGET_UNKNOWN_TEMPLATE,
   BuildTarget,
   PromptResult,
   RouteQuestion,
   RouteResolverPort,
+  SelectorWalkResult,
   resolveBuildTarget,
   v4RouteRegistryFromSelector,
 } from "../buildTarget/resolveBuildTarget";
+import { WalkHistoryEntry } from "../collectInputs/collectInputs";
 import {
   openCreateSelector,
   openCreateSelectorPresentation,
@@ -25,10 +28,15 @@ import {
 import { openDeclarativePackage } from "../distribution/declarativePackage";
 import { ExpressionRuntimePort, Scope, evaluateExpression } from "../expression/evaluateExpression";
 import { readBooleanFeatureFlag } from "../../common/featureFlags";
+import { localizePrefixedText } from "./localizePrompt";
 
 /** Live Q1 create-selector prompt face. See walk-create-selector spec. */
 
 const SOURCE = "Scaffold";
+
+function labelWithIcon(label: string, iconPath: string | undefined): string {
+  return iconPath === undefined ? label : `$(${iconPath}) ${label}`;
+}
 
 /** Create-selector options; all are defaulted. */
 export interface CreateSelectorDeps {
@@ -42,6 +50,8 @@ export interface CreateSelectorDeps {
   prefilled?: Record<string, string>;
   /** Whether unfilled required dimensions may be prompted. */
   interactive?: boolean;
+  /** Resume a prior Q1 walk (cross-phase back): re-ask its last dimension with the retained history. */
+  resume?: { history: WalkHistoryEntry[] };
 }
 
 /** The default env-backed feature-flag reader (a flag is on iff its env var is exactly `"true"`). */
@@ -97,14 +107,17 @@ function buildPort(
     }
     const selected = await ui.selectOption({
       name: pq.name,
-      title: pq.title ?? pq.name,
-      placeholder: pq.placeholder,
+      title: localizePrefixedText(pq.keyPrefix, "title", pq.title) ?? pq.name,
+      placeholder: localizePrefixedText(pq.keyPrefix, "placeholder", pq.placeholder),
       step,
       options: visible.map((option) => ({
         id: option.id,
-        label: option.label,
-        detail: option.detail,
-        groupName: option.groupName,
+        label: labelWithIcon(
+          localizePrefixedText(option.keyPrefix, "label", option.label) ?? option.label,
+          option.iconPath
+        ),
+        detail: localizePrefixedText(option.keyPrefix, "detail", option.detail),
+        groupName: localizePrefixedText(option.keyPrefix, "groupName", option.groupName),
       })),
       returnObject: false,
     });
@@ -130,9 +143,6 @@ function buildPort(
       }
       return openDeclarativePackage(floorBytes, { kind: "create", templateId }).isOk();
     },
-    v3Registry(): boolean {
-      return false;
-    },
     v3CoreMethodRegistry(): boolean {
       return false;
     },
@@ -145,7 +155,7 @@ export async function runCreateSelector(
   ui: UserInteraction,
   surface: string,
   deps: CreateSelectorDeps = {}
-): Promise<Result<BuildTarget, FxError>> {
+): Promise<Result<SelectorWalkResult, FxError>> {
   const flagReader = deps.flagReader ?? envFlagReader;
   const selectorBytesKind = deps.selectorBytesKind ?? "zip";
   const prefilled = deps.prefilled ?? {};
@@ -174,13 +184,15 @@ export async function runCreateSelector(
       (selectorBytesKind === "json" ? v4RouteRegistryFromSelector(spec.value) : undefined)
   );
   try {
-    return await resolveBuildTarget(spec.value, prefilled, interactive, port);
+    return await resolveBuildTarget(spec.value, prefilled, interactive, port, {
+      resume: deps.resume,
+    });
   } catch (e) {
     return err(toFxError(e));
   }
 }
 
-/** Resolve a pinned template id without re-walking Q1; unknown routes default to v3. */
+/** Resolve a pinned template id without re-walking Q1. */
 export function resolveCreateTargetByTemplateId(
   floorBytes: Buffer,
   templateId: string
@@ -190,5 +202,14 @@ export function resolveCreateTargetByTemplateId(
     return err(spec.error);
   }
   const route = spec.value.routes.find((r) => r.templateId === templateId);
-  return ok({ templateId, engine: route?.engine ?? "v3", answers: {} });
+  if (route === undefined) {
+    return err(
+      new UserError({
+        source: SOURCE,
+        name: BUILD_TARGET_UNKNOWN_TEMPLATE,
+        message: `Template '${templateId}' is not present in the create selector.`,
+      })
+    );
+  }
+  return ok({ templateId, engine: route.engine, answers: {} });
 }

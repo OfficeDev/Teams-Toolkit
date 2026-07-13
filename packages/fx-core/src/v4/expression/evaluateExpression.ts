@@ -41,6 +41,39 @@ export type ExpressionNode =
   | { capability: string }
   | { from: string };
 
+/** An authored visibility / value guard node. */
+export type ConditionNode = ExpressionNode;
+
+/** Common authored shape for string-expression predicates such as pipeline `when`. */
+export interface ConditionalExpression {
+  comment?: string;
+  when?: string;
+}
+
+/** Structural check for the authored `ExpressionNode` union. */
+export function isExpressionNode(value: unknown): value is ExpressionNode {
+  if (!isRecord(value)) {
+    return false;
+  }
+  return (
+    typeof value.expr === "string" ||
+    typeof value.from === "string" ||
+    typeof value.featureFlag === "string" ||
+    typeof value.capability === "string" ||
+    isRecord(value.equals) ||
+    isRecord(value.enum) ||
+    Array.isArray(value.anyOf)
+  );
+}
+
+/** Evaluate a string-expression predicate; absent `when` means active. */
+export function evaluateConditionalWhen(
+  conditional: ConditionalExpression,
+  evalWhen: (expr: string) => Result<boolean, FxError>
+): Result<boolean, FxError> {
+  return conditional.when !== undefined ? evalWhen(conditional.when) : ok(true);
+}
+
 /** `SystemError` names for expression evaluation failures. */
 export const EXPR_UNDECLARED_IDENTIFIER = "ExprUndeclaredIdentifier";
 export const EXPR_NON_WHITELISTED_FUNCTION = "ExprNonWhitelistedFunction";
@@ -75,6 +108,10 @@ class EvalError extends Error {
     super(message);
     this.code = code;
   }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 /** Lower each sugar form to the single `expr` grammar. */

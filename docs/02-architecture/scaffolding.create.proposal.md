@@ -1,14 +1,13 @@
-# Scaffolding subsystem — v4 create flow proposal
+# Scaffolding subsystem — v4 ADR decomposition map
 
-> **Expires-when:** ADR-0014 – ADR-0019 all `Accepted` (already met as of 2026-06-08).
-
-- **Status:** Decomposed — superseded by **ADR-0014 … ADR-0019** (all `Accepted`
-  2026-06-08). This file is now a short navigation pointer.
+- **Status:** Historical — superseded by **ADR-0014 ... ADR-0019** (all
+  `Accepted` 2026-06-08). This file is now a navigation pointer for old section
+  references.
 - **Date:** 2026-05-28 (decomposed 2026-06-08)
 - **Scope:** the `create` lifecycle — from a user-confirmed "new project" intent
   to a generated project folder on disk.
 - **Companion:** [`scaffolding.current-state.md`](scaffolding.current-state.md)
-  (the pain catalog this addressed) and
+  (historical pain catalog this addressed) and
   [`scaffolding.backlog.md`](scaffolding.backlog.md) (the open
   in-place-modification / VS backlog, relocated from the former §13).
 
@@ -18,9 +17,9 @@
 > **decomposed** into six focused, `Accepted`, immutable ADRs and their derived
 > specs under [`docs/03-specs/`](../03-specs/README.md). The full prose is in
 > git history; the **binding contract** is the ADRs and specs. This file remains
-> only as the **decomposition map** (so inbound `proposal §N` references still
-> resolve) plus the advisory rollout note (§15). Revisiting any decision requires
-> a **superseding ADR**, not an edit here.
+> only as the **decomposition map** so inbound `proposal §N` references still
+> resolve. Revisiting any decision requires a **superseding ADR**, not an edit
+> here.
 
 ## Decomposition map
 
@@ -30,20 +29,22 @@ ADR `Source` lines and spec `Seam` lines) resolve here.
 
 | Former §§ | Decision — now **`Accepted`** | Derived spec(s) under [`docs/03-specs/`](../03-specs/README.md) |
 |---|---|---|
-| §§5, 5.1, 5.3, 9, 9.1, 10 | [ADR-0014](adr/ADR-0014-dispatcher-buildtarget-resolution.md) — Dispatcher + `BuildTarget` resolution (front stage, v3/v4 coexistence, descriptor-derived routing) | [`resolve-build-target`](../03-specs/operations/scaffolding/resolve-build-target.md) |
+| §§5, 5.1, 5.3, 9, 9.1, 10 | [ADR-0014](adr/ADR-0014-dispatcher-buildtarget-resolution.md) — Dispatcher + `BuildTarget` resolution (front stage, descriptor-derived v4 routing, retained core-method exception) | [`resolve-build-target`](../03-specs/operations/scaffolding/resolve-build-target.md) |
 | §§3, 5 | [ADR-0015](adr/ADR-0015-templates-version-artifact-shape.md) — `templates-v4@version` release artifact shape | [`validate-template-package`](../03-specs/operations/scaffolding/validate-template-package.md) |
 | §§2, 3.1, 3.1.0, 3.1.2, 3.2, 3.5, 4, 4.1, 4.2, 4.3, 6 | [ADR-0016](adr/ADR-0016-declarative-template-format.md) — Declarative descriptor + questions + replaceMap + one closed expression grammar | [`evaluate-expression`](../03-specs/operations/scaffolding/evaluate-expression.md) · [`build-render-context`](../03-specs/operations/scaffolding/build-render-context.md) · [`collect-inputs`](../03-specs/operations/scaffolding/collect-inputs.md) |
 | §§3.3, 3.3.1 | [ADR-0017](adr/ADR-0017-named-pipeline-step-whitelist.md) — Named pipeline + step / actionTemplate whitelist | [`run-scaffold-pipeline`](../03-specs/operations/scaffolding/run-scaffold-pipeline.md) |
 | §§8, 8.1 | [ADR-0018](adr/ADR-0018-scaffold-runtime-test-pyramid.md) — `ScaffoldRuntime` + T1/T2/T3 pyramid + design-first `descriptor.spec` gate | [`scenarios/da/create-mcp-server`](../03-specs/scenarios/da/create-mcp-server.md) · [`scenarios/da/add-mcp-server`](../03-specs/scenarios/da/add-mcp-server.md) |
 | §8.2 | [ADR-0019](adr/ADR-0019-dual-stream-scaffold-telemetry.md) — Dual-stream telemetry (v3 verbatim + parallel `scaffold-v4-*`) | [`emit-scaffold-telemetry`](../03-specs/operations/scaffolding/emit-scaffold-telemetry.md) |
 | §5.2 | [ADR-0006](adr/ADR-0006-template-distribution-channel.md) — Template distribution channel. **Not** decomposed from this proposal; the two share only the `(package-source, package-version)` hand-off and the `descriptor.minEngineVersion` compatibility check | [`resolve-template-source`](../03-specs/operations/scaffolding/resolve-template-source.md) · [`open-template-package`](../03-specs/operations/scaffolding/open-template-package.md) |
-| §13 | Open `modify` / Visual-Studio backlog — **not yet decomposed** | → [`scaffolding.backlog.md`](scaffolding.backlog.md) |
+| §13 | Deferred scenario refinements / Visual-Studio backlog | → [`scaffolding.backlog.md`](scaffolding.backlog.md) |
 | §§11, 12 | Worked example (`da/mcp-server`) + rationale — advisory | folded into the ADR-0018 scenario specs above |
 
 The full domain index (every operation + scenario spec) lives in
 [`docs/03-specs/domains/01-scaffolding.md`](../03-specs/domains/01-scaffolding.md).
 
-## 14. ADRs this proposal will be decomposed into
+<a id="14-adrs-this-proposal-will-be-decomposed-into"></a>
+
+## 14. Accepted ADR decomposition
 
 This proposal became the Context for six focused ADRs, **all now `Accepted`
 (2026-06-08)** — see the decomposition map above for each one's sections and
@@ -69,37 +70,9 @@ decisions:
   half of that cluster by construction (an ADR-0015 consequence), while channel /
   source / version resolution remains ADR-0006's.
 
-## 15. Feasibility & rollout (advisory)
+## 15. Former rollout note
 
-Retained because no ADR owns it — the advisory reasoning behind sequencing the
-implementation. The ADRs own the binding decisions; this is guidance only.
-
-- **Already de-risked.** No mechanism is a novel bet: the adapter bridge reuses
-  [`IGenerator`](../../packages/api/src/generator.ts) (today's v3 generators
-  already implement it); `ScaffoldRuntime` is DI of `fs / http / archive / clock
-  / binaryCache` (the last returns `Result` per the neverthrow rule); declarative
-  JSON-under-schema matches existing manifest-package usage; whitelist dispatch +
-  load-time validation is a net reduction in branching over v3 string switches.
-- **The one unknown — three static analysers.** `produces` forward-reference
-  checking (invariant 7), proving a `requiresNetwork: false` template never
-  reaches `runtime.http` (invariant 14), and `condition` reachability against the
-  selector + optionsSchema graph (invariant 16). The likely resolution for 14:
-  providers/steps **declare** their runtime-face use in the registry entry and
-  the analyser checks the declaration rather than reverse-engineering the body.
-  All three are CI-warn (soft) to absorb early imprecision. **A spike on these is
-  the recommended first de-risking step before ADR-0018 binds in code.**
-- **Recommended rollout — tracer bullet, not full whitelist.** (1) Spike the
-  three analysers; (2) drive `da/mcp-server` end-to-end as the **first vertical
-  slice** with the *minimum* loader / runtime / step / provider set it needs —
-  asserted against [`scenarios/da/create-mcp-server.md`](../03-specs/scenarios/da/create-mcp-server.md);
-  (3) only then backfill the remaining step / provider / `expr` whitelist entries
-  as subsequent templates migrate. This keeps the first end-to-end scenario test
-  the proof of the shape and makes every later template a marginal-cost data
-  change.
-- **Standing post-acceptance risks to govern** (named here, not blockers): whitelist
-  growth turning "data PR" back into "code PR" (signal: growth rate per release);
-  static-analyser imprecision (signal: CI false-positive/negative rate); a DSL
-  expressivity gap forcing logic back into code (signal: migrations blocked on
-  missing DSL forms — needs 2–3 real templates to confirm coverage); and
-  `minEngineVersion` user friction on older engines (a deliberate ADR-0015 trade,
-  surfaced as an explicit upgrade error).
+The rollout sequencing that used to live here is no longer active guidance: v4 is
+the formal scaffolding path. Remaining work belongs either to the derived specs'
+acceptance criteria, to [`scaffolding.backlog.md`](scaffolding.backlog.md), or to
+a new superseding ADR if it changes an accepted decision.

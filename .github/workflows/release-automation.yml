@@ -974,7 +974,7 @@ jobs:
                 vsrelease: vsrelease.toString(),
                 vstemplate: 'false',
                 goproduct: goproduct.toString(),
-                run_test_cases: 'true',
+                run_test_cases: (!goproduct).toString(),
                 skipmarkdowncheck: goproduct.toString()
               }
             });

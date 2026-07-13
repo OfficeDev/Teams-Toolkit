@@ -3,7 +3,7 @@
 
 import { FxError, UserError } from "@microsoft/teamsfx-api";
 import { Result, err, ok } from "neverthrow";
-import { ExpressionNode } from "../expression/evaluateExpression";
+import { ConditionNode, isExpressionNode } from "../expression/evaluateExpression";
 import { DispatchEngine, RouteQuestion, SelectorRoute, SelectorSpec } from "./resolveBuildTarget";
 
 /** Parse raw selector JSON into routing and presentation projections. See resolve-build-target spec. */
@@ -37,25 +37,7 @@ function stringArray(value: unknown): string[] | undefined {
 
 /** Membership test for the closed dispatch-engine set. */
 function isDispatchEngine(value: unknown): value is DispatchEngine {
-  return (
-    value === "v4" || value === "v3" || value === "v3-core-method" || value === "surface-action"
-  );
-}
-
-/** Structural check for the authored `ExpressionNode` union. */
-function isExpressionNode(value: unknown): value is ExpressionNode {
-  if (!isRecord(value)) {
-    return false;
-  }
-  return (
-    typeof value.expr === "string" ||
-    typeof value.from === "string" ||
-    typeof value.featureFlag === "string" ||
-    typeof value.capability === "string" ||
-    isRecord(value.equals) ||
-    isRecord(value.enum) ||
-    Array.isArray(value.anyOf)
-  );
+  return value === "v4" || value === "v3-core-method" || value === "surface-action";
 }
 
 /** Project one raw question onto `{ name, condition? }`. */
@@ -94,10 +76,6 @@ function parseRoute(raw: unknown): Result<SelectorRoute, FxError> {
   const templateId = stringField(raw, "templateId");
   if (templateId !== undefined) {
     route.templateId = templateId;
-  }
-  const v3Adapter = stringField(raw, "v3Adapter");
-  if (v3Adapter !== undefined) {
-    route.v3Adapter = v3Adapter;
   }
   const coreMethod = stringField(raw, "coreMethod");
   if (coreMethod !== undefined) {
@@ -152,7 +130,9 @@ export interface PresentationOption {
   label: string;
   detail?: string;
   groupName?: string;
-  condition?: ExpressionNode;
+  iconPath?: string;
+  keyPrefix?: string;
+  condition?: ConditionNode;
 }
 
 /** One Q1 question's presentation. */
@@ -160,6 +140,7 @@ export interface PresentationQuestion {
   name: string;
   title?: string;
   placeholder?: string;
+  keyPrefix?: string;
   staticOptions: PresentationOption[];
 }
 
@@ -190,6 +171,14 @@ function parsePresentationOption(raw: unknown): Result<PresentationOption, FxErr
   if (groupName !== undefined) {
     option.groupName = groupName;
   }
+  const iconPath = stringField(raw, "iconPath");
+  if (iconPath !== undefined) {
+    option.iconPath = iconPath;
+  }
+  const keyPrefix = stringField(raw, "keyPrefix");
+  if (keyPrefix !== undefined) {
+    option.keyPrefix = keyPrefix;
+  }
   const condition = raw.condition;
   if (condition !== undefined) {
     if (!isExpressionNode(condition)) {
@@ -217,6 +206,10 @@ function parsePresentationQuestion(raw: unknown): Result<PresentationQuestion, F
   const placeholder = stringField(raw, "placeholder");
   if (placeholder !== undefined) {
     question.placeholder = placeholder;
+  }
+  const keyPrefix = stringField(raw, "keyPrefix");
+  if (keyPrefix !== undefined) {
+    question.keyPrefix = keyPrefix;
   }
   if (raw.staticOptions !== undefined) {
     if (!Array.isArray(raw.staticOptions)) {

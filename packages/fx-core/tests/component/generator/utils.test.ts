@@ -191,6 +191,18 @@ describe("utils unit test cases", () => {
     assert.isUndefined(result);
   });
 
+  it("should return undefined for getTemplateVSCUrl when useLocalTemplate flag is true even if latest is higher", async () => {
+    (packageJson as any).version = "3.0.0";
+    Object.assign(templateConfig, {
+      useLocalTemplate: true,
+      localVersion: "5.0.0",
+      tagPrefix: "templates@",
+    });
+    const getLatestVersion = () => Promise.resolve("6.0.0");
+    const result = await getTemplateUrl("ts", getLatestVersion, Platform.VSCode);
+    assert.isUndefined(result);
+  });
+
   it("setGeneralSensitivityLabel happy path", async () => {
     const gtools = new MockTools();
     setTools(gtools);
@@ -279,65 +291,53 @@ describe("utils unit test cases", () => {
 
 describe("templateHelper unit test cases", () => {
   const originalPackageVersion = (packageJson as any).version;
+  const originalTemplateConfig = JSON.parse(JSON.stringify(templateConfig));
 
   afterEach(() => {
     (packageJson as any).version = originalPackageVersion;
+    Object.assign(templateConfig, originalTemplateConfig);
   });
 
   it("should return true when TEMPLATE_VERSION is set to local", () => {
     const restore = mockedEnv({
       TEMPLATE_VERSION: "local",
     });
+    // local override wins even when the config flag is off.
+    (templateConfig as any).useLocalTemplate = false;
     const result = useLocalTemplate();
     assert.isTrue(result);
     restore();
   });
 
-  it("should return false when TEMPLATE_VERSION is not set to local", () => {
+  it("should return false when an explicit non-local TEMPLATE_VERSION is set", () => {
     const restore = mockedEnv({
       TEMPLATE_VERSION: "1.0.0",
     });
     (packageJson as any).version = "3.0.0";
+    (templateConfig as any).useLocalTemplate = true;
+    // An explicit version override forces a download regardless of the flag.
     const result = useLocalTemplate();
     assert.isFalse(result);
     restore();
   });
 
-  it("should return true when package version contains alpha", () => {
-    const restore = mockedEnv({
-      TEMPLATE_VERSION: "",
-    });
-    (packageJson as any).version = "3.0.0-alpha.1";
-    const result = useLocalTemplate();
-    assert.isFalse(result);
-    restore();
-  });
-
-  it("should return false when package version is stable and TEMPLATE_VERSION is not local", () => {
+  it("should return true when the useLocalTemplate config flag is true", () => {
     const restore = mockedEnv({
       TEMPLATE_VERSION: "",
     });
     (packageJson as any).version = "3.0.0";
+    (templateConfig as any).useLocalTemplate = true;
     const result = useLocalTemplate();
-    assert.isFalse(result);
+    assert.isTrue(result);
     restore();
   });
 
-  it("should return false when package version contains beta", () => {
+  it("should return false when the useLocalTemplate config flag is false", () => {
     const restore = mockedEnv({
       TEMPLATE_VERSION: "",
     });
-    (packageJson as any).version = "3.0.0-beta.1";
-    const result = useLocalTemplate();
-    assert.isFalse(result);
-    restore();
-  });
-
-  it("should return false when package version contains rc", () => {
-    const restore = mockedEnv({
-      TEMPLATE_VERSION: "",
-    });
-    (packageJson as any).version = "3.0.0-rc.1";
+    (packageJson as any).version = "3.0.0";
+    (templateConfig as any).useLocalTemplate = false;
     const result = useLocalTemplate();
     assert.isFalse(result);
     restore();

@@ -10,12 +10,36 @@
     "$schema": { "type": "string" },
     "pipeline": { "type": "string" },
     "comment": { "type": "string" },
+    "render": { "$ref": "#/$defs/render" },
     "steps": {
       "type": "array",
       "items": { "$ref": "#/$defs/pipelineStep" }
     }
   },
   "$defs": {
+    "render": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "filters": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/renderFilter" }
+        }
+      }
+    },
+    "renderFilter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["exclude"],
+      "properties": {
+        "comment": { "type": "string" },
+        "when": { "type": "string" },
+        "exclude": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
     "pipelineStep": {
       "type": "object",
       "additionalProperties": false,

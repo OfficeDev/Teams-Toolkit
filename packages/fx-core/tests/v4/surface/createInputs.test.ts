@@ -31,7 +31,11 @@ import { openCreateQuestions } from "../../../src/v4/distribution/createQuestion
 import { openDeclarativePackageMetadata } from "../../../src/v4/distribution/declarativePackage";
 import { DeclarativeLocator } from "../../../src/v4/model/dataModel";
 import { createUiPromptUI } from "../../../src/v4/surface/uiPromptUI";
-import { gateLanguagesBySurface, runCreateInputs } from "../../../src/v4/surface/createInputs";
+import {
+  gateLanguagesBySurface,
+  runCreateInputs,
+  runCreateInputsWalk,
+} from "../../../src/v4/surface/createInputs";
 import { assert } from "vitest";
 
 /**
@@ -46,6 +50,7 @@ import { assert } from "vitest";
 
 const TEMPLATES_V4_DIR = path.resolve(__dirname, "../../../../../templates/v4");
 const MCP_DA: DeclarativeLocator = { kind: "create", templateId: "da/mcp-server" };
+const NO_ACTION: DeclarativeLocator = { kind: "create", templateId: "da/no-action" };
 const STATIC_MCP_DA: DeclarativeLocator = {
   kind: "create",
   templateId: "da/mcp-server-static",
@@ -84,10 +89,16 @@ const RAG_CUSTOM_API: DeclarativeLocator = {
 };
 const OPENAPI_SPEC = path.resolve(__dirname, "../scenarios/fixtures/repairs-openapi.yaml");
 
+let cachedFloor: Buffer | undefined;
+
 function buildFloor(): Buffer {
+  if (cachedFloor !== undefined) {
+    return Buffer.from(cachedFloor);
+  }
   const zip = new AdmZip();
   zip.addLocalFolder(TEMPLATES_V4_DIR, "v4");
-  return zip.toBuffer();
+  cachedFloor = zip.toBuffer();
+  return Buffer.from(cachedFloor);
 }
 
 function buildLanguageFloor(languages = ["typescript", "csharp"]): Buffer {
@@ -417,6 +428,68 @@ describe("runCreateInputs (collect-create-inputs)", () => {
     assert.deepEqual(ui.selectNames, []);
   });
 
+  it("CCI-25: threads baseStep + backable so Q2's first prompt shows Back and a back returns a typed outcome", async () => {
+    const ui = new ScriptedUserInteraction({ back: ["llmService"] });
+    const res = await runCreateInputsWalk(buildFloor(), CUSTOM_COPILOT_BASIC, {}, asUI(ui), {
+      flagReader: () => false,
+      surface: "vscode",
+      baseStep: 3,
+      backable: true,
+    });
+    assert.isTrue(res.isOk(), res.isErr() ? `${res.error.name}: ${res.error.message}` : "ok");
+    if (res.isOk()) {
+      // a back at Q2's first prompt hands control back to the front door (no cancel).
+      assert.strictEqual(res.value.kind, "back");
+    }
+    // llmService is the first prompt, shown at baseStep + 1 = 4, so the host renders a
+    // Back button (step > 1).
+    assert.strictEqual(ui.lastSelectConfig?.step, 4);
+  });
+
+  it("CCI-26: a different locator rebuilds Q2+Q3 fresh — no stale question is carried across templates", async () => {
+    // The MCP server template asks its own Q2 (mcpServerType / url / authType).
+    const mcpUi = new ScriptedUserInteraction({
+      text: { mcpServerUrl: "https://api.example.com/mcp" },
+      select: { authType: "none" },
+    });
+    const mcp = await runCreateInputs(buildFloor(), MCP_DA, {}, asUI(mcpUi), {
+      listLocalMcpServers: async () => [],
+      flagReader: () => false,
+    });
+    assert.isTrue(mcp.isOk(), mcp.isErr() ? `${mcp.error.name}: ${mcp.error.message}` : "ok");
+    assert.deepEqual(mcpUi.promptNames, ["mcpServerType", "mcpServerUrl", "authType"]);
+
+    // The no-action template (empty Q2, common language) under a different locator asks none
+    // of the MCP questions — the Q2+Q3 set is a pure function of the current locator.
+    const noActionUi = new ScriptedUserInteraction({});
+    const noAction = await runCreateInputs(buildFloor(), NO_ACTION, {}, asUI(noActionUi), {
+      flagReader: () => false,
+    });
+    assert.isTrue(
+      noAction.isOk(),
+      noAction.isErr() ? `${noAction.error.name}: ${noAction.error.message}` : "ok"
+    );
+    assert.deepEqual(noActionUi.promptNames, []);
+  });
+
+  it("CCI-28: a provider-single-option first question is back-transparent, so a back at the next prompt re-enters Q1", async () => {
+    const ui = new ScriptedUserInteraction({ back: ["mcpServerUrl"] });
+    const res = await runCreateInputsWalk(buildFloor(), MCP_DA, {}, asUI(ui), {
+      listLocalMcpServers: async () => [], // remote-only → mcpServerType auto-skips
+      flagReader: () => false,
+      baseStep: 3,
+      backable: true,
+    });
+    assert.isTrue(res.isOk(), res.isErr() ? `${res.error.name}: ${res.error.message}` : "ok");
+    if (res.isOk()) {
+      // mcpServerType auto-skipped (records remote, no back-stop); backing mcpServerUrl now
+      // crosses straight into Q1 instead of re-asking the skipped provider question.
+      assert.strictEqual(res.value.kind, "back");
+    }
+    // mcpServerUrl is the first *visible* prompt, at baseStep + 1 = 4 (the skip left no step).
+    assert.strictEqual(ui.lastInputConfig?.step, 4);
+  });
+
   it("CCI-17: VS Code Teams Agents and Apps Python language option carries the v3 Preview description", async () => {
     const ui = new ScriptedUserInteraction({
       select: { llmService: "llm-service-openai", language: "python" },
@@ -523,6 +596,14 @@ describe("runCreateInputs (collect-create-inputs)", () => {
     assert.deepEqual(ui.selectNames, ["mcpServerType", "authType"]);
     assert.deepEqual(ui.dynamicOptionNames, ["mcpServerType"]);
     assert.deepEqual(ui.textNames, ["mcpServerUrl"]);
+    assert.equal(ui.lastInputConfig?.name, "mcpServerUrl");
+    assert.isFunction(ui.lastInputConfig?.validation);
+    const validation = ui.lastInputConfig?.validation;
+    if (validation === undefined) {
+      assert.fail("expected MCP server URL prompt validation");
+    }
+    assert.equal(await validation("not a uri"), "must be a valid URI");
+    assert.isUndefined(await validation("https://api.example.com/mcp"));
   });
 
   it("CCI-17: openapi.operations provider lists operations from the selected OpenAPI document", async () => {
@@ -569,8 +650,9 @@ describe("runCreateInputs (collect-create-inputs)", () => {
     assert.deepEqual(ui.textNames, ["apiSpecLocation"]);
     assert.deepEqual(ui.fileNames, []);
     assert.deepEqual(ui.fileOrInputNames, []);
-    assert.equal(ui.lastInputConfig?.placeholder, "https://example.com/openapi.yaml");
-    assert.equal(ui.lastInputConfig?.prompt, "Enter an OpenAPI description document URL.");
+    assert.equal(ui.lastInputConfig?.title, "OpenAPI Document");
+    assert.equal(ui.lastInputConfig?.placeholder, "Enter OpenAPI Document URL");
+    assert.isUndefined(ui.lastInputConfig?.prompt);
     assert.isFunction(ui.lastInputConfig?.validation);
     assert.equal(
       await ui.lastInputConfig?.validation?.("./openapi.yaml"),
@@ -600,7 +682,8 @@ describe("runCreateInputs (collect-create-inputs)", () => {
     assert.deepEqual(ui.fileNames, ["apiSpecLocation"]);
     assert.deepEqual(ui.textNames, []);
     assert.deepEqual(ui.fileOrInputNames, []);
-    assert.equal(ui.lastFileConfig?.placeholder, "Select an OpenAPI description document.");
+    assert.equal(ui.lastFileConfig?.title, "OpenAPI Document");
+    assert.isUndefined(ui.lastFileConfig?.placeholder);
     assert.deepEqual(ui.lastFileConfig?.filters, {
       "OpenAPI Description Document": ["json", "yml", "yaml"],
     });
@@ -871,6 +954,37 @@ describe("runCreateInputs (collect-create-inputs)", () => {
     assert.isString(await ui.lastInputConfig?.validation?.("!"));
   });
 
+  it("CCI-24: threads create floor app-name validation to the text prompt", async () => {
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "v4-app-name-"));
+    try {
+      fs.ensureDirSync(path.join(tempRoot, "TakenName"));
+      const ui = new ScriptedUserInteraction({
+        select: { llmService: "llm-service-openai", language: "typescript" },
+        text: { openAIKey: "fake-openai-key", "app-name": "MyAgent" },
+        folder: { folder: tempRoot },
+      });
+
+      const res = await runCreateInputs(buildFloor(), BASIC_CUSTOM_ENGINE_AGENT, {}, asUI(ui), {
+        flagReader: () => false,
+        inputs: { platform: Platform.VSCode },
+        surface: "vscode",
+      });
+
+      assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
+      assert.equal(ui.lastInputConfig?.name, "app-name");
+      assert.isFunction(ui.lastInputConfig?.validation);
+      const validation = ui.lastInputConfig?.validation;
+      if (validation === undefined) {
+        assert.fail("expected app-name prompt validation");
+      }
+      assert.include(await validation("a".repeat(31)), "30 characters");
+      assert.include(await validation("TakenName"), "Path exists");
+      assert.isUndefined(await validation("AvailableName"));
+    } finally {
+      removeSync(tempRoot);
+    }
+  });
+
   it("uses create floor defaults without prompts in non-interactive mode", async () => {
     const ui = new ScriptedUserInteraction({
       select: { llmService: "llm-service-openai", language: "typescript" },
@@ -1080,8 +1194,6 @@ describe("runCreateInputs (collect-create-inputs)", () => {
       multi: { apiOperations: ["GET /repairs"] },
       text: {
         azureOpenAIKey: "",
-        azureOpenAIEndpoint: "",
-        azureOpenAIDeploymentName: "",
       },
     });
     const res = await runCreateInputs(
@@ -1096,11 +1208,9 @@ describe("runCreateInputs (collect-create-inputs)", () => {
       assert.fail(res.error.message);
     }
     assert.equal(res.value.apiSpecLocation, OPENAPI_SPEC);
-    assert.deepEqual(ui.textNames, [
-      "azureOpenAIKey",
-      "azureOpenAIEndpoint",
-      "azureOpenAIDeploymentName",
-    ]);
+    // Empty Azure OpenAI key short-circuits the cascade: the endpoint and
+    // deployment name questions are never asked.
+    assert.deepEqual(ui.textNames, ["azureOpenAIKey"]);
     assert.deepEqual(ui.fileNames, []);
     assert.deepEqual(ui.fileOrInputNames, ["apiSpecLocation"]);
     assert.equal(ui.lastFileOrInputConfig?.inputBoxConfig.name, "input-api-spec-url");
@@ -1111,6 +1221,29 @@ describe("runCreateInputs (collect-create-inputs)", () => {
     );
     assert.isUndefined(ui.lastFileOrInputConfig?.validation);
     assert.isFunction(ui.lastFileOrInputConfig?.inputBoxConfig.validation);
+  });
+
+  it("cascades Azure OpenAI questions: a filled key reveals the endpoint, an empty endpoint skips the deployment name", async () => {
+    const ui = new ScriptedUserInteraction({
+      select: { llmService: "llm-service-azure-openai" },
+      text: {
+        azureOpenAIKey: "fake-azure-openai-key",
+        azureOpenAIEndpoint: "",
+      },
+    });
+
+    const res = await runCreateInputs(
+      buildFloor(),
+      WEATHER_AGENT,
+      { language: "typescript" },
+      asUI(ui),
+      { flagReader: () => false }
+    );
+
+    assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
+    // The filled key reveals the endpoint; the empty endpoint short-circuits
+    // the deployment name.
+    assert.deepEqual(ui.textNames, ["azureOpenAIKey", "azureOpenAIEndpoint"]);
   });
 
   it("lists static MCP tools from the provided tools JSON", async () => {
@@ -1612,6 +1745,80 @@ describe("createUiPromptUI (collect-create-inputs)", () => {
     assert.equal(options[1].label, "b");
   });
 
+  it("renders authored option icons through the existing VS Code codicon label syntax", async () => {
+    const ui = new ScriptedUserInteraction({ select: { picker: "a" } });
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask({ name: "picker", type: "singleSelect", title: "Pick" }, [
+      { id: "a", label: "Agent", iconPath: "teamsfx-agent" },
+    ]);
+
+    assert.isTrue(res.isOk());
+    const options = (ui.lastSelectConfig?.options ?? []) as SurfaceOptionItem[];
+    assert.equal(options[0].label, "$(teamsfx-agent) Agent");
+  });
+
+  it("projects undefined singleSelect results to an empty value", async () => {
+    const ui = new ScriptedUserInteraction({ select: { picker: "a" } });
+    ui.selectOption = async (config: SingleSelectConfig) => {
+      ui.lastSelectConfig = config;
+      return ok({ type: "success" });
+    };
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask({ name: "picker", type: "singleSelect", title: "Pick" }, [
+      { id: "a" },
+    ]);
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.deepEqual(res.value, { kind: "value", value: "" });
+    }
+  });
+
+  it("projects object singleSelect results to their option id", async () => {
+    const ui = new ScriptedUserInteraction({ select: { picker: "a" } });
+    ui.selectOption = async (config: SingleSelectConfig) => {
+      ui.lastSelectConfig = config;
+      return ok({ type: "success", result: { id: "a", label: "A" } });
+    };
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask({ name: "picker", type: "singleSelect", title: "Pick" }, [
+      { id: "a", label: "A" },
+    ]);
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.deepEqual(res.value, { kind: "value", value: "a" });
+    }
+  });
+
+  it("rejects singleSelect questions when no options source is supplied", async () => {
+    const ui = new ScriptedUserInteraction({});
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask(
+      { name: "picker", type: "singleSelect", title: "Pick" },
+      undefined
+    );
+
+    assert.isTrue(res.isErr());
+    assert.equal(res._unsafeUnwrapErr().name, "UnsupportedQuestionKind");
+  });
+
+  it("rejects unsupported ask question kinds after other supported kinds are checked", async () => {
+    const ui = new ScriptedUserInteraction({});
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask({ name: "servers", type: "multiSelect", title: "Servers" }, [
+      { id: "alpha" },
+    ]);
+
+    assert.isTrue(res.isErr());
+    assert.equal(res._unsafeUnwrapErr().name, "UnsupportedQuestionKind");
+  });
+
   it("resolves keyPrefix localization before rendering authored v4 LLM questions", async () => {
     const ui = new ScriptedUserInteraction({ select: { llmService: "llm-service-openai" } });
     const prompt = createUiPromptUI(asUI(ui));
@@ -1843,6 +2050,43 @@ describe("createUiPromptUI (collect-create-inputs)", () => {
     assert.deepEqual(ui.multiNames, ["servers"]);
   });
 
+  it("projects undefined multiSelect results to an empty list", async () => {
+    const ui = new ScriptedUserInteraction({ multi: { servers: ["alpha"] } });
+    ui.selectOptions = async (config: MultiSelectConfig) => {
+      ui.lastMultiConfig = config;
+      return ok({ type: "success" });
+    };
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.askMulti({ name: "servers", type: "multiSelect", title: "Servers" }, [
+      { id: "alpha" },
+    ]);
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.deepEqual(res.value, { kind: "value", value: [] });
+    }
+  });
+
+  it("rejects askMulti when the question kind or options source is unsupported", async () => {
+    const ui = new ScriptedUserInteraction({});
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const wrongKind = await prompt.askMulti(
+      { name: "servers", type: "singleSelect", title: "Servers" },
+      [{ id: "alpha" }]
+    );
+    const missingOptions = await prompt.askMulti(
+      { name: "servers", type: "multiSelect", title: "Servers" },
+      undefined
+    );
+
+    assert.isTrue(wrongKind.isErr());
+    assert.equal(wrongKind._unsafeUnwrapErr().name, "UnsupportedQuestionKind");
+    assert.isTrue(missingOptions.isErr());
+    assert.equal(missingOptions._unsafeUnwrapErr().name, "UnsupportedQuestionKind");
+  });
+
   it("CCI-10: ask projects a host back on a singleSelect to { kind: 'back' }", async () => {
     const ui = new ScriptedUserInteraction({ back: ["picker"] });
     const prompt = createUiPromptUI(asUI(ui));
@@ -1867,6 +2111,38 @@ describe("createUiPromptUI (collect-create-inputs)", () => {
     assert.isTrue(res.isOk());
     if (res.isOk()) {
       assert.deepEqual(res.value, { kind: "back" });
+    }
+  });
+
+  it("CCI-27: ask projects a host skip on a skipSingleOption singleSelect to { kind: 'skip' }", async () => {
+    const ui = new ScriptedUserInteraction({});
+    const prompt = createUiPromptUI(asUI(ui));
+
+    // A single option + skipSingleOption → the surface returns { type: "skip" }, which the
+    // bridge projects to { kind: "skip" } so the walk records it without a back-stop.
+    const res = await prompt.ask(
+      { name: "picker", type: "singleSelect", title: "Pick", skipSingleOption: true },
+      [{ id: "only" }]
+    );
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.deepEqual(res.value, { kind: "skip", value: "only" });
+    }
+  });
+
+  it("CCI-27b: askMulti projects a host skip on a skipSingleOption multiSelect to { kind: 'skip' }", async () => {
+    const ui = new ScriptedUserInteraction({});
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.askMulti(
+      { name: "servers", type: "multiSelect", title: "Servers", skipSingleOption: true },
+      [{ id: "only" }]
+    );
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.deepEqual(res.value, { kind: "skip", value: ["only"] });
     }
   });
 
