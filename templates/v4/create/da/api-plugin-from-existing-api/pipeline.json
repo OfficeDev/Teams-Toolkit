@@ -1,6 +1,6 @@
 {
   "pipeline": "default",
-  "comment": "Render the common declarative-agent shell, then generate the API plugin manifest and filtered OpenAPI spec from the selected existing OpenAPI operations.",
+  "comment": "Render the common declarative-agent shell, generate the API plugin files from selected OpenAPI operations, then optionally apply the feature-gated sensitivity label.",
   "steps": [
     { "step": "require-empty-target" },
     {
@@ -8,6 +8,13 @@
       "with": {
         "apiSpecLocation": "{{apiSpecLocation}}",
         "apiOperations": "{{apiOperations}}"
+      }
+    },
+    {
+      "step": "da/set-sensitivity-label",
+      "when": "featureFlag('TEAMSFX_SENSITIVITY_LABEL')",
+      "with": {
+        "manifestPath": "appPackage/declarativeAgent.json"
       }
     }
   ]

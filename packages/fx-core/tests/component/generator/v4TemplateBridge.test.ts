@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { Platform, SystemError } from "@microsoft/teamsfx-api";
+import { Platform, SystemError, UserError } from "@microsoft/teamsfx-api";
 import AdmZip from "adm-zip";
 import fs from "fs-extra";
 import { err, ok } from "neverthrow";
@@ -20,7 +20,14 @@ import {
   scaffoldFromV4Channel,
   v4TemplateBridgeDeps,
 } from "../../../src/component/generator/v4TemplateBridge";
-import { TemplateFileEntry, TemplateSource } from "../../../src/v4";
+import {
+  TemplateFileEntry,
+  TemplateSource,
+  openDeclarativePackage,
+  validateMinEngineVersion,
+} from "../../../src/v4";
+import { mcpAuthScaffoldDeps } from "../../../src/v4/mcp/mcpAuthScaffold";
+import { createStepRegistry } from "../../../src/v4/runtime/runtimeRegistry";
 
 // Build a GeneratorContext whose rename/data/filter functions mirror exactly
 // what DefaultTemplateGenerator.scaffolding constructs, so the render contract
@@ -287,6 +294,24 @@ describe("v4TemplateBridge.scaffoldFromV4Channel", () => {
   });
 });
 
+describe("v4TemplateBridge engine compatibility", () => {
+  it("uses an engine capability version that admits the current in-tree descriptors", async () => {
+    const descriptor = await fs.readJson(
+      path.resolve(__dirname, "../../../../../templates/v4/create/da/mcp-server/descriptor.json")
+    );
+
+    const result = validateMinEngineVersion(
+      "create",
+      "da/mcp-server",
+      descriptor,
+      v4TemplateBridgeDeps.engineVersion(),
+      (name, message) => new UserError({ source: "Scaffold", name, message })
+    );
+
+    assert.isTrue(result.isOk(), result.isErr() ? result.error.message : "expected compatible");
+  });
+});
+
 describe("v4TemplateBridge.scaffoldDeclarativeFromV4Channel", () => {
   const sandbox = vi;
   let tmpDir: string;
@@ -301,6 +326,8 @@ describe("v4TemplateBridge.scaffoldDeclarativeFromV4Channel", () => {
   // exactly as `generateV4Zip.js` bundles it, so the bridge exercises the
   // production distribution → declarative-engine path against the live template.
   const PKG_DIR = path.resolve(__dirname, "../../../../../templates/v4/create/da/mcp-server");
+  const V4_DIR = path.resolve(__dirname, "../../../../../templates/v4");
+  let fullChannelBytesCache: Buffer | undefined;
 
   function channelBytes(): Buffer {
     const zip = new AdmZip();
@@ -308,10 +335,23 @@ describe("v4TemplateBridge.scaffoldDeclarativeFromV4Channel", () => {
     return zip.toBuffer();
   }
 
+  function fullChannelBytes(): Buffer {
+    if (fullChannelBytesCache === undefined) {
+      const zip = new AdmZip();
+      zip.addLocalFolder(V4_DIR, "v4");
+      fullChannelBytesCache = zip.toBuffer();
+    }
+    return fullChannelBytesCache;
+  }
+
   beforeEach(async () => {
     tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "v4decl-"));
     vi.spyOn(v4TemplateBridgeDeps, "createTemplateSourcePort").mockReturnValue({} as any);
     vi.spyOn(v4TemplateBridgeDeps, "loadBundledFloor").mockReturnValue({} as any);
+    vi.spyOn(v4TemplateBridgeDeps, "engineVersion").mockReturnValue("6.11.0");
+    vi.spyOn(v4TemplateBridgeDeps, "validateDeclarativePackageArchive").mockImplementation(
+      (bytes, packageLocator) => openDeclarativePackage(bytes, packageLocator)
+    );
   });
 
   afterEach(async () => {
@@ -344,6 +384,35 @@ describe("v4TemplateBridge.scaffoldDeclarativeFromV4Channel", () => {
     assert.include(ctx.outputs ?? [], "appPackage/ai-plugin.json");
     assert.strictEqual(telemetryProps[TelemetryProperty.TemplatePackageSource], "bundled");
     assert.strictEqual(telemetryProps[TelemetryProperty.TemplatePackageVersion], "6.10.1");
+  });
+
+  it("forwards a bound step registry into the on-disk runtime", async () => {
+    const ctx = makeContext("da-mcp", tmpDir, {});
+    vi.spyOn(v4TemplateBridgeDeps, "resolveLocalTemplateSource").mockReturnValue(source);
+    vi.spyOn(v4TemplateBridgeDeps, "loadResolvedPackage").mockReturnValue(ok(channelBytes()));
+    let resolveCalls = 0;
+
+    await scaffoldDeclarativeFromV4Channel(
+      ctx,
+      locator,
+      { mcpServerType: "remote", mcpServerUrl: "https://api.github.com/mcp", authType: "none" },
+      { appName: "MyMcpAgent", language: "common" },
+      {},
+      (name) => name === "TEAMSFX_SENSITIVITY_LABEL",
+      undefined,
+      createStepRegistry({
+        resolveId: async (): Promise<string> => {
+          resolveCalls += 1;
+          return "general-label-id";
+        },
+      })
+    );
+
+    const manifest = JSON.parse(
+      await fs.readFile(path.join(tmpDir, "appPackage", "declarativeAgent.json"), "utf8")
+    );
+    assert.strictEqual(resolveCalls, 1);
+    assert.strictEqual(manifest.sensitivity_label.id, "general-label-id");
   });
 
   it("uses supplied staged package bytes without resolving the local channel", async () => {
@@ -385,6 +454,81 @@ describe("v4TemplateBridge.scaffoldDeclarativeFromV4Channel", () => {
     assert.include(ctx.outputs ?? [], "appPackage/ai-plugin.json");
   });
 
+  it("rejects a package that requires a newer engine before writing files", async () => {
+    const ctx = makeContext("da-mcp", tmpDir, {});
+    vi.mocked(v4TemplateBridgeDeps.engineVersion).mockReturnValue("6.10.2");
+    vi.spyOn(v4TemplateBridgeDeps, "resolveLocalTemplateSource").mockReturnValue(source);
+    vi.spyOn(v4TemplateBridgeDeps, "loadResolvedPackage").mockReturnValue(ok(fullChannelBytes()));
+    vi.mocked(v4TemplateBridgeDeps.validateDeclarativePackageArchive).mockRestore();
+
+    await expect(
+      scaffoldDeclarativeFromV4Channel(
+        ctx,
+        locator,
+        { mcpServerType: "remote", mcpServerUrl: "https://api.github.com/mcp", authType: "none" },
+        { appName: "MyMcpAgent", language: "common" },
+        {}
+      )
+    ).rejects.toMatchObject({ name: "TemplatePackageEngineTooOld" });
+
+    assert.deepEqual(await fs.readdir(tmpDir), []);
+    assert.isUndefined(ctx.outputs);
+  });
+
+  it("AC-20: rejects malformed package metadata before writing files", async () => {
+    const ctx = makeContext("da-mcp", tmpDir, {});
+    const zip = new AdmZip(fullChannelBytes());
+    const questions = zip.getEntry("v4/create/da/mcp-server/questions.json");
+    assert.isNotNull(questions);
+    questions!.setData(Buffer.from(JSON.stringify({ questions: "not-an-array" })));
+    vi.spyOn(v4TemplateBridgeDeps, "resolveLocalTemplateSource").mockReturnValue(source);
+    vi.spyOn(v4TemplateBridgeDeps, "loadResolvedPackage").mockReturnValue(ok(zip.toBuffer()));
+    vi.mocked(v4TemplateBridgeDeps.validateDeclarativePackageArchive).mockRestore();
+
+    const scaffoldResult = scaffoldDeclarativeFromV4Channel(
+      ctx,
+      locator,
+      { mcpServerType: "remote", mcpServerUrl: "https://api.github.com/mcp", authType: "none" },
+      { appName: "MyMcpAgent", language: "common" },
+      {}
+    );
+
+    await expect(scaffoldResult).rejects.toBeInstanceOf(UserError);
+    await expect(scaffoldResult).rejects.toMatchObject({
+      name: "TemplatePackageSchema",
+      source: "Scaffold",
+    });
+
+    assert.deepEqual(await fs.readdir(tmpDir), []);
+    assert.isUndefined(ctx.outputs);
+  });
+
+  it("rejects unsafe archive paths as runtime SystemErrors before writing files", async () => {
+    const ctx = makeContext("da-mcp", tmpDir, {});
+    const zip = new AdmZip(fullChannelBytes());
+    zip.addFile("v4/create/da/mcp-server/content/z:/payload.txt", Buffer.from("unsafe"));
+    vi.spyOn(v4TemplateBridgeDeps, "resolveLocalTemplateSource").mockReturnValue(source);
+    vi.spyOn(v4TemplateBridgeDeps, "loadResolvedPackage").mockReturnValue(ok(zip.toBuffer()));
+    vi.mocked(v4TemplateBridgeDeps.validateDeclarativePackageArchive).mockRestore();
+
+    const scaffoldResult = scaffoldDeclarativeFromV4Channel(
+      ctx,
+      locator,
+      { mcpServerType: "remote", mcpServerUrl: "https://api.github.com/mcp", authType: "none" },
+      { appName: "MyMcpAgent", language: "common" },
+      {}
+    );
+
+    await expect(scaffoldResult).rejects.toBeInstanceOf(SystemError);
+    await expect(scaffoldResult).rejects.toMatchObject({
+      name: "TemplatePackageUnsafePath",
+      source: "Scaffold",
+    });
+
+    assert.deepEqual(await fs.readdir(tmpDir), []);
+    assert.isUndefined(ctx.outputs);
+  });
+
   it("threads the answers into the engine (oauth selects the vault auth block)", async () => {
     const ctx = makeContext("da-mcp", tmpDir, {});
     vi.spyOn(v4TemplateBridgeDeps, "resolveLocalTemplateSource").mockReturnValue(source);
@@ -397,8 +541,6 @@ describe("v4TemplateBridge.scaffoldDeclarativeFromV4Channel", () => {
         mcpServerType: "remote",
         mcpServerUrl: "https://api.github.com/mcp",
         authType: "oauth",
-        oauthClientId: "cid",
-        oauthClientSecret: "secret",
       },
       { appName: "MyMcpAgent", language: "common" },
       {}
@@ -409,7 +551,7 @@ describe("v4TemplateBridge.scaffoldDeclarativeFromV4Channel", () => {
     assert.notInclude(body, '"type": "None"');
   });
 
-  it("runs the entra-sso pipeline steps onto disk (yml register action + env credential ref)", async () => {
+  it("runs the entra-sso pipeline steps onto disk (yml register action + registration placeholder)", async () => {
     const ctx = makeContext("da-mcp", tmpDir, {});
     vi.spyOn(v4TemplateBridgeDeps, "resolveLocalTemplateSource").mockReturnValue(source);
     vi.spyOn(v4TemplateBridgeDeps, "loadResolvedPackage").mockReturnValue(ok(channelBytes()));
@@ -421,7 +563,6 @@ describe("v4TemplateBridge.scaffoldDeclarativeFromV4Channel", () => {
         mcpServerType: "remote",
         mcpServerUrl: "https://api.github.com/mcp",
         authType: "entra-sso",
-        entraClientId: "eid",
       },
       { appName: "MyMcpAgent", language: "common" },
       {}
@@ -431,13 +572,43 @@ describe("v4TemplateBridge.scaffoldDeclarativeFromV4Channel", () => {
     const body = (await fs.readFile(path.join(tmpDir, "appPackage", "ai-plugin.json"))).toString();
     assert.include(body, '"type": "OAuthPluginVault"');
     assert.include(body, "MCP_DA_AUTH_ID_APIGITHUBC");
-    // the inject-yml-action step welded the Entra register action into the yml
+    // the inject-yml-action step welded the oauth/register (Entra) action into the yml
     const yml = (await fs.readFile(path.join(tmpDir, "m365agents.yml"))).toString();
-    assert.include(yml, "microsoftEntra/register");
+    assert.include(yml, "oauth/register");
+    assert.include(yml, "identityProvider: MicrosoftEntra");
     assert.include(yml, "MCP_DA_AUTH_ID_APIGITHUBC");
-    // the persist-credential-env step seeded the credential ref into the env file
+    // the persist-credential-env step seeded the registration-result placeholder into the env file
     const env = (await fs.readFile(path.join(tmpDir, "env", ".env.dev"))).toString();
     assert.include(env, "MCP_DA_AUTH_ID_APIGITHUBC");
+  });
+
+  it("logs a warning when MCP auth metadata discovery fails without failing scaffold", async () => {
+    const ctx = makeContext("da-mcp", tmpDir, {});
+    const warning = vi.spyOn(ctx.logProvider, "warning");
+    vi.spyOn(mcpAuthScaffoldDeps, "probeMCPServerAuth").mockRejectedValue(
+      new Error("metadata unavailable")
+    );
+    vi.spyOn(v4TemplateBridgeDeps, "resolveLocalTemplateSource").mockReturnValue(source);
+    vi.spyOn(v4TemplateBridgeDeps, "loadResolvedPackage").mockReturnValue(ok(channelBytes()));
+
+    await scaffoldDeclarativeFromV4Channel(
+      ctx,
+      locator,
+      {
+        mcpServerType: "remote",
+        mcpServerUrl: "https://api.github.com/mcp",
+        authType: "oauth",
+      },
+      { appName: "MyMcpAgent", language: "common" },
+      {}
+    );
+
+    assert.equal(warning.mock.calls.length, 1);
+    assert.include(warning.mock.calls[0][0], "metadata unavailable");
+    assert.include(
+      (await fs.readFile(path.join(tmpDir, "m365agents.yml"))).toString(),
+      "oauth/register"
+    );
   });
 
   it("throws but still records source telemetry when the template id is absent", async () => {

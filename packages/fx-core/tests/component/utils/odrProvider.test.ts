@@ -628,6 +628,101 @@ describe("ODRProvider", () => {
       assert.isUndefined(servers[0].tools[0].outputSchema);
     });
 
+    it("should normalize tool schemas to the MCP object root", () => {
+      const mockInput = {
+        servers: [
+          {
+            name: "test-server",
+            _meta: {
+              "io.modelcontextprotocol.registry/publisher-provided": {
+                "com.microsoft.windows": {
+                  manifest: {
+                    server: { mcp_config: { command: "cmd", args: [] } },
+                    _meta: {
+                      "com.microsoft.windows": {
+                        package_family_name: "Package",
+                        static_responses: {
+                          "tools/list": {
+                            tools: [
+                              {
+                                name: "tool1",
+                                inputSchema: { properties: {} },
+                                outputSchema: { type: "string" },
+                              },
+                            ],
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        ],
+      };
+
+      const servers = ODRProvider.parseODRListOutput(mockInput);
+
+      assert.equal(servers[0].tools[0].inputSchema.type, "object");
+      assert.equal(servers[0].tools[0].outputSchema?.type, "object");
+    });
+
+    it("should filter malformed registry entries and normalize malformed tool schemas", () => {
+      const servers = ODRProvider.parseODRListOutput({
+        servers: [
+          null,
+          {
+            name: "test-server",
+            _meta: {
+              "io.modelcontextprotocol.registry/publisher-provided": {
+                "com.microsoft.windows": {
+                  manifest: {
+                    server: { mcp_config: { command: "cmd", args: [] } },
+                    _meta: {
+                      "com.microsoft.windows": {
+                        package_family_name: "Package",
+                        static_responses: {
+                          "tools/list": {
+                            tools: [
+                              null,
+                              { description: "missing name" },
+                              { name: "default-schema" },
+                              {
+                                name: "nested-schema",
+                                inputSchema: {
+                                  type: "object",
+                                  properties: {
+                                    malformed: null,
+                                    choice: { type: "string", enum: ["a", 1] },
+                                  },
+                                  required: ["choice", 1],
+                                },
+                              },
+                            ],
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        ],
+      });
+
+      assert.lengthOf(servers, 1);
+      assert.lengthOf(servers[0].tools, 2);
+      assert.deepStrictEqual(servers[0].tools[0].inputSchema, { type: "object" });
+      assert.deepStrictEqual(servers[0].tools[1].inputSchema.properties?.malformed, {});
+      assert.deepStrictEqual(servers[0].tools[1].inputSchema.properties?.choice, {
+        type: "string",
+        enum: ["a", 1],
+      });
+      assert.deepStrictEqual(servers[0].tools[1].inputSchema.required, ["choice"]);
+    });
+
     it("should handle empty command and args", () => {
       const mockInput = {
         servers: [
@@ -720,7 +815,7 @@ describe("ODRProvider", () => {
           args: ["run", "my-server"],
           tools: [
             { name: "tool1", description: "Tool 1", inputSchema: { type: "object" } },
-            { name: "tool2", description: "Tool 2", inputSchema: { type: "string" } },
+            { name: "tool2", description: "Tool 2", inputSchema: { type: "object" } },
           ],
         },
       ];
@@ -769,7 +864,7 @@ describe("ODRProvider", () => {
           packageFamily: "TestPackage",
           command: "odr",
           args: [],
-          tools: [{ name: "tool1", description: "Tool 1", inputSchema: {} }],
+          tools: [{ name: "tool1", description: "Tool 1", inputSchema: { type: "object" } }],
         },
       ];
 
@@ -792,7 +887,7 @@ describe("ODRProvider", () => {
           packageFamily: "TestPackage",
           command: "odr",
           args: [],
-          tools: [{ name: "tool1", description: "Tool 1", inputSchema: {} }],
+          tools: [{ name: "tool1", description: "Tool 1", inputSchema: { type: "object" } }],
         },
       ];
 

@@ -4,7 +4,7 @@
   "name": "Declarative Agent with API Plugin from OpenAPI",
   "kind": "create",
   "languages": ["common"],
-  "minEngineVersion": "5.20.0",
+  "minEngineVersion": "6.11.0",
   "spec": "docs/03-specs/scenarios/da/create-api-plugin-from-existing-api.md",
   "requiresNetwork": false,
   "optionsSchema": {
@@ -18,7 +18,5 @@
     },
     "additionalProperties": false
   },
-  "replaceMap": [
-    { "var": "ApiSpecPath", "const": "./appPackage/apiSpecificationFile/openapi.yaml" }
-  ]
+  "replaceMap": []
 }

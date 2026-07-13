@@ -3,6 +3,7 @@
 
 /** Public surface of the v4 scaffolding world. */
 
+export * from "./engineVersion";
 export * from "./model/dataModel";
 export * from "./distribution/templateSource";
 export * from "./distribution/templateSourcePort";
@@ -19,11 +20,15 @@ export * from "./renderContext/buildRenderContext";
 export * from "./collectInputs/collectInputs";
 export * from "./pipeline/runScaffoldPipeline";
 export * from "./validation/validateTemplatePackage";
+export * from "./validation/capabilityCatalog";
+export * from "./validation/templateArchiveValidation";
 export * from "./buildTarget/resolveBuildTarget";
 export * from "./buildTarget/parseSelector";
 export * from "./runtime/whitelist";
 export * from "./runtime/renderMustache";
 export * from "./runtime/steps/daAction";
+export * from "./runtime/steps/daSensitivity";
+export * from "./runtime/generalSensitivityLabel";
 export * from "./runtime/steps/mcpAuth";
 export * from "./runtime/packageParse";
 export * from "./runtime/inMemoryRuntime";

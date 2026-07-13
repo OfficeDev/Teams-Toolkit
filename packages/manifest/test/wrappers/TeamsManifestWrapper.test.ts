@@ -259,6 +259,30 @@ describe("TeamsManifestWrapper", () => {
       const ids = manifest.getBotIds();
       assert.deepEqual(ids, ["bot1", "bot2"]);
     });
+
+    it("should replace the first bot command suggestions", () => {
+      const manifest = createTestManifest();
+      manifest.addBot("bot1", ["personal"]);
+
+      manifest.setFirstBotCommandSuggestions(
+        [{ title: "Find pets", description: "Find available pets" }],
+        true
+      );
+
+      assert.deepEqual(manifest.bots[0].commandLists, [
+        {
+          scopes: ["personal", "copilot"],
+          commands: [{ title: "Find pets", description: "Find available pets" }],
+        },
+      ]);
+      assert.isTrue(manifest.isDirty);
+    });
+
+    it("should reject command suggestions when the manifest has no bot", () => {
+      const manifest = createTestManifest();
+
+      assert.throws(() => manifest.setFirstBotCommandSuggestions([], false));
+    });
   });
 
   describe("static tab operations", () => {
@@ -411,6 +435,26 @@ describe("TeamsManifestWrapper", () => {
       assert.deepEqual(paths, ["path1.json", "path2.json"]);
     });
 
+    it("should get legacy copilotExtensions declarative copilot paths", () => {
+      const manifest = TeamsManifestWrapper.fromJSON(
+        JSON.stringify({
+          copilotExtensions: {
+            declarativeCopilots: [{ file: "legacy-agent.json" }],
+          },
+        })
+      );
+
+      assert.deepEqual(manifest.getDeclarativeAgentPaths(), ["legacy-agent.json"]);
+    });
+
+    it("should get top-level declarative agent paths", () => {
+      const manifest = TeamsManifestWrapper.fromJSON(
+        JSON.stringify({ declarativeAgents: [{ file: "top-level-agent.json" }] })
+      );
+
+      assert.deepEqual(manifest.getDeclarativeAgentPaths(), ["top-level-agent.json"]);
+    });
+
     it("should add custom engine agent", () => {
       const manifest = createTestManifest();
       manifest.addCustomEngineAgent("cea-bot-id");
@@ -442,6 +486,48 @@ describe("TeamsManifestWrapper", () => {
 
       manifest.addDeclarativeAgent("a1", "f1.json");
       assert.isTrue(manifest.hasCopilotAgents());
+    });
+  });
+
+  describe("extension runtime operations", () => {
+    it("should add collision-safe actions to the runtime for a command script", () => {
+      const manifest = TeamsManifestWrapper.fromJSON(
+        JSON.stringify({
+          id: "app-id",
+          extensions: [
+            {
+              runtimes: [
+                {
+                  code: { script: "commands.js" },
+                  actions: [{ id: "addfooter", type: "executeDataFunction" }],
+                },
+              ],
+            },
+          ],
+        })
+      );
+
+      const ids = manifest.addExtensionRuntimeActions("commands.js", [
+        { baseId: "addfooter", type: "executeDataFunction" },
+        { baseId: "fillcolor", type: "executeDataFunction" },
+      ]);
+
+      assert.deepEqual(ids, ["addfooter1", "fillcolor"]);
+      const data: unknown = JSON.parse(manifest.toJSON());
+      if (typeof data !== "object" || data === null || Array.isArray(data)) {
+        assert.fail("expected Teams manifest object");
+      }
+      assert.deepNestedInclude(data, {
+        "extensions[0].runtimes[0].actions[1]": {
+          id: "addfooter1",
+          type: "executeDataFunction",
+        },
+        "extensions[0].runtimes[0].actions[2]": {
+          id: "fillcolor",
+          type: "executeDataFunction",
+        },
+      });
+      assert.isTrue(manifest.isDirty);
     });
   });
 

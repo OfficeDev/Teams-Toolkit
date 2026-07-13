@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 import { randomUUID } from "crypto";
-import { FxError, SystemError, UserError } from "@microsoft/teamsfx-api";
+import { FxError, SystemError, TeamsManifestWrapper, UserError } from "@microsoft/teamsfx-api";
 import * as fs from "fs-extra";
 import * as path from "path";
 import { Result, err, ok } from "neverthrow";
@@ -48,10 +48,6 @@ function stringParam(params: StepParams, key: string): string | undefined {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function isRecordArray(value: unknown): value is Record<string, unknown>[] {
-  return Array.isArray(value) && value.every(isRecord);
 }
 
 function nestedRecord(
@@ -133,19 +129,19 @@ function unifyProjectId(
   manifestPath: string,
   envPath: string
 ): Result<void, FxError> {
-  const manifest = readRequiredJsonObject(
-    ctx,
-    manifestPath,
-    "MetaOsManifestMissing",
-    "MetaOsManifestInvalid"
-  );
-  if (manifest.isErr()) {
-    return err(manifest.error);
+  const manifestContents = readRequired(ctx, manifestPath, "MetaOsManifestMissing");
+  if (manifestContents.isErr()) {
+    return err(manifestContents.error);
   }
-
+  let manifest: TeamsManifestWrapper;
+  try {
+    manifest = TeamsManifestWrapper.fromJSON(manifestContents.value.toString("utf8"));
+  } catch {
+    return err(systemError("MetaOsManifestInvalid", `'${manifestPath}' is not valid JSON.`));
+  }
   const appId = randomUUID();
-  manifest.value.id = appId;
-  writeJson(ctx, manifestPath, manifest.value);
+  manifest.setId(appId);
+  ctx.write(manifestPath, Buffer.from(manifest.toJSON(), "utf8"));
   const envRaw = ctx.read(envPath);
   const envText = envRaw === undefined ? "" : envRaw.toString("utf8");
   ctx.write(envPath, Buffer.from(withTeamsAppId(envText, appId), "utf8"));
@@ -202,22 +198,6 @@ function uniqueFileName(ctx: StepContext, baseName: string, extension: string): 
   }
 }
 
-function uniqueActionName(
-  actions: Record<string, unknown>[],
-  key: string,
-  baseName: string
-): string {
-  let suffix = 0;
-  while (true) {
-    const candidate = suffix === 0 ? baseName : `${baseName}${suffix}`;
-    const exists = actions.some((action) => action[key] === candidate);
-    if (!exists) {
-      return candidate;
-    }
-    suffix++;
-  }
-}
-
 interface CommandNames {
   word: string;
   excel: string;
@@ -225,57 +205,43 @@ interface CommandNames {
 }
 
 function updateManifestForDa(ctx: StepContext, daFilename: string): Result<CommandNames, FxError> {
-  const manifest = readRequiredJsonObject(
-    ctx,
-    MANIFEST_PATH,
-    "MetaOsManifestMissing",
-    "MetaOsManifestInvalid"
-  );
-  if (manifest.isErr()) {
-    return err(manifest.error);
+  const manifestContents = readRequired(ctx, MANIFEST_PATH, "MetaOsManifestMissing");
+  if (manifestContents.isErr()) {
+    return err(manifestContents.error);
   }
-
-  manifest.value.id = DEFAULT_MANIFEST_ID;
-  manifest.value.copilotAgents = {
-    declarativeAgents: [{ id: DEFAULT_DA_ID, file: daFilename }],
-  };
-
-  const extensions = manifest.value.extensions;
-  if (!isRecordArray(extensions)) {
+  let manifest: TeamsManifestWrapper;
+  try {
+    manifest = TeamsManifestWrapper.fromJSON(manifestContents.value.toString("utf8"));
+  } catch {
+    return err(systemError("MetaOsManifestInvalid", `'${MANIFEST_PATH}' is not valid JSON.`));
+  }
+  manifest
+    .setId(DEFAULT_MANIFEST_ID)
+    .removeDeclarativeAgent(DEFAULT_DA_ID)
+    .addDeclarativeAgent(DEFAULT_DA_ID, daFilename);
+  if (!manifest.hasExtensions()) {
     return err(systemError("MetaOsManifestShape", "No runtimes found in manifest.extensions."));
   }
-
-  for (const extension of extensions) {
-    const runtimes = extension.runtimes;
-    if (!isRecordArray(runtimes)) {
-      continue;
-    }
-    for (const runtime of runtimes) {
-      const script = nestedRecord(runtime, "code")?.script;
-      if (typeof script !== "string" || !script.includes(DEFAULT_COMMAND_FILE_NAME)) {
-        continue;
-      }
-      const existingActions = runtime.actions;
-      const actions = isRecordArray(existingActions) ? existingActions : [];
-      const commandNames = {
-        word: uniqueActionName(actions, "id", "addfooter"),
-        excel: uniqueActionName(actions, "id", "fillcolor"),
-        powerpoint: uniqueActionName(actions, "id", "addtexttoslide"),
-      };
-      actions.push(
-        { id: commandNames.word, type: "executeDataFunction" },
-        { id: commandNames.excel, type: "executeDataFunction" },
-        { id: commandNames.powerpoint, type: "executeDataFunction" }
-      );
-      runtime.actions = actions;
-      writeJson(ctx, MANIFEST_PATH, manifest.value);
-      return ok(commandNames);
-    }
+  const commandIds = manifest.addExtensionRuntimeActions(DEFAULT_COMMAND_FILE_NAME, [
+    { baseId: "addfooter", type: "executeDataFunction" },
+    { baseId: "fillcolor", type: "executeDataFunction" },
+    { baseId: "addtexttoslide", type: "executeDataFunction" },
+  ]);
+  if (
+    commandIds === undefined ||
+    commandIds[0] === undefined ||
+    commandIds[1] === undefined ||
+    commandIds[2] === undefined
+  ) {
+    return err(
+      systemError(
+        "MetaOsCommandsRuntimeMissing",
+        "No command runtime found in manifest.extensions."
+      )
+    );
   }
-
-  return err(
-    systemError("MetaOsCommandsRuntimeMissing", "No command runtime found in manifest.extensions.")
-  );
+  ctx.write(MANIFEST_PATH, Buffer.from(manifest.toJSON(), "utf8"));
+  return ok({ word: commandIds[0], excel: commandIds[1], powerpoint: commandIds[2] });
 }
 
 function daManifest(appName: string, actionFilename: string): Record<string, unknown> {

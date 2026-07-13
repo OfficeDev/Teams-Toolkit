@@ -156,6 +156,7 @@ export const INPUT_UNKNOWN_PROVIDER = "InputUnknownProvider";
 export const INPUT_UNKNOWN_VALIDATOR = "InputUnknownValidator";
 export const INPUT_FORWARD_DERIVED_REFERENCE = "InputForwardDerivedReference";
 export const INPUT_PROVIDER_FAILED = "InputProviderFailed";
+export const INPUT_PROVIDER_DERIVED_SCHEMA_VIOLATION = "InputProviderDerivedSchemaViolation";
 
 /** `UserError` name for input validation failures. */
 export const INPUT_VALIDATION_FAILED = "InputValidationFailed";
@@ -196,6 +197,10 @@ export async function walkInputs(
 ): Promise<Result<WalkOutcome, FxError>> {
   const baseStep = walkOptions.baseStep ?? 0;
   const declared = Object.keys(optionsSchema.properties ?? {});
+  const questionNameCounts = new Map<string, number>();
+  for (const question of questions) {
+    questionNameCounts.set(question.name, (questionNameCounts.get(question.name) ?? 0) + 1);
+  }
   // Cache providers by normalized params for a single run.
   const providerCache = new Map<string, Promise<ResolvedOptions>>();
   // Providers resolve in declaration order; forward `derived.*` refs are rejected.
@@ -236,6 +241,14 @@ export async function walkInputs(
       );
     }
 
+    const prefilledValue = answers[q.name];
+    if (typeof prefilledValue === "string" && questionNameCounts.get(q.name) === 1) {
+      const validation = await validateScalarAnswer(q, prefilledValue, answers, port);
+      if (validation.isErr()) {
+        return err(validation.error);
+      }
+    }
+
     // Unanswered declared ids become NULL_VALUE so `x == null` remains meaningful.
     const scope = buildScope(declared, answers);
 
@@ -250,44 +263,79 @@ export async function walkInputs(
       }
     }
 
-    // Pre-filled answers are trusted and never prompted.
+    // Pre-filled answers are validated above and never prompted.
     if (q.name in answers) {
+      if (typeof prefilledValue === "string" && questionNameCounts.get(q.name) !== 1) {
+        const validation = await validateScalarAnswer(q, prefilledValue, answers, port);
+        if (validation.isErr()) {
+          return err(validation.error);
+        }
+      }
+      if (q.staticOptions !== undefined) {
+        const visibleOptions = resolveVisibleStaticOptions(q.staticOptions, scope, port);
+        if (visibleOptions.isErr()) {
+          return err(visibleOptions.error);
+        }
+        const validation = validateOptionAnswer(q, answers[q.name], visibleOptions.value);
+        if (validation.isErr()) {
+          return err(validation.error);
+        }
+      }
+      if (q.optionsFrom !== undefined) {
+        const provider = port.optionsProvider(q.optionsFrom);
+        if (provider === undefined) {
+          return err(
+            systemError(
+              INPUT_UNKNOWN_PROVIDER,
+              `optionsFrom '${q.optionsFrom}' on question '${q.name}' is not a registered provider`
+            )
+          );
+        }
+        const paramsResult = resolveParams(q.optionsFromParams, scope, resolvedProviders, port);
+        if (paramsResult.isErr()) {
+          return err(paramsResult.error);
+        }
+        const params = paramsResult.value;
+        const providerId = q.optionsFrom;
+        const cacheKey = `${providerId}|${stableStringify(params)}`;
+        const resolvedOptions = (): Promise<ResolvedOptions> => {
+          let resolved = providerCache.get(cacheKey);
+          if (resolved === undefined) {
+            resolved = fetchProviderOptions(provider, params, providerId, q.name);
+            providerCache.set(cacheKey, resolved);
+          }
+          return resolved;
+        };
+        const validation = await validateProviderOptionAnswer(q, answers[q.name], resolvedOptions);
+        if (validation.isErr()) {
+          return err(validation.error);
+        }
+        const mergeResult = await mergeResolvedProviderDerived(
+          answers,
+          resolvedProviders,
+          providerId,
+          provider.derivedSchema ?? [],
+          resolvedOptions
+        );
+        if (mergeResult.isErr()) {
+          return err(mergeResult.error);
+        }
+      }
       pos++;
       continue;
-    }
-
-    if (answers.nonInteractive === "true") {
-      if (typeof q.default === "string") {
-        answers[q.name] = q.default;
-        pos++;
-        continue;
-      }
-      if (q.optional === true) {
-        pos++;
-        continue;
-      }
-      return err(missingNonInteractiveAnswer(q.name));
     }
 
     // Resolve static or provider-backed options.
     let options: OptionsSource | undefined;
     let resolvedOptions: (() => Promise<ResolvedOptions>) | undefined;
     let resolvedProviderId: string | undefined;
+    let resolvedProviderDerivedSchema: string[] | undefined;
     if (q.staticOptions !== undefined) {
-      const filtered: OptionItem[] = [];
-      for (const opt of q.staticOptions) {
-        if (opt.condition !== undefined) {
-          const r = port.evaluate(opt.condition, scope);
-          if (r.isErr()) {
-            return err(r.error);
-          }
-          if (r.value !== true) {
-            continue;
-          }
-        }
-        filtered.push(opt);
+      const visibleOptions = resolveVisibleStaticOptions(q.staticOptions, scope, port);
+      if (visibleOptions.isErr()) {
+        return err(visibleOptions.error);
       }
-      options = filtered;
+      options = visibleOptions.value;
     } else if (q.optionsFrom !== undefined) {
       // Dynamic option lists are provider-backed, not condition predicates.
       const provider = port.optionsProvider(q.optionsFrom);
@@ -307,6 +355,7 @@ export async function walkInputs(
       const cacheKey = `${q.optionsFrom}|${stableStringify(params)}`;
       const providerId = q.optionsFrom;
       resolvedProviderId = providerId;
+      resolvedProviderDerivedSchema = provider.derivedSchema ?? [];
       resolvedOptions = () => {
         let resolved = providerCache.get(cacheKey);
         if (resolved === undefined) {
@@ -316,6 +365,47 @@ export async function walkInputs(
         return resolved;
       };
       options = resolvedOptions;
+    }
+
+    if (answers.nonInteractive === "true") {
+      if (typeof q.default === "string") {
+        const scalarValidation = await validateScalarAnswer(q, q.default, answers, port);
+        if (scalarValidation.isErr()) {
+          return err(scalarValidation.error);
+        }
+        const optionValidation = Array.isArray(options)
+          ? validateOptionAnswer(q, q.default, options)
+          : resolvedOptions === undefined
+            ? ok(undefined)
+            : await validateProviderOptionAnswer(q, q.default, resolvedOptions);
+        if (optionValidation.isErr()) {
+          return err(optionValidation.error);
+        }
+        if (
+          resolvedOptions !== undefined &&
+          resolvedProviderId !== undefined &&
+          resolvedProviderDerivedSchema !== undefined
+        ) {
+          const mergeResult = await mergeResolvedProviderDerived(
+            answers,
+            resolvedProviders,
+            resolvedProviderId,
+            resolvedProviderDerivedSchema,
+            resolvedOptions
+          );
+          if (mergeResult.isErr()) {
+            return err(mergeResult.error);
+          }
+        }
+        answers[q.name] = q.default;
+        pos++;
+        continue;
+      }
+      if (q.optional === true) {
+        pos++;
+        continue;
+      }
+      return err(missingNonInteractiveAnswer(q.name));
     }
 
     if (Array.isArray(options) && q.skipSingleOption === true && options.length === 1) {
@@ -342,11 +432,31 @@ export async function walkInputs(
         pos = restore.pos;
         continue;
       }
-      if (resolvedOptions !== undefined && resolvedProviderId !== undefined) {
+      if (Array.isArray(options)) {
+        const optionValidation = validateOptionAnswer(q, picked.value.value, options);
+        if (optionValidation.isErr()) {
+          return err(optionValidation.error);
+        }
+      } else if (resolvedOptions !== undefined) {
+        const optionValidation = await validateProviderOptionAnswer(
+          q,
+          picked.value.value,
+          resolvedOptions
+        );
+        if (optionValidation.isErr()) {
+          return err(optionValidation.error);
+        }
+      }
+      if (
+        resolvedOptions !== undefined &&
+        resolvedProviderId !== undefined &&
+        resolvedProviderDerivedSchema !== undefined
+      ) {
         const mergeResult = await mergeResolvedProviderDerived(
           answers,
           resolvedProviders,
           resolvedProviderId,
+          resolvedProviderDerivedSchema,
           resolvedOptions
         );
         if (mergeResult.isErr()) {
@@ -400,12 +510,32 @@ export async function walkInputs(
       continue;
     }
     const value = asked.value.value;
+    const authoritativeValidation = await validateScalarAnswer(q, value, answers, port);
+    if (authoritativeValidation.isErr()) {
+      return err(authoritativeValidation.error);
+    }
+    if (Array.isArray(options)) {
+      const optionValidation = validateOptionAnswer(q, value, options);
+      if (optionValidation.isErr()) {
+        return err(optionValidation.error);
+      }
+    } else if (resolvedOptions !== undefined) {
+      const optionValidation = await validateProviderOptionAnswer(q, value, resolvedOptions);
+      if (optionValidation.isErr()) {
+        return err(optionValidation.error);
+      }
+    }
 
-    if (resolvedOptions !== undefined && resolvedProviderId !== undefined) {
+    if (
+      resolvedOptions !== undefined &&
+      resolvedProviderId !== undefined &&
+      resolvedProviderDerivedSchema !== undefined
+    ) {
       const mergeResult = await mergeResolvedProviderDerived(
         answers,
         resolvedProviders,
         resolvedProviderId,
+        resolvedProviderDerivedSchema,
         resolvedOptions
       );
       if (mergeResult.isErr()) {
@@ -451,6 +581,99 @@ function resolveQuestionValidation(
   port: CollectInputsPort
 ): Result<PromptValidation | undefined, FxError> {
   return resolveValidation(question.validation, answers, port, question.name);
+}
+
+async function validateScalarAnswer(
+  question: QuestionSpec,
+  value: string,
+  answers: Answers,
+  port: CollectInputsPort
+): Promise<Result<void, FxError>> {
+  const resolved = resolveQuestionValidation(question, answers, port);
+  if (resolved.isErr()) {
+    return err(resolved.error);
+  }
+  const message = await resolved.value?.(value);
+  if (message !== undefined) {
+    return err(
+      new UserError({
+        source: SOURCE,
+        name: INPUT_VALIDATION_FAILED,
+        message: `'${question.name}': ${message}`,
+      })
+    );
+  }
+  return ok(undefined);
+}
+
+function resolveVisibleStaticOptions(
+  options: OptionItem[],
+  scope: Scope,
+  port: CollectInputsPort
+): Result<OptionItem[], FxError> {
+  const visible: OptionItem[] = [];
+  for (const option of options) {
+    if (option.condition !== undefined) {
+      const evaluated = port.evaluate(option.condition, scope);
+      if (evaluated.isErr()) {
+        return err(evaluated.error);
+      }
+      if (evaluated.value !== true) {
+        continue;
+      }
+    }
+    visible.push(option);
+  }
+  return ok(visible);
+}
+
+function validateOptionAnswer(
+  question: QuestionSpec,
+  value: string | string[],
+  options: OptionItem[]
+): Result<void, FxError> {
+  if (question.type !== "singleSelect" && question.type !== "multiSelect") {
+    return ok(undefined);
+  }
+  const hasExpectedShape =
+    question.type === "multiSelect" ? Array.isArray(value) : typeof value === "string";
+  if (!hasExpectedShape) {
+    return err(
+      new UserError({
+        source: SOURCE,
+        name: INPUT_VALIDATION_FAILED,
+        message: `'${question.name}' has an invalid answer type.`,
+      })
+    );
+  }
+  const optionIds = new Set(options.map((option) => option.id));
+  const values = Array.isArray(value) ? value : [value];
+  const invalid = values.filter((item) => !optionIds.has(item));
+  if (invalid.length > 0) {
+    return err(
+      new UserError({
+        source: SOURCE,
+        name: INPUT_VALIDATION_FAILED,
+        message: `'${question.name}' contains an unavailable option: ${invalid.join(", ")}`,
+      })
+    );
+  }
+  return ok(undefined);
+}
+
+async function validateProviderOptionAnswer(
+  question: QuestionSpec,
+  value: string | string[],
+  resolvedOptions: () => Promise<ResolvedOptions>
+): Promise<Result<void, FxError>> {
+  try {
+    return validateOptionAnswer(question, value, (await resolvedOptions()).options);
+  } catch (error) {
+    if (error instanceof UserError || error instanceof SystemError) {
+      return err(error);
+    }
+    return err(systemError(INPUT_PROVIDER_FAILED, errorMessage(error)));
+  }
 }
 
 function resolveValidation(
@@ -556,25 +779,42 @@ async function fetchProviderOptions(
 function mergeProviderDerived(
   answers: Answers,
   providerId: string,
+  derivedSchema: string[],
   resolved: ResolvedOptions
-): void {
-  if (resolved.derived === undefined) {
-    return;
+): Result<void, FxError> {
+  const actualKeys = Object.keys(resolved.derived ?? {}).sort();
+  const expectedKeys = [...new Set(derivedSchema)].sort();
+  const undeclared = actualKeys.filter((key) => !expectedKeys.includes(key));
+  const missing = expectedKeys.filter((key) => !actualKeys.includes(key));
+  if (undeclared.length > 0 || missing.length > 0) {
+    return err(
+      systemError(
+        INPUT_PROVIDER_DERIVED_SCHEMA_VIOLATION,
+        `options provider '${providerId}' returned derived keys that do not match derivedSchema; undeclared: [${undeclared.join(
+          ", "
+        )}], missing: [${missing.join(", ")}]`
+      )
+    );
   }
-  for (const [key, value] of Object.entries(resolved.derived)) {
+  for (const [key, value] of Object.entries(resolved.derived ?? {})) {
     answers[`derived.${providerId}.${key}`] = value;
   }
+  return ok(undefined);
 }
 
 async function mergeResolvedProviderDerived(
   answers: Answers,
   resolvedProviders: Set<string>,
   providerId: string,
+  derivedSchema: string[],
   resolvedOptions: () => Promise<ResolvedOptions>
 ): Promise<Result<void, FxError>> {
   try {
     const resolved = await resolvedOptions();
-    mergeProviderDerived(answers, providerId, resolved);
+    const merged = mergeProviderDerived(answers, providerId, derivedSchema, resolved);
+    if (merged.isErr()) {
+      return err(merged.error);
+    }
     resolvedProviders.add(providerId);
     return ok(undefined);
   } catch (error) {

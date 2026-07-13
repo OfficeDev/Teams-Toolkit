@@ -7,7 +7,7 @@ import * as path from "path";
 import { ExpressionRuntimePort } from "../expression/evaluateExpression";
 import { createExpressionPort } from "./whitelist";
 import { ScaffoldRuntime } from "./scaffold";
-import { FileSink, buildPipelinePort } from "./runtimeRegistry";
+import { FileSink, StepRegistry, buildPipelinePort } from "./runtimeRegistry";
 
 /** On-disk scaffold runtime with writes contained under one output root. */
 
@@ -50,7 +50,9 @@ export interface RealRuntime extends ScaffoldRuntime {
 /** Build an on-disk runtime rooted at `rootDir`. */
 export function createRealRuntime(
   rootDir: string,
-  flagReader?: (name: string) => boolean
+  flagReader?: (name: string) => boolean,
+  stepRegistry?: StepRegistry,
+  warningSink?: (message: string) => void
 ): RealRuntime {
   const exprPort: ExpressionRuntimePort = createExpressionPort(flagReader);
   const sink: FileSink = {
@@ -71,6 +73,6 @@ export function createRealRuntime(
       }
     },
   };
-  const port = buildPipelinePort(exprPort, sink);
+  const port = buildPipelinePort(exprPort, sink, stepRegistry, warningSink);
   return { rootDir, exprPort, port };
 }

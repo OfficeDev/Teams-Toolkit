@@ -2,12 +2,11 @@
 // Licensed under the MIT license.
 
 import { SystemError } from "@microsoft/teamsfx-api";
-import { assert, afterEach, vi } from "vitest";
-import { ODRProvider } from "../../../../src/component/utils/odrProvider";
+import { assert } from "vitest";
 import { StepContext } from "../../../../src/v4/pipeline/runScaffoldPipeline";
+import { NOOP_MANIFEST_WRAPPER } from "../../../../src/v4/runtime/runtimeRegistry";
 import {
   STEP_MATERIALIZE_LOCAL_SERVERS,
-  mcpLocalDeps,
   mcpLocalMaterializeServers,
 } from "../../../../src/v4/runtime/steps/mcpLocal";
 
@@ -20,74 +19,40 @@ function makeCtx(): { ctx: StepContext; files: Map<string, Buffer> } {
       write: (filePath, data) => {
         files.set(filePath, data);
       },
-      manifestWrapper: () => ({ addAction: () => undefined }),
+      manifestWrapper: () => NOOP_MANIFEST_WRAPPER,
     },
   };
 }
 
 describe(`${STEP_MATERIALIZE_LOCAL_SERVERS} (v4)`, () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-    mcpLocalDeps.listServers = async () => [];
-  });
-
-  it("delegates the default local server catalog lookup to ODR", async () => {
-    vi.spyOn(ODRProvider, "listServers").mockResolvedValue([
-      {
-        name: "ghmcp",
-        display_name: "GitHub MCP",
-        description: "GitHub tools",
-        version: "1.0.0",
-        identifier: "github",
-        tools: [],
-        packageFamily: "GitHub.MCP",
-        command: "npx",
-        args: ["-y", "@github/github-mcp-server"],
-      },
-    ]);
-    const { ctx, files } = makeCtx();
-
-    const result = await mcpLocalMaterializeServers.apply(
-      { target: ".vscode/mcp.json", selected: ["ghmcp"] },
-      ctx
-    );
-
-    assert.isTrue(result.isOk(), result.isErr() ? result.error.message : "expected ok");
-    const mcpJson = files.get(".vscode/mcp.json");
-    if (mcpJson === undefined) {
-      assert.fail("expected .vscode/mcp.json to be written");
-    }
-    assert.deepStrictEqual(JSON.parse(mcpJson.toString("utf8")), {
-      servers: {
-        ghmcp: {
-          type: "stdio",
-          command: "npx",
-          args: ["-y", "@github/github-mcp-server"],
-        },
-      },
-    });
-  });
-
   it("validateParams reports missing or invalid parameters", () => {
     assert.strictEqual(
-      mcpLocalMaterializeServers.validateParams({ selected: ["ghmcp"] }),
+      mcpLocalMaterializeServers.validateParams({ selected: ["ghmcp"], catalog: "{}" }),
       "missing string parameter 'target'"
     );
     assert.strictEqual(
-      mcpLocalMaterializeServers.validateParams({ target: ".vscode/mcp.json" }),
+      mcpLocalMaterializeServers.validateParams({ target: ".vscode/mcp.json", catalog: "{}" }),
       "missing string[] parameter 'selected'"
+    );
+    assert.strictEqual(
+      mcpLocalMaterializeServers.validateParams({
+        target: ".vscode/mcp.json",
+        selected: ["ghmcp"],
+      }),
+      "missing string parameter 'catalog'"
     );
     assert.isUndefined(
       mcpLocalMaterializeServers.validateParams({
         target: ".vscode/mcp.json",
         selected: ["ghmcp"],
+        catalog: "{}",
       })
     );
   });
 
   it("returns a parameter SystemError when apply receives invalid resolved params", async () => {
     const result = await mcpLocalMaterializeServers.apply(
-      { target: ".vscode/mcp.json", selected: "ghmcp" },
+      { target: ".vscode/mcp.json", selected: "ghmcp", catalog: "{}" },
       makeCtx().ctx
     );
 
@@ -96,46 +61,9 @@ describe(`${STEP_MATERIALIZE_LOCAL_SERVERS} (v4)`, () => {
     assert.strictEqual(result._unsafeUnwrapErr().name, "McpLocalParams");
   });
 
-  it("materializes selected servers from ODR when catalog is not supplied", async () => {
-    mcpLocalDeps.listServers = async () => [
-      {
-        name: "ghmcp",
-        display_name: "GitHub MCP",
-        description: "GitHub tools",
-        version: "1.0.0",
-        identifier: "github",
-        tools: [],
-        packageFamily: "GitHub.MCP",
-        command: "npx",
-        args: ["-y", "@github/github-mcp-server"],
-      },
-    ];
-    const { ctx, files } = makeCtx();
-
+  it("reports a missing selected local server when the catalog does not contain it", async () => {
     const result = await mcpLocalMaterializeServers.apply(
-      { target: ".vscode/mcp.json", selected: ["ghmcp"] },
-      ctx
-    );
-
-    assert.isTrue(result.isOk(), result.isErr() ? result.error.message : "expected ok");
-    const mcpJson = files.get(".vscode/mcp.json");
-    if (mcpJson === undefined) {
-      assert.fail("expected .vscode/mcp.json to be written");
-    }
-    assert.deepStrictEqual(JSON.parse(mcpJson.toString("utf8")), {
-      servers: {
-        ghmcp: {
-          type: "stdio",
-          command: "npx",
-          args: ["-y", "@github/github-mcp-server"],
-        },
-      },
-    });
-  });
-
-  it("reports a missing selected local server when neither catalog nor ODR contains it", async () => {
-    const result = await mcpLocalMaterializeServers.apply(
-      { target: ".vscode/mcp.json", selected: ["missing"] },
+      { target: ".vscode/mcp.json", selected: ["missing"], catalog: "{}" },
       makeCtx().ctx
     );
 

@@ -40,7 +40,14 @@ import { sendErrorEvent, sendSuccessEvent } from "../component/telemetry";
 import { pathUtils } from "../component/utils/pathUtils";
 import { InputValidationError, MissingRequiredInputError, assembleError } from "../error/common";
 import { AppNamePattern, QuestionNames, appNameQuestion, folderQuestion } from "../question";
-import { Answers, BuildTarget, CallerFloor, DeclarativeLocator } from "../v4";
+import {
+  Answers,
+  BuildTarget,
+  CallerFloor,
+  DeclarativeLocator,
+  createGeneralSensitivityLabelService,
+} from "../v4";
+import { createStepRegistry } from "../v4/runtime/runtimeRegistry";
 
 /** The package namespace the create front door opens v4 packages under. */
 const CREATE_KIND = "create";
@@ -128,7 +135,10 @@ export async function scaffoldV4(
       callerFloor,
       telemetryProps,
       flagReader,
-      resolvedPackage
+      resolvedPackage,
+      createStepRegistry(
+        createGeneralSensitivityLabelService(TOOLS.tokenProvider.m365TokenProvider)
+      )
     );
     if (source.warning) {
       TOOLS.logProvider.warning(source.warning);

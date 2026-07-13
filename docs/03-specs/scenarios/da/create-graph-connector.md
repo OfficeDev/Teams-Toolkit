@@ -5,19 +5,19 @@
 - **Scenario ID:** `SCN-DA-CREATE-GRAPH-CONNECTOR` (a declarative agent grounded by a Microsoft Graph connector)
 - **Template id:** `da/graph-connector` (create)
 
-This is the vertical contract for the native v4 declarative-agent-with-Graph-connector create package. The v3 path was a `CombinedProjectGenerator`: render the TypeScript Graph connector project, render a basic declarative agent into a temporary folder, then copy that temporary `appPackage` into the root. The v4 package intentionally flattens that static final output into one package. No v4 post-render step is needed because scaffold writes a fresh target.
+This is the vertical contract for the native v4 declarative-agent-with-Graph-connector create package. The v3 path was a `CombinedProjectGenerator`: render the TypeScript Graph connector project, render a basic declarative agent into a temporary folder, then copy that temporary `appPackage` into the root. The v4 package intentionally flattens that static final output into one package. No post-render copy step is needed; the only optional mutation is the feature-gated sensitivity-label step shared by retained DA create routes.
 
 ## Acceptance Criteria
 
-| ID | Tier | Given | When | Then |
-|----|------|-------|------|------|
-| SCN-CREATE-GC-01 | L1 | empty target and connector answers | scaffold completes | the render phase writes the flattened connector + DA file set (`.tpl` stripped), including TypeScript connector source, infra, scripts, `aad.manifest.json`, project yaml files, and the DA `appPackage` |
-| SCN-CREATE-GC-02 | L1 | rendered `appPackage/declarativeAgent.json` | render | the agent includes the single `GraphConnectors` capability with `connection_id == "${{CONNECTOR_ID}}"`, keeps `instructions == "$[file('instruction.txt')]"`, and omits `sensitivity_label` by default |
-| SCN-CREATE-GC-03 | L1 | rendered env files | render | `env/.env.local` contains `CONNECTOR_ID` and `CONNECTOR_NAME` from Q2; `env/.env.dev` contains the same connector name and leaves `CONNECTOR_ID` empty for provision |
-| SCN-CREATE-GC-04 | L1 | rendered project files | render | `package.json.name` is the safe lower-case project name; `m365agents.yml` includes both the DA app package stages and the Graph connector Azure/AAD stages |
-| SCN-CREATE-GC-05 | L1 | empty target | scaffold | the only scaffold pipeline step is `require-empty-target`; there is no v4 post-render copy or mutation step |
-| SCN-CREATE-GC-06 | L1 | non-empty target | scaffold | `require-empty-target` fails first with **`UserError`** and writes nothing |
-| SCN-CREATE-GC-07 | L1 | identical inputs re-run | scaffold | deterministic - identical `written` set and identical rendered connector env values |
+| ID               | Tier | Given                                                  | When               | Then                                                                                                                                                                                                     |
+| ---------------- | ---- | ------------------------------------------------------ | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SCN-CREATE-GC-01 | L1   | empty target and connector answers                     | scaffold completes | the render phase writes the flattened connector + DA file set (`.tpl` stripped), including TypeScript connector source, infra, scripts, `aad.manifest.json`, project yaml files, and the DA `appPackage` |
+| SCN-CREATE-GC-02 | L1   | rendered `appPackage/declarativeAgent.json`            | render             | the agent includes the single `GraphConnectors` capability with `connection_id == "${{CONNECTOR_ID}}"`, keeps `instructions == "$[file('instruction.txt')]"`, and omits `sensitivity_label` by default   |
+| SCN-CREATE-GC-03 | L1   | rendered env files                                     | render             | `env/.env.local` contains `CONNECTOR_ID` and `CONNECTOR_NAME` from Q2; `env/.env.dev` contains the same connector name and leaves `CONNECTOR_ID` empty for provision                                     |
+| SCN-CREATE-GC-04 | L1   | rendered project files                                 | render             | `package.json.name` is the safe lower-case project name; `m365agents.yml` includes both the DA app package stages and the Graph connector Azure/AAD stages                                               |
+| SCN-CREATE-GC-05 | L1   | empty target with `TEAMSFX_SENSITIVITY_LABEL` disabled | scaffold           | the only pipeline step run is `require-empty-target`; `da/set-sensitivity-label` is skipped and there is no post-render copy step                                                                        |
+| SCN-CREATE-GC-06 | L1   | non-empty target                                       | scaffold           | `require-empty-target` fails first with **`UserError`** and writes nothing                                                                                                                               |
+| SCN-CREATE-GC-07 | L1   | identical inputs re-run                                | scaffold           | deterministic - identical `written` set and identical rendered connector env values                                                                                                                      |
 
 ## Composed operations
 
@@ -25,7 +25,8 @@ This is the vertical contract for the native v4 declarative-agent-with-Graph-con
 - [`collect-create-inputs`](../../operations/scaffolding/collect-create-inputs.md) - asks `graphConnectorName` and `graphConnectorConnectionId` with graph-connector validators.
 - [`resolve-template-source`](../../operations/scaffolding/resolve-template-source.md), [`open-template-package`](../../operations/scaffolding/open-template-package.md), and [`validate-template-package`](../../operations/scaffolding/validate-template-package.md) - open and validate the package.
 - [`build-render-context`](../../operations/scaffolding/build-render-context.md) - derives `SafeProjectNameLowerCase` and maps Q2 answers to legacy template variables `gcName` and `gcConnectionId`.
-- [`run-scaffold-pipeline`](../../operations/scaffolding/run-scaffold-pipeline.md) - runs `require-empty-target` and renders files.
+- [`run-scaffold-pipeline`](../../operations/scaffolding/run-scaffold-pipeline.md) - runs `require-empty-target`, renders files, and skips the feature-gated sensitivity step in this scenario's baseline.
+- [`set-declarative-agent-sensitivity-label`](../../operations/scaffolding/set-declarative-agent-sensitivity-label.md) - owns the optional post-render label mutation; its flag-on vertical behavior is covered by [`SCN-DA-SENSITIVITY-LABEL`](apply-general-sensitivity-label.md).
 
 ## Flow
 

@@ -18,6 +18,7 @@
   },
 
   "replaceMap": [
+    { "var": "DeclarativeCopilot", "const": "" },
     { "var": "SafeProjectNameLowerCase", "expr": "safeProjectNameLowerCase(appName)" },
     { "var": "gcName", "from": "graphConnectorName" },
     { "var": "gcConnectionId", "from": "graphConnectorConnectionId" }

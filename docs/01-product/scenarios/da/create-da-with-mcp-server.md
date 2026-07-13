@@ -14,7 +14,7 @@
 
 A developer creates a Declarative Agent project that is connected to an MCP server. In VS Code, this scenario stops at a generated DA project with `.vscode/mcp.json`; adding MCP tools to the action manifest is handled by the dependent scenario `SCN-DA-ADD-MCP-ACTION-TO-DA`. In CLI, the current implementation has no CodeLens follow-up UX, so the create command also tries to fetch or load MCP tool definitions and may generate the MCP-backed action during project creation.
 
-Success means the developer can choose the Declarative Agent path, choose `Add an Action`, choose `Start with a MCP server`, provide a remote MCP server URL, choose the project location, enter the application name, and generate a DA project. For VS Code, the project contains `.vscode/mcp.json` and is ready for `SCN-DA-ADD-MCP-ACTION-TO-DA`. For CLI, success may additionally include generated MCP action files when tools are available during `atk new`.
+Success means the developer can choose the Declarative Agent path, choose `Add an Action`, choose `Start with a MCP server`, provide a remote MCP server URL, choose the authentication type, choose the project location, enter the application name, and generate a DA project. Static OAuth and Entra credentials are not collected or persisted during create; the existing `oauth/register` provision action asks for them when it first runs. For VS Code, the project contains `.vscode/mcp.json` and is ready for `SCN-DA-ADD-MCP-ACTION-TO-DA`. For CLI, success may additionally include generated MCP action files when tools are available during `atk new`.
 
 This scenario is grounded in the current create question tree and CLI options:
 
@@ -28,9 +28,11 @@ This scenario is grounded in the current create question tree and CLI options:
 - optional `mcp-tools-file-path` for authenticated or offline MCP tool definitions
 - optional `mcp-da-auth-type`, with valid values `oauth` for `OAuth (with static registration)` and `entraSSO` for `Entra SSO`
 
+Client ids, client secrets, and OAuth scopes are provision inputs, not create inputs. The provision prompt marks the client secret as a password and keeps it out of generated project files and ordinary environment files.
+
 ## Dependencies
 
-- Produces: a DA project folder with `appPackage/manifest.json`, a declarative agent manifest, and `.vscode/mcp.json` configured with the MCP server URL in the VS Code flow.
+- Produces: a DA project folder with `appPackage/manifest.json`, a declarative agent manifest, and `.vscode/mcp.json` configured with the MCP server URL in the VS Code flow. When authentication is selected, the generated lifecycle contains the corresponding registration action but no credential values.
 - Enables: `SCN-DA-FETCH-MCP-TOOLS` (VS Code discovery step that runs implicitly before action manifest selection) and `SCN-DA-ADD-MCP-ACTION-TO-DA`, which requires an existing DA project and, for VS Code, a configured `.vscode/mcp.json` entry.
 - Does not include: the post-create VS Code CodeLens flow for selecting or creating an action manifest and choosing MCP operations. That belongs to `add-mcp-action-to-da.md`.
 
@@ -50,7 +52,8 @@ This scenario is grounded in the current create question tree and CLI options:
 - Project input: the user enters the MCP server URL, picks the project location, then enters the app name before project generation.
 - CLI tool discovery: the CLI attempts to fetch tools from the MCP server. If the server requires authentication or tools are not fetched, it can ask for `MCP Tools Definition File`.
 - CLI tool selection: when tool definitions are available in the interactive create flow, the user can choose `Select Operation(s) Copilot can interact with`.
-- CLI auth: when the MCP server requires authentication, the user is asked `Select Authentication Type` and chooses either `OAuth (with static registration)` or `Entra SSO`.
+- CLI auth: when the MCP server requires authentication, the user is asked `Select Authentication Type` and chooses either `OAuth (with static registration)` or `Entra SSO`. Create asks no credential follow-up questions.
+- First provision: `OAuth (with static registration)` asks for client id, password-masked client secret, and scopes; `Entra SSO` asks for its client id; dynamic registration asks for none. These values are consumed by the registration action for that provision invocation and are not written into scaffold output.
 - VS Code success: the generated project is opened with `.vscode/mcp.json`; follow-up action manifest update belongs to `SCN-DA-ADD-MCP-ACTION-TO-DA`.
 - CLI success with tools: project files, the action manifest (`ai-plugin.json`), the captured MCP tool definitions as JSON, and the MCP runtime wiring are generated during creation.
 - CLI warning without tools: the project is created, but MCP action files may remain incomplete; the CLI prints a warning with the current hint command `atk add action --api-plugin-type mcp --mcp-da-server-url <server-url> --mcp-tools-file-path <path-to-tools-json> --interactive false`.

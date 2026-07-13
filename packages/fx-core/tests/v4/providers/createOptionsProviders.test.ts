@@ -102,10 +102,32 @@ describe("create options providers (collect-create-inputs INV-9)", () => {
       (await remoteOnly.fetch({})).options.map((option) => option.id),
       ["remote"]
     );
+    assert.deepEqual(remoteOnly.derivedSchema, ["catalog"]);
+    assert.deepEqual((await remoteOnly.fetch({})).derived, { catalog: "{}" });
+    const localResult = await withLocal.fetch({});
     assert.deepEqual(
-      (await withLocal.fetch({})).options.map((option) => option.id),
+      localResult.options.map((option) => option.id),
       ["remote", "local"]
     );
+    assert.deepEqual(localResult.derived, {
+      catalog: JSON.stringify({
+        ghmcp: { command: "npx", args: ["-y", "@github/github-mcp-server"] },
+      }),
+    });
+  });
+
+  it("CCI-02: a prefilled remote server type does not probe local server state", async () => {
+    const listLocalServers = vi.fn(async () => []);
+    const provider = createMcpServerTypesProvider(listLocalServers);
+
+    const result = await provider.fetch({ selected: "remote" });
+
+    assert.deepEqual(
+      result.options.map((option) => option.id),
+      ["remote"]
+    );
+    assert.deepEqual(result.derived, { catalog: "{}" });
+    assert.equal(listLocalServers.mock.calls.length, 0);
   });
 
   it("CCI-01/02: default registry shares one local MCP server discovery call", async () => {

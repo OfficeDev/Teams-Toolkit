@@ -588,6 +588,7 @@ describe("runCreateInputs (collect-create-inputs)", () => {
       assert.deepEqual(res.value, {
         surface: "vscode",
         mcpServerType: "remote",
+        "derived.mcp.serverTypes.catalog": "{}",
         mcpServerUrl: "https://api.example.com/mcp",
         authType: "none",
       });
@@ -1557,6 +1558,13 @@ describe("runCreateInputs (collect-create-inputs)", () => {
       assert.notProperty(res.value, "mcpServerUrl");
       assert.notProperty(res.value, "authType");
       assert.deepEqual(res.value.selectedLocalServers, ["baremcp"]);
+      assert.equal(
+        res.value["derived.mcp.serverTypes.catalog"],
+        JSON.stringify({
+          ghmcp: { command: "npx", args: ["-y", "@github/github-mcp-server"] },
+          baremcp: { command: "baremcp", args: [] },
+        })
+      );
     }
     // mcpServerType prompted (local is available); remote URL/auth questions are skipped.
     assert.deepEqual(ui.selectNames, ["mcpServerType"]);
@@ -1572,13 +1580,63 @@ describe("runCreateInputs (collect-create-inputs)", () => {
     assert.strictEqual(multiOptionAt(ui.lastMultiConfig, 1).detail, "1 tools available");
   });
 
+  it("CCI-02: a prefilled local MCP pick still resolves the local server catalog", async () => {
+    const ui = new ScriptedUserInteraction({
+      multi: { selectedLocalServers: ["baremcp"] },
+    });
+
+    const res = await runCreateInputs(buildFloor(), MCP_DA, { mcpServerType: "local" }, asUI(ui), {
+      listLocalMcpServers: async () => localMcpServers,
+      flagReader: () => false,
+    });
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.equal(res.value.mcpServerType, "local");
+      assert.deepEqual(res.value.selectedLocalServers, ["baremcp"]);
+      assert.equal(
+        res.value["derived.mcp.serverTypes.catalog"],
+        JSON.stringify({
+          ghmcp: { command: "npx", args: ["-y", "@github/github-mcp-server"] },
+          baremcp: { command: "baremcp", args: [] },
+        })
+      );
+    }
+    assert.deepEqual(ui.selectNames, []);
+    assert.deepEqual(ui.multiNames, ["selectedLocalServers"]);
+  });
+
+  it("CCI-02: a prefilled remote MCP pick resolves an empty catalog without local discovery", async () => {
+    const listLocalMcpServers = vi.fn(async () => localMcpServers);
+    const ui = new ScriptedUserInteraction({});
+
+    const res = await runCreateInputs(
+      buildFloor(),
+      MCP_DA,
+      {
+        mcpServerType: "remote",
+        mcpServerUrl: "https://api.example.com/mcp",
+        authType: "none",
+      },
+      asUI(ui),
+      { listLocalMcpServers, flagReader: () => false }
+    );
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.equal(res.value["derived.mcp.serverTypes.catalog"], "{}");
+    }
+    assert.equal(listLocalMcpServers.mock.calls.length, 0);
+    assert.deepEqual(ui.selectNames, []);
+  });
+
   it("CCI-03: an entryParams mcpServerUrl is used as-is (not prompted); authType=oauth", async () => {
     const ui = new ScriptedUserInteraction({
       select: { authType: "oauth" },
       text: {
-        oauthClientId: "client-id",
-        oauthClientSecret: "client-secret",
-        oauthScopes: "scope.read",
+        oauthClientId: "must-not-be-collected",
+        oauthClientSecret: "must-not-be-collected",
+        oauthScopes: "must-not-be-collected",
       },
     });
 
@@ -1595,18 +1653,17 @@ describe("runCreateInputs (collect-create-inputs)", () => {
       assert.equal(res.value.mcpServerUrl, "https://seed.example.com/mcp");
       assert.equal(res.value.mcpServerType, "remote");
       assert.equal(res.value.authType, "oauth");
-      assert.equal(res.value.oauthClientId, "client-id");
-      assert.equal(res.value.oauthClientSecret, "client-secret");
-      assert.equal(res.value.oauthScopes, "scope.read");
+      assert.notProperty(res.value, "oauthClientId");
+      assert.notProperty(res.value, "oauthClientSecret");
+      assert.notProperty(res.value, "oauthScopes");
     }
-    // The pre-filled url is used as-is (INPUT-12); only OAuth credential prompts run.
-    assert.deepEqual(ui.textNames, ["oauthClientId", "oauthClientSecret", "oauthScopes"]);
+    assert.deepEqual(ui.textNames, []);
   });
 
-  it("CCI-03b: authType=entra-sso asks only Entra client id", async () => {
+  it("CCI-03: authType=entra-sso defers the Entra client id to provision", async () => {
     const ui = new ScriptedUserInteraction({
       select: { authType: "entra-sso" },
-      text: { entraClientId: "entra-client-id" },
+      text: { entraClientId: "must-not-be-collected" },
     });
 
     const res = await runCreateInputs(
@@ -1620,11 +1677,11 @@ describe("runCreateInputs (collect-create-inputs)", () => {
     assert.isTrue(res.isOk());
     if (res.isOk()) {
       assert.equal(res.value.authType, "entra-sso");
-      assert.equal(res.value.entraClientId, "entra-client-id");
+      assert.notProperty(res.value, "entraClientId");
       assert.notProperty(res.value, "oauthClientSecret");
       assert.notProperty(res.value, "oauthScopes");
     }
-    assert.deepEqual(ui.textNames, ["entraClientId"]);
+    assert.deepEqual(ui.textNames, []);
   });
 
   it("CCI-04: an invalid uri for mcpServerUrl -> UserError INPUT_VALIDATION_FAILED", async () => {
@@ -2209,16 +2266,7 @@ describe("openCreateQuestions (collect-create-inputs)", () => {
     if (res.isOk()) {
       assert.deepEqual(
         res.value.map((q) => q.name),
-        [
-          "mcpServerType",
-          "mcpServerUrl",
-          "selectedLocalServers",
-          "authType",
-          "oauthClientId",
-          "oauthClientSecret",
-          "oauthScopes",
-          "entraClientId",
-        ]
+        ["mcpServerType", "mcpServerUrl", "selectedLocalServers", "authType"]
       );
     }
   });

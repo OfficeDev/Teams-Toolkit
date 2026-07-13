@@ -12,9 +12,10 @@ import {
 } from "@microsoft/m365-spec-parser";
 import fs from "fs-extra";
 import { OptionsProvider } from "../collectInputs/collectInputs";
-import { MCPFetchResult } from "../../component/utils/mcpToolFetcher";
-import { type ODRServer } from "../../component/utils/odrProvider";
+import { MCPFetchResult } from "../../common/mcpToolFetcher";
+import { type ODRServer } from "../../common/odrProvider";
 import { SearchOpenAPISpecResult } from "../../common/kiotaClient";
+import { getParserOptions } from "../../common/openApiParserOptions";
 import { parseMcpStaticToolsJson } from "../mcp/mcpStaticTools";
 
 const remoteMcpServerType = {
@@ -44,11 +45,16 @@ export function createMcpServerTypesProvider(
   localServers: () => Promise<ODRServer[]>
 ): OptionsProvider {
   return {
-    async fetch() {
+    derivedSchema: ["catalog"],
+    async fetch(params) {
+      if (params.selected === remoteMcpServerType.id) {
+        return { options: [remoteMcpServerType], derived: { catalog: "{}" } };
+      }
       const servers = await localServers();
       return {
         options:
           servers.length > 0 ? [remoteMcpServerType, localMcpServerType] : [remoteMcpServerType],
+        derived: { catalog: localServerCatalog(servers) },
       };
     },
   };
@@ -57,6 +63,14 @@ export function createMcpServerTypesProvider(
 function localServerDetail(server: ODRServer): string {
   const toolsDetail = `${server.tools.length} tools available`;
   return server.description ? `${server.description} (${toolsDetail})` : toolsDetail;
+}
+
+function localServerCatalog(servers: ODRServer[]): string {
+  const catalog: Record<string, { command: string; args: string[] }> = {};
+  for (const server of servers) {
+    catalog[server.name] = { command: server.command, args: server.args };
+  }
+  return JSON.stringify(catalog);
 }
 
 export function createLocalMcpServersProvider(
@@ -76,33 +90,9 @@ export function createLocalMcpServersProvider(
   };
 }
 
-const openApiMethods = [
-  "get",
-  "post",
-  "put",
-  "delete",
-  "patch",
-  "head",
-  "connect",
-  "options",
-  "trace",
-];
-
 function openApiParseOptions(): ParseOptions {
-  return {
-    isGptPlugin: true,
-    allowAPIKeyAuth: true,
-    allowBearerTokenAuth: true,
-    allowMultipleParameters: true,
-    allowOauth2: true,
-    projectType: ProjectType.Copilot,
-    allowMissingId: true,
-    allowSwagger: true,
-    allowMethods: openApiMethods,
-    allowResponseSemantics: true,
-    allowConversationStarters: false,
-    allowConfirmation: false,
-  };
+  // Reuse the v3 Copilot parser options (single source of truth) instead of a v4 copy.
+  return getParserOptions(ProjectType.Copilot, true);
 }
 
 function operationDetail(operation: ListAPIInfo): string {
@@ -242,6 +232,7 @@ export function createMcpToolsProvider(
   fetchTools: (serverUrl: string) => Promise<MCPFetchResult>
 ): OptionsProvider {
   return {
+    derivedSchema: ["toolsJson"],
     async fetch(params) {
       let toolsJson = params.toolsJson?.trim();
       const toolsFilePath = params.toolsFilePath?.trim();
