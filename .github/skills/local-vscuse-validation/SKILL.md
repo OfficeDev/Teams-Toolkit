@@ -1,6 +1,6 @@
 ---
 name: local-vscuse-validation
-description: "Use when: setting up shared local vscuse prerequisites, credentials, runner, local or pinned published Docker images, local VSIX, env variables, and common rules for Microsoft 365 Agents Toolkit vscuse work. Use vscuse-case-diagnosis for running/fixing existing cases; use vscuse-scenario-authoring for docs/mockup-driven recording and plan generation."
+description: "Use when: setting up shared local vscuse prerequisites, credentials, runner, local or pinned published Docker images, local VSIX, env variables, publishing test reports to storproxy, and common rules for Microsoft 365 Agents Toolkit vscuse work. Use vscuse-case-diagnosis for running/fixing existing cases; use vscuse-scenario-authoring for docs/mockup-driven recording and plan generation."
 argument-hint: "Describe the feature/change and which vscuse plan or scenario to validate"
 ---
 
@@ -344,6 +344,50 @@ if ($exitCode -ne 0) { exit $exitCode }
 
 Do not treat `test_report/test_report.html` as durable evidence. It is the runner's gitignored transient output and may be replaced by the next execution. Pass `--report-dir` for every local CLI run, stream unbuffered output to that same run directory, and report the project-relative artifact paths. Optional summaries such as `run-summary.json` or `run-summary.csv` belong in the same directory.
 
+## Publish Reports for a Repair PR
+
+Repair PRs must link the report that reproduces the original failure and the clean report that validates the fix. Publish only the canonical before and after reports; keep intermediate retries in `.local/test-reports/` unless they are needed to explain the repair.
+
+The repository workflow publishes reports through Azure Blob Storage account `storproxystvoazuxhhvtgiq`, container `content`, and proxy URL `https://storproxy-app-voazuxhhvtgiq.azurewebsites.net/<guid>/index.html`. Local repair work must use the same path through [publish-vscuse-report.ps1](./scripts/publish-vscuse-report.ps1).
+
+Prerequisites (choose either authentication tool):
+
+- Azure CLI is installed and `az account show` succeeds; or Az.Accounts is installed and `Get-AzContext` returns a signed-in context.
+- The signed-in identity has `Storage Blob Data Contributor` access to `storproxystvoazuxhhvtgiq`.
+- The selected report is the run-specific self-contained `test_report.html`, not the transient report path.
+- Review the report before publishing. The proxy URL is organization-authenticated but shareable with authorized reviewers; never publish reports containing passwords, tokens, tenant secrets, generated API keys, or other sensitive values.
+
+From the repository root:
+
+```powershell
+$publisher = ".github/skills/local-vscuse-validation/scripts/publish-vscuse-report.ps1"
+$beforeReport = ".local/test-reports/<before-run>/test_report.html"
+$afterReport = ".local/test-reports/<after-run>/test_report.html"
+
+$beforeUrl = & $publisher -ReportPath $beforeReport
+$afterUrl = & $publisher -ReportPath $afterReport
+
+[PSCustomObject]@{
+   Before = $beforeUrl
+   After = $afterUrl
+} | ConvertTo-Json | Set-Content ".local/test-reports/<plan-name>-report-links.json"
+```
+
+The publisher uses the repository workflow's Azure CLI upload when `az` is available. Otherwise it uses Az.Accounts to request a storage data-plane token and uploads through the Blob REST API; neither path prints the access token. The storage account disables Shared Key authentication, so management-plane `Contributor` access is not sufficient: the signed-in identity needs the Blob data role stated above.
+
+If the initial report is already hosted under the same storproxy base URL, reuse that URL instead of duplicating the upload. If tooling, login, or RBAC blocks publication, classify it as a setup failure, preserve both local report paths, and do not claim the repair PR workflow is complete.
+
+Every repair PR body must include:
+
+```markdown
+## VscUse reports
+
+| State | Result | Report |
+|---|---|---|
+| Before | Failed at `<step-id>` | [Open report](<before-url>) |
+| After | `<successful>/<executed>`, 0 errors | [Open report](<after-url>) |
+```
+
 If the config used for the run does not pass `TEMPLATE_VERSION` into `docker.environment`, create an ignored temporary config for the run and add only the required local validation env values:
 
 ```yaml
@@ -592,6 +636,7 @@ When reporting back, include only the useful facts:
 - vscuse runner availability: installed command, local wheel path, or missing external wheel.
 - Plan executed and result, or why execution could not start.
 - Repository-relative paths to the run-specific `run.log` and `test_report.html` under `.local/test-reports/`.
+- Storproxy URLs for the canonical before and after reports when the work fixes a vscuse case.
 - Failure classification: product bug, plan drift, setup failure, or flake.
 - Plan maintenance summary: which plan files changed and how they stay dynamic.
 - Integrated browser evidence when requested: whether noVNC showed a live running container, which failure-near step was observed, and whether the repaired rerun reached the expected passing state.

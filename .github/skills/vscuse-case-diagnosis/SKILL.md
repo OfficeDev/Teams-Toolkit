@@ -1,6 +1,6 @@
 ---
 name: vscuse-case-diagnosis
-description: "Use when: running an existing vscuse test case, reproducing a failing vscuse plan, deciding product bug vs test plan drift vs setup failure vs flake, repairing a failing case with vscuse-ui/noVNC when useful, and finishing with vscuse CLI validation."
+description: "Use when: running an existing vscuse test case, reproducing a failing vscuse plan, deciding product bug vs test plan drift vs setup failure vs flake, repairing a failing case with vscuse-ui/noVNC, publishing before/after reports to storproxy, and adding those links to a PR."
 argument-hint: "Plan/case name, failing step, or feature workflow to diagnose"
 ---
 
@@ -35,6 +35,7 @@ If local setup, image build, runner install, or credentials are missing, use the
 - Do not repeatedly run the complete create/login/provision/deploy workflow through `vscuse execute` while diagnosing plan drift. Use `Run`, `Continue`, and `Next` in `vscuse-ui` to iterate near the failing area, then use one clean CLI run for final validation.
 - Still finish with `vscuse execute`. A plan is not validated until it passes a clean CLI run or the remaining failure is explicitly classified.
 - For every local `vscuse execute`, use the repository-root artifact command from `local-vscuse-validation`: create a unique `.local/test-reports/<timestamp>-<plan-name>/` directory, pass it with `--report-dir`, and stream unbuffered output to `run.log`. Never overwrite the first failure with a retry.
+- Preserve one canonical failing report before the first repair edit and one clean passing report after the final edit. Publish both through `local-vscuse-validation` and include their storproxy URLs in every repair PR.
 - Show the live execution through the integrated browser at `http://localhost:6080/vnc.html` when the user asks to demonstrate the process.
 - noVNC is a live view of the running container, not a replay. Open it while execution is still running.
 - Do not screenshot or print secrets, passwords, tokens, tenant secrets, or generated API keys.
@@ -131,6 +132,8 @@ Use the report and terminal logs to capture:
 - Whether the local image and `TEMPLATE_VERSION=local` were used.
 - Declared and applied feature flags, by name and non-secret value only.
 
+Before editing, select the canonical failing `test_report.html` and publish it with [publish-vscuse-report.ps1](../local-vscuse-validation/scripts/publish-vscuse-report.ps1). If the supplied failing report already uses the repository storproxy URL, record that URL as the Before report instead of uploading a duplicate. Do not substitute a setup-failure report that never reached the behavior under repair.
+
 ### 5. Classify Before Editing
 
 Use this decision table:
@@ -185,7 +188,7 @@ Recommended UI-first repair loop:
 
 For `SCN-DA-CREATE-WITH-MCP-SERVER` with `TEAMSFX_MCP_FOR_DA_DT=true`, the new dynamic-tool-discovery create flow must not execute legacy fetch-tools steps (`Fetch action from MCP`, `Fetch from MCP`, or static operation selection). Repair the plan in `vscuse-ui` so the full saved case reaches project generation and validates the generated dynamic MCP files first; only then run the clean CLI validation.
 
-### 7. Validate and Report
+### 7. Validate, Publish, and Report
 
 Run the same focused plan again. Final report should include:
 
@@ -196,3 +199,12 @@ Run the same focused plan again. Final report should include:
 - Feature flags declared by the plan and whether they were applied.
 - Files changed and why.
 - Final execution summary: successful count, errors count, and repository-relative paths to the archived log and HTML report.
+
+After the clean final run:
+
+1. Publish its run-specific `test_report.html` with the shared publisher in `local-vscuse-validation`.
+2. Save the Before and After URLs under `.local/test-reports/` so later PR edits do not lose them.
+3. Add a `VscUse reports` table to the PR body with the failing step/result and final successful/error counts.
+4. Verify both organization-authenticated links use `https://storproxy-app-voazuxhhvtgiq.azurewebsites.net/` and appear in the rendered PR body.
+
+A vscuse repair PR is not complete until both report links are present. If report publication is blocked by Azure tooling, authentication, or RBAC, report the setup failure and local artifact paths instead of creating or describing the PR as complete.
