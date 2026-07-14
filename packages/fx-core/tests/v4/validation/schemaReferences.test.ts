@@ -102,7 +102,11 @@ describe("v4 schema references", () => {
         continue;
       }
       assert.strictEqual(requiredField(filePath, "manifestVersion"), "1.29", relativePath);
-      assert.strictEqual(requiredField(filePath, "\\$schema"), TEAMS_MANIFEST_1_29_SCHEMA, relativePath);
+      assert.strictEqual(
+        requiredField(filePath, "\\$schema"),
+        TEAMS_MANIFEST_1_29_SCHEMA,
+        relativePath
+      );
     }
   });
 
