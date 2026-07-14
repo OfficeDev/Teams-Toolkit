@@ -54,7 +54,7 @@ Start from the concrete request: PM chat, GitHub Issue, ADO Work Item, or existi
 1. Clarify the user's need, trigger, affected persona, expected outcome, and requested review owner.
 2. Inspect current PRDs and scenario groups to decide whether the request is already covered, needs a PRD update, needs a scenario update, or needs both.
 3. Classify the change: `new PRD`, `PRD update`, `new scenario`, `scenario update`, or `no product design change needed`.
-4. Identify PM owner, Engineer owner, affected persona, capability/domain, scenario group (`da`, `cea`, `others`, or approved new group), and user surface (`VS Code`, `CLI`, both, or neither). Use [`docs/01-product/owner.md`](../../../docs/01-product/owner.md) as the owner lookup, and cross-check package-level engineering owners with [`.github/CODEOWNERS`](../../CODEOWNERS) when useful.
+4. Identify PM owner, Engineer owner, affected persona, capability/domain, the workload group defined by the [scenario guide](../../../docs/01-product/scenarios/README.md#directory-groups), and user surface (`VS Code`, `CLI`, both, or neither). Use [`docs/01-product/owner.md`](../../../docs/01-product/owner.md) as the owner lookup, and cross-check package-level engineering owners with [`.github/CODEOWNERS`](../../CODEOWNERS) when useful.
 5. Read nearby product context: PRD pages, personas, capabilities, relevant scenarios, architecture constraints, and infrastructure constraints.
 
 ### Phase 2 — Ask before guessing
@@ -127,20 +127,13 @@ Metadata rules:
 
 Create or update Markdown under `docs/01-product/scenarios/<group>/<scenario-slug>.md`. Keep scenario narrative, flow Mermaid, surface notes, state notes, and validation intent in that one Markdown file by default.
 
-Required AI-primary content:
+Before drafting, apply the [Scenario model](../../../docs/01-product/scenarios/README.md#scenario-model) and [legality gates](../../../docs/01-product/scenarios/README.md#scenario-legality-and-approval):
 
-- Scenario narrative: user, trigger, goal, success state, scenario group, and stable scenario ID. This is the source of truth for CLI E2E and VS Code UI test intent.
-- Surface behavior: VS Code, CLI interactive, CLI non-interactive, or not applicable. This refines surface-specific assertions inside the scenario file.
-- Inline Mermaid flow: happy path, decision points, cancellation, errors, and recovery. This refines test paths without requiring a separate `.mmd` file.
-- State notes: empty/loading/error/success/permission states when user-visible.
-- User-visible outputs: a dedicated section (heading `## User-visible outputs` in Markdown, mirrored as a `<section>` such as `Files written after success` in the companion HTML) that enumerates every user-visible change the scenario produces, end-to-end. Required buckets:
-  - **File changes** — every file created, modified, renamed, or deleted on disk. For each entry list the path, whether it is new or modified, the user inputs that drive its content, and which other steps reference it (for example, an action manifest picked in an earlier step). For modified files, identify the specific keys/lines/blocks the scenario writes, not just the file name.
-  - **Notifications and prompts** — success notifications, info/warning toasts, modal confirmations, status-bar messages, and CodeLens labels the user must see, with their exact copy and any action buttons.
-  - **Error and recovery messages** — every user-visible error string surfaced by this scenario, including recoverable inline errors, blocking dialogs, and CLI stderr lines, plus the user action that clears each one.
-  - **Environment and secret writes** — env vars, `.env*` files, or secret store entries the scenario writes, including the variable names and which step produces them.
-  - **External side effects** — provisioned cloud resources, registered apps, OAuth client registrations, telemetry events, or any other change visible outside the user's workspace.
-  - Scaffolding-type scenarios (template scaffolding, `create-*` flows): list runtime-modified outputs (anything written based on user answers, injected by drivers, or conditional on user choice) in full. Boilerplate that is identical for every project from the template can be summarized in a single line such as "plus the standard template boilerplate under `appPackage/`, `infra/`, `env/`, `src/`" without enumerating individual files.
-- Validation notes: how the scenario maps back to PRD requirement IDs, future spec AC rows, CLI E2E test intent, VS Code UI test intent, and deferred L2/L3 validation.
+1. Classify the requested artifact as a journey map, a product scenario, or validation intent using the product-owned definitions.
+2. Complete the required scenario content and collect the evidence named by the product-owned legality gate.
+3. Leave missing evidence as an open question and stop before approval or engineering handoff.
+
+Complete the product-owned [Markdown format](../../../docs/01-product/scenarios/README.md#markdown-format), including its required metadata, user-visible outputs, flow, and validation notes. Do not maintain a second scenario-format checklist in this skill.
 
 Optional visual/state reference content:
 
@@ -276,6 +269,7 @@ Only after this handoff should the engineering workflow generate or update specs
 - PRD metadata includes ISO 8601 `Created` and `Last updated` timestamps, PM owner, Engineer owner, owner source, related request, and status.
 - PRD owners are resolvable through `docs/01-product/owner.md`, `.github/CODEOWNERS`, or explicit human handles; `TBD` owners block approval.
 - Scenario Markdown records behavior and state transitions, not just visuals.
+- New or materially changed scenarios satisfy the linked product-owned Scenario model, classification, and legality rules.
 - Markdown with inline Mermaid must be sufficient for an AI agent to understand behavior; HTML supplements visual structure and states when present.
 - HTML, when present, is concise visual/state reference and cannot be the only source of behavior.
 - The product root index links to newly added or renamed human-readable scenario HTML pages only.

@@ -1,16 +1,29 @@
 # Scenarios
 
-This directory contains grouped product scenario artifacts. Scenario Markdown is the AI-primary source for behavior and validation intent. Scenario HTML is the human-readable view for reviewing concrete user flows and visual states.
+This directory contains grouped product scenario artifacts. Scenario Markdown is the AI-primary source for behavior and validation intent. Scenario HTML is the human-readable view for reviewing concrete user flows and visual states. This README owns the product definition, classification, format, and approval rules for scenarios; specs, tests, architecture pages, and AI skills must link here instead of redefining them.
+
+## Scenario model
+
+Keep these three units distinct:
+
+- A **journey** is an ordered map of independently valuable user goals, for example create → local debug → remote debug. It helps product reviewers understand the complete experience, but it is not one scenario and does not require one end-to-end UI test.
+- A **product scenario** is one independently reviewable user goal. It starts from a declared user-visible state, has one primary goal, and ends in a user-visible success state. It includes applicable surfaces, prerequisites, errors, cancellation, recovery, and user-visible outputs.
+- A **validation case** is an independently executable test slice derived from a scenario. Multiple cases may trace to one scenario. Case identity, language, template variant, authentication, feature flags, account profile, and execution gate belong to the applicable test workflow, not to the product scenario's directory hierarchy.
+
+PRDs may use journey maps to connect scenarios. Scenario files remain the behavior contract for each goal. Do not create scenarios by expanding a workload × lifecycle × language × authentication × feature-flag matrix: a template or route proves an implementation option exists, not that the inferred user goal is supported.
 
 ## Directory groups
 
-Use one product-flow group directory under `scenarios/`:
+Group scenarios by stable workload or product family:
 
 - [`da/`](da/) - Declarative Agent flows, such as create, test, provision, deploy, and publish DA scenarios.
-- [`cea/`](cea/) - Custom Engine Agent flows.
-- [`others/`](others/) - shared or uncategorized flows that are not DA or CEA specific.
+- `cea/` - Custom Engine Agent flows.
+- `teams-app/` - Teams app flows that are not owned by a more specific agent workload.
+- `office-addin/` - Office Add-in flows.
+- `graph-connector/` - Graph connector flows.
+- `toolkit/` - cross-workload login, environment, project-management, and common Toolkit UX flows.
 
-Create a new group only when the existing groups would make ownership or test generation ambiguous. Group directories should not have their own README files; keep classification rules and format rules in this file so AI agents have one stable scenario entry point.
+Do not use lifecycle phases (`create`, `provision`, `deploy`), languages, feature flags, test targets, or surfaces (`vscode`, `vs`, `cli`) as top-level groups. Do not add new scenarios to a generic `others/` bucket. Create a new group only when it has a distinct product owner or user-goal family and the existing groups would make ownership ambiguous. Group directories should not have their own README files; keep classification and format rules here so AI agents have one stable scenario entry point.
 
 Each group directory contains same-basename scenario `.md` + optional `.html` pairs directly.
 
@@ -20,6 +33,18 @@ Each active scenario should use this pair when a human flow view is useful:
 - `<group>/<scenario-slug>.html` - human-readable visual/state reference for the same scenario.
 
 The Markdown file owns behavior. The HTML file helps humans inspect the flow, but must not introduce behavior that is missing from the Markdown source.
+
+## Scenario legality and approval
+
+A new or materially changed scenario must have all of the following evidence before it becomes live:
+
+- **Product evidence** - an approved PRD, an explicit owner decision, or a verified shipped user goal.
+- **Surface evidence** - the documented command, entry point, debug target, or launch target exists for the workload.
+- **Template evidence, when applicable** - the referenced template route and supported language exist. Template evidence alone does not establish a product scenario.
+- **Execution evidence** - required accounts, licenses, tenant configuration, cloud resources, external services, and prerequisite ownership are declared.
+- **Review evidence** - PM and Engineer owners approve the user-visible contract; a first real walkthrough confirms the flow when the UI already exists.
+
+Automated checks may reject invalid IDs, templates, languages, flags, or targets and may report uncovered implementation routes. They must not create or promote a scenario from implementation metadata. For example, a DA template does not imply that DA supports a Playground target.
 
 ## Lifecycle subdirectories
 
@@ -43,6 +68,11 @@ Use Markdown for content that AI agents need to read, trace, and transform into 
 
 Required sections:
 
+The fields added by this guide apply to scenarios created or materially changed
+after this contract lands. Existing live and draft scenarios remain valid until
+their next material product edit; update them opportunistically rather than
+performing a metadata-only migration.
+
 ~~~markdown
 # <Scenario title>
 
@@ -52,8 +82,12 @@ Required sections:
 - Last updated: YYYY-MM-DDTHH:mm:ssZ
 - PM owner: <owner-id or @handle>
 - Engineer owner: <owner-id or @handle>
-- Scenario group: da | cea | others | <approved-group>
+- Scenario group: da | cea | teams-app | office-addin | graph-connector | toolkit | <approved-group>
 - Scenario ID: SCN-<STABLE-ID>
+- Primary goal: create | extend | local-debug | provision | deploy | remote-preview | publish | manage | migrate | <approved-goal>
+- Start state: <user-visible state before this goal>
+- Success state: <user-visible state after this goal>
+- Lifecycle phases: [<ordered phases used by this goal>]
 - Visual/state reference: <scenario-slug>.html
 
 ## Scenario
@@ -67,6 +101,10 @@ List applicable surfaces such as VS Code, CLI interactive, CLI non-interactive, 
 ## States
 
 List user-visible states such as empty, loading, success, error, cancellation, permission, or prerequisite states.
+
+## User-visible outputs
+
+Enumerate every user-visible change the scenario produces end-to-end, using the applicable buckets: file changes, notifications and prompts, error and recovery messages, environment and secret writes, and external side effects.
 
 ## Flow
 
@@ -86,6 +124,12 @@ Markdown rules:
 - `PM owner` and `Engineer owner` values must resolve to an entry in [`../owner.md`](../owner.md) or to a GitHub handle. The scenario metadata names the owner directly; the lookup file is implicit and does not need to be cited in every scenario.
 - A scenario does not link to a PRD in metadata. PRDs reference scenarios, not the other way around; if a scenario needs PRD context, link to it inline in the body where it matters.
 - Use stable scenario IDs such as `SCN-CREATE-AGENT-FROM-TEMPLATE`; tests and future specs should be able to cite them.
+- Keep the Scenario ID stable across language, authentication, feature-flag, account, and test-execution variants. Those dimensions select validation cases; they do not create new product goals by themselves.
+- Record feature flags only when they change the user-visible behavior described by the scenario. A temporary rollout flag is not part of the Scenario ID, and enabling a flag does not by itself prove coverage of the gated branch.
+- Treat lifecycle phases as descriptive metadata, not directory names. Create a separate scenario only when a phase has its own user goal and independently reviewable success state.
+- In `## User-visible outputs`, list every file created, modified, renamed, or deleted; identify whether it is new or modified, the inputs that drive its content, the specific keys/blocks written, and later steps that reference it.
+- Include exact user-visible notifications, prompts, CodeLens labels, errors, recovery actions, environment variables, secret-store or `.env*` writes, external resources, registrations, and other side effects.
+- For scaffolding scenarios, enumerate runtime-modified or conditional outputs in full. Summarize template boilerplate that is identical for every generated project in one line instead of listing every stock file.
 - Keep happy paths, decisions, cancellation, recoverable errors, unrecoverable errors, and recovery actions in the Flow and Validation notes.
 - Put Mermaid directly in the owning Markdown file. Do not create a separate `.mmd` file unless a future scenario becomes too large to read comfortably.
 - Prefer simple headings, bullets, tables, and Mermaid. Avoid prose-only flows that hide test paths.
