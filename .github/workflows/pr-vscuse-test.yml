@@ -123,6 +123,7 @@ jobs:
           fetch-depth: 0
           sparse-checkout: |
             packages/tests/vscuse/vscode-test-cases/plans
+            packages/tests/vscuse/vscode-test-cases/groups
             packages/tests/vscuse/smoking-test-cases.json
 
       # ── 2. Get changed files via API (PR file list) ────────────────────
@@ -184,23 +185,30 @@ jobs:
             // Impacted test plans: an added / modified / renamed plan JSON maps 1:1 to a
             // runnable plan (basename == plan name). Removed plans cannot be run.
             const PLAN_DIR = 'packages/tests/vscuse/vscode-test-cases/plans/';
+            const GROUP_DIR = 'packages/tests/vscuse/vscode-test-cases/groups/';
             const changedPlans = files
               .filter(f => f.filename.startsWith(PLAN_DIR) &&
                            f.filename.endsWith('.json')    &&
                            f.status !== 'removed')
               .map(f => f.filename.slice(PLAN_DIR.length).replace(/\.json$/, ''));
+            const changedGroups = files
+              .filter(f => f.filename.startsWith(GROUP_DIR) &&
+                           f.filename.endsWith('.json')     &&
+                           f.status !== 'removed')
+              .map(f => f.filename.slice(GROUP_DIR.length).replace(/\.json$/, ''));
 
             const hasUserHint = Boolean((process.env.USER_HINT || '').trim());
             const allFiles   = files.map(f => f.filename);
             const codeFiles  = allFiles.filter(f => !isNonCode(f));
-            // Run when product code changed OR a test plan itself changed (impacted plans)
+            // Run when product code changed OR test plans/groups changed (impacted plans)
             // OR a user explicitly provided an atk-vscuse-test hint.
-            const skipDispatch = codeFiles.length === 0 && changedPlans.length === 0 && !hasUserHint;
+            const skipDispatch = codeFiles.length === 0 && changedPlans.length === 0 && changedGroups.length === 0 && !hasUserHint;
 
             core.setOutput('skip_dispatch',      String(skipDispatch));
             core.setOutput('has_code_files',     String(codeFiles.length > 0));
             core.setOutput('has_user_hint',      String(hasUserHint));
             core.setOutput('changed_plans_json', JSON.stringify(changedPlans));
+            core.setOutput('changed_groups_json', JSON.stringify(changedGroups));
 
             if (skipDispatch) {
               console.log(`All ${allFiles.length} changed files are test/doc/ci — skipping vscuse dispatch.`);
@@ -212,6 +220,10 @@ jobs:
               if (changedPlans.length) {
                 console.log(`${changedPlans.length} impacted test plan(s) changed:`);
                 changedPlans.forEach(p => console.log(`  plan: ${p}`));
+              }
+              if (changedGroups.length) {
+                console.log(`${changedGroups.length} changed test group file(s):`);
+                changedGroups.forEach(g => console.log(`  group: ${g}`));
               }
               if (hasUserHint) {
                 console.log('User hint is present — forcing dispatch even if this is a non-code-only PR.');
@@ -285,6 +297,7 @@ jobs:
           HEAD_BRANCH:          ${{ steps.pr-context.outputs.head_ref }}
           USER_HINT:            ${{ steps.user-hint.outputs.hint }}
           CHANGED_PLANS_JSON:   ${{ steps.code-check.outputs.changed_plans_json }}
+          CHANGED_GROUPS_JSON:  ${{ steps.code-check.outputs.changed_groups_json }}
           HAS_CODE_FILES:       ${{ steps.code-check.outputs.has_code_files }}
         run: |
           set -euo pipefail
@@ -307,6 +320,35 @@ jobs:
           fi
           IMPACTED_COUNT=$(echo "$IMPACTED_PLANS" | jq 'length')
           echo "Impacted plans (${IMPACTED_COUNT}): $IMPACTED_PLANS"
+
+          # ── Map changed groups -> impacted plans via plans' execution_order ──
+          if [ -n "${CHANGED_GROUPS_JSON:-}" ] && [ "${CHANGED_GROUPS_JSON:-}" != "[]" ]; then
+            while IFS= read -r group; do
+              [ -z "$group" ] && continue
+              group_file="packages/tests/vscuse/vscode-test-cases/groups/${group}.json"
+              if [ ! -f "$group_file" ]; then
+                echo "Warning: changed group not found on disk, skipping: $group"
+                continue
+              fi
+
+              group_plan_id=$(jq -r '.plan_metadata.plan_id // empty' "$group_file" 2>/dev/null || true)
+              if [ -z "$group_plan_id" ]; then
+                echo "Warning: group file has no plan_metadata.plan_id, skipping: $group_file"
+                continue
+              fi
+
+              while IFS= read -r plan_path; do
+                [ -z "$plan_path" ] && continue
+                plan_name=$(basename "$plan_path" .json)
+                IMPACTED_PLANS=$(echo "$IMPACTED_PLANS" | jq --arg p "$plan_name" '. + [$p]')
+              done < <(jq -r --arg gid "$group_plan_id" '
+                  select((.plan_metadata.execution_order // []) | index($gid)) | input_filename
+                ' packages/tests/vscuse/vscode-test-cases/plans/*.json 2>/dev/null || true)
+            done < <(echo "$CHANGED_GROUPS_JSON" | jq -r '.[]' 2>/dev/null || true)
+          fi
+          IMPACTED_PLANS=$(echo "$IMPACTED_PLANS" | jq 'unique')
+          IMPACTED_COUNT=$(echo "$IMPACTED_PLANS" | jq 'length')
+          echo "Impacted plans after group mapping (${IMPACTED_COUNT}): $IMPACTED_PLANS"
 
           # ── Explicit user-hinted plans (authoritative) ──
           HINT_MATCHED_PLANS='[]'
