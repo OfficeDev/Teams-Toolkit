@@ -14,7 +14,8 @@ in source.
 | §1.1 Three schema families — TS type unions | `packages/manifest/src/generated-types/index.ts` (`TeamsManifest`, `DeclarativeAgentManifest`, `APIPluginManifest`, `AppManifest`) |
 | §1.2 Schema host path prefixes + §1.3 locale-strip | `packages/manifest/src/generated-types/index.ts` (`AppManifestUtils.getLocalSchemaSuffix`) |
 | §1.3 Schema source of record + snapshot fetcher | `packages/manifest/download.js`, `packages/manifest/src/json-schemas/` |
-| §1.4 Teams manifest version set | `packages/manifest/src/generated-types/teams/TeamsManifestV1D*.ts`, `packages/manifest/src/generated-types/teams/TeamsManifestVDevPreview.ts`, `TeamsManifestConverterMap` in `packages/manifest/src/generated-types/index.ts` |
+| §1.4 Teams manifest platform version set and v4 output target | `templates/v4/**/manifest.json.tpl`; enforced by `packages/fx-core/tests/v4/validation/schemaReferences.test.ts` |
+| §1.4 Teams manifest local converter snapshot (currently through `1.28`) | `packages/manifest/src/generated-types/teams/TeamsManifestV1D*.ts`, `packages/manifest/src/generated-types/teams/TeamsManifestVDevPreview.ts`, `TeamsManifestConverterMap` in `packages/manifest/src/generated-types/index.ts` |
 | §1.4 Declarative Agent version set | `packages/manifest/src/generated-types/copilot/declarative-agent/DeclarativeAgentManifestV1D*.ts`, `DeclarativeAgentConverterMap` in `packages/manifest/src/generated-types/index.ts` |
 | §1.4 API Plugin version set | `packages/manifest/src/generated-types/copilot/plugin/ApiPluginManifestV2D*.ts`, `ApiPluginConverterMap` in `packages/manifest/src/generated-types/index.ts` |
 | §1.4 Latest-version aliases | `TeamsManifestLatest`, `DeclarativeAgentManifestLatest`, `APIPluginManifestLatest` in `packages/manifest/src/generated-types/index.ts` |
