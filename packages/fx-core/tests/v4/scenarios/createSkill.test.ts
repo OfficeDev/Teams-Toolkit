@@ -57,7 +57,7 @@ describe("SCN-DA-CREATE-SKILL (v4, T3 InMemoryRuntime)", () => {
     const manifest = readJsonObject(files, "appPackage/manifest.json");
     const name = recordProperty(manifest, "name");
     const copilotAgents = recordProperty(manifest, "copilotAgents");
-    assert.strictEqual(manifest.manifestVersion, "1.28");
+    assert.strictEqual(manifest.manifestVersion, "1.29");
     assert.strictEqual(manifest.id, "${{TEAMS_APP_ID}}");
     assert.strictEqual(name.short, "Skill Agent${{APP_NAME_SUFFIX}}");
     assert.isTrue(isRecordArray(copilotAgents.declarativeAgents));

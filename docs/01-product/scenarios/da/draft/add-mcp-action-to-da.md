@@ -3,12 +3,19 @@
 ## Metadata
 
 - Created: 2026-05-20T00:00:00Z
-- Last updated: 2026-05-20T00:00:00Z
+- Last updated: 2026-07-13T08:52:39Z
+- Status: draft
 - PM owner: summzhan
 - Engineer owner: HuihuiWu-Microsoft, Alive-Fish
 - Scenario group: da
 - Scenario ID: SCN-DA-ADD-MCP-ACTION-TO-DA
+- Primary goal: extend
+- Start state: An existing Declarative Agent project is available; VS Code has the project open, or CLI can resolve the project folder and Teams app manifest.
+- Success state: With Dynamic Tool Discovery enabled, the new MCP-backed action, declarative agent reference, lifecycle wiring, and auth-dependent env entries are present; with it disabled, VS Code has staged the server in `.vscode/mcp.json` for the shipped fetch-tools handoff.
+- Lifecycle phases: [extend]
 - Visual/state reference: add-mcp-action-to-da.html
+- Supersedes: ../add-mcp-action-to-da.md
+- Redesign trigger: Dynamic Tool Discovery and Dynamic Client Registration for DA MCP actions.
 
 > **Draft note:** This draft redesigns the live [`../add-mcp-action-to-da.md`](../add-mcp-action-to-da.md). VS Code Add action now runs the full flow end-to-end (URL &rarr; auth type &rarr; conditional follow-up &rarr; write action manifest + DA manifest + yml), the same way CLI does. Static tool fetching is dropped; tool discovery is dynamic at runtime. The separate VS Code fetch-from-CodeLens scenario [`../fetch-mcp-tools.md`](../fetch-mcp-tools.md) is absorbed into this flow and will be archived when the redesign ships. Companion redesign: [`create-da-with-mcp-server.md`](create-da-with-mcp-server.md).
 
@@ -195,6 +202,43 @@ Example non-interactive command (dynamic OAuth):
 atk add action --api-plugin-type mcp --mcp-da-server-url <server-url> --mcp-da-auth-type oauth-dynamic \
   -t ./appPackage/manifest.json -f <project-path> --interactive false
 ```
+
+## User-visible outputs
+
+### File changes
+
+- With `TEAMSFX_MCP_FOR_DA_DT=true`, the toolkit creates a new action manifest, updates the declarative agent manifest to reference it, and updates `m365agents.yml`. When no tools file is supplied, the action runtime `spec` contains the MCP server `url` without `mcp_tool_description`, and no static MCP tools JSON is created.
+- With DT disabled in VS Code, the toolkit follows the shipped fallback: it creates or modifies `.vscode/mcp.json`, opens it, and defers manifest changes to `SCN-DA-FETCH-MCP-TOOLS`.
+- CLI retains its documented static-tools branches: DT-off or an explicitly supplied `--mcp-tools-file-path` writes a static tool list into the action manifest. The exact generated action filename and collision algorithm are not specified by this Markdown contract.
+- `OAuth (with static registration)` and `Entra SSO` inject `oauth/register`; `OAuth (with dynamic registration)` injects `dcr/register`; `None` injects neither registration action. Cancellation and validation failures write no partial files.
+
+### Notifications and prompts
+
+- Both surfaces collect the MCP server URL and authentication type; static OAuth additionally collects client ID, client secret, and optional scopes, while Entra SSO collects its application client ID. CLI interactive also selects the Teams manifest and displays the modification confirmation.
+- VS Code reports `Action added to your Declarative Agent` after the inline write. CLI prints a success message naming the updated DA manifest and new action manifest, but its exact copy is not specified.
+
+### Error and recovery messages
+
+- Missing server URL, missing static OAuth client ID or secret, missing Entra SSO client ID, invalid CLI manifest path, and invalid project path produce a correctable validation error. Exact message text is not specified.
+- Cancelling a picker, input, or the CLI confirmation exits without changing the project.
+
+### Environment and secret writes
+
+- Static OAuth writes `MCP_DA_OAUTH_CLIENT_ID_<SERVER>` and `MCP_DA_OAUTH_SCOPE_<SERVER>` to `env/.env.dev`, writes `SECRET_MCP_DA_OAUTH_CLIENT_SECRET_<SERVER>` to the gitignored `env/.env.dev.user`, and references those values from `m365agents.yml`.
+- Entra SSO writes `MCP_DA_OAUTH_CLIENT_ID_<SERVER>` to `env/.env.dev` and references it from `m365agents.yml`. Dynamic OAuth and `None` write no credential entries during this flow.
+- Provision later writes the authentication configuration ID used by the generated runtime reference.
+
+### External side effects
+
+- The DT-on dynamic-discovery path with no tools file does not fetch tools during this scenario. The legacy/static CLI branch may contact the MCP server when it tries to fetch tools.
+- Static OAuth requires a pre-registered client, Entra SSO requires an existing Entra application client ID, and dynamic OAuth requires compatible server metadata. External registration actions execute later during provision.
+
+## Open questions
+
+- The prose requires both DT and DCR for `oauth-dynamic`, while the CLI Mermaid gates the value on DCR alone. Which condition is the intended CLI contract?
+- The DT-off non-interactive flow requires `--mcp-tools-file-path`, while the live CLI contract allows URL-based fetch when the file is omitted. Which behavior should the redesign preserve?
+- What are the supported generated action filename/collision rules and the exact no-auth runtime shape?
+- Which account, tenant, license, and administrator owns each static OAuth, Entra SSO, and dynamic registration prerequisite?
 
 ## Validation notes
 

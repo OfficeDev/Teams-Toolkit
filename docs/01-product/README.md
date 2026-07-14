@@ -13,7 +13,7 @@ AI entry point for product intent before specs, tests, or code. Use this directo
 ## What Belongs Here
 
 - [`prd/`](prd/README.md) - high-level PRDs and requirement deltas.
-- [`scenarios/`](scenarios/README.md) - concrete flows grouped by `da/`, `cea/`, or `others/`.
+- [`scenarios/`](scenarios/README.md) - concrete product scenarios; the scenario guide owns their model, workload grouping, format, and approval rules.
 - [`scenarios/index.html`](scenarios/index.html) - human-facing links to scenario HTML only.
 - [`_backups_/`](_backups_/README.md) - old material for reference only; rewrite before using as active product input.
 

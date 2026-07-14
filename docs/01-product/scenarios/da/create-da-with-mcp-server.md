@@ -3,11 +3,15 @@
 ## Metadata
 
 - Created: 2026-05-20T00:00:00Z
-- Last updated: 2026-05-20T00:00:00Z
+- Last updated: 2026-07-13T08:52:39Z
 - PM owner: summzhan
 - Engineer owner: HuihuiWu-Microsoft, Alive-Fish
 - Scenario group: da
 - Scenario ID: SCN-DA-CREATE-WITH-MCP-SERVER
+- Primary goal: create
+- Start state: No project choice has been made; the developer can start the new project flow and choose `Declarative Agent`.
+- Success state: VS Code has opened a generated DA project with `.vscode/mcp.json` ready for the follow-up MCP action flow; CLI has created the project with MCP action wiring when tools are available, or with the documented warning and add-action hint when they are not.
+- Lifecycle phases: [create]
 - Visual/state reference: create-da-with-mcp-server.html
 
 ## Scenario
@@ -36,12 +40,16 @@ Client ids, client secrets, and OAuth scopes are provision inputs, not create in
 - Enables: `SCN-DA-FETCH-MCP-TOOLS` (VS Code discovery step that runs implicitly before action manifest selection) and `SCN-DA-ADD-MCP-ACTION-TO-DA`, which requires an existing DA project and, for VS Code, a configured `.vscode/mcp.json` entry.
 - Does not include: the post-create VS Code CodeLens flow for selecting or creating an action manifest and choosing MCP operations. That belongs to `add-mcp-action-to-da.md`.
 
+## Feature flags
+
+- The shipped MCP create route is controlled by an MCP-for-DA gate, and other action-source options may have their own gates. Their exact identifiers and default values are not established by this scenario.
+
 ## Surfaces
 
 - VS Code: primary guided creation experience using Quick Pick and input box states. It writes `.vscode/mcp.json` and prompts the user to start the MCP server and use the later fetch action flow.
 - CLI interactive: current prompt-driven `atk new` behavior. It asks for the DA capability, action source, remote MCP server URL, optional tools file when tools are not auto-fetched, operation selection when tools are available, auth type when the MCP server requires authentication, app name, and folder.
 - CLI non-interactive: current flag-driven `atk new` behavior. It requires `--capability declarative-agent`, `--with-plugin yes`, `--api-plugin-type mcp`, `--mcp-da-server-url`, `--app-name`, and `--folder`; it may use `--mcp-tools-file-path` and `--mcp-da-auth-type` for authenticated MCP servers.
-- Visual Studio and chat: not covered by this draft scenario.
+- Visual Studio and chat: not covered by this scenario.
 
 ## States
 
@@ -164,6 +172,42 @@ Authenticated or offline tool definitions can be supplied with:
 ```bash
 atk new -c declarative-agent --with-plugin yes --api-plugin-type mcp --mcp-server-type remote --mcp-da-server-url <server-url> --mcp-tools-file-path <tools.json> --mcp-da-auth-type oauth -n <app-name> -f <folder> --interactive false
 ```
+
+## User-visible outputs
+
+### File changes
+
+- Both surfaces generate the standard DA project scaffold, summarized here as `appPackage/manifest.json`, the declarative agent manifest, lifecycle files, and the stock project files shared by DA templates.
+- VS Code creates `.vscode/mcp.json` with the selected remote MCP server URL and opens the generated project. It does not create the MCP action manifest or persist authentication credentials during this scenario.
+- When CLI resolves tools, it additionally creates `appPackage/ai-plugin.json`, writes the captured MCP tool definitions as JSON, updates the declarative agent manifest, and adds the matching MCP runtime and conditional authentication registration wiring.
+- When CLI cannot resolve tools, it still creates the project but may leave the MCP action files incomplete. Cancellation before generation must not leave a partially accepted project.
+
+### Notifications and prompts
+
+- The guided flow includes the Declarative Agent/template/action-source picks, the conditional `MCP Server Type` pick, `MCP Server URL`, project location, and application name. CLI may also prompt for a tools file, operations, and authentication type.
+- CLI reports project creation with either generated action wiring or a warning plus the `atk add action --api-plugin-type mcp ...` follow-up hint. Exact VS Code and CLI success copy is not specified in this Markdown contract.
+
+### Error and recovery messages
+
+- Invalid application name, unavailable location, invalid MCP server URL, missing or unreadable tools file, missing authentication type when required, and missing required non-interactive options keep the user in the flow or return a correctable validation error. Exact message text is not specified.
+- Cancelling before generation exits without creating a partially accepted project.
+
+### Environment and secret writes
+
+- Create writes no client ID, client secret, scope, or other credential value to the generated project. Static OAuth and Entra inputs are collected by `oauth/register` during first provision; the client secret is password-masked and is not written to ordinary environment files by this scenario.
+
+### External side effects
+
+- VS Code checks for `odr.exe` locally and records the selected MCP server configuration; it does not register external OAuth resources during create.
+- CLI may contact the remote MCP server to discover tools. OAuth registration is deferred to provision.
+
+## Open questions
+
+- What are the exact identifiers and defaults of the gates that expose the MCP and other conditional action-source options?
+- The narrative mentions choosing authentication during success, but the shipped VS Code flow has no authentication prompt. Should success be described only by the current surface-specific states?
+- Should the VS Code handoff go directly to `SCN-DA-FETCH-MCP-TOOLS`, or first to `SCN-DA-ADD-MCP-ACTION-TO-DA`? The current text uses both relationships.
+- What `.vscode/mcp.json` shape represents the local `stdio` branch, and what exact success/error messages belong to the contract?
+- The current create notification refers to `ATK: Update Action with MCP`, while the contributed Command Palette label is `Microsoft 365 Agents: Fetch action from MCP`. Should the notification copy be corrected?
 
 ## Validation notes
 
