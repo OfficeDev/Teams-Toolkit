@@ -23,6 +23,9 @@
       "step_6861ac1e",
       "step_41dc25cd",
       "step_c923dbdb",
+      "step_e1a11f01",
+      "step_e1a11f02",
+      "step_e1a11f03",
       "step_baa39070",
       "step_e0bd25da",
       "step_f46232aa",
@@ -148,6 +151,76 @@
       "plan_id": "plan_f355465c"
     },
     {
+      "step_id": "step_e1a11f01",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 389,
+        "y": 351
+      },
+      "description": "Click on the \"Email or phone\" input field within the Microsoft account login page to focus and enable input.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay:180"
+      ],
+      "screenshot": "step_e1a11f01",
+      "created_at": "2026-07-14T02:39:00.000000",
+      "plan_id": "plan_f355465c"
+    },
+    {
+      "step_id": "step_e1a11f02",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{env:M365_ACCOUNT_NAME}}"
+      },
+      "description": "Type ${{env:M365_ACCOUNT_NAME}} into the email or phone input field on the Microsoft sign-in page.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay:3"
+      ],
+      "screenshot": "step_e1a11f02",
+      "created_at": "2026-07-14T02:39:00.000000",
+      "plan_id": "plan_f355465c"
+    },
+    {
+      "step_id": "step_e1a11f03",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 635,
+        "y": 487
+      },
+      "description": "Click the \"Next\" button on the Microsoft sign-in page to advance from the email step to the password step.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay:3"
+      ],
+      "screenshot": "step_e1a11f03",
+      "created_at": "2026-07-14T02:39:00.000000",
+      "plan_id": "plan_f355465c"
+    },
+    {
       "step_id": "step_baa39070",
       "agent": "interaction",
       "tool": "click",
@@ -169,7 +242,7 @@
       ],
       "postconditions": [],
       "tags": [
-        "delay:180"
+        "delay:5"
       ],
       "screenshot": "step_baa39070",
       "created_at": "2026-04-21T03:02:12.293313",
