@@ -150,6 +150,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 22
+          registry-url: 'https://registry.npmjs.org'
 
       - uses: pnpm/action-setup@v4
 
