@@ -1,5 +1,19 @@
 {
   "$schema": "../../schema/pipeline.schema.json",
   "pipeline": "default",
+  "render": {
+    "filters": [
+      {
+        "comment": "Sandbox files are opt-in.",
+        "when": "!featureFlag('TEAMSFX_SANDBOXED_TEAM')",
+        "exclude": [
+          "m365agents.sandbox.yml",
+          "teamsapp.sandbox.yml",
+          "env/.env.sandbox",
+          "env/.env.sandbox.user"
+        ]
+      }
+    ]
+  },
   "steps": [{ "step": "require-empty-target" }]
 }
