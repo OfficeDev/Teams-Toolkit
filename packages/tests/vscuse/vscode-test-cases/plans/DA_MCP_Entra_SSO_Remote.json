@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 25,
+    "total_steps": 17,
     "created_at": "2026-06-29T02:44:33.029362",
     "name": "DA MCP Entra SSO Remote",
     "description": {
@@ -24,33 +24,31 @@
       "step_7437f6e8",
       "step_03fb1bee",
       "step_0e8ca12b",
-      "step_e02cd850",
-      "plan_r_0928_014459",
-      "plan_r_1021_081410",
-      "step_f61600cd",
-      "step_3470fc88",
-      "plan_26ac4c4e",
-      "step_4f38d99d",
-      "step_16e106fb",
-      "step_1a1ac380",
-      "step_a4d37792",
-      "step_90dd124f",
-      "step_4a28cd05",
       "step_a256a727",
       "step_ee1faafc",
+      "step_a49b5428",
+      "step_dc6672cb",
+      "step_e02cd850",
+      "plan_r_0928_014459",
+      "step_f61600cd",
+      "plan_login_m365_for_provision",
       "step_1421ce5a",
       "step_aeb351a0",
       "step_9ffc68ad",
-      "step_bc14f139",
-      "step_a49b5428",
-      "step_dc6672cb",
       "step_ba61c713",
       "step_add5088d",
       "step_38bdd0bf",
       "step_a996b3a7",
       "step_84004606"
     ],
-    "tags": [],
+    "tags": [
+      "scenario:SCN-DA-CREATE-WITH-MCP-SERVER",
+      "source_of_truth:docs/01-product/scenarios/da/draft/create-da-with-mcp-server.md",
+      "feature_flag:TEAMSFX_MCP_FOR_DA_DT=true",
+      "feature_flag:TEAMSFX_MCP_FOR_DA_DCR=true",
+      "auth_type:entra-sso",
+      "dynamic_tool_discovery"
+    ],
     "updated_at": "2026-06-29T03:18:28.708853"
   },
   "steps": [
@@ -152,206 +150,25 @@
     },
     {
       "step_id": "step_f61600cd",
-      "agent": "interaction",
-      "tool": "click",
+      "agent": "code",
+      "tool": "",
       "parameters": {
-        "button": "left",
-        "x": 629,
-        "y": 136
+        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\"\nPROJECT_DIR=\"$PROJECT_DIR\" python3 - <<'PY'\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"])\nrequired = [\"appPackage/manifest.json\", \"appPackage/declarativeAgent.json\", \"appPackage/ai-plugin.json\", \"m365agents.yml\", \".vscode/mcp.json\", \"env/.env.dev\"]\nfor relative in required:\n    if not (project / relative).is_file():\n        raise AssertionError(f\"Missing required file: {relative}\")\nif (project / \"appPackage/mcp-tools-1.json\").exists():\n    raise AssertionError(\"Static MCP tools file must not be generated\")\nplugin = json.loads((project / \"appPackage/ai-plugin.json\").read_text(encoding=\"utf-8\"))\nif plugin.get(\"namespace\") != \"apigithubc\" or plugin.get(\"functions\") != []:\n    raise AssertionError(\"Unexpected dynamic MCP plugin namespace or functions\")\nruntimes = plugin.get(\"runtimes\")\nif not isinstance(runtimes, list) or len(runtimes) != 1:\n    raise AssertionError(\"Expected exactly one MCP runtime\")\nruntime = runtimes[0]\nif runtime.get(\"type\") != \"RemoteMCPServer\" or runtime.get(\"spec\") != {\"url\": \"https://api.githubcopilot.com/mcp/\"} or runtime.get(\"run_for_functions\") != [\"*\"]:\n    raise AssertionError(\"Unexpected dynamic MCP runtime shape\")\nif \"mcp_tool_description\" in runtime:\n    raise AssertionError(\"Dynamic MCP runtime must not contain mcp_tool_description\")\nauth = runtime.get(\"auth\", {})\nif auth.get(\"type\") != \"OAuthPluginVault\" or not str(auth.get(\"reference_id\", \"\")).endswith(\"MCP_DA_AUTH_ID_APIGITHUBC}}\"):\n    raise AssertionError(\"Unexpected OAuthPluginVault reference\")\nyml = (project / \"m365agents.yml\").read_text(encoding=\"utf-8\")\nfor expected in [\"oauth/register\", \"identityProvider: MicrosoftEntra\", \"MCP_DA_OAUTH_CLIENT_ID_APIGITHUBC\", \"MCP_DA_AUTH_ID_APIGITHUBC\"]:\n    if expected not in yml:\n        raise AssertionError(f\"Missing Entra SSO configuration in m365agents.yml: {expected}\")\nfor unexpected in [\"SECRET_MCP_DA_OAUTH_CLIENT_SECRET_APIGITHUBC\", \"MCP_DA_OAUTH_SCOPE_APIGITHUBC\"]:\n    if unexpected in yml:\n        raise AssertionError(f\"Unexpected Entra SSO configuration in m365agents.yml: {unexpected}\")\ndef env_value(relative, key):\n    for line in (project / relative).read_text(encoding=\"utf-8\").splitlines():\n        if line.startswith(key + \"=\"):\n            return line.split(\"=\", 1)[1]\n    return None\nif env_value(\"env/.env.dev\", \"MCP_DA_OAUTH_CLIENT_ID_APIGITHUBC\") != \"${{env:DA_MCP_ENTRA_SSO_CLIENTID}}\":\n    raise AssertionError(\"Entra application client ID was not persisted\")\nmcp = json.loads((project / \".vscode/mcp.json\").read_text(encoding=\"utf-8\"))\nif \"https://api.githubcopilot.com/mcp/\" not in json.dumps(mcp):\n    raise AssertionError(\"MCP URL missing from .vscode/mcp.json\")\nPY\n```"
       },
-      "description": "Click the \"Start\" link in the \"servers\" section of the mcp.json file within the Visual Studio Code editor to trigger a code action or fetch suggestion.",
+      "description": "@code verify the generated Entra SSO MCP DA project follows SCN-DA-CREATE-WITH-MCP-SERVER dynamic tool discovery shape, persists only the Entra application client ID, and injects oauth/register with MicrosoftEntra identity provider.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:629:136:16:5:2689b3cbebababc9",
-        "dhash:629:136:96:5:00008966e6091200",
-        "dhash:629:136:0:10:23b121212121232a"
-      ],
+      "preconditions": [],
       "postconditions": [],
-      "tags": [],
-      "screenshot": "step_f61600cd",
+      "tags": [
+        "source_of_truth:docs/01-product/scenarios/da/draft/create-da-with-mcp-server.md",
+        "scenario:SCN-DA-CREATE-WITH-MCP-SERVER"
+      ],
+      "screenshot": null,
       "created_at": "2026-06-29T03:17:40.264916",
-      "plan_id": "plan_b85e52ee"
-    },
-    {
-      "step_id": "step_3470fc88",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 481,
-        "y": 88
-      },
-      "description": "Click the \"Allow\" button in the GitHub authentication dialog for MCP Server Definition within the Visual Studio Code application interface.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:481:88:16:5:0000004d524d5552",
-        "dhash:481:88:96:5:000024189c4c1a10",
-        "dhash:481:88:0:10:d2b12d212121232a"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_3470fc88",
-      "created_at": "2026-06-29T03:17:40.272943",
-      "plan_id": "plan_b85e52ee"
-    },
-    {
-      "step_id": "step_4f38d99d",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 489,
-        "y": 138
-      },
-      "description": "Click the \"ATK: Fetch from MCP\" link in the editor tab of Visual Studio Code to trigger an agent toolkit action.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:489:138:16:5:5186397d75355827",
-        "dhash:489:138:96:5:2890148dd9718e8e",
-        "dhash:489:138:0:10:23b131252121213a"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_4f38d99d",
-      "created_at": "2026-06-29T03:17:40.280952",
-      "plan_id": "plan_b85e52ee"
-    },
-    {
-      "step_id": "step_16e106fb",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 468,
-        "y": 72
-      },
-      "description": "Click the ai-plugin.json file option in the \"Select the action manifest you want to update\" dropdown within Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:468:72:16:5:0000b24d3e226232",
-        "dhash:468:72:96:5:0000403788866e80",
-        "dhash:468:72:0:10:d8b020282020223a"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_16e106fb",
-      "created_at": "2026-06-29T03:17:40.287955",
-      "plan_id": "plan_b85e52ee"
-    },
-    {
-      "step_id": "step_1a1ac380",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "get"
-      },
-      "description": "Type 'get' into the search input field of the \"Select Operation(s) Copilot can interact with\" dialog in Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:74c240406460623a"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_1a1ac380",
-      "created_at": "2026-06-29T03:17:40.296033",
-      "plan_id": "plan_b85e52ee"
-    },
-    {
-      "step_id": "step_a4d37792",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 314,
-        "y": 81
-      },
-      "description": "Click on the search input field in the \"Select Operation(s) Copilot can interact with\" dialog within Visual Studio Code to focus and enter text.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:314:81:16:5:0000000000000052",
-        "dhash:314:81:96:5:4040209184a281c8",
-        "dhash:314:81:0:10:74c240406460623a"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_a4d37792",
-      "created_at": "2026-06-29T03:17:40.304056",
-      "plan_id": "plan_b85e52ee"
-    },
-    {
-      "step_id": "step_90dd124f",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 788,
-        "y": 49
-      },
-      "description": "Click the blue plus (+) button in the \"Select Operation(s) Copilot can interact with\" dialog in Visual Studio Code to add the selected operation.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:788:49:16:5:8d92696d6d69132c",
-        "dhash:788:49:96:5:0909699191699d45",
-        "dhash:788:49:0:10:74c240406460623a"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_90dd124f",
-      "created_at": "2026-06-29T03:17:40.310188",
-      "plan_id": "plan_b85e52ee"
-    },
-    {
-      "step_id": "step_4a28cd05",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 317,
-        "y": 38
-      },
-      "description": "Click the search input field in the \"Select Authentication Type\" dropdown dialog of Visual Studio Code to activate it for text entry.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:317:38:16:5:0000000000000000",
-        "dhash:317:38:96:5:000000000126d999",
-        "dhash:317:38:0:10:c0b030442020223a"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_4a28cd05",
-      "created_at": "2026-06-29T03:17:40.324204",
       "plan_id": "plan_b85e52ee"
     },
     {
@@ -361,14 +178,14 @@
       "parameters": {
         "text": "entra"
       },
-      "description": "Type 'entra' into the \"Select Authentication Type\" input field in the Visual Studio Code command palette.",
+      "description": "Type 'entra' into the \"Select Authentication Type\" input field during MCP server scaffolding.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:512:384:0:20:c0b030242020223a"
+        "dhash:512:384:0:20:e0c8949492b17075"
       ],
       "postconditions": [],
       "tags": [],
@@ -385,16 +202,14 @@
         "x": 296,
         "y": 72
       },
-      "description": "Click the \"Entra SSO\" option in the \"Select Authentication Type\" dropdown within Visual Studio Code, after typing \"entra\" in the filter box.",
+      "description": "Click the \"Entra SSO\" option in the filtered \"Select Authentication Type\" picker during MCP server scaffolding.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:296:72:16:5:00108c3269cd5d49",
-        "dhash:296:72:96:5:c020286060d9890d",
-        "dhash:296:72:0:10:d0b430242020223a"
+        "dhash:512:384:0:20:e0b8949492b17075"
       ],
       "postconditions": [],
       "tags": [],
@@ -473,46 +288,20 @@
       "plan_id": "plan_b85e52ee"
     },
     {
-      "step_id": "step_bc14f139",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 309,
-        "y": 36
-      },
-      "description": "Click the input field in the \"Enter Microsoft Entra SSO client id for registration in OpenAPI Description Document\" prompt at the top of the Visual Studio Code window.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:309:36:16:5:000000000005922c",
-        "dhash:309:36:96:5:0000200832a613da",
-        "dhash:309:36:0:10:d0b13052a078702a"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_bc14f139",
-      "created_at": "2026-06-29T03:17:40.371345",
-      "plan_id": "plan_b85e52ee"
-    },
-    {
       "step_id": "step_a49b5428",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "4cfde729-32e4-4862-a409-07e14dbfd296"
+        "text": "${{env:DA_MCP_ENTRA_SSO_CLIENTID}}"
       },
-      "description": "Type the Entra SSO client id '4cfde729-32e4-4862-a409-07e14dbfd296' into the \"Enter Microsoft Entra SSO client id for registration in OpenAPI Description Document\" input field in the Visual Studio Code Microsoft 365 Agents extension modal.",
+      "description": "Type ${{env:DA_MCP_ENTRA_SSO_CLIENTID}} into the \"Microsoft Entra Application (Client) ID\" input field during MCP server scaffolding.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:512:384:0:20:d0b131332138303a"
+        "dhash:512:384:0:20:f0b0949492b17075"
       ],
       "postconditions": [],
       "tags": [],
@@ -527,14 +316,14 @@
       "parameters": {
         "key": "enter"
       },
-      "description": "Press the Enter key to confirm the client ID input in the \"Enter Microsoft Entra SSO client id for registration in OpenAPI Description Document\" prompt within Visual Studio Code.",
+      "description": "Press Enter to confirm the Microsoft Entra Application (Client) ID during MCP server scaffolding.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:512:384:0:20:c0b131332138303a"
+        "dhash:512:384:0:20:c0b0949492b17075"
       ],
       "postconditions": [],
       "tags": [],

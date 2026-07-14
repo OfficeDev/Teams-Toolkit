@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 34,
+    "total_steps": 24,
     "created_at": "2026-06-29T03:21:51.231595",
     "name": "DA_with_MCP Server(Oauth)",
     "description": {
@@ -24,42 +24,38 @@
       "step_5f1a8731",
       "step_9c87f073",
       "step_52c22c4c",
-      "step_9a8146c5",
-      "plan_r_0928_014459",
-      "plan_r_1021_081410",
-      "step_94025678",
-      "step_5b9f6257",
-      "plan_26ac4c4e",
-      "step_4b860701",
-      "step_35164443",
-      "step_a712386e",
-      "step_5120006b",
-      "step_289ade9c",
-      "step_d0c53170",
       "step_da1c5301",
       "step_da1c5302",
+      "step_10a9f134",
+      "step_5fa52f1b",
+      "step_6ed8712c",
+      "step_24e52ca7",
+      "step_9ecdaafc",
+      "step_3a870434",
+      "step_9a8146c5",
+      "plan_r_0928_014459",
+      "step_94025678",
+      "plan_login_m365_for_provision",
       "step_8ed7e3fe",
       "step_c83f7f58",
       "step_8db1832f",
       "step_0abfa1e9",
       "step_02fe6ba0",
       "step_ac7309cf",
-      "step_73df5e59",
-      "step_10a9f134",
-      "step_5fa52f1b",
-      "step_6ed8712c",
-      "step_24e52ca7",
-      "step_f1a98f32",
-      "step_9ecdaafc",
-      "step_3a870434",
-      "step_54e19323",
       "step_dcecd61a",
       "step_6278739e",
       "step_dc8a5e54",
       "step_11c1cd46",
       "step_5b6d6181"
     ],
-    "tags": [],
+    "tags": [
+      "scenario:SCN-DA-CREATE-WITH-MCP-SERVER",
+      "source_of_truth:docs/01-product/scenarios/da/draft/create-da-with-mcp-server.md",
+      "feature_flag:TEAMSFX_MCP_FOR_DA_DT=true",
+      "feature_flag:TEAMSFX_MCP_FOR_DA_DCR=true",
+      "auth_type:oauth",
+      "dynamic_tool_discovery"
+    ],
     "updated_at": "2026-07-10T02:34:22.000000"
   },
   "steps": [
@@ -161,206 +157,25 @@
     },
     {
       "step_id": "step_94025678",
-      "agent": "interaction",
-      "tool": "click",
+      "agent": "code",
+      "tool": "",
       "parameters": {
-        "button": "left",
-        "x": 628,
-        "y": 140
+        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\"\nPROJECT_DIR=\"$PROJECT_DIR\" python3 - <<'PY'\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"])\nrequired = [\"appPackage/manifest.json\", \"appPackage/declarativeAgent.json\", \"appPackage/ai-plugin.json\", \"m365agents.yml\", \".vscode/mcp.json\", \"env/.env.dev\", \"env/.env.dev.user\"]\nfor relative in required:\n    if not (project / relative).is_file():\n        raise AssertionError(f\"Missing required file: {relative}\")\nif (project / \"appPackage/mcp-tools-1.json\").exists():\n    raise AssertionError(\"Static MCP tools file must not be generated\")\nplugin = json.loads((project / \"appPackage/ai-plugin.json\").read_text(encoding=\"utf-8\"))\nif plugin.get(\"namespace\") != \"apigithubc\" or plugin.get(\"functions\") != []:\n    raise AssertionError(\"Unexpected dynamic MCP plugin namespace or functions\")\nruntimes = plugin.get(\"runtimes\")\nif not isinstance(runtimes, list) or len(runtimes) != 1:\n    raise AssertionError(\"Expected exactly one MCP runtime\")\nruntime = runtimes[0]\nif runtime.get(\"type\") != \"RemoteMCPServer\" or runtime.get(\"spec\") != {\"url\": \"https://api.githubcopilot.com/mcp/\"} or runtime.get(\"run_for_functions\") != [\"*\"]:\n    raise AssertionError(\"Unexpected dynamic MCP runtime shape\")\nif \"mcp_tool_description\" in runtime:\n    raise AssertionError(\"Dynamic MCP runtime must not contain mcp_tool_description\")\nauth = runtime.get(\"auth\", {})\nif auth.get(\"type\") != \"OAuthPluginVault\" or not str(auth.get(\"reference_id\", \"\")).endswith(\"MCP_DA_AUTH_ID_APIGITHUBC}}\"):\n    raise AssertionError(\"Unexpected OAuthPluginVault reference\")\nyml = (project / \"m365agents.yml\").read_text(encoding=\"utf-8\")\nfor expected in [\"oauth/register\", \"identityProvider: Custom\", \"MCP_DA_OAUTH_CLIENT_ID_APIGITHUBC\", \"SECRET_MCP_DA_OAUTH_CLIENT_SECRET_APIGITHUBC\", \"MCP_DA_OAUTH_SCOPE_APIGITHUBC\", \"MCP_DA_AUTH_ID_APIGITHUBC\"]:\n    if expected not in yml:\n        raise AssertionError(f\"Missing OAuth configuration in m365agents.yml: {expected}\")\ndef env_value(relative, key):\n    for line in (project / relative).read_text(encoding=\"utf-8\").splitlines():\n        if line.startswith(key + \"=\"):\n            return line.split(\"=\", 1)[1]\n    return None\nif not env_value(\"env/.env.dev\", \"MCP_DA_OAUTH_CLIENT_ID_APIGITHUBC\"):\n    raise AssertionError(\"OAuth client ID was not persisted\")\nif env_value(\"env/.env.dev\", \"MCP_DA_OAUTH_SCOPE_APIGITHUBC\") != \"read:user\":\n    raise AssertionError(\"OAuth scopes were not persisted\")\nif not env_value(\"env/.env.dev.user\", \"SECRET_MCP_DA_OAUTH_CLIENT_SECRET_APIGITHUBC\"):\n    raise AssertionError(\"OAuth client secret was not persisted\")\nmcp = json.loads((project / \".vscode/mcp.json\").read_text(encoding=\"utf-8\"))\nif \"https://api.githubcopilot.com/mcp/\" not in json.dumps(mcp):\n    raise AssertionError(\"MCP URL missing from .vscode/mcp.json\")\nPY\n```"
       },
-      "description": "Click the \"Start\" badge link next to \"Fetch action from MCP\" in the mcp.json file header within the VS Code editor.",
+      "description": "@code verify the generated OAuth MCP DA project follows SCN-DA-CREATE-WITH-MCP-SERVER dynamic tool discovery shape, persists OAuth client ID, secret, and scopes without printing them, and injects oauth/register with the expected environment references.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:628:140:16:5:534de9a9a940b400",
-        "dhash:628:140:96:5:00120866f6090049",
-        "dhash:628:140:0:10:23b1212121213a1c"
-      ],
+      "preconditions": [],
       "postconditions": [],
-      "tags": [],
-      "screenshot": "step_94025678",
+      "tags": [
+        "source_of_truth:docs/01-product/scenarios/da/draft/create-da-with-mcp-server.md",
+        "scenario:SCN-DA-CREATE-WITH-MCP-SERVER"
+      ],
+      "screenshot": null,
       "created_at": "2026-06-29T03:21:51.300954",
-      "plan_id": "plan_r_1024_023252"
-    },
-    {
-      "step_id": "step_5b9f6257",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 464,
-        "y": 94
-      },
-      "description": "Click the \"Allow\" button in the GitHub authentication prompt for the MCP Server Definition within Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:464:94:16:5:10accc569692b245",
-        "dhash:464:94:96:5:00021827039484b3",
-        "dhash:464:94:0:10:d2b12d2121213a1c"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_5b9f6257",
-      "created_at": "2026-06-29T03:21:51.313980",
-      "plan_id": "plan_r_1024_023252"
-    },
-    {
-      "step_id": "step_4b860701",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 506,
-        "y": 137
-      },
-      "description": "Click the \"Fetch from MCP\" link above the \"servers\" section in the mcp.json file within Visual Studio Code, located in the MICROSOFT 365 AGENTS TOOLKIT interface.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:506:137:16:5:86584b4adc5a6391",
-        "dhash:506:137:96:5:80404ca232c42838",
-        "dhash:506:137:0:10:23b531212121213a"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_4b860701",
-      "created_at": "2026-06-29T03:21:51.327519",
-      "plan_id": "plan_r_1024_023252"
-    },
-    {
-      "step_id": "step_35164443",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 445,
-        "y": 72
-      },
-      "description": "Click the \"ai-plugin.json\" file option in the manifest selection dropdown of Visual Studio Code when prompted with \"Select the action manifest you want to update\".",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:445:72:16:5:00408023d4aa2a2a",
-        "dhash:445:72:96:5:0000108eb2364ea1",
-        "dhash:445:72:0:10:f0b031282020223a"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_35164443",
-      "created_at": "2026-06-29T03:21:51.338524",
-      "plan_id": "plan_r_1024_023252"
-    },
-    {
-      "step_id": "step_a712386e",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "get"
-      },
-      "description": "Type 'get' into the search input field of the \"Select Operation(s) Copilot can interact with\" dialog in Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:74c240406460623a"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_a712386e",
-      "created_at": "2026-06-29T03:21:51.348700",
-      "plan_id": "plan_r_1024_023252"
-    },
-    {
-      "step_id": "step_5120006b",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 314,
-        "y": 81
-      },
-      "description": "Click on the search input field in the \"Select Operation(s) Copilot can interact with\" dialog within Visual Studio Code to focus and enter text.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:314:81:16:5:0000000000000052",
-        "dhash:314:81:96:5:4040209184a281c8",
-        "dhash:314:81:0:10:74c240406460623a"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_5120006b",
-      "created_at": "2026-06-29T03:21:51.357709",
-      "plan_id": "plan_r_1024_023252"
-    },
-    {
-      "step_id": "step_289ade9c",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 788,
-        "y": 49
-      },
-      "description": "Click the blue plus (+) button in the \"Select Operation(s) Copilot can interact with\" dialog in Visual Studio Code to add the selected operation.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:788:49:16:5:8d92696d6d69132c",
-        "dhash:788:49:96:5:0909699191699d45",
-        "dhash:788:49:0:10:74c240406460623a"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_289ade9c",
-      "created_at": "2026-06-29T03:21:51.364260",
-      "plan_id": "plan_r_1024_023252"
-    },
-    {
-      "step_id": "step_d0c53170",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 317,
-        "y": 38
-      },
-      "description": "Click the search input field in the \"Select Authentication Type\" dropdown dialog of Visual Studio Code to activate it for text entry.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:317:38:16:5:0000000000000000",
-        "dhash:317:38:96:5:000000000024d390",
-        "dhash:317:38:0:10:e0c020202020223a"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_d0c53170",
-      "created_at": "2026-06-29T03:21:51.370262",
       "plan_id": "plan_r_1024_023252"
     },
     {
@@ -370,13 +185,15 @@
       "parameters": {
         "text": "static"
       },
-      "description": "Type 'static' into the \"Select Authentication Type\" input field in Visual Studio Code to filter to the \"OAuth (with static registration)\" option.",
+      "description": "Type 'static' into the \"Select Authentication Type\" input field during MCP server scaffolding to filter to the \"OAuth (with static registration)\" option.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [],
+      "preconditions": [
+        "dhash:512:384:0:20:e0c8949492b17075"
+      ],
       "postconditions": [],
       "tags": [],
       "screenshot": "",
@@ -392,13 +209,15 @@
         "x": 296,
         "y": 72
       },
-      "description": "Click the \"OAuth (with static registration)\" option in the \"Select Authentication Type\" dropdown within Visual Studio Code, after typing \"static\" in the filter box.",
+      "description": "Click the \"OAuth (with static registration)\" option in the filtered \"Select Authentication Type\" picker during MCP server scaffolding.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [],
+      "preconditions": [
+        "dhash:512:384:0:20:e0b8949492b17075"
+      ],
       "postconditions": [],
       "tags": [],
       "screenshot": "",
@@ -546,46 +365,20 @@
       "plan_id": "plan_r_1024_023252"
     },
     {
-      "step_id": "step_73df5e59",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 309,
-        "y": 36
-      },
-      "description": "Click the input field in the \"Enter client id for OAuth registration in OpenAPI Description Document\" prompt at the top of the Visual Studio Code window.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:309:36:16:5:000000000045d144",
-        "dhash:309:36:96:5:0000402a959513db",
-        "dhash:309:36:0:10:702022232362642b"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_73df5e59",
-      "created_at": "2026-06-29T03:21:51.444890",
-      "plan_id": "plan_r_1024_023252"
-    },
-    {
       "step_id": "step_10a9f134",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
         "text": "${{env:DA_MCP_OAUTH_CLIENTID}}"
       },
-      "description": "Type ${{env:DA_MCP_OAUTH_CLIENTID}}  into the \"Enter client id for OAuth registration in OpenAPI Description Document\" input field in the Visual Studio Code Microsoft 365 Agents extension modal.",
+      "description": "Type ${{env:DA_MCP_OAUTH_CLIENTID}} into the \"OAuth Client ID\" input field during MCP server scaffolding.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:512:384:0:20:702022232362642b"
+        "dhash:512:384:0:20:f0b0949492b17075"
       ],
       "postconditions": [],
       "tags": [],
@@ -600,14 +393,14 @@
       "parameters": {
         "key": "enter"
       },
-      "description": "Press the Enter key to confirm the client ID input in the \"Enter client id for OAuth registration in OpenAPI Description Document\" prompt within Visual Studio Code.",
+      "description": "Press Enter to confirm the OAuth Client ID during MCP server scaffolding.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:512:384:0:20:40242a232362642b"
+        "dhash:512:384:0:20:c0b0949492b17075"
       ],
       "postconditions": [],
       "tags": [],
@@ -620,16 +413,16 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "${{secret:DA_MCP_OAUTH_CLIENT_SECERT}}"
+        "text": "${{secret:DA_MCP_OAUTH_CLIENT_SECRET}}"
       },
-      "description": "Type ${{secret:DA_MCP_OAUTH_CLIENT_SECERT}}  into the \"Enter client secret for OAuth registration in OpenAPI Description Document\" input field in Visual Studio Code.",
+      "description": "Type ${{secret:DA_MCP_OAUTH_CLIENT_SECRET}} into the \"OAuth Client Secret\" input field during MCP server scaffolding.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:512:384:0:20:c0b130322030302a"
+        "dhash:512:384:0:20:f0b0949492b17075"
       ],
       "postconditions": [],
       "tags": [],
@@ -644,45 +437,19 @@
       "parameters": {
         "key": "enter"
       },
-      "description": "Press 'Enter' to confirm the entered client secret in the \"Enter client secret for OAuth registration in OpenAPI Description Document\" input dialog within Visual Studio Code.",
+      "description": "Press Enter to confirm the OAuth Client Secret during MCP server scaffolding.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:512:384:0:20:70242a232362642b"
+        "dhash:512:384:0:20:f0b0949492b17075"
       ],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_24e52ca7",
       "created_at": "2026-06-29T03:21:51.482128",
-      "plan_id": "plan_r_1024_023252"
-    },
-    {
-      "step_id": "step_f1a98f32",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 296,
-        "y": 41
-      },
-      "description": "Click the \"Input scopes for OAuth registration\" text field in the Visual Studio Code extension setup dialog to begin entering OAuth scopes.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:296:41:16:5:00000810442126ad",
-        "dhash:296:41:96:5:0013166049984565",
-        "dhash:296:41:0:10:602022232362642b"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_f1a98f32",
-      "created_at": "2026-06-29T03:21:51.497015",
       "plan_id": "plan_r_1024_023252"
     },
     {
@@ -692,14 +459,14 @@
       "parameters": {
         "text": "read:user"
       },
-      "description": "Type 'read:user' into the \u201cScope(s) for OAuth registration\u201d input field at the top of the Visual Studio Code window.",
+      "description": "Type 'read:user' into the \"OAuth Scopes (optional)\" input field during MCP server scaffolding.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:512:384:0:20:70242a232362642b"
+        "dhash:512:384:0:20:f0b0949492b17075"
       ],
       "postconditions": [],
       "tags": [],
@@ -714,45 +481,19 @@
       "parameters": {
         "key": "enter"
       },
-      "description": "Press Enter to confirm the \"read:user\" OAuth scope in the \"Scope(s) for OAuth registration\" input dialog within Visual Studio Code.",
+      "description": "Press Enter to confirm the 'read:user' OAuth scope during MCP server scaffolding.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:512:384:0:20:50242a232362642b"
+        "dhash:512:384:0:20:f0b0949492b17075"
       ],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_3a870434",
       "created_at": "2026-06-29T03:21:51.515779",
-      "plan_id": "plan_r_1024_023252"
-    },
-    {
-      "step_id": "step_54e19323",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 464,
-        "y": 114
-      },
-      "description": "Click the \"Confirm\" button on the Microsoft 365 Agents Toolkit OAuth registration dialog in Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:464:114:16:5:10de2175d45434cb",
-        "dhash:464:114:96:5:0004789787780400",
-        "dhash:464:114:0:10:52322e232362642b"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_54e19323",
-      "created_at": "2026-06-29T03:21:51.530790",
       "plan_id": "plan_r_1024_023252"
     },
     {
