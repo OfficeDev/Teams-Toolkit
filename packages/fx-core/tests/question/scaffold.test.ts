@@ -1230,7 +1230,10 @@ describe("constructNode", () => {
     assert.equal((node.data as any).name, QuestionNames.OfficeAddinHosts);
     assert.deepEqual((node.data as any).default, ["word", "powerpoint", "outlook", "excel"]);
     assert.lengthOf((node.data as any).staticOptions, 4);
-    assert.deepEqual((node.data as any).validation, { minItems: 1 });
+    const validFunc = (node.data as any).validation.validFunc;
+    assert.isFunction(validFunc);
+    assert.isUndefined(validFunc(["word"]));
+    assert.isDefined(validFunc([]));
     assert.deepEqual(node.condition, { equals: "wxp-json-taskpane" });
   });
 
