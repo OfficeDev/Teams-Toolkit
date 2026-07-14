@@ -229,8 +229,8 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 363,
-        "y": 400
+        "x": 420,
+        "y": 422
       },
       "description": "Click on the \"Password\" text field within the Microsoft account login page to focus and enable input.",
       "content_refs": [],
