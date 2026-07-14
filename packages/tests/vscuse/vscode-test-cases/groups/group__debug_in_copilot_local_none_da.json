@@ -156,8 +156,8 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 389,
-        "y": 351
+        "x": 369,
+        "y": 350
       },
       "description": "Click on the \"Email or phone\" input field within the Microsoft account login page to focus and enable input.",
       "content_refs": [],
@@ -165,10 +165,14 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [],
+      "preconditions": [
+        "dhash:369:350:16:5:2113d25252525221",
+        "dhash:369:350:96:5:0919006d19220812",
+        "dhash:369:350:0:10:1b88d0d1e5e6dae4"
+      ],
       "postconditions": [],
       "tags": [
-        "delay:180"
+        "precondition_wait_timeout:300"
       ],
       "screenshot": "step_e1a11f01",
       "created_at": "2026-07-14T02:39:00.000000",
@@ -202,8 +206,8 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 635,
-        "y": 487
+        "x": 629,
+        "y": 484
       },
       "description": "Click the \"Next\" button on the Microsoft sign-in page to advance from the email step to the password step.",
       "content_refs": [],
