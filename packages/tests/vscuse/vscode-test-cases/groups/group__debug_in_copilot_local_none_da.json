@@ -227,7 +227,7 @@
       "parameters": {
         "button": "left",
         "x": 363,
-        "y": 400
+        "y": 425
       },
       "description": "Click on the \"Password\" text field within the Microsoft account login page to focus and enable input.",
       "content_refs": [],
