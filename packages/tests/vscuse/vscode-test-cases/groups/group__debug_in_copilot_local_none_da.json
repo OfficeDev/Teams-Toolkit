@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 12,
+    "total_steps": 15,
     "created_at": "2026-04-21T01:53:19.292868",
     "name": "group__debug_in_copilot_local_none_da",
     "description": {
@@ -23,6 +23,9 @@
       "step_6861ac1e",
       "step_41dc25cd",
       "step_c923dbdb",
+      "step_cle_email01",
+      "step_cle_email02",
+      "step_cle_email03",
       "step_baa39070",
       "step_e0bd25da",
       "step_f46232aa",
@@ -148,6 +151,76 @@
       "plan_id": "plan_f355465c"
     },
     {
+      "step_id": "step_cle_email01",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 369,
+        "y": 350
+      },
+      "description": "Click on the \"Email or phone\" input field in the Microsoft Sign-in form on the login.microsoftonline.com page opened by the Copilot debug browser to focus the cursor for credential entry.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay:180"
+      ],
+      "screenshot": "",
+      "created_at": "2026-04-21T03:02:12.293313",
+      "plan_id": "plan_f355465c"
+    },
+    {
+      "step_id": "step_cle_email02",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{env:M365_ACCOUNT_NAME}}"
+      },
+      "description": "Enter ${{env:M365_ACCOUNT_NAME}} into the email or username input field on the Microsoft Sign in page opened by the Copilot debug browser.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay:3"
+      ],
+      "screenshot": "",
+      "created_at": "2026-04-21T03:02:12.293313",
+      "plan_id": "plan_f355465c"
+    },
+    {
+      "step_id": "step_cle_email03",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 629,
+        "y": 484
+      },
+      "description": "Click the blue \"Next\" button on the Microsoft sign-in page to confirm the entered email address and advance to the password page.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay:3"
+      ],
+      "screenshot": "",
+      "created_at": "2026-04-21T03:02:12.293313",
+      "plan_id": "plan_f355465c"
+    },
+    {
       "step_id": "step_baa39070",
       "agent": "interaction",
       "tool": "click",
@@ -169,7 +242,7 @@
       ],
       "postconditions": [],
       "tags": [
-        "delay:180"
+        "delay:3"
       ],
       "screenshot": "step_baa39070",
       "created_at": "2026-04-21T03:02:12.293313",
