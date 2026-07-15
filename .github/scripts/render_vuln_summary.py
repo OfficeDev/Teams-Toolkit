@@ -94,6 +94,41 @@ def _counts(manifest: Optional[dict]) -> dict:
     }
 
 
+def merge_manifests(manifests: List[dict]) -> Optional[dict]:
+    """Combine several fix manifests (e.g. template npm/NuGet + pnpm lockfiles)
+    into one so a single render pass covers every flow.
+
+    ``max_prs`` collapses to ``0`` (unlimited) if any input is unlimited,
+    otherwise it is the sum of the per-flow caps.
+    """
+    manifests = [m for m in manifests if m]
+    if not manifests:
+        return None
+    if len(manifests) == 1:
+        return manifests[0]
+
+    merged: dict = {
+        "scans": [],
+        "new_prs": [],
+        "skipped_existing": [],
+        "skipped_no_fix": [],
+        "skipped_over_limit": [],
+    }
+    unlimited = False
+    max_total = 0
+    for m in manifests:
+        for key in ("scans", "new_prs", "skipped_existing",
+                    "skipped_no_fix", "skipped_over_limit"):
+            merged[key].extend(m.get(key) or [])
+        cap = m.get("max_prs", 0)
+        if cap in (0, None):
+            unlimited = True
+        else:
+            max_total += cap
+    merged["max_prs"] = 0 if unlimited else max_total
+    return merged
+
+
 # --------------------------------------------------------------------------- #
 # Markdown
 # --------------------------------------------------------------------------- #
@@ -347,7 +382,7 @@ def render_subject(scan_jsons: List[Path], manifest: Optional[dict]) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Render vulnerability scan output")
     parser.add_argument("--scan-json", action="append", default=[])
-    parser.add_argument("--manifest", default=None)
+    parser.add_argument("--manifest", action="append", default=[])
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--output-markdown", action="store_true")
     group.add_argument("--output-email", action="store_true")
@@ -355,7 +390,8 @@ def main() -> int:
     args = parser.parse_args()
 
     scan_paths = [Path(p) for p in args.scan_json]
-    manifest = _read_json(Path(args.manifest)) if args.manifest else None
+    manifests = [m for m in (_read_json(Path(p)) for p in args.manifest) if m]
+    manifest = merge_manifests(manifests)
 
     if args.output_markdown:
         sys.stdout.write(render_markdown(scan_paths, manifest))
