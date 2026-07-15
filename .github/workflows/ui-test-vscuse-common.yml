@@ -225,7 +225,12 @@ jobs:
         shell: bash
 
       - name: Run download script
-        run: node download-vscuse-python.js "${{ inputs.vscuse_version }}" "${{ github.workspace }}/packages/tests/vscuse/vscode-test-cases"
+        run: |
+          if ls "${{ github.workspace }}/packages/tests/vscuse/vscode-test-cases/"*.whl >/dev/null 2>&1; then
+            echo "Committed vscuse wheel found in vscode-test-cases; skipping vscuse-doc download."
+          else
+            node download-vscuse-python.js "${{ inputs.vscuse_version }}" "${{ github.workspace }}/packages/tests/vscuse/vscode-test-cases"
+          fi
         shell: bash
         working-directory: .github/actions/setup-vscuse-environment
 
@@ -236,6 +241,14 @@ jobs:
           source .venv/bin/activate
           WHEEL_FILE=$(ls *.whl | head -n 1)
           pip install "./$WHEEL_FILE"
+        shell: bash
+
+      - name: Migrate plan to OCR preconditions
+        run: |
+          cd packages/tests/vscuse/vscode-test-cases
+          source .venv/bin/activate
+          echo "Migrating ./plans/${{ matrix.test_plan }}.json to OCR (ocr:v1) preconditions..."
+          python migrate_preconditions_to_ocr.py "./plans/${{ matrix.test_plan }}.json"
         shell: bash
 
       - name: Verify Azure Configuration
