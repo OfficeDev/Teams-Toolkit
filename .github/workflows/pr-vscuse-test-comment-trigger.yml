@@ -1,10 +1,10 @@
 name: PR VscUse Test Plan Comment Trigger
 
-# Triggered when a PR comment starts with `/atk-vscuse-test` (or legacy alias `/atk-vsc-use`).
+# Triggered when a PR comment starts with `/atk-vscuse-test`.
 #
 # This workflow:
 #   1. Verifies the commenter has write/maintain/admin permission (anti-abuse).
-#   2. Extracts the hint text after `/atk-vscuse-test` (or `/atk-vsc-use`).
+#   2. Extracts the hint text after `/atk-vscuse-test`.
 #   3. Posts a hidden marker comment (<!-- atk-vsuse-test-hint -->) carrying the hint
 #      so the existing pr-vscuse-test.yml workflow can feed it to the AI plan selector.
 #   4. Dispatches pr-vscuse-test.yml via workflow_dispatch with the PR number, so it
@@ -36,8 +36,7 @@ jobs:
     # Only run when the comment is on a PR and starts with the trigger keyword.
     if: >-
       github.event.issue.pull_request != null &&
-      (startsWith(github.event.comment.body, '/atk-vscuse-test') ||
-       startsWith(github.event.comment.body, '/atk-vsc-use'))
+      startsWith(github.event.comment.body, '/atk-vscuse-test')
     runs-on: ubuntu-latest
 
     steps:
@@ -56,7 +55,7 @@ jobs:
             // Strip the trigger keyword and any leading whitespace/colon.
             const raw = context.payload.comment.body || '';
             const hint = raw
-              .replace(/^\/(?:atk-vscuse-test|atk-vsc-use)\b[:\s]*/, '')
+              .replace(/^\/atk-vscuse-test\b[:\s]*/, '')
               .trim();
 
             core.setOutput('hint', hint);
