@@ -66,4 +66,4 @@ execution:
   precondition_retry_interval: 2   # Default: 2 (retry interval for preconditions in seconds)
 
 logging:
-  level: "INFO"  # Default: "INFO" (options: DEBUG, INFO, WARNING, ERROR)
+  level: "DEBUG"  # Default: "INFO" (options: DEBUG, INFO, WARNING, ERROR)
