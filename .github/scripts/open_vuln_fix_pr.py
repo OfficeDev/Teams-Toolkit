@@ -861,7 +861,36 @@ def run_pipeline(
 ) -> dict:
     repo_root = Path(repo_root)
     scans_summary = _build_scans_summary(scan_paths, skip_targets)
-    groups = group_findings(iter_all_vulns(scan_paths, skip_targets=skip_targets))
+    rows = list(iter_all_vulns(scan_paths, skip_targets=skip_targets))
+
+    manifest = {
+        "branch": rolling_branch,
+        "pr_action": "none",
+        "pr_number": None,
+        "pr_url": "",
+        "scans": scans_summary,
+        "fixed": [],
+        "already_fixed": [],
+        "no_fix": [],
+        "errors": [],
+    }
+
+    # Real runs check out the rolling branch first, so fixes are computed against
+    # the branch we will publish. Templates already fixed by a prior open PR are
+    # then detected as already_fixed instead of being re-fixed.
+    state = RollingPrState(pr_number=None, pr_url="")
+    if not dry_run:
+        try:
+            state = prepare_rolling_branch(
+                repo=repo,
+                repo_root=repo_root,
+                base_branch=base_branch,
+                branch=rolling_branch,
+            )
+        except RollingPrError as exc:
+            manifest["errors"].append({"reason": str(exc)})
+            safe_print(f"Failed to prepare rolling branch: {exc}")
+            return manifest
 
     fixed: List[dict] = []
     already_fixed: List[dict] = []
@@ -869,7 +898,7 @@ def run_pipeline(
     errors: List[dict] = []
     pending_contents = {}
 
-    for (ecosystem, file_name), findings in groups.items():
+    for (ecosystem, file_name), findings in group_findings(rows).items():
         path = resolve_repo_file(repo_root, file_name)
         if path is None:
             errors.append({"file": file_name, "reason": "path outside repository root"})
@@ -892,17 +921,10 @@ def run_pipeline(
         no_fix.extend(result.no_fix)
         errors.extend(result.errors)
 
-    manifest = {
-        "branch": rolling_branch,
-        "pr_action": "none",
-        "pr_number": None,
-        "pr_url": "",
-        "scans": scans_summary,
-        "fixed": fixed,
-        "already_fixed": already_fixed,
-        "no_fix": no_fix,
-        "errors": errors,
-    }
+    manifest["fixed"] = fixed
+    manifest["already_fixed"] = already_fixed
+    manifest["no_fix"] = no_fix
+    manifest["errors"] = errors
 
     if dry_run:
         safe_print(
@@ -917,13 +939,6 @@ def run_pipeline(
             "See manifest for details."
         )
         return manifest
-
-    state = prepare_rolling_branch(
-        repo=repo,
-        repo_root=repo_root,
-        base_branch=base_branch,
-        branch=rolling_branch,
-    )
 
     for path, content in pending_contents.items():
         path.write_text(content, encoding="utf-8")
@@ -967,6 +982,10 @@ def run_pipeline(
             body_file=body_file,
             branch_advanced=branch_advanced,
         )
+    except RollingPrError as exc:
+        manifest["errors"].append({"reason": str(exc)})
+        safe_print(f"Failed to publish rolling PR: {exc}")
+        return manifest
     finally:
         try:
             body_file.unlink()
