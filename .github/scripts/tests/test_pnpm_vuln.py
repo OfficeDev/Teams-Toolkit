@@ -300,19 +300,22 @@ class BuildManifestTest(unittest.TestCase):
 class RenderMergeTest(unittest.TestCase):
     def _template_manifest(self):
         return {
-            "max_prs": 1,
+            "branch": "auto-fix-vuln/rolling",
+            "pr_action": "updated",
+            "pr_number": 42,
+            "pr_url": "https://x/42",
             "scans": [{"scan_target": "templates/vsc", "ecosystem": "npm", "vuln_count": 1}],
-            "new_prs": [{"package": "lodash", "severity": "high",
-                         "fixed_version": "4.17.21", "pr_url": "https://x/1",
-                         "strategy": "direct"}],
-            "skipped_existing": [],
-            "skipped_no_fix": [],
-            "skipped_over_limit": [],
+            "fixed": [{"file": "templates/vsc/a/package.json.tpl", "package": "lodash",
+                       "severity": "high", "fixed_version": "4.17.21",
+                       "advisory_url": "https://adv/lodash", "strategy": "direct"}],
+            "already_fixed": [],
+            "no_fix": [],
+            "errors": [],
         }
 
     def _pnpm_manifest(self):
         return {
-            "max_prs": 1,
+            "branch": "auto-fix-vuln/pnpm-lockfiles",
             "scans": [{"scan_target": "pnpm-lock.yaml", "ecosystem": "pnpm", "vuln_count": 1}],
             "new_prs": [{"package": "validator", "severity": "high",
                          "fixed_version": "13.15.22", "pr_url": "https://x/2",
@@ -326,13 +329,16 @@ class RenderMergeTest(unittest.TestCase):
     def test_merge_combines_rows_and_caps(self):
         merged = render.merge_manifests([self._template_manifest(), self._pnpm_manifest()])
         self.assertEqual(len(merged["scans"]), 2)
-        self.assertEqual(len(merged["new_prs"]), 2)
-        self.assertEqual(len(merged["skipped_no_fix"]), 1)
-        self.assertEqual(merged["max_prs"], 2)
+        self.assertEqual(len(merged["fixed"]), 2)
+        self.assertEqual(len(merged["no_fix"]), 1)
+        self.assertEqual(merged["pr_action"], "updated")
+        self.assertEqual(merged["pr_number"], 42)
 
-    def test_merge_single_is_identity(self):
+    def test_merge_single_is_normalized(self):
         m = self._pnpm_manifest()
-        self.assertIs(render.merge_manifests([m]), m)
+        merged = render.merge_manifests([m])
+        self.assertEqual(len(merged["fixed"]), 1)
+        self.assertEqual(len(merged["no_fix"]), 1)
 
     def test_markdown_and_subject_reflect_merge(self):
         merged = render.merge_manifests([self._template_manifest(), self._pnpm_manifest()])
@@ -341,7 +347,8 @@ class RenderMergeTest(unittest.TestCase):
         self.assertIn("lodash", md)
         self.assertIn("Total vulnerabilities:** 2", md)
         subject = render.render_subject([], merged)
-        self.assertIn("2 new PR(s)", subject)
+        self.assertIn("2 finding(s)", subject)
+        self.assertIn("2 fixed", subject)
 
 
 if __name__ == "__main__":
