@@ -177,9 +177,10 @@ export async function getHost(addinManifestPath: string): Promise<OfficeHost> {
 }
 
 export const OFFICE_ADDIN_HOSTS = ["word", "powerpoint", "outlook", "excel"] as const;
+type OfficeAddinHostId = (typeof OFFICE_ADDIN_HOSTS)[number];
 
 // Office add-in manifest requirement scope for each host.
-const OFFICE_ADDIN_HOST_SCOPE: { [host: string]: string } = {
+const OFFICE_ADDIN_HOST_SCOPE: Record<OfficeAddinHostId, string> = {
   outlook: "mail",
   excel: "workbook",
   word: "document",
@@ -288,12 +289,12 @@ async function pruneUnselectedOfficeAddinHosts(
     await fse.remove(path.join(destinationPath, "src", "commands", `${host}.ts`));
   }
 
+  const hostSet = new Set<string>(OFFICE_ADDIN_HOSTS);
+  const selectedHostSet = new Set<string>(hosts);
   const isSelectedHostName = (name: string): boolean => {
     const firstToken = name.trim().split(/\s+/)[0]?.toLowerCase();
     // Keep entries that do not belong to any known host, or belong to a selected one.
-    return !OFFICE_ADDIN_HOSTS.includes(firstToken as (typeof OFFICE_ADDIN_HOSTS)[number])
-      ? true
-      : hosts.includes(firstToken);
+    return firstToken && hostSet.has(firstToken) ? selectedHostSet.has(firstToken) : true;
   };
 
   // 2. `.vscode/launch.json` — filter host-specific configurations and compounds
