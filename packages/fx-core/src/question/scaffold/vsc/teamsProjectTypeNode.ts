@@ -821,6 +821,13 @@ export function updateActionWithMCP(): IQTreeNode {
             ? "oauth-dynamic"
             : "oauth",
         },
+        // The fetch-from-MCP flow only asks for the auth *type*. Per
+        // SCN-DA-FETCH-MCP-TOOLS, secret collection is deferred to the provision
+        // oauth/register driver. The fetch backend reads only the auth type and
+        // never persists the client id / secret / scopes answers (it injects the
+        // oauth action without credential env refs), so attaching the credential
+        // follow-ups here would only ask questions whose answers are dropped.
+        // Mirror the DT-off add-action flow and collect nothing.
         children: [],
       },
     ],

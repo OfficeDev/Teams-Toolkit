@@ -9,6 +9,7 @@ import { readBooleanFeatureFlag } from "../../common/featureFlags";
 import { SearchOpenAPISpecResult, searchOpenAPISpec } from "../../common/kiotaClient";
 import {
   CollectInputsPort,
+  OptionItem,
   OptionsProvider,
   OptionsSchema,
   walkInputs,

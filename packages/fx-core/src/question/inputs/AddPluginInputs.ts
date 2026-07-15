@@ -28,7 +28,13 @@ export interface AddPluginInputs extends Inputs {
   /** @description MCP Tools Definition File */
   "mcp-tools-file-path"?: string;
   /** @description Select Authentication Type */
-  "mcp-da-auth-type"?: "oauth" | "entra-sso" | "none";
+  "mcp-da-auth-type"?: "oauth" | "oauth-dynamic" | "entra-sso" | "none";
+  /** @description OAuth Client ID */
+  "mcp-da-client-id"?: string;
+  /** @description OAuth Client Secret */
+  "mcp-da-client-secret"?: string;
+  /** @description OAuth Scopes (optional) */
+  "mcp-da-scopes"?: string;
   /** @description Select Teams manifest.json File */
   "manifest-path"?: string;
 }

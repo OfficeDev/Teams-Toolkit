@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import {
+  AdaptiveCardGenerator,
   ConstantString,
   ListAPIInfo,
   ParseOptions,

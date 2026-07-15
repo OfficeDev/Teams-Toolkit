@@ -104,7 +104,9 @@ export interface InjectMCPAuthActionResult {
  * When `persistCredentialEnvRefs` is set (DT mode), the OAuth injector
  * adds explicit `${{...}}` references to credential env vars derived from
  * `serverName` so that `oauth/register` resolves credentials from env files
- * persisted by the add-action flow instead of the in-process bridge.
+ * persisted by the add-action flow instead of the in-process bridge. The scope
+ * reference is emitted only when `scopes` is non-empty, matching the conditional
+ * env-var write so provision never sees a dangling `${{...}}` reference.
  *
  * `oauth-dynamic` is always injected even when `endpoints.wellKnownUrl` is
  * missing — a placeholder string is written instead so the action shows up in
@@ -120,6 +122,7 @@ export async function injectMCPAuthActionToYml(args: {
   endpoints: ResolvedMCPAuthEndpoints;
   persistCredentialEnvRefs?: boolean;
   serverName?: string;
+  scopes?: string;
 }): Promise<InjectMCPAuthActionResult> {
   if (args.authType === "none") return {};
   if (args.authType === "oauth-dynamic") {
@@ -142,7 +145,12 @@ export async function injectMCPAuthActionToYml(args: {
       credentialEnvNames = {
         clientIdEnvName: `MCP_DA_OAUTH_CLIENT_ID_${args.serverName}`,
         clientSecretEnvName: `SECRET_MCP_DA_OAUTH_CLIENT_SECRET_${args.serverName}`,
-        scopeEnvName: `MCP_DA_OAUTH_SCOPE_${args.serverName}`,
+        // Reference the scope env var only when a scope was actually provided.
+        // persistMCPAuthCredentialEnvVars writes MCP_DA_OAUTH_SCOPE_<NAME> only
+        // for a non-empty scope (scope is optional for OAuth); emitting the
+        // ${{...}} ref unconditionally leaves a dangling reference that fails to
+        // resolve and breaks provision.
+        ...(args.scopes ? { scopeEnvName: `MCP_DA_OAUTH_SCOPE_${args.serverName}` } : {}),
       };
     } else if (args.authType === "entra-sso") {
       credentialEnvNames = {

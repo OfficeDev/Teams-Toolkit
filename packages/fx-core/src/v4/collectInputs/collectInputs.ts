@@ -325,6 +325,19 @@ export async function walkInputs(
       continue;
     }
 
+    if (answers.nonInteractive === "true") {
+      if (typeof q.default === "string") {
+        answers[q.name] = q.default;
+        pos++;
+        continue;
+      }
+      if (q.optional === true) {
+        pos++;
+        continue;
+      }
+      return err(missingNonInteractiveAnswer(q.name));
+    }
+
     // Resolve static or provider-backed options.
     let options: OptionsSource | undefined;
     let resolvedOptions: (() => Promise<ResolvedOptions>) | undefined;
@@ -674,6 +687,36 @@ async function validateProviderOptionAnswer(
     }
     return err(systemError(INPUT_PROVIDER_FAILED, errorMessage(error)));
   }
+}
+
+function resolveValidation(
+  validation: string | ValidationSpec | undefined,
+  answers: Answers,
+  port: CollectInputsPort,
+  questionName: string
+): Result<PromptValidation | undefined, FxError> {
+  if (validation === undefined) {
+    return ok(undefined);
+  }
+  const validatorName = typeof validation === "string" ? validation : validation.use;
+  const validator = port.validator(validatorName);
+  if (validator === undefined) {
+    return err(
+      systemError(
+        INPUT_UNKNOWN_VALIDATOR,
+        `validation '${validatorName}' on question '${questionName}' is not a registered validator`
+      )
+    );
+  }
+  return ok((value) => validator(value, answers));
+}
+
+function resolveQuestionValidation(
+  question: QuestionSpec,
+  answers: Answers,
+  port: CollectInputsPort
+): Result<PromptValidation | undefined, FxError> {
+  return resolveValidation(question.validation, answers, port, question.name);
 }
 
 function resolveValidation(

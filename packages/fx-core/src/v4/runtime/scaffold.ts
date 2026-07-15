@@ -17,6 +17,14 @@ import { COMMON_LANGUAGE, selectLanguageContent } from "./selectLanguageContent"
 
 /** v4 scaffold composition over an injected runtime. See create-mcp-server spec. */
 
+const SANDBOXED_TEAM_FLAG = "TEAMSFX_SANDBOXED_TEAM";
+const sandboxFileNames = new Set([
+  "teamsapp.sandbox.yml.tpl",
+  "m365agents.sandbox.yml.tpl",
+  ".env.sandbox",
+  ".env.sandbox.user.tpl",
+]);
+
 /** The two ports `scaffold` composes. */
 export interface ScaffoldRuntime {
   /** The pure expression port (whitelist + flags) for `{expr}` render-var derivation. */
@@ -39,6 +47,21 @@ export interface ScaffoldRequest {
   callerFloor: CallerFloor;
   /** The output directory + the files it already contains (the create-empty contract). */
   targetDir: TargetDir;
+}
+
+function filterSandboxContent(
+  content: TemplateFileEntry[],
+  runtime: ScaffoldRuntime
+): TemplateFileEntry[] {
+  if (runtime.exprPort.flags(SANDBOXED_TEAM_FLAG)) {
+    return content;
+  }
+
+  return content.filter((entry) => {
+    const normalizedPath = entry.path.replace(/\\/g, "/");
+    const fileName = normalizedPath.slice(normalizedPath.lastIndexOf("/") + 1);
+    return !sandboxFileNames.has(fileName);
+  });
 }
 
 /** Scaffold one template package against an injected runtime. */
@@ -72,7 +95,8 @@ export async function scaffold(
 
   // Select the active language subtree before render.
   const language = request.callerFloor.language || COMMON_LANGUAGE;
-  const content = selectLanguageContent(request.descriptor, request.content, language);
+  const selectedContent = selectLanguageContent(request.descriptor, request.content, language);
+  const content = filterSandboxContent(selectedContent, runtime);
 
   return runScaffoldPipeline(pipeline.value, content, renderVars, request.targetDir, runtime.port);
 }
