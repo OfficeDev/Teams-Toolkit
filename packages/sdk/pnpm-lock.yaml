@@ -37,7 +37,7 @@ dependencies:
     version: 2.3.1(adaptive-expressions@4.23.1)
   axios:
     specifier: ^1.8.3
-    version: 1.8.3
+    version: 1.12.0
   jwt-decode:
     specifier: ^4.0.0
     version: 4.0.0
@@ -117,7 +117,7 @@ devDependencies:
     version: 2.0.0
   axios-mock-adapter:
     specifier: ^1.20.0
-    version: 1.20.0(axios@1.8.3)
+    version: 1.20.0(axios@1.12.0)
   chai:
     specifier: ^4.3.4
     version: 4.3.4
@@ -737,7 +737,7 @@ packages:
       '@azure/core-auth': 1.10.0
       '@azure/msal-node': 3.6.3
       '@microsoft/agents-activity': 0.6.18(supports-color@9.4.0)
-      axios: 1.10.0
+      axios: 1.12.0
       jsonwebtoken: 9.0.2
       jwks-rsa: 3.2.0(supports-color@9.4.0)
     transitivePeerDependencies:
@@ -901,6 +901,7 @@ packages:
       unbzip2-stream: 1.4.3
       yargs: 17.7.2
     transitivePeerDependencies:
+      - bare-abort-controller
       - bare-buffer
       - supports-color
     dev: true
@@ -2117,32 +2118,22 @@ packages:
       possible-typed-array-names: 1.1.0
     dev: true
 
-  /axios-mock-adapter@1.20.0(axios@1.8.3):
+  /axios-mock-adapter@1.20.0(axios@1.12.0):
     resolution: {integrity: sha512-shZRhTjLP0WWdcvHKf3rH3iW9deb3UdKbdnKUoHmmsnBhVXN3sjPJM6ZvQ2r/ywgvBVQrMnjrSyQab60G1sr2w==}
     peerDependencies:
       axios: '>= 0.9.0'
     dependencies:
-      axios: 1.8.3
+      axios: 1.12.0
       fast-deep-equal: 3.1.3
       is-blob: 2.1.0
       is-buffer: 2.0.5
     dev: true
 
-  /axios@1.10.0:
-    resolution: {integrity: sha512-/1xYAC4MP/HEG+3duIhFr4ZQXR4sQXOIe+o6sdqzeykGLx6Upp/1p8MHqhINOvGeP7xyNHe7tsiJByc4SSVUxw==}
+  /axios@1.12.0:
+    resolution: {integrity: sha512-oXTDccv8PcfjZmPGlWsPSwtOJCZ/b6W5jAMCNcfwJbCzDckwG0jrYJFaWH1yvivfCXjVzV/SPDEhMB3Q+DSurg==}
     dependencies:
-      follow-redirects: 1.15.9
-      form-data: 4.0.2
-      proxy-from-env: 1.1.0
-    transitivePeerDependencies:
-      - debug
-    dev: false
-
-  /axios@1.8.3:
-    resolution: {integrity: sha512-iP4DebzoNlP/YN2dpwCgb8zoCmhtkajzS48JvwmkSkXvPI3DHc7m+XYL5tGnSlJtR6nImXZmdCuN5aP8dh1d8A==}
-    dependencies:
-      follow-redirects: 1.15.9
-      form-data: 4.0.2
+      follow-redirects: 1.15.11
+      form-data: 4.0.4
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
       - debug
@@ -2161,8 +2152,19 @@ packages:
     dev: true
     optional: true
 
-  /bare-fs@4.1.2:
-    resolution: {integrity: sha512-8wSeOia5B7LwD4+h465y73KOdj5QHsbbuoUfPBi+pXgFJIPuG7SsiOdJuijWMyfid49eD+WivpfY7KT8gbAzBA==}
+  /bare-events@2.8.2:
+    resolution: {integrity: sha512-riJjyv1/mHLIPX4RwiK+oW9/4c3TEUeORHKefKAKnZ5kyslbN+HXowtbaVEqt4IMUB7OXlfixcs6gsFeo/jhiQ==}
+    requiresBuild: true
+    peerDependencies:
+      bare-abort-controller: '*'
+    peerDependenciesMeta:
+      bare-abort-controller:
+        optional: true
+    dev: true
+    optional: true
+
+  /bare-fs@4.5.1:
+    resolution: {integrity: sha512-zGUCsm3yv/ePt2PHNbVxjjn0nNB1MkIaR4wOCxJ2ig5pCf5cCVAYJXVhQg/3OhhJV6DB1ts7Hv0oUaElc2TPQg==}
     engines: {bare: '>=1.16.0'}
     requiresBuild: true
     peerDependencies:
@@ -2174,6 +2176,10 @@ packages:
       bare-events: 2.5.4
       bare-path: 3.0.0
       bare-stream: 2.6.5(bare-events@2.5.4)
+      bare-url: 2.3.2
+      fast-fifo: 1.3.2
+    transitivePeerDependencies:
+      - bare-abort-controller
     dev: true
     optional: true
 
@@ -2206,6 +2212,16 @@ packages:
     dependencies:
       bare-events: 2.5.4
       streamx: 2.22.0
+    transitivePeerDependencies:
+      - bare-abort-controller
+    dev: true
+    optional: true
+
+  /bare-url@2.3.2:
+    resolution: {integrity: sha512-ZMq4gd9ngV5aTMa5p9+UfY0b3skwhHELaDkhEHetMdX0LRkW9kzaym4oo/Eh+Ghm0CCDuMTsRIGM/ytUc1ZYmw==}
+    requiresBuild: true
+    dependencies:
+      bare-path: 3.0.0
     dev: true
     optional: true
 
@@ -3580,8 +3596,8 @@ packages:
     resolution: {integrity: sha512-GX+ysw4PBCz0PzosHDepZGANEuFCMLrnRTiEy9McGjmkCQYwRq4A/X786G/fjM/+OjsWSU1ZrY5qyARZmO/uwg==}
     dev: true
 
-  /follow-redirects@1.15.9:
-    resolution: {integrity: sha512-gew4GsXizNgdoRyqmyfMHyAmXsZDk6mHkSxZFCzW9gwlbtOW44CDtYavM+y+72qD/Vq2l550kMF52DT8fOLJqQ==}
+  /follow-redirects@1.15.11:
+    resolution: {integrity: sha512-deG2P0JfjrTxl50XGCDyfI97ZGVCxIpfKYmfyrQ54n5FO/0gfIES8C/Psl6kWVDolizcaaxZJnTS0QSMxvnsBQ==}
     engines: {node: '>=4.0'}
     peerDependencies:
       debug: '*'
@@ -3612,13 +3628,14 @@ packages:
       signal-exit: 4.1.0
     dev: true
 
-  /form-data@4.0.2:
-    resolution: {integrity: sha512-hGfm/slu0ZabnNt4oaRZ6uREyfCj6P4fT/n6A1rGV+Z0VdGXjfOhVUpkn6qVQONHGIFwmveGXyDs75+nr6FM8w==}
+  /form-data@4.0.4:
+    resolution: {integrity: sha512-KrGhL9Q4zjj0kiUt5OO4Mr/A/jlI2jDYs5eHBpYHPcBEVSiipAvn2Ko2HnPe20rmcuuvMHNdZFp+4IlGTMF0Ow==}
     engines: {node: '>= 6'}
     dependencies:
       asynckit: 0.4.0
       combined-stream: 1.0.8
       es-set-tostringtag: 2.1.0
+      hasown: 2.0.2
       mime-types: 2.1.35
 
   /fromentries@1.3.2:
@@ -3991,7 +4008,7 @@ packages:
     engines: {node: '>=8.0.0'}
     dependencies:
       eventemitter3: 4.0.7
-      follow-redirects: 1.15.9
+      follow-redirects: 1.15.11
       requires-port: 1.0.0
     transitivePeerDependencies:
       - debug
@@ -5700,6 +5717,7 @@ packages:
       typed-query-selector: 2.12.0
       ws: 8.18.1
     transitivePeerDependencies:
+      - bare-abort-controller
       - bare-buffer
       - bufferutil
       - supports-color
@@ -5719,6 +5737,7 @@ packages:
       puppeteer-core: 23.4.1(supports-color@9.4.0)
       typed-query-selector: 2.12.0
     transitivePeerDependencies:
+      - bare-abort-controller
       - bare-buffer
       - bufferutil
       - supports-color
@@ -6295,7 +6314,9 @@ packages:
       fast-fifo: 1.3.2
       text-decoder: 1.2.3
     optionalDependencies:
-      bare-events: 2.5.4
+      bare-events: 2.8.2
+    transitivePeerDependencies:
+      - bare-abort-controller
     dev: true
 
   /string-argv@0.3.2:
@@ -6448,9 +6469,10 @@ packages:
       pump: 3.0.2
       tar-stream: 3.1.7
     optionalDependencies:
-      bare-fs: 4.1.2
+      bare-fs: 4.5.1
       bare-path: 3.0.0
     transitivePeerDependencies:
+      - bare-abort-controller
       - bare-buffer
     dev: true
 
@@ -6460,6 +6482,8 @@ packages:
       b4a: 1.6.7
       fast-fifo: 1.3.2
       streamx: 2.22.0
+    transitivePeerDependencies:
+      - bare-abort-controller
     dev: true
 
   /tcomb-validation@3.4.1:
