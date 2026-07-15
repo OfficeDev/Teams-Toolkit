@@ -112,7 +112,7 @@ describe("SCN-DA-CREATE-NO-ACTION (v4, T3 InMemoryRuntime)", () => {
   it("SCN-CREATE-NOACTION-05: the only pipeline step is require-empty-target; no auth env is seeded", async () => {
     const { files, outcome } = await run();
     assert.deepStrictEqual(outcome.stepsRun, ["require-empty-target"]);
-    assert.isEmpty(outcome.stepsSkipped);
+    assert.deepStrictEqual(outcome.stepsSkipped, ["da/set-sensitivity-label"]);
     assert.notInclude(text(files, "env/.env.dev"), "MCP_DA_AUTH_ID_");
   });
 

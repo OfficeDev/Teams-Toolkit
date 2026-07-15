@@ -1,9 +1,16 @@
 {
   "pipeline": "default",
-  "comment": "Declarative agent with Graph connector: static combined output flattened into one v4 package. No post-render copy step is needed because the fresh create target writes the connector project and DA appPackage together.",
+  "comment": "Render writes the flattened Graph connector project and DA appPackage together, so no post-render copy is needed. The feature-gated sensitivity step owns the only optional mutation.",
   "steps": [
     {
       "step": "require-empty-target"
+    },
+    {
+      "step": "da/set-sensitivity-label",
+      "when": "featureFlag('TEAMSFX_SENSITIVITY_LABEL')",
+      "with": {
+        "manifestPath": "appPackage/declarativeAgent.json"
+      }
     }
   ]
 }

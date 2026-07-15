@@ -11,16 +11,22 @@ import {
   resolveMCPOAuthMetadata,
 } from "../../../src/component/utils/mcpToolFetcher";
 
+const sdkClient = vi.hoisted(() => ({
+  close: vi.fn(),
+  connect: vi.fn(),
+  listTools: vi.fn(),
+}));
+
 vi.mock("@modelcontextprotocol/sdk/client/index.js", () => ({
   Client: class {
     async connect(): Promise<void> {
-      throw new Error("mock connect failure");
+      return sdkClient.connect();
     }
     async listTools(): Promise<{ tools: any[] }> {
-      return { tools: [] };
+      return sdkClient.listTools();
     }
     async close(): Promise<void> {
-      return;
+      return sdkClient.close();
     }
   },
 }));
@@ -38,6 +44,12 @@ vi.mock("@modelcontextprotocol/sdk/client/sse.js", () => ({
 }));
 
 describe("mcpToolFetcher", () => {
+  beforeEach(() => {
+    sdkClient.close.mockReset().mockResolvedValue(undefined);
+    sdkClient.connect.mockReset().mockRejectedValue(new Error("mock connect failure"));
+    sdkClient.listTools.mockReset().mockResolvedValue({ tools: [] });
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -79,6 +91,62 @@ describe("mcpToolFetcher", () => {
       // When SDK imports fail, should return empty tools
       assert.isFalse(result.requiresAuth);
       assert.isEmpty(result.tools);
+    });
+
+    it("should return tools from the streamable HTTP transport", async () => {
+      vi.spyOn(axios, "get").mockResolvedValue({ status: 200 });
+      sdkClient.connect.mockResolvedValue(undefined);
+      sdkClient.listTools.mockResolvedValue({
+        tools: [{ name: "search", inputSchema: { type: "object" } }],
+      });
+
+      const result = await fetchMCPTools("https://example.com/mcp");
+
+      assert.isFalse(result.requiresAuth);
+      assert.deepEqual(result.tools, [
+        { name: "search", description: "", inputSchema: { type: "object" } },
+      ]);
+      assert.strictEqual(sdkClient.close.mock.calls.length, 1);
+    });
+
+    it("should fall back to SSE when the streamable HTTP transport fails", async () => {
+      vi.spyOn(axios, "get").mockRejectedValue(new Error("Connection refused"));
+      sdkClient.connect
+        .mockRejectedValueOnce(new Error("streamable transport failed"))
+        .mockResolvedValueOnce(undefined);
+      sdkClient.listTools.mockResolvedValue({
+        tools: [{ name: "search", description: "SSE search", inputSchema: {} }],
+      });
+
+      const result = await fetchMCPTools("https://example.com/mcp");
+
+      assert.isFalse(result.requiresAuth);
+      assert.deepEqual(result.tools, [
+        { name: "search", description: "SSE search", inputSchema: {} },
+      ]);
+      assert.strictEqual(sdkClient.connect.mock.calls.length, 2);
+      assert.strictEqual(sdkClient.close.mock.calls.length, 2);
+    });
+
+    it("should report auth when both transports fail after an unauthorized response", async () => {
+      vi.spyOn(axios, "get").mockRejectedValue(new Error("Connection refused"));
+      sdkClient.connect
+        .mockRejectedValueOnce(new Error("Unauthorized"))
+        .mockRejectedValueOnce(new Error("SSE transport failed"));
+
+      const result = await fetchMCPTools("https://example.com/mcp");
+
+      assert.isTrue(result.requiresAuth);
+      assert.isEmpty(result.tools);
+    });
+
+    it("should recognize a direct 401 status without response metadata", async () => {
+      vi.spyOn(axios, "get").mockRejectedValue({ status: 401 });
+
+      const result = await fetchMCPTools("https://example.com/mcp");
+
+      assert.isTrue(result.requiresAuth);
+      assert.isUndefined(result.authMetadataUrl);
     });
   });
 

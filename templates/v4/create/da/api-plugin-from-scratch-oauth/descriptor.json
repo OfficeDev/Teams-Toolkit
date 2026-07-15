@@ -3,7 +3,7 @@
   "id": "da/api-plugin-from-scratch-oauth",
   "name": "Declarative Agent with API Plugin using OAuth",
   "languages": ["typescript", "javascript"],
-  "minEngineVersion": "5.20.0",
+  "minEngineVersion": "6.11.0",
   "spec": "docs/03-specs/scenarios/da/create-api-plugin-from-scratch-oauth.md",
   "requiresNetwork": false,
 

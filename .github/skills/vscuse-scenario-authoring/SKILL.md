@@ -18,6 +18,7 @@ This workflow is for authoring or refreshing vscuse coverage. For diagnosing an 
 - The feature area or expected user workflow.
 - Whether the expected UI already exists in product code. vscuse-ui cannot execute future UI that has not been implemented.
 - Feature flags from the docs scenario, especially any `## Feature flags` section or acceptance criteria that depends on `featureFlag(...)`.
+- The intended validation case boundary: start state, one primary behavior, and success state.
 
 ## Core Rules
 
@@ -25,11 +26,18 @@ This workflow is for authoring or refreshing vscuse coverage. For diagnosing an 
 - Prefer `vscuse-ui` for creating or repairing case steps. It is the fastest way to inspect live UI state, record changed interactions, refresh screenshots, and edit steps. Treat the CLI as the final verifier, not the primary authoring surface.
 - Use the integrated browser at `http://localhost:6080/vnc.html` as the live evidence surface.
 - Treat `vscuse-ui` generated plans as drafts until cleaned, parsed, and rerun with `vscuse execute`.
+- Archive every local `vscuse execute` using the repository-root artifact command in `local-vscuse-validation`: a unique gitignored `.local/test-reports/<timestamp>-<plan-name>/` directory containing `run.log` and `test_report.html`.
 - If product behavior does not match the docs, classify it as a product gap or bug before changing coverage.
 - When a draft scenario explicitly replaces shipped behavior, treat the draft doc as the source of truth for the covered case. Existing vscuse steps that encode the old behavior are test plan drift, even if they used to pass.
+- A product journey, product scenario, and validation case are different units. Follow the definitions in [`docs/01-product/scenarios/README.md`](../../../docs/01-product/scenarios/README.md#scenario-model); do not turn a complete journey into one long plan by default.
+- Apply the independent-execution rules below to newly authored or materially refreshed cases. Existing plans remain valid until they are migrated; do not perform metadata-only rewrites across the current plan library.
+- A new or materially refreshed validation case must be independently executable and retryable: it creates or loads its own declared start state, owns setup/assertions/cleanup, and does not consume another case's workspace or ephemeral cloud resources.
+- Split cases at deterministic, reconstructable state boundaries, not mechanically at every command. A remote-preview case may still provision and deploy when those steps share inseparable ephemeral resources.
+- Do not generate the Cartesian product of lifecycle × language × authentication × feature flags. Add a case only when a dimension changes user-visible UI, generated output, runtime behavior, or a meaningful failure domain.
 - Do not commit empty `r_*.json` recordings or exploratory generated plans.
 - Do not hardcode app names, paths, tenant data, API keys, or secrets captured during recording.
 - Scenario feature flags must enter the target plan as `plan_metadata.tags` entries such as `feature_flag:TEAMSFX_MCP_FOR_DA_DT=true`. Do not leave them only in a local shell command or narrative notes.
+- Feature-flag tags document the requirement but do not inject the container environment. Confirm the runner/config passes each flag before classifying behavior, and count a flag as covered only when the case reaches and asserts its gated branch.
 - Prefer keyboard-driven steps over pointer-driven steps when authoring or cleaning recordings. Quick picks, command palette commands, focused default buttons, and simple selections should usually become `key_press`/`type_text` steps instead of coordinate `click` steps.
 - When converting quick-pick clicks to `key_press enter`, preserve or create the wait condition that proves the intended row is loaded and highlighted. A keyboard action without a prompt-specific precondition can run before the list appears and type subsequent input into the wrong quick pick.
 - When recording captures equivalent labels for the same action, such as Teams `Add` versus `Open`, author the case around the shared user intent: assertion accepts either label, the action is semantic/OCR-backed when keyboard is unavailable, and the next assertion verifies the converged outcome.
@@ -64,9 +72,31 @@ Decision rules:
 
 - Same workflow with changed UI/assertions/waits: update the existing plan or group.
 - Shared flow changed: update the shared group, then rerun one focused consumer plan.
-- New workflow, language, provider, debug target, or major branch: create a new plan.
+- New workflow, provider, debug target, or major branch: create a new plan.
 - Existing workflow but different feature-flag preconditions: update the plan metadata with `feature_flag:*` tags, and split into a separate plan when flag-on and flag-off behavior both need coverage.
 - Future UI not implemented: report product gap; do not create a passing case that hides the gap.
+
+### 2a. Define Independently Executable Cases
+
+Map one approved product scenario to one or more validation cases. For a newly authored or materially refreshed case, record this authoring contract in existing `plan_metadata.tags` where a tag convention already exists and in the final authoring report for the remaining dimensions. Do not invent unsupported plan JSON fields. The contract includes:
+
+- stable scenario ID and a unique validation ID;
+- lifecycle phase and execution target;
+- start state, one primary behavior, and success state;
+- authentication or other behavior variant;
+- exact feature-flag values;
+- account/resource profile and whether Azure or M365 login is required;
+- automation level: `contract`, `managed-integration`, or `full-e2e`;
+- prerequisite owner: Toolkit, test fixture, tenant administrator, or external service;
+- setup, assertions, cleanup, and execution gate.
+
+Use these automation levels consistently:
+
+- `contract` validates prompts and generated outputs without requiring the external system to run end-to-end.
+- `managed-integration` starts from infrastructure or identity state owned and health-checked by the test environment.
+- `full-e2e` crosses the real supported external boundaries and is usually scheduled when it is expensive or fragile.
+
+Account requirements belong to the execution target. For example, local debug of a DA in Copilot requires an M365 account; do not infer `account_profile:none` from the word "local." An Entra SSO create case may stop at the generated admin handoff, while a separate scheduled integration uses a managed tenant fixture.
 
 ### Source-of-Truth Override: DA Create With MCP Server
 
@@ -75,6 +105,9 @@ For `SCN-DA-CREATE-WITH-MCP-SERVER`, use `docs/01-product/scenarios/da/draft/cre
 - Do not click `Fetch action from MCP`, `Fetch from MCP`, or `Select Operation(s) Copilot can interact with` as part of the create scenario.
 - Validate the generated dynamic project shape instead: no `appPackage/mcp-tools-1.json`; `appPackage/ai-plugin.json` has an MCP server runtime for the entered URL, empty `functions`, no `mcp_tool_description`, and `run_for_functions: ["*"]`; `appPackage/declarativeAgent.json` references `action_1`; `.vscode/mcp.json` points at the MCP server URL.
 - For `None` auth, `m365agents.yml` must not inject `oauth/register` or `dcr/register`.
+- Setting the DCR flag is not DCR coverage. Only a case that selects `oauth-dynamic` and asserts `dcr/register` covers the DCR-on branch; use a separate DT-on/DCR-off case only when validating that the dynamic-registration option is absent.
+- Treat Entra SSO create as contract coverage through the generated client-ID/admin handoff. Run the real SSO path only from a managed tenant fixture on an appropriate scheduled gate.
+- Keep create, local debug, and remote debug independently executable. Do not split provision/deploy/launch further when they must share resources created in the same remote-debug case.
 - Run the edited plan end-to-end in `vscuse-ui`/noVNC first. Use CLI only after the UI flow has demonstrated that the saved case reaches the expected generated-project state.
 
 ### 3. Start vscuse-ui
@@ -147,7 +180,9 @@ Use direct JSON edits only for changes that are easier to review as text, such a
 When cleaning recorded interactions:
 
 - Convert command palette and quick-pick clicks to keyboard flows whenever possible: `key_press f1`, `type_text`, `key_press enter`.
-- Convert selected/default quick-pick choices to `key_press enter` with the quick-pick precondition instead of clicking the row, unless the row order or selected state is ambiguous. If the selected row loads after the prompt opens, use a precondition wait on that row rather than an immediate Enter.
+- For a single-select Quick Pick, wait for the expected title, clear the search text, type the current label, wait until the exact target row is visible and active (using detail/group when needed), press Enter, then wait for the next expected prompt or terminal outcome. Obtain the current label manually from the applicable selector/questions file using the stable option ID.
+- Do not press Enter as the proof that an expected option is absent. First prove the prompt loaded with a known control option, search for the gated target, wait for a stable no-target state, and assert that the prompt remains unchanged.
+- Convert selected/default quick-pick choices to `key_press enter` only with the prompt-specific active-row precondition. If the selected row loads after the prompt opens, wait for that row rather than pressing Enter immediately.
 - Use `click` only when the target is not keyboard-reachable or when the scenario specifically validates pointer behavior.
 - Do not assume `timeout` makes a visual precondition optional; use `precondition_wait_timeout:X` and verify the loaded plan in vscuse-ui after editing.
 - Reload the vscuse-ui tab or use `Restart`/`Clear` after direct JSON edits, because old execution results can remain visible and look like current failures.
@@ -183,13 +218,7 @@ Parse changed JSON:
 Get-Content packages/tests/vscuse/vscode-test-cases/plans/<plan-name>.json -Raw | ConvertFrom-Json | Out-Null
 ```
 
-Then run the focused case with `vscuse execute`. This final run is required even if the flow looked correct in `vscuse-ui`, because the CLI starts from a clean container and matches CI behavior:
-
-```powershell
-Push-Location packages/tests/vscuse/vscode-test-cases
-vscuse execute --config-file .\config.yaml --groups-dir groups .\plans\<plan-name>.json
-Pop-Location
-```
+Then run the focused case with the complete repository-root artifact command under **Execute a Local Test Plan** in `local-vscuse-validation`. This final run is required even if the flow looked correct in `vscuse-ui`, because the CLI starts from a clean container and matches CI behavior. Confirm its unique run directory contains both `run.log` and `test_report.html`.
 
 Final coverage is valid only after this executable run passes or after any failure is classified and reported.
 
@@ -204,4 +233,4 @@ Report:
 - Product behavior verdict: matches docs, product bug, product gap, setup failure, or flake.
 - Plan maintenance decision: updated existing plan/group, replaced steps, or generated a new plan.
 - Cleanup performed on generated content.
-- Final `vscuse execute` result and report path.
+- Final `vscuse execute` result and repository-relative paths to the archived `run.log` and `test_report.html`.

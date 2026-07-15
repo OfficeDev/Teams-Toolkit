@@ -287,6 +287,41 @@ describe("UserInteraction(CLI) 2", () => {
       assert.isTrue(res.isOk());
     });
 
+    it("preserves input-box validation before applying question-level validation", async () => {
+      const inputBoxValidation = vi.fn((input: string) =>
+        input.startsWith("https://") ? undefined : "must be an HTTPS URL"
+      );
+      const questionValidation = vi.fn((input: string) =>
+        input.endsWith(".yaml") ? undefined : "must be a YAML document"
+      );
+      vi.spyOn(UI, "input").mockImplementation(async (_name, _title, _default, validate) => {
+        assert.isFunction(validate);
+        assert.equal(await validate?.("not-a-url"), "must be an HTTPS URL");
+        assert.equal(questionValidation.mock.calls.length, 0);
+        assert.isTrue(await validate?.("https://example.com/openapi.yaml"));
+        assert.equal(questionValidation.mock.calls.length, 1);
+        return ok("https://example.com/openapi.yaml");
+      });
+
+      const res = await UI.selectFileOrInput({
+        name: "apiSpecLocation",
+        title: "OpenAPI Document",
+        validation: questionValidation,
+        inputBoxConfig: {
+          title: "OpenAPI Document URL",
+          name: "input-api-spec-url",
+          validation: inputBoxValidation,
+        },
+        inputOptionItem: {
+          id: "input",
+          label: "Enter OpenAPI Document URL",
+        },
+      });
+
+      assert.isTrue(res.isOk());
+      assert.equal(res._unsafeUnwrap().result, "https://example.com/openapi.yaml");
+    });
+
     it("load default value error", async () => {
       const res = await UI.selectFileOrInput({
         name: "test",

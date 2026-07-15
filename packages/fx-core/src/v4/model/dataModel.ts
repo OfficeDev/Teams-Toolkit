@@ -27,7 +27,7 @@ export interface TemplateLocator {
 /** Names which declarative package inside the channel zip to open. */
 export interface DeclarativeLocator {
   /** The package namespace: `create` or `modify`. */
-  kind: string;
+  kind: "create" | "modify";
   /** The package id within the kind, e.g. `da/mcp-server`. */
   templateId: string;
 }

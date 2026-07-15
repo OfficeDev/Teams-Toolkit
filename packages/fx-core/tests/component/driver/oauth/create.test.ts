@@ -2,11 +2,12 @@
 // Licensed under the MIT license.
 
 import { SpecParser } from "@microsoft/m365-spec-parser";
-import { SystemError, err } from "@microsoft/teamsfx-api";
+import { SystemError, err, ok } from "@microsoft/teamsfx-api";
 import mockedEnv, { RestoreFn } from "mocked-env";
 import { teamsGraphClient } from "../../../../src/client/teamsGraphClient";
 import { setTools } from "../../../../src/common/globalVars";
 import { CreateOauthDriver } from "../../../../src/component/driver/oauth/create";
+import { CreateOauthArgs } from "../../../../src/component/driver/oauth/interface/createOauthArgs";
 import {
   OauthRegistrationAppType,
   OauthRegistrationTargetAudience,
@@ -15,6 +16,7 @@ import {
 import { MockedLogProvider, MockedUserInteraction } from "../../../plugins/solution/util";
 import { MockedAzureAccountProvider, MockedM365Provider } from "../../../core/utils";
 import { featureFlagManager, FeatureFlags } from "../../../../src";
+import { QuestionNames } from "../../../../src/question/constants";
 import { chai, vi } from "vitest";
 
 const expect = chai.expect;
@@ -23,6 +25,32 @@ const outputKeys = {
   configurationId: "REGISTRATION_ID",
 };
 const outputEnvVarNames = new Map<string, string>(Object.entries(outputKeys));
+
+function setProvisionQuestionAnswers(answers: Record<string, string>): {
+  promptNames: string[];
+  confirm: ReturnType<typeof vi.spyOn>;
+} {
+  const ui = new MockedUserInteraction();
+  const promptNames: string[] = [];
+  vi.spyOn(ui, "inputText").mockImplementation(async (config) => {
+    promptNames.push(config.name);
+    const answer = answers[config.name];
+    expect(answer).to.not.be.undefined;
+    expect(await config.validation?.(answer)).to.be.undefined;
+    expect(await config.additionalValidationOnAccept?.(answer)).to.be.undefined;
+    return ok({ type: "success", result: answer });
+  });
+  const confirm = vi.spyOn(ui, "confirm").mockResolvedValue(ok({ type: "success", value: true }));
+  setTools({
+    ui,
+    logProvider: new MockedLogProvider(),
+    tokenProvider: {
+      azureAccountProvider: new MockedAzureAccountProvider(),
+      m365TokenProvider: new MockedM365Provider(),
+    },
+  });
+  return { promptNames, confirm };
+}
 
 describe("CreateOauthDriver", () => {
   const mockedDriverContext: any = {
@@ -661,6 +689,89 @@ describe("CreateOauthDriver", () => {
       expect(result.result.value.get(outputKeys.configurationId)).to.equal("mockedRegistrationId");
       expect(result.summaries.length).to.equal(1);
     }
+  });
+
+  it("provision handoff: missing Custom OAuth credentials are prompted and consumed", async () => {
+    envRestore = mockedEnv({
+      [QuestionNames.OauthClientId]: undefined,
+      [QuestionNames.OauthClientSecret]: undefined,
+      [QuestionNames.OAuthScope]: undefined,
+      [outputKeys.configurationId]: undefined,
+    });
+    const { promptNames, confirm } = setProvisionQuestionAnswers({
+      [QuestionNames.OauthClientId]: "promptedClientId",
+      [QuestionNames.OauthClientSecret]: "promptedClientSecret",
+      [QuestionNames.OAuthScope]: "promptedScope",
+    });
+    vi.spyOn(teamsGraphClient, "createOauthRegistration").mockImplementation(
+      async (_token, oauthRegistration) => {
+        expect(oauthRegistration.clientId).to.equal("promptedClientId");
+        expect(oauthRegistration.clientSecret).to.equal("promptedClientSecret");
+        expect(oauthRegistration.scopes).to.deep.equal(["promptedScope"]);
+        return {
+          configurationRegistrationId: { oAuthConfigId: "mockedRegistrationId" },
+          resourceIdentifierUri: "mockedResourceIdentifierUri",
+        };
+      }
+    );
+
+    const args: CreateOauthArgs = {
+      name: "test",
+      appId: "mockedAppId",
+      flow: "authorizationCode",
+      identityProvider: "Custom",
+      isPKCEEnabled: false,
+      baseUrl: "https://test",
+      authorizationUrl: "https://auth.example.com/authorize",
+      tokenUrl: "https://auth.example.com/token",
+      refreshUrl: "https://auth.example.com/refresh",
+    };
+    const result = await createOauthDriver.execute(args, mockedDriverContext, outputEnvVarNames);
+
+    expect(result.result.isOk()).to.be.true;
+    expect(promptNames).to.deep.equal([
+      QuestionNames.OauthClientId,
+      QuestionNames.OauthClientSecret,
+      QuestionNames.OAuthScope,
+    ]);
+    expect(confirm).toHaveBeenCalledOnce();
+  });
+
+  it("provision handoff: missing Entra client id is the only prompted credential", async () => {
+    envRestore = mockedEnv({
+      [QuestionNames.OauthClientId]: undefined,
+      [QuestionNames.OauthClientSecret]: undefined,
+      [QuestionNames.OAuthScope]: undefined,
+      [outputKeys.configurationId]: undefined,
+    });
+    const { promptNames, confirm } = setProvisionQuestionAnswers({
+      [QuestionNames.OauthClientId]: "promptedEntraClientId",
+    });
+    vi.spyOn(teamsGraphClient, "createOauthRegistration").mockImplementation(
+      async (_token, oauthRegistration) => {
+        expect(oauthRegistration.clientId).to.equal("promptedEntraClientId");
+        expect(oauthRegistration.clientSecret).to.be.undefined;
+        expect(oauthRegistration.identityProvider).to.equal("MicrosoftEntra");
+        return {
+          configurationRegistrationId: { oAuthConfigId: "mockedRegistrationId" },
+          resourceIdentifierUri: "mockedResourceIdentifierUri",
+        };
+      }
+    );
+
+    const args: CreateOauthArgs = {
+      name: "test",
+      appId: "mockedAppId",
+      flow: "authorizationCode",
+      identityProvider: "MicrosoftEntra",
+      baseUrl: "https://test",
+      refreshUrl: "https://refreshUrl",
+    };
+    const result = await createOauthDriver.execute(args, mockedDriverContext, outputEnvVarNames);
+
+    expect(result.result.isOk()).to.be.true;
+    expect(promptNames).to.deep.equal([QuestionNames.OauthClientId]);
+    expect(confirm).not.toHaveBeenCalled();
   });
 
   it("happy path: read clientSecret from input and refreshurl from spec", async () => {

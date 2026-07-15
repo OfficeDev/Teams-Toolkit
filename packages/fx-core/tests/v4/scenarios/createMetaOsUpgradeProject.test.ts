@@ -20,7 +20,7 @@ import {
  * scaffolded under `InMemoryRuntime`.
  *
  * Spec: docs/03-specs/scenarios/da/create-metaos-upgrade-project.md
- * (SCN-CREATE-METAOS-UPGRADE-01..06)
+ * (SCN-CREATE-METAOS-UPGRADE-01..07)
  */
 
 const templatePackage = loadV4Package("create", "declarative-agent-meta-os-upgrade-project");
@@ -33,10 +33,17 @@ function writeFile(root: string, relativePath: string, body: string): void {
   fs.writeFileSync(filePath, body, "utf8");
 }
 
-function sourceManifest(): string {
+function sourceManifest(withExistingDaReference = false): string {
   return JSON.stringify(
     {
       id: "source-id",
+      ...(withExistingDaReference
+        ? {
+            copilotAgents: {
+              declarativeAgents: [{ id: "declarativeAgentAlc", file: "declarativeAgent.json" }],
+            },
+          }
+        : {}),
       extensions: [
         {
           runtimes: [
@@ -65,9 +72,9 @@ function sourcePackageJson(): string {
   );
 }
 
-function createSourceProject(): string {
+function createSourceProject(withExistingDaReference = false): string {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), `metaos-upgrade-${randomUUID()}-`));
-  writeFile(root, "appPackage/manifest.json", sourceManifest());
+  writeFile(root, "appPackage/manifest.json", sourceManifest(withExistingDaReference));
   writeFile(root, "src/commands/commands.ts", "export const marker = true;\n");
   writeFile(root, "package.json", sourcePackageJson());
   writeFile(root, "src/taskpane/taskpane.ts", "export const taskpane = true;\n");
@@ -79,12 +86,13 @@ function createSourceProject(): string {
   return root;
 }
 
-async function run() {
-  const sourceFolder = createSourceProject();
+async function run(options: { withExistingDaReference?: boolean; seedDaFile?: boolean } = {}) {
+  const sourceFolder = createSourceProject(options.withExistingDaReference);
   try {
     return await runV4Package(templatePackage, {
       callerFloor,
       answers: { officeAddinFolder: sourceFolder },
+      seedFiles: options.seedDaFile ? { "appPackage/declarativeAgent.json": "{}" } : undefined,
     });
   } finally {
     fs.rmSync(sourceFolder, { recursive: true, force: true });
@@ -161,5 +169,15 @@ describe("SCN-DA-CREATE-METAOS-UPGRADE-PROJECT (v4, T3 InMemoryRuntime)", () => 
     assert.includeMembers(outcome.written, ["m365agents.yml", "env/.env.dev"]);
     assert.deepStrictEqual(outcome.stepsRun, ["metaos/upgrade-existing-project"]);
     assert.isEmpty(outcome.stepsSkipped);
+  });
+
+  it("SCN-CREATE-METAOS-UPGRADE-07: keeps the manifest reference aligned with a collision-free DA filename", async () => {
+    const { files } = await run({ withExistingDaReference: true, seedDaFile: true });
+
+    assert.isTrue(files.has("appPackage/declarativeAgent1.json"));
+    const manifest = readJsonObject(files, "appPackage/manifest.json");
+    assert.deepEqual(manifest.copilotAgents, {
+      declarativeAgents: [{ id: "declarativeAgentAlc", file: "declarativeAgent1.json" }],
+    });
   });
 });

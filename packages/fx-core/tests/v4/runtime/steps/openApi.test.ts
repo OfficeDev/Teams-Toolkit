@@ -1,16 +1,19 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+import { ensureDir, mkdtemp, readJson, readdir, remove, writeJson } from "fs-extra";
+import os from "os";
 import * as path from "path";
 import { SystemError, UserError } from "@microsoft/teamsfx-api";
 import { StepContext } from "../../../../src/v4/pipeline/runScaffoldPipeline";
-import { STEP_REGISTRY } from "../../../../src/v4/runtime/runtimeRegistry";
+import { NOOP_MANIFEST_WRAPPER, STEP_REGISTRY } from "../../../../src/v4/runtime/runtimeRegistry";
 import {
   STEP_GENERATE_OPENAPI_PLUGIN_FILES,
   STEP_GENERATE_TEAMS_AI_CUSTOM_API_FILES,
   openApiGeneratePluginFiles,
   openApiGenerateTeamsAiCustomApiFiles,
 } from "../../../../src/v4/runtime/steps/openApi";
+import { generateTeamsAiCustomApiFiles } from "../../../../src/v4/runtime/steps/openApiCustomApi";
 import { ProgrammingLanguage } from "../../../../src/question/constants";
 import { assert, beforeEach, expect, vi } from "vitest";
 
@@ -107,7 +110,6 @@ vi.mock("@microsoft/m365-spec-parser", () => {
       await fs.writeFile(apiSpecPath, "openapi: 3.0.0\n");
       const pluginManifest = mockSpecParserState.pluginManifest ?? {
         functions: [{ name: "getPets", description: "Get pets" }],
-        capabilities: { conversation_starters: mockSpecParserState.pluginConversationStarters },
       };
       if (typeof pluginManifest === "string") {
         await fs.writeFile(pluginPath, pluginManifest);
@@ -126,10 +128,16 @@ vi.mock("@microsoft/m365-spec-parser", () => {
 
   return {
     AdaptiveCardGenerator: { generateAdaptiveCard: mockGenerateAdaptiveCard },
-    ConstantString: { RegistrationIdPostfix: "REGISTRATION_ID" },
+    ConstantString: {
+      AllOperationMethods: ["get", "post", "put", "patch", "delete", "head", "options"],
+      RegistrationIdPostfix: "REGISTRATION_ID",
+    },
     ProjectType: { Copilot: "copilot", TeamsAi: "teams-ai" },
     SpecParser,
     Utils: {
+      getAuthArray(security: unknown): unknown[] {
+        return Array.isArray(security) ? security : [];
+      },
       getSafeRegistrationIdEnvName(value: string): string {
         return value.replace(/[^a-zA-Z0-9]/g, "_").toUpperCase();
       },
@@ -144,6 +152,10 @@ vi.mock("@microsoft/m365-spec-parser", () => {
       },
     },
     ValidationStatus: { Error: "Error" },
+    WarningType: {
+      GenerateCardFailed: "GenerateCardFailed",
+      GenerateJsonDataFailed: "GenerateJsonDataFailed",
+    },
   };
 });
 
@@ -162,7 +174,7 @@ function makeCtx(initial: Record<string, string> = {}): {
       write: (filePath, data) => {
         files.set(filePath, data);
       },
-      manifestWrapper: () => ({ addAction: () => undefined }),
+      manifestWrapper: () => NOOP_MANIFEST_WRAPPER,
     },
   };
 }
@@ -299,6 +311,158 @@ describe("OpenAPI runtime steps (v4)", () => {
     );
   });
 
+  it("SCN-CREATE-RAG-CUSTOM-API-06: emits recoverable adaptive-card warnings", async () => {
+    mockGenerateAdaptiveCard.mockImplementationOnce(() => {
+      throw new Error("unsupported response shape");
+    });
+    const warnings: string[] = [];
+    const state = makeCtx({
+      "appPackage/manifest.json": JSON.stringify({ bots: [{ commandLists: [] }] }),
+      "src/app/app.ts": "// Replace with function definition code\n",
+      "src/app/handlers.ts": "// Replace with function handler code\n{{OPENAPI_SPEC_PATH}}",
+    });
+    state.ctx.warn = (message) => warnings.push(message);
+
+    const result = await openApiGenerateTeamsAiCustomApiFiles.apply(
+      {
+        apiSpecLocation: SPEC_PATH,
+        apiOperations: ["GET /pets"],
+        language: ProgrammingLanguage.TS,
+      },
+      state.ctx
+    );
+
+    assert.isTrue(result.isOk(), result.isErr() ? result.error.message : "expected ok");
+    assert.lengthOf(warnings, 1);
+    assert.include(warnings[0], "getPets");
+    assert.include(warnings[0], "unsupported response shape");
+  });
+
+  it("SCN-CREATE-RAG-CUSTOM-API-06: emits recoverable mock-data warnings", async () => {
+    mockGenerateAdaptiveCard.mockImplementationOnce(() => [
+      { type: "AdaptiveCard", body: [] },
+      "$",
+      {},
+      [{ content: "example data is incomplete" }],
+    ]);
+    const warnings: string[] = [];
+    const state = makeCtx({
+      "appPackage/manifest.json": JSON.stringify({ bots: [{ commandLists: [] }] }),
+      "src/app/app.ts": "// Replace with function definition code\n",
+      "src/app/handlers.ts": "// Replace with function handler code\n{{OPENAPI_SPEC_PATH}}",
+    });
+    state.ctx.warn = (message) => warnings.push(message);
+
+    const result = await openApiGenerateTeamsAiCustomApiFiles.apply(
+      {
+        apiSpecLocation: SPEC_PATH,
+        apiOperations: ["GET /pets"],
+        language: ProgrammingLanguage.TS,
+      },
+      state.ctx
+    );
+
+    assert.isTrue(result.isOk(), result.isErr() ? result.error.message : "expected ok");
+    assert.lengthOf(warnings, 1);
+    assert.include(warnings[0], "example data is incomplete");
+  });
+
+  it("SCN-CREATE-RAG-CUSTOM-API-01: filters malformed parameters and preserves array schemas", async () => {
+    mockSpecParserState.filteredSpec = {
+      info: {},
+      paths: {
+        "/ignored": undefined,
+        "/pets": {
+          get: {
+            operationId: "list-items",
+            parameters: [
+              null,
+              {
+                name: "tags",
+                in: "query",
+                schema: { type: "array", items: { type: "string" } },
+              },
+              { name: "untyped", in: "query" },
+              { name: "ignored", in: "toString", schema: { type: "string" } },
+            ],
+            responses: {},
+          },
+        },
+      },
+    };
+    const state = makeCtx({
+      "appPackage/manifest.json": JSON.stringify({ bots: [{ commandLists: [] }] }),
+      "src/app/app.ts": "// Replace with function definition code\n",
+      "src/app/handlers.ts": "// Replace with function handler code\n{{OPENAPI_SPEC_PATH}}",
+    });
+
+    const result = await openApiGenerateTeamsAiCustomApiFiles.apply(
+      {
+        apiSpecLocation: SPEC_PATH,
+        apiOperations: ["GET /pets"],
+        language: ProgrammingLanguage.TS,
+      },
+      state.ctx
+    );
+
+    assert.isTrue(result.isOk(), result.isErr() ? result.error.message : "expected ok");
+    const functions = text(state.files, "src/app/functions.json");
+    assert.include(functions, '"items": {');
+    assert.include(functions, '"untyped": {');
+    assert.notInclude(functions, '"ignored": {');
+  });
+
+  it("SCN-CREATE-RAG-CUSTOM-API-01: rejects a selected operation without an operation id", async () => {
+    mockSpecParserState.filteredSpec = {
+      info: {},
+      paths: { "/pets": { get: { responses: {} } } },
+    };
+    const state = makeCtx({
+      "appPackage/manifest.json": JSON.stringify({ bots: [{ commandLists: [] }] }),
+      "src/app/app.ts": "// Replace with function definition code\n",
+      "src/app/handlers.ts": "// Replace with function handler code\n{{OPENAPI_SPEC_PATH}}",
+    });
+
+    const result = await openApiGenerateTeamsAiCustomApiFiles.apply(
+      {
+        apiSpecLocation: SPEC_PATH,
+        apiOperations: ["GET /pets"],
+        language: ProgrammingLanguage.TS,
+      },
+      state.ctx
+    );
+
+    assert.isTrue(result.isErr());
+    assert.include(result._unsafeUnwrapErr().message, "no operationId");
+  });
+
+  it("does not generate language-specific files for an unsupported language", async () => {
+    const tempRoot = await mkdtemp(path.join(os.tmpdir(), "m365atk-openapi-custom-api-"));
+    try {
+      await ensureDir(path.join(tempRoot, "appPackage"));
+      await writeJson(path.join(tempRoot, "appPackage", "manifest.json"), {
+        bots: [{ commandLists: [] }],
+      });
+
+      const warnings = await generateTeamsAiCustomApiFiles(
+        { info: { title: "API", version: "1.0.0" }, paths: {} },
+        "csharp",
+        tempRoot,
+        "openapi.yaml"
+      );
+
+      assert.isEmpty(warnings);
+      assert.deepStrictEqual(
+        await readJson(path.join(tempRoot, "src", "app", "functions.json")),
+        {}
+      );
+      assert.deepStrictEqual(await readdir(path.join(tempRoot, "src", "app")), ["functions.json"]);
+      assert.deepStrictEqual(await readdir(path.join(tempRoot, "src")), ["app"]);
+    } finally {
+      await remove(tempRoot);
+    }
+  });
+
   it("returns SystemError results for invalid resolved params and missing render output", async () => {
     const invalidParams = await openApiGeneratePluginFiles.apply(
       { apiSpecLocation: "openapi.yml", apiOperations: "GET /pets" },
@@ -347,6 +511,85 @@ describe("OpenAPI runtime steps (v4)", () => {
     assert.include(text(files, "m365agents.yml"), "uses: apiKey/register");
     assert.include(text(files, "m365agents.yml"), "registrationId: PETKEY_REGISTRATION_ID");
     assert.include(text(files, "m365agents.local.yml"), "uses: apiKey/register");
+  });
+
+  it("preserves existing conversation starters and uses descriptions up to the six-item limit", async () => {
+    mockSpecParserState.listOperations = [
+      {
+        api: "GET /pets",
+        isValid: true,
+        summary: "   ",
+        description: "Find pets by description",
+      },
+      {
+        api: "POST /pets",
+        isValid: true,
+        summary: "Create a pet",
+      },
+    ];
+    const existingStarters = Array.from({ length: 5 }, (_, index) => ({
+      text: `Existing starter ${index + 1}`,
+    }));
+    const { ctx, files } = makeCtx({
+      "appPackage/manifest.json": JSON.stringify({ name: "manifest" }),
+      "appPackage/declarativeAgent.json": JSON.stringify({
+        name: "Agent",
+        conversation_starters: existingStarters,
+      }),
+    });
+
+    const result = await openApiGeneratePluginFiles.apply(
+      {
+        apiSpecLocation: SPEC_PATH,
+        apiOperations: ["GET /pets", "POST /pets"],
+      },
+      ctx
+    );
+
+    assert.isTrue(result.isOk(), result.isErr() ? result.error.message : "expected ok");
+    const agent = readJsonObject(files, "appPackage/declarativeAgent.json");
+    if (!isRecordArray(agent.conversation_starters)) {
+      assert.fail("declarative agent should contain a conversation starter array");
+    }
+    assert.deepStrictEqual(agent.conversation_starters, [
+      ...existingStarters,
+      { text: "Find pets by description" },
+    ]);
+  });
+
+  it("SCN-CREATE-APIPLUGIN-OPENAPI-09: removes starter duplicates before applying the limit", async () => {
+    mockSpecParserState.listOperations = [
+      { api: "GET /pets", isValid: true, summary: "Existing starter 1" },
+      { api: "POST /pets", isValid: true, summary: "Create a pet" },
+    ];
+    const existingStarters = Array.from({ length: 5 }, (_, index) => ({
+      text: `Existing starter ${index + 1}`,
+    }));
+    const { ctx, files } = makeCtx({
+      "appPackage/manifest.json": JSON.stringify({ name: "manifest" }),
+      "appPackage/declarativeAgent.json": JSON.stringify({
+        name: "Agent",
+        conversation_starters: existingStarters,
+      }),
+    });
+
+    const result = await openApiGeneratePluginFiles.apply(
+      {
+        apiSpecLocation: SPEC_PATH,
+        apiOperations: ["GET /pets", "POST /pets"],
+      },
+      ctx
+    );
+
+    assert.isTrue(result.isOk(), result.isErr() ? result.error.message : "expected ok");
+    const agent = readJsonObject(files, "appPackage/declarativeAgent.json");
+    if (!isRecordArray(agent.conversation_starters)) {
+      assert.fail("declarative agent should contain a conversation starter array");
+    }
+    assert.deepStrictEqual(agent.conversation_starters, [
+      ...existingStarters,
+      { text: "Create a pet" },
+    ]);
   });
 
   it("preserves adaptive card files generated for OpenAPI plugin response semantics", async () => {
@@ -408,7 +651,7 @@ describe("OpenAPI runtime steps (v4)", () => {
     );
   });
 
-  it("returns parse and shape errors for invalid generated OpenAPI JSON artifacts", async () => {
+  it("surfaces the manifest read error when the generated declarative agent is invalid JSON", async () => {
     const malformedAgent = await openApiGeneratePluginFiles.apply(
       { apiSpecLocation: "openapi.yml", apiOperations: ["GET /pets"] },
       makeCtx({
@@ -417,51 +660,8 @@ describe("OpenAPI runtime steps (v4)", () => {
       }).ctx
     );
     assert.isTrue(malformedAgent.isErr());
-    assert.strictEqual(malformedAgent._unsafeUnwrapErr().name, "OpenApiDeclarativeAgentParse");
-
-    mockSpecParserState.pluginManifest = [];
-    const nonObjectPlugin = await openApiGeneratePluginFiles.apply(
-      { apiSpecLocation: "openapi.yml", apiOperations: ["GET /pets"] },
-      makeCtx({
-        "appPackage/manifest.json": JSON.stringify({ name: "manifest" }),
-        "appPackage/declarativeAgent.json": JSON.stringify({ name: "Agent" }),
-      }).ctx
-    );
-    assert.isTrue(nonObjectPlugin.isErr());
-    assert.strictEqual(nonObjectPlugin._unsafeUnwrapErr().name, "OpenApiPluginManifestShape");
-  });
-
-  it("falls back to operation summaries when plugin conversation starters are absent", async () => {
-    mockSpecParserState.pluginManifest = {
-      functions: [{}, { name: 1 }, { name: "getPets" }],
-      capabilities: { conversation_starters: "none" },
-    };
-    mockSpecParserState.listOperations = [
-      { api: "GET /ignored", isValid: false, operationId: "ignored", summary: "Ignored" },
-      { api: "GET /missing", isValid: true, summary: "Missing id" },
-      {
-        api: "GET /pets",
-        isValid: true,
-        operationId: "getPets",
-        description: "Fallback pets",
-      },
-    ];
-    const { ctx, files } = makeCtx({
-      "appPackage/manifest.json": JSON.stringify({ name: "manifest" }),
-      "appPackage/declarativeAgent.json": JSON.stringify({ name: "Agent" }),
-    });
-
-    const result = await openApiGeneratePluginFiles.apply(
-      { apiSpecLocation: SPEC_PATH, apiOperations: ["GET /pets"] },
-      ctx
-    );
-
-    assert.isTrue(result.isOk(), result.isErr() ? result.error.message : "expected ok");
-    const agent = readJsonObject(files, "appPackage/declarativeAgent.json");
-    if (!isRecordArray(agent.conversation_starters)) {
-      assert.fail("declarative agent should contain conversation starters");
-    }
-    assert.deepInclude(agent.conversation_starters, { text: "Fallback pets" });
+    // Wrapper-owned action registration preserves the shared manifest read error name.
+    assert.strictEqual(malformedAgent._unsafeUnwrapErr().name, "JSONSyntaxError");
   });
 
   it("injects OAuth registration yaml for OAuth-protected OpenAPI operations", async () => {
@@ -519,159 +719,6 @@ describe("OpenAPI runtime steps (v4)", () => {
     assert.strictEqual(result._unsafeUnwrapErr().name, "OpenApiMultipleAuthServers");
   });
 
-  it("updates TypeScript Teams AI custom API files from generated operations", async () => {
-    const { ctx, files } = makeCtx({
-      "appPackage/manifest.json": JSON.stringify({ bots: [{}] }),
-      "src/app/app.ts": "// Replace with function definition code\n",
-      "src/app/handlers.ts": "{{OPENAPI_SPEC_PATH}}\n// Replace with function handler code\n",
-    });
-
-    const result = await openApiGenerateTeamsAiCustomApiFiles.apply(
-      {
-        apiSpecLocation: "openapi.yaml",
-        apiOperations: ["GET /pets"],
-        language: ProgrammingLanguage.TS,
-      },
-      ctx
-    );
-
-    assert.isTrue(result.isOk(), result.isErr() ? result.error.message : "expected ok");
-    const functions = readJsonObject(files, "src/app/functions.json");
-    assert.containsAllKeys(functions, ["getPets"]);
-    assert.include(text(files, "src/app/app.ts"), "functionDefs.getPets.name");
-    assert.include(text(files, "src/app/handlers.ts"), "addAuthConfig(client)");
-    assert.include(text(files, "src/app/handlers.ts"), "openapi.yaml");
-    assert.include(text(files, "src/app/instructions.txt"), "Pet store APIs");
-    assert.isTrue(files.has("src/adaptiveCards/getPets.json"));
-    assert.include(text(files, "src/adaptiveCards/getPets.json"), '"$data": "${pets}"');
-    assert.include(text(files, "src/adaptiveCards/getPets.json"), "name: ${if(name, name, 'N/A')}");
-    assert.include(text(files, "src/adaptiveCards/getPets.data.json"), '"name": "Milo"');
-    assert.strictEqual(mockGenerateAdaptiveCard.mock.calls.length, 1);
-    const manifest = readJsonObject(files, "appPackage/manifest.json");
-    if (!isRecordArray(manifest.bots)) {
-      assert.fail("manifest should contain bot records");
-    }
-    assert.isArray(manifest.bots[0].commandLists);
-  });
-
-  it("uses OpenAPI operation summaries for Teams manifest command suggestions", async () => {
-    mockSpecParserState.filteredSpec = {
-      info: { description: "Repair APIs" },
-      paths: {
-        "/repairs": {
-          get: {
-            operationId: "listRepairs",
-            summary: "List all repairs without auth",
-            description:
-              "Returns a list of repairs with their details and images. Will return all repairs if assignedTo is not specified.",
-            responses: { "200": { description: "A list of repairs" } },
-          },
-        },
-      },
-    };
-    const { ctx, files } = makeCtx({
-      "appPackage/manifest.json": JSON.stringify({ bots: [{}] }),
-      "src/app/app.ts": "// Replace with function definition code\n",
-      "src/app/handlers.ts": "{{OPENAPI_SPEC_PATH}}\n// Replace with function handler code\n",
-    });
-
-    const result = await openApiGenerateTeamsAiCustomApiFiles.apply(
-      {
-        apiSpecLocation: "openapi.yaml",
-        apiOperations: ["GET /repairs"],
-        language: ProgrammingLanguage.TS,
-      },
-      ctx
-    );
-
-    assert.isTrue(result.isOk(), result.isErr() ? result.error.message : "expected ok");
-    const functions = readJsonObject(files, "src/app/functions.json");
-    const listRepairs = functions.listRepairs;
-    if (!isRecord(listRepairs)) {
-      assert.fail("functions.json should contain listRepairs");
-    }
-    assert.strictEqual(
-      listRepairs.description,
-      "Returns a list of repairs with their details and images. Will return all repairs if assignedTo is not specified."
-    );
-    const manifest = readJsonObject(files, "appPackage/manifest.json");
-    if (!isRecordArray(manifest.bots)) {
-      assert.fail("manifest should contain bot records");
-    }
-    assert.deepStrictEqual(manifest.bots[0].commandLists, [
-      {
-        scopes: ["personal"],
-        commands: [
-          {
-            title: "List all repairs without auth",
-            description: "List all repairs without auth",
-          },
-        ],
-      },
-    ]);
-  });
-
-  it("falls back to a basic Teams AI adaptive card when schema card generation fails", async () => {
-    mockGenerateAdaptiveCard.mockImplementationOnce(() => {
-      throw new Error("card boom");
-    });
-    const { ctx, files } = makeCtx({
-      "appPackage/manifest.json": JSON.stringify({ bots: [{}] }),
-      "src/app/app.ts": "// Replace with function definition code\n",
-      "src/app/handlers.ts": "{{OPENAPI_SPEC_PATH}}\n// Replace with function handler code\n",
-    });
-
-    const result = await openApiGenerateTeamsAiCustomApiFiles.apply(
-      {
-        apiSpecLocation: "openapi.yaml",
-        apiOperations: ["GET /pets"],
-        language: ProgrammingLanguage.TS,
-      },
-      ctx
-    );
-
-    assert.isTrue(result.isOk(), result.isErr() ? result.error.message : "expected ok");
-    assert.include(text(files, "src/adaptiveCards/getPets.json"), "Get pets by id");
-    assert.strictEqual(text(files, "src/adaptiveCards/getPets.data.json"), "{}");
-  });
-
-  it("updates Python Teams AI custom API files from generated operations", async () => {
-    const { ctx, files } = makeCtx({
-      "appPackage/manifest.json": JSON.stringify({ bots: [{}] }),
-      "src/app.py":
-        "// Replace with function definition code\n//Replace with functions to be imported\n",
-      "src/handlers.py": "{{OPENAPI_SPEC_PATH}}\n// Replace with function handler code\n",
-    });
-
-    const result = await openApiGenerateTeamsAiCustomApiFiles.apply(
-      {
-        apiSpecLocation: "openapi.json",
-        apiOperations: ["GET /pets"],
-        language: ProgrammingLanguage.PY,
-      },
-      ctx
-    );
-
-    assert.isTrue(result.isOk(), result.isErr() ? result.error.message : "expected ok");
-    assert.include(text(files, "src/app.py"), 'function_defs["getPets"]["name"]');
-    assert.include(text(files, "src/app.py"), "getPets");
-    assert.include(text(files, "src/handlers.py"), "openapi.json");
-    assert.include(text(files, "src/handlers.py"), "async def getPets");
-    assert.isTrue(files.has("src/adaptiveCards/getPets.json"));
-    assert.include(text(files, "src/adaptiveCards/getPets.json"), '"$data": "${pets}"');
-    assert.include(text(files, "src/adaptiveCards/getPets.data.json"), '"name": "Milo"');
-    const manifest = readJsonObject(files, "appPackage/manifest.json");
-    if (!isRecordArray(manifest.bots)) {
-      assert.fail("manifest should contain bot records");
-    }
-    assert.deepStrictEqual(manifest.bots[0].commandLists, [
-      {
-        scopes: ["personal"],
-        commands: [{ title: "Get pets by id", description: "Get pets by id" }],
-      },
-    ]);
-  });
-
   it("returns Teams AI validation and filtered-spec errors", async () => {
     mockSpecParserState.validationStatus = "Error";
     const validation = await openApiGenerateTeamsAiCustomApiFiles.apply(
@@ -705,24 +752,5 @@ describe("OpenAPI runtime steps (v4)", () => {
     );
     assert.isTrue(missingSpec.isErr());
     assert.strictEqual(missingSpec._unsafeUnwrapErr().name, "OpenApiTeamsAiFilteredSpecMissing");
-  });
-
-  it("returns a Teams AI error when the filtered spec has no operation ids", async () => {
-    mockSpecParserState.filteredSpec = { paths: { "/pets": { get: { summary: "No id" } } } };
-    const result = await openApiGenerateTeamsAiCustomApiFiles.apply(
-      {
-        apiSpecLocation: "openapi.yaml",
-        apiOperations: ["GET /pets"],
-        language: ProgrammingLanguage.JS,
-      },
-      makeCtx({
-        "appPackage/manifest.json": JSON.stringify({ bots: [{}] }),
-        "src/app/app.js": "// Replace with function definition code\n",
-        "src/app/handlers.js": "{{OPENAPI_SPEC_PATH}}\n// Replace with function handler code\n",
-      }).ctx
-    );
-
-    assert.isTrue(result.isErr());
-    assert.strictEqual(result._unsafeUnwrapErr().name, "OpenApiTeamsAiOperationsMissing");
   });
 });

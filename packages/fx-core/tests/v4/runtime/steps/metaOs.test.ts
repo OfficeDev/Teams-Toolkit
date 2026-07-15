@@ -12,6 +12,7 @@ import {
   metaOsUpgradeExistingProject,
 } from "../../../../src/v4/runtime/steps/metaOs";
 import { StepContext } from "../../../../src/v4/pipeline/runScaffoldPipeline";
+import { NOOP_MANIFEST_WRAPPER } from "../../../../src/v4/runtime/runtimeRegistry";
 import { assert } from "vitest";
 
 function makeCtx(initial: Record<string, string> = {}): {
@@ -29,7 +30,7 @@ function makeCtx(initial: Record<string, string> = {}): {
       write: (filePath, data) => {
         files.set(filePath, data);
       },
-      manifestWrapper: () => ({ addAction: () => undefined }),
+      manifestWrapper: () => NOOP_MANIFEST_WRAPPER,
     },
   };
 }
@@ -236,6 +237,34 @@ describe("metaOs steps (v4)", () => {
       assert.strictEqual(plugin.namespace, "AddInFunctions");
       const packageJson = json(files, "package.json");
       assert.deepEqual(packageJson.devDependencies, { "office-addin-debugging": "6.0.6" });
+    });
+
+    it("SCN-CREATE-METAOS-UPGRADE-07: updates an existing DA reference to the generated filename", () => {
+      fs.ensureDirSync(path.join(tempDir, "appPackage"));
+      fs.ensureDirSync(path.join(tempDir, "src/commands"));
+      fs.writeFileSync(path.join(tempDir, "src/commands/commands.ts"), "");
+      fs.writeFileSync(path.join(tempDir, "package.json"), "{}");
+      const manifest = baseManifest([
+        { id: "addfooter", type: "executeDataFunction" },
+        { id: "fillcolor", type: "executeDataFunction" },
+        { id: "addtexttoslide", type: "executeDataFunction" },
+      ]);
+      manifest.copilotAgents = {
+        declarativeAgents: [{ id: "declarativeAgentAlc", file: "declarativeAgent.json" }],
+      };
+      fs.writeFileSync(path.join(tempDir, "appPackage/manifest.json"), JSON.stringify(manifest));
+      const { ctx, files } = makeCtx({ "appPackage/declarativeAgent.json": "{}" });
+
+      const result = metaOsUpgradeExistingProject.apply(
+        { sourceFolder: tempDir, appName: "My Addin" },
+        ctx
+      );
+
+      assert.isTrue(result.isOk(), result.isErr() ? result.error.message : "expected ok");
+      assert.deepEqual(json(files, "appPackage/manifest.json").copilotAgents, {
+        declarativeAgents: [{ id: "declarativeAgentAlc", file: "declarativeAgent1.json" }],
+      });
+      assert.isTrue(files.has("appPackage/declarativeAgent1.json"));
     });
 
     it("returns manifest shape and missing command errors", () => {

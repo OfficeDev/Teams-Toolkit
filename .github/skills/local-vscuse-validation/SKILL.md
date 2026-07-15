@@ -44,6 +44,7 @@ Do not use this skill for ordinary unit tests, CLI E2E tests, or non-VS Code val
 - Plans live in `packages/tests/vscuse/vscode-test-cases/plans`.
 - Groups live in `packages/tests/vscuse/vscode-test-cases/groups`.
 - vscuse config lives at `packages/tests/vscuse/vscode-test-cases/config.yaml`.
+- Preserve every local CLI run under the repository-root `.local/test-reports/<timestamp>-<plan-name>/`. This directory is gitignored. Each run directory must contain the streamed `run.log` and generated `test_report.html`; keep retries in new directories instead of overwriting earlier evidence.
 - Local vscuse credentials should live in `set-azure-env.ps1` at the repository root. This path is gitignored because it contains secrets and should stay easy to find during local validation.
 - The ATK-specific Dockerfile is `packages/tests/vscuse/docker/vscuse-atk/Dockerfile`.
 - Local VSIX files must be copied into `packages/tests/vscuse/docker/vscuse-atk/build-extensions/` before building the local image.
@@ -317,6 +318,7 @@ $vscuseEnvScript = ".\set-azure-env.ps1"
 . $vscuseEnvScript -Env atk06
 
 Push-Location packages/tests/vscuse/vscode-test-cases
+$repoRoot = (git rev-parse --show-toplevel).Trim()
 $dockerCliDir = "C:\Program Files\Docker\Docker\resources\bin"
 if (Test-Path (Join-Path $dockerCliDir "docker.exe")) {
    $env:PATH = "$dockerCliDir;$env:PATH"
@@ -326,9 +328,21 @@ $env:TEMPLATE_VERSION = "local"
 $branchName = (git branch --show-current).Trim()
 $imageBranch = $branchName -replace '^release/', '' -replace '[^A-Za-z0-9_.-]', '-'
 $env:VSCUSE_VSCODE_IMAGE = "vscuse-atk-${imageBranch}:local"
-vscuse execute --config-file .\config.yaml --groups-dir groups .\plans\<plan-name>.json
+$env:PYTHONUNBUFFERED = "1"
+$planPath = ".\plans\<plan-name>.json"
+$planName = [IO.Path]::GetFileNameWithoutExtension($planPath)
+$runId = "{0}-{1}" -f (Get-Date -Format "yyyyMMdd-HHmmss"), ($planName -replace '[^A-Za-z0-9_.-]', '-')
+$artifactDir = Join-Path $repoRoot ".local\test-reports\$runId"
+New-Item -ItemType Directory -Force -Path $artifactDir | Out-Null
+
+vscuse execute --config-file .\config.yaml --groups-dir groups --report-dir $artifactDir $planPath 2>&1 |
+   Tee-Object (Join-Path $artifactDir "run.log")
+$exitCode = $LASTEXITCODE
 Pop-Location
+if ($exitCode -ne 0) { exit $exitCode }
 ```
+
+Do not treat `test_report/test_report.html` as durable evidence. It is the runner's gitignored transient output and may be replaced by the next execution. Pass `--report-dir` for every local CLI run, stream unbuffered output to that same run directory, and report the project-relative artifact paths. Optional summaries such as `run-summary.json` or `run-summary.csv` belong in the same directory.
 
 If the config used for the run does not pass `TEMPLATE_VERSION` into `docker.environment`, create an ignored temporary config for the run and add only the required local validation env values:
 
@@ -432,8 +446,8 @@ The first goal is not to make the case green at any cost. The first goal is to c
 2. Separate harness/setup failures from product failures.
    Missing credentials, GHCR access, Docker CLI not on PATH, noVNC startup failure, or absent scenario env vars are setup problems. Fix those before interpreting UI behavior.
 
-3. Use the report and screenshots to inspect the failing step.
-   The default report is `packages/tests/vscuse/vscode-test-cases/test_report/test_report.html`. Look at before/after screenshots, failed preconditions, retry history, assertion reasoning, and the exact expanded step id.
+3. Use the archived report and screenshots to inspect the failing step.
+   Open the run-specific repository-root `.local/test-reports/<timestamp>-<plan-name>/test_report.html`. The runner may also create `test_report/test_report.html`, but that transient file is not durable evidence. Look at before/after screenshots, failed preconditions, retry history, assertion reasoning, and the exact expanded step id.
 
 4. Classify the failure.
    A product bug means the local extension produced the wrong behavior. Fix product code and rerun the focused plan. Test-plan drift means the product behavior intentionally changed but the recorded step, assertion, hash, wait, or generated data assumption is stale. Repair the plan with `vscuse-ui` or a direct JSON edit, then rerun. A flake means the behavior eventually matches but timing, service response, or visual stability is unreliable; improve waits/preconditions only when the evidence supports it.
@@ -577,6 +591,7 @@ When reporting back, include only the useful facts:
 - Docker image build result and image tag, or the exact access blocker.
 - vscuse runner availability: installed command, local wheel path, or missing external wheel.
 - Plan executed and result, or why execution could not start.
+- Repository-relative paths to the run-specific `run.log` and `test_report.html` under `.local/test-reports/`.
 - Failure classification: product bug, plan drift, setup failure, or flake.
 - Plan maintenance summary: which plan files changed and how they stay dynamic.
 - Integrated browser evidence when requested: whether noVNC showed a live running container, which failure-near step was observed, and whether the repaired rerun reached the expected passing state.

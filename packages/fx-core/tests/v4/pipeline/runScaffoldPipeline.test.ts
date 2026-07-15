@@ -75,9 +75,13 @@ function renderMustache(template: string, vars: RenderVars): Result<string, FxEr
 
 /** Records every manifest mutation as the wrapper's action shape (AC-12 observability). */
 class RecordingWrapper implements ManifestWrapper {
-  actions: Record<string, string>[] = [];
-  addAction(action: Record<string, string>): void {
-    this.actions.push(action);
+  registrations: Array<{ teamsManifestPath: string; pluginManifestPath: string }> = [];
+  registerDeclarativeAgentAction(
+    teamsManifestPath: string,
+    pluginManifestPath: string
+  ): Result<void, FxError> {
+    this.registrations.push({ teamsManifestPath, pluginManifestPath });
+    return ok(undefined);
   }
 }
 
@@ -106,8 +110,10 @@ function makePort(opts: { pipelines?: string[]; steps?: Record<string, Registere
   port: PipelineRuntimePort;
   writes: Map<string, Buffer>;
   wrapper: RecordingWrapper;
+  warnings: string[];
 } {
   const writes = new Map<string, Buffer>();
+  const warnings: string[] = [];
   const wrapper = new RecordingWrapper();
   const pipelines = new Set(
     opts.pipelines ?? ["default", "openapi", "typespec", "officeAddin", "spfx"]
@@ -129,12 +135,13 @@ function makePort(opts: { pipelines?: string[]; steps?: Record<string, Registere
     },
     render: (mustache, vars) => renderMustache(mustache, vars),
     manifestWrapper: () => wrapper,
+    warn: (message) => warnings.push(message),
     write: (path, data) => {
       writes.set(path, data);
     },
     read: (path) => writes.get(path),
   };
-  return { port, writes, wrapper };
+  return { port, writes, wrapper, warnings };
 }
 
 function entry(path: string, body: string): TemplateFileEntry {
@@ -203,7 +210,7 @@ describe("runScaffoldPipeline (v4)", () => {
 
   it("AC-05: a colliding render path is skipped + warned, never overwritten; siblings still write", async () => {
     const pipeline: Pipeline = { pipeline: "default", steps: [] };
-    const { port, writes } = makePort();
+    const { port, writes, warnings } = makePort();
     const res = await runScaffoldPipeline(
       pipeline,
       [entry("ai-plugin.json.tpl", "{}"), entry("m365agents.yml.tpl", "v")],
@@ -222,6 +229,9 @@ describe("runScaffoldPipeline (v4)", () => {
     assert.notInclude(outcome.written, "ai-plugin.json");
     assert.isFalse(writes.has("ai-plugin.json")); // never overwritten
     assert.isTrue(writes.has("m365agents.yml"));
+    assert.lengthOf(warnings, 1);
+    assert.include(warnings[0], "ai-plugin.json");
+    assert.include(warnings[0], "not overwritten");
   });
 
   it("AC-23: active render filters omit matching paths before write/skip handling", async () => {
@@ -532,8 +542,9 @@ describe("runScaffoldPipeline (v4)", () => {
     const register = new FakeStep({
       run: (r, ctx) => {
         const file = typeof r.pluginManifestPath === "string" ? r.pluginManifestPath : "";
-        ctx.manifestWrapper("declarativeAgent").addAction({ id: "action_1", file });
-        return ok(undefined);
+        return ctx
+          .manifestWrapper("declarativeAgent")
+          .registerDeclarativeAgentAction("appPackage/manifest.json", file);
       },
     });
     const pipeline: Pipeline = {
@@ -556,8 +567,11 @@ describe("runScaffoldPipeline (v4)", () => {
       port
     );
     assert.isTrue(res.isOk());
-    assert.deepStrictEqual(wrapper.actions, [
-      { id: "action_1", file: "appPackage/ai-plugin-apigithubc.json" },
+    assert.deepStrictEqual(wrapper.registrations, [
+      {
+        teamsManifestPath: "appPackage/manifest.json",
+        pluginManifestPath: "appPackage/ai-plugin-apigithubc.json",
+      },
     ]);
   });
 
@@ -580,7 +594,6 @@ describe("runScaffoldPipeline (v4)", () => {
             ymlPath: "m365agents.yml",
             authType: "{{authType}}",
             mcpServerUrl: "{{MCPForDAServerUrl}}",
-            includeCredentialRefs: true,
           },
         },
         {
@@ -610,8 +623,6 @@ describe("runScaffoldPipeline (v4)", () => {
     assert.include(outcome.written, "appPackage/ai-plugin.json"); // from render, not a step
     assert.strictEqual(inject.applied.length, 1);
     assert.strictEqual(persist.applied.length, 1);
-    // includeCredentialRefs: true is a JSON literal that passes through unrendered
-    assert.strictEqual(inject.applied[0].includeCredentialRefs, true);
     assert.strictEqual(writes.get("m365agents.yml")?.toString(), "# auth injected");
   });
 
@@ -644,8 +655,9 @@ describe("runScaffoldPipeline (v4)", () => {
     const register = new FakeStep({
       run: (r, ctx) => {
         const file = typeof r.pluginManifestPath === "string" ? r.pluginManifestPath : "";
-        ctx.manifestWrapper("declarativeAgent").addAction({ file });
-        return ok(undefined);
+        return ctx
+          .manifestWrapper("declarativeAgent")
+          .registerDeclarativeAgentAction("appPackage/manifest.json", file);
       },
     });
     const inject = new FakeStep();
@@ -699,7 +711,12 @@ describe("runScaffoldPipeline (v4)", () => {
     ]);
     assert.deepStrictEqual(outcome.written, ["appPackage/ai-plugin-apigithubc.json"]);
     assert.isTrue(writes.has("appPackage/ai-plugin-apigithubc.json"));
-    assert.deepStrictEqual(wrapper.actions, [{ file: "appPackage/ai-plugin-apigithubc.json" }]);
+    assert.deepStrictEqual(wrapper.registrations, [
+      {
+        teamsManifestPath: "appPackage/manifest.json",
+        pluginManifestPath: "appPackage/ai-plugin-apigithubc.json",
+      },
+    ]);
   });
 
   it("AC-16: a cross-step reference (produces) is loader-rejected", async () => {

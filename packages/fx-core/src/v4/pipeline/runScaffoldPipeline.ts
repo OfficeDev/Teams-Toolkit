@@ -5,6 +5,7 @@ import { FxError, SystemError, UserError } from "@microsoft/teamsfx-api";
 import { Result, err, ok } from "neverthrow";
 import { ConditionalExpression, evaluateConditionalWhen } from "../expression/evaluateExpression";
 import { RenderVars, TemplateFileEntry } from "../model/dataModel";
+import { getLocalizedString } from "../../common/localizeUtils";
 
 /** v4 scaffold pipeline executor. See the run-scaffold-pipeline spec and ADR-0017. */
 
@@ -15,7 +16,9 @@ const STEP_REQUIRE_EMPTY_TARGET = "require-empty-target";
 
 const TPL_SUFFIX = ".tpl";
 
-const SKIP_WARNING = "exists, not overwritten; delete or rename it to rebuild";
+function skipWarning(path: string): string {
+  return getLocalizedString("core.v4.scaffold.existingFileSkipped", path);
+}
 
 /** A resolved step parameter value. */
 export type ParamValue = string | boolean | string[];
@@ -76,7 +79,11 @@ export interface Orchestration {
 
 /** Minimal manifest wrapper face needed by registered steps. */
 export interface ManifestWrapper {
-  addAction(action: Record<string, string>): void;
+  registerDeclarativeAgentAction(
+    teamsManifestPath: string,
+    pluginManifestPath: string
+  ): Result<void, FxError>;
+  setSensitivityLabel?(path: string, id: string): Result<void, FxError>;
 }
 
 /** The capabilities the executor hands each registered step's `apply`. */
@@ -85,6 +92,8 @@ export interface StepContext {
   manifestWrapper(kind: string): ManifestWrapper;
   /** Read current bytes at a target path, or `undefined` when absent. */
   read(path: string): Buffer | undefined;
+  /** Emit a localized, user-visible warning without failing the pipeline. */
+  warn?(message: string): void;
 }
 
 /** An engine-registered, whitelist-dispatched post-render step. */
@@ -103,6 +112,7 @@ export interface PipelineRuntimePort {
   evalWhen(expr: string, renderVars: RenderVars): Result<boolean, FxError>;
   render(mustache: string, renderVars: RenderVars): Result<string, FxError>;
   manifestWrapper(kind: string): ManifestWrapper;
+  warn?(message: string): void;
   write(path: string, data: Buffer): void;
   /** Current bytes at a path, or `undefined` when absent. */
   read(path: string): Buffer | undefined;
@@ -268,7 +278,9 @@ export async function runScaffoldPipeline(
         continue;
       }
       if (targetDir.existing.includes(writePath)) {
-        skipped.push({ path: writePath, warning: SKIP_WARNING });
+        const warning = skipWarning(writePath);
+        skipped.push({ path: writePath, warning });
+        port.warn?.(warning);
         continue;
       }
       const renderedBody = port.render(entry.data.toString("utf8"), renderVars); // AC-18
@@ -288,7 +300,9 @@ export async function runScaffoldPipeline(
         continue;
       }
       if (targetDir.existing.includes(writePath)) {
-        skipped.push({ path: writePath, warning: SKIP_WARNING });
+        const warning = skipWarning(writePath);
+        skipped.push({ path: writePath, warning });
+        port.warn?.(warning);
         continue;
       }
       port.write(writePath, entry.data);
@@ -301,6 +315,7 @@ export async function runScaffoldPipeline(
     write: (path, data) => port.write(path, data),
     manifestWrapper: (kind) => port.manifestWrapper(kind),
     read: (path) => port.read(path),
+    warn: port.warn,
   };
   const stepsRun: string[] = [];
   const stepsSkipped: string[] = [];

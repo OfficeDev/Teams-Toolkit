@@ -55,18 +55,22 @@ versions.
 
 ### 1.4 Manifest versions in scope today
 
-These are the versions the platform has published and the toolkit currently
-understands. The set is fixed by the platform; the toolkit cannot mint new
-version numbers.
+These are the versions the platform has published. The set is fixed by the
+platform; the toolkit cannot mint new version numbers.
 
 | Family | Versions supported today | Latest |
 |---|---|---|
-| Teams app manifest | `1.0`, `1.1`, `1.2`, `1.3`, `1.4`, `1.5`, `1.6`, `1.7`, `1.8`, `1.9`, `1.10`, `1.11`, `1.12`, `1.13`, `1.14`, `1.15`, `1.16`, `1.17`, `1.19`, `1.20`, `1.21`, `1.22`, `1.23`, `1.24`, `1.25`, `1.26`, `1.27`, `1.28`, plus `vDevPreview` | `1.28` |
+| Teams app manifest | `1.0`, `1.1`, `1.2`, `1.3`, `1.4`, `1.5`, `1.6`, `1.7`, `1.8`, `1.9`, `1.10`, `1.11`, `1.12`, `1.13`, `1.14`, `1.15`, `1.16`, `1.17`, `1.19`, `1.20`, `1.21`, `1.22`, `1.23`, `1.24`, `1.25`, `1.26`, `1.27`, `1.28`, `1.29`, plus `vDevPreview` | `1.29` |
 | Declarative Agent manifest | `v1.0`, `v1.2`, `v1.3`, `v1.4`, `v1.5`, `v1.6`, `v1.7` | `v1.7` |
 | API Plugin manifest | `v2.1`, `v2.2`, `v2.3`, `v2.4` | `v2.4` |
 
 Gaps in the sequence (Teams `1.18` absent, Declarative Agent `v1.1` absent)
 are platform-side — those version numbers were never published.
+
+The v4 scaffold templates target Teams manifest `1.29`. The local
+`packages/manifest` schema and generated-type snapshot currently ends at
+`1.28`; synchronizing that package to `1.29` is a separate dependency update
+and must not be inferred from the v4 template output version alone.
 
 ### 1.5 JSON Schema draft used
 

@@ -3,11 +3,15 @@
 ## Metadata
 
 - Created: 2026-05-20T00:00:00Z
-- Last updated: 2026-05-20T00:00:00Z
+- Last updated: 2026-07-13T08:52:39Z
 - PM owner: summzhan
 - Engineer owner: HuihuiWu-Microsoft, Alive-Fish
 - Scenario group: da
 - Scenario ID: SCN-DA-FETCH-MCP-TOOLS
+- Primary goal: extend
+- Start state: `.vscode/mcp.json` is open with at least one complete MCP server entry and the built-in and ATK CodeLens actions visible; the configured server can be started and reached.
+- Success state: The selected MCP operations and conditional authentication reference are written to the chosen action manifest, a new action is referenced by the declarative agent manifest when needed, and the `MCP action added` notification offers `Provision`.
+- Lifecycle phases: [extend]
 - Visual/state reference: fetch-mcp-tools.html
 
 ## Scenario
@@ -30,7 +34,7 @@ Success means: a single MCP server is resolved from `.vscode/mcp.json`; a non-em
 
 - VS Code built-in CodeLens: VS Code's MCP runtime owns the `Start`, `tools`, `prompts`, and `More...` actions on each server entry in `.vscode/mcp.json`. Pressing `Start` brings the server up and populates the tools/prompts counts shown next to the server.
 - VS Code ATK CodeLens: ATK contributes `⚡ ATK: Fetch action from MCP` on each server key. The CodeLens is the primary entry point for this scenario; because it is per-server, the click already binds the action to that specific server and no server picker is shown.
-- VS Code Command Palette (edge case): `ATK: Update Action with MCP` is also available without a click target; in that case the toolkit reads `.vscode/mcp.json` and, only if more than one server is configured, prompts the user to pick one in a Quick Pick titled `Select MCP Server`. This Command Palette path is not part of the primary visualized flow.
+- VS Code Command Palette (edge case): `Microsoft 365 Agents: Fetch action from MCP` is also available without a click target; in that case the toolkit reads `.vscode/mcp.json` and, only if more than one server is configured, prompts the user to pick one in a Quick Pick titled `Select MCP Server`. This Command Palette path is not part of the primary visualized flow.
 - CLI: not covered by this scenario. The CLI uses an end-to-end `atk add action --api-plugin-type mcp` path described in `SCN-DA-ADD-MCP-ACTION-TO-DA` which combines URL collection with tool fetch and action manifest update; it does not have a separate fetch surface.
 - Visual Studio and chat: not covered.
 
@@ -38,7 +42,7 @@ Success means: a single MCP server is resolved from `.vscode/mcp.json`; a non-em
 
 - Entry: `.vscode/mcp.json` is open in VS Code; the built-in MCP CodeLens row is visible. The server entry was placed there earlier by `SCN-DA-CREATE-WITH-MCP-SERVER` or `SCN-DA-ADD-MCP-ACTION-TO-DA`.
 - Built-in CodeLens row: `Start | tools | prompts | More...`. Before the server starts, the tools and prompts counts are not shown. After start, the counts reflect what VS Code's MCP runtime discovered.
-- ATK CodeLens row: `⚡ ATK: Fetch action from MCP`. Also reachable from the Command Palette as `ATK: Update Action with MCP`.
+- ATK CodeLens row: `⚡ ATK: Fetch action from MCP`. Also reachable from the Command Palette as `Microsoft 365 Agents: Fetch action from MCP`.
 - Server resolution: each ATK CodeLens is rendered per server entry, so a CodeLens click already binds the action to that server and no server picker is shown. The multi-server `Select MCP Server` Quick Pick is reached only from the Command Palette when `.vscode/mcp.json` contains more than one server; each row shows either the server URL (for `http` servers) or `command args` (for `stdio` servers) as its description.
 - Tool discovery: after the click, the toolkit reads the tools from the running MCP server. The user does not see a separate prompt for this step; the flow either advances to manifest selection or surfaces the empty-tools error described below.
 - Manifest selection: ATK shows a Quick Pick titled `Select the action manifest you want to update`. The list contains the action manifest files already wired into the declarative agent, a `Create a new ai-plugin.json` row, and the `Browse…` row.
@@ -85,8 +89,10 @@ This scenario updates an existing DA project; there is no template boilerplate t
 - `appPackage/declarativeAgent.json` — modified only when a new action manifest was created in step 3. A new entry is appended to `actions` with an `id` that does not collide with existing actions (`action`, `action_2`, ...) and `file` set to the new manifest's basename. When an existing action manifest is reused, this file is not touched.
 - `m365agents.yml` — modified only when the user selected an authentication type for this MCP server runtime and the matching registration step is not already present. The toolkit injects `oauth/register` for `OAuth (with static registration)` and `Entra SSO`, or `dcr/register` for `OAuth (with dynamic registration)`, at the same shape and ordering used by `SCN-DA-CREATE-WITH-MCP-SERVER` and `SCN-DA-ADD-MCP-ACTION-TO-DA`, so the manifest's `auth.reference_id` resolves at provision time.
 
-### Notifications
+### Notifications and prompts
 
+- Entry points are the built-in `Start | tools | prompts | More...` CodeLens, the per-server `⚡ ATK: Fetch action from MCP` CodeLens, and the `Microsoft 365 Agents: Fetch action from MCP` Command Palette command.
+- The Command Palette path conditionally shows `Select MCP Server`. The main flow then shows `Select the action manifest you want to update`, conditionally shows `Name the new action manifest file`, shows `Select Operation(s) Copilot can interact with`, and conditionally shows `Select Authentication Type`.
 - Success (info, source `Microsoft 365 Agents Toolkit`): title `MCP action added`, message `The operations selected from your MCP server are successfully added for Copilot to interact with.`, detail `You can go to the 'ai-plugin.json' to check on details. Now you are able to provision your declarative agent to continue.`, action button `Provision` (runs the standard provision lifecycle).
 
 ### Error and recovery messages
@@ -97,15 +103,21 @@ This scenario updates an existing DA project; there is no template boilerplate t
 
 ### Environment and secret writes
 
-- The injected `oauth/register` or `dcr/register` step in `m365agents.yml` reserves a configuration id that is written into the project's environment files when the provision lifecycle runs. The scenario itself does not write to `env/.env.*` at picker time; auth secret collection in VS Code follows the same convention as `SCN-DA-CREATE-WITH-MCP-SERVER` and `SCN-DA-ADD-MCP-ACTION-TO-DA` and is deferred to those scenarios.
+- The injected `oauth/register` or `dcr/register` step in `m365agents.yml` reserves a configuration ID that is written into the project's environment files when the provision lifecycle runs. This scenario does not write to `env/.env.*` or collect secrets during the picker flow; provision owns any required credential collection.
 
 ### External side effects
 
-- None at scenario time. Any cloud-side OAuth client registration happens later during the provision lifecycle, when the injected `oauth/register` (or `dcr/register`) step runs.
+- The toolkit contacts the selected local or remote MCP server and reads its tool definitions. It does not create cloud-side resources during this scenario. Any OAuth client registration happens later during provision, when the injected `oauth/register` or `dcr/register` step runs.
+
+## Open questions
+
+- What exact prerequisite error strings should validation assert for each missing or malformed `.vscode/mcp.json` state?
+- What M365 account, tenant, license, or administrator prerequisites apply to the later `Provision` action? This scenario currently declares only the local MCP runtime prerequisites.
+- Which provision contract owns credential collection and administrator handoff for the injected authentication registration step?
 
 ## Validation notes
 
-- VS Code UI test intent should trace to `SCN-DA-FETCH-MCP-TOOLS` and cover both entry points (`⚡ ATK: Fetch action from MCP` CodeLens and `ATK: Update Action with MCP` Command Palette), single-server vs multi-server resolution, both remote (`http`) and local (`stdio`) MCP servers, manifest selection (existing vs `Create a new ai-plugin.json` vs `Browse…`), the `Name the new action manifest file` input and its validation rules, operation pre-selection when updating an existing manifest, the conditional `Select Authentication Type` step, and the `Provision` success notification.
+- VS Code UI test intent should trace to `SCN-DA-FETCH-MCP-TOOLS` and cover both entry points (`⚡ ATK: Fetch action from MCP` CodeLens and `Microsoft 365 Agents: Fetch action from MCP` Command Palette), single-server vs multi-server resolution, both remote (`http`) and local (`stdio`) MCP servers, manifest selection (existing vs `Create a new ai-plugin.json` vs `Browse…`), the `Name the new action manifest file` input and its validation rules, operation pre-selection when updating an existing manifest, the conditional `Select Authentication Type` step, and the `Provision` success notification.
 - Recovery validation should exercise the empty-tools error notification `No tools found for the MCP server. Please run the server first.` and the prerequisite errors raised when `.vscode/mcp.json` is missing, malformed, has no server entries, or the resolved entry is missing its URL (for `http`) or command (for `stdio`). The flow should not write to `ai-plugin.json` or `declarativeAgent.json` when any of these errors fire.
 - This scenario is the VS Code post-step for `SCN-DA-ADD-MCP-ACTION-TO-DA`; any test that exercises the end-to-end add-action UX in VS Code should treat the CodeLens click and everything after it as covered by this scenario.
 - Future spec acceptance criteria should trace to the related PRD requirement IDs once the dedicated PRD exists.

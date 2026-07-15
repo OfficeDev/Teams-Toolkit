@@ -1,10 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { FxError, SystemError, UserError } from "@microsoft/teamsfx-api";
+import { APIPluginManifestWrapper, FxError, SystemError, UserError } from "@microsoft/teamsfx-api";
 import fs from "fs-extra";
 import { Result, err, ok } from "neverthrow";
-import { MCPFetchResult, fetchMCPTools } from "../../../component/utils/mcpToolFetcher";
+import { MCPFetchResult, fetchMCPTools } from "../../../common/mcpToolFetcher";
 import { parseMcpStaticToolsJson, selectMcpStaticTools } from "../../mcp/mcpStaticTools";
 import { RegisteredStep, StepContext, StepParams } from "../../pipeline/runScaffoldPipeline";
 
@@ -67,10 +67,6 @@ function hasOptionalArrayParamValue(params: StepParams, key: string): boolean {
     value === "" ||
     (typeof value === "string" && isUnresolvedToken(value))
   );
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function mcpToolsJsonFromFetchResult(
@@ -142,10 +138,7 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-function readRequiredJson(
-  ctx: StepContext,
-  pluginPath: string
-): Result<Record<string, unknown>, FxError> {
+function readRequiredPlugin(ctx: StepContext, pluginPath: string): Result<Buffer, FxError> {
   const current = ctx.read(pluginPath);
   if (current === undefined) {
     return err(
@@ -155,21 +148,7 @@ function readRequiredJson(
       )
     );
   }
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(current.toString("utf8"));
-  } catch (error) {
-    return err(
-      systemError(
-        "McpStaticPluginParse",
-        `Cannot parse '${pluginPath}' as JSON: ${errorMessage(error)}`
-      )
-    );
-  }
-  if (!isRecord(parsed)) {
-    return err(systemError("McpStaticPluginShape", `'${pluginPath}' is not a JSON object`));
-  }
-  return ok(parsed);
+  return ok(current);
 }
 
 function fileName(filePath: string): string {
@@ -230,29 +209,30 @@ export const mcpStaticMaterializeTools: RegisteredStep = {
       return err(systemError(selectedTools.code, selectedTools.message));
     }
 
-    const plugin = readRequiredJson(ctx, pluginPath);
+    const plugin = readRequiredPlugin(ctx, pluginPath);
     if (plugin.isErr()) {
       return err(plugin.error);
     }
-
-    plugin.value.functions = selectedTools.tools.map((tool) => ({
-      name: tool.name,
-      description: tool.description,
-    }));
-    plugin.value.runtimes = [
-      {
-        type: "RemoteMCPServer",
-        spec: {
-          url: mcpServerUrl,
-          mcp_tool_description: {
-            file: fileName(toolsPath),
-          },
-        },
-        run_for_functions: selectedTools.tools.map((tool) => tool.name),
-      },
-    ];
-
-    ctx.write(pluginPath, Buffer.from(JSON.stringify(plugin.value, null, 4) + "\n", "utf8"));
+    let pluginManifest: APIPluginManifestWrapper;
+    try {
+      pluginManifest = APIPluginManifestWrapper.fromJSON(plugin.value.toString("utf8"));
+    } catch (error) {
+      return err(
+        systemError(
+          error instanceof SyntaxError ? "McpStaticPluginParse" : "McpStaticPluginShape",
+          `Cannot parse '${pluginPath}' as an API plugin manifest: ${errorMessage(error)}`
+        )
+      );
+    }
+    pluginManifest.materializeRemoteMcpTools(
+      selectedTools.tools.map((tool) => ({
+        name: tool.name,
+        description: tool.description,
+      })),
+      mcpServerUrl,
+      fileName(toolsPath)
+    );
+    ctx.write(pluginPath, Buffer.from(pluginManifest.toJSON(), "utf8"));
     ctx.write(
       toolsPath,
       Buffer.from(

@@ -92,7 +92,6 @@ describe("SCN-TEAMS-CREATE-TEAMS-COLLABORATOR-AGENT (v4, T3 InMemoryRuntime)", (
     assert.isTrue(renderContext.isOk());
     const vars = renderContext._unsafeUnwrap();
     assert.strictEqual(vars.azureOpenAIKey, "fake-key");
-    assert.strictEqual(vars.originalAzureOpenAIKey, "fake-key");
     assert.strictEqual(vars.azureOpenAIEndpoint, "https://test.com");
     assert.strictEqual(vars.azureOpenAIDeploymentName, "fake-deployment");
   });

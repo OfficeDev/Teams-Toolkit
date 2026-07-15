@@ -8,7 +8,7 @@ written to make those tests green.
 
 ```
 PRD (docs/01-product/prd/)
-  └─ Scenario (docs/01-product/scenarios/<group>/)         ← user journey, engine-neutral
+  └─ Product Scenario (docs/01-product/scenarios/<group>/) ← independently reviewable user goal, engine-neutral
       ├─ Domain Spec (docs/03-specs/domains/<nn>-<domain>.md)
       │   └─ Operation Spec (docs/03-specs/operations/<domain>/<operation>.md)
       │       └─ Acceptance Criteria table   ← horizontal: one atomic action, template-agnostic
@@ -18,6 +18,11 @@ PRD (docs/01-product/prd/)
           └─ Acceptance Criteria table   ← vertical: one feature workflow, composes Operations
               └─ Tests (scenario tier; assert observable workflow outcomes)
 ```
+
+The product layer's
+[`Scenario model`](../01-product/scenarios/README.md#scenario-model) owns the
+distinction between a journey, product scenario, and validation case. This spec
+layer consumes stable product Scenario IDs and does not redefine those units.
 
 Architectural decisions that span multiple specs live as ADRs under
 [`docs/02-architecture/`](../02-architecture/README.md). Data contracts and

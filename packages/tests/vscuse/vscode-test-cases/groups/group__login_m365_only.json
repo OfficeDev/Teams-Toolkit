@@ -158,18 +158,18 @@
       "parameters": {
         "button": "left",
         "x": 461,
-        "y": 70
+        "y": 80
       },
-      "description": "Click on the \"Microsoft 365 Agents: Account\" option in the dropdown menu located at the top prompt bar of the Visual Studio Code interface.",
+      "description": "Click the second result, \"Microsoft 365 Agents: Accounts\", below the similarly named Accounts View command.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:461:70:16:5:a412000080808080",
-        "dhash:461:70:96:5:208ac84148200000",
-        "dhash:461:70:0:10:c424222323232421"
+        "dhash:461:80:16:5:8040800080804000",
+        "dhash:461:80:96:5:26c851ca48300000",
+        "dhash:461:80:0:10:c4643223a3222421"
       ],
       "postconditions": [],
       "tags": [],

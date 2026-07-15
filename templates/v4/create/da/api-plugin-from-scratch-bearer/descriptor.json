@@ -3,7 +3,7 @@
   "id": "da/api-plugin-from-scratch-bearer",
   "name": "Declarative Agent with API Plugin using API Key",
   "languages": ["typescript", "javascript"],
-  "minEngineVersion": "5.20.0",
+  "minEngineVersion": "6.11.0",
   "spec": "docs/03-specs/scenarios/da/create-api-plugin-from-scratch-bearer.md",
   "requiresNetwork": false,
 
@@ -13,7 +13,5 @@
     "additionalProperties": false
   },
 
-  "replaceMap": [
-    { "var": "SafeProjectNameLowerCase", "expr": "safeProjectNameLowerCase(appName)" }
-  ]
+  "replaceMap": [{ "var": "SafeProjectNameLowerCase", "expr": "safeProjectNameLowerCase(appName)" }]
 }

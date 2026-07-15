@@ -8,13 +8,15 @@
 
 This is the **vertical** contract for one template: what scaffolding the
 `da/no-action` create package produces **end-to-end**. It **composes** the
-*horizontal* scaffolding operation specs (linked under
+_horizontal_ scaffolding operation specs (linked under
 [Composed operations](#composed-operations)) and adds only the **concrete**
-artifacts *this* template emits — the rendered `declarativeAgent.json`
-(instructions only, no capability block), the `manifest.json` wiring its single
+artifacts _this_ template emits with the sensitivity-label feature flag off —
+the rendered `declarativeAgent.json` (instructions only, no capability block),
+the `manifest.json` wiring its single
 declarative agent, and the `m365agents.yml` skeleton. Basic DA is a **pure
-render**: the `default` pipeline carries a single `require-empty-target` guard
-and **no** post-render injection (no MCP, no auth, no connector wiring), so this
+render plus one feature-flagged compatibility step**: the `default` pipeline
+carries a `require-empty-target` guard and no action wiring (no MCP, no auth, no
+connector wiring), so this
 scenario also locks "nothing from the action paths leaks into the basic one".
 Mechanism (how the render phase writes, how the empty-variable escape preserves
 an env ref) is **not** restated here; it lives in the composed operation specs.
@@ -25,15 +27,15 @@ whole template scaffolded under `InMemoryRuntime` (hence every row is **L1**).
 
 ## Acceptance Criteria
 
-| ID | Tier | Given | When | Then |
-|----|------|-------|------|------|
-| SCN-CREATE-NOACTION-01 | L1 | empty target | scaffold completes | the render phase writes exactly the basic-DA file set (`.tpl` stripped) — `appPackage/declarativeAgent.json`, `appPackage/manifest.json`, `appPackage/instruction.txt`, `appPackage/color.png`, `appPackage/outline.png`, `m365agents.yml`, `m365agents.local.yml`, `env/.env.dev`, `env/.env.local`, `evals/prompts.json`, `README.md`, `.vscode/launch.json`, `.vscode/tasks.json`, `.vscode/settings.json`, `.vscode/extensions.json`, `.gitignore` — and nothing is skipped |
-| SCN-CREATE-NOACTION-02 | L1 | rendered `appPackage/declarativeAgent.json` | render | `name == "{{appName}}${{APP_NAME_SUFFIX}}"` (the `appName` floor token rendered, the env ref preserved verbatim), `instructions == "$[file('instruction.txt')]"`; **no** `capabilities` block and **no** `sensitivity_label` (the no-action / no-connector shape) |
-| SCN-CREATE-NOACTION-03 | L1 | rendered `appPackage/manifest.json` | render | `manifestVersion == "1.28"`; the env refs survive render — `id == "${{TEAMS_APP_ID}}"`, `name.short == "{{appName}}${{APP_NAME_SUFFIX}}"`; `copilotAgents.declarativeAgents` is the single entry `{ id: "declarativeAgent", file: "declarativeAgent.json" }` |
-| SCN-CREATE-NOACTION-04 | L1 | rendered `m365agents.yml` | render | the `version: v1.12` skeleton with the provision `name` rendered (`name: {{appName}}${{APP_NAME_SUFFIX}}`) and the `copilotAgent/publish` action; **no** action wiring (no `oauth/register`, no `pluginManifestPath`) |
-| SCN-CREATE-NOACTION-05 | L1 | empty target | scaffold | the **only** pipeline step run is `require-empty-target` (`stepsSkipped` empty); no `MCP_DA_AUTH_ID_*` env var is written (basic DA has no auth) |
-| SCN-CREATE-NOACTION-06 | L1 | non-empty target | scaffold | `require-empty-target` fails first with **`UserError`** and writes nothing (the create contract; ordering mechanism owned by `run-scaffold-pipeline`) |
-| SCN-CREATE-NOACTION-07 | L1 | identical inputs re-run | scaffold | deterministic — identical `written` set and identical rendered agent `name` |
+| ID                     | Tier | Given                                                                                 | When               | Then                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ---------------------- | ---- | ------------------------------------------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| SCN-CREATE-NOACTION-01 | L1   | empty target                                                                          | scaffold completes | the render phase writes exactly the basic-DA file set (`.tpl` stripped) — `appPackage/declarativeAgent.json`, `appPackage/manifest.json`, `appPackage/instruction.txt`, `appPackage/color.png`, `appPackage/outline.png`, `m365agents.yml`, `m365agents.local.yml`, `env/.env.dev`, `env/.env.local`, `evals/prompts.json`, `README.md`, `.vscode/launch.json`, `.vscode/tasks.json`, `.vscode/settings.json`, `.vscode/extensions.json`, `.gitignore` |
+| SCN-CREATE-NOACTION-02 | L1   | rendered `appPackage/declarativeAgent.json` with `TEAMSFX_SENSITIVITY_LABEL` disabled | render             | `name == "{{appName}}${{APP_NAME_SUFFIX}}"` (the `appName` floor token rendered, the env ref preserved verbatim), `instructions == "$[file('instruction.txt')]"`; **no** `capabilities` block and **no** `sensitivity_label` (the flag-off baseline)                                                                                                                                                                                                   |
+| SCN-CREATE-NOACTION-03 | L1   | rendered `appPackage/manifest.json`                                                   | render             | `manifestVersion == "1.29"`; the env refs survive render — `id == "${{TEAMS_APP_ID}}"`, `name.short == "{{appName}}${{APP_NAME_SUFFIX}}"`; `copilotAgents.declarativeAgents` is the single entry `{ id: "declarativeAgent", file: "declarativeAgent.json" }`                                                                                                                                                                                           |
+| SCN-CREATE-NOACTION-04 | L1   | rendered `m365agents.yml`                                                             | render             | the `version: v1.12` skeleton with the provision `name` rendered (`name: {{appName}}${{APP_NAME_SUFFIX}}`) and the `copilotAgent/publish` action; **no** action wiring (no `oauth/register`, no `pluginManifestPath`)                                                                                                                                                                                                                                  |
+| SCN-CREATE-NOACTION-05 | L1   | empty target with `TEAMSFX_SENSITIVITY_LABEL` disabled                                | scaffold           | the only pipeline step run is `require-empty-target`; `da/set-sensitivity-label` is skipped, and no `MCP_DA_AUTH_ID_*` env var is written (basic DA has no auth)                                                                                                                                                                                                                                                                                       |
+| SCN-CREATE-NOACTION-06 | L1   | non-empty target                                                                      | scaffold           | `require-empty-target` fails first with **`UserError`** and writes nothing (the create contract; ordering mechanism owned by `run-scaffold-pipeline`)                                                                                                                                                                                                                                                                                                  |
+| SCN-CREATE-NOACTION-07 | L1   | identical inputs re-run                                                               | scaffold           | deterministic — identical `written` set and identical rendered agent `name`                                                                                                                                                                                                                                                                                                                                                                            |
 
 ## Composed operations
 
@@ -47,8 +49,8 @@ This scenario **flows through** these operation specs; their mechanics are
   — picks the `da/no-action` package and pins its `{version, digest}`
   (ADR-0006 / ADR-0015).
 - [`open-template-package`](../../operations/scaffolding/open-template-package.md)
-  + [`validate-template-package`](../../operations/scaffolding/validate-template-package.md)
-  — opens and well-formed-checks the package (ADR-0015).
+  - [`validate-template-package`](../../operations/scaffolding/validate-template-package.md)
+    — opens and well-formed-checks the package (ADR-0015).
 - [`build-render-context`](../../operations/scaffolding/build-render-context.md)
   — derives the render-var map; for basic DA it is just the caller floor
   (`appName`, the `language` axis) plus the package's declared `replaceMap`
@@ -58,11 +60,16 @@ This scenario **flows through** these operation specs; their mechanics are
   provision to resolve later (SCN-CREATE-NOACTION-02/03).
 - [`run-scaffold-pipeline`](../../operations/scaffolding/run-scaffold-pipeline.md)
   — the two-phase executor: its **render phase** writes the new files in
-  SCN-CREATE-NOACTION-01; its **`default` pipeline** runs the single
-  `require-empty-target` guard and nothing else (ADR-0017). The render-var floor
+  SCN-CREATE-NOACTION-01; its **`default` pipeline** runs the
+  `require-empty-target` guard and skips the feature-flagged sensitivity step
+  in this scenario's baseline (ADR-0017). The render-var floor
   is owned by
   [ADR-0016](../../../02-architecture/adr/ADR-0016-declarative-template-format.md)
   (**Accepted** 2026-06-08).
+- [`set-declarative-agent-sensitivity-label`](../../operations/scaffolding/set-declarative-agent-sensitivity-label.md)
+  — owns the optional post-render label mutation; its flag-on vertical behavior
+  is covered by
+  [`SCN-DA-SENSITIVITY-LABEL`](apply-general-sensitivity-label.md).
 
 ## Flow
 

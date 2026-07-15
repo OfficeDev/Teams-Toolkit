@@ -9,7 +9,8 @@ import { TemplateFileEntry } from "../../../src/v4/model/dataModel";
 import { REQUIRE_EMPTY_TARGET } from "../../../src/v4/pipeline/runScaffoldPipeline";
 import { createRealRuntime } from "../../../src/v4/runtime/realRuntime";
 import { ScaffoldRequest, scaffold } from "../../../src/v4/runtime/scaffold";
-import { assert } from "vitest";
+import { mcpAuthScaffoldDeps } from "../../../src/v4/mcp/mcpAuthScaffold";
+import { afterEach, assert, beforeEach, vi } from "vitest";
 
 /**
  * The on-disk `ScaffoldRuntime` face (ADR-0018): the same `da/mcp-server` create
@@ -22,7 +23,7 @@ import { assert } from "vitest";
  * Spec: docs/03-specs/scenarios/da/create-mcp-server.md (the SCN-CREATE-MCP-*
  * contract, here re-validated against a real filesystem sink).
  *
- * v4-owned (INV-7): no v3 symbol participates.
+ * v4-owned (INV-7), including the MCP auth YAML action mutator shared by create and add.
  */
 
 const PKG_DIR = path.resolve(__dirname, "../../../../../templates/v4/create/da/mcp-server");
@@ -81,6 +82,24 @@ function makeRequest(dir: string, options: RunOptions = {}): ScaffoldRequest {
 }
 
 describe("createRealRuntime (v4, on-disk ScaffoldRuntime)", () => {
+  beforeEach(() => {
+    // The oauth/oauth-dynamic auth step probes the server for metadata; stub the network so the
+    // on-disk run stays offline and deterministic. entra-sso/none never probe.
+    vi.spyOn(mcpAuthScaffoldDeps, "probeMCPServerAuth").mockResolvedValue({
+      requiresAuth: true,
+      authMetadataUrl: "https://auth.example.com/.well-known/oauth-protected-resource",
+    });
+    vi.spyOn(mcpAuthScaffoldDeps, "resolveMCPOAuthMetadata").mockResolvedValue({
+      authorizationUrl: "https://auth.example.com/authorize",
+      tokenUrl: "https://auth.example.com/token",
+      wellKnownUrl: "https://auth.example.com/.well-known/oauth-authorization-server",
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   let tempDir: string;
 
   beforeEach(() => {
@@ -154,11 +173,12 @@ describe("createRealRuntime (v4, on-disk ScaffoldRuntime)", () => {
     assert.include(diskText("env/.env.dev"), `${AUTH_ENV_VAR}=`);
   });
 
-  it("ON-DISK-03: an entra-sso run injects microsoftEntra/register and persists the env var", async () => {
+  it("ON-DISK-03: an entra-sso run injects oauth/register (Entra) and persists the env var", async () => {
     const result = await run({ authType: "entra-sso" });
     assert.isTrue(result.isOk(), result.isErr() ? result.error.message : "expected ok");
 
-    assert.include(diskText("m365agents.yml"), "uses: microsoftEntra/register");
+    assert.include(diskText("m365agents.yml"), "uses: oauth/register");
+    assert.include(diskText("m365agents.yml"), "identityProvider: MicrosoftEntra");
     assert.include(diskText("env/.env.dev"), `${AUTH_ENV_VAR}=`);
   });
 

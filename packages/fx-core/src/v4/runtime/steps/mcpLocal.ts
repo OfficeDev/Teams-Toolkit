@@ -3,16 +3,11 @@
 
 import { FxError, SystemError } from "@microsoft/teamsfx-api";
 import { Result, err, ok } from "neverthrow";
-import { ODRProvider, type ODRServer } from "../../../component/utils/odrProvider";
 import { RegisteredStep, StepContext, StepParams } from "../../pipeline/runScaffoldPipeline";
 
 /** Materialize local MCP stdio servers. See create-mcp-server scenario spec. */
 
 const SOURCE = "Scaffold";
-
-export const mcpLocalDeps = {
-  listServers: (): Promise<ODRServer[]> => ODRProvider.listServers(),
-};
 
 /** Engine step name `mcp-local/materialize-servers`. */
 export const STEP_MATERIALIZE_LOCAL_SERVERS = "mcp-local/materialize-servers";
@@ -25,14 +20,6 @@ function systemError(name: string, message: string): SystemError {
 function stringParam(params: StepParams, key: string): string | undefined {
   const value = params[key];
   return typeof value === "string" ? value : undefined;
-}
-
-function optionalStringParam(params: StepParams, key: string): string | undefined {
-  const value = stringParam(params, key);
-  if (value === undefined || /^\{\{[A-Za-z_][A-Za-z0-9_.]*\}\}$/.test(value)) {
-    return undefined;
-  }
-  return value;
 }
 
 /** Read a `with` value as the multiSelect `string[]`, or `undefined`. */
@@ -50,14 +37,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
-}
-
-function catalogFromServers(servers: ODRServer[]): Record<string, unknown> {
-  const catalog: Record<string, unknown> = {};
-  for (const server of servers) {
-    catalog[server.name] = { command: server.command, args: server.args };
-  }
-  return catalog;
 }
 
 /** One materialized stdio server entry. */
@@ -101,31 +80,30 @@ export const mcpLocalMaterializeServers: RegisteredStep = {
     if (stringArrayParam(resolved, "selected") === undefined) {
       return "missing string[] parameter 'selected'";
     }
+    if (stringParam(resolved, "catalog") === undefined) {
+      return "missing string parameter 'catalog'";
+    }
     return undefined;
   },
-  async apply(resolved: StepParams, ctx: StepContext): Promise<Result<void, FxError>> {
+  apply(resolved: StepParams, ctx: StepContext): Result<void, FxError> {
     const target = stringParam(resolved, "target");
     const selected = stringArrayParam(resolved, "selected");
-    const catalogRaw = optionalStringParam(resolved, "catalog");
-    if (target === undefined || selected === undefined) {
+    const catalogRaw = stringParam(resolved, "catalog");
+    if (target === undefined || selected === undefined || catalogRaw === undefined) {
       return err(
         systemError("McpLocalParams", "resolved parameters are not all of the expected type")
       );
     }
     let parsed: unknown;
-    if (catalogRaw === undefined) {
-      parsed = catalogFromServers(await mcpLocalDeps.listServers());
-    } else {
-      try {
-        parsed = JSON.parse(catalogRaw);
-      } catch (error) {
-        return err(
-          systemError(
-            "McpLocalCatalogParse",
-            `local server catalog is not valid JSON: ${errorMessage(error)}`
-          )
-        );
-      }
+    try {
+      parsed = JSON.parse(catalogRaw);
+    } catch (error) {
+      return err(
+        systemError(
+          "McpLocalCatalogParse",
+          `local server catalog is not valid JSON: ${errorMessage(error)}`
+        )
+      );
     }
     if (!isRecord(parsed)) {
       return err(systemError("McpLocalCatalogShape", "local server catalog is not a JSON object"));

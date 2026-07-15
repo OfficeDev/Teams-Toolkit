@@ -3,7 +3,7 @@
   "id": "da/skill",
   "name": "Declarative Agent with Skill",
   "languages": ["common"],
-  "minEngineVersion": "5.20.0",
+  "minEngineVersion": "6.11.0",
   "spec": "docs/03-specs/scenarios/da/create-skill.md",
   "requiresNetwork": false,
 
@@ -13,7 +13,5 @@
     "additionalProperties": false
   },
 
-  "replaceMap": [
-    { "var": "DeclarativeCopilot", "const": "true" }
-  ]
+  "replaceMap": [{ "var": "CopilotConnector", "const": "" }]
 }

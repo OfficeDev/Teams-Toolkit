@@ -4,10 +4,10 @@
 import { FxError, SystemError, UserError } from "@microsoft/teamsfx-api";
 import * as fs from "fs-extra";
 import * as officeAddinProject from "office-addin-project";
-import * as os from "os";
 import * as path from "path";
 import { Result, err, ok } from "neverthrow";
 import { RegisteredStep, StepContext, StepParams } from "../../pipeline/runScaffoldPipeline";
+import { withTempDirectory } from "../withTempDirectory";
 
 /** Office Add-in post-render import steps. */
 
@@ -155,24 +155,27 @@ async function importExistingOfficeAddinProject(
   }
   const sourceRoot = path.resolve(sourceFolder);
   const manifestRelativePath = path.relative(sourceRoot, containedManifest.value);
-  const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "m365atk-office-addin-"));
-  try {
-    await copySourceFiles(sourceRoot, tempRoot);
-    await convertXmlManifestIfNeeded(path.join(tempRoot, manifestRelativePath), tempRoot);
-    await overlayRenderedConfig(ctx, tempRoot);
-    await writeTempTreeToContext(tempRoot, ctx);
-    return ok(undefined);
-  } catch {
-    return err(
-      userError(
-        // eslint-disable-next-line no-secrets/no-secrets
-        "OfficeAddinSourceProjectInvalid",
-        "The Office Add-in project folder could not be imported."
-      )
-    );
-  } finally {
-    await fs.remove(tempRoot);
-  }
+  return withTempDirectory(
+    "m365atk-office-addin-",
+    (phase) =>
+      phase === "operate"
+        ? userError(
+            // eslint-disable-next-line no-secrets/no-secrets
+            "OfficeAddinSourceProjectInvalid",
+            "The Office Add-in project folder could not be imported."
+          )
+        : systemError(
+            "OfficeAddinTempDirectoryFailed",
+            `The Office Add-in temporary directory could not complete ${phase}.`
+          ),
+    async (tempRoot) => {
+      await copySourceFiles(sourceRoot, tempRoot);
+      await convertXmlManifestIfNeeded(path.join(tempRoot, manifestRelativePath), tempRoot);
+      await overlayRenderedConfig(ctx, tempRoot);
+      await writeTempTreeToContext(tempRoot, ctx);
+      return ok(undefined);
+    }
+  );
 }
 
 export const officeAddinImportExistingProject: RegisteredStep = {

@@ -14,7 +14,7 @@ This is the vertical contract for the native v4 declarative-agent-with-TypeSpec 
 | SCN-CREATE-TYPESPEC-01 | L1 | empty target | scaffold completes | the render phase writes exactly the TypeSpec DA file set (`.tpl` stripped) including `.vscode`, `appPackage`, `src/agent`, `scripts`, `package.json`, `tspconfig.yaml`, env, eval, README, and `AGENTS.md` files |
 | SCN-CREATE-TYPESPEC-02 | L1 | rendered `package.json` | render | package `name` is the lower-case safe project name and TypeSpec dependencies are present |
 | SCN-CREATE-TYPESPEC-03 | L1 | rendered `src/agent/main.tsp` | render | the `@agent` display name uses `{{appName}}`; the TypeSpec namespace uses the safe derived `TypeSpecAgentName`; TypeSpec M365 Copilot imports remain intact |
-| SCN-CREATE-TYPESPEC-04 | L1 | rendered `appPackage/manifest.json` | render | `manifestVersion == "1.28"`; `id == "${{TEAMS_APP_ID}}"`; `name.short == "{{appName}}${{APP_NAME_SUFFIX}}"`; TypeSpec-owned declarative-agent output is not pre-baked in the manifest |
+| SCN-CREATE-TYPESPEC-04 | L1 | rendered `appPackage/manifest.json` | render | `manifestVersion == "1.29"`; `id == "${{TEAMS_APP_ID}}"`; `name.short == "{{appName}}${{APP_NAME_SUFFIX}}"`; TypeSpec-owned declarative-agent output is not pre-baked in the manifest |
 | SCN-CREATE-TYPESPEC-05 | L1 | empty target | scaffold | the project yaml includes npm install, env generation, and `typeSpec/compile` stages; no post-render scaffold injection is run |
 | SCN-CREATE-TYPESPEC-06 | L1 | non-empty target | scaffold | `require-empty-target` fails first with **`UserError`** and writes nothing |
 | SCN-CREATE-TYPESPEC-07 | L1 | identical inputs re-run | scaffold | deterministic - identical `written` set and identical rendered TypeSpec namespace |
