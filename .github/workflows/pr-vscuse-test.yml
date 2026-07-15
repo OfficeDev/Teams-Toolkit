@@ -123,7 +123,6 @@ jobs:
           fetch-depth: 0
           sparse-checkout: |
             packages/tests/vscuse/vscode-test-cases/plans
-            packages/tests/vscuse/vscode-test-cases/groups
             packages/tests/vscuse/smoking-test-cases.json
 
       # ── 2. Get changed files via API (PR file list) ────────────────────
@@ -150,7 +149,6 @@ jobs:
         uses: actions/github-script@v6
         env:
           PR_NUMBER: ${{ steps.pr-context.outputs.pr_number }}
-          USER_HINT: ${{ steps.user-hint.outputs.hint }}
         with:
           script: |
             const files = await github.paginate(github.rest.pulls.listFiles, {
@@ -185,30 +183,20 @@ jobs:
             // Impacted test plans: an added / modified / renamed plan JSON maps 1:1 to a
             // runnable plan (basename == plan name). Removed plans cannot be run.
             const PLAN_DIR = 'packages/tests/vscuse/vscode-test-cases/plans/';
-            const GROUP_DIR = 'packages/tests/vscuse/vscode-test-cases/groups/';
             const changedPlans = files
               .filter(f => f.filename.startsWith(PLAN_DIR) &&
                            f.filename.endsWith('.json')    &&
                            f.status !== 'removed')
               .map(f => f.filename.slice(PLAN_DIR.length).replace(/\.json$/, ''));
-            const changedGroups = files
-              .filter(f => f.filename.startsWith(GROUP_DIR) &&
-                           f.filename.endsWith('.json')     &&
-                           f.status !== 'removed')
-              .map(f => f.filename.slice(GROUP_DIR.length).replace(/\.json$/, ''));
 
-            const hasUserHint = Boolean((process.env.USER_HINT || '').trim());
             const allFiles   = files.map(f => f.filename);
             const codeFiles  = allFiles.filter(f => !isNonCode(f));
-            // Run when product code changed OR test plans/groups changed (impacted plans)
-            // OR a user explicitly provided an atk-vscuse-test hint.
-            const skipDispatch = codeFiles.length === 0 && changedPlans.length === 0 && changedGroups.length === 0 && !hasUserHint;
+            // Run when product code changed OR a test plan itself changed (impacted plans).
+            const skipDispatch = codeFiles.length === 0 && changedPlans.length === 0;
 
             core.setOutput('skip_dispatch',      String(skipDispatch));
             core.setOutput('has_code_files',     String(codeFiles.length > 0));
-            core.setOutput('has_user_hint',      String(hasUserHint));
             core.setOutput('changed_plans_json', JSON.stringify(changedPlans));
-            core.setOutput('changed_groups_json', JSON.stringify(changedGroups));
 
             if (skipDispatch) {
               console.log(`All ${allFiles.length} changed files are test/doc/ci — skipping vscuse dispatch.`);
@@ -220,13 +208,6 @@ jobs:
               if (changedPlans.length) {
                 console.log(`${changedPlans.length} impacted test plan(s) changed:`);
                 changedPlans.forEach(p => console.log(`  plan: ${p}`));
-              }
-              if (changedGroups.length) {
-                console.log(`${changedGroups.length} changed test group file(s):`);
-                changedGroups.forEach(g => console.log(`  group: ${g}`));
-              }
-              if (hasUserHint) {
-                console.log('User hint is present — forcing dispatch even if this is a non-code-only PR.');
               }
             }
 
@@ -297,14 +278,9 @@ jobs:
           HEAD_BRANCH:          ${{ steps.pr-context.outputs.head_ref }}
           USER_HINT:            ${{ steps.user-hint.outputs.hint }}
           CHANGED_PLANS_JSON:   ${{ steps.code-check.outputs.changed_plans_json }}
-          CHANGED_GROUPS_JSON:  ${{ steps.code-check.outputs.changed_groups_json }}
           HAS_CODE_FILES:       ${{ steps.code-check.outputs.has_code_files }}
         run: |
           set -euo pipefail
-
-          # List every available plan name (one per line)
-          PLANS_TEXT=$(find packages/tests/vscuse/vscode-test-cases/plans \
-            -maxdepth 1 -name "*.json" -exec basename {} .json \; | sort)
 
           # ── Impacted plans: changed test plan files map 1:1 to runnable plans. ──
           IMPACTED_PLANS='[]'
@@ -321,63 +297,11 @@ jobs:
           IMPACTED_COUNT=$(echo "$IMPACTED_PLANS" | jq 'length')
           echo "Impacted plans (${IMPACTED_COUNT}): $IMPACTED_PLANS"
 
-          # ── Map changed groups -> impacted plans via plans' execution_order ──
-          if [ -n "${CHANGED_GROUPS_JSON:-}" ] && [ "${CHANGED_GROUPS_JSON:-}" != "[]" ]; then
-            while IFS= read -r group; do
-              [ -z "$group" ] && continue
-              group_file="packages/tests/vscuse/vscode-test-cases/groups/${group}.json"
-              if [ ! -f "$group_file" ]; then
-                echo "Warning: changed group not found on disk, skipping: $group"
-                continue
-              fi
-
-              group_plan_id=$(jq -r '.plan_metadata.plan_id // empty' "$group_file" 2>/dev/null || true)
-              if [ -z "$group_plan_id" ]; then
-                echo "Warning: group file has no plan_metadata.plan_id, skipping: $group_file"
-                continue
-              fi
-
-              while IFS= read -r plan_path; do
-                [ -z "$plan_path" ] && continue
-                plan_name=$(basename "$plan_path" .json)
-                IMPACTED_PLANS=$(echo "$IMPACTED_PLANS" | jq --arg p "$plan_name" '. + [$p]')
-              done < <(jq -r --arg gid "$group_plan_id" '
-                  select((.plan_metadata.execution_order // []) | index($gid)) | input_filename
-                ' packages/tests/vscuse/vscode-test-cases/plans/*.json 2>/dev/null || true)
-            done < <(echo "$CHANGED_GROUPS_JSON" | jq -r '.[]' 2>/dev/null || true)
-          fi
-          IMPACTED_PLANS=$(echo "$IMPACTED_PLANS" | jq 'unique')
-          IMPACTED_COUNT=$(echo "$IMPACTED_PLANS" | jq 'length')
-          echo "Impacted plans after group mapping (${IMPACTED_COUNT}): $IMPACTED_PLANS"
-
-          # ── Explicit user-hinted plans (authoritative) ──
-          HINT_MATCHED_PLANS='[]'
-          if [ -n "${USER_HINT:-}" ]; then
-            USER_HINT_LC=$(echo "$USER_HINT" | tr '[:upper:]' '[:lower:]')
-            while IFS= read -r plan; do
-              [ -z "$plan" ] && continue
-              PLAN_LC=$(echo "$plan" | tr '[:upper:]' '[:lower:]')
-              if [[ "$USER_HINT_LC" == *"$PLAN_LC"* ]]; then
-                HINT_MATCHED_PLANS=$(echo "$HINT_MATCHED_PLANS" | jq --arg p "$plan" '. + [$p]')
-              fi
-            done <<< "$PLANS_TEXT"
-            HINT_MATCHED_PLANS=$(echo "$HINT_MATCHED_PLANS" | jq 'unique')
-          fi
-          HINT_MATCHED_COUNT=$(echo "$HINT_MATCHED_PLANS" | jq 'length')
-          echo "User-hinted plans matched (${HINT_MATCHED_COUNT}): $HINT_MATCHED_PLANS"
-
           # ── Plan-only PR (no product code changed): run exactly the impacted plans. ──
           # The Copilot CLI is intentionally not installed for this path (the install
           # steps are gated on has_code_files), so we must not invoke it here.
           if [ "${HAS_CODE_FILES:-true}" != "true" ]; then
-            if [ "$HINT_MATCHED_COUNT" -gt 0 ]; then
-              PLANS_CSV=$(echo "$HINT_MATCHED_PLANS" | jq -r 'join(",")')
-              echo "test_plans=${PLANS_CSV}" >> "$GITHUB_OUTPUT"
-              echo "reason=Selected ${HINT_MATCHED_COUNT} user-requested plan(s) from authoritative hint (no product code modified)." >> "$GITHUB_OUTPUT"
-              echo "ai_source=user-hint" >> "$GITHUB_OUTPUT"
-              echo "is_fallback=false" >> "$GITHUB_OUTPUT"
-              echo "Selected user-hinted plans: $PLANS_CSV"
-            elif [ "$IMPACTED_COUNT" -gt 0 ]; then
+            if [ "$IMPACTED_COUNT" -gt 0 ]; then
               PLANS_CSV=$(echo "$IMPACTED_PLANS" | jq -r 'join(",")')
               echo "test_plans=${PLANS_CSV}" >> "$GITHUB_OUTPUT"
               echo "reason=Selected ${IMPACTED_COUNT} impacted test plan(s) changed in this PR (no product code modified)." >> "$GITHUB_OUTPUT"
@@ -395,6 +319,10 @@ jobs:
             fi
             exit 0
           fi
+
+          # List every available plan name (one per line)
+          PLANS_TEXT=$(find packages/tests/vscuse/vscode-test-cases/plans \
+            -maxdepth 1 -name "*.json" -exec basename {} .json \; | sort)
 
           SYSTEM_PROMPT='You are a test plan selector for the Microsoft 365 Agents Toolkit (ATK) VS Code extension. Select the most relevant VscUse UI test plans for a given PR based on the changed files and PR description. IMPORTANT: If a USER HINT is provided below, treat it as AUTHORITATIVE guidance from a human reviewer — it overrides your own heuristics. The hint may name specific plans to include or exclude, or describe which feature area to focus on; honour it as long as the requested plans actually exist in the available list. IMPORTANT CONTEXT: VscUse tests only test the VS Code extension. The plan files are all for VS Code templates. There are NO C# plan files. FILE PATH MAPPING (apply in order, stop at first match): 1) templates/vs/** (Visual Studio C# templates, NOT VS Code) -> These have no VscUse test plans; return only 1-2 smoke plans (Basic_Custom_Engine_Azure_OpenAI_ts_Copilot_Remote_Debug or General_Teams_Agent_OpenAI_py_Remote_Debug) as a basic sanity check. 2) templates/vscode/ts/custom-copilot-** -> Basic_Custom_Engine_*_ts_* Remote_Debug plans only. 3) templates/vscode/js/** -> *_js_* Remote_Debug plans only. 4) templates/vscode/py/** -> *_py_* Remote_Debug plans only. 5) templates/vscode/**declarative** or **da-** -> DA_*. 6) templates/vscode/**message-extension** -> Message_Extension_*. 7) templates/vscode/**tab** -> Basic_Tab_*. 8) templates/vscode/**bot** -> Simple_Bot_*. 9) packages/vscode-extension/src/treeview/** -> Feature_TreeView_*. 10) packages/vscode-extension/** -> Feature_*. 11) trivial/infra changes (remove pkg, typo, readme, CI yml) -> 1-2 smoke plans only. LANGUAGE RULES (for vscode templates only): _ts_=TypeScript plans; _js_=JavaScript plans; _py_=Python plans. ALL plans have a language suffix (_ts_, _js_, or _py_) - never invent a plan name without one. PLAN PREFIXES: DA_*=Declarative Agent; Basic_Custom_Engine_*=Custom Engine AI bot; General_Teams_Agent_*=Teams agent; Teams_Agent_With_Data_*=AI Search/RAG; Weather_Agent_*=Weather bot; Simple_Bot_*=Simple bot; Message_Extension_*=Message extension; Basic_Tab_*=Tab app; Feature_*=VS Code UI features. Keep total 1-5 plans (or whatever the user hint asks for). Output ONLY a JSON object: {"plans": ["PlanName1"], "reason": "one sentence (mention if a user hint was applied)"}'
 
@@ -453,17 +381,6 @@ jobs:
                 echo "Warning: AI returned unknown plan, skipping: $plan"
               fi
             done < <(echo "$AI_PLANS" | jq -r '.[]' 2>/dev/null || true)
-          fi
-
-          # Force-include user-hinted plans first (authoritative), then AI picks.
-          if [ "$HINT_MATCHED_COUNT" -gt 0 ]; then
-            VALID_PLANS=$(jq -cn --argjson a "$HINT_MATCHED_PLANS" --argjson b "$VALID_PLANS" \
-              'reduce ($a + $b)[] as $p ([]; if index($p) then . else . + [$p] end)')
-            if [ -n "$AI_REASON" ]; then
-              AI_REASON="Applied user hint first. ${AI_REASON}"
-            else
-              AI_REASON="Applied ${HINT_MATCHED_COUNT} user-requested plan(s) from authoritative hint."
-            fi
           fi
 
           # Force-include impacted plans: a changed test plan must always run, on top
