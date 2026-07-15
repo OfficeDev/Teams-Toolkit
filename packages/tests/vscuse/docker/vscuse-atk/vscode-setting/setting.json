@@ -10,5 +10,5 @@
     "strings": "off"
   },
   "editor.suggestOnTriggerCharacters": false,
-  "workbench.hover.delay": 100000
+  "workbench.hover.delay": 180000
 }
