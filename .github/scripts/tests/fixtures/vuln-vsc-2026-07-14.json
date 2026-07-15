@@ -1,0 +1,117 @@
+{
+  "scan_target": "templates/vsc",
+  "ecosystem": "npm",
+  "has_vulnerabilities": true,
+  "vulnerabilities": [
+    {
+      "file": "templates/vsc/js/weather-agent/package.json.tpl",
+      "package": "langsmith",
+      "current_version": "",
+      "fixed_version": "1.4.7",
+      "severity": "high",
+      "advisory_url": "https://github.com/advisories/GHSA-v34v-rq6j-cj6p",
+      "title": "LangSmith Client SDK Affected by Server-Side Request Forgery via Tracing Header Injection",
+      "is_direct": false
+    },
+    {
+      "file": "templates/vsc/js/custom-copilot-rag-custom-api/package.json.tpl",
+      "package": "adaptive-expressions",
+      "current_version": "",
+      "fixed_version": null,
+      "severity": "moderate",
+      "advisory_url": null,
+      "title": null,
+      "is_direct": false
+    },
+    {
+      "file": "templates/vsc/ts/office-addin-excel-cfshortcut/package.json.tpl",
+      "package": "serialize-javascript",
+      "current_version": "",
+      "fixed_version": "14.0.0",
+      "severity": "high",
+      "advisory_url": "https://github.com/advisories/GHSA-5c6j-r48x-rmvq",
+      "title": "Serialize JavaScript is Vulnerable to RCE via RegExp.flags and Date.prototype.toISOString()",
+      "is_direct": false
+    },
+    {
+      "file": "templates/vsc/ts/office-addin-outlook-taskpane/package.json.tpl",
+      "package": "serialize-javascript",
+      "current_version": "",
+      "fixed_version": "14.0.0",
+      "severity": "high",
+      "advisory_url": "https://github.com/advisories/GHSA-5c6j-r48x-rmvq",
+      "title": "Serialize JavaScript is Vulnerable to RCE via RegExp.flags and Date.prototype.toISOString()",
+      "is_direct": false
+    },
+    {
+      "file": "templates/vsc/ts/graph-connector/package.json.tpl",
+      "package": "@azure/ms-rest-js",
+      "current_version": "",
+      "fixed_version": "3.12.0",
+      "severity": "high",
+      "advisory_url": null,
+      "title": null,
+      "is_direct": false
+    },
+    {
+      "file": "templates/vsc/ts/weather-agent/package.json.tpl",
+      "package": "langsmith",
+      "current_version": "",
+      "fixed_version": "1.4.7",
+      "severity": "high",
+      "advisory_url": "https://github.com/advisories/GHSA-v34v-rq6j-cj6p",
+      "title": "LangSmith Client SDK Affected by Server-Side Request Forgery via Tracing Header Injection",
+      "is_direct": false
+    },
+    {
+      "file": "templates/vsc/ts/custom-copilot-rag-custom-api/package.json.tpl",
+      "package": "adaptive-expressions",
+      "current_version": "",
+      "fixed_version": null,
+      "severity": "moderate",
+      "advisory_url": null,
+      "title": null,
+      "is_direct": false
+    },
+    {
+      "file": "templates/vsc/ts/teams-collaborator-agent/package.json.tpl",
+      "package": "@azure/msal-node",
+      "current_version": "",
+      "fixed_version": "2.0.2",
+      "severity": "moderate",
+      "advisory_url": null,
+      "title": null,
+      "is_direct": false
+    },
+    {
+      "file": "templates/vsc/ts/basic-tab/package.json.tpl",
+      "package": "@azure/msal-node",
+      "current_version": "",
+      "fixed_version": null,
+      "severity": "moderate",
+      "advisory_url": null,
+      "title": null,
+      "is_direct": false
+    },
+    {
+      "file": "templates/vsc/ts/office-addin-wxpo-taskpane/package.json.tpl",
+      "package": "serialize-javascript",
+      "current_version": "",
+      "fixed_version": "14.0.0",
+      "severity": "high",
+      "advisory_url": "https://github.com/advisories/GHSA-5c6j-r48x-rmvq",
+      "title": "Serialize JavaScript is Vulnerable to RCE via RegExp.flags and Date.prototype.toISOString()",
+      "is_direct": false
+    },
+    {
+      "file": "templates/vsc/ts/message-extension-v2/package.json.tpl",
+      "package": "@azure/msal-node",
+      "current_version": "",
+      "fixed_version": null,
+      "severity": "moderate",
+      "advisory_url": null,
+      "title": null,
+      "is_direct": false
+    }
+  ]
+}
