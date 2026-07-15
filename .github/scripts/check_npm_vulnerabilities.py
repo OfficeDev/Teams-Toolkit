@@ -13,7 +13,7 @@ import tempfile
 import shutil
 from pathlib import Path
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Tuple
 import json
 
 
@@ -151,24 +151,28 @@ def check_package_vulnerabilities(pkg_file: Path, temp_dir: Path, is_template: b
         except json.JSONDecodeError:
             return ScanResult("error", "npm audit did not return valid JSON")
 
-        metadata = audit_data.get("metadata", {}).get("vulnerabilities", {})
-        critical = metadata.get("critical", 0)
-        high = metadata.get("high", 0)
-        moderate = metadata.get("moderate", 0)
-
-        if critical > 0 or high > 0 or moderate > 0:
+        vulnerabilities = audit_data.get("vulnerabilities") or {}
+        if vulnerabilities:
+            metadata = audit_data.get("metadata", {}).get("vulnerabilities", {})
             vuln_summary = []
-            if critical > 0:
-                vuln_summary.append(f"{critical} critical")
-            if high > 0:
-                vuln_summary.append(f"{high} high")
-            if moderate > 0:
-                vuln_summary.append(f"{moderate} moderate")
+            for severity in ("critical", "high", "moderate", "low", "info"):
+                count = metadata.get(severity, 0)
+                if count > 0:
+                    vuln_summary.append(f"{count} {severity}")
+            summary = (
+                f"Vulnerabilities found: {', '.join(vuln_summary)}"
+                if vuln_summary
+                else "Vulnerabilities found"
+            )
             return ScanResult(
                 "vulnerable",
-                f"Vulnerabilities found: {', '.join(vuln_summary)}",
+                summary,
                 extract_vulnerability_details(audit_data, pkg_file),
             )
+
+        if audit_result.returncode != 0:
+            detail = (audit_result.stderr or audit_result.stdout or "")[:200]
+            return ScanResult("error", f"npm audit failed: {detail}")
 
         return ScanResult("clean", "OK")
 

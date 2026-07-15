@@ -109,7 +109,66 @@ class CheckNpmManifestTests(unittest.TestCase):
         self.assertIn("ERESOLVE", result.message)
 
     @patch.object(MODULE.subprocess, "run")
-    def test_VULN_AC_09_invalid_audit_json_is_an_operational_error(self, run):
+    def test_VULN_AC_01_low_severity_findings_are_emitted(self, run):
+        """Low-severity-only audit must still produce a vulnerable ScanResult."""
+        low_only_audit = {
+            "metadata": {
+                "vulnerabilities": {
+                    "info": 0, "low": 1, "moderate": 0, "high": 0, "critical": 0, "total": 1,
+                }
+            },
+            "vulnerabilities": {
+                "example-pkg": {
+                    "severity": "low",
+                    "isDirect": True,
+                    "fixAvailable": False,
+                    "via": [
+                        {
+                            "source": 9001,
+                            "url": "https://example.test/9001",
+                            "title": "Low-severity issue",
+                            "severity": "low",
+                        }
+                    ],
+                }
+            },
+        }
+        install = Mock(returncode=0, stdout="", stderr="")
+        audit = Mock(returncode=1, stdout=json.dumps(low_only_audit), stderr="")
+        run.side_effect = [install, audit]
+
+        with tempfile.TemporaryDirectory() as temp:
+            source = Path(temp) / "package.json"
+            source.write_text(
+                json.dumps({"dependencies": {"example-pkg": "^1.0.0"}}),
+                encoding="utf-8",
+            )
+            result = MODULE.check_package_vulnerabilities(source, Path(temp))
+
+        self.assertEqual("vulnerable", result.status)
+        self.assertEqual(1, len(result.vulnerabilities))
+        self.assertEqual("9001", result.vulnerabilities[0]["advisory_id"])
+        self.assertEqual("low", result.vulnerabilities[0]["severity"])
+
+    @patch.object(MODULE.subprocess, "run")
+    def test_VULN_AC_09_audit_nonzero_without_vulnerabilities_is_error(self, run):
+        """npm audit nonzero with a valid error payload but no vulnerabilities must be ScanResult error."""
+        install = Mock(returncode=0, stdout="", stderr="")
+        audit = Mock(
+            returncode=1,
+            stdout=json.dumps({"error": {"code": "ENOLOCK", "summary": "missing lock-file"}, "vulnerabilities": {}}),
+            stderr="",
+        )
+        run.side_effect = [install, audit]
+
+        with tempfile.TemporaryDirectory() as temp:
+            source = Path(temp) / "package.json"
+            source.write_text("{}", encoding="utf-8")
+            result = MODULE.check_package_vulnerabilities(source, Path(temp))
+
+        self.assertEqual("error", result.status)
+
+
         install = Mock(returncode=0, stdout="", stderr="")
         audit = Mock(returncode=1, stdout="{invalid", stderr="")
         run.side_effect = [install, audit]

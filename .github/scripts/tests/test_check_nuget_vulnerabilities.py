@@ -1,8 +1,10 @@
 import importlib.util
 import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 
 SCRIPT = Path(__file__).parents[1] / "check_nuget_vulnerabilities.py"
@@ -52,6 +54,26 @@ class ExtractNuGetVulnerabilitiesTests(unittest.TestCase):
             [(record["package"], record["is_direct"]) for record in records],
         )
         self.assertEqual("https://example.test/c", records[2]["advisory_id"])
+
+
+class CheckNuGetProjectTests(unittest.TestCase):
+    @patch.object(MODULE.subprocess, "run")
+    def test_VULN_AC_09_dotnet_list_nonzero_without_confirmed_vuln_is_error(self, run):
+        """dotnet list nonzero exit without a confirmed vulnerability result must be ScanResult error."""
+        restore = Mock(returncode=0, stdout="", stderr="")
+        list_result = Mock(returncode=1, stdout="MSBUILD : error MSB1011", stderr="Network failure")
+        run.side_effect = [restore, list_result]
+
+        with tempfile.TemporaryDirectory() as temp:
+            source = Path(temp) / "App.csproj"
+            source.write_text(
+                '<Project Sdk="Microsoft.NET.Sdk"></Project>',
+                encoding="utf-8",
+            )
+            result = MODULE.check_nuget_vulnerabilities(source, Path(temp))
+
+        self.assertEqual("error", result.status)
+        self.assertIn("dotnet list package failed", result.message)
 
 
 if __name__ == "__main__":

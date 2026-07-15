@@ -15,7 +15,7 @@ import re
 import json
 from pathlib import Path
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Tuple
 
 
 @dataclass
@@ -196,6 +196,10 @@ def check_nuget_vulnerabilities(csproj_file: Path, temp_dir: Path, is_template: 
                 else "Vulnerabilities found"
             )
             return ScanResult("vulnerable", summary, records)
+
+        if vuln_result.returncode != 0:
+            detail = (vuln_result.stderr or vuln_result.stdout or "")[:200]
+            return ScanResult("error", f"dotnet list package failed: {detail}")
 
         return ScanResult("clean", "OK")
 
