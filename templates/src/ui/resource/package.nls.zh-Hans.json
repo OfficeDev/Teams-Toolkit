@@ -85,5 +85,11 @@
   "template.newCFShortcut.detail": "带有自定义函数和快捷方式的任务窗格加载项",
   "template.newCFShortcut.label": "自定义函数和快捷方式",
   "template.newTaskpaneAddin.detail": "在任务窗格中使用按钮和嵌入内容自定义功能区",
-  "template.newTaskpaneAddin.label": "任务窗格"
+  "template.newTaskpaneAddin.label": "任务窗格",
+  "template.officeAddin.hosts.title": "Select the Office applications to support",
+  "template.officeAddin.hosts.placeholder": "Select at least one Office application",
+  "template.officeAddin.hosts.word.label": "Word",
+  "template.officeAddin.hosts.powerpoint.label": "PowerPoint",
+  "template.officeAddin.hosts.outlook.label": "Outlook",
+  "template.officeAddin.hosts.excel.label": "Excel"
 }

@@ -1,7 +1,13 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { IQTreeNode, OptionItem, Platform, SingleSelectQuestion } from "@microsoft/teamsfx-api";
+import {
+  IQTreeNode,
+  MultiSelectQuestion,
+  OptionItem,
+  Platform,
+  SingleSelectQuestion,
+} from "@microsoft/teamsfx-api";
 import { FeatureFlag, FeatureFlags, featureFlagManager } from "../../common/featureFlags";
 import { getLocalizedString } from "../../common/localizeUtils";
 import {
@@ -147,6 +153,9 @@ function resolveNodeReference(
         },
       };
       break;
+    case "officeAddinHostsNode":
+      node = { data: officeAddinHostsQuestion() };
+      break;
     case "officeAddinImportNode":
       node = {
         data: { type: "group", name: QuestionNames.OfficeAddinImport },
@@ -177,4 +186,30 @@ function resolveNodeReference(
     node.condition = jsonObject.condition;
   }
   return node;
+}
+
+export function officeAddinHostsQuestion(): MultiSelectQuestion {
+  const hostOption = (id: string, labelKey: string): OptionItem => ({
+    id,
+    label: getLocalizedString(labelKey),
+  });
+  return {
+    type: "multiSelect",
+    name: QuestionNames.OfficeAddinHosts,
+    title: getLocalizedString("template.officeAddin.hosts.title"),
+    placeholder: getLocalizedString("template.officeAddin.hosts.placeholder"),
+    staticOptions: [
+      hostOption("word", "template.officeAddin.hosts.word.label"),
+      hostOption("powerpoint", "template.officeAddin.hosts.powerpoint.label"),
+      hostOption("outlook", "template.officeAddin.hosts.outlook.label"),
+      hostOption("excel", "template.officeAddin.hosts.excel.label"),
+    ],
+    default: ["word", "powerpoint", "outlook", "excel"],
+    validation: {
+      validFunc: (input: string[]) =>
+        input && input.length > 0
+          ? undefined
+          : getLocalizedString("template.officeAddin.hosts.validation.minItems"),
+    },
+  };
 }

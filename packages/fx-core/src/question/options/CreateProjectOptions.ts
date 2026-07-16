@@ -200,6 +200,13 @@ export const CreateProjectOptions: CLICommandOption[] = [
     description: "Space-separated OAuth scopes for the MCP server. Optional for static OAuth.",
   },
   {
+    name: "office-addin-hosts",
+    type: "array",
+    description: "Select the Office applications the task pane add-in supports.",
+    default: ["word", "powerpoint", "outlook", "excel"],
+    choices: ["word", "powerpoint", "outlook", "excel"],
+  },
+  {
     name: "folder",
     type: "string",
     shortName: "f",

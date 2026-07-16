@@ -85,5 +85,11 @@
   "template.newCFShortcut.detail": "사용자 지정 함수 및 바로 가기가 포함된 작업창 추가 기능",
   "template.newCFShortcut.label": "사용자 지정 함수 및 바로 가기",
   "template.newTaskpaneAddin.detail": "작업창에 단추 및 콘텐츠 포함으로 리본 사용자 지정",
-  "template.newTaskpaneAddin.label": "작업창"
+  "template.newTaskpaneAddin.label": "작업창",
+  "template.officeAddin.hosts.title": "Select the Office applications to support",
+  "template.officeAddin.hosts.placeholder": "Select at least one Office application",
+  "template.officeAddin.hosts.word.label": "Word",
+  "template.officeAddin.hosts.powerpoint.label": "PowerPoint",
+  "template.officeAddin.hosts.outlook.label": "Outlook",
+  "template.officeAddin.hosts.excel.label": "Excel"
 }

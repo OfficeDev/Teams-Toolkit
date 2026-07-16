@@ -47,14 +47,11 @@
         {
             "requirements": {
                 "scopes": [
-                    "mail",
-                    "workbook",
-                    "document",
-                    "presentation"
+                    {{{manifestScopes}}}
                 ]
             },
             "runtimes": [
-                {
+                {{#outlook}}{
                     "requirements": {
                         "capabilities": [
                             {
@@ -78,7 +75,7 @@
                         }
                     ]
                 },
-                {
+                {{/outlook}}{
                     "id": "TaskPaneRuntime",
                     "type": "general",
                     "code": {
@@ -119,7 +116,7 @@
                 }
             ],
             "ribbons": [
-                {
+                {{#outlook}}{
                     "requirements": {
                         "capabilities": [
                             {
@@ -207,7 +204,7 @@
                         }
                     ]
                 },
-                {
+                {{/outlook}}{
                     "contexts": [
                         "default"
                     ],

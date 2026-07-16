@@ -85,5 +85,11 @@
   "template.newCFShortcut.detail": "Componente aggiuntivo riquadro attività con funzione personalizzata e collegamento",
   "template.newCFShortcut.label": "Funzione personalizzata e combinazione di tasti",
   "template.newTaskpaneAddin.detail": "Personalizzare la barra multifunzione con un pulsante e incorporare il contenuto nel riquadro attività",
-  "template.newTaskpaneAddin.label": "Riquadro attività"
+  "template.newTaskpaneAddin.label": "Riquadro attività",
+  "template.officeAddin.hosts.title": "Select the Office applications to support",
+  "template.officeAddin.hosts.placeholder": "Select at least one Office application",
+  "template.officeAddin.hosts.word.label": "Word",
+  "template.officeAddin.hosts.powerpoint.label": "PowerPoint",
+  "template.officeAddin.hosts.outlook.label": "Outlook",
+  "template.officeAddin.hosts.excel.label": "Excel"
 }
