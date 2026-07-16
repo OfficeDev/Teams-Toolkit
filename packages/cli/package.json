@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/OfficeDev/teams-toolkit.git"
+    "url": "git+https://github.com/OfficeDev/microsoft-365-agents-toolkit.git"
   },
   "scripts": {
     "copy-files": "copyfiles -u 1 src/**/*.html src/**/*.css lib/",

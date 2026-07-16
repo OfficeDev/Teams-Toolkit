@@ -9,7 +9,10 @@
     "teamsfx",
     "api"
   ],
-  "repository": "https://github.com/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OfficeDev/microsoft-365-agents-toolkit.git"
+  },
   "files": [
     "build/**/*"
   ],

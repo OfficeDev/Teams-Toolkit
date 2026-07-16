@@ -12,7 +12,7 @@
   "types": "build/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/OfficeDev/TeamsFx.git"
+    "url": "git+https://github.com/OfficeDev/microsoft-365-agents-toolkit.git"
   },
   "scripts": {
     "build": "rimraf build && npx tsc -p ./",
