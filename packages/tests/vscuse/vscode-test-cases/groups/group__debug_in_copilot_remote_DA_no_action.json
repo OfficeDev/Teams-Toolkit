@@ -172,7 +172,9 @@
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:512:384:0:20:1b28f0d9e7e6dae4"
+        "dhash:455:351:16:5:0000000000000000",
+        "dhash:455:351:96:5:0040006060020046",
+        "dhash:455:351:0:10:0b28d0d9e7e6dae4"
       ],
       "postconditions": [],
       "tags": [
