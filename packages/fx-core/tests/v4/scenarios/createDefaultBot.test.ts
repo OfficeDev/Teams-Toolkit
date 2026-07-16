@@ -11,13 +11,14 @@ import {
   readJsonObject,
   recordProperty,
   runV4Package,
+  text,
 } from "./helpers/scenarioHarness";
 
 /**
  * T3 scenario tier: the `default-bot` create package scaffolded under `InMemoryRuntime`.
  *
  * Spec: docs/03-specs/scenarios/teams/create-default-bot.md
- * (SCN-CREATE-DEFAULT-BOT-01..06)
+ * (SCN-CREATE-DEFAULT-BOT-01..07)
  */
 
 const templatePackage = loadV4Package("create", "default-bot");
@@ -88,5 +89,12 @@ describe("SCN-TEAMS-CREATE-DEFAULT-BOT (v4, T3 InMemoryRuntime)", () => {
     assert.instanceOf(error, UserError);
     assert.strictEqual(error.name, REQUIRE_EMPTY_TARGET);
     assert.strictEqual(runtime.files.size, 0);
+  });
+
+  it("SCN-CREATE-DEFAULT-BOT-07: local launch URLs preserve the Teams app id reference", async () => {
+    const { files } = await run("typescript");
+    const launch = text(files, ".vscode/launch.json");
+    assert.include(launch, "/l/app/${{local:TEAMS_APP_ID}}?installAppPackage=true");
+    assert.notInclude(launch, "/l/app/$?installAppPackage=true");
   });
 });
