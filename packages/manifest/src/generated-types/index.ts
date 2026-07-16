@@ -484,7 +484,18 @@ export class AppManifestUtils {
       addFormats(ajv, ["uri", "email", "regex"]);
       validate = ajv.compile(schema);
     }
-    const valid = validate(manifest);
+    // The generated converters (jsonToManifest) populate every declared
+    // optional property with `undefined`, even when it is absent from the
+    // source JSON. Such keys have no JSON representation and are dropped when
+    // the manifest is serialized to disk, but they remain as own enumerable
+    // keys on the in-memory object. AJV counts them via Object.keys(), which
+    // produces spurious "must NOT have additional properties" errors against
+    // schema branches that use `additionalProperties: false` (for example a
+    // ribbon group under a built-in tab reporting phantom `builtInGroupId` /
+    // `overriddenByRibbonApi`). Validate a JSON round-tripped copy so the
+    // object matches what is actually persisted and sent for validation.
+    const manifestToValidate: unknown = JSON.parse(JSON.stringify(manifest));
+    const valid = validate(manifestToValidate);
     if (!valid && validate.errors) {
       return validate.errors.map(
         (error) =>
