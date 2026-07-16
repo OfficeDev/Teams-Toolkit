@@ -171,7 +171,9 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [],
+      "preconditions": [
+        "dhash:512:384:0:20:1b28f0d9e7e6dae4"
+      ],
       "postconditions": [],
       "tags": [
         "precondition_wait_timeout: 60"
