@@ -1030,7 +1030,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion bot reply message: \"[1] you said: Hi\" exist.",
+      "description": "@assertion bot reply message: \"[1] you said: Hi\" or \"You said: Hi\" exist.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
