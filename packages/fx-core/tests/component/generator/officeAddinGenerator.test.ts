@@ -741,10 +741,18 @@ describe("OfficeAddinGeneratorNew", () => {
       ];
       await fse.writeJson(path.join(dest, ".vscode", "launch.json"), {
         version: "0.2.0",
-        configurations: ["word", "excel", "powerpoint", "outlook"].flatMap(mkHostConfigs),
-        compounds: ["word", "excel", "powerpoint", "outlook"].map((host) => ({
-          name: `${host[0].toUpperCase()}${host.slice(1)} Desktop (Edge Chromium)`,
-        })),
+        configurations: [
+          // Non-host entry and a nameless entry must always be kept.
+          { name: "Attach to Component" },
+          {},
+          ...["word", "excel", "powerpoint", "outlook"].flatMap(mkHostConfigs),
+        ],
+        compounds: [
+          {},
+          ...["word", "excel", "powerpoint", "outlook"].map((host) => ({
+            name: `${host[0].toUpperCase()}${host.slice(1)} Desktop (Edge Chromium)`,
+          })),
+        ],
       });
       await fse.writeJson(path.join(dest, "package.json"), {
         config: { app_to_debug: "excel", app_type_to_debug: "desktop" },
@@ -765,10 +773,12 @@ describe("OfficeAddinGeneratorNew", () => {
         chai.assert.isTrue(res.isOk());
 
         const launch = await fse.readJson(path.join(dest, ".vscode", "launch.json"));
-        const compoundNames = launch.compounds.map((c: { name: string }) => c.name);
-        chai.assert.deepEqual(compoundNames, ["Word Desktop (Edge Chromium)"]);
-        const configNames = launch.configurations.map((c: { name: string }) => c.name);
+        const compoundNames = launch.compounds.map((c: { name?: string }) => c.name);
+        chai.assert.deepEqual(compoundNames, [undefined, "Word Desktop (Edge Chromium)"]);
+        const configNames = launch.configurations.map((c: { name?: string }) => c.name);
         chai.assert.deepEqual(configNames, [
+          "Attach to Component",
+          undefined,
           "Word Desktop Host",
           "Word Desktop Attach (Edge Chromium)",
         ]);
