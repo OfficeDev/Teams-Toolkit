@@ -38,6 +38,13 @@ describe("FeatureFlagManager", () => {
     const stringRes = featureFlagManager.getStringValue(FeatureFlags.MCPForDADCR);
     chai.assert.equal(stringRes, "true");
   });
+  it("MCPForDADT defaults to true", async () => {
+    mockedEnvRestore = mockedEnv({ [FeatureFlags.MCPForDADT.name]: undefined });
+    const booleanRes = featureFlagManager.getBooleanValue(FeatureFlags.MCPForDADT);
+    chai.assert.isTrue(booleanRes);
+    const stringRes = featureFlagManager.getStringValue(FeatureFlags.MCPForDADT);
+    chai.assert.equal(stringRes, "true");
+  });
   it("MCPForDADCR can be disabled by environment variable", async () => {
     mockedEnvRestore = mockedEnv({ TEAMSFX_MCP_FOR_DA_DCR: "false" });
     const booleanRes = featureFlagManager.getBooleanValue(FeatureFlags.MCPForDADCR);
@@ -61,5 +68,7 @@ describe("FeatureFlagManager", () => {
     const list = featureFlagManager.listEnabled();
     chai.assert.include(list, "TEAMSFX_CLI_DOTNET");
     chai.assert.include(list, "SME_OAUTH");
+    chai.assert.include(list, FeatureFlags.MCPForDADT.name);
+    chai.assert.include(list, FeatureFlags.MCPForDADCR.name);
   });
 });

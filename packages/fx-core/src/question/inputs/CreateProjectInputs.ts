@@ -53,6 +53,8 @@ export interface CreateProjectInputs extends Inputs {
   "openai-key"?: string;
   /** @description Application Name */
   "app-name"?: string;
+  /** @description Select the Office applications to support */
+  "office-addin-hosts"?: string[];
   /** @description MCP Server Type */
   "mcp-server-type"?: "remote";
   /** @description MCP Server URL */

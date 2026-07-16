@@ -83,4 +83,74 @@ describe("AppManifestUtils", async () => {
       assert.isTrue(mockResponse.text.calledOnce);
     });
   });
+
+  describe("validateAgainstSchema", async () => {
+    const schema = {
+      $schema: "http://json-schema.org/draft-04/schema#",
+      type: "object",
+      properties: {
+        id: { type: "string" },
+      },
+      additionalProperties: false,
+    };
+
+    it("should ignore undefined-valued keys injected by the converter", async () => {
+      // The generated converters populate absent optional fields with
+      // `undefined` (e.g. a ribbon group under a built-in tab gains phantom
+      // `builtInGroupId` / `overriddenByRibbonApi` keys). These have no JSON
+      // representation and must not trigger additionalProperties errors.
+      const manifest = {
+        id: "abc",
+        builtInGroupId: undefined,
+        overriddenByRibbonApi: undefined,
+      };
+      const errors = await AppManifestUtils.validateAgainstSchema(manifest as any, schema as any);
+      assert.deepEqual(errors, []);
+    });
+
+    it("should ignore undefined-valued keys on nested objects", async () => {
+      // Mirrors the real scenario: a ribbon group nested under a built-in tab
+      // gains phantom `builtInGroupId` / `overriddenByRibbonApi` keys from the
+      // converter. The undefined keys sit on a nested object guarded by
+      // `additionalProperties: false`, and must be stripped recursively.
+      const nestedSchema = {
+        $schema: "http://json-schema.org/draft-04/schema#",
+        type: "object",
+        properties: {
+          id: { type: "string" },
+          group: {
+            type: "object",
+            properties: {
+              label: { type: "string" },
+            },
+            additionalProperties: false,
+          },
+        },
+        additionalProperties: false,
+      };
+      const manifest = {
+        id: "abc",
+        group: {
+          label: "g1",
+          builtInGroupId: undefined,
+          overriddenByRibbonApi: undefined,
+        },
+      };
+      const errors = await AppManifestUtils.validateAgainstSchema(
+        manifest as any,
+        nestedSchema as any
+      );
+      assert.deepEqual(errors, []);
+    });
+
+    it("should still report real additional properties", async () => {
+      const manifest = {
+        id: "abc",
+        bogusProp: "x",
+      };
+      const errors = await AppManifestUtils.validateAgainstSchema(manifest as any, schema as any);
+      assert.isTrue(errors.length > 0);
+      assert.isTrue(errors.some((e) => e.includes("bogusProp")));
+    });
+  });
 });

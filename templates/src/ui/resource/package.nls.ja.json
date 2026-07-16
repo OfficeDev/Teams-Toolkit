@@ -85,5 +85,11 @@
   "template.newCFShortcut.detail": "カスタム関数とショートカットを含む作業ウィンドウ アドイン",
   "template.newCFShortcut.label": "カスタム関数とショートカット",
   "template.newTaskpaneAddin.detail": "ボタンでリボンをカスタマイズし、作業ウィンドウにコンテンツを埋め込みます",
-  "template.newTaskpaneAddin.label": "作業ウィンドウ"
+  "template.newTaskpaneAddin.label": "作業ウィンドウ",
+  "template.officeAddin.hosts.title": "Select the Office applications to support",
+  "template.officeAddin.hosts.placeholder": "Select at least one Office application",
+  "template.officeAddin.hosts.word.label": "Word",
+  "template.officeAddin.hosts.powerpoint.label": "PowerPoint",
+  "template.officeAddin.hosts.outlook.label": "Outlook",
+  "template.officeAddin.hosts.excel.label": "Excel"
 }

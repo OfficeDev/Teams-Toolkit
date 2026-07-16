@@ -186,6 +186,7 @@ describe("mcpAuthScaffolder", () => {
         },
         persistCredentialEnvRefs: true,
         serverName: "SERVER1",
+        scopes: "scope1 scope2",
       });
       assert.deepEqual(result, {});
       assert.isTrue(oauthStub.mock.calls.length === 1);
@@ -193,6 +194,29 @@ describe("mcpAuthScaffolder", () => {
         clientIdEnvName: "MCP_DA_OAUTH_CLIENT_ID_SERVER1",
         clientSecretEnvName: "SECRET_MCP_DA_OAUTH_CLIENT_SECRET_SERVER1",
         scopeEnvName: "MCP_DA_OAUTH_SCOPE_SERVER1",
+      });
+    });
+
+    it("omits the scope env ref when no scope is provided (oauth)", async () => {
+      const oauthStub = vi
+        .spyOn(ActionInjector, "injectCreateOAuthActionForMCP")
+        .mockResolvedValue();
+      await injectMCPAuthActionToYml({
+        ...baseArgs,
+        authType: "oauth",
+        endpoints: {
+          authorizationUrl: "https://auth/authorize",
+          tokenUrl: "https://auth/token",
+        },
+        persistCredentialEnvRefs: true,
+        serverName: "SERVER1",
+      });
+      // No scope was entered, so persistMCPAuthCredentialEnvVars writes no
+      // MCP_DA_OAUTH_SCOPE_* var — the yaml must not reference one either, or
+      // provision fails resolving a dangling ${{...}}.
+      assert.deepEqual(oauthStub.mock.calls[0][8], {
+        clientIdEnvName: "MCP_DA_OAUTH_CLIENT_ID_SERVER1",
+        clientSecretEnvName: "SECRET_MCP_DA_OAUTH_CLIENT_SECRET_SERVER1",
       });
     });
 

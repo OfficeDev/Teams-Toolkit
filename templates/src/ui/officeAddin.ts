@@ -35,6 +35,10 @@ export const officeAddinNode = {
   },
   children: [
     {
+      condition: { equals: "wxp-json-taskpane" },
+      node: "officeAddinHostsNode",
+    },
+    {
       condition: { equals: "office-addin-import" },
       node: "officeAddinImportNode",
     },

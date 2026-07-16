@@ -85,5 +85,11 @@
   "template.newCFShortcut.detail": "Suplemento do painel Tarefas com função personalizada e atalho",
   "template.newCFShortcut.label": "Função personalizada e atalho",
   "template.newTaskpaneAddin.detail": "Personalize a faixa de opções com um botão e incorpore conteúdo no painel de tarefas",
-  "template.newTaskpaneAddin.label": "Painel de Tarefas"
+  "template.newTaskpaneAddin.label": "Painel de Tarefas",
+  "template.officeAddin.hosts.title": "Select the Office applications to support",
+  "template.officeAddin.hosts.placeholder": "Select at least one Office application",
+  "template.officeAddin.hosts.word.label": "Word",
+  "template.officeAddin.hosts.powerpoint.label": "PowerPoint",
+  "template.officeAddin.hosts.outlook.label": "Outlook",
+  "template.officeAddin.hosts.excel.label": "Excel"
 }

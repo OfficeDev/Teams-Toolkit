@@ -85,5 +85,11 @@
   "template.newCFShortcut.detail": "Complément du volet des tâches avec fonction personnalisée et raccourci",
   "template.newCFShortcut.label": "Fonction et raccourci personnalisés",
   "template.newTaskpaneAddin.detail": "Personnalisez le ruban avec un bouton et incorporez du contenu dans le volet des tâches",
-  "template.newTaskpaneAddin.label": "Volet des tâches"
+  "template.newTaskpaneAddin.label": "Volet des tâches",
+  "template.officeAddin.hosts.title": "Select the Office applications to support",
+  "template.officeAddin.hosts.placeholder": "Select at least one Office application",
+  "template.officeAddin.hosts.word.label": "Word",
+  "template.officeAddin.hosts.powerpoint.label": "PowerPoint",
+  "template.officeAddin.hosts.outlook.label": "Outlook",
+  "template.officeAddin.hosts.excel.label": "Excel"
 }

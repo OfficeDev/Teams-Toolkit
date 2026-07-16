@@ -176,6 +176,23 @@ export async function getHost(addinManifestPath: string): Promise<OfficeHost> {
   return host;
 }
 
+export const OFFICE_ADDIN_HOSTS = ["word", "powerpoint", "outlook", "excel"] as const;
+type OfficeAddinHostId = (typeof OFFICE_ADDIN_HOSTS)[number];
+
+// Office add-in manifest requirement scope for each host.
+const OFFICE_ADDIN_HOST_SCOPE: Record<OfficeAddinHostId, string> = {
+  outlook: "mail",
+  excel: "workbook",
+  word: "document",
+  powerpoint: "presentation",
+};
+
+function getSelectedOfficeAddinHosts(inputs: Inputs): string[] {
+  const hosts = inputs[QuestionNames.OfficeAddinHosts];
+  // Fall back to all hosts when the question was not asked (CLI / non-interactive).
+  return Array.isArray(hosts) && hosts.length > 0 ? hosts : [...OFFICE_ADDIN_HOSTS];
+}
+
 export class OfficeAddinGeneratorNew extends DefaultTemplateGenerator {
   componentName = "office-addin-generator";
 
@@ -201,12 +218,26 @@ export class OfficeAddinGeneratorNew extends DefaultTemplateGenerator {
     // Hanlde the MetaOS Project
     const res = await OfficeAddinGenerator.doScaffolding(context, inputs, destinationPath);
     if (res.isErr()) return err(res.error);
+
+    const replaceMap: { [key: string]: string } = { manifestId: getUuid() };
+    if (templateName === TemplateNames.WXPTaskpane) {
+      const hosts = getSelectedOfficeAddinHosts(inputs);
+      for (const host of OFFICE_ADDIN_HOSTS) {
+        replaceMap[host] = hosts.includes(host) ? "true" : "";
+      }
+      // Pre-join the manifest requirement scopes so the rendered JSON array stays
+      // valid for any host subset (avoids trailing-comma issues in Mustache).
+      replaceMap["manifestScopes"] = OFFICE_ADDIN_HOSTS.filter((host) => hosts.includes(host))
+        .map((host) => `"${OFFICE_ADDIN_HOST_SCOPE[host]}"`)
+        .join(",\n                    ");
+    }
+
     return Promise.resolve(
       ok([
         {
           templateName: templateName,
           language: ProgrammingLanguage.TS,
-          replaceMap: { manifestId: getUuid() },
+          replaceMap,
         },
       ])
     );
@@ -218,6 +249,12 @@ export class OfficeAddinGeneratorNew extends DefaultTemplateGenerator {
     destinationPath: string,
     actionContext?: ActionContext
   ): Promise<Result<GeneratorResult, FxError>> {
+    // Prune everything tied to the Office hosts that the user did not select.
+    if (inputs[QuestionNames.TemplateName] === TemplateNames.WXPTaskpane) {
+      const hosts = getSelectedOfficeAddinHosts(inputs);
+      await pruneUnselectedOfficeAddinHosts(destinationPath, hosts);
+    }
+
     // Hanlde the MetaOS Project import
     const fromFolder = inputs[QuestionNames.OfficeAddinFolder];
     if (fromFolder) {
@@ -231,5 +268,66 @@ export class OfficeAddinGeneratorNew extends DefaultTemplateGenerator {
       }
     }
     return ok({});
+  }
+}
+
+/**
+ * Remove all references to unselected Office hosts from a scaffolded WXP task
+ * pane project: per-host source files, the `.vscode/launch.json` debug
+ * configurations/compounds (which drive the Run and Debug dropdown), and the
+ * `package.json` debug scripts / default debug app.
+ */
+async function pruneUnselectedOfficeAddinHosts(
+  destinationPath: string,
+  hosts: string[]
+): Promise<void> {
+  const unselected = OFFICE_ADDIN_HOSTS.filter((host) => !hosts.includes(host));
+
+  // 1. Per-host source files.
+  for (const host of unselected) {
+    await fse.remove(path.join(destinationPath, "src", "taskpane", `${host}.ts`));
+    await fse.remove(path.join(destinationPath, "src", "commands", `${host}.ts`));
+  }
+
+  const hostSet = new Set<string>(OFFICE_ADDIN_HOSTS);
+  const selectedHostSet = new Set<string>(hosts);
+  const isSelectedHostName = (name: string): boolean => {
+    const firstToken = name.trim().split(/\s+/)[0]?.toLowerCase();
+    // Keep entries that do not belong to any known host, or belong to a selected one.
+    return firstToken && hostSet.has(firstToken) ? selectedHostSet.has(firstToken) : true;
+  };
+
+  // 2. `.vscode/launch.json` — filter host-specific configurations and compounds
+  //    so the Run and Debug dropdown only lists the selected hosts.
+  const launchPath = path.join(destinationPath, ".vscode", "launch.json");
+  if (await fse.pathExists(launchPath)) {
+    const launch = await fse.readJson(launchPath);
+    if (Array.isArray(launch.configurations)) {
+      launch.configurations = launch.configurations.filter((c: { name?: string }) =>
+        isSelectedHostName(c.name ?? "")
+      );
+    }
+    if (Array.isArray(launch.compounds)) {
+      launch.compounds = launch.compounds.filter((c: { name?: string }) =>
+        isSelectedHostName(c.name ?? "")
+      );
+    }
+    await fse.writeJson(launchPath, launch, { spaces: 2 });
+  }
+
+  // 3. `package.json` — drop the `start:desktop:<host>` scripts for unselected
+  //    hosts and point the default debug app at a selected host.
+  const packagePath = path.join(destinationPath, "package.json");
+  if (await fse.pathExists(packagePath)) {
+    const pkg = await fse.readJson(packagePath);
+    if (pkg.scripts) {
+      for (const host of unselected) {
+        delete pkg.scripts[`start:desktop:${host}`];
+      }
+    }
+    if (pkg.config && !hosts.includes(pkg.config.app_to_debug)) {
+      pkg.config.app_to_debug = hosts[0];
+    }
+    await fse.writeJson(packagePath, pkg, { spaces: 2 });
   }
 }

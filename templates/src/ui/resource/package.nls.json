@@ -85,5 +85,12 @@
   "template.newCFShortcut.detail": "Task pane add-in with custom function and shortcut",
   "template.newCFShortcut.label": "Custom Function and Shortcut",
   "template.newTaskpaneAddin.detail": "Customize the ribbon with a button and embed content in the task pane",
-  "template.newTaskpaneAddin.label": "Task pane"
+  "template.newTaskpaneAddin.label": "Task pane",
+  "template.officeAddin.hosts.title": "Select the Office applications to support",
+  "template.officeAddin.hosts.placeholder": "Select at least one Office application",
+  "template.officeAddin.hosts.word.label": "Word",
+  "template.officeAddin.hosts.powerpoint.label": "PowerPoint",
+  "template.officeAddin.hosts.outlook.label": "Outlook",
+  "template.officeAddin.hosts.excel.label": "Excel",
+  "template.officeAddin.hosts.validation.minItems": "Select at least one Office application to continue."
 }
