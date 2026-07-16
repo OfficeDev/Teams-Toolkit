@@ -163,15 +163,13 @@
         "x": 455,
         "y": 351
       },
-      "description": "Click the red plus icon next to the \"Email or phone\" field in the Microsoft login form.",
+      "description": "Click the account identifier input field in the Microsoft sign-in form to focus it for credential entry.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:455:351:16:5:0000000000000000",
-        "dhash:455:351:96:5:0040006060020046",
         "dhash:455:351:0:10:0b28d0d9e7e6dae4"
       ],
       "postconditions": [],
