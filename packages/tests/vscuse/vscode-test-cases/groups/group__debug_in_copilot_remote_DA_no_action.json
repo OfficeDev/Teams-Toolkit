@@ -164,7 +164,7 @@
       "parameters": {
         "button": "left",
         "x": 455,
-        "y": 372
+        "y": 350
       },
       "description": "Click the \"Email, phone, or Skype\" account input field in the Microsoft sign-in form to focus it for credential entry.",
       "content_refs": [],
