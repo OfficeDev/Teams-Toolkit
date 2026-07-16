@@ -4,6 +4,7 @@
 
 ## Acceptance Criteria
 
+<!-- prettier-ignore -->
 | ID | Runtime | Purpose | Gate | Harness | Scenario | Expected result |
 | --- | --- | --- | --- | --- | --- | --- |
 | SCN-CREATE-DEFAULT-BOT-01 | L1 | scenario | per-PR | InMemoryRuntime | Scaffold the TypeScript simple bot template. | The scaffold writes the TypeScript bot app files. |
@@ -12,6 +13,7 @@
 | SCN-CREATE-DEFAULT-BOT-04 | L1 | scenario | per-PR | InMemoryRuntime | Scaffold the Python simple bot template. | The scaffold selects the Python subtree and omits Node package files. |
 | SCN-CREATE-DEFAULT-BOT-05 | L1 | scenario | per-PR | InMemoryRuntime | Run the scaffold pipeline. | The only pipeline step is `require-empty-target`. |
 | SCN-CREATE-DEFAULT-BOT-06 | L1 | scenario | per-PR | InMemoryRuntime | Scaffold into a target that already contains a file. | The scaffold fails with `REQUIRE_EMPTY_TARGET` before writing files. |
+| SCN-CREATE-DEFAULT-BOT-07 | L1 | scenario | per-PR | InMemoryRuntime | Scaffold the TypeScript simple bot template for local debugging. | The generated launch configuration preserves `${{local:TEAMS_APP_ID}}` for toolkit environment resolution. |
 
 ## Flow
 

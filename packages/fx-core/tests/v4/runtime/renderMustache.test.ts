@@ -41,6 +41,15 @@ describe("v4 runtime — renderMustache", () => {
     }
   });
 
+  it("AC-26: leaves scoped environment references literal for downstream resolution", () => {
+    const template = "${{local:TEAMS_APP_ID}} ${{sandbox:CHANNEL_WEB_URL}}";
+    const result = renderMustache(template, {});
+    assert.isTrue(result.isOk());
+    if (result.isOk()) {
+      assert.strictEqual(result.value, template);
+    }
+  });
+
   it("leaves a producer-less bare token literal (v3 escape-empty-variable parity)", () => {
     const result = renderMustache('"{{ServerName}}": {}', {});
     assert.isTrue(result.isOk());
