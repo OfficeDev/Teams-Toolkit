@@ -3,7 +3,6 @@
 import { DeclarativeAgentManifest, Platform, err, ok, signedIn } from "@microsoft/teamsfx-api";
 import mockedEnv from "mocked-env";
 import { assert, expect, vi } from "vitest";
-import packageJson from "../../../package.json";
 import { GraphClient } from "../../../src/client/graphClient";
 import { createContext, setTools } from "../../../src/common/globalVars";
 import * as requestUtils from "../../../src/common/requestUtils";
@@ -17,6 +16,8 @@ import {
   setGeneralSensitivityLabel,
 } from "../../../src/component/generator/utils";
 import { MockTools } from "../../core/utils";
+
+const packageJson = require("../../../package.json");
 
 describe("utils unit test cases", () => {
   const sandbox = vi;
@@ -101,7 +102,7 @@ describe("utils unit test cases", () => {
     const getLatestVersion = () => Promise.resolve(templateConfig.vsversion);
     const result = await getTemplateUrl("csharp", getLatestVersion, Platform.VS);
     const expectedUrl =
-      "https://github.com/OfficeDev/microsoft-365-agents-toolkit/releases/download/templates-vs@18.6.0/csharp.zip";
+      "https://github.com/OfficeDev/microsoft-365-agents-toolkit/releases/download/templates-vs@0.0.0-rc/csharp.zip";
     assert.strictEqual(result, expectedUrl);
   });
 
@@ -129,6 +130,7 @@ describe("utils unit test cases", () => {
 
   it("should return undefined for alpha version in package.json", async () => {
     (packageJson as any).version = "3.0.0-alpha.1";
+    Object.assign(templateConfig, { useLocalTemplate: false });
     const getLatestVersion = () => Promise.resolve("6.0.0");
     const result = await getTemplateUrl("ts", getLatestVersion, Platform.VSCode);
     assert.isUndefined(result);
@@ -136,9 +138,12 @@ describe("utils unit test cases", () => {
 
   it("should return rc URL for rc version in package.json", async () => {
     (packageJson as any).version = "3.0.0-rc.1";
+    Object.assign(templateConfig, { useLocalTemplate: false });
     const getLatestVersion = () => Promise.resolve("6.0.0");
     const result = await getTemplateUrl("ts", getLatestVersion, Platform.VSCode);
-    assert.isUndefined(result);
+    const expectedUrl =
+      "https://github.com/OfficeDev/microsoft-365-agents-toolkit/releases/download/templates@0.0.0-rc/ts.zip";
+    assert.strictEqual(result, expectedUrl);
   });
 
   it("should use latest version for beta version in package.json when latest is higher", async () => {

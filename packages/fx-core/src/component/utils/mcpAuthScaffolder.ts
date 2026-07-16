@@ -138,8 +138,7 @@ export async function injectMCPAuthActionToYml(args: {
     return placeholderUsed ? { wellKnownUrlPlaceholderUsed: true } : {};
   }
   let credentialEnvNames:
-    | { clientIdEnvName: string; clientSecretEnvName?: string; scopeEnvName?: string }
-    | undefined;
+    { clientIdEnvName: string; clientSecretEnvName?: string; scopeEnvName?: string } | undefined;
   if (args.persistCredentialEnvRefs && args.serverName) {
     if (args.authType === "oauth") {
       credentialEnvNames = {
