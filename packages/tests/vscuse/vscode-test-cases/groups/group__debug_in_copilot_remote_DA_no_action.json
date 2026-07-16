@@ -179,6 +179,7 @@
       ],
       "postconditions": [],
       "tags": [
+        "delay: 30",
         "precondition_wait_timeout: 60"
       ],
       "screenshot": "step_d7fafaa1",
