@@ -25,7 +25,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 # Ensure the package is importable when run from the repo root.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -65,6 +65,20 @@ def migrate_file(path: Path, dry_run: bool, stats: Dict[str, int]) -> Tuple[bool
     screenshots = data.get("screenshots", {}) or {}
     changed = False
 
+    # Build previous-step description lookup using execution order (falls back to
+    # file order). Used to give the runtime OCR judge context on what just happened.
+    steps_by_id = {s.get("step_id"): s for s in data.get("steps", []) if s.get("step_id")}
+    exec_order = (data.get("plan_metadata", {}) or {}).get("execution_order") or [
+        s.get("step_id") for s in data.get("steps", [])
+    ]
+    prev_desc_by_id: Dict[str, Optional[str]] = {}
+    prev_desc: Optional[str] = None
+    for sid in exec_order:
+        prev_desc_by_id[sid] = prev_desc
+        st = steps_by_id.get(sid)
+        if st is not None:
+            prev_desc = st.get("description") or prev_desc
+
     for step in data.get("steps", []):
         pre = step.get("preconditions") or []
         if not pre:
@@ -97,7 +111,12 @@ def migrate_file(path: Path, dry_run: bool, stats: Dict[str, int]) -> Tuple[bool
         viewport = get_image_viewport(data_uri)
         x, y = step.get("parameters", {}).get("x"), step.get("parameters", {}).get("y")
         target = {"x": int(x), "y": int(y)} if x is not None and y is not None else None
-        step["preconditions"] = [encode_ocr_precondition(full_text, viewport=viewport, target=target)]
+        prev_description = prev_desc_by_id.get(step.get("step_id"))
+        step["preconditions"] = [
+            encode_ocr_precondition(
+                full_text, viewport=viewport, target=target, prev_description=prev_description
+            )
+        ]
         stats["converted"] += 1
         changed = True
 
