@@ -262,9 +262,7 @@
       "retry_count": 0,
       "continue_on_error": "0",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:32942a2323232421"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_0e4c9160",
@@ -291,9 +289,7 @@
       "retry_count": 0,
       "continue_on_error": "0",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:c4e4406523232421"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_3d32b4eb",
