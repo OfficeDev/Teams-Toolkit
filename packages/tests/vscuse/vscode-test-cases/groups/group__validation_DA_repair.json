@@ -81,7 +81,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the active agent name displayed on the M365 Copilot page starts with ${{var:app_name}} and may include an environment suffix such as local or dev.",
+      "description": "@assertion the M365 Copilot page shows an active agent whose displayed name starts with \"vscuse_app_\" at the top of the chat (an agent header/title is present). The exact suffix does NOT need to match the current run's app_name, because M365 Copilot caches the agent display name from a previous provision to the same reused app registration, so a stale name such as vscuse_app_XXXXX or vscuse_app_XXXXXdev is acceptable as long as a vscuse_app_ agent is the active agent.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
