@@ -294,25 +294,21 @@ export class OfficeAddinGeneratorNew extends DefaultTemplateGenerator {
 }
 
 /**
- * Remove all references to unselected Office hosts from a scaffolded add-in
- * project: (optionally) per-host source files, the `.vscode/launch.json` debug
+ * Remove all references to unselected Office hosts from a scaffolded WXP task
+ * pane project: per-host source files, the `.vscode/launch.json` debug
  * configurations/compounds (which drive the Run and Debug dropdown), and the
- * `package.json` debug scripts / default debug app. `hosts` is the set of hosts
- * to KEEP.
+ * `package.json` debug scripts / default debug app.
  */
 async function pruneUnselectedOfficeAddinHosts(
   destinationPath: string,
-  hosts: string[],
-  options: { removeSourceFiles: boolean }
+  hosts: string[]
 ): Promise<void> {
   const unselected = OFFICE_ADDIN_HOSTS.filter((host) => !hosts.includes(host));
 
-  // 1. Per-host source files (only for templates that ship one file per host).
-  if (options.removeSourceFiles) {
-    for (const host of unselected) {
-      await fse.remove(path.join(destinationPath, "src", "taskpane", `${host}.ts`));
-      await fse.remove(path.join(destinationPath, "src", "commands", `${host}.ts`));
-    }
+  // 1. Per-host source files.
+  for (const host of unselected) {
+    await fse.remove(path.join(destinationPath, "src", "taskpane", `${host}.ts`));
+    await fse.remove(path.join(destinationPath, "src", "commands", `${host}.ts`));
   }
 
   const hostSet = new Set<string>(OFFICE_ADDIN_HOSTS);

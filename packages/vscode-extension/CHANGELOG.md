@@ -2,6 +2,36 @@
 > Note: This changelog only includes the changes for the stable versions of Microsoft 365 Agents Toolkit (evolved from Teams Toolkit). For the changelog of pre-released versions, please refer to the [Microsoft 365 Agents Toolkit Pre-release Changelog](https://github.com/OfficeDev/TeamsFx/blob/dev/packages/vscode-extension/PRERELEASE.md).
 
 
+## 6.12.0 - July 7, 2026
+
+### New Features
+
+#### Dynamic client registration (DCR) driver
+You can now add a dcr/register lifecycle action that creates a Dynamic Client Registration (RFC 7591) configuration through the Teams Graph Service without exposing client secrets to your local environment. The driver posts to /v1.0/dynamicConfigurations using a well-known (RFC 8414) authorization server URL you provide; the issued credentials remain server-side, and the returned oAuthConfigId is saved to an environment variable. Reference that value in your app's manifest via agentConnectors[].toolSource.remoteMcpServer.authorization.referenceId when using authorization.type "DynamicClientRegistration". This action is idempotent and currently supports creation only, keeping your provisioning pipeline lean and secure. To use it, add dcr/register to your project's YAML lifecycle file with a name and well-known URL, then run your standard provision pipeline in VS Code or the ATK CLI.
+
+#### Support for $[file(...)] in localized manifest files
+Localization file resolution for Teams App manifests now understands and expands $[file(...)] expressions in a context-aware manner. This means your localized strings can include references to external files, and those references are resolved correctly during packaging and validation. The Create App Package and Validate Manifest flows both pass the necessary context so variable expansion behaves consistently across environments. This improves maintainability for apps with larger or shared localization assets. Include $[file(./path/to/file)] in your localization JSON and run Package or Validate from the VS Code Toolkit or via the ATK CLI to take advantage of this enhancement.
+
+### Enhancement
+
+#### Redesigned agent publish experience
+The publishing flow has been streamlined to provide clearer guidance, richer status output, and a more intuitive post-publish handoff. When you publish, the output now surfaces your agent information using new environment variable names prefixed with PUBLISHED_, making it easier to wire the published values back into your configuration. The "Open" link after publishing now directs you to the Microsoft 365 Admin Center (MAC) instead of the Teams Admin Center (TAC) for management tasks, aligning with where agent administration happens. Provisioning messages remain familiar, while publish status and action execution logs are more consistent and easier to follow. Use the Publish command in the VS Code Toolkit view or run the publish command via the ATK CLI to experience the updated flow.
+
+#### Agent evaluation samples in templates
+All declarative agent templates now include a sample evals/prompts.json and updated README guidance to help you measure quality with the Microsoft 365 Copilot Agent Evaluations CLI. The sample prompts file provides a ready-to-run dataset and default evaluators so you can quickly baseline your agent's behavior. Documentation in each template walks you through installing the @microsoft/m365-copilot-eval CLI and running evaluations locally. This makes it easier to add quality checks into your development workflow and iterate more confidently. Open the evals folder in your generated project to get started.
+
+#### App manifest schema v1.29 adoption in templates
+New projects now target the Teams app manifest schema v1.29 by default. Bot-capable templates adopt the new optional properties introduced in that schema: bots.supportsTargetedMessages (defaulted to false) and bots.commandLists[].triggers (defaulted to ["mention"]). These additions are non-breaking—schema defaults apply—so existing projects continue to work unchanged. The manifest parser continues to support v1.27 and v1.28, including the relaxed URL validation for developer fields and composeExtensions.commands[].taskInfo.url that allows HTTP in addition to HTTPS where permitted by the schema. This alignment reduces friction when authoring or validating manifests and ensures compatibility with the latest schema. You can continue to package and validate from VS Code or the CLI as before—no extra steps required.
+
+### Bug Fix
+- Defaulted the LLM service to Azure OpenAI in non-interactive scaffolding to prevent compile errors in LLM-bearing templates, [PR #15909](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/15909)
+- Restored strict validation for declarative-agent v1.7 (and Teams v1.27) manifests by registering the appropriate converters, preventing malformed manifests from passing packaging, [PR #15928](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/15928)
+- Corrected Playground environment hover text to remove the incorrect instruction to run provision, [PR #15859](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/15859)
+- Removed the client-side timeout in ATK to avoid premature request failures; timeouts are now handled by the service, [PR #16017](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16017)
+- Broker-based logout now signs out only the cached account during broker auth flows, avoiding unintended sign-outs, [PR #16019](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16019)
+- Added validation to show a user-friendly error when converting an XML Office Add-in project with an empty root folder, [PR #15937](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/15937)
+
+
 ## 6.10.2 - June 9, 2026
 
 This is a hotfix version.

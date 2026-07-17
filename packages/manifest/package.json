@@ -1,9 +1,13 @@
 {
   "name": "@microsoft/app-manifest",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "main": "build/index.js",
   "types": "build/index.d.ts",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OfficeDev/microsoft-365-agents-toolkit.git"
+  },
   "dependencies": {
     "@types/fs-extra": "^11.0.1",
     "@types/strip-bom": "^4.0.1",

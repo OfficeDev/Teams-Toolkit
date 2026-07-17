@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/m365agentstoolkit-cli",
-  "version": "1.1.11",
+  "version": "1.1.12",
   "author": "Microsoft Corporation",
   "description": "Microsoft 365 Agents Toolkit CLI",
   "license": "MIT",
@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/OfficeDev/teams-toolkit.git"
+    "url": "git+https://github.com/OfficeDev/microsoft-365-agents-toolkit.git"
   },
   "scripts": {
     "copy-files": "copyfiles -u 1 src/**/*.html src/**/*.css lib/",

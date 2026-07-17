@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/m365-spec-parser",
-  "version": "0.2.13",
+  "version": "0.2.14",
   "description": "OpenAPI specification files Parser for M365 Apps",
   "main": "dist/index.node.cjs.js",
   "browser": "dist/index.esm2017.js",
@@ -24,7 +24,10 @@
     "README.md",
     "LICENSE"
   ],
-  "repository": "https://github.com/OfficeDev/TeamsFx",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OfficeDev/microsoft-365-agents-toolkit.git"
+  },
   "engines": {
     "node": ">=10.0.0"
   },

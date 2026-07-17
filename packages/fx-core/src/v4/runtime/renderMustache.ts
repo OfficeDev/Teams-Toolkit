@@ -22,7 +22,7 @@ const VALUE_SENTINEL_OPEN = "\uE002";
 const VALUE_SENTINEL_CLOSE = "\uE003";
 
 // Bare value tokens only; section/comment/partial tags carry a rejected sigil.
-const VALUE_TOKEN = /\{\{\s*([A-Za-z_][A-Za-z0-9_.]*)\s*\}\}/g;
+const VALUE_TOKEN = /\{\{\s*([A-Za-z_][A-Za-z0-9_.]*(?::[A-Za-z_][A-Za-z0-9_.]*)?)\s*\}\}/g;
 const SENTINEL_TOKEN = /\uE000([^\uE001]+)\uE001/g;
 const VALUE_SENTINEL_TOKEN = /\uE002([^\uE003]+)\uE003/g;
 
