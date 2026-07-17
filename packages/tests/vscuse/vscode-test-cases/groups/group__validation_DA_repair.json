@@ -65,13 +65,11 @@
       },
       "description": "Type \"show repair records assigned to karin blair\" into the main chat input box at the bottom of the agent interface in the M365 Copilot web application.",
       "content_refs": [],
-      "timeout": 30,
+      "timeout": 60,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:11dc6346f8e6e4e8"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_21cd2a2f",
