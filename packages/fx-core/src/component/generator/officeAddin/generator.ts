@@ -308,11 +308,13 @@ async function pruneUnselectedOfficeAddinHosts(
   options: { removeSourceFiles: boolean }
 ): Promise<void> {
   const unselected = OFFICE_ADDIN_HOSTS.filter((host) => !hosts.includes(host));
-
+  const removeSourceFiles = options?.removeSourceFiles ?? true;
   // 1. Per-host source files.
-  for (const host of unselected) {
-    await fse.remove(path.join(destinationPath, "src", "taskpane", `${host}.ts`));
-    await fse.remove(path.join(destinationPath, "src", "commands", `${host}.ts`));
+  if (removeSourceFiles) {
+    for (const host of unselected) {
+      await fse.remove(path.join(destinationPath, "src", "taskpane", `${host}.ts`));
+      await fse.remove(path.join(destinationPath, "src", "commands", `${host}.ts`));
+    }
   }
 
   const hostSet = new Set<string>(OFFICE_ADDIN_HOSTS);
