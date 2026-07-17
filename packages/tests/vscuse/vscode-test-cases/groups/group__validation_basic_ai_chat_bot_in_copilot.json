@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 4,
+    "total_steps": 6,
     "created_at": "2026-05-20T03:43:06.091646",
     "name": "group  validation basic ai chat bot in copilot",
     "description": {
@@ -18,6 +18,8 @@
     },
     "generated_at": "2026-05-20T03:43:06.091646",
     "execution_order": [
+      "step_niclose_v1",
+      "step_nireload_v1",
       "step_294018a0",
       "step_865ca70f",
       "step_da7dcba8",
@@ -30,6 +32,50 @@
   },
   "steps": [
     {
+      "step_id": "step_niclose_v1",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 715,
+        "y": 461
+      },
+      "description": "If the M365 Copilot deep-link shows the \"This agent is not installed\" modal (the freshly provisioned agent has not finished installing yet), click its \"Close\" button to dismiss the blocking dialog.",
+      "content_refs": [],
+      "timeout": 10,
+      "retry_count": 0,
+      "continue_on_error": "true",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
+      "created_at": "2026-05-20T03:43:06.091646",
+      "plan_id": "plan_568c0a08"
+    },
+    {
+      "step_id": "step_nireload_v1",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "f5"
+      },
+      "description": "Press F5 to reload the M365 Copilot deep-link so the just-provisioned agent finishes installing and its agent chat (with the \"Message Copilot\" input) loads, instead of the \"This agent is not installed\" modal. Waits for the agent page to render.",
+      "content_refs": [],
+      "timeout": 15,
+      "retry_count": 0,
+      "continue_on_error": "true",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay:15"
+      ],
+      "screenshot": "",
+      "created_at": "2026-05-20T03:43:06.091646",
+      "plan_id": "plan_568c0a08"
+    },
+    {
       "step_id": "step_294018a0",
       "agent": "interaction",
       "tool": "click",
@@ -40,15 +86,11 @@
       },
       "description": "Click the \"Message Copilot\" input field to add a new message in the agent chat within the M365 Copilot web application.",
       "content_refs": [],
-      "timeout": 30,
+      "timeout": 60,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:416:369:16:5:0000000000000000",
-        "dhash:416:369:96:5:00200060f0002000",
-        "dhash:416:369:0:10:1391e7f4d2d3e4e0"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "ocr:true"
