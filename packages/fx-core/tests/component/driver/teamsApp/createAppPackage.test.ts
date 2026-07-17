@@ -3013,6 +3013,158 @@ describe("teamsApp/createAppPackage", async () => {
     });
   });
 
+  describe("Teams manifest agentConnectors packaging", async () => {
+    const agentConnectorsArgs: CreateAppPackageArgs = {
+      manifestPath:
+        "./tests/plugins/resource/appstudio/resources-multi-env/templates/appPackage/v3.manifest.template.json",
+      outputZipPath:
+        "./tests/plugins/resource/appstudio/resources-multi-env/build/appPackage/appPackage.agent-connectors.zip",
+      outputJsonPath:
+        "./tests/plugins/resource/appstudio/resources-multi-env/build/appPackage/manifest.agent-connectors.json",
+    };
+
+    function createManifestWithConnectors(
+      agentConnectors: TeamsManifestVDevPreview.AgentConnector[]
+    ): TeamsManifestVDevPreview.TeamsManifestVDevPreview {
+      const manifest = {
+        manifestVersion: "1.29",
+      } as TeamsManifestVDevPreview.TeamsManifestVDevPreview;
+      manifest.icons = {
+        color: "resources/color.png",
+        outline: "resources/outline.png",
+      };
+      manifest.agentConnectors = agentConnectors;
+      return manifest;
+    }
+
+    it("should bundle agentConnectors mcpToolDescription file into the zip", async () => {
+      const manifest = createManifestWithConnectors([
+        {
+          id: "kusto",
+          displayName: "Kusto",
+          toolSource: {
+            remoteMcpServer: {
+              mcpServerUrl: "https://www.contoso.com",
+              mcpToolDescription: { file: "kusto-tools.json" },
+            },
+          },
+        },
+      ]);
+
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+      vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+      vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+
+      const result = (await teamsAppDriver.execute(agentConnectorsArgs, mockedDriverContext))
+        .result;
+      chai.assert.isTrue(result.isOk());
+
+      const zip = new AdmZip(agentConnectorsArgs.outputZipPath);
+      const toolEntry = zip.getEntry("kusto-tools.json");
+      chai.assert.exists(toolEntry, "kusto-tools.json should be bundled in zip");
+      await fs.remove(agentConnectorsArgs.outputZipPath);
+    });
+
+    it("should succeed when an agent connector has no mcpToolDescription file", async () => {
+      const manifest = createManifestWithConnectors([
+        {
+          id: "urlOnly",
+          displayName: "Url Only",
+          toolSource: {
+            remoteMcpServer: { mcpServerUrl: "https://www.contoso.com" },
+          },
+        },
+      ]);
+
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+      vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+      vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+
+      const result = (await teamsAppDriver.execute(agentConnectorsArgs, mockedDriverContext))
+        .result;
+      chai.assert.isTrue(result.isOk());
+      if (await fs.pathExists(agentConnectorsArgs.outputZipPath)) {
+        await fs.remove(agentConnectorsArgs.outputZipPath);
+      }
+    });
+
+    it("should de-duplicate the same mcpToolDescription file referenced by multiple connectors", async () => {
+      const manifest = createManifestWithConnectors([
+        {
+          id: "kusto1",
+          displayName: "Kusto 1",
+          toolSource: {
+            remoteMcpServer: {
+              mcpServerUrl: "https://www.contoso.com/1",
+              mcpToolDescription: { file: "kusto-tools.json" },
+            },
+          },
+        },
+        {
+          id: "kusto2",
+          displayName: "Kusto 2",
+          toolSource: {
+            remoteMcpServer: {
+              mcpServerUrl: "https://www.contoso.com/2",
+              mcpToolDescription: { file: "kusto-tools.json" },
+            },
+          },
+        },
+      ]);
+
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+      vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+      vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+
+      const result = (await teamsAppDriver.execute(agentConnectorsArgs, mockedDriverContext))
+        .result;
+      chai.assert.isTrue(result.isOk());
+
+      const zip = new AdmZip(agentConnectorsArgs.outputZipPath);
+      const toolEntries = zip
+        .getEntries()
+        .filter((entry) => entry.entryName === "kusto-tools.json");
+      chai.assert.lengthOf(toolEntries, 1, "tool description file should only be packaged once");
+      await fs.remove(agentConnectorsArgs.outputZipPath);
+    });
+
+    it("should return error when the agentConnectors mcpToolDescription file is missing", async () => {
+      const manifest = createManifestWithConnectors([
+        {
+          id: "kusto",
+          displayName: "Kusto",
+          toolSource: {
+            remoteMcpServer: {
+              mcpServerUrl: "https://www.contoso.com",
+              mcpToolDescription: { file: "missing-tools.json" },
+            },
+          },
+        },
+      ]);
+
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+      vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+      vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+      vi.spyOn(fs, "pathExists").mockImplementation(async (filePath) => {
+        if (filePath.toString().includes("missing-tools.json")) {
+          return false;
+        }
+        return true;
+      });
+
+      const result = (await teamsAppDriver.execute(agentConnectorsArgs, mockedDriverContext))
+        .result;
+      chai.assert.isTrue(result.isErr());
+      if (result.isErr()) {
+        chai.assert.isTrue(result.error instanceof FileNotFoundError);
+        chai.assert.include(result.error.message, "missing-tools.json");
+      }
+    });
+  });
+
   describe("package size limit", () => {
     it("should fail when zip exceeds 10 MB", async () => {
       const manifest = {

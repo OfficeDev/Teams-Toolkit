@@ -466,6 +466,20 @@ export class CreateAppPackageDriver implements StepDriver {
       }
     }
 
+    // Agent connector MCP tool description files (Teams manifest agentConnectors, GA since 1.27)
+    const agentConnectors = (manifest as TeamsManifestVDevPreview.TeamsManifestVDevPreview)
+      .agentConnectors;
+    if (agentConnectors?.length) {
+      const addConnectorFilesRes = await this.addAgentConnectorFiles(
+        zip,
+        agentConnectors,
+        appDirectory
+      );
+      if (addConnectorFilesRes.isErr()) {
+        return err(addConnectorFilesRes.error);
+      }
+    }
+
     zip.writeZip(zipFileName);
 
     // Validate zip package size against 10 MB hard limit
@@ -577,6 +591,41 @@ export class CreateAppPackageDriver implements StepDriver {
         return err(new InvalidFileOutsideOfTheDirectotryError(skillFolderAbs));
       }
       await this.addLocalFolderRecursive(zip, skillFolderAbs, appDirectory);
+    }
+    return ok(undefined);
+  }
+
+  /**
+   * Add the MCP tool description files referenced by Teams manifest agent connectors
+   * (agentConnectors[].toolSource.remoteMcpServer.mcpToolDescription.file) to the zip.
+   * The file reference is a schema-declared relative path, mirroring the declarative-agent
+   * file reference; it is optional (v1.29+), so connectors without one add nothing.
+   */
+  private async addAgentConnectorFiles(
+    zip: AdmZip,
+    agentConnectors: TeamsManifestVDevPreview.AgentConnector[],
+    appDirectory: string
+  ): Promise<Result<undefined, FxError>> {
+    const addedFiles = new Set<string>();
+    for (const connector of agentConnectors) {
+      const toolFile = connector.toolSource?.remoteMcpServer?.mcpToolDescription?.file;
+      if (!toolFile) {
+        continue;
+      }
+      const toolFileAbsolutePath = path.resolve(appDirectory, toolFile);
+      if (addedFiles.has(toolFileAbsolutePath)) {
+        continue;
+      }
+      const checkExistenceRes = await this.validateReferencedFile(
+        toolFileAbsolutePath,
+        appDirectory
+      );
+      if (checkExistenceRes.isErr()) {
+        return err(checkExistenceRes.error);
+      }
+      const entryName = path.relative(appDirectory, toolFileAbsolutePath);
+      this.addFileInZip(zip, path.dirname(entryName), toolFileAbsolutePath);
+      addedFiles.add(toolFileAbsolutePath);
     }
     return ok(undefined);
   }
