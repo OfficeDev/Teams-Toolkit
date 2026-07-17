@@ -196,9 +196,11 @@ function getSelectedOfficeAddinHosts(inputs: Inputs): string[] {
 // Nested App Auth SSO template supports a single Office host.
 const OFFICE_ADDIN_NAA_HOSTS = ["word", "excel", "powerpoint"] as const;
 
-function getSelectedNaaHost(inputs: Inputs): string {
+function getSelectedNaaHost(inputs: Inputs): OfficeAddinHostId {
   const host = inputs[QuestionNames.OfficeAddinNaaHost];
-  return typeof host === "string" && OFFICE_ADDIN_NAA_HOSTS.includes(host as any) ? host : "word";
+  return typeof host === "string" && (OFFICE_ADDIN_NAA_HOSTS as readonly string[]).includes(host)
+    ? (host as OfficeAddinHostId)
+    : "word";
 }
 
 export class OfficeAddinGeneratorNew extends DefaultTemplateGenerator {
@@ -294,14 +296,16 @@ export class OfficeAddinGeneratorNew extends DefaultTemplateGenerator {
 }
 
 /**
- * Remove all references to unselected Office hosts from a scaffolded WXP task
- * pane project: per-host source files, the `.vscode/launch.json` debug
+ * Remove all references to unselected Office hosts from a scaffolded add-in
+ * project: (optionally) per-host source files, the `.vscode/launch.json` debug
  * configurations/compounds (which drive the Run and Debug dropdown), and the
- * `package.json` debug scripts / default debug app.
+ * `package.json` debug scripts / default debug app. `hosts` is the set of hosts
+ * to KEEP.
  */
 async function pruneUnselectedOfficeAddinHosts(
   destinationPath: string,
-  hosts: string[]
+  hosts: string[],
+  options: { removeSourceFiles: boolean }
 ): Promise<void> {
   const unselected = OFFICE_ADDIN_HOSTS.filter((host) => !hosts.includes(host));
 
