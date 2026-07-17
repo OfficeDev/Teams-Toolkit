@@ -53,6 +53,7 @@ on:
 permissions:
   actions: write
   contents: write
+  id-token: write # Required for npm OIDC trusted publishing
 
 # Production CD runs (dev / release/*) use a unique group so concurrency is a no-op and
 # real releases / nightly are never cancelled or queued. Other refs (feature/PR branches
@@ -148,7 +149,8 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: 22
+          node-version: 22.22
+          registry-url: 'https://registry.npmjs.org'
 
       - uses: pnpm/action-setup@v4
 
@@ -200,9 +202,10 @@ jobs:
           wine --version
           wine64 --version
 
-      - name: Setup npm registry
-        run: |
-          echo "${{ secrets.NPMRC }}" > ~/.npmrc
+      # OIDC trusted publishing (no NPM token). Requires npm >= 11.5.1, newer
+      # than the npm bundled with Node 22, so upgrade the CLI here.
+      - name: Upgrade npm for OIDC trusted publishing
+        run: npm install -g npm@latest
       
       - name: Setup git
         run: |
@@ -456,22 +459,22 @@ jobs:
       - name: publish alpha release to npm org
         if: ${{ github.ref == 'refs/heads/dev'}}
         run: |
-          npx lerna publish from-package --dist-tag=alpha --yes --allow-branch dev
+          bash .github/scripts/npm-publish-from-package.sh alpha
 
       - name: publish preview release to npm org
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.preid == 'preview' }}
         run: |
-          npx lerna publish from-package --dist-tag=beta --yes
+          bash .github/scripts/npm-publish-from-package.sh beta
 
       - name: publish rc npm packages to npmjs.org
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.preid == 'rc' }}
         run: |
-          npx lerna publish from-package --dist-tag=rc --yes
+          bash .github/scripts/npm-publish-from-package.sh rc
 
       - name: publish stable npm packages to npmjs.org
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.preid == 'stable' }}
         run: |
-          npx lerna publish from-package --yes
+          bash .github/scripts/npm-publish-from-package.sh
 
       - name: pack server bits
         if: ${{ contains(steps.version-change.outputs.CHANGED, '@microsoft/teamsfx-server') || (github.event_name == 'workflow_dispatch' && github.event.inputs.vsrelease == 'true' ) }}

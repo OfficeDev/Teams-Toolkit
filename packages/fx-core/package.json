@@ -4,6 +4,10 @@
   "main": "build/index.js",
   "types": "build/index.d.ts",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OfficeDev/microsoft-365-agents-toolkit.git"
+  },
   "scripts": {
     "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\"",
     "test:unit": "vitest run --coverage --config vitest.config.ts --maxWorkers=75%",
