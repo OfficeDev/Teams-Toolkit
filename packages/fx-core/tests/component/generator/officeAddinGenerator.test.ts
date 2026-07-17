@@ -530,6 +530,24 @@ describe("OfficeAddinGeneratorNew", () => {
     });
   });
 
+  describe("OfficeAddinCapabilityOptions", () => {
+    it(`excelCustomFunctions maps to ExcelCustomFunctions template`, () => {
+      const option = OfficeAddinCapabilityOptions.excelCustomFunctions();
+      chai.assert.equal(option.id, "wxp-json-excel-cf");
+      chai.assert.equal(option.data, TemplateNames.ExcelCustomFunctions);
+      chai.assert.isString(option.label);
+      chai.assert.isString(option.detail);
+    });
+
+    it(`ssoNaa maps to OfficeAddinSsoNaa template`, () => {
+      const option = OfficeAddinCapabilityOptions.ssoNaa();
+      chai.assert.equal(option.id, "wxp-json-sso-naa");
+      chai.assert.equal(option.data, TemplateNames.OfficeAddinSsoNaa);
+      chai.assert.isString(option.label);
+      chai.assert.isString(option.detail);
+    });
+  });
+
   describe("getTemplateInfos()", () => {
     afterEach(() => {
       vi.restoreAllMocks();
@@ -680,6 +698,19 @@ describe("OfficeAddinGeneratorNew", () => {
       vi.spyOn(OfficeAddinGenerator, "doScaffolding").mockResolvedValue(ok(undefined));
       const inputs: Inputs = { platform: Platform.CLI, projectPath: "./" };
       inputs[QuestionNames.TemplateName] = TemplateNames.OfficeAddinSsoNaa;
+      const res = await generator.getTemplateInfos(context, inputs, "./");
+      chai.assert.isTrue(res.isOk());
+      if (res.isOk()) {
+        chai.assert.equal(res.value[0].replaceMap!.manifestScope, `"document"`);
+      }
+    });
+
+    it(`should default sso naa manifestScope to word when host is unsupported`, async () => {
+      vi.spyOn(OfficeAddinGenerator, "doScaffolding").mockResolvedValue(ok(undefined));
+      const inputs: Inputs = { platform: Platform.CLI, projectPath: "./" };
+      inputs[QuestionNames.TemplateName] = TemplateNames.OfficeAddinSsoNaa;
+      // Outlook is not a supported NAA host; the generator must fall back to word.
+      inputs[QuestionNames.OfficeAddinNaaHost] = "outlook";
       const res = await generator.getTemplateInfos(context, inputs, "./");
       chai.assert.isTrue(res.isOk());
       if (res.isOk()) {
