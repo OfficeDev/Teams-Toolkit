@@ -163,16 +163,18 @@
         "x": 455,
         "y": 351
       },
-      "description": "Click the red plus icon next to the \"Email or phone\" field in the Microsoft login form.",
+      "description": "Click inside the \"Email, phone, or Skype\" input field on the Microsoft sign-in page (in Chrome, launched by the Preview in Copilot debug) to focus it before typing the account email.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [],
+      "preconditions": [
+        "dhash:455:351:0:10:0b28d0d9e7e6dae4"
+      ],
       "postconditions": [],
       "tags": [
-        "precondition_wait_timeout: 60"
+        "precondition_wait_timeout: 120"
       ],
       "screenshot": "step_a5893dc9",
       "created_at": "2026-05-20T03:43:01.246637",
