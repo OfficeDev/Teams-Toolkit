@@ -31,6 +31,7 @@ Consolidated troubleshooting for ATK projects — provisioning, runtime, Playgro
 | Stale bot after re-provisioning | Old AAD app still referenced by Bot Framework registration | Delete `env/.env.local` and `env/.env.local.user`, re-run `atk provision --env local -i false` + `atk deploy --env local -i false` |
 | Bot works in Playground but not in Teams | Missing dev tunnel or wrong `BOT_ENDPOINT` | Start `devtunnel host -p 3978 --allow-anonymous`, set `BOT_ENDPOINT` in `env/.env.local` before provisioning |
 | Manifest v1.25 validation fails with `"team"` scope | `supportsChannelFeatures` required at runtime but rejected by v1.25 schema | Use `"personal"` scope only in v1.25, or use devPreview schema that defines the property |
+| Manifest validation fails after **creating app from TDP** | Imported manifest keeps the TDP app's `$schema`/`manifestVersion`, which differs from the version ATK templates target | Re-base `$schema` + `manifestVersion` to the ATK template version, then fix version-specific fields — see [Manifest version mismatch after importing from TDP](#manifest-version-mismatch-after-importing-from-tdp) |
 
 ## YAML Schema Errors
 
@@ -213,6 +214,47 @@ The app manifest (`appPackage/manifest.json`) failed validation against the Team
    ```bash
    atk provision --env local -i false
    ```
+
+### Manifest version mismatch after importing from TDP
+
+When you create a project from an existing Teams app in the Teams Developer Portal (via the `vscode://...referrer=developerportal...` deep link, or the "Create new app" → "Start with an existing Teams app" flow), ATK scaffolds a standard template (`default-bot`, `non-sso-tab`, `default-message-extension`, etc.) and then **overlays the TDP app's manifest onto it**.
+
+**Root cause:** the overlay keeps the TDP manifest's own `$schema` and `manifestVersion` — it does **not** re-base them onto the template. Validation then fetches whatever schema URL the `$schema` field points to and validates against *that* version. If the TDP app was authored on an older/different manifest version, fields or properties defined differently across versions (scope casing, renamed/added properties) cause validation to fail against the version ATK expects.
+
+Two facts that drive the fix:
+- ATK's templates target a specific numbered manifest version (e.g. `"$schema": "https://developer.microsoft.com/json-schemas/teams/v<VERSION>/MicrosoftTeams.schema.json"` with a matching `"manifestVersion": "<VERSION>"`). The exact number changes as ATK ships newer templates — treat a freshly-created project as the source of truth rather than assuming a fixed version. (Declarative-agent / plugin and Office add-in flows instead use `vDevPreview` / `"manifestVersion": "devPreview"`.)
+- Validation is entirely `$schema`-driven — it downloads the exact URL in the manifest and validates against it. There is no fixed/forced version, so correcting `$schema` is what actually changes which schema you're checked against.
+
+**Fix — align the imported manifest to the ATK template version:**
+
+1. Find the version ATK currently targets. Scaffold a throwaway project of the same capability (e.g. `default-bot`) and read the `$schema` / `manifestVersion` from its `appPackage/manifest.json` — that pair is the correct, current target.
+
+2. Open your imported `appPackage/manifest.json` and set both fields to match the freshly-created project's values:
+   ```jsonc
+   {
+     "$schema": "https://developer.microsoft.com/json-schemas/teams/v<VERSION>/MicrosoftTeams.schema.json",
+     "manifestVersion": "<VERSION>"
+   }
+   ```
+   > Keep `$schema` and `manifestVersion` in sync — a mismatch between the two is itself a validation error.
+
+3. Fix the fields the validator now flags. Common version-sensitive differences:
+   - **Scope casing** — older manifests use `"groupchat"`; v1.17+ schemas expect `"groupChat"`. This applies to `bots[].scopes`, `bots[].commandLists[].scopes`, `composeExtensions[].scopes`, and `configurableTabs[].scopes`.
+   - **Removed/renamed or unknown properties** — delete properties the target schema does not define, or move them to their equivalent in the target version as named in the error.
+   - **Newly-required fields** — add any field the target schema marks required (e.g. `description`, `icons`, `accentColor`).
+
+4. Re-validate against the corrected schema:
+   ```bash
+   atk validate --env local
+   ```
+   The output names each remaining invalid field and the JSON path — fix them one by one until validation passes.
+
+5. Re-build and re-provision:
+   ```bash
+   atk provision --env local -i false
+   ```
+
+> **Tip:** the fastest reference for the *correct* shape is a brand-new project of the same capability. Scaffold a throwaway `default-bot` (or matching) project and diff its `appPackage/manifest.json` against your imported one — the template manifest is guaranteed valid for the version ATK targets.
 
 ## Runtime Issues
 
