@@ -5,7 +5,10 @@
 
 /* global console */
 
-import { createNestablePublicClientApplication, type IPublicClientApplication } from "@azure/msal-browser";
+import {
+  createNestablePublicClientApplication,
+  type IPublicClientApplication,
+} from "@azure/msal-browser";
 
 export { AccountManager };
 
@@ -46,7 +49,7 @@ class AccountManager {
 
     // Specify minimum scopes needed for the access token.
     const tokenRequest = {
-      scopes: scopes
+      scopes: scopes,
     };
 
     try {

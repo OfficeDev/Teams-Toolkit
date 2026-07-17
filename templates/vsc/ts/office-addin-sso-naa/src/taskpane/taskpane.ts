@@ -47,7 +47,10 @@ async function getUserData() {
   try {
     const userDataElement = document.getElementById("userData");
     const userAccount = await accountManager.ssoGetUserIdentity(["user.read"]);
-    const idTokenClaims = userAccount.idTokenClaims as { name?: string; preferred_username?: string };
+    const idTokenClaims = userAccount.idTokenClaims as {
+      name?: string;
+      preferred_username?: string;
+    };
 
     console.log(userAccount);
 
