@@ -36,19 +36,15 @@
       "parameters": {
         "button": "left",
         "x": 416,
-        "y": 369
+        "y": 487
       },
-      "description": "Click the \"Message Copilot\" input field to add a new message in the agent chat within the M365 Copilot web application.",
+      "description": "Click the chat message input field at the bottom of the M365 Copilot page (new BizChat layout; the placeholder is agent-specific, e.g. \"Message <agent name>\") to add a new message in the agent chat.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:416:369:16:5:0000000000000000",
-        "dhash:416:369:96:5:00200060f0002000",
-        "dhash:416:369:0:10:1391e7f4d2d3e4e0"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "ocr:true"
