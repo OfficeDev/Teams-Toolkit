@@ -110,9 +110,9 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Preview in Copilot (chrome)"
+        "text": "Preview in Copilot (Chrome)"
       },
-      "description": "Type the text 'Preview in Copilot (chrome)' into the dropdown input field located at the top of the Visual Studio Code interface within the debugging configuration menu.",
+      "description": "Type the exact text \"Preview in Copilot (Chrome)\" into the debug configuration dropdown input to filter to the remote Chrome preview config (disambiguating from the Edge and local compound entries).",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -130,13 +130,18 @@
     {
       "step_id": "step_5211ced2",
       "agent": "interaction",
-      "tool": "click",
+      "tool": "key_press",
       "parameters": {
-        "button": "left",
-        "x": 437,
-        "y": 73
+        "button": null,
+        "dx": null,
+        "dy": null,
+        "key": "enter",
+        "keys": null,
+        "text": null,
+        "x": null,
+        "y": null
       },
-      "description": "Click the \"Preview in Copilot (Chrome)\" option from the dropdown menu in the debug configuration toolbar of the Visual Studio Code interface.",
+      "description": "Press Enter to select \"Preview in Copilot (Chrome)\" from the run/debug configuration dropdown in Visual Studio Code, after typing the exact configuration name to filter the ambiguous \"Preview in Copilot\" entries.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
