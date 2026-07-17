@@ -228,7 +228,7 @@
       "parameters": {
         "text": "my-secret-value"
       },
-      "description": "Type 'my-secret-value' into the \"Enter API Key in OpenAPI Description Document\" input field in Visual Studio Code’s prompt dialog.",
+      "description": "Type 'my-secret-value' into the \"Enter API Key in OpenAPI Description Document\" input field in Visual Studio Code\u2019s prompt dialog.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
