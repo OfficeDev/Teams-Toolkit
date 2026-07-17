@@ -142,8 +142,7 @@ describe("SCN-DA-ADD-MCP-ACTION-TO-DA (v4, T3 InMemoryRuntime)", () => {
     assert.strictEqual(runtime.type, "RemoteMCPServer");
     const spec = runtime.spec;
     assert.isTrue(isRecord(spec));
-    assert.strictEqual(spec.url, MCP_SERVER_URL);
-    assert.strictEqual(spec.enable_dynamic_discovery, true);
+    assert.deepStrictEqual(spec, { url: MCP_SERVER_URL });
     assert.deepStrictEqual(runtime.run_for_functions, ["*"]);
   });
 

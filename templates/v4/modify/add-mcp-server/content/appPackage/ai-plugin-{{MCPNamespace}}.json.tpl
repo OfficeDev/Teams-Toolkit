@@ -10,8 +10,7 @@
     {
       "type": "RemoteMCPServer",
       "spec": {
-        "url": "{{MCPForDAServerUrl}}",
-        "enable_dynamic_discovery": true
+        "url": "{{MCPForDAServerUrl}}"
       },
       "run_for_functions": ["*"],
       "auth": {

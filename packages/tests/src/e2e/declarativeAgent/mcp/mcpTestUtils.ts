@@ -10,10 +10,11 @@ import { Executor } from "../../../utils/executor";
 
 export const learnMCPServerUrl = "https://learn.microsoft.com/api/mcp";
 
-// The dynamic-discovery `ai-plugin.json` (empty functions + enable_dynamic_discovery)
-// is produced only by the v4 create template, so this flow requires v4 on. When
-// v4 is off, `atk new` falls back to the legacy generator which always emits a
-// static (mcp_tool_description + mcp-tools-1.json) scaffold regardless of DT.
+// The dynamic-discovery `ai-plugin.json` (empty functions and no
+// mcp_tool_description) is produced only by the v4 create template, so this
+// flow requires v4 on. When v4 is off, `atk new` falls back to the legacy
+// generator which always emits a static (mcp_tool_description +
+// mcp-tools-1.json) scaffold regardless of DT.
 export const mcpDynamicFlowEnv: Record<string, string> = {
   TEAMSFX_V4_ENABLED: "true",
   TEAMSFX_MCP_FOR_DA_DT: "true",
@@ -70,9 +71,7 @@ export async function expectDynamicMCPProject(
 
   expect(aiPlugin.functions).to.be.an("array").that.is.empty;
   expect(runtime.type).to.equal("RemoteMCPServer");
-  expect(runtime.spec.url).to.equal(learnMCPServerUrl);
-  expect(runtime.spec.enable_dynamic_discovery).to.equal(true);
-  expect(runtime.spec).to.not.have.property("mcp_tool_description");
+  expect(runtime.spec).to.deep.equal({ url: learnMCPServerUrl });
   expect(runtime.run_for_functions).to.deep.equal(["*"]);
   expect(runtime.auth.type).to.equal("None");
 
