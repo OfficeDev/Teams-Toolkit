@@ -33,6 +33,13 @@
       "step_27dc9b90",
       "step_ni_dismiss01",
       "step_e84429f7",
+      "step_relogin_a1",
+      "step_relogin_a2",
+      "step_relogin_a3",
+      "step_relogin_a4",
+      "step_relogin_a5",
+      "step_relogin_a6",
+      "step_relogin_a7",
       "step_8f5f8690"
     ],
     "tags": [
@@ -413,6 +420,181 @@
       ],
       "screenshot": "step_e84429f7",
       "created_at": "2026-04-21T03:01:47.078483",
+      "plan_id": "plan_c795f9af"
+    },
+    {
+      "step_id": "step_relogin_a1",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 389,
+        "y": 351
+      },
+      "description": "If the Microsoft sign-in account page reappears after the F5 refresh, click the email or username field to focus it for re-authentication.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "true",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:389:351:16:5:2d04375555556559",
+        "dhash:389:351:96:5:3666002a6a95008c",
+        "dhash:389:351:0:10:1b28f0d9d7e6dae4"
+      ],
+      "postconditions": [],
+      "tags": [
+        "delay:5",
+        "precondition_wait_timeout:15"
+      ],
+      "screenshot": "step_sign_in_account_page",
+      "plan_id": "plan_c795f9af"
+    },
+    {
+      "step_id": "step_relogin_a2",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{env:M365_ACCOUNT_NAME}}"
+      },
+      "description": "If the sign-in account page reappeared after refresh, type ${{env:M365_ACCOUNT_NAME}} into the focused email or username field.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "true",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:389:351:16:5:2d04375555556559",
+        "dhash:389:351:96:5:3666002a6a90028e",
+        "dhash:389:351:0:10:1b28f0cbc6f6dae4"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition_wait_timeout:10"
+      ],
+      "screenshot": "step_sign_in_account_page",
+      "plan_id": "plan_c795f9af"
+    },
+    {
+      "step_id": "step_relogin_a3",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 635,
+        "y": 487
+      },
+      "description": "If an account was re-entered on the Microsoft sign-in page, click Next to continue to password entry.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "true",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:635:487:16:5:65565645259a2000",
+        "dhash:635:487:96:5:40004c62300c0000",
+        "dhash:635:487:0:10:1b28f0cbc6f6dae4"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition_wait_timeout:10"
+      ],
+      "screenshot": "step_sign_in_account_page",
+      "plan_id": "plan_c795f9af"
+    },
+    {
+      "step_id": "step_relogin_a4",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 369,
+        "y": 412
+      },
+      "description": "If the Microsoft password page is shown after refresh, click the \"Password\" input field to focus it for re-entering the password.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "true",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:369:412:16:5:d65acb24c3900800",
+        "dhash:369:412:96:5:1c01223334283411",
+        "dhash:369:412:0:10:1308f0d9d9e6e6e4"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition_wait_timeout:10"
+      ],
+      "screenshot": "step_d327d516",
+      "plan_id": "plan_c795f9af"
+    },
+    {
+      "step_id": "step_relogin_a5",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{secret:M365_ACCOUNT_PASSWORD}}"
+      },
+      "description": "If the password page is shown after refresh, type ${{secret:M365_ACCOUNT_PASSWORD}} into the Password field to re-authenticate.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "true",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:1b08f0d9d1e6e6e4"
+      ],
+      "postconditions": [],
+      "tags": [
+        "delay:3",
+        "precondition_wait_timeout:10"
+      ],
+      "screenshot": "step_0140f9fb",
+      "plan_id": "plan_c795f9af"
+    },
+    {
+      "step_id": "step_relogin_a6",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "If a password was re-entered after refresh, press Enter to submit and proceed on the Microsoft login page.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "true",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:1b08f0d9d9e6e6e4"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_19ee7405",
+      "plan_id": "plan_c795f9af"
+    },
+    {
+      "step_id": "step_relogin_a7",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "If the \"Stay signed in?\" prompt reappears after refresh re-login, press Enter to confirm \"Yes\".",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "true",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:1808f0d9d9e6e6e4"
+      ],
+      "postconditions": [],
+      "tags": [
+        "delay:3"
+      ],
+      "screenshot": "step_77e6e5d9",
       "plan_id": "plan_c795f9af"
     },
     {
