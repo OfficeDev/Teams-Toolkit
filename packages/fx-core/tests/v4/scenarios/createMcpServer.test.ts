@@ -130,8 +130,7 @@ describe("SCN-DA-CREATE-WITH-MCP-SERVER (v4, T3 InMemoryRuntime)", () => {
     const runtime = recordArrayProperty(plugin, "runtimes")[0];
     const spec = recordProperty(runtime, "spec");
     assert.strictEqual(runtime.type, "RemoteMCPServer");
-    assert.strictEqual(spec.url, MCP_SERVER_URL);
-    assert.strictEqual(spec.enable_dynamic_discovery, true);
+    assert.deepStrictEqual(spec, { url: MCP_SERVER_URL });
     assert.deepStrictEqual(runtime.run_for_functions, ["*"]);
   });
 
