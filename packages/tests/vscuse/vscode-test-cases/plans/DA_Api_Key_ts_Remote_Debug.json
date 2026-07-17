@@ -272,7 +272,7 @@
         "x": null,
         "y": null
       },
-      "description": "@code run \"npm run keygen\" at /home/vscode/AgentsToolkitProjects/${{var:app_name}}. fill in the \"Generated a new API Key: <value>\" into /home/vscode/AgentsToolkitProjects/${{var:app_name}}/env/.env.dev.user, replace SECRET_API_KEY= ' ' with the  <value> and save the file.",
+      "description": "@code In /home/vscode/AgentsToolkitProjects/${{var:app_name}}, run \"npm run keygen\" and capture the key from the output line \"Generated a new API Key: <value>\". Then edit /home/vscode/AgentsToolkitProjects/${{var:app_name}}/env/.env.dev.user: the SECRET_API_KEY line is a single-quoted blank placeholder (SECRET_API_KEY=' '); replace only the quoted placeholder with the captured key so the line becomes SECRET_API_KEY='<value>', keeping any trailing comment. Save the file and print the updated line to confirm SECRET_API_KEY is non-empty.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -363,7 +363,7 @@
         "x": null,
         "y": null
       },
-      "description": "@assertion SECRET_API_KEY has value",
+      "description": "@assertion In the opened .env.dev.user editor the SECRET_API_KEY line shows a non-empty value inside the single quotes (it is no longer the blank placeholder SECRET_API_KEY=' ').",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
