@@ -127,24 +127,28 @@
     {
       "step_id": "step_d23bc917",
       "agent": "interaction",
-      "tool": "key_press",
+      "tool": "click",
       "parameters": {
-        "button": null,
+        "button": "left",
         "dx": null,
         "dy": null,
-        "key": "enter",
+        "key": null,
         "keys": null,
         "text": null,
-        "x": null,
-        "y": null
+        "x": 329,
+        "y": 76
       },
-      "description": "Press Enter once the highlighted \"+ New resource group\" option is visible in the \"Select a resource group\" dropdown within Visual Studio Code.",
+      "description": "Click the \"+ New resource group\" option at the top of the \"Select a resource group\" dropdown within Visual Studio Code, waiting for the dropdown to render before clicking.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "0",
       "depends_on": [],
-      "preconditions": [],
+      "preconditions": [
+        "dhash:329:76:16:5:2050ce93396d21b8",
+        "dhash:329:76:96:5:000008258dbba8c3",
+        "dhash:329:76:0:10:c0c42a23a3222421"
+      ],
       "postconditions": [],
       "tags": [
         "precondition_wait_timeout: 30"
