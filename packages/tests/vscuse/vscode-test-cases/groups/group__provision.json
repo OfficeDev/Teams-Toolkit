@@ -144,11 +144,7 @@
       "retry_count": 0,
       "continue_on_error": "0",
       "depends_on": [],
-      "preconditions": [
-        "dhash:404:76:16:5:0042000000000000",
-        "dhash:404:76:96:5:00004000a6695928",
-        "dhash:404:76:0:10:c0c8484523632421"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "precondition_wait_timeout: 30"
