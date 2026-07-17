@@ -82,8 +82,8 @@
   "template.createProjectQuestion.projectType.teamsAgentsAndApps.label": "Agenti a aplikace Teams",
   "template.importAddin.detail": "Upgrade projektu doplňků na nejnovější manifest aplikace a strukturu projektu",
   "template.importOfficeAddin.label": "Upgrade existujícího doplňku pro Office",
-  "template.newCFShortcut.detail": "Create custom functions in Excel using a shared runtime",
-  "template.newCFShortcut.label": "Excel Custom Functions (Shared Runtime)",
+  "template.newCFShortcut.detail": "Doplněk podokna úloh s vlastní funkcí a klávesovou zkratkou",
+  "template.newCFShortcut.label": "Vlastní funkce a zástupce",
   "template.newTaskpaneAddin.detail": "Umožňuje přizpůsobit pás karet pomocí tlačítka a vložit obsah do podokna úloh.",
   "template.newTaskpaneAddin.label": "Podokno úloh",
   "template.officeAddin.hosts.title": "Select the Office applications to support",
@@ -91,11 +91,5 @@
   "template.officeAddin.hosts.word.label": "Word",
   "template.officeAddin.hosts.powerpoint.label": "PowerPoint",
   "template.officeAddin.hosts.outlook.label": "Outlook",
-  "template.officeAddin.hosts.excel.label": "Excel",
-  "template.newExcelCustomFunctions.detail": "Create custom functions in Excel using a JavaScript-only runtime",
-  "template.newExcelCustomFunctions.label": "Excel Custom Functions (JavaScript-only Runtime)",
-  "template.newSsoNaa.detail": "Task pane add-in that uses Nested App Auth for single sign-on",
-  "template.newSsoNaa.label": "Single Sign-On with Nested App Auth",
-  "template.officeAddin.naaHost.title": "Select the Office application to support",
-  "template.officeAddin.naaHost.placeholder": "Select an Office application"
+  "template.officeAddin.hosts.excel.label": "Excel"
 }

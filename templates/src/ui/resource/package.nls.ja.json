@@ -82,8 +82,8 @@
   "template.createProjectQuestion.projectType.teamsAgentsAndApps.label": "Teams エージェントとアプリ",
   "template.importAddin.detail": "アドイン プロジェクトを、最新のアプリ マニフェストとプロジェクト構造へアップグレードします",
   "template.importOfficeAddin.label": "既存の Office アドインをアップグレードする",
-  "template.newCFShortcut.detail": "Create custom functions in Excel using a shared runtime",
-  "template.newCFShortcut.label": "Excel Custom Functions (Shared Runtime)",
+  "template.newCFShortcut.detail": "カスタム関数とショートカットを含む作業ウィンドウ アドイン",
+  "template.newCFShortcut.label": "カスタム関数とショートカット",
   "template.newTaskpaneAddin.detail": "ボタンでリボンをカスタマイズし、作業ウィンドウにコンテンツを埋め込みます",
   "template.newTaskpaneAddin.label": "作業ウィンドウ",
   "template.officeAddin.hosts.title": "Select the Office applications to support",
@@ -91,11 +91,5 @@
   "template.officeAddin.hosts.word.label": "Word",
   "template.officeAddin.hosts.powerpoint.label": "PowerPoint",
   "template.officeAddin.hosts.outlook.label": "Outlook",
-  "template.officeAddin.hosts.excel.label": "Excel",
-  "template.newExcelCustomFunctions.detail": "Create custom functions in Excel using a JavaScript-only runtime",
-  "template.newExcelCustomFunctions.label": "Excel Custom Functions (JavaScript-only Runtime)",
-  "template.newSsoNaa.detail": "Task pane add-in that uses Nested App Auth for single sign-on",
-  "template.newSsoNaa.label": "Single Sign-On with Nested App Auth",
-  "template.officeAddin.naaHost.title": "Select the Office application to support",
-  "template.officeAddin.naaHost.placeholder": "Select an Office application"
+  "template.officeAddin.hosts.excel.label": "Excel"
 }

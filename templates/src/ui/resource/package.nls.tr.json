@@ -82,8 +82,8 @@
   "template.createProjectQuestion.projectType.teamsAgentsAndApps.label": "Teams Aracıları ve Uygulamaları",
   "template.importAddin.detail": "Bir eklenti projesini en yeni uygulama bildirimi ve proje yapısına yükseltin",
   "template.importOfficeAddin.label": "Mevcut bir Office Eklentisini yükselt",
-  "template.newCFShortcut.detail": "Create custom functions in Excel using a shared runtime",
-  "template.newCFShortcut.label": "Excel Custom Functions (Shared Runtime)",
+  "template.newCFShortcut.detail": "Özel işlev ve kısayol içeren görev bölmesi eklentisi",
+  "template.newCFShortcut.label": "Özel İşlev ve Kısayol",
   "template.newTaskpaneAddin.detail": "Şeridi düğmeyle özelleştirip görev bölmesine içerik ekleyin",
   "template.newTaskpaneAddin.label": "Görev bölmesi",
   "template.officeAddin.hosts.title": "Select the Office applications to support",
@@ -91,11 +91,5 @@
   "template.officeAddin.hosts.word.label": "Word",
   "template.officeAddin.hosts.powerpoint.label": "PowerPoint",
   "template.officeAddin.hosts.outlook.label": "Outlook",
-  "template.officeAddin.hosts.excel.label": "Excel",
-  "template.newExcelCustomFunctions.detail": "Create custom functions in Excel using a JavaScript-only runtime",
-  "template.newExcelCustomFunctions.label": "Excel Custom Functions (JavaScript-only Runtime)",
-  "template.newSsoNaa.detail": "Task pane add-in that uses Nested App Auth for single sign-on",
-  "template.newSsoNaa.label": "Single Sign-On with Nested App Auth",
-  "template.officeAddin.naaHost.title": "Select the Office application to support",
-  "template.officeAddin.naaHost.placeholder": "Select an Office application"
+  "template.officeAddin.hosts.excel.label": "Excel"
 }
