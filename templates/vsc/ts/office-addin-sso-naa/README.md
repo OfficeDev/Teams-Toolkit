@@ -59,6 +59,16 @@ Deploy your project to Azure by following these steps:
 | <ul><li>Open Microsoft 365 Agents Toolkit, and sign into Azure by clicking the `Sign in to Azure` under the `ACCOUNTS` section from sidebar.</li> <li>After you signed in, select a subscription under your account.</li><li>Open the Microsoft 365 Agents Toolkit and click `Provision` from LIFECYCLE section or open the command palette and select: `Microsoft 365 Agents: Provision`.</li><li>Open the Microsoft 365 Agents Toolkit and click `Deploy` or open the command palette and select: `Microsoft 365 Agents: Deploy`.</li></ul> | <ul> <li>Run command `atk auth login azure`.</li> <li>(Optional)Set environment variable AZURE_SUBSCRIPTION_ID to your subscription id in env/.env.dev or in your current shell envrionment if you are using non-interactive mode of `teamsfx` CLI.</li> <li> Run command `atk provision`.</li> <li>Run command: `atk deploy`. </li></ul> |
 > Note: Provisioning and deployment may incur charges to your Azure Subscription.
 
+### Update the app registration for the deployed add-in
+
+After deployment, you must add the deployed domain as an NAA redirect URI in your Microsoft Entra app registration. Otherwise, single sign-on fails because the remote host isn't registered as a trusted broker.
+
+1. Copy the production URL from `ADDIN_ENDPOINT` in the `env/.env.dev` file and note its domain without `https://`, a path, or a trailing slash. For example, if the URL is `https://contoso.azurestaticapps.net`, the domain is `contoso.azurestaticapps.net`.
+1. In the [Azure portal - App registrations](https://go.microsoft.com/fwlink/?linkid=2083908), open the app registration that you created for the add-in.
+1. Select **Authentication**.
+1. Under the **Single-page application (SPA)** platform, add `brk-multihub://<deployed-domain>` as a redirect URI. For example, `brk-multihub://contoso.azurestaticapps.net`.
+1. Keep the existing `brk-multihub://localhost:3000` redirect URI so that local debugging continues to work, and then select **Save**.
+
 To sideload the deployed add-in:
 
 - Copy the production URL from the `ADDIN_ENDPOINT` in env/.env.dev file.
