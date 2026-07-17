@@ -271,10 +271,10 @@
     },
     {
       "step_id": "step_20f65283",
-      "agent": "assertion",
+      "agent": "code",
       "tool": "",
       "parameters": {},
-      "description": "@assertion 'TDP' is exist",
+      "description": "@code wait for readme.md to be viewed. Timeout: 60s",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -282,9 +282,7 @@
       "depends_on": [],
       "preconditions": [],
       "postconditions": [],
-      "tags": [
-        "step_retry_timeout:60"
-      ],
+      "tags": [],
       "screenshot": null,
       "created_at": "2026-05-18T02:19:09.603514",
       "plan_id": "plan_06dbd424"
