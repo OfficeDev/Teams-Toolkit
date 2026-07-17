@@ -3,12 +3,19 @@
 ## Metadata
 
 - Created: 2026-05-20T00:00:00Z
-- Last updated: 2026-05-20T00:00:00Z
+- Last updated: 2026-07-13T08:52:39Z
+- Status: draft
 - PM owner: summzhan
 - Engineer owner: HuihuiWu-Microsoft, Alive-Fish
 - Scenario group: da
 - Scenario ID: SCN-DA-CREATE-WITH-MCP-SERVER
+- Primary goal: create
+- Start state: No project choice has been made; the developer can start the new project flow and choose `Declarative Agent`.
+- Success state: The generated DA project contains the MCP action, declarative agent reference, lifecycle wiring, `.vscode/mcp.json`, and auth-dependent env entries needed to proceed to provision, except that failed DCR discovery requires the documented placeholder repair first.
+- Lifecycle phases: [create]
 - Visual/state reference: create-da-with-mcp-server.html
+- Supersedes: ../create-da-with-mcp-server.md
+- Redesign trigger: Dynamic Tool Discovery and Dynamic Client Registration for DA MCP projects.
 
 > **Draft note:** This draft redesigns the live [`../create-da-with-mcp-server.md`](../create-da-with-mcp-server.md). The new flow drops static tool fetching during scaffolding (tools are discovered dynamically at runtime), and folds the authentication setup into the create flow itself. After project generation the developer has a complete, ready-to-provision DA project with the MCP action already wired into the manifest and the `m365agents.yml`. Companion redesign: [`add-mcp-action-to-da.md`](add-mcp-action-to-da.md).
 
@@ -189,10 +196,10 @@ atk new -c declarative-agent --with-plugin yes --api-plugin-type mcp --mcp-serve
 ## Provision-time prompts (oauth/register)
 
 Source of truth verified in code:
-- `oauth/register` driver: [`packages/fx-core/src/component/driver/oauth/create.ts`](../../../../packages/fx-core/src/component/driver/oauth/create.ts) &mdash; registers `QuestionMW("oauth", true)`.
-- Question tree: `oauthQuestion()` in [`packages/fx-core/src/question/other.ts`](../../../../packages/fx-core/src/question/other.ts).
-- Injection payload: `ActionInjector.injectCreateOAuthActionForMCP` in [`packages/fx-core/src/component/configManager/actionInjector.ts`](../../../../packages/fx-core/src/component/configManager/actionInjector.ts).
-- DCR driver: [`packages/fx-core/src/component/driver/dcr/create.ts`](../../../../packages/fx-core/src/component/driver/dcr/create.ts) &mdash; **no `QuestionMW`**.
+- `oauth/register` driver: [`packages/fx-core/src/component/driver/oauth/create.ts`](../../../../../packages/fx-core/src/component/driver/oauth/create.ts) &mdash; registers `QuestionMW("oauth", true)`.
+- Question tree: `oauthQuestion()` in [`packages/fx-core/src/question/other.ts`](../../../../../packages/fx-core/src/question/other.ts).
+- Injection payload: `ActionInjector.injectCreateOAuthActionForMCP` in [`packages/fx-core/src/component/configManager/actionInjector.ts`](../../../../../packages/fx-core/src/component/configManager/actionInjector.ts).
+- DCR driver: [`packages/fx-core/src/component/driver/dcr/create.ts`](../../../../../packages/fx-core/src/component/driver/dcr/create.ts) &mdash; **no `QuestionMW`**.
 
 ### Idempotency gate (applies to all auth types)
 
@@ -231,7 +238,7 @@ Notes:
   - `env/.env.dev`: `MCP_DA_OAUTH_CLIENT_ID_<SERVERNAME>=...` (+ existing `MCP_DA_AUTH_ID_<SERVERNAME>=`).
   - `m365agents.yml`: `actionInjector` adds `clientId: ${{MCP_DA_OAUTH_CLIENT_ID_<SERVERNAME>}}` to the `with:` block.
 
-  **Today** `actionInjector` omits all three fields and the driver falls back to dash-cased `process.env["oauth-client-id"]` / `oauth-client-secret` / `oauth-scope`, which is an in-process bridge populated by the create-flow `QuestionMW`. Once env-file persistence is in place and YAML references the UPPER_SNAKE names, that fallback in [`packages/fx-core/src/component/driver/oauth/create.ts`](../../../../packages/fx-core/src/component/driver/oauth/create.ts) becomes legacy and provision asks zero questions on first run.
+  **Today** `actionInjector` omits all three fields and the driver falls back to dash-cased `process.env["oauth-client-id"]` / `oauth-client-secret` / `oauth-scope`, which is an in-process bridge populated by the create-flow `QuestionMW`. Once env-file persistence is in place and YAML references the UPPER_SNAKE names, that fallback in [`packages/fx-core/src/component/driver/oauth/create.ts`](../../../../../packages/fx-core/src/component/driver/oauth/create.ts) becomes legacy and provision asks zero questions on first run.
 
 ```mermaid
 flowchart TD
@@ -248,6 +255,45 @@ flowchart TD
   AskEntra --> Register([Call Graph: register OAuth, write configurationId back to env])
   AskConfirm --> Register
 ```
+
+## User-visible outputs
+
+### File changes
+
+- Both surfaces generate the standard DA project scaffold, summarized as `appPackage/manifest.json`, the declarative agent manifest, lifecycle files, `.vscode/mcp.json`, and the stock project files shared by DA templates.
+- With `TEAMSFX_MCP_FOR_DA_DT=true`, `appPackage/ai-plugin.json` contains an MCP runtime whose `spec` has the entered server URL and no `mcp_tool_description`, whose `run_for_functions` is `["*"]`, and whose `functions` list is empty. `appPackage/declarativeAgent.json` references `action_1`. No `appPackage/mcp-tools-1.json` is created.
+- With DT disabled, the scenario describes the shipped compatibility shape: a static `appPackage/mcp-tools-1.json` is created and the action manifest's `functions` are populated.
+- Static OAuth and Entra SSO inject `oauth/register`; dynamic OAuth injects `dcr/register` and upgrades `m365agents.yml` to schema `v1.13`; `None` injects no registration action.
+- When DCR metadata discovery fails, `dcr/register.with.wellKnownAuthorizationServer` contains `<PLEASE_FILL_IN_WELL_KNOWN_AUTHORIZATION_SERVER_URL>` until the developer replaces it. Cancellation before generation leaves no partially accepted project.
+
+### Notifications and prompts
+
+- The guided flow includes the Declarative Agent/template/action-source picks, conditional MCP server type and server selection or URL, authentication type, auth-dependent fields, project location, and application name.
+- DCR discovery failure surfaces a warning that the well-known authorization server placeholder must be replaced before provision. Exact success and warning copy is not specified in this Markdown contract.
+
+### Error and recovery messages
+
+- Invalid app name, unavailable location, invalid MCP server URL, missing static OAuth client ID or secret, missing Entra SSO client ID, and missing non-interactive options produce a correctable validation error. Exact message text is not specified.
+- A DCR discovery failure is recoverable after generation by replacing the placeholder URL before provision. Cancelling before generation writes no partial project.
+
+### Environment and secret writes
+
+- Static OAuth writes `MCP_DA_OAUTH_CLIENT_ID_<SERVER>` and `MCP_DA_OAUTH_SCOPE_<SERVER>` to `env/.env.dev`, writes `SECRET_MCP_DA_OAUTH_CLIENT_SECRET_<SERVER>` to gitignored `env/.env.dev.user`, and references them from `m365agents.yml`.
+- Entra SSO writes `MCP_DA_OAUTH_CLIENT_ID_<SERVER>` to `env/.env.dev` and references it from `m365agents.yml`. Dynamic OAuth and `None` write no credential entries during create.
+- Provision writes `MCP_DA_AUTH_ID_<SERVER>` after registration. When that configuration ID already exists for the environment, re-provision skips the registration prompts.
+
+### External side effects
+
+- The local branch reads servers discovered through `odr.exe`; the remote DCR branch probes the MCP server and follows its authorization metadata to discover the well-known authorization server URL.
+- Provision, not scaffolding, creates the OAuth configuration through Graph/Developer Portal or performs dynamic client registration. Static OAuth requires a pre-registered client, and Entra SSO requires an existing Entra application client ID.
+
+## Open questions
+
+- The prose requires both DT and DCR for `oauth-dynamic`, while the CLI Mermaid gates the value on DCR alone. Which condition is the intended CLI contract?
+- Is the DT-off static-tools branch part of this redesigned scenario? The state description includes it, while Validation notes declare static tools out of scope.
+- Are the static OAuth and Entra values persisted from user input, or are literal placeholders generated for later replacement? The current wording uses both meanings.
+- Should the success state say `ready to provision` when failed DCR discovery leaves a blocking placeholder?
+- Which account, tenant, license, and administrator owns the static OAuth, Entra SSO, and dynamic registration prerequisites?
 
 ## Validation notes
 

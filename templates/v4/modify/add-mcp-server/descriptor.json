@@ -19,22 +19,8 @@
     "properties": {
       "mcpServerUrl": { "type": "string", "format": "uri" },
       "teamsManifestPath": { "type": "string", "default": "appPackage/manifest.json" },
-      "authType": { "enum": ["none", "oauth", "entra-sso", "oauth-dynamic"], "default": "none" },
-      "oauthClientId": { "type": "string" },
-      "oauthClientSecret": { "type": "string" },
-      "oauthScopes": { "type": "string" },
-      "entraClientId": { "type": "string" }
+      "authType": { "enum": ["none", "oauth", "entra-sso", "oauth-dynamic"], "default": "none" }
     },
-    "allOf": [
-      {
-        "if": { "properties": { "authType": { "const": "oauth" } } },
-        "then": { "required": ["oauthClientId", "oauthClientSecret"] }
-      },
-      {
-        "if": { "properties": { "authType": { "const": "entra-sso" } } },
-        "then": { "required": ["entraClientId"] }
-      }
-    ],
     "additionalProperties": false
   },
 

@@ -97,5 +97,6 @@
   "template.officeAddin.hosts.outlook.label": "Outlook",
   "template.officeAddin.hosts.excel.label": "Excel",
   "template.officeAddin.naaHost.title": "Select the Office application to support",
-  "template.officeAddin.naaHost.placeholder": "Select an Office application"
+  "template.officeAddin.naaHost.placeholder": "Select an Office application",
+  "template.officeAddin.hosts.validation.minItems": "Select at least one Office application to continue."
 }

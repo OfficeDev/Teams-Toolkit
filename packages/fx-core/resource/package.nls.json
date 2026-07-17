@@ -1165,6 +1165,7 @@
   "core.MCPForDA.updatePluginManifest": "The operations selected from your MCP server are successfully added for Copilot to interact with. You can go to the '%s' to check on details. Now you are able to provision your declarative agent to continue.",
   "core.MCPForDA.mcpAuthMetadataMissingError": "Unable to find the authentication metadata in the MCP server. Please make sure your MCP server is configured correctly and try again. Details: %s",
   "core.MCPForDA.mcpAuthDcrPlaceholderWarning": "Unable to discover the OAuth well-known authorization server URL for MCP server '%s'. The 'dcr/register' action was added to m365agents.yml with a placeholder — replace '<PLEASE_FILL_IN_WELL_KNOWN_AUTHORIZATION_SERVER_URL>' with the correct URL before provisioning.",
+  "core.v4.scaffold.existingFileSkipped": "'%s' exists and was not overwritten. Delete or rename it to rebuild the file.",
   "core.MCPForDA.mcpAuthMetadataUrlNotFound": "Unable to find the authentication metadata from property \"resource_metadata\" from response of the MCP server.",
   "core.MCPForDA.mcpServerMetadataUrlNotFound": "Unable to find the server metadata from property \"authorization_servers\" from repsonse of the Protected Resource Metadata of the MCP server.",
   "core.MCPForDA.authUrlNotFound": "Unable to find the authentication URL(s) from response of Authorization Server Metadata of the MCP server.",

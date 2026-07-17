@@ -18,16 +18,22 @@ const DELIMITERS: [string, string] = ["{{", "}}"];
 // Private-use sentinels keep producer-less tokens inert through Mustache.
 const SENTINEL_OPEN = "\uE000";
 const SENTINEL_CLOSE = "\uE001";
+const VALUE_SENTINEL_OPEN = "\uE002";
+const VALUE_SENTINEL_CLOSE = "\uE003";
 
 // Bare value tokens only; section/comment/partial tags carry a rejected sigil.
 const VALUE_TOKEN = /\{\{\s*([A-Za-z_][A-Za-z0-9_.]*)\s*\}\}/g;
 const SENTINEL_TOKEN = /\uE000([^\uE001]+)\uE001/g;
+const VALUE_SENTINEL_TOKEN = /\uE002([^\uE003]+)\uE003/g;
 
 export function renderMustache(template: string, renderVars: RenderVars): Result<string, FxError> {
-  // Protect producer-less value tokens so Mustache cannot erase them.
-  const guarded = template.replace(VALUE_TOKEN, (match: string, name: string) =>
-    name in renderVars ? match : `${SENTINEL_OPEN}${name}${SENTINEL_CLOSE}`
-  );
+  // Protect producer-less tokens and exact flat dotted keys from Mustache's nested lookup.
+  const guarded = template.replace(VALUE_TOKEN, (match: string, name: string) => {
+    if (!(name in renderVars)) {
+      return `${SENTINEL_OPEN}${name}${SENTINEL_CLOSE}`;
+    }
+    return name.includes(".") ? `${VALUE_SENTINEL_OPEN}${name}${VALUE_SENTINEL_CLOSE}` : match;
+  });
 
   const previousEscape = Mustache.escape;
   Mustache.escape = (value) => value; // no HTML escaping — URLs and ${{…}} refs pass through
@@ -49,6 +55,12 @@ export function renderMustache(template: string, renderVars: RenderVars): Result
   }
 
   // Restore protected producer-less tokens verbatim.
-  const result = rendered.replace(SENTINEL_TOKEN, (_match: string, name: string) => `{{${name}}}`);
+  const restoredMissing = rendered.replace(
+    SENTINEL_TOKEN,
+    (_match: string, name: string) => `{{${name}}}`
+  );
+  const result = restoredMissing.replace(VALUE_SENTINEL_TOKEN, (_match: string, name: string) =>
+    String(renderVars[name])
+  );
   return ok(result);
 }

@@ -3,8 +3,8 @@
 
 import { FxError, Inputs, UserError, UserInteraction } from "@microsoft/teamsfx-api";
 import { Result, err, ok } from "neverthrow";
-import { MCPFetchResult, fetchMCPTools } from "../../component/utils/mcpToolFetcher";
-import { ODRProvider, type ODRServer } from "../../component/utils/odrProvider";
+import { MCPFetchResult, fetchMCPTools } from "../../common/mcpToolFetcher";
+import { ODRProvider, type ODRServer } from "../../common/odrProvider";
 import { readBooleanFeatureFlag } from "../../common/featureFlags";
 import { SearchOpenAPISpecResult, searchOpenAPISpec } from "../../common/kiotaClient";
 import {

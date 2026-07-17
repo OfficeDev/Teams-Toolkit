@@ -1,6 +1,6 @@
 {
   "pipeline": "default",
-  "comment": "Render produces the base DA project files. On CLI, the static MCP step materializes selected tools into appPackage/mcp-tools-1.json and rewrites appPackage/ai-plugin.json to the legacy static RemoteMCPServer runtime shape. VS Code create skips static tool materialization and leaves tool fetch/update to the MCP CodeLens flow.",
+  "comment": "Render produces the base DA project files. On CLI, the static MCP step materializes selected tools into appPackage/mcp-tools-1.json and rewrites appPackage/ai-plugin.json to the legacy static RemoteMCPServer runtime shape. VS Code create skips static tool materialization and leaves tool fetch/update to the MCP CodeLens flow. The final feature-gated step optionally applies the sensitivity label.",
   "steps": [
     {
       "step": "require-empty-target",
@@ -16,6 +16,13 @@
         "toolsFilePath": "{{mcpToolsFilePath}}",
         "toolsJson": "{{mcpToolsJson}}",
         "selected": "{{selectedMcpTools}}"
+      }
+    },
+    {
+      "step": "da/set-sensitivity-label",
+      "when": "featureFlag('TEAMSFX_SENSITIVITY_LABEL')",
+      "with": {
+        "manifestPath": "appPackage/declarativeAgent.json"
       }
     }
   ]

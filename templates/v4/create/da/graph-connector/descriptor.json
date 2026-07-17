@@ -3,7 +3,7 @@
   "id": "da/graph-connector",
   "name": "Declarative Agent with Graph Connector",
   "languages": ["common"],
-  "minEngineVersion": "5.20.0",
+  "minEngineVersion": "6.11.0",
   "spec": "docs/03-specs/scenarios/da/create-graph-connector.md",
   "requiresNetwork": false,
 

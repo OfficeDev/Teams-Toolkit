@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+import { SystemError, UserError } from "@microsoft/teamsfx-api";
 import fs from "fs-extra";
 import { merge } from "lodash";
 import path from "path";
@@ -9,21 +10,28 @@ import templateConfig from "../../common/templates-config.json";
 import {
   Answers,
   CallerFloor,
+  CURRENT_V4_ENGINE_VERSION,
   DeclarativeLocator,
   TemplateFileEntry,
   TemplateLocator,
   TemplateSource,
   createRealRuntime,
-  openDeclarativePackage,
   scaffold,
 } from "../../v4";
 import * as bundledFloorMod from "../../v4/distribution/bundledFloor";
 import * as templatePackageMod from "../../v4/distribution/templatePackage";
 import * as templateSourceMod from "../../v4/distribution/templateSource";
 import * as templateSourcePortMod from "../../v4/distribution/templateSourcePort";
+import { StepRegistry } from "../../v4/runtime/runtimeRegistry";
+import * as templateArchiveValidationMod from "../../v4/validation/templateArchiveValidation";
 import { defaultTryLimits } from "./constant";
 import { TemplateOutputPathError } from "./error";
 import { GeneratorContext } from "./generatorAction";
+
+const templateArchiveErrors = {
+  user: (name: string, message: string) => new UserError({ source: "Scaffold", name, message }),
+  system: (name: string, message: string) => new SystemError({ source: "Scaffold", name, message }),
+};
 
 export const v4TemplateBridgeDeps = {
   createTemplateSourcePort: templateSourcePortMod.createTemplateSourcePort,
@@ -31,6 +39,20 @@ export const v4TemplateBridgeDeps = {
   resolveLocalTemplateSource: templateSourceMod.resolveLocalTemplateSource,
   loadResolvedPackage: templateSourcePortMod.loadResolvedPackage,
   openTemplatePackage: templatePackageMod.openTemplatePackage,
+  validateDeclarativePackageArchive: (
+    bytes: Buffer,
+    locator: DeclarativeLocator,
+    mode: "build" | "load",
+    engineVersion: string
+  ) =>
+    templateArchiveValidationMod.validateDeclarativePackageArchive(
+      bytes,
+      locator,
+      mode,
+      engineVersion,
+      templateArchiveErrors
+    ),
+  engineVersion: (): string => CURRENT_V4_ENGINE_VERSION,
 };
 
 export interface ResolvedV4ChannelPackage {
@@ -229,11 +251,17 @@ export async function scaffoldDeclarativeFromV4Channel(
   callerFloor: CallerFloor,
   telemetryProps?: Record<string, string>,
   flagReader?: (name: string) => boolean,
-  resolvedPackage?: ResolvedV4ChannelPackage
+  resolvedPackage?: ResolvedV4ChannelPackage,
+  stepRegistry?: StepRegistry
 ): Promise<TemplateSource> {
   const { source, bytes } = resolveChannelPackageBytes(context, telemetryProps, resolvedPackage);
 
-  const loaded = openDeclarativePackage(bytes, locator);
+  const loaded = v4TemplateBridgeDeps.validateDeclarativePackageArchive(
+    bytes,
+    locator,
+    "load",
+    v4TemplateBridgeDeps.engineVersion()
+  );
   if (loaded.isErr()) {
     throw loaded.error;
   }
@@ -248,7 +276,9 @@ export async function scaffoldDeclarativeFromV4Channel(
       callerFloor,
       targetDir: { path: context.destination, existing },
     },
-    createRealRuntime(context.destination, flagReader)
+    createRealRuntime(context.destination, flagReader, stepRegistry, (message) =>
+      context.logProvider.warning(message)
+    )
   );
   if (result.isErr()) {
     throw result.error;

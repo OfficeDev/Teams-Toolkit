@@ -27,11 +27,14 @@ If local setup, image build, runner install, or credentials are missing, use the
 
 ## Core Rules
 
+- Before launching a local run, compare the plan with its owning docs/scenario and the current implementation. Repair deterministic drift first: changed question order, removed flows, required feature flags, generated-file expectations, and over-broad shared groups. Use live execution to validate that static repair and to investigate visual or timing ambiguity, not to rediscover differences already explicit in source.
+- Use the narrowest login group required by the scenario. A Microsoft 365-only scaffold/provision flow must use an M365-only login group; include Azure login only when the case creates, reads, or deploys Azure resources.
 - Use a real `vscuse execute` run. Do not mock the UI flow.
 - After the first failure is classified, start `vscuse-ui` before any second full CLI run. It is the required workbench for live inspection, recording changed steps, refreshing visual checks, and demonstrating the repaired flow.
 - Open the integrated browser to the Web UI at `http://127.0.0.1:6082` and keep its embedded noVNC view visible while repairing. Also provide `http://127.0.0.1:6080/vnc.html` when a separate full-size live view is useful. Tell the user both URLs as soon as the services are ready.
 - Do not repeatedly run the complete create/login/provision/deploy workflow through `vscuse execute` while diagnosing plan drift. Use `Run`, `Continue`, and `Next` in `vscuse-ui` to iterate near the failing area, then use one clean CLI run for final validation.
 - Still finish with `vscuse execute`. A plan is not validated until it passes a clean CLI run or the remaining failure is explicitly classified.
+- For every local `vscuse execute`, use the repository-root artifact command from `local-vscuse-validation`: create a unique `.local/test-reports/<timestamp>-<plan-name>/` directory, pass it with `--report-dir`, and stream unbuffered output to `run.log`. Never overwrite the first failure with a retry.
 - Show the live execution through the integrated browser at `http://localhost:6080/vnc.html` when the user asks to demonstrate the process.
 - noVNC is a live view of the running container, not a replay. Open it while execution is still running.
 - Do not screenshot or print secrets, passwords, tokens, tenant secrets, or generated API keys.
@@ -51,7 +54,9 @@ If local setup, image build, runner install, or credentials are missing, use the
 
 ### 1. Locate the Owning Case
 
-Find the plan and any shared groups it expands. Prefer the smallest owning surface:
+Read the owning docs/scenario and current implementation, then find the plan and any shared groups it expands. Before running, statically compare the documented question order, feature flags, generated artifacts, removed legacy flows, login/resource prerequisites, and the plan's execution order. Fix clear mismatches immediately, then use the first local run as validation rather than discovery.
+
+Prefer the smallest owning surface:
 
 - Edit the plan when only that case is affected.
 - Edit a shared group when the drift belongs to a reused flow and should affect all consumers.
@@ -111,11 +116,7 @@ Check only whether required secrets are set, never their values:
 
 ### 3. Execute the Focused Plan
 
-```powershell
-Push-Location packages/tests/vscuse/vscode-test-cases
-vscuse execute --config-file .\config.yaml --groups-dir groups .\plans\<plan-name>.json
-Pop-Location
-```
+Use the complete repository-root artifact command under **Execute a Local Test Plan** in `local-vscuse-validation`, substituting the focused plan path. Confirm the resulting run directory contains both `run.log` and `test_report.html` before interpreting or editing the case.
 
 When the user needs to see the process, open the integrated browser to `http://localhost:6080/vnc.html`, click `Connect`, and keep it visible near the failing area.
 
@@ -125,7 +126,7 @@ Use the report and terminal logs to capture:
 
 - Plan id and execution id.
 - Failing expanded step id and nearby previous step.
-- Report path, usually `packages/tests/vscuse/vscode-test-cases/test_report/test_report.html`.
+- Repository-relative paths to the run-specific `.local/test-reports/<timestamp>-<plan-name>/run.log` and `test_report.html`. The runner's transient `test_report/test_report.html` is not the archived evidence.
 - Before/after screenshots and assertion reasoning.
 - Whether the local image and `TEMPLATE_VERSION=local` were used.
 - Declared and applied feature flags, by name and non-secret value only.
@@ -194,4 +195,4 @@ Run the same focused plan again. Final report should include:
 - Failure classification.
 - Feature flags declared by the plan and whether they were applied.
 - Files changed and why.
-- Final execution summary: successful count, errors count, and report path.
+- Final execution summary: successful count, errors count, and repository-relative paths to the archived log and HTML report.

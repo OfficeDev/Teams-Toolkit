@@ -4,7 +4,7 @@
 import { ExpressionRuntimePort } from "../expression/evaluateExpression";
 import { PipelineRuntimePort } from "../pipeline/runScaffoldPipeline";
 import { createExpressionPort } from "./whitelist";
-import { FileSink, buildPipelinePort } from "./runtimeRegistry";
+import { FileSink, StepRegistry, buildPipelinePort } from "./runtimeRegistry";
 
 /** Pure in-memory scaffold runtime. See ADR-0018. */
 
@@ -19,7 +19,10 @@ export interface InMemoryRuntime {
 }
 
 /** Build an in-memory runtime. */
-export function createInMemoryRuntime(flagReader?: (name: string) => boolean): InMemoryRuntime {
+export function createInMemoryRuntime(
+  flagReader?: (name: string) => boolean,
+  stepRegistry?: StepRegistry
+): InMemoryRuntime {
   const files = new Map<string, Buffer>();
   const exprPort = createExpressionPort(flagReader);
   const sink: FileSink = {
@@ -28,6 +31,6 @@ export function createInMemoryRuntime(flagReader?: (name: string) => boolean): I
     },
     read: (path: string): Buffer | undefined => files.get(path),
   };
-  const port = buildPipelinePort(exprPort, sink);
+  const port = buildPipelinePort(exprPort, sink, stepRegistry);
   return { port, files, exprPort };
 }

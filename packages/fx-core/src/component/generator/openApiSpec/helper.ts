@@ -15,7 +15,6 @@ import {
   ErrorType,
   InvalidAPIInfo,
   ListAPIInfo,
-  ParseOptions,
   ProjectType,
   SpecParser,
   SpecParserError,
@@ -50,6 +49,7 @@ import * as util from "util";
 import { SpecParserSource } from "../../../common/constants";
 import { featureFlagManager, FeatureFlags } from "../../../common/featureFlags";
 import { getLocalizedString } from "../../../common/localizeUtils";
+import { getParserOptions } from "../../../common/openApiParserOptions";
 import {
   ApiSpecTelemetryPropertis,
   sendTelemetryErrorEvent,
@@ -99,62 +99,7 @@ const enum telemetryEvents {
   failedToGetGenerateWarning = "failed-to-get-generate-warning",
 }
 
-export function getParserOptions(
-  type: ProjectType,
-  isDeclarativeAgent?: boolean,
-  platform?: string
-): ParseOptions {
-  return type === ProjectType.Copilot
-    ? {
-        isGptPlugin: isDeclarativeAgent,
-        allowAPIKeyAuth: false,
-        allowBearerTokenAuth: !!platform && platform === Platform.VS ? false : true,
-        allowMultipleParameters: true,
-        allowOauth2: !!platform && platform === Platform.VS ? false : true,
-        projectType: ProjectType.Copilot,
-        allowMissingId: true,
-        allowSwagger: true,
-        allowMethods: [
-          "get",
-          "post",
-          "put",
-          "delete",
-          "patch",
-          "head",
-          "connect",
-          "options",
-          "trace",
-        ],
-        allowResponseSemantics: true,
-        allowConversationStarters: false, // Conversation starters in the plugin file are no longer used; they are now sourced from the declarativeAgent file.
-        allowConfirmation: false, // confirmation is not stable for public preview in Sydney, so it's temporarily set to false
-      }
-    : type === ProjectType.TeamsAi
-      ? {
-          allowAPIKeyAuth: true,
-          allowBearerTokenAuth: true,
-          allowMultipleParameters: true,
-          allowOauth2: true,
-          projectType: ProjectType.TeamsAi,
-          allowMethods: [
-            "get",
-            "post",
-            "put",
-            "delete",
-            "patch",
-            "head",
-            "connect",
-            "options",
-            "trace",
-          ],
-        }
-      : {
-          projectType: type,
-          allowBearerTokenAuth: !!platform && platform === Platform.VS ? false : true, // Currently, API key auth support is actually bearer token auth
-          allowMultipleParameters: true,
-          allowOauth2: featureFlagManager.getBooleanValue(FeatureFlags.SMEOAuth),
-        };
-}
+export { getParserOptions } from "../../../common/openApiParserOptions";
 
 export const specParserGenerateResultTelemetryEvent = "spec-parser-generate-result";
 export const specParserGenerateResultAllSuccessTelemetryProperty = "all-success";

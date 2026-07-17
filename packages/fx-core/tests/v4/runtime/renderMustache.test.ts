@@ -21,6 +21,18 @@ describe("v4 runtime — renderMustache", () => {
     }
   });
 
+  it("AC-25: substitutes a flat provider-derived token by its exact key", () => {
+    const catalog = JSON.stringify({ ghmcp: { command: "npx", args: [] } });
+    const result = renderMustache("{{derived.mcp.serverTypes.catalog}}", {
+      "derived.mcp.serverTypes.catalog": catalog,
+    });
+
+    assert.isTrue(result.isOk());
+    if (result.isOk()) {
+      assert.strictEqual(result.value, catalog);
+    }
+  });
+
   it("leaves an env ref `${{APP_NAME_SUFFIX}}` literal (no producer, resolved at provision)", () => {
     const result = renderMustache("{{appName}}${{APP_NAME_SUFFIX}}", { appName: "Contoso" });
     assert.isTrue(result.isOk());

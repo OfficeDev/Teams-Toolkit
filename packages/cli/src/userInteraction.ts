@@ -488,7 +488,7 @@ class CLIUserInteraction implements UserInteraction {
     if (loadRes.isErr()) return err(loadRes.error);
     return this.inputText({
       ...config.inputBoxConfig,
-      validation: config.validation,
+      additionalValidationOnAccept: config.validation,
     });
   }
   public async selectFile(config: SelectFileConfig): Promise<Result<SelectFileResult, FxError>> {

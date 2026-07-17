@@ -208,7 +208,12 @@ export function officeAddinHostsQuestion(): MultiSelectQuestion {
       hostOption("excel", "template.officeAddin.hosts.excel.label"),
     ],
     default: ["word", "powerpoint", "outlook", "excel"],
-    validation: { minItems: 1 },
+    validation: {
+      validFunc: (input: string[]) =>
+        input && input.length > 0
+          ? undefined
+          : getLocalizedString("template.officeAddin.hosts.validation.minItems"),
+    },
   };
 }
 

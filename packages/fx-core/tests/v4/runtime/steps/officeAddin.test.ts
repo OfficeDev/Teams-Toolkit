@@ -6,7 +6,7 @@ import * as fs from "fs-extra";
 import * as os from "os";
 import * as path from "path";
 import { StepContext } from "../../../../src/v4/pipeline/runScaffoldPipeline";
-import { STEP_REGISTRY } from "../../../../src/v4/runtime/runtimeRegistry";
+import { NOOP_MANIFEST_WRAPPER, STEP_REGISTRY } from "../../../../src/v4/runtime/runtimeRegistry";
 import {
   STEP_IMPORT_EXISTING_OFFICE_ADDIN_PROJECT,
   officeAddinImportExistingProject,
@@ -34,7 +34,7 @@ function makeCtx(initial: Record<string, string> = {}): {
       write: (filePath, data) => {
         files.set(filePath, data);
       },
-      manifestWrapper: () => ({ addAction: () => undefined }),
+      manifestWrapper: () => NOOP_MANIFEST_WRAPPER,
     },
   };
 }

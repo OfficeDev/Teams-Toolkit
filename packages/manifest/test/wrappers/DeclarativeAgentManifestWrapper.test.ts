@@ -87,6 +87,20 @@ describe("DeclarativeAgentManifestWrapper", () => {
       assert.equal(agent.name, "Chained Name");
       assert.equal(agent.instructions, "Be helpful");
     });
+
+    it("should set a sensitivity label and mark dirty", () => {
+      const agent = DeclarativeAgentManifestWrapper.create({
+        version: "v1.6",
+        name: "Test",
+        description: "Test",
+      });
+
+      const result = agent.setSensitivityLabel("general-label-id");
+
+      assert.strictEqual(result, agent);
+      assert.deepEqual(agent.sensitivityLabel, { id: "general-label-id" });
+      assert.isTrue(agent.isDirty);
+    });
   });
 
   describe("action operations", () => {
@@ -102,6 +116,21 @@ describe("DeclarativeAgentManifestWrapper", () => {
       assert.isTrue(agent.hasAction("action1"));
       assert.equal(agent.actions.length, 1);
       assert.equal(agent.getAction("action1")?.file, "plugin.json");
+    });
+
+    it("should upsert an action by plugin path", () => {
+      const agent = DeclarativeAgentManifestWrapper.create({
+        version: "v1.6",
+        name: "Test",
+        description: "Test",
+      });
+
+      agent.addAction("old-id", "plugin.json").upsertAction("new-id", "plugin.json");
+
+      assert.equal(agent.actions.length, 1);
+      assert.equal(agent.actions[0].id, "new-id");
+      assert.equal(agent.actions[0].file, "plugin.json");
+      assert.isTrue(agent.isDirty);
     });
 
     it("should remove actions", () => {

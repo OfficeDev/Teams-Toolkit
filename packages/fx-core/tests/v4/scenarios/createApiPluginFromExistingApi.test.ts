@@ -127,7 +127,7 @@ describe("SCN-DA-CREATE-API-PLUGIN-FROM-EXISTING-API (v4, T3 InMemoryRuntime)", 
       "require-empty-target",
       "openapi/generate-plugin-files",
     ]);
-    assert.isEmpty(outcome.stepsSkipped);
+    assert.deepStrictEqual(outcome.stepsSkipped, ["da/set-sensitivity-label"]);
   });
 
   it("SCN-CREATE-APIPLUGIN-OPENAPI-06: a non-empty target fails require-empty-target first and writes nothing", async () => {

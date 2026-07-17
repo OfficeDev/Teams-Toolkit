@@ -171,6 +171,53 @@ describe("APIPluginManifestWrapper", () => {
 
       assert.deepEqual(plugin.getApiSpecPaths(), ["keep.yaml"]);
     });
+
+    it("should materialize Remote MCP tools by replacing functions and runtimes", () => {
+      const plugin = APIPluginManifestWrapper.create({
+        schemaVersion: "v2.4",
+        nameForHuman: "Test",
+        descriptionForHuman: "Test",
+      });
+      plugin.addFunction("old").addOpenApiRuntime("old.yaml");
+
+      plugin.materializeRemoteMcpTools(
+        [{ name: "search", description: "Search records" }],
+        "https://api.example.com/mcp",
+        "mcp-tools-1.json"
+      );
+
+      assert.deepEqual(plugin.functions, [{ name: "search", description: "Search records" }]);
+      assert.deepEqual(plugin.runtimes, [
+        {
+          type: "RemoteMCPServer",
+          auth: { type: "None" },
+          spec: {
+            url: "https://api.example.com/mcp",
+            mcp_tool_description: { file: "mcp-tools-1.json" },
+          },
+          run_for_functions: ["search"],
+        },
+      ]);
+      assert.isTrue(plugin.isDirty);
+    });
+
+    it("should return plugin conversation starter text", () => {
+      const plugin = APIPluginManifestWrapper.fromJSON(
+        JSON.stringify({
+          schema_version: "v2.4",
+          name_for_human: "Test",
+          description_for_human: "Test",
+          namespace: "test",
+          functions: [],
+          runtimes: [],
+          capabilities: {
+            conversation_starters: [{ text: "Find pets" }, { text: "List owners" }],
+          },
+        })
+      );
+
+      assert.deepEqual(plugin.getConversationStarterTexts(), ["Find pets", "List owners"]);
+    });
   });
 
   describe("runtime operations - LocalPlugin", () => {

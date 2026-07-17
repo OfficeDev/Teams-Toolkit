@@ -1,9 +1,16 @@
 {
   "pipeline": "default",
-  "comment": "Declarative agent with a local agent skill: pure render. The single require-empty-target step guards the create contract so render writes every file. No post-render injection - the skill is declared in declarativeAgent.json and lives under appPackage/skills/hello-atk.",
+  "comment": "Render writes the local agent skill declared in declarativeAgent.json under appPackage/skills/hello-atk. require-empty-target guards the create contract; the feature-gated sensitivity step owns the only optional post-render mutation.",
   "steps": [
     {
       "step": "require-empty-target"
+    },
+    {
+      "step": "da/set-sensitivity-label",
+      "when": "featureFlag('TEAMSFX_SENSITIVITY_LABEL')",
+      "with": {
+        "manifestPath": "appPackage/declarativeAgent.json"
+      }
     }
   ]
 }
