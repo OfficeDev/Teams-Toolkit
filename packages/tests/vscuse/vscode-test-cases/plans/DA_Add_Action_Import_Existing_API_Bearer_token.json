@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2.0,
       "step_retry_timeout": 0.0
     },
-    "total_steps": 12,
+    "total_steps": 14,
     "created_at": "2026-05-11T05:20:11.967556",
     "name": "DA Add Action Import Existing API Bearer token",
     "description": {
@@ -37,6 +37,8 @@
       "step_98415422",
       "step_0b5dc130",
       "plan_r_1021_031941",
+      "step_c17b9e40",
+      "step_d28c1a55",
       "plan_r_0928_091745"
     ],
     "tags": [],
@@ -339,6 +341,52 @@
       ],
       "screenshot": null,
       "created_at": "2026-05-11T05:20:12.359683",
+      "plan_id": "plan_d847597e"
+    },
+    {
+      "step_id": "step_c17b9e40",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "esc"
+      },
+      "description": "Press Esc to dismiss the \"This agent is not installed\" modal that reappears on the M365 Copilot deep-link after the debug F5 refresh, then wait so the freshly-provisioned agent finishes installing before the page is reloaded.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "force_run:true",
+        "delay:45"
+      ],
+      "screenshot": "",
+      "created_at": "2026-07-17T04:33:26.000000",
+      "plan_id": "plan_d847597e"
+    },
+    {
+      "step_id": "step_d28c1a55",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "f5"
+      },
+      "description": "Press F5 to reload the M365 Copilot deep-link after the agent has had time to install, so the active agent header (vscuse_app_...) renders instead of the \"This agent is not installed\" modal.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "force_run:true",
+        "delay:15"
+      ],
+      "screenshot": "",
+      "created_at": "2026-07-17T04:33:26.000000",
       "plan_id": "plan_d847597e"
     }
   ],
