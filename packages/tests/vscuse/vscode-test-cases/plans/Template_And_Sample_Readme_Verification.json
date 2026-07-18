@@ -102,7 +102,7 @@
       "step_9bda13ac"
     ],
     "tags": [],
-    "updated_at": "2026-07-18T03:33:00.000000"
+    "updated_at": "2026-07-18T03:50:00.000000"
   },
   "steps": [
     {
@@ -484,7 +484,8 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "delay: 5"
+        "delay: 10",
+        "step_retry_timeout:60"
       ],
       "screenshot": null,
       "created_at": "2026-06-25T07:16:13.006034",
@@ -698,7 +699,8 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "delay: 5"
+        "delay: 10",
+        "step_retry_timeout:60"
       ],
       "screenshot": null,
       "created_at": "2026-06-25T07:16:13.094735",
@@ -1150,7 +1152,8 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "delay: 5"
+        "delay: 10",
+        "step_retry_timeout:60"
       ],
       "screenshot": null,
       "created_at": "2026-06-25T07:16:13.287918",
@@ -1472,7 +1475,8 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "delay:10"
+        "delay: 10",
+        "step_retry_timeout:60"
       ],
       "screenshot": null,
       "created_at": "2026-06-25T07:16:13.422674",
@@ -1570,7 +1574,8 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "delay: 5"
+        "delay: 10",
+        "step_retry_timeout:60"
       ],
       "screenshot": null,
       "created_at": "2026-06-25T07:16:13.474574",
@@ -1668,7 +1673,8 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "delay: 5"
+        "delay: 10",
+        "step_retry_timeout:60"
       ],
       "screenshot": null,
       "created_at": "2026-06-25T07:16:13.500482",
@@ -1766,7 +1772,8 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "delay: 5"
+        "delay: 10",
+        "step_retry_timeout:60"
       ],
       "screenshot": null,
       "created_at": "2026-06-25T07:16:13.550682",
@@ -1864,7 +1871,8 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "delay: 5"
+        "delay: 10",
+        "step_retry_timeout:60"
       ],
       "screenshot": null,
       "created_at": "2026-06-25T07:16:13.595308",
@@ -1962,7 +1970,8 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "delay: 5"
+        "delay: 10",
+        "step_retry_timeout:60"
       ],
       "screenshot": null,
       "created_at": "2026-06-25T07:16:13.636217",
