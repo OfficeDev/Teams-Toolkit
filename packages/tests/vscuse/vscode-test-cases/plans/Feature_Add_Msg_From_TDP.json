@@ -42,6 +42,7 @@
       "step_0ef533d1",
       "step_f418ba99",
       "step_bd2a6448",
+      "step_add1c0de",
       "plan_7a23bf2d"
     ],
     "tags": [],
@@ -474,6 +475,28 @@
       "tags": [],
       "screenshot": "step_bd2a6448",
       "created_at": "2026-04-20T06:39:48.677440",
+      "plan_id": "plan_c1d70c10"
+    },
+    {
+      "step_id": "step_add1c0de",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 178,
+        "y": 438
+      },
+      "description": "Click the self-chat (your own '... (You)' entry) at the top of the Favorites list in the Microsoft Teams chat sidebar to open a chat with an enabled message composer, so the messaging extension can be exercised via the 'Actions and apps' (+) button. The previously active CoffeeAgent bot chat shows 'You cannot send messages to this bot' and cannot host the compose flyout.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
+      "created_at": "2026-07-18T03:21:00.000000",
       "plan_id": "plan_c1d70c10"
     }
   ],
