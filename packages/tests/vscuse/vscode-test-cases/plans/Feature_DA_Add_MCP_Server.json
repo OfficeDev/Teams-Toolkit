@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 32,
+    "total_steps": 34,
     "created_at": "2026-04-29T01:53:48.839740",
     "name": "Feature DA Add MCP Server",
     "description": {
@@ -29,6 +29,8 @@
       "step_65a023ae",
       "step_d663e3c7",
       "step_05f52ced",
+      "step_mcp_none_auth_type",
+      "step_mcp_none_auth_confirm",
       "step_8ed7fa60",
       "step_0ac4cc68",
       "step_09221a52",
@@ -57,7 +59,7 @@
       "step_91bf97ae"
     ],
     "tags": [],
-    "updated_at": "2026-04-29T04:31:06.697493"
+    "updated_at": "2026-07-18T02:57:44.000000"
   },
   "steps": [
     {
@@ -232,6 +234,46 @@
       "tags": [],
       "screenshot": "step_05f52ced",
       "created_at": "2026-04-29T02:21:58.755266",
+      "plan_id": "plan_b3d73b8c"
+    },
+    {
+      "step_id": "step_mcp_none_auth_type",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "None"
+      },
+      "description": "Type 'None' into the Select Authentication Type quick pick that appears after entering the MCP server URL, to filter to the None (no authentication) option.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": null,
+      "created_at": "2026-07-18T02:57:44.000000",
+      "plan_id": "plan_b3d73b8c"
+    },
+    {
+      "step_id": "step_mcp_none_auth_confirm",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to select the None (no authentication) type in the Select Authentication Type quick pick for the MCP server.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": null,
+      "created_at": "2026-07-18T02:57:44.000000",
       "plan_id": "plan_b3d73b8c"
     },
     {
