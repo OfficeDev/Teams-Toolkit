@@ -158,7 +158,7 @@
         "x": 400,
         "y": 410
       },
-      "description": "Click the \"Password\" input field on the Microsoft login page to focus and enable password entry for the account test04@atktesting05.onmicrosoft.com.",
+      "description": "Click the \"Password\" input field on the Microsoft login page to focus and enable password entry for the account test017@atktesting06.onmicrosoft.com.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
