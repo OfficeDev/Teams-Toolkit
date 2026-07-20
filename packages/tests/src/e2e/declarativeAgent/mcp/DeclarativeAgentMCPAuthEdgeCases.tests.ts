@@ -3,6 +3,7 @@
 
 /**
  * @author Zhiyu You <zhiyou@microsoft.com>
+ * @scenario SCN-DA-CREATE-WITH-MCP-SERVER
  */
 
 import { ProgrammingLanguage } from "@microsoft/teamsfx-core";

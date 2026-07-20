@@ -1,0 +1,90 @@
+<!doctype html>
+<!-- Generated from scenario Markdown and v4 declarations. Do not edit. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Create Declarative Agent With MCP Server Scenario</title>
+  <link rel="stylesheet" href="../../_assets/product-review/product-review.css">
+  <link rel="stylesheet" href="../../_assets/scenario-components/scenario-components.css">
+  <script type="module" src="../../_assets/scenario-components/scenario-components.js"></script>
+</head>
+<body>
+  <header>
+    <p class="eyebrow">SUPERSEDED · SCN-DA-CREATE-WITH-MCP-SERVER</p>
+    <h1>Create Declarative Agent With MCP Server</h1>
+    <p class="intro">Behavior belongs in <a href="create-da-with-mcp-server-superseded-20260717.md">create-da-with-mcp-server-superseded-20260717.md</a>; this page is a generated review projection.</p>
+    <div class="legend" aria-label="Review links"><a class="link" href="../index.html">Back to product index</a></div>
+  </header>
+  <main>
+    <section class="scenario-flow" aria-labelledby="scenario-heading">
+      <div class="section-head"><h2 id="scenario-heading">Cross-surface Scenario Contract</h2></div>
+      <scenario-markdown-section src="create-da-with-mcp-server-superseded-20260717.md" heading="Scenario" level="2" title="Scenario"></scenario-markdown-section>
+      <scenario-markdown-section src="create-da-with-mcp-server-superseded-20260717.md" heading="States" level="2" title="States"></scenario-markdown-section>
+      <scenario-markdown-section src="create-da-with-mcp-server-superseded-20260717.md" heading="User-visible outputs" level="2" title="User-visible outputs"></scenario-markdown-section>
+      <scenario-markdown-section src="create-da-with-mcp-server-superseded-20260717.md" heading="Validation notes" level="2" title="Validation notes"></scenario-markdown-section>
+    </section>
+    <section class="scenario-flow" aria-labelledby="flow-heading">
+      <div class="section-head"><h2 id="flow-heading">Flow</h2></div>
+      <scenario-mermaid-flow src="create-da-with-mcp-server-superseded-20260717.md" title="SCN-DA-CREATE-WITH-MCP-SERVER"></scenario-mermaid-flow>
+    </section>
+    <section class="scenario-flow" aria-labelledby="question-walk-1-heading" data-review-context="vscode-shipped">
+      <div class="section-head">
+        <h2 id="question-walk-1-heading">vscode Question Walk: vscode-shipped</h2>
+        <p>Surface: vscode; environment: vscode-shipped; languages: common; flags: TEAMSFX_MCP_FOR_DA_DT=false.</p>
+      </div>
+      <div class="vscode-flow-grid">
+      <article class="vscode-flow-card" data-kind="action" data-question-name="projectType">
+        <h3>Step 1<span class="vscode-flow-card__hint">Selector · projectType</span></h3>
+        <vscode-single-select data-localization-key="template.createProjectQuestion" title="New Project" placeholder="Select an option">
+          <vscode-option data-localization-key="template.createProjectQuestion.projectType.declarativeAgent" label="Declarative Agent" description="Create your own agent by declaring instructions, actions, &amp; knowledge to suit your needs." meta="Agents for Microsoft 365 Copilot" icon="teamsfx-agent" selected></vscode-option>
+          <vscode-option data-localization-key="template.createProjectQuestion.projectType.customCopilot" label="Custom Engine Agent" description="Build intelligent agent where you manage orchestration and provide your own LLM" meta="Agents for Microsoft 365 Copilot" icon="teamsfx-custom-copilot"></vscode-option>
+          <vscode-option data-localization-key="template.createProjectQuestion.createGraphConnector" label="Copilot connectors" description="Embed your organization data to make it searchable in Microsoft 365 Copilot" meta="Agents for Microsoft 365 Copilot" icon="teamsfx-graph-connector"></vscode-option>
+          <vscode-option data-localization-key="template.createProjectQuestion.projectType.blankApp" label="Blank Copilot app/agent" description="A minimal app with just a manifest, icons, and environment files. Build any M365 capability from scratch." meta="Apps for Microsoft 365" icon="file"></vscode-option>
+          <vscode-option data-localization-key="template.createProjectQuestion.projectType.teamsAgentsAndApps" label="Teams Agents and Apps" description="Create agent, chat bot, web pages or other apps in Microsoft Teams using Microsoft Teams SDK." meta="Apps for Microsoft 365" icon="microsoft365-agents-toolkit-teams"></vscode-option>
+          <vscode-option data-localization-key="template.createProjectQuestion.projectType.officeAddin" label="Office Add-in" description="Extend Office applications to interact with content in Office documents and Outlook items" meta="Apps for Microsoft 365" icon="microsoft365-agents-office"></vscode-option>
+          <vscode-option data-localization-key="template.createProjectQuestion.projectType.copilotHelp" label="Don&#39;t know how to start? Use GitHub Copilot Chat" description="Chat with GitHub Copilot and get step-by-step instructions to develop your app or Microsoft 365 Copilot agent." meta="Use GitHub Copilot" icon="question"></vscode-option>
+        </vscode-single-select>
+      </article>
+      <article class="vscode-flow-card" data-kind="action" data-question-name="daTemplate">
+        <h3>Step 2<span class="vscode-flow-card__hint">Selector · daTemplate</span></h3>
+        <vscode-single-select data-localization-key="template.createProjectQuestion.declarativeCopilot" title="Create Declarative Agent" placeholder="Add an action to your declarative agent">
+          <vscode-option data-localization-key="template.createProjectQuestion.noPlugin" label="No Action" description="Create declarative agent only" meta=""></vscode-option>
+          <vscode-option data-localization-key="template.createProjectQuestion.addPlugin" label="Add an Action" description="Create a declarative agent with an action" meta="" selected></vscode-option>
+          <vscode-option data-localization-key="template.createProjectQuestion.addGC" label="Add a Copilot connector" description="Create a declarative agent with a Copilot connector" meta=""></vscode-option>
+          <vscode-option data-localization-key="template.createProjectQuestion.apiPlugin.typeSpec" label="Start with TypeSpec for Microsoft 365 Copilot" description="Create a declarative agent with or without an action using TypeSpec for Microsoft 365 Copilot" meta=""></vscode-option>
+        </vscode-single-select>
+      </article>
+      <article class="vscode-flow-card" data-kind="action" data-question-name="actionSource">
+        <h3>Step 3<span class="vscode-flow-card__hint">Selector · actionSource</span></h3>
+        <vscode-single-select data-localization-key="template.createProjectQuestion.createApiPlugin" title="Create an Action" placeholder="Select how to add an action">
+          <vscode-option data-localization-key="template.createProjectQuestion.capability.copilotPluginNewApiOption" label="Start with a New API" description="Create an action with a new API from Azure Functions" meta=""></vscode-option>
+          <vscode-option data-localization-key="template.createProjectQuestion.capability.copilotPluginApiSpecOption" label="Start with an OpenAPI Description Document" description="Create an action from your existing API" meta=""></vscode-option>
+          <vscode-option data-localization-key="template.createProjectQuestion.mcpForDa" label="Start with a MCP server" description="Create an action from your existing MCP server" meta="" selected></vscode-option>
+        </vscode-single-select>
+      </article>
+      <article class="vscode-flow-card" data-kind="action" data-question-name="mcpServerUrl">
+        <h3>Step 4<span class="vscode-flow-card__hint">Text input · mcpServerUrl</span></h3>
+        <vscode-input-box data-localization-key="core.createProjectQuestion.mcpForDa.ServerUrl" title="MCP Server URL" placeholder="" value="https://example.com/mcp"></vscode-input-box>
+      </article>
+      <article class="vscode-flow-card" data-kind="action" data-question-name="folder">
+        <h3>Step 5<span class="vscode-flow-card__hint">File picker · folder</span></h3>
+        <vscode-file-select title="Workspace Folder" placeholder="Choose the folder where your project root folder will be located">
+
+        </vscode-file-select>
+      </article>
+      <article class="vscode-flow-card" data-kind="action" data-question-name="app-name">
+        <h3>Step 6<span class="vscode-flow-card__hint">Text input · app-name</span></h3>
+        <vscode-input-box title="Application Name" placeholder="Input an application name" value=""></vscode-input-box>
+      </article>
+      </div>
+    </section>
+    <section class="scenario-flow" aria-labelledby="provenance-heading">
+      <div class="section-head"><h2 id="provenance-heading">Provenance</h2></div>
+      <p>Scenario contract: <code>da/create-da-with-mcp-server-superseded-20260717.md</code>. Scaffold catalog kind: <code>create</code>.</p>
+      <p class="fingerprint">Current fingerprints: semantic 464b7d821bc697c399a896d38c94136e60571d54759840c0127d265b6b1b8f6a; presentation b54dfc503f253ee7cef6fedc565a41d0d1e551590db9a04f97a511513a26e4ff</p>
+    </section>
+  </main>
+  <footer>Generated review projection. Scenario behavior remains in <code>create-da-with-mcp-server-superseded-20260717.md</code>.</footer>
+</body>
+</html>

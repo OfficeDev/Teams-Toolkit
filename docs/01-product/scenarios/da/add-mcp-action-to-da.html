@@ -1,4 +1,5 @@
 <!doctype html>
+<!-- Generated from scenario Markdown and v4 declarations. Do not edit. -->
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -10,88 +11,210 @@
 </head>
 <body>
   <header>
-    <p class="eyebrow">DA scenario visual/state reference</p>
+    <p class="eyebrow">IMPLEMENTED · SCN-DA-ADD-MCP-ACTION-TO-DA</p>
     <h1>Add MCP Action To Declarative Agent</h1>
-    <p class="intro">
-      This page visualizes the VS Code <em>Add action</em> flow from <a href="add-mcp-action-to-da.md">add-mcp-action-to-da.md</a>.
-      In VS Code, the add-action flow only collects the MCP server URL and writes it into <code>.vscode/mcp.json</code>; tool discovery, action manifest selection, operation pick and auth pick are owned by the separate <a href="fetch-mcp-tools.html">SCN-DA-FETCH-MCP-TOOLS</a> scenario, triggered later from the <code>⚡ ATK: Fetch action from MCP</code> CodeLens.
-    </p>
-    <div class="legend" aria-label="Review links">
-      <a class="link" href="../index.html">Back to product index</a>
-      <a class="link" href="create-da-with-mcp-server.html">Create scenario precondition</a>
-      <a class="link" href="fetch-mcp-tools.html">Next: fetch tools from MCP</a>
-    </div>
+    <p class="intro">Behavior belongs in <a href="add-mcp-action-to-da.md">add-mcp-action-to-da.md</a>; this page is a generated review projection.</p>
+    <div class="legend" aria-label="Review links"><a class="link" href="../index.html">Back to product index</a></div>
   </header>
-
   <main>
-    <section class="scenario-flow" aria-labelledby="fetch-flow-heading">
+    <section class="scenario-flow" aria-labelledby="scenario-heading">
+      <div class="section-head"><h2 id="scenario-heading">Cross-surface Scenario Contract</h2></div>
+      <scenario-markdown-section src="add-mcp-action-to-da.md" heading="Scenario" level="2" title="Scenario"></scenario-markdown-section>
+      <scenario-markdown-section src="add-mcp-action-to-da.md" heading="States" level="2" title="States"></scenario-markdown-section>
+      <scenario-markdown-section src="add-mcp-action-to-da.md" heading="User-visible outputs" level="2" title="User-visible outputs"></scenario-markdown-section>
+      <scenario-markdown-section src="add-mcp-action-to-da.md" heading="Validation notes" level="2" title="Validation notes"></scenario-markdown-section>
+    </section>
+    <section class="scenario-flow" aria-labelledby="flow-heading">
+      <div class="section-head"><h2 id="flow-heading">Flow</h2></div>
+      <scenario-mermaid-flow src="add-mcp-action-to-da.md" title="SCN-DA-ADD-MCP-ACTION-TO-DA"></scenario-mermaid-flow>
+    </section>
+    <section class="scenario-flow" aria-labelledby="question-walk-1-heading" data-review-context="vscode-dcr-defaults">
       <div class="section-head">
-        <h2 id="fetch-flow-heading">VS Code Add Action Flow</h2>
-        <p>Runs the Add action command against an existing DA project. The toolkit only writes the server URL to <code>.vscode/mcp.json</code> and then opens that file. No tools are fetched and no action manifest is touched during this scenario.</p>
+        <h2 id="question-walk-1-heading">vscode Question Walk: vscode-dcr-defaults</h2>
+        <p>Surface: vscode; environment: vscode-v4-preview; languages: common.</p>
       </div>
-
       <div class="vscode-flow-grid">
-        <article class="vscode-flow-card" data-kind="action" aria-labelledby="action-type-title">
-          <h3 id="action-type-title">1. Add an Action: pick action type</h3>
-          <vscode-single-select title="Add an Action" placeholder="Select the type of action to add">
-            <vscode-option label="Start with an OpenAPI Description Document" description="Create an action from your existing API"></vscode-option>
-            <vscode-option label="Start with a MCP server" description="Create an action from your existing MCP server" selected></vscode-option>
-          </vscode-single-select>
-        </article>
-
-        <article class="vscode-flow-card" data-kind="action" aria-labelledby="server-url-title">
-          <h3 id="server-url-title">2. Enter MCP server URL</h3>
-          <vscode-input-box title="MCP Server URL" placeholder="Enter your MCP server URL(e.g. https://example-mcp.com)" value="https://api.githubcopilot.com/mcp/"></vscode-input-box>
-        </article>
-
-        <article class="vscode-flow-card" data-kind="outcome" aria-labelledby="mcp-json-opened-title">
-          <h3 id="mcp-json-opened-title">3. .vscode/mcp.json updated and opened</h3>
-          <vscode-codelens-file title=".vscode/mcp.json" lens="⚡ ATK: Fetch action from MCP | ▷Start | More..." server="apigithubc" type="http" url="https://api.githubcopilot.com/mcp/"></vscode-codelens-file>
-        </article>
-
-        <article class="vscode-flow-card" data-kind="outcome" data-severity="error" aria-labelledby="missing-url-error-title">
-          <h3 id="missing-url-error-title">Recoverable: missing MCP server URL <span class="vscode-flow-card__hint">blocks step 3</span></h3>
-          <vscode-input-box title="MCP Server URL" placeholder="Enter your MCP server URL(e.g. https://example-mcp.com)" value="" error="MCP server URL is required to add this action."></vscode-input-box>
-        </article>
+      <article class="vscode-flow-card" data-kind="action" data-question-name="addCapability">
+        <h3>Step 1<span class="vscode-flow-card__hint">Selector · addCapability</span></h3>
+        <vscode-single-select data-localization-key="core.modifySelector.addCapability" title="Add to Agent" placeholder="Select a capability to add">
+          <vscode-option data-localization-key="core.modifySelector.addCapability.action" label="Action" description="Add an action to your declarative agent" meta="" selected></vscode-option>
+          <vscode-option data-localization-key="core.modifySelector.addCapability.knowledge" label="Knowledge" description="Add a knowledge source to your declarative agent" meta=""></vscode-option>
+          <vscode-option data-localization-key="core.modifySelector.addCapability.auth" label="Authentication" description="Add authentication to a plugin action" meta=""></vscode-option>
+          <vscode-option data-localization-key="core.modifySelector.addCapability.spfxWebPart" label="SPFx Web Part" description="Add a web part to your SharePoint Framework solution" meta=""></vscode-option>
+        </vscode-single-select>
+      </article>
+      <article class="vscode-flow-card" data-kind="action" data-question-name="actionSource">
+        <h3>Step 2<span class="vscode-flow-card__hint">Selector · actionSource</span></h3>
+        <vscode-single-select data-localization-key="template.createProjectQuestion.createApiPlugin" title="Add an Action" placeholder="Select how to add an action">
+          <vscode-option data-localization-key="template.createProjectQuestion.capability.copilotPluginApiSpecOption" label="Start with an OpenAPI Description Document" description="Create an action from your existing API" meta=""></vscode-option>
+          <vscode-option data-localization-key="template.createProjectQuestion.mcpForDa" label="Start with a MCP server" description="Create an action from your existing MCP server" meta="" selected></vscode-option>
+        </vscode-single-select>
+      </article>
+      <article class="vscode-flow-card" data-kind="action" data-question-name="mcpServerUrl">
+        <h3>Step 3<span class="vscode-flow-card__hint">Text input · mcpServerUrl</span></h3>
+        <vscode-input-box data-localization-key="template.mcpAddServer.mcpServerUrl" title="MCP Server URL" placeholder="" value=""></vscode-input-box>
+      </article>
+      <article class="vscode-flow-card" data-kind="action" data-question-name="authType">
+        <h3>Step 4<span class="vscode-flow-card__hint">Template question · authType</span></h3>
+        <vscode-single-select data-localization-key="template.daMcpServer.authType" title="Authentication" placeholder="">
+          <vscode-option label="OAuth (with static registration)" description=""></vscode-option>
+          <vscode-option label="OAuth (with dynamic registration)" description="" selected></vscode-option>
+          <vscode-option label="Entra SSO" description=""></vscode-option>
+          <vscode-option label="None" description=""></vscode-option>
+        </vscode-single-select>
+      </article>
       </div>
     </section>
-
-    <section class="scenario-flow" aria-labelledby="md-vscode-heading">
+    <section class="scenario-flow" aria-labelledby="question-walk-2-heading" data-review-context="vscode-static-oauth">
       <div class="section-head">
-        <h2 id="md-vscode-heading">VS Code Add Action Flow (from Markdown)</h2>
-        <p>Rendered live from <code>add-mcp-action-to-da.md &sect; VS Code add action flow</code>.</p>
+        <h2 id="question-walk-2-heading">vscode Question Walk: vscode-static-oauth</h2>
+        <p>Surface: vscode; environment: vscode-v4-preview; languages: common.</p>
       </div>
-      <scenario-markdown-section
-        src="add-mcp-action-to-da.md"
-        heading="VS Code add action flow"
-        title="SCN-DA-ADD-MCP-ACTION-TO-DA VS Code Flow"></scenario-markdown-section>
+      <div class="vscode-flow-grid">
+      <article class="vscode-flow-card" data-kind="action" data-question-name="addCapability">
+        <h3>Step 1<span class="vscode-flow-card__hint">Selector · addCapability</span></h3>
+        <vscode-single-select data-localization-key="core.modifySelector.addCapability" title="Add to Agent" placeholder="Select a capability to add">
+          <vscode-option data-localization-key="core.modifySelector.addCapability.action" label="Action" description="Add an action to your declarative agent" meta="" selected></vscode-option>
+          <vscode-option data-localization-key="core.modifySelector.addCapability.knowledge" label="Knowledge" description="Add a knowledge source to your declarative agent" meta=""></vscode-option>
+          <vscode-option data-localization-key="core.modifySelector.addCapability.auth" label="Authentication" description="Add authentication to a plugin action" meta=""></vscode-option>
+          <vscode-option data-localization-key="core.modifySelector.addCapability.spfxWebPart" label="SPFx Web Part" description="Add a web part to your SharePoint Framework solution" meta=""></vscode-option>
+        </vscode-single-select>
+      </article>
+      <article class="vscode-flow-card" data-kind="action" data-question-name="actionSource">
+        <h3>Step 2<span class="vscode-flow-card__hint">Selector · actionSource</span></h3>
+        <vscode-single-select data-localization-key="template.createProjectQuestion.createApiPlugin" title="Add an Action" placeholder="Select how to add an action">
+          <vscode-option data-localization-key="template.createProjectQuestion.capability.copilotPluginApiSpecOption" label="Start with an OpenAPI Description Document" description="Create an action from your existing API" meta=""></vscode-option>
+          <vscode-option data-localization-key="template.createProjectQuestion.mcpForDa" label="Start with a MCP server" description="Create an action from your existing MCP server" meta="" selected></vscode-option>
+        </vscode-single-select>
+      </article>
+      <article class="vscode-flow-card" data-kind="action" data-question-name="mcpServerUrl">
+        <h3>Step 3<span class="vscode-flow-card__hint">Text input · mcpServerUrl</span></h3>
+        <vscode-input-box data-localization-key="template.mcpAddServer.mcpServerUrl" title="MCP Server URL" placeholder="" value=""></vscode-input-box>
+      </article>
+      <article class="vscode-flow-card" data-kind="action" data-question-name="authType">
+        <h3>Step 4<span class="vscode-flow-card__hint">Template question · authType</span></h3>
+        <vscode-single-select data-localization-key="template.daMcpServer.authType" title="Authentication" placeholder="">
+          <vscode-option label="OAuth (with static registration)" description="" selected></vscode-option>
+          <vscode-option label="OAuth (with dynamic registration)" description=""></vscode-option>
+          <vscode-option label="Entra SSO" description=""></vscode-option>
+          <vscode-option label="None" description=""></vscode-option>
+        </vscode-single-select>
+      </article>
+      </div>
     </section>
-
-    <section class="scenario-flow" aria-labelledby="md-cli-interactive-heading">
+    <section class="scenario-flow" aria-labelledby="question-walk-3-heading" data-review-context="vscode-entra-sso">
       <div class="section-head">
-        <h2 id="md-cli-interactive-heading">CLI Interactive Add-Action Flow (from Markdown)</h2>
-        <p>Rendered live from <code>add-mcp-action-to-da.md &sect; CLI interactive add-action flow</code>.</p>
+        <h2 id="question-walk-3-heading">vscode Question Walk: vscode-entra-sso</h2>
+        <p>Surface: vscode; environment: vscode-v4-preview; languages: common.</p>
       </div>
-      <scenario-markdown-section
-        src="add-mcp-action-to-da.md"
-        heading="CLI interactive add-action flow"
-        title="SCN-DA-ADD-MCP-ACTION-TO-DA CLI Interactive Flow"></scenario-markdown-section>
+      <div class="vscode-flow-grid">
+      <article class="vscode-flow-card" data-kind="action" data-question-name="addCapability">
+        <h3>Step 1<span class="vscode-flow-card__hint">Selector · addCapability</span></h3>
+        <vscode-single-select data-localization-key="core.modifySelector.addCapability" title="Add to Agent" placeholder="Select a capability to add">
+          <vscode-option data-localization-key="core.modifySelector.addCapability.action" label="Action" description="Add an action to your declarative agent" meta="" selected></vscode-option>
+          <vscode-option data-localization-key="core.modifySelector.addCapability.knowledge" label="Knowledge" description="Add a knowledge source to your declarative agent" meta=""></vscode-option>
+          <vscode-option data-localization-key="core.modifySelector.addCapability.auth" label="Authentication" description="Add authentication to a plugin action" meta=""></vscode-option>
+          <vscode-option data-localization-key="core.modifySelector.addCapability.spfxWebPart" label="SPFx Web Part" description="Add a web part to your SharePoint Framework solution" meta=""></vscode-option>
+        </vscode-single-select>
+      </article>
+      <article class="vscode-flow-card" data-kind="action" data-question-name="actionSource">
+        <h3>Step 2<span class="vscode-flow-card__hint">Selector · actionSource</span></h3>
+        <vscode-single-select data-localization-key="template.createProjectQuestion.createApiPlugin" title="Add an Action" placeholder="Select how to add an action">
+          <vscode-option data-localization-key="template.createProjectQuestion.capability.copilotPluginApiSpecOption" label="Start with an OpenAPI Description Document" description="Create an action from your existing API" meta=""></vscode-option>
+          <vscode-option data-localization-key="template.createProjectQuestion.mcpForDa" label="Start with a MCP server" description="Create an action from your existing MCP server" meta="" selected></vscode-option>
+        </vscode-single-select>
+      </article>
+      <article class="vscode-flow-card" data-kind="action" data-question-name="mcpServerUrl">
+        <h3>Step 3<span class="vscode-flow-card__hint">Text input · mcpServerUrl</span></h3>
+        <vscode-input-box data-localization-key="template.mcpAddServer.mcpServerUrl" title="MCP Server URL" placeholder="" value=""></vscode-input-box>
+      </article>
+      <article class="vscode-flow-card" data-kind="action" data-question-name="authType">
+        <h3>Step 4<span class="vscode-flow-card__hint">Template question · authType</span></h3>
+        <vscode-single-select data-localization-key="template.daMcpServer.authType" title="Authentication" placeholder="">
+          <vscode-option label="OAuth (with static registration)" description=""></vscode-option>
+          <vscode-option label="OAuth (with dynamic registration)" description=""></vscode-option>
+          <vscode-option label="Entra SSO" description="" selected></vscode-option>
+          <vscode-option label="None" description=""></vscode-option>
+        </vscode-single-select>
+      </article>
+      </div>
     </section>
-
-    <section class="scenario-flow" aria-labelledby="md-cli-noninteractive-heading">
+    <section class="scenario-flow" aria-labelledby="question-walk-4-heading" data-review-context="vscode-none">
       <div class="section-head">
-        <h2 id="md-cli-noninteractive-heading">CLI Non-Interactive Add-Action Flow (from Markdown)</h2>
-        <p>Rendered live from <code>add-mcp-action-to-da.md &sect; CLI non-interactive add-action flow</code>, including the trailing <code>atk add action</code> command examples.</p>
+        <h2 id="question-walk-4-heading">vscode Question Walk: vscode-none</h2>
+        <p>Surface: vscode; environment: vscode-v4-preview; languages: common.</p>
       </div>
-      <scenario-markdown-section
-        src="add-mcp-action-to-da.md"
-        heading="CLI non-interactive add-action flow"
-        title="SCN-DA-ADD-MCP-ACTION-TO-DA CLI Non-Interactive Flow"></scenario-markdown-section>
+      <div class="vscode-flow-grid">
+      <article class="vscode-flow-card" data-kind="action" data-question-name="addCapability">
+        <h3>Step 1<span class="vscode-flow-card__hint">Selector · addCapability</span></h3>
+        <vscode-single-select data-localization-key="core.modifySelector.addCapability" title="Add to Agent" placeholder="Select a capability to add">
+          <vscode-option data-localization-key="core.modifySelector.addCapability.action" label="Action" description="Add an action to your declarative agent" meta="" selected></vscode-option>
+          <vscode-option data-localization-key="core.modifySelector.addCapability.knowledge" label="Knowledge" description="Add a knowledge source to your declarative agent" meta=""></vscode-option>
+          <vscode-option data-localization-key="core.modifySelector.addCapability.auth" label="Authentication" description="Add authentication to a plugin action" meta=""></vscode-option>
+          <vscode-option data-localization-key="core.modifySelector.addCapability.spfxWebPart" label="SPFx Web Part" description="Add a web part to your SharePoint Framework solution" meta=""></vscode-option>
+        </vscode-single-select>
+      </article>
+      <article class="vscode-flow-card" data-kind="action" data-question-name="actionSource">
+        <h3>Step 2<span class="vscode-flow-card__hint">Selector · actionSource</span></h3>
+        <vscode-single-select data-localization-key="template.createProjectQuestion.createApiPlugin" title="Add an Action" placeholder="Select how to add an action">
+          <vscode-option data-localization-key="template.createProjectQuestion.capability.copilotPluginApiSpecOption" label="Start with an OpenAPI Description Document" description="Create an action from your existing API" meta=""></vscode-option>
+          <vscode-option data-localization-key="template.createProjectQuestion.mcpForDa" label="Start with a MCP server" description="Create an action from your existing MCP server" meta="" selected></vscode-option>
+        </vscode-single-select>
+      </article>
+      <article class="vscode-flow-card" data-kind="action" data-question-name="mcpServerUrl">
+        <h3>Step 3<span class="vscode-flow-card__hint">Text input · mcpServerUrl</span></h3>
+        <vscode-input-box data-localization-key="template.mcpAddServer.mcpServerUrl" title="MCP Server URL" placeholder="" value=""></vscode-input-box>
+      </article>
+      <article class="vscode-flow-card" data-kind="action" data-question-name="authType">
+        <h3>Step 4<span class="vscode-flow-card__hint">Template question · authType</span></h3>
+        <vscode-single-select data-localization-key="template.daMcpServer.authType" title="Authentication" placeholder="">
+          <vscode-option label="OAuth (with static registration)" description=""></vscode-option>
+          <vscode-option label="OAuth (with dynamic registration)" description=""></vscode-option>
+          <vscode-option label="Entra SSO" description=""></vscode-option>
+          <vscode-option label="None" description="" selected></vscode-option>
+        </vscode-single-select>
+      </article>
+      </div>
+    </section>
+    <section class="scenario-flow" aria-labelledby="question-walk-5-heading" data-review-context="cli-prefilled-none">
+      <div class="section-head">
+        <h2 id="question-walk-5-heading">cli Question Walk: cli-prefilled-none</h2>
+        <p>Surface: cli; environment: cli-v4-preview; languages: common.</p>
+      </div>
+      <div class="vscode-flow-grid">
+      <article class="vscode-flow-card" data-kind="action" data-question-name="addCapability">
+        <h3>Step 1<span class="vscode-flow-card__hint">Selector · addCapability</span></h3>
+        <vscode-single-select data-localization-key="core.modifySelector.addCapability" title="Add to Agent" placeholder="Select a capability to add">
+          <vscode-option data-localization-key="core.modifySelector.addCapability.action" label="Action" description="Add an action to your declarative agent" meta="" selected></vscode-option>
+          <vscode-option data-localization-key="core.modifySelector.addCapability.knowledge" label="Knowledge" description="Add a knowledge source to your declarative agent" meta=""></vscode-option>
+          <vscode-option data-localization-key="core.modifySelector.addCapability.auth" label="Authentication" description="Add authentication to a plugin action" meta=""></vscode-option>
+          <vscode-option data-localization-key="core.modifySelector.addCapability.spfxWebPart" label="SPFx Web Part" description="Add a web part to your SharePoint Framework solution" meta=""></vscode-option>
+        </vscode-single-select>
+      </article>
+      <article class="vscode-flow-card" data-kind="action" data-question-name="actionSource">
+        <h3>Step 2<span class="vscode-flow-card__hint">Selector · actionSource</span></h3>
+        <vscode-single-select data-localization-key="template.createProjectQuestion.createApiPlugin" title="Add an Action" placeholder="Select how to add an action">
+          <vscode-option data-localization-key="template.createProjectQuestion.capability.copilotPluginApiSpecOption" label="Start with an OpenAPI Description Document" description="Create an action from your existing API" meta=""></vscode-option>
+          <vscode-option data-localization-key="template.createProjectQuestion.mcpForDa" label="Start with a MCP server" description="Create an action from your existing MCP server" meta="" selected></vscode-option>
+        </vscode-single-select>
+      </article>
+      <article class="vscode-flow-card" data-kind="action" data-question-name="authType">
+        <h3>Step 3<span class="vscode-flow-card__hint">Template question · authType</span></h3>
+        <vscode-single-select data-localization-key="template.daMcpServer.authType" title="Authentication" placeholder="">
+          <vscode-option label="OAuth (with static registration)" description=""></vscode-option>
+          <vscode-option label="OAuth (with dynamic registration)" description=""></vscode-option>
+          <vscode-option label="Entra SSO" description=""></vscode-option>
+          <vscode-option label="None" description="" selected></vscode-option>
+        </vscode-single-select>
+      </article>
+      </div>
+    </section>
+    <section class="scenario-flow" aria-labelledby="provenance-heading">
+      <div class="section-head"><h2 id="provenance-heading">Provenance</h2></div>
+      <p>Scenario contract: <code>da/add-mcp-action-to-da.md</code>. Scaffold catalog kind: <code>modify</code>.</p>
+      <p class="fingerprint">Current fingerprints: semantic c7788f2243940e9f83a42d6343b0c88f92d248a0c35b83b83e6a41609c175709; presentation 0e3ea01b405baa97d0caa2521c7ab02ff703ed751fbbdb811eb202d65d3f6ea5</p>
     </section>
   </main>
-
-  <footer>
-    Scenario behavior belongs in <code>add-mcp-action-to-da.md</code>. This HTML visualizes VS Code states and renders the Markdown flow sections inline; it does not replace the Markdown contract.
-  </footer>
+  <footer>Generated review projection. Scenario behavior remains in <code>add-mcp-action-to-da.md</code>.</footer>
 </body>
 </html>

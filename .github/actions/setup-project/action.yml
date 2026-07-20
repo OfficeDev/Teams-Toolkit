@@ -1,15 +1,15 @@
 name: setup project
 description: setup project by default installing dependencies and running setup script
 inputs:
-  setup:  # id of input
-    description: 'setup project'
+  setup: # id of input
+    description: "setup project"
     required: true
-    default: 'true'
-  range:  # id of input
-    description: 'package range to install (vscode, cli, e2e, all)'
+    default: "true"
+  range: # id of input
+    description: "package range to install (vscode, cli, e2e, all)"
     required: false
-    default: 'all'
-  
+    default: "all"
+
 runs:
   using: "composite"
   steps:
@@ -19,13 +19,14 @@ runs:
         node-version: 22.17
 
     - uses: pnpm/action-setup@v4
-    
+
     - name: Setup project
       if: ${{ inputs.setup == 'true' }}
       uses: nick-fields/retry@v2
       with:
         timeout_minutes: 10
         max_attempts: 5
+        shell: bash
         command: |
           case "${{ inputs.range }}" in
             "cli")

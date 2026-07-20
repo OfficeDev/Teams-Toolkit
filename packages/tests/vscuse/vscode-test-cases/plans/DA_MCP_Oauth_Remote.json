@@ -50,7 +50,7 @@
     ],
     "tags": [
       "scenario:SCN-DA-CREATE-WITH-MCP-SERVER",
-      "source_of_truth:docs/01-product/scenarios/da/draft/create-da-with-mcp-server.md",
+      "source_of_truth:docs/01-product/scenarios/da/create-da-with-mcp-server.md",
       "feature_flag:TEAMSFX_MCP_FOR_DA_DT=true",
       "feature_flag:TEAMSFX_MCP_FOR_DA_DCR=true",
       "auth_type:oauth",
@@ -98,9 +98,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:f0b09494b2717075"
-      ],
+      "preconditions": ["dhash:512:384:0:20:f0b09494b2717075"],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_9c87f073",
@@ -120,9 +118,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:e0b09494b2717075"
-      ],
+      "preconditions": ["dhash:512:384:0:20:e0b09494b2717075"],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_52c22c4c",
@@ -171,7 +167,7 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "source_of_truth:docs/01-product/scenarios/da/draft/create-da-with-mcp-server.md",
+        "source_of_truth:docs/01-product/scenarios/da/create-da-with-mcp-server.md",
         "scenario:SCN-DA-CREATE-WITH-MCP-SERVER"
       ],
       "screenshot": null,
@@ -191,9 +187,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:e0c8949492b17075"
-      ],
+      "preconditions": ["dhash:512:384:0:20:e0c8949492b17075"],
       "postconditions": [],
       "tags": [],
       "screenshot": "",
@@ -215,9 +209,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:e0b8949492b17075"
-      ],
+      "preconditions": ["dhash:512:384:0:20:e0b8949492b17075"],
       "postconditions": [],
       "tags": [],
       "screenshot": "",
@@ -237,9 +229,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:2131b13321787c79"
-      ],
+      "preconditions": ["dhash:512:384:0:20:2131b13321787c79"],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_8ed7e3fe",
@@ -259,9 +249,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:64c5cc3131787c69"
-      ],
+      "preconditions": ["dhash:512:384:0:20:64c5cc3131787c69"],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_c83f7f58",
@@ -307,9 +295,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:32ac2a2323626423"
-      ],
+      "preconditions": ["dhash:512:384:0:20:32ac2a2323626423"],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_0abfa1e9",
@@ -329,9 +315,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:44a42a2323626423"
-      ],
+      "preconditions": ["dhash:512:384:0:20:44a42a2323626423"],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_02fe6ba0",
@@ -377,9 +361,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:f0b0949492b17075"
-      ],
+      "preconditions": ["dhash:512:384:0:20:f0b0949492b17075"],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_10a9f134",
@@ -399,9 +381,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:c0b0949492b17075"
-      ],
+      "preconditions": ["dhash:512:384:0:20:c0b0949492b17075"],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_5fa52f1b",
@@ -421,9 +401,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:f0b0949492b17075"
-      ],
+      "preconditions": ["dhash:512:384:0:20:f0b0949492b17075"],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_6ed8712c",
@@ -443,9 +421,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:f0b0949492b17075"
-      ],
+      "preconditions": ["dhash:512:384:0:20:f0b0949492b17075"],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_24e52ca7",
@@ -465,9 +441,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:f0b0949492b17075"
-      ],
+      "preconditions": ["dhash:512:384:0:20:f0b0949492b17075"],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_9ecdaafc",
@@ -487,9 +461,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:f0b0949492b17075"
-      ],
+      "preconditions": ["dhash:512:384:0:20:f0b0949492b17075"],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_3a870434",
@@ -509,9 +481,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:322c2aa323626423"
-      ],
+      "preconditions": ["dhash:512:384:0:20:322c2aa323626423"],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_dcecd61a",
@@ -531,9 +501,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:602422a323626423"
-      ],
+      "preconditions": ["dhash:512:384:0:20:602422a323626423"],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_6278739e",
@@ -597,9 +565,7 @@
       "depends_on": [],
       "preconditions": [],
       "postconditions": [],
-      "tags": [
-        "step_retry_timeout: 120"
-      ],
+      "tags": ["step_retry_timeout: 120"],
       "screenshot": null,
       "created_at": "2026-06-29T03:21:51.597839",
       "plan_id": "plan_r_1024_023252"

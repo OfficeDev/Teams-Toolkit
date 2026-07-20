@@ -41,6 +41,7 @@
   "core.progress.configureAzureStorage": "Configuring Azure Storage, enable static website setting.",
   "core.progress.runCommand": "Run command %s at %s",
   "core.progress.deployToAzure": "Deploying %s to %s.",
+  "core.v4.scaffoldMetadataSourceReadFailed": "The scaffold metadata source could not be read.",
   "core.migrationV3.abandonedProject": "This project version is not supported and cannot be upgraded. Please create a new project with Microsoft 365 Agents Toolkit.",
   "core.migrationV3.notAllowedMigration": "This project can be upgraded. Please use Microsoft 365 Agents Toolkit for VS Code v6.10 or Microsoft 365 Agents Toolkit CLI v1.1.11 to upgrade your project.",
   "core.deployArmTemplates.ActionSuccess": "ARM templates are deployed successfully. Resource group name: %s. Deployment name: %s",

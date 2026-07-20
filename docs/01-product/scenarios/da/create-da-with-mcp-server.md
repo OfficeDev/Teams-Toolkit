@@ -3,216 +3,207 @@
 ## Metadata
 
 - Created: 2026-05-20T00:00:00Z
-- Last updated: 2026-07-13T08:52:39Z
+- Last updated: 2026-07-17T00:00:00Z
+- Status: implemented
 - PM owner: summzhan
 - Engineer owner: HuihuiWu-Microsoft, Alive-Fish
 - Scenario group: da
 - Scenario ID: SCN-DA-CREATE-WITH-MCP-SERVER
 - Primary goal: create
 - Start state: No project choice has been made; the developer can start the new project flow and choose `Declarative Agent`.
-- Success state: VS Code has opened a generated DA project with `.vscode/mcp.json` ready for the follow-up MCP action flow; CLI has created the project with MCP action wiring when tools are available, or with the documented warning and add-action hint when they are not.
+- Success state: The generated DA project contains the selected local MCP configuration or a remote MCP action, the declarative agent reference, and the lifecycle wiring needed to provision and run it.
 - Lifecycle phases: [create]
 - Visual/state reference: create-da-with-mcp-server.html
 
 ## Scenario
 
-A developer creates a Declarative Agent project that is connected to an MCP server. In VS Code, this scenario stops at a generated DA project with `.vscode/mcp.json`; adding MCP tools to the action manifest is handled by the dependent scenario `SCN-DA-ADD-MCP-ACTION-TO-DA`. In CLI, the current implementation has no CodeLens follow-up UX, so the create command also tries to fetch or load MCP tool definitions and may generate the MCP-backed action during project creation.
+A developer creates a Declarative Agent project backed by a local or remote MCP server. For a remote server, the developer provides the server URL and selects `OAuth (with static registration)`, `OAuth (with dynamic registration)`, `Entra SSO`, or `None`. For a local server, the developer selects one or more servers discovered on the machine and does not provide remote authentication details.
 
-Success means the developer can choose the Declarative Agent path, choose `Add an Action`, choose `Start with a MCP server`, provide a remote MCP server URL, choose the authentication type, choose the project location, enter the application name, and generate a DA project. Static OAuth and Entra credentials are not collected or persisted during create; the existing `oauth/register` provision action asks for them when it first runs. For VS Code, the project contains `.vscode/mcp.json` and is ready for `SCN-DA-ADD-MCP-ACTION-TO-DA`. For CLI, success may additionally include generated MCP action files when tools are available during `atk new`.
+Dynamic Tool Discovery is the default behavior. The generated remote action points at the MCP server and lets the agent host discover tools at runtime; scaffolding does not fetch or freeze a static tool list.
 
-This scenario is grounded in the current create question tree and CLI options:
+The shipped v3 engine and the v4 preview template implement that same user goal with the same runtime shape: both omit `mcp_tool_description` and `enable_dynamic_discovery` and leave `functions` empty, selecting the host's default dynamic-discovery behavior. They currently differ in credential flow: shipped v3 collects static OAuth or Entra credentials during create and persists environment references for provision, while v4 defers those credential questions to the existing provision-time middleware. These are implementation variants of this Scenario ID, not separate product scenarios.
 
-- `capability=declarative-agent`
-- `with-plugin=yes`
-- `api-plugin-type=mcp`
-- `mcp-server-type=remote`
-- `mcp-da-server-url=<remote MCP server URL>`
-- required `app-name`
-- required `folder`
-- optional `mcp-tools-file-path` for authenticated or offline MCP tool definitions
-- optional `mcp-da-auth-type`, with valid values `oauth` for `OAuth (with static registration)` and `entraSSO` for `Entra SSO`
-
-Client ids, client secrets, and OAuth scopes are provision inputs, not create inputs. The provision prompt marks the client secret as a password and keeps it out of generated project files and ordinary environment files.
+While `TEAMSFX_MCP_FOR_DA_DT` still exists, setting it to `false` selects the compatibility path documented by [`create-mcp-server-static.md`](../../../03-specs/scenarios/da/create-mcp-server-static.md). That path materializes a static tools list. It remains supported until the feature flag and its routed implementation are removed.
 
 ## Dependencies
 
-- Produces: a DA project folder with `appPackage/manifest.json`, a declarative agent manifest, and `.vscode/mcp.json` configured with the MCP server URL in the VS Code flow. When authentication is selected, the generated lifecycle contains the corresponding registration action but no credential values.
-- Enables: `SCN-DA-FETCH-MCP-TOOLS` (VS Code discovery step that runs implicitly before action manifest selection) and `SCN-DA-ADD-MCP-ACTION-TO-DA`, which requires an existing DA project and, for VS Code, a configured `.vscode/mcp.json` entry.
-- Does not include: the post-create VS Code CodeLens flow for selecting or creating an action manifest and choosing MCP operations. That belongs to `add-mcp-action-to-da.md`.
+- Produces a standard DA project, including the app manifest, declarative agent manifest, action manifest, lifecycle files, `.vscode/mcp.json`, environment file, and evaluation assets.
+- Remote servers must expose a valid MCP URL. Dynamic OAuth additionally depends on compatible authorization discovery for Dynamic Client Registration.
+- Local server choices come from the installed local MCP server provider. No remote URL or auth question is shown for a local choice.
+- Provision owns cloud-side OAuth registration. Credential collection happens during shipped v3 create, while the v4 preview defers missing static OAuth or Entra values to provision.
 
 ## Feature flags
 
-- The shipped MCP create route is controlled by an MCP-for-DA gate, and other action-source options may have their own gates. Their exact identifiers and default values are not established by this scenario.
+- `TEAMSFX_MCP_FOR_DA_DT` defaults to `true`. When true, create uses dynamic discovery; the v4 implementation is the `da/mcp-server` template. When false, create retains the static-tools compatibility behavior, implemented by `da/mcp-server-static` in v4.
+- `TEAMSFX_MCP_FOR_DA_DCR` defaults to `true`. `OAuth (with dynamic registration)` is visible and accepted only when both DT and DCR are true.
+- `TEAMSFX_V4_ENABLED` defaults to `false`. The shipped v3 and v4 preview differences are called out below; the generated question-walk review is explicitly projected from the v4 preview template.
+- These flags describe temporary rollout states, not separate product scenarios. Remove the DT-off state from this contract only after its feature flag and implementation route are deleted.
 
 ## Surfaces
 
-- VS Code: primary guided creation experience using Quick Pick and input box states. It writes `.vscode/mcp.json` and prompts the user to start the MCP server and use the later fetch action flow.
-- CLI interactive: current prompt-driven `atk new` behavior. It asks for the DA capability, action source, remote MCP server URL, optional tools file when tools are not auto-fetched, operation selection when tools are available, auth type when the MCP server requires authentication, app name, and folder.
-- CLI non-interactive: current flag-driven `atk new` behavior. It requires `--capability declarative-agent`, `--with-plugin yes`, `--api-plugin-type mcp`, `--mcp-da-server-url`, `--app-name`, and `--folder`; it may use `--mcp-tools-file-path` and `--mcp-da-auth-type` for authenticated MCP servers.
+- VS Code: guided Quick Pick and input-box flow.
+- CLI interactive: prompt-driven `atk new` flow with the same template and conditional question model.
+- CLI non-interactive: flag-driven `atk new` flow. A remote server requires the MCP server URL and auth type together with the standard capability, app-name, and folder inputs. `oauth-dynamic` is rejected when either DT or DCR is false.
 - Visual Studio and chat: not covered by this scenario.
 
 ## States
 
-- Entry: no project choice has been made; the user can choose `Declarative Agent` from the new project flow.
-- Template decision: the user picks one of `No Action`, `Add an Action`, `Add a Copilot connector`, or `Start with TypeSpec for Microsoft 365 Copilot`.
-- Action source decision: when adding an action, the user chooses `Start with a New API`, `Start with an OpenAPI Description Document`, `Start with an Office Add-in Action`, or `Start with a MCP server` when MCP for DA is enabled. Some options are gated by feature flags.
-- MCP source: after `Start with a MCP server`, the toolkit checks whether `odr.exe` is installed on the user's machine. If `odr.exe` is present, the user is asked `MCP Server Type` and chooses `Local MCP server` or `Remote MCP server`. If `odr.exe` is not present, the prompt is skipped and the flow proceeds as if `Remote MCP server` was selected.
-- Project input: the user enters the MCP server URL, picks the project location, then enters the app name before project generation.
-- CLI tool discovery: the CLI attempts to fetch tools from the MCP server. If the server requires authentication or tools are not fetched, it can ask for `MCP Tools Definition File`.
-- CLI tool selection: when tool definitions are available in the interactive create flow, the user can choose `Select Operation(s) Copilot can interact with`.
-- CLI auth: when the MCP server requires authentication, the user is asked `Select Authentication Type` and chooses either `OAuth (with static registration)` or `Entra SSO`. Create asks no credential follow-up questions.
-- First provision: `OAuth (with static registration)` asks for client id, password-masked client secret, and scopes; `Entra SSO` asks for its client id; dynamic registration asks for none. These values are consumed by the registration action for that provision invocation and are not written into scaffold output.
-- VS Code success: the generated project is opened with `.vscode/mcp.json`; follow-up action manifest update belongs to `SCN-DA-ADD-MCP-ACTION-TO-DA`.
-- CLI success with tools: project files, the action manifest (`ai-plugin.json`), the captured MCP tool definitions as JSON, and the MCP runtime wiring are generated during creation.
-- CLI warning without tools: the project is created, but MCP action files may remain incomplete; the CLI prints a warning with the current hint command `atk add action --api-plugin-type mcp --mcp-da-server-url <server-url> --mcp-tools-file-path <path-to-tools-json> --interactive false`.
-- Recoverable error: invalid app name, invalid or unavailable location, invalid MCP server URL, missing tools file, unreadable tools file, missing auth type when required, or missing required non-interactive option is shown with a same-flow recovery path.
-- Cancellation: the user can cancel before project generation; cancellation must not create a partially accepted project.
-
-## Flow
-
-### VS Code create flow
-
-```mermaid
-flowchart TD
-  Start([Developer starts Create a New Agent/App]) --> ChooseDA[Choose Declarative Agent]
-  ChooseDA --> ChooseDATemplate{Choose DA template path}
-  ChooseDATemplate -- No Action --> SelectLocation[Select project location]
-  ChooseDATemplate -- Add an Action --> ChooseActionSource{Choose action source}
-  ChooseDATemplate -- Add a Copilot connector or TypeSpec --> OtherDATemplate[Follow selected DA template prompts]
-  ChooseActionSource -- Start with a New API --> NewApiAuth[Choose API authentication]
-  ChooseActionSource -- Start with an OpenAPI Description Document --> SelectOpenApi[Select OpenAPI document]
-  ChooseActionSource -- Start with an Office Add-in Action --> OfficeAddinAction[Follow Office add-in action prompts]
-  ChooseActionSource -- Start with a MCP server --> OdrCheck{odr.exe installed?}
-  NewApiAuth --> SelectLocation
-  SelectOpenApi --> SelectOpenApiOps[Select operations Copilot can interact with]
-  SelectOpenApiOps --> SelectLocation
-  OfficeAddinAction --> SelectLocation
-  OdrCheck -- Yes --> ServerType{Choose MCP Server Type}
-  OdrCheck -- No --> EnterMcpUrl[Enter MCP server URL]
-  ServerType -- Local MCP server --> LocalMcp[Use local MCP server via odr.exe]
-  ServerType -- Remote MCP server --> EnterMcpUrl
-  LocalMcp --> SelectLocation
-  EnterMcpUrl --> SelectLocation
-  SelectLocation --> EnterAppName[Enter application name]
-  EnterAppName --> Validate{App name, location, and inputs valid?}
-  Validate -- No --> ShowInputRecovery[Show validation error and keep user in the prompt]
-  ShowInputRecovery --> EnterAppName
-  Validate -- Yes --> Generate[Generate DA project and write .vscode/mcp.json]
-  Generate --> ProjectReady([Project ready for SCN-DA-ADD-MCP-ACTION-TO-DA])
-  ChooseDA --> Cancel([Cancel without creating project])
-  ChooseDATemplate --> Cancel
-  ChooseActionSource --> Cancel
-  SelectLocation --> Cancel
-  EnterAppName --> Cancel
-```
-
-### CLI interactive create flow
-
-```mermaid
-flowchart TD
-  Start([Run atk new in interactive mode]) --> ChooseCapability[Choose capability: declarative-agent]
-  ChooseCapability --> AddAction[Choose Create Declarative Agent: add action]
-  AddAction --> ChooseMcp[Choose action type: mcp]
-  ChooseMcp --> OdrCheck{odr.exe installed?}
-  OdrCheck -- Yes --> ServerType{Choose MCP Server Type}
-  OdrCheck -- No --> EnterUrl[Enter MCP Server URL]
-  ServerType -- Local MCP server --> LocalMcp[Use local MCP server via odr.exe]
-  ServerType -- Remote MCP server --> EnterUrl
-  LocalMcp --> EnterAppName
-  EnterUrl --> FetchTools{CLI auto-fetches tools from URL?}
-  FetchTools -- Tools available --> SelectOps[Select Operations Copilot can interact with]
-  FetchTools -- Auth required or no tools --> EnterToolsFile[Enter optional MCP Tools Definition File]
-  EnterToolsFile --> ToolsFromFile{Tools loaded from file?}
-  ToolsFromFile -- Yes --> SelectOps
-  ToolsFromFile -- No --> ContinueWithoutTools[Continue with warning and dynamic-discovery hint]
-  SelectOps --> AuthRequired{MCP server requires authentication?}
-  AuthRequired -- Yes --> SelectAuth[Select Authentication Type: OAuth with static registration or Entra SSO]
-  AuthRequired -- No --> EnterAppName[Enter Application Name]
-  SelectAuth --> EnterAppName
-  ContinueWithoutTools --> EnterAppName
-  EnterAppName --> SelectFolder[Choose Workspace Folder]
-  SelectFolder --> Generate[Generate project]
-  Generate --> Complete([Project created; MCP action generated when tools were available])
-  ChooseCapability --> Cancel([Cancel without creating project])
-  EnterUrl --> Cancel
-  SelectFolder --> Cancel
-```
-
-### CLI non-interactive create flow
-
-```mermaid
-flowchart TD
-  Start([Run atk new --interactive false]) --> ValidateFlags{Required flags present?}
-  ValidateFlags -- No --> MissingOption[Return validation error for missing capability, app name, folder, or MCP URL]
-  ValidateFlags -- Yes --> ResolveTemplate[Pick the declarative agent + MCP action template]
-  ResolveTemplate --> ToolsInput{mcp-tools-file-path provided?}
-  ToolsInput -- Yes --> LoadTools[Load tools from JSON file]
-  ToolsInput -- No --> FetchTools[Try to fetch tools from MCP server URL]
-  LoadTools --> AuthProbe[Probe MCP server auth when needed]
-  FetchTools --> ToolsReady{Tools available?}
-  AuthProbe --> ToolsReady
-  ToolsReady -- Yes --> AuthNeeded{Auth required?}
-  AuthNeeded -- Yes --> AuthFlag{mcp-da-auth-type provided?}
-  AuthFlag -- No --> MissingAuth[Return missing auth type error]
-  AuthFlag -- Yes --> GenerateWithAction[Generate project and MCP-backed action files]
-  AuthNeeded -- No --> GenerateWithAction
-  ToolsReady -- No --> GenerateWithWarning[Generate project and print add-action hint warning]
-  GenerateWithAction --> Complete([Project created with MCP action wiring])
-  GenerateWithWarning --> CompleteDeferred([Project created; add tools later with SCN-DA-ADD-MCP-ACTION-TO-DA])
-```
-
-Example current non-interactive command:
-
-```bash
-atk new -c declarative-agent --with-plugin yes --api-plugin-type mcp --mcp-server-type remote --mcp-da-server-url <server-url> -n <app-name> -f <folder> --interactive false
-```
-
-Authenticated or offline tool definitions can be supplied with:
-
-```bash
-atk new -c declarative-agent --with-plugin yes --api-plugin-type mcp --mcp-server-type remote --mcp-da-server-url <server-url> --mcp-tools-file-path <tools.json> --mcp-da-auth-type oauth -n <app-name> -f <folder> --interactive false
-```
+- Entry: the developer starts project creation and chooses `Declarative Agent` -> `Add an Action` -> `Start with a MCP server`.
+- Server source: when local discovery is available, the developer chooses `Local MCP server` or `Remote MCP server`; otherwise the flow continues with remote.
+- Local: the developer selects one or more discovered local servers. The flow skips URL and authentication questions.
+- Remote: the developer enters a valid MCP server URL and selects an authentication type.
+- Remote auth: `OAuth (with static registration)`, `Entra SSO`, and `None` are always available on the dynamic route. `OAuth (with dynamic registration)` is available only when both DT and DCR are true.
+- Static OAuth and Entra SSO: shipped v3 asks for the required client ID, the OAuth client secret, and optional OAuth scopes during create, then persists environment references for provision. The v4 preview writes auth registration wiring without credential values and asks for missing values during provision.
+- Dynamic OAuth: scaffolding injects `dcr/register`. If authorization discovery cannot be resolved, the generated action contains the documented well-known URL placeholder and the developer receives a warning to repair it before provision.
+- DT-off compatibility: the selector routes to the static template, which fetches or loads tools and writes the static action shape.
+- Validation: invalid URL, app name, location, unsupported auth value, or missing non-interactive input keeps the flow recoverable and does not accept partial output.
+- Cancellation: cancelling before generation leaves no partially scaffolded project.
 
 ## User-visible outputs
 
 ### File changes
 
-- Both surfaces generate the standard DA project scaffold, summarized here as `appPackage/manifest.json`, the declarative agent manifest, lifecycle files, and the stock project files shared by DA templates.
-- VS Code creates `.vscode/mcp.json` with the selected remote MCP server URL and opens the generated project. It does not create the MCP action manifest or persist authentication credentials during this scenario.
-- When CLI resolves tools, it additionally creates `appPackage/ai-plugin.json`, writes the captured MCP tool definitions as JSON, updates the declarative agent manifest, and adds the matching MCP runtime and conditional authentication registration wiring.
-- When CLI cannot resolve tools, it still creates the project but may leave the MCP action files incomplete. Cancellation before generation must not leave a partially accepted project.
+- `appPackage/manifest.json`, `appPackage/declarativeAgent.json`, and the standard DA assets are created.
+- On the default remote path, `appPackage/ai-plugin.json` contains a URL-derived namespace and a `RemoteMCPServer` runtime with `spec.url` and `run_for_functions: ["*"]`. Both shipped v3 and the v4 preview omit `mcp_tool_description` and `enable_dynamic_discovery`. Neither path creates a static MCP tools file.
+- `.vscode/mcp.json` contains the remote server entry. For a local selection, it instead contains the selected `stdio` server definitions and the action manifest has no remote runtime.
+- `m365agents.yml` receives `oauth/register` for static OAuth or Entra SSO, `dcr/register` for dynamic OAuth, and no auth registration action for `None` or a local server.
+- For static OAuth and Entra SSO, the shipped v3 path writes `MCP_DA_OAUTH_CLIENT_ID_<NS>` to `env/.env.<env>`, writes the OAuth secret as `SECRET_MCP_DA_OAUTH_CLIENT_SECRET_<NS>` to the user environment file, and writes `MCP_DA_OAUTH_SCOPE_<NS>` only when scopes were entered. Its `oauth/register` action references those names. The v4 preview writes only the deterministic `MCP_DA_AUTH_ID_<NS>=` registration-result placeholder and no credential values or references.
+- With DT off, the static compatibility template creates the static tools artifact and populated function selection described by its engineering spec.
 
 ### Notifications and prompts
 
-- The guided flow includes the Declarative Agent/template/action-source picks, the conditional `MCP Server Type` pick, `MCP Server URL`, project location, and application name. CLI may also prompt for a tools file, operations, and authentication type.
-- CLI reports project creation with either generated action wiring or a warning plus the `atk add action --api-plugin-type mcp ...` follow-up hint. Exact VS Code and CLI success copy is not specified in this Markdown contract.
+- The guided flow shows the DA template choices, MCP source, conditional local selection or remote URL, conditional auth type, project location, and app name. Shipped v3 also shows the conditional credential follow-ups for static OAuth and Entra SSO; the generated v4 preview walk omits them.
+- Dynamic OAuth discovery fallback produces a warning identifying the manual repair needed before provision.
+- Successful generation opens or reports the generated project through the normal surface behavior.
 
 ### Error and recovery messages
 
-- Invalid application name, unavailable location, invalid MCP server URL, missing or unreadable tools file, missing authentication type when required, and missing required non-interactive options keep the user in the flow or return a correctable validation error. Exact message text is not specified.
-- Cancelling before generation exits without creating a partially accepted project.
+- Invalid user input and unavailable target locations produce a correctable validation error before files are accepted.
+- A non-empty target fails before rendering and writes nothing.
+- Cancelling a picker or input exits without a partial project.
 
 ### Environment and secret writes
 
-- Create writes no client ID, client secret, scope, or other credential value to the generated project. Static OAuth and Entra inputs are collected by `oauth/register` during first provision; the client secret is password-masked and is not written to ordinary environment files by this scenario.
+- Shipped v3 stores the entered client ID and optional scopes in the regular environment file and stores the OAuth client secret through the encrypted user-environment path. It does not log or write the secret to the regular environment file.
+- In the v4 preview, create writes no credential values; on first provision, `oauth/register` asks for missing static OAuth or Entra values and writes the resulting configuration ID to `MCP_DA_AUTH_ID_<NS>`.
+- Dynamic registration asks for no static client ID, client secret, or scopes.
 
 ### External side effects
 
-- VS Code checks for `odr.exe` locally and records the selected MCP server configuration; it does not register external OAuth resources during create.
-- CLI may contact the remote MCP server to discover tools. OAuth registration is deferred to provision.
+- Local selection reads the discovered local MCP server catalog.
+- Remote auth wiring may probe authorization discovery endpoints while generating the lifecycle action. OAuth configuration creation and DCR execution occur during provision, not scaffolding.
 
-## Open questions
+## Flow
 
-- What are the exact identifiers and defaults of the gates that expose the MCP and other conditional action-source options?
-- The narrative mentions choosing authentication during success, but the shipped VS Code flow has no authentication prompt. Should success be described only by the current surface-specific states?
-- Should the VS Code handoff go directly to `SCN-DA-FETCH-MCP-TOOLS`, or first to `SCN-DA-ADD-MCP-ACTION-TO-DA`? The current text uses both relationships.
-- What `.vscode/mcp.json` shape represents the local `stdio` branch, and what exact success/error messages belong to the contract?
-- The current create notification refers to `ATK: Update Action with MCP`, while the contributed Command Palette label is `Microsoft 365 Agents: Fetch action from MCP`. Should the notification copy be corrected?
+```mermaid
+flowchart TD
+  Start([Start new project]) --> ChooseDA[Choose Declarative Agent]
+  ChooseDA --> AddAction[Choose Add an Action]
+  AddAction --> ChooseMCP[Choose Start with a MCP server]
+  ChooseMCP --> DT{TEAMSFX_MCP_FOR_DA_DT?}
+  DT -- false --> Static[Use static-tools compatibility template]
+  DT -- true --> Source{Server type}
+  Source -- local --> Local[Select discovered local servers]
+  Source -- remote --> URL[Enter MCP server URL]
+  URL --> Auth[Select authentication type]
+  Auth --> DCR{OAuth dynamic selected?}
+  DCR -- yes --> Gate{DT and DCR enabled?}
+  Gate -- no --> Invalid[Reject unsupported value]
+  Gate -- yes --> Project
+  DCR -- no --> Engine{TEAMSFX_V4_ENABLED?}
+  Engine -- false, static OAuth or Entra --> Credentials[Collect required credential inputs]
+  Engine -- true or no auth --> Project[Choose location and app name]
+  Credentials --> Project
+  Local --> Project
+  Static --> Project
+  Project --> Generate[Generate project and lifecycle wiring]
+  Generate --> Complete([Project ready to provision])
+```
 
 ## Validation notes
 
-- VS Code UI test intent should trace to `SCN-DA-CREATE-WITH-MCP-SERVER` and stop after project generation, `.vscode/mcp.json` creation, and the handoff into `SCN-DA-ADD-MCP-ACTION-TO-DA`.
-- CLI E2E test intent should trace to `SCN-DA-CREATE-WITH-MCP-SERVER` for interactive and non-interactive `atk new` paths.
-- CLI non-interactive validation should cover missing `--mcp-da-server-url` when `--api-plugin-type mcp` is used, unreadable `--mcp-tools-file-path`, missing `--mcp-da-auth-type` when auth is required and tools are provided, invalid app name, and invalid or unavailable target folder.
-- Because current CLI creation may generate action files when tools are available, validation should assert both possible outcomes: generated MCP action wiring with tools, or a created project plus warning/hint when tools cannot be fetched.
-- Future spec acceptance criteria should trace to the related PRD requirement IDs once the dedicated PRD exists.
+- Three VS Code vscuse remote cases trace to `SCN-DA-CREATE-WITH-MCP-SERVER` for None, static OAuth, and Entra SSO. Local server selection, input recovery, cancellation, and explicit dynamic-registration selection remain L3 validation targets.
+- Existing CLI E2E files carry the same Scenario ID and cover dynamic no-auth creation plus the DT-off static tools-file variant. Their public no-auth server cannot validate real auth injection, and they do not currently cover DCR choice gating.
+- Engineering acceptance criteria for the default dynamic route are in [`create-mcp-server.md`](../../../03-specs/scenarios/da/create-mcp-server.md).
+- DT-off compatibility criteria remain in [`create-mcp-server-static.md`](../../../03-specs/scenarios/da/create-mcp-server-static.md) until the DT flag is removed.
+- Shipped v3 tests own create-time credential collection, encrypted secret persistence, and environment-reference injection. V4 scenario tests own the no-credential scaffold output and provision-time handoff.
+
+## Implementation binding
+
+```yaml
+version: 1
+scaffolding:
+  kind: create
+  templateIds:
+    - da/mcp-server
+  reviewContexts:
+    - id: vscode-remote-dcr-defaults
+      surface: vscode
+      environmentProfile: vscode-v4-preview
+      featureFlags: {}
+      answers:
+        projectType: copilot-agent-type
+        daTemplate: add-action
+        actionSource: mcp
+        mcpServerType: remote
+        mcpServerUrl: https://example.com/mcp
+        authType: oauth-dynamic
+    - id: vscode-remote-static-oauth
+      surface: vscode
+      environmentProfile: vscode-v4-preview
+      featureFlags: {}
+      answers:
+        projectType: copilot-agent-type
+        daTemplate: add-action
+        actionSource: mcp
+        mcpServerType: remote
+        mcpServerUrl: https://example.com/mcp
+        authType: oauth
+    - id: vscode-remote-entra-sso
+      surface: vscode
+      environmentProfile: vscode-v4-preview
+      featureFlags: {}
+      answers:
+        projectType: copilot-agent-type
+        daTemplate: add-action
+        actionSource: mcp
+        mcpServerType: remote
+        mcpServerUrl: https://example.com/mcp
+        authType: entra-sso
+    - id: vscode-remote-none
+      surface: vscode
+      environmentProfile: vscode-v4-preview
+      featureFlags: {}
+      answers:
+        projectType: copilot-agent-type
+        daTemplate: add-action
+        actionSource: mcp
+        mcpServerType: remote
+        mcpServerUrl: https://example.com/mcp
+        authType: none
+    - id: vscode-local
+      surface: vscode
+      environmentProfile: vscode-v4-preview
+      featureFlags: {}
+      answers:
+        projectType: copilot-agent-type
+        daTemplate: add-action
+        actionSource: mcp
+        mcpServerType: local
+        selectedLocalServers:
+          - local-server
+    - id: cli-remote-none
+      surface: cli
+      environmentProfile: cli-v4-preview
+      featureFlags: {}
+      answers:
+        projectType: copilot-agent-type
+        daTemplate: add-action
+        actionSource: mcp
+        mcpServerType: remote
+        mcpServerUrl: https://example.com/mcp
+        authType: none
+  reviewedFingerprints:
+    semantic: 8c5a9d01a93a4ebba76d60a9407356ab7bb999379a7134b0ac0ab674e0882846
+    presentation: 70d93bb2e03499a427e16df485d555eb1cfaea1f61c4bfb7ef0bd2a26c4dd8f4
+```

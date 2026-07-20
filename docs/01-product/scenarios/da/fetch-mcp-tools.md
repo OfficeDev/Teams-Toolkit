@@ -3,44 +3,48 @@
 ## Metadata
 
 - Created: 2026-05-20T00:00:00Z
-- Last updated: 2026-07-13T08:52:39Z
+- Last updated: 2026-07-17T00:00:00Z
+- Status: implemented
 - PM owner: summzhan
 - Engineer owner: HuihuiWu-Microsoft, Alive-Fish
 - Scenario group: da
 - Scenario ID: SCN-DA-FETCH-MCP-TOOLS
 - Primary goal: extend
-- Start state: `.vscode/mcp.json` is open with at least one complete MCP server entry and the built-in and ATK CodeLens actions visible; the configured server can be started and reached.
+- Start state: `TEAMSFX_MCP_FOR_DA_DT=false`, and `.vscode/mcp.json` is open with at least one complete MCP server entry and the built-in and ATK CodeLens actions visible; the configured server can be started and reached.
 - Success state: The selected MCP operations and conditional authentication reference are written to the chosen action manifest, a new action is referenced by the declarative agent manifest when needed, and the `MCP action added` notification offers `Provision`.
 - Lifecycle phases: [extend]
 - Visual/state reference: fetch-mcp-tools.html
 
 ## Scenario
 
-A developer has a Declarative Agent project with `.vscode/mcp.json` containing at least one MCP server entry (typically produced by `SCN-DA-CREATE-WITH-MCP-SERVER` or `SCN-DA-ADD-MCP-ACTION-TO-DA`). They start the MCP server with the built-in VS Code MCP `Start` CodeLens, then click `⚡ ATK: Fetch action from MCP`. That single CodeLens click runs the entire flow end-to-end: ATK discovers tools from the running server, prompts the user to pick (or create) an action manifest, optionally asks for a new file name, lets the user pick which operations Copilot can interact with, asks for an authentication type when the server requires it, and finally writes the operations into the chosen `ai-plugin.json` and wires it into `declarativeAgent.json`. The toolkit then shows the success notification with a `Provision` action.
+With `TEAMSFX_MCP_FOR_DA_DT=false`, a developer has a Declarative Agent project with `.vscode/mcp.json` containing at least one MCP server entry produced by the compatibility branch of `SCN-DA-CREATE-WITH-MCP-SERVER` or `SCN-DA-ADD-MCP-ACTION-TO-DA`. They start the MCP server with the built-in VS Code MCP `Start` CodeLens, then click `⚡ ATK: Fetch action from MCP`. That single CodeLens click runs the entire fallback flow end-to-end: ATK discovers tools from the running server, prompts the user to pick (or create) an action manifest, optionally asks for a new file name, lets the user pick which operations Copilot can interact with, asks for an authentication type when the server requires it, and finally writes the operations into the chosen `ai-plugin.json` and wires it into `declarativeAgent.json`. The toolkit then shows the success notification with a `Provision` action.
 
-Success means: a single MCP server is resolved from `.vscode/mcp.json`; a non-empty tool list is materialized; the user's manifest, operation and auth choices are captured; and `ai-plugin.json` + `declarativeAgent.json` are updated. This scenario owns every interactive step that the CodeLens click triggers, including the success state.
+Success means: a single MCP server is resolved from `.vscode/mcp.json`; a non-empty tool list is materialized; the user's manifest, operation and auth choices are captured; and `ai-plugin.json` + `declarativeAgent.json` are updated. This scenario owns every interactive step that the DT-off CodeLens click triggers, including the success state. It is not part of the default DT-on create or add-action path, where the agent host discovers tools dynamically at runtime.
 
 ## Dependencies
 
-- Requires: an existing DA project with `appPackage/manifest.json`, a declarative agent manifest, and `.vscode/mcp.json` containing at least one MCP server entry. `SCN-DA-CREATE-WITH-MCP-SERVER` and `SCN-DA-ADD-MCP-ACTION-TO-DA` are the two scenarios that produce this state.
+- Requires: `TEAMSFX_MCP_FOR_DA_DT=false` and an existing DA project with `appPackage/manifest.json`, a declarative agent manifest, and `.vscode/mcp.json` containing at least one MCP server entry. The DT-off branches of `SCN-DA-CREATE-WITH-MCP-SERVER` and `SCN-DA-ADD-MCP-ACTION-TO-DA` produce this state.
 - The MCP server entry must be reachable: for a remote (`http`) server, VS Code must be able to start and contact it; for a local (`stdio`) server, the command and any required runtime (for example `odr.exe`) must be installed on the user's machine. The toolkit cannot run this scenario before the server is reported as running by the built-in CodeLens.
 - Produces: an updated action manifest (existing `ai-plugin.json` or a newly created one) and an updated `declarativeAgent.json` with the new action wired in. When the chosen server requires authentication, the toolkit also writes the OAuth registration follow-up actions so provisioning can complete.
 
 ## Feature flags
 
-- `TEAMSFX_MCP_FOR_DA_DCR` — gates only the `OAuth (with dynamic registration)` auth-type option in step 6 and the matching `dcr/register` action in `m365agents.yml`. When the flag is off, the fetch-tools auth picker keeps the shipped options only.
+- `TEAMSFX_MCP_FOR_DA_DT` defaults to `true`. This scenario is the compatibility path reached only when DT is explicitly `false`; with DT true, create and add action write dynamic-discovery runtimes directly and this follow-up is unnecessary.
+- `TEAMSFX_MCP_FOR_DA_DCR` defaults to `true` and gates `OAuth (with dynamic registration)` inside this DT-off flow. Unlike the default create/add auth picker, the fetch-tools picker checks DCR alone because entry into the scenario has already established DT=false.
+- The current VS Code `WorkspaceMCPConfigCodeLensProvider` is registered for every `.vscode/mcp.json` and does not hide `⚡ ATK: Fetch action from MCP` when DT is true. Invoking it manually in a DT-on project can still materialize static tools, but that redundant conversion is not part of the default create/add journey or the supported fallback contract captured here.
+- Keep this scenario and its tests while the DT-off route exists. Archive it only after `TEAMSFX_MCP_FOR_DA_DT` and the corresponding CodeLens implementation are removed.
 
 ## Surfaces
 
 - VS Code built-in CodeLens: VS Code's MCP runtime owns the `Start`, `tools`, `prompts`, and `More...` actions on each server entry in `.vscode/mcp.json`. Pressing `Start` brings the server up and populates the tools/prompts counts shown next to the server.
-- VS Code ATK CodeLens: ATK contributes `⚡ ATK: Fetch action from MCP` on each server key. The CodeLens is the primary entry point for this scenario; because it is per-server, the click already binds the action to that specific server and no server picker is shown.
+- VS Code ATK CodeLens: ATK contributes `⚡ ATK: Fetch action from MCP` on each server key. The provider is currently visible regardless of DT, while this scenario uses it as the primary entry point for the DT-off compatibility flow. Because it is per-server, the click already binds the action to that specific server and no server picker is shown.
 - VS Code Command Palette (edge case): `Microsoft 365 Agents: Fetch action from MCP` is also available without a click target; in that case the toolkit reads `.vscode/mcp.json` and, only if more than one server is configured, prompts the user to pick one in a Quick Pick titled `Select MCP Server`. This Command Palette path is not part of the primary visualized flow.
 - CLI: not covered by this scenario. The CLI uses an end-to-end `atk add action --api-plugin-type mcp` path described in `SCN-DA-ADD-MCP-ACTION-TO-DA` which combines URL collection with tool fetch and action manifest update; it does not have a separate fetch surface.
 - Visual Studio and chat: not covered.
 
 ## States
 
-- Entry: `.vscode/mcp.json` is open in VS Code; the built-in MCP CodeLens row is visible. The server entry was placed there earlier by `SCN-DA-CREATE-WITH-MCP-SERVER` or `SCN-DA-ADD-MCP-ACTION-TO-DA`.
+- Entry: DT is disabled and `.vscode/mcp.json` is open in VS Code; the built-in MCP CodeLens row is visible. The server entry was placed there earlier by a DT-off create or add-action branch. The same ATK CodeLens may also be visible in DT-on projects, but that is not the originating state for this fallback scenario.
 - Built-in CodeLens row: `Start | tools | prompts | More...`. Before the server starts, the tools and prompts counts are not shown. After start, the counts reflect what VS Code's MCP runtime discovered.
 - ATK CodeLens row: `⚡ ATK: Fetch action from MCP`. Also reachable from the Command Palette as `Microsoft 365 Agents: Fetch action from MCP`.
 - Server resolution: each ATK CodeLens is rendered per server entry, so a CodeLens click already binds the action to that server and no server picker is shown. The multi-server `Select MCP Server` Quick Pick is reached only from the Command Palette when `.vscode/mcp.json` contains more than one server; each row shows either the server URL (for `http` servers) or `command args` (for `stdio` servers) as its description.
@@ -109,15 +113,12 @@ This scenario updates an existing DA project; there is no template boilerplate t
 
 - The toolkit contacts the selected local or remote MCP server and reads its tool definitions. It does not create cloud-side resources during this scenario. Any OAuth client registration happens later during provision, when the injected `oauth/register` or `dcr/register` step runs.
 
-## Open questions
-
-- What exact prerequisite error strings should validation assert for each missing or malformed `.vscode/mcp.json` state?
-- What M365 account, tenant, license, or administrator prerequisites apply to the later `Provision` action? This scenario currently declares only the local MCP runtime prerequisites.
-- Which provision contract owns credential collection and administrator handoff for the injected authentication registration step?
-
 ## Validation notes
 
+- VS Code extension unit tests cover the CodeLens provider and `updateActionWithMCP` handler, but no current independently executable vscuse plan is tagged with `SCN-DA-FETCH-MCP-TOOLS`. The older `Feature_DA_Add_MCP_Server` plan exercises this flow as part of a larger, stale multi-behavior recording and remains a refresh source rather than current scenario evidence.
 - VS Code UI test intent should trace to `SCN-DA-FETCH-MCP-TOOLS` and cover both entry points (`⚡ ATK: Fetch action from MCP` CodeLens and `Microsoft 365 Agents: Fetch action from MCP` Command Palette), single-server vs multi-server resolution, both remote (`http`) and local (`stdio`) MCP servers, manifest selection (existing vs `Create a new ai-plugin.json` vs `Browse…`), the `Name the new action manifest file` input and its validation rules, operation pre-selection when updating an existing manifest, the conditional `Select Authentication Type` step, and the `Provision` success notification.
 - Recovery validation should exercise the empty-tools error notification `No tools found for the MCP server. Please run the server first.` and the prerequisite errors raised when `.vscode/mcp.json` is missing, malformed, has no server entries, or the resolved entry is missing its URL (for `http`) or command (for `stdio`). The flow should not write to `ai-plugin.json` or `declarativeAgent.json` when any of these errors fire.
-- This scenario is the VS Code post-step for `SCN-DA-ADD-MCP-ACTION-TO-DA`; any test that exercises the end-to-end add-action UX in VS Code should treat the CodeLens click and everything after it as covered by this scenario.
-- Future spec acceptance criteria should trace to the related PRD requirement IDs once the dedicated PRD exists.
+- This scenario is the VS Code post-step only for the DT-off branches of `SCN-DA-CREATE-WITH-MCP-SERVER` and `SCN-DA-ADD-MCP-ACTION-TO-DA`. Default DT-on tests must not depend on the CodeLens flow.
+- DCR coverage for this picker uses `DT=false, DCR=true`; this deliberately differs from the default dynamic create/add picker, where the DCR option requires both flags.
+- Provision coverage owns credential collection, administrator handoff, and account or tenant prerequisites for injected registration actions. This picker writes no credential values.
+- Keep this scenario's UI coverage until the DT flag and CodeLens fallback implementation are removed. Coverage should also assert the current unconditional CodeLens visibility so a future decision to gate it is an explicit product change rather than an accidental side effect.

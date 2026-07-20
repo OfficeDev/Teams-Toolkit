@@ -10,6 +10,7 @@
 *.yml eol=lf
 *.sh eol=lf
 *.bicep eol=lf
+*.html eol=lf
 
 # Localization files are maintained by the OneLocBuild pipeline as CRLF.
 # Keep them as CRLF so contributor edits don't fight the pipeline (which
