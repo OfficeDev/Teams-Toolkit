@@ -50,7 +50,7 @@
         "x": 474,
         "y": 210
       },
-      "description": "Click on the \"General Teams Agent\" option within the dropdown menu titled \"Teams Agent or App Using Teams AI Library\" at coordinates (474, 210).",
+      "description": "Click on the \"Other Teams Capabilities\" option within the dropdown menu titled \"Teams Agent or App Using Microsoft Teams SDK\" at coordinates (474, 210).",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -168,7 +168,7 @@
         "x": 228,
         "y": 15
       },
-      "description": "Click the \"Back\" button (with shortcut Ctrl+Alt+←) in the \"Application Name\" popup dialog at the top of the Microsoft 365 Agents Toolkit interface in Visual Studio Code, positioned within the red validation message area.",
+      "description": "Click the \"Back\" button (with shortcut Ctrl+Alt+←) at the top-left of the \"Application Name\" popup dialog in the Microsoft 365 Agents Toolkit interface in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -260,7 +260,7 @@
         "x": 225,
         "y": 21
       },
-      "description": "Click on the \"Application Name\" text input field at the top of the Microsoft 365 Agents Toolkit interface in Visual Studio Code, where a validation error (\"App name is longer than the 30 characters.\") is shown due to the entered app name exceeding the character limit.",
+      "description": "Click the \"Back\" button (with shortcut Ctrl+Alt+←) at the top-left of the \"Application Name\" popup dialog in Visual Studio Code, where a validation error (\"App name is longer than the 30 characters.\") is shown.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
