@@ -150,10 +150,15 @@ describe("v4/buildTarget/parseSelector", () => {
       { routes: [] }, // questions not an array (absent)
       { questions: {}, routes: [] }, // questions not an array
       { questions: [], routes: 7 }, // routes not an array
+      { questions: [null], routes: [] }, // question is not an object
       { questions: [{ type: "singleSelect" }], routes: [] }, // question without a string name
       { questions: [{ name: 5 }], routes: [] }, // question name not a string
+      { questions: [], routes: [null] }, // route is not an object
       { questions: [], routes: [{ engine: "v4", templateId: "x" }] }, // route without a string when
       { questions: [], routes: [{ when: "true", engine: "v9" }] }, // route engine outside the closed set
+      { questions: [], routes: [{ when: "true", engine: "v4", templateId: 7 }] },
+      { questions: [], routes: [{ when: "true", engine: "v4", surfaces: "vscode" }] },
+      { questions: [], routes: [{ when: "true", engine: "v4", surfaces: ["vscode", 7] }] },
       {
         questions: [{ name: "p", condition: { nope: "x" } }],
         routes: [],
@@ -166,6 +171,55 @@ describe("v4/buildTarget/parseSelector", () => {
       assert.instanceOf(error, UserError);
       assert.strictEqual(error.name, BUILD_TARGET_MALFORMED_SELECTOR);
     }
+  });
+
+  it("malformed selector presentation is an explicit UserError", () => {
+    const malformed: unknown[] = [
+      { questions: [null] },
+      { questions: [{ staticOptions: [] }] },
+      { questions: [{ name: "projectType", condition: { nope: "x" } }] },
+      { questions: [{ name: "projectType", staticOptions: "not-an-array" }] },
+      { questions: [{ name: "projectType", staticOptions: [null] }] },
+      { questions: [{ name: "projectType", staticOptions: [{ label: "Missing id" }] }] },
+      {
+        questions: [
+          {
+            name: "projectType",
+            staticOptions: [{ id: "conditional", label: "Conditional", condition: { nope: "x" } }],
+          },
+        ],
+      },
+    ];
+
+    for (const raw of malformed) {
+      const result = parseSelectorPresentation(raw);
+      assert.isTrue(result.isErr(), `expected err for ${JSON.stringify(raw)}`);
+      const error = result._unsafeUnwrapErr();
+      assert.instanceOf(error, UserError);
+      assert.strictEqual(error.name, BUILD_TARGET_MALFORMED_SELECTOR);
+    }
+  });
+
+  it("selector presentation keeps valid question and option conditions", () => {
+    const questionCondition = { expr: "surface == 'vscode'" };
+    const optionCondition = { featureFlag: DT };
+
+    const result = parseSelectorPresentation({
+      questions: [
+        {
+          name: "projectType",
+          condition: questionCondition,
+          staticOptions: [{ id: "mcp", label: "MCP", condition: optionCondition }],
+        },
+      ],
+    });
+
+    assert.isTrue(result.isOk());
+    assert.deepEqual(result._unsafeUnwrap().questions[0].condition, questionCondition);
+    assert.deepEqual(
+      result._unsafeUnwrap().questions[0].staticOptions[0].condition,
+      optionCondition
+    );
   });
 
   it("AC-20: malformed selector diagnostics do not echo authored values", () => {

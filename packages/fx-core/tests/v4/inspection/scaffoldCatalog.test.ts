@@ -242,6 +242,21 @@ describe("inspectScaffoldCatalog", () => {
     assert.strictEqual(result._unsafeUnwrapErr(), sourceError);
   });
 
+  it("INV-4: fails the whole catalog when selector presentation is malformed", () => {
+    const bytes = buildMetadataArchive(
+      {
+        questions: [{ name: "projectType", staticOptions: "not-an-array" }],
+        routes: [],
+      },
+      {}
+    );
+
+    const result = inspectScaffoldCatalog(sourceFrom(bytes), "create");
+
+    assert.isTrue(result.isErr(), "expected malformed presentation to fail inspection");
+    assert.strictEqual(result._unsafeUnwrapErr().name, "BuildTargetMalformedSelector");
+  });
+
   it("ISC-03: produces equal catalogs from authored directory and archive sources", () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "atk-scaffold-catalog-"));
     try {
