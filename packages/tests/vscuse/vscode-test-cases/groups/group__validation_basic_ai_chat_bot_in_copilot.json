@@ -38,7 +38,7 @@
         "x": 416,
         "y": 369
       },
-      "description": "Click the \"Message Copilot\" input field to add a new message in the agent chat within the M365 Copilot web application.",
+      "description": "Click the \"Message vscuse_app_UYNRjdev\" input field to add a new message in the agent chat within the M365 Copilot web application.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
