@@ -85,7 +85,7 @@
         "x": 330,
         "y": 348
       },
-      "description": "Click the blue \"Allow\" button in the vsucse_app_XACUc chat response within the M365 Copilot web application to grant access to the Repair Service.",
+      "description": "Click the \"Sign in to Repair Service\" button in the vscuse_app_GjKTC chat response within the M365 Copilot web application to sign in to the Repair Service.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
