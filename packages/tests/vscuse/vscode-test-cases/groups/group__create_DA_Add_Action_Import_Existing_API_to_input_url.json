@@ -5,9 +5,9 @@
     "execution_context": {
       "delay_between_steps": 0.5,
       "stop_on_error": true,
-      "precondition_wait_timeout": 60.0,
-      "precondition_retry_interval": 2.0,
-      "step_retry_timeout": 0.0
+      "precondition_wait_timeout": 60,
+      "precondition_retry_interval": 2,
+      "step_retry_timeout": 0
     },
     "total_steps": 4,
     "created_at": "2026-05-11T05:06:17.129117",
@@ -65,7 +65,7 @@
         "x": 347,
         "y": 132
       },
-      "description": "Click the \"No Action\" option from the dropdown menu under \"Add an action to your declarative agent\" in the \"Create Declarative Agent\" window of Microsoft 365 Agents Toolkit.",
+      "description": "Click the \"Add an Action\" option from the dropdown menu in the \"Create Declarative Agent\" window of Microsoft 365 Agents Toolkit.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
