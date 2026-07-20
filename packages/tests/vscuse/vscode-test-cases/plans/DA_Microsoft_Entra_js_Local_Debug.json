@@ -122,7 +122,7 @@
         "x": 316,
         "y": 121
       },
-      "description": "Click the \"Microsoft\" option in the dropdown menu under the \"Authentication Type\" field.",
+      "description": "Click the \"Microsoft Entra\" option in the dropdown menu under the \"Authentication Type\" field.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
