@@ -97,7 +97,7 @@
         "x": 268,
         "y": 83
       },
-      "description": "Click the \"Default folder\" input field in the \"Workspace Folder\" dialog to specify the directory path for the project.",
+      "description": "Click the \"Default folder\" option in the dropdown suggestion list of the \"Workspace Folder\" dialog to select it as the project directory.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
