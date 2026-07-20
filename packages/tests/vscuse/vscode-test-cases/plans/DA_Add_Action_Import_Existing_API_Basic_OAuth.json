@@ -165,7 +165,9 @@
         "dhash:313:73:0:10:f0b09494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_b20287ae",
       "created_at": "2026-05-11T05:27:45.252075",
       "plan_id": "plan_7ca218e3"

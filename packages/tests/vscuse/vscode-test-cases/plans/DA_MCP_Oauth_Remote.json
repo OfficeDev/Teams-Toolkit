@@ -189,7 +189,9 @@
       "depends_on": [],
       "preconditions": ["dhash:512:384:0:20:e0c8949492b17075"],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "",
       "created_at": "2026-06-29T03:21:51.370500",
       "plan_id": "plan_r_1024_023252"
@@ -211,7 +213,9 @@
       "depends_on": [],
       "preconditions": ["dhash:512:384:0:20:e0b8949492b17075"],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "",
       "created_at": "2026-06-29T03:21:51.370600",
       "plan_id": "plan_r_1024_023252"
