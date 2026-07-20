@@ -86,7 +86,7 @@
     },
     {
       "agent": "interaction",
-      "description": "Click the \"Send a message\" text box in Microsoft Teams to enable typing input.",
+      "description": "Click the blank area of the chat panel to the right of the assistant's response (not the message input box).",
       "step_id": "step_5793c327",
       "content_refs": [],
       "retry_count": 0,

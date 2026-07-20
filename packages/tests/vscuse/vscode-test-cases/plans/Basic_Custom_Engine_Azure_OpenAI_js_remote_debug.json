@@ -169,7 +169,7 @@
         "x": 1007,
         "y": 506
       },
-      "description": "Click the \"View provisioned resources\" button in the Notifications panel of Visual Studio Code, within the Microsoft 365 Agents Toolkit workspace. This action confirms successful provisioning and deploy stages, as indicated by the notification details.",
+      "description": "Click the close (X) button in the top-right of the bottom panel header (next to the maximize icon) in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

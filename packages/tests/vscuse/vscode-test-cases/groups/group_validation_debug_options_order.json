@@ -7,7 +7,7 @@
       "stop_on_error": true,
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2,
-      "step_retry_timeout": 0.0
+      "step_retry_timeout": 0
     },
     "total_steps": 9,
     "created_at": "2025-12-30T10:02:31.245290",
@@ -110,7 +110,7 @@
         "x": 219,
         "y": 48
       },
-      "description": "Click the green \"Start Debugging\" button labeled \"Debug\" in the Run and Debug panel of Visual Studio Code to initiate debugging in Microsoft 365 Agents Playground.",
+      "description": "Click the \"Debug...\" configuration dropdown next to the green Start Debugging icon in the Run and Debug panel of Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
