@@ -1155,6 +1155,7 @@
   "core.MCPForDA.updatePluginManifest": "MCP 서버에서 선택한 작업이 Copilot과 상호 작용할 수 있도록 성공적으로 추가되었습니다. '%s'(으)로 이동하여 세부 정보를 확인할 수 있습니다. 이제 선언적 에이전트를 프로비전하여 계속 진행할 수 있습니다.",
   "core.MCPForDA.mcpAuthMetadataMissingError": "MCP 서버에서 인증 메타데이터를 찾을 수 없습니다. MCP 서버가 올바르게 구성되어 있는지 확인하고 다시 시도하세요. 세부 정보: %s",
   "core.MCPForDA.mcpAuthDcrPlaceholderWarning": "Unable to discover the OAuth well-known authorization server URL for MCP server '%s'. The 'dcr/register' action was added to m365agents.yml with a placeholder — replace '<PLEASE_FILL_IN_WELL_KNOWN_AUTHORIZATION_SERVER_URL>' with the correct URL before provisioning.",
+  "core.v4.scaffold.existingFileSkipped": "'%s' exists and was not overwritten. Delete or rename it to rebuild the file.",
   "core.MCPForDA.mcpAuthMetadataUrlNotFound": "MCP 서버 응답의 \"resource_metadata\" 속성에서 인증 메타데이터를 찾을 수 없습니다.",
   "core.MCPForDA.mcpServerMetadataUrlNotFound": "MCP 서버의 보호된 리소스 메타데이터 응답에서 'authorization_servers' 속성으로부터 서버 메타데이터를 찾을 수 없습니다.",
   "core.MCPForDA.authUrlNotFound": "MCP 서버의 권한 부여 서버 메타데이터 응답에서 인증 URL을 찾을 수 없습니다.",
