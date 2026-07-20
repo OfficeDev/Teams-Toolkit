@@ -197,7 +197,7 @@
         "x": 533,
         "y": 355
       },
-      "description": "Click the center area of the Visual Studio Code editor window, on the main workspace where the VS Code logo is displayed, to focus the editor.",
+      "description": "Click a blank area within the \"Welcome to VS Code\" sign-in dialog, near the VS Code logo, without hitting any button.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
