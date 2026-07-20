@@ -744,7 +744,7 @@
         "x": 1008,
         "y": 23
       },
-      "description": "Click the \"Close\" (X) button in the top-right corner of the Google Chrome window displaying a Visual Studio Code sign-in confirmation.",
+      "description": "Click the \"Close\" (X) button in the top-right corner of the Google Chrome window displaying the M365 Account sign-in confirmation page.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
