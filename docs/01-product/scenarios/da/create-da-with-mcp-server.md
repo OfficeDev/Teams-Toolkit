@@ -205,5 +205,5 @@ scaffolding:
         authType: none
   reviewedFingerprints:
     semantic: 8c5a9d01a93a4ebba76d60a9407356ab7bb999379a7134b0ac0ab674e0882846
-    presentation: ba4af976a2266c3d20be8149dfb2b1d8eccadaa9e82361de887c5be47f8ae367
+    presentation: 70d93bb2e03499a427e16df485d555eb1cfaea1f61c4bfb7ef0bd2a26c4dd8f4
 ```

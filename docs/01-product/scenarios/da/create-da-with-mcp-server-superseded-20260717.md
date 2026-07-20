@@ -240,5 +240,5 @@ scaffolding:
         mcpServerUrl: https://example.com/mcp
   reviewedFingerprints:
     semantic: 464b7d821bc697c399a896d38c94136e60571d54759840c0127d265b6b1b8f6a
-    presentation: fdf4b28bae19885d6674b7e14c7a9dfac89d43c9d3531884864a1ef89e249a4f
+    presentation: b54dfc503f253ee7cef6fedc565a41d0d1e551590db9a04f97a511513a26e4ff
 ```
