@@ -40,6 +40,8 @@ Use `atk new -c <capability>` to create projects. Available capabilities:
 | `office-addin-outlook-taskpane` | Outlook Task Pane Add-in |
 | `office-addin-wxpo-taskpane` | Office Task Pane Add-in |
 | `office-addin-excel-cfshortcut` | Excel Custom Functions |
+| `office-addin-excel-customfunctions` | Excel Custom Functions (JavaScript-only Runtime) |
+| `office-addin-sso-naa` | Single Sign-On with Nested App Auth |
 | `office-addin-config` | Office Add-in Common Configuration |
 
 ## Declarative Agents (Copilot Extensions)
@@ -133,6 +135,41 @@ atk new -c message-extension -l typescript -n myme -i false
 | `tab` | typescript, csharp | Tab |
 | `message-extension` | typescript, python, csharp | Message Extension |
 | `copilot-connector` | typescript, csharp | Copilot Connector |
+
+## Office Add-ins
+
+Office add-ins extend Office applications (Word, Excel, PowerPoint, Outlook) with custom task panes and functions. All office add-in capabilities are TypeScript only.
+
+```bash
+# Task pane add-in for Word, Excel, PowerPoint, and Outlook (all hosts by default)
+atk new -c office-addin-wxpo-taskpane -l typescript -n myaddin -i false
+
+# Task pane supporting only specific Office apps (comma-separated, no spaces)
+atk new -c office-addin-wxpo-taskpane -l typescript -n myaddin --office-addin-hosts word,excel -i false
+
+# Excel custom functions with keyboard shortcuts
+atk new -c office-addin-excel-cfshortcut -l typescript -n myaddin -i false
+
+# Excel custom functions with a JavaScript-only runtime
+atk new -c office-addin-excel-customfunctions -l typescript -n myaddin -i false
+
+# Task pane add-in with single sign-on via Nested App Auth
+atk new -c office-addin-sso-naa -l typescript -n myaddin -i false
+```
+
+| Capability | Languages | Description |
+|------------|-----------|-------------|
+| `office-addin-wxpo-taskpane` | typescript | Task pane add-in for Word, Excel, PowerPoint, and/or Outlook |
+| `office-addin-excel-cfshortcut` | typescript | Excel custom functions with keyboard shortcuts (shared runtime) |
+| `office-addin-excel-customfunctions` | typescript | Excel custom functions using a JavaScript-only runtime |
+| `office-addin-sso-naa` | typescript | Task pane add-in with single sign-on via Nested App Auth |
+| `office-addin-config` | typescript | Common configuration for Office add-ins |
+
+### Office Add-in Options
+
+| Option | Values | Description |
+|--------|--------|-------------|
+| `--office-addin-hosts` | `word`, `powerpoint`, `outlook`, `excel` (comma-separated) | Office apps the task pane supports. Only applies to `office-addin-wxpo-taskpane`. Optional; defaults to all four hosts. Source files and debug configs for unselected hosts are pruned. |
 
 ## Best Practices
 

@@ -27,6 +27,10 @@ Scaffold a new Microsoft 365 agent or Teams app from an ATK template.
 | Teams tab app | `tab` |
 | Teams message extension | `message-extension` |
 | Copilot Connector | `copilot-connector` |
+| Office task pane add-in (Word/Excel/PowerPoint/Outlook) | `office-addin-wxpo-taskpane` |
+| Excel custom functions (shared runtime) | `office-addin-excel-cfshortcut` |
+| Excel custom functions (JavaScript-only runtime) | `office-addin-excel-customfunctions` |
+| Office add-in with SSO via Nested App Auth | `office-addin-sso-naa` |
 
 See [../toolkit/templates.md](../toolkit/templates.md) for the complete template catalog with language support and descriptions.
 
@@ -62,6 +66,18 @@ atk new -c basic-custom-engine-agent -l typescript -n my-cea -f /tmp -i false
 
 # Teams Agent with RAG
 atk new -c teams-agent-rag-customize -l typescript -n my-rag-agent -f /tmp -i false
+
+# Office task pane add-in (all Office apps by default)
+atk new -c office-addin-wxpo-taskpane -l typescript -n my-addin -f /tmp -i false
+
+# Office task pane add-in for specific apps only (comma-separated, no spaces)
+atk new -c office-addin-wxpo-taskpane -l typescript -n my-addin --office-addin-hosts word,excel -f /tmp -i false
+
+# Excel custom functions (JavaScript-only runtime)
+atk new -c office-addin-excel-customfunctions -l typescript -n my-addin -f /tmp -i false
+
+# Office add-in with SSO via Nested App Auth
+atk new -c office-addin-sso-naa -l typescript -n my-addin -f /tmp -i false
 ```
 
 PowerShell equivalent:
@@ -108,6 +124,7 @@ List all samples with `atk list samples`.
 
 - `declarative-agent` does NOT require `-l` language flag
 - `declarative-agent-action-from-existing-api` requires `-a` (OpenAPI spec) and `-o` (operation IDs like `"GET /path"`)
+- Office add-in capabilities (`office-addin-*`) are TypeScript only; `office-addin-wxpo-taskpane` accepts `--office-addin-hosts word,excel` (comma-separated) to limit which Office apps it supports, defaulting to all four
 - Always use `-i false` for non-interactive scripted creation
 - `atk new` can take several minutes — wait for completion (timeout 120000ms+)
 - If template/sample already matches the requirement, do not run dependency install by default; continue only when user asks for next steps
