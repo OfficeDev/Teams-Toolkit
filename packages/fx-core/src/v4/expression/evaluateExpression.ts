@@ -221,6 +221,43 @@ type Ast =
   | { k: "and"; left: Ast; right: Ast }
   | { k: "or"; left: Ast; right: Ast };
 
+/** Enumerate literal feature-flag names without evaluating or short-circuiting the expression. */
+export function collectFeatureFlagReferences(
+  node: ExpressionNode
+): Result<ReadonlySet<string>, FxError> {
+  try {
+    const references = new Set<string>();
+    collectFeatureFlagReferencesFromAst(parse(tokenize(desugarToExpr(node))), references);
+    return ok(references);
+  } catch (e) {
+    const name = e instanceof EvalError ? e.code : EXPR_PARSE_ERROR;
+    const message = e instanceof Error ? e.message : String(e);
+    return err(new SystemError({ source: SOURCE, name, message }));
+  }
+}
+
+function collectFeatureFlagReferencesFromAst(ast: Ast, references: Set<string>): void {
+  switch (ast.k) {
+    case "call":
+      if (ast.name === "featureFlag" && ast.args[0]?.k === "str") {
+        references.add(ast.args[0].v);
+      }
+      ast.args.forEach((argument) => collectFeatureFlagReferencesFromAst(argument, references));
+      break;
+    case "eq":
+    case "and":
+    case "or":
+      collectFeatureFlagReferencesFromAst(ast.left, references);
+      collectFeatureFlagReferencesFromAst(ast.right, references);
+      break;
+    case "not":
+      collectFeatureFlagReferencesFromAst(ast.operand, references);
+      break;
+    default:
+      break;
+  }
+}
+
 /** Recursive-descent parse: or → and → equality → unary → primary (call | group | literal | identifier). */
 function parse(tokens: Token[]): Ast {
   let pos = 0;

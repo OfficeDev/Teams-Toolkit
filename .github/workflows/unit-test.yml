@@ -45,6 +45,9 @@ jobs:
       - name: setup project
         uses: ./.github/actions/setup-project
 
+      - name: Check scenario artifacts
+        run: pnpm --dir packages/fx-core run scenario:check
+
       - name: Unit Test
         run: |
           xvfb-run -a pnpm -r --stream --workspace-concurrency=8 run test:unit
@@ -126,3 +129,15 @@ jobs:
           disable_search: true
           fail_ci_if_error: true
           verbose: true
+
+  scenario-tooling-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup project
+        uses: ./.github/actions/setup-project
+
+      - name: Test scenario tooling on Windows
+        run: pnpm --dir packages/fx-core exec vitest run --config vitest.config.ts tests/scenarioTooling/scenarioCommands.test.ts

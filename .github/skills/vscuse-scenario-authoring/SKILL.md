@@ -100,7 +100,7 @@ Account requirements belong to the execution target. For example, local debug of
 
 ### Source-of-Truth Override: DA Create With MCP Server
 
-For `SCN-DA-CREATE-WITH-MCP-SERVER`, use `docs/01-product/scenarios/da/draft/create-da-with-mcp-server.md` as the source of truth when the user points at that draft. With `TEAMSFX_MCP_FOR_DA_DT=true`, the create-flow case must not continue the legacy fetch-tools/static operation selection path:
+For `SCN-DA-CREATE-WITH-MCP-SERVER`, resolve the requested contract from Scenario ID, `Status`, and `Proposal key`; do not infer lifecycle from a directory name. The current dynamic-tool-discovery contract is `docs/01-product/scenarios/da/create-da-with-mcp-server.md`. With `TEAMSFX_MCP_FOR_DA_DT=true`, the create-flow case must not continue the legacy fetch-tools/static operation selection path:
 
 - Do not click `Fetch action from MCP`, `Fetch from MCP`, or `Select Operation(s) Copilot can interact with` as part of the create scenario.
 - Validate the generated dynamic project shape instead: no `appPackage/mcp-tools-1.json`; `appPackage/ai-plugin.json` has an MCP server runtime for the entered URL, empty `functions`, no `mcp_tool_description`, and `run_for_functions: ["*"]`; `appPackage/declarativeAgent.json` references `action_1`; `.vscode/mcp.json` points at the MCP server URL.

@@ -470,6 +470,58 @@ export class FxCoreDeclarativeAgentPart {
         )
       );
     }
+
+    if (useMCPDTModifyFlow && featureFlagManager.getBooleanValue(FeatureFlags.V4Enabled)) {
+      const entryParams: Record<string, string> = {
+        teamsManifestPath: targetRelativePath(projectPath, teamsManifestPath),
+      };
+      const mcpServerUrl = inputs[QuestionNames.MCPForDAServerUrl];
+      if (typeof mcpServerUrl === "string") {
+        entryParams.mcpServerUrl = mcpServerUrl;
+      }
+      const authType = inputs[QuestionNames.MCPForDAAuthType];
+      if (typeof authType === "string") {
+        entryParams.authType = authType;
+      }
+      const appName = teamsManifest.name.short.replace("${{APP_NAME_SUFFIX}}", "");
+
+      return await fxCoreDeclarativeAgentDeps.modifyProjectFrontDoor(
+        inputs,
+        { addCapability: "add-action", actionSource: "mcp" },
+        entryParams,
+        {
+          resolveArtifactSnapshot: fxCoreDeclarativeAgentDeps.resolveV4TemplateArtifactSnapshot,
+          scaffoldV4: async (frontDoorInputs, target, answers, resolvedPackage) => {
+            const resolvedMcpServerUrl = answers.mcpServerUrl;
+            const resolvedTeamsManifestPath = answers.teamsManifestPath;
+            const resolvedAuthType = answers.authType;
+            if (
+              typeof resolvedMcpServerUrl !== "string" ||
+              typeof resolvedTeamsManifestPath !== "string" ||
+              typeof resolvedAuthType !== "string"
+            ) {
+              return err(
+                new SystemError({
+                  source: "FxCore",
+                  name: "InvalidAddMcpServerAnswers",
+                  message: "The MCP add-action inputs are incomplete.",
+                })
+              );
+            }
+            return await fxCoreDeclarativeAgentDeps.scaffoldAddMcpServerFromV4({
+              templateId: target.templateId,
+              projectPath,
+              platform: frontDoorInputs.platform,
+              teamsManifestPath: resolvedTeamsManifestPath,
+              appName,
+              mcpServerUrl: resolvedMcpServerUrl,
+              authType: resolvedAuthType,
+              resolvedPackage,
+            });
+          },
+        }
+      );
+    }
     const gptManifestFilePathRes = await copilotGptManifestUtils.getManifestPath(teamsManifestPath);
     if (gptManifestFilePathRes.isErr()) {
       return err(gptManifestFilePathRes.error);

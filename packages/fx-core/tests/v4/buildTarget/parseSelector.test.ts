@@ -7,6 +7,7 @@ import { UserError } from "@microsoft/teamsfx-api";
 import { assert } from "vitest";
 import {
   BUILD_TARGET_MALFORMED_SELECTOR,
+  parseSelectorPresentation,
   parseSelectorSpec,
 } from "../../../src/v4/buildTarget/parseSelector";
 import {
@@ -165,6 +166,29 @@ describe("v4/buildTarget/parseSelector", () => {
       assert.instanceOf(error, UserError);
       assert.strictEqual(error.name, BUILD_TARGET_MALFORMED_SELECTOR);
     }
+  });
+
+  it("AC-20: malformed selector diagnostics do not echo authored values", () => {
+    const marker = "sensitive-route-value-must-not-escape";
+    const result = parseSelectorSpec({
+      questions: [],
+      routes: [{ when: marker, engine: "invalid" }],
+    });
+
+    assert.isTrue(result.isErr());
+    assert.notInclude(result._unsafeUnwrapErr().message, marker);
+
+    const presentationMarker = "sensitive-option-id-must-not-escape";
+    const presentation = parseSelectorPresentation({
+      questions: [
+        {
+          name: "projectType",
+          staticOptions: [{ id: presentationMarker }],
+        },
+      ],
+    });
+    assert.isTrue(presentation.isErr());
+    assert.notInclude(presentation._unsafeUnwrapErr().message, presentationMarker);
   });
 
   it("AC-21: the real shipped selector routes the MCP dimensions by feature flag", async () => {

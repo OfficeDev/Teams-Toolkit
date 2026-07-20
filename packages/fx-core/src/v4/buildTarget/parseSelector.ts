@@ -41,38 +41,50 @@ function isDispatchEngine(value: unknown): value is DispatchEngine {
 }
 
 /** Project one raw question onto `{ name, condition? }`. */
-function parseQuestion(raw: unknown): Result<RouteQuestion, FxError> {
+function parseQuestion(raw: unknown, index: number): Result<RouteQuestion, FxError> {
   if (!isRecord(raw)) {
-    return err(userError("a selector question must be an object"));
+    return err(userError(`selector question at index ${index} must be an object`));
   }
   const name = stringField(raw, "name");
   if (name === undefined) {
-    return err(userError("a selector question must have a string 'name'"));
+    return err(userError(`selector question at index ${index} must have a string 'name'`));
   }
   const condition = raw.condition;
   if (condition === undefined) {
     return ok({ name });
   }
   if (!isExpressionNode(condition)) {
-    return err(userError(`selector question '${name}' has a malformed 'condition'`));
+    return err(userError(`selector question at index ${index} has a malformed 'condition'`));
   }
   return ok({ name, condition });
 }
 
 /** Project one raw route onto `{ when, engine, +engine-key? }`. */
-function parseRoute(raw: unknown): Result<SelectorRoute, FxError> {
+function parseRoute(raw: unknown, index: number): Result<SelectorRoute, FxError> {
   if (!isRecord(raw)) {
-    return err(userError("a selector route must be an object"));
+    return err(userError(`selector route at index ${index} must be an object`));
   }
   const when = stringField(raw, "when");
   if (when === undefined) {
-    return err(userError("a selector route must have a string 'when'"));
+    return err(userError(`selector route at index ${index} must have a string 'when'`));
   }
   const engine = raw.engine;
   if (!isDispatchEngine(engine)) {
-    return err(userError(`selector route '${when}' has an invalid 'engine'`));
+    return err(userError(`selector route at index ${index} has an invalid 'engine'`));
   }
   const route: SelectorRoute = { when, engine };
+  for (const key of ["templateId", "coreMethod", "action"] as const) {
+    if (key in raw && typeof raw[key] !== "string") {
+      return err(userError(`selector route at index ${index} has a non-string '${key}'`));
+    }
+  }
+  if (
+    "surfaces" in raw &&
+    (!Array.isArray(raw.surfaces) ||
+      !raw.surfaces.every((surface): surface is string => typeof surface === "string"))
+  ) {
+    return err(userError(`selector route at index ${index} has invalid 'surfaces'`));
+  }
   const templateId = stringField(raw, "templateId");
   if (templateId !== undefined) {
     route.templateId = templateId;
@@ -104,16 +116,16 @@ export function parseSelectorSpec(raw: unknown): Result<SelectorSpec, FxError> {
     return err(userError("selector.json 'routes' must be an array"));
   }
   const questions: RouteQuestion[] = [];
-  for (const rawQuestion of raw.questions) {
-    const parsed = parseQuestion(rawQuestion);
+  for (let index = 0; index < raw.questions.length; index++) {
+    const parsed = parseQuestion(raw.questions[index], index);
     if (parsed.isErr()) {
       return err(parsed.error);
     }
     questions.push(parsed.value);
   }
   const routes: SelectorRoute[] = [];
-  for (const rawRoute of raw.routes) {
-    const parsed = parseRoute(rawRoute);
+  for (let index = 0; index < raw.routes.length; index++) {
+    const parsed = parseRoute(raw.routes[index], index);
     if (parsed.isErr()) {
       return err(parsed.error);
     }
@@ -141,6 +153,7 @@ export interface PresentationQuestion {
   title?: string;
   placeholder?: string;
   keyPrefix?: string;
+  condition?: ConditionNode;
   staticOptions: PresentationOption[];
 }
 
@@ -150,17 +163,33 @@ export interface SelectorPresentation {
 }
 
 /** Project one raw option onto its presentation shape. */
-function parsePresentationOption(raw: unknown): Result<PresentationOption, FxError> {
+function parsePresentationOption(
+  raw: unknown,
+  questionIndex: number,
+  optionIndex: number
+): Result<PresentationOption, FxError> {
   if (!isRecord(raw)) {
-    return err(userError("a selector option must be an object"));
+    return err(
+      userError(
+        `selector question at index ${questionIndex} option at index ${optionIndex} must be an object`
+      )
+    );
   }
   const id = stringField(raw, "id");
   if (id === undefined) {
-    return err(userError("a selector option must have a string 'id'"));
+    return err(
+      userError(
+        `selector question at index ${questionIndex} option at index ${optionIndex} must have a string 'id'`
+      )
+    );
   }
   const label = stringField(raw, "label");
   if (label === undefined) {
-    return err(userError(`selector option '${id}' must have a string 'label'`));
+    return err(
+      userError(
+        `selector question at index ${questionIndex} option at index ${optionIndex} must have a string 'label'`
+      )
+    );
   }
   const option: PresentationOption = { id, label };
   const detail = stringField(raw, "detail");
@@ -182,7 +211,11 @@ function parsePresentationOption(raw: unknown): Result<PresentationOption, FxErr
   const condition = raw.condition;
   if (condition !== undefined) {
     if (!isExpressionNode(condition)) {
-      return err(userError(`selector option '${id}' has a malformed 'condition'`));
+      return err(
+        userError(
+          `selector question at index ${questionIndex} option at index ${optionIndex} has a malformed 'condition'`
+        )
+      );
     }
     option.condition = condition;
   }
@@ -190,13 +223,16 @@ function parsePresentationOption(raw: unknown): Result<PresentationOption, FxErr
 }
 
 /** Project one raw question onto its presentation shape. */
-function parsePresentationQuestion(raw: unknown): Result<PresentationQuestion, FxError> {
+function parsePresentationQuestion(
+  raw: unknown,
+  questionIndex: number
+): Result<PresentationQuestion, FxError> {
   if (!isRecord(raw)) {
-    return err(userError("a selector question must be an object"));
+    return err(userError(`selector question at index ${questionIndex} must be an object`));
   }
   const name = stringField(raw, "name");
   if (name === undefined) {
-    return err(userError("a selector question must have a string 'name'"));
+    return err(userError(`selector question at index ${questionIndex} must have a string 'name'`));
   }
   const question: PresentationQuestion = { name, staticOptions: [] };
   const title = stringField(raw, "title");
@@ -211,12 +247,27 @@ function parsePresentationQuestion(raw: unknown): Result<PresentationQuestion, F
   if (keyPrefix !== undefined) {
     question.keyPrefix = keyPrefix;
   }
+  const condition = raw.condition;
+  if (condition !== undefined) {
+    if (!isExpressionNode(condition)) {
+      return err(
+        userError(`selector question at index ${questionIndex} has a malformed 'condition'`)
+      );
+    }
+    question.condition = condition;
+  }
   if (raw.staticOptions !== undefined) {
     if (!Array.isArray(raw.staticOptions)) {
-      return err(userError(`selector question '${name}' has a non-array 'staticOptions'`));
+      return err(
+        userError(`selector question at index ${questionIndex} has a non-array 'staticOptions'`)
+      );
     }
-    for (const rawOption of raw.staticOptions) {
-      const parsed = parsePresentationOption(rawOption);
+    for (let optionIndex = 0; optionIndex < raw.staticOptions.length; optionIndex++) {
+      const parsed = parsePresentationOption(
+        raw.staticOptions[optionIndex],
+        questionIndex,
+        optionIndex
+      );
       if (parsed.isErr()) {
         return err(parsed.error);
       }
@@ -235,8 +286,8 @@ export function parseSelectorPresentation(raw: unknown): Result<SelectorPresenta
     return err(userError("selector.json 'questions' must be an array"));
   }
   const questions: PresentationQuestion[] = [];
-  for (const rawQuestion of raw.questions) {
-    const parsed = parsePresentationQuestion(rawQuestion);
+  for (let questionIndex = 0; questionIndex < raw.questions.length; questionIndex++) {
+    const parsed = parsePresentationQuestion(raw.questions[questionIndex], questionIndex);
     if (parsed.isErr()) {
       return err(parsed.error);
     }

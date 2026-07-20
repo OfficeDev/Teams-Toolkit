@@ -43,7 +43,7 @@
     ],
     "tags": [
       "scenario:SCN-DA-CREATE-WITH-MCP-SERVER",
-      "source_of_truth:docs/01-product/scenarios/da/draft/create-da-with-mcp-server.md",
+      "source_of_truth:docs/01-product/scenarios/da/create-da-with-mcp-server.md",
       "feature_flag:TEAMSFX_MCP_FOR_DA_DT=true",
       "feature_flag:TEAMSFX_MCP_FOR_DA_DCR=true",
       "auth_type:entra-sso",
@@ -91,9 +91,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:f0b09494b2717075"
-      ],
+      "preconditions": ["dhash:512:384:0:20:f0b09494b2717075"],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_03fb1bee",
@@ -113,9 +111,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:e0b09494b2717075"
-      ],
+      "preconditions": ["dhash:512:384:0:20:e0b09494b2717075"],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_0e8ca12b",
@@ -164,7 +160,7 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "source_of_truth:docs/01-product/scenarios/da/draft/create-da-with-mcp-server.md",
+        "source_of_truth:docs/01-product/scenarios/da/create-da-with-mcp-server.md",
         "scenario:SCN-DA-CREATE-WITH-MCP-SERVER"
       ],
       "screenshot": null,
@@ -184,9 +180,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:e0c8949492b17075"
-      ],
+      "preconditions": ["dhash:512:384:0:20:e0c8949492b17075"],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_a256a727",
@@ -208,9 +202,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:e0b8949492b17075"
-      ],
+      "preconditions": ["dhash:512:384:0:20:e0b8949492b17075"],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_ee1faafc",
@@ -230,9 +222,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:b3b1313321383033"
-      ],
+      "preconditions": ["dhash:512:384:0:20:b3b1313321383033"],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_1421ce5a",
@@ -252,9 +242,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:e4c54c733138302b"
-      ],
+      "preconditions": ["dhash:512:384:0:20:e4c54c733138302b"],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_aeb351a0",
@@ -300,9 +288,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:f0b0949492b17075"
-      ],
+      "preconditions": ["dhash:512:384:0:20:f0b0949492b17075"],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_a49b5428",
@@ -322,9 +308,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:c0b0949492b17075"
-      ],
+      "preconditions": ["dhash:512:384:0:20:c0b0949492b17075"],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_dc6672cb",
@@ -344,9 +328,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:b3b131332138303a"
-      ],
+      "preconditions": ["dhash:512:384:0:20:b3b131332138303a"],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_ba61c713",
@@ -366,9 +348,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:c4e54c5331383033"
-      ],
+      "preconditions": ["dhash:512:384:0:20:c4e54c5331383033"],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_add5088d",
@@ -432,9 +412,7 @@
       "depends_on": [],
       "preconditions": [],
       "postconditions": [],
-      "tags": [
-        "step_retry_timeout: 120"
-      ],
+      "tags": ["step_retry_timeout: 120"],
       "screenshot": null,
       "created_at": "2026-06-29T03:17:40.423229",
       "plan_id": "plan_b85e52ee"
