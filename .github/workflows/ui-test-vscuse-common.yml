@@ -179,7 +179,7 @@ jobs:
       GITHUB_MFA_SECRET: ${{ secrets.GH_MFA_SECRET }}
       #Additional value:
       DA_MCP_ENTRA_SSO_CLIENTID: ${{ secrets.DA_MCP_ENTRA_SSO_CLIENTID }}
-      DA_MCP_OAUTH_CLIENT_SECERT: ${{ secrets.DA_MCP_OAUTH_CLIENT_SECERT }}
+      DA_MCP_OAUTH_CLIENT_SECRET: ${{ secrets.DA_MCP_OAUTH_CLIENT_SECERT }}
       DA_MCP_OAUTH_CLIENTID: ${{ secrets.DA_MCP_OAUTH_CLIENTID }}
 
       # SQL server
