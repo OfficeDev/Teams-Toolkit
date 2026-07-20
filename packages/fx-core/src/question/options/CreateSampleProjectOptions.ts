@@ -37,7 +37,6 @@ export const CreateSampleProjectArguments: CLICommandArgument[] = [
       "NPM-search-connector-M365",
       "bot-proactive-messaging-teamsfx",
       "adaptive-card-notification",
-      "incoming-webhook-notification",
       "stocks-update-notification-bot",
       "query-org-user-with-message-extension-sso",
       "team-central-dashboard",

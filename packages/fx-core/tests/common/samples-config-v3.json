@@ -197,24 +197,6 @@
             "suggested": false
         },
         {
-            "id": "incoming-webhook-notification",
-            "onboardDate": "2022-03-31",
-            "title": "Incoming Webhook Notification",
-            "shortDescription": "Demonstrates how to send notification via Incoming Webhook.",
-            "fullDescription": "This is a sample which shows how to send notification via Incoming Webhook in Microsoft Teams channels.",
-            "types": [
-                "Bot"
-            ],
-            "tags": [
-                "Bot",
-                "TS"
-            ],
-            "time": "5min to run",
-            "configuration": "Manual configurations required",
-            "gifPath": "images/incoming-webhook.gif",
-            "suggested": false
-        },
-        {
             "id": "stocks-update-notification-bot",
             "onboardDate": "2022-08-08",
             "title": "Stocks Update",

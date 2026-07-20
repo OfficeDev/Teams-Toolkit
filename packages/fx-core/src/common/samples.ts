@@ -16,6 +16,7 @@ const SampleConfigFile = ".config/samples-config-v3.json";
 export const SampleConfigTag = "v3.4.0";
 // prerelease tag is always using a branch.
 export const SampleConfigBranchForPrerelease = "main";
+const hiddenSampleIds = new Set(["incoming-webhook-notification"]);
 
 export type SampleUrlInfo = {
   owner: string;
@@ -117,37 +118,39 @@ class SampleProvider {
   @hooks([ErrorContextMW({ component: "SampleProvider" })])
   private parseOnlineSampleConfig(samplesConfig: SampleConfigType, ref: string): SampleCollection {
     const samples =
-      samplesConfig?.samples.map((sample) => {
-        const isExternal = sample["downloadUrlInfo"] ? true : false;
-        let gifUrl =
-          sample["gifPath"] !== undefined
-            ? `https://raw.githubusercontent.com/${SampleConfigOwner}/${SampleConfigRepo}/${ref}/${
-                sample["id"] as string
-              }/${sample["gifPath"] as string}`
-            : undefined;
-        if (isExternal) {
-          const info = sample["downloadUrlInfo"] as SampleUrlInfo;
-          gifUrl =
+      samplesConfig?.samples
+        .filter((sample) => !hiddenSampleIds.has((sample["id"] as string) ?? ""))
+        .map((sample) => {
+          const isExternal = sample["downloadUrlInfo"] ? true : false;
+          let gifUrl =
             sample["gifPath"] !== undefined
-              ? `https://raw.githubusercontent.com/${info.owner}/${info.repository}/${info.ref}/${
-                  info.dir
+              ? `https://raw.githubusercontent.com/${SampleConfigOwner}/${SampleConfigRepo}/${ref}/${
+                  sample["id"] as string
                 }/${sample["gifPath"] as string}`
               : undefined;
-        }
-        return {
-          ...sample,
-          onboardDate: new Date(sample["onboardDate"] as string),
-          downloadUrlInfo: isExternal
-            ? sample["downloadUrlInfo"]
-            : {
-                owner: SampleConfigOwner,
-                repository: SampleConfigRepo,
-                ref: ref,
-                dir: sample["id"] as string,
-              },
-          gifUrl: gifUrl,
-        } as SampleConfig;
-      }) || [];
+          if (isExternal) {
+            const info = sample["downloadUrlInfo"] as SampleUrlInfo;
+            gifUrl =
+              sample["gifPath"] !== undefined
+                ? `https://raw.githubusercontent.com/${info.owner}/${info.repository}/${info.ref}/${
+                    info.dir
+                  }/${sample["gifPath"] as string}`
+                : undefined;
+          }
+          return {
+            ...sample,
+            onboardDate: new Date(sample["onboardDate"] as string),
+            downloadUrlInfo: isExternal
+              ? sample["downloadUrlInfo"]
+              : {
+                  owner: SampleConfigOwner,
+                  repository: SampleConfigRepo,
+                  ref: ref,
+                  dir: sample["id"] as string,
+                },
+            gifUrl: gifUrl,
+          } as SampleConfig;
+        }) || [];
 
     return {
       samples,

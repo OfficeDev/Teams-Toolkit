@@ -44,7 +44,6 @@ export enum TemplateProject {
   NpmSearch = "NPM Search Connector",
   ProactiveMessaging = "Proactive Messaging",
   AdaptiveCard = "Adaptive Card Notification",
-  IncomingWebhook = "Incoming Webhook Notification",
   CopilotConnector = "Copilot Connector App",
   StockUpdate = "Stocks Update",
   QueryOrg = "Org User Search Connector",
@@ -78,7 +77,6 @@ export enum TemplateProjectFolder {
   NpmSearch = "NPM-search-connector-M365",
   ProactiveMessaging = "bot-proactive-messaging-teamsfx",
   AdaptiveCard = "adaptive-card-notification",
-  IncomingWebhook = "incoming-webhook-notification",
   StockUpdate = "stocks-update-notification-bot",
   QueryOrg = "query-org-user-with-message-extension-sso",
   CopilotConnector = "copilot-connector-app",
@@ -127,7 +125,6 @@ export const sampleProjectMap: Record<TemplateProject, TemplateProjectFolder> =
     [TemplateProject.ProactiveMessaging]:
       TemplateProjectFolder.ProactiveMessaging,
     [TemplateProject.AdaptiveCard]: TemplateProjectFolder.AdaptiveCard,
-    [TemplateProject.IncomingWebhook]: TemplateProjectFolder.IncomingWebhook,
     [TemplateProject.CopilotConnector]: TemplateProjectFolder.CopilotConnector,
     [TemplateProject.StockUpdate]: TemplateProjectFolder.StockUpdate,
     [TemplateProject.QueryOrg]: TemplateProjectFolder.QueryOrg,

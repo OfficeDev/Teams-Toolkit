@@ -57,7 +57,6 @@ jobs:
         - bot-sso
         - hello-world-in-meeting
         - adaptive-card-notification
-        - incoming-webhook-notification
         - stocks-update-notification-bot
         language: ['javascript', 'typescript']
 

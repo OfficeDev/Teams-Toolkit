@@ -260,7 +260,6 @@ This document indexes all available VscUse (VS Code UI automation) test plans un
 | `Sample_Stocks_Update_Notification_Bot_Local_Debug` | Stocks Update Notification local |
 | `Sample_Stocks_Update_Notification_Bot_Remote_Debug` | Stocks Update Notification remote |
 | `Sample_Large_Notification_Bot_Remote_Debug_Only` | Large Notification Bot remote |
-| `Sample_Incoming_Webhook_Notification_Happy_Path` | Incoming Webhook Notification |
 | `Sample_Hello_World_Meeting_Local_Debug` | Hello World Meeting local |
 | `Sample_Hello_World_Meeting_Remote_Debug` | Hello World Meeting remote |
 | `Sample_Dice_Roller_in_meeting_Local_Debug` | Dice Roller in Meeting local |

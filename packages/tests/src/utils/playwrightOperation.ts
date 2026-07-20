@@ -41,9 +41,6 @@ export const debugInitMap: Record<TemplateProject, () => Promise<void>> = {
   [TemplateProject.HelloWorldBotSSO]: async () => {
     await startDebugging();
   },
-  [TemplateProject.IncomingWebhook]: async () => {
-    await startDebugging("Attach to Incoming Webhook");
-  },
   [TemplateProject.NpmSearch]: async () => {
     await startDebugging("Debug in Teams (Chrome)");
   },

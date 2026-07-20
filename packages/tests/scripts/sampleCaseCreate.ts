@@ -33,7 +33,6 @@ const sampleRecord: any = {
   [TemplateProjectFolder.TodoListM365]: "sample-todo-list-with-m365",
   [TemplateProjectFolder.NpmSearch]: "sample-npm-search",
   [TemplateProjectFolder.AdaptiveCard]: "sample-adaptive-card",
-  [TemplateProjectFolder.IncomingWebhook]: "sample-incoming-webhook",
   [TemplateProjectFolder.StockUpdate]: "sample-stock-update",
   [TemplateProjectFolder.QueryOrg]: "sample-query-org",
   [TemplateProjectFolder.Dashboard]: "sample-dashboard",
@@ -75,7 +74,7 @@ function main() {
         try {
           pvtData["windows-latest"]["node-22"].push(sampleRecord[sample]);
           console.log(
-            `add sample ${sampleRecord[sample]} to windows-latest node-22`
+            `add sample ${sampleRecord[sample]} to windows-latest node-22`,
           );
         } catch (error) {
           console.log("there is no windows-latest node-22 in pvt.json", error);
@@ -84,7 +83,7 @@ function main() {
         try {
           pvtData["ubuntu-latest"]["node-22"].push(sampleRecord[sample]);
           console.log(
-            `add sample ${sampleRecord[sample]} to ubuntu-latest node-22`
+            `add sample ${sampleRecord[sample]} to ubuntu-latest node-22`,
           );
         } catch (error) {
           console.log("there is no ubuntu-latest node-22 in pvt.json", error);

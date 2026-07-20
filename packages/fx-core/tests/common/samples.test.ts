@@ -210,6 +210,75 @@ describe("Samples", () => {
         chai.assert.isTrue(e instanceof AccessGithubError);
       }
     });
+
+    it("filters hidden sample ids from remote config", async () => {
+      packageJson.version = "2.0.3";
+      const sampleConfigWithHiddenSample = {
+        filterOptions: {
+          capabilities: ["Bot"],
+          languages: ["TS"],
+          technologies: ["Azure"],
+        },
+        samples: [
+          {
+            id: "incoming-webhook-notification",
+            onboardDate: "2024-01-01",
+            title: "Incoming Webhook Notification",
+            shortDescription: "Should be filtered",
+            fullDescription: "Should be filtered",
+            types: ["Bot"],
+            tags: ["Bot", "TS"],
+            time: "5min to run",
+            configuration: "Ready for debug",
+            suggested: false,
+            thumbnailPath: "",
+          },
+          {
+            id: "hello-world-tab-with-backend",
+            onboardDate: "2024-01-02",
+            title: "Tab App with Azure Backend",
+            shortDescription: "Should stay",
+            fullDescription: "Should stay",
+            types: ["Tab"],
+            tags: ["Tab", "TS"],
+            time: "5min to run",
+            configuration: "Ready for debug",
+            suggested: true,
+            thumbnailPath: "",
+          },
+          {
+            onboardDate: "2024-01-03",
+            title: "Sample Without Id",
+            shortDescription: "Should stay",
+            fullDescription: "Should stay",
+            types: ["Tab"],
+            tags: ["Tab", "TS"],
+            time: "5min to run",
+            configuration: "Ready for debug",
+            suggested: false,
+            thumbnailPath: "",
+          },
+        ],
+      };
+
+      sandbox.stub(axios, "get").callsFake(async (url: string, config) => {
+        if (
+          url ===
+          `https://raw.githubusercontent.com/OfficeDev/TeamsFx-Samples/${SampleConfigTag}/.config/samples-config-v3.json`
+        ) {
+          return { data: sampleConfigWithHiddenSample, status: 200 };
+        }
+        throw err(undefined);
+      });
+
+      const samples = (await sampleProvider.SampleCollection).samples;
+      chai
+        .expect(samples.some((sample) => sample.id === "incoming-webhook-notification"))
+        .to.equal(false);
+      chai
+        .expect(samples.some((sample) => sample.id === "hello-world-tab-with-backend"))
+        .to.equal(true);
+    });
   });
 
   describe("getSampleReadmeHtml", () => {
