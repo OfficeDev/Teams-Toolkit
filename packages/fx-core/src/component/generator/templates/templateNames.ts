@@ -70,6 +70,8 @@ export enum TemplateNames {
   OutlookTaskpane = "office-addin-outlook-taskpane", // handled by OfficeAddinGeneratorNew
   WXPTaskpane = "office-addin-wxpo-taskpane", // handled by OfficeAddinGeneratorNew
   ExcelCFShortcut = "office-addin-excel-cfshortcut", // handled by OfficeAddinGeneratorNew
+  ExcelCustomFunctions = "office-addin-excel-customfunctions", // handled by OfficeAddinGeneratorNew
+  OfficeAddinSsoNaa = "office-addin-sso-naa", // handled by OfficeAddinGeneratorNew
   OfficeAddinCommon = "office-addin-config", // handled by OfficeAddinGeneratorNew
 
   // VS only

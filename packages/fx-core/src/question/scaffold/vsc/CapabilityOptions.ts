@@ -358,6 +358,22 @@ export class OfficeAddinCapabilityOptions {
       data: TemplateNames.ExcelCFShortcut,
     };
   }
+  static excelCustomFunctions(): OptionItem {
+    return {
+      id: "wxp-json-excel-cf",
+      label: getLocalizedString("template.newExcelCustomFunctions.label"),
+      detail: getLocalizedString("template.newExcelCustomFunctions.detail"),
+      data: TemplateNames.ExcelCustomFunctions,
+    };
+  }
+  static ssoNaa(): OptionItem {
+    return {
+      id: "wxp-json-sso-naa",
+      label: getLocalizedString("template.newSsoNaa.label"),
+      detail: getLocalizedString("template.newSsoNaa.detail"),
+      data: TemplateNames.OfficeAddinSsoNaa,
+    };
+  }
   static DAMetaOS(): OptionItem {
     return {
       id: "office-da-meta-os",
