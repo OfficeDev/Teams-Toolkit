@@ -53,8 +53,11 @@ VERSION_MAP="$(pnpm -r list --depth -1 --json | node -e '
 MODIFIED_DIRS=()
 restore() {
   for d in "${MODIFIED_DIRS[@]:-}"; do
-    [ -n "$d" ] && [ -f "$d/package.json.bak" ] && mv "$d/package.json.bak" "$d/package.json"
+    if [ -n "$d" ] && [ -f "$d/package.json.bak" ]; then
+      mv "$d/package.json.bak" "$d/package.json"
+    fi
   done
+  return 0
 }
 trap restore EXIT
 
