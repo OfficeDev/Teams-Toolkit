@@ -366,7 +366,7 @@
         "x": 1004,
         "y": 19
       },
-      "description": "Click the \"Close\" button (red cross icon) in the browser tab bar to close the \"M365 Account - Sign In\" page.",
+      "description": "Click the browser window's close (X) button to close the browser window showing the \"M365 Account - Sign In\" page.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
