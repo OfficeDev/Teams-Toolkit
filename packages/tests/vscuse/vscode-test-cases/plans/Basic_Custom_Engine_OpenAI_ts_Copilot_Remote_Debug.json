@@ -107,7 +107,9 @@
         "dhash:352:83:0:10:c0d09094b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_bd641d24",
       "created_at": "2026-01-22T01:26:43.956067",
       "plan_id": "plan_97c90449"
@@ -138,7 +140,9 @@
         "dhash:344:69:0:10:d0989494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_52028e00",
       "created_at": "2026-01-22T01:26:43.960964",
       "plan_id": "plan_97c90449"

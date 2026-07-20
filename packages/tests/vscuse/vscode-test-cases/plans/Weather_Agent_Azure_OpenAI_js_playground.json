@@ -55,7 +55,9 @@
         "dhash:360:131:0:10:c8c88094b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_334183ac",
       "created_at": "2025-12-18T06:42:01.046321",
       "plan_id": "plan_9f75f588"
@@ -81,7 +83,9 @@
         "dhash:344:134:0:10:c0c89094b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_c0e83907",
       "created_at": "2025-12-18T06:42:01.068073",
       "plan_id": "plan_9f75f588"
@@ -107,7 +111,9 @@
         "dhash:320:97:0:10:d0989494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_296599eb",
       "created_at": "2025-12-18T06:42:01.087807",
       "plan_id": "plan_9f75f588"
@@ -133,7 +139,9 @@
         "dhash:344:76:0:10:f0b09494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_83a7878f",
       "created_at": "2025-12-18T06:42:01.105669",
       "plan_id": "plan_9f75f588"

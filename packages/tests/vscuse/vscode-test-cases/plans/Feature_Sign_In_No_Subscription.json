@@ -62,7 +62,9 @@
         "dhash:339:90:0:10:c8c88094b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_686b6e31",
       "created_at": "2026-05-21T05:23:56.341430",
       "plan_id": "plan_61065e46"
@@ -88,7 +90,9 @@
         "dhash:330:78:0:10:c0c0b094b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_b06e4c3d",
       "created_at": "2026-05-21T05:23:56.373875",
       "plan_id": "plan_61065e46"
@@ -114,7 +118,9 @@
         "dhash:352:74:0:10:d0b09494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_142fccae",
       "created_at": "2026-05-21T05:23:56.393878",
       "plan_id": "plan_61065e46"
