@@ -202,7 +202,7 @@
         "x": 349,
         "y": 79
       },
-      "description": "Click the \"Sign in to Azure\" dropdown option in the Visual Studio Code command palette to initiate Microsoft 365 authentication.",
+      "description": "Click the \"Sign in to Azure\" option in the Visual Studio Code command palette to initiate Azure authentication for the Microsoft 365 Agents Toolkit.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
