@@ -1155,6 +1155,7 @@
   "core.MCPForDA.updatePluginManifest": "已順利新增從 MCP 伺服器選取的作業，讓 Copilot 與其互動。您可以前往 '%s' 來查看詳細資料。現在，您可以佈建宣告式代理程式以繼續。",
   "core.MCPForDA.mcpAuthMetadataMissingError": "在 MCP 伺服器中找不到驗證中繼資料。請確定您的 MCP 伺服器已正確設定，然後再試一次。詳細資料: %s",
   "core.MCPForDA.mcpAuthDcrPlaceholderWarning": "Unable to discover the OAuth well-known authorization server URL for MCP server '%s'. The 'dcr/register' action was added to m365agents.yml with a placeholder — replace '<PLEASE_FILL_IN_WELL_KNOWN_AUTHORIZATION_SERVER_URL>' with the correct URL before provisioning.",
+  "core.v4.scaffold.existingFileSkipped": "'%s' exists and was not overwritten. Delete or rename it to rebuild the file.",
   "core.MCPForDA.mcpAuthMetadataUrlNotFound": "無法從 MCP 伺服器的回應中找到來自 \"resource_metadata\" 屬性的驗證中繼資料。",
   "core.MCPForDA.mcpServerMetadataUrlNotFound": "無法從 MCP 伺服器的受保護資源中繼資料回應中找到來自 \"authorization_servers\" 屬性的伺服器中繼資料。",
   "core.MCPForDA.authUrlNotFound": "無法從 MCP 伺服器的授權伺服器中繼資料回應中找到驗證 URL。",

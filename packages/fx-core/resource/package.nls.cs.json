@@ -1155,6 +1155,7 @@
   "core.MCPForDA.updatePluginManifest": "Operace vybrané ze serveru MCP jsou úspěšně přidány pro interakci s Copilotem. Můžete přejít na %s a zkontrolovat podrobnosti. Teď můžete zřídit deklarativního agenta, abyste mohli pokračovat.",
   "core.MCPForDA.mcpAuthMetadataMissingError": "Na serveru MCP nebyla nalezena ověřovací metadata. Ujistěte se, že je server MCP správně nakonfigurovaný, a zkuste to znovu. Podrobnosti: %s",
   "core.MCPForDA.mcpAuthDcrPlaceholderWarning": "Unable to discover the OAuth well-known authorization server URL for MCP server '%s'. The 'dcr/register' action was added to m365agents.yml with a placeholder — replace '<PLEASE_FILL_IN_WELL_KNOWN_AUTHORIZATION_SERVER_URL>' with the correct URL before provisioning.",
+  "core.v4.scaffold.existingFileSkipped": "'%s' exists and was not overwritten. Delete or rename it to rebuild the file.",
   "core.MCPForDA.mcpAuthMetadataUrlNotFound": "Nepovedlo se najít ověřovací metadata z vlastnosti resource_metadata z odpovědi serveru MCP.",
   "core.MCPForDA.mcpServerMetadataUrlNotFound": "Nepodařilo se najít metadata serveru z vlastnosti „authorization_servers“ v odpovědi metadat chráněných prostředků serveru MCP.",
   "core.MCPForDA.authUrlNotFound": "Z odpovědi na metadata autorizačního serveru serveru MCP nelze najít ověřovací adresy URL.",

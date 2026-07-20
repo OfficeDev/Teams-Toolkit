@@ -91,5 +91,6 @@
   "template.officeAddin.hosts.word.label": "Word",
   "template.officeAddin.hosts.powerpoint.label": "PowerPoint",
   "template.officeAddin.hosts.outlook.label": "Outlook",
-  "template.officeAddin.hosts.excel.label": "Excel"
+  "template.officeAddin.hosts.excel.label": "Excel",
+  "template.officeAddin.hosts.validation.minItems": "Select at least one Office application to continue."
 }

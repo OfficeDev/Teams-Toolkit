@@ -1155,6 +1155,7 @@
   "core.MCPForDA.updatePluginManifest": "Les opérations sélectionnées à partir de votre serveur MCP ont été ajoutées pour permettre à Copilot d’interagir. Vous pouvez consulter les détails dans '%s'. Vous pouvez désormais provisionner votre agent déclaratif pour continuer.",
   "core.MCPForDA.mcpAuthMetadataMissingError": "Impossible de trouver les métadonnées d’authentification sur le serveur MCP. Vérifiez que votre serveur MCP est correctement configuré et réessayez. Détails : %s",
   "core.MCPForDA.mcpAuthDcrPlaceholderWarning": "Unable to discover the OAuth well-known authorization server URL for MCP server '%s'. The 'dcr/register' action was added to m365agents.yml with a placeholder — replace '<PLEASE_FILL_IN_WELL_KNOWN_AUTHORIZATION_SERVER_URL>' with the correct URL before provisioning.",
+  "core.v4.scaffold.existingFileSkipped": "'%s' exists and was not overwritten. Delete or rename it to rebuild the file.",
   "core.MCPForDA.mcpAuthMetadataUrlNotFound": "Impossible de trouver les métadonnées d’authentification dans la propriété « resource_metadata » de la réponse du serveur MCP.",
   "core.MCPForDA.mcpServerMetadataUrlNotFound": "Impossible de trouver les métadonnées du serveur dans la propriété « authorization_servers » de la réponse des métadonnées des ressources protégées du serveur MCP.",
   "core.MCPForDA.authUrlNotFound": "Impossible de trouver l’URL d’authentification ou les URL d’authentification dans la réponse des métadonnées du serveur d’autorisation du serveur MCP.",
