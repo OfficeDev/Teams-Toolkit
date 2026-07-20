@@ -156,6 +156,9 @@ function resolveNodeReference(
     case "officeAddinHostsNode":
       node = { data: officeAddinHostsQuestion() };
       break;
+    case "officeAddinNaaHostNode":
+      node = { data: officeAddinNaaHostQuestion() };
+      break;
     case "officeAddinImportNode":
       node = {
         data: { type: "group", name: QuestionNames.OfficeAddinImport },
@@ -211,5 +214,24 @@ export function officeAddinHostsQuestion(): MultiSelectQuestion {
           ? undefined
           : getLocalizedString("template.officeAddin.hosts.validation.minItems"),
     },
+  };
+}
+
+export function officeAddinNaaHostQuestion(): SingleSelectQuestion {
+  const hostOption = (id: string, labelKey: string): OptionItem => ({
+    id,
+    label: getLocalizedString(labelKey),
+  });
+  return {
+    type: "singleSelect",
+    name: QuestionNames.OfficeAddinNaaHost,
+    title: getLocalizedString("template.officeAddin.naaHost.title"),
+    placeholder: getLocalizedString("template.officeAddin.naaHost.placeholder"),
+    staticOptions: [
+      hostOption("word", "template.officeAddin.hosts.word.label"),
+      hostOption("excel", "template.officeAddin.hosts.excel.label"),
+      hostOption("powerpoint", "template.officeAddin.hosts.powerpoint.label"),
+    ],
+    default: "word",
   };
 }

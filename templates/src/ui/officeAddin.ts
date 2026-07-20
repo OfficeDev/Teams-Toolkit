@@ -26,6 +26,18 @@ export const officeAddinNode = {
         featureFlag: "TEAMSFX_CF_SHORTCUT_METAOS",
       },
       {
+        id: "wxp-json-excel-cf",
+        label: "template.newExcelCustomFunctions.label",
+        detail: "template.newExcelCustomFunctions.detail",
+        data: "office-addin-excel-customfunctions",
+      },
+      {
+        id: "wxp-json-sso-naa",
+        label: "template.newSsoNaa.label",
+        detail: "template.newSsoNaa.detail",
+        data: "office-addin-sso-naa",
+      },
+      {
         id: "office-addin-import",
         label: "template.importOfficeAddin.label",
         detail: "template.importAddin.detail",
@@ -37,6 +49,10 @@ export const officeAddinNode = {
     {
       condition: { equals: "wxp-json-taskpane" },
       node: "officeAddinHostsNode",
+    },
+    {
+      condition: { equals: "wxp-json-sso-naa" },
+      node: "officeAddinNaaHostNode",
     },
     {
       condition: { equals: "office-addin-import" },
