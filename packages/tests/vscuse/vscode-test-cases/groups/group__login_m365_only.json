@@ -212,7 +212,7 @@
         "x": 762,
         "y": 97
       },
-      "description": "Click the \"Sign in\" button within the Microsoft 365 developer sandbox modal.",
+      "description": "Click the \"Sign in\" button in the notification prompting for a Microsoft 365 account with custom app upload permission.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
