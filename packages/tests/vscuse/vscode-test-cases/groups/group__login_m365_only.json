@@ -398,7 +398,9 @@
       "depends_on": [],
       "preconditions": [],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "step_retry_timeout: 90"
+      ],
       "screenshot": null,
       "created_at": "2026-06-12T01:25:53.063039",
       "plan_id": "plan_r_1021_081410"
