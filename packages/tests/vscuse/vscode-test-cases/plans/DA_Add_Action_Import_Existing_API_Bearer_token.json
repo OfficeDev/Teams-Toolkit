@@ -5,9 +5,9 @@
     "execution_context": {
       "delay_between_steps": 0.5,
       "stop_on_error": true,
-      "precondition_wait_timeout": 60.0,
-      "precondition_retry_interval": 2.0,
-      "step_retry_timeout": 0.0
+      "precondition_wait_timeout": 60,
+      "precondition_retry_interval": 2,
+      "step_retry_timeout": 0
     },
     "total_steps": 12,
     "created_at": "2026-05-11T05:20:11.967556",
@@ -96,7 +96,7 @@
         "x": 232,
         "y": 51
       },
-      "description": "Click the \"OK\" button in the \"Select Operation(s) Copilot Can Interact with\" dialog at the top of the Microsoft 365 Agents Toolkit interface in Visual Studio Code.",
+      "description": "Click the checkbox next to the operation list header to select all operations in the \"Select Operation(s) Copilot Can Interact with\" dialog in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -124,7 +124,7 @@
         "x": 797,
         "y": 49
       },
-      "description": "Click the blue \"Clear All\" button in the dropdown for operation selection within the \"Microsoft 365 Agents Toolkit\" extension in Visual Studio Code, to deselect all chosen APIs.",
+      "description": "Click the blue \"OK\" button in the \"Select Operation(s) Copilot Can Interact with\" dialog in Visual Studio Code to confirm the selected operation.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -304,7 +304,7 @@
         "x": 1005,
         "y": 761
       },
-      "description": "Click the \"4 New Notifications\" icon in the bottom-right corner of the Visual Studio Code window to open recent alerts.",
+      "description": "Click the notification bell icon in the bottom-right corner of the Visual Studio Code window to open recent alerts.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
