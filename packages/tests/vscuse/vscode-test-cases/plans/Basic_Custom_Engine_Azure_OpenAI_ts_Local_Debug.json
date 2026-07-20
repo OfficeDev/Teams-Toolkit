@@ -121,7 +121,7 @@
         "x": 316,
         "y": 73
       },
-      "description": "Click on the \"Default folder: /home/vscode/AgentsToolkitProjects\" input field under the \"Workspace Folder\" dialog to interact with the directory selection path.",
+      "description": "Click on the \"Default folder: /home/vscode/AgentsToolkitProjects\" option in the \"Workspace Folder\" dropdown list to select it as the project location.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
