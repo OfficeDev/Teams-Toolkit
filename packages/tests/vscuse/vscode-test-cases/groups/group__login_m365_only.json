@@ -212,7 +212,7 @@
         "x": 762,
         "y": 97
       },
-      "description": "Click the \"Sign in\" button within the Microsoft 365 developer sandbox modal.",
+      "description": "Click the \"Sign in\" button in the Microsoft 365 account modal (which also offers creating a developer sandbox).",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
