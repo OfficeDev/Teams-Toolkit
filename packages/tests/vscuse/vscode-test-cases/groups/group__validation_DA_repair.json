@@ -151,7 +151,7 @@
         "x": 340,
         "y": 354
       },
-      "description": "Click the blue \"Allow\" button in the Microsoft Teams web interface to grant access for the agent, as indicated by the red crosshair overlay.",
+      "description": "Click the blue \"Allow\" button in the M365 Copilot chat interface to grant the agent access to the Repair Service.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
