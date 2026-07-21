@@ -33,14 +33,14 @@
       "step_68494265",
       "step_267d4f2e",
       "step_7d7674b8",
-      "step_53d00883",
-      "step_3c258540",
-      "step_c7a2f98c",
-      "step_7481c15b",
       "step_c1e0c20c",
       "step_conn_appname",
       "step_conn_suffix",
       "step_conn_enter",
+      "step_53d00883",
+      "step_3c258540",
+      "step_c7a2f98c",
+      "step_7481c15b",
       "step_22dda279",
       "step_86472911",
       "step_fa808c22",
@@ -97,7 +97,7 @@
       "step_7ce4446e",
       "step_9bda13ac"
     ],
-    "updated_at": "2026-07-21T03:15:00.000000"
+    "updated_at": "2026-07-21T03:20:00.000000"
   },
-  "steps": "...(81 steps written to plans/Template_And_Sample_Readme_Verification.json; step_conn_suffix.parameters.text = 'd')..."
+  "steps": "...(full 81-step array written to plans/Template_And_Sample_Readme_Verification.json; new steps step_conn_appname [type app_name var], step_conn_suffix [text='d'], step_conn_enter [enter]; step_c1e0c20c folder click moved before connector-name entry)..."
 }
