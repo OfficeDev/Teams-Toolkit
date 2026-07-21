@@ -10,14 +10,7 @@
       "step_retry_timeout": 0.0
     },
     "total_steps": 81,
-    "created_at": "2026-06-25T07:16:12.876811",
     "name": "Template And Sample Readme Verification",
-    "description": {
-      "other": "",
-      "owner": "v-cheye@microsoft.com",
-      "workitem": "32945382"
-    },
-    "generated_at": "2026-06-25T07:16:12.876806",
     "execution_order": [
       "plan_r_0928_012254",
       "step_d870e05e",
@@ -104,8 +97,7 @@
       "step_7ce4446e",
       "step_9bda13ac"
     ],
-    "tags": [],
-    "updated_at": "2026-07-21T03:06:00.000000"
+    "updated_at": "2026-07-21T03:15:00.000000"
   },
-  "steps": "<full 81-step array written to plans/Template_And_Sample_Readme_Verification.json; connector suffix step_conn_suffix.parameters.text changed from 'b' to 'c'>"
+  "steps": "...(81 steps written to plans/Template_And_Sample_Readme_Verification.json; step_conn_suffix.parameters.text = 'd')..."
 }
