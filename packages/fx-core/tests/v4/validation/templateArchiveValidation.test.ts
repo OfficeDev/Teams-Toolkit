@@ -30,6 +30,29 @@ function fullArchive(): Buffer {
   return fullArchiveCache;
 }
 
+function archiveWithUnsafePosixContentPath(): Buffer {
+  const zip = new AdmZip(fullArchive());
+  const safeEntryName = "v4/create/da/mcp-server/content/_payload.txt";
+  const unsafeEntryName = "v4/create/da/mcp-server/content//payload.txt";
+  zip.addFile(safeEntryName, Buffer.from("unsafe", "utf8"));
+
+  // addFile normalizes repeated separators, so rewrite the same-length name in both ZIP headers.
+  const archive = zip.toBuffer();
+  const safeEntryNameBytes = Buffer.from(safeEntryName, "utf8");
+  const unsafeEntryNameBytes = Buffer.from(unsafeEntryName, "utf8");
+  assert.equal(safeEntryNameBytes.length, unsafeEntryNameBytes.length);
+
+  let replacementCount = 0;
+  let offset = archive.indexOf(safeEntryNameBytes);
+  while (offset >= 0) {
+    unsafeEntryNameBytes.copy(archive, offset);
+    replacementCount++;
+    offset = archive.indexOf(safeEntryNameBytes, offset + safeEntryNameBytes.length);
+  }
+  assert.equal(replacementCount, 2, "expected entry names in local and central ZIP headers");
+  return archive;
+}
+
 function selectorOnlyArchive(): AdmZip {
   const zip = new AdmZip();
   zip.addLocalFolder(path.join(V4_ROOT, "schema"), "v4/schema");
@@ -223,11 +246,8 @@ describe("v4/validation/templateArchiveValidation", () => {
   );
 
   it("AC-26: POSIX-absolute content paths are rejected before rendering", () => {
-    const zip = new AdmZip(fullArchive());
-    zip.addFile("v4/create/da/mcp-server/content//payload.txt", Buffer.from("unsafe", "utf8"));
-
     const result = validateDeclarativeTemplateArchive(
-      zip.toBuffer(),
+      archiveWithUnsafePosixContentPath(),
       "build",
       "6.11.0",
       runtimeErrors
