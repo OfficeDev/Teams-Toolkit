@@ -268,7 +268,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion Verify that there are 5 options “Declarative Agent”, \"Custom Engine Agent\", \"Copilot Connectors\", \"Teams Agents and Apps\" and \"Office Add-in\"",
+      "description": "@assertion Verify that there are 5 options \u201cDeclarative Agent\u201d, \"Custom Engine Agent\", \"Copilot Connectors\", \"Teams Agents and Apps\" and \"Office Add-in\"",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -422,7 +422,7 @@
         "x": 278,
         "y": 17
       },
-      "description": "Click the \"Back (Ctrl+Alt+←)\" button in the Teams Capability quick selection popup at the top of the Visual Studio Code interface.",
+      "description": "Click the \"Back (Ctrl+Alt+\u2190)\" button in the Teams Capability quick selection popup at the top of the Visual Studio Code interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -632,7 +632,7 @@
         "x": 277,
         "y": 12
       },
-      "description": "Click the \"Back (Ctrl+Alt+←)\" button in the \"Create an Action\" modal at the top of the Visual Studio Code interface to return to the previous selection screen.",
+      "description": "Click the \"Back (Ctrl+Alt+\u2190)\" button in the \"Create an Action\" modal at the top of the Visual Studio Code interface to return to the previous selection screen.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

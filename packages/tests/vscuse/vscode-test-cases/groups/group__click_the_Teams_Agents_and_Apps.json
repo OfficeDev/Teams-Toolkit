@@ -34,7 +34,7 @@
       "parameters": {
         "button": "left",
         "x": 307,
-        "y": 266
+        "y": 213
       },
       "description": "Click the \"Teams Agents and Apps\" option in the \"New Project\" dropdown menu within the Microsoft 365 Agents Toolkit interface.",
       "content_refs": [],
@@ -42,11 +42,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:307:266:16:5:dc38314eb1964652",
-        "dhash:307:266:96:5:1352b511664a30a1",
-        "dhash:307:266:0:10:c4c8889692b17075"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_51279b5b",
