@@ -1025,6 +1025,8 @@ describe("createProjectFrontDoor (dispatch-create-by-engine)", () => {
       ["default-bot", TemplateNames.DefaultBot],
       ["office-addin-wxpo-taskpane", TemplateNames.WXPTaskpane],
       ["office-addin-excel-cfshortcut", TemplateNames.ExcelCFShortcut],
+      ["office-addin-excel-customfunctions", TemplateNames.ExcelCustomFunctions],
+      ["office-addin-sso-naa", TemplateNames.OfficeAddinSsoNaa],
       ["declarative-agent-meta-os-upgrade-project", "declarative-agent-meta-os-upgrade-project"],
       ["office-addin-config", TemplateNames.OfficeAddinCommon],
       ["da/no-action", TemplateNames.DeclarativeAgentBasic],

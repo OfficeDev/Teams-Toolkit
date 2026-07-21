@@ -14,6 +14,8 @@ const TEAMS_MANIFEST_DEV_PREVIEW_SCHEMA =
   "https://developer.microsoft.com/json-schemas/teams/vDevPreview/MicrosoftTeams.schema.json";
 const DEV_PREVIEW_MANIFESTS = new Set([
   "templates/v4/create/office-addin-excel-cfshortcut/content/typescript/appPackage/manifest.json.tpl",
+  "templates/v4/create/office-addin-excel-customfunctions/content/typescript/appPackage/manifest.json.tpl",
+  "templates/v4/create/office-addin-sso-naa/content/typescript/appPackage/manifest.json.tpl",
   "templates/v4/create/office-addin-wxpo-taskpane/content/typescript/appPackage/manifest.json.tpl",
 ]);
 

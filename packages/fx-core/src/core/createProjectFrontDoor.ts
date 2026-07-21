@@ -73,6 +73,8 @@ const V4_TO_V3_TEMPLATE_ID: Readonly<Record<string, string>> = {
   "default-bot": TemplateNames.DefaultBot,
   "office-addin-wxpo-taskpane": TemplateNames.WXPTaskpane,
   "office-addin-excel-cfshortcut": TemplateNames.ExcelCFShortcut,
+  "office-addin-excel-customfunctions": TemplateNames.ExcelCustomFunctions,
+  "office-addin-sso-naa": TemplateNames.OfficeAddinSsoNaa,
   "declarative-agent-meta-os-upgrade-project": "declarative-agent-meta-os-upgrade-project",
   "office-addin-config": TemplateNames.OfficeAddinCommon,
   "da/no-action": TemplateNames.DeclarativeAgentBasic,

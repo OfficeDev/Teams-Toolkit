@@ -52,6 +52,8 @@ const CURRENT_CREATE_V4_TEMPLATE_IDS = [
   "non-sso-tab",
   "office-addin-config",
   "office-addin-excel-cfshortcut",
+  "office-addin-excel-customfunctions",
+  "office-addin-sso-naa",
   "office-addin-wxpo-taskpane",
   "teams-collaborator-agent",
   "weather-agent",
