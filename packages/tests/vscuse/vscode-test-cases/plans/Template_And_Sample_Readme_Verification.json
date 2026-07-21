@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0.0
     },
-    "total_steps": 78,
+    "total_steps": 81,
     "created_at": "2026-06-25T07:16:12.876811",
     "name": "Template And Sample Readme Verification",
     "description": {
@@ -45,6 +45,9 @@
       "step_c7a2f98c",
       "step_7481c15b",
       "step_c1e0c20c",
+      "step_conn_appname",
+      "step_conn_suffix",
+      "step_conn_enter",
       "step_22dda279",
       "step_86472911",
       "step_fa808c22",
@@ -102,7 +105,7 @@
       "step_9bda13ac"
     ],
     "tags": [],
-    "updated_at": "2026-07-18T03:50:00.000000"
+    "updated_at": "2026-07-21T03:22:15.689958"
   },
   "steps": [
     {
@@ -726,6 +729,66 @@
       ],
       "screenshot": "step_c1e0c20c",
       "created_at": "2026-06-25T07:16:13.089528",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_conn_appname",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{var:app_name:vscuse_app_#####}}"
+      },
+      "description": "Type ${{var:app_name:vscuse_app_#####}} into the \"Input an application name\" text field for the Copilot connector project in the Microsoft 365 Agents Toolkit extension.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
+      "created_at": "2026-07-21T03:20:00.000000",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_conn_suffix",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "d"
+      },
+      "description": "Type the character 'd' into the \"Application Name\" input field to give the Copilot connector app a unique name and avoid a path conflict with other created apps.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
+      "created_at": "2026-07-21T03:20:00.000000",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_conn_enter",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the Copilot connector application name so the project scaffolds and its README preview opens.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
+      "created_at": "2026-07-21T03:20:00.000000",
       "plan_id": "plan_2aa92cad"
     },
     {
