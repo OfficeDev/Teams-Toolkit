@@ -12,6 +12,7 @@
         "@microsoft/teams-js": "^2.0.0",
         "@microsoft/teams.api": "^2.0.0",
         "@microsoft/teams.apps": "^2.0.0",
+        "undici": "^6.21.0",
         "@microsoft/teams.cards": "^2.0.0",
         "@microsoft/teams.client": "^2.0.0",
         "@microsoft/teams.common": "^2.0.0",

@@ -1,3 +1,4 @@
+require("./proxy");
 const app = require("./app");
 
 // Start the application
