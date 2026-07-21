@@ -20,9 +20,28 @@ from typing import List, Tuple
 
 @dataclass
 class ScanResult:
-    status: str  # "clean", "vulnerable", or "error"
+    status: str  # "clean", "vulnerable", "skipped", or "error"
     message: str
     vulnerabilities: List[dict] = field(default_factory=list)
+
+
+# VS-only MSBuild project SDKs that are not restorable from NuGet. Projects that
+# target one of these are Teams Toolkit project shells with no NuGet packages to
+# audit, so ``dotnet restore`` can never resolve them. They are skipped rather
+# than reported as scan errors (which would otherwise fail the whole job).
+UNRESOLVABLE_PROJECT_SDKS = ("Microsoft.TeamsFx.Sdk",)
+
+
+def project_sdk_is_unresolvable(csproj_file: Path) -> bool:
+    """Return True when the project targets a custom SDK that cannot be restored."""
+    try:
+        content = csproj_file.read_text(encoding="utf-8")
+    except OSError:
+        return False
+    return any(
+        re.search(rf'Sdk\s*=\s*"{re.escape(sdk)}"', content)
+        for sdk in UNRESOLVABLE_PROJECT_SDKS
+    )
 
 
 def extract_vulnerability_details(json_output: str, source_file: Path) -> List[dict]:
@@ -134,8 +153,14 @@ def check_nuget_vulnerabilities(csproj_file: Path, temp_dir: Path, is_template: 
     """
     Check a .csproj file for NuGet vulnerabilities using dotnet list package --vulnerable.
 
-    Returns a ScanResult with status "clean", "vulnerable", or "error".
+    Returns a ScanResult with status "clean", "vulnerable", "skipped", or "error".
     """
+    if project_sdk_is_unresolvable(csproj_file):
+        return ScanResult(
+            "skipped",
+            "Skipped: uses VS-only SDK Microsoft.TeamsFx.Sdk (no NuGet packages to audit)",
+        )
+
     work_dir = temp_dir / f"check_{csproj_file.stem}_{hash(str(csproj_file)) % 10000}"
     work_dir.mkdir(parents=True, exist_ok=True)
 
@@ -261,6 +286,7 @@ def main():
         
         failed_files = []
         scan_errors = []
+        skipped_files = []
         vuln_records = []
         checked_count = 0
 
@@ -274,6 +300,9 @@ def main():
             if result.status == "error":
                 safe_print(f"  ⚠️ SCAN ERROR: {result.message}")
                 scan_errors.append({"file": str(csproj_file).replace("\\", "/"), "message": result.message})
+            elif result.status == "skipped":
+                safe_print(f"  ⏭️ {result.message}")
+                skipped_files.append(str(csproj_file).replace("\\", "/"))
             elif result.status == "vulnerable":
                 safe_print(f"  ❌ {result.message}")
                 failed_files.append((csproj_file, result.message))
@@ -291,6 +320,9 @@ def main():
             if result.status == "error":
                 safe_print(f"  ⚠️ SCAN ERROR: {result.message}")
                 scan_errors.append({"file": str(tpl_file).replace("\\", "/"), "message": result.message})
+            elif result.status == "skipped":
+                safe_print(f"  ⏭️ {result.message}")
+                skipped_files.append(str(tpl_file).replace("\\", "/"))
             elif result.status == "vulnerable":
                 safe_print(f"  ❌ {result.message}")
                 failed_files.append((tpl_file, result.message))
@@ -305,6 +337,7 @@ def main():
     safe_print("=" * 60)
     safe_print(f"Total files checked: {checked_count}")
     safe_print(f"Files with vulnerabilities: {len(failed_files)}")
+    safe_print(f"Files skipped: {len(skipped_files)}")
 
     if args.output_json:
         scan_target = args.scan_directory[0] if args.scan_directory else ""
@@ -314,6 +347,7 @@ def main():
             "has_vulnerabilities": bool(vuln_records),
             "vulnerabilities": vuln_records,
             "errors": scan_errors,
+            "skipped": skipped_files,
         }
         try:
             Path(args.output_json).parent.mkdir(parents=True, exist_ok=True)

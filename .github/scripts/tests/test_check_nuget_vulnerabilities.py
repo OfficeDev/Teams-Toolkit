@@ -76,5 +76,29 @@ class CheckNuGetProjectTests(unittest.TestCase):
         self.assertIn("dotnet list package failed", result.message)
 
 
+class SkipUnresolvableSdkTests(unittest.TestCase):
+    def test_custom_teamsfx_sdk_is_skipped_without_restore(self):
+        """Projects on the VS-only Microsoft.TeamsFx.Sdk are skipped, not errored,
+        and dotnet is never invoked for them."""
+        with patch.object(MODULE.subprocess, "run") as run:
+            with tempfile.TemporaryDirectory() as temp:
+                source = Path(temp) / "App.csproj"
+                source.write_text(
+                    '<Project ToolsVersion="15.0" Sdk="Microsoft.TeamsFx.Sdk"></Project>',
+                    encoding="utf-8",
+                )
+                result = MODULE.check_nuget_vulnerabilities(source, Path(temp))
+
+        self.assertEqual("skipped", result.status)
+        run.assert_not_called()
+
+    def test_standard_sdk_is_not_skipped(self):
+        source_content = '<Project Sdk="Microsoft.NET.Sdk.Web"></Project>'
+        with tempfile.TemporaryDirectory() as temp:
+            source = Path(temp) / "App.csproj"
+            source.write_text(source_content, encoding="utf-8")
+            self.assertFalse(MODULE.project_sdk_is_unresolvable(source))
+
+
 if __name__ == "__main__":
     unittest.main()
