@@ -254,7 +254,7 @@
       },
       "description": "Click the \"Provision\" button in the confirmation dialog to approve provisioning resources in the dev environment using the listed Azure and Microsoft 365 accounts within Visual Studio Code.",
       "content_refs": [],
-      "timeout": 30,
+      "timeout": 120,
       "retry_count": 0,
       "continue_on_error": "0",
       "depends_on": [],
