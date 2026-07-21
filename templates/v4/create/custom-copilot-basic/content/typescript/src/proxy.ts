@@ -4,6 +4,11 @@
 // Imported first in index so it applies before any SDK opens a connection.
 import { setGlobalDispatcher, EnvHttpProxyAgent } from "undici";
 
-if (process.env.HTTPS_PROXY || process.env.HTTP_PROXY || process.env.https_proxy || process.env.http_proxy) {
+if (
+  process.env.HTTPS_PROXY ||
+  process.env.HTTP_PROXY ||
+  process.env.https_proxy ||
+  process.env.http_proxy
+) {
   setGlobalDispatcher(new EnvHttpProxyAgent());
 }
