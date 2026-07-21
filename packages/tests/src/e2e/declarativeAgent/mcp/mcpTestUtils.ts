@@ -64,6 +64,7 @@ export async function createMCPProjectWithEnv(
 
 export async function expectDynamicMCPProject(
   projectPath: string,
+  authType: "none" | "oauth-dynamic" = "none",
 ): Promise<void> {
   const appPackage = path.join(projectPath, "appPackage");
   const aiPlugin = await fs.readJSON(path.join(appPackage, "ai-plugin.json"));
@@ -73,7 +74,12 @@ export async function expectDynamicMCPProject(
   expect(runtime.type).to.equal("RemoteMCPServer");
   expect(runtime.spec).to.deep.equal({ url: learnMCPServerUrl });
   expect(runtime.run_for_functions).to.deep.equal(["*"]);
-  expect(runtime.auth.type).to.equal("None");
+  if (authType === "none") {
+    expect(runtime.auth.type).to.equal("None");
+  } else {
+    expect(runtime.auth.type).to.equal("OAuthPluginVault");
+    expect(runtime.auth.reference_id).to.be.a("string").that.is.not.empty;
+  }
 
   expect(fs.pathExistsSync(path.join(appPackage, "mcp-tools-1.json"))).to.be
     .false;
@@ -111,4 +117,15 @@ export function expectNoOAuthRegister(projectPath: string): void {
     const ymlContent = fs.readFileSync(ymlPath, "utf8");
     expect(ymlContent).to.not.include("oauth/register");
   }
+}
+
+export function expectDcrRegisterWithoutStaticCredentials(
+  projectPath: string,
+): void {
+  const ymlPath = path.join(projectPath, "m365agents.yml");
+  const ymlContent = fs.readFileSync(ymlPath, "utf8");
+  expect(ymlContent).to.include("dcr/register");
+  expect(ymlContent).to.not.include("oauth/register");
+  expect(ymlContent).to.not.include("MCP_DA_OAUTH_CLIENT_ID_");
+  expect(ymlContent).to.not.include("SECRET_MCP_DA_OAUTH_CLIENT_SECRET_");
 }
