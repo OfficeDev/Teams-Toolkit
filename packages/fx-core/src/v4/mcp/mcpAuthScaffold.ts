@@ -14,20 +14,15 @@ import { deriveMcpServerName } from "../runtime/whitelist";
  * for every auth type (`oauth`/`entra-sso` -> `oauth/register`, `oauth-dynamic` -> `dcr/register`
  * with the v1.13 schema bump).
  *
- * Credential env persistence (v3 `persistMCPAuthCredentialEnvVars`) is intentionally NOT run at
- * scaffold time: it encrypts the `SECRET_*` client secret with `LocalCrypto(projectId)`, and
- * `settingsUtil.readSettings` materializes that `projectId` from a fresh `uuid.v4()` when the yml
- * lacks one. That non-determinism would break the deterministic-scaffold contract
- * (SCN-CREATE-MCP-10). So the action is injected with `persistCredentialEnvRefs: false` (create
- * and add do not collect credentials; the existing `oauth/register` question middleware asks for
- * missing values at provision), and only the deterministic `MCP_DA_AUTH_ID_<NS>` registration
- * placeholder is written here (SCN-CREATE-MCP-06/15/16, SCN-ADD-MCP-07/10).
+ * Static OAuth and Entra credentials follow the v3 contract: the action references deterministic
+ * environment names and the runtime environment writer persists regular values separately from
+ * `SECRET_*` values. Dynamic registration has no static credential fields.
  */
 
 const SOURCE = "Scaffold";
 
-/** MCP create/add scaffolding targets the `dev` environment for the registration placeholder. */
-const CREATE_ENV_FILE = "env/.env.dev";
+/** MCP create scaffolding persists collected credentials to the default development environment. */
+const CREATE_ENVIRONMENT = "dev";
 
 /** Indirection seam so unit tests can stub the network probes on a plain object. */
 export const mcpAuthScaffoldDeps = {
@@ -47,11 +42,18 @@ function errorMessage(error: unknown): string {
 function mcpAuthIdentifiers(mcpServerUrl: string): {
   namespace: string;
   registrationId: string;
+  clientId: string;
+  clientSecret: string;
+  scope: string;
 } {
   const namespace = deriveMcpServerName(mcpServerUrl);
+  const uppercaseNamespace = namespace.toUpperCase();
   return {
     namespace,
-    registrationId: `MCP_DA_AUTH_ID_${namespace.toUpperCase()}`,
+    registrationId: `MCP_DA_AUTH_ID_${uppercaseNamespace}`,
+    clientId: `MCP_DA_OAUTH_CLIENT_ID_${uppercaseNamespace}`,
+    clientSecret: `SECRET_MCP_DA_OAUTH_CLIENT_SECRET_${uppercaseNamespace}`,
+    scope: `MCP_DA_OAUTH_SCOPE_${uppercaseNamespace}`,
   };
 }
 
@@ -95,7 +97,7 @@ async function resolveEndpoints(
  */
 export async function injectMcpAuthAction(
   ctx: StepContext,
-  args: { ymlPath: string; authType: string; mcpServerUrl: string }
+  args: { ymlPath: string; authType: string; mcpServerUrl: string; oauthScopes?: string }
 ): Promise<Result<void, FxError>> {
   const current = ctx.read(args.ymlPath);
   if (current === undefined) {
@@ -106,14 +108,26 @@ export async function injectMcpAuthAction(
       )
     );
   }
-  const { namespace, registrationId } = mcpAuthIdentifiers(args.mcpServerUrl);
+  const identifiers = mcpAuthIdentifiers(args.mcpServerUrl);
   const endpoints = await resolveEndpoints(args.authType, args.mcpServerUrl, ctx.warn);
   const injectResult = injectMcpAuthActionYaml(current.toString("utf8"), {
     authType: args.authType,
-    authName: namespace,
-    registrationId,
+    authName: identifiers.namespace,
+    registrationId: identifiers.registrationId,
     mcpServerUrl: args.mcpServerUrl,
     endpoints,
+    ...(args.authType === "oauth"
+      ? {
+          credentialEnvNames: {
+            clientId: identifiers.clientId,
+            clientSecret: identifiers.clientSecret,
+            ...(args.oauthScopes?.trim() ? { scope: identifiers.scope } : {}),
+          },
+        }
+      : {}),
+    ...(args.authType === "entra-sso"
+      ? { credentialEnvNames: { clientId: identifiers.clientId } }
+      : {}),
   });
   if (injectResult.isErr()) {
     return err(injectResult.error);
@@ -125,27 +139,35 @@ export async function injectMcpAuthAction(
   return ok(undefined);
 }
 
-/** True if the dotenv content already declares `name=…` (idempotency guard). */
-function containsEnvVar(envContent: string, name: string): boolean {
-  return envContent.split("\n").some((line) => line.startsWith(name + "="));
-}
-
 /**
- * Write the deterministic `MCP_DA_AUTH_ID_<NS>=` registration placeholder into `env/.env.dev`
- * (SCN-CREATE-MCP-06). The value is populated at provision by the injected action's
- * `writeToEnvironmentFile.configurationId`.
+ * Persist the deterministic registration placeholder and the static credentials collected during
+ * create. The runtime routes `SECRET_*` through its encrypted user-environment storage.
  */
 export function persistMcpAuthRegistrationEnv(
   ctx: StepContext,
-  args: { mcpServerUrl: string }
-): Result<void, FxError> {
-  const { registrationId } = mcpAuthIdentifiers(args.mcpServerUrl);
-  const current = ctx.read(CREATE_ENV_FILE);
-  const base = current ? current.toString("utf8") : "";
-  if (containsEnvVar(base, registrationId)) {
-    return ok(undefined);
+  args: {
+    authType: string;
+    mcpServerUrl: string;
+    oauthClientId?: string;
+    oauthClientSecret?: string;
+    oauthScopes?: string;
+    entraClientId?: string;
   }
-  const separator = base.length > 0 && !base.endsWith("\n") ? "\n" : "";
-  ctx.write(CREATE_ENV_FILE, Buffer.from(base + separator + registrationId + "=\n", "utf8"));
-  return ok(undefined);
+): Promise<Result<void, FxError>> {
+  const identifiers = mcpAuthIdentifiers(args.mcpServerUrl);
+  const values: Record<string, string> = { [identifiers.registrationId]: "" };
+  if (args.authType === "oauth") {
+    if (args.oauthClientId !== undefined) {
+      values[identifiers.clientId] = args.oauthClientId;
+    }
+    if (args.oauthClientSecret !== undefined) {
+      values[identifiers.clientSecret] = args.oauthClientSecret;
+    }
+    if (args.oauthScopes?.trim()) {
+      values[identifiers.scope] = args.oauthScopes;
+    }
+  } else if (args.authType === "entra-sso" && args.entraClientId !== undefined) {
+    values[identifiers.clientId] = args.entraClientId;
+  }
+  return ctx.writeEnvironment(CREATE_ENVIRONMENT, values);
 }

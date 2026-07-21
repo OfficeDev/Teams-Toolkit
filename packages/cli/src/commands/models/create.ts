@@ -257,6 +257,15 @@ function normalizeCreateInputAliases(inputs: CreateProjectInputs): void {
   for (const [legacyKey, neutralKey] of CREATE_INPUT_ALIASES) {
     copyInputAlias(inputs, legacyKey, neutralKey);
   }
+  const authType = stringInput(inputs, "authType");
+  const clientId = stringInput(inputs, "mcp-da-client-id");
+  if (authType === undefined || authType === "oauth") {
+    copyNeutralInput(inputs, "oauthClientId", clientId);
+    copyNeutralInput(inputs, "oauthClientSecret", stringInput(inputs, "mcp-da-client-secret"));
+    copyNeutralInput(inputs, "oauthScopes", stringInput(inputs, "mcp-da-scopes"));
+  } else if (authType === "entra-sso") {
+    copyNeutralInput(inputs, "entraClientId", clientId);
+  }
   const apiAuth = stringInput(inputs, "apiAuth");
   const normalizedApiAuth = normalizeApiAuth(apiAuth);
   if (normalizedApiAuth !== apiAuth && normalizedApiAuth !== undefined) {

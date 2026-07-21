@@ -1,6 +1,6 @@
 {
   "pipeline": "default",
-  "comment": "Render produces the pure parts: ai-plugin.json is rendered in full (URL-derived namespace + auth reference_id via the mcpNamespace/mcpAuthRef expr functions + the unconditional dynamic-discovery RemoteMCPServer runtime), and m365agents.yml is the v1.12 skeleton WITHOUT the auth step. Auth wiring is post-render injection because it includes endpoint discovery, DCR fallback, and the v1.13 schema bump. Create deliberately omits credential fields: the existing oauth/register provision middleware asks for missing static OAuth or Entra inputs and consumes them in that provision invocation. The persist step writes only the deterministic MCP_DA_AUTH_ID_<NS> registration-result placeholder. The final feature-gated step optionally applies the sensitivity label.",
+  "comment": "Render produces the pure parts: ai-plugin.json is rendered in full (URL-derived namespace + auth reference_id via the mcpNamespace/mcpAuthRef expr functions + the unconditional dynamic-discovery RemoteMCPServer runtime), and m365agents.yml is the v1.12 skeleton without the auth step. Auth wiring is post-render injection because it includes endpoint discovery, DCR fallback, the v1.13 schema bump, and explicit static credential environment references. The persist step writes the registration-result placeholder plus collected static credentials through the runtime environment writer, which isolates SECRET_* values. The final feature-gated step optionally applies the sensitivity label.",
   "steps": [
     {
       "step": "require-empty-target",
@@ -12,7 +12,11 @@
       "with": {
         "ymlPath": "m365agents.yml",
         "authType": "{{authType}}",
-        "mcpServerUrl": "{{MCPForDAServerUrl}}"
+        "mcpServerUrl": "{{MCPForDAServerUrl}}",
+        "oauthClientId": "{{OAuthClientId}}",
+        "oauthClientSecret": "{{OAuthClientSecret}}",
+        "oauthScopes": "{{OAuthScopes}}",
+        "entraClientId": "{{EntraClientId}}"
       }
     },
     {
@@ -20,7 +24,11 @@
       "when": "mcpServerType == 'remote' && (authType == 'oauth' || authType == 'entra-sso')",
       "with": {
         "authType": "{{authType}}",
-        "mcpServerUrl": "{{MCPForDAServerUrl}}"
+        "mcpServerUrl": "{{MCPForDAServerUrl}}",
+        "oauthClientId": "{{OAuthClientId}}",
+        "oauthClientSecret": "{{OAuthClientSecret}}",
+        "oauthScopes": "{{OAuthScopes}}",
+        "entraClientId": "{{EntraClientId}}"
       }
     },
     {

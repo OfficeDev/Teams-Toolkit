@@ -26,30 +26,46 @@ function stringParam(params: StepParams, key: string): string | undefined {
   return typeof value === "string" ? value : undefined;
 }
 
+function validateCredentialParams(resolved: StepParams, authType: string): string | undefined {
+  if (authType === "oauth") {
+    if (!stringParam(resolved, "oauthClientId")?.trim()) {
+      return "missing non-empty string parameter 'oauthClientId'";
+    }
+    if (!stringParam(resolved, "oauthClientSecret")?.trim()) {
+      return "missing non-empty string parameter 'oauthClientSecret'";
+    }
+  } else if (authType === "entra-sso" && !stringParam(resolved, "entraClientId")?.trim()) {
+    return "missing non-empty string parameter 'entraClientId'";
+  }
+  return undefined;
+}
+
 /** Registered step for injecting the shared v4 MCP auth action into `m365agents.yml`. */
 export const mcpAuthInjectYmlAction: RegisteredStep = {
   validateParams(resolved: StepParams): string | undefined {
     if (stringParam(resolved, "ymlPath") === undefined) {
       return "missing string parameter 'ymlPath'";
     }
-    if (stringParam(resolved, "authType") === undefined) {
+    const authType = stringParam(resolved, "authType");
+    if (authType === undefined) {
       return "missing string parameter 'authType'";
     }
     if (stringParam(resolved, "mcpServerUrl") === undefined) {
       return "missing string parameter 'mcpServerUrl'";
     }
-    return undefined;
+    return validateCredentialParams(resolved, authType);
   },
   apply(resolved: StepParams, ctx: StepContext): Promise<Result<void, FxError>> {
     const ymlPath = stringParam(resolved, "ymlPath");
     const authType = stringParam(resolved, "authType");
     const mcpServerUrl = stringParam(resolved, "mcpServerUrl");
+    const oauthScopes = stringParam(resolved, "oauthScopes");
     if (ymlPath === undefined || authType === undefined || mcpServerUrl === undefined) {
       return Promise.resolve(
         err(systemError("McpAuthInjectParams", "resolved parameters are not all strings"))
       );
     }
-    return injectMcpAuthAction(ctx, { ymlPath, authType, mcpServerUrl });
+    return injectMcpAuthAction(ctx, { ymlPath, authType, mcpServerUrl, oauthScopes });
   },
 };
 
@@ -59,19 +75,30 @@ export const mcpAuthInjectYmlAction: RegisteredStep = {
  */
 export const mcpAuthPersistCredentialEnv: RegisteredStep = {
   validateParams(resolved: StepParams): string | undefined {
-    if (stringParam(resolved, "authType") === undefined) {
+    const authType = stringParam(resolved, "authType");
+    if (authType === undefined) {
       return "missing string parameter 'authType'";
     }
     if (stringParam(resolved, "mcpServerUrl") === undefined) {
       return "missing string parameter 'mcpServerUrl'";
     }
-    return undefined;
+    return validateCredentialParams(resolved, authType);
   },
-  apply(resolved: StepParams, ctx: StepContext): Result<void, FxError> {
+  apply(resolved: StepParams, ctx: StepContext): Promise<Result<void, FxError>> {
+    const authType = stringParam(resolved, "authType");
     const mcpServerUrl = stringParam(resolved, "mcpServerUrl");
-    if (mcpServerUrl === undefined) {
-      return err(systemError("McpAuthPersistParams", "resolved parameters are not all strings"));
+    if (authType === undefined || mcpServerUrl === undefined) {
+      return Promise.resolve(
+        err(systemError("McpAuthPersistParams", "resolved parameters are not all strings"))
+      );
     }
-    return persistMcpAuthRegistrationEnv(ctx, { mcpServerUrl });
+    return persistMcpAuthRegistrationEnv(ctx, {
+      authType,
+      mcpServerUrl,
+      oauthClientId: stringParam(resolved, "oauthClientId"),
+      oauthClientSecret: stringParam(resolved, "oauthClientSecret"),
+      oauthScopes: stringParam(resolved, "oauthScopes"),
+      entraClientId: stringParam(resolved, "entraClientId"),
+    });
   },
 };

@@ -167,6 +167,7 @@ class ScriptedUserInteraction {
   fileOrInputNames: string[] = [];
   multiNames: string[] = [];
   dynamicOptionNames: string[] = [];
+  inputConfigs: InputTextConfig[] = [];
   lastSelectConfig?: SingleSelectConfig;
   lastInputConfig?: InputTextConfig;
   lastFileOrInputConfig?: SingleFileOrInputConfig;
@@ -213,6 +214,7 @@ class ScriptedUserInteraction {
   inputText(config: InputTextConfig): Promise<Result<InputTextResult, FxError>> {
     this.promptNames.push(config.name);
     this.textNames.push(config.name);
+    this.inputConfigs.push(config);
     this.lastInputConfig = config;
     if (this.script.back?.includes(config.name) === true) {
       return Promise.resolve(ok({ type: "back" }));
@@ -1630,13 +1632,13 @@ describe("runCreateInputs (collect-create-inputs)", () => {
     assert.deepEqual(ui.selectNames, []);
   });
 
-  it("CCI-03: an entryParams mcpServerUrl is used as-is (not prompted); authType=oauth", async () => {
+  it("CCI-03: static OAuth asks for client id, masked secret, then optional scopes", async () => {
     const ui = new ScriptedUserInteraction({
       select: { authType: "oauth" },
       text: {
-        oauthClientId: "must-not-be-collected",
-        oauthClientSecret: "must-not-be-collected",
-        oauthScopes: "must-not-be-collected",
+        oauthClientId: "oauth-client-id",
+        oauthClientSecret: "oauth-client-secret",
+        oauthScopes: "read:user repo",
       },
     });
 
@@ -1653,17 +1655,19 @@ describe("runCreateInputs (collect-create-inputs)", () => {
       assert.equal(res.value.mcpServerUrl, "https://seed.example.com/mcp");
       assert.equal(res.value.mcpServerType, "remote");
       assert.equal(res.value.authType, "oauth");
-      assert.notProperty(res.value, "oauthClientId");
-      assert.notProperty(res.value, "oauthClientSecret");
-      assert.notProperty(res.value, "oauthScopes");
+      assert.equal(res.value.oauthClientId, "oauth-client-id");
+      assert.equal(res.value.oauthClientSecret, "oauth-client-secret");
+      assert.equal(res.value.oauthScopes, "read:user repo");
     }
-    assert.deepEqual(ui.textNames, []);
+    assert.deepEqual(ui.textNames, ["oauthClientId", "oauthClientSecret", "oauthScopes"]);
+    assert.isBelow(ui.promptNames.indexOf("authType"), ui.promptNames.indexOf("oauthClientId"));
+    assert.isTrue(ui.inputConfigs.find((config) => config.name === "oauthClientSecret")?.password);
   });
 
-  it("CCI-03: authType=entra-sso defers the Entra client id to provision", async () => {
+  it("CCI-03a: Entra SSO asks only for the Entra client id", async () => {
     const ui = new ScriptedUserInteraction({
       select: { authType: "entra-sso" },
-      text: { entraClientId: "must-not-be-collected" },
+      text: { entraClientId: "entra-client-id" },
     });
 
     const res = await runCreateInputs(
@@ -1677,11 +1681,59 @@ describe("runCreateInputs (collect-create-inputs)", () => {
     assert.isTrue(res.isOk());
     if (res.isOk()) {
       assert.equal(res.value.authType, "entra-sso");
-      assert.notProperty(res.value, "entraClientId");
+      assert.equal(res.value.entraClientId, "entra-client-id");
       assert.notProperty(res.value, "oauthClientSecret");
       assert.notProperty(res.value, "oauthScopes");
     }
-    assert.deepEqual(ui.textNames, []);
+    assert.deepEqual(ui.textNames, ["entraClientId"]);
+    assert.isBelow(ui.promptNames.indexOf("authType"), ui.promptNames.indexOf("entraClientId"));
+  });
+
+  it("CCI-03b: dynamic OAuth and none ask no static credential questions", async () => {
+    for (const authType of ["oauth-dynamic", "none"]) {
+      const ui = new ScriptedUserInteraction({});
+      const res = await runCreateInputs(
+        buildFloor(),
+        MCP_DA,
+        {
+          mcpServerType: "remote",
+          mcpServerUrl: "https://seed.example.com/mcp",
+          authType,
+        },
+        asUI(ui),
+        { flagReader: () => true }
+      );
+
+      assert.isTrue(res.isOk());
+      if (res.isOk()) {
+        assert.notProperty(res.value, "oauthClientId");
+        assert.notProperty(res.value, "oauthClientSecret");
+        assert.notProperty(res.value, "oauthScopes");
+        assert.notProperty(res.value, "entraClientId");
+      }
+      assert.deepEqual(ui.textNames, []);
+    }
+  });
+
+  it("CCI-03c: static OAuth rejects an empty required client secret", async () => {
+    const ui = new ScriptedUserInteraction({
+      select: { authType: "oauth" },
+      text: { oauthClientId: "oauth-client-id", oauthClientSecret: " " },
+    });
+
+    const res = await runCreateInputs(
+      buildFloor(),
+      MCP_DA,
+      { mcpServerUrl: "https://seed.example.com/mcp" },
+      asUI(ui),
+      { flagReader: () => false }
+    );
+
+    assert.isTrue(res.isErr());
+    if (res.isErr()) {
+      assert.instanceOf(res.error, UserError);
+      assert.equal(res.error.name, INPUT_VALIDATION_FAILED);
+    }
   });
 
   it("CCI-04: an invalid uri for mcpServerUrl -> UserError INPUT_VALIDATION_FAILED", async () => {
@@ -2266,8 +2318,23 @@ describe("openCreateQuestions (collect-create-inputs)", () => {
     if (res.isOk()) {
       assert.deepEqual(
         res.value.map((q) => q.name),
-        ["mcpServerType", "mcpServerUrl", "selectedLocalServers", "authType"]
+        [
+          "mcpServerType",
+          "mcpServerUrl",
+          "selectedLocalServers",
+          "authType",
+          "oauthClientId",
+          "oauthClientSecret",
+          "oauthScopes",
+          "entraClientId",
+        ]
       );
+      const secret = res.value.find((question) => question.name === "oauthClientSecret");
+      const scopes = res.value.find((question) => question.name === "oauthScopes");
+      const authType = res.value.find((question) => question.name === "authType");
+      assert.equal(authType?.default, "oauth");
+      assert.isTrue(secret?.password);
+      assert.isTrue(scopes?.optional);
     }
   });
 
