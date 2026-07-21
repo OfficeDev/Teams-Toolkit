@@ -34,7 +34,7 @@
       "parameters": {
         "button": "left",
         "x": 307,
-        "y": 213
+        "y": 262
       },
       "description": "Click the \"Teams Agents and Apps\" option in the \"New Project\" dropdown menu within the Microsoft 365 Agents Toolkit interface.",
       "content_refs": [],
