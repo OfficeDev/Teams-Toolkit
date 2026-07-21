@@ -55,6 +55,8 @@ export interface CreateProjectInputs extends Inputs {
   "app-name"?: string;
   /** @description Select the Office applications to support */
   "office-addin-hosts"?: string[];
+  /** @description Select the Office application to support for the Nested App Auth SSO add-in */
+  "office-addin-naa-host"?: string;
   /** @description MCP Server Type */
   "mcp-server-type"?: "remote";
   /** @description MCP Server URL */

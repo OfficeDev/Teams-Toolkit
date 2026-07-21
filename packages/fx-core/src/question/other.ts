@@ -746,9 +746,11 @@ export function addPluginQuestionNode(): IQTreeNode {
               staticOptions: MCPForDAAuthTypeStaticOptions(),
               default: "oauth",
             },
-            children: featureFlagManager.getBooleanValue(FeatureFlags.MCPForDADT)
-              ? MCPForDAAuthCredentialNodes()
-              : [],
+            children:
+              featureFlagManager.getBooleanValue(FeatureFlags.MCPForDADT) &&
+              !featureFlagManager.getBooleanValue(FeatureFlags.V4Enabled)
+                ? MCPForDAAuthCredentialNodes()
+                : [],
           },
         ],
       },

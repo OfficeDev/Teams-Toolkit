@@ -15,6 +15,8 @@ export * from "./distribution/packageDir";
 export * from "./distribution/declarativePackage";
 export * from "./distribution/createSelector";
 export * from "./distribution/createQuestions";
+export * from "./inspection/scaffoldCatalog";
+export * from "./inspection/scaffoldMetadataSource";
 export * from "./expression/evaluateExpression";
 export * from "./renderContext/buildRenderContext";
 export * from "./collectInputs/collectInputs";

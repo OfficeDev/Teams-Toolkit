@@ -221,10 +221,10 @@ class EnvUtil {
       await fs.writeFile(dotEnvSecretFilePath, contentSecret, { encoding: "utf8" });
     }
     if (!envFileExists) {
-      TOOLS.logProvider.info("  Created environment file at " + dotEnvFilePath + EOL + EOL);
+      TOOLS?.logProvider.info("  Created environment file at " + dotEnvFilePath + EOL + EOL);
     }
     if (!envSecretFileExists && Object.keys(parsedDotenvSecret.obj).length > 0) {
-      TOOLS.logProvider.info(
+      TOOLS?.logProvider.info(
         "  Created environment file (secret) at " + dotEnvSecretFilePath + EOL + EOL
       );
     }

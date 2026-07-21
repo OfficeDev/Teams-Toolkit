@@ -3,6 +3,7 @@
 
 /**
  * @author Zhiyu You <zhiyou@microsoft.com>
+ * @scenario SCN-DA-CREATE-WITH-MCP-SERVER
  */
 
 import { ProgrammingLanguage } from "@microsoft/teamsfx-core";
@@ -91,6 +92,7 @@ const noAuthUrlRecord: Record<string, string> = {};
 noAuthUrlRecord["with-plugin"] = "yes";
 noAuthUrlRecord["api-plugin-type"] = "mcp";
 noAuthUrlRecord["mcp-da-server-url"] = learnMCPServerUrl;
+noAuthUrlRecord["mcp-da-auth-type"] = "none";
 
 new DeclarativeAgentMCPNoAuthNew(
   Capability.DeclarativeAgent,
@@ -109,6 +111,7 @@ const noAuthFileRecord: Record<string, string> = {};
 noAuthFileRecord["with-plugin"] = "yes";
 noAuthFileRecord["api-plugin-type"] = "mcp";
 noAuthFileRecord["mcp-da-server-url"] = learnMCPServerUrl;
+noAuthFileRecord["mcp-da-auth-type"] = "none";
 noAuthFileRecord["mcp-tools-file-path"] = mcpToolsFilePath;
 
 new DeclarativeAgentMCPNoAuthFile(

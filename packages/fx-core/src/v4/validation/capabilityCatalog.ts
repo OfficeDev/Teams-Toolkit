@@ -31,6 +31,9 @@ const CAPABILITY_FLOORS: Record<CapabilityKind, ReadonlyMap<string, string>> = {
     ["openapiUrl", "5.20.0"],
     ["graphConnectorName", "5.20.0"],
     ["graphConnectorConnectionId", "5.20.0"],
+    ["mcp.oauthClientIdRequired", "6.11.0"],
+    ["mcp.oauthClientSecretRequired", "6.11.0"],
+    ["mcp.entraClientIdRequired", "6.11.0"],
   ]),
 };
 

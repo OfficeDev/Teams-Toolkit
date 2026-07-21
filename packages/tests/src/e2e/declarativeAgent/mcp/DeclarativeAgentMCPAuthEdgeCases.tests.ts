@@ -3,6 +3,7 @@
 
 /**
  * @author Zhiyu You <zhiyou@microsoft.com>
+ * @scenario SCN-DA-CREATE-WITH-MCP-SERVER
  */
 
 import { ProgrammingLanguage } from "@microsoft/teamsfx-core";
@@ -16,16 +17,15 @@ import { CaseFactory } from "../../caseFactory";
 import { getTestFolder, getUniqueAppName } from "../../commonUtils";
 import {
   createMCPProjectWithEnv,
+  expectDcrRegisterWithoutStaticCredentials,
   expectDynamicMCPProject,
   expectNoOAuthRegister,
   learnMCPServerUrl,
   mcpDynamicFlowEnv,
 } from "./mcpTestUtils";
 
-// Case 2 & 5: With learn.microsoft.com/api/mcp (a public no-auth server that
-// returns tools), these cases verify the server-URL-only flow produces a valid
-// scaffold with tools and no auth block — even when no --mcp-da-auth-type is given.
-class DeclarativeAgentMCPServerUrlOnly extends CaseFactory {
+// Case 2 & 5: explicit no-auth creates a dynamic MCP project without auth wiring.
+class DeclarativeAgentMCPExplicitNoAuth extends CaseFactory {
   public override async onCreate(
     appName: string,
     testFolder: string,
@@ -53,9 +53,8 @@ class DeclarativeAgentMCPServerUrlOnly extends CaseFactory {
   }
 }
 
-// Case 7: --mcp-da-auth-type omitted with a no-auth server — project should
-// succeed because auth probe detects no auth requirement.
-class DeclarativeAgentMCPNoAuthTypeNeeded extends CaseFactory {
+// Case 7: DCR requires no static client ID or secret.
+class DeclarativeAgentMCPDynamicOAuth extends CaseFactory {
   public override async onCreate(
     appName: string,
     testFolder: string,
@@ -78,11 +77,12 @@ class DeclarativeAgentMCPNoAuthTypeNeeded extends CaseFactory {
   }
 
   public override async onAfterCreate(projectPath: string): Promise<void> {
-    await expectDynamicMCPProject(projectPath);
+    await expectDynamicMCPProject(projectPath, "oauth-dynamic");
+    expectDcrRegisterWithoutStaticCredentials(projectPath);
   }
 }
 
-// Case 10: Missing server URL — should fail or skip MCP generation
+// Case 10: missing server URL fails input validation.
 class DeclarativeAgentMCPMissingServerUrl extends CaseFactory {
   public override test() {
     const {
@@ -114,34 +114,43 @@ class DeclarativeAgentMCPMissingServerUrl extends CaseFactory {
           `atk new --interactive false --debug --app-name ${appName} ` +
           `--capability ${capability} ${languageParam} ${customParams}`;
 
+        let scaffoldError: unknown;
         try {
           console.log(`[Start] "${command}" in ${testFolder}.`);
           await execAsync(command, {
             cwd: testFolder,
             env: { ...process.env, ...mcpDynamicFlowEnv },
           });
-          expect.fail("Expected MCP scaffold without mcpServerUrl to fail.");
         } catch (error) {
-          const message =
-            error instanceof Error ? error.message : String(error);
-          console.log(
-            `[Failed] "${command}" in ${testFolder} with error: ${message}`,
-          );
-          expect(message).to.include("Scaffold.InputValidationFailed");
-          expect(message).to.include("mcpServerUrl");
+          scaffoldError = error;
         }
+
+        if (scaffoldError === undefined) {
+          expect.fail("Expected MCP scaffold without mcpServerUrl to fail.");
+        }
+
+        const message =
+          scaffoldError instanceof Error
+            ? scaffoldError.message
+            : String(scaffoldError);
+        console.log(
+          `[Failed] "${command}" in ${testFolder} with error: ${message}`,
+        );
+        expect(message).to.include("Scaffold.InputValidationFailed");
+        expect(message).to.include("mcpServerUrl");
       });
     });
   }
 }
 
-// Case 2: Server URL only, no auth-type — auto-fetch succeeds on no-auth server
+// Case 2: explicit no-auth
 const serverUrlOnlyRecord: Record<string, string> = {};
 serverUrlOnlyRecord["with-plugin"] = "yes";
 serverUrlOnlyRecord["api-plugin-type"] = "mcp";
 serverUrlOnlyRecord["mcp-da-server-url"] = learnMCPServerUrl;
+serverUrlOnlyRecord["mcp-da-auth-type"] = "none";
 
-new DeclarativeAgentMCPServerUrlOnly(
+new DeclarativeAgentMCPExplicitNoAuth(
   Capability.DeclarativeAgent,
   37357430,
   "zhiyou@microsoft.com",
@@ -153,14 +162,14 @@ new DeclarativeAgentMCPServerUrlOnly(
   serverUrlOnlyRecord,
 ).test();
 
-// Case 7: --mcp-da-auth-type omitted — succeeds with no-auth server
-const noAuthTypeRecord: Record<string, string> = {};
-noAuthTypeRecord["with-plugin"] = "yes";
-noAuthTypeRecord["api-plugin-type"] = "mcp";
-noAuthTypeRecord["mcp-da-server-url"] = learnMCPServerUrl;
-// Intentionally omit mcp-da-auth-type
+// Case 7: dynamic OAuth without static credentials
+const dynamicOAuthRecord: Record<string, string> = {};
+dynamicOAuthRecord["with-plugin"] = "yes";
+dynamicOAuthRecord["api-plugin-type"] = "mcp";
+dynamicOAuthRecord["mcp-da-server-url"] = learnMCPServerUrl;
+dynamicOAuthRecord["mcp-da-auth-type"] = "oauth-dynamic";
 
-new DeclarativeAgentMCPNoAuthTypeNeeded(
+new DeclarativeAgentMCPDynamicOAuth(
   Capability.DeclarativeAgent,
   37357429,
   "zhiyou@microsoft.com",
@@ -169,14 +178,14 @@ new DeclarativeAgentMCPNoAuthTypeNeeded(
   {
     skipProvision: true,
   },
-  noAuthTypeRecord,
+  dynamicOAuthRecord,
 ).test();
 
-// Case 10: Missing server URL
+// Case 10: missing server URL
 const missingUrlRecord: Record<string, string> = {};
 missingUrlRecord["with-plugin"] = "yes";
 missingUrlRecord["api-plugin-type"] = "mcp";
-// Intentionally omit mcp-da-server-url
+missingUrlRecord["mcp-da-auth-type"] = "none";
 
 new DeclarativeAgentMCPMissingServerUrl(
   Capability.DeclarativeAgent,

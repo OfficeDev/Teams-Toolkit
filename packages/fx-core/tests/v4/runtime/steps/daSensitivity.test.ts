@@ -21,6 +21,7 @@ function makeContext(labelId: string | undefined): {
   const ctx: StepContext = {
     read: (): Buffer | undefined => undefined,
     write: (): void => undefined,
+    writeEnvironment: () => Promise.resolve(ok(undefined)),
     manifestWrapper: () => ({
       registerDeclarativeAgentAction: (): Result<void, FxError> => ok(undefined),
       setSensitivityLabel: (path: string, id: string): Result<void, FxError> => {
@@ -74,6 +75,7 @@ describe(STEP_SET_SENSITIVITY_LABEL, () => {
         },
         write: (): void => undefined,
       },
+      () => Promise.resolve(ok(undefined)),
       stepRegistry
     );
     const step = port.stepRegistry(STEP_SET_SENSITIVITY_LABEL);
@@ -86,6 +88,7 @@ describe(STEP_SET_SENSITIVITY_LABEL, () => {
       {
         read: port.read,
         write: port.write,
+        writeEnvironment: port.writeEnvironment,
         manifestWrapper: port.manifestWrapper,
       }
     );
@@ -107,6 +110,7 @@ describe(STEP_SET_SENSITIVITY_LABEL, () => {
         read: (): Buffer | undefined => undefined,
         write: (): void => undefined,
       },
+      () => Promise.resolve(ok(undefined)),
       stepRegistry
     );
     const step = port.stepRegistry(STEP_SET_SENSITIVITY_LABEL);
@@ -119,6 +123,7 @@ describe(STEP_SET_SENSITIVITY_LABEL, () => {
       {
         read: port.read,
         write: port.write,
+        writeEnvironment: port.writeEnvironment,
         manifestWrapper: port.manifestWrapper,
       }
     );
@@ -137,6 +142,7 @@ describe(STEP_SET_SENSITIVITY_LABEL, () => {
         read: (): Buffer => Buffer.from("{"),
         write: (): void => undefined,
       },
+      () => Promise.resolve(ok(undefined)),
       stepRegistry
     );
     const step = port.stepRegistry(STEP_SET_SENSITIVITY_LABEL);
@@ -149,6 +155,7 @@ describe(STEP_SET_SENSITIVITY_LABEL, () => {
       {
         read: port.read,
         write: port.write,
+        writeEnvironment: port.writeEnvironment,
         manifestWrapper: port.manifestWrapper,
       }
     );
@@ -179,6 +186,7 @@ describe(STEP_SET_SENSITIVITY_LABEL, () => {
           throw new Error("write failed at C:\\secret\\project");
         },
       },
+      () => Promise.resolve(ok(undefined)),
       stepRegistry
     );
     const step = port.stepRegistry(STEP_SET_SENSITIVITY_LABEL);
@@ -191,6 +199,7 @@ describe(STEP_SET_SENSITIVITY_LABEL, () => {
       {
         read: port.read,
         write: port.write,
+        writeEnvironment: port.writeEnvironment,
         manifestWrapper: port.manifestWrapper,
       }
     );

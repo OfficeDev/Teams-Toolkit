@@ -9,7 +9,7 @@
     "url": "git+https://github.com/OfficeDev/microsoft-365-agents-toolkit.git"
   },
   "scripts": {
-    "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\" \"scripts/scenario-tooling/**/*.ts\"",
     "test:unit": "vitest run --coverage --config vitest.config.ts --maxWorkers=75%",
     "test:unit:fast": "vitest run --config vitest.config.ts --maxWorkers=75% --reporter=dot",
     "test:unit:changed": "vitest run --config vitest.config.ts --maxWorkers=75% --changed",
@@ -20,8 +20,9 @@
     "test:env-checker": "vitest run --config vitest.config.ts --maxWorkers=75% \"tests/component/deps-checker/\"",
     "clean": "rimraf -rf build",
     "prebuild": "npm run gen:cli",
-    "build": "tsc -p ./ --incremental",
-    "lint:fix": "eslint --fix \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "build": "tsc -p ./ --incremental && npm run typecheck:scenario-tooling",
+    "typecheck:scenario-tooling": "tsc -p tsconfig.scenario-tooling.json --incremental false",
+    "lint:fix": "eslint --fix \"src/**/*.ts\" \"tests/**/*.ts\" \"scripts/scenario-tooling/**/*.ts\"",
     "prepublishOnly": "npm run build",
     "package": "rimraf build && webpack --mode production --config ./webpack.config.js",
     "precommit": "lint-staged",
@@ -30,7 +31,13 @@
     "checkUnusedStrings": "node ./scripts/find-unused-strings.js ./resource/package.nls.json ./src ./templates/ui || exit 1",
     "clean:strings": "node ./scripts/delete-unused-strings.js ./resource/package.nls.json ./src",
     "gen:cli": "npx tsx ./src/question/generator.ts && npx prettier --write \"src/question/options/*.ts\" && npx prettier --write \"src/question/inputs/*.ts\"",
-    "gen:template-info:vsc": "npx tsx ./scripts/generate-template-info.ts vscode ./resource/template-info/vsc.json"
+    "gen:template-info:vsc": "npx tsx ./scripts/generate-template-info.ts vscode ./resource/template-info/vsc.json",
+    "scenario:catalog": "tsx ./scripts/scenario-tooling/scenarioCli.ts catalog",
+    "scenario:init": "tsx ./scripts/scenario-tooling/scenarioCli.ts init",
+    "scenario:render": "tsx ./scripts/scenario-tooling/scenarioCli.ts render",
+    "scenario:review": "tsx ./scripts/scenario-tooling/scenarioCli.ts review",
+    "scenario:check": "tsx ./scripts/scenario-tooling/scenarioCli.ts check",
+    "scenario:accept": "tsx ./scripts/scenario-tooling/scenarioCli.ts accept"
   },
   "dependencies": {
     "@apidevtools/swagger-parser": "^10.1.0",
@@ -41,7 +48,6 @@
     "@azure/core-auth": "^1.4.0",
     "@azure/core-rest-pipeline": "^1.22.1",
     "@azure/identity": "^4.1.0",
-    "@azure/msal-node": "^2.6.6",
     "@azure/storage-blob": "^12.25.0",
     "@feathersjs/hooks": "^0.6.5",
     "@microsoft/dev-tunnels-contracts": "1.1.9",

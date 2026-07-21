@@ -1237,6 +1237,20 @@ describe("constructNode", () => {
     assert.deepEqual(node.condition, { equals: "wxp-json-taskpane" });
   });
 
+  it("should return officeAddinNaaHostNode singleSelect defaulting to word", () => {
+    const json = JSON.stringify({
+      node: "officeAddinNaaHostNode",
+      condition: { equals: "wxp-json-sso-naa" },
+    });
+    const node = constructNode(json);
+    assert.isDefined(node);
+    assert.equal((node.data as any).type, "singleSelect");
+    assert.equal((node.data as any).name, QuestionNames.OfficeAddinNaaHost);
+    assert.equal((node.data as any).default, "word");
+    assert.lengthOf((node.data as any).staticOptions, 3);
+    assert.deepEqual(node.condition, { equals: "wxp-json-sso-naa" });
+  });
+
   it("should return azureOpenAINode when node is azureOpenAINode", () => {
     const json = JSON.stringify({
       node: "azureOpenAINode",

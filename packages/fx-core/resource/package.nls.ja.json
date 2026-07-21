@@ -1155,6 +1155,7 @@
   "core.MCPForDA.updatePluginManifest": "MCP サーバーから選択した操作が正常に追加され、Copilot が対話できるようになります。'%s' に移動して詳細を確認できます。宣言型エージェントをプロビジョニングして続行できるようになりました。",
   "core.MCPForDA.mcpAuthMetadataMissingError": "MCP サーバーに認証メタデータが見つかりません。MCP サーバーが正しく構成されていることを確認してから、もう一度お試しください。詳細: %s",
   "core.MCPForDA.mcpAuthDcrPlaceholderWarning": "Unable to discover the OAuth well-known authorization server URL for MCP server '%s'. The 'dcr/register' action was added to m365agents.yml with a placeholder — replace '<PLEASE_FILL_IN_WELL_KNOWN_AUTHORIZATION_SERVER_URL>' with the correct URL before provisioning.",
+  "core.v4.scaffold.existingFileSkipped": "'%s' exists and was not overwritten. Delete or rename it to rebuild the file.",
   "core.MCPForDA.mcpAuthMetadataUrlNotFound": "MCP サーバーの応答からプロパティ \"resource_metadata\" の認証メタデータが見つかりません。",
   "core.MCPForDA.mcpServerMetadataUrlNotFound": "MCP サーバーの保護されたリソース メタデータのプロパティ \"authorization_servers\" からサーバー メタデータが見つかりません。",
   "core.MCPForDA.authUrlNotFound": "MCP サーバーの承認サーバー メタデータの応答から認証 URL が見つかりません。",
