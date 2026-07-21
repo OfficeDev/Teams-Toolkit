@@ -61,7 +61,9 @@
         "dhash:410:127:0:10:c0c88694b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_04181793",
       "created_at": "2025-12-18T08:27:09.202716",
       "plan_id": "plan_fbbf2806"
@@ -87,7 +89,9 @@
         "dhash:405:170:0:10:c0c0b094b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_b265404d",
       "created_at": "2025-12-18T08:27:09.209427",
       "plan_id": "plan_fbbf2806"
@@ -113,7 +117,9 @@
         "dhash:457:73:0:10:f0b09494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_e58d8eaa",
       "created_at": "2025-12-18T08:27:09.215715",
       "plan_id": "plan_fbbf2806"
@@ -135,7 +141,9 @@
         "dhash:512:384:0:20:e0b09494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_b5027988",
       "created_at": "2025-12-18T08:27:09.221432",
       "plan_id": "plan_fbbf2806"
@@ -157,7 +165,9 @@
         "dhash:512:384:0:20:f0b09494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_ab02d281",
       "created_at": "2025-12-18T08:27:09.227207",
       "plan_id": "plan_fbbf2806"
@@ -183,7 +193,9 @@
         "dhash:225:49:0:10:e4989494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_671dae86",
       "created_at": "2025-12-18T08:27:09.234064",
       "plan_id": "plan_fbbf2806"
@@ -209,7 +221,9 @@
         "dhash:795:46:0:10:e4989494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_d9709466",
       "created_at": "2025-12-18T08:27:09.241014",
       "plan_id": "plan_fbbf2806"
@@ -235,7 +249,9 @@
         "dhash:311:76:0:10:f0b09494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_1255a3f4",
       "created_at": "2025-12-18T08:27:09.247024",
       "plan_id": "plan_fbbf2806"

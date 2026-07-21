@@ -1155,6 +1155,7 @@
   "core.MCPForDA.updatePluginManifest": "Операции, выбранные на сервере MCP, добавлены для взаимодействия в Copilot. Вы можете перейти в \"%s\" для просмотра подробностей. Теперь можно подготовить декларативный агент для продолжения.",
   "core.MCPForDA.mcpAuthMetadataMissingError": "Не удалось найти метаданные проверки подлинности на сервере MCP. Убедитесь, что сервер MCP настроен правильно, и повторите попытку. Сведения: %s",
   "core.MCPForDA.mcpAuthDcrPlaceholderWarning": "Unable to discover the OAuth well-known authorization server URL for MCP server '%s'. The 'dcr/register' action was added to m365agents.yml with a placeholder — replace '<PLEASE_FILL_IN_WELL_KNOWN_AUTHORIZATION_SERVER_URL>' with the correct URL before provisioning.",
+  "core.v4.scaffold.existingFileSkipped": "'%s' exists and was not overwritten. Delete or rename it to rebuild the file.",
   "core.MCPForDA.mcpAuthMetadataUrlNotFound": "Не удалось найти метаданные проверки подлинности в свойстве \"resource_metadata\" в ответе сервера MCP.",
   "core.MCPForDA.mcpServerMetadataUrlNotFound": "Не удалось найти метаданные сервера в свойстве \"authorization_servers\" в ответе метаданных защищенных ресурсов сервера MCP.",
   "core.MCPForDA.authUrlNotFound": "Не удалось найти URL-адрес проверки подлинности в ответе метаданных сервера авторизации MCP.",

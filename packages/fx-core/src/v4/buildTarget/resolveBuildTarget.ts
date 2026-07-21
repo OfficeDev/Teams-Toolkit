@@ -167,12 +167,20 @@ function malformedRouteReason(r: SelectorRoute): string | undefined {
   }
 }
 
+/** Validate only a selector route's engine-specific key shape. */
+export function validateSelectorRouteShape(route: SelectorRoute): Result<void, FxError> {
+  const reason = malformedRouteReason(route);
+  return reason === undefined
+    ? ok(undefined)
+    : err(userError(BUILD_TARGET_MALFORMED_ROUTE, `selector route has invalid shape: ${reason}`));
+}
+
 /** Validate the routing table before matching any route. */
 function validateRoutes(routes: SelectorRoute[], port: RouteResolverPort): Result<void, FxError> {
   for (const r of routes) {
-    const reason = malformedRouteReason(r);
-    if (reason !== undefined) {
-      return err(userError(BUILD_TARGET_MALFORMED_ROUTE, `route '${r.when}': ${reason}`));
+    const shape = validateSelectorRouteShape(r);
+    if (shape.isErr()) {
+      return err(shape.error);
     }
     if (r.engine === "v4" && r.templateId !== undefined && !port.v4Registry(r.templateId)) {
       return err(

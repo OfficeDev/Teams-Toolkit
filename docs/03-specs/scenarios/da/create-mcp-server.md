@@ -1,6 +1,6 @@
 # Scenario — Create Declarative Agent with MCP Server (`da/mcp-server`)
 
-- **Status:** Accepted (Decision source [ADR-0018](../../../02-architecture/adr/ADR-0018-scaffold-runtime-test-pyramid.md) Accepted 2026-06-08) — ready for scenario-tier (T3) tests
+- **Status:** Implemented and covered at scenario tier (T3)
 - **Domain:** [`01-scaffolding`](../../domains/01-scaffolding.md)
 - **Scenario ID:** `SCN-DA-CREATE-WITH-MCP-SERVER` (mirrors product scenario
   [`create-da-with-mcp-server.md`](../../../01-product/scenarios/da/create-da-with-mcp-server.md))
@@ -18,13 +18,28 @@ lives in the composed operation specs. Per the
 these AC rows are the source of the ADR-0018 **T3** assertions, run with the
 whole template scaffolded under `InMemoryRuntime` (hence every row is **L1**).
 
+Within the v4 engine, this is the default MCP create route because
+`TEAMSFX_MCP_FOR_DA_DT` defaults to `true`.
+`TEAMSFX_MCP_FOR_DA_DCR` also defaults to `true`; the `oauth-dynamic` option is
+available only while both flags are true. The DT-off compatibility
+implementation remains in
+[`da/mcp-server-static`](create-mcp-server-static.md) under the same stable
+product Scenario ID.
+
+`TEAMSFX_V4_ENABLED` still defaults to `false`, so this spec intentionally owns
+the v4 preview package rather than the shipped v3 generator. Both
+implementations rely on the host's implicit dynamic-discovery shape. The stable
+product scenario documents their temporary credential-flow difference: v4
+defers static credentials to provision, while shipped v3 collects them during
+create.
+
 ## Acceptance Criteria
 
 | ID                | Tier | Given                                                                                                                           | When                  | Then                                                                                                                                                                                                                                                                                                                |
 | ----------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | SCN-CREATE-MCP-01 | L1   | `authType=none`, empty target                                                                                                   | scaffold completes    | the render phase writes the new files `appPackage/ai-plugin.json`, `appPackage/declarativeAgent.json`, `appPackage/manifest.json`, `m365agents.yml`, `.vscode/mcp.json`, `env/.env.dev`, `README.md`, `evals/prompts.json` (new-files-only)                                                                         |
 | SCN-CREATE-MCP-02 | L1   | rendered `appPackage/ai-plugin.json`                                                                                            | URL-derived namespace | `namespace == mcpNamespace(mcpServerUrl)` (host `https://api.github.com/…` → `apigithubc`), never `action_1`                                                                                                                                                                                                        |
-| SCN-CREATE-MCP-03 | L1   | rendered `ai-plugin.json` runtime                                                                                               | always                | `runtimes[0].type == "RemoteMCPServer"`, `spec == { url: mcpServerUrl }` (no `mcp_tool_description` or `enable_dynamic_discovery`), `run_for_functions == ["*"]`                                                                                                                                                      |
+| SCN-CREATE-MCP-03 | L1   | rendered `ai-plugin.json` runtime                                                                                               | always                | `runtimes[0].type == "RemoteMCPServer"`, `spec == { url: mcpServerUrl }` (no `mcp_tool_description` or `enable_dynamic_discovery`), `run_for_functions == ["*"]`                                                                                                                                                    |
 | SCN-CREATE-MCP-04 | L1   | `authType=none`                                                                                                                 | render                | `runtimes[0].auth.type == "None"`; `mcp-auth/inject-yml-action` is in `stepsSkipped`                                                                                                                                                                                                                                |
 | SCN-CREATE-MCP-05 | L1   | `authType=oauth`                                                                                                                | render + steps        | `auth.type == "OAuthPluginVault"`, `auth.reference_id == mcpAuthRef(mcpServerUrl)`; `mcp-auth/inject-yml-action` runs, injecting the `oauth/register` action into `m365agents.yml`                                                                                                                                  |
 | SCN-CREATE-MCP-06 | L1   | `authType` ∈ {`oauth`, `entra-sso`}                                                                                             | persist step          | `mcp-auth/persist-credential-env` runs, writing `MCP_DA_AUTH_ID_<NS>` (e.g. `MCP_DA_AUTH_ID_APIGITHUBC`) into `env/.env.dev`                                                                                                                                                                                        |
@@ -44,6 +59,32 @@ The template schema limits `authType` to `none`, `oauth`, `entra-sso`, and
 `oauth-dynamic`. The auth action also defensively rejects unknown values with
 `McpAuthInjectFailed`; that extension-point guard is covered at file-unit tier,
 not as a user-reachable scenario.
+
+## Executable validation
+
+- **Authored package:**
+  [`templates/v4/create/da/mcp-server`](../../../../templates/v4/create/da/mcp-server)
+  supplies the real `descriptor.json`, `questions.json`, `pipeline.json`, and
+  recursive `content/` bytes. The test does not substitute a fixture package.
+- **Harness:**
+  [`createMcpServer.test.ts`](../../../../packages/fx-core/tests/v4/scenarios/createMcpServer.test.ts)
+  loads those bytes through
+  [`loadV4Package`](../../../../packages/fx-core/tests/v4/scenarios/helpers/scenarioHarness.ts),
+  then calls the production `scaffold` entry under `InMemoryRuntime`.
+- **Traceability:** seventeen tests map 1:1 to the seventeen AC rows above.
+  They cover the remote dynamic-discovery shape, all four auth modes, lifecycle
+  and env mutation, deterministic reruns, the empty-target guard, and one- and
+  multi-server local `stdio` materialization.
+- **External boundary:** OAuth and DCR metadata probes are stubbed at the
+  network edge. This validates the authored package, production render and
+  pipeline code, and generated handoff shape; it does not validate a live MCP
+  or authorization server, provision execution, CLI parsing, or VS Code UI.
+
+Run the focused validation from the repository root:
+
+```bash
+pnpm --dir packages/fx-core exec vitest run --config vitest.config.ts tests/v4/scenarios/createMcpServer.test.ts
+```
 
 ## Composed operations
 
@@ -106,12 +147,15 @@ This scenario does **not** assert:
   prompt-and-flag tree. Those trace to the product scenario
   [`create-da-with-mcp-server.md`](../../../01-product/scenarios/da/create-da-with-mcp-server.md)
   via CLI-E2E / UI smoke, not this scaffold-output contract.
-- The post-create VS Code CodeLens fetch flow
-  (`SCN-DA-FETCH-MCP-TOOLS`) and the add-action follow-up
+- The DT-off VS Code CodeLens compatibility flow
+  (`SCN-DA-FETCH-MCP-TOOLS`) or the separate add-action goal
   ([`SCN-DA-ADD-MCP-ACTION-TO-DA`](add-mcp-server.md)).
+- The shipped v3 MCP generator's runtime marker or create-time credential
+  persistence. Those rollout differences are documented by the stable product
+  scenario and are not assertions of this v4 package.
 - **How** a single file renders or **how** a step mutates a manifest — that
   mechanism is owned by the composed operation specs above.
-- Tool discovery or a static `tools` list (the DT-off shipped path).
+- Tool discovery or a static `tools` list (the DT-off compatibility path).
 - Provision execution itself. This scenario asserts the generated handoff shape
   that activates the existing `oauth/register` provision questions; the
   registration driver's remote side effects remain owned by its lifecycle

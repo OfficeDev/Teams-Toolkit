@@ -68,7 +68,9 @@
         "dhash:325:85:0:10:c8c88094b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_4a02377e",
       "created_at": "2026-05-21T01:56:42.287648",
       "plan_id": "plan_ce2002bb"
@@ -94,7 +96,9 @@
         "dhash:330:78:0:10:c0c4b094b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_341f49e4",
       "created_at": "2026-05-21T01:56:42.295578",
       "plan_id": "plan_ce2002bb"
@@ -236,7 +240,9 @@
         "dhash:512:384:0:20:322c2a6363636421"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_a5d96e41",
       "created_at": "2026-05-21T01:56:42.339608",
       "plan_id": "plan_ce2002bb"
@@ -258,7 +264,9 @@
         "dhash:512:384:0:20:64c0c86723636421"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_7f5961d7",
       "created_at": "2026-05-21T01:56:42.347629",
       "plan_id": "plan_ce2002bb"
@@ -280,7 +288,9 @@
         "dhash:512:384:0:20:44242a6363636421"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_89cc2e5e",
       "created_at": "2026-05-21T01:56:42.354246",
       "plan_id": "plan_ce2002bb"
@@ -302,7 +312,9 @@
         "dhash:512:384:0:20:7024226363636421"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_d9f4727b",
       "created_at": "2026-05-21T01:56:42.359718",
       "plan_id": "plan_ce2002bb"
@@ -324,7 +336,9 @@
         "dhash:512:384:0:20:5024226363636421"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_9544eb22",
       "created_at": "2026-05-21T01:56:42.365131",
       "plan_id": "plan_ce2002bb"
@@ -364,7 +378,9 @@
         "dhash:512:384:0:20:322327637a6c6819"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_1d72298c",
       "created_at": "2026-05-21T01:56:42.376545",
       "plan_id": "plan_ce2002bb"
@@ -386,7 +402,9 @@
         "dhash:512:384:0:20:32232763726a0819"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_c145cd5f",
       "created_at": "2026-05-21T01:56:42.381228",
       "plan_id": "plan_ce2002bb"
@@ -408,7 +426,9 @@
         "dhash:512:384:0:20:322c2a6363636421"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_8decab9d",
       "created_at": "2026-05-21T01:56:42.386769",
       "plan_id": "plan_ce2002bb"
@@ -430,7 +450,9 @@
         "dhash:512:384:0:20:4ce4c06523636421"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_8091a82d",
       "created_at": "2026-05-21T01:56:42.391871",
       "plan_id": "plan_ce2002bb"
@@ -452,7 +474,9 @@
         "dhash:512:384:0:20:44e02a6363636421"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_3a5b7b85",
       "created_at": "2026-05-21T01:56:42.396691",
       "plan_id": "plan_ce2002bb"
@@ -474,7 +498,9 @@
         "dhash:512:384:0:20:7024226363636421"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_3779c40d",
       "created_at": "2026-05-21T01:56:42.402315",
       "plan_id": "plan_ce2002bb"
@@ -496,7 +522,9 @@
         "dhash:512:384:0:20:7024226363636421"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_fa21d0ad",
       "created_at": "2026-05-21T01:56:42.406857",
       "plan_id": "plan_ce2002bb"

@@ -1,4 +1,5 @@
 <!doctype html>
+<!-- Generated from scenario Markdown and v4 declarations. Do not edit. -->
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -10,146 +11,28 @@
 </head>
 <body>
   <header>
-    <p class="eyebrow">DA scenario visual/state reference</p>
+    <p class="eyebrow">IMPLEMENTED · SCN-DA-FETCH-MCP-TOOLS</p>
     <h1>Fetch Tools From MCP Server</h1>
-    <p class="intro">
-      This page visualizes the VS Code flow from <a href="fetch-mcp-tools.md">fetch-mcp-tools.md</a>.
-      The entire flow runs after the user clicks <code>⚡ ATK: Fetch action from MCP</code> on a server row in <code>.vscode/mcp.json</code> &mdash; tool discovery, action manifest selection, operation pick and auth pick are all owned by this scenario. It is the post-step for <a href="add-mcp-action-to-da.html">SCN-DA-ADD-MCP-ACTION-TO-DA</a>; the Markdown remains the behavior contract.
-    </p>
-    <div class="legend" aria-label="Review links">
-      <a class="link" href="../index.html">Back to product index</a>
-      <a class="link" href="create-da-with-mcp-server.html">Create scenario precondition</a>
-      <a class="link" href="add-mcp-action-to-da.html">Previous: add MCP action</a>
-    </div>
+    <p class="intro">Behavior belongs in <a href="fetch-mcp-tools.md">fetch-mcp-tools.md</a>; this page is a generated review projection.</p>
+    <div class="legend" aria-label="Review links"><a class="link" href="../index.html">Back to product index</a></div>
   </header>
-
   <main>
-    <section class="scenario-flow" aria-labelledby="discovery-heading">
-      <div class="section-head">
-        <h2 id="discovery-heading">VS Code Fetch Action Flow</h2>
-        <p>The built-in <code>Start</code> CodeLens runs the MCP server; the ATK CodeLens then triggers the entire fetch-and-update flow.</p>
-      </div>
-
-      <div class="vscode-flow-grid">
-        <article class="vscode-flow-card" data-kind="action" aria-labelledby="start-codelens-title">
-          <h3 id="start-codelens-title">1. Start the MCP server</h3>
-          <vscode-codelens-file title=".vscode/mcp.json" lens="⚡ ATK: Fetch action from MCP | ▷Start | More..." server="apigithubc" type="http" url="https://api.githubcopilot.com/mcp/"></vscode-codelens-file>
-          <p class="caption">VS Code's MCP runtime owns <code>Start</code> and <code>More...</code>; ATK only contributes the leading <code>⚡ ATK: Fetch action from MCP</code> action. Tool and prompt counts are not shown until the server is running.</p>
-        </article>
-
-        <article class="vscode-flow-card" data-kind="action" aria-labelledby="trigger-title">
-          <h3 id="trigger-title">2. Click ⚡ ATK: Fetch action from MCP</h3>
-          <vscode-codelens-file title=".vscode/mcp.json" lens="⚡ ATK: Fetch action from MCP | Running | 44 tools | 2 prompts | More..." server="apigithubc" type="http" url="https://api.githubcopilot.com/mcp/"></vscode-codelens-file>
-          <p class="caption">Once the server is running, VS Code populates the tool and prompt counts. Clicking the CodeLens (or <code>Microsoft 365 Agents: Fetch action from MCP</code> from the Command Palette) discovers the server's tools and then drives the manifest/op/auth pickers below.</p>
-        </article>
-
-        <article class="vscode-flow-card" data-kind="action" aria-labelledby="manifest-select-title">
-          <h3 id="manifest-select-title">3. Select the action manifest you want to update</h3>
-          <vscode-file-select title="Select the action manifest you want to update" placeholder="Search action manifest files in appPackage">
-            <vscode-option label="ai-plugin.json" detail="c:\Users\zhiyou\AgentsToolkitProjects\dalearn-520\appPackage" icon="file" selected></vscode-option>
-            <vscode-option label="Create a new ai-plugin.json" icon="new-file"></vscode-option>
-            <vscode-option label="Browse..." icon="folder"></vscode-option>
-          </vscode-file-select>
-        </article>
-
-        <article class="vscode-flow-card" data-kind="action" aria-labelledby="name-new-manifest-title">
-          <h3 id="name-new-manifest-title">4. Name the new action manifest file <span class="vscode-flow-card__hint">only when "Create a new" picked</span></h3>
-          <vscode-input-box title="Name the new action manifest file" value="ai-plugin.json" placeholder="ai-plugin.json"></vscode-input-box>
-        </article>
-
-        <article class="vscode-flow-card" data-kind="action" aria-labelledby="operation-select-title">
-          <h3 id="operation-select-title">5. Select Operation(s) Copilot can interact with</h3>
-          <vscode-multi-select title="Select Operation(s) Copilot can interact with" placeholder="Type to filter operations" selected-label="2 Selected" confirm-label="OK">
-            <vscode-option label="add_comment_to_pending_review" description="Add a review comment to a pending pull request review." selected></vscode-option>
-            <vscode-option label="add_issue_comment" description="Add a comment to a specific issue in a GitHub repository." selected></vscode-option>
-            <vscode-option label="add_reply_to_pull_request_review_comment" description="Reply to a specific pull request review comment."></vscode-option>
-            <vscode-option label="assign_copilot_to_issue" description="Assign GitHub Copilot to a specific issue."></vscode-option>
-            <vscode-option label="create_branch" description="Create a new branch in a GitHub repository."></vscode-option>
-            <vscode-option label="create_or_update_file" description="Create or update a single file in a GitHub repository."></vscode-option>
-            <vscode-option label="create_pull_request" description="Create a new pull request in a GitHub repository."></vscode-option>
-            <vscode-option label="create_pull_request_with_copilot" description="Delegate a coding task to GitHub Copilot, which opens the PR."></vscode-option>
-            <vscode-option label="create_repository" description="Create a new GitHub repository in your account."></vscode-option>
-          </vscode-multi-select>
-          <p class="caption">The selected operations are written into the action manifest picked in step 3 (here <code>appPackage/ai-plugin.json</code>) as entries under <code>functions</code> and referenced from <code>runtimes[].run_for_functions</code>.</p>
-        </article>
-
-        <article class="vscode-flow-card" data-kind="action" aria-labelledby="auth-type-title">
-          <h3 id="auth-type-title">6. Select Authentication Type <span class="vscode-flow-card__hint">only when MCP server requires auth</span></h3>
-          <vscode-single-select title="Select Authentication Type" placeholder="Type to filter authentication types">
-            <vscode-option label="OAuth (with dynamic registration)" description="MCP server registers a client at runtime; no extra details needed."></vscode-option>
-            <vscode-option label="OAuth (with static registration)" description="Use a pre-registered OAuth client. The toolkit will ask for client id, client secret, and optional scopes." selected></vscode-option>
-            <vscode-option label="Entra SSO" description="Use a Microsoft Entra app for single sign-on. The toolkit will ask for the Entra app client id."></vscode-option>
-          </vscode-single-select>
-          <p class="caption"><code>OAuth (with dynamic registration)</code> is shown only when <code>TEAMSFX_MCP_FOR_DA_DCR</code> is enabled.</p>
-        </article>
-
-        <article class="vscode-flow-card" data-kind="outcome" data-severity="success" aria-labelledby="success-state-title">
-          <h3 id="success-state-title">7. Success notification</h3>
-          <vscode-notification title="MCP action added" message="The operations selected from your MCP server are successfully added for Copilot to interact with." detail="You can go to the 'ai-plugin.json' to check on details. Now you are able to provision your declarative agent to continue." action="Provision" source="Microsoft 365 Agents Toolkit"></vscode-notification>
-        </article>
-
-        <article class="vscode-flow-card" data-kind="outcome" data-severity="error" aria-labelledby="no-tools-title">
-          <h3 id="no-tools-title">Recoverable: tools not found <span class="vscode-flow-card__hint">blocks step 3</span></h3>
-          <vscode-notification severity="error" title="No tools found" message="No tools found for the MCP server. Please run the server first." source="Microsoft 365 Agents Toolkit"></vscode-notification>
-        </article>
-      </div>
+    <section class="scenario-flow" aria-labelledby="scenario-heading">
+      <div class="section-head"><h2 id="scenario-heading">Cross-surface Scenario Contract</h2></div>
+      <scenario-markdown-section src="fetch-mcp-tools.md" heading="Scenario" level="2" title="Scenario"></scenario-markdown-section>
+      <scenario-markdown-section src="fetch-mcp-tools.md" heading="States" level="2" title="States"></scenario-markdown-section>
+      <scenario-markdown-section src="fetch-mcp-tools.md" heading="User-visible outputs" level="2" title="User-visible outputs"></scenario-markdown-section>
+      <scenario-markdown-section src="fetch-mcp-tools.md" heading="Validation notes" level="2" title="Validation notes"></scenario-markdown-section>
     </section>
-
-    <section class="scenario-flow" aria-labelledby="md-flow-heading">
-      <div class="section-head">
-        <h2 id="md-flow-heading">VS Code Fetch Tools Flow (from Markdown)</h2>
-        <p>Rendered live from <code>fetch-mcp-tools.md &sect; VS Code fetch tools flow</code>.</p>
-      </div>
-      <scenario-mermaid-flow src="fetch-mcp-tools.md" title="SCN-DA-FETCH-MCP-TOOLS VS Code Flow"></scenario-mermaid-flow>
+    <section class="scenario-flow" aria-labelledby="flow-heading">
+      <div class="section-head"><h2 id="flow-heading">Flow</h2></div>
+      <scenario-mermaid-flow src="fetch-mcp-tools.md" title="SCN-DA-FETCH-MCP-TOOLS"></scenario-mermaid-flow>
     </section>
-
-    <section class="scenario-flow" aria-labelledby="outputs-heading">
-      <div class="section-head">
-        <h2 id="outputs-heading">User-visible outputs</h2>
-        <p>
-          Mirrors <code>fetch-mcp-tools.md &sect; User-visible outputs</code>. This scenario updates an existing DA project; there is no template boilerplate to summarize. Each output below is driven by the picker answers in the flow above.
-        </p>
-      </div>
-
-      <div class="vscode-flow-grid">
-        <article class="vscode-flow-card" data-kind="outcome" aria-labelledby="outputs-files-title">
-          <h3 id="outputs-files-title">File changes</h3>
-          <ul class="vscode-flow-card__note">
-            <li><code>appPackage/&lt;chosen action manifest&gt;.json</code> &mdash; created when step 3 picks <code>Create a new ai-plugin.json</code> (name from step 4), modified otherwise. Operations from step 5 are written under <code>functions</code> and referenced from the MCP server runtime's <code>run_for_functions</code>; the runtime's <code>auth</code> block is written when step 6 selects an authentication type.</li>
-            <li><code>appPackage/declarativeAgent.json</code> &mdash; modified only when a new manifest was created in step 3. A new entry is appended to <code>actions</code> with a non-colliding <code>id</code> (<code>action</code>, <code>action_2</code>, ...) and <code>file</code> set to the new manifest's basename.</li>
-            <li><code>m365agents.yml</code> &mdash; modified only when an authentication type is selected and the matching registration step is not already present. Static OAuth and Entra SSO inject <code>oauth/register</code>; dynamic OAuth injects <code>dcr/register</code>. The injected step shape and ordering match <a href="create-da-with-mcp-server.html">SCN-DA-CREATE-WITH-MCP-SERVER</a> and <a href="add-mcp-action-to-da.html">SCN-DA-ADD-MCP-ACTION-TO-DA</a>.</li>
-          </ul>
-        </article>
-
-        <article class="vscode-flow-card" data-kind="outcome" data-severity="success" aria-labelledby="outputs-notifications-title">
-          <h3 id="outputs-notifications-title">Notifications</h3>
-          <vscode-notification title="MCP action added" message="The operations selected from your MCP server are successfully added for Copilot to interact with." detail="You can go to the 'ai-plugin.json' to check on details. Now you are able to provision your declarative agent to continue." action="Provision" source="Microsoft 365 Agents Toolkit"></vscode-notification>
-          <p class="caption">Source: <code>Microsoft 365 Agents Toolkit</code>. The <code>Provision</code> button runs the standard provision lifecycle.</p>
-        </article>
-
-        <article class="vscode-flow-card" data-kind="outcome" data-severity="error" aria-labelledby="outputs-errors-title">
-          <h3 id="outputs-errors-title">Error and recovery messages</h3>
-          <vscode-notification severity="error" title="No tools found" message="No tools found for the MCP server. Please run the server first." source="Microsoft 365 Agents Toolkit"></vscode-notification>
-          <p class="caption">Surfaced when the MCP server returns no tools at discovery time. Recovery: start the server using the built-in VS Code MCP <code>Start</code> CodeLens (or fix its configuration) and re-click <code>⚡ ATK: Fetch action from MCP</code>. No files are written before this fires.</p>
-          <p class="vscode-flow-card__note">Prerequisite errors fire when <code>.vscode/mcp.json</code> is missing, malformed, has no server entries, or the resolved server entry is incomplete (no <code>url</code> for <code>http</code>, no <code>command</code> for <code>stdio</code>). Each toast names the missing piece; the user edits the file and retries. No files are written before these fire.</p>
-          <p class="vscode-flow-card__note">Cancellation at any picker leaves no notification and writes nothing to disk.</p>
-        </article>
-
-        <article class="vscode-flow-card" data-kind="note" aria-labelledby="outputs-env-title">
-          <h3 id="outputs-env-title">Environment and secret writes</h3>
-          <p class="vscode-flow-card__note">The <code>oauth/register</code> or <code>dcr/register</code> step injected into <code>m365agents.yml</code> reserves a configuration id that is written into <code>env/.env.*</code> when the provision lifecycle runs. This scenario does not write to <code>env/.env.*</code> at picker time; auth secret collection in VS Code follows the convention defined in <a href="create-da-with-mcp-server.html">SCN-DA-CREATE-WITH-MCP-SERVER</a> and <a href="add-mcp-action-to-da.html">SCN-DA-ADD-MCP-ACTION-TO-DA</a>.</p>
-        </article>
-
-        <article class="vscode-flow-card" data-kind="note" aria-labelledby="outputs-external-title">
-          <h3 id="outputs-external-title">External side effects</h3>
-          <p class="vscode-flow-card__note">None at scenario time. Cloud-side OAuth client registration happens later during the provision lifecycle, when the injected <code>oauth/register</code> (or <code>dcr/register</code>) step runs.</p>
-        </article>
-      </div>
+    <section class="scenario-flow" aria-labelledby="implementation-heading">
+      <div class="section-head"><h2 id="implementation-heading">Implementation Binding</h2></div>
+      <p>This scenario has no scaffolding implementation binding.</p>
     </section>
   </main>
-
-  <footer>
-    Scenario behavior belongs in <code>fetch-mcp-tools.md</code>. This HTML visualizes the VS Code Fetch action flow end-to-end; it does not replace the Markdown contract.
-  </footer>
+  <footer>Generated review projection. Scenario behavior remains in <code>fetch-mcp-tools.md</code>.</footer>
 </body>
 </html>

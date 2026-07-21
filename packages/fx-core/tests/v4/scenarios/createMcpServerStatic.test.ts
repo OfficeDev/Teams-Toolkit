@@ -135,7 +135,7 @@ async function run(
   });
 }
 
-describe("SCN-DA-CREATE-WITH-MCP-SERVER-STATIC (v4, T3 InMemoryRuntime)", () => {
+describe("SCN-DA-CREATE-WITH-MCP-SERVER (DT-off, v4, T3 InMemoryRuntime)", () => {
   it("SCN-CREATE-MCP-STATIC-01: static MCP scaffold writes mcp-tools-1.json", async () => {
     const { files, outcome } = await run(["search", "calendar"]);
     assert.include(outcome.written, "appPackage/ai-plugin.json");

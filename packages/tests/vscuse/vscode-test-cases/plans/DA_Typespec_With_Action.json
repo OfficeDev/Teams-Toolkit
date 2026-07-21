@@ -352,7 +352,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the active agent name displayed on the M365 Copilot page starts with ${{var:app_name}} and may include an environment suffix such as local or dev, and no blocking dialog is open.",
+      "description": "@assertion the active agent name displayed on the M365 Copilot page starts with ${{var:app_name}}, ignoring any underscore differences because the TypeSpec template applies safe-name processing that strips underscores from the app name, and may include an environment suffix such as local or dev, and no blocking dialog is open.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

@@ -49,7 +49,9 @@
         "dhash:512:384:0:20:64a4a4b47c7c747c"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_54382195",
       "created_at": "2026-05-12T08:36:39.667330",
       "plan_id": "plan_728a9c98"
