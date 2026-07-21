@@ -24,7 +24,6 @@ export class FeatureFlagName {
   static readonly CEAEnabled = "TEAMSFX_CEA_ENABLED";
   static readonly SandBoxedTeam = "TEAMSFX_SANDBOXED_TEAM";
   static readonly SensitivityLabelEnabled = "TEAMSFX_SENSITIVITY_LABEL";
-  static readonly DAMetaOS = "TEAMSFX_DA_METAOS";
   static readonly CFShortcutMetaOS = "TEAMSFX_CF_SHORTCUT_METAOS";
   static readonly OpenPluginImportExport = "TEAMSFX_OPENPLUGIN_IMPORT_EXPORT";
   static readonly AgentSkillsManifest = "TEAMSFX_AGENT_SKILLS";
@@ -97,10 +96,6 @@ export class FeatureFlags {
   };
   static readonly SensitivityLabelEnabled = {
     name: FeatureFlagName.SensitivityLabelEnabled,
-    defaultValue: "false",
-  };
-  static readonly DAMetaOS = {
-    name: FeatureFlagName.DAMetaOS,
     defaultValue: "false",
   };
   static readonly CFShortcutMetaOS = {
