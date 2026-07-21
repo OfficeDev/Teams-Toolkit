@@ -30,6 +30,7 @@
         "@azure/identity": "^4.11.1",
         "@azure/search-documents": "^12.0.0",
         "@microsoft/teams.apps": "^2.0.0",
+        "undici": "^6.21.0",
         "@microsoft/teams.ai": "^2.0.0",
         "@microsoft/teams.openai": "^2.0.0",
         "@microsoft/teams.common": "^2.0.0"
