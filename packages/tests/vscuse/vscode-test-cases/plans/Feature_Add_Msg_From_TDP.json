@@ -414,8 +414,8 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 304,
-        "y": 222
+        "x": 288,
+        "y": 214
       },
       "description": "Click the \"Add\" or \"Open\" button on the app details popup within the Microsoft Teams interface.",
       "content_refs": [],
@@ -423,11 +423,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:304:222:16:5:6d6d69696e601020",
-        "dhash:304:222:96:5:7300667170002a8f",
-        "dhash:304:222:0:10:20b4b0e0f8f8e0f4"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_0ef533d1",
