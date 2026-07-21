@@ -1265,6 +1265,129 @@ describe("teamsApp/createAppPackage", async () => {
     chai.assert.isTrue(mcpToolDescriptionAdded, "mcp-tool-description.json should be added to zip");
   });
 
+  it("happy path - agentConnectors with mcpToolDescription file", async () => {
+    const args: CreateAppPackageArgs = {
+      manifestPath:
+        "./tests/plugins/resource/appstudio/resources-multi-env/templates/appPackage/v3.manifest.template.json",
+      outputZipPath:
+        "./tests/plugins/resource/appstudio/resources-multi-env/build/appPackage/appPackage.dev.zip",
+      outputJsonPath:
+        "./tests/plugins/resource/appstudio/resources-multi-env/build/appPackage/manifest.dev.json",
+    };
+
+    const manifest = {
+      manifestVersion: "1.29",
+    } as TeamsManifestV1D19.TeamsManifestV1D19;
+    (manifest as any).agentConnectors = [
+      {
+        id: "kusto",
+        displayName: "Kusto",
+        toolSource: {
+          remoteMcpServer: {
+            mcpServerUrl: "https://www.contoso.com",
+            mcpToolDescription: { file: "kusto-tools.json" },
+          },
+        },
+      },
+    ];
+    manifest.icons = {
+      color: "resources/color.png",
+      outline: "resources/outline.png",
+    };
+
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+    vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+    vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+    vi.spyOn(fs, "stat").mockImplementation(async () => {
+      return { mode: 0o644 } as any;
+    });
+    vi.spyOn(fs, "readFile").mockImplementation((async (_filePath: any, options?: any) => {
+      const content = "{}";
+      if (options === "utf8" || options?.encoding === "utf8") {
+        return content;
+      }
+      return Buffer.from(content);
+    }) as any);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "realpath").mockImplementation(async (p: any) => p);
+
+    const testDriver = new CreateAppPackageDriver();
+    const addedFiles: string[] = [];
+    vi.spyOn(testDriver as any, "addFileInZip").mockImplementation(
+      (_zip: unknown, _zipPath: unknown, filePath: unknown) => {
+        addedFiles.push(filePath as string);
+      }
+    );
+
+    const result = (await testDriver.execute(args, mockedDriverContext)).result;
+    if (result.isErr()) {
+      console.log(result.error);
+    }
+    chai.assert.isTrue(result.isOk());
+
+    const mcpToolDescriptionAdded = addedFiles.some((file) => file.includes("kusto-tools.json"));
+    chai.assert.isTrue(mcpToolDescriptionAdded, "kusto-tools.json should be added to zip");
+  });
+
+  it("error if mcpToolDescription file does not exist for agentConnectors", async () => {
+    const args: CreateAppPackageArgs = {
+      manifestPath:
+        "./tests/plugins/resource/appstudio/resources-multi-env/templates/appPackage/v3.manifest.template.json",
+      outputZipPath:
+        "./tests/plugins/resource/appstudio/resources-multi-env/build/appPackage/appPackage.dev.zip",
+      outputJsonPath:
+        "./tests/plugins/resource/appstudio/resources-multi-env/build/appPackage/manifest.dev.json",
+    };
+
+    const manifest = {
+      manifestVersion: "1.29",
+    } as TeamsManifestV1D19.TeamsManifestV1D19;
+    (manifest as any).agentConnectors = [
+      {
+        id: "kusto",
+        displayName: "Kusto",
+        toolSource: {
+          remoteMcpServer: {
+            mcpServerUrl: "https://www.contoso.com",
+            mcpToolDescription: { file: "kusto-tools.json" },
+          },
+        },
+      },
+    ];
+    manifest.icons = {
+      color: "resources/color.png",
+      outline: "resources/outline.png",
+    };
+
+    vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+    vi.spyOn(fs, "chmod").mockImplementation(async () => {});
+    vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+    vi.spyOn(fs, "stat").mockImplementation(async () => {
+      return { mode: 0o644 } as any;
+    });
+    vi.spyOn(fs, "readFile").mockImplementation((async (_filePath: any, options?: any) => {
+      const content = "{}";
+      if (options === "utf8" || options?.encoding === "utf8") {
+        return content;
+      }
+      return Buffer.from(content);
+    }) as any);
+    vi.spyOn(fs, "realpath").mockImplementation(async (p: any) => p);
+    // color/outline icons exist, but the mcp tool description file does not
+    vi.spyOn(fs, "pathExists").mockImplementation(async (p: any) => {
+      return !p.toString().includes("kusto-tools.json");
+    });
+
+    const testDriver = new CreateAppPackageDriver();
+    vi.spyOn(testDriver as any, "addFileInZip").mockImplementation(() => {});
+
+    const result = (await testDriver.execute(args, mockedDriverContext)).result;
+    chai.assert.isTrue(result.isErr());
+    if (result.isErr()) {
+      chai.assert.equal(result.error.name, "FileNotFoundError");
+    }
+  });
+
   it("invalid color file", async () => {
     const args: CreateAppPackageArgs = {
       manifestPath:
