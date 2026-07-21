@@ -70,10 +70,9 @@ describe("commands/common MCP-for-DA gating", () => {
       stubEnabledFlags([FeatureFlags.MCPForDADT]);
       const result = gateMCPDACredentialOptions(baseOptions());
       for (const name of credentialNames) {
-        assert.isTrue(
-          result.some((o) => o.name === name),
-          `expected ${name} to be present`
-        );
+        const option = result.find((o) => o.name === name);
+        assert.isDefined(option, `expected ${name} to be present`);
+        assert.notEqual(option?.required, true, `${name} must remain conditionally optional`);
       }
     });
 

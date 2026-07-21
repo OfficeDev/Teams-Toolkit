@@ -1,3 +1,4 @@
+require("./proxy");
 const app = require("./app/app");
 
 (async () => {

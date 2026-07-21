@@ -282,7 +282,7 @@ export async function activate(context: vscode.ExtensionContext) {
   await vscode.commands.executeCommand(
     "setContext",
     "fx-extension.isMetaOSAddinProject",
-    featureFlagManager.getBooleanValue(FeatureFlags.DAMetaOS) ? isMetaOSAddinProject : false
+    isMetaOSAddinProject
   );
 
   const isKiotaNPMIntegrationEnabled = featureFlagManager.getBooleanValue(

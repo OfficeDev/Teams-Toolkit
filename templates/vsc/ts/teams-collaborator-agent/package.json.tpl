@@ -29,6 +29,7 @@
         "@microsoft/teams.ai": "2.0.12",
         "@microsoft/teams.api": "2.0.12",
         "@microsoft/teams.apps": "2.0.12",
+        "undici": "^6.21.0",
         "@microsoft/teams.cards": "2.0.12",
         "@microsoft/teams.common": "2.0.12",
         "@microsoft/teams.dev": "2.0.12",

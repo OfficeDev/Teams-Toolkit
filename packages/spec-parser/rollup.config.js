@@ -6,6 +6,7 @@ import pkg from "./package.json";
 const deps = Object.keys(Object.assign({}, pkg.peerDependencies, pkg.dependencies));
 
 const nodeDeps = [...deps, "crypto", "fs", "path"];
+const typescriptFiles = ["**/*.ts", "**/*.tsx"];
 
 /**
  * ES5 Builds
@@ -13,6 +14,7 @@ const nodeDeps = [...deps, "crypto", "fs", "path"];
 const es5BuildPlugins = [
   typescriptPlugin({
     typescript,
+    include: typescriptFiles,
     abortOnError: false,
   }),
   json(),
@@ -24,6 +26,7 @@ const es5BuildPlugins = [
 const es2017Plugins = [
   typescriptPlugin({
     typescript,
+    include: typescriptFiles,
     tsconfigOverride: {
       compilerOptions: {
         target: "es2017",
@@ -57,6 +60,7 @@ const es5Builds = [
     plugins: [
       typescriptPlugin({
         typescript,
+        include: typescriptFiles,
         abortOnError: false,
         useTsconfigDeclarationDir: true,
       }),

@@ -29,7 +29,7 @@ import { getSystemInputs } from "../utils/systemEnvUtils";
 import {
   accountHintPlaceholder,
   Host,
-  m365AppIdEnv,
+  m365AppTitleIdEnv,
   sideloadingDisplayMessages,
 } from "./common/debugConstants";
 import { endLocalDebugSession, getLocalDebugSessionId } from "./common/localDebugSession";
@@ -78,6 +78,12 @@ export class TeamsfxDebugProvider implements vscode.DebugConfigurationProvider {
       if (url.startsWith("https")) {
         host = new URL(url).host;
       }
+
+      // Backward compatibility: projects scaffolded by older toolkit versions
+      // still contain the legacy GUID-based Copilot deep link. Rewrite it to the
+      // simplified `/chat/<hint>` form so those projects keep working.
+      url = normalizeLegacyCopilotUrl(url);
+
       let env: string | undefined = undefined;
 
       // match ${{xxx:yyy}}
@@ -220,6 +226,24 @@ export class TeamsfxDebugProvider implements vscode.DebugConfigurationProvider {
   }
 }
 
+// The legacy Copilot deep link embedded a fixed agent entity GUID and extra
+// query parameters (`?auth=2&developerMode=Basic`). It was replaced with the
+// `https://m365.cloud.microsoft/chat/?titleId=<hint>&source=agents-toolkit`
+// form.
+export function normalizeLegacyCopilotUrl(url: string): string {
+  if (url.includes(accountHintPlaceholder)) {
+    return url;
+  }
+  const legacyCopilotUrl = new RegExp(
+    `(https://${Host.copilot})/chat/entity1-[^/]+/([^?]+)(?:\\?[^#]*)?$`
+  );
+  const match = legacyCopilotUrl.exec(url);
+  if (!match) {
+    return url;
+  }
+  return `${match[1]}/chat/?titleId=${match[2]}&source=agents-toolkit`;
+}
+
 function updateHostBySovereignCloud(url: string): string {
   const sovereignCloudEnvironment = featureFlagManager.getStringValue(
     FeatureFlags.SovereignCloudEnvironment
@@ -289,22 +313,14 @@ async function generateAgentHint(projectPath: string, env: string | undefined): 
   if (envRes.isErr()) {
     throw envRes.error;
   }
-  if (!envRes.value[m365AppIdEnv]) {
+  if (!envRes.value[m365AppTitleIdEnv]) {
     throw new MissingEnvironmentVariablesError(
       ExtensionSource,
-      m365AppIdEnv,
+      m365AppTitleIdEnv,
       path.normalize(path.join(projectPath, ".vscode", "launch.json")),
       "https://aka.ms/teamsfx-tasks"
     );
   }
-  const id = envRes.value[m365AppIdEnv];
-  const clickTimestamp = new Date().toLocaleString();
-  const agentHintJson: AgentHintData = {
-    id,
-    scenario: "launchcopilotextension",
-    properties: { clickTimestamp },
-    version: 1,
-  };
-  const base64 = Buffer.from(JSON.stringify(agentHintJson)).toString("base64");
-  return base64;
+  const id = envRes.value[m365AppTitleIdEnv];
+  return id;
 }

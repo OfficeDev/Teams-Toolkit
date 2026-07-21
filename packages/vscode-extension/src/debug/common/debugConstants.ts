@@ -58,6 +58,7 @@ export enum ANSIColors {
 
 export const accountHintPlaceholder = "${account-hint}";
 export const m365AppIdEnv = "M365_APP_ID";
+export const m365AppTitleIdEnv = "M365_TITLE_ID";
 
 export const openOutputMessage = () =>
   util.format(

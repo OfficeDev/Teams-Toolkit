@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import { SystemError, UserError } from "@microsoft/teamsfx-api";
+import { ok } from "neverthrow";
 import * as fs from "fs-extra";
 import * as os from "os";
 import * as path from "path";
@@ -34,6 +35,7 @@ function makeCtx(initial: Record<string, string> = {}): {
       write: (filePath, data) => {
         files.set(filePath, data);
       },
+      writeEnvironment: () => Promise.resolve(ok(undefined)),
       manifestWrapper: () => NOOP_MANIFEST_WRAPPER,
     },
   };
