@@ -7,6 +7,7 @@ import { REQUIRE_EMPTY_TARGET } from "../../../src/v4/pipeline/runScaffoldPipeli
 import { createInMemoryRuntime } from "../../../src/v4/runtime/inMemoryRuntime";
 import { scaffold } from "../../../src/v4/runtime/scaffold";
 import {
+  assertContainsInOrder,
   loadV4Package,
   readJsonObject,
   recordProperty,
@@ -98,13 +99,26 @@ describe("SCN-TEAMS-CREATE-CUSTOM-COPILOT-RAG-AZURE-AI-SEARCH (v4, T3 InMemoryRu
   });
 
   it("SCN-CREATE-RAG-AZURE-SEARCH-04: Python scaffold selects the Python subtree", async () => {
-    const { outcome } = await run("python");
+    const { files, outcome } = await run("python");
+    const app = text(files, "src/app.py");
     assert.include(outcome.written, "src/app.py");
     assert.include(outcome.written, "src/config.py");
     assert.include(outcome.written, "src/azure_ai_search_data_source.py");
     assert.include(outcome.written, "src/indexers/setup.py");
     assert.include(outcome.written, "src/indexers/data/Contoso_Electronics_Company_Overview.md");
     assert.notInclude(outcome.written, "package.json");
+    assert.include(app, "from openai import OpenAIError");
+    assert.include(app, 'message = error_body.get("message")');
+    assertContainsInOrder(app, [
+      "def get_openai_error_message(error: OpenAIError) -> str:",
+      "try:",
+      "data_context = await azure_ai_search.render_data(input)",
+      "chat_result = await chat_prompt.send(",
+      "except OpenAIError as e:",
+      'print(f"Error generating Azure AI Search response: {get_openai_error_message(e)}")',
+      'await ctx.send(MessageActivityInput(text="An error occurred while processing your request."))',
+      "return",
+    ]);
   });
 
   it("SCN-CREATE-RAG-AZURE-SEARCH-05: only require-empty-target runs", async () => {
