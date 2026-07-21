@@ -10,7 +10,14 @@
       "step_retry_timeout": 0.0
     },
     "total_steps": 81,
+    "created_at": "2026-06-25T07:16:12.876811",
     "name": "Template And Sample Readme Verification",
+    "description": {
+      "other": "",
+      "owner": "v-cheye@microsoft.com",
+      "workitem": "32945382"
+    },
+    "generated_at": "2026-06-25T07:16:12.876806",
     "execution_order": [
       "plan_r_0928_012254",
       "step_d870e05e",
@@ -33,14 +40,14 @@
       "step_68494265",
       "step_267d4f2e",
       "step_7d7674b8",
-      "step_c1e0c20c",
-      "step_conn_appname",
-      "step_conn_suffix",
-      "step_conn_enter",
       "step_53d00883",
       "step_3c258540",
       "step_c7a2f98c",
       "step_7481c15b",
+      "step_c1e0c20c",
+      "step_conn_appname",
+      "step_conn_suffix",
+      "step_conn_enter",
       "step_22dda279",
       "step_86472911",
       "step_fa808c22",
@@ -97,7 +104,2101 @@
       "step_7ce4446e",
       "step_9bda13ac"
     ],
-    "updated_at": "2026-07-21T03:20:00.000000"
+    "tags": [],
+    "updated_at": "2026-07-21T03:22:15.689958"
   },
-  "steps": "...(full 81-step array written to plans/Template_And_Sample_Readme_Verification.json; new steps step_conn_appname [type app_name var], step_conn_suffix [text='d'], step_conn_enter [enter]; step_c1e0c20c folder click moved before connector-name entry)..."
+  "steps": [
+    {
+      "step_id": "step_d870e05e",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 370,
+        "y": 89
+      },
+      "description": "Click the \"Declarative Agent\" option in the \"New Project\" dialog of the Microsoft 365 Agents Toolkit interface, selecting the agent type for Microsoft 365 Copilot.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:370:89:16:5:90d02891718a726a",
+        "dhash:370:89:96:5:0018a48265452131",
+        "dhash:370:89:0:10:c0c88094b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_d870e05e",
+      "created_at": "2026-06-25T07:16:12.881986",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_ffd602c4",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 351,
+        "y": 90
+      },
+      "description": "Click the \"No Action\" option in the dropdown menu within the \"Create Declarative Agent\" dialog in the Microsoft 365 Agents Toolkit extension for Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:351:90:16:5:0000a2944b30874e",
+        "dhash:351:90:96:5:566209524cc83220",
+        "dhash:351:90:0:10:c0c09094b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_ffd602c4",
+      "created_at": "2026-06-25T07:16:12.890070",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_bf723cff",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 348,
+        "y": 74
+      },
+      "description": "Click the \"Default folder\" option in the workspace folder selection dropdown within Visual Studio Code, selecting the path \"/home/vscode/AgentsToolkitProjects\" as the project root.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:348:74:16:5:2800248b746caaaa",
+        "dhash:348:74:96:5:21d8d96529560e00",
+        "dhash:348:74:0:10:f0b09494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_bf723cff",
+      "created_at": "2026-06-25T07:16:12.896086",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_20cc4b2c",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{var:app_name:vscuse_app_#####}}"
+      },
+      "description": "Type  ${{var:app_name:vscuse_app_#####}}  into the \"Input an application name\" text field in the Microsoft 365 Agents Toolkit extension popup within Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:f0b09494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_20cc4b2c",
+      "created_at": "2026-06-25T07:16:12.902093",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_6ff99980",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the application name ${{var:app_name:vscuse_app_#####}} in the input dialog at the top of the Visual Studio Code interface.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:d0b09494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_6ff99980",
+      "created_at": "2026-06-25T07:16:12.919787",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_12da5ca9",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion there's readme file opened and the content in the preview README tab can be displayed normally.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay: 5",
+        "step_retry_timeout:60"
+      ],
+      "screenshot": null,
+      "created_at": "2026-06-25T07:16:12.930328",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_69f6fa64",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 1011,
+        "y": 22
+      },
+      "description": "Click the close (\u201cX\u201d) button at the top-right corner of the \u201cPreview README.md\u201d tab in Visual Studio Code, closing the preview of the README file.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:1011:22:16:5:a2c5b232c9384430",
+        "dhash:1011:22:96:5:2a9c9c6a95898986",
+        "dhash:1011:22:0:10:2024306070707236"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_69f6fa64",
+      "created_at": "2026-06-25T07:16:12.939129",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_47c0dc94",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 196,
+        "y": 292
+      },
+      "description": "Click the \"Create a New Agent/App\" button in the Microsoft 365 Agents Toolkit sidebar of Visual Studio Code, initiating a new agent or app creation workflow.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:196:292:16:5:0000858452b2989c",
+        "dhash:196:292:96:5:d9b2a22c92d32e59",
+        "dhash:196:292:0:10:21b89494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_47c0dc94",
+      "created_at": "2026-06-25T07:16:12.944393",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_3442676d",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 330,
+        "y": 146
+      },
+      "description": "Click the \"Custom Engine Agent\" option in the \"New Project\" dropdown menu within the Microsoft 365 Agents Toolkit extension in Visual Studio Code, selecting the agent type for building an intelligent agent with orchestration and your own LLM.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:330:146:16:5:23a3a5b191042a24",
+        "dhash:330:146:96:5:a452328ccd725432",
+        "dhash:330:146:0:10:c4c88094b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_3442676d",
+      "created_at": "2026-06-25T07:16:12.950480",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_a7aadbe9",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 330,
+        "y": 85
+      },
+      "description": "Click the \"Basic Custom Engine Agent\" dropdown option in the \"App Features Using Microsoft 365 Agents SDK\" extension interface within Visual Studio Code, targeting the agent selection menu.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:330:85:16:5:ad898de11d3153a5",
+        "dhash:330:85:96:5:c58035986844a184",
+        "dhash:330:85:0:10:c0d89094b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_a7aadbe9",
+      "created_at": "2026-06-25T07:16:12.959584",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_57c99052",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 283,
+        "y": 75
+      },
+      "description": "Click the \"TypeScript\" option in the \"Programming Language\" dropdown within the Microsoft 365 Agents Toolkit extension interface in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:283:75:16:5:044ab53384b5b5b5",
+        "dhash:283:75:96:5:000024501252528c",
+        "dhash:283:75:0:10:d0989094b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_57c99052",
+      "created_at": "2026-06-25T07:16:12.968366",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_367eb5a0",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 283,
+        "y": 75
+      },
+      "description": "Click the \"Default Folder\" dropdown entry in the \"Workspace Folder\" selection dialog within Visual Studio Code, as indicated by the highlighted crosshair at (283, 75).",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:283:75:16:5:90328d583b125212",
+        "dhash:283:75:96:5:24535ba40c53d004",
+        "dhash:283:75:0:10:d0b09494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_367eb5a0",
+      "created_at": "2026-06-25T07:16:12.978618",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_feaeb0b4",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{var:app_name:vscuse_app_#####}}"
+      },
+      "description": "Type  ${{var:app_name:vscuse_app_#####}}  into the \"Input an application name\" text field in the Microsoft 365 Agents Toolkit extension popup within Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:f0b09494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_feaeb0b4",
+      "created_at": "2026-06-25T07:16:12.989143",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_2ca00f98",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "a"
+      },
+      "description": "Type the character 'a' into the \"Application Name\" input field at the top of the Microsoft 365 Agents Toolkit interface in Visual Studio Code, which currently contains the text \"vscuse_app_NgmR4\" and displays a path conflict warning.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:d0b89494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_2ca00f98",
+      "created_at": "2026-06-25T07:16:12.995037",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_10fc55be",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the application name in the input dialog at the top of the Visual Studio Code interface.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:f0b09494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_10fc55be",
+      "created_at": "2026-06-25T07:16:13.000479",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_187de766",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion there's readme file opened and the content in the preview README tab can be displayed normally.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay: 10",
+        "step_retry_timeout:60"
+      ],
+      "screenshot": null,
+      "created_at": "2026-06-25T07:16:13.006034",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_68494265",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 1004,
+        "y": 21
+      },
+      "description": "Click the \"Close\" (X) button at the top-right corner of the Visual Studio Code window, located on the title bar, to exit the application.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:1004:21:16:5:5b5c0c9b91aad1f2",
+        "dhash:1004:21:96:5:3ccccc3e42c8c9c2",
+        "dhash:1004:21:0:10:223230a030727030"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_68494265",
+      "created_at": "2026-06-25T07:16:13.012895",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_267d4f2e",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 197,
+        "y": 302
+      },
+      "description": "Click the \"Create a New Agent/App\" button in the Microsoft 365 Agents Toolkit welcome panel within Visual Studio Code, as indicated by the red crosshair at coordinates (197, 302).",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:197:302:16:5:a638b585d55db8d2",
+        "dhash:197:302:96:5:b2a26c9293265951",
+        "dhash:197:302:0:10:21b89494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "step_retry_timeout:60",
+        "precondition:old"
+      ],
+      "screenshot": "step_267d4f2e",
+      "created_at": "2026-06-25T07:16:13.023945",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_7d7674b8",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 350,
+        "y": 178
+      },
+      "description": "Click the \"Copilot connector\" option in the \"New Project\" dropdown within the Microsoft 365 Agents Toolkit interface, targeting the UI element to embed organization data for Microsoft 365 Copilot integration.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:350:178:16:5:b249b64548288ba9",
+        "dhash:350:178:96:5:9332c989cece1713",
+        "dhash:350:178:0:10:c4c89094b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_7d7674b8",
+      "created_at": "2026-06-25T07:16:13.042227",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_53d00883",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "asdfsdf"
+      },
+      "description": "Type text 'testconnectorname' into the \"Add a connector name\" input field within the Microsoft 365 Agents Toolkit extension in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:f0b09494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_53d00883",
+      "created_at": "2026-06-25T07:16:13.048443",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_3c258540",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press the Enter key to confirm the connector name input in the \"Add a connector name\" dialog within Visual Studio Code's Microsoft 365 Agents Toolkit extension.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:f0b09494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_3c258540",
+      "created_at": "2026-06-25T07:16:13.063657",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_c7a2f98c",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "sdafsdf"
+      },
+      "description": "Type text 'testconnectionid' into the \"Add a connection ID\" input field at the top of the Microsoft Visual Studio Code window, within the Microsoft 365 Agents Toolkit extension interface.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:f0b09494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_c7a2f98c",
+      "created_at": "2026-06-25T07:16:13.077869",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_7481c15b",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press the Enter key to confirm the connection ID input in the \"Add a connection ID\" dialog within the Microsoft 365 Agents Toolkit interface in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:f0b09494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_7481c15b",
+      "created_at": "2026-06-25T07:16:13.084171",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_c1e0c20c",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 336,
+        "y": 86
+      },
+      "description": "Click the \"Default folder\" option in the folder selection dropdown within the \"Workspace Folder\" dialog of Visual Studio Code, choosing the path /home/vscode/AgentsToolkitProjects.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:336:86:16:5:bbbab4512c420000",
+        "dhash:336:86:96:5:e56592952400c0c0",
+        "dhash:336:86:0:10:d0b09494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_c1e0c20c",
+      "created_at": "2026-06-25T07:16:13.089528",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_conn_appname",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{var:app_name:vscuse_app_#####}}"
+      },
+      "description": "Type ${{var:app_name:vscuse_app_#####}} into the \"Input an application name\" text field for the Copilot connector project in the Microsoft 365 Agents Toolkit extension.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
+      "created_at": "2026-07-21T03:20:00.000000",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_conn_suffix",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "d"
+      },
+      "description": "Type the character 'd' into the \"Application Name\" input field to give the Copilot connector app a unique name and avoid a path conflict with other created apps.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
+      "created_at": "2026-07-21T03:20:00.000000",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_conn_enter",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the Copilot connector application name so the project scaffolds and its README preview opens.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
+      "created_at": "2026-07-21T03:20:00.000000",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_22dda279",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion there's readme file opened and the content in the preview README tab can be displayed normally.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay: 10",
+        "step_retry_timeout:60"
+      ],
+      "screenshot": null,
+      "created_at": "2026-06-25T07:16:13.094735",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_86472911",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 1009,
+        "y": 21
+      },
+      "description": "Click the close (\u00d7) button on the \"Preview README.md\" tab in the Visual Studio Code interface to close the Markdown preview.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:1009:21:16:5:d96362d989768990",
+        "dhash:1009:21:96:5:3acccc2a96c9c986",
+        "dhash:1009:21:0:10:2124223234747627"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_86472911",
+      "created_at": "2026-06-25T07:16:13.108983",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_fa808c22",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 169,
+        "y": 303
+      },
+      "description": "Click the \"Create a New Agent/App\" blue button in the Microsoft 365 Agents Toolkit welcome panel of Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:169:303:16:5:8d92aa2bb3996a75",
+        "dhash:169:303:96:5:5434c9363605daca",
+        "dhash:169:303:0:10:21b89494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_fa808c22",
+      "created_at": "2026-06-25T07:16:13.122854",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_b735d79c",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 308,
+        "y": 225
+      },
+      "description": "Click the \"General Teams Agent\" dropdown option in the modal titled \"Teams Agent or App Using Microsoft Teams SDK\" within the Microsoft 365 Agents Toolkit interface. The selected option highlights the description: \"Agent that chats with users in Teams built with Teams AI Library and connects to LLMs.\"",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:308:225:16:5:00009064993125a5",
+        "dhash:308:225:96:5:d85987c636a03030",
+        "dhash:308:225:0:10:c0c89094b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_b735d79c",
+      "created_at": "2026-06-25T07:16:13.131685",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_618d0393",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 272,
+        "y": 94
+      },
+      "description": "Click the \"Tab\" option in the dropdown menu of the \"Teams Capability\" selection dialog within the Microsoft 365 Agents Toolkit extension in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:272:94:16:5:1014482cc4555954",
+        "dhash:272:94:96:5:16609095f28793b2",
+        "dhash:272:94:0:10:d0c0b294b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_618d0393",
+      "created_at": "2026-06-25T07:16:13.140562",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_090f51c5",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 276,
+        "y": 77
+      },
+      "description": "Click the \"Default Folder\" option in the folder selection dropdown of the \"Workspace Folder\" dialog in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:276:77:16:5:6198a5a3a3a5b1b3",
+        "dhash:276:77:96:5:122b6994ae515887",
+        "dhash:276:77:0:10:d0b09494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_090f51c5",
+      "created_at": "2026-06-25T07:16:13.153961",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_b558c6b8",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{var:app_name:vscuse_app_#####}}"
+      },
+      "description": "Type  ${{var:app_name:vscuse_app_#####}}  into the \"Input an application name\" text field in the Microsoft 365 Agents Toolkit extension popup within Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:f0b09494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_b558c6b8",
+      "created_at": "2026-06-25T07:16:13.164313",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_26d05eb8",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "b"
+      },
+      "description": "Type 'b' into the \"Application Name\" input field at the top of the Microsoft 365 Agents Toolkit interface in Visual Studio Code, where the current value is \"vscuse_app_6ntwp\".",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:d0b89494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_26d05eb8",
+      "created_at": "2026-06-25T07:16:13.178889",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_e3712c8b",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the application name in the input dialog at the top of the Visual Studio Code interface.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:f0b09494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_e3712c8b",
+      "created_at": "2026-06-25T07:16:13.192127",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_2e0f2578",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion there's readme file opened and the content in the preview README tab can be displayed normally.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay: 10",
+        "step_retry_timeout:60"
+      ],
+      "screenshot": null,
+      "created_at": "2026-06-25T07:16:13.198574",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_976bcfbf",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 1011,
+        "y": 17
+      },
+      "description": "Click the \"Close\" button (window control with an 'X' icon) at the top-right corner of the Visual Studio Code window to exit the application.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:1011:17:16:5:ee12b2c5c4b212ad",
+        "dhash:1011:17:96:5:2a9c9c2a64888988",
+        "dhash:1011:17:0:10:22303030e0307032"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_976bcfbf",
+      "created_at": "2026-06-25T07:16:13.204559",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_65a5a14d",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 233,
+        "y": 300
+      },
+      "description": "Click the \"Create a New Agent\" button in the Microsoft 365 Agents Toolkit welcome panel within Visual Studio Code, as indicated by the red crosshair at coordinates (233, 300).",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:233:300:16:5:92494e4da5b5bc4d",
+        "dhash:233:300:96:5:90906c30b16c8188",
+        "dhash:233:300:0:10:21b89494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_65a5a14d",
+      "created_at": "2026-06-25T07:16:13.214138",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_ac71c544",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 274,
+        "y": 302
+      },
+      "description": "Click the \"Office Add-in\" option in the \"New Project\" popup menu within the Visual Studio Code interface to start creating an Office Add-in project.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:274:302:16:5:0c4853594cb34c00",
+        "dhash:274:302:96:5:22cca926bccc89a3",
+        "dhash:274:302:0:10:c0c8889492b17075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_ac71c544",
+      "created_at": "2026-06-25T07:30:03.647433",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_6bc8d667",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 313,
+        "y": 85
+      },
+      "description": "Click the \"Task pane\" entry in the dropdown menu under \"Select a capability\" within the Microsoft 365 Agents Toolkit interface in Visual Studio Code. The click is visually indicated by a red crosshair on the highlighted dropdown option.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:313:85:16:5:00000000005332c3",
+        "dhash:313:85:96:5:f864879916965969",
+        "dhash:313:85:0:10:c8e0a294b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_6bc8d667",
+      "created_at": "2026-06-25T07:16:13.236223",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_office_hosts",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Wait for the \"Select the Office applications to support\" multi-select quick pick (Word, PowerPoint, Outlook, Excel pre-selected by default) to fully render after choosing the Task pane capability, then press Enter to accept the default selection and continue to the Workspace Folder step.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay: 3",
+        "step_retry_timeout:20"
+      ],
+      "screenshot": null,
+      "created_at": "2026-06-25T07:16:13.236500",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_d38c6e1c",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 315,
+        "y": 77
+      },
+      "description": "Click the \"Default folder\" dropdown in the Workspace Folder selection dialog of Visual Studio Code, targeting the path \"/home/vscode/AgentsToolkitProjects\" to choose the project location.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:315:77:16:5:97889696dcc93648",
+        "dhash:315:77:96:5:3144681754283030",
+        "dhash:315:77:0:10:f0b0949492b17075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_d38c6e1c",
+      "created_at": "2026-06-25T07:16:13.245342",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_fbd7191e",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{var:app_name:vscuse_app_#####}}"
+      },
+      "description": "Type  ${{var:app_name:vscuse_app_#####}}  into the \"Input an application name\" text field in the Microsoft 365 Agents Toolkit extension popup within Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:f0b09494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_fbd7191e",
+      "created_at": "2026-06-25T07:16:13.253063",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_1440cc6d",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "c"
+      },
+      "description": "Type the letter 'c' into the \"Application Name\" input field in the Microsoft 365 Agents Toolkit extension interface within Visual Studio Code, where a path conflict warning is displayed.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:d0b89494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_1440cc6d",
+      "created_at": "2026-06-25T07:16:13.269336",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_ad547778",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the application name in the input dialog at the top of the Visual Studio Code interface.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:f0b09494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_ad547778",
+      "created_at": "2026-06-25T07:16:13.278654",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_0322671d",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion there's readme file opened and the content in the preview README tab can be displayed normally.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay: 10",
+        "step_retry_timeout:60"
+      ],
+      "screenshot": null,
+      "created_at": "2026-06-25T07:16:13.287918",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_091bcbe0",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 1005,
+        "y": 22
+      },
+      "description": "Click the red close button in the top-right corner of the Visual Studio Code window to close the application.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:1005:22:16:5:ba5cb2b30d62d8f2",
+        "dhash:1005:22:96:5:3ccccc3a46c9c9c6",
+        "dhash:1005:22:0:10:22303030e0706c31"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_091bcbe0",
+      "created_at": "2026-06-25T07:16:13.293212",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_d5d9e162",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 203,
+        "y": 340
+      },
+      "description": "Click the \"View Samples\" button in the left sidebar of the Microsoft 365 Agents Toolkit welcome screen within Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:203:340:16:5:34a5a4cdc9b42649",
+        "dhash:203:340:96:5:36b60cd2f20d72a2",
+        "dhash:203:340:0:10:21b89494b0717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_d5d9e162",
+      "created_at": "2026-06-25T07:16:13.298734",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_a822b780",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+-"
+      },
+      "description": "Reduce the zoom level of the Visual Studio Code workspace interface by pressing Ctrl and minus (\u201cCtrl+-\u201d), decreasing text and UI element size across the Microsoft 365 Agents Toolkit \"Samples\" gallery screen.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:33b380b2b2323232"
+      ],
+      "postconditions": [],
+      "tags": [
+        "delay:2",
+        "precondition:old"
+      ],
+      "screenshot": "step_a822b780",
+      "created_at": "2026-06-25T07:16:13.305078",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_6fc3d082",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+-"
+      },
+      "description": "Reduce the zoom level of the Visual Studio Code workspace using the keyboard shortcut Ctrl+-, making the text and UI elements smaller within the \"Samples\" page of the Microsoft 365 Agents Toolkit extension.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:64a4a4baaa646460"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_6fc3d082",
+      "created_at": "2026-06-25T07:16:13.310988",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_1825ce0b",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 918,
+        "y": 161
+      },
+      "description": "Click the \"Theme\" switcher button (depicted by a palette or color icon) in the top-right corner of the Microsoft 365 Agents Toolkit samples page within Visual Studio Code, to change the interface theme.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:918:161:16:5:07e1e9e9e9e90f61",
+        "dhash:918:161:96:5:204028d4d42a0004",
+        "dhash:918:161:0:10:44216a6e4462626e"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_1825ce0b",
+      "created_at": "2026-06-25T07:16:13.320602",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_077b035d",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 605,
+        "y": 161
+      },
+      "description": "Click the \"Language\" dropdown filter in the toolbar above the Featured samples list on the Samples page in the Microsoft 365 Agents Toolkit extension within Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:605:161:16:5:569a2694b466e999",
+        "dhash:605:161:96:5:aaa10c92d0080000",
+        "dhash:605:161:0:10:442126a662e66666"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_077b035d",
+      "created_at": "2026-06-25T07:16:13.331458",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_ebb90d7b",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 573,
+        "y": 185
+      },
+      "description": "Click the \"TS\" option in the \"Language\" dropdown menu within the Samples tab of the Microsoft 365 Agents Toolkit extension in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:573:185:16:5:0d784b4b434b6a74",
+        "dhash:573:185:96:5:01b0b63131393930",
+        "dhash:573:185:0:10:4c29a8a662f66666"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_ebb90d7b",
+      "created_at": "2026-06-25T07:16:13.341112",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_baa880ef",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 573,
+        "y": 211
+      },
+      "description": "Click the checkbox for \"JS\" in the language filter dropdown within the \"Samples\" section of the Microsoft 365 Agents Toolkit workspace in Visual Studio Code, selecting JavaScript as a platform capability.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:573:211:16:5:346c4b4b434b7403",
+        "dhash:573:211:96:5:b631303931343431",
+        "dhash:573:211:0:10:4c2928a672e67666"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_baa880ef",
+      "created_at": "2026-06-25T07:16:13.347229",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_9aac9740",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 573,
+        "y": 235
+      },
+      "description": "Select the \"Python\" checkbox option in the language filter dropdown within the \"Samples\" gallery of the Microsoft 365 Agents Toolkit interface in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:573:235:16:5:056c4b4b4b437a64",
+        "dhash:573:235:96:5:3031313cb6311082",
+        "dhash:573:235:0:10:4c29a8a666e66666"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_9aac9740",
+      "created_at": "2026-06-25T07:16:13.360640",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_1d8b9dc1",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "esc"
+      },
+      "description": "Press the Esc key to close the open language filter dropdown menu in the \"Samples\" section within the Microsoft 365 Agents Toolkit interface in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:4c29a8a662f66666"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_1d8b9dc1",
+      "created_at": "2026-06-25T07:16:13.371070",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_d43c4826",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 811,
+        "y": 299
+      },
+      "description": "Click the \"Create\" button for the \"Coffee Agent\" featured sample on the \"Samples\" tab of the Microsoft 365 Agents Toolkit extension in Visual Studio Code. The button is highlighted with a red crosshair.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:811:299:16:5:096798692a412d92",
+        "dhash:811:299:96:5:c171c8f1f1c871f1",
+        "dhash:811:299:0:10:4c2124a666e66666"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_d43c4826",
+      "created_at": "2026-06-25T07:16:13.386088",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_d3011fa7",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 441,
+        "y": 55
+      },
+      "description": "Click on the \"Default folder /home/vscode/AgentsToolkitProjects\" input field in the \"Workspace Folder\" selection dialog at the top of the Visual Studio Code interface to choose or modify the project root folder location.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:441:55:16:5:a9345c54074375a9",
+        "dhash:441:55:96:5:0b9584322d0cc024",
+        "dhash:441:55:0:10:612124a666e66666"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_d3011fa7",
+      "created_at": "2026-06-25T07:16:13.400688",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_dc46e06a",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion there's readme file opened and the content in the preview README tab can be displayed normally.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay: 10",
+        "step_retry_timeout:60"
+      ],
+      "screenshot": null,
+      "created_at": "2026-06-25T07:16:13.422674",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_c30ba689",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 1013,
+        "y": 17
+      },
+      "description": "Click the \"Close\" (X) button in the top-right corner of the notification panel within Visual Studio Code to dismiss the \"[CoffeeAgent] successfully created\" message.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:1013:17:16:5:5c24658e88652452",
+        "dhash:1013:17:96:5:6a9c9caa64909998",
+        "dhash:1013:17:0:10:203420b036767031"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_c30ba689",
+      "created_at": "2026-06-25T07:16:13.437938",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_8ed55954",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 811,
+        "y": 332
+      },
+      "description": "Click the \"Create\" button next to \"Microsoft Foundry Agent to Microsoft 365 Copilot\" in the Featured samples section of the Microsoft 365 Agents Toolkit extension within Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:811:332:16:5:6798692243259200",
+        "dhash:811:332:96:5:c1f1c871f18ee1f1",
+        "dhash:811:332:0:10:4c2124a666e66666"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_8ed55954",
+      "created_at": "2026-06-25T07:16:13.452155",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_2ecc9f5f",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 398,
+        "y": 55
+      },
+      "description": "Click the \"Default folder\" dropdown in the \"Workspace Folder\" dialog at the top of the Visual Studio Code interface to select the project root location.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:398:55:16:5:a16a95b96b894ab5",
+        "dhash:398:55:96:5:a04949939220cc42",
+        "dhash:398:55:0:10:602124a666e66666"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_2ecc9f5f",
+      "created_at": "2026-06-25T07:16:13.461887",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_04620680",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion there's readme file opened and the content in the preview README tab can be displayed normally.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay: 10",
+        "step_retry_timeout:60"
+      ],
+      "screenshot": null,
+      "created_at": "2026-06-25T07:16:13.474574",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_0e10bd15",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 1015,
+        "y": 18
+      },
+      "description": "Click the \"Close\" (\u00d7) button in the top-right corner of the 'Preview README.md' tab within Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:1015:18:16:5:10c898309ac82ce8",
+        "dhash:1015:18:96:5:6a9c9cba64981994",
+        "dhash:1015:18:0:10:21303082a1216c31"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_0e10bd15",
+      "created_at": "2026-06-25T07:16:13.481987",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_290573ad",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 806,
+        "y": 497
+      },
+      "description": "Click the \"Create\" button for the \"Tab App with Azure Backend\" sample in the Microsoft 365 Agents Toolkit extension in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:806:497:16:5:ac52ad644e6493aa",
+        "dhash:806:497:96:5:69796c69796c7969",
+        "dhash:806:497:0:10:4c2124a666e66666"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_290573ad",
+      "created_at": "2026-06-25T07:16:13.488024",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_8590e359",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 383,
+        "y": 54
+      },
+      "description": "Click the \"Default folder\" option in the \"Choose the folder where your project root will be located\" dropdown at the top of the Visual Studio Code interface.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:383:54:16:5:a8926c9c1d35314c",
+        "dhash:383:54:96:5:0084b44849906e91",
+        "dhash:383:54:0:10:602124a666e66666"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_8590e359",
+      "created_at": "2026-06-25T07:16:13.494321",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_776bf327",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion there's readme file opened and the content in the preview README tab can be displayed normally.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay: 10",
+        "step_retry_timeout:60"
+      ],
+      "screenshot": null,
+      "created_at": "2026-06-25T07:16:13.500482",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_6302e393",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 1001,
+        "y": 22
+      },
+      "description": "Click the \"Debug\" button in the Microsoft 365 Agents Toolkit notification at the bottom right of the Visual Studio Code window, within the context of a Hello World Tab with Backend sample project.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:1001:22:16:5:86d3aeecc3e8737c",
+        "dhash:1001:22:96:5:3c4c4c3c42cc4d42",
+        "dhash:1001:22:0:10:2034613234767221"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_6302e393",
+      "created_at": "2026-06-25T07:16:13.514791",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_859ca96f",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 819,
+        "y": 531
+      },
+      "description": "Click the \"Create\" button for the \"Contact Exporter using Graph Toolkit\" sample in the Microsoft 365 Agents Toolkit interface within Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:819:531:16:5:2593912151ae4905",
+        "dhash:819:531:96:5:d2e298e2e3d2e2d1",
+        "dhash:819:531:0:10:442124a666e66666"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_859ca96f",
+      "created_at": "2026-06-25T07:16:13.528343",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_9d233dbc",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 399,
+        "y": 55
+      },
+      "description": "Click the \"Default folder\" option in the \"Choose the folder where your project root will be located\" dialog at the top of the Visual Studio Code window.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:399:55:16:5:2a56b13156a55a41",
+        "dhash:399:55:96:5:20494ba3b220cc42",
+        "dhash:399:55:0:10:602124a666e66666"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_9d233dbc",
+      "created_at": "2026-06-25T07:16:13.545054",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_d31bbada",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion there's readme file opened and the content in the preview README tab can be displayed normally.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay: 10",
+        "step_retry_timeout:60"
+      ],
+      "screenshot": null,
+      "created_at": "2026-06-25T07:16:13.550682",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_32b270ba",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 1011,
+        "y": 18
+      },
+      "description": "Click the \"Close\" (X) button in the top-right corner of the Visual Studio Code window, indicated by the red crosshair, to exit the application.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:1011:18:16:5:c432b2c5b232c939",
+        "dhash:1011:18:96:5:6a9c9c2a74888984",
+        "dhash:1011:18:0:10:223078323a727221"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_32b270ba",
+      "created_at": "2026-06-25T07:16:13.560114",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_be6c559c",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 795,
+        "y": 564
+      },
+      "description": "Click the \"Create\" button for the \"Bot App with SSO Enabled\" sample in the Microsoft 365 Agents Toolkit extension panel within Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:795:564:16:5:626e65304f2a5029",
+        "dhash:795:564:96:5:b4bc36bcbc34bcb0",
+        "dhash:795:564:0:10:442124a666e66666"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_be6c559c",
+      "created_at": "2026-06-25T07:16:13.571127",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_4d2a5d68",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 439,
+        "y": 56
+      },
+      "description": "Click the \"Default folder /home/vscode/AgentsToolkitProjects\" option in the folder selection dropdown within the \"Workspace Folder\" dialog in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:439:56:16:5:509fafc3a8309651",
+        "dhash:439:56:96:5:0b94943a2904c020",
+        "dhash:439:56:0:10:602124a666e66666"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_4d2a5d68",
+      "created_at": "2026-06-25T07:16:13.582783",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_fae6c40e",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion there's readme file opened and the content in the preview README tab can be displayed normally.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay: 10",
+        "step_retry_timeout:60"
+      ],
+      "screenshot": null,
+      "created_at": "2026-06-25T07:16:13.595308",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_a4f7cab1",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 1011,
+        "y": 18
+      },
+      "description": "Click the \"Close\" (X) button in the top-right corner of the Visual Studio Code application window to close VS Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:1011:18:16:5:c432b2c5b232c939",
+        "dhash:1011:18:96:5:6a9c9c2a74888984",
+        "dhash:1011:18:0:10:253422b232707031"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_a4f7cab1",
+      "created_at": "2026-06-25T07:16:13.606980",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_8a682251",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 810,
+        "y": 623
+      },
+      "description": "Click the \"Create\" button for the \"My First Meeting App\" sample in the Microsoft 365 Agents Toolkit interface within Visual Studio Code, as highlighted by the red crosshair.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:810:623:16:5:94134cb4593ab201",
+        "dhash:810:623:96:5:e9f1c8f1f1c87171",
+        "dhash:810:623:0:10:442124a666e66666"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_8a682251",
+      "created_at": "2026-06-25T07:16:13.615816",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_256d0577",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 407,
+        "y": 55
+      },
+      "description": "Click the \"Default folder\" option in the \"Workspace Folder\" dialog to select the project root folder in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:407:55:16:5:2a58a4346b3bccb5",
+        "dhash:407:55:96:5:4092d226254098c4",
+        "dhash:407:55:0:10:602124a666e66666"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_256d0577",
+      "created_at": "2026-06-25T07:16:13.621709",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_7ce4446e",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion there's readme file opened and the content in the preview README tab can be displayed normally.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay: 10",
+        "step_retry_timeout:60"
+      ],
+      "screenshot": null,
+      "created_at": "2026-06-25T07:16:13.636217",
+      "plan_id": "plan_2aa92cad"
+    },
+    {
+      "step_id": "step_9bda13ac",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 1009,
+        "y": 15
+      },
+      "description": "Click the \"Close\" (\u00d7) button at the top right corner of the \"My Tab\" panel within the Teams meeting preview in Visual Studio Code, to dismiss the panel.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:1009:15:16:5:226389d96362d989",
+        "dhash:1009:15:96:5:3accccda24c2c9c8",
+        "dhash:1009:15:0:10:24243030727a7231"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_9bda13ac",
+      "created_at": "2026-06-25T07:16:13.642595",
+      "plan_id": "plan_2aa92cad"
+    }
+  ]
 }
