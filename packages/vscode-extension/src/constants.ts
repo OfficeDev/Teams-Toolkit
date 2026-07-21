@@ -5,7 +5,6 @@ export enum ConfigurationKey {
   BicepEnvCheckerEnable = "prerequisiteCheck.bicep",
   LogLevel = "logLevel",
   EnableCEA = "enableLaunchAgentForTeamsInCopilot",
-  EnableDAMetaOS = "enableDeclarativeAgentInOfficeAddIn",
   EnableCFShortcutMetaOS = "enableCustomFunctionShortcutInOfficeAddIn",
   SovereignCloudEnvironment = "sovereignCloudEnvironment",
 }

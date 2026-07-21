@@ -33,10 +33,6 @@ export class ConfigManager {
       ConfigurationKey.EnableCEA,
       false
     ).toString();
-    process.env[FeatureFlags.DAMetaOS.name] = this.getConfiguration(
-      ConfigurationKey.EnableDAMetaOS,
-      false
-    ).toString();
     process.env[FeatureFlags.CFShortcutMetaOS.name] = this.getConfiguration(
       ConfigurationKey.EnableCFShortcutMetaOS,
       false
