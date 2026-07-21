@@ -76,6 +76,15 @@ export function text(files: Map<string, Buffer>, filePath: string): string {
   return (buf ?? Buffer.from("", "utf8")).toString("utf8");
 }
 
+export function assertContainsInOrder(content: string, fragments: string[]): void {
+  let searchStart = 0;
+  for (const fragment of fragments) {
+    const currentIndex = content.indexOf(fragment, searchStart);
+    assert.isAtLeast(currentIndex, 0, `expected generated file to include '${fragment}' in order`);
+    searchStart = currentIndex + fragment.length;
+  }
+}
+
 export function readJsonObject(
   files: Map<string, Buffer>,
   filePath: string
