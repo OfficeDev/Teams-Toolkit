@@ -81,7 +81,12 @@ def close_stale_pr(branch: str, repo: str, repo_root: Path) -> None:
         safe_print("No changes and no open rolling PR; nothing to do.")
 
 
-def build_pr_body(manifest: dict) -> str:
+# GitHub caps a PR body at 65536 characters; stay safely under it and always
+# point at the step summary / artifact for the untruncated list.
+MAX_PR_BODY = 60000
+
+
+def _render_body(manifest: dict, *, fixed_cap=None, skipped_cap=None) -> str:
     fixed = manifest.get("new_prs") or []
     skipped = manifest.get("skipped_no_fix") or []
     lines = [
@@ -93,12 +98,16 @@ def build_pr_body(manifest: dict) -> str:
         "Advisories that would require a major upgrade or a forced `override` are "
         "listed under *Not auto-fixed* and left untouched.",
         "",
+        "> The complete, untruncated list is always available in the workflow "
+        "run's step summary and the uploaded `pnpm-manifest.json` artifact.",
+        "",
         f"### Fixed ({len(fixed)})",
     ]
-    if fixed:
+    shown = fixed if fixed_cap is None else fixed[:fixed_cap]
+    if shown:
         lines.append("| Lockfile | Package | Severity | From | To |")
         lines.append("|---|---|---|---|---|")
-        for r in fixed:
+        for r in shown:
             lines.append(
                 f"| `{r.get('scan_target') or ''}` "
                 f"| `{r.get('package') or ''}` "
@@ -106,23 +115,51 @@ def build_pr_body(manifest: dict) -> str:
                 f"| {r.get('current_version') or '—'} "
                 f"| {r.get('fixed_version') or '—'} |"
             )
+        if len(shown) < len(fixed):
+            lines.append(f"| ... | _+{len(fixed) - len(shown)} more_ |  |  |  |")
     else:
         lines.append("_None._")
     lines.append("")
     lines.append(f"### Not auto-fixed ({len(skipped)})")
-    if skipped:
+    shown_s = skipped if skipped_cap is None else skipped[:skipped_cap]
+    if shown_s:
         lines.append("| Lockfile | Package | Severity | Reason |")
         lines.append("|---|---|---|---|")
-        for r in skipped:
+        for r in shown_s:
             lines.append(
                 f"| `{r.get('scan_target') or ''}` "
                 f"| `{r.get('package') or ''}` "
                 f"| {r.get('severity') or ''} "
                 f"| {r.get('reason') or ''} |"
             )
+        if len(shown_s) < len(skipped):
+            lines.append(f"| ... | _+{len(skipped) - len(shown_s)} more_ |  |  |")
     else:
         lines.append("_None._")
     return "\n".join(lines)
+
+
+def build_pr_body(manifest: dict) -> str:
+    body = _render_body(manifest)
+    if len(body) <= MAX_PR_BODY:
+        return body
+    fixed = manifest.get("new_prs") or []
+    skipped = manifest.get("skipped_no_fix") or []
+    for cap in (200, 100, 50, 25, 10, 5, 1):
+        body = _render_body(
+            manifest,
+            fixed_cap=min(cap, len(fixed)),
+            skipped_cap=min(cap, len(skipped)),
+        )
+        if len(body) <= MAX_PR_BODY:
+            return body
+    return (
+        "This PR is maintained automatically by the pnpm lockfile vulnerability "
+        "scan (daily).\n\n"
+        f"Fixed: {len(fixed)} advisory bump(s). Not auto-fixed: {len(skipped)}.\n\n"
+        "The list was too large to inline; see the workflow step summary and the "
+        "`pnpm-manifest.json` artifact for the full detail."
+    )
 
 
 def backfill_pr_url(manifest: dict, pr_url: str) -> None:

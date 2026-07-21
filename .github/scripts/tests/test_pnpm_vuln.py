@@ -27,6 +27,7 @@ def _load(module_name: str):
 
 fix = _load("fix_pnpm_lock_vulnerabilities")
 render = _load("render_vuln_summary")
+publish = _load("open_pnpm_lock_fix_pr")
 
 
 STANDALONE_LOCK = """lockfileVersion: '6.0'
@@ -349,6 +350,75 @@ class RenderMergeTest(unittest.TestCase):
         subject = render.render_subject([], merged)
         self.assertIn("2 finding(s)", subject)
         self.assertIn("2 fixed", subject)
+
+
+
+class BuildPrBodyLengthTest(unittest.TestCase):
+    GH_LIMIT = 65536
+
+    def _big_manifest(self, fixed=600, skipped=700):
+        return {
+            "new_prs": [
+                {
+                    "scan_target": f"packages/pkg-{i}/pnpm-lock.yaml",
+                    "package": f"vulnerable-dependency-{i}",
+                    "severity": "high",
+                    "current_version": "1.2.3",
+                    "fixed_version": "1.2.4",
+                }
+                for i in range(fixed)
+            ],
+            "skipped_no_fix": [
+                {
+                    "scan_target": f"packages/pkg-{i}/pnpm-lock.yaml",
+                    "package": f"unfixable-dependency-{i}",
+                    "severity": "moderate",
+                    "reason": "requires a major upgrade outside the compatible range",
+                }
+                for i in range(skipped)
+            ],
+        }
+
+    def test_small_manifest_is_not_truncated(self):
+        manifest = self._big_manifest(fixed=2, skipped=1)
+        body = publish.build_pr_body(manifest)
+        self.assertLessEqual(len(body), self.GH_LIMIT)
+        self.assertIn("vulnerable-dependency-0", body)
+        self.assertNotIn("more_", body)
+
+    def test_large_manifest_stays_under_github_limit(self):
+        manifest = self._big_manifest(fixed=600, skipped=700)
+        body = publish.build_pr_body(manifest)
+        self.assertLessEqual(len(body), self.GH_LIMIT)
+        # Real totals are still reported in the section headers.
+        self.assertIn("### Fixed (600)", body)
+        self.assertIn("### Not auto-fixed (700)", body)
+        # And an overflow marker points readers to the full list.
+        self.assertIn("more_", body)
+
+    def test_single_giant_row_falls_back_to_counts_only(self):
+        manifest = {
+            "new_prs": [
+                {
+                    "scan_target": "a/pnpm-lock.yaml",
+                    "package": "x",
+                    "severity": "high",
+                    "current_version": "1",
+                    "fixed_version": "2",
+                }
+            ],
+            "skipped_no_fix": [
+                {
+                    "scan_target": "a/pnpm-lock.yaml",
+                    "package": "y",
+                    "severity": "high",
+                    "reason": "z" * (publish.MAX_PR_BODY + 1000),
+                }
+            ],
+        }
+        body = publish.build_pr_body(manifest)
+        self.assertLessEqual(len(body), self.GH_LIMIT)
+        self.assertIn("Fixed: 1 advisory bump(s). Not auto-fixed: 1.", body)
 
 
 if __name__ == "__main__":
