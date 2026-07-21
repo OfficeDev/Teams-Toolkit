@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 29,
+    "total_steps": 32,
     "created_at": "2026-01-06T02:01:16.119023",
     "name": "Feature: UI Layout & Create Project Questions",
     "description": {
@@ -33,6 +33,9 @@
       "step_e5c7e8aa",
       "step_61ee9d59",
       "plan_r_0624_024810",
+      "step_rec_esc01",
+      "step_rec_open1",
+      "step_rec_teams1",
       "step_18eec105",
       "step_3b65d9b9",
       "step_91e5b84d",
@@ -54,7 +57,7 @@
       "step_5f013884"
     ],
     "tags": [],
-    "updated_at": "2026-01-06T09:56:34.118912"
+    "updated_at": "2026-07-21T09:30:00.000000"
   },
   "steps": [
     {
@@ -717,6 +720,67 @@
       "tags": [],
       "screenshot": null,
       "created_at": "2026-01-06T09:55:51.239802",
+      "plan_id": "plan_47e4bf4e"
+    },
+    {
+      "step_id": "step_rec_esc01",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "esc"
+      },
+      "description": "Recovery: press Escape to close the sub-menu that opened because, at the reduced zoom level used in this flow, the shared \"Teams Agents and Apps\" group click at (307,262) landed on the wrong (lower) menu row. This returns focus to the editor so the New Project menu can be reopened cleanly.",
+      "content_refs": [],
+      "timeout": 10,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
+      "plan_id": "plan_47e4bf4e"
+    },
+    {
+      "step_id": "step_rec_open1",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 167,
+        "y": 329
+      },
+      "description": "Recovery: re-open the \"Create New Agent/App\" command in the DEVELOPMENT section of the Microsoft 365 Agents Toolkit sidebar (reduced-zoom position) to bring back the New Project dropdown menu.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
+      "plan_id": "plan_47e4bf4e"
+    },
+    {
+      "step_id": "step_rec_teams1",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 355,
+        "y": 213
+      },
+      "description": "Recovery: click the \"Teams Agents and Apps\" option in the New Project dropdown at its reduced-zoom position (y=213). The shared group clicks at y=262, which is only correct at normal zoom; after the earlier Ctrl+- zoom-out the row moved up to y=213.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
       "plan_id": "plan_47e4bf4e"
     }
   ],
