@@ -109,10 +109,12 @@ class FakeStep implements RegisteredStep {
 function makePort(opts: { pipelines?: string[]; steps?: Record<string, RegisteredStep> } = {}): {
   port: PipelineRuntimePort;
   writes: Map<string, Buffer>;
+  environmentWrites: Array<{ environment: string; values: Record<string, string> }>;
   wrapper: RecordingWrapper;
   warnings: string[];
 } {
   const writes = new Map<string, Buffer>();
+  const environmentWrites: Array<{ environment: string; values: Record<string, string> }> = [];
   const warnings: string[] = [];
   const wrapper = new RecordingWrapper();
   const pipelines = new Set(
@@ -140,8 +142,12 @@ function makePort(opts: { pipelines?: string[]; steps?: Record<string, Registere
       writes.set(path, data);
     },
     read: (path) => writes.get(path),
+    writeEnvironment: (environment, values) => {
+      environmentWrites.push({ environment, values });
+      return Promise.resolve(ok(undefined));
+    },
   };
-  return { port, writes, wrapper, warnings };
+  return { port, writes, environmentWrites, wrapper, warnings };
 }
 
 function entry(path: string, body: string): TemplateFileEntry {
@@ -852,5 +858,37 @@ describe("runScaffoldPipeline (v4)", () => {
     assert.isTrue(res.isOk());
     // the sole-token list resolves structurally (verbatim array); a scalar token still renders to a string
     assert.deepStrictEqual(s.applied[0], { servers: ["alpha", "gamma"], host: "example" });
+  });
+
+  it("AC-27: a named step reaches the injected environment writer without ordinary file writes", async () => {
+    const persist: RegisteredStep = {
+      validateParams: () => undefined,
+      apply: (_resolved, ctx) =>
+        ctx.writeEnvironment("dev", {
+          MCP_DA_OAUTH_CLIENT_ID_TEST: "client-id",
+          SECRET_MCP_DA_OAUTH_CLIENT_SECRET_TEST: "client-secret",
+        }),
+    };
+    const pipeline: Pipeline = {
+      pipeline: "default",
+      steps: [{ step: "mcp-auth/persist-credential-env" }],
+    };
+    const { port, writes, environmentWrites } = makePort({
+      steps: { "mcp-auth/persist-credential-env": persist },
+    });
+
+    const result = await runScaffoldPipeline(pipeline, [], {}, target([]), port);
+
+    assert.isTrue(result.isOk());
+    assert.deepStrictEqual(environmentWrites, [
+      {
+        environment: "dev",
+        values: {
+          MCP_DA_OAUTH_CLIENT_ID_TEST: "client-id",
+          SECRET_MCP_DA_OAUTH_CLIENT_SECRET_TEST: "client-secret",
+        },
+      },
+    ]);
+    assert.strictEqual(writes.size, 0);
   });
 });

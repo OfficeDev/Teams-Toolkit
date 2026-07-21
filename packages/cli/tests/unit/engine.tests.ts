@@ -22,7 +22,7 @@ import mockedEnv from "mocked-env";
 import { assert, vi } from "vitest";
 import * as activate from "../../src/activate";
 import { getFxCore, resetFxCore } from "../../src/activate";
-import { engine } from "../../src/commands/engine";
+import { engine, maskCommandArguments, maskSensitiveInputValues } from "../../src/commands/engine";
 import { start } from "../../src/commands/index";
 import {
   listSamplesCommand,
@@ -101,7 +101,7 @@ describe("CLI Engine", () => {
 
   beforeEach(() => {
     vi.spyOn(process.stdout, "write").mockImplementation(((chunk: any, ...args: any[]) => {
-      const text = typeof chunk === "string" ? chunk : chunk?.toString?.() ?? "";
+      const text = typeof chunk === "string" ? chunk : (chunk?.toString?.() ?? "");
       if (
         text.includes("Usage: atk list templates") ||
         text.includes("List available app templates.") ||
@@ -113,7 +113,7 @@ describe("CLI Engine", () => {
       return stdoutWrite(chunk, ...args);
     }) as any);
     vi.spyOn(process.stderr, "write").mockImplementation(((chunk: any, ...args: any[]) => {
-      const text = typeof chunk === "string" ? chunk : chunk?.toString?.() ?? "";
+      const text = typeof chunk === "string" ? chunk : (chunk?.toString?.() ?? "");
       if (
         text.includes("Some arguments/options are useless because the interactive mode is opened.")
       ) {
@@ -142,6 +142,47 @@ describe("CLI Engine", () => {
     });
   });
   describe("parseArgs", async () => {
+    it("masks sensitive option values in argument and parsed-option debug logs", async () => {
+      const command: CLIFoundCommand = {
+        name: "test",
+        fullName: "test",
+        description: "test command",
+        options: [
+          {
+            type: "string",
+            name: "client-secret",
+            shortName: "s",
+            description: "test secret",
+          },
+        ],
+      };
+      const context: CLIContext = {
+        command,
+        optionValues: {},
+        globalOptionValues: {},
+        argumentValues: [],
+        telemetryProperties: {},
+      };
+      engine.debugLogs = [];
+      const debugLog = vi.spyOn(logger, "debug");
+
+      const result = engine.parseArgs(context, rootCommand, ["--client-secret=tiny"]);
+
+      assert.isTrue(result.isOk());
+      assert.equal(context.optionValues["client-secret"], "tiny");
+      const logged = debugLog.mock.calls.flat().join("\n");
+      assert.notInclude(logged, "tiny");
+      assert.include(logged, "***");
+      assert.deepEqual(maskCommandArguments(["--client-secret=tiny"], command.options ?? []), [
+        "--client-secret=***",
+      ]);
+      assert.deepEqual(maskCommandArguments(["-s", "tiny"], command.options ?? []), ["-s", "***"]);
+      assert.deepEqual(
+        maskSensitiveInputValues({ oauthClientSecret: "tiny", oauthClientId: "visible" }),
+        { oauthClientSecret: "***", oauthClientId: "visible" }
+      );
+    });
+
     it("array type options", async () => {
       const mockedEnvRestore = mockedEnv({
         CI_ENABLED: "true",

@@ -4,6 +4,7 @@
 import { SystemError } from "@microsoft/teamsfx-api";
 import * as fs from "fs-extra";
 import * as path from "path";
+import { envUtil } from "../../component/utils/envUtil";
 import { ExpressionRuntimePort } from "../expression/evaluateExpression";
 import { createExpressionPort } from "./whitelist";
 import { ScaffoldRuntime } from "./scaffold";
@@ -73,6 +74,12 @@ export function createRealRuntime(
       }
     },
   };
-  const port = buildPipelinePort(exprPort, sink, stepRegistry, warningSink);
+  const port = buildPipelinePort(
+    exprPort,
+    sink,
+    (environment, values) => envUtil.writeEnv(rootDir, environment, { ...values }),
+    stepRegistry,
+    warningSink
+  );
   return { rootDir, exprPort, port };
 }

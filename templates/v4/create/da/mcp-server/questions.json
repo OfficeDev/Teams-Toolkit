@@ -45,7 +45,40 @@
         { "id": "entra-sso", "label": "Entra SSO" },
         { "id": "none", "label": "None" }
       ],
-      "default": "none"
+      "default": "oauth"
+    },
+    {
+      "name": "oauthClientId",
+      "type": "text",
+      "title": "OAuth Client ID",
+      "keyPrefix": "core.createProjectQuestion.mcpForDa.ClientId",
+      "condition": { "expr": "authType == 'oauth'" },
+      "validation": "mcp.oauthClientIdRequired"
+    },
+    {
+      "name": "oauthClientSecret",
+      "type": "text",
+      "password": true,
+      "title": "OAuth Client Secret",
+      "keyPrefix": "core.createProjectQuestion.mcpForDa.ClientSecret",
+      "condition": { "expr": "authType == 'oauth'" },
+      "validation": "mcp.oauthClientSecretRequired"
+    },
+    {
+      "name": "oauthScopes",
+      "type": "text",
+      "title": "OAuth Scopes (optional)",
+      "keyPrefix": "core.createProjectQuestion.mcpForDa.Scopes",
+      "condition": { "expr": "authType == 'oauth'" },
+      "optional": true
+    },
+    {
+      "name": "entraClientId",
+      "type": "text",
+      "title": "Microsoft Entra Application (Client) ID",
+      "keyPrefix": "core.createProjectQuestion.mcpForDa.EntraClientId",
+      "condition": { "expr": "authType == 'entra-sso'" },
+      "validation": "mcp.entraClientIdRequired"
     }
   ]
 }

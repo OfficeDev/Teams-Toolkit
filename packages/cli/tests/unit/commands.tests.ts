@@ -283,6 +283,9 @@ describe("CLI commands", () => {
       assert.equal(inputs["mcp-tools-file-path"], "C:/tools/mcp-tools.json");
       assert.equal(inputs.authType, "none");
       assert.equal(inputs["mcp-da-auth-type"], "none");
+      assert.notProperty(inputs, "oauthClientId");
+      assert.notProperty(inputs, "oauthClientSecret");
+      assert.notProperty(inputs, "entraClientId");
       assert.equal(inputs.apiAuth, "none");
       assert.equal(inputs["api-auth"], "none");
       assert.deepEqual(inputs.apiOperations, ["GET /repairs"]);
@@ -293,6 +296,70 @@ describe("CLI commands", () => {
       assert.equal(inputs["azure-openai-endpoint"], "https://test.com");
       assert.equal(inputs.azureOpenAIDeploymentName, "fake-deployment");
       assert.equal(inputs["azure-openai-deployment-name"], "fake-deployment");
+    });
+
+    it("normalizes credential flags to V4 OAuth question names when auth uses its default", async () => {
+      vi.spyOn(activate, "getFxCore").mockReturnValue(new FxCore({} as any));
+      const createProjectFrontDoorStub = vi
+        .spyOn(FxCore.prototype, "createProjectFrontDoor")
+        .mockResolvedValue(ok({ projectPath: "..." }));
+      vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+      vi.spyOn(listTemplatesModule, "listAllTemplates").mockReturnValue([] as any);
+
+      const ctx: CLIContext = {
+        command: { ...getCreateCommand(), fullName: "new" },
+        optionValues: {
+          nonInteractive: true,
+          "mcp-da-client-id": "oauth-client-id",
+          "mcp-da-client-secret": "oauth-client-secret",
+          "mcp-da-scopes": "read:user repo",
+        },
+        globalOptionValues: {},
+        argumentValues: [],
+        telemetryProperties: {},
+      };
+
+      const res = await getCreateCommand().handler!(ctx);
+
+      assert.isTrue(res.isOk());
+      const inputs = createProjectFrontDoorStub.mock.calls[0][0] as any;
+      assert.equal(inputs.oauthClientId, "oauth-client-id");
+      assert.equal(inputs.oauthClientSecret, "oauth-client-secret");
+      assert.equal(inputs.oauthScopes, "read:user repo");
+      assert.isUndefined(inputs.authType);
+      assert.notProperty(inputs, "entraClientId");
+    });
+
+    it("normalizes the shared client-id flag only to the V4 Entra question name", async () => {
+      vi.spyOn(activate, "getFxCore").mockReturnValue(new FxCore({} as any));
+      const createProjectFrontDoorStub = vi
+        .spyOn(FxCore.prototype, "createProjectFrontDoor")
+        .mockResolvedValue(ok({ projectPath: "..." }));
+      vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+      vi.spyOn(listTemplatesModule, "listAllTemplates").mockReturnValue([] as any);
+
+      const ctx: CLIContext = {
+        command: { ...getCreateCommand(), fullName: "new" },
+        optionValues: {
+          nonInteractive: true,
+          "mcp-da-auth-type": "entra-sso",
+          "mcp-da-client-id": "entra-client-id",
+          "mcp-da-client-secret": "unused-secret",
+          "mcp-da-scopes": "unused-scope",
+        },
+        globalOptionValues: {},
+        argumentValues: [],
+        telemetryProperties: {},
+      };
+
+      const res = await getCreateCommand().handler!(ctx);
+
+      assert.isTrue(res.isOk());
+      const inputs = createProjectFrontDoorStub.mock.calls[0][0] as any;
+      assert.equal(inputs.entraClientId, "entra-client-id");
+      assert.notProperty(inputs, "oauthClientId");
+      assert.notProperty(inputs, "oauthClientSecret");
+      assert.notProperty(inputs, "oauthScopes");
     });
 
     it("normalizes legacy create route flags to v4 selector keys without pinning template-name", async () => {

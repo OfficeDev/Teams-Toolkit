@@ -89,6 +89,11 @@ export interface ManifestWrapper {
 /** The capabilities the executor hands each registered step's `apply`. */
 export interface StepContext {
   write(path: string, data: Buffer): void;
+  /** Persist regular and `SECRET_*` values through the runtime's environment boundary. */
+  writeEnvironment(
+    environment: string,
+    values: Record<string, string>
+  ): Promise<Result<void, FxError>>;
   manifestWrapper(kind: string): ManifestWrapper;
   /** Read current bytes at a target path, or `undefined` when absent. */
   read(path: string): Buffer | undefined;
@@ -114,6 +119,10 @@ export interface PipelineRuntimePort {
   manifestWrapper(kind: string): ManifestWrapper;
   warn?(message: string): void;
   write(path: string, data: Buffer): void;
+  writeEnvironment(
+    environment: string,
+    values: Record<string, string>
+  ): Promise<Result<void, FxError>>;
   /** Current bytes at a path, or `undefined` when absent. */
   read(path: string): Buffer | undefined;
 }
@@ -313,6 +322,7 @@ export async function runScaffoldPipeline(
   // Phase 2 — post-render steps, in declared order.
   const ctx: StepContext = {
     write: (path, data) => port.write(path, data),
+    writeEnvironment: (environment, values) => port.writeEnvironment(environment, values),
     manifestWrapper: (kind) => port.manifestWrapper(kind),
     read: (path) => port.read(path),
     warn: port.warn,

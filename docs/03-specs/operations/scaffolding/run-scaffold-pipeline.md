@@ -57,15 +57,16 @@ This operation does **not** depend on the full `ScaffoldRuntime`
 narrow `PipelineRuntimePort` it actually uses (interface-segregation), which the
 full runtime composes later:
 
-| Port face          | Shape                                          | Responsibility                                                                                                                                                                                                                                                |
-| ------------------ | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `stepRegistry`     | `(stepName) => Step \| undefined`              | the engine's whitelist of registered steps, each carrying its `paramsSchema` (decision 2)                                                                                                                                                                     |
-| `pipelineRegistry` | `(pipelineName) => Orchestration \| undefined` | the engine's whitelist of named pipelines (`default \| openapi \| typespec \| officeAddin \| spfx`)                                                                                                                                                           |
-| `evalWhen`         | `(expr, renderVars) => boolean`                | the shared closed-expression evaluator (ADR-0016 §4.3)                                                                                                                                                                                                        |
-| `renderValue`      | `(mustache, renderVars) => string`             | the same Mustache surface `content/**` uses, applied to `with` values                                                                                                                                                                                         |
-| `manifestWrapper`  | `(kind) => Wrapper`                            | the `packages/manifest` wrapper a manifest step MUST route through (decision 3)                                                                                                                                                                               |
-| `fs`               | `{ exists; render; write }`                    | the render-phase file sink (existence-keyed, never overwrites)                                                                                                                                                                                                |
-| `read`             | `(path) => Buffer \| undefined`                | the read-modify-write face a **non-manifest** step uses to rewrite a render-phase file (e.g. `mcp-auth/inject-yml-action` appending to `m365agents.yml`); `undefined` if the path is absent. Manifest mutation still routes through `manifestWrapper` (INV-3) |
+| Port face          | Shape                                          | Responsibility                                                                                                                                                                                                                                                 |
+| ------------------ | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `stepRegistry`     | `(stepName) => Step \| undefined`              | the engine's whitelist of registered steps, each carrying its `paramsSchema` (decision 2)                                                                                                                                                                      |
+| `pipelineRegistry` | `(pipelineName) => Orchestration \| undefined` | the engine's whitelist of named pipelines (`default \| openapi \| typespec \| officeAddin \| spfx`)                                                                                                                                                            |
+| `evalWhen`         | `(expr, renderVars) => boolean`                | the shared closed-expression evaluator (ADR-0016 §4.3)                                                                                                                                                                                                         |
+| `renderValue`      | `(mustache, renderVars) => string`             | the same Mustache surface `content/**` uses, applied to `with` values                                                                                                                                                                                          |
+| `manifestWrapper`  | `(kind) => Wrapper`                            | the `packages/manifest` wrapper a manifest step MUST route through (decision 3)                                                                                                                                                                                |
+| `fs`               | `{ exists; render; write }`                    | the render-phase file sink (existence-keyed, never overwrites)                                                                                                                                                                                                 |
+| `read`             | `(path) => Buffer \| undefined`                | the read-modify-write face a **non-manifest** step uses to rewrite a render-phase file (e.g. `mcp-auth/inject-yml-action` appending to `m365agents.yml`); `undefined` if the path is absent. Manifest mutation still routes through `manifestWrapper` (INV-3)  |
+| `writeEnvironment` | `(env, values) => Result<void, FxError>`       | the runtime-owned environment writer used by named credential steps; the real runtime delegates to the shared env utility so `SECRET_*` values are encrypted into the user env, while in-memory tests expose a separate secret sink rather than ordinary files |
 
 ## Outputs
 
@@ -121,6 +122,7 @@ On `err`:
 | AC-24 | L1   | a filtered `.tpl` body contains an otherwise missing token                                                                                                                                                          | run with the filter active                       | the file is omitted before body render, so the missing token does not fail the scaffold; inactive filters preserve AC-20                                                                                                                                                                                                                                                         |
 | AC-25 | L1   | `renderVars` contains the flat provider-derived key `derived.mcp.serverTypes.catalog`, and a body or step `with` contains `{{derived.mcp.serverTypes.catalog}}`                                                     | render                                           | the token resolves from that exact flat key and inserts its scalar value verbatim; dots in the reserved provider namespace are **not** interpreted as nested-object traversal                                                                                                                                                                                                    |
 | AC-26 | L1   | a `.tpl` body contains a scoped environment reference such as `${{local:TEAMS_APP_ID}}` or `${{sandbox:CHANNEL_WEB_URL}}`                                                                                           | run render phase                                 | the reference is preserved verbatim for the downstream toolkit environment resolver; the Mustache surface never consumes the scoped name or reduces the reference to `$`                                                                                                                                                                                                         |
+| AC-27 | L1   | `mcp-auth/persist-credential-env` receives a regular client id and a `SECRET_*` client secret                                                                                                                       | apply through `StepContext.writeEnvironment`     | the runtime environment writer receives both values; the regular value is observable in the normal env file, the plaintext secret is observable only in the injected secret sink (or encrypted user env in the real runtime), and the pipeline executor never routes either value through hidden MCP-specific logic                                                              |
 
 ## Flow
 
@@ -194,6 +196,9 @@ This operation does **not**:
   must be a render template and/or a named pipeline step selected by
   `pipeline.json`; this executor never adds hidden branches for a template id,
   auth type, file path, or capability.
+- Implement encryption or classify credential names. The injected environment
+  writer owns those runtime semantics; the named domain step chooses which
+  variables to persist, and the generic executor only exposes the port.
 
 ## Invariants
 
@@ -230,3 +235,6 @@ This operation does **not**:
 - **INV-8 — Forward-looking cross-step flow.** `produces` / `<stepId>.<field>`
   cross-step references are loader-rejected until the §13.1 modify-flow step
   library lands; render vars are frozen before any step runs.
+- **INV-9 — Secrets bypass ordinary files.** A named step persists secret
+  environment values only through `writeEnvironment`; it must never pass
+  plaintext secret bytes to `ctx.write`, a manifest wrapper, warning, or log.

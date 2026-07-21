@@ -5,6 +5,7 @@ import { ensureDir, mkdtemp, readJson, readdir, remove, writeJson } from "fs-ext
 import os from "os";
 import * as path from "path";
 import { SystemError, UserError } from "@microsoft/teamsfx-api";
+import { ok } from "neverthrow";
 import { StepContext } from "../../../../src/v4/pipeline/runScaffoldPipeline";
 import { NOOP_MANIFEST_WRAPPER, STEP_REGISTRY } from "../../../../src/v4/runtime/runtimeRegistry";
 import {
@@ -174,6 +175,7 @@ function makeCtx(initial: Record<string, string> = {}): {
       write: (filePath, data) => {
         files.set(filePath, data);
       },
+      writeEnvironment: () => Promise.resolve(ok(undefined)),
       manifestWrapper: () => NOOP_MANIFEST_WRAPPER,
     },
   };

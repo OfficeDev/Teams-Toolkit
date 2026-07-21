@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import { SystemError, UserError } from "@microsoft/teamsfx-api";
+import { ok } from "neverthrow";
 import {
   STEP_MATERIALIZE_STATIC_MCP_TOOLS,
   mcpStaticDeps,
@@ -29,6 +30,7 @@ function makeCtx(initial: Record<string, string> = {}): {
       write: (filePath, data) => {
         files.set(filePath, data);
       },
+      writeEnvironment: () => Promise.resolve(ok(undefined)),
       manifestWrapper: () => NOOP_MANIFEST_WRAPPER,
     },
   };

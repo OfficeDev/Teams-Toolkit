@@ -4,6 +4,11 @@
 import { Validator } from "../collectInputs/collectInputs";
 import { getLocalizedString } from "../../common/localizeUtils";
 import { isValidHttpUrl } from "../../common/stringUtils";
+import {
+  mcpEntraClientIdRequiredValidator,
+  mcpOauthClientIdRequiredValidator,
+  mcpOauthClientSecretRequiredValidator,
+} from "./mcpCredentialValidators";
 
 export const uriValidator: Validator = (value: string): string | undefined => {
   try {
@@ -68,5 +73,8 @@ export function createDefaultCreateInputValidators(): Record<string, Validator> 
     openapiUrl: openApiUrlValidator,
     graphConnectorName: graphConnectorNameValidator,
     graphConnectorConnectionId: graphConnectorConnectionIdValidator,
+    "mcp.oauthClientIdRequired": mcpOauthClientIdRequiredValidator,
+    "mcp.oauthClientSecretRequired": mcpOauthClientSecretRequiredValidator,
+    "mcp.entraClientIdRequired": mcpEntraClientIdRequiredValidator,
   };
 }

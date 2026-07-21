@@ -32,7 +32,8 @@ export const mcpAuthInjectYmlAction: RegisteredStep = {
     if (stringParam(resolved, "ymlPath") === undefined) {
       return "missing string parameter 'ymlPath'";
     }
-    if (stringParam(resolved, "authType") === undefined) {
+    const authType = stringParam(resolved, "authType");
+    if (authType === undefined) {
       return "missing string parameter 'authType'";
     }
     if (stringParam(resolved, "mcpServerUrl") === undefined) {
@@ -49,7 +50,19 @@ export const mcpAuthInjectYmlAction: RegisteredStep = {
         err(systemError("McpAuthInjectParams", "resolved parameters are not all strings"))
       );
     }
-    return injectMcpAuthAction(ctx, { ymlPath, authType, mcpServerUrl });
+    return injectMcpAuthAction(ctx, {
+      ymlPath,
+      authType,
+      mcpServerUrl,
+      credentialFields: {
+        clientId:
+          authType === "oauth"
+            ? Boolean(stringParam(resolved, "oauthClientId")?.trim())
+            : Boolean(stringParam(resolved, "entraClientId")?.trim()),
+        clientSecret: Boolean(stringParam(resolved, "oauthClientSecret")?.trim()),
+        scope: Boolean(stringParam(resolved, "oauthScopes")?.trim()),
+      },
+    });
   },
 };
 
@@ -59,7 +72,8 @@ export const mcpAuthInjectYmlAction: RegisteredStep = {
  */
 export const mcpAuthPersistCredentialEnv: RegisteredStep = {
   validateParams(resolved: StepParams): string | undefined {
-    if (stringParam(resolved, "authType") === undefined) {
+    const authType = stringParam(resolved, "authType");
+    if (authType === undefined) {
       return "missing string parameter 'authType'";
     }
     if (stringParam(resolved, "mcpServerUrl") === undefined) {
@@ -67,11 +81,21 @@ export const mcpAuthPersistCredentialEnv: RegisteredStep = {
     }
     return undefined;
   },
-  apply(resolved: StepParams, ctx: StepContext): Result<void, FxError> {
+  apply(resolved: StepParams, ctx: StepContext): Promise<Result<void, FxError>> {
+    const authType = stringParam(resolved, "authType");
     const mcpServerUrl = stringParam(resolved, "mcpServerUrl");
-    if (mcpServerUrl === undefined) {
-      return err(systemError("McpAuthPersistParams", "resolved parameters are not all strings"));
+    if (authType === undefined || mcpServerUrl === undefined) {
+      return Promise.resolve(
+        err(systemError("McpAuthPersistParams", "resolved parameters are not all strings"))
+      );
     }
-    return persistMcpAuthRegistrationEnv(ctx, { mcpServerUrl });
+    return persistMcpAuthRegistrationEnv(ctx, {
+      authType,
+      mcpServerUrl,
+      oauthClientId: stringParam(resolved, "oauthClientId"),
+      oauthClientSecret: stringParam(resolved, "oauthClientSecret"),
+      oauthScopes: stringParam(resolved, "oauthScopes"),
+      entraClientId: stringParam(resolved, "entraClientId"),
+    });
   },
 };
