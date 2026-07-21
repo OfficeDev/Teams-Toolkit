@@ -69,7 +69,7 @@
         "x": 354,
         "y": 88
       },
-      "description": "Select the \"Declarative Agent – Agents for Microsoft 365 Copilot\" option in the \"New Project\" dropdown within Visual Studio Code.",
+      "description": "Select the \"Declarative Agent \u2013 Agents for Microsoft 365 Copilot\" option in the \"New Project\" dropdown within Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -153,7 +153,7 @@
       "agent": "code",
       "tool": "",
       "parameters": {
-        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\n#!/bin/bash\n\nTARGET_DIR=\"/home/vscode/AgentsToolkitProjects/vscuse_app_XfRJT\"\nFILE_URL=\"https://raw.githubusercontent.com/ayachensiyuan/vscuse-resources/refs/heads/main/DA-EK/Document.docx\"\nFILE_NAME=\"Document.docx\"\n\n# Create target directory if it doesn't exist\nmkdir -p \"$TARGET_DIR\"\n\n# Download file with timeout\ncurl -L --max-time 120 \"$FILE_URL\" -o \"$TARGET_DIR/$FILE_NAME\"\n```\n\n=== Execution Results ===\nExit Code: 0\n\n=== STDERR ===\n% Total    % Received % Xferd  Average Speed   Time    Time     Time  Current\n                                 Dload  Upload   Total   Spent    Left  Speed\n\n  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0\n 11  695k   11 81911    0     0   138k      0  0:00:05 --:--:--  0:00:05  137k\n100  695k  100  695k    0     0   612k      0  0:00:01  0:00:01 --:--:--  612k\n\n✓ Script executed successfully"
+        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\n#!/bin/bash\n\nTARGET_DIR=\"/home/vscode/AgentsToolkitProjects/vscuse_app_XfRJT\"\nFILE_URL=\"https://raw.githubusercontent.com/ayachensiyuan/vscuse-resources/refs/heads/main/DA-EK/Document.docx\"\nFILE_NAME=\"Document.docx\"\n\n# Create target directory if it doesn't exist\nmkdir -p \"$TARGET_DIR\"\n\n# Download file with timeout\ncurl -L --max-time 120 \"$FILE_URL\" -o \"$TARGET_DIR/$FILE_NAME\"\n```\n\n=== Execution Results ===\nExit Code: 0\n\n=== STDERR ===\n% Total    % Received % Xferd  Average Speed   Time    Time     Time  Current\n                                 Dload  Upload   Total   Spent    Left  Speed\n\n  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0\n 11  695k   11 81911    0     0   138k      0  0:00:05 --:--:--  0:00:05  137k\n100  695k  100  695k    0     0   612k      0  0:00:01  0:00:01 --:--:--  612k\n\n\u2713 Script executed successfully"
       },
       "description": "@code download file: https://raw.githubusercontent.com/ayachensiyuan/vscuse-resources/refs/heads/main/DA-EK/Document.docx\nsave to the path: /home/vscode/AgentsToolkitProjects/${{var:app_name}}",
       "content_refs": [],
@@ -219,7 +219,7 @@
       "parameters": {
         "key": "enter"
       },
-      "description": "Press Enter to select “Microsoft 365 Agents: Add Capability” from the Visual Studio Code command palette after typing “>add capability”.",
+      "description": "Press Enter to select \u201cMicrosoft 365 Agents: Add Capability\u201d from the Visual Studio Code command palette after typing \u201c>add capability\u201d.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -269,7 +269,7 @@
         "x": 419,
         "y": 79
       },
-      "description": "Click the “manifest.json” file entry in the “Select Teams manifest.json File” dialog within Visual Studio Code, selecting the file located at /home/vscode/AgentsToolkitProjects/vscuse_app_6PgeC/appPackage.",
+      "description": "Click the \u201cmanifest.json\u201d file entry in the \u201cSelect Teams manifest.json File\u201d dialog within Visual Studio Code, selecting the file located at /home/vscode/AgentsToolkitProjects/vscuse_app_6PgeC/appPackage.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -435,7 +435,7 @@
         "x": null,
         "y": null
       },
-      "description": "Press the F1 key to open the command palette in Visual Studio Code – Insiders, shown while viewing the \"Overview of the Declarative Agent template\" README with the \"Provision\" step selected in the Microsoft 365 Agents Toolkit sidebar.",
+      "description": "Press the F1 key to open the command palette in Visual Studio Code \u2013 Insiders, shown while viewing the \"Overview of the Declarative Agent template\" README with the \"Provision\" step selected in the Microsoft 365 Agents Toolkit sidebar.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
