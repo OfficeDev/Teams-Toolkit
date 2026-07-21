@@ -705,7 +705,7 @@ describe("runCreateSelector (walk-create-selector)", () => {
     const ui = new ScriptedUI(MCP_DA_PICKS);
 
     const res = await runCreateSelector(buildFloor(), asUI(ui), "vscode", {
-      flagReader: flagsOn("TEAMSFX_DA_METAOS", "TEAMSFX_MCP_FOR_DA_DT"),
+      flagReader: flagsOn("TEAMSFX_MCP_FOR_DA_DT"),
     });
 
     assert.isTrue(res.isOk());
@@ -771,9 +771,7 @@ describe("runCreateSelector (walk-create-selector)", () => {
     };
     const ui = new ScriptedUI(picks);
 
-    const res = await runCreateSelector(buildFloor(), asUI(ui), "vscode", {
-      flagReader: flagsOn("TEAMSFX_DA_METAOS"),
-    });
+    const res = await runCreateSelector(buildFloor(), asUI(ui), "vscode");
 
     assert.isTrue(res.isOk());
     if (res.isOk()) {

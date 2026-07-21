@@ -21,7 +21,7 @@ This is the vertical contract for the native v4 Declarative Agent with Office Ad
 
 ## Composed operations
 
-- [`walk-create-selector`](../../operations/scaffolding/walk-create-selector.md) - routes Office DA MetaOS upgrade to this v4 package when `TEAMSFX_DA_METAOS` is enabled.
+- [`walk-create-selector`](../../operations/scaffolding/walk-create-selector.md) - routes Office DA MetaOS upgrade to this v4 package.
 - [`run-scaffold-pipeline`](../../operations/scaffolding/run-scaffold-pipeline.md) - renders lifecycle baseline content and runs the upgrade step.
 
 ## Boundary
