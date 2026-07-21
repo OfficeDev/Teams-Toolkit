@@ -76,7 +76,12 @@ describe("scaffoldFromPackageDir (v4 product front-door)", () => {
   it("ORCH-02: flows answers through so an oauth run injects auth on disk", async () => {
     const result = await scaffoldFromPackageDir(
       PKG_DIR,
-      { ...ANSWERS_NONE, authType: "oauth" },
+      {
+        ...ANSWERS_NONE,
+        authType: "oauth",
+        oauthClientId: "front-door-client-id",
+        oauthClientSecret: "front-door-client-secret",
+      },
       FLOOR,
       { path: tempDir, existing: [] }
     );

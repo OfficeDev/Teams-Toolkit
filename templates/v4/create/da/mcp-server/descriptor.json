@@ -13,8 +13,12 @@
     "properties": {
       "mcpServerType": { "enum": ["local", "remote"], "default": "remote" },
       "mcpServerUrl": { "type": "string", "format": "uri" },
-      "authType": { "enum": ["none", "oauth", "entra-sso", "oauth-dynamic"], "default": "none" },
-      "selectedLocalServers": { "type": "array", "items": { "type": "string" } }
+      "authType": { "enum": ["none", "oauth", "entra-sso", "oauth-dynamic"], "default": "oauth" },
+      "selectedLocalServers": { "type": "array", "items": { "type": "string" } },
+      "oauthClientId": { "type": "string", "pattern": "\\S" },
+      "oauthClientSecret": { "type": "string", "pattern": "\\S" },
+      "oauthScopes": { "type": "string" },
+      "entraClientId": { "type": "string", "pattern": "\\S" }
     },
     "allOf": [
       {
@@ -24,6 +28,20 @@
       {
         "if": { "properties": { "mcpServerType": { "const": "local" } } },
         "then": { "required": ["selectedLocalServers"] }
+      },
+      {
+        "if": {
+          "required": ["authType"],
+          "properties": { "authType": { "const": "oauth" } }
+        },
+        "then": { "required": ["oauthClientId", "oauthClientSecret"] }
+      },
+      {
+        "if": {
+          "required": ["authType"],
+          "properties": { "authType": { "const": "entra-sso" } }
+        },
+        "then": { "required": ["entraClientId"] }
       }
     ],
     "additionalProperties": false
@@ -31,6 +49,10 @@
 
   "replaceMap": [
     { "var": "MCPForDAServerUrl", "from": "mcpServerUrl" },
+    { "var": "OAuthClientId", "from": "oauthClientId" },
+    { "var": "OAuthClientSecret", "from": "oauthClientSecret" },
+    { "var": "OAuthScopes", "from": "oauthScopes" },
+    { "var": "EntraClientId", "from": "entraClientId" },
     { "var": "IsLocalMCP", "when": "mcpServerType == 'local'", "value": "true" },
     { "var": "IsNoAuth", "when": "authType == 'none'", "value": "true" },
     { "var": "MicrosoftEntra", "when": "authType == 'entra-sso'", "value": "true" },

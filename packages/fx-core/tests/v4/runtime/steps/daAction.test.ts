@@ -29,6 +29,7 @@ function makeCtx(initial: Record<string, string> = {}): {
   const ctx: StepContext = {
     read: runtime.port.read,
     write: runtime.port.write,
+    writeEnvironment: runtime.port.writeEnvironment,
     manifestWrapper: runtime.port.manifestWrapper,
   };
   return { ctx, files: runtime.files };
@@ -101,6 +102,7 @@ describe("da-action steps (v4)", () => {
         write: () => {
           throw new Error("the step must not write manifests directly");
         },
+        writeEnvironment: () => Promise.resolve(ok(undefined)),
         manifestWrapper: () => wrapper,
       };
 
@@ -224,22 +226,26 @@ describe("da-action steps (v4)", () => {
 
     it("returns a distinct error when the declarative agent manifest cannot be written", () => {
       const runtime = createInMemoryRuntime();
-      const port = buildPipelinePort(runtime.exprPort, {
-        read: (filePath): Buffer | undefined => {
-          if (filePath === "appPackage/manifest.json") {
-            return Buffer.from(
-              JSON.stringify({ declarativeAgents: [{ file: "declarativeAgent.json" }] })
-            );
-          }
-          if (filePath === "appPackage/declarativeAgent.json") {
-            return Buffer.from(JSON.stringify({ name: "Agent" }));
-          }
-          return undefined;
+      const port = buildPipelinePort(
+        runtime.exprPort,
+        {
+          read: (filePath): Buffer | undefined => {
+            if (filePath === "appPackage/manifest.json") {
+              return Buffer.from(
+                JSON.stringify({ declarativeAgents: [{ file: "declarativeAgent.json" }] })
+              );
+            }
+            if (filePath === "appPackage/declarativeAgent.json") {
+              return Buffer.from(JSON.stringify({ name: "Agent" }));
+            }
+            return undefined;
+          },
+          write: (): void => {
+            throw new Error("write failed at C:\\secret\\project");
+          },
         },
-        write: (): void => {
-          throw new Error("write failed at C:\\secret\\project");
-        },
-      });
+        runtime.port.writeEnvironment
+      );
 
       const result = port
         .manifestWrapper()

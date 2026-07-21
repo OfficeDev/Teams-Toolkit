@@ -149,6 +149,7 @@ describe("deriveCreateOptions", () => {
 
       const authType = optionByName(res.value, "auth-type");
       assert.equal(authType?.questionName, "authType");
+      assert.equal(defaultOf(authType), "oauth");
       assert.includeMembers(choicesOf(authType), ["oauth", "oauth-dynamic", "entra-sso", "none"]);
     }
   });

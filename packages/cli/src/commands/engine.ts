@@ -47,6 +47,62 @@ import UI from "../userInteraction";
 import { editDistance, getSystemInputs } from "../utils";
 import { helper } from "./helper";
 
+const SENSITIVE_OPTION_NAME = /(secret|password|token|key)/i;
+
+function isSensitiveOption(option: CLICommandOption | CLICommandArgument): boolean {
+  return SENSITIVE_OPTION_NAME.test(option.name);
+}
+
+export function maskSensitiveInputValues(
+  values: CLIContext["optionValues"]
+): CLIContext["optionValues"] {
+  const masked = { ...values };
+  for (const key of Object.keys(masked)) {
+    if (SENSITIVE_OPTION_NAME.test(key)) {
+      masked[key] = "***";
+    }
+  }
+  return masked;
+}
+
+export function maskCommandArguments(
+  args: string[],
+  options: Array<CLICommandOption | CLICommandArgument>
+): string[] {
+  const sensitiveNames = new Set<string>();
+  for (const option of options) {
+    if (isSensitiveOption(option)) {
+      sensitiveNames.add(option.name);
+      if (option.shortName !== undefined) {
+        sensitiveNames.add(option.shortName);
+      }
+    }
+  }
+
+  let maskNext = false;
+  return args.map((arg) => {
+    if (maskNext) {
+      maskNext = false;
+      return "***";
+    }
+    if (!arg.startsWith("-")) {
+      return maskSecret(arg, { replace: "***" });
+    }
+    const prefixLength = arg.startsWith("--") ? 2 : 1;
+    const optionAndValue = arg.slice(prefixLength);
+    const separator = optionAndValue.indexOf("=");
+    const name = separator < 0 ? optionAndValue : optionAndValue.slice(0, separator);
+    if (!sensitiveNames.has(name)) {
+      return maskSecret(arg, { replace: "***" });
+    }
+    if (separator < 0) {
+      maskNext = true;
+      return arg;
+    }
+    return `${arg.slice(0, prefixLength + separator + 1)}***`;
+  });
+}
+
 // Tools permitted to identify themselves as the atk caller via ATK_CALLER.
 // Any other value is mapped to "other" so the caller-source telemetry
 // dimension stays low-cardinality and cannot leak free-form input (e.g. PII).
@@ -83,12 +139,18 @@ class CLIEngine {
 
     // get user args
     const args = this.isBundledElectronApp() ? process.argv.slice(1) : process.argv.slice(2);
-    this.debugLogs.push(`user argument list: ${JSON.stringify(args)}`);
 
     // find command
     const findRes = this.findCommand(rootCmd, args);
     const foundCommand = findRes.cmd;
     const remainingArgs = findRes.remainingArgs;
+    const maskedArgs = maskCommandArguments(args, [
+      ...(root.options ?? []),
+      ...(foundCommand.options ?? []),
+      ...(foundCommand.arguments ?? []),
+    ]);
+
+    this.debugLogs.push(`user argument list: ${JSON.stringify(maskedArgs)}`);
 
     this.debugLogs.push(`matched command: ${colorize(foundCommand.fullName, TextType.Commands)}`);
 
@@ -98,9 +160,7 @@ class CLIEngine {
       globalOptionValues: {},
       argumentValues: [],
       telemetryProperties: {
-        [TelemetryProperty.CommandFull]: maskSecret(args.join(" "), {
-          replace: "***",
-        }),
+        [TelemetryProperty.CommandFull]: maskedArgs.join(" "),
         [TelemetryProperty.CommandName]: foundCommand.fullName,
         [TelemetryProperty.Component]: TelemetryComponentType,
         [TelemetryProperty.RunFrom]: tryDetectCICDPlatform(),
@@ -145,12 +205,17 @@ class CLIEngine {
 
     logger.debug(
       `parsed context: ${JSON.stringify(
-        pick(context, [
-          "optionValues",
-          "globalOptionValues",
-          "argumentValues",
-          "telemetryProperties",
-        ]),
+        {
+          optionValues: maskSensitiveInputValues(context.optionValues),
+          globalOptionValues: maskSensitiveInputValues(context.globalOptionValues),
+          argumentValues: context.argumentValues.map((value, index) =>
+            context.command.arguments?.[index] !== undefined &&
+            isSensitiveOption(context.command.arguments[index])
+              ? "***"
+              : value
+          ),
+          telemetryProperties: context.telemetryProperties,
+        },
         null,
         2
       )}`
@@ -215,7 +280,15 @@ class CLIEngine {
         context.argumentValues = [];
         logger.debug(
           `trimmed context for interactive mode: ${JSON.stringify(
-            pick(context, ["optionValues", "argumentValues"]),
+            {
+              optionValues: maskSensitiveInputValues(context.optionValues),
+              argumentValues: context.argumentValues.map((value, index) =>
+                context.command.arguments?.[index] !== undefined &&
+                isSensitiveOption(context.command.arguments[index])
+                  ? "***"
+                  : value
+              ),
+            },
             null,
             2
           )}`
@@ -406,9 +479,9 @@ class CLIEngine {
           const inputValues = isCommandOption ? context.optionValues : context.globalOptionValues;
           const inputKey = this.optionInputKey(option);
           const logObject = {
-            token: token,
+            token: isSensitiveOption(option) ? maskCommandArguments([token], [option])[0] : token,
             option: option.name,
-            value: option.value,
+            value: isSensitiveOption(option) ? "***" : option.value,
             isGlobal: !isCommandOption,
           };
           if (option.value !== undefined) inputValues[inputKey] = option.value;
@@ -447,7 +520,7 @@ class CLIEngine {
             context.optionValues[this.optionInputKey(option)] = option.default;
             this.debugLogs.push(
               `set required option with default value, ${option.name}=${JSON.stringify(
-                option.default
+                isSensitiveOption(option) ? "***" : option.default
               )}`
             );
           }
@@ -463,7 +536,7 @@ class CLIEngine {
             context.argumentValues[i] = argument.default as string;
             this.debugLogs.push(
               `set required argument with default value, ${argument.name}=${JSON.stringify(
-                argument.default
+                isSensitiveOption(argument) ? "***" : argument.default
               )}`
             );
           }
@@ -479,7 +552,7 @@ class CLIEngine {
     const logLevel = context.globalOptionValues.debug ? LogLevel.Debug : LogLevel.Info;
     logger.logLevel = logLevel;
     for (const log of this.debugLogs) {
-      logger.debug(log);
+      logger.debug(maskSecret(log, { replace: "***" }));
     }
     this.debugLogs = [];
 

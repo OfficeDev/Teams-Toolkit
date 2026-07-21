@@ -254,6 +254,12 @@ export interface FileSink {
   read(path: string): Buffer | undefined;
 }
 
+/** Runtime-owned persistence boundary for regular and secret environment values. */
+export type EnvironmentWriter = (
+  environment: string,
+  values: Record<string, string>
+) => Promise<Result<void, FxError>>;
+
 /** Drop list-valued render vars before calling the scalar expression evaluator. */
 function scalarScope(renderVars: RenderVars): Scope {
   const scope: Scope = {};
@@ -270,6 +276,7 @@ function scalarScope(renderVars: RenderVars): Scope {
 export function buildPipelinePort(
   exprPort: ExpressionRuntimePort,
   sink: FileSink,
+  environmentWriter: EnvironmentWriter,
   stepRegistry: StepRegistry = STEP_REGISTRY,
   warningSink?: (message: string) => void
 ): PipelineRuntimePort {
@@ -286,6 +293,7 @@ export function buildPipelinePort(
     manifestWrapper: (): ManifestWrapper => buildManifestWrapper(sink),
     warn: warningSink,
     write: (path: string, data: Buffer): void => sink.write(path, data),
+    writeEnvironment: environmentWriter,
     read: (path: string): Buffer | undefined => sink.read(path),
   };
 }

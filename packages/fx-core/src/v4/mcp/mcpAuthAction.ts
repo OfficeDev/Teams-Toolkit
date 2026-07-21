@@ -25,6 +25,11 @@ export interface MCPAuthActionArgs {
   registrationId: string;
   mcpServerUrl: string;
   endpoints: ResolvedMCPAuthEndpoints;
+  credentialEnvNames?: {
+    clientId: string;
+    clientSecret?: string;
+    scope?: string;
+  };
 }
 
 export interface MCPAuthActionResult {
@@ -116,6 +121,17 @@ function oauthAction(args: MCPAuthActionArgs, appIdEnvName: string): Record<stri
         ? { ...endpointFields, identityProvider: "Custom" }
         : { identityProvider: "MicrosoftEntra" }),
       baseUrl: args.mcpServerUrl,
+      ...(args.credentialEnvNames
+        ? {
+            clientId: `\${{${args.credentialEnvNames.clientId}}}`,
+            ...(args.credentialEnvNames.clientSecret
+              ? { clientSecret: `\${{${args.credentialEnvNames.clientSecret}}}` }
+              : {}),
+            ...(args.credentialEnvNames.scope
+              ? { scope: `\${{${args.credentialEnvNames.scope}}}` }
+              : {}),
+          }
+        : {}),
     },
     writeToEnvironmentFile: { configurationId: args.registrationId },
   };

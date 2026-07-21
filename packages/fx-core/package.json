@@ -48,7 +48,6 @@
     "@azure/core-auth": "^1.4.0",
     "@azure/core-rest-pipeline": "^1.22.1",
     "@azure/identity": "^4.1.0",
-    "@azure/msal-node": "^2.6.6",
     "@azure/storage-blob": "^12.25.0",
     "@feathersjs/hooks": "^0.6.5",
     "@microsoft/dev-tunnels-contracts": "1.1.9",
