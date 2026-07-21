@@ -26,20 +26,6 @@ function stringParam(params: StepParams, key: string): string | undefined {
   return typeof value === "string" ? value : undefined;
 }
 
-function validateCredentialParams(resolved: StepParams, authType: string): string | undefined {
-  if (authType === "oauth") {
-    if (!stringParam(resolved, "oauthClientId")?.trim()) {
-      return "missing non-empty string parameter 'oauthClientId'";
-    }
-    if (!stringParam(resolved, "oauthClientSecret")?.trim()) {
-      return "missing non-empty string parameter 'oauthClientSecret'";
-    }
-  } else if (authType === "entra-sso" && !stringParam(resolved, "entraClientId")?.trim()) {
-    return "missing non-empty string parameter 'entraClientId'";
-  }
-  return undefined;
-}
-
 /** Registered step for injecting the shared v4 MCP auth action into `m365agents.yml`. */
 export const mcpAuthInjectYmlAction: RegisteredStep = {
   validateParams(resolved: StepParams): string | undefined {
@@ -53,19 +39,30 @@ export const mcpAuthInjectYmlAction: RegisteredStep = {
     if (stringParam(resolved, "mcpServerUrl") === undefined) {
       return "missing string parameter 'mcpServerUrl'";
     }
-    return validateCredentialParams(resolved, authType);
+    return undefined;
   },
   apply(resolved: StepParams, ctx: StepContext): Promise<Result<void, FxError>> {
     const ymlPath = stringParam(resolved, "ymlPath");
     const authType = stringParam(resolved, "authType");
     const mcpServerUrl = stringParam(resolved, "mcpServerUrl");
-    const oauthScopes = stringParam(resolved, "oauthScopes");
     if (ymlPath === undefined || authType === undefined || mcpServerUrl === undefined) {
       return Promise.resolve(
         err(systemError("McpAuthInjectParams", "resolved parameters are not all strings"))
       );
     }
-    return injectMcpAuthAction(ctx, { ymlPath, authType, mcpServerUrl, oauthScopes });
+    return injectMcpAuthAction(ctx, {
+      ymlPath,
+      authType,
+      mcpServerUrl,
+      credentialFields: {
+        clientId:
+          authType === "oauth"
+            ? Boolean(stringParam(resolved, "oauthClientId")?.trim())
+            : Boolean(stringParam(resolved, "entraClientId")?.trim()),
+        clientSecret: Boolean(stringParam(resolved, "oauthClientSecret")?.trim()),
+        scope: Boolean(stringParam(resolved, "oauthScopes")?.trim()),
+      },
+    });
   },
 };
 
@@ -82,7 +79,7 @@ export const mcpAuthPersistCredentialEnv: RegisteredStep = {
     if (stringParam(resolved, "mcpServerUrl") === undefined) {
       return "missing string parameter 'mcpServerUrl'";
     }
-    return validateCredentialParams(resolved, authType);
+    return undefined;
   },
   apply(resolved: StepParams, ctx: StepContext): Promise<Result<void, FxError>> {
     const authType = stringParam(resolved, "authType");

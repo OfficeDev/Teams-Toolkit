@@ -13,6 +13,9 @@ describe("create input validators (collect-inputs INV-3b)", () => {
       "openapiUrl",
       "graphConnectorName",
       "graphConnectorConnectionId",
+      "mcp.oauthClientIdRequired",
+      "mcp.oauthClientSecretRequired",
+      "mcp.entraClientIdRequired",
     ]);
     assert.isUndefined(await validators.uri("https://example.com/mcp", {}));
     assert.equal(await validators.uri("not a uri", {}), "must be a valid URI");

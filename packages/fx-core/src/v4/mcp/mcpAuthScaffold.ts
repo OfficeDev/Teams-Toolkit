@@ -97,7 +97,12 @@ async function resolveEndpoints(
  */
 export async function injectMcpAuthAction(
   ctx: StepContext,
-  args: { ymlPath: string; authType: string; mcpServerUrl: string; oauthScopes?: string }
+  args: {
+    ymlPath: string;
+    authType: string;
+    mcpServerUrl: string;
+    credentialFields?: { clientId: boolean; clientSecret: boolean; scope: boolean };
+  }
 ): Promise<Result<void, FxError>> {
   const current = ctx.read(args.ymlPath);
   if (current === undefined) {
@@ -116,16 +121,18 @@ export async function injectMcpAuthAction(
     registrationId: identifiers.registrationId,
     mcpServerUrl: args.mcpServerUrl,
     endpoints,
-    ...(args.authType === "oauth"
+    ...(args.authType === "oauth" && args.credentialFields?.clientId
       ? {
           credentialEnvNames: {
             clientId: identifiers.clientId,
-            clientSecret: identifiers.clientSecret,
-            ...(args.oauthScopes?.trim() ? { scope: identifiers.scope } : {}),
+            ...(args.credentialFields.clientSecret
+              ? { clientSecret: identifiers.clientSecret }
+              : {}),
+            ...(args.credentialFields.scope ? { scope: identifiers.scope } : {}),
           },
         }
       : {}),
-    ...(args.authType === "entra-sso"
+    ...(args.authType === "entra-sso" && args.credentialFields?.clientId
       ? { credentialEnvNames: { clientId: identifiers.clientId } }
       : {}),
   });

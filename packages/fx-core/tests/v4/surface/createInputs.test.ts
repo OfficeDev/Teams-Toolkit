@@ -1715,6 +1715,40 @@ describe("runCreateInputs (collect-create-inputs)", () => {
     }
   });
 
+  it("CCI-03b: non-interactive none and dynamic OAuth do not require static credentials", async () => {
+    for (const authType of ["none", "oauth-dynamic"]) {
+      const ui = new ScriptedUserInteraction({});
+      const res = await runCreateInputs(
+        buildFloor(),
+        MCP_DA,
+        {
+          mcpServerType: "remote",
+          mcpServerUrl: "https://seed.example.com/mcp",
+          authType,
+        },
+        asUI(ui),
+        {
+          surface: "cli",
+          flagReader: () => true,
+          inputs: {
+            platform: Platform.CLI,
+            nonInteractive: true,
+            teamsAppFromTdp: { appName: "My Agent" },
+          },
+        }
+      );
+
+      assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
+      if (res.isOk()) {
+        assert.equal(res.value.authType, authType);
+        assert.notProperty(res.value, "oauthClientId");
+        assert.notProperty(res.value, "oauthClientSecret");
+        assert.notProperty(res.value, "entraClientId");
+      }
+      assert.deepEqual(ui.promptNames, []);
+    }
+  });
+
   it("CCI-03c: static OAuth rejects an empty required client secret", async () => {
     const ui = new ScriptedUserInteraction({
       select: { authType: "oauth" },

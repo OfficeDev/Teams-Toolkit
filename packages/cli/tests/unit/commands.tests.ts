@@ -283,6 +283,9 @@ describe("CLI commands", () => {
       assert.equal(inputs["mcp-tools-file-path"], "C:/tools/mcp-tools.json");
       assert.equal(inputs.authType, "none");
       assert.equal(inputs["mcp-da-auth-type"], "none");
+      assert.notProperty(inputs, "oauthClientId");
+      assert.notProperty(inputs, "oauthClientSecret");
+      assert.notProperty(inputs, "entraClientId");
       assert.equal(inputs.apiAuth, "none");
       assert.equal(inputs["api-auth"], "none");
       assert.deepEqual(inputs.apiOperations, ["GET /repairs"]);
