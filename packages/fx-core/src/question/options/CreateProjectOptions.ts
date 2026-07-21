@@ -207,6 +207,13 @@ export const CreateProjectOptions: CLICommandOption[] = [
     choices: ["word", "powerpoint", "outlook", "excel"],
   },
   {
+    name: "office-addin-naa-host",
+    type: "string",
+    description: "Select the Office application the Nested App Auth SSO add-in supports.",
+    default: "word",
+    choices: ["word", "excel", "powerpoint"],
+  },
+  {
     name: "folder",
     type: "string",
     shortName: "f",
