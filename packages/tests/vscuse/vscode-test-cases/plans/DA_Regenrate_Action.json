@@ -443,7 +443,7 @@
         "x": 230,
         "y": 53
       },
-      "description": "Click the \"OK\" button in the \"Select Operation(s) Copilot Can Interact with\" dialog to confirm the selection of the GET /user/{username} operation within the Microsoft 365 Agents Toolkit extension in Visual Studio Code.",
+      "description": "Click the checkbox to select all displayed operations (GET /user/{username}) in the \"Select Operation(s) Copilot Can Interact with\" dialog within the Microsoft 365 Agents Toolkit extension in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -495,7 +495,7 @@
         "x": 540,
         "y": 80
       },
-      "description": "Click the \"Default folder /home/vscode/AgentsToolkitProject\" option in the \"Workspace Folder\" dropdown within Visual Studio Code.",
+      "description": "Click the \"Default folder /home/vscode/AgentsToolkitProjects\" option in the \"Workspace Folder\" dropdown within Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -665,7 +665,7 @@
         "x": 799,
         "y": 50
       },
-      "description": "Click the blue \"add\" button (plus icon) to the right of the \"1 Selected\" indicator in the \"Select operation(s) Copilot can interact with.\" dialog within Visual Studio Code.",
+      "description": "Click the \"OK\" button to the right of the \"1 Selected\" indicator in the \"Select operation(s) Copilot can interact with.\" dialog within Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
