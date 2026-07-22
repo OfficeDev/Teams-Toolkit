@@ -41,7 +41,7 @@
         "x": 376,
         "y": 409
       },
-      "description": "Click the agent name \"${{var:app_name}}dev\" heading at the top of the M365 Copilot chat interface.",
+      "description": "Click the agent name \"${{var:app_name}}local\" heading at the top of the M365 Copilot chat interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -131,7 +131,7 @@
         "x": 330,
         "y": 350
       },
-      "description": "Click the gray \"Allow\" button in the M365 Copilot chat interface to authorize connecting the ${{var:app_name}}dev agent for handling repair record requests.",
+      "description": "Click the gray \"Allow\" button in the M365 Copilot chat interface to authorize connecting the ${{var:app_name}}local agent for handling repair record requests.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -159,7 +159,7 @@
         "x": 426,
         "y": 364
       },
-      "description": "Click the \"Sign in to ${{var:app_name}}dev\" button in the M365 Copilot chat interface to initiate login and proceed with the query.",
+      "description": "Click the \"Sign in to ${{var:app_name}}local\" button in the M365 Copilot chat interface to initiate login and proceed with the query.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
