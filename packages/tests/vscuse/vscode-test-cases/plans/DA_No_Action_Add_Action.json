@@ -117,7 +117,7 @@
         "x": 352,
         "y": 74
       },
-      "description": "Click the \"Default folder\" dropdown in the \"Workspace Folder\" dialog to set the project root folder path (`/home/.vscode/AgentsToolkitProjects`).",
+      "description": "Click the \"Default folder\" dropdown in the \"Workspace Folder\" dialog to set the project root folder path (`/home/vscode/AgentsToolkitProjects`).",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -239,7 +239,7 @@
         "x": 368,
         "y": 73
       },
-      "description": "Click the text input field labeled \"Enter OpenAPI Description Document Location or Open File...\" in the \"OpenAPI Spec Document\" pop-up within Visual Studio Code.",
+      "description": "Click the \"Enter OpenAPI Document URL\" option in the \"OpenAPI Spec Document\" dropdown within Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -309,7 +309,7 @@
         "x": 229,
         "y": 53
       },
-      "description": "Click the blue \"OK\" button in the \"Select Operation(s) Copilot Can Interact with\" dialog to confirm the selected operations in Visual Studio Code.",
+      "description": "Click the \"select all\" checkbox at the top of the \"Select Operation(s) Copilot Can Interact with\" dialog to select all operations in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -387,7 +387,7 @@
         "x": 481,
         "y": 112
       },
-      "description": "Click the \"Proceed\" button in the Microsoft 365 Agents Toolkit confirmation dialog within Visual Studio Code.",
+      "description": "Click the \"Add\" button in the Microsoft 365 Agents Toolkit confirmation dialog within Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -589,7 +589,7 @@
         "x": 74,
         "y": 124
       },
-      "description": "Click the \"appPackage\" folder in the Explorer panel of Visual Studio Code to expand its contents.",
+      "description": "Click the \"appPackage\" folder in the Explorer panel of Visual Studio Code to collapse its contents.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
