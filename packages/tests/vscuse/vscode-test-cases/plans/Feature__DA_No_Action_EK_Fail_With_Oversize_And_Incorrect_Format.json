@@ -280,7 +280,7 @@
         "x": 317,
         "y": 74
       },
-      "description": "Click the \"manifest.json\" file entry in the \"Select Teams manifest.json File\" dialog within Visual Studio Code to choose the file located at `/home/vscode/AgentsToolkitProjects/vscuse_app_tecaN/appPackage`.",
+      "description": "Click the \"manifest.json\" file entry in the \"Select Teams manifest.json File\" dialog within Visual Studio Code to choose the file located at `/home/vscode/AgentsToolkitProjects/${{var:app_name}}/appPackage`.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -441,7 +441,7 @@
         "x": 1000,
         "y": 606
       },
-      "description": "Click the \"Resolve with Copilot Chat\" button in the Microsoft 365 Agents Toolkit notification popup within Visual Studio Code, at coordinates (1000, 606).",
+      "description": "Click the close (X) button on the Microsoft 365 Agents Toolkit notification popup in the lower right corner of Visual Studio Code to dismiss it.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -467,7 +467,7 @@
         "x": 617,
         "y": 624
       },
-      "description": "Click the “[AppStudioPlugin.ManifestValidationFailed]: Microsoft 365 Agents Toolkit” error notification popup in the lower right corner of the Visual Studio Code window to view details about the manifest validation failure.",
+      "description": "Click the \"teamsApp/validateAppPackage failed\" error line in the OUTPUT panel of Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -646,7 +646,7 @@
         "x": 421,
         "y": 219
       },
-      "description": "Click the \"Web Search\" option in the \"Add Capability\" dropdown within the Microsoft 365 Agents pane of the Visual Studio Code extension interface.",
+      "description": "Click the \"Embedded Knowledge\" option in the \"Add Capability\" dropdown within the Microsoft 365 Agents pane of the Visual Studio Code extension interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -894,7 +894,7 @@
         "x": 996,
         "y": 606
       },
-      "description": "Click the \"Resolve with Copilot Chat\" button in the Microsoft 365 Agents Toolkit notification popup within Visual Studio Code, located at the bottom-right of the interface.",
+      "description": "Click the close (X) button on the Microsoft 365 Agents Toolkit notification popup in the lower right corner of Visual Studio Code to dismiss it.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -920,7 +920,7 @@
         "x": 732,
         "y": 645
       },
-      "description": "Click the error message in the OUTPUT panel stating \"Error: Microsoft 365 Agents Toolkit has completed checking your app package against validation rules. 1 failed.\" within the Visual Studio Code interface under the Microsoft 365 Agents Toolkit extension.",
+      "description": "Click the error message in the OUTPUT panel stating \"Error: InvalidDeclarativeCopilotDocument: Invalid Declarative Agent Document: declarativeAgent.json. Problems discovered: File size 2MB for the file at #/file exceeds the maximum file size of 1MB at (#/file)\" within the Visual Studio Code interface under the Microsoft 365 Agents Toolkit extension.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
