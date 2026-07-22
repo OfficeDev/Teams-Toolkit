@@ -7,7 +7,7 @@
       "stop_on_error": true,
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2,
-      "step_retry_timeout": 0.0
+      "step_retry_timeout": 0
     },
     "total_steps": 4,
     "created_at": "2026-04-17T04:17:17.437047",
@@ -39,7 +39,7 @@
         "x": 340,
         "y": 373
       },
-      "description": "Click inside the \"Message Copilot\" text input box in the M365 Copilot (web app) chat interface.",
+      "description": "Click the \"${{var:app_name}}dev\" agent title/header in the M365 Copilot (web app) chat interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
