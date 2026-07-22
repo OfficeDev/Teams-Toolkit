@@ -15,6 +15,8 @@ This is the vertical contract for the native v4 Nested App Auth single sign-on a
 | SCN-CREATE-SSO-NAA-02 | L1 | rendered `package.json` and manifest | render | package `name` is the lower-case safe project name; manifest app names use the caller floor `appName` |
 | SCN-CREATE-SSO-NAA-03 | L1 | empty target | scaffold | only the `require-empty-target` step runs; no post-render scaffold injection is run |
 | SCN-CREATE-SSO-NAA-04 | L1 | non-empty target | scaffold | `require-empty-target` fails first with **`UserError`** and writes nothing |
+| SCN-CREATE-SSO-NAA-05 | L1 | a selected Office host (Word, Excel, or PowerPoint) | render | the manifest requirement `scopes` contain only the scope for the selected host (`document`, `workbook`, or `presentation`) |
+| SCN-CREATE-SSO-NAA-06 | L1 | a selected Office host | render | the `.vscode/launch.json` debug configs/compounds and `package.json` `start:desktop:<host>` scripts and `app_to_debug` target only the selected host |
 
 ## Composed operations
 

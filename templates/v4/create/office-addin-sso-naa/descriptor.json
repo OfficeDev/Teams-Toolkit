@@ -9,11 +9,21 @@
 
   "optionsSchema": {
     "type": "object",
-    "properties": {},
+    "properties": {
+      "officeAddinNaaHost": {
+        "type": "string",
+        "enum": ["word", "excel", "powerpoint"]
+      }
+    },
     "additionalProperties": false
   },
 
   "replaceMap": [
-    { "var": "SafeProjectNameLowerCase", "expr": "safeProjectNameLowerCase(appName)" }
+    { "var": "SafeProjectNameLowerCase", "expr": "safeProjectNameLowerCase(appName)" },
+    { "var": "ManifestScope", "expr": "officeAddinManifestScope(officeAddinNaaHost)" },
+    { "var": "LaunchConfigurations", "expr": "officeAddinLaunchConfigurations(officeAddinNaaHost)" },
+    { "var": "LaunchCompounds", "expr": "officeAddinLaunchCompounds(officeAddinNaaHost)" },
+    { "var": "DebugScripts", "expr": "officeAddinDebugScripts(officeAddinNaaHost)" },
+    { "var": "DebugApp", "expr": "officeAddinDebugApp(officeAddinNaaHost)" }
   ]
 }

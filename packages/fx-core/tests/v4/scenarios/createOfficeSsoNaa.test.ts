@@ -9,6 +9,7 @@ import { scaffold } from "../../../src/v4/runtime/scaffold";
 import {
   loadV4Package,
   readJsonObject,
+  recordArrayProperty,
   recordProperty,
   runV4Package,
 } from "./helpers/scenarioHarness";
@@ -24,8 +25,8 @@ import {
 const templatePackage = loadV4Package("create", "office-addin-sso-naa");
 const callerFloor = { appName: "My Sso Addin", language: "typescript" };
 
-async function run() {
-  return runV4Package(templatePackage, { callerFloor });
+async function run(answers?: Record<string, string | string[]>) {
+  return runV4Package(templatePackage, { callerFloor, answers });
 }
 
 describe("SCN-OFFICE-CREATE-SSO-NAA (v4, T3 InMemoryRuntime)", () => {
@@ -48,6 +49,37 @@ describe("SCN-OFFICE-CREATE-SSO-NAA (v4, T3 InMemoryRuntime)", () => {
     const name = recordProperty(manifest, "name");
     assert.strictEqual(name.short, "My Sso Addin");
     assert.strictEqual(name.full, "Full name for My Sso Addin");
+  });
+
+  it("SCN-CREATE-SSO-NAA-05: the selected host drives the manifest requirement scope", async () => {
+    const scopeFor = async (host: string): Promise<unknown> => {
+      const manifest = readJsonObject(
+        (await run({ officeAddinNaaHost: host })).files,
+        "appPackage/manifest.json"
+      );
+      const extension = recordArrayProperty(manifest, "extensions")[0];
+      return recordProperty(extension, "requirements").scopes;
+    };
+    assert.deepStrictEqual(await scopeFor("excel"), ["workbook"]);
+    assert.deepStrictEqual(await scopeFor("word"), ["document"]);
+    assert.deepStrictEqual(await scopeFor("powerpoint"), ["presentation"]);
+  });
+
+  it("SCN-CREATE-SSO-NAA-06: the debug surface targets only the selected host", async () => {
+    const { files } = await run({ officeAddinNaaHost: "excel" });
+
+    const launch = readJsonObject(files, ".vscode/launch.json");
+    assert.deepStrictEqual(
+      recordArrayProperty(launch, "compounds").map((c) => c.name),
+      ["Excel Desktop (Edge Chromium)"]
+    );
+
+    const pkg = readJsonObject(files, "package.json");
+    const scripts = recordProperty(pkg, "scripts");
+    assert.property(scripts, "start:desktop:excel");
+    assert.notProperty(scripts, "start:desktop:word");
+    assert.notProperty(scripts, "start:desktop:powerpoint");
+    assert.strictEqual(recordProperty(pkg, "config").app_to_debug, "excel");
   });
 
   it("SCN-CREATE-SSO-NAA-03: only require-empty-target runs", async () => {

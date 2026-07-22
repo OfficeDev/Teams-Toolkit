@@ -43,9 +43,7 @@
         {
             "requirements": {
                 "scopes": [
-                    "document",
-                    "workbook",
-                    "presentation"
+                    {{ManifestScope}}
                 ]
             },
             "runtimes": [

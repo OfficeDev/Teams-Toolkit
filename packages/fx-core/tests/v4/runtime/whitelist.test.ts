@@ -5,10 +5,17 @@ import { evaluateExpression } from "../../../src/v4/expression/evaluateExpressio
 import { assert } from "vitest";
 import { FeatureFlagName } from "../../../src/common/featureFlags";
 import {
+  contains,
   createExpressionPort,
   deriveMcpServerName,
   mcpAuthRef,
   mcpNamespace,
+  officeAddinDebugApp,
+  officeAddinDebugScripts,
+  officeAddinLaunchCompounds,
+  officeAddinLaunchConfigurations,
+  officeAddinManifestScope,
+  officeAddinManifestScopes,
   pathDelimiter,
   safeProjectNameLowerCase,
 } from "../../../src/v4/runtime/whitelist";
@@ -72,6 +79,108 @@ describe("v4 runtime — whitelist functions + ExpressionRuntimePort", () => {
     });
   });
 
+  describe("contains", () => {
+    it("returns `true` when a comma-joined answer selects the item", () => {
+      assert.strictEqual(contains("word,excel,outlook", "outlook"), "true");
+    });
+
+    it("returns empty when the item is not selected", () => {
+      assert.strictEqual(contains("word,excel", "outlook"), "");
+    });
+
+    it("ignores surrounding whitespace and empty segments", () => {
+      assert.strictEqual(contains(" word , excel ", "excel"), "true");
+      assert.strictEqual(contains("", "word"), "");
+    });
+  });
+
+  describe("officeAddinManifestScope", () => {
+    it("maps each NAA host to its single quoted manifest scope", () => {
+      assert.strictEqual(officeAddinManifestScope("word"), '"document"');
+      assert.strictEqual(officeAddinManifestScope("excel"), '"workbook"');
+      assert.strictEqual(officeAddinManifestScope("powerpoint"), '"presentation"');
+    });
+
+    it("falls back to the word scope for an unknown host", () => {
+      assert.strictEqual(officeAddinManifestScope("unknown"), '"document"');
+    });
+  });
+
+  describe("officeAddinManifestScopes", () => {
+    it("renders the selected hosts as a quoted scope list in stable order", () => {
+      assert.strictEqual(
+        officeAddinManifestScopes("excel,word"),
+        '"workbook",\n                    "document"'
+      );
+    });
+
+    it("renders all four scopes in canonical order for the full selection", () => {
+      assert.strictEqual(
+        officeAddinManifestScopes("word,powerpoint,outlook,excel"),
+        '"mail",\n                    "workbook",\n                    "document",\n                    "presentation"'
+      );
+    });
+
+    it("falls back to the word scope when nothing is selected", () => {
+      assert.strictEqual(officeAddinManifestScopes(""), '"document"');
+    });
+  });
+
+  describe("office add-in debug launch surface", () => {
+    it("renders a valid launch.json for a host subset with only the selected hosts", () => {
+      const csv = "excel,outlook";
+      const launch = `{
+  "version": "0.2.0",
+  "configurations": [
+    ${officeAddinLaunchConfigurations(csv)}
+  ],
+  "compounds": [
+    ${officeAddinLaunchCompounds(csv)}
+  ]
+}`;
+      const parsed = JSON.parse(launch) as {
+        configurations: { name: string }[];
+        compounds: { name: string }[];
+      };
+      assert.deepStrictEqual(
+        parsed.configurations.map((c) => c.name),
+        [
+          "Excel Desktop Host",
+          "Excel Desktop Attach (Edge Chromium)",
+          "Outlook Desktop Host",
+          "Outlook Desktop Attach (Edge Chromium)",
+        ]
+      );
+      assert.deepStrictEqual(
+        parsed.compounds.map((c) => c.name),
+        ["Excel Desktop (Edge Chromium)", "Outlook Desktop (Edge Chromium)"]
+      );
+    });
+
+    it("emits only the selected start:desktop scripts and the first host as the debug app", () => {
+      const csv = "powerpoint,word";
+      assert.strictEqual(officeAddinDebugApp(csv), "word");
+      const scripts = `{
+  "scripts": {
+    ${officeAddinDebugScripts(csv)}
+    "start:web": "x"
+  }
+}`;
+      const parsed = JSON.parse(scripts) as { scripts: Record<string, string> };
+      assert.hasAllKeys(parsed.scripts, [
+        "start:desktop:word",
+        "start:desktop:powerpoint",
+        "start:web",
+      ]);
+    });
+
+    it("falls back to word when nothing is selected", () => {
+      assert.strictEqual(officeAddinDebugApp(""), "word");
+      assert.include(officeAddinLaunchConfigurations(""), "Word Desktop Host");
+      assert.notInclude(officeAddinLaunchConfigurations(""), "Excel Desktop Host");
+    });
+  });
+
   describe("createExpressionPort", () => {
     it("exposes the whitelisted functions and nothing else", () => {
       const port = createExpressionPort();
@@ -79,6 +188,13 @@ describe("v4 runtime — whitelist functions + ExpressionRuntimePort", () => {
       assert.isFunction(port.functions("mcpAuthRef"));
       assert.isFunction(port.functions("safeProjectNameLowerCase"));
       assert.isFunction(port.functions("pathDelimiter"));
+      assert.isFunction(port.functions("contains"));
+      assert.isFunction(port.functions("officeAddinManifestScope"));
+      assert.isFunction(port.functions("officeAddinManifestScopes"));
+      assert.isFunction(port.functions("officeAddinLaunchConfigurations"));
+      assert.isFunction(port.functions("officeAddinLaunchCompounds"));
+      assert.isFunction(port.functions("officeAddinDebugScripts"));
+      assert.isFunction(port.functions("officeAddinDebugApp"));
       assert.isUndefined(port.functions("notWhitelisted"));
     });
 
