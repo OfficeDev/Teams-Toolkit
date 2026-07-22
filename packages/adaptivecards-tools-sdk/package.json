@@ -45,12 +45,24 @@
     "adaptive-expressions": "^4.20.0",
     "adaptivecards": "~2.10.0",
     "adaptivecards-templating": "^2.1.0",
-    "markdown-it": "^13.0.2",
+    "markdown-it": "^14.3.0",
     "react": "^17.0.2"
   },
   "overrides": {
     "adaptive-expressions": {
-      "fast-xml-parser": "4.4.1"
+      "fast-xml-parser": "4.5.5"
+    }
+  },
+  "pnpm": {
+    "overrides": {
+      "@xmldom/xmldom@^0.8.0": "0.8.13",
+      "brace-expansion@^1.0.0": "1.1.16",
+      "braces@^3.0.0": "3.0.3",
+      "flatted@^3.0.0": "3.4.2",
+      "fast-xml-parser@^4.0.0": "4.5.5",
+      "lodash@^4.0.0": "4.18.1",
+      "minimatch@^3.0.0": "3.1.5",
+      "picomatch@^2.0.0": "2.3.2"
     }
   },
   "publishConfig": {

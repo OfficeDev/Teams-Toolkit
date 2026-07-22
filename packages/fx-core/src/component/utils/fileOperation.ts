@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import AdmZip, { EntryHeader } from "adm-zip";
+import AdmZip from "adm-zip";
 import * as fs from "fs-extra";
 import { Ignore } from "ignore";
 import klaw from "klaw";
@@ -64,7 +64,10 @@ export async function zipFolderAsync(
     const content = await fs.readFile(filePath);
     zp.addFile(zipPath, content);
     if (stats) {
-      (zp.getEntry(zipPath)?.header as EntryHeader).time = stats.mtime;
+      const entry = zp.getEntry(zipPath);
+      if (entry) {
+        entry.header.time = stats.mtime;
+      }
     }
   };
 

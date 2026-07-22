@@ -466,6 +466,20 @@ export class CreateAppPackageDriver implements StepDriver {
       }
     }
 
+    const teamsManifestAgentConnectors = (
+      manifest as TeamsManifestVDevPreview.TeamsManifestVDevPreview
+    ).agentConnectors;
+    if (teamsManifestAgentConnectors?.length) {
+      const addConnectorsRes = await this.addAgentConnectorFiles(
+        zip,
+        teamsManifestAgentConnectors,
+        appDirectory
+      );
+      if (addConnectorsRes.isErr()) {
+        return err(addConnectorsRes.error);
+      }
+    }
+
     zip.writeZip(zipFileName);
 
     // Validate zip package size against 10 MB hard limit
@@ -577,6 +591,31 @@ export class CreateAppPackageDriver implements StepDriver {
         return err(new InvalidFileOutsideOfTheDirectotryError(skillFolderAbs));
       }
       await this.addLocalFolderRecursive(zip, skillFolderAbs, appDirectory);
+    }
+    return ok(undefined);
+  }
+
+  private async addAgentConnectorFiles(
+    zip: AdmZip,
+    agentConnectors: TeamsManifestVDevPreview.AgentConnector[],
+    appDirectory: string
+  ): Promise<Result<undefined, FxError>> {
+    for (const connector of agentConnectors) {
+      const mcpToolDescriptionFile =
+        connector.toolSource?.remoteMcpServer?.mcpToolDescription?.file;
+      if (!mcpToolDescriptionFile) {
+        continue;
+      }
+      const mcpFileAbsolutePath = path.resolve(appDirectory, mcpToolDescriptionFile);
+      const checkExistenceRes = await this.validateReferencedFile(
+        mcpFileAbsolutePath,
+        appDirectory
+      );
+      if (checkExistenceRes.isErr()) {
+        return err(checkExistenceRes.error);
+      }
+      const dir = path.dirname(mcpToolDescriptionFile);
+      this.addFileInZip(zip, dir, mcpFileAbsolutePath);
     }
     return ok(undefined);
   }

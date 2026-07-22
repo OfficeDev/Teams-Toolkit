@@ -12,6 +12,10 @@
  */
 
 import "reflect-metadata";
+import { installGlobalProxyInterceptor } from "./common/httpProxy";
+
+installGlobalProxyInterceptor();
+
 export { GraphClient } from "./client/graphClient";
 export { teamsDevPortalClient } from "./client/teamsDevPortalClient";
 export { askSubscription } from "./common/azureUtils";

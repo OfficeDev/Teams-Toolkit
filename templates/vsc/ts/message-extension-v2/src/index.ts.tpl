@@ -1,3 +1,4 @@
+import "./proxy";
 import { ManagedIdentityCredential } from "@azure/identity";
 import { cardAttachment, TokenCredentials } from "@microsoft/teams.api";
 import { App } from "@microsoft/teams.apps";

@@ -1,3 +1,4 @@
+import "./proxy";
 import app from "./app/app";
 
 // Start the application

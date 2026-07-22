@@ -6,6 +6,7 @@ import "./mocks/vscode-mock";
 
 import {
   err,
+  MultiSelectConfig,
   ok,
   SelectFileConfig,
   SelectFolderConfig,
@@ -616,14 +617,15 @@ describe("UI Unit Tests", async () => {
     });
 
     it("loads dynamic option in a long time and shows", async function (this: Mocha.Context) {
+      const loadOptions = sandbox.spy(async () => {
+        await sleep(1000);
+        return Promise.resolve([{ id: "1", label: "label1" }]);
+      });
       const config: SingleSelectConfig = {
         name: "name",
         title: "title",
         placeholder: "placeholder",
-        options: async () => {
-          await sleep(1000);
-          return Promise.resolve([{ id: "1", label: "label1" }]);
-        },
+        options: loadOptions,
         skipSingleOption: true,
       };
 
@@ -658,7 +660,59 @@ describe("UI Unit Tests", async () => {
         expect(result.value.result).to.equal("1");
         expect(mockQuickPick.show.called).is.true;
       }
+      expect(loadOptions.calledOnce).is.true;
       sandbox.restore();
+    });
+  });
+
+  describe("multi select", () => {
+    const sandbox = sinon.createSandbox();
+
+    afterEach(() => {
+      sandbox.restore();
+    });
+
+    it("loads slow dynamic options only once", async () => {
+      const clock = sandbox.useFakeTimers();
+      let resolveOptions: ((options: { id: string; label: string }[]) => void) | undefined;
+      const optionsPromise = new Promise<{ id: string; label: string }[]>((resolve) => {
+        resolveOptions = resolve;
+      });
+      const loadOptions = sandbox.spy(() => optionsPromise);
+      const config: MultiSelectConfig = {
+        name: "name",
+        title: "title",
+        placeholder: "placeholder",
+        options: loadOptions,
+      };
+
+      const mockQuickPick = stubInterface<QuickPick<FxQuickPickItem>>();
+      const mockDisposable = stubInterface<Disposable>();
+      let acceptListener: (e: void) => any;
+      mockQuickPick.onDidAccept.callsFake((listener: (e: void) => unknown) => {
+        acceptListener = listener;
+        return mockDisposable;
+      });
+      mockQuickPick.onDidHide.callsFake(() => mockDisposable);
+      mockQuickPick.onDidTriggerButton.callsFake(() => mockDisposable);
+      sandbox.stub(window, "createQuickPick").returns(mockQuickPick);
+
+      const resultPromise = ui.selectOptions(config);
+      await clock.tickAsync(501);
+
+      expect(loadOptions.calledOnce).is.true;
+      expect(mockQuickPick.show.calledOnce).is.true;
+
+      resolveOptions?.([{ id: "1", label: "label1" }]);
+      await clock.tickAsync(0);
+      mockQuickPick.selectedItems = [{ id: "1", label: "label1" }];
+      acceptListener!();
+
+      const result = await resultPromise;
+      expect(result.isOk()).is.true;
+      if (result.isOk()) {
+        expect(result.value.result).to.deep.equal(["1"]);
+      }
     });
   });
 

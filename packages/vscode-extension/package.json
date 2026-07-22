@@ -1507,11 +1507,6 @@
           "default": false,
           "markdownDescription": "Enable launch Agent for Teams in Microsoft 365 Copilot. For more information please refer to [this documentation](https://aka.ms/cea-feature-flag)."
         },
-        "M365AgentsToolkit.enableDeclarativeAgentInOfficeAddIn": {
-          "type": "boolean",
-          "default": true,
-          "markdownDescription": "Enable Declarative Agent support in Office Add-in project."
-        },
         "M365AgentsToolkit.enableCustomFunctionShortcutInOfficeAddIn": {
           "type": "boolean",
           "default": true,

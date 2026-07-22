@@ -8,6 +8,7 @@ from microsoft_teams.ai.ai_model import AIModel
 from microsoft_teams.apps import App, ActivityContext
 from microsoft_teams.openai import OpenAICompletionsAIModel
 from microsoft_teams.api import CitationAppearance, MessageActivity, MessageActivityInput, MessageSubmitActionInvokeActivity
+from openai import OpenAIError
 
 from config import Config
 from azure_ai_search_data_source import AzureAISearchDataSource, AzureAISearchDataSourceOptions
@@ -34,6 +35,21 @@ def load_instructions() -> str:
         return "You are a helpful assistant."
 
 INSTRUCTIONS = load_instructions()
+
+def get_openai_error_message(error: OpenAIError) -> str:
+    body = getattr(error, "body", None)
+    if isinstance(body, dict):
+        error_body = body.get("error")
+        if isinstance(error_body, dict):
+            message = error_body.get("message")
+            if isinstance(message, str) and message:
+                return message
+
+    message = getattr(error, "message", None)
+    if isinstance(message, str) and message:
+        return message
+
+    return error.__class__.__name__
 
 def create_token_factory():
     def get_token(scopes, tenant_id=None):
@@ -85,19 +101,19 @@ async def handle_stateful_conversation(model: AIModel, ctx: ActivityContext[Mess
     print(f"Existing messages before sending to prompt: {len(existing_messages)} messages")
 
     input = ctx.activity.strip_mentions_text().text
-    data_context = await azure_ai_search.render_data(input)
 
     # Create ChatPrompt with conversation-specific memory
     chat_prompt = ChatPrompt(model)
 
     try:
+        data_context = await azure_ai_search.render_data(input)
         chat_result = await chat_prompt.send(
             input=input,
             memory=memory,
             instructions=f"{INSTRUCTIONS}\n\nAdditional Context:\n${data_context.output}"
         )
-    except Exception as e:
-        print(f"Error sending chat prompt: {e}")
+    except OpenAIError as e:
+        print(f"Error generating Azure AI Search response: {get_openai_error_message(e)}")
         await ctx.send(MessageActivityInput(text="An error occurred while processing your request."))
         return
 

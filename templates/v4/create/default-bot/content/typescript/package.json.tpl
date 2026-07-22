@@ -22,6 +22,7 @@
     "dependencies": {
         "@azure/identity": "^4.11.1",
         "@microsoft/teams.apps": "^2.0.0",
+        "undici": "^6.21.0",
         "@microsoft/teams.common": "^2.0.0"
     },
     "devDependencies": {
