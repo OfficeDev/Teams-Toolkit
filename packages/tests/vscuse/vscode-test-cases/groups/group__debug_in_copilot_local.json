@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 20,
+    "total_steps": 18,
     "created_at": "2026-05-18T10:07:16.265795",
     "name": "group: debug_in_copilot_local",
     "description": {
@@ -35,8 +35,6 @@
       "step_d3bcefd8",
       "step_86a70854",
       "step_a0762a17",
-      "step_3bb29c8a",
-      "step_ac955e3b",
       "step_670cbf14"
     ],
     "tags": [

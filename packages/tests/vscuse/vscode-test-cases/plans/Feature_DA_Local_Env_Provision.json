@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 25,
+    "total_steps": 22,
     "created_at": "2026-06-05T01:27:12.431956",
     "name": "Feature DA Local Env Provision",
     "description": {
@@ -37,9 +37,6 @@
       "step_fbd1439e",
       "step_0cd2fc00",
       "step_b8433d0d",
-      "step_9f0d919f",
-      "step_9492b973",
-      "step_d1a2baa7",
       "step_f9d7b0c8",
       "step_ab50c14e",
       "step_888e01f3",

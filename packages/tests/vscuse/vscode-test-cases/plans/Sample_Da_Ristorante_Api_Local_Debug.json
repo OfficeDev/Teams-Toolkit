@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2.0,
       "step_retry_timeout": 0.0
     },
-    "total_steps": 18,
+    "total_steps": 16,
     "created_at": "2026-05-13T05:14:45.531565",
     "name": "Sample Da Ristorante Api Local Debug",
     "description": {
@@ -36,8 +36,6 @@
       "step_6b0beb7b",
       "plan_dcd3b7c4",
       "step_373fa827",
-      "step_5aca54bb",
-      "step_8751ce63",
       "step_7b7da1fc",
       "step_84e8ba69",
       "step_450b02f8",

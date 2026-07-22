@@ -9,7 +9,7 @@
    "precondition_retry_interval": 2,
    "step_retry_count": 0
   },
-  "total_steps": 14,
+  "total_steps": 11,
   "created_at": "2026-05-20T03:43:01.198447",
   "name": "group  debug in copilot remote DA no action Copilot License",
   "description": {
@@ -29,10 +29,7 @@
    "step_ceb13b5f",
    "step_5d691940",
    "step_063b5973",
-   "step_8b35830c",
-   "step_2d5705d2",
-   "step_ek_esc_notinstalled",
-   "step_cae4eca8"
+   "step_8b35830c"
   ],
   "tags": [
    "group"

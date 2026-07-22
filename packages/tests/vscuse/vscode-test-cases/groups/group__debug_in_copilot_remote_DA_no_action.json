@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 13,
+    "total_steps": 11,
     "created_at": "2026-05-25T01:16:24.841621",
     "name": "group: debug_in_copilot_remote_DA_no_action",
     "description": {
@@ -29,9 +29,7 @@
       "step_bfcb687a",
       "step_4c68873a",
       "step_7cfe3868",
-      "step_88c03f8a",
-      "step_0f74bc59",
-      "step_4135734c"
+      "step_88c03f8a"
     ],
     "tags": [
       "group"

@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 15,
+    "total_steps": 13,
     "created_at": "2026-04-21T01:53:19.064480",
     "name": "group  debug in copilot launch remote none da",
     "description": {
@@ -30,8 +30,6 @@
       "step_0140f9fb",
       "step_19ee7405",
       "step_77e6e5d9",
-      "step_27dc9b90",
-      "step_e84429f7",
       "step_8f5f8690"
     ],
     "tags": [
