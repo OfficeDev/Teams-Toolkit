@@ -56,6 +56,16 @@ from typing import List, Optional, Tuple
 
 import shutil
 
+# Import the PR-body renderer eagerly (at module load) rather than lazily inside
+# _render_pr_body(). run_pipeline() checks out the base branch mid-run
+# (prepare_rolling_branch -> `git checkout -B <rolling> origin/<base>`), which
+# overwrites render_vuln_summary.py in the working tree with the base-branch
+# copy. A lazy import performed after that checkout would re-read the (possibly
+# older) base-branch file and fail with ImportError if render_pr_body was added
+# on the feature branch but not yet merged to base. Importing here caches the
+# feature-branch module in sys.modules before the working tree is reset.
+from render_vuln_summary import render_pr_body
+
 
 ROLLING_BRANCH = "auto-fix-vuln/rolling"
 
@@ -844,8 +854,6 @@ def _build_scans_summary(scan_paths, skip_targets) -> List[dict]:
 
 
 def _render_pr_body(manifest: dict) -> str:
-    from render_vuln_summary import render_pr_body
-
     return render_pr_body(manifest)
 
 

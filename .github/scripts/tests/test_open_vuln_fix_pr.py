@@ -441,5 +441,40 @@ class July14ReplayTests(unittest.TestCase):
         self.assertEqual(MODULE.ROLLING_BRANCH, "auto-fix-vuln/rolling")
 
 
+class RenderPrBodyImportTests(unittest.TestCase):
+    """Regression: run_pipeline checks out the base branch mid-run, which
+    overwrites render_vuln_summary.py in the working tree. The PR-body renderer
+    must already be bound at import time so rendering cannot fail with an
+    ImportError after that checkout."""
+
+    def test_pr_body_renders_after_helper_becomes_unimportable(self):
+        manifest = {
+            "scans": [],
+            "fixed": [],
+            "already_fixed": [],
+            "no_fix": [],
+            "errors": [],
+            "pr_action": "none",
+            "pr_number": None,
+            "pr_url": "",
+        }
+        scripts_dir = str(SCRIPT.parent)
+        saved_module = sys.modules.pop("render_vuln_summary", None)
+        saved_path = list(sys.path)
+        try:
+            # Simulate the mid-run `git checkout -B <rolling> origin/<base>` that
+            # replaces render_vuln_summary.py with a base-branch copy lacking
+            # render_pr_body: make the sibling module unimportable entirely.
+            sys.path[:] = [p for p in sys.path if p != scripts_dir]
+            body = MODULE._render_pr_body(manifest)
+        finally:
+            sys.path[:] = saved_path
+            if saved_module is not None:
+                sys.modules["render_vuln_summary"] = saved_module
+
+        self.assertIsInstance(body, str)
+        self.assertIn("Vulnerability Scan", body)
+
+
 if __name__ == "__main__":
     unittest.main()
