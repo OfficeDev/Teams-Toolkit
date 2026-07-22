@@ -39,7 +39,7 @@
         "x": 351,
         "y": 367
       },
-      "description": "Click inside the \"Message Copilot\" input box in the main chat area of the Microsoft Teams web application to focus the text field for message entry.",
+      "description": "Click the \"vscuse-import-api\" agent title/icon area in the Microsoft 365 Copilot chat interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

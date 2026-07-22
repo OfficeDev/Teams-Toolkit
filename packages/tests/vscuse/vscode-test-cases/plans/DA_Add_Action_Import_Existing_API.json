@@ -5,9 +5,9 @@
     "execution_context": {
       "delay_between_steps": 0.5,
       "stop_on_error": true,
-      "precondition_wait_timeout": 60.0,
-      "precondition_retry_interval": 2.0,
-      "step_retry_timeout": 0.0
+      "precondition_wait_timeout": 60,
+      "precondition_retry_interval": 2,
+      "step_retry_timeout": 0
     },
     "total_steps": 37,
     "created_at": "2026-05-22T01:50:30.322018",
@@ -285,7 +285,7 @@
         "x": 162,
         "y": 192
       },
-      "description": "Click the \"repair.yaml\" file under the \"apiSpecificationFile\" folder in the VS Code Explorer sidebar to open it.",
+      "description": "Click the \"repair.yml\" file under the \"apiSpecificationFile\" folder in the VS Code Explorer sidebar to open it.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -313,7 +313,7 @@
         "x": 682,
         "y": 226
       },
-      "description": "Click on the \"url\" value field in the repair.yml file within Visual Studio Code, specifically at the end of the line containing \"${[OPENAPI_SERVER_URL]}/api\", to position the text cursor for editing the API server URL.",
+      "description": "Click on the \"url\" value field in the repair.yml file within Visual Studio Code, specifically at the end of the line containing \"${{OPENAPI_SERVER_URL}}/api\", to position the text cursor for editing the API server URL.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -501,7 +501,7 @@
         "x": 394,
         "y": 51
       },
-      "description": "Right-click on the highlighted URL (`https://pluginrentu.azurewebsites.net/api`) in the `repair.yml` file within Visual Studio Code, under the `apiSpecificationFile` directory, to access context menu options related to the API server endpoint.",
+      "description": "Right-click on the \"repair.yml\" editor tab in Visual Studio Code to open the tab's context menu.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -631,7 +631,7 @@
         "x": 330,
         "y": 135
       },
-      "description": "Select the \"No Action\" option in the \"Create Declarative Agent\" dropdown within the Microsoft 365 Agents extension panel in Visual Studio Code.",
+      "description": "Select the \"Add an Action\" option in the \"Create Declarative Agent\" dropdown within the Microsoft 365 Agents extension panel in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -657,7 +657,7 @@
         "x": 380,
         "y": 128
       },
-      "description": "Click the \"Start with a New API\" option in the \"Create an Action\" dropdown menu within the Visual Studio Code extension interface.",
+      "description": "Click the \"Start with an OpenAPI Description Document\" option in the \"Create an Action\" dropdown menu within the Visual Studio Code extension interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -683,7 +683,7 @@
         "x": 338,
         "y": 102
       },
-      "description": "Click the \"Browse to OpenAPI file\" option in the OpenAPI Spec Document dropdown menu within the Visual Studio Code interface.",
+      "description": "Click the \"Browse to Open File\" option in the OpenAPI Spec Document dropdown menu within the Visual Studio Code interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -789,7 +789,7 @@
         "x": 797,
         "y": 48
       },
-      "description": "Click the blue \"plus\" button next to \"1 Selected\" in the \"Select Operation(s) Copilot Can Interact with\" dialog at the top of the Visual Studio Code interface to add or select an operation.",
+      "description": "Click the \"OK\" button in the \"Select Operation(s) Copilot Can Interact with\" dialog at the top of the Visual Studio Code interface to confirm the selected operation.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
