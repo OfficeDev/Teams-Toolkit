@@ -254,7 +254,7 @@
         "x": 457,
         "y": 96
       },
-      "description": "Click the \"Allow\" button in the Microsoft 365 sign-in prompt to authorize the extension \"Microsoft 365 Agents Toolkit\" within Visual Studio Code.",
+      "description": "Click the \"Allow\" button in the Microsoft authentication popup to let the extension \"Microsoft 365 Agents Toolkit\" sign in using Microsoft for Azure account access.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
