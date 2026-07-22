@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 17,
+    "total_steps": 10,
     "created_at": "2026-04-21T01:53:19.292868",
     "name": "group__debug_in_copilot_local_none_da",
     "description": {
@@ -23,13 +23,6 @@
       "step_6861ac1e",
       "step_41dc25cd",
       "step_c923dbdb",
-      "step_9a4c83e1",
-      "step_52f689d4",
-      "step_23858b42",
-      "step_baa39070",
-      "step_e0bd25da",
-      "step_f46232aa",
-      "step_09a662a3",
       "step_c4bbcf2e",
       "step_44b3e2d1",
       "step_6c5a4ef6",
@@ -150,187 +143,6 @@
       "tags": [],
       "screenshot": "step_c923dbdb",
       "created_at": "2026-04-21T03:02:12.283307",
-      "plan_id": "plan_f355465c"
-    },
-    {
-      "step_id": "step_9a4c83e1",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 389,
-        "y": 351
-      },
-      "description": "If the Microsoft sign-in account page is shown, click the email or username field to focus it for account entry.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "true",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:389:351:16:5:2d04375555556559",
-        "dhash:389:351:96:5:3666002a6a95008c",
-        "dhash:389:351:0:10:1b28f0d9d7e6dae4"
-      ],
-      "postconditions": [],
-      "tags": [
-        "delay:60",
-        "precondition_wait_timeout:300"
-      ],
-      "screenshot": "step_sign_in_account_page",
-      "created_at": "2026-07-14T04:00:00.000000",
-      "plan_id": "plan_f355465c"
-    },
-    {
-      "step_id": "step_52f689d4",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "${{env:M365_ACCOUNT_NAME}}"
-      },
-      "description": "If the Microsoft sign-in account page is shown, type ${{env:M365_ACCOUNT_NAME}} into the focused email or username field.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "true",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:389:351:16:5:2d04375555556559",
-        "dhash:389:351:96:5:3666002a6a90028e",
-        "dhash:389:351:0:10:1b28f0cbc6f6dae4"
-      ],
-      "postconditions": [],
-      "tags": [
-        "precondition_wait_timeout:10"
-      ],
-      "screenshot": "step_sign_in_account_page",
-      "created_at": "2026-07-14T03:20:00.000000",
-      "plan_id": "plan_f355465c"
-    },
-    {
-      "step_id": "step_23858b42",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 635,
-        "y": 487
-      },
-      "description": "If an account was entered on the Microsoft sign-in page, click Next to continue to password entry.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "true",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:635:487:16:5:65565645259a2000",
-        "dhash:635:487:96:5:40004c62300c0000",
-        "dhash:635:487:0:10:1b28f0cbc6f6dae4"
-      ],
-      "postconditions": [],
-      "tags": [
-        "precondition_wait_timeout:10"
-      ],
-      "screenshot": "step_sign_in_account_page",
-      "created_at": "2026-07-14T03:20:00.000000",
-      "plan_id": "plan_f355465c"
-    },
-    {
-      "step_id": "step_baa39070",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 389,
-        "y": 420
-      },
-      "description": "Click on the \"Password\" text field within the Microsoft account login page to focus and enable input.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:389:420:16:5:00895121a9a92300",
-        "dhash:389:420:96:5:3b5300cc6c100052",
-        "dhash:389:420:0:10:1b08f0d9d1e6e6e4"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_baa39070",
-      "created_at": "2026-04-21T03:02:12.293313",
-      "plan_id": "plan_f355465c"
-    },
-    {
-      "step_id": "step_e0bd25da",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "${{secret:M365_ACCOUNT_PASSWORD}}"
-      },
-      "description": "Type  ${{secret:M365_ACCOUNT_PASSWORD}} into the password input field on the Microsoft login page to authenticate user  ${{env:M365_ACCOUNT_NAME}}",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:1b08f0d9d1e6e6e4"
-      ],
-      "postconditions": [],
-      "tags": [
-        "delay:3"
-      ],
-      "screenshot": "step_e0bd25da",
-      "created_at": "2026-04-21T03:02:12.303671",
-      "plan_id": "plan_f355465c"
-    },
-    {
-      "step_id": "step_f46232aa",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press the \"Enter\" key to submit the password field in the Microsoft login page.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:1b08f0d9d1e6e6e4"
-      ],
-      "postconditions": [],
-      "tags": [
-        "delay: 3"
-      ],
-      "screenshot": "step_f46232aa",
-      "created_at": "2026-04-21T03:02:12.312239",
-      "plan_id": "plan_f355465c"
-    },
-    {
-      "step_id": "step_09a662a3",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press the \"Enter\" key to confirm the \"Stay signed in?\" prompt by selecting the highlighted \"Yes\" button on the Microsoft login page in a browser.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:1808f0d9d9e6e6e4"
-      ],
-      "postconditions": [],
-      "tags": [
-        "delay: 3"
-      ],
-      "screenshot": "step_09a662a3",
-      "created_at": "2026-04-21T03:02:12.321233",
       "plan_id": "plan_f355465c"
     },
     {
