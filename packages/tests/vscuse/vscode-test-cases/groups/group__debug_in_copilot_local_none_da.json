@@ -377,7 +377,8 @@
       ],
       "postconditions": [],
       "tags": [
-        "precondition_wait_timeout:3"
+        "precondition_wait_timeout:3",
+        "force_run:true"
       ],
       "screenshot": "step_agent_not_installed",
       "created_at": "2026-07-14T05:14:10.000000",
