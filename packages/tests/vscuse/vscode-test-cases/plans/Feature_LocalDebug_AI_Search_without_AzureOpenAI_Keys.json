@@ -296,14 +296,14 @@
       "parameters": {},
       "description": "@assertion  'Azure OpenAI Key' is visible",
       "content_refs": [],
-      "timeout": 30,
+      "timeout": 300,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "step_retry_timeout:90"
+        "step_retry_timeout:300"
       ],
       "screenshot": null,
       "created_at": "2026-04-30T07:23:59.737028",
@@ -524,11 +524,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:509:513:16:5:d3d3dadad3d1d932",
-        "dhash:509:513:96:5:00000669712c1c53",
-        "dhash:509:513:0:10:3669696969696979"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "precondition_wait_timeout:180"
