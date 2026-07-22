@@ -39,7 +39,7 @@
         "x": 351,
         "y": 367
       },
-      "description": "Click inside the \"Message ${{var:app_name}}local\" input box in the main chat area of the M365 Copilot web application to focus the text field for message entry.",
+      "description": "Click inside the \"Message ${{var:app_name}}dev\" input box in the main chat area of the M365 Copilot web application to focus the text field for message entry.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
