@@ -5,9 +5,9 @@
     "execution_context": {
       "delay_between_steps": 0.5,
       "stop_on_error": true,
-      "precondition_wait_timeout": 60.0,
-      "precondition_retry_interval": 2.0,
-      "step_retry_timeout": 0.0
+      "precondition_wait_timeout": 60,
+      "precondition_retry_interval": 2,
+      "step_retry_timeout": 0
     },
     "total_steps": 18,
     "created_at": "2026-06-04T09:12:10.355519",
@@ -150,7 +150,7 @@
         "x": 531,
         "y": 100
       },
-      "description": "Click the \"aad.manifest.json\" file tab in the editor area of Visual Studio Code to activate or focus the manifest file for the GRAPH-TOOLKIT-CONTACT-EXPORTER project.",
+      "description": "Click the \"Convert to New Schema\" link at the top of the aad.manifest.json editor in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -406,7 +406,7 @@
         "x": 26,
         "y": 61
       },
-      "description": "Click the \"MICROSOFT 365 AGENTS TOOLKIT\" sidebar icon in the Visual Studio Code interface to open the toolkit panel.",
+      "description": "Click the Explorer icon in the Activity Bar of Visual Studio Code to open the file explorer panel.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

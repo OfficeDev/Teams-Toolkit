@@ -7,7 +7,7 @@
       "stop_on_error": true,
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2,
-      "step_retry_timeout": 0.0
+      "step_retry_timeout": 0
     },
     "total_steps": 7,
     "created_at": "2026-05-18T03:02:55.645029",
@@ -42,7 +42,7 @@
         "x": 948,
         "y": 129
       },
-      "description": "Click the language selector button (flag icon) in the top-right corner of the VS Code welcome screen to change the interface language.",
+      "description": "Click the close (X) button in the top-right corner of the VS Code welcome dialog.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
