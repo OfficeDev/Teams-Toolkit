@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 13,
+    "total_steps": 14,
     "created_at": "2026-04-21T01:53:19.292868",
     "name": "group__debug_in_copilot_local_none_da",
     "description": {
@@ -30,6 +30,7 @@
       "step_e0bd25da",
       "step_f46232aa",
       "step_09a662a3",
+      "step_c4bbcf2e",
       "step_ba7f9051"
     ],
     "tags": [
@@ -327,6 +328,31 @@
       ],
       "screenshot": "step_09a662a3",
       "created_at": "2026-04-21T03:02:12.321233",
+      "plan_id": "plan_f355465c"
+    },
+    {
+      "step_id": "step_c4bbcf2e",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+-"
+      },
+      "description": "Use keyboard shortcut \"Ctrl+-\" to zoom out on the \"Chat | M365 Copilot\" page in a web browser.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:13a282828a828282"
+      ],
+      "postconditions": [],
+      "tags": [
+        "force_run:true",
+        "delay:30"
+      ],
+      "screenshot": "step_c4bbcf2e",
+      "created_at": "2026-04-21T03:02:12.330636",
       "plan_id": "plan_f355465c"
     },
     {

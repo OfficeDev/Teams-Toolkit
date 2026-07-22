@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 13,
+    "total_steps": 14,
     "created_at": "2026-04-21T01:53:19.064480",
     "name": "group  debug in copilot launch remote none da",
     "description": {
@@ -30,6 +30,7 @@
       "step_0140f9fb",
       "step_19ee7405",
       "step_77e6e5d9",
+      "step_27dc9b90",
       "step_8f5f8690"
     ],
     "tags": [
@@ -331,6 +332,31 @@
       ],
       "screenshot": "step_77e6e5d9",
       "created_at": "2026-04-21T03:01:47.064701",
+      "plan_id": "plan_c795f9af"
+    },
+    {
+      "step_id": "step_27dc9b90",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+-"
+      },
+      "description": "Zoom out the viewport in the browser displaying the \"Chat | M365 Copilot\" page by using the keyboard shortcut: Ctrl + -.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:13a282828a828282"
+      ],
+      "postconditions": [],
+      "tags": [
+        "delay: 30",
+        "force_run:true"
+      ],
+      "screenshot": "step_27dc9b90",
+      "created_at": "2026-04-21T03:01:47.071846",
       "plan_id": "plan_c795f9af"
     },
     {

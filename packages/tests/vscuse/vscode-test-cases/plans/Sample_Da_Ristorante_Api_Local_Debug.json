@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2.0,
       "step_retry_timeout": 0.0
     },
-    "total_steps": 16,
+    "total_steps": 17,
     "created_at": "2026-05-13T05:14:45.531565",
     "name": "Sample Da Ristorante Api Local Debug",
     "description": {
@@ -36,6 +36,7 @@
       "step_6b0beb7b",
       "plan_dcd3b7c4",
       "step_373fa827",
+      "step_5aca54bb",
       "step_7b7da1fc",
       "step_84e8ba69",
       "step_450b02f8",
@@ -322,6 +323,31 @@
       "tags": [],
       "screenshot": "step_373fa827",
       "created_at": "2026-05-13T06:16:35.365061",
+      "plan_id": "plan_b0d5be76"
+    },
+    {
+      "step_id": "step_5aca54bb",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+-"
+      },
+      "description": "Reduce the zoom level of the Copilot Chat web interface in Microsoft Edge by pressing the keyboard shortcut Ctrl + - while focused on the main \"Welcome to Copilot Chat\" screen.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:1d859668702b2884"
+      ],
+      "postconditions": [],
+      "tags": [
+        "force_run:true",
+        "delay:30"
+      ],
+      "screenshot": "step_5aca54bb",
+      "created_at": "2026-05-13T06:16:35.371065",
       "plan_id": "plan_b0d5be76"
     },
     {

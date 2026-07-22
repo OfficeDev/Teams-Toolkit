@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 15,
+    "total_steps": 16,
     "created_at": "2026-05-21T01:42:33.007408",
     "name": "DA No Action Local Debug",
     "description": {
@@ -37,6 +37,7 @@
       "step_cf00d488",
       "step_db18d1a5",
       "step_156ed394",
+      "step_904a54b9",
       "step_c1889d91",
       "plan_r_1023_054001"
     ],
@@ -376,6 +377,31 @@
       ],
       "screenshot": "step_156ed394",
       "created_at": "2026-05-21T01:42:33.081917",
+      "plan_id": "plan_2bd0acc6"
+    },
+    {
+      "step_id": "step_904a54b9",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+-"
+      },
+      "description": "Use keyboard shortcut \"Ctrl + -\" to zoom out in the web browser displaying the \"Chat | M365 Copilot\" interface.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:13a282828a828282"
+      ],
+      "postconditions": [],
+      "tags": [
+        "delay: 30",
+        "force_run:true"
+      ],
+      "screenshot": "step_904a54b9",
+      "created_at": "2026-05-21T01:42:33.086765",
       "plan_id": "plan_2bd0acc6"
     },
     {

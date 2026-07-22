@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 11,
+    "total_steps": 12,
     "created_at": "2026-05-25T01:16:24.841621",
     "name": "group: debug_in_copilot_remote_DA_no_action",
     "description": {
@@ -29,7 +29,8 @@
       "step_bfcb687a",
       "step_4c68873a",
       "step_7cfe3868",
-      "step_88c03f8a"
+      "step_88c03f8a",
+      "step_0f74bc59"
     ],
     "tags": [
       "group"
@@ -298,6 +299,31 @@
       "tags": [],
       "screenshot": "step_88c03f8a",
       "created_at": "2026-05-25T01:16:24.936842",
+      "plan_id": "plan_r_1021_031941"
+    },
+    {
+      "step_id": "step_0f74bc59",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+-"
+      },
+      "description": "Perform keyboard shortcut \"Ctrl+-\" to reduce the zoom level in the web browser displaying the \"Chat | M365 Copilot\" interface.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:13a282828a828282"
+      ],
+      "postconditions": [],
+      "tags": [
+        "delay: 30",
+        "force_run:true"
+      ],
+      "screenshot": "step_0f74bc59",
+      "created_at": "2026-05-25T01:16:24.945093",
       "plan_id": "plan_r_1021_031941"
     }
   ],
