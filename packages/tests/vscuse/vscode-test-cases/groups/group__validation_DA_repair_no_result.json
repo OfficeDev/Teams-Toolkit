@@ -102,7 +102,7 @@
         "x": 340,
         "y": 354
       },
-      "description": "Click the blue \"Allow\" button in the Microsoft Teams web interface to grant access for the vscuse_app_TqtxJdev agent, as indicated by the red crosshair overlay.",
+      "description": "Click the gray \"Allow\" button in the Microsoft 365 Copilot chat interface to grant access for the ${{var:app_name}} agent, as indicated by the red crosshair overlay.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
