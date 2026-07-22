@@ -107,7 +107,7 @@
         "x": 352,
         "y": 74
       },
-      "description": "Click the \"Default folder\" dropdown in the \"Workspace Folder\" dialog to set the project root folder path (`/home/.vscode/AgentsToolkitProjects`).",
+      "description": "Click the \"Default folder\" dropdown in the \"Workspace Folder\" dialog to set the project root folder path (`/home/vscode/AgentsToolkitProjects`).",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -430,7 +430,7 @@
         "x": 99,
         "y": 62
       },
-      "description": "Click the \"New chat\" button in the left sidebar to start a new conversation in the M365 Copilot web interface.",
+      "description": "Click the browser's reload button in the address bar to refresh the M365 Copilot web page.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
