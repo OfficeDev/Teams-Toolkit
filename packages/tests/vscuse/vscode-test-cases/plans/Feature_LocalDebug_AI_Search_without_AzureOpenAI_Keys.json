@@ -494,17 +494,13 @@
         "x": 312,
         "y": 216
       },
-      "description": "Click the \"Open\" button in the app details popup for vscuse_app_4YhGglocal within the Microsoft Teams web interface.",
+      "description": "Click the \"Open\" or \"Add\" button in the app details popup for vscuse_app_4YhGglocal within the Microsoft Teams web interface. The popup shows \"Add\" when the app is not yet installed and \"Open\" when it is already installed.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:312:216:16:5:34e338b4b4b018c7",
-        "dhash:312:216:96:5:93102561610d0047",
-        "dhash:312:216:0:10:00bcb0d8f8fce0d8"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "precondition_wait_timeout:180"
@@ -522,7 +518,7 @@
         "x": 509,
         "y": 513
       },
-      "description": "Click the \"Open\" button in the vsсuse_app_4YhGglocal app onboarding dialog within the Microsoft Teams web interface.",
+      "description": "Click the \"Open\" button in the vs\u0441use_app_4YhGglocal app onboarding dialog within the Microsoft Teams web interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
