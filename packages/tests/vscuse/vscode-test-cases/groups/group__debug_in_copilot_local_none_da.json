@@ -172,8 +172,8 @@
             ],
             "postconditions": [],
             "tags": [
-                "delay:180",
-                "precondition_wait_timeout:10"
+                "precondition_wait_timeout:180",
+                "optional_if_prompted:m365_signin"
             ],
             "screenshot": "step_sign_in_account_page",
             "created_at": "2026-07-14T04:00:00.000000",
@@ -199,7 +199,8 @@
             ],
             "postconditions": [],
             "tags": [
-                "precondition_wait_timeout:10"
+                "precondition_wait_timeout:10",
+                "optional_if_prompted:m365_signin"
             ],
             "screenshot": "step_sign_in_account_page",
             "created_at": "2026-07-14T03:20:00.000000",
@@ -227,7 +228,8 @@
             ],
             "postconditions": [],
             "tags": [
-                "precondition_wait_timeout:10"
+                "precondition_wait_timeout:10",
+                "optional_if_prompted:m365_signin"
             ],
             "screenshot": "step_sign_in_account_page",
             "created_at": "2026-07-14T03:20:00.000000",
@@ -246,7 +248,7 @@
             "content_refs": [],
             "timeout": 30,
             "retry_count": 0,
-            "continue_on_error": "false",
+            "continue_on_error": "true",
             "depends_on": [],
             "preconditions": [
                 "dhash:389:420:16:5:00895121a9a92300",
@@ -254,7 +256,10 @@
                 "dhash:389:420:0:10:1b08f0d9d1e6e6e4"
             ],
             "postconditions": [],
-            "tags": [],
+            "tags": [
+                "precondition_wait_timeout:15",
+                "optional_if_prompted:m365_signin"
+            ],
             "screenshot": "step_baa39070",
             "created_at": "2026-04-21T03:02:12.293313",
             "plan_id": "plan_f355465c"
@@ -270,14 +275,16 @@
             "content_refs": [],
             "timeout": 30,
             "retry_count": 0,
-            "continue_on_error": "false",
+            "continue_on_error": "true",
             "depends_on": [],
             "preconditions": [
                 "dhash:512:384:0:20:1b08f0d9d1e6e6e4"
             ],
             "postconditions": [],
             "tags": [
-                "delay:3"
+                "delay:3",
+                "precondition_wait_timeout:10",
+                "optional_if_prompted:m365_signin"
             ],
             "screenshot": "step_e0bd25da",
             "created_at": "2026-04-21T03:02:12.303671",
@@ -294,14 +301,16 @@
             "content_refs": [],
             "timeout": 30,
             "retry_count": 0,
-            "continue_on_error": "false",
+            "continue_on_error": "true",
             "depends_on": [],
             "preconditions": [
                 "dhash:512:384:0:20:1b08f0d9d1e6e6e4"
             ],
             "postconditions": [],
             "tags": [
-                "delay: 3"
+                "delay:3",
+                "precondition_wait_timeout:10",
+                "optional_if_prompted:m365_signin"
             ],
             "screenshot": "step_f46232aa",
             "created_at": "2026-04-21T03:02:12.312239",
@@ -318,14 +327,16 @@
             "content_refs": [],
             "timeout": 30,
             "retry_count": 0,
-            "continue_on_error": "false",
+            "continue_on_error": "true",
             "depends_on": [],
             "preconditions": [
                 "dhash:512:384:0:20:1808f0d9d9e6e6e4"
             ],
             "postconditions": [],
             "tags": [
-                "delay: 3"
+                "delay:3",
+                "precondition_wait_timeout:10",
+                "optional_if_prompted:m365_signin"
             ],
             "screenshot": "step_09a662a3",
             "created_at": "2026-04-21T03:02:12.321233",
