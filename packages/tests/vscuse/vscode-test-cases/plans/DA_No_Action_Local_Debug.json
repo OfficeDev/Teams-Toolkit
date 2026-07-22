@@ -381,57 +381,6 @@
       "plan_id": "plan_2bd0acc6"
     },
     {
-      "step_id": "step_904a54b9",
-      "agent": "interaction",
-      "tool": "keyboard_shortcut",
-      "parameters": {
-        "keys": "ctrl+-"
-      },
-      "description": "Use keyboard shortcut \"Ctrl + -\" to zoom out in the web browser displaying the \"Chat | M365 Copilot\" interface.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:13a282828a828282"
-      ],
-      "postconditions": [],
-      "tags": [
-        "delay: 30",
-        "force_run:true"
-      ],
-      "screenshot": "step_904a54b9",
-      "created_at": "2026-05-21T01:42:33.086765",
-      "plan_id": "plan_2bd0acc6"
-    },
-    {
-      "step_id": "step_81c23c3a",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 96,
-        "y": 62
-      },
-      "description": "Click the \"Reload\" button in the Google Chrome address bar to refresh the M365 Copilot web application page. The interaction is indicated by a red crosshair over the circular arrow icon next to the URL.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:96:62:16:5:714698b0b2b49947",
-        "dhash:96:62:96:5:4c40004c4c810200",
-        "dhash:96:62:0:10:15e58c9c9cccc0c0"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_81c23c3a",
-      "created_at": "2026-05-21T01:42:33.090765",
-      "plan_id": "plan_2bd0acc6"
-    },
-    {
       "step_id": "step_c1889d91",
       "agent": "assertion",
       "tool": "",
