@@ -69,7 +69,7 @@
         "x": 650,
         "y": 220
       },
-      "description": "Click on the dropdown option \"General Teams Agent\" in the \"Teams Agent or App Using Teams AI Library\" menu, located at coordinates (650, 220), to select it.",
+      "description": "Click on the dropdown option \"General Teams Agent\" in the \"Teams Agent or App Using Microsoft Teams SDK\" menu, located at coordinates (650, 220), to select it.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -193,7 +193,7 @@
         "x": 1008,
         "y": 20
       },
-      "description": "Click the \"Close\" button (X icon) to close the Log Panel in the Microsoft 365 Agents Playground interface.",
+      "description": "Click the \"Close\" button (X icon) in the browser window's title bar to close the window.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -369,7 +369,7 @@
         "x": 999,
         "y": 19
       },
-      "description": "Click the \"Close\" button (X) located in the top-right corner of the \"Log Panel\" on the Microsoft 365 Agents Playground interface.",
+      "description": "Click the \"Close\" button (X) in the browser window's title bar to close the window.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -431,7 +431,7 @@
         "x": 58,
         "y": 18
       },
-      "description": "Click on the \"Start Debugging\" button located in the top-left corner of the Visual Studio Code interface to initiate the debugging process.",
+      "description": "Click on the \"File\" menu located in the top-left corner of the Visual Studio Code menu bar.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -674,7 +674,7 @@
         "x": 361,
         "y": 313
       },
-      "description": "Click the list item labeled \"account\" in the file selection dialog to select it.",
+      "description": "Click the empty area below the file list (bin, projectStates.json, state.json, telemetryTest.log) in the file selection dialog.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
