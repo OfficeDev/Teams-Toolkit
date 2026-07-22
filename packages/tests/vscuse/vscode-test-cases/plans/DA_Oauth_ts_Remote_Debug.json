@@ -82,7 +82,7 @@
         "x": 320,
         "y": 136
       },
-      "description": "Click the \"No Action\" option in the \"Add an action to your declarative agent\" dropdown menu within the \"Create Declarative Agent\" dialog in Microsoft Visual Studio Code.",
+      "description": "Click the \"Add an Action\" option in the \"Add an action to your declarative agent\" dropdown menu within the \"Create Declarative Agent\" dialog in Microsoft Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
