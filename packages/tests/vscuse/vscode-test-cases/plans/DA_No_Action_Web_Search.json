@@ -1243,7 +1243,7 @@
         "x": 373,
         "y": 50
       },
-      "description": "Click the \"manifest.json\" tab in the Visual Studio Code editor to switch to the manifest.json file.",
+      "description": "Click on the \"manifest.json\" file entry in the VS Code quick open search dropdown to open the file.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
