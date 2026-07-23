@@ -53,7 +53,7 @@
         "x": 474,
         "y": 210
       },
-      "description": "Click on the \"General Teams Agent\" option within the dropdown menu titled \"Teams Agent or App Using Teams AI Library\" at coordinates (474, 210).",
+      "description": "Click on the \"General Teams Agent\" option within the dropdown menu titled \"Teams Agent or App Using Microsoft Teams SDK\" at coordinates (474, 210).",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -131,7 +131,7 @@
         "x": 385,
         "y": 240
       },
-      "description": "Click the \"Allow\" button on the browser permission popup requesting access for \"teams.cloud.microsoft\" to access other apps and services on this device in the Microsoft Teams web interface.",
+      "description": "Click the \"Allow\" button on the browser permission popup requesting access for \"teams.cloud.microsoft\" to access other apps and services on this device in the \"ATK Testing 06\" team's Microsoft Teams web interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -157,7 +157,7 @@
         "x": 291,
         "y": 18
       },
-      "description": "Click the browser tab close button (X) in the top-right corner of the \"Microsoft Teams\" web application interface, closing the current Teams chat window.",
+      "description": "Click the \"New tab\" (+) button next to the \"Chat | General | Microsoft\" tab in Google Chrome to open a new browser tab.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -305,7 +305,7 @@
         "x": 759,
         "y": 198
       },
-      "description": "Click the \"Home\" tab in the Microsoft Teams web interface, within the \"General\" channel of the \"ATK Testing05\" team.",
+      "description": "Click the \"Home\" tab in the Microsoft Teams web interface, within the \"General\" channel of the \"ATK Testing 06\" team.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
