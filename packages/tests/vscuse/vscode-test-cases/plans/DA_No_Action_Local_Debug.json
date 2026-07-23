@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 17,
+    "total_steps": 16,
     "created_at": "2026-05-21T01:42:33.007408",
     "name": "DA No Action Local Debug",
     "description": {
@@ -38,7 +38,6 @@
       "step_db18d1a5",
       "step_156ed394",
       "step_904a54b9",
-      "step_81c23c3a",
       "step_c1889d91",
       "plan_r_1023_054001"
     ],
@@ -403,32 +402,6 @@
       ],
       "screenshot": "step_904a54b9",
       "created_at": "2026-05-21T01:42:33.086765",
-      "plan_id": "plan_2bd0acc6"
-    },
-    {
-      "step_id": "step_81c23c3a",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 96,
-        "y": 62
-      },
-      "description": "Click the \"Reload\" button in the Google Chrome address bar to refresh the M365 Copilot web application page. The interaction is indicated by a red crosshair over the circular arrow icon next to the URL.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:96:62:16:5:714698b0b2b49947",
-        "dhash:96:62:96:5:4c40004c4c810200",
-        "dhash:96:62:0:10:15e58c9c9cccc0c0"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_81c23c3a",
-      "created_at": "2026-05-21T01:42:33.090765",
       "plan_id": "plan_2bd0acc6"
     },
     {

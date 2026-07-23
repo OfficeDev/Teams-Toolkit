@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 20,
+    "total_steps": 19,
     "created_at": "2026-05-18T10:07:16.265795",
     "name": "group: debug_in_copilot_local",
     "description": {
@@ -36,7 +36,6 @@
       "step_86a70854",
       "step_a0762a17",
       "step_3bb29c8a",
-      "step_ac955e3b",
       "step_670cbf14"
     ],
     "tags": [
@@ -463,30 +462,6 @@
         "force_run:true"
       ],
       "screenshot": "step_3bb29c8a",
-      "created_at": "2026-05-18T10:07:16.352198",
-      "plan_id": "plan_r_0928_095902"
-    },
-    {
-      "step_id": "step_ac955e3b",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "f5"
-      },
-      "description": "Press the F5 key to refresh the M365 Copilot chat interface within the Microsoft Edge browser, reloading the page displaying the \"Hi, what can I help you with?\" prompt and sidebar agent list.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:05e58c9cd88c80c0"
-      ],
-      "postconditions": [],
-      "tags": [
-        "force_run:true"
-      ],
-      "screenshot": "step_ac955e3b",
       "created_at": "2026-05-18T10:07:16.352198",
       "plan_id": "plan_r_0928_095902"
     },
