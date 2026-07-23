@@ -243,7 +243,7 @@
         "x": 75,
         "y": 146
       },
-      "description": "Click the \".env\" file in the Explorer panel of Visual Studio Code to select it.",
+      "description": "Click the \"env\" folder in the Explorer panel of Visual Studio Code to expand it.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -295,7 +295,7 @@
         "x": 504,
         "y": 196
       },
-      "description": "Click the \"View provisioned resources\" button in the notification popup at the bottom right of the Visual Studio Code interface.",
+      "description": "Click on the value field \"personal\" of the AGENT_SCOPE environment variable in the .env.dev file within the Visual Studio Code editor.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

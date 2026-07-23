@@ -263,7 +263,7 @@
         "x": 298,
         "y": 103
       },
-      "description": "Click the \"Agent Microsoft 365 Agent\" option in the app selection dropdown within the Microsoft 365 Agents Toolkit interface in Visual Studio Code. The red crosshair marks the exact interaction point, ensuring the \"Agent\" app option is selected for managing collaborators.",
+      "description": "Click the \"app Your app\" checkbox option in the app selection dropdown within the Microsoft 365 Agents Toolkit interface in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -289,7 +289,7 @@
         "x": 793,
         "y": 53
       },
-      "description": "Click the “Manage collaborators” blue button (with user icon) in the app selection popup of the Microsoft 365 Agents Toolkit extension in Visual Studio Code.",
+      "description": "Click the \"OK\" button in the \"Select the app for which you want to manage collaborators\" dialog of the Microsoft 365 Agents Toolkit extension in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -503,7 +503,7 @@
         "x": 310,
         "y": 132
       },
-      "description": "Click the \"Add App Owners\" option in the \"Manage who can make changes to your app\" dropdown within the Microsoft 365 Agents extension panel in Visual Studio Code.",
+      "description": "Click the \"List App Owners\" option in the \"Manage who can make changes to your app\" dropdown within the Microsoft 365 Agents extension panel in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

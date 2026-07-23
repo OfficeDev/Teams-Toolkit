@@ -329,7 +329,7 @@
         "x": 635,
         "y": 458
       },
-      "description": "Click the \"Next\" button on the Microsoft sign-in page after entering the email address (test01@atktesting05.onmicrosoft.com) in the login.microsoftonline.com authentication interface.",
+      "description": "Click the \"Next\" button on the Microsoft sign-in page after entering the email address (${{env:AZURE_ACCOUNT_NAME}}) in the login.microsoftonline.com authentication interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

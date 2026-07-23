@@ -305,7 +305,7 @@
         "x": 228,
         "y": 51
       },
-      "description": "Click the \"Selected\" dropdown within the operation selection dialog in Visual Studio Code's Microsoft 365 Agents extension, targeting the input for selecting available API operations above the OK button.",
+      "description": "Click the checkbox to select all available operations in the \"Select Operation(s) Copilot Can Interact with\" dialog within Visual Studio Code's Microsoft 365 Agents extension.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -383,7 +383,7 @@
         "x": 486,
         "y": 113
       },
-      "description": "Click the \"Proceed\" button in the confirmation dialog of the Microsoft 365 Agents Toolkit extension within Visual Studio Code.",
+      "description": "Click the \"Add\" button in the confirmation dialog of the Microsoft 365 Agents Toolkit extension within Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -647,7 +647,7 @@
         "x": 793,
         "y": 49
       },
-      "description": "Click the language selector (flag icon) in the \"Select Operation(s) Copilot Can Interact with\" pop-up within Visual Studio Code to change the interface language.",
+      "description": "Click the \"OK\" button in the \"Select Operation(s) Copilot Can Interact with\" pop-up within Visual Studio Code to confirm the selected operations.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -815,7 +815,7 @@
         "x": 23,
         "y": 64
       },
-      "description": "Click the “Microsoft 365 Agents Toolkit” icon in the Visual Studio Code sidebar to open the extension panel.",
+      "description": "Click the Explorer icon in the Visual Studio Code Activity Bar to open the Explorer panel.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -911,7 +911,7 @@
         "x": 116,
         "y": 439
       },
-      "description": "Click the \"env\" folder in the Explorer panel within Visual Studio Code, expanding its contents in the project \"VSCAUSE_APP_VTAMB.\"",
+      "description": "Click the \"env\" folder in the Explorer panel within Visual Studio Code, expanding its contents in the project \"${{var:app_name}}.\"",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -937,7 +937,7 @@
         "x": 126,
         "y": 458
       },
-      "description": "Click the \".env\" file under the \"env\" folder in the Explorer panel of Visual Studio Code.",
+      "description": "Click the \".env.dev\" file under the \"env\" folder in the Explorer panel of Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1081,7 +1081,7 @@
         "x": 779,
         "y": 143
       },
-      "description": "Click the \"shared\" value in the AGENT_SCOPE variable within the .env.dev file in Visual Studio Code, highlighting the text in the editor for potential editing.",
+      "description": "Click the \"Replace All\" icon in the Find and Replace bar of Visual Studio Code's .env.dev editor to replace \"shared\" with \"personal\".",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1291,7 +1291,7 @@
         "x": 499,
         "y": 51
       },
-      "description": "Click the settings gear icon in the Visual Studio Code command palette to open palette options while searching for \"show notifications\".",
+      "description": "Click the \"Notifications: Show Notifications\" command in the Visual Studio Code command palette while searching for \"show notifications\".",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

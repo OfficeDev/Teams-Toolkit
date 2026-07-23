@@ -356,7 +356,7 @@
         "x": 429,
         "y": 415
       },
-      "description": "Click the radio button next to the \"General\" channel under \"ATK Testing05\" in the \"Choose where to get started\" dialog in Microsoft Teams web app.",
+      "description": "Click the radio button next to the \"General\" channel under \"ATK Testing 06\" in the \"Choose where to get started\" dialog in Microsoft Teams web app.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -382,7 +382,7 @@
         "x": 702,
         "y": 679
       },
-      "description": "Click the orange \"Go\" button at the bottom right of the \"Added successfully!\" popup in Microsoft Teams, confirming the selected channel to proceed with app usage.",
+      "description": "Click the \"Go\" button at the bottom right of the \"Choose where to get started\" dialog in Microsoft Teams, confirming the selected channel to proceed with app usage.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

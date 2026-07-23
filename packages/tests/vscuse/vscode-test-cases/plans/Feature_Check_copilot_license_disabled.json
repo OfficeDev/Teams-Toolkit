@@ -7,7 +7,7 @@
       "stop_on_error": true,
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2,
-      "step_retry_timeout": 0.0
+      "step_retry_timeout": 0
     },
     "total_steps": 16,
     "created_at": "2026-06-17T02:02:48.491331",
@@ -185,7 +185,7 @@
         "x": 566,
         "y": 433
       },
-      "description": "Click the \"Set up your environment\" radio button under the \"Introduction\" section of the tutorial interface for Microsoft 365 Agents Toolkit in Visual Studio Code.",
+      "description": "Click the \"Check Copilot License\" button in the \"Set up your environment\" section of the Microsoft 365 Agents Toolkit welcome page in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
