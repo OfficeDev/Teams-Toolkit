@@ -39,7 +39,7 @@ on:
       max_retries:
         required: false
         type: number
-        default: 7
+        default: 1
       schedule_trigger:
         required: false
         type: boolean
@@ -124,7 +124,7 @@ jobs:
       matrix:
         test_plan: ${{ fromJson(needs.discover-test-plans.outputs.test-plans) }}
       fail-fast: false
-      max-parallel: 100
+      max-parallel: 50
     permissions:
       contents: read
       packages: write
