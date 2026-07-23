@@ -457,7 +457,7 @@
         "x": 322,
         "y": 100
       },
-      "description": "Click the \"Sign in to Microsoft 365\" link in the ACCOUNTS section of the Microsoft 365 Agents Toolkit panel within Visual Studio Code.",
+      "description": "Click on the empty editor pane area in Visual Studio Code, just to the right of the Microsoft 365 Agents Toolkit sidebar.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
