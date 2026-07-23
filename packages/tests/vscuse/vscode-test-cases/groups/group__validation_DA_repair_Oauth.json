@@ -41,7 +41,7 @@
         "x": 376,
         "y": 409
       },
-      "description": "Click on the blank area of the chat pane, just below the \"${{var:app_name}}dev\" agent title and above the \"Created by\" line, in the M365 Copilot chat interface.",
+      "description": "Click on the blank area of the chat pane, just below the \"${{var:app_name}}dev\" agent title and above the \"Created by\" line, in the M365 Copilot chat interface.(Previously used for clicking the input box, but now used for precondition validation.)",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
