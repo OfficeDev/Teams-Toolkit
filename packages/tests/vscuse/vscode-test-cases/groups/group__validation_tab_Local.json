@@ -44,7 +44,7 @@
         "x": 295,
         "y": 21
       },
-      "description": "Click the \"Add (+)\" button in the notification bar at the top of the Microsoft Teams browser interface.",
+      "description": "Click the \"+\" New Tab button in the Google Chrome browser toolbar to open a new tab.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -166,7 +166,7 @@
         "x": 175,
         "y": 19
       },
-      "description": "Click the browser tab labeled \"(2) vscuse_app...\" at the top left of the Google Chrome window to switch focus from the \"Home\" tab.",
+      "description": "Click the browser tab labeled \"vscuse_app...\" at the top left of the Google Chrome window to switch focus from the \"Home\" tab.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -192,7 +192,7 @@
         "x": 995,
         "y": 198
       },
-      "description": "Click the red plus (+) button in the Microsoft Teams web app interface to add a new item or perform an add action within the \"vscuse_app_RDJh3local\" tab.",
+      "description": "Click the \"...\" (more options) button in the Microsoft Teams web app interface to open the dropdown menu for the \"${{var:app_name}}local\" tab.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -218,7 +218,7 @@
         "x": 933,
         "y": 231
       },
-      "description": "Click the \"Reload app\" option in the dropdown menu of the vscuse_app_RDJh3local tab within Microsoft Teams Web, indicated by the circular arrow icon.",
+      "description": "Click the \"Reload app\" option in the dropdown menu of the ${{var:app_name}}local tab within Microsoft Teams Web, indicated by the circular arrow icon.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
