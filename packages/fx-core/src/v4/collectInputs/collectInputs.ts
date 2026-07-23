@@ -402,15 +402,13 @@ export async function walkInputs(
         continue;
       }
       if (Array.isArray(q.default)) {
-        for (const id of q.default) {
-          const optionValidation = Array.isArray(options)
-            ? validateOptionAnswer(q, id, options)
-            : resolvedOptions === undefined
-              ? ok(undefined)
-              : await validateProviderOptionAnswer(q, id, resolvedOptions);
-          if (optionValidation.isErr()) {
-            return err(optionValidation.error);
-          }
+        const optionValidation = Array.isArray(options)
+          ? validateOptionAnswer(q, q.default, options)
+          : resolvedOptions === undefined
+            ? ok(undefined)
+            : await validateProviderOptionAnswer(q, q.default, resolvedOptions);
+        if (optionValidation.isErr()) {
+          return err(optionValidation.error);
         }
         answers[q.name] = q.default;
         pos++;
