@@ -41,7 +41,7 @@
         "x": 350,
         "y": 373
       },
-      "description": "Click on the \"Message Copilot\" input field in the chat interface within Microsoft 365 Copilot, positioning the cursor for text entry.",
+      "description": "Click on the blank area above the \"vscuse_app_${{var:app_name}}local\" agent title in the Microsoft 365 Copilot chat interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
