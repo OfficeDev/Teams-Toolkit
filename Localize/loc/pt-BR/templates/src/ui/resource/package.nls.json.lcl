@@ -558,18 +558,60 @@
       </Item>
       <Item ItemId=";template.newCFShortcut.detail" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
-          <Val><![CDATA[Task pane add-in with custom function and shortcut]]></Val>
+          <Val><![CDATA[Create custom functions in Excel using a shared runtime]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Suplemento do painel Tarefas com função personalizada e atalho]]></Val>
+            <Val><![CDATA[Criar funções personalizadas no Excel usando um runtime compartilhado]]></Val>
           </Tgt>
+          <Prev Cat="Text">
+            <Val><![CDATA[Task pane add-in with custom function and shortcut]]></Val>
+          </Prev>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";template.newCFShortcut.label" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
-          <Val><![CDATA[Custom Function and Shortcut]]></Val>
+          <Val><![CDATA[Excel Custom Functions (Shared Runtime)]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Função personalizada e atalho]]></Val>
+            <Val><![CDATA[Funções Personalizadas do Excel (Runtime Compartilhado)]]></Val>
+          </Tgt>
+          <Prev Cat="Text">
+            <Val><![CDATA[Custom Function and Shortcut]]></Val>
+          </Prev>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";template.newExcelCustomFunctions.detail" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Create custom functions in Excel using a JavaScript-only runtime]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Criar funções personalizadas no Excel usando um runtime exclusivo do JavaScript]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";template.newExcelCustomFunctions.label" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Excel Custom Functions (JavaScript-only Runtime)]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Funções Personalizadas do Excel (runtime exclusivo do JavaScript)]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";template.newSsoNaa.detail" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Task pane add-in that uses Nested App Auth for single sign-on]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Suplemento do painel de tarefas que usa Autenticação de Aplicativo Aninhado para logon único]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";template.newSsoNaa.label" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Single Sign-On with Nested App Auth]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Logon Único com Autenticação de Aplicativo Aninhado]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -651,6 +693,24 @@
           <Val><![CDATA[Word]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
             <Val><![CDATA[Word]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";template.officeAddin.naaHost.placeholder" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Select an Office application]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Selecione um aplicativo do Office]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";template.officeAddin.naaHost.title" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Select the Office application to support]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Selecione os aplicativos do Office para dar suporte]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
