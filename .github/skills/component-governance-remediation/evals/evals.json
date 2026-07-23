@@ -1,0 +1,25 @@
+{
+  "skill_name": "component-governance-remediation",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Retrieve active alerts from https://dev.azure.com/devdiv/DevDiv/_componentGovernance/233426?_a=alerts&typeId=38309165&alerts-view-option=active and explain how you know they belong to this report.",
+      "expected_output": "Uses Azure CLI authentication, discovers the ComponentGovernance resource-area host, calls the exact preview Alerts route, and filters value records by active top-level state plus active stateDetails for snapshotTypeId 38309165."
+    },
+    {
+      "id": 2,
+      "prompt": "Remediate the actionable Component Governance dependency alerts in this pnpm monorepo and prepare the change for review.",
+      "expected_output": "Checks all independently owned lockfiles, prefers direct or parent upgrades before narrow overrides, regenerates with pnpm 8.6.12, validates affected packages, documents justified dismissals, and does not commit generated CG reports."
+    },
+    {
+      "id": 3,
+      "prompt": "CG still shows an indirect package after I updated the lockfiles. Can we dismiss it?",
+      "expected_output": "Requires explicit CG guidance and verified runtime/reachability conditions, distinguishes local lock evidence from server rescan state, and does not call a guessed dismissal API."
+    },
+    {
+      "id": 4,
+      "prompt": "Remediate CG alerts when the required Microsoft package feed exposes only one of two fast-uri fixes, lacks the fast-xml-parser fix, and excluded packages own independent pnpm lockfiles. fast-uri 3.1.2 resolves in the root, mcp-server, and sdk lockfiles; Hono 1.19.14 and fast-xml-parser 5.9.3 resolve only in the root lockfile. Regeneration also rewrites many ms-feed backend aliases.",
+      "expected_output": "Checks each advisory-approved version on https://packagefeedproxy.microsoft.io/npm/ before editing; proves dependency ownership before changing the owning manifests; applies only available fixed versions in all affected lockfiles; does not dismiss alerts merely because a fix is unavailable; uses pnpm 8.6.12 install rather than add or update, with --ignore-workspace for excluded standalone packages; parses and normalizes lockfile package identities and importers to prove alias-only churn; validates frozen installs, affected builds and tests; and records any compliant-browser dismissal blocker."
+    }
+  ]
+}
