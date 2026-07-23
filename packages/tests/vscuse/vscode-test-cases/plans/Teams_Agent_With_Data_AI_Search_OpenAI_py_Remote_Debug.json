@@ -231,7 +231,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion no error message found.",
+      "description": "@assertion an error message found.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
