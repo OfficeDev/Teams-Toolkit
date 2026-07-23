@@ -94,7 +94,7 @@
         "x": 410,
         "y": 52
       },
-      "description": "Click the \"Welcome\" tab in the workspace area of Visual Studio Code, indicated by the red crosshair at the top center of the editor interface.",
+      "description": "Click the close ('X') button on the \"Welcome\" tab in the workspace area of Visual Studio Code to close it.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
