@@ -406,3 +406,6 @@ test-output-local/
 
 # add jetbrains related ignores
 .idea/
+
+# Generated Component Governance reports
+results/component-governance-*.json

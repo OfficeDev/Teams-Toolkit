@@ -52,7 +52,7 @@
     "eslint-plugin-office-addins": "3.0.2",
     "eslint-plugin-prettier": "^5.5.0",
     "globals": "^16.2.0",
-    "js-yaml": "^4.1.0",
+    "js-yaml": "^4.3.0",
     "lint-staged": "^15.5.2",
     "mustache": "^4.2.0",
     "prettier": "^3.3.3",
