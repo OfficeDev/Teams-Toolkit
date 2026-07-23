@@ -232,10 +232,16 @@ jobs:
         run: npm install @octokit/auth-app @octokit/request @octokit/core node-fetch
         shell: bash
 
-      - name: Run download script
-        run: node download-vscuse-python.js "${{ inputs.vscuse_version }}" "${{ github.workspace }}/packages/tests/vscuse/vscode-test-cases"
+      # TEST BRANCH: use the locally-built vscuse wheel (vsc-use PR #27 – AI precondition
+      # click-retarget) committed under packages/tests/vscuse/local-wheel/ instead of
+      # downloading the published vscuse-doc release. The `vscuse_version` input is ignored
+      # here. Revert this step to `node download-vscuse-python.js ...` to restore the release download.
+      - name: Use locally-committed vscuse wheel
+        run: |
+          cp packages/tests/vscuse/local-wheel/*.whl packages/tests/vscuse/vscode-test-cases/
+          echo "Using local vscuse wheel:"
+          ls -la packages/tests/vscuse/vscode-test-cases/*.whl
         shell: bash
-        working-directory: .github/actions/setup-vscuse-environment
 
       - name: Set up Python virtual environment and install wheel
         run: |
