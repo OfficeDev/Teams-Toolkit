@@ -41,7 +41,7 @@
         "x": 376,
         "y": 409
       },
-      "description": "Click inside the \"Message Copilot\" text input box in the M365 Copilot chat interface under the  agent.",
+      "description": "Click on the blank area of the chat pane, just below the \"${{var:app_name}}local\" agent title and above the \"Created by\" line, in the M365 Copilot chat interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
