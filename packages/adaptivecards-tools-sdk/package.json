@@ -50,7 +50,8 @@
   },
   "overrides": {
     "adaptive-expressions": {
-      "fast-xml-parser": "4.5.5"
+      "fast-xml-parser": "5.7.0",
+      "uuid": "11.1.1"
     }
   },
   "pnpm": {
@@ -59,10 +60,12 @@
       "brace-expansion@^1.0.0": "1.1.16",
       "braces@^3.0.0": "3.0.3",
       "flatted@^3.0.0": "3.4.2",
-      "fast-xml-parser@^4.0.0": "4.5.5",
+      "fast-xml-parser@^4.0.0": "5.7.0",
+      "js-yaml@^4.0.0": "4.3.0",
       "lodash@^4.0.0": "4.18.1",
       "minimatch@^3.0.0": "3.1.5",
-      "picomatch@^2.0.0": "2.3.2"
+      "picomatch@^2.0.0": "2.3.2",
+      "uuid@8.3.2": "11.1.1"
     }
   },
   "publishConfig": {

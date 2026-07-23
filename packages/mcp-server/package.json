@@ -4,6 +4,9 @@
   "bin": {
     "m365agentstoolkit-mcp": "./dist/index.js"
   },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build": "npm run build:prod",
     "build:dev": "webpack --mode development",
@@ -40,6 +43,9 @@
   },
   "pnpm": {
     "overrides": {
+      "@hono/node-server@^1.19.0": "2.0.5",
+      "ajv@8.17.1": "8.18.0",
+      "body-parser@2.2.2": "2.3.0",
       "brace-expansion@^1.0.0": "1.1.16",
       "brace-expansion@^2.0.0": "2.1.2",
       "brace-expansion@^5.0.0": "5.0.7",
@@ -47,12 +53,14 @@
       "flatted@^3.0.0": "3.4.2",
       "hono@>=4.0.0 <4.12.27": "4.12.27",
       "ip-address@>=10.0.0 <10.1.1": "10.2.0",
+      "istanbul-lib-processinfo@3.0.0": "3.0.1",
       "js-yaml@^3.0.0": "3.15.0",
       "lodash@^4.0.0": "4.18.1",
       "minimatch@^3.0.0": "3.1.5",
       "minimatch@^5.0.0": "5.1.9",
       "path-to-regexp@^8.0.0": "8.4.2",
-      "picomatch@^2.0.0": "2.3.2"
+      "picomatch@^2.0.0": "2.3.2",
+      "qs@6.15.0": "6.15.2"
     }
   },
   "devDependencies": {

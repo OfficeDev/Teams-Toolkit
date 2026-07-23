@@ -44,8 +44,8 @@
   "homepage": "https://github.com/OfficeDev/TeamsFx",
   "sideEffects": false,
   "dependencies": {
-    "@azure/identity": "^4.4.1",
-    "@azure/msal-browser": "^3.30.0",
+    "@azure/identity": "4.10.0",
+    "@azure/msal-browser": "^4.30.0",
     "@azure/msal-node": "^2.14.0",
     "@microsoft/agents-activity": "^0.6.18",
     "@microsoft/agents-hosting": "^0.6.18",
@@ -55,7 +55,7 @@
     "adaptivecards-templating": "^2.3.1",
     "axios": "^1.8.3",
     "jwt-decode": "^4.0.0",
-    "uuid": "^10.0.0"
+    "uuid": "^11.1.1"
   },
   "peerDependencies": {
     "@microsoft/agents-activity": "^0.6.1",
@@ -145,18 +145,20 @@
   "pnpm": {
     "overrides": {
       "@xmldom/xmldom@^0.8.0": "0.8.13",
+      "ajv@8.17.1": "8.18.0",
       "axios@^1.0.0": "1.18.1",
       "basic-ftp@^5.0.0": "5.3.1",
       "brace-expansion@^1.0.0": "1.1.16",
       "brace-expansion@^2.0.0": "2.1.2",
       "engine.io@^6.0.0": "6.6.9",
       "fast-uri@^3.0.0": "3.1.2",
-      "fast-xml-parser@^4.0.0": "4.5.5",
+      "fast-xml-parser@^4.0.0": "5.7.0",
       "flatted@^3.0.0": "3.4.2",
       "form-data@^4.0.0": "4.0.6",
       "glob@^11.0.0": "11.1.0",
       "jsonwebtoken@^9.0.0": "9.0.3",
       "jws@^4.0.0": "4.0.1",
+      "js-yaml@^4.0.0": "4.3.0",
       "lodash@^4.0.0": "4.18.1",
       "minimatch@^3.0.0": "3.1.5",
       "minimatch@^5.0.0": "5.1.8",
@@ -168,6 +170,9 @@
       "socket.io-parser@^4.0.0": "4.2.6",
       "tar-fs@^3.0.0": "3.1.3",
       "tmp@^0.2.0": "0.2.7",
+      "uuid@8.3.2": "11.1.1",
+      "uuid@10.0.0": "11.1.1",
+      "uuid@11.1.0": "11.1.1",
       "validator@^13.0.0": "13.15.35",
       "webpack@^5.0.0": "5.76.0",
       "ws@^8.0.0": "8.21.0"
