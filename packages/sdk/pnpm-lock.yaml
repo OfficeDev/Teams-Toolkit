@@ -94,13 +94,13 @@ devDependencies:
     version: 7.47.11(@types/node@18.0.0)
   '@rollup/plugin-json':
     specifier: ^6.1.0
-    version: 6.1.0(rollup@4.27.3)
+    version: 6.1.0(rollup@4.62.2)
   '@rollup/plugin-terser':
     specifier: ^0.4.4
-    version: 0.4.4(rollup@4.27.3)
+    version: 0.4.4(rollup@4.62.2)
   '@rollup/plugin-typescript':
     specifier: 12.1.0
-    version: 12.1.0(rollup@4.27.3)(tslib@2.3.1)(typescript@5.4.2)
+    version: 12.1.0(rollup@4.62.2)(tslib@2.3.1)(typescript@5.4.2)
   '@sinonjs/commons':
     specifier: ^3.0.0
     version: 3.0.0
@@ -268,7 +268,7 @@ devDependencies:
     version: 6.0.1
   rollup:
     specifier: ^4.27.3
-    version: 4.27.3
+    version: 4.62.2
   sinon:
     specifier: ^12.0.1
     version: 12.0.1
@@ -544,7 +544,7 @@ packages:
       globals: 13.24.0
       ignore: 5.3.2
       import-fresh: 3.3.1
-      js-yaml: ms-feed-25.pkgs.visualstudio.com/js-yaml@4.3.0
+      js-yaml: 4.3.0
       minimatch: 3.1.5
       strip-json-comments: 3.1.1
     transitivePeerDependencies:
@@ -580,7 +580,7 @@ packages:
       camelcase: 5.3.1
       find-up: 4.1.0
       get-package-type: 0.1.0
-      js-yaml: ms-feed-12.pkgs.visualstudio.com/js-yaml@3.14.1
+      js-yaml: 3.15.0
       resolve-from: 5.0.0
     dev: true
 
@@ -845,11 +845,12 @@ packages:
       unbzip2-stream: 1.4.3
       yargs: 17.7.2
     transitivePeerDependencies:
+      - bare-abort-controller
       - bare-buffer
       - supports-color
     dev: true
 
-  /@rollup/plugin-json@6.1.0(rollup@4.27.3):
+  /@rollup/plugin-json@6.1.0(rollup@4.62.2):
     resolution: {integrity: sha512-EGI2te5ENk1coGeADSIwZ7G2Q8CJS2sF120T7jLw4xFw9n7wIOXHo+kIYRAoVpJAN+kmqZSoO3Fp4JtoNF4ReA==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
@@ -858,11 +859,11 @@ packages:
       rollup:
         optional: true
     dependencies:
-      '@rollup/pluginutils': 5.1.4(rollup@4.27.3)
-      rollup: 4.27.3
+      '@rollup/pluginutils': 5.1.4(rollup@4.62.2)
+      rollup: 4.62.2
     dev: true
 
-  /@rollup/plugin-terser@0.4.4(rollup@4.27.3):
+  /@rollup/plugin-terser@0.4.4(rollup@4.62.2):
     resolution: {integrity: sha512-XHeJC5Bgvs8LfukDwWZp7yeqin6ns8RTl2B9avbejt6tZqsqvVoWI7ZTQrcNsfKEDWBTnTxM8nMDkO2IFFbd0A==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
@@ -871,13 +872,13 @@ packages:
       rollup:
         optional: true
     dependencies:
-      rollup: 4.27.3
+      rollup: 4.62.2
       serialize-javascript: 6.0.2
       smob: 1.5.0
       terser: 5.39.0
     dev: true
 
-  /@rollup/plugin-typescript@12.1.0(rollup@4.27.3)(tslib@2.3.1)(typescript@5.4.2):
+  /@rollup/plugin-typescript@12.1.0(rollup@4.62.2)(tslib@2.3.1)(typescript@5.4.2):
     resolution: {integrity: sha512-Kzs8KGJofe7cfTRODsnG1jNGxSvU8gVoNNd7Z/QaY25AYwe2LSSUpx/kPxqF38NYkpR8de3m51r9uwJpDlz6dg==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
@@ -890,14 +891,14 @@ packages:
       tslib:
         optional: true
     dependencies:
-      '@rollup/pluginutils': 5.1.4(rollup@4.27.3)
+      '@rollup/pluginutils': 5.1.4(rollup@4.62.2)
       resolve: 1.22.10
-      rollup: 4.27.3
+      rollup: 4.62.2
       tslib: 2.3.1
       typescript: 5.4.2
     dev: true
 
-  /@rollup/pluginutils@5.1.4(rollup@4.27.3):
+  /@rollup/pluginutils@5.1.4(rollup@4.62.2):
     resolution: {integrity: sha512-USm05zrsFxYLPdWWq+K3STlWiT/3ELn3RcV5hJMghpeAIhxfsUIg6mt12CBJBInWMV4VneoV7SfGv8xIwo2qNQ==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
@@ -906,11 +907,211 @@ packages:
       rollup:
         optional: true
     dependencies:
-      '@types/estree': 1.0.7
+      '@types/estree': 1.0.9
       estree-walker: 2.0.2
       picomatch: 4.0.5
-      rollup: 4.27.3
+      rollup: 4.62.2
     dev: true
+
+  /@rollup/rollup-android-arm-eabi@4.62.2:
+    resolution: {integrity: sha512-6o7ZLZK+BeenkZCFNDXqpbjw9bD6nuWonvS/lwQJp7NoVVxm6p3qE7qQ5jGuBjiFsgvqjD8mZAU5oWxTmbOeOg==}
+    cpu: [arm]
+    os: [android]
+    requiresBuild: true
+    dev: true
+    optional: true
+
+  /@rollup/rollup-android-arm64@4.62.2:
+    resolution: {integrity: sha512-BaH7BllCACHoH1LguOU56UItGfUWjujlO65kS9LAodViaN4bwIKd7oeW/ZHJ/4ljr/7MIiENnNy3HJ0zXv8Zkw==}
+    cpu: [arm64]
+    os: [android]
+    requiresBuild: true
+    dev: true
+    optional: true
+
+  /@rollup/rollup-darwin-arm64@4.62.2:
+    resolution: {integrity: sha512-v39RCCvj4He82I9sFmk+M1VZ0PLM9sfsLVikjfx2hYBNALhrrOR2D3JjQA6AhlaSOgcR+RzrKY7e1+bT6SUO/A==}
+    cpu: [arm64]
+    os: [darwin]
+    requiresBuild: true
+    dev: true
+    optional: true
+
+  /@rollup/rollup-darwin-x64@4.62.2:
+    resolution: {integrity: sha512-yl0y2vq3S3lHeuXhEdss6TWfKW8vkujImO12tn4ZkG/4oghr09LvdYm2RElVjokTQiUvDUGXLGsYeLqUMCKpGA==}
+    cpu: [x64]
+    os: [darwin]
+    requiresBuild: true
+    dev: true
+    optional: true
+
+  /@rollup/rollup-freebsd-arm64@4.62.2:
+    resolution: {integrity: sha512-tT4pvt4qXD+vEoezupCWi+a1F0vvDiksiHc+PxRlYTOH1I6/X4id9jPxTP+Fg+545euaFT1jJVs4CEdHZAU1vw==}
+    cpu: [arm64]
+    os: [freebsd]
+    requiresBuild: true
+    dev: true
+    optional: true
+
+  /@rollup/rollup-freebsd-x64@4.62.2:
+    resolution: {integrity: sha512-6nU5F2wCW+qvCBhTn1pdIU3bzsIoF7EUwsCDRxilWGprQR6yd508YnH9+OKFCwpfS8pjZqDUmnCAr7exax0XCg==}
+    cpu: [x64]
+    os: [freebsd]
+    requiresBuild: true
+    dev: true
+    optional: true
+
+  /@rollup/rollup-linux-arm-gnueabihf@4.62.2:
+    resolution: {integrity: sha512-n1GJHPOvpIfhi3TmrCeh6S6URt9BFCt0KQE3qvexyGCTAKpR4Lg+eWvNZEqu7epxwus/8ElT3hacYEucm49SZg==}
+    cpu: [arm]
+    os: [linux]
+    requiresBuild: true
+    dev: true
+    optional: true
+
+  /@rollup/rollup-linux-arm-musleabihf@4.62.2:
+    resolution: {integrity: sha512-JqgflS8wEB+UXV/vS1RpRbifGBeN4D5lz8D8oOFbFZw4vedvdOgCFAjfBmIMdW3yL10XpQQ0Ambepw6MXrhOnA==}
+    cpu: [arm]
+    os: [linux]
+    requiresBuild: true
+    dev: true
+    optional: true
+
+  /@rollup/rollup-linux-arm64-gnu@4.62.2:
+    resolution: {integrity: sha512-wnFJkogWvN4jm/hQRF2UBaeUmk20j5+DmHvoyWii2b8HJDyvz1MF2OU/6ynXt2KR63rbZLWkFpoytpdc/yBuSA==}
+    cpu: [arm64]
+    os: [linux]
+    requiresBuild: true
+    dev: true
+    optional: true
+
+  /@rollup/rollup-linux-arm64-musl@4.62.2:
+    resolution: {integrity: sha512-HVu2bp0zhvJ8xHEV9+UUs7S90VadmBSY3LcIMvozbPo4AuMGDWlz3ymHLHZPX4hR67TKTt8Qp5PJ5RBg/i+RMQ==}
+    cpu: [arm64]
+    os: [linux]
+    requiresBuild: true
+    dev: true
+    optional: true
+
+  /@rollup/rollup-linux-loong64-gnu@4.62.2:
+    resolution: {integrity: sha512-mQqqAV8QaoSgr9I2fKDLY2BAVvmKjWoGiu/cSYQonsLvtqwEn1E4QYfnCOcp5zoEqNhsDYin1s6jx/VJmrxlZg==}
+    cpu: [loong64]
+    os: [linux]
+    requiresBuild: true
+    dev: true
+    optional: true
+
+  /@rollup/rollup-linux-loong64-musl@4.62.2:
+    resolution: {integrity: sha512-IxKLoxCQ2IWi6bT2akyDUBGsOImDKB+sPp4EsTmwFQ/fMwpCKm8uLSSgP/Kx/QYUgKis6SEZ5/Nlhup0DIA0PQ==}
+    cpu: [loong64]
+    os: [linux]
+    requiresBuild: true
+    dev: true
+    optional: true
+
+  /@rollup/rollup-linux-ppc64-gnu@4.62.2:
+    resolution: {integrity: sha512-Mk5ha2RQSgyFfmYYLkBpPnUk8D8FriBxesO1u9O75X0mHgXL1UQcH5Itl2lurWL2tj0RxV9b9tJgipac0hRY9A==}
+    cpu: [ppc64]
+    os: [linux]
+    requiresBuild: true
+    dev: true
+    optional: true
+
+  /@rollup/rollup-linux-ppc64-musl@4.62.2:
+    resolution: {integrity: sha512-CjvEnqJL/0/TQ3TXX3OPIJ/kmBellrWd4heXUmHeJlTnmwjKpSJzoehLaL6Xk0ZnMHBu9dZuFADNOrtjF4v+2w==}
+    cpu: [ppc64]
+    os: [linux]
+    requiresBuild: true
+    dev: true
+    optional: true
+
+  /@rollup/rollup-linux-riscv64-gnu@4.62.2:
+    resolution: {integrity: sha512-1SiZbzwdkaDURsew/tSOrooKiYy7EQGT6m8ufavAi9NEyQb/6VuIxFXAL1fqa4iZe3g4NbNk4P7J32z2tw5Mgg==}
+    cpu: [riscv64]
+    os: [linux]
+    requiresBuild: true
+    dev: true
+    optional: true
+
+  /@rollup/rollup-linux-riscv64-musl@4.62.2:
+    resolution: {integrity: sha512-nQts12zJ3NQRoE6uYljOH89v7szzLDvG2JD/vsX+vGXU8w/At1GowTZ5/7qeFQ8m7L55rpR8Okugnuo5bgjy2Q==}
+    cpu: [riscv64]
+    os: [linux]
+    requiresBuild: true
+    dev: true
+    optional: true
+
+  /@rollup/rollup-linux-s390x-gnu@4.62.2:
+    resolution: {integrity: sha512-E9/ll019jhPIJgpzfZoIkBGhcz+kKNgVWYRY0zr9srBdPPFVpvOKW8VaJKUbeK+eZXyQF9ltME+Kk6affeaPgg==}
+    cpu: [s390x]
+    os: [linux]
+    requiresBuild: true
+    dev: true
+    optional: true
+
+  /@rollup/rollup-linux-x64-gnu@4.62.2:
+    resolution: {integrity: sha512-5BqxR/pshjey51iliyzTD5Xi3EN0aLmQ2lZ3lvefVV9c82BvrLo2/6OT55iifpWBufs6kdwWbuOKS841DrmK9A==}
+    cpu: [x64]
+    os: [linux]
+    requiresBuild: true
+    dev: true
+    optional: true
+
+  /@rollup/rollup-linux-x64-musl@4.62.2:
+    resolution: {integrity: sha512-uNN83XxQrRAh/w0/pmAfibcwyb6YWt4gP+dpnQKPVJshAloQ785ii8CT8ZCIxkGg9opVsvAlGhFitSm6D1Jjpg==}
+    cpu: [x64]
+    os: [linux]
+    requiresBuild: true
+    dev: true
+    optional: true
+
+  /@rollup/rollup-openbsd-x64@4.62.2:
+    resolution: {integrity: sha512-srjEIxSH3LRnJN6THczDHWQplqEMFiAJrTab0msUryh9kwNpkICf3Ea6q6MN/2cZwRFUNx5w+h6Hpi4QuHS6Zg==}
+    cpu: [x64]
+    os: [openbsd]
+    requiresBuild: true
+    dev: true
+    optional: true
+
+  /@rollup/rollup-openharmony-arm64@4.62.2:
+    resolution: {integrity: sha512-8hOJnxgbyObnCm5AlRA3A931xX19xq80RjVTKgJOvEKWqJruP/Uf12IbAOaDjjEXYRewwHLfmF0YRIdK3OwKWA==}
+    cpu: [arm64]
+    os: [openharmony]
+    requiresBuild: true
+    dev: true
+    optional: true
+
+  /@rollup/rollup-win32-arm64-msvc@4.62.2:
+    resolution: {integrity: sha512-mmF4AY1i0hG/bLWUctUq59gtmgaSIRa3cu/A3JFRp/sCNEme2bgDEiDS22P9FbnJB8NJNF4jPJiSP5RHQpUTDg==}
+    cpu: [arm64]
+    os: [win32]
+    requiresBuild: true
+    dev: true
+    optional: true
+
+  /@rollup/rollup-win32-ia32-msvc@4.62.2:
+    resolution: {integrity: sha512-DZgkknc6jhHrk46V25vbAM0zZkyP0nSDkJB8/dRkLTxv470dOmWDqGoEJl/9A0dFfS7yE3REOwNDxpHwSLSt0Q==}
+    cpu: [ia32]
+    os: [win32]
+    requiresBuild: true
+    dev: true
+    optional: true
+
+  /@rollup/rollup-win32-x64-gnu@4.62.2:
+    resolution: {integrity: sha512-T6xr6ucWSFto+VGajA8YH26LdpHRuP4YLHEKAtCWvJDOlnmWcDZVCI2Jmjr+IFHDlt2zRaTAKE4tfjTaWLgJBg==}
+    cpu: [x64]
+    os: [win32]
+    requiresBuild: true
+    dev: true
+    optional: true
+
+  /@rollup/rollup-win32-x64-msvc@4.62.2:
+    resolution: {integrity: sha512-BfzEnDJOt9T8M989/lA37EcJgat01wLRnoi5dQf3QzOH7jzpqTAzdDbVfRljVr5r+jzKqpbHeyOfAaXxAd0PAA==}
+    cpu: [x64]
+    os: [win32]
+    requiresBuild: true
+    dev: true
+    optional: true
 
   /@rushstack/node-core-library@5.9.0(@types/node@18.0.0):
     resolution: {integrity: sha512-MMsshEWkTbXqxqFxD4gcIUWQOCeBChlGczdZbHfqmNZQFLHB3yWxDFSMHFUdu2/OB9NUk7Awn5qRL+rws4HQNg==}
@@ -1120,13 +1321,13 @@ packages:
     resolution: {integrity: sha512-MzMFlSLBqNF2gcHWO0G1vP/YQyfvrxZ0bF+u7mzUdZ1/xK4A4sru+nraZz5i3iEIk1l1uyicaDVTB4QbbEkAYg==}
     dependencies:
       '@types/eslint': 9.6.1
-      '@types/estree': 1.0.7
+      '@types/estree': 0.0.51
     dev: true
 
   /@types/eslint@9.6.1:
     resolution: {integrity: sha512-FXx2pKgId/WyYo2jXw63kk7/+TY7u7AziEJxJAnSFzHlqTAS3Ync6SvgYAN/k4/PQpnnVuzoMuVnByKK2qp0ag==}
     dependencies:
-      '@types/estree': 1.0.7
+      '@types/estree': 0.0.51
       '@types/json-schema': 7.0.15
     dev: true
 
@@ -1134,12 +1335,8 @@ packages:
     resolution: {integrity: sha512-CuPgU6f3eT/XgKKPqKd/gLZV1Xmvf1a2R5POBOGQa6uv82xpls89HU5zKeVoyR8XzHd1RGNOlQlvUe3CFkjWNQ==}
     dev: true
 
-  /@types/estree@1.0.6:
-    resolution: {integrity: sha512-AYnb1nQyY49te+VRAVgmzfcgjYS91mY5P0TKUDCLEM+gNnA+3T6rWITXRLYCpahpqSQbN5cE+gHpnPyXjHWxcw==}
-    dev: true
-
-  /@types/estree@1.0.7:
-    resolution: {integrity: sha512-w28IoSUCJpidD/TGviZwwMJckNESJZXFu7NBZ5YJ4mEUnNraUn9Pm8HSZm/jDF1pDWYKspWE7oVphigUPRakIQ==}
+  /@types/estree@1.0.9:
+    resolution: {integrity: sha512-GhdPgy1el4/ImP05X05Uw4cw2/M93BCUmnEvWZNStlCzEKME4Fkk+YpoA5OiHNQmoS7Cafb8Xa3Pya8m1Qrzeg==}
     dev: true
 
   /@types/express-serve-static-core@4.19.6:
@@ -1282,6 +1479,14 @@ packages:
   /@types/xmldom@0.1.34:
     resolution: {integrity: sha512-7eZFfxI9XHYjJJuugddV6N5YNeXgQE1lArWOcd1eCOKWb/FGs5SIjacSYuEJuwhsGS3gy4RuZ5EUIcqYscuPDA==}
     dev: false
+
+  /@types/yauzl@2.10.3:
+    resolution: {integrity: sha512-oJoftv0LSuaDZE3Le4DbKX+KS9G36NzOeSap90UIK0yMA/NhKJhqlSGtNDORNRaIbQfzjXDrQa0ytJ6mNRGz/Q==}
+    requiresBuild: true
+    dependencies:
+      '@types/node': 18.0.0
+    dev: true
+    optional: true
 
   /@typescript-eslint/eslint-plugin@5.13.0(@typescript-eslint/parser@6.5.0)(eslint@8.15.0)(supports-color@9.4.0)(typescript@5.4.2):
     resolution: {integrity: sha512-vLktb2Uec81fxm/cfz2Hd6QaWOs8qdmVAZXLdOBX6JFJDhf6oDZpMzZ4/LZ6SFM/5DgDcxIMIvy3F+O9yZBuiQ==}
@@ -1933,9 +2138,39 @@ packages:
     dev: true
     optional: true
 
-  /bare-os@3.6.1:
-    resolution: {integrity: sha512-uaIjxokhFidJP+bmmvKSgiMzj2sV5GPHaZVAIktcxcpCyBFFWO+YlikVAdhmUo2vYFvFhOXIAlldqV29L8126g==}
-    engines: {bare: '>=1.14.0'}
+  /bare-events@2.9.1:
+    resolution: {integrity: sha512-Z0oHEHAFDZkffN8Qc39zNZjQlMDkPJRyyyZieU1VH7u8c5S+qHZ2S8ixdKIAxEjfHO7FJxXmJWgteOghVanIsg==}
+    requiresBuild: true
+    peerDependencies:
+      bare-abort-controller: '*'
+    peerDependenciesMeta:
+      bare-abort-controller:
+        optional: true
+    dev: true
+    optional: true
+
+  /bare-fs@4.7.4:
+    resolution: {integrity: sha512-y1kC+ffIx/tPLdTE693uNjHfzTfr+ravR5tvWlMXe25nELbkqV400S71qHDwbkAQ1FVEZobB1NFRzFbCCcyBCQ==}
+    engines: {bare: '>=1.16.0'}
+    requiresBuild: true
+    peerDependencies:
+      bare-buffer: '*'
+    peerDependenciesMeta:
+      bare-buffer:
+        optional: true
+    dependencies:
+      bare-events: 2.5.4
+      bare-path: 3.1.1
+      bare-stream: 2.6.5(bare-events@2.5.4)
+      bare-url: 2.4.6
+      fast-fifo: 1.3.2
+    transitivePeerDependencies:
+      - bare-abort-controller
+    dev: true
+    optional: true
+
+  /bare-path@3.1.1:
+    resolution: {integrity: sha512-JprUlveX3QjApC1cTpsUOiscADftCGVWkzitbHsRqv84hzYwYHw2mbluddsq5TvI8mH/8Ov1f4BiMAdcB0oYnQ==}
     requiresBuild: true
     dev: true
     optional: true
@@ -1954,6 +2189,16 @@ packages:
     dependencies:
       bare-events: 2.5.4
       streamx: 2.22.0
+    transitivePeerDependencies:
+      - bare-abort-controller
+    dev: true
+    optional: true
+
+  /bare-url@2.4.6:
+    resolution: {integrity: sha512-iQxPClE07hETVpbRoX7JXX3v/ZQViCxe/SYCxylRLzdEx1xJAufPptfiOqR8tqiCtmbtMDANKWszzjLu1PMAZQ==}
+    requiresBuild: true
+    dependencies:
+      bare-path: 3.1.1
     dev: true
     optional: true
 
@@ -2213,7 +2458,7 @@ packages:
       normalize-path: 3.0.0
       readdirp: 3.6.0
     optionalDependencies:
-      fsevents: ms-feed-2.pkgs.visualstudio.com/fsevents@2.3.3
+      fsevents: 2.3.3
     dev: true
 
   /chrome-trace-event@1.0.4:
@@ -2384,7 +2629,7 @@ packages:
     dependencies:
       env-paths: 2.2.1
       import-fresh: 3.3.1
-      js-yaml: ms-feed-12.pkgs.visualstudio.com/js-yaml@4.3.0
+      js-yaml: 4.3.0
       parse-json: 5.2.0
       typescript: 5.4.2
     dev: true
@@ -2882,7 +3127,7 @@ packages:
       estraverse: 5.3.0
       esutils: 2.0.3
     optionalDependencies:
-      source-map: ms-feed-12.pkgs.visualstudio.com/source-map@0.6.1
+      source-map: 0.6.1
     dev: true
 
   /eslint-import-resolver-node@0.3.9(supports-color@9.4.0):
@@ -3053,7 +3298,7 @@ packages:
       import-fresh: 3.3.1
       imurmurhash: 0.1.4
       is-glob: 4.0.3
-      js-yaml: ms-feed-25.pkgs.visualstudio.com/js-yaml@4.3.0
+      js-yaml: 4.3.0
       json-stable-stringify-without-jsonify: 1.0.1
       levn: 0.4.1
       lodash.merge: 4.6.2
@@ -3158,7 +3403,7 @@ packages:
       get-stream: 5.2.0
       yauzl: 2.10.0
     optionalDependencies:
-      '@types/yauzl': ms-feed-12.pkgs.visualstudio.com/@types/yauzl@2.10.3
+      '@types/yauzl': 2.10.3
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -3278,16 +3523,6 @@ packages:
     resolution: {integrity: sha512-PjDse7RzhcPkIJwy5t7KPWQSZ9cAbzQXcafsetQoD7sOJRQlGikNbx7yZp2OotDnJyrDcbyRq3Ttb18iYOqkxA==}
     dev: true
 
-  /follow-redirects@1.15.9:
-    resolution: {integrity: sha512-gew4GsXizNgdoRyqmyfMHyAmXsZDk6mHkSxZFCzW9gwlbtOW44CDtYavM+y+72qD/Vq2l550kMF52DT8fOLJqQ==}
-    engines: {node: '>=4.0'}
-    peerDependencies:
-      debug: '*'
-    peerDependenciesMeta:
-      debug:
-        optional: true
-    dev: true
-
   /follow-redirects@1.16.0:
     resolution: {integrity: sha512-y5rN/uOsadFT/JfYwhxRS5R7Qce+g3zG97+JrtFZlC9klX/W5hD7iiLzScI4nZqUS7DNUdhPgw4xI8W2LuXlUw==}
     engines: {node: '>=4.0'}
@@ -3364,6 +3599,14 @@ packages:
   /fs.realpath@1.0.0:
     resolution: {integrity: sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==}
     dev: true
+
+  /fsevents@2.3.3:
+    resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
+    engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
+    os: [darwin]
+    requiresBuild: true
+    dev: true
+    optional: true
 
   /fsu@1.1.1:
     resolution: {integrity: sha512-xQVsnjJ/5pQtcKh+KjUoZGzVWn4uNkchxTF6Lwjr4Gf7nQr8fmUfhKJ62zE77+xQg9xnxi5KUps7XGs+VC986A==}
@@ -3691,7 +3934,7 @@ packages:
     engines: {node: '>=8.0.0'}
     dependencies:
       eventemitter3: 4.0.7
-      follow-redirects: 1.15.9
+      follow-redirects: 1.16.0
       requires-port: 1.0.0
     transitivePeerDependencies:
       - debug
@@ -4165,6 +4408,21 @@ packages:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
     dev: true
 
+  /js-yaml@3.15.0:
+    resolution: {integrity: sha512-ttBQIIQPDeLjpPOohtUdXuXUVoA2uIB6fEH9HyJ7234s5mBJ5wTx20njxplLZQgLaOfpmPQA7X2t5AX6tIPbog==}
+    hasBin: true
+    dependencies:
+      argparse: ms-feed-2.pkgs.visualstudio.com/argparse@1.0.10
+      esprima: 4.0.1
+    dev: true
+
+  /js-yaml@4.3.0:
+    resolution: {integrity: sha512-1td788aAnnZ5qs7V2QIRl1owjtYpbKt749Y3xauqQgwIIGF/xXWz1wMTEBx5O3LK3lXLVuqXPdPxj2BoFHaW9Q==}
+    hasBin: true
+    dependencies:
+      argparse: ms-feed-2.pkgs.visualstudio.com/argparse@2.0.1
+    dev: true
+
   /jsbn@1.1.0:
     resolution: {integrity: sha512-4bYVV3aAMtDTTu4+xsDYa6sy9GyJ69/amsu9sYF2zqjiEoZA5xJi3BrfX3uY+/IekIu7MwdObdbDWpoZdBv3/A==}
     dev: true
@@ -4215,7 +4473,7 @@ packages:
   /jsonfile@4.0.0:
     resolution: {integrity: sha512-m6F1R3z8jjlf2imQHS2Qez5sjKWQzbuuhuJ/FKYFRZvPE3PuHcSMVZzfsLhGVOkfd20obL5SWEBew5ShlquNxg==}
     optionalDependencies:
-      graceful-fs: ms-feed-12.pkgs.visualstudio.com/graceful-fs@4.2.11
+      graceful-fs: 4.2.11
     dev: true
 
   /jsonfile@6.1.0:
@@ -4223,7 +4481,7 @@ packages:
     dependencies:
       universalify: 2.0.1
     optionalDependencies:
-      graceful-fs: ms-feed-12.pkgs.visualstudio.com/graceful-fs@4.2.11
+      graceful-fs: 4.2.11
     dev: true
 
   /jsonwebtoken@9.0.3:
@@ -4752,7 +5010,7 @@ packages:
       find-up: 5.0.0
       glob: 8.1.0
       he: 1.2.0
-      js-yaml: ms-feed-25.pkgs.visualstudio.com/js-yaml@4.3.0
+      js-yaml: 4.3.0
       log-symbols: 4.1.0
       minimatch: 5.1.8
       ms: 2.1.3
@@ -5297,6 +5555,7 @@ packages:
       typed-query-selector: 2.12.0
       ws: 8.21.0
     transitivePeerDependencies:
+      - bare-abort-controller
       - bare-buffer
       - bufferutil
       - supports-color
@@ -5316,6 +5575,7 @@ packages:
       puppeteer-core: 23.4.1(supports-color@9.4.0)
       typed-query-selector: 2.12.0
     transitivePeerDependencies:
+      - bare-abort-controller
       - bare-buffer
       - bufferutil
       - supports-color
@@ -5500,32 +5760,39 @@ packages:
       package-json-from-dist: 1.0.1
     dev: true
 
-  /rollup@4.27.3:
-    resolution: {integrity: sha512-SLsCOnlmGt9VoZ9Ek8yBK8tAdmPHeppkw+Xa7yDlCEhDTvwYei03JlWo1fdc7YTfLZ4tD8riJCUyAgTbszk1fQ==}
+  /rollup@4.62.2:
+    resolution: {integrity: sha512-RFnrW4lhXA3s3eqHDZvN654g8OTjzRfqpIRJYczCGB6HzphckVAi/Qh4tbPUbRuDi7s1Llv8g/NspLkttY3gTA==}
     engines: {node: '>=18.0.0', npm: '>=8.0.0'}
     hasBin: true
     dependencies:
-      '@types/estree': 1.0.6
+      '@types/estree': 1.0.9
     optionalDependencies:
-      '@rollup/rollup-android-arm-eabi': ms-feed-12.pkgs.visualstudio.com/@rollup/rollup-android-arm-eabi@4.27.3
-      '@rollup/rollup-android-arm64': ms-feed-2.pkgs.visualstudio.com/@rollup/rollup-android-arm64@4.27.3
-      '@rollup/rollup-darwin-arm64': ms-feed-2.pkgs.visualstudio.com/@rollup/rollup-darwin-arm64@4.27.3
-      '@rollup/rollup-darwin-x64': ms-feed-12.pkgs.visualstudio.com/@rollup/rollup-darwin-x64@4.27.3
-      '@rollup/rollup-freebsd-arm64': ms-feed-25.pkgs.visualstudio.com/@rollup/rollup-freebsd-arm64@4.27.3
-      '@rollup/rollup-freebsd-x64': ms-feed-2.pkgs.visualstudio.com/@rollup/rollup-freebsd-x64@4.27.3
-      '@rollup/rollup-linux-arm-gnueabihf': ms-feed-25.pkgs.visualstudio.com/@rollup/rollup-linux-arm-gnueabihf@4.27.3
-      '@rollup/rollup-linux-arm-musleabihf': ms-feed-12.pkgs.visualstudio.com/@rollup/rollup-linux-arm-musleabihf@4.27.3
-      '@rollup/rollup-linux-arm64-gnu': ms-feed-12.pkgs.visualstudio.com/@rollup/rollup-linux-arm64-gnu@4.27.3
-      '@rollup/rollup-linux-arm64-musl': ms-feed-12.pkgs.visualstudio.com/@rollup/rollup-linux-arm64-musl@4.27.3
-      '@rollup/rollup-linux-powerpc64le-gnu': ms-feed-25.pkgs.visualstudio.com/@rollup/rollup-linux-powerpc64le-gnu@4.27.3
-      '@rollup/rollup-linux-riscv64-gnu': ms-feed-2.pkgs.visualstudio.com/@rollup/rollup-linux-riscv64-gnu@4.27.3
-      '@rollup/rollup-linux-s390x-gnu': ms-feed-12.pkgs.visualstudio.com/@rollup/rollup-linux-s390x-gnu@4.27.3
-      '@rollup/rollup-linux-x64-gnu': ms-feed-25.pkgs.visualstudio.com/@rollup/rollup-linux-x64-gnu@4.27.3
-      '@rollup/rollup-linux-x64-musl': ms-feed-12.pkgs.visualstudio.com/@rollup/rollup-linux-x64-musl@4.27.3
-      '@rollup/rollup-win32-arm64-msvc': ms-feed-12.pkgs.visualstudio.com/@rollup/rollup-win32-arm64-msvc@4.27.3
-      '@rollup/rollup-win32-ia32-msvc': ms-feed-2.pkgs.visualstudio.com/@rollup/rollup-win32-ia32-msvc@4.27.3
-      '@rollup/rollup-win32-x64-msvc': ms-feed-25.pkgs.visualstudio.com/@rollup/rollup-win32-x64-msvc@4.27.3
-      fsevents: ms-feed-2.pkgs.visualstudio.com/fsevents@2.3.3
+      '@rollup/rollup-android-arm-eabi': 4.62.2
+      '@rollup/rollup-android-arm64': 4.62.2
+      '@rollup/rollup-darwin-arm64': 4.62.2
+      '@rollup/rollup-darwin-x64': 4.62.2
+      '@rollup/rollup-freebsd-arm64': 4.62.2
+      '@rollup/rollup-freebsd-x64': 4.62.2
+      '@rollup/rollup-linux-arm-gnueabihf': 4.62.2
+      '@rollup/rollup-linux-arm-musleabihf': 4.62.2
+      '@rollup/rollup-linux-arm64-gnu': 4.62.2
+      '@rollup/rollup-linux-arm64-musl': 4.62.2
+      '@rollup/rollup-linux-loong64-gnu': 4.62.2
+      '@rollup/rollup-linux-loong64-musl': 4.62.2
+      '@rollup/rollup-linux-ppc64-gnu': 4.62.2
+      '@rollup/rollup-linux-ppc64-musl': 4.62.2
+      '@rollup/rollup-linux-riscv64-gnu': 4.62.2
+      '@rollup/rollup-linux-riscv64-musl': 4.62.2
+      '@rollup/rollup-linux-s390x-gnu': 4.62.2
+      '@rollup/rollup-linux-x64-gnu': 4.62.2
+      '@rollup/rollup-linux-x64-musl': 4.62.2
+      '@rollup/rollup-openbsd-x64': 4.62.2
+      '@rollup/rollup-openharmony-arm64': 4.62.2
+      '@rollup/rollup-win32-arm64-msvc': 4.62.2
+      '@rollup/rollup-win32-ia32-msvc': 4.62.2
+      '@rollup/rollup-win32-x64-gnu': 4.62.2
+      '@rollup/rollup-win32-x64-msvc': 4.62.2
+      fsevents: 2.3.3
     dev: true
 
   /run-parallel@1.2.0:
@@ -5880,7 +6147,9 @@ packages:
       fast-fifo: 1.3.2
       text-decoder: 1.2.3
     optionalDependencies:
-      bare-events: ms-feed-2.pkgs.visualstudio.com/bare-events@2.5.4
+      bare-events: 2.9.1
+    transitivePeerDependencies:
+      - bare-abort-controller
     dev: true
 
   /string-argv@0.3.2:
@@ -6020,9 +6289,10 @@ packages:
       pump: 3.0.2
       tar-stream: 3.1.7
     optionalDependencies:
-      bare-fs: ms-feed-25.pkgs.visualstudio.com/bare-fs@4.1.2
-      bare-path: ms-feed-2.pkgs.visualstudio.com/bare-path@3.0.0
+      bare-fs: 4.7.4
+      bare-path: 3.1.1
     transitivePeerDependencies:
+      - bare-abort-controller
       - bare-buffer
     dev: true
 
@@ -6032,6 +6302,8 @@ packages:
       b4a: 1.6.7
       fast-fifo: 1.3.2
       streamx: 2.22.0
+    transitivePeerDependencies:
+      - bare-abort-controller
     dev: true
 
   /tcomb-validation@3.4.1:
@@ -6734,7 +7006,7 @@ packages:
     dev: false
 
   ms-feed-12.pkgs.visualstudio.com/@azure/core-tracing@1.2.0:
-    resolution: {integrity: sha1-e+XVPDUi1jnPGQQsvNsZ9xvDWrI=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@azure/core-tracing/-/core-tracing-1.2.0.tgz}
+    resolution: {integrity: sha1-e+XVPDUi1jnPGQQsvNsZ9xvDWrI=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@azure/core-tracing/-/core-tracing-1.2.0.tgz}
     name: '@azure/core-tracing'
     version: 1.2.0
     engines: {node: '>=18.0.0'}
@@ -6743,7 +7015,7 @@ packages:
     dev: false
 
   ms-feed-12.pkgs.visualstudio.com/@azure/msal-node@3.6.3:
-    resolution: {integrity: sha1-0HzuQE0HGFCkZX6G4HtDwXNPl/g=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@azure/msal-node/-/msal-node-3.6.3.tgz}
+    resolution: {integrity: sha1-0HzuQE0HGFCkZX6G4HtDwXNPl/g=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@azure/msal-node/-/msal-node-3.6.3.tgz}
     name: '@azure/msal-node'
     version: 3.6.3
     engines: {node: '>=16'}
@@ -6753,103 +7025,8 @@ packages:
       uuid: ms-feed-12.pkgs.visualstudio.com/uuid@11.1.1
     dev: false
 
-  ms-feed-12.pkgs.visualstudio.com/@rollup/rollup-android-arm-eabi@4.27.3:
-    resolution: {integrity: sha1-qyx4xD5Dl/upqA6pOQfeehRPMUk=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-android-arm-eabi/-/rollup-android-arm-eabi-4.27.3.tgz}
-    name: '@rollup/rollup-android-arm-eabi'
-    version: 4.27.3
-    cpu: [arm]
-    os: [android]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  ms-feed-12.pkgs.visualstudio.com/@rollup/rollup-darwin-x64@4.27.3:
-    resolution: {integrity: sha1-Vtq55MrArZd0F0DqGse2pXbiDlk=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-darwin-x64/-/rollup-darwin-x64-4.27.3.tgz}
-    name: '@rollup/rollup-darwin-x64'
-    version: 4.27.3
-    cpu: [x64]
-    os: [darwin]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  ms-feed-12.pkgs.visualstudio.com/@rollup/rollup-linux-arm-musleabihf@4.27.3:
-    resolution: {integrity: sha1-+SDyTlcfJrvNuIImcIaUL9skdL8=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-linux-arm-musleabihf/-/rollup-linux-arm-musleabihf-4.27.3.tgz}
-    name: '@rollup/rollup-linux-arm-musleabihf'
-    version: 4.27.3
-    cpu: [arm]
-    os: [linux]
-    libc: [musl]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  ms-feed-12.pkgs.visualstudio.com/@rollup/rollup-linux-arm64-gnu@4.27.3:
-    resolution: {integrity: sha1-IEZVPpHYynM1mio7tHGCb7vcyaM=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-linux-arm64-gnu/-/rollup-linux-arm64-gnu-4.27.3.tgz}
-    name: '@rollup/rollup-linux-arm64-gnu'
-    version: 4.27.3
-    cpu: [arm64]
-    os: [linux]
-    libc: [glibc]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  ms-feed-12.pkgs.visualstudio.com/@rollup/rollup-linux-arm64-musl@4.27.3:
-    resolution: {integrity: sha1-ij8F2651MQKuEKm8IWjHtrvupdo=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-linux-arm64-musl/-/rollup-linux-arm64-musl-4.27.3.tgz}
-    name: '@rollup/rollup-linux-arm64-musl'
-    version: 4.27.3
-    cpu: [arm64]
-    os: [linux]
-    libc: [musl]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  ms-feed-12.pkgs.visualstudio.com/@rollup/rollup-linux-s390x-gnu@4.27.3:
-    resolution: {integrity: sha1-a5wE2EWTg2+ULOtN2QZEYz1f6HE=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-linux-s390x-gnu/-/rollup-linux-s390x-gnu-4.27.3.tgz}
-    name: '@rollup/rollup-linux-s390x-gnu'
-    version: 4.27.3
-    cpu: [s390x]
-    os: [linux]
-    libc: [glibc]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  ms-feed-12.pkgs.visualstudio.com/@rollup/rollup-linux-x64-musl@4.27.3:
-    resolution: {integrity: sha1-ZUe8AGny14jmzw8zNjuVEYH0zKU=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-linux-x64-musl/-/rollup-linux-x64-musl-4.27.3.tgz}
-    name: '@rollup/rollup-linux-x64-musl'
-    version: 4.27.3
-    cpu: [x64]
-    os: [linux]
-    libc: [musl]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  ms-feed-12.pkgs.visualstudio.com/@rollup/rollup-win32-arm64-msvc@4.27.3:
-    resolution: {integrity: sha1-Py25NHxd9eZien4S2TfOpSfWNSY=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-win32-arm64-msvc/-/rollup-win32-arm64-msvc-4.27.3.tgz}
-    name: '@rollup/rollup-win32-arm64-msvc'
-    version: 4.27.3
-    cpu: [arm64]
-    os: [win32]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  ms-feed-12.pkgs.visualstudio.com/@types/yauzl@2.10.3:
-    resolution: {integrity: sha1-6bKAi08QlQSgPNqVglmHb2EBeZk=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@types/yauzl/-/yauzl-2.10.3.tgz}
-    name: '@types/yauzl'
-    version: 2.10.3
-    requiresBuild: true
-    dependencies:
-      '@types/node': 18.0.0
-    dev: true
-    optional: true
-
   ms-feed-12.pkgs.visualstudio.com/agent-base@6.0.2(supports-color@9.4.0):
-    resolution: {integrity: sha1-Sf/1hXfP7j83F2/qtMIuAPhtf3c=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/agent-base/-/agent-base-6.0.2.tgz}
+    resolution: {integrity: sha1-Sf/1hXfP7j83F2/qtMIuAPhtf3c=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/agent-base/-/agent-base-6.0.2.tgz}
     id: ms-feed-12.pkgs.visualstudio.com/agent-base/6.0.2
     name: agent-base
     version: 6.0.2
@@ -6860,19 +7037,19 @@ packages:
       - supports-color
 
   ms-feed-12.pkgs.visualstudio.com/agent-base@7.1.3:
-    resolution: {integrity: sha1-KUNeuCG8QZRjOluJ5bxHA7r8JaE=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/agent-base/-/agent-base-7.1.3.tgz}
+    resolution: {integrity: sha1-KUNeuCG8QZRjOluJ5bxHA7r8JaE=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/agent-base/-/agent-base-7.1.3.tgz}
     name: agent-base
     version: 7.1.3
     engines: {node: '>= 14'}
 
   ms-feed-12.pkgs.visualstudio.com/anynum@1.0.1:
-    resolution: {integrity: sha1-KqwA4I3603JsHUYuYNvC+DFlmkQ=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/anynum/-/anynum-1.0.1.tgz}
+    resolution: {integrity: sha1-KqwA4I3603JsHUYuYNvC+DFlmkQ=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/anynum/-/anynum-1.0.1.tgz}
     name: anynum
     version: 1.0.1
     dev: false
 
   ms-feed-12.pkgs.visualstudio.com/debug@2.6.9(supports-color@9.4.0):
-    resolution: {integrity: sha1-XRKFFd8TT/Mn6QpMk/Tgd6U2NB8=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/debug/-/debug-2.6.9.tgz}
+    resolution: {integrity: sha1-XRKFFd8TT/Mn6QpMk/Tgd6U2NB8=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/debug/-/debug-2.6.9.tgz}
     id: ms-feed-12.pkgs.visualstudio.com/debug/2.6.9
     name: debug
     version: 2.6.9
@@ -6887,7 +7064,7 @@ packages:
     dev: true
 
   ms-feed-12.pkgs.visualstudio.com/debug@3.2.7(supports-color@9.4.0):
-    resolution: {integrity: sha1-clgLfpFF+zm2Z2+cXl+xALk0F5o=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/debug/-/debug-3.2.7.tgz}
+    resolution: {integrity: sha1-clgLfpFF+zm2Z2+cXl+xALk0F5o=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/debug/-/debug-3.2.7.tgz}
     id: ms-feed-12.pkgs.visualstudio.com/debug/3.2.7
     name: debug
     version: 3.2.7
@@ -6902,7 +7079,7 @@ packages:
     dev: true
 
   ms-feed-12.pkgs.visualstudio.com/debug@4.3.7(supports-color@9.4.0):
-    resolution: {integrity: sha1-h5RbQVGgEddtlaGY1xEchlw2ClI=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/debug/-/debug-4.3.7.tgz}
+    resolution: {integrity: sha1-h5RbQVGgEddtlaGY1xEchlw2ClI=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/debug/-/debug-4.3.7.tgz}
     id: ms-feed-12.pkgs.visualstudio.com/debug/4.3.7
     name: debug
     version: 4.3.7
@@ -6918,7 +7095,7 @@ packages:
     dev: true
 
   ms-feed-12.pkgs.visualstudio.com/debug@4.4.3(supports-color@9.4.0):
-    resolution: {integrity: sha1-xq5DLZvZZiWC/OCHCbA4xY6ePWo=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/debug/-/debug-4.4.3.tgz}
+    resolution: {integrity: sha1-xq5DLZvZZiWC/OCHCbA4xY6ePWo=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/debug/-/debug-4.4.3.tgz}
     id: ms-feed-12.pkgs.visualstudio.com/debug/4.4.3
     name: debug
     version: 4.4.3
@@ -6933,14 +7110,14 @@ packages:
       supports-color: 9.4.0
 
   ms-feed-12.pkgs.visualstudio.com/default-browser-id@5.0.1:
-    resolution: {integrity: sha1-96fMuPUQS/jg9xujscz6Xq/bIeg=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/default-browser-id/-/default-browser-id-5.0.1.tgz}
+    resolution: {integrity: sha1-96fMuPUQS/jg9xujscz6Xq/bIeg=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/default-browser-id/-/default-browser-id-5.0.1.tgz}
     name: default-browser-id
     version: 5.0.1
     engines: {node: '>=18'}
     dev: false
 
   ms-feed-12.pkgs.visualstudio.com/default-browser@5.5.0:
-    resolution: {integrity: sha1-J5LohvJCKJRUWUfMgOGkRElsWXY=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/default-browser/-/default-browser-5.5.0.tgz}
+    resolution: {integrity: sha1-J5LohvJCKJRUWUfMgOGkRElsWXY=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/default-browser/-/default-browser-5.5.0.tgz}
     name: default-browser
     version: 5.5.0
     engines: {node: '>=18'}
@@ -6950,21 +7127,13 @@ packages:
     dev: false
 
   ms-feed-12.pkgs.visualstudio.com/fast-deep-equal@3.1.3:
-    resolution: {integrity: sha1-On1WtVnWy8PrUSMlJE5hmmXGxSU=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/fast-deep-equal/-/fast-deep-equal-3.1.3.tgz}
+    resolution: {integrity: sha1-On1WtVnWy8PrUSMlJE5hmmXGxSU=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/fast-deep-equal/-/fast-deep-equal-3.1.3.tgz}
     name: fast-deep-equal
     version: 3.1.3
     dev: true
 
-  ms-feed-12.pkgs.visualstudio.com/graceful-fs@4.2.11:
-    resolution: {integrity: sha1-QYPk6L8Iu24Fu7L30uDI9xLKQOM=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/graceful-fs/-/graceful-fs-4.2.11.tgz}
-    name: graceful-fs
-    version: 4.2.11
-    requiresBuild: true
-    dev: true
-    optional: true
-
   ms-feed-12.pkgs.visualstudio.com/http-proxy-agent@7.0.2(supports-color@9.4.0):
-    resolution: {integrity: sha1-mosfJGhmwChQlIZYX2K48sGMJw4=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/http-proxy-agent/-/http-proxy-agent-7.0.2.tgz}
+    resolution: {integrity: sha1-mosfJGhmwChQlIZYX2K48sGMJw4=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/http-proxy-agent/-/http-proxy-agent-7.0.2.tgz}
     id: ms-feed-12.pkgs.visualstudio.com/http-proxy-agent/7.0.2
     name: http-proxy-agent
     version: 7.0.2
@@ -6976,7 +7145,7 @@ packages:
       - supports-color
 
   ms-feed-12.pkgs.visualstudio.com/https-proxy-agent@7.0.6(supports-color@9.4.0):
-    resolution: {integrity: sha1-2o3+rH2hMLBcK6S1nJts1mYRprk=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/https-proxy-agent/-/https-proxy-agent-7.0.6.tgz}
+    resolution: {integrity: sha1-2o3+rH2hMLBcK6S1nJts1mYRprk=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/https-proxy-agent/-/https-proxy-agent-7.0.6.tgz}
     id: ms-feed-12.pkgs.visualstudio.com/https-proxy-agent/7.0.6
     name: https-proxy-agent
     version: 7.0.6
@@ -6987,33 +7156,14 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
-  ms-feed-12.pkgs.visualstudio.com/js-yaml@3.14.1:
-    resolution: {integrity: sha1-2ugS/bOCX6MGYJqHFzg8UMNqBTc=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/js-yaml/-/js-yaml-3.14.1.tgz}
-    name: js-yaml
-    version: 3.14.1
-    hasBin: true
-    dependencies:
-      argparse: ms-feed-2.pkgs.visualstudio.com/argparse@1.0.10
-      esprima: 4.0.1
-    dev: true
-
-  ms-feed-12.pkgs.visualstudio.com/js-yaml@4.3.0:
-    resolution: {integrity: sha1-0ZAFcqf3zwtfVAyDZz5gutNDZZI=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/js-yaml/-/js-yaml-4.3.0.tgz}
-    name: js-yaml
-    version: 4.3.0
-    hasBin: true
-    dependencies:
-      argparse: ms-feed-2.pkgs.visualstudio.com/argparse@2.0.1
-    dev: true
-
   ms-feed-12.pkgs.visualstudio.com/json-schema-traverse@1.0.0:
-    resolution: {integrity: sha1-rnvLNlard6c7pcSb9lTzjmtoYOI=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/json-schema-traverse/-/json-schema-traverse-1.0.0.tgz}
+    resolution: {integrity: sha1-rnvLNlard6c7pcSb9lTzjmtoYOI=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/json-schema-traverse/-/json-schema-traverse-1.0.0.tgz}
     name: json-schema-traverse
     version: 1.0.0
     dev: true
 
   ms-feed-12.pkgs.visualstudio.com/jwa@2.0.1:
-    resolution: {integrity: sha1-v4F20a0M1y4PP1gzhZWhPhELyAQ=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/jwa/-/jwa-2.0.1.tgz}
+    resolution: {integrity: sha1-v4F20a0M1y4PP1gzhZWhPhELyAQ=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/jwa/-/jwa-2.0.1.tgz}
     name: jwa
     version: 2.0.1
     dependencies:
@@ -7023,7 +7173,7 @@ packages:
     dev: false
 
   ms-feed-12.pkgs.visualstudio.com/jws@4.0.1:
-    resolution: {integrity: sha1-B+3Bvo+sIOZ3soPs4mFJi9OPBpA=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/jws/-/jws-4.0.1.tgz}
+    resolution: {integrity: sha1-B+3Bvo+sIOZ3soPs4mFJi9OPBpA=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/jws/-/jws-4.0.1.tgz}
     name: jws
     version: 4.0.1
     dependencies:
@@ -7032,7 +7182,7 @@ packages:
     dev: false
 
   ms-feed-12.pkgs.visualstudio.com/open@10.2.0:
-    resolution: {integrity: sha1-udhVvgB2IOgLb7BfrJgUH+Yttzw=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/open/-/open-10.2.0.tgz}
+    resolution: {integrity: sha1-udhVvgB2IOgLb7BfrJgUH+Yttzw=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/open/-/open-10.2.0.tgz}
     name: open
     version: 10.2.0
     engines: {node: '>=18'}
@@ -7044,43 +7194,34 @@ packages:
     dev: false
 
   ms-feed-12.pkgs.visualstudio.com/require-from-string@2.0.2:
-    resolution: {integrity: sha1-iaf92TgmEmcxjq/hT5wy5ZjDaQk=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/require-from-string/-/require-from-string-2.0.2.tgz}
+    resolution: {integrity: sha1-iaf92TgmEmcxjq/hT5wy5ZjDaQk=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/require-from-string/-/require-from-string-2.0.2.tgz}
     name: require-from-string
     version: 2.0.2
     engines: {node: '>=0.10.0'}
     dev: true
 
   ms-feed-12.pkgs.visualstudio.com/semver@6.3.1:
-    resolution: {integrity: sha1-VW0u+GiRRuRtzqS/3QlfNDTf/LQ=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/semver/-/semver-6.3.1.tgz}
+    resolution: {integrity: sha1-VW0u+GiRRuRtzqS/3QlfNDTf/LQ=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/semver/-/semver-6.3.1.tgz}
     name: semver
     version: 6.3.1
     hasBin: true
     dev: true
 
   ms-feed-12.pkgs.visualstudio.com/semver@7.7.1:
-    resolution: {integrity: sha1-q9UJjYKxjGyB9gdP8mR/0+ciDJ8=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/semver/-/semver-7.7.1.tgz}
+    resolution: {integrity: sha1-q9UJjYKxjGyB9gdP8mR/0+ciDJ8=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/semver/-/semver-7.7.1.tgz}
     name: semver
     version: 7.7.1
     engines: {node: '>=10'}
     hasBin: true
 
-  ms-feed-12.pkgs.visualstudio.com/source-map@0.6.1:
-    resolution: {integrity: sha1-dHIq8y6WFOnCh6jQu95IteLxomM=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/source-map/-/source-map-0.6.1.tgz}
-    name: source-map
-    version: 0.6.1
-    engines: {node: '>=0.10.0'}
-    requiresBuild: true
-    dev: true
-    optional: true
-
   ms-feed-12.pkgs.visualstudio.com/uuid@11.1.1:
-    resolution: {integrity: sha1-9tgdLhxl0Adi5eKbFsXS2ZXiCK0=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/uuid/-/uuid-11.1.1.tgz}
+    resolution: {integrity: sha1-9tgdLhxl0Adi5eKbFsXS2ZXiCK0=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/uuid/-/uuid-11.1.1.tgz}
     name: uuid
     version: 11.1.1
     hasBin: true
 
   ms-feed-2.pkgs.visualstudio.com/@azure/abort-controller@2.1.2:
-    resolution: {integrity: sha1-Qv4MyrI4QdmQWBLFjxCC0neEVm0=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@azure/abort-controller/-/abort-controller-2.1.2.tgz}
+    resolution: {integrity: sha1-Qv4MyrI4QdmQWBLFjxCC0neEVm0=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@azure/abort-controller/-/abort-controller-2.1.2.tgz}
     name: '@azure/abort-controller'
     version: 2.1.2
     engines: {node: '>=18.0.0'}
@@ -7089,7 +7230,7 @@ packages:
     dev: false
 
   ms-feed-2.pkgs.visualstudio.com/@azure/core-auth@1.10.0:
-    resolution: {integrity: sha1-aNunA2CA4dnVaZxOSCFKt5b6c60=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@azure/core-auth/-/core-auth-1.10.0.tgz}
+    resolution: {integrity: sha1-aNunA2CA4dnVaZxOSCFKt5b6c60=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@azure/core-auth/-/core-auth-1.10.0.tgz}
     name: '@azure/core-auth'
     version: 1.10.0
     engines: {node: '>=20.0.0'}
@@ -7100,7 +7241,7 @@ packages:
     dev: false
 
   ms-feed-2.pkgs.visualstudio.com/@azure/core-rest-pipeline@1.19.1(supports-color@9.4.0):
-    resolution: {integrity: sha1-50BnZER3egTcVWVthmATHf2SaSQ=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@azure/core-rest-pipeline/-/core-rest-pipeline-1.19.1.tgz}
+    resolution: {integrity: sha1-50BnZER3egTcVWVthmATHf2SaSQ=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@azure/core-rest-pipeline/-/core-rest-pipeline-1.19.1.tgz}
     id: ms-feed-2.pkgs.visualstudio.com/@azure/core-rest-pipeline/1.19.1
     name: '@azure/core-rest-pipeline'
     version: 1.19.1
@@ -7119,7 +7260,7 @@ packages:
     dev: false
 
   ms-feed-2.pkgs.visualstudio.com/@azure/identity@4.10.0(supports-color@9.4.0):
-    resolution: {integrity: sha1-EM/kkge00RHr46qzreR1YcKFLG0=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@azure/identity/-/identity-4.10.0.tgz}
+    resolution: {integrity: sha1-EM/kkge00RHr46qzreR1YcKFLG0=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@azure/identity/-/identity-4.10.0.tgz}
     id: ms-feed-2.pkgs.visualstudio.com/@azure/identity/4.10.0
     name: '@azure/identity'
     version: 4.10.0
@@ -7141,7 +7282,7 @@ packages:
     dev: false
 
   ms-feed-2.pkgs.visualstudio.com/@azure/logger@1.1.4:
-    resolution: {integrity: sha1-Ijy/K0JN+mZHjOmk9XX1nG83l2g=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@azure/logger/-/logger-1.1.4.tgz}
+    resolution: {integrity: sha1-Ijy/K0JN+mZHjOmk9XX1nG83l2g=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@azure/logger/-/logger-1.1.4.tgz}
     name: '@azure/logger'
     version: 1.1.4
     engines: {node: '>=18.0.0'}
@@ -7150,7 +7291,7 @@ packages:
     dev: false
 
   ms-feed-2.pkgs.visualstudio.com/@azure/msal-browser@4.30.0:
-    resolution: {integrity: sha1-MPuveuJtmrdnGqvKPUH5xS0qOTc=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@azure/msal-browser/-/msal-browser-4.30.0.tgz}
+    resolution: {integrity: sha1-MPuveuJtmrdnGqvKPUH5xS0qOTc=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@azure/msal-browser/-/msal-browser-4.30.0.tgz}
     name: '@azure/msal-browser'
     version: 4.30.0
     engines: {node: '>=0.8.0'}
@@ -7159,72 +7300,21 @@ packages:
     dev: false
 
   ms-feed-2.pkgs.visualstudio.com/@azure/msal-common@15.17.0:
-    resolution: {integrity: sha1-rjwDN4yFJkKxyaMDOA6UXCuJfwI=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@azure/msal-common/-/msal-common-15.17.0.tgz}
+    resolution: {integrity: sha1-rjwDN4yFJkKxyaMDOA6UXCuJfwI=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@azure/msal-common/-/msal-common-15.17.0.tgz}
     name: '@azure/msal-common'
     version: 15.17.0
     engines: {node: '>=0.8.0'}
     dev: false
 
   ms-feed-2.pkgs.visualstudio.com/@azure/msal-common@15.8.1:
-    resolution: {integrity: sha1-JxDw/55LE0fITaHCaFchPHUw12w=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@azure/msal-common/-/msal-common-15.8.1.tgz}
+    resolution: {integrity: sha1-JxDw/55LE0fITaHCaFchPHUw12w=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@azure/msal-common/-/msal-common-15.8.1.tgz}
     name: '@azure/msal-common'
     version: 15.8.1
     engines: {node: '>=0.8.0'}
     dev: false
 
-  ms-feed-2.pkgs.visualstudio.com/@rollup/rollup-android-arm64@4.27.3:
-    resolution: {integrity: sha1-3oQGYKtlz3O9bUvGLTis2fyUzWw=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-android-arm64/-/rollup-android-arm64-4.27.3.tgz}
-    name: '@rollup/rollup-android-arm64'
-    version: 4.27.3
-    cpu: [arm64]
-    os: [android]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  ms-feed-2.pkgs.visualstudio.com/@rollup/rollup-darwin-arm64@4.27.3:
-    resolution: {integrity: sha1-jHhuOI9+/w2DAVGp2PvwTAMbsH8=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-darwin-arm64/-/rollup-darwin-arm64-4.27.3.tgz}
-    name: '@rollup/rollup-darwin-arm64'
-    version: 4.27.3
-    cpu: [arm64]
-    os: [darwin]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  ms-feed-2.pkgs.visualstudio.com/@rollup/rollup-freebsd-x64@4.27.3:
-    resolution: {integrity: sha1-x82faapDhHs32BnxLCrWM37CRfo=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-freebsd-x64/-/rollup-freebsd-x64-4.27.3.tgz}
-    name: '@rollup/rollup-freebsd-x64'
-    version: 4.27.3
-    cpu: [x64]
-    os: [freebsd]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  ms-feed-2.pkgs.visualstudio.com/@rollup/rollup-linux-riscv64-gnu@4.27.3:
-    resolution: {integrity: sha1-+oSz+BgmzuDenpD5lU8+VcPMbJc=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-linux-riscv64-gnu/-/rollup-linux-riscv64-gnu-4.27.3.tgz}
-    name: '@rollup/rollup-linux-riscv64-gnu'
-    version: 4.27.3
-    cpu: [riscv64]
-    os: [linux]
-    libc: [glibc]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  ms-feed-2.pkgs.visualstudio.com/@rollup/rollup-win32-ia32-msvc@4.27.3:
-    resolution: {integrity: sha1-VPz5oTqY0/DkvmpLbii53KZ2UC8=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-win32-ia32-msvc/-/rollup-win32-ia32-msvc-4.27.3.tgz}
-    name: '@rollup/rollup-win32-ia32-msvc'
-    version: 4.27.3
-    cpu: [ia32]
-    os: [win32]
-    requiresBuild: true
-    dev: true
-    optional: true
-
   ms-feed-2.pkgs.visualstudio.com/ajv@8.18.0:
-    resolution: {integrity: sha1-iGQYa2c40APrOpMxcrs4M+EM77w=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/ajv/-/ajv-8.18.0.tgz}
+    resolution: {integrity: sha1-iGQYa2c40APrOpMxcrs4M+EM77w=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/ajv/-/ajv-8.18.0.tgz}
     name: ajv
     version: 8.18.0
     dependencies:
@@ -7235,7 +7325,7 @@ packages:
     dev: true
 
   ms-feed-2.pkgs.visualstudio.com/argparse@1.0.10:
-    resolution: {integrity: sha1-vNZ5HqWuCXJeF+WtmIE0zUCz2RE=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/argparse/-/argparse-1.0.10.tgz}
+    resolution: {integrity: sha1-vNZ5HqWuCXJeF+WtmIE0zUCz2RE=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/argparse/-/argparse-1.0.10.tgz}
     name: argparse
     version: 1.0.10
     dependencies:
@@ -7243,44 +7333,26 @@ packages:
     dev: true
 
   ms-feed-2.pkgs.visualstudio.com/argparse@2.0.1:
-    resolution: {integrity: sha1-JG9Q88p4oyQPbJl+ipvR6sSeSzg=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/argparse/-/argparse-2.0.1.tgz}
+    resolution: {integrity: sha1-JG9Q88p4oyQPbJl+ipvR6sSeSzg=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/argparse/-/argparse-2.0.1.tgz}
     name: argparse
     version: 2.0.1
     dev: true
 
-  ms-feed-2.pkgs.visualstudio.com/bare-events@2.5.4:
-    resolution: {integrity: sha1-FhQ9Q14e2er9GrhfEribM1ekF0U=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/bare-events/-/bare-events-2.5.4.tgz}
-    name: bare-events
-    version: 2.5.4
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  ms-feed-2.pkgs.visualstudio.com/bare-path@3.0.0:
-    resolution: {integrity: sha1-tZ0YEwulKmr5J22z6WouPT6lIXg=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/bare-path/-/bare-path-3.0.0.tgz}
-    name: bare-path
-    version: 3.0.0
-    requiresBuild: true
-    dependencies:
-      bare-os: 3.6.1
-    dev: true
-    optional: true
-
   ms-feed-2.pkgs.visualstudio.com/define-lazy-prop@3.0.0:
-    resolution: {integrity: sha1-27Ga37dG1/xtc0oGty9KANAhJV8=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/define-lazy-prop/-/define-lazy-prop-3.0.0.tgz}
+    resolution: {integrity: sha1-27Ga37dG1/xtc0oGty9KANAhJV8=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/define-lazy-prop/-/define-lazy-prop-3.0.0.tgz}
     name: define-lazy-prop
     version: 3.0.0
     engines: {node: '>=12'}
     dev: false
 
   ms-feed-2.pkgs.visualstudio.com/fast-uri@3.1.2:
-    resolution: {integrity: sha1-ivPU/J0+cbEVcswmc7UUp9GoyOw=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/fast-uri/-/fast-uri-3.1.2.tgz}
+    resolution: {integrity: sha1-ivPU/J0+cbEVcswmc7UUp9GoyOw=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/fast-uri/-/fast-uri-3.1.2.tgz}
     name: fast-uri
     version: 3.1.2
     dev: true
 
   ms-feed-2.pkgs.visualstudio.com/fast-xml-builder@1.3.0:
-    resolution: {integrity: sha1-vISYBHlv5Hv5FQIt2Tmw/DC6RV0=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/fast-xml-builder/-/fast-xml-builder-1.3.0.tgz}
+    resolution: {integrity: sha1-vISYBHlv5Hv5FQIt2Tmw/DC6RV0=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/fast-xml-builder/-/fast-xml-builder-1.3.0.tgz}
     name: fast-xml-builder
     version: 1.3.0
     dependencies:
@@ -7288,18 +7360,8 @@ packages:
       xml-naming: ms-feed-25.pkgs.visualstudio.com/xml-naming@0.3.0
     dev: false
 
-  ms-feed-2.pkgs.visualstudio.com/fsevents@2.3.3:
-    resolution: {integrity: sha1-ysZAd4XQNnWipeGlMFxpezR9kNY=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/fsevents/-/fsevents-2.3.3.tgz}
-    name: fsevents
-    version: 2.3.3
-    engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
-    os: [darwin]
-    requiresBuild: true
-    dev: true
-    optional: true
-
   ms-feed-2.pkgs.visualstudio.com/is-docker@3.0.0:
-    resolution: {integrity: sha1-kAk6oxBid9inelkQ265xdH4VogA=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/is-docker/-/is-docker-3.0.0.tgz}
+    resolution: {integrity: sha1-kAk6oxBid9inelkQ265xdH4VogA=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/is-docker/-/is-docker-3.0.0.tgz}
     name: is-docker
     version: 3.0.0
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
@@ -7307,7 +7369,7 @@ packages:
     dev: false
 
   ms-feed-2.pkgs.visualstudio.com/is-wsl@3.1.1:
-    resolution: {integrity: sha1-MniXsmgyo+sRfabCdJLQTKEyWU8=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/is-wsl/-/is-wsl-3.1.1.tgz}
+    resolution: {integrity: sha1-MniXsmgyo+sRfabCdJLQTKEyWU8=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/is-wsl/-/is-wsl-3.1.1.tgz}
     name: is-wsl
     version: 3.1.1
     engines: {node: '>=16'}
@@ -7316,77 +7378,77 @@ packages:
     dev: false
 
   ms-feed-2.pkgs.visualstudio.com/lodash.includes@4.3.0:
-    resolution: {integrity: sha1-YLuYqHy5I8aMoeUTJUgzFISfVT8=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/lodash.includes/-/lodash.includes-4.3.0.tgz}
+    resolution: {integrity: sha1-YLuYqHy5I8aMoeUTJUgzFISfVT8=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/lodash.includes/-/lodash.includes-4.3.0.tgz}
     name: lodash.includes
     version: 4.3.0
     dev: false
 
   ms-feed-2.pkgs.visualstudio.com/lodash.isinteger@4.0.4:
-    resolution: {integrity: sha1-YZwK89A/iwTDH1iChAt3sRzWg0M=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/lodash.isinteger/-/lodash.isinteger-4.0.4.tgz}
+    resolution: {integrity: sha1-YZwK89A/iwTDH1iChAt3sRzWg0M=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/lodash.isinteger/-/lodash.isinteger-4.0.4.tgz}
     name: lodash.isinteger
     version: 4.0.4
     dev: false
 
   ms-feed-2.pkgs.visualstudio.com/lodash.isnumber@3.0.3:
-    resolution: {integrity: sha1-POdoEMWSjQM1IwGsKHMX8RwLH/w=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/lodash.isnumber/-/lodash.isnumber-3.0.3.tgz}
+    resolution: {integrity: sha1-POdoEMWSjQM1IwGsKHMX8RwLH/w=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/lodash.isnumber/-/lodash.isnumber-3.0.3.tgz}
     name: lodash.isnumber
     version: 3.0.3
     dev: false
 
   ms-feed-2.pkgs.visualstudio.com/lodash.isplainobject@4.0.6:
-    resolution: {integrity: sha1-fFJqUtibRcRcxpC4gWO+BJf1UMs=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/lodash.isplainobject/-/lodash.isplainobject-4.0.6.tgz}
+    resolution: {integrity: sha1-fFJqUtibRcRcxpC4gWO+BJf1UMs=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/lodash.isplainobject/-/lodash.isplainobject-4.0.6.tgz}
     name: lodash.isplainobject
     version: 4.0.6
     dev: false
 
   ms-feed-2.pkgs.visualstudio.com/lodash.once@4.1.1:
-    resolution: {integrity: sha1-DdOXEhPHxW34gJd9UEyI+0cal6w=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/lodash.once/-/lodash.once-4.1.1.tgz}
+    resolution: {integrity: sha1-DdOXEhPHxW34gJd9UEyI+0cal6w=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/lodash.once/-/lodash.once-4.1.1.tgz}
     name: lodash.once
     version: 4.1.1
     dev: false
 
   ms-feed-2.pkgs.visualstudio.com/ms@2.0.0:
-    resolution: {integrity: sha1-VgiurfwAvmwpAd9fmGF4jeDVl8g=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/ms/-/ms-2.0.0.tgz}
+    resolution: {integrity: sha1-VgiurfwAvmwpAd9fmGF4jeDVl8g=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/ms/-/ms-2.0.0.tgz}
     name: ms
     version: 2.0.0
     dev: true
 
   ms-feed-2.pkgs.visualstudio.com/ms@2.1.2:
-    resolution: {integrity: sha1-0J0fNXtEP0kzgqjrPM0YOHKuYAk=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/ms/-/ms-2.1.2.tgz}
+    resolution: {integrity: sha1-0J0fNXtEP0kzgqjrPM0YOHKuYAk=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/ms/-/ms-2.1.2.tgz}
     name: ms
     version: 2.1.2
     dev: true
 
   ms-feed-2.pkgs.visualstudio.com/ms@2.1.3:
-    resolution: {integrity: sha1-V0yBOM4dK1hh8LRFedut1gxmFbI=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/ms/-/ms-2.1.3.tgz}
+    resolution: {integrity: sha1-V0yBOM4dK1hh8LRFedut1gxmFbI=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/ms/-/ms-2.1.3.tgz}
     name: ms
     version: 2.1.3
 
   ms-feed-2.pkgs.visualstudio.com/path-expression-matcher@1.6.2:
-    resolution: {integrity: sha1-VnxzwHGX6dzvJOkO3NxXEFZZkWg=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/path-expression-matcher/-/path-expression-matcher-1.6.2.tgz}
+    resolution: {integrity: sha1-VnxzwHGX6dzvJOkO3NxXEFZZkWg=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/path-expression-matcher/-/path-expression-matcher-1.6.2.tgz}
     name: path-expression-matcher
     version: 1.6.2
     engines: {node: '>=14.0.0'}
     dev: false
 
   ms-feed-2.pkgs.visualstudio.com/safe-buffer@5.2.1:
-    resolution: {integrity: sha1-Hq+fqb2x/dTsdfWPnNtOa3gn7sY=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/safe-buffer/-/safe-buffer-5.2.1.tgz}
+    resolution: {integrity: sha1-Hq+fqb2x/dTsdfWPnNtOa3gn7sY=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/safe-buffer/-/safe-buffer-5.2.1.tgz}
     name: safe-buffer
     version: 5.2.1
 
   ms-feed-2.pkgs.visualstudio.com/tslib@1.14.1:
-    resolution: {integrity: sha1-zy04vcNKE0vK8QkcQfZhni9nLQA=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/tslib/-/tslib-1.14.1.tgz}
+    resolution: {integrity: sha1-zy04vcNKE0vK8QkcQfZhni9nLQA=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/tslib/-/tslib-1.14.1.tgz}
     name: tslib
     version: 1.14.1
     dev: true
 
   ms-feed-2.pkgs.visualstudio.com/tslib@2.8.1:
-    resolution: {integrity: sha1-YS7+TtI11Wfoq6Xypfq3AoCt6D8=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/tslib/-/tslib-2.8.1.tgz}
+    resolution: {integrity: sha1-YS7+TtI11Wfoq6Xypfq3AoCt6D8=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/tslib/-/tslib-2.8.1.tgz}
     name: tslib
     version: 2.8.1
 
   ms-feed-25.pkgs.visualstudio.com/@azure/core-client@1.9.3(supports-color@9.4.0):
-    resolution: {integrity: sha1-nKjzvccw0Q1Y9lycLJypkrwVu2c=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@azure/core-client/-/core-client-1.9.3.tgz}
+    resolution: {integrity: sha1-nKjzvccw0Q1Y9lycLJypkrwVu2c=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@azure/core-client/-/core-client-1.9.3.tgz}
     id: ms-feed-25.pkgs.visualstudio.com/@azure/core-client/1.9.3
     name: '@azure/core-client'
     version: 1.9.3
@@ -7404,7 +7466,7 @@ packages:
     dev: false
 
   ms-feed-25.pkgs.visualstudio.com/@azure/core-util@1.11.0:
-    resolution: {integrity: sha1-9TD8Z+c4rqhy+90cyEFucCGfrac=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@azure/core-util/-/core-util-1.11.0.tgz}
+    resolution: {integrity: sha1-9TD8Z+c4rqhy+90cyEFucCGfrac=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@azure/core-util/-/core-util-1.11.0.tgz}
     name: '@azure/core-util'
     version: 1.11.0
     engines: {node: '>=18.0.0'}
@@ -7414,7 +7476,7 @@ packages:
     dev: false
 
   ms-feed-25.pkgs.visualstudio.com/@azure/msal-browser@4.30.0:
-    resolution: {integrity: sha1-MPuveuJtmrdnGqvKPUH5xS0qOTc=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@azure/msal-browser/-/msal-browser-4.30.0.tgz}
+    resolution: {integrity: sha1-MPuveuJtmrdnGqvKPUH5xS0qOTc=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@azure/msal-browser/-/msal-browser-4.30.0.tgz}
     name: '@azure/msal-browser'
     version: 4.30.0
     engines: {node: '>=0.8.0'}
@@ -7423,90 +7485,19 @@ packages:
     dev: false
 
   ms-feed-25.pkgs.visualstudio.com/@nodable/entities@2.2.0:
-    resolution: {integrity: sha1-odRamSsCJZGxwrA6d5Nck5N1tkI=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@nodable/entities/-/entities-2.2.0.tgz}
+    resolution: {integrity: sha1-odRamSsCJZGxwrA6d5Nck5N1tkI=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@nodable/entities/-/entities-2.2.0.tgz}
     name: '@nodable/entities'
     version: 2.2.0
     dev: false
 
-  ms-feed-25.pkgs.visualstudio.com/@rollup/rollup-freebsd-arm64@4.27.3:
-    resolution: {integrity: sha1-vLQRLLfmihLRSLA8vCHd5Ddy9Lw=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-freebsd-arm64/-/rollup-freebsd-arm64-4.27.3.tgz}
-    name: '@rollup/rollup-freebsd-arm64'
-    version: 4.27.3
-    cpu: [arm64]
-    os: [freebsd]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  ms-feed-25.pkgs.visualstudio.com/@rollup/rollup-linux-arm-gnueabihf@4.27.3:
-    resolution: {integrity: sha1-NpKyKYemGVyEkLv2NXgA4MGD7jg=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-linux-arm-gnueabihf/-/rollup-linux-arm-gnueabihf-4.27.3.tgz}
-    name: '@rollup/rollup-linux-arm-gnueabihf'
-    version: 4.27.3
-    cpu: [arm]
-    os: [linux]
-    libc: [glibc]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  ms-feed-25.pkgs.visualstudio.com/@rollup/rollup-linux-powerpc64le-gnu@4.27.3:
-    resolution: {integrity: sha1-0oHZx2L55PGqeQmjE/esvnis7TI=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-linux-powerpc64le-gnu/-/rollup-linux-powerpc64le-gnu-4.27.3.tgz}
-    name: '@rollup/rollup-linux-powerpc64le-gnu'
-    version: 4.27.3
-    cpu: [ppc64]
-    os: [linux]
-    libc: [glibc]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  ms-feed-25.pkgs.visualstudio.com/@rollup/rollup-linux-x64-gnu@4.27.3:
-    resolution: {integrity: sha1-8T7/zc0cwUsmQn5r7Ixsnk3jdz4=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-linux-x64-gnu/-/rollup-linux-x64-gnu-4.27.3.tgz}
-    name: '@rollup/rollup-linux-x64-gnu'
-    version: 4.27.3
-    cpu: [x64]
-    os: [linux]
-    libc: [glibc]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  ms-feed-25.pkgs.visualstudio.com/@rollup/rollup-win32-x64-msvc@4.27.3:
-    resolution: {integrity: sha1-NyH2AflzBZv+61cpks8N/JSrKXA=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-win32-x64-msvc/-/rollup-win32-x64-msvc-4.27.3.tgz}
-    name: '@rollup/rollup-win32-x64-msvc'
-    version: 4.27.3
-    cpu: [x64]
-    os: [win32]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  ms-feed-25.pkgs.visualstudio.com/bare-fs@4.1.2:
-    resolution: {integrity: sha1-WwSCmAGfSJl51aavtID1IErU6Js=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/bare-fs/-/bare-fs-4.1.2.tgz}
-    name: bare-fs
-    version: 4.1.2
-    engines: {bare: '>=1.16.0'}
-    requiresBuild: true
-    peerDependencies:
-      bare-buffer: '*'
-    peerDependenciesMeta:
-      bare-buffer:
-        optional: true
-    dependencies:
-      bare-events: 2.5.4
-      bare-path: ms-feed-2.pkgs.visualstudio.com/bare-path@3.0.0
-      bare-stream: 2.6.5(bare-events@2.5.4)
-    dev: true
-    optional: true
-
   ms-feed-25.pkgs.visualstudio.com/buffer-equal-constant-time@1.0.1:
-    resolution: {integrity: sha1-+OcRMvf/5uAaXJaXpMbz5I1cyBk=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/buffer-equal-constant-time/-/buffer-equal-constant-time-1.0.1.tgz}
+    resolution: {integrity: sha1-+OcRMvf/5uAaXJaXpMbz5I1cyBk=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/buffer-equal-constant-time/-/buffer-equal-constant-time-1.0.1.tgz}
     name: buffer-equal-constant-time
     version: 1.0.1
     dev: false
 
   ms-feed-25.pkgs.visualstudio.com/bundle-name@4.1.0:
-    resolution: {integrity: sha1-87lrNBYNZDGhnXaIE1r3z7h5eIk=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/bundle-name/-/bundle-name-4.1.0.tgz}
+    resolution: {integrity: sha1-87lrNBYNZDGhnXaIE1r3z7h5eIk=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/bundle-name/-/bundle-name-4.1.0.tgz}
     name: bundle-name
     version: 4.1.0
     engines: {node: '>=18'}
@@ -7515,7 +7506,7 @@ packages:
     dev: false
 
   ms-feed-25.pkgs.visualstudio.com/ecdsa-sig-formatter@1.0.11:
-    resolution: {integrity: sha1-rg8PothQRe8UqBfao86azQSJ5b8=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/ecdsa-sig-formatter/-/ecdsa-sig-formatter-1.0.11.tgz}
+    resolution: {integrity: sha1-rg8PothQRe8UqBfao86azQSJ5b8=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/ecdsa-sig-formatter/-/ecdsa-sig-formatter-1.0.11.tgz}
     name: ecdsa-sig-formatter
     version: 1.0.11
     dependencies:
@@ -7523,7 +7514,7 @@ packages:
     dev: false
 
   ms-feed-25.pkgs.visualstudio.com/fast-xml-parser@5.7.0:
-    resolution: {integrity: sha1-uT5Jo9YqiCTFIS2PoJmsLlSNVIo=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/fast-xml-parser/-/fast-xml-parser-5.7.0.tgz}
+    resolution: {integrity: sha1-uT5Jo9YqiCTFIS2PoJmsLlSNVIo=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/fast-xml-parser/-/fast-xml-parser-5.7.0.tgz}
     name: fast-xml-parser
     version: 5.7.0
     hasBin: true
@@ -7535,7 +7526,7 @@ packages:
     dev: false
 
   ms-feed-25.pkgs.visualstudio.com/is-inside-container@1.0.0:
-    resolution: {integrity: sha1-6B+6aZZi6zHb2vJnZqYdSBRxfqQ=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/is-inside-container/-/is-inside-container-1.0.0.tgz}
+    resolution: {integrity: sha1-6B+6aZZi6zHb2vJnZqYdSBRxfqQ=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/is-inside-container/-/is-inside-container-1.0.0.tgz}
     name: is-inside-container
     version: 1.0.0
     engines: {node: '>=14.16'}
@@ -7544,17 +7535,8 @@ packages:
       is-docker: ms-feed-2.pkgs.visualstudio.com/is-docker@3.0.0
     dev: false
 
-  ms-feed-25.pkgs.visualstudio.com/js-yaml@4.3.0:
-    resolution: {integrity: sha1-0ZAFcqf3zwtfVAyDZz5gutNDZZI=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/js-yaml/-/js-yaml-4.3.0.tgz}
-    name: js-yaml
-    version: 4.3.0
-    hasBin: true
-    dependencies:
-      argparse: ms-feed-2.pkgs.visualstudio.com/argparse@2.0.1
-    dev: true
-
   ms-feed-25.pkgs.visualstudio.com/jsonwebtoken@9.0.3:
-    resolution: {integrity: sha1-bNV6sB6bCsB8uEfVPTybbuMfeuI=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/jsonwebtoken/-/jsonwebtoken-9.0.3.tgz}
+    resolution: {integrity: sha1-bNV6sB6bCsB8uEfVPTybbuMfeuI=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/jsonwebtoken/-/jsonwebtoken-9.0.3.tgz}
     name: jsonwebtoken
     version: 9.0.3
     engines: {node: '>=12', npm: '>=6'}
@@ -7572,26 +7554,26 @@ packages:
     dev: false
 
   ms-feed-25.pkgs.visualstudio.com/lodash.isboolean@3.0.3:
-    resolution: {integrity: sha1-bC4XHbKiV82WgC/UOwGyDV9YcPY=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/lodash.isboolean/-/lodash.isboolean-3.0.3.tgz}
+    resolution: {integrity: sha1-bC4XHbKiV82WgC/UOwGyDV9YcPY=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/lodash.isboolean/-/lodash.isboolean-3.0.3.tgz}
     name: lodash.isboolean
     version: 3.0.3
     dev: false
 
   ms-feed-25.pkgs.visualstudio.com/lodash.isstring@4.0.1:
-    resolution: {integrity: sha1-1SfftUVuynzJu5XV2ur4i6VKVFE=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/lodash.isstring/-/lodash.isstring-4.0.1.tgz}
+    resolution: {integrity: sha1-1SfftUVuynzJu5XV2ur4i6VKVFE=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/lodash.isstring/-/lodash.isstring-4.0.1.tgz}
     name: lodash.isstring
     version: 4.0.1
     dev: false
 
   ms-feed-25.pkgs.visualstudio.com/run-applescript@7.1.0:
-    resolution: {integrity: sha1-Lp5UxGZOwxBsW1Yw4knT1llcSRE=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/run-applescript/-/run-applescript-7.1.0.tgz}
+    resolution: {integrity: sha1-Lp5UxGZOwxBsW1Yw4knT1llcSRE=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/run-applescript/-/run-applescript-7.1.0.tgz}
     name: run-applescript
     version: 7.1.0
     engines: {node: '>=18'}
     dev: false
 
   ms-feed-25.pkgs.visualstudio.com/strnum@2.4.1:
-    resolution: {integrity: sha1-hUF/aDETut6g/n4XInZ2+In/flg=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/strnum/-/strnum-2.4.1.tgz}
+    resolution: {integrity: sha1-hUF/aDETut6g/n4XInZ2+In/flg=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/strnum/-/strnum-2.4.1.tgz}
     name: strnum
     version: 2.4.1
     dependencies:
@@ -7599,7 +7581,7 @@ packages:
     dev: false
 
   ms-feed-25.pkgs.visualstudio.com/wsl-utils@0.1.0:
-    resolution: {integrity: sha1-h4PU32cdTVA2W+LuTHGRegVXuqs=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/wsl-utils/-/wsl-utils-0.1.0.tgz}
+    resolution: {integrity: sha1-h4PU32cdTVA2W+LuTHGRegVXuqs=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/wsl-utils/-/wsl-utils-0.1.0.tgz}
     name: wsl-utils
     version: 0.1.0
     engines: {node: '>=18'}
@@ -7608,7 +7590,7 @@ packages:
     dev: false
 
   ms-feed-25.pkgs.visualstudio.com/xml-naming@0.3.0:
-    resolution: {integrity: sha1-RsHhi/4oWEeZgt0qzPNNFudJ7aI=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/xml-naming/-/xml-naming-0.3.0.tgz}
+    resolution: {integrity: sha1-RsHhi/4oWEeZgt0qzPNNFudJ7aI=, registry: https://registry.npmjs.org/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/xml-naming/-/xml-naming-0.3.0.tgz}
     name: xml-naming
     version: 0.3.0
     engines: {node: '>=16.0.0'}
