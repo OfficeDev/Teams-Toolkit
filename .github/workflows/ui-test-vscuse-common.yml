@@ -137,7 +137,15 @@ jobs:
       GH_APP_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}
       AZURE_OPENAI_ENDPOINT: ${{ vars.TEST_TENANT_AZURE_OPENAI_ENDPOINT }}
       AZURE_OPENAI_API_KEY: ${{ secrets.TEST_TENANT_AZURE_OPENAI_KEY }}
+      # Deployment name for the PRODUCT under test (typed into the app's .env as
+      # AZURE_OPENAI_DEPLOYMENT_NAME via the plan steps). Keep this on a cheap model (e.g. gpt-4.1).
       AZURE_OPENAI_MODEL: ${{ vars.TEST_TENANT_AZURE_OPENAI_MODEL }}
+      # Deployment name used by the vscuse automation driver's OWN agents (action + assertion /
+      # precondition verification) via config.yaml. Set the repo variable to a stronger model
+      # (e.g. gpt-5.4) to improve UI reasoning + assertions without touching the product model.
+      # Falls back to AZURE_OPENAI_MODEL when the variable is unset. Dial it back here if it hits
+      # the Azure OpenAI rate-limit threshold.
+      AZURE_OPENAI_VSCUSE_MODEL: ${{ vars.TEST_TENANT_AZURE_OPENAI_VSCUSE_MODEL || vars.TEST_TENANT_AZURE_OPENAI_MODEL }}
       AZURE_OPENAI_API_VERSION: ${{ vars.TEST_TENANT_AZURE_OPENAI_API_VERSION }}
 
       # Vision service
