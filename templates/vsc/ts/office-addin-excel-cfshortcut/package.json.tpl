@@ -40,8 +40,8 @@
     "@types/office-js": "^1.0.377",
     "@types/office-runtime": "^1.0.35",
     "babel-loader": "^9.1.3",
-    "copy-webpack-plugin": "^12.0.2",
-    "custom-functions-metadata-plugin": "^1.5.7",
+    "copy-webpack-plugin": "^14.0.0",
+    "custom-functions-metadata-plugin": "^2.1.10",
     "eslint-plugin-office-addins": "^3.0.2",
     "file-loader": "^6.2.0",
     "html-loader": "^5.0.0",
@@ -59,7 +59,7 @@
     "typescript": "^5.4.2",
     "webpack": "^5.90.3",
     "webpack-cli": "^5.1.4",
-    "webpack-dev-server": "^5.2.2"
+    "webpack-dev-server": "^6.0.0"
   },
   "prettier": "office-addin-prettier-config",
   "browserslist": [
