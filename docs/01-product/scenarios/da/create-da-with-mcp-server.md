@@ -214,6 +214,6 @@ scaffolding:
         oauthClientSecret:
           state: non-empty
   reviewedFingerprints:
-    semantic: 5522688f9868173ef544a0242dfe42bca070748baa1368ff06d7484951d7e00c
-    presentation: 893929565caf7831a1e7ada7fa4d3a3a77e076d0583ef892ebf96a4aefdf211e
+    semantic: ce306745747b6901aec8ec6c20020627b56990c45e75fe87c87b426785f0065a
+    presentation: 6fd81458e6ccea7b1855cbb5a8a5698fb81e8224c046483748adadcf7c5a0622
 ```

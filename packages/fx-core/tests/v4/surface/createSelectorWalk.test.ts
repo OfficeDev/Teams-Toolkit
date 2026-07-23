@@ -823,6 +823,42 @@ describe("runCreateSelector (walk-create-selector)", () => {
     assert.deepEqual(ui.selectNames, ["projectType", "officeAddinCapability"]);
   });
 
+  it("WCS-22c: Office Excel custom functions JS-only runtime resolves the v4 route", async () => {
+    const picks = {
+      projectType: "office-meta-os-type",
+      officeAddinCapability: "office-addin-excel-customfunctions",
+    };
+    const ui = new ScriptedUI(picks);
+
+    const res = await runCreateSelector(buildFloor(), asUI(ui), "vscode");
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.equal(res.value.templateId, "office-addin-excel-customfunctions");
+      assert.equal(res.value.engine, "v4");
+      assert.deepEqual(res.value.answers, picks);
+    }
+    assert.deepEqual(ui.selectNames, ["projectType", "officeAddinCapability"]);
+  });
+
+  it("WCS-22d: Office Nested App Auth SSO resolves the v4 route", async () => {
+    const picks = {
+      projectType: "office-meta-os-type",
+      officeAddinCapability: "office-addin-sso-naa",
+    };
+    const ui = new ScriptedUI(picks);
+
+    const res = await runCreateSelector(buildFloor(), asUI(ui), "vscode");
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.equal(res.value.templateId, "office-addin-sso-naa");
+      assert.equal(res.value.engine, "v4");
+      assert.deepEqual(res.value.answers, picks);
+    }
+    assert.deepEqual(ui.selectNames, ["projectType", "officeAddinCapability"]);
+  });
+
   it("WCS-22b: Office Add-in common configuration resolves the v4 route", async () => {
     const picks = {
       projectType: "office-meta-os-type",

@@ -15,6 +15,9 @@ This is the vertical contract for the native v4 Office task pane add-in create p
 | SCN-CREATE-WXPO-TASKPANE-02 | L1 | rendered `package.json` and manifest | render | package `name` is the lower-case safe project name; manifest app names use the caller floor `appName` |
 | SCN-CREATE-WXPO-TASKPANE-03 | L1 | empty target | scaffold | only the `require-empty-target` step runs; no post-render scaffold injection is run |
 | SCN-CREATE-WXPO-TASKPANE-04 | L1 | non-empty target | scaffold | `require-empty-target` fails first with **`UserError`** and writes nothing |
+| SCN-CREATE-WXPO-TASKPANE-05 | L1 | a selected subset of Office hosts | render | the manifest requirement `scopes` list only the scopes for the selected hosts, in canonical `mail, workbook, document, presentation` order |
+| SCN-CREATE-WXPO-TASKPANE-06 | L1 | a host selection with or without Outlook | render | the Outlook-only manifest blocks (`TaskPaneRuntimeMail` runtime and the `mailRead` ribbon) are present only when Outlook is selected |
+| SCN-CREATE-WXPO-TASKPANE-07 | L1 | a selected subset of Office hosts | render | per-host source files, `.vscode/launch.json` debug configs/compounds, and `package.json` `start:desktop:<host>` scripts and `app_to_debug` are limited to the selected hosts |
 
 ## Composed operations
 

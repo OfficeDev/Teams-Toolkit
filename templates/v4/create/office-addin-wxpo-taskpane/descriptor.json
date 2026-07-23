@@ -9,11 +9,25 @@
 
   "optionsSchema": {
     "type": "object",
-    "properties": {},
+    "properties": {
+      "officeAddinHosts": {
+        "type": "array",
+        "items": { "type": "string", "enum": ["word", "powerpoint", "outlook", "excel"] }
+      }
+    },
     "additionalProperties": false
   },
 
   "replaceMap": [
-    { "var": "SafeProjectNameLowerCase", "expr": "safeProjectNameLowerCase(appName)" }
+    { "var": "SafeProjectNameLowerCase", "expr": "safeProjectNameLowerCase(appName)" },
+    { "var": "ManifestScopes", "expr": "officeAddinManifestScopes(officeAddinHosts)" },
+    { "var": "HostWord", "expr": "contains(officeAddinHosts, 'word')" },
+    { "var": "HostExcel", "expr": "contains(officeAddinHosts, 'excel')" },
+    { "var": "HostPowerPoint", "expr": "contains(officeAddinHosts, 'powerpoint')" },
+    { "var": "HostOutlook", "expr": "contains(officeAddinHosts, 'outlook')" },
+    { "var": "LaunchConfigurations", "expr": "officeAddinLaunchConfigurations(officeAddinHosts)" },
+    { "var": "LaunchCompounds", "expr": "officeAddinLaunchCompounds(officeAddinHosts)" },
+    { "var": "DebugScripts", "expr": "officeAddinDebugScripts(officeAddinHosts)" },
+    { "var": "DebugApp", "expr": "officeAddinDebugApp(officeAddinHosts)" }
   ]
 }

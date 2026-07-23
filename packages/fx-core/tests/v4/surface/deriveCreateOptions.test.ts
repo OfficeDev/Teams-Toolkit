@@ -168,6 +168,18 @@ describe("deriveCreateOptions", () => {
       assert.equal(apiOperations?.type, "array");
       assert.isTrue(skipValidationOf(apiOperations));
 
+      // A static multiSelect with an array default surfaces as an array option
+      // carrying that default (the office task-pane host picker).
+      const officeAddinHosts = optionByName(res.value, "office-addin-hosts");
+      assert.equal(officeAddinHosts?.type, "array");
+      assert.deepEqual(officeAddinHosts?.default, ["word", "powerpoint", "outlook", "excel"]);
+      assert.includeMembers(choicesOf(officeAddinHosts), [
+        "word",
+        "excel",
+        "outlook",
+        "powerpoint",
+      ]);
+
       const openApiSpecType = optionByName(res.value, "open-api-spec-type");
       assert.includeMembers(choicesOf(openApiSpecType), ["enter-url", "open-file", "search-api"]);
 

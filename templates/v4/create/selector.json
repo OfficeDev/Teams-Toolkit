@@ -225,6 +225,14 @@
           "detail": "Create custom functions in Excel using a shared runtime",
           "condition": { "featureFlag": "TEAMSFX_CF_SHORTCUT_METAOS" },
           "keyPrefix": "template.newCFShortcut" },
+        { "id": "office-addin-excel-customfunctions",
+          "label": "Excel Custom Functions (JavaScript-only Runtime)",
+          "detail": "Create custom functions in Excel using a JavaScript-only runtime",
+          "keyPrefix": "template.newExcelCustomFunctions" },
+        { "id": "office-addin-sso-naa",
+          "label": "Single Sign-On with Nested App Auth",
+          "detail": "Build a task pane add-in that uses Nested App Auth for single sign-on",
+          "keyPrefix": "template.newSsoNaa" },
         { "id": "office-addin-config",
           "label": "Upgrade an Existing Office Add-in",
           "detail": "Upgrade an add-in project to the latest app manifest and project structure",
@@ -308,6 +316,16 @@
     {
       "when": "projectType=='office-meta-os-type' && officeAddinCapability=='office-addin-excel-cfshortcut'",
       "templateId": "office-addin-excel-cfshortcut",
+      "engine": "v4"
+    },
+    {
+      "when": "projectType=='office-meta-os-type' && officeAddinCapability=='office-addin-excel-customfunctions'",
+      "templateId": "office-addin-excel-customfunctions",
+      "engine": "v4"
+    },
+    {
+      "when": "projectType=='office-meta-os-type' && officeAddinCapability=='office-addin-sso-naa'",
+      "templateId": "office-addin-sso-naa",
       "engine": "v4"
     },
     {

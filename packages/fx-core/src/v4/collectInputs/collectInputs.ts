@@ -58,7 +58,7 @@ export interface QuestionSpec {
   cliShortName?: string;
   placeholder?: string;
   prompt?: string;
-  default?: string;
+  default?: string | string[];
   password?: boolean;
   filters?: Record<string, string[]>;
   inputOptionItem?: OptionItem;
@@ -396,6 +396,19 @@ export async function walkInputs(
           if (mergeResult.isErr()) {
             return err(mergeResult.error);
           }
+        }
+        answers[q.name] = q.default;
+        pos++;
+        continue;
+      }
+      if (Array.isArray(q.default)) {
+        const optionValidation = Array.isArray(options)
+          ? validateOptionAnswer(q, q.default, options)
+          : resolvedOptions === undefined
+            ? ok(undefined)
+            : await validateProviderOptionAnswer(q, q.default, resolvedOptions);
+        if (optionValidation.isErr()) {
+          return err(optionValidation.error);
         }
         answers[q.name] = q.default;
         pos++;
