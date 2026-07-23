@@ -7,7 +7,7 @@
       "stop_on_error": true,
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2,
-      "step_retry_timeout": 0.0
+      "step_retry_timeout": 0
     },
     "total_steps": 38,
     "created_at": "2026-06-17T01:23:57.561348",
@@ -71,7 +71,7 @@
         "x": 951,
         "y": 127
       },
-      "description": "Click the English language selector button (flag icon) in the top-right corner of the VS Code welcome/sign-in dialog.",
+      "description": "Click the close (X) button in the top-right corner of the VS Code welcome/sign-in dialog.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -341,7 +341,7 @@
         "x": 505,
         "y": 429
       },
-      "description": "Click the \"Set up your environment\" button in the Microsoft 365 Agents Toolkit tutorial interface to proceed to the environment setup step.",
+      "description": "Click the \"Check Copilot License\" button in the \"Set up your environment\" section of the Microsoft 365 Agents Toolkit interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -513,7 +513,7 @@
         "x": 513,
         "y": 652
       },
-      "description": "Click the \"Resources\" button located within the \"Improve your declarative agent\" section of the Microsoft 365 Agents Toolkit interface.",
+      "description": "Click the \"Resources\" section header in the Microsoft 365 Agents Toolkit interface to expand its content.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -623,7 +623,7 @@
         "x": 328,
         "y": 232
       },
-      "description": "Click the \"Dark Modern\" option in the \"Select Color Theme\" dropdown menu.",
+      "description": "Click the \"Dark 2026\" option in the \"Select Color Theme\" dropdown menu.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -739,7 +739,7 @@
         "x": 539,
         "y": 501
       },
-      "description": "Click the checkbox for \"Build a declarative agent\" under the \"Set up your environment\" section in the Microsoft 365 Agents Toolkit interface.",
+      "description": "Click the \"Build a declarative agent\" section in the Microsoft 365 Agents Toolkit interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
