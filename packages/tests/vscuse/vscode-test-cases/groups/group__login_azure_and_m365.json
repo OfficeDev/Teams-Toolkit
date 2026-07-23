@@ -332,7 +332,7 @@
         "x": 631,
         "y": 462
       },
-      "description": "Click the \"Next\" button on the Microsoft sign-in page to continue the authentication process for the user account (test04@atktesting05.onmicrosoft.com) in a Chrome browser.",
+      "description": "Click the \"Next\" button on the Microsoft sign-in page to continue the authentication process for the user account (${{env:M365_ACCOUNT_NAME}}) in a Chrome browser.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
