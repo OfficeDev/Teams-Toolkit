@@ -39,7 +39,7 @@
         "x": 340,
         "y": 373
       },
-      "description": "Click the app title \"${{var:app_name}}dev\" at the top of the M365 Copilot (web app) chat interface.",
+      "description": "Click the app title \"${{var:app_name}}dev\" at the top of the M365 Copilot (web app) chat interface.(Previsously used for clicking the input box, but now used for precondition validation of the assistant's response message.)",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

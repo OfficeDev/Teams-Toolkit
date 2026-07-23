@@ -86,7 +86,7 @@
     },
     {
       "agent": "interaction",
-      "description": "Click the blank area of the chat conversation pane in Microsoft Teams, next to the assistant's response.",
+      "description": "Click the blank area of the chat conversation pane in Microsoft Teams, next to the assistant's response.(Used for precondition validation of the assistant's response message.)",
       "step_id": "step_5793c327",
       "content_refs": [],
       "retry_count": 0,
