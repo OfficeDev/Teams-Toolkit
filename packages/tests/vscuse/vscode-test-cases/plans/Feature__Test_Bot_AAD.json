@@ -48,7 +48,7 @@
         "x": 451,
         "y": 214
       },
-      "description": "Click the \"General Teams Agent\" option in the dropdown menu within the \"Teams Agent or App Using Microsoft Teams SDK\" dialog.",
+      "description": "Click the \"Other Teams Capabilities\" option in the dropdown menu within the \"Teams Agent or App Using Microsoft Teams SDK\" dialog.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
