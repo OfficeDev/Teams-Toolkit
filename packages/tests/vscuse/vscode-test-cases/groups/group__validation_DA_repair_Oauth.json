@@ -131,7 +131,7 @@
         "x": 330,
         "y": 350
       },
-      "description": "Click the blue \"Allow\" button in the M365 Copilot chat interface to authorize connecting the vscuse_app_PggXYdev agent for handling repair record requests.",
+      "description": "Click the blue \"Allow\" button in the M365 Copilot chat interface to authorize connecting the ${{var:app_name}}dev agent for handling repair record requests.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -159,7 +159,7 @@
         "x": 426,
         "y": 364
       },
-      "description": "Click the  button in the M365 Copilot chat interface to initiate login and proceed with the query.",
+      "description": "Click the \"Sign in to ${{var:app_name}}dev\" button in the M365 Copilot chat interface to initiate login and proceed with the query.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
