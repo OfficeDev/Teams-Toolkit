@@ -144,7 +144,7 @@
         "x": 303,
         "y": 121
       },
-      "description": "Click the \"Microsoft\" option in the \"Select an authentication type\" dropdown within the Authentication Type dialog in the Microsoft 365 Agents Toolkit extension for Visual Studio Code.",
+      "description": "Click the \"Microsoft Entra\" option in the \"Select an authentication type\" dropdown within the Authentication Type dialog in the Microsoft 365 Agents Toolkit extension for Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
