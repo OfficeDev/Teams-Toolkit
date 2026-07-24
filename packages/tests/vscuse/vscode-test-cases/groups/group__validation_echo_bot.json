@@ -38,7 +38,7 @@
         "x": 415,
         "y": 503
       },
-      "description": "Click the \"Hi\" button in the ${{var:app_name}}local interface to initiate a conversation with the bot.",
+      "description": "Click the \"Hi\" button in the ${{var:app_name}}dev interface to initiate a conversation with the bot.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
