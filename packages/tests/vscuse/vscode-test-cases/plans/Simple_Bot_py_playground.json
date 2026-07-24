@@ -47,7 +47,7 @@
         "x": 389,
         "y": 217
       },
-      "description": "Click the \"Other Teams Capabilities\" dropdown option in the \"Teams Agent or App Using Teams AI Library\" selector within the Microsoft 365 Agents Toolkit extension for Visual Studio Code.",
+      "description": "Click the \"Other Teams Capabilities\" dropdown option in the \"Teams Agent or App Using Microsoft Teams SDK\" selector within the Microsoft 365 Agents Toolkit extension for Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -151,7 +151,7 @@
         "x": 86,
         "y": 191
       },
-      "description": "Click the \"infra\" folder in the EXPLORER panel of Visual Studio Code to expand its contents.",
+      "description": "Click the \"src\" folder in the EXPLORER panel of Visual Studio Code to expand its contents.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -221,7 +221,7 @@
         "x": 411,
         "y": 51
       },
-      "description": "Click the \"config.py\" tab in the Visual Studio Code editor to activate the file for editing. The click is targeted at the file tab in the main interface, where the file name is visually highlighted to indicate selection.",
+      "description": "Click the close (X) button on the \"config.py\" tab in the Visual Studio Code editor to close the file tab.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
