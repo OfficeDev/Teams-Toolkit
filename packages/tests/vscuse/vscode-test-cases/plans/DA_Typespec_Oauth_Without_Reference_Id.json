@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2.0,
       "step_retry_timeout": 0.0
     },
-    "total_steps": 22,
+    "total_steps": 24,
     "created_at": "2026-04-22T01:52:17.417913",
     "name": "DA Typespec Oauth Without Reference Id",
     "description": {
@@ -39,6 +39,8 @@
       "step_d9bd9fd6",
       "step_00c7ad94",
       "plan_r_1021_031941",
+      "step_close01ab",
+      "step_openag01cd",
       "step_a4433beb",
       "step_a4e66a7b",
       "step_ab4181f8",
@@ -48,7 +50,7 @@
       "step_f5202a5a"
     ],
     "tags": [],
-    "updated_at": "2026-04-22T01:52:39.210081"
+    "updated_at": "2026-07-24T03:40:10.780000"
   },
   "steps": [
     {
@@ -412,6 +414,55 @@
       "plan_id": "plan_1951448c"
     },
     {
+      "step_id": "step_close01ab",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 715,
+        "y": 461
+      },
+      "description": "Click the \"Close\" button in the \"This agent is not installed\" dialog in the M365 Copilot web page to dismiss the modal if it appears.",
+      "content_refs": [],
+      "timeout": 15,
+      "retry_count": 0,
+      "continue_on_error": "true",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "ocr:true"
+      ],
+      "screenshot": null,
+      "created_at": "2026-04-22T01:52:17.520000",
+      "plan_id": "plan_1951448c"
+    },
+    {
+      "step_id": "step_openag01cd",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 97,
+        "y": 405
+      },
+      "description": "Click the \"github-agent0507\" agent entry listed under the \"Agents\" section in the left navigation sidebar of the M365 Copilot web page to open the declarative agent's own chat (the deep link may have opened the general chat instead).",
+      "content_refs": [],
+      "timeout": 20,
+      "retry_count": 0,
+      "continue_on_error": "true",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "ocr:true",
+        "delay: 5"
+      ],
+      "screenshot": null,
+      "created_at": "2026-04-22T01:52:17.520000",
+      "plan_id": "plan_1951448c"
+    },
+    {
       "step_id": "step_a4433beb",
       "agent": "interaction",
       "tool": "click",
@@ -508,11 +559,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:321:316:16:5:8045a2aa9592aaad",
-        "dhash:321:316:96:5:0b2e142626360006",
-        "dhash:321:316:0:10:119593b2c0c0b0a6"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "ocr:true"
@@ -536,11 +583,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:379:361:16:5:4cd225c4cd6d44d6",
-        "dhash:379:361:96:5:8080264962960040",
-        "dhash:379:361:0:10:1ddcd09adae2f8f6"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "ocr:true"
