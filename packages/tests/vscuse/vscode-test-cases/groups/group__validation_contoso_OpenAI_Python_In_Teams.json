@@ -44,7 +44,7 @@
         "x": 587,
         "y": 513
       },
-      "description": "Click the \"Compare Contoso Electronics plan\" card in the vscuse_app_HBlkdev interface on Microsoft Teams.",
+      "description": "Click the \"Compare Contoso Electronics plan\" card in the ${{var:app_name}}local interface on Microsoft Teams.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -92,7 +92,7 @@
         "x": 939,
         "y": 30
       },
-      "description": "Click the \"Close\" button (✖) at the top-right corner of the Microsoft Teams web application interface to close the notification banner.",
+      "description": "Click the minimize button in the browser window's title bar at the top-right corner.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -118,7 +118,7 @@
         "x": 452,
         "y": 640
       },
-      "description": "Click the \"Yes\" button in the Pylance notification to enable type checking recommendations in Visual Studio Code.",
+      "description": "Click within the Terminal panel output area in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
