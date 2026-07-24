@@ -7,6 +7,7 @@ import AzureAccountManager from "./commonlib/azureLogin";
 import { logger } from "./commonlib/logger";
 import M365Login from "./commonlib/M365TokenProviderWrapper";
 import { cliSource } from "./constants";
+import { initializeExpService } from "./exp";
 import CliTelemetry from "./telemetry/cliTelemetry";
 import CLIUserInteraction from "./userInteraction";
 
@@ -45,6 +46,7 @@ export function getFxCore(): FxCore {
     },
     telemetryReporter: CliTelemetry.reporter,
     ui: CLIUserInteraction,
+    expServiceProvider: initializeExpService(),
   };
   fxCore = new FxCore(tools);
   return fxCore;

@@ -71,6 +71,7 @@ Every fact in §1 of the fact page must have a row in the code map. If a
 | OpenAPI spec parser (`@microsoft/m365-spec-parser` public surface, URL-vs-path input, validation diagnostics) | [`openapi-spec-parser.md`](openapi-spec-parser.md) | [`openapi-spec-parser.code-map.md`](openapi-spec-parser.code-map.md) |
 | Office Add-in tooling (`office-addin-project` / `office-addin-manifest`, `convertProject` precondition, MetaOS schema pins) | [`office-addin-tooling.md`](office-addin-tooling.md) | [`office-addin-tooling.code-map.md`](office-addin-tooling.code-map.md) |
 | Microsoft Graph DriveItem resolution (`/sites`, `/shares` endpoints, share-URL encoding, stable identifiers) | [`graph-driveitem-resolution.md`](graph-driveitem-resolution.md) | [`graph-driveitem-resolution.code-map.md`](graph-driveitem-resolution.code-map.md) |
+| Experimentation (Azure ExP / TAS) (`vscode/ab` endpoint, `clientid` assignment unit, `vscode` config namespace, `getTreatmentVariableAsync` feature-flag contract) | [`experimentation-exp.md`](experimentation-exp.md) | [`experimentation-exp.code-map.md`](experimentation-exp.code-map.md) |
 
 ## What does NOT live here
 
