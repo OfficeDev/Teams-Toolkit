@@ -50,7 +50,7 @@
       "step_f5202a5a"
     ],
     "tags": [],
-    "updated_at": "2026-07-24T03:40:10.780000"
+    "updated_at": "2026-07-24T04:05:00.000000"
   },
   "steps": [
     {
@@ -574,10 +574,10 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 379,
-        "y": 361
+        "x": 420,
+        "y": 338
       },
-      "description": "Click the \"Sign in github agent\" button in the M365 Copilot chat interface to initiate GitHub agent authentication.",
+      "description": "Click the \"Sign in to github agent\" button (below the message \"Please sign in to github agent to proceed\") in the github-agent0507 chat within the M365 Copilot web interface to initiate GitHub agent authentication.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -585,9 +585,7 @@
       "depends_on": [],
       "preconditions": [],
       "postconditions": [],
-      "tags": [
-        "ocr:true"
-      ],
+      "tags": [],
       "screenshot": "step_9cbfac7f",
       "created_at": "2026-04-22T01:52:17.566816",
       "plan_id": "plan_1951448c"
