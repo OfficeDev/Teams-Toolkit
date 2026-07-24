@@ -509,7 +509,7 @@
         "x": 124,
         "y": 364
       },
-      "description": "Click the \"DEVELOPMENT\" section header to collapse it in the MICROSOFT 365 AGENTS TOOLKIT side panel in Visual Studio Code.",
+      "description": "Click the \"DEVELOPMENT\" section header to collapse it in the MICROSOFT 365 AGENTS TOOLKIT side panel in Visual Studio Code.(Previously used for clicking the \"Create N Development\" button.)",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

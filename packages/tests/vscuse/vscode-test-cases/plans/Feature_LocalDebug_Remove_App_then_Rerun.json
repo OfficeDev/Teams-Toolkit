@@ -287,7 +287,7 @@
         "x": 669,
         "y": 761
       },
-      "description": "Click on the horizontal scrollbar at the bottom of the browser window in the Developer Portal interface.",
+      "description": "Click on the horizontal scrollbar at the bottom of the browser window in the Developer Portal interface.(Previously used for clicking search button.)",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

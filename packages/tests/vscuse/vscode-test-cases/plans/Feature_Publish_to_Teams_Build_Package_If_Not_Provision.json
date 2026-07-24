@@ -542,7 +542,7 @@
         "x": 997,
         "y": 433
       },
-      "description": "Click the \"Clear Notification (Del)\" button (X) in the notification popup at the top-right to dismiss the Microsoft 365 Agents Toolkit error notification.",
+      "description": "Click top of the \"Clear Notification (Del)\" button (X) in the notification popup at the top-right to dismiss the Microsoft 365 Agents Toolkit error notification.(Previously used for clicking \"Resolve with Copilot Chat\" button.)",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

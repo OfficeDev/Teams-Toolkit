@@ -233,7 +233,7 @@
         "x": 298,
         "y": 103
       },
-      "description": "Click the \"app Your app\" checkbox option in the app selection popup within the Microsoft 365 Agents Toolkit interface in Visual Studio Code, to select the app for managing collaborators.",
+      "description": "Click the \"app\" checkbox option (\"Your app\") in the app selection popup within the Microsoft 365 Agents Toolkit interface in Visual Studio Code, to select the app for managing collaborators.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
