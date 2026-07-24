@@ -53,7 +53,7 @@
         "x": 423,
         "y": 128
       },
-      "description": "Click the \"General Teams Agent\" option in the dropdown list within the \"Teams Agent or App Using Teams AI Library\" selection menu.",
+      "description": "Click the \"Teams Agent with Data\" option in the dropdown list within the \"Teams Agent or App Using Microsoft Teams SDK\" selection menu.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -105,7 +105,7 @@
         "x": 415,
         "y": 79
       },
-      "description": "Click the text input field labeled \"Enter OpenAPI Description or Document Location\" in the top bar of the Visual Studio Code interface.",
+      "description": "Click the \"Enter OpenAPI Document URL\" option in the \"OpenAPI Document\" popup in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -227,7 +227,7 @@
         "x": 792,
         "y": 52
       },
-      "description": "Click the dropdown arrow in the \"Select Operation(s) Teams Can Interact with\" menu to expand selection options.",
+      "description": "Click the \"OK\" button in the \"Select Operation(s) Teams Can Interact with\" popup to confirm the selected operation.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
