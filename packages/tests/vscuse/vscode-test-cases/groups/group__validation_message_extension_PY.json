@@ -63,7 +63,7 @@
         "x": 877,
         "y": 724
       },
-      "description": "Click the \"Send\" button (paper plane icon) in the message input area of the Microsoft Teams web chat interface.",
+      "description": "Click the \"Actions and apps\" button (plus icon) in the message input area of the Microsoft Teams web chat interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -174,7 +174,7 @@
         "x": 972,
         "y": 511
       },
-      "description": "Click the \"Add\" button next to the search result for  in the Microsoft Teams app.",
+      "description": "Click the \"${{var:app_name}}dev\" search result in the Apps search panel of the Microsoft Teams app.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -438,7 +438,7 @@
         "x": 886,
         "y": 719
       },
-      "description": "Click the \"Actions and apps\" button (horizontal ellipsis icon) in the Microsoft Teams message input area toolbar.",
+      "description": "Click the \"Actions and apps\" button (plus icon) in the Microsoft Teams message input area toolbar.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -512,7 +512,7 @@
         "x": 823,
         "y": 511
       },
-      "description": "Click the  option in the search results dropdown within the Microsoft Teams app interface.",
+      "description": "Click the ${{var:app_name}}dev option in the search results dropdown within the Microsoft Teams app interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -538,7 +538,7 @@
         "x": 973,
         "y": 383
       },
-      "description": "Click the search icon (magnifying glass) in the \"Your search query\" input box within the app's context panel in Microsoft Teams.",
+      "description": "Click the \"...\" (more options) button next to the app name in the app's context panel within Microsoft Teams to open the action commands menu.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

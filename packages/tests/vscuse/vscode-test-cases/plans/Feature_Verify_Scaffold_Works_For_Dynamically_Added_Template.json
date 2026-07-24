@@ -48,7 +48,7 @@
         "x": 367,
         "y": 137
       },
-      "description": "Click the \"Declarative Agent\" option in the \"New Project\" dropdown menu within the Microsoft 365 Agents Toolkit interface, initiating the creation of a new agent by declaring instructions and actions.",
+      "description": "Click the \"Custom Engine Agent\" option in the \"New Project\" dropdown menu within the Microsoft 365 Agents Toolkit interface, building an intelligent agent where you manage orchestration and provide your own LLM.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
