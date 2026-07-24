@@ -544,9 +544,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:11fce666f8ecece0"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_2027f471",
@@ -566,9 +564,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:13fce6e6f8e0e0e0"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "delay: 15"
