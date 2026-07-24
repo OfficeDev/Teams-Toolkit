@@ -115,7 +115,7 @@
         "x": 277,
         "y": 75
       },
-      "description": "Click the \"Default Folder\" option in the \"Workspace Folder\" selection dropdown at the top of the Visual Studio Code window.",
+      "description": "Select the \"dev\" option in the \"Select an environment\" dropdown within Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

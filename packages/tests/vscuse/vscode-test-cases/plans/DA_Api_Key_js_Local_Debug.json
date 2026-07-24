@@ -76,7 +76,7 @@
         "x": 315,
         "y": 133
       },
-      "description": "Click on the dropdown suggestion \"Create a declarative agent with an action\" within the \"Add an action to your declarative agent\" input field in the \"Create Declarative Agent\" dialog.",
+      "description": "Click on the \"Add an Action\" option (\"Create a declarative agent with an action\") within the \"Add an action to your declarative agent\" input field in the \"Create Declarative Agent\" dialog.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -128,7 +128,7 @@
         "x": 270,
         "y": 100
       },
-      "description": "Click the \"API\" option in the \"Authentication Type\" dropdown menu located within the Microsoft 365 Agents Toolkit interface.",
+      "description": "Click the \"API Key\" option in the \"Authentication Type\" dropdown menu located within the Microsoft 365 Agents Toolkit interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -217,7 +217,7 @@
     },
     {
       "step_id": "step_456602d9",
-       "agent": "code",
+      "agent": "code",
       "tool": "",
       "parameters": {
         "button": null,

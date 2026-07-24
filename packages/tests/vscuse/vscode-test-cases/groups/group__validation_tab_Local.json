@@ -44,7 +44,7 @@
         "x": 295,
         "y": 21
       },
-      "description": "Click the \"Add (+)\" button in the notification bar at the top of the Microsoft Teams browser interface.",
+      "description": "Click the \"New Tab\" (+) button in the Chrome browser tab bar to open a new tab.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -192,7 +192,7 @@
         "x": 995,
         "y": 198
       },
-      "description": "Click the red plus (+) button in the Microsoft Teams web app interface to add a new item or perform an add action within the \"vscuse_app_RDJh3local\" tab.",
+      "description": "Click the \"...\" (more options) button in the Microsoft Teams web app interface for the \"${{var:app_name}}local\" tab.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

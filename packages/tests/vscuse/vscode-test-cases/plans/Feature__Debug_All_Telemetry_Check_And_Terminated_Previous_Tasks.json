@@ -674,7 +674,7 @@
         "x": 361,
         "y": 313
       },
-      "description": "Click the list item labeled \"account\" in the file selection dialog to select it.",
+      "description": "Click the \"bin\" folder in the file selection dialog under the \".fx\" directory.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

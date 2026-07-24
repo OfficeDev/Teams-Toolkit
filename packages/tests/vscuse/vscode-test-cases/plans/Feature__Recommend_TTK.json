@@ -74,7 +74,7 @@
         "x": 954,
         "y": 131
       },
-      "description": "Click the language selection button (flag icon) in the top-right corner of the Visual Studio Code welcome screen to change the interface language.",
+      "description": "Click the close (X) button on the \"Welcome to VS Code\" sign-in dialog in the top-right corner of the dialog.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -298,7 +298,7 @@
         "x": 605,
         "y": 64
       },
-      "description": "Click the \"Close\" option in the tab context menu within Visual Studio Code's interface to close all tabs except the currently selected one.",
+      "description": "Click the \"Close\" option in the tab context menu within Visual Studio Code's interface to close the currently selected tab.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -353,7 +353,7 @@
         "x": 401,
         "y": 221
       },
-      "description": "Click the \"General Teams Agent\" dropdown option in the \"Teams Agent or App Using Microsoft Teams SDK\" selection dialog of Visual Studio Code.",
+      "description": "Click the \"Other Teams Capabilities\" dropdown option in the \"Teams Agent or App Using Microsoft Teams SDK\" selection dialog of Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -475,7 +475,7 @@
         "x": 27,
         "y": 251
       },
-      "description": "Click the \"Confirm\" button in the Microsoft 365 Agents Toolkit popup dialog at the bottom right of the Visual Studio Code interface.",
+      "description": "Click the Extensions icon in the Activity Bar on the left side of Visual Studio Code to open the Extensions view.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -580,7 +580,7 @@
         "x": 799,
         "y": 196
       },
-      "description": "Click the \"Uninstall\" button for the \"Microsoft 365 Agents Toolkit\" extension in the Visual Studio Code Extensions Marketplace panel.",
+      "description": "Click the gear (manage) icon in the Microsoft 365 Agents Toolkit extension details view in Visual Studio Code's Extensions Marketplace panel.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -934,7 +934,7 @@
         "x": 955,
         "y": 126
       },
-      "description": "Click the **language selection button (flag icon) in the top-right corner** of the Visual Studio Code “Welcome” sign-in dialog to change the interface language.",
+      "description": "Click the close (X) button in the top-right corner of the Visual Studio Code \"Welcome to VS Code\" sign-in dialog to dismiss it.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1032,7 +1032,7 @@
         "x": 22,
         "y": 300
       },
-      "description": "Click the \"Microsoft 365 Agents Toolkit\" extension entry in the left sidebar of the Visual Studio Code Extensions panel, selecting the extension for more details.",
+      "description": "Click the \"Microsoft 365 Agents Toolkit\" (M365) icon in the Visual Studio Code Activity Bar to open its panel.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

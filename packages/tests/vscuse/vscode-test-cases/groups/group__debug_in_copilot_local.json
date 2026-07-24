@@ -121,7 +121,7 @@
         "x": 221,
         "y": 46
       },
-      "description": "Click the green \"Start Debugging (F5)\" button in the Run and Debug panel of Visual Studio Code, located at the top left of the interface.",
+      "description": "Click the debug configuration dropdown arrow next to the \"Debug...\" selector in the Run and Debug panel of Visual Studio Code, located at the top left of the interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -165,7 +165,7 @@
         "x": 25,
         "y": 308
       },
-      "description": "Click the \"Run and Debug\" icon in the left activity bar of the Visual Studio Code interface to open the run/debug panel.",
+      "description": "Click the \"M365 Agents Toolkit\" icon in the left activity bar of the Visual Studio Code interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

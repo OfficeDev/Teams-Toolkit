@@ -39,7 +39,7 @@
         "x": 351,
         "y": 367
       },
-      "description": "Click inside the \"Message Copilot\" input box in the main chat area of the Microsoft Teams web application to focus the text field for message entry.",
+      "description": "Click inside the \"Message ${{var:app_name}}dev\" input box in the main chat area of the M365 Copilot web application to focus the text field for message entry.(Previsously used for clicking the input field, but now used for precondition validation.)",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

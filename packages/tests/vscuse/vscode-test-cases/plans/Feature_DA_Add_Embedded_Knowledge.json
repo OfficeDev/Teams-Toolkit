@@ -85,7 +85,7 @@
         "x": 954,
         "y": 127
       },
-      "description": "Click the language selection button (flag icon) in the top-right corner of the VS Code \"Welcome\" sign-in dialog.",
+      "description": "Click the close (X) button at the top-right corner of the Visual Studio Code \"Welcome to VS Code\" sign-in dialog to dismiss the popup.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -291,7 +291,7 @@
         "x": 27,
         "y": 298
       },
-      "description": "Click the \"Source Control\" icon in the left sidebar of the Visual Studio Code interface to open the source control panel.",
+      "description": "Click the \"M365 Agents Toolkit\" icon in the left sidebar of the Visual Studio Code interface to open the Microsoft 365 Agents Toolkit panel.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -421,7 +421,7 @@
         "x": 352,
         "y": 74
       },
-      "description": "Click the \"Default folder\" dropdown in the \"Workspace Folder\" dialog to set the project root folder path (`/home/.vscode/AgentsToolkitProjects`).",
+      "description": "Click the \"Default folder\" dropdown in the \"Workspace Folder\" dialog to set the project root folder path (`/home/vscode/AgentsToolkitProjects`).",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -447,7 +447,7 @@
         "x": 29,
         "y": 301
       },
-      "description": "Click the \"New File\" button at the top of the Explorer sidebar in Visual Studio Code to create a new file in the workspace.",
+      "description": "Click the \"M365 Agents Toolkit\" icon in the left sidebar of Visual Studio Code to open the Microsoft 365 Agents Toolkit panel.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -603,7 +603,7 @@
         "x": 260,
         "y": 109
       },
-      "description": "Click on the \"additional-files\" folder entry in the file picker dialog under the \"Home\" directory, within the application’s open file interface.",
+      "description": "Click on the \"addtional-files\" folder entry in the file picker dialog under the \"Home\" directory, within the application’s open file interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -651,7 +651,7 @@
         "x": 248,
         "y": 83
       },
-      "description": "Click the \"azure.js\" file name in the file picker dialog to select it.",
+      "description": "Click the \"azure.json\" file name in the file picker dialog to select it.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1203,7 +1203,7 @@
         "x": 27,
         "y": 61
       },
-      "description": "Click the \"Microsoft 365 Agents Toolkit\" icon in the Visual Studio Code sidebar to open the toolkit extension panel.",
+      "description": "Click the \"Explorer\" icon in the Visual Studio Code sidebar to open the Explorer panel.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

@@ -609,7 +609,7 @@
         "x": 24,
         "y": 57
       },
-      "description": "Click the \"MICROSOFT 365 AGENTS TOOLKIT\" panel icon in the Visual Studio Code sidebar to expand or focus the toolkit panel.",
+      "description": "Click the \"Explorer\" icon in the Visual Studio Code Activity Bar to open the Explorer panel.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -661,7 +661,7 @@
         "x": 114,
         "y": 145
       },
-      "description": "Click the editable text field for renaming the \"build\" folder in the File Explorer panel of Visual Studio Code.",
+      "description": "Click the \"build\" folder within the appPackage folder in the Explorer panel of Visual Studio Code to expand its contents.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

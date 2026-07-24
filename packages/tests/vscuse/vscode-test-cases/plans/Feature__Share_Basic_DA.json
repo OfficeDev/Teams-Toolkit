@@ -69,7 +69,7 @@
         "x": 394,
         "y": 85
       },
-      "description": "Click the \"Agents for Microsoft 365 Copilot\" option within the \"New Project\" dropdown menu at coordinates (394, 85).",
+      "description": "Click the \"Declarative Agent\" option within the \"New Project\" dropdown menu.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -397,7 +397,7 @@
         "x": 464,
         "y": 70
       },
-      "description": "Click the \"Share the agent with selected users\" dropdown option within the \"Select a sharing scope\" list in the Microsoft 365 Agents Toolkit interface.",
+      "description": "Click the \"Share to specified users(s) or user group\" option within the \"Select a sharing scope\" list in the Microsoft 365 Agents Toolkit interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

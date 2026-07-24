@@ -280,7 +280,7 @@
         "x": 317,
         "y": 74
       },
-      "description": "Click the \"manifest.json\" file entry in the \"Select Teams manifest.json File\" dialog within Visual Studio Code to choose the file located at `/home/vscode/AgentsToolkitProjects/vscuse_app_tecaN/appPackage`.",
+      "description": "Click the \"manifest.json\" file entry in the \"Select Teams manifest.json File\" dialog within Visual Studio Code to choose the file located at `/home/vscode/AgentsToolkitProjects/${{var:app_name}}/appPackage`.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -646,7 +646,7 @@
         "x": 421,
         "y": 219
       },
-      "description": "Click the \"Web Search\" option in the \"Add Capability\" dropdown within the Microsoft 365 Agents pane of the Visual Studio Code extension interface.",
+      "description": "Click the \"Embedded Knowledge\" option in the \"Add Capability\" dropdown within the Microsoft 365 Agents pane of the Visual Studio Code extension interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -920,7 +920,7 @@
         "x": 732,
         "y": 645
       },
-      "description": "Click the error message in the OUTPUT panel stating \"Error: Microsoft 365 Agents Toolkit has completed checking your app package against validation rules. 1 failed.\" within the Visual Studio Code interface under the Microsoft 365 Agents Toolkit extension.",
+      "description": "Click the error message in the OUTPUT panel stating \"File size 2MB for the file at #/file exceeds the maximum file size of 1MB at (#/file)\" within the Visual Studio Code interface under the Microsoft 365 Agents Toolkit extension.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
