@@ -75,7 +75,7 @@
         "x": 474,
         "y": 210
       },
-      "description": "Click on the \"General Teams Agent\" option within the dropdown menu titled \"Teams Agent or App Using Teams AI Library\" at coordinates (474, 210).",
+      "description": "Click on the \"General Teams Agent\" option within the dropdown menu titled \"Teams Agent or App Using Microsoft Teams SDK\" at coordinates (474, 210).",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -299,7 +299,7 @@
         "x": 636,
         "y": 503
       },
-      "description": "Click the blue \"Next\" button on the Microsoft login page to proceed after entering the email address (test016@xxbdw.onmicrosoft.com) in Google Chrome.",
+      "description": "Click the blue \"Next\" button on the Microsoft login page to proceed after entering the email address (${{env:M365_ACCOUNT_NAME}}) in Google Chrome.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -613,7 +613,7 @@
         "x": 949,
         "y": 474
       },
-      "description": "Click the red plus (+) button in the \"Action\" column to add or perform an action on the listed app within the Microsoft Teams Developer Portal's Apps interface.",
+      "description": "Click the \"...\" (more actions) button in the \"Action\" column for the listed app within the Microsoft Teams Developer Portal's Apps interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
