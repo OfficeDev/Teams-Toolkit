@@ -38,7 +38,7 @@
         "x": 416,
         "y": 369
       },
-      "description": "Click on the agent title \"${{var:app_name}}dev\" heading in the M365 Copilot web application chat page.",
+      "description": "Click on the agent title \"${{var:app_name}}dev\" heading in the M365 Copilot web application chat page.(Previously used for clicking the input box.)",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
