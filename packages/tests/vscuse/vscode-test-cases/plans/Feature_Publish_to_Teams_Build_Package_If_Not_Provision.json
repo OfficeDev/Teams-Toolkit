@@ -78,7 +78,7 @@
         "x": 388,
         "y": 211
       },
-      "description": "Click on the \"Other Teams Capability\" option within the dropdown menu titled \"Teams Agent or App Using Teams AI Library\" in the Microsoft 365 Agents Toolkit interface.",
+      "description": "Click on the \"Other Teams Capabilities\" option within the dropdown menu titled \"Teams Agent or App Using Microsoft Teams SDK\" in the Microsoft 365 Agents Toolkit interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -454,7 +454,7 @@
         "x": 270,
         "y": 76
       },
-      "description": "Click on the file named \"manifest.json\" located within the \"Select Teams manifest.json File\" dialog box in the Visual Studio Code interface, under the path \"/home/vscode/AgentsToolkitProjects/vscuse_app_yjfrx/appPackage\".",
+      "description": "Click on the file named \"manifest.json\" located within the \"Select Teams manifest.json File\" dialog box in the Visual Studio Code interface, under the path \"/home/vscode/AgentsToolkitProjects/${{var:app_name}}/appPackage\".",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -542,7 +542,7 @@
         "x": 997,
         "y": 433
       },
-      "description": "Click the \"Resolve with Copilot Chat\" button in the Microsoft 365 Agents Toolkit error notification popup at the bottom-right of the Visual Studio Code interface.",
+      "description": "Click the \"Clear Notification (Del)\" button (X) in the notification popup at the top-right to dismiss the Microsoft 365 Agents Toolkit error notification.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
