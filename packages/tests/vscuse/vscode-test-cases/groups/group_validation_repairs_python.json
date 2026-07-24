@@ -39,7 +39,7 @@
         "x": 322,
         "y": 721
       },
-      "description": "Click the \"List all repairs without auth\" button in the \"${{var:app_name}}local\" Repair Service tab within the Microsoft Teams web interface.",
+      "description": "Click input box of Teams chat interface.(Previously for clicking the empty location of the Teams chat interface.)",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

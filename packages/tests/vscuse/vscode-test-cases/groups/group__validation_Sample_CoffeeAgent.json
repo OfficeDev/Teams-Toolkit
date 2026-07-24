@@ -130,7 +130,7 @@
         "x": 933,
         "y": 22
       },
-      "description": "Click the \"Close\" (X) button at the top-right corner of the Google Chrome window to close the Microsoft Teams web application tab displaying the \"CoffeeAgentlocal\" interface.",
+      "description": "Click the \"Minimize\" button at the top-right corner of the Google Chrome window to close the Microsoft Teams web application tab displaying the \"CoffeeAgentlocal\" interface.(Previously used for clicking the \"Close\" button of the Microsoft Teams web application tab.)",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
