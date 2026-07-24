@@ -65,7 +65,7 @@
         "x": 877,
         "y": 724
       },
-      "description": "Click the \"Send\" button (paper plane icon) in the message input area of the Microsoft Teams web chat interface.",
+      "description": "Click the \"Actions and apps\" button (+ icon) in the message input area toolbar of the Microsoft Teams web chat interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
