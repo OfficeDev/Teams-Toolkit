@@ -140,7 +140,7 @@
       "agent": "code",
       "tool": "",
       "parameters": {
-        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\n#!/usr/bin/env bash\nset -e\nTARGET_FILE=\"/home/vscode/AgentsToolkitProjects/vscuse_app_hm6tg/src/agent/main.tsp\"\nURL=\"https://raw.githubusercontent.com/KennethBWSong/typeSpecSchema/main/github-agent.tsp\"\n\n# Ensure the destination file exists\nif [ ! -f \"$TARGET_FILE\" ]; then\n  echo \"Error: Target file '$TARGET_FILE' does not exist.\" >&2\n  exit 1\nfi\n\n# Download the file and overwrite the target\ncurl --fail --silent --show-error --max-time 60 \"$URL\" -o \"$TARGET_FILE\"\necho \"File replaced successfully.\"\n```\n\n=== Execution Results ===\nExit Code: 0\n\n=== STDOUT ===\nFile replaced successfully.\n\n✓ Script executed successfully"
+        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\n#!/usr/bin/env bash\nset -e\nTARGET_FILE=\"/home/vscode/AgentsToolkitProjects/vscuse_app_hm6tg/src/agent/main.tsp\"\nURL=\"https://raw.githubusercontent.com/KennethBWSong/typeSpecSchema/main/github-agent.tsp\"\n\n# Ensure the destination file exists\nif [ ! -f \"$TARGET_FILE\" ]; then\n  echo \"Error: Target file '$TARGET_FILE' does not exist.\" >&2\n  exit 1\nfi\n\n# Download the file and overwrite the target\ncurl --fail --silent --show-error --max-time 60 \"$URL\" -o \"$TARGET_FILE\"\necho \"File replaced successfully.\"\n```\n\n=== Execution Results ===\nExit Code: 0\n\n=== STDOUT ===\nFile replaced successfully.\n\n\u2713 Script executed successfully"
       },
       "description": "@code replace all the content in file: \"/home/vscode/AgentsToolkitProjects/${{var:app_name}}/src/agent/main.tsp\" with online code: \"https://github.com/KennethBWSong/typeSpecSchema/blob/main/github-agent.tsp\"",
       "content_refs": [],
@@ -426,11 +426,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:433:411:16:5:0000000000000000",
-        "dhash:433:411:96:5:000000c0c0000000",
-        "dhash:433:411:0:10:13fce646f8e0f0e0"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "delay: 30"
