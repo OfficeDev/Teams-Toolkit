@@ -63,7 +63,7 @@
         "x": 877,
         "y": 724
       },
-      "description": "Click the \"Send\" button (paper plane icon) in the message input area of the Microsoft Teams web chat interface.",
+      "description": "Click the \"Actions and apps\" button (plus icon) in the message input area of the Microsoft Teams web chat interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -512,7 +512,7 @@
         "x": 823,
         "y": 511
       },
-      "description": "Click the  option in the search results dropdown within the Microsoft Teams app interface.",
+      "description": "Click the ${{var:app_name}}local option in the search results dropdown within the Microsoft Teams app interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -538,7 +538,7 @@
         "x": 973,
         "y": 383
       },
-      "description": "Click the search icon (magnifying glass) in the \"Your search query\" input box within the app's context panel in Microsoft Teams.",
+      "description": "Click the \"...\" (more options) button next to the app name in the app's context panel within Microsoft Teams to open the action commands menu.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
