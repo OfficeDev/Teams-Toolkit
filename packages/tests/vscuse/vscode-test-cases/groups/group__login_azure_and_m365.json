@@ -457,7 +457,7 @@
         "x": 322,
         "y": 100
       },
-      "description": "Click an empty area of the editor pane in Visual Studio Code, outside the ACCOUNTS section, before the account sign-in dropdown appears.",
+      "description": "Click an empty area within the ACCOUNTS section of the Microsoft 365 Agents Toolkit sidebar in Visual Studio Code, before the account sign-in dropdown appears.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
