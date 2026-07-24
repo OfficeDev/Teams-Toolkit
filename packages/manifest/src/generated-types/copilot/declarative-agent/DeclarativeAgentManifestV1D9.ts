@@ -1,8 +1,8 @@
 // To parse this data:
 //
-//   import { Convert, DeclarativeAgentManifestV1D8 } from "./file";
+//   import { Convert, DeclarativeAgentManifestV1D9 } from "./file";
 //
-//   const declarativeAgentManifestV1D8 = Convert.toDeclarativeAgentManifestV1D8(json);
+//   const declarativeAgentManifestV1D9 = Convert.toDeclarativeAgentManifestV1D9(json);
 //
 // These functions will throw an error if the JSON doesn't
 // match the expected interface, even if the JSON is valid.
@@ -11,11 +11,11 @@
  * The root of the declarative agent manifest document is a JSON object that contains
  * members that describe the declarative agent.
  */
-export interface DeclarativeAgentManifestV1D8 {
+export interface DeclarativeAgentManifestV1D9 {
     /**
      * Required. Not localizable. The version of the schema this manifest is using.
      */
-    version: "v1.8";
+    version: "v1.9";
     /**
      * Optional. Not localizable.
      */
@@ -75,6 +75,11 @@ export interface DeclarativeAgentManifestV1D8 {
      * Optional. A JSON object that specifies the sensitivity label for the DA.
      */
     sensitivity_label?: SensitivityLabel;
+    /**
+     * Optional. A list of objects that identify agent skill directories to bundle with the
+     * declarative agent.
+     */
+    agent_skills?: AgentSkillElement[];
     [property: string]: any;
 }
 
@@ -91,6 +96,17 @@ export interface ActionElement {
      * Required. Not localizable. A path to the API plugin manifest for this action.
      */
     file: string;
+    [property: string]: any;
+}
+
+/**
+ * Identifies an agent skill directory to bundle with the declarative agent.
+ */
+export interface AgentSkillElement {
+    /**
+     * Required. The relative path to the skill directory containing a SKILL.md file.
+     */
+    folder: string;
     [property: string]: any;
 }
 
@@ -700,12 +716,12 @@ export interface WorkerAgentElement {
 // Converts JSON strings to/from your types
 // and asserts the results of JSON.parse at runtime
 export class Convert {
-    public static toDeclarativeAgentManifestV1D8(json: string): DeclarativeAgentManifestV1D8 {
-        return cast(JSON.parse(json), r("DeclarativeAgentManifestV1D8"));
+    public static toDeclarativeAgentManifestV1D9(json: string): DeclarativeAgentManifestV1D9 {
+        return cast(JSON.parse(json), r("DeclarativeAgentManifestV1D9"));
     }
 
-    public static declarativeAgentManifestV1D8ToJson(value: DeclarativeAgentManifestV1D8): string {
-        return JSON.stringify(uncast(value, r("DeclarativeAgentManifestV1D8")), null, 4);
+    public static declarativeAgentManifestV1D9ToJson(value: DeclarativeAgentManifestV1D9): string {
+        return JSON.stringify(uncast(value, r("DeclarativeAgentManifestV1D9")), null, 4);
     }
 }
 
@@ -862,7 +878,7 @@ function r(name: string) {
 }
 
 const typeMap: any = {
-    "DeclarativeAgentManifestV1D8": o([
+    "DeclarativeAgentManifestV1D9": o([
         { json: "version", js: "version", typ: r("Version") },
         { json: "id", js: "id", typ: u(undefined, "") },
         { json: "name", js: "name", typ: "" },
@@ -877,10 +893,14 @@ const typeMap: any = {
         { json: "editorial_answers", js: "editorial_answers", typ: u(undefined, r("EditorialAnswers")) },
         { json: "worker_agents", js: "worker_agents", typ: u(undefined, a(r("WorkerAgentElement"))) },
         { json: "sensitivity_label", js: "sensitivity_label", typ: u(undefined, r("SensitivityLabel")) },
+        { json: "agent_skills", js: "agent_skills", typ: u(undefined, a(r("AgentSkillElement"))) },
     ], "any"),
     "ActionElement": o([
         { json: "id", js: "id", typ: "" },
         { json: "file", js: "file", typ: "" },
+    ], "any"),
+    "AgentSkillElement": o([
+        { json: "folder", js: "folder", typ: "" },
     ], "any"),
     "BehaviorOverrides": o([
         { json: "special_instructions", js: "special_instructions", typ: u(undefined, r("SpecialInstructions")) },
@@ -1037,6 +1057,6 @@ const typeMap: any = {
         "remove",
     ],
     "Version": [
-        "v1.8",
+        "v1.9",
     ],
 };

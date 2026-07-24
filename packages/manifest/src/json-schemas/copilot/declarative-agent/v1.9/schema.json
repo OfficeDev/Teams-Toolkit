@@ -8,7 +8,7 @@
         "version": {
             "description": "Required. Not localizable. The version of the schema this manifest is using.",
             "type": "string",
-            "const": "v1.8"
+            "const": "v1.9"
         },
         "id": {
             "description": "Optional. Not localizable.",
@@ -98,6 +98,15 @@
         "sensitivity_label": {
             "description": "Optional. A JSON object that specifies the sensitivity label for the DA.",
             "$ref": "#/$defs/sensitivity-label-object"
+        },
+        "agent_skills": {
+            "type": "array",
+            "description": "Optional. A list of objects that identify agent skill directories to bundle with the declarative agent.",
+            "minItems": 1,
+            "maxItems": 10,
+            "items": {
+                "$ref": "#/$defs/agent-skill-object"
+            }
         }
     },
     "required": [
@@ -121,7 +130,8 @@
             "editorial_answers",
             "worker_agents",
             "$schema",
-            "sensitivity_label"
+            "sensitivity_label",
+            "agent_skills"
         ]
     },
     "$defs": {
@@ -1300,6 +1310,24 @@
             ],
             "propertyNames": {
                 "pattern": "^(id|name|x-.*)$"
+            }
+        },
+        "agent-skill-object": {
+            "type": "object",
+            "description": "Identifies an agent skill directory to bundle with the declarative agent.",
+            "properties": {
+                "folder": {
+                    "type": "string",
+                    "description": "Required. The relative path to the skill directory containing a SKILL.md file."
+                }
+            },
+            "required": [
+                "folder"
+            ],
+            "propertyNames": {
+                "enum": [
+                    "folder"
+                ]
             }
         }
     }

@@ -54,8 +54,10 @@ export const CapabilityName: { readonly [K in CapabilityNameValue]: K } = {
   TeamsMessages: "TeamsMessages",
   Dataverse: "Dataverse",
   Email: "Email",
+  EmailActions: "EmailActions",
   People: "People",
   Meetings: "Meetings",
+  MeetingActions: "MeetingActions",
   ScenarioModels: "ScenarioModels",
 } as const;
 
