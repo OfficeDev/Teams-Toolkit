@@ -65,7 +65,7 @@
         "x": 298,
         "y": 25
       },
-      "description": "Click the address bar in the Google Chrome window displaying the Microsoft sign-in page.",
+      "description": "Click the Command Palette input field in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
