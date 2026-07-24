@@ -153,7 +153,7 @@
         "x": 127,
         "y": 280
       },
-      "description": "Click the \"config.ts\" file in the Explorer panel of Visual Studio Code to open it. The interaction targets the file entry labeled \"config.ts\" under the \"VSCAUSE_APP_6QQWu\" workspace, visually indicated by a blue TypeScript icon and a hover tooltip displaying its file path.",
+      "description": "Click the \"config.ts\" file in the Explorer panel of Visual Studio Code to open it. The interaction targets the file entry labeled \"config.ts\" under the \"${{var:app_name}}\" workspace, visually indicated by a blue TypeScript icon and a hover tooltip displaying its file path.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
