@@ -127,7 +127,7 @@
         "x": 156,
         "y": 307
       },
-      "description": "Click the \"m365agent.yml\" file in the Explorer panel of Visual Studio Code to open it.",
+      "description": "Click the \"m365agents.yml\" file in the Explorer panel of Visual Studio Code to open it.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -153,7 +153,7 @@
         "x": 662,
         "y": 192
       },
-      "description": "Click the \"m365agents.yml\" tab in the Visual Studio Code editor to focus on the YAML configuration file within the workspace \"VSCSUE_APP_DTtQK\". The interaction targets the file tab in the central editor panel, visually highlighted as active with a light underline.",
+      "description": "Click the \"m365agents.yml\" tab in the Visual Studio Code editor to focus on the YAML configuration file within the workspace.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -179,7 +179,7 @@
         "x": 414,
         "y": 267
       },
-      "description": "Click the document icon next to the \"Provision\" comment in the \"m365agents.yml\" file within Visual Studio Code, targeting the embedded image link for expanded information or preview.",
+      "description": "Click the \"Provision\" CodeLens link above the \"provision:\" step in the \"m365agents.yml\" file to trigger the provision command.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

@@ -196,7 +196,7 @@
         "x": 568,
         "y": 717
       },
-      "description": "Click the send button (paper plane icon) in the message input area of the Microsoft 365 Agents Playground web application interface.",
+      "description": "Click the \"+\" (compose extension) icon next to the message input area in the Microsoft 365 Agents Playground web application interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -270,7 +270,7 @@
         "x": 328,
         "y": 509
       },
-      "description": "Click the \"Create\" button in the Action-Based Message Extension dialog within the Microsoft 365 Agents Playground web application. The button is located at the bottom right of the popup and is highlighted with a purple background, confirming the submission of the dialog configuration.",
+      "description": "Click the \"Static list of parameters\" radio option in the Action-Based Message Extension dialog within the Microsoft 365 Agents Playground web application.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -858,7 +858,7 @@
         "x": 847,
         "y": 465
       },
-      "description": "Click the \"Zoom +\" button in the Chrome browser's menu to increase the page zoom level within the Microsoft 365 Agents Playground web application interface.",
+      "description": "Click the \"Zoom out\" (minus) button in the Chrome browser's menu to decrease the page zoom level to 90% within the Microsoft 365 Agents Playground web application interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -884,7 +884,7 @@
         "x": 847,
         "y": 465
       },
-      "description": "Click the \"Zoom out\" (minus) button in the Google Chrome browser's menu to set the zoom level to 90%, within the Microsoft 365 Agents Playground web application.",
+      "description": "Click the \"Zoom out\" (minus) button in the Google Chrome browser's menu to decrease the zoom level to 80%, within the Microsoft 365 Agents Playground web application.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -910,7 +910,7 @@
         "x": 310,
         "y": 454
       },
-      "description": "Click the left mouse button on the \"General\" Teams Channel in the Microsoft 365 Agents Playground chat interface, as indicated by the red crosshair on the left sidebar.",
+      "description": "Click on a blank area of the chat panel to dismiss the open Chrome browser menu in the Microsoft 365 Agents Playground web application.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -962,7 +962,7 @@
         "x": 318,
         "y": 304
       },
-      "description": "Click the \"Type a message...\" input field in the General Teams Channel chat area of the Microsoft 365 Agents Playground web application.",
+      "description": "Click the \"+\" (plus) icon next to the message input field in the General Teams Channel chat area of the Microsoft 365 Agents Playground web application.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
