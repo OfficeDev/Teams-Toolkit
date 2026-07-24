@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2.0,
       "step_retry_timeout": 0.0
     },
-    "total_steps": 26,
+    "total_steps": 28,
     "created_at": "2026-06-09T08:58:52.466213",
     "name": "DA Typespec Oauth With Reference Id",
     "description": {
@@ -43,6 +43,8 @@
       "step_ff187b65",
       "step_7e25c226",
       "plan_r_1021_031941",
+      "step_close_notinst",
+      "step_open_agent",
       "step_f63089e7",
       "step_2027f471",
       "step_b425d1e2",
@@ -532,6 +534,56 @@
       "plan_id": "plan_4acfdf08"
     },
     {
+      "step_id": "step_close_notinst",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 715,
+        "y": 461
+      },
+      "description": "Click the \"Close\" button in the \"This agent is not installed\" dialog in the M365 Copilot web interface to dismiss it.",
+      "content_refs": [],
+      "timeout": 20,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "ocr:true",
+        "delay:2"
+      ],
+      "screenshot": null,
+      "created_at": "2026-06-09T08:58:52.594839",
+      "plan_id": "plan_4acfdf08"
+    },
+    {
+      "step_id": "step_open_agent",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 97,
+        "y": 405
+      },
+      "description": "Click the \"github-agent0507\" agent under the \"Agents\" section in the left sidebar of the M365 Copilot web interface to open the agent-scoped chat.",
+      "content_refs": [],
+      "timeout": 20,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "ocr:true",
+        "delay:3"
+      ],
+      "screenshot": null,
+      "created_at": "2026-06-09T08:58:52.594839",
+      "plan_id": "plan_4acfdf08"
+    },
+    {
       "step_id": "step_2027f471",
       "agent": "interaction",
       "tool": "type_text",
@@ -606,11 +658,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:342:355:16:5:0092452ad1d65659",
-        "dhash:342:355:96:5:010f1813330f4403",
-        "dhash:342:355:0:10:199cd096d2e2f0e6"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "ocr:true"
@@ -634,11 +682,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:350:324:16:5:000000000429cb3a",
-        "dhash:350:324:96:5:0860686592904010",
-        "dhash:350:324:0:10:1999919880c0f0a6"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "ocr:true"
@@ -658,8 +702,8 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [],
       "postconditions": [],
+      "preconditions": [],
       "tags": [],
       "screenshot": null,
       "created_at": "2026-06-09T08:58:52.632780",
