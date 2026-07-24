@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0.0
     },
-    "total_steps": 1,
+    "total_steps": 2,
     "created_at": "2026-06-24T02:48:42.584762",
     "name": "Click_the_Teams_Agents_and_Apps",
     "description": {
@@ -19,7 +19,8 @@
     },
     "generated_at": "2026-06-24T02:48:42.584753",
     "execution_order": [
-      "step_51279b5b"
+      "step_51279b5b",
+      "step_4fa59f6a"
     ],
     "tags": [
       "group"
@@ -30,27 +31,49 @@
     {
       "step_id": "step_51279b5b",
       "agent": "interaction",
-      "tool": "click",
+      "tool": "type_text",
       "parameters": {
-        "button": "left",
-        "x": 307,
-        "y": 266
+        "text": "Teams Agents and Apps"
       },
-      "description": "Click the \"Teams Agents and Apps\" option in the \"New Project\" dropdown menu within the Microsoft 365 Agents Toolkit interface.",
+      "description": "Type \"Teams Agents and Apps\" into the \"New Project\" search input in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:307:266:16:5:dc38314eb1964652",
-        "dhash:307:266:96:5:1352b511664a30a1",
-        "dhash:307:266:0:10:c4c8889692b17075"
+        "dhash:512:384:0:20:c0c8268484848001"
       ],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_51279b5b",
       "created_at": "2026-06-24T02:48:42.590588",
+      "plan_id": "plan_r_0624_024810"
+    },
+    {
+      "step_id": "step_4fa59f6a",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to select the filtered \"Teams Agents and Apps\" result from the \"New Project\" dropdown in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:424:79:16:5:433be585e5e5c548",
+        "dhash:424:79:96:5:004018c444d9b906",
+        "dhash:424:79:0:10:c0c8268484848001"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition_wait_timeout:10"
+      ],
+      "screenshot": null,
+      "created_at": "2026-07-23T02:36:39.000000",
       "plan_id": "plan_r_0624_024810"
     }
   ],
