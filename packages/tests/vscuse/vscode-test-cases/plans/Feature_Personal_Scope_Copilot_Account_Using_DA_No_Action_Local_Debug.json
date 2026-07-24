@@ -268,7 +268,7 @@
         "x": 1000,
         "y": 18
       },
-      "description": "Click the browser tab's close button (red crosshair) in the top-right corner of the Microsoft sign-in page, within Google Chrome.",
+      "description": "Click the browser window's close (X) button in the top-right corner of the Google Chrome window showing the Microsoft sign-in page.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
