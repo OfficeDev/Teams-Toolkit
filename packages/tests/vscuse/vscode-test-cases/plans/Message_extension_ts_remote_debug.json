@@ -45,7 +45,7 @@
         "x": 559,
         "y": 213
       },
-      "description": "Click on the \"General Teams Agent\" option in the dropdown menu under \"Teams Agent or App Using Teams AI Library.\"",
+      "description": "Click on the \"General Teams Agent\" option in the dropdown menu under \"Teams Agent or App Using Microsoft Teams SDK.\"",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

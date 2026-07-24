@@ -176,7 +176,7 @@
         "x": 972,
         "y": 511
       },
-      "description": "Click the \"Add\" button next to the search result for  in the Microsoft Teams app.",
+      "description": "Click the \"${{var:app_name}}dev\" search result in the app search dropdown within the Microsoft Teams app.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -554,7 +554,7 @@
         "x": 823,
         "y": 511
       },
-      "description": "Click the  option in the search results dropdown within the Microsoft Teams app interface.",
+      "description": "Click the \"${{var:app_name}}dev\" option in the search results dropdown within the Microsoft Teams app interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
