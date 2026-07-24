@@ -119,6 +119,10 @@ npx --yes --registry $registry pnpm@8.6.12 `
   --dir <standalone-package> install --ignore-workspace --lockfile-only --registry $registry
 ```
 
+Generated lockfiles need a stricter conflict workflow than source files. When the target branch and remediation branch contain independent dependency fixes, do not accept `ours` or `theirs` wholesale. Keep the target branch lockfile as the text baseline, retain the remediation manifests, and regenerate through the required proxy first.
+
+If regeneration is blocked by an unrelated optional package or produces only enterprise feed alias churn, a minimal semantic lockfile merge is permitted as a conflict-resolution exception to the normal no-manual-edit rule. Every replacement edge and package node must come from PNPM output generated for the same manifest or from the remediation branch's previously frozen-install-validated lockfile; never invent integrity, tarball, dependency, or feed metadata. Parse the result as YAML, prove the normalized graph delta contains only the intended closure, confirm importer maps are unchanged after feed normalization, and run a frozen install. Treat the native exit code as authoritative because optional package fetch warnings can coexist with a successful install.
+
 Preserve importer structure and PNPM-generated enterprise feed metadata. The proxy can route unchanged packages through different `ms-feed-N.pkgs.visualstudio.com` backends, producing a large text diff without changing the dependency graph. Use an available structured YAML parser rather than assuming a shell-specific YAML cmdlet. Parse the before and after lockfiles, normalize package identities by removing a leading slash and the `ms-feed-N.pkgs.visualstudio.com/` prefix (using `name` and `version` when present), then compare package identity sets and importer dependency maps. Confirm that only intended package versions changed and that importer dependencies did not drift. Text grep or diff size alone is not sufficient evidence.
 
 For a cross-major override, inspect the package's actual runtime use. Use the parent chains to identify every runtime importer, then build and test those importers and add a behavior probe where appropriate; do not try to build a transitive package as though it were a workspace project. If the new graph raises a public package's Node.js floor, declare that floor in its `engines` field.
@@ -165,6 +169,8 @@ Component Governance reflects service scans, so a source fix may not disappear i
 - Adding overrides to a child package whose lockfile is owned by a parent workspace.
 - Assuming a package excluded from `pnpm-workspace.yaml` cannot discover the parent workspace.
 - Running `pnpm update` and unintentionally refreshing unrelated dependency ranges.
+- Choosing one side of a generated lockfile conflict and dropping independent security fixes from the other side.
+- Treating an optional fetch warning as a failed install without checking the command exit code.
 - Choosing a still-vulnerable release because the required fixed version is absent from the package feed.
 - Searching lockfile text without distinguishing package entries from override selectors.
 - Treating enterprise feed alias churn as dependency graph churn without parsing the lockfile.

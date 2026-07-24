@@ -1564,4 +1564,47 @@ describe("collectInputs (v4)", () => {
     assert.isTrue(back.isOk());
     assert.strictEqual(back._unsafeUnwrap().kind, "back");
   });
+
+  it("INPUT-33: a non-interactive multiSelect array default is applied as the answer", async () => {
+    const questions: QuestionSpec[] = [
+      {
+        name: "officeAddinHosts",
+        type: "multiSelect",
+        staticOptions: [{ id: "word" }, { id: "excel" }, { id: "outlook" }],
+        default: ["word", "excel"],
+      },
+    ];
+
+    const res = await collectInputs(
+      questions,
+      { properties: { officeAddinHosts: { type: "array" } } },
+      { nonInteractive: "true" },
+      makePort({ ui: new ScriptedUI({}) })
+    );
+
+    assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
+    assert.deepStrictEqual(res._unsafeUnwrap().officeAddinHosts, ["word", "excel"]);
+  });
+
+  it("INPUT-34: a non-interactive multiSelect array default rejects an unavailable option", async () => {
+    const questions: QuestionSpec[] = [
+      {
+        name: "officeAddinHosts",
+        type: "multiSelect",
+        staticOptions: [{ id: "word" }, { id: "excel" }],
+        default: ["word", "bogus"],
+      },
+    ];
+
+    const res = await collectInputs(
+      questions,
+      { properties: { officeAddinHosts: { type: "array" } } },
+      { nonInteractive: "true" },
+      makePort({ ui: new ScriptedUI({}) })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_VALIDATION_FAILED);
+    assert.include(res._unsafeUnwrapErr().message, "officeAddinHosts");
+  });
 });

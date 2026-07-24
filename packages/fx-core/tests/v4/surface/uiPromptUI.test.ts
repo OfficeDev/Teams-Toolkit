@@ -226,6 +226,26 @@ describe("createUiPromptUI (collect-create-inputs prompt bridge)", () => {
     assert.deepEqual(multiBack._unsafeUnwrap(), { kind: "back" });
   });
 
+  it("forwards a multi-select default so the host pre-selects the authored ids", async () => {
+    const ui = new ScriptedUi({ multi: ok({ type: "success", result: [] }) });
+    await createUiPromptUI(asUi(ui)).askMulti(
+      {
+        name: "officeAddinHosts",
+        type: "multiSelect",
+        default: ["word", "excel"],
+      },
+      [{ id: "word" }, { id: "excel" }, { id: "outlook" }]
+    );
+    assert.deepEqual(ui.lastMultiConfig?.default, ["word", "excel"]);
+
+    const scalarUi = new ScriptedUi({ multi: ok({ type: "success", result: [] }) });
+    await createUiPromptUI(asUi(scalarUi)).askMulti(
+      { name: "officeAddinHosts", type: "multiSelect", default: "word" },
+      [{ id: "word" }]
+    );
+    assert.deepEqual(scalarUi.lastMultiConfig?.default, ["word"]);
+  });
+
   it("rejects unsupported prompt shapes before calling the host UI", async () => {
     const ui = new ScriptedUi({});
     const prompt = createUiPromptUI(asUi(ui));

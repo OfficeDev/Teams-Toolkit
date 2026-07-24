@@ -40,6 +40,8 @@ const CREATE_INPUT_ALIASES: ReadonlyArray<readonly [string, string]> = [
   ["azure-openai-key", "azureOpenAIKey"],
   ["azure-openai-endpoint", "azureOpenAIEndpoint"],
   ["azure-openai-deployment-name", "azureOpenAIDeploymentName"],
+  ["office-addin-hosts", "officeAddinHosts"],
+  ["office-addin-naa-host", "officeAddinNaaHost"],
 ];
 
 const DECLARATIVE_AGENT_CAPABILITY = "declarative-agent";

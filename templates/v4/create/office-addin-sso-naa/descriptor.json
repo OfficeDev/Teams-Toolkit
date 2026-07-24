@@ -1,0 +1,29 @@
+{
+  "$schema": "../../schema/descriptor.schema.json",
+  "id": "office-addin-sso-naa",
+  "name": "Single Sign-On with Nested App Auth Add-in",
+  "languages": ["typescript"],
+  "minEngineVersion": "5.20.0",
+  "spec": "docs/03-specs/scenarios/office/create-sso-naa.md",
+  "requiresNetwork": false,
+
+  "optionsSchema": {
+    "type": "object",
+    "properties": {
+      "officeAddinNaaHost": {
+        "type": "string",
+        "enum": ["word", "excel", "powerpoint"]
+      }
+    },
+    "additionalProperties": false
+  },
+
+  "replaceMap": [
+    { "var": "SafeProjectNameLowerCase", "expr": "safeProjectNameLowerCase(appName)" },
+    { "var": "ManifestScope", "expr": "officeAddinManifestScope(officeAddinNaaHost)" },
+    { "var": "LaunchConfigurations", "expr": "officeAddinLaunchConfigurations(officeAddinNaaHost)" },
+    { "var": "LaunchCompounds", "expr": "officeAddinLaunchCompounds(officeAddinNaaHost)" },
+    { "var": "DebugScripts", "expr": "officeAddinDebugScripts(officeAddinNaaHost)" },
+    { "var": "DebugApp", "expr": "officeAddinDebugApp(officeAddinNaaHost)" }
+  ]
+}

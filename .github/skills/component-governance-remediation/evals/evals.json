@@ -20,6 +20,11 @@
       "id": 4,
       "prompt": "Remediate CG alerts when the required Microsoft package feed exposes only one of two fast-uri fixes, lacks the fast-xml-parser fix, and excluded packages own independent pnpm lockfiles. fast-uri 3.1.2 resolves in the root, mcp-server, and sdk lockfiles; Hono 1.19.14 and fast-xml-parser 5.9.3 resolve only in the root lockfile. Regeneration also rewrites many ms-feed backend aliases.",
       "expected_output": "Checks each advisory-approved version on https://packagefeedproxy.microsoft.io/npm/ before editing; proves dependency ownership before changing the owning manifests; applies only available fixed versions in all affected lockfiles; does not dismiss alerts merely because a fix is unavailable; uses pnpm 8.6.12 install rather than add or update, with --ignore-workspace for excluded standalone packages; parses and normalizes lockfile package identities and importers to prove alias-only churn; validates frozen installs, affected builds and tests; and records any compliant-browser dismissal blocker."
+    },
+    {
+      "id": 5,
+      "prompt": "Resolve a CG remediation PR conflict where dev upgraded ajv, yaml, rollup, and follow-redirects in two standalone pnpm lockfiles, while the PR upgraded fast-uri. Regenerating through the required proxy rewrites thousands of ms-feed aliases, and one unrelated optional tarball returns 404.",
+      "expected_output": "Preserves dev as the lockfile baseline and retains the PR manifests; does not accept ours or theirs wholesale; tries pnpm 8.6.12 install with --ignore-workspace through the proxy; permits only a minimal semantic conflict merge using PNPM-generated or previously frozen-install-validated nodes; verifies normalized package identities and importer maps as YAML; checks the native exit code instead of treating an optional fetch warning as failure; and runs frozen installs before completing the merge."
     }
   ]
 }

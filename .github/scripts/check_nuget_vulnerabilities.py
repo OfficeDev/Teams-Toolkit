@@ -14,49 +14,69 @@ import shutil
 import re
 import json
 from pathlib import Path
+from dataclasses import dataclass, field
 from typing import List, Tuple
 
 
-SEVERITY_ORDER = {"critical": 0, "high": 1, "moderate": 2, "low": 3, "info": 4}
+@dataclass
+class ScanResult:
+    status: str  # "clean", "vulnerable", "skipped", or "error"
+    message: str
+    vulnerabilities: List[dict] = field(default_factory=list)
 
 
-def extract_first_vuln_details(json_output: str, source_file: Path) -> dict:
-    """Pick the highest-severity vulnerability from `dotnet list package --vulnerable --format json`."""
+# VS-only MSBuild project SDKs that are not restorable from NuGet. Projects that
+# target one of these are Teams Toolkit project shells with no NuGet packages to
+# audit, so ``dotnet restore`` can never resolve them. They are skipped rather
+# than reported as scan errors (which would otherwise fail the whole job).
+UNRESOLVABLE_PROJECT_SDKS = ("Microsoft.TeamsFx.Sdk",)
+
+
+def project_sdk_is_unresolvable(csproj_file: Path) -> bool:
+    """Return True when the project targets a custom SDK that cannot be restored."""
     try:
-        data = json.loads(json_output)
-    except json.JSONDecodeError:
-        return {}
+        content = csproj_file.read_text(encoding="utf-8")
+    except OSError:
+        return False
+    return any(
+        re.search(rf'Sdk\s*=\s*"{re.escape(sdk)}"', content)
+        for sdk in UNRESOLVABLE_PROJECT_SDKS
+    )
 
-    candidates = []
+
+def extract_vulnerability_details(json_output: str, source_file: Path) -> List[dict]:
+    data = json.loads(json_output)
+    records = []
     for project in data.get("projects", []) or []:
-        for fw in project.get("frameworks", []) or []:
-            for pkg in fw.get("topLevelPackages", []) or []:
-                for vuln in pkg.get("vulnerabilities", []) or []:
-                    candidates.append({
-                        "package": pkg.get("id"),
-                        "current_version": pkg.get("resolvedVersion") or pkg.get("requestedVersion"),
-                        "severity": (vuln.get("severity") or "").lower() or None,
-                        "advisory_url": vuln.get("advisoryurl") or vuln.get("advisoryUrl"),
-                    })
-
-    if not candidates:
-        return {}
-
-    candidates.sort(key=lambda v: SEVERITY_ORDER.get((v.get("severity") or ""), 99))
-    pick = candidates[0]
-
-    return {
-        "file": str(source_file).replace("\\", "/"),
-        "package": pick.get("package"),
-        "current_version": pick.get("current_version"),
-        # `dotnet list package --vulnerable` does not surface a concrete fixed version.
-        # Downstream PR opener will create an empty PR for manual handling.
-        "fixed_version": None,
-        "severity": pick.get("severity"),
-        "advisory_url": pick.get("advisory_url"),
-        "title": None,
-        "is_direct": True,
-    }
+        for framework in project.get("frameworks", []) or []:
+            for collection, is_direct in (
+                ("topLevelPackages", True),
+                ("transitivePackages", False),
+            ):
+                for package in framework.get(collection, []) or []:
+                    for vulnerability in package.get("vulnerabilities", []) or []:
+                        advisory_url = (
+                            vulnerability.get("advisoryurl")
+                            or vulnerability.get("advisoryUrl")
+                        )
+                        records.append({
+                            "file": str(source_file).replace("\\", "/"),
+                            "package": package.get("id"),
+                            "current_version": (
+                                package.get("resolvedVersion")
+                                or package.get("requestedVersion")
+                            ),
+                            "fixed_version": None,
+                            "severity": (
+                                vulnerability.get("severity") or ""
+                            ).lower() or None,
+                            "advisory_id": advisory_url,
+                            "advisory_url": advisory_url,
+                            "title": None,
+                            "is_direct": is_direct,
+                            "fix_available": False,
+                        })
+    return records
 
 
 def safe_print(message: str) -> None:
@@ -129,29 +149,30 @@ def process_template_file(tpl_file: Path, dest_dir: Path) -> Path:
     return dest_file
 
 
-def check_nuget_vulnerabilities(csproj_file: Path, temp_dir: Path, is_template: bool = False) -> Tuple[bool, str, dict]:
+def check_nuget_vulnerabilities(csproj_file: Path, temp_dir: Path, is_template: bool = False) -> ScanResult:
     """
     Check a .csproj file for NuGet vulnerabilities using dotnet list package --vulnerable.
 
-    Returns:
-        Tuple of (has_vulnerabilities: bool, message: str, first_vuln_details: dict)
+    Returns a ScanResult with status "clean", "vulnerable", "skipped", or "error".
     """
-    # Create a unique work directory for this check
+    if project_sdk_is_unresolvable(csproj_file):
+        return ScanResult(
+            "skipped",
+            "Skipped: uses VS-only SDK Microsoft.TeamsFx.Sdk (no NuGet packages to audit)",
+        )
+
     work_dir = temp_dir / f"check_{csproj_file.stem}_{hash(str(csproj_file)) % 10000}"
     work_dir.mkdir(parents=True, exist_ok=True)
 
     try:
-        # Process the file
         if is_template:
             processed_file = process_template_file(csproj_file, work_dir)
             csproj_name = processed_file.name
         else:
-            # Copy the file to the work directory
             dest_file = work_dir / csproj_file.name
             shutil.copy(csproj_file, dest_file)
             csproj_name = dest_file.name
 
-        # Run dotnet restore
         restore_result = subprocess.run(
             ["dotnet", "restore", csproj_name],
             cwd=work_dir,
@@ -161,14 +182,11 @@ def check_nuget_vulnerabilities(csproj_file: Path, temp_dir: Path, is_template: 
         )
 
         if restore_result.returncode != 0:
-            # Check if it's a critical error or just a warning
-            stderr = restore_result.stderr.lower()
-            if "error" in stderr and "warning" not in stderr:
-                return False, f"WARNING: Could not restore packages: {restore_result.stderr[:200]}", {}
+            detail = (restore_result.stderr or restore_result.stdout or "")[:200]
+            return ScanResult("error", f"dotnet restore failed: {detail}")
 
-        # Run dotnet list package --vulnerable (text) for the human-readable summary
         vuln_result = subprocess.run(
-            ["dotnet", "list", csproj_name, "package", "--vulnerable"],
+            ["dotnet", "list", csproj_name, "package", "--vulnerable", "--include-transitive"],
             cwd=work_dir,
             capture_output=True,
             text=True,
@@ -177,44 +195,45 @@ def check_nuget_vulnerabilities(csproj_file: Path, temp_dir: Path, is_template: 
 
         output = vuln_result.stdout + vuln_result.stderr
 
-        # Check for vulnerable packages in the output
         if "has the following vulnerable packages" in output:
-            # Extract vulnerability details
-            vuln_lines = []
-            for line in output.split('\n'):
-                if '>' in line and ('Critical' in line or 'High' in line or 'Moderate' in line or 'Low' in line):
-                    vuln_lines.append(line.strip())
-
-            # Re-run with --format json to extract structured details.
             json_result = subprocess.run(
-                ["dotnet", "list", csproj_name, "package", "--vulnerable", "--format", "json"],
+                ["dotnet", "list", csproj_name, "package", "--vulnerable", "--include-transitive", "--format", "json"],
                 cwd=work_dir,
                 capture_output=True,
                 text=True,
                 timeout=180,
             )
-            details = extract_first_vuln_details(json_result.stdout, csproj_file)
+            try:
+                records = extract_vulnerability_details(json_result.stdout, csproj_file)
+            except json.JSONDecodeError:
+                return ScanResult("error", "dotnet audit did not return valid JSON")
 
-            if vuln_lines:
-                return True, f"Vulnerabilities found: {len(vuln_lines)} package(s)", details
-            return True, "Vulnerabilities found", details
+            vuln_lines = [
+                line.strip()
+                for line in output.split('\n')
+                if '>' in line and any(
+                    s in line for s in ('Critical', 'High', 'Moderate', 'Low')
+                )
+            ]
+            summary = (
+                f"Vulnerabilities found: {len(vuln_lines)} package(s)"
+                if vuln_lines
+                else "Vulnerabilities found"
+            )
+            return ScanResult("vulnerable", summary, records)
 
-        # Check for "no vulnerable packages" message
-        if "no vulnerable packages" in output.lower() or vuln_result.returncode == 0:
-            return False, "OK", {}
+        if vuln_result.returncode != 0:
+            detail = (vuln_result.stderr or vuln_result.stdout or "")[:200]
+            return ScanResult("error", f"dotnet list package failed: {detail}")
 
-        return False, "OK", {}
+        return ScanResult("clean", "OK")
 
     except subprocess.TimeoutExpired:
-        return False, "WARNING: dotnet command timed out", {}
-    except Exception as e:
-        return False, f"WARNING: Error during check: {str(e)}", {}
+        return ScanResult("error", "dotnet command timed out")
+    except OSError as exc:
+        return ScanResult("error", str(exc))
     finally:
-        # Clean up the work directory
-        try:
-            shutil.rmtree(work_dir, ignore_errors=True)
-        except Exception:
-            pass
+        shutil.rmtree(work_dir, ignore_errors=True)
 
 
 def main():
@@ -266,6 +285,8 @@ def main():
         safe_print("")
         
         failed_files = []
+        scan_errors = []
+        skipped_files = []
         vuln_records = []
         checked_count = 0
 
@@ -274,36 +295,40 @@ def main():
             checked_count += 1
             safe_print(f"[{checked_count}/{total_files}] Checking: {csproj_file}")
 
-            has_vuln, message, details = check_nuget_vulnerabilities(csproj_file, temp_path, is_template=False)
+            result = check_nuget_vulnerabilities(csproj_file, temp_path, is_template=False)
 
-            if has_vuln:
-                safe_print(f"  ❌ ERROR: {message}")
-                failed_files.append((csproj_file, message))
-                if details:
-                    vuln_records.append(details)
+            if result.status == "error":
+                safe_print(f"  ⚠️ SCAN ERROR: {result.message}")
+                scan_errors.append({"file": str(csproj_file).replace("\\", "/"), "message": result.message})
+            elif result.status == "skipped":
+                safe_print(f"  ⏭️ {result.message}")
+                skipped_files.append(str(csproj_file).replace("\\", "/"))
+            elif result.status == "vulnerable":
+                safe_print(f"  ❌ {result.message}")
+                failed_files.append((csproj_file, result.message))
+                vuln_records.extend(result.vulnerabilities)
             else:
-                if message.startswith("WARNING"):
-                    safe_print(f"  ⚠️ {message}")
-                else:
-                    safe_print(f"  ✅ {message}")
+                safe_print(f"  ✅ {result.message}")
 
         # Check template files
         for tpl_file in template_files:
             checked_count += 1
             safe_print(f"[{checked_count}/{total_files}] Checking: {tpl_file}")
 
-            has_vuln, message, details = check_nuget_vulnerabilities(tpl_file, temp_path, is_template=True)
+            result = check_nuget_vulnerabilities(tpl_file, temp_path, is_template=True)
 
-            if has_vuln:
-                safe_print(f"  ❌ ERROR: {message}")
-                failed_files.append((tpl_file, message))
-                if details:
-                    vuln_records.append(details)
+            if result.status == "error":
+                safe_print(f"  ⚠️ SCAN ERROR: {result.message}")
+                scan_errors.append({"file": str(tpl_file).replace("\\", "/"), "message": result.message})
+            elif result.status == "skipped":
+                safe_print(f"  ⏭️ {result.message}")
+                skipped_files.append(str(tpl_file).replace("\\", "/"))
+            elif result.status == "vulnerable":
+                safe_print(f"  ❌ {result.message}")
+                failed_files.append((tpl_file, result.message))
+                vuln_records.extend(result.vulnerabilities)
             else:
-                if message.startswith("WARNING"):
-                    safe_print(f"  ⚠️ {message}")
-                else:
-                    safe_print(f"  ✅ {message}")
+                safe_print(f"  ✅ {result.message}")
     
     # Summary
     safe_print("")
@@ -312,6 +337,7 @@ def main():
     safe_print("=" * 60)
     safe_print(f"Total files checked: {checked_count}")
     safe_print(f"Files with vulnerabilities: {len(failed_files)}")
+    safe_print(f"Files skipped: {len(skipped_files)}")
 
     if args.output_json:
         scan_target = args.scan_directory[0] if args.scan_directory else ""
@@ -320,22 +346,32 @@ def main():
             "ecosystem": "nuget",
             "has_vulnerabilities": bool(vuln_records),
             "vulnerabilities": vuln_records,
+            "errors": scan_errors,
+            "skipped": skipped_files,
         }
         try:
             Path(args.output_json).parent.mkdir(parents=True, exist_ok=True)
             Path(args.output_json).write_text(json.dumps(payload, indent=2), encoding="utf-8")
             safe_print(f"Wrote scan summary to {args.output_json}")
-        except Exception as e:
-            safe_print(f"WARNING: Failed to write output JSON: {e}")
+        except OSError as exc:
+            safe_print(f"WARNING: Failed to write output JSON: {exc}")
 
-    if failed_files:
+    if scan_errors:
         safe_print("")
-        safe_print("Failed files:")
+        safe_print("Scan errors:")
+        for err in scan_errors:
+            safe_print(f"  - {err['file']}: {err['message']}")
+        safe_print("")
+        safe_print("❌ FAILED: Scanner errors encountered")
+        sys.exit(2)
+    elif failed_files:
+        safe_print("")
+        safe_print("Files with vulnerabilities:")
         for csproj_file, message in failed_files:
             safe_print(f"  - {csproj_file}: {message}")
         safe_print("")
-        safe_print("❌ FAILED: Security vulnerabilities found")
-        sys.exit(1)
+        safe_print("⚠️ Vulnerabilities found (see output JSON for details)")
+        sys.exit(0)
     else:
         safe_print("")
         safe_print("✅ SUCCESS: All C# projects passed NuGet security check")

@@ -5,9 +5,9 @@
     "execution_context": {
       "delay_between_steps": 0.5,
       "stop_on_error": true,
-      "precondition_wait_timeout": 60.0,
-      "precondition_retry_interval": 2.0,
-      "step_retry_timeout": 0.0
+      "precondition_wait_timeout": 60,
+      "precondition_retry_interval": 2,
+      "step_retry_timeout": 0
     },
     "total_steps": 37,
     "created_at": "2026-05-22T01:50:30.322018",
@@ -285,7 +285,7 @@
         "x": 162,
         "y": 192
       },
-      "description": "Click the \"repair.yaml\" file under the \"apiSpecificationFile\" folder in the VS Code Explorer sidebar to open it.",
+      "description": "Click the \"repair.yml\" file under the \"apiSpecificationFile\" folder in the VS Code Explorer sidebar to open it.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -789,7 +789,7 @@
         "x": 797,
         "y": 48
       },
-      "description": "Click the blue \"plus\" button next to \"1 Selected\" in the \"Select Operation(s) Copilot Can Interact with\" dialog at the top of the Visual Studio Code interface to add or select an operation.",
+      "description": "Click the \"OK\" button in the \"Select Operation(s) Copilot Can Interact with\" dialog at the top of the Visual Studio Code interface to confirm the selected operation.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -911,7 +911,7 @@
         "x": 484,
         "y": 51
       },
-      "description": "Click the \"Preview README.md\" tab in Visual Studio Code to activate the file preview.",
+      "description": "Click the close (\"X\") button on the \"Preview README.md\" tab in Visual Studio Code to close the file preview tab.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

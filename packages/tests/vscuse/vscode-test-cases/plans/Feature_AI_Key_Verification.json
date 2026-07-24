@@ -7,7 +7,7 @@
       "stop_on_error": true,
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2,
-      "step_retry_timeout": 0.0
+      "step_retry_timeout": 0
     },
     "total_steps": 11,
     "created_at": "2026-05-21T01:37:07.662381",
@@ -44,7 +44,7 @@
         "x": 954,
         "y": 131
       },
-      "description": "Click the language selection button (flag icon) at the top-right corner of the VS Code welcome sign-in dialog.",
+      "description": "Click the close (X) button at the top-right corner of the \"Welcome to VS Code\" sign-in dialog in the Visual Studio Code application to dismiss the dialog.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

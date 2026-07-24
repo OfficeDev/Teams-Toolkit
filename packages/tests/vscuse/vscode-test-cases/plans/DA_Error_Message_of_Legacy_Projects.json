@@ -5,9 +5,9 @@
     "execution_context": {
       "delay_between_steps": 0.5,
       "stop_on_error": true,
-      "precondition_wait_timeout": 60.0,
-      "precondition_retry_interval": 2.0,
-      "step_retry_timeout": 0.0
+      "precondition_wait_timeout": 60,
+      "precondition_retry_interval": 2,
+      "step_retry_timeout": 0
     },
     "total_steps": 41,
     "created_at": "2026-06-12T07:59:00.069173",
@@ -77,7 +77,7 @@
         "x": 956,
         "y": 126
       },
-      "description": "Click the English language selector button (flag icon) in the top-right corner of the VS Code welcome screen dialog.",
+      "description": "Click the \"Close\" (X) button in the top-right corner of the VS Code welcome screen dialog.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -403,7 +403,7 @@
         "x": 29,
         "y": 252
       },
-      "description": "Click the \"Explorer\" icon in the Visual Studio Code sidebar to open the project file tree.",
+      "description": "Click the \"Extensions\" icon in the Visual Studio Code sidebar to open the Extensions panel.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -455,7 +455,7 @@
         "x": 25,
         "y": 58
       },
-      "description": "Click the left sidebar \"Extensions\" icon in Visual Studio Code, opening the Extensions panel for managing and searching extensions. The crosshair at (25, 58) is positioned over the square icon with four squares in the sidebar, visually confirming interaction with the Extensions feature.",
+      "description": "Click the \"Explorer\" icon in the Visual Studio Code sidebar to switch back to the file explorer view.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -481,7 +481,7 @@
         "x": 1003,
         "y": 507
       },
-      "description": "Click the \"close terminal\" button (icon resembling a trash can) in the Terminal panel of Visual Studio Code, closing the active terminal session in the workspace .",
+      "description": "Click the \"Close Panel\" (X) button in the Terminal panel toolbar of Visual Studio Code, hiding the panel.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

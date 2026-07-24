@@ -5,9 +5,9 @@
     "execution_context": {
       "delay_between_steps": 0.5,
       "stop_on_error": true,
-      "precondition_wait_timeout": 60.0,
-      "precondition_retry_interval": 2.0,
-      "step_retry_timeout": 0.0
+      "precondition_wait_timeout": 60,
+      "precondition_retry_interval": 2,
+      "step_retry_timeout": 0
     },
     "total_steps": 19,
     "created_at": "2026-04-21T01:07:21.245660",
@@ -87,7 +87,7 @@
         "x": 673,
         "y": 371
       },
-      "description": "Click the \"Personal app\" feature card's red plus (+) icon located under the \"Select a feature to add\" section in the \"App features\" page of the Microsoft Teams Developer Portal interface.",
+      "description": "Click the \"Personal app\" feature card under the \"Select a feature to add\" section in the \"App features\" page of the Microsoft Teams Developer Portal interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -287,7 +287,7 @@
         "x": 509,
         "y": 682
       },
-      "description": "Click the \"Confirm\" button in the \"Add a tab to your personal app\" form within the Microsoft Teams Developer Portal interface.",
+      "description": "Click outside the \"Scope\" dropdown to close it in the \"Add a tab to your personal app\" dialog within the Microsoft Teams Developer Portal interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -433,7 +433,7 @@
         "x": 796,
         "y": 47
       },
-      "description": "Click the \"+\" button in the \"Configure content URL(s) for debugging\" dropdown at the top-right of the Visual Studio Code interface.",
+      "description": "Click the \"OK\" button in the \"Configure content URL(s) for debugging\" dialog at the top-right of the Visual Studio Code interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
