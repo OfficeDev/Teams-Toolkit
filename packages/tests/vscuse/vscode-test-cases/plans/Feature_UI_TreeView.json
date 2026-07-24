@@ -7,7 +7,7 @@
       "stop_on_error": true,
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2,
-      "step_retry_timeout": 0.0
+      "step_retry_timeout": 0
     },
     "total_steps": 22,
     "created_at": "2026-05-21T02:59:02.291559",
@@ -211,7 +211,7 @@
         "x": 25,
         "y": 305
       },
-      "description": "Click the “New File” button in the VS Code Explorer sidebar to create a new file in the current workspace.",
+      "description": "Click the \"Microsoft 365 Agents Toolkit\" icon in the activity bar on the left side of Visual Studio Code to open the toolkit panel.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -255,7 +255,7 @@
         "x": 1007,
         "y": 13
       },
-      "description": "Click the \"English\" language indicator button in the top-right corner of the Visual Studio Code window, next to the minimize and maximize controls, to change the display language.",
+      "description": "Click the close (X) button in the top-right corner of the Visual Studio Code window.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -281,7 +281,7 @@
         "x": 21,
         "y": 304
       },
-      "description": "Click the \"Source Control\" icon in the left sidebar of the Visual Studio Code interface to open the source control panel.",
+      "description": "Click the \"Microsoft 365 Agents Toolkit\" icon in the activity bar on the left side of Visual Studio Code to open the toolkit panel.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -509,7 +509,7 @@
         "x": 124,
         "y": 364
       },
-      "description": "Click the \"Create N Development\" button within the DEVELOPMENT section of the MICROSOFT 365 AGENTS TOOLKIT side panel in Visual Studio Code.",
+      "description": "Click the \"DEVELOPMENT\" section header to collapse it in the MICROSOFT 365 AGENTS TOOLKIT side panel in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
