@@ -45,7 +45,7 @@
     "@types/office-runtime": "^1.0.35",
     "babel-loader": "^9.1.3",
     "copy-webpack-plugin": "^14.0.0",
-    "eslint-plugin-office-addins": "^3.0.2",
+    "eslint-plugin-office-addins": "^4.0.10",
     "file-loader": "^6.2.0",
     "html-loader": "^5.0.0",
     "html-webpack-plugin": "^5.6.0",
