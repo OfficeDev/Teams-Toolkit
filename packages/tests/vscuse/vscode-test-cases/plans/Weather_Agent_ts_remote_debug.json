@@ -143,7 +143,7 @@
         "x": 378,
         "y": 80
       },
-      "description": "Click the \"Default folder /home/node/AgentsToolkitProjects\" option in the \"Workspace Folder\" selection dialog in Visual Studio Code.",
+      "description": "Click the \"Default folder /home/vscode/AgentsToolkitProjects\" option in the \"Workspace Folder\" selection dialog in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
