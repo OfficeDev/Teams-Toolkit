@@ -75,11 +75,6 @@ export interface DeclarativeAgentManifestV1D8 {
      * Optional. A JSON object that specifies the sensitivity label for the DA.
      */
     sensitivity_label?: SensitivityLabel;
-    /**
-     * Optional. A list of objects that identify agent skill directories to bundle with the
-     * declarative agent.
-     */
-    agent_skills?: AgentSkillElement[];
     [property: string]: any;
 }
 
@@ -96,17 +91,6 @@ export interface ActionElement {
      * Required. Not localizable. A path to the API plugin manifest for this action.
      */
     file: string;
-    [property: string]: any;
-}
-
-/**
- * Identifies an agent skill directory to bundle with the declarative agent.
- */
-export interface AgentSkillElement {
-    /**
-     * Required. The relative path to the skill directory containing a SKILL.md file.
-     */
-    folder: string;
     [property: string]: any;
 }
 
@@ -201,13 +185,21 @@ export interface Suggestions {
  *
  * Indicates that the DA can search through meetings.
  *
+ * A JSON object whose presence indicates that the DA will be able to perform meeting and
+ * calendar actions, such as scheduling events, creating time-finding polls, or surfacing
+ * time insights.
+ *
  * Indicates that the DA will be able to use files locally in the app package as knowledge.
+ *
+ * A JSON object whose presence indicates that the DA will be able to perform write
+ * operations on email in the mailboxes the user has access to.
  */
 export interface CapabilityElement {
     /**
      * Required. The name of the capability. Allowed values are WebSearch, GraphicArt,
      * CodeInterpreter, OneDriveAndSharePoint, GraphConnectors, TeamsMessages,
-     * EmbeddedKnowledge, Email, People, Meetings, Dataverse, and ScenarioModels.
+     * EmbeddedKnowledge, Email, EmailActions, People, Meetings, MeetingActions, Dataverse, and
+     * ScenarioModels.
      *
      * Required. Must be set to WebSearch.
      *
@@ -231,7 +223,11 @@ export interface CapabilityElement {
      *
      * Required. Must be set to Meetings.
      *
+     * Required. Must be set to MeetingActions.
+     *
      * Required. Must be set to EmbeddedKnowledge.
+     *
+     * Required. Must be set to EmailActions.
      */
     name: Name;
     /**
@@ -519,7 +515,7 @@ export interface ModelElement {
     [property: string]: any;
 }
 
-export type Name = "WebSearch" | "GraphicArt" | "CodeInterpreter" | "OneDriveAndSharePoint" | "GraphConnectors" | "TeamsMessages" | "EmbeddedKnowledge" | "Email" | "People" | "Meetings" | "Dataverse" | "ScenarioModels";
+export type Name = "WebSearch" | "GraphicArt" | "CodeInterpreter" | "OneDriveAndSharePoint" | "GraphConnectors" | "TeamsMessages" | "EmbeddedKnowledge" | "Email" | "EmailActions" | "People" | "Meetings" | "MeetingActions" | "Dataverse" | "ScenarioModels";
 
 /**
  * An object that identifies a site used to constrain the content accessible to the
@@ -881,14 +877,10 @@ const typeMap: any = {
         { json: "editorial_answers", js: "editorial_answers", typ: u(undefined, r("EditorialAnswers")) },
         { json: "worker_agents", js: "worker_agents", typ: u(undefined, a(r("WorkerAgentElement"))) },
         { json: "sensitivity_label", js: "sensitivity_label", typ: u(undefined, r("SensitivityLabel")) },
-        { json: "agent_skills", js: "agent_skills", typ: u(undefined, a(r("AgentSkillElement"))) },
     ], "any"),
     "ActionElement": o([
         { json: "id", js: "id", typ: "" },
         { json: "file", js: "file", typ: "" },
-    ], "any"),
-    "AgentSkillElement": o([
-        { json: "folder", js: "folder", typ: "" },
     ], "any"),
     "BehaviorOverrides": o([
         { json: "special_instructions", js: "special_instructions", typ: u(undefined, r("SpecialInstructions")) },
@@ -1029,9 +1021,11 @@ const typeMap: any = {
         "CodeInterpreter",
         "Dataverse",
         "Email",
+        "EmailActions",
         "EmbeddedKnowledge",
         "GraphConnectors",
         "GraphicArt",
+        "MeetingActions",
         "Meetings",
         "OneDriveAndSharePoint",
         "People",

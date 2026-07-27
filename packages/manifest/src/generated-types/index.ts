@@ -128,8 +128,20 @@ export type TeamsManifest =
 export type TeamsManifestLatest = TeamsManifestV1D28.TeamsManifestV1D28;
 
 export { SensitivityLabel } from "./copilot/declarative-agent/DeclarativeAgentManifestV1D7";
-export { AgentSkillElement } from "./copilot/declarative-agent/DeclarativeAgentManifestV1D8";
 export { AgentSkill } from "./teams/TeamsManifestVDevPreview";
+
+/**
+ * Identifies an agent skill directory to bundle with the declarative agent.
+ *
+ * NOTE: `agent_skills` is a preview feature that is not yet part of a published declarative
+ * agent schema version. This helper type is provided so consumers that need it (for example
+ * the manifest wrapper) can add `agent_skills` as an optional property only where required.
+ * It is intentionally not merged into the declarative agent manifest types.
+ */
+export interface AgentSkillElement {
+  folder: string;
+  [property: string]: any;
+}
 
 export type DeclarativeAgentManifest =
   | DeclarativeAgentManifestV1D0.DeclarativeAgentManifestV1D0
