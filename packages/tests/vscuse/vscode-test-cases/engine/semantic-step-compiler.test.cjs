@@ -836,17 +836,7 @@ test("semantic adapter rejects an open kind incompatible with its target profile
 test("VCB-26: semantic adapter opens an already-active Copilot agent chat", async () => {
   const result = await compileFixture(
     "da-no-action.yml",
-    (sourceText) =>
-      `${sourceText.replace(
-        "        f5-copilot-remote,\n      ]",
-        "        f5-copilot-remote,\n        open-agent,\n      ]",
-      )}
-  open-agent:
-    type: open
-    with:
-      kind: agent
-      destination: chat
-`,
+    (sourceText) => sourceText,
   );
 
   assert.equal(result.ok, true);

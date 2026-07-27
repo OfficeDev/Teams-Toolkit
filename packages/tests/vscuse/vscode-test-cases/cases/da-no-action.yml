@@ -10,6 +10,8 @@ cases:
         login-m365,
         provision,
         f5-copilot-remote,
+        open-agent,
+        check-instruction,
       ]
 
 steps:
@@ -67,3 +69,23 @@ steps:
     type: target
     with:
       profile: "Preview in Copilot (Chrome)"
+
+  open-agent:
+    type: open
+    with:
+      kind: agent
+      destination: chat
+
+  check-instruction:
+    type: checks
+    with:
+      # instruction.txt tells the agent to open every response with this
+      # sentence, so the reply proves the scaffolded instructions were published
+      # and applied. The agent has no action, so nothing external is involved.
+      - type: chat
+        send: What can you do?
+        expect:
+          contains:
+            [
+              "Thanks for using Microsoft 365 Agents Toolkit to create your declarative agent!",
+            ]
