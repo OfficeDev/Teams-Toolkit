@@ -200,6 +200,9 @@ test("scaffold focuses the toolkit view before the create command", async () => 
   const focusIndex = descriptions.indexOf(
     "@assertion exactly one command titled Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View is visible and selectable in the active Command Palette.",
   );
+  const settledIndex = descriptions.indexOf(
+    "@assertion the Microsoft 365 Agents Toolkit view is open in the side bar and the toolkit Get Started editor has finished loading, so no further editor can take keyboard focus.",
+  );
   const createIndex = descriptions.indexOf(
     "@assertion exactly one command titled Microsoft 365 Agents: Create New Agent/App is visible and selectable in the active Command Palette.",
   );
@@ -208,7 +211,8 @@ test("scaffold focuses the toolkit view before the create command", async () => 
   );
 
   assert.equal(focusIndex >= 0, true);
-  assert.equal(focusIndex < createIndex, true);
+  assert.equal(focusIndex < settledIndex, true);
+  assert.equal(settledIndex < createIndex, true);
   assert.equal(createIndex < firstQuestionIndex, true);
 });
 

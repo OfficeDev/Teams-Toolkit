@@ -325,6 +325,13 @@ function createSemanticStepCompiler() {
       }),
     );
     if (error) return error;
+    // The Get Started editor can still open after the focus command returns, so
+    // wait for it to settle before opening the Command Palette again.
+    error = append(
+      output,
+      render(state, "initialization/assert-toolkit-view-settled.json.tpl"),
+    );
+    if (error) return error;
     error = append(
       output,
       render(state, "command-palette/execute-command.json.tpl", {

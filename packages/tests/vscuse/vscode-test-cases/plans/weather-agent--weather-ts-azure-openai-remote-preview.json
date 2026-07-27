@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 152,
+    "total_steps": 153,
     "name": "weather-ts-azure-openai-remote-preview",
     "description": {
       "owner": "",
@@ -24,15 +24,12 @@
       "step_executeCommand_filter_cb4a8be87_1_2",
       "step_executeCommand_assertCommand_cb4a8be87_1_2",
       "step_executeCommand_execute_cb4a8be87_1_2",
-      "step_executeCommand_open_cb4a8be87_1_3",
-      "step_executeCommand_assertPalette_cb4a8be87_1_3",
-      "step_executeCommand_filter_cb4a8be87_1_3",
-      "step_executeCommand_assertCommand_cb4a8be87_1_3",
-      "step_executeCommand_execute_cb4a8be87_1_3",
-      "step_singleSelect_assertQuestion_cb4a8be87_1_4",
-      "step_singleSelect_filter_cb4a8be87_1_4",
-      "step_singleSelect_assertOption_cb4a8be87_1_4",
-      "step_singleSelect_confirm_cb4a8be87_1_4",
+      "step_assertToolkitViewSettled_assert_cb4a8be87_1_3",
+      "step_executeCommand_open_cb4a8be87_1_4",
+      "step_executeCommand_assertPalette_cb4a8be87_1_4",
+      "step_executeCommand_filter_cb4a8be87_1_4",
+      "step_executeCommand_assertCommand_cb4a8be87_1_4",
+      "step_executeCommand_execute_cb4a8be87_1_4",
       "step_singleSelect_assertQuestion_cb4a8be87_1_5",
       "step_singleSelect_filter_cb4a8be87_1_5",
       "step_singleSelect_assertOption_cb4a8be87_1_5",
@@ -41,24 +38,28 @@
       "step_singleSelect_filter_cb4a8be87_1_6",
       "step_singleSelect_assertOption_cb4a8be87_1_6",
       "step_singleSelect_confirm_cb4a8be87_1_6",
-      "step_textInput_assertQuestion_cb4a8be87_1_7",
-      "step_textInput_input_cb4a8be87_1_7",
-      "step_textInput_confirm_cb4a8be87_1_7",
+      "step_singleSelect_assertQuestion_cb4a8be87_1_7",
+      "step_singleSelect_filter_cb4a8be87_1_7",
+      "step_singleSelect_assertOption_cb4a8be87_1_7",
+      "step_singleSelect_confirm_cb4a8be87_1_7",
       "step_textInput_assertQuestion_cb4a8be87_1_8",
       "step_textInput_input_cb4a8be87_1_8",
       "step_textInput_confirm_cb4a8be87_1_8",
       "step_textInput_assertQuestion_cb4a8be87_1_9",
       "step_textInput_input_cb4a8be87_1_9",
       "step_textInput_confirm_cb4a8be87_1_9",
-      "step_singleSelect_assertQuestion_cb4a8be87_1_10",
-      "step_singleSelect_filter_cb4a8be87_1_10",
-      "step_singleSelect_assertOption_cb4a8be87_1_10",
-      "step_singleSelect_confirm_cb4a8be87_1_10",
-      "step_confirmOption_assertPrompt_cb4a8be87_1_11",
-      "step_confirmOption_confirm_cb4a8be87_1_11",
-      "step_textInput_assertQuestion_cb4a8be87_1_12",
-      "step_textInput_input_cb4a8be87_1_12",
-      "step_textInput_confirm_cb4a8be87_1_12",
+      "step_textInput_assertQuestion_cb4a8be87_1_10",
+      "step_textInput_input_cb4a8be87_1_10",
+      "step_textInput_confirm_cb4a8be87_1_10",
+      "step_singleSelect_assertQuestion_cb4a8be87_1_11",
+      "step_singleSelect_filter_cb4a8be87_1_11",
+      "step_singleSelect_assertOption_cb4a8be87_1_11",
+      "step_singleSelect_confirm_cb4a8be87_1_11",
+      "step_confirmOption_assertPrompt_cb4a8be87_1_12",
+      "step_confirmOption_confirm_cb4a8be87_1_12",
+      "step_textInput_assertQuestion_cb4a8be87_1_13",
+      "step_textInput_input_cb4a8be87_1_13",
+      "step_textInput_confirm_cb4a8be87_1_13",
       "step_checkWorkspaceFiles_verify_cb4a8be87_2_1",
       "step_checkWorkspaceFiles_verify_cb4a8be87_2_2",
       "step_checkWorkspaceFiles_verify_cb4a8be87_2_3",
@@ -355,7 +356,28 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_open_cb4a8be87_1_3",
+      "step_id": "step_assertToolkitViewSettled_assert_cb4a8be87_1_3",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Microsoft 365 Agents Toolkit view is open in the side bar and the toolkit Get Started editor has finished loading, so no further editor can take keyboard focus.",
+      "content_refs": [],
+      "timeout": 120,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_execute_cb4a8be87_1_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:initialization",
+        "initialization:assertToolkitViewSettled",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_open_cb4a8be87_1_4",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -367,7 +389,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_cb4a8be87_1_2"
+        "step_assertToolkitViewSettled_assert_cb4a8be87_1_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -377,7 +399,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertPalette_cb4a8be87_1_3",
+      "step_id": "step_executeCommand_assertPalette_cb4a8be87_1_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -387,7 +409,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_open_cb4a8be87_1_3"
+        "step_executeCommand_open_cb4a8be87_1_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -398,7 +420,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_filter_cb4a8be87_1_3",
+      "step_id": "step_executeCommand_filter_cb4a8be87_1_4",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -410,7 +432,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertPalette_cb4a8be87_1_3"
+        "step_executeCommand_assertPalette_cb4a8be87_1_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -420,7 +442,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertCommand_cb4a8be87_1_3",
+      "step_id": "step_executeCommand_assertCommand_cb4a8be87_1_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -430,7 +452,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_filter_cb4a8be87_1_3"
+        "step_executeCommand_filter_cb4a8be87_1_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -441,7 +463,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_execute_cb4a8be87_1_3",
+      "step_id": "step_executeCommand_execute_cb4a8be87_1_4",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -453,7 +475,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertCommand_cb4a8be87_1_3"
+        "step_executeCommand_assertCommand_cb4a8be87_1_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -463,7 +485,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertQuestion_cb4a8be87_1_4",
+      "step_id": "step_singleSelect_assertQuestion_cb4a8be87_1_5",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -473,93 +495,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_cb4a8be87_1_3"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_singleSelect_filter_cb4a8be87_1_4",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "Custom Engine Agent"
-      },
-      "description": "Type the resolved option label Custom Engine Agent into the active single-select prompt.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_singleSelect_assertQuestion_cb4a8be87_1_4"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect"
-      ]
-    },
-    {
-      "step_id": "step_singleSelect_assertOption_cb4a8be87_1_4",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the option Custom Engine Agent is visible and selectable in the filtered single-select prompt.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_singleSelect_filter_cb4a8be87_1_4"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_singleSelect_confirm_cb4a8be87_1_4",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press Enter to confirm the filtered single-select option.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_singleSelect_assertOption_cb4a8be87_1_4"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect"
-      ]
-    },
-    {
-      "step_id": "step_singleSelect_assertQuestion_cb4a8be87_1_5",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the active prompt titled App Features Using Microsoft 365 Agents SDK is visible.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_singleSelect_confirm_cb4a8be87_1_4"
+        "step_executeCommand_execute_cb4a8be87_1_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -574,9 +510,9 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Weather Agent"
+        "text": "Custom Engine Agent"
       },
-      "description": "Type the resolved option label Weather Agent into the active single-select prompt.",
+      "description": "Type the resolved option label Custom Engine Agent into the active single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -596,7 +532,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the option Weather Agent is visible and selectable in the filtered single-select prompt.",
+      "description": "@assertion the option Custom Engine Agent is visible and selectable in the filtered single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -639,7 +575,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the active prompt titled Service for Large Language Model (LLM) is visible.",
+      "description": "@assertion the active prompt titled App Features Using Microsoft 365 Agents SDK is visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -660,9 +596,9 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Azure OpenAI"
+        "text": "Weather Agent"
       },
-      "description": "Type the resolved option label Azure OpenAI into the active single-select prompt.",
+      "description": "Type the resolved option label Weather Agent into the active single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -682,7 +618,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the option Azure OpenAI is visible and selectable in the filtered single-select prompt.",
+      "description": "@assertion the option Weather Agent is visible and selectable in the filtered single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -721,11 +657,11 @@
       ]
     },
     {
-      "step_id": "step_textInput_assertQuestion_cb4a8be87_1_7",
+      "step_id": "step_singleSelect_assertQuestion_cb4a8be87_1_7",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the active prompt titled Azure OpenAI Key is visible.",
+      "description": "@assertion the active prompt titled Service for Large Language Model (LLM) is visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -737,52 +673,73 @@
       "postconditions": [],
       "tags": [
         "component:quick-input",
-        "answer_type:text",
+        "answer_type:singleSelect",
         "step_retry_timeout: 30"
       ]
     },
     {
-      "step_id": "step_textInput_input_cb4a8be87_1_7",
+      "step_id": "step_singleSelect_filter_cb4a8be87_1_7",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "${{secret:AZURE_OPENAI_API_KEY}}"
+        "text": "Azure OpenAI"
       },
-      "description": "Type the authored value into the active text prompt.",
+      "description": "Type the resolved option label Azure OpenAI into the active single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_assertQuestion_cb4a8be87_1_7"
+        "step_singleSelect_assertQuestion_cb4a8be87_1_7"
       ],
       "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:quick-input",
-        "answer_type:text"
+        "answer_type:singleSelect"
       ]
     },
     {
-      "step_id": "step_textInput_confirm_cb4a8be87_1_7",
+      "step_id": "step_singleSelect_assertOption_cb4a8be87_1_7",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the option Azure OpenAI is visible and selectable in the filtered single-select prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_filter_cb4a8be87_1_7"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_confirm_cb4a8be87_1_7",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
         "key": "enter"
       },
-      "description": "Press Enter to submit the accepted text input.",
+      "description": "Press Enter to confirm the filtered single-select option.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_input_cb4a8be87_1_7"
+        "step_singleSelect_assertOption_cb4a8be87_1_7"
       ],
       "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:quick-input",
-        "answer_type:text"
+        "answer_type:singleSelect"
       ]
     },
     {
@@ -790,13 +747,13 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the active prompt titled Azure OpenAI Endpoint is visible.",
+      "description": "@assertion the active prompt titled Azure OpenAI Key is visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_confirm_cb4a8be87_1_7"
+        "step_singleSelect_confirm_cb4a8be87_1_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -811,7 +768,7 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "${{env:AZURE_OPENAI_ENDPOINT}}"
+        "text": "${{secret:AZURE_OPENAI_API_KEY}}"
       },
       "description": "Type the authored value into the active text prompt.",
       "content_refs": [],
@@ -855,7 +812,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the active prompt titled Azure OpenAI Deployment Name is visible.",
+      "description": "@assertion the active prompt titled Azure OpenAI Endpoint is visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -876,7 +833,7 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "${{env:AZURE_OPENAI_MODEL}}"
+        "text": "${{env:AZURE_OPENAI_ENDPOINT}}"
       },
       "description": "Type the authored value into the active text prompt.",
       "content_refs": [],
@@ -916,11 +873,11 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertQuestion_cb4a8be87_1_10",
+      "step_id": "step_textInput_assertQuestion_cb4a8be87_1_10",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the active prompt titled Programming Language is visible.",
+      "description": "@assertion the active prompt titled Azure OpenAI Deployment Name is visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -932,12 +889,77 @@
       "postconditions": [],
       "tags": [
         "component:quick-input",
+        "answer_type:text",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_textInput_input_cb4a8be87_1_10",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{env:AZURE_OPENAI_MODEL}}"
+      },
+      "description": "Type the authored value into the active text prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_textInput_assertQuestion_cb4a8be87_1_10"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:text"
+      ]
+    },
+    {
+      "step_id": "step_textInput_confirm_cb4a8be87_1_10",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to submit the accepted text input.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_textInput_input_cb4a8be87_1_10"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:text"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertQuestion_cb4a8be87_1_11",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the active prompt titled Programming Language is visible.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_textInput_confirm_cb4a8be87_1_10"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
         "answer_type:singleSelect",
         "step_retry_timeout: 30"
       ]
     },
     {
-      "step_id": "step_singleSelect_filter_cb4a8be87_1_10",
+      "step_id": "step_singleSelect_filter_cb4a8be87_1_11",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -949,7 +971,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_cb4a8be87_1_10"
+        "step_singleSelect_assertQuestion_cb4a8be87_1_11"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -959,7 +981,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOption_cb4a8be87_1_10",
+      "step_id": "step_singleSelect_assertOption_cb4a8be87_1_11",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -969,7 +991,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_filter_cb4a8be87_1_10"
+        "step_singleSelect_filter_cb4a8be87_1_11"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -980,7 +1002,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_confirm_cb4a8be87_1_10",
+      "step_id": "step_singleSelect_confirm_cb4a8be87_1_11",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -992,7 +1014,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOption_cb4a8be87_1_10"
+        "step_singleSelect_assertOption_cb4a8be87_1_11"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1002,7 +1024,7 @@
       ]
     },
     {
-      "step_id": "step_confirmOption_assertPrompt_cb4a8be87_1_11",
+      "step_id": "step_confirmOption_assertPrompt_cb4a8be87_1_12",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1012,7 +1034,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_confirm_cb4a8be87_1_10"
+        "step_singleSelect_confirm_cb4a8be87_1_11"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1024,7 +1046,7 @@
       ]
     },
     {
-      "step_id": "step_confirmOption_confirm_cb4a8be87_1_11",
+      "step_id": "step_confirmOption_confirm_cb4a8be87_1_12",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1036,7 +1058,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_confirmOption_assertPrompt_cb4a8be87_1_11"
+        "step_confirmOption_assertPrompt_cb4a8be87_1_12"
       ],
       "preconditions": [
         "dhash:364:74:16:5:08056a9a5d5516b6",
@@ -1051,7 +1073,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_assertQuestion_cb4a8be87_1_12",
+      "step_id": "step_textInput_assertQuestion_cb4a8be87_1_13",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1061,7 +1083,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_confirmOption_confirm_cb4a8be87_1_11"
+        "step_confirmOption_confirm_cb4a8be87_1_12"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1072,7 +1094,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_input_cb4a8be87_1_12",
+      "step_id": "step_textInput_input_cb4a8be87_1_13",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1084,7 +1106,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_assertQuestion_cb4a8be87_1_12"
+        "step_textInput_assertQuestion_cb4a8be87_1_13"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1094,7 +1116,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_confirm_cb4a8be87_1_12",
+      "step_id": "step_textInput_confirm_cb4a8be87_1_13",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1106,7 +1128,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_input_cb4a8be87_1_12"
+        "step_textInput_input_cb4a8be87_1_13"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1128,7 +1150,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_confirm_cb4a8be87_1_12"
+        "step_textInput_confirm_cb4a8be87_1_13"
       ],
       "preconditions": [],
       "postconditions": [],

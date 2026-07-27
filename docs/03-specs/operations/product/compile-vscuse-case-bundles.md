@@ -456,6 +456,7 @@ components/
   dialog/
     click-primary-action.json.tpl
   initialization/
+    assert-toolkit-view-settled.json.tpl
     close-welcome-overlay.json.tpl
   notifications/
     assert-contains.json.tpl
@@ -545,6 +546,13 @@ requires a fresh runner session with the startup overlay visible and fails initi
 precondition is not met. The component does not close the underlying Welcome/Get Started editor or
 any project editor.
 
+The scaffold recipe uses a second initialization component,
+`initialization/assert-toolkit-view-settled.json.tpl`. It also has no semantic parameters and emits
+a single assertion that the toolkit view is open in the side bar and its Get Started editor has
+finished loading. It owns no coordinates. The scaffold recipe emits it between the toolkit-view
+focus command and the create command, because the Get Started editor can still open after the focus
+command returns and would then take keyboard focus away from the first scaffold quick pick.
+
 ## Command Palette Component Contract
 
 Any compiler-owned recipe that executes a visible VS Code command uses
@@ -559,7 +567,8 @@ The scaffold recipe instantiates this component twice after case initialization 
 the first scaffold quick-input component. It first executes
 `Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View`, because activating the
 toolkit opens its Get Started editor, which keeps keyboard focus and swallows the text typed into
-the first scaffold quick pick; focusing the toolkit view parks focus on a tree view instead. It then
+the first scaffold quick pick; focusing the toolkit view parks focus on a tree view instead. It
+waits for the toolkit view to settle through the initialization component described above, then
 executes `Microsoft 365 Agents: Create New Agent/App`. Both titles are resolved by the compiler's
 command adapter; the compiler does not use a TreeView coordinate or provide a TreeView fallback. The
 first emitted quick-input assertion verifies that command execution reached the expected first
@@ -913,7 +922,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-34 | Given the checked-in case sources and no injected `compileStep`, setup reads no external template contracts and uses the semantic compiler plus component renderer to emit twelve deterministic current-format runnable plans; every operation resolves through a supported adapter, removed manifest-owned cases are deleted, and a second setup reports no generated-plan changes.        |
 | VCB-35 | Given a `multiSelect` answer with a non-empty array of unique supported option IDs, compilation preserves the authored order, emits one filter/assert/toggle interaction per option, clears the filter between options, and confirms the prompt exactly once; invalid value shapes, empty arrays, and duplicates fail before plan output.                                                   |
 | VCB-36 | Given `provision.with.environment: none`, compilation omits environment selection while keeping the remaining provision recipe; omitting the input emits the recorded `dev` selection, and any other value fails before plan output.                                                                                                                                                        |
-| VCB-37 | Given any scaffold, compilation focuses the toolkit view through the command component after initialization and before the create command, so the toolkit Get Started editor cannot hold keyboard focus when the first scaffold quick pick opens.                                                                                                                                           |
+| VCB-37 | Given any scaffold, compilation focuses the toolkit view through the command component after initialization, waits for the toolkit Get Started editor to finish loading, and only then executes the create command, so no editor can hold keyboard focus when the first scaffold quick pick opens.                                                                                          |
 | VCB-38 | Given a `chat` check without `expect`, compilation sends the message and emits no response assertion, so a following assertion observes the surface the message produced; an empty `expect` object still fails before plan output.                                                                                                                                                          |
 
 ## Boundary
