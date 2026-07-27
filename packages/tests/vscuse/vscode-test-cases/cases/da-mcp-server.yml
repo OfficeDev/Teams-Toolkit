@@ -14,6 +14,8 @@ cases:
         login-m365,
         provision,
         f5-copilot-remote,
+        open-agent,
+        check-mcp-none-chat,
       ]
 
   - id: da-mcp-remote-oauth-preview
@@ -25,6 +27,8 @@ cases:
         login-m365,
         provision,
         f5-copilot-remote,
+        open-agent,
+        check-mcp-oauth-chat,
       ]
 
   - id: da-mcp-remote-entra-preview
@@ -221,3 +225,30 @@ steps:
     type: target
     with:
       profile: "Preview in Copilot (Chrome)"
+
+  open-agent:
+    type: open
+    with:
+      kind: agent
+      destination: chat
+
+  # The MCP servers are hosted outside this repository, so their answers cannot
+  # be asserted. These checks only require the agent to answer without failing,
+  # which is enough to show the scaffolded MCP action was published and reached.
+  check-mcp-none-chat:
+    type: checks
+    with:
+      - type: chat
+        send: Search Microsoft Learn for how to build a declarative agent.
+        expect:
+          replied: true
+          notContains: ["error"]
+
+  check-mcp-oauth-chat:
+    type: checks
+    with:
+      - type: chat
+        send: List the GitHub repositories I own.
+        expect:
+          replied: true
+          notContains: ["error"]

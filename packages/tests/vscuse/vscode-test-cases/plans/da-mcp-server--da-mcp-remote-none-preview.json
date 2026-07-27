@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 94,
+    "total_steps": 101,
     "name": "da-mcp-remote-none-preview",
     "description": {
       "owner": "",
@@ -109,7 +109,14 @@
       "step_browserM365SignIn_assertStaySignedIn_cbe46eee0_5_3",
       "step_browserM365SignIn_confirmStaySignedIn_cbe46eee0_5_3",
       "step_browserM365SignIn_refresh_cbe46eee0_5_3",
-      "step_assertReady_assertReady_cbe46eee0_5_4"
+      "step_assertReady_assertReady_cbe46eee0_5_4",
+      "step_assertReady_assertReady_cbe46eee0_6_1",
+      "step_sendCopilotMessage_assertInput_cbe46eee0_7_1",
+      "step_sendCopilotMessage_focusInput_cbe46eee0_7_1",
+      "step_sendCopilotMessage_type_cbe46eee0_7_1",
+      "step_sendCopilotMessage_send_cbe46eee0_7_1",
+      "step_assertChatReplied_assert_cbe46eee0_7_2",
+      "step_assertChatNotContains_assert_cbe46eee0_7_3"
     ],
     "tags": [
       "case_id:da-mcp-remote-none-preview",
@@ -2216,6 +2223,172 @@
         "component:browser",
         "action:assert-ready",
         "step_retry_timeout: 180"
+      ]
+    },
+    {
+      "step_id": "step_assertReady_assertReady_cbe46eee0_6_1",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_assertReady_assertReady_cbe46eee0_5_4"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "action:assert-ready",
+        "step_retry_timeout: 180"
+      ]
+    },
+    {
+      "step_id": "step_sendCopilotMessage_assertInput_cbe46eee0_7_1",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Copilot \"Message Copilot\" input is visible.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_assertReady_assertReady_cbe46eee0_6_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:copilot",
+        "entry_state:chat-ready",
+        "action:send-message",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_sendCopilotMessage_focusInput_cbe46eee0_7_1",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 416,
+        "y": 369
+      },
+      "description": "Click the Copilot \"Message Copilot\" input.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_sendCopilotMessage_assertInput_cbe46eee0_7_1"
+      ],
+      "preconditions": [
+        "dhash:416:369:16:5:0000000000000000",
+        "dhash:416:369:96:5:00200060f0002000",
+        "dhash:416:369:0:10:1391e7f4d2d3e4e0"
+      ],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:copilot",
+        "entry_state:chat-ready",
+        "action:send-message"
+      ]
+    },
+    {
+      "step_id": "step_sendCopilotMessage_type_cbe46eee0_7_1",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Search Microsoft Learn for how to build a declarative agent."
+      },
+      "description": "Type \"Search Microsoft Learn for how to build a declarative agent.\" into the Copilot message input.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_sendCopilotMessage_focusInput_cbe46eee0_7_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:copilot",
+        "entry_state:chat-ready",
+        "action:send-message"
+      ]
+    },
+    {
+      "step_id": "step_sendCopilotMessage_send_cbe46eee0_7_1",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to send the Copilot message.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_sendCopilotMessage_type_cbe46eee0_7_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:copilot",
+        "entry_state:chat-ready",
+        "action:send-message"
+      ]
+    },
+    {
+      "step_id": "step_assertChatReplied_assert_cbe46eee0_7_2",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the current assistant turn is complete and contains a non-empty response.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_sendCopilotMessage_send_cbe46eee0_7_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "action:assert-chat-response",
+        "expectation:replied",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_assertChatNotContains_assert_cbe46eee0_7_3",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the current assistant response does not contain \"error\".",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_assertChatReplied_assert_cbe46eee0_7_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "action:assert-chat-response",
+        "expectation:not-contains",
+        "step_retry_timeout: 120"
       ]
     }
   ],
