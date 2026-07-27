@@ -27,11 +27,11 @@ screenshots, and shared groups remain unchanged.
 ## Current Implementation Limits
 
 The root object, case objects, and semantic step-definition objects are closed schemas. Check
-assertions, check expectations, and provision input groups are also closed by their semantic
-adapters. Other nested `with` objects are currently consumed field by field rather than rejected
-for every unknown field. In particular, the compiler currently accepts an empty scaffold `answers`
-array, an empty non-initial `checks.with` array, and unused nested fields on login, target, and open
-definitions. `deploy.with` is also ignored. Authors must not rely on those accepted-but-unused
+assertions, check expectations, provision input groups, and `deploy.with` are also closed by their
+semantic adapters. Other nested `with` objects are currently consumed field by field rather than
+rejected for every unknown field. In particular, the compiler currently accepts an empty scaffold
+`answers` array, an empty non-initial `checks.with` array, and unused nested fields on login,
+target, and open definitions. Authors must not rely on those accepted-but-unused
 values; complete nested closure remains follow-up validation work.
 
 Text answers generally accept any string. `appName` is the exception: it must use an expression
