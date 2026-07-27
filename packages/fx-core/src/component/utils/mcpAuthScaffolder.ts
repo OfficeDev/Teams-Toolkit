@@ -69,7 +69,8 @@ export async function resolveMCPAuthEndpoints(
   }
   const metadata = await mcpAuthScaffolderDeps.resolveMCPOAuthMetadata(
     inputs[QuestionNames.MCPForDAAuthMetadataUrl],
-    inputs[QuestionNames.MCPForDAAuthWellKnownUrl]
+    inputs[QuestionNames.MCPForDAAuthWellKnownUrl],
+    inputs[QuestionNames.MCPForDAServerUrl]
   );
   return {
     authorizationUrl: metadata.authorizationUrl,

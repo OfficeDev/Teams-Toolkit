@@ -92,6 +92,7 @@ describe("mcpAuthScaffolder", () => {
       const inputs: Inputs = {
         platform: Platform.VSCode,
         [QuestionNames.MCPForDAAuthMetadataUrl]: "https://example.com/metadata",
+        [QuestionNames.MCPForDAServerUrl]: "https://example.com/mcp",
       };
       const result = await resolveMCPAuthEndpoints("oauth", inputs);
       assert.deepEqual(result, {
@@ -100,7 +101,12 @@ describe("mcpAuthScaffolder", () => {
         refreshUrl: "https://auth/token",
         wellKnownUrl: "https://auth/.well-known/oauth-authorization-server",
       });
-      expect(stub).toHaveBeenCalledExactlyOnceWith("https://example.com/metadata", undefined);
+      // the server url is the fallback discovery source when the metadata url leads nowhere
+      expect(stub).toHaveBeenCalledExactlyOnceWith(
+        "https://example.com/metadata",
+        undefined,
+        "https://example.com/mcp"
+      );
     });
 
     it("resolves endpoints for oauth-dynamic via well-known url", async () => {
@@ -119,7 +125,8 @@ describe("mcpAuthScaffolder", () => {
       assert.equal(result.wellKnownUrl, "https://auth/.well-known/oauth-authorization-server");
       expect(stub).toHaveBeenCalledExactlyOnceWith(
         undefined,
-        "https://auth/.well-known/oauth-authorization-server"
+        "https://auth/.well-known/oauth-authorization-server",
+        undefined
       );
     });
   });

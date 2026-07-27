@@ -76,7 +76,8 @@ async function resolveEndpoints(
     const probe = await mcpAuthScaffoldDeps.probeMCPServerAuth(mcpServerUrl);
     const metadata = await mcpAuthScaffoldDeps.resolveMCPOAuthMetadata(
       probe.authMetadataUrl,
-      undefined
+      undefined,
+      mcpServerUrl
     );
     return {
       authorizationUrl: metadata.authorizationUrl,

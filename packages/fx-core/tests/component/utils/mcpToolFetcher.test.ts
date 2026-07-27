@@ -5,6 +5,7 @@ import axios from "axios";
 import fs from "fs-extra";
 import { assert, vi } from "vitest";
 import {
+  buildMCPServerWellKnownCandidates,
   buildWellKnownCandidates,
   fetchMCPTools,
   probeMCPServerAuth,
@@ -652,6 +653,119 @@ describe("mcpToolFetcher", () => {
         assert.isNotEmpty(e.message);
       }
       assert.strictEqual(getStub.mock.calls.length, 1);
+    });
+
+    it("should fall back to the MCP server origin when the 401 carries no resource_metadata", async () => {
+      // A server on the 2025-03-26 MCP auth spec: it is its own authorization server, publishes
+      // RFC 8414 metadata at the origin root, and serves no protected-resource document.
+      const getStub = vi.spyOn(axios, "get");
+      getStub.mockImplementation(async (url: string): Promise<any> => {
+        if (url === "https://mcp.contoso.com/.well-known/oauth-authorization-server") {
+          return {
+            status: 200,
+            data: {
+              authorization_endpoint: "https://mcp.contoso.com/oauth/authorize",
+              token_endpoint: "https://mcp.contoso.com/oauth/token",
+            },
+          };
+        }
+        throw new Error("Request failed with status code 404");
+      });
+
+      const metadata = await resolveMCPOAuthMetadata(
+        undefined,
+        undefined,
+        "https://mcp.contoso.com/mcp"
+      );
+
+      assert.strictEqual(metadata.authorizationUrl, "https://mcp.contoso.com/oauth/authorize");
+      assert.strictEqual(metadata.tokenUrl, "https://mcp.contoso.com/oauth/token");
+      assert.strictEqual(
+        metadata.wellKnownUrl,
+        "https://mcp.contoso.com/.well-known/oauth-authorization-server"
+      );
+    });
+
+    it("should fall back to the MCP server origin when the advertised metadata is unreachable", async () => {
+      const getStub = vi.spyOn(axios, "get");
+      getStub.mockImplementation(async (url: string): Promise<any> => {
+        if (url === "https://mcp.contoso.com/.well-known/oauth-authorization-server") {
+          return {
+            status: 200,
+            data: {
+              authorization_endpoint: "https://mcp.contoso.com/oauth/authorize",
+              token_endpoint: "https://mcp.contoso.com/oauth/token",
+            },
+          };
+        }
+        throw new Error("Request failed with status code 404");
+      });
+
+      const metadata = await resolveMCPOAuthMetadata(
+        "https://mcp.contoso.com/.well-known/oauth-protected-resource",
+        undefined,
+        "https://mcp.contoso.com/mcp"
+      );
+
+      assert.strictEqual(metadata.tokenUrl, "https://mcp.contoso.com/oauth/token");
+    });
+
+    it("should prefer the advertised authorization server over the MCP server origin", async () => {
+      const getStub = vi.spyOn(axios, "get");
+      getStub.mockImplementation(async (url: string): Promise<any> => {
+        if (url === "https://mcp.contoso.com/.well-known/oauth-protected-resource") {
+          return { status: 200, data: { authorization_servers: ["https://auth.contoso.com"] } };
+        }
+        if (url === "https://auth.contoso.com/.well-known/oauth-authorization-server") {
+          return {
+            status: 200,
+            data: {
+              authorization_endpoint: "https://auth.contoso.com/authorize",
+              token_endpoint: "https://auth.contoso.com/token",
+            },
+          };
+        }
+        throw new Error("Request failed with status code 404");
+      });
+
+      const metadata = await resolveMCPOAuthMetadata(
+        "https://mcp.contoso.com/.well-known/oauth-protected-resource",
+        undefined,
+        "https://mcp.contoso.com/mcp"
+      );
+
+      assert.strictEqual(metadata.authorizationUrl, "https://auth.contoso.com/authorize");
+    });
+
+    it("should still throw when neither the metadata url nor the server url resolves", async () => {
+      vi.spyOn(axios, "get").mockRejectedValue(new Error("Request failed with status code 404"));
+
+      try {
+        await resolveMCPOAuthMetadata(undefined, undefined, "https://mcp.contoso.com/mcp");
+        assert.fail("Should have thrown");
+      } catch (e: any) {
+        assert.include(e.message, "https://mcp.contoso.com/.well-known/oauth-authorization-server");
+      }
+    });
+  });
+
+  describe("buildMCPServerWellKnownCandidates", () => {
+    it("should probe the path-derived forms before the origin root", () => {
+      assert.deepEqual(buildMCPServerWellKnownCandidates("https://mcp.contoso.com/mcp"), [
+        "https://mcp.contoso.com/.well-known/oauth-authorization-server/mcp",
+        "https://mcp.contoso.com/.well-known/openid-configuration/mcp",
+        "https://mcp.contoso.com/mcp/.well-known/oauth-authorization-server",
+        "https://mcp.contoso.com/mcp/.well-known/openid-configuration",
+        "https://mcp.contoso.com/.well-known/oauth-authorization-server",
+        "https://mcp.contoso.com/.well-known/openid-configuration",
+      ]);
+    });
+
+    it("should deduplicate when the server url has no path", () => {
+      assert.deepEqual(buildMCPServerWellKnownCandidates("https://mcp.contoso.com"), [
+        "https://mcp.contoso.com/.well-known/oauth-authorization-server",
+        "https://mcp.contoso.com/.well-known/openid-configuration",
+      ]);
     });
   });
 

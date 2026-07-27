@@ -204,10 +204,61 @@ export function buildWellKnownCandidates(issuer: string): string[] {
   ];
 }
 
+/**
+ * Build the ordered list of authorization-server metadata URLs to probe for an MCP server that
+ * never pointed at an authorization server.
+ *
+ * MCP servers written against the 2025-03-26 authorization spec are their own authorization
+ * server: they publish RFC 8414 metadata at the origin root and ship no RFC 9728
+ * protected-resource document at all. Such a server answers the 401 challenge with `realm`
+ * alone, so `resource_metadata` discovery dead-ends and the endpoints have to be derived from
+ * the server URL instead. Path-derived forms are probed first, because a host exposing several
+ * MCP endpoints may serve per-endpoint metadata; the origin root is the last resort.
+ */
+export function buildMCPServerWellKnownCandidates(mcpServerUrl: string): string[] {
+  const serverUrl = new URL(mcpServerUrl);
+  const origin = `${serverUrl.protocol}//${serverUrl.host}`;
+  return [
+    ...new Set([
+      ...buildWellKnownCandidates(mcpServerUrl),
+      `${origin}/.well-known/oauth-authorization-server`,
+      `${origin}/.well-known/openid-configuration`,
+    ]),
+  ];
+}
+
+/**
+ * Read the RFC 9728 protected-resource document the server advertised and turn its first
+ * authorization server into discovery candidates. Returns an empty list when the document
+ * names no authorization server.
+ */
+async function candidatesFromProtectedResourceMetadata(
+  authMetadataUrl: string,
+  canFallBack: boolean
+): Promise<string[]> {
+  let response;
+  try {
+    response = await axios.get(authMetadataUrl);
+  } catch (error) {
+    // A server advertising a document it cannot serve is broken, but the MCP server URL may
+    // still lead to the authorization server, so let the caller try that before failing.
+    if (canFallBack) {
+      return [];
+    }
+    throw error;
+  }
+  const issuers = response.data?.authorization_servers;
+  if (response.status === 200 && Array.isArray(issuers) && issuers.length > 0) {
+    return buildWellKnownCandidates(issuers[0]);
+  }
+  return [];
+}
+
 /** Resolve OAuth endpoints from MCP resource or authorization-server metadata. */
 export async function resolveMCPOAuthMetadata(
   authMetadataUrl?: string,
-  wellKnownUrl?: string
+  wellKnownUrl?: string,
+  mcpServerUrl?: string
 ): Promise<MCPOAuthMetadata> {
   let candidates: string[];
 
@@ -215,20 +266,22 @@ export async function resolveMCPOAuthMetadata(
     // An explicitly configured URL is authoritative — never substitute a guess for it.
     candidates = [wellKnownUrl];
   } else {
-    if (!authMetadataUrl) {
-      throw new Error(getLocalizedString("core.MCPForDA.mcpAuthMetadataUrlNotFound"));
+    candidates = authMetadataUrl
+      ? await candidatesFromProtectedResourceMetadata(authMetadataUrl, !!mcpServerUrl)
+      : [];
+
+    if (candidates.length === 0 && mcpServerUrl) {
+      candidates = buildMCPServerWellKnownCandidates(mcpServerUrl);
     }
 
-    const response = await axios.get(authMetadataUrl);
-    if (
-      response.status === 200 &&
-      response.data &&
-      response.data.authorization_servers &&
-      response.data.authorization_servers.length > 0
-    ) {
-      candidates = buildWellKnownCandidates(response.data.authorization_servers[0]);
-    } else {
-      throw new Error(getLocalizedString("core.MCPForDA.mcpServerMetadataUrlNotFound"));
+    if (candidates.length === 0) {
+      throw new Error(
+        getLocalizedString(
+          authMetadataUrl
+            ? "core.MCPForDA.mcpServerMetadataUrlNotFound"
+            : "core.MCPForDA.mcpAuthMetadataUrlNotFound"
+        )
+      );
     }
   }
 
