@@ -313,6 +313,16 @@ describe("mcpToolFetcher", () => {
       assert.equal(result.responseStatus, 200);
     });
 
+    it("should reject a 200 whose body is neither text nor an object", async () => {
+      // A 204-style empty body deserializes to undefined; it carries no envelope either.
+      vi.spyOn(axios, "post").mockResolvedValue({ status: 200, data: undefined });
+
+      const result = await probeMCPServerAuth("https://example.com/");
+      assert.isFalse(result.requiresAuth);
+      assert.equal(result.endpointStatus, "notEndpoint");
+      assert.equal(result.responseStatus, 200);
+    });
+
     it("should return requiresAuth=true when server responds 401", async () => {
       vi.spyOn(axios, "post").mockRejectedValue({
         response: {
@@ -825,6 +835,23 @@ describe("mcpToolFetcher", () => {
         assert.fail("Should have thrown");
       } catch (e: any) {
         assert.include(e.message, "https://mcp.contoso.com/.well-known/oauth-authorization-server");
+      }
+    });
+
+    it("should surface the fetch failure when there is no server url to fall back to", async () => {
+      // Without an MCP server url there is nothing left to try, so the transport error is
+      // reported as-is rather than being swallowed into a generic "no candidates" message.
+      vi.spyOn(axios, "get").mockRejectedValue(new Error("getaddrinfo ENOTFOUND mcp.contoso.com"));
+
+      try {
+        await resolveMCPOAuthMetadata(
+          "https://mcp.contoso.com/.well-known/oauth-protected-resource",
+          undefined,
+          undefined
+        );
+        assert.fail("Should have thrown");
+      } catch (e: any) {
+        assert.include(e.message, "ENOTFOUND");
       }
     });
   });

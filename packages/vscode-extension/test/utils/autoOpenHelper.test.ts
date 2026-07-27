@@ -618,6 +618,52 @@ describe("autoOpenHelper", () => {
     await ShowScaffoldingWarningSummary(workspacePath, "");
   });
 
+  it("ShowScaffoldingWarningSummary() - raises unresolved MCP placeholders as a notification", async () => {
+    // The summary only reaches the output channel, which is easy to miss, so a placeholder that
+    // will break provision has to escalate to a notification as well.
+    const workspacePath = "/path/to/workspace";
+
+    const manifest: TeamsAppManifest = {
+      manifestVersion: "version",
+      id: "mock-app-id",
+      name: { short: "short-name" },
+      description: { short: "", full: "" },
+      version: "version",
+      icons: { outline: "outline.png", color: "color.png" },
+      accentColor: "#ffffff",
+      developer: {
+        privacyUrl: "",
+        websiteUrl: "",
+        termsOfUseUrl: "",
+        name: "",
+      },
+      staticTabs: [
+        {
+          name: "name0",
+          entityId: "index0",
+          scopes: ["personal"],
+          contentUrl: "localhost/content",
+          websiteUrl: "localhost/website",
+        },
+      ],
+    };
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(VscodeLogInstance, "info").mockImplementation(() => {});
+    const fakeOutputChannel = {
+      show: vi.fn().mockResolvedValue(),
+    };
+    mockValue(VscodeLogInstance, "outputChannel", fakeOutputChannel);
+    vi.spyOn(ExtTelemetry, "sendTelemetryEvent").mockReturnValue();
+    const warning = vi.spyOn(vscode.window, "showWarningMessage").mockResolvedValue(undefined);
+
+    await ShowScaffoldingWarningSummary(
+      workspacePath,
+      JSON.stringify([{ type: "mcpAuthOAuthUrlPlaceholder", content: "fill in the oauth urls" }])
+    );
+
+    assert.equal(warning.mock.calls.length, 1);
+  });
+
   describe("showMCPAuthPlaceholderNotification", () => {
     const placeholderWarning: Warning = {
       type: "mcpAuthOAuthUrlPlaceholder",
