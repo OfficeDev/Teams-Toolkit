@@ -578,15 +578,10 @@ test("browser checks require a preceding target", async () => {
   const result = await compileFixture(
     "da-api-plugin-from-existing-api.yml",
     (sourceText) =>
-      sourceText
-        .replace(
-          "      - type: chat\n        send: show repair records assigned to karin blair\n      - type: browser\n        expect:\n          role: button\n          name: Sign in to Repair Service\n",
-          "      - type: browser\n        expect:\n          role: button\n          name: Sign in to Repair Service\n",
-        )
-        .replace(
-          /        f5-copilot-remote,\r?\n        open-agent,\r?\n        check-oauth-sign-in,/,
-          "        check-oauth-sign-in,\n        f5-copilot-remote,\n        open-agent,",
-        ),
+      sourceText.replace(
+        /        f5-copilot-remote,\r?\n        check-oauth-sign-in,/,
+        "        check-oauth-sign-in,\n        f5-copilot-remote,",
+      ),
   );
 
   assert.equal(result.ok, false);

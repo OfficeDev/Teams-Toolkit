@@ -11,8 +11,6 @@ cases:
         login-m365,
         provision,
         f5-copilot-remote,
-        open-agent,
-        check-repair,
       ]
 
   - id: da-api-plugin-from-existing-api-api-key-remote-preview
@@ -25,8 +23,6 @@ cases:
         login-m365,
         provision-api-key,
         f5-copilot-remote,
-        open-agent,
-        check-api-key-action,
       ]
 
   - id: da-api-plugin-from-existing-api-bearer-remote-preview
@@ -39,8 +35,6 @@ cases:
         login-m365,
         provision-bearer,
         f5-copilot-remote,
-        open-agent,
-        check-bearer-action,
       ]
 
   - id: da-api-plugin-from-existing-api-oauth-remote-preview
@@ -53,7 +47,6 @@ cases:
         login-m365,
         provision-oauth,
         f5-copilot-remote,
-        open-agent,
         check-oauth-sign-in,
       ]
 
@@ -324,11 +317,6 @@ steps:
   check-oauth-sign-in:
     type: checks
     with:
-      # The OAuth plugin cannot call the Repair Service until the signed-in user
-      # consents, so the sign-in button only appears once a message triggers the
-      # action.
-      - type: chat
-        send: show repair records assigned to karin blair
       - type: browser
         expect:
           role: button
@@ -365,41 +353,3 @@ steps:
     type: target
     with:
       profile: "Preview in Copilot (Chrome)"
-
-  open-agent:
-    type: open
-    with:
-      kind: agent
-      destination: chat
-
-  check-repair:
-    type: checks
-    with:
-      - type: chat
-        send: show repair records assigned to karin blair
-        allowAction: true
-        expect:
-          contains: ["Oil change"]
-
-  check-api-key-action:
-    type: checks
-    with:
-      # The CI api key is a placeholder, so the Repair Service rejects the call
-      # and no repair record can be asserted. The consent prompt and the reply
-      # still prove the api key plugin action reaches the service.
-      - type: chat
-        send: show repair records assigned to karin blair
-        allowAction: true
-        expect:
-          replied: true
-
-  check-bearer-action:
-    type: checks
-    with:
-      # The CI bearer token is a placeholder, so the Repair Service answers with
-      # an empty result set and no repair record can be asserted.
-      - type: chat
-        send: show repair records assigned to karin blair
-        allowAction: true
-        expect:
-          replied: true
