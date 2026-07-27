@@ -1184,5 +1184,6 @@
   "core.MCPForDA.toolsFileReadError": "Failed to read MCP tools file: %s. To add tools later, run:\n  %s",
   "core.MCPForDA.authRequired": "The MCP server at %s requires authentication. Tools could not be fetched automatically. To add tools, run:\n  %s",
   "core.MCPForDA.noToolsFetched": "No tools were discovered from the MCP server at %s. To add tools later, run:\n  %s",
+  "core.MCPForDA.mcpServerUrlNotFound": "%s returned 404 for an MCP initialize request, so it may not be an MCP endpoint. MCP server URLs commonly end with '/mcp'. Verify the URL before provisioning.",
   "core.MCPForDA.fetchError": "Failed to fetch tools from the MCP server at %s. To add tools later, run:\n  %s"
 }

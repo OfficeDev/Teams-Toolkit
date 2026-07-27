@@ -2003,6 +2003,54 @@ describe("helper", async () => {
       );
     });
 
+    it("DT auth: warns when the MCP server url returns 404", async () => {
+      // The DT path never fetches tools, so this warning is the only thing standing between a
+      // mistyped url and a scaffold that looks complete but points nowhere.
+      vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(true);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readJSON").mockResolvedValue({
+        schema_version: "v1",
+        functions: [],
+        runtimes: [],
+      });
+      vi.spyOn(fs, "writeJSON").mockResolvedValue();
+      vi.spyOn(fs, "readFile").mockResolvedValue(
+        "provision:\n  - uses: teamsApp/create\n    writeToEnvironmentFile:\n      teamsAppId: TEAMS_APP_ID\n" as any
+      );
+      vi.spyOn(fs, "writeFile").mockResolvedValue();
+
+      vi.spyOn(mcpToolFetcher, "probeMCPServerAuth").mockResolvedValue({
+        requiresAuth: false,
+        endpointNotFound: true,
+      });
+      vi.spyOn(
+        mcpAuthScaffolderDeps.mcpAuthScaffolderDeps,
+        "resolveMCPOAuthMetadata"
+      ).mockResolvedValue({
+        authorizationUrl: "https://taskmaster.example.com/oauth/authorize",
+        tokenUrl: "https://taskmaster.example.com/oauth/token",
+        refreshUrl: "https://taskmaster.example.com/oauth/token",
+        wellKnownUrl: "https://taskmaster.example.com/.well-known/oauth-authorization-server",
+      });
+
+      const inputs: Inputs = {
+        platform: Platform.VSCode,
+        // Missing the trailing /mcp: the host answers GET, so only the probe exposes it.
+        [QuestionNames.MCPForDAServerUrl]: "https://taskmaster.example.com",
+        [QuestionNames.MCPForDAAuthType]: "oauth",
+      };
+
+      const res = await generatorHelper.generateForMCPForDA(testDestinationPath, inputs);
+
+      assert.isTrue(res.isOk());
+      if (res.isOk()) {
+        const warning = res.value.warnings?.find((w) => w.type === "mcpServerUrlNotFound");
+        assert.isDefined(warning);
+        assert.include(warning!.content, "https://taskmaster.example.com");
+        assert.include(warning!.content, "/mcp");
+      }
+    });
+
     it("flag OFF with auth type uses legacy static path (no DT)", async () => {
       // With TEAMSFX_MCP_FOR_DA_DT off, the dispatcher must keep the legacy
       // static-tools behavior even when an auth-type answer is present:

@@ -315,6 +315,25 @@ describe("mcpToolFetcher", () => {
 
       const result = await probeMCPServerAuth("https://down.example.com/mcp");
       assert.isFalse(result.requiresAuth);
+      assert.isNotTrue(result.endpointNotFound);
+    });
+
+    it("should flag a 404 as a url that is not an MCP endpoint", async () => {
+      // The mistyped form of an MCP url often still serves a page on GET, so only the
+      // initialize POST reveals that nothing is routed there.
+      vi.spyOn(axios, "post").mockRejectedValue({ response: { status: 404 } });
+
+      const result = await probeMCPServerAuth("https://taskmaster.example.com");
+      assert.isFalse(result.requiresAuth);
+      assert.isTrue(result.endpointNotFound);
+    });
+
+    it("should not flag a 401 as a missing endpoint", async () => {
+      vi.spyOn(axios, "post").mockRejectedValue({ status: 401 });
+
+      const result = await probeMCPServerAuth("https://taskmaster.example.com/mcp");
+      assert.isTrue(result.requiresAuth);
+      assert.isNotTrue(result.endpointNotFound);
     });
 
     it("should handle 401 via error.status (no response object)", async () => {

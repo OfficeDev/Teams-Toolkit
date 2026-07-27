@@ -132,6 +132,14 @@ export async function readMCPToolsFromFile(filePath: string): Promise<MCPTool[]>
 export interface MCPAuthProbeResult {
   requiresAuth: boolean;
   authMetadataUrl?: string;
+  /**
+   * The endpoint answered an MCP `initialize` request with 404, so nothing is routed there.
+   * A mistyped server URL commonly still serves an ordinary page on GET — the host's landing
+   * page, say — which makes it look reachable; only the POST exposes that it is not an MCP
+   * endpoint. Reported separately from `requiresAuth` because it says the URL is wrong, not
+   * that authorization is missing.
+   */
+  endpointNotFound?: boolean;
 }
 
 /** Probe an MCP streamable-HTTP endpoint for an OAuth challenge. */
@@ -166,6 +174,9 @@ export async function probeMCPServerAuth(serverUrl: string): Promise<MCPAuthProb
         }
       }
       return { requiresAuth: true, authMetadataUrl };
+    }
+    if (error?.response?.status === 404 || error?.status === 404) {
+      return { requiresAuth: false, endpointNotFound: true };
     }
     return { requiresAuth: false };
   }

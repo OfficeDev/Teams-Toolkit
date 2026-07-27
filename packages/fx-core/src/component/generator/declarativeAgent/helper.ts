@@ -830,6 +830,15 @@ async function generateForMCPForDAWithAuth(
           if (authProbe.authMetadataUrl) {
             inputs[QuestionNames.MCPForDAAuthMetadataUrl] = authProbe.authMetadataUrl;
           }
+          // This branch never fetches tools, so a mistyped server URL would otherwise leave no
+          // trace at all: endpoint discovery falls back to the host and happily returns its
+          // authorization server, and the scaffold looks complete.
+          if (authProbe.endpointNotFound) {
+            warnings.push({
+              type: "mcpServerUrlNotFound",
+              content: getLocalizedString("core.MCPForDA.mcpServerUrlNotFound", mcpServerUrl),
+            });
+          }
         } catch {
           // Probe failed — continue; endpoint resolution below will best-effort
           // and yml injection will still run with undefined endpoints.
