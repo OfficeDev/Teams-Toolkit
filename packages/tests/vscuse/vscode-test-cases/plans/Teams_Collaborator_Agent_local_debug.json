@@ -52,7 +52,7 @@
         "x": 395,
         "y": 174
       },
-      "description": "Click the \"Teams Collaborator Agent\" option in the dropdown menu within the \"Teams Agent or App Using Teams AI Library\" selection box.",
+      "description": "Click the \"Teams Collaborator Agent\" option in the dropdown menu within the \"Teams Agent or App Using Microsoft Teams SDK\" selection box.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

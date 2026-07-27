@@ -46,7 +46,7 @@
         "x": 545,
         "y": 489
       },
-      "description": "Click the \"List all repairs without auth\" button located under the \"vscuse_app_aEydglocal\" header in the Microsoft Teams application interface.",
+      "description": "Click the \"List all repairs without auth\" button located under the \"${{var:app_name}}local\" header in the Microsoft Teams application interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -94,7 +94,7 @@
         "x": 939,
         "y": 30
       },
-      "description": "Click the \"Close\" button (✖) at the top-right corner of the Microsoft Teams web application interface to close the notification banner.",
+      "description": "Click the minimize button in the browser window's title bar to minimize the Microsoft Teams web application.(Previously used for clicking the Close button.)",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

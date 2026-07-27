@@ -50,7 +50,7 @@
         "x": 307,
         "y": 132
       },
-      "description": "Click the \"Teams Agent with Data\" dropdown option in the \"Teams Agent or App Using Teams AI Library\" selection menu within the Microsoft 365 Agents Toolkit interface in Visual Studio Code.",
+      "description": "Click the \"Teams Agent with Data\" dropdown option in the \"Teams Agent or App Using Microsoft Teams SDK\" selection menu within the Microsoft 365 Agents Toolkit interface in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -76,7 +76,7 @@
         "x": 288,
         "y": 87
       },
-      "description": "Click the \"Custom\" option within the \"Select an option to load your data\" dropdown menu in the Teams Agent with Data extension in Visual Studio Code.",
+      "description": "Click the \"Customize\" option within the \"Select an option to load your data\" dropdown menu in the Teams Agent with Data extension in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

@@ -53,7 +53,7 @@
         "x": 385,
         "y": 128
       },
-      "description": "Click the \"General Teams Agent\" dropdown option within the \"Teams Agent or App Using Teams AI Library\" selection popup in Visual Studio Code.",
+      "description": "Click the \"Teams Agent with Data\" dropdown option within the \"Teams Agent or App Using Microsoft Teams SDK\" selection popup in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
