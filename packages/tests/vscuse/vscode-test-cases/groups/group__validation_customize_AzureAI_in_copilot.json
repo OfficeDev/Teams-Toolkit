@@ -38,7 +38,7 @@
         "x": 373,
         "y": 366
       },
-      "description": "Click the \"Message Copilot\" input box in the M365 Copilot web application, within the agent chat interface, focusing on the area where users enter text to start a conversation.",
+      "description": "Click the \"Message ${{var:app_name}}dev\" input box in the M365 Copilot web application, within the agent chat interface, focusing on the area where users enter text to start a conversation.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
