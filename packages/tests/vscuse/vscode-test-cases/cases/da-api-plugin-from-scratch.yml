@@ -8,8 +8,10 @@ cases:
       [
         scaffold-ts,
         check-ts,
+        login-azure,
         login-m365,
-        provision,
+        provision-arm,
+        deploy,
         f5-copilot-remote,
         open-agent,
         check-repair,
@@ -22,8 +24,10 @@ cases:
       [
         scaffold-js,
         check-js,
+        login-azure,
         login-m365,
-        provision,
+        provision-arm,
+        deploy,
         f5-copilot-remote,
         open-agent,
         check-repair,
@@ -110,6 +114,15 @@ steps:
         expect:
           notContains: ["oauth/register", "dcr/register", "aadApp/create"]
 
+  # The scaffolded m365agents.yml runs arm/deploy to host the repairs Azure
+  # Functions backend, so this template needs an Azure subscription on top of M365.
+  login-azure:
+    type: login
+    with:
+      type: azure
+      account: "${{env:AZURE_ACCOUNT_NAME}}"
+      password: "${{secret:AZURE_ACCOUNT_PASSWORD}}"
+
   login-m365:
     type: login
     with:
@@ -117,8 +130,18 @@ steps:
       account: "${{env:M365_ACCOUNT_NAME}}"
       password: "${{secret:M365_ACCOUNT_PASSWORD}}"
 
-  provision:
+  provision-arm:
     type: provision
+    with:
+      arm:
+        subscriptionId: "${{env:AZURE_SUBSCRIPTION_ID}}"
+        targetResourceGroupName: "+ New resource group"
+        newResourceGroupName: "${{var:app_name}}-rg"
+        newResourceGroupLocation: "${{env:RESOURCE_GROUP_REGION}}"
+
+  # azureFunctions/zipDeploy publishes the repairs backend that check-repair queries.
+  deploy:
+    type: deploy
 
   f5-copilot-remote:
     type: target
