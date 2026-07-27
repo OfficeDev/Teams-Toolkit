@@ -102,7 +102,7 @@
         "x": 457,
         "y": 73
       },
-      "description": "Click the \"Azure OpenAI\" option in the \"Service for Large Language Model (LLM)\" picker within the pop-up window at the top of the Microsoft Visual Studio Code interface, to select Azure OpenAI as the LLM service. This also advances the wizard to the \"OpenAPI Document\" step and auto-focuses its URL input field.",
+      "description": "Click on the \"Enter OpenAPI Description Document Location\" text field within the pop-up window at the top of the Microsoft Visual Studio Code interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
