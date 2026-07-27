@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 160,
+    "total_steps": 162,
     "name": "da-api-plugin-from-scratch-js",
     "description": {
       "owner": "",
@@ -109,23 +109,23 @@
       "step_executeCommand_filter_c919bef1e_5_1",
       "step_executeCommand_assertCommand_c919bef1e_5_1",
       "step_executeCommand_execute_c919bef1e_5_1",
-      "step_singleSelect_assertQuestion_c919bef1e_5_2",
-      "step_singleSelect_filter_c919bef1e_5_2",
-      "step_singleSelect_assertOption_c919bef1e_5_2",
-      "step_singleSelect_confirm_c919bef1e_5_2",
+      "step_clickOption_assertPrompt_c919bef1e_5_2",
+      "step_clickOption_click_c919bef1e_5_2",
       "step_singleSelect_assertQuestion_c919bef1e_5_3",
       "step_singleSelect_filter_c919bef1e_5_3",
       "step_singleSelect_assertOption_c919bef1e_5_3",
       "step_singleSelect_confirm_c919bef1e_5_3",
-      "step_textInput_assertQuestion_c919bef1e_5_4",
-      "step_textInput_input_c919bef1e_5_4",
-      "step_textInput_confirm_c919bef1e_5_4",
-      "step_singleSelect_assertQuestion_c919bef1e_5_5",
-      "step_singleSelect_filter_c919bef1e_5_5",
-      "step_singleSelect_assertOption_c919bef1e_5_5",
-      "step_singleSelect_confirm_c919bef1e_5_5",
-      "step_clickOption_assertPrompt_c919bef1e_5_6",
-      "step_clickOption_click_c919bef1e_5_6",
+      "step_singleSelect_assertQuestion_c919bef1e_5_4",
+      "step_singleSelect_filter_c919bef1e_5_4",
+      "step_singleSelect_assertOption_c919bef1e_5_4",
+      "step_singleSelect_confirm_c919bef1e_5_4",
+      "step_textInput_assertQuestion_c919bef1e_5_5",
+      "step_textInput_input_c919bef1e_5_5",
+      "step_textInput_confirm_c919bef1e_5_5",
+      "step_singleSelect_assertQuestion_c919bef1e_5_6",
+      "step_singleSelect_filter_c919bef1e_5_6",
+      "step_singleSelect_assertOption_c919bef1e_5_6",
+      "step_singleSelect_confirm_c919bef1e_5_6",
       "step_clickPrimaryAction_assertDialog_c919bef1e_5_7",
       "step_clickPrimaryAction_click_c919bef1e_5_7",
       "step_executeCommand_open_c919bef1e_5_8",
@@ -139,14 +139,16 @@
       "step_executeCommand_filter_c919bef1e_6_1",
       "step_executeCommand_assertCommand_c919bef1e_6_1",
       "step_executeCommand_execute_c919bef1e_6_1",
-      "step_confirm_assertQuestion_c919bef1e_6_2",
-      "step_confirm_confirm_c919bef1e_6_2",
-      "step_executeCommand_open_c919bef1e_6_3",
-      "step_executeCommand_assertPalette_c919bef1e_6_3",
-      "step_executeCommand_filter_c919bef1e_6_3",
-      "step_executeCommand_assertCommand_c919bef1e_6_3",
-      "step_executeCommand_execute_c919bef1e_6_3",
-      "step_assertNotificationContains_assert_c919bef1e_6_4",
+      "step_clickOption_assertPrompt_c919bef1e_6_2",
+      "step_clickOption_click_c919bef1e_6_2",
+      "step_confirm_assertQuestion_c919bef1e_6_3",
+      "step_confirm_confirm_c919bef1e_6_3",
+      "step_executeCommand_open_c919bef1e_6_4",
+      "step_executeCommand_assertPalette_c919bef1e_6_4",
+      "step_executeCommand_filter_c919bef1e_6_4",
+      "step_executeCommand_assertCommand_c919bef1e_6_4",
+      "step_executeCommand_execute_c919bef1e_6_4",
+      "step_assertNotificationContains_assert_c919bef1e_6_5",
       "step_executeCommand_open_c919bef1e_7_1",
       "step_executeCommand_assertPalette_c919bef1e_7_1",
       "step_executeCommand_filter_c919bef1e_7_1",
@@ -2317,11 +2319,11 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertQuestion_c919bef1e_5_2",
+      "step_id": "step_clickOption_assertPrompt_c919bef1e_5_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the active prompt titled Select Subscription for Current Tenant ID is visible.",
+      "description": "@assertion the active prompt titled Select an environment is visible and the option dev is selectable.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -2334,72 +2336,37 @@
       "tags": [
         "component:quick-input",
         "answer_type:singleSelect",
+        "interaction:click",
         "step_retry_timeout: 30"
       ]
     },
     {
-      "step_id": "step_singleSelect_filter_c919bef1e_5_2",
+      "step_id": "step_clickOption_click_c919bef1e_5_2",
       "agent": "interaction",
-      "tool": "type_text",
+      "tool": "click",
       "parameters": {
-        "text": "${{env:AZURE_SUBSCRIPTION_ID}}"
+        "button": "left",
+        "x": 292,
+        "y": 77
       },
-      "description": "Type the resolved option label ${{env:AZURE_SUBSCRIPTION_ID}} into the active single-select prompt.",
+      "description": "Click the dev option in the active prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_c919bef1e_5_2"
+        "step_clickOption_assertPrompt_c919bef1e_5_2"
       ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect"
-      ]
-    },
-    {
-      "step_id": "step_singleSelect_assertOption_c919bef1e_5_2",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the option ${{env:AZURE_SUBSCRIPTION_ID}} is visible and selectable in the filtered single-select prompt.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_singleSelect_filter_c919bef1e_5_2"
+      "preconditions": [
+        "dhash:292:77:16:5:0000000000000000",
+        "dhash:292:77:96:5:0000c0004020204c",
+        "dhash:292:77:0:10:d088222323232421"
       ],
-      "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:quick-input",
         "answer_type:singleSelect",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_singleSelect_confirm_c919bef1e_5_2",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press Enter to confirm the filtered single-select option.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_singleSelect_assertOption_c919bef1e_5_2"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect"
+        "interaction:click"
       ]
     },
     {
@@ -2407,13 +2374,13 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the active prompt titled Select a resource group is visible.",
+      "description": "@assertion the active prompt titled Select Subscription for Current Tenant ID is visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_confirm_c919bef1e_5_2"
+        "step_clickOption_click_c919bef1e_5_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2428,9 +2395,9 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "+ New resource group"
+        "text": "${{env:AZURE_SUBSCRIPTION_ID}}"
       },
-      "description": "Type the resolved option label + New resource group into the active single-select prompt.",
+      "description": "Type the resolved option label ${{env:AZURE_SUBSCRIPTION_ID}} into the active single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -2450,7 +2417,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the option + New resource group is visible and selectable in the filtered single-select prompt.",
+      "description": "@assertion the option ${{env:AZURE_SUBSCRIPTION_ID}} is visible and selectable in the filtered single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -2489,11 +2456,11 @@
       ]
     },
     {
-      "step_id": "step_textInput_assertQuestion_c919bef1e_5_4",
+      "step_id": "step_singleSelect_assertQuestion_c919bef1e_5_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the active prompt titled New resource group name is visible.",
+      "description": "@assertion the active prompt titled Select a resource group is visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -2505,89 +2472,24 @@
       "postconditions": [],
       "tags": [
         "component:quick-input",
-        "answer_type:text",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_textInput_input_c919bef1e_5_4",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "${{var:app_name}}-rg"
-      },
-      "description": "Type the authored value into the active text prompt.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_textInput_assertQuestion_c919bef1e_5_4"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:text"
-      ]
-    },
-    {
-      "step_id": "step_textInput_confirm_c919bef1e_5_4",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press Enter to submit the accepted text input.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_textInput_input_c919bef1e_5_4"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:text"
-      ]
-    },
-    {
-      "step_id": "step_singleSelect_assertQuestion_c919bef1e_5_5",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the active prompt titled Location for the new resource group is visible.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_textInput_confirm_c919bef1e_5_4"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
         "answer_type:singleSelect",
         "step_retry_timeout: 30"
       ]
     },
     {
-      "step_id": "step_singleSelect_filter_c919bef1e_5_5",
+      "step_id": "step_singleSelect_filter_c919bef1e_5_4",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "${{env:RESOURCE_GROUP_REGION}}"
+        "text": "+ New resource group"
       },
-      "description": "Type the resolved option label ${{env:RESOURCE_GROUP_REGION}} into the active single-select prompt.",
+      "description": "Type the resolved option label + New resource group into the active single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_c919bef1e_5_5"
+        "step_singleSelect_assertQuestion_c919bef1e_5_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2597,17 +2499,17 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOption_c919bef1e_5_5",
+      "step_id": "step_singleSelect_assertOption_c919bef1e_5_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the option ${{env:RESOURCE_GROUP_REGION}} is visible and selectable in the filtered single-select prompt.",
+      "description": "@assertion the option + New resource group is visible and selectable in the filtered single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_filter_c919bef1e_5_5"
+        "step_singleSelect_filter_c919bef1e_5_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2618,7 +2520,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_confirm_c919bef1e_5_5",
+      "step_id": "step_singleSelect_confirm_c919bef1e_5_4",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2630,7 +2532,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOption_c919bef1e_5_5"
+        "step_singleSelect_assertOption_c919bef1e_5_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2640,54 +2542,154 @@
       ]
     },
     {
-      "step_id": "step_clickOption_assertPrompt_c919bef1e_5_6",
+      "step_id": "step_textInput_assertQuestion_c919bef1e_5_5",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the active prompt titled Select an environment is visible and the option dev is selectable.",
+      "description": "@assertion the active prompt titled New resource group name is visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_confirm_c919bef1e_5_5"
+        "step_singleSelect_confirm_c919bef1e_5_4"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:text",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_textInput_input_c919bef1e_5_5",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{var:app_name}}-rg"
+      },
+      "description": "Type the authored value into the active text prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_textInput_assertQuestion_c919bef1e_5_5"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:text"
+      ]
+    },
+    {
+      "step_id": "step_textInput_confirm_c919bef1e_5_5",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to submit the accepted text input.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_textInput_input_c919bef1e_5_5"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:text"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertQuestion_c919bef1e_5_6",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the active prompt titled Location for the new resource group is visible.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_textInput_confirm_c919bef1e_5_5"
       ],
       "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:quick-input",
         "answer_type:singleSelect",
-        "interaction:click",
         "step_retry_timeout: 30"
       ]
     },
     {
-      "step_id": "step_clickOption_click_c919bef1e_5_6",
+      "step_id": "step_singleSelect_filter_c919bef1e_5_6",
       "agent": "interaction",
-      "tool": "click",
+      "tool": "type_text",
       "parameters": {
-        "button": "left",
-        "x": 292,
-        "y": 77
+        "text": "${{env:RESOURCE_GROUP_REGION}}"
       },
-      "description": "Click the dev option in the active prompt.",
+      "description": "Type the resolved option label ${{env:RESOURCE_GROUP_REGION}} into the active single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_clickOption_assertPrompt_c919bef1e_5_6"
+        "step_singleSelect_assertQuestion_c919bef1e_5_6"
       ],
-      "preconditions": [
-        "dhash:292:77:16:5:0000000000000000",
-        "dhash:292:77:96:5:0000c0004020204c",
-        "dhash:292:77:0:10:d088222323232421"
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertOption_c919bef1e_5_6",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the option ${{env:RESOURCE_GROUP_REGION}} is visible and selectable in the filtered single-select prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_filter_c919bef1e_5_6"
       ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:quick-input",
         "answer_type:singleSelect",
-        "interaction:click"
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_confirm_c919bef1e_5_6",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the filtered single-select option.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertOption_c919bef1e_5_6"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
       ]
     },
     {
@@ -2701,7 +2703,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_clickOption_click_c919bef1e_5_6"
+        "step_singleSelect_confirm_c919bef1e_5_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2971,11 +2973,11 @@
       ]
     },
     {
-      "step_id": "step_confirm_assertQuestion_c919bef1e_6_2",
+      "step_id": "step_clickOption_assertPrompt_c919bef1e_6_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the confirmation question Deploy is visible and the option Deploy is focused.",
+      "description": "@assertion the active prompt titled Select an environment is visible and the option dev is selectable.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -2987,12 +2989,63 @@
       "postconditions": [],
       "tags": [
         "component:quick-input",
+        "answer_type:singleSelect",
+        "interaction:click",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_clickOption_click_c919bef1e_6_2",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 292,
+        "y": 77
+      },
+      "description": "Click the dev option in the active prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_clickOption_assertPrompt_c919bef1e_6_2"
+      ],
+      "preconditions": [
+        "dhash:292:77:16:5:0000000000000000",
+        "dhash:292:77:96:5:0000c0004020204c",
+        "dhash:292:77:0:10:d088222323232421"
+      ],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "interaction:click"
+      ]
+    },
+    {
+      "step_id": "step_confirm_assertQuestion_c919bef1e_6_3",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the confirmation question Deploy is visible and the option Deploy is focused.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_clickOption_click_c919bef1e_6_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
         "answer_type:confirm",
         "step_retry_timeout: 30"
       ]
     },
     {
-      "step_id": "step_confirm_confirm_c919bef1e_6_2",
+      "step_id": "step_confirm_confirm_c919bef1e_6_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -3004,7 +3057,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_confirm_assertQuestion_c919bef1e_6_2"
+        "step_confirm_assertQuestion_c919bef1e_6_3"
       ],
       "preconditions": [
         "dhash:512:384:0:20:a4843a23233b2e2d"
@@ -3016,7 +3069,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_open_c919bef1e_6_3",
+      "step_id": "step_executeCommand_open_c919bef1e_6_4",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -3028,7 +3081,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_confirm_confirm_c919bef1e_6_2"
+        "step_confirm_confirm_c919bef1e_6_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3038,7 +3091,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertPalette_c919bef1e_6_3",
+      "step_id": "step_executeCommand_assertPalette_c919bef1e_6_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -3048,7 +3101,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_open_c919bef1e_6_3"
+        "step_executeCommand_open_c919bef1e_6_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3059,7 +3112,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_filter_c919bef1e_6_3",
+      "step_id": "step_executeCommand_filter_c919bef1e_6_4",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -3071,7 +3124,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertPalette_c919bef1e_6_3"
+        "step_executeCommand_assertPalette_c919bef1e_6_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3081,7 +3134,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertCommand_c919bef1e_6_3",
+      "step_id": "step_executeCommand_assertCommand_c919bef1e_6_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -3091,7 +3144,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_filter_c919bef1e_6_3"
+        "step_executeCommand_filter_c919bef1e_6_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3102,7 +3155,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_execute_c919bef1e_6_3",
+      "step_id": "step_executeCommand_execute_c919bef1e_6_4",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -3114,7 +3167,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertCommand_c919bef1e_6_3"
+        "step_executeCommand_assertCommand_c919bef1e_6_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3124,7 +3177,7 @@
       ]
     },
     {
-      "step_id": "step_assertNotificationContains_assert_c919bef1e_6_4",
+      "step_id": "step_assertNotificationContains_assert_c919bef1e_6_5",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -3134,7 +3187,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_c919bef1e_6_3"
+        "step_executeCommand_execute_c919bef1e_6_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3157,7 +3210,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertNotificationContains_assert_c919bef1e_6_4"
+        "step_assertNotificationContains_assert_c919bef1e_6_5"
       ],
       "preconditions": [],
       "postconditions": [],

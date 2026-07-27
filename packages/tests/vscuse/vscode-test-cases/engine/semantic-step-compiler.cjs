@@ -520,12 +520,14 @@ function createSemanticStepCompiler() {
     return { ok: true, value: output };
   }
 
-  function validateProvisionInputs(state, definition) {
+  // The toolkit selects the environment in the same middleware for every
+  // lifecycle command, so `provision` and `deploy` share one input contract.
+  function validateEnvironmentInput(definition) {
     const declared = definition.with ?? {};
     if (!isRecord(declared)) {
       return failure(
-        "VCB_PROVISION_INPUT_UNKNOWN",
-        "The provision operation contains an unsupported input.",
+        "VCB_LIFECYCLE_INPUT_UNKNOWN",
+        "The lifecycle operation contains an unsupported input.",
       );
     }
     const { [provisionEnvironmentInput]: environment, ...inputs } = declared;
@@ -534,17 +536,32 @@ function createSemanticStepCompiler() {
       environment !== provisionEnvironmentSkipValue
     ) {
       return failure(
-        "VCB_PROVISION_INPUT_UNKNOWN",
-        `The provision environment input supports only "${provisionEnvironmentSkipValue}".`,
+        "VCB_LIFECYCLE_INPUT_UNKNOWN",
+        `The lifecycle environment input supports only "${provisionEnvironmentSkipValue}".`,
       );
     }
-    const groups = validateProvisionInputGroups(state, inputs);
+    return {
+      ok: true,
+      value: {
+        inputs,
+        selectsEnvironment: environment !== provisionEnvironmentSkipValue,
+      },
+    };
+  }
+
+  function validateProvisionInputs(state, definition) {
+    const environment = validateEnvironmentInput(definition);
+    if (!environment.ok) return environment;
+    const groups = validateProvisionInputGroups(
+      state,
+      environment.value.inputs,
+    );
     if (!groups.ok) return groups;
     return {
       ok: true,
       value: {
         ...groups.value,
-        selectsEnvironment: environment !== provisionEnvironmentSkipValue,
+        selectsEnvironment: environment.value.selectsEnvironment,
       },
     };
   }
@@ -582,14 +599,14 @@ function createSemanticStepCompiler() {
           "The API key provision input must use a secret expression.",
         );
       }
+      const questions = [{ ...provisionApiKeyQuestion, value: inputs.apiKey }];
       return {
         ok: true,
         value: {
-          afterEnvironment: [
-            { ...provisionApiKeyQuestion, value: inputs.apiKey },
-          ],
-          beforeEnvironment: [],
           confirmation: provisionApiKeyConfirmation,
+          questions,
+          // The API key is not persisted, so F5 asks for it again.
+          replayedQuestions: questions,
         },
       };
     }
@@ -615,15 +632,17 @@ function createSemanticStepCompiler() {
           "OAuth provision credentials must use environment and secret expressions.",
         );
       }
+      const questions = provisionOauthQuestions.map((question) => ({
+        ...question,
+        value: inputs.oauth[question.key],
+      }));
       return {
         ok: true,
         value: {
-          afterEnvironment: provisionOauthQuestions.map((question) => ({
-            ...question,
-            value: inputs.oauth[question.key],
-          })),
-          beforeEnvironment: [],
           confirmation: provisionOauthConfirmation,
+          questions,
+          // The OAuth credentials are not persisted, so F5 asks for them again.
+          replayedQuestions: questions,
         },
       };
     }
@@ -631,9 +650,9 @@ function createSemanticStepCompiler() {
       return {
         ok: true,
         value: {
-          afterEnvironment: [],
-          beforeEnvironment: [],
           confirmation: undefined,
+          questions: [],
+          replayedQuestions: [],
         },
       };
     }
@@ -658,12 +677,14 @@ function createSemanticStepCompiler() {
     return {
       ok: true,
       value: {
-        afterEnvironment: [],
-        beforeEnvironment: provisionArmQuestions.map((question) => ({
+        confirmation: provisionConfirmation,
+        questions: provisionArmQuestions.map((question) => ({
           ...question,
           value: inputs.arm[question.key],
         })),
-        confirmation: provisionConfirmation,
+        // Provision writes the ARM answers into the environment, so F5 reuses
+        // them instead of prompting again.
+        replayedQuestions: [],
       },
     };
   }
@@ -697,35 +718,47 @@ function createSemanticStepCompiler() {
       }),
     );
     if (error) return error;
+    let questions = [];
+    let selectsEnvironment;
     if (definition.type === "provision") {
       const provision = validateProvisionInputs(state, definition);
       if (!provision.ok) return provision;
       state.targetProvision =
-        provision.value.afterEnvironment.length > 0
+        provision.value.replayedQuestions.length > 0
           ? {
               confirmation: provision.value.confirmation,
-              questions: provision.value.afterEnvironment,
+              questions: provision.value.replayedQuestions,
             }
           : undefined;
-      const beforeEnvironment = renderProvisionQuestions(
-        state,
-        provision.value.beforeEnvironment,
-        output,
-      );
-      if (!beforeEnvironment.ok) return beforeEnvironment;
-      if (provision.value.selectsEnvironment) {
-        const { component, ...environmentValues } = provisionEnvironment;
-        error = append(output, render(state, component, environmentValues));
-        if (error) return error;
-      }
-      const afterEnvironment = renderProvisionQuestions(
-        state,
-        provision.value.afterEnvironment,
-        output,
-      );
-      if (!afterEnvironment.ok) return afterEnvironment;
       confirmation = provision.value.confirmation;
+      questions = provision.value.questions;
+      selectsEnvironment = provision.value.selectsEnvironment;
+    } else {
+      const environment = validateEnvironmentInput(definition);
+      if (!environment.ok) return environment;
+      if (Object.keys(environment.value.inputs).length > 0) {
+        return failure(
+          "VCB_LIFECYCLE_INPUT_UNKNOWN",
+          "The lifecycle operation contains an unsupported input.",
+        );
+      }
+      selectsEnvironment = environment.value.selectsEnvironment;
     }
+
+    // The toolkit resolves the environment in the middleware that wraps every
+    // lifecycle command, before the command body asks any of its own questions,
+    // so the picker always precedes the operation-owned prompts.
+    if (selectsEnvironment) {
+      const { component, ...environmentValues } = provisionEnvironment;
+      error = append(output, render(state, component, environmentValues));
+      if (error) return error;
+    }
+    const renderedQuestions = renderProvisionQuestions(
+      state,
+      questions,
+      output,
+    );
+    if (!renderedQuestions.ok) return renderedQuestions;
 
     if (confirmation !== undefined) {
       const { component, ...confirmationValues } = confirmation;

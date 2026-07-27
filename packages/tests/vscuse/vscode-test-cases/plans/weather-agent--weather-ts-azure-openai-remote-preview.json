@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 153,
+    "total_steps": 151,
     "name": "weather-ts-azure-openai-remote-preview",
     "description": {
       "owner": "",
@@ -126,16 +126,14 @@
       "step_singleSelect_filter_cb4a8be87_5_5",
       "step_singleSelect_assertOption_cb4a8be87_5_5",
       "step_singleSelect_confirm_cb4a8be87_5_5",
-      "step_clickOption_assertPrompt_cb4a8be87_5_6",
-      "step_clickOption_click_cb4a8be87_5_6",
-      "step_clickPrimaryAction_assertDialog_cb4a8be87_5_7",
-      "step_clickPrimaryAction_click_cb4a8be87_5_7",
-      "step_executeCommand_open_cb4a8be87_5_8",
-      "step_executeCommand_assertPalette_cb4a8be87_5_8",
-      "step_executeCommand_filter_cb4a8be87_5_8",
-      "step_executeCommand_assertCommand_cb4a8be87_5_8",
-      "step_executeCommand_execute_cb4a8be87_5_8",
-      "step_assertNotificationContains_assert_cb4a8be87_5_9",
+      "step_clickPrimaryAction_assertDialog_cb4a8be87_5_6",
+      "step_clickPrimaryAction_click_cb4a8be87_5_6",
+      "step_executeCommand_open_cb4a8be87_5_7",
+      "step_executeCommand_assertPalette_cb4a8be87_5_7",
+      "step_executeCommand_filter_cb4a8be87_5_7",
+      "step_executeCommand_assertCommand_cb4a8be87_5_7",
+      "step_executeCommand_execute_cb4a8be87_5_7",
+      "step_assertNotificationContains_assert_cb4a8be87_5_8",
       "step_executeCommand_open_cb4a8be87_6_1",
       "step_executeCommand_assertPalette_cb4a8be87_6_1",
       "step_executeCommand_filter_cb4a8be87_6_1",
@@ -2673,11 +2671,11 @@
       ]
     },
     {
-      "step_id": "step_clickOption_assertPrompt_cb4a8be87_5_6",
+      "step_id": "step_clickPrimaryAction_assertDialog_cb4a8be87_5_6",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the active prompt titled Select an environment is visible and the option dev is selectable.",
+      "description": "@assertion the dialog Provision is visible with the primary action Provision.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -2688,64 +2686,13 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect",
-        "interaction:click",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_clickOption_click_cb4a8be87_5_6",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 292,
-        "y": 77
-      },
-      "description": "Click the dev option in the active prompt.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_clickOption_assertPrompt_cb4a8be87_5_6"
-      ],
-      "preconditions": [
-        "dhash:292:77:16:5:0000000000000000",
-        "dhash:292:77:96:5:0000c0004020204c",
-        "dhash:292:77:0:10:d088222323232421"
-      ],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect",
-        "interaction:click"
-      ]
-    },
-    {
-      "step_id": "step_clickPrimaryAction_assertDialog_cb4a8be87_5_7",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the dialog Provision is visible with the primary action Provision.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_clickOption_click_cb4a8be87_5_6"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
         "component:dialog",
         "action:click-primary",
         "step_retry_timeout: 30"
       ]
     },
     {
-      "step_id": "step_clickPrimaryAction_click_cb4a8be87_5_7",
+      "step_id": "step_clickPrimaryAction_click_cb4a8be87_5_6",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2757,7 +2704,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_clickPrimaryAction_assertDialog_cb4a8be87_5_7"
+        "step_clickPrimaryAction_assertDialog_cb4a8be87_5_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2767,7 +2714,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_open_cb4a8be87_5_8",
+      "step_id": "step_executeCommand_open_cb4a8be87_5_7",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2779,7 +2726,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_clickPrimaryAction_click_cb4a8be87_5_7"
+        "step_clickPrimaryAction_click_cb4a8be87_5_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2789,7 +2736,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertPalette_cb4a8be87_5_8",
+      "step_id": "step_executeCommand_assertPalette_cb4a8be87_5_7",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2799,7 +2746,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_open_cb4a8be87_5_8"
+        "step_executeCommand_open_cb4a8be87_5_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2810,7 +2757,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_filter_cb4a8be87_5_8",
+      "step_id": "step_executeCommand_filter_cb4a8be87_5_7",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -2822,7 +2769,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertPalette_cb4a8be87_5_8"
+        "step_executeCommand_assertPalette_cb4a8be87_5_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2832,7 +2779,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertCommand_cb4a8be87_5_8",
+      "step_id": "step_executeCommand_assertCommand_cb4a8be87_5_7",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2842,7 +2789,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_filter_cb4a8be87_5_8"
+        "step_executeCommand_filter_cb4a8be87_5_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2853,7 +2800,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_execute_cb4a8be87_5_8",
+      "step_id": "step_executeCommand_execute_cb4a8be87_5_7",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2865,7 +2812,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertCommand_cb4a8be87_5_8"
+        "step_executeCommand_assertCommand_cb4a8be87_5_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2875,7 +2822,7 @@
       ]
     },
     {
-      "step_id": "step_assertNotificationContains_assert_cb4a8be87_5_9",
+      "step_id": "step_assertNotificationContains_assert_cb4a8be87_5_8",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2885,7 +2832,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_cb4a8be87_5_8"
+        "step_executeCommand_execute_cb4a8be87_5_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2908,7 +2855,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertNotificationContains_assert_cb4a8be87_5_9"
+        "step_assertNotificationContains_assert_cb4a8be87_5_8"
       ],
       "preconditions": [],
       "postconditions": [],

@@ -816,7 +816,107 @@ test("semantic adapter rejects an unsupported provision environment input", asyn
   );
 
   assert.equal(result.ok, false);
-  assert.equal(result.diagnostics[0].code, "VCB_PROVISION_INPUT_UNKNOWN");
+  assert.equal(result.diagnostics[0].code, "VCB_LIFECYCLE_INPUT_UNKNOWN");
+});
+
+test("VCB-39: deploy selects the environment under the provision contract", async () => {
+  const emitted = await compileFixture(
+    "da-api-plugin-from-scratch.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(emitted.ok, true);
+  const descriptions = emitted.value[0].plan.steps.map(
+    (step) => step.description,
+  );
+  const deployCommandIndex = descriptions.indexOf(
+    "@assertion exactly one command titled Microsoft 365 Agents: Deploy is visible and selectable in the active Command Palette.",
+  );
+  const deployEnvironmentIndex = descriptions.findIndex(
+    (description, index) =>
+      index > deployCommandIndex &&
+      description === "Click the dev option in the active prompt.",
+  );
+  const deployConfirmationIndex = descriptions.findIndex(
+    (description, index) =>
+      index > deployCommandIndex &&
+      description.includes("the confirmation question Deploy is visible"),
+  );
+
+  assert.equal(deployCommandIndex >= 0, true);
+  assert.equal(deployCommandIndex < deployEnvironmentIndex, true);
+  assert.equal(deployEnvironmentIndex < deployConfirmationIndex, true);
+
+  const skipped = await compileFixture(
+    "da-api-plugin-from-scratch.yml",
+    (sourceText) =>
+      sourceText.replace(
+        "  deploy:\n    type: deploy\n",
+        "  deploy:\n    type: deploy\n    with:\n      environment: none\n",
+      ),
+  );
+  assert.equal(skipped.ok, true);
+  assert.equal(
+    skipped.value[0].plan.steps.filter(
+      (step) =>
+        step.description === "Click the dev option in the active prompt.",
+    ).length,
+    1,
+  );
+});
+
+test("VCB-39: an unsupported deploy input fails before plan output", async () => {
+  const unsupportedEnvironment = await compileFixture(
+    "da-api-plugin-from-scratch.yml",
+    (sourceText) =>
+      sourceText.replace(
+        "  deploy:\n    type: deploy\n",
+        "  deploy:\n    type: deploy\n    with:\n      environment: dev\n",
+      ),
+  );
+  assert.equal(unsupportedEnvironment.ok, false);
+  assert.equal(
+    unsupportedEnvironment.diagnostics[0].code,
+    "VCB_LIFECYCLE_INPUT_UNKNOWN",
+  );
+
+  const unsupportedInput = await compileFixture(
+    "da-api-plugin-from-scratch.yml",
+    (sourceText) =>
+      sourceText.replace(
+        "  deploy:\n    type: deploy\n",
+        "  deploy:\n    type: deploy\n    with:\n      arm: {}\n",
+      ),
+  );
+  assert.equal(unsupportedInput.ok, false);
+  assert.equal(
+    unsupportedInput.diagnostics[0].code,
+    "VCB_LIFECYCLE_INPUT_UNKNOWN",
+  );
+});
+
+test("VCB-40: environment selection precedes the operation-owned prompts", async () => {
+  const result = await compileFixture(
+    "da-api-plugin-from-scratch.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(result.ok, true);
+  const descriptions = result.value[0].plan.steps.map(
+    (step) => step.description,
+  );
+  const environmentIndex = descriptions.indexOf(
+    "Click the dev option in the active prompt.",
+  );
+  const subscriptionIndex = descriptions.indexOf(
+    "@assertion the active prompt titled Select Subscription for Current Tenant ID is visible.",
+  );
+  const resourceGroupIndex = descriptions.indexOf(
+    "@assertion the active prompt titled Select a resource group is visible.",
+  );
+
+  assert.equal(environmentIndex >= 0, true);
+  assert.equal(subscriptionIndex >= 0, true);
+  assert.equal(environmentIndex < subscriptionIndex, true);
+  assert.equal(subscriptionIndex < resourceGroupIndex, true);
 });
 
 test("semantic adapter rejects a target with missing prerequisites", async () => {
