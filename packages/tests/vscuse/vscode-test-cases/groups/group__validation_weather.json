@@ -37,7 +37,7 @@
         "x": 668,
         "y": 530
       },
-      "description": "Click the prompt card labeled \"Can you forecast the tomorrow weather in San Francisco for me?\" in the ${{var:app_name}}dev chatbot interface within Microsoft Teams (web version). The click is precisely targeted at the prompt card's text.",
+      "description": "Click the prompt card labeled \"Can you forecast the tomorrow weather in San Francisco for me?\" in the ${{var:app_name}}dev or ${{var:app_name}}local chatbot interface within Microsoft Teams (web version). The click is precisely targeted at the prompt card's text.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
