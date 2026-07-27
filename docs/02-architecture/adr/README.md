@@ -38,12 +38,14 @@ decision. The format for a new ADR is defined inline below under
 | ADR-0017 | [Named pipeline + step / actionTemplate whitelist](ADR-0017-named-pipeline-step-whitelist.md) | Accepted | [`scaffolding.create.proposal.md` §14](../scaffolding.create.proposal.md#14-adrs-this-proposal-will-be-decomposed-into) |
 | ADR-0018 | [`ScaffoldRuntime` + T1/T2/T3 test pyramid + design-first `descriptor.spec` gate (application of ADR-0013, not a competing tiering)](ADR-0018-scaffold-runtime-test-pyramid.md) | Accepted | [`scaffolding.create.proposal.md` §14](../scaffolding.create.proposal.md#14-adrs-this-proposal-will-be-decomposed-into) |
 | ADR-0019 | [Dual-stream scaffold telemetry (v3 verbatim + parallel `scaffold-v4-*` family)](ADR-0019-dual-stream-scaffold-telemetry.md) | Accepted | [`scaffolding.create.proposal.md` §14](../scaffolding.create.proposal.md#14-adrs-this-proposal-will-be-decomposed-into) |
+| ADR-0020 | [MCP server URL validity: when to check, and whether to block](ADR-0020-mcp-server-url-validity.md) | Proposed | [`mcp-remote-servers.md` §3](../external-dependencies/mcp-remote-servers.md#3-open-questions) |
 
 > **Reading order vs. numeric order.** The Index is in **numeric order** —
 > the immutable, reservation-ordered ADR id is the anchor for every forward
 > reference, so rows are never re-sorted by topic or activity. Use the two
 > notes below to read it by *activity* instead: ADR-0014 – ADR-0019 are the
-> **active decision set**; ADR-0007 – ADR-0012 are **passive backlog**.
+> **active decision set**; ADR-0007 – ADR-0012 and ADR-0020 are **passive
+> backlog**.
 
 > **Active decision set (ADR-0014 – ADR-0019).** These six are the v4
 > create-flow *shape*, decomposed from
@@ -65,9 +67,10 @@ decision. The format for a new ADR is defined inline below under
 > [`scaffolding.create.proposal.md`](../scaffolding.create.proposal.md) into a
 > short pointer (the owner's call).
 
-> **External-dependency backlog (ADR-0007 – ADR-0012).** These six record
-> decisions forced by external tools (DriveItem resolution, OpenAPI ingestion,
-> SPFx, TypeSpec, Kiota, Office Add-in import). They are **decoupled from the v4
+> **External-dependency backlog (ADR-0007 – ADR-0012, ADR-0020).** These seven
+> record decisions forced by external tools (DriveItem resolution, OpenAPI
+> ingestion, SPFx, TypeSpec, Kiota, Office Add-in import, remote MCP servers).
+> They are **decoupled from the v4
 > scaffolding selector / routing *shape*** — the in-progress
 > [`scaffolding.create.proposal.md`](../scaffolding.create.proposal.md) does not
 > depend on any of them, treating each as an opaque named pipeline. They bind

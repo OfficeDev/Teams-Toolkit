@@ -139,7 +139,8 @@ with `GET` and with the final path segment removed.
   validation on the MCP server URL question, and should it block or only
   hint? Precision was 100% across eight valid endpoints, but the sample is
   small and a gateway mid-deploy can legitimately `404`. Recall was 6/9, so it
-  cannot be the only gate. Needs an ADR.
+  cannot be the only gate. Tracked as
+  [ADR-0020](../adr/ADR-0020-mcp-server-url-validity.md).
 - The dynamic-tool-discovery scaffold path performs no tool fetch by design,
   so it has no independent check that the URL serves tools. The `404` warning
   covers part of this; the §1.4 Moody's case remains uncovered.
