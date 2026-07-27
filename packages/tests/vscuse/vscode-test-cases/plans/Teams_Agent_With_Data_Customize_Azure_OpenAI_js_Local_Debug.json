@@ -49,7 +49,7 @@
         "x": 362,
         "y": 127
       },
-      "description": "Click on the \"Teams Agent with D...\" option in the dropdown menu under \"Teams Agent or App Using Teams AI Library\" to select it.",
+      "description": "Click on the \"Teams Agent with Data\" option in the dropdown menu under \"Teams Agent or App Using Microsoft Teams SDK\" to select it.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

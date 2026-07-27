@@ -208,7 +208,7 @@
         "x": 795,
         "y": 46
       },
-      "description": "Click the \"Close\" button (red 'x') in the dropdown list titled \"Select Operation(s) Teams Can Interact with\" at position (795, 46).",
+      "description": "Click the \"OK\" button in the dropdown list titled \"Select Operation(s) Teams Can Interact with\" at position (795, 46).",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

@@ -71,7 +71,7 @@
         "x": 288,
         "y": 87
       },
-      "description": "Click the \"Custom\" option within the \"Select an option to load your data\" dropdown menu in the Teams Agent with Data extension in Visual Studio Code.",
+      "description": "Click the \"Customize\" option within the \"Select an option to load your data\" dropdown menu in the Teams Agent with Data extension in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

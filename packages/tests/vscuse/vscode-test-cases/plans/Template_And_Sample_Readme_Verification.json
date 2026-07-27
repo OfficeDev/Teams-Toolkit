@@ -7,7 +7,7 @@
       "stop_on_error": true,
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2,
-      "step_retry_timeout": 0.0
+      "step_retry_timeout": 0
     },
     "total_steps": 81,
     "created_at": "2026-06-25T07:16:12.876811",
@@ -270,7 +270,7 @@
         "x": 1011,
         "y": 22
       },
-      "description": "Click the close (\u201cX\u201d) button at the top-right corner of the \u201cPreview README.md\u201d tab in Visual Studio Code, closing the preview of the README file.",
+      "description": "Click the close (“X”) button at the top-right corner of the “Preview README.md” tab in Visual Studio Code, closing the preview of the README file.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -821,7 +821,7 @@
         "x": 1009,
         "y": 21
       },
-      "description": "Click the close (\u00d7) button on the \"Preview README.md\" tab in the Visual Studio Code interface to close the Markdown preview.",
+      "description": "Click the \"Close\" (X) window control button at the top-right corner of the Visual Studio Code window to exit the application.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1364,7 +1364,7 @@
       "parameters": {
         "keys": "ctrl+-"
       },
-      "description": "Reduce the zoom level of the Visual Studio Code workspace interface by pressing Ctrl and minus (\u201cCtrl+-\u201d), decreasing text and UI element size across the Microsoft 365 Agents Toolkit \"Samples\" gallery screen.",
+      "description": "Reduce the zoom level of the Visual Studio Code workspace interface by pressing Ctrl and minus (“Ctrl+-”), decreasing text and UI element size across the Microsoft 365 Agents Toolkit \"Samples\" gallery screen.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1415,7 +1415,7 @@
         "x": 918,
         "y": 161
       },
-      "description": "Click the \"Theme\" switcher button (depicted by a palette or color icon) in the top-right corner of the Microsoft 365 Agents Toolkit samples page within Visual Studio Code, to change the interface theme.",
+      "description": "Click the \"List view\" toggle button (depicted by a list icon) next to the grid view icon in the top-right corner of the toolbar on the Samples page in the Microsoft 365 Agents Toolkit within Visual Studio Code, to switch the samples display to list view.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1656,7 +1656,7 @@
         "x": 1013,
         "y": 17
       },
-      "description": "Click the \"Close\" (X) button in the top-right corner of the notification panel within Visual Studio Code to dismiss the \"[CoffeeAgent] successfully created\" message.",
+      "description": "Click the \"Close\" (X) button in the top-right corner of the Visual Studio Code window to close the newly opened CoffeeAgent project window.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1761,7 +1761,7 @@
         "x": 1015,
         "y": 18
       },
-      "description": "Click the \"Close\" (\u00d7) button in the top-right corner of the 'Preview README.md' tab within Visual Studio Code.",
+      "description": "Click the \"Close\" (×) button in the top-right corner of the Visual Studio Code window to close the newly opened Microsoft Foundry Agent (ProxyAgent-NodeJS) project window.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1789,7 +1789,7 @@
         "x": 806,
         "y": 497
       },
-      "description": "Click the \"Create\" button for the \"Tab App with Azure Backend\" sample in the Microsoft 365 Agents Toolkit extension in Visual Studio Code.",
+      "description": "Click the \"Create\" button for the \"Claude Agent with Agent365 SDK in NodeJS\" sample in the Microsoft 365 Agents Toolkit extension in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1866,7 +1866,7 @@
         "x": 1001,
         "y": 22
       },
-      "description": "Click the \"Debug\" button in the Microsoft 365 Agents Toolkit notification at the bottom right of the Visual Studio Code window, within the context of a Hello World Tab with Backend sample project.",
+      "description": "Click the \"Close\" (X) button in the top-right corner of the Visual Studio Code window to close the newly opened Claude Agent (Node.js) project window.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1894,7 +1894,7 @@
         "x": 819,
         "y": 531
       },
-      "description": "Click the \"Create\" button for the \"Contact Exporter using Graph Toolkit\" sample in the Microsoft 365 Agents Toolkit interface within Visual Studio Code.",
+      "description": "Click the \"Create\" button for the \"Tab App with Azure Backend\" sample in the Microsoft 365 Agents Toolkit interface within Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1999,7 +1999,7 @@
         "x": 795,
         "y": 564
       },
-      "description": "Click the \"Create\" button for the \"Bot App with SSO Enabled\" sample in the Microsoft 365 Agents Toolkit extension panel within Visual Studio Code.",
+      "description": "Click the \"Create\" button for the \"Contact Exporter using Graph Toolkit\" sample in the Microsoft 365 Agents Toolkit extension panel within Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -2104,7 +2104,7 @@
         "x": 810,
         "y": 623
       },
-      "description": "Click the \"Create\" button for the \"My First Meeting App\" sample in the Microsoft 365 Agents Toolkit interface within Visual Studio Code, as highlighted by the red crosshair.",
+      "description": "Click the \"Create\" button for the \"Todo List with SPFx\" sample in the Microsoft 365 Agents Toolkit interface within Visual Studio Code, as highlighted by the red crosshair.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -2181,7 +2181,7 @@
         "x": 1009,
         "y": 15
       },
-      "description": "Click the \"Close\" (\u00d7) button at the top right corner of the \"My Tab\" panel within the Teams meeting preview in Visual Studio Code, to dismiss the panel.",
+      "description": "Click the \"Close\" (X) button in the top-right corner of the Visual Studio Code window to close VS Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

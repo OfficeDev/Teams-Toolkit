@@ -105,7 +105,7 @@
         "x": 415,
         "y": 79
       },
-      "description": "Click the text input field labeled \"Enter OpenAPI Description or Document Location\" in the top bar of the Visual Studio Code interface.",
+      "description": "Click the \"Enter OpenAPI Document URL\" option in the \"OpenAPI Document\" dropdown menu in the Visual Studio Code interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -131,7 +131,7 @@
         "x": 326,
         "y": 50
       },
-      "description": "Click inside the input field labeled \"Enter OpenAPI Description Document URL\" in the VS Code extension interface header to initiate document entry.",
+      "description": "Click inside the input field labeled \"Enter OpenAPI Document URL\" in the VS Code extension interface header to initiate document entry.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -227,7 +227,7 @@
         "x": 792,
         "y": 52
       },
-      "description": "Click the dropdown arrow in the \"Select Operation(s) Teams Can Interact with\" menu to expand selection options.",
+      "description": "Click the \"OK\" button to confirm the selected operation(s) in the \"Select Operation(s) Teams Can Interact with\" dialog.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

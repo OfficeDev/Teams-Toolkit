@@ -186,7 +186,7 @@
         "x": 719,
         "y": 80
       },
-      "description": "Click the \"src/requirements.txt\" item in the dependency selection dialog to select it for installation.",
+      "description": "Click the \"requirements.txt\" item in the dependency selection dialog to select it for installation.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -230,7 +230,7 @@
         "x": 794,
         "y": 58
       },
-      "description": "Click the \"OK\" button in the dropdown menu confirming the selection of 'src/requirements.txt' in Visual Studio Code.",
+      "description": "Click the \"OK\" button in the dropdown menu confirming the selection of 'requirements.txt' in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

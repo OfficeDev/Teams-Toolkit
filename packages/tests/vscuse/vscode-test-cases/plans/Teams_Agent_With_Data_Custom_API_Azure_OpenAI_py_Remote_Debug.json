@@ -228,7 +228,7 @@
         "x": 792,
         "y": 52
       },
-      "description": "Click the dropdown arrow in the \"Select Operation(s) Teams Can Interact with\" menu to expand selection options.",
+      "description": "Click the \"OK\" button in the \"Select Operation(s) Teams Can Interact with\" menu to confirm the selected operation.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
