@@ -238,7 +238,7 @@
         "x": 232,
         "y": 80
       },
-      "description": "Click the search/filter input box in the \"Select Operation(s) Copilot Can Interact with\" modal at the top of the Microsoft Visual Studio Code interface, to activate text entry for filtering available API operations.",
+      "description": "Click the checkbox next to the \"GET /repairs\" operation in the \"Select Operation(s) Copilot Can Interact with\" modal to select it.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -266,7 +266,7 @@
         "x": 790,
         "y": 49
       },
-      "description": "Click the language selector button (flag icon) in the API operations dropdown within the Visual Studio Code Microsoft 365 Agents Toolkit extension interface.",
+      "description": "Click the OK button in the \"Select Operation(s) Copilot Can Interact with\" modal to confirm the selected operation.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

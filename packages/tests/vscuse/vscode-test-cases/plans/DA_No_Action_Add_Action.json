@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 27,
+    "total_steps": 28,
     "created_at": "2026-04-13T01:30:49.279012",
     "name": "DA No Action Add Action",
     "description": {
@@ -28,6 +28,7 @@
       "step_4693a755",
       "step_5295c7fb",
       "step_fb570157",
+      "step_2e298c1d",
       "step_6577ef62",
       "step_fb5ad1b4",
       "step_758d3d5a",
@@ -116,7 +117,7 @@
         "x": 352,
         "y": 74
       },
-      "description": "Click the \"Default folder\" dropdown in the \"Workspace Folder\" dialog to set the project root folder path (`/home/.vscode/AgentsToolkitProjects`).",
+      "description": "Click the \"Default folder\" dropdown in the \"Workspace Folder\" dialog to set the project root folder path (`/home/vscode/AgentsToolkitProjects`).",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -230,6 +231,32 @@
       "plan_id": "plan_54a305c1"
     },
     {
+      "step_id": "step_2e298c1d",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 368,
+        "y": 73
+      },
+      "description": "Click the \"Enter OpenAPI Document URL\" option in the \"OpenAPI Spec Document\" dropdown within Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:368:73:16:5:31aeb63394b5b5b5",
+        "dhash:368:73:96:5:00004299994c48b1",
+        "dhash:368:73:0:10:60202a63666c6c2d"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_2e298c1d",
+      "created_at": "2026-04-13T01:30:49.301300",
+      "plan_id": "plan_54a305c1"
+    },
+    {
       "step_id": "step_6577ef62",
       "agent": "interaction",
       "tool": "type_text",
@@ -282,7 +309,7 @@
         "x": 229,
         "y": 53
       },
-      "description": "Click the blue \"OK\" button in the \"Select Operation(s) Copilot Can Interact with\" dialog to confirm the selected operations in Visual Studio Code.",
+      "description": "Click the select-all checkbox at the top of the \"Select Operation(s) Copilot Can Interact with\" dialog to check all listed operations in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -360,7 +387,7 @@
         "x": 481,
         "y": 112
       },
-      "description": "Click the \"Proceed\" button in the Microsoft 365 Agents Toolkit confirmation dialog within Visual Studio Code.",
+      "description": "Click the \"Add\" button in the Microsoft 365 Agents Toolkit confirmation dialog within Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

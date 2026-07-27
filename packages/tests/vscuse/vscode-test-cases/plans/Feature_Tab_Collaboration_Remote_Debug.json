@@ -89,7 +89,7 @@
         "x": 584,
         "y": 217
       },
-      "description": "Click on the \"General Teams Agent\" option in the dropdown menu within the \"Teams Agent or App Using Teams AI Library\" selection list.",
+      "description": "Click on the \"Other Teams Capabilities\" option in the dropdown menu within the \"Teams Agent or App Using Microsoft Teams SDK\" selection list.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -233,7 +233,7 @@
         "x": 298,
         "y": 103
       },
-      "description": "Click the \"Agent Microsoft 365 Agent\" option in the app selection dropdown within the Microsoft 365 Agents Toolkit interface in Visual Studio Code. The red crosshair marks the exact interaction point, ensuring the \"Agent\" app option is selected for managing collaborators.",
+      "description": "Click the \"app\" checkbox option (\"Your app\") in the app selection popup within the Microsoft 365 Agents Toolkit interface in Visual Studio Code, to select the app for managing collaborators.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -259,7 +259,7 @@
         "x": 793,
         "y": 53
       },
-      "description": "Click the “Manage collaborators” blue button (with user icon) in the app selection popup of the Microsoft 365 Agents Toolkit extension in Visual Studio Code.",
+      "description": "Click the \"OK\" button to confirm the selected app in the app selection popup of the Microsoft 365 Agents Toolkit extension in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -471,7 +471,7 @@
         "x": 310,
         "y": 132
       },
-      "description": "Click the \"Add App Owners\" option in the \"Manage who can make changes to your app\" dropdown within the Microsoft 365 Agents extension panel in Visual Studio Code.",
+      "description": "Click the \"List App Owners\" option in the \"Manage who can make changes to your app\" dropdown within the Microsoft 365 Agents extension panel in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -497,7 +497,7 @@
         "x": 298,
         "y": 100
       },
-      "description": "Click the \"app YHP\" option in the selection dropdown within the \"Select the app for which you want to manage collaborators\" dialog in Visual Studio Code, under the Microsoft 365 Agents extension panel.",
+      "description": "Click the \"app\" option (\"Your app\") in the selection dropdown within the \"Select the app for which you want to manage collaborators\" dialog in Visual Studio Code, under the Microsoft 365 Agents extension panel.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

@@ -270,7 +270,7 @@
         "x": 415,
         "y": 266
       },
-      "description": "Click the file icon next to \"provision\" in the \"m365agents.yml\" file within Visual Studio Code's editor, highlighting the start of the \"provision\" section.",
+      "description": "Click the \"Provision\" CodeLens run link above the \"provision:\" section in the \"m365agents.yml\" file within Visual Studio Code's editor to start the provision stage.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

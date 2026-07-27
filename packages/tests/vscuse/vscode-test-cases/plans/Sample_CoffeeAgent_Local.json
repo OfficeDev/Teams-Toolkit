@@ -5,9 +5,9 @@
     "execution_context": {
       "delay_between_steps": 0.5,
       "stop_on_error": true,
-      "precondition_wait_timeout": 60.0,
-      "precondition_retry_interval": 2.0,
-      "step_retry_timeout": 0.0
+      "precondition_wait_timeout": 60,
+      "precondition_retry_interval": 2,
+      "step_retry_timeout": 0
     },
     "total_steps": 9,
     "created_at": "2026-05-12T05:40:13.789697",
@@ -70,7 +70,7 @@
         "x": 766,
         "y": 293
       },
-      "description": "Click the \"Create\" button for the \"Coffee Engine Agent\" sample in the \"Featured samples\" section within the Microsoft 365 Agents Toolkit extension pane in Visual Studio Code.And input ${{var:app_name:coffee-agent}} into the run time variable.",
+      "description": "Click the \"Create\" button for the \"Coffee Agent\" sample in the \"Featured samples\" section within the Microsoft 365 Agents Toolkit extension pane in Visual Studio Code.And input ${{var:app_name:coffee-agent}} into the run time variable.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

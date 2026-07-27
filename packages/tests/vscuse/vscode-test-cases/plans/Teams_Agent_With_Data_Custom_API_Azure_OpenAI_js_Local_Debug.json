@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 8,
+    "total_steps": 9,
     "created_at": "2025-11-26T14:28:28.988711",
     "name": "Teams Agent With Data Custom API Azure OpenAI js Local Debug",
     "description": {
@@ -23,6 +23,7 @@
       "plan_r_0624_024810",
       "step_86dba6ed",
       "step_04ee3a97",
+      "step_38acf8e7",
       "step_df2c661b",
       "step_4c05eaca",
       "step_696bc77e",
@@ -48,7 +49,7 @@
         "x": 410,
         "y": 127
       },
-      "description": "Click the \"Teams Agent with Data\" dropdown option (the 2nd item, described as \"Agent that uses your content and knowledge to accurately answer domain-specific questions\") in the \"Teams Agent or App Using Teams AI Library\" menu.",
+      "description": "Click the \"Teams Agent with Data\" dropdown option in the \"Teams Agent or App Using Microsoft Teams SDK\" menu.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -76,7 +77,7 @@
         "x": 405,
         "y": 170
       },
-      "description": "Click on the \"Customize\" option in the dropdown menu under \"Select an option to load your data\" in the \"Teams Agent with Data\" interface.",
+      "description": "Click on the \"Custom API\" option in the dropdown menu under \"Select an option to load your data\" in the \"Teams Agent with Data\" interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -93,6 +94,34 @@
       ],
       "screenshot": "step_04ee3a97",
       "created_at": "2025-11-26T14:28:29.035087",
+      "plan_id": "plan_b8dd182a"
+    },
+    {
+      "step_id": "step_38acf8e7",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 457,
+        "y": 73
+      },
+      "description": "Click on the \"Enter OpenAPI Document URL\" option in the \"OpenAPI Document\" pop-up window at the top of the Microsoft Visual Studio Code interface.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:457:73:16:5:00085aa55b5ada72",
+        "dhash:457:73:96:5:200021ca4ca16890",
+        "dhash:457:73:0:10:f0b09494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_38acf8e7",
+      "created_at": "2025-11-26T14:28:29.049989",
       "plan_id": "plan_b8dd182a"
     },
     {
@@ -180,7 +209,7 @@
         "x": 795,
         "y": 46
       },
-      "description": "Click the \"Close\" button (red 'x') in the dropdown list titled \"Select Operation(s) Teams Can Interact with\" at position (795, 46).",
+      "description": "Click the \"OK\" button in the dropdown list titled \"Select Operation(s) Teams Can Interact with\" at position (795, 46).",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

@@ -5,9 +5,9 @@
     "execution_context": {
       "delay_between_steps": 0.5,
       "stop_on_error": true,
-      "precondition_wait_timeout": 60.0,
-      "precondition_retry_interval": 2.0,
-      "step_retry_timeout": 0.0
+      "precondition_wait_timeout": 60,
+      "precondition_retry_interval": 2,
+      "step_retry_timeout": 0
     },
     "total_steps": 14,
     "created_at": "2026-05-09T09:04:57.802966",
@@ -99,7 +99,7 @@
         "x": 299,
         "y": 20
       },
-      "description": "Click the \"Turn on\" button in the notification bar at the top of the Microsoft Teams web app to enable desktop notifications.",
+      "description": "Click the \"New tab\" (+) button in the Chrome browser tab bar to open a new tab.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -259,7 +259,7 @@
         "x": 994,
         "y": 202
       },
-      "description": "Click the red plus (+) button in the upper-right corner of the \"tab-with-backendlocal\" tab within the Microsoft Teams web interface in Google Chrome.",
+      "description": "Click the \"...\" (more options) button in the upper-right corner of the \"${{var:app_name}}local\" app panel within the Microsoft Teams web interface to open its menu.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -315,7 +315,7 @@
         "x": 388,
         "y": 246
       },
-      "description": "Click the \"Allow\" button on the teams.microsoft.com permission popup in the Microsoft Teams web application to grant access for connecting to devices on your local network.",
+      "description": "Click the \"Allow\" button on the teams.cloud.microsoft permission popup in the Microsoft Teams web application to grant access to other apps and services on this device.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

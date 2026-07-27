@@ -49,7 +49,7 @@
         "x": 410,
         "y": 127
       },
-      "description": "Click the \"Teams Agent with Data\" dropdown option (the 2nd item, described as \"Agent that uses your content and knowledge to accurately answer domain-specific questions\") in the \"Teams Agent or App Using Teams AI Library\" menu.",
+      "description": "Click the \"Teams Agent with Data\" dropdown option in the \"Teams Agent or App Using Microsoft Teams SDK\" menu.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

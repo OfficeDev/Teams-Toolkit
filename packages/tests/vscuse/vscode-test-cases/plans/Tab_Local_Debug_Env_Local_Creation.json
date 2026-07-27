@@ -48,7 +48,7 @@
         "x": 474,
         "y": 210
       },
-      "description": "Click the \"Other Teams Capabilities\" option (the 4th/bottom item, described as \"App that uses tab, bot and message extension\") within the dropdown menu titled \"Teams Agent or App Using Microsoft Teams SDK\" at coordinates (474, 210). This advances the wizard to the Tab/Bot/Message-Extension capability picker needed for a Tab app.",
+      "description": "Click on the \"Other Teams Capabilities\" option within the dropdown menu titled \"Teams Agent or App Using Microsoft Teams SDK\" at coordinates (474, 210).",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

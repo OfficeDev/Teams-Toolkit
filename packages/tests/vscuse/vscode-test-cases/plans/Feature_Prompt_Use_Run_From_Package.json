@@ -56,7 +56,7 @@
         "x": 584,
         "y": 217
       },
-      "description": "Click on the \"General Teams Agent\" option in the dropdown menu within the \"Teams Agent or App Using Teams AI Library\" selection list.",
+      "description": "Click on the \"Other Teams Capabilities\" option in the dropdown menu within the \"Teams Agent or App Using Microsoft Teams SDK\" selection list.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -290,7 +290,7 @@
         "x": 533,
         "y": 511
       },
-      "description": "Click the search field labeled \"Find\" in the OUTPUT panel at the bottom of the Visual Studio Code window to activate text search within the Microsoft 365 Agents Toolkit output.",
+      "description": "Click the \"Filter\" field in the OUTPUT panel at the bottom of the Visual Studio Code window to activate text filtering within the Microsoft 365 Agents Toolkit output.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

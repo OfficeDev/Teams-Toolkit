@@ -65,7 +65,7 @@
         "x": 298,
         "y": 25
       },
-      "description": "Click the search input field in the VS Code command palette at the top center of the interface to activate command selection.",
+      "description": "Click the Command Palette input field in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

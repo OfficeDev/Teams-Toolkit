@@ -202,7 +202,7 @@
         "x": 349,
         "y": 79
       },
-      "description": "Click the \"Sign in to Azure\" dropdown option in the Visual Studio Code command palette to initiate Microsoft 365 authentication.",
+      "description": "Click the \"Sign in to Azure\" dropdown option in the Visual Studio Code command palette to initiate Azure authentication.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -254,7 +254,7 @@
         "x": 457,
         "y": 96
       },
-      "description": "Click the \"Allow\" button in the Microsoft 365 sign-in prompt to authorize the extension \"Microsoft 365 Agents Toolkit\" within Visual Studio Code.",
+      "description": "Click the \"Allow\" button in the Azure sign-in prompt to authorize the extension \"Microsoft 365 Agents Toolkit\" within Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -457,7 +457,7 @@
         "x": 322,
         "y": 100
       },
-      "description": "Click the \"Sign in to Microsoft 365\" link in the ACCOUNTS section of the Microsoft 365 Agents Toolkit panel within Visual Studio Code.",
+      "description": "Click the right empty location of \"Sign in to Microsoft 365\" item in the ACCOUNTS section of the Microsoft 365 Agents Toolkit sidebar in Visual Studio Code to open the account sign-in dropdown.(Previously for clicking the \"Sign in to Microsoft 365\" button.)",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

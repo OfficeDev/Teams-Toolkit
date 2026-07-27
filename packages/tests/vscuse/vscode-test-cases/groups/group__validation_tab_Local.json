@@ -166,7 +166,7 @@
         "x": 175,
         "y": 19
       },
-      "description": "Click the browser tab labeled \"(2) vscuse_app...\" at the top left of the Google Chrome window to switch focus from the \"Home\" tab.",
+      "description": "Click the browser tab labeled \"vscuse_app...\" (with unread notification badge) at the top left of the Google Chrome window to switch focus from the \"Home\" tab.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -218,7 +218,7 @@
         "x": 933,
         "y": 231
       },
-      "description": "Click the \"Reload app\" option in the dropdown menu of the vscuse_app_RDJh3local tab within Microsoft Teams Web, indicated by the circular arrow icon.",
+      "description": "Click the \"Reload app\" option in the dropdown menu of the ${{var:app_name}}local tab within Microsoft Teams Web, indicated by the circular arrow icon.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -244,7 +244,7 @@
         "x": 399,
         "y": 235
       },
-      "description": "Click the \"Allow\" button on the teams.microsoft.com permission popup in the Chrome browser to grant network access.",
+      "description": "Click the \"Allow\" button on the teams.cloud.microsoft permission popup in the Chrome browser to grant network access.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

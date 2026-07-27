@@ -7,7 +7,7 @@
       "stop_on_error": true,
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2,
-      "step_retry_timeout": 0.0
+      "step_retry_timeout": 0
     },
     "total_steps": 7,
     "created_at": "2026-05-18T03:02:55.645029",
@@ -42,7 +42,7 @@
         "x": 948,
         "y": 129
       },
-      "description": "Click the language selector button (flag icon) in the top-right corner of the VS Code welcome screen to change the interface language.",
+      "description": "Click the close ('X') button in the top-right corner of the \"Welcome to VS Code\" sign-in dialog to dismiss it.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -68,7 +68,7 @@
         "x": 25,
         "y": 299
       },
-      "description": "Click the \"Microsoft 365 Agents Toolkit\" item in the EXPLORER panel of Visual Studio Code to select or open the toolkit folder.",
+      "description": "Click the \"Microsoft 365 Agents Toolkit\" icon in the Activity Bar of Visual Studio Code to open the extension panel.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -94,7 +94,7 @@
         "x": 410,
         "y": 52
       },
-      "description": "Click the \"Welcome\" tab in the workspace area of Visual Studio Code, indicated by the red crosshair at the top center of the editor interface.",
+      "description": "Click the close ('X') button on the \"Welcome\" tab in the workspace area of Visual Studio Code to close it.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -171,7 +171,7 @@
         "x": 901,
         "y": 193
       },
-      "description": "Click the grid view icon in the \"Samples\" section of the Microsoft 365 Agents Toolkit extension in Visual Studio Code to change the sample display layout.",
+      "description": "Click the list view icon in the \"Samples\" section of the Microsoft 365 Agents Toolkit extension in Visual Studio Code to change the sample display layout.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
