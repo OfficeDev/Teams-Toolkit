@@ -1,9 +1,10 @@
-import { ok, TeamsAppManifest } from "@microsoft/teamsfx-api";
+import { ok, TeamsAppManifest, Warning } from "@microsoft/teamsfx-api";
 import * as globalState from "@microsoft/teamsfx-core";
 import {
   featureFlagManager,
   FeatureFlags,
   manifestUtils,
+  pathUtils,
   pluginManifestUtils,
 } from "@microsoft/teamsfx-core";
 import * as apiSpec from "@microsoft/teamsfx-core/build/component/generator/openApiSpec/helper";
@@ -18,6 +19,7 @@ import { ExtTelemetry } from "../../src/telemetry/extTelemetry";
 import * as appDefinitionUtils from "../../src/utils/appDefinitionUtils";
 import {
   showLocalDebugMessage,
+  showMCPAuthPlaceholderNotification,
   ShowScaffoldingWarningSummary,
 } from "../../src/utils/autoOpenHelper";
 import { mockValue } from "../mocks/vitestMockUtils";
@@ -613,5 +615,72 @@ describe("autoOpenHelper", () => {
     vi.spyOn(ExtTelemetry, "sendTelemetryEvent").mockResolvedValue();
     // Call the function
     await ShowScaffoldingWarningSummary(workspacePath, "");
+  });
+
+  describe("showMCPAuthPlaceholderNotification", () => {
+    const placeholderWarning: Warning = {
+      type: "mcpAuthOAuthUrlPlaceholder",
+      content: "fill in the oauth urls",
+    };
+
+    it("stays silent for advisory MCP warnings", () => {
+      const warning = vi.spyOn(vscode.window, "showWarningMessage");
+
+      showMCPAuthPlaceholderNotification("/path/to/workspace", [
+        { type: "mcpNoToolsFetched", content: "no tools" },
+      ]);
+
+      assert.equal(warning.mock.calls.length, 0);
+    });
+
+    it("opens the yml file when the developer picks the first action", async () => {
+      vi.spyOn(ExtTelemetry, "sendTelemetryEvent").mockReturnValue();
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("/path/to/workspace/m365agents.yml");
+      const showTextDocument = vi
+        .spyOn(vscode.window, "showTextDocument")
+        .mockResolvedValue({} as any);
+      const warning = vi
+        .spyOn(vscode.window, "showWarningMessage")
+        .mockImplementation(
+          (_message: string, ...items: any[]) => Promise.resolve(items[0]) as any
+        );
+
+      showMCPAuthPlaceholderNotification("/path/to/workspace", [placeholderWarning]);
+      await warning.mock.results[0].value;
+
+      assert.equal(showTextDocument.mock.calls.length, 1);
+    });
+
+    it("re-runs create when the developer picks the second action", async () => {
+      vi.spyOn(ExtTelemetry, "sendTelemetryEvent").mockReturnValue();
+      const executeCommand = vi
+        .spyOn(vscode.commands, "executeCommand")
+        .mockResolvedValue(undefined);
+      const warning = vi
+        .spyOn(vscode.window, "showWarningMessage")
+        .mockImplementation(
+          (_message: string, ...items: any[]) => Promise.resolve(items[1]) as any
+        );
+
+      showMCPAuthPlaceholderNotification("/path/to/workspace", [
+        { type: "mcpAuthDcrWellKnownUrlPlaceholder", content: "fill in the well-known url" },
+      ]);
+      await warning.mock.results[0].value;
+
+      assert.equal(executeCommand.mock.calls[0][0], "fx-extension.create");
+    });
+
+    it("does nothing when the notification is dismissed", async () => {
+      vi.spyOn(ExtTelemetry, "sendTelemetryEvent").mockReturnValue();
+      const showTextDocument = vi.spyOn(vscode.window, "showTextDocument");
+      const warning = vi
+        .spyOn(vscode.window, "showWarningMessage")
+        .mockResolvedValue(undefined as any);
+
+      showMCPAuthPlaceholderNotification("/path/to/workspace", [placeholderWarning]);
+      await warning.mock.results[0].value;
+
+      assert.equal(showTextDocument.mock.calls.length, 0);
+    });
   });
 });

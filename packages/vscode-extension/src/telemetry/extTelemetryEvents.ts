@@ -302,6 +302,11 @@ export enum TelemetryEvent {
   ShowScaffoldingWarningSummary = "show-scaffolding-warning-summary",
   ShowScaffoldingWarningSummaryError = "show-scaffolding-warning-summary-error",
 
+  // MCP auth endpoints could not be discovered, so m365agents.yml holds placeholders
+  ShowMCPAuthPlaceholderNotification = "show-mcp-auth-placeholder-notification",
+  ClickOpenMCPAuthYml = "click-open-mcp-auth-yml",
+  ClickRecreateMCPApp = "click-recreate-mcp-app",
+
   FindSimilarIssues = "find-similar-issues",
 
   // Teams Github Copilot UI
