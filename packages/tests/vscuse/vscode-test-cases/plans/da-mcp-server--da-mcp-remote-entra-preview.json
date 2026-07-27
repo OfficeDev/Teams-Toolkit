@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 98,
+    "total_steps": 100,
     "name": "da-mcp-remote-entra-preview",
     "description": {
       "owner": "",
@@ -25,15 +25,13 @@
       "step_executeCommand_assertCommand_c0af3d3fa_1_2",
       "step_executeCommand_execute_c0af3d3fa_1_2",
       "step_assertToolkitViewSettled_assert_c0af3d3fa_1_3",
-      "step_executeCommand_open_c0af3d3fa_1_4",
-      "step_executeCommand_assertPalette_c0af3d3fa_1_4",
-      "step_executeCommand_filter_c0af3d3fa_1_4",
-      "step_executeCommand_assertCommand_c0af3d3fa_1_4",
-      "step_executeCommand_execute_c0af3d3fa_1_4",
-      "step_singleSelect_assertQuestion_c0af3d3fa_1_5",
-      "step_singleSelect_filter_c0af3d3fa_1_5",
-      "step_singleSelect_assertOption_c0af3d3fa_1_5",
-      "step_singleSelect_confirm_c0af3d3fa_1_5",
+      "step_closeGetStartedEditor_close_c0af3d3fa_1_4",
+      "step_closeGetStartedEditor_assertClosed_c0af3d3fa_1_4",
+      "step_executeCommand_open_c0af3d3fa_1_5",
+      "step_executeCommand_assertPalette_c0af3d3fa_1_5",
+      "step_executeCommand_filter_c0af3d3fa_1_5",
+      "step_executeCommand_assertCommand_c0af3d3fa_1_5",
+      "step_executeCommand_execute_c0af3d3fa_1_5",
       "step_singleSelect_assertQuestion_c0af3d3fa_1_6",
       "step_singleSelect_filter_c0af3d3fa_1_6",
       "step_singleSelect_assertOption_c0af3d3fa_1_6",
@@ -42,21 +40,25 @@
       "step_singleSelect_filter_c0af3d3fa_1_7",
       "step_singleSelect_assertOption_c0af3d3fa_1_7",
       "step_singleSelect_confirm_c0af3d3fa_1_7",
-      "step_textInput_assertQuestion_c0af3d3fa_1_8",
-      "step_textInput_input_c0af3d3fa_1_8",
-      "step_textInput_confirm_c0af3d3fa_1_8",
-      "step_singleSelect_assertQuestion_c0af3d3fa_1_9",
-      "step_singleSelect_filter_c0af3d3fa_1_9",
-      "step_singleSelect_assertOption_c0af3d3fa_1_9",
-      "step_singleSelect_confirm_c0af3d3fa_1_9",
-      "step_textInput_assertQuestion_c0af3d3fa_1_10",
-      "step_textInput_input_c0af3d3fa_1_10",
-      "step_textInput_confirm_c0af3d3fa_1_10",
-      "step_confirmOption_assertPrompt_c0af3d3fa_1_11",
-      "step_confirmOption_confirm_c0af3d3fa_1_11",
-      "step_textInput_assertQuestion_c0af3d3fa_1_12",
-      "step_textInput_input_c0af3d3fa_1_12",
-      "step_textInput_confirm_c0af3d3fa_1_12",
+      "step_singleSelect_assertQuestion_c0af3d3fa_1_8",
+      "step_singleSelect_filter_c0af3d3fa_1_8",
+      "step_singleSelect_assertOption_c0af3d3fa_1_8",
+      "step_singleSelect_confirm_c0af3d3fa_1_8",
+      "step_textInput_assertQuestion_c0af3d3fa_1_9",
+      "step_textInput_input_c0af3d3fa_1_9",
+      "step_textInput_confirm_c0af3d3fa_1_9",
+      "step_singleSelect_assertQuestion_c0af3d3fa_1_10",
+      "step_singleSelect_filter_c0af3d3fa_1_10",
+      "step_singleSelect_assertOption_c0af3d3fa_1_10",
+      "step_singleSelect_confirm_c0af3d3fa_1_10",
+      "step_textInput_assertQuestion_c0af3d3fa_1_11",
+      "step_textInput_input_c0af3d3fa_1_11",
+      "step_textInput_confirm_c0af3d3fa_1_11",
+      "step_confirmOption_assertPrompt_c0af3d3fa_1_12",
+      "step_confirmOption_confirm_c0af3d3fa_1_12",
+      "step_textInput_assertQuestion_c0af3d3fa_1_13",
+      "step_textInput_input_c0af3d3fa_1_13",
+      "step_textInput_confirm_c0af3d3fa_1_13",
       "step_checkWorkspaceFiles_verify_c0af3d3fa_2_1",
       "step_checkWorkspaceFiles_verify_c0af3d3fa_2_2",
       "step_checkWorkspaceFiles_verify_c0af3d3fa_2_3",
@@ -324,7 +326,50 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_open_c0af3d3fa_1_4",
+      "step_id": "step_closeGetStartedEditor_close_c0af3d3fa_1_4",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+w"
+      },
+      "description": "Press Ctrl+W to close the toolkit Get Started editor.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_assertToolkitViewSettled_assert_c0af3d3fa_1_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:initialization",
+        "initialization:closeGetStartedEditor"
+      ]
+    },
+    {
+      "step_id": "step_closeGetStartedEditor_assertClosed_c0af3d3fa_1_4",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion no editor tab is open in the Visual Studio Code editor area.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_closeGetStartedEditor_close_c0af3d3fa_1_4"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:initialization",
+        "initialization:closeGetStartedEditor",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_open_c0af3d3fa_1_5",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -336,7 +381,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertToolkitViewSettled_assert_c0af3d3fa_1_3"
+        "step_closeGetStartedEditor_assertClosed_c0af3d3fa_1_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -346,7 +391,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertPalette_c0af3d3fa_1_4",
+      "step_id": "step_executeCommand_assertPalette_c0af3d3fa_1_5",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -356,7 +401,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_open_c0af3d3fa_1_4"
+        "step_executeCommand_open_c0af3d3fa_1_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -367,7 +412,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_filter_c0af3d3fa_1_4",
+      "step_id": "step_executeCommand_filter_c0af3d3fa_1_5",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -379,7 +424,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertPalette_c0af3d3fa_1_4"
+        "step_executeCommand_assertPalette_c0af3d3fa_1_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -389,7 +434,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertCommand_c0af3d3fa_1_4",
+      "step_id": "step_executeCommand_assertCommand_c0af3d3fa_1_5",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -399,7 +444,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_filter_c0af3d3fa_1_4"
+        "step_executeCommand_filter_c0af3d3fa_1_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -410,7 +455,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_execute_c0af3d3fa_1_4",
+      "step_id": "step_executeCommand_execute_c0af3d3fa_1_5",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -422,7 +467,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertCommand_c0af3d3fa_1_4"
+        "step_executeCommand_assertCommand_c0af3d3fa_1_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -432,7 +477,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertQuestion_c0af3d3fa_1_5",
+      "step_id": "step_singleSelect_assertQuestion_c0af3d3fa_1_6",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -442,93 +487,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_c0af3d3fa_1_4"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_singleSelect_filter_c0af3d3fa_1_5",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "Declarative Agent"
-      },
-      "description": "Type the resolved option label Declarative Agent into the active single-select prompt.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_singleSelect_assertQuestion_c0af3d3fa_1_5"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect"
-      ]
-    },
-    {
-      "step_id": "step_singleSelect_assertOption_c0af3d3fa_1_5",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the option Declarative Agent is visible and selectable in the filtered single-select prompt.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_singleSelect_filter_c0af3d3fa_1_5"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_singleSelect_confirm_c0af3d3fa_1_5",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press Enter to confirm the filtered single-select option.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_singleSelect_assertOption_c0af3d3fa_1_5"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect"
-      ]
-    },
-    {
-      "step_id": "step_singleSelect_assertQuestion_c0af3d3fa_1_6",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the active prompt titled Create Declarative Agent is visible.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_singleSelect_confirm_c0af3d3fa_1_5"
+        "step_executeCommand_execute_c0af3d3fa_1_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -543,9 +502,9 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Add an Action"
+        "text": "Declarative Agent"
       },
-      "description": "Type the resolved option label Add an Action into the active single-select prompt.",
+      "description": "Type the resolved option label Declarative Agent into the active single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -565,7 +524,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the option Add an Action is visible and selectable in the filtered single-select prompt.",
+      "description": "@assertion the option Declarative Agent is visible and selectable in the filtered single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -608,7 +567,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the active prompt titled Create an Action is visible.",
+      "description": "@assertion the active prompt titled Create Declarative Agent is visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -629,9 +588,9 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Start with a MCP server"
+        "text": "Add an Action"
       },
-      "description": "Type the resolved option label Start with a MCP server into the active single-select prompt.",
+      "description": "Type the resolved option label Add an Action into the active single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -651,7 +610,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the option Start with a MCP server is visible and selectable in the filtered single-select prompt.",
+      "description": "@assertion the option Add an Action is visible and selectable in the filtered single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -690,11 +649,11 @@
       ]
     },
     {
-      "step_id": "step_textInput_assertQuestion_c0af3d3fa_1_8",
+      "step_id": "step_singleSelect_assertQuestion_c0af3d3fa_1_8",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the active prompt titled MCP Server URL is visible.",
+      "description": "@assertion the active prompt titled Create an Action is visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -706,89 +665,24 @@
       "postconditions": [],
       "tags": [
         "component:quick-input",
-        "answer_type:text",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_textInput_input_c0af3d3fa_1_8",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "https://api.githubcopilot.com/mcp/"
-      },
-      "description": "Type the authored value into the active text prompt.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_textInput_assertQuestion_c0af3d3fa_1_8"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:text"
-      ]
-    },
-    {
-      "step_id": "step_textInput_confirm_c0af3d3fa_1_8",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press Enter to submit the accepted text input.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_textInput_input_c0af3d3fa_1_8"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:text"
-      ]
-    },
-    {
-      "step_id": "step_singleSelect_assertQuestion_c0af3d3fa_1_9",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the active prompt titled Select Authentication Type is visible.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_textInput_confirm_c0af3d3fa_1_8"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
         "answer_type:singleSelect",
         "step_retry_timeout: 30"
       ]
     },
     {
-      "step_id": "step_singleSelect_filter_c0af3d3fa_1_9",
+      "step_id": "step_singleSelect_filter_c0af3d3fa_1_8",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Entra SSO"
+        "text": "Start with a MCP server"
       },
-      "description": "Type the resolved option label Entra SSO into the active single-select prompt.",
+      "description": "Type the resolved option label Start with a MCP server into the active single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_c0af3d3fa_1_9"
+        "step_singleSelect_assertQuestion_c0af3d3fa_1_8"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -798,17 +692,17 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOption_c0af3d3fa_1_9",
+      "step_id": "step_singleSelect_assertOption_c0af3d3fa_1_8",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the option Entra SSO is visible and selectable in the filtered single-select prompt.",
+      "description": "@assertion the option Start with a MCP server is visible and selectable in the filtered single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_filter_c0af3d3fa_1_9"
+        "step_singleSelect_filter_c0af3d3fa_1_8"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -819,7 +713,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_confirm_c0af3d3fa_1_9",
+      "step_id": "step_singleSelect_confirm_c0af3d3fa_1_8",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -831,7 +725,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOption_c0af3d3fa_1_9"
+        "step_singleSelect_assertOption_c0af3d3fa_1_8"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -841,17 +735,17 @@
       ]
     },
     {
-      "step_id": "step_textInput_assertQuestion_c0af3d3fa_1_10",
+      "step_id": "step_textInput_assertQuestion_c0af3d3fa_1_9",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the active prompt titled Microsoft Entra Application (Client) ID is visible.",
+      "description": "@assertion the active prompt titled MCP Server URL is visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_confirm_c0af3d3fa_1_9"
+        "step_singleSelect_confirm_c0af3d3fa_1_8"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -862,11 +756,11 @@
       ]
     },
     {
-      "step_id": "step_textInput_input_c0af3d3fa_1_10",
+      "step_id": "step_textInput_input_c0af3d3fa_1_9",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "${{env:DA_MCP_ENTRA_SSO_CLIENTID}}"
+        "text": "https://api.githubcopilot.com/mcp/"
       },
       "description": "Type the authored value into the active text prompt.",
       "content_refs": [],
@@ -874,7 +768,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_assertQuestion_c0af3d3fa_1_10"
+        "step_textInput_assertQuestion_c0af3d3fa_1_9"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -884,7 +778,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_confirm_c0af3d3fa_1_10",
+      "step_id": "step_textInput_confirm_c0af3d3fa_1_9",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -896,7 +790,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_input_c0af3d3fa_1_10"
+        "step_textInput_input_c0af3d3fa_1_9"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -906,7 +800,158 @@
       ]
     },
     {
-      "step_id": "step_confirmOption_assertPrompt_c0af3d3fa_1_11",
+      "step_id": "step_singleSelect_assertQuestion_c0af3d3fa_1_10",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the active prompt titled Select Authentication Type is visible.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_textInput_confirm_c0af3d3fa_1_9"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_filter_c0af3d3fa_1_10",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Entra SSO"
+      },
+      "description": "Type the resolved option label Entra SSO into the active single-select prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertQuestion_c0af3d3fa_1_10"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertOption_c0af3d3fa_1_10",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the option Entra SSO is visible and selectable in the filtered single-select prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_filter_c0af3d3fa_1_10"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_confirm_c0af3d3fa_1_10",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the filtered single-select option.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertOption_c0af3d3fa_1_10"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_textInput_assertQuestion_c0af3d3fa_1_11",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the active prompt titled Microsoft Entra Application (Client) ID is visible.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_confirm_c0af3d3fa_1_10"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:text",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_textInput_input_c0af3d3fa_1_11",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{env:DA_MCP_ENTRA_SSO_CLIENTID}}"
+      },
+      "description": "Type the authored value into the active text prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_textInput_assertQuestion_c0af3d3fa_1_11"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:text"
+      ]
+    },
+    {
+      "step_id": "step_textInput_confirm_c0af3d3fa_1_11",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to submit the accepted text input.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_textInput_input_c0af3d3fa_1_11"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:text"
+      ]
+    },
+    {
+      "step_id": "step_confirmOption_assertPrompt_c0af3d3fa_1_12",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -916,7 +961,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_confirm_c0af3d3fa_1_10"
+        "step_textInput_confirm_c0af3d3fa_1_11"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -928,7 +973,7 @@
       ]
     },
     {
-      "step_id": "step_confirmOption_confirm_c0af3d3fa_1_11",
+      "step_id": "step_confirmOption_confirm_c0af3d3fa_1_12",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -940,7 +985,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_confirmOption_assertPrompt_c0af3d3fa_1_11"
+        "step_confirmOption_assertPrompt_c0af3d3fa_1_12"
       ],
       "preconditions": [
         "dhash:364:74:16:5:08056a9a5d5516b6",
@@ -955,7 +1000,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_assertQuestion_c0af3d3fa_1_12",
+      "step_id": "step_textInput_assertQuestion_c0af3d3fa_1_13",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -965,7 +1010,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_confirmOption_confirm_c0af3d3fa_1_11"
+        "step_confirmOption_confirm_c0af3d3fa_1_12"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -976,7 +1021,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_input_c0af3d3fa_1_12",
+      "step_id": "step_textInput_input_c0af3d3fa_1_13",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -988,7 +1033,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_assertQuestion_c0af3d3fa_1_12"
+        "step_textInput_assertQuestion_c0af3d3fa_1_13"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -998,7 +1043,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_confirm_c0af3d3fa_1_12",
+      "step_id": "step_textInput_confirm_c0af3d3fa_1_13",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1010,7 +1055,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_input_c0af3d3fa_1_12"
+        "step_textInput_input_c0af3d3fa_1_13"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1032,7 +1077,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_confirm_c0af3d3fa_1_12"
+        "step_textInput_confirm_c0af3d3fa_1_13"
       ],
       "preconditions": [],
       "postconditions": [],

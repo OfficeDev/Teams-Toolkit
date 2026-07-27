@@ -216,6 +216,37 @@ test("scaffold focuses the toolkit view before the create command", async () => 
   assert.equal(createIndex < firstQuestionIndex, true);
 });
 
+test("VCB-41: scaffold closes the Get Started editor before the create command", async () => {
+  const result = await compileFixture(
+    "da-no-action.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const descriptions = result.value[0].plan.steps.map(
+    (step) => step.description,
+  );
+  const settledIndex = descriptions.indexOf(
+    "@assertion the Microsoft 365 Agents Toolkit view is open in the side bar and the toolkit Get Started editor is visible in the editor area.",
+  );
+  const closeIndex = descriptions.indexOf(
+    "Press Ctrl+W to close the toolkit Get Started editor.",
+  );
+  const closedIndex = descriptions.indexOf(
+    "@assertion no editor tab is open in the Visual Studio Code editor area.",
+  );
+  const createIndex = descriptions.indexOf(
+    "@assertion exactly one command titled Microsoft 365 Agents: Create New Agent/App is visible and selectable in the active Command Palette.",
+  );
+
+  // The settled assertion guarantees the editor exists, so Ctrl+W targets it
+  // instead of closing the window.
+  assert.equal(settledIndex >= 0, true);
+  assert.equal(settledIndex < closeIndex, true);
+  assert.equal(closeIndex < closedIndex, true);
+  assert.equal(closedIndex < createIndex, true);
+});
+
 test("DA scaffold filters its options before app name", async (context) => {
   const plansDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "vscuse-generated-"),

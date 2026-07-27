@@ -326,10 +326,21 @@ function createSemanticStepCompiler() {
     );
     if (error) return error;
     // The Get Started editor can still open after the focus command returns, so
-    // wait for it to settle before opening the Command Palette again.
+    // wait for it to settle before closing it.
     error = append(
       output,
       render(state, "initialization/assert-toolkit-view-settled.json.tpl"),
+    );
+    if (error) return error;
+    // The toolkit sets `ignoreFocusOut` on every quick pick it opens, so one
+    // that loses keyboard focus stays on screen instead of dismissing itself.
+    // Leaving the Get Started editor open lets it reclaim focus while the create
+    // command opens its first quick pick, which then passes its prompt assertion
+    // but sends the filter keystrokes to the editor, so close the editor instead
+    // of racing it.
+    error = append(
+      output,
+      render(state, "initialization/close-get-started-editor.json.tpl"),
     );
     if (error) return error;
     error = append(

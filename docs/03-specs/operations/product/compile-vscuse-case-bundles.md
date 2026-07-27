@@ -548,10 +548,21 @@ any project editor.
 
 The scaffold recipe uses a second initialization component,
 `initialization/assert-toolkit-view-settled.json.tpl`. It also has no semantic parameters and emits
-a single assertion that the toolkit view is open in the side bar and its Get Started editor has
-finished loading. It owns no coordinates. The scaffold recipe emits it between the toolkit-view
-focus command and the create command, because the Get Started editor can still open after the focus
-command returns and would then take keyboard focus away from the first scaffold quick pick.
+a single assertion that the toolkit view is open in the side bar and its Get Started editor is
+visible in the editor area. It owns no coordinates. The scaffold recipe emits it after the
+toolkit-view focus command, because the Get Started editor can still open after that command
+returns.
+
+The scaffold recipe then uses a third initialization component,
+`initialization/close-get-started-editor.json.tpl`, between that assertion and the create command.
+It closes the Get Started editor with `Ctrl+W` and asserts that no editor tab remains open. It has
+no semantic parameters and owns no coordinates. The toolkit sets `ignoreFocusOut` on every quick
+pick it opens, so a scaffold quick pick that loses keyboard focus stays on screen instead of
+dismissing itself. The Get Started editor reclaims focus while the create command is opening its
+first quick pick, which leaves that quick pick visible but deaf: its prompt assertion passes and the
+filter keystrokes reach the editor instead. Closing the editor removes the competing focus target
+rather than racing it. The preceding settled assertion is what makes the close deterministic: it
+guarantees the editor exists, so `Ctrl+W` targets it instead of closing the window.
 
 ## Command Palette Component Contract
 
@@ -930,6 +941,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-37 | Given any scaffold, compilation focuses the toolkit view through the command component after initialization, waits for the toolkit Get Started editor to finish loading, and only then executes the create command, so no editor can hold keyboard focus when the first scaffold quick pick opens.                                                                                          |
 | VCB-38 | Given a `chat` check without `expect`, compilation sends the message and emits no response assertion, so a following assertion observes the surface the message produced; an empty `expect` object still fails before plan output.                                                                                                                                                          |     | VCB-39 | Given `deploy`, compilation emits environment selection under the same contract as `provision`, omits it for `deploy.with.environment: none`, and fails before plan output for any other environment value or any other deploy input. |
 | VCB-40 | Given a lifecycle operation that selects an environment, compilation emits that selection before every operation-owned prompt, matching the toolkit resolving the environment in middleware that wraps the command body.                                                                                                                                                                    |
+| VCB-41 | Given `scaffold`, compilation closes the toolkit Get Started editor and asserts no editor tab remains open, after the toolkit view has settled and before the create command, so no editor can reclaim keyboard focus from the first scaffold quick pick, which `ignoreFocusOut` would otherwise leave visible but unable to receive its filter keystrokes.                                 |
 
 ## Boundary
 
