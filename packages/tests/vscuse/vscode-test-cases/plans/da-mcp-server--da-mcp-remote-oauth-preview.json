@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 96,
+    "total_steps": 98,
     "name": "da-mcp-remote-oauth-preview",
     "description": {
       "owner": "",
@@ -24,8 +24,10 @@
       "step_executeCommand_filter_cc3292876_1_2",
       "step_executeCommand_assertCommand_cc3292876_1_2",
       "step_executeCommand_execute_cc3292876_1_2",
-      "step_clickOption_assertPrompt_cc3292876_1_3",
-      "step_clickOption_click_cc3292876_1_3",
+      "step_singleSelect_assertQuestion_cc3292876_1_3",
+      "step_singleSelect_filter_cc3292876_1_3",
+      "step_singleSelect_assertOption_cc3292876_1_3",
+      "step_singleSelect_confirm_cc3292876_1_3",
       "step_singleSelect_assertQuestion_cc3292876_1_4",
       "step_singleSelect_filter_cc3292876_1_4",
       "step_singleSelect_assertOption_cc3292876_1_4",
@@ -301,11 +303,11 @@
       ]
     },
     {
-      "step_id": "step_clickOption_assertPrompt_cc3292876_1_3",
+      "step_id": "step_singleSelect_assertQuestion_cc3292876_1_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the active prompt titled New Project is visible and the option Declarative Agent is selectable.",
+      "description": "@assertion the active prompt titled New Project is visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -318,37 +320,72 @@
       "tags": [
         "component:quick-input",
         "answer_type:singleSelect",
-        "interaction:click",
         "step_retry_timeout: 30"
       ]
     },
     {
-      "step_id": "step_clickOption_click_cc3292876_1_3",
+      "step_id": "step_singleSelect_filter_cc3292876_1_3",
       "agent": "interaction",
-      "tool": "click",
+      "tool": "type_text",
       "parameters": {
-        "button": "left",
-        "x": 339,
-        "y": 90
+        "text": "Declarative Agent"
       },
-      "description": "Click the Declarative Agent option in the active prompt.",
+      "description": "Type the resolved option label Declarative Agent into the active single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_clickOption_assertPrompt_cc3292876_1_3"
+        "step_singleSelect_assertQuestion_cc3292876_1_3"
       ],
-      "preconditions": [
-        "dhash:339:90:16:5:9c59a399e8174e4e",
-        "dhash:339:90:96:5:10279410680ce367",
-        "dhash:339:90:0:10:c8c88094b2717075"
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertOption_cc3292876_1_3",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the option Declarative Agent is visible and selectable in the filtered single-select prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_filter_cc3292876_1_3"
       ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:quick-input",
         "answer_type:singleSelect",
-        "interaction:click"
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_confirm_cc3292876_1_3",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the filtered single-select option.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertOption_cc3292876_1_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
       ]
     },
     {
@@ -362,7 +399,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_clickOption_click_cc3292876_1_3"
+        "step_singleSelect_confirm_cc3292876_1_3"
       ],
       "preconditions": [],
       "postconditions": [],

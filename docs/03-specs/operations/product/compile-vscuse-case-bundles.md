@@ -636,23 +636,24 @@ branches into one sign-in template.
 Scaffold answer interactions are reusable VScUse JSON templates under
 `packages/tests/vscuse/vscode-test-cases/components/quick-input/`:
 
-| Adapter use                          | Component file                                            | Parameters supplied by the compiler                |
-| ------------------------------------ | --------------------------------------------------------- | -------------------------------------------------- |
-| Filtered `singleSelect`              | `single-select.json.tpl`                                  | Canonical question title and option label          |
-| Recorded-click `singleSelect` option | `click-option.json.tpl`                                   | Question, option, coordinates, and preconditions   |
-| Focused `singleSelect` option        | `confirm-option.json.tpl`                                 | Question, option, and preconditions                |
-| `multiSelect`                        | `multi-select.json.tpl` + `multi-select-confirm.json.tpl` | Canonical question title, option labels, and count |
-| `text`                               | `text.json.tpl`                                           | Canonical question title and authored input value  |
-| Lifecycle focused confirmation       | `confirm.json.tpl`                                        | Adapter-supplied question title and focused option |
-| Recipe-owned filtered option         | `filter-option.json.tpl`                                  | Canonical option label                             |
+| Adapter use                        | Component file                                            | Parameters supplied by the compiler                |
+| ---------------------------------- | --------------------------------------------------------- | -------------------------------------------------- |
+| Filtered `singleSelect`            | `single-select.json.tpl`                                  | Canonical question title and option label          |
+| Recipe-owned recorded-click option | `click-option.json.tpl`                                   | Question, option, coordinates, and preconditions   |
+| Focused `singleSelect` option      | `confirm-option.json.tpl`                                 | Question, option, and preconditions                |
+| `multiSelect`                      | `multi-select.json.tpl` + `multi-select-confirm.json.tpl` | Canonical question title, option labels, and count |
+| `text`                             | `text.json.tpl`                                           | Canonical question title and authored input value  |
+| Lifecycle focused confirmation     | `confirm.json.tpl`                                        | Adapter-supplied question title and focused option |
+| Recipe-owned filtered option       | `filter-option.json.tpl`                                  | Canonical option label                             |
 
 The authored answer types are `singleSelect`, `multiSelect`, and `text`. The semantic adapter
-starts with `answers[].type`, then may select an option-specific `click-option` or `confirm-option`
-component for a supported single-select value. Lifecycle confirmation and recipe-owned option
-filtering are selected by operation adapters and are not authored answer types. Components do not name
-business questions, template IDs, or option IDs. The compiler resolves semantic IDs
-before instantiation and JSON-escapes every parameter. Each template has a top-level `component`
-declaration and a `steps` array of current-format VScUse step fragments. `component` declares
+starts with `answers[].type`, then may select a `confirm-option` component for a supported
+single-select value that the toolkit already focuses. Lifecycle confirmation, recipe-owned option
+filtering, and recipe-owned recorded clicks are selected by operation adapters and are not authored
+answer types. Components do not name business questions, template IDs, or option IDs. The compiler
+resolves semantic IDs before instantiation and JSON-escapes every parameter. Each template has a
+top-level `component` declaration and a `steps` array of current-format VScUse step fragments.
+`component` declares
 `version`, a fixed `id`, its surface or answer type, and its `parameters`; it is removed after
 instantiation.
 

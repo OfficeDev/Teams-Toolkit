@@ -187,7 +187,7 @@ test("generated plans define app_name before reading it", async (context) => {
   }
 });
 
-test("DA scaffold follows recorded option activations before app name", async (context) => {
+test("DA scaffold filters its options before app name", async (context) => {
   const plansDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "vscuse-generated-"),
   );
@@ -208,12 +208,13 @@ test("DA scaffold follows recorded option activations before app name", async (c
       "utf8",
     ),
   );
-  const clickLabels = ["Declarative Agent", "No Action"];
-  const clickIndexes = clickLabels.map((label) =>
+  const optionLabels = ["Declarative Agent", "No Action"];
+  const optionIndexes = optionLabels.map((label) =>
     plan.steps.findIndex(
       (step) =>
-        step.tool === "click" &&
-        step.description === `Click the ${label} option in the active prompt.`,
+        step.tool === "type_text" &&
+        step.description ===
+          `Type the resolved option label ${label} into the active single-select prompt.`,
     ),
   );
   const appNameIndex = plan.steps.findIndex(
@@ -227,14 +228,14 @@ test("DA scaffold follows recorded option activations before app name", async (c
   );
 
   assert.deepEqual(
-    clickIndexes.every((index) => index >= 0),
+    optionIndexes.every((index) => index >= 0),
     true,
   );
   assert.deepEqual(
-    clickIndexes,
-    [...clickIndexes].sort((left, right) => left - right),
+    optionIndexes,
+    [...optionIndexes].sort((left, right) => left - right),
   );
-  assert.equal(clickIndexes.at(-1) < workspaceFolderIndex, true);
+  assert.equal(optionIndexes.at(-1) < workspaceFolderIndex, true);
   assert.equal(workspaceFolderIndex < appNameIndex, true);
 });
 
@@ -330,7 +331,7 @@ test("VCB-34: DA API plugin from scratch compiles complete remote branches in au
       ? "TypeScript"
       : "JavaScript";
     const authoredOptions = [
-      "Click the Declarative Agent option in the active prompt.",
+      "@assertion the option Declarative Agent is visible and selectable in the filtered single-select prompt.",
       "@assertion the option Add an Action is visible and selectable in the filtered single-select prompt.",
       "@assertion the option Start with a New API is visible and selectable in the filtered single-select prompt.",
       "@assertion the option None is visible and selectable in the filtered single-select prompt.",

@@ -33,31 +33,6 @@ const accountAdapters = {
   },
 };
 
-const clickOptions = {
-  "copilot-agent-type": {
-    component: "quick-input/click-option.json.tpl",
-    label: "Declarative Agent",
-    preconditions: [
-      "dhash:339:90:16:5:9c59a399e8174e4e",
-      "dhash:339:90:96:5:10279410680ce367",
-      "dhash:339:90:0:10:c8c88094b2717075",
-    ],
-    x: 339,
-    y: 90,
-  },
-  "no-action": {
-    component: "quick-input/click-option.json.tpl",
-    label: "No Action",
-    preconditions: [
-      "dhash:330:78:16:5:0000000000000000",
-      "dhash:330:78:96:5:2195982010531a48",
-      "dhash:330:78:0:10:c0c0b094b2717075",
-    ],
-    x: 330,
-    y: 78,
-  },
-};
-
 const defaultFolderOption = {
   component: "quick-input/confirm-option.json.tpl",
   label: "Default folder",
@@ -111,7 +86,7 @@ const scaffoldQuestionAdapters = {
     type: "singleSelect",
   },
   daTemplate: {
-    options: { "add-action": "Add an Action", ...clickOptions },
+    options: { "add-action": "Add an Action", "no-action": "No Action" },
     title: "Create Declarative Agent",
     type: "singleSelect",
   },
@@ -144,8 +119,8 @@ const scaffoldQuestionAdapters = {
   },
   projectType: {
     options: {
+      "copilot-agent-type": "Declarative Agent",
       "custom-engine-agent-type": "Custom Engine Agent",
-      "copilot-agent-type": clickOptions["copilot-agent-type"],
     },
     title: "New Project",
     type: "singleSelect",
@@ -274,24 +249,6 @@ function isRecord(value) {
 
 function hasOnlyFields(value, allowedFields) {
   return Object.keys(value).every((field) => allowedFields.has(field));
-}
-
-function isClickOption(option) {
-  return (
-    isRecord(option) &&
-    hasOnlyFields(
-      option,
-      new Set(["component", "label", "preconditions", "x", "y"]),
-    ) &&
-    option.component === "quick-input/click-option.json.tpl" &&
-    typeof option.label === "string" &&
-    Number.isInteger(option.x) &&
-    Number.isInteger(option.y) &&
-    Array.isArray(option.preconditions) &&
-    option.preconditions.every(
-      (precondition) => typeof precondition === "string",
-    )
-  );
 }
 
 function isConfirmOption(option) {
@@ -438,17 +395,6 @@ function createSemanticStepCompiler() {
             render(state, "quick-input/single-select.json.tpl", {
               optionLabel: option,
               questionTitle,
-            }),
-          );
-        } else if (isClickOption(option)) {
-          error = append(
-            output,
-            render(state, option.component, {
-              optionLabel: option.label,
-              preconditions: option.preconditions,
-              questionTitle,
-              x: option.x,
-              y: option.y,
             }),
           );
         } else if (isConfirmOption(option)) {

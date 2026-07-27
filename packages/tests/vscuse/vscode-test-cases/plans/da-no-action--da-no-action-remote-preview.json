@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 75,
+    "total_steps": 79,
     "name": "da-no-action-remote-preview",
     "description": {
       "owner": "",
@@ -24,10 +24,14 @@
       "step_executeCommand_filter_c60abcc38_1_2",
       "step_executeCommand_assertCommand_c60abcc38_1_2",
       "step_executeCommand_execute_c60abcc38_1_2",
-      "step_clickOption_assertPrompt_c60abcc38_1_3",
-      "step_clickOption_click_c60abcc38_1_3",
-      "step_clickOption_assertPrompt_c60abcc38_1_4",
-      "step_clickOption_click_c60abcc38_1_4",
+      "step_singleSelect_assertQuestion_c60abcc38_1_3",
+      "step_singleSelect_filter_c60abcc38_1_3",
+      "step_singleSelect_assertOption_c60abcc38_1_3",
+      "step_singleSelect_confirm_c60abcc38_1_3",
+      "step_singleSelect_assertQuestion_c60abcc38_1_4",
+      "step_singleSelect_filter_c60abcc38_1_4",
+      "step_singleSelect_assertOption_c60abcc38_1_4",
+      "step_singleSelect_confirm_c60abcc38_1_4",
       "step_confirmOption_assertPrompt_c60abcc38_1_5",
       "step_confirmOption_confirm_c60abcc38_1_5",
       "step_textInput_assertQuestion_c60abcc38_1_6",
@@ -278,11 +282,11 @@
       ]
     },
     {
-      "step_id": "step_clickOption_assertPrompt_c60abcc38_1_3",
+      "step_id": "step_singleSelect_assertQuestion_c60abcc38_1_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the active prompt titled New Project is visible and the option Declarative Agent is selectable.",
+      "description": "@assertion the active prompt titled New Project is visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -295,88 +299,158 @@
       "tags": [
         "component:quick-input",
         "answer_type:singleSelect",
-        "interaction:click",
         "step_retry_timeout: 30"
       ]
     },
     {
-      "step_id": "step_clickOption_click_c60abcc38_1_3",
+      "step_id": "step_singleSelect_filter_c60abcc38_1_3",
       "agent": "interaction",
-      "tool": "click",
+      "tool": "type_text",
       "parameters": {
-        "button": "left",
-        "x": 339,
-        "y": 90
+        "text": "Declarative Agent"
       },
-      "description": "Click the Declarative Agent option in the active prompt.",
+      "description": "Type the resolved option label Declarative Agent into the active single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_clickOption_assertPrompt_c60abcc38_1_3"
+        "step_singleSelect_assertQuestion_c60abcc38_1_3"
       ],
-      "preconditions": [
-        "dhash:339:90:16:5:9c59a399e8174e4e",
-        "dhash:339:90:96:5:10279410680ce367",
-        "dhash:339:90:0:10:c8c88094b2717075"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:quick-input",
-        "answer_type:singleSelect",
-        "interaction:click"
+        "answer_type:singleSelect"
       ]
     },
     {
-      "step_id": "step_clickOption_assertPrompt_c60abcc38_1_4",
+      "step_id": "step_singleSelect_assertOption_c60abcc38_1_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the active prompt titled Create Declarative Agent is visible and the option No Action is selectable.",
+      "description": "@assertion the option Declarative Agent is visible and selectable in the filtered single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_clickOption_click_c60abcc38_1_3"
+        "step_singleSelect_filter_c60abcc38_1_3"
       ],
       "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:quick-input",
         "answer_type:singleSelect",
-        "interaction:click",
         "step_retry_timeout: 30"
       ]
     },
     {
-      "step_id": "step_clickOption_click_c60abcc38_1_4",
+      "step_id": "step_singleSelect_confirm_c60abcc38_1_3",
       "agent": "interaction",
-      "tool": "click",
+      "tool": "key_press",
       "parameters": {
-        "button": "left",
-        "x": 330,
-        "y": 78
+        "key": "enter"
       },
-      "description": "Click the No Action option in the active prompt.",
+      "description": "Press Enter to confirm the filtered single-select option.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_clickOption_assertPrompt_c60abcc38_1_4"
+        "step_singleSelect_assertOption_c60abcc38_1_3"
       ],
-      "preconditions": [
-        "dhash:330:78:16:5:0000000000000000",
-        "dhash:330:78:96:5:2195982010531a48",
-        "dhash:330:78:0:10:c0c0b094b2717075"
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertQuestion_c60abcc38_1_4",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the active prompt titled Create Declarative Agent is visible.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_confirm_c60abcc38_1_3"
       ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:quick-input",
         "answer_type:singleSelect",
-        "interaction:click"
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_filter_c60abcc38_1_4",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "No Action"
+      },
+      "description": "Type the resolved option label No Action into the active single-select prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertQuestion_c60abcc38_1_4"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertOption_c60abcc38_1_4",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the option No Action is visible and selectable in the filtered single-select prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_filter_c60abcc38_1_4"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_confirm_c60abcc38_1_4",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the filtered single-select option.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertOption_c60abcc38_1_4"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
       ]
     },
     {
@@ -390,7 +464,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_clickOption_click_c60abcc38_1_4"
+        "step_singleSelect_confirm_c60abcc38_1_4"
       ],
       "preconditions": [],
       "postconditions": [],
