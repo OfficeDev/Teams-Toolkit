@@ -247,6 +247,42 @@ test("VCB-41: scaffold closes the Get Started editor before the create command",
   assert.equal(closedIndex < createIndex, true);
 });
 
+test("VCB-42: login focuses the toolkit view before the account menu", async () => {
+  const result = await compileFixture(
+    "da-api-plugin-from-scratch.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const descriptions = result.value[0].plan.steps.map(
+    (step) => step.description,
+  );
+  const accountMenuIndex = descriptions.indexOf(
+    "@assertion the Accounts View result is first and the Microsoft 365 Agents: Accounts command is second and selectable in the active Command Palette.",
+  );
+  const focusIndex = descriptions.findLastIndex(
+    (description, index) =>
+      index < accountMenuIndex &&
+      description ===
+        "@assertion exactly one command titled Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View is visible and selectable in the active Command Palette.",
+  );
+  const createIndex = descriptions.indexOf(
+    "@assertion exactly one command titled Microsoft 365 Agents: Create New Agent/App is visible and selectable in the active Command Palette.",
+  );
+  const readinessIndex = descriptions.findIndex(
+    (description, index) =>
+      index > accountMenuIndex &&
+      description.includes('in the "ACCOUNTS" section'),
+  );
+
+  // The focus must belong to the login block, not to the scaffold block that
+  // ran in the window scaffolding replaced.
+  assert.equal(accountMenuIndex >= 0, true);
+  assert.equal(createIndex < focusIndex, true);
+  assert.equal(focusIndex < accountMenuIndex, true);
+  assert.equal(accountMenuIndex < readinessIndex, true);
+});
+
 test("DA scaffold filters its options before app name", async (context) => {
   const plansDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "vscuse-generated-"),

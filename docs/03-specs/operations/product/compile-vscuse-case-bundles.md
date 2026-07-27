@@ -630,7 +630,13 @@ following authored `open` resolves a separate adapter.
 
 ## Account Sign-In Component Contract
 
-Azure and Microsoft 365 sign-in recipes first instantiate
+Azure and Microsoft 365 sign-in recipes first execute the toolkit-view focus command through
+`command-palette/execute-command.json.tpl`. Scaffolding reopens the workspace in a new window whose
+side bar defaults to the Explorer, so the toolkit tree view that owns the ACCOUNTS section is not
+showing, and the readiness assertion at the end of each adapter reads the signed-in account from
+that section.
+
+The recipes then instantiate
 `authentication/open-account-menu.json.tpl`. The component uses F1, filters by the canonical
 command title `Microsoft 365 Agents: Accounts`, asserts that Accounts View is first and the toolkit
 Accounts command is second, then selects the second result by keyboard to leave the account menu active. It is account-neutral but
@@ -941,7 +947,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-37 | Given any scaffold, compilation focuses the toolkit view through the command component after initialization, waits for the toolkit Get Started editor to finish loading, and only then executes the create command, so no editor can hold keyboard focus when the first scaffold quick pick opens.                                                                                          |
 | VCB-38 | Given a `chat` check without `expect`, compilation sends the message and emits no response assertion, so a following assertion observes the surface the message produced; an empty `expect` object still fails before plan output.                                                                                                                                                          |     | VCB-39 | Given `deploy`, compilation emits environment selection under the same contract as `provision`, omits it for `deploy.with.environment: none`, and fails before plan output for any other environment value or any other deploy input. |
 | VCB-40 | Given a lifecycle operation that selects an environment, compilation emits that selection before every operation-owned prompt, matching the toolkit resolving the environment in middleware that wraps the command body.                                                                                                                                                                    |
-| VCB-41 | Given `scaffold`, compilation closes the toolkit Get Started editor and asserts no editor tab remains open, after the toolkit view has settled and before the create command, so no editor can reclaim keyboard focus from the first scaffold quick pick, which `ignoreFocusOut` would otherwise leave visible but unable to receive its filter keystrokes.                                 |
+| VCB-41 | Given `scaffold`, compilation closes the toolkit Get Started editor and asserts no editor tab remains open, after the toolkit view has settled and before the create command, so no editor can reclaim keyboard focus from the first scaffold quick pick, which `ignoreFocusOut` would otherwise leave visible but unable to receive its filter keystrokes.                                 |     | VCB-42 | Given `login`, compilation focuses the toolkit view before opening the account menu, so the ACCOUNTS section the readiness assertion reads is showing in the window scaffolding opened, whose side bar defaults to the Explorer.      |
 
 ## Boundary
 

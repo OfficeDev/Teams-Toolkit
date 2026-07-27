@@ -510,7 +510,18 @@ function createSemanticStepCompiler() {
     }
 
     const output = [];
+    // Scaffolding reopens the workspace in a new window whose side bar defaults
+    // to the Explorer, so the toolkit tree view that owns the ACCOUNTS section
+    // is not showing. Focus it here, because the readiness assertion at the end
+    // of the account component reads the signed-in account from that section.
     let error = append(
+      output,
+      render(state, "command-palette/execute-command.json.tpl", {
+        commandTitle: commandTitles.focusToolkitView,
+      }),
+    );
+    if (error) return error;
+    error = append(
       output,
       render(state, "authentication/open-account-menu.json.tpl"),
     );

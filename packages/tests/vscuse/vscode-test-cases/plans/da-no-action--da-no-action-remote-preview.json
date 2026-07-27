@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 94,
+    "total_steps": 99,
     "name": "da-no-action-remote-preview",
     "description": {
       "owner": "",
@@ -49,28 +49,33 @@
       "step_checkWorkspaceFiles_verify_c60abcc38_2_2",
       "step_checkWorkspaceFiles_verify_c60abcc38_2_3",
       "step_checkWorkspaceFiles_verify_c60abcc38_2_4",
-      "step_openAccountMenu_open_c60abcc38_3_1",
-      "step_openAccountMenu_assertPalette_c60abcc38_3_1",
-      "step_openAccountMenu_filter_c60abcc38_3_1",
-      "step_openAccountMenu_assertCommand_c60abcc38_3_1",
-      "step_openAccountMenu_selectSecond_c60abcc38_3_1",
-      "step_openAccountMenu_execute_c60abcc38_3_1",
-      "step_signInM365_assertOption_c60abcc38_3_2",
-      "step_signInM365_selectOption_c60abcc38_3_2",
-      "step_signInM365_confirmSignIn_c60abcc38_3_2",
-      "step_signInM365_focusAccount_c60abcc38_3_2",
-      "step_signInM365_typeAccount_c60abcc38_3_2",
-      "step_signInM365_next_c60abcc38_3_2",
-      "step_signInM365_typePassword_c60abcc38_3_2",
-      "step_signInM365_submit_c60abcc38_3_2",
-      "step_signInM365_closeBrowser_c60abcc38_3_2",
-      "step_signInM365_reopenAccounts_c60abcc38_3_2",
-      "step_signInM365_assertPalette_c60abcc38_3_2",
-      "step_signInM365_filterAccounts_c60abcc38_3_2",
-      "step_signInM365_assertAccountsCommand_c60abcc38_3_2",
-      "step_signInM365_openAccounts_c60abcc38_3_2",
-      "step_signInM365_assertReady_c60abcc38_3_2",
-      "step_signInM365_closeAccounts_c60abcc38_3_2",
+      "step_executeCommand_open_c60abcc38_3_1",
+      "step_executeCommand_assertPalette_c60abcc38_3_1",
+      "step_executeCommand_filter_c60abcc38_3_1",
+      "step_executeCommand_assertCommand_c60abcc38_3_1",
+      "step_executeCommand_execute_c60abcc38_3_1",
+      "step_openAccountMenu_open_c60abcc38_3_2",
+      "step_openAccountMenu_assertPalette_c60abcc38_3_2",
+      "step_openAccountMenu_filter_c60abcc38_3_2",
+      "step_openAccountMenu_assertCommand_c60abcc38_3_2",
+      "step_openAccountMenu_selectSecond_c60abcc38_3_2",
+      "step_openAccountMenu_execute_c60abcc38_3_2",
+      "step_signInM365_assertOption_c60abcc38_3_3",
+      "step_signInM365_selectOption_c60abcc38_3_3",
+      "step_signInM365_confirmSignIn_c60abcc38_3_3",
+      "step_signInM365_focusAccount_c60abcc38_3_3",
+      "step_signInM365_typeAccount_c60abcc38_3_3",
+      "step_signInM365_next_c60abcc38_3_3",
+      "step_signInM365_typePassword_c60abcc38_3_3",
+      "step_signInM365_submit_c60abcc38_3_3",
+      "step_signInM365_closeBrowser_c60abcc38_3_3",
+      "step_signInM365_reopenAccounts_c60abcc38_3_3",
+      "step_signInM365_assertPalette_c60abcc38_3_3",
+      "step_signInM365_filterAccounts_c60abcc38_3_3",
+      "step_signInM365_assertAccountsCommand_c60abcc38_3_3",
+      "step_signInM365_openAccounts_c60abcc38_3_3",
+      "step_signInM365_assertReady_c60abcc38_3_3",
+      "step_signInM365_closeAccounts_c60abcc38_3_3",
       "step_executeCommand_open_c60abcc38_4_1",
       "step_executeCommand_assertPalette_c60abcc38_4_1",
       "step_executeCommand_filter_c60abcc38_4_1",
@@ -847,7 +852,7 @@
       ]
     },
     {
-      "step_id": "step_openAccountMenu_open_c60abcc38_3_1",
+      "step_id": "step_executeCommand_open_c60abcc38_3_1",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -864,12 +869,12 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "component:authentication",
-        "action:open-account-menu"
+        "component:command-palette",
+        "action:execute-command"
       ]
     },
     {
-      "step_id": "step_openAccountMenu_assertPalette_c60abcc38_3_1",
+      "step_id": "step_executeCommand_assertPalette_c60abcc38_3_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -879,7 +884,115 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_openAccountMenu_open_c60abcc38_3_1"
+        "step_executeCommand_open_c60abcc38_3_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_filter_c60abcc38_3_1",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View"
+      },
+      "description": "Type the resolved command title into the active Command Palette.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_assertPalette_c60abcc38_3_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_assertCommand_c60abcc38_3_1",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion exactly one command titled Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View is visible and selectable in the active Command Palette.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_filter_c60abcc38_3_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_execute_c60abcc38_3_1",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to execute the selected Command Palette command.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_assertCommand_c60abcc38_3_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_openAccountMenu_open_c60abcc38_3_2",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "f1"
+      },
+      "description": "Press the F1 key to open the Command Palette in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_execute_c60abcc38_3_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "action:open-account-menu"
+      ]
+    },
+    {
+      "step_id": "step_openAccountMenu_assertPalette_c60abcc38_3_2",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Visual Studio Code Command Palette is visible, active, and ready to accept a command search.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_openAccountMenu_open_c60abcc38_3_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -890,7 +1003,7 @@
       ]
     },
     {
-      "step_id": "step_openAccountMenu_filter_c60abcc38_3_1",
+      "step_id": "step_openAccountMenu_filter_c60abcc38_3_2",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -902,7 +1015,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_openAccountMenu_assertPalette_c60abcc38_3_1"
+        "step_openAccountMenu_assertPalette_c60abcc38_3_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -912,7 +1025,7 @@
       ]
     },
     {
-      "step_id": "step_openAccountMenu_assertCommand_c60abcc38_3_1",
+      "step_id": "step_openAccountMenu_assertCommand_c60abcc38_3_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -922,7 +1035,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_openAccountMenu_filter_c60abcc38_3_1"
+        "step_openAccountMenu_filter_c60abcc38_3_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -933,7 +1046,7 @@
       ]
     },
     {
-      "step_id": "step_openAccountMenu_selectSecond_c60abcc38_3_1",
+      "step_id": "step_openAccountMenu_selectSecond_c60abcc38_3_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -945,7 +1058,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_openAccountMenu_assertCommand_c60abcc38_3_1"
+        "step_openAccountMenu_assertCommand_c60abcc38_3_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -955,7 +1068,7 @@
       ]
     },
     {
-      "step_id": "step_openAccountMenu_execute_c60abcc38_3_1",
+      "step_id": "step_openAccountMenu_execute_c60abcc38_3_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -967,7 +1080,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_openAccountMenu_selectSecond_c60abcc38_3_1"
+        "step_openAccountMenu_selectSecond_c60abcc38_3_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -977,7 +1090,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_assertOption_c60abcc38_3_2",
+      "step_id": "step_signInM365_assertOption_c60abcc38_3_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -987,7 +1100,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_openAccountMenu_execute_c60abcc38_3_1"
+        "step_openAccountMenu_execute_c60abcc38_3_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -999,7 +1112,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_selectOption_c60abcc38_3_2",
+      "step_id": "step_signInM365_selectOption_c60abcc38_3_3",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -1013,7 +1126,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_assertOption_c60abcc38_3_2"
+        "step_signInM365_assertOption_c60abcc38_3_3"
       ],
       "preconditions": [
         "dhash:379:52:16:5:c6392121998d30ce",
@@ -1027,7 +1140,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_confirmSignIn_c60abcc38_3_2",
+      "step_id": "step_signInM365_confirmSignIn_c60abcc38_3_3",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -1041,7 +1154,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_selectOption_c60abcc38_3_2"
+        "step_signInM365_selectOption_c60abcc38_3_3"
       ],
       "preconditions": [
         "dhash:762:97:16:5:24b1a72ba9aba343",
@@ -1055,7 +1168,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_focusAccount_c60abcc38_3_2",
+      "step_id": "step_signInM365_focusAccount_c60abcc38_3_3",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -1069,7 +1182,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_confirmSignIn_c60abcc38_3_2"
+        "step_signInM365_confirmSignIn_c60abcc38_3_3"
       ],
       "preconditions": [
         "dhash:369:350:16:5:2113d25252525221",
@@ -1084,7 +1197,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_typeAccount_c60abcc38_3_2",
+      "step_id": "step_signInM365_typeAccount_c60abcc38_3_3",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1096,7 +1209,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_focusAccount_c60abcc38_3_2"
+        "step_signInM365_focusAccount_c60abcc38_3_3"
       ],
       "preconditions": [
         "dhash:512:384:0:20:1b28f0d9e7e6dae4"
@@ -1109,7 +1222,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_next_c60abcc38_3_2",
+      "step_id": "step_signInM365_next_c60abcc38_3_3",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -1123,7 +1236,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_typeAccount_c60abcc38_3_2"
+        "step_signInM365_typeAccount_c60abcc38_3_3"
       ],
       "preconditions": [
         "dhash:629:484:16:5:23248c4b6c24d32c",
@@ -1138,7 +1251,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_typePassword_c60abcc38_3_2",
+      "step_id": "step_signInM365_typePassword_c60abcc38_3_3",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1150,7 +1263,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_next_c60abcc38_3_2"
+        "step_signInM365_next_c60abcc38_3_3"
       ],
       "preconditions": [
         "dhash:512:384:0:20:1b08f0d9d1e6e6e4"
@@ -1163,7 +1276,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_submit_c60abcc38_3_2",
+      "step_id": "step_signInM365_submit_c60abcc38_3_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1175,7 +1288,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_typePassword_c60abcc38_3_2"
+        "step_signInM365_typePassword_c60abcc38_3_3"
       ],
       "preconditions": [
         "dhash:512:384:0:20:1b08f0d9d1e6e6e4"
@@ -1188,7 +1301,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_closeBrowser_c60abcc38_3_2",
+      "step_id": "step_signInM365_closeBrowser_c60abcc38_3_3",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -1202,7 +1315,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_submit_c60abcc38_3_2"
+        "step_signInM365_submit_c60abcc38_3_3"
       ],
       "preconditions": [
         "dhash:1004:19:16:5:aac833964c9633cc",
@@ -1217,7 +1330,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_reopenAccounts_c60abcc38_3_2",
+      "step_id": "step_signInM365_reopenAccounts_c60abcc38_3_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1229,7 +1342,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_closeBrowser_c60abcc38_3_2"
+        "step_signInM365_closeBrowser_c60abcc38_3_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1239,7 +1352,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_assertPalette_c60abcc38_3_2",
+      "step_id": "step_signInM365_assertPalette_c60abcc38_3_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1249,7 +1362,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_reopenAccounts_c60abcc38_3_2"
+        "step_signInM365_reopenAccounts_c60abcc38_3_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1260,7 +1373,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_filterAccounts_c60abcc38_3_2",
+      "step_id": "step_signInM365_filterAccounts_c60abcc38_3_3",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1272,7 +1385,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_assertPalette_c60abcc38_3_2"
+        "step_signInM365_assertPalette_c60abcc38_3_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1282,7 +1395,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_assertAccountsCommand_c60abcc38_3_2",
+      "step_id": "step_signInM365_assertAccountsCommand_c60abcc38_3_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1292,7 +1405,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_filterAccounts_c60abcc38_3_2"
+        "step_signInM365_filterAccounts_c60abcc38_3_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1303,7 +1416,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_openAccounts_c60abcc38_3_2",
+      "step_id": "step_signInM365_openAccounts_c60abcc38_3_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1315,7 +1428,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_assertAccountsCommand_c60abcc38_3_2"
+        "step_signInM365_assertAccountsCommand_c60abcc38_3_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1325,7 +1438,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_assertReady_c60abcc38_3_2",
+      "step_id": "step_signInM365_assertReady_c60abcc38_3_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1335,7 +1448,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_openAccounts_c60abcc38_3_2"
+        "step_signInM365_openAccounts_c60abcc38_3_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1347,7 +1460,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_closeAccounts_c60abcc38_3_2",
+      "step_id": "step_signInM365_closeAccounts_c60abcc38_3_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1359,7 +1472,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_assertReady_c60abcc38_3_2"
+        "step_signInM365_assertReady_c60abcc38_3_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1381,7 +1494,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_closeAccounts_c60abcc38_3_2"
+        "step_signInM365_closeAccounts_c60abcc38_3_3"
       ],
       "preconditions": [],
       "postconditions": [],
