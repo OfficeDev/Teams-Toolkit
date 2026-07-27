@@ -17,6 +17,8 @@ const provisionEnvironmentSkipValue = "none";
 const commandTitles = {
   create: "Microsoft 365 Agents: Create New Agent/App",
   deploy: "Microsoft 365 Agents: Deploy",
+  focusToolkitView:
+    "Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View",
   notifications: "Notifications: Show Notifications",
   provision: "Microsoft 365 Agents: Provision",
   target: "Debug: Select and Start Debugging",
@@ -311,6 +313,16 @@ function createSemanticStepCompiler() {
     let error = append(
       output,
       render(state, "initialization/close-welcome-overlay.json.tpl"),
+    );
+    if (error) return error;
+    // Activating the toolkit opens its Get Started editor, which keeps keyboard
+    // focus and swallows the text typed into the first scaffold quick pick.
+    // Focusing the toolkit view first parks focus on a tree view instead.
+    error = append(
+      output,
+      render(state, "command-palette/execute-command.json.tpl", {
+        commandTitle: commandTitles.focusToolkitView,
+      }),
     );
     if (error) return error;
     error = append(

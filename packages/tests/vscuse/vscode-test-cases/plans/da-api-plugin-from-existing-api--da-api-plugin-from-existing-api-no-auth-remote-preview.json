@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 105,
+    "total_steps": 110,
     "name": "da-api-plugin-from-existing-api-no-auth-remote-preview",
     "description": {
       "owner": "",
@@ -24,10 +24,11 @@
       "step_executeCommand_filter_c2579f408_1_2",
       "step_executeCommand_assertCommand_c2579f408_1_2",
       "step_executeCommand_execute_c2579f408_1_2",
-      "step_singleSelect_assertQuestion_c2579f408_1_3",
-      "step_singleSelect_filter_c2579f408_1_3",
-      "step_singleSelect_assertOption_c2579f408_1_3",
-      "step_singleSelect_confirm_c2579f408_1_3",
+      "step_executeCommand_open_c2579f408_1_3",
+      "step_executeCommand_assertPalette_c2579f408_1_3",
+      "step_executeCommand_filter_c2579f408_1_3",
+      "step_executeCommand_assertCommand_c2579f408_1_3",
+      "step_executeCommand_execute_c2579f408_1_3",
       "step_singleSelect_assertQuestion_c2579f408_1_4",
       "step_singleSelect_filter_c2579f408_1_4",
       "step_singleSelect_assertOption_c2579f408_1_4",
@@ -40,25 +41,29 @@
       "step_singleSelect_filter_c2579f408_1_6",
       "step_singleSelect_assertOption_c2579f408_1_6",
       "step_singleSelect_confirm_c2579f408_1_6",
-      "step_textInput_assertQuestion_c2579f408_1_7",
-      "step_textInput_input_c2579f408_1_7",
-      "step_textInput_confirm_c2579f408_1_7",
-      "step_multiSelect_assertQuestion_c2579f408_1_8",
-      "step_multiSelect_filter_c2579f408_1_8",
-      "step_multiSelect_assertOption_c2579f408_1_8",
-      "step_multiSelect_focusOption_c2579f408_1_8",
-      "step_multiSelect_assertFocused_c2579f408_1_8",
-      "step_multiSelect_toggle_c2579f408_1_8",
-      "step_multiSelect_assertSelected_c2579f408_1_8",
-      "step_multiSelect_selectFilter_c2579f408_1_8",
-      "step_multiSelect_clearFilter_c2579f408_1_8",
-      "step_multiSelectConfirm_assertQuestion_c2579f408_1_9",
-      "step_multiSelectConfirm_confirm_c2579f408_1_9",
-      "step_confirmOption_assertPrompt_c2579f408_1_10",
-      "step_confirmOption_confirm_c2579f408_1_10",
-      "step_textInput_assertQuestion_c2579f408_1_11",
-      "step_textInput_input_c2579f408_1_11",
-      "step_textInput_confirm_c2579f408_1_11",
+      "step_singleSelect_assertQuestion_c2579f408_1_7",
+      "step_singleSelect_filter_c2579f408_1_7",
+      "step_singleSelect_assertOption_c2579f408_1_7",
+      "step_singleSelect_confirm_c2579f408_1_7",
+      "step_textInput_assertQuestion_c2579f408_1_8",
+      "step_textInput_input_c2579f408_1_8",
+      "step_textInput_confirm_c2579f408_1_8",
+      "step_multiSelect_assertQuestion_c2579f408_1_9",
+      "step_multiSelect_filter_c2579f408_1_9",
+      "step_multiSelect_assertOption_c2579f408_1_9",
+      "step_multiSelect_focusOption_c2579f408_1_9",
+      "step_multiSelect_assertFocused_c2579f408_1_9",
+      "step_multiSelect_toggle_c2579f408_1_9",
+      "step_multiSelect_assertSelected_c2579f408_1_9",
+      "step_multiSelect_selectFilter_c2579f408_1_9",
+      "step_multiSelect_clearFilter_c2579f408_1_9",
+      "step_multiSelectConfirm_assertQuestion_c2579f408_1_10",
+      "step_multiSelectConfirm_confirm_c2579f408_1_10",
+      "step_confirmOption_assertPrompt_c2579f408_1_11",
+      "step_confirmOption_confirm_c2579f408_1_11",
+      "step_textInput_assertQuestion_c2579f408_1_12",
+      "step_textInput_input_c2579f408_1_12",
+      "step_textInput_confirm_c2579f408_1_12",
       "step_checkWorkspaceFiles_verify_c2579f408_2_1",
       "step_checkWorkspaceFiles_verify_c2579f408_2_2",
       "step_checkWorkspaceFiles_verify_c2579f408_2_3",
@@ -247,7 +252,7 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Microsoft 365 Agents: Create New Agent/App"
+        "text": "Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View"
       },
       "description": "Type the resolved command title into the active Command Palette.",
       "content_refs": [],
@@ -269,7 +274,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion exactly one command titled Microsoft 365 Agents: Create New Agent/App is visible and selectable in the active Command Palette.",
+      "description": "@assertion exactly one command titled Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View is visible and selectable in the active Command Palette.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -308,11 +313,13 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertQuestion_c2579f408_1_3",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the active prompt titled New Project is visible.",
+      "step_id": "step_executeCommand_open_c2579f408_1_3",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "f1"
+      },
+      "description": "Press the F1 key to open the Command Palette in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -323,74 +330,94 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect",
-        "step_retry_timeout: 30"
+        "component:command-palette",
+        "action:execute-command"
       ]
     },
     {
-      "step_id": "step_singleSelect_filter_c2579f408_1_3",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "Declarative Agent"
-      },
-      "description": "Type the resolved option label Declarative Agent into the active single-select prompt.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_singleSelect_assertQuestion_c2579f408_1_3"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect"
-      ]
-    },
-    {
-      "step_id": "step_singleSelect_assertOption_c2579f408_1_3",
+      "step_id": "step_executeCommand_assertPalette_c2579f408_1_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the option Declarative Agent is visible and selectable in the filtered single-select prompt.",
+      "description": "@assertion the Visual Studio Code Command Palette is visible, active, and ready to accept a command search.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_filter_c2579f408_1_3"
+        "step_executeCommand_open_c2579f408_1_3"
       ],
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect",
+        "component:command-palette",
+        "action:execute-command",
         "step_retry_timeout: 30"
       ]
     },
     {
-      "step_id": "step_singleSelect_confirm_c2579f408_1_3",
+      "step_id": "step_executeCommand_filter_c2579f408_1_3",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Microsoft 365 Agents: Create New Agent/App"
+      },
+      "description": "Type the resolved command title into the active Command Palette.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_assertPalette_c2579f408_1_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_assertCommand_c2579f408_1_3",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion exactly one command titled Microsoft 365 Agents: Create New Agent/App is visible and selectable in the active Command Palette.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_filter_c2579f408_1_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_execute_c2579f408_1_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
         "key": "enter"
       },
-      "description": "Press Enter to confirm the filtered single-select option.",
+      "description": "Press Enter to execute the selected Command Palette command.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOption_c2579f408_1_3"
+        "step_executeCommand_assertCommand_c2579f408_1_3"
       ],
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect"
+        "component:command-palette",
+        "action:execute-command"
       ]
     },
     {
@@ -398,13 +425,13 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the active prompt titled Create Declarative Agent is visible.",
+      "description": "@assertion the active prompt titled New Project is visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_confirm_c2579f408_1_3"
+        "step_executeCommand_execute_c2579f408_1_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -419,9 +446,9 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Add an Action"
+        "text": "Declarative Agent"
       },
-      "description": "Type the resolved option label Add an Action into the active single-select prompt.",
+      "description": "Type the resolved option label Declarative Agent into the active single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -441,7 +468,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the option Add an Action is visible and selectable in the filtered single-select prompt.",
+      "description": "@assertion the option Declarative Agent is visible and selectable in the filtered single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -484,7 +511,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the active prompt titled Create an Action is visible.",
+      "description": "@assertion the active prompt titled Create Declarative Agent is visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -505,9 +532,9 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Start with an OpenAPI Description Document"
+        "text": "Add an Action"
       },
-      "description": "Type the resolved option label Start with an OpenAPI Description Document into the active single-select prompt.",
+      "description": "Type the resolved option label Add an Action into the active single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -527,7 +554,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the option Start with an OpenAPI Description Document is visible and selectable in the filtered single-select prompt.",
+      "description": "@assertion the option Add an Action is visible and selectable in the filtered single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -570,7 +597,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the active prompt titled OpenAPI Spec Document is visible.",
+      "description": "@assertion the active prompt titled Create an Action is visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -591,9 +618,9 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Enter OpenAPI Document URL"
+        "text": "Start with an OpenAPI Description Document"
       },
-      "description": "Type the resolved option label Enter OpenAPI Document URL into the active single-select prompt.",
+      "description": "Type the resolved option label Start with an OpenAPI Description Document into the active single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -613,7 +640,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the option Enter OpenAPI Document URL is visible and selectable in the filtered single-select prompt.",
+      "description": "@assertion the option Start with an OpenAPI Description Document is visible and selectable in the filtered single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -652,11 +679,11 @@
       ]
     },
     {
-      "step_id": "step_textInput_assertQuestion_c2579f408_1_7",
+      "step_id": "step_singleSelect_assertQuestion_c2579f408_1_7",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the active prompt titled OpenAPI Document is visible.",
+      "description": "@assertion the active prompt titled OpenAPI Spec Document is visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -668,12 +695,98 @@
       "postconditions": [],
       "tags": [
         "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_filter_c2579f408_1_7",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Enter OpenAPI Document URL"
+      },
+      "description": "Type the resolved option label Enter OpenAPI Document URL into the active single-select prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertQuestion_c2579f408_1_7"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertOption_c2579f408_1_7",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the option Enter OpenAPI Document URL is visible and selectable in the filtered single-select prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_filter_c2579f408_1_7"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_confirm_c2579f408_1_7",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the filtered single-select option.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertOption_c2579f408_1_7"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_textInput_assertQuestion_c2579f408_1_8",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the active prompt titled OpenAPI Document is visible.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_confirm_c2579f408_1_7"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
         "answer_type:text",
         "step_retry_timeout: 30"
       ]
     },
     {
-      "step_id": "step_textInput_input_c2579f408_1_7",
+      "step_id": "step_textInput_input_c2579f408_1_8",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -685,7 +798,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_assertQuestion_c2579f408_1_7"
+        "step_textInput_assertQuestion_c2579f408_1_8"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -695,7 +808,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_confirm_c2579f408_1_7",
+      "step_id": "step_textInput_confirm_c2579f408_1_8",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -707,7 +820,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_input_c2579f408_1_7"
+        "step_textInput_input_c2579f408_1_8"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -717,7 +830,7 @@
       ]
     },
     {
-      "step_id": "step_multiSelect_assertQuestion_c2579f408_1_8",
+      "step_id": "step_multiSelect_assertQuestion_c2579f408_1_9",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -727,7 +840,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_confirm_c2579f408_1_7"
+        "step_textInput_confirm_c2579f408_1_8"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -738,7 +851,7 @@
       ]
     },
     {
-      "step_id": "step_multiSelect_filter_c2579f408_1_8",
+      "step_id": "step_multiSelect_filter_c2579f408_1_9",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -750,7 +863,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_multiSelect_assertQuestion_c2579f408_1_8"
+        "step_multiSelect_assertQuestion_c2579f408_1_9"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -760,7 +873,7 @@
       ]
     },
     {
-      "step_id": "step_multiSelect_assertOption_c2579f408_1_8",
+      "step_id": "step_multiSelect_assertOption_c2579f408_1_9",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -770,7 +883,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_multiSelect_filter_c2579f408_1_8"
+        "step_multiSelect_filter_c2579f408_1_9"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -781,7 +894,7 @@
       ]
     },
     {
-      "step_id": "step_multiSelect_focusOption_c2579f408_1_8",
+      "step_id": "step_multiSelect_focusOption_c2579f408_1_9",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -793,7 +906,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_multiSelect_assertOption_c2579f408_1_8"
+        "step_multiSelect_assertOption_c2579f408_1_9"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -803,7 +916,7 @@
       ]
     },
     {
-      "step_id": "step_multiSelect_assertFocused_c2579f408_1_8",
+      "step_id": "step_multiSelect_assertFocused_c2579f408_1_9",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -813,7 +926,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_multiSelect_focusOption_c2579f408_1_8"
+        "step_multiSelect_focusOption_c2579f408_1_9"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -824,7 +937,7 @@
       ]
     },
     {
-      "step_id": "step_multiSelect_toggle_c2579f408_1_8",
+      "step_id": "step_multiSelect_toggle_c2579f408_1_9",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -836,7 +949,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_multiSelect_assertFocused_c2579f408_1_8"
+        "step_multiSelect_assertFocused_c2579f408_1_9"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -846,7 +959,7 @@
       ]
     },
     {
-      "step_id": "step_multiSelect_assertSelected_c2579f408_1_8",
+      "step_id": "step_multiSelect_assertSelected_c2579f408_1_9",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -856,7 +969,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_multiSelect_toggle_c2579f408_1_8"
+        "step_multiSelect_toggle_c2579f408_1_9"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -867,7 +980,7 @@
       ]
     },
     {
-      "step_id": "step_multiSelect_selectFilter_c2579f408_1_8",
+      "step_id": "step_multiSelect_selectFilter_c2579f408_1_9",
       "agent": "interaction",
       "tool": "keyboard_shortcut",
       "parameters": {
@@ -879,7 +992,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_multiSelect_assertSelected_c2579f408_1_8"
+        "step_multiSelect_assertSelected_c2579f408_1_9"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -889,7 +1002,7 @@
       ]
     },
     {
-      "step_id": "step_multiSelect_clearFilter_c2579f408_1_8",
+      "step_id": "step_multiSelect_clearFilter_c2579f408_1_9",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -901,7 +1014,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_multiSelect_selectFilter_c2579f408_1_8"
+        "step_multiSelect_selectFilter_c2579f408_1_9"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -911,7 +1024,7 @@
       ]
     },
     {
-      "step_id": "step_multiSelectConfirm_assertQuestion_c2579f408_1_9",
+      "step_id": "step_multiSelectConfirm_assertQuestion_c2579f408_1_10",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -921,7 +1034,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_multiSelect_clearFilter_c2579f408_1_8"
+        "step_multiSelect_clearFilter_c2579f408_1_9"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -932,7 +1045,7 @@
       ]
     },
     {
-      "step_id": "step_multiSelectConfirm_confirm_c2579f408_1_9",
+      "step_id": "step_multiSelectConfirm_confirm_c2579f408_1_10",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -944,7 +1057,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_multiSelectConfirm_assertQuestion_c2579f408_1_9"
+        "step_multiSelectConfirm_assertQuestion_c2579f408_1_10"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -954,7 +1067,7 @@
       ]
     },
     {
-      "step_id": "step_confirmOption_assertPrompt_c2579f408_1_10",
+      "step_id": "step_confirmOption_assertPrompt_c2579f408_1_11",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -964,7 +1077,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_multiSelectConfirm_confirm_c2579f408_1_9"
+        "step_multiSelectConfirm_confirm_c2579f408_1_10"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -976,7 +1089,7 @@
       ]
     },
     {
-      "step_id": "step_confirmOption_confirm_c2579f408_1_10",
+      "step_id": "step_confirmOption_confirm_c2579f408_1_11",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -988,7 +1101,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_confirmOption_assertPrompt_c2579f408_1_10"
+        "step_confirmOption_assertPrompt_c2579f408_1_11"
       ],
       "preconditions": [
         "dhash:364:74:16:5:08056a9a5d5516b6",
@@ -1003,7 +1116,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_assertQuestion_c2579f408_1_11",
+      "step_id": "step_textInput_assertQuestion_c2579f408_1_12",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1013,7 +1126,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_confirmOption_confirm_c2579f408_1_10"
+        "step_confirmOption_confirm_c2579f408_1_11"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1024,7 +1137,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_input_c2579f408_1_11",
+      "step_id": "step_textInput_input_c2579f408_1_12",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1036,7 +1149,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_assertQuestion_c2579f408_1_11"
+        "step_textInput_assertQuestion_c2579f408_1_12"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1046,7 +1159,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_confirm_c2579f408_1_11",
+      "step_id": "step_textInput_confirm_c2579f408_1_12",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1058,7 +1171,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_input_c2579f408_1_11"
+        "step_textInput_input_c2579f408_1_12"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1080,7 +1193,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_confirm_c2579f408_1_11"
+        "step_textInput_confirm_c2579f408_1_12"
       ],
       "preconditions": [],
       "postconditions": [],

@@ -552,13 +552,17 @@ visible and selectable, then confirms it with Enter. Its only semantic parameter
 assertion sentences are authored directly in the template. It contains no product command,
 scaffold, lifecycle, or business question IDs.
 
-The scaffold recipe instantiates this component exactly once after case initialization and before
-the first scaffold quick-input component. Its command title is
-`Microsoft 365 Agents: Create New Agent/App`, resolved by the compiler's command adapter;
-the compiler does not use a TreeView coordinate or provide a TreeView fallback. The first emitted
-quick-input assertion verifies that command execution reached the expected first scaffold
-question. A command-specific result assertion remains the responsibility of the following recipe
-component because the generic command component cannot know the invoked command's result surface.
+The scaffold recipe instantiates this component twice after case initialization and before
+the first scaffold quick-input component. It first executes
+`Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View`, because activating the
+toolkit opens its Get Started editor, which keeps keyboard focus and swallows the text typed into
+the first scaffold quick pick; focusing the toolkit view parks focus on a tree view instead. It then
+executes `Microsoft 365 Agents: Create New Agent/App`. Both titles are resolved by the compiler's
+command adapter; the compiler does not use a TreeView coordinate or provide a TreeView fallback. The
+first emitted quick-input assertion verifies that command execution reached the expected first
+scaffold question. A command-specific result assertion remains the responsibility of the following
+recipe component because the generic command component cannot know the invoked command's result
+surface.
 
 ## Lifecycle Component Composition Contract
 
@@ -906,6 +910,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-34 | Given the checked-in case sources and no injected `compileStep`, setup reads no external template contracts and uses the semantic compiler plus component renderer to emit twelve deterministic current-format runnable plans; every operation resolves through a supported adapter, removed manifest-owned cases are deleted, and a second setup reports no generated-plan changes.        |
 | VCB-35 | Given a `multiSelect` answer with a non-empty array of unique supported option IDs, compilation preserves the authored order, emits one filter/assert/toggle interaction per option, clears the filter between options, and confirms the prompt exactly once; invalid value shapes, empty arrays, and duplicates fail before plan output.                                                   |
 | VCB-36 | Given `provision.with.environment: none`, compilation omits environment selection while keeping the remaining provision recipe; omitting the input emits the recorded `dev` selection, and any other value fails before plan output.                                                                                                                                                        |
+| VCB-37 | Given any scaffold, compilation focuses the toolkit view through the command component after initialization and before the create command, so the toolkit Get Started editor cannot hold keyboard focus when the first scaffold quick pick opens.                                                                                                                                           |
 
 ## Boundary
 

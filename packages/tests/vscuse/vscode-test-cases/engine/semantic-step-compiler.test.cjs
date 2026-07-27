@@ -187,6 +187,31 @@ test("generated plans define app_name before reading it", async (context) => {
   }
 });
 
+test("scaffold focuses the toolkit view before the create command", async () => {
+  const result = await compileFixture(
+    "da-no-action.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const descriptions = result.value[0].plan.steps.map(
+    (step) => step.description,
+  );
+  const focusIndex = descriptions.indexOf(
+    "@assertion exactly one command titled Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View is visible and selectable in the active Command Palette.",
+  );
+  const createIndex = descriptions.indexOf(
+    "@assertion exactly one command titled Microsoft 365 Agents: Create New Agent/App is visible and selectable in the active Command Palette.",
+  );
+  const firstQuestionIndex = descriptions.indexOf(
+    "@assertion the active prompt titled New Project is visible.",
+  );
+
+  assert.equal(focusIndex >= 0, true);
+  assert.equal(focusIndex < createIndex, true);
+  assert.equal(createIndex < firstQuestionIndex, true);
+});
+
 test("DA scaffold filters its options before app name", async (context) => {
   const plansDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "vscuse-generated-"),
