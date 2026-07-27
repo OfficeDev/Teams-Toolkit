@@ -603,8 +603,10 @@ describe("v4TemplateBridge.scaffoldDeclarativeFromV4Channel", () => {
       {}
     );
 
-    assert.equal(warning.mock.calls.length, 1);
+    assert.equal(warning.mock.calls.length, 2);
     assert.include(warning.mock.calls[0][0], "metadata unavailable");
+    // the action is still injected, with placeholders the developer must replace
+    assert.include(warning.mock.calls[1][0], "https://api.github.com/mcp");
     assert.include(
       (await fs.readFile(path.join(tmpDir, "m365agents.yml"))).toString(),
       "oauth/register"

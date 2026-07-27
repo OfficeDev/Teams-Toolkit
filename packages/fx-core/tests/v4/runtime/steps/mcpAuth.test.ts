@@ -187,8 +187,10 @@ describe("mcp-auth steps (v4)", () => {
       );
 
       assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
-      assert.lengthOf(warnings, 1);
+      assert.lengthOf(warnings, 2);
       assert.include(warnings[0], "metadata unavailable");
+      // the action is still injected, with placeholders the developer must replace
+      assert.include(warnings[1], SERVER_URL);
     });
 
     it("warns when oauth-dynamic requires manual replacement of the well-known URL", async () => {
