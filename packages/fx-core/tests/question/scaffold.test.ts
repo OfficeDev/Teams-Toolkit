@@ -917,6 +917,14 @@ describe("MCPCliPreFetchToolsNode", () => {
 
 describe("MCPForDAServerUrlNode", () => {
   const sandbox = vi;
+  beforeEach(() => {
+    // Every case below reaches the endpoint probe, so give it a benign default. Without
+    // this the validator would issue a real request to the example urls.
+    vi.spyOn(teamsProjectTypeDeps, "probeMCPServerAuth").mockResolvedValue({
+      requiresAuth: false,
+      endpointStatus: "confirmed",
+    });
+  });
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -944,6 +952,59 @@ describe("MCPForDAServerUrlNode", () => {
     const result = await validFunc("https://example.com", inputs);
     assert.isUndefined(result);
     assert.isTrue(fetchStub.mock.calls.length === 0);
+    // The endpoint probe is not CLI-only: VS Code skips the tool fetch but must still
+    // validate the url.
+    assert.strictEqual(vi.mocked(teamsProjectTypeDeps.probeMCPServerAuth).mock.calls.length, 1);
+  });
+  it("validFunc rejects a url the server answers with 404", async () => {
+    vi.mocked(teamsProjectTypeDeps.probeMCPServerAuth).mockResolvedValue({
+      requiresAuth: false,
+      endpointStatus: "notEndpoint",
+      responseStatus: 404,
+    });
+    const node = MCPForDAServerUrlNode();
+    const data = node.data as any;
+    const validFunc = data.additionalValidationOnAccept.validFunc;
+    const inputs: Inputs = { platform: Platform.VSCode };
+    const result = await validFunc("https://taskmaster.example.com", inputs);
+    assert.isString(result);
+    assert.include(result, "/mcp");
+  });
+  it("validFunc accepts every outcome other than 404", async () => {
+    // 404 is the only status a valid endpoint was never measured returning. Anything else,
+    // including an unreachable server, must not block scaffolding.
+    const node = MCPForDAServerUrlNode();
+    const data = node.data as any;
+    const validFunc = data.additionalValidationOnAccept.validFunc;
+
+    vi.mocked(teamsProjectTypeDeps.probeMCPServerAuth).mockResolvedValue({
+      requiresAuth: true,
+      endpointStatus: "confirmed",
+    });
+    assert.isUndefined(
+      await validFunc("https://secure.example.com/mcp", { platform: Platform.VSCode })
+    );
+
+    vi.mocked(teamsProjectTypeDeps.probeMCPServerAuth).mockResolvedValue({
+      requiresAuth: false,
+      endpointStatus: "undetermined",
+    });
+    assert.isUndefined(
+      await validFunc("https://down.example.com/mcp", { platform: Platform.VSCode })
+    );
+
+    // A WAF in front of a valid endpoint answers 403, so the softer `notEndpoint` shapes
+    // warn after scaffolding rather than blocking the url outright here.
+    for (const responseStatus of [403, 405, 200]) {
+      vi.mocked(teamsProjectTypeDeps.probeMCPServerAuth).mockResolvedValue({
+        requiresAuth: false,
+        endpointStatus: "notEndpoint",
+        responseStatus,
+      });
+      assert.isUndefined(
+        await validFunc("https://waf.example.com/mcp", { platform: Platform.VSCode })
+      );
+    }
   });
   it("validFunc sets auth inputs when requiresAuth=true and no authMetadataUrl", async () => {
     vi.spyOn(teamsProjectTypeDeps, "fetchMCPTools").mockResolvedValue({

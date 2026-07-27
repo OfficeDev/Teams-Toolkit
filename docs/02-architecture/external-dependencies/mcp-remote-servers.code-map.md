@@ -18,12 +18,15 @@ location in source.
 | §1.2 `initialize` POST probe | `packages/fx-core/src/common/mcpToolFetcher.ts` (`probeMCPServerAuth`) |
 | §1.2 Streamable HTTP / SSE transport selection for tool listing | `packages/fx-core/src/common/mcpToolFetcher.ts` (`fetchMCPTools`) |
 | §1.2 Shared re-export consumed by v3 call sites | `packages/fx-core/src/component/utils/mcpToolFetcher.ts` |
-| §1.3 / §1.4 `404` reported as "not an MCP endpoint" | `packages/fx-core/src/common/mcpToolFetcher.ts` (`MCPAuthProbeResult.endpointNotFound`) |
+| §1.2 JSON-RPC envelope check, tolerant of SSE framing | `packages/fx-core/src/common/mcpToolFetcher.ts` (`carriesJSONRPCEnvelope`) |
+| §1.3 / §1.4 Three-state URL verdict | `packages/fx-core/src/common/mcpToolFetcher.ts` (`MCPEndpointStatus`, `MCPAuthProbeResult.endpointStatus`) |
+| §1.4 Negative statuses treated as "not an MCP endpoint" | `packages/fx-core/src/common/mcpToolFetcher.ts` (`NOT_AN_ENDPOINT_STATUSES`) |
 | §1.4 Warning raised on the dynamic-tool-discovery scaffold path | `packages/fx-core/src/component/generator/declarativeAgent/helper.ts` (`generateForMCPForDAWithAuth`, warning type `mcpServerUrlNotFound`) |
 | §1.4 Warning text | `packages/fx-core/resource/package.nls.json` (`core.MCPForDA.mcpServerUrlNotFound`) |
 | §1.4 Tool-fetch based signal on the non-DT paths | `packages/fx-core/src/component/generator/declarativeAgent/helper.ts` (`generateForMCPForDA`), `packages/fx-core/src/core/FxCore.declarativeAgent.ts` (warning type `mcpNoToolsFetched`) |
 | §1.1 / §1.4 v3 endpoint resolution and placeholder fallback | `packages/fx-core/src/component/utils/mcpAuthScaffolder.ts` (`resolveMCPAuthEndpoints`) |
 | §1.1 / §1.4 v4 endpoint resolution and placeholder fallback | `packages/fx-core/src/v4/mcp/mcpAuthScaffold.ts` (`resolveEndpoints`), `packages/fx-core/src/v4/mcp/mcpAuthAction.ts` |
 | §1.4 v4 tool fetch on the static path | `packages/fx-core/src/v4/runtime/steps/mcpStatic.ts` |
-| §3 MCP server URL question (input-time validation site) | `packages/fx-core/src/question/scaffold/vsc/teamsProjectTypeNode.ts` (`MCPForDAServerUrlNode`, `additionalValidationOnAccept`) |
+| §2.10 MCP server URL question (input-time blocking validation site) | `packages/fx-core/src/question/scaffold/vsc/teamsProjectTypeNode.ts` (`MCPForDAServerUrlNode`, `additionalValidationOnAccept`) |
+| §2.10 Rejection message | `packages/fx-core/resource/package.nls.json` (`core.createProjectQuestion.mcpForDa.ServerUrl.notAnMcpEndpoint`) |
 | §1.3 / §1.4 Measured behavior regression tests | `packages/fx-core/tests/component/utils/mcpToolFetcher.test.ts`, `packages/fx-core/tests/component/generator/declarativeAgentGenerator.test.ts` |

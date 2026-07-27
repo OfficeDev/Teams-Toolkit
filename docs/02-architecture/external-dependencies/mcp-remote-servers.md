@@ -34,9 +34,23 @@ implements only the 2025-06-18 chain dead-ends on the latter.
   deployed and reachable.
 - An MCP endpoint answers an unauthenticated `initialize` **POST** with either
   a JSON-RPC result, or a `401` challenge. It does not answer `404`.
+- A `2xx` status alone is not proof. `https://substrate-sdf.office.com/` answers
+  `200` with HTML to the same `POST` (§1.4). The **JSON-RPC envelope in the body**
+  is the proof, and it survives the `text/event-stream` framing a streamable-HTTP
+  server replies with, because `jsonrpc` sits inside the `data:` payload:
+
+  ```
+  event: message
+  data: {"result":{"protocolVersion":"2025-03-26",…},"id":1,"jsonrpc":"2.0"}
+  ```
+
+- Authorization is **not** universal. `https://learn.microsoft.com/api/mcp`
+  answers `initialize` with `200` and a full result, and serves its three tools,
+  with no credentials at all (§1.3).
 - `GET` on the same URL is **not** a substitute. Two of the servers measured
   return `200` with an HTML or JSON page on `GET` at a non-endpoint path while
-  returning `404` to `POST` at that same path.
+  returning `404` to `POST` at that same path, and one **valid** endpoint
+  returns `405` to `GET` (§1.3).
 
 ### 1.3 Measured behavior — documented endpoint URLs
 
@@ -49,12 +63,19 @@ implements only the 2025-06-18 chain dead-ends on the latter.
 | Canva | `https://mcp.canva.com/mcp` | 401 | 401 | `realm="OAuth"`, `resource_metadata=".../oauth-protected-resource/mcp"` |
 | Moody's | `https://api.moodys.com/genai-ready-data/m1/mcp` | 401 | 401 | `resource_metadata="https://api.moodys.com/genai-ready-data/.well-known/oauth-protected-resource/m1/mcp"` |
 | LSEG | `https://api.analytics.lseg.com/lfa/mcp` | 401 | 401 | `realm="MCP Server"`, `resource_metadata=".../oauth-protected-resource/lfa/mcp"` |
+| Microsoft Learn | `https://learn.microsoft.com/api/mcp` | **200**, `text/event-stream`, JSON-RPC result | **405** (HTML) | — (no authorization required) |
 | Office SDF | `https://substrate-sdf.office.com/exmigd2sapp/mcp` | 503 | 503 | — (Envoy `upstream connect error`; ring was down) |
 
-**No valid MCP endpoint returned `404`.** Eight reachable valid endpoints were
-measured (the seven above plus the eval server in §1.5); all eight answered
-`401`. The Office SDF ring was unreachable and returned `503` on every path,
-valid or not.
+**No valid MCP endpoint returned `404`.** Nine reachable valid endpoints were
+measured (the eight above plus the eval server in §1.5); eight answered `401`
+and one answered `200`. The Office SDF ring was unreachable and returned `503`
+on every path, valid or not.
+
+The Learn row also shows `405` coming from a **valid** endpoint: the server
+exists and rejects the method, answering `GET` with
+`"This is an MCP server endpoint and cannot be accessed directly via a browser
+or unsupported transports like SSE."` `405` therefore only carries a signal for
+the `initialize` `POST`, never for `GET`.
 
 Note that HubSpot's endpoint **is** the origin root. A bare origin is a
 legitimate MCP endpoint URL, so URL *shape* carries no signal.
@@ -71,11 +92,26 @@ instead of the endpoint.
 | `https://mcp.notion.com/` | 404 | 404 | yes |
 | `https://mcp.canva.com/` | **404** | **200** (HTML) | yes — `GET` would have cleared it |
 | `https://api.analytics.lseg.com/lfa/` | 404 | 404 | yes (Kong `no Route matched`) |
+| `https://taskmaster-mcp-server.azurewebsites.net/` | **404** | **200** (JSON) | yes |
+| `https://learn.microsoft.com/api/` | **405** | 404 (`API not handled`) | **no** |
+| `https://learn.microsoft.com/api` | **403** (Akamai) | 404 | **no** |
+| `https://learn.microsoft.com/` | **403** (Akamai) | 200 (HTML) | **no** |
 | `https://api.moodys.com/genai-ready-data/m1/` | **401** | 401 | **no** |
 | `https://substrate-sdf.office.com/exmigd2sapp/` | 503 | 503 | no (ring down) |
-| `https://substrate-sdf.office.com/` | 200 (HTML) | 200 (HTML) | no |
+| `https://substrate-sdf.office.com/` | 200 (HTML) | 200 (HTML) | **no** |
 
 HubSpot has no truncated form — its endpoint is already the origin root.
+
+A `404`-only rule catches 6 of these 12. Widening the negative signal to the
+other shapes the measurements produced — `403`, `405`, and `2xx` without a
+JSON-RPC envelope — raises that to 10 of 12 while still misclassifying none of
+the nine valid endpoints in §1.3 and §1.5.
+
+The two `403`s are **not** the application answering: Akamai intercepts ahead
+of it and rejects the probe outright. A WAF fronting a *valid* endpoint could
+do the same to a request carrying no ordinary browser `User-Agent`, so `403` is
+weaker evidence than `404` — it can mean "wrong URL" or "the edge disliked the
+request".
 
 The Moody's row is the significant miss: the truncated URL is answered by the
 API gateway's auth layer, which is mounted on the **path prefix**, so it
@@ -132,20 +168,32 @@ with `GET` and with the final path segment removed.
    URL, and must not be reported as one (§1.3, §1.4).
 7. URL shape carries no signal: a bare origin is a legitimate endpoint, and
    `/sse` endpoints are still deployed (§1.2, §1.3).
+8. A successful `initialize` must be recognized by the **JSON-RPC envelope in
+   the body**, not by the `2xx` status, and the check must tolerate
+   `text/event-stream` framing (§1.2).
+9. Confirmation that a URL is an MCP endpoint must be tracked separately from
+   the absence of an authorization challenge: a server needing no
+   authorization at all is legitimate (§1.2), so "no auth" cannot stand in for
+   "could not tell" (§1.2, §1.3).
+10. A user-supplied MCP server URL must be rejected at input time when an
+    `initialize` `POST` returns `404`, and only then
+    ([ADR-0020](../adr/ADR-0020-mcp-server-url-validity.md)).
+11. The weaker negative signals — `403`, `405`, and `2xx` without a JSON-RPC
+    envelope — must warn rather than block, because a `403` can come from a WAF
+    in front of a valid endpoint (§1.4)
+    ([ADR-0020](../adr/ADR-0020-mcp-server-url-validity.md)).
+12. Accepting a URL must never be presented as confirmation that it serves
+    tools — §1.4 documents a wrong URL that answers `401`
+    ([ADR-0020](../adr/ADR-0020-mcp-server-url-validity.md)).
 
 ## 3. Open questions
 
-- Should the `404` signal move from a post-scaffold warning to input-time
-  validation on the MCP server URL question, and should it block or only
-  hint? Precision was 100% across eight valid endpoints, but the sample is
-  small and a gateway mid-deploy can legitimately `404`. Recall was 6/9, so it
-  cannot be the only gate. Tracked as
-  [ADR-0020](../adr/ADR-0020-mcp-server-url-validity.md).
 - The dynamic-tool-discovery scaffold path performs no tool fetch by design,
-  so it has no independent check that the URL serves tools. The `404` warning
-  covers part of this; the §1.4 Moody's case remains uncovered.
-- `405` was not observed on any server, including the SSE endpoint. Whether
-  `405` should join `404` as a negative signal is unresolved and currently
-  decided against on precautionary grounds only.
+  so it has no independent check that the URL serves tools. §2.10 and §2.11
+  cover the status-code cases; the §1.4 Moody's case remains uncovered, as does
+  a URL whose host was unreachable at scaffold time.
+- Whether a confirmed endpoint should be surfaced to the user as positive
+  feedback at input time, and through which affordance, is undecided. The
+  probe now distinguishes the state; nothing renders it.
 - When a URL is known-wrong, should dynamic client registration still be
   allowed to register an OAuth client against that host during provision?

@@ -832,8 +832,10 @@ async function generateForMCPForDAWithAuth(
           }
           // This branch never fetches tools, so a mistyped server URL would otherwise leave no
           // trace at all: endpoint discovery falls back to the host and happily returns its
-          // authorization server, and the scaffold looks complete.
-          if (authProbe.endpointNotFound) {
+          // authorization server, and the scaffold looks complete. Warns on every `notEndpoint`
+          // shape, not just 404 — this is advisory, so it can be broader than the blocking rule
+          // applied when the URL is first entered.
+          if (authProbe.endpointStatus === "notEndpoint") {
             warnings.push({
               type: "mcpServerUrlNotFound",
               content: getLocalizedString("core.MCPForDA.mcpServerUrlNotFound", mcpServerUrl),

@@ -273,12 +273,44 @@ describe("mcpToolFetcher", () => {
   });
 
   describe("probeMCPServerAuth", () => {
-    it("should return requiresAuth=false when server responds 200", async () => {
-      vi.spyOn(axios, "post").mockResolvedValue({ status: 200 });
+    it("should confirm the endpoint when a 200 carries a JSON-RPC envelope", async () => {
+      vi.spyOn(axios, "post").mockResolvedValue({
+        status: 200,
+        data: { jsonrpc: "2.0", id: 1, result: { protocolVersion: "2025-03-26" } },
+      });
 
       const result = await probeMCPServerAuth("https://example.com/mcp");
       assert.isFalse(result.requiresAuth);
+      assert.equal(result.endpointStatus, "confirmed");
       assert.isUndefined(result.authMetadataUrl);
+    });
+
+    it("should confirm the endpoint when the JSON-RPC envelope arrives SSE-framed", async () => {
+      // Streamable-HTTP servers answer `initialize` with `text/event-stream`, which axios hands
+      // back as raw text. The envelope is inside the `data:` payload, so the body text carries
+      // the proof even though nothing parsed the frames.
+      vi.spyOn(axios, "post").mockResolvedValue({
+        status: 200,
+        data: 'event: message\ndata: {"result":{"protocolVersion":"2025-03-26"},"id":1,"jsonrpc":"2.0"}\n\n',
+      });
+
+      const result = await probeMCPServerAuth("https://learn.example.com/api/mcp");
+      assert.isFalse(result.requiresAuth);
+      assert.equal(result.endpointStatus, "confirmed");
+    });
+
+    it("should reject a 200 that carries no JSON-RPC envelope", async () => {
+      // A truncated url on a host that serves a landing page answers 200 with HTML, so the
+      // status alone proves nothing.
+      vi.spyOn(axios, "post").mockResolvedValue({
+        status: 200,
+        data: "<!DOCTYPE html><html><body>Welcome</body></html>",
+      });
+
+      const result = await probeMCPServerAuth("https://example.com/");
+      assert.isFalse(result.requiresAuth);
+      assert.equal(result.endpointStatus, "notEndpoint");
+      assert.equal(result.responseStatus, 200);
     });
 
     it("should return requiresAuth=true when server responds 401", async () => {
@@ -310,30 +342,51 @@ describe("mcpToolFetcher", () => {
       assert.equal(result.authMetadataUrl, "https://secure.example.com/.well-known/oauth");
     });
 
-    it("should return requiresAuth=false on non-401 errors", async () => {
+    it("should leave the endpoint undetermined on a transport failure", async () => {
+      // Nothing was learned about the url, so it must not be reported as wrong.
       vi.spyOn(axios, "post").mockRejectedValue(new Error("ECONNREFUSED"));
 
       const result = await probeMCPServerAuth("https://down.example.com/mcp");
       assert.isFalse(result.requiresAuth);
-      assert.isNotTrue(result.endpointNotFound);
+      assert.equal(result.endpointStatus, "undetermined");
+      assert.isUndefined(result.responseStatus);
     });
 
-    it("should flag a 404 as a url that is not an MCP endpoint", async () => {
-      // The mistyped form of an MCP url often still serves a page on GET, so only the
-      // initialize POST reveals that nothing is routed there.
-      vi.spyOn(axios, "post").mockRejectedValue({ response: { status: 404 } });
+    it("should leave the endpoint undetermined on a 5xx", async () => {
+      vi.spyOn(axios, "post").mockRejectedValue({ response: { status: 503 } });
 
-      const result = await probeMCPServerAuth("https://taskmaster.example.com");
-      assert.isFalse(result.requiresAuth);
-      assert.isTrue(result.endpointNotFound);
+      const result = await probeMCPServerAuth("https://down.example.com/mcp");
+      assert.equal(result.endpointStatus, "undetermined");
     });
 
-    it("should not flag a 401 as a missing endpoint", async () => {
+    it("should leave the endpoint undetermined on a transient 4xx", async () => {
+      // 429 says the server is throttling, not that the url is wrong.
+      vi.spyOn(axios, "post").mockRejectedValue({ response: { status: 429 } });
+
+      const result = await probeMCPServerAuth("https://busy.example.com/mcp");
+      assert.equal(result.endpointStatus, "undetermined");
+      assert.isUndefined(result.responseStatus);
+    });
+
+    for (const status of [403, 404, 405]) {
+      it(`should flag a ${status} as a url that is not an MCP endpoint`, async () => {
+        // The mistyped form of an MCP url often still serves a page on GET, so only the
+        // initialize POST reveals that nothing MCP is routed there.
+        vi.spyOn(axios, "post").mockRejectedValue({ response: { status } });
+
+        const result = await probeMCPServerAuth("https://taskmaster.example.com");
+        assert.isFalse(result.requiresAuth);
+        assert.equal(result.endpointStatus, "notEndpoint");
+        assert.equal(result.responseStatus, status);
+      });
+    }
+
+    it("should confirm rather than reject a 401", async () => {
       vi.spyOn(axios, "post").mockRejectedValue({ status: 401 });
 
       const result = await probeMCPServerAuth("https://taskmaster.example.com/mcp");
       assert.isTrue(result.requiresAuth);
-      assert.isNotTrue(result.endpointNotFound);
+      assert.equal(result.endpointStatus, "confirmed");
     });
 
     it("should handle 401 via error.status (no response object)", async () => {
@@ -341,6 +394,14 @@ describe("mcpToolFetcher", () => {
 
       const result = await probeMCPServerAuth("https://secure.example.com/mcp");
       assert.isTrue(result.requiresAuth);
+    });
+
+    it("should flag a 404 reported via error.status (no response object)", async () => {
+      vi.spyOn(axios, "post").mockRejectedValue({ status: 404 });
+
+      const result = await probeMCPServerAuth("https://example.com/");
+      assert.equal(result.endpointStatus, "notEndpoint");
+      assert.equal(result.responseStatus, 404);
     });
   });
 

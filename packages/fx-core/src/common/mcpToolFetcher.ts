@@ -129,20 +129,58 @@ export async function readMCPToolsFromFile(filePath: string): Promise<MCPTool[]>
   });
 }
 
+/**
+ * What a probe learned about the URL itself, independently of whether authorization is needed.
+ *
+ * - `confirmed`: something MCP-shaped answered — either a successful `initialize` or an OAuth
+ *   challenge. The URL is right.
+ * - `notEndpoint`: the server answered definitively and the answer was not MCP. The URL is
+ *   most likely wrong.
+ * - `undetermined`: nothing was learned (server error, timeout, DNS or transport failure).
+ *   Says nothing about the URL and must never be reported as a problem with it.
+ */
+export type MCPEndpointStatus = "confirmed" | "notEndpoint" | "undetermined";
+
+/** HTTP statuses treated as proof that no MCP endpoint is routed at the URL.
+ *
+ * Deliberately enumerated rather than "any 4xx": measurements across nine live servers only ever
+ * produced these three for a wrong URL (404 from routing, 405 from an endpoint that exists but
+ * rejects the method, 403 from a WAF in front of the app). Statuses such as 429 or 408 are
+ * transient and would slander a URL that is in fact correct. */
+const NOT_AN_ENDPOINT_STATUSES = [403, 404, 405];
+
+/**
+ * A 2xx alone proves nothing: a truncated URL on a host that serves a landing page answers 200
+ * with HTML. The JSON-RPC envelope in the payload is the actual proof. The body text is searched
+ * instead of the frames being parsed because that works for both `application/json` and the
+ * `text/event-stream` framing streamable-HTTP servers use — `jsonrpc` sits inside the `data:`
+ * payload either way. The quotes keep an HTML page that merely mentions the word from matching.
+ */
+function carriesJSONRPCEnvelope(body: unknown): boolean {
+  if (typeof body === "string") {
+    return body.includes('"jsonrpc"');
+  }
+  if (body && typeof body === "object") {
+    return "jsonrpc" in body;
+  }
+  return false;
+}
+
 export interface MCPAuthProbeResult {
   requiresAuth: boolean;
   authMetadataUrl?: string;
   /**
-   * The endpoint answered an MCP `initialize` request with 404, so nothing is routed there.
-   * A mistyped server URL commonly still serves an ordinary page on GET — the host's landing
-   * page, say — which makes it look reachable; only the POST exposes that it is not an MCP
-   * endpoint. Reported separately from `requiresAuth` because it says the URL is wrong, not
-   * that authorization is missing.
+   * Whether the URL was confirmed to be an MCP endpoint. Reported separately from `requiresAuth`
+   * because it says whether the URL is right, not whether authorization is missing. A mistyped
+   * URL commonly still serves an ordinary page on GET — the host's landing page, say — which
+   * makes it look reachable; only the `initialize` POST exposes that nothing MCP is there.
    */
-  endpointNotFound?: boolean;
+  endpointStatus: MCPEndpointStatus;
+  /** The HTTP status behind a `notEndpoint` verdict. Absent for the other two states. */
+  responseStatus?: number;
 }
 
-/** Probe an MCP streamable-HTTP endpoint for an OAuth challenge. */
+/** Probe an MCP streamable-HTTP endpoint for an OAuth challenge and for the URL's validity. */
 export async function probeMCPServerAuth(serverUrl: string): Promise<MCPAuthProbeResult> {
   const initializeBody = {
     jsonrpc: "2.0",
@@ -155,16 +193,21 @@ export async function probeMCPServerAuth(serverUrl: string): Promise<MCPAuthProb
     },
   };
   try {
-    await axios.post(serverUrl, initializeBody, {
+    const response = await axios.post(serverUrl, initializeBody, {
       timeout: 10000,
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json, text/event-stream",
       },
     });
-    return { requiresAuth: false };
+    return carriesJSONRPCEnvelope(response.data)
+      ? { requiresAuth: false, endpointStatus: "confirmed" }
+      : { requiresAuth: false, endpointStatus: "notEndpoint", responseStatus: response.status };
   } catch (error: any) {
-    if (error?.response?.status === 401 || error?.status === 401) {
+    const status: unknown = error?.response?.status ?? error?.status;
+    if (status === 401) {
+      // Only something that means to be a protected resource issues an OAuth challenge, so a
+      // 401 confirms the endpoint just as firmly as a successful initialize does.
       const wwwAuth = error?.response?.headers?.["www-authenticate"];
       let authMetadataUrl: string | undefined;
       if (wwwAuth) {
@@ -173,12 +216,12 @@ export async function probeMCPServerAuth(serverUrl: string): Promise<MCPAuthProb
           authMetadataUrl = match[1];
         }
       }
-      return { requiresAuth: true, authMetadataUrl };
+      return { requiresAuth: true, authMetadataUrl, endpointStatus: "confirmed" };
     }
-    if (error?.response?.status === 404 || error?.status === 404) {
-      return { requiresAuth: false, endpointNotFound: true };
+    if (typeof status === "number" && NOT_AN_ENDPOINT_STATUSES.includes(status)) {
+      return { requiresAuth: false, endpointStatus: "notEndpoint", responseStatus: status };
     }
-    return { requiresAuth: false };
+    return { requiresAuth: false, endpointStatus: "undetermined" };
   }
 }
 

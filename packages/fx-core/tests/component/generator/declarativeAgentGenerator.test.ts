@@ -2021,7 +2021,8 @@ describe("helper", async () => {
 
       vi.spyOn(mcpToolFetcher, "probeMCPServerAuth").mockResolvedValue({
         requiresAuth: false,
-        endpointNotFound: true,
+        endpointStatus: "notEndpoint",
+        responseStatus: 404,
       });
       vi.spyOn(
         mcpAuthScaffolderDeps.mcpAuthScaffolderDeps,
@@ -2048,6 +2049,78 @@ describe("helper", async () => {
         assert.isDefined(warning);
         assert.include(warning!.content, "https://taskmaster.example.com");
         assert.include(warning!.content, "/mcp");
+      }
+    });
+
+    it("DT auth: warns for a non-404 answer that is still not MCP", async () => {
+      // The advisory warning is broader than the blocking rule applied when the url is first
+      // entered: a 403 from a WAF is not certain enough to reject the url, but it is worth
+      // saying out loud once the scaffold exists.
+      vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(true);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readJSON").mockResolvedValue({
+        schema_version: "v1",
+        functions: [],
+        runtimes: [],
+      });
+      vi.spyOn(fs, "writeJSON").mockResolvedValue();
+      vi.spyOn(fs, "readFile").mockResolvedValue(
+        "provision:\n  - uses: teamsApp/create\n    writeToEnvironmentFile:\n      teamsAppId: TEAMS_APP_ID\n" as any
+      );
+      vi.spyOn(fs, "writeFile").mockResolvedValue();
+
+      vi.spyOn(mcpToolFetcher, "probeMCPServerAuth").mockResolvedValue({
+        requiresAuth: false,
+        endpointStatus: "notEndpoint",
+        responseStatus: 403,
+      });
+
+      const inputs: Inputs = {
+        platform: Platform.VSCode,
+        [QuestionNames.MCPForDAServerUrl]: "https://waf.example.com/api",
+        [QuestionNames.MCPForDAAuthType]: "oauth",
+      };
+
+      const res = await generatorHelper.generateForMCPForDA(testDestinationPath, inputs);
+
+      assert.isTrue(res.isOk());
+      if (res.isOk()) {
+        assert.isDefined(res.value.warnings?.find((w) => w.type === "mcpServerUrlNotFound"));
+      }
+    });
+
+    it("DT auth: stays quiet when the probe learned nothing about the url", async () => {
+      // A timeout or 5xx says the network misbehaved, not that the url is wrong. Warning here
+      // would train developers to ignore the message.
+      vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(true);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readJSON").mockResolvedValue({
+        schema_version: "v1",
+        functions: [],
+        runtimes: [],
+      });
+      vi.spyOn(fs, "writeJSON").mockResolvedValue();
+      vi.spyOn(fs, "readFile").mockResolvedValue(
+        "provision:\n  - uses: teamsApp/create\n    writeToEnvironmentFile:\n      teamsAppId: TEAMS_APP_ID\n" as any
+      );
+      vi.spyOn(fs, "writeFile").mockResolvedValue();
+
+      vi.spyOn(mcpToolFetcher, "probeMCPServerAuth").mockResolvedValue({
+        requiresAuth: false,
+        endpointStatus: "undetermined",
+      });
+
+      const inputs: Inputs = {
+        platform: Platform.VSCode,
+        [QuestionNames.MCPForDAServerUrl]: "https://down.example.com/mcp",
+        [QuestionNames.MCPForDAAuthType]: "oauth",
+      };
+
+      const res = await generatorHelper.generateForMCPForDA(testDestinationPath, inputs);
+
+      assert.isTrue(res.isOk());
+      if (res.isOk()) {
+        assert.isUndefined(res.value.warnings?.find((w) => w.type === "mcpServerUrlNotFound"));
       }
     });
 

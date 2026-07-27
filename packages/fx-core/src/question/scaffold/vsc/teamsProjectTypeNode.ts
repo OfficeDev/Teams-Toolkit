@@ -14,7 +14,11 @@ import * as fs from "fs-extra";
 import path from "path";
 import { featureFlagManager, FeatureFlags } from "../../../common/featureFlags";
 import { getLocalizedString } from "../../../common/localizeUtils";
-import { fetchMCPTools, readMCPToolsFromFile } from "../../../component/utils/mcpToolFetcher";
+import {
+  fetchMCPTools,
+  readMCPToolsFromFile,
+  probeMCPServerAuth,
+} from "../../../component/utils/mcpToolFetcher";
 import { ODRProvider, ODRServer } from "../../../component/utils/odrProvider";
 import {
   SPFxFrameworkQuestion,
@@ -44,6 +48,7 @@ export const teamsProjectTypeDeps = {
   readJSON: fs.readJSON,
   fetchMCPTools,
   readMCPToolsFromFile,
+  probeMCPServerAuth,
 };
 
 /**
@@ -623,6 +628,18 @@ export function MCPForDAServerUrlNode(): IQTreeNode {
       additionalValidationOnAccept: {
         validFunc: async (value: string, inputs?: Inputs): Promise<string | undefined> => {
           if (!value || !inputs) return undefined;
+          // ADR-0020: block only on 404, the one answer no valid MCP endpoint was ever measured
+          // giving. The other `notEndpoint` shapes (403, 405, 200 without a JSON-RPC envelope)
+          // only warn after scaffolding, because a 403 can come from a WAF sitting in front of a
+          // perfectly good endpoint and wrongly blocking a legitimate URL is worse than missing a
+          // wrong one. `undetermined` — 5xx, timeouts, unreachable hosts — never blocks, so
+          // scaffolding does not fail closed because the network did.
+          const probe = await teamsProjectTypeDeps.probeMCPServerAuth(value);
+          if (probe.endpointStatus === "notEndpoint" && probe.responseStatus === 404) {
+            return getLocalizedString(
+              "core.createProjectQuestion.mcpForDa.ServerUrl.notAnMcpEndpoint"
+            );
+          }
           // For CLI: attempt to auto-fetch tools from the server
           if (inputs.platform !== Platform.VSCode) {
             try {
