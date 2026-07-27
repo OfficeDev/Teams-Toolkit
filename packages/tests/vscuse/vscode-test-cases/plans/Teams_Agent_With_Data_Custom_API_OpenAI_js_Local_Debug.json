@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 8,
+    "total_steps": 9,
     "created_at": "2025-12-01T06:07:51.943352",
     "name": "Teams Agent With Data Custom API OpenAI js Local Debug",
     "description": {
@@ -24,6 +24,7 @@
       "step_6609ed2c",
       "step_e0e08ddb",
       "step_b53694b0",
+      "step_e60c108d",
       "step_db417dc7",
       "step_5fba8df1",
       "step_0a431054",
@@ -115,6 +116,28 @@
       "tags": [],
       "screenshot": "step_b53694b0",
       "created_at": "2025-12-01T07:30:53.007904",
+      "plan_id": "plan_f422c281"
+    },
+    {
+      "step_id": "step_e60c108d",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press the \"Enter\" key again after selecting \"Custom API Preview\" to proceed to the \"Enter OpenAPI Description Document Location\" input field within the Microsoft 365 Agents Toolkit interface.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:f0b09494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_e60c108d",
+      "created_at": "2025-12-01T07:30:53.017079",
       "plan_id": "plan_f422c281"
     },
     {

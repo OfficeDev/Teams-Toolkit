@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 27,
+    "total_steps": 29,
     "created_at": "2026-03-05T05:32:20.876243",
     "name": "Feature DA Manifest File Function Manifest Plugin Support",
     "description": {
@@ -24,6 +24,8 @@
       "step_1e75c2ce",
       "step_8453a784",
       "step_0b4ec9fd",
+      "step_ac9d2ff1",
+      "step_3339fbdb",
       "step_125416b8",
       "step_f8cd48d7",
       "step_86d4e1be",
@@ -183,6 +185,50 @@
       "tags": [],
       "screenshot": "step_0b4ec9fd",
       "created_at": "2026-03-05T05:32:21.058623",
+      "plan_id": "plan_5b46db62"
+    },
+    {
+      "step_id": "step_ac9d2ff1",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter in the \"Enter OpenAPI Description Document Location or Open File...\" input field within the OpenAPI Spec Document dialog in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:e0b09494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_ac9d2ff1",
+      "created_at": "2026-03-05T05:32:21.074926",
+      "plan_id": "plan_5b46db62"
+    },
+    {
+      "step_id": "step_3339fbdb",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press the \"Enter\" key again to proceed to typing in the \"Enter OpenAPI Description Document Location\" input within the VS Code Microsoft 365 Agents Toolkit interface.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:512:384:0:20:f0b09494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_3339fbdb",
+      "created_at": "2026-03-05T05:32:21.088998",
       "plan_id": "plan_5b46db62"
     },
     {
