@@ -1,0 +1,69 @@
+version: 1
+
+cases:
+  - id: da-no-action-remote-preview
+    scenarioId: SCN-DA-CREATE-NO-ACTION
+    steps:
+      [
+        scaffold-da-no-action,
+        check-da-no-action,
+        login-m365,
+        provision,
+        f5-copilot-remote,
+      ]
+
+steps:
+  scaffold-da-no-action:
+    type: scaffold
+    with:
+      template: da/no-action
+      answers:
+        - question: projectType
+          value: copilot-agent-type
+        - question: daTemplate
+          value: no-action
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-da-no-action:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/declarativeAgent.json
+        expect:
+          exists: true
+          contains:
+            - '"name": "${{var:app_name}}${{APP_NAME_SUFFIX}}"'
+            - '"instructions": "$[file(''instruction.txt'')]"'
+          notContains: ['"capabilities"', '"sensitivity_label"']
+      - type: file
+        path: appPackage/manifest.json
+        expect:
+          contains: ['"manifestVersion": "1.29"', '"declarativeAgents"']
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains: ["version: v1.12", "copilotAgent/publish"]
+          notContains: ["oauth/register", "dcr/register", "pluginManifestPath"]
+      - type: file
+        path: appPackage/ai-plugin.json
+        expect:
+          exists: false
+
+  login-m365:
+    type: login
+    with:
+      type: m365
+      account: "${{env:M365_ACCOUNT_NAME}}"
+      password: "${{secret:M365_ACCOUNT_PASSWORD}}"
+
+  provision:
+    type: provision
+
+  f5-copilot-remote:
+    type: target
+    with:
+      profile: "Preview in Copilot (Chrome)"

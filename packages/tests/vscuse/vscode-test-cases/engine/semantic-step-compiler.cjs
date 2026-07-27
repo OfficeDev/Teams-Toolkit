@@ -1,0 +1,1153 @@
+const { createHash } = require("node:crypto");
+const path = require("node:path");
+
+const { renderComponent } = require("./render-component.cjs");
+
+const componentRoot = path.join(__dirname, "..", "components");
+const appNameExpressionPattern =
+  /^\$\{\{var:app_name:[A-Za-z0-9][A-Za-z0-9_#-]*\}\}$/;
+const environmentExpressionPattern = /^\$\{\{env:([A-Z_a-z][A-Z_a-z0-9]*)\}\}$/;
+const secretExpressionPattern = /^\$\{\{secret:[A-Z_a-z][A-Z_a-z0-9]*\}\}$/;
+const relativePathPattern =
+  /^(?!\/)(?![A-Za-z]:)(?!.*(?:^|\/)\.\.(?:\/|$))[^\\]+$/;
+const provisionInputGroups = new Set(["apiKey", "arm", "oauth"]);
+
+const commandTitles = {
+  create: "Microsoft 365 Agents: Create New Agent/App",
+  deploy: "Microsoft 365 Agents: Deploy",
+  notifications: "Notifications: Show Notifications",
+  provision: "Microsoft 365 Agents: Provision",
+  target: "Debug: Select and Start Debugging",
+};
+
+const accountAdapters = {
+  azure: {
+    accountVariable: "AZURE_ACCOUNT_NAME",
+    component: "authentication/azure/sign-in.json.tpl",
+  },
+  m365: {
+    accountVariable: "M365_ACCOUNT_NAME",
+    component: "authentication/m365/sign-in.json.tpl",
+  },
+};
+
+const clickOptions = {
+  "copilot-agent-type": {
+    component: "quick-input/click-option.json.tpl",
+    label: "Declarative Agent",
+    preconditions: [
+      "dhash:339:90:16:5:9c59a399e8174e4e",
+      "dhash:339:90:96:5:10279410680ce367",
+      "dhash:339:90:0:10:c8c88094b2717075",
+    ],
+    x: 339,
+    y: 90,
+  },
+  "no-action": {
+    component: "quick-input/click-option.json.tpl",
+    label: "No Action",
+    preconditions: [
+      "dhash:330:78:16:5:0000000000000000",
+      "dhash:330:78:96:5:2195982010531a48",
+      "dhash:330:78:0:10:c0c0b094b2717075",
+    ],
+    x: 330,
+    y: 78,
+  },
+};
+
+const defaultFolderOption = {
+  component: "quick-input/confirm-option.json.tpl",
+  label: "Default folder",
+  preconditions: [
+    "dhash:364:74:16:5:08056a9a5d5516b6",
+    "dhash:364:74:96:5:44232286e2168e01",
+    "dhash:364:74:0:10:f0b09494b2717075",
+  ],
+};
+
+const scaffoldQuestionAdapters = {
+  actionSource: {
+    options: {
+      mcp: "Start with a MCP server",
+      "new-api": "Start with a New API",
+      openapi: "Start with an OpenAPI Description Document",
+    },
+    title: "Create an Action",
+    type: "singleSelect",
+  },
+  appName: { title: "Application Name", type: "text" },
+  apiAuth: {
+    options: { none: "None" },
+    title: "Authentication Type",
+    type: "singleSelect",
+  },
+  apiOperations: {
+    options: { "GET /repair": "GET /repair", "GET /repairs": "GET /repairs" },
+    title: "Select Operation(s) Copilot Can Interact with",
+    type: "multiSelect",
+  },
+  apiSpecLocation: { title: "OpenAPI Document", type: "text" },
+  authType: {
+    options: {
+      "entra-sso": "Entra SSO",
+      none: "None",
+      oauth: "OAuth (with static registration)",
+    },
+    title: "Select Authentication Type",
+    type: "singleSelect",
+  },
+  azureOpenAIDeploymentName: {
+    title: "Azure OpenAI Deployment Name",
+    type: "text",
+  },
+  azureOpenAIEndpoint: { title: "Azure OpenAI Endpoint", type: "text" },
+  azureOpenAIKey: { secret: true, title: "Azure OpenAI Key", type: "text" },
+  customEngineAgent: {
+    options: { "weather-agent": "Weather Agent" },
+    title: "App Features Using Microsoft 365 Agents SDK",
+    type: "singleSelect",
+  },
+  daTemplate: {
+    options: { "add-action": "Add an Action", ...clickOptions },
+    title: "Create Declarative Agent",
+    type: "singleSelect",
+  },
+  language: {
+    options: { javascript: "JavaScript", typescript: "TypeScript" },
+    title: "Programming Language",
+    type: "singleSelect",
+  },
+  llmService: {
+    options: {
+      "llm-service-azure-openai": "Azure OpenAI",
+      "llm-service-openai": "OpenAI",
+    },
+    title: "Service for Large Language Model (LLM)",
+    type: "singleSelect",
+  },
+  "mcp-da-client-id": { title: "OAuth Client ID", type: "text" },
+  "mcp-da-client-secret": {
+    secret: true,
+    title: "OAuth Client Secret",
+    type: "text",
+  },
+  "mcp-da-scopes": { title: "OAuth Scopes (optional)", type: "text" },
+  mcpServerUrl: { title: "MCP Server URL", type: "text" },
+  openAIKey: { secret: true, title: "OpenAI Key", type: "text" },
+  openApiSpecType: {
+    options: { "enter-url": "Enter OpenAPI Document URL" },
+    title: "OpenAPI Spec Document",
+    type: "singleSelect",
+  },
+  projectType: {
+    options: {
+      "custom-engine-agent-type": "Custom Engine Agent",
+      "copilot-agent-type": clickOptions["copilot-agent-type"],
+    },
+    title: "New Project",
+    type: "singleSelect",
+  },
+  workspaceFolder: {
+    options: { default: defaultFolderOption },
+    title: "Workspace Folder",
+    type: "singleSelect",
+  },
+};
+
+const provisionArmQuestions = [
+  {
+    component: "quick-input/single-select.json.tpl",
+    key: "subscriptionId",
+    title: "Select Subscription for Current Tenant ID",
+  },
+  {
+    component: "quick-input/single-select.json.tpl",
+    key: "targetResourceGroupName",
+    title: "Select a resource group",
+  },
+  {
+    component: "quick-input/text.json.tpl",
+    key: "newResourceGroupName",
+    title: "New resource group name",
+  },
+  {
+    component: "quick-input/single-select.json.tpl",
+    key: "newResourceGroupLocation",
+    title: "Location for the new resource group",
+  },
+];
+
+const provisionApiKeyQuestion = {
+  component: "quick-input/text.json.tpl",
+  title: "Enter API Key in OpenAPI Description Document",
+};
+
+const provisionOauthQuestions = [
+  {
+    component: "quick-input/text.json.tpl",
+    key: "clientId",
+    title: "Oauth registration client ID",
+  },
+  {
+    component: "quick-input/text.json.tpl",
+    key: "clientSecret",
+    title: "OAuth registration client secret",
+  },
+];
+
+const provisionEnvironment = {
+  component: "quick-input/click-option.json.tpl",
+  optionLabel: "dev",
+  preconditions: [
+    "dhash:292:77:16:5:0000000000000000",
+    "dhash:292:77:96:5:0000c0004020204c",
+    "dhash:292:77:0:10:d088222323232421",
+  ],
+  questionTitle: "Select an environment",
+  x: 292,
+  y: 77,
+};
+
+const provisionConfirmation = {
+  actionLabel: "Provision",
+  component: "dialog/click-primary-action.json.tpl",
+  dialogTitle: "Provision",
+};
+
+const provisionApiKeyConfirmation = {
+  actionLabel: "Confirm",
+  component: "dialog/click-primary-action.json.tpl",
+  dialogTitle:
+    "Microsoft 365 Agents Toolkit will upload the API key to Developer Portal. The API key will be used by Teams client to securely access your API in runtime. Microsoft 365 Agents Toolkit will not store your API key.",
+};
+
+const provisionOauthConfirmation = {
+  actionLabel: "Confirm",
+  component: "dialog/click-primary-action.json.tpl",
+  dialogTitle:
+    "Microsoft 365 Agents Toolkit uploads the client ID/Secret for OAuth Registration to Developer Portal. It is used by Teams client to securely access your API at runtime. Microsoft 365 Agents Toolkit doesn't store your client ID/Secret.",
+};
+
+const lifecycleAdapters = {
+  deploy: {
+    confirmation: {
+      component: "quick-input/confirm.json.tpl",
+      optionLabel: "Deploy",
+      questionTitle: "Deploy",
+    },
+    successText: "actions in deploy stage executed successfully",
+  },
+  provision: { successText: "provision stage executed successfully" },
+};
+
+const targetAdapters = {
+  "Launch Remote in Teams (Chrome)": {
+    host: "teams",
+    open: { adapter: "teams-add", destination: "chat", kind: "app" },
+    readySubject:
+      "the Weather Agent app details page is visible in Microsoft Teams",
+    requires: ["login:azure", "login:m365", "provision", "deploy"],
+  },
+  "Preview in Copilot (Chrome)": {
+    browserAuthentication: {
+      component: "authentication/browser/m365-sign-in.json.tpl",
+      credentials: "m365",
+    },
+    host: "copilot",
+    open: { adapter: "ready", destination: "chat", kind: "agent" },
+    readySubject:
+      "${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot",
+    requires: ["login:m365", "provision"],
+  },
+};
+
+function failure(code, message) {
+  return { ok: false, diagnostics: [{ code, message }] };
+}
+
+function isRecord(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function hasOnlyFields(value, allowedFields) {
+  return Object.keys(value).every((field) => allowedFields.has(field));
+}
+
+function isClickOption(option) {
+  return (
+    isRecord(option) &&
+    hasOnlyFields(
+      option,
+      new Set(["component", "label", "preconditions", "x", "y"]),
+    ) &&
+    option.component === "quick-input/click-option.json.tpl" &&
+    typeof option.label === "string" &&
+    Number.isInteger(option.x) &&
+    Number.isInteger(option.y) &&
+    Array.isArray(option.preconditions) &&
+    option.preconditions.every(
+      (precondition) => typeof precondition === "string",
+    )
+  );
+}
+
+function isConfirmOption(option) {
+  return (
+    isRecord(option) &&
+    hasOnlyFields(option, new Set(["component", "label", "preconditions"])) &&
+    option.component === "quick-input/confirm-option.json.tpl" &&
+    typeof option.label === "string" &&
+    Array.isArray(option.preconditions) &&
+    option.preconditions.every(
+      (precondition) => typeof precondition === "string",
+    )
+  );
+}
+
+function createSuffix(caseId, occurrence, componentIndex) {
+  const hash = createHash("sha256").update(caseId).digest("hex").slice(0, 8);
+  return `c${hash}_${occurrence}_${componentIndex}`;
+}
+
+function createSemanticStepCompiler() {
+  const states = new Map();
+
+  function render(state, relativePath, values = {}) {
+    state.componentIndex += 1;
+    const rendered = renderComponent({
+      componentRoot,
+      relativePath,
+      values: {
+        instanceSuffix: createSuffix(
+          state.caseId,
+          state.occurrence,
+          state.componentIndex,
+        ),
+        ...values,
+      },
+    });
+    if (!rendered.ok) {
+      return rendered;
+    }
+    if (state.lastStepId !== undefined && rendered.value.length > 0) {
+      rendered.value[0].depends_on = [state.lastStepId];
+    }
+    if (rendered.value.length > 0) {
+      state.lastStepId = rendered.value.at(-1).step_id;
+    }
+    return rendered;
+  }
+
+  function append(output, rendered) {
+    if (!rendered.ok) {
+      return rendered;
+    }
+    output.push(...rendered.value);
+    return undefined;
+  }
+
+  function compileScaffold(state, definition) {
+    const output = [];
+    let error = append(
+      output,
+      render(state, "initialization/close-welcome-overlay.json.tpl"),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "command-palette/execute-command.json.tpl", {
+        commandTitle: commandTitles.create,
+      }),
+    );
+    if (error) return error;
+
+    const answerState = {};
+    for (const answer of definition.with.answers) {
+      const question = scaffoldQuestionAdapters[answer.question];
+      if (question === undefined) {
+        return failure(
+          "VCB_SCAFFOLD_QUESTION_UNKNOWN",
+          "The scaffold answer question is not supported.",
+        );
+      }
+      if (Object.hasOwn(answerState, answer.question)) {
+        return failure(
+          "VCB_SCAFFOLD_QUESTION_DUPLICATE",
+          "A scaffold answer question is duplicated.",
+        );
+      }
+      const answerType = answer.type ?? "singleSelect";
+      const isValidMultiSelect =
+        answerType === "multiSelect" &&
+        Array.isArray(answer.value) &&
+        answer.value.length > 0 &&
+        answer.value.every(
+          (optionId) => typeof optionId === "string" && optionId.length > 0,
+        ) &&
+        new Set(answer.value).size === answer.value.length;
+      if (
+        answerType !== question.type ||
+        (answerType === "multiSelect"
+          ? !isValidMultiSelect
+          : typeof answer.value !== "string")
+      ) {
+        return failure(
+          "VCB_SCAFFOLD_ANSWER_TYPE",
+          "A scaffold answer does not match its supported question type.",
+        );
+      }
+      if (
+        question.secret === true &&
+        !secretExpressionPattern.test(answer.value)
+      ) {
+        return failure(
+          "VCB_SECRET_EXPRESSION_REQUIRED",
+          "A secret answer must use a secret expression.",
+        );
+      }
+      if (
+        answer.question === "appName" &&
+        !appNameExpressionPattern.test(answer.value)
+      ) {
+        return failure(
+          "VCB_APP_NAME_EXPRESSION_REQUIRED",
+          "The app name must use a safe app_name initializer expression.",
+        );
+      }
+
+      const questionTitle =
+        answer.question === "mcp-da-client-id" &&
+        answerState.authType === "entra-sso"
+          ? "Microsoft Entra Application (Client) ID"
+          : question.title;
+      answerState[answer.question] = answer.value;
+      if (question.type === "singleSelect") {
+        const option = question.options[answer.value];
+        if (option === undefined) {
+          return failure(
+            "VCB_SCAFFOLD_OPTION_UNKNOWN",
+            "The scaffold answer option is not supported.",
+          );
+        }
+        if (typeof option === "string") {
+          error = append(
+            output,
+            render(state, "quick-input/single-select.json.tpl", {
+              optionLabel: option,
+              questionTitle,
+            }),
+          );
+        } else if (isClickOption(option)) {
+          error = append(
+            output,
+            render(state, option.component, {
+              optionLabel: option.label,
+              preconditions: option.preconditions,
+              questionTitle,
+              x: option.x,
+              y: option.y,
+            }),
+          );
+        } else if (isConfirmOption(option)) {
+          error = append(
+            output,
+            render(state, option.component, {
+              optionLabel: option.label,
+              preconditions: option.preconditions,
+              questionTitle,
+            }),
+          );
+        } else {
+          return failure(
+            "VCB_SCAFFOLD_OPTION_INVALID",
+            "The scaffold option adapter is invalid.",
+          );
+        }
+      } else if (question.type === "multiSelect") {
+        for (const optionId of answer.value) {
+          const optionLabel = question.options[optionId];
+          if (optionLabel === undefined) {
+            return failure(
+              "VCB_SCAFFOLD_OPTION_UNKNOWN",
+              "The scaffold answer option is not supported.",
+            );
+          }
+          error = append(
+            output,
+            render(state, "quick-input/multi-select.json.tpl", {
+              optionLabel,
+              questionTitle,
+            }),
+          );
+          if (error) return error;
+        }
+        error = append(
+          output,
+          render(state, "quick-input/multi-select-confirm.json.tpl", {
+            questionTitle,
+            selectedCount: String(answer.value.length),
+          }),
+        );
+      } else {
+        error = append(
+          output,
+          render(state, "quick-input/text.json.tpl", {
+            inputValue: answer.value,
+            questionTitle,
+          }),
+        );
+      }
+      if (error) return error;
+    }
+    if (!Object.hasOwn(answerState, "appName")) {
+      return failure(
+        "VCB_APP_NAME_EXPRESSION_REQUIRED",
+        "The scaffold must initialize app_name.",
+      );
+    }
+    state.template = definition.with.template;
+    return { ok: true, value: output };
+  }
+
+  function compileLogin(state, definition) {
+    const accountMatch = environmentExpressionPattern.exec(
+      definition.with?.account ?? "",
+    );
+    if (
+      accountMatch === null ||
+      !secretExpressionPattern.test(definition.with?.password ?? "")
+    ) {
+      return failure(
+        "VCB_ACCOUNT_EXPRESSION_REQUIRED",
+        "Login credentials must use environment and secret expressions.",
+      );
+    }
+    const account = accountAdapters[definition.with?.type];
+    if (account === undefined || account.accountVariable !== accountMatch[1]) {
+      return failure(
+        "VCB_ACCOUNT_UNKNOWN",
+        "The login account is not supported by the semantic adapter.",
+      );
+    }
+
+    const output = [];
+    let error = append(
+      output,
+      render(state, "authentication/open-account-menu.json.tpl"),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, account.component, {
+        accountName: definition.with.account,
+        accountPassword: definition.with.password,
+      }),
+    );
+    if (error) return error;
+    state.credentials.set(definition.with.type, {
+      accountName: definition.with.account,
+      accountPassword: definition.with.password,
+    });
+    state.completed.add(`login:${definition.with.type}`);
+    return { ok: true, value: output };
+  }
+
+  function validateProvisionInputs(state, definition) {
+    const inputs = definition.with ?? {};
+    if (
+      !isRecord(inputs) ||
+      Object.keys(inputs).some((key) => !provisionInputGroups.has(key))
+    ) {
+      return failure(
+        "VCB_PROVISION_INPUT_UNKNOWN",
+        "The provision operation contains an unsupported input.",
+      );
+    }
+    const activeInputGroups = Object.keys(inputs);
+    if (activeInputGroups.length > 1) {
+      return failure(
+        "VCB_PROVISION_INPUT_UNKNOWN",
+        "The provision operation must declare at most one input group.",
+      );
+    }
+    if (
+      (inputs.apiKey !== undefined || inputs.oauth !== undefined) &&
+      state.template !== "da/api-plugin-from-existing-api"
+    ) {
+      return failure(
+        "VCB_PROVISION_INPUT_REDUNDANT",
+        "The provision operation declares an input that is not prompted.",
+      );
+    }
+    if (inputs.apiKey !== undefined) {
+      if (
+        typeof inputs.apiKey !== "string" ||
+        !secretExpressionPattern.test(inputs.apiKey)
+      ) {
+        return failure(
+          "VCB_SECRET_EXPRESSION_REQUIRED",
+          "The API key provision input must use a secret expression.",
+        );
+      }
+      return {
+        ok: true,
+        value: {
+          afterEnvironment: [
+            { ...provisionApiKeyQuestion, value: inputs.apiKey },
+          ],
+          beforeEnvironment: [],
+          confirmation: provisionApiKeyConfirmation,
+        },
+      };
+    }
+    if (inputs.oauth !== undefined) {
+      const expectedKeys = new Set(
+        provisionOauthQuestions.map((question) => question.key),
+      );
+      if (
+        !isRecord(inputs.oauth) ||
+        Object.keys(inputs.oauth).some((key) => !expectedKeys.has(key))
+      ) {
+        return failure(
+          "VCB_PROVISION_INPUT_UNKNOWN",
+          "The OAuth provision operation does not match its supported input set.",
+        );
+      }
+      if (
+        !environmentExpressionPattern.test(inputs.oauth.clientId ?? "") ||
+        !secretExpressionPattern.test(inputs.oauth.clientSecret ?? "")
+      ) {
+        return failure(
+          "VCB_ACCOUNT_EXPRESSION_REQUIRED",
+          "OAuth provision credentials must use environment and secret expressions.",
+        );
+      }
+      return {
+        ok: true,
+        value: {
+          afterEnvironment: provisionOauthQuestions.map((question) => ({
+            ...question,
+            value: inputs.oauth[question.key],
+          })),
+          beforeEnvironment: [],
+          confirmation: provisionOauthConfirmation,
+        },
+      };
+    }
+    if (inputs.arm === undefined) {
+      return {
+        ok: true,
+        value: {
+          afterEnvironment: [],
+          beforeEnvironment: [],
+          confirmation: undefined,
+        },
+      };
+    }
+    if (!state.completed.has("login:azure")) {
+      return failure(
+        "VCB_PROVISION_PREREQUISITE",
+        "ARM provision requires a preceding Azure login.",
+      );
+    }
+    const expectedKeys = new Set(
+      provisionArmQuestions.map((question) => question.key),
+    );
+    if (
+      !isRecord(inputs.arm) ||
+      Object.keys(inputs.arm).some((key) => !expectedKeys.has(key))
+    ) {
+      return failure(
+        "VCB_PROVISION_INPUT_UNKNOWN",
+        "The provision operation does not match its supported input set.",
+      );
+    }
+    return {
+      ok: true,
+      value: {
+        afterEnvironment: [],
+        beforeEnvironment: provisionArmQuestions.map((question) => ({
+          ...question,
+          value: inputs.arm[question.key],
+        })),
+        confirmation: provisionConfirmation,
+      },
+    };
+  }
+
+  function renderProvisionQuestions(state, questions, output) {
+    for (const question of questions) {
+      const { value } = question;
+      if (typeof value !== "string") {
+        return failure(
+          "VCB_PROVISION_INPUT_REQUIRED",
+          "The provision operation is missing a required input.",
+        );
+      }
+      const values = question.component.endsWith("single-select.json.tpl")
+        ? { optionLabel: value, questionTitle: question.title }
+        : { inputValue: value, questionTitle: question.title };
+      const error = append(output, render(state, question.component, values));
+      if (error) return error;
+    }
+    return { ok: true };
+  }
+
+  function compileLifecycle(state, definition) {
+    const recipe = lifecycleAdapters[definition.type];
+    let confirmation = recipe.confirmation;
+    const output = [];
+    let error = append(
+      output,
+      render(state, "command-palette/execute-command.json.tpl", {
+        commandTitle: commandTitles[definition.type],
+      }),
+    );
+    if (error) return error;
+    if (definition.type === "provision") {
+      const provision = validateProvisionInputs(state, definition);
+      if (!provision.ok) return provision;
+      state.targetProvision =
+        provision.value.afterEnvironment.length > 0
+          ? {
+              confirmation: provision.value.confirmation,
+              questions: provision.value.afterEnvironment,
+            }
+          : undefined;
+      const beforeEnvironment = renderProvisionQuestions(
+        state,
+        provision.value.beforeEnvironment,
+        output,
+      );
+      if (!beforeEnvironment.ok) return beforeEnvironment;
+      const { component, ...environmentValues } = provisionEnvironment;
+      error = append(output, render(state, component, environmentValues));
+      if (error) return error;
+      const afterEnvironment = renderProvisionQuestions(
+        state,
+        provision.value.afterEnvironment,
+        output,
+      );
+      if (!afterEnvironment.ok) return afterEnvironment;
+      confirmation = provision.value.confirmation;
+    }
+
+    if (confirmation !== undefined) {
+      const { component, ...confirmationValues } = confirmation;
+      error = append(output, render(state, component, confirmationValues));
+      if (error) return error;
+    }
+    error = append(
+      output,
+      render(state, "command-palette/execute-command.json.tpl", {
+        commandTitle: commandTitles.notifications,
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "notifications/assert-contains.json.tpl", {
+        notificationText: recipe.successText,
+      }),
+    );
+    if (error) return error;
+    state.completed.add(definition.type);
+    return { ok: true, value: output };
+  }
+
+  function compileTarget(state, definition) {
+    const profileTitle = definition.with?.profile;
+    const profile = targetAdapters[profileTitle];
+    if (profile === undefined) {
+      return failure(
+        "VCB_TARGET_PROFILE_UNKNOWN",
+        "The launch profile is not supported by the semantic adapter.",
+      );
+    }
+    const missingPrerequisite = profile.requires.find(
+      (requirement) => !state.completed.has(requirement),
+    );
+    if (missingPrerequisite !== undefined) {
+      return failure(
+        "VCB_TARGET_PREREQUISITE",
+        "The target is missing a required preceding operation.",
+      );
+    }
+
+    const output = [];
+    let error = append(
+      output,
+      render(state, "command-palette/execute-command.json.tpl", {
+        commandTitle: commandTitles.target,
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "quick-input/filter-option.json.tpl", {
+        optionLabel: profileTitle,
+      }),
+    );
+    if (error) return error;
+    if (state.targetProvision !== undefined) {
+      const targetProvisionQuestions = renderProvisionQuestions(
+        state,
+        state.targetProvision.questions,
+        output,
+      );
+      if (!targetProvisionQuestions.ok) return targetProvisionQuestions;
+      const { component, ...confirmationValues } =
+        state.targetProvision.confirmation;
+      error = append(output, render(state, component, confirmationValues));
+      if (error) return error;
+    }
+    if (profile.browserAuthentication !== undefined) {
+      const credentials = state.credentials.get(
+        profile.browserAuthentication.credentials,
+      );
+      if (credentials === undefined) {
+        return failure(
+          "VCB_TARGET_BROWSER_AUTH_REQUIRED",
+          "The target browser authentication credentials are unavailable.",
+        );
+      }
+      error = append(
+        output,
+        render(state, profile.browserAuthentication.component, credentials),
+      );
+      if (error) return error;
+    }
+    error = append(
+      output,
+      render(state, "browser/assert-ready.json.tpl", {
+        readySubject: profile.readySubject,
+      }),
+    );
+    state.profile = profile;
+    state.completed.add("target");
+    return error ?? { ok: true, value: output };
+  }
+
+  function compileOpen(state, definition) {
+    if (
+      state.profile === undefined ||
+      state.profile.open === undefined ||
+      definition.with?.destination !== state.profile.open.destination ||
+      definition.with?.kind !== state.profile.open.kind
+    ) {
+      return failure(
+        "VCB_OPEN_ADAPTER_UNKNOWN",
+        "The authored open operation has no compatible target adapter.",
+      );
+    }
+    let rendered;
+    if (state.profile.open.adapter === "teams-add") {
+      rendered = render(state, "browser/teams/add-and-open-app.json.tpl", {
+        readySubject: state.profile.readySubject,
+      });
+    } else if (state.profile.open.adapter === "ready") {
+      rendered = render(state, "browser/assert-ready.json.tpl", {
+        readySubject: state.profile.readySubject,
+      });
+    } else {
+      return failure(
+        "VCB_OPEN_ADAPTER_UNKNOWN",
+        "The target does not register an open adapter.",
+      );
+    }
+    if (rendered.ok) {
+      state.completed.add(`${state.profile.open.destination}-ready`);
+    }
+    return rendered;
+  }
+
+  function normalizeFileAssertion(assertion) {
+    const expected = assertion.expect ?? {};
+    const exists = expected.exists ?? true;
+    const contains = expected.contains ?? [];
+    const notContains = expected.notContains ?? [];
+    if (
+      typeof assertion.path !== "string" ||
+      !relativePathPattern.test(assertion.path) ||
+      typeof exists !== "boolean" ||
+      !Array.isArray(contains) ||
+      contains.some((value) => typeof value !== "string") ||
+      !Array.isArray(notContains) ||
+      notContains.some((value) => typeof value !== "string") ||
+      (exists === false && (contains.length > 0 || notContains.length > 0))
+    ) {
+      return undefined;
+    }
+    const replaceAppName = (value) =>
+      value.replaceAll("${{var:app_name}}", "__VSCUSE_APP_NAME__");
+    return {
+      path: assertion.path,
+      exists,
+      contains: contains.map(replaceAppName),
+      notContains: notContains.map(replaceAppName),
+    };
+  }
+
+  function compileFileCheck(state, assertion) {
+    const normalized = normalizeFileAssertion(assertion);
+    if (normalized === undefined) {
+      return failure(
+        "VCB_FILE_ASSERTION_INVALID",
+        "A workspace file assertion is invalid.",
+      );
+    }
+    const assertionsBase64 = Buffer.from(
+      JSON.stringify([normalized]),
+      "utf8",
+    ).toString("base64");
+    return render(state, "checks/workspace-file.json.tpl", {
+      assertionsBase64,
+    });
+  }
+
+  function compileChatCheck(state, assertion) {
+    const sendComponents = {
+      copilot: "browser/copilot/send-message.json.tpl",
+      teams: "browser/teams/send-message.json.tpl",
+    };
+    const sendComponent = sendComponents[state.profile?.host];
+    if (
+      sendComponent === undefined ||
+      !state.completed.has("chat-ready") ||
+      typeof assertion.send !== "string"
+    ) {
+      return failure(
+        "VCB_CHAT_ADAPTER_UNKNOWN",
+        "The chat check has no compatible message adapter.",
+      );
+    }
+
+    const output = [];
+    let error = append(
+      output,
+      render(state, sendComponent, { message: assertion.send }),
+    );
+    if (error) return error;
+    if (assertion.allowAction === true) {
+      if (state.profile.host !== "copilot") {
+        return failure(
+          "VCB_CHAT_ACTION_CONSENT_UNKNOWN",
+          "Action consent is not supported by the current chat adapter.",
+        );
+      }
+      error = append(
+        output,
+        render(state, "browser/copilot/allow-action.json.tpl", {}),
+      );
+      if (error) return error;
+    }
+    const expected = assertion.expect ?? {};
+    if (
+      expected.replied === true ||
+      expected.contains !== undefined ||
+      expected.notContains !== undefined
+    ) {
+      error = append(
+        output,
+        render(state, "browser/chat/assert-replied.json.tpl"),
+      );
+      if (error) return error;
+    }
+    for (const expectedText of expected.contains ?? []) {
+      error = append(
+        output,
+        render(state, "browser/chat/assert-contains.json.tpl", {
+          expectedText,
+        }),
+      );
+      if (error) return error;
+    }
+    for (const unexpectedText of expected.notContains ?? []) {
+      error = append(
+        output,
+        render(state, "browser/chat/assert-not-contains.json.tpl", {
+          unexpectedText,
+        }),
+      );
+      if (error) return error;
+    }
+    return { ok: true, value: output };
+  }
+
+  function compileBrowserCheck(state, assertion) {
+    if (!state.completed.has("target")) {
+      return failure(
+        "VCB_BROWSER_ADAPTER_UNKNOWN",
+        "The browser check requires a preceding target operation.",
+      );
+    }
+    return render(state, "browser/assert-element.json.tpl", {
+      accessibleName: assertion.expect.name,
+      role: assertion.expect.role,
+    });
+  }
+
+  function validateCheckAssertion(assertion) {
+    if (!isRecord(assertion)) {
+      return failure(
+        "VCB_CHECK_ASSERTION_INVALID",
+        "Each check assertion must be a map.",
+      );
+    }
+    const assertionFields =
+      assertion.type === "file"
+        ? new Set(["type", "path", "expect"])
+        : assertion.type === "browser"
+          ? new Set(["type", "expect"])
+          : assertion.type === "chat"
+            ? new Set(["type", "send", "allowAction", "expect"])
+            : undefined;
+    if (assertionFields === undefined) {
+      return failure(
+        "VCB_CHECK_ADAPTER_UNKNOWN",
+        "The assertion type is not supported by the semantic adapter.",
+      );
+    }
+    if (!hasOnlyFields(assertion, assertionFields)) {
+      return failure(
+        "VCB_CHECK_FIELD_UNKNOWN",
+        "The check assertion contains an unsupported field.",
+      );
+    }
+
+    const expected = assertion.expect;
+    const expectationFields =
+      assertion.type === "file"
+        ? new Set(["exists", "contains", "notContains"])
+        : assertion.type === "browser"
+          ? new Set(["role", "name"])
+          : new Set(["replied", "contains", "notContains"]);
+    if (!isRecord(expected) || !hasOnlyFields(expected, expectationFields)) {
+      return failure(
+        "VCB_CHECK_FIELD_UNKNOWN",
+        "The check expectation contains an unsupported field.",
+      );
+    }
+    const listFields = ["contains", "notContains"];
+    if (
+      Object.keys(expected).length === 0 ||
+      (assertion.type === "browser" &&
+        (typeof expected.role !== "string" ||
+          expected.role.length === 0 ||
+          typeof expected.name !== "string" ||
+          expected.name.length === 0)) ||
+      listFields.some(
+        (field) =>
+          expected[field] !== undefined &&
+          (!Array.isArray(expected[field]) ||
+            expected[field].length === 0 ||
+            expected[field].some((value) => typeof value !== "string")),
+      ) ||
+      (expected.exists !== undefined && typeof expected.exists !== "boolean") ||
+      (expected.replied !== undefined &&
+        typeof expected.replied !== "boolean") ||
+      (assertion.allowAction !== undefined && assertion.allowAction !== true)
+    ) {
+      return failure(
+        "VCB_CHECK_ASSERTION_INVALID",
+        "The check expectation is invalid.",
+      );
+    }
+    return { ok: true };
+  }
+
+  function compileChecks(state, definition) {
+    if (!Array.isArray(definition.with)) {
+      return failure(
+        "VCB_CHECKS_INVALID",
+        "Checks must contain an ordered assertion list.",
+      );
+    }
+    if (
+      state.requiresInitialFileCheck &&
+      !definition.with.some((assertion) => assertion.type === "file")
+    ) {
+      return failure(
+        "VCB_OPERATION_ORDER",
+        "The scaffold operation must be immediately followed by a file check.",
+      );
+    }
+    const output = [];
+    for (const assertion of definition.with) {
+      const validated = validateCheckAssertion(assertion);
+      if (!validated.ok) return validated;
+      const result =
+        assertion.type === "file"
+          ? compileFileCheck(state, assertion)
+          : assertion.type === "browser"
+            ? compileBrowserCheck(state, assertion)
+            : assertion.type === "chat"
+              ? compileChatCheck(state, assertion)
+              : failure(
+                  "VCB_CHECK_ADAPTER_UNKNOWN",
+                  "The assertion type is not supported by the semantic adapter.",
+                );
+      if (!result.ok) return result;
+      output.push(...result.value);
+    }
+    state.requiresInitialFileCheck = false;
+    return { ok: true, value: output };
+  }
+
+  return ({ caseId, definition, occurrence }) => {
+    let state = states.get(caseId);
+    if (definition.type === "scaffold") {
+      state = {
+        caseId,
+        completed: new Set(),
+        componentIndex: 0,
+        credentials: new Map(),
+        occurrence,
+        requiresInitialFileCheck: true,
+        targetProvision: undefined,
+      };
+      states.set(caseId, state);
+    } else if (state === undefined) {
+      return failure(
+        "VCB_OPERATION_ORDER",
+        "The scaffold operation must be compiled first.",
+      );
+    }
+    state.occurrence = occurrence;
+    state.componentIndex = 0;
+    if (
+      definition.type !== "scaffold" &&
+      definition.type !== "checks" &&
+      state.requiresInitialFileCheck
+    ) {
+      return failure(
+        "VCB_OPERATION_ORDER",
+        "The scaffold operation must be immediately followed by a file check.",
+      );
+    }
+
+    switch (definition.type) {
+      case "scaffold":
+        return compileScaffold(state, definition);
+      case "login":
+        return compileLogin(state, definition);
+      case "provision":
+      case "deploy":
+        return compileLifecycle(state, definition);
+      case "target":
+        return compileTarget(state, definition);
+      case "open":
+        return compileOpen(state, definition);
+      case "checks":
+        return compileChecks(state, definition);
+      default:
+        return failure(
+          "VCB_STEP_TYPE_UNSUPPORTED",
+          "The semantic step type is not supported.",
+        );
+    }
+  };
+}
+
+module.exports = { createSemanticStepCompiler };

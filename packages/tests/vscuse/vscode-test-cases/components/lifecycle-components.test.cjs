@@ -1,0 +1,185 @@
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+const test = require("node:test");
+
+const componentRoot = __dirname;
+const substitutions = {
+  accountName: "${{env:M365_ACCOUNT_NAME}}",
+  accountPassword: "${{secret:M365_ACCOUNT_PASSWORD}}",
+  actionLabel: 'Provision "now"',
+  commandTitle: "Debug: Select and Start Debugging",
+  dialogTitle: "Confirm provisioning\nfor dev",
+  inputValue: "test value",
+  instanceSuffix: "lifecycle_1",
+  notificationText: 'stage completed "successfully"\nwith details',
+  optionLabel: "Deploy",
+  questionTitle: "Deploy resources in dev?",
+  readySubject: "the selected target is visible",
+};
+
+function render(relativePath, overrides = {}) {
+  const values = { ...substitutions, ...overrides };
+  const source = fs.readFileSync(
+    path.join(componentRoot, relativePath),
+    "utf8",
+  );
+  assert.equal(source.includes("\r"), false, `${relativePath} must use LF`);
+  assert.equal(
+    /source_[^"\s]*/.test(source),
+    false,
+    `${relativePath} must not use source_* tags`,
+  );
+  const usedParameters = new Set(
+    [...source.matchAll(/\{\{(?:text|json):([A-Za-z][A-Za-z0-9_]*)\}\}/g)].map(
+      (match) => match[1],
+    ),
+  );
+
+  const rendered = source
+    .replace(/\{\{text:([A-Za-z][A-Za-z0-9_]*)\}\}/g, (_, name) => {
+      assert.ok(
+        name in values,
+        `${relativePath} uses unknown text parameter ${name}`,
+      );
+      return JSON.stringify(values[name]).slice(1, -1);
+    })
+    .replace(/\{\{json:([A-Za-z][A-Za-z0-9_]*)\}\}/g, (_, name) => {
+      assert.ok(
+        name in values,
+        `${relativePath} uses unknown JSON parameter ${name}`,
+      );
+      return JSON.stringify(values[name]);
+    });
+
+  const component = JSON.parse(rendered);
+  assert.deepEqual(
+    [...component.component.parameters].sort(),
+    [...usedParameters].sort(),
+    `${relativePath} must declare exactly its used parameters`,
+  );
+  const ids = component.steps.map((step) => step.step_id);
+  assert.equal(
+    new Set(ids).size,
+    ids.length,
+    `${relativePath} must render unique IDs`,
+  );
+  component.steps.forEach((step, index) => {
+    assert.deepEqual(step.depends_on, index === 0 ? [] : [ids[index - 1]]);
+  });
+  return component;
+}
+
+test("initialization accepts a ready workbench without a specific editor", () => {
+  const initialization = render(
+    "initialization/close-welcome-overlay.json.tpl",
+  );
+
+  assert.equal(initialization.component.id, "closeWelcomeOverlay");
+  assert.match(initialization.steps.at(-1).description, /workbench is ready/);
+  assert.doesNotMatch(
+    initialization.steps.at(-1).description,
+    /Welcome editor/,
+  );
+});
+
+test("quick-input assertions match prompt titles", () => {
+  for (const relativePath of [
+    "quick-input/single-select.json.tpl",
+    "quick-input/text.json.tpl",
+  ]) {
+    const quickInput = render(relativePath);
+    assert.match(quickInput.steps[0].description, /prompt titled/);
+    assert.doesNotMatch(quickInput.steps[0].description, /the question/);
+  }
+});
+
+test("plain text input submits immediately after typing", () => {
+  const textInput = render("quick-input/text.json.tpl");
+
+  assert.deepEqual(
+    textInput.steps.map((step) => step.tool),
+    ["", "type_text", "key_press"],
+  );
+  assert.equal(textInput.steps.at(-1).parameters.key, "enter");
+  assert.doesNotMatch(
+    textInput.steps.map((step) => step.description).join("\n"),
+    /without exposing its content/,
+  );
+});
+
+test("Microsoft 365 sign-in verifies the account in the Accounts menu", () => {
+  const signIn = render("authentication/m365/sign-in.json.tpl");
+  const verificationSteps = signIn.steps.slice(-7);
+
+  assert.deepEqual(
+    verificationSteps.map((step) => step.tool),
+    ["key_press", "", "type_text", "", "key_press", "", "key_press"],
+  );
+  assert.equal(verificationSteps[0].parameters.key, "f1");
+  assert.equal(
+    verificationSteps[2].parameters.text,
+    "Microsoft 365 Agents: Accounts",
+  );
+  assert.match(verificationSteps[3].description, /first result/);
+  assert.equal(verificationSteps[4].parameters.key, "enter");
+  assert.match(verificationSteps[5].description, /active account menu/);
+  assert.match(verificationSteps[5].description, /M365_ACCOUNT_NAME/);
+  assert.equal(verificationSteps[6].parameters.key, "esc");
+});
+
+test("lifecycle recipes have reusable confirmation and notification primitives", () => {
+  const dialog = render("dialog/click-primary-action.json.tpl");
+  assert.equal(dialog.component.id, "clickPrimaryAction");
+  assert.deepEqual(
+    dialog.steps.map((step) => step.tool),
+    ["", "key_press"],
+  );
+  assert.equal(dialog.steps[1].parameters.key, "enter");
+  assert.deepEqual(dialog.steps[1].preconditions, []);
+
+  const confirmation = render("quick-input/confirm.json.tpl");
+  assert.equal(confirmation.component.answerType, "confirm");
+  assert.deepEqual(
+    confirmation.steps.map((step) => step.tool),
+    ["", "key_press"],
+  );
+  assert.equal(confirmation.steps[1].parameters.key, "enter");
+  assert.deepEqual(confirmation.steps[1].preconditions, [
+    "dhash:512:384:0:20:a4843a23233b2e2d",
+  ]);
+
+  const notification = render("notifications/assert-contains.json.tpl");
+  assert.equal(notification.component.id, "assertContains");
+  assert.equal(notification.steps.length, 1);
+  assert.match(notification.steps[0].description, /stage completed/);
+  assert.ok(notification.steps[0].tags.includes("step_retry_timeout: 300"));
+});
+
+test("target primitives expose F1, profile selection, and browser readiness behavior", () => {
+  const launchProfile = "Microsoft 365 Agents Toolkit";
+  const command = render("command-palette/execute-command.json.tpl");
+  const profile = render("quick-input/filter-option.json.tpl", {
+    optionLabel: launchProfile,
+  });
+  const readiness = render("browser/assert-ready.json.tpl");
+
+  assert.equal(command.component.id, "executeCommand");
+  assert.equal(command.steps[0].parameters.key, "f1");
+  assert.equal(command.steps.at(-1).parameters.key, "enter");
+  assert.equal(profile.component.id, "filterOption");
+  assert.deepEqual(
+    profile.steps.map((step) => step.tool),
+    ["type_text", "", "key_press"],
+  );
+  assert.equal(profile.steps[0].parameters.text, launchProfile);
+  assert.doesNotMatch(
+    profile.steps.map((step) => step.description).join("\n"),
+    /prompt titled/,
+  );
+  assert.equal(profile.steps.at(-1).parameters.key, "enter");
+  assert.equal(readiness.component.id, "assertReady");
+  assert.equal(readiness.steps.length, 1);
+  assert.equal(readiness.steps[0].agent, "assertion");
+  assert.match(readiness.steps[0].description, /selected target is visible/);
+});
