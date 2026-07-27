@@ -420,7 +420,7 @@
         "x": 433,
         "y": 411
       },
-      "description": "Click the red plus (+) button inside the \"Message Copilot\" input box to start composing a new message in the chat within the M365 Copilot web application interface.",
+      "description": "Click the \"Message Copilot\" input box to start composing a new message in the chat within the M365 Copilot web application interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

@@ -125,7 +125,7 @@
       "parameters": {
         "key": "enter"
       },
-      "description": "Press the \"Enter\" key to confirm the selected file path in the \"Enter OpenAPI Description Document Location\" input field within the Microsoft 365 Agents Toolkit interface.",
+      "description": "Press the \"Enter\" key again after selecting \"Custom API Preview\" to proceed to the \"Enter OpenAPI Description Document Location\" input field within the Microsoft 365 Agents Toolkit interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
