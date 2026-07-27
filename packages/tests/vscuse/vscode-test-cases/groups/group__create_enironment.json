@@ -186,7 +186,7 @@
         "x": 719,
         "y": 80
       },
-      "description": "Click the blue \"OK\" button in the dependency selection dialog at the top of the Visual Studio Code window to confirm the selected requirements.txt file.",
+      "description": "Click the \"src/requirements.txt\" row (its checkbox) in the dependency selection dialog at the top of the Visual Studio Code window, to check/select it for installation. This is NOT the OK button -- the OK button that actually confirms/closes this dialog is a separate later click (step_d928b73f).",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

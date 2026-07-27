@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 9,
+    "total_steps": 8,
     "created_at": "2025-11-26T14:46:08.638637",
     "name": "Teams Agent With Data Custom API Azure OpenAI py Local Debug",
     "description": {
@@ -23,7 +23,6 @@
       "plan_r_0624_024810",
       "step_47b7b5e0",
       "step_0a4a8383",
-      "step_a0443b85",
       "step_b4037740",
       "step_5b0e8cda",
       "step_aad6dbbc",
@@ -51,7 +50,7 @@
         "x": 410,
         "y": 127
       },
-      "description": "Click the \"General Teams Agent\" dropdown option in the \"Teams Agent or App Using Teams AI Library\" menu.",
+      "description": "Click the \"Teams Agent with Data\" dropdown option (the 2nd item, described as \"Agent that uses your content and knowledge to accurately answer domain-specific questions\") in the \"Teams Agent or App Using Teams AI Library\" menu.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -92,34 +91,6 @@
       "tags": [],
       "screenshot": "step_0a4a8383",
       "created_at": "2025-11-27T04:28:37.511149",
-      "plan_id": "plan_8912358f"
-    },
-    {
-      "step_id": "step_a0443b85",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 457,
-        "y": 73
-      },
-      "description": "Click on the \"Enter OpenAPI Description Document Location\" text field within the pop-up window at the top of the Microsoft Visual Studio Code interface.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:457:73:16:5:00085aa55b5ada72",
-        "dhash:457:73:96:5:200021ca4ca16890",
-        "dhash:457:73:0:10:f0b09494b2717075"
-      ],
-      "postconditions": [],
-      "tags": [
-        "precondition:old"
-      ],
-      "screenshot": "step_a0443b85",
-      "created_at": "2025-11-27T04:28:37.537423",
       "plan_id": "plan_8912358f"
     },
     {

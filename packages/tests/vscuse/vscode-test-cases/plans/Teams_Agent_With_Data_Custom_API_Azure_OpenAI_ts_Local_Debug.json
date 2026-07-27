@@ -50,7 +50,7 @@
         "x": 410,
         "y": 127
       },
-      "description": "Click the \"General Teams Agent\" dropdown option in the \"Teams Agent or App Using Teams AI Library\" menu.",
+      "description": "Click the \"Teams Agent with Data\" dropdown option (the 2nd item, described as \"Agent that uses your content and knowledge to accurately answer domain-specific questions\") in the \"Teams Agent or App Using Teams AI Library\" menu.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -102,7 +102,7 @@
         "x": 457,
         "y": 73
       },
-      "description": "Click on the \"Enter OpenAPI Description Document Location\" text field within the pop-up window at the top of the Microsoft Visual Studio Code interface.",
+      "description": "Click the \"Azure OpenAI\" option in the \"Service for Large Language Model (LLM)\" picker within the pop-up window at the top of the Microsoft Visual Studio Code interface, to select Azure OpenAI as the LLM service. This also advances the wizard to the \"OpenAPI Document\" step and auto-focuses its URL input field.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

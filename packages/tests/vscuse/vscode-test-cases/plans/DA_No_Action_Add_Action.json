@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 28,
+    "total_steps": 27,
     "created_at": "2026-04-13T01:30:49.279012",
     "name": "DA No Action Add Action",
     "description": {
@@ -28,7 +28,6 @@
       "step_4693a755",
       "step_5295c7fb",
       "step_fb570157",
-      "step_2e298c1d",
       "step_6577ef62",
       "step_fb5ad1b4",
       "step_758d3d5a",
@@ -228,32 +227,6 @@
       "tags": [],
       "screenshot": "step_fb570157",
       "created_at": "2026-04-13T01:30:49.298959",
-      "plan_id": "plan_54a305c1"
-    },
-    {
-      "step_id": "step_2e298c1d",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 368,
-        "y": 73
-      },
-      "description": "Click the text input field labeled \"Enter OpenAPI Description Document Location or Open File...\" in the \"OpenAPI Spec Document\" pop-up within Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:368:73:16:5:31aeb63394b5b5b5",
-        "dhash:368:73:96:5:00004299994c48b1",
-        "dhash:368:73:0:10:60202a63666c6c2d"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_2e298c1d",
-      "created_at": "2026-04-13T01:30:49.301300",
       "plan_id": "plan_54a305c1"
     },
     {

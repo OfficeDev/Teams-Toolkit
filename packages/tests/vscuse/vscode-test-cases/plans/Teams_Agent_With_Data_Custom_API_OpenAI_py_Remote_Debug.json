@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 10,
+    "total_steps": 9,
     "created_at": "2026-02-24T07:20:20.174329",
     "name": "Teams Agent With Data Custom API OpenAI py Remote Debug",
     "description": {
@@ -24,7 +24,6 @@
       "step_3da1142e",
       "step_9d89eee6",
       "step_ed95f866",
-      "step_ff1b3a33",
       "step_7ca5e897",
       "step_196375a9",
       "step_d00dd661",
@@ -119,30 +118,6 @@
       ],
       "screenshot": "step_ed95f866",
       "created_at": "2026-02-24T07:20:20.209395",
-      "plan_id": "plan_1a551e3b"
-    },
-    {
-      "step_id": "step_ff1b3a33",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press the \"Enter\" key to confirm the selected file path in the \"Enter OpenAPI Description Document Location\" input field within the Microsoft 365 Agents Toolkit interface.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:f0b09494b2717075"
-      ],
-      "postconditions": [],
-      "tags": [
-        "delay: 3"
-      ],
-      "screenshot": "step_ff1b3a33",
-      "created_at": "2026-02-24T07:20:20.214822",
       "plan_id": "plan_1a551e3b"
     },
     {
