@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 21,
+    "total_steps": 22,
     "created_at": "2026-04-30T07:28:56.301607",
     "name": "Feature LocalDebug Custom API without AzureOpenAI Keys",
     "description": {
@@ -23,6 +23,7 @@
       "plan_r_0624_024810",
       "step_6070d856",
       "step_2daf154d",
+      "step_fbd4ff5f",
       "step_51f8445c",
       "step_124a1154",
       "step_243e8e72",
@@ -103,6 +104,32 @@
       "tags": [],
       "screenshot": "step_2daf154d",
       "created_at": "2026-04-30T07:28:56.325438",
+      "plan_id": "plan_866dc22b"
+    },
+    {
+      "step_id": "step_fbd4ff5f",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 331,
+        "y": 76
+      },
+      "description": "Click the \"Enter OpenAPI Description Document Location\" input field in the OpenAPI Description Document dialog within Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:331:76:16:5:2411466dc594949c",
+        "dhash:331:76:96:5:00904990962912c0",
+        "dhash:331:76:0:10:f0b09494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_fbd4ff5f",
+      "created_at": "2026-04-30T07:28:56.333612",
       "plan_id": "plan_866dc22b"
     },
     {

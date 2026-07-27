@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 7,
+    "total_steps": 8,
     "created_at": "2025-12-18T03:09:40.976661",
     "name": "Teams Agent With Data Custom API Azure OpenAI js PlayGround",
     "description": {
@@ -23,6 +23,7 @@
       "plan_r_0624_024810",
       "step_c4837869",
       "step_60218d01",
+      "step_025a505e",
       "step_a7c2bdb6",
       "step_20b2e9c9",
       "step_816cc34c",
@@ -92,6 +93,34 @@
       ],
       "screenshot": "step_60218d01",
       "created_at": "2025-12-18T03:55:00.658170",
+      "plan_id": "plan_43836b26"
+    },
+    {
+      "step_id": "step_025a505e",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 457,
+        "y": 73
+      },
+      "description": "Click on the \"Enter OpenAPI Document URL\" option within the \"OpenAPI Document\" pop-up window at the top of the Microsoft Visual Studio Code interface.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:457:73:16:5:00085aa55b5ada72",
+        "dhash:457:73:96:5:200021ca4ca16890",
+        "dhash:457:73:0:10:f0b09494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "precondition:old"
+      ],
+      "screenshot": "step_025a505e",
+      "created_at": "2025-12-18T03:55:00.666374",
       "plan_id": "plan_43836b26"
     },
     {
