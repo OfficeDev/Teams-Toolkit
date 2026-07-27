@@ -51,7 +51,7 @@ import "reflect-metadata";
 import { Container } from "typedi";
 import { pathToFileURL } from "url";
 import { teamsDevPortalClient } from "../client/teamsDevPortalClient";
-import { ApiKeyParameters, AuthParameters, OAuthParameters } from "../common/authInterface";
+import { ApiKeyParameters, AuthParameters } from "../common/authInterface";
 import {
   AppStudioScopes,
   MosServiceScope,
@@ -1394,7 +1394,7 @@ export class FxCore extends FxCoreOpenPluginPart {
       if (envRes.isErr()) {
         return err(envRes.error);
       }
-      res[env] = envRes.value as DotenvParseOutput;
+      res[env] = envRes.value;
     }
     return ok(res);
   }
@@ -2375,7 +2375,7 @@ export class FxCore extends FxCoreOpenPluginPart {
     if (skillFrom || skillFromZipFile) {
       const isZipImport =
         skillFromZipFile || (skillFrom && skillFrom.toLowerCase().endsWith(".zip"));
-      const sourcePath = skillFromZipFile || (skillFrom as string);
+      const sourcePath = (skillFromZipFile || skillFrom)!;
 
       if (isZipImport) {
         // Zip import mode
@@ -2899,7 +2899,7 @@ export class FxCore extends FxCoreOpenPluginPart {
         const oauthTokenUrl = inputs[QuestionNames.OAuthTokenUrl] as string;
         const oauthRefreshUrl = inputs[QuestionNames.OAuthRefreshUrl] as string;
         const oauthScopes = inputs[QuestionNames.OAuthScope] as string;
-        const enablePKCEStr = inputs[QuestionNames.OauthPKCE] as string;
+        const enablePKCEStr = inputs[QuestionNames.OauthPKCE];
         const scopeArr = this.parseScope(oauthScopes);
 
         authParameters = {
@@ -2909,7 +2909,7 @@ export class FxCore extends FxCoreOpenPluginPart {
           refreshUrl: oauthRefreshUrl ? oauthRefreshUrl : undefined,
           scopes: scopeArr,
           enablePKCE: enablePKCEStr === "true",
-        } as OAuthParameters;
+        };
       } else if (authType === AddAuthActionAuthTypeOptions.apiKey().id) {
         const apiKeyIn = inputs[QuestionNames.ApiKeyIn] as string;
         const apiKeyName = inputs[QuestionNames.ApiKeyName] as string;
@@ -2928,7 +2928,7 @@ export class FxCore extends FxCoreOpenPluginPart {
           tokenUrl: "https://login.microsoftonline.com/${{TEAMS_APP_TENANT_ID}}/oauth2/v2.0/token",
           refreshUrl: undefined,
           scopes: scopeArr,
-        } as OAuthParameters;
+        };
       }
 
       // Update openapi spec

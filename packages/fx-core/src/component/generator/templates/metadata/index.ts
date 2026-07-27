@@ -10,6 +10,8 @@ import * as folder from "../../../../folder";
 import * as templateHelper from "../../templateHelper";
 import { Template } from "./interface";
 
+const DECLARATIVE_AGENT_ID_PREFIX = "declarative-agent";
+
 function getTemplateMetadataConfig(configName: string, platform?: Platform): Template[] {
   let jsonPath: string;
 
@@ -99,7 +101,7 @@ export function listAllTemplates(): TemplateGroup[] {
 // List declarative agent templates grouped by name.
 export function listDeclarativeAgentTemplates(): TemplateGroup[] {
   const templates = getAllTemplatesOnPlatform(getListPlatform()).filter((t) =>
-    t.id.startsWith("declarative-agent")
+    (t.alias || t.name).startsWith(DECLARATIVE_AGENT_ID_PREFIX)
   );
   return groupTemplatesByName(templates);
 }
