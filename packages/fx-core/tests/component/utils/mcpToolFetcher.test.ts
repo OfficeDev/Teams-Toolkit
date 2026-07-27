@@ -5,6 +5,7 @@ import axios from "axios";
 import fs from "fs-extra";
 import { assert, vi } from "vitest";
 import {
+  buildWellKnownCandidates,
   fetchMCPTools,
   probeMCPServerAuth,
   readMCPToolsFromFile,
@@ -543,6 +544,141 @@ describe("mcpToolFetcher", () => {
       } catch (e: any) {
         assert.isNotEmpty(e.message);
       }
+    });
+
+    it("should fall back to the appended OIDC discovery form when RFC 8414 insertion 404s", async () => {
+      const getStub = vi.spyOn(axios, "get");
+      getStub.mockImplementation(async (url: string): Promise<any> => {
+        if (url === "https://example.com/.well-known/oauth-protected-resource") {
+          return {
+            status: 200,
+            data: { authorization_servers: ["https://login.microsoftonline.com/common/v2.0"] },
+          };
+        }
+        // Entra serves ONLY the appended OIDC form; every other candidate 404s.
+        if (
+          url === "https://login.microsoftonline.com/common/v2.0/.well-known/openid-configuration"
+        ) {
+          return {
+            data: {
+              authorization_endpoint:
+                "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+              token_endpoint: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+            },
+          };
+        }
+        throw new Error("Request failed with status code 404");
+      });
+
+      const result = await resolveMCPOAuthMetadata(
+        "https://example.com/.well-known/oauth-protected-resource"
+      );
+
+      assert.equal(
+        result.authorizationUrl,
+        "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
+      );
+      assert.equal(result.tokenUrl, "https://login.microsoftonline.com/common/oauth2/v2.0/token");
+      assert.equal(
+        result.wellKnownUrl,
+        "https://login.microsoftonline.com/common/v2.0/.well-known/openid-configuration"
+      );
+    });
+
+    it("should skip a candidate that responds without endpoints and try the next one", async () => {
+      const getStub = vi.spyOn(axios, "get");
+      getStub.mockImplementation(async (url: string): Promise<any> => {
+        if (url === "https://example.com/.well-known/oauth-protected-resource") {
+          return { status: 200, data: { authorization_servers: ["https://auth.example.com/t1"] } };
+        }
+        if (url === "https://auth.example.com/.well-known/oauth-authorization-server/t1") {
+          // Responds 200 but with a protected-resource document — no endpoints.
+          return { data: { resource: "https://auth.example.com/", authorization_servers: [] } };
+        }
+        if (url === "https://auth.example.com/.well-known/openid-configuration/t1") {
+          return {
+            data: {
+              authorization_endpoint: "https://auth.example.com/authorize",
+              token_endpoint: "https://auth.example.com/token",
+            },
+          };
+        }
+        throw new Error("Request failed with status code 404");
+      });
+
+      const result = await resolveMCPOAuthMetadata(
+        "https://example.com/.well-known/oauth-protected-resource"
+      );
+
+      assert.equal(result.authorizationUrl, "https://auth.example.com/authorize");
+      assert.equal(
+        result.wellKnownUrl,
+        "https://auth.example.com/.well-known/openid-configuration/t1"
+      );
+    });
+
+    it("should report every attempted candidate when all of them fail", async () => {
+      const getStub = vi.spyOn(axios, "get");
+      getStub.mockImplementation(async (url: string): Promise<any> => {
+        if (url === "https://example.com/.well-known/oauth-protected-resource") {
+          return { status: 200, data: { authorization_servers: ["https://auth.example.com/t1"] } };
+        }
+        throw new Error("Request failed with status code 404");
+      });
+
+      try {
+        await resolveMCPOAuthMetadata("https://example.com/.well-known/oauth-protected-resource");
+        assert.fail("Should have thrown");
+      } catch (e: any) {
+        assert.include(
+          e.message,
+          "https://auth.example.com/.well-known/oauth-authorization-server/t1"
+        );
+        assert.include(e.message, "https://auth.example.com/t1/.well-known/openid-configuration");
+      }
+    });
+
+    it("should not probe alternative candidates when wellKnownUrl is explicitly configured", async () => {
+      const getStub = vi.spyOn(axios, "get");
+      getStub.mockRejectedValue(new Error("Request failed with status code 404"));
+
+      try {
+        await resolveMCPOAuthMetadata(
+          undefined,
+          "https://auth.example.com/.well-known/oauth-authorization-server"
+        );
+        assert.fail("Should have thrown");
+      } catch (e: any) {
+        assert.isNotEmpty(e.message);
+      }
+      assert.strictEqual(getStub.mock.calls.length, 1);
+    });
+  });
+
+  describe("buildWellKnownCandidates", () => {
+    it("should order insertion before append for an issuer with a path", () => {
+      assert.deepEqual(buildWellKnownCandidates("https://login.microsoftonline.com/common/v2.0"), [
+        "https://login.microsoftonline.com/.well-known/oauth-authorization-server/common/v2.0",
+        "https://login.microsoftonline.com/.well-known/openid-configuration/common/v2.0",
+        "https://login.microsoftonline.com/common/v2.0/.well-known/oauth-authorization-server",
+        "https://login.microsoftonline.com/common/v2.0/.well-known/openid-configuration",
+      ]);
+    });
+
+    it("should deduplicate candidates for a host-only issuer", () => {
+      assert.deepEqual(buildWellKnownCandidates("https://mcp.notion.com"), [
+        "https://mcp.notion.com/.well-known/oauth-authorization-server",
+        "https://mcp.notion.com/.well-known/openid-configuration",
+      ]);
+    });
+
+    it("should strip a trailing slash from the issuer path", () => {
+      assert.deepEqual(buildWellKnownCandidates("https://auth.example.com/tenant/"), [
+        "https://auth.example.com/.well-known/oauth-authorization-server/tenant",
+        "https://auth.example.com/.well-known/openid-configuration/tenant",
+        "https://auth.example.com/tenant/.well-known/oauth-authorization-server",
+        "https://auth.example.com/tenant/.well-known/openid-configuration",
+      ]);
     });
   });
 });

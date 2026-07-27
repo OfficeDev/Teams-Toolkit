@@ -734,6 +734,15 @@ export async function generateForMCPForDA(
               ),
             });
           }
+          if (injectResult.oauthUrlPlaceholderUsed) {
+            warnings.push({
+              type: "mcpAuthOAuthUrlPlaceholder",
+              content: getLocalizedString(
+                "core.MCPForDA.mcpAuthOAuthPlaceholderWarning",
+                mcpServerUrl
+              ),
+            });
+          }
         }
       } catch (error: any) {
         warnings.push({
@@ -861,6 +870,15 @@ async function generateForMCPForDAWithAuth(
               type: "mcpAuthDcrWellKnownUrlPlaceholder",
               content: getLocalizedString(
                 "core.MCPForDA.mcpAuthDcrPlaceholderWarning",
+                mcpServerUrl
+              ),
+            });
+          }
+          if (injectResult.oauthUrlPlaceholderUsed) {
+            warnings.push({
+              type: "mcpAuthOAuthUrlPlaceholder",
+              content: getLocalizedString(
+                "core.MCPForDA.mcpAuthOAuthPlaceholderWarning",
                 mcpServerUrl
               ),
             });

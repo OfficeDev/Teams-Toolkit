@@ -178,14 +178,43 @@ export interface MCPOAuthMetadata {
   wellKnownUrl: string;
 }
 
+/**
+ * Build the ordered list of authorization-server metadata URLs to probe for an issuer.
+ *
+ * Providers disagree on which discovery form they serve: RFC 8414 §3.1 mandates inserting
+ * `/.well-known/oauth-authorization-server` between the host and the issuer path, while
+ * OpenID Connect Discovery §4 appends `/.well-known/openid-configuration` to the issuer.
+ * Microsoft Entra, for example, serves ONLY the appended OIDC form — the RFC 8414 insertion
+ * form returns 404 — so probing a single form silently loses the endpoints for whole classes
+ * of identity providers. Candidates are deduplicated (a host-only issuer collapses the
+ * insertion and append forms) and returned in RFC-preference order.
+ */
+export function buildWellKnownCandidates(issuer: string): string[] {
+  const issuerUrl = new URL(issuer);
+  const origin = `${issuerUrl.protocol}//${issuerUrl.host}`;
+  // A trailing slash makes providers such as Notion return 404 for the insertion form.
+  const issuerPath = issuerUrl.pathname === "/" ? "" : issuerUrl.pathname.replace(/\/+$/, "");
+  return [
+    ...new Set([
+      `${origin}/.well-known/oauth-authorization-server${issuerPath}`,
+      `${origin}/.well-known/openid-configuration${issuerPath}`,
+      `${origin}${issuerPath}/.well-known/oauth-authorization-server`,
+      `${origin}${issuerPath}/.well-known/openid-configuration`,
+    ]),
+  ];
+}
+
 /** Resolve OAuth endpoints from MCP resource or authorization-server metadata. */
 export async function resolveMCPOAuthMetadata(
   authMetadataUrl?: string,
   wellKnownUrl?: string
 ): Promise<MCPOAuthMetadata> {
-  let resolvedWellKnownUrl = wellKnownUrl;
+  let candidates: string[];
 
-  if (!resolvedWellKnownUrl) {
+  if (wellKnownUrl) {
+    // An explicitly configured URL is authoritative — never substitute a guess for it.
+    candidates = [wellKnownUrl];
+  } else {
     if (!authMetadataUrl) {
       throw new Error(getLocalizedString("core.MCPForDA.mcpAuthMetadataUrlNotFound"));
     }
@@ -197,23 +226,26 @@ export async function resolveMCPOAuthMetadata(
       response.data.authorization_servers &&
       response.data.authorization_servers.length > 0
     ) {
-      const mcpServerMetadataUrl = response.data.authorization_servers[0];
-      const serverUrl = new URL(mcpServerMetadataUrl);
-      const serverPath = serverUrl.pathname === "/" ? "" : serverUrl.pathname;
-      resolvedWellKnownUrl = `${serverUrl.protocol}//${serverUrl.host}/.well-known/oauth-authorization-server${serverPath}`;
+      candidates = buildWellKnownCandidates(response.data.authorization_servers[0]);
     } else {
       throw new Error(getLocalizedString("core.MCPForDA.mcpServerMetadataUrlNotFound"));
     }
   }
 
-  const metadataResponse = await axios.get(resolvedWellKnownUrl);
-  const authorizationUrl = metadataResponse.data?.authorization_endpoint;
-  const tokenUrl = metadataResponse.data?.token_endpoint;
-  const refreshUrl = metadataResponse.data?.refresh_endpoint;
-
-  if (!authorizationUrl || !tokenUrl) {
-    throw new Error(getLocalizedString("core.MCPForDA.authUrlNotFound"));
+  for (const candidate of candidates) {
+    try {
+      const metadataResponse = await axios.get(candidate);
+      const authorizationUrl = metadataResponse.data?.authorization_endpoint;
+      const tokenUrl = metadataResponse.data?.token_endpoint;
+      const refreshUrl = metadataResponse.data?.refresh_endpoint;
+      if (authorizationUrl && tokenUrl) {
+        return { authorizationUrl, tokenUrl, refreshUrl, wellKnownUrl: candidate };
+      }
+    } catch {
+      // A 404 / unreachable candidate just means this provider uses a different
+      // discovery form; keep probing and report every attempt if all of them fail.
+    }
   }
 
-  return { authorizationUrl, tokenUrl, refreshUrl, wellKnownUrl: resolvedWellKnownUrl };
+  throw new Error(getLocalizedString("core.MCPForDA.authUrlNotFound", candidates.join(", ")));
 }

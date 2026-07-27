@@ -142,6 +142,11 @@ export async function injectMcpAuthAction(
   if (injectResult.value.wellKnownUrlPlaceholderUsed) {
     ctx.warn?.(getLocalizedString("core.MCPForDA.mcpAuthDcrPlaceholderWarning", args.mcpServerUrl));
   }
+  if (injectResult.value.oauthUrlPlaceholderUsed) {
+    ctx.warn?.(
+      getLocalizedString("core.MCPForDA.mcpAuthOAuthPlaceholderWarning", args.mcpServerUrl)
+    );
+  }
   ctx.write(args.ymlPath, Buffer.from(injectResult.value.yaml, "utf8"));
   return ok(undefined);
 }

@@ -349,7 +349,7 @@ export class FxCoreDeclarativeAgentPart {
 
     if (mcpAuth === "OAuthPluginVault" && !!registrationId) {
       // insert oauth info in teamsapp.yaml
-      await injectMCPAuthActionToYml({
+      const injectResult = await injectMCPAuthActionToYml({
         ymlPath: pathUtils.getYmlFilePath(projectPath) as string,
         authType,
         authName: serverName,
@@ -357,6 +357,22 @@ export class FxCoreDeclarativeAgentPart {
         mcpServerUrl,
         endpoints: mcpAuthEndpoints,
       });
+      // This flow has no scaffolding summary to fall back on, so surface the placeholders
+      // directly — otherwise provision fails later with an opaque error.
+      if (injectResult.wellKnownUrlPlaceholderUsed) {
+        void context.userInteraction.showMessage(
+          "warn",
+          getLocalizedString("core.MCPForDA.mcpAuthDcrPlaceholderWarning", mcpServerUrl),
+          false
+        );
+      }
+      if (injectResult.oauthUrlPlaceholderUsed) {
+        void context.userInteraction.showMessage(
+          "warn",
+          getLocalizedString("core.MCPForDA.mcpAuthOAuthPlaceholderWarning", mcpServerUrl),
+          false
+        );
+      }
     }
     void context.userInteraction
       .showMessage(
@@ -773,7 +789,7 @@ export class FxCoreDeclarativeAgentPart {
           try {
             const ymlPath = pathUtils.getYmlFilePath(inputs.projectPath);
             if (ymlPath) {
-              await injectMCPAuthActionToYml({
+              const injectResult = await injectMCPAuthActionToYml({
                 ymlPath,
                 authType,
                 authName: namespace,
@@ -784,6 +800,24 @@ export class FxCoreDeclarativeAgentPart {
                 serverName,
                 scopes: inputs[QuestionNames.MCPForDAScopes],
               });
+              if (injectResult.wellKnownUrlPlaceholderUsed) {
+                mcpWarnings.push({
+                  type: "mcpAuthDcrWellKnownUrlPlaceholder",
+                  content: getLocalizedString(
+                    "core.MCPForDA.mcpAuthDcrPlaceholderWarning",
+                    mcpServerUrl
+                  ),
+                });
+              }
+              if (injectResult.oauthUrlPlaceholderUsed) {
+                mcpWarnings.push({
+                  type: "mcpAuthOAuthUrlPlaceholder",
+                  content: getLocalizedString(
+                    "core.MCPForDA.mcpAuthOAuthPlaceholderWarning",
+                    mcpServerUrl
+                  ),
+                });
+              }
             }
           } catch (error: any) {
             mcpWarnings.push({
@@ -1005,7 +1039,7 @@ export class FxCoreDeclarativeAgentPart {
               const endpoints = await resolveMCPAuthEndpoints(authType, inputs);
               const ymlPath = pathUtils.getYmlFilePath(inputs.projectPath);
               if (ymlPath) {
-                await injectMCPAuthActionToYml({
+                const injectResult = await injectMCPAuthActionToYml({
                   ymlPath,
                   authType,
                   authName: actionId,
@@ -1013,6 +1047,24 @@ export class FxCoreDeclarativeAgentPart {
                   mcpServerUrl,
                   endpoints,
                 });
+                if (injectResult.wellKnownUrlPlaceholderUsed) {
+                  mcpWarnings.push({
+                    type: "mcpAuthDcrWellKnownUrlPlaceholder",
+                    content: getLocalizedString(
+                      "core.MCPForDA.mcpAuthDcrPlaceholderWarning",
+                      mcpServerUrl
+                    ),
+                  });
+                }
+                if (injectResult.oauthUrlPlaceholderUsed) {
+                  mcpWarnings.push({
+                    type: "mcpAuthOAuthUrlPlaceholder",
+                    content: getLocalizedString(
+                      "core.MCPForDA.mcpAuthOAuthPlaceholderWarning",
+                      mcpServerUrl
+                    ),
+                  });
+                }
               }
             } catch (error: any) {
               mcpWarnings.push({

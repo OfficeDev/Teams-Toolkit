@@ -88,10 +88,34 @@ export async function resolveMCPAuthEndpoints(
 export const MCP_DCR_WELL_KNOWN_URL_PLACEHOLDER =
   "<PLEASE_FILL_IN_WELL_KNOWN_AUTHORIZATION_SERVER_URL>";
 
+/**
+ * Placeholders written to `oauth/register` when endpoint discovery can't produce the
+ * authorization / token URLs for a static `oauth` (`identityProvider: Custom`) action.
+ * Omitting the fields instead would hide the gap entirely — the action looks complete but
+ * can never provision — so the placeholders make the missing values visible and editable,
+ * mirroring the `dcr/register` contract above.
+ */
+export const MCP_OAUTH_AUTHORIZATION_URL_PLACEHOLDER = "<PLEASE_FILL_IN_AUTHORIZATION_URL>";
+export const MCP_OAUTH_TOKEN_URL_PLACEHOLDER = "<PLEASE_FILL_IN_TOKEN_URL>";
+
+/**
+ * Every MCP scaffolding warning type is camelCased with this prefix (`mcpAuthRequired`,
+ * `mcpNoToolsFetched`, `mcpAuthDcrWellKnownUrlPlaceholder`, ...), while spec-parser warning
+ * types are kebab-cased (`operationid-missing`, `generate-card-failed`, ...). Surfaces use
+ * this predicate to let MCP warnings through the scaffolding summary without also leaking
+ * spec-parser warnings that the API-plugin flows deliberately suppress.
+ */
+export function isMCPScaffoldWarning(warning: { type: string }): boolean {
+  return warning.type.startsWith("mcp");
+}
+
 export interface InjectMCPAuthActionResult {
   /** True when `oauth-dynamic` was injected with the placeholder URL because
    * `endpoints.wellKnownUrl` was missing. */
   wellKnownUrlPlaceholderUsed?: boolean;
+  /** True when `oauth` was injected with placeholder authorization / token URLs
+   * because endpoint discovery didn't return them. */
+  oauthUrlPlaceholderUsed?: boolean;
 }
 
 /**
@@ -157,18 +181,25 @@ export async function injectMCPAuthActionToYml(args: {
       };
     }
   }
+  // Only static `oauth` emits these endpoints; `entra-sso` resolves them from Entra.
+  const oauthUrlPlaceholderUsed =
+    args.authType === "oauth" && (!args.endpoints.authorizationUrl || !args.endpoints.tokenUrl);
   await ActionInjector.injectCreateOAuthActionForMCP(
     args.ymlPath,
     args.authType,
     args.authName,
     args.registrationId,
     args.mcpServerUrl,
-    args.endpoints.authorizationUrl,
-    args.endpoints.tokenUrl,
+    args.authType === "oauth"
+      ? (args.endpoints.authorizationUrl ?? MCP_OAUTH_AUTHORIZATION_URL_PLACEHOLDER)
+      : args.endpoints.authorizationUrl,
+    args.authType === "oauth"
+      ? (args.endpoints.tokenUrl ?? MCP_OAUTH_TOKEN_URL_PLACEHOLDER)
+      : args.endpoints.tokenUrl,
     args.endpoints.refreshUrl,
     credentialEnvNames
   );
-  return {};
+  return oauthUrlPlaceholderUsed ? { oauthUrlPlaceholderUsed: true } : {};
 }
 
 /**
