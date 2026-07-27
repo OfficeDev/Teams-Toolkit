@@ -733,6 +733,62 @@ test("semantic adapter rejects provision inputs that the template does not promp
   assert.equal(result.diagnostics[0].code, "VCB_PROVISION_INPUT_REDUNDANT");
 });
 
+test("provision environment selection follows the authored environment input", async (context) => {
+  const plansDirectory = await fs.mkdtemp(
+    path.join(os.tmpdir(), "vscuse-generated-"),
+  );
+  context.after(() => fs.rm(plansDirectory, { force: true, recursive: true }));
+
+  const result = await setupGeneratedPlans({
+    onDiff: () => {},
+    plansDirectory,
+  });
+  assert.equal(result.ok, true);
+
+  const environmentDescription = "Click the dev option in the active prompt.";
+  const mcpPlan = JSON.parse(
+    await fs.readFile(
+      path.join(
+        plansDirectory,
+        "da-mcp-server--da-mcp-remote-none-preview.json",
+      ),
+      "utf8",
+    ),
+  );
+  const noActionPlan = JSON.parse(
+    await fs.readFile(
+      path.join(
+        plansDirectory,
+        "da-no-action--da-no-action-remote-preview.json",
+      ),
+      "utf8",
+    ),
+  );
+
+  assert.equal(
+    mcpPlan.steps.some((step) => step.description === environmentDescription),
+    false,
+  );
+  assert.equal(
+    noActionPlan.steps.some(
+      (step) => step.description === environmentDescription,
+    ),
+    true,
+  );
+});
+
+test("semantic adapter rejects an unsupported provision environment input", async () => {
+  const result = await compileFixture("da-no-action.yml", (sourceText) =>
+    sourceText.replace(
+      "  provision:\n    type: provision",
+      "  provision:\n    type: provision\n    with:\n      environment: dev",
+    ),
+  );
+
+  assert.equal(result.ok, false);
+  assert.equal(result.diagnostics[0].code, "VCB_PROVISION_INPUT_UNKNOWN");
+});
+
 test("semantic adapter rejects a target with missing prerequisites", async () => {
   const result = await compileFixture("weather-agent.yml", (sourceText) =>
     sourceText.replace("        login-m365,\n", ""),

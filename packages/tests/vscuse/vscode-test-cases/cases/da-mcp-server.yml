@@ -210,8 +210,12 @@ steps:
       account: "${{env:M365_ACCOUNT_NAME}}"
       password: "${{secret:M365_ACCOUNT_PASSWORD}}"
 
+  # da/mcp-server scaffolds env/.env.dev only, so the toolkit auto-selects the
+  # single environment and never shows the "Select an environment" quick pick.
   provision:
     type: provision
+    with:
+      environment: none
 
   f5-copilot-remote:
     type: target

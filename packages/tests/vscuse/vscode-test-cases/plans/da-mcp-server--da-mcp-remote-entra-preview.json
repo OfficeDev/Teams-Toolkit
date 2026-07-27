@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 92,
+    "total_steps": 90,
     "name": "da-mcp-remote-entra-preview",
     "description": {
       "owner": "",
@@ -81,14 +81,12 @@
       "step_executeCommand_filter_c0af3d3fa_4_1",
       "step_executeCommand_assertCommand_c0af3d3fa_4_1",
       "step_executeCommand_execute_c0af3d3fa_4_1",
-      "step_clickOption_assertPrompt_c0af3d3fa_4_2",
-      "step_clickOption_click_c0af3d3fa_4_2",
-      "step_executeCommand_open_c0af3d3fa_4_3",
-      "step_executeCommand_assertPalette_c0af3d3fa_4_3",
-      "step_executeCommand_filter_c0af3d3fa_4_3",
-      "step_executeCommand_assertCommand_c0af3d3fa_4_3",
-      "step_executeCommand_execute_c0af3d3fa_4_3",
-      "step_assertNotificationContains_assert_c0af3d3fa_4_4",
+      "step_executeCommand_open_c0af3d3fa_4_2",
+      "step_executeCommand_assertPalette_c0af3d3fa_4_2",
+      "step_executeCommand_filter_c0af3d3fa_4_2",
+      "step_executeCommand_assertCommand_c0af3d3fa_4_2",
+      "step_executeCommand_execute_c0af3d3fa_4_2",
+      "step_assertNotificationContains_assert_c0af3d3fa_4_3",
       "step_executeCommand_open_c0af3d3fa_5_1",
       "step_executeCommand_assertPalette_c0af3d3fa_5_1",
       "step_executeCommand_filter_c0af3d3fa_5_1",
@@ -1595,58 +1593,7 @@
       ]
     },
     {
-      "step_id": "step_clickOption_assertPrompt_c0af3d3fa_4_2",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the active prompt titled Select an environment is visible and the option dev is selectable.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_executeCommand_execute_c0af3d3fa_4_1"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect",
-        "interaction:click",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_clickOption_click_c0af3d3fa_4_2",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 292,
-        "y": 77
-      },
-      "description": "Click the dev option in the active prompt.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_clickOption_assertPrompt_c0af3d3fa_4_2"
-      ],
-      "preconditions": [
-        "dhash:292:77:16:5:0000000000000000",
-        "dhash:292:77:96:5:0000c0004020204c",
-        "dhash:292:77:0:10:d088222323232421"
-      ],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect",
-        "interaction:click"
-      ]
-    },
-    {
-      "step_id": "step_executeCommand_open_c0af3d3fa_4_3",
+      "step_id": "step_executeCommand_open_c0af3d3fa_4_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1658,7 +1605,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_clickOption_click_c0af3d3fa_4_2"
+        "step_executeCommand_execute_c0af3d3fa_4_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1668,7 +1615,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertPalette_c0af3d3fa_4_3",
+      "step_id": "step_executeCommand_assertPalette_c0af3d3fa_4_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1678,7 +1625,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_open_c0af3d3fa_4_3"
+        "step_executeCommand_open_c0af3d3fa_4_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1689,7 +1636,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_filter_c0af3d3fa_4_3",
+      "step_id": "step_executeCommand_filter_c0af3d3fa_4_2",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1701,7 +1648,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertPalette_c0af3d3fa_4_3"
+        "step_executeCommand_assertPalette_c0af3d3fa_4_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1711,7 +1658,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertCommand_c0af3d3fa_4_3",
+      "step_id": "step_executeCommand_assertCommand_c0af3d3fa_4_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1721,7 +1668,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_filter_c0af3d3fa_4_3"
+        "step_executeCommand_filter_c0af3d3fa_4_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1732,7 +1679,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_execute_c0af3d3fa_4_3",
+      "step_id": "step_executeCommand_execute_c0af3d3fa_4_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1744,7 +1691,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertCommand_c0af3d3fa_4_3"
+        "step_executeCommand_assertCommand_c0af3d3fa_4_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1754,7 +1701,7 @@
       ]
     },
     {
-      "step_id": "step_assertNotificationContains_assert_c0af3d3fa_4_4",
+      "step_id": "step_assertNotificationContains_assert_c0af3d3fa_4_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1764,7 +1711,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_c0af3d3fa_4_3"
+        "step_executeCommand_execute_c0af3d3fa_4_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1787,7 +1734,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertNotificationContains_assert_c0af3d3fa_4_4"
+        "step_assertNotificationContains_assert_c0af3d3fa_4_3"
       ],
       "preconditions": [],
       "postconditions": [],

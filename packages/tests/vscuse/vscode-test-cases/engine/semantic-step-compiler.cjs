@@ -11,6 +11,8 @@ const secretExpressionPattern = /^\$\{\{secret:[A-Z_a-z][A-Z_a-z0-9]*\}\}$/;
 const relativePathPattern =
   /^(?!\/)(?![A-Za-z]:)(?!.*(?:^|\/)\.\.(?:\/|$))[^\\]+$/;
 const provisionInputGroups = new Set(["apiKey", "arm", "oauth"]);
+const provisionEnvironmentInput = "environment";
+const provisionEnvironmentSkipValue = "none";
 
 const commandTitles = {
   create: "Microsoft 365 Agents: Create New Agent/App",
@@ -554,11 +556,36 @@ function createSemanticStepCompiler() {
   }
 
   function validateProvisionInputs(state, definition) {
-    const inputs = definition.with ?? {};
+    const declared = definition.with ?? {};
+    if (!isRecord(declared)) {
+      return failure(
+        "VCB_PROVISION_INPUT_UNKNOWN",
+        "The provision operation contains an unsupported input.",
+      );
+    }
+    const { [provisionEnvironmentInput]: environment, ...inputs } = declared;
     if (
-      !isRecord(inputs) ||
-      Object.keys(inputs).some((key) => !provisionInputGroups.has(key))
+      environment !== undefined &&
+      environment !== provisionEnvironmentSkipValue
     ) {
+      return failure(
+        "VCB_PROVISION_INPUT_UNKNOWN",
+        `The provision environment input supports only "${provisionEnvironmentSkipValue}".`,
+      );
+    }
+    const groups = validateProvisionInputGroups(state, inputs);
+    if (!groups.ok) return groups;
+    return {
+      ok: true,
+      value: {
+        ...groups.value,
+        selectsEnvironment: environment !== provisionEnvironmentSkipValue,
+      },
+    };
+  }
+
+  function validateProvisionInputGroups(state, inputs) {
+    if (Object.keys(inputs).some((key) => !provisionInputGroups.has(key))) {
       return failure(
         "VCB_PROVISION_INPUT_UNKNOWN",
         "The provision operation contains an unsupported input.",
@@ -721,9 +748,11 @@ function createSemanticStepCompiler() {
         output,
       );
       if (!beforeEnvironment.ok) return beforeEnvironment;
-      const { component, ...environmentValues } = provisionEnvironment;
-      error = append(output, render(state, component, environmentValues));
-      if (error) return error;
+      if (provision.value.selectsEnvironment) {
+        const { component, ...environmentValues } = provisionEnvironment;
+        error = append(output, render(state, component, environmentValues));
+        if (error) return error;
+      }
       const afterEnvironment = renderProvisionQuestions(
         state,
         provision.value.afterEnvironment,
