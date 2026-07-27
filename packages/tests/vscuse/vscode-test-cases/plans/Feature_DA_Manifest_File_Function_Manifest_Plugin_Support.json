@@ -216,7 +216,7 @@
       "parameters": {
         "key": "enter"
       },
-      "description": "Press Enter to confirm the \"Enter OpenAPI Description Document Location\" input in the VS Code Microsoft 365 Agents Toolkit interface.",
+      "description": "Press the \"Enter\" key again to proceed to typing in the \"Enter OpenAPI Description Document Location\" input within the VS Code Microsoft 365 Agents Toolkit interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

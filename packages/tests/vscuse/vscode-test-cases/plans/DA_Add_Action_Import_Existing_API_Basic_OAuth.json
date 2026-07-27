@@ -99,7 +99,7 @@
         "x": 232,
         "y": 51
       },
-      "description": "Click the \"OK\" button in the \"Select Operation(s) Copilot Can Interact with\" dialog at the top of the Microsoft 365 Agents Toolkit interface in Visual Studio Code.",
+      "description": "Click the \"Select all\" checkbox at the top-left of the \"Select Operation(s) Copilot Can Interact with\" quick pick to select all listed API operations (checking the \"GET /repair\" operation), in the Microsoft 365 Agents Toolkit extension for Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -127,7 +127,7 @@
         "x": 797,
         "y": 49
       },
-      "description": "Click the blue \"Clear All\" button in the dropdown for operation selection within the \"Microsoft 365 Agents Toolkit\" extension in Visual Studio Code, to deselect all chosen APIs.",
+      "description": "Click the blue \"OK\" button in the \"Select Operation(s) Copilot Can Interact with\" quick pick to confirm the selected API operation(s), in the Microsoft 365 Agents Toolkit extension for Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -165,9 +165,7 @@
         "dhash:313:73:0:10:f0b09494b2717075"
       ],
       "postconditions": [],
-      "tags": [
-        "precondition:old"
-      ],
+      "tags": [],
       "screenshot": "step_b20287ae",
       "created_at": "2026-05-11T05:27:45.252075",
       "plan_id": "plan_7ca218e3"

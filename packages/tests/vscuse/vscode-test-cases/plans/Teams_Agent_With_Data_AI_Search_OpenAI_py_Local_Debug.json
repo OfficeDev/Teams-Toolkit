@@ -46,7 +46,7 @@
         "x": 410,
         "y": 127
       },
-      "description": "Click the \"Teams Agent with Data\" dropdown option in the \"Teams Agent or App Using Microsoft Teams SDK\" menu.",
+      "description": "Click the \"Teams Agent with Data\" dropdown option.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
