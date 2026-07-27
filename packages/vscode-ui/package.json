@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/vscode-ui",
-  "version": "1.0.17",
+  "version": "1.0.18-rc.0",
   "main": "build/index.js",
   "types": "build/index.d.ts",
   "license": "MIT",
