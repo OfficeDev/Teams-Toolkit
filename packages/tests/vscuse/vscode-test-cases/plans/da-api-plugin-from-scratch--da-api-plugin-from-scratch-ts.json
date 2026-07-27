@@ -433,7 +433,7 @@
       "parameters": {
         "text": "Add an Action"
       },
-      "description": "Type the resolved option label into the active single-select prompt.",
+      "description": "Type the resolved option label Add an Action into the active single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -519,7 +519,7 @@
       "parameters": {
         "text": "Start with a New API"
       },
-      "description": "Type the resolved option label into the active single-select prompt.",
+      "description": "Type the resolved option label Start with a New API into the active single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -605,7 +605,7 @@
       "parameters": {
         "text": "None"
       },
-      "description": "Type the resolved option label into the active single-select prompt.",
+      "description": "Type the resolved option label None into the active single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -691,7 +691,7 @@
       "parameters": {
         "text": "TypeScript"
       },
-      "description": "Type the resolved option label into the active single-select prompt.",
+      "description": "Type the resolved option label TypeScript into the active single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -2172,7 +2172,7 @@
       "parameters": {
         "text": "${{env:AZURE_SUBSCRIPTION_ID}}"
       },
-      "description": "Type the resolved option label into the active single-select prompt.",
+      "description": "Type the resolved option label ${{env:AZURE_SUBSCRIPTION_ID}} into the active single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -2258,7 +2258,7 @@
       "parameters": {
         "text": "+ New resource group"
       },
-      "description": "Type the resolved option label into the active single-select prompt.",
+      "description": "Type the resolved option label + New resource group into the active single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -2409,7 +2409,7 @@
       "parameters": {
         "text": "${{env:RESOURCE_GROUP_REGION}}"
       },
-      "description": "Type the resolved option label into the active single-select prompt.",
+      "description": "Type the resolved option label ${{env:RESOURCE_GROUP_REGION}} into the active single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

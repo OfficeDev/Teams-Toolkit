@@ -32,7 +32,7 @@
       "parameters": {
         "text": {{json:optionLabel}}
       },
-      "description": "Type the resolved option label into the active single-select prompt.",
+      "description": "Type the resolved option label {{text:optionLabel}} into the active single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

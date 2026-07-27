@@ -379,7 +379,7 @@
       "parameters": {
         "text": "Add an Action"
       },
-      "description": "Type the resolved option label into the active single-select prompt.",
+      "description": "Type the resolved option label Add an Action into the active single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -465,7 +465,7 @@
       "parameters": {
         "text": "Start with a MCP server"
       },
-      "description": "Type the resolved option label into the active single-select prompt.",
+      "description": "Type the resolved option label Start with a MCP server into the active single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -616,7 +616,7 @@
       "parameters": {
         "text": "OAuth (with static registration)"
       },
-      "description": "Type the resolved option label into the active single-select prompt.",
+      "description": "Type the resolved option label OAuth (with static registration) into the active single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
