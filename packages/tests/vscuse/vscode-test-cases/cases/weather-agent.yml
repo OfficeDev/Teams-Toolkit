@@ -16,6 +16,9 @@ cases:
         check-weather-chat,
       ]
 
+  # No chat check: CI has no funded openai.com key, so this case covers the
+  # JavaScript/OpenAI scaffold and lifecycle only. Real completions are verified
+  # by the Azure OpenAI case above.
   - id: weather-js-openai-remote-preview
     scenarioId: SCN-CREATE-WEATHER-03
     steps:
@@ -28,7 +31,6 @@ cases:
         deploy,
         f5-teams-remote,
         open-app,
-        check-weather-chat,
       ]
 
 steps:
