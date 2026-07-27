@@ -11,6 +11,26 @@ import * as templateHelper from "../../../component/generator/templateHelper";
 import * as folder from "../../../folder";
 import { constructNode } from "../constructNode";
 
+function invalidateCorruptedUiCache(cacheFilePath: string): void {
+  try {
+    fs.removeSync(cacheFilePath);
+  } catch {
+    // best-effort cleanup
+  }
+  const configRoot = path.join(os.homedir(), `.${String(ConfigFolderName)}`);
+  const versionFiles = [
+    path.join(configRoot, "template-version.txt"),
+    path.join(configRoot, "template-version-v4.txt"),
+  ];
+  for (const versionFile of versionFiles) {
+    try {
+      fs.removeSync(versionFile);
+    } catch {
+      // best-effort cleanup
+    }
+  }
+}
+
 /**
  * Load the wizard question tree from wizardNode.json.
  * Combined JSON with all sub-trees inlined.
@@ -43,16 +63,26 @@ function loadUiNode(fileName: string, platform: Platform): IQTreeNode {
   // escape hatch in metadata/index.ts — they carry no local code bindings.)
   const v4Enabled = featureFlagManager.getBooleanValue(FeatureFlags.V4Enabled);
 
-  let jsonPath: string;
   let source: string;
   if (!v4Enabled && !templateHelper.useLocalTemplate() && fs.pathExistsSync(cachedJsonPath)) {
-    jsonPath = cachedJsonPath;
-    source = "cache";
+    try {
+      const content = fs.readFileSync(cachedJsonPath, "utf-8");
+      TOOLS?.logProvider?.info(
+        `[Dynamic Template] Loaded ${fileName} from cache: ${cachedJsonPath}`
+      );
+      return constructNode(content, platform);
+    } catch {
+      invalidateCorruptedUiCache(cachedJsonPath);
+      source = "bundled";
+      TOOLS?.logProvider?.info(
+        `[Dynamic Template] Cached ${fileName} is corrupted, fallback to bundled UI.`
+      );
+    }
   } else {
-    jsonPath = path.join(folder.getTemplatesFolder(), "ui", fileName);
     source = "bundled";
   }
 
+  const jsonPath = path.join(folder.getTemplatesFolder(), "ui", fileName);
   const content = fs.readFileSync(jsonPath, "utf-8");
   TOOLS?.logProvider?.info(`[Dynamic Template] Loaded ${fileName} from ${source}: ${jsonPath}`);
   return constructNode(content, platform);

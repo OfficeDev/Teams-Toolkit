@@ -1503,6 +1503,26 @@ describe("rootNode", () => {
     const readPath = String(readFileSyncStub.mock.calls[0][0]);
     assert.include(readPath, path.join(`.${String(ConfigFolderName)}`, "ui", "wizardNode.json"));
   });
+
+  it("clears cache markers and falls back to bundled UI when v3 cache JSON is corrupted", () => {
+    vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(false);
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+    vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
+    vi.spyOn(fs, "readFileSync")
+      .mockImplementationOnce(() => {
+        throw new Error("bad json");
+      })
+      .mockReturnValueOnce(JSON.stringify({ data: { type: "group", name: "root" }, children: [] }));
+    const removeSyncStub = vi.spyOn(fs, "removeSync").mockImplementation(() => undefined as any);
+
+    const node = getRootProjectTypeNode(Platform.VSCode);
+
+    assert.isDefined(node);
+    assert.equal(node.data?.name, "root");
+    const removedPaths = removeSyncStub.mock.calls.map((call) => String(call[0]));
+    assert.isTrue(removedPaths.some((p) => p.includes("template-version.txt")));
+    assert.isTrue(removedPaths.some((p) => p.includes("template-version-v4.txt")));
+  });
 });
 
 describe("constructNode", () => {

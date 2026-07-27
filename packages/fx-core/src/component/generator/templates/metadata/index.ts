@@ -9,6 +9,32 @@ import * as folder from "../../../../folder";
 import * as templateHelper from "../../templateHelper";
 import { Template } from "./interface";
 
+function getMetadataVersionFiles(platform?: Platform): string[] {
+  const configRoot = path.join(os.homedir(), `.${String(ConfigFolderName)}`);
+  if (platform === Platform.VS) {
+    return [path.join(configRoot, "vs-metadata", "template-vs-version.txt")];
+  }
+  return [
+    path.join(configRoot, "template-version.txt"),
+    path.join(configRoot, "template-version-v4.txt"),
+  ];
+}
+
+function invalidateCorruptedMetadataCache(cacheFilePath: string, platform?: Platform): void {
+  try {
+    fs.removeSync(cacheFilePath);
+  } catch {
+    // best-effort cleanup
+  }
+  for (const versionFile of getMetadataVersionFiles(platform)) {
+    try {
+      fs.removeSync(versionFile);
+    } catch {
+      // best-effort cleanup
+    }
+  }
+}
+
 function getTemplateMetadataConfig(configName: string, platform?: Platform): Template[] {
   let jsonPath: string;
 
@@ -31,7 +57,13 @@ function getTemplateMetadataConfig(configName: string, platform?: Platform): Tem
     cachedJsonPath &&
     fs.pathExistsSync(cachedJsonPath)
   ) {
-    jsonPath = cachedJsonPath;
+    try {
+      const content = fs.readFileSync(cachedJsonPath, "utf-8");
+      return JSON.parse(content) as Template[];
+    } catch {
+      invalidateCorruptedMetadataCache(cachedJsonPath, platform);
+    }
+    jsonPath = path.join(folder.getTemplatesFolder(), "metadata", configName);
   } else {
     jsonPath = path.join(folder.getTemplatesFolder(), "metadata", configName);
   }
