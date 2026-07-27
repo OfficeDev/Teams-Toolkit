@@ -37,7 +37,7 @@ import { getAppName } from "./appDefinitionUtils";
 import { getLocalDebugMessageTemplate } from "./commonUtils";
 import { localize } from "./localizeUtils";
 
-export async function showLocalDebugMessage() {
+export async function showLocalDebugMessage(skipNextStepNotification = false) {
   const shouldShowLocalDebugMessage = (await teamsfxCore.globalStateGet(
     GlobalKey.ShowLocalDebugMessage,
     false
@@ -70,6 +70,14 @@ export async function showLocalDebugMessage() {
     !globalVariables.isSensitivityLabelSet
   ) {
     showSetSensitivityLabelMessage();
+  }
+
+  // Every call to action below (local debug, preview, provision) starts a lifecycle that is
+  // guaranteed to fail while the project still holds fill-in placeholders. The scaffolding
+  // warning notification takes over as the single next step. The flag above is still consumed
+  // so the stale invitation does not resurface the next time the workspace is opened.
+  if (skipNextStepNotification) {
+    return;
   }
 
   if (hasKeyGenJsFile || hasKeyGenTsFile) {
@@ -270,11 +278,34 @@ const MCP_AUTH_PLACEHOLDER_WARNING_TYPES = [
   "mcpAuthOAuthUrlPlaceholder",
 ];
 
+/**
+ * Whether the scaffolded project needs a manual edit before any lifecycle can succeed, given
+ * the raw `GlobalKey.CreateWarnings` payload. Callers use it to suppress notifications that
+ * would invite the developer into a guaranteed failure.
+ */
+export function hasProvisionBlockingWarning(createWarnings: string): boolean {
+  if (!createWarnings) {
+    return false;
+  }
+  try {
+    const warnings = JSON.parse(createWarnings) as Warning[];
+    return Array.isArray(warnings) && warnings.some(isProvisionBlockingWarning);
+  } catch {
+    // ShowScaffoldingWarningSummary reports the parse failure. Here we only decide whether to
+    // hide a notification, so an unreadable payload degrades to showing the usual one.
+    return false;
+  }
+}
+
+function isProvisionBlockingWarning(warning: Warning): boolean {
+  return MCP_AUTH_PLACEHOLDER_WARNING_TYPES.includes(warning.type);
+}
+
 export function showMCPAuthPlaceholderNotification(
   workspacePath: string,
   warnings: Warning[]
 ): void {
-  if (!warnings.some((warning) => MCP_AUTH_PLACEHOLDER_WARNING_TYPES.includes(warning.type))) {
+  if (!warnings.some(isProvisionBlockingWarning)) {
     return;
   }
 

@@ -18,6 +18,7 @@ import * as readmeHandlers from "../../src/handlers/readmeHandlers";
 import { ExtTelemetry } from "../../src/telemetry/extTelemetry";
 import * as appDefinitionUtils from "../../src/utils/appDefinitionUtils";
 import {
+  hasProvisionBlockingWarning,
   showLocalDebugMessage,
   showMCPAuthPlaceholderNotification,
   ShowScaffoldingWarningSummary,
@@ -622,6 +623,36 @@ describe("autoOpenHelper", () => {
       type: "mcpAuthOAuthUrlPlaceholder",
       content: "fill in the oauth urls",
     };
+
+    it("showLocalDebugMessage() - suppressed while the project cannot provision", async () => {
+      mockValue(process, "platform", "win32");
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+      mockValue(globalVariables, "workspaceUri", vscode.Uri.file("test"));
+      const showMessageStub = vi.spyOn(vscode.window, "showInformationMessage");
+
+      await showLocalDebugMessage(true);
+
+      assert.equal(showMessageStub.mock.calls.length, 0);
+      // the stale invitation must not resurface the next time the workspace is opened
+      assert.isFalse(await globalState.globalStateGet("ShowLocalDebugMessage", false));
+    });
+
+    it("hasProvisionBlockingWarning() - only for unresolved placeholders", () => {
+      assert.isTrue(hasProvisionBlockingWarning(JSON.stringify([placeholderWarning])));
+      assert.isTrue(
+        hasProvisionBlockingWarning(
+          JSON.stringify([{ type: "mcpAuthDcrWellKnownUrlPlaceholder", content: "fill in" }])
+        )
+      );
+      assert.isFalse(
+        hasProvisionBlockingWarning(
+          JSON.stringify([{ type: "mcpNoToolsFetched", content: "none" }])
+        )
+      );
+      assert.isFalse(hasProvisionBlockingWarning(""));
+      // an unreadable payload degrades to the usual notification
+      assert.isFalse(hasProvisionBlockingWarning("not json"));
+    });
 
     it("stays silent for advisory MCP warnings", () => {
       const warning = vi.spyOn(vscode.window, "showWarningMessage");
