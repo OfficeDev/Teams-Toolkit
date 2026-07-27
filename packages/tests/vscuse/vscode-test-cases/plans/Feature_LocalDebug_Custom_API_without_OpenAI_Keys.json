@@ -61,7 +61,7 @@
         "x": 301,
         "y": 131
       },
-      "description": "Click the \"Teams Agent with Data\" dropdown option in the Microsoft 365 Agents Toolkit extension within Visual Studio Code, selecting the agent type for data-driven interactions.",
+      "description": "Click the \"Teams Agent with Data\" dropdown option.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
