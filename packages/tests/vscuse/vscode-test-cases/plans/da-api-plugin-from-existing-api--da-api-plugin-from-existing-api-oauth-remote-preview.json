@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 123,
+    "total_steps": 128,
     "name": "da-api-plugin-from-existing-api-oauth-remote-preview",
     "description": {
       "owner": "",
@@ -138,7 +138,12 @@
       "step_browserM365SignIn_confirmStaySignedIn_cd7e35bb7_5_6",
       "step_browserM365SignIn_refresh_cd7e35bb7_5_6",
       "step_assertReady_assertReady_cd7e35bb7_5_7",
-      "step_assertElement_assertVisible_cd7e35bb7_6_1"
+      "step_assertReady_assertReady_cd7e35bb7_6_1",
+      "step_sendCopilotMessage_assertInput_cd7e35bb7_7_1",
+      "step_sendCopilotMessage_focusInput_cd7e35bb7_7_1",
+      "step_sendCopilotMessage_type_cd7e35bb7_7_1",
+      "step_sendCopilotMessage_send_cd7e35bb7_7_1",
+      "step_assertElement_assertVisible_cd7e35bb7_7_2"
     ],
     "tags": [
       "case_id:da-api-plugin-from-existing-api-oauth-remote-preview",
@@ -2857,7 +2862,129 @@
       ]
     },
     {
-      "step_id": "step_assertElement_assertVisible_cd7e35bb7_6_1",
+      "step_id": "step_assertReady_assertReady_cd7e35bb7_6_1",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_assertReady_assertReady_cd7e35bb7_5_7"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "action:assert-ready",
+        "step_retry_timeout: 180"
+      ]
+    },
+    {
+      "step_id": "step_sendCopilotMessage_assertInput_cd7e35bb7_7_1",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Copilot \"Message Copilot\" input is visible.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_assertReady_assertReady_cd7e35bb7_6_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:copilot",
+        "entry_state:chat-ready",
+        "action:send-message",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_sendCopilotMessage_focusInput_cd7e35bb7_7_1",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 416,
+        "y": 369
+      },
+      "description": "Click the Copilot \"Message Copilot\" input.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_sendCopilotMessage_assertInput_cd7e35bb7_7_1"
+      ],
+      "preconditions": [
+        "dhash:416:369:16:5:0000000000000000",
+        "dhash:416:369:96:5:00200060f0002000",
+        "dhash:416:369:0:10:1391e7f4d2d3e4e0"
+      ],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:copilot",
+        "entry_state:chat-ready",
+        "action:send-message"
+      ]
+    },
+    {
+      "step_id": "step_sendCopilotMessage_type_cd7e35bb7_7_1",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "show repair records assigned to karin blair"
+      },
+      "description": "Type \"show repair records assigned to karin blair\" into the Copilot message input.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_sendCopilotMessage_focusInput_cd7e35bb7_7_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:copilot",
+        "entry_state:chat-ready",
+        "action:send-message"
+      ]
+    },
+    {
+      "step_id": "step_sendCopilotMessage_send_cd7e35bb7_7_1",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to send the Copilot message.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_sendCopilotMessage_type_cd7e35bb7_7_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:copilot",
+        "entry_state:chat-ready",
+        "action:send-message"
+      ]
+    },
+    {
+      "step_id": "step_assertElement_assertVisible_cd7e35bb7_7_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2867,7 +2994,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertReady_assertReady_cd7e35bb7_5_7"
+        "step_sendCopilotMessage_send_cd7e35bb7_7_1"
       ],
       "preconditions": [],
       "postconditions": [],

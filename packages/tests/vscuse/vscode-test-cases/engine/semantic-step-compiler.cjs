@@ -1003,7 +1003,11 @@ function createSemanticStepCompiler() {
       );
     }
 
-    const expected = assertion.expect;
+    // A chat check may omit its expectation when the message only has to reach
+    // the agent so that a later assertion can observe the resulting surface.
+    const sendOnlyChat =
+      assertion.type === "chat" && assertion.expect === undefined;
+    const expected = sendOnlyChat ? {} : assertion.expect;
     const expectationFields =
       assertion.type === "file"
         ? new Set(["exists", "contains", "notContains"])
@@ -1018,7 +1022,7 @@ function createSemanticStepCompiler() {
     }
     const listFields = ["contains", "notContains"];
     if (
-      Object.keys(expected).length === 0 ||
+      (!sendOnlyChat && Object.keys(expected).length === 0) ||
       (assertion.type === "browser" &&
         (typeof expected.role !== "string" ||
           expected.role.length === 0 ||

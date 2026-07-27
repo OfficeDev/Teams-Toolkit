@@ -194,6 +194,7 @@ only duplicate information.
 | `open.with.destination`      | Required converged destination: `chat` or `page`.                                                                                                                                                                                        |
 | `chat.send`                  | Required string sent as one user turn through the active target's chat adapter. Authors should use a non-empty message; current validation permits an empty string.                                                                      |
 | `chat.allowAction`           | Optional literal `true`; after a Copilot message, accepts the deterministic capability-consent prompt.                                                                                                                                   |
+| `chat.expect`                | Optional for `chat` only; omitting it sends the message without asserting the reply so a later assertion can observe the surface the message produced.                                                                                   |
 | `chat.expect.replied`        | Optional boolean. `true` requires one completed, non-empty assistant response; `false` emits no response assertion.                                                                                                                      |
 | `chat.expect.contains`       | Optional non-empty list of literal visible substrings that must all occur in the completed response.                                                                                                                                     |
 | `chat.expect.notContains`    | Optional non-empty list of literal visible substrings that must all be absent from the completed response.                                                                                                                               |
@@ -282,9 +283,11 @@ separate check context field:
 - `chat` uses the current target's chat adapter and requires `chat-ready` state. A preceding `open`
   establishes that state for the current Teams or Copilot profile. `allowAction: true` is supported
   only by the Copilot adapter after a capability-producing message; it accepts exactly one recorded
-  consent prompt before response assertions. One or more of `expect.replied`,
-  `expect.contains`, or `expect.notContains` is required. Content expectations imply
-  `replied: true`.
+  consent prompt before response assertions. When `expect` is present, one or more of
+  `expect.replied`, `expect.contains`, or `expect.notContains` is required, and content
+  expectations imply `replied: true`. Omitting `expect` sends the message and asserts nothing about
+  the reply, which lets a following assertion observe the surface the message produced — for example
+  the sign-in button an OAuth-protected plugin raises instead of an answer.
 
 Assertions execute in their authored array order. A `checks` definition may combine assertion
 types only when every assertion's required runtime state exists at that position in the case. The
@@ -911,6 +914,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-35 | Given a `multiSelect` answer with a non-empty array of unique supported option IDs, compilation preserves the authored order, emits one filter/assert/toggle interaction per option, clears the filter between options, and confirms the prompt exactly once; invalid value shapes, empty arrays, and duplicates fail before plan output.                                                   |
 | VCB-36 | Given `provision.with.environment: none`, compilation omits environment selection while keeping the remaining provision recipe; omitting the input emits the recorded `dev` selection, and any other value fails before plan output.                                                                                                                                                        |
 | VCB-37 | Given any scaffold, compilation focuses the toolkit view through the command component after initialization and before the create command, so the toolkit Get Started editor cannot hold keyboard focus when the first scaffold quick pick opens.                                                                                                                                           |
+| VCB-38 | Given a `chat` check without `expect`, compilation sends the message and emits no response assertion, so a following assertion observes the surface the message produced; an empty `expect` object still fails before plan output.                                                                                                                                                          |
 
 ## Boundary
 

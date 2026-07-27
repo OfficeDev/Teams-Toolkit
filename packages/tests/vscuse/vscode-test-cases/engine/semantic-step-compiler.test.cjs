@@ -578,10 +578,15 @@ test("browser checks require a preceding target", async () => {
   const result = await compileFixture(
     "da-api-plugin-from-existing-api.yml",
     (sourceText) =>
-      sourceText.replace(
-        /        f5-copilot-remote,\r?\n        check-oauth-sign-in,/,
-        "        check-oauth-sign-in,\n        f5-copilot-remote,",
-      ),
+      sourceText
+        .replace(
+          "      - type: chat\n        send: show repair records assigned to karin blair\n      - type: browser\n        expect:\n          role: button\n          name: Sign in to Repair Service\n",
+          "      - type: browser\n        expect:\n          role: button\n          name: Sign in to Repair Service\n",
+        )
+        .replace(
+          /        f5-copilot-remote,\r?\n        open-agent,\r?\n        check-oauth-sign-in,/,
+          "        check-oauth-sign-in,\n        f5-copilot-remote,\n        open-agent,",
+        ),
   );
 
   assert.equal(result.ok, false);
@@ -885,6 +890,44 @@ test("semantic adapter rejects unknown nested assertion fields", async () => {
 
   assert.equal(result.ok, false);
   assert.equal(result.diagnostics[0].code, "VCB_CHECK_FIELD_UNKNOWN");
+});
+
+test("VCB-38: a chat check without an expectation sends without asserting the reply", async () => {
+  const result = await compileFixture("weather-agent.yml", (sourceText) =>
+    sourceText.replace(
+      "        expect:\n          replied: true\n          contains: [Seattle]\n",
+      "",
+    ),
+  );
+
+  assert.equal(result.ok, true);
+  const descriptions = result.value[0].plan.steps.map(
+    (step) => step.description,
+  );
+  assert.equal(
+    descriptions.includes(
+      "@assertion the current assistant turn is complete and contains a non-empty response.",
+    ),
+    false,
+  );
+  assert.equal(
+    descriptions.filter((description) =>
+      description.includes("What is the weather in Seattle?"),
+    ).length > 0,
+    true,
+  );
+});
+
+test("VCB-38: an empty chat expectation still fails", async () => {
+  const result = await compileFixture("weather-agent.yml", (sourceText) =>
+    sourceText.replace(
+      "        expect:\n          replied: true\n          contains: [Seattle]\n",
+      "        expect: {}\n",
+    ),
+  );
+
+  assert.equal(result.ok, false);
+  assert.equal(result.diagnostics[0].code, "VCB_CHECK_ASSERTION_INVALID");
 });
 
 test("semantic adapter requires Azure login before prompted ARM provision", async () => {
