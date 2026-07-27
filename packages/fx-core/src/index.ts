@@ -99,7 +99,13 @@ export { pluginManifestUtils } from "./component/driver/teamsApp/utils/PluginMan
 export { DefaultTemplateGenerator } from "./component/generator/defaultGenerator";
 export { HelperMethods } from "./component/generator/officeAddin/helperMethods";
 export { generateScaffoldingSummary } from "./component/generator/openApiSpec/helper";
-export { getAllTemplatesOnPlatform } from "./component/generator/templates/metadata";
+export {
+  getAllTemplatesOnPlatform,
+  groupTemplatesByName,
+  listAllTemplates,
+  listDeclarativeAgentTemplates,
+  TemplateGroup,
+} from "./component/generator/templates/metadata";
 export { TemplateInfo } from "./component/generator/templates/templateInfo";
 export { getSampleFileInfo, runWithLimitedConcurrency } from "./component/generator/utils";
 export * from "./component/local/constants";
