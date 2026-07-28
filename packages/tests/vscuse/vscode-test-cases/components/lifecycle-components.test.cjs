@@ -141,10 +141,10 @@ test("VCB-49: Ctrl+W is gated on the Welcome tab being the active editor", () =>
 
 test("VCB-50: the multi-select component selects by control, not by position", () => {
   const multiSelect = render("quick-input/multi-select.json.tpl");
-  const [, , focusSelectAll, selectAll, assertSelected, confirm] =
+  const [, , focusSelectAll, selectAll, , assertSelected, confirm] =
     multiSelect.steps;
 
-  assert.equal(multiSelect.steps.length, 6);
+  assert.equal(multiSelect.steps.length, 7);
   assert.equal(focusSelectAll.parameters.keys, "shift+tab");
   assert.equal(selectAll.parameters.key, "space");
   assert.equal(assertSelected.agent, "assertion");
@@ -160,6 +160,23 @@ test("VCB-50: the multi-select component selects by control, not by position", (
     assert.notEqual(step.parameters.key, "down");
     assert.equal(/\bSelected\b/.test(step.description), false);
   }
+});
+
+test("VCB-56: the multi-select component confirms from the input box", () => {
+  const multiSelect = render("quick-input/multi-select.json.tpl");
+  const [, , focusSelectAll, , restoreFocus] = multiSelect.steps;
+  const confirm = multiSelect.steps.at(-1);
+
+  // Enter does not confirm the prompt while the select-all checkbox holds
+  // focus, so the detour that reached that checkbox is closed before Enter.
+  assert.equal(focusSelectAll.parameters.keys, "shift+tab");
+  assert.equal(restoreFocus.parameters.keys, "tab");
+  assert.equal(confirm.parameters.key, "enter");
+  assert.equal(
+    multiSelect.steps.indexOf(restoreFocus) <
+      multiSelect.steps.indexOf(confirm),
+    true,
+  );
 });
 
 test("VCB-55: option components wait for the prompt to load its options", () => {

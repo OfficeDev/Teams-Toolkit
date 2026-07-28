@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 118,
+    "total_steps": 119,
     "name": "da-api-plugin-from-existing-api-bearer-remote-preview",
     "description": {
       "owner": "",
@@ -60,6 +60,7 @@
       "step_multiSelect_assertOptionsLoaded_cccb76852_1_11",
       "step_multiSelect_focusSelectAll_cccb76852_1_11",
       "step_multiSelect_selectAll_cccb76852_1_11",
+      "step_multiSelect_restoreFocus_cccb76852_1_11",
       "step_multiSelect_assertSelected_cccb76852_1_11",
       "step_multiSelect_confirm_cccb76852_1_11",
       "step_confirmOption_assertPrompt_cccb76852_1_12",
@@ -1093,6 +1094,28 @@
       ]
     },
     {
+      "step_id": "step_multiSelect_restoreFocus_cccb76852_1_11",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "tab"
+      },
+      "description": "Move focus from the select-all checkbox back to the multi-select input box.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_multiSelect_selectAll_cccb76852_1_11"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:multiSelect"
+      ]
+    },
+    {
       "step_id": "step_multiSelect_assertSelected_cccb76852_1_11",
       "agent": "assertion",
       "tool": "",
@@ -1103,7 +1126,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_multiSelect_selectAll_cccb76852_1_11"
+        "step_multiSelect_restoreFocus_cccb76852_1_11"
       ],
       "preconditions": [],
       "postconditions": [],

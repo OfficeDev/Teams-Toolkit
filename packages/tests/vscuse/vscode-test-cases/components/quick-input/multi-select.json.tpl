@@ -79,6 +79,23 @@
       "tags": ["component:quick-input", "answer_type:multiSelect"]
     },
     {
+      "step_id": "step_multiSelect_restoreFocus_{{text:instanceSuffix}}",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "tab"
+      },
+      "description": "Move focus from the select-all checkbox back to the multi-select input box.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": ["step_multiSelect_selectAll_{{text:instanceSuffix}}"],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": ["component:quick-input", "answer_type:multiSelect"]
+    },
+    {
       "step_id": "step_multiSelect_assertSelected_{{text:instanceSuffix}}",
       "agent": "assertion",
       "tool": "",
@@ -88,7 +105,7 @@
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
-      "depends_on": ["step_multiSelect_selectAll_{{text:instanceSuffix}}"],
+      "depends_on": ["step_multiSelect_restoreFocus_{{text:instanceSuffix}}"],
       "preconditions": [],
       "postconditions": [],
       "tags": [

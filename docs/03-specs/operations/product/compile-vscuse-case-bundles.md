@@ -788,8 +788,10 @@ and selectable, and only then confirms it. The option assertion intentionally ru
 a valid option in a long or virtualized list may not be visible before input.
 
 A multi-select moves focus from the prompt's input box to its select-all checkbox with `Shift+Tab`,
-checks every option with `Space`, asserts that every listed option now shows a checked checkbox,
-and confirms the prompt. It neither filters the list nor steps through it, so no keystroke depends
+checks every option with `Space`, returns focus to the input box with `Tab`, asserts that every
+listed option now shows a checked checkbox, and confirms the prompt. `Enter` does not confirm the
+prompt while the select-all checkbox holds focus, so the component closes the detour it opened
+before it confirms. It neither filters the list nor steps through it, so no keystroke depends
 on an option's position, and the closing assertion names no count. Its wait step also keeps that
 closing assertion meaningful, because every option of an empty list trivially carries a checked
 checkbox. A `multiSelect` answer is
@@ -1068,6 +1070,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-53 | Given `login`, the account menu is opened through the shared command component and no emitted step selects a palette result by position, because several toolkit titles share the filter text and the ranking moves once a command enters the palette's recently used list, which a case that signs in twice always triggers.                                                               |
 | VCB-54 | Given `login`, the side bar is opened with `View: Show Microsoft 365 Agents Toolkit` rather than the ACCOUNTS focus command, because the focus title carries the word `Accounts` and would therefore be a candidate for the account command's filter one step later while holding the top of the palette's recently used order.                                                             |
 | VCB-55 | Given a `singleSelect` or `multiSelect` answer, the emitted component waits on a retried assertion that the prompt lists at least one option before its first keystroke, because the toolkit renders the prompt's title while its options are still loading and the title assertion alone therefore passes over a list that no keystroke can act on.                                        |
+| VCB-56 | Given a `multiSelect` answer, the emitted component returns focus to the prompt's input box with `Tab` after checking the options and before pressing `Enter`, because `Enter` does not confirm the prompt while the select-all checkbox that `Shift+Tab` reached still holds focus.                                                                                                        |
 
 ## Boundary
 
