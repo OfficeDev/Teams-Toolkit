@@ -605,8 +605,9 @@ activation, so waiting for it converts the race into a bounded wait.
 Any compiler-owned recipe that executes a visible VS Code command uses
 `packages/tests/vscuse/vscode-test-cases/components/command-palette/execute-command.json.tpl`.
 The component opens the Command Palette with `F1`, asserts that the palette is active,
-types the exact canonical `en-US` command title, asserts that exactly one matching command is
-visible and selectable, then confirms it with Enter. Its only semantic parameter is `commandTitle`;
+types the exact canonical `en-US` command title, asserts that the first command listed under the
+input box is the titled one and is highlighted, then confirms it with Enter. Its only semantic
+parameter is `commandTitle`;
 assertion sentences are authored directly in the template. It contains no product command,
 scaffold, lifecycle, or business question IDs.
 
@@ -618,10 +619,19 @@ one character that distinguishes the Command Palette from all of them, and the c
 `type_text` appends the command title to it rather than replacing it, so the palette reads
 `>` followed by the exact title at the moment the second assertion runs.
 
+The second assertion names the first result rather than the whole list, because the palette can
+list more than one command for an exact title. VS Code appends a `similar commands` section under
+the exact matches, and the toolkit ships titles that share a prefix, so filtering by
+`Microsoft 365 Agents: Create New Agent/App` also lists
+`Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View` beneath it. A count is
+therefore not an invariant the toolkit controls. What the component needs before pressing Enter is
+that Enter runs the intended command, and Enter runs the highlighted first result, so that is what
+the assertion states.
+
 The scaffold recipe instantiates this component twice after case initialization and before
 the first scaffold quick-input component. It first executes
 `Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View`, because activating the
-toolkit opens its Get Started editor, which keeps keyboard focus and swallows the text typed into
+toolkit opens its Welcome editor, which keeps keyboard focus and swallows the text typed into
 the first scaffold quick pick; focusing the toolkit view parks focus on a tree view instead. It
 waits for the toolkit view to settle through the initialization component described above, then
 executes `Microsoft 365 Agents: Create New Agent/App`. Both titles are resolved by the compiler's
@@ -695,8 +705,8 @@ Code displays for them, `Microsoft 365 Agents Toolkit: Focus on Accounts View` f
 account menu active. Naming both results literally keeps the assertion readable from a screenshot,
 because a paraphrase of a command title is not text the judge can find on screen. It is
 account-neutral but
-intentionally separate from `execute-command.json.tpl`, whose unique-result contract does not
-match this VS Code command surface. The recipe then instantiates exactly one deterministic adapter:
+intentionally separate from `execute-command.json.tpl`, because it selects the second result rather
+than the highlighted first one. The recipe then instantiates exactly one deterministic adapter:
 
 | Account         | Adapter                                           | Entry state                           | Converged state               |
 | --------------- | ------------------------------------------------- | ------------------------------------- | ----------------------------- |
@@ -1043,6 +1053,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-49 | Given `scaffold`, the close component asserts that the tab labeled `Welcome` showing the Build a Declarative Agent walkthrough is the active editor tab before pressing `Ctrl+W`, because that shortcut closes the window when no editor is open, the preceding settled assertion only claims the editor is visible, and no tab is ever labeled Get Started.                                |
 | VCB-50 | Given a `multiSelect` answer, every option invocation ends by asserting that the prompt's input box is empty and the toggled option is still checked, so the `Ctrl+A` and `Backspace` pair that clears the filter cannot delete another surface's content unnoticed.                                                                                                                        |
 | VCB-51 | Given `provision.with.arm`, the emitted sequence starts at the resource group prompt and rejects an authored `subscriptionId`, because the exported `AZURE_SUBSCRIPTION_ID` resolves the toolkit's subscription placeholder before it can ask, and the picker filters on the subscription name the ID never renders as.                                                                     |
+| VCB-52 | Given any executed command, the second Command Palette assertion names the first listed command and its highlight rather than a result count, because VS Code lists `similar commands` under an exact title match and the toolkit ships titles that share a prefix, while Enter runs only the highlighted first result.                                                                     |
 
 ## Boundary
 

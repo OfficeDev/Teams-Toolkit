@@ -198,13 +198,13 @@ test("scaffold focuses the toolkit view before the create command", async () => 
     (step) => step.description,
   );
   const focusIndex = descriptions.indexOf(
-    "@assertion the Command Palette input box reads >Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View and exactly one command titled Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View is listed under it.",
+    "@assertion the Command Palette input box reads >Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View and the first command listed under it is titled Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View and is highlighted.",
   );
   const settledIndex = descriptions.indexOf(
     "@assertion the Microsoft 365 Agents Toolkit view is open in the side bar and an editor tab labeled Welcome showing the Build a Declarative Agent walkthrough is open in the editor area.",
   );
   const createIndex = descriptions.indexOf(
-    "@assertion the Command Palette input box reads >Microsoft 365 Agents: Create New Agent/App and exactly one command titled Microsoft 365 Agents: Create New Agent/App is listed under it.",
+    "@assertion the Command Palette input box reads >Microsoft 365 Agents: Create New Agent/App and the first command listed under it is titled Microsoft 365 Agents: Create New Agent/App and is highlighted.",
   );
   const firstQuestionIndex = descriptions.indexOf(
     "@assertion the active prompt titled New Project is visible.",
@@ -236,7 +236,7 @@ test("VCB-41: scaffold closes the Welcome editor before the create command", asy
     "@assertion no editor tab is open in the Visual Studio Code editor area.",
   );
   const createIndex = descriptions.indexOf(
-    "@assertion the Command Palette input box reads >Microsoft 365 Agents: Create New Agent/App and exactly one command titled Microsoft 365 Agents: Create New Agent/App is listed under it.",
+    "@assertion the Command Palette input box reads >Microsoft 365 Agents: Create New Agent/App and the first command listed under it is titled Microsoft 365 Agents: Create New Agent/App and is highlighted.",
   );
 
   // The settled assertion guarantees the editor exists, so Ctrl+W targets it
@@ -264,10 +264,10 @@ test("VCB-42: login focuses the Accounts view before the account menu", async ()
     (description, index) =>
       index < accountMenuIndex &&
       description ===
-        "@assertion the Command Palette input box reads >Microsoft 365 Agents Toolkit: Focus on Accounts View and exactly one command titled Microsoft 365 Agents Toolkit: Focus on Accounts View is listed under it.",
+        "@assertion the Command Palette input box reads >Microsoft 365 Agents Toolkit: Focus on Accounts View and the first command listed under it is titled Microsoft 365 Agents Toolkit: Focus on Accounts View and is highlighted.",
   );
   const createIndex = descriptions.indexOf(
-    "@assertion the Command Palette input box reads >Microsoft 365 Agents: Create New Agent/App and exactly one command titled Microsoft 365 Agents: Create New Agent/App is listed under it.",
+    "@assertion the Command Palette input box reads >Microsoft 365 Agents: Create New Agent/App and the first command listed under it is titled Microsoft 365 Agents: Create New Agent/App and is highlighted.",
   );
   const readinessIndex = descriptions.findIndex(
     (description, index) =>
@@ -906,7 +906,7 @@ test("VCB-39: deploy selects the environment under the provision contract", asyn
     (step) => step.description,
   );
   const deployCommandIndex = descriptions.indexOf(
-    "@assertion the Command Palette input box reads >Microsoft 365 Agents: Deploy and exactly one command titled Microsoft 365 Agents: Deploy is listed under it.",
+    "@assertion the Command Palette input box reads >Microsoft 365 Agents: Deploy and the first command listed under it is titled Microsoft 365 Agents: Deploy and is highlighted.",
   );
   const deployEnvironmentIndex = descriptions.findIndex(
     (description, index) =>
@@ -1134,7 +1134,7 @@ test("VCB-45: scaffolding ends by waiting for the reopened project window", asyn
     "Press Enter to submit the accepted text input.",
   );
   const firstToolkitUiIndex = descriptions.indexOf(
-    "@assertion the Command Palette input box reads >Microsoft 365 Agents Toolkit: Focus on Accounts View and exactly one command titled Microsoft 365 Agents Toolkit: Focus on Accounts View is listed under it.",
+    "@assertion the Command Palette input box reads >Microsoft 365 Agents Toolkit: Focus on Accounts View and the first command listed under it is titled Microsoft 365 Agents Toolkit: Focus on Accounts View and is highlighted.",
   );
 
   // The reopened window has to activate the toolkit again before any later

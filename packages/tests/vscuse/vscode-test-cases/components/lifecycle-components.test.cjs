@@ -157,10 +157,18 @@ test("VCB-48: Command Palette assertions name the > in the input box", () => {
   assert.equal(assertPalette.agent, "assertion");
   assert.match(assertPalette.description, /a > character in its input box/);
   assert.equal(assertCommand.agent, "assertion");
+  assert.match(assertCommand.description, />Debug: Select and Start Debugging/);
+});
+
+test("VCB-52: the command assertion names the first result, not a result count", () => {
+  const command = render("command-palette/execute-command.json.tpl");
+  const assertCommand = command.steps[3];
+
   assert.match(
     assertCommand.description,
-    />Debug: Select and Start Debugging and exactly one command titled Debug: Select and Start Debugging/,
+    /the first command listed under it is titled Debug: Select and Start Debugging and is highlighted/,
   );
+  assert.equal(/exactly one/.test(assertCommand.description), false);
 });
 
 test("lifecycle recipes have reusable confirmation and notification primitives", () => {

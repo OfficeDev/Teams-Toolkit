@@ -64,7 +64,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the Command Palette input box reads >{{text:commandTitle}} and exactly one command titled {{text:commandTitle}} is listed under it.",
+      "description": "@assertion the Command Palette input box reads >{{text:commandTitle}} and the first command listed under it is titled {{text:commandTitle}} and is highlighted.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
