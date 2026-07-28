@@ -548,8 +548,6 @@ test("VCB-35: multi-select answers toggle each unique option and confirm once", 
       `@assertion the filtered ${operation} option is focused in the active multi-select prompt.`,
       `Press Space to toggle the focused ${operation} option.`,
       `@assertion the ${operation} option has a checked checkbox in the active multi-select prompt.`,
-      "Select the current multi-select filter text.",
-      "Clear the current multi-select filter text.",
     ];
     const flowIndexes = multiSelectFlow.map((description) =>
       descriptions.indexOf(description),
@@ -570,10 +568,13 @@ test("VCB-35: multi-select answers toggle each unique option and confirm once", 
       1,
     );
     assert.equal(tools.includes("hotkey"), false);
-    assert.equal(tools.includes("keyboard_shortcut"), true);
   }
 
-  for (const value of ["[]", '["GET /repairs", "GET /repairs"]']) {
+  for (const value of [
+    "[]",
+    '["GET /repairs", "GET /repairs"]',
+    '["GET /repair", "GET /repairs"]',
+  ]) {
     const invalid = await compileFixture(
       "da-api-plugin-from-existing-api.yml",
       (sourceText) => sourceText.replace('["GET /repairs"]', value),

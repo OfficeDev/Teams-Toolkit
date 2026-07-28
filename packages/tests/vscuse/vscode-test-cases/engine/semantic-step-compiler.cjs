@@ -394,7 +394,13 @@ function createSemanticStepCompiler() {
       const isValidMultiSelect =
         answerType === "multiSelect" &&
         Array.isArray(answer.value) &&
-        answer.value.length > 0 &&
+        // The multi-select component filters the prompt by option label and
+        // leaves that text in the input box, because no keystroke clears a
+        // quick pick filter without also addressing its checkbox list. A second
+        // option would therefore type its label onto the first one and match
+        // nothing, so a multi-option answer fails here instead of compiling into
+        // a plan that silently selects nothing.
+        answer.value.length === 1 &&
         answer.value.every(
           (optionId) => typeof optionId === "string" && optionId.length > 0,
         ) &&

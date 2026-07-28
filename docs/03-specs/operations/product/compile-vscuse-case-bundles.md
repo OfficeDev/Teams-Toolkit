@@ -385,14 +385,14 @@ selector path from `template`; the authored selector answers are the source of e
 
 Authored `answers` are an ordered list of stable question keys, UI types, and values. The
 optional `type` defaults to `singleSelect`; the V1 closed set is `singleSelect`, `multiSelect`, and
-`text`. A single-select requires one option ID, a multi-select requires a non-empty array of unique
-option IDs, and text accepts a literal, `${{env:NAME}}`, `${{var:app_name}}`, or
+`text`. A single-select requires one option ID, a multi-select requires an array holding exactly one
+option ID, and text accepts a literal, `${{env:NAME}}`, `${{var:app_name}}`, or
 `${{secret:NAME}}`. The authored type must equal the semantic adapter's supported type after
 applying the default. Unsupported types and value shapes are errors. The compiler consumes entries
 exactly in authored order and resolves each question key to its canonical `en-US` visible title and
 each option ID to its visible label. Every valid authored entry represents one prompted question
-and emits one logical answer expansion. A multi-select expansion contains one component per option
-plus one confirmation component. The compiler does not load or maintain a second per-template
+and emits one logical answer expansion. A multi-select expansion contains one option component plus
+one confirmation component. The compiler does not load or maintain a second per-template
 question graph, infer omitted questions, or reorder answers.
 
 For `da/mcp-server`, cases explicitly author the observed conditional path: `authType: oauth` is
@@ -776,15 +776,20 @@ instantiation.
 Every prompted answer component begins with an `assertion` step whose description requires the
 canonical `en-US` question title to be visible in the active prompt. A single-select then filters
 by canonical option label, asserts that the filtered option is visible and selectable, and only
-then confirms it. A multi-select emits one component invocation per authored option: each invocation
-filters by canonical option label, asserts that the filtered option is visible and selectable,
-toggles that option, clears the filter, and asserts that the prompt's input box is empty and the
-toggled option is still checked. The compiler confirms the prompt
-once after the last option. The option assertion intentionally runs after filtering: a valid option
-in a long or virtualized list may not be visible before input. The closing assertion covers the
-clear, which is a `Ctrl+A` and `Backspace` pair: on any surface other than the open prompt that pair
-selects and deletes that surface's own content, and the component would otherwise end on an
-unverified destructive keystroke. Compiler-generated assertion
+then confirms it. A multi-select filters by canonical option label, asserts that the filtered option
+is visible and selectable, toggles that option, and asserts that the option now has a checked
+checkbox. The compiler confirms the prompt once after the option component. The option assertion
+intentionally runs after filtering: a valid option in a long or virtualized list may not be visible
+before input.
+
+The multi-select component leaves its filter text in the prompt, and a `multiSelect` answer
+therefore carries exactly one option ID. No keystroke clears a quick pick filter without also
+addressing the checkbox list that a `canSelectMany` prompt puts under the same input, so a
+component that promised to clear the filter would end on an unverifiable keystroke, and a second
+option invocation would type its label onto the first one and match nothing. The confirmation
+reads the prompt's selection counter, which the prompt renders whether or not the input box holds
+filter text, so leaving the filter costs the confirmation nothing. A two-option answer fails
+compilation instead of producing a plan that selects nothing. Compiler-generated assertion
 descriptions contain resolved titles or labels but never authored answer values or secrets.
 
 A dynamic complete JSON value uses `{{json:<name>}}`; the compiler replaces it with the JSON
@@ -1005,7 +1010,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | VCB-01 | Given scaffold definitions naming one template and multiple valid cases, when compiled, then one deterministic current-format JSON plan is emitted per case.                                                                                                                                                                                                                                |
 | VCB-02 | Given named file-level step definitions and case step references, when compiled, then every case resolves its required ordered list by exact name without inheritance, inline definitions, or overrides.                                                                                                                                                                                    |
-| VCB-03 | Given ordered scaffold answers, compilation emits one supported logical answer expansion per answer in authored order without loading or inferring a second template question path; a multi-select expansion emits one option component per value plus one confirmation.                                                                                                                    |
+| VCB-03 | Given ordered scaffold answers, compilation emits one supported logical answer expansion per answer in authored order without loading or inferring a second template question path; a multi-select expansion emits one option component plus one confirmation.                                                                                                                              |
 | VCB-04 | Given a referenced operation requiring Azure or M365 authentication, when compiled, then a compatible preceding `login` definition with explicit type, account, and password is required.                                                                                                                                                                                                   |
 | VCB-05 | Given `provision.with.arm`, compilation includes the supported ARM questions and requires every supported ARM input; given `provision.with.oauth` for `da/api-plugin-from-existing-api`, compilation requires environment/secret credential expressions and emits its recorded prompts and confirmation; other templates reject OAuth input.                                                |
 | VCB-06 | Given an explicit `deploy` definition, when compiled, then its lifecycle recipe is included at that exact position; profile-owned prelaunch deployment remains part of the referenced launch profile.                                                                                                                                                                                       |
@@ -1036,7 +1041,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-32 | Given ARM inputs on `provision`, compilation emits the fixed supported ARM prompt sequence, requires Azure login and every supported input, and rejects missing, duplicate, or unsupported inputs before plan output.                                                                                                                                                                       |
 | VCB-33 | Given setup compilation succeeds for all sources, setup prints the deterministic generated-plan diff and transactionally updates only manifest-owned files in `plans/`; unchanged output performs no writes, compilation errors, manual-plan collisions, or concurrent changes leave prior content unchanged, and a failed rollback preserves a recoverable backup.                         |
 | VCB-34 | Given the checked-in case sources and no injected `compileStep`, setup reads no external template contracts and uses the semantic compiler plus component renderer to emit twelve deterministic current-format runnable plans; every operation resolves through a supported adapter, removed manifest-owned cases are deleted, and a second setup reports no generated-plan changes.        |
-| VCB-35 | Given a `multiSelect` answer with a non-empty array of unique supported option IDs, compilation preserves the authored order, emits one filter/assert/toggle interaction per option, clears the filter between options, and confirms the prompt exactly once; invalid value shapes, empty arrays, and duplicates fail before plan output.                                                   |
+| VCB-35 | Given a `multiSelect` answer carrying exactly one supported option ID, compilation emits one filter/assert/toggle interaction and confirms the prompt exactly once; invalid value shapes, empty arrays, duplicates, and answers carrying more than one option fail before plan output.                                                                                                      |
 | VCB-36 | Given `provision.with.environment: none`, compilation omits environment selection while keeping the remaining provision recipe; omitting the input emits the recorded `dev` selection, and any other value fails before plan output.                                                                                                                                                        |
 | VCB-37 | Given any scaffold, compilation focuses the toolkit view through the command component after initialization, waits for the toolkit Welcome editor to finish loading, and only then executes the create command, so no editor can hold keyboard focus when the first scaffold quick pick opens.                                                                                              |
 | VCB-38 | Given a `chat` check without `expect`, compilation sends the message and emits no response assertion, so a following assertion observes the surface the message produced; an empty `expect` object still fails before plan output.                                                                                                                                                          |
@@ -1051,7 +1056,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-47 | Given any `login`, the sign-in adapter verifies the account in the ACCOUNTS section right after closing the browser, so no operation that follows starts with an account menu open over the window or with the account menu command promoted in the palette's recently used list.                                                                                                           |
 | VCB-48 | Given any executed command, both Command Palette assertions name the `>` the palette keeps in its input box, so neither is satisfied by another quick pick that VS Code draws with the same frame.                                                                                                                                                                                          |
 | VCB-49 | Given `scaffold`, the close component asserts that the tab labeled `Welcome` showing the Build a Declarative Agent walkthrough is the active editor tab before pressing `Ctrl+W`, because that shortcut closes the window when no editor is open, the preceding settled assertion only claims the editor is visible, and no tab is ever labeled Get Started.                                |
-| VCB-50 | Given a `multiSelect` answer, every option invocation ends by asserting that the prompt's input box is empty and the toggled option is still checked, so the `Ctrl+A` and `Backspace` pair that clears the filter cannot delete another surface's content unnoticed.                                                                                                                        |
+| VCB-50 | Given a `multiSelect` answer, the option component ends on the assertion that the toggled option has a checked checkbox and emits no `Ctrl+A` or `Backspace`, because neither key clears a quick pick filter without also addressing the checkbox list the prompt puts under the same input.                                                                                                |
 | VCB-51 | Given `provision.with.arm`, the emitted sequence starts at the resource group prompt and rejects an authored `subscriptionId`, because the exported `AZURE_SUBSCRIPTION_ID` resolves the toolkit's subscription placeholder before it can ask, and the picker filters on the subscription name the ID never renders as.                                                                     |
 | VCB-52 | Given any executed command, the second Command Palette assertion names the highlighted command and names neither a result count nor a position, because VS Code lists `similar commands` under an exact title match and ranks them itself, while Enter runs the highlighted command wherever it sits in the list.                                                                           |
 | VCB-53 | Given `login`, the account menu is opened through the shared command component and no emitted step selects a palette result by position, because several toolkit titles share the filter text and the ranking moves once a command enters the palette's recently used list, which a case that signs in twice always triggers.                                                               |

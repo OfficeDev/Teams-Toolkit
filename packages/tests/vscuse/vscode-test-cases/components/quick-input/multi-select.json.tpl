@@ -132,59 +132,6 @@
         "answer_type:multiSelect",
         "step_retry_timeout: 30"
       ]
-    },
-    {
-      "step_id": "step_multiSelect_selectFilter_{{text:instanceSuffix}}",
-      "agent": "interaction",
-      "tool": "keyboard_shortcut",
-      "parameters": {
-        "keys": "ctrl+a"
-      },
-      "description": "Select the current multi-select filter text.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": ["step_multiSelect_assertSelected_{{text:instanceSuffix}}"],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": ["component:quick-input", "answer_type:multiSelect"]
-    },
-    {
-      "step_id": "step_multiSelect_clearFilter_{{text:instanceSuffix}}",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "backspace"
-      },
-      "description": "Clear the current multi-select filter text.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": ["step_multiSelect_selectFilter_{{text:instanceSuffix}}"],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": ["component:quick-input", "answer_type:multiSelect"]
-    },
-    {
-      "step_id": "step_multiSelect_assertCleared_{{text:instanceSuffix}}",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the multi-select prompt titled {{text:questionTitle}} has an empty input box and the {{text:optionLabel}} option still has a checked checkbox.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": ["step_multiSelect_clearFilter_{{text:instanceSuffix}}"],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:multiSelect",
-        "step_retry_timeout: 30"
-      ]
     }
   ]
 }

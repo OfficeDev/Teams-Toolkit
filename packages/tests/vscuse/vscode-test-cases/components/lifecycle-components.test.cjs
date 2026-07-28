@@ -139,15 +139,20 @@ test("VCB-49: Ctrl+W is gated on the Welcome tab being the active editor", () =>
   assert.match(assertClosed.description, /no editor tab is open/);
 });
 
-test("VCB-50: clearing the multi-select filter verifies its own result", () => {
+test("VCB-50: the multi-select component ends on the checked checkbox", () => {
   const multiSelect = render("quick-input/multi-select.json.tpl");
-  const clearFilter = multiSelect.steps.at(-2);
-  const assertCleared = multiSelect.steps.at(-1);
+  const assertSelected = multiSelect.steps.at(-1);
 
-  assert.equal(clearFilter.parameters.key, "backspace");
-  assert.equal(assertCleared.agent, "assertion");
-  assert.match(assertCleared.description, /has an empty input box/);
-  assert.match(assertCleared.description, /still has a checked checkbox/);
+  assert.equal(assertSelected.agent, "assertion");
+  assert.match(assertSelected.description, /has a checked checkbox/);
+
+  // No keystroke clears a quick pick filter without also addressing its
+  // checkbox list, so the component leaves the filter in place rather than
+  // ending on a keystroke it cannot verify.
+  for (const step of multiSelect.steps) {
+    assert.notEqual(step.parameters.keys, "ctrl+a");
+    assert.notEqual(step.parameters.key, "backspace");
+  }
 });
 
 test("VCB-48: Command Palette assertions name the > in the input box", () => {
