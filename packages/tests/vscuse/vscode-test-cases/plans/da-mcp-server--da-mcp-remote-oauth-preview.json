@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 117,
+    "total_steps": 118,
     "name": "da-mcp-remote-oauth-preview",
     "description": {
       "owner": "",
@@ -65,6 +65,7 @@
       "step_textInput_assertQuestion_cc3292876_1_15",
       "step_textInput_input_cc3292876_1_15",
       "step_textInput_confirm_cc3292876_1_15",
+      "step_assertProjectWindowReady_assert_cc3292876_1_16",
       "step_checkWorkspaceFiles_verify_cc3292876_2_1",
       "step_checkWorkspaceFiles_verify_cc3292876_2_2",
       "step_checkWorkspaceFiles_verify_cc3292876_2_3",
@@ -1212,6 +1213,27 @@
       ]
     },
     {
+      "step_id": "step_assertProjectWindowReady_assert_cc3292876_1_16",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Preview README.md editor tab is open in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 60,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_textInput_confirm_cc3292876_1_15"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:initialization",
+        "initialization:assertProjectWindowReady",
+        "step_retry_timeout: 60"
+      ]
+    },
+    {
       "step_id": "step_checkWorkspaceFiles_verify_cc3292876_2_1",
       "agent": "code",
       "tool": "",
@@ -1224,7 +1246,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_confirm_cc3292876_1_15"
+        "step_assertProjectWindowReady_assert_cc3292876_1_16"
       ],
       "preconditions": [],
       "postconditions": [],

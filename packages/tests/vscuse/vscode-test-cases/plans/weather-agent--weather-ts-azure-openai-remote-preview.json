@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 163,
+    "total_steps": 164,
     "name": "weather-ts-azure-openai-remote-preview",
     "description": {
       "owner": "",
@@ -62,6 +62,7 @@
       "step_textInput_assertQuestion_cb4a8be87_1_14",
       "step_textInput_input_cb4a8be87_1_14",
       "step_textInput_confirm_cb4a8be87_1_14",
+      "step_assertProjectWindowReady_assert_cb4a8be87_1_15",
       "step_checkWorkspaceFiles_verify_cb4a8be87_2_1",
       "step_checkWorkspaceFiles_verify_cb4a8be87_2_2",
       "step_checkWorkspaceFiles_verify_cb4a8be87_2_3",
@@ -1191,6 +1192,27 @@
       ]
     },
     {
+      "step_id": "step_assertProjectWindowReady_assert_cb4a8be87_1_15",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Preview README.md editor tab is open in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 60,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_textInput_confirm_cb4a8be87_1_14"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:initialization",
+        "initialization:assertProjectWindowReady",
+        "step_retry_timeout: 60"
+      ]
+    },
+    {
       "step_id": "step_checkWorkspaceFiles_verify_cb4a8be87_2_1",
       "agent": "code",
       "tool": "",
@@ -1203,7 +1225,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_confirm_cb4a8be87_1_14"
+        "step_assertProjectWindowReady_assert_cb4a8be87_1_15"
       ],
       "preconditions": [],
       "postconditions": [],

@@ -579,6 +579,18 @@ filter keystrokes reach the editor instead. Closing the editor removes the compe
 rather than racing it. The preceding settled assertion is what makes the close deterministic: it
 guarantees the editor exists, so `Ctrl+W` targets it instead of closing the window.
 
+The scaffold recipe ends with a fourth initialization component,
+`initialization/assert-project-window-ready.json.tpl`, which asserts that the Preview README.md
+editor tab is open. It has no semantic parameters and owns no coordinates. Submitting the last
+scaffold answer starts project creation, which reopens the workspace in a new window whose extension
+host starts the toolkit again. Every later operation drives toolkit-contributed UI, and the toolkit
+registers that UI only once activation sets `fx-extension.isTeamsFx`, so an operation that runs
+before activation finishes addresses commands and views that do not exist yet. Nothing else in the
+reopened window proves activation: the post-scaffold file checks read the workspace directly, and a
+command that registers after the Command Palette has already filtered does not appear in the filtered
+list. The toolkit opens that README preview only for a freshly created project and only after
+activation, so waiting for it converts the race into a bounded wait.
+
 ## Command Palette Component Contract
 
 Any compiler-owned recipe that executes a visible VS Code command uses
@@ -978,6 +990,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-42 | Given `login`, compilation focuses the Accounts view before opening the account menu, so the ACCOUNTS section the readiness assertion reads is showing in the window scaffolding opened, whose side bar defaults to the Explorer and whose focus commands differ from the pre-scaffold window's.                                                                                            |
 | VCB-43 | Given a target profile, the readiness assertion names the app by the unique prefix the case authored rather than the fully composed manifest name, so one subject holds across templates that append `APP_NAME_SUFFIX` and templates that do not, and across environments that resolve that suffix differently.                                                                             |
 | VCB-44 | Given a Copilot `chat` check, the message-input assertion names the input by the app prefix the case authored, matching the placeholder the previewed agent shows, rather than the `Message Copilot` placeholder that only the unscoped Copilot chat shows.                                                                                                                                 |
+| VCB-45 | Given `scaffold`, compilation ends the operation by waiting for the README preview the toolkit opens for a freshly created project, so no later operation addresses a toolkit command or view before the reopened window has activated the extension that contributes it.                                                                                                                   |
 
 ## Boundary
 

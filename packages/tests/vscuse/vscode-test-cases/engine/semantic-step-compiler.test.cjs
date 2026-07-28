@@ -1091,6 +1091,31 @@ test("VCB-44: the Copilot message input is named by its previewed agent", async 
   );
 });
 
+test("VCB-45: scaffolding ends by waiting for the reopened project window", async () => {
+  const result = await compileFixture(
+    "da-no-action.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const steps = result.value[0].plan.steps;
+  const descriptions = steps.map((step) => step.description);
+  const readyIndex = descriptions.indexOf(
+    "@assertion the Preview README.md editor tab is open in Visual Studio Code.",
+  );
+  const lastScaffoldAnswerIndex = descriptions.lastIndexOf(
+    "Press Enter to submit the accepted text input.",
+  );
+  const firstToolkitUiIndex = descriptions.indexOf(
+    "@assertion exactly one command titled Microsoft 365 Agents Toolkit: Focus on Accounts View is visible and selectable in the active Command Palette.",
+  );
+
+  // The reopened window has to activate the toolkit again before any later
+  // operation can address a command or view the toolkit contributes.
+  assert.equal(readyIndex > lastScaffoldAnswerIndex, true);
+  assert.equal(readyIndex < firstToolkitUiIndex, true);
+});
+
 test("semantic adapter requires chat-ready state before a chat check", async () => {
   const result = await compileFixture("weather-agent.yml", (sourceText) =>
     sourceText.replace("        open-app,\n", ""),

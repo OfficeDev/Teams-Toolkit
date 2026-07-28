@@ -500,6 +500,20 @@ function createSemanticStepCompiler() {
         "The scaffold must initialize app_name.",
       );
     }
+    // The last answer starts project creation, which reopens the workspace in a
+    // new window whose extension host has to start the toolkit again. Every
+    // later operation drives toolkit-contributed UI, and the toolkit registers
+    // that UI only once activation sets `fx-extension.isTeamsFx`, so scaffolding
+    // ends by waiting for the README preview the toolkit opens for a freshly
+    // created project. Nothing else in the reopened window proves activation:
+    // the post-scaffold file checks read the workspace directly, and a command
+    // the Command Palette has already filtered does not appear when it
+    // registers late.
+    error = append(
+      output,
+      render(state, "initialization/assert-project-window-ready.json.tpl", {}),
+    );
+    if (error) return error;
     state.template = definition.with.template;
     return { ok: true, value: output };
   }
