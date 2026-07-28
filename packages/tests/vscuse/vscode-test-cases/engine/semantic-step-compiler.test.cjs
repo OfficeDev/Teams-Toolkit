@@ -649,10 +649,15 @@ test("browser checks require a preceding target", async () => {
   const result = await compileFixture(
     "da-api-plugin-from-existing-api.yml",
     (sourceText) =>
-      sourceText.replace(
-        /        f5-copilot-remote,\r?\n        check-oauth-sign-in,/,
-        "        check-oauth-sign-in,\n        f5-copilot-remote,",
-      ),
+      sourceText
+        .replace(
+          /      - type: chat\r?\n        send: List all repairs with oauth\r?\n        allowAction: true\r?\n/,
+          "",
+        )
+        .replace(
+          /        f5-copilot-remote,\r?\n        open-agent,\r?\n        check-oauth-sign-in,/,
+          "        check-oauth-sign-in,\n        f5-copilot-remote,\n        open-agent,",
+        ),
   );
 
   assert.equal(result.ok, false);
@@ -1030,6 +1035,34 @@ test("semantic adapter requires an immediate post-scaffold file check", async ()
 
   assert.equal(result.ok, false);
   assert.equal(result.diagnostics[0].code, "VCB_OPERATION_ORDER");
+});
+
+test("VCB-43: the Copilot ready subject follows the template's agent name", async () => {
+  const readySubject = (result) =>
+    result.value[0].plan.steps
+      .map((step) => step.description)
+      .find((description) =>
+        description.includes("is displayed in the main section"),
+      );
+  const suffixed = await compileFixture(
+    "da-no-action.yml",
+    (sourceText) => sourceText,
+  );
+  const unsuffixed = await compileFixture(
+    "da-api-plugin-from-existing-api.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(suffixed.ok, true);
+  assert.equal(unsuffixed.ok, true);
+  assert.equal(
+    readySubject(suffixed),
+    "@assertion ${{var:app_name}}dev is displayed in the main section of Microsoft 365 Copilot.",
+  );
+  assert.equal(
+    readySubject(unsuffixed),
+    "@assertion ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot.",
+  );
 });
 
 test("semantic adapter requires chat-ready state before a chat check", async () => {

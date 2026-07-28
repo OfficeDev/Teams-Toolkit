@@ -502,6 +502,13 @@ chat destination is ready. The generic adapter accepts `readySubject`; the Teams
 that parameter for its final assertion while its Add and Added subjects remain fixed. The recorded
 coordinates and visual preconditions remain component-owned.
 
+A target profile resolves `readySubject` from the scaffold template, because Copilot titles an agent
+with the `name` its `declarativeAgent.json` declares and the templates do not compose that name
+identically. Every template writes `{{appName}}${{APP_NAME_SUFFIX}}` with no separator, which
+`.env.dev` resolves to the authored app name with `dev` appended, except the template scaffolded
+from an existing API spec, which writes `{{appName}}` alone. Naming the agent from the profile alone
+would assert a title the product never renders for one of those two shapes.
+
 An adapter template is linear and owns exactly one entry state. It must not use an "Add or Open"
 assertion followed by an Add-only sequence, optional steps, or runtime fallback clicks. A test
 profile using the fresh-app adapter must guarantee a unique, not-yet-installed app identity. Direct
@@ -954,7 +961,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-40 | Given a lifecycle operation that selects an environment, compilation emits that selection before every operation-owned prompt, matching the toolkit resolving the environment in middleware that wraps the command body.                                                                                                                                                                    |
 | VCB-41 | Given `scaffold`, compilation closes the toolkit Get Started editor and asserts no editor tab remains open, after the toolkit view has settled and before the create command, so no editor can reclaim keyboard focus from the first scaffold quick pick, which `ignoreFocusOut` would otherwise leave visible but unable to receive its filter keystrokes.                                 |
 | VCB-42 | Given `login`, compilation focuses the toolkit view before opening the account menu, so the ACCOUNTS section the readiness assertion reads is showing in the window scaffolding opened, whose side bar defaults to the Explorer.                                                                                                                                                            |
-| VCB-43 | Given a Copilot preview target, the readiness assertion names the app as the scaffolded manifest composes it, appending the `APP_NAME_SUFFIX` of the previewed environment to the authored app name, rather than the authored name alone.                                                                                                                                                   |
+| VCB-43 | Given a Copilot preview target, the readiness assertion names the agent as the scaffolded `declarativeAgent.json` composes it, appending the `APP_NAME_SUFFIX` of the previewed environment to the authored app name for every template except the one scaffolded from an existing API spec, which declares the authored name alone.                                                        |
 
 ## Boundary
 

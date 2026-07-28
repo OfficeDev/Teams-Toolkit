@@ -47,6 +47,7 @@ cases:
         login-m365,
         provision-oauth,
         f5-copilot-remote,
+        open-agent,
         check-oauth-sign-in,
       ]
 
@@ -314,9 +315,18 @@ steps:
             ]
           notContains: ["apiKey/register"]
 
+  # The OAuth consent only appears once the agent tries to call the protected
+  # API, so the agent has to be asked something first. The recorded
+  # `validation_DA_repair_Oauth` group shows the order the product uses: send the
+  # message, allow the action, and only then does the sign-in button appear. The
+  # message needs no expectation of its own because the button the next check
+  # reads is the response it produces.
   check-oauth-sign-in:
     type: checks
     with:
+      - type: chat
+        send: List all repairs with oauth
+        allowAction: true
       - type: browser
         expect:
           role: button
@@ -353,3 +363,9 @@ steps:
     type: target
     with:
       profile: "Preview in Copilot (Chrome)"
+
+  open-agent:
+    type: open
+    with:
+      kind: agent
+      destination: chat
