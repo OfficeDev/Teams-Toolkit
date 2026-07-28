@@ -773,6 +773,20 @@ export class FxCoreDeclarativeAgentPart {
               if (authProbe.authMetadataUrl) {
                 inputs[QuestionNames.MCPForDAAuthMetadataUrl] = authProbe.authMetadataUrl;
               }
+              // Same advisory warning the create flow raises on its DT branch: this branch
+              // never fetches tools, so a URL that is not an MCP endpoint would otherwise
+              // leave no trace — endpoint discovery falls back to the host and the action
+              // looks complete.
+              if (authProbe.endpointStatus === "notEndpoint") {
+                mcpWarnings.push({
+                  type: "mcpServerUrlNotAnEndpoint",
+                  content: getLocalizedString(
+                    "core.MCPForDA.mcpServerUrlNotAnEndpoint",
+                    mcpServerUrl,
+                    String(authProbe.responseStatus)
+                  ),
+                });
+              }
             } catch {
               // best-effort probe; endpoint resolution below tolerates undefined
             }

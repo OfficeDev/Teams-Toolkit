@@ -3305,6 +3305,93 @@ describe("addPlugin", async () => {
     }
   });
 
+  it("from MCP (DT flag on): warns when the probed url is not an MCP endpoint", async () => {
+    const appName = await mockV3Project();
+    const projectPath = path.join(os.tmpdir(), appName);
+    const inputs: Inputs = {
+      platform: Platform.CLI,
+      [QuestionNames.Folder]: os.tmpdir(),
+      [QuestionNames.TeamsAppManifestFilePath]: "manifest.json",
+      [QuestionNames.ActionType]: ActionStartOptions.mcp().id,
+      [QuestionNames.MCPForDAServerUrl]: "https://example.com",
+      [QuestionNames.MCPToolsFilePath]: "",
+      [QuestionNames.MCPForDAAuthType]: "oauth",
+      [QuestionNames.MCPForDAClientId]: "client-id",
+      [QuestionNames.MCPForDAClientSecret]: "client-secret",
+      [QuestionNames.MCPForDAScopes]: "scope-a",
+      projectPath,
+    };
+
+    const manifest = new TeamsAppManifest();
+    manifest.copilotExtensions = {
+      declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
+    };
+
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) => {
+      return flag === FeatureFlags.MCPForDADT;
+    });
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(
+      copilotGptManifestUtils,
+      "getDefaultNextAvailablePluginManifestPath"
+    ).mockResolvedValue("ai-plugin_1.json");
+    vi.spyOn(copilotGptManifestUtils, "addAction").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+
+    vi.spyOn(addPluginTools.ui, "showMessage").mockImplementation((level) => {
+      if (level === "warn") return Promise.resolve(ok("Add"));
+      return Promise.resolve(ok(""));
+    });
+
+    const mcpToolFetcherModule = await import("../../src/component/utils/mcpToolFetcher");
+    vi.spyOn(mcpToolFetcherModule, "probeMCPServerAuth").mockResolvedValue({
+      requiresAuth: true,
+      endpointStatus: "notEndpoint",
+      responseStatus: 403,
+    });
+
+    const mcpAuthScaffolderModule = await import("../../src/component/utils/mcpAuthScaffolder");
+    vi.spyOn(
+      mcpAuthScaffolderModule.mcpAuthScaffolderDeps,
+      "resolveMCPOAuthMetadata"
+    ).mockResolvedValue({
+      authorizationUrl: "https://example.com/oauth/authorize",
+      tokenUrl: "https://example.com/oauth/token",
+      refreshUrl: "https://example.com/oauth/token",
+      wellKnownUrl: "https://example.com/.well-known/oauth-authorization-server",
+    });
+
+    const actionInjectorModule = await import("../../src/component/configManager/actionInjector");
+    vi.spyOn(
+      actionInjectorModule.ActionInjector,
+      "injectCreateOAuthActionForMCP"
+    ).mockResolvedValue();
+
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+    vi.spyOn(fs, "ensureFile").mockResolvedValue();
+    vi.spyOn(fs, "writeJSON").mockResolvedValue();
+    const warnStub = vi.spyOn(addPluginTools.logProvider, "warning").mockResolvedValue();
+
+    const core = new FxCore(addPluginTools);
+    const result = await core.addPlugin(inputs);
+
+    assert.isTrue(result.isOk());
+    // The DT branch never fetches tools, so this warning is the only trace a wrong
+    // url leaves — the same one the create flow raises.
+    const warnings = warnStub.mock.calls.map((c) => String(c[0]));
+    assert.isTrue(warnings.some((w) => w.includes("https://example.com") && w.includes("403")));
+
+    if (await fs.pathExists(projectPath)) {
+      await fs.remove(projectPath);
+    }
+  });
+
   it("from MCP (DT flag on): still injects oauth/register when auth metadata cannot be resolved", async () => {
     const appName = await mockV3Project();
     const projectPath = path.join(os.tmpdir(), appName);
