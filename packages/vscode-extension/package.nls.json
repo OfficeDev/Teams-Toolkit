@@ -297,7 +297,7 @@
   "teamstoolkit.handlers.manualStepRequired": "[%s] is created at [local address](%s). Follow the instructions in README file to preview your app.",
   "teamstoolkit.handlers.manualStepRequired.fallback": "[%s] is created at %s. Follow the instructions in README file to preview your app.",
   "teamstoolkit.handlers.manualStepRequiredTitle": "Open README",
-  "teamstoolkit.handlers.mcpAuthPlaceholder.message": "Microsoft 365 Agents Toolkit could not discover the OAuth endpoints of your MCP server, so it left placeholders in m365agents.yml. Provisioning will fail until they are replaced. If the MCP server URL was mistyped, create the app again with the correct URL. Otherwise, open m365agents.yml and fill in the placeholder values.",
+  "teamstoolkit.handlers.mcpAuthPlaceholder.message": "Could not discover the OAuth endpoints of your MCP server, so m365agents.yml contains placeholders. Provisioning will fail until they are replaced.",
   "teamstoolkit.handlers.mcpAuthPlaceholder.openYmlTitle": "Open m365agents.yml",
   "teamstoolkit.handlers.mcpAuthPlaceholder.recreateTitle": "Create New App",
   "teamstoolkit.handlers.referLinkForMoreDetails": "Please refer to this link for more details: ",

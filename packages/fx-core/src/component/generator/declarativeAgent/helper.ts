@@ -35,6 +35,8 @@ import { pluginManifestUtils } from "../../driver/teamsApp/utils/PluginManifestU
 import { normalizePath } from "../../driver/teamsApp/utils/utils";
 import { getEnvironmentVariables } from "../../utils/common";
 import {
+  MCP_OAUTH_AUTHORIZATION_URL_PLACEHOLDER,
+  MCP_OAUTH_TOKEN_URL_PLACEHOLDER,
   deriveMCPManifestOAuth,
   injectMCPAuthActionToYml,
   persistMCPAuthCredentialEnvVars,
@@ -739,7 +741,9 @@ export async function generateForMCPForDA(
               type: "mcpAuthOAuthUrlPlaceholder",
               content: getLocalizedString(
                 "core.MCPForDA.mcpAuthOAuthPlaceholderWarning",
-                mcpServerUrl
+                mcpServerUrl,
+                MCP_OAUTH_AUTHORIZATION_URL_PLACEHOLDER,
+                MCP_OAUTH_TOKEN_URL_PLACEHOLDER
               ),
             });
           }
@@ -837,8 +841,12 @@ async function generateForMCPForDAWithAuth(
           // applied when the URL is first entered.
           if (authProbe.endpointStatus === "notEndpoint") {
             warnings.push({
-              type: "mcpServerUrlNotFound",
-              content: getLocalizedString("core.MCPForDA.mcpServerUrlNotFound", mcpServerUrl),
+              type: "mcpServerUrlNotAnEndpoint",
+              content: getLocalizedString(
+                "core.MCPForDA.mcpServerUrlNotAnEndpoint",
+                mcpServerUrl,
+                String(authProbe.responseStatus)
+              ),
             });
           }
         } catch {
@@ -890,7 +898,9 @@ async function generateForMCPForDAWithAuth(
               type: "mcpAuthOAuthUrlPlaceholder",
               content: getLocalizedString(
                 "core.MCPForDA.mcpAuthOAuthPlaceholderWarning",
-                mcpServerUrl
+                mcpServerUrl,
+                MCP_OAUTH_AUTHORIZATION_URL_PLACEHOLDER,
+                MCP_OAUTH_TOKEN_URL_PLACEHOLDER
               ),
             });
           }

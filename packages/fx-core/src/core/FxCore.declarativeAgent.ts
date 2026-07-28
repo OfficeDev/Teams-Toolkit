@@ -50,6 +50,8 @@ import {
 import { QuestionMW } from "../component/middleware/questionMW";
 import { outputScaffoldingWarningMessage } from "../component/utils/common";
 import {
+  MCP_OAUTH_AUTHORIZATION_URL_PLACEHOLDER,
+  MCP_OAUTH_TOKEN_URL_PLACEHOLDER,
   ResolvedMCPAuthEndpoints,
   deriveMCPManifestOAuth,
   injectMCPAuthActionToYml,
@@ -369,7 +371,12 @@ export class FxCoreDeclarativeAgentPart {
       if (injectResult.oauthUrlPlaceholderUsed) {
         void context.userInteraction.showMessage(
           "warn",
-          getLocalizedString("core.MCPForDA.mcpAuthOAuthPlaceholderWarning", mcpServerUrl),
+          getLocalizedString(
+            "core.MCPForDA.mcpAuthOAuthPlaceholderWarning",
+            mcpServerUrl,
+            MCP_OAUTH_AUTHORIZATION_URL_PLACEHOLDER,
+            MCP_OAUTH_TOKEN_URL_PLACEHOLDER
+          ),
           false
         );
       }
@@ -814,7 +821,9 @@ export class FxCoreDeclarativeAgentPart {
                   type: "mcpAuthOAuthUrlPlaceholder",
                   content: getLocalizedString(
                     "core.MCPForDA.mcpAuthOAuthPlaceholderWarning",
-                    mcpServerUrl
+                    mcpServerUrl,
+                    MCP_OAUTH_AUTHORIZATION_URL_PLACEHOLDER,
+                    MCP_OAUTH_TOKEN_URL_PLACEHOLDER
                   ),
                 });
               }
@@ -1061,7 +1070,9 @@ export class FxCoreDeclarativeAgentPart {
                     type: "mcpAuthOAuthUrlPlaceholder",
                     content: getLocalizedString(
                       "core.MCPForDA.mcpAuthOAuthPlaceholderWarning",
-                      mcpServerUrl
+                      mcpServerUrl,
+                      MCP_OAUTH_AUTHORIZATION_URL_PLACEHOLDER,
+                      MCP_OAUTH_TOKEN_URL_PLACEHOLDER
                     ),
                   });
                 }

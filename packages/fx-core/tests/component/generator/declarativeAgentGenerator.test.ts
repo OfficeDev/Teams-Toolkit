@@ -2045,9 +2045,10 @@ describe("helper", async () => {
 
       assert.isTrue(res.isOk());
       if (res.isOk()) {
-        const warning = res.value.warnings?.find((w) => w.type === "mcpServerUrlNotFound");
+        const warning = res.value.warnings?.find((w) => w.type === "mcpServerUrlNotAnEndpoint");
         assert.isDefined(warning);
         assert.include(warning!.content, "https://taskmaster.example.com");
+        assert.include(warning!.content, "404");
         assert.include(warning!.content, "/mcp");
       }
     });
@@ -2085,7 +2086,7 @@ describe("helper", async () => {
 
       assert.isTrue(res.isOk());
       if (res.isOk()) {
-        assert.isDefined(res.value.warnings?.find((w) => w.type === "mcpServerUrlNotFound"));
+        assert.isDefined(res.value.warnings?.find((w) => w.type === "mcpServerUrlNotAnEndpoint"));
       }
     });
 
@@ -2120,7 +2121,7 @@ describe("helper", async () => {
 
       assert.isTrue(res.isOk());
       if (res.isOk()) {
-        assert.isUndefined(res.value.warnings?.find((w) => w.type === "mcpServerUrlNotFound"));
+        assert.isUndefined(res.value.warnings?.find((w) => w.type === "mcpServerUrlNotAnEndpoint"));
       }
     });
 

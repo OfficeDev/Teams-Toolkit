@@ -4,7 +4,12 @@
 import { FxError, SystemError } from "@microsoft/teamsfx-api";
 import { Result, err, ok } from "neverthrow";
 import { getLocalizedString } from "../../common/localizeUtils";
-import { ResolvedMCPAuthEndpoints, injectMcpAuthActionYaml } from "./mcpAuthAction";
+import {
+  MCP_OAUTH_AUTHORIZATION_URL_PLACEHOLDER,
+  MCP_OAUTH_TOKEN_URL_PLACEHOLDER,
+  ResolvedMCPAuthEndpoints,
+  injectMcpAuthActionYaml,
+} from "./mcpAuthAction";
 import { probeMCPServerAuth, resolveMCPOAuthMetadata } from "../../common/mcpToolFetcher";
 import { StepContext } from "../pipeline/runScaffoldPipeline";
 import { deriveMcpServerName } from "../runtime/whitelist";
@@ -145,7 +150,12 @@ export async function injectMcpAuthAction(
   }
   if (injectResult.value.oauthUrlPlaceholderUsed) {
     ctx.warn?.(
-      getLocalizedString("core.MCPForDA.mcpAuthOAuthPlaceholderWarning", args.mcpServerUrl)
+      getLocalizedString(
+        "core.MCPForDA.mcpAuthOAuthPlaceholderWarning",
+        args.mcpServerUrl,
+        MCP_OAUTH_AUTHORIZATION_URL_PLACEHOLDER,
+        MCP_OAUTH_TOKEN_URL_PLACEHOLDER
+      )
     );
   }
   ctx.write(args.ymlPath, Buffer.from(injectResult.value.yaml, "utf8"));

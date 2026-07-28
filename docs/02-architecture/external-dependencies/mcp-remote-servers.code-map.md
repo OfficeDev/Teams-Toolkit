@@ -21,8 +21,8 @@ location in source.
 | §1.2 JSON-RPC envelope check, tolerant of SSE framing | `packages/fx-core/src/common/mcpToolFetcher.ts` (`carriesJSONRPCEnvelope`) |
 | §1.3 / §1.4 Three-state URL verdict | `packages/fx-core/src/common/mcpToolFetcher.ts` (`MCPEndpointStatus`, `MCPAuthProbeResult.endpointStatus`) |
 | §1.4 Negative statuses treated as "not an MCP endpoint" | `packages/fx-core/src/common/mcpToolFetcher.ts` (`NOT_AN_ENDPOINT_STATUSES`) |
-| §1.4 Warning raised on the dynamic-tool-discovery scaffold path | `packages/fx-core/src/component/generator/declarativeAgent/helper.ts` (`generateForMCPForDAWithAuth`, warning type `mcpServerUrlNotFound`) |
-| §1.4 Warning text | `packages/fx-core/resource/package.nls.json` (`core.MCPForDA.mcpServerUrlNotFound`) |
+| §1.4 Warning raised on the dynamic-tool-discovery scaffold path | `packages/fx-core/src/component/generator/declarativeAgent/helper.ts` (`generateForMCPForDAWithAuth`, warning type `mcpServerUrlNotAnEndpoint`) |
+| §1.4 Warning text | `packages/fx-core/resource/package.nls.json` (`core.MCPForDA.mcpServerUrlNotAnEndpoint`) |
 | §1.4 Tool-fetch based signal on the non-DT paths | `packages/fx-core/src/component/generator/declarativeAgent/helper.ts` (`generateForMCPForDA`), `packages/fx-core/src/core/FxCore.declarativeAgent.ts` (warning type `mcpNoToolsFetched`) |
 | §1.1 / §1.4 v3 endpoint resolution and placeholder fallback | `packages/fx-core/src/component/utils/mcpAuthScaffolder.ts` (`resolveMCPAuthEndpoints`) |
 | §1.1 / §1.4 v4 endpoint resolution and placeholder fallback | `packages/fx-core/src/v4/mcp/mcpAuthScaffold.ts` (`resolveEndpoints`), `packages/fx-core/src/v4/mcp/mcpAuthAction.ts` |
