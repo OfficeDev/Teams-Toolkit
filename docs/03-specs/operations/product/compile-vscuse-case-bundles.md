@@ -109,7 +109,6 @@ steps:
     type: provision
     with:
       arm:
-        subscriptionId: "${{env:AZURE_SUBSCRIPTION_ID}}"
         targetResourceGroupName: "+ New resource group"
         newResourceGroupName: "${{var:app_name}}-rg"
         newResourceGroupLocation: "${{env:RESOURCE_GROUP_REGION}}"
@@ -798,10 +797,15 @@ Password questions use `text`; the semantic adapter separately requires a secret
 ensures diagnostics never expose its value.
 
 The semantic adapter owns one closed ARM prompt sequence:
-`subscriptionId`, `targetResourceGroupName`, `newResourceGroupName`, and
+`targetResourceGroupName`, `newResourceGroupName`, and
 `newResourceGroupLocation`. A `provision` step containing `with.arm` selects that sequence, requires
 a preceding Azure login, requires every supported key, and uses the recorded Provision confirmation
-component. A bare `provision` emits only environment selection and notification verification.
+component. The sequence has no subscription prompt. The toolkit opens one only when the signed-in
+account can see more than one subscription, and the compatible test profile guarantees a single
+subscription, so the toolkit selects it without asking. The prompt is also unanswerable from a
+subscription ID: its items carry the subscription name as their label and no description or detail,
+so the ID the environment holds never renders and can never match a filter.
+A bare `provision` emits only environment selection and notification verification.
 Environment selection is shared by `provision` and `deploy`, because the toolkit resolves the
 environment in the middleware that wraps every lifecycle command. It is therefore emitted before any
 operation-owned prompt, and it is emitted unless the step declares `with.environment: none`, which
@@ -1029,6 +1033,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-48 | Given any executed command, both Command Palette assertions name the `>` the palette keeps in its input box, so neither is satisfied by another quick pick that VS Code draws with the same frame.                                                                                                                                                                                          |
 | VCB-49 | Given `scaffold`, the close component asserts that the Get Started tab is the active editor tab before pressing `Ctrl+W`, because that shortcut closes the window when no editor is open and the preceding settled assertion only claims the editor is visible.                                                                                                                             |
 | VCB-50 | Given a `multiSelect` answer, every option invocation ends by asserting that the prompt's input box is empty and the toggled option is still checked, so the `Ctrl+A` and `Backspace` pair that clears the filter cannot delete another surface's content unnoticed.                                                                                                                        |
+| VCB-51 | Given `provision.with.arm`, the emitted sequence starts at the resource group prompt and rejects an authored `subscriptionId`, because the toolkit asks for a subscription only when the account can see more than one and the prompt filters on the subscription name the ID never renders as.                                                                                             |
 
 ## Boundary
 

@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 169,
+    "total_steps": 165,
     "name": "da-api-plugin-from-scratch-ts",
     "description": {
       "owner": "",
@@ -123,25 +123,21 @@
       "step_singleSelect_filter_ccf08c250_5_3",
       "step_singleSelect_assertOption_ccf08c250_5_3",
       "step_singleSelect_confirm_ccf08c250_5_3",
-      "step_singleSelect_assertQuestion_ccf08c250_5_4",
-      "step_singleSelect_filter_ccf08c250_5_4",
-      "step_singleSelect_assertOption_ccf08c250_5_4",
-      "step_singleSelect_confirm_ccf08c250_5_4",
-      "step_textInput_assertQuestion_ccf08c250_5_5",
-      "step_textInput_input_ccf08c250_5_5",
-      "step_textInput_confirm_ccf08c250_5_5",
-      "step_singleSelect_assertQuestion_ccf08c250_5_6",
-      "step_singleSelect_filter_ccf08c250_5_6",
-      "step_singleSelect_assertOption_ccf08c250_5_6",
-      "step_singleSelect_confirm_ccf08c250_5_6",
-      "step_clickPrimaryAction_assertDialog_ccf08c250_5_7",
-      "step_clickPrimaryAction_click_ccf08c250_5_7",
-      "step_executeCommand_open_ccf08c250_5_8",
-      "step_executeCommand_assertPalette_ccf08c250_5_8",
-      "step_executeCommand_filter_ccf08c250_5_8",
-      "step_executeCommand_assertCommand_ccf08c250_5_8",
-      "step_executeCommand_execute_ccf08c250_5_8",
-      "step_assertNotificationContains_assert_ccf08c250_5_9",
+      "step_textInput_assertQuestion_ccf08c250_5_4",
+      "step_textInput_input_ccf08c250_5_4",
+      "step_textInput_confirm_ccf08c250_5_4",
+      "step_singleSelect_assertQuestion_ccf08c250_5_5",
+      "step_singleSelect_filter_ccf08c250_5_5",
+      "step_singleSelect_assertOption_ccf08c250_5_5",
+      "step_singleSelect_confirm_ccf08c250_5_5",
+      "step_clickPrimaryAction_assertDialog_ccf08c250_5_6",
+      "step_clickPrimaryAction_click_ccf08c250_5_6",
+      "step_executeCommand_open_ccf08c250_5_7",
+      "step_executeCommand_assertPalette_ccf08c250_5_7",
+      "step_executeCommand_filter_ccf08c250_5_7",
+      "step_executeCommand_assertCommand_ccf08c250_5_7",
+      "step_executeCommand_execute_ccf08c250_5_7",
+      "step_assertNotificationContains_assert_ccf08c250_5_8",
       "step_executeCommand_open_ccf08c250_6_1",
       "step_executeCommand_assertPalette_ccf08c250_6_1",
       "step_executeCommand_filter_ccf08c250_6_1",
@@ -2552,7 +2548,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the active prompt titled Select Subscription for Current Tenant ID is visible.",
+      "description": "@assertion the active prompt titled Select a resource group is visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -2573,9 +2569,9 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "${{env:AZURE_SUBSCRIPTION_ID}}"
+        "text": "+ New resource group"
       },
-      "description": "Type the resolved option label ${{env:AZURE_SUBSCRIPTION_ID}} into the active single-select prompt.",
+      "description": "Type the resolved option label + New resource group into the active single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -2595,7 +2591,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the option ${{env:AZURE_SUBSCRIPTION_ID}} is visible and selectable in the filtered single-select prompt.",
+      "description": "@assertion the option + New resource group is visible and selectable in the filtered single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -2634,11 +2630,11 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertQuestion_ccf08c250_5_4",
+      "step_id": "step_textInput_assertQuestion_ccf08c250_5_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the active prompt titled Select a resource group is visible.",
+      "description": "@assertion the active prompt titled New resource group name is visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -2650,98 +2646,12 @@
       "postconditions": [],
       "tags": [
         "component:quick-input",
-        "answer_type:singleSelect",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_singleSelect_filter_ccf08c250_5_4",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "+ New resource group"
-      },
-      "description": "Type the resolved option label + New resource group into the active single-select prompt.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_singleSelect_assertQuestion_ccf08c250_5_4"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect"
-      ]
-    },
-    {
-      "step_id": "step_singleSelect_assertOption_ccf08c250_5_4",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the option + New resource group is visible and selectable in the filtered single-select prompt.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_singleSelect_filter_ccf08c250_5_4"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_singleSelect_confirm_ccf08c250_5_4",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press Enter to confirm the filtered single-select option.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_singleSelect_assertOption_ccf08c250_5_4"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect"
-      ]
-    },
-    {
-      "step_id": "step_textInput_assertQuestion_ccf08c250_5_5",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the active prompt titled New resource group name is visible.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_singleSelect_confirm_ccf08c250_5_4"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
         "answer_type:text",
         "step_retry_timeout: 30"
       ]
     },
     {
-      "step_id": "step_textInput_input_ccf08c250_5_5",
+      "step_id": "step_textInput_input_ccf08c250_5_4",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -2753,7 +2663,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_assertQuestion_ccf08c250_5_5"
+        "step_textInput_assertQuestion_ccf08c250_5_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2763,7 +2673,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_confirm_ccf08c250_5_5",
+      "step_id": "step_textInput_confirm_ccf08c250_5_4",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2775,7 +2685,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_input_ccf08c250_5_5"
+        "step_textInput_input_ccf08c250_5_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2785,7 +2695,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertQuestion_ccf08c250_5_6",
+      "step_id": "step_singleSelect_assertQuestion_ccf08c250_5_5",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2795,7 +2705,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_confirm_ccf08c250_5_5"
+        "step_textInput_confirm_ccf08c250_5_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2806,7 +2716,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_filter_ccf08c250_5_6",
+      "step_id": "step_singleSelect_filter_ccf08c250_5_5",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -2818,7 +2728,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_ccf08c250_5_6"
+        "step_singleSelect_assertQuestion_ccf08c250_5_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2828,7 +2738,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOption_ccf08c250_5_6",
+      "step_id": "step_singleSelect_assertOption_ccf08c250_5_5",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2838,7 +2748,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_filter_ccf08c250_5_6"
+        "step_singleSelect_filter_ccf08c250_5_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2849,7 +2759,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_confirm_ccf08c250_5_6",
+      "step_id": "step_singleSelect_confirm_ccf08c250_5_5",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2861,7 +2771,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOption_ccf08c250_5_6"
+        "step_singleSelect_assertOption_ccf08c250_5_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2871,7 +2781,7 @@
       ]
     },
     {
-      "step_id": "step_clickPrimaryAction_assertDialog_ccf08c250_5_7",
+      "step_id": "step_clickPrimaryAction_assertDialog_ccf08c250_5_6",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2881,7 +2791,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_confirm_ccf08c250_5_6"
+        "step_singleSelect_confirm_ccf08c250_5_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2892,7 +2802,7 @@
       ]
     },
     {
-      "step_id": "step_clickPrimaryAction_click_ccf08c250_5_7",
+      "step_id": "step_clickPrimaryAction_click_ccf08c250_5_6",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2904,7 +2814,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_clickPrimaryAction_assertDialog_ccf08c250_5_7"
+        "step_clickPrimaryAction_assertDialog_ccf08c250_5_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2914,7 +2824,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_open_ccf08c250_5_8",
+      "step_id": "step_executeCommand_open_ccf08c250_5_7",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2926,7 +2836,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_clickPrimaryAction_click_ccf08c250_5_7"
+        "step_clickPrimaryAction_click_ccf08c250_5_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2936,7 +2846,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertPalette_ccf08c250_5_8",
+      "step_id": "step_executeCommand_assertPalette_ccf08c250_5_7",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2946,7 +2856,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_open_ccf08c250_5_8"
+        "step_executeCommand_open_ccf08c250_5_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2957,7 +2867,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_filter_ccf08c250_5_8",
+      "step_id": "step_executeCommand_filter_ccf08c250_5_7",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -2969,7 +2879,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertPalette_ccf08c250_5_8"
+        "step_executeCommand_assertPalette_ccf08c250_5_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2979,7 +2889,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertCommand_ccf08c250_5_8",
+      "step_id": "step_executeCommand_assertCommand_ccf08c250_5_7",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2989,7 +2899,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_filter_ccf08c250_5_8"
+        "step_executeCommand_filter_ccf08c250_5_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3000,7 +2910,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_execute_ccf08c250_5_8",
+      "step_id": "step_executeCommand_execute_ccf08c250_5_7",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -3012,7 +2922,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertCommand_ccf08c250_5_8"
+        "step_executeCommand_assertCommand_ccf08c250_5_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3022,7 +2932,7 @@
       ]
     },
     {
-      "step_id": "step_assertNotificationContains_assert_ccf08c250_5_9",
+      "step_id": "step_assertNotificationContains_assert_ccf08c250_5_8",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -3032,7 +2942,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_ccf08c250_5_8"
+        "step_executeCommand_execute_ccf08c250_5_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3055,7 +2965,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertNotificationContains_assert_ccf08c250_5_9"
+        "step_assertNotificationContains_assert_ccf08c250_5_8"
       ],
       "preconditions": [],
       "postconditions": [],

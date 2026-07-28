@@ -165,7 +165,6 @@ steps:
     with:
       environment: none
       arm:
-        subscriptionId: "${{env:AZURE_SUBSCRIPTION_ID}}"
         targetResourceGroupName: "+ New resource group"
         newResourceGroupName: "${{var:app_name}}-rg"
         newResourceGroupLocation: "${{env:RESOURCE_GROUP_REGION}}"

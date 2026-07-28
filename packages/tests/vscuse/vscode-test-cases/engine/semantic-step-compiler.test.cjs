@@ -983,17 +983,44 @@ test("VCB-40: environment selection precedes the operation-owned prompts", async
   const environmentIndex = descriptions.indexOf(
     "Click the dev option in the active prompt.",
   );
-  const subscriptionIndex = descriptions.indexOf(
-    "@assertion the active prompt titled Select Subscription for Current Tenant ID is visible.",
-  );
   const resourceGroupIndex = descriptions.indexOf(
     "@assertion the active prompt titled Select a resource group is visible.",
   );
 
   assert.equal(environmentIndex >= 0, true);
-  assert.equal(subscriptionIndex >= 0, true);
-  assert.equal(environmentIndex < subscriptionIndex, true);
-  assert.equal(subscriptionIndex < resourceGroupIndex, true);
+  assert.equal(environmentIndex < resourceGroupIndex, true);
+});
+
+test("VCB-51: ARM provision emits no subscription prompt", async () => {
+  const result = await compileFixture(
+    "da-api-plugin-from-scratch.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(result.ok, true);
+  const descriptions = result.value[0].plan.steps.map(
+    (step) => step.description,
+  );
+
+  // The toolkit asks for a subscription only when the account can see more
+  // than one, and the prompt filters on the name, not the ID.
+  assert.equal(
+    descriptions.some((description) => /subscription/i.test(description)),
+    false,
+  );
+
+  const authoredSubscription = await compileFixture(
+    "da-api-plugin-from-scratch.yml",
+    (sourceText) =>
+      sourceText.replace(
+        '        targetResourceGroupName: "+ New resource group"',
+        '        subscriptionId: "${{env:AZURE_SUBSCRIPTION_ID}}"\n        targetResourceGroupName: "+ New resource group"',
+      ),
+  );
+  assert.equal(authoredSubscription.ok, false);
+  assert.equal(
+    authoredSubscription.diagnostics[0].code,
+    "VCB_PROVISION_INPUT_UNKNOWN",
+  );
 });
 
 test("semantic adapter rejects a target with missing prerequisites", async () => {

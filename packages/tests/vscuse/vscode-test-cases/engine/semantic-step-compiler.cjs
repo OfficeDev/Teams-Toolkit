@@ -153,11 +153,6 @@ const scaffoldQuestionAdapters = {
 const provisionArmQuestions = [
   {
     component: "quick-input/single-select.json.tpl",
-    key: "subscriptionId",
-    title: "Select Subscription for Current Tenant ID",
-  },
-  {
-    component: "quick-input/single-select.json.tpl",
     key: "targetResourceGroupName",
     title: "Select a resource group",
   },
