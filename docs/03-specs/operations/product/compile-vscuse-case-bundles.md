@@ -570,14 +570,17 @@ returns.
 
 The scaffold recipe then uses a third initialization component,
 `initialization/close-get-started-editor.json.tpl`, between that assertion and the create command.
-It closes the Get Started editor with `Ctrl+W` and asserts that no editor tab remains open. It has
+It asserts that the Get Started tab is the active editor tab, closes it with `Ctrl+W`, and asserts
+that no editor tab remains open. It has
 no semantic parameters and owns no coordinates. The toolkit sets `ignoreFocusOut` on every quick
 pick it opens, so a scaffold quick pick that loses keyboard focus stays on screen instead of
 dismissing itself. The Get Started editor reclaims focus while the create command is opening its
 first quick pick, which leaves that quick pick visible but deaf: its prompt assertion passes and the
 filter keystrokes reach the editor instead. Closing the editor removes the competing focus target
-rather than racing it. The preceding settled assertion is what makes the close deterministic: it
-guarantees the editor exists, so `Ctrl+W` targets it instead of closing the window.
+rather than racing it. The component's own opening assertion is what makes the close deterministic.
+`Ctrl+W` closes the active editor and closes the window when no editor is open, so the settled
+assertion that precedes the component is not enough on its own: it claims the Get Started editor is
+visible, not that it is the tab `Ctrl+W` will act on.
 
 The scaffold recipe ends with a fourth initialization component,
 `initialization/assert-project-window-ready.json.tpl`, which asserts that the Preview README.md
@@ -759,9 +762,13 @@ canonical `en-US` question title to be visible in the active prompt. A single-se
 by canonical option label, asserts that the filtered option is visible and selectable, and only
 then confirms it. A multi-select emits one component invocation per authored option: each invocation
 filters by canonical option label, asserts that the filtered option is visible and selectable,
-toggles that option, and clears the filter before the next option. The compiler confirms the prompt
+toggles that option, clears the filter, and asserts that the prompt's input box is empty and the
+toggled option is still checked. The compiler confirms the prompt
 once after the last option. The option assertion intentionally runs after filtering: a valid option
-in a long or virtualized list may not be visible before input. Compiler-generated assertion
+in a long or virtualized list may not be visible before input. The closing assertion covers the
+clear, which is a `Ctrl+A` and `Backspace` pair: on any surface other than the open prompt that pair
+selects and deletes that surface's own content, and the component would otherwise end on an
+unverified destructive keystroke. Compiler-generated assertion
 descriptions contain resolved titles or labels but never authored answer values or secrets.
 
 A dynamic complete JSON value uses `{{json:<name>}}`; the compiler replaces it with the JSON
@@ -1020,6 +1027,8 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-46 | Given a `login` that is not the first sign-in of its case, compilation selects the sign-in component whose entry state is the account picker the earlier sign-in leaves behind, and fails when the account has no recorded sign-in for that entry state.                                                                                                                                    |
 | VCB-47 | Given any `login`, the sign-in adapter verifies the account in the ACCOUNTS section right after closing the browser, so no operation that follows starts with an account menu open over the window or with the account menu command promoted in the palette's recently used list.                                                                                                           |
 | VCB-48 | Given any executed command, both Command Palette assertions name the `>` the palette keeps in its input box, so neither is satisfied by another quick pick that VS Code draws with the same frame.                                                                                                                                                                                          |
+| VCB-49 | Given `scaffold`, the close component asserts that the Get Started tab is the active editor tab before pressing `Ctrl+W`, because that shortcut closes the window when no editor is open and the preceding settled assertion only claims the editor is visible.                                                                                                                             |
+| VCB-50 | Given a `multiSelect` answer, every option invocation ends by asserting that the prompt's input box is empty and the toggled option is still checked, so the `Ctrl+A` and `Backspace` pair that clears the filter cannot delete another surface's content unnoticed.                                                                                                                        |
 
 ## Boundary
 

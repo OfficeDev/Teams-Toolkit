@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 119,
+    "total_steps": 121,
     "name": "da-api-plugin-from-existing-api-bearer-remote-preview",
     "description": {
       "owner": "",
@@ -25,6 +25,7 @@
       "step_executeCommand_assertCommand_cccb76852_1_2",
       "step_executeCommand_execute_cccb76852_1_2",
       "step_assertToolkitViewSettled_assert_cccb76852_1_3",
+      "step_closeGetStartedEditor_assertActive_cccb76852_1_4",
       "step_closeGetStartedEditor_close_cccb76852_1_4",
       "step_closeGetStartedEditor_assertClosed_cccb76852_1_4",
       "step_executeCommand_open_cccb76852_1_5",
@@ -60,6 +61,7 @@
       "step_multiSelect_assertSelected_cccb76852_1_11",
       "step_multiSelect_selectFilter_cccb76852_1_11",
       "step_multiSelect_clearFilter_cccb76852_1_11",
+      "step_multiSelect_assertCleared_cccb76852_1_11",
       "step_multiSelectConfirm_assertQuestion_cccb76852_1_12",
       "step_multiSelectConfirm_confirm_cccb76852_1_12",
       "step_confirmOption_assertPrompt_cccb76852_1_13",
@@ -343,6 +345,27 @@
       ]
     },
     {
+      "step_id": "step_closeGetStartedEditor_assertActive_cccb76852_1_4",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the toolkit Get Started tab is the active editor tab in the Visual Studio Code editor area.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_assertToolkitViewSettled_assert_cccb76852_1_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:initialization",
+        "initialization:closeGetStartedEditor",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
       "step_id": "step_closeGetStartedEditor_close_cccb76852_1_4",
       "agent": "interaction",
       "tool": "keyboard_shortcut",
@@ -355,7 +378,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertToolkitViewSettled_assert_cccb76852_1_3"
+        "step_closeGetStartedEditor_assertActive_cccb76852_1_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1097,6 +1120,27 @@
       ]
     },
     {
+      "step_id": "step_multiSelect_assertCleared_cccb76852_1_11",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the multi-select prompt titled Select Operation(s) Copilot Can Interact with has an empty input box and the GET /repair option still has a checked checkbox.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_multiSelect_clearFilter_cccb76852_1_11"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:multiSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
       "step_id": "step_multiSelectConfirm_assertQuestion_cccb76852_1_12",
       "agent": "assertion",
       "tool": "",
@@ -1107,7 +1151,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_multiSelect_clearFilter_cccb76852_1_11"
+        "step_multiSelect_assertCleared_cccb76852_1_11"
       ],
       "preconditions": [],
       "postconditions": [],

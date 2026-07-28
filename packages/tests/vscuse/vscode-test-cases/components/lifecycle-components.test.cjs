@@ -126,6 +126,27 @@ test("VCB-47: Microsoft 365 sign-in verifies the account in the ACCOUNTS section
   }
 });
 
+test("VCB-49: Ctrl+W is gated on the Get Started tab being the active editor", () => {
+  const close = render("initialization/close-get-started-editor.json.tpl");
+  const [assertActive, closeEditor, assertClosed] = close.steps;
+
+  assert.equal(assertActive.agent, "assertion");
+  assert.match(assertActive.description, /the active editor tab/);
+  assert.equal(closeEditor.parameters.keys, "ctrl+w");
+  assert.match(assertClosed.description, /no editor tab is open/);
+});
+
+test("VCB-50: clearing the multi-select filter verifies its own result", () => {
+  const multiSelect = render("quick-input/multi-select.json.tpl");
+  const clearFilter = multiSelect.steps.at(-2);
+  const assertCleared = multiSelect.steps.at(-1);
+
+  assert.equal(clearFilter.parameters.key, "backspace");
+  assert.equal(assertCleared.agent, "assertion");
+  assert.match(assertCleared.description, /has an empty input box/);
+  assert.match(assertCleared.description, /still has a checked checkbox/);
+});
+
 test("VCB-48: Command Palette assertions name the > in the input box", () => {
   const command = render("command-palette/execute-command.json.tpl");
   const [, assertPalette, , assertCommand] = command.steps;

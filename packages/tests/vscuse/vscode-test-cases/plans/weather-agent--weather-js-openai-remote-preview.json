@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 144,
+    "total_steps": 145,
     "name": "weather-js-openai-remote-preview",
     "description": {
       "owner": "",
@@ -25,6 +25,7 @@
       "step_executeCommand_assertCommand_c61edf2e8_1_2",
       "step_executeCommand_execute_c61edf2e8_1_2",
       "step_assertToolkitViewSettled_assert_c61edf2e8_1_3",
+      "step_closeGetStartedEditor_assertActive_c61edf2e8_1_4",
       "step_closeGetStartedEditor_close_c61edf2e8_1_4",
       "step_closeGetStartedEditor_assertClosed_c61edf2e8_1_4",
       "step_executeCommand_open_c61edf2e8_1_5",
@@ -368,6 +369,27 @@
       ]
     },
     {
+      "step_id": "step_closeGetStartedEditor_assertActive_c61edf2e8_1_4",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the toolkit Get Started tab is the active editor tab in the Visual Studio Code editor area.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_assertToolkitViewSettled_assert_c61edf2e8_1_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:initialization",
+        "initialization:closeGetStartedEditor",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
       "step_id": "step_closeGetStartedEditor_close_c61edf2e8_1_4",
       "agent": "interaction",
       "tool": "keyboard_shortcut",
@@ -380,7 +402,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertToolkitViewSettled_assert_c61edf2e8_1_3"
+        "step_closeGetStartedEditor_assertActive_c61edf2e8_1_4"
       ],
       "preconditions": [],
       "postconditions": [],

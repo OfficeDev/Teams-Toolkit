@@ -7,6 +7,25 @@
   },
   "steps": [
     {
+      "step_id": "step_closeGetStartedEditor_assertActive_{{text:instanceSuffix}}",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the toolkit Get Started tab is the active editor tab in the Visual Studio Code editor area.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:initialization",
+        "initialization:closeGetStartedEditor",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
       "step_id": "step_closeGetStartedEditor_close_{{text:instanceSuffix}}",
       "agent": "interaction",
       "tool": "keyboard_shortcut",
@@ -18,7 +37,9 @@
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
-      "depends_on": [],
+      "depends_on": [
+        "step_closeGetStartedEditor_assertActive_{{text:instanceSuffix}}"
+      ],
       "preconditions": [],
       "postconditions": [],
       "tags": [
