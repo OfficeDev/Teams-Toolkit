@@ -235,8 +235,11 @@ const targetAdapters = {
     },
     host: "copilot",
     open: { adapter: "ready", destination: "chat", kind: "agent" },
+    // Every scaffolded manifest names the app `{{appName}}${{APP_NAME_SUFFIX}}`
+    // with no separator, and `.env.dev` sets that suffix to `dev`, so the agent
+    // Copilot displays is the authored app name with `dev` appended.
     readySubject:
-      "${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot",
+      "${{var:app_name}}dev is displayed in the main section of Microsoft 365 Copilot",
     requires: ["login:m365", "provision"],
   },
 };

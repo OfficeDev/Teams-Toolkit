@@ -807,9 +807,11 @@ test("Copilot target authenticates the browser before readiness", async (context
   assert.equal(profileIndex < accountIndex, true);
   assert.equal(accountIndex < passwordIndex, true);
   assert.equal(passwordIndex < readinessIndex, true);
-  assert.match(readinessDescription, /\}\} is displayed/);
+  // The scaffolded manifest names the app `{{appName}}${{APP_NAME_SUFFIX}}`, and
+  // `.env.dev` sets that suffix to `dev`, so the remote preview target names the
+  // authored app name with `dev` appended and never the local suffix.
+  assert.match(readinessDescription, /\}\}dev is displayed/);
   assert.doesNotMatch(readinessDescription, /\}\}local/);
-  assert.doesNotMatch(readinessDescription, /\}\}dev/);
   assert.doesNotMatch(readinessDescription, /is ready is ready/);
 });
 
@@ -1015,7 +1017,7 @@ test("VCB-26: semantic adapter opens an already-active Copilot agent chat", asyn
     result.value[0].plan.steps.filter(
       (step) =>
         step.description ===
-        "@assertion ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot.",
+        "@assertion ${{var:app_name}}dev is displayed in the main section of Microsoft 365 Copilot.",
     ).length,
     2,
   );
