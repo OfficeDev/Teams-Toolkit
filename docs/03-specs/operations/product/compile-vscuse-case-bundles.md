@@ -638,8 +638,12 @@ that section.
 
 The recipes then instantiate
 `authentication/open-account-menu.json.tpl`. The component uses F1, filters by the canonical
-command title `Microsoft 365 Agents: Accounts`, asserts that Accounts View is first and the toolkit
-Accounts command is second, then selects the second result by keyboard to leave the account menu active. It is account-neutral but
+command title `Microsoft 365 Agents: Accounts`, asserts the two leading results by the labels VS
+Code displays for them, `Microsoft 365 Agents Toolkit: Focus on Accounts View` first and
+`Microsoft 365 Agents: Accounts` second, then selects the second result by keyboard to leave the
+account menu active. Naming both results literally keeps the assertion readable from a screenshot,
+because a paraphrase of a command title is not text the judge can find on screen. It is
+account-neutral but
 intentionally separate from `execute-command.json.tpl`, whose unique-result contract does not
 match this VS Code command surface. The recipe then instantiates exactly one deterministic adapter:
 

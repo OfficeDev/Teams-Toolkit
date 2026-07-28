@@ -258,7 +258,7 @@ test("VCB-42: login focuses the toolkit view before the account menu", async () 
     (step) => step.description,
   );
   const accountMenuIndex = descriptions.indexOf(
-    "@assertion the Accounts View result is first and the Microsoft 365 Agents: Accounts command is second and selectable in the active Command Palette.",
+    '@assertion the first result in the Command Palette is "Microsoft 365 Agents Toolkit: Focus on Accounts View" and the second result is "Microsoft 365 Agents: Accounts".',
   );
   const focusIndex = descriptions.findLastIndex(
     (description, index) =>

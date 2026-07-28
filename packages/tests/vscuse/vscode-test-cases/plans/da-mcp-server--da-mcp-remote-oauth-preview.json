@@ -1505,7 +1505,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the Accounts View result is first and the Microsoft 365 Agents: Accounts command is second and selectable in the active Command Palette.",
+      "description": "@assertion the first result in the Command Palette is \"Microsoft 365 Agents Toolkit: Focus on Accounts View\" and the second result is \"Microsoft 365 Agents: Accounts\".",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
