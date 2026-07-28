@@ -115,7 +115,7 @@
         "x": 277,
         "y": 75
       },
-      "description": "Select the \"dev\" option in the \"Select an environment\" dropdown within Visual Studio Code.",
+      "description": "Click the \"Default folder\" dropdown in the \"Workspace Folder\" dialog to set the project root folder path (`/home/.vscode/AgentsToolkitProjects`).",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
