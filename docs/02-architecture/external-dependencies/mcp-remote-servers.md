@@ -10,8 +10,9 @@ codebase. This page records only observed, reproducible wire behavior. How the
 toolkit composes that behavior into scaffold flows is an internal concern and
 belongs in an ADR under [`../adr/`](../adr/README.md).
 
-All measurements in §1.3–§1.5 were taken 2026-07-27 with an unauthenticated
-`initialize` request and are reproducible with the recipe in §1.6.
+All measurements in §1.3–§1.5 were taken 2026-07-27, those in §1.6 on 2026-07-28,
+with an unauthenticated `initialize` request; all are reproducible with the
+recipe in §1.7.
 
 ## 1. Facts the toolkit is bound to
 
@@ -27,6 +28,14 @@ Two generations are in the wild and a client must handle both.
 Every production server measured in §1.3 implements 2025-06-18. The only
 2025-03-26 server observed is an internal eval server. A client that
 implements only the 2025-06-18 chain dead-ends on the latter.
+
+A challenge is not the only way the first chain starts. A server may publish a
+protected-resource document and still never challenge, because it defers
+authorization to the individual tool calls rather than to `initialize` (§1.6).
+The document's location is not a secret the server has to reveal: RFC 9728 §3.1
+derives it from the resource URL by inserting `/.well-known/oauth-protected-resource`
+between the host and the resource path. Discovery driven only by
+`resource_metadata` loses this class entirely.
 
 ### 1.2 Transport and method
 
@@ -134,7 +143,56 @@ catch this.
 Its auth middleware is mounted on `/mcp*`, so `/mcp/.well-known/…` returns
 `401` rather than `404`.
 
-### 1.6 Reproducing these measurements
+### 1.6 Reference: servers that publish metadata but never challenge
+
+Google's MCP servers authorize the individual tool calls, not `initialize`.
+An unauthenticated `initialize` `POST` is answered `200` with a complete
+JSON-RPC result and **no** `WWW-Authenticate` header:
+
+```
+{"id":1,"jsonrpc":"2.0","result":{"capabilities":{…},
+ "protocolVersion":"2025-03-26",
+ "serverInfo":{"name":"StatelessServer","version":"ESF"}}}
+```
+
+Each nevertheless publishes an RFC 9728 document, reachable only at the §3.1
+insertion location:
+
+| URL | Status |
+|---|---|
+| `https://drivemcp.googleapis.com/.well-known/oauth-protected-resource/mcp/v1` | **200** |
+| `https://gmailmcp.googleapis.com/.well-known/oauth-protected-resource/mcp/v1` | **200** |
+| `https://calendarmcp.googleapis.com/.well-known/oauth-protected-resource/mcp/v1` | **200** |
+| `https://drivemcp.googleapis.com/.well-known/oauth-protected-resource` | 404 |
+| `https://drivemcp.googleapis.com/mcp/v1/.well-known/oauth-protected-resource` | 404 |
+| every `oauth-authorization-server` / `openid-configuration` form on the server host | 404 |
+
+All three documents name the same issuer:
+
+```
+{"authorization_servers":["https://accounts.google.com/"],
+ "resource":"https://drivemcp.googleapis.com/mcp/v1",
+ "bearer_methods_supported":["header"],"scopes_supported":[…]}
+```
+
+and `https://accounts.google.com/.well-known/oauth-authorization-server`
+returns the endpoints.
+
+The insertion form is the one that generalizes. Where both were measured, only
+it was always present:
+
+| URL | Status |
+|---|---|
+| `https://mcp.notion.com/.well-known/oauth-protected-resource/mcp` | 200 |
+| `https://mcp.notion.com/.well-known/oauth-protected-resource` | 200 |
+| `https://api.githubcopilot.com/.well-known/oauth-protected-resource/mcp` | 200 |
+| `https://api.githubcopilot.com/.well-known/oauth-protected-resource` | **404** |
+
+These three servers also add to the valid-endpoint sample of §1.3 as the only
+measured production endpoints that answer `initialize` with neither a challenge
+nor a requirement for credentials at that stage.
+
+### 1.7 Reproducing these measurements
 
 ```
 POST <url>
@@ -151,10 +209,11 @@ with `GET` and with the final path segment removed.
 
 ## 2. Constraints derived from these facts
 
-1. Authorization discovery must attempt **both** spec generations: the
-   `resource_metadata` chain, and — when no protected-resource document is
-   advertised — RFC 8414 / OIDC well-known candidates derived from the MCP
-   server URL including its origin root (§1.1).
+1. Authorization discovery must attempt **both** spec generations, and must not
+   depend on being challenged: the advertised `resource_metadata` chain, then
+   the RFC 9728 protected-resource document **derived** from the MCP server URL,
+   and — when no such document exists — RFC 8414 / OIDC well-known candidates
+   derived from the MCP server URL including its origin root (§1.1, §1.6).
 2. Well-known candidates derived from an **issuer** must not include
    origin-root forms: for a tenant-scoped issuer the root form can return a
    valid-but-wrong-tenant document, which is worse than failing (§1.1).

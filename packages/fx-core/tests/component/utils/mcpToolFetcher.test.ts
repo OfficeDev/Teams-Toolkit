@@ -6,6 +6,7 @@ import fs from "fs-extra";
 import { assert, vi } from "vitest";
 import {
   buildMCPServerWellKnownCandidates,
+  buildProtectedResourceCandidates,
   buildWellKnownCandidates,
   fetchMCPTools,
   probeMCPServerAuth,
@@ -827,6 +828,79 @@ describe("mcpToolFetcher", () => {
       assert.strictEqual(metadata.authorizationUrl, "https://auth.contoso.com/authorize");
     });
 
+    it("should derive the protected-resource document when the server never advertised one", async () => {
+      // Google's MCP servers defer authorization to the tool calls, so an unauthenticated
+      // initialize returns 200 with no challenge and there is no resource_metadata to follow.
+      // The document still exists at the RFC 9728 §3.1 insertion location.
+      const getStub = vi.spyOn(axios, "get");
+      getStub.mockImplementation(async (url: string): Promise<any> => {
+        if (url === "https://drivemcp.googleapis.com/.well-known/oauth-protected-resource/mcp/v1") {
+          return {
+            status: 200,
+            data: { authorization_servers: ["https://accounts.google.com/"] },
+          };
+        }
+        if (url === "https://accounts.google.com/.well-known/oauth-authorization-server") {
+          return {
+            status: 200,
+            data: {
+              authorization_endpoint: "https://accounts.google.com/o/oauth2/v2/auth",
+              token_endpoint: "https://oauth2.googleapis.com/token",
+            },
+          };
+        }
+        throw new Error("Request failed with status code 404");
+      });
+
+      const metadata = await resolveMCPOAuthMetadata(
+        undefined,
+        undefined,
+        "https://drivemcp.googleapis.com/mcp/v1"
+      );
+
+      assert.strictEqual(metadata.authorizationUrl, "https://accounts.google.com/o/oauth2/v2/auth");
+      assert.strictEqual(metadata.tokenUrl, "https://oauth2.googleapis.com/token");
+      assert.strictEqual(
+        metadata.wellKnownUrl,
+        "https://accounts.google.com/.well-known/oauth-authorization-server"
+      );
+      // The authoritative document answered, so the server was never guessed to be its own
+      // authorization server.
+      assert.isFalse(
+        getStub.mock.calls.some(
+          (call) =>
+            call[0] === "https://drivemcp.googleapis.com/.well-known/oauth-authorization-server"
+        )
+      );
+    });
+
+    it("should derive the protected-resource document from the origin root as well", async () => {
+      const getStub = vi.spyOn(axios, "get");
+      getStub.mockImplementation(async (url: string): Promise<any> => {
+        if (url === "https://mcp.contoso.com/.well-known/oauth-protected-resource") {
+          return { status: 200, data: { authorization_servers: ["https://auth.contoso.com"] } };
+        }
+        if (url === "https://auth.contoso.com/.well-known/oauth-authorization-server") {
+          return {
+            status: 200,
+            data: {
+              authorization_endpoint: "https://auth.contoso.com/authorize",
+              token_endpoint: "https://auth.contoso.com/token",
+            },
+          };
+        }
+        throw new Error("Request failed with status code 404");
+      });
+
+      const metadata = await resolveMCPOAuthMetadata(
+        undefined,
+        undefined,
+        "https://mcp.contoso.com/mcp"
+      );
+
+      assert.strictEqual(metadata.tokenUrl, "https://auth.contoso.com/token");
+    });
+
     it("should still throw when neither the metadata url nor the server url resolves", async () => {
       vi.spyOn(axios, "get").mockRejectedValue(new Error("Request failed with status code 404"));
 
@@ -872,6 +946,28 @@ describe("mcpToolFetcher", () => {
       assert.deepEqual(buildMCPServerWellKnownCandidates("https://mcp.contoso.com"), [
         "https://mcp.contoso.com/.well-known/oauth-authorization-server",
         "https://mcp.contoso.com/.well-known/openid-configuration",
+      ]);
+    });
+  });
+
+  describe("buildProtectedResourceCandidates", () => {
+    it("should probe the RFC 9728 insertion form before the origin root", () => {
+      assert.deepEqual(buildProtectedResourceCandidates("https://drivemcp.googleapis.com/mcp/v1"), [
+        "https://drivemcp.googleapis.com/.well-known/oauth-protected-resource/mcp/v1",
+        "https://drivemcp.googleapis.com/.well-known/oauth-protected-resource",
+      ]);
+    });
+
+    it("should deduplicate when the server url has no path", () => {
+      assert.deepEqual(buildProtectedResourceCandidates("https://mcp.contoso.com"), [
+        "https://mcp.contoso.com/.well-known/oauth-protected-resource",
+      ]);
+    });
+
+    it("should strip a trailing slash from the resource path", () => {
+      assert.deepEqual(buildProtectedResourceCandidates("https://mcp.contoso.com/mcp/"), [
+        "https://mcp.contoso.com/.well-known/oauth-protected-resource/mcp",
+        "https://mcp.contoso.com/.well-known/oauth-protected-resource",
       ]);
     });
   });

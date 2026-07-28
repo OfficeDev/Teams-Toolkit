@@ -282,6 +282,32 @@ export function buildMCPServerWellKnownCandidates(mcpServerUrl: string): string[
 }
 
 /**
+ * Build the RFC 9728 protected-resource metadata URLs to probe for an MCP server that never
+ * advertised one.
+ *
+ * A server only hands out its `resource_metadata` location inside a `WWW-Authenticate`
+ * challenge, and a server that defers authorization to the individual tool calls answers an
+ * unauthenticated `initialize` with a plain 200 and no challenge at all — Google's Gmail,
+ * Calendar and Drive servers do exactly that, yet each publishes a protected-resource document
+ * naming `https://accounts.google.com/`. Waiting to be told therefore loses the metadata for a
+ * whole class of servers, so the document is derived from the resource URL instead, as MCP's
+ * authorization spec requires of clients. RFC 9728 §3.1 inserts the well-known segment between
+ * the host and the resource path; the path-less form follows for servers that publish at the
+ * origin root only.
+ */
+export function buildProtectedResourceCandidates(mcpServerUrl: string): string[] {
+  const serverUrl = new URL(mcpServerUrl);
+  const origin = `${serverUrl.protocol}//${serverUrl.host}`;
+  const resourcePath = serverUrl.pathname === "/" ? "" : serverUrl.pathname.replace(/\/+$/, "");
+  return [
+    ...new Set([
+      `${origin}/.well-known/oauth-protected-resource${resourcePath}`,
+      `${origin}/.well-known/oauth-protected-resource`,
+    ]),
+  ];
+}
+
+/**
  * Read the RFC 9728 protected-resource document the server advertised and turn its first
  * authorization server into discovery candidates. Returns an empty list when the document
  * names no authorization server.
@@ -308,6 +334,21 @@ async function candidatesFromProtectedResourceMetadata(
   return [];
 }
 
+/**
+ * Look for a protected-resource document at the locations RFC 9728 derives from the MCP server
+ * URL. The first document naming an authorization server wins; a location that is absent only
+ * means this server publishes at the other one.
+ */
+async function candidatesFromDerivedProtectedResource(mcpServerUrl: string): Promise<string[]> {
+  for (const candidate of buildProtectedResourceCandidates(mcpServerUrl)) {
+    const candidates = await candidatesFromProtectedResourceMetadata(candidate, true);
+    if (candidates.length > 0) {
+      return candidates;
+    }
+  }
+  return [];
+}
+
 /** Resolve OAuth endpoints from MCP resource or authorization-server metadata. */
 export async function resolveMCPOAuthMetadata(
   authMetadataUrl?: string,
@@ -323,6 +364,12 @@ export async function resolveMCPOAuthMetadata(
     candidates = authMetadataUrl
       ? await candidatesFromProtectedResourceMetadata(authMetadataUrl, !!mcpServerUrl)
       : [];
+
+    if (candidates.length === 0 && mcpServerUrl) {
+      // The authoritative answer, when the server publishes one, is its protected-resource
+      // document — so try that before assuming the server is its own authorization server.
+      candidates = await candidatesFromDerivedProtectedResource(mcpServerUrl);
+    }
 
     if (candidates.length === 0 && mcpServerUrl) {
       candidates = buildMCPServerWellKnownCandidates(mcpServerUrl);

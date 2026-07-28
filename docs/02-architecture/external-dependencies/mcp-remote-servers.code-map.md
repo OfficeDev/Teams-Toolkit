@@ -13,6 +13,7 @@ location in source.
 |---|---|
 | §1.1 Both auth generations — discovery entry point | `packages/fx-core/src/common/mcpToolFetcher.ts` (`resolveMCPOAuthMetadata`) |
 | §1.1 `resource_metadata` chain (2025-06-18) | `packages/fx-core/src/common/mcpToolFetcher.ts` (`candidatesFromProtectedResourceMetadata`) |
+| §1.6 Protected-resource document derived from the server URL | `packages/fx-core/src/common/mcpToolFetcher.ts` (`buildProtectedResourceCandidates`, `candidatesFromDerivedProtectedResource`) |
 | §1.1 Origin-root fallback (2025-03-26) | `packages/fx-core/src/common/mcpToolFetcher.ts` (`buildMCPServerWellKnownCandidates`) |
 | §1.1 Issuer-derived candidates, no origin-root forms | `packages/fx-core/src/common/mcpToolFetcher.ts` (`buildWellKnownCandidates`) |
 | §1.2 `initialize` POST probe | `packages/fx-core/src/common/mcpToolFetcher.ts` (`probeMCPServerAuth`) |
