@@ -522,8 +522,10 @@ the converged adapter state. Semantic case YAML continues to author only `kind` 
 
 Each host `send-message.json.tpl` accepts `instanceSuffix` and `message`. It asserts the host's
 message input, clicks the recorded input control, types the message, and presses Enter exactly once.
-It does not assert response content. For one `chat` check, the compiler emits the current host's
-send component, the Copilot `allow-action` component when `allowAction: true`, then
+The Copilot input carries the previewed agent's own name, so its assertion names that input by the
+prefix the case authored rather than by the `Message Copilot` placeholder the unscoped Copilot chat
+shows. It does not assert response content. For one `chat` check, the compiler emits the current
+host's send component, the Copilot `allow-action` component when `allowAction: true`, then
 `assert-replied` whenever `replied: true` or a content expectation implies it, followed by one
 `assert-contains` per `contains` item and one `assert-not-contains` per `notContains` item. The
 consent component asserts the deterministic Allow prompt, clicks its recorded control, and asserts
@@ -535,8 +537,11 @@ to a template.
 The Playground message component is not reachable until a compatible target adapter can produce
 `chat-ready`; that future adapter may reuse `assert-ready.json.tpl`. The recorded Copilot remote
 target converges to an already-active agent chat, so `open` for `kind: agent` and
-`destination: chat` reasserts that ready state without selecting an agent. The recorded Copilot
-"Message Copilot" click belongs to `send-message`, not `open`. The `allow-action` adapter is limited
+`destination: chat` emits no step. The target has already asserted this profile's readiness subject
+with nothing in between, and repeating that assertion cannot fail unless the target's own assertion
+already failed. The operation still declares the destination and kind the case chats in, which
+compilation rejects when the profile cannot reach them. The recorded Copilot message-input click
+belongs to `send-message`, not `open`. The `allow-action` adapter is limited
 to the deterministic consent state reached after a capability-producing Copilot message; it is not
 a generic permission fallback.
 
@@ -955,7 +960,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-23 | Given a prompted scaffold answer, its component first asserts the canonical question title; a single-select filters by label, asserts the filtered option is selectable, then confirms it.                                                                                                                                                                                                  |
 | VCB-24 | Given a fresh runner session, compilation prepends exactly one initialization component that asserts and closes the startup sign-in overlay, verifies workbench readiness, and does not close the Welcome editor.                                                                                                                                                                           |
 | VCB-25 | Given a scaffold operation, compilation instantiates the generic Command Palette component exactly once after initialization and before its first quick input; it executes the compiler-owned create command without TreeView interaction.                                                                                                                                                  |
-| VCB-26 | Given an `open`, compilation selects one profile-compatible browser adapter for its deterministic entry state; a fresh Teams app follows Add then Open and verifies readiness, while an already-ready target emits assertion only.                                                                                                                                                          |
+| VCB-26 | Given an `open`, compilation selects one profile-compatible browser adapter for its deterministic entry state; a fresh Teams app follows Add then Open and verifies readiness, while an already-ready target emits no step because its target already asserted the same readiness subject with nothing in between.                                                                          |
 | VCB-28 | Given a component invocation suffix, direct template rendering produces every step ID from a fixed prefix and validated suffix; caller-supplied IDs, invalid suffixes, and collisions within one rendered component fail atomically. Plan-level uniqueness depends on compiler-generated suffixes and is not independently revalidated after composition.                                   |
 | VCB-29 | Given a component assertion, its description is authored directly as fixed template text plus declared `text` placeholders; complete caller-supplied descriptions and invalid substitutions fail atomically.                                                                                                                                                                                |
 | VCB-30 | Given Azure or Microsoft 365 sign-in, compilation opens the account menu through its F1 component, selects the account-specific deterministic adapter, preserves secret isolation, and verifies account readiness.                                                                                                                                                                          |
@@ -972,6 +977,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-41 | Given `scaffold`, compilation closes the toolkit Get Started editor and asserts no editor tab remains open, after the toolkit view has settled and before the create command, so no editor can reclaim keyboard focus from the first scaffold quick pick, which `ignoreFocusOut` would otherwise leave visible but unable to receive its filter keystrokes.                                 |
 | VCB-42 | Given `login`, compilation focuses the Accounts view before opening the account menu, so the ACCOUNTS section the readiness assertion reads is showing in the window scaffolding opened, whose side bar defaults to the Explorer and whose focus commands differ from the pre-scaffold window's.                                                                                            |
 | VCB-43 | Given a target profile, the readiness assertion names the app by the unique prefix the case authored rather than the fully composed manifest name, so one subject holds across templates that append `APP_NAME_SUFFIX` and templates that do not, and across environments that resolve that suffix differently.                                                                             |
+| VCB-44 | Given a Copilot `chat` check, the message-input assertion names the input by the app prefix the case authored, matching the placeholder the previewed agent shows, rather than the `Message Copilot` placeholder that only the unscoped Copilot chat shows.                                                                                                                                 |
 
 ## Boundary
 

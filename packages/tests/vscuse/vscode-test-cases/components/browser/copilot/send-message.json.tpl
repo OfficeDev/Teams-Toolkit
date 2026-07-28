@@ -12,7 +12,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the Copilot \"Message Copilot\" input is visible.",
+      "description": "@assertion the Microsoft 365 Copilot message input is visible and its placeholder text starts with Message ${{var:app_name}}.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -37,7 +37,7 @@
         "x": 416,
         "y": 369
       },
-      "description": "Click the Copilot \"Message Copilot\" input.",
+      "description": "Click the Microsoft 365 Copilot message input.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

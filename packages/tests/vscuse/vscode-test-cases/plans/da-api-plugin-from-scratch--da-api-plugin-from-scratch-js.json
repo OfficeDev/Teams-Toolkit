@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 174,
+    "total_steps": 173,
     "name": "da-api-plugin-from-scratch-js",
     "description": {
       "owner": "",
@@ -180,7 +180,6 @@
       "step_browserM365SignIn_confirmStaySignedIn_c919bef1e_7_3",
       "step_browserM365SignIn_refresh_c919bef1e_7_3",
       "step_assertReady_assertReady_c919bef1e_7_4",
-      "step_assertReady_assertReady_c919bef1e_8_1",
       "step_sendCopilotMessage_assertInput_c919bef1e_9_1",
       "step_sendCopilotMessage_focusInput_c919bef1e_9_1",
       "step_sendCopilotMessage_type_c919bef1e_9_1",
@@ -3884,38 +3883,17 @@
       ]
     },
     {
-      "step_id": "step_assertReady_assertReady_c919bef1e_8_1",
+      "step_id": "step_sendCopilotMessage_assertInput_c919bef1e_9_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot.",
+      "description": "@assertion the Microsoft 365 Copilot message input is visible and its placeholder text starts with Message ${{var:app_name}}.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
         "step_assertReady_assertReady_c919bef1e_7_4"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:browser",
-        "action:assert-ready",
-        "step_retry_timeout: 180"
-      ]
-    },
-    {
-      "step_id": "step_sendCopilotMessage_assertInput_c919bef1e_9_1",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the Copilot \"Message Copilot\" input is visible.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_assertReady_assertReady_c919bef1e_8_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3936,7 +3914,7 @@
         "x": 416,
         "y": 369
       },
-      "description": "Click the Copilot \"Message Copilot\" input.",
+      "description": "Click the Microsoft 365 Copilot message input.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

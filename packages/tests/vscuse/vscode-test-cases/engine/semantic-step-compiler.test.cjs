@@ -447,7 +447,7 @@ test("VCB-34: DA API plugin from scratch compiles complete remote branches in au
     );
     const runtimeFlow = [
       "@assertion a visible Visual Studio Code notification contains provision stage executed successfully.",
-      'Click the Copilot "Message Copilot" input.',
+      "Click the Microsoft 365 Copilot message input.",
       "@assertion the Copilot action-consent Allow button is visible.",
       "Click the Copilot action-consent Allow button.",
       "@assertion the Copilot action-consent prompt is no longer visible.",
@@ -1014,7 +1014,7 @@ test("semantic adapter rejects an open kind incompatible with its target profile
   assert.equal(result.diagnostics[0].code, "VCB_OPEN_ADAPTER_UNKNOWN");
 });
 
-test("VCB-26: semantic adapter opens an already-active Copilot agent chat", async () => {
+test("VCB-26: an already-ready Copilot target makes its open emit no step", async () => {
   const result = await compileFixture(
     "da-no-action.yml",
     (sourceText) => sourceText,
@@ -1027,7 +1027,7 @@ test("VCB-26: semantic adapter opens an already-active Copilot agent chat", asyn
         step.description ===
         "@assertion an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot.",
     ).length,
-    2,
+    1,
   );
 });
 
@@ -1065,6 +1065,30 @@ test("VCB-43: the Copilot ready subject names the app by its authored prefix", a
     "@assertion an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot.",
   );
   assert.equal(readySubject(unsuffixed), readySubject(suffixed));
+});
+
+test("VCB-44: the Copilot message input is named by its previewed agent", async () => {
+  const result = await compileFixture(
+    "da-no-action.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const descriptions = result.value[0].plan.steps.map(
+    (step) => step.description,
+  );
+  // The previewed agent owns the input placeholder, so the unscoped Copilot
+  // wording names a control that is never on screen in these plans.
+  assert.equal(
+    descriptions.includes(
+      "@assertion the Microsoft 365 Copilot message input is visible and its placeholder text starts with Message ${{var:app_name}}.",
+    ),
+    true,
+  );
+  assert.equal(
+    descriptions.some((description) => description.includes("Message Copilot")),
+    false,
+  );
 });
 
 test("semantic adapter requires chat-ready state before a chat check", async () => {

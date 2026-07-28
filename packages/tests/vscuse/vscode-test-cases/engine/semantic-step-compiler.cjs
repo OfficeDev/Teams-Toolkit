@@ -914,9 +914,13 @@ function createSemanticStepCompiler() {
         readySubject: state.profile.readySubject,
       });
     } else if (state.profile.open.adapter === "ready") {
-      rendered = render(state, "browser/assert-ready.json.tpl", {
-        readySubject: state.profile.readySubject,
-      });
+      // The target already converged on this destination and asserted this
+      // profile's readiness subject with nothing in between, so rendering the
+      // same component again would only repeat a claim that cannot fail on its
+      // own. The operation still earns its place by declaring which destination
+      // and kind the case chats in, which the check above rejects when the
+      // profile cannot reach it.
+      rendered = { ok: true, value: [] };
     } else {
       return failure(
         "VCB_OPEN_ADAPTER_UNKNOWN",
