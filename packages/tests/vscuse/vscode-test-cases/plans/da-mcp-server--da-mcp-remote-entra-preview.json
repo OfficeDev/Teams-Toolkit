@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 101,
+    "total_steps": 100,
     "name": "da-mcp-remote-entra-preview",
     "description": {
       "owner": "",
@@ -71,12 +71,11 @@
       "step_executeCommand_filter_c0af3d3fa_3_1",
       "step_executeCommand_assertCommand_c0af3d3fa_3_1",
       "step_executeCommand_execute_c0af3d3fa_3_1",
-      "step_openAccountMenu_open_c0af3d3fa_3_2",
-      "step_openAccountMenu_assertPalette_c0af3d3fa_3_2",
-      "step_openAccountMenu_filter_c0af3d3fa_3_2",
-      "step_openAccountMenu_assertCommand_c0af3d3fa_3_2",
-      "step_openAccountMenu_selectSecond_c0af3d3fa_3_2",
-      "step_openAccountMenu_execute_c0af3d3fa_3_2",
+      "step_executeCommand_open_c0af3d3fa_3_2",
+      "step_executeCommand_assertPalette_c0af3d3fa_3_2",
+      "step_executeCommand_filter_c0af3d3fa_3_2",
+      "step_executeCommand_assertCommand_c0af3d3fa_3_2",
+      "step_executeCommand_execute_c0af3d3fa_3_2",
       "step_signInM365_assertOption_c0af3d3fa_3_3",
       "step_signInM365_selectOption_c0af3d3fa_3_3",
       "step_signInM365_confirmSignIn_c0af3d3fa_3_3",
@@ -1331,7 +1330,7 @@
       ]
     },
     {
-      "step_id": "step_openAccountMenu_open_c0af3d3fa_3_2",
+      "step_id": "step_executeCommand_open_c0af3d3fa_3_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1348,116 +1347,94 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "component:authentication",
-        "action:open-account-menu"
+        "component:command-palette",
+        "action:execute-command"
       ]
     },
     {
-      "step_id": "step_openAccountMenu_assertPalette_c0af3d3fa_3_2",
+      "step_id": "step_executeCommand_assertPalette_c0af3d3fa_3_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the Visual Studio Code Command Palette is visible, active, and ready to accept a command search.",
+      "description": "@assertion the Visual Studio Code Command Palette is visible with a > character in its input box and is ready to accept a command search.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_openAccountMenu_open_c0af3d3fa_3_2"
+        "step_executeCommand_open_c0af3d3fa_3_2"
       ],
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "component:authentication",
-        "action:open-account-menu",
+        "component:command-palette",
+        "action:execute-command",
         "step_retry_timeout: 30"
       ]
     },
     {
-      "step_id": "step_openAccountMenu_filter_c0af3d3fa_3_2",
+      "step_id": "step_executeCommand_filter_c0af3d3fa_3_2",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
         "text": "Microsoft 365 Agents: Accounts"
       },
-      "description": "Type 'Microsoft 365 Agents: Accounts' into the Visual Studio Code command palette input field at the top center of the interface.",
+      "description": "Type the resolved command title into the active Command Palette.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_openAccountMenu_assertPalette_c0af3d3fa_3_2"
+        "step_executeCommand_assertPalette_c0af3d3fa_3_2"
       ],
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "component:authentication",
-        "action:open-account-menu"
+        "component:command-palette",
+        "action:execute-command"
       ]
     },
     {
-      "step_id": "step_openAccountMenu_assertCommand_c0af3d3fa_3_2",
+      "step_id": "step_executeCommand_assertCommand_c0af3d3fa_3_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the first result in the Command Palette is \"Microsoft 365 Agents Toolkit: Focus on Accounts View\" and the second result is \"Microsoft 365 Agents: Accounts\".",
+      "description": "@assertion the Command Palette input box reads >Microsoft 365 Agents: Accounts and the first command listed under it is titled Microsoft 365 Agents: Accounts and is highlighted.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_openAccountMenu_filter_c0af3d3fa_3_2"
+        "step_executeCommand_filter_c0af3d3fa_3_2"
       ],
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "component:authentication",
-        "action:open-account-menu",
+        "component:command-palette",
+        "action:execute-command",
         "step_retry_timeout: 30"
       ]
     },
     {
-      "step_id": "step_openAccountMenu_selectSecond_c0af3d3fa_3_2",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "down"
-      },
-      "description": "Press Down to select the second Command Palette result, Microsoft 365 Agents: Accounts.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_openAccountMenu_assertCommand_c0af3d3fa_3_2"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:authentication",
-        "action:open-account-menu"
-      ]
-    },
-    {
-      "step_id": "step_openAccountMenu_execute_c0af3d3fa_3_2",
+      "step_id": "step_executeCommand_execute_c0af3d3fa_3_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
         "key": "enter"
       },
-      "description": "Press Enter to open the Microsoft 365 Agents account menu.",
+      "description": "Press Enter to execute the selected Command Palette command.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_openAccountMenu_selectSecond_c0af3d3fa_3_2"
+        "step_executeCommand_assertCommand_c0af3d3fa_3_2"
       ],
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "component:authentication",
-        "action:open-account-menu"
+        "component:command-palette",
+        "action:execute-command"
       ]
     },
     {
@@ -1471,7 +1448,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_openAccountMenu_execute_c0af3d3fa_3_2"
+        "step_executeCommand_execute_c0af3d3fa_3_2"
       ],
       "preconditions": [],
       "postconditions": [],

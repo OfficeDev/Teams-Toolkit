@@ -428,7 +428,6 @@ components/
   authentication/
     browser/
       m365-sign-in.json.tpl
-    open-account-menu.json.tpl
     azure/
       sign-in.json.tpl
     m365/
@@ -697,16 +696,13 @@ An empty workspace shows only the `Microsoft 365 Agents Toolkit` welcome view, a
 workspace hides it and shows Accounts, Environment, Development, Lifecycle, Utility, and
 Help and feedback instead, so neither title resolves in the other window.
 
-The recipes then instantiate
-`authentication/open-account-menu.json.tpl`. The component uses F1, filters by the canonical
-command title `Microsoft 365 Agents: Accounts`, asserts the two leading results by the labels VS
-Code displays for them, `Microsoft 365 Agents Toolkit: Focus on Accounts View` first and
-`Microsoft 365 Agents: Accounts` second, then selects the second result by keyboard to leave the
-account menu active. Naming both results literally keeps the assertion readable from a screenshot,
-because a paraphrase of a command title is not text the judge can find on screen. It is
-account-neutral but
-intentionally separate from `execute-command.json.tpl`, because it selects the second result rather
-than the highlighted first one. The recipe then instantiates exactly one deterministic adapter:
+The recipes then open the account menu by executing `Microsoft 365 Agents: Accounts` through
+`command-palette/execute-command.json.tpl`, under the same contract as every other command. No
+emitted step selects a palette result by position. Position is not an invariant the toolkit
+controls: several toolkit titles share the filter text, so more than one result is listed, and the
+ranking moves once a command enters the palette's recently used list, which a case that signs in
+twice always triggers. The component's second assertion names the highlighted first result, which
+is the result Enter runs. The recipe then instantiates exactly one deterministic adapter:
 
 | Account         | Adapter                                           | Entry state                           | Converged state               |
 | --------------- | ------------------------------------------------- | ------------------------------------- | ----------------------------- |
@@ -723,11 +719,8 @@ assertions, tags, or diagnostics.
 Every adapter ends the same way: it closes the browser window and reads the account name from the
 ACCOUNTS section the recipe already focused. No adapter reopens the account menu to verify. That
 menu is a quick pick, so leaving it open swallows the keystrokes the next operation types, and
-running its command again promotes `Microsoft 365 Agents: Accounts` in the palette's recently used
-list, which changes what the next `execute-command` instance has selected when it presses Enter.
-Reaching the menu also needs the two-result ordering `authentication/open-account-menu.json.tpl`
-recorded, which an adapter that filters by the same title and presses Enter without selecting the
-second result contradicts.
+running its command again costs a palette round trip that verifies nothing the ACCOUNTS section
+does not already show.
 
 The compatible test profile guarantees that both Toolkit accounts are signed out when a case starts,
 so the first sign-in of a case reaches the recorded account-input form. It guarantees nothing about
@@ -1054,6 +1047,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-50 | Given a `multiSelect` answer, every option invocation ends by asserting that the prompt's input box is empty and the toggled option is still checked, so the `Ctrl+A` and `Backspace` pair that clears the filter cannot delete another surface's content unnoticed.                                                                                                                        |
 | VCB-51 | Given `provision.with.arm`, the emitted sequence starts at the resource group prompt and rejects an authored `subscriptionId`, because the exported `AZURE_SUBSCRIPTION_ID` resolves the toolkit's subscription placeholder before it can ask, and the picker filters on the subscription name the ID never renders as.                                                                     |
 | VCB-52 | Given any executed command, the second Command Palette assertion names the first listed command and its highlight rather than a result count, because VS Code lists `similar commands` under an exact title match and the toolkit ships titles that share a prefix, while Enter runs only the highlighted first result.                                                                     |
+| VCB-53 | Given `login`, the account menu is opened through the shared command component and no emitted step selects a palette result by position, because several toolkit titles share the filter text and the ranking moves once a command enters the palette's recently used list, which a case that signs in twice always triggers.                                                               |
 
 ## Boundary
 

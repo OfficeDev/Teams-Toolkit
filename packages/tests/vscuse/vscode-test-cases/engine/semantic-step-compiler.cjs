@@ -15,6 +15,7 @@ const provisionEnvironmentInput = "environment";
 const provisionEnvironmentSkipValue = "none";
 
 const commandTitles = {
+  accounts: "Microsoft 365 Agents: Accounts",
   create: "Microsoft 365 Agents: Create New Agent/App",
   deploy: "Microsoft 365 Agents: Deploy",
   // The toolkit contributes one side bar view per section and VS Code generates
@@ -557,9 +558,17 @@ function createSemanticStepCompiler() {
       }),
     );
     if (error) return error;
+    // The account menu is opened through the shared command component, so the
+    // step that presses Enter is gated on the highlighted first result being
+    // the Accounts command. Selecting a result by position would depend on how
+    // VS Code ranks the toolkit titles that share the filter text, and that
+    // ranking also moves once a command enters the palette's recently used
+    // list, which happens as soon as one case signs in twice.
     error = append(
       output,
-      render(state, "authentication/open-account-menu.json.tpl"),
+      render(state, "command-palette/execute-command.json.tpl", {
+        commandTitle: commandTitles.accounts,
+      }),
     );
     if (error) return error;
     const signedInBefore = state.credentials.size > 0;

@@ -258,7 +258,7 @@ test("VCB-42: login focuses the Accounts view before the account menu", async ()
     (step) => step.description,
   );
   const accountMenuIndex = descriptions.indexOf(
-    '@assertion the first result in the Command Palette is "Microsoft 365 Agents Toolkit: Focus on Accounts View" and the second result is "Microsoft 365 Agents: Accounts".',
+    "@assertion the Command Palette input box reads >Microsoft 365 Agents: Accounts and the first command listed under it is titled Microsoft 365 Agents: Accounts and is highlighted.",
   );
   const focusIndex = descriptions.findLastIndex(
     (description, index) =>
@@ -281,6 +281,30 @@ test("VCB-42: login focuses the Accounts view before the account menu", async ()
   assert.equal(createIndex < focusIndex, true);
   assert.equal(focusIndex < accountMenuIndex, true);
   assert.equal(accountMenuIndex < readinessIndex, true);
+});
+
+test("VCB-53: no login step selects a palette result by position", async () => {
+  const result = await compileFixture(
+    "da-api-plugin-from-scratch.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const steps = result.value[0].plan.steps;
+
+  // Two logins share one case, so the first one puts the account command in the
+  // palette's recently used list before the second one runs.
+  const accountMenuAssertions = steps.filter(
+    (step) =>
+      step.description ===
+      "@assertion the Command Palette input box reads >Microsoft 365 Agents: Accounts and the first command listed under it is titled Microsoft 365 Agents: Accounts and is highlighted.",
+  );
+  assert.equal(accountMenuAssertions.length, 2);
+
+  for (const step of steps) {
+    assert.equal(/the second result/.test(step.description), false);
+    assert.equal(/selectSecond/.test(step.step_id), false);
+  }
 });
 
 test("DA scaffold filters its options before app name", async (context) => {
