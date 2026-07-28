@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 7,
+    "total_steps": 8,
     "created_at": "2026-04-20T11:56:20.740014",
     "name": "group: DA_validation_repair",
     "description": {
@@ -19,6 +19,7 @@
     "generated_at": "2026-04-20T11:56:20.740014",
     "execution_order": [
       "step_bee70d3d",
+      "step_op3n1card",
       "step_21cd2a2f",
       "step_f73b6a41",
       "step_7f88d7b2",
@@ -58,6 +59,28 @@
       ],
       "screenshot": "step_bee70d3d",
       "created_at": "2026-04-21T02:27:29.203163",
+      "plan_id": "plan_r_0928_091745"
+    },
+    {
+      "step_id": "step_op3n1card",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 374,
+        "y": 222
+      },
+      "description": "If the M365 Copilot agent info card (a modal showing the agent name, publisher and an \"Open\" button) is displayed over the chat, click its \"Open\" button to enter the agent chat before typing. This modal appears intermittently for a freshly added declarative agent; when it is absent this clicks a blank area above the chat and is harmless.",
+      "content_refs": [],
+      "timeout": 10,
+      "retry_count": 0,
+      "continue_on_error": "true",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
+      "created_at": "2026-07-28T04:07:00.000000",
       "plan_id": "plan_r_0928_091745"
     },
     {
