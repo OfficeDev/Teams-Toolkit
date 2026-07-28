@@ -25,10 +25,10 @@ on:
         required: false
         type: string
       max_retries:
-        description: "Maximum number of retry attempts (1-20, default: 1)"
+        description: "Maximum number of retry attempts (1-20, default: 7)"
         required: false
         type: number
-        default: 1
+        default: 7
       schedule_trigger:
         description: "Whether the build is triggered by schedule"
         type: boolean
@@ -53,7 +53,7 @@ jobs:
       vscuse_version: ${{ github.event.inputs.vscuse_version }}
       template_version: ${{ github.event.inputs.template_version }}
       email_receiver: ${{ github.event.inputs.email-receiver }}
-      max_retries: ${{ fromJson(github.event.inputs.max_retries || '1') }}
+      max_retries: ${{ fromJson(github.event.inputs.max_retries || '7') }}
       schedule_trigger: ${{ github.event.inputs.schedule_trigger == 'true' }}
       # Pipeline-specific knobs
       plan_find_args: '-name "Feature_*.json"'
@@ -64,7 +64,7 @@ jobs:
 
   trigger-ui-test-samples:
     needs: run
-    if: ${{ always() && github.event.inputs.schedule_trigger == 'true' && needs.run.result != 'skipped' && needs.run.result != 'cancelled' && (needs.run.result == 'success' || github.run_attempt == fromJson(github.event.inputs.max_retries || '1')) }}
+    if: ${{ always() && github.event.inputs.schedule_trigger == 'true' && needs.run.result != 'skipped' && needs.run.result != 'cancelled' && (needs.run.result == 'success' || github.run_attempt == fromJson(github.event.inputs.max_retries || '7')) }}
     runs-on: ubuntu-latest
     permissions:
       actions: write
