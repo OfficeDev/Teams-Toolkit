@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/app-manifest",
-  "version": "1.0.8-rc.0",
+  "version": "1.0.8",
   "main": "build/index.js",
   "types": "build/index.d.ts",
   "license": "MIT",
