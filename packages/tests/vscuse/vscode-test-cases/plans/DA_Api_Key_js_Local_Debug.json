@@ -128,7 +128,7 @@
         "x": 270,
         "y": 100
       },
-      "description": "Click the \"API\" option in the \"Authentication Type\" dropdown menu located within the Microsoft 365 Agents Toolkit interface.",
+      "description": "Click the \"API Key\" option in the \"Authentication Type\" dropdown menu located within the Microsoft 365 Agents Toolkit interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
