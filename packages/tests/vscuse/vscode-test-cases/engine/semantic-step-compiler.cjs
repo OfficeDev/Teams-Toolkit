@@ -25,11 +25,14 @@ const commandTitles = {
   // opens hides that view and shows Accounts, Environment, Development,
   // Lifecycle, Utility, and Help and feedback instead. Neither title resolves in
   // the other window.
-  focusAccountsView: "Microsoft 365 Agents Toolkit: Focus on Accounts View",
   focusToolkitView:
     "Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View",
   notifications: "Notifications: Show Notifications",
   provision: "Microsoft 365 Agents: Provision",
+  // VS Code generates one show command per view container, so this title exists
+  // in both windows, and the container renders every view the current
+  // `fx-extension.isTeamsFx` value allows, ACCOUNTS first.
+  showToolkit: "View: Show Microsoft 365 Agents Toolkit",
   target: "Debug: Select and Start Debugging",
 };
 
@@ -546,24 +549,27 @@ function createSemanticStepCompiler() {
 
     const output = [];
     // Scaffolding reopens the workspace in a new window whose side bar defaults
-    // to the Explorer, so the toolkit tree view that owns the ACCOUNTS section
-    // is not showing. Focus that section directly, because the readiness
-    // assertion at the end of the account component reads the signed-in account
-    // from it, and because the welcome view the empty workspace focuses no
-    // longer exists once the workspace is a toolkit project.
+    // to the Explorer, so the toolkit view container that owns the ACCOUNTS
+    // section is not showing. Show the container rather than focus the ACCOUNTS
+    // view, because the readiness assertion at the end of the account component
+    // reads the signed-in account from that section and the container renders it
+    // first. The per-view focus title carries the word Accounts, so it would
+    // still match the account command's palette filter one step later while
+    // sitting at the top of the recently used list; the container title carries
+    // no word that filter contains.
     let error = append(
       output,
       render(state, "command-palette/execute-command.json.tpl", {
-        commandTitle: commandTitles.focusAccountsView,
+        commandTitle: commandTitles.showToolkit,
       }),
     );
     if (error) return error;
     // The account menu is opened through the shared command component, so the
-    // step that presses Enter is gated on the highlighted first result being
-    // the Accounts command. Selecting a result by position would depend on how
-    // VS Code ranks the toolkit titles that share the filter text, and that
-    // ranking also moves once a command enters the palette's recently used
-    // list, which happens as soon as one case signs in twice.
+    // step that presses Enter is gated on the highlighted command being the
+    // Accounts command. Selecting a result by position would depend on how VS
+    // Code ranks the titles that share the filter text, and that ranking also
+    // moves once a command enters the palette's recently used list, which
+    // happens as soon as one case signs in twice.
     error = append(
       output,
       render(state, "command-palette/execute-command.json.tpl", {

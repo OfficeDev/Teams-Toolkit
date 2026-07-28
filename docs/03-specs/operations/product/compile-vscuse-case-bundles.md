@@ -687,25 +687,29 @@ following authored `open` resolves a separate adapter.
 ## Account Sign-In Component Contract
 
 Azure and Microsoft 365 sign-in recipes first execute
-`Microsoft 365 Agents Toolkit: Focus on Accounts View` through
+`View: Show Microsoft 365 Agents Toolkit` through
 `command-palette/execute-command.json.tpl`. Scaffolding reopens the workspace in a new window whose
-side bar defaults to the Explorer, so the toolkit tree view that owns the ACCOUNTS section is not
-showing, and the readiness assertion at the end of each adapter reads the signed-in account from
-that section.
+side bar defaults to the Explorer, so the toolkit view container that owns the ACCOUNTS section is
+not showing, and the readiness assertion at the end of each adapter reads the signed-in account from
+that section, which is the first view the container renders.
 
-The title differs from the one case initialization uses because the toolkit contributes one view per
-side bar section and VS Code generates a focus command per view, gated on `fx-extension.isTeamsFx`.
-An empty workspace shows only the `Microsoft 365 Agents Toolkit` welcome view, and a scaffolded
-workspace hides it and shows Accounts, Environment, Development, Lifecycle, Utility, and
-Help and feedback instead, so neither title resolves in the other window.
+The recipes show the container rather than focus the ACCOUNTS view, even though the per-view focus
+command reaches the same section. The next step types `Microsoft 365 Agents: Accounts` into the
+palette, and `Microsoft 365 Agents Toolkit: Focus on Accounts View` carries the word `Accounts`, so
+it is a candidate for that filter while also sitting at the top of the palette's recently used
+order, having just been executed. VS Code decides that ranking, not the toolkit. The container title
+carries no word the account filter contains, so it cannot appear in that result list at all, and the
+collision is removed rather than assumed away. Showing the container is also the title case
+initialization would resolve, because VS Code generates one show command per container regardless of
+`fx-extension.isTeamsFx`, while the focus commands exist only for the views that context key allows.
 
 The recipes then open the account menu by executing `Microsoft 365 Agents: Accounts` through
 `command-palette/execute-command.json.tpl`, under the same contract as every other command. No
 emitted step selects a palette result by position. Position is not an invariant the toolkit
-controls: several toolkit titles share the filter text, so more than one result is listed, and the
-ranking moves once a command enters the palette's recently used list, which a case that signs in
-twice always triggers. The component's second assertion names the highlighted command, which is the
-result Enter runs. The recipe then instantiates exactly one deterministic adapter:
+controls: the palette can list more than one result, and the ranking moves once a command enters the
+recently used list, which a case that signs in twice always triggers. The component's second
+assertion names the highlighted command, which is the result Enter runs. The recipe then instantiates
+exactly one deterministic adapter:
 
 | Account         | Adapter                                           | Entry state                           | Converged state               |
 | --------------- | ------------------------------------------------- | ------------------------------------- | ----------------------------- |
@@ -1051,6 +1055,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-51 | Given `provision.with.arm`, the emitted sequence starts at the resource group prompt and rejects an authored `subscriptionId`, because the exported `AZURE_SUBSCRIPTION_ID` resolves the toolkit's subscription placeholder before it can ask, and the picker filters on the subscription name the ID never renders as.                                                                     |
 | VCB-52 | Given any executed command, the second Command Palette assertion names the highlighted command and names neither a result count nor a position, because VS Code lists `similar commands` under an exact title match and ranks them itself, while Enter runs the highlighted command wherever it sits in the list.                                                                           |
 | VCB-53 | Given `login`, the account menu is opened through the shared command component and no emitted step selects a palette result by position, because several toolkit titles share the filter text and the ranking moves once a command enters the palette's recently used list, which a case that signs in twice always triggers.                                                               |
+| VCB-54 | Given `login`, the side bar is opened with `View: Show Microsoft 365 Agents Toolkit` rather than the ACCOUNTS focus command, because the focus title carries the word `Accounts` and would therefore be a candidate for the account command's filter one step later while holding the top of the palette's recently used order.                                                             |
 
 ## Boundary
 

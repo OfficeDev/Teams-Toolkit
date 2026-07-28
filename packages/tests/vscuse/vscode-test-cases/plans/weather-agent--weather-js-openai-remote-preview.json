@@ -1241,7 +1241,7 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Microsoft 365 Agents Toolkit: Focus on Accounts View"
+        "text": "View: Show Microsoft 365 Agents Toolkit"
       },
       "description": "Type the resolved command title into the active Command Palette.",
       "content_refs": [],
@@ -1263,7 +1263,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the Command Palette input box reads >Microsoft 365 Agents Toolkit: Focus on Accounts View and the highlighted command listed under it is titled Microsoft 365 Agents Toolkit: Focus on Accounts View.",
+      "description": "@assertion the Command Palette input box reads >View: Show Microsoft 365 Agents Toolkit and the highlighted command listed under it is titled View: Show Microsoft 365 Agents Toolkit.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1748,7 +1748,7 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Microsoft 365 Agents Toolkit: Focus on Accounts View"
+        "text": "View: Show Microsoft 365 Agents Toolkit"
       },
       "description": "Type the resolved command title into the active Command Palette.",
       "content_refs": [],
@@ -1770,7 +1770,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the Command Palette input box reads >Microsoft 365 Agents Toolkit: Focus on Accounts View and the highlighted command listed under it is titled Microsoft 365 Agents Toolkit: Focus on Accounts View.",
+      "description": "@assertion the Command Palette input box reads >View: Show Microsoft 365 Agents Toolkit and the highlighted command listed under it is titled View: Show Microsoft 365 Agents Toolkit.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

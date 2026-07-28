@@ -264,7 +264,7 @@ test("VCB-42: login focuses the Accounts view before the account menu", async ()
     (description, index) =>
       index < accountMenuIndex &&
       description ===
-        "@assertion the Command Palette input box reads >Microsoft 365 Agents Toolkit: Focus on Accounts View and the highlighted command listed under it is titled Microsoft 365 Agents Toolkit: Focus on Accounts View.",
+        "@assertion the Command Palette input box reads >View: Show Microsoft 365 Agents Toolkit and the highlighted command listed under it is titled View: Show Microsoft 365 Agents Toolkit.",
   );
   const createIndex = descriptions.indexOf(
     "@assertion the Command Palette input box reads >Microsoft 365 Agents: Create New Agent/App and the highlighted command listed under it is titled Microsoft 365 Agents: Create New Agent/App.",
@@ -304,6 +304,39 @@ test("VCB-53: no login step selects a palette result by position", async () => {
   for (const step of steps) {
     assert.equal(/the second result/.test(step.description), false);
     assert.equal(/selectSecond/.test(step.step_id), false);
+  }
+});
+
+test("VCB-54: the side bar step before a login carries no word the account filter matches", async () => {
+  const result = await compileFixture(
+    "da-api-plugin-from-scratch.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const steps = result.value[0].plan.steps;
+  const accountFilter = "Microsoft 365 Agents: Accounts";
+
+  // The command that shows the side bar runs one component before the account
+  // command, so it is the most recently used command when the account filter is
+  // typed. Sharing a word with that filter would put it in the same result list
+  // at the top of the recently used order.
+  const filters = steps.filter((step) => step.tool === "type_text");
+  const accountFilterIndexes = filters
+    .map((step, index) => (step.parameters.text === accountFilter ? index : -1))
+    .filter((index) => index >= 0);
+  assert.equal(accountFilterIndexes.length, 2);
+
+  for (const index of accountFilterIndexes) {
+    const previous = filters[index - 1].parameters.text;
+    assert.equal(previous, "View: Show Microsoft 365 Agents Toolkit");
+    // Accounts is the word that decides whether a title is a candidate for this
+    // filter at all. The shared Microsoft 365 Agents prefix is not enough.
+    assert.equal(/accounts/i.test(previous), false);
+  }
+
+  for (const step of steps) {
+    assert.equal(/Focus on Accounts View/.test(step.description), false);
   }
 });
 
@@ -1158,7 +1191,7 @@ test("VCB-45: scaffolding ends by waiting for the reopened project window", asyn
     "Press Enter to submit the accepted text input.",
   );
   const firstToolkitUiIndex = descriptions.indexOf(
-    "@assertion the Command Palette input box reads >Microsoft 365 Agents Toolkit: Focus on Accounts View and the highlighted command listed under it is titled Microsoft 365 Agents Toolkit: Focus on Accounts View.",
+    "@assertion the Command Palette input box reads >View: Show Microsoft 365 Agents Toolkit and the highlighted command listed under it is titled View: Show Microsoft 365 Agents Toolkit.",
   );
 
   // The reopened window has to activate the toolkit again before any later
