@@ -70,7 +70,7 @@
         "x": 374,
         "y": 222
       },
-      "description": "If the M365 Copilot agent info card (a modal showing the agent name, publisher and an \"Open\" button) is displayed over the chat, click its \"Open\" button to enter the agent chat before typing. This modal appears intermittently for a freshly added declarative agent; when it is absent this clicks a blank area above the chat and is harmless.",
+      "description": "If the M365 Copilot agent info card (a modal showing the agent name, publisher and an \"Open\" button) is displayed over the chat, click its \"Open\" button to enter the agent chat before typing. This modal appears intermittently for a freshly added declarative agent; its \"Open\" button first renders as a disabled grey skeleton and only becomes clickable a few seconds later, so this step waits (delay:30) before clicking. When the modal is absent this clicks a blank area above the chat and is harmless.",
       "content_refs": [],
       "timeout": 10,
       "retry_count": 0,
@@ -78,7 +78,9 @@
       "depends_on": [],
       "preconditions": [],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "delay:30"
+      ],
       "screenshot": "",
       "created_at": "2026-07-28T04:07:00.000000",
       "plan_id": "plan_r_0928_091745"
