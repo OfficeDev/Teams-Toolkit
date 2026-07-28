@@ -20,7 +20,7 @@ test("renders typed component parameters as valid JSON", () => {
   });
 
   assert.equal(result.ok, true);
-  assert.equal(result.value[1].parameters.text, 'Option "one"');
+  assert.equal(result.value[2].parameters.text, 'Option "one"');
   assert.match(result.value[0].description, /Question\none/);
   assert.equal(
     new Set(result.value.map((step) => step.step_id)).size,

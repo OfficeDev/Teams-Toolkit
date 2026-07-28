@@ -26,6 +26,25 @@
       ]
     },
     {
+      "step_id": "step_multiSelect_assertOptionsLoaded_{{text:instanceSuffix}}",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the multi-select prompt titled {{text:questionTitle}} lists at least one option below its input box.",
+      "content_refs": [],
+      "timeout": 120,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": ["step_multiSelect_assertQuestion_{{text:instanceSuffix}}"],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:multiSelect",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
       "step_id": "step_multiSelect_focusSelectAll_{{text:instanceSuffix}}",
       "agent": "interaction",
       "tool": "keyboard_shortcut",
@@ -37,7 +56,7 @@
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
-      "depends_on": ["step_multiSelect_assertQuestion_{{text:instanceSuffix}}"],
+      "depends_on": ["step_multiSelect_assertOptionsLoaded_{{text:instanceSuffix}}"],
       "preconditions": [],
       "postconditions": [],
       "tags": ["component:quick-input", "answer_type:multiSelect"]

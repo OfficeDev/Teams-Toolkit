@@ -141,10 +141,10 @@ test("VCB-49: Ctrl+W is gated on the Welcome tab being the active editor", () =>
 
 test("VCB-50: the multi-select component selects by control, not by position", () => {
   const multiSelect = render("quick-input/multi-select.json.tpl");
-  const [, focusSelectAll, selectAll, assertSelected, confirm] =
+  const [, , focusSelectAll, selectAll, assertSelected, confirm] =
     multiSelect.steps;
 
-  assert.equal(multiSelect.steps.length, 5);
+  assert.equal(multiSelect.steps.length, 6);
   assert.equal(focusSelectAll.parameters.keys, "shift+tab");
   assert.equal(selectAll.parameters.key, "space");
   assert.equal(assertSelected.agent, "assertion");
@@ -159,6 +159,32 @@ test("VCB-50: the multi-select component selects by control, not by position", (
     assert.notEqual(step.tool, "type_text");
     assert.notEqual(step.parameters.key, "down");
     assert.equal(/\bSelected\b/.test(step.description), false);
+  }
+});
+
+test("VCB-55: option components wait for the prompt to load its options", () => {
+  for (const relativePath of [
+    "quick-input/single-select.json.tpl",
+    "quick-input/multi-select.json.tpl",
+  ]) {
+    const quickInput = render(relativePath);
+    const assertOptionsLoaded = quickInput.steps[1];
+
+    assert.equal(assertOptionsLoaded.agent, "assertion");
+    assert.match(
+      assertOptionsLoaded.description,
+      /lists at least one option below its input box/,
+    );
+    assert.equal(
+      assertOptionsLoaded.tags.includes("step_retry_timeout: 120"),
+      true,
+    );
+
+    // The title assertion alone passes while the prompt still reads
+    // "Loading options...", so the first keystroke must depend on this step.
+    assert.deepEqual(quickInput.steps[2].depends_on, [
+      assertOptionsLoaded.step_id,
+    ]);
   }
 });
 

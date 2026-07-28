@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 153,
+    "total_steps": 159,
     "name": "weather-ts-azure-openai-remote-preview",
     "description": {
       "owner": "",
@@ -34,14 +34,17 @@
       "step_executeCommand_assertCommand_cb4a8be87_1_5",
       "step_executeCommand_execute_cb4a8be87_1_5",
       "step_singleSelect_assertQuestion_cb4a8be87_1_6",
+      "step_singleSelect_assertOptionsLoaded_cb4a8be87_1_6",
       "step_singleSelect_filter_cb4a8be87_1_6",
       "step_singleSelect_assertOption_cb4a8be87_1_6",
       "step_singleSelect_confirm_cb4a8be87_1_6",
       "step_singleSelect_assertQuestion_cb4a8be87_1_7",
+      "step_singleSelect_assertOptionsLoaded_cb4a8be87_1_7",
       "step_singleSelect_filter_cb4a8be87_1_7",
       "step_singleSelect_assertOption_cb4a8be87_1_7",
       "step_singleSelect_confirm_cb4a8be87_1_7",
       "step_singleSelect_assertQuestion_cb4a8be87_1_8",
+      "step_singleSelect_assertOptionsLoaded_cb4a8be87_1_8",
       "step_singleSelect_filter_cb4a8be87_1_8",
       "step_singleSelect_assertOption_cb4a8be87_1_8",
       "step_singleSelect_confirm_cb4a8be87_1_8",
@@ -55,6 +58,7 @@
       "step_textInput_input_cb4a8be87_1_11",
       "step_textInput_confirm_cb4a8be87_1_11",
       "step_singleSelect_assertQuestion_cb4a8be87_1_12",
+      "step_singleSelect_assertOptionsLoaded_cb4a8be87_1_12",
       "step_singleSelect_filter_cb4a8be87_1_12",
       "step_singleSelect_assertOption_cb4a8be87_1_12",
       "step_singleSelect_confirm_cb4a8be87_1_12",
@@ -118,6 +122,7 @@
       "step_executeCommand_assertCommand_cb4a8be87_5_1",
       "step_executeCommand_execute_cb4a8be87_5_1",
       "step_singleSelect_assertQuestion_cb4a8be87_5_2",
+      "step_singleSelect_assertOptionsLoaded_cb4a8be87_5_2",
       "step_singleSelect_filter_cb4a8be87_5_2",
       "step_singleSelect_assertOption_cb4a8be87_5_2",
       "step_singleSelect_confirm_cb4a8be87_5_2",
@@ -125,6 +130,7 @@
       "step_textInput_input_cb4a8be87_5_3",
       "step_textInput_confirm_cb4a8be87_5_3",
       "step_singleSelect_assertQuestion_cb4a8be87_5_4",
+      "step_singleSelect_assertOptionsLoaded_cb4a8be87_5_4",
       "step_singleSelect_filter_cb4a8be87_5_4",
       "step_singleSelect_assertOption_cb4a8be87_5_4",
       "step_singleSelect_confirm_cb4a8be87_5_4",
@@ -570,6 +576,27 @@
       ]
     },
     {
+      "step_id": "step_singleSelect_assertOptionsLoaded_cb4a8be87_1_6",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the prompt titled New Project lists at least one option below its input box.",
+      "content_refs": [],
+      "timeout": 120,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertQuestion_cb4a8be87_1_6"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
       "step_id": "step_singleSelect_filter_cb4a8be87_1_6",
       "agent": "interaction",
       "tool": "type_text",
@@ -582,7 +609,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_cb4a8be87_1_6"
+        "step_singleSelect_assertOptionsLoaded_cb4a8be87_1_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -656,6 +683,27 @@
       ]
     },
     {
+      "step_id": "step_singleSelect_assertOptionsLoaded_cb4a8be87_1_7",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the prompt titled App Features Using Microsoft 365 Agents SDK lists at least one option below its input box.",
+      "content_refs": [],
+      "timeout": 120,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertQuestion_cb4a8be87_1_7"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
       "step_id": "step_singleSelect_filter_cb4a8be87_1_7",
       "agent": "interaction",
       "tool": "type_text",
@@ -668,7 +716,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_cb4a8be87_1_7"
+        "step_singleSelect_assertOptionsLoaded_cb4a8be87_1_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -742,6 +790,27 @@
       ]
     },
     {
+      "step_id": "step_singleSelect_assertOptionsLoaded_cb4a8be87_1_8",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the prompt titled Service for Large Language Model (LLM) lists at least one option below its input box.",
+      "content_refs": [],
+      "timeout": 120,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertQuestion_cb4a8be87_1_8"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
       "step_id": "step_singleSelect_filter_cb4a8be87_1_8",
       "agent": "interaction",
       "tool": "type_text",
@@ -754,7 +823,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_cb4a8be87_1_8"
+        "step_singleSelect_assertOptionsLoaded_cb4a8be87_1_8"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1023,6 +1092,27 @@
       ]
     },
     {
+      "step_id": "step_singleSelect_assertOptionsLoaded_cb4a8be87_1_12",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the prompt titled Programming Language lists at least one option below its input box.",
+      "content_refs": [],
+      "timeout": 120,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertQuestion_cb4a8be87_1_12"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
       "step_id": "step_singleSelect_filter_cb4a8be87_1_12",
       "agent": "interaction",
       "tool": "type_text",
@@ -1035,7 +1125,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_cb4a8be87_1_12"
+        "step_singleSelect_assertOptionsLoaded_cb4a8be87_1_12"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2498,6 +2588,27 @@
       ]
     },
     {
+      "step_id": "step_singleSelect_assertOptionsLoaded_cb4a8be87_5_2",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the prompt titled Select a resource group lists at least one option below its input box.",
+      "content_refs": [],
+      "timeout": 120,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertQuestion_cb4a8be87_5_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
       "step_id": "step_singleSelect_filter_cb4a8be87_5_2",
       "agent": "interaction",
       "tool": "type_text",
@@ -2510,7 +2621,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_cb4a8be87_5_2"
+        "step_singleSelect_assertOptionsLoaded_cb4a8be87_5_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2649,6 +2760,27 @@
       ]
     },
     {
+      "step_id": "step_singleSelect_assertOptionsLoaded_cb4a8be87_5_4",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the prompt titled Location for the new resource group lists at least one option below its input box.",
+      "content_refs": [],
+      "timeout": 120,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertQuestion_cb4a8be87_5_4"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
       "step_id": "step_singleSelect_filter_cb4a8be87_5_4",
       "agent": "interaction",
       "tool": "type_text",
@@ -2661,7 +2793,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_cb4a8be87_5_4"
+        "step_singleSelect_assertOptionsLoaded_cb4a8be87_5_4"
       ],
       "preconditions": [],
       "postconditions": [],

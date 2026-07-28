@@ -772,15 +772,27 @@ top-level `component` declaration and a `steps` array of current-format VScUse s
 instantiation.
 
 Every prompted answer component begins with an `assertion` step whose description requires the
-canonical `en-US` question title to be visible in the active prompt. A single-select then filters
-by canonical option label, asserts that the filtered option is visible and selectable, and only
-then confirms it. The option assertion intentionally runs after filtering: a valid option in a long
-or virtualized list may not be visible before input.
+canonical `en-US` question title to be visible in the active prompt. A component that picks from a
+list then asserts, in a second step of its own, that the prompt lists at least one option below its
+input box. The toolkit renders a prompt's frame before its options: while the option set is being
+loaded the prompt already carries its final title and the input box reads `Loading options...`, so
+the title assertion alone passes over a list that no keystroke can act on yet. Keeping the wait in
+its own step is what makes it a wait: a retried assertion step reports the difference between a
+prompt that is still loading and a prompt that loaded the wrong thing, which a single compound
+sentence cannot. Its retry window is longer than the default, because the option set behind an
+Azure subscription, resource group, region, or fetched OpenAPI description arrives over the
+network.
+
+A single-select then filters by canonical option label, asserts that the filtered option is visible
+and selectable, and only then confirms it. The option assertion intentionally runs after filtering:
+a valid option in a long or virtualized list may not be visible before input.
 
 A multi-select moves focus from the prompt's input box to its select-all checkbox with `Shift+Tab`,
 checks every option with `Space`, asserts that every listed option now shows a checked checkbox,
 and confirms the prompt. It neither filters the list nor steps through it, so no keystroke depends
-on an option's position, and the closing assertion names no count. A `multiSelect` answer is
+on an option's position, and the closing assertion names no count. Its wait step also keeps that
+closing assertion meaningful, because every option of an empty list trivially carries a checked
+checkbox. A `multiSelect` answer is
 therefore the literal `all`: the option set a prompt renders comes from the resource that the
 earlier answers pointed at, such as an OpenAPI description behind an authored URL, so a case file
 cannot name an individual option without asserting something the toolkit does not own. Compiler-generated assertion
@@ -1055,6 +1067,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-52 | Given any executed command, the second Command Palette assertion names the highlighted command and names neither a result count nor a position, because VS Code lists `similar commands` under an exact title match and ranks them itself, while Enter runs the highlighted command wherever it sits in the list.                                                                           |
 | VCB-53 | Given `login`, the account menu is opened through the shared command component and no emitted step selects a palette result by position, because several toolkit titles share the filter text and the ranking moves once a command enters the palette's recently used list, which a case that signs in twice always triggers.                                                               |
 | VCB-54 | Given `login`, the side bar is opened with `View: Show Microsoft 365 Agents Toolkit` rather than the ACCOUNTS focus command, because the focus title carries the word `Accounts` and would therefore be a candidate for the account command's filter one step later while holding the top of the palette's recently used order.                                                             |
+| VCB-55 | Given a `singleSelect` or `multiSelect` answer, the emitted component waits on a retried assertion that the prompt lists at least one option before its first keystroke, because the toolkit renders the prompt's title while its options are still loading and the title assertion alone therefore passes over a list that no keystroke can act on.                                        |
 
 ## Boundary
 

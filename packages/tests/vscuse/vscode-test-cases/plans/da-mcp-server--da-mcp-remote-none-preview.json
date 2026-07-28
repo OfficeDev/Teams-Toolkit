@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 103,
+    "total_steps": 107,
     "name": "da-mcp-remote-none-preview",
     "description": {
       "owner": "",
@@ -34,14 +34,17 @@
       "step_executeCommand_assertCommand_cbe46eee0_1_5",
       "step_executeCommand_execute_cbe46eee0_1_5",
       "step_singleSelect_assertQuestion_cbe46eee0_1_6",
+      "step_singleSelect_assertOptionsLoaded_cbe46eee0_1_6",
       "step_singleSelect_filter_cbe46eee0_1_6",
       "step_singleSelect_assertOption_cbe46eee0_1_6",
       "step_singleSelect_confirm_cbe46eee0_1_6",
       "step_singleSelect_assertQuestion_cbe46eee0_1_7",
+      "step_singleSelect_assertOptionsLoaded_cbe46eee0_1_7",
       "step_singleSelect_filter_cbe46eee0_1_7",
       "step_singleSelect_assertOption_cbe46eee0_1_7",
       "step_singleSelect_confirm_cbe46eee0_1_7",
       "step_singleSelect_assertQuestion_cbe46eee0_1_8",
+      "step_singleSelect_assertOptionsLoaded_cbe46eee0_1_8",
       "step_singleSelect_filter_cbe46eee0_1_8",
       "step_singleSelect_assertOption_cbe46eee0_1_8",
       "step_singleSelect_confirm_cbe46eee0_1_8",
@@ -49,6 +52,7 @@
       "step_textInput_input_cbe46eee0_1_9",
       "step_textInput_confirm_cbe46eee0_1_9",
       "step_singleSelect_assertQuestion_cbe46eee0_1_10",
+      "step_singleSelect_assertOptionsLoaded_cbe46eee0_1_10",
       "step_singleSelect_filter_cbe46eee0_1_10",
       "step_singleSelect_assertOption_cbe46eee0_1_10",
       "step_singleSelect_confirm_cbe46eee0_1_10",
@@ -522,6 +526,27 @@
       ]
     },
     {
+      "step_id": "step_singleSelect_assertOptionsLoaded_cbe46eee0_1_6",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the prompt titled New Project lists at least one option below its input box.",
+      "content_refs": [],
+      "timeout": 120,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertQuestion_cbe46eee0_1_6"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
       "step_id": "step_singleSelect_filter_cbe46eee0_1_6",
       "agent": "interaction",
       "tool": "type_text",
@@ -534,7 +559,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_cbe46eee0_1_6"
+        "step_singleSelect_assertOptionsLoaded_cbe46eee0_1_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -608,6 +633,27 @@
       ]
     },
     {
+      "step_id": "step_singleSelect_assertOptionsLoaded_cbe46eee0_1_7",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the prompt titled Create Declarative Agent lists at least one option below its input box.",
+      "content_refs": [],
+      "timeout": 120,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertQuestion_cbe46eee0_1_7"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
       "step_id": "step_singleSelect_filter_cbe46eee0_1_7",
       "agent": "interaction",
       "tool": "type_text",
@@ -620,7 +666,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_cbe46eee0_1_7"
+        "step_singleSelect_assertOptionsLoaded_cbe46eee0_1_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -694,6 +740,27 @@
       ]
     },
     {
+      "step_id": "step_singleSelect_assertOptionsLoaded_cbe46eee0_1_8",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the prompt titled Create an Action lists at least one option below its input box.",
+      "content_refs": [],
+      "timeout": 120,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertQuestion_cbe46eee0_1_8"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
       "step_id": "step_singleSelect_filter_cbe46eee0_1_8",
       "agent": "interaction",
       "tool": "type_text",
@@ -706,7 +773,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_cbe46eee0_1_8"
+        "step_singleSelect_assertOptionsLoaded_cbe46eee0_1_8"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -845,6 +912,27 @@
       ]
     },
     {
+      "step_id": "step_singleSelect_assertOptionsLoaded_cbe46eee0_1_10",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the prompt titled Select Authentication Type lists at least one option below its input box.",
+      "content_refs": [],
+      "timeout": 120,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertQuestion_cbe46eee0_1_10"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
       "step_id": "step_singleSelect_filter_cbe46eee0_1_10",
       "agent": "interaction",
       "tool": "type_text",
@@ -857,7 +945,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_cbe46eee0_1_10"
+        "step_singleSelect_assertOptionsLoaded_cbe46eee0_1_10"
       ],
       "preconditions": [],
       "postconditions": [],

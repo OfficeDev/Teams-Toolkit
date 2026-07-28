@@ -26,6 +26,25 @@
       ]
     },
     {
+      "step_id": "step_singleSelect_assertOptionsLoaded_{{text:instanceSuffix}}",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the prompt titled {{text:questionTitle}} lists at least one option below its input box.",
+      "content_refs": [],
+      "timeout": 120,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": ["step_singleSelect_assertQuestion_{{text:instanceSuffix}}"],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
       "step_id": "step_singleSelect_filter_{{text:instanceSuffix}}",
       "agent": "interaction",
       "tool": "type_text",
@@ -37,7 +56,7 @@
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
-      "depends_on": ["step_singleSelect_assertQuestion_{{text:instanceSuffix}}"],
+      "depends_on": ["step_singleSelect_assertOptionsLoaded_{{text:instanceSuffix}}"],
       "preconditions": [],
       "postconditions": [],
       "tags": ["component:quick-input", "answer_type:singleSelect"]
