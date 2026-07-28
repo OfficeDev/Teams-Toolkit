@@ -334,8 +334,9 @@ function createSemanticStepCompiler() {
       render(state, "initialization/close-welcome-overlay.json.tpl"),
     );
     if (error) return error;
-    // Activating the toolkit opens its Get Started editor, which keeps keyboard
-    // focus and swallows the text typed into the first scaffold quick pick.
+    // Activating the toolkit opens a walkthrough, which VS Code renders in a
+    // tab labeled Welcome. That tab keeps keyboard focus and swallows the text
+    // typed into the first scaffold quick pick.
     // Focusing the toolkit view first parks focus on a tree view instead.
     error = append(
       output,
@@ -344,7 +345,7 @@ function createSemanticStepCompiler() {
       }),
     );
     if (error) return error;
-    // The Get Started editor can still open after the focus command returns, so
+    // The Welcome editor can still open after the focus command returns, so
     // wait for it to settle before closing it.
     error = append(
       output,
@@ -353,7 +354,7 @@ function createSemanticStepCompiler() {
     if (error) return error;
     // The toolkit sets `ignoreFocusOut` on every quick pick it opens, so one
     // that loses keyboard focus stays on screen instead of dismissing itself.
-    // Leaving the Get Started editor open lets it reclaim focus while the create
+    // Leaving the Welcome editor open lets it reclaim focus while the create
     // command opens its first quick pick, which then passes its prompt assertion
     // but sends the filter keystrokes to the editor, so close the editor instead
     // of racing it.

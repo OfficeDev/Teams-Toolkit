@@ -362,7 +362,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the Microsoft 365 Agents Toolkit view is open in the side bar and the toolkit Get Started editor is visible in the editor area.",
+      "description": "@assertion the Microsoft 365 Agents Toolkit view is open in the side bar and an editor tab labeled Welcome showing the Build a Declarative Agent walkthrough is open in the editor area.",
       "content_refs": [],
       "timeout": 120,
       "retry_count": 0,
@@ -383,7 +383,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the toolkit Get Started tab is the active editor tab in the Visual Studio Code editor area.",
+      "description": "@assertion the editor tab labeled Welcome showing the Build a Declarative Agent walkthrough is the active editor tab in the Visual Studio Code editor area.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -406,7 +406,7 @@
       "parameters": {
         "keys": "ctrl+w"
       },
-      "description": "Press Ctrl+W to close the toolkit Get Started editor.",
+      "description": "Press Ctrl+W to close the Welcome editor tab.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

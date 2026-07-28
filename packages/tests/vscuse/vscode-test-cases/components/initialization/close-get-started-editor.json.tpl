@@ -11,7 +11,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the toolkit Get Started tab is the active editor tab in the Visual Studio Code editor area.",
+      "description": "@assertion the editor tab labeled Welcome showing the Build a Declarative Agent walkthrough is the active editor tab in the Visual Studio Code editor area.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -32,7 +32,7 @@
       "parameters": {
         "keys": "ctrl+w"
       },
-      "description": "Press Ctrl+W to close the toolkit Get Started editor.",
+      "description": "Press Ctrl+W to close the Welcome editor tab.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

@@ -562,23 +562,30 @@ any project editor.
 
 The scaffold recipe uses a second initialization component,
 `initialization/assert-toolkit-view-settled.json.tpl`. It also has no semantic parameters and emits
-a single assertion that the toolkit view is open in the side bar and its Get Started editor is
-visible in the editor area. It owns no coordinates. The scaffold recipe emits it after the
-toolkit-view focus command, because the Get Started editor can still open after that command
-returns.
+a single assertion that the toolkit view is open in the side bar and an editor tab labeled Welcome
+showing the Build a Declarative Agent walkthrough is open in the editor area. It owns no
+coordinates. The scaffold recipe emits it after the toolkit-view focus command, because that editor
+can still open after the command returns.
+
+Both assertions name the tab by the label VS Code paints on it. Activating the toolkit opens a VS
+Code walkthrough, and VS Code renders every walkthrough inside a tab labeled `Welcome`, so no tab is
+ever labeled Get Started; the toolkit does contribute a `Get Started` link under HELP AND FEEDBACK
+in its own side bar, which is a different element an assertion naming Get Started can be satisfied
+by. Naming the walkthrough heading as well separates the toolkit's Welcome tab from the built-in
+Get Started with VS Code walkthrough, which VS Code renders in a tab with the same label.
 
 The scaffold recipe then uses a third initialization component,
 `initialization/close-get-started-editor.json.tpl`, between that assertion and the create command.
-It asserts that the Get Started tab is the active editor tab, closes it with `Ctrl+W`, and asserts
+It asserts that the Welcome tab is the active editor tab, closes it with `Ctrl+W`, and asserts
 that no editor tab remains open. It has
 no semantic parameters and owns no coordinates. The toolkit sets `ignoreFocusOut` on every quick
 pick it opens, so a scaffold quick pick that loses keyboard focus stays on screen instead of
-dismissing itself. The Get Started editor reclaims focus while the create command is opening its
+dismissing itself. The Welcome editor reclaims focus while the create command is opening its
 first quick pick, which leaves that quick pick visible but deaf: its prompt assertion passes and the
 filter keystrokes reach the editor instead. Closing the editor removes the competing focus target
 rather than racing it. The component's own opening assertion is what makes the close deterministic.
 `Ctrl+W` closes the active editor and closes the window when no editor is open, so the settled
-assertion that precedes the component is not enough on its own: it claims the Get Started editor is
+assertion that precedes the component is not enough on its own: it claims the Welcome editor is
 visible, not that it is the tab `Ctrl+W` will act on.
 
 The scaffold recipe ends with a fourth initialization component,
@@ -800,12 +807,14 @@ The semantic adapter owns one closed ARM prompt sequence:
 `targetResourceGroupName`, `newResourceGroupName`, and
 `newResourceGroupLocation`. A `provision` step containing `with.arm` selects that sequence, requires
 a preceding Azure login, requires every supported key, and uses the recorded Provision confirmation
-component. The sequence has no subscription prompt. The toolkit opens one only when the signed-in
-account can see more than one subscription, and the compatible test profile guarantees a single
-subscription, so the toolkit selects it without asking. The prompt is also unanswerable from a
-subscription ID: its items carry the subscription name as their label and no description or detail,
-so the ID the environment holds never renders and can never match a filter.
-A bare `provision` emits only environment selection and notification verification.
+component. The sequence has no subscription prompt, because the harness makes the subscription
+question unreachable. The runner exports `AZURE_SUBSCRIPTION_ID` into the container, the toolkit
+loads `.env.<env>` with the process environment taking priority over the file, and it asks for a
+subscription only when that placeholder is still unresolved. The exported value resolves it on every
+run, so the toolkit applies the exported subscription directly and never opens the picker. The
+picker is also unanswerable from a subscription ID: its items carry the subscription name as their
+label and no description or detail, so the ID the environment holds never renders and can never
+match a filter. A bare `provision` emits only environment selection and notification verification.
 Environment selection is shared by `provision` and `deploy`, because the toolkit resolves the
 environment in the middleware that wraps every lifecycle command. It is therefore emitted before any
 operation-owned prompt, and it is emitted unless the step declares `with.environment: none`, which
@@ -1019,11 +1028,11 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-34 | Given the checked-in case sources and no injected `compileStep`, setup reads no external template contracts and uses the semantic compiler plus component renderer to emit twelve deterministic current-format runnable plans; every operation resolves through a supported adapter, removed manifest-owned cases are deleted, and a second setup reports no generated-plan changes.        |
 | VCB-35 | Given a `multiSelect` answer with a non-empty array of unique supported option IDs, compilation preserves the authored order, emits one filter/assert/toggle interaction per option, clears the filter between options, and confirms the prompt exactly once; invalid value shapes, empty arrays, and duplicates fail before plan output.                                                   |
 | VCB-36 | Given `provision.with.environment: none`, compilation omits environment selection while keeping the remaining provision recipe; omitting the input emits the recorded `dev` selection, and any other value fails before plan output.                                                                                                                                                        |
-| VCB-37 | Given any scaffold, compilation focuses the toolkit view through the command component after initialization, waits for the toolkit Get Started editor to finish loading, and only then executes the create command, so no editor can hold keyboard focus when the first scaffold quick pick opens.                                                                                          |
+| VCB-37 | Given any scaffold, compilation focuses the toolkit view through the command component after initialization, waits for the toolkit Welcome editor to finish loading, and only then executes the create command, so no editor can hold keyboard focus when the first scaffold quick pick opens.                                                                                              |
 | VCB-38 | Given a `chat` check without `expect`, compilation sends the message and emits no response assertion, so a following assertion observes the surface the message produced; an empty `expect` object still fails before plan output.                                                                                                                                                          |
 | VCB-39 | Given `deploy`, compilation emits environment selection under the same contract as `provision`, omits it for `deploy.with.environment: none`, and fails before plan output for any other environment value or any other deploy input.                                                                                                                                                       |
 | VCB-40 | Given a lifecycle operation that selects an environment, compilation emits that selection before every operation-owned prompt, matching the toolkit resolving the environment in middleware that wraps the command body.                                                                                                                                                                    |
-| VCB-41 | Given `scaffold`, compilation closes the toolkit Get Started editor and asserts no editor tab remains open, after the toolkit view has settled and before the create command, so no editor can reclaim keyboard focus from the first scaffold quick pick, which `ignoreFocusOut` would otherwise leave visible but unable to receive its filter keystrokes.                                 |
+| VCB-41 | Given `scaffold`, compilation closes the toolkit Welcome editor and asserts no editor tab remains open, after the toolkit view has settled and before the create command, so no editor can reclaim keyboard focus from the first scaffold quick pick, which `ignoreFocusOut` would otherwise leave visible but unable to receive its filter keystrokes.                                     |
 | VCB-42 | Given `login`, compilation focuses the Accounts view before opening the account menu, so the ACCOUNTS section the readiness assertion reads is showing in the window scaffolding opened, whose side bar defaults to the Explorer and whose focus commands differ from the pre-scaffold window's.                                                                                            |
 | VCB-43 | Given a target profile, the readiness assertion names the app by the unique prefix the case authored rather than the fully composed manifest name, so one subject holds across templates that append `APP_NAME_SUFFIX` and templates that do not, and across environments that resolve that suffix differently.                                                                             |
 | VCB-44 | Given a Copilot `chat` check, the message-input assertion names the input by the app prefix the case authored, matching the placeholder the previewed agent shows, rather than the `Message Copilot` placeholder that only the unscoped Copilot chat shows.                                                                                                                                 |
@@ -1031,9 +1040,9 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-46 | Given a `login` that is not the first sign-in of its case, compilation selects the sign-in component whose entry state is the account picker the earlier sign-in leaves behind, and fails when the account has no recorded sign-in for that entry state.                                                                                                                                    |
 | VCB-47 | Given any `login`, the sign-in adapter verifies the account in the ACCOUNTS section right after closing the browser, so no operation that follows starts with an account menu open over the window or with the account menu command promoted in the palette's recently used list.                                                                                                           |
 | VCB-48 | Given any executed command, both Command Palette assertions name the `>` the palette keeps in its input box, so neither is satisfied by another quick pick that VS Code draws with the same frame.                                                                                                                                                                                          |
-| VCB-49 | Given `scaffold`, the close component asserts that the Get Started tab is the active editor tab before pressing `Ctrl+W`, because that shortcut closes the window when no editor is open and the preceding settled assertion only claims the editor is visible.                                                                                                                             |
+| VCB-49 | Given `scaffold`, the close component asserts that the tab labeled `Welcome` showing the Build a Declarative Agent walkthrough is the active editor tab before pressing `Ctrl+W`, because that shortcut closes the window when no editor is open, the preceding settled assertion only claims the editor is visible, and no tab is ever labeled Get Started.                                |
 | VCB-50 | Given a `multiSelect` answer, every option invocation ends by asserting that the prompt's input box is empty and the toggled option is still checked, so the `Ctrl+A` and `Backspace` pair that clears the filter cannot delete another surface's content unnoticed.                                                                                                                        |
-| VCB-51 | Given `provision.with.arm`, the emitted sequence starts at the resource group prompt and rejects an authored `subscriptionId`, because the toolkit asks for a subscription only when the account can see more than one and the prompt filters on the subscription name the ID never renders as.                                                                                             |
+| VCB-51 | Given `provision.with.arm`, the emitted sequence starts at the resource group prompt and rejects an authored `subscriptionId`, because the exported `AZURE_SUBSCRIPTION_ID` resolves the toolkit's subscription placeholder before it can ask, and the picker filters on the subscription name the ID never renders as.                                                                     |
 
 ## Boundary
 

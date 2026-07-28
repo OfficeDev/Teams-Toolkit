@@ -11,7 +11,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the Microsoft 365 Agents Toolkit view is open in the side bar and the toolkit Get Started editor is visible in the editor area.",
+      "description": "@assertion the Microsoft 365 Agents Toolkit view is open in the side bar and an editor tab labeled Welcome showing the Build a Declarative Agent walkthrough is open in the editor area.",
       "content_refs": [],
       "timeout": 120,
       "retry_count": 0,

@@ -201,7 +201,7 @@ test("scaffold focuses the toolkit view before the create command", async () => 
     "@assertion the Command Palette input box reads >Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View and exactly one command titled Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View is listed under it.",
   );
   const settledIndex = descriptions.indexOf(
-    "@assertion the Microsoft 365 Agents Toolkit view is open in the side bar and the toolkit Get Started editor is visible in the editor area.",
+    "@assertion the Microsoft 365 Agents Toolkit view is open in the side bar and an editor tab labeled Welcome showing the Build a Declarative Agent walkthrough is open in the editor area.",
   );
   const createIndex = descriptions.indexOf(
     "@assertion the Command Palette input box reads >Microsoft 365 Agents: Create New Agent/App and exactly one command titled Microsoft 365 Agents: Create New Agent/App is listed under it.",
@@ -216,7 +216,7 @@ test("scaffold focuses the toolkit view before the create command", async () => 
   assert.equal(createIndex < firstQuestionIndex, true);
 });
 
-test("VCB-41: scaffold closes the Get Started editor before the create command", async () => {
+test("VCB-41: scaffold closes the Welcome editor before the create command", async () => {
   const result = await compileFixture(
     "da-no-action.yml",
     (sourceText) => sourceText,
@@ -227,10 +227,10 @@ test("VCB-41: scaffold closes the Get Started editor before the create command",
     (step) => step.description,
   );
   const settledIndex = descriptions.indexOf(
-    "@assertion the Microsoft 365 Agents Toolkit view is open in the side bar and the toolkit Get Started editor is visible in the editor area.",
+    "@assertion the Microsoft 365 Agents Toolkit view is open in the side bar and an editor tab labeled Welcome showing the Build a Declarative Agent walkthrough is open in the editor area.",
   );
   const closeIndex = descriptions.indexOf(
-    "Press Ctrl+W to close the toolkit Get Started editor.",
+    "Press Ctrl+W to close the Welcome editor tab.",
   );
   const closedIndex = descriptions.indexOf(
     "@assertion no editor tab is open in the Visual Studio Code editor area.",

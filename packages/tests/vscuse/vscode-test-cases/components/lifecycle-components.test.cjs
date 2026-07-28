@@ -126,12 +126,15 @@ test("VCB-47: Microsoft 365 sign-in verifies the account in the ACCOUNTS section
   }
 });
 
-test("VCB-49: Ctrl+W is gated on the Get Started tab being the active editor", () => {
+test("VCB-49: Ctrl+W is gated on the Welcome tab being the active editor", () => {
   const close = render("initialization/close-get-started-editor.json.tpl");
   const [assertActive, closeEditor, assertClosed] = close.steps;
 
   assert.equal(assertActive.agent, "assertion");
-  assert.match(assertActive.description, /the active editor tab/);
+  assert.match(
+    assertActive.description,
+    /the editor tab labeled Welcome showing the Build a Declarative Agent walkthrough is the active editor tab/,
+  );
   assert.equal(closeEditor.parameters.keys, "ctrl+w");
   assert.match(assertClosed.description, /no editor tab is open/);
 });
