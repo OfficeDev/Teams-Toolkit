@@ -258,7 +258,7 @@ test("VCB-42: login shows the side bar before the sign-in adapter runs", async (
     (step) => step.description,
   );
   const entryIndex = descriptions.findIndex((description) =>
-    /^@assertion Sign in to .+ is visible in the ACCOUNTS section/.test(
+    /^@assertion the ACCOUNTS section of the side bar lists an entry/.test(
       description,
     ),
   );
@@ -348,7 +348,7 @@ test("VCB-57: login enters from the ACCOUNTS section, not the palette", async ()
 
   // Both logins enter from the labelled entry the ACCOUNTS section renders.
   const entrySteps = steps.filter((step) =>
-    /^@assertion Sign in to .+ is visible in the ACCOUNTS section/.test(
+    /^@assertion the ACCOUNTS section of the side bar lists an entry/.test(
       step.description,
     ),
   );

@@ -701,7 +701,9 @@ initialization would resolve, because VS Code generates one show command per con
 `fx-extension.isTeamsFx`, while the focus commands exist only for the views that context key allows.
 
 The container reveals the ACCOUNTS section, whose entries carry their own labels, so each adapter
-asserts the label it is about to click and clicks the entry rather than a palette result. The recipe
+asserts the label it is about to click and clicks the entry rather than a palette result. The side
+bar truncates a label wider than its column, so the Microsoft 365 entry is asserted by the prefix
+that stays on screen at the default window size rather than by its full label. The recipe
 instantiates exactly one deterministic adapter:
 
 | Account         | Adapter                                           | Entry state                                  | Converged state               |

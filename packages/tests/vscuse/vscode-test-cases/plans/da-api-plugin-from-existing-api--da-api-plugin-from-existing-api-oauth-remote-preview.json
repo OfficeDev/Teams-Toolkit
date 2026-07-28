@@ -1507,7 +1507,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion Sign in to Microsoft 365 is visible in the ACCOUNTS section of the Microsoft 365 Agents Toolkit side bar.",
+      "description": "@assertion the ACCOUNTS section of the side bar lists an entry whose label begins with Sign in to Microsoft.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1533,7 +1533,7 @@
         "x": 213,
         "y": 102
       },
-      "description": "Click the \"Sign in to Microsoft 365\" entry in the ACCOUNTS section of the Microsoft 365 Agents Toolkit side bar.",
+      "description": "Click the entry whose label begins with \"Sign in to Microsoft\" in the ACCOUNTS section of the side bar.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

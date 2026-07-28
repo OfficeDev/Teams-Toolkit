@@ -12,7 +12,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion Sign in to Azure is visible in the ACCOUNTS section of the Microsoft 365 Agents Toolkit side bar.",
+      "description": "@assertion the ACCOUNTS section of the side bar lists an entry labeled Sign in to Azure.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -36,7 +36,7 @@
         "x": 165,
         "y": 127
       },
-      "description": "Click the \"Sign in to Azure\" entry in the ACCOUNTS section of the Microsoft 365 Agents Toolkit side bar.",
+      "description": "Click the \"Sign in to Azure\" entry in the ACCOUNTS section of the side bar.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
