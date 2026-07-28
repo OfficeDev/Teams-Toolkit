@@ -220,12 +220,20 @@ const lifecycleAdapters = {
   provision: { successText: "provision stage executed successfully" },
 };
 
+// A readiness subject only has to show that the app on screen is the one this
+// case scaffolded, so it names the app by the unique prefix the case authored
+// and tolerates whatever the product appends. Manifests compose their name as
+// `{{appName}}${{APP_NAME_SUFFIX}}`, but not every template appends the suffix
+// and the previewed environment decides its value, so asserting the fully
+// composed name makes readiness fail on naming detail that the post-scaffold
+// file checks already assert exactly, and against the real manifest rather than
+// against a screenshot.
 const targetAdapters = {
   "Launch Remote in Teams (Chrome)": {
     host: "teams",
     open: { adapter: "teams-add", destination: "chat", kind: "app" },
-    readySubject: () =>
-      "the Weather Agent app details page is visible in Microsoft Teams",
+    readySubject:
+      "the Microsoft Teams app details page for an app whose name starts with ${{var:app_name}} is visible",
     requires: ["login:azure", "login:m365", "provision", "deploy"],
   },
   "Preview in Copilot (Chrome)": {
@@ -235,25 +243,11 @@ const targetAdapters = {
     },
     host: "copilot",
     open: { adapter: "ready", destination: "chat", kind: "agent" },
-    readySubject: (template) =>
-      `${copilotAgentName(template)} is displayed in the main section of Microsoft 365 Copilot`,
+    readySubject:
+      "an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot",
     requires: ["login:m365", "provision"],
   },
 };
-
-// Copilot titles an agent with the `name` its `declarativeAgent.json` declares.
-// Every declarative agent template composes that name as
-// `{{appName}}${{APP_NAME_SUFFIX}}` with no separator, which `.env.dev`
-// resolves to the authored app name with `dev` appended. The template
-// scaffolded from an existing API spec is the one exception: it declares
-// `{{appName}}` alone, so Copilot shows the authored name unchanged.
-const unsuffixedAgentTemplates = new Set(["da/api-plugin-from-existing-api"]);
-
-function copilotAgentName(template) {
-  return unsuffixedAgentTemplates.has(template)
-    ? "${{var:app_name}}"
-    : "${{var:app_name}}dev";
-}
 
 function failure(code, message) {
   return { ok: false, diagnostics: [{ code, message }] };
@@ -884,7 +878,7 @@ function createSemanticStepCompiler() {
     error = append(
       output,
       render(state, "browser/assert-ready.json.tpl", {
-        readySubject: profile.readySubject(state.template),
+        readySubject: profile.readySubject,
       }),
     );
     state.profile = profile;
@@ -907,11 +901,11 @@ function createSemanticStepCompiler() {
     let rendered;
     if (state.profile.open.adapter === "teams-add") {
       rendered = render(state, "browser/teams/add-and-open-app.json.tpl", {
-        readySubject: state.profile.readySubject(state.template),
+        readySubject: state.profile.readySubject,
       });
     } else if (state.profile.open.adapter === "ready") {
       rendered = render(state, "browser/assert-ready.json.tpl", {
-        readySubject: state.profile.readySubject(state.template),
+        readySubject: state.profile.readySubject,
       });
     } else {
       return failure(

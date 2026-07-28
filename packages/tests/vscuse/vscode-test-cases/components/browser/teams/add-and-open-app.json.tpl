@@ -103,7 +103,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion {{text:readySubject}} is visible and ready.",
+      "description": "@assertion {{text:readySubject}}.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

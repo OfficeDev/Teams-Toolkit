@@ -812,11 +812,14 @@ test("Copilot target authenticates the browser before readiness", async (context
   assert.equal(profileIndex < accountIndex, true);
   assert.equal(accountIndex < passwordIndex, true);
   assert.equal(passwordIndex < readinessIndex, true);
-  // The scaffolded manifest names the app `{{appName}}${{APP_NAME_SUFFIX}}`, and
-  // `.env.dev` sets that suffix to `dev`, so the remote preview target names the
-  // authored app name with `dev` appended and never the local suffix.
-  assert.match(readinessDescription, /\}\}dev is displayed/);
+  // Readiness names the app by the prefix the case authored, so it holds
+  // whether or not the manifest appended an environment suffix.
+  assert.match(
+    readinessDescription,
+    /whose name starts with \$\{\{var:app_name\}\}/,
+  );
   assert.doesNotMatch(readinessDescription, /\}\}local/);
+  assert.doesNotMatch(readinessDescription, /\}\}dev/);
   assert.doesNotMatch(readinessDescription, /is ready is ready/);
 });
 
@@ -1022,7 +1025,7 @@ test("VCB-26: semantic adapter opens an already-active Copilot agent chat", asyn
     result.value[0].plan.steps.filter(
       (step) =>
         step.description ===
-        "@assertion ${{var:app_name}}dev is displayed in the main section of Microsoft 365 Copilot.",
+        "@assertion an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot.",
     ).length,
     2,
   );
@@ -1037,13 +1040,15 @@ test("semantic adapter requires an immediate post-scaffold file check", async ()
   assert.equal(result.diagnostics[0].code, "VCB_OPERATION_ORDER");
 });
 
-test("VCB-43: the Copilot ready subject follows the template's agent name", async () => {
+test("VCB-43: the Copilot ready subject names the app by its authored prefix", async () => {
   const readySubject = (result) =>
     result.value[0].plan.steps
       .map((step) => step.description)
       .find((description) =>
         description.includes("is displayed in the main section"),
       );
+  // These two templates compose the agent name differently: one appends
+  // `${{APP_NAME_SUFFIX}}` and the other does not. One prefix claim covers both.
   const suffixed = await compileFixture(
     "da-no-action.yml",
     (sourceText) => sourceText,
@@ -1057,12 +1062,9 @@ test("VCB-43: the Copilot ready subject follows the template's agent name", asyn
   assert.equal(unsuffixed.ok, true);
   assert.equal(
     readySubject(suffixed),
-    "@assertion ${{var:app_name}}dev is displayed in the main section of Microsoft 365 Copilot.",
+    "@assertion an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot.",
   );
-  assert.equal(
-    readySubject(unsuffixed),
-    "@assertion ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot.",
-  );
+  assert.equal(readySubject(unsuffixed), readySubject(suffixed));
 });
 
 test("semantic adapter requires chat-ready state before a chat check", async () => {
