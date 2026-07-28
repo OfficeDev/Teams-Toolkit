@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 4,
+    "total_steps": 5,
     "created_at": "2026-04-17T04:17:17.437047",
     "name": "group  validation openai bot in Copilot",
     "description": {
@@ -20,6 +20,7 @@
     "generated_at": "2026-04-17T04:17:17.437044",
     "execution_order": [
       "step_53ed5a31",
+      "step_close_agent_details_modal",
       "step_4298c4f6",
       "step_9830333b",
       "step_b4ea5f58"
@@ -56,6 +57,26 @@
       ],
       "screenshot": "step_53ed5a31",
       "created_at": "2026-04-17T05:59:50.231990",
+      "plan_id": "plan_r_1125_031353"
+    },
+    {
+      "step_id": "step_close_agent_details_modal",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "escape"
+      },
+      "description": "Press the \"Escape\" key to dismiss the new agent/app details info modal that now appears over the M365 Copilot (web app) chat after opening the Custom Engine Agent/OpenAI bot. This modal is centered on screen and intercepts interaction with the \"Message Copilot\" input box, so it must be closed before typing into the chat input.",
+      "content_refs": [],
+      "timeout": 15,
+      "retry_count": 0,
+      "continue_on_error": "true",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
+      "created_at": "2026-04-17T05:59:50.234000",
       "plan_id": "plan_r_1125_031353"
     },
     {
