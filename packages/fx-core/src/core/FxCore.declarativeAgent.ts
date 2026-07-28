@@ -1122,6 +1122,28 @@ export class FxCoreDeclarativeAgentPart {
           }
         }
       }
+
+      // An unreplaced placeholder guarantees a provision failure later, and the output channel
+      // is easy to miss — more so here, where the action is about to report success. Raise this
+      // one case to a notification, as the create flow does.
+      const placeholderWarning = mcpWarnings.find(
+        (warning) =>
+          warning.type === "mcpAuthDcrWellKnownUrlPlaceholder" ||
+          warning.type === "mcpAuthOAuthUrlPlaceholder"
+      );
+      if (placeholderWarning && inputs.platform === Platform.VSCode) {
+        const openYml = getLocalizedString("core.MCPForDA.openYmlFile");
+        void context.userInteraction
+          .showMessage("warn", placeholderWarning.content, false, openYml)
+          .then((userRes) => {
+            if (userRes.isOk() && userRes.value === openYml) {
+              const ymlPath = pathUtils.getYmlFilePath(inputs.projectPath);
+              if (ymlPath) {
+                void TOOLS?.ui?.openFile?.(ymlPath);
+              }
+            }
+          });
+      }
     } else {
       const addPluginRes = await declarativeAgentHelperModule.addExistingPlugin(
         declarativeCopilotManifestPath,

@@ -3468,6 +3468,87 @@ describe("addPlugin", async () => {
     }
   });
 
+  it("from MCP (DT flag on): notifies in VS Code when the yml is left with oauth placeholders", async () => {
+    const appName = await mockV3Project();
+    const projectPath = path.join(os.tmpdir(), appName);
+    const inputs: Inputs = {
+      platform: Platform.VSCode,
+      [QuestionNames.Folder]: os.tmpdir(),
+      [QuestionNames.TeamsAppManifestFilePath]: "manifest.json",
+      [QuestionNames.ActionType]: ActionStartOptions.mcp().id,
+      [QuestionNames.MCPForDAServerUrl]: "https://example.com/mcp",
+      [QuestionNames.MCPToolsFilePath]: "",
+      [QuestionNames.MCPForDAAuthType]: "oauth",
+      [QuestionNames.MCPForDAClientId]: "client-id",
+      [QuestionNames.MCPForDAClientSecret]: "client-secret",
+      [QuestionNames.MCPForDAScopes]: "scope-a",
+      projectPath,
+    };
+
+    const manifest = new TeamsAppManifest();
+    manifest.copilotExtensions = {
+      declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
+    };
+
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) => {
+      return flag === FeatureFlags.MCPForDADT;
+    });
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(
+      copilotGptManifestUtils,
+      "getDefaultNextAvailablePluginManifestPath"
+    ).mockResolvedValue("ai-plugin_1.json");
+    vi.spyOn(copilotGptManifestUtils, "addAction").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+
+    const showMessage = vi
+      .spyOn(addPluginTools.ui, "showMessage")
+      .mockImplementation((level, message, modal, ...items) => Promise.resolve(ok(items[0])));
+    const openFile = vi.spyOn(addPluginTools.ui, "openFile").mockResolvedValue(ok(undefined));
+
+    // Metadata resolution fails, so the injector falls back to placeholder URLs.
+    const mcpAuthScaffolderModule = await import("../../src/component/utils/mcpAuthScaffolder");
+    vi.spyOn(
+      mcpAuthScaffolderModule.mcpAuthScaffolderDeps,
+      "resolveMCPOAuthMetadata"
+    ).mockRejectedValue(new Error("no resource_metadata"));
+
+    const actionInjectorModule = await import("../../src/component/configManager/actionInjector");
+    vi.spyOn(
+      actionInjectorModule.ActionInjector,
+      "injectCreateOAuthActionForMCP"
+    ).mockResolvedValue();
+
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+    vi.spyOn(fs, "ensureFile").mockResolvedValue();
+    vi.spyOn(fs, "writeJSON").mockResolvedValue();
+
+    const core = new FxCore(addPluginTools);
+    const result = await core.addPlugin(inputs);
+
+    assert.isTrue(result.isOk());
+    // The action reports success right after, so a warning left in the output channel
+    // reads as "everything worked". Placeholders must be raised the way create raises them.
+    const warned = showMessage.mock.calls.find((call) => call[0] === "warn");
+    assert.isDefined(warned);
+    assert.include(String(warned![1]), "https://example.com/mcp");
+    assert.include(String(warned![1]), "placeholders");
+
+    // The notification's only action opens the file that holds the placeholders.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    assert.isTrue(openFile.mock.calls.some((call) => call[0] === "m365agents.yml"));
+
+    if (await fs.pathExists(projectPath)) {
+      await fs.remove(projectPath);
+    }
+  });
+
   it("from MCP (DT flag on): still writes the plugin manifest when oauth/register injection fails", async () => {
     const appName = await mockV3Project();
     const projectPath = path.join(os.tmpdir(), appName);
