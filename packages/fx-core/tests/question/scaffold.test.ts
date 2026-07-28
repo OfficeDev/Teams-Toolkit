@@ -970,6 +970,25 @@ describe("MCPForDAServerUrlNode", () => {
     assert.isString(result);
     assert.include(result, "404");
   });
+  it("validFunc rejects a value that is not an absolute http(s) url", async () => {
+    // A scheme-less value never reaches the network, so the probe would report no status
+    // and the url would slip through as `undetermined`. Rule it out syntactically.
+    const node = MCPForDAServerUrlNode();
+    const data = node.data as any;
+    const validFunc = data.additionalValidationOnAccept.validFunc;
+    const inputs: Inputs = { platform: Platform.VSCode };
+
+    for (const value of ["taskmaster.example.com", "example.com/mcp", "ftp://example.com/mcp"]) {
+      const result = await validFunc(value, inputs);
+      assert.isString(result, value);
+      assert.include(result, "https://");
+    }
+    // Not a network problem, so the server is never contacted.
+    assert.strictEqual(vi.mocked(teamsProjectTypeDeps.probeMCPServerAuth).mock.calls.length, 0);
+
+    // http is allowed: a locally hosted MCP server is a normal thing to point at.
+    assert.isUndefined(await validFunc("http://localhost:3000/mcp", inputs));
+  });
   it("validFunc accepts every outcome other than 404", async () => {
     // 404 is the only status a valid endpoint was never measured returning. Anything else,
     // including an unreachable server, must not block scaffolding.

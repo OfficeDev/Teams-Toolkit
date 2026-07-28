@@ -65,7 +65,7 @@ import { inputOrSearchAPISpecNode } from "./scaffold/commonNodes";
 import {
   MCPForDAAuthCredentialNodes,
   MCPForDAAuthTypeStaticOptions,
-  validateMCPServerUrlIsEndpoint,
+  validateMCPServerUrl,
 } from "./scaffold/vsc/teamsProjectTypeNode";
 
 export function convertAadToNewSchemaQuestionNode(): IQTreeNode {
@@ -723,7 +723,7 @@ export function addPluginQuestionNode(): IQTreeNode {
           additionalValidationOnAccept: {
             validFunc: async (value: string): Promise<string | undefined> => {
               if (!value) return undefined;
-              return await validateMCPServerUrlIsEndpoint(value);
+              return await validateMCPServerUrl(value);
             },
           },
         },

@@ -1347,6 +1347,20 @@ describe("addPluginQuestionNode", async () => {
 
     assert.isUndefined(await validFunc("https://waf.example.com/mcp", {} as Inputs));
   });
+
+  it("rejects an MCP server url that is not an absolute http(s) url", async () => {
+    const probeStub = vi.spyOn(teamsProjectTypeDeps, "probeMCPServerAuth");
+    const serverUrlNode = addPluginQuestionNode().children!.find(
+      (child) => child.data.name === QuestionNames.MCPForDAServerUrl
+    );
+    const validation = (serverUrlNode!.data as TextInputQuestion).additionalValidationOnAccept;
+    const validFunc = (validation as FuncValidation<string>).validFunc;
+
+    const result = await validFunc("taskmaster.example.com", {} as Inputs);
+    assert.isString(result);
+    assert.include(result as string, "https://");
+    assert.strictEqual(probeStub.mock.calls.length, 0);
+  });
 });
 
 describe("addKnowledgeQuestionNode", async () => {

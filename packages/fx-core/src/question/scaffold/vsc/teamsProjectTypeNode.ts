@@ -618,18 +618,31 @@ export function MCPForDAAuthCredentialNodes(): IQTreeNode[] {
 }
 
 /**
- * Reject an MCP server URL the server answered with 404.
+ * Reject an MCP server URL that cannot be one.
  *
- * ADR-0020: block only on 404, the one answer no valid MCP endpoint was ever measured
- * giving. The other `notEndpoint` shapes (403, 405, 200 without a JSON-RPC envelope) only
- * warn after scaffolding, because a 403 can come from a WAF sitting in front of a perfectly
- * good endpoint and wrongly blocking a legitimate URL is worse than missing a wrong one.
- * `undetermined` — 5xx, timeouts, unreachable hosts — never blocks, so scaffolding does not
- * fail closed because the network did.
+ * A value with no scheme never reaches the network: axios cannot build a request from it, so
+ * the probe throws, reports no status, and would be classified `undetermined` — letting a
+ * plainly malformed URL through. Rule it out syntactically first.
+ *
+ * ADR-0020: of the answers a server actually gives, block only on 404, the one no valid MCP
+ * endpoint was ever measured giving. The other `notEndpoint` shapes (403, 405, 200 without a
+ * JSON-RPC envelope) only warn after scaffolding, because a 403 can come from a WAF sitting in
+ * front of a perfectly good endpoint and wrongly blocking a legitimate URL is worse than
+ * missing a wrong one. `undetermined` — 5xx, timeouts, unreachable hosts — never blocks, so
+ * scaffolding does not fail closed because the network did.
  *
  * Shared by the create flow and the "add MCP server" action flow so both reject the same URLs.
  */
-export async function validateMCPServerUrlIsEndpoint(value: string): Promise<string | undefined> {
+export async function validateMCPServerUrl(value: string): Promise<string | undefined> {
+  let parsed: URL;
+  try {
+    parsed = new URL(value);
+  } catch {
+    return getLocalizedString("core.createProjectQuestion.mcpForDa.ServerUrl.invalidUrl");
+  }
+  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+    return getLocalizedString("core.createProjectQuestion.mcpForDa.ServerUrl.invalidUrl");
+  }
   const probe = await teamsProjectTypeDeps.probeMCPServerAuth(value);
   if (probe.endpointStatus === "notEndpoint" && probe.responseStatus === 404) {
     return getLocalizedString("core.createProjectQuestion.mcpForDa.ServerUrl.notAnMcpEndpoint");
@@ -648,7 +661,7 @@ export function MCPForDAServerUrlNode(): IQTreeNode {
       additionalValidationOnAccept: {
         validFunc: async (value: string, inputs?: Inputs): Promise<string | undefined> => {
           if (!value || !inputs) return undefined;
-          const rejection = await validateMCPServerUrlIsEndpoint(value);
+          const rejection = await validateMCPServerUrl(value);
           if (rejection) {
             return rejection;
           }
