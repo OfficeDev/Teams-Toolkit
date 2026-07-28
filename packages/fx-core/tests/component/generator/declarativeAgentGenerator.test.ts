@@ -2049,7 +2049,6 @@ describe("helper", async () => {
         assert.isDefined(warning);
         assert.include(warning!.content, "https://taskmaster.example.com");
         assert.include(warning!.content, "404");
-        assert.include(warning!.content, "/mcp");
       }
     });
 

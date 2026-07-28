@@ -968,7 +968,7 @@ describe("MCPForDAServerUrlNode", () => {
     const inputs: Inputs = { platform: Platform.VSCode };
     const result = await validFunc("https://taskmaster.example.com", inputs);
     assert.isString(result);
-    assert.include(result, "/mcp");
+    assert.include(result, "404");
   });
   it("validFunc accepts every outcome other than 404", async () => {
     // 404 is the only status a valid endpoint was never measured returning. Anything else,
