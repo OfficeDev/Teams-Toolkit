@@ -1,8 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-import { CLICommand, ok, Platform } from "@microsoft/teamsfx-api";
-import * as teamsfxCore from "@microsoft/teamsfx-core";
-import { Template } from "@microsoft/teamsfx-core/build/component/generator/templates/metadata/interface";
+import { CLICommand, ok } from "@microsoft/teamsfx-api";
+import { listAllTemplates, TemplateGroup } from "@microsoft/teamsfx-core";
 import chalk from "chalk";
 import Table from "cli-table3";
 import { logger } from "../../commonlib/logger";
@@ -10,42 +9,10 @@ import { commands } from "../../resource";
 import { TelemetryEvent } from "../../telemetry/cliTelemetryEvents";
 import { ListFormatOption } from "../common";
 
-interface TemplateGroup {
-  name: string;
-  alias?: string;
-  displayName: string;
-  description: string;
-  language: string;
-}
-
-export function listAllTemplates(): TemplateGroup[] {
-  let templates = teamsfxCore.getAllTemplatesOnPlatform(Platform.VSCode);
-  if (teamsfxCore.featureFlagManager.getBooleanValue(teamsfxCore.FeatureFlags.CLIDotNet)) {
-    templates = teamsfxCore.getAllTemplatesOnPlatform(Platform.VS);
-  }
-
-  return groupTemplatesByName(templates as Template[]);
-}
-
-export function groupTemplatesByName(templates: Template[]): TemplateGroup[] {
-  // Group by template name, ignoring programming language
-  const groupedTemplates = new Map<string, TemplateGroup>();
-
-  templates.forEach((template) => {
-    if (!groupedTemplates.has(template.name)) {
-      const templateWithDisplay = template as Template;
-      groupedTemplates.set(template.name, {
-        name: template.name,
-        alias: template.alias,
-        displayName: templateWithDisplay.displayName || template.alias || template.name,
-        description: template.description,
-        language: template.language,
-      });
-    }
-  });
-
-  return Array.from(groupedTemplates.values());
-}
+// Re-export fx-core's listAllTemplates so consumers (e.g. create.ts) can import
+// it through this module's namespace and stub it in unit tests. Binding the
+// fx-core function directly at a call site would remove that stubbing seam.
+export { listAllTemplates } from "@microsoft/teamsfx-core";
 
 export const listTemplatesCommand: CLICommand = {
   name: "templates",

@@ -3,7 +3,6 @@
 
 import { CLIContext } from "@microsoft/teamsfx-api";
 import { helpCommand, listSamplesCommand, listTemplatesCommand } from "../../src/commands/models";
-import * as listTemplatesModule from "../../src/commands/models/listTemplates";
 import * as utils from "../../src/utils";
 import { assert, vi } from "vitest";
 
@@ -52,32 +51,6 @@ describe("CLI read-only commands list", () => {
       };
       const res = await listTemplatesCommand.handler!(ctx);
       assert.isTrue(res.isOk());
-    });
-
-    it("groupTemplatesByName groups by name and falls back display name", async () => {
-      const templates = listTemplatesModule.groupTemplatesByName([
-        {
-          name: "dup-template",
-          alias: "dup-alias",
-          description: "desc 1",
-          language: "typescript",
-        },
-        {
-          name: "dup-template",
-          alias: "dup-alias-2",
-          description: "desc 2",
-          language: "javascript",
-        },
-        {
-          name: "no-alias-template",
-          description: "desc 3",
-          language: "typescript",
-        },
-      ] as any);
-
-      assert.equal(templates.length, 2);
-      assert.equal(templates[0].displayName, "dup-alias");
-      assert.equal(templates[1].displayName, "no-alias-template");
     });
   });
 
