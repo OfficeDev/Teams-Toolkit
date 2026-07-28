@@ -1126,7 +1126,7 @@
   "error.kiotaClient.EmptyResult": "Get empty result when parser OpenAPI description file.",
   "core.createProjectQuestion.mcpForDa.ServerUrl.title": "MCP Server URL",
   "core.createProjectQuestion.mcpForDa.ServerUrl.placeholder": "Enter your MCP server URL(e.g. https://example-mcp.com)",
-  "core.createProjectQuestion.mcpForDa.ServerUrl.notAnMcpEndpoint": "This is not an MCP server URL — the server returned 404 for an MCP initialize request. MCP server URLs commonly end with '/mcp'.",
+  "core.createProjectQuestion.mcpForDa.ServerUrl.notAnMcpEndpoint": "This is not an MCP server URL — the server returned 404 for an MCP initialize request. Check that the URL points to the server's MCP endpoint rather than its host; the endpoint path is often '/mcp'.",
   "core.createProjectQuestion.mcpForDa.PreFetchTools.title": "Select Operation(s) Copilot can interact with",
   "core.createProjectQuestion.mcpForDa.AuthType.title": "Select Authentication Type",
   "core.createProjectQuestion.mcpForDa.Auth.OAuth": "OAuth (with static registration)",
@@ -1185,6 +1185,6 @@
   "core.MCPForDA.toolsFileReadError": "Failed to read MCP tools file: %s. To add tools later, run:\n  %s",
   "core.MCPForDA.authRequired": "The MCP server at %s requires authentication. Tools could not be fetched automatically. To add tools, run:\n  %s",
   "core.MCPForDA.noToolsFetched": "No tools were discovered from the MCP server at %s. To add tools later, run:\n  %s",
-  "core.MCPForDA.mcpServerUrlNotAnEndpoint": "%s answered an MCP initialize request with HTTP %s, so it may not be an MCP server URL. MCP server URLs commonly end with '/mcp'. Verify the URL before provisioning.",
+  "core.MCPForDA.mcpServerUrlNotAnEndpoint": "%s answered an MCP initialize request with HTTP %s, so it may not be an MCP server URL. Check that the URL points to the server's MCP endpoint rather than its host; the endpoint path is often '/mcp'. Verify the URL before provisioning.",
   "core.MCPForDA.fetchError": "Failed to fetch tools from the MCP server at %s. To add tools later, run:\n  %s"
 }
