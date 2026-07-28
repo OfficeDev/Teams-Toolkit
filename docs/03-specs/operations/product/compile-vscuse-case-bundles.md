@@ -601,6 +601,14 @@ visible and selectable, then confirms it with Enter. Its only semantic parameter
 assertion sentences are authored directly in the template. It contains no product command,
 scaffold, lifecycle, or business question IDs.
 
+Both assertions name the `>` the palette keeps in its input box. VS Code renders every quick pick
+with the same frame, so a sentence that only describes an input box with a filtered list under it
+is equally true of the toolkit account menu, the environment picker, and every scaffold question,
+and the assertion agent reports such a sentence as satisfied on the wrong surface. The `>` is the
+one character that distinguishes the Command Palette from all of them, and the component's
+`type_text` appends the command title to it rather than replacing it, so the palette reads
+`>` followed by the exact title at the moment the second assertion runs.
+
 The scaffold recipe instantiates this component twice after case initialization and before
 the first scaffold quick-input component. It first executes
 `Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View`, because activating the
@@ -1011,6 +1019,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-45 | Given `scaffold`, compilation ends the operation by waiting for the README preview the toolkit opens for a freshly created project, so no later operation addresses a toolkit command or view before the reopened window has activated the extension that contributes it.                                                                                                                   |
 | VCB-46 | Given a `login` that is not the first sign-in of its case, compilation selects the sign-in component whose entry state is the account picker the earlier sign-in leaves behind, and fails when the account has no recorded sign-in for that entry state.                                                                                                                                    |
 | VCB-47 | Given any `login`, the sign-in adapter verifies the account in the ACCOUNTS section right after closing the browser, so no operation that follows starts with an account menu open over the window or with the account menu command promoted in the palette's recently used list.                                                                                                           |
+| VCB-48 | Given any executed command, both Command Palette assertions name the `>` the palette keeps in its input box, so neither is satisfied by another quick pick that VS Code draws with the same frame.                                                                                                                                                                                          |
 
 ## Boundary
 

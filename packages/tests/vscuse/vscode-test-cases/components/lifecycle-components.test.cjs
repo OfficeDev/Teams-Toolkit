@@ -126,6 +126,19 @@ test("VCB-47: Microsoft 365 sign-in verifies the account in the ACCOUNTS section
   }
 });
 
+test("VCB-48: Command Palette assertions name the > in the input box", () => {
+  const command = render("command-palette/execute-command.json.tpl");
+  const [, assertPalette, , assertCommand] = command.steps;
+
+  assert.equal(assertPalette.agent, "assertion");
+  assert.match(assertPalette.description, /a > character in its input box/);
+  assert.equal(assertCommand.agent, "assertion");
+  assert.match(
+    assertCommand.description,
+    />Debug: Select and Start Debugging and exactly one command titled Debug: Select and Start Debugging/,
+  );
+});
+
 test("lifecycle recipes have reusable confirmation and notification primitives", () => {
   const dialog = render("dialog/click-primary-action.json.tpl");
   assert.equal(dialog.component.id, "clickPrimaryAction");
