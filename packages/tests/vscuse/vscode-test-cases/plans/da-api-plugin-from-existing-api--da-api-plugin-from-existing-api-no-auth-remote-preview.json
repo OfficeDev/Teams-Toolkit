@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 113,
+    "total_steps": 108,
     "name": "da-api-plugin-from-existing-api-no-auth-remote-preview",
     "description": {
       "owner": "",
@@ -82,21 +82,16 @@
       "step_executeCommand_filter_c2579f408_3_1",
       "step_executeCommand_assertCommand_c2579f408_3_1",
       "step_executeCommand_execute_c2579f408_3_1",
-      "step_executeCommand_open_c2579f408_3_2",
-      "step_executeCommand_assertPalette_c2579f408_3_2",
-      "step_executeCommand_filter_c2579f408_3_2",
-      "step_executeCommand_assertCommand_c2579f408_3_2",
-      "step_executeCommand_execute_c2579f408_3_2",
-      "step_signInM365_assertOption_c2579f408_3_3",
-      "step_signInM365_selectOption_c2579f408_3_3",
-      "step_signInM365_confirmSignIn_c2579f408_3_3",
-      "step_signInM365_focusAccount_c2579f408_3_3",
-      "step_signInM365_typeAccount_c2579f408_3_3",
-      "step_signInM365_next_c2579f408_3_3",
-      "step_signInM365_typePassword_c2579f408_3_3",
-      "step_signInM365_submit_c2579f408_3_3",
-      "step_signInM365_closeBrowser_c2579f408_3_3",
-      "step_signInM365_assertReady_c2579f408_3_3",
+      "step_signInM365_assertOption_c2579f408_3_2",
+      "step_signInM365_selectOption_c2579f408_3_2",
+      "step_signInM365_confirmSignIn_c2579f408_3_2",
+      "step_signInM365_focusAccount_c2579f408_3_2",
+      "step_signInM365_typeAccount_c2579f408_3_2",
+      "step_signInM365_next_c2579f408_3_2",
+      "step_signInM365_typePassword_c2579f408_3_2",
+      "step_signInM365_submit_c2579f408_3_2",
+      "step_signInM365_closeBrowser_c2579f408_3_2",
+      "step_signInM365_assertReady_c2579f408_3_2",
       "step_executeCommand_open_c2579f408_4_1",
       "step_executeCommand_assertPalette_c2579f408_4_1",
       "step_executeCommand_filter_c2579f408_4_1",
@@ -1580,13 +1575,11 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_open_c2579f408_3_2",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "f1"
-      },
-      "description": "Press the F1 key to open the Command Palette in Visual Studio Code.",
+      "step_id": "step_signInM365_assertOption_c2579f408_3_2",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion Sign in to Microsoft 365 is visible in the ACCOUNTS section of the Microsoft 365 Agents Toolkit side bar.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1597,139 +1590,33 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "component:command-palette",
-        "action:execute-command"
-      ]
-    },
-    {
-      "step_id": "step_executeCommand_assertPalette_c2579f408_3_2",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the Visual Studio Code Command Palette is visible with a > character in its input box and is ready to accept a command search.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_executeCommand_open_c2579f408_3_2"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:command-palette",
-        "action:execute-command",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_executeCommand_filter_c2579f408_3_2",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "Microsoft 365 Agents: Accounts"
-      },
-      "description": "Type the resolved command title into the active Command Palette.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_executeCommand_assertPalette_c2579f408_3_2"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:command-palette",
-        "action:execute-command"
-      ]
-    },
-    {
-      "step_id": "step_executeCommand_assertCommand_c2579f408_3_2",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the Command Palette input box reads >Microsoft 365 Agents: Accounts and the highlighted command listed under it is titled Microsoft 365 Agents: Accounts.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_executeCommand_filter_c2579f408_3_2"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:command-palette",
-        "action:execute-command",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_executeCommand_execute_c2579f408_3_2",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press Enter to execute the selected Command Palette command.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_executeCommand_assertCommand_c2579f408_3_2"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:command-palette",
-        "action:execute-command"
-      ]
-    },
-    {
-      "step_id": "step_signInM365_assertOption_c2579f408_3_3",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion Sign in to Microsoft 365 is visible and selectable in the active account menu.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_executeCommand_execute_c2579f408_3_2"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
         "component:authentication",
         "account:m365",
-        "entry_state:account-menu-open",
+        "entry_state:toolkit-side-bar-visible",
         "step_retry_timeout: 30"
       ]
     },
     {
-      "step_id": "step_signInM365_selectOption_c2579f408_3_3",
+      "step_id": "step_signInM365_selectOption_c2579f408_3_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 379,
-        "y": 52
+        "x": 213,
+        "y": 102
       },
-      "description": "Click the \"Sign in to Microsoft 365\" option from the dropdown menu in the Microsoft 365 Agents Toolkit section of the Visual Studio Code interface.",
+      "description": "Click the \"Sign in to Microsoft 365\" entry in the ACCOUNTS section of the Microsoft 365 Agents Toolkit side bar.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_assertOption_c2579f408_3_3"
+        "step_signInM365_assertOption_c2579f408_3_2"
       ],
       "preconditions": [
-        "dhash:379:52:16:5:c6392121998d30ce",
-        "dhash:379:52:96:5:002058a020586020",
-        "dhash:379:52:0:10:c824222323232421"
+        "dhash:213:102:16:5:9c63d67674d4c718",
+        "dhash:213:102:96:5:8c512758d92c2cce",
+        "dhash:213:102:0:10:92c86223a3622421"
       ],
       "postconditions": [],
       "tags": [
@@ -1738,7 +1625,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_confirmSignIn_c2579f408_3_3",
+      "step_id": "step_signInM365_confirmSignIn_c2579f408_3_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -1752,7 +1639,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_selectOption_c2579f408_3_3"
+        "step_signInM365_selectOption_c2579f408_3_2"
       ],
       "preconditions": [
         "dhash:762:97:16:5:24b1a72ba9aba343",
@@ -1766,7 +1653,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_focusAccount_c2579f408_3_3",
+      "step_id": "step_signInM365_focusAccount_c2579f408_3_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -1780,7 +1667,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_confirmSignIn_c2579f408_3_3"
+        "step_signInM365_confirmSignIn_c2579f408_3_2"
       ],
       "preconditions": [
         "dhash:369:350:16:5:2113d25252525221",
@@ -1795,7 +1682,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_typeAccount_c2579f408_3_3",
+      "step_id": "step_signInM365_typeAccount_c2579f408_3_2",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1807,7 +1694,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_focusAccount_c2579f408_3_3"
+        "step_signInM365_focusAccount_c2579f408_3_2"
       ],
       "preconditions": [
         "dhash:512:384:0:20:1b28f0d9e7e6dae4"
@@ -1820,7 +1707,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_next_c2579f408_3_3",
+      "step_id": "step_signInM365_next_c2579f408_3_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -1834,7 +1721,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_typeAccount_c2579f408_3_3"
+        "step_signInM365_typeAccount_c2579f408_3_2"
       ],
       "preconditions": [
         "dhash:629:484:16:5:23248c4b6c24d32c",
@@ -1849,7 +1736,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_typePassword_c2579f408_3_3",
+      "step_id": "step_signInM365_typePassword_c2579f408_3_2",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1861,7 +1748,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_next_c2579f408_3_3"
+        "step_signInM365_next_c2579f408_3_2"
       ],
       "preconditions": [
         "dhash:512:384:0:20:1b08f0d9d1e6e6e4"
@@ -1874,7 +1761,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_submit_c2579f408_3_3",
+      "step_id": "step_signInM365_submit_c2579f408_3_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1886,7 +1773,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_typePassword_c2579f408_3_3"
+        "step_signInM365_typePassword_c2579f408_3_2"
       ],
       "preconditions": [
         "dhash:512:384:0:20:1b08f0d9d1e6e6e4"
@@ -1899,7 +1786,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_closeBrowser_c2579f408_3_3",
+      "step_id": "step_signInM365_closeBrowser_c2579f408_3_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -1913,7 +1800,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_submit_c2579f408_3_3"
+        "step_signInM365_submit_c2579f408_3_2"
       ],
       "preconditions": [
         "dhash:1004:19:16:5:aac833964c9633cc",
@@ -1928,7 +1815,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_assertReady_c2579f408_3_3",
+      "step_id": "step_signInM365_assertReady_c2579f408_3_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1938,7 +1825,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_closeBrowser_c2579f408_3_3"
+        "step_signInM365_closeBrowser_c2579f408_3_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1962,7 +1849,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_assertReady_c2579f408_3_3"
+        "step_signInM365_assertReady_c2579f408_3_2"
       ],
       "preconditions": [],
       "postconditions": [],

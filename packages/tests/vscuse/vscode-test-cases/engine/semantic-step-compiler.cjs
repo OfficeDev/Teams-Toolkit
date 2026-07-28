@@ -15,7 +15,6 @@ const provisionEnvironmentInput = "environment";
 const provisionEnvironmentSkipValue = "none";
 
 const commandTitles = {
-  accounts: "Microsoft 365 Agents: Accounts",
   create: "Microsoft 365 Agents: Create New Agent/App",
   deploy: "Microsoft 365 Agents: Deploy",
   // The toolkit contributes one side bar view per section and VS Code generates
@@ -529,30 +528,20 @@ function createSemanticStepCompiler() {
     const output = [];
     // Scaffolding reopens the workspace in a new window whose side bar defaults
     // to the Explorer, so the toolkit view container that owns the ACCOUNTS
-    // section is not showing. Show the container rather than focus the ACCOUNTS
-    // view, because the readiness assertion at the end of the account component
-    // reads the signed-in account from that section and the container renders it
-    // first. The per-view focus title carries the word Accounts, so it would
-    // still match the account command's palette filter one step later while
-    // sitting at the top of the recently used list; the container title carries
-    // no word that filter contains.
+    // section is not showing. Show the container and let the account components
+    // click the sign-in entry the ACCOUNTS section renders. The Command Palette
+    // cannot reach `Microsoft 365 Agents: Accounts`: VS Code generates
+    // `Microsoft 365 Agents Toolkit: Focus on Accounts View` from the ACCOUNTS
+    // view, every word of the account command's title is also a word of that
+    // generated title in the same order, so no filter text separates them, and
+    // which of the two the palette highlights moves with the palette's recently
+    // used list. The container title carries no word that would collide here,
+    // and the ACCOUNTS section it reveals labels its own entries, so the
+    // account components can name what they click.
     let error = append(
       output,
       render(state, "command-palette/execute-command.json.tpl", {
         commandTitle: commandTitles.showToolkit,
-      }),
-    );
-    if (error) return error;
-    // The account menu is opened through the shared command component, so the
-    // step that presses Enter is gated on the highlighted command being the
-    // Accounts command. Selecting a result by position would depend on how VS
-    // Code ranks the titles that share the filter text, and that ranking also
-    // moves once a command enters the palette's recently used list, which
-    // happens as soon as one case signs in twice.
-    error = append(
-      output,
-      render(state, "command-palette/execute-command.json.tpl", {
-        commandTitle: commandTitles.accounts,
       }),
     );
     if (error) return error;

@@ -12,7 +12,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion Sign in to Microsoft 365 is visible and selectable in the active account menu.",
+      "description": "@assertion Sign in to Microsoft 365 is visible in the ACCOUNTS section of the Microsoft 365 Agents Toolkit side bar.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -23,7 +23,7 @@
       "tags": [
         "component:authentication",
         "account:m365",
-        "entry_state:account-menu-open",
+        "entry_state:toolkit-side-bar-visible",
         "step_retry_timeout: 30"
       ]
     },
@@ -33,10 +33,10 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 379,
-        "y": 52
+        "x": 213,
+        "y": 102
       },
-      "description": "Click the \"Sign in to Microsoft 365\" option from the dropdown menu in the Microsoft 365 Agents Toolkit section of the Visual Studio Code interface.",
+      "description": "Click the \"Sign in to Microsoft 365\" entry in the ACCOUNTS section of the Microsoft 365 Agents Toolkit side bar.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -45,9 +45,9 @@
         "step_signInM365FromPicker_assertOption_{{text:instanceSuffix}}"
       ],
       "preconditions": [
-        "dhash:379:52:16:5:c6392121998d30ce",
-        "dhash:379:52:96:5:002058a020586020",
-        "dhash:379:52:0:10:c824222323232421"
+        "dhash:213:102:16:5:9c63d67674d4c718",
+        "dhash:213:102:96:5:8c512758d92c2cce",
+        "dhash:213:102:0:10:92c86223a3622421"
       ],
       "postconditions": [],
       "tags": ["component:authentication", "account:m365"]

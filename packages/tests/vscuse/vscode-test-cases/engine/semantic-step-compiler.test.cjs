@@ -247,7 +247,7 @@ test("VCB-41: scaffold closes the Welcome editor before the create command", asy
   assert.equal(closedIndex < createIndex, true);
 });
 
-test("VCB-42: login focuses the Accounts view before the account menu", async () => {
+test("VCB-42: login shows the side bar before the sign-in adapter runs", async () => {
   const result = await compileFixture(
     "da-api-plugin-from-scratch.yml",
     (sourceText) => sourceText,
@@ -257,12 +257,14 @@ test("VCB-42: login focuses the Accounts view before the account menu", async ()
   const descriptions = result.value[0].plan.steps.map(
     (step) => step.description,
   );
-  const accountMenuIndex = descriptions.indexOf(
-    "@assertion the Command Palette input box reads >Microsoft 365 Agents: Accounts and the highlighted command listed under it is titled Microsoft 365 Agents: Accounts.",
+  const entryIndex = descriptions.findIndex((description) =>
+    /^@assertion Sign in to .+ is visible in the ACCOUNTS section/.test(
+      description,
+    ),
   );
-  const focusIndex = descriptions.findLastIndex(
+  const showIndex = descriptions.findLastIndex(
     (description, index) =>
-      index < accountMenuIndex &&
+      index < entryIndex &&
       description ===
         "@assertion the Command Palette input box reads >View: Show Microsoft 365 Agents Toolkit and the highlighted command listed under it is titled View: Show Microsoft 365 Agents Toolkit.",
   );
@@ -271,16 +273,15 @@ test("VCB-42: login focuses the Accounts view before the account menu", async ()
   );
   const readinessIndex = descriptions.findIndex(
     (description, index) =>
-      index > accountMenuIndex &&
-      description.includes('in the "ACCOUNTS" section'),
+      index > entryIndex && description.includes('in the "ACCOUNTS" section'),
   );
 
-  // The focus must belong to the login block, not to the scaffold block that
-  // ran in the window scaffolding replaced.
-  assert.equal(accountMenuIndex >= 0, true);
-  assert.equal(createIndex < focusIndex, true);
-  assert.equal(focusIndex < accountMenuIndex, true);
-  assert.equal(accountMenuIndex < readinessIndex, true);
+  // The side bar step must belong to the login block, not to the scaffold block
+  // that ran in the window scaffolding replaced.
+  assert.equal(entryIndex >= 0, true);
+  assert.equal(createIndex < showIndex, true);
+  assert.equal(showIndex < entryIndex, true);
+  assert.equal(entryIndex < readinessIndex, true);
 });
 
 test("VCB-53: no login step selects a palette result by position", async () => {
@@ -292,22 +293,13 @@ test("VCB-53: no login step selects a palette result by position", async () => {
   assert.equal(result.ok, true);
   const steps = result.value[0].plan.steps;
 
-  // Two logins share one case, so the first one puts the account command in the
-  // palette's recently used list before the second one runs.
-  const accountMenuAssertions = steps.filter(
-    (step) =>
-      step.description ===
-      "@assertion the Command Palette input box reads >Microsoft 365 Agents: Accounts and the highlighted command listed under it is titled Microsoft 365 Agents: Accounts.",
-  );
-  assert.equal(accountMenuAssertions.length, 2);
-
   for (const step of steps) {
     assert.equal(/the second result/.test(step.description), false);
     assert.equal(/selectSecond/.test(step.step_id), false);
   }
 });
 
-test("VCB-54: the side bar step before a login carries no word the account filter matches", async () => {
+test("VCB-54: login opens the side bar with the container show command", async () => {
   const result = await compileFixture(
     "da-api-plugin-from-scratch.yml",
     (sourceText) => sourceText,
@@ -315,29 +307,52 @@ test("VCB-54: the side bar step before a login carries no word the account filte
 
   assert.equal(result.ok, true);
   const steps = result.value[0].plan.steps;
-  const accountFilter = "Microsoft 365 Agents: Accounts";
 
-  // The command that shows the side bar runs one component before the account
-  // command, so it is the most recently used command when the account filter is
-  // typed. Sharing a word with that filter would put it in the same result list
-  // at the top of the recently used order.
-  const filters = steps.filter((step) => step.tool === "type_text");
-  const accountFilterIndexes = filters
-    .map((step, index) => (step.parameters.text === accountFilter ? index : -1))
-    .filter((index) => index >= 0);
-  assert.equal(accountFilterIndexes.length, 2);
-
-  for (const index of accountFilterIndexes) {
-    const previous = filters[index - 1].parameters.text;
-    assert.equal(previous, "View: Show Microsoft 365 Agents Toolkit");
-    // Accounts is the word that decides whether a title is a candidate for this
-    // filter at all. The shared Microsoft 365 Agents prefix is not enough.
-    assert.equal(/accounts/i.test(previous), false);
-  }
+  // Two logins share one case, and each one shows the container that renders
+  // the ACCOUNTS section before its adapter clicks a sign-in entry.
+  const showFilters = steps.filter(
+    (step) =>
+      step.tool === "type_text" &&
+      step.parameters.text === "View: Show Microsoft 365 Agents Toolkit",
+  );
+  assert.equal(showFilters.length, 2);
 
   for (const step of steps) {
     assert.equal(/Focus on Accounts View/.test(step.description), false);
   }
+});
+
+test("VCB-57: login enters from the ACCOUNTS section, not the palette", async () => {
+  const result = await compileFixture(
+    "da-api-plugin-from-scratch.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const steps = result.value[0].plan.steps;
+
+  // Every word of `Microsoft 365 Agents: Accounts` is also a word of the
+  // `Microsoft 365 Agents Toolkit: Focus on Accounts View` command VS Code
+  // generates from the ACCOUNTS view, in the same order, so no filter text
+  // lists one without the other and the highlighted result is VS Code's choice.
+  for (const step of steps) {
+    assert.equal(
+      /Microsoft 365 Agents: Accounts/.test(step.parameters.text ?? ""),
+      false,
+    );
+    assert.equal(
+      /Microsoft 365 Agents: Accounts/.test(step.description),
+      false,
+    );
+  }
+
+  // Both logins enter from the labelled entry the ACCOUNTS section renders.
+  const entrySteps = steps.filter((step) =>
+    /^@assertion Sign in to .+ is visible in the ACCOUNTS section/.test(
+      step.description,
+    ),
+  );
+  assert.equal(entrySteps.length, 2);
 });
 
 test("DA scaffold filters its options before app name", async (context) => {

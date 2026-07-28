@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 159,
+    "total_steps": 149,
     "name": "weather-ts-azure-openai-remote-preview",
     "description": {
       "owner": "",
@@ -80,42 +80,32 @@
       "step_executeCommand_filter_cb4a8be87_3_1",
       "step_executeCommand_assertCommand_cb4a8be87_3_1",
       "step_executeCommand_execute_cb4a8be87_3_1",
-      "step_executeCommand_open_cb4a8be87_3_2",
-      "step_executeCommand_assertPalette_cb4a8be87_3_2",
-      "step_executeCommand_filter_cb4a8be87_3_2",
-      "step_executeCommand_assertCommand_cb4a8be87_3_2",
-      "step_executeCommand_execute_cb4a8be87_3_2",
-      "step_signInAzure_assertOption_cb4a8be87_3_3",
-      "step_signInAzure_selectOption_cb4a8be87_3_3",
-      "step_signInAzure_confirmSignIn_cb4a8be87_3_3",
-      "step_signInAzure_allow_cb4a8be87_3_3",
-      "step_signInAzure_focusAccount_cb4a8be87_3_3",
-      "step_signInAzure_typeAccount_cb4a8be87_3_3",
-      "step_signInAzure_next_cb4a8be87_3_3",
-      "step_signInAzure_typePassword_cb4a8be87_3_3",
-      "step_signInAzure_submit_cb4a8be87_3_3",
-      "step_signInAzure_closeBrowser_cb4a8be87_3_3",
-      "step_signInAzure_assertReady_cb4a8be87_3_3",
+      "step_signInAzure_assertOption_cb4a8be87_3_2",
+      "step_signInAzure_selectOption_cb4a8be87_3_2",
+      "step_signInAzure_confirmSignIn_cb4a8be87_3_2",
+      "step_signInAzure_allow_cb4a8be87_3_2",
+      "step_signInAzure_focusAccount_cb4a8be87_3_2",
+      "step_signInAzure_typeAccount_cb4a8be87_3_2",
+      "step_signInAzure_next_cb4a8be87_3_2",
+      "step_signInAzure_typePassword_cb4a8be87_3_2",
+      "step_signInAzure_submit_cb4a8be87_3_2",
+      "step_signInAzure_closeBrowser_cb4a8be87_3_2",
+      "step_signInAzure_assertReady_cb4a8be87_3_2",
       "step_executeCommand_open_cb4a8be87_4_1",
       "step_executeCommand_assertPalette_cb4a8be87_4_1",
       "step_executeCommand_filter_cb4a8be87_4_1",
       "step_executeCommand_assertCommand_cb4a8be87_4_1",
       "step_executeCommand_execute_cb4a8be87_4_1",
-      "step_executeCommand_open_cb4a8be87_4_2",
-      "step_executeCommand_assertPalette_cb4a8be87_4_2",
-      "step_executeCommand_filter_cb4a8be87_4_2",
-      "step_executeCommand_assertCommand_cb4a8be87_4_2",
-      "step_executeCommand_execute_cb4a8be87_4_2",
-      "step_signInM365FromPicker_assertOption_cb4a8be87_4_3",
-      "step_signInM365FromPicker_selectOption_cb4a8be87_4_3",
-      "step_signInM365FromPicker_confirmSignIn_cb4a8be87_4_3",
-      "step_signInM365FromPicker_useAnotherAccount_cb4a8be87_4_3",
-      "step_signInM365FromPicker_typeAccount_cb4a8be87_4_3",
-      "step_signInM365FromPicker_next_cb4a8be87_4_3",
-      "step_signInM365FromPicker_typePassword_cb4a8be87_4_3",
-      "step_signInM365FromPicker_submit_cb4a8be87_4_3",
-      "step_signInM365FromPicker_closeBrowser_cb4a8be87_4_3",
-      "step_signInM365FromPicker_assertReady_cb4a8be87_4_3",
+      "step_signInM365FromPicker_assertOption_cb4a8be87_4_2",
+      "step_signInM365FromPicker_selectOption_cb4a8be87_4_2",
+      "step_signInM365FromPicker_confirmSignIn_cb4a8be87_4_2",
+      "step_signInM365FromPicker_useAnotherAccount_cb4a8be87_4_2",
+      "step_signInM365FromPicker_typeAccount_cb4a8be87_4_2",
+      "step_signInM365FromPicker_next_cb4a8be87_4_2",
+      "step_signInM365FromPicker_typePassword_cb4a8be87_4_2",
+      "step_signInM365FromPicker_submit_cb4a8be87_4_2",
+      "step_signInM365FromPicker_closeBrowser_cb4a8be87_4_2",
+      "step_signInM365FromPicker_assertReady_cb4a8be87_4_2",
       "step_executeCommand_open_cb4a8be87_5_1",
       "step_executeCommand_assertPalette_cb4a8be87_5_1",
       "step_executeCommand_filter_cb4a8be87_5_1",
@@ -1582,13 +1572,11 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_open_cb4a8be87_3_2",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "f1"
-      },
-      "description": "Press the F1 key to open the Command Palette in Visual Studio Code.",
+      "step_id": "step_signInAzure_assertOption_cb4a8be87_3_2",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion Sign in to Azure is visible in the ACCOUNTS section of the Microsoft 365 Agents Toolkit side bar.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1599,139 +1587,33 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "component:command-palette",
-        "action:execute-command"
-      ]
-    },
-    {
-      "step_id": "step_executeCommand_assertPalette_cb4a8be87_3_2",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the Visual Studio Code Command Palette is visible with a > character in its input box and is ready to accept a command search.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_executeCommand_open_cb4a8be87_3_2"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:command-palette",
-        "action:execute-command",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_executeCommand_filter_cb4a8be87_3_2",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "Microsoft 365 Agents: Accounts"
-      },
-      "description": "Type the resolved command title into the active Command Palette.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_executeCommand_assertPalette_cb4a8be87_3_2"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:command-palette",
-        "action:execute-command"
-      ]
-    },
-    {
-      "step_id": "step_executeCommand_assertCommand_cb4a8be87_3_2",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the Command Palette input box reads >Microsoft 365 Agents: Accounts and the highlighted command listed under it is titled Microsoft 365 Agents: Accounts.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_executeCommand_filter_cb4a8be87_3_2"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:command-palette",
-        "action:execute-command",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_executeCommand_execute_cb4a8be87_3_2",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press Enter to execute the selected Command Palette command.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_executeCommand_assertCommand_cb4a8be87_3_2"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:command-palette",
-        "action:execute-command"
-      ]
-    },
-    {
-      "step_id": "step_signInAzure_assertOption_cb4a8be87_3_3",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion Sign in to Azure is visible and selectable in the active account menu.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_executeCommand_execute_cb4a8be87_3_2"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
         "component:authentication",
         "account:azure",
-        "entry_state:account-menu-open",
+        "entry_state:toolkit-side-bar-visible",
         "step_retry_timeout: 30"
       ]
     },
     {
-      "step_id": "step_signInAzure_selectOption_cb4a8be87_3_3",
+      "step_id": "step_signInAzure_selectOption_cb4a8be87_3_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 349,
-        "y": 79
+        "x": 165,
+        "y": 127
       },
-      "description": "Click the \"Sign in to Azure\" dropdown option in the Visual Studio Code command palette to initiate Microsoft 365 authentication.",
+      "description": "Click the \"Sign in to Azure\" entry in the ACCOUNTS section of the Microsoft 365 Agents Toolkit side bar.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInAzure_assertOption_cb4a8be87_3_3"
+        "step_signInAzure_assertOption_cb4a8be87_3_2"
       ],
       "preconditions": [
-        "dhash:349:79:16:5:0000000000000000",
-        "dhash:349:79:96:5:8b54644b0c644498",
-        "dhash:349:79:0:10:c8602223a3222421"
+        "dhash:165:127:16:5:5819353567ef55aa",
+        "dhash:165:127:96:5:2cd1259b9b941a6a",
+        "dhash:165:127:0:10:a2942223a3222421"
       ],
       "postconditions": [],
       "tags": [
@@ -1740,7 +1622,7 @@
       ]
     },
     {
-      "step_id": "step_signInAzure_confirmSignIn_cb4a8be87_3_3",
+      "step_id": "step_signInAzure_confirmSignIn_cb4a8be87_3_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -1754,7 +1636,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInAzure_selectOption_cb4a8be87_3_3"
+        "step_signInAzure_selectOption_cb4a8be87_3_2"
       ],
       "preconditions": [
         "dhash:534:98:16:5:554a54555555468f",
@@ -1768,7 +1650,7 @@
       ]
     },
     {
-      "step_id": "step_signInAzure_allow_cb4a8be87_3_3",
+      "step_id": "step_signInAzure_allow_cb4a8be87_3_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -1782,7 +1664,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInAzure_confirmSignIn_cb4a8be87_3_3"
+        "step_signInAzure_confirmSignIn_cb4a8be87_3_2"
       ],
       "preconditions": [
         "dhash:457:96:16:5:524d5552564cb3ca",
@@ -1796,7 +1678,7 @@
       ]
     },
     {
-      "step_id": "step_signInAzure_focusAccount_cb4a8be87_3_3",
+      "step_id": "step_signInAzure_focusAccount_cb4a8be87_3_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -1810,7 +1692,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInAzure_allow_cb4a8be87_3_3"
+        "step_signInAzure_allow_cb4a8be87_3_2"
       ],
       "preconditions": [
         "dhash:432:327:16:5:114c134b4a13b2cc",
@@ -1825,7 +1707,7 @@
       ]
     },
     {
-      "step_id": "step_signInAzure_typeAccount_cb4a8be87_3_3",
+      "step_id": "step_signInAzure_typeAccount_cb4a8be87_3_2",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1837,7 +1719,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInAzure_focusAccount_cb4a8be87_3_3"
+        "step_signInAzure_focusAccount_cb4a8be87_3_2"
       ],
       "preconditions": [
         "dhash:512:384:0:20:1b28d0d9e7e4dae4"
@@ -1850,7 +1732,7 @@
       ]
     },
     {
-      "step_id": "step_signInAzure_next_cb4a8be87_3_3",
+      "step_id": "step_signInAzure_next_cb4a8be87_3_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -1864,7 +1746,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInAzure_typeAccount_cb4a8be87_3_3"
+        "step_signInAzure_typeAccount_cb4a8be87_3_2"
       ],
       "preconditions": [
         "dhash:631:462:16:5:0000000091000000",
@@ -1879,7 +1761,7 @@
       ]
     },
     {
-      "step_id": "step_signInAzure_typePassword_cb4a8be87_3_3",
+      "step_id": "step_signInAzure_typePassword_cb4a8be87_3_2",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1891,7 +1773,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInAzure_next_cb4a8be87_3_3"
+        "step_signInAzure_next_cb4a8be87_3_2"
       ],
       "preconditions": [
         "dhash:512:384:0:20:1908f0d9d1e6e6e4"
@@ -1905,7 +1787,7 @@
       ]
     },
     {
-      "step_id": "step_signInAzure_submit_cb4a8be87_3_3",
+      "step_id": "step_signInAzure_submit_cb4a8be87_3_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1917,7 +1799,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInAzure_typePassword_cb4a8be87_3_3"
+        "step_signInAzure_typePassword_cb4a8be87_3_2"
       ],
       "preconditions": [
         "dhash:512:384:0:20:1908f0d9d1e6e6e4"
@@ -1930,7 +1812,7 @@
       ]
     },
     {
-      "step_id": "step_signInAzure_closeBrowser_cb4a8be87_3_3",
+      "step_id": "step_signInAzure_closeBrowser_cb4a8be87_3_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -1944,7 +1826,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInAzure_submit_cb4a8be87_3_3"
+        "step_signInAzure_submit_cb4a8be87_3_2"
       ],
       "preconditions": [
         "dhash:991:18:16:5:b020624245454242",
@@ -1959,7 +1841,7 @@
       ]
     },
     {
-      "step_id": "step_signInAzure_assertReady_cb4a8be87_3_3",
+      "step_id": "step_signInAzure_assertReady_cb4a8be87_3_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1969,7 +1851,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInAzure_closeBrowser_cb4a8be87_3_3"
+        "step_signInAzure_closeBrowser_cb4a8be87_3_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1993,7 +1875,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInAzure_assertReady_cb4a8be87_3_3"
+        "step_signInAzure_assertReady_cb4a8be87_3_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2089,13 +1971,11 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_open_cb4a8be87_4_2",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "f1"
-      },
-      "description": "Press the F1 key to open the Command Palette in Visual Studio Code.",
+      "step_id": "step_signInM365FromPicker_assertOption_cb4a8be87_4_2",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion Sign in to Microsoft 365 is visible in the ACCOUNTS section of the Microsoft 365 Agents Toolkit side bar.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -2106,139 +1986,33 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "component:command-palette",
-        "action:execute-command"
-      ]
-    },
-    {
-      "step_id": "step_executeCommand_assertPalette_cb4a8be87_4_2",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the Visual Studio Code Command Palette is visible with a > character in its input box and is ready to accept a command search.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_executeCommand_open_cb4a8be87_4_2"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:command-palette",
-        "action:execute-command",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_executeCommand_filter_cb4a8be87_4_2",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "Microsoft 365 Agents: Accounts"
-      },
-      "description": "Type the resolved command title into the active Command Palette.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_executeCommand_assertPalette_cb4a8be87_4_2"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:command-palette",
-        "action:execute-command"
-      ]
-    },
-    {
-      "step_id": "step_executeCommand_assertCommand_cb4a8be87_4_2",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the Command Palette input box reads >Microsoft 365 Agents: Accounts and the highlighted command listed under it is titled Microsoft 365 Agents: Accounts.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_executeCommand_filter_cb4a8be87_4_2"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:command-palette",
-        "action:execute-command",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_executeCommand_execute_cb4a8be87_4_2",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press Enter to execute the selected Command Palette command.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_executeCommand_assertCommand_cb4a8be87_4_2"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:command-palette",
-        "action:execute-command"
-      ]
-    },
-    {
-      "step_id": "step_signInM365FromPicker_assertOption_cb4a8be87_4_3",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion Sign in to Microsoft 365 is visible and selectable in the active account menu.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_executeCommand_execute_cb4a8be87_4_2"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
         "component:authentication",
         "account:m365",
-        "entry_state:account-menu-open",
+        "entry_state:toolkit-side-bar-visible",
         "step_retry_timeout: 30"
       ]
     },
     {
-      "step_id": "step_signInM365FromPicker_selectOption_cb4a8be87_4_3",
+      "step_id": "step_signInM365FromPicker_selectOption_cb4a8be87_4_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 379,
-        "y": 52
+        "x": 213,
+        "y": 102
       },
-      "description": "Click the \"Sign in to Microsoft 365\" option from the dropdown menu in the Microsoft 365 Agents Toolkit section of the Visual Studio Code interface.",
+      "description": "Click the \"Sign in to Microsoft 365\" entry in the ACCOUNTS section of the Microsoft 365 Agents Toolkit side bar.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365FromPicker_assertOption_cb4a8be87_4_3"
+        "step_signInM365FromPicker_assertOption_cb4a8be87_4_2"
       ],
       "preconditions": [
-        "dhash:379:52:16:5:c6392121998d30ce",
-        "dhash:379:52:96:5:002058a020586020",
-        "dhash:379:52:0:10:c824222323232421"
+        "dhash:213:102:16:5:9c63d67674d4c718",
+        "dhash:213:102:96:5:8c512758d92c2cce",
+        "dhash:213:102:0:10:92c86223a3622421"
       ],
       "postconditions": [],
       "tags": [
@@ -2247,7 +2021,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365FromPicker_confirmSignIn_cb4a8be87_4_3",
+      "step_id": "step_signInM365FromPicker_confirmSignIn_cb4a8be87_4_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -2261,7 +2035,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365FromPicker_selectOption_cb4a8be87_4_3"
+        "step_signInM365FromPicker_selectOption_cb4a8be87_4_2"
       ],
       "preconditions": [
         "dhash:762:97:16:5:24b1a72ba9aba343",
@@ -2275,7 +2049,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365FromPicker_useAnotherAccount_cb4a8be87_4_3",
+      "step_id": "step_signInM365FromPicker_useAnotherAccount_cb4a8be87_4_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -2289,7 +2063,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365FromPicker_confirmSignIn_cb4a8be87_4_3"
+        "step_signInM365FromPicker_confirmSignIn_cb4a8be87_4_2"
       ],
       "preconditions": [
         "dhash:447:487:16:5:ac534b4aaaaa6a15",
@@ -2304,7 +2078,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365FromPicker_typeAccount_cb4a8be87_4_3",
+      "step_id": "step_signInM365FromPicker_typeAccount_cb4a8be87_4_2",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -2316,7 +2090,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365FromPicker_useAnotherAccount_cb4a8be87_4_3"
+        "step_signInM365FromPicker_useAnotherAccount_cb4a8be87_4_2"
       ],
       "preconditions": [
         "dhash:512:384:0:20:1392f8d8c6e6dae4"
@@ -2329,7 +2103,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365FromPicker_next_cb4a8be87_4_3",
+      "step_id": "step_signInM365FromPicker_next_cb4a8be87_4_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -2343,7 +2117,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365FromPicker_typeAccount_cb4a8be87_4_3"
+        "step_signInM365FromPicker_typeAccount_cb4a8be87_4_2"
       ],
       "preconditions": [
         "dhash:655:505:16:5:0000000080400020",
@@ -2358,7 +2132,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365FromPicker_typePassword_cb4a8be87_4_3",
+      "step_id": "step_signInM365FromPicker_typePassword_cb4a8be87_4_2",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -2370,7 +2144,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365FromPicker_next_cb4a8be87_4_3"
+        "step_signInM365FromPicker_next_cb4a8be87_4_2"
       ],
       "preconditions": [
         "dhash:512:384:0:20:1392e8d8d9f6e6e4"
@@ -2383,7 +2157,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365FromPicker_submit_cb4a8be87_4_3",
+      "step_id": "step_signInM365FromPicker_submit_cb4a8be87_4_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2395,7 +2169,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365FromPicker_typePassword_cb4a8be87_4_3"
+        "step_signInM365FromPicker_typePassword_cb4a8be87_4_2"
       ],
       "preconditions": [
         "dhash:512:384:0:20:1392e8d8d9f6e6e4"
@@ -2408,7 +2182,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365FromPicker_closeBrowser_cb4a8be87_4_3",
+      "step_id": "step_signInM365FromPicker_closeBrowser_cb4a8be87_4_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -2422,7 +2196,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365FromPicker_submit_cb4a8be87_4_3"
+        "step_signInM365FromPicker_submit_cb4a8be87_4_2"
       ],
       "preconditions": [
         "dhash:1008:19:16:5:a322c95a325ac922",
@@ -2437,7 +2211,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365FromPicker_assertReady_cb4a8be87_4_3",
+      "step_id": "step_signInM365FromPicker_assertReady_cb4a8be87_4_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2447,7 +2221,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365FromPicker_closeBrowser_cb4a8be87_4_3"
+        "step_signInM365FromPicker_closeBrowser_cb4a8be87_4_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2471,7 +2245,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365FromPicker_assertReady_cb4a8be87_4_3"
+        "step_signInM365FromPicker_assertReady_cb4a8be87_4_2"
       ],
       "preconditions": [],
       "postconditions": [],

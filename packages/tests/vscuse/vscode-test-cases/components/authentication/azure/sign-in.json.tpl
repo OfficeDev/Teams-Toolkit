@@ -12,7 +12,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion Sign in to Azure is visible and selectable in the active account menu.",
+      "description": "@assertion Sign in to Azure is visible in the ACCOUNTS section of the Microsoft 365 Agents Toolkit side bar.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -23,7 +23,7 @@
       "tags": [
         "component:authentication",
         "account:azure",
-        "entry_state:account-menu-open",
+        "entry_state:toolkit-side-bar-visible",
         "step_retry_timeout: 30"
       ]
     },
@@ -33,19 +33,19 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 349,
-        "y": 79
+        "x": 165,
+        "y": 127
       },
-      "description": "Click the \"Sign in to Azure\" dropdown option in the Visual Studio Code command palette to initiate Microsoft 365 authentication.",
+      "description": "Click the \"Sign in to Azure\" entry in the ACCOUNTS section of the Microsoft 365 Agents Toolkit side bar.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": ["step_signInAzure_assertOption_{{text:instanceSuffix}}"],
       "preconditions": [
-        "dhash:349:79:16:5:0000000000000000",
-        "dhash:349:79:96:5:8b54644b0c644498",
-        "dhash:349:79:0:10:c8602223a3222421"
+        "dhash:165:127:16:5:5819353567ef55aa",
+        "dhash:165:127:96:5:2cd1259b9b941a6a",
+        "dhash:165:127:0:10:a2942223a3222421"
       ],
       "postconditions": [],
       "tags": [
