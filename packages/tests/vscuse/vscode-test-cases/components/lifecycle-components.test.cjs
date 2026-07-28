@@ -160,15 +160,16 @@ test("VCB-48: Command Palette assertions name the > in the input box", () => {
   assert.match(assertCommand.description, />Debug: Select and Start Debugging/);
 });
 
-test("VCB-52: the command assertion names the first result, not a result count", () => {
+test("VCB-52: the command assertion names the highlight, not a count or a position", () => {
   const command = render("command-palette/execute-command.json.tpl");
   const assertCommand = command.steps[3];
 
   assert.match(
     assertCommand.description,
-    /the first command listed under it is titled Debug: Select and Start Debugging and is highlighted/,
+    /the highlighted command listed under it is titled Debug: Select and Start Debugging/,
   );
   assert.equal(/exactly one/.test(assertCommand.description), false);
+  assert.equal(/first|second/.test(assertCommand.description), false);
 });
 
 test("lifecycle recipes have reusable confirmation and notification primitives", () => {
