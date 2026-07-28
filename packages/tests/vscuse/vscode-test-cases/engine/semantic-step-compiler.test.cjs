@@ -247,7 +247,7 @@ test("VCB-41: scaffold closes the Get Started editor before the create command",
   assert.equal(closedIndex < createIndex, true);
 });
 
-test("VCB-42: login focuses the toolkit view before the account menu", async () => {
+test("VCB-42: login focuses the Accounts view before the account menu", async () => {
   const result = await compileFixture(
     "da-api-plugin-from-scratch.yml",
     (sourceText) => sourceText,
@@ -264,7 +264,7 @@ test("VCB-42: login focuses the toolkit view before the account menu", async () 
     (description, index) =>
       index < accountMenuIndex &&
       description ===
-        "@assertion exactly one command titled Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View is visible and selectable in the active Command Palette.",
+        "@assertion exactly one command titled Microsoft 365 Agents Toolkit: Focus on Accounts View is visible and selectable in the active Command Palette.",
   );
   const createIndex = descriptions.indexOf(
     "@assertion exactly one command titled Microsoft 365 Agents: Create New Agent/App is visible and selectable in the active Command Palette.",

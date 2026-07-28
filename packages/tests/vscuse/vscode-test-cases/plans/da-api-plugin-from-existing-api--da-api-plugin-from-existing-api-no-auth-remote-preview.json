@@ -1484,7 +1484,7 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View"
+        "text": "Microsoft 365 Agents Toolkit: Focus on Accounts View"
       },
       "description": "Type the resolved command title into the active Command Palette.",
       "content_refs": [],
@@ -1506,7 +1506,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion exactly one command titled Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View is visible and selectable in the active Command Palette.",
+      "description": "@assertion exactly one command titled Microsoft 365 Agents Toolkit: Focus on Accounts View is visible and selectable in the active Command Palette.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

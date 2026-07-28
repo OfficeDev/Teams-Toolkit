@@ -640,11 +640,18 @@ following authored `open` resolves a separate adapter.
 
 ## Account Sign-In Component Contract
 
-Azure and Microsoft 365 sign-in recipes first execute the toolkit-view focus command through
+Azure and Microsoft 365 sign-in recipes first execute
+`Microsoft 365 Agents Toolkit: Focus on Accounts View` through
 `command-palette/execute-command.json.tpl`. Scaffolding reopens the workspace in a new window whose
 side bar defaults to the Explorer, so the toolkit tree view that owns the ACCOUNTS section is not
 showing, and the readiness assertion at the end of each adapter reads the signed-in account from
 that section.
+
+The title differs from the one case initialization uses because the toolkit contributes one view per
+side bar section and VS Code generates a focus command per view, gated on `fx-extension.isTeamsFx`.
+An empty workspace shows only the `Microsoft 365 Agents Toolkit` welcome view, and a scaffolded
+workspace hides it and shows Accounts, Environment, Development, Lifecycle, Utility, and
+Help and feedback instead, so neither title resolves in the other window.
 
 The recipes then instantiate
 `authentication/open-account-menu.json.tpl`. The component uses F1, filters by the canonical
@@ -963,7 +970,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-39 | Given `deploy`, compilation emits environment selection under the same contract as `provision`, omits it for `deploy.with.environment: none`, and fails before plan output for any other environment value or any other deploy input.                                                                                                                                                       |
 | VCB-40 | Given a lifecycle operation that selects an environment, compilation emits that selection before every operation-owned prompt, matching the toolkit resolving the environment in middleware that wraps the command body.                                                                                                                                                                    |
 | VCB-41 | Given `scaffold`, compilation closes the toolkit Get Started editor and asserts no editor tab remains open, after the toolkit view has settled and before the create command, so no editor can reclaim keyboard focus from the first scaffold quick pick, which `ignoreFocusOut` would otherwise leave visible but unable to receive its filter keystrokes.                                 |
-| VCB-42 | Given `login`, compilation focuses the toolkit view before opening the account menu, so the ACCOUNTS section the readiness assertion reads is showing in the window scaffolding opened, whose side bar defaults to the Explorer.                                                                                                                                                            |
+| VCB-42 | Given `login`, compilation focuses the Accounts view before opening the account menu, so the ACCOUNTS section the readiness assertion reads is showing in the window scaffolding opened, whose side bar defaults to the Explorer and whose focus commands differ from the pre-scaffold window's.                                                                                            |
 | VCB-43 | Given a target profile, the readiness assertion names the app by the unique prefix the case authored rather than the fully composed manifest name, so one subject holds across templates that append `APP_NAME_SUFFIX` and templates that do not, and across environments that resolve that suffix differently.                                                                             |
 
 ## Boundary

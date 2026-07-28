@@ -17,6 +17,14 @@ const provisionEnvironmentSkipValue = "none";
 const commandTitles = {
   create: "Microsoft 365 Agents: Create New Agent/App",
   deploy: "Microsoft 365 Agents: Deploy",
+  // The toolkit contributes one side bar view per section and VS Code generates
+  // one focus command per view, so which focus commands exist depends on
+  // `fx-extension.isTeamsFx`. The empty workspace a case starts in shows only
+  // the `Microsoft 365 Agents Toolkit` welcome view, and the window scaffolding
+  // opens hides that view and shows Accounts, Environment, Development,
+  // Lifecycle, Utility, and Help and feedback instead. Neither title resolves in
+  // the other window.
+  focusAccountsView: "Microsoft 365 Agents Toolkit: Focus on Accounts View",
   focusToolkitView:
     "Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View",
   notifications: "Notifications: Show Notifications",
@@ -520,12 +528,14 @@ function createSemanticStepCompiler() {
     const output = [];
     // Scaffolding reopens the workspace in a new window whose side bar defaults
     // to the Explorer, so the toolkit tree view that owns the ACCOUNTS section
-    // is not showing. Focus it here, because the readiness assertion at the end
-    // of the account component reads the signed-in account from that section.
+    // is not showing. Focus that section directly, because the readiness
+    // assertion at the end of the account component reads the signed-in account
+    // from it, and because the welcome view the empty workspace focuses no
+    // longer exists once the workspace is a toolkit project.
     let error = append(
       output,
       render(state, "command-palette/execute-command.json.tpl", {
-        commandTitle: commandTitles.focusToolkitView,
+        commandTitle: commandTitles.focusAccountsView,
       }),
     );
     if (error) return error;
