@@ -917,7 +917,11 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [],
+      "preconditions": [
+        "dhash:484:51:16:5:0000000000000000",
+        "dhash:484:51:96:5:0000600000000000",
+        "dhash:484:51:0:10:242122a3a322242c"
+      ],
       "postconditions": [],
       "tags": [
         "precondition_wait_timeout: 120"
