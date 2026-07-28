@@ -139,19 +139,26 @@ test("VCB-49: Ctrl+W is gated on the Welcome tab being the active editor", () =>
   assert.match(assertClosed.description, /no editor tab is open/);
 });
 
-test("VCB-50: the multi-select component ends on the checked checkbox", () => {
+test("VCB-50: the multi-select component selects by control, not by position", () => {
   const multiSelect = render("quick-input/multi-select.json.tpl");
-  const assertSelected = multiSelect.steps.at(-1);
+  const [, focusSelectAll, selectAll, assertSelected, confirm] =
+    multiSelect.steps;
 
+  assert.equal(multiSelect.steps.length, 5);
+  assert.equal(focusSelectAll.parameters.keys, "shift+tab");
+  assert.equal(selectAll.parameters.key, "space");
   assert.equal(assertSelected.agent, "assertion");
+  assert.match(assertSelected.description, /every option listed/);
   assert.match(assertSelected.description, /has a checked checkbox/);
+  assert.equal(confirm.parameters.key, "enter");
 
-  // No keystroke clears a quick pick filter without also addressing its
-  // checkbox list, so the component leaves the filter in place rather than
-  // ending on a keystroke it cannot verify.
+  // The prompt lists whatever the resource behind the earlier answers exposes,
+  // so the component may neither type a filter, nor step the list, nor name a
+  // count.
   for (const step of multiSelect.steps) {
-    assert.notEqual(step.parameters.keys, "ctrl+a");
-    assert.notEqual(step.parameters.key, "backspace");
+    assert.notEqual(step.tool, "type_text");
+    assert.notEqual(step.parameters.key, "down");
+    assert.equal(/\bSelected\b/.test(step.description), false);
   }
 });
 

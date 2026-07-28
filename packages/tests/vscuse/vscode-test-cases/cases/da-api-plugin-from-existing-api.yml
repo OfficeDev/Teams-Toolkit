@@ -70,7 +70,7 @@ steps:
           value: https://raw.githubusercontent.com/Alive-Fish/example-openapi-spec/main/real-no-auth.yaml
         - question: apiOperations
           type: multiSelect
-          value: ["GET /repairs"]
+          value: all
         - question: workspaceFolder
           value: default
         - question: appName
@@ -95,7 +95,7 @@ steps:
           value: https://raw.githubusercontent.com/SLdragon/example-openapi-spec/refs/heads/main/real-custom-api-key.yaml
         - question: apiOperations
           type: multiSelect
-          value: ["GET /repairs"]
+          value: all
         - question: workspaceFolder
           value: default
         - question: appName
@@ -120,7 +120,7 @@ steps:
           value: https://raw.githubusercontent.com/SLdragon/example-openapi-spec/refs/heads/main/real-bearer.yaml
         - question: apiOperations
           type: multiSelect
-          value: ["GET /repair"]
+          value: all
         - question: workspaceFolder
           value: default
         - question: appName
@@ -145,7 +145,7 @@ steps:
           value: https://raw.githubusercontent.com/SLdragon/example-openapi-spec/refs/heads/main/real-oauth.yaml
         - question: apiOperations
           type: multiSelect
-          value: ["GET /repairs"]
+          value: all
         - question: workspaceFolder
           value: default
         - question: appName

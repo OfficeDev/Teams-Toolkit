@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 117,
+    "total_steps": 113,
     "name": "da-api-plugin-from-existing-api-api-key-remote-preview",
     "description": {
       "owner": "",
@@ -53,20 +53,16 @@
       "step_textInput_input_c8af7aec5_1_10",
       "step_textInput_confirm_c8af7aec5_1_10",
       "step_multiSelect_assertQuestion_c8af7aec5_1_11",
-      "step_multiSelect_filter_c8af7aec5_1_11",
-      "step_multiSelect_assertOption_c8af7aec5_1_11",
-      "step_multiSelect_focusOption_c8af7aec5_1_11",
-      "step_multiSelect_assertFocused_c8af7aec5_1_11",
-      "step_multiSelect_toggle_c8af7aec5_1_11",
+      "step_multiSelect_focusSelectAll_c8af7aec5_1_11",
+      "step_multiSelect_selectAll_c8af7aec5_1_11",
       "step_multiSelect_assertSelected_c8af7aec5_1_11",
-      "step_multiSelectConfirm_assertQuestion_c8af7aec5_1_12",
-      "step_multiSelectConfirm_confirm_c8af7aec5_1_12",
-      "step_confirmOption_assertPrompt_c8af7aec5_1_13",
-      "step_confirmOption_confirm_c8af7aec5_1_13",
-      "step_textInput_assertQuestion_c8af7aec5_1_14",
-      "step_textInput_input_c8af7aec5_1_14",
-      "step_textInput_confirm_c8af7aec5_1_14",
-      "step_assertProjectWindowReady_assert_c8af7aec5_1_15",
+      "step_multiSelect_confirm_c8af7aec5_1_11",
+      "step_confirmOption_assertPrompt_c8af7aec5_1_12",
+      "step_confirmOption_confirm_c8af7aec5_1_12",
+      "step_textInput_assertQuestion_c8af7aec5_1_13",
+      "step_textInput_input_c8af7aec5_1_13",
+      "step_textInput_confirm_c8af7aec5_1_13",
+      "step_assertProjectWindowReady_assert_c8af7aec5_1_14",
       "step_checkWorkspaceFiles_verify_c8af7aec5_2_1",
       "step_checkWorkspaceFiles_verify_c8af7aec5_2_2",
       "step_checkWorkspaceFiles_verify_c8af7aec5_2_3",
@@ -943,13 +939,13 @@
       ]
     },
     {
-      "step_id": "step_multiSelect_filter_c8af7aec5_1_11",
+      "step_id": "step_multiSelect_focusSelectAll_c8af7aec5_1_11",
       "agent": "interaction",
-      "tool": "type_text",
+      "tool": "keyboard_shortcut",
       "parameters": {
-        "text": "GET /repairs"
+        "keys": "shift+tab"
       },
-      "description": "Type the resolved option label GET /repairs into the active multi-select prompt.",
+      "description": "Move focus from the multi-select input box to the select-all checkbox of the prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -965,83 +961,19 @@
       ]
     },
     {
-      "step_id": "step_multiSelect_assertOption_c8af7aec5_1_11",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the option GET /repairs is visible and selectable in the filtered multi-select prompt.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_multiSelect_filter_c8af7aec5_1_11"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:multiSelect",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_multiSelect_focusOption_c8af7aec5_1_11",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "down"
-      },
-      "description": "Press Down to focus the filtered GET /repairs option.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_multiSelect_assertOption_c8af7aec5_1_11"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:multiSelect"
-      ]
-    },
-    {
-      "step_id": "step_multiSelect_assertFocused_c8af7aec5_1_11",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the filtered GET /repairs option is focused in the active multi-select prompt.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_multiSelect_focusOption_c8af7aec5_1_11"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:multiSelect",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_multiSelect_toggle_c8af7aec5_1_11",
+      "step_id": "step_multiSelect_selectAll_c8af7aec5_1_11",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
         "key": "space"
       },
-      "description": "Press Space to toggle the focused GET /repairs option.",
+      "description": "Press Space to check every option of the multi-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_multiSelect_assertFocused_c8af7aec5_1_11"
+        "step_multiSelect_focusSelectAll_c8af7aec5_1_11"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1055,13 +987,13 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the GET /repairs option has a checked checkbox in the active multi-select prompt.",
+      "description": "@assertion every option listed in the multi-select prompt titled Select Operation(s) Copilot Can Interact with has a checked checkbox.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_multiSelect_toggle_c8af7aec5_1_11"
+        "step_multiSelect_selectAll_c8af7aec5_1_11"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1072,28 +1004,7 @@
       ]
     },
     {
-      "step_id": "step_multiSelectConfirm_assertQuestion_c8af7aec5_1_12",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the active multi-select prompt titled Select Operation(s) Copilot Can Interact with displays exactly 1 Selected in its selection counter.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_multiSelect_assertSelected_c8af7aec5_1_11"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:multiSelect",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_multiSelectConfirm_confirm_c8af7aec5_1_12",
+      "step_id": "step_multiSelect_confirm_c8af7aec5_1_11",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1105,7 +1016,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_multiSelectConfirm_assertQuestion_c8af7aec5_1_12"
+        "step_multiSelect_assertSelected_c8af7aec5_1_11"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1115,7 +1026,7 @@
       ]
     },
     {
-      "step_id": "step_confirmOption_assertPrompt_c8af7aec5_1_13",
+      "step_id": "step_confirmOption_assertPrompt_c8af7aec5_1_12",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1125,7 +1036,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_multiSelectConfirm_confirm_c8af7aec5_1_12"
+        "step_multiSelect_confirm_c8af7aec5_1_11"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1137,7 +1048,7 @@
       ]
     },
     {
-      "step_id": "step_confirmOption_confirm_c8af7aec5_1_13",
+      "step_id": "step_confirmOption_confirm_c8af7aec5_1_12",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1149,7 +1060,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_confirmOption_assertPrompt_c8af7aec5_1_13"
+        "step_confirmOption_assertPrompt_c8af7aec5_1_12"
       ],
       "preconditions": [
         "dhash:364:74:16:5:08056a9a5d5516b6",
@@ -1164,7 +1075,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_assertQuestion_c8af7aec5_1_14",
+      "step_id": "step_textInput_assertQuestion_c8af7aec5_1_13",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1174,7 +1085,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_confirmOption_confirm_c8af7aec5_1_13"
+        "step_confirmOption_confirm_c8af7aec5_1_12"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1185,7 +1096,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_input_c8af7aec5_1_14",
+      "step_id": "step_textInput_input_c8af7aec5_1_13",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1197,7 +1108,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_assertQuestion_c8af7aec5_1_14"
+        "step_textInput_assertQuestion_c8af7aec5_1_13"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1207,7 +1118,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_confirm_c8af7aec5_1_14",
+      "step_id": "step_textInput_confirm_c8af7aec5_1_13",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1219,7 +1130,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_input_c8af7aec5_1_14"
+        "step_textInput_input_c8af7aec5_1_13"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1229,7 +1140,7 @@
       ]
     },
     {
-      "step_id": "step_assertProjectWindowReady_assert_c8af7aec5_1_15",
+      "step_id": "step_assertProjectWindowReady_assert_c8af7aec5_1_14",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1239,7 +1150,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_confirm_c8af7aec5_1_14"
+        "step_textInput_confirm_c8af7aec5_1_13"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1262,7 +1173,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertProjectWindowReady_assert_c8af7aec5_1_15"
+        "step_assertProjectWindowReady_assert_c8af7aec5_1_14"
       ],
       "preconditions": [],
       "postconditions": [],

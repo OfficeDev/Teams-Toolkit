@@ -3,7 +3,7 @@
     "version": 1,
     "id": "multiSelect",
     "answerType": "multiSelect",
-    "parameters": ["instanceSuffix", "questionTitle", "optionLabel"]
+    "parameters": ["instanceSuffix", "questionTitle"]
   },
   "steps": [
     {
@@ -26,13 +26,13 @@
       ]
     },
     {
-      "step_id": "step_multiSelect_filter_{{text:instanceSuffix}}",
+      "step_id": "step_multiSelect_focusSelectAll_{{text:instanceSuffix}}",
       "agent": "interaction",
-      "tool": "type_text",
+      "tool": "keyboard_shortcut",
       "parameters": {
-        "text": {{json:optionLabel}}
+        "keys": "shift+tab"
       },
-      "description": "Type the resolved option label {{text:optionLabel}} into the active multi-select prompt.",
+      "description": "Move focus from the multi-select input box to the select-all checkbox of the prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -43,73 +43,18 @@
       "tags": ["component:quick-input", "answer_type:multiSelect"]
     },
     {
-      "step_id": "step_multiSelect_assertOption_{{text:instanceSuffix}}",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the option {{text:optionLabel}} is visible and selectable in the filtered multi-select prompt.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": ["step_multiSelect_filter_{{text:instanceSuffix}}"],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:multiSelect",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_multiSelect_focusOption_{{text:instanceSuffix}}",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "down"
-      },
-      "description": "Press Down to focus the filtered {{text:optionLabel}} option.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": ["step_multiSelect_assertOption_{{text:instanceSuffix}}"],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": ["component:quick-input", "answer_type:multiSelect"]
-    },
-    {
-      "step_id": "step_multiSelect_assertFocused_{{text:instanceSuffix}}",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the filtered {{text:optionLabel}} option is focused in the active multi-select prompt.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": ["step_multiSelect_focusOption_{{text:instanceSuffix}}"],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:multiSelect",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_multiSelect_toggle_{{text:instanceSuffix}}",
+      "step_id": "step_multiSelect_selectAll_{{text:instanceSuffix}}",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
         "key": "space"
       },
-      "description": "Press Space to toggle the focused {{text:optionLabel}} option.",
+      "description": "Press Space to check every option of the multi-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
-      "depends_on": ["step_multiSelect_assertFocused_{{text:instanceSuffix}}"],
+      "depends_on": ["step_multiSelect_focusSelectAll_{{text:instanceSuffix}}"],
       "preconditions": [],
       "postconditions": [],
       "tags": ["component:quick-input", "answer_type:multiSelect"]
@@ -119,12 +64,12 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the {{text:optionLabel}} option has a checked checkbox in the active multi-select prompt.",
+      "description": "@assertion every option listed in the multi-select prompt titled {{text:questionTitle}} has a checked checkbox.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
-      "depends_on": ["step_multiSelect_toggle_{{text:instanceSuffix}}"],
+      "depends_on": ["step_multiSelect_selectAll_{{text:instanceSuffix}}"],
       "preconditions": [],
       "postconditions": [],
       "tags": [
@@ -132,6 +77,23 @@
         "answer_type:multiSelect",
         "step_retry_timeout: 30"
       ]
+    },
+    {
+      "step_id": "step_multiSelect_confirm_{{text:instanceSuffix}}",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the multi-select prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": ["step_multiSelect_assertSelected_{{text:instanceSuffix}}"],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": ["component:quick-input", "answer_type:multiSelect"]
     }
   ]
 }

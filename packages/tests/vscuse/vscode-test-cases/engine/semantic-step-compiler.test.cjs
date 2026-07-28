@@ -529,7 +529,7 @@ test("VCB-34: DA API plugin from scratch compiles complete remote branches in au
   }
 });
 
-test("VCB-35: multi-select answers toggle each unique option and confirm once", async () => {
+test("VCB-35: multi-select answers check every option and confirm once", async () => {
   const valid = await compileFixture(
     "da-api-plugin-from-existing-api.yml",
     (sourceText) => sourceText,
@@ -540,14 +540,11 @@ test("VCB-35: multi-select answers toggle each unique option and confirm once", 
   for (const generated of valid.value) {
     const descriptions = generated.plan.steps.map((step) => step.description);
     const tools = generated.plan.steps.map((step) => step.tool);
-    const operation = generated.caseId.includes("bearer")
-      ? "GET /repair"
-      : "GET /repairs";
     const multiSelectFlow = [
-      `Press Down to focus the filtered ${operation} option.`,
-      `@assertion the filtered ${operation} option is focused in the active multi-select prompt.`,
-      `Press Space to toggle the focused ${operation} option.`,
-      `@assertion the ${operation} option has a checked checkbox in the active multi-select prompt.`,
+      "Move focus from the multi-select input box to the select-all checkbox of the prompt.",
+      "Press Space to check every option of the multi-select prompt.",
+      "@assertion every option listed in the multi-select prompt titled Select Operation(s) Copilot Can Interact with has a checked checkbox.",
+      "Press Enter to confirm the multi-select prompt.",
     ];
     const flowIndexes = multiSelectFlow.map((description) =>
       descriptions.indexOf(description),
@@ -570,17 +567,19 @@ test("VCB-35: multi-select answers toggle each unique option and confirm once", 
     assert.equal(tools.includes("hotkey"), false);
   }
 
-  for (const value of [
-    "[]",
-    '["GET /repairs", "GET /repairs"]',
-    '["GET /repair", "GET /repairs"]',
-  ]) {
+  for (const value of ['["GET /repairs"]', "none", '""']) {
     const invalid = await compileFixture(
       "da-api-plugin-from-existing-api.yml",
-      (sourceText) => sourceText.replace('["GET /repairs"]', value),
+      (sourceText) => sourceText.replace("value: all", `value: ${value}`),
     );
     assert.equal(invalid.ok, false);
-    assert.equal(invalid.diagnostics[0].code, "VCB_SCAFFOLD_ANSWER_TYPE");
+    assert.equal(
+      [
+        "VCB_SCAFFOLD_ANSWER_TYPE",
+        "VCB_SCAFFOLD_MULTI_SELECT_ALL_REQUIRED",
+      ].includes(invalid.diagnostics[0].code),
+      true,
+    );
   }
 });
 

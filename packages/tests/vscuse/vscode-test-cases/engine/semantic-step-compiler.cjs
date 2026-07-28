@@ -82,7 +82,6 @@ const scaffoldQuestionAdapters = {
     type: "singleSelect",
   },
   apiOperations: {
-    options: { "GET /repair": "GET /repair", "GET /repairs": "GET /repairs" },
     title: "Select Operation(s) Copilot Can Interact with",
     type: "multiSelect",
   },
@@ -391,29 +390,21 @@ function createSemanticStepCompiler() {
         );
       }
       const answerType = answer.type ?? "singleSelect";
-      const isValidMultiSelect =
-        answerType === "multiSelect" &&
-        Array.isArray(answer.value) &&
-        // The multi-select component filters the prompt by option label and
-        // leaves that text in the input box, because no keystroke clears a
-        // quick pick filter without also addressing its checkbox list. A second
-        // option would therefore type its label onto the first one and match
-        // nothing, so a multi-option answer fails here instead of compiling into
-        // a plan that silently selects nothing.
-        answer.value.length === 1 &&
-        answer.value.every(
-          (optionId) => typeof optionId === "string" && optionId.length > 0,
-        ) &&
-        new Set(answer.value).size === answer.value.length;
-      if (
-        answerType !== question.type ||
-        (answerType === "multiSelect"
-          ? !isValidMultiSelect
-          : typeof answer.value !== "string")
-      ) {
+      if (answerType !== question.type || typeof answer.value !== "string") {
         return failure(
           "VCB_SCAFFOLD_ANSWER_TYPE",
           "A scaffold answer does not match its supported question type.",
+        );
+      }
+      // The multi-select component checks every option through the prompt's own
+      // select-all control, so it never filters the list and never depends on
+      // an option's position. The option set a prompt renders comes from the
+      // resource the earlier answers pointed at, not from this file, so `all`
+      // is the only selection the compiler can name.
+      if (answerType === "multiSelect" && answer.value !== "all") {
+        return failure(
+          "VCB_SCAFFOLD_MULTI_SELECT_ALL_REQUIRED",
+          "A multi-select answer must be all.",
         );
       }
       if (
@@ -473,28 +464,10 @@ function createSemanticStepCompiler() {
           );
         }
       } else if (question.type === "multiSelect") {
-        for (const optionId of answer.value) {
-          const optionLabel = question.options[optionId];
-          if (optionLabel === undefined) {
-            return failure(
-              "VCB_SCAFFOLD_OPTION_UNKNOWN",
-              "The scaffold answer option is not supported.",
-            );
-          }
-          error = append(
-            output,
-            render(state, "quick-input/multi-select.json.tpl", {
-              optionLabel,
-              questionTitle,
-            }),
-          );
-          if (error) return error;
-        }
         error = append(
           output,
-          render(state, "quick-input/multi-select-confirm.json.tpl", {
+          render(state, "quick-input/multi-select.json.tpl", {
             questionTitle,
-            selectedCount: String(answer.value.length),
           }),
         );
       } else {
