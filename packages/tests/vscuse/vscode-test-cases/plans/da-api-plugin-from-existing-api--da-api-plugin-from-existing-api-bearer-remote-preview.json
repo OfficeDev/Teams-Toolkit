@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 125,
+    "total_steps": 119,
     "name": "da-api-plugin-from-existing-api-bearer-remote-preview",
     "description": {
       "owner": "",
@@ -92,13 +92,7 @@
       "step_signInM365_typePassword_cccb76852_3_3",
       "step_signInM365_submit_cccb76852_3_3",
       "step_signInM365_closeBrowser_cccb76852_3_3",
-      "step_signInM365_reopenAccounts_cccb76852_3_3",
-      "step_signInM365_assertPalette_cccb76852_3_3",
-      "step_signInM365_filterAccounts_cccb76852_3_3",
-      "step_signInM365_assertAccountsCommand_cccb76852_3_3",
-      "step_signInM365_openAccounts_cccb76852_3_3",
       "step_signInM365_assertReady_cccb76852_3_3",
-      "step_signInM365_closeAccounts_cccb76852_3_3",
       "step_executeCommand_open_cccb76852_4_1",
       "step_executeCommand_assertPalette_cccb76852_4_1",
       "step_executeCommand_filter_cccb76852_4_1",
@@ -1851,13 +1845,11 @@
       ]
     },
     {
-      "step_id": "step_signInM365_reopenAccounts_cccb76852_3_3",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "f1"
-      },
-      "description": "Press F1 to reopen the Command Palette after Microsoft 365 authentication completes.",
+      "step_id": "step_signInM365_assertReady_cccb76852_3_3",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion there's ${{env:M365_ACCOUNT_NAME}} in the \"ACCOUNTS\" section",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1869,137 +1861,9 @@
       "postconditions": [],
       "tags": [
         "component:authentication",
-        "account:m365"
-      ]
-    },
-    {
-      "step_id": "step_signInM365_assertPalette_cccb76852_3_3",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the Visual Studio Code Command Palette is visible, active, and ready to accept a command search.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_signInM365_reopenAccounts_cccb76852_3_3"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:authentication",
-        "account:m365",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_signInM365_filterAccounts_cccb76852_3_3",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "Microsoft 365 Agents: Accounts"
-      },
-      "description": "Type 'Microsoft 365 Agents: Accounts' into the active Command Palette.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_signInM365_assertPalette_cccb76852_3_3"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:authentication",
-        "account:m365"
-      ]
-    },
-    {
-      "step_id": "step_signInM365_assertAccountsCommand_cccb76852_3_3",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion Microsoft 365 Agents: Accounts is the selected first result in the active Command Palette.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_signInM365_filterAccounts_cccb76852_3_3"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:authentication",
-        "account:m365",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_signInM365_openAccounts_cccb76852_3_3",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press Enter to open the Microsoft 365 Agents account menu.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_signInM365_assertAccountsCommand_cccb76852_3_3"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:authentication",
-        "account:m365"
-      ]
-    },
-    {
-      "step_id": "step_signInM365_assertReady_cccb76852_3_3",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion ${{env:M365_ACCOUNT_NAME}} is visible as the signed-in Microsoft 365 account in the active account menu.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_signInM365_openAccounts_cccb76852_3_3"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:authentication",
         "account:m365",
         "readiness:account-visible",
         "step_retry_timeout: 60"
-      ]
-    },
-    {
-      "step_id": "step_signInM365_closeAccounts_cccb76852_3_3",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "esc"
-      },
-      "description": "Press Escape to close the account menu after verifying Microsoft 365 sign-in.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_signInM365_assertReady_cccb76852_3_3"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:authentication",
-        "account:m365"
       ]
     },
     {
@@ -2015,7 +1879,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_closeAccounts_cccb76852_3_3"
+        "step_signInM365_assertReady_cccb76852_3_3"
       ],
       "preconditions": [],
       "postconditions": [],

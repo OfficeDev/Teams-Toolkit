@@ -1173,6 +1173,43 @@ test("VCB-46: an account with no account-picker recording fails to compile", asy
   assert.equal(result.diagnostics[0].code, "VCB_ACCOUNT_PICKER_UNSUPPORTED");
 });
 
+test("VCB-47: every sign-in verifies the account in the ACCOUNTS section", async () => {
+  const result = await compileFixture(
+    "weather-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const steps = result.value[0].plan.steps;
+  const readySteps = steps.filter((step) =>
+    /^step_signIn[A-Za-z0-9]*_assertReady_/.test(step.step_id),
+  );
+
+  // Azure and Microsoft 365 both converge on the same sidebar assertion.
+  assert.equal(readySteps.length, 2);
+  for (const step of readySteps) {
+    assert.match(step.description, /in the "ACCOUNTS" section$/);
+    assert.equal(
+      steps.some(
+        (other) =>
+          other.depends_on.includes(step.step_id) &&
+          other.step_id.startsWith("step_signIn"),
+      ),
+      false,
+    );
+  }
+
+  // No sign-in adapter reopens the account menu after the browser closes.
+  assert.equal(
+    steps.some((step) =>
+      /^step_signIn[A-Za-z0-9]*_(reopenAccounts|filterAccounts|openAccounts|closeAccounts)_/.test(
+        step.step_id,
+      ),
+    ),
+    false,
+  );
+});
+
 test("semantic adapter requires chat-ready state before a chat check", async () => {
   const result = await compileFixture("weather-agent.yml", (sourceText) =>
     sourceText.replace("        open-app,\n", ""),

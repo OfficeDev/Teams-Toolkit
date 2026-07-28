@@ -108,24 +108,22 @@ test("plain text input submits immediately after typing", () => {
   );
 });
 
-test("Microsoft 365 sign-in verifies the account in the Accounts menu", () => {
-  const signIn = render("authentication/m365/sign-in.json.tpl");
-  const verificationSteps = signIn.steps.slice(-7);
+test("VCB-47: Microsoft 365 sign-in verifies the account in the ACCOUNTS section", () => {
+  for (const relativePath of [
+    "authentication/m365/sign-in.json.tpl",
+    "authentication/m365/sign-in-from-account-picker.json.tpl",
+  ]) {
+    const signIn = render(relativePath);
+    const closeBrowser = signIn.steps.at(-2);
+    const assertReady = signIn.steps.at(-1);
 
-  assert.deepEqual(
-    verificationSteps.map((step) => step.tool),
-    ["key_press", "", "type_text", "", "key_press", "", "key_press"],
-  );
-  assert.equal(verificationSteps[0].parameters.key, "f1");
-  assert.equal(
-    verificationSteps[2].parameters.text,
-    "Microsoft 365 Agents: Accounts",
-  );
-  assert.match(verificationSteps[3].description, /first result/);
-  assert.equal(verificationSteps[4].parameters.key, "enter");
-  assert.match(verificationSteps[5].description, /active account menu/);
-  assert.match(verificationSteps[5].description, /M365_ACCOUNT_NAME/);
-  assert.equal(verificationSteps[6].parameters.key, "esc");
+    assert.equal(closeBrowser.tool, "click");
+    assert.equal(assertReady.tool, "");
+    assert.match(assertReady.step_id, /_assertReady_/);
+    assert.equal(assertReady.depends_on[0], closeBrowser.step_id);
+    assert.match(assertReady.description, /M365_ACCOUNT_NAME/);
+    assert.match(assertReady.description, /in the "ACCOUNTS" section$/);
+  }
 });
 
 test("lifecycle recipes have reusable confirmation and notification primitives", () => {

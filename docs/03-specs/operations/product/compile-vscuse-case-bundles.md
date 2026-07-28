@@ -693,6 +693,15 @@ literal credentials fail compilation. Templates use these values only for browse
 non-secret account-name readiness assertion. Password values never appear in descriptions,
 assertions, tags, or diagnostics.
 
+Every adapter ends the same way: it closes the browser window and reads the account name from the
+ACCOUNTS section the recipe already focused. No adapter reopens the account menu to verify. That
+menu is a quick pick, so leaving it open swallows the keystrokes the next operation types, and
+running its command again promotes `Microsoft 365 Agents: Accounts` in the palette's recently used
+list, which changes what the next `execute-command` instance has selected when it presses Enter.
+Reaching the menu also needs the two-result ordering `authentication/open-account-menu.json.tpl`
+recorded, which an adapter that filters by the same title and presses Enter without selecting the
+second result contradicts.
+
 The compatible test profile guarantees that both Toolkit accounts are signed out when a case starts,
 so the first sign-in of a case reaches the recorded account-input form. It guarantees nothing about
 the sign-ins that follow it. Every Toolkit sign-in goes through the same Microsoft identity endpoint
@@ -1001,6 +1010,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-44 | Given a Copilot `chat` check, the message-input assertion names the input by the app prefix the case authored, matching the placeholder the previewed agent shows, rather than the `Message Copilot` placeholder that only the unscoped Copilot chat shows.                                                                                                                                 |
 | VCB-45 | Given `scaffold`, compilation ends the operation by waiting for the README preview the toolkit opens for a freshly created project, so no later operation addresses a toolkit command or view before the reopened window has activated the extension that contributes it.                                                                                                                   |
 | VCB-46 | Given a `login` that is not the first sign-in of its case, compilation selects the sign-in component whose entry state is the account picker the earlier sign-in leaves behind, and fails when the account has no recorded sign-in for that entry state.                                                                                                                                    |
+| VCB-47 | Given any `login`, the sign-in adapter verifies the account in the ACCOUNTS section right after closing the browser, so no operation that follows starts with an account menu open over the window or with the account menu command promoted in the palette's recently used list.                                                                                                           |
 
 ## Boundary
 

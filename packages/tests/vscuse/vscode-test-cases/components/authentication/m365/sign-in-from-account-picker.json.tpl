@@ -210,13 +210,11 @@
       "tags": ["component:authentication", "account:m365", "delay: 3"]
     },
     {
-      "step_id": "step_signInM365FromPicker_reopenAccounts_{{text:instanceSuffix}}",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "f1"
-      },
-      "description": "Press F1 to reopen the Command Palette after Microsoft 365 authentication completes.",
+      "step_id": "step_signInM365FromPicker_assertReady_{{text:instanceSuffix}}",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion there's {{text:accountName}} in the \"ACCOUNTS\" section",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -226,128 +224,12 @@
       ],
       "preconditions": [],
       "postconditions": [],
-      "tags": ["component:authentication", "account:m365"]
-    },
-    {
-      "step_id": "step_signInM365FromPicker_assertPalette_{{text:instanceSuffix}}",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the Visual Studio Code Command Palette is visible, active, and ready to accept a command search.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_signInM365FromPicker_reopenAccounts_{{text:instanceSuffix}}"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:authentication",
-        "account:m365",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_signInM365FromPicker_filterAccounts_{{text:instanceSuffix}}",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "Microsoft 365 Agents: Accounts"
-      },
-      "description": "Type 'Microsoft 365 Agents: Accounts' into the active Command Palette.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_signInM365FromPicker_assertPalette_{{text:instanceSuffix}}"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": ["component:authentication", "account:m365"]
-    },
-    {
-      "step_id": "step_signInM365FromPicker_assertAccountsCommand_{{text:instanceSuffix}}",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion Microsoft 365 Agents: Accounts is the selected first result in the active Command Palette.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_signInM365FromPicker_filterAccounts_{{text:instanceSuffix}}"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:authentication",
-        "account:m365",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_signInM365FromPicker_openAccounts_{{text:instanceSuffix}}",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press Enter to open the Microsoft 365 Agents account menu.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_signInM365FromPicker_assertAccountsCommand_{{text:instanceSuffix}}"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": ["component:authentication", "account:m365"]
-    },
-    {
-      "step_id": "step_signInM365FromPicker_assertReady_{{text:instanceSuffix}}",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion {{text:accountName}} is visible as the signed-in Microsoft 365 account in the active account menu.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_signInM365FromPicker_openAccounts_{{text:instanceSuffix}}"
-      ],
-      "preconditions": [],
-      "postconditions": [],
       "tags": [
         "component:authentication",
         "account:m365",
         "readiness:account-visible",
         "step_retry_timeout: 60"
       ]
-    },
-    {
-      "step_id": "step_signInM365FromPicker_closeAccounts_{{text:instanceSuffix}}",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "esc"
-      },
-      "description": "Press Escape to close the account menu after verifying Microsoft 365 sign-in.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_signInM365FromPicker_assertReady_{{text:instanceSuffix}}"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": ["component:authentication", "account:m365"]
     }
   ]
 }
