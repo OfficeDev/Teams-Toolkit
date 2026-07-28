@@ -681,10 +681,11 @@ account-neutral but
 intentionally separate from `execute-command.json.tpl`, whose unique-result contract does not
 match this VS Code command surface. The recipe then instantiates exactly one deterministic adapter:
 
-| Account | Adapter                        | Entry state       | Converged state               |
-| ------- | ------------------------------ | ----------------- | ----------------------------- |
-| Azure   | `authentication/azure/sign-in` | Account menu open | Azure account visible         |
-| M365    | `authentication/m365/sign-in`  | Account menu open | Microsoft 365 account visible |
+| Account         | Adapter                                           | Entry state                           | Converged state               |
+| --------------- | ------------------------------------------------- | ------------------------------------- | ----------------------------- |
+| Azure           | `authentication/azure/sign-in`                    | Account menu open, browser signed out | Azure account visible         |
+| M365            | `authentication/m365/sign-in`                     | Account menu open, browser signed out | Microsoft 365 account visible |
+| M365, returning | `authentication/m365/sign-in-from-account-picker` | Account menu open, account picker due | Microsoft 365 account visible |
 
 Both adapters accept `accountName` and `accountPassword` in addition to `instanceSuffix`.
 `accountName` must be an environment expression and `accountPassword` must be a secret expression;
@@ -692,9 +693,17 @@ literal credentials fail compilation. Templates use these values only for browse
 non-secret account-name readiness assertion. Password values never appear in descriptions,
 assertions, tags, or diagnostics.
 
-Their compatible test profile guarantees that both Toolkit accounts are signed out and the browser
-authentication session reaches the recorded account-input form without a cached-account chooser.
-A cached-account or Use another account state requires a separate deterministic adapter.
+The compatible test profile guarantees that both Toolkit accounts are signed out when a case starts,
+so the first sign-in of a case reaches the recorded account-input form. It guarantees nothing about
+the sign-ins that follow it. Every Toolkit sign-in goes through the same Microsoft identity endpoint
+in the same browser profile, so once one sign-in has completed the next one lands on the Pick an
+account page listing the account the earlier one left behind. That is a different page rather than
+the same page with an extra step: the email field is not where the first page put it, and Next moves
+too, so it gets its own adapter rather than an optional step or a runtime fallback. Compilation
+knows which entry state applies because it knows how many logins the case has already compiled. An
+account whose adapter has no recording for the picker entry state fails with
+`VCB_ACCOUNT_PICKER_UNSUPPORTED` instead of compiling the signed-out recording into a window that
+will not show it.
 
 The adapters are separate because their deterministic recordings are not equivalent. Azure has
 additional VS Code Sign in and Allow prompts, while the Microsoft 365 path has a developer sandbox
@@ -991,6 +1000,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-43 | Given a target profile, the readiness assertion names the app by the unique prefix the case authored rather than the fully composed manifest name, so one subject holds across templates that append `APP_NAME_SUFFIX` and templates that do not, and across environments that resolve that suffix differently.                                                                             |
 | VCB-44 | Given a Copilot `chat` check, the message-input assertion names the input by the app prefix the case authored, matching the placeholder the previewed agent shows, rather than the `Message Copilot` placeholder that only the unscoped Copilot chat shows.                                                                                                                                 |
 | VCB-45 | Given `scaffold`, compilation ends the operation by waiting for the README preview the toolkit opens for a freshly created project, so no later operation addresses a toolkit command or view before the reopened window has activated the extension that contributes it.                                                                                                                   |
+| VCB-46 | Given a `login` that is not the first sign-in of its case, compilation selects the sign-in component whose entry state is the account picker the earlier sign-in leaves behind, and fails when the account has no recorded sign-in for that entry state.                                                                                                                                    |
 
 ## Boundary
 

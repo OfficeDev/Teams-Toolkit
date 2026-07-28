@@ -1116,6 +1116,63 @@ test("VCB-45: scaffolding ends by waiting for the reopened project window", asyn
   assert.equal(readyIndex < firstToolkitUiIndex, true);
 });
 
+test("VCB-46: a login after another login signs in from the account picker", async () => {
+  const withBothAccounts = await compileFixture(
+    "weather-agent.yml",
+    (sourceText) => sourceText,
+  );
+  const withOneAccount = await compileFixture(
+    "da-no-action.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(withBothAccounts.ok, true);
+  assert.equal(withOneAccount.ok, true);
+  const pickerStepId = /^step_signInM365FromPicker_useAnotherAccount_/;
+  const signInStepId = /^step_signIn(M365|Azure)_assertOption_/;
+
+  // Azure signs in first from a signed-out browser, so only the Microsoft 365
+  // sign-in that follows it meets the account picker.
+  const bothSteps = withBothAccounts.value[0].plan.steps;
+  assert.equal(
+    bothSteps.filter((step) => signInStepId.test(step.step_id)).length,
+    1,
+  );
+  assert.equal(
+    bothSteps.filter((step) => pickerStepId.test(step.step_id)).length,
+    1,
+  );
+
+  // A case with a single login starts from the signed-out browser the profile
+  // guarantees, so it keeps the account-input recording.
+  const oneSteps = withOneAccount.value[0].plan.steps;
+  assert.equal(
+    oneSteps.filter((step) => signInStepId.test(step.step_id)).length,
+    1,
+  );
+  assert.equal(
+    oneSteps.some((step) => pickerStepId.test(step.step_id)),
+    false,
+  );
+});
+
+test("VCB-46: an account with no account-picker recording fails to compile", async () => {
+  const result = await compileFixture("weather-agent.yml", (sourceText) =>
+    sourceText
+      .replace(
+        "        login-azure,\n        login-m365,",
+        "        login-m365,\n        login-azure,",
+      )
+      .replace(
+        "        login-azure,\n        login-m365,",
+        "        login-m365,\n        login-azure,",
+      ),
+  );
+
+  assert.equal(result.ok, false);
+  assert.equal(result.diagnostics[0].code, "VCB_ACCOUNT_PICKER_UNSUPPORTED");
+});
+
 test("semantic adapter requires chat-ready state before a chat check", async () => {
   const result = await compileFixture("weather-agent.yml", (sourceText) =>
     sourceText.replace("        open-app,\n", ""),

@@ -101,22 +101,22 @@
       "step_openAccountMenu_assertCommand_c919bef1e_4_2",
       "step_openAccountMenu_selectSecond_c919bef1e_4_2",
       "step_openAccountMenu_execute_c919bef1e_4_2",
-      "step_signInM365_assertOption_c919bef1e_4_3",
-      "step_signInM365_selectOption_c919bef1e_4_3",
-      "step_signInM365_confirmSignIn_c919bef1e_4_3",
-      "step_signInM365_focusAccount_c919bef1e_4_3",
-      "step_signInM365_typeAccount_c919bef1e_4_3",
-      "step_signInM365_next_c919bef1e_4_3",
-      "step_signInM365_typePassword_c919bef1e_4_3",
-      "step_signInM365_submit_c919bef1e_4_3",
-      "step_signInM365_closeBrowser_c919bef1e_4_3",
-      "step_signInM365_reopenAccounts_c919bef1e_4_3",
-      "step_signInM365_assertPalette_c919bef1e_4_3",
-      "step_signInM365_filterAccounts_c919bef1e_4_3",
-      "step_signInM365_assertAccountsCommand_c919bef1e_4_3",
-      "step_signInM365_openAccounts_c919bef1e_4_3",
-      "step_signInM365_assertReady_c919bef1e_4_3",
-      "step_signInM365_closeAccounts_c919bef1e_4_3",
+      "step_signInM365FromPicker_assertOption_c919bef1e_4_3",
+      "step_signInM365FromPicker_selectOption_c919bef1e_4_3",
+      "step_signInM365FromPicker_confirmSignIn_c919bef1e_4_3",
+      "step_signInM365FromPicker_useAnotherAccount_c919bef1e_4_3",
+      "step_signInM365FromPicker_typeAccount_c919bef1e_4_3",
+      "step_signInM365FromPicker_next_c919bef1e_4_3",
+      "step_signInM365FromPicker_typePassword_c919bef1e_4_3",
+      "step_signInM365FromPicker_submit_c919bef1e_4_3",
+      "step_signInM365FromPicker_closeBrowser_c919bef1e_4_3",
+      "step_signInM365FromPicker_reopenAccounts_c919bef1e_4_3",
+      "step_signInM365FromPicker_assertPalette_c919bef1e_4_3",
+      "step_signInM365FromPicker_filterAccounts_c919bef1e_4_3",
+      "step_signInM365FromPicker_assertAccountsCommand_c919bef1e_4_3",
+      "step_signInM365FromPicker_openAccounts_c919bef1e_4_3",
+      "step_signInM365FromPicker_assertReady_c919bef1e_4_3",
+      "step_signInM365FromPicker_closeAccounts_c919bef1e_4_3",
       "step_executeCommand_open_c919bef1e_5_1",
       "step_executeCommand_assertPalette_c919bef1e_5_1",
       "step_executeCommand_filter_c919bef1e_5_1",
@@ -2111,7 +2111,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_assertOption_c919bef1e_4_3",
+      "step_id": "step_signInM365FromPicker_assertOption_c919bef1e_4_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2133,7 +2133,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_selectOption_c919bef1e_4_3",
+      "step_id": "step_signInM365FromPicker_selectOption_c919bef1e_4_3",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -2147,7 +2147,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_assertOption_c919bef1e_4_3"
+        "step_signInM365FromPicker_assertOption_c919bef1e_4_3"
       ],
       "preconditions": [
         "dhash:379:52:16:5:c6392121998d30ce",
@@ -2161,7 +2161,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_confirmSignIn_c919bef1e_4_3",
+      "step_id": "step_signInM365FromPicker_confirmSignIn_c919bef1e_4_3",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -2175,7 +2175,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_selectOption_c919bef1e_4_3"
+        "step_signInM365FromPicker_selectOption_c919bef1e_4_3"
       ],
       "preconditions": [
         "dhash:762:97:16:5:24b1a72ba9aba343",
@@ -2189,26 +2189,26 @@
       ]
     },
     {
-      "step_id": "step_signInM365_focusAccount_c919bef1e_4_3",
+      "step_id": "step_signInM365FromPicker_useAnotherAccount_c919bef1e_4_3",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 369,
-        "y": 350
+        "x": 447,
+        "y": 487
       },
-      "description": "Click on the \"Email or phone\" input field in the Microsoft Sign-in form on the login.microsoftonline.com webpage to focus the cursor for credential entry.",
+      "description": "Click the \"Use another account\" option on the Microsoft \"Pick an account\" login screen in Google Chrome.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_confirmSignIn_c919bef1e_4_3"
+        "step_signInM365FromPicker_confirmSignIn_c919bef1e_4_3"
       ],
       "preconditions": [
-        "dhash:369:350:16:5:2113d25252525221",
-        "dhash:369:350:96:5:0919006d19220812",
-        "dhash:369:350:0:10:1b88d0d1e5e6dae4"
+        "dhash:447:487:16:5:ac534b4aaaaa6a15",
+        "dhash:447:487:96:5:0100228d15a20000",
+        "dhash:447:487:0:10:1312e8d89ed6e6e4"
       ],
       "postconditions": [],
       "tags": [
@@ -2218,22 +2218,22 @@
       ]
     },
     {
-      "step_id": "step_signInM365_typeAccount_c919bef1e_4_3",
+      "step_id": "step_signInM365FromPicker_typeAccount_c919bef1e_4_3",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
         "text": "${{env:M365_ACCOUNT_NAME}}"
       },
-      "description": "Enter the resolved Microsoft 365 account name into the email or username input field on the Microsoft Sign in page.",
+      "description": "Enter the resolved Microsoft 365 account name into the email or username input field the account picker opened.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_focusAccount_c919bef1e_4_3"
+        "step_signInM365FromPicker_useAnotherAccount_c919bef1e_4_3"
       ],
       "preconditions": [
-        "dhash:512:384:0:20:1b28f0d9e7e6dae4"
+        "dhash:512:384:0:20:1392f8d8c6e6dae4"
       ],
       "postconditions": [],
       "tags": [
@@ -2243,13 +2243,13 @@
       ]
     },
     {
-      "step_id": "step_signInM365_next_c919bef1e_4_3",
+      "step_id": "step_signInM365FromPicker_next_c919bef1e_4_3",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 629,
-        "y": 484
+        "x": 655,
+        "y": 505
       },
       "description": "Click the blue \"Next\" button on the Microsoft sign-in page, confirming the entered email address for login.",
       "content_refs": [],
@@ -2257,12 +2257,12 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_typeAccount_c919bef1e_4_3"
+        "step_signInM365FromPicker_typeAccount_c919bef1e_4_3"
       ],
       "preconditions": [
-        "dhash:629:484:16:5:23248c4b6c24d32c",
-        "dhash:629:484:96:5:00004eb131860000",
-        "dhash:629:484:0:10:1b28f0d9e7e6dae4"
+        "dhash:655:505:16:5:0000000080400020",
+        "dhash:655:505:96:5:0000408bcb4b0000",
+        "dhash:655:505:0:10:1392f8d8c7e6dae4"
       ],
       "postconditions": [],
       "tags": [
@@ -2272,7 +2272,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_typePassword_c919bef1e_4_3",
+      "step_id": "step_signInM365FromPicker_typePassword_c919bef1e_4_3",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -2284,10 +2284,10 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_next_c919bef1e_4_3"
+        "step_signInM365FromPicker_next_c919bef1e_4_3"
       ],
       "preconditions": [
-        "dhash:512:384:0:20:1b08f0d9d1e6e6e4"
+        "dhash:512:384:0:20:1392e8d8d9f6e6e4"
       ],
       "postconditions": [],
       "tags": [
@@ -2297,7 +2297,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_submit_c919bef1e_4_3",
+      "step_id": "step_signInM365FromPicker_submit_c919bef1e_4_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2309,10 +2309,10 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_typePassword_c919bef1e_4_3"
+        "step_signInM365FromPicker_typePassword_c919bef1e_4_3"
       ],
       "preconditions": [
-        "dhash:512:384:0:20:1b08f0d9d1e6e6e4"
+        "dhash:512:384:0:20:1392e8d8d9f6e6e4"
       ],
       "postconditions": [],
       "tags": [
@@ -2322,12 +2322,12 @@
       ]
     },
     {
-      "step_id": "step_signInM365_closeBrowser_c919bef1e_4_3",
+      "step_id": "step_signInM365FromPicker_closeBrowser_c919bef1e_4_3",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 1004,
+        "x": 1008,
         "y": 19
       },
       "description": "Click the \"Close\" button (red cross icon) in the browser tab bar to close the \"M365 Account - Sign In\" page.",
@@ -2336,12 +2336,12 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_submit_c919bef1e_4_3"
+        "step_signInM365FromPicker_submit_c919bef1e_4_3"
       ],
       "preconditions": [
-        "dhash:1004:19:16:5:aac833964c9633cc",
-        "dhash:1004:19:96:5:d2232323c200e6e6",
-        "dhash:1004:19:0:10:0b01410169414141"
+        "dhash:1008:19:16:5:a322c95a325ac922",
+        "dhash:1008:19:96:5:926363639200c6c4",
+        "dhash:1008:19:0:10:1312094769614541"
       ],
       "postconditions": [],
       "tags": [
@@ -2351,7 +2351,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_reopenAccounts_c919bef1e_4_3",
+      "step_id": "step_signInM365FromPicker_reopenAccounts_c919bef1e_4_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2363,7 +2363,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_closeBrowser_c919bef1e_4_3"
+        "step_signInM365FromPicker_closeBrowser_c919bef1e_4_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2373,7 +2373,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_assertPalette_c919bef1e_4_3",
+      "step_id": "step_signInM365FromPicker_assertPalette_c919bef1e_4_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2383,7 +2383,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_reopenAccounts_c919bef1e_4_3"
+        "step_signInM365FromPicker_reopenAccounts_c919bef1e_4_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2394,7 +2394,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_filterAccounts_c919bef1e_4_3",
+      "step_id": "step_signInM365FromPicker_filterAccounts_c919bef1e_4_3",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -2406,7 +2406,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_assertPalette_c919bef1e_4_3"
+        "step_signInM365FromPicker_assertPalette_c919bef1e_4_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2416,7 +2416,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_assertAccountsCommand_c919bef1e_4_3",
+      "step_id": "step_signInM365FromPicker_assertAccountsCommand_c919bef1e_4_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2426,7 +2426,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_filterAccounts_c919bef1e_4_3"
+        "step_signInM365FromPicker_filterAccounts_c919bef1e_4_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2437,7 +2437,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_openAccounts_c919bef1e_4_3",
+      "step_id": "step_signInM365FromPicker_openAccounts_c919bef1e_4_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2449,7 +2449,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_assertAccountsCommand_c919bef1e_4_3"
+        "step_signInM365FromPicker_assertAccountsCommand_c919bef1e_4_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2459,7 +2459,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_assertReady_c919bef1e_4_3",
+      "step_id": "step_signInM365FromPicker_assertReady_c919bef1e_4_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2469,7 +2469,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_openAccounts_c919bef1e_4_3"
+        "step_signInM365FromPicker_openAccounts_c919bef1e_4_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2481,7 +2481,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_closeAccounts_c919bef1e_4_3",
+      "step_id": "step_signInM365FromPicker_closeAccounts_c919bef1e_4_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2493,7 +2493,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_assertReady_c919bef1e_4_3"
+        "step_signInM365FromPicker_assertReady_c919bef1e_4_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2515,7 +2515,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_closeAccounts_c919bef1e_4_3"
+        "step_signInM365FromPicker_closeAccounts_c919bef1e_4_3"
       ],
       "preconditions": [],
       "postconditions": [],

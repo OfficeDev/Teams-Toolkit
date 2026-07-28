@@ -32,6 +32,12 @@ const commandTitles = {
   target: "Debug: Select and Start Debugging",
 };
 
+// Every toolkit sign-in runs through the same Microsoft identity endpoint in
+// the same browser profile, so the first sign-in of a plan lands on the email
+// form while a later one lands on the Pick an account page that lists the
+// account the earlier sign-in left behind. Those are different pages, not the
+// same page with an extra step: the email field is not where the first page put
+// it, and Next moves too. Each entry state therefore gets its own component.
 const accountAdapters = {
   azure: {
     accountVariable: "AZURE_ACCOUNT_NAME",
@@ -40,6 +46,8 @@ const accountAdapters = {
   m365: {
     accountVariable: "M365_ACCOUNT_NAME",
     component: "authentication/m365/sign-in.json.tpl",
+    returningComponent:
+      "authentication/m365/sign-in-from-account-picker.json.tpl",
   },
 };
 
@@ -558,12 +566,23 @@ function createSemanticStepCompiler() {
       render(state, "authentication/open-account-menu.json.tpl"),
     );
     if (error) return error;
+    const signedInBefore = state.credentials.size > 0;
+    if (signedInBefore && account.returningComponent === undefined) {
+      return failure(
+        "VCB_ACCOUNT_PICKER_UNSUPPORTED",
+        "The login account has no recorded sign-in for the account picker a previous login leaves behind.",
+      );
+    }
     error = append(
       output,
-      render(state, account.component, {
-        accountName: definition.with.account,
-        accountPassword: definition.with.password,
-      }),
+      render(
+        state,
+        signedInBefore ? account.returningComponent : account.component,
+        {
+          accountName: definition.with.account,
+          accountPassword: definition.with.password,
+        },
+      ),
     );
     if (error) return error;
     state.credentials.set(definition.with.type, {
