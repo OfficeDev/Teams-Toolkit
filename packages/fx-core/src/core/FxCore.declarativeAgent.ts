@@ -1133,14 +1133,12 @@ export class FxCoreDeclarativeAgentPart {
       );
       if (placeholderWarning && inputs.platform === Platform.VSCode) {
         const openYml = getLocalizedString("core.MCPForDA.openYmlFile");
+        const ymlPath = pathUtils.getYmlFilePath(inputs.projectPath);
         void context.userInteraction
           .showMessage("warn", placeholderWarning.content, false, openYml)
           .then((userRes) => {
-            if (userRes.isOk() && userRes.value === openYml) {
-              const ymlPath = pathUtils.getYmlFilePath(inputs.projectPath);
-              if (ymlPath) {
-                void TOOLS?.ui?.openFile?.(ymlPath);
-              }
+            if (userRes.isOk() && userRes.value === openYml && ymlPath) {
+              void TOOLS?.ui?.openFile?.(ymlPath);
             }
           });
       }
