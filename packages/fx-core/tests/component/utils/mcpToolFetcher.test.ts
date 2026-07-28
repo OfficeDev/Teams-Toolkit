@@ -3,6 +3,7 @@
 
 import axios from "axios";
 import fs from "fs-extra";
+import { Readable } from "stream";
 import { assert, vi } from "vitest";
 import {
   buildMCPServerWellKnownCandidates,
@@ -384,6 +385,7 @@ describe("mcpToolFetcher", () => {
         // The mistyped form of an MCP url often still serves a page on GET, so only the
         // initialize POST reveals that nothing MCP is routed there.
         vi.spyOn(axios, "post").mockRejectedValue({ response: { status } });
+        vi.spyOn(axios, "get").mockRejectedValue({ response: { status } });
 
         const result = await probeMCPServerAuth("https://taskmaster.example.com");
         assert.isFalse(result.requiresAuth);
@@ -391,6 +393,73 @@ describe("mcpToolFetcher", () => {
         assert.equal(result.responseStatus, status);
       });
     }
+
+    it("should confirm a 4xx that turns out to be the deprecated HTTP+SSE transport", async () => {
+      // A 2024-11-05 server has nothing to POST to, so the transport spec has the client fall
+      // back to a GET and read the `endpoint` event rather than condemn the url.
+      vi.spyOn(axios, "post").mockRejectedValue({ response: { status: 405 } });
+      vi.spyOn(axios, "get").mockResolvedValue({
+        headers: { "content-type": "text/event-stream; charset=utf-8" },
+        data: Readable.from(["event: endpoint\ndata: /messages?sessionId=abc\n\n"]),
+      });
+
+      const result = await probeMCPServerAuth("https://legacy.example.com/sse");
+      assert.isFalse(result.requiresAuth);
+      assert.equal(result.endpointStatus, "confirmed");
+      assert.isUndefined(result.responseStatus);
+    });
+
+    it("should keep the notEndpoint verdict when the fallback GET is not an event stream", async () => {
+      const stream = Readable.from(["<html>not found</html>"]);
+      const destroySpy = vi.spyOn(stream, "destroy");
+      vi.spyOn(axios, "post").mockRejectedValue({ response: { status: 404 } });
+      vi.spyOn(axios, "get").mockResolvedValue({
+        headers: { "content-type": "text/html" },
+        data: stream,
+      });
+
+      const result = await probeMCPServerAuth("https://example.com/");
+      assert.equal(result.endpointStatus, "notEndpoint");
+      assert.equal(result.responseStatus, 404);
+      assert.isTrue(destroySpy.mock.calls.length > 0);
+    });
+
+    it("should keep the notEndpoint verdict when the event stream names no endpoint", async () => {
+      vi.spyOn(axios, "post").mockRejectedValue({ response: { status: 405 } });
+      vi.spyOn(axios, "get").mockResolvedValue({
+        headers: { "content-type": "text/event-stream" },
+        data: Readable.from(["event: ping\ndata: {}\n\n"]),
+      });
+
+      const result = await probeMCPServerAuth("https://noisy.example.com/sse");
+      assert.equal(result.endpointStatus, "notEndpoint");
+      assert.equal(result.responseStatus, 405);
+    });
+
+    it("should keep the notEndpoint verdict when the event stream errors out", async () => {
+      const stream = new Readable({ read: () => undefined });
+      vi.spyOn(axios, "post").mockRejectedValue({ response: { status: 404 } });
+      vi.spyOn(axios, "get").mockResolvedValue({
+        headers: { "content-type": "text/event-stream" },
+        data: stream,
+      });
+      setTimeout(() => stream.emit("error", new Error("ECONNRESET")), 0);
+
+      const result = await probeMCPServerAuth("https://flaky.example.com/sse");
+      assert.equal(result.endpointStatus, "notEndpoint");
+      assert.equal(result.responseStatus, 404);
+    });
+
+    it("should stop reading an event stream that never names an endpoint", async () => {
+      vi.spyOn(axios, "post").mockRejectedValue({ response: { status: 404 } });
+      vi.spyOn(axios, "get").mockResolvedValue({
+        headers: { "content-type": "text/event-stream" },
+        data: Readable.from(["data: " + "x".repeat(9000) + "\n\n", "event: endpoint\n\n"]),
+      });
+
+      const result = await probeMCPServerAuth("https://chatty.example.com/sse");
+      assert.equal(result.endpointStatus, "notEndpoint");
+    });
 
     it("should confirm rather than reject a 401", async () => {
       vi.spyOn(axios, "post").mockRejectedValue({ status: 401 });
@@ -409,6 +478,7 @@ describe("mcpToolFetcher", () => {
 
     it("should flag a 404 reported via error.status (no response object)", async () => {
       vi.spyOn(axios, "post").mockRejectedValue({ status: 404 });
+      vi.spyOn(axios, "get").mockRejectedValue({ status: 404 });
 
       const result = await probeMCPServerAuth("https://example.com/");
       assert.equal(result.endpointStatus, "notEndpoint");

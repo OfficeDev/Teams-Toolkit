@@ -3,6 +3,7 @@
 
 import axios from "axios";
 import fs from "fs-extra";
+import { Readable } from "stream";
 import { getLocalizedString } from "./localizeUtils";
 
 export interface MCPTool {
@@ -146,8 +147,16 @@ export type MCPEndpointStatus = "confirmed" | "notEndpoint" | "undetermined";
  * Deliberately enumerated rather than "any 4xx": measurements across nine live servers only ever
  * produced these three for a wrong URL (404 from routing, 405 from an endpoint that exists but
  * rejects the method, 403 from a WAF in front of the app). Statuses such as 429 or 408 are
- * transient and would slander a URL that is in fact correct. */
+ * transient and would slander a URL that is in fact correct. 400 is excluded on purpose: the
+ * transport spec requires a server to answer 400 when it rejects the `MCP-Protocol-Version`,
+ * so a valid endpoint may well produce one for this probe. */
 const NOT_AN_ENDPOINT_STATUSES = [403, 404, 405];
+
+/** How long to wait for a deprecated HTTP+SSE server to name its message endpoint. */
+const LEGACY_SSE_TIMEOUT_MS = 5000;
+
+/** Stop buffering an event stream that is not going to name an endpoint. */
+const LEGACY_SSE_MAX_BYTES = 8192;
 
 /**
  * A 2xx alone proves nothing: a truncated URL on a host that serves a landing page answers 200
@@ -178,6 +187,62 @@ export interface MCPAuthProbeResult {
   endpointStatus: MCPEndpointStatus;
   /** The HTTP status behind a `notEndpoint` verdict. Absent for the other two states. */
   responseStatus?: number;
+}
+
+/**
+ * Read an event stream only as far as the first `endpoint` event, which is how a 2024-11-05
+ * server announces where its messages go. Anything else — the stream ending, an error, a
+ * stream that just keeps talking, a server that never answers — means no such announcement.
+ */
+function announcesLegacyMessageEndpoint(stream: Readable): Promise<boolean> {
+  return new Promise((resolve) => {
+    let buffered = "";
+    const settle = (found: boolean) => {
+      clearTimeout(timer);
+      stream.destroy();
+      resolve(found);
+    };
+    const timer = setTimeout(() => settle(false), LEGACY_SSE_TIMEOUT_MS);
+    stream.on("data", (chunk: Buffer | string) => {
+      buffered += chunk.toString();
+      if (/^event:\s*endpoint\s*$/m.test(buffered)) {
+        settle(true);
+      } else if (buffered.length > LEGACY_SSE_MAX_BYTES) {
+        settle(false);
+      }
+    });
+    stream.on("end", () => settle(false));
+    stream.on("error", () => settle(false));
+  });
+}
+
+/**
+ * Ask the URL, the way the MCP transport spec's backwards-compatibility rule prescribes,
+ * whether a deprecated HTTP+SSE server is listening there.
+ *
+ * A 2024-11-05 server has no streamable-HTTP endpoint to POST to, so it answers the
+ * `initialize` POST with a 4xx — the spec names 405 and 404 explicitly. Reading that 4xx as
+ * proof of a wrong URL would therefore condemn a whole generation of valid servers. The spec's
+ * own disambiguation is to open an SSE stream with GET: an HTTP+SSE server replies
+ * `text/event-stream` and names its message endpoint in the first event.
+ */
+async function servesLegacySSETransport(serverUrl: string): Promise<boolean> {
+  try {
+    const response = await axios.get(serverUrl, {
+      timeout: LEGACY_SSE_TIMEOUT_MS,
+      responseType: "stream",
+      headers: { Accept: "text/event-stream" },
+    });
+    const contentType = String(response.headers?.["content-type"] ?? "");
+    if (!contentType.includes("text/event-stream")) {
+      response.data?.destroy?.();
+      return false;
+    }
+    return await announcesLegacyMessageEndpoint(response.data);
+  } catch {
+    // A GET that fails says only that the old transport is not there either.
+    return false;
+  }
 }
 
 /** Probe an MCP streamable-HTTP endpoint for an OAuth challenge and for the URL's validity. */
@@ -219,7 +284,11 @@ export async function probeMCPServerAuth(serverUrl: string): Promise<MCPAuthProb
       return { requiresAuth: true, authMetadataUrl, endpointStatus: "confirmed" };
     }
     if (typeof status === "number" && NOT_AN_ENDPOINT_STATUSES.includes(status)) {
-      return { requiresAuth: false, endpointStatus: "notEndpoint", responseStatus: status };
+      // The spec reads a 4xx here as "this may be the old transport", not as "wrong URL", so
+      // the verdict is not settled until HTTP+SSE has been ruled out.
+      return (await servesLegacySSETransport(serverUrl))
+        ? { requiresAuth: false, endpointStatus: "confirmed" }
+        : { requiresAuth: false, endpointStatus: "notEndpoint", responseStatus: status };
     }
     return { requiresAuth: false, endpointStatus: "undetermined" };
   }

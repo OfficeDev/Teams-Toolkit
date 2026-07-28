@@ -22,6 +22,7 @@ location in source.
 | §1.2 JSON-RPC envelope check, tolerant of SSE framing | `packages/fx-core/src/common/mcpToolFetcher.ts` (`carriesJSONRPCEnvelope`) |
 | §1.3 / §1.4 Three-state URL verdict | `packages/fx-core/src/common/mcpToolFetcher.ts` (`MCPEndpointStatus`, `MCPAuthProbeResult.endpointStatus`) |
 | §1.4 Negative statuses treated as "not an MCP endpoint" | `packages/fx-core/src/common/mcpToolFetcher.ts` (`NOT_AN_ENDPOINT_STATUSES`) |
+| §1.2 Deprecated HTTP+SSE ruled out before a 4xx becomes a verdict | `packages/fx-core/src/common/mcpToolFetcher.ts` (`servesLegacySSETransport`, `announcesLegacyMessageEndpoint`) |
 | §1.4 Warning raised on the dynamic-tool-discovery scaffold path | `packages/fx-core/src/component/generator/declarativeAgent/helper.ts` (`generateForMCPForDAWithAuth`, warning type `mcpServerUrlNotAnEndpoint`) |
 | §1.4 Warning text | `packages/fx-core/resource/package.nls.json` (`core.MCPForDA.mcpServerUrlNotAnEndpoint`) |
 | §1.4 Tool-fetch based signal on the non-DT paths | `packages/fx-core/src/component/generator/declarativeAgent/helper.ts` (`generateForMCPForDA`), `packages/fx-core/src/core/FxCore.declarativeAgent.ts` (warning type `mcpNoToolsFetched`) |

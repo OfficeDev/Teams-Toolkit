@@ -13,14 +13,14 @@ toolkit currently accepts such a URL, scaffolds a project around it, and the
 mistake surfaces only at provision time or not at all.
 
 [`mcp-remote-servers.md` §1.3–§1.4](../external-dependencies/mcp-remote-servers.md#13-measured-behavior--documented-endpoint-urls)
-records what nine real endpoints and twelve truncated forms return. Four
+records what nine real endpoints and fourteen truncated forms return. Four
 measured facts drive this decision:
 
 - No valid endpoint returned `404`. A `404` from an `initialize` `POST` is
   therefore a zero-false-positive negative signal on the sample measured.
-- It is not a complete signal: it caught six of the twelve truncated URLs.
+- It is not a complete signal: it caught six of the fourteen truncated URLs.
   Widening to the other negative shapes measured — `403`, `405`, and `2xx`
-  without a JSON-RPC envelope — raises that to ten of twelve, still without
+  without a JSON-RPC envelope — raises that to ten of fourteen, still without
   misclassifying any of the nine valid endpoints.
 - Those wider shapes are weaker evidence. Both measured `403`s came from a WAF
   intercepting ahead of the application, and a WAF fronting a *valid* endpoint
@@ -28,6 +28,16 @@ measured facts drive this decision:
   when addressed with the wrong method.
 - `5xx` and transport failures mean the server is unreachable, not that the
   URL is wrong, and must be distinguished from both of the above.
+
+One valid server that *can* answer `404` is absent from the sample rather than
+nonexistent. The transport spec's backwards-compatibility rule has a client
+read `404` or `405` from the `initialize` `POST` as "this may be a deprecated
+HTTP+SSE server" and disambiguate with a `GET` that opens an event stream.
+No such server was reachable to measure — every `/sse` path probed is either a
+streamable-HTTP endpoint or authorization-gated ahead of transport dispatch —
+but the requirement is normative, so the probe performs that `GET` before
+forming a `notEndpoint` verdict (fact page §1.2). The zero-false-positive
+property is preserved by construction rather than by the sample.
 
 A fifth fact constrains how success is recognized: `https://learn.microsoft.com/api/mcp`
 requires no authorization at all and answers `initialize` with `200`, while
@@ -98,7 +108,7 @@ whether authorization is required:
 | State | Produced by | Effect |
 |---|---|---|
 | `confirmed` | `401`, or `2xx` carrying a JSON-RPC envelope | none |
-| `notEndpoint` | `403`, `404`, `405`, or `2xx` without a JSON-RPC envelope | `404` blocks at input; the rest warn after scaffolding |
+| `notEndpoint` | `403`, `404`, `405`, or `2xx` without a JSON-RPC envelope, and no HTTP+SSE stream at the URL | `404` blocks at input; the rest warn after scaffolding |
 | `undetermined` | `5xx`, other statuses, timeouts, transport failures | none |
 
 Blocking on `404` is chosen over the non-blocking hint (B) because the measured
@@ -122,7 +132,10 @@ surfaces at all.
 
 The negative statuses are enumerated (`403`, `404`, `405`) rather than
 generalized to "any 4xx", because statuses such as `429` and `408` are
-transient and would slander a URL that is in fact correct.
+transient and would slander a URL that is in fact correct. `400` is excluded
+for a stronger reason: the transport spec *requires* a server to answer `400`
+when it rejects the `MCP-Protocol-Version`, so a valid endpoint can produce
+one.
 
 The check is not a substitute for the tool-fetch signal on the paths that have
 one, and does not claim completeness — §1.4 of the fact page documents a
@@ -130,10 +143,13 @@ truncated URL that answers `401` and therefore passes.
 
 ## Consequences
 
-- New constraints §2.8 – §2.12 on
+- New constraints §2.8 – §2.13 on
   [`mcp-remote-servers.md`](../external-dependencies/mcp-remote-servers.md#2-constraints-derived-from-these-facts).
 - Scaffolding gains a network round-trip in the question walk on every
   platform. Previously the VS Code path performed no probe at this point.
+- A URL that is going to be rejected costs a second round-trip, the HTTP+SSE
+  `GET`. Only the `notEndpoint` path pays it; a confirmed or undetermined URL
+  never does.
 - A valid MCP server that is mid-deploy behind a gateway returning `404` will
   block the create flow with no override. This is the accepted cost of the
   decision; the residual risk is bounded because a deploying gateway more

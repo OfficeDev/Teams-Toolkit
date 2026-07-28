@@ -11,8 +11,8 @@ toolkit composes that behavior into scaffold flows is an internal concern and
 belongs in an ADR under [`../adr/`](../adr/README.md).
 
 All measurements in §1.3–§1.5 were taken 2026-07-27, those in §1.6 on 2026-07-28,
-with an unauthenticated `initialize` request; all are reproducible with the
-recipe in §1.7.
+with an unauthenticated `initialize` request; every row was re-verified 2026-07-28
+and all are reproducible with the recipe in §1.7.
 
 ## 1. Facts the toolkit is bound to
 
@@ -60,6 +60,25 @@ between the host and the resource path. Discovery driven only by
   return `200` with an HTML or JSON page on `GET` at a non-endpoint path while
   returning `404` to `POST` at that same path, and one **valid** endpoint
   returns `405` to `GET` (§1.3).
+- A `4xx` to the `initialize` `POST` does not settle the question on its own.
+  The transport spec's backwards-compatibility rule has a client read `405` or
+  `404` there as "this may be a 2024-11-05 HTTP+SSE server" and disambiguate
+  with a `GET`, which that transport answers `text/event-stream`, opening by
+  naming where messages go:
+
+  ```
+  event: endpoint
+  data: /messages?sessionId=…
+  ```
+
+  No such server appears in these measurements — every `/sse` path probed is
+  either a streamable-HTTP endpoint or gated by authorization ahead of
+  transport dispatch (§1.3, §1.4). This is a spec-mandated constraint, not a
+  measured one, and it is the only known way a **valid** server produces the
+  `404` that §2.10 blocks on.
+- `400` carries no signal about the URL. The spec **requires** a server to
+  answer `400` when it rejects the `MCP-Protocol-Version`, and Google's servers
+  answer any unroutable path with `400` and an HTML error page (§1.4).
 
 ### 1.3 Measured behavior — documented endpoint URLs
 
@@ -106,14 +125,16 @@ instead of the endpoint.
 | `https://learn.microsoft.com/api` | **403** (Akamai) | 404 | **no** |
 | `https://learn.microsoft.com/` | **403** (Akamai) | 200 (HTML) | **no** |
 | `https://api.moodys.com/genai-ready-data/m1/` | **401** | 401 | **no** |
+| `https://drivemcp.googleapis.com/` | **400** (HTML) | not measured | **no** |
+| `https://drivemcp.googleapis.com/mcp/` | **400** (HTML) | not measured | **no** |
 | `https://substrate-sdf.office.com/exmigd2sapp/` | 503 | 503 | no (ring down) |
 | `https://substrate-sdf.office.com/` | 200 (HTML) | 200 (HTML) | **no** |
 
 HubSpot has no truncated form — its endpoint is already the origin root.
 
-A `404`-only rule catches 6 of these 12. Widening the negative signal to the
+A `404`-only rule catches 6 of these 14. Widening the negative signal to the
 other shapes the measurements produced — `403`, `405`, and `2xx` without a
-JSON-RPC envelope — raises that to 10 of 12 while still misclassifying none of
+JSON-RPC envelope — raises that to 10 of 14 while still misclassifying none of
 the nine valid endpoints in §1.3 and §1.5.
 
 The two `403`s are **not** the application answering: Akamai intercepts ahead
@@ -192,6 +213,27 @@ These three servers also add to the valid-endpoint sample of §1.3 as the only
 measured production endpoints that answer `initialize` with neither a challenge
 nor a requirement for credentials at that stage.
 
+The document is served for **any** path prefix on those hosts, echoing the
+requested path back in `resource`:
+
+```
+GET https://drivemcp.googleapis.com/.well-known/oauth-protected-resource/mcp
+200 {"authorization_servers":["https://accounts.google.com/"],
+     "resource":"https://drivemcp.googleapis.com/mcp", …}
+```
+
+so a wrong-but-plausible Google path still resolves to real endpoints, and RFC
+9728 §3.3's `resource` check cannot catch it — the same class of miss as the
+Moody's row in §1.4.
+
+The reverse also occurs, and is caught. `https://api.githubcopilot.com/mcp/sse`
+is not an endpoint, yet answers `401` because the auth gate sits ahead of
+routing, and it advertises
+`resource_metadata=".../oauth-protected-resource/mcp/sse"`. That document URL
+itself answers `401`, no derived or well-known candidate resolves, and
+discovery fails — so the wrong URL is caught one stage after the probe rather
+than by it.
+
 ### 1.7 Reproducing these measurements
 
 ```
@@ -220,7 +262,9 @@ with `GET` and with the final path segment removed.
 3. Reachability and endpoint-validity probes must use `POST`; a `GET` result
    must not be treated as evidence that a URL is an MCP endpoint (§1.2, §1.4).
 4. `404` from an `initialize` `POST` means no MCP endpoint is routed at that
-   URL. No valid endpoint produced it in any measurement (§1.3).
+   URL — but only once the deprecated HTTP+SSE transport has been ruled out
+   with the `GET` the spec prescribes, since that transport answers the `POST`
+   with `404` or `405` (§1.2, §1.3).
 5. A non-`404` response must not be treated as proof the URL is correct — a
    path-prefix auth gateway answers `401` for parent paths (§1.4).
 6. `5xx` and transport failures indicate an unreachable server, not a wrong
@@ -244,6 +288,9 @@ with `GET` and with the final path segment removed.
 12. Accepting a URL must never be presented as confirmation that it serves
     tools — §1.4 documents a wrong URL that answers `401`
     ([ADR-0020](../adr/ADR-0020-mcp-server-url-validity.md)).
+13. `400` must never be treated as a wrong-URL signal: the spec requires it for
+    a rejected `MCP-Protocol-Version`, so a valid endpoint can produce one
+    (§1.2, §1.4).
 
 ## 3. Open questions
 
