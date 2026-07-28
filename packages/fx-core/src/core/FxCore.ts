@@ -142,11 +142,6 @@ import {
   getParserOptions,
 } from "../component/generator/openApiSpec/helper";
 import * as templateHelper from "../component/generator/templateHelper";
-import {
-  TemplateGroup,
-  listAllTemplates,
-  listDeclarativeAgentTemplates,
-} from "../component/generator/templates/metadata";
 import * as generatorUtils from "../component/generator/utils";
 import { resolveV4MetadataSource } from "../component/generator/v4MetadataSource";
 import { LaunchHelper } from "../component/m365/launchHelper";
@@ -369,21 +364,6 @@ export class FxCore extends FxCoreOpenPluginPart {
     const res = await coordinator.create(context, inputs);
     inputs.projectPath = context.projectPath;
     return res;
-  }
-
-  /**
-   * List all scaffolding templates grouped by name. Thin, stateless delegate
-   * over the shared util so instance-based consumers get the same data.
-   */
-  listTemplates(): Result<TemplateGroup[], FxError> {
-    return ok(listAllTemplates());
-  }
-
-  /**
-   * List declarative agent templates grouped by name.
-   */
-  listDeclarativeAgentTemplates(): Result<TemplateGroup[], FxError> {
-    return ok(listDeclarativeAgentTemplates());
   }
 
   /**

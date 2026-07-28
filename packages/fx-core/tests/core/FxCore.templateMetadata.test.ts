@@ -12,7 +12,6 @@ import { featureFlagManager } from "../../src/common/featureFlags";
 import { setTools } from "../../src/common/globalVars";
 import "../../src/component/feature/sso";
 import * as templateHelper from "../../src/component/generator/templateHelper";
-import * as templateMetadata from "../../src/component/generator/templates/metadata";
 import * as generatorUtils from "../../src/component/generator/utils";
 import * as fxCoreModule from "../../src/core/FxCore";
 import { MockTools, randomAppName } from "./utils";
@@ -551,60 +550,5 @@ describe("fetchOnlineTemplateMetadataForVS", () => {
       "18.4.1",
       { encoding: "utf-8" },
     ]);
-  });
-});
-
-describe("FxCore template listing", () => {
-  let core: FxCore;
-
-  beforeEach(() => {
-    setTools(tools);
-    core = new FxCore(tools);
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  it("listTemplates delegates to listAllTemplates and wraps result in ok", () => {
-    const groups = [
-      {
-        name: "app",
-        displayName: "App",
-        description: "desc",
-        language: "typescript",
-      },
-    ];
-    const stub = vi.spyOn(templateMetadata, "listAllTemplates").mockReturnValue(groups);
-
-    const result = core.listTemplates();
-
-    assert.isTrue(result.isOk());
-    if (result.isOk()) {
-      assert.deepEqual(result.value, groups);
-    }
-    assert.equal(stub.mock.calls.length, 1);
-  });
-
-  it("listDeclarativeAgentTemplates delegates to the util and wraps result in ok", () => {
-    const groups = [
-      {
-        name: "copilot-gpt-basic",
-        displayName: "Declarative Agent",
-        description: "Basic DA",
-        language: "common",
-      },
-    ];
-    const stub = vi
-      .spyOn(templateMetadata, "listDeclarativeAgentTemplates")
-      .mockReturnValue(groups);
-
-    const result = core.listDeclarativeAgentTemplates();
-
-    assert.isTrue(result.isOk());
-    if (result.isOk()) {
-      assert.deepEqual(result.value, groups);
-    }
-    assert.equal(stub.mock.calls.length, 1);
   });
 });
