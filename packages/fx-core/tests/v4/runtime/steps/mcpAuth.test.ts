@@ -190,7 +190,8 @@ describe("mcp-auth steps (v4)", () => {
       assert.lengthOf(warnings, 2);
       assert.include(warnings[0], "metadata unavailable");
       // the action is still injected, with placeholders the developer must replace
-      assert.include(warnings[1], SERVER_URL);
+      assert.include(warnings[1], "authorizationUrl");
+      assert.include(warnings[1], "tokenUrl");
     });
 
     it("warns when oauth-dynamic requires manual replacement of the well-known URL", async () => {
@@ -207,7 +208,7 @@ describe("mcp-auth steps (v4)", () => {
       assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
       assert.lengthOf(warnings, 2);
       assert.include(warnings[0], "metadata unavailable");
-      assert.include(warnings[1], SERVER_URL);
+      assert.include(warnings[1], "wellKnownAuthorizationServer");
     });
 
     it("is idempotent — a re-run does not duplicate the registration action", async () => {

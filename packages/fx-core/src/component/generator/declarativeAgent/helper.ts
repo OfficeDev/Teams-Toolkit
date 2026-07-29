@@ -35,8 +35,6 @@ import { pluginManifestUtils } from "../../driver/teamsApp/utils/PluginManifestU
 import { normalizePath } from "../../driver/teamsApp/utils/utils";
 import { getEnvironmentVariables } from "../../utils/common";
 import {
-  MCP_OAUTH_AUTHORIZATION_URL_PLACEHOLDER,
-  MCP_OAUTH_TOKEN_URL_PLACEHOLDER,
   deriveMCPManifestOAuth,
   injectMCPAuthActionToYml,
   persistMCPAuthCredentialEnvVars,
@@ -730,21 +728,13 @@ export async function generateForMCPForDA(
           if (injectResult.wellKnownUrlPlaceholderUsed) {
             warnings.push({
               type: "mcpAuthDcrWellKnownUrlPlaceholder",
-              content: getLocalizedString(
-                "core.MCPForDA.mcpAuthDcrPlaceholderWarning",
-                mcpServerUrl
-              ),
+              content: getLocalizedString("core.MCPForDA.mcpAuthDcrPlaceholderWarning"),
             });
           }
           if (injectResult.oauthUrlPlaceholderUsed) {
             warnings.push({
               type: "mcpAuthOAuthUrlPlaceholder",
-              content: getLocalizedString(
-                "core.MCPForDA.mcpAuthOAuthPlaceholderWarning",
-                mcpServerUrl,
-                MCP_OAUTH_AUTHORIZATION_URL_PLACEHOLDER,
-                MCP_OAUTH_TOKEN_URL_PLACEHOLDER
-              ),
+              content: getLocalizedString("core.MCPForDA.mcpAuthOAuthPlaceholderWarning"),
             });
           }
         }
@@ -887,21 +877,13 @@ async function generateForMCPForDAWithAuth(
           if (injectResult.wellKnownUrlPlaceholderUsed) {
             warnings.push({
               type: "mcpAuthDcrWellKnownUrlPlaceholder",
-              content: getLocalizedString(
-                "core.MCPForDA.mcpAuthDcrPlaceholderWarning",
-                mcpServerUrl
-              ),
+              content: getLocalizedString("core.MCPForDA.mcpAuthDcrPlaceholderWarning"),
             });
           }
           if (injectResult.oauthUrlPlaceholderUsed) {
             warnings.push({
               type: "mcpAuthOAuthUrlPlaceholder",
-              content: getLocalizedString(
-                "core.MCPForDA.mcpAuthOAuthPlaceholderWarning",
-                mcpServerUrl,
-                MCP_OAUTH_AUTHORIZATION_URL_PLACEHOLDER,
-                MCP_OAUTH_TOKEN_URL_PLACEHOLDER
-              ),
+              content: getLocalizedString("core.MCPForDA.mcpAuthOAuthPlaceholderWarning"),
             });
           }
         }

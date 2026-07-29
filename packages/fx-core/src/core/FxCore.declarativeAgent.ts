@@ -50,8 +50,6 @@ import {
 import { QuestionMW } from "../component/middleware/questionMW";
 import { outputScaffoldingWarningMessage } from "../component/utils/common";
 import {
-  MCP_OAUTH_AUTHORIZATION_URL_PLACEHOLDER,
-  MCP_OAUTH_TOKEN_URL_PLACEHOLDER,
   ResolvedMCPAuthEndpoints,
   deriveMCPManifestOAuth,
   injectMCPAuthActionToYml,
@@ -364,19 +362,14 @@ export class FxCoreDeclarativeAgentPart {
       if (injectResult.wellKnownUrlPlaceholderUsed) {
         void context.userInteraction.showMessage(
           "warn",
-          getLocalizedString("core.MCPForDA.mcpAuthDcrPlaceholderWarning", mcpServerUrl),
+          getLocalizedString("core.MCPForDA.mcpAuthDcrPlaceholderWarning"),
           false
         );
       }
       if (injectResult.oauthUrlPlaceholderUsed) {
         void context.userInteraction.showMessage(
           "warn",
-          getLocalizedString(
-            "core.MCPForDA.mcpAuthOAuthPlaceholderWarning",
-            mcpServerUrl,
-            MCP_OAUTH_AUTHORIZATION_URL_PLACEHOLDER,
-            MCP_OAUTH_TOKEN_URL_PLACEHOLDER
-          ),
+          getLocalizedString("core.MCPForDA.mcpAuthOAuthPlaceholderWarning"),
           false
         );
       }
@@ -824,21 +817,13 @@ export class FxCoreDeclarativeAgentPart {
               if (injectResult.wellKnownUrlPlaceholderUsed) {
                 mcpWarnings.push({
                   type: "mcpAuthDcrWellKnownUrlPlaceholder",
-                  content: getLocalizedString(
-                    "core.MCPForDA.mcpAuthDcrPlaceholderWarning",
-                    mcpServerUrl
-                  ),
+                  content: getLocalizedString("core.MCPForDA.mcpAuthDcrPlaceholderWarning"),
                 });
               }
               if (injectResult.oauthUrlPlaceholderUsed) {
                 mcpWarnings.push({
                   type: "mcpAuthOAuthUrlPlaceholder",
-                  content: getLocalizedString(
-                    "core.MCPForDA.mcpAuthOAuthPlaceholderWarning",
-                    mcpServerUrl,
-                    MCP_OAUTH_AUTHORIZATION_URL_PLACEHOLDER,
-                    MCP_OAUTH_TOKEN_URL_PLACEHOLDER
-                  ),
+                  content: getLocalizedString("core.MCPForDA.mcpAuthOAuthPlaceholderWarning"),
                 });
               }
             }
@@ -1073,21 +1058,13 @@ export class FxCoreDeclarativeAgentPart {
                 if (injectResult.wellKnownUrlPlaceholderUsed) {
                   mcpWarnings.push({
                     type: "mcpAuthDcrWellKnownUrlPlaceholder",
-                    content: getLocalizedString(
-                      "core.MCPForDA.mcpAuthDcrPlaceholderWarning",
-                      mcpServerUrl
-                    ),
+                    content: getLocalizedString("core.MCPForDA.mcpAuthDcrPlaceholderWarning"),
                   });
                 }
                 if (injectResult.oauthUrlPlaceholderUsed) {
                   mcpWarnings.push({
                     type: "mcpAuthOAuthUrlPlaceholder",
-                    content: getLocalizedString(
-                      "core.MCPForDA.mcpAuthOAuthPlaceholderWarning",
-                      mcpServerUrl,
-                      MCP_OAUTH_AUTHORIZATION_URL_PLACEHOLDER,
-                      MCP_OAUTH_TOKEN_URL_PLACEHOLDER
-                    ),
+                    content: getLocalizedString("core.MCPForDA.mcpAuthOAuthPlaceholderWarning"),
                   });
                 }
               }

@@ -3537,7 +3537,7 @@ describe("addPlugin", async () => {
     // reads as "everything worked". Placeholders must be raised the way create raises them.
     const warned = showMessage.mock.calls.find((call) => call[0] === "warn");
     assert.isDefined(warned);
-    assert.include(String(warned![1]), "https://example.com/mcp");
+    assert.include(String(warned![1]), "authorizationUrl");
     assert.include(String(warned![1]), "placeholders");
 
     // The notification's only action opens the file that holds the placeholders.
