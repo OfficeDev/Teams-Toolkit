@@ -108,7 +108,7 @@ test("VCB-34: semantic compiler does not read external template contracts", asyn
   }
 });
 
-test("VCB-34: default setup compiles the checked-in YAML sources into eighteen plans", async (context) => {
+test("VCB-34: default setup compiles the checked-in YAML sources into twenty-five plans", async (context) => {
   const plansDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "vscuse-generated-"),
   );
@@ -121,9 +121,9 @@ test("VCB-34: default setup compiles the checked-in YAML sources into eighteen p
   });
 
   assert.equal(first.ok, true);
-  assert.equal(first.value.files.length, 18);
+  assert.equal(first.value.files.length, 25);
   const generatedFiles = first.value.files;
-  assert.equal(generatedFiles.length, 18);
+  assert.equal(generatedFiles.length, 25);
   assert.equal(
     generatedFiles.includes(
       "da-api-plugin-from-existing-api--da-api-plugin-from-existing-api-no-auth.json",
@@ -828,7 +828,7 @@ test("provision confirmation follows the authored provision input", async (conte
     await fs.readFile(
       path.join(
         plansDirectory,
-        "weather-agent--weather-ts-azure-openai-remote-preview.json",
+        "weather-agent--weather-ts-azure-openai-remote-teams.json",
       ),
       "utf8",
     ),
@@ -1421,6 +1421,62 @@ test("VCB-71: the Python remote Teams target opens the app through the Teams add
     plan.steps.some((step) => step.step_id.startsWith("step_addAndOpenApp_")),
     true,
   );
+});
+
+test("VCB-72: the weather bundle authors every LLM, language, and Teams launch combination", async () => {
+  const result = await compileFixture(
+    "weather-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const caseIds = new Set(result.value.map((generated) => generated.caseId));
+  for (const llm of ["azure-openai", "openai"]) {
+    for (const language of ["ts", "js"]) {
+      for (const launch of ["remote-teams", "local-teams"]) {
+        assert.equal(
+          caseIds.has(`weather-${language}-${llm}-${launch}`),
+          true,
+          `weather-${language}-${llm}-${launch} is not authored`,
+        );
+      }
+    }
+  }
+});
+
+test("VCB-73: an OpenAI weather case launches its target and asserts no chat completion", async () => {
+  const result = await compileFixture(
+    "weather-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  for (const generated of result.value) {
+    if (!generated.caseId.includes("-openai-")) {
+      continue;
+    }
+    const isAzure = generated.caseId.includes("-azure-openai-");
+    const sendsAMessage = generated.plan.steps.some((step) =>
+      /^step_send(Teams|Copilot|Playground)Message_/.test(step.step_id || ""),
+    );
+    assert.equal(
+      sendsAMessage,
+      isAzure,
+      `${generated.caseId} sends ${sendsAMessage ? "a" : "no"} chat message`,
+    );
+  }
+});
+
+test("VCB-74: the remote Copilot target requires provision and deploy", async () => {
+  const result = await compileFixture("weather-agent.yml", (sourceText) =>
+    sourceText.replace(
+      "        deploy,\n        f5-copilot-remote,",
+      "        f5-copilot-remote,",
+    ),
+  );
+
+  assert.equal(result.ok, false);
+  assert.equal(result.diagnostics[0].code, "VCB_TARGET_PREREQUISITE");
 });
 
 test("VCB-26: an already-ready Copilot target makes its open emit no step", async () => {

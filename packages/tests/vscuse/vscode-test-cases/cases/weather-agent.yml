@@ -1,7 +1,13 @@
 version: 1
 
+# The first eight cases are the full LLM x language x launch matrix. Language is
+# a genuinely different template package, so every language gets its own launch
+# and, where a real key exists, its own completion. Launch and language are
+# orthogonal — m365agents.yml and launch.json are byte-identical between the
+# TypeScript and JavaScript packages — so the remaining surfaces are sampled once
+# rather than crossed with every language.
 cases:
-  - id: weather-ts-azure-openai-remote-preview
+  - id: weather-ts-azure-openai-remote-teams
     scenarioId: SCN-CREATE-WEATHER-01
     steps:
       [
@@ -14,23 +20,6 @@ cases:
         f5-teams-remote,
         open-app,
         check-weather-chat,
-      ]
-
-  # No chat check: CI has no funded openai.com key, so this case covers the
-  # JavaScript/OpenAI scaffold and lifecycle only. Real completions are verified
-  # by the Azure OpenAI case above.
-  - id: weather-js-openai-remote-preview
-    scenarioId: SCN-CREATE-WEATHER-03
-    steps:
-      [
-        scaffold-weather-js-openai,
-        check-weather-js,
-        login-azure,
-        login-m365,
-        provision-arm,
-        deploy,
-        f5-teams-remote,
-        open-app,
       ]
 
   # Local debug: the launch profile's preLaunchTask chain registers the app,
@@ -46,6 +35,107 @@ cases:
         login-m365,
         f5-teams-local,
         open-app,
+        check-weather-chat,
+      ]
+
+  - id: weather-js-azure-openai-remote-teams
+    scenarioId: SCN-CREATE-WEATHER-01
+    steps:
+      [
+        scaffold-weather-js-azure-openai,
+        check-weather-js,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote,
+        open-app,
+        check-weather-chat,
+      ]
+
+  - id: weather-js-azure-openai-local-teams
+    scenarioId: SCN-CREATE-WEATHER-01
+    steps:
+      [
+        scaffold-weather-js-azure-openai,
+        check-weather-js,
+        login-m365,
+        f5-teams-local,
+        open-app,
+        check-weather-chat,
+      ]
+
+  # The OpenAI half of the matrix ends at the launched surface and asserts no
+  # completion. config.yaml declares no openai.com key, and the recordings these
+  # cases replace type a placeholder key for the same reason. What they do cover
+  # is the OpenAI branch of the scaffold question tree, which asks for a single
+  # key instead of an endpoint and a deployment name, and the different generated
+  # configuration that follows from it.
+  - id: weather-ts-openai-remote-teams
+    scenarioId: SCN-CREATE-WEATHER-03
+    steps:
+      [
+        scaffold-weather-ts-openai,
+        check-weather-ts,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote,
+        open-app,
+      ]
+
+  - id: weather-ts-openai-local-teams
+    scenarioId: SCN-CREATE-WEATHER-03
+    steps:
+      [
+        scaffold-weather-ts-openai,
+        check-weather-ts,
+        login-m365,
+        f5-teams-local,
+        open-app,
+      ]
+
+  - id: weather-js-openai-remote-teams
+    scenarioId: SCN-CREATE-WEATHER-03
+    steps:
+      [
+        scaffold-weather-js-openai,
+        check-weather-js,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote,
+        open-app,
+      ]
+
+  - id: weather-js-openai-local-teams
+    scenarioId: SCN-CREATE-WEATHER-03
+    steps:
+      [
+        scaffold-weather-js-openai,
+        check-weather-js,
+        login-m365,
+        f5-teams-local,
+        open-app,
+      ]
+
+  # Surfaces beyond Teams, sampled on the canonical TypeScript + Azure OpenAI
+  # combination. A custom engine agent previewed in Copilot needs its bot
+  # deployed first, unlike a declarative agent.
+  - id: weather-ts-azure-openai-remote-copilot
+    scenarioId: SCN-CREATE-WEATHER-01
+    steps:
+      [
+        scaffold-weather-ts-azure-openai,
+        check-weather-ts,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-copilot-remote,
+        open-agent,
         check-weather-chat,
       ]
 
@@ -70,6 +160,17 @@ cases:
       [
         scaffold-weather-ts-azure-openai,
         check-weather-ts,
+        f5-playground,
+        open-app,
+        check-weather-chat,
+      ]
+
+  - id: weather-js-azure-openai-playground
+    scenarioId: SCN-CREATE-WEATHER-01
+    steps:
+      [
+        scaffold-weather-js-azure-openai,
+        check-weather-js,
         f5-playground,
         open-app,
         check-weather-chat,
@@ -137,6 +238,56 @@ steps:
         path: appPackage/manifest.json
         expect:
           contains: ['"manifestVersion": "1.29"']
+
+  scaffold-weather-ts-openai:
+    type: scaffold
+    with:
+      template: weather-agent
+      answers:
+        - question: projectType
+          value: custom-engine-agent-type
+        - question: customEngineAgent
+          value: weather-agent
+        - question: llmService
+          value: llm-service-openai
+        - question: openAIKey
+          type: text
+          value: "${{secret:OPENAI_API_KEY}}"
+        - question: language
+          value: typescript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  scaffold-weather-js-azure-openai:
+    type: scaffold
+    with:
+      template: weather-agent
+      answers:
+        - question: projectType
+          value: custom-engine-agent-type
+        - question: customEngineAgent
+          value: weather-agent
+        - question: llmService
+          value: llm-service-azure-openai
+        - question: azureOpenAIKey
+          type: text
+          value: "${{secret:AZURE_OPENAI_API_KEY}}"
+        - question: azureOpenAIEndpoint
+          type: text
+          value: "${{env:AZURE_OPENAI_ENDPOINT}}"
+        - question: azureOpenAIDeploymentName
+          type: text
+          value: "${{env:AZURE_OPENAI_MODEL}}"
+        - question: language
+          value: javascript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
 
   scaffold-weather-js-openai:
     type: scaffold
@@ -230,6 +381,11 @@ steps:
     type: target
     with:
       profile: "(Preview) Debug in Copilot (Chrome)"
+
+  f5-copilot-remote:
+    type: target
+    with:
+      profile: "(Preview) Launch Remote in Copilot (Chrome)"
 
   f5-playground:
     type: target

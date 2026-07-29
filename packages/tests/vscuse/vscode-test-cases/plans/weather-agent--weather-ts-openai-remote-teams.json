@@ -1,181 +1,169 @@
 {
   "plan_metadata": {
     "version": "1.1",
-    "plan_id": "plan_7374fcb31c11",
+    "plan_id": "plan_c7e9339d5b4c",
     "execution_context": {
       "delay_between_steps": 1,
       "stop_on_error": true,
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 149,
-    "name": "weather-ts-azure-openai-remote-preview",
+    "total_steps": 137,
+    "name": "weather-ts-openai-remote-teams",
     "description": {
       "owner": "",
-      "workitem": "SCN-CREATE-WEATHER-01",
+      "workitem": "SCN-CREATE-WEATHER-03",
       "other": ""
     },
     "execution_order": [
-      "step_closeWelcomeOverlay_assertVisible_cb4a8be87_1_1",
-      "step_closeWelcomeOverlay_close_cb4a8be87_1_1",
-      "step_closeWelcomeOverlay_assertReady_cb4a8be87_1_1",
-      "step_executeCommand_open_cb4a8be87_1_2",
-      "step_executeCommand_assertPalette_cb4a8be87_1_2",
-      "step_executeCommand_filter_cb4a8be87_1_2",
-      "step_executeCommand_assertCommand_cb4a8be87_1_2",
-      "step_executeCommand_execute_cb4a8be87_1_2",
-      "step_assertToolkitViewSettled_assert_cb4a8be87_1_3",
-      "step_closeGetStartedEditor_assertActive_cb4a8be87_1_4",
-      "step_closeGetStartedEditor_close_cb4a8be87_1_4",
-      "step_closeGetStartedEditor_assertClosed_cb4a8be87_1_4",
-      "step_executeCommand_open_cb4a8be87_1_5",
-      "step_executeCommand_assertPalette_cb4a8be87_1_5",
-      "step_executeCommand_filter_cb4a8be87_1_5",
-      "step_executeCommand_assertCommand_cb4a8be87_1_5",
-      "step_executeCommand_execute_cb4a8be87_1_5",
-      "step_singleSelect_assertQuestion_cb4a8be87_1_6",
-      "step_singleSelect_assertOptionsLoaded_cb4a8be87_1_6",
-      "step_singleSelect_filter_cb4a8be87_1_6",
-      "step_singleSelect_assertOption_cb4a8be87_1_6",
-      "step_singleSelect_confirm_cb4a8be87_1_6",
-      "step_singleSelect_assertQuestion_cb4a8be87_1_7",
-      "step_singleSelect_assertOptionsLoaded_cb4a8be87_1_7",
-      "step_singleSelect_filter_cb4a8be87_1_7",
-      "step_singleSelect_assertOption_cb4a8be87_1_7",
-      "step_singleSelect_confirm_cb4a8be87_1_7",
-      "step_singleSelect_assertQuestion_cb4a8be87_1_8",
-      "step_singleSelect_assertOptionsLoaded_cb4a8be87_1_8",
-      "step_singleSelect_filter_cb4a8be87_1_8",
-      "step_singleSelect_assertOption_cb4a8be87_1_8",
-      "step_singleSelect_confirm_cb4a8be87_1_8",
-      "step_textInput_assertQuestion_cb4a8be87_1_9",
-      "step_textInput_input_cb4a8be87_1_9",
-      "step_textInput_confirm_cb4a8be87_1_9",
-      "step_textInput_assertQuestion_cb4a8be87_1_10",
-      "step_textInput_input_cb4a8be87_1_10",
-      "step_textInput_confirm_cb4a8be87_1_10",
-      "step_textInput_assertQuestion_cb4a8be87_1_11",
-      "step_textInput_input_cb4a8be87_1_11",
-      "step_textInput_confirm_cb4a8be87_1_11",
-      "step_singleSelect_assertQuestion_cb4a8be87_1_12",
-      "step_singleSelect_assertOptionsLoaded_cb4a8be87_1_12",
-      "step_singleSelect_filter_cb4a8be87_1_12",
-      "step_singleSelect_assertOption_cb4a8be87_1_12",
-      "step_singleSelect_confirm_cb4a8be87_1_12",
-      "step_confirmOption_assertPrompt_cb4a8be87_1_13",
-      "step_confirmOption_confirm_cb4a8be87_1_13",
-      "step_textInput_assertQuestion_cb4a8be87_1_14",
-      "step_textInput_input_cb4a8be87_1_14",
-      "step_textInput_confirm_cb4a8be87_1_14",
-      "step_assertProjectWindowReady_assert_cb4a8be87_1_15",
-      "step_checkWorkspaceFiles_verify_cb4a8be87_2_1",
-      "step_checkWorkspaceFiles_verify_cb4a8be87_2_2",
-      "step_checkWorkspaceFiles_verify_cb4a8be87_2_3",
-      "step_checkWorkspaceFiles_verify_cb4a8be87_2_4",
-      "step_checkWorkspaceFiles_verify_cb4a8be87_2_5",
-      "step_checkWorkspaceFiles_verify_cb4a8be87_2_6",
-      "step_checkWorkspaceFiles_verify_cb4a8be87_2_7",
-      "step_executeCommand_open_cb4a8be87_3_1",
-      "step_executeCommand_assertPalette_cb4a8be87_3_1",
-      "step_executeCommand_filter_cb4a8be87_3_1",
-      "step_executeCommand_assertCommand_cb4a8be87_3_1",
-      "step_executeCommand_execute_cb4a8be87_3_1",
-      "step_signInAzure_assertOption_cb4a8be87_3_2",
-      "step_signInAzure_selectOption_cb4a8be87_3_2",
-      "step_signInAzure_confirmSignIn_cb4a8be87_3_2",
-      "step_signInAzure_allow_cb4a8be87_3_2",
-      "step_signInAzure_focusAccount_cb4a8be87_3_2",
-      "step_signInAzure_typeAccount_cb4a8be87_3_2",
-      "step_signInAzure_next_cb4a8be87_3_2",
-      "step_signInAzure_typePassword_cb4a8be87_3_2",
-      "step_signInAzure_submit_cb4a8be87_3_2",
-      "step_signInAzure_closeBrowser_cb4a8be87_3_2",
-      "step_signInAzure_assertReady_cb4a8be87_3_2",
-      "step_executeCommand_open_cb4a8be87_4_1",
-      "step_executeCommand_assertPalette_cb4a8be87_4_1",
-      "step_executeCommand_filter_cb4a8be87_4_1",
-      "step_executeCommand_assertCommand_cb4a8be87_4_1",
-      "step_executeCommand_execute_cb4a8be87_4_1",
-      "step_signInM365FromPicker_assertOption_cb4a8be87_4_2",
-      "step_signInM365FromPicker_selectOption_cb4a8be87_4_2",
-      "step_signInM365FromPicker_confirmSignIn_cb4a8be87_4_2",
-      "step_signInM365FromPicker_useAnotherAccount_cb4a8be87_4_2",
-      "step_signInM365FromPicker_typeAccount_cb4a8be87_4_2",
-      "step_signInM365FromPicker_next_cb4a8be87_4_2",
-      "step_signInM365FromPicker_typePassword_cb4a8be87_4_2",
-      "step_signInM365FromPicker_submit_cb4a8be87_4_2",
-      "step_signInM365FromPicker_closeBrowser_cb4a8be87_4_2",
-      "step_signInM365FromPicker_assertReady_cb4a8be87_4_2",
-      "step_executeCommand_open_cb4a8be87_5_1",
-      "step_executeCommand_assertPalette_cb4a8be87_5_1",
-      "step_executeCommand_filter_cb4a8be87_5_1",
-      "step_executeCommand_assertCommand_cb4a8be87_5_1",
-      "step_executeCommand_execute_cb4a8be87_5_1",
-      "step_executeCommand_open_cb4a8be87_5_2",
-      "step_executeCommand_assertPalette_cb4a8be87_5_2",
-      "step_executeCommand_filter_cb4a8be87_5_2",
-      "step_executeCommand_assertCommand_cb4a8be87_5_2",
-      "step_executeCommand_execute_cb4a8be87_5_2",
-      "step_singleSelect_assertQuestion_cb4a8be87_5_3",
-      "step_singleSelect_assertOptionsLoaded_cb4a8be87_5_3",
-      "step_singleSelect_filter_cb4a8be87_5_3",
-      "step_singleSelect_assertOption_cb4a8be87_5_3",
-      "step_singleSelect_confirm_cb4a8be87_5_3",
-      "step_textInput_assertQuestion_cb4a8be87_5_4",
-      "step_textInput_input_cb4a8be87_5_4",
-      "step_textInput_confirm_cb4a8be87_5_4",
-      "step_singleSelect_assertQuestion_cb4a8be87_5_5",
-      "step_singleSelect_assertOptionsLoaded_cb4a8be87_5_5",
-      "step_singleSelect_filter_cb4a8be87_5_5",
-      "step_singleSelect_assertOption_cb4a8be87_5_5",
-      "step_singleSelect_confirm_cb4a8be87_5_5",
-      "step_clickPrimaryAction_assertDialog_cb4a8be87_5_6",
-      "step_clickPrimaryAction_click_cb4a8be87_5_6",
-      "step_assertNotificationContains_assert_cb4a8be87_5_7",
-      "step_executeCommand_open_cb4a8be87_6_1",
-      "step_executeCommand_assertPalette_cb4a8be87_6_1",
-      "step_executeCommand_filter_cb4a8be87_6_1",
-      "step_executeCommand_assertCommand_cb4a8be87_6_1",
-      "step_executeCommand_execute_cb4a8be87_6_1",
-      "step_executeCommand_open_cb4a8be87_6_2",
-      "step_executeCommand_assertPalette_cb4a8be87_6_2",
-      "step_executeCommand_filter_cb4a8be87_6_2",
-      "step_executeCommand_assertCommand_cb4a8be87_6_2",
-      "step_executeCommand_execute_cb4a8be87_6_2",
-      "step_clickPrimaryAction_assertDialog_cb4a8be87_6_3",
-      "step_clickPrimaryAction_click_cb4a8be87_6_3",
-      "step_assertNotificationContains_assert_cb4a8be87_6_4",
-      "step_executeCommand_open_cb4a8be87_7_1",
-      "step_executeCommand_assertPalette_cb4a8be87_7_1",
-      "step_executeCommand_filter_cb4a8be87_7_1",
-      "step_executeCommand_assertCommand_cb4a8be87_7_1",
-      "step_executeCommand_execute_cb4a8be87_7_1",
-      "step_filterOption_filter_cb4a8be87_7_2",
-      "step_filterOption_assertOption_cb4a8be87_7_2",
-      "step_filterOption_confirm_cb4a8be87_7_2",
-      "step_assertReady_assertReady_cb4a8be87_7_3",
-      "step_addAndOpenApp_assertAdd_cb4a8be87_8_1",
-      "step_addAndOpenApp_add_cb4a8be87_8_1",
-      "step_addAndOpenApp_assertAdded_cb4a8be87_8_1",
-      "step_addAndOpenApp_open_cb4a8be87_8_1",
-      "step_addAndOpenApp_assertReady_cb4a8be87_8_1",
-      "step_sendTeamsMessage_assertInput_cb4a8be87_9_1",
-      "step_sendTeamsMessage_focusInput_cb4a8be87_9_1",
-      "step_sendTeamsMessage_type_cb4a8be87_9_1",
-      "step_sendTeamsMessage_send_cb4a8be87_9_1",
-      "step_assertChatReplied_assert_cb4a8be87_9_2",
-      "step_assertChatContains_assert_cb4a8be87_9_3"
+      "step_closeWelcomeOverlay_assertVisible_c3f41809f_1_1",
+      "step_closeWelcomeOverlay_close_c3f41809f_1_1",
+      "step_closeWelcomeOverlay_assertReady_c3f41809f_1_1",
+      "step_executeCommand_open_c3f41809f_1_2",
+      "step_executeCommand_assertPalette_c3f41809f_1_2",
+      "step_executeCommand_filter_c3f41809f_1_2",
+      "step_executeCommand_assertCommand_c3f41809f_1_2",
+      "step_executeCommand_execute_c3f41809f_1_2",
+      "step_assertToolkitViewSettled_assert_c3f41809f_1_3",
+      "step_closeGetStartedEditor_assertActive_c3f41809f_1_4",
+      "step_closeGetStartedEditor_close_c3f41809f_1_4",
+      "step_closeGetStartedEditor_assertClosed_c3f41809f_1_4",
+      "step_executeCommand_open_c3f41809f_1_5",
+      "step_executeCommand_assertPalette_c3f41809f_1_5",
+      "step_executeCommand_filter_c3f41809f_1_5",
+      "step_executeCommand_assertCommand_c3f41809f_1_5",
+      "step_executeCommand_execute_c3f41809f_1_5",
+      "step_singleSelect_assertQuestion_c3f41809f_1_6",
+      "step_singleSelect_assertOptionsLoaded_c3f41809f_1_6",
+      "step_singleSelect_filter_c3f41809f_1_6",
+      "step_singleSelect_assertOption_c3f41809f_1_6",
+      "step_singleSelect_confirm_c3f41809f_1_6",
+      "step_singleSelect_assertQuestion_c3f41809f_1_7",
+      "step_singleSelect_assertOptionsLoaded_c3f41809f_1_7",
+      "step_singleSelect_filter_c3f41809f_1_7",
+      "step_singleSelect_assertOption_c3f41809f_1_7",
+      "step_singleSelect_confirm_c3f41809f_1_7",
+      "step_singleSelect_assertQuestion_c3f41809f_1_8",
+      "step_singleSelect_assertOptionsLoaded_c3f41809f_1_8",
+      "step_singleSelect_filter_c3f41809f_1_8",
+      "step_singleSelect_assertOption_c3f41809f_1_8",
+      "step_singleSelect_confirm_c3f41809f_1_8",
+      "step_textInput_assertQuestion_c3f41809f_1_9",
+      "step_textInput_input_c3f41809f_1_9",
+      "step_textInput_confirm_c3f41809f_1_9",
+      "step_singleSelect_assertQuestion_c3f41809f_1_10",
+      "step_singleSelect_assertOptionsLoaded_c3f41809f_1_10",
+      "step_singleSelect_filter_c3f41809f_1_10",
+      "step_singleSelect_assertOption_c3f41809f_1_10",
+      "step_singleSelect_confirm_c3f41809f_1_10",
+      "step_confirmOption_assertPrompt_c3f41809f_1_11",
+      "step_confirmOption_confirm_c3f41809f_1_11",
+      "step_textInput_assertQuestion_c3f41809f_1_12",
+      "step_textInput_input_c3f41809f_1_12",
+      "step_textInput_confirm_c3f41809f_1_12",
+      "step_assertProjectWindowReady_assert_c3f41809f_1_13",
+      "step_checkWorkspaceFiles_verify_c3f41809f_2_1",
+      "step_checkWorkspaceFiles_verify_c3f41809f_2_2",
+      "step_checkWorkspaceFiles_verify_c3f41809f_2_3",
+      "step_checkWorkspaceFiles_verify_c3f41809f_2_4",
+      "step_checkWorkspaceFiles_verify_c3f41809f_2_5",
+      "step_checkWorkspaceFiles_verify_c3f41809f_2_6",
+      "step_checkWorkspaceFiles_verify_c3f41809f_2_7",
+      "step_executeCommand_open_c3f41809f_3_1",
+      "step_executeCommand_assertPalette_c3f41809f_3_1",
+      "step_executeCommand_filter_c3f41809f_3_1",
+      "step_executeCommand_assertCommand_c3f41809f_3_1",
+      "step_executeCommand_execute_c3f41809f_3_1",
+      "step_signInAzure_assertOption_c3f41809f_3_2",
+      "step_signInAzure_selectOption_c3f41809f_3_2",
+      "step_signInAzure_confirmSignIn_c3f41809f_3_2",
+      "step_signInAzure_allow_c3f41809f_3_2",
+      "step_signInAzure_focusAccount_c3f41809f_3_2",
+      "step_signInAzure_typeAccount_c3f41809f_3_2",
+      "step_signInAzure_next_c3f41809f_3_2",
+      "step_signInAzure_typePassword_c3f41809f_3_2",
+      "step_signInAzure_submit_c3f41809f_3_2",
+      "step_signInAzure_closeBrowser_c3f41809f_3_2",
+      "step_signInAzure_assertReady_c3f41809f_3_2",
+      "step_executeCommand_open_c3f41809f_4_1",
+      "step_executeCommand_assertPalette_c3f41809f_4_1",
+      "step_executeCommand_filter_c3f41809f_4_1",
+      "step_executeCommand_assertCommand_c3f41809f_4_1",
+      "step_executeCommand_execute_c3f41809f_4_1",
+      "step_signInM365FromPicker_assertOption_c3f41809f_4_2",
+      "step_signInM365FromPicker_selectOption_c3f41809f_4_2",
+      "step_signInM365FromPicker_confirmSignIn_c3f41809f_4_2",
+      "step_signInM365FromPicker_useAnotherAccount_c3f41809f_4_2",
+      "step_signInM365FromPicker_typeAccount_c3f41809f_4_2",
+      "step_signInM365FromPicker_next_c3f41809f_4_2",
+      "step_signInM365FromPicker_typePassword_c3f41809f_4_2",
+      "step_signInM365FromPicker_submit_c3f41809f_4_2",
+      "step_signInM365FromPicker_closeBrowser_c3f41809f_4_2",
+      "step_signInM365FromPicker_assertReady_c3f41809f_4_2",
+      "step_executeCommand_open_c3f41809f_5_1",
+      "step_executeCommand_assertPalette_c3f41809f_5_1",
+      "step_executeCommand_filter_c3f41809f_5_1",
+      "step_executeCommand_assertCommand_c3f41809f_5_1",
+      "step_executeCommand_execute_c3f41809f_5_1",
+      "step_executeCommand_open_c3f41809f_5_2",
+      "step_executeCommand_assertPalette_c3f41809f_5_2",
+      "step_executeCommand_filter_c3f41809f_5_2",
+      "step_executeCommand_assertCommand_c3f41809f_5_2",
+      "step_executeCommand_execute_c3f41809f_5_2",
+      "step_singleSelect_assertQuestion_c3f41809f_5_3",
+      "step_singleSelect_assertOptionsLoaded_c3f41809f_5_3",
+      "step_singleSelect_filter_c3f41809f_5_3",
+      "step_singleSelect_assertOption_c3f41809f_5_3",
+      "step_singleSelect_confirm_c3f41809f_5_3",
+      "step_textInput_assertQuestion_c3f41809f_5_4",
+      "step_textInput_input_c3f41809f_5_4",
+      "step_textInput_confirm_c3f41809f_5_4",
+      "step_singleSelect_assertQuestion_c3f41809f_5_5",
+      "step_singleSelect_assertOptionsLoaded_c3f41809f_5_5",
+      "step_singleSelect_filter_c3f41809f_5_5",
+      "step_singleSelect_assertOption_c3f41809f_5_5",
+      "step_singleSelect_confirm_c3f41809f_5_5",
+      "step_clickPrimaryAction_assertDialog_c3f41809f_5_6",
+      "step_clickPrimaryAction_click_c3f41809f_5_6",
+      "step_assertNotificationContains_assert_c3f41809f_5_7",
+      "step_executeCommand_open_c3f41809f_6_1",
+      "step_executeCommand_assertPalette_c3f41809f_6_1",
+      "step_executeCommand_filter_c3f41809f_6_1",
+      "step_executeCommand_assertCommand_c3f41809f_6_1",
+      "step_executeCommand_execute_c3f41809f_6_1",
+      "step_executeCommand_open_c3f41809f_6_2",
+      "step_executeCommand_assertPalette_c3f41809f_6_2",
+      "step_executeCommand_filter_c3f41809f_6_2",
+      "step_executeCommand_assertCommand_c3f41809f_6_2",
+      "step_executeCommand_execute_c3f41809f_6_2",
+      "step_clickPrimaryAction_assertDialog_c3f41809f_6_3",
+      "step_clickPrimaryAction_click_c3f41809f_6_3",
+      "step_assertNotificationContains_assert_c3f41809f_6_4",
+      "step_executeCommand_open_c3f41809f_7_1",
+      "step_executeCommand_assertPalette_c3f41809f_7_1",
+      "step_executeCommand_filter_c3f41809f_7_1",
+      "step_executeCommand_assertCommand_c3f41809f_7_1",
+      "step_executeCommand_execute_c3f41809f_7_1",
+      "step_filterOption_filter_c3f41809f_7_2",
+      "step_filterOption_assertOption_c3f41809f_7_2",
+      "step_filterOption_confirm_c3f41809f_7_2",
+      "step_assertReady_assertReady_c3f41809f_7_3",
+      "step_addAndOpenApp_assertAdd_c3f41809f_8_1",
+      "step_addAndOpenApp_add_c3f41809f_8_1",
+      "step_addAndOpenApp_assertAdded_c3f41809f_8_1",
+      "step_addAndOpenApp_open_c3f41809f_8_1",
+      "step_addAndOpenApp_assertReady_c3f41809f_8_1"
     ],
     "tags": [
-      "case_id:weather-ts-azure-openai-remote-preview",
-      "scenario_id:SCN-CREATE-WEATHER-01",
+      "case_id:weather-ts-openai-remote-teams",
+      "scenario_id:SCN-CREATE-WEATHER-03",
       "template_id:weather-agent",
       "gate:pr"
     ]
   },
   "steps": [
     {
-      "step_id": "step_closeWelcomeOverlay_assertVisible_cb4a8be87_1_1",
+      "step_id": "step_closeWelcomeOverlay_assertVisible_c3f41809f_1_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -194,7 +182,7 @@
       ]
     },
     {
-      "step_id": "step_closeWelcomeOverlay_close_cb4a8be87_1_1",
+      "step_id": "step_closeWelcomeOverlay_close_c3f41809f_1_1",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -208,7 +196,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_closeWelcomeOverlay_assertVisible_cb4a8be87_1_1"
+        "step_closeWelcomeOverlay_assertVisible_c3f41809f_1_1"
       ],
       "preconditions": [
         "dhash:952:128:16:5:255266345964665b",
@@ -223,7 +211,7 @@
       ]
     },
     {
-      "step_id": "step_closeWelcomeOverlay_assertReady_cb4a8be87_1_1",
+      "step_id": "step_closeWelcomeOverlay_assertReady_c3f41809f_1_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -233,7 +221,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_closeWelcomeOverlay_close_cb4a8be87_1_1"
+        "step_closeWelcomeOverlay_close_c3f41809f_1_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -244,7 +232,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_open_cb4a8be87_1_2",
+      "step_id": "step_executeCommand_open_c3f41809f_1_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -256,7 +244,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_closeWelcomeOverlay_assertReady_cb4a8be87_1_1"
+        "step_closeWelcomeOverlay_assertReady_c3f41809f_1_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -266,7 +254,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertPalette_cb4a8be87_1_2",
+      "step_id": "step_executeCommand_assertPalette_c3f41809f_1_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -276,7 +264,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_open_cb4a8be87_1_2"
+        "step_executeCommand_open_c3f41809f_1_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -287,7 +275,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_filter_cb4a8be87_1_2",
+      "step_id": "step_executeCommand_filter_c3f41809f_1_2",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -299,7 +287,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertPalette_cb4a8be87_1_2"
+        "step_executeCommand_assertPalette_c3f41809f_1_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -309,7 +297,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertCommand_cb4a8be87_1_2",
+      "step_id": "step_executeCommand_assertCommand_c3f41809f_1_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -319,7 +307,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_filter_cb4a8be87_1_2"
+        "step_executeCommand_filter_c3f41809f_1_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -330,7 +318,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_execute_cb4a8be87_1_2",
+      "step_id": "step_executeCommand_execute_c3f41809f_1_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -342,7 +330,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertCommand_cb4a8be87_1_2"
+        "step_executeCommand_assertCommand_c3f41809f_1_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -352,7 +340,7 @@
       ]
     },
     {
-      "step_id": "step_assertToolkitViewSettled_assert_cb4a8be87_1_3",
+      "step_id": "step_assertToolkitViewSettled_assert_c3f41809f_1_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -362,7 +350,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_cb4a8be87_1_2"
+        "step_executeCommand_execute_c3f41809f_1_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -373,7 +361,7 @@
       ]
     },
     {
-      "step_id": "step_closeGetStartedEditor_assertActive_cb4a8be87_1_4",
+      "step_id": "step_closeGetStartedEditor_assertActive_c3f41809f_1_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -383,7 +371,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertToolkitViewSettled_assert_cb4a8be87_1_3"
+        "step_assertToolkitViewSettled_assert_c3f41809f_1_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -394,7 +382,7 @@
       ]
     },
     {
-      "step_id": "step_closeGetStartedEditor_close_cb4a8be87_1_4",
+      "step_id": "step_closeGetStartedEditor_close_c3f41809f_1_4",
       "agent": "interaction",
       "tool": "keyboard_shortcut",
       "parameters": {
@@ -406,7 +394,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_closeGetStartedEditor_assertActive_cb4a8be87_1_4"
+        "step_closeGetStartedEditor_assertActive_c3f41809f_1_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -416,7 +404,7 @@
       ]
     },
     {
-      "step_id": "step_closeGetStartedEditor_assertClosed_cb4a8be87_1_4",
+      "step_id": "step_closeGetStartedEditor_assertClosed_c3f41809f_1_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -426,7 +414,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_closeGetStartedEditor_close_cb4a8be87_1_4"
+        "step_closeGetStartedEditor_close_c3f41809f_1_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -437,7 +425,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_open_cb4a8be87_1_5",
+      "step_id": "step_executeCommand_open_c3f41809f_1_5",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -449,7 +437,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_closeGetStartedEditor_assertClosed_cb4a8be87_1_4"
+        "step_closeGetStartedEditor_assertClosed_c3f41809f_1_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -459,7 +447,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertPalette_cb4a8be87_1_5",
+      "step_id": "step_executeCommand_assertPalette_c3f41809f_1_5",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -469,7 +457,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_open_cb4a8be87_1_5"
+        "step_executeCommand_open_c3f41809f_1_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -480,7 +468,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_filter_cb4a8be87_1_5",
+      "step_id": "step_executeCommand_filter_c3f41809f_1_5",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -492,7 +480,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertPalette_cb4a8be87_1_5"
+        "step_executeCommand_assertPalette_c3f41809f_1_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -502,7 +490,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertCommand_cb4a8be87_1_5",
+      "step_id": "step_executeCommand_assertCommand_c3f41809f_1_5",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -512,7 +500,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_filter_cb4a8be87_1_5"
+        "step_executeCommand_filter_c3f41809f_1_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -523,7 +511,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_execute_cb4a8be87_1_5",
+      "step_id": "step_executeCommand_execute_c3f41809f_1_5",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -535,7 +523,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertCommand_cb4a8be87_1_5"
+        "step_executeCommand_assertCommand_c3f41809f_1_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -545,7 +533,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertQuestion_cb4a8be87_1_6",
+      "step_id": "step_singleSelect_assertQuestion_c3f41809f_1_6",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -555,7 +543,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_cb4a8be87_1_5"
+        "step_executeCommand_execute_c3f41809f_1_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -566,7 +554,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOptionsLoaded_cb4a8be87_1_6",
+      "step_id": "step_singleSelect_assertOptionsLoaded_c3f41809f_1_6",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -576,7 +564,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_cb4a8be87_1_6"
+        "step_singleSelect_assertQuestion_c3f41809f_1_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -587,7 +575,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_filter_cb4a8be87_1_6",
+      "step_id": "step_singleSelect_filter_c3f41809f_1_6",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -599,7 +587,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOptionsLoaded_cb4a8be87_1_6"
+        "step_singleSelect_assertOptionsLoaded_c3f41809f_1_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -609,7 +597,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOption_cb4a8be87_1_6",
+      "step_id": "step_singleSelect_assertOption_c3f41809f_1_6",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -619,7 +607,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_filter_cb4a8be87_1_6"
+        "step_singleSelect_filter_c3f41809f_1_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -630,7 +618,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_confirm_cb4a8be87_1_6",
+      "step_id": "step_singleSelect_confirm_c3f41809f_1_6",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -642,7 +630,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOption_cb4a8be87_1_6"
+        "step_singleSelect_assertOption_c3f41809f_1_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -652,7 +640,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertQuestion_cb4a8be87_1_7",
+      "step_id": "step_singleSelect_assertQuestion_c3f41809f_1_7",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -662,7 +650,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_confirm_cb4a8be87_1_6"
+        "step_singleSelect_confirm_c3f41809f_1_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -673,7 +661,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOptionsLoaded_cb4a8be87_1_7",
+      "step_id": "step_singleSelect_assertOptionsLoaded_c3f41809f_1_7",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -683,7 +671,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_cb4a8be87_1_7"
+        "step_singleSelect_assertQuestion_c3f41809f_1_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -694,7 +682,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_filter_cb4a8be87_1_7",
+      "step_id": "step_singleSelect_filter_c3f41809f_1_7",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -706,7 +694,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOptionsLoaded_cb4a8be87_1_7"
+        "step_singleSelect_assertOptionsLoaded_c3f41809f_1_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -716,7 +704,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOption_cb4a8be87_1_7",
+      "step_id": "step_singleSelect_assertOption_c3f41809f_1_7",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -726,7 +714,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_filter_cb4a8be87_1_7"
+        "step_singleSelect_filter_c3f41809f_1_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -737,7 +725,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_confirm_cb4a8be87_1_7",
+      "step_id": "step_singleSelect_confirm_c3f41809f_1_7",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -749,7 +737,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOption_cb4a8be87_1_7"
+        "step_singleSelect_assertOption_c3f41809f_1_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -759,7 +747,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertQuestion_cb4a8be87_1_8",
+      "step_id": "step_singleSelect_assertQuestion_c3f41809f_1_8",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -769,7 +757,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_confirm_cb4a8be87_1_7"
+        "step_singleSelect_confirm_c3f41809f_1_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -780,7 +768,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOptionsLoaded_cb4a8be87_1_8",
+      "step_id": "step_singleSelect_assertOptionsLoaded_c3f41809f_1_8",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -790,7 +778,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_cb4a8be87_1_8"
+        "step_singleSelect_assertQuestion_c3f41809f_1_8"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -801,19 +789,19 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_filter_cb4a8be87_1_8",
+      "step_id": "step_singleSelect_filter_c3f41809f_1_8",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Azure OpenAI"
+        "text": "OpenAI"
       },
-      "description": "Type the resolved option label Azure OpenAI into the active single-select prompt.",
+      "description": "Type the resolved option label OpenAI into the active single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOptionsLoaded_cb4a8be87_1_8"
+        "step_singleSelect_assertOptionsLoaded_c3f41809f_1_8"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -823,17 +811,17 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOption_cb4a8be87_1_8",
+      "step_id": "step_singleSelect_assertOption_c3f41809f_1_8",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the option Azure OpenAI is visible and selectable in the filtered single-select prompt.",
+      "description": "@assertion the option OpenAI is visible and selectable in the filtered single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_filter_cb4a8be87_1_8"
+        "step_singleSelect_filter_c3f41809f_1_8"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -844,7 +832,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_confirm_cb4a8be87_1_8",
+      "step_id": "step_singleSelect_confirm_c3f41809f_1_8",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -856,7 +844,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOption_cb4a8be87_1_8"
+        "step_singleSelect_assertOption_c3f41809f_1_8"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -866,17 +854,17 @@
       ]
     },
     {
-      "step_id": "step_textInput_assertQuestion_cb4a8be87_1_9",
+      "step_id": "step_textInput_assertQuestion_c3f41809f_1_9",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the active prompt titled Azure OpenAI Key is visible.",
+      "description": "@assertion the active prompt titled OpenAI Key is visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_confirm_cb4a8be87_1_8"
+        "step_singleSelect_confirm_c3f41809f_1_8"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -887,11 +875,11 @@
       ]
     },
     {
-      "step_id": "step_textInput_input_cb4a8be87_1_9",
+      "step_id": "step_textInput_input_c3f41809f_1_9",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "${{secret:AZURE_OPENAI_API_KEY}}"
+        "text": "${{secret:OPENAI_API_KEY}}"
       },
       "description": "Type the authored value into the active text prompt.",
       "content_refs": [],
@@ -899,7 +887,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_assertQuestion_cb4a8be87_1_9"
+        "step_textInput_assertQuestion_c3f41809f_1_9"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -909,7 +897,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_confirm_cb4a8be87_1_9",
+      "step_id": "step_textInput_confirm_c3f41809f_1_9",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -921,7 +909,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_input_cb4a8be87_1_9"
+        "step_textInput_input_c3f41809f_1_9"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -931,137 +919,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_assertQuestion_cb4a8be87_1_10",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the active prompt titled Azure OpenAI Endpoint is visible.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_textInput_confirm_cb4a8be87_1_9"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:text",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_textInput_input_cb4a8be87_1_10",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "${{env:AZURE_OPENAI_ENDPOINT}}"
-      },
-      "description": "Type the authored value into the active text prompt.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_textInput_assertQuestion_cb4a8be87_1_10"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:text"
-      ]
-    },
-    {
-      "step_id": "step_textInput_confirm_cb4a8be87_1_10",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press Enter to submit the accepted text input.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_textInput_input_cb4a8be87_1_10"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:text"
-      ]
-    },
-    {
-      "step_id": "step_textInput_assertQuestion_cb4a8be87_1_11",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the active prompt titled Azure OpenAI Deployment Name is visible.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_textInput_confirm_cb4a8be87_1_10"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:text",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_textInput_input_cb4a8be87_1_11",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "${{env:AZURE_OPENAI_MODEL}}"
-      },
-      "description": "Type the authored value into the active text prompt.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_textInput_assertQuestion_cb4a8be87_1_11"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:text"
-      ]
-    },
-    {
-      "step_id": "step_textInput_confirm_cb4a8be87_1_11",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press Enter to submit the accepted text input.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_textInput_input_cb4a8be87_1_11"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:text"
-      ]
-    },
-    {
-      "step_id": "step_singleSelect_assertQuestion_cb4a8be87_1_12",
+      "step_id": "step_singleSelect_assertQuestion_c3f41809f_1_10",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1071,7 +929,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_confirm_cb4a8be87_1_11"
+        "step_textInput_confirm_c3f41809f_1_9"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1082,7 +940,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOptionsLoaded_cb4a8be87_1_12",
+      "step_id": "step_singleSelect_assertOptionsLoaded_c3f41809f_1_10",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1092,7 +950,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_cb4a8be87_1_12"
+        "step_singleSelect_assertQuestion_c3f41809f_1_10"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1103,7 +961,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_filter_cb4a8be87_1_12",
+      "step_id": "step_singleSelect_filter_c3f41809f_1_10",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1115,7 +973,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOptionsLoaded_cb4a8be87_1_12"
+        "step_singleSelect_assertOptionsLoaded_c3f41809f_1_10"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1125,7 +983,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOption_cb4a8be87_1_12",
+      "step_id": "step_singleSelect_assertOption_c3f41809f_1_10",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1135,7 +993,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_filter_cb4a8be87_1_12"
+        "step_singleSelect_filter_c3f41809f_1_10"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1146,7 +1004,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_confirm_cb4a8be87_1_12",
+      "step_id": "step_singleSelect_confirm_c3f41809f_1_10",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1158,7 +1016,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOption_cb4a8be87_1_12"
+        "step_singleSelect_assertOption_c3f41809f_1_10"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1168,7 +1026,7 @@
       ]
     },
     {
-      "step_id": "step_confirmOption_assertPrompt_cb4a8be87_1_13",
+      "step_id": "step_confirmOption_assertPrompt_c3f41809f_1_11",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1178,7 +1036,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_confirm_cb4a8be87_1_12"
+        "step_singleSelect_confirm_c3f41809f_1_10"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1190,7 +1048,7 @@
       ]
     },
     {
-      "step_id": "step_confirmOption_confirm_cb4a8be87_1_13",
+      "step_id": "step_confirmOption_confirm_c3f41809f_1_11",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1202,7 +1060,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_confirmOption_assertPrompt_cb4a8be87_1_13"
+        "step_confirmOption_assertPrompt_c3f41809f_1_11"
       ],
       "preconditions": [
         "dhash:364:74:16:5:08056a9a5d5516b6",
@@ -1217,7 +1075,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_assertQuestion_cb4a8be87_1_14",
+      "step_id": "step_textInput_assertQuestion_c3f41809f_1_12",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1227,7 +1085,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_confirmOption_confirm_cb4a8be87_1_13"
+        "step_confirmOption_confirm_c3f41809f_1_11"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1238,7 +1096,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_input_cb4a8be87_1_14",
+      "step_id": "step_textInput_input_c3f41809f_1_12",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1250,7 +1108,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_assertQuestion_cb4a8be87_1_14"
+        "step_textInput_assertQuestion_c3f41809f_1_12"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1260,7 +1118,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_confirm_cb4a8be87_1_14",
+      "step_id": "step_textInput_confirm_c3f41809f_1_12",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1272,7 +1130,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_input_cb4a8be87_1_14"
+        "step_textInput_input_c3f41809f_1_12"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1282,7 +1140,7 @@
       ]
     },
     {
-      "step_id": "step_assertProjectWindowReady_assert_cb4a8be87_1_15",
+      "step_id": "step_assertProjectWindowReady_assert_c3f41809f_1_13",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1292,7 +1150,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_confirm_cb4a8be87_1_14"
+        "step_textInput_confirm_c3f41809f_1_12"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1303,7 +1161,7 @@
       ]
     },
     {
-      "step_id": "step_checkWorkspaceFiles_verify_cb4a8be87_2_1",
+      "step_id": "step_checkWorkspaceFiles_verify_c3f41809f_2_1",
       "agent": "code",
       "tool": "",
       "parameters": {
@@ -1315,7 +1173,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertProjectWindowReady_assert_cb4a8be87_1_15"
+        "step_assertProjectWindowReady_assert_c3f41809f_1_13"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1326,7 +1184,7 @@
       ]
     },
     {
-      "step_id": "step_checkWorkspaceFiles_verify_cb4a8be87_2_2",
+      "step_id": "step_checkWorkspaceFiles_verify_c3f41809f_2_2",
       "agent": "code",
       "tool": "",
       "parameters": {
@@ -1338,7 +1196,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_checkWorkspaceFiles_verify_cb4a8be87_2_1"
+        "step_checkWorkspaceFiles_verify_c3f41809f_2_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1349,7 +1207,7 @@
       ]
     },
     {
-      "step_id": "step_checkWorkspaceFiles_verify_cb4a8be87_2_3",
+      "step_id": "step_checkWorkspaceFiles_verify_c3f41809f_2_3",
       "agent": "code",
       "tool": "",
       "parameters": {
@@ -1361,7 +1219,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_checkWorkspaceFiles_verify_cb4a8be87_2_2"
+        "step_checkWorkspaceFiles_verify_c3f41809f_2_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1372,7 +1230,7 @@
       ]
     },
     {
-      "step_id": "step_checkWorkspaceFiles_verify_cb4a8be87_2_4",
+      "step_id": "step_checkWorkspaceFiles_verify_c3f41809f_2_4",
       "agent": "code",
       "tool": "",
       "parameters": {
@@ -1384,7 +1242,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_checkWorkspaceFiles_verify_cb4a8be87_2_3"
+        "step_checkWorkspaceFiles_verify_c3f41809f_2_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1395,7 +1253,7 @@
       ]
     },
     {
-      "step_id": "step_checkWorkspaceFiles_verify_cb4a8be87_2_5",
+      "step_id": "step_checkWorkspaceFiles_verify_c3f41809f_2_5",
       "agent": "code",
       "tool": "",
       "parameters": {
@@ -1407,7 +1265,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_checkWorkspaceFiles_verify_cb4a8be87_2_4"
+        "step_checkWorkspaceFiles_verify_c3f41809f_2_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1418,7 +1276,7 @@
       ]
     },
     {
-      "step_id": "step_checkWorkspaceFiles_verify_cb4a8be87_2_6",
+      "step_id": "step_checkWorkspaceFiles_verify_c3f41809f_2_6",
       "agent": "code",
       "tool": "",
       "parameters": {
@@ -1430,7 +1288,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_checkWorkspaceFiles_verify_cb4a8be87_2_5"
+        "step_checkWorkspaceFiles_verify_c3f41809f_2_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1441,7 +1299,7 @@
       ]
     },
     {
-      "step_id": "step_checkWorkspaceFiles_verify_cb4a8be87_2_7",
+      "step_id": "step_checkWorkspaceFiles_verify_c3f41809f_2_7",
       "agent": "code",
       "tool": "",
       "parameters": {
@@ -1453,7 +1311,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_checkWorkspaceFiles_verify_cb4a8be87_2_6"
+        "step_checkWorkspaceFiles_verify_c3f41809f_2_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1464,7 +1322,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_open_cb4a8be87_3_1",
+      "step_id": "step_executeCommand_open_c3f41809f_3_1",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1476,7 +1334,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_checkWorkspaceFiles_verify_cb4a8be87_2_7"
+        "step_checkWorkspaceFiles_verify_c3f41809f_2_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1486,7 +1344,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertPalette_cb4a8be87_3_1",
+      "step_id": "step_executeCommand_assertPalette_c3f41809f_3_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1496,7 +1354,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_open_cb4a8be87_3_1"
+        "step_executeCommand_open_c3f41809f_3_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1507,7 +1365,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_filter_cb4a8be87_3_1",
+      "step_id": "step_executeCommand_filter_c3f41809f_3_1",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1519,7 +1377,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertPalette_cb4a8be87_3_1"
+        "step_executeCommand_assertPalette_c3f41809f_3_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1529,7 +1387,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertCommand_cb4a8be87_3_1",
+      "step_id": "step_executeCommand_assertCommand_c3f41809f_3_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1539,7 +1397,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_filter_cb4a8be87_3_1"
+        "step_executeCommand_filter_c3f41809f_3_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1550,7 +1408,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_execute_cb4a8be87_3_1",
+      "step_id": "step_executeCommand_execute_c3f41809f_3_1",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1562,7 +1420,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertCommand_cb4a8be87_3_1"
+        "step_executeCommand_assertCommand_c3f41809f_3_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1572,7 +1430,7 @@
       ]
     },
     {
-      "step_id": "step_signInAzure_assertOption_cb4a8be87_3_2",
+      "step_id": "step_signInAzure_assertOption_c3f41809f_3_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1582,7 +1440,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_cb4a8be87_3_1"
+        "step_executeCommand_execute_c3f41809f_3_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1594,7 +1452,7 @@
       ]
     },
     {
-      "step_id": "step_signInAzure_selectOption_cb4a8be87_3_2",
+      "step_id": "step_signInAzure_selectOption_c3f41809f_3_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -1608,7 +1466,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInAzure_assertOption_cb4a8be87_3_2"
+        "step_signInAzure_assertOption_c3f41809f_3_2"
       ],
       "preconditions": [
         "dhash:165:127:16:5:5819353567ef55aa",
@@ -1622,7 +1480,7 @@
       ]
     },
     {
-      "step_id": "step_signInAzure_confirmSignIn_cb4a8be87_3_2",
+      "step_id": "step_signInAzure_confirmSignIn_c3f41809f_3_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -1636,7 +1494,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInAzure_selectOption_cb4a8be87_3_2"
+        "step_signInAzure_selectOption_c3f41809f_3_2"
       ],
       "preconditions": [
         "dhash:534:98:16:5:554a54555555468f",
@@ -1650,7 +1508,7 @@
       ]
     },
     {
-      "step_id": "step_signInAzure_allow_cb4a8be87_3_2",
+      "step_id": "step_signInAzure_allow_c3f41809f_3_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -1664,7 +1522,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInAzure_confirmSignIn_cb4a8be87_3_2"
+        "step_signInAzure_confirmSignIn_c3f41809f_3_2"
       ],
       "preconditions": [
         "dhash:457:96:16:5:524d5552564cb3ca",
@@ -1678,7 +1536,7 @@
       ]
     },
     {
-      "step_id": "step_signInAzure_focusAccount_cb4a8be87_3_2",
+      "step_id": "step_signInAzure_focusAccount_c3f41809f_3_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -1692,7 +1550,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInAzure_allow_cb4a8be87_3_2"
+        "step_signInAzure_allow_c3f41809f_3_2"
       ],
       "preconditions": [
         "dhash:432:327:16:5:114c134b4a13b2cc",
@@ -1707,7 +1565,7 @@
       ]
     },
     {
-      "step_id": "step_signInAzure_typeAccount_cb4a8be87_3_2",
+      "step_id": "step_signInAzure_typeAccount_c3f41809f_3_2",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1719,7 +1577,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInAzure_focusAccount_cb4a8be87_3_2"
+        "step_signInAzure_focusAccount_c3f41809f_3_2"
       ],
       "preconditions": [
         "dhash:512:384:0:20:1b28d0d9e7e4dae4"
@@ -1732,7 +1590,7 @@
       ]
     },
     {
-      "step_id": "step_signInAzure_next_cb4a8be87_3_2",
+      "step_id": "step_signInAzure_next_c3f41809f_3_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -1746,7 +1604,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInAzure_typeAccount_cb4a8be87_3_2"
+        "step_signInAzure_typeAccount_c3f41809f_3_2"
       ],
       "preconditions": [
         "dhash:631:462:16:5:0000000091000000",
@@ -1761,7 +1619,7 @@
       ]
     },
     {
-      "step_id": "step_signInAzure_typePassword_cb4a8be87_3_2",
+      "step_id": "step_signInAzure_typePassword_c3f41809f_3_2",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1773,7 +1631,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInAzure_next_cb4a8be87_3_2"
+        "step_signInAzure_next_c3f41809f_3_2"
       ],
       "preconditions": [
         "dhash:512:384:0:20:1908f0d9d1e6e6e4"
@@ -1787,7 +1645,7 @@
       ]
     },
     {
-      "step_id": "step_signInAzure_submit_cb4a8be87_3_2",
+      "step_id": "step_signInAzure_submit_c3f41809f_3_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1799,7 +1657,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInAzure_typePassword_cb4a8be87_3_2"
+        "step_signInAzure_typePassword_c3f41809f_3_2"
       ],
       "preconditions": [
         "dhash:512:384:0:20:1908f0d9d1e6e6e4"
@@ -1812,7 +1670,7 @@
       ]
     },
     {
-      "step_id": "step_signInAzure_closeBrowser_cb4a8be87_3_2",
+      "step_id": "step_signInAzure_closeBrowser_c3f41809f_3_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -1826,7 +1684,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInAzure_submit_cb4a8be87_3_2"
+        "step_signInAzure_submit_c3f41809f_3_2"
       ],
       "preconditions": [
         "dhash:991:18:16:5:b020624245454242",
@@ -1841,7 +1699,7 @@
       ]
     },
     {
-      "step_id": "step_signInAzure_assertReady_cb4a8be87_3_2",
+      "step_id": "step_signInAzure_assertReady_c3f41809f_3_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1851,7 +1709,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInAzure_closeBrowser_cb4a8be87_3_2"
+        "step_signInAzure_closeBrowser_c3f41809f_3_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1863,7 +1721,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_open_cb4a8be87_4_1",
+      "step_id": "step_executeCommand_open_c3f41809f_4_1",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1875,7 +1733,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInAzure_assertReady_cb4a8be87_3_2"
+        "step_signInAzure_assertReady_c3f41809f_3_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1885,7 +1743,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertPalette_cb4a8be87_4_1",
+      "step_id": "step_executeCommand_assertPalette_c3f41809f_4_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1895,7 +1753,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_open_cb4a8be87_4_1"
+        "step_executeCommand_open_c3f41809f_4_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1906,7 +1764,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_filter_cb4a8be87_4_1",
+      "step_id": "step_executeCommand_filter_c3f41809f_4_1",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1918,7 +1776,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertPalette_cb4a8be87_4_1"
+        "step_executeCommand_assertPalette_c3f41809f_4_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1928,7 +1786,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertCommand_cb4a8be87_4_1",
+      "step_id": "step_executeCommand_assertCommand_c3f41809f_4_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1938,7 +1796,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_filter_cb4a8be87_4_1"
+        "step_executeCommand_filter_c3f41809f_4_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1949,7 +1807,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_execute_cb4a8be87_4_1",
+      "step_id": "step_executeCommand_execute_c3f41809f_4_1",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1961,7 +1819,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertCommand_cb4a8be87_4_1"
+        "step_executeCommand_assertCommand_c3f41809f_4_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1971,7 +1829,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365FromPicker_assertOption_cb4a8be87_4_2",
+      "step_id": "step_signInM365FromPicker_assertOption_c3f41809f_4_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1981,7 +1839,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_cb4a8be87_4_1"
+        "step_executeCommand_execute_c3f41809f_4_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1993,7 +1851,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365FromPicker_selectOption_cb4a8be87_4_2",
+      "step_id": "step_signInM365FromPicker_selectOption_c3f41809f_4_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -2007,7 +1865,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365FromPicker_assertOption_cb4a8be87_4_2"
+        "step_signInM365FromPicker_assertOption_c3f41809f_4_2"
       ],
       "preconditions": [
         "dhash:213:102:16:5:9c63d67674d4c718",
@@ -2021,7 +1879,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365FromPicker_confirmSignIn_cb4a8be87_4_2",
+      "step_id": "step_signInM365FromPicker_confirmSignIn_c3f41809f_4_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -2035,7 +1893,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365FromPicker_selectOption_cb4a8be87_4_2"
+        "step_signInM365FromPicker_selectOption_c3f41809f_4_2"
       ],
       "preconditions": [
         "dhash:762:97:16:5:24b1a72ba9aba343",
@@ -2049,7 +1907,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365FromPicker_useAnotherAccount_cb4a8be87_4_2",
+      "step_id": "step_signInM365FromPicker_useAnotherAccount_c3f41809f_4_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -2063,7 +1921,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365FromPicker_confirmSignIn_cb4a8be87_4_2"
+        "step_signInM365FromPicker_confirmSignIn_c3f41809f_4_2"
       ],
       "preconditions": [
         "dhash:447:487:16:5:ac534b4aaaaa6a15",
@@ -2078,7 +1936,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365FromPicker_typeAccount_cb4a8be87_4_2",
+      "step_id": "step_signInM365FromPicker_typeAccount_c3f41809f_4_2",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -2090,7 +1948,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365FromPicker_useAnotherAccount_cb4a8be87_4_2"
+        "step_signInM365FromPicker_useAnotherAccount_c3f41809f_4_2"
       ],
       "preconditions": [
         "dhash:512:384:0:20:1392f8d8c6e6dae4"
@@ -2103,7 +1961,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365FromPicker_next_cb4a8be87_4_2",
+      "step_id": "step_signInM365FromPicker_next_c3f41809f_4_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -2117,7 +1975,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365FromPicker_typeAccount_cb4a8be87_4_2"
+        "step_signInM365FromPicker_typeAccount_c3f41809f_4_2"
       ],
       "preconditions": [
         "dhash:655:505:16:5:0000000080400020",
@@ -2132,7 +1990,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365FromPicker_typePassword_cb4a8be87_4_2",
+      "step_id": "step_signInM365FromPicker_typePassword_c3f41809f_4_2",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -2144,7 +2002,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365FromPicker_next_cb4a8be87_4_2"
+        "step_signInM365FromPicker_next_c3f41809f_4_2"
       ],
       "preconditions": [
         "dhash:512:384:0:20:1392e8d8d9f6e6e4"
@@ -2157,7 +2015,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365FromPicker_submit_cb4a8be87_4_2",
+      "step_id": "step_signInM365FromPicker_submit_c3f41809f_4_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2169,7 +2027,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365FromPicker_typePassword_cb4a8be87_4_2"
+        "step_signInM365FromPicker_typePassword_c3f41809f_4_2"
       ],
       "preconditions": [
         "dhash:512:384:0:20:1392e8d8d9f6e6e4"
@@ -2182,7 +2040,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365FromPicker_closeBrowser_cb4a8be87_4_2",
+      "step_id": "step_signInM365FromPicker_closeBrowser_c3f41809f_4_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -2196,7 +2054,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365FromPicker_submit_cb4a8be87_4_2"
+        "step_signInM365FromPicker_submit_c3f41809f_4_2"
       ],
       "preconditions": [
         "dhash:1008:19:16:5:a322c95a325ac922",
@@ -2211,7 +2069,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365FromPicker_assertReady_cb4a8be87_4_2",
+      "step_id": "step_signInM365FromPicker_assertReady_c3f41809f_4_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2221,7 +2079,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365FromPicker_closeBrowser_cb4a8be87_4_2"
+        "step_signInM365FromPicker_closeBrowser_c3f41809f_4_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2233,7 +2091,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_open_cb4a8be87_5_1",
+      "step_id": "step_executeCommand_open_c3f41809f_5_1",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2245,7 +2103,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365FromPicker_assertReady_cb4a8be87_4_2"
+        "step_signInM365FromPicker_assertReady_c3f41809f_4_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2255,7 +2113,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertPalette_cb4a8be87_5_1",
+      "step_id": "step_executeCommand_assertPalette_c3f41809f_5_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2265,7 +2123,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_open_cb4a8be87_5_1"
+        "step_executeCommand_open_c3f41809f_5_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2276,7 +2134,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_filter_cb4a8be87_5_1",
+      "step_id": "step_executeCommand_filter_c3f41809f_5_1",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -2288,7 +2146,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertPalette_cb4a8be87_5_1"
+        "step_executeCommand_assertPalette_c3f41809f_5_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2298,7 +2156,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertCommand_cb4a8be87_5_1",
+      "step_id": "step_executeCommand_assertCommand_c3f41809f_5_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2308,7 +2166,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_filter_cb4a8be87_5_1"
+        "step_executeCommand_filter_c3f41809f_5_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2319,7 +2177,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_execute_cb4a8be87_5_1",
+      "step_id": "step_executeCommand_execute_c3f41809f_5_1",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2331,7 +2189,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertCommand_cb4a8be87_5_1"
+        "step_executeCommand_assertCommand_c3f41809f_5_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2341,7 +2199,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_open_cb4a8be87_5_2",
+      "step_id": "step_executeCommand_open_c3f41809f_5_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2353,7 +2211,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_cb4a8be87_5_1"
+        "step_executeCommand_execute_c3f41809f_5_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2363,7 +2221,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertPalette_cb4a8be87_5_2",
+      "step_id": "step_executeCommand_assertPalette_c3f41809f_5_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2373,7 +2231,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_open_cb4a8be87_5_2"
+        "step_executeCommand_open_c3f41809f_5_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2384,7 +2242,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_filter_cb4a8be87_5_2",
+      "step_id": "step_executeCommand_filter_c3f41809f_5_2",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -2396,7 +2254,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertPalette_cb4a8be87_5_2"
+        "step_executeCommand_assertPalette_c3f41809f_5_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2406,7 +2264,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertCommand_cb4a8be87_5_2",
+      "step_id": "step_executeCommand_assertCommand_c3f41809f_5_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2416,7 +2274,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_filter_cb4a8be87_5_2"
+        "step_executeCommand_filter_c3f41809f_5_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2427,7 +2285,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_execute_cb4a8be87_5_2",
+      "step_id": "step_executeCommand_execute_c3f41809f_5_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2439,7 +2297,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertCommand_cb4a8be87_5_2"
+        "step_executeCommand_assertCommand_c3f41809f_5_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2449,7 +2307,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertQuestion_cb4a8be87_5_3",
+      "step_id": "step_singleSelect_assertQuestion_c3f41809f_5_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2459,7 +2317,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_cb4a8be87_5_2"
+        "step_executeCommand_execute_c3f41809f_5_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2470,7 +2328,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOptionsLoaded_cb4a8be87_5_3",
+      "step_id": "step_singleSelect_assertOptionsLoaded_c3f41809f_5_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2480,7 +2338,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_cb4a8be87_5_3"
+        "step_singleSelect_assertQuestion_c3f41809f_5_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2491,7 +2349,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_filter_cb4a8be87_5_3",
+      "step_id": "step_singleSelect_filter_c3f41809f_5_3",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -2503,7 +2361,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOptionsLoaded_cb4a8be87_5_3"
+        "step_singleSelect_assertOptionsLoaded_c3f41809f_5_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2513,7 +2371,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOption_cb4a8be87_5_3",
+      "step_id": "step_singleSelect_assertOption_c3f41809f_5_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2523,7 +2381,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_filter_cb4a8be87_5_3"
+        "step_singleSelect_filter_c3f41809f_5_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2534,7 +2392,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_confirm_cb4a8be87_5_3",
+      "step_id": "step_singleSelect_confirm_c3f41809f_5_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2546,7 +2404,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOption_cb4a8be87_5_3"
+        "step_singleSelect_assertOption_c3f41809f_5_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2556,7 +2414,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_assertQuestion_cb4a8be87_5_4",
+      "step_id": "step_textInput_assertQuestion_c3f41809f_5_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2566,7 +2424,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_confirm_cb4a8be87_5_3"
+        "step_singleSelect_confirm_c3f41809f_5_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2577,7 +2435,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_input_cb4a8be87_5_4",
+      "step_id": "step_textInput_input_c3f41809f_5_4",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -2589,7 +2447,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_assertQuestion_cb4a8be87_5_4"
+        "step_textInput_assertQuestion_c3f41809f_5_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2599,7 +2457,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_confirm_cb4a8be87_5_4",
+      "step_id": "step_textInput_confirm_c3f41809f_5_4",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2611,7 +2469,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_input_cb4a8be87_5_4"
+        "step_textInput_input_c3f41809f_5_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2621,7 +2479,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertQuestion_cb4a8be87_5_5",
+      "step_id": "step_singleSelect_assertQuestion_c3f41809f_5_5",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2631,7 +2489,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_confirm_cb4a8be87_5_4"
+        "step_textInput_confirm_c3f41809f_5_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2642,7 +2500,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOptionsLoaded_cb4a8be87_5_5",
+      "step_id": "step_singleSelect_assertOptionsLoaded_c3f41809f_5_5",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2652,7 +2510,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_cb4a8be87_5_5"
+        "step_singleSelect_assertQuestion_c3f41809f_5_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2663,7 +2521,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_filter_cb4a8be87_5_5",
+      "step_id": "step_singleSelect_filter_c3f41809f_5_5",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -2675,7 +2533,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOptionsLoaded_cb4a8be87_5_5"
+        "step_singleSelect_assertOptionsLoaded_c3f41809f_5_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2685,7 +2543,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOption_cb4a8be87_5_5",
+      "step_id": "step_singleSelect_assertOption_c3f41809f_5_5",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2695,7 +2553,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_filter_cb4a8be87_5_5"
+        "step_singleSelect_filter_c3f41809f_5_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2706,7 +2564,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_confirm_cb4a8be87_5_5",
+      "step_id": "step_singleSelect_confirm_c3f41809f_5_5",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2718,7 +2576,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOption_cb4a8be87_5_5"
+        "step_singleSelect_assertOption_c3f41809f_5_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2728,7 +2586,7 @@
       ]
     },
     {
-      "step_id": "step_clickPrimaryAction_assertDialog_cb4a8be87_5_6",
+      "step_id": "step_clickPrimaryAction_assertDialog_c3f41809f_5_6",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2738,7 +2596,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_confirm_cb4a8be87_5_5"
+        "step_singleSelect_confirm_c3f41809f_5_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2749,7 +2607,7 @@
       ]
     },
     {
-      "step_id": "step_clickPrimaryAction_click_cb4a8be87_5_6",
+      "step_id": "step_clickPrimaryAction_click_c3f41809f_5_6",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2761,7 +2619,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_clickPrimaryAction_assertDialog_cb4a8be87_5_6"
+        "step_clickPrimaryAction_assertDialog_c3f41809f_5_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2771,7 +2629,7 @@
       ]
     },
     {
-      "step_id": "step_assertNotificationContains_assert_cb4a8be87_5_7",
+      "step_id": "step_assertNotificationContains_assert_c3f41809f_5_7",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2781,7 +2639,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_clickPrimaryAction_click_cb4a8be87_5_6"
+        "step_clickPrimaryAction_click_c3f41809f_5_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2792,7 +2650,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_open_cb4a8be87_6_1",
+      "step_id": "step_executeCommand_open_c3f41809f_6_1",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2804,7 +2662,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertNotificationContains_assert_cb4a8be87_5_7"
+        "step_assertNotificationContains_assert_c3f41809f_5_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2814,7 +2672,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertPalette_cb4a8be87_6_1",
+      "step_id": "step_executeCommand_assertPalette_c3f41809f_6_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2824,7 +2682,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_open_cb4a8be87_6_1"
+        "step_executeCommand_open_c3f41809f_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2835,7 +2693,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_filter_cb4a8be87_6_1",
+      "step_id": "step_executeCommand_filter_c3f41809f_6_1",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -2847,7 +2705,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertPalette_cb4a8be87_6_1"
+        "step_executeCommand_assertPalette_c3f41809f_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2857,7 +2715,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertCommand_cb4a8be87_6_1",
+      "step_id": "step_executeCommand_assertCommand_c3f41809f_6_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2867,7 +2725,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_filter_cb4a8be87_6_1"
+        "step_executeCommand_filter_c3f41809f_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2878,7 +2736,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_execute_cb4a8be87_6_1",
+      "step_id": "step_executeCommand_execute_c3f41809f_6_1",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2890,7 +2748,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertCommand_cb4a8be87_6_1"
+        "step_executeCommand_assertCommand_c3f41809f_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2900,7 +2758,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_open_cb4a8be87_6_2",
+      "step_id": "step_executeCommand_open_c3f41809f_6_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2912,7 +2770,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_cb4a8be87_6_1"
+        "step_executeCommand_execute_c3f41809f_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2922,7 +2780,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertPalette_cb4a8be87_6_2",
+      "step_id": "step_executeCommand_assertPalette_c3f41809f_6_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2932,7 +2790,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_open_cb4a8be87_6_2"
+        "step_executeCommand_open_c3f41809f_6_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2943,7 +2801,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_filter_cb4a8be87_6_2",
+      "step_id": "step_executeCommand_filter_c3f41809f_6_2",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -2955,7 +2813,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertPalette_cb4a8be87_6_2"
+        "step_executeCommand_assertPalette_c3f41809f_6_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2965,7 +2823,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertCommand_cb4a8be87_6_2",
+      "step_id": "step_executeCommand_assertCommand_c3f41809f_6_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2975,7 +2833,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_filter_cb4a8be87_6_2"
+        "step_executeCommand_filter_c3f41809f_6_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2986,7 +2844,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_execute_cb4a8be87_6_2",
+      "step_id": "step_executeCommand_execute_c3f41809f_6_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2998,7 +2856,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertCommand_cb4a8be87_6_2"
+        "step_executeCommand_assertCommand_c3f41809f_6_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3008,7 +2866,7 @@
       ]
     },
     {
-      "step_id": "step_clickPrimaryAction_assertDialog_cb4a8be87_6_3",
+      "step_id": "step_clickPrimaryAction_assertDialog_c3f41809f_6_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -3018,7 +2876,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_cb4a8be87_6_2"
+        "step_executeCommand_execute_c3f41809f_6_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3029,7 +2887,7 @@
       ]
     },
     {
-      "step_id": "step_clickPrimaryAction_click_cb4a8be87_6_3",
+      "step_id": "step_clickPrimaryAction_click_c3f41809f_6_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -3041,7 +2899,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_clickPrimaryAction_assertDialog_cb4a8be87_6_3"
+        "step_clickPrimaryAction_assertDialog_c3f41809f_6_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3051,7 +2909,7 @@
       ]
     },
     {
-      "step_id": "step_assertNotificationContains_assert_cb4a8be87_6_4",
+      "step_id": "step_assertNotificationContains_assert_c3f41809f_6_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -3061,7 +2919,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_clickPrimaryAction_click_cb4a8be87_6_3"
+        "step_clickPrimaryAction_click_c3f41809f_6_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3072,7 +2930,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_open_cb4a8be87_7_1",
+      "step_id": "step_executeCommand_open_c3f41809f_7_1",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -3084,7 +2942,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertNotificationContains_assert_cb4a8be87_6_4"
+        "step_assertNotificationContains_assert_c3f41809f_6_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3094,7 +2952,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertPalette_cb4a8be87_7_1",
+      "step_id": "step_executeCommand_assertPalette_c3f41809f_7_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -3104,7 +2962,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_open_cb4a8be87_7_1"
+        "step_executeCommand_open_c3f41809f_7_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3115,7 +2973,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_filter_cb4a8be87_7_1",
+      "step_id": "step_executeCommand_filter_c3f41809f_7_1",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -3127,7 +2985,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertPalette_cb4a8be87_7_1"
+        "step_executeCommand_assertPalette_c3f41809f_7_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3137,7 +2995,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertCommand_cb4a8be87_7_1",
+      "step_id": "step_executeCommand_assertCommand_c3f41809f_7_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -3147,7 +3005,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_filter_cb4a8be87_7_1"
+        "step_executeCommand_filter_c3f41809f_7_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3158,7 +3016,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_execute_cb4a8be87_7_1",
+      "step_id": "step_executeCommand_execute_c3f41809f_7_1",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -3170,7 +3028,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertCommand_cb4a8be87_7_1"
+        "step_executeCommand_assertCommand_c3f41809f_7_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3180,7 +3038,7 @@
       ]
     },
     {
-      "step_id": "step_filterOption_filter_cb4a8be87_7_2",
+      "step_id": "step_filterOption_filter_c3f41809f_7_2",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -3192,7 +3050,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_cb4a8be87_7_1"
+        "step_executeCommand_execute_c3f41809f_7_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3202,7 +3060,7 @@
       ]
     },
     {
-      "step_id": "step_filterOption_assertOption_cb4a8be87_7_2",
+      "step_id": "step_filterOption_assertOption_c3f41809f_7_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -3212,7 +3070,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_filter_cb4a8be87_7_2"
+        "step_filterOption_filter_c3f41809f_7_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3223,7 +3081,7 @@
       ]
     },
     {
-      "step_id": "step_filterOption_confirm_cb4a8be87_7_2",
+      "step_id": "step_filterOption_confirm_c3f41809f_7_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -3235,7 +3093,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_assertOption_cb4a8be87_7_2"
+        "step_filterOption_assertOption_c3f41809f_7_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3245,7 +3103,7 @@
       ]
     },
     {
-      "step_id": "step_assertReady_assertReady_cb4a8be87_7_3",
+      "step_id": "step_assertReady_assertReady_c3f41809f_7_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -3255,7 +3113,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_confirm_cb4a8be87_7_2"
+        "step_filterOption_confirm_c3f41809f_7_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3266,7 +3124,7 @@
       ]
     },
     {
-      "step_id": "step_addAndOpenApp_assertAdd_cb4a8be87_8_1",
+      "step_id": "step_addAndOpenApp_assertAdd_c3f41809f_8_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -3276,7 +3134,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertReady_assertReady_cb4a8be87_7_3"
+        "step_assertReady_assertReady_c3f41809f_7_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3288,7 +3146,7 @@
       ]
     },
     {
-      "step_id": "step_addAndOpenApp_add_cb4a8be87_8_1",
+      "step_id": "step_addAndOpenApp_add_c3f41809f_8_1",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -3302,7 +3160,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_addAndOpenApp_assertAdd_cb4a8be87_8_1"
+        "step_addAndOpenApp_assertAdd_c3f41809f_8_1"
       ],
       "preconditions": [
         "dhash:288:214:16:5:05100a0511030b12",
@@ -3317,7 +3175,7 @@
       ]
     },
     {
-      "step_id": "step_addAndOpenApp_assertAdded_cb4a8be87_8_1",
+      "step_id": "step_addAndOpenApp_assertAdded_c3f41809f_8_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -3327,7 +3185,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_addAndOpenApp_add_cb4a8be87_8_1"
+        "step_addAndOpenApp_add_c3f41809f_8_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3339,7 +3197,7 @@
       ]
     },
     {
-      "step_id": "step_addAndOpenApp_open_cb4a8be87_8_1",
+      "step_id": "step_addAndOpenApp_open_c3f41809f_8_1",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -3353,7 +3211,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_addAndOpenApp_assertAdded_cb4a8be87_8_1"
+        "step_addAndOpenApp_assertAdded_c3f41809f_8_1"
       ],
       "preconditions": [
         "dhash:533:508:16:5:00987494ca4acacc",
@@ -3369,7 +3227,7 @@
       ]
     },
     {
-      "step_id": "step_addAndOpenApp_assertReady_cb4a8be87_8_1",
+      "step_id": "step_addAndOpenApp_assertReady_c3f41809f_8_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -3379,7 +3237,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_addAndOpenApp_open_cb4a8be87_8_1"
+        "step_addAndOpenApp_open_c3f41809f_8_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3388,155 +3246,6 @@
         "host_surface:teams",
         "readiness:chat-ready",
         "step_retry_timeout: 180"
-      ]
-    },
-    {
-      "step_id": "step_sendTeamsMessage_assertInput_cb4a8be87_9_1",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the Teams \"Type a message\" input is visible.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_addAndOpenApp_assertReady_cb4a8be87_8_1"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:browser",
-        "host_surface:teams",
-        "entry_state:chat-ready",
-        "action:send-message",
-        "step_retry_timeout: 120"
-      ]
-    },
-    {
-      "step_id": "step_sendTeamsMessage_focusInput_cb4a8be87_9_1",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 200,
-        "y": 712
-      },
-      "description": "Click the Teams \"Type a message\" input.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_sendTeamsMessage_assertInput_cb4a8be87_9_1"
-      ],
-      "preconditions": [
-        "dhash:200:712:16:5:258c421e0d2c2d1c",
-        "dhash:200:712:96:5:0020887362000200",
-        "dhash:200:712:0:10:24b4b08e8e8c81a1"
-      ],
-      "postconditions": [],
-      "tags": [
-        "component:browser",
-        "host_surface:teams",
-        "entry_state:chat-ready",
-        "action:send-message"
-      ]
-    },
-    {
-      "step_id": "step_sendTeamsMessage_type_cb4a8be87_9_1",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "What is the weather in Seattle?"
-      },
-      "description": "Type \"What is the weather in Seattle?\" into the Teams message input.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_sendTeamsMessage_focusInput_cb4a8be87_9_1"
-      ],
-      "preconditions": [
-        "dhash:512:384:0:20:24b4b08e8e8c80a9"
-      ],
-      "postconditions": [],
-      "tags": [
-        "component:browser",
-        "host_surface:teams",
-        "entry_state:chat-ready",
-        "action:send-message"
-      ]
-    },
-    {
-      "step_id": "step_sendTeamsMessage_send_cb4a8be87_9_1",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press Enter to send the Teams message.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_sendTeamsMessage_type_cb4a8be87_9_1"
-      ],
-      "preconditions": [
-        "dhash:512:384:0:20:24b4b08e8e8c80b9"
-      ],
-      "postconditions": [],
-      "tags": [
-        "component:browser",
-        "host_surface:teams",
-        "entry_state:chat-ready",
-        "action:send-message"
-      ]
-    },
-    {
-      "step_id": "step_assertChatReplied_assert_cb4a8be87_9_2",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the current assistant turn is complete and contains a non-empty response.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_sendTeamsMessage_send_cb4a8be87_9_1"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:browser",
-        "action:assert-chat-response",
-        "expectation:replied",
-        "step_retry_timeout: 120"
-      ]
-    },
-    {
-      "step_id": "step_assertChatContains_assert_cb4a8be87_9_3",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the current assistant response contains \"Seattle\".",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_assertChatReplied_assert_cb4a8be87_9_2"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:browser",
-        "action:assert-chat-response",
-        "expectation:contains",
-        "step_retry_timeout: 120"
       ]
     }
   ],
