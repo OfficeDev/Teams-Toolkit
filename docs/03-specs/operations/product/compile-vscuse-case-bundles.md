@@ -309,7 +309,9 @@ required state it establishes. A `chat` assertion is rejected unless the precedi
 reached `chat-ready`.
 
 `target` is one authored F5 operation that selects and starts its declared launch profile. The
-current adapters support `Launch Remote in Teams (Chrome)` and `Preview in Copilot (Chrome)`; any
+current adapters support the remote profiles `Launch Remote in Teams (Chrome)` and
+`Preview in Copilot (Chrome)`, and the local debug profiles `Debug in Teams (Chrome)`,
+`(Preview) Debug in Copilot (Chrome)`, and `Debug in Microsoft 365 Agents Playground`; any
 other exact title fails until a deterministic adapter is added. The
 authored `profile` is the exact case-sensitive `name` shown in the F5 picker after template rendering;
 it is not a compiler-defined semantic ID. For example, the TypeScript Weather template authors
@@ -982,8 +984,8 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
   until those adapters exist, their entry states fail resolution. Each future adapter must own only
   the transition and confirmation steps reachable from its deterministic entry state. DOM, labels,
   and transient actions never enter case YAML.
-- A future Agents Playground adapter may establish `chat-ready` directly after its profile-owned
-  prelaunch tasks complete, so chat checks would not require an artificial `open` step.
+- The Agents Playground adapter establishes `chat-ready` from the readiness its target already
+  asserted, so its `open` emits no step and only declares the surface the case chats in.
 - A `file` assertion selects the workspace-file adapter. It normalizes the authored `path` relative
   to the generated project, rejects absolute paths and traversal, checks existence, then applies
   every `contains` and `notContains` assertion to the UTF-8 content.
@@ -1101,6 +1103,9 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-59 | Given `provision` or `deploy`, the notification center is opened before the operation's own command runs and no emitted step reopens the Command Palette between that command and the success assertion, because VS Code closes the palette when the window loses focus and a running lifecycle operation opens browser windows of its own.                                                                                            |
 | VCB-60 | Given a lifecycle confirmation, the emitted component gates its Enter on the dialog assertion alone and on no image hash, because the dialog renders over whatever the scaffolded template left on screen and that background differs per template.                                                                                                                                                                                    |
 | VCB-61 | Given `provision` or `deploy`, the confirmation is the modal-dialog component and its assertion names the message the toolkit composes, `Costs may apply based on usage. Do you want to provision resources in dev environment using listed accounts?` and `Do you want to deploy resources in dev environment?`, because both consents are `showMessage(..., modal)` calls whose only on-screen text is that message and its buttons. |
+| VCB-64 | Given a `target` whose profile is a local debug profile, the adapter requires no `provision` and no `deploy`, because the profile's own `preLaunchTask` chain runs the local lifecycle before the app starts, so authoring the remote lifecycle commands would create Azure resources the local run never reads.                                                                                                                       |
+| VCB-65 | Given the `Debug in Microsoft 365 Agents Playground` target, the adapter requires no `login` and emits no browser sign-in, because the Playground serves the agent from the local machine and never authenticates the run against Microsoft 365.                                                                                                                                                                                       |
+| VCB-66 | Given a `chat` check whose target is the Agents Playground, the compiler emits the Playground message adapter, because the Playground renders its own `Type a message...` composer rather than the Teams or Copilot one.                                                                                                                                                                                                               |
 
 ## Boundary
 

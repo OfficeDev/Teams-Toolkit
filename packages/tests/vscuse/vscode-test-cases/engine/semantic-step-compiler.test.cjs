@@ -108,7 +108,7 @@ test("VCB-34: semantic compiler does not read external template contracts", asyn
   }
 });
 
-test("VCB-34: default setup compiles the checked-in YAML sources into twelve plans", async (context) => {
+test("VCB-34: default setup compiles the checked-in YAML sources into fifteen plans", async (context) => {
   const plansDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "vscuse-generated-"),
   );
@@ -121,9 +121,9 @@ test("VCB-34: default setup compiles the checked-in YAML sources into twelve pla
   });
 
   assert.equal(first.ok, true);
-  assert.equal(first.value.files.length, 12);
+  assert.equal(first.value.files.length, 15);
   const generatedFiles = first.value.files;
-  assert.equal(generatedFiles.length, 12);
+  assert.equal(generatedFiles.length, 15);
   assert.equal(
     generatedFiles.includes(
       "da-api-plugin-from-existing-api--da-api-plugin-from-existing-api-no-auth.json",
@@ -1194,6 +1194,93 @@ test("semantic adapter rejects a target with missing prerequisites", async () =>
 
   assert.equal(result.ok, false);
   assert.equal(result.diagnostics[0].code, "VCB_TARGET_PREREQUISITE");
+});
+
+test("VCB-64: local debug targets require no provision or deploy", async () => {
+  const result = await compileFixture(
+    "weather-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const plansByCase = new Map(
+    result.value.map((generated) => [generated.caseId, generated.plan]),
+  );
+  for (const caseId of [
+    "weather-ts-azure-openai-local-teams",
+    "weather-ts-azure-openai-local-copilot",
+    "weather-ts-azure-openai-playground",
+  ]) {
+    const plan = plansByCase.get(caseId);
+    assert.notEqual(plan, undefined, caseId);
+    const typedValues = plan.steps
+      .filter((step) => step.tool === "type_text")
+      .map((step) => step.parameters.text);
+    assert.equal(
+      typedValues.includes("Microsoft 365 Agents: Provision"),
+      false,
+      caseId,
+    );
+    assert.equal(
+      typedValues.includes("Microsoft 365 Agents: Deploy"),
+      false,
+      caseId,
+    );
+  }
+});
+
+test("VCB-65: the Agents Playground target signs no account in", async () => {
+  const result = await compileFixture(
+    "weather-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const plan = result.value.find(
+    (generated) => generated.caseId === "weather-ts-azure-openai-playground",
+  ).plan;
+  const typedValues = plan.steps
+    .filter((step) => step.tool === "type_text")
+    .map((step) => step.parameters.text);
+  assert.equal(typedValues.includes("${{env:M365_ACCOUNT_NAME}}"), false);
+  assert.equal(
+    typedValues.includes("${{secret:M365_ACCOUNT_PASSWORD}}"),
+    false,
+  );
+  assert.equal(
+    plan.steps.some((step) =>
+      ["step_signInAzure_", "step_signInM365_", "step_browserM365SignIn_"].some(
+        (prefix) => step.step_id.startsWith(prefix),
+      ),
+    ),
+    false,
+  );
+});
+
+test("VCB-66: an Agents Playground chat check uses the Playground composer", async () => {
+  const result = await compileFixture(
+    "weather-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const plan = result.value.find(
+    (generated) => generated.caseId === "weather-ts-azure-openai-playground",
+  ).plan;
+  assert.equal(
+    plan.steps.some((step) =>
+      step.step_id.startsWith("step_sendPlaygroundMessage_"),
+    ),
+    true,
+  );
+  assert.equal(
+    plan.steps.some(
+      (step) =>
+        step.step_id.startsWith("step_sendTeamsMessage_") ||
+        step.step_id.startsWith("step_sendCopilotMessage_"),
+    ),
+    false,
+  );
 });
 
 test("semantic adapter rejects an open kind incompatible with its target profile", async () => {

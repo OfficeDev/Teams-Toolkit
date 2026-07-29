@@ -12,6 +12,9 @@
     "da-mcp-server--da-mcp-remote-oauth-preview.json",
     "da-no-action--da-no-action-remote-preview.json",
     "weather-agent--weather-js-openai-remote-preview.json",
+    "weather-agent--weather-ts-azure-openai-local-copilot.json",
+    "weather-agent--weather-ts-azure-openai-local-teams.json",
+    "weather-agent--weather-ts-azure-openai-playground.json",
     "weather-agent--weather-ts-azure-openai-remote-preview.json"
   ]
 }

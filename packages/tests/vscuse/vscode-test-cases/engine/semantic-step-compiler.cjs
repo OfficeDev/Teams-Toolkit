@@ -265,6 +265,41 @@ const targetAdapters = {
       "an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot",
     requires: ["login:m365", "provision"],
   },
+  // The local debug profiles below carry a preLaunchTask chain that validates
+  // prerequisites, registers the app, starts the tunnel, and runs the local
+  // lifecycle before the application starts, so they require no authored
+  // provision or deploy. They reach the same surfaces the remote profiles reach,
+  // so they reuse those readiness subjects; the subjects name the app by the
+  // prefix the case authored, which holds for the `local` suffix as it does for
+  // `dev`.
+  "Debug in Teams (Chrome)": {
+    host: "teams",
+    open: { adapter: "teams-add", destination: "chat", kind: "app" },
+    readySubject:
+      "the Microsoft Teams app details page for an app whose name starts with ${{var:app_name}} is visible",
+    requires: ["login:m365"],
+  },
+  "(Preview) Debug in Copilot (Chrome)": {
+    browserAuthentication: {
+      component: "authentication/browser/m365-sign-in.json.tpl",
+      credentials: "m365",
+    },
+    host: "copilot",
+    open: { adapter: "ready", destination: "chat", kind: "agent" },
+    readySubject:
+      "an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot",
+    requires: ["login:m365"],
+  },
+  // The Agents Playground hosts the agent on the local machine and talks to it
+  // over the local bot endpoint, so nothing in this target authenticates against
+  // Microsoft 365 and no account has to be signed in first.
+  "Debug in Microsoft 365 Agents Playground": {
+    host: "playground",
+    open: { adapter: "ready", destination: "chat", kind: "app" },
+    readySubject:
+      "the Microsoft 365 Agents Playground page is open in the browser",
+    requires: [],
+  },
 };
 
 function failure(code, message) {
@@ -1000,6 +1035,7 @@ function createSemanticStepCompiler() {
   function compileChatCheck(state, assertion) {
     const sendComponents = {
       copilot: "browser/copilot/send-message.json.tpl",
+      playground: "browser/playground/send-message.json.tpl",
       teams: "browser/teams/send-message.json.tpl",
     };
     const sendComponent = sendComponents[state.profile?.host];

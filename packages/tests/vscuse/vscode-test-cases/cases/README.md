@@ -9,13 +9,13 @@ migration inventory and coverage status.
 
 ## Initial coverage
 
-| File                                  | Template family                       | Cases | Contract pressure                                                    |
-| ------------------------------------- | ------------------------------------- | ----: | -------------------------------------------------------------------- |
-| `weather-agent.yml`                   | Custom Engine Agent                   |     2 | language subtrees, Azure lifecycle, Teams app/chat activation        |
-| `da-no-action.yml`                    | Declarative Agent                     |     1 | negative file assertions, Copilot agent discoverability              |
-| `da-mcp-server.yml`                   | Declarative Agent with MCP action     |     3 | conditional auth inputs, pipeline mutations, Copilot discoverability |
-| `da-api-plugin-from-scratch.yml`      | Declarative Agent with new API action |     2 | language branches and no-auth API plugin output                      |
-| `da-api-plugin-from-existing-api.yml` | Declarative Agent with existing API   |     4 | no auth, API key, bearer, OAuth provision, and remote preview        |
+| File                                  | Template family                       | Cases | Contract pressure                                                                                   |
+| ------------------------------------- | ------------------------------------- | ----: | --------------------------------------------------------------------------------------------------- |
+| `weather-agent.yml`                   | Custom Engine Agent                   |     5 | language subtrees, Azure lifecycle, Teams app/chat activation, local Teams/Copilot/Playground debug |
+| `da-no-action.yml`                    | Declarative Agent                     |     1 | negative file assertions, Copilot agent discoverability                                             |
+| `da-mcp-server.yml`                   | Declarative Agent with MCP action     |     3 | conditional auth inputs, pipeline mutations, Copilot discoverability                                |
+| `da-api-plugin-from-scratch.yml`      | Declarative Agent with new API action |     2 | language branches and no-auth API plugin output                                                     |
+| `da-api-plugin-from-existing-api.yml` | Declarative Agent with existing API   |     4 | no auth, API key, bearer, OAuth provision, and remote preview                                       |
 
 ## Model findings
 
@@ -43,7 +43,7 @@ Authoring these fixtures exposed six gaps in the first contract draft:
    proves capability outcomes.
 
 The default setup parses, validates, and expands these sources, then resolves their semantic steps
-through the compiler-owned adapter and reusable components into twelve independent runnable VScUse
+through the compiler-owned adapter and reusable components into fifteen independent runnable VScUse
 plans. The case YAML is the only authored template/scenario source. Setup prints the generated-plan
 diff before transactionally updating only manifest-owned files. A custom semantic-step adapter may
 still be injected by focused compiler and writer tests.
