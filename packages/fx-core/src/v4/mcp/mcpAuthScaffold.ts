@@ -76,7 +76,8 @@ async function resolveEndpoints(
     const probe = await mcpAuthScaffoldDeps.probeMCPServerAuth(mcpServerUrl);
     const metadata = await mcpAuthScaffoldDeps.resolveMCPOAuthMetadata(
       probe.authMetadataUrl,
-      undefined
+      undefined,
+      mcpServerUrl
     );
     return {
       authorizationUrl: metadata.authorizationUrl,
@@ -140,7 +141,10 @@ export async function injectMcpAuthAction(
     return err(injectResult.error);
   }
   if (injectResult.value.wellKnownUrlPlaceholderUsed) {
-    ctx.warn?.(getLocalizedString("core.MCPForDA.mcpAuthDcrPlaceholderWarning", args.mcpServerUrl));
+    ctx.warn?.(getLocalizedString("core.MCPForDA.mcpAuthDcrPlaceholderWarning"));
+  }
+  if (injectResult.value.oauthUrlPlaceholderUsed) {
+    ctx.warn?.(getLocalizedString("core.MCPForDA.mcpAuthOAuthPlaceholderWarning"));
   }
   ctx.write(args.ymlPath, Buffer.from(injectResult.value.yaml, "utf8"));
   return ok(undefined);

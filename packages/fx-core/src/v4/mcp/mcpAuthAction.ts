@@ -12,6 +12,14 @@ const SUPPORTED_AUTH_TYPES = new Set(["none", "oauth", "entra-sso", "oauth-dynam
 export const MCP_DCR_WELL_KNOWN_URL_PLACEHOLDER =
   "<PLEASE_FILL_IN_WELL_KNOWN_AUTHORIZATION_SERVER_URL>";
 
+/**
+ * Placeholders for a static `oauth` action whose authorization / token URLs could not be
+ * discovered. `identityProvider: Custom` is unusable without both, and omitting the fields
+ * hides the gap; the placeholders make it visible and editable.
+ */
+export const MCP_OAUTH_AUTHORIZATION_URL_PLACEHOLDER = "<PLEASE_FILL_IN_AUTHORIZATION_URL>";
+export const MCP_OAUTH_TOKEN_URL_PLACEHOLDER = "<PLEASE_FILL_IN_TOKEN_URL>";
+
 export interface ResolvedMCPAuthEndpoints {
   authorizationUrl?: string;
   tokenUrl?: string;
@@ -35,6 +43,7 @@ export interface MCPAuthActionArgs {
 export interface MCPAuthActionResult {
   yaml: string;
   wellKnownUrlPlaceholderUsed: boolean;
+  oauthUrlPlaceholderUsed: boolean;
 }
 
 function failure(message: string): Result<never, FxError> {
@@ -102,14 +111,13 @@ function ensureMinimumVersion(current: unknown, minimum: string): string | undef
 
 function oauthAction(args: MCPAuthActionArgs, appIdEnvName: string): Record<string, unknown> {
   const endpointFields: Record<string, string> = {};
-  if (args.endpoints.authorizationUrl) {
-    endpointFields.authorizationUrl = args.endpoints.authorizationUrl;
-  }
-  if (args.endpoints.tokenUrl) {
-    endpointFields.tokenUrl = args.endpoints.tokenUrl;
-  }
-  if (args.endpoints.refreshUrl) {
-    endpointFields.refreshUrl = args.endpoints.refreshUrl;
+  if (args.authType === "oauth") {
+    endpointFields.authorizationUrl =
+      args.endpoints.authorizationUrl ?? MCP_OAUTH_AUTHORIZATION_URL_PLACEHOLDER;
+    endpointFields.tokenUrl = args.endpoints.tokenUrl ?? MCP_OAUTH_TOKEN_URL_PLACEHOLDER;
+    if (args.endpoints.refreshUrl) {
+      endpointFields.refreshUrl = args.endpoints.refreshUrl;
+    }
   }
   return {
     uses: "oauth/register",
@@ -165,7 +173,7 @@ export function injectMcpAuthActionYaml(
     return failure(`Unsupported MCP auth type '${args.authType}'.`);
   }
   if (args.authType === "none") {
-    return ok({ yaml, wellKnownUrlPlaceholderUsed: false });
+    return ok({ yaml, wellKnownUrlPlaceholderUsed: false, oauthUrlPlaceholderUsed: false });
   }
 
   const document = parseDocument(yaml);
@@ -182,7 +190,11 @@ export function injectMcpAuthActionYaml(
     (item) => uses(item) === actionUses && registrationId(item) === args.registrationId
   );
   if (alreadyRegistered) {
-    return ok({ yaml: document.toString(), wellKnownUrlPlaceholderUsed: false });
+    return ok({
+      yaml: document.toString(),
+      wellKnownUrlPlaceholderUsed: false,
+      oauthUrlPlaceholderUsed: false,
+    });
   }
 
   provision.items = provision.items.filter((item) => uses(item) !== undefined);
@@ -193,6 +205,8 @@ export function injectMcpAuthActionYaml(
   }
 
   const placeholderUsed = args.authType === "oauth-dynamic" && !args.endpoints.wellKnownUrl;
+  const oauthUrlPlaceholderUsed =
+    args.authType === "oauth" && (!args.endpoints.authorizationUrl || !args.endpoints.tokenUrl);
   const action =
     args.authType === "oauth-dynamic"
       ? dcrAction(
@@ -210,5 +224,9 @@ export function injectMcpAuthActionYaml(
     }
   }
 
-  return ok({ yaml: document.toString(), wellKnownUrlPlaceholderUsed: placeholderUsed });
+  return ok({
+    yaml: document.toString(),
+    wellKnownUrlPlaceholderUsed: placeholderUsed,
+    oauthUrlPlaceholderUsed,
+  });
 }

@@ -53,6 +53,36 @@ describe("v4 MCP auth YAML action", () => {
     });
   });
 
+  it("injects Custom OAuth with placeholders when the endpoints could not be discovered", () => {
+    const result = injectMcpAuthActionYaml(BASE_YML, {
+      ...BASE_ARGS,
+      authType: "oauth",
+      endpoints: {},
+    });
+
+    assert.isTrue(result.isOk(), result.isErr() ? result.error.message : "expected ok");
+    assert.isTrue(result._unsafeUnwrap().oauthUrlPlaceholderUsed);
+    assert.deepEqual(provisionActions(result._unsafeUnwrap().yaml)[1].with, {
+      name: "apigithubc",
+      appId: "${{TEAMS_APP_ID}}",
+      flow: "authorizationCode",
+      authorizationUrl: "<PLEASE_FILL_IN_AUTHORIZATION_URL>",
+      tokenUrl: "<PLEASE_FILL_IN_TOKEN_URL>",
+      identityProvider: "Custom",
+      baseUrl: "https://api.github.com/mcp",
+    });
+  });
+
+  it("does not flag Entra as needing OAuth URLs", () => {
+    const result = injectMcpAuthActionYaml(BASE_YML, {
+      ...BASE_ARGS,
+      authType: "entra-sso",
+      endpoints: {},
+    });
+
+    assert.isFalse(result._unsafeUnwrap().oauthUrlPlaceholderUsed);
+  });
+
   it("SCN-CREATE-MCP-16: injects Entra without credential references", () => {
     const result = injectMcpAuthActionYaml(BASE_YML, {
       ...BASE_ARGS,
@@ -118,6 +148,7 @@ describe("v4 MCP auth YAML action", () => {
     assert.deepEqual(result._unsafeUnwrap(), {
       yaml: BASE_YML,
       wellKnownUrlPlaceholderUsed: false,
+      oauthUrlPlaceholderUsed: false,
     });
   });
 

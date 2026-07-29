@@ -1,0 +1,243 @@
+version: 1
+
+cases:
+  - id: da-api-plugin-from-scratch-ts
+    scenarioId: SCN-DA-CREATE-API-PLUGIN-FROM-SCRATCH
+    gate: manual
+    steps:
+      [
+        scaffold-ts,
+        check-ts,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-copilot-remote,
+        open-agent,
+        check-repair,
+      ]
+
+  - id: da-api-plugin-from-scratch-js
+    scenarioId: SCN-DA-CREATE-API-PLUGIN-FROM-SCRATCH
+    gate: manual
+    steps:
+      [
+        scaffold-js,
+        check-js,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-copilot-remote,
+        open-agent,
+        check-repair,
+      ]
+
+steps:
+  scaffold-ts:
+    type: scaffold
+    with:
+      template: da/api-plugin-from-scratch
+      answers:
+        - question: projectType
+          value: copilot-agent-type
+        - question: daTemplate
+          value: add-action
+        - question: actionSource
+          value: new-api
+        - question: apiAuth
+          value: none
+        - question: language
+          value: typescript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-ts:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/repairDeclarativeAgent.json
+        expect:
+          contains:
+            - '"name": "${{var:app_name}}${{APP_NAME_SUFFIX}}"'
+            - '"instructions": "$[file(''instruction.txt'')]"'
+            - '"id": "repairPlugin"'
+            - '"file": "ai-plugin.json"'
+          notContains: ['"sensitivity_label"']
+      - type: file
+        path: appPackage/ai-plugin.json
+        expect:
+          contains:
+            - '"namespace": "repairs"'
+            - '"name_for_human": "${{var:app_name}}${{APP_NAME_SUFFIX}}"'
+            - '"type": "OpenApi"'
+            - '"type": "None"'
+            - '"url": "apiSpecificationFile/repair.yml"'
+      - type: file
+        path: appPackage/manifest.json
+        expect:
+          contains:
+            - '"manifestVersion": "1.29"'
+            - '"id": "${{TEAMS_APP_ID}}"'
+            - '"short": "${{var:app_name}}${{APP_NAME_SUFFIX}}"'
+            - '"id": "repairDeclarativeAgent"'
+            - '"file": "repairDeclarativeAgent.json"'
+      - type: file
+        path: appPackage/apiSpecificationFile/repair.yml
+        expect:
+          exists: true
+      - type: file
+        path: src/functions/repairs.ts
+        expect:
+          exists: true
+      - type: file
+        path: src/functions/repairs.js
+        expect:
+          exists: false
+      - type: file
+        path: src/repairsData.json
+        expect:
+          exists: true
+      - type: file
+        path: tsconfig.json
+        expect:
+          exists: true
+      - type: file
+        path: m365agents.yml
+        expect:
+          notContains: ["oauth/register", "dcr/register", "aadApp/create"]
+      - type: file
+        path: m365agents.local.yml
+        expect:
+          notContains: ["oauth/register", "dcr/register", "aadApp/create"]
+
+  # The scaffolded m365agents.yml runs arm/deploy to host the repairs Azure
+  # Functions backend, so this template needs an Azure subscription on top of M365.
+  login-azure:
+    type: login
+    with:
+      type: azure
+      account: "${{env:AZURE_ACCOUNT_NAME}}"
+      password: "${{secret:AZURE_ACCOUNT_PASSWORD}}"
+
+  login-m365:
+    type: login
+    with:
+      type: m365
+      account: "${{env:M365_ACCOUNT_NAME}}"
+      password: "${{secret:M365_ACCOUNT_PASSWORD}}"
+
+  provision-arm:
+    type: provision
+    with:
+      arm:
+        targetResourceGroupName: "+ New resource group"
+        newResourceGroupName: "${{var:app_name}}-rg"
+        newResourceGroupLocation: "${{env:RESOURCE_GROUP_REGION}}"
+
+  # azureFunctions/zipDeploy publishes the repairs backend that check-repair queries.
+  deploy:
+    type: deploy
+
+  f5-copilot-remote:
+    type: target
+    with:
+      profile: "Preview in Copilot (Chrome)"
+
+  open-agent:
+    type: open
+    with:
+      kind: agent
+      destination: chat
+
+  check-repair:
+    type: checks
+    with:
+      - type: chat
+        send: show repair records assigned to karin blair
+        allowAction: true
+        expect:
+          contains: ["Oil Change"]
+
+  scaffold-js:
+    type: scaffold
+    with:
+      template: da/api-plugin-from-scratch
+      answers:
+        - question: projectType
+          value: copilot-agent-type
+        - question: daTemplate
+          value: add-action
+        - question: actionSource
+          value: new-api
+        - question: apiAuth
+          value: none
+        - question: language
+          value: javascript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-js:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/repairDeclarativeAgent.json
+        expect:
+          contains:
+            - '"name": "${{var:app_name}}${{APP_NAME_SUFFIX}}"'
+            - '"instructions": "$[file(''instruction.txt'')]"'
+            - '"id": "repairPlugin"'
+            - '"file": "ai-plugin.json"'
+          notContains: ['"sensitivity_label"']
+      - type: file
+        path: appPackage/ai-plugin.json
+        expect:
+          contains:
+            - '"namespace": "repairs"'
+            - '"name_for_human": "${{var:app_name}}${{APP_NAME_SUFFIX}}"'
+            - '"type": "OpenApi"'
+            - '"type": "None"'
+            - '"url": "apiSpecificationFile/repair.yml"'
+      - type: file
+        path: appPackage/manifest.json
+        expect:
+          contains:
+            - '"manifestVersion": "1.29"'
+            - '"id": "${{TEAMS_APP_ID}}"'
+            - '"short": "${{var:app_name}}${{APP_NAME_SUFFIX}}"'
+            - '"id": "repairDeclarativeAgent"'
+            - '"file": "repairDeclarativeAgent.json"'
+      - type: file
+        path: appPackage/apiSpecificationFile/repair.yml
+        expect:
+          exists: true
+      - type: file
+        path: src/functions/repairs.js
+        expect:
+          exists: true
+      - type: file
+        path: src/functions/repairs.ts
+        expect:
+          exists: false
+      - type: file
+        path: src/repairsData.json
+        expect:
+          exists: true
+      - type: file
+        path: tsconfig.json
+        expect:
+          exists: false
+      - type: file
+        path: m365agents.yml
+        expect:
+          notContains: ["oauth/register", "dcr/register", "aadApp/create"]
+      - type: file
+        path: m365agents.local.yml
+        expect:
+          notContains: ["oauth/register", "dcr/register", "aadApp/create"]

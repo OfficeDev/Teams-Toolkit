@@ -190,6 +190,20 @@ jobs:
       DA_MCP_OAUTH_CLIENT_SECRET: ${{ secrets.DA_MCP_OAUTH_CLIENT_SECRET }}
       DA_MCP_OAUTH_CLIENTID: ${{ secrets.DA_MCP_OAUTH_CLIENTID }}
 
+      # Credentials registered by the da/api-plugin-from-existing-api cases. The
+      # cases only register them through apiKey/register and oauth/register; they
+      # never call the sample API. Defaults reuse the literals the retired
+      # DA_Add_Action_Import_Existing_API_* plans typed, so no secret is required.
+      EXISTING_API_KEY: ${{ secrets.EXISTING_API_KEY || 'faketestvalue' }}
+      EXISTING_API_BEARER_TOKEN: ${{ secrets.EXISTING_API_BEARER_TOKEN || 'my-secret-value' }}
+      EXISTING_API_OAUTH_CLIENT_ID: ${{ secrets.EXISTING_API_OAUTH_CLIENT_ID || 'fake_client_id' }}
+      EXISTING_API_OAUTH_CLIENT_SECRET: ${{ secrets.EXISTING_API_OAUTH_CLIENT_SECRET || 'fake_clientsecret' }}
+
+      # OpenAI (openai.com). No test subscription exists, so this falls back to the
+      # same fake key the existing UI tests use. Cases using this path must not
+      # assert a real model completion.
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || 'fake' }}
+
       # SQL server
       SQL_USER: ${{ secrets.SQL_USER }}
       SECRET_SQL_PASSWORD: ${{ secrets.SECRET_SQL_PASSWORD }}
