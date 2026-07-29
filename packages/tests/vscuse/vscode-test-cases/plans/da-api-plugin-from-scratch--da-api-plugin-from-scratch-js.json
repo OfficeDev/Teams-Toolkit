@@ -145,8 +145,8 @@
       "step_executeCommand_execute_c919bef1e_6_2",
       "step_clickOption_assertPrompt_c919bef1e_6_3",
       "step_clickOption_click_c919bef1e_6_3",
-      "step_confirm_assertQuestion_c919bef1e_6_4",
-      "step_confirm_confirm_c919bef1e_6_4",
+      "step_clickPrimaryAction_assertDialog_c919bef1e_6_4",
+      "step_clickPrimaryAction_click_c919bef1e_6_4",
       "step_assertNotificationContains_assert_c919bef1e_6_5",
       "step_executeCommand_open_c919bef1e_7_1",
       "step_executeCommand_assertPalette_c919bef1e_7_1",
@@ -2775,7 +2775,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the dialog Provision is visible with the primary action Provision.",
+      "description": "@assertion the dialog Costs may apply based on usage. Do you want to provision resources in dev environment using listed accounts? is visible with the primary action Provision.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -3102,11 +3102,11 @@
       ]
     },
     {
-      "step_id": "step_confirm_assertQuestion_c919bef1e_6_4",
+      "step_id": "step_clickPrimaryAction_assertDialog_c919bef1e_6_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the confirmation question Deploy is visible and the option Deploy is focused.",
+      "description": "@assertion the dialog Do you want to deploy resources in dev environment? is visible with the primary action Deploy.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -3117,31 +3117,31 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "component:quick-input",
-        "answer_type:confirm",
+        "component:dialog",
+        "action:click-primary",
         "step_retry_timeout: 30"
       ]
     },
     {
-      "step_id": "step_confirm_confirm_c919bef1e_6_4",
+      "step_id": "step_clickPrimaryAction_click_c919bef1e_6_4",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
         "key": "enter"
       },
-      "description": "Press Enter to confirm the focused option.",
+      "description": "Press Enter to activate the primary action Deploy in the confirmed dialog.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_confirm_assertQuestion_c919bef1e_6_4"
+        "step_clickPrimaryAction_assertDialog_c919bef1e_6_4"
       ],
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "component:quick-input",
-        "answer_type:confirm"
+        "component:dialog",
+        "action:click-primary"
       ]
     },
     {
@@ -3155,7 +3155,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_confirm_confirm_c919bef1e_6_4"
+        "step_clickPrimaryAction_click_c919bef1e_6_4"
       ],
       "preconditions": [],
       "postconditions": [],

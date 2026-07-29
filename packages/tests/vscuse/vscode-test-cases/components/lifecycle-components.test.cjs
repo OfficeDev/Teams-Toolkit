@@ -173,12 +173,12 @@ test("VCB-58: the multi-select component asserts no checked state", () => {
 });
 
 test("VCB-60: the confirmation component gates on no image hash", () => {
-  const confirm = render("quick-input/confirm.json.tpl");
+  const dialog = render("dialog/click-primary-action.json.tpl");
 
-  // The prompt renders over whatever the scaffolded template left on screen,
+  // The dialog renders over whatever the scaffolded template left on screen,
   // and that background differs per template, so the confirmation is gated by
   // its assertion alone.
-  for (const step of confirm.steps) {
+  for (const step of dialog.steps) {
     assert.deepEqual(step.preconditions, []);
   }
 });
@@ -257,15 +257,6 @@ test("lifecycle recipes have reusable confirmation and notification primitives",
   );
   assert.equal(dialog.steps[1].parameters.key, "enter");
   assert.deepEqual(dialog.steps[1].preconditions, []);
-
-  const confirmation = render("quick-input/confirm.json.tpl");
-  assert.equal(confirmation.component.answerType, "confirm");
-  assert.deepEqual(
-    confirmation.steps.map((step) => step.tool),
-    ["", "key_press"],
-  );
-  assert.equal(confirmation.steps[1].parameters.key, "enter");
-  assert.deepEqual(confirmation.steps[1].preconditions, []);
 
   const notification = render("notifications/assert-contains.json.tpl");
   assert.equal(notification.component.id, "assertContains");

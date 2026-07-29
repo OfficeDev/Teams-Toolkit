@@ -835,7 +835,9 @@ test("provision confirmation follows the authored provision input", async (conte
   );
   assert.equal(
     weatherPlan.steps.some((step) =>
-      step.description.includes("the dialog Provision is visible"),
+      step.description.includes(
+        "Do you want to provision resources in dev environment using listed accounts? is visible",
+      ),
     ),
     true,
   );
@@ -989,7 +991,9 @@ test("VCB-39: deploy selects the environment under the provision contract", asyn
   const deployConfirmationIndex = descriptions.findIndex(
     (description, index) =>
       index > deployCommandIndex &&
-      description.includes("the confirmation question Deploy is visible"),
+      description.includes(
+        "the dialog Do you want to deploy resources in dev environment? is visible",
+      ),
   );
 
   assert.equal(deployCommandIndex >= 0, true);
@@ -1104,32 +1108,81 @@ test("VCB-59: the notification center opens before the lifecycle command runs", 
   assert.equal(result.ok, true);
   const steps = result.value[0].plan.steps;
   const filters = steps.map((step) => step.parameters?.text ?? "");
-  const notificationsIndex = filters.indexOf(
-    "Notifications: Show Notifications",
-  );
-  const provisionIndex = filters.indexOf("Microsoft 365 Agents: Provision");
-  const successIndex = steps.findIndex((step) =>
-    step.description.includes("provision stage executed successfully"),
-  );
+  const suffixOf = (index) =>
+    steps[index].step_id.replace("step_executeCommand_filter_", "");
+  const indexOfStep = (stepId) =>
+    steps.findIndex((step) => step.step_id === stepId);
 
-  assert.equal(notificationsIndex >= 0, true);
-  assert.equal(notificationsIndex < provisionIndex, true);
-  assert.equal(provisionIndex < successIndex, true);
+  for (const lifecycle of [
+    {
+      commandTitle: "Microsoft 365 Agents: Provision",
+      successText: "provision stage executed successfully",
+    },
+    {
+      commandTitle: "Microsoft 365 Agents: Deploy",
+      successText: "actions in deploy stage executed successfully",
+    },
+  ]) {
+    const commandIndex = filters.indexOf(lifecycle.commandTitle);
+    const notificationsIndex = filters.lastIndexOf(
+      "Notifications: Show Notifications",
+      commandIndex,
+    );
+    const successIndex = steps.findIndex((step) =>
+      step.description.includes(lifecycle.successText),
+    );
 
-  const suffix = steps[provisionIndex].step_id.replace(
-    "step_executeCommand_filter_",
-    "",
-  );
-  const triggerIndex = steps.findIndex(
-    (step) => step.step_id === `step_executeCommand_execute_${suffix}`,
-  );
+    assert.equal(notificationsIndex >= 0, true);
+    assert.equal(commandIndex < successIndex, true);
 
-  // VS Code closes the Command Palette when the window loses focus, and a
-  // running provision opens browser windows of its own, so nothing between the
-  // command and its result may reopen the palette.
-  const running = steps.slice(triggerIndex + 1, successIndex);
+    // The notification center is opened by the round trip that immediately
+    // precedes the operation's own command.
+    const notificationsSuffix = suffixOf(notificationsIndex);
+    const commandSuffix = suffixOf(commandIndex);
+    assert.equal(
+      indexOfStep(`step_executeCommand_execute_${notificationsSuffix}`) + 1,
+      indexOfStep(`step_executeCommand_open_${commandSuffix}`),
+    );
+
+    // VS Code closes the Command Palette when the window loses focus, and a
+    // running lifecycle operation opens browser windows of its own, so nothing
+    // between the command and its result may reopen the palette.
+    const triggerIndex = indexOfStep(
+      `step_executeCommand_execute_${commandSuffix}`,
+    );
+    const running = steps.slice(triggerIndex + 1, successIndex);
+    assert.equal(
+      running.some((step) => step.step_id.startsWith("step_executeCommand_")),
+      false,
+    );
+  }
+});
+
+test("VCB-61: lifecycle confirmations assert the modal dialog message", async () => {
+  const result = await compileFixture(
+    "da-api-plugin-from-scratch.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(result.ok, true);
+  const steps = result.value[0].plan.steps;
+  const descriptions = steps.map((step) => step.description);
+
+  // Both consents are showMessage(..., modal) calls, so the operation name
+  // appears only on the button and never as a dialog title.
   assert.equal(
-    running.some((step) => step.step_id.startsWith("step_executeCommand_")),
+    descriptions.includes(
+      "@assertion the dialog Costs may apply based on usage. Do you want to provision resources in dev environment using listed accounts? is visible with the primary action Provision.",
+    ),
+    true,
+  );
+  assert.equal(
+    descriptions.includes(
+      "@assertion the dialog Do you want to deploy resources in dev environment? is visible with the primary action Deploy.",
+    ),
+    true,
+  );
+  assert.equal(
+    steps.some((step) => step.step_id.startsWith("step_confirm_")),
     false,
   );
 });

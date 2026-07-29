@@ -201,10 +201,15 @@ const provisionEnvironment = {
   y: 77,
 };
 
+// Every lifecycle consent is a showMessage(..., modal) call, so it renders as a
+// VS Code modal dialog whose only on-screen text is the composed message and
+// its buttons. The account lines above this sentence carry the signed-in user
+// and subscription, so the assertion names the fixed sentence alone.
 const provisionConfirmation = {
   actionLabel: "Provision",
   component: "dialog/click-primary-action.json.tpl",
-  dialogTitle: "Provision",
+  dialogTitle:
+    "Costs may apply based on usage. Do you want to provision resources in dev environment using listed accounts?",
 };
 
 const provisionApiKeyConfirmation = {
@@ -224,9 +229,9 @@ const provisionOauthConfirmation = {
 const lifecycleAdapters = {
   deploy: {
     confirmation: {
-      component: "quick-input/confirm.json.tpl",
-      optionLabel: "Deploy",
-      questionTitle: "Deploy",
+      actionLabel: "Deploy",
+      component: "dialog/click-primary-action.json.tpl",
+      dialogTitle: "Do you want to deploy resources in dev environment?",
     },
     successText: "actions in deploy stage executed successfully",
   },
