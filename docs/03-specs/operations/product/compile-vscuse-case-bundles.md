@@ -727,6 +727,13 @@ ACCOUNTS section it started from. No adapter opens the account menu to verify, b
 a quick pick that would swallow the keystrokes the next operation types, and it shows nothing the
 ACCOUNTS section does not already show.
 
+That readiness assertion carries a longer retry window than the default. Closing the browser only
+ends the identity endpoint's part of the sign-in: the toolkit then exchanges the authorization code
+for its own tokens, and until that finishes the ACCOUNTS section shows a spinner reading
+`Microsoft 365: Signing in...` rather than the account name. The exchange runs against a remote
+service from inside the runner's container, so its duration is not bounded by anything the plan
+controls, and the retried assertion is the only wait the adapter has.
+
 The compatible test profile guarantees that both Toolkit accounts are signed out when a case starts,
 so the first sign-in of a case reaches the recorded account-input form. It guarantees nothing about
 the sign-ins that follow it. Every Toolkit sign-in goes through the same Microsoft identity endpoint
@@ -1066,6 +1073,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-45 | Given `scaffold`, compilation ends the operation by waiting for the README preview the toolkit opens for a freshly created project, so no later operation addresses a toolkit command or view before the reopened window has activated the extension that contributes it.                                                                                                                                                              |
 | VCB-46 | Given a `login` that is not the first sign-in of its case, compilation selects the sign-in component whose entry state is the account picker the earlier sign-in leaves behind, and fails when the account has no recorded sign-in for that entry state.                                                                                                                                                                               |
 | VCB-47 | Given any `login`, the sign-in adapter verifies the account in the ACCOUNTS section right after closing the browser, so no operation that follows starts with an account menu open over the window.                                                                                                                                                                                                                                    |
+| VCB-62 | Given any `login`, the account-readiness assertion retries for 180 seconds, because closing the browser leaves the toolkit exchanging tokens with a remote service and the ACCOUNTS section shows `Microsoft 365: Signing in...` until that exchange finishes.                                                                                                                                                                         |
 | VCB-48 | Given any executed command, both Command Palette assertions name the `>` the palette keeps in its input box, so neither is satisfied by another quick pick that VS Code draws with the same frame.                                                                                                                                                                                                                                     |
 | VCB-49 | Given `scaffold`, the close component asserts that the tab labeled `Welcome` showing the Build a Declarative Agent walkthrough is the active editor tab before pressing `Ctrl+W`, because that shortcut closes the window when no editor is open, the preceding settled assertion only claims the editor is visible, and no tab is ever labeled Get Started.                                                                           |
 | VCB-50 | Given a `multiSelect` answer, the emitted component types no filter text, presses no arrow key, and names no selection count, because the prompt lists whatever the resource behind the earlier answers exposes and neither the option set nor its order is a toolkit-owned invariant.                                                                                                                                                 |

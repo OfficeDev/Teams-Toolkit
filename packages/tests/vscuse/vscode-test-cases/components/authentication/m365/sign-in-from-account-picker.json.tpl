@@ -228,7 +228,7 @@
         "component:authentication",
         "account:m365",
         "readiness:account-visible",
-        "step_retry_timeout: 60"
+        "step_retry_timeout: 180"
       ]
     }
   ]

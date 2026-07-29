@@ -126,6 +126,19 @@ test("VCB-47: Microsoft 365 sign-in verifies the account in the ACCOUNTS section
   }
 });
 
+test("VCB-62: account readiness waits out the toolkit's Signing in state", () => {
+  for (const relativePath of [
+    "authentication/azure/sign-in.json.tpl",
+    "authentication/m365/sign-in.json.tpl",
+    "authentication/m365/sign-in-from-account-picker.json.tpl",
+  ]) {
+    const assertReady = render(relativePath).steps.at(-1);
+
+    assert.equal(assertReady.tags.includes("readiness:account-visible"), true);
+    assert.equal(assertReady.tags.includes("step_retry_timeout: 180"), true);
+  }
+});
+
 test("VCB-49: Ctrl+W is gated on the Welcome tab being the active editor", () => {
   const close = render("initialization/close-get-started-editor.json.tpl");
   const [assertActive, closeEditor, assertClosed] = close.steps;
