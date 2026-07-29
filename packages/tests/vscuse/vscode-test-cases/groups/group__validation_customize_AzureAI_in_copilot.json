@@ -38,7 +38,7 @@
         "x": 373,
         "y": 366
       },
-      "description": "Click on the input box",
+      "description": "Click the input box in the M365 Copilot chat page.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
