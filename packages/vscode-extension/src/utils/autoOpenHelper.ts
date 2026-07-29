@@ -305,7 +305,13 @@ export function showMCPAuthPlaceholderNotification(
   workspacePath: string,
   warnings: Warning[]
 ): void {
-  if (!warnings.some(isProvisionBlockingWarning)) {
+  // The warning already carries the wording the other MCP auth flows show, so reuse it
+  // instead of a second phrasing of the same problem.
+  const message = warnings
+    .filter(isProvisionBlockingWarning)
+    .map((warning) => warning.content)
+    .join(" ");
+  if (!message) {
     return;
   }
 
@@ -326,22 +332,16 @@ export function showMCPAuthPlaceholderNotification(
   };
 
   ExtTelemetry.sendTelemetryEvent(TelemetryEvent.ShowMCPAuthPlaceholderNotification);
-  void vscode.window
-    .showWarningMessage(
-      localize("teamstoolkit.handlers.mcpAuthPlaceholder.message"),
-      openYml,
-      recreate
-    )
-    .then((selection) => {
-      if (selection) {
-        ExtTelemetry.sendTelemetryEvent(
-          selection.title === openYml.title
-            ? TelemetryEvent.ClickOpenMCPAuthYml
-            : TelemetryEvent.ClickRecreateMCPApp
-        );
-        void selection.run();
-      }
-    });
+  void vscode.window.showWarningMessage(message, openYml, recreate).then((selection) => {
+    if (selection) {
+      ExtTelemetry.sendTelemetryEvent(
+        selection.title === openYml.title
+          ? TelemetryEvent.ClickOpenMCPAuthYml
+          : TelemetryEvent.ClickRecreateMCPApp
+      );
+      void selection.run();
+    }
+  });
 }
 
 export async function autoInstallDependencyHandler() {

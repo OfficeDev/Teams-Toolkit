@@ -725,6 +725,8 @@ describe("autoOpenHelper", () => {
       showMCPAuthPlaceholderNotification("/path/to/workspace", [placeholderWarning]);
       await warning.mock.results[0].value;
 
+      // the notification repeats the core warning verbatim rather than rewording it
+      assert.equal(warning.mock.calls[0][0], placeholderWarning.content);
       assert.equal(showTextDocument.mock.calls.length, 1);
     });
 
