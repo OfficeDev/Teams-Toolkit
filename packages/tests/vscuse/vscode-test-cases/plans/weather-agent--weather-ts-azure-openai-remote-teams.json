@@ -2788,7 +2788,7 @@
       "tags": [
         "component:notifications",
         "action:assert-contains",
-        "step_retry_timeout: 300"
+        "step_retry_timeout: 900"
       ]
     },
     {
@@ -3068,7 +3068,7 @@
       "tags": [
         "component:notifications",
         "action:assert-contains",
-        "step_retry_timeout: 300"
+        "step_retry_timeout: 900"
       ]
     },
     {

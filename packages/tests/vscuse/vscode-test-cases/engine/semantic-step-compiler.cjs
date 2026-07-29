@@ -74,6 +74,7 @@ const pythonEnvironment = {
   dependenciesTitle: "Select dependencies to install",
   environmentTypeLabel: "Venv",
   successText: "The following environment is selected:",
+  successTimeout: "300",
 };
 
 const scaffoldQuestionAdapters = {
@@ -245,6 +246,12 @@ const provisionOauthConfirmation = {
     "Microsoft 365 Agents Toolkit uploads the client ID/Secret for OAuth Registration to Developer Portal. It is used by Teams client to securely access your API at runtime. Microsoft 365 Agents Toolkit doesn't store your client ID/Secret.",
 };
 
+// Both stages wait on an Azure control plane rather than on the toolkit: the
+// provision stage watches an ARM deployment create the hosting plan, the web
+// app, and the bot registration, and the deploy stage builds the project and
+// uploads the package to that web app. Either can outlast the five minutes the
+// hand-recorded plans allowed, and the wait is only ever paid in full when the
+// stage never reports success.
 const lifecycleAdapters = {
   deploy: {
     confirmation: {
@@ -253,8 +260,12 @@ const lifecycleAdapters = {
       dialogTitle: "Do you want to deploy resources in dev environment?",
     },
     successText: "actions in deploy stage executed successfully",
+    successTimeout: "900",
   },
-  provision: { successText: "provision stage executed successfully" },
+  provision: {
+    successText: "provision stage executed successfully",
+    successTimeout: "900",
+  },
 };
 
 // A readiness subject only has to show that the app on screen is the one this
@@ -900,6 +911,7 @@ function createSemanticStepCompiler() {
       output,
       render(state, "notifications/assert-contains.json.tpl", {
         notificationText: pythonEnvironment.successText,
+        retryTimeout: pythonEnvironment.successTimeout,
       }),
     );
     if (error) return error;
@@ -1016,6 +1028,7 @@ function createSemanticStepCompiler() {
       output,
       render(state, "notifications/assert-contains.json.tpl", {
         notificationText: recipe.successText,
+        retryTimeout: recipe.successTimeout,
       }),
     );
     if (error) return error;

@@ -16,6 +16,7 @@ const substitutions = {
   optionLabel: "Deploy",
   questionTitle: "Deploy resources in dev?",
   readySubject: "the selected target is visible",
+  retryTimeout: "900",
 };
 
 function render(relativePath, overrides = {}) {
@@ -293,7 +294,7 @@ test("lifecycle recipes have reusable confirmation and notification primitives",
   assert.equal(notification.component.id, "assertContains");
   assert.equal(notification.steps.length, 1);
   assert.match(notification.steps[0].description, /stage completed/);
-  assert.ok(notification.steps[0].tags.includes("step_retry_timeout: 300"));
+  assert.ok(notification.steps[0].tags.includes("step_retry_timeout: 900"));
 });
 
 test("target primitives expose F1, profile selection, and browser readiness behavior", () => {

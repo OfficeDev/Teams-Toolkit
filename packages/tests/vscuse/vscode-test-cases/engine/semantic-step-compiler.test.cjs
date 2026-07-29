@@ -1510,6 +1510,40 @@ test("VCB-76: a shell-unsafe local environment value fails the compilation", asy
   );
 });
 
+test("VCB-77: an Azure lifecycle waits longer for its notification than a local operation", async () => {
+  const result = await compileFixture(
+    "basic-custom-engine-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const plan = result.value.find(
+    (generated) =>
+      generated.caseId === "basic-cea-py-azure-openai-remote-teams",
+  ).plan;
+  const timeoutOf = (text) => {
+    const step = plan.steps.find(
+      (candidate) =>
+        candidate.step_id.startsWith("step_assertNotificationContains_") &&
+        candidate.description.includes(text),
+    );
+    assert.notEqual(step, undefined);
+    return step.tags.find((tag) => tag.startsWith("step_retry_timeout: "));
+  };
+  assert.equal(
+    timeoutOf("provision stage executed successfully"),
+    "step_retry_timeout: 900",
+  );
+  assert.equal(
+    timeoutOf("actions in deploy stage executed successfully"),
+    "step_retry_timeout: 900",
+  );
+  assert.equal(
+    timeoutOf("The following environment is selected:"),
+    "step_retry_timeout: 300",
+  );
+});
+
 test("VCB-74: the remote Copilot target requires provision and deploy", async () => {
   const result = await compileFixture("weather-agent.yml", (sourceText) =>
     sourceText.replace(
