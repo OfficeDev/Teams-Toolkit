@@ -1544,6 +1544,37 @@ test("VCB-77: an Azure lifecycle waits longer for its notification than a local 
   );
 });
 
+test("VCB-78: a Chrome target signs the launched browser in before asserting readiness", async () => {
+  const result = await compileFixture(
+    "basic-custom-engine-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  for (const caseId of [
+    "basic-cea-py-azure-openai-local-teams",
+    "basic-cea-py-azure-openai-remote-teams",
+  ]) {
+    const plan = result.value.find(
+      (generated) => generated.caseId === caseId,
+    ).plan;
+    const launchIndex = plan.steps.findIndex(
+      (step) =>
+        step.tool === "key_press" &&
+        step.step_id.startsWith("step_filterOption_confirm_"),
+    );
+    const passwordIndex = plan.steps.findIndex((step) =>
+      step.step_id.startsWith("step_browserM365PasswordSignIn_enterPassword_"),
+    );
+    const readyIndex = plan.steps.findIndex((step) =>
+      step.step_id.startsWith("step_assertReady_assertReady_"),
+    );
+    assert.notEqual(passwordIndex, -1, caseId);
+    assert.equal(launchIndex < passwordIndex, true, caseId);
+    assert.equal(passwordIndex < readyIndex, true, caseId);
+  }
+});
+
 test("VCB-74: the remote Copilot target requires provision and deploy", async () => {
   const result = await compileFixture("weather-agent.yml", (sourceText) =>
     sourceText.replace(

@@ -277,7 +277,17 @@ const lifecycleAdapters = {
 // file checks already assert exactly, and against the real manifest rather than
 // against a screenshot.
 const targetAdapters = {
+  // Every Chrome launch configuration the templates ship omits `userDataDir`, so
+  // js-debug hands the session a profile of its own that carries no Microsoft 365
+  // session and the browser always has to sign in. Which page it opens on is
+  // decided by the launch URL: the Teams targets carry the toolkit's
+  // `${account-hint}`, which resolves to a `login_hint` and asks straight for the
+  // password of the account already signed in to Visual Studio Code.
   "Launch Remote in Teams (Chrome)": {
+    browserAuthentication: {
+      component: "authentication/browser/m365-password-sign-in.json.tpl",
+      credentials: "m365",
+    },
     host: "teams",
     open: { adapter: "teams-add", destination: "chat", kind: "app" },
     readySubject:
@@ -289,6 +299,10 @@ const targetAdapters = {
   // use. It reaches the same Teams app details page, so it reuses that adapter's
   // open transition and readiness subject.
   "Launch Remote (Chrome)": {
+    browserAuthentication: {
+      component: "authentication/browser/m365-password-sign-in.json.tpl",
+      credentials: "m365",
+    },
     host: "teams",
     open: { adapter: "teams-add", destination: "chat", kind: "app" },
     readySubject:
@@ -328,6 +342,10 @@ const targetAdapters = {
   // prefix the case authored, which holds for the `local` suffix as it does for
   // `dev`.
   "Debug in Teams (Chrome)": {
+    browserAuthentication: {
+      component: "authentication/browser/m365-password-sign-in.json.tpl",
+      credentials: "m365",
+    },
     host: "teams",
     open: { adapter: "teams-add", destination: "chat", kind: "app" },
     readySubject:

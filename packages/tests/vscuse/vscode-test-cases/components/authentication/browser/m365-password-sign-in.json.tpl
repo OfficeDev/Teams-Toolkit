@@ -1,0 +1,85 @@
+{
+  "component": {
+    "version": 1,
+    "id": "browserM365PasswordSignIn",
+    "answerType": "authentication",
+    "parameters": ["instanceSuffix", "accountName", "accountPassword"]
+  },
+  "steps": [
+    {
+      "step_id": "step_browserM365PasswordSignIn_assertPassword_{{text:instanceSuffix}}",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Microsoft sign-in page in Chrome names {{text:accountName}} and asks for that account's password.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": ["component:authentication", "surface:browser", "step_retry_timeout: 300"]
+    },
+    {
+      "step_id": "step_browserM365PasswordSignIn_enterPassword_{{text:instanceSuffix}}",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": { "text": {{json:accountPassword}} },
+      "description": "Enter the registered Microsoft 365 password in the focused password input of the browser sign-in form.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": ["step_browserM365PasswordSignIn_assertPassword_{{text:instanceSuffix}}"],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": ["component:authentication", "surface:browser"]
+    },
+    {
+      "step_id": "step_browserM365PasswordSignIn_submitPassword_{{text:instanceSuffix}}",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": { "key": "enter" },
+      "description": "Press Enter to submit the Microsoft 365 password.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": ["step_browserM365PasswordSignIn_enterPassword_{{text:instanceSuffix}}"],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": ["component:authentication", "surface:browser"]
+    },
+    {
+      "step_id": "step_browserM365PasswordSignIn_assertStaySignedIn_{{text:instanceSuffix}}",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Microsoft Stay signed in question is visible with Yes focused.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": ["step_browserM365PasswordSignIn_submitPassword_{{text:instanceSuffix}}"],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": ["component:authentication", "surface:browser", "step_retry_timeout: 120"]
+    },
+    {
+      "step_id": "step_browserM365PasswordSignIn_confirmStaySignedIn_{{text:instanceSuffix}}",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": { "key": "enter" },
+      "description": "Press Enter to confirm staying signed in.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": ["step_browserM365PasswordSignIn_assertStaySignedIn_{{text:instanceSuffix}}"],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": ["component:authentication", "surface:browser", "delay: 30"]
+    }
+  ]
+}

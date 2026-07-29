@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 89,
+    "total_steps": 94,
     "name": "weather-ts-openai-local-teams",
     "description": {
       "owner": "",
@@ -93,7 +93,12 @@
       "step_filterOption_filter_cc58c0052_5_2",
       "step_filterOption_assertOption_cc58c0052_5_2",
       "step_filterOption_confirm_cc58c0052_5_2",
-      "step_assertReady_assertReady_cc58c0052_5_3",
+      "step_browserM365PasswordSignIn_assertPassword_cc58c0052_5_3",
+      "step_browserM365PasswordSignIn_enterPassword_cc58c0052_5_3",
+      "step_browserM365PasswordSignIn_submitPassword_cc58c0052_5_3",
+      "step_browserM365PasswordSignIn_assertStaySignedIn_cc58c0052_5_3",
+      "step_browserM365PasswordSignIn_confirmStaySignedIn_cc58c0052_5_3",
+      "step_assertReady_assertReady_cc58c0052_5_4",
       "step_addAndOpenApp_assertAdd_cc58c0052_6_1",
       "step_addAndOpenApp_add_cc58c0052_6_1",
       "step_addAndOpenApp_assertAdded_cc58c0052_6_1",
@@ -1840,7 +1845,116 @@
       ]
     },
     {
-      "step_id": "step_assertReady_assertReady_cc58c0052_5_3",
+      "step_id": "step_browserM365PasswordSignIn_assertPassword_cc58c0052_5_3",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Microsoft sign-in page in Chrome names ${{env:M365_ACCOUNT_NAME}} and asks for that account's password.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_filterOption_confirm_cc58c0052_5_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "surface:browser",
+        "step_retry_timeout: 300"
+      ]
+    },
+    {
+      "step_id": "step_browserM365PasswordSignIn_enterPassword_cc58c0052_5_3",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{secret:M365_ACCOUNT_PASSWORD}}"
+      },
+      "description": "Enter the registered Microsoft 365 password in the focused password input of the browser sign-in form.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_browserM365PasswordSignIn_assertPassword_cc58c0052_5_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "surface:browser"
+      ]
+    },
+    {
+      "step_id": "step_browserM365PasswordSignIn_submitPassword_cc58c0052_5_3",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to submit the Microsoft 365 password.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_browserM365PasswordSignIn_enterPassword_cc58c0052_5_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "surface:browser"
+      ]
+    },
+    {
+      "step_id": "step_browserM365PasswordSignIn_assertStaySignedIn_cc58c0052_5_3",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Microsoft Stay signed in question is visible with Yes focused.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_browserM365PasswordSignIn_submitPassword_cc58c0052_5_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "surface:browser",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_browserM365PasswordSignIn_confirmStaySignedIn_cc58c0052_5_3",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm staying signed in.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_browserM365PasswordSignIn_assertStaySignedIn_cc58c0052_5_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "surface:browser",
+        "delay: 30"
+      ]
+    },
+    {
+      "step_id": "step_assertReady_assertReady_cc58c0052_5_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1850,7 +1964,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_confirm_cc58c0052_5_2"
+        "step_browserM365PasswordSignIn_confirmStaySignedIn_cc58c0052_5_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1871,7 +1985,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertReady_assertReady_cc58c0052_5_3"
+        "step_assertReady_assertReady_cc58c0052_5_4"
       ],
       "preconditions": [],
       "postconditions": [],
