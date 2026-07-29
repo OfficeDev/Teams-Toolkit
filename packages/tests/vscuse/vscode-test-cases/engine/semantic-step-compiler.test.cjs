@@ -560,7 +560,6 @@ test("VCB-35: multi-select answers check every option and confirm once", async (
       "Move focus from the multi-select input box to the select-all checkbox of the prompt.",
       "Press Space to check every option of the multi-select prompt.",
       "Move focus from the select-all checkbox back to the multi-select input box.",
-      "@assertion every option listed in the multi-select prompt titled Select Operation(s) Copilot Can Interact with has a checked checkbox.",
       "Press Enter to confirm the multi-select prompt.",
     ];
     const flowIndexes = multiSelectFlow.map((description) =>

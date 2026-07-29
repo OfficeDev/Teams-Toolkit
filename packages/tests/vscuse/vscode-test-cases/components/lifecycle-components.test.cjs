@@ -141,15 +141,12 @@ test("VCB-49: Ctrl+W is gated on the Welcome tab being the active editor", () =>
 
 test("VCB-50: the multi-select component selects by control, not by position", () => {
   const multiSelect = render("quick-input/multi-select.json.tpl");
-  const [, , focusSelectAll, selectAll, , assertSelected, confirm] =
-    multiSelect.steps;
+  const [, , focusSelectAll, selectAll] = multiSelect.steps;
+  const confirm = multiSelect.steps.at(-1);
 
-  assert.equal(multiSelect.steps.length, 7);
+  assert.equal(multiSelect.steps.length, 6);
   assert.equal(focusSelectAll.parameters.keys, "shift+tab");
   assert.equal(selectAll.parameters.key, "space");
-  assert.equal(assertSelected.agent, "assertion");
-  assert.match(assertSelected.description, /every option listed/);
-  assert.match(assertSelected.description, /has a checked checkbox/);
   assert.equal(confirm.parameters.key, "enter");
 
   // The prompt lists whatever the resource behind the earlier answers exposes,
@@ -159,6 +156,19 @@ test("VCB-50: the multi-select component selects by control, not by position", (
     assert.notEqual(step.tool, "type_text");
     assert.notEqual(step.parameters.key, "down");
     assert.equal(/\bSelected\b/.test(step.description), false);
+  }
+});
+
+test("VCB-58: the multi-select component asserts no checked state", () => {
+  const multiSelect = render("quick-input/multi-select.json.tpl");
+
+  // The prompt draws its placeholder on the input-box row and the select-all
+  // checkbox beside it, so a reader of the screen cannot tell that row from an
+  // option row.
+  for (const step of multiSelect.steps) {
+    if (step.agent !== "assertion") continue;
+    assert.equal(/checked/.test(step.description), false);
+    assert.equal(/every option/.test(step.description), false);
   }
 });
 

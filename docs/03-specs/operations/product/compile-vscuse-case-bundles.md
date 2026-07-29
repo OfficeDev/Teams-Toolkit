@@ -784,13 +784,18 @@ and selectable, and only then confirms it. The option assertion intentionally ru
 a valid option in a long or virtualized list may not be visible before input.
 
 A multi-select moves focus from the prompt's input box to its select-all checkbox with `Shift+Tab`,
-checks every option with `Space`, returns focus to the input box with `Tab`, asserts that every
-listed option now shows a checked checkbox, and confirms the prompt. `Enter` does not confirm the
-prompt while the select-all checkbox holds focus, so the component closes the detour it opened
-before it confirms. It neither filters the list nor steps through it, so no keystroke depends
-on an option's position, and the closing assertion names no count. Its wait step also keeps that
-closing assertion meaningful, because every option of an empty list trivially carries a checked
-checkbox. A `multiSelect` answer is
+checks every option with `Space`, returns focus to the input box with `Tab`, and confirms the
+prompt. `Enter` does not confirm the prompt while the select-all checkbox holds focus, so the
+component closes the detour it opened before it confirms. It neither filters the list nor steps
+through it, so no keystroke depends on an option's position.
+
+No step asserts that the options are checked. The prompt draws its placeholder text on the same row
+as the select-all checkbox, directly above the option rows, so a reader of the screen cannot tell
+that row from an option row, and the assertion that tried reported the checked select-all control as
+an unchecked-neighbour option. The claim was unverifiable for a second reason: it ranges over every
+option, and a list that scrolls does not show every option at once. The wait step before `Shift+Tab`
+keeps the keystrokes meaningful on their own, since it is what guarantees the list has options at
+all. A `multiSelect` answer is
 therefore the literal `all`: the option set a prompt renders comes from the resource that the
 earlier answers pointed at, such as an OpenAPI description behind an authored URL, so a case file
 cannot name an individual option without asserting something the toolkit does not own. Compiler-generated assertion
@@ -1045,7 +1050,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-32 | Given ARM inputs on `provision`, compilation emits the fixed supported ARM prompt sequence, requires Azure login and every supported input, and rejects missing, duplicate, or unsupported inputs before plan output.                                                                                                                                                                                                              |
 | VCB-33 | Given setup compilation succeeds for all sources, setup prints the deterministic generated-plan diff and transactionally updates only manifest-owned files in `plans/`; unchanged output performs no writes, compilation errors, manual-plan collisions, or concurrent changes leave prior content unchanged, and a failed rollback preserves a recoverable backup.                                                                |
 | VCB-34 | Given the checked-in case sources and no injected `compileStep`, setup reads no external template contracts and uses the semantic compiler plus component renderer to emit twelve deterministic current-format runnable plans; every operation resolves through a supported adapter, removed manifest-owned cases are deleted, and a second setup reports no generated-plan changes.                                               |
-| VCB-35 | Given a `multiSelect` answer whose value is the literal `all`, compilation emits one component that focuses the prompt's select-all checkbox, checks every option, asserts the result, and confirms the prompt exactly once; any other value fails before plan output.                                                                                                                                                             |
+| VCB-35 | Given a `multiSelect` answer whose value is the literal `all`, compilation emits one component that focuses the prompt's select-all checkbox, checks every option, and confirms the prompt exactly once; any other value fails before plan output.                                                                                                                                                                                 |
 | VCB-36 | Given `provision.with.environment: none`, compilation omits environment selection while keeping the remaining provision recipe; omitting the input emits the recorded `dev` selection, and any other value fails before plan output.                                                                                                                                                                                               |
 | VCB-37 | Given any scaffold, compilation focuses the toolkit view through the command component after initialization, waits for the toolkit Welcome editor to finish loading, and only then executes the create command, so no editor can hold keyboard focus when the first scaffold quick pick opens.                                                                                                                                     |
 | VCB-38 | Given a `chat` check without `expect`, compilation sends the message and emits no response assertion, so a following assertion observes the surface the message produced; an empty `expect` object still fails before plan output.                                                                                                                                                                                                 |
@@ -1068,6 +1073,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-55 | Given a `singleSelect` or `multiSelect` answer, the emitted component waits on a retried assertion that the prompt lists at least one option before its first keystroke, because the toolkit renders the prompt's title while its options are still loading and the title assertion alone therefore passes over a list that no keystroke can act on.                                                                               |
 | VCB-56 | Given a `multiSelect` answer, the emitted component returns focus to the prompt's input box with `Tab` after checking the options and before pressing `Enter`, because `Enter` does not confirm the prompt while the select-all checkbox that `Shift+Tab` reached still holds focus.                                                                                                                                               |
 | VCB-57 | Given `login`, the sign-in adapter enters from the ACCOUNTS section of the toolkit side bar and no emitted step filters the Command Palette for `Microsoft 365 Agents: Accounts`, because VS Code generates `Microsoft 365 Agents Toolkit: Focus on Accounts View` from that view and every word of the account command's title is a word of the generated title in the same order, so no filter text lists one without the other. |
+| VCB-58 | Given a `multiSelect` answer, no emitted step asserts that the options are checked, because the prompt draws its placeholder on the same row as the select-all checkbox and directly above the option rows, so a reader of the screen cannot tell that row from an option row, and because the claim ranges over every option while a list that scrolls does not show every option at once.                                        |
 
 ## Boundary
 
