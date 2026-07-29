@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 124,
+    "total_steps": 119,
     "name": "da-api-plugin-from-existing-api-api-key-remote-preview",
     "description": {
       "owner": "",
@@ -115,22 +115,17 @@
       "step_filterSecondOption_next_c8af7aec5_5_2",
       "step_filterSecondOption_assertOption_c8af7aec5_5_2",
       "step_filterSecondOption_confirm_c8af7aec5_5_2",
-      "step_textInput_assertQuestion_c8af7aec5_5_3",
-      "step_textInput_input_c8af7aec5_5_3",
-      "step_textInput_confirm_c8af7aec5_5_3",
-      "step_clickPrimaryAction_assertDialog_c8af7aec5_5_4",
-      "step_clickPrimaryAction_click_c8af7aec5_5_4",
-      "step_browserM365SignIn_assertAccount_c8af7aec5_5_5",
-      "step_browserM365SignIn_focusAccount_c8af7aec5_5_5",
-      "step_browserM365SignIn_enterAccount_c8af7aec5_5_5",
-      "step_browserM365SignIn_submitAccount_c8af7aec5_5_5",
-      "step_browserM365SignIn_assertPassword_c8af7aec5_5_5",
-      "step_browserM365SignIn_enterPassword_c8af7aec5_5_5",
-      "step_browserM365SignIn_submitPassword_c8af7aec5_5_5",
-      "step_browserM365SignIn_assertStaySignedIn_c8af7aec5_5_5",
-      "step_browserM365SignIn_confirmStaySignedIn_c8af7aec5_5_5",
-      "step_browserM365SignIn_refresh_c8af7aec5_5_5",
-      "step_assertReady_assertReady_c8af7aec5_5_6",
+      "step_browserM365SignIn_assertAccount_c8af7aec5_5_3",
+      "step_browserM365SignIn_focusAccount_c8af7aec5_5_3",
+      "step_browserM365SignIn_enterAccount_c8af7aec5_5_3",
+      "step_browserM365SignIn_submitAccount_c8af7aec5_5_3",
+      "step_browserM365SignIn_assertPassword_c8af7aec5_5_3",
+      "step_browserM365SignIn_enterPassword_c8af7aec5_5_3",
+      "step_browserM365SignIn_submitPassword_c8af7aec5_5_3",
+      "step_browserM365SignIn_assertStaySignedIn_c8af7aec5_5_3",
+      "step_browserM365SignIn_confirmStaySignedIn_c8af7aec5_5_3",
+      "step_browserM365SignIn_refresh_c8af7aec5_5_3",
+      "step_assertReady_assertReady_c8af7aec5_5_4",
       "step_sendCopilotMessage_assertInput_c8af7aec5_7_1",
       "step_sendCopilotMessage_focusInput_c8af7aec5_7_1",
       "step_sendCopilotMessage_type_c8af7aec5_7_1",
@@ -2352,11 +2347,11 @@
       ]
     },
     {
-      "step_id": "step_textInput_assertQuestion_c8af7aec5_5_3",
+      "step_id": "step_browserM365SignIn_assertAccount_c8af7aec5_5_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the active prompt titled Enter API Key in OpenAPI Description Document is visible.",
+      "description": "@assertion the Microsoft sign-in page is visible in Chrome with an email or username input.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -2367,121 +2362,13 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "component:quick-input",
-        "answer_type:text",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_textInput_input_c8af7aec5_5_3",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "${{secret:EXISTING_API_KEY}}"
-      },
-      "description": "Type the authored value into the active text prompt.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_textInput_assertQuestion_c8af7aec5_5_3"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:text"
-      ]
-    },
-    {
-      "step_id": "step_textInput_confirm_c8af7aec5_5_3",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press Enter to submit the accepted text input.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_textInput_input_c8af7aec5_5_3"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:text"
-      ]
-    },
-    {
-      "step_id": "step_clickPrimaryAction_assertDialog_c8af7aec5_5_4",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the dialog Microsoft 365 Agents Toolkit will upload the API key to Developer Portal. The API key will be used by Teams client to securely access your API in runtime. Microsoft 365 Agents Toolkit will not store your API key. is visible with the primary action Confirm.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_textInput_confirm_c8af7aec5_5_3"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:dialog",
-        "action:click-primary",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_clickPrimaryAction_click_c8af7aec5_5_4",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press Enter to activate the primary action Confirm in the confirmed dialog.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_clickPrimaryAction_assertDialog_c8af7aec5_5_4"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:dialog",
-        "action:click-primary"
-      ]
-    },
-    {
-      "step_id": "step_browserM365SignIn_assertAccount_c8af7aec5_5_5",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the Microsoft sign-in page is visible in Chrome with an email or username input.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_clickPrimaryAction_click_c8af7aec5_5_4"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
         "component:authentication",
         "surface:browser",
         "step_retry_timeout: 180"
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_focusAccount_c8af7aec5_5_5",
+      "step_id": "step_browserM365SignIn_focusAccount_c8af7aec5_5_3",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -2495,7 +2382,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_assertAccount_c8af7aec5_5_5"
+        "step_browserM365SignIn_assertAccount_c8af7aec5_5_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2505,7 +2392,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_enterAccount_c8af7aec5_5_5",
+      "step_id": "step_browserM365SignIn_enterAccount_c8af7aec5_5_3",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -2517,7 +2404,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_focusAccount_c8af7aec5_5_5"
+        "step_browserM365SignIn_focusAccount_c8af7aec5_5_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2527,7 +2414,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_submitAccount_c8af7aec5_5_5",
+      "step_id": "step_browserM365SignIn_submitAccount_c8af7aec5_5_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2539,7 +2426,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_enterAccount_c8af7aec5_5_5"
+        "step_browserM365SignIn_enterAccount_c8af7aec5_5_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2549,7 +2436,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_assertPassword_c8af7aec5_5_5",
+      "step_id": "step_browserM365SignIn_assertPassword_c8af7aec5_5_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2559,7 +2446,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_submitAccount_c8af7aec5_5_5"
+        "step_browserM365SignIn_submitAccount_c8af7aec5_5_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2570,7 +2457,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_enterPassword_c8af7aec5_5_5",
+      "step_id": "step_browserM365SignIn_enterPassword_c8af7aec5_5_3",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -2582,7 +2469,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_assertPassword_c8af7aec5_5_5"
+        "step_browserM365SignIn_assertPassword_c8af7aec5_5_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2592,7 +2479,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_submitPassword_c8af7aec5_5_5",
+      "step_id": "step_browserM365SignIn_submitPassword_c8af7aec5_5_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2604,7 +2491,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_enterPassword_c8af7aec5_5_5"
+        "step_browserM365SignIn_enterPassword_c8af7aec5_5_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2614,7 +2501,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_assertStaySignedIn_c8af7aec5_5_5",
+      "step_id": "step_browserM365SignIn_assertStaySignedIn_c8af7aec5_5_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2624,7 +2511,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_submitPassword_c8af7aec5_5_5"
+        "step_browserM365SignIn_submitPassword_c8af7aec5_5_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2635,7 +2522,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_confirmStaySignedIn_c8af7aec5_5_5",
+      "step_id": "step_browserM365SignIn_confirmStaySignedIn_c8af7aec5_5_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2647,7 +2534,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_assertStaySignedIn_c8af7aec5_5_5"
+        "step_browserM365SignIn_assertStaySignedIn_c8af7aec5_5_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2658,7 +2545,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_refresh_c8af7aec5_5_5",
+      "step_id": "step_browserM365SignIn_refresh_c8af7aec5_5_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2670,7 +2557,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_confirmStaySignedIn_c8af7aec5_5_5"
+        "step_browserM365SignIn_confirmStaySignedIn_c8af7aec5_5_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2681,7 +2568,7 @@
       ]
     },
     {
-      "step_id": "step_assertReady_assertReady_c8af7aec5_5_6",
+      "step_id": "step_assertReady_assertReady_c8af7aec5_5_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2691,7 +2578,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_refresh_c8af7aec5_5_5"
+        "step_browserM365SignIn_refresh_c8af7aec5_5_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2712,7 +2599,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertReady_assertReady_c8af7aec5_5_6"
+        "step_assertReady_assertReady_c8af7aec5_5_4"
       ],
       "preconditions": [],
       "postconditions": [],

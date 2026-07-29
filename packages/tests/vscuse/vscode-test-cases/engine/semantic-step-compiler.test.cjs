@@ -599,7 +599,7 @@ test("VCB-35: multi-select answers check every option and confirm once", async (
   }
 });
 
-test("existing API cases preserve legacy authentication variants", async () => {
+test("VCB-65: existing API registration credentials are prompted only during provision", async () => {
   const result = await compileFixture(
     "da-api-plugin-from-existing-api.yml",
     (sourceText) => sourceText,
@@ -633,17 +633,26 @@ test("existing API cases preserve legacy authentication variants", async () => {
   for (const { caseId, credentialValues, url } of variants) {
     const plan = plansByCase.get(caseId);
     assert.notEqual(plan, undefined, caseId);
-    const typedValues = plan.steps
-      .filter((step) => step.tool === "type_text")
-      .map((step) => step.parameters.text);
+    const typedValues = plan.steps.map((step) => step.parameters.text);
     assert.equal(typedValues.includes(url), true, caseId);
+    const targetSelectionIndex = plan.steps.findIndex(
+      (step) =>
+        step.description ===
+        "Press Enter to confirm the highlighted filtered option.",
+    );
+    assert.equal(targetSelectionIndex >= 0, true, caseId);
     for (const value of credentialValues) {
-      assert.equal(
-        typedValues.filter((typedValue) => typedValue === value).length,
-        2,
-        caseId,
+      const credentialIndices = typedValues.flatMap((typedValue, index) =>
+        typedValue === value ? [index] : [],
       );
+      assert.deepEqual(credentialIndices.length, 1, caseId);
+      assert.equal(credentialIndices[0] < targetSelectionIndex, true, caseId);
     }
+    assert.match(
+      plan.steps[targetSelectionIndex + 1].step_id,
+      /step_browserM365SignIn_assertAccount/,
+      caseId,
+    );
   }
 
   const oauthPlan = plansByCase.get(
@@ -667,14 +676,7 @@ test("existing API cases preserve legacy authentication variants", async () => {
     description.includes("is displayed in the main section"),
   );
   const targetSelectionIndex = oauthDescriptions.findIndex((description) =>
-    description.includes("Preview in Copilot (Chrome) is selected"),
-  );
-  const repeatedClientIdIndex = oauthPlan.steps.findLastIndex(
-    (step) => step.parameters.text === "${{env:EXISTING_API_OAUTH_CLIENT_ID}}",
-  );
-  const repeatedClientSecretIndex = oauthPlan.steps.findLastIndex(
-    (step) =>
-      step.parameters.text === "${{secret:EXISTING_API_OAUTH_CLIENT_SECRET}}",
+    description.includes("confirm the highlighted filtered option"),
   );
   const signInIndex = oauthDescriptions.indexOf(
     "@assertion a visible browser element has role button and accessible name Sign in to Repair Service.",
@@ -682,8 +684,7 @@ test("existing API cases preserve legacy authentication variants", async () => {
   assert.equal(environmentIndex < clientIdIndex, true);
   assert.equal(clientIdIndex < clientSecretIndex, true);
   assert.equal(clientSecretIndex < confirmationIndex, true);
-  assert.equal(targetSelectionIndex < repeatedClientIdIndex, true);
-  assert.equal(repeatedClientIdIndex < repeatedClientSecretIndex, true);
+  assert.equal(confirmationIndex < targetSelectionIndex, true);
   assert.equal(readinessIndex >= 0, true);
   assert.equal(readinessIndex < signInIndex, true);
 });

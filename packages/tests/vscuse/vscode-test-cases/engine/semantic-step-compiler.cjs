@@ -672,8 +672,6 @@ function createSemanticStepCompiler() {
         value: {
           confirmation: provisionApiKeyConfirmation,
           questions,
-          // The API key is not persisted, so F5 asks for it again.
-          replayedQuestions: questions,
         },
       };
     }
@@ -708,8 +706,6 @@ function createSemanticStepCompiler() {
         value: {
           confirmation: provisionOauthConfirmation,
           questions,
-          // The OAuth credentials are not persisted, so F5 asks for them again.
-          replayedQuestions: questions,
         },
       };
     }
@@ -719,7 +715,6 @@ function createSemanticStepCompiler() {
         value: {
           confirmation: undefined,
           questions: [],
-          replayedQuestions: [],
         },
       };
     }
@@ -749,9 +744,6 @@ function createSemanticStepCompiler() {
           ...question,
           value: inputs.arm[question.key],
         })),
-        // Provision writes the ARM answers into the environment, so F5 reuses
-        // them instead of prompting again.
-        replayedQuestions: [],
       },
     };
   }
@@ -800,13 +792,6 @@ function createSemanticStepCompiler() {
     if (definition.type === "provision") {
       const provision = validateProvisionInputs(state, definition);
       if (!provision.ok) return provision;
-      state.targetProvision =
-        provision.value.replayedQuestions.length > 0
-          ? {
-              confirmation: provision.value.confirmation,
-              questions: provision.value.replayedQuestions,
-            }
-          : undefined;
       confirmation = provision.value.confirmation;
       questions = provision.value.questions;
       selectsEnvironment = provision.value.selectsEnvironment;
@@ -906,18 +891,6 @@ function createSemanticStepCompiler() {
       }),
     );
     if (error) return error;
-    if (state.targetProvision !== undefined) {
-      const targetProvisionQuestions = renderProvisionQuestions(
-        state,
-        state.targetProvision.questions,
-        output,
-      );
-      if (!targetProvisionQuestions.ok) return targetProvisionQuestions;
-      const { component, ...confirmationValues } =
-        state.targetProvision.confirmation;
-      error = append(output, render(state, component, confirmationValues));
-      if (error) return error;
-    }
     if (profile.browserAuthentication !== undefined) {
       const credentials = state.credentials.get(
         profile.browserAuthentication.credentials,
@@ -1229,7 +1202,6 @@ function createSemanticStepCompiler() {
         credentials: new Map(),
         occurrence,
         requiresInitialFileCheck: true,
-        targetProvision: undefined,
       };
       states.set(caseId, state);
     } else if (state === undefined) {
