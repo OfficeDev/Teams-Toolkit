@@ -10,11 +10,20 @@ import { FeatureFlags, featureFlagManager } from "../../../src/common/featureFla
 import { setTools } from "../../../src/common/globalVars";
 import { copilotGptManifestUtils } from "../../../src/component/driver/teamsApp/utils/CopilotGptManifestUtils";
 import { manifestUtils } from "../../../src/component/driver/teamsApp/utils/ManifestUtils";
+import { scaffoldDeclarativeFromV4Channel } from "../../../src/component/generator/v4TemplateBridge";
 import { fxCoreDeclarativeAgentDeps } from "../../../src/core/FxCore.declarativeAgent";
 import { QuestionNames } from "../../../src/question";
 import { ActionStartOptions } from "../../../src/question/constants";
 import { addPluginQuestionNode } from "../../../src/question/other";
 import { MockTools } from "../../core/utils";
+
+// The entry imports the channel scaffold as a binding, so the module has to be mocked to drive
+// the warnings it hands back on the generator context.
+vi.mock("../../../src/component/generator/v4TemplateBridge", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("../../../src/component/generator/v4TemplateBridge")>();
+  return { ...actual, scaffoldDeclarativeFromV4Channel: vi.fn() };
+});
 
 /**
  * T3 scenario tier: the real MCP add-action entry and its legacy question adapter.
@@ -172,6 +181,31 @@ describe("SCN-DA-ADD-MCP-ACTION-TO-DA (v4 entry, T3)", () => {
     }
     assert.equal(modifyFrontDoorStub.mock.calls.length, 3);
     assert.equal(scaffoldStub.mock.calls.length, 0);
+  });
+
+  it("raises only the placeholder warnings from the v4 add scaffold as notifications", async () => {
+    vi.mocked(scaffoldDeclarativeFromV4Channel).mockImplementation(async (context) => {
+      context.warnings = [
+        { type: "mcpServerUrlNotAnEndpoint", content: "advisory only" },
+        { type: "mcpAuthOAuthUrlPlaceholder", content: "repair the oauth urls" },
+      ];
+      return { origin: "bundled", version: "1.0.0", digest: "sha256:test", location: "test" };
+    });
+    const showMessage = vi.spyOn(tools.ui, "showMessage");
+
+    const result = await fxCoreDeclarativeAgentDeps.scaffoldAddMcpServerFromV4({
+      templateId: "add-mcp-server",
+      projectPath: path.join(os.tmpdir(), "scenario-add-mcp-placeholder-warning"),
+      teamsManifestPath: "appPackage/manifest.json",
+      appName: "My MCP App",
+      mcpServerUrl: "https://example.com/mcp",
+      authType: "oauth",
+    });
+
+    assert.isTrue(result.isOk());
+    const warned = showMessage.mock.calls.filter((call) => call[0] === "warn");
+    assert.equal(warned.length, 1);
+    assert.equal(warned[0][1], "repair the oauth urls");
   });
 
   it("SCN-ADD-MCP-12: v4 add questions collect auth type but defer credentials", () => {
