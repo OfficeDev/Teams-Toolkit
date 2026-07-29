@@ -243,12 +243,16 @@ test("VCB-55: option components wait for the prompt to load its options", () => 
     assert.equal(assertOptionsLoaded.agent, "assertion");
     assert.match(
       assertOptionsLoaded.description,
-      /lists at least one option below its input box/,
+      /has finished loading and lists at least one selectable option/,
     );
     assert.equal(
       assertOptionsLoaded.tags.includes("step_retry_timeout: 120"),
       true,
     );
+
+    // VCB-81: a reader that placed the loaded option above the input box read
+    // the earlier `below its input box` claim as false.
+    assert.equal(/input box/.test(assertOptionsLoaded.description), false);
 
     // The title assertion alone passes while the prompt still reads
     // "Loading options...", so the first keystroke must depend on this step.

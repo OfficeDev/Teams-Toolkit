@@ -809,15 +809,22 @@ instantiation.
 
 Every prompted answer component begins with an `assertion` step whose description requires the
 canonical `en-US` question title to be visible in the active prompt. A component that picks from a
-list then asserts, in a second step of its own, that the prompt lists at least one option below its
-input box. The toolkit renders a prompt's frame before its options: while the option set is being
-loaded the prompt already carries its final title and the input box reads `Loading options...`, so
-the title assertion alone passes over a list that no keystroke can act on yet. Keeping the wait in
-its own step is what makes it a wait: a retried assertion step reports the difference between a
-prompt that is still loading and a prompt that loaded the wrong thing, which a single compound
-sentence cannot. Its retry window is longer than the default, because the option set behind an
-Azure subscription, resource group, region, or fetched OpenAPI description arrives over the
+list then asserts, in a second step of its own, that the prompt has finished loading and lists at
+least one selectable option. The toolkit renders a prompt's frame before its options: while the
+option set is being loaded the prompt already carries its final title and the input box reads
+`Loading options...`, so the title assertion alone passes over a list that no keystroke can act on
+yet. Keeping the wait in its own step is what makes it a wait: a retried assertion step reports the
+difference between a prompt that is still loading and a prompt that loaded the wrong thing, which a
+single compound sentence cannot. Its retry window is longer than the default, because the option set
+behind an Azure subscription, resource group, region, or fetched OpenAPI description arrives over the
 network.
+
+The assertion places no option relative to the input box. The earlier wording required an option
+`below its input box`, and a multi-select whose one option had loaded was reported as having none:
+the reader placed that option above the input box and read the `0 Selected` and `OK` controls that
+sit directly under the box as the whole of what the prompt lists. Where a prompt draws its rows is
+not a toolkit-owned invariant, and the wait needs only the option set, so the claim is about loading
+and about a selectable option existing.
 
 A single-select then filters by canonical option label, asserts that the filtered option is visible
 and selectable, and only then confirms it. The option assertion intentionally runs after filtering:
@@ -1136,6 +1143,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-78 | Given a Chrome target, the launched browser is signed in before its readiness is asserted, because every Chrome launch configuration the templates ship omits `userDataDir` and therefore gets a profile carrying no Microsoft 365 session, and its URL carries the toolkit's account hint, so the browser opens on the password prompt for the account already signed in to Visual Studio Code.                                       |
 | VCB-79 | Given a Chrome target that signs in from the password prompt, the password input is clicked before the password is typed, because the browser the debug session launches keeps focus in its address bar, so a password typed without that click is entered outside the sign-in form.                                                                                                                                                   |
 | VCB-80 | Given a lifecycle operation, the notification center is cleared before the operation starts, because it keeps every notification the run has raised, so the assertion that waits for this operation's success would otherwise read it out of a list that also holds the scaffolding, sign-in, and earlier lifecycle entries.                                                                                                           |
+| VCB-81 | Given a `singleSelect` or `multiSelect` answer, the assertion that waits for the option set places no option relative to the prompt's input box, because a multi-select whose one option had loaded was reported as having none once the reader placed that option above the box and read the `0 Selected` and `OK` controls under it as the whole of what the prompt lists.                                                           |
 
 ## Boundary
 
