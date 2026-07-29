@@ -3,7 +3,7 @@
 ## Metadata
 
 - Created: 2026-05-20T00:00:00Z
-- Last updated: 2026-07-17T00:00:00Z
+- Last updated: 2026-07-29T00:00:00Z
 - Status: implemented
 - PM owner: summzhan
 - Engineer owner: HuihuiWu-Microsoft, Alive-Fish
@@ -51,7 +51,7 @@ When `TEAMSFX_MCP_FOR_DA_DT=false`, VS Code keeps the compatibility handoff: it 
 
 - Entry: an existing DA project is available and the developer starts `Add action`.
 - Action source: the developer selects `Start with a MCP server`.
-- Server URL: the developer enters a valid remote MCP server URL unless the surface already supplied it.
+- Server URL: the developer enters a remote MCP server URL unless the surface already supplied it. The URL is checked as it is entered, by the same rule as create: a value that is not an absolute `http(s)` address, or one the server answers with 404 to an MCP `initialize` request, is rejected on the question.
 - Authentication: `OAuth (with static registration)`, `Entra SSO`, and `None` are available on the dynamic path. `OAuth (with dynamic registration)` is available only when DT and DCR are both true.
 - Static OAuth and Entra SSO: shipped v3 asks for the required client ID, the OAuth client secret, and optional OAuth scopes during add, then persists environment references. The v4 preview writes registration wiring without credential values and asks for missing values during provision.
 - Dynamic OAuth: add injects `dcr/register`. Unresolved authorization discovery produces a warning and a well-known URL placeholder that must be repaired before provision.
@@ -59,7 +59,7 @@ When `TEAMSFX_MCP_FOR_DA_DT=false`, VS Code keeps the compatibility handoff: it 
 - Confirmation: VS Code dynamic mode writes after the final required answer. CLI interactive retains the standard modification confirmation; cancellation writes nothing.
 - Idempotent re-run: adding the same URL and auth mode does not duplicate the action, lifecycle registration, or environment placeholder.
 - Deferred update: changing the auth mode for an already-added same-host server is not guaranteed by this scenario.
-- Validation: missing or invalid URL, invalid project or manifest path, and unsupported auth values are recoverable before mutation.
+- Validation: a missing URL, a URL that is not an absolute `http(s)` address or that answers 404 to the MCP `initialize` request, an invalid project or manifest path, and unsupported auth values are recoverable before mutation.
 
 ## User-visible outputs
 
@@ -76,6 +76,7 @@ When `TEAMSFX_MCP_FOR_DA_DT=false`, VS Code keeps the compatibility handoff: it 
 - The dynamic flow asks for action source, conditional MCP server URL, and authentication type. Shipped v3 also asks the conditional credential follow-ups for static OAuth and Entra SSO; the generated v4 preview walk omits them.
 - VS Code reports that the action was added after successful inline mutation. CLI uses its normal success output after confirmation or non-interactive completion.
 - Dynamic OAuth discovery fallback warns that the generated well-known URL placeholder must be repaired before provision.
+- Add has no scaffolding summary, so a lifecycle action left holding auth placeholders is raised as a warning notification naming the file to repair.
 
 ### Error and recovery messages
 
@@ -92,6 +93,7 @@ When `TEAMSFX_MCP_FOR_DA_DT=false`, VS Code keeps the compatibility handoff: it 
 ### External side effects
 
 - Dynamic add does not fetch MCP tools.
+- Entering the server URL sends an unauthenticated MCP `initialize` request to it to establish whether an MCP endpoint is there.
 - Auth wiring may probe authorization discovery endpoints. OAuth configuration creation and DCR execution occur during provision.
 - DT-off Fetch Tools may contact the selected MCP server when the developer invokes that follow-up scenario.
 
@@ -177,6 +179,6 @@ scaffolding:
         mcpServerUrl: https://example.com/mcp
         authType: none
   reviewedFingerprints:
-    semantic: c7788f2243940e9f83a42d6343b0c88f92d248a0c35b83b83e6a41609c175709
+    semantic: 30fc7ef7f883f05f92581295ba1299eab270edbf44eae79db27063058b039225
     presentation: 0e3ea01b405baa97d0caa2521c7ab02ff703ed751fbbdb811eb202d65d3f6ea5
 ```
