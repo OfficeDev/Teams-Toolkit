@@ -259,12 +259,14 @@ cases:
       ]
 ```
 
-V1 step types are `scaffold`, `login`, `provision`, `deploy`, `pythonEnvironment`, `target`, `open`,
-and `checks`.
+V1 step types are `scaffold`, `login`, `provision`, `deploy`, `pythonEnvironment`,
+`localEnvironment`, `target`, `open`, and `checks`.
 `scaffold` accepts `template` and `answers`; `login`, `provision`, and `target` accept their
 same-named operation input. `deploy` has no semantic input, although current validation ignores an
 authored `with` object. `pythonEnvironment` requires exactly one input, `with.interpreter`, the
 label the Python extension's interpreter picker shows for the interpreter the case selects.
+`localEnvironment` accepts a `with` mapping of environment variable names to values, each added to
+the `envs` mapping that the project's local lifecycle writes into `.localConfigs`.
 `open` requires `with.kind` and
 `with.destination`; the current template, target profile, and those two values select a compatible
 adapter. The profile already identifies the host surface, so `open` does not repeat Teams or
@@ -1126,8 +1128,10 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-70 | Given a `pythonEnvironment` operation, the notification center is opened before the completion assertion, because creating the virtual environment and installing its requirements takes minutes and the notification the Python extension raises is the only visible signal that the environment is selected.                                                                                                                         |
 | VCB-71 | Given the `Launch Remote (Chrome)` target, the adapter reaches the Teams app details page through the same add-and-open transition as `Launch Remote in Teams (Chrome)`, because the Python templates only rename that profile and leave the browser flow it launches unchanged.                                                                                                                                                       |
 | VCB-72 | Given the weather agent bundle, every combination of LLM service and language is authored against both the remote and the local Teams launch, because each language is a separate template package and each launch drives a separate lifecycle, so a combination that is never authored is never covered.                                                                                                                              |
-| VCB-73 | Given a weather agent case whose LLM service is OpenAI, the case launches the target but asserts no chat completion, because the run configuration declares no openai.com key and the recordings these cases replace type a placeholder, so what the case can honestly cover is the OpenAI branch of the scaffold question tree and the lifecycle that follows it.                                                                     |
+| VCB-73 | Given a weather agent case whose LLM service is OpenAI, a local launch asserts a chat completion and a remote launch does not, because an Azure OpenAI resource serves the OpenAI v1 protocol and the local run can be redirected at it, while a remote run reads its app settings from the generated `infra/azure.bicep`, which carries the key alone.                                                                                |
 | VCB-74 | Given the `(Preview) Launch Remote in Copilot (Chrome)` target, the adapter requires provision and deploy, unlike `Preview in Copilot (Chrome)`, because a custom engine agent answers from a bot the deploy stage publishes while a declarative agent answers from a definition the provision stage uploads.                                                                                                                          |
+| VCB-75 | Given a `localEnvironment` operation, each named variable is added to the `envs` mapping that the project's local lifecycle writes into `.localConfigs`, because the scaffolded app reads its configuration from that generated file, and writing the variable there scopes it to the authoring case instead of every case sharing the container environment.                                                                          |
+| VCB-76 | Given a `localEnvironment` operation whose variable name or value would not survive a shell assignment unquoted, the compilation fails, because the value is interpolated into a generated shell command and the runner resolves its own placeholders before the shell sees it.                                                                                                                                                        |
 
 ## Boundary
 

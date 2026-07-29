@@ -879,7 +879,7 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "${{secret:OPENAI_API_KEY}}"
+        "text": "${{secret:AZURE_OPENAI_API_KEY}}"
       },
       "description": "Type the authored value into the active text prompt.",
       "content_refs": [],

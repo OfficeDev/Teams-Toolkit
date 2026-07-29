@@ -1,0 +1,30 @@
+{
+  "component": {
+    "version": 1,
+    "id": "setLocalEnvironmentVariable",
+    "parameters": ["instanceSuffix", "variableName", "variableValue"]
+  },
+  "steps": [
+    {
+      "step_id": "step_setLocalEnvironmentVariable_{{text:instanceSuffix}}",
+      "agent": "code",
+      "tool": "",
+      "parameters": {
+        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" VARIABLE_NAME=\"{{text:variableName}}\" VARIABLE_VALUE=\"{{text:variableValue}}\" python3 - <<'PY'\nimport os\nfrom pathlib import Path\n\nlifecycle = Path(os.environ[\"PROJECT_DIR\"]).resolve() / \"m365agents.local.yml\"\nname = os.environ[\"VARIABLE_NAME\"]\nvalue = os.environ[\"VARIABLE_VALUE\"]\nlines = lifecycle.read_text(encoding=\"utf-8\").splitlines()\ntarget = next((index for index, line in enumerate(lines) if line.strip() == \"target: ./.localConfigs\"), None)\nif target is None:\n    raise AssertionError(\"The local lifecycle writes no .localConfigs environment file\")\nheader = next((index for index in range(target + 1, len(lines)) if lines[index].strip() == \"envs:\"), None)\nif header is None:\n    raise AssertionError(\"The .localConfigs environment file declares no envs mapping\")\nindent = \" \" * (len(lines[header]) - len(lines[header].lstrip()) + 2)\nend = header + 1\nwhile end < len(lines) and lines[end].startswith(indent) and lines[end].strip():\n    end += 1\nkept = [line for line in lines[header + 1 : end] if not line.strip().startswith(name + \":\")]\nlines[header + 1 : end] = kept + [indent + name + \": \" + value]\nlifecycle.write_text(\"\\n\".join(lines) + \"\\n\", encoding=\"utf-8\")\nPY\n```"
+      },
+      "description": "@code add the named variable to the envs mapping the local lifecycle writes into .localConfigs, without logging its value.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:workspace",
+        "operation:local-environment",
+        "step_retry_timeout: 120"
+      ]
+    }
+  ]
+}

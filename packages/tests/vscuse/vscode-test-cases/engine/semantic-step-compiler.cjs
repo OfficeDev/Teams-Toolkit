@@ -10,6 +10,9 @@ const environmentExpressionPattern = /^\$\{\{env:([A-Z_a-z][A-Z_a-z0-9]*)\}\}$/;
 const secretExpressionPattern = /^\$\{\{secret:[A-Z_a-z][A-Z_a-z0-9]*\}\}$/;
 const relativePathPattern =
   /^(?!\/)(?![A-Za-z]:)(?!.*(?:^|\/)\.\.(?:\/|$))[^\\]+$/;
+const localEnvironmentNamePattern = /^[A-Z][A-Z0-9_]*$/;
+const localEnvironmentValuePattern = /^[A-Za-z0-9:/._-]*$/;
+const runnerPlaceholderPattern = /\$\{\{[a-z]+:[A-Za-z0-9_:#-]+\}\}/g;
 const provisionInputGroups = new Set(["apiKey", "arm", "oauth"]);
 const provisionEnvironmentInput = "environment";
 const provisionEnvironmentSkipValue = "none";
@@ -904,6 +907,43 @@ function createSemanticStepCompiler() {
     return { ok: true, value: output };
   }
 
+  function compileLocalEnvironment(state, definition) {
+    const inputs = definition.with ?? {};
+    const names = isRecord(inputs) ? Object.keys(inputs).sort() : [];
+    if (
+      !isRecord(inputs) ||
+      names.length === 0 ||
+      names.some(
+        (name) =>
+          !localEnvironmentNamePattern.test(name) ||
+          typeof inputs[name] !== "string" ||
+          inputs[name].length === 0 ||
+          // The runner resolves its own placeholders before the shell sees the
+          // value, so they are stripped before the shell-safety check.
+          !localEnvironmentValuePattern.test(
+            inputs[name].replaceAll(runnerPlaceholderPattern, ""),
+          ),
+      )
+    ) {
+      return failure(
+        "VCB_LOCAL_ENVIRONMENT_INPUT_INVALID",
+        "The local environment operation requires shell-safe variable names and values.",
+      );
+    }
+    const output = [];
+    for (const name of names) {
+      const error = append(
+        output,
+        render(state, "workspace/local-environment-variable.json.tpl", {
+          variableName: name,
+          variableValue: inputs[name],
+        }),
+      );
+      if (error) return error;
+    }
+    return { ok: true, value: output };
+  }
+
   function compileLifecycle(state, definition) {
     const recipe = lifecycleAdapters[definition.type];
     let confirmation = recipe.confirmation;
@@ -1373,6 +1413,8 @@ function createSemanticStepCompiler() {
         return compileLifecycle(state, definition);
       case "pythonEnvironment":
         return compilePythonEnvironment(state, definition);
+      case "localEnvironment":
+        return compileLocalEnvironment(state, definition);
       case "target":
         return compileTarget(state, definition);
       case "open":

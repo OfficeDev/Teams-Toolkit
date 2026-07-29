@@ -1444,7 +1444,7 @@ test("VCB-72: the weather bundle authors every LLM, language, and Teams launch c
   }
 });
 
-test("VCB-73: an OpenAI weather case launches its target and asserts no chat completion", async () => {
+test("VCB-73: an OpenAI weather case asserts a completion locally but not remotely", async () => {
   const result = await compileFixture(
     "weather-agent.yml",
     (sourceText) => sourceText,
@@ -1452,19 +1452,62 @@ test("VCB-73: an OpenAI weather case launches its target and asserts no chat com
 
   assert.equal(result.ok, true);
   for (const generated of result.value) {
-    if (!generated.caseId.includes("-openai-")) {
+    if (
+      !generated.caseId.includes("-openai-") ||
+      generated.caseId.includes("-azure-openai-")
+    ) {
       continue;
     }
-    const isAzure = generated.caseId.includes("-azure-openai-");
+    const isLocal = generated.caseId.includes("-local-");
     const sendsAMessage = generated.plan.steps.some((step) =>
       /^step_send(Teams|Copilot|Playground)Message_/.test(step.step_id || ""),
     );
     assert.equal(
       sendsAMessage,
-      isAzure,
+      isLocal,
       `${generated.caseId} sends ${sendsAMessage ? "a" : "no"} chat message`,
     );
   }
+});
+
+test("VCB-75: a local environment operation writes the variable into the local lifecycle", async () => {
+  const result = await compileFixture(
+    "weather-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const generated = result.value.find(
+    (candidate) => candidate.caseId === "weather-ts-openai-local-teams",
+  );
+  const step = generated.plan.steps.find((candidate) =>
+    candidate.step_id.startsWith("step_setLocalEnvironmentVariable_"),
+  );
+
+  assert.equal(step.agent, "code");
+  assert.equal(
+    step.parameters.sample.includes(
+      'VARIABLE_NAME="OPENAI_BASE_URL" VARIABLE_VALUE="${{env:AZURE_OPENAI_ENDPOINT}}/openai/v1"',
+    ),
+    true,
+  );
+  assert.equal(step.parameters.sample.includes("m365agents.local.yml"), true);
+  assert.equal(step.parameters.sample.includes('"envs:"'), true);
+});
+
+test("VCB-76: a shell-unsafe local environment value fails the compilation", async () => {
+  const result = await compileFixture("weather-agent.yml", (sourceText) =>
+    sourceText.replace(
+      'OPENAI_BASE_URL: "${{env:AZURE_OPENAI_ENDPOINT}}/openai/v1"',
+      'OPENAI_BASE_URL: "$(id)"',
+    ),
+  );
+
+  assert.equal(result.ok, false);
+  assert.equal(
+    result.diagnostics[0].code,
+    "VCB_LOCAL_ENVIRONMENT_INPUT_INVALID",
+  );
 });
 
 test("VCB-74: the remote Copilot target requires provision and deploy", async () => {

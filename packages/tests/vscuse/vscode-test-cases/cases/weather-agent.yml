@@ -65,12 +65,13 @@ cases:
         check-weather-chat,
       ]
 
-  # The OpenAI half of the matrix ends at the launched surface and asserts no
-  # completion. config.yaml declares no openai.com key, and the recordings these
-  # cases replace type a placeholder key for the same reason. What they do cover
-  # is the OpenAI branch of the scaffold question tree, which asks for a single
-  # key instead of an endpoint and a deployment name, and the different generated
-  # configuration that follows from it.
+  # The OpenAI remote cases end at the launched surface and assert no
+  # completion. An Azure OpenAI resource speaks the OpenAI v1 protocol, so the
+  # local cases below redirect the OpenAI client at it and do assert one, but a
+  # remote run reads its app settings from infra/azure.bicep, which declares only
+  # the key. What both halves cover is the OpenAI branch of the scaffold question
+  # tree, which asks for a single key instead of an endpoint and a deployment
+  # name, and the different generated configuration that follows from it.
   - id: weather-ts-openai-remote-teams
     scenarioId: SCN-CREATE-WEATHER-03
     steps:
@@ -91,9 +92,11 @@ cases:
       [
         scaffold-weather-ts-openai,
         check-weather-ts,
+        redirect-openai-base-url,
         login-m365,
         f5-teams-local,
         open-app,
+        check-weather-chat,
       ]
 
   - id: weather-js-openai-remote-teams
@@ -116,9 +119,11 @@ cases:
       [
         scaffold-weather-js-openai,
         check-weather-js,
+        redirect-openai-base-url,
         login-m365,
         f5-teams-local,
         open-app,
+        check-weather-chat,
       ]
 
   # Surfaces beyond Teams, sampled on the canonical TypeScript + Azure OpenAI
@@ -250,9 +255,12 @@ steps:
           value: weather-agent
         - question: llmService
           value: llm-service-openai
+        # An Azure OpenAI resource authenticates its OpenAI v1 endpoint with the
+        # resource key presented as a bearer token, so the OpenAI branch can be
+        # driven by the same secret the Azure branch uses.
         - question: openAIKey
           type: text
-          value: "${{secret:OPENAI_API_KEY}}"
+          value: "${{secret:AZURE_OPENAI_API_KEY}}"
         - question: language
           value: typescript
         - question: workspaceFolder
@@ -302,7 +310,7 @@ steps:
           value: llm-service-openai
         - question: openAIKey
           type: text
-          value: "${{secret:OPENAI_API_KEY}}"
+          value: "${{secret:AZURE_OPENAI_API_KEY}}"
         - question: language
           value: javascript
         - question: workspaceFolder
@@ -310,6 +318,16 @@ steps:
         - question: appName
           type: text
           value: "${{var:app_name:vscuse_app_#####}}"
+
+  # The scaffolded agent constructs its OpenAI client without a base URL, so the
+  # client falls back to OPENAI_BASE_URL. Writing it into the lifecycle rather
+  # than the container environment keeps the redirect inside the two cases that
+  # ask for it, and routes it through the same generated .localConfigs the key
+  # travels through.
+  redirect-openai-base-url:
+    type: localEnvironment
+    with:
+      OPENAI_BASE_URL: "${{env:AZURE_OPENAI_ENDPOINT}}/openai/v1"
 
   check-weather-js:
     type: checks
