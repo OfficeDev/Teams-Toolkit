@@ -501,7 +501,7 @@
         "x": 394,
         "y": 51
       },
-      "description": "Right-click on the highlighted URL (`https://pluginrentu.azurewebsites.net/api`) in the `repair.yml` file within Visual Studio Code, under the `apiSpecificationFile` directory, to access context menu options related to the API server endpoint.",
+      "description": "Right-click on the \"repair.yml\" editor tab in Visual Studio Code to open the tab context menu.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -631,7 +631,7 @@
         "x": 330,
         "y": 135
       },
-      "description": "Select the \"No Action\" option in the \"Create Declarative Agent\" dropdown within the Microsoft 365 Agents extension panel in Visual Studio Code.",
+      "description": "Select the \"Add an Action\" option in the \"Create Declarative Agent\" dropdown within the Microsoft 365 Agents extension panel in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -683,7 +683,7 @@
         "x": 338,
         "y": 102
       },
-      "description": "Click the \"Browse to OpenAPI file\" option in the OpenAPI Spec Document dropdown menu within the Visual Studio Code interface.",
+      "description": "Click the \"Browse to Open File\" option in the OpenAPI Spec Document dropdown menu within the Visual Studio Code interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
