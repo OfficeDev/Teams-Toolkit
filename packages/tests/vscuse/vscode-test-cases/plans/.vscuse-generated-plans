@@ -1,6 +1,9 @@
 {
   "version": 1,
   "files": [
+    "basic-custom-engine-agent--basic-cea-py-azure-openai-local-teams.json",
+    "basic-custom-engine-agent--basic-cea-py-azure-openai-playground.json",
+    "basic-custom-engine-agent--basic-cea-py-azure-openai-remote-teams.json",
     "da-api-plugin-from-existing-api--da-api-plugin-from-existing-api-api-key-remote-preview.json",
     "da-api-plugin-from-existing-api--da-api-plugin-from-existing-api-bearer-remote-preview.json",
     "da-api-plugin-from-existing-api--da-api-plugin-from-existing-api-no-auth-remote-preview.json",

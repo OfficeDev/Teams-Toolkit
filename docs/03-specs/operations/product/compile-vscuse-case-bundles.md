@@ -259,13 +259,25 @@ cases:
       ]
 ```
 
-V1 step types are `scaffold`, `login`, `provision`, `deploy`, `target`, `open`, and `checks`.
+V1 step types are `scaffold`, `login`, `provision`, `deploy`, `pythonEnvironment`, `target`, `open`,
+and `checks`.
 `scaffold` accepts `template` and `answers`; `login`, `provision`, and `target` accept their
 same-named operation input. `deploy` has no semantic input, although current validation ignores an
-authored `with` object. `open` requires `with.kind` and
+authored `with` object. `pythonEnvironment` requires exactly one input, `with.interpreter`, the
+label the Python extension's interpreter picker shows for the interpreter the case selects.
+`open` requires `with.kind` and
 `with.destination`; the current template, target profile, and those two values select a compatible
 adapter. The profile already identifies the host surface, so `open` does not repeat Teams or
 Copilot as authored input. A future Playground target adapter can follow the same rule.
+
+`pythonEnvironment` is the one operation a Python case authors that a TypeScript or JavaScript case
+does not. A Python scaffold writes a `src/requirements.txt` it never installs, and every launch
+profile the Python templates author starts the app from the workspace interpreter, so a case that
+launches a Python project without first creating its virtual environment starts an app whose
+dependencies are missing. The operation runs `Python: Create Environment...`, filters the
+environment-type picker to `Venv`, filters the interpreter picker to the authored label, confirms
+the `Select dependencies to install` prompt with every dependency checked, and then waits on the
+notification the extension raises when the environment is selected.
 
 A `checks` definition requires a `with` array. The check immediately following `scaffold` must
 contain at least one `file` assertion; current validation permits a later `checks` definition to be
@@ -309,14 +321,15 @@ required state it establishes. A `chat` assertion is rejected unless the precedi
 reached `chat-ready`.
 
 `target` is one authored F5 operation that selects and starts its declared launch profile. The
-current adapters support the remote profiles `Launch Remote in Teams (Chrome)` and
-`Preview in Copilot (Chrome)`, and the local debug profiles `Debug in Teams (Chrome)`,
-`(Preview) Debug in Copilot (Chrome)`, and `Debug in Microsoft 365 Agents Playground`; any
+current adapters support the remote profiles `Launch Remote in Teams (Chrome)`,
+`Launch Remote (Chrome)`, and `Preview in Copilot (Chrome)`, and the local debug profiles
+`Debug in Teams (Chrome)`, `(Preview) Debug in Copilot (Chrome)`, and
+`Debug in Microsoft 365 Agents Playground`; any
 other exact title fails until a deterministic adapter is added. The
 authored `profile` is the exact case-sensitive `name` shown in the F5 picker after template rendering;
 it is not a compiler-defined semantic ID. For example, the TypeScript Weather template authors
-`Launch Remote in Teams (Chrome)`. A Python profile titled `Launch Remote (Chrome)` is currently
-unsupported because no semantic target adapter is registered for that exact title.
+`Launch Remote in Teams (Chrome)` while the Python templates author the same remote Teams launch
+as `Launch Remote (Chrome)`.
 A selected profile's `preLaunchTask` may validate prerequisites, create local debug state, start the
 tunnel, provision and deploy locally, and start the application. Those profile-owned tasks are not
 duplicated as case step references. A profile without lifecycle prelaunch tasks instead requires the
@@ -1106,6 +1119,11 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-64 | Given a `target` whose profile is a local debug profile, the adapter requires no `provision` and no `deploy`, because the profile's own `preLaunchTask` chain runs the local lifecycle before the app starts, so authoring the remote lifecycle commands would create Azure resources the local run never reads.                                                                                                                       |
 | VCB-65 | Given the `Debug in Microsoft 365 Agents Playground` target, the adapter requires no `login` and emits no browser sign-in, because the Playground serves the agent from the local machine and never authenticates the run against Microsoft 365.                                                                                                                                                                                       |
 | VCB-66 | Given a `chat` check whose target is the Agents Playground, the compiler emits the Playground message adapter, because the Playground renders its own `Type a message...` composer rather than the Teams or Copilot one.                                                                                                                                                                                                               |
+| VCB-67 | Given a `pythonEnvironment` operation, the compiler drives `Python: Create Environment...` through the `Venv` environment type, the authored interpreter, and the `Select dependencies to install` prompt, because a Python scaffold ships a `src/requirements.txt` the scaffold itself never installs and every launch profile starts the app from the workspace interpreter.                                                          |
+| VCB-68 | Given a `pythonEnvironment` operation, the interpreter is authored per case rather than fixed by the compiler, because the label the picker shows is the patch version the runner image happens to carry and a compiler-owned literal would break on every image bump.                                                                                                                                                                 |
+| VCB-69 | Given a `pythonEnvironment` operation, the environment type and interpreter are chosen by filtering the picker on their labels instead of clicking a row, because both pickers list a machine-dependent number of entries and a row's position carries no meaning the recording can pin.                                                                                                                                               |
+| VCB-70 | Given a `pythonEnvironment` operation, the notification center is opened before the completion assertion, because creating the virtual environment and installing its requirements takes minutes and the notification the Python extension raises is the only visible signal that the environment is selected.                                                                                                                          |
+| VCB-71 | Given the `Launch Remote (Chrome)` target, the adapter reaches the Teams app details page through the same add-and-open transition as `Launch Remote in Teams (Chrome)`, because the Python templates only rename that profile and leave the browser flow it launches unchanged.                                                                                                                                                       |
 
 ## Boundary
 

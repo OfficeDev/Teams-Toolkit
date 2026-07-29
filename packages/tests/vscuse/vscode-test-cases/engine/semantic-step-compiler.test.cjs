@@ -108,7 +108,7 @@ test("VCB-34: semantic compiler does not read external template contracts", asyn
   }
 });
 
-test("VCB-34: default setup compiles the checked-in YAML sources into fifteen plans", async (context) => {
+test("VCB-34: default setup compiles the checked-in YAML sources into eighteen plans", async (context) => {
   const plansDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "vscuse-generated-"),
   );
@@ -121,9 +121,9 @@ test("VCB-34: default setup compiles the checked-in YAML sources into fifteen pl
   });
 
   assert.equal(first.ok, true);
-  assert.equal(first.value.files.length, 15);
+  assert.equal(first.value.files.length, 18);
   const generatedFiles = first.value.files;
-  assert.equal(generatedFiles.length, 15);
+  assert.equal(generatedFiles.length, 18);
   assert.equal(
     generatedFiles.includes(
       "da-api-plugin-from-existing-api--da-api-plugin-from-existing-api-no-auth.json",
@@ -1290,6 +1290,137 @@ test("semantic adapter rejects an open kind incompatible with its target profile
 
   assert.equal(result.ok, false);
   assert.equal(result.diagnostics[0].code, "VCB_OPEN_ADAPTER_UNKNOWN");
+});
+
+test("VCB-67: a Python environment operation drives the Venv creation flow", async () => {
+  const result = await compileFixture(
+    "basic-custom-engine-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const plan = result.value.find(
+    (generated) => generated.caseId === "basic-cea-py-azure-openai-playground",
+  ).plan;
+  const typedValues = plan.steps
+    .filter((step) => step.tool === "type_text")
+    .map((step) => step.parameters.text);
+  const commandIndex = typedValues.indexOf("Python: Create Environment...");
+  assert.notEqual(commandIndex, -1);
+  assert.equal(typedValues[commandIndex + 1], "Venv");
+  assert.equal(typedValues[commandIndex + 2], "Python 3.12");
+  assert.equal(
+    plan.steps.some(
+      (step) =>
+        step.agent === "assertion" &&
+        step.description.includes("Select dependencies to install"),
+    ),
+    true,
+  );
+});
+
+test("VCB-68: a Python environment operation reads its interpreter from the case", async () => {
+  const result = await compileFixture(
+    "basic-custom-engine-agent.yml",
+    (sourceText) =>
+      sourceText.replace(
+        'interpreter: "Python 3.12"',
+        'interpreter: "Python 3.13"',
+      ),
+  );
+
+  assert.equal(result.ok, true);
+  const plan = result.value.find(
+    (generated) => generated.caseId === "basic-cea-py-azure-openai-playground",
+  ).plan;
+  const typedValues = plan.steps
+    .filter((step) => step.tool === "type_text")
+    .map((step) => step.parameters.text);
+  assert.equal(typedValues.includes("Python 3.13"), true);
+  assert.equal(typedValues.includes("Python 3.12"), false);
+});
+
+test("VCB-68: a Python environment operation without an interpreter is rejected", async () => {
+  const result = await compileFixture(
+    "basic-custom-engine-agent.yml",
+    (sourceText) =>
+      sourceText.replace('      interpreter: "Python 3.12"\n', ""),
+  );
+
+  assert.equal(result.ok, false);
+  assert.equal(
+    result.diagnostics[0].code,
+    "VCB_PYTHON_ENVIRONMENT_INPUT_INVALID",
+  );
+});
+
+test("VCB-69: a Python environment operation clicks no picker row", async () => {
+  const result = await compileFixture(
+    "basic-custom-engine-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const plan = result.value.find(
+    (generated) => generated.caseId === "basic-cea-py-azure-openai-playground",
+  ).plan;
+  const environmentSteps = plan.steps.filter((step) =>
+    ["step_filterOption_", "step_multiSelect_"].some((prefix) =>
+      step.step_id.startsWith(prefix),
+    ),
+  );
+  assert.notEqual(environmentSteps.length, 0);
+  for (const step of environmentSteps) {
+    assert.equal(step.tool === "click", false, step.step_id);
+    assert.equal(step.parameters.x, undefined, step.step_id);
+    assert.equal(step.parameters.y, undefined, step.step_id);
+  }
+});
+
+test("VCB-70: a Python environment operation opens the notification center before asserting", async () => {
+  const result = await compileFixture(
+    "basic-custom-engine-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const plan = result.value.find(
+    (generated) => generated.caseId === "basic-cea-py-azure-openai-playground",
+  ).plan;
+  const assertionIndex = plan.steps.findIndex(
+    (step) =>
+      step.agent === "assertion" &&
+      step.description.includes("The following environment is selected:"),
+  );
+  assert.notEqual(assertionIndex, -1);
+  const notificationIndex = plan.steps.findIndex(
+    (step) =>
+      step.tool === "type_text" &&
+      step.parameters.text === "Notifications: Show Notifications",
+  );
+  assert.notEqual(notificationIndex, -1);
+  assert.equal(notificationIndex < assertionIndex, true);
+});
+
+test("VCB-71: the Python remote Teams target opens the app through the Teams add transition", async () => {
+  const result = await compileFixture(
+    "basic-custom-engine-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const plan = result.value.find(
+    (generated) =>
+      generated.caseId === "basic-cea-py-azure-openai-remote-teams",
+  ).plan;
+  const typedValues = plan.steps
+    .filter((step) => step.tool === "type_text")
+    .map((step) => step.parameters.text);
+  assert.equal(typedValues.includes("Launch Remote (Chrome)"), true);
+  assert.equal(
+    plan.steps.some((step) => step.step_id.startsWith("step_addAndOpenApp_")),
+    true,
+  );
 });
 
 test("VCB-26: an already-ready Copilot target makes its open emit no step", async () => {

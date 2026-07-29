@@ -64,6 +64,15 @@ const defaultFolderOption = {
   ],
 };
 
+// Creating a Python virtual environment is a Python extension flow, not a
+// toolkit flow, so its literals live next to the semantic step that drives it.
+const pythonEnvironment = {
+  commandTitle: "Python: Create Environment...",
+  dependenciesTitle: "Select dependencies to install",
+  environmentTypeLabel: "Venv",
+  successText: "The following environment is selected:",
+};
+
 const scaffoldQuestionAdapters = {
   actionSource: {
     options: {
@@ -101,7 +110,10 @@ const scaffoldQuestionAdapters = {
   azureOpenAIEndpoint: { title: "Azure OpenAI Endpoint", type: "text" },
   azureOpenAIKey: { secret: true, title: "Azure OpenAI Key", type: "text" },
   customEngineAgent: {
-    options: { "weather-agent": "Weather Agent" },
+    options: {
+      "basic-custom-engine-agent": "Basic Custom Engine Agent",
+      "weather-agent": "Weather Agent",
+    },
     title: "App Features Using Microsoft 365 Agents SDK",
     type: "singleSelect",
   },
@@ -111,7 +123,11 @@ const scaffoldQuestionAdapters = {
     type: "singleSelect",
   },
   language: {
-    options: { javascript: "JavaScript", typescript: "TypeScript" },
+    options: {
+      javascript: "JavaScript",
+      python: "Python",
+      typescript: "TypeScript",
+    },
     title: "Programming Language",
     type: "singleSelect",
   },
@@ -248,6 +264,17 @@ const lifecycleAdapters = {
 // against a screenshot.
 const targetAdapters = {
   "Launch Remote in Teams (Chrome)": {
+    host: "teams",
+    open: { adapter: "teams-add", destination: "chat", kind: "app" },
+    readySubject:
+      "the Microsoft Teams app details page for an app whose name starts with ${{var:app_name}} is visible",
+    requires: ["login:azure", "login:m365", "provision", "deploy"],
+  },
+  // The Python templates name the same remote Teams launch `Launch Remote
+  // (Chrome)`, without the `in Teams` the TypeScript and JavaScript templates
+  // use. It reaches the same Teams app details page, so it reuses that adapter's
+  // open transition and readiness subject.
+  "Launch Remote (Chrome)": {
     host: "teams",
     open: { adapter: "teams-add", destination: "chat", kind: "app" },
     readySubject:
@@ -799,6 +826,70 @@ function createSemanticStepCompiler() {
     return { ok: true };
   }
 
+  function compilePythonEnvironment(state, definition) {
+    const inputs = definition.with ?? {};
+    if (
+      !isRecord(inputs) ||
+      !hasOnlyFields(inputs, new Set(["interpreter"])) ||
+      typeof inputs.interpreter !== "string" ||
+      inputs.interpreter.length === 0
+    ) {
+      return failure(
+        "VCB_PYTHON_ENVIRONMENT_INPUT_INVALID",
+        "The Python environment operation requires an interpreter label.",
+      );
+    }
+    const output = [];
+    let error = append(
+      output,
+      render(state, "command-palette/execute-command.json.tpl", {
+        commandTitle: pythonEnvironment.commandTitle,
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "quick-input/filter-option.json.tpl", {
+        optionLabel: pythonEnvironment.environmentTypeLabel,
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "quick-input/filter-option.json.tpl", {
+        optionLabel: inputs.interpreter,
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "quick-input/multi-select.json.tpl", {
+        questionTitle: pythonEnvironment.dependenciesTitle,
+      }),
+    );
+    if (error) return error;
+    // Creating the virtual environment and installing the requirements it
+    // declares takes minutes, and the notification the Python extension raises
+    // when it finishes is the only visible completion signal, so the
+    // notification center is opened before the assertion waits on it.
+    error = append(
+      output,
+      render(state, "command-palette/execute-command.json.tpl", {
+        commandTitle: commandTitles.notifications,
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "notifications/assert-contains.json.tpl", {
+        notificationText: pythonEnvironment.successText,
+      }),
+    );
+    if (error) return error;
+    state.completed.add("pythonEnvironment");
+    return { ok: true, value: output };
+  }
+
   function compileLifecycle(state, definition) {
     const recipe = lifecycleAdapters[definition.type];
     let confirmation = recipe.confirmation;
@@ -1266,6 +1357,8 @@ function createSemanticStepCompiler() {
       case "provision":
       case "deploy":
         return compileLifecycle(state, definition);
+      case "pythonEnvironment":
+        return compilePythonEnvironment(state, definition);
       case "target":
         return compileTarget(state, definition);
       case "open":

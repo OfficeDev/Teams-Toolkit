@@ -1,0 +1,189 @@
+version: 1
+
+# The Weather Agent template is registered for TypeScript, JavaScript, and C#
+# only, so Python scaffolding is covered here instead: Basic Custom Engine Agent
+# is the custom engine agent template the toolkit does offer in Python, and it
+# reaches the same three launch surfaces.
+cases:
+  # Every Python case creates its virtual environment right after the file
+  # check. The scaffold writes src/requirements.txt but installs nothing, and
+  # each launch profile starts the app from the workspace interpreter, so a
+  # launch before that operation starts an app with no dependencies.
+  - id: basic-cea-py-azure-openai-remote-teams
+    scenarioId: SCN-CREATE-BASIC-CEA-01
+    steps:
+      [
+        scaffold-basic-cea-py-azure-openai,
+        check-basic-cea-py,
+        create-python-environment,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote,
+        open-app,
+        check-basic-cea-chat,
+      ]
+
+  - id: basic-cea-py-azure-openai-local-teams
+    scenarioId: SCN-CREATE-BASIC-CEA-01
+    steps:
+      [
+        scaffold-basic-cea-py-azure-openai,
+        check-basic-cea-py,
+        create-python-environment,
+        login-m365,
+        f5-teams-local,
+        open-app,
+        check-basic-cea-chat,
+      ]
+
+  - id: basic-cea-py-azure-openai-playground
+    scenarioId: SCN-CREATE-BASIC-CEA-01
+    steps:
+      [
+        scaffold-basic-cea-py-azure-openai,
+        check-basic-cea-py,
+        create-python-environment,
+        f5-playground,
+        open-app,
+        check-basic-cea-chat,
+      ]
+
+steps:
+  scaffold-basic-cea-py-azure-openai:
+    type: scaffold
+    with:
+      template: basic-custom-engine-agent
+      answers:
+        - question: projectType
+          value: custom-engine-agent-type
+        - question: customEngineAgent
+          value: basic-custom-engine-agent
+        - question: llmService
+          value: llm-service-azure-openai
+        - question: azureOpenAIKey
+          type: text
+          value: "${{secret:AZURE_OPENAI_API_KEY}}"
+        - question: azureOpenAIEndpoint
+          type: text
+          value: "${{env:AZURE_OPENAI_ENDPOINT}}"
+        - question: azureOpenAIDeploymentName
+          type: text
+          value: "${{env:AZURE_OPENAI_MODEL}}"
+        - question: language
+          value: python
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-basic-cea-py:
+    type: checks
+    with:
+      - type: file
+        path: m365agents.yml
+        expect:
+          exists: true
+          contains: ["provision:", "deploy:"]
+      - type: file
+        path: src/app.py
+        expect:
+          exists: true
+      - type: file
+        path: src/agent.py
+        expect:
+          exists: true
+      - type: file
+        path: src/config.py
+        expect:
+          exists: true
+      # The Python extension installs exactly this file when the environment is
+      # created, so the case asserts it exists before creating the environment.
+      - type: file
+        path: src/requirements.txt
+        expect:
+          exists: true
+          contains: [microsoft-agents-hosting-aiohttp, openai]
+      - type: file
+        path: infra/azure.bicep
+        expect:
+          exists: true
+      - type: file
+        path: appPackage/manifest.json
+        expect:
+          contains: ['"manifestVersion": "1.29"']
+      # The Python scaffold writes no Node project.
+      - type: file
+        path: package.json
+        expect:
+          exists: false
+
+  # The interpreter label is the patch version the runner image carries. It is
+  # authored here rather than fixed in the compiler so an image bump changes one
+  # case line instead of every Python plan.
+  create-python-environment:
+    type: pythonEnvironment
+    with:
+      interpreter: "Python 3.12"
+
+  login-azure:
+    type: login
+    with:
+      type: azure
+      account: "${{env:AZURE_ACCOUNT_NAME}}"
+      password: "${{secret:AZURE_ACCOUNT_PASSWORD}}"
+
+  login-m365:
+    type: login
+    with:
+      type: m365
+      account: "${{env:M365_ACCOUNT_NAME}}"
+      password: "${{secret:M365_ACCOUNT_PASSWORD}}"
+
+  provision-arm:
+    type: provision
+    with:
+      environment: none
+      arm:
+        targetResourceGroupName: "+ New resource group"
+        newResourceGroupName: "${{var:app_name}}-rg"
+        newResourceGroupLocation: "${{env:RESOURCE_GROUP_REGION}}"
+
+  deploy:
+    type: deploy
+    with:
+      environment: none
+
+  # The Python templates name the remote Teams launch without `in Teams`.
+  f5-teams-remote:
+    type: target
+    with:
+      profile: "Launch Remote (Chrome)"
+
+  f5-teams-local:
+    type: target
+    with:
+      profile: "Debug in Teams (Chrome)"
+
+  f5-playground:
+    type: target
+    with:
+      profile: "Debug in Microsoft 365 Agents Playground"
+
+  open-app:
+    type: open
+    with:
+      kind: app
+      destination: chat
+
+  # The basic agent answers general questions rather than calling a tool, so the
+  # check asserts a reply and no literal the model is not required to produce.
+  check-basic-cea-chat:
+    type: checks
+    with:
+      - type: chat
+        send: How to develop agent for Teams?
+        expect:
+          replied: true
