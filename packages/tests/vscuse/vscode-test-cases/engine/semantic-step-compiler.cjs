@@ -18,6 +18,7 @@ const provisionEnvironmentInput = "environment";
 const provisionEnvironmentSkipValue = "none";
 
 const commandTitles = {
+  clearNotifications: "Notifications: Clear All Notifications",
   create: "Microsoft 365 Agents: Create New Agent/App",
   deploy: "Microsoft 365 Agents: Deploy",
   // The toolkit contributes one side bar view per section and VS Code generates
@@ -978,10 +979,21 @@ function createSemanticStepCompiler() {
     const recipe = lifecycleAdapters[definition.type];
     let confirmation = recipe.confirmation;
     const output = [];
+    // The notification center keeps every notification the run has raised, so
+    // the assertion that waits for this operation's success would read it out of
+    // a list that also holds the scaffolding, sign-in, and earlier lifecycle
+    // entries.
+    let error = append(
+      output,
+      render(state, "command-palette/execute-command.json.tpl", {
+        commandTitle: commandTitles.clearNotifications,
+      }),
+    );
+    if (error) return error;
     // VS Code closes the Command Palette as soon as the window loses focus, and
     // a running lifecycle operation opens browser windows of its own, so the
     // notification center is opened before the operation starts.
-    let error = append(
+    error = append(
       output,
       render(state, "command-palette/execute-command.json.tpl", {
         commandTitle: commandTitles.notifications,

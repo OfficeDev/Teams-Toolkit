@@ -1597,6 +1597,34 @@ test("VCB-79: the password prompt is focused before the password is typed", asyn
   assert.equal(focusIndex < passwordIndex, true);
 });
 
+test("VCB-80: a lifecycle operation clears the notification center before it starts", async () => {
+  const result = await compileFixture(
+    "basic-custom-engine-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const plan = result.value.find(
+    (generated) =>
+      generated.caseId === "basic-cea-py-azure-openai-remote-teams",
+  ).plan;
+  const commands = plan.steps
+    .filter((step) => step.step_id.startsWith("step_executeCommand_filter_"))
+    .map((step) => step.parameters.text);
+
+  for (const title of [
+    "Microsoft 365 Agents: Provision",
+    "Microsoft 365 Agents: Deploy",
+  ]) {
+    const index = commands.indexOf(title);
+    assert.notEqual(index, -1, title);
+    assert.deepEqual(commands.slice(index - 2, index), [
+      "Notifications: Clear All Notifications",
+      "Notifications: Show Notifications",
+    ]);
+  }
+});
+
 test("VCB-74: the remote Copilot target requires provision and deploy", async () => {
   const result = await compileFixture("weather-agent.yml", (sourceText) =>
     sourceText.replace(

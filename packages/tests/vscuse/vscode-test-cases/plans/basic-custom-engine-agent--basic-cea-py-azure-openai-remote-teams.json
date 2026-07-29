@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 178,
+    "total_steps": 188,
     "name": "basic-cea-py-azure-openai-remote-teams",
     "description": {
       "owner": "",
@@ -140,22 +140,27 @@
       "step_executeCommand_filter_c9bd6c5f6_6_2",
       "step_executeCommand_assertCommand_c9bd6c5f6_6_2",
       "step_executeCommand_execute_c9bd6c5f6_6_2",
-      "step_singleSelect_assertQuestion_c9bd6c5f6_6_3",
-      "step_singleSelect_assertOptionsLoaded_c9bd6c5f6_6_3",
-      "step_singleSelect_filter_c9bd6c5f6_6_3",
-      "step_singleSelect_assertOption_c9bd6c5f6_6_3",
-      "step_singleSelect_confirm_c9bd6c5f6_6_3",
-      "step_textInput_assertQuestion_c9bd6c5f6_6_4",
-      "step_textInput_input_c9bd6c5f6_6_4",
-      "step_textInput_confirm_c9bd6c5f6_6_4",
-      "step_singleSelect_assertQuestion_c9bd6c5f6_6_5",
-      "step_singleSelect_assertOptionsLoaded_c9bd6c5f6_6_5",
-      "step_singleSelect_filter_c9bd6c5f6_6_5",
-      "step_singleSelect_assertOption_c9bd6c5f6_6_5",
-      "step_singleSelect_confirm_c9bd6c5f6_6_5",
-      "step_clickPrimaryAction_assertDialog_c9bd6c5f6_6_6",
-      "step_clickPrimaryAction_click_c9bd6c5f6_6_6",
-      "step_assertNotificationContains_assert_c9bd6c5f6_6_7",
+      "step_executeCommand_open_c9bd6c5f6_6_3",
+      "step_executeCommand_assertPalette_c9bd6c5f6_6_3",
+      "step_executeCommand_filter_c9bd6c5f6_6_3",
+      "step_executeCommand_assertCommand_c9bd6c5f6_6_3",
+      "step_executeCommand_execute_c9bd6c5f6_6_3",
+      "step_singleSelect_assertQuestion_c9bd6c5f6_6_4",
+      "step_singleSelect_assertOptionsLoaded_c9bd6c5f6_6_4",
+      "step_singleSelect_filter_c9bd6c5f6_6_4",
+      "step_singleSelect_assertOption_c9bd6c5f6_6_4",
+      "step_singleSelect_confirm_c9bd6c5f6_6_4",
+      "step_textInput_assertQuestion_c9bd6c5f6_6_5",
+      "step_textInput_input_c9bd6c5f6_6_5",
+      "step_textInput_confirm_c9bd6c5f6_6_5",
+      "step_singleSelect_assertQuestion_c9bd6c5f6_6_6",
+      "step_singleSelect_assertOptionsLoaded_c9bd6c5f6_6_6",
+      "step_singleSelect_filter_c9bd6c5f6_6_6",
+      "step_singleSelect_assertOption_c9bd6c5f6_6_6",
+      "step_singleSelect_confirm_c9bd6c5f6_6_6",
+      "step_clickPrimaryAction_assertDialog_c9bd6c5f6_6_7",
+      "step_clickPrimaryAction_click_c9bd6c5f6_6_7",
+      "step_assertNotificationContains_assert_c9bd6c5f6_6_8",
       "step_executeCommand_open_c9bd6c5f6_7_1",
       "step_executeCommand_assertPalette_c9bd6c5f6_7_1",
       "step_executeCommand_filter_c9bd6c5f6_7_1",
@@ -166,9 +171,14 @@
       "step_executeCommand_filter_c9bd6c5f6_7_2",
       "step_executeCommand_assertCommand_c9bd6c5f6_7_2",
       "step_executeCommand_execute_c9bd6c5f6_7_2",
-      "step_clickPrimaryAction_assertDialog_c9bd6c5f6_7_3",
-      "step_clickPrimaryAction_click_c9bd6c5f6_7_3",
-      "step_assertNotificationContains_assert_c9bd6c5f6_7_4",
+      "step_executeCommand_open_c9bd6c5f6_7_3",
+      "step_executeCommand_assertPalette_c9bd6c5f6_7_3",
+      "step_executeCommand_filter_c9bd6c5f6_7_3",
+      "step_executeCommand_assertCommand_c9bd6c5f6_7_3",
+      "step_executeCommand_execute_c9bd6c5f6_7_3",
+      "step_clickPrimaryAction_assertDialog_c9bd6c5f6_7_4",
+      "step_clickPrimaryAction_click_c9bd6c5f6_7_4",
+      "step_assertNotificationContains_assert_c9bd6c5f6_7_5",
       "step_executeCommand_open_c9bd6c5f6_8_1",
       "step_executeCommand_assertPalette_c9bd6c5f6_8_1",
       "step_executeCommand_filter_c9bd6c5f6_8_1",
@@ -2829,7 +2839,7 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Notifications: Show Notifications"
+        "text": "Notifications: Clear All Notifications"
       },
       "description": "Type the resolved command title into the active Command Palette.",
       "content_refs": [],
@@ -2851,7 +2861,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the Command Palette input box reads >Notifications: Show Notifications and the highlighted command listed under it is titled Notifications: Show Notifications.",
+      "description": "@assertion the Command Palette input box reads >Notifications: Clear All Notifications and the highlighted command listed under it is titled Notifications: Clear All Notifications.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -2937,7 +2947,7 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Microsoft 365 Agents: Provision"
+        "text": "Notifications: Show Notifications"
       },
       "description": "Type the resolved command title into the active Command Palette.",
       "content_refs": [],
@@ -2959,7 +2969,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the Command Palette input box reads >Microsoft 365 Agents: Provision and the highlighted command listed under it is titled Microsoft 365 Agents: Provision.",
+      "description": "@assertion the Command Palette input box reads >Notifications: Show Notifications and the highlighted command listed under it is titled Notifications: Show Notifications.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -2998,11 +3008,13 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertQuestion_c9bd6c5f6_6_3",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the active prompt titled Select a resource group is visible.",
+      "step_id": "step_executeCommand_open_c9bd6c5f6_6_3",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "f1"
+      },
+      "description": "Press the F1 key to open the Command Palette in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -3013,13 +3025,119 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_assertPalette_c9bd6c5f6_6_3",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Visual Studio Code Command Palette is visible with a > character in its input box and is ready to accept a command search.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_open_c9bd6c5f6_6_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_filter_c9bd6c5f6_6_3",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Microsoft 365 Agents: Provision"
+      },
+      "description": "Type the resolved command title into the active Command Palette.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_assertPalette_c9bd6c5f6_6_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_assertCommand_c9bd6c5f6_6_3",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Command Palette input box reads >Microsoft 365 Agents: Provision and the highlighted command listed under it is titled Microsoft 365 Agents: Provision.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_filter_c9bd6c5f6_6_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_execute_c9bd6c5f6_6_3",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to execute the selected Command Palette command.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_assertCommand_c9bd6c5f6_6_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertQuestion_c9bd6c5f6_6_4",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the active prompt titled Select a resource group is visible.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_execute_c9bd6c5f6_6_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
         "component:quick-input",
         "answer_type:singleSelect",
         "step_retry_timeout: 30"
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOptionsLoaded_c9bd6c5f6_6_3",
+      "step_id": "step_singleSelect_assertOptionsLoaded_c9bd6c5f6_6_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -3029,7 +3147,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_c9bd6c5f6_6_3"
+        "step_singleSelect_assertQuestion_c9bd6c5f6_6_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3040,7 +3158,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_filter_c9bd6c5f6_6_3",
+      "step_id": "step_singleSelect_filter_c9bd6c5f6_6_4",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -3052,7 +3170,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOptionsLoaded_c9bd6c5f6_6_3"
+        "step_singleSelect_assertOptionsLoaded_c9bd6c5f6_6_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3062,7 +3180,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOption_c9bd6c5f6_6_3",
+      "step_id": "step_singleSelect_assertOption_c9bd6c5f6_6_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -3072,7 +3190,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_filter_c9bd6c5f6_6_3"
+        "step_singleSelect_filter_c9bd6c5f6_6_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3083,7 +3201,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_confirm_c9bd6c5f6_6_3",
+      "step_id": "step_singleSelect_confirm_c9bd6c5f6_6_4",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -3095,7 +3213,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOption_c9bd6c5f6_6_3"
+        "step_singleSelect_assertOption_c9bd6c5f6_6_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3105,7 +3223,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_assertQuestion_c9bd6c5f6_6_4",
+      "step_id": "step_textInput_assertQuestion_c9bd6c5f6_6_5",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -3115,7 +3233,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_confirm_c9bd6c5f6_6_3"
+        "step_singleSelect_confirm_c9bd6c5f6_6_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3126,7 +3244,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_input_c9bd6c5f6_6_4",
+      "step_id": "step_textInput_input_c9bd6c5f6_6_5",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -3138,7 +3256,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_assertQuestion_c9bd6c5f6_6_4"
+        "step_textInput_assertQuestion_c9bd6c5f6_6_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3148,7 +3266,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_confirm_c9bd6c5f6_6_4",
+      "step_id": "step_textInput_confirm_c9bd6c5f6_6_5",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -3160,7 +3278,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_input_c9bd6c5f6_6_4"
+        "step_textInput_input_c9bd6c5f6_6_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3170,7 +3288,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertQuestion_c9bd6c5f6_6_5",
+      "step_id": "step_singleSelect_assertQuestion_c9bd6c5f6_6_6",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -3180,7 +3298,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_confirm_c9bd6c5f6_6_4"
+        "step_textInput_confirm_c9bd6c5f6_6_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3191,7 +3309,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOptionsLoaded_c9bd6c5f6_6_5",
+      "step_id": "step_singleSelect_assertOptionsLoaded_c9bd6c5f6_6_6",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -3201,7 +3319,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_c9bd6c5f6_6_5"
+        "step_singleSelect_assertQuestion_c9bd6c5f6_6_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3212,7 +3330,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_filter_c9bd6c5f6_6_5",
+      "step_id": "step_singleSelect_filter_c9bd6c5f6_6_6",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -3224,7 +3342,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOptionsLoaded_c9bd6c5f6_6_5"
+        "step_singleSelect_assertOptionsLoaded_c9bd6c5f6_6_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3234,7 +3352,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOption_c9bd6c5f6_6_5",
+      "step_id": "step_singleSelect_assertOption_c9bd6c5f6_6_6",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -3244,7 +3362,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_filter_c9bd6c5f6_6_5"
+        "step_singleSelect_filter_c9bd6c5f6_6_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3255,7 +3373,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_confirm_c9bd6c5f6_6_5",
+      "step_id": "step_singleSelect_confirm_c9bd6c5f6_6_6",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -3267,7 +3385,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOption_c9bd6c5f6_6_5"
+        "step_singleSelect_assertOption_c9bd6c5f6_6_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3277,7 +3395,7 @@
       ]
     },
     {
-      "step_id": "step_clickPrimaryAction_assertDialog_c9bd6c5f6_6_6",
+      "step_id": "step_clickPrimaryAction_assertDialog_c9bd6c5f6_6_7",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -3287,7 +3405,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_confirm_c9bd6c5f6_6_5"
+        "step_singleSelect_confirm_c9bd6c5f6_6_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3298,7 +3416,7 @@
       ]
     },
     {
-      "step_id": "step_clickPrimaryAction_click_c9bd6c5f6_6_6",
+      "step_id": "step_clickPrimaryAction_click_c9bd6c5f6_6_7",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -3310,7 +3428,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_clickPrimaryAction_assertDialog_c9bd6c5f6_6_6"
+        "step_clickPrimaryAction_assertDialog_c9bd6c5f6_6_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3320,7 +3438,7 @@
       ]
     },
     {
-      "step_id": "step_assertNotificationContains_assert_c9bd6c5f6_6_7",
+      "step_id": "step_assertNotificationContains_assert_c9bd6c5f6_6_8",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -3330,7 +3448,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_clickPrimaryAction_click_c9bd6c5f6_6_6"
+        "step_clickPrimaryAction_click_c9bd6c5f6_6_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3353,7 +3471,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertNotificationContains_assert_c9bd6c5f6_6_7"
+        "step_assertNotificationContains_assert_c9bd6c5f6_6_8"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3388,7 +3506,7 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Notifications: Show Notifications"
+        "text": "Notifications: Clear All Notifications"
       },
       "description": "Type the resolved command title into the active Command Palette.",
       "content_refs": [],
@@ -3410,7 +3528,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the Command Palette input box reads >Notifications: Show Notifications and the highlighted command listed under it is titled Notifications: Show Notifications.",
+      "description": "@assertion the Command Palette input box reads >Notifications: Clear All Notifications and the highlighted command listed under it is titled Notifications: Clear All Notifications.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -3496,7 +3614,7 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Microsoft 365 Agents: Deploy"
+        "text": "Notifications: Show Notifications"
       },
       "description": "Type the resolved command title into the active Command Palette.",
       "content_refs": [],
@@ -3518,7 +3636,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the Command Palette input box reads >Microsoft 365 Agents: Deploy and the highlighted command listed under it is titled Microsoft 365 Agents: Deploy.",
+      "description": "@assertion the Command Palette input box reads >Notifications: Show Notifications and the highlighted command listed under it is titled Notifications: Show Notifications.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -3557,11 +3675,13 @@
       ]
     },
     {
-      "step_id": "step_clickPrimaryAction_assertDialog_c9bd6c5f6_7_3",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the dialog Do you want to deploy resources in dev environment? is visible with the primary action Deploy.",
+      "step_id": "step_executeCommand_open_c9bd6c5f6_7_3",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "f1"
+      },
+      "description": "Press the F1 key to open the Command Palette in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -3572,13 +3692,119 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_assertPalette_c9bd6c5f6_7_3",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Visual Studio Code Command Palette is visible with a > character in its input box and is ready to accept a command search.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_open_c9bd6c5f6_7_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_filter_c9bd6c5f6_7_3",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Microsoft 365 Agents: Deploy"
+      },
+      "description": "Type the resolved command title into the active Command Palette.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_assertPalette_c9bd6c5f6_7_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_assertCommand_c9bd6c5f6_7_3",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Command Palette input box reads >Microsoft 365 Agents: Deploy and the highlighted command listed under it is titled Microsoft 365 Agents: Deploy.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_filter_c9bd6c5f6_7_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_execute_c9bd6c5f6_7_3",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to execute the selected Command Palette command.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_assertCommand_c9bd6c5f6_7_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_clickPrimaryAction_assertDialog_c9bd6c5f6_7_4",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the dialog Do you want to deploy resources in dev environment? is visible with the primary action Deploy.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_execute_c9bd6c5f6_7_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
         "component:dialog",
         "action:click-primary",
         "step_retry_timeout: 30"
       ]
     },
     {
-      "step_id": "step_clickPrimaryAction_click_c9bd6c5f6_7_3",
+      "step_id": "step_clickPrimaryAction_click_c9bd6c5f6_7_4",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -3590,7 +3816,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_clickPrimaryAction_assertDialog_c9bd6c5f6_7_3"
+        "step_clickPrimaryAction_assertDialog_c9bd6c5f6_7_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3600,7 +3826,7 @@
       ]
     },
     {
-      "step_id": "step_assertNotificationContains_assert_c9bd6c5f6_7_4",
+      "step_id": "step_assertNotificationContains_assert_c9bd6c5f6_7_5",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -3610,7 +3836,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_clickPrimaryAction_click_c9bd6c5f6_7_3"
+        "step_clickPrimaryAction_click_c9bd6c5f6_7_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3633,7 +3859,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertNotificationContains_assert_c9bd6c5f6_7_4"
+        "step_assertNotificationContains_assert_c9bd6c5f6_7_5"
       ],
       "preconditions": [],
       "postconditions": [],
