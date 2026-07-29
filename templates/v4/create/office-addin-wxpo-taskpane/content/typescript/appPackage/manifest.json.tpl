@@ -29,11 +29,11 @@
     "authorization": {
         "permissions": {
             "resourceSpecific": [
-                {
+                {{#HostOutlook}}{
                     "name": "MailboxItem.Read.User",
                     "type": "Delegated"
                 },
-                {
+                {{/HostOutlook}}{
                     "name": "Document.ReadWrite.User",
                     "type": "Delegated"
                 }
@@ -47,14 +47,11 @@
         {
             "requirements": {
                 "scopes": [
-                    "mail",
-                    "workbook",
-                    "document",
-                    "presentation"
+                    {{ManifestScopes}}
                 ]
             },
             "runtimes": [
-                {
+                {{#HostOutlook}}{
                     "requirements": {
                         "capabilities": [
                             {
@@ -78,7 +75,7 @@
                         }
                     ]
                 },
-                {
+                {{/HostOutlook}}{
                     "id": "TaskPaneRuntime",
                     "type": "general",
                     "code": {
@@ -119,7 +116,7 @@
                 }
             ],
             "ribbons": [
-                {
+                {{#HostOutlook}}{
                     "requirements": {
                         "capabilities": [
                             {
@@ -207,7 +204,7 @@
                         }
                     ]
                 },
-                {
+                {{/HostOutlook}}{
                     "contexts": [
                         "default"
                     ],

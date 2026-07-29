@@ -190,7 +190,7 @@
         "x": 425,
         "y": 78
       },
-      "description": "Click on the \"Accounts: Manage Accounts\" option in the dropdown menu under the \"Microsoft 365 Agents Toolkit\" search field in the Visual Studio Code interface.",
+      "description": "Click on the \"Microsoft 365 Agents: Accounts\" option in the dropdown menu under the \"Microsoft 365 Agents Toolkit\" search field in the Visual Studio Code interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -441,9 +441,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:1b18e0d8d9e6e6e4"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "precondition_wait_timeout: 60",

@@ -2,6 +2,13 @@
 > Note: This changelog only includes the changes for the stable versions of Microsoft 365 Agents Toolkit (evolved from Teams Toolkit). For the changelog of pre-released versions, please refer to the [Microsoft 365 Agents Toolkit Pre-release Changelog](https://github.com/OfficeDev/TeamsFx/blob/dev/packages/vscode-extension/PRERELEASE.md).
 
 
+## 6.12.1 - July 27, 2026
+
+### Bug Fix
+- Updated Developer Agent (DA) manifest to version 1.8 to restore compatibility and resolve schema validation issues, [PR #16450](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16450)
+- Reverted manifest v1.9 changes so that agent_skill remains optional, preserving backward compatibility with existing agents
+
+
 ## 6.12.0 - July 7, 2026
 
 ### New Features

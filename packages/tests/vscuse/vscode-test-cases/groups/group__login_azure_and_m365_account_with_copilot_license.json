@@ -174,7 +174,7 @@
         "x": 456,
         "y": 74
       },
-      "description": "Click the \"Microsoft 365 Agents: Toolkit: Accounts\" command in the Visual Studio Code command palette.",
+      "description": "Click the \"Microsoft 365 Agents: Accounts\" command in the Visual Studio Code command palette.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -358,9 +358,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:1312e8d8d9f6e6e4"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "precondition_wait_timeout: 60",
@@ -689,9 +687,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:1392e8d8d9f6e6e4"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "delay:5"

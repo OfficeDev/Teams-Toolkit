@@ -443,7 +443,7 @@
         "x": 230,
         "y": 53
       },
-      "description": "Click the \"OK\" button in the \"Select Operation(s) Copilot Can Interact with\" dialog to confirm the selection of the GET /user/{username} operation within the Microsoft 365 Agents Toolkit extension in Visual Studio Code.",
+      "description": "Click the checkbox next to the GET /user/{username} operation in the \"Select Operation(s) Copilot Can Interact with\" dialog to select it within the Microsoft 365 Agents Toolkit extension in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -539,9 +539,9 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Regenerate Plugin"
+        "text": "Regenerate Action"
       },
-      "description": "Type 'Regenerate Plugin' into the VS Code command palette input box at the top of the Microsoft Visual Studio Code interface.",
+      "description": "Type 'Regenerate Action' into the VS Code command palette input box at the top of the Microsoft Visual Studio Code interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -563,7 +563,7 @@
       "parameters": {
         "key": "enter"
       },
-      "description": "Press Enter to select \"Microsoft 365 Agents: Regenerate Plugin\" from the command palette in Visual Studio Code.",
+      "description": "Press Enter to select \"Microsoft 365 Agents: Regenerate Action\" from the command palette in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -665,7 +665,7 @@
         "x": 799,
         "y": 50
       },
-      "description": "Click the blue \"add\" button (plus icon) to the right of the \"1 Selected\" indicator in the \"Select operation(s) Copilot can interact with.\" dialog within Visual Studio Code.",
+      "description": "Click the \"OK\" button in the \"Select operation(s) Copilot can interact with.\" dialog within Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

@@ -174,7 +174,7 @@
         "x": 456,
         "y": 74
       },
-      "description": "Click the \"Microsoft 365 Agents: Toolkit: Accounts\" command in the Visual Studio Code command palette.",
+      "description": "Click the \"Microsoft 365 Agents: Accounts\" command in the Visual Studio Code command palette.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -202,7 +202,7 @@
         "x": 349,
         "y": 79
       },
-      "description": "Click the \"Sign in to Azure\" dropdown option in the Visual Studio Code command palette to initiate Microsoft 365 authentication.",
+      "description": "Click the \"Sign in to Azure\" dropdown option in the Visual Studio Code command palette to initiate Azure authentication.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -254,7 +254,7 @@
         "x": 457,
         "y": 96
       },
-      "description": "Click the \"Allow\" button in the Microsoft 365 sign-in prompt to authorize the extension \"Microsoft 365 Agents Toolkit\" within Visual Studio Code.",
+      "description": "Click the \"Allow\" button in the Azure sign-in prompt to authorize the extension \"Microsoft 365 Agents Toolkit\" within Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -332,7 +332,7 @@
         "x": 631,
         "y": 462
       },
-      "description": "Click the \"Next\" button on the Microsoft sign-in page to continue the authentication process for the user account (test04@atktesting05.onmicrosoft.com) in a Chrome browser.",
+      "description": "Click the \"Next\" button on the Microsoft sign-in page to continue the authentication process for the user account (${{env:AZURE_ACCOUNT_NAME}}) in a Chrome browser.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -364,9 +364,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:1908f0d9d1e6e6e4"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "precondition_wait_timeout: 60",
@@ -457,7 +455,7 @@
         "x": 322,
         "y": 100
       },
-      "description": "Click the \"Sign in to Microsoft 365\" link in the ACCOUNTS section of the Microsoft 365 Agents Toolkit panel within Visual Studio Code.",
+      "description": "Click the right empty location of \"Sign in to Microsoft 365\" item in the ACCOUNTS section of the Microsoft 365 Agents Toolkit sidebar in Visual Studio Code to open the account sign-in dropdown.(Previously for clicking the \"Sign in to Microsoft 365\" button.)",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -698,9 +696,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:1b18e0d8d9e6e6e4"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "delay:5"

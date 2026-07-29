@@ -73,7 +73,7 @@
         "x": 584,
         "y": 217
       },
-      "description": "Click on the \"General Teams Agent\" option in the dropdown menu within the \"Teams Agent or App Using Teams AI Library\" selection list.",
+      "description": "Click on the \"Other Teams Capabilites\" option in the dropdown menu within the \"Teams Agent or App Using Microsoft Teams SDK\" selection list.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -251,7 +251,7 @@
         "x": 446,
         "y": 75
       },
-      "description": "Click the \"manifest.json\" file entry in the file selection dropdown within the \"Select Teams manifest.json File\" dialog of Visual Studio Code, targeting the path \"/home/vscode/AgentsToolkitProjects/vscuse_app_jdmqM/appPackage\".",
+      "description": "Click the \"manifest.json\" file entry in the file selection dropdown within the \"Select Teams manifest.json File\" dialog of Visual Studio Code, targeting the path \"/home/vscode/AgentsToolkitProjects/${{var:app_name}}/appPackage\".",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -405,9 +405,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:1b18e0d8d9e6e6e4"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_5c930fdc",
@@ -449,7 +447,7 @@
         "x": 632,
         "y": 551
       },
-      "description": "Click the \"No\" button on the \"Stay signed in?\" Microsoft login prompt in Google Chrome at login.microsoftonline.com, confirming the selection at the red crosshair location.",
+      "description": "Click the \"Yes\" button on the \"Stay signed in?\" Microsoft login prompt in Google Chrome at login.microsoftonline.com, confirming the selection at the red crosshair location.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -501,7 +499,7 @@
         "x": 591,
         "y": 383
       },
-      "description": "Click the edit field for the \"version\" property in the manifest.json file within the App package editor of the Microsoft Teams Developer Portal, placing the cursor after the first character of the version string (`\"1\"` in `\"1.0.0\"`).",
+      "description": "Click the edit field for the \"version\" property in the manifest.json file within the App package editor of the Microsoft Teams Developer Portal, placing the cursor after the first character of the version string (`\"2\"` in `\"2.0.0\"`).",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -749,7 +747,7 @@
         "x": 422,
         "y": 76
       },
-      "description": "Click the \"manifest.json\" file entry in the file selection dropdown at the top of the \"Select Teams manifest_json File\" dialog within Visual Studio Code, highlighting the file path \"/home/vsco/AgentsToolkitProjects/vscuse_app_vk3Ee/appPackage/manifest.json\".",
+      "description": "Click the \"manifest.json\" file entry in the file selection dropdown at the top of the \"Select Teams manifest_json File\" dialog within Visual Studio Code, highlighting the file path \"/home/vscode/AgentsToolkitProjects/${{var:app_name}}/appPackage/manifest.json\".",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

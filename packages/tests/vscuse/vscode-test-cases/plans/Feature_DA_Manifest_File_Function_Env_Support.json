@@ -702,7 +702,7 @@
         "x": 114,
         "y": 145
       },
-      "description": "Click the editable text field for renaming the \"build\" folder in the File Explorer panel of Visual Studio Code.",
+      "description": "Click the \"build\" folder in the File Explorer panel of Visual Studio Code to expand its contents.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

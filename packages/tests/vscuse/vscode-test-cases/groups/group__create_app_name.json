@@ -120,7 +120,7 @@
         "x": 329,
         "y": 50
       },
-      "description": "Perform a right-click on the \"Preview README.md\" tab header in the Visual Studio Code interface to access contextual options for the file preview.",
+      "description": "Perform a right-click on the \"Preview README.md\" tab header in the Visual Studio Code interface to access contextual options for the file.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

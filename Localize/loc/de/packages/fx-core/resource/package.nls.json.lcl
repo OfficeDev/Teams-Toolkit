@@ -6169,6 +6169,15 @@
         </Str>
         <Disp Icon="Str" />
       </Item>
+      <Item ItemId=";core.v4.scaffold.existingFileSkipped" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA['%s' exists and was not overwritten. Delete or rename it to rebuild the file.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[„%s“ ist vorhanden und wurde nicht überschrieben. Löschen Sie sie, oder benennen Sie sie um, um die Datei neu zu erstellen.]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
       <Item ItemId=";debug.install" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Install]]></Val>

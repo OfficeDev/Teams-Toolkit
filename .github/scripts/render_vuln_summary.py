@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 """
-Render the output of the vulnerability scan pipeline in three flavors:
+Render the output of the vulnerability scan pipeline in several flavors:
 
   --output-markdown   GitHub Actions step summary (markdown tables)
   --output-email      HTML body suitable for send-email-report action
   --output-subject    one-line email subject
 
+`render_pr_body(manifest)` produces the same aggregate markdown used for the
+rolling fix PR body (without the workflow-run footer). open_vuln_fix_pr.py
+imports it for `gh pr create --body-file` / `gh pr edit --body-file`.
+
 Inputs are the per-scanner JSON files produced by check_npm_vulnerabilities.py
 and check_nuget_vulnerabilities.py plus the manifest produced by
-open_vuln_fix_pr.py. All three are optional in the sense that missing files
-are tolerated (rendered as empty sections).
+open_vuln_fix_pr.py. Missing files are tolerated (rendered as empty sections).
 """
 
 from __future__ import annotations
@@ -36,10 +39,7 @@ def _read_json(path: Optional[Path]) -> Optional[dict]:
 
 
 def _beijing_today() -> str:
-    """Return today's date in Asia/Shanghai (UTC+8) as YYYY-MM-DD.
-
-    Pipeline runs on UTC so we shift manually rather than relying on tzdata.
-    """
+    """Return today's date in Asia/Shanghai (UTC+8) as YYYY-MM-DD."""
     now_utc = _dt.datetime.now(_dt.timezone.utc)
     return (now_utc + _dt.timedelta(hours=8)).strftime("%Y-%m-%d")
 
@@ -84,14 +84,112 @@ def _scan_rows(scan_jsons: List[Path], manifest: Optional[dict]) -> List[dict]:
 
 
 def _counts(manifest: Optional[dict]) -> dict:
-    m = manifest or {}
+    value = manifest or {}
     return {
-        "new": len(m.get("new_prs") or []),
-        "existing": len(m.get("skipped_existing") or []),
-        "no_fix": len(m.get("skipped_no_fix") or []),
-        "over_limit": len(m.get("skipped_over_limit") or []),
-        "max_prs": m.get("max_prs", 0),
+        "fixed": len(value.get("fixed") or []),
+        "already_fixed": len(value.get("already_fixed") or []),
+        "no_fix": len(value.get("no_fix") or []),
+        "errors": len(value.get("errors") or []),
     }
+
+
+def _advisory(record: dict) -> str:
+    return record.get("advisory_id") or record.get("advisory_url") or ""
+
+
+def _rolling_pr_line(manifest: Optional[dict]) -> str:
+    value = manifest or {}
+    action = value.get("pr_action") or "none"
+    number = value.get("pr_number")
+    url = value.get("pr_url") or ""
+    label = f"#{number}" if number else (_short_pr(url) or "")
+    link = f"[{label}]({url})" if (url and label) else label
+    if action == "created":
+        return f"**Opened rolling fix PR {link}**".rstrip()
+    if action == "updated":
+        return f"**Updated rolling fix PR {link}**".rstrip()
+    return "**No rolling fix PR change this run.**"
+
+
+def _normalize_manifest(manifest: dict) -> dict:
+    """Normalize legacy per-vulnerability manifests to rolling aggregate shape.
+
+    New rolling shape:
+      scans, fixed, already_fixed, no_fix, errors, pr_action, pr_number, pr_url
+
+    Legacy shape (used by pnpm lockfile flow):
+      scans, new_prs, skipped_existing, skipped_no_fix, skipped_over_limit
+    """
+    if any(
+        key in manifest
+        for key in ("fixed", "already_fixed", "no_fix", "errors", "pr_action")
+    ):
+        return {
+            "branch": manifest.get("branch"),
+            "pr_action": manifest.get("pr_action", "none"),
+            "pr_number": manifest.get("pr_number"),
+            "pr_url": manifest.get("pr_url", ""),
+            "scans": list(manifest.get("scans") or []),
+            "fixed": list(manifest.get("fixed") or []),
+            "already_fixed": list(manifest.get("already_fixed") or []),
+            "no_fix": list(manifest.get("no_fix") or []),
+            "errors": list(manifest.get("errors") or []),
+        }
+
+    fixed = list(manifest.get("new_prs") or [])
+    already_fixed = list(manifest.get("skipped_existing") or [])
+    no_fix = list(manifest.get("skipped_no_fix") or [])
+    no_fix.extend(
+        {
+            **row,
+            "reason": row.get("reason") or "skipped by PR limit",
+        }
+        for row in (manifest.get("skipped_over_limit") or [])
+    )
+    return {
+        "branch": manifest.get("branch"),
+        "pr_action": "none",
+        "pr_number": None,
+        "pr_url": "",
+        "scans": list(manifest.get("scans") or []),
+        "fixed": fixed,
+        "already_fixed": already_fixed,
+        "no_fix": no_fix,
+        "errors": list(manifest.get("errors") or []),
+    }
+
+
+def merge_manifests(manifests: List[dict]) -> Optional[dict]:
+    manifests = [m for m in manifests if m]
+    if not manifests:
+        return None
+
+    normalized = [_normalize_manifest(m) for m in manifests]
+    merged: dict = {
+        "branch": None,
+        "pr_action": "none",
+        "pr_number": None,
+        "pr_url": "",
+        "scans": [],
+        "fixed": [],
+        "already_fixed": [],
+        "no_fix": [],
+        "errors": [],
+    }
+    for value in normalized:
+        if not merged["branch"] and value.get("branch"):
+            merged["branch"] = value.get("branch")
+        action = value.get("pr_action") or "none"
+        if action in ("created", "updated"):
+            merged["pr_action"] = action
+            merged["pr_number"] = value.get("pr_number")
+            merged["pr_url"] = value.get("pr_url") or ""
+        merged["scans"].extend(value.get("scans") or [])
+        merged["fixed"].extend(value.get("fixed") or [])
+        merged["already_fixed"].extend(value.get("already_fixed") or [])
+        merged["no_fix"].extend(value.get("no_fix") or [])
+        merged["errors"].extend(value.get("errors") or [])
+    return merged
 
 
 # --------------------------------------------------------------------------- #
@@ -99,12 +197,11 @@ def _counts(manifest: Optional[dict]) -> dict:
 # --------------------------------------------------------------------------- #
 
 
-def render_markdown(scan_jsons: List[Path], manifest: Optional[dict]) -> str:
+def _markdown_body(manifest: Optional[dict], scan_jsons: List[Path]) -> List[str]:
     counts = _counts(manifest)
     scans = _scan_rows(scan_jsons, manifest)
     total_vulns = sum(s.get("vuln_count", 0) for s in scans)
-    run_url = _workflow_run_url()
-    max_label = "unlimited" if counts["max_prs"] in (0, None) else str(counts["max_prs"])
+    value = manifest or {}
 
     out: List[str] = []
     out.append(f"## Vulnerability Scan - {_beijing_today()}")
@@ -125,74 +222,84 @@ def render_markdown(scan_jsons: List[Path], manifest: Optional[dict]) -> str:
     out.append("")
     out.append(f"**Total vulnerabilities:** {total_vulns}")
     out.append("")
+    out.append(_rolling_pr_line(manifest))
+    out.append("")
 
-    new_prs = (manifest or {}).get("new_prs") or []
-    out.append(f"### Newly opened fix PRs ({counts['new']} / max {max_label})")
-    if not new_prs:
+    fixed = value.get("fixed") or []
+    out.append(f"### Verified fixes ({counts['fixed']})")
+    if not fixed:
         out.append("_None._")
     else:
-        out.append("| Package | Severity | Fixed version | PR | Strategy |")
-        out.append("|---|---|---|---|---|")
-        for r in new_prs:
+        out.append("| File | Package | Advisory | Strategy |")
+        out.append("|---|---|---|---|")
+        for r in fixed:
             out.append(
+                f"| `{r.get('file') or ''}` "
                 f"| `{r.get('package') or ''}` "
-                f"| {r.get('severity') or ''} "
-                f"| {r.get('fixed_version') or '—'} "
-                f"| {_short_pr(r.get('pr_url') or '')} "
+                f"| {_advisory(r)} "
                 f"| {r.get('strategy') or ''} |"
             )
     out.append("")
 
-    existing = (manifest or {}).get("skipped_existing") or []
-    out.append(f"### Skipped - PR already created ({counts['existing']})")
-    if not existing:
+    already = value.get("already_fixed") or []
+    out.append(f"### Already fixed on rolling branch ({counts['already_fixed']})")
+    if not already:
         out.append("_None._")
     else:
-        out.append("| Package | Severity | Existing branch |")
+        out.append("| File | Package | Advisory |")
         out.append("|---|---|---|")
-        for r in existing:
+        for r in already:
             out.append(
+                f"| `{r.get('file') or ''}` "
                 f"| `{r.get('package') or ''}` "
-                f"| {r.get('severity') or ''} "
-                f"| `{r.get('branch') or ''}` |"
+                f"| {_advisory(r)} |"
             )
     out.append("")
 
-    no_fix = (manifest or {}).get("skipped_no_fix") or []
-    out.append(f"### Skipped - no automatic fix ({counts['no_fix']})")
+    no_fix = value.get("no_fix") or []
+    out.append(f"### No verified automatic fix ({counts['no_fix']})")
     if not no_fix:
         out.append("_None._")
     else:
-        out.append("| Package | Severity | Reason |")
+        out.append("| File | Package | Reason |")
         out.append("|---|---|---|")
         for r in no_fix:
             out.append(
+                f"| `{r.get('file') or ''}` "
                 f"| `{r.get('package') or ''}` "
-                f"| {r.get('severity') or ''} "
                 f"| {r.get('reason') or ''} |"
             )
     out.append("")
 
-    over = (manifest or {}).get("skipped_over_limit") or []
-    out.append(f"### Skipped - over PR limit ({counts['over_limit']})")
-    if not over:
+    errors = value.get("errors") or []
+    out.append(f"### Operational errors ({counts['errors']})")
+    if not errors:
         out.append("_None._")
     else:
-        out.append("| Package | Severity | Branch |")
-        out.append("|---|---|---|")
-        for r in over:
+        out.append("| File | Reason |")
+        out.append("|---|---|")
+        for r in errors:
             out.append(
-                f"| `{r.get('package') or ''}` "
-                f"| {r.get('severity') or ''} "
-                f"| `{r.get('branch') or ''}` |"
+                f"| `{r.get('file') or ''}` "
+                f"| {r.get('reason') or ''} |"
             )
     out.append("")
 
+    return out
+
+
+def render_markdown(scan_jsons: List[Path], manifest: Optional[dict]) -> str:
+    out = _markdown_body(manifest, scan_jsons)
+    run_url = _workflow_run_url()
     if run_url:
         out.append(f"[View workflow run]({run_url})")
         out.append("")
-
     return "\n".join(out)
+
+
+def render_pr_body(manifest: Optional[dict]) -> str:
+    """Aggregate markdown for the rolling PR body (no workflow-run footer)."""
+    return "\n".join(_markdown_body(manifest, []))
 
 
 # --------------------------------------------------------------------------- #
@@ -209,7 +316,7 @@ def render_email_html(scan_jsons: List[Path], manifest: Optional[dict]) -> str:
     scans = _scan_rows(scan_jsons, manifest)
     total_vulns = sum(s.get("vuln_count", 0) for s in scans)
     run_url = _workflow_run_url()
-    max_label = "unlimited" if counts["max_prs"] in (0, None) else str(counts["max_prs"])
+    value = manifest or {}
 
     style_table = (
         'border-collapse:collapse;border:1px solid #ccc;'
@@ -244,70 +351,75 @@ def render_email_html(scan_jsons: List[Path], manifest: Optional[dict]) -> str:
     parts.append("</tbody></table>")
     parts.append(f"<p><b>Total vulnerabilities:</b> {_h(total_vulns)}</p>")
 
-    # New PRs
-    new_prs = (manifest or {}).get("new_prs") or []
-    parts.append(f"<h3>Newly opened fix PRs ({_h(counts['new'])} / max {_h(max_label)})</h3>")
-    if not new_prs:
+    # Rolling PR
+    pr_url = value.get("pr_url") or ""
+    number = value.get("pr_number")
+    label = f"#{number}" if number else (_short_pr(pr_url) or "")
+    action = value.get("pr_action") or "none"
+    verb = {"created": "Opened", "updated": "Updated"}.get(action)
+    if verb:
+        link = f'<a href="{_h(pr_url)}">{_h(label)}</a>' if pr_url else _h(label)
+        parts.append(f"<p><b>{verb} rolling fix PR {link}</b></p>")
+    else:
+        parts.append("<p><b>No rolling fix PR change this run.</b></p>")
+
+    # Verified fixes
+    fixed = value.get("fixed") or []
+    parts.append(f"<h3>Verified fixes ({_h(counts['fixed'])})</h3>")
+    if not fixed:
         parts.append("<p><i>None.</i></p>")
     else:
-        parts.append(open_table(["Package", "Severity", "Fixed version", "PR", "Strategy"]))
-        for r in new_prs:
-            pr_url = r.get("pr_url") or ""
-            pr_cell = (
-                f'<a href="{_h(pr_url)}">{_h(_short_pr(pr_url) or pr_url)}</a>'
-                if pr_url else ""
-            )
+        parts.append(open_table(["File", "Package", "Advisory", "Strategy"]))
+        for r in fixed:
             parts.append(row([
+                f"<code>{_h(r.get('file'))}</code>",
                 f"<code>{_h(r.get('package'))}</code>",
-                _h(r.get("severity")),
-                _h(r.get("fixed_version") or "—"),
-                pr_cell,
+                _h(_advisory(r)),
                 _h(r.get("strategy")),
             ]))
         parts.append("</tbody></table>")
 
-    # Skipped: existing
-    existing = (manifest or {}).get("skipped_existing") or []
-    parts.append(f"<h3>Skipped &ndash; PR already created ({_h(counts['existing'])})</h3>")
-    if not existing:
+    # Already fixed
+    already = value.get("already_fixed") or []
+    parts.append(f"<h3>Already fixed on rolling branch ({_h(counts['already_fixed'])})</h3>")
+    if not already:
         parts.append("<p><i>None.</i></p>")
     else:
-        parts.append(open_table(["Package", "Severity", "Existing branch"]))
-        for r in existing:
+        parts.append(open_table(["File", "Package", "Advisory"]))
+        for r in already:
             parts.append(row([
+                f"<code>{_h(r.get('file'))}</code>",
                 f"<code>{_h(r.get('package'))}</code>",
-                _h(r.get("severity")),
-                f"<code>{_h(r.get('branch'))}</code>",
+                _h(_advisory(r)),
             ]))
         parts.append("</tbody></table>")
 
-    # Skipped: no fix
-    no_fix = (manifest or {}).get("skipped_no_fix") or []
-    parts.append(f"<h3>Skipped &ndash; no automatic fix ({_h(counts['no_fix'])})</h3>")
+    # No fix
+    no_fix = value.get("no_fix") or []
+    parts.append(f"<h3>No verified automatic fix ({_h(counts['no_fix'])})</h3>")
     if not no_fix:
         parts.append("<p><i>None.</i></p>")
     else:
-        parts.append(open_table(["Package", "Severity", "Reason"]))
+        parts.append(open_table(["File", "Package", "Reason"]))
         for r in no_fix:
             parts.append(row([
+                f"<code>{_h(r.get('file'))}</code>",
                 f"<code>{_h(r.get('package'))}</code>",
-                _h(r.get("severity")),
                 _h(r.get("reason")),
             ]))
         parts.append("</tbody></table>")
 
-    # Skipped: over limit
-    over = (manifest or {}).get("skipped_over_limit") or []
-    parts.append(f"<h3>Skipped &ndash; over PR limit ({_h(counts['over_limit'])})</h3>")
-    if not over:
+    # Operational errors
+    errors = value.get("errors") or []
+    parts.append(f"<h3>Operational errors ({_h(counts['errors'])})</h3>")
+    if not errors:
         parts.append("<p><i>None.</i></p>")
     else:
-        parts.append(open_table(["Package", "Severity", "Branch"]))
-        for r in over:
+        parts.append(open_table(["File", "Reason"]))
+        for r in errors:
             parts.append(row([
-                f"<code>{_h(r.get('package'))}</code>",
-                _h(r.get("severity")),
-                f"<code>{_h(r.get('branch'))}</code>",
+                f"<code>{_h(r.get('file'))}</code>",
+                _h(r.get("reason")),
             ]))
         parts.append("</tbody></table>")
 
@@ -328,14 +440,14 @@ def render_subject(scan_jsons: List[Path], manifest: Optional[dict]) -> str:
     total_vulns = sum(s.get("vuln_count", 0) for s in scans)
     date = _beijing_today()
 
-    if total_vulns == 0:
+    if total_vulns == 0 and counts["errors"] == 0:
         return f"[Vuln Scan] No vulnerabilities found - {date}"
 
     return (
-        f"[Vuln Scan] {counts['new']} new PR(s), "
-        f"{counts['existing']} skipped (already exists), "
+        f"[Vuln Scan] {total_vulns} finding(s), "
+        f"{counts['fixed']} fixed, "
         f"{counts['no_fix']} no-fix, "
-        f"{counts['over_limit']} over-limit - {date}"
+        f"{counts['errors']} error(s) - {date}"
     )
 
 
@@ -347,7 +459,7 @@ def render_subject(scan_jsons: List[Path], manifest: Optional[dict]) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Render vulnerability scan output")
     parser.add_argument("--scan-json", action="append", default=[])
-    parser.add_argument("--manifest", default=None)
+    parser.add_argument("--manifest", action="append", default=[])
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--output-markdown", action="store_true")
     group.add_argument("--output-email", action="store_true")
@@ -355,7 +467,8 @@ def main() -> int:
     args = parser.parse_args()
 
     scan_paths = [Path(p) for p in args.scan_json]
-    manifest = _read_json(Path(args.manifest)) if args.manifest else None
+    manifests = [m for m in (_read_json(Path(p)) for p in args.manifest) if m]
+    manifest = merge_manifests(manifests)
 
     if args.output_markdown:
         sys.stdout.write(render_markdown(scan_paths, manifest))

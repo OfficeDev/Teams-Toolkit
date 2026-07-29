@@ -42,7 +42,7 @@
         "x": 382,
         "y": 218
       },
-      "description": "Click on the \"Other Teams Capabilities\" option in the dropdown menu within the \"Teams Agent or App Using Teams AI Library\" modal.",
+      "description": "Click on the \"Other Teams Capabilities\" option in the dropdown menu within the \"Teams Agent or App Using Microsoft Teams SDK\" modal.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

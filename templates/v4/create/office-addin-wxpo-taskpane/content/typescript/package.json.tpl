@@ -7,7 +7,7 @@
   },
   "license": "MIT",
   "config": {
-    "app_to_debug": "excel",
+    "app_to_debug": "{{DebugApp}}",
     "app_type_to_debug": "desktop",
     "dev_server_port": 3000
   },
@@ -25,10 +25,7 @@
     "signout": "office-addin-dev-settings m365-account logout",
     "start": "office-addin-debugging start appPackage/manifest.json",
     "start:desktop": "office-addin-debugging start appPackage/manifest.json desktop",
-    "start:desktop:word": "office-addin-debugging start appPackage/manifest.json desktop --app word",
-    "start:desktop:excel": "office-addin-debugging start appPackage/manifest.json desktop --app excel",
-    "start:desktop:powerpoint": "office-addin-debugging start appPackage/manifest.json desktop --app powerpoint",
-    "start:desktop:outlook": "office-addin-debugging start appPackage/manifest.json desktop --app outlook",
+    {{DebugScripts}}
     "start:web": "office-addin-debugging start appPackage/manifest.json web",
     "stop": "office-addin-debugging stop appPackage/manifest.json",
     "validate": "office-addin-manifest validate appPackage/manifest.json",

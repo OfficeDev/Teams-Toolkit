@@ -5,9 +5,9 @@
     "execution_context": {
       "delay_between_steps": 0.5,
       "stop_on_error": true,
-      "precondition_wait_timeout": 60.0,
-      "precondition_retry_interval": 2.0,
-      "step_retry_timeout": 0.0
+      "precondition_wait_timeout": 60,
+      "precondition_retry_interval": 2,
+      "step_retry_timeout": 0
     },
     "total_steps": 19,
     "created_at": "2026-05-14T01:57:51.379181",
@@ -340,7 +340,7 @@
         "x": 141,
         "y": 19
       },
-      "description": "Click the browser tab titled \"(1) graph-connector-applocal | teams.microsoft.com\" at coordinates (141, 19) to switch context.",
+      "description": "Click the browser tab titled \"graph-connector-applocal | Microsoft Teams\" (teams.cloud.microsoft) at coordinates (141, 19) to switch context.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -366,7 +366,7 @@
         "x": 997,
         "y": 198
       },
-      "description": "Click the \"Turn on\" button in the notification bar at the top of the Microsoft Teams web interface to enable desktop notifications.",
+      "description": "Click the \"...\" (more options) button in the top-right of the Microsoft Teams web interface to open its dropdown menu.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -418,7 +418,7 @@
         "x": 373,
         "y": 240
       },
-      "description": "Click the \"Allow\" button in the popup requesting network device connection access for teams.microsoft.com.",
+      "description": "Click the \"Allow\" button in the popup requesting device access for teams.cloud.microsoft.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

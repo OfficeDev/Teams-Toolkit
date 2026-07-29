@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 13,
+    "total_steps": 12,
     "created_at": "2026-05-25T01:16:24.841621",
     "name": "group: debug_in_copilot_remote_DA_no_action",
     "description": {
@@ -30,8 +30,7 @@
       "step_4c68873a",
       "step_7cfe3868",
       "step_88c03f8a",
-      "step_0f74bc59",
-      "step_4135734c"
+      "step_0f74bc59"
     ],
     "tags": [
       "group"
@@ -241,9 +240,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:1b08f0d9d1e6e6e4"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "precondition_wait_timeout: 60"
@@ -325,31 +322,6 @@
       ],
       "screenshot": "step_0f74bc59",
       "created_at": "2026-05-25T01:16:24.945093",
-      "plan_id": "plan_r_1021_031941"
-    },
-    {
-      "step_id": "step_4135734c",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "f5"
-      },
-      "description": "Simulate pressing F5 to refresh the M365 Copilot web application interface in a Chrome browser, updating the chat and agent list view.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:05e58c9c988c80c0"
-      ],
-      "postconditions": [],
-      "tags": [
-        "force_run:true",
-        "delay:10"
-      ],
-      "screenshot": "step_4135734c",
-      "created_at": "2026-05-25T01:16:24.955191",
       "plan_id": "plan_r_1021_031941"
     }
   ],

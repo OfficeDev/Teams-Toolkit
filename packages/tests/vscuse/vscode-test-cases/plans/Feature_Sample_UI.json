@@ -7,7 +7,7 @@
       "stop_on_error": true,
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2,
-      "step_retry_timeout": 0.0
+      "step_retry_timeout": 0
     },
     "total_steps": 26,
     "created_at": "2026-06-09T01:48:29.962151",
@@ -296,7 +296,7 @@
         "x": 600,
         "y": 216
       },
-      "description": "Click the checkbox option for \"clear all\" in the SSO dropdown filter within the \"Samples\" panel of Microsoft Visual Studio Code, to refine the displayed sample projects.",
+      "description": "Click the \"Clear all\" link in the filter tags row of the \"Samples\" tab within the Microsoft 365 Agents Toolkit extension in Visual Studio Code, to remove all applied filters.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -446,7 +446,7 @@
         "x": 900,
         "y": 184
       },
-      "description": "Click the \"Search\" input field in the \"Samples\" tab of the Microsoft 365 Agents Toolkit extension within Visual Studio Code to focus on it and enable sample searching.",
+      "description": "Click the list view toggle icon in the \"Samples\" tab of the Microsoft 365 Agents Toolkit extension within Visual Studio Code, switching the samples display to list view.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

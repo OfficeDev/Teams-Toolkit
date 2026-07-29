@@ -329,7 +329,7 @@
         "x": 635,
         "y": 458
       },
-      "description": "Click the \"Next\" button on the Microsoft sign-in page after entering the email address (test01@atktesting05.onmicrosoft.com) in the login.microsoftonline.com authentication interface.",
+      "description": "Click the \"Next\" button on the Microsoft sign-in page after entering the email address (${{env:AZURE_ACCOUNT_NAME}}) in the login.microsoftonline.com authentication interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -359,9 +359,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:1b2319197966271e"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "precondition_wait_timeout: 60",
@@ -672,9 +670,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:1b18e0d8d9e6e6e4"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "delay:5"

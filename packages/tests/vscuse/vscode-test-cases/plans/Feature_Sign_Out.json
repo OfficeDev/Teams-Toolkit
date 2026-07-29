@@ -369,7 +369,7 @@
         "x": 282,
         "y": 124
       },
-      "description": "Click the \"Manage Trusted Extensions\" option in the command palette dropdown within Visual Studio Code's window.",
+      "description": "Click the \"Sign Out\" option in the command palette dropdown within Visual Studio Code's window.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -547,9 +547,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:1b18e0d8d9f6e6e4"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_ee23b803",
@@ -565,7 +563,7 @@
         "x": 609,
         "y": 538
       },
-      "description": "Click the \"Sign in\" button on the Microsoft login page to submit the entered password for the account test31@xxbdw.onmicrosoft.com.",
+      "description": "Click the \"Sign in\" button on the Microsoft login page to submit the entered password for the account ${{env:M365_ACCOUNT_NAME}}.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

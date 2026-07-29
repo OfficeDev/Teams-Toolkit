@@ -44,7 +44,7 @@
         "x": 413,
         "y": 84
       },
-      "description": "Click on the \"General Teams Agent\" option within the dropdown menu titled \"Teams Agent or App Using Teams AI Library\" to select the agent description: \"Agent that chats with users in Teams built with Teams AI Library and connects to LLMs.\"",
+      "description": "Click on the \"General Teams Agent\" option within the dropdown menu titled \"Teams Agent or App Using Microsoft Teams SDK\" to select the agent description: \"Agent that chats with users in Teams built with Teams AI Library and connects to LLMs.\"",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

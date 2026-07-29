@@ -18,6 +18,7 @@ import {
   JSONSyntaxError,
   manifestUtils,
   outputScaffoldingWarningMessage,
+  pathUtils,
   pluginManifestUtils,
 } from "@microsoft/teamsfx-core";
 import fs from "fs-extra";
@@ -36,7 +37,7 @@ import { getAppName } from "./appDefinitionUtils";
 import { getLocalDebugMessageTemplate } from "./commonUtils";
 import { localize } from "./localizeUtils";
 
-export async function showLocalDebugMessage() {
+export async function showLocalDebugMessage(skipNextStepNotification = false) {
   const shouldShowLocalDebugMessage = (await teamsfxCore.globalStateGet(
     GlobalKey.ShowLocalDebugMessage,
     false
@@ -69,6 +70,14 @@ export async function showLocalDebugMessage() {
     !globalVariables.isSensitivityLabelSet
   ) {
     showSetSensitivityLabelMessage();
+  }
+
+  // Every call to action below (local debug, preview, provision) starts a lifecycle that is
+  // guaranteed to fail while the project still holds fill-in placeholders. The scaffolding
+  // warning notification takes over as the single next step. The flag above is still consumed
+  // so the stale invitation does not resurface the next time the workspace is opened.
+  if (skipNextStepNotification) {
+    return;
   }
 
   if (hasKeyGenJsFile || hasKeyGenTsFile) {
@@ -249,10 +258,90 @@ export async function ShowScaffoldingWarningSummary(
         manifestRes.error
       );
     }
+
+    // The output channel is easy to miss, and an unreplaced placeholder guarantees a
+    // provision failure later, so raise this one case to a notification.
+    showMCPAuthPlaceholderNotification(workspacePath, createWarnings);
   } catch (e) {
     const error = assembleError(e);
     ExtTelemetry.sendTelemetryErrorEvent(TelemetryEvent.ShowScaffoldingWarningSummaryError, error);
   }
+}
+
+/**
+ * `Warning.type` values reported when MCP auth endpoint discovery failed and the scaffolder
+ * fell back to fill-in placeholders in `m365agents.yml`. The other MCP warnings are advisory
+ * and stay in the output channel.
+ */
+const MCP_AUTH_PLACEHOLDER_WARNING_TYPES = [
+  "mcpAuthDcrWellKnownUrlPlaceholder",
+  "mcpAuthOAuthUrlPlaceholder",
+];
+
+/**
+ * Whether the scaffolded project needs a manual edit before any lifecycle can succeed, given
+ * the raw `GlobalKey.CreateWarnings` payload. Callers use it to suppress notifications that
+ * would invite the developer into a guaranteed failure.
+ */
+export function hasProvisionBlockingWarning(createWarnings: string): boolean {
+  if (!createWarnings) {
+    return false;
+  }
+  try {
+    const warnings = JSON.parse(createWarnings) as Warning[];
+    return Array.isArray(warnings) && warnings.some(isProvisionBlockingWarning);
+  } catch {
+    // ShowScaffoldingWarningSummary reports the parse failure. Here we only decide whether to
+    // hide a notification, so an unreadable payload degrades to showing the usual one.
+    return false;
+  }
+}
+
+function isProvisionBlockingWarning(warning: Warning): boolean {
+  return MCP_AUTH_PLACEHOLDER_WARNING_TYPES.includes(warning.type);
+}
+
+export function showMCPAuthPlaceholderNotification(
+  workspacePath: string,
+  warnings: Warning[]
+): void {
+  // The warning already carries the wording the other MCP auth flows show, so reuse it
+  // instead of a second phrasing of the same problem.
+  const message = warnings
+    .filter(isProvisionBlockingWarning)
+    .map((warning) => warning.content)
+    .join(" ");
+  if (!message) {
+    return;
+  }
+
+  const openYml = {
+    title: localize("teamstoolkit.handlers.mcpAuthPlaceholder.openYmlTitle"),
+    run: async (): Promise<void> => {
+      const ymlPath = pathUtils.getYmlFilePath(workspacePath, undefined, true);
+      if (ymlPath) {
+        await vscode.window.showTextDocument(vscode.Uri.file(ymlPath));
+      }
+    },
+  };
+  const recreate = {
+    title: localize("teamstoolkit.handlers.mcpAuthPlaceholder.recreateTitle"),
+    run: async (): Promise<void> => {
+      await vscode.commands.executeCommand(CommandKey.Create, TelemetryTriggerFrom.Notification);
+    },
+  };
+
+  ExtTelemetry.sendTelemetryEvent(TelemetryEvent.ShowMCPAuthPlaceholderNotification);
+  void vscode.window.showWarningMessage(message, openYml, recreate).then((selection) => {
+    if (selection) {
+      ExtTelemetry.sendTelemetryEvent(
+        selection.title === openYml.title
+          ? TelemetryEvent.ClickOpenMCPAuthYml
+          : TelemetryEvent.ClickRecreateMCPApp
+      );
+      void selection.run();
+    }
+  });
 }
 
 export async function autoInstallDependencyHandler() {

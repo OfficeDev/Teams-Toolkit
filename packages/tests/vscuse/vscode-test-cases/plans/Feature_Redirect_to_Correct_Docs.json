@@ -7,7 +7,7 @@
       "stop_on_error": true,
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2,
-      "step_retry_timeout": 0.0
+      "step_retry_timeout": 0
     },
     "total_steps": 41,
     "created_at": "2026-05-18T05:04:54.364604",
@@ -300,7 +300,7 @@
         "x": 649,
         "y": 350
       },
-      "description": "Click the hyperlink labeled \"Learn how to set up a developer environment\" under the \"Set up your environment\" section in the Microsoft 365 Agents Toolkit interface.",
+      "description": "Click the hyperlink labeled \"Learn how to get a developer environment.\" under the \"Set up your environment\" section in the Microsoft 365 Agents Toolkit interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -442,7 +442,7 @@
         "x": 538,
         "y": 429
       },
-      "description": "Click the \"Build Declarative Agent\"\" button located under the \"Set up your environment\" section in the Microsoft 365 Agents Toolkit Welcome interface.",
+      "description": "Click the \"Build a declarative agent\" radio button within the \"Build a Declarative Agent\" tutorial interface in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -486,7 +486,7 @@
         "x": 550,
         "y": 453
       },
-      "description": "Click the \"Preview in Microsoft 365 Copilot\" button within the \"Build a declarative agent\" section on the Microsoft 365 Agents Toolkit Welcome interface.",
+      "description": "Click the \"Preview in Microsoft 365 Copilot\" radio button within the \"Build a Declarative Agent\" tutorial interface in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -548,7 +548,7 @@
         "x": 537,
         "y": 562
       },
-      "description": "Click the checkbox for \"Improve your declarative agent\" under the \"Preview in Microsoft 365 Copilot\" section in the Microsoft 365 Agents Toolkit interface.",
+      "description": "Click the \"Improve your declarative agent\" radio button within the \"Build a Declarative Agent\" tutorial interface in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -876,7 +876,7 @@
         "x": 1005,
         "y": 24
       },
-      "description": "Click the \"X\" button to close the banner indicating \"Google Chrome isn't your default browser\" at the top-right corner of the application window.",
+      "description": "Click the browser's \"Close\" button at the top-right corner of the application window to exit the current page.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

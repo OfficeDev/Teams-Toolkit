@@ -69,7 +69,7 @@
         "x": 388,
         "y": 211
       },
-      "description": "Click on the \"Other Teams Capability\" option within the dropdown menu titled \"Teams Agent or App Using Teams AI Library\" in the Microsoft 365 Agents Toolkit interface.",
+      "description": "Click on the \"Other Teams Capabilities\" option within the dropdown menu titled \"Teams Agent or App Using Microsoft Teams SDK\" in the Microsoft 365 Agents Toolkit interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

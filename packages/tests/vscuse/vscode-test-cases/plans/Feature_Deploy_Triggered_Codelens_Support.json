@@ -45,7 +45,7 @@
         "x": 474,
         "y": 210
       },
-      "description": "Click on the \"General Teams Agent\" option within the dropdown menu titled \"Teams Agent or App Using Teams AI Library\" at coordinates (474, 210).",
+      "description": "Click on the \"Other Teams Capabilities\" option within the dropdown menu titled \"Teams Agent or App Using Microsoft Teams SDK\" at coordinates (474, 210).",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -129,7 +129,7 @@
         "x": 156,
         "y": 307
       },
-      "description": "Click the \"m365agent.yml\" file in the Explorer panel of Visual Studio Code to open it.",
+      "description": "Click the \"m365agents.yml\" file in the Explorer panel of Visual Studio Code to open it.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -155,7 +155,7 @@
         "x": 662,
         "y": 192
       },
-      "description": "Click the \"m365agents.yml\" tab in the Visual Studio Code editor to focus on the YAML configuration file within the workspace \"VSCSUE_APP_DTtQK\". The interaction targets the file tab in the central editor panel, visually highlighted as active with a light underline.",
+      "description": "Click within the m365agents.yml file content in the editor (near line 5) to focus on the YAML configuration file within the workspace \"${{var:app_name}}\".",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

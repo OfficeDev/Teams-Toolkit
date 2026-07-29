@@ -41,7 +41,7 @@
         "x": 350,
         "y": 373
       },
-      "description": "Click on the \"Message Copilot\" input field in the chat interface within Microsoft 365 Copilot, positioning the cursor for text entry.",
+      "description": "Click the input box in the M365 Copilot chat page.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -151,7 +151,7 @@
         "x": 340,
         "y": 354
       },
-      "description": "Click the blue \"Allow\" button in the Microsoft Teams web interface to grant access for the agent, as indicated by the red crosshair overlay.",
+      "description": "Click the gray \"Allow\" button in the Microsoft 365 Copilot chat interface to grant access for the \"vscuse_app_${{var:app_name}}dev\" agent.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

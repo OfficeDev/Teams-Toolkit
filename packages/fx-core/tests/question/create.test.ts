@@ -1206,14 +1206,14 @@ describe("scaffold question", () => {
       }
     });
 
-    it("dynamicOptions: should throw error when listOperations returns error", async () => {
+    it("dynamicOptions: should preserve listOperations errors as a typed UserError", async () => {
       const question = selectApiOperationForRegenerateQuestion();
       const inputs: any = {
         [QuestionNames.SelectOpenAPISpecFromPlugin]: "path/to/spec",
       };
 
       const errorMessage = "List operations failed";
-      const mockError = [new Error(errorMessage)];
+      const mockError = [{ content: errorMessage }];
 
       vi.spyOn(fs, "pathExists").mockResolvedValue(true);
       vi.spyOn(createQuestionDeps.createQuestionDeps, "createContext").mockReturnValue(
@@ -1227,7 +1227,12 @@ describe("scaffold question", () => {
         await question.dynamicOptions!(inputs);
         assert.fail("Should throw error");
       } catch (e) {
-        assert.deepEqual(e, mockError);
+        assert.instanceOf(e, UserError);
+        if (!(e instanceof UserError)) {
+          assert.fail("Expected UserError");
+        }
+        assert.equal(e.name, "ListOpenAPISpecOperationsError");
+        assert.equal(e.message, errorMessage);
       }
     });
 

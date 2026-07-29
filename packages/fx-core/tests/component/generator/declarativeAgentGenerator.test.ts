@@ -2003,6 +2003,127 @@ describe("helper", async () => {
       );
     });
 
+    it("DT auth: warns when the MCP server url returns 404", async () => {
+      // The DT path never fetches tools, so this warning is the only thing standing between a
+      // mistyped url and a scaffold that looks complete but points nowhere.
+      vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(true);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readJSON").mockResolvedValue({
+        schema_version: "v1",
+        functions: [],
+        runtimes: [],
+      });
+      vi.spyOn(fs, "writeJSON").mockResolvedValue();
+      vi.spyOn(fs, "readFile").mockResolvedValue(
+        "provision:\n  - uses: teamsApp/create\n    writeToEnvironmentFile:\n      teamsAppId: TEAMS_APP_ID\n" as any
+      );
+      vi.spyOn(fs, "writeFile").mockResolvedValue();
+
+      vi.spyOn(mcpToolFetcher, "probeMCPServerAuth").mockResolvedValue({
+        requiresAuth: false,
+        endpointStatus: "notEndpoint",
+        responseStatus: 404,
+      });
+      vi.spyOn(
+        mcpAuthScaffolderDeps.mcpAuthScaffolderDeps,
+        "resolveMCPOAuthMetadata"
+      ).mockResolvedValue({
+        authorizationUrl: "https://taskmaster.example.com/oauth/authorize",
+        tokenUrl: "https://taskmaster.example.com/oauth/token",
+        refreshUrl: "https://taskmaster.example.com/oauth/token",
+        wellKnownUrl: "https://taskmaster.example.com/.well-known/oauth-authorization-server",
+      });
+
+      const inputs: Inputs = {
+        platform: Platform.VSCode,
+        // Missing the trailing /mcp: the host answers GET, so only the probe exposes it.
+        [QuestionNames.MCPForDAServerUrl]: "https://taskmaster.example.com",
+        [QuestionNames.MCPForDAAuthType]: "oauth",
+      };
+
+      const res = await generatorHelper.generateForMCPForDA(testDestinationPath, inputs);
+
+      assert.isTrue(res.isOk());
+      if (res.isOk()) {
+        const warning = res.value.warnings?.find((w) => w.type === "mcpServerUrlNotAnEndpoint");
+        assert.isDefined(warning);
+        assert.include(warning!.content, "https://taskmaster.example.com");
+        assert.include(warning!.content, "404");
+      }
+    });
+
+    it("DT auth: warns for a non-404 answer that is still not MCP", async () => {
+      // The advisory warning is broader than the blocking rule applied when the url is first
+      // entered: a 403 from a WAF is not certain enough to reject the url, but it is worth
+      // saying out loud once the scaffold exists.
+      vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(true);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readJSON").mockResolvedValue({
+        schema_version: "v1",
+        functions: [],
+        runtimes: [],
+      });
+      vi.spyOn(fs, "writeJSON").mockResolvedValue();
+      vi.spyOn(fs, "readFile").mockResolvedValue(
+        "provision:\n  - uses: teamsApp/create\n    writeToEnvironmentFile:\n      teamsAppId: TEAMS_APP_ID\n" as any
+      );
+      vi.spyOn(fs, "writeFile").mockResolvedValue();
+
+      vi.spyOn(mcpToolFetcher, "probeMCPServerAuth").mockResolvedValue({
+        requiresAuth: false,
+        endpointStatus: "notEndpoint",
+        responseStatus: 403,
+      });
+
+      const inputs: Inputs = {
+        platform: Platform.VSCode,
+        [QuestionNames.MCPForDAServerUrl]: "https://waf.example.com/api",
+        [QuestionNames.MCPForDAAuthType]: "oauth",
+      };
+
+      const res = await generatorHelper.generateForMCPForDA(testDestinationPath, inputs);
+
+      assert.isTrue(res.isOk());
+      if (res.isOk()) {
+        assert.isDefined(res.value.warnings?.find((w) => w.type === "mcpServerUrlNotAnEndpoint"));
+      }
+    });
+
+    it("DT auth: stays quiet when the probe learned nothing about the url", async () => {
+      // A timeout or 5xx says the network misbehaved, not that the url is wrong. Warning here
+      // would train developers to ignore the message.
+      vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(true);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readJSON").mockResolvedValue({
+        schema_version: "v1",
+        functions: [],
+        runtimes: [],
+      });
+      vi.spyOn(fs, "writeJSON").mockResolvedValue();
+      vi.spyOn(fs, "readFile").mockResolvedValue(
+        "provision:\n  - uses: teamsApp/create\n    writeToEnvironmentFile:\n      teamsAppId: TEAMS_APP_ID\n" as any
+      );
+      vi.spyOn(fs, "writeFile").mockResolvedValue();
+
+      vi.spyOn(mcpToolFetcher, "probeMCPServerAuth").mockResolvedValue({
+        requiresAuth: false,
+        endpointStatus: "undetermined",
+      });
+
+      const inputs: Inputs = {
+        platform: Platform.VSCode,
+        [QuestionNames.MCPForDAServerUrl]: "https://down.example.com/mcp",
+        [QuestionNames.MCPForDAAuthType]: "oauth",
+      };
+
+      const res = await generatorHelper.generateForMCPForDA(testDestinationPath, inputs);
+
+      assert.isTrue(res.isOk());
+      if (res.isOk()) {
+        assert.isUndefined(res.value.warnings?.find((w) => w.type === "mcpServerUrlNotAnEndpoint"));
+      }
+    });
+
     it("flag OFF with auth type uses legacy static path (no DT)", async () => {
       // With TEAMSFX_MCP_FOR_DA_DT off, the dispatcher must keep the legacy
       // static-tools behavior even when an auth-type answer is present:
@@ -2177,6 +2298,93 @@ describe("helper", async () => {
         assert.isTrue(
           res.value.warnings!.some((w) => w.type === "mcpAuthDcrWellKnownUrlPlaceholder")
         );
+      }
+    });
+
+    it("DT auth: oauth url placeholders used adds warning", async () => {
+      vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(true);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readJSON").mockResolvedValue({
+        schema_version: "v1",
+        functions: [],
+        runtimes: [],
+      });
+      vi.spyOn(fs, "writeJSON").mockResolvedValue();
+      vi.spyOn(fs, "readFile").mockResolvedValue(
+        "provision:\n  - uses: teamsApp/create\n    writeToEnvironmentFile:\n      teamsAppId: TEAMS_APP_ID\n" as any
+      );
+      vi.spyOn(fs, "writeFile").mockResolvedValue();
+      vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
+
+      // Discovery produced neither endpoint, so `oauth/register` is written with fill-in
+      // placeholders and the developer has to be told before provision fails on them.
+      vi.spyOn(
+        mcpAuthScaffolderDeps.mcpAuthScaffolderDeps,
+        "resolveMCPOAuthMetadata"
+      ).mockResolvedValue({});
+
+      const inputs: Inputs = {
+        platform: Platform.VSCode,
+        [QuestionNames.MCPForDAServerUrl]: "https://secure.example.com/mcp",
+        [QuestionNames.MCPForDAAuthType]: "oauth",
+        [QuestionNames.MCPForDAAuthMetadataUrl]:
+          "https://auth.example.com/.well-known/oauth-authorization-server",
+      };
+
+      const res = await generatorHelper.generateForMCPForDA(testDestinationPath, inputs);
+
+      assert.isTrue(res.isOk());
+      if (res.isOk()) {
+        assert.isTrue(res.value.warnings!.some((w) => w.type === "mcpAuthOAuthUrlPlaceholder"));
+      }
+    });
+
+    it("static tools path: oauth url placeholders used adds warning", async () => {
+      // Same gap on the legacy (DT flag off) path, which injects the action from a different
+      // call site and would otherwise leave the placeholders unannounced.
+      vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "readJSON").mockResolvedValue({
+        schema_version: "v1",
+        functions: [],
+        runtimes: [],
+      });
+      vi.spyOn(fs, "writeJSON").mockResolvedValue();
+      vi.spyOn(fs, "readFile").mockResolvedValue(
+        "provision:\n  - uses: teamsApp/create\n    writeToEnvironmentFile:\n      teamsAppId: TEAMS_APP_ID\n" as any
+      );
+      vi.spyOn(fs, "writeFile").mockResolvedValue();
+      vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
+
+      vi.spyOn(
+        mcpAuthScaffolderDeps.mcpAuthScaffolderDeps,
+        "resolveMCPOAuthMetadata"
+      ).mockResolvedValue({});
+
+      const inputs: Inputs = {
+        platform: Platform.CLI,
+        [QuestionNames.MCPForDAServerUrl]: "https://secure.example.com/mcp",
+        [QuestionNames.MCPForDAServerName]: "testServer",
+        [QuestionNames.MCPForDAAvailableTools]: [
+          {
+            name: "testServer_secureTool",
+            description: "Secure tool",
+            inputSchema: { type: "object" },
+            tags: [],
+          },
+        ],
+        [QuestionNames.MCPForDAPreFetchTools]: ["testServer_secureTool"],
+        [QuestionNames.MCPForDAAuth]: "OAuthPluginVault",
+        [QuestionNames.MCPForDAAuthType]: "oauth",
+        [QuestionNames.MCPForDAAuthMetadataUrl]:
+          "https://auth.example.com/.well-known/oauth-authorization-server",
+      };
+
+      const res = await generatorHelper.generateForMCPForDA(testDestinationPath, inputs);
+
+      assert.isTrue(res.isOk());
+      if (res.isOk()) {
+        assert.isTrue(res.value.warnings!.some((w) => w.type === "mcpAuthOAuthUrlPlaceholder"));
       }
     });
   });

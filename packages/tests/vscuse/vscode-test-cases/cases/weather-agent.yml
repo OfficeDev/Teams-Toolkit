@@ -1,0 +1,195 @@
+version: 1
+
+cases:
+  - id: weather-ts-azure-openai-remote-preview
+    scenarioId: SCN-CREATE-WEATHER-01
+    steps:
+      [
+        scaffold-weather-ts-azure-openai,
+        check-weather-ts,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote,
+        open-app,
+        check-weather-chat,
+      ]
+
+  # No chat check: CI has no funded openai.com key, so this case covers the
+  # JavaScript/OpenAI scaffold and lifecycle only. Real completions are verified
+  # by the Azure OpenAI case above.
+  - id: weather-js-openai-remote-preview
+    scenarioId: SCN-CREATE-WEATHER-03
+    steps:
+      [
+        scaffold-weather-js-openai,
+        check-weather-js,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote,
+        open-app,
+      ]
+
+steps:
+  scaffold-weather-ts-azure-openai:
+    type: scaffold
+    with:
+      template: weather-agent
+      answers:
+        - question: projectType
+          value: custom-engine-agent-type
+        - question: customEngineAgent
+          value: weather-agent
+        - question: llmService
+          value: llm-service-azure-openai
+        - question: azureOpenAIKey
+          type: text
+          value: "${{secret:AZURE_OPENAI_API_KEY}}"
+        - question: azureOpenAIEndpoint
+          type: text
+          value: "${{env:AZURE_OPENAI_ENDPOINT}}"
+        - question: azureOpenAIDeploymentName
+          type: text
+          value: "${{env:AZURE_OPENAI_MODEL}}"
+        - question: language
+          value: typescript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-weather-ts:
+    type: checks
+    with:
+      - type: file
+        path: m365agents.yml
+        expect:
+          exists: true
+          contains: ["version: v1.11", "provision:", "deploy:"]
+          notContains: ["oauth/register", "dcr/register"]
+      - type: file
+        path: src/index.ts
+        expect:
+          exists: true
+      - type: file
+        path: src/agent.ts
+        expect:
+          exists: true
+      - type: file
+        path: src/tools/getWeatherTool.ts
+        expect:
+          exists: true
+      - type: file
+        path: package.json
+        expect:
+          exists: true
+      - type: file
+        path: infra/azure.bicep
+        expect:
+          exists: true
+      - type: file
+        path: appPackage/manifest.json
+        expect:
+          contains: ['"manifestVersion": "1.29"']
+
+  scaffold-weather-js-openai:
+    type: scaffold
+    with:
+      template: weather-agent
+      answers:
+        - question: projectType
+          value: custom-engine-agent-type
+        - question: customEngineAgent
+          value: weather-agent
+        - question: llmService
+          value: llm-service-openai
+        - question: openAIKey
+          type: text
+          value: "${{secret:OPENAI_API_KEY}}"
+        - question: language
+          value: javascript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-weather-js:
+    type: checks
+    with:
+      - type: file
+        path: src/index.js
+        expect:
+          exists: true
+      - type: file
+        path: src/agent.js
+        expect:
+          exists: true
+      - type: file
+        path: src/tools/getWeatherTool.js
+        expect:
+          exists: true
+      - type: file
+        path: package.json
+        expect:
+          contains: ['"start"', '"dev:teamsfx"']
+      - type: file
+        path: src/index.ts
+        expect:
+          exists: false
+
+  login-azure:
+    type: login
+    with:
+      type: azure
+      account: "${{env:AZURE_ACCOUNT_NAME}}"
+      password: "${{secret:AZURE_ACCOUNT_PASSWORD}}"
+
+  login-m365:
+    type: login
+    with:
+      type: m365
+      account: "${{env:M365_ACCOUNT_NAME}}"
+      password: "${{secret:M365_ACCOUNT_PASSWORD}}"
+
+  # The weather agent is a custom engine agent, so its manifest declares
+  # copilotAgents.customEngineAgents instead of declarativeAgents. The toolkit
+  # therefore offers remote environments only, leaving dev as the single
+  # selectable environment, and auto-selects it for every lifecycle command.
+  provision-arm:
+    type: provision
+    with:
+      environment: none
+      arm:
+        targetResourceGroupName: "+ New resource group"
+        newResourceGroupName: "${{var:app_name}}-rg"
+        newResourceGroupLocation: "${{env:RESOURCE_GROUP_REGION}}"
+
+  deploy:
+    type: deploy
+    with:
+      environment: none
+
+  f5-teams-remote:
+    type: target
+    with:
+      profile: "Launch Remote in Teams (Chrome)"
+
+  open-app:
+    type: open
+    with:
+      kind: app
+      destination: chat
+
+  check-weather-chat:
+    type: checks
+    with:
+      - type: chat
+        send: What is the weather in Seattle?
+        expect:
+          replied: true
+          contains: [Seattle]

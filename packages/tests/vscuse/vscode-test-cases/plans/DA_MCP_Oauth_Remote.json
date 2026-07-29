@@ -405,7 +405,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": ["dhash:512:384:0:20:f0b0949492b17075"],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_6ed8712c",

@@ -195,9 +195,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:1b08f0f9e1e8e6e4"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_d124da4f",
@@ -365,7 +363,7 @@
         "x": 691,
         "y": 682
       },
-      "description": "Click the purple button with the English flag icon at the bottom of the \"Choose where to get started\" popup in Microsoft Teams web interface.",
+      "description": "Click the purple \"Go\" button at the bottom of the \"Choose where to get started\" popup in Microsoft Teams web interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

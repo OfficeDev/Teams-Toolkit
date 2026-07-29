@@ -42,7 +42,7 @@
     "@apidevtools/swagger-parser": "^10.1.1",
     "@microsoft/app-manifest": "workspace:*",
     "fs-extra": "^11.2.0",
-    "js-yaml": "^4.1.0",
+    "js-yaml": "^4.3.0",
     "openapi-types": "^7.2.3",
     "swagger2openapi": "^7.0.8"
   },

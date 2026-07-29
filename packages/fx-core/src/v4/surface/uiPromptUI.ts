@@ -107,7 +107,7 @@ export function createUiPromptUI(ui: UserInteraction): PromptUI {
             question.placeholder
           ),
           prompt: localizePrefixedText(question.keyPrefix, "prompt", question.prompt),
-          default: question.default,
+          default: typeof question.default === "string" ? question.default : undefined,
           options: toSurfaceOptionsSource(options),
           returnObject: false,
           skipSingleOption: question.skipSingleOption,
@@ -136,7 +136,7 @@ export function createUiPromptUI(ui: UserInteraction): PromptUI {
             question.placeholder
           ),
           prompt: localizePrefixedText(question.keyPrefix, "prompt", question.prompt),
-          default: question.default,
+          default: typeof question.default === "string" ? question.default : undefined,
           password: question.password,
           step,
           validation,
@@ -160,7 +160,7 @@ export function createUiPromptUI(ui: UserInteraction): PromptUI {
             question.placeholder
           ),
           prompt: localizePrefixedText(question.keyPrefix, "prompt", question.prompt),
-          default: question.default,
+          default: typeof question.default === "string" ? question.default : undefined,
           filters: question.filters,
           step,
           validation,
@@ -231,7 +231,7 @@ export function createUiPromptUI(ui: UserInteraction): PromptUI {
             question.placeholder
           ),
           prompt: localizePrefixedText(question.keyPrefix, "prompt", question.prompt),
-          default: question.default,
+          default: typeof question.default === "string" ? question.default : undefined,
           step,
           validation,
         };
@@ -260,6 +260,11 @@ export function createUiPromptUI(ui: UserInteraction): PromptUI {
         title: localizePrefixedText(question.keyPrefix, "title", question.title) ?? question.name,
         placeholder: localizePrefixedText(question.keyPrefix, "placeholder", question.placeholder),
         prompt: localizePrefixedText(question.keyPrefix, "prompt", question.prompt),
+        default: Array.isArray(question.default)
+          ? question.default
+          : question.default === undefined
+            ? undefined
+            : [question.default],
         options: toSurfaceOptionsSource(options),
         returnObject: false,
         skipSingleOption: question.skipSingleOption,

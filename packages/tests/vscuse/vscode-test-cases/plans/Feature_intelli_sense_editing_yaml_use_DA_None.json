@@ -268,7 +268,7 @@
         "x": 757,
         "y": 417
       },
-      "description": "Click at the end of the comment line \"# Write the information of created resources into environment file(s)\" in the \"m365agents.yml\" file editor within Visual Studio Code.",
+      "description": "Click at the end of the comment line \"# the specified environment variable(s).\" in the \"m365agents.yml\" file editor within Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

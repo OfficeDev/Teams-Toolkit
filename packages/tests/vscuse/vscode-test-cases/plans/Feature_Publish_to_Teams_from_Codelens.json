@@ -292,7 +292,7 @@
         "x": 399,
         "y": 413
       },
-      "description": "Click the \"publish:\" keyword in the m365agents.yml file within Visual Studio Code, focusing on the YAML workflow configuration for Teams app deployment. The crosshair marks the exact position, highlighting the start of the publish job definition under the \"Triggered when 'teamsapp publish' is executed\" section.",
+      "description": "Click the \"Publish\" CodeLens link above the \"publish:\" job in the m365agents.yml file within Visual Studio Code to trigger the Teams app publish command.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

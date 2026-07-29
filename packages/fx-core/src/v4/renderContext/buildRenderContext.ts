@@ -34,16 +34,15 @@ export function buildRenderContext(
   port: ExpressionRuntimePort,
   declaredKeys: string[] = []
 ): Result<RenderVars, FxError> {
-  // Seed declared keys with NULL_VALUE; omit string[] answers from the scalar evaluator scope.
+  // Seed declared keys with NULL_VALUE. A string[] answer enters the scalar scope
+  // as a comma-joined string so membership fns (e.g. contains) can test it.
   const scope: Scope = {};
   for (const key of declaredKeys) {
     scope[key] = NULL_VALUE;
   }
   Object.assign(scope, callerFloor);
   for (const [key, value] of Object.entries(answers)) {
-    if (!Array.isArray(value)) {
-      scope[key] = value;
-    }
+    scope[key] = Array.isArray(value) ? value.join(",") : value;
   }
   // Seed = raw answers plus derived values; the caller floor is overlaid downstream.
   const renderVars: RenderVars = { ...answers };

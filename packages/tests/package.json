@@ -12,6 +12,8 @@
     "test:e2e:parallel": "mocha --parallel --exit --reporter @mochajs/json-file-reporter \"src/e2e/**/*.tests.ts\"",
     "test:e2e:smoke": "mocha --exit --reporter @mochajs/json-file-reporter \"src/e2e/smoke/*.tests.ts\"",
     "test:e2e:others": "mocha --exit --reporter @mochajs/json-file-reporter \"src/e2e/{,!(smoke)}/*.tests.ts\"",
+    "generate:vscuse-cases": "node -e \"require('./vscuse/vscode-test-cases/engine/index.cjs').setupGeneratedPlans().then((result) => { if (!result.ok) { console.error(JSON.stringify(result.diagnostics, null, 2)); process.exitCode = 1; } })\"",
+    "test:vscuse-engine": "node --test vscuse/vscode-test-cases/engine/*.test.cjs vscuse/vscode-test-cases/components/lifecycle-components.test.cjs",
     "precommit": "lint-staged"
   },
   "devDependencies": {
@@ -64,7 +66,7 @@
     "tslib": "^2.3.1",
     "typescript": "~5.9.0",
     "typescript-eslint": "^8.56.0",
-    "uuid": "^8.3.2",
+    "uuid": "^11.1.1",
     "vscode-extension-tester": "^8.2.0"
   },
   "dependencies": {
@@ -83,13 +85,13 @@
     "form-data": "4.0.0",
     "fs-extra": "^11.3.2",
     "is-wsl": "^2.2.0",
-    "js-yaml": "^4.1.0",
+    "js-yaml": "^4.3.0",
     "md5": "^2.3.0",
     "querystring": "^0.2.1",
     "semver": "^7.5.2",
     "strip-bom": "4",
     "tmp": "^0.2.5",
-    "yaml": "^2.2.2"
+    "yaml": "^2.8.3"
   },
   "optionalDependencies": {
     "keytar": "^7.7.0"

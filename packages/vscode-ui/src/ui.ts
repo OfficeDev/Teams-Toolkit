@@ -321,7 +321,8 @@ export class VSCodeUI implements UserInteraction {
           const timeoutPromise = new Promise((resolve) => {
             setTimeout(resolve, 500, this.localizer.loadingOptionsTimeoutMessage());
           });
-          Promise.race([loadDynamicData(), timeoutPromise])
+          const loadPromise = loadDynamicData();
+          Promise.race([loadPromise, timeoutPromise])
             .then((value) => {
               if (value != this.localizer.loadingOptionsTimeoutMessage()) {
                 if (config.skipSingleOption && options.length === 1) {
@@ -336,9 +337,7 @@ export class VSCodeUI implements UserInteraction {
                 }
               } else {
                 quickPick.show();
-                loadDynamicData()
-                  .then(onDataLoaded)
-                  .catch((e) => resolve(err(this.assembleError(e))));
+                loadPromise.then(onDataLoaded).catch((e) => resolve(err(this.assembleError(e))));
               }
             })
             .catch((e) => resolve(err(this.assembleError(e))));
@@ -505,7 +504,8 @@ export class VSCodeUI implements UserInteraction {
           const timeoutPromise = new Promise((resolve) => {
             setTimeout(resolve, 500, this.localizer.loadingOptionsTimeoutMessage());
           });
-          Promise.race([loadDynamicData(), timeoutPromise])
+          const loadPromise = loadDynamicData();
+          Promise.race([loadPromise, timeoutPromise])
             .then((value) => {
               if (value != this.localizer.loadingOptionsTimeoutMessage()) {
                 if (config.skipSingleOption && options.length === 1) {
@@ -520,9 +520,7 @@ export class VSCodeUI implements UserInteraction {
                 }
               } else {
                 quickPick.show();
-                loadDynamicData()
-                  .then(onDataLoaded)
-                  .catch((e) => resolve(err(this.assembleError(e))));
+                loadPromise.then(onDataLoaded).catch((e) => resolve(err(this.assembleError(e))));
               }
             })
             .catch((e) => resolve(err(this.assembleError(e))));
@@ -1058,15 +1056,15 @@ export class VSCodeUI implements UserInteraction {
         let promise: Thenable<string | undefined>;
         switch (level) {
           case "info": {
-            promise = window.showInformationMessage(message as string, option, ...items);
+            promise = window.showInformationMessage(message, option, ...items);
             break;
           }
           case "warn": {
-            promise = window.showWarningMessage(message as string, option, ...items);
+            promise = window.showWarningMessage(message, option, ...items);
             break;
           }
           case "error":
-            promise = window.showErrorMessage(message as string, option, ...items);
+            promise = window.showErrorMessage(message, option, ...items);
         }
         promise.then(
           (v) => {
@@ -1081,7 +1079,7 @@ export class VSCodeUI implements UserInteraction {
                 )
               );
           },
-          (error) => {}
+          () => {}
         );
       } catch (error) {
         resolve(err(this.assembleError(error)));

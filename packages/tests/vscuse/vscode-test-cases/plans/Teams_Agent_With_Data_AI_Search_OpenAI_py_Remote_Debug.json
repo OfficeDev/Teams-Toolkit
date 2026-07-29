@@ -51,7 +51,7 @@
         "x": 410,
         "y": 127
       },
-      "description": "Click the \"General Teams Agent\" dropdown option in the \"Teams Agent or App Using Teams AI Library\" menu.",
+      "description": "Click the \"Teams Agent with Data\" dropdown option.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -231,7 +231,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion no error message found.",
+      "description": "@assertion an error message found.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
