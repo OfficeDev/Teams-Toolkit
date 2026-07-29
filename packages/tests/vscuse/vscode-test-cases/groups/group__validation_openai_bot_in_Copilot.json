@@ -39,7 +39,7 @@
         "x": 340,
         "y": 373
       },
-      "description": "click message input box prepare for tying",
+      "description": "Click on the blank area above the \"${{var:app_name}}local\" agent title, near the top of the M365 Copilot chat page.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
