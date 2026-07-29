@@ -38,6 +38,7 @@ decision. The format for a new ADR is defined inline below under
 | ADR-0017 | [Named pipeline + step / actionTemplate whitelist](ADR-0017-named-pipeline-step-whitelist.md) | Accepted | [`scaffolding.create.proposal.md` §14](../scaffolding.create.proposal.md#14-adrs-this-proposal-will-be-decomposed-into) |
 | ADR-0018 | [`ScaffoldRuntime` + T1/T2/T3 test pyramid + design-first `descriptor.spec` gate (application of ADR-0013, not a competing tiering)](ADR-0018-scaffold-runtime-test-pyramid.md) | Accepted | [`scaffolding.create.proposal.md` §14](../scaffolding.create.proposal.md#14-adrs-this-proposal-will-be-decomposed-into) |
 | ADR-0019 | [Dual-stream scaffold telemetry (v3 verbatim + parallel `scaffold-v4-*` family)](ADR-0019-dual-stream-scaffold-telemetry.md) | Accepted | [`scaffolding.create.proposal.md` §14](../scaffolding.create.proposal.md#14-adrs-this-proposal-will-be-decomposed-into) |
+| ADR-0020 | [MCP server URL validity: when to check, and whether to block](ADR-0020-mcp-server-url-validity.md) | Accepted | [`mcp-remote-servers.md` §3](../external-dependencies/mcp-remote-servers.md#3-open-questions) |
 
 > **Reading order vs. numeric order.** The Index is in **numeric order** —
 > the immutable, reservation-ordered ADR id is the anchor for every forward
