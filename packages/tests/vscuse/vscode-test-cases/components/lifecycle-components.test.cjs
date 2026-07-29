@@ -139,6 +139,15 @@ test("VCB-62: account readiness waits out the toolkit's Signing in state", () =>
   }
 });
 
+test("VCB-63: the Copilot consent click resolves its target by OCR", () => {
+  const allowAction = render("browser/copilot/allow-action.json.tpl");
+  const click = allowAction.steps.find((step) => step.tool === "click");
+
+  assert.match(click.description, /the "Allow" button/);
+  assert.equal(click.tags.includes("ocr:true"), true);
+  assert.deepEqual(click.preconditions, []);
+});
+
 test("VCB-49: Ctrl+W is gated on the Welcome tab being the active editor", () => {
   const close = render("initialization/close-get-started-editor.json.tpl");
   const [assertActive, closeEditor, assertClosed] = close.steps;

@@ -521,7 +521,7 @@ test("VCB-34: DA API plugin from scratch compiles complete remote branches in au
       "@assertion a visible Visual Studio Code notification contains provision stage executed successfully.",
       "Click the Microsoft 365 Copilot message input.",
       "@assertion the Copilot action-consent Allow button is visible.",
-      "Click the Copilot action-consent Allow button.",
+      'Click the "Allow" button in the Microsoft 365 Copilot chat interface to grant the agent access.',
       "@assertion the Copilot action-consent prompt is no longer visible.",
       '@assertion the current assistant response contains "Oil Change".',
     ];

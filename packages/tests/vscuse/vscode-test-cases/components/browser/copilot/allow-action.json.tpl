@@ -36,23 +36,20 @@
         "x": 340,
         "y": 354
       },
-      "description": "Click the Copilot action-consent Allow button.",
+      "description": "Click the \"Allow\" button in the Microsoft 365 Copilot chat interface to grant the agent access.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": ["step_allowCopilotAction_assert_{{text:instanceSuffix}}"],
-      "preconditions": [
-        "dhash:340:354:16:5:000022a669682baa",
-        "dhash:340:354:96:5:018cac93939b4600",
-        "dhash:340:354:0:10:1595d29af0e2f0e6"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:browser",
         "host_surface:copilot",
         "entry_state:action-consent",
-        "action:allow"
+        "action:allow",
+        "ocr:true"
       ]
     },
     {
