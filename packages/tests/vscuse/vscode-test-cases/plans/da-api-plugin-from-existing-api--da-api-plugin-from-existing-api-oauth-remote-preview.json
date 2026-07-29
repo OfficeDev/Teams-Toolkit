@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 127,
+    "total_steps": 129,
     "name": "da-api-plugin-from-existing-api-oauth-remote-preview",
     "description": {
       "owner": "",
@@ -113,9 +113,11 @@
       "step_executeCommand_filter_cd7e35bb7_5_1",
       "step_executeCommand_assertCommand_cd7e35bb7_5_1",
       "step_executeCommand_execute_cd7e35bb7_5_1",
-      "step_filterOption_filter_cd7e35bb7_5_2",
-      "step_filterOption_assertOption_cd7e35bb7_5_2",
-      "step_filterOption_confirm_cd7e35bb7_5_2",
+      "step_filterSecondOption_filter_cd7e35bb7_5_2",
+      "step_filterSecondOption_assertResults_cd7e35bb7_5_2",
+      "step_filterSecondOption_next_cd7e35bb7_5_2",
+      "step_filterSecondOption_assertOption_cd7e35bb7_5_2",
+      "step_filterSecondOption_confirm_cd7e35bb7_5_2",
       "step_textInput_assertQuestion_cd7e35bb7_5_3",
       "step_textInput_input_cd7e35bb7_5_3",
       "step_textInput_confirm_cd7e35bb7_5_3",
@@ -2312,7 +2314,7 @@
       ]
     },
     {
-      "step_id": "step_filterOption_filter_cd7e35bb7_5_2",
+      "step_id": "step_filterSecondOption_filter_cd7e35bb7_5_2",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -2334,17 +2336,17 @@
       ]
     },
     {
-      "step_id": "step_filterOption_assertOption_cd7e35bb7_5_2",
+      "step_id": "step_filterSecondOption_assertResults_cd7e35bb7_5_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the option Preview in Copilot (Chrome) is visible and selectable in the filtered option picker.",
+      "description": "@assertion the filtered option picker shows Preview Local in Copilot (Chrome) as the highlighted first result and Preview in Copilot (Chrome) as the second selectable result.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_filter_cd7e35bb7_5_2"
+        "step_filterSecondOption_filter_cd7e35bb7_5_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2355,19 +2357,62 @@
       ]
     },
     {
-      "step_id": "step_filterOption_confirm_cd7e35bb7_5_2",
+      "step_id": "step_filterSecondOption_next_cd7e35bb7_5_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
-        "key": "enter"
+        "key": "down"
       },
-      "description": "Press Enter to confirm the filtered option.",
+      "description": "Press Down to highlight the second filtered option.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_assertOption_cd7e35bb7_5_2"
+        "step_filterSecondOption_assertResults_cd7e35bb7_5_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_filterSecondOption_assertOption_cd7e35bb7_5_2",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the option Preview in Copilot (Chrome) is highlighted in the filtered option picker.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_filterSecondOption_next_cd7e35bb7_5_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_filterSecondOption_confirm_cd7e35bb7_5_2",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the highlighted filtered option.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_filterSecondOption_assertOption_cd7e35bb7_5_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2387,7 +2432,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_confirm_cd7e35bb7_5_2"
+        "step_filterSecondOption_confirm_cd7e35bb7_5_2"
       ],
       "preconditions": [],
       "postconditions": [],

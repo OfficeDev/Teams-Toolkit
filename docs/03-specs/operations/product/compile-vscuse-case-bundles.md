@@ -120,6 +120,7 @@ steps:
     type: target
     with:
       profile: "Launch Remote in Teams (Chrome)"
+      profileSelection: first
 
   open-app:
     type: open
@@ -233,7 +234,9 @@ steps:
           notContains: ["oauth/register"]
   remote-preview:
     type: target
-    with: { profile: "Launch Remote in Teams (Chrome)" }
+    with:
+      profile: "Launch Remote in Teams (Chrome)"
+      profileSelection: first
   open-app:
     type: open
     with: { kind: app, destination: chat }
@@ -362,8 +365,13 @@ The current Copilot target definition is:
 ```yaml
 remote-preview-da:
   type: target
-  with: { profile: "Preview in Copilot (Chrome)" }
+  with:
+    profile: "Preview in Copilot (Chrome)"
+    profileSelection: second
 ```
+
+`profileSelection` is the authored position of the intended profile after filtering. Every target
+declares `first` or `second`; the compiler does not derive that position from the scaffold template.
 
 An explicit open definition declares the semantic object and desired destination, not the current
 UI action:
@@ -1087,6 +1095,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-47 | Given any `login`, the sign-in adapter verifies the account in the ACCOUNTS section right after closing the browser, so no operation that follows starts with an account menu open over the window.                                                                                                                                                                                                                                    |
 | VCB-62 | Given any `login`, the account-readiness assertion retries for 180 seconds, because closing the browser leaves the toolkit exchanging tokens with a remote service and the ACCOUNTS section shows `Microsoft 365: Signing in...` until that exchange finishes.                                                                                                                                                                         |
 | VCB-63 | Given a Copilot `chat` check, every click the compiler emits into the conversation column names its control's on-screen text in the description, is tagged `ocr:true`, and declares no visual preconditions, because a previewed agent opens with the navigation rail collapsed and that column, and every control in it, sits left of where the recordings captured it.                                                               |
+| VCB-64 | Given a target, its case must explicitly declare `profileSelection: first` or `profileSelection: second`; compilation uses only that declaration to choose the initially highlighted result or move to and assert the second result before confirming, rejects a missing or profile-incompatible selection, and never infers picker order from the scaffold template.                                                                  |
 | VCB-48 | Given any executed command, both Command Palette assertions name the `>` the palette keeps in its input box, so neither is satisfied by another quick pick that VS Code draws with the same frame.                                                                                                                                                                                                                                     |
 | VCB-49 | Given `scaffold`, the close component asserts that the tab labeled `Welcome` showing the Build a Declarative Agent walkthrough is the active editor tab before pressing `Ctrl+W`, because that shortcut closes the window when no editor is open, the preceding settled assertion only claims the editor is visible, and no tab is ever labeled Get Started.                                                                           |
 | VCB-50 | Given a `multiSelect` answer, the emitted component types no filter text, presses no arrow key, and names no selection count, because the prompt lists whatever the resource behind the earlier answers exposes and neither the option set nor its order is a toolkit-owned invariant.                                                                                                                                                 |

@@ -33,8 +33,10 @@ Authoring these fixtures exposed six gaps in the first contract draft:
    scopes; Entra SSO asks only for client ID; None asks no credential questions. Cases author these
    prompted answers in their observed order; the semantic adapter resolves their visible UI labels.
 5. Local debug, remote preview, and Agents Playground all start through VS Code F5. A target therefore
-   declares the exact launch title visible after template rendering. The semantic adapter maps that
-   authored title to lifecycle prerequisites and reusable UI components.
+   declares the exact launch title visible after template rendering and `profileSelection: first` or
+   `profileSelection: second` for its position after filtering. The semantic adapter maps those
+   authored values to lifecycle prerequisites and reusable UI components without inferring picker
+   order from the scaffold template.
 6. F5 completion and experience activation are distinct failure domains. A target starts its launch
    profile; an explicit `open` declares whether it activates an app or agent and whether it must
    converge to chat or page readiness. The current Teams adapter handles a fresh Add/Open path;

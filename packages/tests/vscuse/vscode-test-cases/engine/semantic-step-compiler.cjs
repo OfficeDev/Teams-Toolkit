@@ -250,6 +250,9 @@ const targetAdapters = {
   "Launch Remote in Teams (Chrome)": {
     host: "teams",
     open: { adapter: "teams-add", destination: "chat", kind: "app" },
+    profileSelections: {
+      first: { component: "quick-input/filter-option.json.tpl" },
+    },
     readySubject:
       "the Microsoft Teams app details page for an app whose name starts with ${{var:app_name}} is visible",
     requires: ["login:azure", "login:m365", "provision", "deploy"],
@@ -261,6 +264,13 @@ const targetAdapters = {
     },
     host: "copilot",
     open: { adapter: "ready", destination: "chat", kind: "agent" },
+    profileSelections: {
+      first: { component: "quick-input/filter-option.json.tpl" },
+      second: {
+        component: "quick-input/filter-second-option.json.tpl",
+        initialOptionLabel: "Preview Local in Copilot (Chrome)",
+      },
+    },
     readySubject:
       "an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot",
     requires: ["login:m365", "provision"],
@@ -870,10 +880,29 @@ function createSemanticStepCompiler() {
       }),
     );
     if (error) return error;
+    const profileSelectionId = definition.with?.profileSelection;
+    if (profileSelectionId === undefined) {
+      return failure(
+        "VCB_TARGET_PROFILE_SELECTION_REQUIRED",
+        "The target must declare which filtered launch profile to select.",
+      );
+    }
+    if (
+      typeof profileSelectionId !== "string" ||
+      !Object.hasOwn(profile.profileSelections, profileSelectionId)
+    ) {
+      return failure(
+        "VCB_TARGET_PROFILE_SELECTION_UNKNOWN",
+        "The target profile selection is not supported by the semantic adapter.",
+      );
+    }
+    const profileSelection = profile.profileSelections[profileSelectionId];
+    const { component, ...profileSelectionValues } = profileSelection;
     error = append(
       output,
-      render(state, "quick-input/filter-option.json.tpl", {
+      render(state, component, {
         optionLabel: profileTitle,
+        ...profileSelectionValues,
       }),
     );
     if (error) return error;

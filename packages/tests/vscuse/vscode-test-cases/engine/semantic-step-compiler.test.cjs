@@ -688,6 +688,52 @@ test("existing API cases preserve legacy authentication variants", async () => {
   assert.equal(readinessIndex < signInIndex, true);
 });
 
+test("existing API remote previews validate the Copilot action response", async () => {
+  const result = await compileFixture(
+    "da-api-plugin-from-existing-api.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const plansByCase = new Map(
+    result.value.map((generated) => [generated.caseId, generated.plan]),
+  );
+  const caseIds = [
+    "da-api-plugin-from-existing-api-no-auth-remote-preview",
+    "da-api-plugin-from-existing-api-api-key-remote-preview",
+    "da-api-plugin-from-existing-api-bearer-remote-preview",
+  ];
+
+  for (const caseId of caseIds) {
+    const plan = plansByCase.get(caseId);
+    assert.notEqual(plan, undefined, caseId);
+    assert.equal(
+      plan.steps.filter(
+        (step) =>
+          step.tool === "type_text" &&
+          step.parameters.text ===
+            "show repair records assigned to karin blair",
+      ).length,
+      1,
+      caseId,
+    );
+    assert.equal(
+      plan.steps.some((step) =>
+        step.description.includes("action-consent Allow button"),
+      ),
+      true,
+      caseId,
+    );
+    assert.equal(
+      plan.steps.filter((step) =>
+        step.tags.includes("action:assert-chat-response"),
+      ).length,
+      2,
+      caseId,
+    );
+  }
+});
+
 test("existing API provision credentials require protected expressions", async () => {
   const invalidApiKey = await compileFixture(
     "da-api-plugin-from-existing-api.yml",
@@ -866,7 +912,8 @@ test("Copilot target authenticates the browser before readiness", async (context
   );
   const profileIndex = plan.steps.findIndex(
     (step) =>
-      step.description === "Press Enter to confirm the filtered option.",
+      step.description ===
+      "Press Enter to confirm the highlighted filtered option.",
   );
   const accountIndex = plan.steps.findIndex(
     (step, index) =>
@@ -884,6 +931,7 @@ test("Copilot target authenticates the browser before readiness", async (context
   );
   const readinessDescription = plan.steps[readinessIndex]?.description ?? "";
 
+  assert.equal(profileIndex >= 0, true);
   assert.equal(profileIndex < accountIndex, true);
   assert.equal(accountIndex < passwordIndex, true);
   assert.equal(passwordIndex < readinessIndex, true);
@@ -896,6 +944,84 @@ test("Copilot target authenticates the browser before readiness", async (context
   assert.doesNotMatch(readinessDescription, /\}\}local/);
   assert.doesNotMatch(readinessDescription, /\}\}dev/);
   assert.doesNotMatch(readinessDescription, /is ready is ready/);
+});
+
+test("VCB-64: target profile selection follows the explicit case declaration", async () => {
+  const existingApiResult = await compileFixture(
+    "da-api-plugin-from-existing-api.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(existingApiResult.ok, true);
+  const existingApiPlan = existingApiResult.value.find(
+    (generated) =>
+      generated.caseId ===
+      "da-api-plugin-from-existing-api-api-key-remote-preview",
+  ).plan;
+  const existingApiFilterIndex = existingApiPlan.steps.findIndex(
+    (step) =>
+      step.tool === "type_text" &&
+      step.parameters.text === "Preview in Copilot (Chrome)",
+  );
+  assert.equal(existingApiFilterIndex >= 0, true);
+  const existingApiProfileSteps = existingApiPlan.steps.slice(
+    existingApiFilterIndex,
+    existingApiFilterIndex + 5,
+  );
+  assert.deepEqual(
+    existingApiProfileSteps.map((step) => step.tool),
+    ["type_text", "", "key_press", "", "key_press"],
+  );
+  assert.equal(existingApiProfileSteps[2].parameters.key, "down");
+  assert.match(
+    existingApiProfileSteps[3].description,
+    /Preview in Copilot \(Chrome\).*highlighted/,
+  );
+  assert.equal(existingApiProfileSteps[4].parameters.key, "enter");
+
+  const mcpResult = await compileFixture(
+    "da-mcp-server.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(mcpResult.ok, true);
+  const mcpPlan = mcpResult.value[0].plan;
+  const mcpFilterIndex = mcpPlan.steps.findIndex(
+    (step) =>
+      step.tool === "type_text" &&
+      step.parameters.text === "Preview in Copilot (Chrome)",
+  );
+  assert.equal(mcpFilterIndex >= 0, true);
+  const mcpProfileSteps = mcpPlan.steps.slice(
+    mcpFilterIndex,
+    mcpFilterIndex + 3,
+  );
+  assert.deepEqual(
+    mcpProfileSteps.map((step) => step.tool),
+    ["type_text", "", "key_press"],
+  );
+  assert.equal(mcpProfileSteps[2].parameters.key, "enter");
+
+  const missingSelection = await compileFixture(
+    "da-api-plugin-from-existing-api.yml",
+    (sourceText) =>
+      sourceText.replace(/\n      profileSelection: (first|second)/, ""),
+  );
+  assert.equal(missingSelection.ok, false);
+  assert.equal(
+    missingSelection.diagnostics[0].code,
+    "VCB_TARGET_PROFILE_SELECTION_REQUIRED",
+  );
+
+  const unsupportedSelection = await compileFixture(
+    "da-api-plugin-from-existing-api.yml",
+    (sourceText) =>
+      sourceText.replace("profileSelection: second", "profileSelection: third"),
+  );
+  assert.equal(unsupportedSelection.ok, false);
+  assert.equal(
+    unsupportedSelection.diagnostics[0].code,
+    "VCB_TARGET_PROFILE_SELECTION_UNKNOWN",
+  );
 });
 
 test("semantic adapter rejects provision inputs that the template does not prompt for", async () => {

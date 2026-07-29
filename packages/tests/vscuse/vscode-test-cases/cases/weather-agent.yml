@@ -178,6 +178,7 @@ steps:
     type: target
     with:
       profile: "Launch Remote in Teams (Chrome)"
+      profileSelection: first
 
   open-app:
     type: open
