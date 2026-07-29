@@ -519,7 +519,7 @@ test("VCB-34: DA API plugin from scratch compiles complete remote branches in au
     );
     const runtimeFlow = [
       "@assertion a visible Visual Studio Code notification contains provision stage executed successfully.",
-      "Click the Microsoft 365 Copilot message input.",
+      'Click the "Message ${{var:app_name}}" input box in the Microsoft 365 Copilot web application.',
       "@assertion the Copilot action-consent Allow button is visible.",
       'Click the "Allow" button in the Microsoft 365 Copilot chat interface to grant the agent access.',
       "@assertion the Copilot action-consent prompt is no longer visible.",

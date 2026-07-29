@@ -37,7 +37,7 @@
         "x": 416,
         "y": 369
       },
-      "description": "Click the Microsoft 365 Copilot message input.",
+      "description": "Click the \"Message ${{var:app_name}}\" input box in the Microsoft 365 Copilot web application.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -45,17 +45,14 @@
       "depends_on": [
         "step_sendCopilotMessage_assertInput_{{text:instanceSuffix}}"
       ],
-      "preconditions": [
-        "dhash:416:369:16:5:0000000000000000",
-        "dhash:416:369:96:5:00200060f0002000",
-        "dhash:416:369:0:10:1391e7f4d2d3e4e0"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:browser",
         "host_surface:copilot",
         "entry_state:chat-ready",
-        "action:send-message"
+        "action:send-message",
+        "ocr:true"
       ]
     },
     {

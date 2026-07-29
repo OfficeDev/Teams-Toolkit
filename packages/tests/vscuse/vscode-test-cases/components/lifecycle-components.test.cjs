@@ -139,13 +139,22 @@ test("VCB-62: account readiness waits out the toolkit's Signing in state", () =>
   }
 });
 
-test("VCB-63: the Copilot consent click resolves its target by OCR", () => {
-  const allowAction = render("browser/copilot/allow-action.json.tpl");
-  const click = allowAction.steps.find((step) => step.tool === "click");
+test("VCB-63: Copilot conversation clicks resolve their target by OCR", () => {
+  for (const [relativePath, control] of [
+    ["browser/copilot/allow-action.json.tpl", '"Allow" button'],
+    [
+      "browser/copilot/send-message.json.tpl",
+      '"Message ${{var:app_name}}" input box',
+    ],
+  ]) {
+    const click = render(relativePath, {
+      message: "List all repairs",
+    }).steps.find((step) => step.tool === "click");
 
-  assert.match(click.description, /the "Allow" button/);
-  assert.equal(click.tags.includes("ocr:true"), true);
-  assert.deepEqual(click.preconditions, []);
+    assert.equal(click.description.includes(control), true);
+    assert.equal(click.tags.includes("ocr:true"), true);
+    assert.deepEqual(click.preconditions, []);
+  }
 });
 
 test("VCB-49: Ctrl+W is gated on the Welcome tab being the active editor", () => {

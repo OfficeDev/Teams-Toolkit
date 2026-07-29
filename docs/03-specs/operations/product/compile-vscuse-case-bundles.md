@@ -540,14 +540,17 @@ belongs to `send-message`, not `open`. The `allow-action` adapter is limited
 to the deterministic consent state reached after a capability-producing Copilot message; it is not
 a generic permission fallback.
 
-The consent click resolves its target with the runner's `ocr:true` tag rather than the recorded
+Every Copilot click resolves its target with the runner's `ocr:true` tag rather than the recorded
 coordinate alone, and carries no visual preconditions. Everything inside the Copilot conversation
 column is laid out relative to that column, and the column moves with the window width and with
-whether the left navigation rail is expanded. The recordings the component was derived from entered
-Copilot through the full chat surface with the rail expanded, while a previewed agent opens on its
-own scoped page with the rail collapsed, which puts the Allow button more than a hundred pixels to
-the left of where it was recorded. The recorded coordinate stays as the seed the runner overwrites,
-and the assertion that precedes the click is what waits for the prompt.
+whether the left navigation rail is expanded. The recordings these components were derived from
+entered Copilot through the full chat surface with the rail expanded, while a previewed agent opens
+on its own scoped page with the rail collapsed, which puts the Allow button more than a hundred
+pixels to the left of where it was recorded. The recorded coordinate stays as the seed the runner
+overwrites, and the assertion that precedes each click is what waits for its target. This follows
+the recordings themselves: the Copilot consent click was recorded with `ocr:true`, and
+`groups/group__debug_in_teams_remote.json` drops the hashes of a control whose surrounding screen
+varies rather than pinning one of its variants.
 
 ## Case Initialization Component Contract
 
@@ -1083,7 +1086,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-46 | Given a `login` that is not the first sign-in of its case, compilation selects the sign-in component whose entry state is the account picker the earlier sign-in leaves behind, and fails when the account has no recorded sign-in for that entry state.                                                                                                                                                                               |
 | VCB-47 | Given any `login`, the sign-in adapter verifies the account in the ACCOUNTS section right after closing the browser, so no operation that follows starts with an account menu open over the window.                                                                                                                                                                                                                                    |
 | VCB-62 | Given any `login`, the account-readiness assertion retries for 180 seconds, because closing the browser leaves the toolkit exchanging tokens with a remote service and the ACCOUNTS section shows `Microsoft 365: Signing in...` until that exchange finishes.                                                                                                                                                                         |
-| VCB-63 | Given `allowAction: true`, the consent click names the `Allow` button in its description, is tagged `ocr:true`, and declares no visual preconditions, because a previewed agent opens with the navigation rail collapsed and the Copilot conversation column, and every control in it, sits left of where the recordings captured it.                                                                                                  |
+| VCB-63 | Given a Copilot `chat` check, every click the compiler emits into the conversation column names its control's on-screen text in the description, is tagged `ocr:true`, and declares no visual preconditions, because a previewed agent opens with the navigation rail collapsed and that column, and every control in it, sits left of where the recordings captured it.                                                               |
 | VCB-48 | Given any executed command, both Command Palette assertions name the `>` the palette keeps in its input box, so neither is satisfied by another quick pick that VS Code draws with the same frame.                                                                                                                                                                                                                                     |
 | VCB-49 | Given `scaffold`, the close component asserts that the tab labeled `Welcome` showing the Build a Declarative Agent walkthrough is the active editor tab before pressing `Ctrl+W`, because that shortcut closes the window when no editor is open, the preceding settled assertion only claims the editor is visible, and no tab is ever labeled Get Started.                                                                           |
 | VCB-50 | Given a `multiSelect` answer, the emitted component types no filter text, presses no arrow key, and names no selection count, because the prompt lists whatever the resource behind the earlier answers exposes and neither the option set nor its order is a toolkit-owned invariant.                                                                                                                                                 |
