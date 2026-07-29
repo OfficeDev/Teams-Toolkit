@@ -689,6 +689,37 @@ test("VCB-65: existing API registration credentials are prompted only during pro
   assert.equal(readinessIndex < signInIndex, true);
 });
 
+test("VCB-66: Copilot browser authentication preserves the launch deep link and zoom", async () => {
+  const result = await compileFixture(
+    "da-api-plugin-from-existing-api.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  for (const generated of result.value) {
+    const steps = generated.plan.steps;
+    const confirmIndex = steps.findIndex((step) =>
+      step.step_id.includes("browserM365SignIn_confirmStaySignedIn"),
+    );
+    assert.equal(confirmIndex >= 0, true, generated.caseId);
+    assert.match(
+      steps[confirmIndex + 1].step_id,
+      /step_assertReady_assertReady/,
+      generated.caseId,
+    );
+    assert.equal(
+      steps.some((step) => step.parameters.key === "f5"),
+      false,
+      generated.caseId,
+    );
+    assert.equal(
+      steps.some((step) => step.parameters.keys === "ctrl+-"),
+      false,
+      generated.caseId,
+    );
+  }
+});
+
 test("existing API remote previews validate the Copilot action response", async () => {
   const result = await compileFixture(
     "da-api-plugin-from-existing-api.yml",
