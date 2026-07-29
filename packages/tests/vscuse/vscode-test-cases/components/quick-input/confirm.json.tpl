@@ -39,7 +39,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": ["step_confirm_assertQuestion_{{text:instanceSuffix}}"],
-      "preconditions": ["dhash:512:384:0:20:a4843a23233b2e2d"],
+      "preconditions": [],
       "postconditions": [],
       "tags": ["component:quick-input", "answer_type:confirm"]
     }

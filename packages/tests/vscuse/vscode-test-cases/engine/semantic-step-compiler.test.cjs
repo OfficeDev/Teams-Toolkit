@@ -1096,6 +1096,44 @@ test("VCB-51: ARM provision emits no subscription prompt", async () => {
   );
 });
 
+test("VCB-59: the notification center opens before the lifecycle command runs", async () => {
+  const result = await compileFixture(
+    "da-api-plugin-from-scratch.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(result.ok, true);
+  const steps = result.value[0].plan.steps;
+  const filters = steps.map((step) => step.parameters?.text ?? "");
+  const notificationsIndex = filters.indexOf(
+    "Notifications: Show Notifications",
+  );
+  const provisionIndex = filters.indexOf("Microsoft 365 Agents: Provision");
+  const successIndex = steps.findIndex((step) =>
+    step.description.includes("provision stage executed successfully"),
+  );
+
+  assert.equal(notificationsIndex >= 0, true);
+  assert.equal(notificationsIndex < provisionIndex, true);
+  assert.equal(provisionIndex < successIndex, true);
+
+  const suffix = steps[provisionIndex].step_id.replace(
+    "step_executeCommand_filter_",
+    "",
+  );
+  const triggerIndex = steps.findIndex(
+    (step) => step.step_id === `step_executeCommand_execute_${suffix}`,
+  );
+
+  // VS Code closes the Command Palette when the window loses focus, and a
+  // running provision opens browser windows of its own, so nothing between the
+  // command and its result may reopen the palette.
+  const running = steps.slice(triggerIndex + 1, successIndex);
+  assert.equal(
+    running.some((step) => step.step_id.startsWith("step_executeCommand_")),
+    false,
+  );
+});
+
 test("semantic adapter rejects a target with missing prerequisites", async () => {
   const result = await compileFixture("weather-agent.yml", (sourceText) =>
     sourceText.replace("        login-m365,\n", ""),

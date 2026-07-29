@@ -92,18 +92,18 @@
       "step_executeCommand_filter_cccb76852_4_1",
       "step_executeCommand_assertCommand_cccb76852_4_1",
       "step_executeCommand_execute_cccb76852_4_1",
-      "step_clickOption_assertPrompt_cccb76852_4_2",
-      "step_clickOption_click_cccb76852_4_2",
-      "step_textInput_assertQuestion_cccb76852_4_3",
-      "step_textInput_input_cccb76852_4_3",
-      "step_textInput_confirm_cccb76852_4_3",
-      "step_clickPrimaryAction_assertDialog_cccb76852_4_4",
-      "step_clickPrimaryAction_click_cccb76852_4_4",
-      "step_executeCommand_open_cccb76852_4_5",
-      "step_executeCommand_assertPalette_cccb76852_4_5",
-      "step_executeCommand_filter_cccb76852_4_5",
-      "step_executeCommand_assertCommand_cccb76852_4_5",
-      "step_executeCommand_execute_cccb76852_4_5",
+      "step_executeCommand_open_cccb76852_4_2",
+      "step_executeCommand_assertPalette_cccb76852_4_2",
+      "step_executeCommand_filter_cccb76852_4_2",
+      "step_executeCommand_assertCommand_cccb76852_4_2",
+      "step_executeCommand_execute_cccb76852_4_2",
+      "step_clickOption_assertPrompt_cccb76852_4_3",
+      "step_clickOption_click_cccb76852_4_3",
+      "step_textInput_assertQuestion_cccb76852_4_4",
+      "step_textInput_input_cccb76852_4_4",
+      "step_textInput_confirm_cccb76852_4_4",
+      "step_clickPrimaryAction_assertDialog_cccb76852_4_5",
+      "step_clickPrimaryAction_click_cccb76852_4_5",
       "step_assertNotificationContains_assert_cccb76852_4_6",
       "step_executeCommand_open_cccb76852_5_1",
       "step_executeCommand_assertPalette_cccb76852_5_1",
@@ -1776,7 +1776,7 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Microsoft 365 Agents: Provision"
+        "text": "Notifications: Show Notifications"
       },
       "description": "Type the resolved command title into the active Command Palette.",
       "content_refs": [],
@@ -1798,7 +1798,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the Command Palette input box reads >Microsoft 365 Agents: Provision and the highlighted command listed under it is titled Microsoft 365 Agents: Provision.",
+      "description": "@assertion the Command Palette input box reads >Notifications: Show Notifications and the highlighted command listed under it is titled Notifications: Show Notifications.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1837,7 +1837,115 @@
       ]
     },
     {
-      "step_id": "step_clickOption_assertPrompt_cccb76852_4_2",
+      "step_id": "step_executeCommand_open_cccb76852_4_2",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "f1"
+      },
+      "description": "Press the F1 key to open the Command Palette in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_execute_cccb76852_4_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_assertPalette_cccb76852_4_2",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Visual Studio Code Command Palette is visible with a > character in its input box and is ready to accept a command search.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_open_cccb76852_4_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_filter_cccb76852_4_2",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Microsoft 365 Agents: Provision"
+      },
+      "description": "Type the resolved command title into the active Command Palette.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_assertPalette_cccb76852_4_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_assertCommand_cccb76852_4_2",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Command Palette input box reads >Microsoft 365 Agents: Provision and the highlighted command listed under it is titled Microsoft 365 Agents: Provision.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_filter_cccb76852_4_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_execute_cccb76852_4_2",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to execute the selected Command Palette command.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_assertCommand_cccb76852_4_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_clickOption_assertPrompt_cccb76852_4_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1847,7 +1955,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_cccb76852_4_1"
+        "step_executeCommand_execute_cccb76852_4_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1859,7 +1967,7 @@
       ]
     },
     {
-      "step_id": "step_clickOption_click_cccb76852_4_2",
+      "step_id": "step_clickOption_click_cccb76852_4_3",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -1873,7 +1981,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_clickOption_assertPrompt_cccb76852_4_2"
+        "step_clickOption_assertPrompt_cccb76852_4_3"
       ],
       "preconditions": [
         "dhash:292:77:16:5:0000000000000000",
@@ -1888,7 +1996,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_assertQuestion_cccb76852_4_3",
+      "step_id": "step_textInput_assertQuestion_cccb76852_4_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1898,7 +2006,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_clickOption_click_cccb76852_4_2"
+        "step_clickOption_click_cccb76852_4_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1909,7 +2017,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_input_cccb76852_4_3",
+      "step_id": "step_textInput_input_cccb76852_4_4",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1921,7 +2029,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_assertQuestion_cccb76852_4_3"
+        "step_textInput_assertQuestion_cccb76852_4_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1931,7 +2039,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_confirm_cccb76852_4_3",
+      "step_id": "step_textInput_confirm_cccb76852_4_4",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1943,7 +2051,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_input_cccb76852_4_3"
+        "step_textInput_input_cccb76852_4_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1953,7 +2061,7 @@
       ]
     },
     {
-      "step_id": "step_clickPrimaryAction_assertDialog_cccb76852_4_4",
+      "step_id": "step_clickPrimaryAction_assertDialog_cccb76852_4_5",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1963,7 +2071,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_confirm_cccb76852_4_3"
+        "step_textInput_confirm_cccb76852_4_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1974,7 +2082,7 @@
       ]
     },
     {
-      "step_id": "step_clickPrimaryAction_click_cccb76852_4_4",
+      "step_id": "step_clickPrimaryAction_click_cccb76852_4_5",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1986,121 +2094,13 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_clickPrimaryAction_assertDialog_cccb76852_4_4"
+        "step_clickPrimaryAction_assertDialog_cccb76852_4_5"
       ],
       "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:dialog",
         "action:click-primary"
-      ]
-    },
-    {
-      "step_id": "step_executeCommand_open_cccb76852_4_5",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "f1"
-      },
-      "description": "Press the F1 key to open the Command Palette in Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_clickPrimaryAction_click_cccb76852_4_4"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:command-palette",
-        "action:execute-command"
-      ]
-    },
-    {
-      "step_id": "step_executeCommand_assertPalette_cccb76852_4_5",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the Visual Studio Code Command Palette is visible with a > character in its input box and is ready to accept a command search.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_executeCommand_open_cccb76852_4_5"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:command-palette",
-        "action:execute-command",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_executeCommand_filter_cccb76852_4_5",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "Notifications: Show Notifications"
-      },
-      "description": "Type the resolved command title into the active Command Palette.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_executeCommand_assertPalette_cccb76852_4_5"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:command-palette",
-        "action:execute-command"
-      ]
-    },
-    {
-      "step_id": "step_executeCommand_assertCommand_cccb76852_4_5",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the Command Palette input box reads >Notifications: Show Notifications and the highlighted command listed under it is titled Notifications: Show Notifications.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_executeCommand_filter_cccb76852_4_5"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:command-palette",
-        "action:execute-command",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_executeCommand_execute_cccb76852_4_5",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press Enter to execute the selected Command Palette command.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_executeCommand_assertCommand_cccb76852_4_5"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:command-palette",
-        "action:execute-command"
       ]
     },
     {
@@ -2114,7 +2114,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_cccb76852_4_5"
+        "step_clickPrimaryAction_click_cccb76852_4_5"
       ],
       "preconditions": [],
       "postconditions": [],

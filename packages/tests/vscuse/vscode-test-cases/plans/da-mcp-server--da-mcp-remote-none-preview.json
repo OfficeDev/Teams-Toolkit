@@ -1660,7 +1660,7 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Microsoft 365 Agents: Provision"
+        "text": "Notifications: Show Notifications"
       },
       "description": "Type the resolved command title into the active Command Palette.",
       "content_refs": [],
@@ -1682,7 +1682,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the Command Palette input box reads >Microsoft 365 Agents: Provision and the highlighted command listed under it is titled Microsoft 365 Agents: Provision.",
+      "description": "@assertion the Command Palette input box reads >Notifications: Show Notifications and the highlighted command listed under it is titled Notifications: Show Notifications.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1768,7 +1768,7 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Notifications: Show Notifications"
+        "text": "Microsoft 365 Agents: Provision"
       },
       "description": "Type the resolved command title into the active Command Palette.",
       "content_refs": [],
@@ -1790,7 +1790,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the Command Palette input box reads >Notifications: Show Notifications and the highlighted command listed under it is titled Notifications: Show Notifications.",
+      "description": "@assertion the Command Palette input box reads >Microsoft 365 Agents: Provision and the highlighted command listed under it is titled Microsoft 365 Agents: Provision.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

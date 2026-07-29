@@ -654,24 +654,28 @@ The current evidence-backed recipe shapes are:
 
 | Operation   | Component sequence                                                                                                                                        | Result state                   |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
-| `provision` | Execute Provision; emit supported ARM, API-key, or OAuth prompts when authored; use the matching confirmation adapter; show Notifications; assert success | `provisioned`                  |
-| `deploy`    | Execute Deploy; confirm the focused Deploy option; show Notifications; assert success                                                                     | `deployed`                     |
+| `provision` | Show Notifications; execute Provision; emit supported ARM, API-key, or OAuth prompts when authored; use the matching confirmation adapter; assert success | `provisioned`                  |
+| `deploy`    | Show Notifications; execute Deploy; confirm the focused Deploy option; assert success                                                                     | `deployed`                     |
 | `target`    | Execute Select and Start Debugging; select the exact authored profile; assert the adapter-produced target readiness                                       | Profile-owned target readiness |
 
 `dialog/click-primary-action.json.tpl` accepts `dialogTitle` and `actionLabel`, asserts the
 recorded dialog entry state, then presses Enter to activate the asserted primary action. It supports
 the registered Provision, API-key, and OAuth confirmation descriptions. `quick-input/confirm.json.tpl`
-accepts `questionTitle` and `optionLabel`, asserts that the option is focused, and presses Enter;
-its current visual precondition supports the recorded Deploy confirmation state. These components
+accepts `questionTitle` and `optionLabel`, asserts that the option is focused, and presses Enter.
+Neither component gates its Enter on an image hash, because both prompts render over whatever the
+scaffolded template left on screen and that background differs per template. These components
 must not be interchanged or combined through optional steps. A different dialog layout or focus
 state requires a separate recorded adapter.
 
-After a lifecycle action starts, the recipe reuses `execute-command.json.tpl` with the canonical
-Notifications command, then instantiates `notifications/assert-contains.json.tpl` with the fixed
-operation success text from the semantic adapter. The notification template owns its 300-second retry
-window; timeout is not semantic YAML input. A recipe with a terminal continuation prompt, such as
-`Ok to proceed? (y)`, remains unsupported until a terminal-specific adapter records that entry and
-converged state.
+A lifecycle recipe opens the notification center with the canonical Notifications command through
+`execute-command.json.tpl` before it executes the operation's own command, and instantiates
+`notifications/assert-contains.json.tpl` with the fixed operation success text from the semantic
+adapter as the only step that follows the operation's trigger. VS Code closes the Command Palette as
+soon as the window loses focus, and a running lifecycle operation opens browser windows of its own,
+so a palette round trip placed after the trigger races the operation it is meant to observe. The
+notification template owns its 300-second retry window; timeout is not semantic YAML input. A recipe
+with a terminal continuation prompt, such as `Ok to proceed? (y)`, remains unsupported until a
+terminal-specific adapter records that entry and converged state.
 
 A target recipe ends before Teams Add/Open, Copilot selection, or chat activity. A preceding
 `login:m365` obtains and stores credentials; the Copilot target adapter uses those credentials for
@@ -1074,6 +1078,8 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-56 | Given a `multiSelect` answer, the emitted component returns focus to the prompt's input box with `Tab` after checking the options and before pressing `Enter`, because `Enter` does not confirm the prompt while the select-all checkbox that `Shift+Tab` reached still holds focus.                                                                                                                                               |
 | VCB-57 | Given `login`, the sign-in adapter enters from the ACCOUNTS section of the toolkit side bar and no emitted step filters the Command Palette for `Microsoft 365 Agents: Accounts`, because VS Code generates `Microsoft 365 Agents Toolkit: Focus on Accounts View` from that view and every word of the account command's title is a word of the generated title in the same order, so no filter text lists one without the other. |
 | VCB-58 | Given a `multiSelect` answer, no emitted step asserts that the options are checked, because the prompt draws its placeholder on the same row as the select-all checkbox and directly above the option rows, so a reader of the screen cannot tell that row from an option row, and because the claim ranges over every option while a list that scrolls does not show every option at once.                                        |
+| VCB-59 | Given `provision` or `deploy`, the notification center is opened before the operation's own command runs and no emitted step reopens the Command Palette between that command and the success assertion, because VS Code closes the palette when the window loses focus and a running lifecycle operation opens browser windows of its own.                                                                                        |
+| VCB-60 | Given a lifecycle confirmation, the emitted component gates its Enter on the focused-option assertion alone and on no image hash, because the prompt renders over whatever the scaffolded template left on screen and that background differs per template.                                                                                                                                                                        |
 
 ## Boundary
 

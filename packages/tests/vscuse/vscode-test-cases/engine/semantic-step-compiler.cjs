@@ -763,7 +763,17 @@ function createSemanticStepCompiler() {
     const recipe = lifecycleAdapters[definition.type];
     let confirmation = recipe.confirmation;
     const output = [];
+    // VS Code closes the Command Palette as soon as the window loses focus, and
+    // a running lifecycle operation opens browser windows of its own, so the
+    // notification center is opened before the operation starts.
     let error = append(
+      output,
+      render(state, "command-palette/execute-command.json.tpl", {
+        commandTitle: commandTitles.notifications,
+      }),
+    );
+    if (error) return error;
+    error = append(
       output,
       render(state, "command-palette/execute-command.json.tpl", {
         commandTitle: commandTitles[definition.type],
@@ -817,13 +827,6 @@ function createSemanticStepCompiler() {
       error = append(output, render(state, component, confirmationValues));
       if (error) return error;
     }
-    error = append(
-      output,
-      render(state, "command-palette/execute-command.json.tpl", {
-        commandTitle: commandTitles.notifications,
-      }),
-    );
-    if (error) return error;
     error = append(
       output,
       render(state, "notifications/assert-contains.json.tpl", {
