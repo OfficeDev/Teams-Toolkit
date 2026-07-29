@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 142,
+    "total_steps": 143,
     "name": "weather-ts-openai-remote-teams",
     "description": {
       "owner": "",
@@ -148,6 +148,7 @@
       "step_filterOption_assertOption_c3f41809f_7_2",
       "step_filterOption_confirm_c3f41809f_7_2",
       "step_browserM365PasswordSignIn_assertPassword_c3f41809f_7_3",
+      "step_browserM365PasswordSignIn_focusPassword_c3f41809f_7_3",
       "step_browserM365PasswordSignIn_enterPassword_c3f41809f_7_3",
       "step_browserM365PasswordSignIn_submitPassword_c3f41809f_7_3",
       "step_browserM365PasswordSignIn_assertStaySignedIn_c3f41809f_7_3",
@@ -3129,6 +3130,30 @@
       ]
     },
     {
+      "step_id": "step_browserM365PasswordSignIn_focusPassword_c3f41809f_7_3",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 400,
+        "y": 405
+      },
+      "description": "Click the password input on the Microsoft sign-in page to move focus out of the browser address bar.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_browserM365PasswordSignIn_assertPassword_c3f41809f_7_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "surface:browser"
+      ]
+    },
+    {
       "step_id": "step_browserM365PasswordSignIn_enterPassword_c3f41809f_7_3",
       "agent": "interaction",
       "tool": "type_text",
@@ -3141,7 +3166,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365PasswordSignIn_assertPassword_c3f41809f_7_3"
+        "step_browserM365PasswordSignIn_focusPassword_c3f41809f_7_3"
       ],
       "preconditions": [],
       "postconditions": [],

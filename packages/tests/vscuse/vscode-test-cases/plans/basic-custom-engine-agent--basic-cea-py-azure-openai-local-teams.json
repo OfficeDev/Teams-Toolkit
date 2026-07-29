@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 122,
+    "total_steps": 123,
     "name": "basic-cea-py-azure-openai-local-teams",
     "description": {
       "owner": "",
@@ -123,6 +123,7 @@
       "step_filterOption_assertOption_c834b2eb3_5_2",
       "step_filterOption_confirm_c834b2eb3_5_2",
       "step_browserM365PasswordSignIn_assertPassword_c834b2eb3_5_3",
+      "step_browserM365PasswordSignIn_focusPassword_c834b2eb3_5_3",
       "step_browserM365PasswordSignIn_enterPassword_c834b2eb3_5_3",
       "step_browserM365PasswordSignIn_submitPassword_c834b2eb3_5_3",
       "step_browserM365PasswordSignIn_assertStaySignedIn_c834b2eb3_5_3",
@@ -2521,6 +2522,30 @@
       ]
     },
     {
+      "step_id": "step_browserM365PasswordSignIn_focusPassword_c834b2eb3_5_3",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 400,
+        "y": 405
+      },
+      "description": "Click the password input on the Microsoft sign-in page to move focus out of the browser address bar.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_browserM365PasswordSignIn_assertPassword_c834b2eb3_5_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "surface:browser"
+      ]
+    },
+    {
       "step_id": "step_browserM365PasswordSignIn_enterPassword_c834b2eb3_5_3",
       "agent": "interaction",
       "tool": "type_text",
@@ -2533,7 +2558,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365PasswordSignIn_assertPassword_c834b2eb3_5_3"
+        "step_browserM365PasswordSignIn_focusPassword_c834b2eb3_5_3"
       ],
       "preconditions": [],
       "postconditions": [],

@@ -22,6 +22,21 @@
       "tags": ["component:authentication", "surface:browser", "step_retry_timeout: 300"]
     },
     {
+      "step_id": "step_browserM365PasswordSignIn_focusPassword_{{text:instanceSuffix}}",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": { "button": "left", "x": 400, "y": 405 },
+      "description": "Click the password input on the Microsoft sign-in page to move focus out of the browser address bar.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": ["step_browserM365PasswordSignIn_assertPassword_{{text:instanceSuffix}}"],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": ["component:authentication", "surface:browser"]
+    },
+    {
       "step_id": "step_browserM365PasswordSignIn_enterPassword_{{text:instanceSuffix}}",
       "agent": "interaction",
       "tool": "type_text",
@@ -31,7 +46,7 @@
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
-      "depends_on": ["step_browserM365PasswordSignIn_assertPassword_{{text:instanceSuffix}}"],
+      "depends_on": ["step_browserM365PasswordSignIn_focusPassword_{{text:instanceSuffix}}"],
       "preconditions": [],
       "postconditions": [],
       "tags": ["component:authentication", "surface:browser"]

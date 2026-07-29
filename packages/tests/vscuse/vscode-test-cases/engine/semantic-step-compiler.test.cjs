@@ -1575,6 +1575,28 @@ test("VCB-78: a Chrome target signs the launched browser in before asserting rea
   }
 });
 
+test("VCB-79: the password prompt is focused before the password is typed", async () => {
+  const result = await compileFixture(
+    "basic-custom-engine-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const plan = result.value.find(
+    (generated) => generated.caseId === "basic-cea-py-azure-openai-local-teams",
+  ).plan;
+  const focusIndex = plan.steps.findIndex((step) =>
+    step.step_id.startsWith("step_browserM365PasswordSignIn_focusPassword_"),
+  );
+  const passwordIndex = plan.steps.findIndex((step) =>
+    step.step_id.startsWith("step_browserM365PasswordSignIn_enterPassword_"),
+  );
+
+  assert.notEqual(focusIndex, -1);
+  assert.equal(plan.steps[focusIndex].tool, "click");
+  assert.equal(focusIndex < passwordIndex, true);
+});
+
 test("VCB-74: the remote Copilot target requires provision and deploy", async () => {
   const result = await compileFixture("weather-agent.yml", (sourceText) =>
     sourceText.replace(
