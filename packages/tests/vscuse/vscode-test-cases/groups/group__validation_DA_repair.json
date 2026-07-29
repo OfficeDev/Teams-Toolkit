@@ -41,7 +41,7 @@
         "x": 350,
         "y": 373
       },
-      "description": "Click on the blank area above the \"vscuse_app_${{var:app_name}}dev\" agent title in the Microsoft 365 Copilot chat interface.(Previously used for clicking the input box, but now used for precondition validation.)",
+      "description": "Click on the input box",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
