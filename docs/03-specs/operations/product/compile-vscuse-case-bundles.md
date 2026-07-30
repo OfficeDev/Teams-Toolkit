@@ -495,25 +495,34 @@ case YAML. Open components converge one deterministic entry state to the request
 state. Chat components start from `chat-ready`, submit one message through the current host, and
 apply host-neutral assertions to the resulting assistant response. V1 includes:
 
-| Operation | Host surface | Entry state           | Component file                      | Converged state      |
-| --------- | ------------ | --------------------- | ----------------------------------- | -------------------- |
-| `open`    | Any          | Already ready         | `assert-ready.json.tpl`             | Adapter-owned        |
-| `open`    | Teams        | Fresh app details/Add | `teams/add-and-open-app.json.tpl`   | `chat-ready`         |
-| `chat`    | Teams        | `chat-ready`          | `teams/send-message.json.tpl`       | `message-submitted`  |
-| `chat`    | Copilot      | `chat-ready`          | `copilot/send-message.json.tpl`     | `message-submitted`  |
-| `chat`    | Copilot      | Consent prompt        | `copilot/allow-action.json.tpl`     | Consent dismissed    |
-| `chat`    | Playground   | `chat-ready`          | `playground/send-message.json.tpl`  | `message-submitted`  |
-| `browser` | Any          | Target ready          | `assert-element.json.tpl`           | Element visible      |
-| `chat`    | Any          | `message-submitted`   | `chat/assert-replied.json.tpl`      | `assistant-response` |
-| `chat`    | Any          | `assistant-response`  | `chat/assert-contains.json.tpl`     | `assistant-response` |
-| `chat`    | Any          | `assistant-response`  | `chat/assert-not-contains.json.tpl` | `assistant-response` |
+| Operation | Host surface | Entry state          | Component file                      | Converged state      |
+| --------- | ------------ | -------------------- | ----------------------------------- | -------------------- |
+| `open`    | Any          | Already ready        | `assert-ready.json.tpl`             | Adapter-owned        |
+| `open`    | Teams        | App details popup    | `teams/add-and-open-app.json.tpl`   | `chat-ready`         |
+| `chat`    | Teams        | `chat-ready`         | `teams/send-message.json.tpl`       | `message-submitted`  |
+| `chat`    | Copilot      | `chat-ready`         | `copilot/send-message.json.tpl`     | `message-submitted`  |
+| `chat`    | Copilot      | Consent prompt       | `copilot/allow-action.json.tpl`     | Consent dismissed    |
+| `chat`    | Playground   | `chat-ready`         | `playground/send-message.json.tpl`  | `message-submitted`  |
+| `browser` | Any          | Target ready         | `assert-element.json.tpl`           | Element visible      |
+| `chat`    | Any          | `message-submitted`  | `chat/assert-replied.json.tpl`      | `assistant-response` |
+| `chat`    | Any          | `assistant-response` | `chat/assert-contains.json.tpl`     | `assistant-response` |
+| `chat`    | Any          | `assistant-response` | `chat/assert-not-contains.json.tpl` | `assistant-response` |
 
-`assert-ready.json.tpl` emits only the adapter's semantic readiness assertion. The Teams fresh-app
-component asserts that Add is visible, clicks the recorded Add control, asserts that the
-"Added successfully!" dialog and Open control are visible, clicks Open, then asserts the requested
+`assert-ready.json.tpl` emits only the adapter's semantic readiness assertion. The Teams app details
+component asserts that the popup shows its primary action button, clicks the recorded control,
+asserts that the dialog it opened shows its Open control, clicks Open, then asserts the requested
 chat destination is ready. The generic adapter accepts `readySubject`; the Teams adapter also uses
-that parameter for its final assertion while its Add and Added subjects remain fixed. The recorded
+that parameter for its final assertion while its popup and dialog subjects remain fixed. The recorded
 coordinates and visual preconditions remain component-owned.
+
+Neither of the component's first two assertions names a caption. Teams captions the popup's primary
+action `Add` for an account that has not installed the app and `Open` for one that has, and titles
+the dialog that follows accordingly, so a run that met the second state failed an assertion written
+for the first. Both states run the same two clicks at the same two recorded controls, and which one
+a run meets is account state the case does not own, so the claims are about the controls the clicks
+need rather than about what Teams writes on them. The recorded corpus carries both: one recording
+wrote `Click the "Add" or "Open" button on the app details popup` at the very coordinate this
+component clicks.
 
 A target profile's `readySubject` names the app by the unique prefix the case authored, as
 "an app whose name starts with `${{var:app_name}}`", and tolerates whatever the product appends.
@@ -1144,6 +1153,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-79 | Given a Chrome target that signs in from the password prompt, the password input is clicked before the password is typed, because the browser the debug session launches keeps focus in its address bar, so a password typed without that click is entered outside the sign-in form.                                                                                                                                                   |
 | VCB-80 | Given a lifecycle operation, the notification center is cleared before the operation starts, because it keeps every notification the run has raised, so the assertion that waits for this operation's success would otherwise read it out of a list that also holds the scaffolding, sign-in, and earlier lifecycle entries.                                                                                                           |
 | VCB-81 | Given a `singleSelect` or `multiSelect` answer, the assertion that waits for the option set places no option relative to the prompt's input box, because a multi-select whose one option had loaded was reported as having none once the reader placed that option above the box and read the `0 Selected` and `OK` controls under it as the whole of what the prompt lists.                                                           |
+| VCB-82 | Given a Teams target, neither assertion around the app details popup names a caption, because Teams captions the popup's primary action `Add` for an account that has not installed the app and `Open` for one that has, and titles the dialog that follows accordingly, and which of the two a run meets is account state the case does not own.                                                                                      |
 
 ## Boundary
 

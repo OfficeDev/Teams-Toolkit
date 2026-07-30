@@ -12,7 +12,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the blue \"Add\" button exists.",
+      "description": "@assertion the app details popup is visible with its primary action button below the app name.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -23,7 +23,7 @@
       "tags": [
         "component:browser",
         "host_surface:teams",
-        "entry_state:add",
+        "entry_state:app-details",
         "step_retry_timeout: 180"
       ]
     },
@@ -36,7 +36,7 @@
         "x": 288,
         "y": 214
       },
-      "description": "Click Add on the app details popup within the Microsoft Teams interface.",
+      "description": "Click the primary action button on the app details popup within the Microsoft Teams interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -48,14 +48,18 @@
         "dhash:288:214:0:10:00b4b0d8f8fcf0d8"
       ],
       "postconditions": [],
-      "tags": ["component:browser", "host_surface:teams", "entry_state:add"]
+      "tags": [
+        "component:browser",
+        "host_surface:teams",
+        "entry_state:app-details"
+      ]
     },
     {
       "step_id": "step_addAndOpenApp_assertAdded_{{text:instanceSuffix}}",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the \"Added successfully!\" dialog and its Open button are visible.",
+      "description": "@assertion the dialog that the app details popup opened is visible with its Open button.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -79,7 +83,7 @@
         "x": 533,
         "y": 508
       },
-      "description": "Click Open in the Microsoft Teams Added successfully dialog.",
+      "description": "Click Open in the dialog that the app details popup opened.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

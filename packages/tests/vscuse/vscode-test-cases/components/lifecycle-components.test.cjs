@@ -328,3 +328,18 @@ test("target primitives expose F1, profile selection, and browser readiness beha
   assert.equal(readiness.steps[0].agent, "assertion");
   assert.match(readiness.steps[0].description, /selected target is visible/);
 });
+
+test("VCB-82: the Teams app details component names no button caption", () => {
+  const component = render("browser/teams/add-and-open-app.json.tpl");
+
+  assert.equal(component.component.id, "addAndOpenApp");
+  const [assertPopup, clickPopup, assertDialog] = component.steps;
+  // Teams captions the popup's primary action `Add` for an account that has
+  // not installed the app and `Open` for one that has, and titles the dialog
+  // that follows accordingly.
+  for (const step of [assertPopup, clickPopup, assertDialog]) {
+    assert.equal(/\bAdd\b|Added successfully/.test(step.description), false);
+  }
+  assert.match(assertPopup.description, /primary action button/);
+  assert.match(assertDialog.description, /Open button/);
+});
