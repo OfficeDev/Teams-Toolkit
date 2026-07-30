@@ -143,10 +143,7 @@ test("VCB-62: account readiness waits out the toolkit's Signing in state", () =>
 test("VCB-63: Copilot conversation clicks resolve their target by OCR", () => {
   for (const [relativePath, control] of [
     ["browser/copilot/allow-action.json.tpl", '"Allow" button'],
-    [
-      "browser/copilot/send-message.json.tpl",
-      '"Message ${{var:app_name}}" input box',
-    ],
+    ["browser/copilot/send-message.json.tpl", '"Message" input box'],
   ]) {
     const click = render(relativePath, {
       message: "List all repairs",

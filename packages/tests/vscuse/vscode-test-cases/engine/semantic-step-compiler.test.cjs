@@ -519,7 +519,7 @@ test("VCB-34: DA API plugin from scratch compiles complete remote branches in au
     );
     const runtimeFlow = [
       "@assertion a visible Visual Studio Code notification contains provision stage executed successfully.",
-      'Click the "Message ${{var:app_name}}" input box in the Microsoft 365 Copilot web application.',
+      'Click the "Message" input box in the Microsoft 365 Copilot web application.',
       "@assertion the Copilot action-consent Allow button is visible.",
       'Click the "Allow" button in the Microsoft 365 Copilot chat interface to grant the agent access.',
       "@assertion the Copilot action-consent Allow button is no longer visible.",
@@ -1946,7 +1946,7 @@ test("VCB-43: the Copilot ready subject names the app by its authored prefix", a
   assert.equal(readySubject(unsuffixed), readySubject(suffixed));
 });
 
-test("VCB-44: the Copilot message input is named by its previewed agent", async () => {
+test("VCB-44: the Copilot message input is read independently of its placeholder", async () => {
   const result = await compileFixture(
     "da-no-action.yml",
     (sourceText) => sourceText,
@@ -1956,13 +1956,26 @@ test("VCB-44: the Copilot message input is named by its previewed agent", async 
   const descriptions = result.value[0].plan.steps.map(
     (step) => step.description,
   );
-  // The previewed agent owns the input placeholder, so the unscoped Copilot
-  // wording names a control that is never on screen in these plans.
+  // Copilot ships the previewed agent page in placeholder variants, so reading
+  // either name through the placeholder names a control that is sometimes
+  // absent.
   assert.equal(
     descriptions.includes(
-      "@assertion the Microsoft 365 Copilot message input is visible and its placeholder text starts with Message ${{var:app_name}}.",
+      "@assertion the Microsoft 365 Copilot message input is visible on a page for an agent whose name starts with ${{var:app_name}}.",
     ),
     true,
+  );
+  assert.equal(
+    descriptions.includes(
+      'Click the "Message" input box in the Microsoft 365 Copilot web application.',
+    ),
+    true,
+  );
+  assert.equal(
+    descriptions.some((description) =>
+      description.includes("Message ${{var:app_name}}"),
+    ),
+    false,
   );
   assert.equal(
     descriptions.some((description) => description.includes("Message Copilot")),
