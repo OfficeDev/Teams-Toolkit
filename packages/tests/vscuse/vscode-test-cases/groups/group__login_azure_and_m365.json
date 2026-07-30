@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 30,
+    "total_steps": 31,
     "created_at": "2026-06-11T03:17:05.683269",
     "name": "group: login_azure_and_m365",
     "description": {
@@ -29,6 +29,7 @@
       "step_77f7d945",
       "step_bd700ff4",
       "step_7d82b1cc",
+      "step_passkey_dismiss",
       "step_87f1f977",
       "step_903f3532",
       "step_a1f23fa8",
@@ -777,6 +778,35 @@
       ],
       "screenshot": null,
       "created_at": "2026-06-11T03:17:05.862305",
+      "plan_id": "plan_r_0928_020230"
+    },
+    {
+      "step_id": "step_passkey_dismiss",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "button": "left",
+        "dx": null,
+        "dy": null,
+        "key": "escape",
+        "keys": null,
+        "text": null,
+        "x": null,
+        "y": null
+      },
+      "description": "Press Escape to dismiss the browser passkey / Windows Hello popup that appears after entering the email address, which blocks the Microsoft sign-in \"Next\" button.",
+      "content_refs": [],
+      "timeout": 10,
+      "retry_count": 0,
+      "continue_on_error": "true",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay:2"
+      ],
+      "screenshot": "",
+      "created_at": "2026-06-11T03:17:05.746800",
       "plan_id": "plan_r_0928_020230"
     }
   ],
