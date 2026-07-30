@@ -608,6 +608,11 @@ describe("v4TemplateBridge.scaffoldDeclarativeFromV4Channel", () => {
     // the action is still injected, with placeholders the developer must replace
     assert.include(warning.mock.calls[1][0], "authorizationUrl");
     assert.include(warning.mock.calls[1][0], "tokenUrl");
+    // and the typed warnings come back on the context so the caller can put them on the result
+    assert.deepEqual(
+      (ctx.warnings ?? []).map((entry) => entry.type),
+      ["mcpAuthMetadataError", "mcpAuthOAuthUrlPlaceholder"]
+    );
     assert.include(
       (await fs.readFile(path.join(tmpDir, "m365agents.yml"))).toString(),
       "oauth/register"

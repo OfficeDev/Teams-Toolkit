@@ -492,7 +492,7 @@ export const openApiGenerateTeamsAiCustomApiFiles: RegisteredStep = {
           openapiSpecFileName
         );
         for (const warning of warnings) {
-          ctx.warn?.(warning.content);
+          ctx.warn?.({ type: String(warning.type), content: warning.content });
         }
 
         await writeTempTreeToContext(tempRoot, ctx);

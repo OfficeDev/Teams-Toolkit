@@ -323,7 +323,7 @@ describe("OpenAPI runtime steps (v4)", () => {
       "src/app/app.ts": "// Replace with function definition code\n",
       "src/app/handlers.ts": "// Replace with function handler code\n{{OPENAPI_SPEC_PATH}}",
     });
-    state.ctx.warn = (message) => warnings.push(message);
+    state.ctx.warn = (warning) => warnings.push(warning.content);
 
     const result = await openApiGenerateTeamsAiCustomApiFiles.apply(
       {
@@ -353,7 +353,7 @@ describe("OpenAPI runtime steps (v4)", () => {
       "src/app/app.ts": "// Replace with function definition code\n",
       "src/app/handlers.ts": "// Replace with function handler code\n{{OPENAPI_SPEC_PATH}}",
     });
-    state.ctx.warn = (message) => warnings.push(message);
+    state.ctx.warn = (warning) => warnings.push(warning.content);
 
     const result = await openApiGenerateTeamsAiCustomApiFiles.apply(
       {

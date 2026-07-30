@@ -5,7 +5,7 @@ import AdmZip from "adm-zip";
 import fs from "fs-extra";
 import path from "path";
 
-import { LogProvider, Platform } from "@microsoft/teamsfx-api";
+import { LogProvider, Platform, Warning } from "@microsoft/teamsfx-api";
 
 import { SampleUrlInfo } from "../../common/samples";
 import { getTemplatesFolder } from "../../folder";
@@ -32,6 +32,8 @@ export interface GeneratorContext {
   sampleInfo?: SampleUrlInfo;
   fallback?: boolean;
   outputs?: string[];
+  /** Warnings raised while generating, for the caller to put on `CreateProjectResult`. */
+  warnings?: Warning[];
 
   filterFn?: (name: string) => boolean;
   fileNameReplaceFn?: (name: string, data: Buffer) => string;

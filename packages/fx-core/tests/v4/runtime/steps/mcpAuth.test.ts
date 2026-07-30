@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { SystemError } from "@microsoft/teamsfx-api";
+import { SystemError, Warning } from "@microsoft/teamsfx-api";
 import { err } from "neverthrow";
 import {
   STEP_INJECT_YML_ACTION,
@@ -20,10 +20,10 @@ function makeCtx(initial: Record<string, string> = {}): {
   ctx: StepContext;
   files: Map<string, Buffer>;
   secretEnvironmentVariables: Map<string, Map<string, string>>;
-  warnings: string[];
+  warnings: Warning[];
 } {
   const runtime = createInMemoryRuntime();
-  const warnings: string[] = [];
+  const warnings: Warning[] = [];
   for (const [path, body] of Object.entries(initial)) {
     runtime.files.set(path, Buffer.from(body, "utf8"));
   }
@@ -34,7 +34,7 @@ function makeCtx(initial: Record<string, string> = {}): {
       writeEnvironment: runtime.port.writeEnvironment,
       manifestWrapper: () => NOOP_MANIFEST_WRAPPER,
     },
-    { warn: (message: string) => warnings.push(message) }
+    { warn: (warning: Warning) => warnings.push(warning) }
   );
   return {
     ctx,
@@ -72,6 +72,7 @@ describe("mcp-auth steps (v4)", () => {
     vi.spyOn(mcpAuthScaffoldDeps, "probeMCPServerAuth").mockResolvedValue({
       requiresAuth: true,
       authMetadataUrl: "https://auth.example.com/.well-known/oauth-protected-resource",
+      endpointStatus: "confirmed",
     });
     vi.spyOn(mcpAuthScaffoldDeps, "resolveMCPOAuthMetadata").mockResolvedValue({
       authorizationUrl: "https://auth.example.com/authorize",
@@ -188,10 +189,12 @@ describe("mcp-auth steps (v4)", () => {
 
       assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
       assert.lengthOf(warnings, 2);
-      assert.include(warnings[0], "metadata unavailable");
+      assert.strictEqual(warnings[0].type, "mcpAuthMetadataError");
+      assert.include(warnings[0].content, "metadata unavailable");
       // the action is still injected, with placeholders the developer must replace
-      assert.include(warnings[1], "authorizationUrl");
-      assert.include(warnings[1], "tokenUrl");
+      assert.strictEqual(warnings[1].type, "mcpAuthOAuthUrlPlaceholder");
+      assert.include(warnings[1].content, "authorizationUrl");
+      assert.include(warnings[1].content, "tokenUrl");
     });
 
     it("warns when oauth-dynamic requires manual replacement of the well-known URL", async () => {
@@ -207,8 +210,30 @@ describe("mcp-auth steps (v4)", () => {
 
       assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
       assert.lengthOf(warnings, 2);
-      assert.include(warnings[0], "metadata unavailable");
-      assert.include(warnings[1], "wellKnownAuthorizationServer");
+      assert.include(warnings[0].content, "metadata unavailable");
+      assert.strictEqual(warnings[1].type, "mcpAuthDcrWellKnownUrlPlaceholder");
+      assert.include(warnings[1].content, "wellKnownAuthorizationServer");
+    });
+
+    it("warns when the server URL answered like something that is not an MCP endpoint", async () => {
+      vi.mocked(mcpAuthScaffoldDeps.probeMCPServerAuth).mockResolvedValue({
+        requiresAuth: false,
+        endpointStatus: "notEndpoint",
+        responseStatus: 403,
+      });
+      const { ctx, warnings } = makeCtx({ "m365agents.yml": PROVISION_YML });
+
+      const res = await mcpAuthInjectYmlAction.apply(
+        { ymlPath: "m365agents.yml", authType: "oauth", mcpServerUrl: SERVER_URL },
+        ctx
+      );
+
+      assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
+      // advisory only — the action is still injected with the endpoints that did resolve
+      assert.lengthOf(warnings, 1);
+      assert.strictEqual(warnings[0].type, "mcpServerUrlNotAnEndpoint");
+      assert.include(warnings[0].content, SERVER_URL);
+      assert.include(warnings[0].content, "403");
     });
 
     it("is idempotent — a re-run does not duplicate the registration action", async () => {

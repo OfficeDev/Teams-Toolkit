@@ -267,6 +267,48 @@ describe("createFrontDoorAdapters", () => {
       assert.equal(warning.mock.calls[0][0], "Using bundled template fallback.");
     });
 
+    it("carries the pipeline warnings onto the create result", async () => {
+      vi.spyOn(scaffoldV4Deps, "scaffoldDeclarativeFromV4Channel").mockImplementation(
+        async (context) => {
+          context.warnings = [{ type: "mcpAuthOAuthUrlPlaceholder", content: "repair the urls" }];
+          return TEMPLATE_SOURCE;
+        }
+      );
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue(undefined);
+      const inputs: Inputs = {
+        platform: Platform.VSCode,
+        [QuestionNames.Folder]: "/tmp",
+        [QuestionNames.AppName]: "MyApp",
+      };
+
+      const res = await scaffoldV4(inputs, v4Target, {});
+
+      assert.isTrue(res.isOk());
+      assert.deepEqual(res._unsafeUnwrap().warnings, [
+        { type: "mcpAuthOAuthUrlPlaceholder", content: "repair the urls" },
+      ]);
+    });
+
+    it("leaves the create result without warnings when the pipeline raised none", async () => {
+      vi.spyOn(scaffoldV4Deps, "scaffoldDeclarativeFromV4Channel").mockImplementation(
+        async (context) => {
+          context.warnings = [];
+          return TEMPLATE_SOURCE;
+        }
+      );
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue(undefined);
+      const inputs: Inputs = {
+        platform: Platform.VSCode,
+        [QuestionNames.Folder]: "/tmp",
+        [QuestionNames.AppName]: "MyApp",
+      };
+
+      const res = await scaffoldV4(inputs, v4Target, {});
+
+      assert.isTrue(res.isOk());
+      assert.isUndefined(res._unsafeUnwrap().warnings);
+    });
+
     it("returns the tracking id error when ensureTrackingId fails", async () => {
       vi.spyOn(scaffoldV4Deps, "scaffoldDeclarativeFromV4Channel").mockResolvedValue(
         TEMPLATE_SOURCE

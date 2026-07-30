@@ -151,6 +151,11 @@ export async function scaffoldV4(
   sendSuccessEvent(TelemetryEvent.GenerateTemplate, telemetryProps);
 
   const result: CreateProjectResult = { projectPath };
+  // The scaffolding summary and the surfaces' post-create notifications read these; dropping
+  // them here is what would make a placeholder-bearing m365agents.yml fail silently later.
+  if (generatorContext.warnings?.length) {
+    result.warnings = generatorContext.warnings;
+  }
   const ymlPath = pathUtils.getYmlFilePath(projectPath, "dev");
   if (ymlPath && (await fs.pathExists(ymlPath))) {
     const ensureRes = await coordinator.ensureTrackingId(projectPath, inputs.projectId);

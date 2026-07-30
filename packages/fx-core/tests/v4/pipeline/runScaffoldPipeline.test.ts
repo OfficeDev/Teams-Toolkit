@@ -137,7 +137,7 @@ function makePort(opts: { pipelines?: string[]; steps?: Record<string, Registere
     },
     render: (mustache, vars) => renderMustache(mustache, vars),
     manifestWrapper: () => wrapper,
-    warn: (message) => warnings.push(message),
+    warn: (warning) => warnings.push(warning.content),
     write: (path, data) => {
       writes.set(path, data);
     },
