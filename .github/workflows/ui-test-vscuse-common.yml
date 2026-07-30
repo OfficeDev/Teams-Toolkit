@@ -54,6 +54,11 @@ on:
         required: false
         type: number
         default: 80
+      max_parallel:
+        description: "Maximum number of per-plan matrix jobs to run concurrently."
+        required: false
+        type: number
+        default: 100
       no_failed_step_text:
         required: false
         type: string
@@ -104,12 +109,15 @@ jobs:
           INPUT_TEST_PLAN: ${{ inputs.test_plan }}
         run: |
           if [ -z "$INPUT_TEST_PLAN" ]; then
-            # Use caller-supplied find predicate to enumerate default plans
-            plans=$(eval "find packages/tests/vscuse/vscode-test-cases/plans/ -maxdepth 1 -type f $PLAN_FIND_ARGS -exec basename {} .json \;" | jq -R -s -c 'split("\n")[:-1]')
+            # Use caller-supplied find predicate to enumerate default plans.
+            # Shuffle so that similarly named plans (e.g. Teams_*, DA_*) are spread
+            # across parallel batches instead of all landing in the same one, which
+            # reduces contention on the shared test tenant / Azure resources.
+            plans=$(eval "find packages/tests/vscuse/vscode-test-cases/plans/ -maxdepth 1 -type f $PLAN_FIND_ARGS -exec basename {} .json \;" | shuf | jq -R -s -c 'split("\n")[:-1]')
             echo "plans=$plans" >> $GITHUB_OUTPUT
             echo "Found test plans: $plans"
           else
-            input_plans=$(echo "$INPUT_TEST_PLAN" | tr ',' '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | jq -R -s -c 'split("\n")[:-1]')
+            input_plans=$(echo "$INPUT_TEST_PLAN" | tr ',' '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | shuf | jq -R -s -c 'split("\n")[:-1]')
             echo "plans=$input_plans" >> $GITHUB_OUTPUT
             echo "Using input test plans: $input_plans"
           fi
@@ -124,7 +132,7 @@ jobs:
       matrix:
         test_plan: ${{ fromJson(needs.discover-test-plans.outputs.test-plans) }}
       fail-fast: false
-      max-parallel: 100
+      max-parallel: ${{ inputs.max_parallel }}
     permissions:
       contents: read
       packages: write
