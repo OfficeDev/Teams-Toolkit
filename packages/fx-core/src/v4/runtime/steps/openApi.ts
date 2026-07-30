@@ -2,11 +2,14 @@
 // Licensed under the MIT license.
 
 import {
+  AdaptiveCardUpdateStrategy,
   ConstantString,
+  GenerateResult,
   ListAPIInfo,
   ParseOptions,
   ProjectType,
   SpecParser,
+  SpecParserError,
   Utils,
   ValidationStatus,
 } from "@microsoft/m365-spec-parser";
@@ -26,6 +29,9 @@ import axios from "axios";
 import * as fs from "fs-extra";
 import * as path from "path";
 import { Result, err, ok } from "neverthrow";
+import { SpecParserSource } from "../../../common/constants";
+import { generatePlugin, validateOpenAPISpec } from "../../../common/daSpecParser";
+import { getLocalizedString } from "../../../common/localizeUtils";
 import { getParserOptions } from "../../../common/openApiParserOptions";
 import { isValidHttpUrl } from "../../../common/stringUtils";
 import { isJsonSpecFile } from "../../../common/utils";
@@ -47,6 +53,8 @@ const PLUGIN_PATH = `${AppPackageFolderName}/${DefaultPluginManifestFileName}`;
 const API_SPEC_PATH = `${AppPackageFolderName}/${DefaultApiSpecFolderName}/${DefaultApiSpecYamlFileName}`;
 const ORIGINAL_API_SPEC_PATH = `${API_SPEC_PATH}.original`;
 const DEFAULT_ACTION_ID = "action_1";
+/** Mirrors `invalidApiSpecErrorName` in the legacy openApiSpec helper, which v4 must not import. */
+const INVALID_API_SPEC_ERROR_NAME = "invalid-api-spec";
 const M365_AGENTS_YML = "m365agents.yml";
 const M365_AGENTS_LOCAL_YML = "m365agents.local.yml";
 
@@ -339,6 +347,15 @@ export const openApiGeneratePluginFiles: RegisteredStep = {
       return err(agent.error);
     }
 
+    // Same shared gate the legacy path runs, so an incompatible document fails before generation.
+    const validation = await validateOpenAPISpec(apiSpecLocation);
+    if (validation.status === ValidationStatus.Error) {
+      const message = getLocalizedString(
+        "core.createProjectQuestion.apiSpec.multipleValidationErrors.message"
+      );
+      return err(new UserError(SOURCE, INVALID_API_SPEC_ERROR_NAME, message, message));
+    }
+
     return withTempDirectory(
       "m365atk-openapi-",
       (phase, error) =>
@@ -354,12 +371,33 @@ export const openApiGeneratePluginFiles: RegisteredStep = {
           apiOperations.includes(operation.api)
         );
 
-        await parser.generateForCopilot(
-          temp.manifestPath,
-          apiOperations,
-          temp.apiSpecPath,
-          temp.pluginPath
-        );
+        // Share the v3 declarative-agent generator so the Kiota-integration flag selects the same branch.
+        let generated: GenerateResult;
+        try {
+          generated = await generatePlugin(
+            apiSpecLocation,
+            temp.manifestPath,
+            temp.apiSpecPath,
+            temp.pluginPath,
+            apiOperations,
+            AdaptiveCardUpdateStrategy.CreateNew
+          );
+        } catch (error) {
+          if (!(error instanceof SpecParserError)) {
+            throw error;
+          }
+          return err(
+            new SystemError(
+              SpecParserSource,
+              error.errorType.toString(),
+              error.message,
+              error.message
+            )
+          );
+        }
+        for (const warning of generated.warnings) {
+          ctx.warn?.({ type: String(warning.type), content: warning.content });
+        }
 
         const agentManifestPath = path.join(tempRoot, AGENT_PATH);
         let agentManifest: DeclarativeAgentManifestWrapper;
@@ -402,7 +440,10 @@ export const openApiGeneratePluginFiles: RegisteredStep = {
         }
 
         await writeTempTreeToContext(tempRoot, ctx);
-        ctx.write(ORIGINAL_API_SPEC_PATH, await readOriginalOpenApiSpec(apiSpecLocation));
+        if (ctx.read(ORIGINAL_API_SPEC_PATH) === undefined) {
+          // The Kiota branch already emits the unfiltered document beside the generated spec.
+          ctx.write(ORIGINAL_API_SPEC_PATH, await readOriginalOpenApiSpec(apiSpecLocation));
+        }
         updateAuthYml(ctx, M365_AGENTS_YML, registrations.value);
         updateAuthYml(ctx, M365_AGENTS_LOCAL_YML, registrations.value);
         return ok(undefined);

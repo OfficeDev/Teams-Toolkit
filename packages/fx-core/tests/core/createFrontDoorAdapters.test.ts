@@ -11,6 +11,7 @@ import { ListSensitivityLabelScope } from "../../src/common/constants";
 import { setTools } from "../../src/common/globalVars";
 import { TelemetryEvent, TelemetryProperty, TelemetrySuccess } from "../../src/common/telemetry";
 import { coordinator } from "../../src/component/coordinator";
+import { manifestUtils } from "../../src/component/driver/teamsApp/utils/ManifestUtils";
 import { pathUtils } from "../../src/component/utils/pathUtils";
 import {
   collectCreateFloor,
@@ -229,6 +230,52 @@ describe("createFrontDoorAdapters", () => {
       } finally {
         await fs.remove(folder);
       }
+    });
+
+    it("DCE-26: trims an over-length manifest short name after the scaffold", async () => {
+      const folder = tempFolder();
+      const appName = "MyVeryLongDeclarativeAgentName";
+      const manifestPath = path.join(folder, appName, "appPackage", "manifest.json");
+      vi.spyOn(scaffoldV4Deps, "scaffoldDeclarativeFromV4Channel").mockImplementation(async () => {
+        await fs.outputJson(manifestPath, { name: { short: `${appName}\${{APP_NAME_SUFFIX}}` } });
+        return TEMPLATE_SOURCE;
+      });
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue(undefined);
+      const inputs: Inputs = {
+        platform: Platform.VSCode,
+        [QuestionNames.Folder]: folder,
+        [QuestionNames.AppName]: appName,
+      };
+
+      try {
+        const res = await scaffoldV4(inputs, v4Target, {});
+
+        assert.isTrue(res.isOk());
+        const manifest = await fs.readJson(manifestPath);
+        assert.equal(manifest.name.short, "MyVeryLongDeclarativeAgen${{APP_NAME_SUFFIX}}");
+      } finally {
+        await fs.remove(folder);
+      }
+    });
+
+    it("returns the trim error when trimManifestShortName fails", async () => {
+      vi.spyOn(scaffoldV4Deps, "scaffoldDeclarativeFromV4Channel").mockResolvedValue(
+        TEMPLATE_SOURCE
+      );
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue(undefined);
+      vi.spyOn(manifestUtils, "trimManifestShortName").mockResolvedValue(
+        err(new UserError({ source: "Test", name: "TrimShortNameFailed", message: "failed" }))
+      );
+      const inputs: Inputs = {
+        platform: Platform.VSCode,
+        [QuestionNames.Folder]: "/tmp",
+        [QuestionNames.AppName]: "MyApp",
+      };
+
+      const res = await scaffoldV4(inputs, v4Target, {});
+
+      assert.isTrue(res.isErr());
+      assert.equal(res._unsafeUnwrapErr().name, "TrimShortNameFailed");
     });
 
     it("defaults the caller-floor language to common when the target has none", async () => {
