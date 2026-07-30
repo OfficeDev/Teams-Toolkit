@@ -1,13 +1,15 @@
 # Generated-to-Legacy Case Mapping
 
-This mapping relates each YAML-authored case to its generated plan and closest legacy VScUse plan.
-It is a migration inventory, not an instruction to delete legacy plans automatically.
+This mapping relates each YAML-authored case to its generated plan and the legacy VScUse plan it
+replaced. It is the migration record for plans that are gone: the legacy plan column names a file
+that no longer exists wherever the status is **Full**.
 
 ## Status
 
-- **Full**: the generated case covers the legacy scenario intent with semantic steps and file checks.
+- **Full**: the generated case covers the legacy scenario intent with semantic steps and file
+  checks, and the legacy plan has been removed.
 - **Partial**: the generated case covers the legacy scaffold and lifecycle but stops short of the
-  legacy chat validation.
+  legacy chat validation, so the legacy plan is kept until that gap closes.
 
 ## Mapping
 
@@ -41,10 +43,11 @@ It is a migration inventory, not an instruction to delete legacy plans automatic
 
 ## Legacy Weather Plans Not Mapped
 
-The legacy weather corpus is the full two LLM services by two languages by five surfaces matrix, so
-it holds twenty plans. The twelve cases above cover the whole LLM-by-language-by-Teams-launch matrix
-and sample each remaining surface once. The eight unmapped plans cross a language or an LLM service
-with the Copilot and Playground surfaces:
+The legacy weather corpus was the full two LLM services by two languages by five surfaces matrix, so
+it held twenty plans. The twelve cases above cover the whole LLM-by-language-by-Teams-launch matrix
+and sample each remaining surface once. The eight plans below cross a language or an LLM service
+with the Copilot and Playground surfaces and are kept, because no generated case replaces one of
+them on its own:
 `Weather_Agent_js_local_copilot.json`, `Weather_Agent_js_remote_copilot.json`,
 `Weather_Agent_OpenAI_ts_Copilot_Local_Debug.json`, `Weather_Agent_OpenAI_ts_Copilot_Remote_Debug.json`,
 `Weather_Agent_OpenAI_js_Copilot_Local_Debug.json`, `Weather_Agent_OpenAI_js_Copilot_Remote_Debug.json`,
@@ -56,6 +59,6 @@ against both Teams launches.
 
 ## Legacy Plan Not Mapped
 
-`DA_Add_Action_Import_Existing_API.json` is intentionally excluded. It represents a broader obsolete/generic flow and does not match one generated case closely enough for replacement. The four `Basic` authentication variants are the migration sources for the existing-API bundle.
+`DA_Add_Action_Import_Existing_API.json` is intentionally excluded and kept. It represents a broader obsolete/generic flow and does not match one generated case closely enough for replacement. The four `Basic` authentication variants are the migration sources for the existing-API bundle.
 
 Generated plan filenames remain owned by `plans/.vscuse-generated-plans`; this document does not change setup ownership or generation behavior.
