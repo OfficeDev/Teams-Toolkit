@@ -37,6 +37,7 @@ import {
   scaffoldDeclarativeFromV4Channel,
 } from "../component/generator/v4TemplateBridge";
 import { sendErrorEvent, sendSuccessEvent } from "../component/telemetry";
+import { manifestUtils } from "../component/driver/teamsApp/utils/ManifestUtils";
 import { pathUtils } from "../component/utils/pathUtils";
 import { InputValidationError, MissingRequiredInputError, assembleError } from "../error/common";
 import { AppNamePattern, QuestionNames, appNameQuestion, folderQuestion } from "../question";
@@ -85,8 +86,9 @@ export const scaffoldV4Deps = {
  * floor (`folder` / `app-name`), then renders the located `create/<templateId>`
  * declarative package onto disk via the v4 distribution channel.
  *
- * Mirrors the legacy customized-generator validation and tracking-id tail so a
- * v4 scaffold yields the same `CreateProjectResult` shape as every other create path.
+ * Mirrors the legacy customized-generator validation, tracking-id and manifest
+ * short-name-trim tail so a v4 scaffold yields the same `CreateProjectResult`
+ * shape as every other create path.
  */
 export async function scaffoldV4(
   inputs: Inputs,
@@ -163,6 +165,10 @@ export async function scaffoldV4(
       return err(ensureRes.error);
     }
     result.projectId = ensureRes.value;
+  }
+  const trimRes = await manifestUtils.trimManifestShortName(projectPath);
+  if (trimRes.isErr()) {
+    return err(trimRes.error);
   }
   return ok(result);
 }
