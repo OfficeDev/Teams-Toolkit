@@ -123,7 +123,8 @@ test("VCB-47: Microsoft 365 sign-in verifies the account in the ACCOUNTS section
     assert.match(assertReady.step_id, /_assertReady_/);
     assert.equal(assertReady.depends_on[0], closeBrowser.step_id);
     assert.match(assertReady.description, /M365_ACCOUNT_NAME/);
-    assert.match(assertReady.description, /in the "ACCOUNTS" section$/);
+    assert.match(assertReady.description, /the "ACCOUNTS" section lists/);
+    assert.match(assertReady.description, /trailing ellipsis\.$/);
   }
 });
 

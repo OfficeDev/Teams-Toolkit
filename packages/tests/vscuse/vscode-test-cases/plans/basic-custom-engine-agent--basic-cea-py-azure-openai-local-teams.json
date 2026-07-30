@@ -2310,7 +2310,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion there's ${{env:M365_ACCOUNT_NAME}} in the \"ACCOUNTS\" section",
+      "description": "@assertion the \"ACCOUNTS\" section lists an entry whose label is ${{env:M365_ACCOUNT_NAME}} or that name cut short by the side bar with a trailing ellipsis.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

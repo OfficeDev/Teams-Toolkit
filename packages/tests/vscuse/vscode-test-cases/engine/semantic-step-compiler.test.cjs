@@ -273,7 +273,8 @@ test("VCB-42: login shows the side bar before the sign-in adapter runs", async (
   );
   const readinessIndex = descriptions.findIndex(
     (description, index) =>
-      index > entryIndex && description.includes('in the "ACCOUNTS" section'),
+      index > entryIndex &&
+      description.includes('the "ACCOUNTS" section lists'),
   );
 
   // The side bar step must belong to the login block, not to the scaffold block
@@ -2082,7 +2083,8 @@ test("VCB-47: every sign-in verifies the account in the ACCOUNTS section", async
   // Azure and Microsoft 365 both converge on the same sidebar assertion.
   assert.equal(readySteps.length, 2);
   for (const step of readySteps) {
-    assert.match(step.description, /in the "ACCOUNTS" section$/);
+    assert.match(step.description, /the "ACCOUNTS" section lists/);
+    assert.match(step.description, /trailing ellipsis\.$/);
     assert.equal(
       steps.some(
         (other) =>
