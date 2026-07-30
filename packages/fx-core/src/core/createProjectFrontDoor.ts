@@ -45,7 +45,8 @@ import { QuestionNames } from "../question/questionNames";
  *                        same floor, with the create floor appended to the same
  *                        walk, then `scaffoldV4` the authored package;
  *   - `surface-action` → return the action's surface signal (no scaffold).
- *   - `v3` / `v3-core-method` → unsupported when the v4 front door is enabled.
+ * `{ v4, surface-action }` is the whole closed engine set (ADR-0014 Amendment 5):
+ * no selector engine hands off to v3.
  * Flag off is a pure pass-through to the unmodified `createV3` (INV-1): the
  * selector is never walked, so v3 behavior is byte-identical.
  *
@@ -238,11 +239,11 @@ function dispatchSurfaceAction(target: BuildTarget): Result<CreateProjectResult,
   );
 }
 
-function unsupportedCreateTarget(target: BuildTarget): SystemError {
+function unexpectedPresetBack(target: BuildTarget): SystemError {
   return new SystemError({
     source: SOURCE,
-    name: "UnsupportedCreateEngine",
-    message: `The create front door does not dispatch the '${target.engine}' engine.`,
+    name: "UnexpectedCreateBack",
+    message: `The preset-template create path for '${target.templateId}' is not backable, but Q2 signalled back.`,
   });
 }
 
@@ -285,8 +286,6 @@ export async function createProjectFrontDoor(
         const action = dispatchSurfaceAction(target);
         return action.isErr() ? err(action.error) : ok({ kind: "result", result: action.value });
       }
-      case "v3-core-method":
-        return err(unsupportedCreateTarget(target));
       case "v4": {
         inputs[QuestionNames.TemplateName] = templateNameForV4(target);
         const runInputs = deps.runInputs ?? runCreateInputsWalk;
@@ -381,7 +380,7 @@ export async function createProjectFrontDoor(
     }
     // The preset path is not backable (baseStep 0, backable false), so `done` is the live branch.
     return dispatched.value.kind === "back"
-      ? err(unsupportedCreateTarget(target.value))
+      ? err(unexpectedPresetBack(target.value))
       : ok(dispatched.value.result);
   }
 

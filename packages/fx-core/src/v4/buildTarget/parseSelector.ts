@@ -37,7 +37,7 @@ function stringArray(value: unknown): string[] | undefined {
 
 /** Membership test for the closed dispatch-engine set. */
 function isDispatchEngine(value: unknown): value is DispatchEngine {
-  return value === "v4" || value === "v3-core-method" || value === "surface-action";
+  return value === "v4" || value === "surface-action";
 }
 
 /** Project one raw question onto `{ name, condition? }`. */
@@ -73,7 +73,7 @@ function parseRoute(raw: unknown, index: number): Result<SelectorRoute, FxError>
     return err(userError(`selector route at index ${index} has an invalid 'engine'`));
   }
   const route: SelectorRoute = { when, engine };
-  for (const key of ["templateId", "coreMethod", "action"] as const) {
+  for (const key of ["templateId", "action"] as const) {
     if (key in raw && typeof raw[key] !== "string") {
       return err(userError(`selector route at index ${index} has a non-string '${key}'`));
     }
@@ -88,10 +88,6 @@ function parseRoute(raw: unknown, index: number): Result<SelectorRoute, FxError>
   const templateId = stringField(raw, "templateId");
   if (templateId !== undefined) {
     route.templateId = templateId;
-  }
-  const coreMethod = stringField(raw, "coreMethod");
-  if (coreMethod !== undefined) {
-    route.coreMethod = coreMethod;
   }
   const action = stringField(raw, "action");
   if (action !== undefined) {

@@ -35,9 +35,10 @@ not the v3 question tree (principle 1); the resulting `BuildTarget`
   action (e.g. `open-github-copilot-chat` → `shouldInvokeTeamsAgent`). This
   generalizes today's hand-coded `ProjectType === startWithGithubCopilot`
   early-return into a selector-driven route.
-- **`engine: "v3-core-method"`** → unsupported in the v4-enabled create front
-  door. `engine:"v3"` is no longer a valid selector engine after the v4
-  migration; flag off is the only legacy create path.
+
+`{ v4, surface-action }` is the whole closed set: after ADR-0014 Amendments 3
+and 5 there is no selector engine that hands off to v3, so the flag-off
+pass-through is the only legacy create path.
 
 The front door is a **new entry** (`createProjectFrontDoor`) that the surfaces
 call. When `TEAMSFX_V4_ENABLED` is **off**, the front door is a **pure
@@ -55,7 +56,7 @@ The operation owns the **createProject-level composition** and nothing else:
 2. **The engine dispatch** — branch on `BuildTarget.engine`: for `v4` run
   `runCreateInputs` (Q2 + common floor), then
   `scaffoldDeclarativeFromV4Channel`; for `surface-action` perform the action
-  and return; for `v3-core-method` return `UnsupportedCreateEngine`.
+  and return.
 
 It does **not** ask the selector's routing questions itself (that is
 `runCreateSelector`), does **not** ask the v4 Q2 or common floor (that is
@@ -131,7 +132,6 @@ flowchart TD
   eng -- "v4" --> q2v4["runCreateInputs(metadata bytes, locator, answers, ui,\nbaseStep=Q1 promptCount, backable)\n→ Answers + floor write-back | back"]
   q2v4 -- "back at Q2 first prompt" --> sel
   q2v4 -- "done" --> sc["scaffoldDeclarativeFromV4Channel(locator, answers, templates bytes)"] --> done
-  eng -- "v3-core-method" --> unsupported(["err(UnsupportedCreateEngine)\nno v3 hand-off"])
   sel -. cancel .-> e(["err(UserError)"])
   q2v4 -. cancel/invalid .-> e
 ```
@@ -163,9 +163,9 @@ flowchart TD
   `src/v4` (alongside the bridge / core wiring). It calls `runCreateSelector` /
   `runCreateInputs` only through their exported pure contracts; it adds **no** v3
   import into `src/v4`, so INV-7 holds (walk-create-selector INV-1).
-- **INV-5** — No flag-on v3 hand-off. With `TEAMSFX_V4_ENABLED` on,
-  `engine:"v3-core-method"` is an explicit unsupported error in the create front
-  door, and `engine:"v3"` is no longer a valid selector engine. Legacy
+- **INV-5** — No flag-on v3 hand-off. With `TEAMSFX_V4_ENABLED` on, the closed
+  selector engine set is `{ v4, surface-action }`, so no resolved `BuildTarget`
+  can name a v3 target at all (ADR-0014 Amendments 3 and 5). Legacy
   scaffolding is reachable only through the flag-off pass-through (DCE-01).
 - **INV-6** — The source read is injectable, so the whole funnel + dispatch is
   CI-testable from an in-memory floor built from the loose `templates/v4` source,
@@ -215,8 +215,8 @@ flowchart TD
   `createProjectFrontDoor(inputs)` that the surfaces call. Flag-off ⇒ it delegates
   straight to the unmodified `createProject` (pure pass-through). Flag-on ⇒ it runs
   `runCreateSelector` (Q1) and dispatches: `v4` → `runCreateInputs` +
-  `scaffoldDeclarativeFromV4Channel`; `surface-action` → the action;
-  `v3-core-method` → unsupported error. **Rationale:** v4 has formally migrated;
+  `scaffoldDeclarativeFromV4Channel`; `surface-action` → the action.
+  **Rationale:** v4 has formally migrated;
   once the v4 front door is enabled, it must not re-enter legacy scaffolding.
   The legacy create path is still available through the flag-off opt-out, so no
   v3 branch is woven into the v4-enabled dispatch.

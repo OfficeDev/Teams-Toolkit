@@ -1089,20 +1089,6 @@ describe("createProjectFrontDoor (dispatch-create-by-engine)", () => {
     assert.equal(inputs["template-name"], "future/v4-template");
   });
 
-  it("fails loudly on an unsupported create engine (v3-core-method)", async () => {
-    const target: BuildTarget = { templateId: "some-core-method", engine: "v3-core-method" };
-
-    const res = await createProjectFrontDoor(
-      baseInputs(),
-      deps({ runSelector: () => okTarget(target) })
-    );
-
-    assert.isTrue(res.isErr());
-    if (res.isErr()) {
-      assert.equal(res.error.name, "UnsupportedCreateEngine");
-    }
-  });
-
   it("fails loudly on an unhandled surface action", async () => {
     const target: BuildTarget = { templateId: "some-other-action", engine: "surface-action" };
 

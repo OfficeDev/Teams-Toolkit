@@ -24,7 +24,6 @@ interface PortOpts {
   answers?: Record<string, string>; // scripted prompt answers, keyed by question name
   flags?: Record<string, boolean>;
   v4?: string[];
-  coreMethods?: string[];
 }
 
 function makePort(opts: PortOpts): { port: RouteResolverPort; calls: string[] } {
@@ -44,19 +43,19 @@ function makePort(opts: PortOpts): { port: RouteResolverPort; calls: string[] } 
     },
     v4Registry(templateId) {
       calls.push("v4Registry:" + templateId);
-      return (opts.v4 ?? []).includes(templateId);
-    },
-    v3CoreMethodRegistry(coreMethod) {
-      calls.push("coreMethod:" + coreMethod);
-      return (opts.coreMethods ?? []).includes(coreMethod);
+      // The DT-off twin is always registered: every `createSelector()` test validates the
+      // whole routing table up front, but only AC-05 cares which of the pair it resolves to.
+      return templateId === DT_OFF_TWIN || (opts.v4 ?? []).includes(templateId);
     },
   };
   return { port, calls };
 }
 
 const DT = "TEAMSFX_MCP_FOR_DA_DT";
+/** The v4 package the MCP route falls to when the DT flag is off (mirrors the shipped selector). */
+const DT_OFF_TWIN = "da/mcp-server-static";
 
-/** A create selector mirroring the real one: a DT-gated v4/v3-core-method split plus a surface-action route. */
+/** A create selector mirroring the real one: a DT-gated v4 twin split plus a surface-action route. */
 function createSelector(): SelectorSpec {
   return {
     questions: [
@@ -71,8 +70,8 @@ function createSelector(): SelectorSpec {
       },
       {
         when: `projectType=='declarative-agent' && actionSource=='mcp' && !featureFlag('${DT}')`,
-        engine: "v3-core-method",
-        coreMethod: "addPlugin",
+        engine: "v4",
+        templateId: DT_OFF_TWIN,
       },
       {
         when: "projectType=='github-copilot'",
@@ -91,13 +90,11 @@ describe("v4/buildTarget/resolveBuildTarget", () => {
       routes: [
         { when: "true", engine: "v4", templateId: "da/mcp-server" },
         { when: "true", engine: "v4" },
-        { when: "true", engine: "v3-core-method", coreMethod: "addPlugin" },
         { when: "true", engine: "surface-action", action: "open-chat" },
       ],
     });
 
     assert.isTrue(registry("da/mcp-server"));
-    assert.isFalse(registry("addPlugin"));
     assert.isFalse(registry("open-chat"));
     assert.isFalse(registry("missing"));
   });
@@ -150,7 +147,6 @@ describe("v4/buildTarget/resolveBuildTarget", () => {
     const { port } = makePort({
       flags: { [DT]: false },
       v4: ["da/mcp-server"],
-      coreMethods: ["addPlugin"],
     });
     const res = await resolveBuildTarget(
       createSelector(),
@@ -159,8 +155,8 @@ describe("v4/buildTarget/resolveBuildTarget", () => {
       port
     );
     const bt = res._unsafeUnwrap();
-    assert.strictEqual(bt.engine, "v3-core-method");
-    assert.strictEqual(bt.templateId, "addPlugin");
+    assert.strictEqual(bt.engine, "v4");
+    assert.strictEqual(bt.templateId, DT_OFF_TWIN);
     assert.notStrictEqual(bt.templateId, "da/mcp-server");
   });
 
@@ -176,23 +172,6 @@ describe("v4/buildTarget/resolveBuildTarget", () => {
     // validateRoutes consulted v4Registry for the v4 route; nothing branched on language.
     assert.include(calls, "v4Registry:da/mcp-server");
     assert.isEmpty(calls.filter((c) => c === "prompt:language"));
-  });
-
-  it("AC-08: a route naming a coreMethod in v3CoreMethodRegistry dispatches to v3-core-method", async () => {
-    const { port } = makePort({
-      flags: { [DT]: false },
-      v4: ["da/mcp-server"],
-      coreMethods: ["addPlugin"],
-    });
-    const res = await resolveBuildTarget(
-      createSelector(),
-      { projectType: "declarative-agent", actionSource: "mcp" },
-      false,
-      port
-    );
-    const bt = res._unsafeUnwrap();
-    assert.strictEqual(bt.engine, "v3-core-method");
-    assert.strictEqual(bt.templateId, "addPlugin");
   });
 
   it("AC-09: a surface-action route scaffolds nothing — returns the action id, carrying the walk answers", async () => {
@@ -223,21 +202,6 @@ describe("v4/buildTarget/resolveBuildTarget", () => {
     assert.deepEqual(bt.answers, { projectType: "github-copilot" });
   });
 
-  it("AC-10: a route naming a coreMethod absent from v3CoreMethodRegistry is an explicit UserError, never a silent fallback", async () => {
-    const { port } = makePort({ flags: { [DT]: false }, v4: ["da/mcp-server"], coreMethods: [] });
-    const res = await resolveBuildTarget(
-      createSelector(),
-      { projectType: "declarative-agent", actionSource: "mcp" },
-      false,
-      port
-    );
-    assert.isTrue(res.isErr());
-    const e = res._unsafeUnwrapErr();
-    assert.instanceOf(e, UserError);
-    assert.strictEqual(e.name, BUILD_TARGET_UNKNOWN_TEMPLATE);
-    assert.include(e.message, "addPlugin");
-  });
-
   it("AC-11: a route missing its engine key — or carrying a foreign key — is rejected", async () => {
     const missingKey: SelectorSpec = {
       questions: [],
@@ -249,29 +213,11 @@ describe("v4/buildTarget/resolveBuildTarget", () => {
 
     const foreignKey: SelectorSpec = {
       questions: [],
-      routes: [{ when: "true", engine: "v4", templateId: "t", coreMethod: "addPlugin" }],
+      routes: [{ when: "true", engine: "v4", templateId: "t", action: "open" }],
     };
     const res2 = await resolveBuildTarget(foreignKey, {}, false, makePort({ v4: ["t"] }).port);
     assert.isTrue(res2.isErr());
     assert.strictEqual(res2._unsafeUnwrapErr().name, BUILD_TARGET_MALFORMED_ROUTE);
-
-    const missingCoreMethod: SelectorSpec = {
-      questions: [],
-      routes: [{ when: "true", engine: "v3-core-method" }],
-    };
-    const res3 = await resolveBuildTarget(missingCoreMethod, {}, false, makePort({}).port);
-    assert.isTrue(res3.isErr());
-    assert.strictEqual(res3._unsafeUnwrapErr().name, BUILD_TARGET_MALFORMED_ROUTE);
-
-    const malformedCoreMethod: SelectorSpec = {
-      questions: [],
-      routes: [
-        { when: "true", engine: "v3-core-method", coreMethod: "addPlugin", templateId: "t" },
-      ],
-    };
-    const res4 = await resolveBuildTarget(malformedCoreMethod, {}, false, makePort({}).port);
-    assert.isTrue(res4.isErr());
-    assert.strictEqual(res4._unsafeUnwrapErr().name, BUILD_TARGET_MALFORMED_ROUTE);
 
     const missingAction: SelectorSpec = {
       questions: [],
@@ -283,7 +229,7 @@ describe("v4/buildTarget/resolveBuildTarget", () => {
 
     const malformedAction: SelectorSpec = {
       questions: [],
-      routes: [{ when: "true", engine: "surface-action", action: "open", coreMethod: "add" }],
+      routes: [{ when: "true", engine: "surface-action", action: "open", templateId: "t" }],
     };
     const res6 = await resolveBuildTarget(malformedAction, {}, false, makePort({}).port);
     assert.isTrue(res6.isErr());
