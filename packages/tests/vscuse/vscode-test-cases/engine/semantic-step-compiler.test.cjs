@@ -705,7 +705,7 @@ test("VCB-86: Copilot browser authentication preserves the launch deep link", as
   }
 });
 
-test("VCB-87: Copilot browser authentication zooms the viewport out once before the readiness assertion", async () => {
+test("VCB-87: a Copilot target zooms the viewport out once after the readiness assertion", async () => {
   const result = await compileFixture(
     "da-api-plugin-from-existing-api.yml",
     (sourceText) => sourceText,
@@ -714,33 +714,46 @@ test("VCB-87: Copilot browser authentication zooms the viewport out once before 
   assert.equal(result.ok, true);
   for (const generated of result.value) {
     const steps = generated.plan.steps;
-    const confirmIndex = steps.findIndex((step) =>
-      step.step_id.includes("browserM365SignIn_confirmStaySignedIn"),
+    const readyIndex = steps.findIndex((step) =>
+      step.step_id.includes("assertReady_assertReady"),
     );
-    assert.equal(confirmIndex >= 0, true, generated.caseId);
+    assert.equal(readyIndex >= 0, true, generated.caseId);
     assert.match(
-      steps[confirmIndex + 1].step_id,
-      /step_browserM365SignIn_zoomOut/,
+      steps[readyIndex + 1].step_id,
+      /step_zoomOut_zoomOut/,
       generated.caseId,
     );
     assert.equal(
-      steps[confirmIndex + 1].tool,
+      steps[readyIndex + 1].tool,
       "keyboard_shortcut",
       generated.caseId,
     );
     assert.equal(
-      steps[confirmIndex + 1].parameters.keys,
+      steps[readyIndex + 1].parameters.keys,
       "ctrl+-",
-      generated.caseId,
-    );
-    assert.match(
-      steps[confirmIndex + 2].step_id,
-      /step_assertReady_assertReady/,
       generated.caseId,
     );
     assert.equal(
       steps.filter((step) => step.parameters.keys === "ctrl+-").length,
       1,
+      generated.caseId,
+    );
+  }
+});
+
+test("VCB-87: a Teams target never zooms the viewport out", async () => {
+  const result = await compileFixture(
+    "weather-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  for (const generated of result.value.filter((candidate) =>
+    candidate.caseId.endsWith("-teams"),
+  )) {
+    assert.equal(
+      generated.plan.steps.some((step) => step.parameters.keys === "ctrl+-"),
+      false,
       generated.caseId,
     );
   }

@@ -107,8 +107,8 @@
       "step_browserM365SignIn_submitPassword_cf4f7ebda_4_3",
       "step_browserM365SignIn_assertStaySignedIn_cf4f7ebda_4_3",
       "step_browserM365SignIn_confirmStaySignedIn_cf4f7ebda_4_3",
-      "step_browserM365SignIn_zoomOut_cf4f7ebda_4_3",
       "step_assertReady_assertReady_cf4f7ebda_4_4",
+      "step_zoomOut_zoomOut_cf4f7ebda_4_5",
       "step_sendCopilotMessage_assertInput_cf4f7ebda_6_1",
       "step_sendCopilotMessage_focusInput_cf4f7ebda_6_1",
       "step_sendCopilotMessage_type_cf4f7ebda_6_1",
@@ -2155,7 +2155,28 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_zoomOut_cf4f7ebda_4_3",
+      "step_id": "step_assertReady_assertReady_cf4f7ebda_4_4",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_browserM365SignIn_confirmStaySignedIn_cf4f7ebda_4_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "action:assert-ready",
+        "step_retry_timeout: 180"
+      ]
+    },
+    {
+      "step_id": "step_zoomOut_zoomOut_cf4f7ebda_4_5",
       "agent": "interaction",
       "tool": "keyboard_shortcut",
       "parameters": {
@@ -2167,34 +2188,13 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_confirmStaySignedIn_cf4f7ebda_4_3"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:authentication",
-        "surface:browser"
-      ]
-    },
-    {
-      "step_id": "step_assertReady_assertReady_cf4f7ebda_4_4",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_browserM365SignIn_zoomOut_cf4f7ebda_4_3"
+        "step_assertReady_assertReady_cf4f7ebda_4_4"
       ],
       "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:browser",
-        "action:assert-ready",
-        "step_retry_timeout: 180"
+        "action:zoom-out"
       ]
     },
     {
@@ -2208,7 +2208,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertReady_assertReady_cf4f7ebda_4_4"
+        "step_zoomOut_zoomOut_cf4f7ebda_4_5"
       ],
       "preconditions": [],
       "postconditions": [],

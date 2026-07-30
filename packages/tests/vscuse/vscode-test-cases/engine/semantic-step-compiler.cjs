@@ -1162,6 +1162,11 @@ function createSemanticStepCompiler() {
         readySubject: profile.readySubject,
       }),
     );
+    if (error) return error;
+    if (profile.host === "copilot") {
+      error = append(output, render(state, "browser/zoom-out.json.tpl", {}));
+      if (error) return error;
+    }
     state.profile = profile;
     state.completed.add("target");
     return error ?? { ok: true, value: output };
