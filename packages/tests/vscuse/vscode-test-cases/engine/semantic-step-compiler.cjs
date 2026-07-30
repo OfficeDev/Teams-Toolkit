@@ -162,8 +162,24 @@ const scaffoldQuestionAdapters = {
     options: {
       "copilot-agent-type": "Declarative Agent",
       "custom-engine-agent-type": "Custom Engine Agent",
+      "teams-agent-and-app-type": "Teams Agents and Apps",
     },
     title: "New Project",
+    type: "singleSelect",
+  },
+  teamsAppType: {
+    options: {
+      "teams-other-app-type": "Other Teams Capabilities",
+    },
+    title: "Teams Agent or App Using Microsoft Teams SDK",
+    type: "singleSelect",
+  },
+  teamsOtherAppType: {
+    options: {
+      "default-bot": "Simple Bot",
+      "default-message-extension": "Message Extension",
+    },
+    title: "Teams Capability",
     type: "singleSelect",
   },
   workspaceFolder: {
@@ -296,6 +312,22 @@ const targetAdapters = {
   // `${account-hint}`, which resolves to a `login_hint` and asks straight for the
   // password of the account already signed in to Visual Studio Code.
   "Launch Remote in Teams (Chrome)": {
+    browserAuthentication: {
+      component: "authentication/browser/m365-password-sign-in.json.tpl",
+      credentials: "m365",
+    },
+    host: "teams",
+    open: { adapter: "teams-add", destination: "chat", kind: "app" },
+    profileSelections: {
+      first: { component: "quick-input/filter-option.json.tpl" },
+    },
+    readySubject:
+      "the Microsoft Teams app details page for an app whose name starts with ${{var:app_name}} is visible",
+    requires: ["login:azure", "login:m365", "provision", "deploy"],
+  },
+  // The v4 TypeScript Bot and Message Extension templates title the same
+  // remote Teams launch `View Remote App in Teams (Chrome)`.
+  "View Remote App in Teams (Chrome)": {
     browserAuthentication: {
       component: "authentication/browser/m365-password-sign-in.json.tpl",
       credentials: "m365",
