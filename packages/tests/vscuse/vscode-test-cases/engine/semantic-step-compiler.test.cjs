@@ -1679,6 +1679,35 @@ test("VCB-75: a local environment operation writes the variable into the local l
   assert.equal(step.parameters.sample.includes('"envs:"'), true);
 });
 
+test("VCB-88: a local environment step names its variable and verifies its own write", async () => {
+  const result = await compileFixture(
+    "weather-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const generated = result.value.find(
+    (candidate) => candidate.caseId === "weather-ts-openai-local-teams",
+  );
+  const step = generated.plan.steps.find((candidate) =>
+    candidate.step_id.startsWith("step_setLocalEnvironmentVariable_"),
+  );
+
+  assert.equal(step.description.includes("OPENAI_BASE_URL"), true);
+  assert.equal(
+    step.parameters.sample.includes(
+      'if not value:\n    raise AssertionError("The variable value resolved to nothing")',
+    ),
+    true,
+  );
+  assert.equal(
+    step.parameters.sample.includes(
+      'if written != [indent + name + ": " + value]:',
+    ),
+    true,
+  );
+});
+
 test("VCB-76: a shell-unsafe local environment value fails the compilation", async () => {
   const result = await compileFixture("weather-agent.yml", (sourceText) =>
     sourceText.replace(
