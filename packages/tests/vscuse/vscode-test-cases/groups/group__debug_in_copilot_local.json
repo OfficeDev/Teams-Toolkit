@@ -36,6 +36,8 @@
       "step_86a70854",
       "step_a0762a17",
       "step_3bb29c8a",
+      "step_c105ed99",
+      "step_09e4a9e1",
       "step_670cbf14"
     ],
     "tags": [
@@ -457,6 +459,64 @@
       ],
       "screenshot": "step_3bb29c8a",
       "created_at": "2026-05-18T10:07:16.352198",
+      "plan_id": "plan_r_0928_095902"
+    },
+    {
+      "step_id": "step_c105ed99",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "dx": null,
+        "dy": null,
+        "key": null,
+        "keys": null,
+        "text": null,
+        "x": 715,
+        "y": 461
+      },
+      "description": "If the M365 Copilot browser shows a \"This agent is not installed\" dialog (the debug deep link opened before/with a mismatched entity), click its \"Close\" button to dismiss the modal blocking the main chat section.",
+      "content_refs": [],
+      "timeout": 10,
+      "retry_count": 0,
+      "continue_on_error": "true",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "force_run:true"
+      ],
+      "screenshot": "",
+      "created_at": "2026-07-30T02:57:00.000000",
+      "plan_id": "plan_r_0928_095902"
+    },
+    {
+      "step_id": "step_09e4a9e1",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "dx": null,
+        "dy": null,
+        "key": null,
+        "keys": null,
+        "text": null,
+        "x": 110,
+        "y": 405
+      },
+      "description": "Click the \"${{var:app_name}}local\" agent in the left \"Agents\" list of M365 Copilot to open it in the main chat section so the agent name is displayed there.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "true",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay: 5"
+      ],
+      "screenshot": "",
+      "created_at": "2026-07-30T02:57:00.000000",
       "plan_id": "plan_r_0928_095902"
     },
     {
