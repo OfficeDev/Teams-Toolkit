@@ -789,7 +789,7 @@ test("VCB-89: action consent closes on the Allow button, not on the prompt", asy
   );
 });
 
-test("existing API remote previews validate the Copilot action response", async () => {
+test("existing API remote previews reach the Copilot action consent", async () => {
   const result = await compileFixture(
     "da-api-plugin-from-existing-api.yml",
     (sourceText) => sourceText,
@@ -799,13 +799,15 @@ test("existing API remote previews validate the Copilot action response", async 
   const plansByCase = new Map(
     result.value.map((generated) => [generated.caseId, generated.plan]),
   );
-  const caseIds = [
-    "da-api-plugin-from-existing-api-no-auth-remote-preview",
-    "da-api-plugin-from-existing-api-api-key-remote-preview",
-    "da-api-plugin-from-existing-api-bearer-remote-preview",
+  // Only the no-auth variant reaches a repair service this repository can call,
+  // so it is the only one that reads the answer.
+  const responseStepsByCase = [
+    ["da-api-plugin-from-existing-api-no-auth-remote-preview", 2],
+    ["da-api-plugin-from-existing-api-api-key-remote-preview", 0],
+    ["da-api-plugin-from-existing-api-bearer-remote-preview", 0],
   ];
 
-  for (const caseId of caseIds) {
+  for (const [caseId, responseSteps] of responseStepsByCase) {
     const plan = plansByCase.get(caseId);
     assert.notEqual(plan, undefined, caseId);
     assert.equal(
@@ -829,7 +831,7 @@ test("existing API remote previews validate the Copilot action response", async 
       plan.steps.filter((step) =>
         step.tags.includes("action:assert-chat-response"),
       ).length,
-      2,
+      responseSteps,
       caseId,
     );
   }

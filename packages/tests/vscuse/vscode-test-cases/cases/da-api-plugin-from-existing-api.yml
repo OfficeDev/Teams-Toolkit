@@ -26,7 +26,7 @@ cases:
         provision-api-key,
         f5-copilot-remote,
         open-agent,
-        check-repair-chat,
+        check-repair-action,
       ]
 
   - id: da-api-plugin-from-existing-api-bearer-remote-preview
@@ -40,7 +40,7 @@ cases:
         provision-bearer,
         f5-copilot-remote,
         open-agent,
-        check-repair-chat,
+        check-repair-action,
       ]
 
   - id: da-api-plugin-from-existing-api-oauth-remote-preview
@@ -388,3 +388,16 @@ steps:
         expect:
           replied: true
           notContains: ["error"]
+
+  # The API-key and bearer variants point at a repair service this repository
+  # cannot reach, so any response they produce reports that service rather than
+  # the credential the case provisioned. The consent prompt is the last state
+  # these cases own: Copilot only raises it once it has resolved the plugin and
+  # is about to call it, so accepting it proves the credential reached a wired
+  # plugin without reading the upstream answer.
+  check-repair-action:
+    type: checks
+    with:
+      - type: chat
+        send: show repair records assigned to karin blair
+        allowAction: true
