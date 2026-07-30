@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 169,
+    "total_steps": 170,
     "name": "da-api-plugin-from-scratch-js",
     "description": {
       "owner": "",
@@ -175,6 +175,7 @@
       "step_browserM365SignIn_submitPassword_c919bef1e_7_3",
       "step_browserM365SignIn_assertStaySignedIn_c919bef1e_7_3",
       "step_browserM365SignIn_confirmStaySignedIn_c919bef1e_7_3",
+      "step_browserM365SignIn_zoomOut_c919bef1e_7_3",
       "step_assertReady_assertReady_c919bef1e_7_4",
       "step_sendCopilotMessage_assertInput_c919bef1e_9_1",
       "step_sendCopilotMessage_focusInput_c919bef1e_9_1",
@@ -3762,6 +3763,28 @@
       ]
     },
     {
+      "step_id": "step_browserM365SignIn_zoomOut_c919bef1e_7_3",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+-"
+      },
+      "description": "Zoom the browser out once with Ctrl+- so the Microsoft 365 Copilot navigation rail stops covering the conversation column.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_browserM365SignIn_confirmStaySignedIn_c919bef1e_7_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "surface:browser"
+      ]
+    },
+    {
       "step_id": "step_assertReady_assertReady_c919bef1e_7_4",
       "agent": "assertion",
       "tool": "",
@@ -3772,7 +3795,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_confirmStaySignedIn_c919bef1e_7_3"
+        "step_browserM365SignIn_zoomOut_c919bef1e_7_3"
       ],
       "preconditions": [],
       "postconditions": [],

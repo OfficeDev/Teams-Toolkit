@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 98,
+    "total_steps": 99,
     "name": "weather-ts-azure-openai-local-copilot",
     "description": {
       "owner": "",
@@ -107,6 +107,7 @@
       "step_browserM365SignIn_submitPassword_cf4f7ebda_4_3",
       "step_browserM365SignIn_assertStaySignedIn_cf4f7ebda_4_3",
       "step_browserM365SignIn_confirmStaySignedIn_cf4f7ebda_4_3",
+      "step_browserM365SignIn_zoomOut_cf4f7ebda_4_3",
       "step_assertReady_assertReady_cf4f7ebda_4_4",
       "step_sendCopilotMessage_assertInput_cf4f7ebda_6_1",
       "step_sendCopilotMessage_focusInput_cf4f7ebda_6_1",
@@ -2154,6 +2155,28 @@
       ]
     },
     {
+      "step_id": "step_browserM365SignIn_zoomOut_cf4f7ebda_4_3",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+-"
+      },
+      "description": "Zoom the browser out once with Ctrl+- so the Microsoft 365 Copilot navigation rail stops covering the conversation column.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_browserM365SignIn_confirmStaySignedIn_cf4f7ebda_4_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "surface:browser"
+      ]
+    },
+    {
       "step_id": "step_assertReady_assertReady_cf4f7ebda_4_4",
       "agent": "assertion",
       "tool": "",
@@ -2164,7 +2187,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_confirmStaySignedIn_cf4f7ebda_4_3"
+        "step_browserM365SignIn_zoomOut_cf4f7ebda_4_3"
       ],
       "preconditions": [],
       "postconditions": [],

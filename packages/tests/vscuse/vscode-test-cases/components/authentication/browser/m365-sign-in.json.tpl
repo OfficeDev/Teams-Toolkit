@@ -140,6 +140,21 @@
       "preconditions": [],
       "postconditions": [],
       "tags": ["component:authentication", "surface:browser", "delay: 30"]
+    },
+    {
+      "step_id": "step_browserM365SignIn_zoomOut_{{text:instanceSuffix}}",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": { "keys": "ctrl+-" },
+      "description": "Zoom the browser out once with Ctrl+- so the Microsoft 365 Copilot navigation rail stops covering the conversation column.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": ["step_browserM365SignIn_confirmStaySignedIn_{{text:instanceSuffix}}"],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": ["component:authentication", "surface:browser"]
     }
   ]
 }

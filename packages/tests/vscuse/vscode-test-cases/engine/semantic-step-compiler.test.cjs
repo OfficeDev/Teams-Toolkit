@@ -689,7 +689,23 @@ test("VCB-85: existing API registration credentials are prompted only during pro
   assert.equal(readinessIndex < signInIndex, true);
 });
 
-test("VCB-86: Copilot browser authentication preserves the launch deep link and zoom", async () => {
+test("VCB-86: Copilot browser authentication preserves the launch deep link", async () => {
+  const result = await compileFixture(
+    "da-api-plugin-from-existing-api.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  for (const generated of result.value) {
+    assert.equal(
+      generated.plan.steps.some((step) => step.parameters.key === "f5"),
+      false,
+      generated.caseId,
+    );
+  }
+});
+
+test("VCB-87: Copilot browser authentication zooms the viewport out once before the readiness assertion", async () => {
   const result = await compileFixture(
     "da-api-plugin-from-existing-api.yml",
     (sourceText) => sourceText,
@@ -704,17 +720,27 @@ test("VCB-86: Copilot browser authentication preserves the launch deep link and 
     assert.equal(confirmIndex >= 0, true, generated.caseId);
     assert.match(
       steps[confirmIndex + 1].step_id,
+      /step_browserM365SignIn_zoomOut/,
+      generated.caseId,
+    );
+    assert.equal(
+      steps[confirmIndex + 1].tool,
+      "keyboard_shortcut",
+      generated.caseId,
+    );
+    assert.equal(
+      steps[confirmIndex + 1].parameters.keys,
+      "ctrl+-",
+      generated.caseId,
+    );
+    assert.match(
+      steps[confirmIndex + 2].step_id,
       /step_assertReady_assertReady/,
       generated.caseId,
     );
     assert.equal(
-      steps.some((step) => step.parameters.key === "f5"),
-      false,
-      generated.caseId,
-    );
-    assert.equal(
-      steps.some((step) => step.parameters.keys === "ctrl+-"),
-      false,
+      steps.filter((step) => step.parameters.keys === "ctrl+-").length,
+      1,
       generated.caseId,
     );
   }
