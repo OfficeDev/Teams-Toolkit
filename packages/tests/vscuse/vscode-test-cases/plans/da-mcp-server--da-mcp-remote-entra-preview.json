@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 104,
+    "total_steps": 103,
     "name": "da-mcp-remote-entra-preview",
     "description": {
       "owner": "",
@@ -118,7 +118,6 @@
       "step_browserM365SignIn_submitPassword_c0af3d3fa_5_3",
       "step_browserM365SignIn_assertStaySignedIn_c0af3d3fa_5_3",
       "step_browserM365SignIn_confirmStaySignedIn_c0af3d3fa_5_3",
-      "step_browserM365SignIn_refresh_c0af3d3fa_5_3",
       "step_assertReady_assertReady_c0af3d3fa_5_4"
     ],
     "tags": [
@@ -2396,29 +2395,6 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_refresh_c0af3d3fa_5_3",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "f5"
-      },
-      "description": "Press F5 to refresh Microsoft 365 Copilot after browser authentication.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_browserM365SignIn_confirmStaySignedIn_c0af3d3fa_5_3"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:authentication",
-        "surface:browser",
-        "force_run:true"
-      ]
-    },
-    {
       "step_id": "step_assertReady_assertReady_c0af3d3fa_5_4",
       "agent": "assertion",
       "tool": "",
@@ -2429,7 +2405,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_refresh_c0af3d3fa_5_3"
+        "step_browserM365SignIn_confirmStaySignedIn_c0af3d3fa_5_3"
       ],
       "preconditions": [],
       "postconditions": [],

@@ -161,16 +161,19 @@ steps:
     type: target
     with:
       profile: "Launch Remote (Chrome)"
+      profileSelection: first
 
   f5-teams-local:
     type: target
     with:
       profile: "Debug in Teams (Chrome)"
+      profileSelection: first
 
   f5-playground:
     type: target
     with:
       profile: "Debug in Microsoft 365 Agents Playground"
+      profileSelection: first
 
   open-app:
     type: open

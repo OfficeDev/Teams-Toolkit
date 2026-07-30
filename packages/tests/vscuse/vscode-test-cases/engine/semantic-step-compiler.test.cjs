@@ -599,7 +599,7 @@ test("VCB-35: multi-select answers check every option and confirm once", async (
   }
 });
 
-test("existing API cases preserve legacy authentication variants", async () => {
+test("VCB-85: existing API registration credentials are prompted only during provision", async () => {
   const result = await compileFixture(
     "da-api-plugin-from-existing-api.yml",
     (sourceText) => sourceText,
@@ -633,17 +633,26 @@ test("existing API cases preserve legacy authentication variants", async () => {
   for (const { caseId, credentialValues, url } of variants) {
     const plan = plansByCase.get(caseId);
     assert.notEqual(plan, undefined, caseId);
-    const typedValues = plan.steps
-      .filter((step) => step.tool === "type_text")
-      .map((step) => step.parameters.text);
+    const typedValues = plan.steps.map((step) => step.parameters.text);
     assert.equal(typedValues.includes(url), true, caseId);
+    const targetSelectionIndex = plan.steps.findIndex(
+      (step) =>
+        step.description ===
+        "Press Enter to confirm the highlighted filtered option.",
+    );
+    assert.equal(targetSelectionIndex >= 0, true, caseId);
     for (const value of credentialValues) {
-      assert.equal(
-        typedValues.filter((typedValue) => typedValue === value).length,
-        2,
-        caseId,
+      const credentialIndices = typedValues.flatMap((typedValue, index) =>
+        typedValue === value ? [index] : [],
       );
+      assert.deepEqual(credentialIndices.length, 1, caseId);
+      assert.equal(credentialIndices[0] < targetSelectionIndex, true, caseId);
     }
+    assert.match(
+      plan.steps[targetSelectionIndex + 1].step_id,
+      /step_browserM365SignIn_assertAccount/,
+      caseId,
+    );
   }
 
   const oauthPlan = plansByCase.get(
@@ -667,14 +676,7 @@ test("existing API cases preserve legacy authentication variants", async () => {
     description.includes("is displayed in the main section"),
   );
   const targetSelectionIndex = oauthDescriptions.findIndex((description) =>
-    description.includes("Preview in Copilot (Chrome) is selected"),
-  );
-  const repeatedClientIdIndex = oauthPlan.steps.findLastIndex(
-    (step) => step.parameters.text === "${{env:EXISTING_API_OAUTH_CLIENT_ID}}",
-  );
-  const repeatedClientSecretIndex = oauthPlan.steps.findLastIndex(
-    (step) =>
-      step.parameters.text === "${{secret:EXISTING_API_OAUTH_CLIENT_SECRET}}",
+    description.includes("confirm the highlighted filtered option"),
   );
   const signInIndex = oauthDescriptions.indexOf(
     "@assertion a visible browser element has role button and accessible name Sign in to Repair Service.",
@@ -682,10 +684,86 @@ test("existing API cases preserve legacy authentication variants", async () => {
   assert.equal(environmentIndex < clientIdIndex, true);
   assert.equal(clientIdIndex < clientSecretIndex, true);
   assert.equal(clientSecretIndex < confirmationIndex, true);
-  assert.equal(targetSelectionIndex < repeatedClientIdIndex, true);
-  assert.equal(repeatedClientIdIndex < repeatedClientSecretIndex, true);
+  assert.equal(confirmationIndex < targetSelectionIndex, true);
   assert.equal(readinessIndex >= 0, true);
   assert.equal(readinessIndex < signInIndex, true);
+});
+
+test("VCB-86: Copilot browser authentication preserves the launch deep link and zoom", async () => {
+  const result = await compileFixture(
+    "da-api-plugin-from-existing-api.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  for (const generated of result.value) {
+    const steps = generated.plan.steps;
+    const confirmIndex = steps.findIndex((step) =>
+      step.step_id.includes("browserM365SignIn_confirmStaySignedIn"),
+    );
+    assert.equal(confirmIndex >= 0, true, generated.caseId);
+    assert.match(
+      steps[confirmIndex + 1].step_id,
+      /step_assertReady_assertReady/,
+      generated.caseId,
+    );
+    assert.equal(
+      steps.some((step) => step.parameters.key === "f5"),
+      false,
+      generated.caseId,
+    );
+    assert.equal(
+      steps.some((step) => step.parameters.keys === "ctrl+-"),
+      false,
+      generated.caseId,
+    );
+  }
+});
+
+test("existing API remote previews validate the Copilot action response", async () => {
+  const result = await compileFixture(
+    "da-api-plugin-from-existing-api.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const plansByCase = new Map(
+    result.value.map((generated) => [generated.caseId, generated.plan]),
+  );
+  const caseIds = [
+    "da-api-plugin-from-existing-api-no-auth-remote-preview",
+    "da-api-plugin-from-existing-api-api-key-remote-preview",
+    "da-api-plugin-from-existing-api-bearer-remote-preview",
+  ];
+
+  for (const caseId of caseIds) {
+    const plan = plansByCase.get(caseId);
+    assert.notEqual(plan, undefined, caseId);
+    assert.equal(
+      plan.steps.filter(
+        (step) =>
+          step.tool === "type_text" &&
+          step.parameters.text ===
+            "show repair records assigned to karin blair",
+      ).length,
+      1,
+      caseId,
+    );
+    assert.equal(
+      plan.steps.some((step) =>
+        step.description.includes("action-consent Allow button"),
+      ),
+      true,
+      caseId,
+    );
+    assert.equal(
+      plan.steps.filter((step) =>
+        step.tags.includes("action:assert-chat-response"),
+      ).length,
+      2,
+      caseId,
+    );
+  }
 });
 
 test("existing API provision credentials require protected expressions", async () => {
@@ -866,7 +944,8 @@ test("Copilot target authenticates the browser before readiness", async (context
   );
   const profileIndex = plan.steps.findIndex(
     (step) =>
-      step.description === "Press Enter to confirm the filtered option.",
+      step.description ===
+      "Press Enter to confirm the highlighted filtered option.",
   );
   const accountIndex = plan.steps.findIndex(
     (step, index) =>
@@ -884,6 +963,7 @@ test("Copilot target authenticates the browser before readiness", async (context
   );
   const readinessDescription = plan.steps[readinessIndex]?.description ?? "";
 
+  assert.equal(profileIndex >= 0, true);
   assert.equal(profileIndex < accountIndex, true);
   assert.equal(accountIndex < passwordIndex, true);
   assert.equal(passwordIndex < readinessIndex, true);
@@ -896,6 +976,84 @@ test("Copilot target authenticates the browser before readiness", async (context
   assert.doesNotMatch(readinessDescription, /\}\}local/);
   assert.doesNotMatch(readinessDescription, /\}\}dev/);
   assert.doesNotMatch(readinessDescription, /is ready is ready/);
+});
+
+test("VCB-84: target profile selection follows the explicit case declaration", async () => {
+  const existingApiResult = await compileFixture(
+    "da-api-plugin-from-existing-api.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(existingApiResult.ok, true);
+  const existingApiPlan = existingApiResult.value.find(
+    (generated) =>
+      generated.caseId ===
+      "da-api-plugin-from-existing-api-api-key-remote-preview",
+  ).plan;
+  const existingApiFilterIndex = existingApiPlan.steps.findIndex(
+    (step) =>
+      step.tool === "type_text" &&
+      step.parameters.text === "Preview in Copilot (Chrome)",
+  );
+  assert.equal(existingApiFilterIndex >= 0, true);
+  const existingApiProfileSteps = existingApiPlan.steps.slice(
+    existingApiFilterIndex,
+    existingApiFilterIndex + 5,
+  );
+  assert.deepEqual(
+    existingApiProfileSteps.map((step) => step.tool),
+    ["type_text", "", "key_press", "", "key_press"],
+  );
+  assert.equal(existingApiProfileSteps[2].parameters.key, "down");
+  assert.match(
+    existingApiProfileSteps[3].description,
+    /Preview in Copilot \(Chrome\).*highlighted/,
+  );
+  assert.equal(existingApiProfileSteps[4].parameters.key, "enter");
+
+  const mcpResult = await compileFixture(
+    "da-mcp-server.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(mcpResult.ok, true);
+  const mcpPlan = mcpResult.value[0].plan;
+  const mcpFilterIndex = mcpPlan.steps.findIndex(
+    (step) =>
+      step.tool === "type_text" &&
+      step.parameters.text === "Preview in Copilot (Chrome)",
+  );
+  assert.equal(mcpFilterIndex >= 0, true);
+  const mcpProfileSteps = mcpPlan.steps.slice(
+    mcpFilterIndex,
+    mcpFilterIndex + 3,
+  );
+  assert.deepEqual(
+    mcpProfileSteps.map((step) => step.tool),
+    ["type_text", "", "key_press"],
+  );
+  assert.equal(mcpProfileSteps[2].parameters.key, "enter");
+
+  const missingSelection = await compileFixture(
+    "da-api-plugin-from-existing-api.yml",
+    (sourceText) =>
+      sourceText.replace(/\n      profileSelection: (first|second)/, ""),
+  );
+  assert.equal(missingSelection.ok, false);
+  assert.equal(
+    missingSelection.diagnostics[0].code,
+    "VCB_TARGET_PROFILE_SELECTION_REQUIRED",
+  );
+
+  const unsupportedSelection = await compileFixture(
+    "da-api-plugin-from-existing-api.yml",
+    (sourceText) =>
+      sourceText.replace("profileSelection: second", "profileSelection: third"),
+  );
+  assert.equal(unsupportedSelection.ok, false);
+  assert.equal(
+    unsupportedSelection.diagnostics[0].code,
+    "VCB_TARGET_PROFILE_SELECTION_UNKNOWN",
+  );
 });
 
 test("semantic adapter rejects provision inputs that the template does not prompt for", async () => {

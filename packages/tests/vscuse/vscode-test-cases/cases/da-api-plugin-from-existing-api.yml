@@ -11,6 +11,8 @@ cases:
         login-m365,
         provision,
         f5-copilot-remote,
+        open-agent,
+        check-repair-chat,
       ]
 
   - id: da-api-plugin-from-existing-api-api-key-remote-preview
@@ -23,6 +25,8 @@ cases:
         login-m365,
         provision-api-key,
         f5-copilot-remote,
+        open-agent,
+        check-repair-chat,
       ]
 
   - id: da-api-plugin-from-existing-api-bearer-remote-preview
@@ -35,6 +39,8 @@ cases:
         login-m365,
         provision-bearer,
         f5-copilot-remote,
+        open-agent,
+        check-repair-chat,
       ]
 
   - id: da-api-plugin-from-existing-api-oauth-remote-preview
@@ -363,9 +369,22 @@ steps:
     type: target
     with:
       profile: "Preview in Copilot (Chrome)"
+      profileSelection: second
 
   open-agent:
     type: open
     with:
       kind: agent
       destination: chat
+
+  # The repair service is hosted outside this repository, so its exact records
+  # are not stable test data. Require a completed, non-error response instead.
+  check-repair-chat:
+    type: checks
+    with:
+      - type: chat
+        send: show repair records assigned to karin blair
+        allowAction: true
+        expect:
+          replied: true
+          notContains: ["error"]

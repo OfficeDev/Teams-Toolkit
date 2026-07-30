@@ -225,6 +225,7 @@ steps:
     type: target
     with:
       profile: "Preview in Copilot (Chrome)"
+      profileSelection: first
 
   open-agent:
     type: open

@@ -120,6 +120,7 @@ steps:
     type: target
     with:
       profile: "Launch Remote in Teams (Chrome)"
+      profileSelection: first
 
   open-app:
     type: open
@@ -233,7 +234,9 @@ steps:
           notContains: ["oauth/register"]
   remote-preview:
     type: target
-    with: { profile: "Launch Remote in Teams (Chrome)" }
+    with:
+      profile: "Launch Remote in Teams (Chrome)"
+      profileSelection: first
   open-app:
     type: open
     with: { kind: app, destination: chat }
@@ -380,8 +383,13 @@ The current Copilot target definition is:
 ```yaml
 remote-preview-da:
   type: target
-  with: { profile: "Preview in Copilot (Chrome)" }
+  with:
+    profile: "Preview in Copilot (Chrome)"
+    profileSelection: second
 ```
+
+`profileSelection` is the authored position of the intended profile after filtering. Every target
+declares `first` or `second`; the compiler does not derive that position from the scaffold template.
 
 An explicit open definition declares the semantic object and desired destination, not the current
 UI action:
@@ -723,12 +731,12 @@ terminal-specific adapter records that entry and converged state.
 
 A target recipe ends before Teams Add/Open, Copilot selection, or chat activity. A preceding
 `login:m365` obtains and stores credentials; the Copilot target adapter uses those credentials for
-browser M365 sign-in after launch. When provision prompted for API-key or OAuth credentials, the
-target recipe also replays those prompts after profile selection. Semantic activation remains in
-`open`, and chat activity remains in `checks`. Existing recorded debug groups that combine these
-concerns are evidence sources only and cannot be reused wholesale as target adapters. A target that
-launches directly into a ready surface may reuse `browser/assert-ready.json.tpl`; otherwise the
-following authored `open` resolves a separate adapter.
+browser M365 sign-in after launch. Provision owns API-key, bearer-token, and OAuth registration
+credential prompts and emits each prompt exactly once; target never replays them after profile
+selection. Semantic activation remains in `open`, and chat activity remains in `checks`. Existing
+recorded debug groups that combine these concerns are evidence sources only and cannot be reused
+wholesale as target adapters. A target that launches directly into a ready surface may reuse
+`browser/assert-ready.json.tpl`; otherwise the following authored `open` resolves a separate adapter.
 
 ## Account Sign-In Component Contract
 
@@ -1107,7 +1115,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-28 | Given a component invocation suffix, direct template rendering produces every step ID from a fixed prefix and validated suffix; caller-supplied IDs, invalid suffixes, and collisions within one rendered component fail atomically. Plan-level uniqueness depends on compiler-generated suffixes and is not independently revalidated after composition.                                                                               |
 | VCB-29 | Given a component assertion, its description is authored directly as fixed template text plus declared `text` placeholders; complete caller-supplied descriptions and invalid substitutions fail atomically.                                                                                                                                                                                                                            |
 | VCB-30 | Given Azure or Microsoft 365 sign-in, compilation shows the toolkit side bar, selects the account-specific deterministic adapter, preserves secret isolation, and verifies account readiness.                                                                                                                                                                                                                                           |
-| VCB-31 | Given `provision`, `deploy`, or `target`, compilation composes only compatible UI-surface components in semantic operation order; visible commands use F1, distinct confirmation entry states do not share fallbacks, lifecycle success is asserted, and target excludes semantic activation while allowing profile-owned browser authentication and credential replay.                                                                 |
+| VCB-31 | Given `provision`, `deploy`, or `target`, compilation composes only compatible UI-surface components in semantic operation order; visible commands use F1, distinct confirmation entry states do not share fallbacks, lifecycle success is asserted, and target excludes semantic activation while allowing profile-owned browser authentication.                                                                                       |
 | VCB-32 | Given ARM inputs on `provision`, compilation emits the fixed supported ARM prompt sequence, requires Azure login and every supported input, and rejects missing, duplicate, or unsupported inputs before plan output.                                                                                                                                                                                                                   |
 | VCB-33 | Given setup compilation succeeds for all sources, setup prints the deterministic generated-plan diff and transactionally updates only manifest-owned files in `plans/`; unchanged output performs no writes, compilation errors, manual-plan collisions, or concurrent changes leave prior content unchanged, and a failed rollback preserves a recoverable backup.                                                                     |
 | VCB-34 | Given the checked-in case sources and no injected `compileStep`, setup reads no external template contracts and uses the semantic compiler plus component renderer to emit twelve deterministic current-format runnable plans; every operation resolves through a supported adapter, removed manifest-owned cases are deleted, and a second setup reports no generated-plan changes.                                                    |
@@ -1160,6 +1168,9 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-81 | Given a `singleSelect` or `multiSelect` answer, the assertion that waits for the option set places no option relative to the prompt's input box, because a multi-select whose one option had loaded was reported as having none once the reader placed that option above the box and read the `0 Selected` and `OK` controls under it as the whole of what the prompt lists.                                                            |
 | VCB-82 | Given a Teams target, neither assertion around the app details popup names a caption, because Teams captions the popup's primary action `Add` for an account that has not installed the app and `Open` for one that has, and titles the dialog that follows accordingly, and which of the two a run meets is account state the case does not own.                                                                                       |
 | VCB-83 | Given a Teams target, both clicks the app details transition makes resolve their target with the runner's `ocr:true` tag, name every caption the control can carry, and declare no visual preconditions, because the caption, and therefore the control's width and position, changes with whether the account has already installed the app, which is what `groups/group__debug_in_teams_remote.json` records for the same two clicks. |
+| VCB-84 | Given a target, its case must explicitly declare `profileSelection: first` or `profileSelection: second`; compilation uses only that declaration to choose the initially highlighted result or move to and assert the second result before confirming, rejects a missing or profile-incompatible selection, and never infers picker order from the scaffold template.                                                                   |
+| VCB-85 | Given existing-API provision with API-key, bearer-token, or OAuth registration credentials, compilation emits those credential prompts and their confirmation exactly once inside `provision`; a later target starts profile-owned browser authentication immediately after profile selection and never replays registration credentials.                                                                                               |
+| VCB-86 | Given profile-owned Microsoft 365 browser authentication for a Copilot target, compilation proceeds directly from confirming `Stay signed in` to the target readiness assertion without refreshing the browser or changing its zoom, preserving the launch deep link and the recorded geometry of later Copilot interactions.                                                                                                           |
 
 ## Boundary
 

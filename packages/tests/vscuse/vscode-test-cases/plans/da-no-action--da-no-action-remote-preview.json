@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 95,
+    "total_steps": 96,
     "name": "da-no-action-remote-preview",
     "description": {
       "owner": "",
@@ -91,9 +91,11 @@
       "step_executeCommand_filter_c60abcc38_5_1",
       "step_executeCommand_assertCommand_c60abcc38_5_1",
       "step_executeCommand_execute_c60abcc38_5_1",
-      "step_filterOption_filter_c60abcc38_5_2",
-      "step_filterOption_assertOption_c60abcc38_5_2",
-      "step_filterOption_confirm_c60abcc38_5_2",
+      "step_filterSecondOption_filter_c60abcc38_5_2",
+      "step_filterSecondOption_assertResults_c60abcc38_5_2",
+      "step_filterSecondOption_next_c60abcc38_5_2",
+      "step_filterSecondOption_assertOption_c60abcc38_5_2",
+      "step_filterSecondOption_confirm_c60abcc38_5_2",
       "step_browserM365SignIn_assertAccount_c60abcc38_5_3",
       "step_browserM365SignIn_focusAccount_c60abcc38_5_3",
       "step_browserM365SignIn_enterAccount_c60abcc38_5_3",
@@ -103,7 +105,6 @@
       "step_browserM365SignIn_submitPassword_c60abcc38_5_3",
       "step_browserM365SignIn_assertStaySignedIn_c60abcc38_5_3",
       "step_browserM365SignIn_confirmStaySignedIn_c60abcc38_5_3",
-      "step_browserM365SignIn_refresh_c60abcc38_5_3",
       "step_assertReady_assertReady_c60abcc38_5_4",
       "step_sendCopilotMessage_assertInput_c60abcc38_7_1",
       "step_sendCopilotMessage_focusInput_c60abcc38_7_1",
@@ -1806,7 +1807,7 @@
       ]
     },
     {
-      "step_id": "step_filterOption_filter_c60abcc38_5_2",
+      "step_id": "step_filterSecondOption_filter_c60abcc38_5_2",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1828,17 +1829,17 @@
       ]
     },
     {
-      "step_id": "step_filterOption_assertOption_c60abcc38_5_2",
+      "step_id": "step_filterSecondOption_assertResults_c60abcc38_5_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the option Preview in Copilot (Chrome) is visible and selectable in the filtered option picker.",
+      "description": "@assertion the filtered option picker shows Preview Local in Copilot (Chrome) as the highlighted first result and Preview in Copilot (Chrome) as the second selectable result.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_filter_c60abcc38_5_2"
+        "step_filterSecondOption_filter_c60abcc38_5_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1849,19 +1850,62 @@
       ]
     },
     {
-      "step_id": "step_filterOption_confirm_c60abcc38_5_2",
+      "step_id": "step_filterSecondOption_next_c60abcc38_5_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
-        "key": "enter"
+        "key": "down"
       },
-      "description": "Press Enter to confirm the filtered option.",
+      "description": "Press Down to highlight the second filtered option.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_assertOption_c60abcc38_5_2"
+        "step_filterSecondOption_assertResults_c60abcc38_5_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_filterSecondOption_assertOption_c60abcc38_5_2",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the option Preview in Copilot (Chrome) is highlighted in the filtered option picker.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_filterSecondOption_next_c60abcc38_5_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_filterSecondOption_confirm_c60abcc38_5_2",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the highlighted filtered option.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_filterSecondOption_assertOption_c60abcc38_5_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1881,7 +1925,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_confirm_c60abcc38_5_2"
+        "step_filterSecondOption_confirm_c60abcc38_5_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2069,29 +2113,6 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_refresh_c60abcc38_5_3",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "f5"
-      },
-      "description": "Press F5 to refresh Microsoft 365 Copilot after browser authentication.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_browserM365SignIn_confirmStaySignedIn_c60abcc38_5_3"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:authentication",
-        "surface:browser",
-        "force_run:true"
-      ]
-    },
-    {
       "step_id": "step_assertReady_assertReady_c60abcc38_5_4",
       "agent": "assertion",
       "tool": "",
@@ -2102,7 +2123,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_refresh_c60abcc38_5_3"
+        "step_browserM365SignIn_confirmStaySignedIn_c60abcc38_5_3"
       ],
       "preconditions": [],
       "postconditions": [],

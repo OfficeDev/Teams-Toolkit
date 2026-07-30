@@ -140,21 +140,6 @@
       "preconditions": [],
       "postconditions": [],
       "tags": ["component:authentication", "surface:browser", "delay: 30"]
-    },
-    {
-      "step_id": "step_browserM365SignIn_refresh_{{text:instanceSuffix}}",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": { "key": "f5" },
-      "description": "Press F5 to refresh Microsoft 365 Copilot after browser authentication.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": ["step_browserM365SignIn_confirmStaySignedIn_{{text:instanceSuffix}}"],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": ["component:authentication", "surface:browser", "force_run:true"]
     }
   ]
 }

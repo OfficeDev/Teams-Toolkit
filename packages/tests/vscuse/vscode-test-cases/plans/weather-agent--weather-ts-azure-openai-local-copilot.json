@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 99,
+    "total_steps": 98,
     "name": "weather-ts-azure-openai-local-copilot",
     "description": {
       "owner": "",
@@ -107,7 +107,6 @@
       "step_browserM365SignIn_submitPassword_cf4f7ebda_4_3",
       "step_browserM365SignIn_assertStaySignedIn_cf4f7ebda_4_3",
       "step_browserM365SignIn_confirmStaySignedIn_cf4f7ebda_4_3",
-      "step_browserM365SignIn_refresh_cf4f7ebda_4_3",
       "step_assertReady_assertReady_cf4f7ebda_4_4",
       "step_sendCopilotMessage_assertInput_cf4f7ebda_6_1",
       "step_sendCopilotMessage_focusInput_cf4f7ebda_6_1",
@@ -2155,29 +2154,6 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_refresh_cf4f7ebda_4_3",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "f5"
-      },
-      "description": "Press F5 to refresh Microsoft 365 Copilot after browser authentication.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_browserM365SignIn_confirmStaySignedIn_cf4f7ebda_4_3"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:authentication",
-        "surface:browser",
-        "force_run:true"
-      ]
-    },
-    {
       "step_id": "step_assertReady_assertReady_cf4f7ebda_4_4",
       "agent": "assertion",
       "tool": "",
@@ -2188,7 +2164,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_refresh_cf4f7ebda_4_3"
+        "step_browserM365SignIn_confirmStaySignedIn_cf4f7ebda_4_3"
       ],
       "preconditions": [],
       "postconditions": [],

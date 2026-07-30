@@ -277,6 +277,17 @@ const lifecycleAdapters = {
 // composed name makes readiness fail on naming detail that the post-scaffold
 // file checks already assert exactly, and against the real manifest rather than
 // against a screenshot.
+//
+// `profileSelections` lists the picker positions an adapter supports, and the
+// case declares which one it means. Every profile below is reached from the
+// first filtered result, because VS Code orders the launch picker by each
+// configuration's `presentation.group` and `presentation.order` and the
+// templates give the intended profile the earliest position among the entries
+// its own title matches. The declarative-agent templates are the exception:
+// they publish `Preview Local in Copilot (Chrome)` as a compound in group `all`
+// and `Preview in Copilot (Chrome)` as a configuration in group `remote`, and
+// the local title contains the remote one as a subsequence, so filtering on the
+// remote title lists the local compound first.
 const targetAdapters = {
   // Every Chrome launch configuration the templates ship omits `userDataDir`, so
   // js-debug hands the session a profile of its own that carries no Microsoft 365
@@ -291,6 +302,9 @@ const targetAdapters = {
     },
     host: "teams",
     open: { adapter: "teams-add", destination: "chat", kind: "app" },
+    profileSelections: {
+      first: { component: "quick-input/filter-option.json.tpl" },
+    },
     readySubject:
       "the Microsoft Teams app details page for an app whose name starts with ${{var:app_name}} is visible",
     requires: ["login:azure", "login:m365", "provision", "deploy"],
@@ -306,6 +320,9 @@ const targetAdapters = {
     },
     host: "teams",
     open: { adapter: "teams-add", destination: "chat", kind: "app" },
+    profileSelections: {
+      first: { component: "quick-input/filter-option.json.tpl" },
+    },
     readySubject:
       "the Microsoft Teams app details page for an app whose name starts with ${{var:app_name}} is visible",
     requires: ["login:azure", "login:m365", "provision", "deploy"],
@@ -317,6 +334,13 @@ const targetAdapters = {
     },
     host: "copilot",
     open: { adapter: "ready", destination: "chat", kind: "agent" },
+    profileSelections: {
+      first: { component: "quick-input/filter-option.json.tpl" },
+      second: {
+        component: "quick-input/filter-second-option.json.tpl",
+        initialOptionLabel: "Preview Local in Copilot (Chrome)",
+      },
+    },
     readySubject:
       "an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot",
     requires: ["login:m365", "provision"],
@@ -331,6 +355,9 @@ const targetAdapters = {
     },
     host: "copilot",
     open: { adapter: "ready", destination: "chat", kind: "agent" },
+    profileSelections: {
+      first: { component: "quick-input/filter-option.json.tpl" },
+    },
     readySubject:
       "an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot",
     requires: ["login:azure", "login:m365", "provision", "deploy"],
@@ -349,6 +376,9 @@ const targetAdapters = {
     },
     host: "teams",
     open: { adapter: "teams-add", destination: "chat", kind: "app" },
+    profileSelections: {
+      first: { component: "quick-input/filter-option.json.tpl" },
+    },
     readySubject:
       "the Microsoft Teams app details page for an app whose name starts with ${{var:app_name}} is visible",
     requires: ["login:m365"],
@@ -360,6 +390,9 @@ const targetAdapters = {
     },
     host: "copilot",
     open: { adapter: "ready", destination: "chat", kind: "agent" },
+    profileSelections: {
+      first: { component: "quick-input/filter-option.json.tpl" },
+    },
     readySubject:
       "an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot",
     requires: ["login:m365"],
@@ -370,6 +403,9 @@ const targetAdapters = {
   "Debug in Microsoft 365 Agents Playground": {
     host: "playground",
     open: { adapter: "ready", destination: "chat", kind: "app" },
+    profileSelections: {
+      first: { component: "quick-input/filter-option.json.tpl" },
+    },
     readySubject:
       "the Microsoft 365 Agents Playground page is open in the browser",
     requires: [],
@@ -771,8 +807,6 @@ function createSemanticStepCompiler() {
         value: {
           confirmation: provisionApiKeyConfirmation,
           questions,
-          // The API key is not persisted, so F5 asks for it again.
-          replayedQuestions: questions,
         },
       };
     }
@@ -807,8 +841,6 @@ function createSemanticStepCompiler() {
         value: {
           confirmation: provisionOauthConfirmation,
           questions,
-          // The OAuth credentials are not persisted, so F5 asks for them again.
-          replayedQuestions: questions,
         },
       };
     }
@@ -818,7 +850,6 @@ function createSemanticStepCompiler() {
         value: {
           confirmation: undefined,
           questions: [],
-          replayedQuestions: [],
         },
       };
     }
@@ -848,9 +879,6 @@ function createSemanticStepCompiler() {
           ...question,
           value: inputs.arm[question.key],
         })),
-        // Provision writes the ARM answers into the environment, so F5 reuses
-        // them instead of prompting again.
-        replayedQuestions: [],
       },
     };
   }
@@ -1012,13 +1040,6 @@ function createSemanticStepCompiler() {
     if (definition.type === "provision") {
       const provision = validateProvisionInputs(state, definition);
       if (!provision.ok) return provision;
-      state.targetProvision =
-        provision.value.replayedQuestions.length > 0
-          ? {
-              confirmation: provision.value.confirmation,
-              questions: provision.value.replayedQuestions,
-            }
-          : undefined;
       confirmation = provision.value.confirmation;
       questions = provision.value.questions;
       selectsEnvironment = provision.value.selectsEnvironment;
@@ -1093,25 +1114,32 @@ function createSemanticStepCompiler() {
       }),
     );
     if (error) return error;
+    const profileSelectionId = definition.with?.profileSelection;
+    if (profileSelectionId === undefined) {
+      return failure(
+        "VCB_TARGET_PROFILE_SELECTION_REQUIRED",
+        "The target must declare which filtered launch profile to select.",
+      );
+    }
+    if (
+      typeof profileSelectionId !== "string" ||
+      !Object.hasOwn(profile.profileSelections, profileSelectionId)
+    ) {
+      return failure(
+        "VCB_TARGET_PROFILE_SELECTION_UNKNOWN",
+        "The target profile selection is not supported by the semantic adapter.",
+      );
+    }
+    const profileSelection = profile.profileSelections[profileSelectionId];
+    const { component, ...profileSelectionValues } = profileSelection;
     error = append(
       output,
-      render(state, "quick-input/filter-option.json.tpl", {
+      render(state, component, {
         optionLabel: profileTitle,
+        ...profileSelectionValues,
       }),
     );
     if (error) return error;
-    if (state.targetProvision !== undefined) {
-      const targetProvisionQuestions = renderProvisionQuestions(
-        state,
-        state.targetProvision.questions,
-        output,
-      );
-      if (!targetProvisionQuestions.ok) return targetProvisionQuestions;
-      const { component, ...confirmationValues } =
-        state.targetProvision.confirmation;
-      error = append(output, render(state, component, confirmationValues));
-      if (error) return error;
-    }
     if (profile.browserAuthentication !== undefined) {
       const credentials = state.credentials.get(
         profile.browserAuthentication.credentials,
@@ -1424,7 +1452,6 @@ function createSemanticStepCompiler() {
         credentials: new Map(),
         occurrence,
         requiresInitialFileCheck: true,
-        targetProvision: undefined,
       };
       states.set(caseId, state);
     } else if (state === undefined) {
