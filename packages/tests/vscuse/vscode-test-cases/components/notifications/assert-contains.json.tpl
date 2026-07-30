@@ -3,7 +3,7 @@
     "version": 1,
     "uiSurface": "notifications",
     "id": "assertContains",
-    "parameters": ["instanceSuffix", "notificationText"]
+    "parameters": ["instanceSuffix", "notificationText", "retryTimeout"]
   },
   "steps": [
     {
@@ -22,7 +22,7 @@
       "tags": [
         "component:notifications",
         "action:assert-contains",
-        "step_retry_timeout: 300"
+        "step_retry_timeout: {{text:retryTimeout}}"
       ]
     }
   ]

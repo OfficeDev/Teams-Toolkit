@@ -57,7 +57,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the Copilot action-consent prompt is no longer visible.",
+      "description": "@assertion the Copilot action-consent Allow button is no longer visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -68,7 +68,7 @@
       "tags": [
         "component:browser",
         "host_surface:copilot",
-        "exit_state:assistant-response-pending",
+        "exit_state:action-consent-dismissed",
         "step_retry_timeout: 30"
       ]
     }

@@ -14,6 +14,8 @@ const allowedStepTypes = new Set([
   "login",
   "provision",
   "deploy",
+  "pythonEnvironment",
+  "localEnvironment",
   "target",
   "open",
   "checks",

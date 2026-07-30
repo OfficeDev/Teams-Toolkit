@@ -108,7 +108,7 @@ test("VCB-34: semantic compiler does not read external template contracts", asyn
   }
 });
 
-test("VCB-34: default setup compiles the checked-in YAML sources into twelve plans", async (context) => {
+test("VCB-34: default setup compiles the checked-in YAML sources into twenty-five plans", async (context) => {
   const plansDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "vscuse-generated-"),
   );
@@ -121,9 +121,9 @@ test("VCB-34: default setup compiles the checked-in YAML sources into twelve pla
   });
 
   assert.equal(first.ok, true);
-  assert.equal(first.value.files.length, 12);
+  assert.equal(first.value.files.length, 25);
   const generatedFiles = first.value.files;
-  assert.equal(generatedFiles.length, 12);
+  assert.equal(generatedFiles.length, 25);
   assert.equal(
     generatedFiles.includes(
       "da-api-plugin-from-existing-api--da-api-plugin-from-existing-api-no-auth.json",
@@ -273,7 +273,8 @@ test("VCB-42: login shows the side bar before the sign-in adapter runs", async (
   );
   const readinessIndex = descriptions.findIndex(
     (description, index) =>
-      index > entryIndex && description.includes('in the "ACCOUNTS" section'),
+      index > entryIndex &&
+      description.includes('the "ACCOUNTS" section lists'),
   );
 
   // The side bar step must belong to the login block, not to the scaffold block
@@ -519,10 +520,10 @@ test("VCB-34: DA API plugin from scratch compiles complete remote branches in au
     );
     const runtimeFlow = [
       "@assertion a visible Visual Studio Code notification contains provision stage executed successfully.",
-      'Click the "Message ${{var:app_name}}" input box in the Microsoft 365 Copilot web application.',
+      'Click the "Message" input box in the Microsoft 365 Copilot web application.',
       "@assertion the Copilot action-consent Allow button is visible.",
       'Click the "Allow" button in the Microsoft 365 Copilot chat interface to grant the agent access.',
-      "@assertion the Copilot action-consent prompt is no longer visible.",
+      "@assertion the Copilot action-consent Allow button is no longer visible.",
       '@assertion the current assistant response contains "Oil Change".',
     ];
     const runtimeIndexes = runtimeFlow.map((description) =>
@@ -556,7 +557,7 @@ test("VCB-35: multi-select answers check every option and confirm once", async (
     const descriptions = generated.plan.steps.map((step) => step.description);
     const tools = generated.plan.steps.map((step) => step.tool);
     const multiSelectFlow = [
-      "@assertion the multi-select prompt titled Select Operation(s) Copilot Can Interact with lists at least one option below its input box.",
+      "@assertion the multi-select prompt titled Select Operation(s) Copilot Can Interact with has finished loading and lists at least one selectable option.",
       "Move focus from the multi-select input box to the select-all checkbox of the prompt.",
       "Press Space to check every option of the multi-select prompt.",
       "Move focus from the select-all checkbox back to the multi-select input box.",
@@ -599,7 +600,7 @@ test("VCB-35: multi-select answers check every option and confirm once", async (
   }
 });
 
-test("existing API cases preserve legacy authentication variants", async () => {
+test("VCB-85: existing API registration credentials are prompted only during provision", async () => {
   const result = await compileFixture(
     "da-api-plugin-from-existing-api.yml",
     (sourceText) => sourceText,
@@ -633,17 +634,26 @@ test("existing API cases preserve legacy authentication variants", async () => {
   for (const { caseId, credentialValues, url } of variants) {
     const plan = plansByCase.get(caseId);
     assert.notEqual(plan, undefined, caseId);
-    const typedValues = plan.steps
-      .filter((step) => step.tool === "type_text")
-      .map((step) => step.parameters.text);
+    const typedValues = plan.steps.map((step) => step.parameters.text);
     assert.equal(typedValues.includes(url), true, caseId);
+    const targetSelectionIndex = plan.steps.findIndex(
+      (step) =>
+        step.description ===
+        "Press Enter to confirm the highlighted filtered option.",
+    );
+    assert.equal(targetSelectionIndex >= 0, true, caseId);
     for (const value of credentialValues) {
-      assert.equal(
-        typedValues.filter((typedValue) => typedValue === value).length,
-        2,
-        caseId,
+      const credentialIndices = typedValues.flatMap((typedValue, index) =>
+        typedValue === value ? [index] : [],
       );
+      assert.deepEqual(credentialIndices.length, 1, caseId);
+      assert.equal(credentialIndices[0] < targetSelectionIndex, true, caseId);
     }
+    assert.match(
+      plan.steps[targetSelectionIndex + 1].step_id,
+      /step_browserM365SignIn_assertAccount/,
+      caseId,
+    );
   }
 
   const oauthPlan = plansByCase.get(
@@ -667,14 +677,7 @@ test("existing API cases preserve legacy authentication variants", async () => {
     description.includes("is displayed in the main section"),
   );
   const targetSelectionIndex = oauthDescriptions.findIndex((description) =>
-    description.includes("Preview in Copilot (Chrome) is selected"),
-  );
-  const repeatedClientIdIndex = oauthPlan.steps.findLastIndex(
-    (step) => step.parameters.text === "${{env:EXISTING_API_OAUTH_CLIENT_ID}}",
-  );
-  const repeatedClientSecretIndex = oauthPlan.steps.findLastIndex(
-    (step) =>
-      step.parameters.text === "${{secret:EXISTING_API_OAUTH_CLIENT_SECRET}}",
+    description.includes("confirm the highlighted filtered option"),
   );
   const signInIndex = oauthDescriptions.indexOf(
     "@assertion a visible browser element has role button and accessible name Sign in to Repair Service.",
@@ -682,10 +685,157 @@ test("existing API cases preserve legacy authentication variants", async () => {
   assert.equal(environmentIndex < clientIdIndex, true);
   assert.equal(clientIdIndex < clientSecretIndex, true);
   assert.equal(clientSecretIndex < confirmationIndex, true);
-  assert.equal(targetSelectionIndex < repeatedClientIdIndex, true);
-  assert.equal(repeatedClientIdIndex < repeatedClientSecretIndex, true);
+  assert.equal(confirmationIndex < targetSelectionIndex, true);
   assert.equal(readinessIndex >= 0, true);
   assert.equal(readinessIndex < signInIndex, true);
+});
+
+test("VCB-86: Copilot browser authentication preserves the launch deep link", async () => {
+  const result = await compileFixture(
+    "da-api-plugin-from-existing-api.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  for (const generated of result.value) {
+    assert.equal(
+      generated.plan.steps.some((step) => step.parameters.key === "f5"),
+      false,
+      generated.caseId,
+    );
+  }
+});
+
+test("VCB-87: a Copilot target zooms the viewport out once after the readiness assertion", async () => {
+  const result = await compileFixture(
+    "da-api-plugin-from-existing-api.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  for (const generated of result.value) {
+    const steps = generated.plan.steps;
+    const readyIndex = steps.findIndex((step) =>
+      step.step_id.includes("assertReady_assertReady"),
+    );
+    assert.equal(readyIndex >= 0, true, generated.caseId);
+    assert.match(
+      steps[readyIndex + 1].step_id,
+      /step_zoomOut_zoomOut/,
+      generated.caseId,
+    );
+    assert.equal(
+      steps[readyIndex + 1].tool,
+      "keyboard_shortcut",
+      generated.caseId,
+    );
+    assert.equal(
+      steps[readyIndex + 1].parameters.keys,
+      "ctrl+-",
+      generated.caseId,
+    );
+    assert.equal(
+      steps.filter((step) => step.parameters.keys === "ctrl+-").length,
+      1,
+      generated.caseId,
+    );
+  }
+});
+
+test("VCB-87: a Teams target never zooms the viewport out", async () => {
+  const result = await compileFixture(
+    "weather-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  for (const generated of result.value.filter((candidate) =>
+    candidate.caseId.endsWith("-teams"),
+  )) {
+    assert.equal(
+      generated.plan.steps.some((step) => step.parameters.keys === "ctrl+-"),
+      false,
+      generated.caseId,
+    );
+  }
+});
+
+test("VCB-89: action consent closes on the Allow button, not on the prompt", async () => {
+  const result = await compileFixture(
+    "da-api-plugin-from-existing-api.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const oauth = result.value.find((candidate) =>
+    candidate.caseId.endsWith("-oauth-remote-preview"),
+  );
+  const dismissed = oauth.plan.steps.find((step) =>
+    step.step_id.includes("allowCopilotAction_assertDismissed"),
+  );
+
+  assert.equal(
+    dismissed.description,
+    "@assertion the Copilot action-consent Allow button is no longer visible.",
+  );
+  assert.equal(
+    dismissed.tags.includes("exit_state:action-consent-dismissed"),
+    true,
+  );
+  assert.equal(
+    dismissed.tags.some((tag) =>
+      tag.startsWith("exit_state:assistant-response"),
+    ),
+    false,
+  );
+});
+
+test("existing API remote previews reach the Copilot action consent", async () => {
+  const result = await compileFixture(
+    "da-api-plugin-from-existing-api.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const plansByCase = new Map(
+    result.value.map((generated) => [generated.caseId, generated.plan]),
+  );
+  // Only the no-auth variant reaches a repair service this repository can call,
+  // so it is the only one that reads the answer.
+  const responseStepsByCase = [
+    ["da-api-plugin-from-existing-api-no-auth-remote-preview", 2],
+    ["da-api-plugin-from-existing-api-api-key-remote-preview", 0],
+    ["da-api-plugin-from-existing-api-bearer-remote-preview", 0],
+  ];
+
+  for (const [caseId, responseSteps] of responseStepsByCase) {
+    const plan = plansByCase.get(caseId);
+    assert.notEqual(plan, undefined, caseId);
+    assert.equal(
+      plan.steps.filter(
+        (step) =>
+          step.tool === "type_text" &&
+          step.parameters.text ===
+            "show repair records assigned to karin blair",
+      ).length,
+      1,
+      caseId,
+    );
+    assert.equal(
+      plan.steps.some((step) =>
+        step.description.includes("action-consent Allow button"),
+      ),
+      true,
+      caseId,
+    );
+    assert.equal(
+      plan.steps.filter((step) =>
+        step.tags.includes("action:assert-chat-response"),
+      ).length,
+      responseSteps,
+      caseId,
+    );
+  }
 });
 
 test("existing API provision credentials require protected expressions", async () => {
@@ -828,7 +978,7 @@ test("provision confirmation follows the authored provision input", async (conte
     await fs.readFile(
       path.join(
         plansDirectory,
-        "weather-agent--weather-ts-azure-openai-remote-preview.json",
+        "weather-agent--weather-ts-azure-openai-remote-teams.json",
       ),
       "utf8",
     ),
@@ -866,7 +1016,8 @@ test("Copilot target authenticates the browser before readiness", async (context
   );
   const profileIndex = plan.steps.findIndex(
     (step) =>
-      step.description === "Press Enter to confirm the filtered option.",
+      step.description ===
+      "Press Enter to confirm the highlighted filtered option.",
   );
   const accountIndex = plan.steps.findIndex(
     (step, index) =>
@@ -884,6 +1035,7 @@ test("Copilot target authenticates the browser before readiness", async (context
   );
   const readinessDescription = plan.steps[readinessIndex]?.description ?? "";
 
+  assert.equal(profileIndex >= 0, true);
   assert.equal(profileIndex < accountIndex, true);
   assert.equal(accountIndex < passwordIndex, true);
   assert.equal(passwordIndex < readinessIndex, true);
@@ -896,6 +1048,84 @@ test("Copilot target authenticates the browser before readiness", async (context
   assert.doesNotMatch(readinessDescription, /\}\}local/);
   assert.doesNotMatch(readinessDescription, /\}\}dev/);
   assert.doesNotMatch(readinessDescription, /is ready is ready/);
+});
+
+test("VCB-84: target profile selection follows the explicit case declaration", async () => {
+  const existingApiResult = await compileFixture(
+    "da-api-plugin-from-existing-api.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(existingApiResult.ok, true);
+  const existingApiPlan = existingApiResult.value.find(
+    (generated) =>
+      generated.caseId ===
+      "da-api-plugin-from-existing-api-api-key-remote-preview",
+  ).plan;
+  const existingApiFilterIndex = existingApiPlan.steps.findIndex(
+    (step) =>
+      step.tool === "type_text" &&
+      step.parameters.text === "Preview in Copilot (Chrome)",
+  );
+  assert.equal(existingApiFilterIndex >= 0, true);
+  const existingApiProfileSteps = existingApiPlan.steps.slice(
+    existingApiFilterIndex,
+    existingApiFilterIndex + 5,
+  );
+  assert.deepEqual(
+    existingApiProfileSteps.map((step) => step.tool),
+    ["type_text", "", "key_press", "", "key_press"],
+  );
+  assert.equal(existingApiProfileSteps[2].parameters.key, "down");
+  assert.match(
+    existingApiProfileSteps[3].description,
+    /Preview in Copilot \(Chrome\).*highlighted/,
+  );
+  assert.equal(existingApiProfileSteps[4].parameters.key, "enter");
+
+  const mcpResult = await compileFixture(
+    "da-mcp-server.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(mcpResult.ok, true);
+  const mcpPlan = mcpResult.value[0].plan;
+  const mcpFilterIndex = mcpPlan.steps.findIndex(
+    (step) =>
+      step.tool === "type_text" &&
+      step.parameters.text === "Preview in Copilot (Chrome)",
+  );
+  assert.equal(mcpFilterIndex >= 0, true);
+  const mcpProfileSteps = mcpPlan.steps.slice(
+    mcpFilterIndex,
+    mcpFilterIndex + 3,
+  );
+  assert.deepEqual(
+    mcpProfileSteps.map((step) => step.tool),
+    ["type_text", "", "key_press"],
+  );
+  assert.equal(mcpProfileSteps[2].parameters.key, "enter");
+
+  const missingSelection = await compileFixture(
+    "da-api-plugin-from-existing-api.yml",
+    (sourceText) =>
+      sourceText.replace(/\n      profileSelection: (first|second)/, ""),
+  );
+  assert.equal(missingSelection.ok, false);
+  assert.equal(
+    missingSelection.diagnostics[0].code,
+    "VCB_TARGET_PROFILE_SELECTION_REQUIRED",
+  );
+
+  const unsupportedSelection = await compileFixture(
+    "da-api-plugin-from-existing-api.yml",
+    (sourceText) =>
+      sourceText.replace("profileSelection: second", "profileSelection: third"),
+  );
+  assert.equal(unsupportedSelection.ok, false);
+  assert.equal(
+    unsupportedSelection.diagnostics[0].code,
+    "VCB_TARGET_PROFILE_SELECTION_UNKNOWN",
+  );
 });
 
 test("semantic adapter rejects provision inputs that the template does not prompt for", async () => {
@@ -1196,6 +1426,93 @@ test("semantic adapter rejects a target with missing prerequisites", async () =>
   assert.equal(result.diagnostics[0].code, "VCB_TARGET_PREREQUISITE");
 });
 
+test("VCB-64: local debug targets require no provision or deploy", async () => {
+  const result = await compileFixture(
+    "weather-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const plansByCase = new Map(
+    result.value.map((generated) => [generated.caseId, generated.plan]),
+  );
+  for (const caseId of [
+    "weather-ts-azure-openai-local-teams",
+    "weather-ts-azure-openai-local-copilot",
+    "weather-ts-azure-openai-playground",
+  ]) {
+    const plan = plansByCase.get(caseId);
+    assert.notEqual(plan, undefined, caseId);
+    const typedValues = plan.steps
+      .filter((step) => step.tool === "type_text")
+      .map((step) => step.parameters.text);
+    assert.equal(
+      typedValues.includes("Microsoft 365 Agents: Provision"),
+      false,
+      caseId,
+    );
+    assert.equal(
+      typedValues.includes("Microsoft 365 Agents: Deploy"),
+      false,
+      caseId,
+    );
+  }
+});
+
+test("VCB-65: the Agents Playground target signs no account in", async () => {
+  const result = await compileFixture(
+    "weather-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const plan = result.value.find(
+    (generated) => generated.caseId === "weather-ts-azure-openai-playground",
+  ).plan;
+  const typedValues = plan.steps
+    .filter((step) => step.tool === "type_text")
+    .map((step) => step.parameters.text);
+  assert.equal(typedValues.includes("${{env:M365_ACCOUNT_NAME}}"), false);
+  assert.equal(
+    typedValues.includes("${{secret:M365_ACCOUNT_PASSWORD}}"),
+    false,
+  );
+  assert.equal(
+    plan.steps.some((step) =>
+      ["step_signInAzure_", "step_signInM365_", "step_browserM365SignIn_"].some(
+        (prefix) => step.step_id.startsWith(prefix),
+      ),
+    ),
+    false,
+  );
+});
+
+test("VCB-66: an Agents Playground chat check uses the Playground composer", async () => {
+  const result = await compileFixture(
+    "weather-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const plan = result.value.find(
+    (generated) => generated.caseId === "weather-ts-azure-openai-playground",
+  ).plan;
+  assert.equal(
+    plan.steps.some((step) =>
+      step.step_id.startsWith("step_sendPlaygroundMessage_"),
+    ),
+    true,
+  );
+  assert.equal(
+    plan.steps.some(
+      (step) =>
+        step.step_id.startsWith("step_sendTeamsMessage_") ||
+        step.step_id.startsWith("step_sendCopilotMessage_"),
+    ),
+    false,
+  );
+});
+
 test("semantic adapter rejects an open kind incompatible with its target profile", async () => {
   const result = await compileFixture("weather-agent.yml", (sourceText) =>
     sourceText.replace("      kind: app", "      kind: agent"),
@@ -1203,6 +1520,403 @@ test("semantic adapter rejects an open kind incompatible with its target profile
 
   assert.equal(result.ok, false);
   assert.equal(result.diagnostics[0].code, "VCB_OPEN_ADAPTER_UNKNOWN");
+});
+
+test("VCB-67: a Python environment operation drives the Venv creation flow", async () => {
+  const result = await compileFixture(
+    "basic-custom-engine-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const plan = result.value.find(
+    (generated) => generated.caseId === "basic-cea-py-azure-openai-playground",
+  ).plan;
+  const typedValues = plan.steps
+    .filter((step) => step.tool === "type_text")
+    .map((step) => step.parameters.text);
+  const commandIndex = typedValues.indexOf("Python: Create Environment...");
+  assert.notEqual(commandIndex, -1);
+  assert.equal(typedValues[commandIndex + 1], "Venv");
+  assert.equal(typedValues[commandIndex + 2], "Python 3.12");
+  assert.equal(
+    plan.steps.some(
+      (step) =>
+        step.agent === "assertion" &&
+        step.description.includes("Select dependencies to install"),
+    ),
+    true,
+  );
+});
+
+test("VCB-68: a Python environment operation reads its interpreter from the case", async () => {
+  const result = await compileFixture(
+    "basic-custom-engine-agent.yml",
+    (sourceText) =>
+      sourceText.replace(
+        'interpreter: "Python 3.12"',
+        'interpreter: "Python 3.13"',
+      ),
+  );
+
+  assert.equal(result.ok, true);
+  const plan = result.value.find(
+    (generated) => generated.caseId === "basic-cea-py-azure-openai-playground",
+  ).plan;
+  const typedValues = plan.steps
+    .filter((step) => step.tool === "type_text")
+    .map((step) => step.parameters.text);
+  assert.equal(typedValues.includes("Python 3.13"), true);
+  assert.equal(typedValues.includes("Python 3.12"), false);
+});
+
+test("VCB-68: a Python environment operation without an interpreter is rejected", async () => {
+  const result = await compileFixture(
+    "basic-custom-engine-agent.yml",
+    (sourceText) =>
+      sourceText.replace('      interpreter: "Python 3.12"\n', ""),
+  );
+
+  assert.equal(result.ok, false);
+  assert.equal(
+    result.diagnostics[0].code,
+    "VCB_PYTHON_ENVIRONMENT_INPUT_INVALID",
+  );
+});
+
+test("VCB-69: a Python environment operation clicks no picker row", async () => {
+  const result = await compileFixture(
+    "basic-custom-engine-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const plan = result.value.find(
+    (generated) => generated.caseId === "basic-cea-py-azure-openai-playground",
+  ).plan;
+  const environmentSteps = plan.steps.filter((step) =>
+    ["step_filterOption_", "step_multiSelect_"].some((prefix) =>
+      step.step_id.startsWith(prefix),
+    ),
+  );
+  assert.notEqual(environmentSteps.length, 0);
+  for (const step of environmentSteps) {
+    assert.equal(step.tool === "click", false, step.step_id);
+    assert.equal(step.parameters.x, undefined, step.step_id);
+    assert.equal(step.parameters.y, undefined, step.step_id);
+  }
+});
+
+test("VCB-70: a Python environment operation opens the notification center before asserting", async () => {
+  const result = await compileFixture(
+    "basic-custom-engine-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const plan = result.value.find(
+    (generated) => generated.caseId === "basic-cea-py-azure-openai-playground",
+  ).plan;
+  const assertionIndex = plan.steps.findIndex(
+    (step) =>
+      step.agent === "assertion" &&
+      step.description.includes("The following environment is selected:"),
+  );
+  assert.notEqual(assertionIndex, -1);
+  const notificationIndex = plan.steps.findIndex(
+    (step) =>
+      step.tool === "type_text" &&
+      step.parameters.text === "Notifications: Show Notifications",
+  );
+  assert.notEqual(notificationIndex, -1);
+  assert.equal(notificationIndex < assertionIndex, true);
+});
+
+test("VCB-71: the Python remote Teams target opens the app through the Teams add transition", async () => {
+  const result = await compileFixture(
+    "basic-custom-engine-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const plan = result.value.find(
+    (generated) =>
+      generated.caseId === "basic-cea-py-azure-openai-remote-teams",
+  ).plan;
+  const typedValues = plan.steps
+    .filter((step) => step.tool === "type_text")
+    .map((step) => step.parameters.text);
+  assert.equal(typedValues.includes("Launch Remote (Chrome)"), true);
+  assert.equal(
+    plan.steps.some((step) => step.step_id.startsWith("step_addAndOpenApp_")),
+    true,
+  );
+});
+
+test("VCB-90: the Teams open converges on the conversation, not the app details page", async () => {
+  const result = await compileFixture(
+    "basic-custom-engine-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const plan = result.value.find(
+    (generated) => generated.caseId === "basic-cea-py-azure-openai-local-teams",
+  ).plan;
+  const target = plan.steps.find((step) =>
+    step.step_id.startsWith("step_assertReady_assertReady_"),
+  );
+  const opened = plan.steps.find((step) =>
+    step.step_id.startsWith("step_addAndOpenApp_assertReady_"),
+  );
+
+  assert.match(target.description, /app details page/);
+  assert.equal(/app details page/.test(opened.description), false);
+  assert.match(opened.description, /conversation/);
+  assert.match(opened.description, /\$\{\{var:app_name\}\}/);
+});
+
+test("VCB-72: the weather bundle authors every LLM, language, and Teams launch combination", async () => {
+  const result = await compileFixture(
+    "weather-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const caseIds = new Set(result.value.map((generated) => generated.caseId));
+  for (const llm of ["azure-openai", "openai"]) {
+    for (const language of ["ts", "js"]) {
+      for (const launch of ["remote-teams", "local-teams"]) {
+        assert.equal(
+          caseIds.has(`weather-${language}-${llm}-${launch}`),
+          true,
+          `weather-${language}-${llm}-${launch} is not authored`,
+        );
+      }
+    }
+  }
+});
+
+test("VCB-73: an OpenAI weather case asserts a completion locally but not remotely", async () => {
+  const result = await compileFixture(
+    "weather-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  for (const generated of result.value) {
+    if (
+      !generated.caseId.includes("-openai-") ||
+      generated.caseId.includes("-azure-openai-")
+    ) {
+      continue;
+    }
+    const isLocal = generated.caseId.includes("-local-");
+    const sendsAMessage = generated.plan.steps.some((step) =>
+      /^step_send(Teams|Copilot|Playground)Message_/.test(step.step_id || ""),
+    );
+    assert.equal(
+      sendsAMessage,
+      isLocal,
+      `${generated.caseId} sends ${sendsAMessage ? "a" : "no"} chat message`,
+    );
+  }
+});
+
+test("VCB-75: a local environment operation writes the variable into the local lifecycle", async () => {
+  const result = await compileFixture(
+    "weather-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const generated = result.value.find(
+    (candidate) => candidate.caseId === "weather-ts-openai-local-teams",
+  );
+  const step = generated.plan.steps.find((candidate) =>
+    candidate.step_id.startsWith("step_setLocalEnvironmentVariable_"),
+  );
+
+  assert.equal(step.agent, "code");
+  assert.equal(
+    step.parameters.sample.includes(
+      'VARIABLE_NAME="OPENAI_BASE_URL" VARIABLE_VALUE="${{env:AZURE_OPENAI_ENDPOINT}}/openai/v1"',
+    ),
+    true,
+  );
+  assert.equal(step.parameters.sample.includes("m365agents.local.yml"), true);
+  assert.equal(step.parameters.sample.includes('"envs:"'), true);
+});
+
+test("VCB-88: a local environment step names its variable and verifies its own write", async () => {
+  const result = await compileFixture(
+    "weather-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const generated = result.value.find(
+    (candidate) => candidate.caseId === "weather-ts-openai-local-teams",
+  );
+  const step = generated.plan.steps.find((candidate) =>
+    candidate.step_id.startsWith("step_setLocalEnvironmentVariable_"),
+  );
+
+  assert.equal(step.description.includes("OPENAI_BASE_URL"), true);
+  assert.equal(
+    step.parameters.sample.includes(
+      'if not value:\n    raise AssertionError("The variable value resolved to nothing")',
+    ),
+    true,
+  );
+  assert.equal(
+    step.parameters.sample.includes(
+      'if written != [indent + name + ": " + value]:',
+    ),
+    true,
+  );
+});
+
+test("VCB-76: a shell-unsafe local environment value fails the compilation", async () => {
+  const result = await compileFixture("weather-agent.yml", (sourceText) =>
+    sourceText.replace(
+      'OPENAI_BASE_URL: "${{env:AZURE_OPENAI_ENDPOINT}}/openai/v1"',
+      'OPENAI_BASE_URL: "$(id)"',
+    ),
+  );
+
+  assert.equal(result.ok, false);
+  assert.equal(
+    result.diagnostics[0].code,
+    "VCB_LOCAL_ENVIRONMENT_INPUT_INVALID",
+  );
+});
+
+test("VCB-77: an Azure lifecycle waits longer for its notification than a local operation", async () => {
+  const result = await compileFixture(
+    "basic-custom-engine-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const plan = result.value.find(
+    (generated) =>
+      generated.caseId === "basic-cea-py-azure-openai-remote-teams",
+  ).plan;
+  const timeoutOf = (text) => {
+    const step = plan.steps.find(
+      (candidate) =>
+        candidate.step_id.startsWith("step_assertNotificationContains_") &&
+        candidate.description.includes(text),
+    );
+    assert.notEqual(step, undefined);
+    return step.tags.find((tag) => tag.startsWith("step_retry_timeout: "));
+  };
+  assert.equal(
+    timeoutOf("provision stage executed successfully"),
+    "step_retry_timeout: 900",
+  );
+  assert.equal(
+    timeoutOf("actions in deploy stage executed successfully"),
+    "step_retry_timeout: 900",
+  );
+  assert.equal(
+    timeoutOf("The following environment is selected:"),
+    "step_retry_timeout: 300",
+  );
+});
+
+test("VCB-78: a Chrome target signs the launched browser in before asserting readiness", async () => {
+  const result = await compileFixture(
+    "basic-custom-engine-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  for (const caseId of [
+    "basic-cea-py-azure-openai-local-teams",
+    "basic-cea-py-azure-openai-remote-teams",
+  ]) {
+    const plan = result.value.find(
+      (generated) => generated.caseId === caseId,
+    ).plan;
+    const launchIndex = plan.steps.findIndex(
+      (step) =>
+        step.tool === "key_press" &&
+        step.step_id.startsWith("step_filterOption_confirm_"),
+    );
+    const passwordIndex = plan.steps.findIndex((step) =>
+      step.step_id.startsWith("step_browserM365PasswordSignIn_enterPassword_"),
+    );
+    const readyIndex = plan.steps.findIndex((step) =>
+      step.step_id.startsWith("step_assertReady_assertReady_"),
+    );
+    assert.notEqual(passwordIndex, -1, caseId);
+    assert.equal(launchIndex < passwordIndex, true, caseId);
+    assert.equal(passwordIndex < readyIndex, true, caseId);
+  }
+});
+
+test("VCB-79: the password prompt is focused before the password is typed", async () => {
+  const result = await compileFixture(
+    "basic-custom-engine-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const plan = result.value.find(
+    (generated) => generated.caseId === "basic-cea-py-azure-openai-local-teams",
+  ).plan;
+  const focusIndex = plan.steps.findIndex((step) =>
+    step.step_id.startsWith("step_browserM365PasswordSignIn_focusPassword_"),
+  );
+  const passwordIndex = plan.steps.findIndex((step) =>
+    step.step_id.startsWith("step_browserM365PasswordSignIn_enterPassword_"),
+  );
+
+  assert.notEqual(focusIndex, -1);
+  assert.equal(plan.steps[focusIndex].tool, "click");
+  assert.equal(focusIndex < passwordIndex, true);
+});
+
+test("VCB-80: a lifecycle operation clears the notification center before it starts", async () => {
+  const result = await compileFixture(
+    "basic-custom-engine-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const plan = result.value.find(
+    (generated) =>
+      generated.caseId === "basic-cea-py-azure-openai-remote-teams",
+  ).plan;
+  const commands = plan.steps
+    .filter((step) => step.step_id.startsWith("step_executeCommand_filter_"))
+    .map((step) => step.parameters.text);
+
+  for (const title of [
+    "Microsoft 365 Agents: Provision",
+    "Microsoft 365 Agents: Deploy",
+  ]) {
+    const index = commands.indexOf(title);
+    assert.notEqual(index, -1, title);
+    assert.deepEqual(commands.slice(index - 2, index), [
+      "Notifications: Clear All Notifications",
+      "Notifications: Show Notifications",
+    ]);
+  }
+});
+
+test("VCB-74: the remote Copilot target requires provision and deploy", async () => {
+  const result = await compileFixture("weather-agent.yml", (sourceText) =>
+    sourceText.replace(
+      "        deploy,\n        f5-copilot-remote,",
+      "        f5-copilot-remote,",
+    ),
+  );
+
+  assert.equal(result.ok, false);
+  assert.equal(result.diagnostics[0].code, "VCB_TARGET_PREREQUISITE");
 });
 
 test("VCB-26: an already-ready Copilot target makes its open emit no step", async () => {
@@ -1258,7 +1972,7 @@ test("VCB-43: the Copilot ready subject names the app by its authored prefix", a
   assert.equal(readySubject(unsuffixed), readySubject(suffixed));
 });
 
-test("VCB-44: the Copilot message input is named by its previewed agent", async () => {
+test("VCB-44: the Copilot message input is read independently of its placeholder", async () => {
   const result = await compileFixture(
     "da-no-action.yml",
     (sourceText) => sourceText,
@@ -1268,13 +1982,26 @@ test("VCB-44: the Copilot message input is named by its previewed agent", async 
   const descriptions = result.value[0].plan.steps.map(
     (step) => step.description,
   );
-  // The previewed agent owns the input placeholder, so the unscoped Copilot
-  // wording names a control that is never on screen in these plans.
+  // Copilot ships the previewed agent page in placeholder variants, so reading
+  // either name through the placeholder names a control that is sometimes
+  // absent.
   assert.equal(
     descriptions.includes(
-      "@assertion the Microsoft 365 Copilot message input is visible and its placeholder text starts with Message ${{var:app_name}}.",
+      "@assertion the Microsoft 365 Copilot message input is visible on a page for an agent whose name starts with ${{var:app_name}}.",
     ),
     true,
+  );
+  assert.equal(
+    descriptions.includes(
+      'Click the "Message" input box in the Microsoft 365 Copilot web application.',
+    ),
+    true,
+  );
+  assert.equal(
+    descriptions.some((description) =>
+      description.includes("Message ${{var:app_name}}"),
+    ),
+    false,
   );
   assert.equal(
     descriptions.some((description) => description.includes("Message Copilot")),
@@ -1379,7 +2106,8 @@ test("VCB-47: every sign-in verifies the account in the ACCOUNTS section", async
   // Azure and Microsoft 365 both converge on the same sidebar assertion.
   assert.equal(readySteps.length, 2);
   for (const step of readySteps) {
-    assert.match(step.description, /in the "ACCOUNTS" section$/);
+    assert.match(step.description, /the "ACCOUNTS" section lists/);
+    assert.match(step.description, /trailing ellipsis\.$/);
     assert.equal(
       steps.some(
         (other) =>
