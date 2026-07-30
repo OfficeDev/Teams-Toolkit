@@ -3,6 +3,7 @@
 
 import { ExpressionRuntimePort } from "../expression/evaluateExpression";
 import { PipelineRuntimePort } from "../pipeline/runScaffoldPipeline";
+import { Warning } from "@microsoft/teamsfx-api";
 import { dotenvUtil } from "../../component/utils/envUtil";
 import { ok } from "neverthrow";
 import { createExpressionPort } from "./whitelist";
@@ -18,6 +19,8 @@ export interface InMemoryRuntime {
   files: Map<string, Buffer>;
   /** Plaintext secret values, isolated from the ordinary file map by environment name. */
   secretEnvironmentVariables: Map<string, Map<string, string>>;
+  /** Warnings emitted by post-render steps, in emission order. */
+  warnings: Warning[];
   /** The pure expression port (whitelist + flags), reused for `{expr}` render-var derivation. */
   exprPort: ExpressionRuntimePort;
 }
@@ -29,6 +32,7 @@ export function createInMemoryRuntime(
 ): InMemoryRuntime {
   const files = new Map<string, Buffer>();
   const secretEnvironmentVariables = new Map<string, Map<string, string>>();
+  const warnings: Warning[] = [];
   const exprPort = createExpressionPort(flagReader);
   const sink: FileSink = {
     write: (path: string, data: Buffer): void => {
@@ -55,7 +59,10 @@ export function createInMemoryRuntime(
       secretEnvironmentVariables.set(environment, secrets);
       return Promise.resolve(ok(undefined));
     },
-    stepRegistry
+    stepRegistry,
+    (warning: Warning): void => {
+      warnings.push(warning);
+    }
   );
-  return { port, files, secretEnvironmentVariables, exprPort };
+  return { port, files, secretEnvironmentVariables, warnings, exprPort };
 }
