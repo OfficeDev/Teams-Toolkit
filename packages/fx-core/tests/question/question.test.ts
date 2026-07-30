@@ -1313,6 +1313,54 @@ describe("addPluginQuestionNode", async () => {
       QuestionNames.TeamsAppManifestFilePath,
     ]);
   });
+
+  it("rejects an MCP server url the server answers with 404", async () => {
+    // The add-action flow must reject the same urls the create flow does.
+    vi.spyOn(teamsProjectTypeDeps, "probeMCPServerAuth").mockResolvedValue({
+      requiresAuth: false,
+      endpointStatus: "notEndpoint",
+      responseStatus: 404,
+    });
+    const serverUrlNode = addPluginQuestionNode().children!.find(
+      (child) => child.data.name === QuestionNames.MCPForDAServerUrl
+    );
+    const validation = (serverUrlNode!.data as TextInputQuestion).additionalValidationOnAccept;
+    const validFunc = (validation as FuncValidation<string>).validFunc;
+
+    assert.isUndefined(await validFunc("", {} as Inputs));
+    const result = await validFunc("https://taskmaster.example.com", {} as Inputs);
+    assert.isString(result);
+    assert.include(result as string, "404");
+  });
+
+  it("accepts an MCP server url the server answers with anything other than 404", async () => {
+    vi.spyOn(teamsProjectTypeDeps, "probeMCPServerAuth").mockResolvedValue({
+      requiresAuth: false,
+      endpointStatus: "notEndpoint",
+      responseStatus: 403,
+    });
+    const serverUrlNode = addPluginQuestionNode().children!.find(
+      (child) => child.data.name === QuestionNames.MCPForDAServerUrl
+    );
+    const validation = (serverUrlNode!.data as TextInputQuestion).additionalValidationOnAccept;
+    const validFunc = (validation as FuncValidation<string>).validFunc;
+
+    assert.isUndefined(await validFunc("https://waf.example.com/mcp", {} as Inputs));
+  });
+
+  it("rejects an MCP server url that is not an absolute http(s) url", async () => {
+    const probeStub = vi.spyOn(teamsProjectTypeDeps, "probeMCPServerAuth");
+    const serverUrlNode = addPluginQuestionNode().children!.find(
+      (child) => child.data.name === QuestionNames.MCPForDAServerUrl
+    );
+    const validation = (serverUrlNode!.data as TextInputQuestion).additionalValidationOnAccept;
+    const validFunc = (validation as FuncValidation<string>).validFunc;
+
+    const result = await validFunc("taskmaster.example.com", {} as Inputs);
+    assert.isString(result);
+    assert.include(result as string, "https://");
+    assert.strictEqual(probeStub.mock.calls.length, 0);
+  });
 });
 
 describe("addKnowledgeQuestionNode", async () => {

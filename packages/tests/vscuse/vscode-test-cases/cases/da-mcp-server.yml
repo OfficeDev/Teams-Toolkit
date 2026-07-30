@@ -1,0 +1,254 @@
+version: 1
+
+featureFlags:
+  - TEAMSFX_MCP_FOR_DA_DT=true
+  - TEAMSFX_MCP_FOR_DA_DCR=true
+
+cases:
+  - id: da-mcp-remote-none-preview
+    scenarioId: SCN-DA-CREATE-WITH-MCP-SERVER
+    steps:
+      [
+        scaffold-mcp-none,
+        check-mcp-none,
+        login-m365,
+        provision,
+        f5-copilot-remote,
+        open-agent,
+        check-mcp-none-chat,
+      ]
+
+  - id: da-mcp-remote-oauth-preview
+    scenarioId: SCN-DA-CREATE-WITH-MCP-SERVER
+    steps:
+      [
+        scaffold-mcp-oauth,
+        check-mcp-oauth,
+        login-m365,
+        provision,
+        f5-copilot-remote,
+        open-agent,
+        check-mcp-oauth-chat,
+      ]
+
+  - id: da-mcp-remote-entra-preview
+    scenarioId: SCN-DA-CREATE-WITH-MCP-SERVER
+    steps:
+      [
+        scaffold-mcp-entra,
+        check-mcp-entra,
+        login-m365,
+        provision,
+        f5-copilot-remote,
+      ]
+
+steps:
+  scaffold-mcp-none:
+    type: scaffold
+    with:
+      template: da/mcp-server
+      answers:
+        - question: projectType
+          value: copilot-agent-type
+        - question: daTemplate
+          value: add-action
+        - question: actionSource
+          value: mcp
+        - question: mcpServerUrl
+          type: text
+          value: https://learn.microsoft.com/api/mcp
+        - question: authType
+          value: none
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-mcp-none:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/ai-plugin.json
+        expect:
+          contains:
+            - '"functions": []'
+            - '"type": "RemoteMCPServer"'
+            - '"url": "https://learn.microsoft.com/api/mcp"'
+            - '"run_for_functions": ["*"]'
+            - '"type": "None"'
+          notContains: ["mcp_tool_description"]
+      - type: file
+        path: appPackage/declarativeAgent.json
+        expect:
+          contains: ['"id": "action_1"', '"file": "ai-plugin.json"']
+      - type: file
+        path: .vscode/mcp.json
+        expect:
+          contains: ["https://learn.microsoft.com/api/mcp"]
+      - type: file
+        path: m365agents.yml
+        expect:
+          notContains: ["oauth/register", "dcr/register"]
+      - type: file
+        path: appPackage/mcp-tools-1.json
+        expect:
+          exists: false
+
+  scaffold-mcp-oauth:
+    type: scaffold
+    with:
+      template: da/mcp-server
+      answers:
+        - question: projectType
+          value: copilot-agent-type
+        - question: daTemplate
+          value: add-action
+        - question: actionSource
+          value: mcp
+        - question: mcpServerUrl
+          type: text
+          value: https://api.githubcopilot.com/mcp/
+        - question: authType
+          value: oauth
+        - question: mcp-da-client-id
+          type: text
+          value: "${{env:DA_MCP_OAUTH_CLIENTID}}"
+        - question: mcp-da-client-secret
+          type: text
+          value: "${{secret:DA_MCP_OAUTH_CLIENT_SECRET}}"
+        - question: mcp-da-scopes
+          type: text
+          value: read:user
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-mcp-oauth:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/ai-plugin.json
+        expect:
+          contains:
+            - '"functions": []'
+            - '"type": "OAuthPluginVault"'
+            - '"reference_id": "${{MCP_DA_AUTH_ID_APIGITHUBC}}"'
+      - type: file
+        path: appPackage/declarativeAgent.json
+        expect:
+          contains: ['"id": "action_1"', '"file": "ai-plugin.json"']
+      - type: file
+        path: .vscode/mcp.json
+        expect:
+          contains: ["https://api.githubcopilot.com/mcp/"]
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains: ["uses: oauth/register", "identityProvider: Custom"]
+          notContains: ["uses: dcr/register", "clientId:"]
+      - type: file
+        path: env/.env.dev
+        expect:
+          contains: ["MCP_DA_AUTH_ID_APIGITHUBC="]
+
+  scaffold-mcp-entra:
+    type: scaffold
+    with:
+      template: da/mcp-server
+      answers:
+        - question: projectType
+          value: copilot-agent-type
+        - question: daTemplate
+          value: add-action
+        - question: actionSource
+          value: mcp
+        - question: mcpServerUrl
+          type: text
+          value: https://api.githubcopilot.com/mcp/
+        - question: authType
+          value: entra-sso
+        - question: mcp-da-client-id
+          type: text
+          value: "${{env:DA_MCP_ENTRA_SSO_CLIENTID}}"
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-mcp-entra:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/ai-plugin.json
+        expect:
+          contains:
+            - '"functions": []'
+            - '"type": "OAuthPluginVault"'
+            - '"reference_id": "${{MCP_DA_AUTH_ID_APIGITHUBC}}"'
+      - type: file
+        path: appPackage/declarativeAgent.json
+        expect:
+          contains: ['"id": "action_1"', '"file": "ai-plugin.json"']
+      - type: file
+        path: .vscode/mcp.json
+        expect:
+          contains: ["https://api.githubcopilot.com/mcp/"]
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains: ["uses: oauth/register", "identityProvider: MicrosoftEntra"]
+          notContains: ["uses: dcr/register", "clientId:"]
+      - type: file
+        path: env/.env.dev
+        expect:
+          contains: ["MCP_DA_AUTH_ID_APIGITHUBC="]
+
+  login-m365:
+    type: login
+    with:
+      type: m365
+      account: "${{env:M365_ACCOUNT_NAME}}"
+      password: "${{secret:M365_ACCOUNT_PASSWORD}}"
+
+  # da/mcp-server scaffolds env/.env.dev only, so the toolkit auto-selects the
+  # single environment and never shows the "Select an environment" quick pick.
+  provision:
+    type: provision
+    with:
+      environment: none
+
+  f5-copilot-remote:
+    type: target
+    with:
+      profile: "Preview in Copilot (Chrome)"
+
+  open-agent:
+    type: open
+    with:
+      kind: agent
+      destination: chat
+
+  # The MCP servers are hosted outside this repository, so their answers cannot
+  # be asserted. These checks only require the agent to answer without failing,
+  # which is enough to show the scaffolded MCP action was published and reached.
+  check-mcp-none-chat:
+    type: checks
+    with:
+      - type: chat
+        send: Search Microsoft Learn for how to build a declarative agent.
+        expect:
+          replied: true
+          notContains: ["error"]
+
+  check-mcp-oauth-chat:
+    type: checks
+    with:
+      - type: chat
+        send: List the GitHub repositories I own.
+        expect:
+          replied: true
+          notContains: ["error"]

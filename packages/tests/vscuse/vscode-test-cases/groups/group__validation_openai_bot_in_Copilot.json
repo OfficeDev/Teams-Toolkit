@@ -39,7 +39,7 @@
         "x": 340,
         "y": 373
       },
-      "description": "click message input box prepare for tying",
+      "description": "Click the message input box to prepare for typing.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

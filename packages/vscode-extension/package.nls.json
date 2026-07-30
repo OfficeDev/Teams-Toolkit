@@ -297,6 +297,8 @@
   "teamstoolkit.handlers.manualStepRequired": "[%s] is created at [local address](%s). Follow the instructions in README file to preview your app.",
   "teamstoolkit.handlers.manualStepRequired.fallback": "[%s] is created at %s. Follow the instructions in README file to preview your app.",
   "teamstoolkit.handlers.manualStepRequiredTitle": "Open README",
+  "teamstoolkit.handlers.mcpAuthPlaceholder.openYmlTitle": "Open m365agents.yml",
+  "teamstoolkit.handlers.mcpAuthPlaceholder.recreateTitle": "Create New App",
   "teamstoolkit.handlers.referLinkForMoreDetails": "Please refer to this link for more details: ",
   "teamstoolkit.handlers.reportIssue": "Report Issue",
   "teamstoolkit.handlers.similarIssues": "Similar Issues",

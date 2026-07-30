@@ -9,7 +9,10 @@ import { envUtil } from "../../../src/component/utils/envUtil";
 import {
   deriveMCPManifestOAuth,
   injectMCPAuthActionToYml,
+  isMCPScaffoldWarning,
   MCP_DCR_WELL_KNOWN_URL_PLACEHOLDER,
+  MCP_OAUTH_AUTHORIZATION_URL_PLACEHOLDER,
+  MCP_OAUTH_TOKEN_URL_PLACEHOLDER,
   mcpAuthScaffolderDeps,
   persistMCPAuthCredentialEnvVars,
   resolveMCPAuthEndpoints,
@@ -89,6 +92,7 @@ describe("mcpAuthScaffolder", () => {
       const inputs: Inputs = {
         platform: Platform.VSCode,
         [QuestionNames.MCPForDAAuthMetadataUrl]: "https://example.com/metadata",
+        [QuestionNames.MCPForDAServerUrl]: "https://example.com/mcp",
       };
       const result = await resolveMCPAuthEndpoints("oauth", inputs);
       assert.deepEqual(result, {
@@ -97,7 +101,12 @@ describe("mcpAuthScaffolder", () => {
         refreshUrl: "https://auth/token",
         wellKnownUrl: "https://auth/.well-known/oauth-authorization-server",
       });
-      expect(stub).toHaveBeenCalledExactlyOnceWith("https://example.com/metadata", undefined);
+      // the server url is the fallback discovery source when the metadata url leads nowhere
+      expect(stub).toHaveBeenCalledExactlyOnceWith(
+        "https://example.com/metadata",
+        undefined,
+        "https://example.com/mcp"
+      );
     });
 
     it("resolves endpoints for oauth-dynamic via well-known url", async () => {
@@ -116,7 +125,8 @@ describe("mcpAuthScaffolder", () => {
       assert.equal(result.wellKnownUrl, "https://auth/.well-known/oauth-authorization-server");
       expect(stub).toHaveBeenCalledExactlyOnceWith(
         undefined,
-        "https://auth/.well-known/oauth-authorization-server"
+        "https://auth/.well-known/oauth-authorization-server",
+        undefined
       );
     });
   });
@@ -170,6 +180,48 @@ describe("mcpAuthScaffolder", () => {
       });
       assert.deepEqual(result, { wellKnownUrlPlaceholderUsed: true });
       assert.equal(dcrStub.mock.calls[0][4], MCP_DCR_WELL_KNOWN_URL_PLACEHOLDER);
+    });
+
+    it("injects OAuth action with placeholders when the endpoints are missing", async () => {
+      const oauthStub = vi
+        .spyOn(ActionInjector, "injectCreateOAuthActionForMCP")
+        .mockResolvedValue();
+      const result = await injectMCPAuthActionToYml({
+        ...baseArgs,
+        authType: "oauth",
+        endpoints: {},
+      });
+      assert.deepEqual(result, { oauthUrlPlaceholderUsed: true });
+      assert.equal(oauthStub.mock.calls[0][5], MCP_OAUTH_AUTHORIZATION_URL_PLACEHOLDER);
+      assert.equal(oauthStub.mock.calls[0][6], MCP_OAUTH_TOKEN_URL_PLACEHOLDER);
+    });
+
+    it("flags the placeholder when only one of the two OAuth urls resolved", async () => {
+      const oauthStub = vi
+        .spyOn(ActionInjector, "injectCreateOAuthActionForMCP")
+        .mockResolvedValue();
+      const result = await injectMCPAuthActionToYml({
+        ...baseArgs,
+        authType: "oauth",
+        endpoints: { authorizationUrl: "https://auth/authorize" },
+      });
+      assert.deepEqual(result, { oauthUrlPlaceholderUsed: true });
+      assert.equal(oauthStub.mock.calls[0][5], "https://auth/authorize");
+      assert.equal(oauthStub.mock.calls[0][6], MCP_OAUTH_TOKEN_URL_PLACEHOLDER);
+    });
+
+    it("does not substitute placeholders for entra-sso", async () => {
+      const oauthStub = vi
+        .spyOn(ActionInjector, "injectCreateOAuthActionForMCP")
+        .mockResolvedValue();
+      const result = await injectMCPAuthActionToYml({
+        ...baseArgs,
+        authType: "entra-sso",
+        endpoints: {},
+      });
+      assert.deepEqual(result, {});
+      assert.isUndefined(oauthStub.mock.calls[0][5]);
+      assert.isUndefined(oauthStub.mock.calls[0][6]);
     });
 
     it("injects OAuth action with credential env refs when persisting (oauth)", async () => {
@@ -259,6 +311,19 @@ describe("mcpAuthScaffolder", () => {
         persistCredentialEnvRefs: true,
       });
       assert.isUndefined(oauthStub.mock.calls[0][8]);
+    });
+  });
+
+  describe("isMCPScaffoldWarning", () => {
+    it("accepts MCP scaffolding warning types", () => {
+      assert.isTrue(isMCPScaffoldWarning({ type: "mcpAuthOAuthUrlPlaceholder" }));
+      assert.isTrue(isMCPScaffoldWarning({ type: "mcpAuthDcrWellKnownUrlPlaceholder" }));
+      assert.isTrue(isMCPScaffoldWarning({ type: "mcpNoToolsFetched" }));
+    });
+
+    it("rejects spec-parser warning types", () => {
+      assert.isFalse(isMCPScaffoldWarning({ type: "operationid-missing" }));
+      assert.isFalse(isMCPScaffoldWarning({ type: "generate-card-failed" }));
     });
   });
 
