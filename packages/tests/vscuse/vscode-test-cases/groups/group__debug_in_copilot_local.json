@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 19,
+    "total_steps": 21,
     "created_at": "2026-05-18T10:07:16.265795",
     "name": "group: debug_in_copilot_local",
     "description": {
@@ -36,6 +36,8 @@
       "step_86a70854",
       "step_a0762a17",
       "step_3bb29c8a",
+      "step_close_agent_modal",
+      "step_open_agent_sidebar",
       "step_670cbf14"
     ],
     "tags": [
@@ -457,6 +459,56 @@
       ],
       "screenshot": "step_3bb29c8a",
       "created_at": "2026-05-18T10:07:16.352198",
+      "plan_id": "plan_r_0928_095902"
+    },
+    {
+      "step_id": "step_close_agent_modal",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 715,
+        "y": 461
+      },
+      "description": "Click the \"Close\" button on the \"This agent is not installed\" modal dialog on the M365 Copilot web page, if it is shown, to dismiss it.",
+      "content_refs": [],
+      "timeout": 15,
+      "retry_count": 0,
+      "continue_on_error": "true",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "force_run:true",
+        "delay: 3"
+      ],
+      "screenshot": "",
+      "created_at": "2026-07-30T03:15:00.000000",
+      "plan_id": "plan_r_0928_095902"
+    },
+    {
+      "step_id": "step_open_agent_sidebar",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 114,
+        "y": 405
+      },
+      "description": "Click the debugged agent (the first item under the \"Agents\" heading) in the M365 Copilot left sidebar to open it in the main section of the page.",
+      "content_refs": [],
+      "timeout": 15,
+      "retry_count": 0,
+      "continue_on_error": "true",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "force_run:true",
+        "delay: 5"
+      ],
+      "screenshot": "",
+      "created_at": "2026-07-30T03:15:00.000000",
       "plan_id": "plan_r_0928_095902"
     },
     {
