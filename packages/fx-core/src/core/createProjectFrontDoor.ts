@@ -28,7 +28,6 @@ import {
 } from "../v4";
 import { FeatureFlags, readBooleanFeatureFlag } from "../common/featureFlags";
 import { TOOLS } from "../common/globalVars";
-import { TemplateNames } from "../component/generator/templates/templateNames";
 import type { ResolvedV4ChannelPackage } from "../component/generator/v4TemplateBridge";
 import { QuestionNames } from "../question/questionNames";
 
@@ -60,35 +59,6 @@ const SOURCE = "Scaffold";
 
 /** The only shipped create `surface-action`: open GitHub Copilot Chat (the v3 `startWithGithubCopilot` shape). */
 const OPEN_GITHUB_COPILOT_CHAT = "open-github-copilot-chat";
-const V4_TO_V3_TEMPLATE_ID: Readonly<Record<string, string>> = {
-  "basic-custom-engine-agent": TemplateNames.BasicCustomEngineAgent,
-  "weather-agent": TemplateNames.WeatherAgent,
-  "graph-connector": TemplateNames.GraphConnector,
-  "custom-copilot-basic": TemplateNames.CustomCopilotBasic,
-  "custom-copilot-rag-customize": TemplateNames.CustomCopilotRagCustomize,
-  "custom-copilot-rag-azure-ai-search": TemplateNames.CustomCopilotRagAzureAISearch,
-  "custom-copilot-rag-custom-api": TemplateNames.CustomCopilotRagCustomApi,
-  "teams-collaborator-agent": TemplateNames.TeamsCollaboratorAgent,
-  "non-sso-tab": TemplateNames.Tab,
-  "default-message-extension": TemplateNames.DefaultMessageExtension,
-  "default-bot": TemplateNames.DefaultBot,
-  "office-addin-wxpo-taskpane": TemplateNames.WXPTaskpane,
-  "office-addin-excel-cfshortcut": TemplateNames.ExcelCFShortcut,
-  "office-addin-excel-customfunctions": TemplateNames.ExcelCustomFunctions,
-  "office-addin-sso-naa": TemplateNames.OfficeAddinSsoNaa,
-  "declarative-agent-meta-os-upgrade-project": "declarative-agent-meta-os-upgrade-project",
-  "office-addin-config": TemplateNames.OfficeAddinCommon,
-  "da/no-action": TemplateNames.DeclarativeAgentBasic,
-  "da/graph-connector": TemplateNames.DeclarativeAgentWithGraphConnector,
-  "da/typespec": TemplateNames.DeclarativeAgentWithTypeSpec,
-  "da/skill": TemplateNames.DeclarativeAgentWithSkill,
-  "da/api-plugin-from-scratch": TemplateNames.DeclarativeAgentWithActionFromScratch,
-  "da/api-plugin-from-scratch-bearer": TemplateNames.DeclarativeAgentWithActionFromScratchBearer,
-  "da/api-plugin-from-scratch-oauth": TemplateNames.DeclarativeAgentWithActionFromScratchOAuth,
-  "da/api-plugin-from-existing-api": TemplateNames.DeclarativeAgentWithActionFromExistingApiSpec,
-  "da/mcp-server-static": TemplateNames.DeclarativeAgentWithActionFromMCP,
-  "da/mcp-server": TemplateNames.DeclarativeAgentWithActionFromMCP,
-};
 const NON_V4_INPUT_KEYS: ReadonlySet<string> = new Set([
   "capabilities",
   "folder",
@@ -197,10 +167,6 @@ function selectorPrefillFromInputs(inputs: Inputs): Record<string, string> {
   return answers;
 }
 
-function templateNameForV4(target: BuildTarget): string {
-  return V4_TO_V3_TEMPLATE_ID[target.templateId] ?? target.templateId;
-}
-
 function applyV4CreateFloorAnswers(inputs: Inputs, answers: Answers): void {
   const folder = answers[QuestionNames.Folder];
   if (typeof folder === "string") {
@@ -287,7 +253,6 @@ export async function createProjectFrontDoor(
         return action.isErr() ? err(action.error) : ok({ kind: "result", result: action.value });
       }
       case "v4": {
-        inputs[QuestionNames.TemplateName] = templateNameForV4(target);
         const runInputs = deps.runInputs ?? runCreateInputsWalk;
         const locator: DeclarativeLocator = { kind: "create", templateId: target.templateId };
         // Q2 + common floor, over the same floor, continuing Q1's step numbering.

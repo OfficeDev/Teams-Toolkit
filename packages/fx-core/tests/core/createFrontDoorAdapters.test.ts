@@ -12,6 +12,7 @@ import { setTools } from "../../src/common/globalVars";
 import { TelemetryEvent, TelemetryProperty, TelemetrySuccess } from "../../src/common/telemetry";
 import { coordinator } from "../../src/component/coordinator";
 import { manifestUtils } from "../../src/component/driver/teamsApp/utils/ManifestUtils";
+import { TemplateNames } from "../../src/component/generator/templates/templateNames";
 import { pathUtils } from "../../src/component/utils/pathUtils";
 import {
   collectCreateFloor,
@@ -149,7 +150,6 @@ describe("createFrontDoorAdapters", () => {
         platform: Platform.VSCode,
         [QuestionNames.Folder]: "/tmp",
         [QuestionNames.AppName]: "MyApp",
-        [QuestionNames.TemplateName]: "declarative-agent-with-action-from-mcp",
       };
 
       const res = await scaffoldV4(inputs, v4Target, { language: "typescript" });
@@ -188,7 +188,6 @@ describe("createFrontDoorAdapters", () => {
         platform: Platform.VSCode,
         [QuestionNames.Folder]: "/tmp",
         [QuestionNames.AppName]: "MyApp",
-        [QuestionNames.TemplateName]: "declarative-agent-with-action-from-mcp",
       };
 
       const res = await scaffoldV4(inputs, v4Target, {});
@@ -203,6 +202,99 @@ describe("createFrontDoorAdapters", () => {
       assert.equal(
         sendTelemetryError.mock.calls[0][1]?.[TelemetryProperty.Success],
         TelemetrySuccess.No
+      );
+    });
+
+    it("DCE-19: derives the v3-compatible telemetry template id from the v4 target id", async () => {
+      const expectedMappings: ReadonlyArray<readonly [string, string]> = [
+        ["basic-custom-engine-agent", TemplateNames.BasicCustomEngineAgent],
+        ["weather-agent", TemplateNames.WeatherAgent],
+        ["graph-connector", TemplateNames.GraphConnector],
+        ["custom-copilot-basic", TemplateNames.CustomCopilotBasic],
+        ["custom-copilot-rag-customize", TemplateNames.CustomCopilotRagCustomize],
+        ["custom-copilot-rag-azure-ai-search", TemplateNames.CustomCopilotRagAzureAISearch],
+        ["custom-copilot-rag-custom-api", TemplateNames.CustomCopilotRagCustomApi],
+        ["teams-collaborator-agent", TemplateNames.TeamsCollaboratorAgent],
+        ["non-sso-tab", TemplateNames.Tab],
+        ["default-message-extension", TemplateNames.DefaultMessageExtension],
+        ["default-bot", TemplateNames.DefaultBot],
+        ["office-addin-wxpo-taskpane", TemplateNames.WXPTaskpane],
+        ["office-addin-excel-cfshortcut", TemplateNames.ExcelCFShortcut],
+        ["office-addin-excel-customfunctions", TemplateNames.ExcelCustomFunctions],
+        ["office-addin-sso-naa", TemplateNames.OfficeAddinSsoNaa],
+        ["declarative-agent-meta-os-upgrade-project", "declarative-agent-meta-os-upgrade-project"],
+        ["office-addin-config", TemplateNames.OfficeAddinCommon],
+        ["da/no-action", TemplateNames.DeclarativeAgentBasic],
+        ["da/graph-connector", TemplateNames.DeclarativeAgentWithGraphConnector],
+        ["da/typespec", TemplateNames.DeclarativeAgentWithTypeSpec],
+        ["da/skill", TemplateNames.DeclarativeAgentWithSkill],
+        ["da/api-plugin-from-scratch", TemplateNames.DeclarativeAgentWithActionFromScratch],
+        [
+          "da/api-plugin-from-scratch-bearer",
+          TemplateNames.DeclarativeAgentWithActionFromScratchBearer,
+        ],
+        [
+          "da/api-plugin-from-scratch-oauth",
+          TemplateNames.DeclarativeAgentWithActionFromScratchOAuth,
+        ],
+        [
+          "da/api-plugin-from-existing-api",
+          TemplateNames.DeclarativeAgentWithActionFromExistingApiSpec,
+        ],
+        ["da/mcp-server-static", TemplateNames.DeclarativeAgentWithActionFromMCP],
+        ["da/mcp-server", TemplateNames.DeclarativeAgentWithActionFromMCP],
+      ];
+      vi.spyOn(scaffoldV4Deps, "scaffoldDeclarativeFromV4Channel").mockResolvedValue(
+        TEMPLATE_SOURCE
+      );
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue(undefined);
+      const sendTelemetry = vi.spyOn(tools.telemetryReporter, "sendTelemetryEvent");
+
+      for (const [templateId, expectedTemplateName] of expectedMappings) {
+        sendTelemetry.mockClear();
+        const inputs: Inputs = {
+          platform: Platform.VSCode,
+          [QuestionNames.Folder]: "/tmp",
+          [QuestionNames.AppName]: "MyApp",
+        };
+
+        const res = await scaffoldV4(
+          inputs,
+          { templateId, engine: "v4", language: "common" },
+          { language: "typescript" }
+        );
+
+        assert.isTrue(res.isOk());
+        assert.equal(
+          sendTelemetry.mock.calls[0][1]?.[TelemetryProperty.TemplateName],
+          `${expectedTemplateName}-ts`,
+          templateId
+        );
+      }
+    });
+
+    it("DCE-20: an unmapped v4 target id falls back to itself as the telemetry key", async () => {
+      vi.spyOn(scaffoldV4Deps, "scaffoldDeclarativeFromV4Channel").mockResolvedValue(
+        TEMPLATE_SOURCE
+      );
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue(undefined);
+      const sendTelemetry = vi.spyOn(tools.telemetryReporter, "sendTelemetryEvent");
+      const inputs: Inputs = {
+        platform: Platform.VSCode,
+        [QuestionNames.Folder]: "/tmp",
+        [QuestionNames.AppName]: "MyApp",
+      };
+
+      const res = await scaffoldV4(
+        inputs,
+        { templateId: "future/v4-template", engine: "v4", language: "common" },
+        { language: "typescript" }
+      );
+
+      assert.isTrue(res.isOk());
+      assert.equal(
+        sendTelemetry.mock.calls[0][1]?.[TelemetryProperty.TemplateName],
+        "future/v4-template-ts"
       );
     });
 

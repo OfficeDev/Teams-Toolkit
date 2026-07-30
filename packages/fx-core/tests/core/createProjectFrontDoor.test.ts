@@ -25,7 +25,6 @@ import type { ResolvedV4ChannelPackage } from "../../src/component/generator/v4T
 import { CreateFrontDoorDeps, createProjectFrontDoor } from "../../src/core/createProjectFrontDoor";
 import { FeatureFlags } from "../../src/common/featureFlags";
 import { QuestionNames } from "../../src/question/questionNames";
-import { TemplateNames } from "../../src/component/generator/templates/templateNames";
 
 /**
  * Tests for docs/03-specs/operations/scaffolding/dispatch-create-by-engine.md.
@@ -924,7 +923,6 @@ describe("createProjectFrontDoor (dispatch-create-by-engine)", () => {
     assert.equal(scaffoldV4.calls[0][0][QuestionNames.Folder], "C:/src");
     assert.equal(scaffoldV4.calls[0][0][QuestionNames.AppName], "MyAgent");
     assert.deepEqual(scaffoldV4.calls[0][2], q2AndFloor);
-    assert.equal(scaffoldV4.calls[0][0]["template-name"], "declarative-agent-with-action-from-mcp");
   });
 
   it("DCE-15: a Q2+Q3 input cancellation propagates and does not scaffold", async () => {
@@ -1009,70 +1007,30 @@ describe("createProjectFrontDoor (dispatch-create-by-engine)", () => {
     }
   });
 
-  it("DCE-19: a v4 target maps its template id to the v3 telemetry template before Q2", async () => {
+  it("DCE-19: the front door never writes the legacy template-name onto inputs", async () => {
     const q2Failed = new UserError({ source: "Test", name: "Q2Failed", message: "bad inputs" });
-    const expectedMappings: ReadonlyArray<readonly [string, string]> = [
-      ["basic-custom-engine-agent", TemplateNames.BasicCustomEngineAgent],
-      ["weather-agent", TemplateNames.WeatherAgent],
-      ["graph-connector", TemplateNames.GraphConnector],
-      ["custom-copilot-basic", TemplateNames.CustomCopilotBasic],
-      ["custom-copilot-rag-customize", TemplateNames.CustomCopilotRagCustomize],
-      ["custom-copilot-rag-azure-ai-search", TemplateNames.CustomCopilotRagAzureAISearch],
-      ["custom-copilot-rag-custom-api", TemplateNames.CustomCopilotRagCustomApi],
-      ["teams-collaborator-agent", TemplateNames.TeamsCollaboratorAgent],
-      ["non-sso-tab", TemplateNames.Tab],
-      ["default-message-extension", TemplateNames.DefaultMessageExtension],
-      ["default-bot", TemplateNames.DefaultBot],
-      ["office-addin-wxpo-taskpane", TemplateNames.WXPTaskpane],
-      ["office-addin-excel-cfshortcut", TemplateNames.ExcelCFShortcut],
-      ["office-addin-excel-customfunctions", TemplateNames.ExcelCustomFunctions],
-      ["office-addin-sso-naa", TemplateNames.OfficeAddinSsoNaa],
-      ["declarative-agent-meta-os-upgrade-project", "declarative-agent-meta-os-upgrade-project"],
-      ["office-addin-config", TemplateNames.OfficeAddinCommon],
-      ["da/no-action", TemplateNames.DeclarativeAgentBasic],
-      ["da/graph-connector", TemplateNames.DeclarativeAgentWithGraphConnector],
-      ["da/typespec", TemplateNames.DeclarativeAgentWithTypeSpec],
-      ["da/skill", TemplateNames.DeclarativeAgentWithSkill],
-      ["da/api-plugin-from-scratch", TemplateNames.DeclarativeAgentWithActionFromScratch],
-      [
-        "da/api-plugin-from-scratch-bearer",
-        TemplateNames.DeclarativeAgentWithActionFromScratchBearer,
-      ],
-      [
-        "da/api-plugin-from-scratch-oauth",
-        TemplateNames.DeclarativeAgentWithActionFromScratchOAuth,
-      ],
-      [
-        "da/api-plugin-from-existing-api",
-        TemplateNames.DeclarativeAgentWithActionFromExistingApiSpec,
-      ],
-      ["da/mcp-server-static", TemplateNames.DeclarativeAgentWithActionFromMCP],
-      ["da/mcp-server", TemplateNames.DeclarativeAgentWithActionFromMCP],
-    ];
+    const scaffoldV4 = recorder((_i: Inputs, _t: BuildTarget, _a: Answers) => okResult("/v4"));
+    const inputs = baseInputs();
 
-    for (const [templateId, expectedTemplateName] of expectedMappings) {
-      const scaffoldV4 = recorder((_i: Inputs, _t: BuildTarget, _a: Answers) => okResult("/v4"));
-      const inputs = baseInputs();
+    const res = await createProjectFrontDoor(
+      inputs,
+      deps({
+        scaffoldV4: scaffoldV4.fn,
+        runSelector: () => okTarget({ templateId: "da/mcp-server", engine: "v4", answers: {} }),
+        runInputs: () => Promise.resolve(err(q2Failed)),
+      })
+    );
 
-      const res = await createProjectFrontDoor(
-        inputs,
-        deps({
-          scaffoldV4: scaffoldV4.fn,
-          runSelector: () => okTarget({ templateId, engine: "v4", answers: {} }),
-          runInputs: () => Promise.resolve(err(q2Failed)),
-        })
-      );
-
-      assert.isTrue(res.isErr());
-      if (res.isErr()) {
-        assert.equal(res.error.name, "Q2Failed");
-      }
-      assert.equal(scaffoldV4.calls.length, 0);
-      assert.equal(inputs["template-name"], expectedTemplateName, templateId);
+    assert.isTrue(res.isErr());
+    if (res.isErr()) {
+      assert.equal(res.error.name, "Q2Failed");
     }
+    assert.equal(scaffoldV4.calls.length, 0);
+    // The legacy id is a `generate-template` telemetry key only (DCE-21) — never a dispatch input.
+    assert.isUndefined(inputs["template-name"]);
   });
 
-  it("DCE-20: an unmapped v4 telemetry template id falls back to itself", async () => {
+  it("DCE-20: an unmapped v4 target id is not written onto inputs either", async () => {
     const q2Failed = new UserError({ source: "Test", name: "Q2Failed", message: "bad inputs" });
     const target: BuildTarget = { templateId: "future/v4-template", engine: "v4", answers: {} };
     const inputs = baseInputs();
@@ -1086,7 +1044,7 @@ describe("createProjectFrontDoor (dispatch-create-by-engine)", () => {
     );
 
     assert.isTrue(res.isErr());
-    assert.equal(inputs["template-name"], "future/v4-template");
+    assert.isUndefined(inputs["template-name"]);
   });
 
   it("fails loudly on an unhandled surface action", async () => {
@@ -1285,7 +1243,8 @@ describe("createProjectFrontDoor (dispatch-create-by-engine)", () => {
     const inputs = baseInputs();
 
     // `resolveByTemplateId` (the preset short-circuit) defaults to fail-if-called: the loop must
-    // re-walk Q1 even though dispatchByEngine set inputs["template-name"] on the first iteration.
+    // re-walk Q1, and no iteration can plant a preset because the front door never writes
+    // inputs["template-name"] (DCE-19).
     const res = await createProjectFrontDoor(
       inputs,
       deps({ runSelector: runSelector.fn, runInputs: runInputs.fn, scaffoldV4: okScaffold })
@@ -1293,7 +1252,6 @@ describe("createProjectFrontDoor (dispatch-create-by-engine)", () => {
 
     assert.isTrue(res.isOk());
     assert.equal(runSelector.calls.length, 2);
-    // The v4 template-name was written (proving dispatch ran), yet Q1 was still re-walked.
-    assert.equal(inputs["template-name"], TemplateNames.DeclarativeAgentWithActionFromMCP);
+    assert.isUndefined(inputs["template-name"]);
   });
 });
