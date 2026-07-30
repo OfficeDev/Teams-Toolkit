@@ -2682,10 +2682,10 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 288,
+        "x": 265,
         "y": 214
       },
-      "description": "Click the primary action button on the app details popup within the Microsoft Teams interface.",
+      "description": "Click the visible blue \"Add\" or \"Open\" button in the Microsoft Teams app details dialog.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -2693,16 +2693,13 @@
       "depends_on": [
         "step_addAndOpenApp_assertAdd_c834b2eb3_6_1"
       ],
-      "preconditions": [
-        "dhash:288:214:16:5:05100a0511030b12",
-        "dhash:288:214:96:5:2616011c1c01005b",
-        "dhash:288:214:0:10:00b4b0d8f8fcf0d8"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:browser",
         "host_surface:teams",
-        "entry_state:app-details"
+        "entry_state:app-details",
+        "ocr:true"
       ]
     },
     {
@@ -2733,10 +2730,10 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 533,
-        "y": 508
+        "x": 529,
+        "y": 506
       },
-      "description": "Click Open in the dialog that the app details popup opened.",
+      "description": "Click the blue \"Open\" button in the \"Added successfully!\" or \"Let's go\" dialog for the app in Microsoft Teams.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -2744,17 +2741,13 @@
       "depends_on": [
         "step_addAndOpenApp_assertAdded_c834b2eb3_6_1"
       ],
-      "preconditions": [
-        "dhash:533:508:16:5:00987494ca4acacc",
-        "dhash:533:508:96:5:000058a48598e36b",
-        "dhash:533:508:0:10:1669696969696979"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:browser",
         "host_surface:teams",
         "entry_state:added",
-        "precondition_wait_timeout: 120"
+        "ocr:true"
       ]
     },
     {
