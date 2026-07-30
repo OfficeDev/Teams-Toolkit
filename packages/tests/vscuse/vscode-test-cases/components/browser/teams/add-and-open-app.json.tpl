@@ -4,7 +4,7 @@
     "uiSurface": "browser",
     "hostSurface": "teams",
     "id": "addAndOpenApp",
-    "parameters": ["instanceSuffix", "readySubject"]
+    "parameters": ["instanceSuffix"]
   },
   "steps": [
     {
@@ -100,7 +100,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion {{text:readySubject}}.",
+      "description": "@assertion the Microsoft Teams conversation with an app whose name starts with ${{var:app_name}} is open with its message box.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

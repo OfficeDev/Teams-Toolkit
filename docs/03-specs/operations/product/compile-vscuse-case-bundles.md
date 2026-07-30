@@ -519,8 +519,16 @@ apply host-neutral assertions to the resulting assistant response. V1 includes:
 `assert-ready.json.tpl` emits only the adapter's semantic readiness assertion. The Teams app details
 component asserts that the popup shows its primary action button, clicks that control, asserts that
 the dialog it opened shows its Open control, clicks Open, then asserts the requested chat
-destination is ready. The generic adapter accepts `readySubject`; the Teams adapter also uses
-that parameter for its final assertion while its popup and dialog subjects remain fixed.
+destination is ready. The generic adapter accepts `readySubject`; the Teams adapter takes no such
+parameter, because every profile that reaches it converges on the same Teams conversation.
+
+That closing assertion names the conversation the app opened into rather than the target's
+app-details subject. The target asserts that page as the entry state this component consumes, and
+the two clicks between them leave it for the app's own conversation, so a subject that already held
+before the transition reports nothing about whether the transition happened. The recording this
+component comes from closes the same transition by asserting the app's name is on screen, which the
+conversation heading carries alongside the message box that distinguishes it from the page the
+component started on.
 
 Neither of the component's first two assertions names a caption. Teams captions the popup's primary
 action `Add` for an account that has not installed the app and `Open` for one that has, and titles
@@ -1181,6 +1189,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-87 | Given a Copilot target, compilation zooms the browser out once with `Ctrl+-` immediately after the target readiness assertion, because at the container's viewport width Microsoft 365 Copilot lays its navigation rail over the conversation column and clips the left of the `Message <app name>` composer placeholder, and Chrome scopes a zoom level to the origin that holds it, so a zoom pressed while the browser still sits on the sign-in origin leaves Copilot at its own zoom.                                                                                         |
 | VCB-88 | Given a `localEnvironment` operation, the emitted step names the variable it sets in its description, refuses a value that resolved to nothing, and re-reads the lifecycle file to confirm the variable is present exactly once carrying that value, because the runner's code agent regenerates the script from this sample rather than replaying it, and a regeneration that dropped the value wrote a valueless `OPENAI_BASE_URL:` key that the step still reported as successful and that surfaced only later, as an `InvalidYamlSchemaError` when the launch profile started. |
 | VCB-89 | Given `allowAction: true`, the consent component's closing assertion names the `Allow` button rather than the consent prompt, and converges on the consent being dismissed rather than on a pending assistant response, because an OAuth-protected action answers `Allow` with a second consent card carrying `Sign in to <service>` and `Cancel`, so an assertion reading the prompt rather than the button reports a legitimate state as a failure.                                                                                                                              |
+| VCB-90 | Given a Teams `open`, the component's closing assertion names the conversation the app opened into rather than repeating the target's app-details subject, because the two clicks between them leave that page, so a subject that holds before the transition cannot report whether the transition happened.                                                                                                                                                                                                                                                                       |
 
 ## Boundary
 

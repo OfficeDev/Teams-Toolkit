@@ -1653,6 +1653,29 @@ test("VCB-71: the Python remote Teams target opens the app through the Teams add
   );
 });
 
+test("VCB-90: the Teams open converges on the conversation, not the app details page", async () => {
+  const result = await compileFixture(
+    "basic-custom-engine-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const plan = result.value.find(
+    (generated) => generated.caseId === "basic-cea-py-azure-openai-local-teams",
+  ).plan;
+  const target = plan.steps.find((step) =>
+    step.step_id.startsWith("step_assertReady_assertReady_"),
+  );
+  const opened = plan.steps.find((step) =>
+    step.step_id.startsWith("step_addAndOpenApp_assertReady_"),
+  );
+
+  assert.match(target.description, /app details page/);
+  assert.equal(/app details page/.test(opened.description), false);
+  assert.match(opened.description, /conversation/);
+  assert.match(opened.description, /\$\{\{var:app_name\}\}/);
+});
+
 test("VCB-72: the weather bundle authors every LLM, language, and Teams launch combination", async () => {
   const result = await compileFixture(
     "weather-agent.yml",

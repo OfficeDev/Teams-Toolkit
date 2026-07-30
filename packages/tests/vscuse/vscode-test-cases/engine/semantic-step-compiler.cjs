@@ -1186,9 +1186,10 @@ function createSemanticStepCompiler() {
     }
     let rendered;
     if (state.profile.open.adapter === "teams-add") {
-      rendered = render(state, "browser/teams/add-and-open-app.json.tpl", {
-        readySubject: state.profile.readySubject,
-      });
+      // The component carries its own converged subject rather than the
+      // profile's: the target asserts the app details page this component
+      // enters on, and the two clicks in between leave it.
+      rendered = render(state, "browser/teams/add-and-open-app.json.tpl", {});
     } else if (state.profile.open.adapter === "ready") {
       // The target already converged on this destination and asserted this
       // profile's readiness subject with nothing in between, so rendering the
