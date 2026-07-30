@@ -522,7 +522,7 @@ test("VCB-34: DA API plugin from scratch compiles complete remote branches in au
       'Click the "Message ${{var:app_name}}" input box in the Microsoft 365 Copilot web application.',
       "@assertion the Copilot action-consent Allow button is visible.",
       'Click the "Allow" button in the Microsoft 365 Copilot chat interface to grant the agent access.',
-      "@assertion the Copilot action-consent prompt is no longer visible.",
+      "@assertion the Copilot action-consent Allow button is no longer visible.",
       '@assertion the current assistant response contains "Oil Change".',
     ];
     const runtimeIndexes = runtimeFlow.map((description) =>
@@ -757,6 +757,36 @@ test("VCB-87: a Teams target never zooms the viewport out", async () => {
       generated.caseId,
     );
   }
+});
+
+test("VCB-89: action consent closes on the Allow button, not on the prompt", async () => {
+  const result = await compileFixture(
+    "da-api-plugin-from-existing-api.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const oauth = result.value.find((candidate) =>
+    candidate.caseId.endsWith("-oauth-remote-preview"),
+  );
+  const dismissed = oauth.plan.steps.find((step) =>
+    step.step_id.includes("allowCopilotAction_assertDismissed"),
+  );
+
+  assert.equal(
+    dismissed.description,
+    "@assertion the Copilot action-consent Allow button is no longer visible.",
+  );
+  assert.equal(
+    dismissed.tags.includes("exit_state:action-consent-dismissed"),
+    true,
+  );
+  assert.equal(
+    dismissed.tags.some((tag) =>
+      tag.startsWith("exit_state:assistant-response"),
+    ),
+    false,
+  );
 });
 
 test("existing API remote previews validate the Copilot action response", async () => {

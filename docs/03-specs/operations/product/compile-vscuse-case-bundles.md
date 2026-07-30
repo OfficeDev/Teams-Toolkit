@@ -564,7 +564,9 @@ host's send component, the Copilot `allow-action` component when `allowAction: t
 `assert-replied` whenever `replied: true` or a content expectation implies it, followed by one
 `assert-contains` per `contains` item and one `assert-not-contains` per `notContains` item. The
 consent component asserts the deterministic Allow prompt, clicks its recorded control, and asserts
-that the prompt is dismissed. Items preserve their authored list order; the two lists execute in
+that the Allow button is gone. It names the button rather than the prompt because an OAuth-protected
+action replaces the Allow card with a second consent card offering `Sign in to <service>` and
+`Cancel`. Items preserve their authored list order; the two lists execute in
 `contains`, then `notContains` order. This keeps variable-length expectations in compiler
 composition rather than adding loops, optional branches, or complete caller-supplied descriptions
 to a template.
@@ -1173,6 +1175,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-86 | Given profile-owned Microsoft 365 browser authentication for a Copilot target, compilation never refreshes the browser after confirming `Stay signed in`, preserving the launch deep link that carried the target to the previewed agent.                                                                                                                                                                                                                                                                                                                                          |
 | VCB-87 | Given a Copilot target, compilation zooms the browser out once with `Ctrl+-` immediately after the target readiness assertion, because at the container's viewport width Microsoft 365 Copilot lays its navigation rail over the conversation column and clips the left of the `Message <app name>` composer placeholder, and Chrome scopes a zoom level to the origin that holds it, so a zoom pressed while the browser still sits on the sign-in origin leaves Copilot at its own zoom.                                                                                         |
 | VCB-88 | Given a `localEnvironment` operation, the emitted step names the variable it sets in its description, refuses a value that resolved to nothing, and re-reads the lifecycle file to confirm the variable is present exactly once carrying that value, because the runner's code agent regenerates the script from this sample rather than replaying it, and a regeneration that dropped the value wrote a valueless `OPENAI_BASE_URL:` key that the step still reported as successful and that surfaced only later, as an `InvalidYamlSchemaError` when the launch profile started. |
+| VCB-89 | Given `allowAction: true`, the consent component's closing assertion names the `Allow` button rather than the consent prompt, and converges on the consent being dismissed rather than on a pending assistant response, because an OAuth-protected action answers `Allow` with a second consent card carrying `Sign in to <service>` and `Cancel`, so an assertion reading the prompt rather than the button reports a legitimate state as a failure.                                                                                                                              |
 
 ## Boundary
 
