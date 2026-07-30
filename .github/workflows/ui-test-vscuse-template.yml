@@ -66,6 +66,7 @@ jobs:
       # Pipeline-specific knobs
       plan_find_args: '-name "*.json" ! -name "Feature_*" ! -name "Sample_*"'
       main_timeout_minutes: 50
+      max_parallel: 50
       no_failed_step_text: " "
       filter_no_errors_found: true
       email_subject_suffix: "[Templates]"
