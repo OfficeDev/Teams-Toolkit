@@ -6,6 +6,7 @@ import {
   FxError,
   SystemError,
   TeamsManifestWrapper,
+  Warning,
 } from "@microsoft/teamsfx-api";
 import { Result, err, ok } from "neverthrow";
 import path from "path";
@@ -278,7 +279,7 @@ export function buildPipelinePort(
   sink: FileSink,
   environmentWriter: EnvironmentWriter,
   stepRegistry: StepRegistry = STEP_REGISTRY,
-  warningSink?: (message: string) => void
+  warningSink?: (warning: Warning) => void
 ): PipelineRuntimePort {
   return {
     pipelineRegistry: (name: string): Orchestration | undefined =>

@@ -6,7 +6,7 @@
       "type": "text",
       "title": "MCP Server URL",
       "keyPrefix": "core.createProjectQuestion.mcpForDa.ServerUrl",
-      "validation": "uri"
+      "validation": "mcp.serverUrl"
     },
     {
       "name": "mcpToolsFilePath",

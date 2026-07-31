@@ -116,6 +116,7 @@ production path does not split selector and content resolution.
 | DCE-23 | L1 | flag **on**, after re-entering Q1 the user picks a **different** dimension that resolves a **different** `templateId` (e.g. `daTemplate` `add-action`→`no-action`) | `createProjectFrontDoor` | the loop resolves the new `BuildTarget` and runs `runCreateInputs` fresh under the new `locator`, loading that template's Q2+Q3 (CCI-26); the prior template's Q2 answers are discarded and no stale question is asked — the Q2+Q3 set always matches the currently resolved template |
 | DCE-24 | L1 | flag **on**, the user backs through Q2 into Q1 and then `back` at Q1's **first** dimension | `createProjectFrontDoor` | the whole create is cancelled with the propagated `BuildTargetWalkCancelled` `UserError` (the true top of the wizard); no scaffold occurs |
 | DCE-25 | L1 | flag **on**, a re-entry loop iteration whose prior iteration wrote `inputs["template-name"]` | `createProjectFrontDoor` | the loop re-walks Q1 and does **not** mistake the prior iteration's `inputs["template-name"]` for a preset short-circuit; the preset-`template-name` fast path (INV-8) is evaluated once, before the loop, so re-entry never skips Q1 |
+| DCE-26 | L1 | flag **on**, an app name that renders a manifest short name longer than 25 characters | `scaffoldV4` completes | the scaffolded `appPackage/manifest.json` short name is trimmed to the 25-character store limit with its `${{...}}` placeholders preserved — the same create tail the legacy `coordinator.create` runs |
 
 ## Flow
 

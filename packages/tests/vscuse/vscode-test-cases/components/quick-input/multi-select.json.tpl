@@ -30,7 +30,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the multi-select prompt titled {{text:questionTitle}} lists at least one option below its input box.",
+      "description": "@assertion the multi-select prompt titled {{text:questionTitle}} has finished loading and lists at least one selectable option.",
       "content_refs": [],
       "timeout": 120,
       "retry_count": 0,

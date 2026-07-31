@@ -110,6 +110,16 @@ export function isMCPScaffoldWarning(warning: { type: string }): boolean {
   return warning.type.startsWith("mcp");
 }
 
+/**
+ * The subset of MCP scaffolding warnings that mean the generated `m365agents.yml` still holds a
+ * placeholder and therefore cannot provision. Surfaces single these out for a blocking-looking
+ * notification instead of a summary line.
+ */
+export const MCP_AUTH_PLACEHOLDER_WARNING_TYPES = [
+  "mcpAuthDcrWellKnownUrlPlaceholder",
+  "mcpAuthOAuthUrlPlaceholder",
+];
+
 export interface InjectMCPAuthActionResult {
   /** True when `oauth-dynamic` was injected with the placeholder URL because
    * `endpoints.wellKnownUrl` was missing. */

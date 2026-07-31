@@ -3,7 +3,7 @@
 ## Metadata
 
 - Created: 2026-07-20T09:29:44Z
-- Last updated: 2026-07-21T01:53:25Z
+- Last updated: 2026-07-29T00:00:00Z
 - Status: approved
 - PM owner: summzhan
 - Engineer owner: HuihuiWu-Microsoft, Alive-Fish
@@ -53,13 +53,14 @@ While `TEAMSFX_MCP_FOR_DA_DT` still exists, setting it to `false` selects the co
 - Entry: the developer starts project creation and chooses `Declarative Agent` -> `Add an Action` -> `Start with a MCP server`.
 - Server source: when local discovery is available, the developer chooses `Local MCP server` or `Remote MCP server`; otherwise the flow continues with remote.
 - Local: the developer selects one or more discovered local servers. The flow skips URL, authentication, and credential questions.
-- Remote: the developer enters a valid MCP server URL and selects an authentication type.
+- Remote: the developer enters an MCP server URL and selects an authentication type. The URL is checked as it is entered: a value that is not an absolute `http(s)` address, or one the server answers with 404 to an MCP `initialize` request, is rejected on the question.
 - Remote auth: `OAuth (with static registration)`, `Entra SSO`, and `None` are always available on the dynamic route. `OAuth (with dynamic registration)` is available only when both DT and DCR are true.
 - Static OAuth: immediately after auth selection, the flow asks for a required OAuth client ID, a required masked client secret, and optional space-separated scopes, in that order.
 - Entra SSO: immediately after auth selection, the flow asks only for a required Microsoft Entra Application (Client) ID.
 - Dynamic OAuth and None: the flow asks no client ID, client secret, or scopes question and continues to project location and application name.
 - Dynamic OAuth: scaffolding injects `dcr/register`. If authorization discovery cannot be resolved, the generated action contains the documented well-known URL placeholder and the developer receives a warning to repair it before provision.
-- Validation: an empty required credential, invalid URL, invalid app name or location, unsupported auth value, or missing required non-interactive input keeps the flow recoverable and does not accept partial output.
+- Static OAuth: scaffolding injects `oauth/register`. If the server advertises no OAuth endpoints, the generated action contains authorization and token URL placeholders and the developer receives the same repair warning.
+- Validation: an empty required credential, a server URL that is not an absolute `http(s)` address or that answers 404 to the MCP `initialize` request, an invalid app name or location, an unsupported auth value, or a missing required non-interactive input keeps the flow recoverable and does not accept partial output.
 - Cancellation: cancelling before generation leaves no partially scaffolded project and persists no credential value.
 
 ## User-visible outputs
@@ -78,6 +79,7 @@ While `TEAMSFX_MCP_FOR_DA_DT` still exists, setting it to `false` selects the co
 - The guided flow shows the DA template choices, MCP source, conditional local selection or remote URL, auth type, required credential follow-ups, project location, and app name.
 - The client secret is masked while entered and is never included in generated review artifacts, warnings, or logs.
 - Dynamic OAuth discovery fallback produces a warning identifying the manual repair needed before provision.
+- A server URL that answers the `initialize` request like something other than an MCP endpoint, without answering 404, produces an advisory warning after scaffolding. Generation still succeeds.
 - Successful generation opens or reports the generated project through the normal surface behavior.
 
 ### Error and recovery messages
@@ -97,6 +99,7 @@ While `TEAMSFX_MCP_FOR_DA_DT` still exists, setting it to `false` selects the co
 ### External side effects
 
 - Local selection reads the discovered local MCP server catalog.
+- Entering the remote URL sends an unauthenticated MCP `initialize` request to it to establish whether an MCP endpoint is there.
 - Remote auth wiring may probe authorization discovery endpoints while generating the lifecycle action. OAuth configuration creation and DCR execution occur during provision, not scaffolding.
 
 ## Flow
@@ -214,6 +217,6 @@ scaffolding:
         oauthClientSecret:
           state: non-empty
   reviewedFingerprints:
-    semantic: ce306745747b6901aec8ec6c20020627b56990c45e75fe87c87b426785f0065a
+    semantic: fe2d4b51d713e03ae3acdf3dc633bdbb24c1dc0a44808992462cccb87f81dba9
     presentation: 6fd81458e6ccea7b1855cbb5a8a5698fb81e8224c046483748adadcf7c5a0622
 ```
