@@ -17,7 +17,7 @@
       "title": "MCP Server URL",
       "keyPrefix": "core.createProjectQuestion.mcpForDa.ServerUrl",
       "condition": { "expr": "mcpServerType == 'remote'" },
-      "validation": "uri"
+      "validation": "mcp.serverUrl"
     },
     {
       "name": "selectedLocalServers",

@@ -34,6 +34,7 @@ const CAPABILITY_FLOORS: Record<CapabilityKind, ReadonlyMap<string, string>> = {
     ["mcp.oauthClientIdRequired", "6.11.0"],
     ["mcp.oauthClientSecretRequired", "6.11.0"],
     ["mcp.entraClientIdRequired", "6.11.0"],
+    ["mcp.serverUrl", "6.11.0"],
   ]),
 };
 

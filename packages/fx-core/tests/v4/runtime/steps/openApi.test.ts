@@ -4,8 +4,10 @@
 import { ensureDir, mkdtemp, readJson, readdir, remove, writeJson } from "fs-extra";
 import os from "os";
 import * as path from "path";
+import { SpecParser } from "@microsoft/m365-spec-parser";
 import { SystemError, UserError } from "@microsoft/teamsfx-api";
 import { ok } from "neverthrow";
+import { featureFlagManager } from "../../../../src/common/featureFlags";
 import { StepContext } from "../../../../src/v4/pipeline/runScaffoldPipeline";
 import { NOOP_MANIFEST_WRAPPER, STEP_REGISTRY } from "../../../../src/v4/runtime/runtimeRegistry";
 import {
@@ -83,6 +85,15 @@ vi.mock("axios", () => ({
 }));
 
 vi.mock("@microsoft/m365-spec-parser", () => {
+  class SpecParserError extends Error {
+    constructor(
+      message: string,
+      public readonly errorType: string
+    ) {
+      super(message);
+    }
+  }
+
   class SpecParser {
     async list(): Promise<{ APIs: MockParserOperation[] }> {
       return { APIs: mockSpecParserState.listOperations };
@@ -96,6 +107,10 @@ vi.mock("@microsoft/m365-spec-parser", () => {
       return undefined;
     }
 
+    async generateAdaptiveCardInPlugin(): Promise<void> {
+      return undefined;
+    }
+
     async getFilteredSpecs(): Promise<unknown[]> {
       return [undefined, mockSpecParserState.filteredSpec];
     }
@@ -105,7 +120,7 @@ vi.mock("@microsoft/m365-spec-parser", () => {
       _apiOperations: string[],
       apiSpecPath: string,
       pluginPath: string
-    ): Promise<void> {
+    ): Promise<{ allSuccess: boolean; warnings: unknown[] }> {
       const fs = await import("fs-extra");
       const nodePath = await import("path");
       await fs.writeFile(apiSpecPath, "openapi: 3.0.0\n");
@@ -124,23 +139,33 @@ vi.mock("@microsoft/m365-spec-parser", () => {
         await fs.ensureDir(nodePath.dirname(filePath));
         await fs.writeFile(filePath, content);
       }
+      return { allSuccess: true, warnings: [] };
     }
   }
 
   return {
     AdaptiveCardGenerator: { generateAdaptiveCard: mockGenerateAdaptiveCard },
+    AdaptiveCardUpdateStrategy: { CreateNew: "CreateNew", KeepExisting: "KeepExisting" },
     ConstantString: {
       AllOperationMethods: ["get", "post", "put", "patch", "delete", "head", "options"],
       RegistrationIdPostfix: "REGISTRATION_ID",
     },
+    ErrorType: { NoSupportedApi: "NoSupportedApi", SpecNotValid: "SpecNotValid" },
     ProjectType: { Copilot: "copilot", TeamsAi: "teams-ai" },
     SpecParser,
+    SpecParserError,
     Utils: {
+      format(template: string, ...args: string[]): string {
+        return `${template} ${args.join(",")}`;
+      },
       getAuthArray(security: unknown): unknown[] {
         return Array.isArray(security) ? security : [];
       },
       getSafeRegistrationIdEnvName(value: string): string {
         return value.replace(/[^a-zA-Z0-9]/g, "_").toUpperCase();
+      },
+      checkServerUrl(): unknown[] {
+        return [];
       },
       isAPIKeyAuthButNotInCookie(authScheme: Record<string, unknown> | undefined): boolean {
         return authScheme?.type === "apiKey" && authScheme.in !== "cookie";
@@ -152,10 +177,13 @@ vi.mock("@microsoft/m365-spec-parser", () => {
         return authScheme?.type === "oauth2";
       },
     },
-    ValidationStatus: { Error: "Error" },
+    ValidationStatus: { Error: "Error", Valid: "Valid" },
     WarningType: {
       GenerateCardFailed: "GenerateCardFailed",
       GenerateJsonDataFailed: "GenerateJsonDataFailed",
+      OperationIdContainsSpecialCharacters: "OperationIdContainsSpecialCharacters",
+      OperationIdMissing: "OperationIdMissing",
+      UnsupportedAuthType: "UnsupportedAuthType",
     },
   };
 });
@@ -280,6 +308,8 @@ beforeEach(() => {
   mockSpecParserState.validationStatus = "Ok";
   mockGenerateAdaptiveCard.mockClear();
   mockAxiosGet.mockReset();
+  // The Kiota branch spawns an external binary; pin it off unless a test opts in.
+  vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
 });
 
 describe("OpenAPI runtime steps (v4)", () => {
@@ -323,7 +353,7 @@ describe("OpenAPI runtime steps (v4)", () => {
       "src/app/app.ts": "// Replace with function definition code\n",
       "src/app/handlers.ts": "// Replace with function handler code\n{{OPENAPI_SPEC_PATH}}",
     });
-    state.ctx.warn = (message) => warnings.push(message);
+    state.ctx.warn = (warning) => warnings.push(warning.content);
 
     const result = await openApiGenerateTeamsAiCustomApiFiles.apply(
       {
@@ -353,7 +383,7 @@ describe("OpenAPI runtime steps (v4)", () => {
       "src/app/app.ts": "// Replace with function definition code\n",
       "src/app/handlers.ts": "// Replace with function handler code\n{{OPENAPI_SPEC_PATH}}",
     });
-    state.ctx.warn = (message) => warnings.push(message);
+    state.ctx.warn = (warning) => warnings.push(warning.content);
 
     const result = await openApiGenerateTeamsAiCustomApiFiles.apply(
       {
@@ -513,6 +543,32 @@ describe("OpenAPI runtime steps (v4)", () => {
     assert.include(text(files, "m365agents.yml"), "uses: apiKey/register");
     assert.include(text(files, "m365agents.yml"), "registrationId: PETKEY_REGISTRATION_ID");
     assert.include(text(files, "m365agents.local.yml"), "uses: apiKey/register");
+  });
+
+  it("does not mislabel a non-spec-parser generator crash as a spec-parser failure", async () => {
+    const generate = vi
+      .spyOn(SpecParser.prototype, "generateForCopilot")
+      .mockRejectedValue(new Error("disk full"));
+    const { ctx, files } = makeCtx({
+      "appPackage/manifest.json": JSON.stringify({ name: "manifest" }),
+      "appPackage/declarativeAgent.json": JSON.stringify({ name: "Agent" }),
+    });
+
+    try {
+      const result = await openApiGeneratePluginFiles.apply(
+        { apiSpecLocation: SPEC_PATH, apiOperations: ["GET /pets"] },
+        ctx
+      );
+
+      assert.isTrue(result.isErr());
+      const error = result._unsafeUnwrapErr();
+      assert.instanceOf(error, SystemError);
+      assert.strictEqual(error.name, "OpenApiGenerateFailed");
+      assert.include(error.message, "disk full");
+      assert.isFalse(files.has("appPackage/ai-plugin.json"));
+    } finally {
+      generate.mockRestore();
+    }
   });
 
   it("preserves existing conversation starters and uses descriptions up to the six-item limit", async () => {

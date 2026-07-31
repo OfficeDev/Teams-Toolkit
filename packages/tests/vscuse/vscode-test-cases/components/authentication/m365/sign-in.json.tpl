@@ -228,7 +228,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion there's {{text:accountName}} in the \"ACCOUNTS\" section",
+      "description": "@assertion the \"ACCOUNTS\" section lists an entry whose label is {{text:accountName}} or that name cut short by the side bar with a trailing ellipsis.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

@@ -7,7 +7,7 @@
       "title": "MCP Server URL",
       "keyPrefix": "template.mcpAddServer.mcpServerUrl",
       "condition": { "expr": "mcpServerUrl == null" },
-      "validation": "uri"
+      "validation": "mcp.serverUrl"
     },
     {
       "name": "authType",

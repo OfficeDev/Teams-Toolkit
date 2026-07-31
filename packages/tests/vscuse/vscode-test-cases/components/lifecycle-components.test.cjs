@@ -16,6 +16,7 @@ const substitutions = {
   optionLabel: "Deploy",
   questionTitle: "Deploy resources in dev?",
   readySubject: "the selected target is visible",
+  retryTimeout: "900",
 };
 
 function render(relativePath, overrides = {}) {
@@ -122,7 +123,8 @@ test("VCB-47: Microsoft 365 sign-in verifies the account in the ACCOUNTS section
     assert.match(assertReady.step_id, /_assertReady_/);
     assert.equal(assertReady.depends_on[0], closeBrowser.step_id);
     assert.match(assertReady.description, /M365_ACCOUNT_NAME/);
-    assert.match(assertReady.description, /in the "ACCOUNTS" section$/);
+    assert.match(assertReady.description, /the "ACCOUNTS" section lists/);
+    assert.match(assertReady.description, /trailing ellipsis\.$/);
   }
 });
 
@@ -142,10 +144,7 @@ test("VCB-62: account readiness waits out the toolkit's Signing in state", () =>
 test("VCB-63: Copilot conversation clicks resolve their target by OCR", () => {
   for (const [relativePath, control] of [
     ["browser/copilot/allow-action.json.tpl", '"Allow" button'],
-    [
-      "browser/copilot/send-message.json.tpl",
-      '"Message ${{var:app_name}}" input box',
-    ],
+    ["browser/copilot/send-message.json.tpl", '"Message" input box'],
   ]) {
     const click = render(relativePath, {
       message: "List all repairs",
@@ -242,12 +241,16 @@ test("VCB-55: option components wait for the prompt to load its options", () => 
     assert.equal(assertOptionsLoaded.agent, "assertion");
     assert.match(
       assertOptionsLoaded.description,
-      /lists at least one option below its input box/,
+      /has finished loading and lists at least one selectable option/,
     );
     assert.equal(
       assertOptionsLoaded.tags.includes("step_retry_timeout: 120"),
       true,
     );
+
+    // VCB-81: a reader that placed the loaded option above the input box read
+    // the earlier `below its input box` claim as false.
+    assert.equal(/input box/.test(assertOptionsLoaded.description), false);
 
     // The title assertion alone passes while the prompt still reads
     // "Loading options...", so the first keystroke must depend on this step.
@@ -293,7 +296,7 @@ test("lifecycle recipes have reusable confirmation and notification primitives",
   assert.equal(notification.component.id, "assertContains");
   assert.equal(notification.steps.length, 1);
   assert.match(notification.steps[0].description, /stage completed/);
-  assert.ok(notification.steps[0].tags.includes("step_retry_timeout: 300"));
+  assert.ok(notification.steps[0].tags.includes("step_retry_timeout: 900"));
 });
 
 test("target primitives expose F1, profile selection, and browser readiness behavior", () => {
@@ -322,4 +325,32 @@ test("target primitives expose F1, profile selection, and browser readiness beha
   assert.equal(readiness.steps.length, 1);
   assert.equal(readiness.steps[0].agent, "assertion");
   assert.match(readiness.steps[0].description, /selected target is visible/);
+});
+
+test("VCB-82: the Teams app details assertions name no button caption", () => {
+  const component = render("browser/teams/add-and-open-app.json.tpl");
+
+  assert.equal(component.component.id, "addAndOpenApp");
+  const [assertPopup, , assertDialog] = component.steps;
+  // Teams captions the popup's primary action `Add` for an account that has
+  // not installed the app and `Open` for one that has, and titles the dialog
+  // that follows accordingly.
+  for (const step of [assertPopup, assertDialog]) {
+    assert.equal(/\bAdd\b|Added successfully/.test(step.description), false);
+  }
+  assert.match(assertPopup.description, /primary action button/);
+  assert.match(assertDialog.description, /Open button/);
+});
+
+test("VCB-83: the Teams app details clicks resolve their target with OCR", () => {
+  const component = render("browser/teams/add-and-open-app.json.tpl");
+
+  const clicks = component.steps.filter((step) => step.tool === "click");
+  assert.equal(clicks.length, 2);
+  for (const click of clicks) {
+    assert.equal(click.tags.includes("ocr:true"), true);
+    assert.deepEqual(click.preconditions, []);
+  }
+  assert.match(clicks[0].description, /"Add" or "Open"/);
+  assert.match(clicks[1].description, /"Added successfully!" or "Let's go"/);
 });

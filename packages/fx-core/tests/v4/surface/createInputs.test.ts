@@ -36,7 +36,8 @@ import {
   runCreateInputs,
   runCreateInputsWalk,
 } from "../../../src/v4/surface/createInputs";
-import { assert } from "vitest";
+import { assert, vi } from "vitest";
+import { teamsProjectTypeDeps } from "../../../src/question/scaffold/vsc/teamsProjectTypeNode";
 
 /**
  * Tests for docs/03-specs/operations/scaffolding/collect-create-inputs.md.
@@ -575,6 +576,10 @@ describe("runCreateInputs (collect-create-inputs)", () => {
   });
 
   it("CCI-01: remote-only provider auto-skips mcpServerType, asks url + authType=none", async () => {
+    // The server-URL question probes the server (ADR-0020); keep this test offline.
+    const probe = vi
+      .spyOn(teamsProjectTypeDeps, "probeMCPServerAuth")
+      .mockResolvedValue({ requiresAuth: false, endpointStatus: "confirmed" });
     const ui = new ScriptedUserInteraction({
       text: { mcpServerUrl: "https://api.example.com/mcp" },
       select: { authType: "none" },
@@ -605,8 +610,9 @@ describe("runCreateInputs (collect-create-inputs)", () => {
     if (validation === undefined) {
       assert.fail("expected MCP server URL prompt validation");
     }
-    assert.equal(await validation("not a uri"), "must be a valid URI");
+    assert.include(await validation("not a uri"), "absolute URL");
     assert.isUndefined(await validation("https://api.example.com/mcp"));
+    probe.mockRestore();
   });
 
   it("CCI-17: openapi.operations provider lists operations from the selected OpenAPI document", async () => {

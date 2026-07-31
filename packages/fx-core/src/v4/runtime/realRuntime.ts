@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { SystemError } from "@microsoft/teamsfx-api";
+import { SystemError, Warning } from "@microsoft/teamsfx-api";
 import * as fs from "fs-extra";
 import * as path from "path";
 import { envUtil } from "../../component/utils/envUtil";
@@ -53,7 +53,7 @@ export function createRealRuntime(
   rootDir: string,
   flagReader?: (name: string) => boolean,
   stepRegistry?: StepRegistry,
-  warningSink?: (message: string) => void
+  warningSink?: (warning: Warning) => void
 ): RealRuntime {
   const exprPort: ExpressionRuntimePort = createExpressionPort(flagReader);
   const sink: FileSink = {
