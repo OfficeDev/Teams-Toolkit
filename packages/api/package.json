@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/teamsfx-api",
-  "version": "0.23.15",
+  "version": "0.23.16",
   "description": "teamsfx framework api",
   "main": "build/index.js",
   "types": "build/index.d.ts",
