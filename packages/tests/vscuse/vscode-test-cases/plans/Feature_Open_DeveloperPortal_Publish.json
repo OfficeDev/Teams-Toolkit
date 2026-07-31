@@ -448,7 +448,8 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "precondition_wait_timeout:60"
+        "precondition_wait_timeout:60",
+        "delay: 3"
       ],
       "screenshot": "step_4728c76c",
       "created_at": "2026-01-08T10:04:35.154707",

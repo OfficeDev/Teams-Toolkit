@@ -190,7 +190,9 @@
       "depends_on": [],
       "preconditions": [],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "delay: 3"
+      ],
       "screenshot": "step_ea3a642c",
       "created_at": "2026-05-19T04:13:46.594495",
       "plan_id": "plan_r_0113_093650"

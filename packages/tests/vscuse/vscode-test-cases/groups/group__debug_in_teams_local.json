@@ -192,7 +192,9 @@
       "depends_on": [],
       "preconditions": [],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "delay: 3"
+      ],
       "screenshot": "step_abda900e",
       "created_at": "2026-06-05T09:07:45.962908",
       "plan_id": "plan_r_0930_083113"
