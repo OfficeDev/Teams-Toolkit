@@ -1744,9 +1744,7 @@
       "depends_on": [
         "step_signInM365_next_c2579f408_3_2"
       ],
-      "preconditions": [
-        "dhash:512:384:0:20:1b08f0d9d1e6e6e4"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:authentication",
