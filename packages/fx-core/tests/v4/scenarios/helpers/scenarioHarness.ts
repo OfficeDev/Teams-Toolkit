@@ -3,6 +3,7 @@
 
 import * as fs from "fs";
 import * as path from "path";
+import { Warning } from "@microsoft/teamsfx-api";
 import { TemplateFileEntry } from "../../../../src/v4/model/dataModel";
 import { createInMemoryRuntime } from "../../../../src/v4/runtime/inMemoryRuntime";
 import { ScaffoldRequest, scaffold } from "../../../../src/v4/runtime/scaffold";
@@ -47,6 +48,7 @@ export async function runV4Package(
 ): Promise<{
   files: Map<string, Buffer>;
   secrets: Map<string, string>;
+  warnings: Warning[];
   outcome: V4ScenarioOutcome;
 }> {
   const runtime = createInMemoryRuntime();
@@ -66,6 +68,7 @@ export async function runV4Package(
   return {
     files: runtime.files,
     secrets: runtime.secretEnvironmentVariables.get("dev") ?? new Map(),
+    warnings: runtime.warnings,
     outcome: unwrapOutcome(result),
   };
 }

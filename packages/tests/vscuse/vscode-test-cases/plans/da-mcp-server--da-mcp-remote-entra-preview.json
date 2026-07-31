@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 99,
+    "total_steps": 104,
     "name": "da-mcp-remote-entra-preview",
     "description": {
       "owner": "",
@@ -95,7 +95,12 @@
       "step_executeCommand_filter_c0af3d3fa_4_2",
       "step_executeCommand_assertCommand_c0af3d3fa_4_2",
       "step_executeCommand_execute_c0af3d3fa_4_2",
-      "step_assertNotificationContains_assert_c0af3d3fa_4_3",
+      "step_executeCommand_open_c0af3d3fa_4_3",
+      "step_executeCommand_assertPalette_c0af3d3fa_4_3",
+      "step_executeCommand_filter_c0af3d3fa_4_3",
+      "step_executeCommand_assertCommand_c0af3d3fa_4_3",
+      "step_executeCommand_execute_c0af3d3fa_4_3",
+      "step_assertNotificationContains_assert_c0af3d3fa_4_4",
       "step_executeCommand_open_c0af3d3fa_5_1",
       "step_executeCommand_assertPalette_c0af3d3fa_5_1",
       "step_executeCommand_filter_c0af3d3fa_5_1",
@@ -113,8 +118,8 @@
       "step_browserM365SignIn_submitPassword_c0af3d3fa_5_3",
       "step_browserM365SignIn_assertStaySignedIn_c0af3d3fa_5_3",
       "step_browserM365SignIn_confirmStaySignedIn_c0af3d3fa_5_3",
-      "step_browserM365SignIn_refresh_c0af3d3fa_5_3",
-      "step_assertReady_assertReady_c0af3d3fa_5_4"
+      "step_assertReady_assertReady_c0af3d3fa_5_4",
+      "step_zoomOut_zoomOut_c0af3d3fa_5_5"
     ],
     "tags": [
       "case_id:da-mcp-remote-entra-preview",
@@ -522,7 +527,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the prompt titled New Project lists at least one option below its input box.",
+      "description": "@assertion the prompt titled New Project has finished loading and lists at least one selectable option.",
       "content_refs": [],
       "timeout": 120,
       "retry_count": 0,
@@ -629,7 +634,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the prompt titled Create Declarative Agent lists at least one option below its input box.",
+      "description": "@assertion the prompt titled Create Declarative Agent has finished loading and lists at least one selectable option.",
       "content_refs": [],
       "timeout": 120,
       "retry_count": 0,
@@ -736,7 +741,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the prompt titled Create an Action lists at least one option below its input box.",
+      "description": "@assertion the prompt titled Create an Action has finished loading and lists at least one selectable option.",
       "content_refs": [],
       "timeout": 120,
       "retry_count": 0,
@@ -908,7 +913,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the prompt titled Select Authentication Type lists at least one option below its input box.",
+      "description": "@assertion the prompt titled Select Authentication Type has finished loading and lists at least one selectable option.",
       "content_refs": [],
       "timeout": 120,
       "retry_count": 0,
@@ -1657,7 +1662,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion there's ${{env:M365_ACCOUNT_NAME}} in the \"ACCOUNTS\" section",
+      "description": "@assertion the \"ACCOUNTS\" section lists an entry whose label is ${{env:M365_ACCOUNT_NAME}} or that name cut short by the side bar with a trailing ellipsis.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1722,7 +1727,7 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Notifications: Show Notifications"
+        "text": "Notifications: Clear All Notifications"
       },
       "description": "Type the resolved command title into the active Command Palette.",
       "content_refs": [],
@@ -1744,7 +1749,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the Command Palette input box reads >Notifications: Show Notifications and the highlighted command listed under it is titled Notifications: Show Notifications.",
+      "description": "@assertion the Command Palette input box reads >Notifications: Clear All Notifications and the highlighted command listed under it is titled Notifications: Clear All Notifications.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1830,7 +1835,7 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Microsoft 365 Agents: Provision"
+        "text": "Notifications: Show Notifications"
       },
       "description": "Type the resolved command title into the active Command Palette.",
       "content_refs": [],
@@ -1852,7 +1857,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the Command Palette input box reads >Microsoft 365 Agents: Provision and the highlighted command listed under it is titled Microsoft 365 Agents: Provision.",
+      "description": "@assertion the Command Palette input box reads >Notifications: Show Notifications and the highlighted command listed under it is titled Notifications: Show Notifications.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1891,11 +1896,13 @@
       ]
     },
     {
-      "step_id": "step_assertNotificationContains_assert_c0af3d3fa_4_3",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion a visible Visual Studio Code notification contains provision stage executed successfully.",
+      "step_id": "step_executeCommand_open_c0af3d3fa_4_3",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "f1"
+      },
+      "description": "Press the F1 key to open the Command Palette in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1906,9 +1913,115 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_assertPalette_c0af3d3fa_4_3",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Visual Studio Code Command Palette is visible with a > character in its input box and is ready to accept a command search.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_open_c0af3d3fa_4_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_filter_c0af3d3fa_4_3",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Microsoft 365 Agents: Provision"
+      },
+      "description": "Type the resolved command title into the active Command Palette.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_assertPalette_c0af3d3fa_4_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_assertCommand_c0af3d3fa_4_3",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Command Palette input box reads >Microsoft 365 Agents: Provision and the highlighted command listed under it is titled Microsoft 365 Agents: Provision.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_filter_c0af3d3fa_4_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_execute_c0af3d3fa_4_3",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to execute the selected Command Palette command.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_assertCommand_c0af3d3fa_4_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_assertNotificationContains_assert_c0af3d3fa_4_4",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion a visible Visual Studio Code notification contains provision stage executed successfully.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_execute_c0af3d3fa_4_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
         "component:notifications",
         "action:assert-contains",
-        "step_retry_timeout: 300"
+        "step_retry_timeout: 900"
       ]
     },
     {
@@ -1924,7 +2037,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertNotificationContains_assert_c0af3d3fa_4_3"
+        "step_assertNotificationContains_assert_c0af3d3fa_4_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2283,29 +2396,6 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_refresh_c0af3d3fa_5_3",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "f5"
-      },
-      "description": "Press F5 to refresh Microsoft 365 Copilot after browser authentication.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_browserM365SignIn_confirmStaySignedIn_c0af3d3fa_5_3"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:authentication",
-        "surface:browser",
-        "force_run:true"
-      ]
-    },
-    {
       "step_id": "step_assertReady_assertReady_c0af3d3fa_5_4",
       "agent": "assertion",
       "tool": "",
@@ -2316,7 +2406,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_refresh_c0af3d3fa_5_3"
+        "step_browserM365SignIn_confirmStaySignedIn_c0af3d3fa_5_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2324,6 +2414,28 @@
         "component:browser",
         "action:assert-ready",
         "step_retry_timeout: 180"
+      ]
+    },
+    {
+      "step_id": "step_zoomOut_zoomOut_c0af3d3fa_5_5",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+-"
+      },
+      "description": "Zoom the browser out once with Ctrl+- so the Microsoft 365 Copilot navigation rail stops covering the conversation column.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_assertReady_assertReady_c0af3d3fa_5_4"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "action:zoom-out"
       ]
     }
   ],

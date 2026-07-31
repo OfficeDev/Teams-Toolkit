@@ -10,11 +10,15 @@ const environmentExpressionPattern = /^\$\{\{env:([A-Z_a-z][A-Z_a-z0-9]*)\}\}$/;
 const secretExpressionPattern = /^\$\{\{secret:[A-Z_a-z][A-Z_a-z0-9]*\}\}$/;
 const relativePathPattern =
   /^(?!\/)(?![A-Za-z]:)(?!.*(?:^|\/)\.\.(?:\/|$))[^\\]+$/;
+const localEnvironmentNamePattern = /^[A-Z][A-Z0-9_]*$/;
+const localEnvironmentValuePattern = /^[A-Za-z0-9:/._-]*$/;
+const runnerPlaceholderPattern = /\$\{\{[a-z]+:[A-Za-z0-9_:#-]+\}\}/g;
 const provisionInputGroups = new Set(["apiKey", "arm", "oauth"]);
 const provisionEnvironmentInput = "environment";
 const provisionEnvironmentSkipValue = "none";
 
 const commandTitles = {
+  clearNotifications: "Notifications: Clear All Notifications",
   create: "Microsoft 365 Agents: Create New Agent/App",
   deploy: "Microsoft 365 Agents: Deploy",
   // The toolkit contributes one side bar view per section and VS Code generates
@@ -64,6 +68,16 @@ const defaultFolderOption = {
   ],
 };
 
+// Creating a Python virtual environment is a Python extension flow, not a
+// toolkit flow, so its literals live next to the semantic step that drives it.
+const pythonEnvironment = {
+  commandTitle: "Python: Create Environment...",
+  dependenciesTitle: "Select dependencies to install",
+  environmentTypeLabel: "Venv",
+  successText: "The following environment is selected:",
+  successTimeout: "300",
+};
+
 const scaffoldQuestionAdapters = {
   actionSource: {
     options: {
@@ -101,7 +115,10 @@ const scaffoldQuestionAdapters = {
   azureOpenAIEndpoint: { title: "Azure OpenAI Endpoint", type: "text" },
   azureOpenAIKey: { secret: true, title: "Azure OpenAI Key", type: "text" },
   customEngineAgent: {
-    options: { "weather-agent": "Weather Agent" },
+    options: {
+      "basic-custom-engine-agent": "Basic Custom Engine Agent",
+      "weather-agent": "Weather Agent",
+    },
     title: "App Features Using Microsoft 365 Agents SDK",
     type: "singleSelect",
   },
@@ -111,7 +128,11 @@ const scaffoldQuestionAdapters = {
     type: "singleSelect",
   },
   language: {
-    options: { javascript: "JavaScript", typescript: "TypeScript" },
+    options: {
+      javascript: "JavaScript",
+      python: "Python",
+      typescript: "TypeScript",
+    },
     title: "Programming Language",
     type: "singleSelect",
   },
@@ -226,6 +247,12 @@ const provisionOauthConfirmation = {
     "Microsoft 365 Agents Toolkit uploads the client ID/Secret for OAuth Registration to Developer Portal. It is used by Teams client to securely access your API at runtime. Microsoft 365 Agents Toolkit doesn't store your client ID/Secret.",
 };
 
+// Both stages wait on an Azure control plane rather than on the toolkit: the
+// provision stage watches an ARM deployment create the hosting plan, the web
+// app, and the bot registration, and the deploy stage builds the project and
+// uploads the package to that web app. Either can outlast the five minutes the
+// hand-recorded plans allowed, and the wait is only ever paid in full when the
+// stage never reports success.
 const lifecycleAdapters = {
   deploy: {
     confirmation: {
@@ -234,8 +261,12 @@ const lifecycleAdapters = {
       dialogTitle: "Do you want to deploy resources in dev environment?",
     },
     successText: "actions in deploy stage executed successfully",
+    successTimeout: "900",
   },
-  provision: { successText: "provision stage executed successfully" },
+  provision: {
+    successText: "provision stage executed successfully",
+    successTimeout: "900",
+  },
 };
 
 // A readiness subject only has to show that the app on screen is the one this
@@ -246,10 +277,52 @@ const lifecycleAdapters = {
 // composed name makes readiness fail on naming detail that the post-scaffold
 // file checks already assert exactly, and against the real manifest rather than
 // against a screenshot.
+//
+// `profileSelections` lists the picker positions an adapter supports, and the
+// case declares which one it means. Every profile below is reached from the
+// first filtered result, because VS Code orders the launch picker by each
+// configuration's `presentation.group` and `presentation.order` and the
+// templates give the intended profile the earliest position among the entries
+// its own title matches. The declarative-agent templates are the exception:
+// they publish `Preview Local in Copilot (Chrome)` as a compound in group `all`
+// and `Preview in Copilot (Chrome)` as a configuration in group `remote`, and
+// the local title contains the remote one as a subsequence, so filtering on the
+// remote title lists the local compound first.
 const targetAdapters = {
+  // Every Chrome launch configuration the templates ship omits `userDataDir`, so
+  // js-debug hands the session a profile of its own that carries no Microsoft 365
+  // session and the browser always has to sign in. Which page it opens on is
+  // decided by the launch URL: the Teams targets carry the toolkit's
+  // `${account-hint}`, which resolves to a `login_hint` and asks straight for the
+  // password of the account already signed in to Visual Studio Code.
   "Launch Remote in Teams (Chrome)": {
+    browserAuthentication: {
+      component: "authentication/browser/m365-password-sign-in.json.tpl",
+      credentials: "m365",
+    },
     host: "teams",
     open: { adapter: "teams-add", destination: "chat", kind: "app" },
+    profileSelections: {
+      first: { component: "quick-input/filter-option.json.tpl" },
+    },
+    readySubject:
+      "the Microsoft Teams app details page for an app whose name starts with ${{var:app_name}} is visible",
+    requires: ["login:azure", "login:m365", "provision", "deploy"],
+  },
+  // The Python templates name the same remote Teams launch `Launch Remote
+  // (Chrome)`, without the `in Teams` the TypeScript and JavaScript templates
+  // use. It reaches the same Teams app details page, so it reuses that adapter's
+  // open transition and readiness subject.
+  "Launch Remote (Chrome)": {
+    browserAuthentication: {
+      component: "authentication/browser/m365-password-sign-in.json.tpl",
+      credentials: "m365",
+    },
+    host: "teams",
+    open: { adapter: "teams-add", destination: "chat", kind: "app" },
+    profileSelections: {
+      first: { component: "quick-input/filter-option.json.tpl" },
+    },
     readySubject:
       "the Microsoft Teams app details page for an app whose name starts with ${{var:app_name}} is visible",
     requires: ["login:azure", "login:m365", "provision", "deploy"],
@@ -261,9 +334,81 @@ const targetAdapters = {
     },
     host: "copilot",
     open: { adapter: "ready", destination: "chat", kind: "agent" },
+    profileSelections: {
+      first: { component: "quick-input/filter-option.json.tpl" },
+      second: {
+        component: "quick-input/filter-second-option.json.tpl",
+        initialOptionLabel: "Preview Local in Copilot (Chrome)",
+      },
+    },
     readySubject:
       "an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot",
     requires: ["login:m365", "provision"],
+  },
+  // A custom engine agent is hosted on Azure, so its Copilot preview needs the
+  // deployed bot behind it. The declarative-agent preview above needs only
+  // provision, because the toolkit uploads the agent definition itself.
+  "(Preview) Launch Remote in Copilot (Chrome)": {
+    browserAuthentication: {
+      component: "authentication/browser/m365-sign-in.json.tpl",
+      credentials: "m365",
+    },
+    host: "copilot",
+    open: { adapter: "ready", destination: "chat", kind: "agent" },
+    profileSelections: {
+      first: { component: "quick-input/filter-option.json.tpl" },
+    },
+    readySubject:
+      "an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot",
+    requires: ["login:azure", "login:m365", "provision", "deploy"],
+  },
+  // The local debug profiles below carry a preLaunchTask chain that validates
+  // prerequisites, registers the app, starts the tunnel, and runs the local
+  // lifecycle before the application starts, so they require no authored
+  // provision or deploy. They reach the same surfaces the remote profiles reach,
+  // so they reuse those readiness subjects; the subjects name the app by the
+  // prefix the case authored, which holds for the `local` suffix as it does for
+  // `dev`.
+  "Debug in Teams (Chrome)": {
+    browserAuthentication: {
+      component: "authentication/browser/m365-password-sign-in.json.tpl",
+      credentials: "m365",
+    },
+    host: "teams",
+    open: { adapter: "teams-add", destination: "chat", kind: "app" },
+    profileSelections: {
+      first: { component: "quick-input/filter-option.json.tpl" },
+    },
+    readySubject:
+      "the Microsoft Teams app details page for an app whose name starts with ${{var:app_name}} is visible",
+    requires: ["login:m365"],
+  },
+  "(Preview) Debug in Copilot (Chrome)": {
+    browserAuthentication: {
+      component: "authentication/browser/m365-sign-in.json.tpl",
+      credentials: "m365",
+    },
+    host: "copilot",
+    open: { adapter: "ready", destination: "chat", kind: "agent" },
+    profileSelections: {
+      first: { component: "quick-input/filter-option.json.tpl" },
+    },
+    readySubject:
+      "an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot",
+    requires: ["login:m365"],
+  },
+  // The Agents Playground hosts the agent on the local machine and talks to it
+  // over the local bot endpoint, so nothing in this target authenticates against
+  // Microsoft 365 and no account has to be signed in first.
+  "Debug in Microsoft 365 Agents Playground": {
+    host: "playground",
+    open: { adapter: "ready", destination: "chat", kind: "app" },
+    profileSelections: {
+      first: { component: "quick-input/filter-option.json.tpl" },
+    },
+    readySubject:
+      "the Microsoft 365 Agents Playground page is open in the browser",
+    requires: [],
   },
 };
 
@@ -662,8 +807,6 @@ function createSemanticStepCompiler() {
         value: {
           confirmation: provisionApiKeyConfirmation,
           questions,
-          // The API key is not persisted, so F5 asks for it again.
-          replayedQuestions: questions,
         },
       };
     }
@@ -698,8 +841,6 @@ function createSemanticStepCompiler() {
         value: {
           confirmation: provisionOauthConfirmation,
           questions,
-          // The OAuth credentials are not persisted, so F5 asks for them again.
-          replayedQuestions: questions,
         },
       };
     }
@@ -709,7 +850,6 @@ function createSemanticStepCompiler() {
         value: {
           confirmation: undefined,
           questions: [],
-          replayedQuestions: [],
         },
       };
     }
@@ -739,9 +879,6 @@ function createSemanticStepCompiler() {
           ...question,
           value: inputs.arm[question.key],
         })),
-        // Provision writes the ARM answers into the environment, so F5 reuses
-        // them instead of prompting again.
-        replayedQuestions: [],
       },
     };
   }
@@ -764,14 +901,127 @@ function createSemanticStepCompiler() {
     return { ok: true };
   }
 
+  function compilePythonEnvironment(state, definition) {
+    const inputs = definition.with ?? {};
+    if (
+      !isRecord(inputs) ||
+      !hasOnlyFields(inputs, new Set(["interpreter"])) ||
+      typeof inputs.interpreter !== "string" ||
+      inputs.interpreter.length === 0
+    ) {
+      return failure(
+        "VCB_PYTHON_ENVIRONMENT_INPUT_INVALID",
+        "The Python environment operation requires an interpreter label.",
+      );
+    }
+    const output = [];
+    let error = append(
+      output,
+      render(state, "command-palette/execute-command.json.tpl", {
+        commandTitle: pythonEnvironment.commandTitle,
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "quick-input/filter-option.json.tpl", {
+        optionLabel: pythonEnvironment.environmentTypeLabel,
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "quick-input/filter-option.json.tpl", {
+        optionLabel: inputs.interpreter,
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "quick-input/multi-select.json.tpl", {
+        questionTitle: pythonEnvironment.dependenciesTitle,
+      }),
+    );
+    if (error) return error;
+    // Creating the virtual environment and installing the requirements it
+    // declares takes minutes, and the notification the Python extension raises
+    // when it finishes is the only visible completion signal, so the
+    // notification center is opened before the assertion waits on it.
+    error = append(
+      output,
+      render(state, "command-palette/execute-command.json.tpl", {
+        commandTitle: commandTitles.notifications,
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "notifications/assert-contains.json.tpl", {
+        notificationText: pythonEnvironment.successText,
+        retryTimeout: pythonEnvironment.successTimeout,
+      }),
+    );
+    if (error) return error;
+    state.completed.add("pythonEnvironment");
+    return { ok: true, value: output };
+  }
+
+  function compileLocalEnvironment(state, definition) {
+    const inputs = definition.with ?? {};
+    const names = isRecord(inputs) ? Object.keys(inputs).sort() : [];
+    if (
+      !isRecord(inputs) ||
+      names.length === 0 ||
+      names.some(
+        (name) =>
+          !localEnvironmentNamePattern.test(name) ||
+          typeof inputs[name] !== "string" ||
+          inputs[name].length === 0 ||
+          // The runner resolves its own placeholders before the shell sees the
+          // value, so they are stripped before the shell-safety check.
+          !localEnvironmentValuePattern.test(
+            inputs[name].replaceAll(runnerPlaceholderPattern, ""),
+          ),
+      )
+    ) {
+      return failure(
+        "VCB_LOCAL_ENVIRONMENT_INPUT_INVALID",
+        "The local environment operation requires shell-safe variable names and values.",
+      );
+    }
+    const output = [];
+    for (const name of names) {
+      const error = append(
+        output,
+        render(state, "workspace/local-environment-variable.json.tpl", {
+          variableName: name,
+          variableValue: inputs[name],
+        }),
+      );
+      if (error) return error;
+    }
+    return { ok: true, value: output };
+  }
+
   function compileLifecycle(state, definition) {
     const recipe = lifecycleAdapters[definition.type];
     let confirmation = recipe.confirmation;
     const output = [];
+    // The notification center keeps every notification the run has raised, so
+    // the assertion that waits for this operation's success would read it out of
+    // a list that also holds the scaffolding, sign-in, and earlier lifecycle
+    // entries.
+    let error = append(
+      output,
+      render(state, "command-palette/execute-command.json.tpl", {
+        commandTitle: commandTitles.clearNotifications,
+      }),
+    );
+    if (error) return error;
     // VS Code closes the Command Palette as soon as the window loses focus, and
     // a running lifecycle operation opens browser windows of its own, so the
     // notification center is opened before the operation starts.
-    let error = append(
+    error = append(
       output,
       render(state, "command-palette/execute-command.json.tpl", {
         commandTitle: commandTitles.notifications,
@@ -790,13 +1040,6 @@ function createSemanticStepCompiler() {
     if (definition.type === "provision") {
       const provision = validateProvisionInputs(state, definition);
       if (!provision.ok) return provision;
-      state.targetProvision =
-        provision.value.replayedQuestions.length > 0
-          ? {
-              confirmation: provision.value.confirmation,
-              questions: provision.value.replayedQuestions,
-            }
-          : undefined;
       confirmation = provision.value.confirmation;
       questions = provision.value.questions;
       selectsEnvironment = provision.value.selectsEnvironment;
@@ -836,6 +1079,7 @@ function createSemanticStepCompiler() {
       output,
       render(state, "notifications/assert-contains.json.tpl", {
         notificationText: recipe.successText,
+        retryTimeout: recipe.successTimeout,
       }),
     );
     if (error) return error;
@@ -870,25 +1114,32 @@ function createSemanticStepCompiler() {
       }),
     );
     if (error) return error;
+    const profileSelectionId = definition.with?.profileSelection;
+    if (profileSelectionId === undefined) {
+      return failure(
+        "VCB_TARGET_PROFILE_SELECTION_REQUIRED",
+        "The target must declare which filtered launch profile to select.",
+      );
+    }
+    if (
+      typeof profileSelectionId !== "string" ||
+      !Object.hasOwn(profile.profileSelections, profileSelectionId)
+    ) {
+      return failure(
+        "VCB_TARGET_PROFILE_SELECTION_UNKNOWN",
+        "The target profile selection is not supported by the semantic adapter.",
+      );
+    }
+    const profileSelection = profile.profileSelections[profileSelectionId];
+    const { component, ...profileSelectionValues } = profileSelection;
     error = append(
       output,
-      render(state, "quick-input/filter-option.json.tpl", {
+      render(state, component, {
         optionLabel: profileTitle,
+        ...profileSelectionValues,
       }),
     );
     if (error) return error;
-    if (state.targetProvision !== undefined) {
-      const targetProvisionQuestions = renderProvisionQuestions(
-        state,
-        state.targetProvision.questions,
-        output,
-      );
-      if (!targetProvisionQuestions.ok) return targetProvisionQuestions;
-      const { component, ...confirmationValues } =
-        state.targetProvision.confirmation;
-      error = append(output, render(state, component, confirmationValues));
-      if (error) return error;
-    }
     if (profile.browserAuthentication !== undefined) {
       const credentials = state.credentials.get(
         profile.browserAuthentication.credentials,
@@ -911,6 +1162,11 @@ function createSemanticStepCompiler() {
         readySubject: profile.readySubject,
       }),
     );
+    if (error) return error;
+    if (profile.host === "copilot") {
+      error = append(output, render(state, "browser/zoom-out.json.tpl", {}));
+      if (error) return error;
+    }
     state.profile = profile;
     state.completed.add("target");
     return error ?? { ok: true, value: output };
@@ -930,9 +1186,10 @@ function createSemanticStepCompiler() {
     }
     let rendered;
     if (state.profile.open.adapter === "teams-add") {
-      rendered = render(state, "browser/teams/add-and-open-app.json.tpl", {
-        readySubject: state.profile.readySubject,
-      });
+      // The component carries its own converged subject rather than the
+      // profile's: the target asserts the app details page this component
+      // enters on, and the two clicks in between leave it.
+      rendered = render(state, "browser/teams/add-and-open-app.json.tpl", {});
     } else if (state.profile.open.adapter === "ready") {
       // The target already converged on this destination and asserted this
       // profile's readiness subject with nothing in between, so rendering the
@@ -1000,6 +1257,7 @@ function createSemanticStepCompiler() {
   function compileChatCheck(state, assertion) {
     const sendComponents = {
       copilot: "browser/copilot/send-message.json.tpl",
+      playground: "browser/playground/send-message.json.tpl",
       teams: "browser/teams/send-message.json.tpl",
     };
     const sendComponent = sendComponents[state.profile?.host];
@@ -1200,7 +1458,6 @@ function createSemanticStepCompiler() {
         credentials: new Map(),
         occurrence,
         requiresInitialFileCheck: true,
-        targetProvision: undefined,
       };
       states.set(caseId, state);
     } else if (state === undefined) {
@@ -1230,6 +1487,10 @@ function createSemanticStepCompiler() {
       case "provision":
       case "deploy":
         return compileLifecycle(state, definition);
+      case "pythonEnvironment":
+        return compilePythonEnvironment(state, definition);
+      case "localEnvironment":
+        return compileLocalEnvironment(state, definition);
       case "target":
         return compileTarget(state, definition);
       case "open":

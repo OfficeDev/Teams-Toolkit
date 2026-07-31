@@ -9,6 +9,7 @@ import {
   mcpOauthClientIdRequiredValidator,
   mcpOauthClientSecretRequiredValidator,
 } from "./mcpCredentialValidators";
+import { mcpServerUrlValidator } from "./mcpServerUrlValidator";
 
 export const uriValidator: Validator = (value: string): string | undefined => {
   try {
@@ -76,5 +77,6 @@ export function createDefaultCreateInputValidators(): Record<string, Validator> 
     "mcp.oauthClientIdRequired": mcpOauthClientIdRequiredValidator,
     "mcp.oauthClientSecretRequired": mcpOauthClientSecretRequiredValidator,
     "mcp.entraClientIdRequired": mcpEntraClientIdRequiredValidator,
+    "mcp.serverUrl": mcpServerUrlValidator,
   };
 }

@@ -69,6 +69,7 @@ steps:
     type: target
     with:
       profile: "Preview in Copilot (Chrome)"
+      profileSelection: second
 
   open-agent:
     type: open

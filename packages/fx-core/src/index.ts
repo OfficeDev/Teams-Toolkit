@@ -124,6 +124,7 @@ export {
   MCPEndpointStatus,
   probeMCPServerAuth,
 } from "./component/utils/mcpToolFetcher";
+export { MCP_AUTH_PLACEHOLDER_WARNING_TYPES } from "./component/utils/mcpAuthScaffolder";
 export { ODRTool, ODRServer, ODRProvider } from "./component/utils/odrProvider";
 export { pathUtils } from "./component/utils/pathUtils";
 export { newResourceGroupOption, resourceGroupHelper } from "./component/utils/ResourceGroupHelper";

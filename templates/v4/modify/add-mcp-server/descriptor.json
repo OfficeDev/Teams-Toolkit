@@ -4,7 +4,7 @@
   "name": "Add MCP Server Action",
   "kind": "modify",
   "languages": ["common"],
-  "minEngineVersion": "5.20.0",
+  "minEngineVersion": "6.11.0",
   "spec": "docs/03-specs/scenarios/da/add-mcp-server.md",
   "requiresNetwork": false,
 

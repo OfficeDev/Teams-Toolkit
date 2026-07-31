@@ -4,7 +4,7 @@
     "uiSurface": "browser",
     "hostSurface": "teams",
     "id": "addAndOpenApp",
-    "parameters": ["instanceSuffix", "readySubject"]
+    "parameters": ["instanceSuffix"]
   },
   "steps": [
     {
@@ -12,7 +12,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the blue \"Add\" button exists.",
+      "description": "@assertion the app details popup is visible with its primary action button below the app name.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -23,7 +23,7 @@
       "tags": [
         "component:browser",
         "host_surface:teams",
-        "entry_state:add",
+        "entry_state:app-details",
         "step_retry_timeout: 180"
       ]
     },
@@ -33,29 +33,30 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 288,
+        "x": 265,
         "y": 214
       },
-      "description": "Click Add on the app details popup within the Microsoft Teams interface.",
+      "description": "Click the visible blue \"Add\" or \"Open\" button in the Microsoft Teams app details dialog.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": ["step_addAndOpenApp_assertAdd_{{text:instanceSuffix}}"],
-      "preconditions": [
-        "dhash:288:214:16:5:05100a0511030b12",
-        "dhash:288:214:96:5:2616011c1c01005b",
-        "dhash:288:214:0:10:00b4b0d8f8fcf0d8"
-      ],
+      "preconditions": [],
       "postconditions": [],
-      "tags": ["component:browser", "host_surface:teams", "entry_state:add"]
+      "tags": [
+        "component:browser",
+        "host_surface:teams",
+        "entry_state:app-details",
+        "ocr:true"
+      ]
     },
     {
       "step_id": "step_addAndOpenApp_assertAdded_{{text:instanceSuffix}}",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the \"Added successfully!\" dialog and its Open button are visible.",
+      "description": "@assertion the dialog that the app details popup opened is visible with its Open button.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -76,26 +77,22 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 533,
-        "y": 508
+        "x": 529,
+        "y": 506
       },
-      "description": "Click Open in the Microsoft Teams Added successfully dialog.",
+      "description": "Click the blue \"Open\" button in the \"Added successfully!\" or \"Let's go\" dialog for the app in Microsoft Teams.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": ["step_addAndOpenApp_assertAdded_{{text:instanceSuffix}}"],
-      "preconditions": [
-        "dhash:533:508:16:5:00987494ca4acacc",
-        "dhash:533:508:96:5:000058a48598e36b",
-        "dhash:533:508:0:10:1669696969696979"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:browser",
         "host_surface:teams",
         "entry_state:added",
-        "precondition_wait_timeout: 120"
+        "ocr:true"
       ]
     },
     {
@@ -103,7 +100,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion {{text:readySubject}}.",
+      "description": "@assertion the Microsoft Teams conversation with an app whose name starts with ${{var:app_name}} is open with its message box.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

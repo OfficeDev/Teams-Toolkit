@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { FxError, SystemError, UserError } from "@microsoft/teamsfx-api";
+import { FxError, SystemError, UserError, Warning } from "@microsoft/teamsfx-api";
 import { Result, err, ok } from "neverthrow";
 import { ConditionalExpression, evaluateConditionalWhen } from "../expression/evaluateExpression";
 import { RenderVars, TemplateFileEntry } from "../model/dataModel";
@@ -19,6 +19,9 @@ const TPL_SUFFIX = ".tpl";
 function skipWarning(path: string): string {
   return getLocalizedString("core.v4.scaffold.existingFileSkipped", path);
 }
+
+/** `Warning.type` for a render path left untouched because the target already had that file. */
+export const EXISTING_FILE_SKIPPED_WARNING = "v4ExistingFileSkipped";
 
 /** A resolved step parameter value. */
 export type ParamValue = string | boolean | string[];
@@ -97,8 +100,12 @@ export interface StepContext {
   manifestWrapper(kind: string): ManifestWrapper;
   /** Read current bytes at a target path, or `undefined` when absent. */
   read(path: string): Buffer | undefined;
-  /** Emit a localized, user-visible warning without failing the pipeline. */
-  warn?(message: string): void;
+  /**
+   * Emit a localized, user-visible warning without failing the pipeline. The `type` is what
+   * lets a surface decide what to do with it (summary line, notification, log only), so it
+   * travels with the message instead of being dropped at the boundary.
+   */
+  warn?(warning: Warning): void;
 }
 
 /** An engine-registered, whitelist-dispatched post-render step. */
@@ -117,7 +124,7 @@ export interface PipelineRuntimePort {
   evalWhen(expr: string, renderVars: RenderVars): Result<boolean, FxError>;
   render(mustache: string, renderVars: RenderVars): Result<string, FxError>;
   manifestWrapper(kind: string): ManifestWrapper;
-  warn?(message: string): void;
+  warn?(warning: Warning): void;
   write(path: string, data: Buffer): void;
   writeEnvironment(
     environment: string,
@@ -289,7 +296,7 @@ export async function runScaffoldPipeline(
       if (targetDir.existing.includes(writePath)) {
         const warning = skipWarning(writePath);
         skipped.push({ path: writePath, warning });
-        port.warn?.(warning);
+        port.warn?.({ type: EXISTING_FILE_SKIPPED_WARNING, content: warning });
         continue;
       }
       const renderedBody = port.render(entry.data.toString("utf8"), renderVars); // AC-18
@@ -311,7 +318,7 @@ export async function runScaffoldPipeline(
       if (targetDir.existing.includes(writePath)) {
         const warning = skipWarning(writePath);
         skipped.push({ path: writePath, warning });
-        port.warn?.(warning);
+        port.warn?.({ type: EXISTING_FILE_SKIPPED_WARNING, content: warning });
         continue;
       }
       port.write(writePath, entry.data);

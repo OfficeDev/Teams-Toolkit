@@ -2,7 +2,17 @@
 // Licensed under the MIT license.
 
 import * as path from "path";
-import { UserError } from "@microsoft/teamsfx-api";
+import {
+  SpecParser,
+  SpecParserError,
+  ErrorType,
+  ValidationStatus,
+  WarningType,
+} from "@microsoft/m365-spec-parser";
+import { SystemError, UserError, Warning } from "@microsoft/teamsfx-api";
+import { ensureDir, writeFile, writeJson } from "fs-extra";
+import { FeatureFlags, featureFlagManager } from "../../../src/common/featureFlags";
+import * as kiotaClient from "../../../src/common/kiotaClient";
 import { REQUIRE_EMPTY_TARGET } from "../../../src/v4/pipeline/runScaffoldPipeline";
 import { createInMemoryRuntime } from "../../../src/v4/runtime/inMemoryRuntime";
 import { ScaffoldRequest, scaffold } from "../../../src/v4/runtime/scaffold";
@@ -23,7 +33,7 @@ import {
  * existing OpenAPI description document — scaffolded under `InMemoryRuntime`.
  *
  * Spec: docs/03-specs/scenarios/da/create-api-plugin-from-existing-api.md
- * (SCN-CREATE-APIPLUGIN-OPENAPI-01..10)
+ * (SCN-CREATE-APIPLUGIN-OPENAPI-01..14)
  */
 
 const SPEC_PATH = path.resolve(__dirname, "fixtures/repairs-openapi.yaml");
@@ -52,7 +62,7 @@ const EXPECTED_RENDER_FILES = [
 
 async function run(
   options: { existing?: string[]; specPath?: string } = {}
-): Promise<{ files: Map<string, Buffer>; outcome: V4ScenarioOutcome }> {
+): Promise<{ files: Map<string, Buffer>; outcome: V4ScenarioOutcome; warnings: Warning[] }> {
   return runV4Package(templatePackage, {
     answers: { apiSpecLocation: options.specPath ?? SPEC_PATH, apiOperations: ["GET /repairs"] },
     callerFloor: { appName: "MyAgent", language: "common" },
@@ -61,6 +71,11 @@ async function run(
 }
 
 describe("SCN-DA-CREATE-API-PLUGIN-FROM-EXISTING-API (v4, T3 InMemoryRuntime)", () => {
+  beforeEach(() => {
+    // The shared generator's Kiota branch spawns an external binary; T3 runs the spec-parser branch.
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+  });
+
   it("SCN-CREATE-APIPLUGIN-OPENAPI-01: the render phase writes exactly the common file set", async () => {
     const { outcome } = await run();
     assert.deepStrictEqual([...outcome.written].sort(), [...EXPECTED_RENDER_FILES].sort());
@@ -167,6 +182,148 @@ describe("SCN-DA-CREATE-API-PLUGIN-FROM-EXISTING-API (v4, T3 InMemoryRuntime)", 
       assert.include(content, "      name: ApiKeyAuth");
       assert.include(content, "      apiSpecPath: ./appPackage/apiSpecificationFile/openapi.yaml");
       assert.include(content, "      registrationId:");
+    }
+  });
+
+  it("SCN-CREATE-APIPLUGIN-OPENAPI-11: the Kiota branch owns the generated plugin artifacts and the original description", async () => {
+    vi.mocked(featureFlagManager.getBooleanValue).mockImplementation(
+      (flag) => flag === FeatureFlags.KiotaNPMIntegration
+    );
+    const listTree = vi.spyOn(kiotaClient, "listAPITreeInfo").mockResolvedValue({
+      rootNode: {
+        isOperation: true,
+        path: "/repairs#GET",
+        segment: "GET",
+        operationId: "listRepairs",
+        summary: "List repairs",
+        selected: true,
+        children: [],
+      },
+      servers: ["https://api.example.com"],
+      security: [],
+      securitySchemes: {},
+      logs: [],
+    } as never);
+    const generate = vi
+      .spyOn(kiotaClient, "kiotageneratePlugin")
+      .mockImplementation(async (_specPath, outputPath, pluginName, workingDirectory) => {
+        await ensureDir(outputPath);
+        const generatedSpec = path.join(outputPath, "openapi.yaml");
+        const generatedPlugin = path.join(outputPath, "ai-plugin.json");
+        await writeFile(generatedSpec, "openapi: 3.0.0\ninfo:\n  title: Kiota Filtered API\n");
+        await writeJson(generatedPlugin, {
+          functions: [{ name: "listRepairs" }],
+          runtimes: [{ type: "OpenApi", auth: { type: "None" }, spec: { url: "placeholder" } }],
+        });
+        const documents = path.join(workingDirectory, ".kiota", "documents", pluginName);
+        await ensureDir(documents);
+        await writeFile(
+          path.join(documents, "openapi.yaml"),
+          "openapi: 3.0.0\ninfo:\n  title: Kiota Original API\n"
+        );
+        return { openAPISpec: generatedSpec, aiPlugin: generatedPlugin } as never;
+      });
+
+    try {
+      const { files } = await run();
+      assert.include(
+        text(files, "appPackage/apiSpecificationFile/openapi.yaml"),
+        "title: Kiota Filtered API"
+      );
+      assert.include(
+        text(files, "appPackage/apiSpecificationFile/openapi.yaml.original"),
+        "title: Kiota Original API"
+      );
+      const plugin = readJsonObject(files, "appPackage/ai-plugin.json");
+      const runtime = recordArrayProperty(plugin, "runtimes")[0];
+      assert.strictEqual(recordProperty(runtime, "spec").url, "apiSpecificationFile/openapi.yaml");
+    } finally {
+      listTree.mockRestore();
+      generate.mockRestore();
+    }
+  });
+
+  it("SCN-CREATE-APIPLUGIN-OPENAPI-12: a spec parser generation failure surfaces as a SpecParser system error", async () => {
+    const generateForCopilot = vi
+      .spyOn(SpecParser.prototype, "generateForCopilot")
+      .mockRejectedValue(
+        new SpecParserError("cannot generate the plugin manifest", ErrorType.SpecNotValid)
+      );
+
+    try {
+      const runtime = createInMemoryRuntime();
+      const request: ScaffoldRequest = {
+        descriptor: templatePackage.descriptor,
+        pipeline: templatePackage.pipeline,
+        content: templatePackage.content,
+        answers: { apiSpecLocation: SPEC_PATH, apiOperations: ["GET /repairs"] },
+        callerFloor: { appName: "MyAgent", language: "common" },
+        targetDir: { path: "/out", existing: [] },
+      };
+      const result = await scaffold(request, runtime);
+      assert.isTrue(result.isErr());
+      const error = result._unsafeUnwrapErr();
+      assert.instanceOf(error, SystemError);
+      assert.strictEqual(error.source, "SpecParser");
+      assert.strictEqual(error.name, ErrorType.SpecNotValid.toString());
+      assert.strictEqual(error.message, "cannot generate the plugin manifest");
+    } finally {
+      generateForCopilot.mockRestore();
+    }
+  });
+
+  it("SCN-CREATE-APIPLUGIN-OPENAPI-13: non-fatal generator warnings reach the scaffold warning channel", async () => {
+    const generateForCopilot = vi
+      .spyOn(SpecParser.prototype, "generateForCopilot")
+      .mockResolvedValue({
+        allSuccess: true,
+        warnings: [
+          { type: WarningType.GenerateCardFailed, content: "failed to generate the adaptive card" },
+        ],
+      });
+
+    try {
+      const { warnings } = await run();
+      assert.deepStrictEqual(warnings, [
+        {
+          type: String(WarningType.GenerateCardFailed),
+          content: "failed to generate the adaptive card",
+        },
+      ]);
+    } finally {
+      generateForCopilot.mockRestore();
+    }
+  });
+
+  it("SCN-CREATE-APIPLUGIN-OPENAPI-14: an incompatible description document fails validation before generation", async () => {
+    const validate = vi.spyOn(SpecParser.prototype, "validate").mockResolvedValue({
+      status: ValidationStatus.Error,
+      errors: [{ type: ErrorType.NoSupportedApi, content: "" }],
+      warnings: [],
+      specHash: "",
+    });
+    const generateForCopilot = vi.spyOn(SpecParser.prototype, "generateForCopilot");
+
+    try {
+      const runtime = createInMemoryRuntime();
+      const request: ScaffoldRequest = {
+        descriptor: templatePackage.descriptor,
+        pipeline: templatePackage.pipeline,
+        content: templatePackage.content,
+        answers: { apiSpecLocation: SPEC_PATH, apiOperations: ["GET /repairs"] },
+        callerFloor: { appName: "MyAgent", language: "common" },
+        targetDir: { path: "/out", existing: [] },
+      };
+      const result = await scaffold(request, runtime);
+      assert.isTrue(result.isErr());
+      const error = result._unsafeUnwrapErr();
+      assert.instanceOf(error, UserError);
+      assert.strictEqual(error.name, "invalid-api-spec");
+      assert.strictEqual(generateForCopilot.mock.calls.length, 0);
+      assert.isFalse(runtime.files.has("appPackage/ai-plugin.json"));
+    } finally {
+      validate.mockRestore();
+      generateForCopilot.mockRestore();
     }
   });
 });

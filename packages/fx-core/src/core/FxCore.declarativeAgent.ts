@@ -50,6 +50,7 @@ import {
 import { QuestionMW } from "../component/middleware/questionMW";
 import { outputScaffoldingWarningMessage } from "../component/utils/common";
 import {
+  MCP_AUTH_PLACEHOLDER_WARNING_TYPES,
   ResolvedMCPAuthEndpoints,
   deriveMCPManifestOAuth,
   injectMCPAuthActionToYml,
@@ -108,6 +109,14 @@ async function scaffoldAddMcpServerFromV4(
     );
     if (source.warning) {
       TOOLS.logProvider.warning(source.warning);
+    }
+    // Like the shipped add-action flow, this path has no scaffolding summary to fall back on,
+    // so an m365agents.yml left with auth placeholders has to be said out loud — otherwise
+    // provision fails later with an opaque error.
+    for (const warning of context.warnings ?? []) {
+      if (MCP_AUTH_PLACEHOLDER_WARNING_TYPES.includes(warning.type)) {
+        void TOOLS.ui.showMessage("warn", warning.content, false);
+      }
     }
   } catch (error) {
     return err(assembleError(error));

@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 107,
+    "total_steps": 123,
     "name": "da-api-plugin-from-existing-api-no-auth-remote-preview",
     "description": {
       "owner": "",
@@ -101,17 +101,24 @@
       "step_executeCommand_filter_c2579f408_4_2",
       "step_executeCommand_assertCommand_c2579f408_4_2",
       "step_executeCommand_execute_c2579f408_4_2",
-      "step_clickOption_assertPrompt_c2579f408_4_3",
-      "step_clickOption_click_c2579f408_4_3",
-      "step_assertNotificationContains_assert_c2579f408_4_4",
+      "step_executeCommand_open_c2579f408_4_3",
+      "step_executeCommand_assertPalette_c2579f408_4_3",
+      "step_executeCommand_filter_c2579f408_4_3",
+      "step_executeCommand_assertCommand_c2579f408_4_3",
+      "step_executeCommand_execute_c2579f408_4_3",
+      "step_clickOption_assertPrompt_c2579f408_4_4",
+      "step_clickOption_click_c2579f408_4_4",
+      "step_assertNotificationContains_assert_c2579f408_4_5",
       "step_executeCommand_open_c2579f408_5_1",
       "step_executeCommand_assertPalette_c2579f408_5_1",
       "step_executeCommand_filter_c2579f408_5_1",
       "step_executeCommand_assertCommand_c2579f408_5_1",
       "step_executeCommand_execute_c2579f408_5_1",
-      "step_filterOption_filter_c2579f408_5_2",
-      "step_filterOption_assertOption_c2579f408_5_2",
-      "step_filterOption_confirm_c2579f408_5_2",
+      "step_filterSecondOption_filter_c2579f408_5_2",
+      "step_filterSecondOption_assertResults_c2579f408_5_2",
+      "step_filterSecondOption_next_c2579f408_5_2",
+      "step_filterSecondOption_assertOption_c2579f408_5_2",
+      "step_filterSecondOption_confirm_c2579f408_5_2",
       "step_browserM365SignIn_assertAccount_c2579f408_5_3",
       "step_browserM365SignIn_focusAccount_c2579f408_5_3",
       "step_browserM365SignIn_enterAccount_c2579f408_5_3",
@@ -121,8 +128,17 @@
       "step_browserM365SignIn_submitPassword_c2579f408_5_3",
       "step_browserM365SignIn_assertStaySignedIn_c2579f408_5_3",
       "step_browserM365SignIn_confirmStaySignedIn_c2579f408_5_3",
-      "step_browserM365SignIn_refresh_c2579f408_5_3",
-      "step_assertReady_assertReady_c2579f408_5_4"
+      "step_assertReady_assertReady_c2579f408_5_4",
+      "step_zoomOut_zoomOut_c2579f408_5_5",
+      "step_sendCopilotMessage_assertInput_c2579f408_7_1",
+      "step_sendCopilotMessage_focusInput_c2579f408_7_1",
+      "step_sendCopilotMessage_type_c2579f408_7_1",
+      "step_sendCopilotMessage_send_c2579f408_7_1",
+      "step_allowCopilotAction_assert_c2579f408_7_2",
+      "step_allowCopilotAction_click_c2579f408_7_2",
+      "step_allowCopilotAction_assertDismissed_c2579f408_7_2",
+      "step_assertChatReplied_assert_c2579f408_7_3",
+      "step_assertChatNotContains_assert_c2579f408_7_4"
     ],
     "tags": [
       "case_id:da-api-plugin-from-existing-api-no-auth-remote-preview",
@@ -528,7 +544,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the prompt titled New Project lists at least one option below its input box.",
+      "description": "@assertion the prompt titled New Project has finished loading and lists at least one selectable option.",
       "content_refs": [],
       "timeout": 120,
       "retry_count": 0,
@@ -635,7 +651,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the prompt titled Create Declarative Agent lists at least one option below its input box.",
+      "description": "@assertion the prompt titled Create Declarative Agent has finished loading and lists at least one selectable option.",
       "content_refs": [],
       "timeout": 120,
       "retry_count": 0,
@@ -742,7 +758,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the prompt titled Create an Action lists at least one option below its input box.",
+      "description": "@assertion the prompt titled Create an Action has finished loading and lists at least one selectable option.",
       "content_refs": [],
       "timeout": 120,
       "retry_count": 0,
@@ -849,7 +865,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the prompt titled OpenAPI Spec Document lists at least one option below its input box.",
+      "description": "@assertion the prompt titled OpenAPI Spec Document has finished loading and lists at least one selectable option.",
       "content_refs": [],
       "timeout": 120,
       "retry_count": 0,
@@ -1021,7 +1037,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the multi-select prompt titled Select Operation(s) Copilot Can Interact with lists at least one option below its input box.",
+      "description": "@assertion the multi-select prompt titled Select Operation(s) Copilot Can Interact with has finished loading and lists at least one selectable option.",
       "content_refs": [],
       "timeout": 120,
       "retry_count": 0,
@@ -1797,7 +1813,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion there's ${{env:M365_ACCOUNT_NAME}} in the \"ACCOUNTS\" section",
+      "description": "@assertion the \"ACCOUNTS\" section lists an entry whose label is ${{env:M365_ACCOUNT_NAME}} or that name cut short by the side bar with a trailing ellipsis.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1862,7 +1878,7 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Notifications: Show Notifications"
+        "text": "Notifications: Clear All Notifications"
       },
       "description": "Type the resolved command title into the active Command Palette.",
       "content_refs": [],
@@ -1884,7 +1900,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the Command Palette input box reads >Notifications: Show Notifications and the highlighted command listed under it is titled Notifications: Show Notifications.",
+      "description": "@assertion the Command Palette input box reads >Notifications: Clear All Notifications and the highlighted command listed under it is titled Notifications: Clear All Notifications.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1970,7 +1986,7 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Microsoft 365 Agents: Provision"
+        "text": "Notifications: Show Notifications"
       },
       "description": "Type the resolved command title into the active Command Palette.",
       "content_refs": [],
@@ -1992,7 +2008,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the Command Palette input box reads >Microsoft 365 Agents: Provision and the highlighted command listed under it is titled Microsoft 365 Agents: Provision.",
+      "description": "@assertion the Command Palette input box reads >Notifications: Show Notifications and the highlighted command listed under it is titled Notifications: Show Notifications.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -2031,7 +2047,115 @@
       ]
     },
     {
-      "step_id": "step_clickOption_assertPrompt_c2579f408_4_3",
+      "step_id": "step_executeCommand_open_c2579f408_4_3",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "f1"
+      },
+      "description": "Press the F1 key to open the Command Palette in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_execute_c2579f408_4_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_assertPalette_c2579f408_4_3",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Visual Studio Code Command Palette is visible with a > character in its input box and is ready to accept a command search.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_open_c2579f408_4_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_filter_c2579f408_4_3",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Microsoft 365 Agents: Provision"
+      },
+      "description": "Type the resolved command title into the active Command Palette.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_assertPalette_c2579f408_4_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_assertCommand_c2579f408_4_3",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Command Palette input box reads >Microsoft 365 Agents: Provision and the highlighted command listed under it is titled Microsoft 365 Agents: Provision.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_filter_c2579f408_4_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_execute_c2579f408_4_3",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to execute the selected Command Palette command.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_assertCommand_c2579f408_4_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_clickOption_assertPrompt_c2579f408_4_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2041,7 +2165,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_c2579f408_4_2"
+        "step_executeCommand_execute_c2579f408_4_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2053,7 +2177,7 @@
       ]
     },
     {
-      "step_id": "step_clickOption_click_c2579f408_4_3",
+      "step_id": "step_clickOption_click_c2579f408_4_4",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -2067,7 +2191,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_clickOption_assertPrompt_c2579f408_4_3"
+        "step_clickOption_assertPrompt_c2579f408_4_4"
       ],
       "preconditions": [
         "dhash:292:77:16:5:0000000000000000",
@@ -2082,7 +2206,7 @@
       ]
     },
     {
-      "step_id": "step_assertNotificationContains_assert_c2579f408_4_4",
+      "step_id": "step_assertNotificationContains_assert_c2579f408_4_5",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2092,14 +2216,14 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_clickOption_click_c2579f408_4_3"
+        "step_clickOption_click_c2579f408_4_4"
       ],
       "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:notifications",
         "action:assert-contains",
-        "step_retry_timeout: 300"
+        "step_retry_timeout: 900"
       ]
     },
     {
@@ -2115,7 +2239,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertNotificationContains_assert_c2579f408_4_4"
+        "step_assertNotificationContains_assert_c2579f408_4_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2211,7 +2335,7 @@
       ]
     },
     {
-      "step_id": "step_filterOption_filter_c2579f408_5_2",
+      "step_id": "step_filterSecondOption_filter_c2579f408_5_2",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -2233,17 +2357,17 @@
       ]
     },
     {
-      "step_id": "step_filterOption_assertOption_c2579f408_5_2",
+      "step_id": "step_filterSecondOption_assertResults_c2579f408_5_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the option Preview in Copilot (Chrome) is visible and selectable in the filtered option picker.",
+      "description": "@assertion the filtered option picker shows Preview Local in Copilot (Chrome) as the highlighted first result and Preview in Copilot (Chrome) as the second selectable result.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_filter_c2579f408_5_2"
+        "step_filterSecondOption_filter_c2579f408_5_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2254,19 +2378,62 @@
       ]
     },
     {
-      "step_id": "step_filterOption_confirm_c2579f408_5_2",
+      "step_id": "step_filterSecondOption_next_c2579f408_5_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
-        "key": "enter"
+        "key": "down"
       },
-      "description": "Press Enter to confirm the filtered option.",
+      "description": "Press Down to highlight the second filtered option.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_assertOption_c2579f408_5_2"
+        "step_filterSecondOption_assertResults_c2579f408_5_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_filterSecondOption_assertOption_c2579f408_5_2",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the option Preview in Copilot (Chrome) is highlighted in the filtered option picker.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_filterSecondOption_next_c2579f408_5_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_filterSecondOption_confirm_c2579f408_5_2",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the highlighted filtered option.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_filterSecondOption_assertOption_c2579f408_5_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2286,7 +2453,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_confirm_c2579f408_5_2"
+        "step_filterSecondOption_confirm_c2579f408_5_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2474,29 +2641,6 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_refresh_c2579f408_5_3",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "f5"
-      },
-      "description": "Press F5 to refresh Microsoft 365 Copilot after browser authentication.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_browserM365SignIn_confirmStaySignedIn_c2579f408_5_3"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:authentication",
-        "surface:browser",
-        "force_run:true"
-      ]
-    },
-    {
       "step_id": "step_assertReady_assertReady_c2579f408_5_4",
       "agent": "assertion",
       "tool": "",
@@ -2507,7 +2651,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_refresh_c2579f408_5_3"
+        "step_browserM365SignIn_confirmStaySignedIn_c2579f408_5_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2515,6 +2659,241 @@
         "component:browser",
         "action:assert-ready",
         "step_retry_timeout: 180"
+      ]
+    },
+    {
+      "step_id": "step_zoomOut_zoomOut_c2579f408_5_5",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+-"
+      },
+      "description": "Zoom the browser out once with Ctrl+- so the Microsoft 365 Copilot navigation rail stops covering the conversation column.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_assertReady_assertReady_c2579f408_5_4"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "action:zoom-out"
+      ]
+    },
+    {
+      "step_id": "step_sendCopilotMessage_assertInput_c2579f408_7_1",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Microsoft 365 Copilot message input is visible on a page for an agent whose name starts with ${{var:app_name}}.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_zoomOut_zoomOut_c2579f408_5_5"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:copilot",
+        "entry_state:chat-ready",
+        "action:send-message",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_sendCopilotMessage_focusInput_c2579f408_7_1",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 416,
+        "y": 369
+      },
+      "description": "Click the \"Message\" input box in the Microsoft 365 Copilot web application.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_sendCopilotMessage_assertInput_c2579f408_7_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:copilot",
+        "entry_state:chat-ready",
+        "action:send-message",
+        "ocr:true"
+      ]
+    },
+    {
+      "step_id": "step_sendCopilotMessage_type_c2579f408_7_1",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "show repair records assigned to karin blair"
+      },
+      "description": "Type \"show repair records assigned to karin blair\" into the Copilot message input.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_sendCopilotMessage_focusInput_c2579f408_7_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:copilot",
+        "entry_state:chat-ready",
+        "action:send-message"
+      ]
+    },
+    {
+      "step_id": "step_sendCopilotMessage_send_c2579f408_7_1",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to send the Copilot message.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_sendCopilotMessage_type_c2579f408_7_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:copilot",
+        "entry_state:chat-ready",
+        "action:send-message"
+      ]
+    },
+    {
+      "step_id": "step_allowCopilotAction_assert_c2579f408_7_2",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Copilot action-consent Allow button is visible.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_sendCopilotMessage_send_c2579f408_7_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:copilot",
+        "entry_state:action-consent",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_allowCopilotAction_click_c2579f408_7_2",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 340,
+        "y": 354
+      },
+      "description": "Click the \"Allow\" button in the Microsoft 365 Copilot chat interface to grant the agent access.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_allowCopilotAction_assert_c2579f408_7_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:copilot",
+        "entry_state:action-consent",
+        "action:allow",
+        "ocr:true"
+      ]
+    },
+    {
+      "step_id": "step_allowCopilotAction_assertDismissed_c2579f408_7_2",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Copilot action-consent Allow button is no longer visible.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_allowCopilotAction_click_c2579f408_7_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:copilot",
+        "exit_state:action-consent-dismissed",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_assertChatReplied_assert_c2579f408_7_3",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the current assistant turn is complete and contains a non-empty response.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_allowCopilotAction_assertDismissed_c2579f408_7_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "action:assert-chat-response",
+        "expectation:replied",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_assertChatNotContains_assert_c2579f408_7_4",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the current assistant response does not contain \"error\".",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_assertChatReplied_assert_c2579f408_7_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "action:assert-chat-response",
+        "expectation:not-contains",
+        "step_retry_timeout: 120"
       ]
     }
   ],

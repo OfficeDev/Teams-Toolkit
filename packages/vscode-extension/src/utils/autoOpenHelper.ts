@@ -17,6 +17,7 @@ import {
   generateScaffoldingSummary,
   JSONSyntaxError,
   manifestUtils,
+  MCP_AUTH_PLACEHOLDER_WARNING_TYPES,
   outputScaffoldingWarningMessage,
   pathUtils,
   pluginManifestUtils,
@@ -267,16 +268,6 @@ export async function ShowScaffoldingWarningSummary(
     ExtTelemetry.sendTelemetryErrorEvent(TelemetryEvent.ShowScaffoldingWarningSummaryError, error);
   }
 }
-
-/**
- * `Warning.type` values reported when MCP auth endpoint discovery failed and the scaffolder
- * fell back to fill-in placeholders in `m365agents.yml`. The other MCP warnings are advisory
- * and stay in the output channel.
- */
-const MCP_AUTH_PLACEHOLDER_WARNING_TYPES = [
-  "mcpAuthDcrWellKnownUrlPlaceholder",
-  "mcpAuthOAuthUrlPlaceholder",
-];
 
 /**
  * Whether the scaffolded project needs a manual edit before any lifecycle can succeed, given
