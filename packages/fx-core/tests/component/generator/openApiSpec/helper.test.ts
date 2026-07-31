@@ -89,6 +89,29 @@ describe("generateScaffoldingSummary", async () => {
     assert.equal(res.length, 0);
   });
 
+  it("surfaces MCP scaffolding warnings but not suppressed spec-parser warnings", async () => {
+    vi.spyOn(fs, "existsSync").mockReturnValue(true);
+    const res = await generateScaffoldingSummary(
+      [
+        {
+          type: "mcpAuthOAuthUrlPlaceholder",
+          content: "fill in the oauth urls",
+        },
+        {
+          type: WarningType.GenerateJsonDataFailed,
+          content: "should stay hidden",
+        },
+      ],
+      teamsManifest,
+      "path",
+      undefined,
+      ""
+    );
+
+    assert.isTrue(res.includes("fill in the oauth urls"));
+    assert.isFalse(res.includes("should stay hidden"));
+  });
+
   it("warnings about missing property", async () => {
     const res = await generateScaffoldingSummary(
       [],

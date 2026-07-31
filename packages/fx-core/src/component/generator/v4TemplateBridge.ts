@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { SystemError, UserError } from "@microsoft/teamsfx-api";
+import { SystemError, UserError, Warning } from "@microsoft/teamsfx-api";
 import fs from "fs-extra";
 import { merge } from "lodash";
 import path from "path";
@@ -267,6 +267,10 @@ export async function scaffoldDeclarativeFromV4Channel(
   }
 
   const existing = await listExistingRelativeFiles(context.destination);
+  // Warnings raised by the pipeline are both logged and handed back on the context, so the
+  // caller can put them on `CreateProjectResult.warnings` — that is what feeds the scaffolding
+  // summary and the surfaces' post-create notifications.
+  const warnings: Warning[] = [];
   const result = await scaffold(
     {
       descriptor: loaded.value.descriptor,
@@ -276,14 +280,16 @@ export async function scaffoldDeclarativeFromV4Channel(
       callerFloor,
       targetDir: { path: context.destination, existing },
     },
-    createRealRuntime(context.destination, flagReader, stepRegistry, (message) =>
-      context.logProvider.warning(message)
-    )
+    createRealRuntime(context.destination, flagReader, stepRegistry, (warning) => {
+      warnings.push(warning);
+      context.logProvider.warning(warning.content);
+    })
   );
   if (result.isErr()) {
     throw result.error;
   }
 
   context.outputs = result.value.written;
+  context.warnings = warnings;
   return source;
 }

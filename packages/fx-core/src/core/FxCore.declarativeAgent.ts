@@ -50,6 +50,7 @@ import {
 import { QuestionMW } from "../component/middleware/questionMW";
 import { outputScaffoldingWarningMessage } from "../component/utils/common";
 import {
+  MCP_AUTH_PLACEHOLDER_WARNING_TYPES,
   ResolvedMCPAuthEndpoints,
   deriveMCPManifestOAuth,
   injectMCPAuthActionToYml,
@@ -108,6 +109,14 @@ async function scaffoldAddMcpServerFromV4(
     );
     if (source.warning) {
       TOOLS.logProvider.warning(source.warning);
+    }
+    // Like the shipped add-action flow, this path has no scaffolding summary to fall back on,
+    // so an m365agents.yml left with auth placeholders has to be said out loud — otherwise
+    // provision fails later with an opaque error.
+    for (const warning of context.warnings ?? []) {
+      if (MCP_AUTH_PLACEHOLDER_WARNING_TYPES.includes(warning.type)) {
+        void TOOLS.ui.showMessage("warn", warning.content, false);
+      }
     }
   } catch (error) {
     return err(assembleError(error));
@@ -349,7 +358,7 @@ export class FxCoreDeclarativeAgentPart {
 
     if (mcpAuth === "OAuthPluginVault" && !!registrationId) {
       // insert oauth info in teamsapp.yaml
-      await injectMCPAuthActionToYml({
+      const injectResult = await injectMCPAuthActionToYml({
         ymlPath: pathUtils.getYmlFilePath(projectPath) as string,
         authType,
         authName: serverName,
@@ -357,6 +366,22 @@ export class FxCoreDeclarativeAgentPart {
         mcpServerUrl,
         endpoints: mcpAuthEndpoints,
       });
+      // This flow has no scaffolding summary to fall back on, so surface the placeholders
+      // directly — otherwise provision fails later with an opaque error.
+      if (injectResult.wellKnownUrlPlaceholderUsed) {
+        void context.userInteraction.showMessage(
+          "warn",
+          getLocalizedString("core.MCPForDA.mcpAuthDcrPlaceholderWarning"),
+          false
+        );
+      }
+      if (injectResult.oauthUrlPlaceholderUsed) {
+        void context.userInteraction.showMessage(
+          "warn",
+          getLocalizedString("core.MCPForDA.mcpAuthOAuthPlaceholderWarning"),
+          false
+        );
+      }
     }
     void context.userInteraction
       .showMessage(
@@ -750,6 +775,20 @@ export class FxCoreDeclarativeAgentPart {
               if (authProbe.authMetadataUrl) {
                 inputs[QuestionNames.MCPForDAAuthMetadataUrl] = authProbe.authMetadataUrl;
               }
+              // Same advisory warning the create flow raises on its DT branch: this branch
+              // never fetches tools, so a URL that is not an MCP endpoint would otherwise
+              // leave no trace — endpoint discovery falls back to the host and the action
+              // looks complete.
+              if (authProbe.endpointStatus === "notEndpoint") {
+                mcpWarnings.push({
+                  type: "mcpServerUrlNotAnEndpoint",
+                  content: getLocalizedString(
+                    "core.MCPForDA.mcpServerUrlNotAnEndpoint",
+                    mcpServerUrl,
+                    String(authProbe.responseStatus)
+                  ),
+                });
+              }
             } catch {
               // best-effort probe; endpoint resolution below tolerates undefined
             }
@@ -773,7 +812,7 @@ export class FxCoreDeclarativeAgentPart {
           try {
             const ymlPath = pathUtils.getYmlFilePath(inputs.projectPath);
             if (ymlPath) {
-              await injectMCPAuthActionToYml({
+              const injectResult = await injectMCPAuthActionToYml({
                 ymlPath,
                 authType,
                 authName: namespace,
@@ -784,6 +823,18 @@ export class FxCoreDeclarativeAgentPart {
                 serverName,
                 scopes: inputs[QuestionNames.MCPForDAScopes],
               });
+              if (injectResult.wellKnownUrlPlaceholderUsed) {
+                mcpWarnings.push({
+                  type: "mcpAuthDcrWellKnownUrlPlaceholder",
+                  content: getLocalizedString("core.MCPForDA.mcpAuthDcrPlaceholderWarning"),
+                });
+              }
+              if (injectResult.oauthUrlPlaceholderUsed) {
+                mcpWarnings.push({
+                  type: "mcpAuthOAuthUrlPlaceholder",
+                  content: getLocalizedString("core.MCPForDA.mcpAuthOAuthPlaceholderWarning"),
+                });
+              }
             }
           } catch (error: any) {
             mcpWarnings.push({
@@ -1005,7 +1056,7 @@ export class FxCoreDeclarativeAgentPart {
               const endpoints = await resolveMCPAuthEndpoints(authType, inputs);
               const ymlPath = pathUtils.getYmlFilePath(inputs.projectPath);
               if (ymlPath) {
-                await injectMCPAuthActionToYml({
+                const injectResult = await injectMCPAuthActionToYml({
                   ymlPath,
                   authType,
                   authName: actionId,
@@ -1013,6 +1064,18 @@ export class FxCoreDeclarativeAgentPart {
                   mcpServerUrl,
                   endpoints,
                 });
+                if (injectResult.wellKnownUrlPlaceholderUsed) {
+                  mcpWarnings.push({
+                    type: "mcpAuthDcrWellKnownUrlPlaceholder",
+                    content: getLocalizedString("core.MCPForDA.mcpAuthDcrPlaceholderWarning"),
+                  });
+                }
+                if (injectResult.oauthUrlPlaceholderUsed) {
+                  mcpWarnings.push({
+                    type: "mcpAuthOAuthUrlPlaceholder",
+                    content: getLocalizedString("core.MCPForDA.mcpAuthOAuthPlaceholderWarning"),
+                  });
+                }
               }
             } catch (error: any) {
               mcpWarnings.push({
@@ -1044,6 +1107,26 @@ export class FxCoreDeclarativeAgentPart {
             context.logProvider.warning(warning.content);
           }
         }
+      }
+
+      // An unreplaced placeholder guarantees a provision failure later, and the output channel
+      // is easy to miss — more so here, where the action is about to report success. Raise this
+      // one case to a notification, as the create flow does.
+      const placeholderWarning = mcpWarnings.find(
+        (warning) =>
+          warning.type === "mcpAuthDcrWellKnownUrlPlaceholder" ||
+          warning.type === "mcpAuthOAuthUrlPlaceholder"
+      );
+      if (placeholderWarning && inputs.platform === Platform.VSCode) {
+        const openYml = getLocalizedString("core.MCPForDA.openYmlFile");
+        const ymlPath = pathUtils.getYmlFilePath(inputs.projectPath);
+        void context.userInteraction
+          .showMessage("warn", placeholderWarning.content, false, openYml)
+          .then((userRes) => {
+            if (userRes.isOk() && userRes.value === openYml && ymlPath) {
+              void TOOLS?.ui?.openFile?.(ymlPath);
+            }
+          });
       }
     } else {
       const addPluginRes = await declarativeAgentHelperModule.addExistingPlugin(

@@ -54,6 +54,11 @@ on:
         required: false
         type: number
         default: 80
+      max_parallel:
+        description: "Maximum number of per-plan matrix jobs to run concurrently."
+        required: false
+        type: number
+        default: 100
       no_failed_step_text:
         required: false
         type: string
@@ -104,12 +109,15 @@ jobs:
           INPUT_TEST_PLAN: ${{ inputs.test_plan }}
         run: |
           if [ -z "$INPUT_TEST_PLAN" ]; then
-            # Use caller-supplied find predicate to enumerate default plans
-            plans=$(eval "find packages/tests/vscuse/vscode-test-cases/plans/ -maxdepth 1 -type f $PLAN_FIND_ARGS -exec basename {} .json \;" | jq -R -s -c 'split("\n")[:-1]')
+            # Use caller-supplied find predicate to enumerate default plans.
+            # Shuffle so that similarly named plans (e.g. Teams_*, DA_*) are spread
+            # across parallel batches instead of all landing in the same one, which
+            # reduces contention on the shared test tenant / Azure resources.
+            plans=$(eval "find packages/tests/vscuse/vscode-test-cases/plans/ -maxdepth 1 -type f $PLAN_FIND_ARGS -exec basename {} .json \;" | shuf | jq -R -s -c 'split("\n")[:-1]')
             echo "plans=$plans" >> $GITHUB_OUTPUT
             echo "Found test plans: $plans"
           else
-            input_plans=$(echo "$INPUT_TEST_PLAN" | tr ',' '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | jq -R -s -c 'split("\n")[:-1]')
+            input_plans=$(echo "$INPUT_TEST_PLAN" | tr ',' '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | shuf | jq -R -s -c 'split("\n")[:-1]')
             echo "plans=$input_plans" >> $GITHUB_OUTPUT
             echo "Using input test plans: $input_plans"
           fi
@@ -124,7 +132,7 @@ jobs:
       matrix:
         test_plan: ${{ fromJson(needs.discover-test-plans.outputs.test-plans) }}
       fail-fast: false
-      max-parallel: 100
+      max-parallel: ${{ inputs.max_parallel }}
     permissions:
       contents: read
       packages: write
@@ -181,6 +189,20 @@ jobs:
       DA_MCP_ENTRA_SSO_CLIENTID: ${{ secrets.DA_MCP_ENTRA_SSO_CLIENTID }}
       DA_MCP_OAUTH_CLIENT_SECRET: ${{ secrets.DA_MCP_OAUTH_CLIENT_SECRET }}
       DA_MCP_OAUTH_CLIENTID: ${{ secrets.DA_MCP_OAUTH_CLIENTID }}
+
+      # Credentials registered by the da/api-plugin-from-existing-api cases. The
+      # cases only register them through apiKey/register and oauth/register; they
+      # never call the sample API. Defaults reuse the literals the retired
+      # DA_Add_Action_Import_Existing_API_* plans typed, so no secret is required.
+      EXISTING_API_KEY: ${{ secrets.EXISTING_API_KEY || 'faketestvalue' }}
+      EXISTING_API_BEARER_TOKEN: ${{ secrets.EXISTING_API_BEARER_TOKEN || 'my-secret-value' }}
+      EXISTING_API_OAUTH_CLIENT_ID: ${{ secrets.EXISTING_API_OAUTH_CLIENT_ID || 'fake_client_id' }}
+      EXISTING_API_OAUTH_CLIENT_SECRET: ${{ secrets.EXISTING_API_OAUTH_CLIENT_SECRET || 'fake_clientsecret' }}
+
+      # OpenAI (openai.com). No test subscription exists, so this falls back to the
+      # same fake key the existing UI tests use. Cases using this path must not
+      # assert a real model completion.
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || 'fake' }}
 
       # SQL server
       SQL_USER: ${{ secrets.SQL_USER }}

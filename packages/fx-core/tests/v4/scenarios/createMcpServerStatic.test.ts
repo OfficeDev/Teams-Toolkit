@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import { assert } from "chai";
+import { afterEach, beforeEach, vi } from "vitest";
 import {
   FxError,
   InputTextConfig,
@@ -27,6 +28,7 @@ import {
   runV4Package,
   V4ScenarioOutcome,
 } from "./helpers/scenarioHarness";
+import { teamsProjectTypeDeps } from "../../../src/question/scaffold/vsc/teamsProjectTypeNode";
 
 /**
  * T3 scenario tier for the DT-off v4 static MCP create package.
@@ -136,6 +138,18 @@ async function run(
 }
 
 describe("SCN-DA-CREATE-WITH-MCP-SERVER (DT-off, v4, T3 InMemoryRuntime)", () => {
+  beforeEach(() => {
+    // The server-URL question probes the server (ADR-0020); keep these tests offline.
+    vi.spyOn(teamsProjectTypeDeps, "probeMCPServerAuth").mockResolvedValue({
+      requiresAuth: false,
+      endpointStatus: "confirmed",
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("SCN-CREATE-MCP-STATIC-01: static MCP scaffold writes mcp-tools-1.json", async () => {
     const { files, outcome } = await run(["search", "calendar"]);
     assert.include(outcome.written, "appPackage/ai-plugin.json");

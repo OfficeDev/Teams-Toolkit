@@ -24,8 +24,11 @@ export async function autoOpenProjectHandler(): Promise<void> {
   const autoInstallDependency = (await teamsfxCore.globalStateGet(
     GlobalKey.AutoInstallDependency
   )) as boolean;
+  // A project scaffolded with unresolved placeholders cannot provision or debug yet, so the
+  // generic next-step notification gives way to the scaffolding warning notification.
+  const skipNextStepNotification = autoOpenHelper.hasProvisionBlockingWarning(createWarnings);
   if (isOpenWalkThrough) {
-    await autoOpenHelper.showLocalDebugMessage();
+    await autoOpenHelper.showLocalDebugMessage(skipNextStepNotification);
     await teamsfxCore.globalStateUpdate(GlobalKey.OpenWalkThrough, false);
 
     if (globalVariables.workspaceUri?.fsPath) {
@@ -37,7 +40,7 @@ export async function autoOpenProjectHandler(): Promise<void> {
     }
   }
   if (isOpenReadMe === globalVariables.workspaceUri?.fsPath) {
-    await autoOpenHelper.showLocalDebugMessage();
+    await autoOpenHelper.showLocalDebugMessage(skipNextStepNotification);
     await readmeHandlers.openReadMeHandler(TelemetryTriggerFrom.Auto);
     await readmeHandlers.openWorkspaceMCPConfigHandler(TelemetryTriggerFrom.Auto);
     await projectStatusUtils.updateProjectStatus(
