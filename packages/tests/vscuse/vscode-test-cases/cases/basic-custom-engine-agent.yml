@@ -15,7 +15,7 @@ cases:
         login-m365,
         provision-arm,
         deploy,
-        f5-teams-remote,
+        f5-teams-remote-node,
         open-app,
         check-basic-cea-chat,
       ]
@@ -53,7 +53,7 @@ cases:
         login-m365,
         provision-arm,
         deploy,
-        f5-teams-remote,
+        f5-teams-remote-node,
         open-app,
         check-basic-cea-chat,
       ]
@@ -348,7 +348,13 @@ steps:
     with:
       environment: none
 
-  # The Python templates name the remote Teams launch without `in Teams`.
+  f5-teams-remote-node:
+    type: target
+    with:
+      profile: "Launch Remote in Teams (Chrome)"
+      profileSelection: first
+
+  # The Python template names the remote Teams launch without `in Teams`.
   f5-teams-remote:
     type: target
     with:

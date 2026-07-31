@@ -1827,6 +1827,41 @@ test("VCB-93: CEA, Bot, and Message Extension bundles author their supported lau
   }
 });
 
+test("VCB-94: Basic CEA remote Teams cases use each language template's launch profile", async () => {
+  const result = await compileFixture(
+    "basic-custom-engine-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  for (const { caseId, expectedProfile, unexpectedProfile } of [
+    {
+      caseId: "basic-cea-ts-azure-openai-remote-teams",
+      expectedProfile: "Launch Remote in Teams (Chrome)",
+      unexpectedProfile: "Launch Remote (Chrome)",
+    },
+    {
+      caseId: "basic-cea-js-azure-openai-remote-teams",
+      expectedProfile: "Launch Remote in Teams (Chrome)",
+      unexpectedProfile: "Launch Remote (Chrome)",
+    },
+    {
+      caseId: "basic-cea-py-azure-openai-remote-teams",
+      expectedProfile: "Launch Remote (Chrome)",
+      unexpectedProfile: "Launch Remote in Teams (Chrome)",
+    },
+  ]) {
+    const plan = result.value.find(
+      (generated) => generated.caseId === caseId,
+    ).plan;
+    const typedValues = plan.steps
+      .filter((step) => step.tool === "type_text")
+      .map((step) => step.parameters.text);
+    assert.equal(typedValues.includes(expectedProfile), true, caseId);
+    assert.equal(typedValues.includes(unexpectedProfile), false, caseId);
+  }
+});
+
 test("VCB-73: an OpenAI weather case asserts a completion locally but not remotely", async () => {
   const result = await compileFixture(
     "weather-agent.yml",
