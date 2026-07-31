@@ -37,6 +37,8 @@
       "step_86a70854",
       "step_a0762a17",
       "step_3bb29c8a",
+      "step_close_agent_not_installed",
+      "step_open_agent_sidebar",
       "step_670cbf14"
     ],
     "tags": [
@@ -498,6 +500,56 @@
       ],
       "screenshot": null,
       "created_at": "2026-05-18T10:07:16.360767",
+      "plan_id": "plan_r_0928_095902"
+    },
+    {
+      "step_id": "step_close_agent_not_installed",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 715,
+        "y": 461
+      },
+      "description": "Click the \"Close\" button to dismiss the \"This agent is not installed\" popup that can appear on the M365 Copilot chat page after the deep link opens, so the main section becomes accessible.",
+      "content_refs": [],
+      "timeout": 15,
+      "retry_count": 0,
+      "continue_on_error": "true",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay: 3",
+        "force_run:true"
+      ],
+      "screenshot": "step_close_agent_not_installed",
+      "created_at": "2026-07-31T03:00:00.000000",
+      "plan_id": "plan_r_0928_095902"
+    },
+    {
+      "step_id": "step_open_agent_sidebar",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 113,
+        "y": 405
+      },
+      "description": "Click the debugged agent (top entry under the \"Agents\" header in the left sidebar of the M365 Copilot page) to open its conversation in the main section so the app name is displayed.",
+      "content_refs": [],
+      "timeout": 15,
+      "retry_count": 0,
+      "continue_on_error": "true",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay: 3",
+        "force_run:true"
+      ],
+      "screenshot": "step_open_agent_sidebar",
+      "created_at": "2026-07-31T03:00:00.000000",
       "plan_id": "plan_r_0928_095902"
     }
   ],
