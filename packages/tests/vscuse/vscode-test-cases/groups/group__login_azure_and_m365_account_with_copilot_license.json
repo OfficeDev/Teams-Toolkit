@@ -449,7 +449,7 @@
         "x": 322,
         "y": 100
       },
-      "description": "Click the \"Sign in to Microsoft 365\" link in the ACCOUNTS section of the Microsoft 365 Agents Toolkit panel within Visual Studio Code.",
+      "description": "Click the right empty location of \"Sign in to Microsoft 365\" item in the ACCOUNTS section of the Microsoft 365 Agents Toolkit sidebar in Visual Studio Code to open the account sign-in dropdown.(Previously for clicking the \"Sign in to Microsoft 365\" button.)",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
