@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 20,
+    "total_steps": 22,
     "created_at": "2026-05-18T10:07:16.265795",
     "name": "group: debug_in_copilot_local",
     "description": {
@@ -37,6 +37,8 @@
       "step_86a70854",
       "step_a0762a17",
       "step_3bb29c8a",
+      "step_dd_close01",
+      "step_dd_reload01",
       "step_670cbf14"
     ],
     "tags": [
@@ -482,6 +484,54 @@
       ],
       "screenshot": "step_3bb29c8a",
       "created_at": "2026-05-18T10:07:16.352198",
+      "plan_id": "plan_r_0928_095902"
+    },
+    {
+      "step_id": "step_dd_close01",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 715,
+        "y": 461
+      },
+      "description": "Click the \"Close\" button to dismiss the \"This agent is not installed\" dialog that M365 Copilot briefly shows when the debug deep-link opened before the just-sideloaded declarative agent finished propagating to the account (the agent is already listed under \"Agents\" in the left sidebar).",
+      "content_refs": [],
+      "timeout": 15,
+      "retry_count": 0,
+      "continue_on_error": "true",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay: 5",
+        "force_run:true"
+      ],
+      "screenshot": null,
+      "created_at": "2026-05-18T10:07:16.360800",
+      "plan_id": "plan_r_0928_095902"
+    },
+    {
+      "step_id": "step_dd_reload01",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+r"
+      },
+      "description": "Press Ctrl+R to reload the M365 Copilot agent deep-link. Because the sideloaded agent has now finished installing (it appears under \"Agents\" in the left sidebar), reloading resolves the deep-link and opens the agent in the main section, recovering from the transient \"This agent is not installed\" state before the app-name assertion runs.",
+      "content_refs": [],
+      "timeout": 15,
+      "retry_count": 0,
+      "continue_on_error": "true",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay: 20",
+        "force_run:true"
+      ],
+      "screenshot": null,
+      "created_at": "2026-05-18T10:07:16.360900",
       "plan_id": "plan_r_0928_095902"
     },
     {
