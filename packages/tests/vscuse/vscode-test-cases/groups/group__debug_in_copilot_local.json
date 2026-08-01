@@ -296,8 +296,8 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 389,
-        "y": 351
+        "x": 369,
+        "y": 350
       },
       "description": "Click on the \"Email or phone\" input field within the Microsoft Sign-In page to focus the cursor for user input.",
       "content_refs": [],
@@ -306,9 +306,9 @@
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:389:351:16:5:88229c5c54dc9464",
-        "dhash:389:351:96:5:366700356588004d",
-        "dhash:389:351:0:10:0b28d0d9e7e6dae4"
+        "dhash:369:350:16:5:2113d25252525221",
+        "dhash:369:350:96:5:0919006d19220812",
+        "dhash:369:350:0:10:1b88d0d1e5e6dae4"
       ],
       "postconditions": [],
       "tags": [
