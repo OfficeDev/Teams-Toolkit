@@ -65,7 +65,7 @@
       "parameters": {
         "text": "https://raw.githubusercontent.com/SLdragon/example-openapi-spec/refs/heads/main/petstore-official.yaml"
       },
-      "description": "Type 'https://raw.githubusercontent.com/SLdragon/example-openapi-spec/refs/heads/main/petstore-official.yaml' into the \"Enter OpenAPI Description Document URL\" input box in the popup dialog in Visual Studio Code’s Microsoft 365 Agents Toolkit interface.",
+      "description": "Type 'https://raw.githubusercontent.com/SLdragon/example-openapi-spec/refs/heads/main/petstore-official.yaml' into the \"Enter OpenAPI Description Document URL\" input box in the popup dialog in Visual Studio Code\u2019s Microsoft 365 Agents Toolkit interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -177,7 +177,7 @@
       "parameters": {
         "keys": "ctrl+z"
       },
-      "description": "Undo the last action in the Visual Studio Code “Select Operation” input field (in the Microsoft 365 Agents Toolkit extension) using keyboard shortcut: Ctrl+Z.",
+      "description": "Undo the last action in the Visual Studio Code \u201cSelect Operation\u201d input field (in the Microsoft 365 Agents Toolkit extension) using keyboard shortcut: Ctrl+Z.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -199,7 +199,7 @@
       "parameters": {
         "keys": "ctrl+z"
       },
-      "description": "Undo the selection of the API endpoint “GET /store/order/{orderId}” in the Visual Studio Code “Select Operation” input dropdown by pressing the keyboard shortcut Ctrl+Z.",
+      "description": "Undo the selection of the API endpoint \u201cGET /store/order/{orderId}\u201d in the Visual Studio Code \u201cSelect Operation\u201d input dropdown by pressing the keyboard shortcut Ctrl+Z.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -645,11 +645,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:235:258:16:5:545454a4b4804840",
-        "dhash:235:258:96:5:7d6d6e6d76667c7d",
-        "dhash:235:258:0:10:64c4c04523626421"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_2991de14",
