@@ -335,7 +335,9 @@
         "dhash:512:384:0:20:1b28f0d9e7e6dae4"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "delay: 3"
+      ],
       "screenshot": "step_0fec5113",
       "created_at": "2026-05-18T10:07:16.328684",
       "plan_id": "plan_r_0928_095902"
