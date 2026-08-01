@@ -535,7 +535,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion ${{var:app_name}}local displayed on the main section of the screen.",
+      "description": "@assertion The declarative agent ${{var:app_name}}local is open in the M365 Copilot chat: its name appears in the message input box placeholder (e.g. \"Message ${{var:app_name}}local\") in the central chat area and/or is listed under \"Agents\" in the left sidebar.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
