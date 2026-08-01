@@ -98,15 +98,6 @@
         "sensitivity_label": {
             "description": "Optional. A JSON object that specifies the sensitivity label for the DA.",
             "$ref": "#/$defs/sensitivity-label-object"
-        },
-        "agent_skills": {
-            "type": "array",
-            "description": "Optional. A list of objects that identify agent skill directories to bundle with the declarative agent.",
-            "minItems": 1,
-            "maxItems": 10,
-            "items": {
-                "$ref": "#/$defs/agent-skill-object"
-            }
         }
     },
     "required": [
@@ -130,8 +121,7 @@
             "editorial_answers",
             "worker_agents",
             "$schema",
-            "sensitivity_label",
-            "agent_skills"
+            "sensitivity_label"
         ]
     },
     "$defs": {
@@ -313,7 +303,7 @@
                 "properties": {
                     "name": {
                         "type": "string",
-                        "description": "Required. The name of the capability. Allowed values are WebSearch, GraphicArt, CodeInterpreter, OneDriveAndSharePoint, GraphConnectors, TeamsMessages, EmbeddedKnowledge, Email, People, Meetings, Dataverse, and ScenarioModels.",
+                        "description": "Required. The name of the capability. Allowed values are WebSearch, GraphicArt, CodeInterpreter, OneDriveAndSharePoint, GraphConnectors, TeamsMessages, EmbeddedKnowledge, Email, EmailActions, People, Meetings, MeetingActions, Dataverse, and ScenarioModels.",
                         "anyOf": [
                             {
                                 "const": "WebSearch"
@@ -340,10 +330,16 @@
                                 "const": "Email"
                             },
                             {
+                                "const": "EmailActions"
+                            },
+                            {
                                 "const": "People"
                             },
                             {
                                 "const": "Meetings"
+                            },
+                            {
+                                "const": "MeetingActions"
                             },
                             {
                                 "const": "Dataverse"
@@ -389,7 +385,13 @@
                         "$ref": "#/$defs/capabilities/meetings"
                     },
                     {
+                        "$ref": "#/$defs/capabilities/meeting-actions"
+                    },
+                    {
                         "$ref": "#/$defs/capabilities/embedded-knowledge"
+                    },
+                    {
+                        "$ref": "#/$defs/capabilities/email-actions"
                     }
                 ],
                 "required": [
@@ -772,6 +774,42 @@
                     "enum": [
                         "name",
                         "items_by_id"
+                    ]
+                }
+            },
+            "email-actions": {
+                "type": "object",
+                "description": "A JSON object whose presence indicates that the DA will be able to perform write operations on email in the mailboxes the user has access to.",
+                "properties": {
+                    "name": {
+                        "const": "EmailActions",
+                        "description": "Required. Must be set to EmailActions."
+                    }
+                },
+                "required": [
+                    "name"
+                ],
+                "propertyNames": {
+                    "enum": [
+                        "name"
+                    ]
+                }
+            },
+            "meeting-actions": {
+                "type": "object",
+                "description": "A JSON object whose presence indicates that the DA will be able to perform meeting and calendar actions, such as scheduling events, creating time-finding polls, or surfacing time insights.",
+                "properties": {
+                    "name": {
+                        "const": "MeetingActions",
+                        "description": "Required. Must be set to MeetingActions."
+                    }
+                },
+                "required": [
+                    "name"
+                ],
+                "propertyNames": {
+                    "enum": [
+                        "name"
                     ]
                 }
             },
@@ -1262,24 +1300,6 @@
             ],
             "propertyNames": {
                 "pattern": "^(id|name|x-.*)$"
-            }
-        },
-        "agent-skill-object": {
-            "type": "object",
-            "description": "Identifies an agent skill directory to bundle with the declarative agent.",
-            "properties": {
-                "folder": {
-                    "type": "string",
-                    "description": "Required. The relative path to the skill directory containing a SKILL.md file."
-                }
-            },
-            "required": [
-                "folder"
-            ],
-            "propertyNames": {
-                "enum": [
-                    "folder"
-                ]
             }
         }
     }
