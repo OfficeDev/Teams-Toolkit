@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 19,
+    "total_steps": 20,
     "created_at": "2026-05-18T10:07:16.265795",
     "name": "group: debug_in_copilot_local",
     "description": {
@@ -23,6 +23,7 @@
       "step_6b02a102",
       "step_fb1102dc",
       "step_4492af48",
+      "step_dd_escape01",
       "step_6f17d0b9",
       "step_bd2cc94b",
       "step_1d1e293c",
@@ -146,6 +147,26 @@
       "description": "@assertion debug select ordered as same as the follow:\nDebug in Copilot (Edge)\nDebug in Copilot (Chrome)\nPreview in Copilot (Edge)\n\nPreview in Copilot (Chrome)",
       "content_refs": [],
       "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": null,
+      "created_at": "2026-05-18T10:07:16.297201",
+      "plan_id": "plan_r_0928_095902"
+    },
+    {
+      "step_id": "step_dd_escape01",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "escape"
+      },
+      "description": "Press Escape to close the debug configuration dropdown QuickPick (now shows an extra search box / C# entry and stays open) so the Run and Debug panel returns to a known state before clicking the M365 Agents Toolkit activity-bar icon.",
+      "content_refs": [],
+      "timeout": 10,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
