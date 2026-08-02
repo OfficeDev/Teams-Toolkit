@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 14,
+    "total_steps": 10,
     "created_at": "2025-11-25T04:50:13.062446",
     "name": "Basic Custom Engine OpenAI ts Copilot Local Debug",
     "description": {
@@ -28,10 +28,6 @@
       "plan_r_0928_014459",
       "plan_r_1021_081410",
       "plan_f355465c",
-      "step_ad11c0a7",
-      "step_ad22c0b8",
-      "step_ad33c0c9",
-      "step_ad44c0da",
       "plan_r_1125_031353"
     ],
     "tags": [],
@@ -142,96 +138,6 @@
       "tags": [],
       "screenshot": "step_d04039fa",
       "created_at": "2025-11-25T07:26:00.881346",
-      "plan_id": "plan_cb218eb9"
-    },
-    {
-      "step_id": "step_ad11c0a7",
-      "agent": "interaction",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion there's \"Add\" or \"Open\" blue button exist.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "step_retry_timeout:180"
-      ],
-      "screenshot": "",
-      "created_at": "2026-08-02T02:24:34.000000",
-      "plan_id": "plan_cb218eb9"
-    },
-    {
-      "step_id": "step_ad22c0b8",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 312,
-        "y": 214
-      },
-      "description": "Click the \"Add\" or \"Open\" button on the app install popup within the M365 Copilot interface to add the ${{var:app_name}}local app.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "ocr:true",
-        "delay:3"
-      ],
-      "screenshot": "",
-      "created_at": "2026-08-02T02:24:34.000000",
-      "plan_id": "plan_cb218eb9"
-    },
-    {
-      "step_id": "step_ad33c0c9",
-      "agent": "interaction",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion there's \"Open\" blue button exist.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "true",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "step_retry_timeout:60"
-      ],
-      "screenshot": "",
-      "created_at": "2026-08-02T02:24:34.000000",
-      "plan_id": "plan_cb218eb9"
-    },
-    {
-      "step_id": "step_ad44c0da",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 533,
-        "y": 508
-      },
-      "description": "Click the \"Open\" button in the \"Added successfully!\" dialog to open the ${{var:app_name}}local app in M365 Copilot.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "true",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "ocr:true",
-        "delay:3"
-      ],
-      "screenshot": "",
-      "created_at": "2026-08-02T02:24:34.000000",
       "plan_id": "plan_cb218eb9"
     }
   ],
