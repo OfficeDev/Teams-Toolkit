@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 14,
+    "total_steps": 18,
     "created_at": "2026-04-21T01:53:19.292868",
     "name": "group__debug_in_copilot_local_none_da",
     "description": {
@@ -30,13 +30,17 @@
       "step_e0bd25da",
       "step_f46232aa",
       "step_09a662a3",
+      "step_ad01c110",
+      "step_ad02c220",
+      "step_ad03c330",
+      "step_ad04c440",
       "step_c4bbcf2e",
       "step_ba7f9051"
     ],
     "tags": [
       "group"
     ],
-    "updated_at": "2026-04-21T03:02:27.587711"
+    "updated_at": "2026-08-02T02:45:53.000000"
   },
   "steps": [
     {
@@ -326,6 +330,92 @@
       ],
       "screenshot": "step_09a662a3",
       "created_at": "2026-04-21T03:02:12.321233",
+      "plan_id": "plan_f355465c"
+    },
+    {
+      "step_id": "step_ad01c110",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion there's \"Add\" or \"Open\" blue button exist on the M365 Copilot app install popup.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "true",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "step_retry_timeout: 180"
+      ],
+      "screenshot": null,
+      "plan_id": "plan_f355465c"
+    },
+    {
+      "step_id": "step_ad02c220",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 312,
+        "y": 214
+      },
+      "description": "Click the \"Add\" or \"Open\" blue button on the M365 Copilot app details install popup to install the sideloaded agent.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "true",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "ocr:true",
+        "delay:3"
+      ],
+      "screenshot": "",
+      "plan_id": "plan_f355465c"
+    },
+    {
+      "step_id": "step_ad03c330",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion there's \"Open\" blue button exist in the \"Added successfully!\" dialog.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "true",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "step_retry_timeout: 180"
+      ],
+      "screenshot": null,
+      "plan_id": "plan_f355465c"
+    },
+    {
+      "step_id": "step_ad04c440",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 533,
+        "y": 508
+      },
+      "description": "Click the \"Open\" button in the \"Added successfully!\" dialog to open the installed agent's chat in M365 Copilot.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "true",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "ocr:true",
+        "delay:3"
+      ],
+      "screenshot": "",
       "plan_id": "plan_f355465c"
     },
     {

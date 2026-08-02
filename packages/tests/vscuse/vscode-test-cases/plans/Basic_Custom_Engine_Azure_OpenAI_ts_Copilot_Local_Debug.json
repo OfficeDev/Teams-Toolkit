@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 4,
+    "total_steps": 3,
     "created_at": "2025-12-16T06:34:23.291039",
     "name": "Basic Custom Engine Azure OpenAI ts Copilot Local Debug",
     "description": {
@@ -28,11 +28,10 @@
       "plan_r_0928_014459",
       "plan_r_1021_081410",
       "plan_f355465c",
-      "step_a7c3d1f0",
       "plan_568c0a08"
     ],
     "tags": [],
-    "updated_at": "2026-08-02T02:27:50.000000"
+    "updated_at": "2026-08-02T02:45:53.000000"
   },
   "steps": [
     {
@@ -113,30 +112,6 @@
       ],
       "screenshot": "step_cc5ba507",
       "created_at": "2025-12-16T06:34:23.315143",
-      "plan_id": "plan_c917256b"
-    },
-    {
-      "step_id": "step_a7c3d1f0",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 416,
-        "y": 400
-      },
-      "description": "Click the blue \"Add\" button in the M365 Copilot custom-agent install dialog to add the agent, dismissing the app-details modal so the chat input box on the M365 Copilot page becomes reachable.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "true",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "ocr:true"
-      ],
-      "screenshot": "",
-      "created_at": "2026-08-02T02:27:50.000000",
       "plan_id": "plan_c917256b"
     }
   ],
