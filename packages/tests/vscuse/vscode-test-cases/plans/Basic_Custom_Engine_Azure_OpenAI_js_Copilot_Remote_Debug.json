@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 2,
+    "total_steps": 1,
     "created_at": "2026-05-11T06:58:57.669528",
     "name": "Basic Custom Engine Azure OpenAI js Copilot Remote Debug",
     "description": {
@@ -30,7 +30,6 @@
       "plan_r_0928_073729",
       "plan_r_0928_075846",
       "plan_c795f9af",
-      "step_add_app_copilot",
       "plan_568c0a08"
     ],
     "tags": [],
@@ -56,28 +55,6 @@
       "postconditions": [],
       "tags": [],
       "screenshot": "step_b703a796",
-      "created_at": "2026-05-11T06:58:57.763957",
-      "plan_id": "plan_b814ca64"
-    },
-    {
-      "step_id": "step_add_app_copilot",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 373,
-        "y": 222
-      },
-      "description": "Click the \"Add\" button in the M365 Copilot agent store install dialog (for ${{var:app_name}}dev) to install the agent and dismiss the modal, so the Copilot chat input becomes reachable. If the agent is already added and the chat is open, this clicks empty page area and is harmless.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "true",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "",
       "created_at": "2026-05-11T06:58:57.763957",
       "plan_id": "plan_b814ca64"
     }
