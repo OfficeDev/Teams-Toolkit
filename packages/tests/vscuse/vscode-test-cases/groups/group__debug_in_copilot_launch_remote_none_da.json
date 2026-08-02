@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 15,
+    "total_steps": 16,
     "created_at": "2026-04-21T01:53:19.064480",
     "name": "group  debug in copilot launch remote none da",
     "description": {
@@ -31,6 +31,7 @@
       "step_19ee7405",
       "step_77e6e5d9",
       "step_27dc9b90",
+      "step_reload_copilot",
       "step_add_app_dev_copilot",
       "step_8f5f8690"
     ],
@@ -356,6 +357,29 @@
       ],
       "screenshot": "step_27dc9b90",
       "created_at": "2026-04-21T03:01:47.071846",
+      "plan_id": "plan_c795f9af"
+    },
+    {
+      "step_id": "step_reload_copilot",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+r"
+      },
+      "description": "Reload the M365 Copilot browser page (Ctrl+R) to re-resolve the \"${{var:app_name}}dev\" agent deep link. When the launch opens the chat/entity1 deep link before the sideloaded agent title has propagated to the tenant catalog, M365 shows a dead-end \"This agent is not installed\" modal that only offers Close; reloading after the wait lets the now-propagated agent open its chat (or show the installable agent-store Add modal). Harmless if the agent already loaded.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "true",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay: 30",
+        "force_run:true"
+      ],
+      "screenshot": "",
+      "created_at": "2026-04-21T03:01:47.085177",
       "plan_id": "plan_c795f9af"
     },
     {
