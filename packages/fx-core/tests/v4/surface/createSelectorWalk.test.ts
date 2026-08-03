@@ -303,36 +303,6 @@ describe("runCreateSelector (walk-create-selector)", () => {
     }
   });
 
-  it("WCS-00: uses the default v3 core-method registry for selector JSON routes", async () => {
-    const ui = new ScriptedUI({ projectType: "minimal" });
-    const selector = {
-      questions: [
-        {
-          name: "projectType",
-          type: "singleSelect",
-          staticOptions: [{ id: "minimal", label: "Minimal" }],
-        },
-      ],
-      routes: [
-        {
-          when: "projectType=='minimal'",
-          engine: "v3-core-method",
-          coreMethod: "createSampleProject",
-        },
-      ],
-    };
-
-    const res = await runCreateSelector(Buffer.from(JSON.stringify(selector)), asUI(ui), "vscode", {
-      selectorBytesKind: "json",
-      flagReader: () => false,
-    });
-
-    assert.isTrue(res.isErr());
-    if (res.isErr()) {
-      assert.equal(res.error.name, ["BuildTargetUnknown", "Template"].join(""));
-    }
-  });
-
   it("WCS-00: returns selector parse errors for invalid selector JSON bytes", async () => {
     const ui = new ScriptedUI({});
 

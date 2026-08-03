@@ -28,7 +28,6 @@ import {
 } from "../v4";
 import { FeatureFlags, readBooleanFeatureFlag } from "../common/featureFlags";
 import { TOOLS } from "../common/globalVars";
-import { TemplateNames } from "../component/generator/templates/templateNames";
 import type { ResolvedV4ChannelPackage } from "../component/generator/v4TemplateBridge";
 import { QuestionNames } from "../question/questionNames";
 
@@ -45,7 +44,8 @@ import { QuestionNames } from "../question/questionNames";
  *                        same floor, with the create floor appended to the same
  *                        walk, then `scaffoldV4` the authored package;
  *   - `surface-action` → return the action's surface signal (no scaffold).
- *   - `v3` / `v3-core-method` → unsupported when the v4 front door is enabled.
+ * `{ v4, surface-action }` is the whole closed engine set (ADR-0014 Amendment 5):
+ * no selector engine hands off to v3.
  * Flag off is a pure pass-through to the unmodified `createV3` (INV-1): the
  * selector is never walked, so v3 behavior is byte-identical.
  *
@@ -59,35 +59,6 @@ const SOURCE = "Scaffold";
 
 /** The only shipped create `surface-action`: open GitHub Copilot Chat (the v3 `startWithGithubCopilot` shape). */
 const OPEN_GITHUB_COPILOT_CHAT = "open-github-copilot-chat";
-const V4_TO_V3_TEMPLATE_ID: Readonly<Record<string, string>> = {
-  "basic-custom-engine-agent": TemplateNames.BasicCustomEngineAgent,
-  "weather-agent": TemplateNames.WeatherAgent,
-  "graph-connector": TemplateNames.GraphConnector,
-  "custom-copilot-basic": TemplateNames.CustomCopilotBasic,
-  "custom-copilot-rag-customize": TemplateNames.CustomCopilotRagCustomize,
-  "custom-copilot-rag-azure-ai-search": TemplateNames.CustomCopilotRagAzureAISearch,
-  "custom-copilot-rag-custom-api": TemplateNames.CustomCopilotRagCustomApi,
-  "teams-collaborator-agent": TemplateNames.TeamsCollaboratorAgent,
-  "non-sso-tab": TemplateNames.Tab,
-  "default-message-extension": TemplateNames.DefaultMessageExtension,
-  "default-bot": TemplateNames.DefaultBot,
-  "office-addin-wxpo-taskpane": TemplateNames.WXPTaskpane,
-  "office-addin-excel-cfshortcut": TemplateNames.ExcelCFShortcut,
-  "office-addin-excel-customfunctions": TemplateNames.ExcelCustomFunctions,
-  "office-addin-sso-naa": TemplateNames.OfficeAddinSsoNaa,
-  "declarative-agent-meta-os-upgrade-project": "declarative-agent-meta-os-upgrade-project",
-  "office-addin-config": TemplateNames.OfficeAddinCommon,
-  "da/no-action": TemplateNames.DeclarativeAgentBasic,
-  "da/graph-connector": TemplateNames.DeclarativeAgentWithGraphConnector,
-  "da/typespec": TemplateNames.DeclarativeAgentWithTypeSpec,
-  "da/skill": TemplateNames.DeclarativeAgentWithSkill,
-  "da/api-plugin-from-scratch": TemplateNames.DeclarativeAgentWithActionFromScratch,
-  "da/api-plugin-from-scratch-bearer": TemplateNames.DeclarativeAgentWithActionFromScratchBearer,
-  "da/api-plugin-from-scratch-oauth": TemplateNames.DeclarativeAgentWithActionFromScratchOAuth,
-  "da/api-plugin-from-existing-api": TemplateNames.DeclarativeAgentWithActionFromExistingApiSpec,
-  "da/mcp-server-static": TemplateNames.DeclarativeAgentWithActionFromMCP,
-  "da/mcp-server": TemplateNames.DeclarativeAgentWithActionFromMCP,
-};
 const NON_V4_INPUT_KEYS: ReadonlySet<string> = new Set([
   "capabilities",
   "folder",
@@ -196,10 +167,6 @@ function selectorPrefillFromInputs(inputs: Inputs): Record<string, string> {
   return answers;
 }
 
-function templateNameForV4(target: BuildTarget): string {
-  return V4_TO_V3_TEMPLATE_ID[target.templateId] ?? target.templateId;
-}
-
 function applyV4CreateFloorAnswers(inputs: Inputs, answers: Answers): void {
   const folder = answers[QuestionNames.Folder];
   if (typeof folder === "string") {
@@ -238,11 +205,11 @@ function dispatchSurfaceAction(target: BuildTarget): Result<CreateProjectResult,
   );
 }
 
-function unsupportedCreateTarget(target: BuildTarget): SystemError {
+function unexpectedPresetBack(target: BuildTarget): SystemError {
   return new SystemError({
     source: SOURCE,
-    name: "UnsupportedCreateEngine",
-    message: `The create front door does not dispatch the '${target.engine}' engine.`,
+    name: "UnexpectedCreateBack",
+    message: `The preset-template create path for '${target.templateId}' is not backable, but Q2 signalled back.`,
   });
 }
 
@@ -285,10 +252,7 @@ export async function createProjectFrontDoor(
         const action = dispatchSurfaceAction(target);
         return action.isErr() ? err(action.error) : ok({ kind: "result", result: action.value });
       }
-      case "v3-core-method":
-        return err(unsupportedCreateTarget(target));
       case "v4": {
-        inputs[QuestionNames.TemplateName] = templateNameForV4(target);
         const runInputs = deps.runInputs ?? runCreateInputsWalk;
         const locator: DeclarativeLocator = { kind: "create", templateId: target.templateId };
         // Q2 + common floor, over the same floor, continuing Q1's step numbering.
@@ -381,7 +345,7 @@ export async function createProjectFrontDoor(
     }
     // The preset path is not backable (baseStep 0, backable false), so `done` is the live branch.
     return dispatched.value.kind === "back"
-      ? err(unsupportedCreateTarget(target.value))
+      ? err(unexpectedPresetBack(target.value))
       : ok(dispatched.value.result);
   }
 

@@ -30,9 +30,8 @@
       "required": ["when", "engine"],
       "properties": {
         "when": { "type": "string" },
-        "engine": { "type": "string", "enum": ["v4", "v3-core-method", "surface-action"] },
+        "engine": { "type": "string", "enum": ["v4", "surface-action"] },
         "templateId": { "type": "string" },
-        "coreMethod": { "type": "string" },
         "action": { "type": "string" },
         "surfaces": {
           "type": "array",
@@ -41,35 +40,22 @@
       },
       "allOf": [
         {
-          "comment": "engine v4 → templateId required; no v3/surface keys.",
+          "comment": "engine v4 → templateId required; no surface key.",
           "if": { "properties": { "engine": { "const": "v4" } } },
           "then": {
             "required": ["templateId"],
             "not": { "anyOf": [
-              { "required": ["coreMethod"] },
               { "required": ["action"] }
             ] }
           }
         },
         {
-          "comment": "engine v3-core-method → coreMethod (an fx-core method like addPlugin, not an IGenerator) required. The modify seam: shipped add-* paths are core methods/drivers, not generators. No templateId / surface key.",
-          "if": { "properties": { "engine": { "const": "v3-core-method" } } },
-          "then": {
-            "required": ["coreMethod"],
-            "not": { "anyOf": [
-              { "required": ["templateId"] },
-              { "required": ["action"] }
-            ] }
-          }
-        },
-        {
-          "comment": "engine surface-action → action required; scaffolds nothing (no templateId / core-method key).",
+          "comment": "engine surface-action → action required; scaffolds nothing (no templateId).",
           "if": { "properties": { "engine": { "const": "surface-action" } } },
           "then": {
             "required": ["action"],
             "not": { "anyOf": [
-              { "required": ["templateId"] },
-              { "required": ["coreMethod"] }
+              { "required": ["templateId"] }
             ] }
           }
         }

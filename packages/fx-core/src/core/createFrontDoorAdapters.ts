@@ -32,6 +32,7 @@ import { coordinator } from "../component/coordinator";
 import { templateDefaultOnActionError } from "../component/generator/generator";
 import { GeneratorContext } from "../component/generator/generatorAction";
 import { convertToLangKey } from "../component/generator/utils";
+import { TemplateNames } from "../component/generator/templates/templateNames";
 import {
   ResolvedV4ChannelPackage,
   scaffoldDeclarativeFromV4Channel,
@@ -56,14 +57,43 @@ const CREATE_KIND = "create";
 /** The language a single-language (language-neutral) v4 package scaffolds under. */
 const COMMON_LANGUAGE = "common";
 
-function scaffoldTelemetryProps(
-  inputs: Inputs,
-  target: BuildTarget,
-  language: string
-): Record<string, string> {
-  const templateName = inputs[QuestionNames.TemplateName];
-  const templateId =
-    typeof templateName === "string" && templateName.length > 0 ? templateName : target.templateId;
+/**
+ * v4 template id → its v3 `TemplateNames` equivalent, used **only** as the
+ * `generate-template` telemetry key so existing OKR queries keep joining with
+ * command-level `create-project` (DCE-19/-21). It is not a dispatch input.
+ */
+const LEGACY_TELEMETRY_TEMPLATE_ID: Readonly<Record<string, string>> = {
+  "basic-custom-engine-agent": TemplateNames.BasicCustomEngineAgent,
+  "weather-agent": TemplateNames.WeatherAgent,
+  "graph-connector": TemplateNames.GraphConnector,
+  "custom-copilot-basic": TemplateNames.CustomCopilotBasic,
+  "custom-copilot-rag-customize": TemplateNames.CustomCopilotRagCustomize,
+  "custom-copilot-rag-azure-ai-search": TemplateNames.CustomCopilotRagAzureAISearch,
+  "custom-copilot-rag-custom-api": TemplateNames.CustomCopilotRagCustomApi,
+  "teams-collaborator-agent": TemplateNames.TeamsCollaboratorAgent,
+  "non-sso-tab": TemplateNames.Tab,
+  "default-message-extension": TemplateNames.DefaultMessageExtension,
+  "default-bot": TemplateNames.DefaultBot,
+  "office-addin-wxpo-taskpane": TemplateNames.WXPTaskpane,
+  "office-addin-excel-cfshortcut": TemplateNames.ExcelCFShortcut,
+  "office-addin-excel-customfunctions": TemplateNames.ExcelCustomFunctions,
+  "office-addin-sso-naa": TemplateNames.OfficeAddinSsoNaa,
+  "declarative-agent-meta-os-upgrade-project": "declarative-agent-meta-os-upgrade-project",
+  "office-addin-config": TemplateNames.OfficeAddinCommon,
+  "da/no-action": TemplateNames.DeclarativeAgentBasic,
+  "da/graph-connector": TemplateNames.DeclarativeAgentWithGraphConnector,
+  "da/typespec": TemplateNames.DeclarativeAgentWithTypeSpec,
+  "da/skill": TemplateNames.DeclarativeAgentWithSkill,
+  "da/api-plugin-from-scratch": TemplateNames.DeclarativeAgentWithActionFromScratch,
+  "da/api-plugin-from-scratch-bearer": TemplateNames.DeclarativeAgentWithActionFromScratchBearer,
+  "da/api-plugin-from-scratch-oauth": TemplateNames.DeclarativeAgentWithActionFromScratchOAuth,
+  "da/api-plugin-from-existing-api": TemplateNames.DeclarativeAgentWithActionFromExistingApiSpec,
+  "da/mcp-server-static": TemplateNames.DeclarativeAgentWithActionFromMCP,
+  "da/mcp-server": TemplateNames.DeclarativeAgentWithActionFromMCP,
+};
+
+function scaffoldTelemetryProps(target: BuildTarget, language: string): Record<string, string> {
+  const templateId = LEGACY_TELEMETRY_TEMPLATE_ID[target.templateId] ?? target.templateId;
   return {
     [TelemetryProperty.Component]: Component.core,
     [TelemetryProperty.TemplateName]: `${templateId}-${convertToLangKey(language)}`,
@@ -117,7 +147,7 @@ export async function scaffoldV4(
   // never asks it, so an absent answer falls back to the language-neutral floor.
   const languageAnswer = answers["language"];
   const language = typeof languageAnswer === "string" ? languageAnswer : COMMON_LANGUAGE;
-  const telemetryProps = scaffoldTelemetryProps(inputs, target, language);
+  const telemetryProps = scaffoldTelemetryProps(target, language);
   const generatorContext: GeneratorContext = {
     name: appName,
     language,

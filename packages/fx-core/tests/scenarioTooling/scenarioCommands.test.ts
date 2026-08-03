@@ -461,8 +461,8 @@ describe("scenario artifact commands", () => {
       externalRoutes: [
         {
           when: "projectType == 'agent'",
-          engine: "v3-core-method",
-          coreMethod: "coveredLegacyFlow",
+          engine: "surface-action",
+          action: "coveredLegacyFlow",
         },
         {
           when: "projectType == 'legacy'",
