@@ -169,6 +169,7 @@ const scaffoldQuestionAdapters = {
   },
   teamsAppType: {
     options: {
+      "custom-copilot-basic": "General Teams Agent",
       "teams-other-app-type": "Other Teams Capabilities",
     },
     title: "Teams Agent or App Using Microsoft Teams SDK",
@@ -394,6 +395,22 @@ const targetAdapters = {
       "an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot",
     requires: ["login:azure", "login:m365", "provision", "deploy"],
   },
+  // General Teams Agent templates expose the same custom-engine Copilot flow
+  // without the preview prefix.
+  "Launch Remote in Copilot (Chrome)": {
+    browserAuthentication: {
+      component: "authentication/browser/m365-sign-in.json.tpl",
+      credentials: "m365",
+    },
+    host: "copilot",
+    open: { adapter: "ready", destination: "chat", kind: "agent" },
+    profileSelections: {
+      first: { component: "quick-input/filter-option.json.tpl" },
+    },
+    readySubject:
+      "an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot",
+    requires: ["login:azure", "login:m365", "provision", "deploy"],
+  },
   // The local debug profiles below carry a preLaunchTask chain that validates
   // prerequisites, registers the app, starts the tunnel, and runs the local
   // lifecycle before the application starts, so they require no authored
@@ -416,6 +433,20 @@ const targetAdapters = {
     requires: ["login:m365"],
   },
   "(Preview) Debug in Copilot (Chrome)": {
+    browserAuthentication: {
+      component: "authentication/browser/m365-sign-in.json.tpl",
+      credentials: "m365",
+    },
+    host: "copilot",
+    open: { adapter: "ready", destination: "chat", kind: "agent" },
+    profileSelections: {
+      first: { component: "quick-input/filter-option.json.tpl" },
+    },
+    readySubject:
+      "an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot",
+    requires: ["login:m365"],
+  },
+  "Debug in Copilot (Chrome)": {
     browserAuthentication: {
       component: "authentication/browser/m365-sign-in.json.tpl",
       credentials: "m365",
