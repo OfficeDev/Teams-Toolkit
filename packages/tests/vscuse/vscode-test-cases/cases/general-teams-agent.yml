@@ -1,11 +1,5 @@
 version: 1
 
-# The Copilot launch profiles are rendered only when this compatibility flag is
-# enabled. Keeping it on the bundle also makes every generated plan reproducible
-# under the same template shape.
-featureFlags:
-  - TEAMSFX_CEA_ENABLED=true
-
 # Teams remote and local launches cover the complete LLM x language matrix,
 # because those dimensions change the rendered package and lifecycle. Azure
 # OpenAI covers Playground in every language, while one TypeScript combination
@@ -52,6 +46,10 @@ cases:
 
   - id: general-teams-ts-azure-openai-remote-copilot
     scenarioId: SCN-CREATE-CUSTOM-COPILOT-BASIC-01
+    # The run workflow injects this before VS Code starts so scaffold renders
+    # the Copilot profiles without mutating user settings or reloading.
+    featureFlags:
+      - TEAMSFX_CEA_ENABLED=true
     steps:
       [
         scaffold-general-ts-azure-openai,
@@ -67,6 +65,8 @@ cases:
 
   - id: general-teams-ts-azure-openai-local-copilot
     scenarioId: SCN-CREATE-CUSTOM-COPILOT-BASIC-01
+    featureFlags:
+      - TEAMSFX_CEA_ENABLED=true
     steps:
       [
         scaffold-general-ts-azure-openai,

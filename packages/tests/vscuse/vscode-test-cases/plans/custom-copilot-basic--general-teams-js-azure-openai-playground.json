@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 80,
+    "total_steps": 73,
     "name": "general-teams-js-azure-openai-playground",
     "description": {
       "owner": "",
@@ -19,62 +19,55 @@
       "step_closeWelcomeOverlay_assertVisible_cb6651156_1_1",
       "step_closeWelcomeOverlay_close_cb6651156_1_1",
       "step_closeWelcomeOverlay_assertReady_cb6651156_1_1",
-      "step_setVsCodeUserSetting_cb6651156_1_2",
-      "step_executeCommand_open_cb6651156_1_3",
-      "step_executeCommand_assertPalette_cb6651156_1_3",
-      "step_executeCommand_filter_cb6651156_1_3",
-      "step_executeCommand_assertCommand_cb6651156_1_3",
-      "step_executeCommand_execute_cb6651156_1_3",
-      "step_assertWorkbenchReady_assert_cb6651156_1_4",
+      "step_executeCommand_open_cb6651156_1_2",
+      "step_executeCommand_assertPalette_cb6651156_1_2",
+      "step_executeCommand_filter_cb6651156_1_2",
+      "step_executeCommand_assertCommand_cb6651156_1_2",
+      "step_executeCommand_execute_cb6651156_1_2",
+      "step_assertToolkitViewSettled_assert_cb6651156_1_3",
+      "step_closeGetStartedEditor_assertActive_cb6651156_1_4",
+      "step_closeGetStartedEditor_close_cb6651156_1_4",
+      "step_closeGetStartedEditor_assertClosed_cb6651156_1_4",
       "step_executeCommand_open_cb6651156_1_5",
       "step_executeCommand_assertPalette_cb6651156_1_5",
       "step_executeCommand_filter_cb6651156_1_5",
       "step_executeCommand_assertCommand_cb6651156_1_5",
       "step_executeCommand_execute_cb6651156_1_5",
-      "step_assertToolkitViewSettled_assert_cb6651156_1_6",
-      "step_closeGetStartedEditor_assertActive_cb6651156_1_7",
-      "step_closeGetStartedEditor_close_cb6651156_1_7",
-      "step_closeGetStartedEditor_assertClosed_cb6651156_1_7",
-      "step_executeCommand_open_cb6651156_1_8",
-      "step_executeCommand_assertPalette_cb6651156_1_8",
-      "step_executeCommand_filter_cb6651156_1_8",
-      "step_executeCommand_assertCommand_cb6651156_1_8",
-      "step_executeCommand_execute_cb6651156_1_8",
-      "step_singleSelect_assertQuestion_cb6651156_1_9",
-      "step_singleSelect_assertOptionsLoaded_cb6651156_1_9",
-      "step_singleSelect_filter_cb6651156_1_9",
-      "step_singleSelect_assertOption_cb6651156_1_9",
-      "step_singleSelect_confirm_cb6651156_1_9",
-      "step_singleSelect_assertQuestion_cb6651156_1_10",
-      "step_singleSelect_assertOptionsLoaded_cb6651156_1_10",
-      "step_singleSelect_filter_cb6651156_1_10",
-      "step_singleSelect_assertOption_cb6651156_1_10",
-      "step_singleSelect_confirm_cb6651156_1_10",
-      "step_singleSelect_assertQuestion_cb6651156_1_11",
-      "step_singleSelect_assertOptionsLoaded_cb6651156_1_11",
-      "step_singleSelect_filter_cb6651156_1_11",
-      "step_singleSelect_assertOption_cb6651156_1_11",
-      "step_singleSelect_confirm_cb6651156_1_11",
-      "step_textInput_assertQuestion_cb6651156_1_12",
-      "step_textInput_input_cb6651156_1_12",
-      "step_textInput_confirm_cb6651156_1_12",
-      "step_textInput_assertQuestion_cb6651156_1_13",
-      "step_textInput_input_cb6651156_1_13",
-      "step_textInput_confirm_cb6651156_1_13",
+      "step_singleSelect_assertQuestion_cb6651156_1_6",
+      "step_singleSelect_assertOptionsLoaded_cb6651156_1_6",
+      "step_singleSelect_filter_cb6651156_1_6",
+      "step_singleSelect_assertOption_cb6651156_1_6",
+      "step_singleSelect_confirm_cb6651156_1_6",
+      "step_singleSelect_assertQuestion_cb6651156_1_7",
+      "step_singleSelect_assertOptionsLoaded_cb6651156_1_7",
+      "step_singleSelect_filter_cb6651156_1_7",
+      "step_singleSelect_assertOption_cb6651156_1_7",
+      "step_singleSelect_confirm_cb6651156_1_7",
+      "step_singleSelect_assertQuestion_cb6651156_1_8",
+      "step_singleSelect_assertOptionsLoaded_cb6651156_1_8",
+      "step_singleSelect_filter_cb6651156_1_8",
+      "step_singleSelect_assertOption_cb6651156_1_8",
+      "step_singleSelect_confirm_cb6651156_1_8",
+      "step_textInput_assertQuestion_cb6651156_1_9",
+      "step_textInput_input_cb6651156_1_9",
+      "step_textInput_confirm_cb6651156_1_9",
+      "step_textInput_assertQuestion_cb6651156_1_10",
+      "step_textInput_input_cb6651156_1_10",
+      "step_textInput_confirm_cb6651156_1_10",
+      "step_textInput_assertQuestion_cb6651156_1_11",
+      "step_textInput_input_cb6651156_1_11",
+      "step_textInput_confirm_cb6651156_1_11",
+      "step_singleSelect_assertQuestion_cb6651156_1_12",
+      "step_singleSelect_assertOptionsLoaded_cb6651156_1_12",
+      "step_singleSelect_filter_cb6651156_1_12",
+      "step_singleSelect_assertOption_cb6651156_1_12",
+      "step_singleSelect_confirm_cb6651156_1_12",
+      "step_confirmOption_assertPrompt_cb6651156_1_13",
+      "step_confirmOption_confirm_cb6651156_1_13",
       "step_textInput_assertQuestion_cb6651156_1_14",
       "step_textInput_input_cb6651156_1_14",
       "step_textInput_confirm_cb6651156_1_14",
-      "step_singleSelect_assertQuestion_cb6651156_1_15",
-      "step_singleSelect_assertOptionsLoaded_cb6651156_1_15",
-      "step_singleSelect_filter_cb6651156_1_15",
-      "step_singleSelect_assertOption_cb6651156_1_15",
-      "step_singleSelect_confirm_cb6651156_1_15",
-      "step_confirmOption_assertPrompt_cb6651156_1_16",
-      "step_confirmOption_confirm_cb6651156_1_16",
-      "step_textInput_assertQuestion_cb6651156_1_17",
-      "step_textInput_input_cb6651156_1_17",
-      "step_textInput_confirm_cb6651156_1_17",
-      "step_assertProjectWindowReady_assert_cb6651156_1_18",
+      "step_assertProjectWindowReady_assert_cb6651156_1_15",
       "step_checkWorkspaceFiles_verify_cb6651156_2_1",
       "step_checkWorkspaceFiles_verify_cb6651156_2_2",
       "step_checkWorkspaceFiles_verify_cb6651156_2_3",
@@ -101,8 +94,7 @@
       "case_id:general-teams-js-azure-openai-playground",
       "scenario_id:SCN-CREATE-CUSTOM-COPILOT-BASIC-03",
       "template_id:custom-copilot-basic",
-      "gate:pr",
-      "feature_flag:TEAMSFX_CEA_ENABLED=true"
+      "gate:pr"
     ]
   },
   "steps": [
@@ -176,30 +168,7 @@
       ]
     },
     {
-      "step_id": "step_setVsCodeUserSetting_cb6651156_1_2",
-      "agent": "code",
-      "tool": "",
-      "parameters": {
-        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nSETTINGS_PATH=\"/home/vscode/.config/Code/User/settings.json\" SETTING_KEY=\"M365AgentsToolkit.enableLaunchAgentForTeamsInCopilot\" SETTING_VALUE=\"true\" python3 - <<'PY'\nimport json\nimport os\nfrom pathlib import Path\n\nsettings_path = Path(os.environ[\"SETTINGS_PATH\"])\nsetting_key = os.environ[\"SETTING_KEY\"]\nraw_setting_value = os.environ[\"SETTING_VALUE\"]\nif raw_setting_value not in (\"true\", \"false\"):\n    raise AssertionError(\"The VS Code user setting value must be true or false\")\nsetting_value = raw_setting_value == \"true\"\nsettings_path.parent.mkdir(parents=True, exist_ok=True)\nif settings_path.exists():\n    settings = json.loads(settings_path.read_text(encoding=\"utf-8\"))\nelse:\n    settings = {}\nif not isinstance(settings, dict):\n    raise AssertionError(\"VS Code user settings must contain a JSON object\")\nsettings[setting_key] = setting_value\nsettings_path.write_text(json.dumps(settings, indent=2) + \"\\n\", encoding=\"utf-8\")\npersisted = json.loads(settings_path.read_text(encoding=\"utf-8\"))\nif persisted.get(setting_key) is not setting_value:\n    raise AssertionError(\"The VS Code user setting was not persisted\")\nPY\n```"
-      },
-      "description": "@code set the M365AgentsToolkit.enableLaunchAgentForTeamsInCopilot VS Code user setting to true and verify the persisted boolean value.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_closeWelcomeOverlay_assertReady_cb6651156_1_1"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:workspace",
-        "operation:vscode-setting",
-        "step_retry_timeout: 120"
-      ]
-    },
-    {
-      "step_id": "step_executeCommand_open_cb6651156_1_3",
+      "step_id": "step_executeCommand_open_cb6651156_1_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -211,7 +180,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_setVsCodeUserSetting_cb6651156_1_2"
+        "step_closeWelcomeOverlay_assertReady_cb6651156_1_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -221,7 +190,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertPalette_cb6651156_1_3",
+      "step_id": "step_executeCommand_assertPalette_cb6651156_1_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -231,7 +200,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_open_cb6651156_1_3"
+        "step_executeCommand_open_cb6651156_1_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -242,11 +211,11 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_filter_cb6651156_1_3",
+      "step_id": "step_executeCommand_filter_cb6651156_1_2",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Developer: Reload Window"
+        "text": "Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View"
       },
       "description": "Type the resolved command title into the active Command Palette.",
       "content_refs": [],
@@ -254,7 +223,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertPalette_cb6651156_1_3"
+        "step_executeCommand_assertPalette_cb6651156_1_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -264,17 +233,17 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertCommand_cb6651156_1_3",
+      "step_id": "step_executeCommand_assertCommand_cb6651156_1_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the Command Palette input box reads >Developer: Reload Window and the highlighted command listed under it is titled Developer: Reload Window.",
+      "description": "@assertion the Command Palette input box reads >Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View and the highlighted command listed under it is titled Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_filter_cb6651156_1_3"
+        "step_executeCommand_filter_cb6651156_1_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -285,7 +254,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_execute_cb6651156_1_3",
+      "step_id": "step_executeCommand_execute_cb6651156_1_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -297,7 +266,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertCommand_cb6651156_1_3"
+        "step_executeCommand_assertCommand_cb6651156_1_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -307,24 +276,88 @@
       ]
     },
     {
-      "step_id": "step_assertWorkbenchReady_assert_cb6651156_1_4",
+      "step_id": "step_assertToolkitViewSettled_assert_cb6651156_1_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the Visual Studio Code workbench has finished reloading and is ready for commands.",
+      "description": "@assertion the Microsoft 365 Agents Toolkit view is open in the side bar and an editor tab labeled Welcome showing the Build a Declarative Agent walkthrough is open in the editor area.",
       "content_refs": [],
       "timeout": 120,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_cb6651156_1_3"
+        "step_executeCommand_execute_cb6651156_1_2"
       ],
       "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:initialization",
-        "initialization:assertWorkbenchReady",
+        "initialization:assertToolkitViewSettled",
         "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_closeGetStartedEditor_assertActive_cb6651156_1_4",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the editor tab labeled Welcome showing the Build a Declarative Agent walkthrough is the active editor tab in the Visual Studio Code editor area.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_assertToolkitViewSettled_assert_cb6651156_1_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:initialization",
+        "initialization:closeGetStartedEditor",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_closeGetStartedEditor_close_cb6651156_1_4",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+w"
+      },
+      "description": "Press Ctrl+W to close the Welcome editor tab.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_closeGetStartedEditor_assertActive_cb6651156_1_4"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:initialization",
+        "initialization:closeGetStartedEditor"
+      ]
+    },
+    {
+      "step_id": "step_closeGetStartedEditor_assertClosed_cb6651156_1_4",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion no editor tab is open in the Visual Studio Code editor area.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_closeGetStartedEditor_close_cb6651156_1_4"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:initialization",
+        "initialization:closeGetStartedEditor",
+        "step_retry_timeout: 30"
       ]
     },
     {
@@ -340,7 +373,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertWorkbenchReady_assert_cb6651156_1_4"
+        "step_closeGetStartedEditor_assertClosed_cb6651156_1_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -375,7 +408,7 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View"
+        "text": "Microsoft 365 Agents: Create New Agent/App"
       },
       "description": "Type the resolved command title into the active Command Palette.",
       "content_refs": [],
@@ -397,7 +430,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the Command Palette input box reads >Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View and the highlighted command listed under it is titled Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View.",
+      "description": "@assertion the Command Palette input box reads >Microsoft 365 Agents: Create New Agent/App and the highlighted command listed under it is titled Microsoft 365 Agents: Create New Agent/App.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -436,200 +469,7 @@
       ]
     },
     {
-      "step_id": "step_assertToolkitViewSettled_assert_cb6651156_1_6",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the Microsoft 365 Agents Toolkit view is open in the side bar and an editor tab labeled Welcome showing the Build a Declarative Agent walkthrough is open in the editor area.",
-      "content_refs": [],
-      "timeout": 120,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_executeCommand_execute_cb6651156_1_5"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:initialization",
-        "initialization:assertToolkitViewSettled",
-        "step_retry_timeout: 120"
-      ]
-    },
-    {
-      "step_id": "step_closeGetStartedEditor_assertActive_cb6651156_1_7",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the editor tab labeled Welcome showing the Build a Declarative Agent walkthrough is the active editor tab in the Visual Studio Code editor area.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_assertToolkitViewSettled_assert_cb6651156_1_6"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:initialization",
-        "initialization:closeGetStartedEditor",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_closeGetStartedEditor_close_cb6651156_1_7",
-      "agent": "interaction",
-      "tool": "keyboard_shortcut",
-      "parameters": {
-        "keys": "ctrl+w"
-      },
-      "description": "Press Ctrl+W to close the Welcome editor tab.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_closeGetStartedEditor_assertActive_cb6651156_1_7"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:initialization",
-        "initialization:closeGetStartedEditor"
-      ]
-    },
-    {
-      "step_id": "step_closeGetStartedEditor_assertClosed_cb6651156_1_7",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion no editor tab is open in the Visual Studio Code editor area.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_closeGetStartedEditor_close_cb6651156_1_7"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:initialization",
-        "initialization:closeGetStartedEditor",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_executeCommand_open_cb6651156_1_8",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "f1"
-      },
-      "description": "Press the F1 key to open the Command Palette in Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_closeGetStartedEditor_assertClosed_cb6651156_1_7"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:command-palette",
-        "action:execute-command"
-      ]
-    },
-    {
-      "step_id": "step_executeCommand_assertPalette_cb6651156_1_8",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the Visual Studio Code Command Palette is visible with a > character in its input box and is ready to accept a command search.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_executeCommand_open_cb6651156_1_8"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:command-palette",
-        "action:execute-command",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_executeCommand_filter_cb6651156_1_8",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "Microsoft 365 Agents: Create New Agent/App"
-      },
-      "description": "Type the resolved command title into the active Command Palette.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_executeCommand_assertPalette_cb6651156_1_8"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:command-palette",
-        "action:execute-command"
-      ]
-    },
-    {
-      "step_id": "step_executeCommand_assertCommand_cb6651156_1_8",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the Command Palette input box reads >Microsoft 365 Agents: Create New Agent/App and the highlighted command listed under it is titled Microsoft 365 Agents: Create New Agent/App.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_executeCommand_filter_cb6651156_1_8"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:command-palette",
-        "action:execute-command",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_executeCommand_execute_cb6651156_1_8",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press Enter to execute the selected Command Palette command.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_executeCommand_assertCommand_cb6651156_1_8"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:command-palette",
-        "action:execute-command"
-      ]
-    },
-    {
-      "step_id": "step_singleSelect_assertQuestion_cb6651156_1_9",
+      "step_id": "step_singleSelect_assertQuestion_cb6651156_1_6",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -639,7 +479,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_cb6651156_1_8"
+        "step_executeCommand_execute_cb6651156_1_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -650,7 +490,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOptionsLoaded_cb6651156_1_9",
+      "step_id": "step_singleSelect_assertOptionsLoaded_cb6651156_1_6",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -660,7 +500,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_cb6651156_1_9"
+        "step_singleSelect_assertQuestion_cb6651156_1_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -671,7 +511,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_filter_cb6651156_1_9",
+      "step_id": "step_singleSelect_filter_cb6651156_1_6",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -683,7 +523,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOptionsLoaded_cb6651156_1_9"
+        "step_singleSelect_assertOptionsLoaded_cb6651156_1_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -693,7 +533,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOption_cb6651156_1_9",
+      "step_id": "step_singleSelect_assertOption_cb6651156_1_6",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -703,7 +543,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_filter_cb6651156_1_9"
+        "step_singleSelect_filter_cb6651156_1_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -714,7 +554,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_confirm_cb6651156_1_9",
+      "step_id": "step_singleSelect_confirm_cb6651156_1_6",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -726,7 +566,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOption_cb6651156_1_9"
+        "step_singleSelect_assertOption_cb6651156_1_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -736,7 +576,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertQuestion_cb6651156_1_10",
+      "step_id": "step_singleSelect_assertQuestion_cb6651156_1_7",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -746,7 +586,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_confirm_cb6651156_1_9"
+        "step_singleSelect_confirm_cb6651156_1_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -757,7 +597,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOptionsLoaded_cb6651156_1_10",
+      "step_id": "step_singleSelect_assertOptionsLoaded_cb6651156_1_7",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -767,7 +607,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_cb6651156_1_10"
+        "step_singleSelect_assertQuestion_cb6651156_1_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -778,7 +618,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_filter_cb6651156_1_10",
+      "step_id": "step_singleSelect_filter_cb6651156_1_7",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -790,7 +630,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOptionsLoaded_cb6651156_1_10"
+        "step_singleSelect_assertOptionsLoaded_cb6651156_1_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -800,7 +640,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOption_cb6651156_1_10",
+      "step_id": "step_singleSelect_assertOption_cb6651156_1_7",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -810,7 +650,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_filter_cb6651156_1_10"
+        "step_singleSelect_filter_cb6651156_1_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -821,7 +661,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_confirm_cb6651156_1_10",
+      "step_id": "step_singleSelect_confirm_cb6651156_1_7",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -833,7 +673,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOption_cb6651156_1_10"
+        "step_singleSelect_assertOption_cb6651156_1_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -843,7 +683,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertQuestion_cb6651156_1_11",
+      "step_id": "step_singleSelect_assertQuestion_cb6651156_1_8",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -853,7 +693,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_confirm_cb6651156_1_10"
+        "step_singleSelect_confirm_cb6651156_1_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -864,7 +704,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOptionsLoaded_cb6651156_1_11",
+      "step_id": "step_singleSelect_assertOptionsLoaded_cb6651156_1_8",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -874,7 +714,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_cb6651156_1_11"
+        "step_singleSelect_assertQuestion_cb6651156_1_8"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -885,7 +725,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_filter_cb6651156_1_11",
+      "step_id": "step_singleSelect_filter_cb6651156_1_8",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -897,7 +737,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOptionsLoaded_cb6651156_1_11"
+        "step_singleSelect_assertOptionsLoaded_cb6651156_1_8"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -907,7 +747,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOption_cb6651156_1_11",
+      "step_id": "step_singleSelect_assertOption_cb6651156_1_8",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -917,7 +757,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_filter_cb6651156_1_11"
+        "step_singleSelect_filter_cb6651156_1_8"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -928,7 +768,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_confirm_cb6651156_1_11",
+      "step_id": "step_singleSelect_confirm_cb6651156_1_8",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -940,7 +780,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOption_cb6651156_1_11"
+        "step_singleSelect_assertOption_cb6651156_1_8"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -950,7 +790,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_assertQuestion_cb6651156_1_12",
+      "step_id": "step_textInput_assertQuestion_cb6651156_1_9",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -960,7 +800,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_confirm_cb6651156_1_11"
+        "step_singleSelect_confirm_cb6651156_1_8"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -971,7 +811,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_input_cb6651156_1_12",
+      "step_id": "step_textInput_input_cb6651156_1_9",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -983,7 +823,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_assertQuestion_cb6651156_1_12"
+        "step_textInput_assertQuestion_cb6651156_1_9"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -993,7 +833,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_confirm_cb6651156_1_12",
+      "step_id": "step_textInput_confirm_cb6651156_1_9",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1005,7 +845,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_input_cb6651156_1_12"
+        "step_textInput_input_cb6651156_1_9"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1015,7 +855,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_assertQuestion_cb6651156_1_13",
+      "step_id": "step_textInput_assertQuestion_cb6651156_1_10",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1025,7 +865,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_confirm_cb6651156_1_12"
+        "step_textInput_confirm_cb6651156_1_9"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1036,7 +876,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_input_cb6651156_1_13",
+      "step_id": "step_textInput_input_cb6651156_1_10",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1048,7 +888,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_assertQuestion_cb6651156_1_13"
+        "step_textInput_assertQuestion_cb6651156_1_10"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1058,7 +898,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_confirm_cb6651156_1_13",
+      "step_id": "step_textInput_confirm_cb6651156_1_10",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1070,7 +910,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_input_cb6651156_1_13"
+        "step_textInput_input_cb6651156_1_10"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1080,7 +920,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_assertQuestion_cb6651156_1_14",
+      "step_id": "step_textInput_assertQuestion_cb6651156_1_11",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1090,7 +930,228 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_confirm_cb6651156_1_13"
+        "step_textInput_confirm_cb6651156_1_10"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:text",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_textInput_input_cb6651156_1_11",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{env:AZURE_OPENAI_MODEL}}"
+      },
+      "description": "Type the authored value into the active text prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_textInput_assertQuestion_cb6651156_1_11"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:text"
+      ]
+    },
+    {
+      "step_id": "step_textInput_confirm_cb6651156_1_11",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to submit the accepted text input.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_textInput_input_cb6651156_1_11"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:text"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertQuestion_cb6651156_1_12",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the active prompt titled Programming Language is visible.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_textInput_confirm_cb6651156_1_11"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertOptionsLoaded_cb6651156_1_12",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the prompt titled Programming Language has finished loading and lists at least one selectable option.",
+      "content_refs": [],
+      "timeout": 120,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertQuestion_cb6651156_1_12"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_filter_cb6651156_1_12",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "JavaScript"
+      },
+      "description": "Type the resolved option label JavaScript into the active single-select prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertOptionsLoaded_cb6651156_1_12"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertOption_cb6651156_1_12",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the option JavaScript is visible and selectable in the filtered single-select prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_filter_cb6651156_1_12"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_confirm_cb6651156_1_12",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the filtered single-select option.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertOption_cb6651156_1_12"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_confirmOption_assertPrompt_cb6651156_1_13",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the active prompt titled Workspace Folder is visible and the option Default folder is focused.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_confirm_cb6651156_1_12"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "interaction:key-press",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_confirmOption_confirm_cb6651156_1_13",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the Default folder option.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_confirmOption_assertPrompt_cb6651156_1_13"
+      ],
+      "preconditions": [
+        "dhash:364:74:16:5:08056a9a5d5516b6",
+        "dhash:364:74:96:5:44232286e2168e01",
+        "dhash:364:74:0:10:f0b09494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "interaction:key-press"
+      ]
+    },
+    {
+      "step_id": "step_textInput_assertQuestion_cb6651156_1_14",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the active prompt titled Application Name is visible.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_confirmOption_confirm_cb6651156_1_13"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1105,7 +1166,7 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "${{env:AZURE_OPENAI_MODEL}}"
+        "text": "${{var:app_name:vscuse_app_#####}}"
       },
       "description": "Type the authored value into the active text prompt.",
       "content_refs": [],
@@ -1145,228 +1206,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertQuestion_cb6651156_1_15",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the active prompt titled Programming Language is visible.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_textInput_confirm_cb6651156_1_14"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_singleSelect_assertOptionsLoaded_cb6651156_1_15",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the prompt titled Programming Language has finished loading and lists at least one selectable option.",
-      "content_refs": [],
-      "timeout": 120,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_singleSelect_assertQuestion_cb6651156_1_15"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect",
-        "step_retry_timeout: 120"
-      ]
-    },
-    {
-      "step_id": "step_singleSelect_filter_cb6651156_1_15",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "JavaScript"
-      },
-      "description": "Type the resolved option label JavaScript into the active single-select prompt.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_singleSelect_assertOptionsLoaded_cb6651156_1_15"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect"
-      ]
-    },
-    {
-      "step_id": "step_singleSelect_assertOption_cb6651156_1_15",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the option JavaScript is visible and selectable in the filtered single-select prompt.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_singleSelect_filter_cb6651156_1_15"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_singleSelect_confirm_cb6651156_1_15",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press Enter to confirm the filtered single-select option.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_singleSelect_assertOption_cb6651156_1_15"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect"
-      ]
-    },
-    {
-      "step_id": "step_confirmOption_assertPrompt_cb6651156_1_16",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the active prompt titled Workspace Folder is visible and the option Default folder is focused.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_singleSelect_confirm_cb6651156_1_15"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect",
-        "interaction:key-press",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_confirmOption_confirm_cb6651156_1_16",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press Enter to confirm the Default folder option.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_confirmOption_assertPrompt_cb6651156_1_16"
-      ],
-      "preconditions": [
-        "dhash:364:74:16:5:08056a9a5d5516b6",
-        "dhash:364:74:96:5:44232286e2168e01",
-        "dhash:364:74:0:10:f0b09494b2717075"
-      ],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect",
-        "interaction:key-press"
-      ]
-    },
-    {
-      "step_id": "step_textInput_assertQuestion_cb6651156_1_17",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the active prompt titled Application Name is visible.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_confirmOption_confirm_cb6651156_1_16"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:text",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_textInput_input_cb6651156_1_17",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "${{var:app_name:vscuse_app_#####}}"
-      },
-      "description": "Type the authored value into the active text prompt.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_textInput_assertQuestion_cb6651156_1_17"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:text"
-      ]
-    },
-    {
-      "step_id": "step_textInput_confirm_cb6651156_1_17",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press Enter to submit the accepted text input.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_textInput_input_cb6651156_1_17"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:text"
-      ]
-    },
-    {
-      "step_id": "step_assertProjectWindowReady_assert_cb6651156_1_18",
+      "step_id": "step_assertProjectWindowReady_assert_cb6651156_1_15",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1376,7 +1216,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_confirm_cb6651156_1_17"
+        "step_textInput_confirm_cb6651156_1_14"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1399,7 +1239,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertProjectWindowReady_assert_cb6651156_1_18"
+        "step_assertProjectWindowReady_assert_cb6651156_1_15"
       ],
       "preconditions": [],
       "postconditions": [],

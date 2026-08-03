@@ -54,8 +54,10 @@ plans. The case YAML is the only authored template/scenario source. Setup prints
 diff before transactionally updating only manifest-owned files. A custom semantic-step adapter may
 still be injected by focused compiler and writer tests.
 
-Sources that require compatibility switches declare unique `NAME=true` or `NAME=false` entries in
-`featureFlags`; the compiler emits the existing VScUse `feature_flag:` plan metadata convention.
+Sources that require the same compatibility switch in every case declare unique `NAME=true` or
+`NAME=false` entries in root `featureFlags`. A case that alone needs a switch declares its own
+`featureFlags`; the compiler merges those with the root defaults and emits the existing VScUse
+`feature_flag:` plan metadata convention only for that generated plan.
 
 General scenario identity resolution is not implemented yet; the current fixtures retain their
 checked-in product or engineering scenario IDs. Local MCP selection is omitted until the test

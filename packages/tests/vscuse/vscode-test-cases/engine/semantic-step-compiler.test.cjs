@@ -1883,15 +1883,6 @@ test("VCB-95: the General Teams Agent bundle authors its explicit behavior matri
   expectedCaseIds.add("general-teams-ts-azure-openai-local-copilot");
 
   assert.deepEqual(caseIds, expectedCaseIds);
-  for (const generated of result.value) {
-    assert.equal(
-      generated.plan.plan_metadata.tags.includes(
-        "feature_flag:TEAMSFX_CEA_ENABLED=true",
-      ),
-      true,
-      generated.caseId,
-    );
-  }
   const typedValues = result.value[0].plan.steps
     .filter((step) => step.tool === "type_text")
     .map((step) => step.parameters.text);
@@ -1995,7 +1986,7 @@ test("VCB-97: General Teams Agent OpenAI cases chat locally but not remotely", a
   }
 });
 
-test("VCB-98: General Teams Agent cases enable Copilot launches before scaffolding", async () => {
+test("VCB-98: only General Teams Agent Copilot cases inject the launch flag before startup", async () => {
   const result = await compileFixture(
     "general-teams-agent.yml",
     (sourceText) => sourceText,
@@ -2004,45 +1995,33 @@ test("VCB-98: General Teams Agent cases enable Copilot launches before scaffoldi
   assert.equal(result.value.length, 17);
 
   for (const entry of result.value) {
-    const settingIndex = entry.plan.steps.findIndex(
+    const hasSettingOrReload = entry.plan.steps.some(
       (step) =>
-        step.description ===
-        "@code set the M365AgentsToolkit.enableLaunchAgentForTeamsInCopilot VS Code user setting to true and verify the persisted boolean value.",
+        step.description?.includes(
+          "M365AgentsToolkit.enableLaunchAgentForTeamsInCopilot",
+        ) || step.parameters?.text === "Developer: Reload Window",
     );
-    const scaffoldIndex = entry.plan.steps.findIndex(
-      (step) =>
-        step.parameters?.text === "Microsoft 365 Agents: Create New Agent/App",
+    const hasFeatureFlag = entry.plan.plan_metadata.tags.includes(
+      "feature_flag:TEAMSFX_CEA_ENABLED=true",
     );
-    const reloadIndex = entry.plan.steps.findIndex(
-      (step) => step.parameters?.text === "Developer: Reload Window",
-    );
-    const readyIndex = entry.plan.steps.findIndex(
-      (step) =>
-        step.description ===
-        "@assertion the Visual Studio Code workbench has finished reloading and is ready for commands.",
-    );
+    const targetsCopilot = entry.caseId.endsWith("-copilot");
 
-    assert.notEqual(settingIndex, -1, entry.caseId);
-    assert.notEqual(scaffoldIndex, -1, entry.caseId);
-    assert.notEqual(reloadIndex, -1, entry.caseId);
-    assert.notEqual(readyIndex, -1, entry.caseId);
-    assert.ok(settingIndex < reloadIndex, entry.caseId);
-    assert.ok(reloadIndex < readyIndex, entry.caseId);
-    assert.ok(readyIndex < scaffoldIndex, entry.caseId);
+    assert.equal(hasSettingOrReload, false, entry.caseId);
+    assert.equal(hasFeatureFlag, targetsCopilot, entry.caseId);
   }
 
   const missingFeatureFlag = await compileFixture(
     "general-teams-agent.yml",
     (sourceText) =>
       sourceText.replace(
-        /featureFlags:\r?\n  - TEAMSFX_CEA_ENABLED=true\r?\n/,
+        /    featureFlags:\r?\n      - TEAMSFX_CEA_ENABLED=true\r?\n/,
         "",
       ),
   );
   assert.equal(missingFeatureFlag.ok, false);
   assert.equal(
     missingFeatureFlag.diagnostics[0].code,
-    "VCB_SCAFFOLD_PREREQUISITE",
+    "VCB_TARGET_PREREQUISITE",
   );
 });
 
