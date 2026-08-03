@@ -9,8 +9,6 @@ import { TelemetryEvent } from "./telemetry/extTelemetryEvents";
 import { FeatureFlags } from "@microsoft/teamsfx-core";
 
 export class ConfigManager {
-  private readonly ceaEnvironmentOverride = process.env[FeatureFlags.CEAEnabled.name];
-
   registerConfigChangeCallback() {
     this.loadConfigs();
     vscode.workspace.onDidChangeConfiguration?.(this.changeConfigCallback.bind(this));
@@ -31,9 +29,10 @@ export class ConfigManager {
       ConfigurationKey.BicepEnvCheckerEnable,
       false
     ).toString();
-    process.env[FeatureFlags.CEAEnabled.name] =
-      this.ceaEnvironmentOverride ??
-      this.getConfiguration(ConfigurationKey.EnableCEA, false).toString();
+    process.env[FeatureFlags.CEAEnabled.name] = this.getConfiguration(
+      ConfigurationKey.EnableCEA,
+      false
+    ).toString();
     process.env[FeatureFlags.CFShortcutMetaOS.name] = this.getConfiguration(
       ConfigurationKey.EnableCFShortcutMetaOS,
       false

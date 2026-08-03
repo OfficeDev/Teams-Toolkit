@@ -7,6 +7,7 @@ import { ExtTelemetry } from "../../src/telemetry/extTelemetry";
 import * as vsc_ui from "../../src/qm/vsc_ui";
 import * as lifecycleHandlers from "../../src/handlers/lifecycleHandlers";
 import { vi, assert } from "vitest";
+import { ConfigurationKey } from "../../src/constants";
 
 describe("configMgr", () => {
   describe("loadLogLevel", () => {
@@ -76,15 +77,20 @@ describe("configMgr", () => {
       assert.isTrue(stub.called);
     });
 
-    it("preserves an explicitly injected CEA environment override", () => {
+    it("reloads CEA from the VS Code setting", () => {
       const previousValue = process.env[FeatureFlags.CEAEnabled.name];
-      process.env[FeatureFlags.CEAEnabled.name] = "true";
       try {
         const manager = new ConfigManager();
-        vi.spyOn(manager, "getConfiguration").mockReturnValue(false);
+        let ceaEnabled = false;
+        vi.spyOn(manager, "getConfiguration").mockImplementation((key, defaultValue) =>
+          key === ConfigurationKey.EnableCEA ? ceaEnabled : defaultValue
+        );
 
         manager.loadFeatureFlags();
+        assert.equal(process.env[FeatureFlags.CEAEnabled.name], "false");
 
+        ceaEnabled = true;
+        manager.loadFeatureFlags();
         assert.equal(process.env[FeatureFlags.CEAEnabled.name], "true");
       } finally {
         if (previousValue === undefined) {
