@@ -5,12 +5,88 @@ version: 1
 # is the custom engine agent template the toolkit does offer in Python, and it
 # reaches the same three launch surfaces.
 cases:
+  - id: basic-cea-ts-azure-openai-remote-teams
+    scenarioId: SCN-CREATE-BASIC-CEA-01
+    steps:
+      [
+        scaffold-basic-cea-ts-azure-openai,
+        check-basic-cea-ts,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote-node,
+        open-app,
+        check-basic-cea-chat,
+      ]
+
+  - id: basic-cea-ts-azure-openai-local-teams
+    scenarioId: SCN-CREATE-BASIC-CEA-01
+    steps:
+      [
+        scaffold-basic-cea-ts-azure-openai,
+        check-basic-cea-ts,
+        login-m365,
+        f5-teams-local,
+        open-app,
+        check-basic-cea-chat,
+      ]
+
+  - id: basic-cea-ts-azure-openai-playground
+    scenarioId: SCN-CREATE-BASIC-CEA-01
+    steps:
+      [
+        scaffold-basic-cea-ts-azure-openai,
+        check-basic-cea-ts,
+        f5-playground,
+        open-app,
+        check-basic-cea-chat,
+      ]
+
+  - id: basic-cea-js-azure-openai-remote-teams
+    scenarioId: SCN-CREATE-BASIC-CEA-03
+    steps:
+      [
+        scaffold-basic-cea-js-azure-openai,
+        check-basic-cea-js,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote-node,
+        open-app,
+        check-basic-cea-chat,
+      ]
+
+  - id: basic-cea-js-azure-openai-local-teams
+    scenarioId: SCN-CREATE-BASIC-CEA-03
+    steps:
+      [
+        scaffold-basic-cea-js-azure-openai,
+        check-basic-cea-js,
+        login-m365,
+        f5-teams-local,
+        open-app,
+        check-basic-cea-chat,
+      ]
+
+  - id: basic-cea-js-azure-openai-playground
+    scenarioId: SCN-CREATE-BASIC-CEA-03
+    steps:
+      [
+        scaffold-basic-cea-js-azure-openai,
+        check-basic-cea-js,
+        f5-playground,
+        open-app,
+        check-basic-cea-chat,
+      ]
+
   # Every Python case creates its virtual environment right after the file
   # check. The scaffold writes src/requirements.txt but installs nothing, and
   # each launch profile starts the app from the workspace interpreter, so a
   # launch before that operation starts an app with no dependencies.
   - id: basic-cea-py-azure-openai-remote-teams
-    scenarioId: SCN-CREATE-BASIC-CEA-01
+    scenarioId: SCN-CREATE-BASIC-CEA-04
     steps:
       [
         scaffold-basic-cea-py-azure-openai,
@@ -26,7 +102,7 @@ cases:
       ]
 
   - id: basic-cea-py-azure-openai-local-teams
-    scenarioId: SCN-CREATE-BASIC-CEA-01
+    scenarioId: SCN-CREATE-BASIC-CEA-04
     steps:
       [
         scaffold-basic-cea-py-azure-openai,
@@ -39,7 +115,7 @@ cases:
       ]
 
   - id: basic-cea-py-azure-openai-playground
-    scenarioId: SCN-CREATE-BASIC-CEA-01
+    scenarioId: SCN-CREATE-BASIC-CEA-04
     steps:
       [
         scaffold-basic-cea-py-azure-openai,
@@ -51,6 +127,122 @@ cases:
       ]
 
 steps:
+  scaffold-basic-cea-ts-azure-openai:
+    type: scaffold
+    with:
+      template: basic-custom-engine-agent
+      answers:
+        - question: projectType
+          value: custom-engine-agent-type
+        - question: customEngineAgent
+          value: basic-custom-engine-agent
+        - question: llmService
+          value: llm-service-azure-openai
+        - question: azureOpenAIKey
+          type: text
+          value: "${{secret:AZURE_OPENAI_API_KEY}}"
+        - question: azureOpenAIEndpoint
+          type: text
+          value: "${{env:AZURE_OPENAI_ENDPOINT}}"
+        - question: azureOpenAIDeploymentName
+          type: text
+          value: "${{env:AZURE_OPENAI_MODEL}}"
+        - question: language
+          value: typescript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-basic-cea-ts:
+    type: checks
+    with:
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains: ["version: v1.11", "provision:", "deploy:"]
+      - type: file
+        path: src/index.ts
+        expect:
+          exists: true
+      - type: file
+        path: src/app/app.ts
+        expect:
+          exists: true
+      - type: file
+        path: src/config.ts
+        expect:
+          exists: true
+      - type: file
+        path: package.json
+        expect:
+          exists: true
+      - type: file
+        path: infra/azure.bicep
+        expect:
+          exists: true
+      - type: file
+        path: appPackage/manifest.json
+        expect:
+          contains: ['"manifestVersion": "1.29"']
+
+  scaffold-basic-cea-js-azure-openai:
+    type: scaffold
+    with:
+      template: basic-custom-engine-agent
+      answers:
+        - question: projectType
+          value: custom-engine-agent-type
+        - question: customEngineAgent
+          value: basic-custom-engine-agent
+        - question: llmService
+          value: llm-service-azure-openai
+        - question: azureOpenAIKey
+          type: text
+          value: "${{secret:AZURE_OPENAI_API_KEY}}"
+        - question: azureOpenAIEndpoint
+          type: text
+          value: "${{env:AZURE_OPENAI_ENDPOINT}}"
+        - question: azureOpenAIDeploymentName
+          type: text
+          value: "${{env:AZURE_OPENAI_MODEL}}"
+        - question: language
+          value: javascript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-basic-cea-js:
+    type: checks
+    with:
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains: ["version: v1.11", "provision:", "deploy:"]
+      - type: file
+        path: src/index.js
+        expect:
+          exists: true
+      - type: file
+        path: src/app/app.js
+        expect:
+          exists: true
+      - type: file
+        path: src/config.js
+        expect:
+          exists: true
+      - type: file
+        path: package.json
+        expect:
+          exists: true
+      - type: file
+        path: src/index.ts
+        expect:
+          exists: false
+
   scaffold-basic-cea-py-azure-openai:
     type: scaffold
     with:
@@ -156,7 +348,13 @@ steps:
     with:
       environment: none
 
-  # The Python templates name the remote Teams launch without `in Teams`.
+  f5-teams-remote-node:
+    type: target
+    with:
+      profile: "Launch Remote in Teams (Chrome)"
+      profileSelection: first
+
+  # The Python template names the remote Teams launch without `in Teams`.
   f5-teams-remote:
     type: target
     with:

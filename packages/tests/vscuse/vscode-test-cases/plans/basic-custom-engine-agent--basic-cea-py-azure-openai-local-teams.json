@@ -12,7 +12,7 @@
     "name": "basic-cea-py-azure-openai-local-teams",
     "description": {
       "owner": "",
-      "workitem": "SCN-CREATE-BASIC-CEA-01",
+      "workitem": "SCN-CREATE-BASIC-CEA-04",
       "other": ""
     },
     "execution_order": [
@@ -142,7 +142,7 @@
     ],
     "tags": [
       "case_id:basic-cea-py-azure-openai-local-teams",
-      "scenario_id:SCN-CREATE-BASIC-CEA-01",
+      "scenario_id:SCN-CREATE-BASIC-CEA-04",
       "template_id:basic-custom-engine-agent",
       "gate:pr"
     ]

@@ -108,7 +108,7 @@ test("VCB-34: semantic compiler does not read external template contracts", asyn
   }
 });
 
-test("VCB-34: default setup compiles the checked-in YAML sources into twenty-five plans", async (context) => {
+test("VCB-34: default setup compiles the checked-in YAML sources into forty-six plans", async (context) => {
   const plansDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "vscuse-generated-"),
   );
@@ -121,9 +121,9 @@ test("VCB-34: default setup compiles the checked-in YAML sources into twenty-fiv
   });
 
   assert.equal(first.ok, true);
-  assert.equal(first.value.files.length, 25);
+  assert.equal(first.value.files.length, 46);
   const generatedFiles = first.value.files;
-  assert.equal(generatedFiles.length, 25);
+  assert.equal(generatedFiles.length, 46);
   assert.equal(
     generatedFiles.includes(
       "da-api-plugin-from-existing-api--da-api-plugin-from-existing-api-no-auth.json",
@@ -406,6 +406,79 @@ test("DA scaffold filters its options before app name", async (context) => {
   );
   assert.equal(optionIndexes.at(-1) < workspaceFolderIndex, true);
   assert.equal(workspaceFolderIndex < appNameIndex, true);
+});
+
+test("VCB-91: Teams Other scaffolds resolve the complete authored selector path", async () => {
+  for (const { caseId, optionLabel, template } of [
+    {
+      caseId: "simple-bot-ts",
+      optionLabel: "Simple Bot",
+      template: "default-bot",
+    },
+    {
+      caseId: "message-extension-ts",
+      optionLabel: "Message Extension",
+      template: "default-message-extension",
+    },
+  ]) {
+    const sourceText = `version: 1
+cases:
+  - id: ${caseId}
+    scenarioId: VCB-91
+    steps: [scaffold, check]
+steps:
+  scaffold:
+    type: scaffold
+    with:
+      template: ${template}
+      answers:
+        - question: projectType
+          value: teams-agent-and-app-type
+        - question: teamsAppType
+          value: teams-other-app-type
+        - question: teamsOtherAppType
+          value: ${template}
+        - question: language
+          value: typescript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "\${{var:app_name:vscuse_app_#####}}"
+  check:
+    type: checks
+    with:
+      - type: file
+        path: m365agents.yml
+        expect:
+          exists: true
+`;
+    const result = await compileCaseBundle({
+      compileStep: createSemanticStepCompiler(),
+      sourcePath: `cases/${template}.yml`,
+      sourceText,
+    });
+
+    assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+    const typedValues = result.value[0].plan.steps
+      .filter((step) => step.tool === "type_text")
+      .map((step) => step.parameters.text);
+    const selectorIndexes = [
+      "Teams Agents and Apps",
+      "Other Teams Capabilities",
+      optionLabel,
+    ].map((label) => typedValues.indexOf(label));
+    assert.equal(
+      selectorIndexes.every((index) => index >= 0),
+      true,
+      template,
+    );
+    assert.deepEqual(
+      selectorIndexes,
+      [...selectorIndexes].sort((left, right) => left - right),
+      template,
+    );
+  }
 });
 
 test("scaffold app names require a safe app_name initializer expression", async () => {
@@ -1653,6 +1726,31 @@ test("VCB-71: the Python remote Teams target opens the app through the Teams add
   );
 });
 
+test("VCB-92: the View Remote App target uses the remote Teams adapter", async () => {
+  const result = await compileFixture(
+    "basic-custom-engine-agent.yml",
+    (sourceText) =>
+      sourceText.replace(
+        'profile: "Launch Remote (Chrome)"',
+        'profile: "View Remote App in Teams (Chrome)"',
+      ),
+  );
+
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const plan = result.value.find(
+    (generated) =>
+      generated.caseId === "basic-cea-py-azure-openai-remote-teams",
+  ).plan;
+  const typedValues = plan.steps
+    .filter((step) => step.tool === "type_text")
+    .map((step) => step.parameters.text);
+  assert.equal(typedValues.includes("View Remote App in Teams (Chrome)"), true);
+  assert.equal(
+    plan.steps.some((step) => step.step_id.startsWith("step_addAndOpenApp_")),
+    true,
+  );
+});
+
 test("VCB-90: the Teams open converges on the conversation, not the app details page", async () => {
   const result = await compileFixture(
     "basic-custom-engine-agent.yml",
@@ -1694,6 +1792,73 @@ test("VCB-72: the weather bundle authors every LLM, language, and Teams launch c
         );
       }
     }
+  }
+});
+
+test("VCB-93: CEA, Bot, and Message Extension bundles author their supported launch matrices", async () => {
+  for (const { fileName, languages, prefix } of [
+    {
+      fileName: "basic-custom-engine-agent.yml",
+      languages: ["ts", "js", "py"],
+      prefix: "basic-cea",
+    },
+    {
+      fileName: "default-bot.yml",
+      languages: ["ts", "js", "py"],
+      prefix: "simple-bot",
+    },
+    {
+      fileName: "default-message-extension.yml",
+      languages: ["ts", "py"],
+      prefix: "message-extension",
+    },
+  ]) {
+    const result = await compileFixture(fileName, (sourceText) => sourceText);
+    assert.equal(result.ok, true, fileName);
+    const caseIds = new Set(result.value.map((generated) => generated.caseId));
+    for (const language of languages) {
+      for (const launch of ["remote-teams", "local-teams", "playground"]) {
+        const llm = prefix === "basic-cea" ? "-azure-openai" : "";
+        const caseId = `${prefix}-${language}${llm}-${launch}`;
+        assert.equal(caseIds.has(caseId), true, caseId);
+      }
+    }
+    assert.equal(caseIds.size, languages.length * 3, fileName);
+  }
+});
+
+test("VCB-94: Basic CEA remote Teams cases use each language template's launch profile", async () => {
+  const result = await compileFixture(
+    "basic-custom-engine-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  for (const { caseId, expectedProfile, unexpectedProfile } of [
+    {
+      caseId: "basic-cea-ts-azure-openai-remote-teams",
+      expectedProfile: "Launch Remote in Teams (Chrome)",
+      unexpectedProfile: "Launch Remote (Chrome)",
+    },
+    {
+      caseId: "basic-cea-js-azure-openai-remote-teams",
+      expectedProfile: "Launch Remote in Teams (Chrome)",
+      unexpectedProfile: "Launch Remote (Chrome)",
+    },
+    {
+      caseId: "basic-cea-py-azure-openai-remote-teams",
+      expectedProfile: "Launch Remote (Chrome)",
+      unexpectedProfile: "Launch Remote in Teams (Chrome)",
+    },
+  ]) {
+    const plan = result.value.find(
+      (generated) => generated.caseId === caseId,
+    ).plan;
+    const typedValues = plan.steps
+      .filter((step) => step.tool === "type_text")
+      .map((step) => step.parameters.text);
+    assert.equal(typedValues.includes(expectedProfile), true, caseId);
+    assert.equal(typedValues.includes(unexpectedProfile), false, caseId);
   }
 });
 
