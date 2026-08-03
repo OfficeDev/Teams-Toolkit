@@ -2044,9 +2044,15 @@ test("VCB-99: Playground reply checks use visible completion evidence", async ()
     playground.plan.steps.some(
       (step) =>
         step.description ===
-        '@assertion the Agents Playground shows a non-empty assistant response above visible thumbs-up and thumbs-down feedback controls, and the "Type a message..." composer is ready for the next user turn with no response-generation indicator visible.',
+        '@assertion the Agents Playground shows a non-empty assistant response, and the "Type a message..." composer is ready for the next user turn with no response-generation indicator visible.',
     ),
     true,
+  );
+  assert.equal(
+    playground.plan.steps.some((step) =>
+      step.description.includes("feedback controls"),
+    ),
+    false,
   );
   assert.equal(
     localTeams.plan.steps.some(
