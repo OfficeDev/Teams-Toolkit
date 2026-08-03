@@ -1361,9 +1361,16 @@ function createSemanticStepCompiler() {
       playground: "browser/playground/send-message.json.tpl",
       teams: "browser/teams/send-message.json.tpl",
     };
+    const replyComponents = {
+      copilot: "browser/chat/assert-replied.json.tpl",
+      playground: "browser/playground/assert-replied.json.tpl",
+      teams: "browser/chat/assert-replied.json.tpl",
+    };
     const sendComponent = sendComponents[state.profile?.host];
+    const replyComponent = replyComponents[state.profile?.host];
     if (
       sendComponent === undefined ||
+      replyComponent === undefined ||
       !state.completed.has("chat-ready") ||
       typeof assertion.send !== "string"
     ) {
@@ -1398,10 +1405,7 @@ function createSemanticStepCompiler() {
       expected.contains !== undefined ||
       expected.notContains !== undefined
     ) {
-      error = append(
-        output,
-        render(state, "browser/chat/assert-replied.json.tpl"),
-      );
+      error = append(output, render(state, replyComponent));
       if (error) return error;
     }
     for (const expectedText of expected.contains ?? []) {

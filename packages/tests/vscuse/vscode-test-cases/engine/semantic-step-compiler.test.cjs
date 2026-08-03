@@ -2046,6 +2046,39 @@ test("VCB-98: General Teams Agent cases enable Copilot launches before scaffoldi
   );
 });
 
+test("VCB-99: Playground reply checks use visible completion evidence", async () => {
+  const result = await compileFixture(
+    "general-teams-agent.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+
+  const playground = result.value.find(
+    (entry) => entry.caseId === "general-teams-py-azure-openai-playground",
+  );
+  const localTeams = result.value.find(
+    (entry) => entry.caseId === "general-teams-py-azure-openai-local-teams",
+  );
+  assert.notEqual(playground, undefined);
+  assert.notEqual(localTeams, undefined);
+  assert.equal(
+    playground.plan.steps.some(
+      (step) =>
+        step.description ===
+        '@assertion the Agents Playground shows a non-empty assistant response above visible thumbs-up and thumbs-down feedback controls, and the "Type a message..." composer is ready for the next user turn with no response-generation indicator visible.',
+    ),
+    true,
+  );
+  assert.equal(
+    localTeams.plan.steps.some(
+      (step) =>
+        step.description ===
+        "@assertion the current assistant turn is complete and contains a non-empty response.",
+    ),
+    true,
+  );
+});
+
 test("VCB-73: an OpenAI weather case asserts a completion locally but not remotely", async () => {
   const result = await compileFixture(
     "weather-agent.yml",
