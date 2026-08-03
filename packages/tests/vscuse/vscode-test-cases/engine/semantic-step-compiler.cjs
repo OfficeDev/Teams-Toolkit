@@ -16,6 +16,10 @@ const runnerPlaceholderPattern = /\$\{\{[a-z]+:[A-Za-z0-9_:#-]+\}\}/g;
 const provisionInputGroups = new Set(["apiKey", "arm", "oauth"]);
 const provisionEnvironmentInput = "environment";
 const provisionEnvironmentSkipValue = "none";
+const copilotLaunchFeatureFlag = "TEAMSFX_CEA_ENABLED=true";
+const copilotLaunchSetting =
+  "M365AgentsToolkit." +
+  ["enable", "Launch", "Agent", "For", "Teams", "In", "Copilot"].join("");
 
 const commandTitles = {
   clearNotifications: "Notifications: Clear All Notifications",
@@ -32,6 +36,7 @@ const commandTitles = {
     "Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View",
   notifications: "Notifications: Show Notifications",
   provision: "Microsoft 365 Agents: Provision",
+  reloadWindow: "Developer: Reload Window",
   // VS Code generates one show command per view container, so this title exists
   // in both windows, and the container renders every view the current
   // `fx-extension.isTeamsFx` value allows, ACCOUNTS first.
@@ -544,11 +549,44 @@ function createSemanticStepCompiler() {
 
   function compileScaffold(state, definition) {
     const output = [];
+    const enablesCopilotLaunches =
+      definition.with?.template === "custom-copilot-basic";
+    if (
+      enablesCopilotLaunches &&
+      !state.featureFlags.has(copilotLaunchFeatureFlag)
+    ) {
+      return failure(
+        "VCB_SCAFFOLD_PREREQUISITE",
+        "The General Teams Agent scaffold requires its Copilot launch feature flag.",
+      );
+    }
     let error = append(
       output,
       render(state, "initialization/close-welcome-overlay.json.tpl"),
     );
     if (error) return error;
+    if (enablesCopilotLaunches) {
+      error = append(
+        output,
+        render(state, "workspace/vscode-user-setting.json.tpl", {
+          settingKey: copilotLaunchSetting,
+          settingValue: "true",
+        }),
+      );
+      if (error) return error;
+      error = append(
+        output,
+        render(state, "command-palette/execute-command.json.tpl", {
+          commandTitle: commandTitles.reloadWindow,
+        }),
+      );
+      if (error) return error;
+      error = append(
+        output,
+        render(state, "initialization/assert-workbench-ready.json.tpl"),
+      );
+      if (error) return error;
+    }
     // Activating the toolkit opens a walkthrough, which VS Code renders in a
     // tab labeled Welcome. That tab keeps keyboard focus and swallows the text
     // typed into the first scaffold quick pick.
@@ -1511,7 +1549,7 @@ function createSemanticStepCompiler() {
     return { ok: true, value: output };
   }
 
-  return ({ caseId, definition, occurrence }) => {
+  return ({ caseId, definition, featureFlags, occurrence }) => {
     let state = states.get(caseId);
     if (definition.type === "scaffold") {
       state = {
@@ -1519,6 +1557,7 @@ function createSemanticStepCompiler() {
         completed: new Set(),
         componentIndex: 0,
         credentials: new Map(),
+        featureFlags: new Set(featureFlags ?? []),
         occurrence,
         requiresInitialFileCheck: true,
       };

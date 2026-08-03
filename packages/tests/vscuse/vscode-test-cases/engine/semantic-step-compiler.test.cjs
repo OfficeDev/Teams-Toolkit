@@ -1995,6 +1995,57 @@ test("VCB-97: General Teams Agent OpenAI cases chat locally but not remotely", a
   }
 });
 
+test("VCB-98: General Teams Agent cases enable Copilot launches before scaffolding", async () => {
+  const result = await compileFixture(
+    "general-teams-agent.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  assert.equal(result.value.length, 17);
+
+  for (const entry of result.value) {
+    const settingIndex = entry.plan.steps.findIndex(
+      (step) =>
+        step.description ===
+        "@code set the M365AgentsToolkit.enableLaunchAgentForTeamsInCopilot VS Code user setting to true and verify the persisted boolean value.",
+    );
+    const scaffoldIndex = entry.plan.steps.findIndex(
+      (step) =>
+        step.parameters?.text === "Microsoft 365 Agents: Create New Agent/App",
+    );
+    const reloadIndex = entry.plan.steps.findIndex(
+      (step) => step.parameters?.text === "Developer: Reload Window",
+    );
+    const readyIndex = entry.plan.steps.findIndex(
+      (step) =>
+        step.description ===
+        "@assertion the Visual Studio Code workbench has finished reloading and is ready for commands.",
+    );
+
+    assert.notEqual(settingIndex, -1, entry.caseId);
+    assert.notEqual(scaffoldIndex, -1, entry.caseId);
+    assert.notEqual(reloadIndex, -1, entry.caseId);
+    assert.notEqual(readyIndex, -1, entry.caseId);
+    assert.ok(settingIndex < reloadIndex, entry.caseId);
+    assert.ok(reloadIndex < readyIndex, entry.caseId);
+    assert.ok(readyIndex < scaffoldIndex, entry.caseId);
+  }
+
+  const missingFeatureFlag = await compileFixture(
+    "general-teams-agent.yml",
+    (sourceText) =>
+      sourceText.replace(
+        /featureFlags:\r?\n  - TEAMSFX_CEA_ENABLED=true\r?\n/,
+        "",
+      ),
+  );
+  assert.equal(missingFeatureFlag.ok, false);
+  assert.equal(
+    missingFeatureFlag.diagnostics[0].code,
+    "VCB_SCAFFOLD_PREREQUISITE",
+  );
+});
+
 test("VCB-73: an OpenAI weather case asserts a completion locally but not remotely", async () => {
   const result = await compileFixture(
     "weather-agent.yml",
