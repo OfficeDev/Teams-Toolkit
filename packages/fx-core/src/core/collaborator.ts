@@ -477,7 +477,7 @@ export async function listCollaborator(
   if (inputs[CollaborationConstants.IncludeCollaborators] === true) {
     return ok({
       state: CollaborationState.OK,
-      collaborators: mergeCollaborators(teamsAppOwners, aadOwners),
+      collaborators: mergeCollaborators(teamsAppOwners, aadOwners, agentOwners),
     });
   }
   return ok({
@@ -487,7 +487,8 @@ export async function listCollaborator(
 
 function mergeCollaborators(
   teamsAppOwners: TeamsAppAdmin[],
-  aadOwners: AadOwner[]
+  aadOwners: AadOwner[],
+  agentOwners: AgentOwner[]
 ): Collaborator[] {
   const collaboratorMap = new Map<string, Collaborator>();
   for (const teamsOwner of teamsAppOwners) {
@@ -496,6 +497,7 @@ function mergeCollaborators(
       userObjectId: teamsOwner.userObjectId,
       isAadOwner: false,
       teamsAppResourceId: teamsOwner.resourceId,
+      isAgentOwner: false,
     });
   }
   for (const aadOwner of aadOwners) {
@@ -510,6 +512,23 @@ function mergeCollaborators(
         isAadOwner: true,
         teamsAppResourceId: "",
         aadResourceId: aadOwner.resourceId,
+        isAgentOwner: false,
+      });
+    }
+  }
+  for (const agentOwner of agentOwners) {
+    const existing = collaboratorMap.get(agentOwner.userObjectId);
+    if (existing) {
+      existing.isAgentOwner = true;
+      existing.agentResourceId = agentOwner.resourceId;
+    } else {
+      collaboratorMap.set(agentOwner.userObjectId, {
+        userPrincipalName: agentOwner.userPrincipalName,
+        userObjectId: agentOwner.userObjectId,
+        isAadOwner: false,
+        teamsAppResourceId: "",
+        isAgentOwner: true,
+        agentResourceId: agentOwner.resourceId,
       });
     }
   }

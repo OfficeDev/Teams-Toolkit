@@ -155,6 +155,7 @@ describe("Collaborator APIs for V3", () => {
           isAadOwner: true,
           teamsAppResourceId: "fake-resource-id",
           aadResourceId: "fake-resource-id",
+          isAgentOwner: false,
         },
       ]);
     });
@@ -237,6 +238,7 @@ describe("Collaborator APIs for V3", () => {
           userPrincipalName: "teams-only-user-principal-name",
           isAadOwner: false,
           teamsAppResourceId: "fake-teams-resource-id",
+          isAgentOwner: false,
         },
         {
           userObjectId: "aad-only-user-object-id",
@@ -244,6 +246,46 @@ describe("Collaborator APIs for V3", () => {
           isAadOwner: true,
           teamsAppResourceId: "",
           aadResourceId: "fake-aad-resource-id",
+          isAgentOwner: false,
+        },
+      ]);
+    });
+
+    it("should merge agent owners into collaborators list", async () => {
+      vi.spyOn(tokenProvider.m365TokenProvider, "getJsonObject").mockResolvedValue(
+        ok({
+          tid: "mock_project_tenant_id",
+          oid: "fake_oid",
+          unique_name: "fake_unique_name",
+          name: "fake_name",
+        })
+      );
+      const expectedTitleId = "test-agent-title";
+      vi.spyOn(shareUtils, "parseShareAppActionYamlConfig").mockResolvedValueOnce(
+        ok({ titleId: expectedTitleId, teamsappId: "", appId: "" })
+      );
+      vi.spyOn(AgentCollaboration.prototype, "listCollaborator").mockResolvedValue(
+        ok([
+          {
+            userObjectId: "agent-only-user-object-id",
+            resourceId: expectedTitleId,
+            displayName: "agent-only-display-name",
+            userPrincipalName: "agent-only-user-principal-name",
+          },
+        ])
+      );
+      inputs[QuestionNames.collaborationAppType] = [CollaborationConstants.AgentOptionId];
+      inputs[CollaborationConstants.IncludeCollaborators] = true;
+      const result = await listCollaborator(ctx, inputs, tokenProvider);
+      assert.isTrue(result.isOk());
+      assert.deepEqual(result._unsafeUnwrap().collaborators, [
+        {
+          userObjectId: "agent-only-user-object-id",
+          userPrincipalName: "agent-only-user-principal-name",
+          isAadOwner: false,
+          teamsAppResourceId: "",
+          isAgentOwner: true,
+          agentResourceId: expectedTitleId,
         },
       ]);
     });
