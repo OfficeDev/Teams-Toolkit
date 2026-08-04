@@ -1,147 +1,150 @@
 {
   "plan_metadata": {
     "version": "1.1",
-    "plan_id": "plan_d3c6a39ac5cf",
+    "plan_id": "plan_70284e82bb8c",
     "execution_context": {
       "delay_between_steps": 1,
       "stop_on_error": true,
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 115,
-    "name": "general-teams-py-openai-local-teams",
+    "total_steps": 118,
+    "name": "rag-customize-py-openai-local-teams",
     "description": {
       "owner": "",
-      "workitem": "SCN-CREATE-CUSTOM-COPILOT-BASIC-04",
+      "workitem": "SCN-CREATE-RAG-CUSTOMIZE-04",
       "other": ""
     },
     "execution_order": [
-      "step_closeWelcomeOverlay_assertVisible_c9e3ec5f9_1_1",
-      "step_closeWelcomeOverlay_close_c9e3ec5f9_1_1",
-      "step_closeWelcomeOverlay_assertReady_c9e3ec5f9_1_1",
-      "step_executeCommand_open_c9e3ec5f9_1_2",
-      "step_executeCommand_assertPalette_c9e3ec5f9_1_2",
-      "step_executeCommand_filter_c9e3ec5f9_1_2",
-      "step_executeCommand_assertCommand_c9e3ec5f9_1_2",
-      "step_executeCommand_execute_c9e3ec5f9_1_2",
-      "step_assertToolkitViewSettled_assert_c9e3ec5f9_1_3",
-      "step_closeGetStartedEditor_assertActive_c9e3ec5f9_1_4",
-      "step_closeGetStartedEditor_close_c9e3ec5f9_1_4",
-      "step_closeGetStartedEditor_assertClosed_c9e3ec5f9_1_4",
-      "step_executeCommand_open_c9e3ec5f9_1_5",
-      "step_executeCommand_assertPalette_c9e3ec5f9_1_5",
-      "step_executeCommand_filter_c9e3ec5f9_1_5",
-      "step_executeCommand_assertCommand_c9e3ec5f9_1_5",
-      "step_executeCommand_execute_c9e3ec5f9_1_5",
-      "step_singleSelect_assertQuestion_c9e3ec5f9_1_6",
-      "step_singleSelect_assertOptionsLoaded_c9e3ec5f9_1_6",
-      "step_singleSelect_filter_c9e3ec5f9_1_6",
-      "step_singleSelect_assertOption_c9e3ec5f9_1_6",
-      "step_singleSelect_confirm_c9e3ec5f9_1_6",
-      "step_singleSelect_assertQuestion_c9e3ec5f9_1_7",
-      "step_singleSelect_assertOptionsLoaded_c9e3ec5f9_1_7",
-      "step_singleSelect_filter_c9e3ec5f9_1_7",
-      "step_singleSelect_assertOption_c9e3ec5f9_1_7",
-      "step_singleSelect_confirm_c9e3ec5f9_1_7",
-      "step_singleSelect_assertQuestion_c9e3ec5f9_1_8",
-      "step_singleSelect_assertOptionsLoaded_c9e3ec5f9_1_8",
-      "step_singleSelect_filter_c9e3ec5f9_1_8",
-      "step_singleSelect_assertOption_c9e3ec5f9_1_8",
-      "step_singleSelect_confirm_c9e3ec5f9_1_8",
-      "step_textInput_assertQuestion_c9e3ec5f9_1_9",
-      "step_textInput_input_c9e3ec5f9_1_9",
-      "step_textInput_confirm_c9e3ec5f9_1_9",
-      "step_singleSelect_assertQuestion_c9e3ec5f9_1_10",
-      "step_singleSelect_assertOptionsLoaded_c9e3ec5f9_1_10",
-      "step_singleSelect_filter_c9e3ec5f9_1_10",
-      "step_singleSelect_assertOption_c9e3ec5f9_1_10",
-      "step_singleSelect_confirm_c9e3ec5f9_1_10",
-      "step_confirmOption_assertPrompt_c9e3ec5f9_1_11",
-      "step_confirmOption_confirm_c9e3ec5f9_1_11",
-      "step_textInput_assertQuestion_c9e3ec5f9_1_12",
-      "step_textInput_input_c9e3ec5f9_1_12",
-      "step_textInput_confirm_c9e3ec5f9_1_12",
-      "step_assertProjectWindowReady_assert_c9e3ec5f9_1_13",
-      "step_checkWorkspaceFiles_verify_c9e3ec5f9_2_1",
-      "step_checkWorkspaceFiles_verify_c9e3ec5f9_2_2",
-      "step_checkWorkspaceFiles_verify_c9e3ec5f9_2_3",
-      "step_checkWorkspaceFiles_verify_c9e3ec5f9_2_4",
-      "step_checkWorkspaceFiles_verify_c9e3ec5f9_2_5",
-      "step_executeCommand_open_c9e3ec5f9_3_1",
-      "step_executeCommand_assertPalette_c9e3ec5f9_3_1",
-      "step_executeCommand_filter_c9e3ec5f9_3_1",
-      "step_executeCommand_assertCommand_c9e3ec5f9_3_1",
-      "step_executeCommand_execute_c9e3ec5f9_3_1",
-      "step_filterOption_filter_c9e3ec5f9_3_2",
-      "step_filterOption_assertOption_c9e3ec5f9_3_2",
-      "step_filterOption_confirm_c9e3ec5f9_3_2",
-      "step_filterOption_filter_c9e3ec5f9_3_3",
-      "step_filterOption_assertOption_c9e3ec5f9_3_3",
-      "step_filterOption_confirm_c9e3ec5f9_3_3",
-      "step_multiSelect_assertQuestion_c9e3ec5f9_3_4",
-      "step_multiSelect_assertOptionsLoaded_c9e3ec5f9_3_4",
-      "step_multiSelect_focusSelectAll_c9e3ec5f9_3_4",
-      "step_multiSelect_selectAll_c9e3ec5f9_3_4",
-      "step_multiSelect_restoreFocus_c9e3ec5f9_3_4",
-      "step_multiSelect_confirm_c9e3ec5f9_3_4",
-      "step_executeCommand_open_c9e3ec5f9_3_5",
-      "step_executeCommand_assertPalette_c9e3ec5f9_3_5",
-      "step_executeCommand_filter_c9e3ec5f9_3_5",
-      "step_executeCommand_assertCommand_c9e3ec5f9_3_5",
-      "step_executeCommand_execute_c9e3ec5f9_3_5",
-      "step_assertNotificationContains_assert_c9e3ec5f9_3_6",
-      "step_setLocalEnvironmentVariable_c9e3ec5f9_4_1",
-      "step_executeCommand_open_c9e3ec5f9_5_1",
-      "step_executeCommand_assertPalette_c9e3ec5f9_5_1",
-      "step_executeCommand_filter_c9e3ec5f9_5_1",
-      "step_executeCommand_assertCommand_c9e3ec5f9_5_1",
-      "step_executeCommand_execute_c9e3ec5f9_5_1",
-      "step_signInM365_assertOption_c9e3ec5f9_5_2",
-      "step_signInM365_selectOption_c9e3ec5f9_5_2",
-      "step_signInM365_confirmSignIn_c9e3ec5f9_5_2",
-      "step_signInM365_focusAccount_c9e3ec5f9_5_2",
-      "step_signInM365_typeAccount_c9e3ec5f9_5_2",
-      "step_signInM365_next_c9e3ec5f9_5_2",
-      "step_signInM365_typePassword_c9e3ec5f9_5_2",
-      "step_signInM365_submit_c9e3ec5f9_5_2",
-      "step_signInM365_closeBrowser_c9e3ec5f9_5_2",
-      "step_signInM365_assertReady_c9e3ec5f9_5_2",
-      "step_executeCommand_open_c9e3ec5f9_6_1",
-      "step_executeCommand_assertPalette_c9e3ec5f9_6_1",
-      "step_executeCommand_filter_c9e3ec5f9_6_1",
-      "step_executeCommand_assertCommand_c9e3ec5f9_6_1",
-      "step_executeCommand_execute_c9e3ec5f9_6_1",
-      "step_filterOption_filter_c9e3ec5f9_6_2",
-      "step_filterOption_assertOption_c9e3ec5f9_6_2",
-      "step_filterOption_confirm_c9e3ec5f9_6_2",
-      "step_browserM365PasswordSignIn_assertPassword_c9e3ec5f9_6_3",
-      "step_browserM365PasswordSignIn_focusPassword_c9e3ec5f9_6_3",
-      "step_browserM365PasswordSignIn_enterPassword_c9e3ec5f9_6_3",
-      "step_browserM365PasswordSignIn_submitPassword_c9e3ec5f9_6_3",
-      "step_browserM365PasswordSignIn_assertStaySignedIn_c9e3ec5f9_6_3",
-      "step_browserM365PasswordSignIn_confirmStaySignedIn_c9e3ec5f9_6_3",
-      "step_assertReady_assertReady_c9e3ec5f9_6_4",
-      "step_addAndOpenApp_assertAdd_c9e3ec5f9_7_1",
-      "step_addAndOpenApp_add_c9e3ec5f9_7_1",
-      "step_addAndOpenApp_assertAdded_c9e3ec5f9_7_1",
-      "step_addAndOpenApp_open_c9e3ec5f9_7_1",
-      "step_addAndOpenApp_assertReady_c9e3ec5f9_7_1",
-      "step_sendTeamsMessage_assertInput_c9e3ec5f9_8_1",
-      "step_sendTeamsMessage_focusInput_c9e3ec5f9_8_1",
-      "step_sendTeamsMessage_type_c9e3ec5f9_8_1",
-      "step_sendTeamsMessage_send_c9e3ec5f9_8_1",
-      "step_assertChatReplied_assert_c9e3ec5f9_8_2"
+      "step_closeWelcomeOverlay_assertVisible_cc18694a1_1_1",
+      "step_closeWelcomeOverlay_close_cc18694a1_1_1",
+      "step_closeWelcomeOverlay_assertReady_cc18694a1_1_1",
+      "step_executeCommand_open_cc18694a1_1_2",
+      "step_executeCommand_assertPalette_cc18694a1_1_2",
+      "step_executeCommand_filter_cc18694a1_1_2",
+      "step_executeCommand_assertCommand_cc18694a1_1_2",
+      "step_executeCommand_execute_cc18694a1_1_2",
+      "step_assertToolkitViewSettled_assert_cc18694a1_1_3",
+      "step_closeGetStartedEditor_assertActive_cc18694a1_1_4",
+      "step_closeGetStartedEditor_close_cc18694a1_1_4",
+      "step_closeGetStartedEditor_assertClosed_cc18694a1_1_4",
+      "step_executeCommand_open_cc18694a1_1_5",
+      "step_executeCommand_assertPalette_cc18694a1_1_5",
+      "step_executeCommand_filter_cc18694a1_1_5",
+      "step_executeCommand_assertCommand_cc18694a1_1_5",
+      "step_executeCommand_execute_cc18694a1_1_5",
+      "step_singleSelect_assertQuestion_cc18694a1_1_6",
+      "step_singleSelect_assertOptionsLoaded_cc18694a1_1_6",
+      "step_singleSelect_filter_cc18694a1_1_6",
+      "step_singleSelect_assertOption_cc18694a1_1_6",
+      "step_singleSelect_confirm_cc18694a1_1_6",
+      "step_singleSelect_assertQuestion_cc18694a1_1_7",
+      "step_singleSelect_assertOptionsLoaded_cc18694a1_1_7",
+      "step_singleSelect_filter_cc18694a1_1_7",
+      "step_singleSelect_assertOption_cc18694a1_1_7",
+      "step_singleSelect_confirm_cc18694a1_1_7",
+      "step_singleSelect_assertQuestion_cc18694a1_1_8",
+      "step_singleSelect_assertOptionsLoaded_cc18694a1_1_8",
+      "step_singleSelect_filter_cc18694a1_1_8",
+      "step_singleSelect_assertOption_cc18694a1_1_8",
+      "step_singleSelect_confirm_cc18694a1_1_8",
+      "step_singleSelect_assertQuestion_cc18694a1_1_9",
+      "step_singleSelect_assertOptionsLoaded_cc18694a1_1_9",
+      "step_singleSelect_filter_cc18694a1_1_9",
+      "step_singleSelect_assertOption_cc18694a1_1_9",
+      "step_singleSelect_confirm_cc18694a1_1_9",
+      "step_textInput_assertQuestion_cc18694a1_1_10",
+      "step_textInput_input_cc18694a1_1_10",
+      "step_textInput_confirm_cc18694a1_1_10",
+      "step_singleSelect_assertQuestion_cc18694a1_1_11",
+      "step_singleSelect_assertOptionsLoaded_cc18694a1_1_11",
+      "step_singleSelect_filter_cc18694a1_1_11",
+      "step_singleSelect_assertOption_cc18694a1_1_11",
+      "step_singleSelect_confirm_cc18694a1_1_11",
+      "step_confirmOption_assertPrompt_cc18694a1_1_12",
+      "step_confirmOption_confirm_cc18694a1_1_12",
+      "step_textInput_assertQuestion_cc18694a1_1_13",
+      "step_textInput_input_cc18694a1_1_13",
+      "step_textInput_confirm_cc18694a1_1_13",
+      "step_assertProjectWindowReady_assert_cc18694a1_1_14",
+      "step_checkWorkspaceFiles_verify_cc18694a1_2_1",
+      "step_checkWorkspaceFiles_verify_cc18694a1_2_2",
+      "step_checkWorkspaceFiles_verify_cc18694a1_2_3",
+      "step_executeCommand_open_cc18694a1_3_1",
+      "step_executeCommand_assertPalette_cc18694a1_3_1",
+      "step_executeCommand_filter_cc18694a1_3_1",
+      "step_executeCommand_assertCommand_cc18694a1_3_1",
+      "step_executeCommand_execute_cc18694a1_3_1",
+      "step_filterOption_filter_cc18694a1_3_2",
+      "step_filterOption_assertOption_cc18694a1_3_2",
+      "step_filterOption_confirm_cc18694a1_3_2",
+      "step_filterOption_filter_cc18694a1_3_3",
+      "step_filterOption_assertOption_cc18694a1_3_3",
+      "step_filterOption_confirm_cc18694a1_3_3",
+      "step_multiSelect_assertQuestion_cc18694a1_3_4",
+      "step_multiSelect_assertOptionsLoaded_cc18694a1_3_4",
+      "step_multiSelect_focusSelectAll_cc18694a1_3_4",
+      "step_multiSelect_selectAll_cc18694a1_3_4",
+      "step_multiSelect_restoreFocus_cc18694a1_3_4",
+      "step_multiSelect_confirm_cc18694a1_3_4",
+      "step_executeCommand_open_cc18694a1_3_5",
+      "step_executeCommand_assertPalette_cc18694a1_3_5",
+      "step_executeCommand_filter_cc18694a1_3_5",
+      "step_executeCommand_assertCommand_cc18694a1_3_5",
+      "step_executeCommand_execute_cc18694a1_3_5",
+      "step_assertNotificationContains_assert_cc18694a1_3_6",
+      "step_setLocalEnvironmentVariable_cc18694a1_4_1",
+      "step_executeCommand_open_cc18694a1_5_1",
+      "step_executeCommand_assertPalette_cc18694a1_5_1",
+      "step_executeCommand_filter_cc18694a1_5_1",
+      "step_executeCommand_assertCommand_cc18694a1_5_1",
+      "step_executeCommand_execute_cc18694a1_5_1",
+      "step_signInM365_assertOption_cc18694a1_5_2",
+      "step_signInM365_selectOption_cc18694a1_5_2",
+      "step_signInM365_confirmSignIn_cc18694a1_5_2",
+      "step_signInM365_focusAccount_cc18694a1_5_2",
+      "step_signInM365_typeAccount_cc18694a1_5_2",
+      "step_signInM365_next_cc18694a1_5_2",
+      "step_signInM365_typePassword_cc18694a1_5_2",
+      "step_signInM365_submit_cc18694a1_5_2",
+      "step_signInM365_closeBrowser_cc18694a1_5_2",
+      "step_signInM365_assertReady_cc18694a1_5_2",
+      "step_executeCommand_open_cc18694a1_6_1",
+      "step_executeCommand_assertPalette_cc18694a1_6_1",
+      "step_executeCommand_filter_cc18694a1_6_1",
+      "step_executeCommand_assertCommand_cc18694a1_6_1",
+      "step_executeCommand_execute_cc18694a1_6_1",
+      "step_filterOption_filter_cc18694a1_6_2",
+      "step_filterOption_assertOption_cc18694a1_6_2",
+      "step_filterOption_confirm_cc18694a1_6_2",
+      "step_browserM365PasswordSignIn_assertPassword_cc18694a1_6_3",
+      "step_browserM365PasswordSignIn_focusPassword_cc18694a1_6_3",
+      "step_browserM365PasswordSignIn_enterPassword_cc18694a1_6_3",
+      "step_browserM365PasswordSignIn_submitPassword_cc18694a1_6_3",
+      "step_browserM365PasswordSignIn_assertStaySignedIn_cc18694a1_6_3",
+      "step_browserM365PasswordSignIn_confirmStaySignedIn_cc18694a1_6_3",
+      "step_assertReady_assertReady_cc18694a1_6_4",
+      "step_addAndOpenApp_assertAdd_cc18694a1_7_1",
+      "step_addAndOpenApp_add_cc18694a1_7_1",
+      "step_addAndOpenApp_assertAdded_cc18694a1_7_1",
+      "step_addAndOpenApp_open_cc18694a1_7_1",
+      "step_addAndOpenApp_assertReady_cc18694a1_7_1",
+      "step_sendTeamsMessage_assertInput_cc18694a1_8_1",
+      "step_sendTeamsMessage_focusInput_cc18694a1_8_1",
+      "step_sendTeamsMessage_type_cc18694a1_8_1",
+      "step_sendTeamsMessage_send_cc18694a1_8_1",
+      "step_assertChatReplied_assert_cc18694a1_8_2"
     ],
     "tags": [
-      "case_id:general-teams-py-openai-local-teams",
-      "scenario_id:SCN-CREATE-CUSTOM-COPILOT-BASIC-04",
-      "template_id:custom-copilot-basic",
+      "case_id:rag-customize-py-openai-local-teams",
+      "scenario_id:SCN-CREATE-RAG-CUSTOMIZE-04",
+      "template_id:custom-copilot-rag-customize",
       "gate:pr"
     ]
   },
   "steps": [
     {
-      "step_id": "step_closeWelcomeOverlay_assertVisible_c9e3ec5f9_1_1",
+      "step_id": "step_closeWelcomeOverlay_assertVisible_cc18694a1_1_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -160,7 +163,7 @@
       ]
     },
     {
-      "step_id": "step_closeWelcomeOverlay_close_c9e3ec5f9_1_1",
+      "step_id": "step_closeWelcomeOverlay_close_cc18694a1_1_1",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -174,7 +177,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_closeWelcomeOverlay_assertVisible_c9e3ec5f9_1_1"
+        "step_closeWelcomeOverlay_assertVisible_cc18694a1_1_1"
       ],
       "preconditions": [
         "dhash:952:128:16:5:255266345964665b",
@@ -189,7 +192,7 @@
       ]
     },
     {
-      "step_id": "step_closeWelcomeOverlay_assertReady_c9e3ec5f9_1_1",
+      "step_id": "step_closeWelcomeOverlay_assertReady_cc18694a1_1_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -199,7 +202,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_closeWelcomeOverlay_close_c9e3ec5f9_1_1"
+        "step_closeWelcomeOverlay_close_cc18694a1_1_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -210,7 +213,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_open_c9e3ec5f9_1_2",
+      "step_id": "step_executeCommand_open_cc18694a1_1_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -222,7 +225,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_closeWelcomeOverlay_assertReady_c9e3ec5f9_1_1"
+        "step_closeWelcomeOverlay_assertReady_cc18694a1_1_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -232,7 +235,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertPalette_c9e3ec5f9_1_2",
+      "step_id": "step_executeCommand_assertPalette_cc18694a1_1_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -242,7 +245,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_open_c9e3ec5f9_1_2"
+        "step_executeCommand_open_cc18694a1_1_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -253,7 +256,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_filter_c9e3ec5f9_1_2",
+      "step_id": "step_executeCommand_filter_cc18694a1_1_2",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -265,7 +268,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertPalette_c9e3ec5f9_1_2"
+        "step_executeCommand_assertPalette_cc18694a1_1_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -275,7 +278,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertCommand_c9e3ec5f9_1_2",
+      "step_id": "step_executeCommand_assertCommand_cc18694a1_1_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -285,7 +288,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_filter_c9e3ec5f9_1_2"
+        "step_executeCommand_filter_cc18694a1_1_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -296,7 +299,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_execute_c9e3ec5f9_1_2",
+      "step_id": "step_executeCommand_execute_cc18694a1_1_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -308,7 +311,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertCommand_c9e3ec5f9_1_2"
+        "step_executeCommand_assertCommand_cc18694a1_1_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -318,7 +321,7 @@
       ]
     },
     {
-      "step_id": "step_assertToolkitViewSettled_assert_c9e3ec5f9_1_3",
+      "step_id": "step_assertToolkitViewSettled_assert_cc18694a1_1_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -328,7 +331,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_c9e3ec5f9_1_2"
+        "step_executeCommand_execute_cc18694a1_1_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -339,7 +342,7 @@
       ]
     },
     {
-      "step_id": "step_closeGetStartedEditor_assertActive_c9e3ec5f9_1_4",
+      "step_id": "step_closeGetStartedEditor_assertActive_cc18694a1_1_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -349,7 +352,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertToolkitViewSettled_assert_c9e3ec5f9_1_3"
+        "step_assertToolkitViewSettled_assert_cc18694a1_1_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -360,7 +363,7 @@
       ]
     },
     {
-      "step_id": "step_closeGetStartedEditor_close_c9e3ec5f9_1_4",
+      "step_id": "step_closeGetStartedEditor_close_cc18694a1_1_4",
       "agent": "interaction",
       "tool": "keyboard_shortcut",
       "parameters": {
@@ -372,7 +375,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_closeGetStartedEditor_assertActive_c9e3ec5f9_1_4"
+        "step_closeGetStartedEditor_assertActive_cc18694a1_1_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -382,7 +385,7 @@
       ]
     },
     {
-      "step_id": "step_closeGetStartedEditor_assertClosed_c9e3ec5f9_1_4",
+      "step_id": "step_closeGetStartedEditor_assertClosed_cc18694a1_1_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -392,7 +395,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_closeGetStartedEditor_close_c9e3ec5f9_1_4"
+        "step_closeGetStartedEditor_close_cc18694a1_1_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -403,7 +406,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_open_c9e3ec5f9_1_5",
+      "step_id": "step_executeCommand_open_cc18694a1_1_5",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -415,7 +418,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_closeGetStartedEditor_assertClosed_c9e3ec5f9_1_4"
+        "step_closeGetStartedEditor_assertClosed_cc18694a1_1_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -425,7 +428,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertPalette_c9e3ec5f9_1_5",
+      "step_id": "step_executeCommand_assertPalette_cc18694a1_1_5",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -435,7 +438,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_open_c9e3ec5f9_1_5"
+        "step_executeCommand_open_cc18694a1_1_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -446,7 +449,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_filter_c9e3ec5f9_1_5",
+      "step_id": "step_executeCommand_filter_cc18694a1_1_5",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -458,7 +461,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertPalette_c9e3ec5f9_1_5"
+        "step_executeCommand_assertPalette_cc18694a1_1_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -468,7 +471,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertCommand_c9e3ec5f9_1_5",
+      "step_id": "step_executeCommand_assertCommand_cc18694a1_1_5",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -478,7 +481,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_filter_c9e3ec5f9_1_5"
+        "step_executeCommand_filter_cc18694a1_1_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -489,7 +492,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_execute_c9e3ec5f9_1_5",
+      "step_id": "step_executeCommand_execute_cc18694a1_1_5",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -501,7 +504,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertCommand_c9e3ec5f9_1_5"
+        "step_executeCommand_assertCommand_cc18694a1_1_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -511,7 +514,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertQuestion_c9e3ec5f9_1_6",
+      "step_id": "step_singleSelect_assertQuestion_cc18694a1_1_6",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -521,7 +524,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_c9e3ec5f9_1_5"
+        "step_executeCommand_execute_cc18694a1_1_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -532,7 +535,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOptionsLoaded_c9e3ec5f9_1_6",
+      "step_id": "step_singleSelect_assertOptionsLoaded_cc18694a1_1_6",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -542,7 +545,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_c9e3ec5f9_1_6"
+        "step_singleSelect_assertQuestion_cc18694a1_1_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -553,7 +556,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_filter_c9e3ec5f9_1_6",
+      "step_id": "step_singleSelect_filter_cc18694a1_1_6",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -565,7 +568,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOptionsLoaded_c9e3ec5f9_1_6"
+        "step_singleSelect_assertOptionsLoaded_cc18694a1_1_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -575,7 +578,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOption_c9e3ec5f9_1_6",
+      "step_id": "step_singleSelect_assertOption_cc18694a1_1_6",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -585,7 +588,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_filter_c9e3ec5f9_1_6"
+        "step_singleSelect_filter_cc18694a1_1_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -596,7 +599,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_confirm_c9e3ec5f9_1_6",
+      "step_id": "step_singleSelect_confirm_cc18694a1_1_6",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -608,7 +611,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOption_c9e3ec5f9_1_6"
+        "step_singleSelect_assertOption_cc18694a1_1_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -618,7 +621,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertQuestion_c9e3ec5f9_1_7",
+      "step_id": "step_singleSelect_assertQuestion_cc18694a1_1_7",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -628,7 +631,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_confirm_c9e3ec5f9_1_6"
+        "step_singleSelect_confirm_cc18694a1_1_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -639,7 +642,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOptionsLoaded_c9e3ec5f9_1_7",
+      "step_id": "step_singleSelect_assertOptionsLoaded_cc18694a1_1_7",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -649,7 +652,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_c9e3ec5f9_1_7"
+        "step_singleSelect_assertQuestion_cc18694a1_1_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -660,19 +663,19 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_filter_c9e3ec5f9_1_7",
+      "step_id": "step_singleSelect_filter_cc18694a1_1_7",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "General Teams Agent"
+        "text": "Teams Agent with Data"
       },
-      "description": "Type the resolved option label General Teams Agent into the active single-select prompt.",
+      "description": "Type the resolved option label Teams Agent with Data into the active single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOptionsLoaded_c9e3ec5f9_1_7"
+        "step_singleSelect_assertOptionsLoaded_cc18694a1_1_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -682,17 +685,17 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOption_c9e3ec5f9_1_7",
+      "step_id": "step_singleSelect_assertOption_cc18694a1_1_7",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the option General Teams Agent is visible and selectable in the filtered single-select prompt.",
+      "description": "@assertion the option Teams Agent with Data is visible and selectable in the filtered single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_filter_c9e3ec5f9_1_7"
+        "step_singleSelect_filter_cc18694a1_1_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -703,7 +706,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_confirm_c9e3ec5f9_1_7",
+      "step_id": "step_singleSelect_confirm_cc18694a1_1_7",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -715,7 +718,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOption_c9e3ec5f9_1_7"
+        "step_singleSelect_assertOption_cc18694a1_1_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -725,17 +728,17 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertQuestion_c9e3ec5f9_1_8",
+      "step_id": "step_singleSelect_assertQuestion_cc18694a1_1_8",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the active prompt titled Service for Large Language Model (LLM) is visible.",
+      "description": "@assertion the active prompt titled Teams Agent with Data is visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_confirm_c9e3ec5f9_1_7"
+        "step_singleSelect_confirm_cc18694a1_1_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -746,17 +749,17 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOptionsLoaded_c9e3ec5f9_1_8",
+      "step_id": "step_singleSelect_assertOptionsLoaded_cc18694a1_1_8",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the prompt titled Service for Large Language Model (LLM) has finished loading and lists at least one selectable option.",
+      "description": "@assertion the prompt titled Teams Agent with Data has finished loading and lists at least one selectable option.",
       "content_refs": [],
       "timeout": 120,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_c9e3ec5f9_1_8"
+        "step_singleSelect_assertQuestion_cc18694a1_1_8"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -767,7 +770,114 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_filter_c9e3ec5f9_1_8",
+      "step_id": "step_singleSelect_filter_cc18694a1_1_8",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Customize"
+      },
+      "description": "Type the resolved option label Customize into the active single-select prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertOptionsLoaded_cc18694a1_1_8"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertOption_cc18694a1_1_8",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the option Customize is visible and selectable in the filtered single-select prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_filter_cc18694a1_1_8"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_confirm_cc18694a1_1_8",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the filtered single-select option.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertOption_cc18694a1_1_8"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertQuestion_cc18694a1_1_9",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the active prompt titled Service for Large Language Model (LLM) is visible.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_confirm_cc18694a1_1_8"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertOptionsLoaded_cc18694a1_1_9",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the prompt titled Service for Large Language Model (LLM) has finished loading and lists at least one selectable option.",
+      "content_refs": [],
+      "timeout": 120,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertQuestion_cc18694a1_1_9"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_filter_cc18694a1_1_9",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -779,7 +889,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOptionsLoaded_c9e3ec5f9_1_8"
+        "step_singleSelect_assertOptionsLoaded_cc18694a1_1_9"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -789,7 +899,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOption_c9e3ec5f9_1_8",
+      "step_id": "step_singleSelect_assertOption_cc18694a1_1_9",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -799,7 +909,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_filter_c9e3ec5f9_1_8"
+        "step_singleSelect_filter_cc18694a1_1_9"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -810,7 +920,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_confirm_c9e3ec5f9_1_8",
+      "step_id": "step_singleSelect_confirm_cc18694a1_1_9",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -822,7 +932,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOption_c9e3ec5f9_1_8"
+        "step_singleSelect_assertOption_cc18694a1_1_9"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -832,7 +942,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_assertQuestion_c9e3ec5f9_1_9",
+      "step_id": "step_textInput_assertQuestion_cc18694a1_1_10",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -842,7 +952,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_confirm_c9e3ec5f9_1_8"
+        "step_singleSelect_confirm_cc18694a1_1_9"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -853,7 +963,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_input_c9e3ec5f9_1_9",
+      "step_id": "step_textInput_input_cc18694a1_1_10",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -865,7 +975,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_assertQuestion_c9e3ec5f9_1_9"
+        "step_textInput_assertQuestion_cc18694a1_1_10"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -875,7 +985,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_confirm_c9e3ec5f9_1_9",
+      "step_id": "step_textInput_confirm_cc18694a1_1_10",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -887,7 +997,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_input_c9e3ec5f9_1_9"
+        "step_textInput_input_cc18694a1_1_10"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -897,7 +1007,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertQuestion_c9e3ec5f9_1_10",
+      "step_id": "step_singleSelect_assertQuestion_cc18694a1_1_11",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -907,7 +1017,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_confirm_c9e3ec5f9_1_9"
+        "step_textInput_confirm_cc18694a1_1_10"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -918,7 +1028,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOptionsLoaded_c9e3ec5f9_1_10",
+      "step_id": "step_singleSelect_assertOptionsLoaded_cc18694a1_1_11",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -928,7 +1038,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_c9e3ec5f9_1_10"
+        "step_singleSelect_assertQuestion_cc18694a1_1_11"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -939,7 +1049,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_filter_c9e3ec5f9_1_10",
+      "step_id": "step_singleSelect_filter_cc18694a1_1_11",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -951,7 +1061,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOptionsLoaded_c9e3ec5f9_1_10"
+        "step_singleSelect_assertOptionsLoaded_cc18694a1_1_11"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -961,7 +1071,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOption_c9e3ec5f9_1_10",
+      "step_id": "step_singleSelect_assertOption_cc18694a1_1_11",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -971,7 +1081,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_filter_c9e3ec5f9_1_10"
+        "step_singleSelect_filter_cc18694a1_1_11"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -982,7 +1092,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_confirm_c9e3ec5f9_1_10",
+      "step_id": "step_singleSelect_confirm_cc18694a1_1_11",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -994,7 +1104,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOption_c9e3ec5f9_1_10"
+        "step_singleSelect_assertOption_cc18694a1_1_11"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1004,7 +1114,7 @@
       ]
     },
     {
-      "step_id": "step_confirmOption_assertPrompt_c9e3ec5f9_1_11",
+      "step_id": "step_confirmOption_assertPrompt_cc18694a1_1_12",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1014,7 +1124,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_confirm_c9e3ec5f9_1_10"
+        "step_singleSelect_confirm_cc18694a1_1_11"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1026,7 +1136,7 @@
       ]
     },
     {
-      "step_id": "step_confirmOption_confirm_c9e3ec5f9_1_11",
+      "step_id": "step_confirmOption_confirm_cc18694a1_1_12",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1038,7 +1148,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_confirmOption_assertPrompt_c9e3ec5f9_1_11"
+        "step_confirmOption_assertPrompt_cc18694a1_1_12"
       ],
       "preconditions": [
         "dhash:364:74:16:5:08056a9a5d5516b6",
@@ -1053,7 +1163,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_assertQuestion_c9e3ec5f9_1_12",
+      "step_id": "step_textInput_assertQuestion_cc18694a1_1_13",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1063,7 +1173,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_confirmOption_confirm_c9e3ec5f9_1_11"
+        "step_confirmOption_confirm_cc18694a1_1_12"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1074,7 +1184,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_input_c9e3ec5f9_1_12",
+      "step_id": "step_textInput_input_cc18694a1_1_13",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1086,7 +1196,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_assertQuestion_c9e3ec5f9_1_12"
+        "step_textInput_assertQuestion_cc18694a1_1_13"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1096,7 +1206,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_confirm_c9e3ec5f9_1_12",
+      "step_id": "step_textInput_confirm_cc18694a1_1_13",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1108,7 +1218,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_input_c9e3ec5f9_1_12"
+        "step_textInput_input_cc18694a1_1_13"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1118,7 +1228,7 @@
       ]
     },
     {
-      "step_id": "step_assertProjectWindowReady_assert_c9e3ec5f9_1_13",
+      "step_id": "step_assertProjectWindowReady_assert_cc18694a1_1_14",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1128,7 +1238,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_confirm_c9e3ec5f9_1_12"
+        "step_textInput_confirm_cc18694a1_1_13"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1139,11 +1249,11 @@
       ]
     },
     {
-      "step_id": "step_checkWorkspaceFiles_verify_c9e3ec5f9_2_1",
+      "step_id": "step_checkWorkspaceFiles_verify_cc18694a1_2_1",
       "agent": "code",
       "tool": "",
       "parameters": {
-        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" ASSERTIONS_B64=\"W3sicGF0aCI6Im0zNjVhZ2VudHMueW1sIiwiZXhpc3RzIjp0cnVlLCJjb250YWlucyI6WyJ2ZXJzaW9uOiB2MS4xMSIsInByb3Zpc2lvbjoiLCJkZXBsb3k6IiwidGVhbXNBcHAvZXh0ZW5kVG9NMzY1Il0sIm5vdENvbnRhaW5zIjpbXX1d\" python3 - <<'PY'\nimport base64\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\nassertions = json.loads(base64.b64decode(os.environ[\"ASSERTIONS_B64\"]).decode(\"utf-8\"))\nfor assertion in assertions:\n    target = (project / assertion[\"path\"]).resolve()\n    try:\n        target.relative_to(project)\n    except ValueError as error:\n        raise AssertionError(\"File assertion escaped the project directory\") from error\n    exists = target.is_file()\n    if exists != assertion[\"exists\"]:\n        raise AssertionError(f\"Unexpected file existence for {assertion['path']}\")\n    if not exists:\n        continue\n    content = target.read_text(encoding=\"utf-8\")\n    for expected in assertion.get(\"contains\", []):\n        expected = expected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if expected not in content:\n            raise AssertionError(f\"Expected content is absent from {assertion['path']}\")\n    for unexpected in assertion.get(\"notContains\", []):\n        unexpected = unexpected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if unexpected in content:\n            raise AssertionError(f\"Unexpected content is present in {assertion['path']}\")\nPY\n```"
+        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" ASSERTIONS_B64=\"W3sicGF0aCI6InNyYy9teV9kYXRhX3NvdXJjZS5weSIsImV4aXN0cyI6dHJ1ZSwiY29udGFpbnMiOltdLCJub3RDb250YWlucyI6W119XQ==\" python3 - <<'PY'\nimport base64\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\nassertions = json.loads(base64.b64decode(os.environ[\"ASSERTIONS_B64\"]).decode(\"utf-8\"))\nfor assertion in assertions:\n    target = (project / assertion[\"path\"]).resolve()\n    try:\n        target.relative_to(project)\n    except ValueError as error:\n        raise AssertionError(\"File assertion escaped the project directory\") from error\n    exists = target.is_file()\n    if exists != assertion[\"exists\"]:\n        raise AssertionError(f\"Unexpected file existence for {assertion['path']}\")\n    if not exists:\n        continue\n    content = target.read_text(encoding=\"utf-8\")\n    for expected in assertion.get(\"contains\", []):\n        expected = expected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if expected not in content:\n            raise AssertionError(f\"Expected content is absent from {assertion['path']}\")\n    for unexpected in assertion.get(\"notContains\", []):\n        unexpected = unexpected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if unexpected in content:\n            raise AssertionError(f\"Unexpected content is present in {assertion['path']}\")\nPY\n```"
       },
       "description": "@code verify the authored workspace file existence and content assertions without logging file contents.",
       "content_refs": [],
@@ -1151,7 +1261,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertProjectWindowReady_assert_c9e3ec5f9_1_13"
+        "step_assertProjectWindowReady_assert_cc18694a1_1_14"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1162,11 +1272,11 @@
       ]
     },
     {
-      "step_id": "step_checkWorkspaceFiles_verify_c9e3ec5f9_2_2",
+      "step_id": "step_checkWorkspaceFiles_verify_cc18694a1_2_2",
       "agent": "code",
       "tool": "",
       "parameters": {
-        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" ASSERTIONS_B64=\"W3sicGF0aCI6InNyYy9hcHAucHkiLCJleGlzdHMiOnRydWUsImNvbnRhaW5zIjpbXSwibm90Q29udGFpbnMiOltdfV0=\" python3 - <<'PY'\nimport base64\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\nassertions = json.loads(base64.b64decode(os.environ[\"ASSERTIONS_B64\"]).decode(\"utf-8\"))\nfor assertion in assertions:\n    target = (project / assertion[\"path\"]).resolve()\n    try:\n        target.relative_to(project)\n    except ValueError as error:\n        raise AssertionError(\"File assertion escaped the project directory\") from error\n    exists = target.is_file()\n    if exists != assertion[\"exists\"]:\n        raise AssertionError(f\"Unexpected file existence for {assertion['path']}\")\n    if not exists:\n        continue\n    content = target.read_text(encoding=\"utf-8\")\n    for expected in assertion.get(\"contains\", []):\n        expected = expected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if expected not in content:\n            raise AssertionError(f\"Expected content is absent from {assertion['path']}\")\n    for unexpected in assertion.get(\"notContains\", []):\n        unexpected = unexpected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if unexpected in content:\n            raise AssertionError(f\"Unexpected content is present in {assertion['path']}\")\nPY\n```"
+        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" ASSERTIONS_B64=\"W3sicGF0aCI6InNyYy9jb25maWcucHkiLCJleGlzdHMiOnRydWUsImNvbnRhaW5zIjpbIk9QRU5BSV9BUElfS0VZIiwiT1BFTkFJX01PREVMX05BTUU9J2dwdC0zLjUtdHVyYm8nIl0sIm5vdENvbnRhaW5zIjpbIkFaVVJFX09QRU5BSV9BUElfS0VZIl19XQ==\" python3 - <<'PY'\nimport base64\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\nassertions = json.loads(base64.b64decode(os.environ[\"ASSERTIONS_B64\"]).decode(\"utf-8\"))\nfor assertion in assertions:\n    target = (project / assertion[\"path\"]).resolve()\n    try:\n        target.relative_to(project)\n    except ValueError as error:\n        raise AssertionError(\"File assertion escaped the project directory\") from error\n    exists = target.is_file()\n    if exists != assertion[\"exists\"]:\n        raise AssertionError(f\"Unexpected file existence for {assertion['path']}\")\n    if not exists:\n        continue\n    content = target.read_text(encoding=\"utf-8\")\n    for expected in assertion.get(\"contains\", []):\n        expected = expected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if expected not in content:\n            raise AssertionError(f\"Expected content is absent from {assertion['path']}\")\n    for unexpected in assertion.get(\"notContains\", []):\n        unexpected = unexpected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if unexpected in content:\n            raise AssertionError(f\"Unexpected content is present in {assertion['path']}\")\nPY\n```"
       },
       "description": "@code verify the authored workspace file existence and content assertions without logging file contents.",
       "content_refs": [],
@@ -1174,7 +1284,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_checkWorkspaceFiles_verify_c9e3ec5f9_2_1"
+        "step_checkWorkspaceFiles_verify_cc18694a1_2_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1185,30 +1295,7 @@
       ]
     },
     {
-      "step_id": "step_checkWorkspaceFiles_verify_c9e3ec5f9_2_3",
-      "agent": "code",
-      "tool": "",
-      "parameters": {
-        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" ASSERTIONS_B64=\"W3sicGF0aCI6InNyYy9jb25maWcucHkiLCJleGlzdHMiOnRydWUsImNvbnRhaW5zIjpbIk9QRU5BSV9BUElfS0VZID0iLCJPUEVOQUlfTU9ERUxfTkFNRT0nZ3B0LTMuNS10dXJibyciXSwibm90Q29udGFpbnMiOlsiQVpVUkVfT1BFTkFJX0FQSV9LRVkiXX1d\" python3 - <<'PY'\nimport base64\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\nassertions = json.loads(base64.b64decode(os.environ[\"ASSERTIONS_B64\"]).decode(\"utf-8\"))\nfor assertion in assertions:\n    target = (project / assertion[\"path\"]).resolve()\n    try:\n        target.relative_to(project)\n    except ValueError as error:\n        raise AssertionError(\"File assertion escaped the project directory\") from error\n    exists = target.is_file()\n    if exists != assertion[\"exists\"]:\n        raise AssertionError(f\"Unexpected file existence for {assertion['path']}\")\n    if not exists:\n        continue\n    content = target.read_text(encoding=\"utf-8\")\n    for expected in assertion.get(\"contains\", []):\n        expected = expected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if expected not in content:\n            raise AssertionError(f\"Expected content is absent from {assertion['path']}\")\n    for unexpected in assertion.get(\"notContains\", []):\n        unexpected = unexpected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if unexpected in content:\n            raise AssertionError(f\"Unexpected content is present in {assertion['path']}\")\nPY\n```"
-      },
-      "description": "@code verify the authored workspace file existence and content assertions without logging file contents.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_checkWorkspaceFiles_verify_c9e3ec5f9_2_2"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:checks",
-        "assertion:file",
-        "step_retry_timeout:120"
-      ]
-    },
-    {
-      "step_id": "step_checkWorkspaceFiles_verify_c9e3ec5f9_2_4",
+      "step_id": "step_checkWorkspaceFiles_verify_cc18694a1_2_3",
       "agent": "code",
       "tool": "",
       "parameters": {
@@ -1220,7 +1307,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_checkWorkspaceFiles_verify_c9e3ec5f9_2_3"
+        "step_checkWorkspaceFiles_verify_cc18694a1_2_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1231,30 +1318,7 @@
       ]
     },
     {
-      "step_id": "step_checkWorkspaceFiles_verify_c9e3ec5f9_2_5",
-      "agent": "code",
-      "tool": "",
-      "parameters": {
-        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" ASSERTIONS_B64=\"W3sicGF0aCI6InBhY2thZ2UuanNvbiIsImV4aXN0cyI6ZmFsc2UsImNvbnRhaW5zIjpbXSwibm90Q29udGFpbnMiOltdfV0=\" python3 - <<'PY'\nimport base64\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\nassertions = json.loads(base64.b64decode(os.environ[\"ASSERTIONS_B64\"]).decode(\"utf-8\"))\nfor assertion in assertions:\n    target = (project / assertion[\"path\"]).resolve()\n    try:\n        target.relative_to(project)\n    except ValueError as error:\n        raise AssertionError(\"File assertion escaped the project directory\") from error\n    exists = target.is_file()\n    if exists != assertion[\"exists\"]:\n        raise AssertionError(f\"Unexpected file existence for {assertion['path']}\")\n    if not exists:\n        continue\n    content = target.read_text(encoding=\"utf-8\")\n    for expected in assertion.get(\"contains\", []):\n        expected = expected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if expected not in content:\n            raise AssertionError(f\"Expected content is absent from {assertion['path']}\")\n    for unexpected in assertion.get(\"notContains\", []):\n        unexpected = unexpected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if unexpected in content:\n            raise AssertionError(f\"Unexpected content is present in {assertion['path']}\")\nPY\n```"
-      },
-      "description": "@code verify the authored workspace file existence and content assertions without logging file contents.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_checkWorkspaceFiles_verify_c9e3ec5f9_2_4"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:checks",
-        "assertion:file",
-        "step_retry_timeout:120"
-      ]
-    },
-    {
-      "step_id": "step_executeCommand_open_c9e3ec5f9_3_1",
+      "step_id": "step_executeCommand_open_cc18694a1_3_1",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1266,7 +1330,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_checkWorkspaceFiles_verify_c9e3ec5f9_2_5"
+        "step_checkWorkspaceFiles_verify_cc18694a1_2_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1276,7 +1340,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertPalette_c9e3ec5f9_3_1",
+      "step_id": "step_executeCommand_assertPalette_cc18694a1_3_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1286,7 +1350,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_open_c9e3ec5f9_3_1"
+        "step_executeCommand_open_cc18694a1_3_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1297,7 +1361,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_filter_c9e3ec5f9_3_1",
+      "step_id": "step_executeCommand_filter_cc18694a1_3_1",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1309,7 +1373,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertPalette_c9e3ec5f9_3_1"
+        "step_executeCommand_assertPalette_cc18694a1_3_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1319,7 +1383,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertCommand_c9e3ec5f9_3_1",
+      "step_id": "step_executeCommand_assertCommand_cc18694a1_3_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1329,7 +1393,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_filter_c9e3ec5f9_3_1"
+        "step_executeCommand_filter_cc18694a1_3_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1340,7 +1404,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_execute_c9e3ec5f9_3_1",
+      "step_id": "step_executeCommand_execute_cc18694a1_3_1",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1352,7 +1416,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertCommand_c9e3ec5f9_3_1"
+        "step_executeCommand_assertCommand_cc18694a1_3_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1362,7 +1426,7 @@
       ]
     },
     {
-      "step_id": "step_filterOption_filter_c9e3ec5f9_3_2",
+      "step_id": "step_filterOption_filter_cc18694a1_3_2",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1374,7 +1438,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_c9e3ec5f9_3_1"
+        "step_executeCommand_execute_cc18694a1_3_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1384,7 +1448,7 @@
       ]
     },
     {
-      "step_id": "step_filterOption_assertOption_c9e3ec5f9_3_2",
+      "step_id": "step_filterOption_assertOption_cc18694a1_3_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1394,7 +1458,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_filter_c9e3ec5f9_3_2"
+        "step_filterOption_filter_cc18694a1_3_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1405,7 +1469,7 @@
       ]
     },
     {
-      "step_id": "step_filterOption_confirm_c9e3ec5f9_3_2",
+      "step_id": "step_filterOption_confirm_cc18694a1_3_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1417,7 +1481,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_assertOption_c9e3ec5f9_3_2"
+        "step_filterOption_assertOption_cc18694a1_3_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1427,7 +1491,7 @@
       ]
     },
     {
-      "step_id": "step_filterOption_filter_c9e3ec5f9_3_3",
+      "step_id": "step_filterOption_filter_cc18694a1_3_3",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1439,7 +1503,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_confirm_c9e3ec5f9_3_2"
+        "step_filterOption_confirm_cc18694a1_3_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1449,7 +1513,7 @@
       ]
     },
     {
-      "step_id": "step_filterOption_assertOption_c9e3ec5f9_3_3",
+      "step_id": "step_filterOption_assertOption_cc18694a1_3_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1459,7 +1523,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_filter_c9e3ec5f9_3_3"
+        "step_filterOption_filter_cc18694a1_3_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1470,7 +1534,7 @@
       ]
     },
     {
-      "step_id": "step_filterOption_confirm_c9e3ec5f9_3_3",
+      "step_id": "step_filterOption_confirm_cc18694a1_3_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1482,7 +1546,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_assertOption_c9e3ec5f9_3_3"
+        "step_filterOption_assertOption_cc18694a1_3_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1492,7 +1556,7 @@
       ]
     },
     {
-      "step_id": "step_multiSelect_assertQuestion_c9e3ec5f9_3_4",
+      "step_id": "step_multiSelect_assertQuestion_cc18694a1_3_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1502,7 +1566,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_confirm_c9e3ec5f9_3_3"
+        "step_filterOption_confirm_cc18694a1_3_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1513,7 +1577,7 @@
       ]
     },
     {
-      "step_id": "step_multiSelect_assertOptionsLoaded_c9e3ec5f9_3_4",
+      "step_id": "step_multiSelect_assertOptionsLoaded_cc18694a1_3_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1523,7 +1587,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_multiSelect_assertQuestion_c9e3ec5f9_3_4"
+        "step_multiSelect_assertQuestion_cc18694a1_3_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1534,7 +1598,7 @@
       ]
     },
     {
-      "step_id": "step_multiSelect_focusSelectAll_c9e3ec5f9_3_4",
+      "step_id": "step_multiSelect_focusSelectAll_cc18694a1_3_4",
       "agent": "interaction",
       "tool": "keyboard_shortcut",
       "parameters": {
@@ -1546,7 +1610,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_multiSelect_assertOptionsLoaded_c9e3ec5f9_3_4"
+        "step_multiSelect_assertOptionsLoaded_cc18694a1_3_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1556,7 +1620,7 @@
       ]
     },
     {
-      "step_id": "step_multiSelect_selectAll_c9e3ec5f9_3_4",
+      "step_id": "step_multiSelect_selectAll_cc18694a1_3_4",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1568,7 +1632,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_multiSelect_focusSelectAll_c9e3ec5f9_3_4"
+        "step_multiSelect_focusSelectAll_cc18694a1_3_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1578,7 +1642,7 @@
       ]
     },
     {
-      "step_id": "step_multiSelect_restoreFocus_c9e3ec5f9_3_4",
+      "step_id": "step_multiSelect_restoreFocus_cc18694a1_3_4",
       "agent": "interaction",
       "tool": "keyboard_shortcut",
       "parameters": {
@@ -1590,7 +1654,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_multiSelect_selectAll_c9e3ec5f9_3_4"
+        "step_multiSelect_selectAll_cc18694a1_3_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1600,7 +1664,7 @@
       ]
     },
     {
-      "step_id": "step_multiSelect_confirm_c9e3ec5f9_3_4",
+      "step_id": "step_multiSelect_confirm_cc18694a1_3_4",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1612,7 +1676,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_multiSelect_restoreFocus_c9e3ec5f9_3_4"
+        "step_multiSelect_restoreFocus_cc18694a1_3_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1622,7 +1686,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_open_c9e3ec5f9_3_5",
+      "step_id": "step_executeCommand_open_cc18694a1_3_5",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1634,7 +1698,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_multiSelect_confirm_c9e3ec5f9_3_4"
+        "step_multiSelect_confirm_cc18694a1_3_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1644,7 +1708,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertPalette_c9e3ec5f9_3_5",
+      "step_id": "step_executeCommand_assertPalette_cc18694a1_3_5",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1654,7 +1718,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_open_c9e3ec5f9_3_5"
+        "step_executeCommand_open_cc18694a1_3_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1665,7 +1729,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_filter_c9e3ec5f9_3_5",
+      "step_id": "step_executeCommand_filter_cc18694a1_3_5",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1677,7 +1741,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertPalette_c9e3ec5f9_3_5"
+        "step_executeCommand_assertPalette_cc18694a1_3_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1687,7 +1751,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertCommand_c9e3ec5f9_3_5",
+      "step_id": "step_executeCommand_assertCommand_cc18694a1_3_5",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1697,7 +1761,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_filter_c9e3ec5f9_3_5"
+        "step_executeCommand_filter_cc18694a1_3_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1708,7 +1772,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_execute_c9e3ec5f9_3_5",
+      "step_id": "step_executeCommand_execute_cc18694a1_3_5",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1720,7 +1784,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertCommand_c9e3ec5f9_3_5"
+        "step_executeCommand_assertCommand_cc18694a1_3_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1730,7 +1794,7 @@
       ]
     },
     {
-      "step_id": "step_assertNotificationContains_assert_c9e3ec5f9_3_6",
+      "step_id": "step_assertNotificationContains_assert_cc18694a1_3_6",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1740,7 +1804,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_c9e3ec5f9_3_5"
+        "step_executeCommand_execute_cc18694a1_3_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1751,7 +1815,7 @@
       ]
     },
     {
-      "step_id": "step_setLocalEnvironmentVariable_c9e3ec5f9_4_1",
+      "step_id": "step_setLocalEnvironmentVariable_cc18694a1_4_1",
       "agent": "code",
       "tool": "",
       "parameters": {
@@ -1763,7 +1827,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertNotificationContains_assert_c9e3ec5f9_3_6"
+        "step_assertNotificationContains_assert_cc18694a1_3_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1774,7 +1838,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_open_c9e3ec5f9_5_1",
+      "step_id": "step_executeCommand_open_cc18694a1_5_1",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1786,7 +1850,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_setLocalEnvironmentVariable_c9e3ec5f9_4_1"
+        "step_setLocalEnvironmentVariable_cc18694a1_4_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1796,7 +1860,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertPalette_c9e3ec5f9_5_1",
+      "step_id": "step_executeCommand_assertPalette_cc18694a1_5_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1806,7 +1870,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_open_c9e3ec5f9_5_1"
+        "step_executeCommand_open_cc18694a1_5_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1817,7 +1881,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_filter_c9e3ec5f9_5_1",
+      "step_id": "step_executeCommand_filter_cc18694a1_5_1",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1829,7 +1893,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertPalette_c9e3ec5f9_5_1"
+        "step_executeCommand_assertPalette_cc18694a1_5_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1839,7 +1903,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertCommand_c9e3ec5f9_5_1",
+      "step_id": "step_executeCommand_assertCommand_cc18694a1_5_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1849,7 +1913,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_filter_c9e3ec5f9_5_1"
+        "step_executeCommand_filter_cc18694a1_5_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1860,7 +1924,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_execute_c9e3ec5f9_5_1",
+      "step_id": "step_executeCommand_execute_cc18694a1_5_1",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1872,7 +1936,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertCommand_c9e3ec5f9_5_1"
+        "step_executeCommand_assertCommand_cc18694a1_5_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1882,7 +1946,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_assertOption_c9e3ec5f9_5_2",
+      "step_id": "step_signInM365_assertOption_cc18694a1_5_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1892,7 +1956,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_c9e3ec5f9_5_1"
+        "step_executeCommand_execute_cc18694a1_5_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1904,7 +1968,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_selectOption_c9e3ec5f9_5_2",
+      "step_id": "step_signInM365_selectOption_cc18694a1_5_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -1918,7 +1982,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_assertOption_c9e3ec5f9_5_2"
+        "step_signInM365_assertOption_cc18694a1_5_2"
       ],
       "preconditions": [
         "dhash:213:102:16:5:9c63d67674d4c718",
@@ -1932,7 +1996,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_confirmSignIn_c9e3ec5f9_5_2",
+      "step_id": "step_signInM365_confirmSignIn_cc18694a1_5_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -1946,7 +2010,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_selectOption_c9e3ec5f9_5_2"
+        "step_signInM365_selectOption_cc18694a1_5_2"
       ],
       "preconditions": [
         "dhash:762:97:16:5:24b1a72ba9aba343",
@@ -1960,7 +2024,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_focusAccount_c9e3ec5f9_5_2",
+      "step_id": "step_signInM365_focusAccount_cc18694a1_5_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -1974,7 +2038,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_confirmSignIn_c9e3ec5f9_5_2"
+        "step_signInM365_confirmSignIn_cc18694a1_5_2"
       ],
       "preconditions": [
         "dhash:369:350:16:5:2113d25252525221",
@@ -1989,7 +2053,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_typeAccount_c9e3ec5f9_5_2",
+      "step_id": "step_signInM365_typeAccount_cc18694a1_5_2",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -2001,7 +2065,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_focusAccount_c9e3ec5f9_5_2"
+        "step_signInM365_focusAccount_cc18694a1_5_2"
       ],
       "preconditions": [
         "dhash:512:384:0:20:1b28f0d9e7e6dae4"
@@ -2014,7 +2078,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_next_c9e3ec5f9_5_2",
+      "step_id": "step_signInM365_next_cc18694a1_5_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -2028,7 +2092,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_typeAccount_c9e3ec5f9_5_2"
+        "step_signInM365_typeAccount_cc18694a1_5_2"
       ],
       "preconditions": [
         "dhash:629:484:16:5:23248c4b6c24d32c",
@@ -2043,7 +2107,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_typePassword_c9e3ec5f9_5_2",
+      "step_id": "step_signInM365_typePassword_cc18694a1_5_2",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -2055,7 +2119,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_next_c9e3ec5f9_5_2"
+        "step_signInM365_next_cc18694a1_5_2"
       ],
       "preconditions": [
         "dhash:512:384:0:20:1b08f0d9d1e6e6e4"
@@ -2068,7 +2132,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_submit_c9e3ec5f9_5_2",
+      "step_id": "step_signInM365_submit_cc18694a1_5_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2080,7 +2144,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_typePassword_c9e3ec5f9_5_2"
+        "step_signInM365_typePassword_cc18694a1_5_2"
       ],
       "preconditions": [
         "dhash:512:384:0:20:1b08f0d9d1e6e6e4"
@@ -2093,7 +2157,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_closeBrowser_c9e3ec5f9_5_2",
+      "step_id": "step_signInM365_closeBrowser_cc18694a1_5_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -2107,7 +2171,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_submit_c9e3ec5f9_5_2"
+        "step_signInM365_submit_cc18694a1_5_2"
       ],
       "preconditions": [
         "dhash:1004:19:16:5:aac833964c9633cc",
@@ -2122,7 +2186,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_assertReady_c9e3ec5f9_5_2",
+      "step_id": "step_signInM365_assertReady_cc18694a1_5_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2132,7 +2196,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_closeBrowser_c9e3ec5f9_5_2"
+        "step_signInM365_closeBrowser_cc18694a1_5_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2144,7 +2208,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_open_c9e3ec5f9_6_1",
+      "step_id": "step_executeCommand_open_cc18694a1_6_1",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2156,7 +2220,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_assertReady_c9e3ec5f9_5_2"
+        "step_signInM365_assertReady_cc18694a1_5_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2166,7 +2230,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertPalette_c9e3ec5f9_6_1",
+      "step_id": "step_executeCommand_assertPalette_cc18694a1_6_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2176,7 +2240,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_open_c9e3ec5f9_6_1"
+        "step_executeCommand_open_cc18694a1_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2187,7 +2251,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_filter_c9e3ec5f9_6_1",
+      "step_id": "step_executeCommand_filter_cc18694a1_6_1",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -2199,7 +2263,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertPalette_c9e3ec5f9_6_1"
+        "step_executeCommand_assertPalette_cc18694a1_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2209,7 +2273,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertCommand_c9e3ec5f9_6_1",
+      "step_id": "step_executeCommand_assertCommand_cc18694a1_6_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2219,7 +2283,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_filter_c9e3ec5f9_6_1"
+        "step_executeCommand_filter_cc18694a1_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2230,7 +2294,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_execute_c9e3ec5f9_6_1",
+      "step_id": "step_executeCommand_execute_cc18694a1_6_1",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2242,7 +2306,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertCommand_c9e3ec5f9_6_1"
+        "step_executeCommand_assertCommand_cc18694a1_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2252,7 +2316,7 @@
       ]
     },
     {
-      "step_id": "step_filterOption_filter_c9e3ec5f9_6_2",
+      "step_id": "step_filterOption_filter_cc18694a1_6_2",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -2264,7 +2328,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_c9e3ec5f9_6_1"
+        "step_executeCommand_execute_cc18694a1_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2274,7 +2338,7 @@
       ]
     },
     {
-      "step_id": "step_filterOption_assertOption_c9e3ec5f9_6_2",
+      "step_id": "step_filterOption_assertOption_cc18694a1_6_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2284,7 +2348,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_filter_c9e3ec5f9_6_2"
+        "step_filterOption_filter_cc18694a1_6_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2295,7 +2359,7 @@
       ]
     },
     {
-      "step_id": "step_filterOption_confirm_c9e3ec5f9_6_2",
+      "step_id": "step_filterOption_confirm_cc18694a1_6_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2307,7 +2371,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_assertOption_c9e3ec5f9_6_2"
+        "step_filterOption_assertOption_cc18694a1_6_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2317,7 +2381,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365PasswordSignIn_assertPassword_c9e3ec5f9_6_3",
+      "step_id": "step_browserM365PasswordSignIn_assertPassword_cc18694a1_6_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2327,7 +2391,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_confirm_c9e3ec5f9_6_2"
+        "step_filterOption_confirm_cc18694a1_6_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2338,7 +2402,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365PasswordSignIn_focusPassword_c9e3ec5f9_6_3",
+      "step_id": "step_browserM365PasswordSignIn_focusPassword_cc18694a1_6_3",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -2352,7 +2416,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365PasswordSignIn_assertPassword_c9e3ec5f9_6_3"
+        "step_browserM365PasswordSignIn_assertPassword_cc18694a1_6_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2362,7 +2426,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365PasswordSignIn_enterPassword_c9e3ec5f9_6_3",
+      "step_id": "step_browserM365PasswordSignIn_enterPassword_cc18694a1_6_3",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -2374,7 +2438,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365PasswordSignIn_focusPassword_c9e3ec5f9_6_3"
+        "step_browserM365PasswordSignIn_focusPassword_cc18694a1_6_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2384,7 +2448,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365PasswordSignIn_submitPassword_c9e3ec5f9_6_3",
+      "step_id": "step_browserM365PasswordSignIn_submitPassword_cc18694a1_6_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2396,7 +2460,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365PasswordSignIn_enterPassword_c9e3ec5f9_6_3"
+        "step_browserM365PasswordSignIn_enterPassword_cc18694a1_6_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2406,7 +2470,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365PasswordSignIn_assertStaySignedIn_c9e3ec5f9_6_3",
+      "step_id": "step_browserM365PasswordSignIn_assertStaySignedIn_cc18694a1_6_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2416,7 +2480,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365PasswordSignIn_submitPassword_c9e3ec5f9_6_3"
+        "step_browserM365PasswordSignIn_submitPassword_cc18694a1_6_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2427,7 +2491,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365PasswordSignIn_confirmStaySignedIn_c9e3ec5f9_6_3",
+      "step_id": "step_browserM365PasswordSignIn_confirmStaySignedIn_cc18694a1_6_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2439,7 +2503,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365PasswordSignIn_assertStaySignedIn_c9e3ec5f9_6_3"
+        "step_browserM365PasswordSignIn_assertStaySignedIn_cc18694a1_6_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2450,7 +2514,7 @@
       ]
     },
     {
-      "step_id": "step_assertReady_assertReady_c9e3ec5f9_6_4",
+      "step_id": "step_assertReady_assertReady_cc18694a1_6_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2460,7 +2524,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365PasswordSignIn_confirmStaySignedIn_c9e3ec5f9_6_3"
+        "step_browserM365PasswordSignIn_confirmStaySignedIn_cc18694a1_6_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2471,7 +2535,7 @@
       ]
     },
     {
-      "step_id": "step_addAndOpenApp_assertAdd_c9e3ec5f9_7_1",
+      "step_id": "step_addAndOpenApp_assertAdd_cc18694a1_7_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2481,7 +2545,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertReady_assertReady_c9e3ec5f9_6_4"
+        "step_assertReady_assertReady_cc18694a1_6_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2493,7 +2557,7 @@
       ]
     },
     {
-      "step_id": "step_addAndOpenApp_add_c9e3ec5f9_7_1",
+      "step_id": "step_addAndOpenApp_add_cc18694a1_7_1",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -2507,7 +2571,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_addAndOpenApp_assertAdd_c9e3ec5f9_7_1"
+        "step_addAndOpenApp_assertAdd_cc18694a1_7_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2519,7 +2583,7 @@
       ]
     },
     {
-      "step_id": "step_addAndOpenApp_assertAdded_c9e3ec5f9_7_1",
+      "step_id": "step_addAndOpenApp_assertAdded_cc18694a1_7_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2529,7 +2593,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_addAndOpenApp_add_c9e3ec5f9_7_1"
+        "step_addAndOpenApp_add_cc18694a1_7_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2541,7 +2605,7 @@
       ]
     },
     {
-      "step_id": "step_addAndOpenApp_open_c9e3ec5f9_7_1",
+      "step_id": "step_addAndOpenApp_open_cc18694a1_7_1",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -2555,7 +2619,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_addAndOpenApp_assertAdded_c9e3ec5f9_7_1"
+        "step_addAndOpenApp_assertAdded_cc18694a1_7_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2567,7 +2631,7 @@
       ]
     },
     {
-      "step_id": "step_addAndOpenApp_assertReady_c9e3ec5f9_7_1",
+      "step_id": "step_addAndOpenApp_assertReady_cc18694a1_7_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2577,7 +2641,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_addAndOpenApp_open_c9e3ec5f9_7_1"
+        "step_addAndOpenApp_open_cc18694a1_7_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2589,7 +2653,7 @@
       ]
     },
     {
-      "step_id": "step_sendTeamsMessage_assertInput_c9e3ec5f9_8_1",
+      "step_id": "step_sendTeamsMessage_assertInput_cc18694a1_8_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2599,7 +2663,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_addAndOpenApp_assertReady_c9e3ec5f9_7_1"
+        "step_addAndOpenApp_assertReady_cc18694a1_7_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2612,7 +2676,7 @@
       ]
     },
     {
-      "step_id": "step_sendTeamsMessage_focusInput_c9e3ec5f9_8_1",
+      "step_id": "step_sendTeamsMessage_focusInput_cc18694a1_8_1",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -2626,7 +2690,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_sendTeamsMessage_assertInput_c9e3ec5f9_8_1"
+        "step_sendTeamsMessage_assertInput_cc18694a1_8_1"
       ],
       "preconditions": [
         "dhash:200:712:16:5:258c421e0d2c2d1c",
@@ -2642,19 +2706,19 @@
       ]
     },
     {
-      "step_id": "step_sendTeamsMessage_type_c9e3ec5f9_8_1",
+      "step_id": "step_sendTeamsMessage_type_cc18694a1_8_1",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "How to develop agent for Teams?"
+        "text": "What is included in the Contoso Electronics PerksPlus program?"
       },
-      "description": "Type \"How to develop agent for Teams?\" into the Teams message input.",
+      "description": "Type \"What is included in the Contoso Electronics PerksPlus program?\" into the Teams message input.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_sendTeamsMessage_focusInput_c9e3ec5f9_8_1"
+        "step_sendTeamsMessage_focusInput_cc18694a1_8_1"
       ],
       "preconditions": [
         "dhash:512:384:0:20:24b4b08e8e8c80a9"
@@ -2668,7 +2732,7 @@
       ]
     },
     {
-      "step_id": "step_sendTeamsMessage_send_c9e3ec5f9_8_1",
+      "step_id": "step_sendTeamsMessage_send_cc18694a1_8_1",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2680,7 +2744,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_sendTeamsMessage_type_c9e3ec5f9_8_1"
+        "step_sendTeamsMessage_type_cc18694a1_8_1"
       ],
       "preconditions": [
         "dhash:512:384:0:20:24b4b08e8e8c80b9"
@@ -2694,7 +2758,7 @@
       ]
     },
     {
-      "step_id": "step_assertChatReplied_assert_c9e3ec5f9_8_2",
+      "step_id": "step_assertChatReplied_assert_cc18694a1_8_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2704,7 +2768,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_sendTeamsMessage_send_c9e3ec5f9_8_1"
+        "step_sendTeamsMessage_send_cc18694a1_8_1"
       ],
       "preconditions": [],
       "postconditions": [],
