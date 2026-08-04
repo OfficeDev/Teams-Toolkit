@@ -84,6 +84,14 @@ that no longer exists wherever the status is **Full**.
 | `da-api-plugin-from-existing-api.yml` | `da-api-plugin-from-existing-api-api-key-remote-preview` | `da-api-plugin-from-existing-api--da-api-plugin-from-existing-api-api-key-remote-preview.json` | `DA_Add_Action_Import_Existing_API_Basic_API_Key.json`          | Full    | API Key scaffold, protected credential input, provision, and Copilot remote preview.                                                                                       |
 | `da-api-plugin-from-existing-api.yml` | `da-api-plugin-from-existing-api-bearer-remote-preview`  | `da-api-plugin-from-existing-api--da-api-plugin-from-existing-api-bearer-remote-preview.json`  | `DA_Add_Action_Import_Existing_API_Bearer_token.json`           | Full    | Bearer scaffold, protected token input, provision, and Copilot remote preview.                                                                                             |
 | `da-api-plugin-from-existing-api.yml` | `da-api-plugin-from-existing-api-oauth-remote-preview`   | `da-api-plugin-from-existing-api--da-api-plugin-from-existing-api-oauth-remote-preview.json`   | `DA_Add_Action_Import_Existing_API_Basic_OAuth.json`            | Full    | OAuth scaffold, protected client credentials, provision, Copilot remote preview, and sign-in action assertion.                                                             |
+| `teams-collaborator-agent.yml`        | `collaborator-ts-azure-openai-remote-teams`              | `teams-collaborator-agent--collaborator-ts-azure-openai-remote-teams.json`                     | `Teams_Collaborator_Agent_remote_debug.json`                    | Full    | Teams Collaborator Agent, Azure OpenAI, TypeScript, provision, deploy, and Teams remote launch; the legacy plan also stopped at launch without a chat check.               |
+| `teams-collaborator-agent.yml`        | `collaborator-ts-azure-openai-local-teams`               | `teams-collaborator-agent--collaborator-ts-azure-openai-local-teams.json`                      | `Teams_Collaborator_Agent_local_debug.json`                     | Full    | Teams Collaborator Agent, Azure OpenAI, TypeScript, local Teams launch, and an action-item chat validation asserting a reply instead of the legacy model-authored wording. |
+
+## Legacy Teams Collaborator Agent Plans Not Mapped
+
+`Teams_Collaborator_Agent_debug_in_playground.json` remains recorded. The generated bundle covers the
+remote and local Teams launches only, so no generated case replaces the Agents Playground surface for
+this template yet.
 
 ## Legacy Weather Plans Not Mapped
 
