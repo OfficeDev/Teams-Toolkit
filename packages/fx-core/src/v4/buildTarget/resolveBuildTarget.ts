@@ -24,14 +24,13 @@ import {
 const SOURCE = "Scaffold";
 
 /** The worlds dispatch can hand off to. */
-export type DispatchEngine = "v4" | "v3-core-method" | "surface-action";
+export type DispatchEngine = "v4" | "surface-action";
 
 /** One parsed `selector.json` route. */
 export interface SelectorRoute {
   when: string;
   engine: DispatchEngine;
   templateId?: string;
-  coreMethod?: string;
   action?: string;
   surfaces?: string[];
 }
@@ -70,8 +69,6 @@ export interface RouteResolverPort {
   featureFlag(name: string): boolean;
   /** Membership test for the v4 world. */
   v4Registry(templateId: string): boolean;
-  /** Membership test for the frozen v3 core-method allow-list. */
-  v3CoreMethodRegistry(coreMethod: string): boolean;
 }
 
 /** The resolved dispatch outcome. */
@@ -136,7 +133,6 @@ function buildScope(declared: string[], answers: Record<string, string>): Scope 
 function malformedRouteReason(r: SelectorRoute): string | undefined {
   const has = {
     templateId: r.templateId !== undefined,
-    coreMethod: r.coreMethod !== undefined,
     action: r.action !== undefined,
   };
   switch (r.engine) {
@@ -144,24 +140,16 @@ function malformedRouteReason(r: SelectorRoute): string | undefined {
       if (!has.templateId) {
         return "engine 'v4' requires 'templateId'";
       }
-      if (has.coreMethod || has.action) {
-        return "engine 'v4' must not carry 'coreMethod' / 'action'";
-      }
-      return undefined;
-    case "v3-core-method":
-      if (!has.coreMethod) {
-        return "engine 'v3-core-method' requires 'coreMethod'";
-      }
-      if (has.templateId || has.action) {
-        return "engine 'v3-core-method' must not carry 'templateId' / 'action'";
+      if (has.action) {
+        return "engine 'v4' must not carry 'action'";
       }
       return undefined;
     case "surface-action":
       if (!has.action) {
         return "engine 'surface-action' requires 'action'";
       }
-      if (has.templateId || has.coreMethod) {
-        return "engine 'surface-action' must not carry 'templateId' / 'coreMethod'";
+      if (has.templateId) {
+        return "engine 'surface-action' must not carry 'templateId'";
       }
       return undefined;
   }
@@ -356,8 +344,7 @@ function matchRoute(
 
 /** Dispatch a matched route to its engine-specific id. */
 function dispatchRoute(
-  r: SelectorRoute,
-  port: RouteResolverPort
+  r: SelectorRoute
 ): Result<{ templateId: string; engine: DispatchEngine }, FxError> {
   switch (r.engine) {
     case "v4":
@@ -367,21 +354,6 @@ function dispatchRoute(
         );
       }
       return ok({ templateId: r.templateId, engine: r.engine });
-    case "v3-core-method":
-      if (r.coreMethod === undefined) {
-        return err(
-          userError(BUILD_TARGET_MALFORMED_ROUTE, `route '${r.when}': missing 'coreMethod'`)
-        );
-      }
-      if (!port.v3CoreMethodRegistry(r.coreMethod)) {
-        return err(
-          userError(
-            BUILD_TARGET_UNKNOWN_TEMPLATE,
-            `core method '${r.coreMethod}' is not in the v3 core-method allow-list`
-          )
-        );
-      }
-      return ok({ templateId: r.coreMethod, engine: r.engine });
     case "surface-action":
       if (r.action === undefined) {
         return err(userError(BUILD_TARGET_MALFORMED_ROUTE, `route '${r.when}': missing 'action'`));
@@ -421,7 +393,7 @@ export async function resolveBuildTarget(
   if (matched.isErr()) {
     return err(matched.error);
   }
-  const dispatched = dispatchRoute(matched.value, port);
+  const dispatched = dispatchRoute(matched.value);
   if (dispatched.isErr()) {
     return err(dispatched.error);
   }

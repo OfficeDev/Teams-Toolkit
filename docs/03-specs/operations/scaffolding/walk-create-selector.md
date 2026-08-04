@@ -95,8 +95,8 @@ localization mechanism.
 `Promise<Result<BuildTarget, FxError>>`:
 
 - `ok(BuildTarget)` — `{ templateId, engine, answers }`: the dispatched engine +
-  id (`v4` / `surface-action`, plus the retained `v3-core-method` modify
-  exception) and `answers` — the collected Q1 dimension picks, surfaced as the
+  id (`v4` / `surface-action` — the whole closed set) and `answers` — the
+  collected Q1 dimension picks, surfaced as the
   gate for the Q0 `language` question. `language` is resolved later, in
   [`collect-create-inputs`](collect-create-inputs.md) (ADR-0014 Amendment 2).
 - `UserError` — a route/selector authoring break (malformed / dangling-`v4` /
@@ -208,7 +208,7 @@ flowchart TD
   (AC-12): the resolved source must carry a descriptor for that `templateId`, or
   route resolution fails with `BuildTargetDanglingV4Route`.
 - This operation stops at the dispatched `BuildTarget`; `createProjectFrontDoor`
-  owns the `engine=v4` Q2 + scaffold hand-off and rejects the retained
-  `engine=v3-core-method` exception on the create surface.
+  owns the `engine=v4` Q2 + scaffold hand-off and the `engine=surface-action`
+  hand-off.
 </content>
 </invoke>

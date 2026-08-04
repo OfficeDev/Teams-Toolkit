@@ -188,7 +188,6 @@ export async function modifyProjectFrontDoor(
       }
       return deps.scaffoldV4(inputs, target.value, answers.value);
     }
-    case "v3-core-method":
     case "surface-action":
       return err(unsupportedModifyTarget(target.value));
   }

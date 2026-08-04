@@ -22,8 +22,9 @@ The proposal's §§5/9 replace that with a single **front stage** that resolves 
 a per-kind declarative `selector.json`. The two shipped selectors
 (`create/selector.json`, `modify/selector.json`) are the ground truth this ADR
 ratifies: routing is data under [`selector.schema.json`](../../../templates/v4/schema/selector.schema.json),
-and now routes to v4, surface actions, or the retained `v3-core-method` modify
-exception. The original v3 generator coexistence branch has ended.
+and now routes to v4 or surface actions. Both the v3 generator coexistence
+branch and the retained `v3-core-method` exception have ended (Amendments 3
+and 5).
 
 ## Options considered
 
@@ -60,24 +61,19 @@ exception. The original v3 generator coexistence branch has ended.
   (Q2 → pipeline), which is identical regardless of source.
 
 2. **Each `selector.json` route declares its `engine`** — the closed set is
-   `{ v4, v3-core-method, surface-action }` (invariant 12,
-   `selector.schema.json`):
+   `{ v4, surface-action }` (invariant 12, `selector.schema.json`):
    - `v4` → load `templates/v4/<kind>/<templateId>/{descriptor,questions,pipeline}`
      and run the v4 path (e.g. `da/mcp-server`).
-   - `v3-core-method` → retained only as the explicit modify exception. Once a
-     v4 front door is enabled, create must reject it and modify must not invoke
-     it unless the front-door contract explicitly allows that path.
    - `surface-action` → scaffolds nothing; names an `action` the surface maps to
      a command (the declarative form of today's `start-with-github-copilot`
      special case).
 
-3. **v4 routing is descriptor-derived, with one retained core-method exception**
-  (§5.1, §10). The v3 generator registry is no longer part of selector
-  dispatch. The retained v3 core-method registry is a **frozen** allow-list;
-  v4 routing is **descriptor-derived** (§5.3) — the create selector's routable
+3. **v4 routing is descriptor-derived** (§5.1, §10). Neither the v3 generator
+  registry nor a v3 core-method allow-list is part of selector dispatch; v4
+  routing is **descriptor-derived** (§5.3) — the create selector's routable
   v4 ids are exactly the `templates/v4/create/*` descriptors, not a
   hand-maintained index. New or migrated behavior lands as v4 template data,
-  providers, validators, or pipeline steps, not as `engine:"v3"` routes.
+  providers, validators, or pipeline steps, not as a v3 route.
 
 4. **CLI keeps back-compat aliases** (§9.1): **Amended 2026-06-15 — Amendment 2.**
   With the `direct` source gone, the `--template-id` primitive is withdrawn;
@@ -88,10 +84,10 @@ exception. The original v3 generator coexistence branch has ended.
 ## Consequences
 
 - **New constraint (invariant 12):** every `routes[].engine` must be one of the
-  three values, with the engine-specific required key present (`templateId` /
-  `coreMethod` / `action`) and the other branches' keys forbidden. Enforced by
-  `selector.schema.json` + a loader check. `engine:"v3"` and `v3Adapter` are no
-  longer valid selector authoring surface.
+  two values, with the engine-specific required key present (`templateId` /
+  `action`) and the other branch's key forbidden. Enforced by
+  `selector.schema.json` + a loader check. `engine:"v3"`, `engine:"v3-core-method"`,
+  and `v3Adapter` are no longer valid selector authoring surface.
 - **New constraint (invariant 17):** v4 routing ids must resolve to an existing
   `templates/v4/<kind>/<id>/descriptor.json`; a route to a missing descriptor is
   a build failure (routing is derived, not hand-listed).
@@ -369,3 +365,49 @@ Q1 pick loads a different template's Q2+Q3 without a stale-state hazard.
 [`dispatch-create-by-engine`](../../03-specs/operations/scaffolding/dispatch-create-by-engine.md)
 (DCE-22..25, INV-10 — the re-entry loop) realize this amendment. No other
 ADR-0014 consequence changes.
+
+## Amendment 5 — Remove the retained `v3-core-method` dispatch exception (2026-07-30)
+
+- **Status:** Accepted (in-place amendment; supersedes the retained
+  `v3-core-method` branch in Decision 2 and Decision 3, and the closed-set
+  wording in Amendment 3).
+- **Scope:** Closed engine set and selector route key shape. The single `walk`
+  source, descriptor-bound `language`, `templateId`-only dispatch, and the
+  cross-phase back loop are unchanged.
+
+### Why
+
+`v3-core-method` was kept as the modify exception for `core.addPlugin`. The
+shipped `modify/selector.json` now routes the MCP add-action path straight to
+the authored `modify/add-mcp-server` v4 package, so neither shipped selector
+carries a `v3-core-method` route, and both front doors already answer that
+engine with an unsupported-engine error. Keeping the value in the closed set
+left a dead branch in the resolver, the parser, the schema, and two front doors,
+and — the reason this matters — kept "route it back to a v3 core method"
+*representable*, which is exactly the escape hatch new behavior should not have.
+
+The v4→v3 dispatch fallback is removed at the type level rather than at the
+route level: what cannot be expressed cannot be reintroduced by authoring.
+
+### Decision
+
+The selector engine set is now `{ v4, surface-action }`. `coreMethod`,
+`engine:"v3-core-method"`, and the `v3CoreMethodRegistry` port face are removed
+from `selector.schema.json`, `DispatchEngine`, `SelectorRoute`,
+`RouteResolverPort`, and both front doors' dispatch switches.
+
+This narrows the closed set only. It does **not** remove the flag-off
+`TEAMSFX_V4_ENABLED` pass-through to `createProject`, which is the rollout
+opt-out (dispatch-create-by-engine INV-1), nor the separate v3 entries that
+never reach a selector (`createProjectFromTdp`, sample creation).
+
+### Derived-spec impact
+
+[`resolve-build-target`](../../03-specs/operations/scaffolding/resolve-build-target.md)
+drops the core-method registry from its port, withdraws AC-08 and AC-10, and
+adds AC-23 locking that a `v3-core-method` engine is rejected at parse, and that
+a leftover `coreMethod` key is no longer a route key.
+[`dispatch-create-by-engine`](../../03-specs/operations/scaffolding/dispatch-create-by-engine.md)
+and [`walk-create-selector`](../../03-specs/operations/scaffolding/walk-create-selector.md)
+drop the create-side rejection wording, since such a `BuildTarget` is no longer
+representable.
