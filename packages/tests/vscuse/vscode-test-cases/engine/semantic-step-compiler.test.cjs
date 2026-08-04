@@ -2213,7 +2213,7 @@ steps:
     compileStep: createSemanticStepCompiler(),
     sourcePath: "cases/local-user-environment.yml",
     sourceText: sourceText.replace(
-      'SECRET_API_KEY: "\${{var:app_name}}-api-key"',
+      'SECRET_API_KEY: "${{var:app_name}}-api-key"',
       'SECRET_API_KEY: "$(id)"',
     ),
   });
