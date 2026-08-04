@@ -10,6 +10,7 @@ import {
 } from "@microsoft/teamsfx-api";
 import fs from "fs-extra";
 import mockedEnv, { RestoreFn } from "mocked-env";
+import os from "os";
 import path from "path";
 import { assert, vi } from "vitest";
 import {
@@ -527,13 +528,18 @@ describe("trimManifestShortName", () => {
 describe("resolveLocFile", () => {
   const sandbox = vi;
   let mockedEnvRestore: RestoreFn;
+  let tmpDir: string | undefined;
 
-  afterEach(() => {
+  afterEach(async () => {
     if (mockedEnvRestore) {
       mockedEnvRestore();
     }
     vi.restoreAllMocks();
     vi.restoreAllMocks();
+    if (tmpDir) {
+      await fs.remove(tmpDir);
+      tmpDir = undefined;
+    }
   });
 
   it("returns error when loc file doesn't exist", async () => {
@@ -582,21 +588,17 @@ describe("resolveLocFile", () => {
   });
 
   it("resolves $[file(...)] when context is provided", async () => {
-    vi.spyOn(fs, "pathExists").mockImplementation(async (filePath) => {
-      return filePath === "loc_file_path" || filePath === "instruction.txt";
-    });
-    vi.spyOn(fs, "readFile").mockImplementation(((filePath: number | fs.PathLike) => {
-      if (filePath === "loc_file_path") {
-        return Promise.resolve(
-          JSON.stringify({
-            name: {
-              short: "$[file('instruction.txt')]",
-            },
-          })
-        );
-      }
-      return Promise.resolve("localized short name");
-    }) as any);
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "resolveloc-"));
+    const locFilePath = path.join(tmpDir, "loc_file.json");
+    await fs.writeFile(
+      locFilePath,
+      JSON.stringify({
+        name: {
+          short: "$[file('instruction.txt')]",
+        },
+      })
+    );
+    await fs.writeFile(path.join(tmpDir, "instruction.txt"), "localized short name");
 
     const context: any = {
       platform: Platform.VSCode,
@@ -608,7 +610,7 @@ describe("resolveLocFile", () => {
       },
     };
 
-    const locFile = await manifestUtils.resolveLocFile("loc_file_path", context);
+    const locFile = await manifestUtils.resolveLocFile(locFilePath, context);
 
     assert.isTrue(locFile.isOk());
     if (locFile.isOk()) {

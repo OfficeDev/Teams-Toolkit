@@ -21,6 +21,7 @@ import { PluginManifestSchema } from "./pluginManifest";
 export * from "./declarativeCopilotManifest";
 export * from "./generated-types";
 export * from "./manifest";
+export * from "./manifestTemplate";
 export * from "./pluginManifest";
 export * from "./wrappers";
 

@@ -8,12 +8,18 @@ import {
   Result,
   UserError,
   UserErrorOptions,
+  // Host-agnostic manifest-template resolution lives in @microsoft/app-manifest and
+  // is re-exported by @microsoft/teamsfx-api. fx-core stays the home for telemetry,
+  // localized messages, and FxError mapping; the resolution logic lives one layer down.
+  ManifestType,
+  expandFileFunctionMacros,
+  UnsupportedFileFormatError as ManifestUnsupportedFileFormatError,
+  InvalidFunctionError as ManifestInvalidFunctionError,
+  InvalidFunctionParameterError as ManifestInvalidFunctionParameterError,
+  ReadFileError as ManifestReadFileError,
+  FileNotFoundError as ManifestFileNotFoundError,
 } from "@microsoft/teamsfx-api";
-import path from "path";
-import fs from "fs-extra";
-import stripBom from "strip-bom";
 import { FileNotFoundError } from "../../error";
-import { expandEnvironmentVariable } from "./common";
 import { getLocalizedString } from "../../common/localizeUtils";
 import { DriverContext } from "../driver/interface/commonArgs";
 
@@ -26,12 +32,40 @@ enum TelemetryPropertyKey {
   functionCount = "function-count",
 }
 
-export enum ManifestType {
-  TeamsManifest = "teams-manifest",
-  PluginManifest = "plugin-manifest",
-  DeclarativeCopilotManifest = "declarative-copilot-manifest",
-  ApiSpec = "api-spec",
-  EmbeddedKnowledgeFile = "embedded-knowledge-file",
+// Re-exported for existing importers (ManifestUtils, PluginManifestUtils, utils, createAppPackage).
+export { ManifestType };
+
+// Map a plain error thrown by @microsoft/app-manifest's resolver to the localized
+// FxError surface fx-core drivers expect, emitting the same diagnostic logs as before.
+function toFxError(e: unknown, ctx: DriverContext): FxError {
+  if (e instanceof ManifestUnsupportedFileFormatError) {
+    ctx.logProvider.error(
+      getLocalizedString("core.envFunc.unsupportedFile.errorLog", e.filePath, "txt")
+    );
+    return new UnsupportedFileFormatError(ctx.platform);
+  }
+  if (e instanceof ManifestInvalidFunctionError) {
+    ctx.logProvider.error(
+      getLocalizedString("core.envFunc.unsupportedFunction.errorLog", e.token, "file")
+    );
+    return new InvalidFunctionError(ctx.platform);
+  }
+  if (e instanceof ManifestInvalidFunctionParameterError) {
+    ctx.logProvider.error(
+      getLocalizedString("core.envFunc.invalidFunctionParameter.errorLog", e.token, "file")
+    );
+    return new InvalidFunctionParameter(ctx.platform);
+  }
+  if (e instanceof ManifestReadFileError) {
+    ctx.logProvider.error(
+      getLocalizedString("core.envFunc.readFile.errorLog", e.filePath, e.cause?.toString())
+    );
+    return new ReadFileError(ctx.platform, e.filePath);
+  }
+  if (e instanceof ManifestFileNotFoundError) {
+    return new FileNotFoundError(source, e.filePath);
+  }
+  throw e;
 }
 
 export async function expandVariableWithFunction(
@@ -42,129 +76,20 @@ export async function expandVariableWithFunction(
   manifestType: ManifestType,
   fromPath: string
 ): Promise<Result<string, FxError>> {
-  const regex = /\$\[ *[a-zA-Z][a-zA-Z]*\([^\]]*\) *\]/g;
-  const matches = content.match(regex);
-
-  if (!matches) {
-    return ok(content); // no function
-  }
-  let count = 0;
-  for (const placeholder of matches) {
-    const processedRes = await processFunction(
-      placeholder.slice(2, -1).trim(),
-      ctx,
-      envs,
-      fromPath
-    );
-    if (processedRes.isErr()) {
-      return err(processedRes.error);
-    }
-    let value = processedRes.value;
-    if (isJson && value) {
-      value = JSON.stringify(value).slice(1, -1);
-    }
-    if (value) {
-      count += 1;
-      content = content.replace(placeholder, value);
-    }
+  let resolved: { content: string; functionCount: number };
+  try {
+    resolved = await expandFileFunctionMacros(content, isJson, { envs, fromPath });
+  } catch (e) {
+    return err(toFxError(e, ctx));
   }
 
-  if (count > 0) {
+  if (resolved.functionCount > 0) {
     ctx.telemetryReporter.sendTelemetryEvent(telemetryEvent, {
       [TelemetryPropertyKey.manifestType]: manifestType.toString(),
-      [TelemetryPropertyKey.functionCount]: count.toString(),
+      [TelemetryPropertyKey.functionCount]: resolved.functionCount.toString(),
     });
   }
-  return ok(content);
-}
-
-async function processFunction(
-  content: string,
-  ctx: DriverContext,
-  envs: { [key in string]: string } | undefined,
-  path: string
-): Promise<Result<string, FxError>> {
-  const firstTrimmedContent = content.trim();
-  if (!firstTrimmedContent.startsWith("file(") || !firstTrimmedContent.endsWith(")")) {
-    ctx.logProvider.error(
-      getLocalizedString("core.envFunc.unsupportedFunction.errorLog", firstTrimmedContent, "file")
-    );
-    return err(new InvalidFunctionError(ctx.platform));
-  }
-
-  // file()
-  const trimmedParameter = content.slice(5, -1).trim();
-  if (trimmedParameter[0] === "'" && trimmedParameter[trimmedParameter.length - 1] === "'") {
-    // static string as function parameter
-    const res = await readFileContent(
-      trimmedParameter.substring(1, trimmedParameter.length - 1),
-      ctx,
-      envs,
-      path
-    );
-    return res;
-  } else if (trimmedParameter.startsWith("${{") && trimmedParameter.endsWith("}}")) {
-    // env variable inside
-    const resolvedParameter = expandEnvironmentVariable(trimmedParameter, envs);
-
-    const res = readFileContent(resolvedParameter, ctx, envs, path);
-    return res;
-  } else if (trimmedParameter.startsWith("file(") && trimmedParameter.endsWith(")")) {
-    // nested function inside
-    const processsedRes = await processFunction(trimmedParameter, ctx, envs, path);
-
-    if (processsedRes.isErr()) {
-      return err(processsedRes.error);
-    }
-
-    const readFileRes = await readFileContent(processsedRes.value, ctx, envs, path);
-    return readFileRes;
-  } else {
-    // invalid content inside function
-    ctx.logProvider.error(
-      getLocalizedString("core.envFunc.invalidFunctionParameter.errorLog", trimmedParameter, "file")
-    );
-    return err(new InvalidFunctionParameter(ctx.platform));
-  }
-}
-
-async function readFileContent(
-  filePath: string,
-  ctx: DriverContext,
-  envs: { [key in string]: string } | undefined,
-  fromPath: string
-): Promise<Result<string, FxError>> {
-  const ext = path.extname(filePath);
-  if (ext.toLowerCase() !== ".txt" && ext.toLowerCase() !== ".md") {
-    ctx.logProvider.error(
-      getLocalizedString("core.envFunc.unsupportedFile.errorLog", filePath, "txt")
-    );
-    return err(new UnsupportedFileFormatError(ctx.platform));
-  }
-
-  const absolutePath = getAbsolutePath(filePath, fromPath);
-  if (await fs.pathExists(absolutePath)) {
-    try {
-      let fileContent = await fs.readFile(absolutePath, "utf8");
-      fileContent = stripBom(fileContent);
-      let processedFileContent = expandEnvironmentVariable(fileContent, envs);
-      processedFileContent = processedFileContent.replace(/\r\n/g, "\n");
-      return ok(processedFileContent);
-    } catch (e) {
-      ctx.logProvider.error(
-        getLocalizedString("core.envFunc.readFile.errorLog", absolutePath, e?.toString())
-      );
-      return err(new ReadFileError(ctx.platform, absolutePath));
-    }
-  } else {
-    return err(new FileNotFoundError(source, filePath));
-  }
-}
-
-function getAbsolutePath(relativeOrAbsolutePath: string, fromPath: string): string {
-  return path.isAbsolute(relativeOrAbsolutePath)
-    ? relativeOrAbsolutePath
-    : path.join(path.dirname(fromPath), relativeOrAbsolutePath);
+  return ok(resolved.content);
 }
 
 class UnsupportedFileFormatError extends UserError {

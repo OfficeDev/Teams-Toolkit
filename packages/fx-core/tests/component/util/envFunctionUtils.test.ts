@@ -1,4 +1,6 @@
 import fs from "fs-extra";
+import os from "os";
+import path from "path";
 import mockedEnv, { RestoreFn } from "mocked-env";
 import { setTools } from "../../../src/common/globalVars";
 import { MockTools } from "../../core/utils";
@@ -24,10 +26,15 @@ describe("expandVariableWithFunction", async () => {
   };
 
   let mockedEnvRestore: RestoreFn | undefined;
-  afterEach(() => {
+  let tmpDir: string | undefined;
+  afterEach(async () => {
     vi.restoreAllMocks();
     if (mockedEnvRestore) {
       mockedEnvRestore();
+    }
+    if (tmpDir) {
+      await fs.remove(tmpDir);
+      tmpDir = undefined;
     }
   });
 
@@ -48,23 +55,16 @@ describe("expandVariableWithFunction", async () => {
   it("happy path with placeholders", async () => {
     mockedEnvRestore = mockedEnv({
       TEST_ENV: "test",
-      FILE_PATH: "testfile1.txt",
+      FILE_PATH: "byEnv.txt",
     });
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "envfunc-"));
+    await fs.writeFile(path.join(tmpDir, "simple.md"), "description in ${{TEST_ENV}}");
+    await fs.writeFile(path.join(tmpDir, "outer.txt"), "inner.txt");
+    await fs.writeFile(path.join(tmpDir, "inner.txt"), "description in ${{TEST_ENV}}");
+    await fs.writeFile(path.join(tmpDir, "byEnv.txt"), "description in ${{TEST_ENV}}");
+
     const content =
-      "description:\"$[file('testfile1.md')]\",description2:\"$[file( file( 'C://testfile2.txt' ))] $[file(${{FILE_PATH}})]\"";
-    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
-    vi.spyOn(fs, "readFile").mockImplementation((file: number | fs.PathLike) => {
-      if (file.toString().endsWith("testfile1.txt")) {
-        return Promise.resolve("description in ${{TEST_ENV}}" as any);
-      } else if (file.toString().endsWith("testfile2.txt")) {
-        return Promise.resolve("test/testfile1.txt" as any);
-      }
-      if (file.toString().endsWith("testfile1.md")) {
-        return Promise.resolve("description in ${{TEST_ENV}}" as any);
-      } else {
-        throw new Error("not support " + file);
-      }
-    });
+      "description:\"$[file('simple.md')]\",description2:\"$[file( file( 'outer.txt' ))] $[file(${{FILE_PATH}})]\"";
 
     const res = await expandVariableWithFunction(
       content,
@@ -72,7 +72,7 @@ describe("expandVariableWithFunction", async () => {
       undefined,
       true,
       ManifestType.DeclarativeCopilotManifest,
-      "C://test.json"
+      path.join(tmpDir, "manifest.json")
     );
     if (res.isErr()) {
       console.log(res.error);
@@ -155,12 +155,10 @@ describe("expandVariableWithFunction", async () => {
       TEST_ENV: "test",
       FILE_PATH: "testfile1.txt",
     });
-    const content = "description:\"$[ file('testfile1.txt')]\"C://test";
-
-    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
-    vi.spyOn(fs, "readFile").mockImplementation((file: number | fs.PathLike) => {
-      throw new Error("not support " + file);
-    });
+    // Make the target path a directory so the real readFile throws (EISDIR).
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "envfunc-"));
+    await fs.mkdirp(path.join(tmpDir, "testfile1.txt"));
+    const content = "description:\"$[ file('testfile1.txt')]\"";
 
     let res = await expandVariableWithFunction(
       content,
@@ -168,7 +166,7 @@ describe("expandVariableWithFunction", async () => {
       undefined,
       true,
       ManifestType.DeclarativeCopilotManifest,
-      "C://test"
+      path.join(tmpDir, "manifest.json")
     );
     assert.isTrue(
       res.isErr() &&
@@ -182,7 +180,7 @@ describe("expandVariableWithFunction", async () => {
       undefined,
       true,
       ManifestType.DeclarativeCopilotManifest,
-      "C://test"
+      path.join(tmpDir, "manifest.json")
     );
     assert.isTrue(res.isErr() && res.error.name === "ReadFileError");
   });
@@ -192,12 +190,12 @@ describe("expandVariableWithFunction", async () => {
       TEST_ENV: "test",
       FILE_PATH: "testfile1.txt",
     });
-    const content = "description:\"$[ file(file('testfile1.txt'))]\"C://test";
-
-    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
-    vi.spyOn(fs, "readFile").mockImplementation((file: number | fs.PathLike) => {
-      throw new Error("not support " + file);
-    });
+    // Inner file() resolves to a path whose target is a directory, so the
+    // outer read throws (EISDIR).
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "envfunc-"));
+    await fs.writeFile(path.join(tmpDir, "testfile1.txt"), "erroring.txt");
+    await fs.mkdirp(path.join(tmpDir, "erroring.txt"));
+    const content = "description:\"$[ file(file('testfile1.txt'))]\"";
 
     let res = await expandVariableWithFunction(
       content,
@@ -205,7 +203,7 @@ describe("expandVariableWithFunction", async () => {
       undefined,
       true,
       ManifestType.DeclarativeCopilotManifest,
-      "C://test"
+      path.join(tmpDir, "manifest.json")
     );
 
     assert.isTrue(
@@ -220,7 +218,7 @@ describe("expandVariableWithFunction", async () => {
       undefined,
       true,
       ManifestType.DeclarativeCopilotManifest,
-      "C://test"
+      path.join(tmpDir, "manifest.json")
     );
     assert.isTrue(res.isErr() && res.error.name === "ReadFileError");
   });
@@ -230,9 +228,8 @@ describe("expandVariableWithFunction", async () => {
       TEST_ENV: "test",
       FILE_PATH: "testfile1.txt",
     });
-    const content = "description:\"$[ file('testfile1.txt')]\"C://test";
-
-    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "envfunc-"));
+    const content = "description:\"$[ file('testfile1.txt')]\"";
 
     const res = await expandVariableWithFunction(
       content,
@@ -240,7 +237,7 @@ describe("expandVariableWithFunction", async () => {
       undefined,
       true,
       ManifestType.DeclarativeCopilotManifest,
-      "C://test"
+      path.join(tmpDir, "manifest.json")
     );
     assert.isTrue(res.isErr() && res.error instanceof FileNotFoundError);
   });
