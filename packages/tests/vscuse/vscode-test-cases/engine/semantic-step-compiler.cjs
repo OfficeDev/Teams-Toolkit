@@ -91,7 +91,12 @@ const scaffoldQuestionAdapters = {
   },
   appName: { title: "Application Name", type: "text" },
   apiAuth: {
-    options: { none: "None" },
+    options: {
+      "api-key": "API Key",
+      "microsoft-entra": "Microsoft Entra",
+      none: "None",
+      oauth: "OAuth",
+    },
     title: "Authentication Type",
     type: "singleSelect",
   },
@@ -1096,6 +1101,41 @@ function createSemanticStepCompiler() {
     return { ok: true, value: output };
   }
 
+  function compileLocalUserEnvironment(state, definition) {
+    const inputs = definition.with ?? {};
+    const names = isRecord(inputs) ? Object.keys(inputs).sort() : [];
+    if (
+      !isRecord(inputs) ||
+      names.length === 0 ||
+      names.some(
+        (name) =>
+          !localEnvironmentNamePattern.test(name) ||
+          typeof inputs[name] !== "string" ||
+          inputs[name].length === 0 ||
+          !localEnvironmentValuePattern.test(
+            inputs[name].replaceAll(runnerPlaceholderPattern, ""),
+          ),
+      )
+    ) {
+      return failure(
+        "VCB_LOCAL_USER_ENVIRONMENT_INPUT_INVALID",
+        "The local user environment operation requires shell-safe variable names and values.",
+      );
+    }
+    const output = [];
+    for (const name of names) {
+      const error = append(
+        output,
+        render(state, "workspace/local-user-environment-variable.json.tpl", {
+          variableName: name,
+          variableValue: inputs[name],
+        }),
+      );
+      if (error) return error;
+    }
+    return { ok: true, value: output };
+  }
+
   function compileLifecycle(state, definition) {
     const recipe = lifecycleAdapters[definition.type];
     let confirmation = recipe.confirmation;
@@ -1190,6 +1230,7 @@ function createSemanticStepCompiler() {
       );
     }
     if (
+      state.template === "custom-copilot-basic" &&
       [
         "Launch Remote in Copilot (Chrome)",
         "Debug in Copilot (Chrome)",
@@ -1601,6 +1642,8 @@ function createSemanticStepCompiler() {
         return compilePythonEnvironment(state, definition);
       case "localEnvironment":
         return compileLocalEnvironment(state, definition);
+      case "localUserEnvironment":
+        return compileLocalUserEnvironment(state, definition);
       case "target":
         return compileTarget(state, definition);
       case "open":
