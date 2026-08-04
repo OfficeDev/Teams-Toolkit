@@ -108,7 +108,7 @@ test("VCB-34: semantic compiler does not read external template contracts", asyn
   }
 });
 
-test("VCB-34: default setup compiles the checked-in YAML sources into twenty-five plans", async (context) => {
+test("VCB-34: default setup compiles the checked-in YAML sources into sixty-three plans", async (context) => {
   const plansDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "vscuse-generated-"),
   );
@@ -121,9 +121,9 @@ test("VCB-34: default setup compiles the checked-in YAML sources into twenty-fiv
   });
 
   assert.equal(first.ok, true);
-  assert.equal(first.value.files.length, 25);
+  assert.equal(first.value.files.length, 63);
   const generatedFiles = first.value.files;
-  assert.equal(generatedFiles.length, 25);
+  assert.equal(generatedFiles.length, 63);
   assert.equal(
     generatedFiles.includes(
       "da-api-plugin-from-existing-api--da-api-plugin-from-existing-api-no-auth.json",
@@ -408,6 +408,79 @@ test("DA scaffold filters its options before app name", async (context) => {
   assert.equal(workspaceFolderIndex < appNameIndex, true);
 });
 
+test("VCB-91: Teams Other scaffolds resolve the complete authored selector path", async () => {
+  for (const { caseId, optionLabel, template } of [
+    {
+      caseId: "simple-bot-ts",
+      optionLabel: "Simple Bot",
+      template: "default-bot",
+    },
+    {
+      caseId: "message-extension-ts",
+      optionLabel: "Message Extension",
+      template: "default-message-extension",
+    },
+  ]) {
+    const sourceText = `version: 1
+cases:
+  - id: ${caseId}
+    scenarioId: VCB-91
+    steps: [scaffold, check]
+steps:
+  scaffold:
+    type: scaffold
+    with:
+      template: ${template}
+      answers:
+        - question: projectType
+          value: teams-agent-and-app-type
+        - question: teamsAppType
+          value: teams-other-app-type
+        - question: teamsOtherAppType
+          value: ${template}
+        - question: language
+          value: typescript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "\${{var:app_name:vscuse_app_#####}}"
+  check:
+    type: checks
+    with:
+      - type: file
+        path: m365agents.yml
+        expect:
+          exists: true
+`;
+    const result = await compileCaseBundle({
+      compileStep: createSemanticStepCompiler(),
+      sourcePath: `cases/${template}.yml`,
+      sourceText,
+    });
+
+    assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+    const typedValues = result.value[0].plan.steps
+      .filter((step) => step.tool === "type_text")
+      .map((step) => step.parameters.text);
+    const selectorIndexes = [
+      "Teams Agents and Apps",
+      "Other Teams Capabilities",
+      optionLabel,
+    ].map((label) => typedValues.indexOf(label));
+    assert.equal(
+      selectorIndexes.every((index) => index >= 0),
+      true,
+      template,
+    );
+    assert.deepEqual(
+      selectorIndexes,
+      [...selectorIndexes].sort((left, right) => left - right),
+      template,
+    );
+  }
+});
+
 test("scaffold app names require a safe app_name initializer expression", async () => {
   const unsafeValues = [
     "literal-name",
@@ -557,7 +630,7 @@ test("VCB-35: multi-select answers check every option and confirm once", async (
     const descriptions = generated.plan.steps.map((step) => step.description);
     const tools = generated.plan.steps.map((step) => step.tool);
     const multiSelectFlow = [
-      "@assertion the multi-select prompt titled Select Operation(s) Copilot Can Interact with has finished loading and lists at least one selectable option.",
+      "@assertion the multi-select prompt titled Select Operation(s) Copilot Can Interact with has finished loading and lists at least one selectable option: an option row with a text label beside a square selection control. The selection-count badge reports how many options are selected, not how many options are available.",
       "Move focus from the multi-select input box to the select-all checkbox of the prompt.",
       "Press Space to check every option of the multi-select prompt.",
       "Move focus from the select-all checkbox back to the multi-select input box.",
@@ -1653,6 +1726,31 @@ test("VCB-71: the Python remote Teams target opens the app through the Teams add
   );
 });
 
+test("VCB-92: the View Remote App target uses the remote Teams adapter", async () => {
+  const result = await compileFixture(
+    "basic-custom-engine-agent.yml",
+    (sourceText) =>
+      sourceText.replace(
+        'profile: "Launch Remote (Chrome)"',
+        'profile: "View Remote App in Teams (Chrome)"',
+      ),
+  );
+
+  assert.equal(result.ok, true, JSON.stringify(result.diagnostics?.[0]));
+  const plan = result.value.find(
+    (generated) =>
+      generated.caseId === "basic-cea-py-azure-openai-remote-teams",
+  ).plan;
+  const typedValues = plan.steps
+    .filter((step) => step.tool === "type_text")
+    .map((step) => step.parameters.text);
+  assert.equal(typedValues.includes("View Remote App in Teams (Chrome)"), true);
+  assert.equal(
+    plan.steps.some((step) => step.step_id.startsWith("step_addAndOpenApp_")),
+    true,
+  );
+});
+
 test("VCB-90: the Teams open converges on the conversation, not the app details page", async () => {
   const result = await compileFixture(
     "basic-custom-engine-agent.yml",
@@ -1695,6 +1793,275 @@ test("VCB-72: the weather bundle authors every LLM, language, and Teams launch c
       }
     }
   }
+});
+
+test("VCB-93: CEA, Bot, and Message Extension bundles author their supported launch matrices", async () => {
+  for (const { fileName, languages, prefix } of [
+    {
+      fileName: "basic-custom-engine-agent.yml",
+      languages: ["ts", "js", "py"],
+      prefix: "basic-cea",
+    },
+    {
+      fileName: "default-bot.yml",
+      languages: ["ts", "js", "py"],
+      prefix: "simple-bot",
+    },
+    {
+      fileName: "default-message-extension.yml",
+      languages: ["ts", "py"],
+      prefix: "message-extension",
+    },
+  ]) {
+    const result = await compileFixture(fileName, (sourceText) => sourceText);
+    assert.equal(result.ok, true, fileName);
+    const caseIds = new Set(result.value.map((generated) => generated.caseId));
+    for (const language of languages) {
+      for (const launch of ["remote-teams", "local-teams", "playground"]) {
+        const llm = prefix === "basic-cea" ? "-azure-openai" : "";
+        const caseId = `${prefix}-${language}${llm}-${launch}`;
+        assert.equal(caseIds.has(caseId), true, caseId);
+      }
+    }
+    assert.equal(caseIds.size, languages.length * 3, fileName);
+  }
+});
+
+test("VCB-94: Basic CEA remote Teams cases use each language template's launch profile", async () => {
+  const result = await compileFixture(
+    "basic-custom-engine-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  for (const { caseId, expectedProfile, unexpectedProfile } of [
+    {
+      caseId: "basic-cea-ts-azure-openai-remote-teams",
+      expectedProfile: "Launch Remote in Teams (Chrome)",
+      unexpectedProfile: "Launch Remote (Chrome)",
+    },
+    {
+      caseId: "basic-cea-js-azure-openai-remote-teams",
+      expectedProfile: "Launch Remote in Teams (Chrome)",
+      unexpectedProfile: "Launch Remote (Chrome)",
+    },
+    {
+      caseId: "basic-cea-py-azure-openai-remote-teams",
+      expectedProfile: "Launch Remote (Chrome)",
+      unexpectedProfile: "Launch Remote in Teams (Chrome)",
+    },
+  ]) {
+    const plan = result.value.find(
+      (generated) => generated.caseId === caseId,
+    ).plan;
+    const typedValues = plan.steps
+      .filter((step) => step.tool === "type_text")
+      .map((step) => step.parameters.text);
+    assert.equal(typedValues.includes(expectedProfile), true, caseId);
+    assert.equal(typedValues.includes(unexpectedProfile), false, caseId);
+  }
+});
+
+test("VCB-95: the General Teams Agent bundle authors its explicit behavior matrix", async () => {
+  const result = await compileFixture(
+    "general-teams-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true, JSON.stringify(result.diagnostics?.[0]));
+  const caseIds = new Set(result.value.map((generated) => generated.caseId));
+  const expectedCaseIds = new Set();
+  for (const language of ["ts", "js", "py"]) {
+    for (const llm of ["azure-openai", "openai"]) {
+      for (const launch of ["remote-teams", "local-teams"]) {
+        expectedCaseIds.add(`general-teams-${language}-${llm}-${launch}`);
+      }
+    }
+    expectedCaseIds.add(`general-teams-${language}-azure-openai-playground`);
+  }
+  expectedCaseIds.add("general-teams-ts-azure-openai-remote-copilot");
+  expectedCaseIds.add("general-teams-ts-azure-openai-local-copilot");
+
+  assert.deepEqual(caseIds, expectedCaseIds);
+  const typedValues = result.value[0].plan.steps
+    .filter((step) => step.tool === "type_text")
+    .map((step) => step.parameters.text);
+  assert.equal(typedValues.includes("General Teams Agent"), true);
+});
+
+test("VCB-96: General Teams Agent Copilot targets use their remote and local lifecycles", async () => {
+  const result = await compileFixture(
+    "general-teams-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  for (const { caseId, expectedProfile, expectedLifecycleCommands } of [
+    {
+      caseId: "general-teams-ts-azure-openai-remote-copilot",
+      expectedProfile: "Launch Remote in Copilot (Chrome)",
+      expectedLifecycleCommands: [
+        "Microsoft 365 Agents: Provision",
+        "Microsoft 365 Agents: Deploy",
+      ],
+    },
+    {
+      caseId: "general-teams-ts-azure-openai-local-copilot",
+      expectedProfile: "Debug in Copilot (Chrome)",
+      expectedLifecycleCommands: [],
+    },
+  ]) {
+    const plan = result.value.find(
+      (generated) => generated.caseId === caseId,
+    ).plan;
+    const typedValues = plan.steps
+      .filter((step) => step.tool === "type_text")
+      .map((step) => step.parameters.text);
+    const lifecycleCommands = typedValues.filter((value) =>
+      [
+        "Microsoft 365 Agents: Provision",
+        "Microsoft 365 Agents: Deploy",
+      ].includes(value),
+    );
+    assert.equal(typedValues.includes(expectedProfile), true, caseId);
+    assert.deepEqual(lifecycleCommands, expectedLifecycleCommands, caseId);
+    assert.equal(
+      plan.steps.some((step) =>
+        step.description.includes(
+          "is displayed in the main section of Microsoft 365 Copilot",
+        ),
+      ),
+      true,
+      caseId,
+    );
+  }
+
+  for (const transform of [
+    (sourceText) =>
+      sourceText.replace(
+        /        deploy,\r?\n        f5-copilot-remote,/,
+        "        f5-copilot-remote,",
+      ),
+    (sourceText) =>
+      sourceText.replace(
+        /        login-m365,\r?\n        f5-copilot-local,/,
+        "        f5-copilot-local,",
+      ),
+  ]) {
+    const missingPrerequisite = await compileFixture(
+      "general-teams-agent.yml",
+      transform,
+    );
+    assert.equal(missingPrerequisite.ok, false);
+    assert.equal(
+      missingPrerequisite.diagnostics[0].code,
+      "VCB_TARGET_PREREQUISITE",
+    );
+  }
+});
+
+test("VCB-97: General Teams Agent OpenAI cases chat locally but not remotely", async () => {
+  const result = await compileFixture(
+    "general-teams-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  for (const generated of result.value) {
+    if (
+      !generated.caseId.includes("-openai-") ||
+      generated.caseId.includes("-azure-openai-")
+    ) {
+      continue;
+    }
+    const isLocal = generated.caseId.includes("-local-");
+    const sendsAMessage = generated.plan.steps.some((step) =>
+      /^step_sendTeamsMessage_/.test(step.step_id || ""),
+    );
+    const setsOpenAIBaseUrl = generated.plan.steps.some((step) =>
+      /^step_setLocalEnvironmentVariable_/.test(step.step_id || ""),
+    );
+    assert.equal(sendsAMessage, isLocal, generated.caseId);
+    assert.equal(setsOpenAIBaseUrl, isLocal, generated.caseId);
+  }
+});
+
+test("VCB-98: only General Teams Agent Copilot cases inject the launch flag before startup", async () => {
+  const result = await compileFixture(
+    "general-teams-agent.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  assert.equal(result.value.length, 17);
+
+  for (const entry of result.value) {
+    const hasSettingOrReload = entry.plan.steps.some(
+      (step) =>
+        step.description?.includes(
+          "M365AgentsToolkit.enableLaunchAgentForTeamsInCopilot",
+        ) || step.parameters?.text === "Developer: Reload Window",
+    );
+    const hasFeatureFlag = entry.plan.plan_metadata.tags.includes(
+      "feature_flag:TEAMSFX_CEA_ENABLED=true",
+    );
+    const targetsCopilot = entry.caseId.endsWith("-copilot");
+
+    assert.equal(hasSettingOrReload, false, entry.caseId);
+    assert.equal(hasFeatureFlag, targetsCopilot, entry.caseId);
+  }
+
+  const missingFeatureFlag = await compileFixture(
+    "general-teams-agent.yml",
+    (sourceText) =>
+      sourceText.replace(
+        /    featureFlags:\r?\n      - TEAMSFX_CEA_ENABLED=true\r?\n/,
+        "",
+      ),
+  );
+  assert.equal(missingFeatureFlag.ok, false);
+  assert.equal(
+    missingFeatureFlag.diagnostics[0].code,
+    "VCB_TARGET_PREREQUISITE",
+  );
+});
+
+test("VCB-99: Playground reply checks use visible completion evidence", async () => {
+  const result = await compileFixture(
+    "general-teams-agent.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+
+  const playground = result.value.find(
+    (entry) => entry.caseId === "general-teams-py-azure-openai-playground",
+  );
+  const localTeams = result.value.find(
+    (entry) => entry.caseId === "general-teams-py-azure-openai-local-teams",
+  );
+  assert.notEqual(playground, undefined);
+  assert.notEqual(localTeams, undefined);
+  assert.equal(
+    playground.plan.steps.some(
+      (step) =>
+        step.description ===
+        '@assertion the Agents Playground shows a non-empty assistant response, and the "Type a message..." composer is ready for the next user turn with no response-generation indicator visible.',
+    ),
+    true,
+  );
+  assert.equal(
+    playground.plan.steps.some((step) =>
+      step.description.includes("feedback controls"),
+    ),
+    false,
+  );
+  assert.equal(
+    localTeams.plan.steps.some(
+      (step) =>
+        step.description ===
+        "@assertion the current assistant turn is complete and contains a non-empty response.",
+    ),
+    true,
+  );
 });
 
 test("VCB-73: an OpenAI weather case asserts a completion locally but not remotely", async () => {

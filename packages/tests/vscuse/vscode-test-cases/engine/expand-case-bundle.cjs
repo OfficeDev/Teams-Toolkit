@@ -60,7 +60,10 @@ function expandCaseBundle({ bundle, sourcePath }) {
     }
     expandedCases.push({
       caseId: caseDefinition.id,
-      featureFlags: structuredClone(bundle.featureFlags ?? []),
+      featureFlags: structuredClone([
+        ...(bundle.featureFlags ?? []),
+        ...(caseDefinition.featureFlags ?? []),
+      ]),
       gate: caseDefinition.gate ?? "pr",
       scenarioId: caseDefinition.scenarioId,
       steps,

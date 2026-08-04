@@ -1,0 +1,233 @@
+version: 1
+
+# The generated engine currently owns scaffold, lifecycle, and launch adapters.
+# Invoking the message extension itself remains on the recorded legacy group
+# until a dedicated semantic component is captured from the live Teams UI.
+cases:
+  - id: message-extension-ts-remote-teams
+    scenarioId: SCN-CREATE-MESSAGE-EXTENSION-01
+    steps:
+      [
+        scaffold-message-extension-ts,
+        check-message-extension-ts,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote-ts,
+        open-app,
+      ]
+
+  - id: message-extension-ts-local-teams
+    scenarioId: SCN-CREATE-MESSAGE-EXTENSION-01
+    steps:
+      [
+        scaffold-message-extension-ts,
+        check-message-extension-ts,
+        login-m365,
+        f5-teams-local,
+        open-app,
+      ]
+
+  - id: message-extension-ts-playground
+    scenarioId: SCN-CREATE-MESSAGE-EXTENSION-01
+    steps:
+      [scaffold-message-extension-ts, check-message-extension-ts, f5-playground]
+
+  - id: message-extension-py-remote-teams
+    scenarioId: SCN-CREATE-MESSAGE-EXTENSION-03
+    steps:
+      [
+        scaffold-message-extension-py,
+        check-message-extension-py,
+        create-python-environment,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote,
+        open-app,
+      ]
+
+  - id: message-extension-py-local-teams
+    scenarioId: SCN-CREATE-MESSAGE-EXTENSION-03
+    steps:
+      [
+        scaffold-message-extension-py,
+        check-message-extension-py,
+        create-python-environment,
+        login-m365,
+        f5-teams-local,
+        open-app,
+      ]
+
+  - id: message-extension-py-playground
+    scenarioId: SCN-CREATE-MESSAGE-EXTENSION-03
+    steps:
+      [
+        scaffold-message-extension-py,
+        check-message-extension-py,
+        create-python-environment,
+        f5-playground,
+      ]
+
+steps:
+  scaffold-message-extension-ts:
+    type: scaffold
+    with:
+      template: default-message-extension
+      answers:
+        - question: projectType
+          value: teams-agent-and-app-type
+        - question: teamsAppType
+          value: teams-other-app-type
+        - question: teamsOtherAppType
+          value: default-message-extension
+        - question: language
+          value: typescript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-message-extension-ts:
+    type: checks
+    with:
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains: ["version: v1.11", "provision:", "deploy:"]
+      - type: file
+        path: src/index.ts
+        expect:
+          exists: true
+          contains: ['app.on("message.ext.query"']
+      - type: file
+        path: src/card.ts
+        expect:
+          exists: true
+      - type: file
+        path: package.json
+        expect:
+          exists: true
+      - type: file
+        path: infra/azure.bicep
+        expect:
+          exists: true
+      - type: file
+        path: appPackage/manifest.json
+        expect:
+          contains: ['"manifestVersion": "1.29"', '"composeExtensions": [']
+
+  scaffold-message-extension-py:
+    type: scaffold
+    with:
+      template: default-message-extension
+      answers:
+        - question: projectType
+          value: teams-agent-and-app-type
+        - question: teamsAppType
+          value: teams-other-app-type
+        - question: teamsOtherAppType
+          value: default-message-extension
+        - question: language
+          value: python
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-message-extension-py:
+    type: checks
+    with:
+      - type: file
+        path: src/app.py
+        expect:
+          exists: true
+          contains: [handle_message_ext_query]
+      - type: file
+        path: src/card_generators.py
+        expect:
+          exists: true
+      - type: file
+        path: src/config.py
+        expect:
+          exists: true
+      - type: file
+        path: src/requirements.txt
+        expect:
+          exists: true
+          contains: [microsoft-teams-apps, azure-identity]
+      - type: file
+        path: infra/azure.bicep
+        expect:
+          exists: true
+      - type: file
+        path: package.json
+        expect:
+          exists: false
+
+  create-python-environment:
+    type: pythonEnvironment
+    with:
+      interpreter: "Python 3.12"
+
+  login-azure:
+    type: login
+    with:
+      type: azure
+      account: "${{env:AZURE_ACCOUNT_NAME}}"
+      password: "${{secret:AZURE_ACCOUNT_PASSWORD}}"
+
+  login-m365:
+    type: login
+    with:
+      type: m365
+      account: "${{env:M365_ACCOUNT_NAME}}"
+      password: "${{secret:M365_ACCOUNT_PASSWORD}}"
+
+  provision-arm:
+    type: provision
+    with:
+      environment: none
+      arm:
+        targetResourceGroupName: "+ New resource group"
+        newResourceGroupName: "${{var:app_name}}-rg"
+        newResourceGroupLocation: "${{env:RESOURCE_GROUP_REGION}}"
+
+  deploy:
+    type: deploy
+    with:
+      environment: none
+
+  f5-teams-remote-ts:
+    type: target
+    with:
+      profile: "View Remote App in Teams (Chrome)"
+      profileSelection: first
+
+  f5-teams-remote:
+    type: target
+    with:
+      profile: "Launch Remote (Chrome)"
+      profileSelection: first
+
+  f5-teams-local:
+    type: target
+    with:
+      profile: "Debug in Teams (Chrome)"
+      profileSelection: first
+
+  f5-playground:
+    type: target
+    with:
+      profile: "Debug in Microsoft 365 Agents Playground"
+      profileSelection: first
+
+  open-app:
+    type: open
+    with:
+      kind: app
+      destination: chat
