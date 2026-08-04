@@ -1,14 +1,20 @@
+## Azure OpenAI / Vision used by VSCUSE ITSELF.
+## Entra ID (AAD) auth only - no API keys (team policy). The token comes from the
+## "Login to Azure" step in the workflow (azure/login@v2 with DEVOPS_* credentials).
+## Note this is a DIFFERENT endpoint from the key-based one the test cases use; the
+## latter is passed into the container through docker.environment below.
 azure_openai:
-  endpoint: "${AZURE_OPENAI_ENDPOINT}" # Required: Set via environment variable
-  api_key: "${AZURE_OPENAI_API_KEY}" # Required: Set via environment variable
-  api_version: "${AZURE_OPENAI_API_VERSION}" # Default: "2025-04-01-preview"
-  model: "${AZURE_OPENAI_MODEL}" # Default: "gpt-4.1"
+  endpoint: "${VSCUSE_AZURE_OPENAI_ENDPOINT}" # Required: Set via environment variable
+  api_version: "${VSCUSE_AZURE_OPENAI_API_VERSION}" # Default: "2025-04-01-preview"
+  model: "${VSCUSE_AZURE_OPENAI_MODEL}" # Default: "gpt-4.1"
   timeout: 60 # Default: 60 (seconds)
-  use_azure_credential: false # Default: false
+  use_azure_credential: true # Authenticate with Entra ID instead of an API key
+  credential_type: "cli" # Reuse the azure/login session (avoids the slow IMDS probe)
 
 azure_vision:
-  endpoint: "${AZURE_VISION_ENDPOINT}" # Required: Set via environment variable
-  api_key: "${AZURE_VISION_KEY}" # Required: Set via environment variable
+  endpoint: "${VSCUSE_AZURE_VISION_ENDPOINT}" # Required: Set via environment variable
+  use_azure_credential: true # Authenticate with Entra ID instead of an API key
+  credential_type: "cli"
 
 azure_service_principal:
   client_id: "${AZURE_CLIENT_ID}" # Required: Set via environment variable
@@ -30,6 +36,15 @@ docker:
   environment:
     TEAMSFX_TELEMETRY_TEST: "true" # Default: false (set to true to use VS Code Insider)
     NPM_CONFIG_REGISTRY: "${NPM_CONFIG_REGISTRY:https://registry.npmjs.org/}"
+
+    # Azure OpenAI for the TEST CASES (scaffolded projects). vscuse itself uses a
+    # different, AAD-only endpoint, so it no longer injects these automatically -
+    # they have to be declared explicitly here.
+    AZURE_OPENAI_ENDPOINT: "${AZURE_OPENAI_ENDPOINT}"
+    AZURE_OPENAI_API_KEY: "${AZURE_OPENAI_API_KEY}"
+    AZURE_OPENAI_MODEL: "${AZURE_OPENAI_MODEL}"
+    AZURE_OPENAI_API_VERSION: "${AZURE_OPENAI_API_VERSION}"
+
     AZURE_SEARCH_KEY: "${AZURE_SEARCH_KEY}"
     AZURE_SEARCH_ENDPOINT: "${AZURE_SEARCH_ENDPOINT}"
     AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME: "${AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME}"

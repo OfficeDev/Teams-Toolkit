@@ -143,14 +143,24 @@ jobs:
     env:
       GH_APP_ID: ${{ secrets.GH_APP_ID }}
       GH_APP_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}
+      # --- Azure OpenAI used by the TEST CASES (scaffolded projects) -------------
+      # Key-based endpoint; consumed via ${{env:...}} / ${{secret:...}} placeholders in
+      # the plans and forwarded into the container through docker.environment.
       AZURE_OPENAI_ENDPOINT: ${{ vars.TEST_TENANT_AZURE_OPENAI_ENDPOINT }}
       AZURE_OPENAI_API_KEY: ${{ secrets.TEST_TENANT_AZURE_OPENAI_KEY }}
       AZURE_OPENAI_MODEL: ${{ vars.TEST_TENANT_AZURE_OPENAI_MODEL }}
       AZURE_OPENAI_API_VERSION: ${{ vars.TEST_TENANT_AZURE_OPENAI_API_VERSION }}
 
-      # Vision service
-      AZURE_VISION_ENDPOINT: ${{ vars.AZURE_VISION_ENDPOINT }}
-      AZURE_VISION_KEY: ${{ secrets.AZURE_VISION_KEY }}
+      # --- Azure OpenAI + Vision used by VSCUSE ITSELF ---------------------------
+      # Entra ID (AAD) auth only - no API keys. The token comes from the
+      # "Login to Azure" step below (DEVOPS_* federated credentials).
+      VSCUSE_AZURE_OPENAI_ENDPOINT: ${{ vars.VSCUSE_AZURE_OPENAI_ENDPOINT }}
+      VSCUSE_AZURE_OPENAI_MODEL: ${{ vars.VSCUSE_AZURE_OPENAI_MODEL }}
+      VSCUSE_AZURE_OPENAI_API_VERSION: ${{ vars.VSCUSE_AZURE_OPENAI_API_VERSION }}
+      VSCUSE_AZURE_VISION_ENDPOINT: ${{ vars.VSCUSE_AZURE_VISION_ENDPOINT }}
+
+      # Vision service is now AAD-only for vscuse (see VSCUSE_AZURE_VISION_ENDPOINT above);
+      # AZURE_VISION_ENDPOINT / AZURE_VISION_KEY are no longer needed.
 
       # AZURE AI search
       AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME: "text-embedding-ada-002"
@@ -232,6 +242,17 @@ jobs:
         with:
           ref: ${{ github.ref_name }}
 
+      # vscuse's own Azure OpenAI / Vision calls authenticate with Entra ID, so we must be
+      # logged in BEFORE "Run test". The service principal needs "Cognitive Services OpenAI
+      # User" on the vscuse AOAI resource and "Cognitive Services User" on the Vision one.
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{secrets.DEVOPS_CLIENT_ID}}
+          tenant-id: ${{secrets.DEVOPS_TENANT_ID}}
+          subscription-id: ${{secrets.DEVOPS_SUB_ID}}
+          enable-AzPSSession: true
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -263,12 +284,29 @@ jobs:
       - name: Verify Azure Configuration
         run: |
           echo "Verifying Azure configuration..."
+          # vscuse itself: Entra ID auth, endpoint only (no key).
+          if [ -z "$VSCUSE_AZURE_OPENAI_ENDPOINT" ]; then
+            echo "❌ VSCUSE_AZURE_OPENAI_ENDPOINT is not set"
+            exit 1
+          fi
+          if [ -z "$VSCUSE_AZURE_VISION_ENDPOINT" ]; then
+            echo "❌ VSCUSE_AZURE_VISION_ENDPOINT is not set"
+            exit 1
+          fi
+          if ! az account show > /dev/null 2>&1; then
+            echo "❌ Not logged in to Azure - Entra ID auth for vscuse will fail"
+            exit 1
+          fi
+          echo "✅ vscuse Azure OpenAI + Vision configured (Entra ID auth)"
+
+          # Test cases: key-based Azure OpenAI endpoint.
           if [ -z "$AZURE_OPENAI_ENDPOINT" ] || [ -z "$AZURE_OPENAI_API_KEY" ]; then
-            echo "❌ Azure OpenAI configuration missing"
+            echo "❌ Test-case Azure OpenAI configuration missing"
             exit 1
           else
-            echo "✅ Azure OpenAI configured"
+            echo "✅ Test-case Azure OpenAI configured (API key auth)"
           fi
+
           if [ -n "$AZURE_CLIENT_ID" ] && [ -n "$AZURE_CLIENT_SECRET" ] && [ -n "$AZURE_TENANT_ID" ]; then
             echo "✅ Azure Service Principal configured - M365 Toolkit authentication enabled"
           else
