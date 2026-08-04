@@ -108,7 +108,7 @@ test("VCB-34: semantic compiler does not read external template contracts", asyn
   }
 });
 
-test("VCB-34: default setup compiles the checked-in YAML sources into sixty-three plans", async (context) => {
+test("VCB-34: default setup compiles the checked-in YAML sources into sixty-nine plans", async (context) => {
   const plansDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "vscuse-generated-"),
   );
@@ -121,9 +121,9 @@ test("VCB-34: default setup compiles the checked-in YAML sources into sixty-thre
   });
 
   assert.equal(first.ok, true);
-  assert.equal(first.value.files.length, 63);
+  assert.equal(first.value.files.length, 69);
   const generatedFiles = first.value.files;
-  assert.equal(generatedFiles.length, 63);
+  assert.equal(generatedFiles.length, 69);
   assert.equal(
     generatedFiles.includes(
       "da-api-plugin-from-existing-api--da-api-plugin-from-existing-api-no-auth.json",
@@ -408,6 +408,25 @@ test("DA scaffold filters its options before app name", async (context) => {
   assert.equal(workspaceFolderIndex < appNameIndex, true);
 });
 
+test("VCB-105: New API auth IDs resolve to their visible labels", async () => {
+  for (const [optionId, optionLabel] of [
+    ["api-key", "API Key"],
+    ["microsoft-entra", "Microsoft Entra"],
+    ["oauth", "OAuth"],
+  ]) {
+    const result = await compileFixture(
+      "da-api-plugin-from-scratch.yml",
+      (sourceText) => sourceText.replace("value: none", `value: ${optionId}`),
+    );
+
+    assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+    const typedValues = result.value[0].plan.steps
+      .filter((step) => step.tool === "type_text")
+      .map((step) => step.parameters.text);
+    assert.equal(typedValues.includes(optionLabel), true, optionId);
+  }
+});
+
 test("VCB-91: Teams Other scaffolds resolve the complete authored selector path", async () => {
   for (const { caseId, optionLabel, template } of [
     {
@@ -566,8 +585,12 @@ test("VCB-34: DA API plugin from scratch compiles complete remote branches in au
   );
 
   assert.equal(result.ok, true);
-  assert.equal(result.value.length, 2);
-  for (const generated of result.value) {
+  assert.equal(result.value.length, 3);
+  const remoteCases = result.value.filter(
+    (generated) => !generated.caseId.endsWith("-local-copilot"),
+  );
+  assert.equal(remoteCases.length, 2);
+  for (const generated of remoteCases) {
     const descriptions = generated.plan.steps.map((step) => step.description);
     const language = generated.caseId.endsWith("-ts")
       ? "TypeScript"
@@ -2025,6 +2048,30 @@ test("VCB-98: only General Teams Agent Copilot cases inject the launch flag befo
   );
 });
 
+test("VCB-106: the Copilot launch flag prerequisite is template-scoped", async () => {
+  const result = await compileFixture(
+    "da-api-plugin-from-scratch.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const generated = result.value.find(
+    (entry) => entry.caseId === "da-api-plugin-from-scratch-js-local-copilot",
+  );
+  assert.equal(
+    generated.plan.plan_metadata.tags.includes(
+      "feature_flag:TEAMSFX_CEA_ENABLED=true",
+    ),
+    false,
+  );
+  assert.equal(
+    generated.plan.steps.some(
+      (step) => step.parameters.text === "Debug in Copilot (Chrome)",
+    ),
+    true,
+  );
+});
+
 test("VCB-99: Playground reply checks use visible completion evidence", async () => {
   const result = await compileFixture(
     "general-teams-agent.yml",
@@ -2113,6 +2160,68 @@ test("VCB-75: a local environment operation writes the variable into the local l
   );
   assert.equal(step.parameters.sample.includes("m365agents.local.yml"), true);
   assert.equal(step.parameters.sample.includes('"envs:"'), true);
+});
+
+test("VCB-107: local user environment values update the fixed project file", async () => {
+  const sourceText = `version: 1
+cases:
+  - id: local-user-environment
+    scenarioId: VCB-107
+    steps: [scaffold, check, set-api-key]
+steps:
+  scaffold:
+    type: scaffold
+    with:
+      template: da/api-plugin-from-scratch-bearer
+      answers:
+        - question: apiAuth
+          value: api-key
+        - question: appName
+          type: text
+          value: "\${{var:app_name:vscuse_app_#####}}"
+  check:
+    type: checks
+    with:
+      - type: file
+        path: env/.env.local.user
+        expect:
+          exists: true
+  set-api-key:
+    type: localUserEnvironment
+    with:
+      SECRET_API_KEY: "\${{var:app_name}}-api-key"
+`;
+  const result = await compileCaseBundle({
+    compileStep: createSemanticStepCompiler(),
+    sourcePath: "cases/local-user-environment.yml",
+    sourceText,
+  });
+
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const step = result.value[0].plan.steps.find((candidate) =>
+    candidate.step_id.startsWith("step_setLocalUserEnvironmentVariable_"),
+  );
+  assert.equal(step.agent, "code");
+  assert.equal(
+    step.parameters.sample.includes('/ "env" / ".env.local.user"'),
+    true,
+  );
+  assert.equal(step.description.includes("SECRET_API_KEY"), true);
+  assert.equal(step.description.includes("api-key"), false);
+
+  const unsafe = await compileCaseBundle({
+    compileStep: createSemanticStepCompiler(),
+    sourcePath: "cases/local-user-environment.yml",
+    sourceText: sourceText.replace(
+      'SECRET_API_KEY: "${{var:app_name}}-api-key"',
+      'SECRET_API_KEY: "$(id)"',
+    ),
+  });
+  assert.equal(unsafe.ok, false);
+  assert.equal(
+    unsafe.diagnostics[0].code,
+    "VCB_LOCAL_USER_ENVIRONMENT_INPUT_INVALID",
+  );
 });
 
 test("VCB-88: a local environment step names its variable and verifies its own write", async () => {
