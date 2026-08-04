@@ -1376,19 +1376,12 @@ function createSemanticStepCompiler() {
       activation.adapter === "teams-add" ||
       activation.adapter === "teams-add-local-page"
     ) {
-      // The component carries the adapter's converged subject rather than the
-      // profile's: the target asserts the app details page this component
-      // enters on, and the two clicks in between leave it, for a conversation
-      // when a bot was scaffolded and for a tab page when a tab was.
-      let error = append(
-        output,
-        render(state, "browser/teams/add-and-open-app.json.tpl", {
-          convergedSubject: activation.subject,
-          destination,
-        }),
-      );
-      if (error) return error;
+      let error;
       if (activation.adapter === "teams-add-local-page") {
+        // Trusting the certificate before the app opens is what lets the tab
+        // render on its first load. Trusting it afterwards leaves an already
+        // failed frame that only an in-Teams reload recovers, and that reload
+        // races the browser permission prompt Teams raises on the same page.
         error = append(
           output,
           render(
@@ -1398,12 +1391,19 @@ function createSemanticStepCompiler() {
           ),
         );
         if (error) return error;
-        error = append(
-          output,
-          render(state, "browser/teams/reload-app.json.tpl", {}),
-        );
-        if (error) return error;
       }
+      // The component carries the adapter's converged subject rather than the
+      // profile's: the target asserts the app details page this component
+      // enters on, and the two clicks in between leave it, for a conversation
+      // when a bot was scaffolded and for a tab page when a tab was.
+      error = append(
+        output,
+        render(state, "browser/teams/add-and-open-app.json.tpl", {
+          convergedSubject: activation.subject,
+          destination,
+        }),
+      );
+      if (error) return error;
     } else if (activation.adapter !== "ready") {
       return failure(
         "VCB_OPEN_ADAPTER_UNKNOWN",

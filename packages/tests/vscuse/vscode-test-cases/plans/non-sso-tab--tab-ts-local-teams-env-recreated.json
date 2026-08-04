@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 99,
+    "total_steps": 92,
     "name": "tab-ts-local-teams-env-recreated",
     "description": {
       "owner": "",
@@ -89,30 +89,23 @@
       "step_browserM365PasswordSignIn_assertStaySignedIn_c9c198c7d_5_3",
       "step_browserM365PasswordSignIn_confirmStaySignedIn_c9c198c7d_5_3",
       "step_assertReady_assertReady_c9c198c7d_5_4",
-      "step_addAndOpenApp_assertAdd_c9c198c7d_6_1",
-      "step_addAndOpenApp_add_c9c198c7d_6_1",
-      "step_addAndOpenApp_assertAdded_c9c198c7d_6_1",
-      "step_addAndOpenApp_open_c9c198c7d_6_1",
-      "step_addAndOpenApp_assertReady_c9c198c7d_6_1",
-      "step_trustLocalTabCertificate_assertTabBar_c9c198c7d_6_2",
-      "step_trustLocalTabCertificate_newTab_c9c198c7d_6_2",
-      "step_trustLocalTabCertificate_assertAddressBar_c9c198c7d_6_2",
-      "step_trustLocalTabCertificate_typeUrl_c9c198c7d_6_2",
-      "step_trustLocalTabCertificate_navigate_c9c198c7d_6_2",
-      "step_trustLocalTabCertificate_assertWarning_c9c198c7d_6_2",
-      "step_trustLocalTabCertificate_expandWarning_c9c198c7d_6_2",
-      "step_trustLocalTabCertificate_assertProceed_c9c198c7d_6_2",
-      "step_trustLocalTabCertificate_proceed_c9c198c7d_6_2",
-      "step_trustLocalTabCertificate_assertTrusted_c9c198c7d_6_2",
-      "step_trustLocalTabCertificate_switchBack_c9c198c7d_6_2",
-      "step_trustLocalTabCertificate_assertReturned_c9c198c7d_6_2",
-      "step_reloadApp_assertOverflow_c9c198c7d_6_3",
-      "step_reloadApp_openOverflow_c9c198c7d_6_3",
-      "step_reloadApp_assertMenu_c9c198c7d_6_3",
-      "step_reloadApp_reload_c9c198c7d_6_3",
-      "step_reloadApp_assertPermission_c9c198c7d_6_3",
-      "step_reloadApp_allow_c9c198c7d_6_3",
-      "step_reloadApp_assertRendered_c9c198c7d_6_3",
+      "step_trustLocalTabCertificate_assertTabBar_c9c198c7d_6_1",
+      "step_trustLocalTabCertificate_newTab_c9c198c7d_6_1",
+      "step_trustLocalTabCertificate_assertAddressBar_c9c198c7d_6_1",
+      "step_trustLocalTabCertificate_typeUrl_c9c198c7d_6_1",
+      "step_trustLocalTabCertificate_navigate_c9c198c7d_6_1",
+      "step_trustLocalTabCertificate_assertWarning_c9c198c7d_6_1",
+      "step_trustLocalTabCertificate_expandWarning_c9c198c7d_6_1",
+      "step_trustLocalTabCertificate_assertProceed_c9c198c7d_6_1",
+      "step_trustLocalTabCertificate_proceed_c9c198c7d_6_1",
+      "step_trustLocalTabCertificate_assertTrusted_c9c198c7d_6_1",
+      "step_trustLocalTabCertificate_switchBack_c9c198c7d_6_1",
+      "step_trustLocalTabCertificate_assertReturned_c9c198c7d_6_1",
+      "step_addAndOpenApp_assertAdd_c9c198c7d_6_2",
+      "step_addAndOpenApp_add_c9c198c7d_6_2",
+      "step_addAndOpenApp_assertAdded_c9c198c7d_6_2",
+      "step_addAndOpenApp_open_c9c198c7d_6_2",
+      "step_addAndOpenApp_assertReady_c9c198c7d_6_2",
       "step_assertPageContains_assert_c9c198c7d_7_1",
       "step_checkWorkspaceFiles_verify_c9c198c7d_8_1"
     ],
@@ -1763,11 +1756,11 @@
       ]
     },
     {
-      "step_id": "step_addAndOpenApp_assertAdd_c9c198c7d_6_1",
+      "step_id": "step_trustLocalTabCertificate_assertTabBar_c9c198c7d_6_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the app details popup is visible with its primary action button below the app name.",
+      "description": "@assertion Microsoft Teams is the displayed page in Google Chrome and the Chrome tab bar shows its new-tab button to the right of the open tabs.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1780,130 +1773,12 @@
       "tags": [
         "component:browser",
         "host_surface:teams",
-        "entry_state:app-details",
-        "step_retry_timeout: 180"
-      ]
-    },
-    {
-      "step_id": "step_addAndOpenApp_add_c9c198c7d_6_1",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 265,
-        "y": 214
-      },
-      "description": "Click the visible blue \"Add\" or \"Open\" button in the Microsoft Teams app details dialog.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_addAndOpenApp_assertAdd_c9c198c7d_6_1"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:browser",
-        "host_surface:teams",
-        "entry_state:app-details",
-        "ocr:true"
-      ]
-    },
-    {
-      "step_id": "step_addAndOpenApp_assertAdded_c9c198c7d_6_1",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the dialog that the app details popup opened is visible with its Open button.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_addAndOpenApp_add_c9c198c7d_6_1"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:browser",
-        "host_surface:teams",
-        "entry_state:added",
-        "step_retry_timeout: 180"
-      ]
-    },
-    {
-      "step_id": "step_addAndOpenApp_open_c9c198c7d_6_1",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 529,
-        "y": 506
-      },
-      "description": "Click the blue \"Open\" button in the \"Added successfully!\" or \"Let's go\" dialog for the app in Microsoft Teams.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_addAndOpenApp_assertAdded_c9c198c7d_6_1"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:browser",
-        "host_surface:teams",
-        "entry_state:added",
-        "ocr:true"
-      ]
-    },
-    {
-      "step_id": "step_addAndOpenApp_assertReady_c9c198c7d_6_1",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the Microsoft Teams tab page for an app whose name starts with ${{var:app_name}} is open.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_addAndOpenApp_open_c9c198c7d_6_1"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:browser",
-        "host_surface:teams",
-        "readiness:page-ready",
-        "step_retry_timeout: 180"
-      ]
-    },
-    {
-      "step_id": "step_trustLocalTabCertificate_assertTabBar_c9c198c7d_6_2",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion Microsoft Teams is the displayed page in Google Chrome and the Chrome tab bar shows its new-tab button to the right of the open tabs.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_addAndOpenApp_assertReady_c9c198c7d_6_1"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:browser",
-        "host_surface:teams",
-        "entry_state:teams-app-tab",
+        "entry_state:teams-page",
         "step_retry_timeout: 120"
       ]
     },
     {
-      "step_id": "step_trustLocalTabCertificate_newTab_c9c198c7d_6_2",
+      "step_id": "step_trustLocalTabCertificate_newTab_c9c198c7d_6_1",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -1917,19 +1792,19 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_trustLocalTabCertificate_assertTabBar_c9c198c7d_6_2"
+        "step_trustLocalTabCertificate_assertTabBar_c9c198c7d_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:browser",
         "host_surface:teams",
-        "entry_state:teams-app-tab",
+        "entry_state:teams-page",
         "ocr:true"
       ]
     },
     {
-      "step_id": "step_trustLocalTabCertificate_assertAddressBar_c9c198c7d_6_2",
+      "step_id": "step_trustLocalTabCertificate_assertAddressBar_c9c198c7d_6_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1939,7 +1814,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_trustLocalTabCertificate_newTab_c9c198c7d_6_2"
+        "step_trustLocalTabCertificate_newTab_c9c198c7d_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1951,7 +1826,7 @@
       ]
     },
     {
-      "step_id": "step_trustLocalTabCertificate_typeUrl_c9c198c7d_6_2",
+      "step_id": "step_trustLocalTabCertificate_typeUrl_c9c198c7d_6_1",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1963,7 +1838,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_trustLocalTabCertificate_assertAddressBar_c9c198c7d_6_2"
+        "step_trustLocalTabCertificate_assertAddressBar_c9c198c7d_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1974,7 +1849,7 @@
       ]
     },
     {
-      "step_id": "step_trustLocalTabCertificate_navigate_c9c198c7d_6_2",
+      "step_id": "step_trustLocalTabCertificate_navigate_c9c198c7d_6_1",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1986,7 +1861,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_trustLocalTabCertificate_typeUrl_c9c198c7d_6_2"
+        "step_trustLocalTabCertificate_typeUrl_c9c198c7d_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1997,7 +1872,7 @@
       ]
     },
     {
-      "step_id": "step_trustLocalTabCertificate_assertWarning_c9c198c7d_6_2",
+      "step_id": "step_trustLocalTabCertificate_assertWarning_c9c198c7d_6_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2007,7 +1882,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_trustLocalTabCertificate_navigate_c9c198c7d_6_2"
+        "step_trustLocalTabCertificate_navigate_c9c198c7d_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2019,7 +1894,7 @@
       ]
     },
     {
-      "step_id": "step_trustLocalTabCertificate_expandWarning_c9c198c7d_6_2",
+      "step_id": "step_trustLocalTabCertificate_expandWarning_c9c198c7d_6_1",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -2033,7 +1908,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_trustLocalTabCertificate_assertWarning_c9c198c7d_6_2"
+        "step_trustLocalTabCertificate_assertWarning_c9c198c7d_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2045,7 +1920,7 @@
       ]
     },
     {
-      "step_id": "step_trustLocalTabCertificate_assertProceed_c9c198c7d_6_2",
+      "step_id": "step_trustLocalTabCertificate_assertProceed_c9c198c7d_6_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2055,7 +1930,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_trustLocalTabCertificate_expandWarning_c9c198c7d_6_2"
+        "step_trustLocalTabCertificate_expandWarning_c9c198c7d_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2067,7 +1942,7 @@
       ]
     },
     {
-      "step_id": "step_trustLocalTabCertificate_proceed_c9c198c7d_6_2",
+      "step_id": "step_trustLocalTabCertificate_proceed_c9c198c7d_6_1",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -2081,7 +1956,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_trustLocalTabCertificate_assertProceed_c9c198c7d_6_2"
+        "step_trustLocalTabCertificate_assertProceed_c9c198c7d_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2093,7 +1968,7 @@
       ]
     },
     {
-      "step_id": "step_trustLocalTabCertificate_assertTrusted_c9c198c7d_6_2",
+      "step_id": "step_trustLocalTabCertificate_assertTrusted_c9c198c7d_6_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2103,7 +1978,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_trustLocalTabCertificate_proceed_c9c198c7d_6_2"
+        "step_trustLocalTabCertificate_proceed_c9c198c7d_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2115,7 +1990,7 @@
       ]
     },
     {
-      "step_id": "step_trustLocalTabCertificate_switchBack_c9c198c7d_6_2",
+      "step_id": "step_trustLocalTabCertificate_switchBack_c9c198c7d_6_1",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -2129,7 +2004,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_trustLocalTabCertificate_assertTrusted_c9c198c7d_6_2"
+        "step_trustLocalTabCertificate_assertTrusted_c9c198c7d_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2141,7 +2016,7 @@
       ]
     },
     {
-      "step_id": "step_trustLocalTabCertificate_assertReturned_c9c198c7d_6_2",
+      "step_id": "step_trustLocalTabCertificate_assertReturned_c9c198c7d_6_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2151,180 +2026,132 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_trustLocalTabCertificate_switchBack_c9c198c7d_6_2"
+        "step_trustLocalTabCertificate_switchBack_c9c198c7d_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:browser",
         "host_surface:teams",
-        "exit_state:teams-app-tab",
+        "exit_state:teams-page",
         "step_retry_timeout: 120"
       ]
     },
     {
-      "step_id": "step_reloadApp_assertOverflow_c9c198c7d_6_3",
+      "step_id": "step_addAndOpenApp_assertAdd_c9c198c7d_6_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the Microsoft Teams header for an app whose name starts with ${{var:app_name}} shows its more-options button.",
+      "description": "@assertion the app details popup is visible with its primary action button below the app name.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_trustLocalTabCertificate_assertReturned_c9c198c7d_6_2"
+        "step_trustLocalTabCertificate_assertReturned_c9c198c7d_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:browser",
         "host_surface:teams",
-        "entry_state:teams-app-tab",
-        "step_retry_timeout: 120"
+        "entry_state:app-details",
+        "step_retry_timeout: 180"
       ]
     },
     {
-      "step_id": "step_reloadApp_openOverflow_c9c198c7d_6_3",
+      "step_id": "step_addAndOpenApp_add_c9c198c7d_6_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 995,
-        "y": 198
+        "x": 265,
+        "y": 214
       },
-      "description": "Click the more-options (\"...\") button in the Microsoft Teams header for the app.",
+      "description": "Click the visible blue \"Add\" or \"Open\" button in the Microsoft Teams app details dialog.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_reloadApp_assertOverflow_c9c198c7d_6_3"
+        "step_addAndOpenApp_assertAdd_c9c198c7d_6_2"
       ],
       "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:browser",
         "host_surface:teams",
-        "entry_state:teams-app-tab",
+        "entry_state:app-details",
         "ocr:true"
       ]
     },
     {
-      "step_id": "step_reloadApp_assertMenu_c9c198c7d_6_3",
+      "step_id": "step_addAndOpenApp_assertAdded_c9c198c7d_6_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the Microsoft Teams more-options menu is open with its \"Reload app\" command.",
+      "description": "@assertion the dialog that the app details popup opened is visible with its Open button.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_reloadApp_openOverflow_c9c198c7d_6_3"
+        "step_addAndOpenApp_add_c9c198c7d_6_2"
       ],
       "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:browser",
         "host_surface:teams",
-        "entry_state:more-options-menu",
-        "step_retry_timeout: 60"
+        "entry_state:added",
+        "step_retry_timeout: 180"
       ]
     },
     {
-      "step_id": "step_reloadApp_reload_c9c198c7d_6_3",
+      "step_id": "step_addAndOpenApp_open_c9c198c7d_6_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 933,
-        "y": 231
+        "x": 529,
+        "y": 506
       },
-      "description": "Click \"Reload app\" in the Microsoft Teams more-options menu.",
+      "description": "Click the blue \"Open\" button in the \"Added successfully!\" or \"Let's go\" dialog for the app in Microsoft Teams.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_reloadApp_assertMenu_c9c198c7d_6_3"
+        "step_addAndOpenApp_assertAdded_c9c198c7d_6_2"
       ],
       "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:browser",
         "host_surface:teams",
-        "entry_state:more-options-menu",
+        "entry_state:added",
         "ocr:true"
       ]
     },
     {
-      "step_id": "step_reloadApp_assertPermission_c9c198c7d_6_3",
+      "step_id": "step_addAndOpenApp_assertReady_c9c198c7d_6_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the browser permission prompt raised by teams.cloud.microsoft is visible with its Allow button.",
+      "description": "@assertion the Microsoft Teams tab page for an app whose name starts with ${{var:app_name}} is open.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_reloadApp_reload_c9c198c7d_6_3"
+        "step_addAndOpenApp_open_c9c198c7d_6_2"
       ],
       "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:browser",
         "host_surface:teams",
-        "entry_state:permission-prompt",
-        "step_retry_timeout: 120"
-      ]
-    },
-    {
-      "step_id": "step_reloadApp_allow_c9c198c7d_6_3",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 399,
-        "y": 235
-      },
-      "description": "Click the \"Allow\" button on the browser permission prompt raised by teams.cloud.microsoft.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_reloadApp_assertPermission_c9c198c7d_6_3"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:browser",
-        "host_surface:teams",
-        "entry_state:permission-prompt",
-        "ocr:true"
-      ]
-    },
-    {
-      "step_id": "step_reloadApp_assertRendered_c9c198c7d_6_3",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the Microsoft Teams tab for an app whose name starts with ${{var:app_name}} shows its rendered page content instead of an empty frame.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_reloadApp_allow_c9c198c7d_6_3"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:browser",
-        "host_surface:teams",
-        "exit_state:tab-content-rendered",
+        "readiness:page-ready",
         "step_retry_timeout: 180"
       ]
     },
@@ -2339,7 +2166,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_reloadApp_assertRendered_c9c198c7d_6_3"
+        "step_addAndOpenApp_assertReady_c9c198c7d_6_2"
       ],
       "preconditions": [],
       "postconditions": [],

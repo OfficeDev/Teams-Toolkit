@@ -3090,7 +3090,7 @@ test("VCB-117: the Teams open closes on the subject its adapter supplies", async
   }
 });
 
-test("VCB-118: only the local tab open trusts the development certificate and reloads", async () => {
+test("VCB-118: only the local tab open trusts the development certificate, and it does so before the app opens", async () => {
   const result = await compileFixture(
     "non-sso-tab.yml",
     (sourceText) => sourceText,
@@ -3103,19 +3103,21 @@ test("VCB-118: only the local tab open trusts the development certificate and re
   const remote = result.value.find(
     (generated) => generated.caseId === "tab-ts-remote-teams",
   ).plan;
-  const hasComponent = (plan, componentId) =>
-    plan.steps.some((step) => step.step_id.startsWith(`step_${componentId}_`));
+  const indexOfComponent = (plan, componentId) =>
+    plan.steps.findIndex((step) =>
+      step.step_id.startsWith(`step_${componentId}_`),
+    );
 
-  assert.equal(hasComponent(local, "trustLocalTabCertificate"), true);
-  assert.equal(hasComponent(local, "reloadApp"), true);
+  const trustIndex = indexOfComponent(local, "trustLocalTabCertificate");
+  assert.notEqual(trustIndex, -1);
+  assert.ok(trustIndex < indexOfComponent(local, "addAndOpenApp"));
   assert.equal(
     local.steps.some(
       (step) => step.parameters?.text === "https://localhost:3978/tabs/home",
     ),
     true,
   );
-  assert.equal(hasComponent(remote, "trustLocalTabCertificate"), false);
-  assert.equal(hasComponent(remote, "reloadApp"), false);
+  assert.equal(indexOfComponent(remote, "trustLocalTabCertificate"), -1);
 });
 
 test("VCB-119: a page check requires page-ready and asserts each authored substring", async () => {

@@ -23,7 +23,7 @@
       "tags": [
         "component:browser",
         "host_surface:teams",
-        "entry_state:teams-app-tab",
+        "entry_state:teams-page",
         "step_retry_timeout: 120"
       ]
     },
@@ -49,7 +49,7 @@
       "tags": [
         "component:browser",
         "host_surface:teams",
-        "entry_state:teams-app-tab",
+        "entry_state:teams-page",
         "ocr:true"
       ]
     },
@@ -283,7 +283,7 @@
       "tags": [
         "component:browser",
         "host_surface:teams",
-        "exit_state:teams-app-tab",
+        "exit_state:teams-page",
         "step_retry_timeout: 120"
       ]
     }
