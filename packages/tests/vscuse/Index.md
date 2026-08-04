@@ -17,7 +17,7 @@ This document indexes all available VscUse (VS Code UI automation) test plans un
 | AI search, custom API, knowledge/RAG                       | [Teams Agent With Data](#teams-agent-with-data)        |
 | Collaborator, multi-user agent                             | [Teams Collaborator Agent](#teams-collaborator-agent)  |
 | Weather bot, playground sample                             | [Weather Agent](#weather-agent)                        |
-| Simple bot, echo bot, notification bot                     | [Simple Bot](#simple-bot)                              |
+| Simple bot, echo bot, notification bot                     | [Generated](#generated)                                |
 | Message extension, search/action command                   | [Message Extension](#message-extension)                |
 | Tab, React, SPFx, frontend                                 | [Tab](#tab)                                            |
 | Sample gallery, CoffeeAgent, Data Analyst, ProxyAgent      | [Sample](#sample)                                      |
@@ -87,14 +87,8 @@ Compiled from the YAML cases under [`vscode-test-cases/cases/`](vscode-test-case
 
 | Test Plan | Lang | Provider | Mode |
 |-----------|------|----------|------|
-| `Basic_Custom_Engine_Azure_OpenAI_js_Local_Debug` | JS | Azure OpenAI | Local |
-| `Basic_Custom_Engine_Azure_OpenAI_js_remote_debug` | JS | Azure OpenAI | Remote |
-| `Basic_Custom_Engine_Azure_OpenAI_js_playground` | JS | Azure OpenAI | Playground |
 | `Basic_Custom_Engine_Azure_OpenAI_js_Copilot_Local_Debug` | JS | Azure OpenAI | Copilot local |
 | `Basic_Custom_Engine_Azure_OpenAI_js_Copilot_Remote_Debug` | JS | Azure OpenAI | Copilot remote |
-| `Basic_Custom_Engine_Azure_OpenAI_ts_Local_Debug` | TS | Azure OpenAI | Local |
-| `Basic_Custom_Engine_Azure_OpenAI_ts_remote_debug` | TS | Azure OpenAI | Remote |
-| `Basic_Custom_Engine_Azure_OpenAI_ts_playground` | TS | Azure OpenAI | Playground |
 | `Basic_Custom_Engine_Azure_OpenAI_ts_Copilot_Local_Debug` | TS | Azure OpenAI | Copilot local |
 | `Basic_Custom_Engine_Azure_OpenAI_ts_Copilot_Remote_Debug` | TS | Azure OpenAI | Copilot remote |
 | `Basic_Custom_Engine_OpenAI_js_Local_Debug` | JS | OpenAI | Local |
@@ -183,24 +177,6 @@ Compiled from the YAML cases under [`vscode-test-cases/cases/`](vscode-test-case
 | `Weather_Agent_OpenAI_ts_playground` | TS | OpenAI playground |
 | `Weather_Agent_OpenAI_ts_Copilot_Local_Debug` | TS | OpenAI Copilot local |
 | `Weather_Agent_OpenAI_ts_Copilot_Remote_Debug` | TS | OpenAI Copilot remote |
-
----
-
-## Simple Bot
-
-**Keywords:** simple bot, echo bot, notification
-
-| Test Plan | Lang | Mode |
-|-----------|------|------|
-| `Simple_Bot_js_Local_Debug` | JS | Local |
-| `Simple_Bot_js_Remote_Debug` | JS | Remote |
-| `Simple_Bot_js_playground` | JS | Playground |
-| `Simple_Bot_ts_Local_Debug` | TS | Local |
-| `Simple_Bot_ts_Remote_Debug` | TS | Remote |
-| `Simple_Bot_ts_playground` | TS | Playground |
-| `Simple_bot_py_local_debug` | Py | Local |
-| `Simple_bot_py_remote_debug` | Py | Remote |
-| `Simple_Bot_py_playground` | Py | Playground |
 
 ---
 
