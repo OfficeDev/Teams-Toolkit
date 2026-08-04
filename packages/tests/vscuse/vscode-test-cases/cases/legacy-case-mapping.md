@@ -74,6 +74,12 @@ that no longer exists wherever the status is **Full**.
 | `da-mcp-server.yml`                   | `da-mcp-remote-entra-preview`                            | `da-mcp-server--da-mcp-remote-entra-preview.json`                                              | `DA_MCP_Entra_SSO_Remote.json`                                  | Full    | Remote MCP with Microsoft Entra SSO and pipeline/file assertions.                                                                                                          |
 | `da-api-plugin-from-scratch.yml`      | `da-api-plugin-from-scratch-ts`                          | `da-api-plugin-from-scratch--da-api-plugin-from-scratch-ts.json`                               | `DA_None_ts_Remote_Debug.json`                                  | Full    | New API + None auth + TypeScript scaffold/file validation, provision, Copilot remote preview, action consent, and repair response validation.                              |
 | `da-api-plugin-from-scratch.yml`      | `da-api-plugin-from-scratch-js`                          | `da-api-plugin-from-scratch--da-api-plugin-from-scratch-js.json`                               | `DA_None_js_Remote_Debug.json`                                  | Full    | New API + None auth + JavaScript scaffold/file validation, provision, Copilot remote preview, action consent, and repair response validation.                              |
+| `da-api-plugin-from-scratch.yml`      | `da-api-plugin-from-scratch-js-local-copilot`            | `da-api-plugin-from-scratch--da-api-plugin-from-scratch-js-local-copilot.json`                 | `DA_None_js_Local_Debug.json`                                   | Full    | New API + None auth + JavaScript scaffold/file validation, local Copilot launch, action consent, and repair response validation.                                           |
+| `da-api-plugin-from-scratch-bearer.yml` | `da-api-plugin-from-scratch-api-key-ts-local-copilot`  | `da-api-plugin-from-scratch-bearer--da-api-plugin-from-scratch-api-key-ts-local-copilot.json`  | `DA_Api_Key_ts_Local_Debug.json`                                | Full    | New API + API Key + TypeScript scaffold/file validation, local user environment materialization, local Copilot launch, and repair response validation.                    |
+| `da-api-plugin-from-scratch-bearer.yml` | `da-api-plugin-from-scratch-api-key-js-local-copilot`  | `da-api-plugin-from-scratch-bearer--da-api-plugin-from-scratch-api-key-js-local-copilot.json`  | `DA_Api_Key_js_Local_Debug.json`                                | Full    | New API + API Key + JavaScript scaffold/file validation, local user environment materialization, local Copilot launch, and repair response validation.                    |
+| `da-api-plugin-from-scratch-oauth.yml` | `da-api-plugin-from-scratch-entra-ts-local-copilot`     | `da-api-plugin-from-scratch-oauth--da-api-plugin-from-scratch-entra-ts-local-copilot.json`     | `DA_Microsoft_Entra_ts_Local_Debug.json`                        | Full    | New API + Microsoft Entra + TypeScript scaffold/file validation, local Copilot launch, action consent, and repair response validation.                                     |
+| `da-api-plugin-from-scratch-oauth.yml` | `da-api-plugin-from-scratch-oauth-ts-local-copilot`     | `da-api-plugin-from-scratch-oauth--da-api-plugin-from-scratch-oauth-ts-local-copilot.json`     | `DA_Oauth_ts_Local_Debug.json`                                  | Full    | New API + OAuth + TypeScript scaffold/file validation, local Copilot launch, action consent, and Repair Service sign-in assertion.                                         |
+| `da-api-plugin-from-scratch-oauth.yml` | `da-api-plugin-from-scratch-oauth-js-local-copilot`     | `da-api-plugin-from-scratch-oauth--da-api-plugin-from-scratch-oauth-js-local-copilot.json`     | `DA_Oauth_js_Local_Debug.json`                                  | Full    | New API + OAuth + JavaScript scaffold/file validation, local Copilot launch, action consent, and Repair Service sign-in assertion.                                         |
 | `da-api-plugin-from-existing-api.yml` | `da-api-plugin-from-existing-api-no-auth-remote-preview` | `da-api-plugin-from-existing-api--da-api-plugin-from-existing-api-no-auth-remote-preview.json` | `DA_Add_Action_Import_Existing_API_Basic_No_Auth.json`          | Full    | No-auth scaffold/file validation, provision, and Copilot remote preview.                                                                                                   |
 | `da-api-plugin-from-existing-api.yml` | `da-api-plugin-from-existing-api-api-key-remote-preview` | `da-api-plugin-from-existing-api--da-api-plugin-from-existing-api-api-key-remote-preview.json` | `DA_Add_Action_Import_Existing_API_Basic_API_Key.json`          | Full    | API Key scaffold, protected credential input, provision, and Copilot remote preview.                                                                                       |
 | `da-api-plugin-from-existing-api.yml` | `da-api-plugin-from-existing-api-bearer-remote-preview`  | `da-api-plugin-from-existing-api--da-api-plugin-from-existing-api-bearer-remote-preview.json`  | `DA_Add_Action_Import_Existing_API_Bearer_token.json`           | Full    | Bearer scaffold, protected token input, provision, and Copilot remote preview.                                                                                             |
@@ -107,6 +113,20 @@ surface and remain recorded without a one-to-one generated replacement:
 `General_Teams_Agent_Azure_OpenAI_py_Copilot_Remote_Debug.json`.
 The bundle asserts that both language packages render the Copilot profile while the TypeScript cases
 exercise its remote and local browser flow, so crossing those dimensions adds no distinct contract.
+
+## Legacy DA Plans Not Mapped
+
+Four failed declarative-agent plans still require workflows outside the semantic engine's closed
+step set:
+
+- `DA_Api_Key_ts_Remote_Debug.json` generates a key and writes the remote `dev` user environment
+  before provision; `localUserEnvironment` intentionally targets only the local environment.
+- `DA_Typespec_With_Action.json` edits `src/agent/main.tsp` after scaffolding, but generated cases
+  expose no arbitrary source-edit operation or TypeSpec DA scaffold adapter.
+- `DA_Error_Message_of_Legacy_Projects.json` switches extension versions and invokes Share, neither
+  of which has a semantic operation.
+- `DA_With_EK_Happy_Path.json` adds Embedded Knowledge after creation through a file-picker flow,
+  which has no semantic operation or recorded generated-case component.
 
 ## Legacy Plan Not Mapped
 

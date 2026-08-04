@@ -1,0 +1,214 @@
+version: 1
+
+cases:
+  - id: da-api-plugin-from-scratch-api-key-ts-local-copilot
+    scenarioId: SCN-DA-CREATE-API-PLUGIN-FROM-SCRATCH
+    gate: manual
+    steps:
+      [
+        scaffold-ts,
+        check-ts,
+        set-api-key,
+        login-m365,
+        f5-copilot-local,
+        open-agent,
+        check-repair,
+      ]
+
+  - id: da-api-plugin-from-scratch-api-key-js-local-copilot
+    scenarioId: SCN-DA-CREATE-API-PLUGIN-FROM-SCRATCH
+    gate: manual
+    steps:
+      [
+        scaffold-js,
+        check-js,
+        set-api-key,
+        login-m365,
+        f5-copilot-local,
+        open-agent,
+        check-repair,
+      ]
+
+steps:
+  scaffold-ts:
+    type: scaffold
+    with:
+      template: da/api-plugin-from-scratch-bearer
+      answers:
+        - question: projectType
+          value: copilot-agent-type
+        - question: daTemplate
+          value: add-action
+        - question: actionSource
+          value: new-api
+        - question: apiAuth
+          value: api-key
+        - question: language
+          value: typescript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-ts:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/repairDeclarativeAgent.json
+        expect:
+          contains:
+            - '"name": "${{var:app_name}}${{APP_NAME_SUFFIX}}"'
+            - '"id": "repairPlugin"'
+            - '"file": "ai-plugin.json"'
+      - type: file
+        path: appPackage/ai-plugin.json
+        expect:
+          contains:
+            - '"namespace": "repairs"'
+            - '"type": "OpenApi"'
+            - '"type": "ApiKeyPluginVault"'
+            - '"reference_id": "${{APIKEY_REGISTRATION_ID}}"'
+            - '"url": "apiSpecificationFile/repair.yml"'
+          notContains: ["OAuthPluginVault"]
+      - type: file
+        path: m365agents.local.yml
+        expect:
+          contains:
+            - "uses: apiKey/register"
+            - "primaryClientSecret: ${{SECRET_API_KEY}}"
+            - "registrationId: APIKEY_REGISTRATION_ID"
+            - "API_KEY: ${{SECRET_API_KEY}}"
+          notContains: ["oauth/register", "aadApp/create"]
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains:
+            - "uses: apiKey/register"
+            - "primaryClientSecret: ${{SECRET_API_KEY}}"
+            - "registrationId: APIKEY_REGISTRATION_ID"
+          notContains: ["oauth/register", "aadApp/create"]
+      - type: file
+        path: env/.env.local.user
+        expect:
+          contains: ["SECRET_API_KEY="]
+      - type: file
+        path: src/functions/repairs.ts
+        expect:
+          exists: true
+      - type: file
+        path: src/functions/repairs.js
+        expect:
+          exists: false
+      - type: file
+        path: tsconfig.json
+        expect:
+          exists: true
+
+  scaffold-js:
+    type: scaffold
+    with:
+      template: da/api-plugin-from-scratch-bearer
+      answers:
+        - question: projectType
+          value: copilot-agent-type
+        - question: daTemplate
+          value: add-action
+        - question: actionSource
+          value: new-api
+        - question: apiAuth
+          value: api-key
+        - question: language
+          value: javascript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-js:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/repairDeclarativeAgent.json
+        expect:
+          contains:
+            - '"name": "${{var:app_name}}${{APP_NAME_SUFFIX}}"'
+            - '"id": "repairPlugin"'
+            - '"file": "ai-plugin.json"'
+      - type: file
+        path: appPackage/ai-plugin.json
+        expect:
+          contains:
+            - '"namespace": "repairs"'
+            - '"type": "OpenApi"'
+            - '"type": "ApiKeyPluginVault"'
+            - '"reference_id": "${{APIKEY_REGISTRATION_ID}}"'
+            - '"url": "apiSpecificationFile/repair.yml"'
+          notContains: ["OAuthPluginVault"]
+      - type: file
+        path: m365agents.local.yml
+        expect:
+          contains:
+            - "uses: apiKey/register"
+            - "primaryClientSecret: ${{SECRET_API_KEY}}"
+            - "registrationId: APIKEY_REGISTRATION_ID"
+            - "API_KEY: ${{SECRET_API_KEY}}"
+          notContains: ["oauth/register", "aadApp/create"]
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains:
+            - "uses: apiKey/register"
+            - "primaryClientSecret: ${{SECRET_API_KEY}}"
+            - "registrationId: APIKEY_REGISTRATION_ID"
+          notContains: ["oauth/register", "aadApp/create"]
+      - type: file
+        path: env/.env.local.user
+        expect:
+          contains: ["SECRET_API_KEY="]
+      - type: file
+        path: src/functions/repairs.js
+        expect:
+          exists: true
+      - type: file
+        path: src/functions/repairs.ts
+        expect:
+          exists: false
+      - type: file
+        path: tsconfig.json
+        expect:
+          exists: false
+
+  set-api-key:
+    type: localUserEnvironment
+    with:
+      SECRET_API_KEY: "${{var:app_name}}-api-key"
+
+  login-m365:
+    type: login
+    with:
+      type: m365
+      account: "${{env:M365_ACCOUNT_NAME}}"
+      password: "${{secret:M365_ACCOUNT_PASSWORD}}"
+
+  f5-copilot-local:
+    type: target
+    with:
+      profile: "Debug in Copilot (Chrome)"
+      profileSelection: first
+
+  open-agent:
+    type: open
+    with:
+      kind: agent
+      destination: chat
+
+  check-repair:
+    type: checks
+    with:
+      - type: chat
+        send: show repair records assigned to karin blair
+        allowAction: true
+        expect:
+          contains: ["Oil Change"]

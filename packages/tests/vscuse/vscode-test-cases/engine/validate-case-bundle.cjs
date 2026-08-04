@@ -22,6 +22,7 @@ const allowedStepTypes = new Set([
   "deploy",
   "pythonEnvironment",
   "localEnvironment",
+  "localUserEnvironment",
   "target",
   "open",
   "checks",
@@ -120,7 +121,7 @@ function validateCaseBundle({ bundle, sourcePath }) {
   }
   const inheritedFeatureFlags = rootFeatureFlagsInvalid
     ? []
-    : bundle.featureFlags ?? [];
+    : (bundle.featureFlags ?? []);
 
   if (!Array.isArray(bundle.cases) || bundle.cases.length === 0) {
     diagnostics.push(
