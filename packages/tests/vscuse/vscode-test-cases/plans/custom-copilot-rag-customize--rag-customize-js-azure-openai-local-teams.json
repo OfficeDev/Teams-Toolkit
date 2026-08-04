@@ -1,127 +1,135 @@
 {
   "plan_metadata": {
     "version": "1.1",
-    "plan_id": "plan_a86b093a22d5",
+    "plan_id": "plan_10170e3db44f",
     "execution_context": {
       "delay_between_steps": 1,
       "stop_on_error": true,
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 95,
-    "name": "weather-ts-openai-local-teams",
+    "total_steps": 103,
+    "name": "rag-customize-js-azure-openai-local-teams",
     "description": {
       "owner": "",
-      "workitem": "SCN-CREATE-WEATHER-03",
+      "workitem": "SCN-CREATE-RAG-CUSTOMIZE-03",
       "other": ""
     },
     "execution_order": [
-      "step_closeWelcomeOverlay_assertVisible_cc58c0052_1_1",
-      "step_closeWelcomeOverlay_close_cc58c0052_1_1",
-      "step_closeWelcomeOverlay_assertReady_cc58c0052_1_1",
-      "step_executeCommand_open_cc58c0052_1_2",
-      "step_executeCommand_assertPalette_cc58c0052_1_2",
-      "step_executeCommand_filter_cc58c0052_1_2",
-      "step_executeCommand_assertCommand_cc58c0052_1_2",
-      "step_executeCommand_execute_cc58c0052_1_2",
-      "step_assertToolkitViewSettled_assert_cc58c0052_1_3",
-      "step_closeGetStartedEditor_assertActive_cc58c0052_1_4",
-      "step_closeGetStartedEditor_close_cc58c0052_1_4",
-      "step_closeGetStartedEditor_assertClosed_cc58c0052_1_4",
-      "step_executeCommand_open_cc58c0052_1_5",
-      "step_executeCommand_assertPalette_cc58c0052_1_5",
-      "step_executeCommand_filter_cc58c0052_1_5",
-      "step_executeCommand_assertCommand_cc58c0052_1_5",
-      "step_executeCommand_execute_cc58c0052_1_5",
-      "step_singleSelect_assertQuestion_cc58c0052_1_6",
-      "step_singleSelect_assertOptionsLoaded_cc58c0052_1_6",
-      "step_singleSelect_filter_cc58c0052_1_6",
-      "step_singleSelect_assertOption_cc58c0052_1_6",
-      "step_singleSelect_confirm_cc58c0052_1_6",
-      "step_singleSelect_assertQuestion_cc58c0052_1_7",
-      "step_singleSelect_assertOptionsLoaded_cc58c0052_1_7",
-      "step_singleSelect_filter_cc58c0052_1_7",
-      "step_singleSelect_assertOption_cc58c0052_1_7",
-      "step_singleSelect_confirm_cc58c0052_1_7",
-      "step_singleSelect_assertQuestion_cc58c0052_1_8",
-      "step_singleSelect_assertOptionsLoaded_cc58c0052_1_8",
-      "step_singleSelect_filter_cc58c0052_1_8",
-      "step_singleSelect_assertOption_cc58c0052_1_8",
-      "step_singleSelect_confirm_cc58c0052_1_8",
-      "step_textInput_assertQuestion_cc58c0052_1_9",
-      "step_textInput_input_cc58c0052_1_9",
-      "step_textInput_confirm_cc58c0052_1_9",
-      "step_singleSelect_assertQuestion_cc58c0052_1_10",
-      "step_singleSelect_assertOptionsLoaded_cc58c0052_1_10",
-      "step_singleSelect_filter_cc58c0052_1_10",
-      "step_singleSelect_assertOption_cc58c0052_1_10",
-      "step_singleSelect_confirm_cc58c0052_1_10",
-      "step_confirmOption_assertPrompt_cc58c0052_1_11",
-      "step_confirmOption_confirm_cc58c0052_1_11",
-      "step_textInput_assertQuestion_cc58c0052_1_12",
-      "step_textInput_input_cc58c0052_1_12",
-      "step_textInput_confirm_cc58c0052_1_12",
-      "step_assertProjectWindowReady_assert_cc58c0052_1_13",
-      "step_checkWorkspaceFiles_verify_cc58c0052_2_1",
-      "step_checkWorkspaceFiles_verify_cc58c0052_2_2",
-      "step_checkWorkspaceFiles_verify_cc58c0052_2_3",
-      "step_checkWorkspaceFiles_verify_cc58c0052_2_4",
-      "step_checkWorkspaceFiles_verify_cc58c0052_2_5",
-      "step_checkWorkspaceFiles_verify_cc58c0052_2_6",
-      "step_checkWorkspaceFiles_verify_cc58c0052_2_7",
-      "step_setLocalEnvironmentVariable_cc58c0052_3_1",
-      "step_executeCommand_open_cc58c0052_4_1",
-      "step_executeCommand_assertPalette_cc58c0052_4_1",
-      "step_executeCommand_filter_cc58c0052_4_1",
-      "step_executeCommand_assertCommand_cc58c0052_4_1",
-      "step_executeCommand_execute_cc58c0052_4_1",
-      "step_signInM365_assertOption_cc58c0052_4_2",
-      "step_signInM365_selectOption_cc58c0052_4_2",
-      "step_signInM365_confirmSignIn_cc58c0052_4_2",
-      "step_signInM365_focusAccount_cc58c0052_4_2",
-      "step_signInM365_typeAccount_cc58c0052_4_2",
-      "step_signInM365_next_cc58c0052_4_2",
-      "step_signInM365_typePassword_cc58c0052_4_2",
-      "step_signInM365_submit_cc58c0052_4_2",
-      "step_signInM365_closeBrowser_cc58c0052_4_2",
-      "step_signInM365_assertReady_cc58c0052_4_2",
-      "step_executeCommand_open_cc58c0052_5_1",
-      "step_executeCommand_assertPalette_cc58c0052_5_1",
-      "step_executeCommand_filter_cc58c0052_5_1",
-      "step_executeCommand_assertCommand_cc58c0052_5_1",
-      "step_executeCommand_execute_cc58c0052_5_1",
-      "step_filterOption_filter_cc58c0052_5_2",
-      "step_filterOption_assertOption_cc58c0052_5_2",
-      "step_filterOption_confirm_cc58c0052_5_2",
-      "step_browserM365PasswordSignIn_assertPassword_cc58c0052_5_3",
-      "step_browserM365PasswordSignIn_focusPassword_cc58c0052_5_3",
-      "step_browserM365PasswordSignIn_enterPassword_cc58c0052_5_3",
-      "step_browserM365PasswordSignIn_submitPassword_cc58c0052_5_3",
-      "step_browserM365PasswordSignIn_assertStaySignedIn_cc58c0052_5_3",
-      "step_browserM365PasswordSignIn_confirmStaySignedIn_cc58c0052_5_3",
-      "step_assertReady_assertReady_cc58c0052_5_4",
-      "step_addAndOpenApp_assertAdd_cc58c0052_6_1",
-      "step_addAndOpenApp_add_cc58c0052_6_1",
-      "step_addAndOpenApp_assertAdded_cc58c0052_6_1",
-      "step_addAndOpenApp_open_cc58c0052_6_1",
-      "step_addAndOpenApp_assertReady_cc58c0052_6_1",
-      "step_sendTeamsMessage_assertInput_cc58c0052_7_1",
-      "step_sendTeamsMessage_focusInput_cc58c0052_7_1",
-      "step_sendTeamsMessage_type_cc58c0052_7_1",
-      "step_sendTeamsMessage_send_cc58c0052_7_1",
-      "step_assertChatReplied_assert_cc58c0052_7_2",
-      "step_assertChatContains_assert_cc58c0052_7_3"
+      "step_closeWelcomeOverlay_assertVisible_c3c113141_1_1",
+      "step_closeWelcomeOverlay_close_c3c113141_1_1",
+      "step_closeWelcomeOverlay_assertReady_c3c113141_1_1",
+      "step_executeCommand_open_c3c113141_1_2",
+      "step_executeCommand_assertPalette_c3c113141_1_2",
+      "step_executeCommand_filter_c3c113141_1_2",
+      "step_executeCommand_assertCommand_c3c113141_1_2",
+      "step_executeCommand_execute_c3c113141_1_2",
+      "step_assertToolkitViewSettled_assert_c3c113141_1_3",
+      "step_closeGetStartedEditor_assertActive_c3c113141_1_4",
+      "step_closeGetStartedEditor_close_c3c113141_1_4",
+      "step_closeGetStartedEditor_assertClosed_c3c113141_1_4",
+      "step_executeCommand_open_c3c113141_1_5",
+      "step_executeCommand_assertPalette_c3c113141_1_5",
+      "step_executeCommand_filter_c3c113141_1_5",
+      "step_executeCommand_assertCommand_c3c113141_1_5",
+      "step_executeCommand_execute_c3c113141_1_5",
+      "step_singleSelect_assertQuestion_c3c113141_1_6",
+      "step_singleSelect_assertOptionsLoaded_c3c113141_1_6",
+      "step_singleSelect_filter_c3c113141_1_6",
+      "step_singleSelect_assertOption_c3c113141_1_6",
+      "step_singleSelect_confirm_c3c113141_1_6",
+      "step_singleSelect_assertQuestion_c3c113141_1_7",
+      "step_singleSelect_assertOptionsLoaded_c3c113141_1_7",
+      "step_singleSelect_filter_c3c113141_1_7",
+      "step_singleSelect_assertOption_c3c113141_1_7",
+      "step_singleSelect_confirm_c3c113141_1_7",
+      "step_singleSelect_assertQuestion_c3c113141_1_8",
+      "step_singleSelect_assertOptionsLoaded_c3c113141_1_8",
+      "step_singleSelect_filter_c3c113141_1_8",
+      "step_singleSelect_assertOption_c3c113141_1_8",
+      "step_singleSelect_confirm_c3c113141_1_8",
+      "step_singleSelect_assertQuestion_c3c113141_1_9",
+      "step_singleSelect_assertOptionsLoaded_c3c113141_1_9",
+      "step_singleSelect_filter_c3c113141_1_9",
+      "step_singleSelect_assertOption_c3c113141_1_9",
+      "step_singleSelect_confirm_c3c113141_1_9",
+      "step_textInput_assertQuestion_c3c113141_1_10",
+      "step_textInput_input_c3c113141_1_10",
+      "step_textInput_confirm_c3c113141_1_10",
+      "step_textInput_assertQuestion_c3c113141_1_11",
+      "step_textInput_input_c3c113141_1_11",
+      "step_textInput_confirm_c3c113141_1_11",
+      "step_textInput_assertQuestion_c3c113141_1_12",
+      "step_textInput_input_c3c113141_1_12",
+      "step_textInput_confirm_c3c113141_1_12",
+      "step_singleSelect_assertQuestion_c3c113141_1_13",
+      "step_singleSelect_assertOptionsLoaded_c3c113141_1_13",
+      "step_singleSelect_filter_c3c113141_1_13",
+      "step_singleSelect_assertOption_c3c113141_1_13",
+      "step_singleSelect_confirm_c3c113141_1_13",
+      "step_confirmOption_assertPrompt_c3c113141_1_14",
+      "step_confirmOption_confirm_c3c113141_1_14",
+      "step_textInput_assertQuestion_c3c113141_1_15",
+      "step_textInput_input_c3c113141_1_15",
+      "step_textInput_confirm_c3c113141_1_15",
+      "step_assertProjectWindowReady_assert_c3c113141_1_16",
+      "step_checkWorkspaceFiles_verify_c3c113141_2_1",
+      "step_checkWorkspaceFiles_verify_c3c113141_2_2",
+      "step_checkWorkspaceFiles_verify_c3c113141_2_3",
+      "step_checkWorkspaceFiles_verify_c3c113141_2_4",
+      "step_checkWorkspaceFiles_verify_c3c113141_2_5",
+      "step_executeCommand_open_c3c113141_3_1",
+      "step_executeCommand_assertPalette_c3c113141_3_1",
+      "step_executeCommand_filter_c3c113141_3_1",
+      "step_executeCommand_assertCommand_c3c113141_3_1",
+      "step_executeCommand_execute_c3c113141_3_1",
+      "step_signInM365_assertOption_c3c113141_3_2",
+      "step_signInM365_selectOption_c3c113141_3_2",
+      "step_signInM365_confirmSignIn_c3c113141_3_2",
+      "step_signInM365_focusAccount_c3c113141_3_2",
+      "step_signInM365_typeAccount_c3c113141_3_2",
+      "step_signInM365_next_c3c113141_3_2",
+      "step_signInM365_typePassword_c3c113141_3_2",
+      "step_signInM365_submit_c3c113141_3_2",
+      "step_signInM365_closeBrowser_c3c113141_3_2",
+      "step_signInM365_assertReady_c3c113141_3_2",
+      "step_executeCommand_open_c3c113141_4_1",
+      "step_executeCommand_assertPalette_c3c113141_4_1",
+      "step_executeCommand_filter_c3c113141_4_1",
+      "step_executeCommand_assertCommand_c3c113141_4_1",
+      "step_executeCommand_execute_c3c113141_4_1",
+      "step_filterOption_filter_c3c113141_4_2",
+      "step_filterOption_assertOption_c3c113141_4_2",
+      "step_filterOption_confirm_c3c113141_4_2",
+      "step_browserM365PasswordSignIn_assertPassword_c3c113141_4_3",
+      "step_browserM365PasswordSignIn_focusPassword_c3c113141_4_3",
+      "step_browserM365PasswordSignIn_enterPassword_c3c113141_4_3",
+      "step_browserM365PasswordSignIn_submitPassword_c3c113141_4_3",
+      "step_browserM365PasswordSignIn_assertStaySignedIn_c3c113141_4_3",
+      "step_browserM365PasswordSignIn_confirmStaySignedIn_c3c113141_4_3",
+      "step_assertReady_assertReady_c3c113141_4_4",
+      "step_addAndOpenApp_assertAdd_c3c113141_5_1",
+      "step_addAndOpenApp_add_c3c113141_5_1",
+      "step_addAndOpenApp_assertAdded_c3c113141_5_1",
+      "step_addAndOpenApp_open_c3c113141_5_1",
+      "step_addAndOpenApp_assertReady_c3c113141_5_1",
+      "step_sendTeamsMessage_assertInput_c3c113141_6_1",
+      "step_sendTeamsMessage_focusInput_c3c113141_6_1",
+      "step_sendTeamsMessage_type_c3c113141_6_1",
+      "step_sendTeamsMessage_send_c3c113141_6_1",
+      "step_assertChatReplied_assert_c3c113141_6_2",
+      "step_assertChatNotContains_assert_c3c113141_6_3"
     ],
     "tags": [
-      "case_id:weather-ts-openai-local-teams",
-      "scenario_id:SCN-CREATE-WEATHER-03",
-      "template_id:weather-agent",
+      "case_id:rag-customize-js-azure-openai-local-teams",
+      "scenario_id:SCN-CREATE-RAG-CUSTOMIZE-03",
+      "template_id:custom-copilot-rag-customize",
       "gate:pr"
     ]
   },
   "steps": [
     {
-      "step_id": "step_closeWelcomeOverlay_assertVisible_cc58c0052_1_1",
+      "step_id": "step_closeWelcomeOverlay_assertVisible_c3c113141_1_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -140,7 +148,7 @@
       ]
     },
     {
-      "step_id": "step_closeWelcomeOverlay_close_cc58c0052_1_1",
+      "step_id": "step_closeWelcomeOverlay_close_c3c113141_1_1",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -154,7 +162,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_closeWelcomeOverlay_assertVisible_cc58c0052_1_1"
+        "step_closeWelcomeOverlay_assertVisible_c3c113141_1_1"
       ],
       "preconditions": [
         "dhash:952:128:16:5:255266345964665b",
@@ -169,7 +177,7 @@
       ]
     },
     {
-      "step_id": "step_closeWelcomeOverlay_assertReady_cc58c0052_1_1",
+      "step_id": "step_closeWelcomeOverlay_assertReady_c3c113141_1_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -179,7 +187,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_closeWelcomeOverlay_close_cc58c0052_1_1"
+        "step_closeWelcomeOverlay_close_c3c113141_1_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -190,7 +198,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_open_cc58c0052_1_2",
+      "step_id": "step_executeCommand_open_c3c113141_1_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -202,7 +210,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_closeWelcomeOverlay_assertReady_cc58c0052_1_1"
+        "step_closeWelcomeOverlay_assertReady_c3c113141_1_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -212,7 +220,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertPalette_cc58c0052_1_2",
+      "step_id": "step_executeCommand_assertPalette_c3c113141_1_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -222,7 +230,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_open_cc58c0052_1_2"
+        "step_executeCommand_open_c3c113141_1_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -233,7 +241,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_filter_cc58c0052_1_2",
+      "step_id": "step_executeCommand_filter_c3c113141_1_2",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -245,7 +253,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertPalette_cc58c0052_1_2"
+        "step_executeCommand_assertPalette_c3c113141_1_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -255,7 +263,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertCommand_cc58c0052_1_2",
+      "step_id": "step_executeCommand_assertCommand_c3c113141_1_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -265,7 +273,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_filter_cc58c0052_1_2"
+        "step_executeCommand_filter_c3c113141_1_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -276,7 +284,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_execute_cc58c0052_1_2",
+      "step_id": "step_executeCommand_execute_c3c113141_1_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -288,7 +296,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertCommand_cc58c0052_1_2"
+        "step_executeCommand_assertCommand_c3c113141_1_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -298,7 +306,7 @@
       ]
     },
     {
-      "step_id": "step_assertToolkitViewSettled_assert_cc58c0052_1_3",
+      "step_id": "step_assertToolkitViewSettled_assert_c3c113141_1_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -308,7 +316,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_cc58c0052_1_2"
+        "step_executeCommand_execute_c3c113141_1_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -319,7 +327,7 @@
       ]
     },
     {
-      "step_id": "step_closeGetStartedEditor_assertActive_cc58c0052_1_4",
+      "step_id": "step_closeGetStartedEditor_assertActive_c3c113141_1_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -329,7 +337,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertToolkitViewSettled_assert_cc58c0052_1_3"
+        "step_assertToolkitViewSettled_assert_c3c113141_1_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -340,7 +348,7 @@
       ]
     },
     {
-      "step_id": "step_closeGetStartedEditor_close_cc58c0052_1_4",
+      "step_id": "step_closeGetStartedEditor_close_c3c113141_1_4",
       "agent": "interaction",
       "tool": "keyboard_shortcut",
       "parameters": {
@@ -352,7 +360,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_closeGetStartedEditor_assertActive_cc58c0052_1_4"
+        "step_closeGetStartedEditor_assertActive_c3c113141_1_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -362,7 +370,7 @@
       ]
     },
     {
-      "step_id": "step_closeGetStartedEditor_assertClosed_cc58c0052_1_4",
+      "step_id": "step_closeGetStartedEditor_assertClosed_c3c113141_1_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -372,7 +380,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_closeGetStartedEditor_close_cc58c0052_1_4"
+        "step_closeGetStartedEditor_close_c3c113141_1_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -383,7 +391,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_open_cc58c0052_1_5",
+      "step_id": "step_executeCommand_open_c3c113141_1_5",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -395,7 +403,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_closeGetStartedEditor_assertClosed_cc58c0052_1_4"
+        "step_closeGetStartedEditor_assertClosed_c3c113141_1_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -405,7 +413,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertPalette_cc58c0052_1_5",
+      "step_id": "step_executeCommand_assertPalette_c3c113141_1_5",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -415,7 +423,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_open_cc58c0052_1_5"
+        "step_executeCommand_open_c3c113141_1_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -426,7 +434,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_filter_cc58c0052_1_5",
+      "step_id": "step_executeCommand_filter_c3c113141_1_5",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -438,7 +446,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertPalette_cc58c0052_1_5"
+        "step_executeCommand_assertPalette_c3c113141_1_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -448,7 +456,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertCommand_cc58c0052_1_5",
+      "step_id": "step_executeCommand_assertCommand_c3c113141_1_5",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -458,7 +466,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_filter_cc58c0052_1_5"
+        "step_executeCommand_filter_c3c113141_1_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -469,7 +477,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_execute_cc58c0052_1_5",
+      "step_id": "step_executeCommand_execute_c3c113141_1_5",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -481,7 +489,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertCommand_cc58c0052_1_5"
+        "step_executeCommand_assertCommand_c3c113141_1_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -491,7 +499,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertQuestion_cc58c0052_1_6",
+      "step_id": "step_singleSelect_assertQuestion_c3c113141_1_6",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -501,7 +509,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_cc58c0052_1_5"
+        "step_executeCommand_execute_c3c113141_1_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -512,7 +520,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOptionsLoaded_cc58c0052_1_6",
+      "step_id": "step_singleSelect_assertOptionsLoaded_c3c113141_1_6",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -522,7 +530,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_cc58c0052_1_6"
+        "step_singleSelect_assertQuestion_c3c113141_1_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -533,19 +541,19 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_filter_cc58c0052_1_6",
+      "step_id": "step_singleSelect_filter_c3c113141_1_6",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Custom Engine Agent"
+        "text": "Teams Agents and Apps"
       },
-      "description": "Type the resolved option label Custom Engine Agent into the active single-select prompt.",
+      "description": "Type the resolved option label Teams Agents and Apps into the active single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOptionsLoaded_cc58c0052_1_6"
+        "step_singleSelect_assertOptionsLoaded_c3c113141_1_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -555,17 +563,17 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOption_cc58c0052_1_6",
+      "step_id": "step_singleSelect_assertOption_c3c113141_1_6",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the option Custom Engine Agent is visible and selectable in the filtered single-select prompt.",
+      "description": "@assertion the option Teams Agents and Apps is visible and selectable in the filtered single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_filter_cc58c0052_1_6"
+        "step_singleSelect_filter_c3c113141_1_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -576,7 +584,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_confirm_cc58c0052_1_6",
+      "step_id": "step_singleSelect_confirm_c3c113141_1_6",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -588,7 +596,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOption_cc58c0052_1_6"
+        "step_singleSelect_assertOption_c3c113141_1_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -598,17 +606,17 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertQuestion_cc58c0052_1_7",
+      "step_id": "step_singleSelect_assertQuestion_c3c113141_1_7",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the active prompt titled App Features Using Microsoft 365 Agents SDK is visible.",
+      "description": "@assertion the active prompt titled Teams Agent or App Using Microsoft Teams SDK is visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_confirm_cc58c0052_1_6"
+        "step_singleSelect_confirm_c3c113141_1_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -619,17 +627,17 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOptionsLoaded_cc58c0052_1_7",
+      "step_id": "step_singleSelect_assertOptionsLoaded_c3c113141_1_7",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the prompt titled App Features Using Microsoft 365 Agents SDK has finished loading and lists at least one selectable option.",
+      "description": "@assertion the prompt titled Teams Agent or App Using Microsoft Teams SDK has finished loading and lists at least one selectable option.",
       "content_refs": [],
       "timeout": 120,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_cc58c0052_1_7"
+        "step_singleSelect_assertQuestion_c3c113141_1_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -640,19 +648,19 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_filter_cc58c0052_1_7",
+      "step_id": "step_singleSelect_filter_c3c113141_1_7",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Weather Agent"
+        "text": "Teams Agent with Data"
       },
-      "description": "Type the resolved option label Weather Agent into the active single-select prompt.",
+      "description": "Type the resolved option label Teams Agent with Data into the active single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOptionsLoaded_cc58c0052_1_7"
+        "step_singleSelect_assertOptionsLoaded_c3c113141_1_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -662,17 +670,17 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOption_cc58c0052_1_7",
+      "step_id": "step_singleSelect_assertOption_c3c113141_1_7",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the option Weather Agent is visible and selectable in the filtered single-select prompt.",
+      "description": "@assertion the option Teams Agent with Data is visible and selectable in the filtered single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_filter_cc58c0052_1_7"
+        "step_singleSelect_filter_c3c113141_1_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -683,7 +691,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_confirm_cc58c0052_1_7",
+      "step_id": "step_singleSelect_confirm_c3c113141_1_7",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -695,7 +703,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOption_cc58c0052_1_7"
+        "step_singleSelect_assertOption_c3c113141_1_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -705,7 +713,114 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertQuestion_cc58c0052_1_8",
+      "step_id": "step_singleSelect_assertQuestion_c3c113141_1_8",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the active prompt titled Teams Agent with Data is visible.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_confirm_c3c113141_1_7"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertOptionsLoaded_c3c113141_1_8",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the prompt titled Teams Agent with Data has finished loading and lists at least one selectable option.",
+      "content_refs": [],
+      "timeout": 120,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertQuestion_c3c113141_1_8"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_filter_c3c113141_1_8",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Customize"
+      },
+      "description": "Type the resolved option label Customize into the active single-select prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertOptionsLoaded_c3c113141_1_8"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertOption_c3c113141_1_8",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the option Customize is visible and selectable in the filtered single-select prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_filter_c3c113141_1_8"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_confirm_c3c113141_1_8",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the filtered single-select option.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertOption_c3c113141_1_8"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertQuestion_c3c113141_1_9",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -715,7 +830,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_confirm_cc58c0052_1_7"
+        "step_singleSelect_confirm_c3c113141_1_8"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -726,7 +841,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOptionsLoaded_cc58c0052_1_8",
+      "step_id": "step_singleSelect_assertOptionsLoaded_c3c113141_1_9",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -736,7 +851,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_cc58c0052_1_8"
+        "step_singleSelect_assertQuestion_c3c113141_1_9"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -747,19 +862,19 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_filter_cc58c0052_1_8",
+      "step_id": "step_singleSelect_filter_c3c113141_1_9",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "OpenAI"
+        "text": "Azure OpenAI"
       },
-      "description": "Type the resolved option label OpenAI into the active single-select prompt.",
+      "description": "Type the resolved option label Azure OpenAI into the active single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOptionsLoaded_cc58c0052_1_8"
+        "step_singleSelect_assertOptionsLoaded_c3c113141_1_9"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -769,17 +884,17 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOption_cc58c0052_1_8",
+      "step_id": "step_singleSelect_assertOption_c3c113141_1_9",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the option OpenAI is visible and selectable in the filtered single-select prompt.",
+      "description": "@assertion the option Azure OpenAI is visible and selectable in the filtered single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_filter_cc58c0052_1_8"
+        "step_singleSelect_filter_c3c113141_1_9"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -790,7 +905,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_confirm_cc58c0052_1_8",
+      "step_id": "step_singleSelect_confirm_c3c113141_1_9",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -802,7 +917,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOption_cc58c0052_1_8"
+        "step_singleSelect_assertOption_c3c113141_1_9"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -812,17 +927,17 @@
       ]
     },
     {
-      "step_id": "step_textInput_assertQuestion_cc58c0052_1_9",
+      "step_id": "step_textInput_assertQuestion_c3c113141_1_10",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the active prompt titled OpenAI Key is visible.",
+      "description": "@assertion the active prompt titled Azure OpenAI Key is visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_confirm_cc58c0052_1_8"
+        "step_singleSelect_confirm_c3c113141_1_9"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -833,7 +948,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_input_cc58c0052_1_9",
+      "step_id": "step_textInput_input_c3c113141_1_10",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -845,7 +960,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_assertQuestion_cc58c0052_1_9"
+        "step_textInput_assertQuestion_c3c113141_1_10"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -855,7 +970,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_confirm_cc58c0052_1_9",
+      "step_id": "step_textInput_confirm_c3c113141_1_10",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -867,7 +982,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_input_cc58c0052_1_9"
+        "step_textInput_input_c3c113141_1_10"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -877,7 +992,137 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertQuestion_cc58c0052_1_10",
+      "step_id": "step_textInput_assertQuestion_c3c113141_1_11",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the active prompt titled Azure OpenAI Endpoint is visible.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_textInput_confirm_c3c113141_1_10"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:text",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_textInput_input_c3c113141_1_11",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{env:AZURE_OPENAI_ENDPOINT}}"
+      },
+      "description": "Type the authored value into the active text prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_textInput_assertQuestion_c3c113141_1_11"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:text"
+      ]
+    },
+    {
+      "step_id": "step_textInput_confirm_c3c113141_1_11",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to submit the accepted text input.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_textInput_input_c3c113141_1_11"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:text"
+      ]
+    },
+    {
+      "step_id": "step_textInput_assertQuestion_c3c113141_1_12",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the active prompt titled Azure OpenAI Deployment Name is visible.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_textInput_confirm_c3c113141_1_11"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:text",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_textInput_input_c3c113141_1_12",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{env:AZURE_OPENAI_MODEL}}"
+      },
+      "description": "Type the authored value into the active text prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_textInput_assertQuestion_c3c113141_1_12"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:text"
+      ]
+    },
+    {
+      "step_id": "step_textInput_confirm_c3c113141_1_12",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to submit the accepted text input.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_textInput_input_c3c113141_1_12"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:text"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertQuestion_c3c113141_1_13",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -887,7 +1132,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_confirm_cc58c0052_1_9"
+        "step_textInput_confirm_c3c113141_1_12"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -898,7 +1143,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOptionsLoaded_cc58c0052_1_10",
+      "step_id": "step_singleSelect_assertOptionsLoaded_c3c113141_1_13",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -908,7 +1153,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_cc58c0052_1_10"
+        "step_singleSelect_assertQuestion_c3c113141_1_13"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -919,19 +1164,19 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_filter_cc58c0052_1_10",
+      "step_id": "step_singleSelect_filter_c3c113141_1_13",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "TypeScript"
+        "text": "JavaScript"
       },
-      "description": "Type the resolved option label TypeScript into the active single-select prompt.",
+      "description": "Type the resolved option label JavaScript into the active single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOptionsLoaded_cc58c0052_1_10"
+        "step_singleSelect_assertOptionsLoaded_c3c113141_1_13"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -941,17 +1186,17 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOption_cc58c0052_1_10",
+      "step_id": "step_singleSelect_assertOption_c3c113141_1_13",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the option TypeScript is visible and selectable in the filtered single-select prompt.",
+      "description": "@assertion the option JavaScript is visible and selectable in the filtered single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_filter_cc58c0052_1_10"
+        "step_singleSelect_filter_c3c113141_1_13"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -962,7 +1207,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_confirm_cc58c0052_1_10",
+      "step_id": "step_singleSelect_confirm_c3c113141_1_13",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -974,7 +1219,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOption_cc58c0052_1_10"
+        "step_singleSelect_assertOption_c3c113141_1_13"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -984,7 +1229,7 @@
       ]
     },
     {
-      "step_id": "step_confirmOption_assertPrompt_cc58c0052_1_11",
+      "step_id": "step_confirmOption_assertPrompt_c3c113141_1_14",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -994,7 +1239,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_confirm_cc58c0052_1_10"
+        "step_singleSelect_confirm_c3c113141_1_13"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1006,7 +1251,7 @@
       ]
     },
     {
-      "step_id": "step_confirmOption_confirm_cc58c0052_1_11",
+      "step_id": "step_confirmOption_confirm_c3c113141_1_14",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1018,7 +1263,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_confirmOption_assertPrompt_cc58c0052_1_11"
+        "step_confirmOption_assertPrompt_c3c113141_1_14"
       ],
       "preconditions": [
         "dhash:364:74:16:5:08056a9a5d5516b6",
@@ -1033,7 +1278,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_assertQuestion_cc58c0052_1_12",
+      "step_id": "step_textInput_assertQuestion_c3c113141_1_15",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1043,7 +1288,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_confirmOption_confirm_cc58c0052_1_11"
+        "step_confirmOption_confirm_c3c113141_1_14"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1054,7 +1299,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_input_cc58c0052_1_12",
+      "step_id": "step_textInput_input_c3c113141_1_15",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1066,7 +1311,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_assertQuestion_cc58c0052_1_12"
+        "step_textInput_assertQuestion_c3c113141_1_15"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1076,7 +1321,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_confirm_cc58c0052_1_12",
+      "step_id": "step_textInput_confirm_c3c113141_1_15",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1088,7 +1333,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_input_cc58c0052_1_12"
+        "step_textInput_input_c3c113141_1_15"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1098,7 +1343,7 @@
       ]
     },
     {
-      "step_id": "step_assertProjectWindowReady_assert_cc58c0052_1_13",
+      "step_id": "step_assertProjectWindowReady_assert_c3c113141_1_16",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1108,7 +1353,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_confirm_cc58c0052_1_12"
+        "step_textInput_confirm_c3c113141_1_15"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1119,11 +1364,11 @@
       ]
     },
     {
-      "step_id": "step_checkWorkspaceFiles_verify_cc58c0052_2_1",
+      "step_id": "step_checkWorkspaceFiles_verify_c3c113141_2_1",
       "agent": "code",
       "tool": "",
       "parameters": {
-        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" ASSERTIONS_B64=\"W3sicGF0aCI6Im0zNjVhZ2VudHMueW1sIiwiZXhpc3RzIjp0cnVlLCJjb250YWlucyI6WyJ2ZXJzaW9uOiB2MS4xMSIsInByb3Zpc2lvbjoiLCJkZXBsb3k6Il0sIm5vdENvbnRhaW5zIjpbIm9hdXRoL3JlZ2lzdGVyIiwiZGNyL3JlZ2lzdGVyIl19XQ==\" python3 - <<'PY'\nimport base64\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\nassertions = json.loads(base64.b64decode(os.environ[\"ASSERTIONS_B64\"]).decode(\"utf-8\"))\nfor assertion in assertions:\n    target = (project / assertion[\"path\"]).resolve()\n    try:\n        target.relative_to(project)\n    except ValueError as error:\n        raise AssertionError(\"File assertion escaped the project directory\") from error\n    exists = target.is_file()\n    if exists != assertion[\"exists\"]:\n        raise AssertionError(f\"Unexpected file existence for {assertion['path']}\")\n    if not exists:\n        continue\n    content = target.read_text(encoding=\"utf-8\")\n    for expected in assertion.get(\"contains\", []):\n        expected = expected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if expected not in content:\n            raise AssertionError(f\"Expected content is absent from {assertion['path']}\")\n    for unexpected in assertion.get(\"notContains\", []):\n        unexpected = unexpected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if unexpected in content:\n            raise AssertionError(f\"Unexpected content is present in {assertion['path']}\")\nPY\n```"
+        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" ASSERTIONS_B64=\"W3sicGF0aCI6Im0zNjVhZ2VudHMueW1sIiwiZXhpc3RzIjp0cnVlLCJjb250YWlucyI6WyJ2ZXJzaW9uOiB2MS4xMSIsInByb3Zpc2lvbjoiLCJkZXBsb3k6IiwidGVhbXNBcHAvZXh0ZW5kVG9NMzY1Il0sIm5vdENvbnRhaW5zIjpbXX1d\" python3 - <<'PY'\nimport base64\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\nassertions = json.loads(base64.b64decode(os.environ[\"ASSERTIONS_B64\"]).decode(\"utf-8\"))\nfor assertion in assertions:\n    target = (project / assertion[\"path\"]).resolve()\n    try:\n        target.relative_to(project)\n    except ValueError as error:\n        raise AssertionError(\"File assertion escaped the project directory\") from error\n    exists = target.is_file()\n    if exists != assertion[\"exists\"]:\n        raise AssertionError(f\"Unexpected file existence for {assertion['path']}\")\n    if not exists:\n        continue\n    content = target.read_text(encoding=\"utf-8\")\n    for expected in assertion.get(\"contains\", []):\n        expected = expected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if expected not in content:\n            raise AssertionError(f\"Expected content is absent from {assertion['path']}\")\n    for unexpected in assertion.get(\"notContains\", []):\n        unexpected = unexpected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if unexpected in content:\n            raise AssertionError(f\"Unexpected content is present in {assertion['path']}\")\nPY\n```"
       },
       "description": "@code verify the authored workspace file existence and content assertions without logging file contents.",
       "content_refs": [],
@@ -1131,7 +1376,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertProjectWindowReady_assert_cc58c0052_1_13"
+        "step_assertProjectWindowReady_assert_c3c113141_1_16"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1142,11 +1387,11 @@
       ]
     },
     {
-      "step_id": "step_checkWorkspaceFiles_verify_cc58c0052_2_2",
+      "step_id": "step_checkWorkspaceFiles_verify_c3c113141_2_2",
       "agent": "code",
       "tool": "",
       "parameters": {
-        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" ASSERTIONS_B64=\"W3sicGF0aCI6InNyYy9pbmRleC50cyIsImV4aXN0cyI6dHJ1ZSwiY29udGFpbnMiOltdLCJub3RDb250YWlucyI6W119XQ==\" python3 - <<'PY'\nimport base64\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\nassertions = json.loads(base64.b64decode(os.environ[\"ASSERTIONS_B64\"]).decode(\"utf-8\"))\nfor assertion in assertions:\n    target = (project / assertion[\"path\"]).resolve()\n    try:\n        target.relative_to(project)\n    except ValueError as error:\n        raise AssertionError(\"File assertion escaped the project directory\") from error\n    exists = target.is_file()\n    if exists != assertion[\"exists\"]:\n        raise AssertionError(f\"Unexpected file existence for {assertion['path']}\")\n    if not exists:\n        continue\n    content = target.read_text(encoding=\"utf-8\")\n    for expected in assertion.get(\"contains\", []):\n        expected = expected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if expected not in content:\n            raise AssertionError(f\"Expected content is absent from {assertion['path']}\")\n    for unexpected in assertion.get(\"notContains\", []):\n        unexpected = unexpected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if unexpected in content:\n            raise AssertionError(f\"Unexpected content is present in {assertion['path']}\")\nPY\n```"
+        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" ASSERTIONS_B64=\"W3sicGF0aCI6InNyYy9hcHAvbXlEYXRhU291cmNlLmpzIiwiZXhpc3RzIjp0cnVlLCJjb250YWlucyI6W10sIm5vdENvbnRhaW5zIjpbXX1d\" python3 - <<'PY'\nimport base64\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\nassertions = json.loads(base64.b64decode(os.environ[\"ASSERTIONS_B64\"]).decode(\"utf-8\"))\nfor assertion in assertions:\n    target = (project / assertion[\"path\"]).resolve()\n    try:\n        target.relative_to(project)\n    except ValueError as error:\n        raise AssertionError(\"File assertion escaped the project directory\") from error\n    exists = target.is_file()\n    if exists != assertion[\"exists\"]:\n        raise AssertionError(f\"Unexpected file existence for {assertion['path']}\")\n    if not exists:\n        continue\n    content = target.read_text(encoding=\"utf-8\")\n    for expected in assertion.get(\"contains\", []):\n        expected = expected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if expected not in content:\n            raise AssertionError(f\"Expected content is absent from {assertion['path']}\")\n    for unexpected in assertion.get(\"notContains\", []):\n        unexpected = unexpected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if unexpected in content:\n            raise AssertionError(f\"Unexpected content is present in {assertion['path']}\")\nPY\n```"
       },
       "description": "@code verify the authored workspace file existence and content assertions without logging file contents.",
       "content_refs": [],
@@ -1154,7 +1399,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_checkWorkspaceFiles_verify_cc58c0052_2_1"
+        "step_checkWorkspaceFiles_verify_c3c113141_2_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1165,11 +1410,11 @@
       ]
     },
     {
-      "step_id": "step_checkWorkspaceFiles_verify_cc58c0052_2_3",
+      "step_id": "step_checkWorkspaceFiles_verify_c3c113141_2_3",
       "agent": "code",
       "tool": "",
       "parameters": {
-        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" ASSERTIONS_B64=\"W3sicGF0aCI6InNyYy9hZ2VudC50cyIsImV4aXN0cyI6dHJ1ZSwiY29udGFpbnMiOltdLCJub3RDb250YWlucyI6W119XQ==\" python3 - <<'PY'\nimport base64\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\nassertions = json.loads(base64.b64decode(os.environ[\"ASSERTIONS_B64\"]).decode(\"utf-8\"))\nfor assertion in assertions:\n    target = (project / assertion[\"path\"]).resolve()\n    try:\n        target.relative_to(project)\n    except ValueError as error:\n        raise AssertionError(\"File assertion escaped the project directory\") from error\n    exists = target.is_file()\n    if exists != assertion[\"exists\"]:\n        raise AssertionError(f\"Unexpected file existence for {assertion['path']}\")\n    if not exists:\n        continue\n    content = target.read_text(encoding=\"utf-8\")\n    for expected in assertion.get(\"contains\", []):\n        expected = expected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if expected not in content:\n            raise AssertionError(f\"Expected content is absent from {assertion['path']}\")\n    for unexpected in assertion.get(\"notContains\", []):\n        unexpected = unexpected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if unexpected in content:\n            raise AssertionError(f\"Unexpected content is present in {assertion['path']}\")\nPY\n```"
+        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" ASSERTIONS_B64=\"W3sicGF0aCI6InNyYy9kYXRhL0NvbnRvc29fRWxlY3Ryb25pY3NfUGxhbl9CZW5lZml0cy5tZCIsImV4aXN0cyI6dHJ1ZSwiY29udGFpbnMiOltdLCJub3RDb250YWlucyI6W119XQ==\" python3 - <<'PY'\nimport base64\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\nassertions = json.loads(base64.b64decode(os.environ[\"ASSERTIONS_B64\"]).decode(\"utf-8\"))\nfor assertion in assertions:\n    target = (project / assertion[\"path\"]).resolve()\n    try:\n        target.relative_to(project)\n    except ValueError as error:\n        raise AssertionError(\"File assertion escaped the project directory\") from error\n    exists = target.is_file()\n    if exists != assertion[\"exists\"]:\n        raise AssertionError(f\"Unexpected file existence for {assertion['path']}\")\n    if not exists:\n        continue\n    content = target.read_text(encoding=\"utf-8\")\n    for expected in assertion.get(\"contains\", []):\n        expected = expected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if expected not in content:\n            raise AssertionError(f\"Expected content is absent from {assertion['path']}\")\n    for unexpected in assertion.get(\"notContains\", []):\n        unexpected = unexpected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if unexpected in content:\n            raise AssertionError(f\"Unexpected content is present in {assertion['path']}\")\nPY\n```"
       },
       "description": "@code verify the authored workspace file existence and content assertions without logging file contents.",
       "content_refs": [],
@@ -1177,7 +1422,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_checkWorkspaceFiles_verify_cc58c0052_2_2"
+        "step_checkWorkspaceFiles_verify_c3c113141_2_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1188,11 +1433,11 @@
       ]
     },
     {
-      "step_id": "step_checkWorkspaceFiles_verify_cc58c0052_2_4",
+      "step_id": "step_checkWorkspaceFiles_verify_c3c113141_2_4",
       "agent": "code",
       "tool": "",
       "parameters": {
-        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" ASSERTIONS_B64=\"W3sicGF0aCI6InNyYy90b29scy9nZXRXZWF0aGVyVG9vbC50cyIsImV4aXN0cyI6dHJ1ZSwiY29udGFpbnMiOltdLCJub3RDb250YWlucyI6W119XQ==\" python3 - <<'PY'\nimport base64\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\nassertions = json.loads(base64.b64decode(os.environ[\"ASSERTIONS_B64\"]).decode(\"utf-8\"))\nfor assertion in assertions:\n    target = (project / assertion[\"path\"]).resolve()\n    try:\n        target.relative_to(project)\n    except ValueError as error:\n        raise AssertionError(\"File assertion escaped the project directory\") from error\n    exists = target.is_file()\n    if exists != assertion[\"exists\"]:\n        raise AssertionError(f\"Unexpected file existence for {assertion['path']}\")\n    if not exists:\n        continue\n    content = target.read_text(encoding=\"utf-8\")\n    for expected in assertion.get(\"contains\", []):\n        expected = expected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if expected not in content:\n            raise AssertionError(f\"Expected content is absent from {assertion['path']}\")\n    for unexpected in assertion.get(\"notContains\", []):\n        unexpected = unexpected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if unexpected in content:\n            raise AssertionError(f\"Unexpected content is present in {assertion['path']}\")\nPY\n```"
+        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" ASSERTIONS_B64=\"W3sicGF0aCI6InNyYy9jb25maWcuanMiLCJleGlzdHMiOnRydWUsImNvbnRhaW5zIjpbImF6dXJlT3BlbkFJS2V5OiBwcm9jZXNzLmVudi5BWlVSRV9PUEVOQUlfQVBJX0tFWSIsImF6dXJlT3BlbkFJRW5kcG9pbnQ6IHByb2Nlc3MuZW52LkFaVVJFX09QRU5BSV9FTkRQT0lOVCIsImF6dXJlT3BlbkFJRGVwbG95bWVudE5hbWU6IHByb2Nlc3MuZW52LkFaVVJFX09QRU5BSV9ERVBMT1lNRU5UX05BTUUiXSwibm90Q29udGFpbnMiOlsib3BlbkFJS2V5OiBwcm9jZXNzLmVudi5PUEVOQUlfQVBJX0tFWSJdfV0=\" python3 - <<'PY'\nimport base64\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\nassertions = json.loads(base64.b64decode(os.environ[\"ASSERTIONS_B64\"]).decode(\"utf-8\"))\nfor assertion in assertions:\n    target = (project / assertion[\"path\"]).resolve()\n    try:\n        target.relative_to(project)\n    except ValueError as error:\n        raise AssertionError(\"File assertion escaped the project directory\") from error\n    exists = target.is_file()\n    if exists != assertion[\"exists\"]:\n        raise AssertionError(f\"Unexpected file existence for {assertion['path']}\")\n    if not exists:\n        continue\n    content = target.read_text(encoding=\"utf-8\")\n    for expected in assertion.get(\"contains\", []):\n        expected = expected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if expected not in content:\n            raise AssertionError(f\"Expected content is absent from {assertion['path']}\")\n    for unexpected in assertion.get(\"notContains\", []):\n        unexpected = unexpected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if unexpected in content:\n            raise AssertionError(f\"Unexpected content is present in {assertion['path']}\")\nPY\n```"
       },
       "description": "@code verify the authored workspace file existence and content assertions without logging file contents.",
       "content_refs": [],
@@ -1200,7 +1445,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_checkWorkspaceFiles_verify_cc58c0052_2_3"
+        "step_checkWorkspaceFiles_verify_c3c113141_2_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1211,11 +1456,11 @@
       ]
     },
     {
-      "step_id": "step_checkWorkspaceFiles_verify_cc58c0052_2_5",
+      "step_id": "step_checkWorkspaceFiles_verify_c3c113141_2_5",
       "agent": "code",
       "tool": "",
       "parameters": {
-        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" ASSERTIONS_B64=\"W3sicGF0aCI6InBhY2thZ2UuanNvbiIsImV4aXN0cyI6dHJ1ZSwiY29udGFpbnMiOltdLCJub3RDb250YWlucyI6W119XQ==\" python3 - <<'PY'\nimport base64\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\nassertions = json.loads(base64.b64decode(os.environ[\"ASSERTIONS_B64\"]).decode(\"utf-8\"))\nfor assertion in assertions:\n    target = (project / assertion[\"path\"]).resolve()\n    try:\n        target.relative_to(project)\n    except ValueError as error:\n        raise AssertionError(\"File assertion escaped the project directory\") from error\n    exists = target.is_file()\n    if exists != assertion[\"exists\"]:\n        raise AssertionError(f\"Unexpected file existence for {assertion['path']}\")\n    if not exists:\n        continue\n    content = target.read_text(encoding=\"utf-8\")\n    for expected in assertion.get(\"contains\", []):\n        expected = expected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if expected not in content:\n            raise AssertionError(f\"Expected content is absent from {assertion['path']}\")\n    for unexpected in assertion.get(\"notContains\", []):\n        unexpected = unexpected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if unexpected in content:\n            raise AssertionError(f\"Unexpected content is present in {assertion['path']}\")\nPY\n```"
+        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" ASSERTIONS_B64=\"W3sicGF0aCI6InNyYy9jb25maWcudHMiLCJleGlzdHMiOmZhbHNlLCJjb250YWlucyI6W10sIm5vdENvbnRhaW5zIjpbXX1d\" python3 - <<'PY'\nimport base64\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\nassertions = json.loads(base64.b64decode(os.environ[\"ASSERTIONS_B64\"]).decode(\"utf-8\"))\nfor assertion in assertions:\n    target = (project / assertion[\"path\"]).resolve()\n    try:\n        target.relative_to(project)\n    except ValueError as error:\n        raise AssertionError(\"File assertion escaped the project directory\") from error\n    exists = target.is_file()\n    if exists != assertion[\"exists\"]:\n        raise AssertionError(f\"Unexpected file existence for {assertion['path']}\")\n    if not exists:\n        continue\n    content = target.read_text(encoding=\"utf-8\")\n    for expected in assertion.get(\"contains\", []):\n        expected = expected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if expected not in content:\n            raise AssertionError(f\"Expected content is absent from {assertion['path']}\")\n    for unexpected in assertion.get(\"notContains\", []):\n        unexpected = unexpected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if unexpected in content:\n            raise AssertionError(f\"Unexpected content is present in {assertion['path']}\")\nPY\n```"
       },
       "description": "@code verify the authored workspace file existence and content assertions without logging file contents.",
       "content_refs": [],
@@ -1223,7 +1468,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_checkWorkspaceFiles_verify_cc58c0052_2_4"
+        "step_checkWorkspaceFiles_verify_c3c113141_2_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1234,76 +1479,7 @@
       ]
     },
     {
-      "step_id": "step_checkWorkspaceFiles_verify_cc58c0052_2_6",
-      "agent": "code",
-      "tool": "",
-      "parameters": {
-        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" ASSERTIONS_B64=\"W3sicGF0aCI6ImluZnJhL2F6dXJlLmJpY2VwIiwiZXhpc3RzIjp0cnVlLCJjb250YWlucyI6W10sIm5vdENvbnRhaW5zIjpbXX1d\" python3 - <<'PY'\nimport base64\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\nassertions = json.loads(base64.b64decode(os.environ[\"ASSERTIONS_B64\"]).decode(\"utf-8\"))\nfor assertion in assertions:\n    target = (project / assertion[\"path\"]).resolve()\n    try:\n        target.relative_to(project)\n    except ValueError as error:\n        raise AssertionError(\"File assertion escaped the project directory\") from error\n    exists = target.is_file()\n    if exists != assertion[\"exists\"]:\n        raise AssertionError(f\"Unexpected file existence for {assertion['path']}\")\n    if not exists:\n        continue\n    content = target.read_text(encoding=\"utf-8\")\n    for expected in assertion.get(\"contains\", []):\n        expected = expected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if expected not in content:\n            raise AssertionError(f\"Expected content is absent from {assertion['path']}\")\n    for unexpected in assertion.get(\"notContains\", []):\n        unexpected = unexpected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if unexpected in content:\n            raise AssertionError(f\"Unexpected content is present in {assertion['path']}\")\nPY\n```"
-      },
-      "description": "@code verify the authored workspace file existence and content assertions without logging file contents.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_checkWorkspaceFiles_verify_cc58c0052_2_5"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:checks",
-        "assertion:file",
-        "step_retry_timeout:120"
-      ]
-    },
-    {
-      "step_id": "step_checkWorkspaceFiles_verify_cc58c0052_2_7",
-      "agent": "code",
-      "tool": "",
-      "parameters": {
-        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" ASSERTIONS_B64=\"W3sicGF0aCI6ImFwcFBhY2thZ2UvbWFuaWZlc3QuanNvbiIsImV4aXN0cyI6dHJ1ZSwiY29udGFpbnMiOlsiXCJtYW5pZmVzdFZlcnNpb25cIjogXCIxLjI5XCIiXSwibm90Q29udGFpbnMiOltdfV0=\" python3 - <<'PY'\nimport base64\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\nassertions = json.loads(base64.b64decode(os.environ[\"ASSERTIONS_B64\"]).decode(\"utf-8\"))\nfor assertion in assertions:\n    target = (project / assertion[\"path\"]).resolve()\n    try:\n        target.relative_to(project)\n    except ValueError as error:\n        raise AssertionError(\"File assertion escaped the project directory\") from error\n    exists = target.is_file()\n    if exists != assertion[\"exists\"]:\n        raise AssertionError(f\"Unexpected file existence for {assertion['path']}\")\n    if not exists:\n        continue\n    content = target.read_text(encoding=\"utf-8\")\n    for expected in assertion.get(\"contains\", []):\n        expected = expected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if expected not in content:\n            raise AssertionError(f\"Expected content is absent from {assertion['path']}\")\n    for unexpected in assertion.get(\"notContains\", []):\n        unexpected = unexpected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if unexpected in content:\n            raise AssertionError(f\"Unexpected content is present in {assertion['path']}\")\nPY\n```"
-      },
-      "description": "@code verify the authored workspace file existence and content assertions without logging file contents.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_checkWorkspaceFiles_verify_cc58c0052_2_6"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:checks",
-        "assertion:file",
-        "step_retry_timeout:120"
-      ]
-    },
-    {
-      "step_id": "step_setLocalEnvironmentVariable_cc58c0052_3_1",
-      "agent": "code",
-      "tool": "",
-      "parameters": {
-        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" VARIABLE_NAME=\"OPENAI_BASE_URL\" VARIABLE_VALUE=\"${{env:AZURE_OPENAI_ENDPOINT}}/openai/v1\" python3 - <<'PY'\nimport os\nfrom pathlib import Path\n\nlifecycle = Path(os.environ[\"PROJECT_DIR\"]).resolve() / \"m365agents.local.yml\"\nname = os.environ[\"VARIABLE_NAME\"]\nvalue = os.environ[\"VARIABLE_VALUE\"]\nif not value:\n    raise AssertionError(\"The variable value resolved to nothing\")\nlines = lifecycle.read_text(encoding=\"utf-8\").splitlines()\ntargets = (\"target: ./.localConfigs\", \"target: ./.env\")\ntarget = next((index for index, line in enumerate(lines) if line.strip() in targets), None)\nif target is None:\n    raise AssertionError(\"The local lifecycle writes no runtime environment file\")\nheader = next((index for index in range(target + 1, len(lines)) if lines[index].strip() == \"envs:\"), None)\nif header is None:\n    raise AssertionError(\"The runtime environment file declares no envs mapping\")\nindent = \" \" * (len(lines[header]) - len(lines[header].lstrip()) + 2)\nend = header + 1\nwhile end < len(lines) and lines[end].startswith(indent) and lines[end].strip():\n    end += 1\nkept = [line for line in lines[header + 1 : end] if not line.strip().startswith(name + \":\")]\nlines[header + 1 : end] = kept + [indent + name + \": \" + value]\nlifecycle.write_text(\"\\n\".join(lines) + \"\\n\", encoding=\"utf-8\")\nwritten = [line for line in lifecycle.read_text(encoding=\"utf-8\").splitlines() if line.strip().startswith(name + \":\")]\nif written != [indent + name + \": \" + value]:\n    raise AssertionError(\"The variable was not written exactly once with its value\")\nPY\n```"
-      },
-      "description": "@code set OPENAI_BASE_URL in the envs mapping the local lifecycle writes into the project's runtime environment file to exactly the value the reference script assigns, without logging that value.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_checkWorkspaceFiles_verify_cc58c0052_2_7"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:workspace",
-        "operation:local-environment",
-        "step_retry_timeout: 120"
-      ]
-    },
-    {
-      "step_id": "step_executeCommand_open_cc58c0052_4_1",
+      "step_id": "step_executeCommand_open_c3c113141_3_1",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1315,7 +1491,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_setLocalEnvironmentVariable_cc58c0052_3_1"
+        "step_checkWorkspaceFiles_verify_c3c113141_2_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1325,7 +1501,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertPalette_cc58c0052_4_1",
+      "step_id": "step_executeCommand_assertPalette_c3c113141_3_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1335,7 +1511,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_open_cc58c0052_4_1"
+        "step_executeCommand_open_c3c113141_3_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1346,7 +1522,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_filter_cc58c0052_4_1",
+      "step_id": "step_executeCommand_filter_c3c113141_3_1",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1358,7 +1534,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertPalette_cc58c0052_4_1"
+        "step_executeCommand_assertPalette_c3c113141_3_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1368,7 +1544,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertCommand_cc58c0052_4_1",
+      "step_id": "step_executeCommand_assertCommand_c3c113141_3_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1378,7 +1554,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_filter_cc58c0052_4_1"
+        "step_executeCommand_filter_c3c113141_3_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1389,7 +1565,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_execute_cc58c0052_4_1",
+      "step_id": "step_executeCommand_execute_c3c113141_3_1",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1401,7 +1577,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertCommand_cc58c0052_4_1"
+        "step_executeCommand_assertCommand_c3c113141_3_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1411,7 +1587,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_assertOption_cc58c0052_4_2",
+      "step_id": "step_signInM365_assertOption_c3c113141_3_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1421,7 +1597,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_cc58c0052_4_1"
+        "step_executeCommand_execute_c3c113141_3_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1433,7 +1609,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_selectOption_cc58c0052_4_2",
+      "step_id": "step_signInM365_selectOption_c3c113141_3_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -1447,7 +1623,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_assertOption_cc58c0052_4_2"
+        "step_signInM365_assertOption_c3c113141_3_2"
       ],
       "preconditions": [
         "dhash:213:102:16:5:9c63d67674d4c718",
@@ -1461,7 +1637,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_confirmSignIn_cc58c0052_4_2",
+      "step_id": "step_signInM365_confirmSignIn_c3c113141_3_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -1475,7 +1651,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_selectOption_cc58c0052_4_2"
+        "step_signInM365_selectOption_c3c113141_3_2"
       ],
       "preconditions": [
         "dhash:762:97:16:5:24b1a72ba9aba343",
@@ -1489,7 +1665,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_focusAccount_cc58c0052_4_2",
+      "step_id": "step_signInM365_focusAccount_c3c113141_3_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -1503,7 +1679,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_confirmSignIn_cc58c0052_4_2"
+        "step_signInM365_confirmSignIn_c3c113141_3_2"
       ],
       "preconditions": [
         "dhash:369:350:16:5:2113d25252525221",
@@ -1518,7 +1694,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_typeAccount_cc58c0052_4_2",
+      "step_id": "step_signInM365_typeAccount_c3c113141_3_2",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1530,7 +1706,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_focusAccount_cc58c0052_4_2"
+        "step_signInM365_focusAccount_c3c113141_3_2"
       ],
       "preconditions": [
         "dhash:512:384:0:20:1b28f0d9e7e6dae4"
@@ -1543,7 +1719,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_next_cc58c0052_4_2",
+      "step_id": "step_signInM365_next_c3c113141_3_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -1557,7 +1733,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_typeAccount_cc58c0052_4_2"
+        "step_signInM365_typeAccount_c3c113141_3_2"
       ],
       "preconditions": [
         "dhash:629:484:16:5:23248c4b6c24d32c",
@@ -1572,7 +1748,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_typePassword_cc58c0052_4_2",
+      "step_id": "step_signInM365_typePassword_c3c113141_3_2",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1584,7 +1760,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_next_cc58c0052_4_2"
+        "step_signInM365_next_c3c113141_3_2"
       ],
       "preconditions": [
         "dhash:512:384:0:20:1b08f0d9d1e6e6e4"
@@ -1597,7 +1773,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_submit_cc58c0052_4_2",
+      "step_id": "step_signInM365_submit_c3c113141_3_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1609,7 +1785,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_typePassword_cc58c0052_4_2"
+        "step_signInM365_typePassword_c3c113141_3_2"
       ],
       "preconditions": [
         "dhash:512:384:0:20:1b08f0d9d1e6e6e4"
@@ -1622,7 +1798,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_closeBrowser_cc58c0052_4_2",
+      "step_id": "step_signInM365_closeBrowser_c3c113141_3_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -1636,7 +1812,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_submit_cc58c0052_4_2"
+        "step_signInM365_submit_c3c113141_3_2"
       ],
       "preconditions": [
         "dhash:1004:19:16:5:aac833964c9633cc",
@@ -1651,7 +1827,7 @@
       ]
     },
     {
-      "step_id": "step_signInM365_assertReady_cc58c0052_4_2",
+      "step_id": "step_signInM365_assertReady_c3c113141_3_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1661,7 +1837,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_closeBrowser_cc58c0052_4_2"
+        "step_signInM365_closeBrowser_c3c113141_3_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1673,7 +1849,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_open_cc58c0052_5_1",
+      "step_id": "step_executeCommand_open_c3c113141_4_1",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1685,7 +1861,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365_assertReady_cc58c0052_4_2"
+        "step_signInM365_assertReady_c3c113141_3_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1695,7 +1871,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertPalette_cc58c0052_5_1",
+      "step_id": "step_executeCommand_assertPalette_c3c113141_4_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1705,7 +1881,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_open_cc58c0052_5_1"
+        "step_executeCommand_open_c3c113141_4_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1716,7 +1892,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_filter_cc58c0052_5_1",
+      "step_id": "step_executeCommand_filter_c3c113141_4_1",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1728,7 +1904,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertPalette_cc58c0052_5_1"
+        "step_executeCommand_assertPalette_c3c113141_4_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1738,7 +1914,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertCommand_cc58c0052_5_1",
+      "step_id": "step_executeCommand_assertCommand_c3c113141_4_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1748,7 +1924,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_filter_cc58c0052_5_1"
+        "step_executeCommand_filter_c3c113141_4_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1759,7 +1935,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_execute_cc58c0052_5_1",
+      "step_id": "step_executeCommand_execute_c3c113141_4_1",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1771,7 +1947,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertCommand_cc58c0052_5_1"
+        "step_executeCommand_assertCommand_c3c113141_4_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1781,7 +1957,7 @@
       ]
     },
     {
-      "step_id": "step_filterOption_filter_cc58c0052_5_2",
+      "step_id": "step_filterOption_filter_c3c113141_4_2",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1793,7 +1969,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_cc58c0052_5_1"
+        "step_executeCommand_execute_c3c113141_4_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1803,7 +1979,7 @@
       ]
     },
     {
-      "step_id": "step_filterOption_assertOption_cc58c0052_5_2",
+      "step_id": "step_filterOption_assertOption_c3c113141_4_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1813,7 +1989,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_filter_cc58c0052_5_2"
+        "step_filterOption_filter_c3c113141_4_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1824,7 +2000,7 @@
       ]
     },
     {
-      "step_id": "step_filterOption_confirm_cc58c0052_5_2",
+      "step_id": "step_filterOption_confirm_c3c113141_4_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1836,7 +2012,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_assertOption_cc58c0052_5_2"
+        "step_filterOption_assertOption_c3c113141_4_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1846,7 +2022,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365PasswordSignIn_assertPassword_cc58c0052_5_3",
+      "step_id": "step_browserM365PasswordSignIn_assertPassword_c3c113141_4_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1856,7 +2032,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_confirm_cc58c0052_5_2"
+        "step_filterOption_confirm_c3c113141_4_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1867,7 +2043,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365PasswordSignIn_focusPassword_cc58c0052_5_3",
+      "step_id": "step_browserM365PasswordSignIn_focusPassword_c3c113141_4_3",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -1881,7 +2057,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365PasswordSignIn_assertPassword_cc58c0052_5_3"
+        "step_browserM365PasswordSignIn_assertPassword_c3c113141_4_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1891,7 +2067,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365PasswordSignIn_enterPassword_cc58c0052_5_3",
+      "step_id": "step_browserM365PasswordSignIn_enterPassword_c3c113141_4_3",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1903,7 +2079,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365PasswordSignIn_focusPassword_cc58c0052_5_3"
+        "step_browserM365PasswordSignIn_focusPassword_c3c113141_4_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1913,7 +2089,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365PasswordSignIn_submitPassword_cc58c0052_5_3",
+      "step_id": "step_browserM365PasswordSignIn_submitPassword_c3c113141_4_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1925,7 +2101,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365PasswordSignIn_enterPassword_cc58c0052_5_3"
+        "step_browserM365PasswordSignIn_enterPassword_c3c113141_4_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1935,7 +2111,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365PasswordSignIn_assertStaySignedIn_cc58c0052_5_3",
+      "step_id": "step_browserM365PasswordSignIn_assertStaySignedIn_c3c113141_4_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1945,7 +2121,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365PasswordSignIn_submitPassword_cc58c0052_5_3"
+        "step_browserM365PasswordSignIn_submitPassword_c3c113141_4_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1956,7 +2132,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365PasswordSignIn_confirmStaySignedIn_cc58c0052_5_3",
+      "step_id": "step_browserM365PasswordSignIn_confirmStaySignedIn_c3c113141_4_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1968,7 +2144,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365PasswordSignIn_assertStaySignedIn_cc58c0052_5_3"
+        "step_browserM365PasswordSignIn_assertStaySignedIn_c3c113141_4_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1979,7 +2155,7 @@
       ]
     },
     {
-      "step_id": "step_assertReady_assertReady_cc58c0052_5_4",
+      "step_id": "step_assertReady_assertReady_c3c113141_4_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1989,7 +2165,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365PasswordSignIn_confirmStaySignedIn_cc58c0052_5_3"
+        "step_browserM365PasswordSignIn_confirmStaySignedIn_c3c113141_4_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2000,7 +2176,7 @@
       ]
     },
     {
-      "step_id": "step_addAndOpenApp_assertAdd_cc58c0052_6_1",
+      "step_id": "step_addAndOpenApp_assertAdd_c3c113141_5_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2010,7 +2186,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertReady_assertReady_cc58c0052_5_4"
+        "step_assertReady_assertReady_c3c113141_4_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2022,7 +2198,7 @@
       ]
     },
     {
-      "step_id": "step_addAndOpenApp_add_cc58c0052_6_1",
+      "step_id": "step_addAndOpenApp_add_c3c113141_5_1",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -2036,7 +2212,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_addAndOpenApp_assertAdd_cc58c0052_6_1"
+        "step_addAndOpenApp_assertAdd_c3c113141_5_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2048,7 +2224,7 @@
       ]
     },
     {
-      "step_id": "step_addAndOpenApp_assertAdded_cc58c0052_6_1",
+      "step_id": "step_addAndOpenApp_assertAdded_c3c113141_5_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2058,7 +2234,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_addAndOpenApp_add_cc58c0052_6_1"
+        "step_addAndOpenApp_add_c3c113141_5_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2070,7 +2246,7 @@
       ]
     },
     {
-      "step_id": "step_addAndOpenApp_open_cc58c0052_6_1",
+      "step_id": "step_addAndOpenApp_open_c3c113141_5_1",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -2084,7 +2260,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_addAndOpenApp_assertAdded_cc58c0052_6_1"
+        "step_addAndOpenApp_assertAdded_c3c113141_5_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2096,7 +2272,7 @@
       ]
     },
     {
-      "step_id": "step_addAndOpenApp_assertReady_cc58c0052_6_1",
+      "step_id": "step_addAndOpenApp_assertReady_c3c113141_5_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2106,7 +2282,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_addAndOpenApp_open_cc58c0052_6_1"
+        "step_addAndOpenApp_open_c3c113141_5_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2118,7 +2294,7 @@
       ]
     },
     {
-      "step_id": "step_sendTeamsMessage_assertInput_cc58c0052_7_1",
+      "step_id": "step_sendTeamsMessage_assertInput_c3c113141_6_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2128,7 +2304,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_addAndOpenApp_assertReady_cc58c0052_6_1"
+        "step_addAndOpenApp_assertReady_c3c113141_5_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2141,7 +2317,7 @@
       ]
     },
     {
-      "step_id": "step_sendTeamsMessage_focusInput_cc58c0052_7_1",
+      "step_id": "step_sendTeamsMessage_focusInput_c3c113141_6_1",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -2155,7 +2331,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_sendTeamsMessage_assertInput_cc58c0052_7_1"
+        "step_sendTeamsMessage_assertInput_c3c113141_6_1"
       ],
       "preconditions": [
         "dhash:200:712:16:5:258c421e0d2c2d1c",
@@ -2171,19 +2347,19 @@
       ]
     },
     {
-      "step_id": "step_sendTeamsMessage_type_cc58c0052_7_1",
+      "step_id": "step_sendTeamsMessage_type_c3c113141_6_1",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "What is the weather in Seattle?"
+        "text": "What is included in the Contoso Electronics PerksPlus program?"
       },
-      "description": "Type \"What is the weather in Seattle?\" into the Teams message input.",
+      "description": "Type \"What is included in the Contoso Electronics PerksPlus program?\" into the Teams message input.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_sendTeamsMessage_focusInput_cc58c0052_7_1"
+        "step_sendTeamsMessage_focusInput_c3c113141_6_1"
       ],
       "preconditions": [
         "dhash:512:384:0:20:24b4b08e8e8c80a9"
@@ -2197,7 +2373,7 @@
       ]
     },
     {
-      "step_id": "step_sendTeamsMessage_send_cc58c0052_7_1",
+      "step_id": "step_sendTeamsMessage_send_c3c113141_6_1",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2209,7 +2385,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_sendTeamsMessage_type_cc58c0052_7_1"
+        "step_sendTeamsMessage_type_c3c113141_6_1"
       ],
       "preconditions": [
         "dhash:512:384:0:20:24b4b08e8e8c80b9"
@@ -2223,7 +2399,7 @@
       ]
     },
     {
-      "step_id": "step_assertChatReplied_assert_cc58c0052_7_2",
+      "step_id": "step_assertChatReplied_assert_c3c113141_6_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2233,7 +2409,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_sendTeamsMessage_send_cc58c0052_7_1"
+        "step_sendTeamsMessage_send_c3c113141_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2245,24 +2421,24 @@
       ]
     },
     {
-      "step_id": "step_assertChatContains_assert_cc58c0052_7_3",
+      "step_id": "step_assertChatNotContains_assert_c3c113141_6_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the current assistant response contains \"Seattle\".",
+      "description": "@assertion the current assistant response does not contain \"error\".",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertChatReplied_assert_cc58c0052_7_2"
+        "step_assertChatReplied_assert_c3c113141_6_2"
       ],
       "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:browser",
         "action:assert-chat-response",
-        "expectation:contains",
+        "expectation:not-contains",
         "step_retry_timeout: 120"
       ]
     }
