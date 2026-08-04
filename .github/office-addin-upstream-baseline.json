@@ -1,0 +1,31 @@
+{
+  "_comment": "Last-known upstream OfficeDev manifest.json manifestVersion per toolkit Office Add-in template. The office-addin-manifest-drift-check workflow fires a tracking issue only when upstream advances past these values. After handling a drift issue, bump the affected entry here.",
+  "_verified": "2026-08-03",
+  "templates": {
+    "office-addin-wxpo-taskpane": {
+      "upstreamRepo": "OfficeDev/Office-Addin-TaskPane",
+      "upstreamBranch": "release",
+      "upstreamManifestVersion": "1.24"
+    },
+    "office-addin-outlook-taskpane": {
+      "upstreamRepo": "OfficeDev/Office-Addin-TaskPane",
+      "upstreamBranch": "release",
+      "upstreamManifestVersion": "1.24"
+    },
+    "office-addin-excel-customfunctions": {
+      "upstreamRepo": "OfficeDev/Excel-Custom-Functions",
+      "upstreamBranch": "release",
+      "upstreamManifestVersion": "1.17"
+    },
+    "office-addin-excel-cfshortcut": {
+      "upstreamRepo": "OfficeDev/Excel-Custom-Functions-Shared",
+      "upstreamBranch": "release",
+      "upstreamManifestVersion": "1.17"
+    },
+    "office-addin-sso-naa": {
+      "upstreamRepo": "OfficeDev/Office-Addin-TaskPane-SSO-NAA",
+      "upstreamBranch": "yo-office",
+      "upstreamManifestVersion": "xml-only"
+    }
+  }
+}
