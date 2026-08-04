@@ -21,13 +21,18 @@ import { logger } from "./logger";
  * - Classic conhost (`conhost.exe cmd`): `node <- cmd` -> the console window itself, because
  *   under conhost the console window is attributed to the client process.
  * - Standalone `cmd.exe` handed off to WT by the default-terminal setting: `node <- cmd <-
- *   explorer <- svchost <- ...`. WT is COM-activated on a separate process branch and is NOT an
- *   ancestor, so no terminal window is reachable and the walk yields nothing. That is intended:
- *   MSAL then uses a NULL owner, and the dialog still comes to the front via the foreground grant
- *   the CLI process holds.
+ *   explorer <- ...`. WT is COM-activated on a separate process branch and is NOT an ancestor.
+ * - Git Bash: `node <- sh <- (dead pid)`. MSYS emulates fork/exec by spawning a new Win32
+ *   process and letting the original exit, so the Win32 parent chain is severed above `sh`.
+ *
+ * The last two cases fall back to `GetForegroundWindow()`, which at sign-in time is the terminal
+ * the user just typed into. Measured to return the same handle the walk yields where both work.
+ * It is a fallback rather than the primary source because the user may switch windows while the
+ * ~700 ms resolution runs, and an unrelated app is a worse owner than the real ancestor.
  *
  * The walk stops at `explorer` rather than continuing, because explorer's `MainWindowHandle` is an
- * arbitrary shell window (observed: a `ThumbnailDeviceHelperWnd`) that would be a bogus owner.
+ * arbitrary shell window (observed: a `ThumbnailDeviceHelperWnd`) that would be a bogus owner. For
+ * the same reason an `explorer`-owned foreground window is rejected.
  *
  * The script takes no input, so nothing is interpolated into the command line.
  */
@@ -50,6 +55,19 @@ const resolveWindowScript = [
   "  if ($name -eq 'explorer') { break }",
   "  if ($windows.ContainsKey($id)) { $found = $windows[$id]; break }",
   "  $id = $parent[$id]",
+  "}",
+  // Fallback for the hosts where the walk cannot reach the terminal. The P/Invoke costs ~500 ms
+  // to compile, so it is only paid when the walk already failed.
+  "if ($found -eq 0) {",
+  '  $sig = \'[DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow(); [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);\'',
+  "  $api = Add-Type -MemberDefinition $sig -Name AtkForeground -Namespace Atk -PassThru",
+  "  $fg = $api::GetForegroundWindow()",
+  "  if ($fg -ne [IntPtr]::Zero) {",
+  "    $fpid = 0",
+  "    [void]$api::GetWindowThreadProcessId($fg, [ref]$fpid)",
+  "    $fname = $names[[int]$fpid]",
+  "    if ($fname -and $fname -ne 'explorer') { $found = [int64]$fg; $trail += ('[foreground:{0}({1})]' -f $fname, $fpid) }",
+  "  }",
   "}",
   // Single line: "<handle>;<walk trail>"
   "[Console]::Out.Write(\"$found;\" + ($trail -join ' <- '))",
@@ -127,8 +145,15 @@ export function getParentWindowHandle(): Buffer | undefined {
 
   try {
     const encoded = Buffer.from(resolveWindowScript, "utf16le").toString("base64");
+    const powerShellPath = path.join(
+      process.env.SystemRoot ?? "C:\\Windows",
+      "System32",
+      "WindowsPowerShell",
+      "v1.0",
+      "powershell.exe"
+    );
     const output = execFileSync(
-      "powershell.exe",
+      powerShellPath,
       ["-NoProfile", "-NonInteractive", "-EncodedCommand", encoded],
       {
         encoding: "utf8",
