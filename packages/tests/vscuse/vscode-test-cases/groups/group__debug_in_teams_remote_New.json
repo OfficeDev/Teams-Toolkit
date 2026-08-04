@@ -278,8 +278,8 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 265,
-        "y": 214
+        "x": 252,
+        "y": 248
       },
       "description": "Click the “Add” button within the app details  in Microsoft Teams (web interface), indicated by a blue button below the app name and publisher.",
       "content_refs": [],
@@ -287,11 +287,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:265:214:16:5:2020202020202020",
-        "dhash:265:214:96:5:6d65604747c40096",
-        "dhash:265:214:0:10:00b4b0d8f4fcf0e8"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_f28cf147",
