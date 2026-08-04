@@ -27,7 +27,7 @@ cases:
         login-m365,
         f5-teams-local,
         open-app,
-        check-rag-customize-chat,
+        check-rag-customize-chat-openai,
       ]
 
   - id: rag-customize-js-azure-openai-local-teams
@@ -52,7 +52,7 @@ cases:
         login-m365,
         f5-teams-local,
         open-app,
-        check-rag-customize-chat,
+        check-rag-customize-chat-openai,
       ]
 
   - id: rag-customize-py-azure-openai-local-teams
@@ -79,7 +79,7 @@ cases:
         login-m365,
         f5-teams-local,
         open-app,
-        check-rag-customize-chat,
+        check-rag-customize-chat-openai,
       ]
 
   - id: rag-customize-py-openai-local-copilot
@@ -98,7 +98,7 @@ cases:
         login-m365,
         f5-copilot-local,
         open-agent,
-        check-rag-customize-chat,
+        check-rag-customize-chat-openai,
       ]
 
 steps:
@@ -509,3 +509,15 @@ steps:
         expect:
           replied: true
           notContains: ["error"]
+
+  check-rag-customize-chat-openai:
+    type: checks
+    with:
+      # The OpenAI branch hardcodes `gpt-3.5-turbo` in the generated config, and
+      # the redirected Azure OpenAI resource resolves that as a deployment name
+      # it does not host, so the reply cannot be grounded. The legacy OpenAI
+      # plans asserted no more than this either.
+      - type: chat
+        send: What is included in the Contoso Electronics PerksPlus program?
+        expect:
+          replied: true

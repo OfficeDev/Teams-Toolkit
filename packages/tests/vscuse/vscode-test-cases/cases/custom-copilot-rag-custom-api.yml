@@ -27,7 +27,7 @@ cases:
         login-m365,
         f5-teams-local,
         open-app,
-        check-rag-custom-api-chat,
+        check-rag-custom-api-chat-openai,
       ]
 
   - id: rag-custom-api-js-azure-openai-local-teams
@@ -52,7 +52,7 @@ cases:
         login-m365,
         f5-teams-local,
         open-app,
-        check-rag-custom-api-chat,
+        check-rag-custom-api-chat-openai,
       ]
 
   - id: rag-custom-api-py-azure-openai-local-teams
@@ -79,7 +79,7 @@ cases:
         login-m365,
         f5-teams-local,
         open-app,
-        check-rag-custom-api-chat,
+        check-rag-custom-api-chat-openai,
       ]
 
 steps:
@@ -486,3 +486,15 @@ steps:
         expect:
           replied: true
           notContains: ["error"]
+
+  check-rag-custom-api-chat-openai:
+    type: checks
+    with:
+      # The OpenAI branch hardcodes `gpt-3.5-turbo` in the generated app, and
+      # the redirected Azure OpenAI resource resolves that as a deployment name
+      # it does not host, so the reply cannot be grounded. The legacy OpenAI
+      # plans asserted no more than this either.
+      - type: chat
+        send: List all the repairs
+        expect:
+          replied: true

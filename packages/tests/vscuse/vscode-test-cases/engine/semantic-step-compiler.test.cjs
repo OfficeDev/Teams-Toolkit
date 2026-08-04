@@ -2935,3 +2935,66 @@ test("VCB-112: a local environment step accepts either runtime environment file"
   );
   assert.equal(step.description.includes(".localConfigs"), false);
 });
+
+test("VCB-113: the OpenAI branch asserts no grounded answer", async () => {
+  for (const [fileName] of teamsAgentWithDataBundles) {
+    const result = await compileFixture(fileName, (sourceText) => sourceText);
+    assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+
+    for (const generated of result.value) {
+      const hasStep = (prefix) =>
+        generated.plan.steps.some((candidate) =>
+          candidate.step_id.startsWith(prefix),
+        );
+      const onOpenAIBranch =
+        generated.caseId.includes("-openai-") &&
+        !generated.caseId.includes("-azure-openai-");
+
+      assert.equal(hasStep("step_assertChatReplied_"), true, generated.caseId);
+      assert.equal(
+        hasStep("step_assertChatNotContains_"),
+        !onOpenAIBranch,
+        generated.caseId,
+      );
+    }
+  }
+});
+
+test("VCB-114: the Node Azure AI Search OpenAI cases run on a fake key", async () => {
+  const result = await compileFixture(
+    "custom-copilot-rag-azure-ai-search.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+
+  const fakeKeyCases = [
+    "rag-azure-ai-search-ts-openai-local-teams",
+    "rag-azure-ai-search-js-openai-local-teams",
+  ];
+  for (const generated of result.value) {
+    const descriptions = generated.plan.steps.map(
+      (candidate) => candidate.description,
+    );
+    const onFakeKey = fakeKeyCases.includes(generated.caseId);
+
+    assert.equal(
+      descriptions.some((text) => text.includes("set OPENAI_API_KEY ")),
+      onFakeKey,
+      generated.caseId,
+    );
+    assert.equal(
+      descriptions.some((text) => text.includes("set OPENAI_BASE_URL ")),
+      generated.caseId === "rag-azure-ai-search-py-openai-local-teams",
+      generated.caseId,
+    );
+    assert.equal(
+      generated.plan.steps.some(
+        (candidate) =>
+          candidate.step_id.startsWith("step_assertChatContains_") &&
+          candidate.description.includes("encountered an error"),
+      ),
+      onFakeKey,
+      generated.caseId,
+    );
+  }
+});

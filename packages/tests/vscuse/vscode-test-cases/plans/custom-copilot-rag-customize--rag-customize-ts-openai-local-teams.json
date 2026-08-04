@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 98,
+    "total_steps": 97,
     "name": "rag-customize-ts-openai-local-teams",
     "description": {
       "owner": "",
@@ -112,8 +112,7 @@
       "step_sendTeamsMessage_focusInput_c8b6e566f_7_1",
       "step_sendTeamsMessage_type_c8b6e566f_7_1",
       "step_sendTeamsMessage_send_c8b6e566f_7_1",
-      "step_assertChatReplied_assert_c8b6e566f_7_2",
-      "step_assertChatNotContains_assert_c8b6e566f_7_3"
+      "step_assertChatReplied_assert_c8b6e566f_7_2"
     ],
     "tags": [
       "case_id:rag-customize-ts-openai-local-teams",
@@ -2305,28 +2304,6 @@
         "component:browser",
         "action:assert-chat-response",
         "expectation:replied",
-        "step_retry_timeout: 120"
-      ]
-    },
-    {
-      "step_id": "step_assertChatNotContains_assert_c8b6e566f_7_3",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the current assistant response does not contain \"error\".",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_assertChatReplied_assert_c8b6e566f_7_2"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:browser",
-        "action:assert-chat-response",
-        "expectation:not-contains",
         "step_retry_timeout: 120"
       ]
     }

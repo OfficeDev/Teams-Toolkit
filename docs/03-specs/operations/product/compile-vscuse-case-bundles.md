@@ -48,6 +48,13 @@ incorrect path at execution time. Parser and structural diagnostics include a so
 path and may be aggregated; semantic adapter compilation currently stops at the first error and
 returns only a stable code and redacted message.
 
+The Teams Agent with Data templates hardcode `gpt-3.5-turbo`, and `text-embedding-ada-002` for
+Azure AI Search, on their OpenAI branch, so a run redirected to the test Azure OpenAI resource
+resolves a deployment that resource does not host and no grounded answer is reachable. VCB-113 and
+VCB-114 record what those cases assert instead. When the templates move to a model the test resource
+hosts, tighten those chat checks to the grounded assertions the Azure OpenAI branch already carries
+and retire both criteria.
+
 ## YAML Contract
 
 ```yaml
@@ -1231,6 +1238,8 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-110 | Given a scaffold that already answered the Teams Agent with Data source, its `apiOperations` prompt is titled `Select Operation(s) Teams Can Interact with`, while the declarative-agent action flow keeps `Select Operation(s) Copilot Can Interact with`.                                                                                                                                                                                                                                                                                                                        |
 | VCB-111 | Given the Teams Agent with Data bundles, each data source authors a local Teams launch for every LLM service and supported language, the customized-source bundle additionally samples one Python OpenAI local Copilot launch, and the Azure AI Search cases write the search credentials and embedding deployment their templates read from the generated runtime environment file but that the scaffold never prompts for.                                                                                                                                                       |
 | VCB-112 | Given a local environment step, it writes the variable into whichever runtime environment file the project's local lifecycle generates, because Python projects generate `.env` where Node projects generate `.localConfigs`.                                                                                                                                                                                                                                                                                                                                                      |
+| VCB-113 | Given a Teams Agent with Data case on the OpenAI branch, its chat check asserts no grounded answer, because the generated project hardcodes an OpenAI model name that the redirected Azure OpenAI resource does not host as a deployment; the Azure OpenAI branch keeps the error-free reply assertion.                                                                                                                                                                                                                                                                            |
+| VCB-114 | Given the two Node Azure AI Search cases on the OpenAI branch, they overwrite the OpenAI key with a fake value instead of redirecting the base URL, and assert the resulting error reply, because that is the authentication-failure coverage their legacy plans carried.                                                                                                                                                                                                                                                                                                          |
 
 ## Boundary
 

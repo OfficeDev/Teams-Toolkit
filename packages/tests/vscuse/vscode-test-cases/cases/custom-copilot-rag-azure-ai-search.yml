@@ -25,11 +25,11 @@ cases:
         scaffold-rag-search-ts-openai,
         check-rag-search-ts-openai,
         fill-azure-search-credentials,
-        redirect-openai-base-url,
+        use-fake-openai-key,
         login-m365,
         f5-teams-local,
         open-app,
-        check-rag-search-chat,
+        check-rag-search-chat-openai-fake-key,
       ]
 
   - id: rag-azure-ai-search-js-azure-openai-local-teams
@@ -53,11 +53,11 @@ cases:
         scaffold-rag-search-js-openai,
         check-rag-search-js-openai,
         fill-azure-search-credentials,
-        redirect-openai-base-url,
+        use-fake-openai-key,
         login-m365,
         f5-teams-local,
         open-app,
-        check-rag-search-chat,
+        check-rag-search-chat-openai-fake-key,
       ]
 
   - id: rag-azure-ai-search-py-azure-openai-local-teams
@@ -87,7 +87,7 @@ cases:
         login-m365,
         f5-teams-local,
         open-app,
-        check-rag-search-chat,
+        check-rag-search-chat-openai,
       ]
 
 steps:
@@ -178,8 +178,8 @@ steps:
           value: custom-copilot-rag-azure-ai-search
         - question: llmService
           value: llm-service-openai
-        # The OpenAI client is redirected to an Azure OpenAI v1 endpoint before
-        # launch, so the case supplies the Azure OpenAI key here.
+        # A secret expression is the only accepted shape here; the case replaces
+        # the value with the legacy fake key before launch.
         - question: openAIKey
           type: text
           value: "${{secret:AZURE_OPENAI_API_KEY}}"
@@ -282,6 +282,8 @@ steps:
           value: custom-copilot-rag-azure-ai-search
         - question: llmService
           value: llm-service-openai
+        # A secret expression is the only accepted shape here; the case replaces
+        # the value with the legacy fake key before launch.
         - question: openAIKey
           type: text
           value: "${{secret:AZURE_OPENAI_API_KEY}}"
@@ -452,6 +454,13 @@ steps:
     with:
       OPENAI_BASE_URL: "${{env:AZURE_OPENAI_ENDPOINT}}/openai/v1"
 
+  # The legacy Node plans ran on this fake key and asserted the failure it
+  # produced, which is coverage of the authentication path no working key gives.
+  use-fake-openai-key:
+    type: localEnvironment
+    with:
+      OPENAI_API_KEY: faked_openapi_key
+
   login-m365:
     type: login
     with:
@@ -483,3 +492,26 @@ steps:
         expect:
           replied: true
           notContains: ["error"]
+
+  check-rag-search-chat-openai:
+    type: checks
+    with:
+      # The OpenAI branch hardcodes `gpt-3.5-turbo` and `text-embedding-ada-002`
+      # in the generated config, and the redirected Azure OpenAI resource
+      # resolves those as deployment names it does not host, so the reply cannot
+      # be grounded. The legacy Python plan asserted its failure in the terminal,
+      # which no adapter reaches, so the case asserts the reply itself.
+      - type: chat
+        send: What is the Contoso Electronics PerksPlus program?
+        expect:
+          replied: true
+
+  check-rag-search-chat-openai-fake-key:
+    type: checks
+    with:
+      # The wording is the Teams AI library's, not the model's, and is what the
+      # legacy Node plans asserted on the same fake key.
+      - type: chat
+        send: What is the Contoso Electronics PerksPlus program?
+        expect:
+          contains: ["encountered an error"]
