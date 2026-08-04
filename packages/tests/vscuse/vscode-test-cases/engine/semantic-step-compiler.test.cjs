@@ -108,7 +108,7 @@ test("VCB-34: semantic compiler does not read external template contracts", asyn
   }
 });
 
-test("VCB-34: default setup compiles the checked-in YAML sources into sixty-three plans", async (context) => {
+test("VCB-34: default setup compiles the checked-in YAML sources into eighty-two plans", async (context) => {
   const plansDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "vscuse-generated-"),
   );
@@ -121,9 +121,9 @@ test("VCB-34: default setup compiles the checked-in YAML sources into sixty-thre
   });
 
   assert.equal(first.ok, true);
-  assert.equal(first.value.files.length, 63);
+  assert.equal(first.value.files.length, 82);
   const generatedFiles = first.value.files;
-  assert.equal(generatedFiles.length, 63);
+  assert.equal(generatedFiles.length, 82);
   assert.equal(
     generatedFiles.includes(
       "da-api-plugin-from-existing-api--da-api-plugin-from-existing-api-no-auth.json",
@@ -2562,4 +2562,267 @@ test("semantic adapter requires Azure login before prompted ARM provision", asyn
 
   assert.equal(result.ok, false);
   assert.equal(result.diagnostics[0].code, "VCB_PROVISION_PREREQUISITE");
+});
+
+const teamsAgentWithDataBundles = [
+  ["custom-copilot-rag-customize.yml", "Customize"],
+  ["custom-copilot-rag-azure-ai-search.yml", "Azure AI Search"],
+  ["custom-copilot-rag-custom-api.yml", "Custom API"],
+];
+
+test("VCB-104: Teams Agent with Data cases resolve the full data source selector path", async () => {
+  for (const [fileName, sourceLabel] of teamsAgentWithDataBundles) {
+    const result = await compileFixture(fileName, (sourceText) => sourceText);
+    assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+
+    for (const generated of result.value) {
+      const typed = generated.plan.steps
+        .map((step) => step.parameters?.text)
+        .filter((text) => typeof text === "string");
+
+      assert.equal(
+        typed.includes("Teams Agents and Apps"),
+        true,
+        generated.caseId,
+      );
+      assert.equal(
+        typed.includes("Teams Agent with Data"),
+        true,
+        generated.caseId,
+      );
+      assert.equal(typed.includes(sourceLabel), true, generated.caseId);
+      assert.equal(
+        generated.plan.steps.some((step) =>
+          step.description?.includes(
+            "Teams Agent or App Using Microsoft Teams SDK",
+          ),
+        ),
+        true,
+        generated.caseId,
+      );
+      assert.equal(
+        generated.plan.steps.filter((step) =>
+          step.description?.includes("Teams Agent with Data"),
+        ).length > 0,
+        true,
+        generated.caseId,
+      );
+    }
+  }
+});
+
+test("VCB-105: the Teams Agent with Data OpenAPI document answer picks the URL item before typing it", async () => {
+  const specUrl =
+    "https://raw.githubusercontent.com/SLdragon/example-openapi-spec/main/real-no-auth.yaml";
+  const result = await compileFixture(
+    "custom-copilot-rag-custom-api.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+
+  for (const generated of result.value) {
+    const typed = generated.plan.steps
+      .map((step) => step.parameters?.text)
+      .filter((text) => typeof text === "string");
+    const pickIndex = typed.indexOf("Enter OpenAPI Document URL");
+    const urlIndex = typed.indexOf(specUrl);
+
+    assert.notEqual(pickIndex, -1, generated.caseId);
+    assert.notEqual(urlIndex, -1, generated.caseId);
+    assert.equal(pickIndex < urlIndex, true, generated.caseId);
+    assert.equal(
+      generated.plan.steps.filter(
+        (step) =>
+          step.description ===
+          "@assertion the active prompt titled OpenAPI Document is visible.",
+      ).length,
+      2,
+      generated.caseId,
+    );
+  }
+
+  const declarativeAgent = await compileFixture(
+    "da-api-plugin-from-existing-api.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(
+    declarativeAgent.ok,
+    true,
+    declarativeAgent.diagnostics?.[0]?.code,
+  );
+  for (const generated of declarativeAgent.value) {
+    // The declarative agent answers the spec type first, so the item that opens
+    // the input box belongs to that earlier prompt and the OpenAPI document
+    // prompt itself stays a single input box.
+    assert.equal(
+      generated.plan.steps.filter(
+        (step) =>
+          step.description ===
+          "@assertion the active prompt titled OpenAPI Document is visible.",
+      ).length,
+      1,
+      generated.caseId,
+    );
+  }
+});
+
+test("VCB-106: the operation prompt names the surface the answered flow reaches", async () => {
+  const teamsAgent = await compileFixture(
+    "custom-copilot-rag-custom-api.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(teamsAgent.ok, true, teamsAgent.diagnostics?.[0]?.code);
+  for (const generated of teamsAgent.value) {
+    const descriptions = generated.plan.steps.map(
+      (step) => step.description || "",
+    );
+    assert.equal(
+      descriptions.some((description) =>
+        description.includes("Select Operation(s) Teams Can Interact with"),
+      ),
+      true,
+      generated.caseId,
+    );
+    assert.equal(
+      descriptions.some((description) =>
+        description.includes("Select Operation(s) Copilot Can Interact with"),
+      ),
+      false,
+      generated.caseId,
+    );
+  }
+
+  const declarativeAgent = await compileFixture(
+    "da-api-plugin-from-existing-api.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(
+    declarativeAgent.ok,
+    true,
+    declarativeAgent.diagnostics?.[0]?.code,
+  );
+  for (const generated of declarativeAgent.value) {
+    const descriptions = generated.plan.steps.map(
+      (step) => step.description || "",
+    );
+    assert.equal(
+      descriptions.some((description) =>
+        description.includes("Select Operation(s) Copilot Can Interact with"),
+      ),
+      true,
+      generated.caseId,
+    );
+  }
+});
+
+test("VCB-107: the Teams Agent with Data bundles cover their launch matrix and supply unprompted credentials", async () => {
+  const customize = await compileFixture(
+    "custom-copilot-rag-customize.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(customize.ok, true, customize.diagnostics?.[0]?.code);
+  assert.deepEqual(customize.value.map((entry) => entry.caseId).sort(), [
+    "rag-customize-js-azure-openai-local-teams",
+    "rag-customize-js-openai-local-teams",
+    "rag-customize-py-azure-openai-local-teams",
+    "rag-customize-py-openai-local-copilot",
+    "rag-customize-py-openai-local-teams",
+    "rag-customize-ts-azure-openai-local-teams",
+    "rag-customize-ts-openai-local-teams",
+  ]);
+  for (const generated of customize.value) {
+    assert.equal(
+      generated.plan.plan_metadata.tags.includes(
+        "feature_flag:TEAMSFX_CEA_ENABLED=true",
+      ),
+      generated.caseId.endsWith("-local-copilot"),
+      generated.caseId,
+    );
+  }
+
+  const search = await compileFixture(
+    "custom-copilot-rag-azure-ai-search.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(search.ok, true, search.diagnostics?.[0]?.code);
+  assert.deepEqual(search.value.map((entry) => entry.caseId).sort(), [
+    "rag-azure-ai-search-js-azure-openai-local-teams",
+    "rag-azure-ai-search-js-openai-local-teams",
+    "rag-azure-ai-search-py-azure-openai-local-teams",
+    "rag-azure-ai-search-py-openai-local-teams",
+    "rag-azure-ai-search-ts-azure-openai-local-teams",
+    "rag-azure-ai-search-ts-openai-local-teams",
+  ]);
+  for (const generated of search.value) {
+    const samples = generated.plan.steps
+      .filter((step) =>
+        step.step_id?.startsWith("step_setLocalEnvironmentVariable_"),
+      )
+      .map((step) => step.parameters.sample);
+
+    assert.equal(
+      samples.some((sample) =>
+        sample.includes('VARIABLE_NAME="AZURE_SEARCH_KEY"'),
+      ),
+      true,
+      generated.caseId,
+    );
+    assert.equal(
+      samples.some((sample) =>
+        sample.includes('VARIABLE_NAME="AZURE_SEARCH_ENDPOINT"'),
+      ),
+      true,
+      generated.caseId,
+    );
+
+    const usesAzureOpenAI = generated.caseId.includes("-azure-openai-");
+    const embeddingName = generated.caseId.startsWith("rag-azure-ai-search-py-")
+      ? "AZURE_OPENAI_EMBEDDING_DEPLOYMENT"
+      : "AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME";
+    assert.equal(
+      samples.some((sample) =>
+        sample.includes(`VARIABLE_NAME="${embeddingName}"`),
+      ),
+      usesAzureOpenAI,
+      generated.caseId,
+    );
+  }
+
+  const customApi = await compileFixture(
+    "custom-copilot-rag-custom-api.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(customApi.ok, true, customApi.diagnostics?.[0]?.code);
+  assert.deepEqual(customApi.value.map((entry) => entry.caseId).sort(), [
+    "rag-custom-api-js-azure-openai-local-teams",
+    "rag-custom-api-js-openai-local-teams",
+    "rag-custom-api-py-azure-openai-local-teams",
+    "rag-custom-api-py-openai-local-teams",
+    "rag-custom-api-ts-azure-openai-local-teams",
+    "rag-custom-api-ts-openai-local-teams",
+  ]);
+});
+
+test("VCB-108: a local environment step accepts either runtime environment file", async () => {
+  const result = await compileFixture(
+    "custom-copilot-rag-azure-ai-search.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+
+  const generated = result.value.find(
+    (candidate) =>
+      candidate.caseId === "rag-azure-ai-search-py-azure-openai-local-teams",
+  );
+  const step = generated.plan.steps.find((candidate) =>
+    candidate.step_id.startsWith("step_setLocalEnvironmentVariable_"),
+  );
+
+  assert.equal(
+    step.parameters.sample.includes(
+      'targets = ("target: ./.localConfigs", "target: ./.env")',
+    ),
+    true,
+  );
+  assert.equal(step.description.includes(".localConfigs"), false);
 });

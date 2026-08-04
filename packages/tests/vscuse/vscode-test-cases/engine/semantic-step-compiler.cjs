@@ -115,6 +115,15 @@ const scaffoldQuestionAdapters = {
   },
   azureOpenAIEndpoint: { title: "Azure OpenAI Endpoint", type: "text" },
   azureOpenAIKey: { secret: true, title: "Azure OpenAI Key", type: "text" },
+  customCopilotRag: {
+    options: {
+      "custom-copilot-rag-azure-ai-search": "Azure AI Search",
+      "custom-copilot-rag-custom-api": "Custom API",
+      "custom-copilot-rag-customize": "Customize",
+    },
+    title: "Teams Agent with Data",
+    type: "singleSelect",
+  },
   customEngineAgent: {
     options: {
       "basic-custom-engine-agent": "Basic Custom Engine Agent",
@@ -171,6 +180,7 @@ const scaffoldQuestionAdapters = {
   teamsAppType: {
     options: {
       "custom-copilot-basic": "General Teams Agent",
+      "custom-copilot-rag": "Teams Agent with Data",
       "teams-other-app-type": "Other Teams Capabilities",
     },
     title: "Teams Agent or App Using Microsoft Teams SDK",
@@ -639,11 +649,17 @@ function createSemanticStepCompiler() {
         );
       }
 
+      // The toolkit composes some prompts from answers the case already gave,
+      // so the same question key can carry a different title, or reach a
+      // different prompt shape, on a different path.
+      const inTeamsAgentWithData = answerState.customCopilotRag !== undefined;
       const questionTitle =
         answer.question === "mcp-da-client-id" &&
         answerState.authType === "entra-sso"
           ? "Microsoft Entra Application (Client) ID"
-          : question.title;
+          : answer.question === "apiOperations" && inTeamsAgentWithData
+            ? "Select Operation(s) Teams Can Interact with"
+            : question.title;
       answerState[answer.question] = answer.value;
       if (question.type === "singleSelect") {
         const option = question.options[answer.value];
@@ -684,6 +700,19 @@ function createSemanticStepCompiler() {
           }),
         );
       } else {
+        // The Teams Agent with Data flow reaches the OpenAPI document as a
+        // `singleFileOrText` question, so its prompt lists the workspace files
+        // beside an item that opens the input box the URL is typed into.
+        if (answer.question === "apiSpecLocation" && inTeamsAgentWithData) {
+          error = append(
+            output,
+            render(state, "quick-input/single-select.json.tpl", {
+              optionLabel: "Enter OpenAPI Document URL",
+              questionTitle,
+            }),
+          );
+          if (error) return error;
+        }
         error = append(
           output,
           render(state, "quick-input/text.json.tpl", {

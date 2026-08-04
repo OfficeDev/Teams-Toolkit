@@ -1,0 +1,485 @@
+version: 1
+
+# Every LLM service and language reaches a local Teams launch, because those
+# dimensions change the rendered indexer, config module, and the credentials the
+# local lifecycle has to resolve.
+cases:
+  - id: rag-azure-ai-search-ts-azure-openai-local-teams
+    scenarioId: SCN-CREATE-RAG-AZURE-SEARCH-01
+    steps:
+      [
+        scaffold-rag-search-ts-azure-openai,
+        check-rag-search-ts-azure-openai,
+        fill-azure-search-credentials,
+        fill-node-embedding-deployment,
+        login-m365,
+        f5-teams-local,
+        open-app,
+        check-rag-search-chat,
+      ]
+
+  - id: rag-azure-ai-search-ts-openai-local-teams
+    scenarioId: SCN-CREATE-RAG-AZURE-SEARCH-01
+    steps:
+      [
+        scaffold-rag-search-ts-openai,
+        check-rag-search-ts-openai,
+        fill-azure-search-credentials,
+        redirect-openai-base-url,
+        login-m365,
+        f5-teams-local,
+        open-app,
+        check-rag-search-chat,
+      ]
+
+  - id: rag-azure-ai-search-js-azure-openai-local-teams
+    scenarioId: SCN-CREATE-RAG-AZURE-SEARCH-03
+    steps:
+      [
+        scaffold-rag-search-js-azure-openai,
+        check-rag-search-js-azure-openai,
+        fill-azure-search-credentials,
+        fill-node-embedding-deployment,
+        login-m365,
+        f5-teams-local,
+        open-app,
+        check-rag-search-chat,
+      ]
+
+  - id: rag-azure-ai-search-js-openai-local-teams
+    scenarioId: SCN-CREATE-RAG-AZURE-SEARCH-03
+    steps:
+      [
+        scaffold-rag-search-js-openai,
+        check-rag-search-js-openai,
+        fill-azure-search-credentials,
+        redirect-openai-base-url,
+        login-m365,
+        f5-teams-local,
+        open-app,
+        check-rag-search-chat,
+      ]
+
+  - id: rag-azure-ai-search-py-azure-openai-local-teams
+    scenarioId: SCN-CREATE-RAG-AZURE-SEARCH-04
+    steps:
+      [
+        scaffold-rag-search-py-azure-openai,
+        check-rag-search-py-azure-openai,
+        create-python-environment,
+        fill-azure-search-credentials,
+        fill-python-embedding-deployment,
+        login-m365,
+        f5-teams-local,
+        open-app,
+        check-rag-search-chat,
+      ]
+
+  - id: rag-azure-ai-search-py-openai-local-teams
+    scenarioId: SCN-CREATE-RAG-AZURE-SEARCH-04
+    steps:
+      [
+        scaffold-rag-search-py-openai,
+        check-rag-search-py-openai,
+        create-python-environment,
+        fill-azure-search-credentials,
+        redirect-openai-base-url,
+        login-m365,
+        f5-teams-local,
+        open-app,
+        check-rag-search-chat,
+      ]
+
+steps:
+  scaffold-rag-search-ts-azure-openai:
+    type: scaffold
+    with:
+      template: custom-copilot-rag-azure-ai-search
+      answers:
+        - question: projectType
+          value: teams-agent-and-app-type
+        - question: teamsAppType
+          value: custom-copilot-rag
+        - question: customCopilotRag
+          value: custom-copilot-rag-azure-ai-search
+        - question: llmService
+          value: llm-service-azure-openai
+        - question: azureOpenAIKey
+          type: text
+          value: "${{secret:AZURE_OPENAI_API_KEY}}"
+        - question: azureOpenAIEndpoint
+          type: text
+          value: "${{env:AZURE_OPENAI_ENDPOINT}}"
+        - question: azureOpenAIDeploymentName
+          type: text
+          value: "${{env:AZURE_OPENAI_MODEL}}"
+        - question: language
+          value: typescript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-rag-search-ts-azure-openai:
+    type: checks
+    with:
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains:
+            ["version: v1.11", "provision:", "deploy:", "teamsApp/extendToM365"]
+      - type: file
+        path: src/app/azureAISearchDataSource.ts
+        expect:
+          exists: true
+      - type: file
+        path: src/indexers/setup.ts
+        expect:
+          exists: true
+      - type: file
+        path: src/config.ts
+        expect:
+          contains:
+            [
+              "azureOpenAIKey: process.env.AZURE_OPENAI_API_KEY",
+              "azureOpenAIEmbeddingDeploymentName: process.env.AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME",
+              "azureSearchKey: process.env.AZURE_SEARCH_KEY",
+              "azureSearchEndpoint: process.env.AZURE_SEARCH_ENDPOINT",
+            ]
+          notContains: ["openAIKey: process.env.OPENAI_API_KEY"]
+      - type: file
+        path: .vscode/launch.json
+        expect:
+          contains:
+            [
+              "Debug in Teams (Chrome)",
+              "Debug in Microsoft 365 Agents Playground",
+            ]
+      - type: file
+        path: package.json
+        expect:
+          exists: true
+      - type: file
+        path: appPackage/manifest.json
+        expect:
+          contains: ['"manifestVersion": "1.29"']
+
+  scaffold-rag-search-ts-openai:
+    type: scaffold
+    with:
+      template: custom-copilot-rag-azure-ai-search
+      answers:
+        - question: projectType
+          value: teams-agent-and-app-type
+        - question: teamsAppType
+          value: custom-copilot-rag
+        - question: customCopilotRag
+          value: custom-copilot-rag-azure-ai-search
+        - question: llmService
+          value: llm-service-openai
+        # The OpenAI client is redirected to an Azure OpenAI v1 endpoint before
+        # launch, so the case supplies the Azure OpenAI key here.
+        - question: openAIKey
+          type: text
+          value: "${{secret:AZURE_OPENAI_API_KEY}}"
+        - question: language
+          value: typescript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-rag-search-ts-openai:
+    type: checks
+    with:
+      - type: file
+        path: src/app/azureAISearchDataSource.ts
+        expect:
+          exists: true
+      - type: file
+        path: src/indexers/setup.ts
+        expect:
+          exists: true
+      - type: file
+        path: src/config.ts
+        expect:
+          contains:
+            [
+              "openAIKey: process.env.OPENAI_API_KEY",
+              'openAIEmbeddingModelName: "text-embedding-ada-002"',
+              "azureSearchKey: process.env.AZURE_SEARCH_KEY",
+            ]
+          notContains: [azureOpenAIKey]
+
+  scaffold-rag-search-js-azure-openai:
+    type: scaffold
+    with:
+      template: custom-copilot-rag-azure-ai-search
+      answers:
+        - question: projectType
+          value: teams-agent-and-app-type
+        - question: teamsAppType
+          value: custom-copilot-rag
+        - question: customCopilotRag
+          value: custom-copilot-rag-azure-ai-search
+        - question: llmService
+          value: llm-service-azure-openai
+        - question: azureOpenAIKey
+          type: text
+          value: "${{secret:AZURE_OPENAI_API_KEY}}"
+        - question: azureOpenAIEndpoint
+          type: text
+          value: "${{env:AZURE_OPENAI_ENDPOINT}}"
+        - question: azureOpenAIDeploymentName
+          type: text
+          value: "${{env:AZURE_OPENAI_MODEL}}"
+        - question: language
+          value: javascript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-rag-search-js-azure-openai:
+    type: checks
+    with:
+      - type: file
+        path: src/app/azureAISearchDataSource.js
+        expect:
+          exists: true
+      - type: file
+        path: src/indexers/setup.js
+        expect:
+          exists: true
+      - type: file
+        path: src/config.js
+        expect:
+          contains:
+            [
+              "azureOpenAIKey: process.env.AZURE_OPENAI_API_KEY",
+              "azureOpenAIEmbeddingDeploymentName: process.env.AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME",
+              "azureSearchEndpoint: process.env.AZURE_SEARCH_ENDPOINT",
+            ]
+          notContains: ["openAIKey: process.env.OPENAI_API_KEY"]
+      - type: file
+        path: src/config.ts
+        expect:
+          exists: false
+
+  scaffold-rag-search-js-openai:
+    type: scaffold
+    with:
+      template: custom-copilot-rag-azure-ai-search
+      answers:
+        - question: projectType
+          value: teams-agent-and-app-type
+        - question: teamsAppType
+          value: custom-copilot-rag
+        - question: customCopilotRag
+          value: custom-copilot-rag-azure-ai-search
+        - question: llmService
+          value: llm-service-openai
+        - question: openAIKey
+          type: text
+          value: "${{secret:AZURE_OPENAI_API_KEY}}"
+        - question: language
+          value: javascript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-rag-search-js-openai:
+    type: checks
+    with:
+      - type: file
+        path: src/app/azureAISearchDataSource.js
+        expect:
+          exists: true
+      - type: file
+        path: src/config.js
+        expect:
+          contains:
+            [
+              "openAIKey: process.env.OPENAI_API_KEY",
+              'openAIEmbeddingModelName: "text-embedding-ada-002"',
+              "azureSearchKey: process.env.AZURE_SEARCH_KEY",
+            ]
+          notContains: [azureOpenAIKey]
+
+  scaffold-rag-search-py-azure-openai:
+    type: scaffold
+    with:
+      template: custom-copilot-rag-azure-ai-search
+      answers:
+        - question: projectType
+          value: teams-agent-and-app-type
+        - question: teamsAppType
+          value: custom-copilot-rag
+        - question: customCopilotRag
+          value: custom-copilot-rag-azure-ai-search
+        - question: llmService
+          value: llm-service-azure-openai
+        - question: azureOpenAIKey
+          type: text
+          value: "${{secret:AZURE_OPENAI_API_KEY}}"
+        - question: azureOpenAIEndpoint
+          type: text
+          value: "${{env:AZURE_OPENAI_ENDPOINT}}"
+        - question: azureOpenAIDeploymentName
+          type: text
+          value: "${{env:AZURE_OPENAI_MODEL}}"
+        - question: language
+          value: python
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-rag-search-py-azure-openai:
+    type: checks
+    with:
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains:
+            ["version: v1.11", "provision:", "deploy:", "teamsApp/extendToM365"]
+      - type: file
+        path: src/azure_ai_search_data_source.py
+        expect:
+          exists: true
+      - type: file
+        path: src/indexers/setup.py
+        expect:
+          exists: true
+      - type: file
+        path: src/config.py
+        expect:
+          contains:
+            [
+              AZURE_OPENAI_API_KEY,
+              AZURE_OPENAI_EMBEDDING_DEPLOYMENT,
+              AZURE_SEARCH_KEY,
+              AZURE_SEARCH_ENDPOINT,
+            ]
+          notContains: [OPENAI_MODEL_NAME]
+      - type: file
+        path: src/requirements.txt
+        expect:
+          contains: [azure-search-documents, microsoft-teams-apps]
+      - type: file
+        path: package.json
+        expect:
+          exists: false
+
+  scaffold-rag-search-py-openai:
+    type: scaffold
+    with:
+      template: custom-copilot-rag-azure-ai-search
+      answers:
+        - question: projectType
+          value: teams-agent-and-app-type
+        - question: teamsAppType
+          value: custom-copilot-rag
+        - question: customCopilotRag
+          value: custom-copilot-rag-azure-ai-search
+        - question: llmService
+          value: llm-service-openai
+        - question: openAIKey
+          type: text
+          value: "${{secret:AZURE_OPENAI_API_KEY}}"
+        - question: language
+          value: python
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-rag-search-py-openai:
+    type: checks
+    with:
+      - type: file
+        path: src/azure_ai_search_data_source.py
+        expect:
+          exists: true
+      - type: file
+        path: src/config.py
+        expect:
+          contains:
+            [
+              OPENAI_API_KEY,
+              "OPENAI_EMBEDDING_DEPLOYMENT='text-embedding-ada-002'",
+              AZURE_SEARCH_KEY,
+            ]
+          notContains: [AZURE_OPENAI_API_KEY]
+
+  create-python-environment:
+    type: pythonEnvironment
+    with:
+      interpreter: "Python 3.12"
+
+  # The templates read these from the generated runtime environment file, but
+  # the scaffold never prompts for them, so the local lifecycle would otherwise
+  # stop on an unresolved placeholder and open an input box mid-launch.
+  fill-azure-search-credentials:
+    type: localEnvironment
+    with:
+      AZURE_SEARCH_KEY: "${{secret:AZURE_SEARCH_KEY}}"
+      AZURE_SEARCH_ENDPOINT: "${{env:AZURE_SEARCH_ENDPOINT}}"
+
+  fill-node-embedding-deployment:
+    type: localEnvironment
+    with:
+      AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME: "${{env:AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME}}"
+
+  # The Python config module reads the deployment under a shorter name than the
+  # Node config module does.
+  fill-python-embedding-deployment:
+    type: localEnvironment
+    with:
+      AZURE_OPENAI_EMBEDDING_DEPLOYMENT: "${{env:AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME}}"
+
+  # The OpenAI branch reads OPENAI_BASE_URL, so pointing it at the Azure OpenAI
+  # v1 surface lets the case reuse the Azure OpenAI key it already supplied.
+  redirect-openai-base-url:
+    type: localEnvironment
+    with:
+      OPENAI_BASE_URL: "${{env:AZURE_OPENAI_ENDPOINT}}/openai/v1"
+
+  login-m365:
+    type: login
+    with:
+      type: m365
+      account: "${{env:M365_ACCOUNT_NAME}}"
+      password: "${{secret:M365_ACCOUNT_PASSWORD}}"
+
+  f5-teams-local:
+    type: target
+    with:
+      profile: "Debug in Teams (Chrome)"
+      profileSelection: first
+
+  open-app:
+    type: open
+    with:
+      kind: app
+      destination: chat
+
+  check-rag-search-chat:
+    type: checks
+    with:
+      # The indexed documents live in a shared Azure AI Search service and the
+      # reply wording comes from the model, so the case asserts that the agent
+      # answered without failing rather than asserting text this repository does
+      # not control.
+      - type: chat
+        send: What is the Contoso Electronics PerksPlus program?
+        expect:
+          replied: true
+          notContains: ["error"]
