@@ -139,6 +139,12 @@ describe("Collaborator APIs for V3", () => {
           },
         ])
       );
+      vi.spyOn(CollaborationUtil, "getTeamsAppIdAndAadObjectId").mockResolvedValue(
+        ok({
+          teamsAppId: "teamsAppId",
+          aadObjectId: "aadObjectId",
+        })
+      );
       inputs[CollaborationConstants.IncludeCollaborators] = true;
       const result = await listCollaborator(ctx, inputs, tokenProvider);
       assert.isTrue(result.isOk());
@@ -215,6 +221,12 @@ describe("Collaborator APIs for V3", () => {
             userPrincipalName: "aad-only-user-principal-name",
           },
         ])
+      );
+      vi.spyOn(CollaborationUtil, "getTeamsAppIdAndAadObjectId").mockResolvedValue(
+        ok({
+          teamsAppId: "teamsAppId",
+          aadObjectId: "aadObjectId",
+        })
       );
       inputs[CollaborationConstants.IncludeCollaborators] = true;
       const result = await listCollaborator(ctx, inputs, tokenProvider);
