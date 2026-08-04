@@ -195,6 +195,7 @@ const scaffoldQuestionAdapters = {
     options: {
       "default-bot": "Simple Bot",
       "default-message-extension": "Message Extension",
+      "non-sso-tab": "Tab",
     },
     title: "Teams Capability",
     type: "singleSelect",
@@ -321,6 +322,18 @@ const lifecycleAdapters = {
 // and `Preview in Copilot (Chrome)` as a configuration in group `remote`, and
 // the local title contains the remote one as a subsequence, so filtering on the
 // remote title lists the local compound first.
+// A profile registers one activation adapter per destination it can reach. One
+// launch title serves more than one scaffold package: the Teams debug and remote
+// profiles open a conversation for a bot or message extension and a tab page for
+// a tab, and only the case knows which of the two it scaffolded.
+const teamsChatSubject =
+  "the Microsoft Teams conversation with an app whose name starts with ${{var:app_name}} is open with its message box";
+const teamsPageSubject =
+  "the Microsoft Teams tab page for an app whose name starts with ${{var:app_name}} is open";
+const teamsAppDetailsSubject =
+  "the Microsoft Teams app details page for an app whose name starts with ${{var:app_name}} is visible";
+const copilotAgentSubject =
+  "an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot";
 const targetAdapters = {
   // Every Chrome launch configuration the templates ship omits `userDataDir`, so
   // js-debug hands the session a profile of its own that carries no Microsoft 365
@@ -334,28 +347,32 @@ const targetAdapters = {
       credentials: "m365",
     },
     host: "teams",
-    open: { adapter: "teams-add", destination: "chat", kind: "app" },
+    open: {
+      chat: { adapter: "teams-add", kind: "app", subject: teamsChatSubject },
+    },
     profileSelections: {
       first: { component: "quick-input/filter-option.json.tpl" },
     },
-    readySubject:
-      "the Microsoft Teams app details page for an app whose name starts with ${{var:app_name}} is visible",
+    readySubject: teamsAppDetailsSubject,
     requires: ["login:azure", "login:m365", "provision", "deploy"],
   },
   // The v4 TypeScript Bot and Message Extension templates title the same
-  // remote Teams launch `View Remote App in Teams (Chrome)`.
+  // remote Teams launch `View Remote App in Teams (Chrome)`, and so does the Tab
+  // template, which reaches a tab page rather than a conversation.
   "View Remote App in Teams (Chrome)": {
     browserAuthentication: {
       component: "authentication/browser/m365-password-sign-in.json.tpl",
       credentials: "m365",
     },
     host: "teams",
-    open: { adapter: "teams-add", destination: "chat", kind: "app" },
+    open: {
+      chat: { adapter: "teams-add", kind: "app", subject: teamsChatSubject },
+      page: { adapter: "teams-add", kind: "app", subject: teamsPageSubject },
+    },
     profileSelections: {
       first: { component: "quick-input/filter-option.json.tpl" },
     },
-    readySubject:
-      "the Microsoft Teams app details page for an app whose name starts with ${{var:app_name}} is visible",
+    readySubject: teamsAppDetailsSubject,
     requires: ["login:azure", "login:m365", "provision", "deploy"],
   },
   // The Python templates name the same remote Teams launch `Launch Remote
@@ -368,12 +385,13 @@ const targetAdapters = {
       credentials: "m365",
     },
     host: "teams",
-    open: { adapter: "teams-add", destination: "chat", kind: "app" },
+    open: {
+      chat: { adapter: "teams-add", kind: "app", subject: teamsChatSubject },
+    },
     profileSelections: {
       first: { component: "quick-input/filter-option.json.tpl" },
     },
-    readySubject:
-      "the Microsoft Teams app details page for an app whose name starts with ${{var:app_name}} is visible",
+    readySubject: teamsAppDetailsSubject,
     requires: ["login:azure", "login:m365", "provision", "deploy"],
   },
   "Preview in Copilot (Chrome)": {
@@ -382,7 +400,7 @@ const targetAdapters = {
       credentials: "m365",
     },
     host: "copilot",
-    open: { adapter: "ready", destination: "chat", kind: "agent" },
+    open: { chat: { adapter: "ready", kind: "agent" } },
     profileSelections: {
       first: { component: "quick-input/filter-option.json.tpl" },
       second: {
@@ -390,8 +408,7 @@ const targetAdapters = {
         initialOptionLabel: "Preview Local in Copilot (Chrome)",
       },
     },
-    readySubject:
-      "an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot",
+    readySubject: copilotAgentSubject,
     requires: ["login:m365", "provision"],
   },
   // A custom engine agent is hosted on Azure, so its Copilot preview needs the
@@ -403,12 +420,11 @@ const targetAdapters = {
       credentials: "m365",
     },
     host: "copilot",
-    open: { adapter: "ready", destination: "chat", kind: "agent" },
+    open: { chat: { adapter: "ready", kind: "agent" } },
     profileSelections: {
       first: { component: "quick-input/filter-option.json.tpl" },
     },
-    readySubject:
-      "an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot",
+    readySubject: copilotAgentSubject,
     requires: ["login:azure", "login:m365", "provision", "deploy"],
   },
   // General Teams Agent templates expose the same custom-engine Copilot flow
@@ -419,12 +435,11 @@ const targetAdapters = {
       credentials: "m365",
     },
     host: "copilot",
-    open: { adapter: "ready", destination: "chat", kind: "agent" },
+    open: { chat: { adapter: "ready", kind: "agent" } },
     profileSelections: {
       first: { component: "quick-input/filter-option.json.tpl" },
     },
-    readySubject:
-      "an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot",
+    readySubject: copilotAgentSubject,
     requires: ["login:azure", "login:m365", "provision", "deploy"],
   },
   // The local debug profiles below carry a preLaunchTask chain that validates
@@ -440,12 +455,22 @@ const targetAdapters = {
       credentials: "m365",
     },
     host: "teams",
-    open: { adapter: "teams-add", destination: "chat", kind: "app" },
+    open: {
+      chat: { adapter: "teams-add", kind: "app", subject: teamsChatSubject },
+      // The local lifecycle serves the tab from `https://localhost:3978` behind a
+      // development certificate Chrome has never been told to trust, so the frame
+      // Teams opens stays empty until the certificate is accepted and the app is
+      // reloaded. The remote profile above needs neither step.
+      page: {
+        adapter: "teams-add-local-page",
+        kind: "app",
+        subject: teamsPageSubject,
+      },
+    },
     profileSelections: {
       first: { component: "quick-input/filter-option.json.tpl" },
     },
-    readySubject:
-      "the Microsoft Teams app details page for an app whose name starts with ${{var:app_name}} is visible",
+    readySubject: teamsAppDetailsSubject,
     requires: ["login:m365"],
   },
   "(Preview) Debug in Copilot (Chrome)": {
@@ -454,12 +479,11 @@ const targetAdapters = {
       credentials: "m365",
     },
     host: "copilot",
-    open: { adapter: "ready", destination: "chat", kind: "agent" },
+    open: { chat: { adapter: "ready", kind: "agent" } },
     profileSelections: {
       first: { component: "quick-input/filter-option.json.tpl" },
     },
-    readySubject:
-      "an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot",
+    readySubject: copilotAgentSubject,
     requires: ["login:m365"],
   },
   "Debug in Copilot (Chrome)": {
@@ -468,12 +492,11 @@ const targetAdapters = {
       credentials: "m365",
     },
     host: "copilot",
-    open: { adapter: "ready", destination: "chat", kind: "agent" },
+    open: { chat: { adapter: "ready", kind: "agent" } },
     profileSelections: {
       first: { component: "quick-input/filter-option.json.tpl" },
     },
-    readySubject:
-      "an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot",
+    readySubject: copilotAgentSubject,
     requires: ["login:m365"],
   },
   // The Agents Playground hosts the agent on the local machine and talks to it
@@ -481,7 +504,7 @@ const targetAdapters = {
   // Microsoft 365 and no account has to be signed in first.
   "Debug in Microsoft 365 Agents Playground": {
     host: "playground",
-    open: { adapter: "ready", destination: "chat", kind: "app" },
+    open: { chat: { adapter: "ready", kind: "app" } },
     profileSelections: {
       first: { component: "quick-input/filter-option.json.tpl" },
     },
@@ -1136,6 +1159,24 @@ function createSemanticStepCompiler() {
     return { ok: true, value: output };
   }
 
+  function compileRemoveWorkspaceFile(state, definition) {
+    const inputs = definition.with ?? {};
+    if (
+      !isRecord(inputs) ||
+      !hasOnlyFields(inputs, new Set(["path"])) ||
+      typeof inputs.path !== "string" ||
+      !relativePathPattern.test(inputs.path)
+    ) {
+      return failure(
+        "VCB_REMOVE_WORKSPACE_FILE_INPUT_INVALID",
+        "The remove workspace file operation requires one project-relative path.",
+      );
+    }
+    return render(state, "workspace/remove-file.json.tpl", {
+      relativePath: inputs.path,
+    });
+  }
+
   function compileLifecycle(state, definition) {
     const recipe = lifecycleAdapters[definition.type];
     let confirmation = recipe.confirmation;
@@ -1319,41 +1360,64 @@ function createSemanticStepCompiler() {
   }
 
   function compileOpen(state, definition) {
-    if (
-      state.profile === undefined ||
-      state.profile.open === undefined ||
-      definition.with?.destination !== state.profile.open.destination ||
-      definition.with?.kind !== state.profile.open.kind
-    ) {
+    const destination = definition.with?.destination;
+    const activation =
+      typeof destination === "string"
+        ? state.profile?.open?.[destination]
+        : undefined;
+    if (activation === undefined || definition.with?.kind !== activation.kind) {
       return failure(
         "VCB_OPEN_ADAPTER_UNKNOWN",
         "The authored open operation has no compatible target adapter.",
       );
     }
-    let rendered;
-    if (state.profile.open.adapter === "teams-add") {
-      // The component carries its own converged subject rather than the
+    const output = [];
+    if (
+      activation.adapter === "teams-add" ||
+      activation.adapter === "teams-add-local-page"
+    ) {
+      // The component carries the adapter's converged subject rather than the
       // profile's: the target asserts the app details page this component
-      // enters on, and the two clicks in between leave it.
-      rendered = render(state, "browser/teams/add-and-open-app.json.tpl", {});
-    } else if (state.profile.open.adapter === "ready") {
-      // The target already converged on this destination and asserted this
-      // profile's readiness subject with nothing in between, so rendering the
-      // same component again would only repeat a claim that cannot fail on its
-      // own. The operation still earns its place by declaring which destination
-      // and kind the case chats in, which the check above rejects when the
-      // profile cannot reach it.
-      rendered = { ok: true, value: [] };
-    } else {
+      // enters on, and the two clicks in between leave it, for a conversation
+      // when a bot was scaffolded and for a tab page when a tab was.
+      let error = append(
+        output,
+        render(state, "browser/teams/add-and-open-app.json.tpl", {
+          convergedSubject: activation.subject,
+          destination,
+        }),
+      );
+      if (error) return error;
+      if (activation.adapter === "teams-add-local-page") {
+        error = append(
+          output,
+          render(
+            state,
+            "browser/teams/trust-local-tab-certificate.json.tpl",
+            {},
+          ),
+        );
+        if (error) return error;
+        error = append(
+          output,
+          render(state, "browser/teams/reload-app.json.tpl", {}),
+        );
+        if (error) return error;
+      }
+    } else if (activation.adapter !== "ready") {
       return failure(
         "VCB_OPEN_ADAPTER_UNKNOWN",
         "The target does not register an open adapter.",
       );
     }
-    if (rendered.ok) {
-      state.completed.add(`${state.profile.open.destination}-ready`);
-    }
-    return rendered;
+    // A `ready` adapter emits nothing: the target already converged on this
+    // destination and asserted this profile's readiness subject with nothing in
+    // between, so rendering the same component again would only repeat a claim
+    // that cannot fail on its own. The operation still earns its place by
+    // declaring which destination and kind the case uses, which the check above
+    // rejects when the profile cannot reach it.
+    state.completed.add(`${destination}-ready`);
+    return { ok: true, value: output };
   }
 
   function normalizeFileAssertion(assertion) {
@@ -1487,6 +1551,26 @@ function createSemanticStepCompiler() {
     });
   }
 
+  function compilePageCheck(state, assertion) {
+    if (!state.completed.has("page-ready")) {
+      return failure(
+        "VCB_PAGE_ADAPTER_UNKNOWN",
+        "The page check requires a preceding open operation reaching page-ready.",
+      );
+    }
+    const output = [];
+    for (const expectedText of assertion.expect.contains) {
+      const error = append(
+        output,
+        render(state, "browser/page/assert-contains.json.tpl", {
+          expectedText,
+        }),
+      );
+      if (error) return error;
+    }
+    return { ok: true, value: output };
+  }
+
   function validateCheckAssertion(assertion) {
     if (!isRecord(assertion)) {
       return failure(
@@ -1497,7 +1581,7 @@ function createSemanticStepCompiler() {
     const assertionFields =
       assertion.type === "file"
         ? new Set(["type", "path", "expect"])
-        : assertion.type === "browser"
+        : assertion.type === "browser" || assertion.type === "page"
           ? new Set(["type", "expect"])
           : assertion.type === "chat"
             ? new Set(["type", "send", "allowAction", "expect"])
@@ -1525,7 +1609,9 @@ function createSemanticStepCompiler() {
         ? new Set(["exists", "contains", "notContains"])
         : assertion.type === "browser"
           ? new Set(["role", "name"])
-          : new Set(["replied", "contains", "notContains"]);
+          : assertion.type === "page"
+            ? new Set(["contains"])
+            : new Set(["replied", "contains", "notContains"]);
     if (!isRecord(expected) || !hasOnlyFields(expected, expectationFields)) {
       return failure(
         "VCB_CHECK_FIELD_UNKNOWN",
@@ -1540,6 +1626,7 @@ function createSemanticStepCompiler() {
           expected.role.length === 0 ||
           typeof expected.name !== "string" ||
           expected.name.length === 0)) ||
+      (assertion.type === "page" && expected.contains === undefined) ||
       listFields.some(
         (field) =>
           expected[field] !== undefined &&
@@ -1585,12 +1672,14 @@ function createSemanticStepCompiler() {
           ? compileFileCheck(state, assertion)
           : assertion.type === "browser"
             ? compileBrowserCheck(state, assertion)
-            : assertion.type === "chat"
-              ? compileChatCheck(state, assertion)
-              : failure(
-                  "VCB_CHECK_ADAPTER_UNKNOWN",
-                  "The assertion type is not supported by the semantic adapter.",
-                );
+            : assertion.type === "page"
+              ? compilePageCheck(state, assertion)
+              : assertion.type === "chat"
+                ? compileChatCheck(state, assertion)
+                : failure(
+                    "VCB_CHECK_ADAPTER_UNKNOWN",
+                    "The assertion type is not supported by the semantic adapter.",
+                  );
       if (!result.ok) return result;
       output.push(...result.value);
     }
@@ -1644,6 +1733,8 @@ function createSemanticStepCompiler() {
         return compileLocalEnvironment(state, definition);
       case "localUserEnvironment":
         return compileLocalUserEnvironment(state, definition);
+      case "removeWorkspaceFile":
+        return compileRemoveWorkspaceFile(state, definition);
       case "target":
         return compileTarget(state, definition);
       case "open":

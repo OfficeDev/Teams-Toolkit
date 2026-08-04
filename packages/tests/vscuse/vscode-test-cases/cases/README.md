@@ -15,6 +15,7 @@ migration inventory and coverage status.
 | `basic-custom-engine-agent.yml`       | Custom Engine Agent                   |     9 | TypeScript, JavaScript, and Python against remote Teams, local Teams, and Playground         |
 | `default-bot.yml`                     | Teams Bot                             |     9 | current Teams selector path, three languages, lifecycle boundaries, and chat validation      |
 | `default-message-extension.yml`       | Teams Message Extension               |     6 | current Teams selector path, two languages, lifecycle boundaries, and launch profiles        |
+| `non-sso-tab.yml`                     | Teams Tab                             |     3 | page activation instead of chat, local certificate trust, and generated-file recreation      |
 | `general-teams-agent.yml`             | General Teams Agent                   |    17 | both LLM branches, three languages, Teams lifecycle matrix, Playground, and Copilot samples  |
 | `da-no-action.yml`                    | Declarative Agent                     |     1 | negative file assertions, Copilot agent discoverability                                      |
 | `da-mcp-server.yml`                   | Declarative Agent with MCP action     |     3 | conditional auth inputs, pipeline mutations, Copilot discoverability                         |
@@ -49,7 +50,7 @@ Authoring these fixtures exposed six gaps in the first contract draft:
    proves capability outcomes.
 
 The default setup parses, validates, and expands these sources, then resolves their semantic steps
-through the compiler-owned adapter and reusable components into sixty-three independent runnable VScUse
+through the compiler-owned adapter and reusable components into ninety-one independent runnable VScUse
 plans. The case YAML is the only authored template/scenario source. Setup prints the generated-plan
 diff before transactionally updating only manifest-owned files. A custom semantic-step adapter may
 still be injected by focused compiler and writer tests.

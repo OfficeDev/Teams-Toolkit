@@ -108,7 +108,7 @@ test("VCB-34: semantic compiler does not read external template contracts", asyn
   }
 });
 
-test("VCB-34: default setup compiles the checked-in YAML sources into eighty-eight plans", async (context) => {
+test("VCB-34: default setup compiles the checked-in YAML sources into ninety-one plans", async (context) => {
   const plansDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "vscuse-generated-"),
   );
@@ -121,9 +121,9 @@ test("VCB-34: default setup compiles the checked-in YAML sources into eighty-eig
   });
 
   assert.equal(first.ok, true);
-  assert.equal(first.value.files.length, 88);
+  assert.equal(first.value.files.length, 91);
   const generatedFiles = first.value.files;
-  assert.equal(generatedFiles.length, 88);
+  assert.equal(generatedFiles.length, 91);
   assert.equal(
     generatedFiles.includes(
       "da-api-plugin-from-existing-api--da-api-plugin-from-existing-api-no-auth.json",
@@ -2997,4 +2997,192 @@ test("VCB-114: the Node Azure AI Search OpenAI cases run on a fake key", async (
       generated.caseId,
     );
   }
+});
+
+test("VCB-115: the Tab selector path resolves without a language question", async () => {
+  const result = await compileFixture(
+    "non-sso-tab.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const plan = result.value.find(
+    (generated) => generated.caseId === "tab-ts-local-teams",
+  ).plan;
+  const typedValues = plan.steps
+    .filter((step) => step.tool === "type_text")
+    .map((step) => step.parameters.text);
+
+  assert.equal(typedValues.includes("Other Teams Capabilities"), true);
+  assert.equal(typedValues.includes("Tab"), true);
+  assert.equal(typedValues.includes("TypeScript"), false);
+});
+
+test("VCB-116: a target profile registers one activation adapter per destination", async () => {
+  const tabResult = await compileFixture(
+    "non-sso-tab.yml",
+    (sourceText) => sourceText,
+  );
+  const botResult = await compileFixture(
+    "default-bot.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(tabResult.ok, true, tabResult.diagnostics?.[0]?.code);
+  assert.equal(botResult.ok, true, botResult.diagnostics?.[0]?.code);
+  for (const [result, caseId] of [
+    [tabResult, "tab-ts-local-teams"],
+    [botResult, "simple-bot-ts-local-teams"],
+  ]) {
+    const plan = result.value.find(
+      (generated) => generated.caseId === caseId,
+    ).plan;
+    const typedValues = plan.steps
+      .filter((step) => step.tool === "type_text")
+      .map((step) => step.parameters.text);
+    assert.equal(typedValues.includes("Debug in Teams (Chrome)"), true, caseId);
+    assert.equal(
+      plan.steps.some((step) => step.step_id.startsWith("step_addAndOpenApp_")),
+      true,
+      caseId,
+    );
+  }
+
+  const unregistered = await compileFixture("non-sso-tab.yml", (sourceText) =>
+    sourceText.replace(
+      'profile: "Debug in Teams (Chrome)"',
+      'profile: "Debug in Microsoft 365 Agents Playground"',
+    ),
+  );
+
+  assert.equal(unregistered.ok, false);
+  assert.equal(unregistered.diagnostics[0].code, "VCB_OPEN_ADAPTER_UNKNOWN");
+});
+
+test("VCB-117: the Teams open closes on the subject its adapter supplies", async () => {
+  const tabResult = await compileFixture(
+    "non-sso-tab.yml",
+    (sourceText) => sourceText,
+  );
+  const botResult = await compileFixture(
+    "default-bot.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(tabResult.ok, true, tabResult.diagnostics?.[0]?.code);
+  assert.equal(botResult.ok, true, botResult.diagnostics?.[0]?.code);
+  const findConverged = (result, caseId) =>
+    result.value
+      .find((generated) => generated.caseId === caseId)
+      .plan.steps.find((step) =>
+        step.step_id.startsWith("step_addAndOpenApp_assertReady_"),
+      );
+  const tabConverged = findConverged(tabResult, "tab-ts-local-teams");
+  const botConverged = findConverged(botResult, "simple-bot-ts-local-teams");
+
+  assert.match(tabConverged.description, /tab page/);
+  assert.equal(/conversation/.test(tabConverged.description), false);
+  assert.equal(tabConverged.tags.includes("readiness:page-ready"), true);
+  assert.match(botConverged.description, /conversation/);
+  assert.equal(botConverged.tags.includes("readiness:chat-ready"), true);
+  for (const converged of [tabConverged, botConverged]) {
+    assert.equal(/app details page/.test(converged.description), false);
+  }
+});
+
+test("VCB-118: only the local tab open trusts the development certificate and reloads", async () => {
+  const result = await compileFixture(
+    "non-sso-tab.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const local = result.value.find(
+    (generated) => generated.caseId === "tab-ts-local-teams",
+  ).plan;
+  const remote = result.value.find(
+    (generated) => generated.caseId === "tab-ts-remote-teams",
+  ).plan;
+  const hasComponent = (plan, componentId) =>
+    plan.steps.some((step) => step.step_id.startsWith(`step_${componentId}_`));
+
+  assert.equal(hasComponent(local, "trustLocalTabCertificate"), true);
+  assert.equal(hasComponent(local, "reloadApp"), true);
+  assert.equal(
+    local.steps.some(
+      (step) => step.parameters?.text === "https://localhost:3978/tabs/home",
+    ),
+    true,
+  );
+  assert.equal(hasComponent(remote, "trustLocalTabCertificate"), false);
+  assert.equal(hasComponent(remote, "reloadApp"), false);
+});
+
+test("VCB-119: a page check requires page-ready and asserts each authored substring", async () => {
+  const result = await compileFixture(
+    "non-sso-tab.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const pageAssertions = result.value
+    .find((generated) => generated.caseId === "tab-ts-local-teams")
+    .plan.steps.filter((step) =>
+      step.step_id.startsWith("step_assertPageContains_"),
+    );
+
+  assert.equal(pageAssertions.length, 1);
+  assert.match(
+    pageAssertions[0].description,
+    /Your app is running in TeamsModern/,
+  );
+
+  const withoutPageReady = await compileFixture(
+    "non-sso-tab.yml",
+    (sourceText) =>
+      sourceText.replace("destination: page", "destination: chat"),
+  );
+
+  assert.equal(withoutPageReady.ok, false);
+  assert.equal(
+    withoutPageReady.diagnostics[0].code,
+    "VCB_PAGE_ADAPTER_UNKNOWN",
+  );
+});
+
+test("VCB-120: removeWorkspaceFile deletes one project-relative file", async () => {
+  const result = await compileFixture(
+    "non-sso-tab.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const removals = result.value
+    .find(
+      (generated) => generated.caseId === "tab-ts-local-teams-env-recreated",
+    )
+    .plan.steps.filter((step) =>
+      step.step_id.startsWith("step_removeWorkspaceFile_"),
+    );
+
+  assert.equal(removals.length, 1);
+  assert.equal(removals[0].agent, "code");
+  assert.match(removals[0].description, /env\/\.env\.local/);
+  assert.match(
+    removals[0].parameters.sample,
+    /RELATIVE_PATH="env\/\.env\.local"/,
+  );
+
+  const escaping = await compileFixture("non-sso-tab.yml", (sourceText) =>
+    sourceText.replace(
+      "\n      path: env/.env.local",
+      "\n      path: ../escape.txt",
+    ),
+  );
+
+  assert.equal(escaping.ok, false);
+  assert.equal(
+    escaping.diagnostics[0].code,
+    "VCB_REMOVE_WORKSPACE_FILE_INPUT_INVALID",
+  );
 });
