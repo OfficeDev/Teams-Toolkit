@@ -25,6 +25,7 @@ function composeCase({ compileStep, expandedCase, sourcePath }) {
     const result = compileStep({
       caseId: expandedCase.caseId,
       definition: step.definition,
+      featureFlags: expandedCase.featureFlags,
       occurrence: step.occurrence,
       stepName: step.stepName,
     });

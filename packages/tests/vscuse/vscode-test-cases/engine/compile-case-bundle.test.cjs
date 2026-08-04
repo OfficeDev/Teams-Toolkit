@@ -199,6 +199,50 @@ test("VCB-02: every case expands exact step references in authored order", () =>
   );
 });
 
+test("VCB-100: case feature flags merge with bundle defaults without leaking to siblings", () => {
+  const result = compileCaseBundle({
+    sourcePath: "cases/weather.yml",
+    sourceText: sourceText.replace(
+      "    scenarioId: SCN-LOCAL",
+      "    scenarioId: SCN-LOCAL\n    featureFlags:\n      - TEAMSFX_CASE_ONLY=true",
+    ),
+    compileStep: createStepCompiler([]),
+  });
+
+  assert.equal(result.ok, true, JSON.stringify(result.diagnostics?.[0]));
+  const remoteTags = result.value.find(
+    (generated) => generated.caseId === "remote",
+  ).plan.plan_metadata.tags;
+  const localTags = result.value.find(
+    (generated) => generated.caseId === "local",
+  ).plan.plan_metadata.tags;
+  assert.equal(
+    remoteTags.includes("feature_flag:TEAMSFX_MCP_FOR_DA_DT=true"),
+    true,
+  );
+  assert.equal(
+    remoteTags.includes("feature_flag:TEAMSFX_CASE_ONLY=true"),
+    false,
+  );
+  assert.equal(
+    localTags.includes("feature_flag:TEAMSFX_MCP_FOR_DA_DT=true"),
+    true,
+  );
+  assert.equal(localTags.includes("feature_flag:TEAMSFX_CASE_ONLY=true"), true);
+
+  const duplicate = compileCaseBundle({
+    sourcePath: "cases/weather.yml",
+    sourceText: sourceText.replace(
+      "    scenarioId: SCN-LOCAL",
+      "    scenarioId: SCN-LOCAL\n    featureFlags:\n      - TEAMSFX_MCP_FOR_DA_DT=false",
+    ),
+    compileStep: createStepCompiler([]),
+  });
+  assert.equal(duplicate.ok, false);
+  assert.equal(duplicate.diagnostics[0].code, "VCB_FEATURE_FLAGS_INVALID");
+  assert.equal(duplicate.diagnostics[0].yamlPath, "$.cases[1].featureFlags");
+});
+
 test("VCB-08 foundation: invalid YAML and closed-schema violations return precise redacted diagnostics", () => {
   const fixtures = [
     {
