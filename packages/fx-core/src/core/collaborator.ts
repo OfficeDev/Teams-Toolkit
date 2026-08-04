@@ -497,7 +497,6 @@ function mergeCollaborators(
       userObjectId: teamsOwner.userObjectId,
       isAadOwner: false,
       teamsAppResourceId: teamsOwner.resourceId,
-      isAgentOwner: false,
     });
   }
   for (const aadOwner of aadOwners) {
@@ -512,23 +511,16 @@ function mergeCollaborators(
         isAadOwner: true,
         teamsAppResourceId: "",
         aadResourceId: aadOwner.resourceId,
-        isAgentOwner: false,
       });
     }
   }
   for (const agentOwner of agentOwners) {
-    const existing = collaboratorMap.get(agentOwner.userObjectId);
-    if (existing) {
-      existing.isAgentOwner = true;
-      existing.agentResourceId = agentOwner.resourceId;
-    } else {
+    if (!collaboratorMap.has(agentOwner.userObjectId)) {
       collaboratorMap.set(agentOwner.userObjectId, {
         userPrincipalName: agentOwner.userPrincipalName,
         userObjectId: agentOwner.userObjectId,
         isAadOwner: false,
         teamsAppResourceId: "",
-        isAgentOwner: true,
-        agentResourceId: agentOwner.resourceId,
       });
     }
   }

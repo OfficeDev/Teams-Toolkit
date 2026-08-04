@@ -155,7 +155,6 @@ describe("Collaborator APIs for V3", () => {
           isAadOwner: true,
           teamsAppResourceId: "fake-resource-id",
           aadResourceId: "fake-resource-id",
-          isAgentOwner: false,
         },
       ]);
     });
@@ -238,7 +237,6 @@ describe("Collaborator APIs for V3", () => {
           userPrincipalName: "teams-only-user-principal-name",
           isAadOwner: false,
           teamsAppResourceId: "fake-teams-resource-id",
-          isAgentOwner: false,
         },
         {
           userObjectId: "aad-only-user-object-id",
@@ -246,7 +244,6 @@ describe("Collaborator APIs for V3", () => {
           isAadOwner: true,
           teamsAppResourceId: "",
           aadResourceId: "fake-aad-resource-id",
-          isAgentOwner: false,
         },
       ]);
     });
@@ -284,8 +281,6 @@ describe("Collaborator APIs for V3", () => {
           userPrincipalName: "agent-only-user-principal-name",
           isAadOwner: false,
           teamsAppResourceId: "",
-          isAgentOwner: true,
-          agentResourceId: expectedTitleId,
         },
       ]);
     });

@@ -46,8 +46,6 @@ export interface Collaborator {
   isAadOwner: boolean;
   teamsAppResourceId: string;
   aadResourceId?: string;
-  isAgentOwner: boolean;
-  agentResourceId?: string;
 }
 
 export interface AadOwner {
