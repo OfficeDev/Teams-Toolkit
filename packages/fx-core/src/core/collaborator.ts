@@ -30,10 +30,12 @@ import {
   AadOwner,
   AgentOwner,
   AppIds,
+  Collaborator,
   CollaborationState,
   ListCollaboratorResult,
   PermissionsResult,
   ResourcePermission,
+  TeamsAppAdmin,
 } from "../common/permissionInterface";
 import { SolutionError, SolutionSource, SolutionTelemetryProperty } from "../component/constants";
 import { parseShareAppActionYamlConfig } from "../component/driver/share/utils";
@@ -62,6 +64,10 @@ export class CollaborationConstants {
   static readonly TeamsAppQuestionId = "teamsApp";
   static readonly AadAppQuestionId = "aadApp";
   static readonly AgentOptionId = "agent";
+
+  // listCollaborator() output options. Opt-in and defaults to false/undefined
+  // so existing callers keep getting the exact same result shape as before.
+  static readonly IncludeCollaborators = "includeCollaborators";
 
   static readonly placeholderRegex = /\$\{\{ *[a-zA-Z0-9_.-]* *\}\}/g;
 }
@@ -468,9 +474,46 @@ export async function listCollaborator(
     telemetryProps[SolutionTelemetryProperty.CollaboratorCount] = teamsOwnerCount.toString();
     telemetryProps[SolutionTelemetryProperty.AadOwnerCount] = aadOwnerCount.toString();
   }
+  if (inputs[CollaborationConstants.IncludeCollaborators] === true) {
+    return ok({
+      state: CollaborationState.OK,
+      collaborators: mergeCollaborators(teamsAppOwners, aadOwners),
+    });
+  }
   return ok({
     state: CollaborationState.OK,
   });
+}
+
+function mergeCollaborators(
+  teamsAppOwners: TeamsAppAdmin[],
+  aadOwners: AadOwner[]
+): Collaborator[] {
+  const collaboratorMap = new Map<string, Collaborator>();
+  for (const teamsOwner of teamsAppOwners) {
+    collaboratorMap.set(teamsOwner.userObjectId, {
+      userPrincipalName: teamsOwner.userPrincipalName,
+      userObjectId: teamsOwner.userObjectId,
+      isAadOwner: false,
+      teamsAppResourceId: teamsOwner.resourceId,
+    });
+  }
+  for (const aadOwner of aadOwners) {
+    const existing = collaboratorMap.get(aadOwner.userObjectId);
+    if (existing) {
+      existing.isAadOwner = true;
+      existing.aadResourceId = aadOwner.resourceId;
+    } else {
+      collaboratorMap.set(aadOwner.userObjectId, {
+        userPrincipalName: aadOwner.userPrincipalName,
+        userObjectId: aadOwner.userObjectId,
+        isAadOwner: true,
+        teamsAppResourceId: "",
+        aadResourceId: aadOwner.resourceId,
+      });
+    }
+  }
+  return Array.from(collaboratorMap.values());
 }
 
 export async function checkPermission(

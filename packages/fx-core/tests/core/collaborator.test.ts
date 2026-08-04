@@ -139,8 +139,101 @@ describe("Collaborator APIs for V3", () => {
           },
         ])
       );
+      inputs[CollaborationConstants.IncludeCollaborators] = true;
       const result = await listCollaborator(ctx, inputs, tokenProvider);
       assert.isTrue(result.isOk());
+      assert.deepEqual(result._unsafeUnwrap().collaborators, [
+        {
+          userObjectId: "fake-aad-user-object-id",
+          userPrincipalName: "fake-user-principal-name",
+          isAadOwner: true,
+          teamsAppResourceId: "fake-resource-id",
+          aadResourceId: "fake-resource-id",
+        },
+      ]);
+    });
+
+    it("should not include collaborators when includeCollaborators flag is not set", async () => {
+      vi.spyOn(tokenProvider.m365TokenProvider, "getJsonObject").mockResolvedValue(
+        ok({
+          tid: "mock_project_tenant_id",
+          oid: "fake_oid",
+          unique_name: "fake_unique_name",
+          name: "fake_name",
+        })
+      );
+      vi.spyOn(TeamsCollaboration.prototype, "listCollaborator").mockResolvedValue(
+        ok([
+          {
+            userObjectId: "fake-aad-user-object-id",
+            resourceId: "fake-resource-id",
+            displayName: "fake-display-name",
+            userPrincipalName: "fake-user-principal-name",
+          },
+        ])
+      );
+      vi.spyOn(AadCollaboration.prototype, "listCollaborator").mockResolvedValue(
+        ok([
+          {
+            userObjectId: "fake-aad-user-object-id",
+            resourceId: "fake-resource-id",
+            displayName: "fake-display-name",
+            userPrincipalName: "fake-user-principal-name",
+          },
+        ])
+      );
+      const result = await listCollaborator(ctx, inputs, tokenProvider);
+      assert.isTrue(result.isOk());
+      assert.deepEqual(result._unsafeUnwrap(), { state: CollaborationState.OK });
+    });
+
+    it("should merge distinct teams and aad owners into collaborators list", async () => {
+      vi.spyOn(tokenProvider.m365TokenProvider, "getJsonObject").mockResolvedValue(
+        ok({
+          tid: "mock_project_tenant_id",
+          oid: "fake_oid",
+          unique_name: "fake_unique_name",
+          name: "fake_name",
+        })
+      );
+      vi.spyOn(TeamsCollaboration.prototype, "listCollaborator").mockResolvedValue(
+        ok([
+          {
+            userObjectId: "teams-only-user-object-id",
+            resourceId: "fake-teams-resource-id",
+            displayName: "teams-only-display-name",
+            userPrincipalName: "teams-only-user-principal-name",
+          },
+        ])
+      );
+      vi.spyOn(AadCollaboration.prototype, "listCollaborator").mockResolvedValue(
+        ok([
+          {
+            userObjectId: "aad-only-user-object-id",
+            resourceId: "fake-aad-resource-id",
+            displayName: "aad-only-display-name",
+            userPrincipalName: "aad-only-user-principal-name",
+          },
+        ])
+      );
+      inputs[CollaborationConstants.IncludeCollaborators] = true;
+      const result = await listCollaborator(ctx, inputs, tokenProvider);
+      assert.isTrue(result.isOk());
+      assert.deepEqual(result._unsafeUnwrap().collaborators, [
+        {
+          userObjectId: "teams-only-user-object-id",
+          userPrincipalName: "teams-only-user-principal-name",
+          isAadOwner: false,
+          teamsAppResourceId: "fake-teams-resource-id",
+        },
+        {
+          userObjectId: "aad-only-user-object-id",
+          userPrincipalName: "aad-only-user-principal-name",
+          isAadOwner: true,
+          teamsAppResourceId: "",
+          aadResourceId: "fake-aad-resource-id",
+        },
+      ]);
     });
 
     it("happy path without aad", async () => {
