@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { Platform, TeamsAppManifest } from "@microsoft/teamsfx-api";
+import { Platform, TeamsAppManifest, err } from "@microsoft/teamsfx-api";
 import AdmZip from "adm-zip";
 import fs from "fs-extra";
 import mockedEnv from "mocked-env";
@@ -18,6 +18,7 @@ import { ValidateAppPackageArgs } from "../../../../src/component/driver/teamsAp
 import { IAppValidationNote } from "../../../../src/component/driver/teamsApp/interfaces/appdefinitions/IValidationResult";
 import { ValidateAppPackageDriver } from "../../../../src/component/driver/teamsApp/validateAppPackage";
 import { metadataUtil } from "../../../../src/component/utils/metadataUtil";
+import { UserCancelError } from "../../../../src/error";
 import { MockedM365Provider } from "../../../core/utils";
 import { MockedLogProvider, MockedUserInteraction } from "../../../plugins/solution/util";
 
@@ -107,6 +108,145 @@ describe("teamsApp/validateAppPackage", async () => {
       expect(result.error.name).toBe("UserCancel");
     }
     expect(validationSpy).not.toHaveBeenCalled();
+  });
+
+  it("validateForClient_EmptyPackagePath_ReturnsInputError", async () => {
+    const pathExistsSpy = vi.spyOn(fs, "pathExists");
+
+    const result = await teamsAppDriver.validateForClient(
+      { appPackagePath: "" },
+      mockedDriverContext
+    );
+
+    chai.assert(result.isErr());
+    expect(pathExistsSpy).not.toHaveBeenCalled();
+  });
+
+  it("validateForClient_MissingPackage_ReturnsFileNotFound", async () => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+
+    const result = await teamsAppDriver.validateForClient(
+      { appPackagePath: "missing.zip" },
+      mockedDriverContext
+    );
+
+    chai.assert(result.isErr());
+    if (result.isErr()) {
+      expect(result.error.name).toBe(AppStudioError.FileNotFoundError.name);
+    }
+  });
+
+  it("validateForClient_AbortedAfterReadingPackage_ReturnsUserCancel", async () => {
+    const controller = new AbortController();
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockImplementation(async () => {
+      controller.abort();
+      return Buffer.from("package");
+    });
+    const tokenSpy = vi.spyOn(mockedDriverContext.m365TokenProvider, "getAccessToken");
+
+    const result = await teamsAppDriver.validateForClient(
+      { appPackagePath: "app.zip" },
+      { ...mockedDriverContext, signal: controller.signal }
+    );
+
+    chai.assert(result.isErr());
+    if (result.isErr()) {
+      expect(result.error.name).toBe("UserCancel");
+    }
+    expect(tokenSpy).not.toHaveBeenCalled();
+  });
+
+  it("validateForClient_TokenFailure_ReturnsOriginalError", async () => {
+    const expectedError = new UserCancelError("test");
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockResolvedValue(Buffer.from("package"));
+    vi.spyOn(mockedDriverContext.m365TokenProvider, "getAccessToken").mockResolvedValue(
+      err(expectedError)
+    );
+
+    const result = await teamsAppDriver.validateForClient(
+      { appPackagePath: "app.zip" },
+      mockedDriverContext
+    );
+
+    chai.assert(result.isErr());
+    if (result.isErr()) {
+      expect(result.error).toBe(expectedError);
+    }
+  });
+
+  it("validateForClient_AbortedAfterServiceCall_ReturnsUserCancel", async () => {
+    const controller = new AbortController();
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockResolvedValue(Buffer.from("package"));
+    vi.spyOn(teamsDevPortalClient, "partnerCenterAppPackageValidation").mockImplementation(
+      async () => {
+        controller.abort();
+        return {
+          status: "Accepted",
+          errors: [],
+          warnings: [],
+          notes: [],
+          addInDetails: {
+            displayName: "Test app",
+            developerName: "Test developer",
+            version: "1.0.0",
+            manifestVersion: "1.22",
+          },
+        };
+      }
+    );
+
+    const result = await teamsAppDriver.validateForClient(
+      { appPackagePath: "app.zip" },
+      { ...mockedDriverContext, signal: controller.signal }
+    );
+
+    chai.assert(result.isErr());
+    if (result.isErr()) {
+      expect(result.error.name).toBe("UserCancel");
+    }
+  });
+
+  it("validateForClient_AbortedServiceThrows_ReturnsUserCancel", async () => {
+    const controller = new AbortController();
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockResolvedValue(Buffer.from("package"));
+    vi.spyOn(teamsDevPortalClient, "partnerCenterAppPackageValidation").mockImplementation(
+      async () => {
+        controller.abort();
+        throw new Error("aborted");
+      }
+    );
+
+    const result = await teamsAppDriver.validateForClient(
+      { appPackagePath: "app.zip" },
+      { ...mockedDriverContext, signal: controller.signal }
+    );
+
+    chai.assert(result.isErr());
+    if (result.isErr()) {
+      expect(result.error.name).toBe("UserCancel");
+    }
+  });
+
+  it("validateForClient_ServiceThrows_ReturnsAssembledError", async () => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockResolvedValue(Buffer.from("package"));
+    vi.spyOn(teamsDevPortalClient, "partnerCenterAppPackageValidation").mockRejectedValue(
+      new Error("service failure")
+    );
+
+    const result = await teamsAppDriver.validateForClient(
+      { appPackagePath: "app.zip" },
+      mockedDriverContext
+    );
+
+    chai.assert(result.isErr());
+    if (result.isErr()) {
+      expect(result.error.name).not.toBe("UserCancel");
+    }
   });
 
   it("file not found - app package", async () => {

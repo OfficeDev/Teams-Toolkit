@@ -3,6 +3,7 @@
 
 import { Platform, TeamsAppManifest, err, ok } from "@microsoft/teamsfx-api";
 import fs from "fs-extra";
+import { chai, vi } from "vitest";
 import { TOOLS, setTools } from "../../../../src/common/globalVars";
 import { ConfigureTeamsAppDriver } from "../../../../src/component/driver/teamsApp/configure";
 import { CreateAppPackageDriver } from "../../../../src/component/driver/teamsApp/createAppPackage";
@@ -21,7 +22,6 @@ import {
   UserCancelError,
 } from "../../../../src/error";
 import { MockTools } from "../../../core/utils";
-import { chai, vi } from "vitest";
 
 describe("TeamsAppMgr", async () => {
   const sandbox = vi;
@@ -29,6 +29,21 @@ describe("TeamsAppMgr", async () => {
     vi.restoreAllMocks();
   });
   describe("ensureAppPackageFile", async () => {
+    it("returns user cancel for a pre-aborted signal", async () => {
+      const controller = new AbortController();
+      controller.abort();
+      const packageSpy = vi.spyOn(teamsappMgr, "packageTeamsApp");
+
+      const result = await teamsappMgr.ensureAppPackageFile({
+        projectPath: "",
+        platform: Platform.CLI,
+        abortSignal: controller.signal,
+      });
+
+      chai.assert(result.isErr() && result.error instanceof UserCancelError);
+      chai.assert.equal(packageSpy.mock.calls.length, 0);
+    });
+
     it("sucess", async () => {
       vi.spyOn(teamsappMgr, "packageTeamsApp").mockResolvedValue(
         ok({ manifestPath: "", outputJsonPath: "", outputZipPath: "" })
@@ -212,6 +227,61 @@ describe("TeamsAppMgr", async () => {
   describe("packageTeamsApp", async () => {
     const tools = new MockTools();
     setTools(tools);
+    it("returns user cancel for a pre-aborted signal", async () => {
+      const controller = new AbortController();
+      controller.abort();
+      const pathExistsSpy = vi.spyOn(fs, "pathExists");
+
+      const result = await teamsappMgr.packageTeamsApp({
+        projectPath: "xxx",
+        platform: Platform.CLI,
+        abortSignal: controller.signal,
+      });
+
+      chai.assert(result.isErr() && result.error instanceof UserCancelError);
+      chai.assert.equal(pathExistsSpy.mock.calls.length, 0);
+    });
+
+    it("returns user cancel when aborted after loading the environment", async () => {
+      const controller = new AbortController();
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(teamsappMgr, "checkAndTryToLoadEnv").mockImplementation(async () => {
+        controller.abort();
+        return ok(undefined);
+      });
+      const executeSpy = vi.spyOn(CreateAppPackageDriver.prototype, "execute");
+
+      const result = await teamsappMgr.packageTeamsApp({
+        projectPath: "xxx",
+        platform: Platform.CLI,
+        "manifest-file": "xxx",
+        abortSignal: controller.signal,
+      });
+
+      chai.assert(result.isErr() && result.error instanceof UserCancelError);
+      chai.assert.equal(executeSpy.mock.calls.length, 0);
+    });
+
+    it("returns user cancel when aborted by the package driver", async () => {
+      const controller = new AbortController();
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(teamsappMgr, "checkAndTryToLoadEnv").mockResolvedValue(ok(undefined));
+      vi.spyOn(teamsAppMgrDeps, "runForTypeSpecProject").mockResolvedValue();
+      vi.spyOn(CreateAppPackageDriver.prototype, "execute").mockImplementation(async () => {
+        controller.abort();
+        return { result: ok(new Map()), summaries: [] };
+      });
+
+      const result = await teamsappMgr.packageTeamsApp({
+        projectPath: "xxx",
+        platform: Platform.CLI,
+        "manifest-file": "xxx",
+        abortSignal: controller.signal,
+      });
+
+      chai.assert(result.isErr() && result.error instanceof UserCancelError);
+    });
+
     it("no manifest file input, default does not exist", async () => {
       vi.spyOn(fs, "pathExists").mockResolvedValue(false);
       const result = await teamsappMgr.packageTeamsApp({
@@ -346,6 +416,50 @@ describe("TeamsAppMgr", async () => {
     });
   });
 
+  describe("validateTeamsAppForClient", () => {
+    it("returns an input error when package file is missing", async () => {
+      const validateSpy = vi.spyOn(ValidateAppPackageDriver.prototype, "validateForClient");
+
+      const result = await teamsappMgr.validateTeamsAppForClient({
+        projectPath: "xxx",
+        platform: Platform.CLI,
+      });
+
+      chai.assert(result.isErr() && result.error instanceof MissingRequiredInputError);
+      chai.assert.equal(validateSpy.mock.calls.length, 0);
+    });
+
+    it("forwards the package and abort signal to the validation driver", async () => {
+      const controller = new AbortController();
+      const validationResult = {
+        status: "Accepted",
+        errors: [],
+        warnings: [],
+        notes: [],
+        addInDetails: {
+          displayName: "Test app",
+          developerName: "Test developer",
+          version: "1.0.0",
+          manifestVersion: "1.22",
+        },
+      };
+      const validateSpy = vi
+        .spyOn(ValidateAppPackageDriver.prototype, "validateForClient")
+        .mockResolvedValue(ok(validationResult));
+
+      const result = await teamsappMgr.validateTeamsAppForClient({
+        projectPath: "xxx",
+        platform: Platform.CLI,
+        "package-file": "app.zip",
+        abortSignal: controller.signal,
+      });
+
+      chai.assert(result.isOk() && result.value === validationResult);
+      chai.assert.equal(validateSpy.mock.calls[0][0].appPackagePath, "app.zip");
+      chai.assert.equal(validateSpy.mock.calls[0][1].signal, controller.signal);
+    });
+  });
+
   describe("updateTeamsApp", async () => {
     const tools = new MockTools();
     setTools(tools);
@@ -434,6 +548,79 @@ describe("TeamsAppMgr", async () => {
   describe("publishTeamsApp", async () => {
     const tools = new MockTools();
     setTools(tools);
+    it("returns user cancel for a pre-aborted signal", async () => {
+      const controller = new AbortController();
+      controller.abort();
+      const ensureSpy = vi.spyOn(teamsappMgr, "ensureAppPackageFile");
+
+      const result = await teamsappMgr.publishTeamsApp({
+        projectPath: "xxx",
+        platform: Platform.CLI,
+        abortSignal: controller.signal,
+      });
+
+      chai.assert(result.isErr() && result.error instanceof UserCancelError);
+      chai.assert.equal(ensureSpy.mock.calls.length, 0);
+    });
+
+    it("returns user cancel when aborted after ensuring the package", async () => {
+      const controller = new AbortController();
+      vi.spyOn(teamsappMgr, "ensureAppPackageFile").mockImplementation(async () => {
+        controller.abort();
+        return ok(undefined);
+      });
+      const validateSpy = vi.spyOn(ValidateAppPackageDriver.prototype, "execute");
+
+      const result = await teamsappMgr.publishTeamsApp({
+        projectPath: "xxx",
+        platform: Platform.CLI,
+        abortSignal: controller.signal,
+      });
+
+      chai.assert(result.isErr() && result.error instanceof UserCancelError);
+      chai.assert.equal(validateSpy.mock.calls.length, 0);
+    });
+
+    it("returns user cancel when aborted by validation", async () => {
+      const controller = new AbortController();
+      vi.spyOn(teamsappMgr, "ensureAppPackageFile").mockResolvedValue(ok(undefined));
+      vi.spyOn(ValidateAppPackageDriver.prototype, "execute").mockImplementation(async () => {
+        controller.abort();
+        return { result: ok(new Map()), summaries: [] };
+      });
+      const publishSpy = vi.spyOn(PublishAppPackageDriver.prototype, "execute");
+
+      const result = await teamsappMgr.publishTeamsApp({
+        projectPath: "xxx",
+        platform: Platform.CLI,
+        abortSignal: controller.signal,
+      });
+
+      chai.assert(result.isErr() && result.error instanceof UserCancelError);
+      chai.assert.equal(publishSpy.mock.calls.length, 0);
+    });
+
+    it("returns user cancel when aborted by publishing", async () => {
+      const controller = new AbortController();
+      vi.spyOn(teamsappMgr, "ensureAppPackageFile").mockResolvedValue(ok(undefined));
+      vi.spyOn(ValidateAppPackageDriver.prototype, "execute").mockResolvedValue({
+        result: ok(new Map()),
+        summaries: [],
+      });
+      vi.spyOn(PublishAppPackageDriver.prototype, "execute").mockImplementation(async () => {
+        controller.abort();
+        return { result: ok(new Map()), summaries: [] };
+      });
+
+      const result = await teamsappMgr.publishTeamsApp({
+        projectPath: "xxx",
+        platform: Platform.CLI,
+        abortSignal: controller.signal,
+      });
+
+      chai.assert(result.isErr() && result.error instanceof UserCancelError);
+    });
+
     it("ensureAppPackageFile fail", async () => {
       vi.spyOn(teamsappMgr, "ensureAppPackageFile").mockResolvedValue(err(new UserCancelError()));
       const result = await teamsappMgr.publishTeamsApp({
