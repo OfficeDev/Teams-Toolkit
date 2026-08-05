@@ -6,6 +6,10 @@
 
 ### New Features
 
+#### Expanded Office Add-in templates and host selection
+
+Office Add-in project creation now includes templates for Excel custom functions using a JavaScript-only runtime and task pane add-ins using Nested App Auth for single sign-on. You can select the target Office applications for task pane projects and choose Word, Excel, or PowerPoint for Nested App Auth projects in interactive and non-interactive flows. Generated projects also use updated Office Add-in development, debugging, linting, and manifest tooling for improved compatibility.
+
 #### Proxy-aware core workflows and templates
 
 ATK now supports proxy configuration across core workflows and templates, making it easier to work in enterprise or restricted network environments. If your organization requires outbound traffic through a proxy, you can configure standard environment variables such as `HTTP_PROXY`, `HTTPS_PROXY`, and `NO_PROXY` and have toolkit workflows respect them. This improves reliability when creating, scaffolding, and working with projects behind a corporate proxy. To use it, set the proxy environment variables in your shell before running ATK in VS Code or from the CLI.
