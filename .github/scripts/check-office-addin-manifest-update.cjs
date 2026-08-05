@@ -76,6 +76,27 @@ function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, "utf8"));
 }
 
+// GitHub API GET with optional token (higher rate limit + private access).
+async function githubApi(urlPath) {
+  const token = process.env.GITHUB_TOKEN || "";
+  const headers = {
+    Accept: "application/vnd.github+json",
+    "User-Agent": "office-addin-manifest-drift-check",
+  };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  try {
+    const response = await fetch(`https://api.github.com${urlPath}`, {
+      method: "GET",
+      headers,
+      signal: AbortSignal.timeout(20000),
+    });
+    if (!response.ok) return null;
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
 // Toolkit .tpl manifests contain {{...}} placeholders that break JSON.parse.
 // manifestVersion is always a literal, so extract it directly by regex.
 function readToolkitManifestVersion(templateId) {
@@ -107,6 +128,26 @@ async function fetchUpstreamManifestVersion(template) {
   }
 }
 
+async function fetchLatestCommitSha(template) {
+  const data = await githubApi(
+    `/repos/${template.upstreamRepo}/commits/${template.upstreamBranch}`,
+  );
+  return data && data.sha ? data.sha : null;
+}
+
+// Recent commits on the upstream branch, newest first, capped at `limit`.
+async function fetchRecentCommits(template, limit = 15) {
+  const data = await githubApi(
+    `/repos/${template.upstreamRepo}/commits?sha=${template.upstreamBranch}&per_page=${limit}`,
+  );
+  if (!Array.isArray(data)) return [];
+  return data.map((entry) => ({
+    sha: (entry.sha || "").slice(0, 10),
+    date: entry.commit?.author?.date || "",
+    message: (entry.commit?.message || "").split("\n")[0],
+  }));
+}
+
 function toListText(items, limit = 10) {
   if (!items || items.length === 0) return "none";
   const shown = items.slice(0, limit).join(", ");
@@ -114,61 +155,70 @@ function toListText(items, limit = 10) {
   return `${shown} (+${items.length - limit} more)`;
 }
 
-function buildFallbackSummary(driftedRows) {
-  if (driftedRows.length === 0) {
-    return "No upstream advances detected against the recorded baseline.";
-  }
-  return driftedRows
-    .map(
-      (row) =>
-        `${row.id}: upstream advanced from baseline ${row.baselineVersion} to ${row.upstreamVersion} (toolkit ships ${row.toolkitVersion}).`,
-    )
-    .join(" ");
-}
-
-function generateAISummary(driftedRows) {
-  const copilotToken = process.env.COPILOT_TOKEN || "";
-
+// Ask Copilot CLI to explore upstream + toolkit code itself and judge whether
+// the toolkit template should be updated. Copilot has its own tools enabled so
+// it can fetch upstream files and read the checked-out toolkit template.
+function judgeWithCopilot(row) {
+  const copilotToken = process.env.COPILOT_GITHUB_TOKEN || "";
   if (!copilotToken) {
     return {
       source: "fallback",
-      text: "AI summary unavailable because no token was provided. Set COPILOT_TOKEN.",
+      text: "Copilot judgment unavailable because no token was provided. Set COPILOT_GITHUB_TOKEN.",
     };
   }
 
-  const promptPayload = driftedRows.map((row) => ({
-    template: row.id,
-    upstreamRepo: row.upstreamRepo,
-    baselineVersion: row.baselineVersion,
-    upstreamVersion: row.upstreamVersion,
-    toolkitVersion: row.toolkitVersion,
-  }));
+  const toolkitSrcPath = path
+    .join("templates", "vsc", "ts", row.id, "src")
+    .replace(/\\/g, "/");
 
-  const prompt = `The following Microsoft 365 Agents Toolkit Office Add-in templates are forks of OfficeDev upstream templates, and upstream has published newer manifest versions. Output 5-8 bullet points covering: what changed, likely impact on the toolkit's forked templates, validation/compatibility risk, and upgrade priority.\n\n${JSON.stringify(promptPayload, null, 2)}`;
+  const recentCommitsText = row.recentCommits.length
+    ? row.recentCommits
+        .map((c) => `- ${c.sha} ${c.date} ${c.message}`)
+        .join("\n")
+    : "- (none fetched)";
+
+  const prompt = [
+    `You are auditing a Microsoft 365 Agents Toolkit Office Add-in template that is a fork of an OfficeDev upstream template.`,
+    ``,
+    `Toolkit template id: ${row.id}`,
+    `Toolkit template source (in this repo, already checked out): ${toolkitSrcPath}`,
+    `Upstream repo: https://github.com/${row.upstreamRepo} (branch: ${row.upstreamBranch})`,
+    `Baseline upstream commit we last reconciled with: ${row.baselineSha}`,
+    `Current upstream head commit: ${row.upstreamSha}`,
+    ``,
+    `Recent upstream commits since baseline (newest first):`,
+    recentCommitsText,
+    ``,
+    `Task:`,
+    `1. Read the toolkit template's src/ files locally.`,
+    `2. Fetch the corresponding upstream src/ files (raw.githubusercontent.com/${row.upstreamRepo}/${row.upstreamBranch}/src/...).`,
+    `3. Compare the TypeScript logic (ignore formatting, comments, and the toolkit's {{placeholder}} tokens).`,
+    `4. Judge whether the toolkit template needs a code update to track upstream.`,
+    ``,
+    `Output concise markdown: a one-line VERDICT (UPDATE NEEDED / NO UPDATE NEEDED / REVIEW), then 3-6 bullets citing the specific files and behavioral differences, then an upgrade-priority (low/medium/high).`,
+  ].join("\n");
 
   try {
     const result = execSync(
-      `copilot -p ${JSON.stringify(prompt)} --allow-tool=none --no-ask-user`,
+      `copilot -p ${JSON.stringify(prompt)} --allow-all-tools --no-ask-user`,
       {
         encoding: "utf-8",
-        timeout: 30000,
-        env: { ...process.env, GITHUB_TOKEN: copilotToken },
+        timeout: 180000,
+        env: { ...process.env },
         stdio: ["pipe", "pipe", "pipe"],
       },
     );
-
     if (!result || typeof result !== "string") {
       return {
         source: "fallback",
-        text: "AI summary unavailable because CLI response was empty.",
+        text: "Copilot judgment unavailable because CLI response was empty.",
       };
     }
-
     return { source: "ai", text: result.trim() };
   } catch (error) {
     return {
       source: "fallback",
-      text: `AI summary unavailable due to CLI error: ${error.message}`,
+      text: `Copilot judgment unavailable due to CLI error: ${error.message}`,
     };
   }
 }
@@ -177,38 +227,49 @@ function buildIssueBody(report) {
   const tableRows = report.rows
     .map(
       (row) =>
-        `| ${row.id} | ${row.toolkitVersion} | ${row.upstreamVersion} | ${row.baselineVersion} | ${row.status} | ${row.drifted ? "**yes**" : "no"} |`,
+        `| ${row.id} | ${row.toolkitVersion} | ${row.upstreamVersion} | ${row.baselineVersion} | ${row.manifestDrift ? "yes" : "no"} | ${row.codeDrift ? "yes" : "no"} | ${row.status} |`,
+    )
+    .join("\n");
+
+  const judgmentSections = report.rows
+    .filter((row) => row.codeDrift)
+    .map((row) =>
+      [
+        `### ${row.id}`,
+        "",
+        `Upstream: \`${row.upstreamRepo}@${row.upstreamBranch}\` — baseline \`${row.baselineSha?.slice(0, 10)}\` → head \`${row.upstreamSha?.slice(0, 10)}\``,
+        "",
+        `Copilot judgment (source: ${row.judgment.source}):`,
+        "",
+        row.judgment.text,
+        "",
+      ].join("\n"),
     )
     .join("\n");
 
   return [
     `<!-- office-addin-manifest-drift:${report.markerVersion} -->`,
-    "## Office Add-in Upstream Manifest Drift Detected",
+    "## Office Add-in Upstream Drift Detected",
     "",
-    "One or more OfficeDev upstream templates have published a newer manifest version than the",
-    "recorded baseline for the corresponding toolkit Office Add-in template.",
+    "One or more OfficeDev upstream templates have advanced past the recorded baseline for the",
+    "corresponding toolkit Office Add-in template — either a newer manifest version or new commits.",
     "",
     "## Status Table",
     "",
-    "| Template | Toolkit ver | Upstream ver | Baseline | Status | Drifted |",
-    "|---|---|---|---|---|---|",
+    "| Template | Toolkit ver | Upstream ver | Baseline ver | Manifest drift | Code drift | Status |",
+    "|---|---|---|---|---|---|---|",
     tableRows,
     "",
-    "## AI Summary of Upstream Changes",
+    "## Copilot Code-Update Judgment",
     "",
-    `Source: ${report.aiSummarySource}`,
-    report.aiSummaryText,
+    judgmentSections || "_No code drift detected; no per-template judgment generated._",
     "",
-    "## Impact",
+    "## Recommended Follow-up",
     "",
-    `- Templates with upstream advances: ${toListText(report.driftedIds)}`,
-    "",
-    "## Recommended Upgrade Tasks",
-    "",
-    "- Review each drifted upstream template's manifest changes against the toolkit fork.",
-    "- Update the affected `templates/vsc/ts/<id>/appPackage/manifest.json.tpl` where applicable.",
-    "- Re-check `src/` divergence per `office-addin-toolkit-vs-upstream.md`.",
-    "- Bump the corresponding entry in `.github/office-addin-upstream-baseline.json` once handled.",
+    "- Review each Copilot judgment above and update the affected `templates/vsc/ts/<id>/src` where warranted.",
+    "- Update the affected `templates/vsc/ts/<id>/appPackage/manifest.json.tpl` if manifest drift is flagged.",
+    "- Re-check `office-addin-toolkit-vs-upstream.md` for known intentional divergences.",
+    "- Bump the affected `upstreamManifestVersion` / `upstreamCommitSha` in `.github/office-addin-upstream-baseline.json` once reconciled.",
     "",
     "## Notes",
     "",
@@ -239,12 +300,13 @@ async function main() {
 
   for (const template of TEMPLATES) {
     const toolkitVersion = readToolkitManifestVersion(template.id) || "unknown";
-    const baselineVersion =
-      baseline[template.id]?.upstreamManifestVersion || "N/A";
+    const baselineEntry = baseline[template.id] || {};
+    const baselineVersion = baselineEntry.upstreamManifestVersion || "N/A";
+    const baselineSha = baselineEntry.upstreamCommitSha || "N/A";
 
     let upstreamVersion = "N/A";
     let status;
-    let drifted = false;
+    let manifestDrift = false;
 
     if (!template.upstreamJson) {
       status = "xml-only";
@@ -255,8 +317,7 @@ async function main() {
       } else {
         upstreamVersion = fetched.version || "N/A";
         status = "comparable";
-        // Drift = upstream advanced beyond the recorded baseline.
-        drifted =
+        manifestDrift =
           compareVersions(
             parseVersion(upstreamVersion),
             parseVersion(baselineVersion),
@@ -264,48 +325,62 @@ async function main() {
       }
     }
 
-    rows.push({
+    // Code drift: upstream head SHA differs from the reconciled baseline SHA.
+    const upstreamSha = await fetchLatestCommitSha(template);
+    const codeDrift = Boolean(
+      upstreamSha && baselineSha !== "N/A" && upstreamSha !== baselineSha,
+    );
+
+    const recentCommits = codeDrift
+      ? await fetchRecentCommits(template)
+      : [];
+
+    const row = {
       id: template.id,
       upstreamRepo: template.upstreamRepo,
+      upstreamBranch: template.upstreamBranch,
       toolkitVersion,
       upstreamVersion,
       baselineVersion,
+      baselineSha,
+      upstreamSha: upstreamSha || "N/A",
       status,
-      drifted,
-    });
+      manifestDrift,
+      codeDrift,
+      recentCommits,
+      judgment: { source: "none", text: "" },
+    };
+
+    // Let Copilot explore + judge only when code actually drifted.
+    if (codeDrift) {
+      row.judgment = judgeWithCopilot(row);
+    }
+
+    rows.push(row);
   }
 
-  const driftedRows = rows.filter((row) => row.drifted);
+  const driftedRows = rows.filter(
+    (row) => row.manifestDrift || row.codeDrift,
+  );
   const driftDetected = driftedRows.length > 0;
   const driftedIds = driftedRows.map((row) => row.id);
 
-  let aiSummarySource = "none";
-  let aiSummaryText = "No drift detected; no summary generated.";
-
-  if (driftDetected) {
-    const ai = generateAISummary(driftedRows);
-    aiSummarySource = ai.source;
-    aiSummaryText = ai.text;
-    if (ai.source !== "ai") {
-      aiSummaryText = `${ai.text}\n\nFallback summary: ${buildFallbackSummary(driftedRows)}`;
-    }
-  }
-
   const markerVersion = driftedRows
-    .map((row) => `${row.id}:${row.upstreamVersion}`)
+    .map(
+      (row) =>
+        `${row.id}:${row.upstreamVersion}:${(row.upstreamSha || "").slice(0, 10)}`,
+    )
     .join(",");
 
   const report = {
     markerVersion,
     rows,
     driftedIds,
-    aiSummarySource,
-    aiSummaryText,
   };
 
   const issueTitle = driftDetected
-    ? `Office Add-in upstream manifest drift: ${driftedIds.join(", ")}`
-    : "Office Add-in upstream manifest drift";
+    ? `Office Add-in upstream drift: ${driftedIds.join(", ")}`
+    : "Office Add-in upstream drift";
   const issueBody = buildIssueBody(report);
 
   console.log(
@@ -313,8 +388,18 @@ async function main() {
       {
         driftDetected,
         driftedIds,
-        rows,
-        aiSummarySource,
+        rows: rows.map((row) => ({
+          id: row.id,
+          toolkitVersion: row.toolkitVersion,
+          upstreamVersion: row.upstreamVersion,
+          baselineVersion: row.baselineVersion,
+          baselineSha: row.baselineSha?.slice(0, 10),
+          upstreamSha: row.upstreamSha?.slice(0, 10),
+          status: row.status,
+          manifestDrift: row.manifestDrift,
+          codeDrift: row.codeDrift,
+          judgmentSource: row.judgment.source,
+        })),
       },
       null,
       2,
@@ -324,7 +409,6 @@ async function main() {
   setOutput("drift_detected", String(driftDetected));
   setOutput("drift_marker_version", markerVersion);
   setOutput("drifted_ids", driftedIds.join(","));
-  setOutput("ai_summary_source", aiSummarySource);
   setOutput("issue_title", issueTitle);
   setOutput("issue_body", issueBody);
 }

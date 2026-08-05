@@ -24,11 +24,30 @@ jobs:
       - name: Install Copilot CLI
         run: npm install -g @github/copilot
 
-      - name: Detect upstream manifest drift
+      - name: Set up Copilot credentials
+        env:
+          GH_USER:         ${{ vars.COPILOT_CLI_RUNNER_USER }}
+          TEST_USER_TOKEN: ${{ secrets.COPILOT_CLI_RUNNER_TOKEN }}
+          GH_APP_ID:       ${{ vars.COPILOT_CLI_RUNNER_APP_ID }}
+        run: |
+          mkdir -p ~/.config/github-copilot
+          echo '{
+            "'"github.com:${GH_APP_ID}"'":{
+              "user": "'"$GH_USER"'",
+              "oauth_token":"'"$TEST_USER_TOKEN"'",
+              "githubAppId":"'"$GH_APP_ID"'"
+            }
+          }' > ~/.config/github-copilot/apps.json
+          chmod 600 ~/.config/github-copilot/apps.json
+
+      - name: Detect upstream manifest and code drift
         id: drift_check
         env:
-          COPILOT_TOKEN: ${{ secrets.COPILOT_TOKEN }}
-        run: node ./.github/scripts/check-office-addin-manifest-update.cjs
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_CLI_RUNNER_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          export COPILOT_GITHUB_TOKEN=$(python3 -c "import json,os; d=json.load(open(os.path.expanduser('~/.config/github-copilot/apps.json'))); print(list(d.values())[0]['oauth_token'])")
+          node ./.github/scripts/check-office-addin-manifest-update.cjs
 
       - name: Create or update tracking issue
         if: ${{ steps.drift_check.outputs.drift_detected == 'true' }}
