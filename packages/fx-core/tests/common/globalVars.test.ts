@@ -3,7 +3,13 @@
 
 import { hooks } from "@feathersjs/hooks";
 import { assert, vi } from "vitest";
-import { ErrorContextMW, globalVars, setErrorContext, setTools } from "../../src/common/globalVars";
+import {
+  ErrorContextMW,
+  createContext,
+  globalVars,
+  setErrorContext,
+  setTools,
+} from "../../src/common/globalVars";
 import "../../src/component/feature/sso";
 import { MockTools } from "../core/utils";
 
@@ -15,6 +21,16 @@ describe("globalVars", () => {
   });
   afterEach(async () => {
     vi.restoreAllMocks();
+  });
+
+  it("createContext should allow an undefined telemetry reporter", () => {
+    const toolsWithoutTelemetry = new MockTools();
+    toolsWithoutTelemetry.telemetryReporter = undefined;
+    setTools(toolsWithoutTelemetry);
+
+    const context = createContext();
+
+    assert.isUndefined(context.telemetryReporter);
   });
 
   describe("setErrorContext", () => {

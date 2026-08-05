@@ -157,10 +157,12 @@ export class Lifecycle implements ILifecycle {
     const actions = JSON.stringify(
       this.driverDefs.map((def) => camelCase(this.stringifyDriverDef(def)))
     );
-    const telemetryReporter = new TeamsFxTelemetryReporter(ctx.telemetryReporter, {
-      componentName: component,
-    });
-    telemetryReporter.sendStartEvent({
+    const telemetryReporter = ctx.telemetryReporter
+      ? new TeamsFxTelemetryReporter(ctx.telemetryReporter, {
+          componentName: component,
+        })
+      : undefined;
+    telemetryReporter?.sendStartEvent({
       eventName: lifecycleExecutionEvent,
       properties: {
         [TelemetryProperty.Lifecycle]: this.name,
@@ -209,7 +211,7 @@ export class Lifecycle implements ILifecycle {
       }
     }
 
-    telemetryReporter.sendEndEvent(
+    telemetryReporter?.sendEndEvent(
       {
         eventName: lifecycleExecutionEvent,
         properties: {

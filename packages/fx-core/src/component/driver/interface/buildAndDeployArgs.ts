@@ -31,7 +31,7 @@ export type DeployContext = {
   azureAccountProvider: AzureAccountProvider;
   progressBar: IProgressHandler | undefined;
   logProvider: LogProvider;
-  telemetryReporter: TelemetryReporter;
+  telemetryReporter?: TelemetryReporter;
 };
 
 export type AzureUploadConfig = {

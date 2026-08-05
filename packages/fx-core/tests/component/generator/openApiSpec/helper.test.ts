@@ -1926,6 +1926,32 @@ describe("listOperations", async () => {
     chai.expect(res.isOk()).to.be.true;
   });
 
+  it("listOperations succeeds without a telemetry reporter", async () => {
+    const context = createContext();
+    context.telemetryReporter = undefined;
+    const inputs = {
+      "custom-copilot-rag": "custom-copilot-rag-customApi",
+      platform: Platform.VSCode,
+    };
+    vi.spyOn(openApiSpecHelper, "formatValidationErrors").mockResolvedValue([]);
+    vi.spyOn(openApiSpecHelper, "logValidationResults").mockResolvedValue();
+    vi.spyOn(SpecParser.prototype, "validate").mockResolvedValue({
+      status: ValidationStatus.Valid,
+      warnings: [],
+      errors: [],
+      specHash: "xxx",
+    });
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
+      APIs: [],
+      allAPICount: 1,
+      validAPICount: 0,
+    });
+
+    const res = await openApiSpecHelper.listOperations(context, "", inputs, true, false, "");
+
+    chai.expect(res.isOk()).to.be.true;
+  });
+
   it("will show invalid api reasons", async () => {
     const context = createContext();
     const inputs = {
