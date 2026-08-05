@@ -2,6 +2,67 @@
 > Note: This changelog only includes the changes for the stable versions of Microsoft 365 Agents Toolkit (evolved from Teams Toolkit). For the changelog of pre-released versions, please refer to the [Microsoft 365 Agents Toolkit Pre-release Changelog](https://github.com/OfficeDev/TeamsFx/blob/dev/packages/vscode-extension/PRERELEASE.md).
 
 
+## 6.14.0 - August 5, 2026
+
+### New Features
+
+#### Easier OpenAPI project creation with built-in document search
+
+[description]: You can now search for an OpenAPI document directly during v4 project creation instead of manually pasting a URL every time. This brings the familiar “Search OpenAPI Document” experience into the v4 OpenAPI flow and automatically normalizes the selected result for the existing creation pipeline. The flow also adds inline validation for create inputs and OpenAPI URLs, so issues are caught earlier while you are entering values. In ATK VS Code or the ATK CLI, choose the OpenAPI-based project path and use the search option to quickly locate and reuse an API spec.
+
+#### Proxy-aware core workflows and templates
+
+[description]: ATK now supports proxy configuration across core workflows and templates, making it easier to work in enterprise or restricted network environments. If your organization requires outbound traffic through a proxy, you can configure standard environment variables such as `HTTP_PROXY`, `HTTPS_PROXY`, and `NO_PROXY` and have toolkit workflows respect them. This improves reliability when creating, scaffolding, and working with projects behind a corporate proxy. To use it, set the proxy environment variables in your shell before running ATK in VS Code or from the CLI.
+
+### Enhancement
+
+#### Better readability for `.env` examples on sample pages
+
+[description]: The sample detail page now shows `.env` code snippets with improved text contrast in Light theme. This update fixes accessibility issues where some syntax colors were too faint against a white background, making configuration examples harder to read. The new scoped styling keeps those snippets clearer and more WCAG-friendly without changing the Dark theme experience. If you browse samples in ATK VS Code with a light theme enabled, environment variable examples should now be much easier to scan.
+
+#### Improved v4 project creation foundations for localization and parity
+
+[description]: The v4 project creation experience has been refined to better match v3 behavior and localization patterns. This includes localized selector prompts, better reuse of existing strings, support for masked secret inputs, shared question fragments for LLM-related setup, and restored progressive Azure OpenAI question flow. These updates improve consistency and reduce friction when entering sensitive values or working in localized environments. The work remains behind the v4 feature flag, so it prepares the experience without changing the default shipped flow.
+
+#### Smoother back navigation in the v4 creation wizard
+
+[description]: The v4 creation flow now supports back navigation across selector and template-input phases, making the wizard behave more like one continuous journey. If you go back from the first question in the template input stage, you can return to the earlier selection steps instead of canceling the whole flow immediately. This makes it easier to reconsider a template choice and continue creating a project without restarting from scratch. The behavior is currently gated behind the v4 feature flag.
+
+#### More complete v4 scaffolding after project generation
+
+[description]: V4 scaffolding now covers more of the post-render work that users already expect from v3, including additional setup responsibilities for OpenAPI, MCP, MetaOS, Office Add-in, and declarative agent scenarios. This improves the quality and completeness of generated projects by ensuring more of the necessary follow-up mutations and validations happen automatically. Template validation was also strengthened to catch capability, version, and archive issues earlier. The result is more reliable generated output and closer parity with established scaffolding behavior.
+
+#### Updated v4 scenarios and Teams manifests for newer schema support
+
+[description]: Stable v4 Teams manifests have been updated to version 1.29, helping generated projects align with newer manifest expectations. The update also refines scenario modeling and adds the latest bot defaults while validating rendered manifest variants structurally. This improves consistency across generated app outputs and makes v4 scenarios easier to review and maintain. Office Add-in preview manifests remain intentionally unchanged where preview behavior is still required.
+
+#### Added troubleshooting guidance for skill manifest validation errors
+
+[description]: ATK now includes additional troubleshooting guidance to help you diagnose manifest validation problems in skill-related scenarios. When validation issues occur, the guidance helps point you toward likely causes and next steps instead of leaving you with a generic failure state. This should make it easier to recover from packaging or validation problems during development. The update is especially helpful for users who are iterating on manifest changes and need clearer remediation guidance.
+
+#### Better support for packaging tool files in manifest ZIPs
+
+[description]: Manifest packaging has been improved so tool-related files are correctly included in generated manifest ZIP archives. This helps prevent packaging gaps that could lead to incomplete app packages or follow-on validation issues. For users creating packages in VS Code or through the CLI, the packaging result should now better reflect the files expected by the tooling workflow. This makes manifest ZIP generation more dependable for deployment and testing.
+
+### Bug Fix
+- Restored the v4 blank app template and routed blank app creation correctly in the v4 selector flow, [PR #16260](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16260)
+- Gated v4 sandbox scaffold files so sandbox-specific files are only included when sandbox mode is enabled, [PR #16344](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16344)
+- Disabled the v4 feature flag by default so project creation continues to use the v3 engine unless `TEAMSFX_V4_ENABLED` is explicitly turned on, [PR #16290](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16290)
+- Fixed template and metadata source selection so PR and non-production builds use bundled local content when `useLocalTemplate` is enabled, [PR #16291](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16291)
+- Handled invalid OpenAI keys in Python local-debug data agent templates so errors return a fallback response instead of surfacing as HTTP 500 failures, [PR #16317](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16317)
+- Fixed manifest validation for conditional and optional properties with `undefined` values to avoid false additional-properties errors, [PR #16341](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16341)
+- Generated the Declarative Toolkit add-MCP action inline instead of routing through the v4 modify front door, [PR #16359](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16359)
+- Kept injecting OAuth registration settings when MCP auth metadata resolution fails, [PR #16359](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16359)
+- Persisted MCP add-action OAuth credentials to environment files, [PR #16359](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16359)
+- Omitted MCP scope environment references when no scope is provided, [PR #16359](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16359)
+- Preserved scoped template variables such as `${{local:...}}` and `${{sandbox:...}}` during v4 rendering, [PR #16362](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16362)
+- Removed the invalid `enable_dynamic_discovery` field from MCP scaffolding while preserving supported URL-based tool discovery, [PR #16370](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16370)
+- Updated the agent link URL to avoid agent-installed issues, [PR #16396](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16396)
+- Collected and securely persisted v4 MCP authentication credentials, including masked secrets and existing CLI flag mappings, [PR #16398](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16398)
+- Restored missing declarative agent user environment templates such as `.env.dev.user` and `.env.local.user` in affected v4 templates, [PR #16409](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16409)
+- Handled OpenAI errors in v4 Python agent templates so bot flows return safe fallback responses instead of unhandled server errors, [PR #16410](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16410)
+
+
 ## 6.12.1 - July 27, 2026
 
 ### Bug Fix
