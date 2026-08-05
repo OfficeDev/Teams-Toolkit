@@ -922,6 +922,9 @@ export function addAuthActionQuestion(): IQTreeNode {
           if (!!!pluginManifestPath || !!!apiSpecPath) {
             return false;
           }
+          if (inputs[QuestionNames.ApiOperation] !== undefined) {
+            return false;
+          }
           const pluginManifest = (await fs.readJson(
             pluginManifestPath as string
           )) as PluginManifestSchema;
@@ -934,7 +937,7 @@ export function addAuthActionQuestion(): IQTreeNode {
               apis.push(...(runtime.run_for_functions as string[]));
             });
           const apisDedup = [...new Set(apis)];
-          if (apisDedup.length === 1) {
+          if (apisDedup.length === 1 || (inputs.nonInteractive && apisDedup.length > 0)) {
             inputs[QuestionNames.ApiOperation] = apisDedup;
             return false;
           }

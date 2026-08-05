@@ -511,7 +511,7 @@ describe("AzureDeployImpl zip deploy acceleration", () => {
     const context = {
       logProvider: new TestLogProvider(),
       ui: new MockUserInteraction(),
-      telemetryReporter: new MockTelemetryReporter(),
+      telemetryReporter: undefined,
     } as any;
     const impl = new AzureZipDeployImpl(
       args,
@@ -535,9 +535,7 @@ describe("AzureDeployImpl zip deploy acceleration", () => {
       return mockWebSiteManagementClient;
     } as any);
     const token = new MyTokenCredential();
-    vi.spyOn(token, "getToken").mockImplementation(() => {
-      throw new Error("test message");
-    });
+    vi.spyOn(token, "getToken").mockResolvedValue(null);
     await expect(
       impl.createAzureDeployConfig(
         {
@@ -548,6 +546,29 @@ describe("AzureDeployImpl zip deploy acceleration", () => {
         token
       )
     ).rejects.toThrow(GetPublishingCredentialsError);
+  });
+
+  it("zip deploy succeeds without a telemetry reporter", async () => {
+    const args = {
+      workingDirectory: "/",
+      artifactFolder: "/",
+      resourceId: "/subscriptions/sub/resourceGroups/rg/providers/Microsoft.Web/sites/app",
+    } as DeployArgs;
+    const context = {
+      logProvider: new TestLogProvider(),
+      ui: new MockUserInteraction(),
+      telemetryReporter: undefined,
+    } as any;
+    const impl = new AzureZipDeployImpl(args, context, "Azure App Service", "help", [], []);
+    vi.spyOn(impl as any, "packageToZip").mockResolvedValue(Readable.from("test"));
+    vi.spyOn(impl, "createAzureDeployConfig").mockResolvedValue(zipDeployConfig);
+    vi.spyOn(AzureZipDeployImpl, "getZipDeployEndpoint").mockResolvedValue("endpoint");
+    vi.spyOn(impl, "zipDeployPackage").mockResolvedValue("location");
+    vi.spyOn(impl, "checkDeployStatus").mockResolvedValue({ status: 4 } as any);
+
+    const cost = await impl.zipDeploy({}, zipDeployResource, new MyTokenCredential());
+
+    expect(cost).toBeGreaterThanOrEqual(0);
   });
 
   it("zipDeployPackage DeployZipPackageError throw 500", async () => {

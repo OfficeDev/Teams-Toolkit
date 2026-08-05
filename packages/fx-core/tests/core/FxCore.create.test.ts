@@ -12,6 +12,7 @@ import {
   ok,
   Platform,
   Result,
+  Tools,
 } from "@microsoft/teamsfx-api";
 import fs from "fs-extra";
 import { assert, vi } from "vitest";
@@ -102,6 +103,23 @@ describe("createProjectFromTdp", () => {
   it("happy", async () => {
     const core = new FxCore(tools);
     assert.isFunction(core.createProjectFromTdp);
+  });
+
+  it("creates from TDP without a telemetry reporter", async () => {
+    const toolsWithoutTelemetry: Tools = { ...new MockTools(), telemetryReporter: undefined };
+    const core = new FxCore(toolsWithoutTelemetry);
+    vi.spyOn(coordinator, "create").mockResolvedValue(ok({ projectPath: "test-project" }));
+
+    const res = await core.createProjectFromTdp({
+      platform: Platform.CLI,
+      teamsAppFromTdp: {
+        appName: "test-app",
+        teamsAppId: "test-id",
+      },
+      nonInteractive: true,
+    });
+
+    assert.isTrue(res.isOk());
   });
 });
 

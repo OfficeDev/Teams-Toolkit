@@ -66,21 +66,13 @@ export function setErrorContext(option: ErrorContextOption): void {
 }
 
 export type ExternalSource =
-  | "Graph"
-  | "Azure"
-  | "Teams"
-  | "TeamsGraph"
-  | "BotFx"
-  | "SPFx"
-  | "DevTools"
-  | "M365"
-  | "";
+  "Graph" | "Azure" | "Teams" | "TeamsGraph" | "BotFx" | "SPFx" | "DevTools" | "M365" | "";
 
 export function createContext(): Context {
   const context: Context = {
     userInteraction: TOOLS.ui,
     logProvider: TOOLS.logProvider,
-    telemetryReporter: TOOLS.telemetryReporter!,
+    telemetryReporter: TOOLS.telemetryReporter,
     tokenProvider: TOOLS.tokenProvider,
   };
   return context;

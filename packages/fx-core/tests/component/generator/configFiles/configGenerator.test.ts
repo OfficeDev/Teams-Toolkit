@@ -49,6 +49,30 @@ describe("ConfigGenerator", () => {
     assert.isFunction(configGenerator.run);
   });
 
+  it("generates config files without a telemetry reporter", async () => {
+    const pgTs = path.join(templatesRoot, "configs", "playground", "typescript");
+    await fs.ensureDir(path.join(pgTs, ".vscode"));
+    await fs.ensureDir(path.join(pgTs, "env"));
+    await fs.writeFile(path.join(pgTs, "package.json"), '{"fromTemplate":true}');
+    await fs.writeFile(path.join(pgTs, ".vscode", "launch.json"), "{}");
+    await fs.writeFile(path.join(pgTs, ".vscode", "tasks.json"), "{}");
+    await fs.writeFile(path.join(pgTs, "m365agents.playground.yml"), "version: 1.0.0\n");
+    await fs.writeFile(path.join(pgTs, "env", ".env.playground"), "# playground env\n");
+    await fs.writeFile(path.join(pgTs, "env", ".env.playground.user"), "# user env\n");
+    const tools = new MockTools();
+    tools.telemetryReporter = undefined;
+    setTools(tools);
+
+    const res = await configGenerator.run(
+      createContext(),
+      destination,
+      [{ name: "playground", programmingLanguage: "typescript" }],
+      { hasBot: true }
+    );
+
+    assert.isTrue(res.isOk());
+  });
+
   it("continues on conflict and reports success/failed components", async () => {
     // Arrange templates for local/typescript
     const localTs = path.join(templatesRoot, "configs", "local", "typescript");

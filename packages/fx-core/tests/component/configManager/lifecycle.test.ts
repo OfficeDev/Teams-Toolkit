@@ -164,6 +164,20 @@ class DriverThatUsesWriteToEnvironmentFileField implements StepDriver {
 }
 
 describe("v3 lifecyle", () => {
+  it("should execute without a telemetry reporter", async () => {
+    vi.spyOn(Container, "has").mockReturnValue(false);
+    const context = { ...mockedDriverContext, telemetryReporter: undefined };
+    const lifecycle = new Lifecycle(
+      "configureApp",
+      [{ name: "missing", uses: "missing", with: {} }],
+      "1.0.0"
+    );
+
+    const { result } = await lifecycle.execute(context);
+
+    assert.isTrue(result.isErr());
+  });
+
   describe("when driver name not found", () => {
     before(() => {
       vi.spyOn(Container, "has").mockReturnValue(false);
