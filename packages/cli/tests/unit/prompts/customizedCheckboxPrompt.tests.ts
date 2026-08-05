@@ -315,11 +315,13 @@ describe("checkbox prompt", () => {
   });
 
   it("fail on validate values", async () => {
+    let validationAttempts = 0;
     const { answer, events, getScreen } = await render(checkbox, {
       message: "Select a string",
       choices: choices,
       validateValues: (values) => {
-        return "invalid selections";
+        validationAttempts++;
+        return validationAttempts === 1 ? "invalid selections" : undefined;
       },
     });
 
@@ -353,5 +355,8 @@ describe("checkbox prompt", () => {
         (Use arrow keys to reveal more choices)
         > invalid selections`)
     );
+
+    events.keypress("enter");
+    expect(await answer).to.deep.equal([]);
   });
 });
