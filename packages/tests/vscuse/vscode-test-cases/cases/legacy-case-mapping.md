@@ -8,8 +8,9 @@ that no longer exists wherever the status is **Full**.
 
 - **Full**: the generated case covers the legacy scenario intent with semantic steps and file
   checks, and the legacy plan has been removed.
-- **Partial**: the generated case covers the legacy scaffold and lifecycle but stops short of the
-  legacy chat validation, so the legacy plan is kept until that gap closes.
+- **Partial**: the generated case covers the legacy scaffold and lifecycle but stops short of part of
+  the legacy flow, such as its chat validation or its negative input path, so the legacy plan is kept
+  until that gap closes.
 
 A generated case is still **Full** when it sends the legacy prompt and asserts an error-free reply
 where the legacy plan asserted reply wording. The wording is the model's, so asserting it would tie
@@ -119,6 +120,9 @@ and carries the follow-up for tightening these checks once the templates move to
 | `custom-copilot-rag-custom-api.yml`      | `rag-custom-api-js-openai-local-teams`                   | `custom-copilot-rag-custom-api--rag-custom-api-js-openai-local-teams.json`                     | `Teams_Agent_With_Data_Custom_API_OpenAI_js_Local_Debug.json`        | Full    | Custom API data source from an OpenAPI document, OpenAI, JavaScript, local Teams launch, and a reply check, which is the whole of what the legacy OpenAI plan asserted.                               |
 | `custom-copilot-rag-custom-api.yml`      | `rag-custom-api-py-azure-openai-local-teams`             | `custom-copilot-rag-custom-api--rag-custom-api-py-azure-openai-local-teams.json`               | `Teams_Agent_With_Data_Custom_API_Azure_OpenAI_py_Local_Debug.json`  | Full    | Custom API data source from an OpenAPI document, Azure OpenAI, Python, virtual environment creation, local Teams launch, and an error-free reply check in place of the legacy reply wording.          |
 | `custom-copilot-rag-custom-api.yml`      | `rag-custom-api-py-openai-local-teams`                   | `custom-copilot-rag-custom-api--rag-custom-api-py-openai-local-teams.json`                     | `Teams_Agent_With_Data_Custom_API_OpenAI_py_Local_Debug.json`        | Full    | Custom API data source from an OpenAPI document, OpenAI, Python, virtual environment creation, local Teams launch, and a reply check, which is the whole of what the legacy OpenAI plan asserted.     |
+| `non-sso-tab.yml` | `tab-ts-local-teams` | `non-sso-tab--tab-ts-local-teams.json` | `Basic_Tab_Local_Debug.json` | Partial | Tab scaffold/file validation, local Teams launch, development certificate trust, and rendered tab page assertion; the legacy invalid and over-length app name flow is not covered. |
+| `non-sso-tab.yml` | `tab-ts-remote-teams` | `non-sso-tab--tab-ts-remote-teams.json` | `Basic_Tab_Remote_Debug.json` | Partial | Tab scaffold/file validation, provision, deploy, remote Teams preview, and rendered tab page assertion; the legacy provision-before-login flow is not covered. |
+| `non-sso-tab.yml` | `tab-ts-local-teams-env-recreated` | `non-sso-tab--tab-ts-local-teams-env-recreated.json` | `Tab_Local_Debug_Env_Local_Creation.json` | Partial | Deletes the scaffolded `env/.env.local`, runs the local lifecycle, and asserts the file exists again; kept until the generated case has a green run on the shared image. |
 
 ## Legacy Weather Plans Not Mapped
 
@@ -148,6 +152,20 @@ surface and remain recorded without a one-to-one generated replacement:
 `General_Teams_Agent_Azure_OpenAI_py_Copilot_Remote_Debug.json`.
 The bundle asserts that both language packages render the Copilot profile while the TypeScript cases
 exercise its remote and local browser flow, so crossing those dimensions adds no distinct contract.
+
+## Legacy Tab Flows Not Mapped
+
+The three tab cases deliberately drop the negative input flows the legacy plans recorded, so those
+legacy plans stay in place:
+
+- `Basic_Tab_Local_Debug.json` types `g#ed!-k?/h` and a thirty-three character name into the app name
+  box to read back the validation messages. A scaffold operation authors one answer per prompted
+  question, so it has no way to author a rejected answer followed by a corrected one.
+- `Basic_Tab_Remote_Debug.json` invokes provision before signing in to read the resulting "needs a
+  Microsoft 365 account" message. The semantic compiler rejects that ordering at compile time
+  (`VCB_PROVISION_PREREQUISITE`), which is the contract rather than a recordable runtime flow.
+- `Basic_Tab_Remote_Debug.json` also dismisses leftover notifications before provisioning. That is
+  environment noise rather than product behavior and has no semantic operation.
 
 ## Legacy DA Plans Not Mapped
 
