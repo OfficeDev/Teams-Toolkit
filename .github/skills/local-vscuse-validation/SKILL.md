@@ -348,8 +348,8 @@ If the config used for the run does not pass `TEMPLATE_VERSION` into `docker.env
 
 ```yaml
 docker:
-   environment:
-      TEMPLATE_VERSION: "local"
+  environment:
+    TEMPLATE_VERSION: "local"
 ```
 
 After the container starts, verify the non-secret routing env before interpreting UI behavior:
@@ -371,7 +371,10 @@ Before interpreting a plan failure, distinguish setup success from runtime crede
 For CI parity, the command shape is:
 
 ```powershell
-vscuse execute --config-file .\config.yaml --groups-dir groups .\plans\<plan-name>.json
+$planPath = ".\plans\<plan-name>.json"
+$runConfig = Join-Path $env:TEMP "vscuse-config.yaml"
+node .\engine\prepare-vscuse-config.cjs .\config.yaml $planPath $runConfig
+vscuse execute --config-file $runConfig --groups-dir groups $planPath
 ```
 
 `config.yaml` defaults `docker.image_name` to `${VSCUSE_VSCODE_IMAGE:ghcr.io/officedev/vscuse-atk-vscode:latest}`. Always set `VSCUSE_VSCODE_IMAGE` explicitly: use a branch-specific local image for the current local VSIX, or a provenance-checked published tag for a requested CI-built product version.
@@ -389,19 +392,18 @@ Feature flags are part of a scenario's test preconditions, not part of the share
 }
 ```
 
-Before running or recording that case, read and apply the declared tags in the current process:
+Before running or recording that case, generate its temporary execution config:
 
 ```powershell
 $planPath = "packages/tests/vscuse/vscode-test-cases/plans/<plan-name>.json"
-$plan = Get-Content $planPath -Raw | ConvertFrom-Json
-@($plan.plan_metadata.tags) | Where-Object { $_ -like "feature_flag:*" } | ForEach-Object {
-    $pair = $_ -replace "^feature_flag:", ""
-    $name, $value = $pair.Split("=", 2)
-    Set-Item -Path "Env:$name" -Value $value
-}
+$runConfig = Join-Path $env:TEMP "vscuse-config.yaml"
+node packages/tests/vscuse/vscode-test-cases/engine/prepare-vscuse-config.cjs `
+   packages/tests/vscuse/vscode-test-cases/config.yaml `
+   $planPath `
+   $runConfig
 ```
 
-Those environment values, plus `TEMPLATE_VERSION=local` for local-repo validation, must be available inside the vscuse VS Code container before the extension host starts. If a direct `vscuse execute --config-file .\config.yaml ...` run does not propagate a declared flag or `TEMPLATE_VERSION`, use a temporary config for that run that adds only the declared flags and local template routing under `docker.environment`, then rerun the same plan. Do not persist scenario-only flags in `set-azure-env.ps1`, and do not treat a run as valid when the plan declares flags that were not applied.
+The helper copies only that plan's validated flags into `docker.environment`. The ATK test image maps `TEAMSFX_CEA_ENABLED` to the corresponding VS Code user setting before the extension host starts, so production configuration precedence remains unchanged. Add `TEMPLATE_VERSION=local` to the temporary config for local-repo validation when needed. Do not persist scenario-only flags in `config.yaml` or `set-azure-env.ps1`, and do not treat a run as valid when it used the shared config directly despite declaring flags.
 
 ## Demonstrate a Failing Case in the Integrated Browser
 

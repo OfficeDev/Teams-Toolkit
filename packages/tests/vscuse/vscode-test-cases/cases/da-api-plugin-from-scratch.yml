@@ -33,6 +33,19 @@ cases:
         check-repair,
       ]
 
+  - id: da-api-plugin-from-scratch-js-local-copilot
+    scenarioId: SCN-DA-CREATE-API-PLUGIN-FROM-SCRATCH
+    gate: manual
+    steps:
+      [
+        scaffold-js,
+        check-js,
+        login-m365,
+        f5-copilot-local,
+        open-agent,
+        check-repair,
+      ]
+
 steps:
   scaffold-ts:
     type: scaffold
@@ -146,6 +159,12 @@ steps:
     type: target
     with:
       profile: "Preview in Copilot (Chrome)"
+      profileSelection: first
+
+  f5-copilot-local:
+    type: target
+    with:
+      profile: "Debug in Copilot (Chrome)"
       profileSelection: first
 
   open-agent:

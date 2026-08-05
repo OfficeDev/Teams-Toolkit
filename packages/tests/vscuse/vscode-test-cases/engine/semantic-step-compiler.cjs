@@ -16,6 +16,7 @@ const runnerPlaceholderPattern = /\$\{\{[a-z]+:[A-Za-z0-9_:#-]+\}\}/g;
 const provisionInputGroups = new Set(["apiKey", "arm", "oauth"]);
 const provisionEnvironmentInput = "environment";
 const provisionEnvironmentSkipValue = "none";
+const copilotLaunchFeatureFlag = "TEAMSFX_CEA_ENABLED=true";
 
 const commandTitles = {
   clearNotifications: "Notifications: Clear All Notifications",
@@ -90,7 +91,12 @@ const scaffoldQuestionAdapters = {
   },
   appName: { title: "Application Name", type: "text" },
   apiAuth: {
-    options: { none: "None" },
+    options: {
+      "api-key": "API Key",
+      "microsoft-entra": "Microsoft Entra",
+      none: "None",
+      oauth: "OAuth",
+    },
     title: "Authentication Type",
     type: "singleSelect",
   },
@@ -114,6 +120,15 @@ const scaffoldQuestionAdapters = {
   },
   azureOpenAIEndpoint: { title: "Azure OpenAI Endpoint", type: "text" },
   azureOpenAIKey: { secret: true, title: "Azure OpenAI Key", type: "text" },
+  customCopilotRag: {
+    options: {
+      "custom-copilot-rag-azure-ai-search": "Azure AI Search",
+      "custom-copilot-rag-custom-api": "Custom API",
+      "custom-copilot-rag-customize": "Customize",
+    },
+    title: "Teams Agent with Data",
+    type: "singleSelect",
+  },
   customEngineAgent: {
     options: {
       "basic-custom-engine-agent": "Basic Custom Engine Agent",
@@ -169,6 +184,8 @@ const scaffoldQuestionAdapters = {
   },
   teamsAppType: {
     options: {
+      "custom-copilot-basic": "General Teams Agent",
+      "custom-copilot-rag": "Teams Agent with Data",
       "teams-other-app-type": "Other Teams Capabilities",
     },
     title: "Teams Agent or App Using Microsoft Teams SDK",
@@ -394,6 +411,22 @@ const targetAdapters = {
       "an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot",
     requires: ["login:azure", "login:m365", "provision", "deploy"],
   },
+  // General Teams Agent templates expose the same custom-engine Copilot flow
+  // without the preview prefix.
+  "Launch Remote in Copilot (Chrome)": {
+    browserAuthentication: {
+      component: "authentication/browser/m365-sign-in.json.tpl",
+      credentials: "m365",
+    },
+    host: "copilot",
+    open: { adapter: "ready", destination: "chat", kind: "agent" },
+    profileSelections: {
+      first: { component: "quick-input/filter-option.json.tpl" },
+    },
+    readySubject:
+      "an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot",
+    requires: ["login:azure", "login:m365", "provision", "deploy"],
+  },
   // The local debug profiles below carry a preLaunchTask chain that validates
   // prerequisites, registers the app, starts the tunnel, and runs the local
   // lifecycle before the application starts, so they require no authored
@@ -416,6 +449,20 @@ const targetAdapters = {
     requires: ["login:m365"],
   },
   "(Preview) Debug in Copilot (Chrome)": {
+    browserAuthentication: {
+      component: "authentication/browser/m365-sign-in.json.tpl",
+      credentials: "m365",
+    },
+    host: "copilot",
+    open: { adapter: "ready", destination: "chat", kind: "agent" },
+    profileSelections: {
+      first: { component: "quick-input/filter-option.json.tpl" },
+    },
+    readySubject:
+      "an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot",
+    requires: ["login:m365"],
+  },
+  "Debug in Copilot (Chrome)": {
     browserAuthentication: {
       component: "authentication/browser/m365-sign-in.json.tpl",
       credentials: "m365",
@@ -607,11 +654,17 @@ function createSemanticStepCompiler() {
         );
       }
 
+      // The toolkit composes some prompts from answers the case already gave,
+      // so the same question key can carry a different title, or reach a
+      // different prompt shape, on a different path.
+      const inTeamsAgentWithData = answerState.customCopilotRag !== undefined;
       const questionTitle =
         answer.question === "mcp-da-client-id" &&
         answerState.authType === "entra-sso"
           ? "Microsoft Entra Application (Client) ID"
-          : question.title;
+          : answer.question === "apiOperations" && inTeamsAgentWithData
+            ? "Select Operation(s) Teams Can Interact with"
+            : question.title;
       answerState[answer.question] = answer.value;
       if (question.type === "singleSelect") {
         const option = question.options[answer.value];
@@ -652,6 +705,19 @@ function createSemanticStepCompiler() {
           }),
         );
       } else {
+        // The Teams Agent with Data flow reaches the OpenAPI document as a
+        // `singleFileOrText` question, so its prompt lists the workspace files
+        // beside an item that opens the input box the URL is typed into.
+        if (answer.question === "apiSpecLocation" && inTeamsAgentWithData) {
+          error = append(
+            output,
+            render(state, "quick-input/single-select.json.tpl", {
+              optionLabel: "Enter OpenAPI Document URL",
+              questionTitle,
+            }),
+          );
+          if (error) return error;
+        }
         error = append(
           output,
           render(state, "quick-input/text.json.tpl", {
@@ -1035,6 +1101,41 @@ function createSemanticStepCompiler() {
     return { ok: true, value: output };
   }
 
+  function compileLocalUserEnvironment(state, definition) {
+    const inputs = definition.with ?? {};
+    const names = isRecord(inputs) ? Object.keys(inputs).sort() : [];
+    if (
+      !isRecord(inputs) ||
+      names.length === 0 ||
+      names.some(
+        (name) =>
+          !localEnvironmentNamePattern.test(name) ||
+          typeof inputs[name] !== "string" ||
+          inputs[name].length === 0 ||
+          !localEnvironmentValuePattern.test(
+            inputs[name].replaceAll(runnerPlaceholderPattern, ""),
+          ),
+      )
+    ) {
+      return failure(
+        "VCB_LOCAL_USER_ENVIRONMENT_INPUT_INVALID",
+        "The local user environment operation requires shell-safe variable names and values.",
+      );
+    }
+    const output = [];
+    for (const name of names) {
+      const error = append(
+        output,
+        render(state, "workspace/local-user-environment-variable.json.tpl", {
+          variableName: name,
+          variableValue: inputs[name],
+        }),
+      );
+      if (error) return error;
+    }
+    return { ok: true, value: output };
+  }
+
   function compileLifecycle(state, definition) {
     const recipe = lifecycleAdapters[definition.type];
     let confirmation = recipe.confirmation;
@@ -1126,6 +1227,19 @@ function createSemanticStepCompiler() {
       return failure(
         "VCB_TARGET_PROFILE_UNKNOWN",
         "The launch profile is not supported by the semantic adapter.",
+      );
+    }
+    if (
+      state.template === "custom-copilot-basic" &&
+      [
+        "Launch Remote in Copilot (Chrome)",
+        "Debug in Copilot (Chrome)",
+      ].includes(profileTitle) &&
+      !state.featureFlags.has(copilotLaunchFeatureFlag)
+    ) {
+      return failure(
+        "VCB_TARGET_PREREQUISITE",
+        "The General Teams Agent Copilot target requires its launch feature flag.",
       );
     }
     const missingPrerequisite = profile.requires.find(
@@ -1292,9 +1406,16 @@ function createSemanticStepCompiler() {
       playground: "browser/playground/send-message.json.tpl",
       teams: "browser/teams/send-message.json.tpl",
     };
+    const replyComponents = {
+      copilot: "browser/chat/assert-replied.json.tpl",
+      playground: "browser/playground/assert-replied.json.tpl",
+      teams: "browser/chat/assert-replied.json.tpl",
+    };
     const sendComponent = sendComponents[state.profile?.host];
+    const replyComponent = replyComponents[state.profile?.host];
     if (
       sendComponent === undefined ||
+      replyComponent === undefined ||
       !state.completed.has("chat-ready") ||
       typeof assertion.send !== "string"
     ) {
@@ -1329,10 +1450,7 @@ function createSemanticStepCompiler() {
       expected.contains !== undefined ||
       expected.notContains !== undefined
     ) {
-      error = append(
-        output,
-        render(state, "browser/chat/assert-replied.json.tpl"),
-      );
+      error = append(output, render(state, replyComponent));
       if (error) return error;
     }
     for (const expectedText of expected.contains ?? []) {
@@ -1480,7 +1598,7 @@ function createSemanticStepCompiler() {
     return { ok: true, value: output };
   }
 
-  return ({ caseId, definition, occurrence }) => {
+  return ({ caseId, definition, featureFlags, occurrence }) => {
     let state = states.get(caseId);
     if (definition.type === "scaffold") {
       state = {
@@ -1488,6 +1606,7 @@ function createSemanticStepCompiler() {
         completed: new Set(),
         componentIndex: 0,
         credentials: new Map(),
+        featureFlags: new Set(featureFlags ?? []),
         occurrence,
         requiresInitialFileCheck: true,
       };
@@ -1523,6 +1642,8 @@ function createSemanticStepCompiler() {
         return compilePythonEnvironment(state, definition);
       case "localEnvironment":
         return compileLocalEnvironment(state, definition);
+      case "localUserEnvironment":
+        return compileLocalUserEnvironment(state, definition);
       case "target":
         return compileTarget(state, definition);
       case "open":

@@ -1423,7 +1423,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the multi-select prompt titled Select dependencies to install has finished loading and lists at least one selectable option.",
+      "description": "@assertion the multi-select prompt titled Select dependencies to install has finished loading and lists at least one selectable option: an option row with a text label beside a square selection control. The selection-count badge reports how many options are selected, not how many options are available.",
       "content_refs": [],
       "timeout": 120,
       "retry_count": 0,
@@ -1960,7 +1960,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the current assistant turn is complete and contains a non-empty response.",
+      "description": "@assertion the Agents Playground shows a non-empty assistant response, and the \"Type a message...\" composer is ready for the next user turn with no response-generation indicator visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1972,6 +1972,8 @@
       "postconditions": [],
       "tags": [
         "component:browser",
+        "host_surface:playground",
+        "entry_state:reply-complete",
         "action:assert-chat-response",
         "expectation:replied",
         "step_retry_timeout: 120"

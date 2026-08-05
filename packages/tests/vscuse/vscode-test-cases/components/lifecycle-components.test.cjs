@@ -202,6 +202,19 @@ test("VCB-58: the multi-select component asserts no checked state", () => {
   }
 });
 
+test("VCB-81: the multi-select option wait identifies option rows without using position or count", () => {
+  const multiSelect = render("quick-input/multi-select.json.tpl");
+  const assertOptionsLoaded = multiSelect.steps[1];
+
+  assert.match(
+    assertOptionsLoaded.description,
+    /option row with a text label beside a square selection control/,
+  );
+  assert.match(assertOptionsLoaded.description, /selection-count badge/);
+  assert.equal(/input box/.test(assertOptionsLoaded.description), false);
+  assert.equal(/\b[0-9]+\b/.test(assertOptionsLoaded.description), false);
+});
+
 test("VCB-60: the confirmation component gates on no image hash", () => {
   const dialog = render("dialog/click-primary-action.json.tpl");
 

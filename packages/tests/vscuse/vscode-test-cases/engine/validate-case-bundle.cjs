@@ -1,6 +1,12 @@
 const { createDiagnostic } = require("./diagnostics.cjs");
 
-const allowedCaseFields = new Set(["id", "scenarioId", "steps", "gate"]);
+const allowedCaseFields = new Set([
+  "id",
+  "scenarioId",
+  "featureFlags",
+  "steps",
+  "gate",
+]);
 const allowedGates = new Set(["pr", "scheduled", "manual"]);
 const allowedRootFields = new Set([
   "version",
@@ -16,6 +22,7 @@ const allowedStepTypes = new Set([
   "deploy",
   "pythonEnvironment",
   "localEnvironment",
+  "localUserEnvironment",
   "target",
   "open",
   "checks",
@@ -24,6 +31,27 @@ const featureFlagPattern = /^[A-Z_][A-Z0-9_]*=(?:true|false)$/;
 
 function isRecord(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function featureFlagsAreInvalid(featureFlags, inheritedFeatureFlags = []) {
+  if (featureFlags === undefined) {
+    return false;
+  }
+  if (
+    !Array.isArray(featureFlags) ||
+    featureFlags.length === 0 ||
+    featureFlags.some(
+      (featureFlag) =>
+        typeof featureFlag !== "string" ||
+        !featureFlagPattern.test(featureFlag),
+    )
+  ) {
+    return true;
+  }
+  const names = [...inheritedFeatureFlags, ...featureFlags].map(
+    (featureFlag) => featureFlag.split("=", 1)[0],
+  );
+  return new Set(names).size !== names.length;
 }
 
 function addUnknownFieldDiagnostics({
@@ -80,17 +108,8 @@ function validateCaseBundle({ bundle, sourcePath }) {
       ),
     );
   }
-  if (
-    bundle.featureFlags !== undefined &&
-    (!Array.isArray(bundle.featureFlags) ||
-      bundle.featureFlags.length === 0 ||
-      bundle.featureFlags.some(
-        (featureFlag) =>
-          typeof featureFlag !== "string" ||
-          !featureFlagPattern.test(featureFlag),
-      ) ||
-      new Set(bundle.featureFlags).size !== bundle.featureFlags.length)
-  ) {
+  const rootFeatureFlagsInvalid = featureFlagsAreInvalid(bundle.featureFlags);
+  if (rootFeatureFlagsInvalid) {
     diagnostics.push(
       createDiagnostic(
         "VCB_FEATURE_FLAGS_INVALID",
@@ -100,6 +119,10 @@ function validateCaseBundle({ bundle, sourcePath }) {
       ),
     );
   }
+  const inheritedFeatureFlags =
+    rootFeatureFlagsInvalid || bundle.featureFlags === undefined
+      ? []
+      : bundle.featureFlags;
 
   if (!Array.isArray(bundle.cases) || bundle.cases.length === 0) {
     diagnostics.push(
@@ -132,6 +155,21 @@ function validateCaseBundle({ bundle, sourcePath }) {
         value: caseDefinition,
         yamlPath,
       });
+      if (
+        featureFlagsAreInvalid(
+          caseDefinition.featureFlags,
+          inheritedFeatureFlags,
+        )
+      ) {
+        diagnostics.push(
+          createDiagnostic(
+            "VCB_FEATURE_FLAGS_INVALID",
+            sourcePath,
+            `${yamlPath}.featureFlags`,
+            "Feature flags must be unique NAME=true or NAME=false entries.",
+          ),
+        );
+      }
       if (
         typeof caseDefinition.id !== "string" ||
         caseDefinition.id.length === 0

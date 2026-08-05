@@ -1691,7 +1691,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the current assistant turn is complete and contains a non-empty response.",
+      "description": "@assertion the Agents Playground shows a non-empty assistant response, and the \"Type a message...\" composer is ready for the next user turn with no response-generation indicator visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1703,6 +1703,8 @@
       "postconditions": [],
       "tags": [
         "component:browser",
+        "host_surface:playground",
+        "entry_state:reply-complete",
         "action:assert-chat-response",
         "expectation:replied",
         "step_retry_timeout: 120"

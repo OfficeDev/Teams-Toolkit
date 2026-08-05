@@ -242,8 +242,8 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install dependencies for download actions
-        run: npm install @octokit/auth-app @octokit/request @octokit/core node-fetch
+      - name: Install workflow Node dependencies
+        run: npm install @octokit/auth-app @octokit/request @octokit/core node-fetch yaml@2.8.3
         shell: bash
 
       - name: Run download script
@@ -329,8 +329,10 @@ jobs:
           fi
 
       - name: Run test
+        env:
+          TEST_PLAN: ${{ matrix.test_plan }}
         run: |
-          echo "🚀 Running test plan: ${{ matrix.test_plan }}"
+          echo "🚀 Running test plan: $TEST_PLAN"
           echo "Using image tag: ${{ inputs.image_tag }}"
           echo "Test execution started at: $(date)"
 
@@ -338,7 +340,8 @@ jobs:
           cd packages/tests/vscuse/vscode-test-cases
           python -m venv .venv
           source .venv/bin/activate
-          vscuse execute --config-file ./config.yaml --groups-dir groups ./plans/${{ matrix.test_plan }}.json 2>&1 | tee run_result.txt
+          node ./engine/prepare-vscuse-config.cjs ./config.yaml "./plans/$TEST_PLAN.json" ./config.run.yaml
+          vscuse execute --config-file ./config.run.yaml --groups-dir groups "./plans/$TEST_PLAN.json" 2>&1 | tee run_result.txt
 
       - name: Extract errors from run result
         if: always()
@@ -442,7 +445,7 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
-      - name : Login to Azure
+      - name: Login to Azure
         if: always()
         uses: azure/login@v2
         with:

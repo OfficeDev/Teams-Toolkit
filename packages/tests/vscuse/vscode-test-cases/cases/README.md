@@ -12,9 +12,10 @@ migration inventory and coverage status.
 | File                                  | Template family                       | Cases | Contract pressure                                                                            |
 | ------------------------------------- | ------------------------------------- | ----: | -------------------------------------------------------------------------------------------- |
 | `weather-agent.yml`                   | Custom Engine Agent                   |    12 | full LLM x language x Teams launch matrix, Azure lifecycle, Copilot remote/local, Playground |
-| `basic-custom-engine-agent.yml`       | Custom Engine Agent                   |     9 | TypeScript, JavaScript, and Python against remote Teams, local Teams, and Playground          |
+| `basic-custom-engine-agent.yml`       | Custom Engine Agent                   |     9 | TypeScript, JavaScript, and Python against remote Teams, local Teams, and Playground         |
 | `default-bot.yml`                     | Teams Bot                             |     9 | current Teams selector path, three languages, lifecycle boundaries, and chat validation      |
 | `default-message-extension.yml`       | Teams Message Extension               |     6 | current Teams selector path, two languages, lifecycle boundaries, and launch profiles        |
+| `general-teams-agent.yml`             | General Teams Agent                   |    17 | both LLM branches, three languages, Teams lifecycle matrix, Playground, and Copilot samples  |
 | `da-no-action.yml`                    | Declarative Agent                     |     1 | negative file assertions, Copilot agent discoverability                                      |
 | `da-mcp-server.yml`                   | Declarative Agent with MCP action     |     3 | conditional auth inputs, pipeline mutations, Copilot discoverability                         |
 | `da-api-plugin-from-scratch.yml`      | Declarative Agent with new API action |     2 | language branches and no-auth API plugin output                                              |
@@ -48,13 +49,17 @@ Authoring these fixtures exposed six gaps in the first contract draft:
    proves capability outcomes.
 
 The default setup parses, validates, and expands these sources, then resolves their semantic steps
-through the compiler-owned adapter and reusable components into forty-six independent runnable VScUse
+through the compiler-owned adapter and reusable components into sixty-three independent runnable VScUse
 plans. The case YAML is the only authored template/scenario source. Setup prints the generated-plan
 diff before transactionally updating only manifest-owned files. A custom semantic-step adapter may
 still be injected by focused compiler and writer tests.
 
-Sources that require compatibility switches declare unique `NAME=true` or `NAME=false` entries in
-`featureFlags`; the compiler emits the existing VScUse `feature_flag:` plan metadata convention.
+Sources that require the same compatibility switch in every case declare unique `NAME=true` or
+`NAME=false` entries in root `featureFlags`. A case that alone needs a switch declares its own
+`featureFlags`; the compiler merges those with the root defaults and emits the existing VScUse
+`feature_flag:` plan metadata convention only for that generated plan. Before execution,
+`engine/prepare-vscuse-config.cjs` copies those tags into a temporary run config without changing
+the shared config or another case's environment.
 
 General scenario identity resolution is not implemented yet; the current fixtures retain their
 checked-in product or engineering scenario IDs. Local MCP selection is omitted until the test

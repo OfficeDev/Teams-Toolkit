@@ -1037,7 +1037,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the multi-select prompt titled Select Operation(s) Copilot Can Interact with has finished loading and lists at least one selectable option.",
+      "description": "@assertion the multi-select prompt titled Select Operation(s) Copilot Can Interact with has finished loading and lists at least one selectable option: an option row with a text label beside a square selection control. The selection-count badge reports how many options are selected, not how many options are available.",
       "content_refs": [],
       "timeout": 120,
       "retry_count": 0,
