@@ -3,7 +3,15 @@
 
 import { hooks } from "@feathersjs/hooks";
 import { assert, vi } from "vitest";
-import { ErrorContextMW, globalVars, setErrorContext, setTools } from "../../src/common/globalVars";
+import {
+  ErrorContextMW,
+  createContext,
+  globalVars,
+  setErrorContext,
+  setTools,
+} from "../../src/common/globalVars";
+import { createDriverContext } from "../../src/component/driver/util/utils";
+import { Platform, Tools } from "@microsoft/teamsfx-api";
 import "../../src/component/feature/sso";
 import { MockTools } from "../core/utils";
 
@@ -15,6 +23,26 @@ describe("globalVars", () => {
   });
   afterEach(async () => {
     vi.restoreAllMocks();
+  });
+
+  it("createContext should allow an undefined telemetry reporter", () => {
+    const toolsWithoutTelemetry: Tools = { ...new MockTools(), telemetryReporter: undefined };
+    setTools(toolsWithoutTelemetry);
+
+    const context = createContext();
+
+    assert.isUndefined(context.telemetryReporter);
+  });
+  it("createDriverContext should allow an undefined telemetry reporter", () => {
+    const toolsWithoutTelemetry: Tools = { ...new MockTools(), telemetryReporter: undefined };
+    setTools(toolsWithoutTelemetry);
+
+    const context = createDriverContext({
+      platform: Platform.CLI,
+      projectPath: "test-project",
+    });
+
+    assert.isUndefined(context.telemetryReporter);
   });
 
   describe("setErrorContext", () => {

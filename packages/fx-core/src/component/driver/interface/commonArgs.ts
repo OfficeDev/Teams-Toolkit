@@ -18,7 +18,7 @@ export interface DriverContext {
   ui: UserInteraction | undefined;
   progressBar: IProgressHandler | undefined;
   logProvider: LogProvider;
-  telemetryReporter: TelemetryReporter;
+  telemetryReporter?: TelemetryReporter;
   projectPath: string;
   platform: Platform;
 }

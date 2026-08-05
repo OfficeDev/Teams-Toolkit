@@ -9,6 +9,7 @@ import {
   AdaptiveCardGenerator,
   ErrorResult,
   ErrorType,
+  ProjectType,
   SpecParser,
   Utils,
   ValidationStatus,
@@ -1924,6 +1925,83 @@ describe("listOperations", async () => {
 
     const res = await openApiSpecHelper.listOperations(context, "", inputs, true, false, "");
     chai.expect(res.isOk()).to.be.true;
+  });
+
+  it("listOperations succeeds without a telemetry reporter", async () => {
+    const context = createContext();
+    context.telemetryReporter = undefined;
+    const inputs = {
+      "custom-copilot-rag": "custom-copilot-rag-customApi",
+      platform: Platform.VSCode,
+    };
+    vi.spyOn(openApiSpecHelper, "formatValidationErrors").mockResolvedValue([]);
+    vi.spyOn(openApiSpecHelper, "logValidationResults").mockResolvedValue();
+    vi.spyOn(SpecParser.prototype, "validate").mockResolvedValue({
+      status: ValidationStatus.Valid,
+      warnings: [],
+      errors: [],
+      specHash: "xxx",
+    });
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
+      APIs: [],
+      allAPICount: 1,
+      validAPICount: 0,
+    });
+
+    const res = await openApiSpecHelper.listOperations(context, "", inputs, true, false, "");
+
+    chai.expect(res.isOk()).to.be.true;
+  });
+
+  it("generateFromApiSpec succeeds without a telemetry reporter", async () => {
+    const context = createContext();
+    context.telemetryReporter = undefined;
+    const specParser = {
+      validate: vi.fn().mockResolvedValue({
+        status: ValidationStatus.Valid,
+        warnings: [],
+        errors: [],
+        specHash: "hash",
+      }),
+      generate: vi.fn().mockResolvedValue({
+        allSuccess: true,
+        warnings: [],
+      }),
+    } as unknown as SpecParser;
+
+    const res = await openApiSpecHelper.generateFromApiSpec(
+      specParser,
+      "manifest.json",
+      {
+        platform: Platform.CLI,
+        [QuestionNames.ApiOperation]: ["getPet"],
+      },
+      context,
+      "test",
+      ProjectType.SME,
+      {
+        destinationApiSpecFilePath: "openapi.yaml",
+        responseTemplateFolder: "responseTemplates",
+      },
+      "openapi.yaml"
+    );
+
+    chai.expect(res.isOk()).to.be.true;
+  });
+
+  it("logValidationResults succeeds without a telemetry reporter", () => {
+    const context = createContext();
+    context.telemetryReporter = undefined;
+
+    openApiSpecHelper.logValidationResults(
+      ProjectType.Copilot,
+      [],
+      [],
+      context,
+      false,
+      false,
+      "hash"
+    );
   });
 
   it("will show invalid api reasons", async () => {

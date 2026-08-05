@@ -1,12 +1,13 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { InputsWithProjectPath, Platform, Stage } from "@microsoft/teamsfx-api";
+import { InputsWithProjectPath, ok, Platform, Stage } from "@microsoft/teamsfx-api";
 import fs from "fs-extra";
 import { Container } from "typedi";
 import * as utils from "../../../src/common/globalVars";
 import { setTools } from "../../../src/common/globalVars";
 import "../../../src/component/feature/sso";
+import * as createAuthFilesModule from "../../../src/component/feature/createAuthFiles";
 import * as templateUtils from "../../../src/component/generator/utils";
 import { ComponentNames } from "../../../src/component/migrate";
 import { MockTools, randomAppName } from "../../core/utils";
@@ -40,6 +41,40 @@ describe("SSO can add in VS V3 project", () => {
     vi.spyOn(fs, "pathExists").mockResolvedValue(false);
     const ssoRes = await component.add(context, inputs);
     assert.isTrue(ssoRes.isErr() && ssoRes.error.name === "FileNotFoundError");
+  });
+
+  it("add sso failure is safe without a telemetry reporter", async () => {
+    const component = Container.get(ComponentNames.SSO) as any;
+    const contextWithoutTelemetry = { ...context, telemetryReporter: undefined };
+    const inputs: InputsWithProjectPath = {
+      projectPath: "projectPath",
+      platform: Platform.VS,
+      language: "csharp",
+      "app-name": appName,
+      stage: Stage.addFeature,
+    };
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+
+    const ssoRes = await component.add(contextWithoutTelemetry, inputs);
+
+    assert.isTrue(ssoRes.isErr() && ssoRes.error.name === "FileNotFoundError");
+  });
+
+  it("add sso succeeds without a telemetry reporter", async () => {
+    const component = Container.get(ComponentNames.SSO) as any;
+    const contextWithoutTelemetry = { ...context, telemetryReporter: undefined };
+    const inputs: InputsWithProjectPath = {
+      projectPath: "projectPath",
+      platform: Platform.VS,
+      language: "csharp",
+      "app-name": appName,
+      stage: Stage.addFeature,
+    };
+    vi.spyOn(createAuthFilesModule, "createAuthFiles").mockResolvedValue(ok(undefined));
+
+    const ssoRes = await component.add(contextWithoutTelemetry, inputs);
+
+    assert.isTrue(ssoRes.isOk());
   });
 
   it("add sso failed for VS v3 project due to unexpected error", async () => {

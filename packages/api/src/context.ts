@@ -9,7 +9,7 @@ import { ExpServiceProvider } from "./utils/exp";
 export interface Context {
   userInteraction: UserInteraction;
   logProvider: LogProvider;
-  telemetryReporter: TelemetryReporter;
+  telemetryReporter?: TelemetryReporter;
   expServiceProvider?: ExpServiceProvider;
   tokenProvider?: TokenProvider;
   projectPath?: string;

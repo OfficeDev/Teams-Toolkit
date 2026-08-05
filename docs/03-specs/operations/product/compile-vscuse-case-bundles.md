@@ -173,7 +173,7 @@ only duplicate information.
 | `version`                                               | Required; first version is `1`.                                                                                                                                                                                                       |
 | `featureFlags`                                          | Optional non-empty list of unique `NAME=true` or `NAME=false` compatibility switches inherited by every case and emitted as `feature_flag:` plan metadata.                                                                            |
 | `steps`                                                 | Required non-empty map of unique step names to atomic semantic step definitions.                                                                                                                                                      |
-| `steps.<name>.type`                                     | Required; one of `scaffold`, `login`, `provision`, `deploy`, `target`, `open`, or `checks`.                                                                                                                                           |
+| `steps.<name>.type`                                     | Required; one of `scaffold`, `login`, `provision`, `deploy`, `removeWorkspaceFile`, `target`, `open`, or `checks`.                                                                                                                    |
 | `steps.<name>.with`                                     | Step-local input consumed by the definition's semantic adapter. Provision and check inputs are closed; see current implementation limits for other nested objects.                                                                    |
 | `cases`                                                 | One or more explicit cases for the file's single scaffold template. V1 has no matrix expansion.                                                                                                                                       |
 | `case.id`                                               | Required and unique within the file. Combined with the resolved scaffold template for the generated plan name.                                                                                                                        |
@@ -208,6 +208,8 @@ only duplicate information.
 | `chat.expect.notContains`                               | Optional non-empty list of literal visible substrings that must all be absent from the completed response.                                                                                                                            |
 | `browser.expect.role`                                   | Required non-empty accessible role for an element visible after a target operation.                                                                                                                                                   |
 | `browser.expect.name`                                   | Required non-empty accessible name for that visible browser element.                                                                                                                                                                  |
+| `page.expect.contains`                                  | Required non-empty list of literal visible substrings that must all occur on the page the current target opened.                                                                                                                      |
+| `removeWorkspaceFile.with.path`                         | Required workspace-relative path to one generated file the operation deletes, so a later operation can be observed recreating it.                                                                                                     |
 
 Step definitions own all authored operation input. A case owns only case metadata and the ordered
 names of the definitions it executes. Definitions are atomic: they cannot reference other steps or
@@ -271,7 +273,7 @@ cases:
 ```
 
 V1 step types are `scaffold`, `login`, `provision`, `deploy`, `pythonEnvironment`,
-`localEnvironment`, `localUserEnvironment`, `target`, `open`, and `checks`.
+`localEnvironment`, `localUserEnvironment`, `removeWorkspaceFile`, `target`, `open`, and `checks`.
 `scaffold` accepts `template` and `answers`; `login`, `provision`, and `target` accept their
 same-named operation input. `deploy` has no semantic input, although current validation ignores an
 authored `with` object. `pythonEnvironment` requires exactly one input, `with.interpreter`, the
@@ -282,6 +284,10 @@ which is `.localConfigs` for Node projects and `.env` for Python projects.
 `localUserEnvironment` accepts the same closed mapping shape but replaces an existing variable in
 `env/.env.local.user`, so a profile-owned local provision can resolve the value before it writes
 runtime configuration. It accepts no authored path and never creates a missing variable.
+`removeWorkspaceFile` requires exactly one input, `with.path`, and deletes that project-relative
+file after the post-scaffold file check has proven it exists. It exists so a case can observe a
+later operation recreating a file the template ships, which cannot be observed while the scaffolded
+copy is still on disk.
 `open` requires `with.kind` and
 `with.destination`; the current template, target profile, and those two values select a compatible
 adapter. The profile already identifies the host surface, so `open` does not repeat Teams or
@@ -308,6 +314,10 @@ separate check context field:
   combined with either content expectation.
 - `browser` requires a preceding `target` and asserts one visible element by its accessible `role`
   and `name`. It does not expose coordinates, selectors, screenshots, or free-form source tags.
+- `page` uses the page the current target opened and requires `page-ready` state. A preceding `open`
+  with `destination: page` establishes that state. It requires a non-empty `expect.contains` list of
+  literal visible substrings and emits one assertion per item in authored order. It names visible
+  content only; page URLs, frames, and reload mechanics belong to the open adapter.
 - `chat` uses the current target's chat adapter and requires `chat-ready` state. A preceding `open`
   establishes that state for the current Teams or Copilot profile. `allowAction: true` is supported
   only by the Copilot adapter after a capability-producing message; it accepts exactly one recorded
@@ -356,7 +366,10 @@ adapter.
 
 `open` is a separate convergent operation over the current target. `kind` identifies whether the
 surface activates an `app` or an `agent`; `destination` identifies whether success must produce
-`chat-ready` or `page-ready`; current adapters support only `chat-ready`. The compiler selects a compatible adapter for one supported,
+`chat-ready` or `page-ready`. A target profile registers one activation adapter per destination it
+can reach, because one launch title serves more than one scaffold package: `Debug in Teams (Chrome)`
+opens a conversation for a bot and a tab page for a tab, and only the case knows which of the two it
+scaffolded. The compiler selects a compatible adapter for one supported,
 deterministic entry state, then verifies the requested destination state. An unsupported state,
 including direct Teams Open, an already-active Teams experience, Copilot agent selection, or a
 permission prompt, fails adapter resolution until an isolated recording proves its transition.
@@ -528,32 +541,51 @@ case YAML. Open components converge one deterministic entry state to the request
 state. Chat components start from `chat-ready`, submit one message through the current host, and
 apply host-neutral assertions to the resulting assistant response. V1 includes:
 
-| Operation | Host surface | Entry state          | Component file                      | Converged state      |
-| --------- | ------------ | -------------------- | ----------------------------------- | -------------------- |
-| `open`    | Any          | Already ready        | `assert-ready.json.tpl`             | Adapter-owned        |
-| `open`    | Teams        | App details popup    | `teams/add-and-open-app.json.tpl`   | `chat-ready`         |
-| `chat`    | Teams        | `chat-ready`         | `teams/send-message.json.tpl`       | `message-submitted`  |
-| `chat`    | Copilot      | `chat-ready`         | `copilot/send-message.json.tpl`     | `message-submitted`  |
-| `chat`    | Copilot      | Consent prompt       | `copilot/allow-action.json.tpl`     | Consent dismissed    |
-| `chat`    | Playground   | `chat-ready`         | `playground/send-message.json.tpl`  | `message-submitted`  |
-| `browser` | Any          | Target ready         | `assert-element.json.tpl`           | Element visible      |
-| `chat`    | Any          | `message-submitted`  | `chat/assert-replied.json.tpl`      | `assistant-response` |
-| `chat`    | Any          | `assistant-response` | `chat/assert-contains.json.tpl`     | `assistant-response` |
-| `chat`    | Any          | `assistant-response` | `chat/assert-not-contains.json.tpl` | `assistant-response` |
+| Operation | Host surface | Entry state          | Component file                               | Converged state      |
+| --------- | ------------ | -------------------- | -------------------------------------------- | -------------------- |
+| `open`    | Any          | Already ready        | `assert-ready.json.tpl`                      | Adapter-owned        |
+| `open`    | Teams        | Teams page           | `teams/trust-local-tab-certificate.json.tpl` | Teams page           |
+| `open`    | Teams        | App details popup    | `teams/add-and-open-app.json.tpl`            | Adapter-owned        |
+| `open`    | Teams        | Local access prompt  | `teams/allow-local-device-access.json.tpl`   | Teams app tab        |
+| `chat`    | Teams        | `chat-ready`         | `teams/send-message.json.tpl`                | `message-submitted`  |
+| `chat`    | Copilot      | `chat-ready`         | `copilot/send-message.json.tpl`              | `message-submitted`  |
+| `chat`    | Copilot      | Consent prompt       | `copilot/allow-action.json.tpl`              | Consent dismissed    |
+| `chat`    | Playground   | `chat-ready`         | `playground/send-message.json.tpl`           | `message-submitted`  |
+| `browser` | Any          | Target ready         | `assert-element.json.tpl`                    | Element visible      |
+| `page`    | Any          | `page-ready`         | `page/assert-contains.json.tpl`              | `page-ready`         |
+| `chat`    | Any          | `message-submitted`  | `chat/assert-replied.json.tpl`               | `assistant-response` |
+| `chat`    | Any          | `assistant-response` | `chat/assert-contains.json.tpl`              | `assistant-response` |
+| `chat`    | Any          | `assistant-response` | `chat/assert-not-contains.json.tpl`          | `assistant-response` |
 
 `assert-ready.json.tpl` emits only the adapter's semantic readiness assertion. The Teams app details
 component asserts that the popup shows its primary action button, clicks that control, asserts that
-the dialog it opened shows its Open control, clicks Open, then asserts the requested chat
-destination is ready. The generic adapter accepts `readySubject`; the Teams adapter takes no such
-parameter, because every profile that reaches it converges on the same Teams conversation.
+the dialog it opened shows its Open control, clicks Open, then asserts the converged subject its
+adapter supplies. The generic adapter accepts `readySubject`; the Teams adapter accepts
+`convergedSubject`, because the transition is the same for every profile that reaches it while what
+it converges on is not: a bot or message extension opens into the app's conversation and a tab opens
+into the app's tab page.
 
-That closing assertion names the conversation the app opened into rather than the target's
+That closing assertion names what the app opened into rather than the target's
 app-details subject. The target asserts that page as the entry state this component consumes, and
-the two clicks between them leave it for the app's own conversation, so a subject that already held
+the two clicks between them leave it, so a subject that already held
 before the transition reports nothing about whether the transition happened. The recording this
 component comes from closes the same transition by asserting the app's name is on screen, which the
 conversation heading carries alongside the message box that distinguishes it from the page the
 component started on.
+
+A local Teams tab needs two extra components around the shared add-and-open transition. Its local lifecycle sets
+`TAB_ENDPOINT` to `https://localhost:3978` and the manifest points the static tab at
+`${{TAB_ENDPOINT}}/tabs/home`, so the frame Teams opens loads from a self-signed origin Chrome has
+never been told to trust and stays blank. `teams/trust-local-tab-certificate.json.tpl` opens that
+origin in a separate browser tab, accepts the interstitial, and returns to the Teams tab before the
+app is added, so the frame renders on its first load. Trusting the origin afterwards leaves a frame
+that has already failed, and the only way back is the app's own reload command, which races the
+browser permission prompt Teams raises on the same page. After the app opens,
+`teams/allow-local-device-access.json.tpl` asserts that `teams.cloud.microsoft` is asking to access
+other apps and services on the device, clicks its Allow button, and asserts that the prompt closes
+before page content is checked. The components own the URL and screenshot-recorded controls; a case
+authors only `destination: page`. The remote profiles emit neither component, because a provisioned
+tab is served from a public endpoint with a valid certificate and does not access the local device.
 
 Neither of the component's first two assertions names a caption. Teams captions the popup's primary
 action `Add` for an account that has not installed the app and `Open` for one that has, and titles
@@ -1065,7 +1097,8 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
   without implicitly adding or opening an experience.
 - An `open` operation resolves a compatible adapter from the current target profile, authored
   `kind` and `destination`, and one deterministic entry state. It performs the semantic activation
-  when needed and verifies `chat-ready`. A `page-ready` destination requires a future adapter.
+  when needed and verifies the requested readiness. A profile registers at most one adapter per
+  destination, and a destination it does not register fails resolution.
 - The Teams fresh-app adapter handles only Add. Direct Open, already-active Teams
   experiences, Copilot agent selection, and permission prompts require separate recorded adapters;
   until those adapters exist, their entry states fail resolution. Each future adapter must own only
@@ -1084,8 +1117,8 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
   structure are outside this assertion unless a future dedicated check type defines them.
 - A `chat` assertion uses the selected profile's surface adapter and executes at its exact authored
   position after `chat-ready` is reached; checks are never appended implicitly. It sends one
-  message, waits for one completed response, then applies its response expectations. Page
-  assertions are not implemented in V1.
+  message, waits for one completed response, then applies its response expectations. A `page`
+  assertion executes the same way after `page-ready` is reached and claims only visible content.
 
 ## Output and Invariants
 
@@ -1160,7 +1193,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-31  | Given `provision`, `deploy`, or `target`, compilation composes only compatible UI-surface components in semantic operation order; visible commands use F1, distinct confirmation entry states do not share fallbacks, lifecycle success is asserted, and target excludes semantic activation while allowing profile-owned browser authentication.                                                                                                                                                                                                                                  |
 | VCB-32  | Given ARM inputs on `provision`, compilation emits the fixed supported ARM prompt sequence, requires Azure login and every supported input, and rejects missing, duplicate, or unsupported inputs before plan output.                                                                                                                                                                                                                                                                                                                                                              |
 | VCB-33  | Given setup compilation succeeds for all sources, setup prints the deterministic generated-plan diff and transactionally updates only manifest-owned files in `plans/`; unchanged output performs no writes, compilation errors, manual-plan collisions, or concurrent changes leave prior content unchanged, and a failed rollback preserves a recoverable backup.                                                                                                                                                                                                                |
-| VCB-34  | Given the checked-in case sources and no injected `compileStep`, setup reads no external template contracts and uses the semantic compiler plus component renderer to emit sixty-nine deterministic current-format runnable plans; every operation resolves through a supported adapter, removed manifest-owned cases are deleted, and a second setup reports no generated-plan changes.                                                                                                                                                                                           |
+| VCB-34  | Given the checked-in case sources and no injected `compileStep`, setup reads no external template contracts and uses the semantic compiler plus component renderer to emit ninety-one deterministic current-format runnable plans; every operation resolves through a supported adapter, removed manifest-owned cases are deleted, and a second setup reports no generated-plan changes.                                                                                                                                                                                           |
 | VCB-35  | Given a `multiSelect` answer whose value is the literal `all`, compilation emits one component that focuses the prompt's select-all checkbox, checks every option, and confirms the prompt exactly once; any other value fails before plan output.                                                                                                                                                                                                                                                                                                                                 |
 | VCB-36  | Given `provision.with.environment: none`, compilation omits environment selection while keeping the remaining provision recipe; omitting the input emits the recorded `dev` selection, and any other value fails before plan output.                                                                                                                                                                                                                                                                                                                                               |
 | VCB-37  | Given any scaffold, compilation focuses the toolkit view through the command component after initialization, waits for the toolkit Welcome editor to finish loading, and only then executes the create command, so no editor can hold keyboard focus when the first scaffold quick pick opens.                                                                                                                                                                                                                                                                                     |
@@ -1240,6 +1273,14 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-112 | Given a local environment step, it writes the variable into whichever runtime environment file the project's local lifecycle generates, because Python projects generate `.env` where Node projects generate `.localConfigs`.                                                                                                                                                                                                                                                                                                                                                      |
 | VCB-113 | Given a Teams Agent with Data case on the OpenAI branch, its chat check asserts no grounded answer, because the generated project hardcodes an OpenAI model name that the redirected Azure OpenAI resource does not host as a deployment; the Azure OpenAI branch keeps the error-free reply assertion.                                                                                                                                                                                                                                                                            |
 | VCB-114 | Given the two Node Azure AI Search cases on the OpenAI branch, they overwrite the OpenAI key with a fake value instead of redirecting the base URL, and assert the resulting error reply, because that is the authentication-failure coverage their legacy plans carried.                                                                                                                                                                                                                                                                                                          |
+| VCB-115 | Given a Tab scaffold answering `teamsOtherAppType: non-sso-tab`, compilation emits `Teams Agent or App Using Microsoft Teams SDK` → `Other Teams Capabilities` → `Tab` and no language selection, because the Tab package ships one language and the toolkit therefore shows no language prompt.                                                                                                                                                                                                                                                                                   |
+| VCB-116 | Given a target profile, it registers at most one activation adapter per destination it can reach, and an authored `open` resolves the adapter matching its `destination` and `kind`; `Debug in Teams (Chrome)` therefore reaches `chat-ready` for a bot and `page-ready` for a tab, while a destination the profile does not register fails resolution.                                                                                                                                                                                                                            |
+| VCB-117 | Given a Teams `open`, the add-and-open component's closing assertion is the converged subject its adapter supplies, so the same recorded transition closes on the app's conversation for `destination: chat` and on the app's tab page for `destination: page`, and neither run asserts the app-details page the target already asserted.                                                                                                                                                                                                                                          |
+| VCB-118 | Given a `Debug in Teams (Chrome)` open with `destination: page`, the adapter accepts the local development certificate at `https://localhost:3978` in a separate browser tab before it adds and opens the app, then allows the `teams.cloud.microsoft` request to access other apps and services on the device before claiming `page-ready`; the remote tab profile emits neither local-only step because its public endpoint carries a valid certificate and does not access the local device.                                                                                    |
+| VCB-119 | Given a `page` check, compilation requires the preceding sequence to have reached `page-ready`, requires a non-empty `expect.contains` list, and emits one visible-content assertion per item in authored order; a `page` check without a preceding page `open` fails before plan output.                                                                                                                                                                                                                                                                                          |
+| VCB-120 | Given a `removeWorkspaceFile` operation, compilation emits one workspace mutation that deletes the authored project-relative file and fails when the path is absent, absolute, or escapes the project, so a case can prove that a later local debug recreates a file the template ships.                                                                                                                                                                                                                                                                                           |
+| VCB-121 | Given a `teams-collaborator-agent` scaffold, the authored selector path resolves `Teams Agents and Apps` then `Teams Collaborator Agent` followed by the Azure OpenAI key, endpoint, and deployment name inputs, and authors no LLM-service and no programming-language answer, because that template ships TypeScript only and reads Azure OpenAI settings directly.                                                                                                                                                                                                              |
+| VCB-122 | Given the Teams Collaborator Agent bundle, its remote Teams case selects `Launch Remote (Chrome)` and stops once the deployed app conversation opens, while its local Teams case selects `Debug in Teams (Chrome)` and asserts one reply in that personal conversation, where the agent answers without an at-mention.                                                                                                                                                                                                                                                             |
 
 ## Boundary
 

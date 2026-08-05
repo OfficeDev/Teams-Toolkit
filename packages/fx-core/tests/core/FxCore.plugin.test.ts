@@ -3810,7 +3810,7 @@ describe("addAuthAction", async () => {
     vi.restoreAllMocks();
   });
 
-  it("happy path: successfully add auth action for api key", async () => {
+  it("happy path: successfully add auth action for api key without telemetry", async () => {
     const appName = await mockV3Project();
     const inputs: Inputs = {
       platform: Platform.VSCode,
@@ -3855,7 +3855,9 @@ describe("addAuthAction", async () => {
     vi.spyOn(fs, "writeJson").mockImplementation(async (path: string, data: any) => {
       assert.equal(data.runtimes.length, 1);
     });
-    const core = new FxCore(tools);
+    const toolsWithoutTelemetry = new MockTools();
+    toolsWithoutTelemetry.telemetryReporter = undefined;
+    const core = new FxCore(toolsWithoutTelemetry);
     const result = await core.addAuthAction(inputs);
     assert.isTrue(result.isOk());
   });
