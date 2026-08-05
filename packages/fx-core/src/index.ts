@@ -18,6 +18,12 @@ installGlobalProxyInterceptor();
 
 export { GraphClient } from "./client/graphClient";
 export { teamsDevPortalClient } from "./client/teamsDevPortalClient";
+export {
+  getDefaultAuthorityUrl,
+  getEntraEndpoint,
+  getTenantedAuthorityUrl,
+  isSovereignHigh,
+} from "./common/accountUtils";
 export { askSubscription } from "./common/azureUtils";
 export {
   AppStudioScopes,
@@ -27,8 +33,8 @@ export {
   GraphReadUserScopes,
   GraphScopes,
   ListSensitivityLabelScope,
-  SPFxScopes,
   MosServiceScope,
+  SPFxScopes,
 } from "./common/constants";
 export { Correlator } from "./common/correlator";
 export {
@@ -37,12 +43,6 @@ export {
   FeatureFlags,
   isFeatureFlagEnabled,
 } from "./common/featureFlags";
-export {
-  getEntraEndpoint,
-  getDefaultAuthorityUrl,
-  getTenantedAuthorityUrl,
-  isSovereignHigh,
-} from "./common/accountUtils";
 export { globalStateGet, globalStateUpdate } from "./common/globalState";
 export { AadSet } from "./common/globalVars";
 export { getDefaultString, getLocalizedString } from "./common/localizeUtils";
@@ -118,14 +118,14 @@ export { PackageService } from "./component/m365/packageService";
 export * from "./component/middleware/actionExecutionMW";
 export { outputScaffoldingWarningMessage } from "./component/utils/common";
 export { DotenvOutput, envUtil } from "./component/utils/envUtil";
-export { metadataUtil } from "./component/utils/metadataUtil";
+export { MCP_AUTH_PLACEHOLDER_WARNING_TYPES } from "./component/utils/mcpAuthScaffolder";
 export {
   MCPAuthProbeResult,
   MCPEndpointStatus,
   probeMCPServerAuth,
 } from "./component/utils/mcpToolFetcher";
-export { MCP_AUTH_PLACEHOLDER_WARNING_TYPES } from "./component/utils/mcpAuthScaffolder";
-export { ODRTool, ODRServer, ODRProvider } from "./component/utils/odrProvider";
+export { metadataUtil } from "./component/utils/metadataUtil";
+export { ODRProvider, ODRServer, ODRTool } from "./component/utils/odrProvider";
 export { pathUtils } from "./component/utils/pathUtils";
 export { newResourceGroupOption, resourceGroupHelper } from "./component/utils/ResourceGroupHelper";
 export { CoreCallbackFunc } from "./core/callback";
@@ -133,6 +133,7 @@ export { CollaborationConstants } from "./core/collaborator";
 export { environmentManager } from "./core/environment";
 export { environmentNameManager } from "./core/environmentName";
 export { FxCore } from "./core/FxCore";
+export * from "./core/FxCoreClient";
 export { PreProvisionResForVS, VersionCheckRes } from "./core/types";
 export * from "./error/index";
 export * from "./question/constants";

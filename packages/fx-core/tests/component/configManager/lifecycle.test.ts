@@ -164,6 +164,52 @@ class DriverThatUsesWriteToEnvironmentFileField implements StepDriver {
 }
 
 describe("v3 lifecyle", () => {
+  describe("when execution is cancelled", () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it("execute_AbortedAfterDriver_StopsBeforeNextDriver", async () => {
+      const controller = new AbortController();
+      const firstDriver: StepDriver = {
+        execute: vi.fn(async () => {
+          controller.abort();
+          return { result: ok(new Map<string, string>()), summaries: [] };
+        }),
+      };
+      const secondDriver: StepDriver = {
+        execute: vi.fn(async () => ({
+          result: ok(new Map<string, string>()),
+          summaries: [],
+        })),
+      };
+      vi.spyOn(Container, "has").mockReturnValue(true);
+      vi.spyOn(Container, "get").mockImplementation((token: unknown) =>
+        String(token) === "FirstDriver" ? firstDriver : secondDriver
+      );
+      const lifecycle = new Lifecycle(
+        "provision",
+        [
+          { uses: "FirstDriver", with: {} },
+          { uses: "SecondDriver", with: {} },
+        ],
+        "1.0.0"
+      );
+
+      const execution = await lifecycle.execute({
+        ...mockedDriverContext,
+        signal: controller.signal,
+      });
+
+      assert(
+        execution.result.isErr() &&
+          execution.result.error.kind === "Failure" &&
+          execution.result.error.error.name === "UserCancel"
+      );
+      assert.equal((secondDriver.execute as ReturnType<typeof vi.fn>).mock.calls.length, 0);
+    });
+  });
+
   describe("when driver name not found", () => {
     before(() => {
       vi.spyOn(Container, "has").mockReturnValue(false);

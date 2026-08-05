@@ -47,6 +47,68 @@ describe("teamsApp/validateAppPackage", async () => {
     vi.spyOn(metadataUtil, "parseManifest").mockReturnValue(undefined);
   });
 
+  it("validateForClient_RejectedPackage_ReturnsStructuredOutcome", async () => {
+    const controller = new AbortController();
+    const validationResult = {
+      status: "Rejected",
+      errors: [
+        {
+          id: "invalid-manifest",
+          content: "The manifest is invalid.",
+          filePath: "manifest.json",
+          shortCodeNumber: 1,
+          title: "Invalid manifest",
+          validationCategory: "manifest",
+        },
+      ],
+      warnings: [],
+      notes: [],
+      addInDetails: {
+        displayName: "Test app",
+        developerName: "Test developer",
+        version: "1.0.0",
+        manifestVersion: "1.22",
+      },
+    };
+    const validationSpy = vi
+      .spyOn(teamsDevPortalClient, "partnerCenterAppPackageValidation")
+      .mockResolvedValue(validationResult);
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockResolvedValue(Buffer.from("package"));
+
+    const result = await teamsAppDriver.validateForClient(
+      { appPackagePath: "fakePath" },
+      { ...mockedDriverContext, signal: controller.signal }
+    );
+
+    chai.assert(result.isOk());
+    if (result.isOk()) {
+      expect(result.value).toEqual(validationResult);
+    }
+    expect(validationSpy).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(Buffer),
+      controller.signal
+    );
+  });
+
+  it("validateForClient_PreAbortedSignal_DoesNotInvokeService", async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const validationSpy = vi.spyOn(teamsDevPortalClient, "partnerCenterAppPackageValidation");
+
+    const result = await teamsAppDriver.validateForClient(
+      { appPackagePath: "fakePath" },
+      { ...mockedDriverContext, signal: controller.signal }
+    );
+
+    chai.assert(result.isErr());
+    if (result.isErr()) {
+      expect(result.error.name).toBe("UserCancel");
+    }
+    expect(validationSpy).not.toHaveBeenCalled();
+  });
+
   it("file not found - app package", async () => {
     const args: ValidateAppPackageArgs = {
       appPackagePath: "fakepath",
