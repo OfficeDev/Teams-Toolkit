@@ -78,7 +78,7 @@ function readJson(filePath) {
 
 // GitHub API GET with optional token (higher rate limit + private access).
 async function githubApi(urlPath) {
-  const token = process.env.GITHUB_TOKEN || "";
+  const token = process.env.GH_TOKEN || "";
   const headers = {
     Accept: "application/vnd.github+json",
     "User-Agent": "office-addin-manifest-drift-check",
