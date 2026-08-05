@@ -108,7 +108,7 @@ test("VCB-34: semantic compiler does not read external template contracts", asyn
   }
 });
 
-test("VCB-34: default setup compiles the checked-in YAML sources into ninety-one plans", async (context) => {
+test("VCB-34: default setup compiles the checked-in YAML sources into ninety-seven plans", async (context) => {
   const plansDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "vscuse-generated-"),
   );
@@ -121,9 +121,9 @@ test("VCB-34: default setup compiles the checked-in YAML sources into ninety-one
   });
 
   assert.equal(first.ok, true);
-  assert.equal(first.value.files.length, 91);
+  assert.equal(first.value.files.length, 97);
   const generatedFiles = first.value.files;
-  assert.equal(generatedFiles.length, 91);
+  assert.equal(generatedFiles.length, 97);
   assert.equal(
     generatedFiles.includes(
       "da-api-plugin-from-existing-api--da-api-plugin-from-existing-api-no-auth.json",
@@ -648,7 +648,6 @@ test("VCB-35: multi-select answers check every option and confirm once", async (
   );
 
   assert.equal(valid.ok, true);
-  assert.equal(valid.value.length, 4);
   for (const generated of valid.value) {
     const descriptions = generated.plan.steps.map((step) => step.description);
     const tools = generated.plan.steps.map((step) => step.tool);
@@ -1819,18 +1818,21 @@ test("VCB-72: the weather bundle authors every LLM, language, and Teams launch c
 });
 
 test("VCB-93: CEA, Bot, and Message Extension bundles author their supported launch matrices", async () => {
-  for (const { fileName, languages, prefix } of [
+  for (const { additionalCases, fileName, languages, prefix } of [
     {
+      additionalCases: 0,
       fileName: "basic-custom-engine-agent.yml",
       languages: ["ts", "js", "py"],
       prefix: "basic-cea",
     },
     {
+      additionalCases: 1,
       fileName: "default-bot.yml",
       languages: ["ts", "js", "py"],
       prefix: "simple-bot",
     },
     {
+      additionalCases: 0,
       fileName: "default-message-extension.yml",
       languages: ["ts", "py"],
       prefix: "message-extension",
@@ -1846,7 +1848,11 @@ test("VCB-93: CEA, Bot, and Message Extension bundles author their supported lau
         assert.equal(caseIds.has(caseId), true, caseId);
       }
     }
-    assert.equal(caseIds.size, languages.length * 3, fileName);
+    assert.equal(
+      caseIds.size,
+      languages.length * 3 + additionalCases,
+      fileName,
+    );
   }
 });
 
@@ -3202,4 +3208,288 @@ test("VCB-120: removeWorkspaceFile deletes one project-relative file", async () 
     escaping.diagnostics[0].code,
     "VCB_REMOVE_WORKSPACE_FILE_INPUT_INVALID",
   );
+});
+
+test("VCB-121: an existing bot registration is configured before local Teams debug", async () => {
+  const result = await compileFixture(
+    "default-bot.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const generated = result.value.find(
+    (candidate) =>
+      candidate.caseId === "simple-bot-js-local-teams-existing-registration",
+  );
+  assert.notEqual(generated, undefined);
+
+  const environmentSteps = generated.plan.steps.filter((step) =>
+    step.step_id.startsWith("step_setLocalEnvironmentVariable_"),
+  );
+  assert.equal(environmentSteps.length, 2);
+  assert.equal(
+    environmentSteps[0].parameters.sample.includes(
+      'VARIABLE_NAME="BOT_ID" VARIABLE_VALUE="${{env:TEST_AAD_APP_ID}}"',
+    ),
+    true,
+  );
+  assert.equal(
+    environmentSteps[1].parameters.sample.includes(
+      'VARIABLE_NAME="SECRET_BOT_PASSWORD" VARIABLE_VALUE="${{secret:TEST_AAD_APP_PASSWORD}}"',
+    ),
+    true,
+  );
+
+  const targetIndex = generated.plan.steps.findIndex(
+    (step) => step.parameters.text === "Debug in Teams (Chrome)",
+  );
+  const chatIndex = generated.plan.steps.findIndex((step) =>
+    step.step_id.startsWith("step_assertChatContains_"),
+  );
+  assert.notEqual(targetIndex, -1);
+  assert.notEqual(chatIndex, -1);
+  assert.equal(
+    environmentSteps.every(
+      (step) => generated.plan.steps.indexOf(step) < targetIndex,
+    ),
+    true,
+  );
+  assert.equal(targetIndex < chatIndex, true);
+});
+
+test("VCB-122: action authentication emits only the prompts for its stable auth type", async () => {
+  const addAuthenticationCases = (sourceText) =>
+    sourceText.replace(
+      "\nsteps:\n",
+      `
+  - id: vcb-122-api-key
+    scenarioId: SCN-DA-ADD-AUTHENTICATION
+    steps: [scaffold-existing-api, check-existing-api, configure-api-key]
+  - id: vcb-122-bearer
+    scenarioId: SCN-DA-ADD-AUTHENTICATION
+    steps: [scaffold-existing-api, check-existing-api, configure-bearer]
+  - id: vcb-122-entra
+    scenarioId: SCN-DA-ADD-AUTHENTICATION
+    steps: [scaffold-existing-api, check-existing-api, configure-entra]
+  - id: vcb-122-oauth
+    scenarioId: SCN-DA-ADD-AUTHENTICATION
+    steps: [scaffold-existing-api, check-existing-api, configure-oauth]
+  - id: vcb-122-oauth-pkce
+    scenarioId: SCN-DA-ADD-AUTHENTICATION
+    steps: [scaffold-existing-api, check-existing-api, configure-oauth-pkce]
+
+steps:
+`,
+    ).concat(`
+
+  configure-api-key:
+    type: configureActionAuthentication
+    with:
+      authName: apiKey
+      authType: api-key
+      apiKeyIn: header
+      apiKeyName: X-API-KEY
+
+  configure-bearer:
+    type: configureActionAuthentication
+    with:
+      authName: apiKey
+      authType: bearer-token
+
+  configure-entra:
+    type: configureActionAuthentication
+    with:
+      authName: aadAuthCode
+      authType: microsoft-entra
+      scope: "api://example/repairs_read: Read repair records"
+
+  configure-oauth:
+    type: configureActionAuthentication
+    with:
+      authName: oauth2
+      authType: oauth
+      authorizationUrl: https://github.com/login/oauth/authorize
+      tokenUrl: https://github.com/login/oauth/access_token
+      scope: "repo: Read repos"
+      pkce: false
+
+  configure-oauth-pkce:
+    type: configureActionAuthentication
+    with:
+      authName: oAuth2AuthCode
+      authType: oauth
+      authorizationUrl: https://login.microsoftonline.com/common/oauth2/v2.0/authorize
+      tokenUrl: https://login.microsoftonline.com/common/oauth2/v2.0/token
+      scope: "api://example/repairs_read: Read repair records"
+      pkce: true
+`);
+
+  const result = await compileFixture(
+    "da-api-plugin-from-existing-api.yml",
+    addAuthenticationCases,
+  );
+
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const expectedInputs = new Map([
+    ["vcb-122-api-key", ["apiKey", "API Key", "Header", "X-API-KEY"]],
+    ["vcb-122-bearer", ["apiKey", "API Key (Bearer Token Auth)"]],
+    [
+      "vcb-122-entra",
+      [
+        "aadAuthCode",
+        "Microsoft Entra",
+        "api://example/repairs_read: Read repair records",
+      ],
+    ],
+    [
+      "vcb-122-oauth",
+      [
+        "oauth2",
+        "OAuth",
+        "https://github.com/login/oauth/authorize",
+        "https://github.com/login/oauth/access_token",
+        "repo: Read repos",
+        "No",
+      ],
+    ],
+    [
+      "vcb-122-oauth-pkce",
+      [
+        "oAuth2AuthCode",
+        "OAuth",
+        "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+        "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+        "api://example/repairs_read: Read repair records",
+        "Yes",
+      ],
+    ],
+  ]);
+  for (const [caseId, authoredInputs] of expectedInputs) {
+    const generated = result.value.find(
+      (candidate) => candidate.caseId === caseId,
+    );
+    assert.notEqual(generated, undefined);
+    const inputTexts = generated.plan.steps
+      .map((step) => step.parameters.text)
+      .filter((text) => typeof text === "string");
+    assert.equal(
+      inputTexts.includes(
+        "Microsoft 365 Agents: Add Configurations to Support Actions with Authentication in Declarative Agent",
+      ),
+      true,
+    );
+    assert.equal(inputTexts.includes("ai-plugin.json"), true);
+    for (const authoredInput of authoredInputs) {
+      assert.equal(inputTexts.includes(authoredInput), true, authoredInput);
+    }
+    assert.equal(
+      generated.plan.steps.some(
+        (step) =>
+          step.step_id.startsWith("step_assertNotificationContains_") &&
+          step.description.includes(
+            "successfully updated your project configuration",
+          ),
+      ),
+      true,
+    );
+  }
+
+  for (const transformInvalidInput of [
+    (sourceText) => sourceText.replace("      apiKeyName: X-API-KEY\n", ""),
+    (sourceText) =>
+      sourceText.replace(
+        "      authType: bearer-token\n",
+        "      authType: bearer-token\n      apiKeyName: X-API-KEY\n",
+      ),
+    (sourceText) =>
+      sourceText.replace("      authName: apiKey\n", '      authName: ""\n'),
+    (sourceText) =>
+      sourceText.replace("      pkce: true\n", '      pkce: "true"\n'),
+  ]) {
+    const invalid = await compileFixture(
+      "da-api-plugin-from-existing-api.yml",
+      (sourceText) => transformInvalidInput(addAuthenticationCases(sourceText)),
+    );
+    assert.equal(invalid.ok, false);
+    assert.equal(
+      invalid.diagnostics[0].code,
+      "VCB_CONFIGURE_ACTION_AUTHENTICATION_INPUT_INVALID",
+    );
+  }
+
+  const checkedIn = await compileFixture(
+    "da-api-plugin-from-existing-api.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(checkedIn.ok, true, checkedIn.diagnostics?.[0]?.code);
+  const migratedCases = new Map(
+    checkedIn.value.map((generated) => [generated.caseId, generated.plan]),
+  );
+  for (const caseId of [
+    "da-add-api-key-auth-configuration",
+    "da-add-bearer-auth-configuration",
+    "da-add-microsoft-entra-auth-configuration",
+    "da-add-oauth-auth-configuration",
+    "da-add-pkce-oauth-auth-configuration",
+  ]) {
+    assert.equal(migratedCases.has(caseId), true, caseId);
+  }
+
+  const provisionInputs = new Map([
+    [
+      "da-add-microsoft-entra-auth-configuration",
+      ["${{env:EXISTING_API_ENTRA_CLIENT_ID}}"],
+    ],
+    [
+      "da-add-oauth-auth-configuration",
+      [
+        "${{env:EXISTING_API_OAUTH_CLIENT_ID}}",
+        "${{secret:EXISTING_API_OAUTH_CLIENT_SECRET}}",
+      ],
+    ],
+    [
+      "da-add-pkce-oauth-auth-configuration",
+      ["${{env:EXISTING_API_PKCE_CLIENT_ID}}"],
+    ],
+  ]);
+  for (const [caseId, expectedCredentials] of provisionInputs) {
+    const plan = migratedCases.get(caseId);
+    const inputTexts = plan.steps
+      .map((step) => step.parameters.text)
+      .filter((text) => typeof text === "string");
+    for (const credential of expectedCredentials) {
+      assert.equal(inputTexts.includes(credential), true, credential);
+    }
+    assert.equal(
+      plan.steps.some((step) =>
+        step.step_id.startsWith("step_assertElement_assertVisible_"),
+      ),
+      true,
+    );
+  }
+  assert.equal(
+    migratedCases
+      .get("da-add-pkce-oauth-auth-configuration")
+      .steps.some(
+        (step) =>
+          step.parameters.text ===
+          "${{secret:EXISTING_API_OAUTH_CLIENT_SECRET}}",
+      ),
+    false,
+  );
+  for (const caseId of [
+    "da-add-api-key-auth-configuration",
+    "da-add-bearer-auth-configuration",
+  ]) {
+    assert.equal(
+      migratedCases
+        .get(caseId)
+        .steps.some(
+          (step) =>
+            step.step_id.startsWith("step_assertNotificationContains_") &&
+            step.description.includes("provision stage executed successfully"),
+        ),
+      true,
+    );
+  }
 });

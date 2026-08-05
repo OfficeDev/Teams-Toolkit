@@ -13,7 +13,12 @@ const relativePathPattern =
 const localEnvironmentNamePattern = /^[A-Z][A-Z0-9_]*$/;
 const localEnvironmentValuePattern = /^[A-Za-z0-9:/._-]*$/;
 const runnerPlaceholderPattern = /\$\{\{[a-z]+:[A-Za-z0-9_:#-]+\}\}/g;
-const provisionInputGroups = new Set(["apiKey", "arm", "oauth"]);
+const provisionInputGroups = new Set([
+  "apiKey",
+  "arm",
+  "microsoftEntra",
+  "oauth",
+]);
 const provisionEnvironmentInput = "environment";
 const provisionEnvironmentSkipValue = "none";
 const copilotLaunchFeatureFlag = "TEAMSFX_CEA_ENABLED=true";
@@ -22,6 +27,8 @@ const commandTitles = {
   clearNotifications: "Notifications: Clear All Notifications",
   create: "Microsoft 365 Agents: Create New Agent/App",
   deploy: "Microsoft 365 Agents: Deploy",
+  configureActionAuthentication:
+    "Microsoft 365 Agents: Add Configurations to Support Actions with Authentication in Declarative Agent",
   // The toolkit contributes one side bar view per section and VS Code generates
   // one focus command per view, so which focus commands exist depends on
   // `fx-extension.isTeamsFx`. The empty workspace a case starts in shows only
@@ -38,6 +45,36 @@ const commandTitles = {
   // `fx-extension.isTeamsFx` value allows, ACCOUNTS first.
   showToolkit: "View: Show Microsoft 365 Agents Toolkit",
   target: "Debug: Select and Start Debugging",
+};
+
+const actionAuthenticationAdapter = {
+  authNameTitle: "Enter the Name of Auth Configuration",
+  authType: {
+    options: {
+      "api-key": "API Key",
+      "bearer-token": "API Key (Bearer Token Auth)",
+      "microsoft-entra": "Microsoft Entra",
+      oauth: "OAuth",
+    },
+    title: "Authentication Type",
+  },
+  apiKeyIn: {
+    options: { header: "Header", query: "Query" },
+    title: "Enter where the API Key should be in the request",
+  },
+  apiKeyNameTitle: "Enter the Name of API Key",
+  authorizationUrlTitle: "Enter the OAuth Authorization URL",
+  manifestFileName: "ai-plugin.json",
+  manifestTitle: "Import Manifest File",
+  pkce: {
+    options: { false: "No", true: "Yes" },
+    title: "Enable PKCE for OAuth?",
+  },
+  refreshUrlTitle: "Enter the OAuth Refresh URL",
+  scopeTitle:
+    "Enter the OAuth Scope. Samle: scope1: description for scope1; scope2: description for scope2",
+  successText: "successfully updated your project configuration",
+  tokenUrlTitle: "Enter the OAuth Token URL",
 };
 
 // Every toolkit sign-in runs through the same Microsoft identity endpoint in
@@ -242,6 +279,12 @@ const provisionOauthQuestions = [
     title: "OAuth registration client secret",
   },
 ];
+
+const provisionMicrosoftEntraQuestion = {
+  component: "quick-input/text.json.tpl",
+  key: "clientId",
+  title: "Entra SSO client ID",
+};
 
 const provisionEnvironment = {
   component: "quick-input/click-option.json.tpl",
@@ -524,6 +567,19 @@ function isRecord(value) {
 
 function hasOnlyFields(value, allowedFields) {
   return Object.keys(value).every((field) => allowedFields.has(field));
+}
+
+function isNonEmptyString(value) {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function isAbsoluteUrl(value) {
+  if (!isNonEmptyString(value)) return false;
+  try {
+    return new URL(value).protocol.length > 0;
+  } catch {
+    return false;
+  }
 }
 
 function isConfirmOption(option) {
@@ -904,7 +960,9 @@ function createSemanticStepCompiler() {
       );
     }
     if (
-      (inputs.apiKey !== undefined || inputs.oauth !== undefined) &&
+      (inputs.apiKey !== undefined ||
+        inputs.microsoftEntra !== undefined ||
+        inputs.oauth !== undefined) &&
       state.template !== "da/api-plugin-from-existing-api"
     ) {
       return failure(
@@ -944,24 +1002,63 @@ function createSemanticStepCompiler() {
           "The OAuth provision operation does not match its supported input set.",
         );
       }
+      const permitsMissingClientSecret =
+        state.actionAuthentication?.authType === "oauth" &&
+        state.actionAuthentication.pkce === true;
       if (
         !environmentExpressionPattern.test(inputs.oauth.clientId ?? "") ||
-        !secretExpressionPattern.test(inputs.oauth.clientSecret ?? "")
+        (inputs.oauth.clientSecret === undefined
+          ? !permitsMissingClientSecret
+          : !secretExpressionPattern.test(inputs.oauth.clientSecret))
       ) {
         return failure(
           "VCB_ACCOUNT_EXPRESSION_REQUIRED",
           "OAuth provision credentials must use environment and secret expressions.",
         );
       }
-      const questions = provisionOauthQuestions.map((question) => ({
-        ...question,
-        value: inputs.oauth[question.key],
-      }));
+      const questions = provisionOauthQuestions
+        .filter(
+          (question) =>
+            question.key !== "clientSecret" ||
+            inputs.oauth.clientSecret !== undefined,
+        )
+        .map((question) => ({
+          ...question,
+          value: inputs.oauth[question.key],
+        }));
       return {
         ok: true,
         value: {
-          confirmation: provisionOauthConfirmation,
+          confirmation:
+            inputs.oauth.clientSecret === undefined
+              ? undefined
+              : provisionOauthConfirmation,
           questions,
+        },
+      };
+    }
+    if (inputs.microsoftEntra !== undefined) {
+      if (
+        state.actionAuthentication?.authType !== "microsoft-entra" ||
+        !isRecord(inputs.microsoftEntra) ||
+        !hasOnlyFields(inputs.microsoftEntra, new Set(["clientId"])) ||
+        !environmentExpressionPattern.test(inputs.microsoftEntra.clientId ?? "")
+      ) {
+        return failure(
+          "VCB_ACCOUNT_EXPRESSION_REQUIRED",
+          "Microsoft Entra provision credentials require the matching authentication configuration and an environment client ID.",
+        );
+      }
+      return {
+        ok: true,
+        value: {
+          confirmation: undefined,
+          questions: [
+            {
+              ...provisionMicrosoftEntraQuestion,
+              value: inputs.microsoftEntra.clientId,
+            },
+          ],
         },
       };
     }
@@ -1175,6 +1272,200 @@ function createSemanticStepCompiler() {
     return render(state, "workspace/remove-file.json.tpl", {
       relativePath: inputs.path,
     });
+  }
+
+  function validateActionAuthenticationInputs(definition) {
+    const inputs = definition.with;
+    if (
+      !isRecord(inputs) ||
+      !isNonEmptyString(inputs.authName) ||
+      actionAuthenticationAdapter.authType.options[inputs.authType] ===
+        undefined
+    ) {
+      return failure(
+        "VCB_CONFIGURE_ACTION_AUTHENTICATION_INPUT_INVALID",
+        "The action authentication operation does not match its supported input set.",
+      );
+    }
+
+    let valid = false;
+    if (inputs.authType === "api-key") {
+      valid =
+        hasOnlyFields(
+          inputs,
+          new Set(["authName", "authType", "apiKeyIn", "apiKeyName"]),
+        ) &&
+        actionAuthenticationAdapter.apiKeyIn.options[inputs.apiKeyIn] !==
+          undefined &&
+        isNonEmptyString(inputs.apiKeyName);
+    } else if (inputs.authType === "bearer-token") {
+      valid = hasOnlyFields(inputs, new Set(["authName", "authType"]));
+    } else if (inputs.authType === "microsoft-entra") {
+      valid =
+        hasOnlyFields(inputs, new Set(["authName", "authType", "scope"])) &&
+        isNonEmptyString(inputs.scope);
+    } else if (inputs.authType === "oauth") {
+      valid =
+        hasOnlyFields(
+          inputs,
+          new Set([
+            "authName",
+            "authType",
+            "authorizationUrl",
+            "tokenUrl",
+            "refreshUrl",
+            "scope",
+            "pkce",
+          ]),
+        ) &&
+        isAbsoluteUrl(inputs.authorizationUrl) &&
+        isAbsoluteUrl(inputs.tokenUrl) &&
+        (inputs.refreshUrl === undefined || isAbsoluteUrl(inputs.refreshUrl)) &&
+        isNonEmptyString(inputs.scope) &&
+        typeof inputs.pkce === "boolean";
+    }
+
+    return valid
+      ? { ok: true, value: inputs }
+      : failure(
+          "VCB_CONFIGURE_ACTION_AUTHENTICATION_INPUT_INVALID",
+          "The action authentication operation does not match its supported input set.",
+        );
+  }
+
+  function compileActionAuthentication(state, definition) {
+    const validated = validateActionAuthenticationInputs(definition);
+    if (!validated.ok) return validated;
+    const inputs = validated.value;
+    const output = [];
+    let error = append(
+      output,
+      render(state, "command-palette/execute-command.json.tpl", {
+        commandTitle: commandTitles.clearNotifications,
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "command-palette/execute-command.json.tpl", {
+        commandTitle: commandTitles.configureActionAuthentication,
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "quick-input/single-select.json.tpl", {
+        optionLabel: actionAuthenticationAdapter.manifestFileName,
+        questionTitle: actionAuthenticationAdapter.manifestTitle,
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "quick-input/text.json.tpl", {
+        inputValue: inputs.authName,
+        questionTitle: actionAuthenticationAdapter.authNameTitle,
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "quick-input/single-select.json.tpl", {
+        optionLabel:
+          actionAuthenticationAdapter.authType.options[inputs.authType],
+        questionTitle: actionAuthenticationAdapter.authType.title,
+      }),
+    );
+    if (error) return error;
+
+    const textQuestion = (questionTitle, inputValue) =>
+      append(
+        output,
+        render(state, "quick-input/text.json.tpl", {
+          inputValue,
+          questionTitle,
+        }),
+      );
+    const singleSelectQuestion = (question, value) =>
+      append(
+        output,
+        render(state, "quick-input/single-select.json.tpl", {
+          optionLabel: question.options[value],
+          questionTitle: question.title,
+        }),
+      );
+
+    if (inputs.authType === "api-key") {
+      error = singleSelectQuestion(
+        actionAuthenticationAdapter.apiKeyIn,
+        inputs.apiKeyIn,
+      );
+      if (error) return error;
+      error = textQuestion(
+        actionAuthenticationAdapter.apiKeyNameTitle,
+        inputs.apiKeyName,
+      );
+    } else if (inputs.authType === "microsoft-entra") {
+      error = textQuestion(
+        actionAuthenticationAdapter.scopeTitle,
+        inputs.scope,
+      );
+    } else if (inputs.authType === "oauth") {
+      error = textQuestion(
+        actionAuthenticationAdapter.authorizationUrlTitle,
+        inputs.authorizationUrl,
+      );
+      if (error) return error;
+      error = textQuestion(
+        actionAuthenticationAdapter.tokenUrlTitle,
+        inputs.tokenUrl,
+      );
+      if (error) return error;
+      error = append(
+        output,
+        inputs.refreshUrl === undefined
+          ? render(state, "quick-input/empty-text.json.tpl", {
+              questionTitle: actionAuthenticationAdapter.refreshUrlTitle,
+            })
+          : render(state, "quick-input/text.json.tpl", {
+              inputValue: inputs.refreshUrl,
+              questionTitle: actionAuthenticationAdapter.refreshUrlTitle,
+            }),
+      );
+      if (error) return error;
+      error = textQuestion(
+        actionAuthenticationAdapter.scopeTitle,
+        inputs.scope,
+      );
+      if (error) return error;
+      error = singleSelectQuestion(
+        actionAuthenticationAdapter.pkce,
+        inputs.pkce,
+      );
+    }
+    if (error) return error;
+
+    error = append(
+      output,
+      render(state, "command-palette/execute-command.json.tpl", {
+        commandTitle: commandTitles.notifications,
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "notifications/assert-contains.json.tpl", {
+        notificationText: actionAuthenticationAdapter.successText,
+        retryTimeout: "120",
+      }),
+    );
+    if (error) return error;
+    state.actionAuthentication = {
+      authType: inputs.authType,
+      pkce: inputs.pkce,
+    };
+    state.completed.add("configureActionAuthentication");
+    return { ok: true, value: output };
   }
 
   function compileLifecycle(state, definition) {
@@ -1742,6 +2033,8 @@ function createSemanticStepCompiler() {
         return compileLocalUserEnvironment(state, definition);
       case "removeWorkspaceFile":
         return compileRemoveWorkspaceFile(state, definition);
+      case "configureActionAuthentication":
+        return compileActionAuthentication(state, definition);
       case "target":
         return compileTarget(state, definition);
       case "open":

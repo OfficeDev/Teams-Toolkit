@@ -57,6 +57,86 @@ cases:
         check-oauth-sign-in,
       ]
 
+  - id: da-add-api-key-auth-configuration
+    scenarioId: SCN-DA-CREATE-API-PLUGIN-FROM-EXISTING-API
+    gate: manual
+    steps:
+      [
+        scaffold-existing-api,
+        check-existing-api,
+        configure-added-api-key,
+        check-added-api-key-auth,
+        login-m365,
+        provision-api-key,
+        f5-copilot-remote,
+        open-agent,
+        check-repair-action,
+      ]
+
+  - id: da-add-bearer-auth-configuration
+    scenarioId: SCN-DA-CREATE-API-PLUGIN-FROM-EXISTING-API
+    gate: manual
+    steps:
+      [
+        scaffold-existing-api,
+        check-existing-api,
+        configure-added-bearer,
+        check-added-api-key-auth,
+        login-m365,
+        provision-bearer,
+        f5-copilot-remote,
+        open-agent,
+        check-repair-action,
+      ]
+
+  - id: da-add-microsoft-entra-auth-configuration
+    scenarioId: SCN-DA-CREATE-API-PLUGIN-FROM-EXISTING-API
+    gate: manual
+    steps:
+      [
+        scaffold-existing-api,
+        check-existing-api,
+        configure-added-entra,
+        check-added-entra-auth,
+        login-m365,
+        provision-entra,
+        f5-copilot-remote,
+        open-agent,
+        check-added-auth-sign-in,
+      ]
+
+  - id: da-add-oauth-auth-configuration
+    scenarioId: SCN-DA-CREATE-API-PLUGIN-FROM-EXISTING-API
+    gate: manual
+    steps:
+      [
+        scaffold-existing-api,
+        check-existing-api,
+        configure-added-oauth,
+        check-added-oauth-auth,
+        login-m365,
+        provision-oauth,
+        f5-copilot-remote,
+        open-agent,
+        check-added-auth-sign-in,
+      ]
+
+  - id: da-add-pkce-oauth-auth-configuration
+    scenarioId: SCN-DA-CREATE-API-PLUGIN-FROM-EXISTING-API
+    gate: manual
+    steps:
+      [
+        scaffold-existing-api,
+        check-existing-api,
+        configure-added-pkce-oauth,
+        check-added-pkce-oauth-auth,
+        login-m365,
+        provision-pkce-oauth,
+        f5-copilot-remote,
+        open-agent,
+        check-added-auth-sign-in,
+      ]
+
 steps:
   scaffold-existing-api:
     type: scaffold
@@ -401,3 +481,132 @@ steps:
       - type: chat
         send: show repair records assigned to karin blair
         allowAction: true
+
+  configure-added-api-key:
+    type: configureActionAuthentication
+    with:
+      authName: apiKey
+      authType: api-key
+      apiKeyIn: header
+      apiKeyName: X-API-KEY
+
+  configure-added-bearer:
+    type: configureActionAuthentication
+    with:
+      authName: apiKey
+      authType: bearer-token
+
+  configure-added-entra:
+    type: configureActionAuthentication
+    with:
+      authName: aadAuthCode
+      authType: microsoft-entra
+      scope: "api://example/repairs_read: Read repair records"
+
+  configure-added-oauth:
+    type: configureActionAuthentication
+    with:
+      authName: oauth2
+      authType: oauth
+      authorizationUrl: https://github.com/login/oauth/authorize
+      tokenUrl: https://github.com/login/oauth/access_token
+      scope: "repo: Read repos"
+      pkce: false
+
+  configure-added-pkce-oauth:
+    type: configureActionAuthentication
+    with:
+      authName: oAuth2AuthCode
+      authType: oauth
+      authorizationUrl: https://login.microsoftonline.com/common/oauth2/v2.0/authorize
+      tokenUrl: https://login.microsoftonline.com/common/oauth2/v2.0/token
+      scope: "api://example/repairs_read: Read repair records"
+      pkce: true
+
+  check-added-api-key-auth:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/ai-plugin.json
+        expect:
+          contains: ['"type": "ApiKeyPluginVault"']
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains: ["uses: apiKey/register", "name: apiKey"]
+          notContains: ["uses: oauth/register"]
+
+  check-added-entra-auth:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/ai-plugin.json
+        expect:
+          contains: ['"type": "OAuthPluginVault"']
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains:
+            [
+              "uses: oauth/register",
+              "name: aadAuthCode",
+              "identityProvider: MicrosoftEntra",
+            ]
+          notContains: ["uses: apiKey/register"]
+
+  check-added-oauth-auth:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/ai-plugin.json
+        expect:
+          contains: ['"type": "OAuthPluginVault"']
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains:
+            ["uses: oauth/register", "name: oauth2", "flow: authorizationCode"]
+          notContains:
+            ["identityProvider: MicrosoftEntra", "isPKCEEnabled: true"]
+
+  check-added-pkce-oauth-auth:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/ai-plugin.json
+        expect:
+          contains: ['"type": "OAuthPluginVault"']
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains:
+            [
+              "uses: oauth/register",
+              "name: oAuth2AuthCode",
+              "flow: authorizationCode",
+              "isPKCEEnabled: true",
+            ]
+          notContains: ["identityProvider: MicrosoftEntra"]
+
+  provision-entra:
+    type: provision
+    with:
+      microsoftEntra:
+        clientId: "${{env:EXISTING_API_ENTRA_CLIENT_ID}}"
+
+  provision-pkce-oauth:
+    type: provision
+    with:
+      oauth:
+        clientId: "${{env:EXISTING_API_PKCE_CLIENT_ID}}"
+
+  check-added-auth-sign-in:
+    type: checks
+    with:
+      - type: chat
+        send: List all repairs
+        allowAction: true
+      - type: browser
+        expect:
+          role: button
+          name: Sign in to Repair Service

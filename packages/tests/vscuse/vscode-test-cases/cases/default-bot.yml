@@ -69,6 +69,19 @@ cases:
         check-simple-bot-chat,
       ]
 
+  - id: simple-bot-js-local-teams-existing-registration
+    scenarioId: SCN-CREATE-DEFAULT-BOT-03
+    steps:
+      [
+        scaffold-simple-bot-js,
+        check-simple-bot-js,
+        login-m365,
+        configure-existing-bot-registration,
+        f5-teams-local,
+        open-app,
+        check-simple-bot-chat,
+      ]
+
   - id: simple-bot-js-playground
     scenarioId: SCN-CREATE-DEFAULT-BOT-03
     steps:
@@ -217,6 +230,12 @@ steps:
         path: index.ts
         expect:
           exists: false
+
+  configure-existing-bot-registration:
+    type: localEnvironment
+    with:
+      BOT_ID: "${{env:TEST_AAD_APP_ID}}"
+      SECRET_BOT_PASSWORD: "${{secret:TEST_AAD_APP_PASSWORD}}"
 
   scaffold-simple-bot-py:
     type: scaffold

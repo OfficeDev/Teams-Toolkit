@@ -23,6 +23,7 @@ const allowedStepTypes = new Set([
   "pythonEnvironment",
   "localEnvironment",
   "localUserEnvironment",
+  "configureActionAuthentication",
   "removeWorkspaceFile",
   "target",
   "open",
