@@ -3830,7 +3830,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion a visible Visual Studio Code notification contains actions in deploy stage executed successfully.",
+      "description": "@assertion a visible Visual Studio Code notification explicitly contains the text actions in deploy stage executed successfully. A provision-stage success notification or a Deploy progress notification does not satisfy this assertion; keep waiting until the deploy-stage success notification is visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
