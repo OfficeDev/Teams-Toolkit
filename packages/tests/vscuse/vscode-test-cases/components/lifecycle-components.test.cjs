@@ -9,6 +9,8 @@ const substitutions = {
   accountPassword: "${{secret:M365_ACCOUNT_PASSWORD}}",
   actionLabel: 'Provision "now"',
   commandTitle: "Debug: Select and Start Debugging",
+  convergedSubject: "the Microsoft Teams conversation is open",
+  destination: "chat",
   dialogTitle: "Confirm provisioning\nfor dev",
   inputValue: "test value",
   instanceSuffix: "lifecycle_1",
