@@ -1,0 +1,109 @@
+version: 1
+
+cases:
+  - id: da-typespec-with-action-remote-preview
+    scenarioId: SCN-DA-CREATE-TYPESPEC
+    gate: manual
+    steps:
+      [
+        scaffold-typespec,
+        check-scaffold,
+        configure-github-action,
+        check-configured-action,
+        login-m365,
+        provision,
+        f5-copilot-remote,
+        open-agent,
+        check-github-issues,
+      ]
+
+steps:
+  scaffold-typespec:
+    type: scaffold
+    with:
+      template: da/typespec
+      answers:
+        - question: projectType
+          value: copilot-agent-type
+        - question: daTemplate
+          value: typespec
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-scaffold:
+    type: checks
+    with:
+      - type: file
+        path: src/agent/main.tsp
+        expect:
+          contains:
+            - "// @conversationStarter(#{"
+            - '//   title: "Get latest issues",'
+            - '//   text: "Get the latest issues from GitHub"'
+            - "// })"
+            - "// op searchIssues is global.GitHubAPI.searchIssues;"
+      - type: file
+        path: src/agent/actions/github.tsp
+        expect:
+          exists: true
+
+  configure-github-action:
+    type: configureTypeSpecAction
+    with:
+      action: github-issues
+
+  check-configured-action:
+    type: checks
+    with:
+      - type: file
+        path: src/agent/main.tsp
+        expect:
+          contains:
+            - "@conversationStarter(#{"
+            - '  title: "Get latest issues",'
+            - '  text: "Get the latest issues from GitHub"'
+            - "  op searchIssues is global.GitHubAPI.searchIssues;"
+          notContains:
+            - "// @conversationStarter(#{"
+            - "// op searchIssues is global.GitHubAPI.searchIssues;"
+
+  login-m365:
+    type: login
+    with:
+      type: m365
+      account: "${{env:M365_ACCOUNT_NAME}}"
+      password: "${{secret:M365_ACCOUNT_PASSWORD}}"
+
+  # The TypeSpec template scaffolds only env/.env.dev, so the toolkit selects
+  # the single environment without showing an environment quick pick.
+  provision:
+    type: provision
+    with:
+      environment: none
+
+  f5-copilot-remote:
+    type: target
+    with:
+      profile: "Preview in Copilot (Chrome)"
+      profileSelection: second
+
+  open-agent:
+    type: open
+    with:
+      kind: agent
+      destination: chat
+
+  # The query reads live public GitHub data, so exact issue titles and counts
+  # are not stable assertions owned by this repository.
+  check-github-issues:
+    type: checks
+    with:
+      - type: chat
+        send: get latest issues
+        allowAction: true
+        expect:
+          replied: true
+          notContains: ["error"]

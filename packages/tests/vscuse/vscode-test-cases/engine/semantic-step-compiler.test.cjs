@@ -108,7 +108,7 @@ test("VCB-34: semantic compiler does not read external template contracts", asyn
   }
 });
 
-test("VCB-34: default setup compiles the checked-in YAML sources into ninety-three plans", async (context) => {
+test("VCB-34: default setup compiles the checked-in YAML sources into ninety-four plans", async (context) => {
   const plansDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "vscuse-generated-"),
   );
@@ -121,9 +121,9 @@ test("VCB-34: default setup compiles the checked-in YAML sources into ninety-thr
   });
 
   assert.equal(first.ok, true);
-  assert.equal(first.value.files.length, 93);
+  assert.equal(first.value.files.length, 94);
   const generatedFiles = first.value.files;
-  assert.equal(generatedFiles.length, 93);
+  assert.equal(generatedFiles.length, 94);
   assert.equal(
     generatedFiles.includes(
       "da-api-plugin-from-existing-api--da-api-plugin-from-existing-api-no-auth.json",
@@ -1139,7 +1139,7 @@ test("Copilot target authenticates the browser before readiness", async (context
   // whether or not the manifest appended an environment suffix.
   assert.match(
     readinessDescription,
-    /whose name starts with \$\{\{var:app_name\}\}/,
+    /whose displayed name starts with the underscore-free form of \$\{\{var:app_name\}\}/,
   );
   assert.doesNotMatch(readinessDescription, /\}\}local/);
   assert.doesNotMatch(readinessDescription, /\}\}dev/);
@@ -2224,6 +2224,141 @@ steps:
   );
 });
 
+test("VCB-123: TypeSpec GitHub issues action uses a deterministic terminal mutation", async () => {
+  const sourceText = `version: 1
+cases:
+  - id: typespec-github-issues
+    scenarioId: VCB-123
+    steps: [scaffold, check, configure-action]
+steps:
+  scaffold:
+    type: scaffold
+    with:
+      template: da/typespec
+      answers:
+        - question: daTemplate
+          value: typespec
+        - question: appName
+          type: text
+          value: "\${{var:app_name:vscuse_app_#####}}"
+  check:
+    type: checks
+    with:
+      - type: file
+        path: src/agent/main.tsp
+        expect:
+          exists: true
+  configure-action:
+    type: configureTypeSpecAction
+    with:
+      action: github-issues
+`;
+  const result = await compileCaseBundle({
+    compileStep: createSemanticStepCompiler(),
+    sourcePath: "cases/da-typespec-with-action.yml",
+    sourceText,
+  });
+
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const plan = result.value[0].plan;
+  assert.equal(
+    plan.steps.some((step) =>
+      step.description.includes(
+        "Start with TypeSpec for Microsoft 365 Copilot",
+      ),
+    ),
+    true,
+  );
+  const mutation = plan.steps.filter((step) =>
+    step.step_id.startsWith("step_configureTypeSpecGitHubIssuesAction_"),
+  );
+  assert.deepEqual(
+    mutation.map((step) => [step.agent, step.tool]),
+    [
+      ["interaction", "keyboard_shortcut"],
+      ["assertion", ""],
+      ["interaction", "type_text"],
+      ["interaction", "key_press"],
+      ["assertion", ""],
+      ["interaction", "keyboard_shortcut"],
+      ["assertion", ""],
+    ],
+  );
+  assert.equal(
+    mutation.some((step) => step.agent === "code"),
+    false,
+  );
+  const command = mutation.find((step) => step.tool === "type_text");
+  assert.equal(
+    command.parameters.text.includes(
+      "/home/vscode/AgentsToolkitProjects/${{var:app_name}}",
+    ),
+    true,
+  );
+  assert.equal(command.parameters.text.includes("src/agent/main.tsp"), false);
+  assert.equal(command.parameters.text.includes("range(16"), false);
+  assert.equal(
+    command.parameters.text.includes("VSCUSE_TYPESPEC_ACTION_CONFIGURED"),
+    false,
+  );
+  assert.equal(
+    command.parameters.text.includes(
+      "printf '\\nVSCUSE_TYPESPEC_ACTION_%s\\n' CONFIGURED",
+    ),
+    true,
+  );
+  assert.equal(
+    mutation.some((step) =>
+      step.description.includes("VSCUSE_TYPESPEC_ACTION_CONFIGURED"),
+    ),
+    true,
+  );
+
+  for (const invalidInput of [
+    "action: unknown",
+    "action: github-issues\n      path: other.tsp",
+  ]) {
+    const invalid = await compileCaseBundle({
+      compileStep: createSemanticStepCompiler(),
+      sourcePath: "cases/da-typespec-with-action.yml",
+      sourceText: sourceText.replace("action: github-issues", invalidInput),
+    });
+    assert.equal(invalid.ok, false);
+    assert.equal(
+      invalid.diagnostics[0].code,
+      "VCB_TYPESPEC_ACTION_INPUT_INVALID",
+    );
+  }
+});
+
+test("VCB-124: TypeSpec single environment skips the provision picker", async () => {
+  const result = await compileFixture(
+    "da-typespec-with-action.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const descriptions = result.value[0].plan.steps.map(
+    (step) => step.description,
+  );
+  assert.equal(
+    descriptions.includes(
+      "@assertion the active prompt titled Select an environment is visible and the option dev is selectable.",
+    ),
+    false,
+  );
+  assert.equal(
+    descriptions.includes("Click the dev option in the active prompt."),
+    false,
+  );
+  assert.equal(
+    descriptions.includes(
+      "@assertion a visible Visual Studio Code notification contains provision stage executed successfully.",
+    ),
+    true,
+  );
+});
+
 test("VCB-88: a local environment step names its variable and verifies its own write", async () => {
   const result = await compileFixture(
     "weather-agent.yml",
@@ -2406,7 +2541,7 @@ test("VCB-26: an already-ready Copilot target makes its open emit no step", asyn
     result.value[0].plan.steps.filter(
       (step) =>
         step.description ===
-        "@assertion an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot.",
+        "@assertion an agent whose displayed name starts with the underscore-free form of ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot.",
     ).length,
     1,
   );
@@ -2443,7 +2578,7 @@ test("VCB-43: the Copilot ready subject names the app by its authored prefix", a
   assert.equal(unsuffixed.ok, true);
   assert.equal(
     readySubject(suffixed),
-    "@assertion an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot.",
+    "@assertion an agent whose displayed name starts with the underscore-free form of ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot.",
   );
   assert.equal(readySubject(unsuffixed), readySubject(suffixed));
 });
@@ -2463,7 +2598,7 @@ test("VCB-44: the Copilot message input is read independently of its placeholder
   // absent.
   assert.equal(
     descriptions.includes(
-      "@assertion the Microsoft 365 Copilot message input is visible on a page for an agent whose name starts with ${{var:app_name}}.",
+      "@assertion the Microsoft 365 Copilot message input is visible on a page for an agent whose displayed name starts with the underscore-free form of ${{var:app_name}}.",
     ),
     true,
   );
@@ -2482,6 +2617,30 @@ test("VCB-44: the Copilot message input is read independently of its placeholder
   assert.equal(
     descriptions.some((description) => description.includes("Message Copilot")),
     false,
+  );
+});
+
+test("VCB-125: Copilot assertions use the underscore-free app-name prefix", async () => {
+  const result = await compileFixture(
+    "da-no-action.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const descriptions = result.value[0].plan.steps.map(
+    (step) => step.description,
+  );
+  assert.equal(
+    descriptions.includes(
+      "@assertion an agent whose displayed name starts with the underscore-free form of ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot.",
+    ),
+    true,
+  );
+  assert.equal(
+    descriptions.includes(
+      "@assertion the Microsoft 365 Copilot message input is visible on a page for an agent whose displayed name starts with the underscore-free form of ${{var:app_name}}.",
+    ),
+    true,
   );
 });
 
