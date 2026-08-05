@@ -474,6 +474,10 @@ const targetAdapters = {
     },
     readySubject: teamsAppDetailsSubject,
     requires: ["login:m365"],
+    workbenchEntry: {
+      component: "workspace/start-debug-in-teams.json.tpl",
+      profileSelection: "first",
+    },
   },
   "(Preview) Debug in Copilot (Chrome)": {
     browserAuthentication: {
@@ -1295,14 +1299,13 @@ function createSemanticStepCompiler() {
       );
     }
 
-    const output = [];
-    let error = append(
-      output,
-      render(state, "command-palette/execute-command.json.tpl", {
-        commandTitle: commandTitles.target,
-      }),
-    );
-    if (error) return error;
+    const entry = definition.with?.entry ?? "command-palette";
+    if (!["command-palette", "workbench"].includes(entry)) {
+      return failure(
+        "VCB_TARGET_ENTRY_UNKNOWN",
+        "The target launch entry is not supported by the semantic adapter.",
+      );
+    }
     const profileSelectionId = definition.with?.profileSelection;
     if (profileSelectionId === undefined) {
       return failure(
@@ -1319,16 +1322,44 @@ function createSemanticStepCompiler() {
         "The target profile selection is not supported by the semantic adapter.",
       );
     }
-    const profileSelection = profile.profileSelections[profileSelectionId];
-    const { component, ...profileSelectionValues } = profileSelection;
-    error = append(
-      output,
-      render(state, component, {
-        optionLabel: profileTitle,
-        ...profileSelectionValues,
-      }),
-    );
-    if (error) return error;
+    if (
+      entry === "workbench" &&
+      (profile.workbenchEntry === undefined ||
+        profile.workbenchEntry.profileSelection !== profileSelectionId)
+    ) {
+      return failure(
+        "VCB_TARGET_ENTRY_UNSUPPORTED",
+        "The target profile has no recording for the requested launch entry and selection.",
+      );
+    }
+
+    const output = [];
+    let error;
+    if (entry === "workbench") {
+      error = append(
+        output,
+        render(state, profile.workbenchEntry.component, {}),
+      );
+      if (error) return error;
+    } else {
+      error = append(
+        output,
+        render(state, "command-palette/execute-command.json.tpl", {
+          commandTitle: commandTitles.target,
+        }),
+      );
+      if (error) return error;
+      const profileSelection = profile.profileSelections[profileSelectionId];
+      const { component, ...profileSelectionValues } = profileSelection;
+      error = append(
+        output,
+        render(state, component, {
+          optionLabel: profileTitle,
+          ...profileSelectionValues,
+        }),
+      );
+      if (error) return error;
+    }
     if (profile.browserAuthentication !== undefined) {
       const credentials = state.credentials.get(
         profile.browserAuthentication.credentials,

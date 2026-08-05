@@ -108,7 +108,7 @@ test("VCB-34: semantic compiler does not read external template contracts", asyn
   }
 });
 
-test("VCB-34: default setup compiles the checked-in YAML sources into ninety-three plans", async (context) => {
+test("VCB-34: default setup compiles the checked-in YAML sources into ninety-four plans", async (context) => {
   const plansDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "vscuse-generated-"),
   );
@@ -121,9 +121,9 @@ test("VCB-34: default setup compiles the checked-in YAML sources into ninety-thr
   });
 
   assert.equal(first.ok, true);
-  assert.equal(first.value.files.length, 93);
+  assert.equal(first.value.files.length, 94);
   const generatedFiles = first.value.files;
-  assert.equal(generatedFiles.length, 93);
+  assert.equal(generatedFiles.length, 94);
   assert.equal(
     generatedFiles.includes(
       "da-api-plugin-from-existing-api--da-api-plugin-from-existing-api-no-auth.json",
@@ -1846,7 +1846,12 @@ test("VCB-93: CEA, Bot, and Message Extension bundles author their supported lau
         assert.equal(caseIds.has(caseId), true, caseId);
       }
     }
-    assert.equal(caseIds.size, languages.length * 3, fileName);
+    const launchEntryVariants = fileName === "default-bot.yml" ? 1 : 0;
+    assert.equal(
+      caseIds.size,
+      languages.length * 3 + launchEntryVariants,
+      fileName,
+    );
   }
 });
 
@@ -3299,4 +3304,77 @@ test("VCB-122: the Teams Collaborator Agent bundle chats locally but stops after
       caseId,
     );
   }
+});
+
+test("VCB-123: a local Teams target can start from the Run and Debug Workbench", async () => {
+  const workbench = await compileFixture(
+    "default-bot.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(workbench.ok, true, workbench.diagnostics?.[0]?.code);
+  const plan = workbench.value.find(
+    (generated) => generated.caseId === "simple-bot-js-local-teams-workbench",
+  ).plan;
+  const workbenchEntry = plan.steps.findIndex((step) =>
+    step.step_id.startsWith("step_targetWorkbench_open_"),
+  );
+  assert.equal(workbenchEntry >= 0, true);
+  assert.deepEqual(
+    plan.steps
+      .slice(workbenchEntry, workbenchEntry + 4)
+      .map((step) => step.tool),
+    ["click", "click", "click", "click"],
+  );
+  assert.equal(
+    plan.steps.some(
+      (step) =>
+        step.tool === "type_text" &&
+        step.parameters.text === "Debug: Select and Start Debugging",
+    ),
+    false,
+  );
+  assert.equal(
+    plan.steps.some((step) =>
+      /Microsoft Teams app details page/.test(step.description),
+    ),
+    true,
+  );
+  const defaultPlan = workbench.value.find(
+    (generated) => generated.caseId === "simple-bot-js-local-teams",
+  ).plan;
+  assert.equal(
+    defaultPlan.steps.some(
+      (step) =>
+        step.tool === "type_text" &&
+        step.parameters.text === "Debug: Select and Start Debugging",
+    ),
+    true,
+  );
+
+  const unknownEntry = await compileFixture("default-bot.yml", (sourceText) =>
+    sourceText.replace("      entry: workbench", "      entry: sidebar"),
+  );
+  assert.equal(unknownEntry.ok, false);
+  assert.equal(unknownEntry.diagnostics[0].code, "VCB_TARGET_ENTRY_UNKNOWN");
+
+  const unsupportedEntry = await compileFixture(
+    "default-bot.yml",
+    (sourceText) =>
+      sourceText.replace(
+        `  f5-teams-local-workbench:
+    type: target
+    with:
+      profile: "Debug in Teams (Chrome)"`,
+        `  f5-teams-local-workbench:
+    type: target
+    with:
+      profile: "Debug in Microsoft 365 Agents Playground"`,
+      ),
+  );
+  assert.equal(unsupportedEntry.ok, false);
+  assert.equal(
+    unsupportedEntry.diagnostics[0].code,
+    "VCB_TARGET_ENTRY_UNSUPPORTED",
+  );
 });

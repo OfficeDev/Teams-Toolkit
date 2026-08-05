@@ -69,6 +69,18 @@ cases:
         check-simple-bot-chat,
       ]
 
+  - id: simple-bot-js-local-teams-workbench
+    scenarioId: SCN-CREATE-DEFAULT-BOT-03
+    steps:
+      [
+        scaffold-simple-bot-js,
+        check-simple-bot-js,
+        login-m365,
+        f5-teams-local-workbench,
+        open-app,
+        check-simple-bot-chat,
+      ]
+
   - id: simple-bot-js-playground
     scenarioId: SCN-CREATE-DEFAULT-BOT-03
     steps:
@@ -313,6 +325,13 @@ steps:
     with:
       profile: "Debug in Teams (Chrome)"
       profileSelection: first
+
+  f5-teams-local-workbench:
+    type: target
+    with:
+      profile: "Debug in Teams (Chrome)"
+      profileSelection: first
+      entry: workbench
 
   f5-playground:
     type: target

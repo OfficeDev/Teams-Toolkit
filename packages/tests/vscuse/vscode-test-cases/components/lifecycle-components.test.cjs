@@ -342,6 +342,56 @@ test("target primitives expose F1, profile selection, and browser readiness beha
   assert.match(readiness.steps[0].description, /selected target is visible/);
 });
 
+test("VCB-123: the Workbench target entry keeps its recorded click preconditions", () => {
+  const workbench = render("workspace/start-debug-in-teams.json.tpl");
+
+  assert.deepEqual(
+    workbench.steps.map((step) => ({
+      x: step.parameters.x,
+      y: step.parameters.y,
+      preconditions: step.preconditions,
+    })),
+    [
+      {
+        x: 15,
+        y: 201,
+        preconditions: [
+          "dhash:15:201:16:5:2c2d2929496c72b7",
+          "dhash:15:201:96:5:44443c47c7cb37e4",
+          "dhash:15:201:0:10:b2882223a3222421",
+        ],
+      },
+      {
+        x: 221,
+        y: 51,
+        preconditions: [
+          "dhash:221:51:16:5:00102552996d9609",
+          "dhash:221:51:96:5:6161e51292ee0e00",
+          "dhash:221:51:0:10:a260626363226421",
+        ],
+      },
+      {
+        x: 215,
+        y: 141,
+        preconditions: [
+          "dhash:215:141:16:5:106f9e4a4a4ac7b0",
+          "dhash:215:141:96:5:932a480a480a4cb2",
+          "dhash:215:141:0:10:82c8d283e3226421",
+        ],
+      },
+      {
+        x: 132,
+        y: 57,
+        preconditions: [
+          "dhash:132:57:16:5:3633333630526528",
+          "dhash:132:57:96:5:b2307432bf464639",
+          "dhash:132:57:0:10:9268626363226421",
+        ],
+      },
+    ],
+  );
+});
+
 test("VCB-82: the Teams app details assertions name no button caption", () => {
   const component = render("browser/teams/add-and-open-app.json.tpl");
 
