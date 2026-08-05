@@ -1,0 +1,167 @@
+version: 1
+
+# The Teams Collaborator Agent template ships TypeScript only and reads Azure
+# OpenAI settings directly, so the bundle authors one scaffold and varies only
+# the launch surface. Remote stops after the deployed app conversation opens,
+# matching the recorded scenario, while local continues into the collaborator
+# chat.
+cases:
+  - id: collaborator-ts-azure-openai-remote-teams
+    scenarioId: SCN-CREATE-COLLABORATOR-01
+    steps:
+      [
+        scaffold-collaborator-ts,
+        check-collaborator-ts,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote,
+        open-app,
+      ]
+
+  - id: collaborator-ts-azure-openai-local-teams
+    scenarioId: SCN-CREATE-COLLABORATOR-01
+    steps:
+      [
+        scaffold-collaborator-ts,
+        check-collaborator-ts,
+        login-m365,
+        f5-teams-local,
+        open-app,
+        check-collaborator-chat,
+      ]
+
+steps:
+  scaffold-collaborator-ts:
+    type: scaffold
+    with:
+      template: teams-collaborator-agent
+      answers:
+        - question: projectType
+          value: teams-agent-and-app-type
+        - question: teamsAppType
+          value: teams-collaborator-agent
+        - question: azureOpenAIKey
+          type: text
+          value: "${{secret:AZURE_OPENAI_API_KEY}}"
+        - question: azureOpenAIEndpoint
+          type: text
+          value: "${{env:AZURE_OPENAI_ENDPOINT}}"
+        - question: azureOpenAIDeploymentName
+          type: text
+          value: "${{env:AZURE_OPENAI_MODEL}}"
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-collaborator-ts:
+    type: checks
+    with:
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains: ["version: v1.11", "provision:", "deploy:", "arm/deploy"]
+      - type: file
+        path: package.json
+        expect:
+          exists: true
+      - type: file
+        path: src/index.ts
+        expect:
+          exists: true
+      - type: file
+        path: src/agent/manager.ts
+        expect:
+          exists: true
+      - type: file
+        path: src/capabilities/registry.ts
+        expect:
+          contains:
+            [
+              SUMMARIZER_CAPABILITY_DEFINITION,
+              ACTION_ITEMS_CAPABILITY_DEFINITION,
+              SEARCH_CAPABILITY_DEFINITION,
+            ]
+      - type: file
+        path: src/utils/config.ts
+        expect:
+          contains: [AOAI_API_KEY, AOAI_ENDPOINT, RUNNING_ON_AZURE]
+      - type: file
+        path: infra/azure.bicep
+        expect:
+          contains: ["Microsoft.Sql/servers", "SQL_CONNECTION_STRING"]
+      - type: file
+        path: .vscode/launch.json
+        expect:
+          contains:
+            [
+              "Launch Remote (Chrome)",
+              "Debug in Teams (Chrome)",
+              "Debug in Microsoft 365 Agents Playground",
+            ]
+          notContains:
+            ["Launch Remote in Teams (Chrome)", "Debug in Copilot (Chrome)"]
+      - type: file
+        path: appPackage/manifest.json
+        expect:
+          contains: ['"manifestVersion": "1.29"']
+
+  login-azure:
+    type: login
+    with:
+      type: azure
+      account: "${{env:AZURE_ACCOUNT_NAME}}"
+      password: "${{secret:AZURE_ACCOUNT_PASSWORD}}"
+
+  login-m365:
+    type: login
+    with:
+      type: m365
+      account: "${{env:M365_ACCOUNT_NAME}}"
+      password: "${{secret:M365_ACCOUNT_PASSWORD}}"
+
+  provision-arm:
+    type: provision
+    with:
+      environment: none
+      arm:
+        targetResourceGroupName: "+ New resource group"
+        newResourceGroupName: "${{var:app_name}}-rg"
+        newResourceGroupLocation: "${{env:RESOURCE_GROUP_REGION}}"
+
+  deploy:
+    type: deploy
+    with:
+      environment: none
+
+  f5-teams-remote:
+    type: target
+    with:
+      profile: "Launch Remote (Chrome)"
+      profileSelection: first
+
+  f5-teams-local:
+    type: target
+    with:
+      profile: "Debug in Teams (Chrome)"
+      profileSelection: first
+
+  open-app:
+    type: open
+    with:
+      kind: app
+      destination: chat
+
+  # The agent always answers in a personal conversation, so the message needs no
+  # at-mention. Only the reply itself is asserted: the routed capability answer
+  # is produced by Azure OpenAI, which this repository does not control.
+  check-collaborator-chat:
+    type: checks
+    with:
+      - type: chat
+        send: Create a task to review the proposal by Friday
+        expect:
+          replied: true

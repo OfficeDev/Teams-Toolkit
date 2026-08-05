@@ -108,7 +108,7 @@ test("VCB-34: semantic compiler does not read external template contracts", asyn
   }
 });
 
-test("VCB-34: default setup compiles the checked-in YAML sources into ninety-one plans", async (context) => {
+test("VCB-34: default setup compiles the checked-in YAML sources into ninety-three plans", async (context) => {
   const plansDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "vscuse-generated-"),
   );
@@ -121,9 +121,9 @@ test("VCB-34: default setup compiles the checked-in YAML sources into ninety-one
   });
 
   assert.equal(first.ok, true);
-  assert.equal(first.value.files.length, 91);
+  assert.equal(first.value.files.length, 93);
   const generatedFiles = first.value.files;
-  assert.equal(generatedFiles.length, 91);
+  assert.equal(generatedFiles.length, 93);
   assert.equal(
     generatedFiles.includes(
       "da-api-plugin-from-existing-api--da-api-plugin-from-existing-api-no-auth.json",
@@ -3202,4 +3202,101 @@ test("VCB-120: removeWorkspaceFile deletes one project-relative file", async () 
     escaping.diagnostics[0].code,
     "VCB_REMOVE_WORKSPACE_FILE_INPUT_INVALID",
   );
+});
+
+test("VCB-121: the Teams Collaborator Agent scaffold skips the LLM service and language questions", async () => {
+  const result = await compileFixture(
+    "teams-collaborator-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true, JSON.stringify(result.diagnostics?.[0]));
+  const plan = result.value.find(
+    (generated) =>
+      generated.caseId === "collaborator-ts-azure-openai-local-teams",
+  ).plan;
+  const typedValues = plan.steps
+    .filter((step) => step.tool === "type_text")
+    .map((step) => step.parameters.text);
+
+  assert.deepEqual(typedValues.slice(2, 4), [
+    "Teams Agents and Apps",
+    "Teams Collaborator Agent",
+  ]);
+  assert.equal(typedValues.includes("General Teams Agent"), false);
+  assert.equal(typedValues.includes("Other Teams Capabilities"), false);
+  assert.equal(typedValues.includes("Azure OpenAI"), false);
+  assert.equal(typedValues.includes("TypeScript"), false);
+
+  const descriptions = plan.steps.map((step) => step.description).join("\n");
+  for (const title of [
+    "Azure OpenAI Key",
+    "Azure OpenAI Endpoint",
+    "Azure OpenAI Deployment Name",
+    "Workspace Folder",
+    "Application Name",
+  ]) {
+    assert.equal(descriptions.includes(title), true, title);
+  }
+  for (const title of [
+    "Service for Large Language Model (LLM)",
+    "Programming Language",
+  ]) {
+    assert.equal(descriptions.includes(title), false, title);
+  }
+});
+
+test("VCB-122: the Teams Collaborator Agent bundle chats locally but stops after the remote launch", async () => {
+  const result = await compileFixture(
+    "teams-collaborator-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true, JSON.stringify(result.diagnostics?.[0]));
+  assert.deepEqual(
+    result.value.map((generated) => generated.caseId),
+    [
+      "collaborator-ts-azure-openai-remote-teams",
+      "collaborator-ts-azure-openai-local-teams",
+    ],
+  );
+
+  for (const { caseId, expectedProfile, expectsChat } of [
+    {
+      caseId: "collaborator-ts-azure-openai-remote-teams",
+      expectedProfile: "Launch Remote (Chrome)",
+      expectsChat: false,
+    },
+    {
+      caseId: "collaborator-ts-azure-openai-local-teams",
+      expectedProfile: "Debug in Teams (Chrome)",
+      expectsChat: true,
+    },
+  ]) {
+    const plan = result.value.find(
+      (generated) => generated.caseId === caseId,
+    ).plan;
+    const typedValues = plan.steps
+      .filter((step) => step.tool === "type_text")
+      .map((step) => step.parameters.text);
+
+    assert.equal(typedValues.includes(expectedProfile), true, caseId);
+    assert.equal(
+      plan.steps.some((step) => step.step_id.startsWith("step_addAndOpenApp_")),
+      true,
+      caseId,
+    );
+    assert.equal(
+      plan.steps.some((step) =>
+        step.step_id.startsWith("step_sendTeamsMessage_"),
+      ),
+      expectsChat,
+      caseId,
+    );
+    assert.equal(
+      typedValues.includes("Create a task to review the proposal by Friday"),
+      expectsChat,
+      caseId,
+    );
+  }
 });
