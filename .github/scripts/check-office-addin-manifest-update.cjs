@@ -112,6 +112,65 @@ function readToolkitManifestVersion(templateId) {
   return match ? match[1] : null;
 }
 
+// Toolkit .tpl package.json parses as JSON (its only placeholder sits inside a
+// string value). Read its dependency maps; return null if it can't be parsed.
+function readToolkitDependencies(templateId) {
+  const tplPath = path.join(TEMPLATE_ROOT, templateId, "package.json.tpl");
+  if (!fs.existsSync(tplPath)) return null;
+  try {
+    const pkg = JSON.parse(fs.readFileSync(tplPath, "utf8"));
+    return {
+      ...(pkg.dependencies || {}),
+      ...(pkg.devDependencies || {}),
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function fetchUpstreamDependencies(template) {
+  const url = `https://raw.githubusercontent.com/${template.upstreamRepo}/${template.upstreamBranch}/package.json`;
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      signal: AbortSignal.timeout(20000),
+    });
+    if (!response.ok) return null;
+    const pkg = JSON.parse(await response.text());
+    return {
+      ...(pkg.dependencies || {}),
+      ...(pkg.devDependencies || {}),
+    };
+  } catch {
+    return null;
+  }
+}
+
+// Compare toolkit vs upstream dependency maps. added = upstream has, toolkit
+// lacks; removed = toolkit has, upstream dropped; changed = version range differs.
+function diffDependencies(toolkitDeps, upstreamDeps) {
+  if (!toolkitDeps || !upstreamDeps) return null;
+  const added = [];
+  const removed = [];
+  const changed = [];
+
+  for (const name of Object.keys(upstreamDeps)) {
+    if (!(name in toolkitDeps)) {
+      added.push(`${name}@${upstreamDeps[name]}`);
+    } else if (toolkitDeps[name] !== upstreamDeps[name]) {
+      changed.push(`${name}: ${toolkitDeps[name]} → ${upstreamDeps[name]}`);
+    }
+  }
+  for (const name of Object.keys(toolkitDeps)) {
+    if (!(name in upstreamDeps)) {
+      removed.push(`${name}@${toolkitDeps[name]}`);
+    }
+  }
+
+  const drift = added.length > 0 || removed.length > 0 || changed.length > 0;
+  return { added, removed, changed, drift };
+}
+
 async function fetchUpstreamManifestVersion(template) {
   const url = `https://raw.githubusercontent.com/${template.upstreamRepo}/${template.upstreamBranch}/manifest.json`;
   try {
@@ -177,6 +236,23 @@ function judgeWithCopilot(row) {
         .join("\n")
     : "- (none fetched)";
 
+  const d = row.depDiff || {};
+  const depText = row.depDrift
+    ? [
+        d.added && d.added.length
+          ? `Added upstream (toolkit lacks): ${d.added.join(", ")}`
+          : null,
+        d.changed && d.changed.length
+          ? `Version changed (toolkit → upstream): ${d.changed.join(", ")}`
+          : null,
+        d.removed && d.removed.length
+          ? `Removed upstream (toolkit still has): ${d.removed.join(", ")}`
+          : null,
+      ]
+        .filter(Boolean)
+        .join("\n")
+    : "(no package.json dependency drift)";
+
   const prompt = [
     `You are auditing a Microsoft 365 Agents Toolkit Office Add-in template that is a fork of an OfficeDev upstream template.`,
     ``,
@@ -189,13 +265,17 @@ function judgeWithCopilot(row) {
     `Recent upstream commits since baseline (newest first):`,
     recentCommitsText,
     ``,
+    `package.json dependency drift (precomputed, toolkit vs upstream):`,
+    depText,
+    ``,
     `Task:`,
     `1. Read the toolkit template's src/ files locally.`,
     `2. Fetch the corresponding upstream src/ files (raw.githubusercontent.com/${row.upstreamRepo}/${row.upstreamBranch}/src/...).`,
     `3. Compare the TypeScript logic (ignore formatting, comments, and the toolkit's {{placeholder}} tokens).`,
-    `4. Judge whether the toolkit template needs a code update to track upstream.`,
+    `4. Consider the dependency drift above: judge whether the upstream dependency changes are security/compat-relevant and whether the toolkit's package.json.tpl should follow (note that some toolkit deps intentionally differ).`,
+    `5. Judge whether the toolkit template needs a code and/or dependency update to track upstream.`,
     ``,
-    `Output concise markdown: a one-line VERDICT (UPDATE NEEDED / NO UPDATE NEEDED / REVIEW), then 3-6 bullets citing the specific files and behavioral differences, then an upgrade-priority (low/medium/high).`,
+    `Output concise markdown: a one-line VERDICT (UPDATE NEEDED / NO UPDATE NEEDED / REVIEW), then 3-6 bullets citing the specific files/dependencies and behavioral differences, then an upgrade-priority (low/medium/high).`,
   ].join("\n");
 
   try {
@@ -227,12 +307,33 @@ function buildIssueBody(report) {
   const tableRows = report.rows
     .map(
       (row) =>
-        `| ${row.id} | ${row.toolkitVersion} | ${row.upstreamVersion} | ${row.baselineVersion} | ${row.manifestDrift ? "yes" : "no"} | ${row.codeDrift ? "yes" : "no"} | ${row.status} |`,
+        `| ${row.id} | ${row.toolkitVersion} | ${row.upstreamVersion} | ${row.baselineVersion} | ${row.manifestDrift ? "yes" : "no"} | ${row.codeDrift ? "yes" : "no"} | ${row.depDrift ? "yes" : "no"} | ${row.status} |`,
     )
     .join("\n");
 
+  const depSections = report.rows
+    .filter((row) => row.depDrift)
+    .map((row) => {
+      const d = row.depDiff || {};
+      const line = (label, items) =>
+        items && items.length
+          ? `- ${label}:\n${items.map((i) => `  - ${i}`).join("\n")}`
+          : null;
+      return [
+        `### ${row.id}`,
+        "",
+        line("Added upstream (toolkit lacks)", d.added),
+        line("Version changed (toolkit → upstream)", d.changed),
+        line("Removed upstream (toolkit still has)", d.removed),
+        "",
+      ]
+        .filter((x) => x !== null)
+        .join("\n");
+    })
+    .join("\n");
+
   const judgmentSections = report.rows
-    .filter((row) => row.codeDrift)
+    .filter((row) => row.codeDrift || row.depDrift)
     .map((row) =>
       [
         `### ${row.id}`,
@@ -252,21 +353,28 @@ function buildIssueBody(report) {
     "## Office Add-in Upstream Drift Detected",
     "",
     "One or more OfficeDev upstream templates have advanced past the recorded baseline for the",
-    "corresponding toolkit Office Add-in template — either a newer manifest version or new commits.",
+    "corresponding toolkit Office Add-in template — a newer manifest version, new commits, or",
+    "changed package.json dependencies.",
     "",
     "## Status Table",
     "",
-    "| Template | Toolkit ver | Upstream ver | Baseline ver | Manifest drift | Code drift | Status |",
-    "|---|---|---|---|---|---|---|",
+    "| Template | Toolkit ver | Upstream ver | Baseline ver | Manifest drift | Code drift | Dep drift | Status |",
+    "|---|---|---|---|---|---|---|---|",
     tableRows,
+    "",
+    "## Dependency Drift (package.json)",
+    "",
+    depSections || "_No dependency drift detected._",
     "",
     "## Copilot Code-Update Judgment",
     "",
-    judgmentSections || "_No code drift detected; no per-template judgment generated._",
+    judgmentSections ||
+      "_No code or dependency drift detected; no per-template judgment generated._",
     "",
     "## Recommended Follow-up",
     "",
     "- Review each Copilot judgment above and update the affected `templates/vsc/ts/<id>/src` where warranted.",
+    "- Reconcile flagged `package.json.tpl` dependency ranges against upstream where appropriate.",
     "- Update the affected `templates/vsc/ts/<id>/appPackage/manifest.json.tpl` if manifest drift is flagged.",
     "- Re-check `office-addin-toolkit-vs-upstream.md` for known intentional divergences.",
     "- Bump the affected `upstreamManifestVersion` / `upstreamCommitSha` in `.github/office-addin-upstream-baseline.json` once reconciled.",
@@ -296,6 +404,9 @@ function setOutput(name, value) {
 
 async function main() {
   const baseline = readJson(BASELINE_PATH).templates || {};
+  // Manual test switch (workflow_dispatch input): treat every template as
+  // drifted regardless of baseline, to exercise the Copilot + issue path.
+  const ignoreBaseline = /^(true|1)$/i.test(process.env.IGNORE_BASELINE || "");
   const rows = [];
 
   for (const template of TEMPLATES) {
@@ -327,9 +438,18 @@ async function main() {
 
     // Code drift: upstream head SHA differs from the reconciled baseline SHA.
     const upstreamSha = await fetchLatestCommitSha(template);
-    const codeDrift = Boolean(
-      upstreamSha && baselineSha !== "N/A" && upstreamSha !== baselineSha,
+    const codeDrift =
+      ignoreBaseline ||
+      Boolean(
+        upstreamSha && baselineSha !== "N/A" && upstreamSha !== baselineSha,
+      );
+
+    // Dependency drift: toolkit vs upstream package.json dependency ranges.
+    const depDiff = diffDependencies(
+      readToolkitDependencies(template.id),
+      await fetchUpstreamDependencies(template),
     );
+    const depDrift = Boolean(depDiff && depDiff.drift);
 
     const recentCommits = codeDrift
       ? await fetchRecentCommits(template)
@@ -347,12 +467,14 @@ async function main() {
       status,
       manifestDrift,
       codeDrift,
+      depDrift,
+      depDiff,
       recentCommits,
       judgment: { source: "none", text: "" },
     };
 
-    // Let Copilot explore + judge only when code actually drifted.
-    if (codeDrift) {
+    // Let Copilot explore + judge when code or dependencies actually drifted.
+    if (codeDrift || depDrift) {
       row.judgment = judgeWithCopilot(row);
     }
 
@@ -360,7 +482,7 @@ async function main() {
   }
 
   const driftedRows = rows.filter(
-    (row) => row.manifestDrift || row.codeDrift,
+    (row) => row.manifestDrift || row.codeDrift || row.depDrift,
   );
   const driftDetected = driftedRows.length > 0;
   const driftedIds = driftedRows.map((row) => row.id);
@@ -398,6 +520,7 @@ async function main() {
           status: row.status,
           manifestDrift: row.manifestDrift,
           codeDrift: row.codeDrift,
+          depDrift: row.depDrift,
           judgmentSource: row.judgment.source,
         })),
       },
