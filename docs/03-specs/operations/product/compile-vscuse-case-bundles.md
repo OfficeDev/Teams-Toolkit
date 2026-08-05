@@ -546,6 +546,7 @@ apply host-neutral assertions to the resulting assistant response. V1 includes:
 | `open`    | Any          | Already ready        | `assert-ready.json.tpl`                      | Adapter-owned        |
 | `open`    | Teams        | Teams page           | `teams/trust-local-tab-certificate.json.tpl` | Teams page           |
 | `open`    | Teams        | App details popup    | `teams/add-and-open-app.json.tpl`            | Adapter-owned        |
+| `open`    | Teams        | Local access prompt  | `teams/allow-local-device-access.json.tpl`   | Teams app tab        |
 | `chat`    | Teams        | `chat-ready`         | `teams/send-message.json.tpl`                | `message-submitted`  |
 | `chat`    | Copilot      | `chat-ready`         | `copilot/send-message.json.tpl`              | `message-submitted`  |
 | `chat`    | Copilot      | Consent prompt       | `copilot/allow-action.json.tpl`              | Consent dismissed    |
@@ -572,16 +573,19 @@ component comes from closes the same transition by asserting the app's name is o
 conversation heading carries alongside the message box that distinguishes it from the page the
 component started on.
 
-A local Teams tab needs one more component, and it runs first. Its local lifecycle sets
+A local Teams tab needs two extra components around the shared add-and-open transition. Its local lifecycle sets
 `TAB_ENDPOINT` to `https://localhost:3978` and the manifest points the static tab at
 `${{TAB_ENDPOINT}}/tabs/home`, so the frame Teams opens loads from a self-signed origin Chrome has
 never been told to trust and stays blank. `teams/trust-local-tab-certificate.json.tpl` opens that
 origin in a separate browser tab, accepts the interstitial, and returns to the Teams tab before the
 app is added, so the frame renders on its first load. Trusting the origin afterwards leaves a frame
 that has already failed, and the only way back is the app's own reload command, which races the
-browser permission prompt Teams raises on the same page. The component owns the URL and the recorded
-controls; a case authors only `destination: page`. The remote profiles do not emit it, because a
-provisioned tab is served from a public endpoint with a valid certificate.
+browser permission prompt Teams raises on the same page. After the app opens,
+`teams/allow-local-device-access.json.tpl` asserts that `teams.cloud.microsoft` is asking to access
+other apps and services on the device, clicks its Allow button, and asserts that the prompt closes
+before page content is checked. The components own the URL and screenshot-recorded controls; a case
+authors only `destination: page`. The remote profiles emit neither component, because a provisioned
+tab is served from a public endpoint with a valid certificate and does not access the local device.
 
 Neither of the component's first two assertions names a caption. Teams captions the popup's primary
 action `Add` for an account that has not installed the app and `Open` for one that has, and titles
@@ -1272,7 +1276,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-115 | Given a Tab scaffold answering `teamsOtherAppType: non-sso-tab`, compilation emits `Teams Agent or App Using Microsoft Teams SDK` → `Other Teams Capabilities` → `Tab` and no language selection, because the Tab package ships one language and the toolkit therefore shows no language prompt.                                                                                                                                                                                                                                                                                   |
 | VCB-116 | Given a target profile, it registers at most one activation adapter per destination it can reach, and an authored `open` resolves the adapter matching its `destination` and `kind`; `Debug in Teams (Chrome)` therefore reaches `chat-ready` for a bot and `page-ready` for a tab, while a destination the profile does not register fails resolution.                                                                                                                                                                                                                            |
 | VCB-117 | Given a Teams `open`, the add-and-open component's closing assertion is the converged subject its adapter supplies, so the same recorded transition closes on the app's conversation for `destination: chat` and on the app's tab page for `destination: page`, and neither run asserts the app-details page the target already asserted.                                                                                                                                                                                                                                          |
-| VCB-118 | Given a `Debug in Teams (Chrome)` open with `destination: page`, the adapter accepts the local development certificate at `https://localhost:3978` in a separate browser tab before it adds and opens the app, so the tab frame renders on its first load; the remote tab profile emits no such step because its endpoint carries a valid certificate.                                                                                                                                                                                                                             |
+| VCB-118 | Given a `Debug in Teams (Chrome)` open with `destination: page`, the adapter accepts the local development certificate at `https://localhost:3978` in a separate browser tab before it adds and opens the app, then allows the `teams.cloud.microsoft` request to access other apps and services on the device before claiming `page-ready`; the remote tab profile emits neither local-only step because its public endpoint carries a valid certificate and does not access the local device.                                                                                    |
 | VCB-119 | Given a `page` check, compilation requires the preceding sequence to have reached `page-ready`, requires a non-empty `expect.contains` list, and emits one visible-content assertion per item in authored order; a `page` check without a preceding page `open` fails before plan output.                                                                                                                                                                                                                                                                                          |
 | VCB-120 | Given a `removeWorkspaceFile` operation, compilation emits one workspace mutation that deletes the authored project-relative file and fails when the path is absent, absolute, or escapes the project, so a case can prove that a later local debug recreates a file the template ships.                                                                                                                                                                                                                                                                                           |
 

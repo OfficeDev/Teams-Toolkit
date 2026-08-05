@@ -457,10 +457,10 @@ const targetAdapters = {
     host: "teams",
     open: {
       chat: { adapter: "teams-add", kind: "app", subject: teamsChatSubject },
-      // The local lifecycle serves the tab from `https://localhost:3978` behind a
-      // development certificate Chrome has never been told to trust, so the frame
-      // Teams opens stays empty until the certificate is accepted and the app is
-      // reloaded. The remote profile above needs neither step.
+      // The local lifecycle serves the tab from `https://localhost:3978`, so the
+      // adapter must trust its development certificate before opening the app and
+      // then allow the cloud-hosted Teams page to access that local service. The
+      // remote profile above needs neither local-only transition.
       page: {
         adapter: "teams-add-local-page",
         kind: "app",
@@ -1404,6 +1404,13 @@ function createSemanticStepCompiler() {
         }),
       );
       if (error) return error;
+      if (activation.adapter === "teams-add-local-page") {
+        error = append(
+          output,
+          render(state, "browser/teams/allow-local-device-access.json.tpl", {}),
+        );
+        if (error) return error;
+      }
     } else if (activation.adapter !== "ready") {
       return failure(
         "VCB_OPEN_ADAPTER_UNKNOWN",

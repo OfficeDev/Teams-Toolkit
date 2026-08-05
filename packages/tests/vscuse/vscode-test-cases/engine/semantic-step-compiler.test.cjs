@@ -3090,7 +3090,7 @@ test("VCB-117: the Teams open closes on the subject its adapter supplies", async
   }
 });
 
-test("VCB-118: only the local tab open trusts the development certificate, and it does so before the app opens", async () => {
+test("VCB-118: local tab open trusts the certificate before opening and allows local access afterward", async () => {
   const result = await compileFixture(
     "non-sso-tab.yml",
     (sourceText) => sourceText,
@@ -3109,8 +3109,22 @@ test("VCB-118: only the local tab open trusts the development certificate, and i
     );
 
   const trustIndex = indexOfComponent(local, "trustLocalTabCertificate");
+  const addIndex = indexOfComponent(local, "addAndOpenApp");
+  const allowIndex = indexOfComponent(local, "allowLocalDeviceAccess");
+  const pageCheckIndex = indexOfComponent(local, "assertPageContains");
   assert.notEqual(trustIndex, -1);
-  assert.ok(trustIndex < indexOfComponent(local, "addAndOpenApp"));
+  assert.ok(trustIndex < addIndex);
+  assert.ok(addIndex < allowIndex);
+  assert.ok(allowIndex < pageCheckIndex);
+  const allowStep = local.steps.find((step) =>
+    step.step_id.startsWith("step_allowLocalDeviceAccess_allow_"),
+  );
+  assert.deepEqual(allowStep.parameters, {
+    button: "left",
+    x: 389,
+    y: 241,
+  });
+  assert.equal(allowStep.tags.includes("ocr:true"), true);
   assert.equal(
     local.steps.some(
       (step) => step.parameters?.text === "https://localhost:3978/tabs/home",
@@ -3118,6 +3132,7 @@ test("VCB-118: only the local tab open trusts the development certificate, and i
     true,
   );
   assert.equal(indexOfComponent(remote, "trustLocalTabCertificate"), -1);
+  assert.equal(indexOfComponent(remote, "allowLocalDeviceAccess"), -1);
 });
 
 test("VCB-119: a page check requires page-ready and asserts each authored substring", async () => {
