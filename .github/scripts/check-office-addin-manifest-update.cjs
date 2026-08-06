@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 
 const { execSync } = require("child_process");
 
@@ -171,6 +172,18 @@ function diffDependencies(toolkitDeps, upstreamDeps) {
   return { added, removed, changed, drift };
 }
 
+// Stable short hash of an upstream dependency map, so we can record it in the
+// baseline and only flag dep drift when UPSTREAM's deps change from what we last
+// reconciled (rather than flagging the toolkit's intentional divergence forever).
+function hashDependencies(deps) {
+  if (!deps) return null;
+  const normalized = Object.keys(deps)
+    .sort()
+    .map((name) => `${name}@${deps[name]}`)
+    .join("\n");
+  return crypto.createHash("sha256").update(normalized).digest("hex").slice(0, 16);
+}
+
 async function fetchUpstreamManifestVersion(template) {
   const url = `https://raw.githubusercontent.com/${template.upstreamRepo}/${template.upstreamBranch}/manifest.json`;
   try {
@@ -212,6 +225,24 @@ function toListText(items, limit = 10) {
   const shown = items.slice(0, limit).join(", ");
   if (items.length <= limit) return shown;
   return `${shown} (+${items.length - limit} more)`;
+}
+
+// The Copilot CLI streams its whole tool-call trace to stdout (file reads, web
+// fetches, greps). Keep only the final answer: prefer everything from the first
+// VERDICT marker onward; otherwise drop the trace/tree-glyph lines.
+function stripCliTrace(raw) {
+  const text = String(raw).replace(/\r/g, "");
+  const verdictIdx = text.search(/\*{0,2}VERDICT\b/i);
+  if (verdictIdx !== -1) {
+    return text.slice(verdictIdx).trim();
+  }
+  const cleaned = text
+    .split("\n")
+    .filter((line) => !/^\s*[●│└/]/.test(line))
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+  return cleaned || text.trim();
 }
 
 // Ask Copilot CLI to explore upstream + toolkit code itself and judge whether
@@ -294,7 +325,7 @@ function judgeWithCopilot(row) {
         text: "Copilot judgment unavailable because CLI response was empty.",
       };
     }
-    return { source: "ai", text: result.trim() };
+    return { source: "ai", text: stripCliTrace(result) };
   } catch (error) {
     return {
       source: "fallback",
@@ -414,6 +445,7 @@ async function main() {
     const baselineEntry = baseline[template.id] || {};
     const baselineVersion = baselineEntry.upstreamManifestVersion || "N/A";
     const baselineSha = baselineEntry.upstreamCommitSha || "N/A";
+    const baselineDepHash = baselineEntry.upstreamDepHash || "N/A";
 
     let upstreamVersion = "N/A";
     let status;
@@ -445,11 +477,23 @@ async function main() {
       );
 
     // Dependency drift: toolkit vs upstream package.json dependency ranges.
+    // Dependency drift: only when UPSTREAM's dependency set changed from the
+    // reconciled baseline hash (the toolkit-vs-upstream diff below is shown for
+    // context, but it is not itself the trigger — that would flag intentional
+    // toolkit divergence on every run).
+    const upstreamDeps = await fetchUpstreamDependencies(template);
+    const upstreamDepHash = hashDependencies(upstreamDeps);
     const depDiff = diffDependencies(
       readToolkitDependencies(template.id),
-      await fetchUpstreamDependencies(template),
+      upstreamDeps,
     );
-    const depDrift = Boolean(depDiff && depDiff.drift);
+    const depDrift =
+      ignoreBaseline ||
+      Boolean(
+        upstreamDepHash &&
+          baselineDepHash !== "N/A" &&
+          upstreamDepHash !== baselineDepHash,
+      );
 
     const recentCommits = codeDrift
       ? await fetchRecentCommits(template)
@@ -464,6 +508,8 @@ async function main() {
       baselineVersion,
       baselineSha,
       upstreamSha: upstreamSha || "N/A",
+      baselineDepHash,
+      upstreamDepHash: upstreamDepHash || "N/A",
       status,
       manifestDrift,
       codeDrift,
@@ -521,6 +567,7 @@ async function main() {
           manifestDrift: row.manifestDrift,
           codeDrift: row.codeDrift,
           depDrift: row.depDrift,
+          upstreamDepHash: row.upstreamDepHash,
           judgmentSource: row.judgment.source,
         })),
       },
