@@ -70,7 +70,7 @@ function applyWithCopilot(row) {
   ].join("\n");
 
   return run(`copilot -p ${JSON.stringify(prompt)} --allow-all-tools --no-ask-user`, {
-    timeout: 300000,
+    timeout: 600000,
   });
 }
 
@@ -120,18 +120,27 @@ function createPr(row, changeSummary) {
     .filter(Boolean)
     .join("\n");
 
-  // Use the REST API via curl so we don't depend on the gh CLI being present.
+  // Write the JSON body to a temp file and use `curl --data @file` so the body
+  // (which contains newlines, backticks, quotes from the judgment) never passes
+  // through shell escaping — that was causing GitHub 400 "Problems parsing JSON".
   const payload = JSON.stringify({ title, head: branch, base, body });
   const apiUrl = `https://api.github.com/repos/${repo}/pulls`;
-  const result = run(
-    `curl -s -X POST ${apiUrl} ` +
-      `-H "Authorization: Bearer ${token}" ` +
-      `-H "Accept: application/vnd.github+json" ` +
-      `-H "Content-Type: application/json" ` +
-      `-d ${JSON.stringify(payload)}`,
-  );
+  const payloadPath = path.join(REPO_ROOT, ".github", `.pr-payload-${row.id}.json`);
+  fs.writeFileSync(payloadPath, payload);
+  let result;
+  try {
+    result = run(
+      `curl -s -X POST ${apiUrl} ` +
+        `-H "Authorization: Bearer ${token}" ` +
+        `-H "Accept: application/vnd.github+json" ` +
+        `-H "Content-Type: application/json" ` +
+        `--data @${payloadPath}`,
+    );
+  } finally {
+    fs.rmSync(payloadPath, { force: true });
+  }
   const parsed = JSON.parse(result);
-  return parsed.html_url || `(PR create response: ${result.slice(0, 200)})`;
+  return parsed.html_url || `(PR create response: ${result.slice(0, 300)})`;
 }
 
 function main() {
