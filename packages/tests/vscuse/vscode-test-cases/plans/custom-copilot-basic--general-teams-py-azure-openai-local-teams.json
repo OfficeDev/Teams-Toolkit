@@ -1893,7 +1893,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion a visible Visual Studio Code notification contains The following environment is selected:.",
+      "description": "@assertion a visible Visual Studio Code notification contains the literal text The following environment is selected:. A notification with different text, including an in-progress notification, does not satisfy this assertion.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
