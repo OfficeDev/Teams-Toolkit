@@ -40,6 +40,7 @@ decision. The format for a new ADR is defined inline below under
 | ADR-0019 | [Dual-stream scaffold telemetry (v3 verbatim + parallel `scaffold-v4-*` family)](ADR-0019-dual-stream-scaffold-telemetry.md) | Accepted | [`scaffolding.create.proposal.md` §14](../scaffolding.create.proposal.md#14-adrs-this-proposal-will-be-decomposed-into) |
 | ADR-0020 | [MCP server URL validity: when to check, and whether to block](ADR-0020-mcp-server-url-validity.md) | Accepted | [`mcp-remote-servers.md` §3](../external-dependencies/mcp-remote-servers.md#3-open-questions) |
 | ADR-0021 | [Parent window for the WAM broker sign-in dialog](ADR-0021-wam-broker-dialog-parent-window.md) | Proposed | [gim-home/wiqd#1884](https://github.com/gim-home/wiqd/issues/1884) |
+| ADR-0022 | [Ownership of host-agnostic manifest-template resolution](ADR-0022-manifest-template-resolution-ownership.md) | Accepted | Internal concern — cross-host `file()`/`${{ENV}}` resolver reuse in PR #16525 |
 
 > **Reading order vs. numeric order.** The Index is in **numeric order** —
 > the immutable, reservation-ordered ADR id is the anchor for every forward
