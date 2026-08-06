@@ -91,11 +91,11 @@ export class CheckSideloadingPermissionFailedError extends SystemError {
 }
 
 export class InvalidFileOutsideOfTheDirectotryError extends UserError {
-  constructor(filePath: string) {
+  constructor() {
     const errorOptions: UserErrorOptions = {
       source: Constants.PLUGIN_NAME,
-      message: getDefaultString("error.teamsApp.createAppPackage.invalidFile", filePath),
-      displayMessage: getLocalizedString("error.teamsApp.createAppPackage.invalidFile", filePath),
+      message: getDefaultString("error.teamsApp.createAppPackage.invalidFile"),
+      displayMessage: getLocalizedString("error.teamsApp.createAppPackage.invalidFile"),
       categories: [ErrorCategory.External],
     };
     super(errorOptions);

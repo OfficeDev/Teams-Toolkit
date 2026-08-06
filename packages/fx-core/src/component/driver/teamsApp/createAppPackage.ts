@@ -133,19 +133,9 @@ export class CreateAppPackageDriver implements StepDriver {
     }
     for (const file of relativeFiles) {
       const filePath = path.resolve(appDirectory, file);
-      if (!(await fs.pathExists(filePath))) {
-        const error = new FileNotFoundError(
-          actionName,
-          filePath,
-          "https://aka.ms/teamsfx-actions/teamsapp-zipAppPackage"
-        );
-        return err(error);
-      }
-      const realFilePath = await fs.realpath(filePath);
-      const realAppDirectory = await fs.realpath(appDirectory);
-      const fileRelativePath = path.relative(realAppDirectory, realFilePath);
-      if (fileRelativePath.startsWith("..")) {
-        return err(new InvalidFileOutsideOfTheDirectotryError(filePath));
+      const validationResult = await this.validateReferencedFile(filePath, appDirectory);
+      if (validationResult.isErr()) {
+        return err(validationResult.error);
       }
     }
 
@@ -177,32 +167,23 @@ export class CreateAppPackageDriver implements StepDriver {
     if (additionalLanguages && additionalLanguages.length > 0) {
       for (const language of additionalLanguages) {
         const file = language.file;
-        const fileName = path.join(appDirectory, file);
-        if (!(await fs.pathExists(fileName))) {
-          return err(
-            new FileNotFoundError(
-              actionName,
-              fileName,
-              "https://aka.ms/teamsfx-actions/teamsapp-zipAppPackage"
-            )
-          );
+        const fileName = path.resolve(appDirectory, file);
+        const validationResult = await this.validateReferencedFile(fileName, appDirectory);
+        if (validationResult.isErr()) {
+          return err(validationResult.error);
         }
       }
     }
     if (defaultLanguageFile) {
-      const fileName = path.join(appDirectory, defaultLanguageFile);
-      if (!(await fs.pathExists(fileName))) {
-        return err(
-          new FileNotFoundError(
-            actionName,
-            fileName,
-            "https://aka.ms/teamsfx-actions/teamsapp-zipAppPackage"
-          )
-        );
+      const fileName = path.resolve(appDirectory, defaultLanguageFile);
+      const validationResult = await this.validateReferencedFile(fileName, appDirectory);
+      if (validationResult.isErr()) {
+        return err(validationResult.error);
       }
     }
 
     const zip = new AdmZip();
+    const resolvedJsonFiles = new Map<string, string>();
     zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(manifest, null, 4)));
 
     // icon images, relative path
@@ -219,9 +200,6 @@ export class CreateAppPackageDriver implements StepDriver {
         const realFileName = await fs.realpath(fileName);
         const realAppDirectory = await fs.realpath(appDirectory);
         const relativePath = path.relative(realAppDirectory, realFileName);
-        if (relativePath.startsWith("..")) {
-          return err(new InvalidFileOutsideOfTheDirectotryError(fileName));
-        }
         const resolvedLocFileRes = await manifestUtils.resolveLocFile(fileName, context);
         if (resolvedLocFileRes.isErr()) {
           return err(resolvedLocFileRes.error);
@@ -236,9 +214,6 @@ export class CreateAppPackageDriver implements StepDriver {
       const realFileName = await fs.realpath(fileName);
       const realAppDirectory = await fs.realpath(appDirectory);
       const relativePath = path.relative(realAppDirectory, realFileName);
-      if (relativePath.startsWith("..")) {
-        return err(new InvalidFileOutsideOfTheDirectotryError(fileName));
-      }
 
       const resolvedLocFileRes = await manifestUtils.resolveLocFile(fileName, context);
       if (resolvedLocFileRes.isErr()) {
@@ -314,7 +289,8 @@ export class CreateAppPackageDriver implements StepDriver {
         context,
         shouldwriteAllManifest
           ? path.join(jsonFileDir, path.relative(appDirectory, declarativeAgentManifestFile))
-          : undefined
+          : undefined,
+        resolvedJsonFiles
       );
       if (addFileWithVariableRes.isErr()) {
         return err(addFileWithVariableRes.error);
@@ -368,7 +344,8 @@ export class CreateAppPackageDriver implements StepDriver {
               hasTTKGeneratedFolder ? generatedFolder : appDirectory,
               context,
               !shouldwriteAllManifest ? undefined : jsonFileDir,
-              hasTTKGeneratedFolder ? appDirectory : undefined
+              hasTTKGeneratedFolder ? appDirectory : undefined,
+              resolvedJsonFiles
             );
 
             if (addPluginRes.isErr()) {
@@ -436,14 +413,13 @@ export class CreateAppPackageDriver implements StepDriver {
                   return err(
                     new FileNotFoundError(
                       actionName,
-                      skillMdPath,
+                      path.basename(skillMdPath),
                       "https://aka.ms/teamsfx-actions/teamsapp-zipAppPackage"
                     )
                   );
                 }
 
-                const skillRelativePath = path.relative(appDirectory, skillFolderAbsolutePath);
-                zip.addLocalFolder(skillFolderAbsolutePath, skillRelativePath);
+                await this.addLocalFolderRecursive(zip, skillFolderAbsolutePath, appDirectory);
               }
             }
           }
@@ -480,16 +456,61 @@ export class CreateAppPackageDriver implements StepDriver {
       }
     }
 
-    zip.writeZip(zipFileName);
-
-    // Validate zip package size against 10 MB hard limit
-    const maxPackageSize = 10 * 1024 * 1024;
-    const zipStats = await fs.stat(zipFileName);
-    if (zipStats.size > maxPackageSize) {
-      return err(new AppPackageSizeExceededError(zipStats.size, maxPackageSize));
+    if (resolvedJsonFiles.has(teamsManifestJsonFileName)) {
+      return err(
+        new InvalidActionInputError(
+          actionName,
+          ["outputFolder"],
+          "https://aka.ms/teamsfx-actions/teamsapp-zipAppPackage"
+        )
+      );
+    }
+    resolvedJsonFiles.set(teamsManifestJsonFileName, JSON.stringify(manifest, null, 4));
+    const outputFileNames = [zipFileName, ...resolvedJsonFiles.keys()];
+    const canonicalOutputPaths: string[] = [];
+    let hasInvalidOutputPath = false;
+    for (const outputFileName of outputFileNames) {
+      if (await this.isDirectory(outputFileName)) {
+        hasInvalidOutputPath = true;
+        break;
+      }
+      const canonicalOutputPath = await this.getCanonicalDestinationPath(outputFileName);
+      if (
+        canonicalOutputPaths.some(
+          (outputPath) =>
+            this.isPathContained(outputPath, canonicalOutputPath) ||
+            this.isPathContained(canonicalOutputPath, outputPath)
+        )
+      ) {
+        hasInvalidOutputPath = true;
+        break;
+      }
+      canonicalOutputPaths.push(canonicalOutputPath);
+    }
+    if (hasInvalidOutputPath) {
+      return err(
+        new InvalidActionInputError(
+          actionName,
+          ["outputZipPath", args.outputJsonPath ? "outputJsonPath" : "outputFolder"],
+          "https://aka.ms/teamsfx-actions/teamsapp-zipAppPackage"
+        )
+      );
     }
 
-    await this.writeJsonFile(teamsManifestJsonFileName, JSON.stringify(manifest, null, 4));
+    const stagedZipFileName = this.getStagedOutputPath(zipFileName);
+    const maxPackageSize = 10 * 1024 * 1024;
+    try {
+      zip.writeZip(stagedZipFileName);
+
+      const zipStats = await fs.stat(stagedZipFileName);
+      if (zipStats.size > maxPackageSize) {
+        return err(new AppPackageSizeExceededError(zipStats.size, maxPackageSize));
+      }
+
+      await this.publishOutputs(stagedZipFileName, zipFileName, resolvedJsonFiles);
+    } finally {
+      await fs.remove(stagedZipFileName).catch(() => {});
+    }
 
     const builtSuccess = [
       { content: "(√)Done: ", color: Colors.BRIGHT_GREEN },
@@ -538,11 +559,15 @@ export class CreateAppPackageDriver implements StepDriver {
     file: string,
     directory: string
   ): Promise<Result<undefined, FxError>> {
+    if (!this.isPathContained(directory, file)) {
+      return err(new InvalidFileOutsideOfTheDirectotryError());
+    }
+
     if (!(await fs.pathExists(file))) {
       return err(
         new FileNotFoundError(
           actionName,
-          file,
+          path.basename(file),
           "https://aka.ms/teamsfx-actions/teamsapp-zipAppPackage"
         )
       );
@@ -550,12 +575,21 @@ export class CreateAppPackageDriver implements StepDriver {
 
     const realFile = await fs.realpath(file);
     const realDirectory = await fs.realpath(directory);
-    const relativePath = path.relative(realDirectory, realFile);
-    if (relativePath.startsWith("..")) {
-      return err(new InvalidFileOutsideOfTheDirectotryError(file));
+    if (!this.isPathContained(realDirectory, realFile)) {
+      return err(new InvalidFileOutsideOfTheDirectotryError());
     }
 
     return ok(undefined);
+  }
+
+  private isPathContained(directory: string, file: string): boolean {
+    const relativePath = path.relative(directory, file);
+    return (
+      relativePath === "" ||
+      (relativePath !== ".." &&
+        !relativePath.startsWith(`..${path.sep}`) &&
+        !path.isAbsolute(relativePath))
+    );
   }
 
   private async addAgentSkillFolders(
@@ -565,30 +599,19 @@ export class CreateAppPackageDriver implements StepDriver {
   ): Promise<Result<undefined, FxError>> {
     for (const skill of agentSkills) {
       const skillFolderAbs = path.resolve(appDirectory, skill.folder);
-      if (!(await fs.pathExists(skillFolderAbs))) {
-        return err(
-          new FileNotFoundError(
-            actionName,
-            skillFolderAbs,
-            "https://aka.ms/teamsfx-actions/teamsapp-zipAppPackage"
-          )
-        );
+      const validationResult = await this.validateReferencedFile(skillFolderAbs, appDirectory);
+      if (validationResult.isErr()) {
+        return err(validationResult.error);
       }
       const skillMdPath = path.join(skillFolderAbs, "SKILL.md");
       if (!(await fs.pathExists(skillMdPath))) {
         return err(
           new FileNotFoundError(
             actionName,
-            skillMdPath,
+            path.basename(skillMdPath),
             "https://aka.ms/teamsfx-actions/teamsapp-zipAppPackage"
           )
         );
-      }
-      const realSkillFolder = await fs.realpath(skillFolderAbs);
-      const realAppDirectory = await fs.realpath(appDirectory);
-      const relativeToApp = path.relative(realAppDirectory, realSkillFolder);
-      if (relativeToApp.startsWith("..") || path.isAbsolute(relativeToApp)) {
-        return err(new InvalidFileOutsideOfTheDirectotryError(skillFolderAbs));
       }
       await this.addLocalFolderRecursive(zip, skillFolderAbs, appDirectory);
     }
@@ -636,8 +659,7 @@ export class CreateAppPackageDriver implements StepDriver {
         await this.addLocalFolderRecursive(zip, entryAbs, appDirectory);
       } else if (entry.isFile()) {
         const realEntryAbs = await fs.realpath(entryAbs);
-        const relToApp = path.relative(realAppDirectory, realEntryAbs);
-        if (relToApp.startsWith("..")) {
+        if (!this.isPathContained(realAppDirectory, realEntryAbs)) {
           continue;
         }
         const relDir = path.dirname(path.relative(appDirectory, entryAbs));
@@ -661,7 +683,8 @@ export class CreateAppPackageDriver implements StepDriver {
     appDirectory: string,
     context: WrapDriverContext,
     outputDirectory?: string,
-    defaultAppDirectry?: string
+    defaultAppDirectry?: string,
+    resolvedJsonFiles?: Map<string, string>
   ): Promise<Result<undefined, FxError>> {
     const pluginFile = path.resolve(appDirectory, pluginRelativePath);
     const checkExistenceRes = await this.validateReferencedFile(pluginFile, appDirectory);
@@ -680,13 +703,17 @@ export class CreateAppPackageDriver implements StepDriver {
     if (pluginFileContent.functions) {
       for (const func of pluginFileContent.functions) {
         if (func.capabilities?.response_semantics?.static_template?.file) {
-          const staticTemplateFile = await this.getAdaptiveCardTemplateFile(
+          const staticTemplateFileResult = await this.getAdaptiveCardTemplateFile(
             context,
             pluginFile,
             func,
             appDirectory,
             defaultAppDirectry
           );
+          if (staticTemplateFileResult.isErr()) {
+            return err(staticTemplateFileResult.error);
+          }
+          const staticTemplateFile = staticTemplateFileResult.value;
           if (!staticTemplateFile) {
             continue;
           }
@@ -695,7 +722,7 @@ export class CreateAppPackageDriver implements StepDriver {
             context.logProvider.warning(
               getLocalizedString(
                 "plugins.appstudio.createPackage.aiPlugin.overrideWarning",
-                pluginFile,
+                path.basename(pluginFile),
                 func.name
               )
             );
@@ -728,38 +755,45 @@ export class CreateAppPackageDriver implements StepDriver {
       await updateVersionForTeamsAppYamlFile(context.projectPath);
     }
 
-    if (namespaceContainsUnderscore || containExternalAdaptiveCard) {
-      tempFolder = path.join(appDirectory, ".tmp");
-      await fs.ensureDir(tempFolder);
-      tmpPluginFile = path.join(tempFolder, `tmp-ai-plugin-${uuid.v4().slice(0, 6)}.json`);
-      const processedFunctionRes = await expandVariableWithFunction(
-        JSON.stringify(pluginFileContent),
-        context,
-        undefined,
-        true,
-        ManifestType.PluginManifest,
-        pluginFile
-      );
-      if (processedFunctionRes.isErr()) {
-        return err(processedFunctionRes.error);
+    let addFileWithVariableRes: Result<undefined, FxError>;
+    try {
+      if (namespaceContainsUnderscore || containExternalAdaptiveCard) {
+        const processedFunctionRes = await expandVariableWithFunction(
+          JSON.stringify(pluginFileContent),
+          context,
+          undefined,
+          true,
+          ManifestType.PluginManifest,
+          pluginFile
+        );
+        if (processedFunctionRes.isErr()) {
+          return err(processedFunctionRes.error);
+        }
+        pluginFileContent = JSON.parse(processedFunctionRes.value);
+        tempFolder = await fs.mkdtemp(path.join(appDirectory, ".tmp-"));
+        const tempFolderValidation = await this.validateReferencedFile(tempFolder, appDirectory);
+        if (tempFolderValidation.isErr()) {
+          return err(tempFolderValidation.error);
+        }
+        tmpPluginFile = path.join(tempFolder, `tmp-ai-plugin-${uuid.v4().slice(0, 6)}.json`);
+        await fs.writeJSON(tmpPluginFile, pluginFileContent, { spaces: 4 });
       }
-      pluginFileContent = JSON.parse(processedFunctionRes.value);
-      await fs.writeJSON(tmpPluginFile, pluginFileContent, { spaces: 4 });
-    }
 
-    const addFileWithVariableRes = await this.addFileWithVariable(
-      zip,
-      pluginRelativePath,
-      tmpPluginFile,
-      ManifestType.PluginManifest,
-      context,
-      !outputDirectory
-        ? undefined
-        : path.join(outputDirectory, path.relative(appDirectory, pluginFile))
-    );
-
-    if (containExternalAdaptiveCard && tmpPluginFile !== pluginFile && tempFolder) {
-      await fs.remove(tempFolder);
+      addFileWithVariableRes = await this.addFileWithVariable(
+        zip,
+        pluginRelativePath,
+        tmpPluginFile,
+        ManifestType.PluginManifest,
+        context,
+        !outputDirectory
+          ? undefined
+          : path.join(outputDirectory, path.relative(appDirectory, pluginFile)),
+        resolvedJsonFiles
+      );
+    } finally {
+      if (tempFolder) {
+        await fs.remove(tempFolder);
+      }
     }
 
     if (addFileWithVariableRes.isErr()) {
@@ -848,7 +882,8 @@ export class CreateAppPackageDriver implements StepDriver {
     filePath: string,
     manifestType: ManifestType,
     context: WrapDriverContext,
-    outputPath?: string // If outputPath exists, we will write down the file after replacing placeholders.
+    outputPath?: string,
+    resolvedJsonFiles?: Map<string, string>
   ): Promise<Result<undefined, FxError>> {
     const expandedEnvVarResult = await CreateAppPackageDriver.expandEnvVars(
       filePath,
@@ -864,10 +899,19 @@ export class CreateAppPackageDriver implements StepDriver {
     zip.addFile(entryName, Buffer.from(content), "", attr.mode);
 
     if (outputPath && path.extname(outputPath).toLowerCase() === ".json") {
-      await this.writeJsonFile(
-        `${outputPath.substring(0, outputPath.length - 5)}.${process.env.TEAMSFX_ENV!}.json`,
-        content
-      );
+      const resolvedOutputPath = `${outputPath.substring(0, outputPath.length - 5)}.${
+        process.env.TEAMSFX_ENV!
+      }.json`;
+      if (resolvedJsonFiles?.has(resolvedOutputPath)) {
+        return err(
+          new InvalidActionInputError(
+            actionName,
+            ["outputFolder"],
+            "https://aka.ms/teamsfx-actions/teamsapp-zipAppPackage"
+          )
+        );
+      }
+      resolvedJsonFiles?.set(resolvedOutputPath, content);
     }
 
     return ok(undefined);
@@ -882,8 +926,132 @@ export class CreateAppPackageDriver implements StepDriver {
       await fs.chmod(jsonFileName, 0o777);
     }
     await fs.ensureDir(path.dirname(jsonFileName));
-    await fs.writeFile(jsonFileName, content);
+    await fs.outputFile(jsonFileName, content);
     await fs.chmod(jsonFileName, 0o444);
+  }
+
+  private getStagedOutputPath(outputPath: string): string {
+    return path.join(path.dirname(outputPath), `.${path.basename(outputPath)}.${uuid.v4()}.tmp`);
+  }
+
+  private async isDirectory(filePath: string): Promise<boolean> {
+    try {
+      return (await fs.stat(filePath)).isDirectory();
+    } catch (error) {
+      if (this.isFileNotFoundError(error)) {
+        return false;
+      }
+      throw error;
+    }
+  }
+
+  private async getCanonicalDestinationPath(outputPath: string): Promise<string> {
+    try {
+      return await fs.realpath(outputPath);
+    } catch (error) {
+      if (!this.isFileNotFoundError(error)) {
+        throw error;
+      }
+    }
+
+    const missingDirectories: string[] = [];
+    let ancestor = path.dirname(outputPath);
+    while (true) {
+      try {
+        const realAncestor = await fs.realpath(ancestor);
+        return path.join(realAncestor, ...missingDirectories, path.basename(outputPath));
+      } catch (error) {
+        if (!this.isFileNotFoundError(error)) {
+          throw error;
+        }
+        const parent = path.dirname(ancestor);
+        if (parent === ancestor) {
+          throw error;
+        }
+        missingDirectories.unshift(path.basename(ancestor));
+        ancestor = parent;
+      }
+    }
+  }
+
+  private async publishOutputs(
+    stagedZipFile: string,
+    outputZipFile: string,
+    jsonFiles: Map<string, string>
+  ): Promise<void> {
+    const stagedJsonFiles = new Map<string, string>();
+    const backupFiles = new Map<string, string>();
+    const publishedFiles: string[] = [];
+    try {
+      for (const [jsonFile, content] of jsonFiles) {
+        const stagedJsonFile = this.getStagedOutputPath(jsonFile);
+        stagedJsonFiles.set(jsonFile, stagedJsonFile);
+        await this.writeJsonFile(stagedJsonFile, content);
+      }
+      for (const [jsonFile, stagedJsonFile] of stagedJsonFiles) {
+        await this.backUpOutputFile(jsonFile, backupFiles);
+        await fs.rename(stagedJsonFile, jsonFile);
+        publishedFiles.push(jsonFile);
+      }
+      await this.backUpOutputFile(outputZipFile, backupFiles);
+      await fs.rename(stagedZipFile, outputZipFile);
+      publishedFiles.push(outputZipFile);
+    } catch (error) {
+      let rollbackError: unknown;
+      for (const publishedFile of publishedFiles.reverse()) {
+        try {
+          await fs.chmod(publishedFile, 0o777);
+        } catch (cleanupError) {
+          if (!this.isFileNotFoundError(cleanupError)) {
+            rollbackError ??= cleanupError;
+          }
+        }
+        try {
+          await fs.remove(publishedFile);
+        } catch (cleanupError) {
+          rollbackError ??= cleanupError;
+        }
+      }
+      for (const [outputFile, backupFile] of Array.from(backupFiles.entries()).reverse()) {
+        try {
+          await fs.rename(backupFile, outputFile);
+        } catch (restoreError) {
+          rollbackError ??= restoreError;
+        }
+      }
+      if (rollbackError) {
+        throw rollbackError;
+      }
+      throw error;
+    } finally {
+      for (const stagedJsonFile of stagedJsonFiles.values()) {
+        await fs.remove(stagedJsonFile);
+      }
+    }
+
+    for (const backupFile of backupFiles.values()) {
+      await fs.chmod(backupFile, 0o600).catch(() => {});
+      await fs.remove(backupFile).catch(() => {});
+    }
+  }
+
+  private async backUpOutputFile(
+    outputFile: string,
+    backupFiles: Map<string, string>
+  ): Promise<void> {
+    const backupFile = this.getStagedOutputPath(outputFile);
+    try {
+      await fs.rename(outputFile, backupFile);
+      backupFiles.set(outputFile, backupFile);
+    } catch (error) {
+      if (!this.isFileNotFoundError(error)) {
+        throw error;
+      }
+    }
+  }
+
+  private isFileNotFoundError(error: unknown): error is NodeJS.ErrnoException {
+    return error instanceof Error && "code" in error && error.code === "ENOENT";
   }
 
   private async getAdaptiveCardTemplateFile(
@@ -892,7 +1060,7 @@ export class CreateAppPackageDriver implements StepDriver {
     func: FunctionObject,
     appDirectory: string,
     defaultAppDirectry?: string
-  ): Promise<string | undefined> {
+  ): Promise<Result<string | undefined, FxError>> {
     let staticTemplateFile = path.resolve(
       defaultAppDirectry ?? path.dirname(pluginFile),
       func.capabilities!.response_semantics!.static_template!.file as string
@@ -902,7 +1070,10 @@ export class CreateAppPackageDriver implements StepDriver {
       defaultAppDirectry ?? appDirectory
     );
     if (checkExistenceRes.isOk()) {
-      return staticTemplateFile;
+      return ok(staticTemplateFile);
+    }
+    if (checkExistenceRes.error instanceof InvalidFileOutsideOfTheDirectotryError) {
+      return err(checkExistenceRes.error);
     }
 
     if (defaultAppDirectry) {
@@ -915,17 +1086,20 @@ export class CreateAppPackageDriver implements StepDriver {
     }
 
     if (checkExistenceRes.isErr()) {
+      if (checkExistenceRes.error instanceof InvalidFileOutsideOfTheDirectotryError) {
+        return err(checkExistenceRes.error);
+      }
       delete func.capabilities!.response_semantics!.static_template;
       context.logProvider.warning(
         getLocalizedString(
           "plugins.appstudio.createPackage.aiPlugin.invalidFilePropertyWarning",
-          pluginFile,
+          path.basename(pluginFile),
           func.name
         )
       );
-      return undefined;
+      return ok(undefined);
     }
 
-    return staticTemplateFile;
+    return ok(staticTemplateFile);
   }
 }
