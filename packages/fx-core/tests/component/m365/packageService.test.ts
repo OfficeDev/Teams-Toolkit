@@ -340,32 +340,12 @@ describe("Package Service", () => {
         titlesServiceUrl: "https://test-url",
       },
     };
-    axiosPostResponses["/dev/v1/users/packages"] = {
-      data: {
-        operationId: "test-operation-id",
-        titlePreview: {
-          titleId: "test-title-id-preview",
-        },
-      },
-    };
     axiosPostResponses["/builder/v1/users/packages"] = {
       data: {
         statusId: "test-status-id-builder-api",
         titlePreview: {
           titleId: "test-title-id-preview-builder-api",
         },
-      },
-    };
-    axiosPostResponses["/dev/v1/users/packages/acquisitions"] = {
-      data: {
-        statusId: "test-status-id",
-      },
-    };
-    axiosGetResponses["/dev/v1/users/packages/status/test-status-id"] = {
-      status: 200,
-      data: {
-        titleId: "test-title-id",
-        appId: "test-app-id",
       },
     };
     axiosGetResponses["/builder/v1/users/packages/status/test-status-id-builder-api"] = {
@@ -388,8 +368,8 @@ describe("Package Service", () => {
     let actualError: Error | undefined;
     try {
       const result = await packageService.sideLoading("test-token", "test-path");
-      chai.assert.equal(result[0], "test-title-id");
-      chai.assert.equal(result[1], "test-app-id");
+      chai.assert.equal(result[0], "test-title-id-builder-api");
+      chai.assert.equal(result[1], "test-app-id-builder-api");
     } catch (error: any) {
       actualError = error;
     }
@@ -426,8 +406,8 @@ describe("Package Service", () => {
     } as any);
     try {
       const result = await packageService.sideLoading("test-token", "test-path");
-      chai.assert.equal(result[0], "test-title-id");
-      chai.assert.equal(result[1], "test-app-id");
+      chai.assert.equal(result[0], "test-title-id-builder-api");
+      chai.assert.equal(result[1], "test-app-id-builder-api");
     } catch (error: any) {
       actualError = error;
     }
@@ -485,8 +465,8 @@ describe("Package Service", () => {
         "test-token",
         "./tests/component/m365/success.zip"
       );
-      chai.assert.equal(result[0], "test-title-id");
-      chai.assert.equal(result[1], "test-app-id");
+      chai.assert.equal(result[0], "test-title-id-builder-api");
+      chai.assert.equal(result[1], "test-app-id-builder-api");
     } catch (error: any) {
       actualError = error;
     }
@@ -494,60 +474,41 @@ describe("Package Service", () => {
     chai.assert.isUndefined(actualError);
   });
 
-  it("sideload status api with 202 on first try and 200 on second try", async () => {
-    axiosPostResponses["/dev/v1/users/packages"] = {
+  it("sideLoading uploads a non-declarative package through the Builder API", async () => {
+    axiosGetResponses["/config/v1/environment"] = {
       data: {
-        operationId: "test-operation-id",
+        titlesServiceUrl: "https://test-url",
+      },
+    };
+    axiosPostResponses["/builder/v1/users/packages"] = {
+      status: 200,
+      data: {
         titlePreview: {
-          titleId: "test-title-id-preview",
+          titleId: "test-title-id",
+          appId: "test-app-id",
         },
       },
     };
-    axiosPostResponses["/dev/v1/users/packages/acquisitions"] = {
-      data: {
-        statusId: "test-status-id",
-      },
-    };
 
-    let statusCallCount = 0;
-    vi.spyOn(testAxiosInstance, "get").mockImplementation((url: string): any => {
-      if (url === "/dev/v1/users/packages/status/test-status-id") {
-        statusCallCount++;
-        if (statusCallCount === 1) {
-          return Promise.resolve({ status: 202 });
-        }
-        return Promise.resolve({
-          status: 200,
-          data: {
-            titleId: "test-title-id",
-            appId: "test-app-id",
-          },
-        });
-      }
-      if (url === "/config/v1/environment") {
-        return Promise.resolve({
-          data: {
-            titlesServiceUrl: "https://test-url",
-          },
-        });
-      }
-      return Promise.resolve({});
-    });
-
+    const postStub = vi.spyOn(testAxiosInstance, "post");
     const packageService = new PackageService("https://test-endpoint", logger);
     vi.spyOn(packageService, "getManifestFromZip" as keyof PackageService).mockReturnValue(
       {} as any
     );
-    let actualError: Error | undefined;
-    try {
-      const result = await packageService.sideLoading("test-token", "test-path");
-      chai.assert.equal(result[0], "test-title-id");
-      chai.assert.equal(result[1], "test-app-id");
-    } catch (error: any) {
-      actualError = error;
-    }
 
-    chai.assert.isUndefined(actualError);
+    const result = await packageService.sideLoading("test-token", "test-path", AppScope.Tenant);
+
+    chai.assert.deepEqual(result, ["test-title-id", "test-app-id", ""]);
+    const builderRequest = postStub.mock.calls.find(
+      ([url]) => url === "/builder/v1/users/packages"
+    );
+    chai.assert.isDefined(builderRequest);
+    chai.assert.deepEqual(builderRequest?.[2]?.params, {
+      scope: AppScope.Tenant,
+      shouldBlock: true,
+    });
+    chai.assert.equal(builderRequest?.[2]?.headers?.Authorization, "Bearer test-token");
+    chai.assert.isFalse(postStub.mock.calls.some(([url]) => url === "/dev/v1/users/packages"));
   });
 
   it("sideLoadingV2 returns immediately when shouldBlock response is 200", async () => {
@@ -628,12 +589,6 @@ describe("Package Service", () => {
         },
       },
     };
-    axiosPostResponses["/dev/v1/users/packages/acquisitions"] = {
-      data: {
-        statusId: "test-status-id",
-      },
-    };
-
     let statusCallCount = 0;
     vi.spyOn(testAxiosInstance, "get").mockImplementation((url: string): any => {
       if (url === "/builder/v1/users/packages/status/test-status-id-builder-api") {
@@ -743,7 +698,6 @@ describe("Package Service", () => {
         titlesServiceUrl: "https://test-url",
       },
     };
-    axiosPostResponses["/dev/v1/users/packages"] = new Error("test-post");
     axiosPostResponses["/builder/v1/users/packages"] = new Error("test-post-builder-api");
 
     let packageService = new PackageService("https://test-endpoint");
@@ -758,7 +712,7 @@ describe("Package Service", () => {
     }
 
     chai.assert.isDefined(actualError);
-    chai.assert.isTrue(actualError?.message.includes("test-post"));
+    chai.assert.isTrue(actualError?.message.includes("test-post-builder-api"));
 
     packageService = new PackageService("https://test-endpoint", logger);
     vi.spyOn(packageService, "getManifestFromZip" as keyof PackageService).mockReturnValue(
@@ -772,7 +726,7 @@ describe("Package Service", () => {
     }
 
     chai.assert.isDefined(actualError);
-    chai.assert.isTrue(actualError?.message.includes("test-post"));
+    chai.assert.isTrue(actualError?.message.includes("test-post-builder-api"));
 
     packageService = new PackageService("https://test-endpoint", logger);
     vi.spyOn(packageService, "getManifestFromZip" as keyof PackageService).mockReturnValue({
@@ -827,7 +781,7 @@ describe("Package Service", () => {
         traceresponse: "tracing-id",
       },
     };
-    axiosPostResponses["/dev/v1/users/packages"] = expectedError;
+    axiosPostResponses["/builder/v1/users/packages"] = expectedError;
 
     let packageService = new PackageService("https://test-endpoint");
     vi.spyOn(packageService, "getManifestFromZip" as keyof PackageService).mockReturnValue(
@@ -874,7 +828,7 @@ describe("Package Service", () => {
       },
       status: 400,
     };
-    axiosPostResponses["/dev/v1/users/packages"] = expectedError;
+    axiosPostResponses["/builder/v1/users/packages"] = expectedError;
 
     const packageService = new PackageService("https://test-endpoint");
     vi.spyOn(packageService, "getManifestFromZip" as keyof PackageService).mockReturnValue(
@@ -910,7 +864,7 @@ describe("Package Service", () => {
       },
       status: 403,
     };
-    axiosPostResponses["/dev/v1/users/packages"] = expectedError;
+    axiosPostResponses["/builder/v1/users/packages"] = expectedError;
 
     const packageService = new PackageService("https://test-endpoint");
     vi.spyOn(packageService, "getManifestFromZip" as keyof PackageService).mockReturnValue(
@@ -2020,7 +1974,7 @@ describe("Package Service", () => {
     );
   });
 
-  it("withNetworkRetry works for sideLoadingV1 upload", async () => {
+  it("withNetworkRetry works for a non-declarative sideLoading upload", async () => {
     let postCallCount = 0;
     vi.spyOn(testAxiosInstance, "get").mockImplementation((url: string) => {
       if (url === "/config/v1/environment") {
@@ -2028,19 +1982,10 @@ describe("Package Service", () => {
           data: { titlesServiceUrl: "https://test-url" },
         });
       }
-      if (url === "/dev/v1/users/packages/status/test-status-id") {
-        return Promise.resolve({
-          status: 200,
-          data: {
-            titleId: "retry-v1-title-id",
-            appId: "retry-v1-app-id",
-          },
-        });
-      }
       return Promise.reject(new Error("unexpected get url"));
     });
     vi.spyOn(testAxiosInstance, "post").mockImplementation((url: string) => {
-      if (url === "/dev/v1/users/packages") {
+      if (url === "/builder/v1/users/packages") {
         postCallCount++;
         if (postCallCount <= 1) {
           const err: any = new Error("TLS connection reset");
@@ -2048,12 +1993,13 @@ describe("Package Service", () => {
           return Promise.reject(err);
         }
         return Promise.resolve({
-          data: { operationId: "test-operation-id" },
-        });
-      }
-      if (url === "/dev/v1/users/packages/acquisitions") {
-        return Promise.resolve({
-          data: { statusId: "test-status-id" },
+          status: 200,
+          data: {
+            titlePreview: {
+              titleId: "retry-builder-title-id",
+              appId: "retry-builder-app-id",
+            },
+          },
         });
       }
       return Promise.reject(new Error("unexpected url"));
@@ -2065,8 +2011,8 @@ describe("Package Service", () => {
       {} as any
     );
     const result = await packageService.sideLoading("test-token", "test-path");
-    chai.assert.equal(result[0], "retry-v1-title-id");
-    chai.assert.equal(result[1], "retry-v1-app-id");
+    chai.assert.equal(result[0], "retry-builder-title-id");
+    chai.assert.equal(result[1], "retry-builder-app-id");
     chai.assert.equal(postCallCount, 2);
     chai.assert.isTrue(
       warningStub.mock.calls.some(
