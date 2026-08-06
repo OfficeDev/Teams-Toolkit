@@ -164,6 +164,78 @@ class DriverThatUsesWriteToEnvironmentFileField implements StepDriver {
 }
 
 describe("v3 lifecyle", () => {
+  describe("when execution is cancelled", () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it("execute_PreAbortedSignal_DoesNotRunDriver", async () => {
+      const controller = new AbortController();
+      controller.abort();
+      const driver: StepDriver = {
+        execute: vi.fn(async () => ({
+          result: ok(new Map<string, string>()),
+          summaries: [],
+        })),
+      };
+      vi.spyOn(Container, "has").mockReturnValue(true);
+      vi.spyOn(Container, "get").mockReturnValue(driver);
+      const lifecycle = new Lifecycle("provision", [{ uses: "Driver", with: {} }], "1.0.0");
+
+      const execution = await lifecycle.execute({
+        ...mockedDriverContext,
+        signal: controller.signal,
+      });
+
+      assert(
+        execution.result.isErr() &&
+          execution.result.error.kind === "Failure" &&
+          execution.result.error.error.name === "UserCancel"
+      );
+      assert.equal((driver.execute as ReturnType<typeof vi.fn>).mock.calls.length, 0);
+    });
+
+    it("execute_AbortedAfterDriver_StopsBeforeNextDriver", async () => {
+      const controller = new AbortController();
+      const firstDriver: StepDriver = {
+        execute: vi.fn(async () => {
+          controller.abort();
+          return { result: ok(new Map<string, string>()), summaries: [] };
+        }),
+      };
+      const secondDriver: StepDriver = {
+        execute: vi.fn(async () => ({
+          result: ok(new Map<string, string>()),
+          summaries: [],
+        })),
+      };
+      vi.spyOn(Container, "has").mockReturnValue(true);
+      vi.spyOn(Container, "get").mockImplementation((token: unknown) =>
+        String(token) === "FirstDriver" ? firstDriver : secondDriver
+      );
+      const lifecycle = new Lifecycle(
+        "provision",
+        [
+          { uses: "FirstDriver", with: {} },
+          { uses: "SecondDriver", with: {} },
+        ],
+        "1.0.0"
+      );
+
+      const execution = await lifecycle.execute({
+        ...mockedDriverContext,
+        signal: controller.signal,
+      });
+
+      assert(
+        execution.result.isErr() &&
+          execution.result.error.kind === "Failure" &&
+          execution.result.error.error.name === "UserCancel"
+      );
+      assert.equal((secondDriver.execute as ReturnType<typeof vi.fn>).mock.calls.length, 0);
+    });
+  });
+
   it("should execute without a telemetry reporter", async () => {
     vi.spyOn(Container, "has").mockReturnValue(false);
     const context = { ...mockedDriverContext, telemetryReporter: undefined };

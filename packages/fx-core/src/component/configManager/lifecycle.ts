@@ -5,27 +5,27 @@
  * @author yefuwang@microsoft.com
  */
 
-import { ok, err, FxError, Result, LogProvider } from "@microsoft/teamsfx-api";
+import { err, FxError, LogProvider, ok, Result } from "@microsoft/teamsfx-api";
 import _, { camelCase } from "lodash";
 import { Container } from "typedi";
+import { setErrorContext } from "../../common/globalVars";
+import { MissingEnvironmentVariablesError, UserCancelError } from "../../error";
 import { InvalidYmlActionNameError } from "../../error/yml";
+import { AzureEnvironmentVariables, OpenAIEnvironmentVariables } from "../constants";
 import { DriverContext } from "../driver/interface/commonArgs";
 import { StepDriver } from "../driver/interface/stepDriver";
+import { envUtil } from "../utils/envUtil";
 import { TeamsFxTelemetryReporter } from "../utils/teamsFxTelemetryReporter";
 import { component, lifecycleExecutionEvent, SummaryConstant, TelemetryProperty } from "./constant";
 import {
   DriverDefinition,
-  LifecycleName,
-  ILifecycle,
   DriverInstance,
-  UnresolvedPlaceholders,
-  ResolvedPlaceholders,
   ExecutionResult,
+  ILifecycle,
+  LifecycleName,
+  ResolvedPlaceholders,
+  UnresolvedPlaceholders,
 } from "./interface";
-import { MissingEnvironmentVariablesError } from "../../error";
-import { setErrorContext } from "../../common/globalVars";
-import { AzureEnvironmentVariables, OpenAIEnvironmentVariables } from "../constants";
-import { envUtil } from "../utils/envUtil";
 
 function resolveDriverDef(
   def: DriverDefinition,
@@ -241,6 +241,12 @@ export class Lifecycle implements ILifecycle {
     const envOutput = new Map<string, string>();
     const summaries: string[][] = [];
     for (const driver of drivers) {
+      if (ctx.signal?.aborted) {
+        return {
+          result: err({ kind: "Failure", error: new UserCancelError(this.name) }),
+          summaries,
+        };
+      }
       ctx.logProvider.verbose(
         `Executing action ${this.stringifyDriverDef(driver)} in lifecycle ${this.name}`
       );
@@ -287,6 +293,12 @@ export class Lifecycle implements ILifecycle {
         this.version,
         driver.name
       );
+      if (ctx.signal?.aborted) {
+        return {
+          result: err({ kind: "Failure", error: new UserCancelError(this.name) }),
+          summaries,
+        };
+      }
       const result = r.result;
       const summary = r.summaries.map((s) => `${SummaryConstant.Succeeded} ${s}`);
       summaries.push(summary);
