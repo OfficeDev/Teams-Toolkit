@@ -7,19 +7,34 @@ on:
         description: "Ignore the recorded baseline and treat all templates as drifted (forces the Copilot judgment + issue path for testing)"
         type: boolean
         default: false
+      create_prs:
+        description: "After the report, open a separate PR per template Copilot judged UPDATE NEEDED (edits src + package.json.tpl)"
+        type: boolean
+        default: false
   # schedule:
   #   - cron: "23 6 * * *"
 
 permissions:
-  contents: read
+  contents: write
   issues: write
+  pull-requests: write
 
 jobs:
   detect-and-report:
     runs-on: ubuntu-latest
     steps:
+      - name: Generate GitHub App token
+        id: generate-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.APP_GITHUB_APP_ID }}
+          private-key: ${{ secrets.APP_GITHUB_APP_PRIVATE_KEY }}
+
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ steps.generate-token.outputs.token }}
 
       - name: Setup node
         uses: actions/setup-node@v3
@@ -45,7 +60,7 @@ jobs:
           }' > ~/.config/github-copilot/apps.json
           chmod 600 ~/.config/github-copilot/apps.json
 
-      - name: Detect upstream manifest and code drift
+      - name: Detect upstream manifest, code, and dependency drift
         id: drift_check
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_CLI_RUNNER_TOKEN }}
@@ -78,7 +93,7 @@ jobs:
               : [];
 
             const labels = [
-              { name: "office-addin-manifest-drift", color: "fbca04", description: "Tracks OfficeDev upstream Office Add-in manifest version advances" },
+              { name: "office-addin-manifest-drift", color: "fbca04", description: "Tracks OfficeDev upstream Office Add-in drift (manifest, code, dependencies)" },
               { name: "copilot-upgrade", color: "0e8a16", description: "Issue is routed for Copilot-assisted upgrade work" }
             ];
 
@@ -155,8 +170,18 @@ jobs:
               }
             }
 
+      - name: Create update PRs
+        if: ${{ inputs.create_prs && steps.drift_check.outputs.update_ids != '' }}
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_CLI_RUNNER_TOKEN }}
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+          PR_BASE_BRANCH: ${{ github.ref_name }}
+        run: |
+          export COPILOT_GITHUB_TOKEN=$(python3 -c "import json,os; d=json.load(open(os.path.expanduser('~/.config/github-copilot/apps.json'))); print(list(d.values())[0]['oauth_token'])")
+          node ./.github/scripts/apply-office-addin-prs.cjs
+
       - name: Log no-drift result
         if: ${{ steps.drift_check.outputs.drift_detected != 'true' }}
-        run: |
-          echo "No upstream manifest drift detected."
-          echo "AI summary source: ${{ steps.drift_check.outputs.ai_summary_source }}"
+        run: echo "No upstream drift detected."

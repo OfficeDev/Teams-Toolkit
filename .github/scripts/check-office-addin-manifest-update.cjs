@@ -11,6 +11,7 @@ const BASELINE_PATH = path.join(
   "office-addin-upstream-baseline.json",
 );
 const TEMPLATE_ROOT = path.join(REPO_ROOT, "templates", "vsc", "ts");
+const RESULTS_PATH = path.join(REPO_ROOT, ".github", "office-addin-drift-results.json");
 
 // Toolkit Office Add-in templates mapped to their OfficeDev upstream source.
 // `upstreamJson` is false when upstream ships only an XML manifest (not comparable).
@@ -230,6 +231,16 @@ function toListText(items, limit = 10) {
 // The Copilot CLI streams its whole tool-call trace to stdout (file reads, web
 // fetches, greps). Keep only the final answer: prefer everything from the first
 // VERDICT marker onward; otherwise drop the trace/tree-glyph lines.
+// Classify a Copilot judgment into a coarse verdict for downstream automation.
+// Returns "update" | "no-update" | "review" | "unknown".
+function parseVerdict(judgmentText) {
+  const t = String(judgmentText || "").toUpperCase();
+  if (/VERDICT[:\s*]*NO UPDATE NEEDED/.test(t)) return "no-update";
+  if (/VERDICT[:\s*]*UPDATE NEEDED/.test(t)) return "update";
+  if (/VERDICT[:\s*]*REVIEW/.test(t)) return "review";
+  return "unknown";
+}
+
 function stripCliTrace(raw) {
   const text = String(raw).replace(/\r/g, "");
   const verdictIdx = text.search(/\*{0,2}VERDICT\b/i);
@@ -523,6 +534,7 @@ async function main() {
     if (codeDrift || depDrift) {
       row.judgment = judgeWithCopilot(row);
     }
+    row.verdict = parseVerdict(row.judgment.text);
 
     rows.push(row);
   }
@@ -569,6 +581,34 @@ async function main() {
           depDrift: row.depDrift,
           upstreamDepHash: row.upstreamDepHash,
           judgmentSource: row.judgment.source,
+          verdict: row.verdict,
+        })),
+      },
+      null,
+      2,
+    ),
+  );
+
+  // Templates Copilot judged as needing an update — the PR-generation step
+  // consumes these. Write a full results file so the apply script has the
+  // per-template judgment text and drift detail without re-running the check.
+  const updateRows = rows.filter((row) => row.verdict === "update");
+  const updateIds = updateRows.map((row) => row.id);
+  fs.writeFileSync(
+    RESULTS_PATH,
+    JSON.stringify(
+      {
+        generatedForRun: process.env.GITHUB_RUN_ID || "",
+        rows: rows.map((row) => ({
+          id: row.id,
+          upstreamRepo: row.upstreamRepo,
+          upstreamBranch: row.upstreamBranch,
+          verdict: row.verdict,
+          manifestDrift: row.manifestDrift,
+          codeDrift: row.codeDrift,
+          depDrift: row.depDrift,
+          depDiff: row.depDiff,
+          judgment: row.judgment.text,
         })),
       },
       null,
@@ -579,6 +619,7 @@ async function main() {
   setOutput("drift_detected", String(driftDetected));
   setOutput("drift_marker_version", markerVersion);
   setOutput("drifted_ids", driftedIds.join(","));
+  setOutput("update_ids", updateIds.join(","));
   setOutput("issue_title", issueTitle);
   setOutput("issue_body", issueBody);
 }
