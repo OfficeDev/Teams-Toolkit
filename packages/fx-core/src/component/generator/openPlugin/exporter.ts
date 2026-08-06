@@ -4,31 +4,35 @@
 import { err, FxError, ok, Result, SystemError, UserError } from "@microsoft/teamsfx-api";
 import fs from "fs-extra";
 import * as path from "path";
+import {
+  ATK_EXTENSION_NAMESPACE,
+  DEFAULT_REMOTE_MCP_TYPE,
+  MCP_CONFIG_FILE,
+  MCP_SCHEMA_URL,
+  normalizePluginName,
+  PLUGIN_MANIFEST_FILE,
+  PLUGIN_SCHEMA_URL,
+} from "./spec";
 import { AtkAgentConnectorExt, AtkExtensionBlock, AuthorizationType, ExportInputs } from "./types";
 
 export const OPEN_PLUGIN_EXPORT_SOURCE = "OpenPluginExport";
 
 export interface ExportResult {
-  /** Absolute path to the generated Open Plugin directory. */
+  /** Absolute path to the generated Agent Plugin directory. */
   outputPath: string;
   warnings: string[];
 }
 
-const ATK_EXTENSION_KEY = "x-microsoft-365-agents-toolkit";
-
-const MANIFEST_LOCATIONS: Record<NonNullable<ExportInputs["manifestKind"]>, string> = {
-  "open-plugin": ".plugin/plugin.json",
-  "claude-plugin": ".claude-plugin/plugin.json",
-  "cursor-plugin": ".cursor-plugin/plugin.json",
-};
-
 /**
  * Export an ATK project (folder containing appPackage/manifest.json plus the
- * usual agentSkills/agentConnectors layout) into an Open Plugin Spec v1.0
- * directory. The output is structured so that `atk import openplugin --path
- * <output>` reconstructs an equivalent ATK project; fields with no native
- * Open Plugin equivalent are preserved verbatim under the
- * `x-microsoft-365-agents-toolkit` extension key in plugin.json.
+ * usual agentSkills/agentConnectors layout) into an Agent Plugins v1.0.0
+ * directory (https://agent-plugins.org/). The output is structured so that
+ * `atk import agentplugin --path <output>` reconstructs an equivalent ATK
+ * project; fields with no native Agent Plugins equivalent are preserved
+ * verbatim under `extensions["com.microsoft.agents-toolkit"]` in plugin.json.
+ *
+ * Output is always spec-compliant 1.0.0: plugin.json in the plugin root, and
+ * mcp.json (not .mcp.json) for MCP servers.
  */
 export async function exportOpenPlugin(
   inputs: ExportInputs
@@ -64,10 +68,16 @@ export async function exportOpenPlugin(
     }
     const manifest = manifestRaw as TeamsLikeManifest;
     const warnings: string[] = [];
-    const kind = inputs.manifestKind ?? "open-plugin";
+    if (inputs.manifestKind && inputs.manifestKind !== "open-plugin") {
+      warnings.push(
+        `--manifest-kind '${inputs.manifestKind}' is ignored. Agent Plugins 1.0.0 mandates ` +
+          `'${PLUGIN_MANIFEST_FILE}' in the plugin root, so alternate manifest locations are no ` +
+          `longer emitted.`
+      );
+    }
 
     const pluginName = derivePluginName(manifest);
-    const defaultOutput = path.join(process.cwd(), `${pluginName}-openplugin`);
+    const defaultOutput = path.join(process.cwd(), `${pluginName}-agentplugin`);
     const outputPath = path.resolve(inputs.output ?? defaultOutput);
 
     if (await fs.pathExists(outputPath)) {
@@ -85,9 +95,7 @@ export async function exportOpenPlugin(
     await fs.ensureDir(outputPath);
 
     const pluginJson = buildPluginJson(manifest, pluginName);
-    const manifestRel = MANIFEST_LOCATIONS[kind];
-    const manifestOut = path.join(outputPath, manifestRel);
-    await fs.ensureDir(path.dirname(manifestOut));
+    const manifestOut = path.join(outputPath, PLUGIN_MANIFEST_FILE);
     await fs.writeJSON(manifestOut, pluginJson, { spaces: 2 });
 
     await writeMcpJson(outputPath, manifest, warnings);
@@ -142,15 +150,20 @@ interface TeamsLikeManifest {
   }>;
 }
 
+/**
+ * Derive a plugin name that satisfies the Agent Plugins 1.0.0 `name`
+ * constraint (1-64 chars, `^(?!.*(?:--|\.\.))[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$`).
+ */
 function derivePluginName(manifest: TeamsLikeManifest): string {
   const short = manifest.name?.short?.trim();
   const full = manifest.name?.full?.trim();
-  const fromName = (short ?? full ?? "").toLowerCase();
-  const slug = fromName.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  const fromName = short ?? full ?? "";
+  const slug = normalizePluginName(fromName, "");
   if (slug) return slug;
   if (manifest.packageName) {
     const last = manifest.packageName.split(".").pop();
-    if (last) return last;
+    const fromPackage = normalizePluginName(last ?? "", "");
+    if (fromPackage) return fromPackage;
   }
   return "exported-plugin";
 }
@@ -160,7 +173,9 @@ function buildPluginJson(manifest: TeamsLikeManifest, pluginName: string): Recor
   if (manifest.developer?.name) author.name = manifest.developer.name;
   if (manifest.developer?.websiteUrl) author.url = manifest.developer.websiteUrl;
 
+  // Key order mirrors the published schema: $schema and name first.
   const pluginJson: Record<string, unknown> = {
+    $schema: PLUGIN_SCHEMA_URL,
     name: pluginName,
     version: manifest.version ?? "1.0.0",
     description: manifest.description?.full ?? manifest.description?.short ?? pluginName,
@@ -215,8 +230,11 @@ function buildPluginJson(manifest: TeamsLikeManifest, pluginName: string): Recor
     extension.agentConnectors = connectorOverrides;
   }
 
+  // Agent Plugins 1.0.0 closes the manifest schema (additionalProperties:
+  // false), so client data must be namespaced under `extensions` rather than
+  // written to a top-level `x-...` key.
   if (Object.keys(extension).length > 0) {
-    pluginJson[ATK_EXTENSION_KEY] = extension;
+    pluginJson.extensions = { [ATK_EXTENSION_NAMESPACE]: extension };
   }
   return pluginJson;
 }
@@ -242,12 +260,18 @@ async function writeMcpJson(
       );
       continue;
     }
-    servers[id] = { type: "http", url: remote.mcpServerUrl };
+    // "http" is not an Agent Plugins transport; 1.0.0 defines stdio,
+    // streamable-http and (legacy) sse.
+    servers[id] = { type: DEFAULT_REMOTE_MCP_TYPE, url: remote.mcpServerUrl };
   }
   if (Object.keys(servers).length === 0) {
     return;
   }
-  await fs.writeJSON(path.join(outputPath, ".mcp.json"), { mcpServers: servers }, { spaces: 2 });
+  await fs.writeJSON(
+    path.join(outputPath, MCP_CONFIG_FILE),
+    { $schema: MCP_SCHEMA_URL, mcpServers: servers },
+    { spaces: 2 }
+  );
 }
 
 async function copySkills(

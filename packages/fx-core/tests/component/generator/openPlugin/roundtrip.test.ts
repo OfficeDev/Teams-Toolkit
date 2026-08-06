@@ -18,16 +18,19 @@ async function tmp(prefix: string): Promise<string> {
 }
 
 async function seedSamplePlugin(root: string): Promise<void> {
-  await fs.ensureDir(path.join(root, ".plugin"));
-  await fs.writeJSON(path.join(root, ".plugin", "plugin.json"), {
+  await fs.writeJSON(path.join(root, "plugin.json"), {
+    $schema: "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
     name: "demo-plugin",
     version: "1.2.3",
-    description: "A demo Open Plugin for the round-trip test.",
+    description: "A demo Agent Plugin for the round-trip test.",
     author: { name: "Jane Doe", url: "https://example.com" },
     homepage: "https://example.com",
   });
-  await fs.writeJSON(path.join(root, ".mcp.json"), {
-    mcpServers: { web: { url: "https://web.example.com/api", description: "remote" } },
+  await fs.writeJSON(path.join(root, "mcp.json"), {
+    $schema: "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+    mcpServers: {
+      web: { type: "streamable-http", url: "https://web.example.com/api", description: "remote" },
+    },
   });
   await fs.ensureDir(path.join(root, "skills", "alpha-skill"));
   await fs.writeFile(

@@ -16,19 +16,29 @@ async function tmp(prefix: string): Promise<string> {
   return await fs.mkdtemp(path.join(os.tmpdir(), prefix));
 }
 
-async function seedSamplePlugin(root: string, manifestRel = ".plugin/plugin.json"): Promise<void> {
+async function seedSamplePlugin(root: string, manifestRel = "plugin.json"): Promise<void> {
+  // Agent Plugins 1.0.0 layout by default; callers pass a legacy path to
+  // exercise the back-compat probe.
+  const isLegacy = manifestRel !== "plugin.json";
   await fs.ensureDir(path.join(root, path.dirname(manifestRel)));
   await fs.writeJSON(path.join(root, manifestRel), {
+    ...(isLegacy
+      ? {}
+      : { $schema: "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json" }),
     name: "demo-plugin",
     version: "1.2.3",
-    description: "A demo Open Plugin used by converter tests.",
+    description: "A demo Agent Plugin used by converter tests.",
     author: { name: "Jane Doe", email: "jane@example.com", url: "https://example.com" },
     homepage: "https://example.com",
   });
-  await fs.writeJSON(path.join(root, ".mcp.json"), {
+  await fs.writeJSON(path.join(root, isLegacy ? ".mcp.json" : "mcp.json"), {
     mcpServers: {
-      web: { url: "https://web.example.com/api", description: "web tools" },
-      stdioOnly: { command: "node", args: ["server.js"] },
+      web: {
+        type: "streamable-http",
+        url: "https://web.example.com/api",
+        description: "web tools",
+      },
+      stdioOnly: { type: "stdio", command: "node", args: ["server.js"] },
     },
   });
   await fs.ensureDir(path.join(root, "skills", "alpha-skill"));

@@ -7,7 +7,9 @@ import * as path from "path";
 import { exportOpenPlugin } from "../../../../src/component/generator/openPlugin/exporter";
 import { assert, chai } from "vitest";
 
-const ATK_EXTENSION_KEY = "x-microsoft-365-agents-toolkit";
+const ATK_EXTENSION_NAMESPACE = "com.microsoft.agents-toolkit";
+const PLUGIN_SCHEMA_URL = "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json";
+const MCP_SCHEMA_URL = "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json";
 
 async function tmp(prefix: string): Promise<string> {
   return await fs.mkdtemp(path.join(os.tmpdir(), prefix));
@@ -87,18 +89,20 @@ describe("openPlugin.exportOpenPlugin", () => {
     await fs.remove(outDir);
   });
 
-  it("writes plugin.json with the x-microsoft-365-agents-toolkit extension", async () => {
+  it("writes plugin.json in the plugin root with the namespaced toolkit extension", async () => {
     const res = await exportOpenPlugin({ path: projectDir, output: outDir });
     if (res.isErr()) throw new Error(res.error.message);
-    const plugin = (await fs.readJSON(path.join(outDir, ".plugin", "plugin.json"))) as Record<
-      string,
-      any
-    >;
+    // Agent Plugins 1.0.0 mandates plugin.json in the root, not .plugin/.
+    chai.expect(await fs.pathExists(path.join(outDir, ".plugin", "plugin.json"))).to.equal(false);
+    const plugin = (await fs.readJSON(path.join(outDir, "plugin.json"))) as Record<string, any>;
+    chai.expect(plugin.$schema).to.equal(PLUGIN_SCHEMA_URL);
     chai.expect(plugin.name).to.equal("demo-plugin");
     chai.expect(plugin.version).to.equal("1.2.3");
     chai.expect(plugin.author).to.deep.equal({ name: "Jane Doe", url: "https://example.com" });
     chai.expect(plugin.homepage).to.equal("https://example.com");
-    const ext = plugin[ATK_EXTENSION_KEY];
+    // The closed 1.0.0 schema forbids top-level x- keys.
+    chai.expect(plugin["x-microsoft-365-agents-toolkit"]).to.be.undefined;
+    const ext = plugin.extensions[ATK_EXTENSION_NAMESPACE];
     chai.expect(ext).to.exist;
     chai.expect(ext.manifestVersion).to.equal("devPreview");
     chai.expect(ext.id).to.equal("12345678-1234-1234-1234-123456789abc");
@@ -114,12 +118,16 @@ describe("openPlugin.exportOpenPlugin", () => {
     });
   });
 
-  it("writes .mcp.json with remote MCP servers and skips stdio connectors with a warning", async () => {
+  it("writes mcp.json with remote MCP servers and skips stdio connectors with a warning", async () => {
     const res = await exportOpenPlugin({ path: projectDir, output: outDir });
     if (res.isErr()) throw new Error(res.error.message);
-    const mcp = (await fs.readJSON(path.join(outDir, ".mcp.json"))) as Record<string, any>;
+    // 1.0.0 renamed .mcp.json to mcp.json.
+    chai.expect(await fs.pathExists(path.join(outDir, ".mcp.json"))).to.equal(false);
+    const mcp = (await fs.readJSON(path.join(outDir, "mcp.json"))) as Record<string, any>;
+    chai.expect(mcp.$schema).to.equal(MCP_SCHEMA_URL);
     chai.expect(mcp.mcpServers.web).to.deep.equal({
-      type: "http",
+      // "http" is not an Agent Plugins transport.
+      type: "streamable-http",
       url: "https://web.example.com/api",
     });
     chai.expect(mcp.mcpServers.stdioOnly).to.be.undefined;
@@ -140,7 +148,7 @@ describe("openPlugin.exportOpenPlugin", () => {
     }
   });
 
-  it("supports --manifest-kind claude-plugin", async () => {
+  it("ignores --manifest-kind claude-plugin and warns", async () => {
     const res = await exportOpenPlugin({
       path: projectDir,
       output: outDir,
@@ -149,11 +157,12 @@ describe("openPlugin.exportOpenPlugin", () => {
     if (res.isErr()) throw new Error(res.error.message);
     chai
       .expect(await fs.pathExists(path.join(outDir, ".claude-plugin", "plugin.json")))
-      .to.equal(true);
-    chai.expect(await fs.pathExists(path.join(outDir, ".plugin", "plugin.json"))).to.equal(false);
+      .to.equal(false);
+    chai.expect(await fs.pathExists(path.join(outDir, "plugin.json"))).to.equal(true);
+    chai.expect(res.value.warnings.some((w) => w.includes("--manifest-kind"))).to.equal(true);
   });
 
-  it("supports --manifest-kind cursor-plugin", async () => {
+  it("ignores --manifest-kind cursor-plugin and warns", async () => {
     const res = await exportOpenPlugin({
       path: projectDir,
       output: outDir,
@@ -162,7 +171,24 @@ describe("openPlugin.exportOpenPlugin", () => {
     if (res.isErr()) throw new Error(res.error.message);
     chai
       .expect(await fs.pathExists(path.join(outDir, ".cursor-plugin", "plugin.json")))
-      .to.equal(true);
+      .to.equal(false);
+    chai.expect(await fs.pathExists(path.join(outDir, "plugin.json"))).to.equal(true);
+    chai.expect(res.value.warnings.some((w) => w.includes("--manifest-kind"))).to.equal(true);
+  });
+
+  it("emits a spec-conformant plugin name for a display name with spaces and punctuation", async () => {
+    const appPackage = path.join(projectDir, "appPackage");
+    const manifest = await fs.readJSON(path.join(appPackage, "manifest.json"));
+    manifest.name = { short: "My  Fancy -- Plugin!!", full: "My Fancy Plugin" };
+    await fs.writeJSON(path.join(appPackage, "manifest.json"), manifest);
+
+    const res = await exportOpenPlugin({ path: projectDir, output: outDir });
+    if (res.isErr()) throw new Error(res.error.message);
+    const plugin = (await fs.readJSON(path.join(outDir, "plugin.json"))) as Record<string, any>;
+    chai.expect(plugin.name).to.equal("my-fancy-plugin");
+    chai
+      .expect(plugin.name)
+      .to.match(/^(?!.*(?:--|\.\.))[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/, "name must satisfy 1.0.0");
   });
 
   it("returns ManifestNotFound when appPackage/manifest.json is missing", async () => {

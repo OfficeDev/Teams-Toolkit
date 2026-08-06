@@ -49,16 +49,19 @@ export function mapToTtkProject(parsed: ParsedOpenPlugin, inputs: ImportInputs):
   const privacyUrl = inputs.privacyUrl ?? ext.developer?.privacyUrl;
   if (!privacyUrl) {
     throw new Error(
-      "developer.privacyUrl is required. Pass --privacy-url (Open Plugin spec has no equivalent field)."
+      "developer.privacyUrl is required. Pass --privacy-url (the Agent Plugins spec has no equivalent field)."
     );
   }
   const termsUrl = inputs.termsUrl ?? ext.developer?.termsOfUseUrl;
   if (!termsUrl) {
     throw new Error(
-      "developer.termsOfUseUrl is required. Pass --terms-url (Open Plugin spec has no equivalent field)."
+      "developer.termsOfUseUrl is required. Pass --terms-url (the Agent Plugins spec has no equivalent field)."
     );
   }
 
+  // NOTE: the "openplugin:" seed is load-bearing — it feeds the deterministic
+  // UUIDv5 app id. Renaming it would change the generated id for every existing
+  // plugin, so it stays as-is despite the spec rename.
   const idSeed = inputs.packageName ?? ext.packageName ?? `openplugin:${pluginName}`;
   const appId = inputs.appId ?? ext.id ?? deterministicAppId(idSeed);
 

@@ -16,13 +16,13 @@ export const ExportOpenPluginOptions: CLICommandOption[] = [
     type: "string",
     shortName: "o",
     description:
-      "Destination Open Plugin directory. Defaults to ./<plugin-name>-openplugin in the current working directory.",
+      "Destination Agent Plugin directory. Defaults to ./<plugin-name>-agentplugin in the current working directory.",
   },
   {
     name: "manifest-kind",
     type: "string",
     description:
-      "Where to write plugin.json: 'open-plugin' (.plugin/plugin.json, default), 'claude-plugin' (.claude-plugin/plugin.json), or 'cursor-plugin' (.cursor-plugin/plugin.json).",
+      "Deprecated and ignored. Agent Plugins v1.0.0 requires plugin.json in the plugin root, so alternate manifest locations are no longer emitted.",
     default: "open-plugin",
     choices: ["open-plugin", "claude-plugin", "cursor-plugin"],
   },
