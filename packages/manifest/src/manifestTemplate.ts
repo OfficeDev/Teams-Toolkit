@@ -35,9 +35,16 @@ export interface ResolveManifestOptions {
   logger?: { error: (message: string) => void };
 }
 
-// Base error for all template-resolution failures. Consumers can catch this to
-// distinguish resolution errors from unexpected exceptions. Subclasses carry the
-// offending path/token so a host (e.g. fx-core) can remap them to its own errors.
+/**
+ * Base error for all template-resolution failures. Consumers can catch this to
+ * distinguish resolution errors from unexpected exceptions. Subclasses carry the
+ * offending path/token so a host (e.g. fx-core) can remap them to its own errors.
+ *
+ * @remarks
+ * Messages on these errors are plain, non-localized English. A host that surfaces
+ * them to end users (fx-core, the SPFx build pipeline, etc.) is expected to catch
+ * the specific subclass and remap it to its own localized error before display.
+ */
 export class ManifestTemplateError extends Error {
   constructor(message: string) {
     super(message);
@@ -113,14 +120,19 @@ export function expandEnvironmentVariable(
       }
     }
   }
+
   return content;
 }
 
-// Return the de-duplicated list of `${{ENV_NAME}}` variables referenced in content.
+/**
+ * Expand environment variables in content. The format of referencing environment variable is: ${{ENV_NAME}}
+ * @return An array of environment variables
+ */
 export function getEnvironmentVariables(content: string): string[] {
   const placeholders = content.match(placeholderRegex);
   if (placeholders) {
-    const variables = placeholders.map((placeholder) => placeholder.slice(3, -2).trim());
+    const variables = placeholders.map((placeholder) => placeholder.slice(3, -2).trim()); // removes `${{` and `}}`)
+    // remove duplicates
     return [...new Set(variables)];
   }
   return [];
@@ -160,9 +172,6 @@ async function readFileContent(
   throw new FileNotFoundError(filePath);
 }
 
-// Resolve a single `file(...)` call (the text inside `$[ ... ]`) to its embedded,
-// env-expanded file content. Supports a single-quoted static path, a `${{env}}`
-// parameter, and a nested `file(file(...))` call.
 export async function processManifestFunction(
   content: string,
   envs: { [key in string]: string } | undefined,
@@ -175,6 +184,7 @@ export async function processManifestFunction(
     throw new InvalidFunctionError(firstTrimmedContent);
   }
 
+  // file()
   const trimmedParameter = content.slice(5, -1).trim();
   if (trimmedParameter[0] === "'" && trimmedParameter[trimmedParameter.length - 1] === "'") {
     // static string as function parameter
@@ -193,15 +203,12 @@ export async function processManifestFunction(
     const nested = await processManifestFunction(trimmedParameter, envs, fromPath, logger);
     return readFileContent(nested, envs, fromPath, logger);
   } else {
+    // invalid content inside function
     logger?.error(`Invalid parameter '${trimmedParameter}' for the 'file' function.`);
     throw new InvalidFunctionParameterError(trimmedParameter);
   }
 }
 
-// Expand every `$[file('<path>')]` call in content. When `isJson` is true the
-// embedded content is JSON-string escaped so it can be inlined into a JSON string.
-// Returns the resolved content along with the number of calls that produced a
-// value, so a host can report telemetry.
 export async function expandFileFunctionMacros(
   content: string,
   isJson: boolean,
@@ -209,7 +216,7 @@ export async function expandFileFunctionMacros(
 ): Promise<{ content: string; functionCount: number }> {
   const matches = content.match(functionRegex);
   if (!matches) {
-    return { content, functionCount: 0 };
+    return { content, functionCount: 0 }; // no function
   }
   let functionCount = 0;
   for (const placeholder of matches) {

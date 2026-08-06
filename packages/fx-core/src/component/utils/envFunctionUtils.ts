@@ -8,9 +8,6 @@ import {
   Result,
   UserError,
   UserErrorOptions,
-  // Host-agnostic manifest-template resolution lives in @microsoft/app-manifest and
-  // is re-exported by @microsoft/teamsfx-api. fx-core stays the home for telemetry,
-  // localized messages, and FxError mapping; the resolution logic lives one layer down.
   ManifestType,
   expandFileFunctionMacros,
   UnsupportedFileFormatError as ManifestUnsupportedFileFormatError,
@@ -19,7 +16,7 @@ import {
   ReadFileError as ManifestReadFileError,
   FileNotFoundError as ManifestFileNotFoundError,
 } from "@microsoft/teamsfx-api";
-import { FileNotFoundError } from "../../error";
+import { FileNotFoundError, assembleError } from "../../error";
 import { getLocalizedString } from "../../common/localizeUtils";
 import { DriverContext } from "../driver/interface/commonArgs";
 
@@ -65,7 +62,11 @@ function toFxError(e: unknown, ctx: DriverContext): FxError {
   if (e instanceof ManifestFileNotFoundError) {
     return new FileNotFoundError(source, e.filePath);
   }
-  throw e;
+  // MissingEnvironmentVariablesError is intentionally unmapped: fx-core only calls
+  // expandFileFunctionMacros (which never throws it), not resolveManifest. A future
+  // caller wiring fx-core to resolveManifest must add its localized mapping here.
+  // Anything else is unexpected; wrap it so the Result<T, FxError> contract holds.
+  return assembleError(e, source);
 }
 
 export async function expandVariableWithFunction(
