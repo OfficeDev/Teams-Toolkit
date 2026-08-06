@@ -65,7 +65,7 @@
         "x": 474,
         "y": 210
       },
-      "description": "Click on the \"General Teams Agent\" option within the dropdown menu titled \"Teams Agent or App Using Teams AI Library\" at coordinates (474, 210).",
+      "description": "Click on the \"Other Teams Capabilities\" option within the dropdown menu titled \"Teams Agent or App Using Microsoft Teams SDK\" at coordinates (474, 210).",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -287,7 +287,7 @@
         "x": 669,
         "y": 761
       },
-      "description": "Click the search button located to the right of the search bar in the \"Apps\" section of the Developer Portal interface.",
+      "description": "Click on the horizontal scrollbar at the bottom of the browser window in the Developer Portal interface.(Previously used for clicking search button.)",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -313,7 +313,7 @@
         "x": 521,
         "y": 22
       },
-      "description": "Click the \"New Developer Portal\" toggle switch located at the top-right corner of the Developer Portal interface at coordinates (521, 22).",
+      "description": "Click on an empty area of the browser tab bar in the Developer Portal interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -483,7 +483,7 @@
         "x": 714,
         "y": 513
       },
-      "description": "Click the \"Confirm\" button in the \"Delete App\" confirmation dialog within the Microsoft Teams Developer Portal to permanently delete the app \"vscuse_app_cHMNMlocal\".",
+      "description": "Click the \"Confirm\" button in the \"Delete App\" confirmation dialog within the Microsoft Teams Developer Portal to permanently delete the app \"${{var:app_name}}local\".",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -645,7 +645,7 @@
         "x": 293,
         "y": 217
       },
-      "description": "Click the \"Open\" button in the Microsoft Teams app to launch the `vscuse_app_EHVdHlocal` application.",
+      "description": "Click the \"Open\" button in the Microsoft Teams app to launch the `${{var:app_name}}local` application.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

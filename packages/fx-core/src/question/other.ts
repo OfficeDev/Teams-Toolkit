@@ -65,6 +65,7 @@ import { inputOrSearchAPISpecNode } from "./scaffold/commonNodes";
 import {
   MCPForDAAuthCredentialNodes,
   MCPForDAAuthTypeStaticOptions,
+  validateMCPServerUrl,
 } from "./scaffold/vsc/teamsProjectTypeNode";
 
 export function convertAadToNewSchemaQuestionNode(): IQTreeNode {
@@ -717,6 +718,14 @@ export function addPluginQuestionNode(): IQTreeNode {
           placeholder: getLocalizedString(
             "core.createProjectQuestion.mcpForDa.ServerUrl.placeholder"
           ),
+          // Same rejection rule as the create flow — a URL that is not an MCP endpoint is
+          // no more usable when added to an existing project than when creating a new one.
+          additionalValidationOnAccept: {
+            validFunc: async (value: string): Promise<string | undefined> => {
+              if (!value) return undefined;
+              return await validateMCPServerUrl(value);
+            },
+          },
         },
         children: [
           // MCP tools file input (CLI only — VS Code DT-on uses dynamic discovery)
@@ -746,9 +755,11 @@ export function addPluginQuestionNode(): IQTreeNode {
               staticOptions: MCPForDAAuthTypeStaticOptions(),
               default: "oauth",
             },
-            children: featureFlagManager.getBooleanValue(FeatureFlags.MCPForDADT)
-              ? MCPForDAAuthCredentialNodes()
-              : [],
+            children:
+              featureFlagManager.getBooleanValue(FeatureFlags.MCPForDADT) &&
+              !featureFlagManager.getBooleanValue(FeatureFlags.V4Enabled)
+                ? MCPForDAAuthCredentialNodes()
+                : [],
           },
         ],
       },
@@ -909,6 +920,9 @@ export function addAuthActionQuestion(): IQTreeNode {
           const pluginManifestPath = inputs[QuestionNames.PluginManifestFilePath];
           const apiSpecPath = inputs[QuestionNames.ApiSpecLocation];
           if (!!!pluginManifestPath || !!!apiSpecPath) {
+            return false;
+          }
+          if (inputs[QuestionNames.ApiOperation] !== undefined) {
             return false;
           }
           const pluginManifest = (await fs.readJson(
@@ -1132,7 +1146,7 @@ export function apiSpecFromPluginManifestQuestion(): SingleSelectQuestion {
       const pluginManifest = (await fs.readJson(pluginManifestPath)) as PluginManifestSchema;
       const specs = pluginManifest
         .runtimes!.filter((runtime) => runtime.type === "OpenApi")
-        .map((runtime) => runtime.spec.url as string);
+        .map((runtime) => runtime.spec.url);
       return [...new Set(specs)];
     },
   };

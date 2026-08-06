@@ -101,7 +101,9 @@
         "dhash:512:384:0:20:f0b09494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_636dbdbf",
       "created_at": "2026-06-15T08:16:26.010302",
       "plan_id": "plan_f1b0cfbf"
@@ -115,7 +117,7 @@
         "x": 232,
         "y": 51
       },
-      "description": "Click the \"OK\" button in the \"Select Operation(s) Copilot Can Interact with\" dialog at the top of the Microsoft 365 Agents Toolkit interface in Visual Studio Code.",
+      "description": "Click the checkbox to select all operations in the \"Select Operation(s) Copilot Can Interact with\" dropdown in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -128,7 +130,8 @@
       ],
       "postconditions": [],
       "tags": [
-        "precondition_wait_timeout: 60"
+        "precondition_wait_timeout: 60",
+        "precondition:old"
       ],
       "screenshot": "step_1071bb7d",
       "created_at": "2026-06-15T08:16:26.020350",
@@ -143,7 +146,7 @@
         "x": 797,
         "y": 49
       },
-      "description": "Click the blue \"Clear All\" button in the dropdown for operation selection within the \"Microsoft 365 Agents Toolkit\" extension in Visual Studio Code, to deselect all chosen APIs.",
+      "description": "Click the \"OK\" button in the \"Select Operation(s) Copilot Can Interact with\" dropdown to confirm the operation selection in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -155,7 +158,9 @@
         "dhash:797:49:0:10:e4b09494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_3ea1fb5e",
       "created_at": "2026-06-15T08:16:26.037576",
       "plan_id": "plan_f1b0cfbf"
@@ -181,7 +186,9 @@
         "dhash:313:73:0:10:f0b09494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_0ff70afb",
       "created_at": "2026-06-15T08:16:26.047087",
       "plan_id": "plan_f1b0cfbf"
@@ -203,7 +210,9 @@
         "dhash:512:384:0:20:322c2a6363636421"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_e45c2e3c",
       "created_at": "2026-06-15T08:16:26.058406",
       "plan_id": "plan_f1b0cfbf"
@@ -225,7 +234,9 @@
         "dhash:512:384:0:20:6820226363636421"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_4f5c973e",
       "created_at": "2026-06-15T08:16:26.070453",
       "plan_id": "plan_f1b0cfbf"
@@ -247,7 +258,9 @@
         "dhash:512:384:0:20:6820226363636421"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_66e64f45",
       "created_at": "2026-06-15T08:16:26.080857",
       "plan_id": "plan_f1b0cfbf"
@@ -269,7 +282,9 @@
         "dhash:512:384:0:20:4020226363636421"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_cc3e9499",
       "created_at": "2026-06-15T08:16:26.091288",
       "plan_id": "plan_f1b0cfbf"
@@ -611,7 +626,8 @@
       "postconditions": [],
       "tags": [
         "delay:10",
-        "force_run:true"
+        "force_run:true",
+        "precondition:old"
       ],
       "screenshot": "step_da80314a",
       "created_at": "2026-06-15T08:16:26.231100",

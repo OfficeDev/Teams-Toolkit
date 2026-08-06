@@ -182,7 +182,7 @@ describe("SCN-DA-CREATE-API-PLUGIN-FROM-SCRATCH-BEARER (v4, T3 InMemoryRuntime)"
   it("SCN-CREATE-APIPLUGIN-BEARER-07: the only pipeline step is require-empty-target; no post-render injection runs", async () => {
     const { outcome } = await run("typescript");
     assert.deepStrictEqual(outcome.stepsRun, ["require-empty-target"]);
-    assert.isEmpty(outcome.stepsSkipped);
+    assert.deepStrictEqual(outcome.stepsSkipped, ["da/set-sensitivity-label"]);
   });
 
   it("SCN-CREATE-APIPLUGIN-BEARER-08: a non-empty target fails require-empty-target first and writes nothing", async () => {

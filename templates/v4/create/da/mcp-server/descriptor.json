@@ -3,7 +3,7 @@
   "id": "da/mcp-server",
   "name": "Declarative Agent with MCP Server",
   "languages": ["common"],
-  "minEngineVersion": "5.20.0",
+  "minEngineVersion": "6.11.0",
   "spec": "docs/03-specs/scenarios/da/create-mcp-server.md",
   "requiresNetwork": false,
 
@@ -13,12 +13,12 @@
     "properties": {
       "mcpServerType": { "enum": ["local", "remote"], "default": "remote" },
       "mcpServerUrl": { "type": "string", "format": "uri" },
-      "authType": { "enum": ["none", "oauth", "entra-sso", "oauth-dynamic"], "default": "none" },
-      "oauthClientId": { "type": "string" },
-      "oauthClientSecret": { "type": "string" },
+      "authType": { "enum": ["none", "oauth", "entra-sso", "oauth-dynamic"], "default": "oauth" },
+      "selectedLocalServers": { "type": "array", "items": { "type": "string" } },
+      "oauthClientId": { "type": "string", "pattern": "\\S" },
+      "oauthClientSecret": { "type": "string", "pattern": "\\S" },
       "oauthScopes": { "type": "string" },
-      "entraClientId": { "type": "string" },
-      "selectedLocalServers": { "type": "array", "items": { "type": "string" } }
+      "entraClientId": { "type": "string", "pattern": "\\S" }
     },
     "allOf": [
       {
@@ -30,11 +30,17 @@
         "then": { "required": ["selectedLocalServers"] }
       },
       {
-        "if": { "properties": { "authType": { "const": "oauth" } } },
+        "if": {
+          "required": ["authType"],
+          "properties": { "authType": { "const": "oauth" } }
+        },
         "then": { "required": ["oauthClientId", "oauthClientSecret"] }
       },
       {
-        "if": { "properties": { "authType": { "const": "entra-sso" } } },
+        "if": {
+          "required": ["authType"],
+          "properties": { "authType": { "const": "entra-sso" } }
+        },
         "then": { "required": ["entraClientId"] }
       }
     ],
@@ -42,8 +48,11 @@
   },
 
   "replaceMap": [
-    { "var": "DeclarativeCopilot", "const": "true" },
     { "var": "MCPForDAServerUrl", "from": "mcpServerUrl" },
+    { "var": "OAuthClientId", "from": "oauthClientId" },
+    { "var": "OAuthClientSecret", "from": "oauthClientSecret" },
+    { "var": "OAuthScopes", "from": "oauthScopes" },
+    { "var": "EntraClientId", "from": "entraClientId" },
     { "var": "IsLocalMCP", "when": "mcpServerType == 'local'", "value": "true" },
     { "var": "IsNoAuth", "when": "authType == 'none'", "value": "true" },
     { "var": "MicrosoftEntra", "when": "authType == 'entra-sso'", "value": "true" },

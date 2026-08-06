@@ -14,39 +14,6 @@ provision:
     writeToEnvironmentFile:
       teamsAppId: TEAMS_APP_ID
 
-{{#ApiKey}}
-  # Register API KEY
-  - uses: apiKey/register
-    with:
-      # Name of the API Key
-      name: {{ApiSpecAuthName}}
-      # app ID
-      appId: ${{TEAMS_APP_ID}}
-      # Path to OpenAPI description document
-      apiSpecPath: {{{ApiSpecPath}}}
-    # Write the registration information of API Key into environment file for
-    # the specified environment variable(s).
-    writeToEnvironmentFile:
-      registrationId: {{ApiSpecAuthRegistrationIdEnvName}}
-{{/ApiKey}}
-
-{{#OAuth}}
-  - uses: oauth/register
-    with:
-      name: {{ApiSpecAuthName}}
-      flow: authorizationCode
-      # app ID
-      appId: ${{TEAMS_APP_ID}}
-      # Path to OpenAPI description document
-      apiSpecPath: {{{ApiSpecPath}}}
-      # Use below property to change token exchange behaviour, BasicAuthorizationHeader: token exchange is done via HTTP headers. PostRequestBody: token exchange is done via request body
-      # tokenExchangeMethodType: BasicAuthorizationHeader
-      # Uncomment below property to use proof key for code exchange (PKCE)
-      # isPKCEEnabled: true
-    writeToEnvironmentFile:
-      configurationId: {{ApiSpecAuthRegistrationIdEnvName}}
-{{/OAuth}}
-
   # Build app package with latest env value
   - uses: teamsApp/zipAppPackage
     with:

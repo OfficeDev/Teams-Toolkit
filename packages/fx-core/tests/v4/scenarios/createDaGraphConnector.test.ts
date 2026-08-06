@@ -80,7 +80,7 @@ describe("SCN-DA-CREATE-GRAPH-CONNECTOR (v4, T3 InMemoryRuntime)", () => {
   it("SCN-CREATE-GC-05: the only pipeline step is require-empty-target", async () => {
     const { outcome } = await run();
     assert.deepStrictEqual(outcome.stepsRun, ["require-empty-target"]);
-    assert.isEmpty(outcome.stepsSkipped);
+    assert.deepStrictEqual(outcome.stepsSkipped, ["da/set-sensitivity-label"]);
   });
 
   it("SCN-CREATE-GC-06: a non-empty target fails require-empty-target first", async () => {

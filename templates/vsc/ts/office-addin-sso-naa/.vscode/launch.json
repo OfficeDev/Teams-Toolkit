@@ -1,0 +1,111 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Word Desktop Host",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run start:desktop:word",
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "Install",
+      "postDebugTask": "Stop Debug",
+      "presentation": {
+        "hidden": true
+      }
+    },
+    {
+      "name": "Word Desktop Attach (Edge Chromium)",
+      "type": "msedge",
+      "request": "attach",
+      "port": 9229,
+      "timeout": 600000,
+      "webRoot": "${workspaceRoot}",
+      "presentation": {
+        "hidden": true
+      }
+    },
+    {
+      "name": "Excel Desktop Host",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run start:desktop:excel",
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "Install",
+      "postDebugTask": "Stop Debug",
+      "presentation": {
+        "hidden": true
+      }
+    },
+    {
+      "name": "Excel Desktop Attach (Edge Chromium)",
+      "type": "msedge",
+      "request": "attach",
+      "port": 9229,
+      "timeout": 600000,
+      "webRoot": "${workspaceRoot}",
+      "presentation": {
+        "hidden": true
+      }
+    },
+    {
+      "name": "PowerPoint Desktop Host",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run start:desktop:powerpoint",
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "Install",
+      "postDebugTask": "Stop Debug",
+      "presentation": {
+        "hidden": true
+      }
+    },
+    {
+      "name": "PowerPoint Desktop Attach (Edge Chromium)",
+      "type": "msedge",
+      "request": "attach",
+      "port": 9229,
+      "timeout": 600000,
+      "webRoot": "${workspaceRoot}",
+      "presentation": {
+        "hidden": true
+      }
+    },
+    {
+      "name": "PowerPoint Desktop Attach (Edge Chromium)",
+      "type": "msedge",
+      "request": "attach",
+      "port": 9229,
+      "timeout": 600000,
+      "webRoot": "${workspaceRoot}",
+      "presentation": {
+        "hidden": true
+      }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Word Desktop (Edge Chromium)",
+      "configurations": [
+        "Word Desktop Host",
+        "Word Desktop Attach (Edge Chromium)"
+      ],
+      "stopAll": true
+    },
+    {
+      "name": "Excel Desktop (Edge Chromium)",
+      "configurations": [
+        "Excel Desktop Host",
+        "Excel Desktop Attach (Edge Chromium)"
+      ],
+      "stopAll": true
+    },
+    {
+      "name": "PowerPoint Desktop (Edge Chromium)",
+      "configurations": [
+        "PowerPoint Desktop Host",
+        "PowerPoint Desktop Attach (Edge Chromium)"
+      ],
+      "stopAll": true
+    }
+  ]
+}

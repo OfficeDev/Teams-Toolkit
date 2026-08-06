@@ -9,18 +9,19 @@ This is the vertical contract for the native v4 Declarative Agent with Office Ad
 
 ## Acceptance Criteria
 
-| ID | Tier | Given | When | Then |
-|----|------|-------|------|------|
-| SCN-CREATE-METAOS-UPGRADE-01 | L1 | an existing Office Add-in project folder | scaffold completes | copied source files are written into the target while `README.md`, Teams yaml files, lock files, `env/`, and `node_modules/` are excluded |
-| SCN-CREATE-METAOS-UPGRADE-02 | L1 | copied `appPackage/manifest.json` contains an Office commands runtime | upgrade step runs | the manifest references `declarativeAgent.json` and adds the three Office action ids to the commands runtime |
-| SCN-CREATE-METAOS-UPGRADE-03 | L1 | copied project has no DA/action manifests | upgrade step runs | `appPackage/declarativeAgent.json` and `appPackage/alchemy-plugin.json` are generated with the Office LocalPlugin action shape |
-| SCN-CREATE-METAOS-UPGRADE-04 | L1 | copied `src/commands/commands.ts` and `package.json` exist | upgrade step runs | Office action handler code is appended and `office-addin-debugging` is set to `6.0.6` |
-| SCN-CREATE-METAOS-UPGRADE-05 | L1 | copied manifest and env are present or env is absent | upgrade step finishes | manifest `id` and `env/.env.dev` `TEAMS_APP_ID` are set to the same generated UUID |
-| SCN-CREATE-METAOS-UPGRADE-06 | L1 | empty target | scaffold | `m365agents.yml` and `env/.env.dev` lifecycle baseline files are rendered, then the package runs only `metaos/upgrade-existing-project` |
+| ID                           | Tier | Given                                                                                                                       | When                  | Then                                                                                                                                            |
+| ---------------------------- | ---- | --------------------------------------------------------------------------------------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| SCN-CREATE-METAOS-UPGRADE-01 | L1   | an existing Office Add-in project folder                                                                                    | scaffold completes    | copied source files are written into the target while `README.md`, Teams yaml files, lock files, `env/`, and `node_modules/` are excluded       |
+| SCN-CREATE-METAOS-UPGRADE-02 | L1   | copied `appPackage/manifest.json` contains an Office commands runtime                                                       | upgrade step runs     | the manifest references `declarativeAgent.json` and adds the three Office action ids to the commands runtime                                    |
+| SCN-CREATE-METAOS-UPGRADE-03 | L1   | copied project has no DA/action manifests                                                                                   | upgrade step runs     | `appPackage/declarativeAgent.json` and `appPackage/alchemy-plugin.json` are generated with the Office LocalPlugin action shape                  |
+| SCN-CREATE-METAOS-UPGRADE-04 | L1   | copied `src/commands/commands.ts` and `package.json` exist                                                                  | upgrade step runs     | Office action handler code is appended and `office-addin-debugging` is set to `6.0.6`                                                           |
+| SCN-CREATE-METAOS-UPGRADE-05 | L1   | copied manifest and env are present or env is absent                                                                        | upgrade step finishes | manifest `id` and `env/.env.dev` `TEAMS_APP_ID` are set to the same generated UUID                                                              |
+| SCN-CREATE-METAOS-UPGRADE-06 | L1   | empty target                                                                                                                | scaffold              | `m365agents.yml` and `env/.env.dev` lifecycle baseline files are rendered, then the package runs only `metaos/upgrade-existing-project`         |
+| SCN-CREATE-METAOS-UPGRADE-07 | L1   | the target already contains `declarativeAgent.json` and the copied manifest already references the `declarativeAgentAlc` id | upgrade step runs     | the generated agent uses the collision-free filename `declarativeAgent1.json`, and the existing manifest reference is updated to that same file |
 
 ## Composed operations
 
-- [`walk-create-selector`](../../operations/scaffolding/walk-create-selector.md) - routes Office DA MetaOS upgrade to this v4 package when `TEAMSFX_DA_METAOS` is enabled.
+- [`walk-create-selector`](../../operations/scaffolding/walk-create-selector.md) - routes Office DA MetaOS upgrade to this v4 package.
 - [`run-scaffold-pipeline`](../../operations/scaffolding/run-scaffold-pipeline.md) - renders lifecycle baseline content and runs the upgrade step.
 
 ## Boundary

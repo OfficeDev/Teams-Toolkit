@@ -8,6 +8,7 @@ from microsoft_teams.ai.ai_model import AIModel
 from microsoft_teams.apps import App, ActivityContext
 from microsoft_teams.openai import OpenAICompletionsAIModel
 from microsoft_teams.api import MessageActivity, MessageActivityInput, MessageSubmitActionInvokeActivity
+from openai import OpenAIError
 
 from config import Config
 from handlers import //Replace with functions to be imported
@@ -24,6 +25,21 @@ def load_instructions() -> str:
         return "You are a helpful assistant."
 
 INSTRUCTIONS = load_instructions()
+
+def get_openai_error_message(error: OpenAIError) -> str:
+    body = getattr(error, "body", None)
+    if isinstance(body, dict):
+        error_body = body.get("error")
+        if isinstance(error_body, dict):
+            message = error_body.get("message")
+            if isinstance(message, str) and message:
+                return message
+
+    message = getattr(error, "message", None)
+    if isinstance(message, str) and message:
+        return message
+
+    return error.__class__.__name__
 
 def load_function_definitions():
     functions_path = os.path.join(os.path.dirname(__file__), 'functions.json')
@@ -88,11 +104,16 @@ async def handle_stateful_conversation(model: AIModel, ctx: ActivityContext[Mess
 
     // Replace with function definition code
 
-    chat_result = await prompt.send(
-        input=ctx.activity.text, 
-        memory=memory,
-        instructions=INSTRUCTIONS
-    )
+    try:
+        chat_result = await prompt.send(
+            input=ctx.activity.text, 
+            memory=memory,
+            instructions=INSTRUCTIONS
+        )
+    except OpenAIError as e:
+        print(f"Error sending chat prompt: {get_openai_error_message(e)}")
+        await ctx.send(MessageActivityInput(text="An error occurred while processing your request."))
+        return
 
     await ctx.send(MessageActivityInput(text=chat_result.response.content).add_ai_generated().add_feedback())
 

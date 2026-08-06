@@ -48,7 +48,7 @@
         "x": 410,
         "y": 127
       },
-      "description": "Click the \"General Teams Agent\" dropdown option in the \"Teams Agent or App Using Teams AI Library\" menu.",
+      "description": "Click the \"Teams Agent with Data\" dropdown option.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -60,7 +60,9 @@
         "dhash:410:127:0:10:c0c88694b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_c4837869",
       "created_at": "2025-12-18T03:55:00.651231",
       "plan_id": "plan_43836b26"
@@ -86,7 +88,9 @@
         "dhash:405:170:0:10:c0c0b094b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_60218d01",
       "created_at": "2025-12-18T03:55:00.658170",
       "plan_id": "plan_43836b26"
@@ -100,7 +104,7 @@
         "x": 457,
         "y": 73
       },
-      "description": "Click on the \"Enter OpenAPI Description Document Location\" text field within the pop-up window at the top of the Microsoft Visual Studio Code interface.",
+      "description": "Click on the \"Enter OpenAPI Document URL\" option within the \"OpenAPI Document\" pop-up window at the top of the Microsoft Visual Studio Code interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -112,7 +116,9 @@
         "dhash:457:73:0:10:f0b09494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_025a505e",
       "created_at": "2025-12-18T03:55:00.666374",
       "plan_id": "plan_43836b26"
@@ -134,7 +140,9 @@
         "dhash:512:384:0:20:e0b09494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_a7c2bdb6",
       "created_at": "2025-12-18T03:55:00.674123",
       "plan_id": "plan_43836b26"
@@ -156,7 +164,9 @@
         "dhash:512:384:0:20:f0b09494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_20b2e9c9",
       "created_at": "2025-12-18T03:55:00.680249",
       "plan_id": "plan_43836b26"
@@ -182,7 +192,9 @@
         "dhash:225:49:0:10:e4989494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_816cc34c",
       "created_at": "2025-12-18T03:55:00.687872",
       "plan_id": "plan_43836b26"
@@ -208,7 +220,9 @@
         "dhash:795:46:0:10:e4989494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_aae779ef",
       "created_at": "2025-12-18T03:55:00.694062",
       "plan_id": "plan_43836b26"
@@ -234,7 +248,9 @@
         "dhash:311:76:0:10:f0b09494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_c7d56405",
       "created_at": "2025-12-18T03:55:00.700731",
       "plan_id": "plan_43836b26"

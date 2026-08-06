@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import { assert } from "chai";
+import { afterEach, beforeEach, vi } from "vitest";
 import {
   FxError,
   InputTextConfig,
@@ -27,6 +28,7 @@ import {
   runV4Package,
   V4ScenarioOutcome,
 } from "./helpers/scenarioHarness";
+import { teamsProjectTypeDeps } from "../../../src/question/scaffold/vsc/teamsProjectTypeNode";
 
 /**
  * T3 scenario tier for the DT-off v4 static MCP create package.
@@ -54,10 +56,16 @@ const MCP_TOOLS_JSON = JSON.stringify({
 
 const templatePackage = loadV4Package("create", "da/mcp-server-static");
 
+let cachedFloor: Buffer | undefined;
+
 function buildFloor(): Buffer {
+  if (cachedFloor !== undefined) {
+    return Buffer.from(cachedFloor);
+  }
   const zip = new AdmZip();
   zip.addLocalFolder(TEMPLATES_V4_DIR, "v4");
-  return zip.toBuffer();
+  cachedFloor = zip.toBuffer();
+  return Buffer.from(cachedFloor);
 }
 
 function noAnswer(name: string): FxError {
@@ -77,13 +85,23 @@ class StaticMcpQ2UI {
     return Promise.resolve(ok({ type: "success", result: "" }));
   }
 
-  selectOptions(config: MultiSelectConfig): Promise<Result<MultiSelectResult, FxError>> {
+  async selectOptions(config: MultiSelectConfig): Promise<Result<MultiSelectResult, FxError>> {
     this.multiNames.push(config.name);
+    if (typeof config.options === "function") {
+      try {
+        config = { ...config, options: await config.options() };
+      } catch (error) {
+        if (error instanceof UserError) {
+          return err(error);
+        }
+        return err(noAnswer(config.name));
+      }
+    }
     this.lastMultiConfig = config;
     if (config.name !== "selectedMcpTools") {
-      return Promise.resolve(err(noAnswer(config.name)));
+      return err(noAnswer(config.name));
     }
-    return Promise.resolve(ok({ type: "success", result: ["search"] }));
+    return ok({ type: "success", result: ["search"] });
   }
 }
 
@@ -119,7 +137,19 @@ async function run(
   });
 }
 
-describe("SCN-DA-CREATE-WITH-MCP-SERVER-STATIC (v4, T3 InMemoryRuntime)", () => {
+describe("SCN-DA-CREATE-WITH-MCP-SERVER (DT-off, v4, T3 InMemoryRuntime)", () => {
+  beforeEach(() => {
+    // The server-URL question probes the server (ADR-0020); keep these tests offline.
+    vi.spyOn(teamsProjectTypeDeps, "probeMCPServerAuth").mockResolvedValue({
+      requiresAuth: false,
+      endpointStatus: "confirmed",
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("SCN-CREATE-MCP-STATIC-01: static MCP scaffold writes mcp-tools-1.json", async () => {
     const { files, outcome } = await run(["search", "calendar"]);
     assert.include(outcome.written, "appPackage/ai-plugin.json");
@@ -252,6 +282,6 @@ describe("SCN-DA-CREATE-WITH-MCP-SERVER-STATIC (v4, T3 InMemoryRuntime)", () => 
     assert.instanceOf(error, UserError);
     assert.strictEqual(error.name, "McpAuthRequired");
     assert.deepStrictEqual(ui.textNames, ["mcpToolsFilePath"]);
-    assert.deepStrictEqual(ui.multiNames, []);
+    assert.deepStrictEqual(ui.multiNames, ["selectedMcpTools"]);
   });
 });

@@ -45,7 +45,7 @@
         "x": 410,
         "y": 127
       },
-      "description": "Click the \"General Teams Agent\" dropdown option in the \"Teams Agent or App Using Teams AI Library\" menu.",
+      "description": "Click the \"Teams Agent with Data\" dropdown option.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -57,7 +57,9 @@
         "dhash:410:127:0:10:c0c88294b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_7ae02caa",
       "created_at": "2025-12-18T09:43:44.849277",
       "plan_id": "plan_b003fd4d"
@@ -83,7 +85,9 @@
         "dhash:420:130:0:10:c0c0b094b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_ec90c7a4",
       "created_at": "2025-12-18T09:43:44.865712",
       "plan_id": "plan_b003fd4d"
@@ -135,7 +139,9 @@
         "dhash:311:76:0:10:f0b09494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_ba813bad",
       "created_at": "2025-12-18T09:43:44.893004",
       "plan_id": "plan_b003fd4d"

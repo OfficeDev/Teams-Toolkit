@@ -186,8 +186,6 @@
   "teamstoolkit.commandsTreeViewProvider.manageCollaboratorDescription": "Microsoft 365 アプリ コラボレーターの管理 (Microsoft Entra アプリを使用)",
   "teamstoolkit.commandsTreeViewProvider.addPluginTitle": "アクションの追加",
   "teamstoolkit.commandsTreeViewProvider.addPluginDescription": "宣言型エージェントにアクションを追加する",
-  "teamstoolkit.commandsTreeViewProvider.metaOSExtendToDA": "アプリを宣言型エージェントに拡張する",
-  "teamstoolkit.commandsTreeViewProvider.metaOSExtendToDADescription": "アドイン プロジェクトを宣言型エージェントに拡張する",
   "teamstoolkit.commandsTreeViewProvider.metaOS.convert.title": "宣言型エージェントに拡張する",
   "teamstoolkit.commandsTreeViewProvider.metaOS.convert.description": "アドイン プロジェクトを宣言型エージェント アクションに拡張する",
   "teamstoolkit.commandsTreeViewProvider.regenerateActionTitle": "アクションの再生成",

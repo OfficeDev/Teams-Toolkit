@@ -14,15 +14,21 @@ import {
   CollectInputsPort,
   INPUT_BOTH_OPTION_SOURCES,
   INPUT_FORWARD_DERIVED_REFERENCE,
+  INPUT_PROVIDER_DERIVED_SCHEMA_VIOLATION,
+  INPUT_PROVIDER_FAILED,
   INPUT_VALIDATION_FAILED,
+  INPUT_UNKNOWN_PROVIDER,
+  INPUT_UNKNOWN_VALIDATOR,
   INPUT_WALK_CANCELLED,
   OptionItem,
+  OptionsSource,
   OptionsProvider,
   PromptUI,
   QuestionSpec,
   ResolvedOptions,
   Validator,
   collectInputs,
+  walkInputs,
 } from "../../../src/v4/collectInputs/collectInputs";
 
 /**
@@ -57,50 +63,85 @@ class ExprPort implements ExpressionRuntimePort {
 class ScriptedUI implements PromptUI {
   asked: string[] = [];
   lastOptions: Record<string, OptionItem[] | undefined> = {};
+  lastValidations: Record<
+    string,
+    ((value: string) => string | undefined | Promise<string | undefined>) | undefined
+  > = {};
   private readonly script: Record<string, string>;
   private readonly multiScript: Record<string, string[]>;
   constructor(script: Record<string, string>, multiScript: Record<string, string[]> = {}) {
     this.script = script;
     this.multiScript = multiScript;
   }
-  ask(
+  async ask(
     question: QuestionSpec,
-    options: OptionItem[] | undefined
+    options: OptionsSource | undefined,
+    _step?: number,
+    validation?: (value: string) => string | undefined | Promise<string | undefined>
   ): Promise<Result<Asked<string>, FxError>> {
     this.asked.push(question.name);
-    this.lastOptions[question.name] = options;
-    if (question.name in this.script) {
-      return Promise.resolve(ok({ kind: "value", value: this.script[question.name] }));
+    this.lastValidations[question.name] = validation;
+    const resolvedOptions = await resolveTestOptions(options);
+    this.lastOptions[question.name] = resolvedOptions;
+    if (question.skipSingleOption === true && resolvedOptions?.length === 1) {
+      return ok({ kind: "skip", value: optionId(resolvedOptions[0]) });
     }
-    return Promise.resolve(
-      err(
-        new UserError({
-          source: "Test",
-          name: "NoScriptedAnswer",
-          message: `no scripted answer for '${question.name}'`,
-        })
-      )
+    if (question.name in this.script) {
+      const value = this.script[question.name];
+      const message = await validation?.(value);
+      if (message !== undefined) {
+        return err(
+          new UserError({
+            source: "Test",
+            name: INPUT_VALIDATION_FAILED,
+            message: `'${question.name}': ${message}`,
+          })
+        );
+      }
+      return ok({ kind: "value", value });
+    }
+    return err(
+      new UserError({
+        source: "Test",
+        name: "NoScriptedAnswer",
+        message: `no scripted answer for '${question.name}'`,
+      })
     );
   }
-  askMulti(
+  async askMulti(
     question: QuestionSpec,
-    options: OptionItem[] | undefined
+    options: OptionsSource | undefined
   ): Promise<Result<Asked<string[]>, FxError>> {
     this.asked.push(question.name);
-    this.lastOptions[question.name] = options;
-    if (question.name in this.multiScript) {
-      return Promise.resolve(ok({ kind: "value", value: this.multiScript[question.name] }));
+    const resolvedOptions = await resolveTestOptions(options);
+    this.lastOptions[question.name] = resolvedOptions;
+    if (question.skipSingleOption === true && resolvedOptions?.length === 1) {
+      return ok({ kind: "skip", value: [optionId(resolvedOptions[0])] });
     }
-    return Promise.resolve(
-      err(
-        new UserError({
-          source: "Test",
-          name: "NoScriptedAnswer",
-          message: `no scripted multi-answer for '${question.name}'`,
-        })
-      )
+    if (question.name in this.multiScript) {
+      return ok({ kind: "value", value: this.multiScript[question.name] });
+    }
+    return err(
+      new UserError({
+        source: "Test",
+        name: "NoScriptedAnswer",
+        message: `no scripted multi-answer for '${question.name}'`,
+      })
     );
   }
+}
+
+function optionId(option: OptionItem): string {
+  return option.id;
+}
+
+async function resolveTestOptions(
+  options: OptionsSource | undefined
+): Promise<OptionItem[] | undefined> {
+  if (options === undefined || Array.isArray(options)) {
+    return options;
+  }
+  return (await options()).options;
 }
 
 /** A no-scripted-answer error for the sequence-driven driver. */
@@ -108,10 +149,11 @@ function noScripted(name: string): FxError {
   return new UserError({ source: "Test", name: "NoScriptedAnswer", message: name });
 }
 
-/** One scripted reply for the sequenced driver: a scalar value, a multi value, or a host back. */
+/** One scripted reply for the sequenced driver: a scalar value, a multi value, a surface skip, or a host back. */
 type SeqResponse =
   | { kind: "value"; value: string }
   | { kind: "multi"; value: string[] }
+  | { kind: "skip"; value: string }
   | { kind: "back" };
 
 /**
@@ -125,7 +167,7 @@ class SequencedPromptUI implements PromptUI {
   constructor(private readonly responses: SeqResponse[]) {}
   ask(
     question: QuestionSpec,
-    _options: OptionItem[] | undefined,
+    _options: OptionsSource | undefined,
     step?: number
   ): Promise<Result<Asked<string>, FxError>> {
     this.calls.push({ name: question.name, step });
@@ -136,16 +178,19 @@ class SequencedPromptUI implements PromptUI {
     if (response.kind === "back") {
       return Promise.resolve(ok({ kind: "back" }));
     }
+    if (response.kind === "skip") {
+      return Promise.resolve(ok({ kind: "skip", value: response.value }));
+    }
     return Promise.resolve(ok({ kind: "value", value: response.value }));
   }
   askMulti(
     question: QuestionSpec,
-    _options: OptionItem[] | undefined,
+    _options: OptionsSource | undefined,
     step?: number
   ): Promise<Result<Asked<string[]>, FxError>> {
     this.calls.push({ name: question.name, step });
     const response = this.responses[this.cursor++];
-    if (response === undefined || response.kind === "value") {
+    if (response === undefined || response.kind === "value" || response.kind === "skip") {
       return Promise.resolve(err(noScripted(question.name)));
     }
     if (response.kind === "back") {
@@ -212,7 +257,6 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { mcpServerType: {}, mcpServerUrl: {} } },
       {},
-      ["common"],
       makePort({ ui })
     );
     assert.isTrue(res.isOk());
@@ -245,7 +289,6 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { authType: {} } },
       {},
-      ["common"],
       makePort({ ui, exprPort: new ExprPort({}) })
     );
     assert.isTrue(res.isOk());
@@ -265,7 +308,6 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { x: {} } },
       {},
-      ["common"],
       makePort({ ui: new ScriptedUI({}) })
     );
     assert.isTrue(res.isErr());
@@ -274,7 +316,7 @@ describe("collectInputs (v4)", () => {
     assert.strictEqual(e.name, INPUT_BOTH_OPTION_SOURCES);
   });
 
-  it("INPUT-04: skipSingleOption auto-selects a sole option without prompting", async () => {
+  it("INPUT-04: skipSingleOption auto-selects a sole provider option through the UI", async () => {
     const provider = new FakeProvider({ options: [{ id: "remote" }] });
     const questions: QuestionSpec[] = [
       {
@@ -289,11 +331,10 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { mcpServerType: {} } },
       {},
-      ["common"],
       makePort({ ui, providers: { "mcp.serverTypes": provider } })
     );
     assert.strictEqual(res._unsafeUnwrap().mcpServerType, "remote");
-    assert.notInclude(ui.asked, "mcpServerType");
+    assert.include(ui.asked, "mcpServerType");
   });
 
   it("INPUT-05: optionsFrom invokes the named provider through the port", async () => {
@@ -306,7 +347,6 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { mcpServerType: {} } },
       {},
-      ["common"],
       makePort({ ui, providers: { "mcp.serverTypes": provider } })
     );
     assert.strictEqual(provider.fetchCount, 1);
@@ -315,6 +355,505 @@ describe("collectInputs (v4)", () => {
       (ui.lastOptions.mcpServerType ?? []).map((o) => o.id),
       ["local", "remote"]
     );
+  });
+
+  it("INPUT-23: a prefilled provider answer still resolves derived values without prompting", async () => {
+    const provider = new FakeProvider(
+      {
+        options: [{ id: "local" }, { id: "remote" }],
+        derived: { catalog: '{"github":{"command":"gh","args":["mcp"]}}' },
+      },
+      ["catalog"]
+    );
+    const questions: QuestionSpec[] = [
+      { name: "mcpServerType", type: "singleSelect", optionsFrom: "mcp.serverTypes" },
+    ];
+    const ui = new ScriptedUI({});
+
+    const res = await collectInputs(
+      questions,
+      { properties: { mcpServerType: {} } },
+      { mcpServerType: "local" },
+      makePort({ ui, providers: { "mcp.serverTypes": provider } })
+    );
+
+    assert.deepStrictEqual(res._unsafeUnwrap(), {
+      mcpServerType: "local",
+      "derived.mcp.serverTypes.catalog": '{"github":{"command":"gh","args":["mcp"]}}',
+    });
+    assert.strictEqual(provider.fetchCount, 1);
+    assert.deepStrictEqual(ui.asked, []);
+  });
+
+  it("INPUT-26: a prefilled singleSelect must name a visible static option", async () => {
+    const questions: QuestionSpec[] = [
+      {
+        name: "authType",
+        type: "singleSelect",
+        staticOptions: [{ id: "none" }, { id: "oauth" }, { id: "entra-sso" }],
+      },
+    ];
+    const ui = new ScriptedUI({});
+
+    const res = await collectInputs(
+      questions,
+      { properties: { authType: { enum: ["none", "oauth", "entra-sso"] } } },
+      { authType: "bogus" },
+      makePort({ ui })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.instanceOf(res._unsafeUnwrapErr(), UserError);
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_VALIDATION_FAILED);
+    assert.include(res._unsafeUnwrapErr().message, "authType");
+    assert.deepStrictEqual(ui.asked, []);
+  });
+
+  it("INPUT-27: a prefilled provider multiSelect rejects an unavailable option", async () => {
+    const provider = new FakeProvider({ options: [{ id: "alpha" }, { id: "beta" }] });
+    const questions: QuestionSpec[] = [
+      {
+        name: "selectedLocalServers",
+        type: "multiSelect",
+        optionsFrom: "mcp.localServers",
+      },
+    ];
+
+    const res = await collectInputs(
+      questions,
+      { properties: { selectedLocalServers: { type: "array" } } },
+      { selectedLocalServers: ["alpha", "missing"] },
+      makePort({
+        ui: new ScriptedUI({}),
+        providers: { "mcp.localServers": provider },
+      })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_VALIDATION_FAILED);
+    assert.include(res._unsafeUnwrapErr().message, "selectedLocalServers");
+    assert.strictEqual(provider.fetchCount, 1);
+  });
+
+  it("INPUT-28: a non-interactive default must name a visible option", async () => {
+    const questions: QuestionSpec[] = [
+      {
+        name: "authType",
+        type: "singleSelect",
+        staticOptions: [{ id: "none" }, { id: "oauth" }],
+        default: "bogus",
+      },
+    ];
+
+    const res = await collectInputs(
+      questions,
+      { properties: { authType: { enum: ["none", "oauth"] } } },
+      { nonInteractive: "true" },
+      makePort({ ui: new ScriptedUI({}) })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_VALIDATION_FAILED);
+    assert.include(res._unsafeUnwrapErr().message, "authType");
+  });
+
+  it("INPUT-29: a prefilled answer still runs its named validator", async () => {
+    const questions: QuestionSpec[] = [
+      {
+        name: "mcpServerUrl",
+        type: "text",
+        condition: { expr: "mcpServerUrl == null" },
+        validation: "uri",
+      },
+    ];
+
+    const res = await collectInputs(
+      questions,
+      { properties: { mcpServerUrl: { type: "string", format: "uri" } } },
+      { mcpServerUrl: "not a uri" },
+      makePort({ ui: new ScriptedUI({}), validators: { uri: uriValidator } })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_VALIDATION_FAILED);
+    assert.include(res._unsafeUnwrapErr().message, "mcpServerUrl");
+  });
+
+  it("INPUT-29: a prefilled duplicate-name answer runs the active branch validator", async () => {
+    const questions: QuestionSpec[] = [
+      {
+        name: "apiSpecLocation",
+        type: "text",
+        condition: { expr: "openApiSpecType == 'enter-url'" },
+        validation: "uri",
+      },
+      {
+        name: "apiSpecLocation",
+        type: "singleFile",
+        condition: { expr: "openApiSpecType == 'open-file'" },
+      },
+    ];
+
+    const res = await collectInputs(
+      questions,
+      { properties: { openApiSpecType: {}, apiSpecLocation: {} } },
+      { openApiSpecType: "enter-url", apiSpecLocation: "not a uri" },
+      makePort({ ui: new ScriptedUI({}), validators: { uri: uriValidator } })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_VALIDATION_FAILED);
+    assert.include(res._unsafeUnwrapErr().message, "apiSpecLocation");
+  });
+
+  it("INPUT-29: an inactive duplicate URL branch does not reject a prefilled file path", async () => {
+    const questions: QuestionSpec[] = [
+      {
+        name: "apiSpecLocation",
+        type: "text",
+        condition: { expr: "openApiSpecType == 'enter-url'" },
+        validation: "uri",
+      },
+      {
+        name: "apiSpecLocation",
+        type: "singleFile",
+        condition: { expr: "openApiSpecType == 'open-file'" },
+      },
+    ];
+
+    const res = await collectInputs(
+      questions,
+      { properties: { openApiSpecType: {}, apiSpecLocation: {} } },
+      { apiSpecLocation: "specs/openapi.yaml" },
+      makePort({ ui: new ScriptedUI({}), validators: { uri: uriValidator } })
+    );
+
+    assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
+    assert.strictEqual(res._unsafeUnwrap().apiSpecLocation, "specs/openapi.yaml");
+  });
+
+  it("INPUT-30: a non-interactive default still runs its named validator", async () => {
+    const questions: QuestionSpec[] = [
+      {
+        name: "mcpServerUrl",
+        type: "text",
+        default: "not a uri",
+        validation: "uri",
+      },
+    ];
+
+    const res = await collectInputs(
+      questions,
+      { properties: { mcpServerUrl: { type: "string", format: "uri" } } },
+      { nonInteractive: "true" },
+      makePort({ ui: new ScriptedUI({}), validators: { uri: uriValidator } })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_VALIDATION_FAILED);
+    assert.include(res._unsafeUnwrapErr().message, "mcpServerUrl");
+  });
+
+  it("INPUT-31: post-prompt validation remains authoritative", async () => {
+    const questions: QuestionSpec[] = [{ name: "mcpServerUrl", type: "text", validation: "uri" }];
+
+    const res = await collectInputs(
+      questions,
+      { properties: { mcpServerUrl: { type: "string", format: "uri" } } },
+      {},
+      makePort({
+        ui: new SequencedPromptUI([{ kind: "value", value: "not a uri" }]),
+        validators: { uri: uriValidator },
+      })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_VALIDATION_FAILED);
+    assert.include(res._unsafeUnwrapErr().message, "mcpServerUrl");
+  });
+
+  it("INPUT-32: a prompted singleSelect must name a visible static option", async () => {
+    const questions: QuestionSpec[] = [
+      {
+        name: "authType",
+        type: "singleSelect",
+        staticOptions: [{ id: "none" }, { id: "oauth" }],
+      },
+    ];
+
+    const res = await collectInputs(
+      questions,
+      { properties: { authType: { enum: ["none", "oauth"] } } },
+      {},
+      makePort({ ui: new SequencedPromptUI([{ kind: "value", value: "bogus" }]) })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_VALIDATION_FAILED);
+    assert.include(res._unsafeUnwrapErr().message, "authType");
+  });
+
+  it("INPUT-33: a prompted provider multiSelect rejects an unavailable option", async () => {
+    const provider = new FakeProvider({ options: [{ id: "alpha" }, { id: "beta" }] });
+    const questions: QuestionSpec[] = [
+      {
+        name: "selectedLocalServers",
+        type: "multiSelect",
+        optionsFrom: "mcp.localServers",
+      },
+    ];
+
+    const res = await collectInputs(
+      questions,
+      { properties: { selectedLocalServers: { type: "array" } } },
+      {},
+      makePort({
+        ui: new SequencedPromptUI([{ kind: "multi", value: ["alpha", "missing"] }]),
+        providers: { "mcp.localServers": provider },
+      })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_VALIDATION_FAILED);
+    assert.include(res._unsafeUnwrapErr().message, "selectedLocalServers");
+  });
+
+  it("a prompted static multiSelect rejects an unavailable option", async () => {
+    const questions: QuestionSpec[] = [
+      {
+        name: "selectedServers",
+        type: "multiSelect",
+        staticOptions: [{ id: "alpha" }, { id: "beta" }],
+      },
+    ];
+
+    const res = await collectInputs(
+      questions,
+      { properties: { selectedServers: { type: "array" } } },
+      {},
+      makePort({ ui: new SequencedPromptUI([{ kind: "multi", value: ["missing"] }]) })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_VALIDATION_FAILED);
+    assert.include(res._unsafeUnwrapErr().message, "selectedServers");
+  });
+
+  it("INPUT-34: a provider-backed non-interactive default must be available", async () => {
+    const provider = new FakeProvider({ options: [{ id: "remote" }] });
+    const questions: QuestionSpec[] = [
+      {
+        name: "mcpServerType",
+        type: "singleSelect",
+        optionsFrom: "mcp.serverTypes",
+        default: "local",
+      },
+    ];
+
+    const res = await collectInputs(
+      questions,
+      { properties: { mcpServerType: { enum: ["local", "remote"] } } },
+      { nonInteractive: "true" },
+      makePort({
+        ui: new ScriptedUI({}),
+        providers: { "mcp.serverTypes": provider },
+      })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_VALIDATION_FAILED);
+    assert.include(res._unsafeUnwrapErr().message, "mcpServerType");
+    assert.strictEqual(provider.fetchCount, 1);
+
+    const validProvider = new FakeProvider(
+      { options: [{ id: "remote" }], derived: { catalog: "available" } },
+      ["catalog"]
+    );
+    questions[0].default = "remote";
+    const valid = await collectInputs(
+      questions,
+      { properties: { mcpServerType: { enum: ["local", "remote"] } } },
+      { nonInteractive: "true" },
+      makePort({
+        ui: new ScriptedUI({}),
+        providers: { "mcp.serverTypes": validProvider },
+      })
+    );
+
+    assert.isTrue(valid.isOk());
+    assert.deepStrictEqual(valid._unsafeUnwrap(), {
+      nonInteractive: "true",
+      mcpServerType: "remote",
+      "derived.mcp.serverTypes.catalog": "available",
+    });
+  });
+
+  it("INPUT-02: a prefilled static option propagates a visibility expression error", async () => {
+    const res = await collectInputs(
+      [
+        {
+          name: "authType",
+          type: "singleSelect",
+          staticOptions: [{ id: "oauth", condition: { expr: "unknownPredicate()" } }],
+        },
+      ],
+      { properties: { authType: {} } },
+      { authType: "oauth" },
+      makePort({ ui: new ScriptedUI({}) })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.instanceOf(res._unsafeUnwrapErr(), SystemError);
+  });
+
+  it("INPUT-05: a prefilled provider question rejects an unknown provider", async () => {
+    const res = await collectInputs(
+      [{ name: "server", type: "singleSelect", optionsFrom: "missing.provider" }],
+      { properties: { server: {} } },
+      { server: "remote" },
+      makePort({ ui: new ScriptedUI({}) })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_UNKNOWN_PROVIDER);
+  });
+
+  it("INPUT-05: a prefilled provider exception is wrapped as a provider failure", async () => {
+    const provider: OptionsProvider = {
+      fetch: async () => Promise.reject(new Error("provider exploded")),
+    };
+    const res = await collectInputs(
+      [{ name: "server", type: "singleSelect", optionsFrom: "mcp.servers" }],
+      { properties: { server: {} } },
+      { server: "remote" },
+      makePort({ ui: new ScriptedUI({}), providers: { "mcp.servers": provider } })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_PROVIDER_FAILED);
+    assert.include(res._unsafeUnwrapErr().message, "provider exploded");
+  });
+
+  it("INPUT-06: a prefilled provider question propagates a parameter expression error", async () => {
+    const provider = new FakeProvider({ options: [{ id: "remote" }] });
+    const res = await collectInputs(
+      [
+        {
+          name: "server",
+          type: "singleSelect",
+          optionsFrom: "mcp.servers",
+          optionsFromParams: { source: { expr: "unknownSource()" } },
+        },
+      ],
+      { properties: { server: {} } },
+      { server: "remote" },
+      makePort({ ui: new ScriptedUI({}), providers: { "mcp.servers": provider } })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.instanceOf(res._unsafeUnwrapErr(), SystemError);
+    assert.strictEqual(provider.fetchCount, 0);
+  });
+
+  it("INPUT-25: a prefilled provider question rejects undeclared derived data", async () => {
+    const provider = new FakeProvider(
+      { options: [{ id: "remote" }], derived: { undeclared: "value" } },
+      ["catalog"]
+    );
+    const res = await collectInputs(
+      [{ name: "server", type: "singleSelect", optionsFrom: "mcp.servers" }],
+      { properties: { server: {} } },
+      { server: "remote" },
+      makePort({ ui: new ScriptedUI({}), providers: { "mcp.servers": provider } })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_PROVIDER_DERIVED_SCHEMA_VIOLATION);
+    assert.include(res._unsafeUnwrapErr().message, "undeclared");
+  });
+
+  it("INPUT-25: a non-interactive provider default rejects undeclared derived data", async () => {
+    const provider = new FakeProvider(
+      { options: [{ id: "remote" }], derived: { undeclared: "value" } },
+      ["catalog"]
+    );
+    const res = await collectInputs(
+      [
+        {
+          name: "server",
+          type: "singleSelect",
+          optionsFrom: "mcp.servers",
+          default: "remote",
+        },
+      ],
+      { properties: { server: {} } },
+      { nonInteractive: "true" },
+      makePort({ ui: new ScriptedUI({}), providers: { "mcp.servers": provider } })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_PROVIDER_DERIVED_SCHEMA_VIOLATION);
+    assert.include(res._unsafeUnwrapErr().message, "undeclared");
+  });
+
+  it("INPUT-26: a prefilled singleSelect rejects a list-shaped answer", async () => {
+    const res = await collectInputs(
+      [
+        {
+          name: "authType",
+          type: "singleSelect",
+          staticOptions: [{ id: "oauth" }],
+        },
+      ],
+      { properties: { authType: {} } },
+      { authType: ["oauth"] },
+      makePort({ ui: new ScriptedUI({}) })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_VALIDATION_FAILED);
+    assert.include(res._unsafeUnwrapErr().message, "invalid answer type");
+  });
+
+  it("INPUT-29: a prefilled scalar rejects an unknown validator", async () => {
+    const res = await collectInputs(
+      [{ name: "serverUrl", type: "text", validation: "missing" }],
+      { properties: { serverUrl: {} } },
+      { serverUrl: "https://example.com/mcp" },
+      makePort({ ui: new ScriptedUI({}) })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_UNKNOWN_VALIDATOR);
+  });
+
+  it("INPUT-26: option membership is ignored for a non-select question", async () => {
+    const res = await collectInputs(
+      [{ name: "label", type: "text", staticOptions: [{ id: "unused" }] }],
+      { properties: { label: {} } },
+      { label: "free text" },
+      makePort({ ui: new ScriptedUI({}) })
+    );
+
+    assert.deepStrictEqual(res._unsafeUnwrap(), { label: "free text" });
+  });
+
+  it("INPUT-02: a prompted static option propagates a visibility expression error", async () => {
+    const res = await collectInputs(
+      [
+        {
+          name: "authType",
+          type: "singleSelect",
+          staticOptions: [{ id: "oauth", condition: { expr: "unknownPredicate()" } }],
+        },
+      ],
+      { properties: { authType: {} } },
+      {},
+      makePort({ ui: new ScriptedUI({ authType: "oauth" }) })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.instanceOf(res._unsafeUnwrapErr(), SystemError);
   });
 
   it("INPUT-06: optionsFromParams close over an answer via the shared evaluator", async () => {
@@ -334,7 +873,6 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { apiSpecLocation: {}, apiOperation: {} } },
       {},
-      ["common"],
       makePort({ ui, providers: { "openapi.operations": provider } })
     );
     assert.isTrue(res.isOk());
@@ -360,10 +898,58 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { mcpServerType: {} } },
       {},
-      ["common"],
       makePort({ ui: new ScriptedUI({}), providers: { "mcp.serverTypes": provider } })
     );
     assert.strictEqual(res._unsafeUnwrap()["derived.mcp.serverTypes.apiAuthData"], "bearer");
+  });
+
+  it("INPUT-25: provider derived rejects a key absent from derivedSchema", async () => {
+    const provider = new FakeProvider(
+      { options: [{ id: "remote" }], derived: { undeclared: "value" } },
+      ["catalog"]
+    );
+    const questions: QuestionSpec[] = [
+      {
+        name: "mcpServerType",
+        type: "singleSelect",
+        optionsFrom: "mcp.serverTypes",
+        skipSingleOption: true,
+      },
+    ];
+
+    const res = await collectInputs(
+      questions,
+      { properties: { mcpServerType: {} } },
+      {},
+      makePort({ ui: new ScriptedUI({}), providers: { "mcp.serverTypes": provider } })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, "InputProviderDerivedSchemaViolation");
+    assert.include(res._unsafeUnwrapErr().message, "undeclared");
+  });
+
+  it("INPUT-25: provider derived rejects a missing derivedSchema key", async () => {
+    const provider = new FakeProvider({ options: [{ id: "remote" }] }, ["catalog"]);
+    const questions: QuestionSpec[] = [
+      {
+        name: "mcpServerType",
+        type: "singleSelect",
+        optionsFrom: "mcp.serverTypes",
+        skipSingleOption: true,
+      },
+    ];
+
+    const res = await collectInputs(
+      questions,
+      { properties: { mcpServerType: {} } },
+      {},
+      makePort({ ui: new ScriptedUI({}), providers: { "mcp.serverTypes": provider } })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, "InputProviderDerivedSchemaViolation");
+    assert.include(res._unsafeUnwrapErr().message, "catalog");
   });
 
   it("INPUT-08: a forward derived.<id>.<key> reference is rejected", async () => {
@@ -384,7 +970,6 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { q1: {}, q2: {} } },
       {},
-      ["common"],
       makePort({ ui: new ScriptedUI({}), providers: { early, late } })
     );
     assert.isTrue(res.isErr());
@@ -403,7 +988,6 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { a: {}, b: {} } },
       {},
-      ["common"],
       makePort({ ui: new ScriptedUI({}), providers: { "mcp.serverTypes": provider } })
     );
     assert.isTrue(res.isOk());
@@ -418,14 +1002,125 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { mcpServerUrl: {} } },
       {},
-      ["common"],
       makePort({ ui, validators: { uri: uriValidator } })
     );
+    assert.isFunction(ui.lastValidations.mcpServerUrl);
     assert.isTrue(res.isErr());
     const e = res._unsafeUnwrapErr();
     assert.instanceOf(e, UserError);
     assert.strictEqual(e.name, INPUT_VALIDATION_FAILED);
     assert.include(e.message, "mcpServerUrl");
+  });
+
+  it("INPUT-10: an unknown question validator is rejected before prompting", async () => {
+    const questions: QuestionSpec[] = [
+      { name: "mcpServerUrl", type: "text", validation: "missing" },
+    ];
+    const ui = new ScriptedUI({ mcpServerUrl: "https://api.example.com/mcp" });
+
+    const res = await collectInputs(
+      questions,
+      { properties: { mcpServerUrl: {} } },
+      {},
+      makePort({ ui })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_UNKNOWN_VALIDATOR);
+    assert.deepStrictEqual(ui.asked, []);
+  });
+
+  it("INPUT-10: an unknown input-box validator is rejected before prompting", async () => {
+    const questions: QuestionSpec[] = [
+      {
+        name: "apiSpecLocation",
+        type: "singleFileOrText",
+        inputOptionItem: { id: "input" },
+        inputBoxConfig: { name: "input-api-spec-url", validation: "missing" },
+      },
+    ];
+    const ui = new ScriptedUI({ apiSpecLocation: "https://example.com/openapi.yaml" });
+
+    const res = await collectInputs(
+      questions,
+      { properties: { apiSpecLocation: {} } },
+      {},
+      makePort({ ui })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_UNKNOWN_VALIDATOR);
+    assert.deepStrictEqual(ui.asked, []);
+  });
+
+  it("INPUT-10: scalar provider errors after prompting are returned as input errors", async () => {
+    const providerError = new UserError({
+      source: "Test",
+      name: "ProviderUserError",
+      message: "bad",
+    });
+    const provider: OptionsProvider = { fetch: async () => Promise.reject(providerError) };
+    const questions: QuestionSpec[] = [
+      { name: "openApiSpec", type: "singleSelect", optionsFrom: "openapi.search" },
+    ];
+
+    const res = await collectInputs(
+      questions,
+      { properties: { openApiSpec: {} } },
+      {},
+      makePort({
+        ui: new SequencedPromptUI([{ kind: "value", value: "https://example.com/openapi.yaml" }]),
+        providers: { "openapi.search": provider },
+      })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, "ProviderUserError");
+  });
+
+  it("INPUT-10: multi provider exceptions after prompting are wrapped as provider failures", async () => {
+    const provider: OptionsProvider = {
+      fetch: async () => Promise.reject(new Error("provider exploded")),
+    };
+    const questions: QuestionSpec[] = [
+      { name: "apiOperations", type: "multiSelect", optionsFrom: "openapi.operations" },
+    ];
+
+    const res = await collectInputs(
+      questions,
+      { properties: { apiOperations: {} } },
+      {},
+      makePort({
+        ui: new SequencedPromptUI([{ kind: "multi", value: ["GET /repairs"] }]),
+        providers: { "openapi.operations": provider },
+      })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_PROVIDER_FAILED);
+  });
+
+  it("INPUT-10: non-Error provider exceptions are wrapped as provider failures", async () => {
+    const provider: OptionsProvider = {
+      fetch: async () => Promise.reject("provider exploded"),
+    };
+    const questions: QuestionSpec[] = [
+      { name: "apiOperations", type: "multiSelect", optionsFrom: "openapi.operations" },
+    ];
+
+    const res = await collectInputs(
+      questions,
+      { properties: { apiOperations: {} } },
+      {},
+      makePort({
+        ui: new SequencedPromptUI([{ kind: "multi", value: ["GET /repairs"] }]),
+        providers: { "openapi.operations": provider },
+      })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_PROVIDER_FAILED);
+    assert.include(res._unsafeUnwrapErr().message, "provider exploded");
   });
 
   it("INPUT-11: machine-state (odr.exe) gating is the provider, never a condition predicate", async () => {
@@ -443,7 +1138,6 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { mcpServerType: {} } },
       {},
-      ["common"],
       makePort({ ui: new ScriptedUI({}), providers: { "mcp.serverTypes": odrAbsent } })
     );
     assert.strictEqual(res._unsafeUnwrap().mcpServerType, "remote");
@@ -467,7 +1161,6 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { mcpServerUrl: {} } },
       { mcpServerUrl: url },
-      ["common"],
       makePort({ ui: uiPre, validators: { uri: uriValidator } })
     );
     assert.isTrue(resPre.isOk());
@@ -479,7 +1172,6 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { mcpServerUrl: {} } },
       {},
-      ["common"],
       makePort({ ui: uiAsk, validators: { uri: uriValidator } })
     );
     assert.isTrue(resAsk.isOk());
@@ -487,16 +1179,24 @@ describe("collectInputs (v4)", () => {
     assert.strictEqual(resAsk._unsafeUnwrap().mcpServerUrl, url);
   });
 
-  it("INPUT-13: a non-singleton languages list asks language after Q2; ['common'] auto-skips", async () => {
+  it("INPUT-13: caller-provided language question behaves like any other singleSelect", async () => {
     const questions: QuestionSpec[] = [
       { name: "first", type: "singleSelect", staticOptions: [{ id: "a" }, { id: "b" }] },
+      {
+        name: "language",
+        type: "singleSelect",
+        staticOptions: [
+          { id: "typescript", label: "TypeScript" },
+          { id: "javascript", label: "JavaScript" },
+          { id: "python", label: "Python" },
+        ],
+      },
     ];
     const uiMulti = new ScriptedUI({ first: "a", language: "typescript" });
     const resMulti = await collectInputs(
       questions,
-      { properties: { first: {} } },
+      { properties: { first: {}, language: {} } },
       {},
-      ["typescript", "javascript", "python"],
       makePort({ ui: uiMulti })
     );
     assert.strictEqual(resMulti._unsafeUnwrap().first, "a");
@@ -509,20 +1209,26 @@ describe("collectInputs (v4)", () => {
       { id: "javascript", label: "JavaScript" },
       { id: "python", label: "Python" },
     ]);
-    // ['common'] → the language axis is auto-skipped
+
+    // A caller whose descriptor languages are ['common'] simply does not add a language question.
     const uiCommon = new ScriptedUI({});
-    const resCommon = await collectInputs([], {}, {}, ["common"], makePort({ ui: uiCommon }));
+    const resCommon = await collectInputs([], {}, {}, makePort({ ui: uiCommon }));
     assert.notInclude(uiCommon.asked, "language");
     assert.notProperty(resCommon._unsafeUnwrap(), "language");
   });
 
-  it("INPUT-13: a pre-filled language skips the language axis for a multi-language template", async () => {
+  it("INPUT-13: a pre-filled language skips the caller-provided language question", async () => {
     const ui = new ScriptedUI({});
     const res = await collectInputs(
-      [],
-      {},
+      [
+        {
+          name: "language",
+          type: "singleSelect",
+          staticOptions: [{ id: "typescript" }, { id: "javascript" }],
+        },
+      ],
+      { properties: { language: {} } },
       { language: "javascript" },
-      ["typescript", "javascript"],
       makePort({ ui })
     );
 
@@ -550,14 +1256,12 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { mcpServerType: {}, authType: {} } },
       {},
-      ["common"],
       build(new FakeProvider({ options: [{ id: "remote" }] }))
     );
     const b = await collectInputs(
       questions,
       { properties: { mcpServerType: {}, authType: {} } },
       {},
-      ["common"],
       build(new FakeProvider({ options: [{ id: "remote" }] }))
     );
     assert.deepStrictEqual(a._unsafeUnwrap(), b._unsafeUnwrap());
@@ -576,7 +1280,6 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { selectedLocalServers: {} } },
       {},
-      ["common"],
       makePort({ ui })
     );
     assert.isTrue(res.isOk());
@@ -601,7 +1304,6 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { first: {}, second: {} } },
       {},
-      ["common"],
       makePort({ ui })
     );
     assert.isTrue(res.isOk());
@@ -619,9 +1321,14 @@ describe("collectInputs (v4)", () => {
     );
   });
 
-  it("INPUT-17: a back from the language axis crosses into the previous Q2 question", async () => {
+  it("INPUT-17: a back from a caller-provided language question crosses into the previous question", async () => {
     const questions: QuestionSpec[] = [
       { name: "first", type: "singleSelect", staticOptions: [{ id: "a" }, { id: "b" }] },
+      {
+        name: "language",
+        type: "singleSelect",
+        staticOptions: [{ id: "typescript" }, { id: "javascript" }],
+      },
     ];
     // first→a, language→back (re-asks Q2), first→b, language→javascript
     const ui = new SequencedPromptUI([
@@ -632,9 +1339,8 @@ describe("collectInputs (v4)", () => {
     ]);
     const res = await collectInputs(
       questions,
-      { properties: { first: {} } },
+      { properties: { first: {}, language: {} } },
       {},
-      ["typescript", "javascript"],
       makePort({ ui })
     );
     assert.isTrue(res.isOk());
@@ -655,13 +1361,7 @@ describe("collectInputs (v4)", () => {
       { name: "first", type: "singleSelect", staticOptions: [{ id: "a" }, { id: "b" }] },
     ];
     const ui = new SequencedPromptUI([{ kind: "back" }]);
-    const res = await collectInputs(
-      questions,
-      { properties: { first: {} } },
-      {},
-      ["common"],
-      makePort({ ui })
-    );
+    const res = await collectInputs(questions, { properties: { first: {} } }, {}, makePort({ ui }));
     assert.isTrue(res.isErr());
     const e = res._unsafeUnwrapErr();
     assert.instanceOf(e, UserError);
@@ -690,7 +1390,6 @@ describe("collectInputs (v4)", () => {
       questions,
       { properties: { first: {}, servers: {} } },
       {},
-      ["common"],
       makePort({ ui })
     );
     assert.isTrue(res.isOk());
@@ -699,5 +1398,213 @@ describe("collectInputs (v4)", () => {
       ui.calls.map((c) => c.name),
       ["first", "servers", "first", "servers"]
     );
+  });
+
+  it("INPUT-20: a baseStep offset continues the step numbering so the first prompt shows a Back button", async () => {
+    const questions: QuestionSpec[] = [
+      { name: "first", type: "singleSelect", staticOptions: [{ id: "a" }, { id: "b" }] },
+      { name: "second", type: "singleSelect", staticOptions: [{ id: "x" }, { id: "y" }] },
+    ];
+    const ui = new SequencedPromptUI([
+      { kind: "value", value: "a" },
+      { kind: "value", value: "x" },
+    ]);
+    const res = await walkInputs(
+      questions,
+      { properties: { first: {}, second: {} } },
+      {},
+      makePort({ ui }),
+      { baseStep: 3 }
+    );
+    assert.isTrue(res.isOk());
+    const outcome = res._unsafeUnwrap();
+    assert.strictEqual(outcome.kind, "done");
+    if (outcome.kind === "done") {
+      assert.deepStrictEqual(outcome.answers, { first: "a", second: "x" });
+      assert.strictEqual(outcome.promptCount, 2);
+    }
+    // baseStep 3 → first prompt is step 4 (Back button shown), second is step 5
+    assert.deepStrictEqual(
+      ui.calls.map((c) => c.step),
+      [4, 5]
+    );
+  });
+
+  it("INPUT-21: with backable set, a back at the first prompt returns a typed back outcome instead of cancelling", async () => {
+    const questions: QuestionSpec[] = [
+      { name: "first", type: "singleSelect", staticOptions: [{ id: "a" }, { id: "b" }] },
+    ];
+    const ui = new SequencedPromptUI([{ kind: "back" }]);
+    const res = await walkInputs(questions, { properties: { first: {} } }, {}, makePort({ ui }), {
+      baseStep: 2,
+      backable: true,
+    });
+    assert.isTrue(res.isOk(), res.isErr() ? `${res.error.name}: ${res.error.message}` : "ok");
+    assert.strictEqual(res._unsafeUnwrap().kind, "back");
+    // default (backable false) still cancels — INPUT-18 unchanged
+    const uiCancel = new SequencedPromptUI([{ kind: "back" }]);
+    const cancelled = await walkInputs(
+      questions,
+      { properties: { first: {} } },
+      {},
+      makePort({ ui: uiCancel })
+    );
+    assert.isTrue(cancelled.isErr());
+    assert.strictEqual(cancelled._unsafeUnwrapErr().name, INPUT_WALK_CANCELLED);
+  });
+
+  it("INPUT-22: resuming a prior walk's history re-asks the last prompted question and preserves back", async () => {
+    const questions: QuestionSpec[] = [
+      { name: "first", type: "singleSelect", staticOptions: [{ id: "a" }, { id: "b" }] },
+      { name: "second", type: "singleSelect", staticOptions: [{ id: "x" }, { id: "y" }] },
+    ];
+    // First, run to done to capture the walk history.
+    const uiFirst = new SequencedPromptUI([
+      { kind: "value", value: "a" },
+      { kind: "value", value: "x" },
+    ]);
+    const firstRun = await walkInputs(
+      questions,
+      { properties: { first: {}, second: {} } },
+      {},
+      makePort({ ui: uiFirst })
+    );
+    assert.isTrue(firstRun.isOk());
+    const done = firstRun._unsafeUnwrap();
+    assert.strictEqual(done.kind, "done");
+    if (done.kind !== "done") {
+      return;
+    }
+    // Resume: re-asks 'second' (the last prompted question), then a back crosses into
+    // 'first' (the retained history is intact), then re-forward.
+    const uiResume = new SequencedPromptUI([
+      { kind: "back" },
+      { kind: "value", value: "b" },
+      { kind: "value", value: "y" },
+    ]);
+    const resumed = await walkInputs(
+      questions,
+      { properties: { first: {}, second: {} } },
+      {},
+      makePort({ ui: uiResume }),
+      { resume: { history: done.history } }
+    );
+    assert.isTrue(resumed.isOk());
+    const resumedOutcome = resumed._unsafeUnwrap();
+    assert.strictEqual(resumedOutcome.kind, "done");
+    if (resumedOutcome.kind === "done") {
+      assert.deepStrictEqual(resumedOutcome.answers, { first: "b", second: "y" });
+    }
+    assert.deepStrictEqual(
+      uiResume.calls.map((c) => c.name),
+      ["second", "first", "second"]
+    );
+    // 'second' re-asked at step 2 (history retains 'first'); back crosses to 'first' at step 1
+    assert.deepStrictEqual(
+      uiResume.calls.map((c) => c.step),
+      [2, 1, 2]
+    );
+  });
+
+  it("INPUT-24: a surface-skipped question is back-transparent (pushes no history)", async () => {
+    const questions: QuestionSpec[] = [
+      { name: "skipped", type: "singleSelect", staticOptions: [{ id: "auto" }] },
+      { name: "second", type: "singleSelect", staticOptions: [{ id: "x" }, { id: "y" }] },
+    ];
+    // 'skipped' auto-skips (records its answer, but is not a back-stop); a back at 'second'
+    // crosses straight over it into an empty history and cancels — it does NOT re-ask 'skipped'.
+    const ui = new SequencedPromptUI([{ kind: "skip", value: "auto" }, { kind: "back" }]);
+    const res = await collectInputs(
+      questions,
+      { properties: { skipped: {}, second: {} } },
+      {},
+      makePort({ ui })
+    );
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_WALK_CANCELLED);
+    // both prompts are step 1: 'skipped' pushed no history, so 'second' is also the first step.
+    assert.deepStrictEqual(ui.calls, [
+      { name: "skipped", step: 1 },
+      { name: "second", step: 1 },
+    ]);
+  });
+
+  it("INPUT-21b: a multiSelect first prompt returns a typed back when backable", async () => {
+    const questions: QuestionSpec[] = [
+      { name: "servers", type: "multiSelect", staticOptions: [{ id: "x" }, { id: "y" }] },
+    ];
+    const ui = new SequencedPromptUI([{ kind: "back" }]);
+    const res = await walkInputs(questions, { properties: { servers: {} } }, {}, makePort({ ui }), {
+      backable: true,
+    });
+    assert.isTrue(res.isOk());
+    assert.strictEqual(res._unsafeUnwrap().kind, "back");
+  });
+
+  it("INPUT-22b: resuming an empty history cancels, or hands a typed back when backable", async () => {
+    const questions: QuestionSpec[] = [
+      { name: "first", type: "singleSelect", staticOptions: [{ id: "a" }] },
+    ];
+    const cancelled = await walkInputs(
+      questions,
+      { properties: { first: {} } },
+      {},
+      makePort({ ui: new SequencedPromptUI([]) }),
+      { resume: { history: [] } }
+    );
+    assert.isTrue(cancelled.isErr());
+    assert.strictEqual(cancelled._unsafeUnwrapErr().name, INPUT_WALK_CANCELLED);
+    const back = await walkInputs(
+      questions,
+      { properties: { first: {} } },
+      {},
+      makePort({ ui: new SequencedPromptUI([]) }),
+      { resume: { history: [] }, backable: true }
+    );
+    assert.isTrue(back.isOk());
+    assert.strictEqual(back._unsafeUnwrap().kind, "back");
+  });
+
+  it("INPUT-33: a non-interactive multiSelect array default is applied as the answer", async () => {
+    const questions: QuestionSpec[] = [
+      {
+        name: "officeAddinHosts",
+        type: "multiSelect",
+        staticOptions: [{ id: "word" }, { id: "excel" }, { id: "outlook" }],
+        default: ["word", "excel"],
+      },
+    ];
+
+    const res = await collectInputs(
+      questions,
+      { properties: { officeAddinHosts: { type: "array" } } },
+      { nonInteractive: "true" },
+      makePort({ ui: new ScriptedUI({}) })
+    );
+
+    assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
+    assert.deepStrictEqual(res._unsafeUnwrap().officeAddinHosts, ["word", "excel"]);
+  });
+
+  it("INPUT-34: a non-interactive multiSelect array default rejects an unavailable option", async () => {
+    const questions: QuestionSpec[] = [
+      {
+        name: "officeAddinHosts",
+        type: "multiSelect",
+        staticOptions: [{ id: "word" }, { id: "excel" }],
+        default: ["word", "bogus"],
+      },
+    ];
+
+    const res = await collectInputs(
+      questions,
+      { properties: { officeAddinHosts: { type: "array" } } },
+      { nonInteractive: "true" },
+      makePort({ ui: new ScriptedUI({}) })
+    );
+
+    assert.isTrue(res.isErr());
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_VALIDATION_FAILED);
+    assert.include(res._unsafeUnwrapErr().message, "officeAddinHosts");
   });
 });

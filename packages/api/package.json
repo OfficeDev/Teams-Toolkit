@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/teamsfx-api",
-  "version": "0.23.14",
+  "version": "0.23.16",
   "description": "teamsfx framework api",
   "main": "build/index.js",
   "types": "build/index.d.ts",
@@ -9,12 +9,14 @@
     "teamsfx",
     "api"
   ],
-  "repository": "https://github.com/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OfficeDev/microsoft-365-agents-toolkit.git"
+  },
   "files": [
     "build/**/*"
   ],
   "scripts": {
-    "lint:staged": "lint-staged",
     "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\"",
     "prebuild": "npx json2ts --input src/schemas/envConfig.json --output src/schemas/envConfig.ts",
     "build": "tsc -p ./ --incremental",
@@ -53,7 +55,7 @@
     "lint-staged": "^10.5.4",
     "mocha": "^11.0.0",
     "nyc": "^17.1.0",
-    "prettier": "^2.4.1",
+    "prettier": "^3.3.3",
     "sinon": "^19.0.0",
     "source-map-support": "^0.5.19",
     "ts-node": "^10.9.2",
@@ -75,7 +77,8 @@
   },
   "lint-staged": {
     "*.{js,jsx,css,ts,tsx}": [
-      "npx eslint --cache --fix --quiet"
+      "eslint --cache --fix --quiet",
+      "prettier --cache --write --ignore-unknown"
     ]
   }
 }

@@ -148,23 +148,17 @@
     {
       "step_id": "step_039e984f",
       "agent": "interaction",
-      "tool": "click",
+      "tool": "key_press",
       "parameters": {
-        "button": "left",
-        "x": 621,
-        "y": 177
+        "key": "escape"
       },
-      "description": "Click the \"Debug in Microsoft 365 Agents Playground\" option in the Run and Debug dropdown menu within the Visual Studio Code interface. The red crosshair at (621, 177) precisely marks this menu item for selection.",
+      "description": "Press Escape to close the Run and Debug configuration dropdown after validating its option order.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:621:177:16:5:0000000000000000",
-        "dhash:621:177:96:5:0000000000000000",
-        "dhash:621:177:0:10:82ccca83e3236421"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_039e984f",

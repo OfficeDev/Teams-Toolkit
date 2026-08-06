@@ -58,7 +58,9 @@
         "dhash:360:131:0:10:c8c88094b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_7198e5cd",
       "created_at": "2025-11-26T01:39:49.115496",
       "plan_id": "plan_f3e69fdd"
@@ -84,7 +86,9 @@
         "dhash:344:134:0:10:c0c89094b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_52a316c5",
       "created_at": "2025-11-26T01:39:49.135160",
       "plan_id": "plan_f3e69fdd"
@@ -110,7 +114,9 @@
         "dhash:264:129:0:10:c0d09494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_5b29acf4",
       "created_at": "2025-11-26T01:39:49.154238",
       "plan_id": "plan_f3e69fdd"
@@ -132,7 +138,9 @@
         "dhash:512:384:0:20:f0b09494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_0fb2dbc1",
       "created_at": "2025-11-26T01:39:49.176053",
       "plan_id": "plan_f3e69fdd"
@@ -154,7 +162,9 @@
         "dhash:512:384:0:20:f0b09494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_d09ef496",
       "created_at": "2025-11-26T01:39:49.197832",
       "plan_id": "plan_f3e69fdd"
@@ -180,7 +190,9 @@
         "dhash:292:78:0:10:d0989494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_14f28290",
       "created_at": "2025-11-26T01:39:49.223203",
       "plan_id": "plan_f3e69fdd"
@@ -206,7 +218,9 @@
         "dhash:344:76:0:10:f0b09494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_c2c295b3",
       "created_at": "2025-11-26T01:39:49.250015",
       "plan_id": "plan_f3e69fdd"

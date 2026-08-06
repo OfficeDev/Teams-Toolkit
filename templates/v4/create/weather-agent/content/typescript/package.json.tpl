@@ -26,7 +26,8 @@
         "@azure/openai": "^2.0.0",
         "@langchain/langgraph": "^0.2.66",
         "@langchain/openai": "^0.5.6",
-        "@microsoft/agents-hosting-express": "^1.0.0"
+        "@microsoft/agents-hosting-express": "^1.0.0",
+        "undici": "^6.21.0"
     },
     "devDependencies": {
         "@types/express": "^5.0.0",

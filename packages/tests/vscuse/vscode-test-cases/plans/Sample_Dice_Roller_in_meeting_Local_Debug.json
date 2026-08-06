@@ -474,9 +474,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:1b08f0d9d1e6e6e4"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "delay:3"
@@ -554,7 +552,9 @@
         "dhash:512:384:0:20:b2842a23a3232421"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_3989fd26",
       "created_at": "2026-06-16T05:32:19.483200",
       "plan_id": "plan_3f90cfaf"
@@ -673,7 +673,8 @@
       ],
       "postconditions": [],
       "tags": [
-        "precondition_wait_timeout:120"
+        "precondition_wait_timeout:120",
+        "precondition:old"
       ],
       "screenshot": "step_7d5b2d76",
       "created_at": "2026-06-16T05:32:19.785285",

@@ -83,7 +83,9 @@
         "dhash:354:88:0:10:c8c88094b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_da53fa4f",
       "created_at": "2026-01-13T07:41:29.060581",
       "plan_id": "plan_15c94e14"
@@ -114,7 +116,9 @@
         "dhash:372:83:0:10:c0c0b094b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_87d4f789",
       "created_at": "2026-01-13T07:41:29.072879",
       "plan_id": "plan_15c94e14"
@@ -145,7 +149,9 @@
         "dhash:277:75:0:10:f0b09494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_e4ae3a07",
       "created_at": "2026-01-13T07:41:29.089075",
       "plan_id": "plan_15c94e14"
@@ -174,7 +180,9 @@
         "dhash:512:384:0:20:328c2a2323032421"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_f2c526b3",
       "created_at": "2026-01-13T07:41:29.107528",
       "plan_id": "plan_15c94e14"
@@ -203,7 +211,9 @@
         "dhash:512:384:0:20:e4c048672303a421"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_51d06256",
       "created_at": "2026-01-13T07:41:29.127583",
       "plan_id": "plan_15c94e14"
@@ -232,7 +242,9 @@
         "dhash:512:384:0:20:cc8422232303a421"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_8bf0b504",
       "created_at": "2026-01-13T07:41:29.147252",
       "plan_id": "plan_15c94e14"
@@ -382,7 +394,9 @@
         "dhash:512:384:0:20:b28c2a23231a2c2c"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_6610109a",
       "created_at": "2026-01-13T07:41:29.281412",
       "plan_id": "plan_15c94e14"
@@ -404,7 +418,9 @@
         "dhash:512:384:0:20:e48c3223231a2c2c"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_1064fd11",
       "created_at": "2026-01-13T07:41:29.305761",
       "plan_id": "plan_15c94e14"
@@ -426,7 +442,9 @@
         "dhash:512:384:0:20:ec8c3223231a2c2c"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_430ef3f2",
       "created_at": "2026-01-13T07:41:29.325043",
       "plan_id": "plan_15c94e14"
@@ -448,7 +466,9 @@
         "dhash:512:384:0:20:b28c2a2323032421"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_0a9f3dfb",
       "created_at": "2026-01-13T07:41:29.341373",
       "plan_id": "plan_15c94e14"
@@ -470,7 +490,9 @@
         "dhash:512:384:0:20:c4942a2323032421"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_8dbee599",
       "created_at": "2026-01-13T07:41:29.356410",
       "plan_id": "plan_15c94e14"
@@ -492,7 +514,9 @@
         "dhash:512:384:0:20:c4942a2323032421"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_8b220be6",
       "created_at": "2026-01-13T07:41:29.374697",
       "plan_id": "plan_15c94e14"
@@ -540,7 +564,9 @@
         "dhash:512:384:0:20:b28c2a2323032421"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_0817d4d5",
       "created_at": "2026-01-13T07:41:29.408508",
       "plan_id": "plan_15c94e14"
@@ -562,7 +588,9 @@
         "dhash:512:384:0:20:e0a4322323032421"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_e2147fda",
       "created_at": "2026-01-13T07:41:29.424906",
       "plan_id": "plan_15c94e14"
@@ -584,7 +612,9 @@
         "dhash:512:384:0:20:e484222323032421"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_a4a0b56d",
       "created_at": "2026-01-13T07:41:29.437978",
       "plan_id": "plan_15c94e14"
@@ -630,7 +660,9 @@
         "dhash:24:57:0:10:328c2a2323032929"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_255598fd",
       "created_at": "2026-01-13T07:41:29.464075",
       "plan_id": "plan_15c94e14"
@@ -670,7 +702,7 @@
         "x": 114,
         "y": 145
       },
-      "description": "Click the editable text field for renaming the \"build\" folder in the File Explorer panel of Visual Studio Code.",
+      "description": "Click the \"build\" folder in the File Explorer panel of Visual Studio Code to expand its contents.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

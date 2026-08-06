@@ -1,34 +1,35 @@
 azure_openai:
-  endpoint: "${AZURE_OPENAI_ENDPOINT}"      # Required: Set via environment variable
-  api_key: "${AZURE_OPENAI_API_KEY}"        # Required: Set via environment variable
-  api_version: "${AZURE_OPENAI_API_VERSION}"         # Default: "2025-04-01-preview"
-  model: "${AZURE_OPENAI_MODEL}"            # Default: "gpt-4.1"
-  timeout: 60                               # Default: 60 (seconds)
-  use_azure_credential: false               # Default: false
+  endpoint: "${AZURE_OPENAI_ENDPOINT}" # Required: Set via environment variable
+  api_key: "${AZURE_OPENAI_API_KEY}" # Required: Set via environment variable
+  api_version: "${AZURE_OPENAI_API_VERSION}" # Default: "2025-04-01-preview"
+  model: "${AZURE_OPENAI_MODEL}" # Default: "gpt-4.1"
+  timeout: 60 # Default: 60 (seconds)
+  use_azure_credential: false # Default: false
 
 azure_vision:
-  endpoint: "${AZURE_VISION_ENDPOINT}"      # Required: Set via environment variable
-  api_key: "${AZURE_VISION_KEY}"            # Required: Set via environment variable
+  endpoint: "${AZURE_VISION_ENDPOINT}" # Required: Set via environment variable
+  api_key: "${AZURE_VISION_KEY}" # Required: Set via environment variable
 
 azure_service_principal:
-  client_id: "${AZURE_CLIENT_ID}"           # Required: Set via environment variable
-  client_secret: "${AZURE_CLIENT_SECRET}"   # Required: Set via environment variable
-  tenant_id: "${AZURE_TENANT_ID}"           # Required: Set via environment variable
+  client_id: "${AZURE_CLIENT_ID}" # Required: Set via environment variable
+  client_secret: "${AZURE_CLIENT_SECRET}" # Required: Set via environment variable
+  tenant_id: "${AZURE_TENANT_ID}" # Required: Set via environment variable
   subscription_id: "${AZURE_SUBSCRIPTION_ID}" # Required: Set via environment variable
-  enabled: false                            # Default: false (set to true to enable)
+  enabled: false # Default: false (set to true to enable)
 
 m365:
-  account_name: "${M365_ACCOUNT_NAME}"      # Required: Set via environment variable
+  account_name: "${M365_ACCOUNT_NAME}" # Required: Set via environment variable
   account_password: "${M365_ACCOUNT_PASSWORD}" # Required: Set via environment variable
-  tenant_id: "${M365_TENANT_ID}"            # Required: Set via environment variable
-  enabled: false                            # Default: false (set to true to enable)
+  tenant_id: "${M365_TENANT_ID}" # Required: Set via environment variable
+  enabled: false # Default: false (set to true to enable)
 
 docker:
-  container_name: "vscuse-container"        # Default: "vscuse-container"
+  container_name: "vscuse-container" # Default: "vscuse-container"
   image_name: "${VSCUSE_VSCODE_IMAGE:ghcr.io/officedev/vscuse-atk-vscode:latest}" # Default: "ghcr.io/officedev/vscuse-atk-vscode:latest"
-  vscode_insiders: false   
+  vscode_insiders: false
   environment:
-    TEAMSFX_TELEMETRY_TEST: "true"                 # Default: false (set to true to use VS Code Insider)
+    TEAMSFX_TELEMETRY_TEST: "true" # Default: false (set to true to use VS Code Insider)
+    NPM_CONFIG_REGISTRY: "${NPM_CONFIG_REGISTRY:https://registry.npmjs.org/}"
     AZURE_SEARCH_KEY: "${AZURE_SEARCH_KEY}"
     AZURE_SEARCH_ENDPOINT: "${AZURE_SEARCH_ENDPOINT}"
     AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME: "${AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME}"
@@ -46,7 +47,7 @@ docker:
     M365_ACCOUNT_ADMIN_PASSWORD: "${M365_ACCOUNT_ADMIN_PASSWORD}"
     AZURE_SUBSCRIPTION_ID: "${AZURE_SUBSCRIPTION_ID}"
     RESOURCE_GROUP_REGION: "${RESOURCE_GROUP_REGION}"
-    
+
     # ms tenant account
     MS_AZURE_ACCOUNT_NAME: "${MS_AZURE_ACCOUNT_NAME}"
     MS_AZURE_ACCOUNT_PASSWORD: "${MS_AZURE_ACCOUNT_PASSWORD}"
@@ -59,10 +60,10 @@ docker:
     TEST_AAD_APP_ID: "${TEST_AAD_APP_ID}"
     TEST_AAD_APP_PASSWORD: "${TEST_AAD_APP_PASSWORD}"
 execution:
-  delay_between_steps: 0.5         # Default: 0.5 (seconds between steps)
-  stop_on_error: true              # Default: true (stop execution on first error)
-  precondition_wait_timeout: 60    # Default: 60 (max wait for preconditions in seconds)
-  precondition_retry_interval: 2   # Default: 2 (retry interval for preconditions in seconds)
+  delay_between_steps: 0.5 # Default: 0.5 (seconds between steps)
+  stop_on_error: true # Default: true (stop execution on first error)
+  precondition_wait_timeout: 60 # Default: 60 (max wait for preconditions in seconds)
+  precondition_retry_interval: 2 # Default: 2 (retry interval for preconditions in seconds)
 
 logging:
-  level: "INFO"  # Default: "INFO" (options: DEBUG, INFO, WARNING, ERROR)
+  level: "INFO" # Default: "INFO" (options: DEBUG, INFO, WARNING, ERROR)

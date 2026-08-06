@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2.0,
       "step_retry_timeout": 0.0
     },
-    "total_steps": 19,
+    "total_steps": 20,
     "created_at": "2026-07-01T05:36:31.274541",
     "name": "DA Typespec With Action",
     "description": {
@@ -37,6 +37,7 @@
       "step_56362671",
       "step_97b53f60",
       "plan_r_1021_031941",
+      "step_a678eb4c",
       "step_92756e1a",
       "step_ad09f448",
       "step_b2e9a5f3",
@@ -347,6 +348,26 @@
       "plan_id": "plan_621326ee"
     },
     {
+      "step_id": "step_a678eb4c",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the active agent name displayed on the M365 Copilot page starts with ${{var:app_name}}, ignoring any underscore differences because the TypeSpec template applies safe-name processing that strips underscores from the app name, and may include an environment suffix such as local or dev, and no blocking dialog is open.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "step_retry_timeout: 60"
+      ],
+      "screenshot": null,
+      "created_at": "2026-07-14T16:25:00.000000",
+      "plan_id": "plan_621326ee"
+    },
+    {
       "step_id": "step_92756e1a",
       "agent": "interaction",
       "tool": "click",
@@ -355,17 +376,13 @@
         "x": 363,
         "y": 370
       },
-      "description": "Click the \"Message Copilot\" text input box in the vsduseappGVMjD agent chat interface within the M365 web application.",
+      "description": "Click the message input box for the ${{var:app_name}} agent in the M365 Copilot web application.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:363:370:16:5:a50535d5d5b5e7da",
-        "dhash:363:370:96:5:00440086de004400",
-        "dhash:363:370:0:10:15b586f0a6c6c0c0"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_92756e1a",

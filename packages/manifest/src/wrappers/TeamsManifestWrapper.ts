@@ -26,6 +26,42 @@ type CustomEngineAgentType = NonNullable<
   NonNullable<LatestManifestType["copilotAgents"]>["customEngineAgents"]
 >[number];
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function nestedRecord(value: unknown, key: string): Record<string, unknown> | undefined {
+  return isRecord(value) && isRecord(value[key]) ? value[key] : undefined;
+}
+
+function manifestFilePaths(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  const paths: string[] = [];
+  for (const item of value) {
+    if (isRecord(item) && typeof item.file === "string") {
+      paths.push(item.file);
+    }
+  }
+  return paths;
+}
+
+function recordArray(value: unknown): Record<string, unknown>[] | undefined {
+  return Array.isArray(value) && value.every(isRecord) ? value : undefined;
+}
+
+function uniqueRecordId(records: Record<string, unknown>[], baseId: string): string {
+  let suffix = 0;
+  while (true) {
+    const candidate = suffix === 0 ? baseId : `${baseId}${suffix}`;
+    if (!records.some((record) => record.id === candidate)) {
+      return candidate;
+    }
+    suffix++;
+  }
+}
+
 // Re-export useful types derived from the latest manifest type
 export type Bot = BotType;
 export type StaticTab = StaticTabType;
@@ -217,6 +253,9 @@ export class TeamsManifestWrapper {
    */
   static fromJSON(json: string): TeamsManifestWrapper {
     const data = TeamsManifestConverter.jsonToManifest(json);
+    if (typeof data !== "object" || data === null || Array.isArray(data)) {
+      throw new Error("Teams manifest JSON must contain an object.");
+    }
     return new TeamsManifestWrapper(data);
   }
 
@@ -532,6 +571,28 @@ export class TeamsManifestWrapper {
     return this.bots.find((b) => b.botId === botId);
   }
 
+  /**
+   * Replaces the command suggestions for the first bot in the manifest.
+   * @param commands - Suggested command titles and descriptions.
+   * @param includeCopilotScope - Whether the command list also applies to Copilot.
+   */
+  setFirstBotCommandSuggestions(
+    commands: Array<{ title: string; description: string }>,
+    includeCopilotScope: boolean
+  ): this {
+    const bot = this.bots[0];
+    if (!bot) {
+      throw new Error("Cannot set bot command suggestions because the manifest has no bot.");
+    }
+    const scopes: NonNullable<BotType["commandLists"]>[number]["scopes"] = ["personal"];
+    if (includeCopilotScope) {
+      scopes.push("copilot");
+    }
+    bot.commandLists = [{ scopes, commands }];
+    this.markDirty();
+    return this;
+  }
+
   // ============= Static Tab Operations =============
 
   /**
@@ -819,7 +880,13 @@ export class TeamsManifestWrapper {
    * Returns all declarative agent file paths.
    */
   getDeclarativeAgentPaths(): string[] {
-    return this.declarativeAgents.map((a) => a.file);
+    const copilotExtensions = nestedRecord(this._data, "copilotExtensions");
+    const copilotAgents = nestedRecord(this._data, "copilotAgents");
+    return [
+      ...manifestFilePaths(copilotExtensions?.declarativeCopilots),
+      ...manifestFilePaths(copilotAgents?.declarativeAgents),
+      ...manifestFilePaths(isRecord(this._data) ? this._data.declarativeAgents : undefined),
+    ];
   }
 
   /**
@@ -827,6 +894,48 @@ export class TeamsManifestWrapper {
    */
   hasCopilotAgents(): boolean {
     return this.declarativeAgents.length > 0 || this.customEngineAgents.length > 0;
+  }
+
+  /**
+   * Adds actions to the extension runtime whose code script contains `scriptFileName`.
+   * Returned IDs are collision-safe against the runtime's existing actions.
+   */
+  addExtensionRuntimeActions(
+    scriptFileName: string,
+    actions: ReadonlyArray<{ baseId: string; type: string }>
+  ): string[] | undefined {
+    const extensions = recordArray(isRecord(this._data) ? this._data.extensions : undefined);
+    if (extensions === undefined) {
+      return undefined;
+    }
+    for (const extension of extensions) {
+      const runtimes = recordArray(extension.runtimes);
+      if (runtimes === undefined) {
+        continue;
+      }
+      for (const runtime of runtimes) {
+        const script = nestedRecord(runtime, "code")?.script;
+        if (typeof script !== "string" || !script.includes(scriptFileName)) {
+          continue;
+        }
+        const runtimeActions = recordArray(runtime.actions) ?? [];
+        const ids: string[] = [];
+        for (const action of actions) {
+          const id = uniqueRecordId(runtimeActions, action.baseId);
+          runtimeActions.push({ id, type: action.type });
+          ids.push(id);
+        }
+        runtime.actions = runtimeActions;
+        this.markDirty();
+        return ids;
+      }
+    }
+    return undefined;
+  }
+
+  /** Returns whether the manifest contains a structurally valid extension array. */
+  hasExtensions(): boolean {
+    return recordArray(isRecord(this._data) ? this._data.extensions : undefined) !== undefined;
   }
 
   // ============= Validation =============

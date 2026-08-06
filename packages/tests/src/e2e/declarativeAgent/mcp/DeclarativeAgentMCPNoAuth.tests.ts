@@ -3,12 +3,11 @@
 
 /**
  * @author Zhiyu You <zhiyou@microsoft.com>
+ * @scenario SCN-DA-CREATE-WITH-MCP-SERVER
  */
 
 import { ProgrammingLanguage } from "@microsoft/teamsfx-core";
-import { expect } from "chai";
 import * as fs from "fs-extra";
-import * as path from "path";
 import { Capability } from "../../../utils/constants";
 import { CaseFactory } from "../../caseFactory";
 import {
@@ -16,49 +15,64 @@ import {
   writeMCPToolsFixture,
   removeMCPToolsFixture,
 } from "./mcpToolsFixture";
+import {
+  createMCPProjectWithEnv,
+  expectDynamicMCPProject,
+  expectNoOAuthRegister,
+  expectStaticMCPProject,
+  learnMCPServerUrl,
+  mcpDynamicFlowEnv,
+  mcpStaticFlowEnv,
+} from "./mcpTestUtils";
 
 // Case 1: atk new — MCP with no-auth server URL (auto-fetch tools)
 class DeclarativeAgentMCPNoAuthNew extends CaseFactory {
+  public override async onCreate(
+    appName: string,
+    testFolder: string,
+    capability: Capability,
+    programmingLanguage?: ProgrammingLanguage,
+    custimized?: Record<string, string>,
+  ): Promise<void> {
+    await createMCPProjectWithEnv(
+      testFolder,
+      appName,
+      capability,
+      programmingLanguage,
+      custimized,
+      mcpDynamicFlowEnv,
+    );
+  }
+
   public override async onAfter(projectPath: string): Promise<void> {
     await fs.remove(projectPath);
   }
 
   public override async onAfterCreate(projectPath: string): Promise<void> {
-    const appPackage = path.join(projectPath, "appPackage");
-
-    // ai-plugin.json must exist and have functions and MCP runtime
-    const aiPlugin = await fs.readJSON(path.join(appPackage, "ai-plugin.json"));
-    expect(aiPlugin.functions).to.be.an("array").that.is.not.empty;
-    expect(aiPlugin.runtimes).to.be.an("array").that.is.not.empty;
-    expect(aiPlugin.runtimes[0].type).to.equal("RemoteMCPServer");
-    expect(aiPlugin.runtimes[0].spec.url).to.be.a("string").that.is.not.empty;
-    // No auth block for no-auth servers
-    expect(aiPlugin.runtimes[0].auth).to.be.undefined;
-
-    // mcp-tools-1.json must exist with tool definitions
-    const mcpToolsPath = path.join(appPackage, "mcp-tools-1.json");
-    expect(fs.pathExistsSync(mcpToolsPath)).to.be.true;
-    const mcpTools = await fs.readJSON(mcpToolsPath);
-    expect(mcpTools.tools).to.be.an("array").that.is.not.empty;
-
-    // DA manifest must reference ai-plugin.json
-    const daManifest = await fs.readJSON(
-      path.join(appPackage, "declarativeAgent.json"),
-    );
-    expect(daManifest.actions).to.be.an("array").that.is.not.empty;
-    expect(daManifest.actions[0].file).to.equal("ai-plugin.json");
-
-    // m365agents.yml should NOT contain oauth/register action
-    const ymlPath = path.join(projectPath, "m365agents.yml");
-    if (fs.pathExistsSync(ymlPath)) {
-      const ymlContent = fs.readFileSync(ymlPath, "utf8");
-      expect(ymlContent).to.not.include("oauth/register");
-    }
+    await expectDynamicMCPProject(projectPath);
+    expectNoOAuthRegister(projectPath);
   }
 }
 
-// Case 6: atk new — MCP with tools loaded from file (no auth)
+// Case 6: atk new — MCP static flow with tools loaded from file (no auth)
 class DeclarativeAgentMCPNoAuthFile extends CaseFactory {
+  public override async onCreate(
+    appName: string,
+    testFolder: string,
+    capability: Capability,
+    programmingLanguage?: ProgrammingLanguage,
+    custimized?: Record<string, string>,
+  ): Promise<void> {
+    await createMCPProjectWithEnv(
+      testFolder,
+      appName,
+      capability,
+      programmingLanguage,
+      custimized,
+      mcpStaticFlowEnv,
+    );
+  }
+
   public override async onBefore(): Promise<void> {
     await writeMCPToolsFixture();
   }
@@ -69,21 +83,7 @@ class DeclarativeAgentMCPNoAuthFile extends CaseFactory {
   }
 
   public override async onAfterCreate(projectPath: string): Promise<void> {
-    const appPackage = path.join(projectPath, "appPackage");
-
-    // ai-plugin.json must exist and have functions and MCP runtime
-    const aiPlugin = await fs.readJSON(path.join(appPackage, "ai-plugin.json"));
-    expect(aiPlugin.functions).to.be.an("array").that.is.not.empty;
-    expect(aiPlugin.runtimes).to.be.an("array").that.is.not.empty;
-    expect(aiPlugin.runtimes[0].type).to.equal("RemoteMCPServer");
-    // No auth block for no-auth servers
-    expect(aiPlugin.runtimes[0].auth).to.be.undefined;
-
-    // mcp-tools-1.json must exist
-    const mcpToolsPath = path.join(appPackage, "mcp-tools-1.json");
-    expect(fs.pathExistsSync(mcpToolsPath)).to.be.true;
-    const mcpTools = await fs.readJSON(mcpToolsPath);
-    expect(mcpTools.tools).to.be.an("array").that.is.not.empty;
+    await expectStaticMCPProject(projectPath);
   }
 }
 
@@ -91,7 +91,8 @@ class DeclarativeAgentMCPNoAuthFile extends CaseFactory {
 const noAuthUrlRecord: Record<string, string> = {};
 noAuthUrlRecord["with-plugin"] = "yes";
 noAuthUrlRecord["api-plugin-type"] = "mcp";
-noAuthUrlRecord["mcp-da-server-url"] = "https://learn.microsoft.com/api/mcp";
+noAuthUrlRecord["mcp-da-server-url"] = learnMCPServerUrl;
+noAuthUrlRecord["mcp-da-auth-type"] = "none";
 
 new DeclarativeAgentMCPNoAuthNew(
   Capability.DeclarativeAgent,
@@ -109,7 +110,8 @@ new DeclarativeAgentMCPNoAuthNew(
 const noAuthFileRecord: Record<string, string> = {};
 noAuthFileRecord["with-plugin"] = "yes";
 noAuthFileRecord["api-plugin-type"] = "mcp";
-noAuthFileRecord["mcp-da-server-url"] = "https://learn.microsoft.com/api/mcp";
+noAuthFileRecord["mcp-da-server-url"] = learnMCPServerUrl;
+noAuthFileRecord["mcp-da-auth-type"] = "none";
 noAuthFileRecord["mcp-tools-file-path"] = mcpToolsFilePath;
 
 new DeclarativeAgentMCPNoAuthFile(

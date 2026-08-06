@@ -41,7 +41,7 @@
         "x": 956,
         "y": 130
       },
-      "description": "Click the language selection flag button in the top-right corner of the Visual Studio Code welcome screen.",
+      "description": "Click the \"close\" (X) button in the top-right corner of the VS Code welcome sign-in dialog to dismiss the window.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

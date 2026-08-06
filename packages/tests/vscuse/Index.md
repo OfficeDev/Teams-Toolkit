@@ -10,18 +10,38 @@ This document indexes all available VscUse (VS Code UI automation) test plans un
 
 | PR touches...                                              | Category                                               |
 |------------------------------------------------------------|--------------------------------------------------------|
+| YAML-authored cases, the case compiler, its components     | [Generated](#generated)                                |
 | Declarative Agent, DA, plugin, MCP, TypeSpec, Copilot ext | [DA (Declarative Agent)](#da-declarative-agent)        |
 | Custom Engine, LLM bot, AI bot                             | [Basic Custom Engine Agent](#basic-custom-engine-agent)|
 | General Teams agent templates                              | [General Teams Agent](#general-teams-agent)            |
 | AI search, custom API, knowledge/RAG                       | [Teams Agent With Data](#teams-agent-with-data)        |
 | Collaborator, multi-user agent                             | [Teams Collaborator Agent](#teams-collaborator-agent)  |
 | Weather bot, playground sample                             | [Weather Agent](#weather-agent)                        |
-| Simple bot, echo bot, notification bot                     | [Simple Bot](#simple-bot)                              |
+| Simple bot, echo bot, notification bot                     | [Generated](#generated)                                |
 | Message extension, search/action command                   | [Message Extension](#message-extension)                |
 | Tab, React, SPFx, frontend                                 | [Tab](#tab)                                            |
 | Sample gallery, CoffeeAgent, Data Analyst, ProxyAgent      | [Sample](#sample)                                      |
 | VS Code UI, treeview, command palette, publish, provision  | [Feature](#feature)                                    |
 | Template README                                            | [Template Verification](#template-verification)        |
+
+---
+
+## Generated
+
+**Keywords:** weather agent, custom engine agent, declarative agent, MCP, API plugin, scaffolding, provision, deploy
+
+Compiled from the YAML cases under [`vscode-test-cases/cases/`](vscode-test-cases/cases/) and owned by `vscode-test-cases/plans/.vscuse-generated-plans`. Never hand-edit these; regenerate them with `npm run generate:vscuse-cases`. They replaced the legacy plans recorded in [`legacy-case-mapping.md`](vscode-test-cases/cases/legacy-case-mapping.md).
+
+| Test Plan | Scenario |
+|-----------|----------|
+| `weather-agent--weather-{ts\|js}-{azure-openai\|openai}-{local\|remote}-teams` | Weather Agent, Teams launch (8 plans) |
+| `weather-agent--weather-ts-azure-openai-{local\|remote}-copilot` | Weather Agent, Copilot launch |
+| `weather-agent--weather-{ts\|js}-azure-openai-playground` | Weather Agent, Agents Playground |
+| `basic-custom-engine-agent--basic-cea-py-azure-openai-{local-teams\|remote-teams\|playground}` | Custom Engine Agent, Python |
+| `da-no-action--da-no-action-remote-preview` | Declarative Agent, no action |
+| `da-mcp-server--da-mcp-remote-{none\|oauth\|entra}-preview` | Declarative Agent, remote MCP |
+| `da-api-plugin-from-scratch--da-api-plugin-from-scratch-{ts\|js}` | API plugin from a new API |
+| `da-api-plugin-from-existing-api--da-api-plugin-from-existing-api-{no-auth\|api-key\|bearer\|oauth}-remote-preview` | API plugin from an existing API |
 
 ---
 
@@ -32,14 +52,11 @@ This document indexes all available VscUse (VS Code UI automation) test plans un
 | Test Plan | Auth / Scenario |
 |-----------|-----------------|
 | `DA_No_Action_Local_Debug` | No action — local |
-| `DA_No_Action_Remote_Debug` | No action — remote |
 | `DA_No_Action_Add_Action` | Add action to no-action DA |
 | `DA_No_Action_Add_Knowledge_Onedrive` | OneDrive knowledge |
 | `DA_No_Action_Web_Search` | Web search |
 | `DA_None_js_Local_Debug` | None auth JS local |
-| `DA_None_js_Remote_Debug` | None auth JS remote |
 | `DA_None_ts_Local_Debug` | None auth TS local |
-| `DA_None_ts_Remote_Debug` | None auth TS remote |
 | `DA_Api_Key_js_Local_Debug` | API Key JS local |
 | `DA_Api_Key_js_Remote_Debug` | API Key JS remote |
 | `DA_Api_Key_ts_Local_Debug` | API Key TS local |
@@ -52,14 +69,7 @@ This document indexes all available VscUse (VS Code UI automation) test plans un
 | `DA_Microsoft_Entra_js_Remote_Debug` | Entra SSO JS remote |
 | `DA_Microsoft_Entra_ts_Local_Debug` | Entra SSO TS local |
 | `DA_Microsoft_Entra_ts_Remote_Debug` | Entra SSO TS remote |
-| `DA_MCP_None_Remote` | MCP None auth remote |
-| `DA_MCP_Entra_SSO_Remote` | MCP Entra SSO remote |
-| `DA_MCP_Oauth_Remote` | MCP OAuth remote |
 | `DA_Add_Action_Import_Existing_API` | Import existing API |
-| `DA_Add_Action_Import_Existing_API_Basic_No_Auth` | Import API (No Auth) |
-| `DA_Add_Action_Import_Existing_API_Basic_API_Key` | Import API (API Key) |
-| `DA_Add_Action_Import_Existing_API_Basic_OAuth` | Import API (OAuth) |
-| `DA_Add_Action_Import_Existing_API_Bearer_token` | Import API (Bearer) |
 | `DA_AddCapability_CopilotConnector` | Add Copilot Connector |
 | `DA_Regenrate_Action` | Regenerate action |
 | `DA_Error_Message_of_Legacy_Projects` | Legacy project errors |
@@ -77,19 +87,10 @@ This document indexes all available VscUse (VS Code UI automation) test plans un
 
 | Test Plan | Lang | Provider | Mode |
 |-----------|------|----------|------|
-| `Basic_Custom_Engine_Azure_OpenAI_js_Local_Debug` | JS | Azure OpenAI | Local |
-| `Basic_Custom_Engine_Azure_OpenAI_js_remote_debug` | JS | Azure OpenAI | Remote |
-| `Basic_Custom_Engine_Azure_OpenAI_js_playground` | JS | Azure OpenAI | Playground |
 | `Basic_Custom_Engine_Azure_OpenAI_js_Copilot_Local_Debug` | JS | Azure OpenAI | Copilot local |
 | `Basic_Custom_Engine_Azure_OpenAI_js_Copilot_Remote_Debug` | JS | Azure OpenAI | Copilot remote |
-| `Basic_Custom_Engine_Azure_OpenAI_ts_Local_Debug` | TS | Azure OpenAI | Local |
-| `Basic_Custom_Engine_Azure_OpenAI_ts_remote_debug` | TS | Azure OpenAI | Remote |
-| `Basic_Custom_Engine_Azure_OpenAI_ts_playground` | TS | Azure OpenAI | Playground |
 | `Basic_Custom_Engine_Azure_OpenAI_ts_Copilot_Local_Debug` | TS | Azure OpenAI | Copilot local |
 | `Basic_Custom_Engine_Azure_OpenAI_ts_Copilot_Remote_Debug` | TS | Azure OpenAI | Copilot remote |
-| `Basic_Custom_Engine_Azure_OpenAI_py_playground` | Py | Azure OpenAI | Playground |
-| `Basic_Custom_Engine_Agent_Azure_OpenAI_py_Local_Debug` | Py | Azure OpenAI | Local |
-| `Basic_Custom_Engine_Agent_Azure_OpenAI_py_Remote_Debug` | Py | Azure OpenAI | Remote |
 | `Basic_Custom_Engine_OpenAI_js_Local_Debug` | JS | OpenAI | Local |
 | `Basic_Custom_Engine_OpenAI_js_Remote_Debug` | JS | OpenAI | Remote |
 | `Basic_Custom_Engine_OpenAI_js_playground` | JS | OpenAI | Playground |
@@ -166,44 +167,16 @@ This document indexes all available VscUse (VS Code UI automation) test plans un
 
 | Test Plan | Lang | Mode |
 |-----------|------|------|
-| `Weather_Agent_js_Local_Debug` | JS | Local |
-| `Weather_Agent_js_remote_debug` | JS | Remote |
 | `Weather_Agent_js_local_copilot` | JS | Copilot local |
 | `Weather_Agent_js_remote_copilot` | JS | Copilot remote |
-| `Weather_Agent_ts_Local_Debug` | TS | Local |
-| `Weather_Agent_ts_remote_debug` | TS | Remote |
-| `Weather_Agent_ts_local_copilot` | TS | Copilot local |
-| `Weather_Agent_ts_remote_copilot` | TS | Copilot remote |
-| `Weather_Agent_OpenAI_js_Local_Debug` | JS | OpenAI local |
 | `Weather_Agent_OpenAI_js_Remote_Debug` | JS | OpenAI remote |
 | `Weather_Agent_OpenAI_js_playground` | JS | OpenAI playground |
 | `Weather_Agent_OpenAI_js_Copilot_Local_Debug` | JS | OpenAI Copilot local |
 | `Weather_Agent_OpenAI_js_Copilot_Remote_Debug` | JS | OpenAI Copilot remote |
-| `Weather_Agent_OpenAI_ts_Local_Debug` | TS | OpenAI local |
 | `Weather_Agent_OpenAI_ts_Remote_Debug` | TS | OpenAI remote |
 | `Weather_Agent_OpenAI_ts_playground` | TS | OpenAI playground |
 | `Weather_Agent_OpenAI_ts_Copilot_Local_Debug` | TS | OpenAI Copilot local |
 | `Weather_Agent_OpenAI_ts_Copilot_Remote_Debug` | TS | OpenAI Copilot remote |
-| `Weather_Agent_Azure_OpenAI_js_playground` | JS | Azure OpenAI playground |
-| `Weather_Agent_Azure_OpenAI_ts_playground` | TS | Azure OpenAI playground |
-
----
-
-## Simple Bot
-
-**Keywords:** simple bot, echo bot, notification
-
-| Test Plan | Lang | Mode |
-|-----------|------|------|
-| `Simple_Bot_js_Local_Debug` | JS | Local |
-| `Simple_Bot_js_Remote_Debug` | JS | Remote |
-| `Simple_Bot_js_playground` | JS | Playground |
-| `Simple_Bot_ts_Local_Debug` | TS | Local |
-| `Simple_Bot_ts_Remote_Debug` | TS | Remote |
-| `Simple_Bot_ts_playground` | TS | Playground |
-| `Simple_bot_py_local_debug` | Py | Local |
-| `Simple_bot_py_remote_debug` | Py | Remote |
-| `Simple_Bot_py_playground` | Py | Playground |
 
 ---
 

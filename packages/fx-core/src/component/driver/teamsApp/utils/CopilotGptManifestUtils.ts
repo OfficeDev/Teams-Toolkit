@@ -687,7 +687,7 @@ export class CopilotGptManifestUtils {
 
     const capability = agentManifest.capabilities.find(
       (cap) => cap.name === DeclarativeCopilotCapabilityName.OneDriveAndSharePoint
-    ) as OneDriveAndSharePointCapability | undefined;
+    );
 
     if (items_by_url) {
       newCapabilityData.items_by_url = capability ? capability.items_by_url || [] : [];
@@ -728,7 +728,7 @@ export class CopilotGptManifestUtils {
     };
     const capability = agentManifest.capabilities.find(
       (cap) => cap.name === DeclarativeCopilotCapabilityName.WebSearch
-    ) as WebSearchCapability | undefined;
+    );
 
     // del capability warning
     if (items_by_url === null && capability?.sites?.length) {

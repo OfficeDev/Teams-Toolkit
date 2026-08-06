@@ -60,13 +60,13 @@ Topic pages have up to two siblings:
   the current implementation, organized to inform ADR proposals and to
   give AI agents a written floor of context. Not a contract, not a
   decision, not a navigation aid. Carries an `Expires-when:` header (see
-  [Conventions](#conventions)) and is rewritten or deleted once that
-  condition is met. Add one only when (a) the subsystem has open
-  structural questions being worked through ADRs and (b) those ADRs
-  share a common backdrop worth writing down once rather than restating
-  in every ADR's Context section.
+  [Conventions](#conventions)) and is rewritten, deleted, or explicitly marked
+  historical once that condition is met. Add one only when (a) the subsystem has
+  open structural questions being worked through ADRs and (b) those ADRs share a
+  common backdrop worth writing down once rather than restating in every ADR's
+  Context section.
 
-| Topic | Page | Code map | Current state |
+| Topic | Page | Code map | Historical context |
 |---|---|---|---|
 | Scaffolding subsystem (create / import → on-disk project skeleton) | [`scaffolding.md`](scaffolding.md) | [`scaffolding.code-map.md`](scaffolding.code-map.md) | [`scaffolding.current-state.md`](scaffolding.current-state.md) |
 

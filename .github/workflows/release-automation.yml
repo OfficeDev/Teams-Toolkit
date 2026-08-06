@@ -514,11 +514,22 @@ jobs:
             core.setOutput('pr_url', created.data.html_url);
             core.setOutput('pr_number', String(created.data.number));
 
+      - id: generate-samples-token
+        if: ${{ env.APP_GITHUB_APP_ID != '' && env.APP_GITHUB_APP_PRIVATE_KEY != '' }}
+        continue-on-error: true
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ env.APP_GITHUB_APP_ID }}
+          private-key: ${{ env.APP_GITHUB_APP_PRIVATE_KEY }}
+          owner: OfficeDev
+          repositories: |
+            microsoft-365-agents-toolkit-samples
+
       - name: Create PR in samples repo (merge dev into main)
         if: ${{ env.DRY_RUN == 'false' && env.RERUN_CD_ONLY == 'false' && steps.config.outputs.is_hotfix != 'true' }}
         uses: actions/github-script@v7
         with:
-          github-token: ${{ steps.generate-token.outputs.token || github.token }}
+          github-token: ${{ steps.generate-samples-token.outputs.token || github.token }}
           script: |
             const owner = 'OfficeDev';
             const repo = 'microsoft-365-agents-toolkit-samples';
@@ -897,12 +908,18 @@ jobs:
           script: |
             console.log('No release scheduled for tomorrow. Triggering default CD on dev.');
 
+            const now = new Date();
+            const utc8 = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+            const series = `${utc8.getUTCFullYear()}${String(utc8.getUTCMonth() + 1).padStart(2, '0')}${String(utc8.getUTCDate()).padStart(2, '0')}`;
+            console.log(`  series: ${series}`);
+
             await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'cd.yml',
               ref: 'dev',
               inputs: {
+                series: series,
                 run_test_cases: 'true'
               }
             });
@@ -968,7 +985,7 @@ jobs:
                 vsrelease: vsrelease.toString(),
                 vstemplate: 'false',
                 goproduct: goproduct.toString(),
-                run_test_cases: 'true',
+                run_test_cases: (!goproduct).toString(),
                 skipmarkdowncheck: goproduct.toString()
               }
             });

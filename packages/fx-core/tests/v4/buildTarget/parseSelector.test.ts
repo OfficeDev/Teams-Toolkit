@@ -7,6 +7,7 @@ import { UserError } from "@microsoft/teamsfx-api";
 import { assert } from "vitest";
 import {
   BUILD_TARGET_MALFORMED_SELECTOR,
+  parseSelectorPresentation,
   parseSelectorSpec,
 } from "../../../src/v4/buildTarget/parseSelector";
 import {
@@ -35,7 +36,6 @@ const CURRENT_CREATE_V4_TEMPLATE_IDS = [
   "custom-copilot-rag-azure-ai-search",
   "custom-copilot-rag-custom-api",
   "custom-copilot-rag-customize",
-  "declarative-agent-meta-os-upgrade-project",
   "default-bot",
   "default-message-extension",
   "graph-connector",
@@ -53,6 +53,8 @@ const CURRENT_CREATE_V4_TEMPLATE_IDS = [
   "non-sso-tab",
   "office-addin-config",
   "office-addin-excel-cfshortcut",
+  "office-addin-excel-customfunctions",
+  "office-addin-sso-naa",
   "office-addin-wxpo-taskpane",
   "teams-collaborator-agent",
   "weather-agent",
@@ -74,12 +76,6 @@ function makePort(opts: PortOpts): RouteResolverPort {
     },
     v4Registry(templateId) {
       return (opts.v4 ?? []).includes(templateId);
-    },
-    v3Registry(templateId) {
-      return (opts.v4 ?? []).includes(templateId);
-    },
-    v3CoreMethodRegistry() {
-      return false;
     },
   };
 }
@@ -106,9 +102,8 @@ describe("v4/buildTarget/parseSelector", () => {
       routes: [
         {
           when: "projectType=='copilot-agent-type'",
-          engine: "v3",
+          engine: "v4",
           templateId: "copilot-gpt-basic",
-          v3Adapter: "DeclarativeAgentGenerator",
           comment: "authoring note that must not survive",
         },
         {
@@ -135,9 +130,8 @@ describe("v4/buildTarget/parseSelector", () => {
     // routes: when + engine + only that engine's key — authoring `comment` is dropped.
     assert.deepStrictEqual(spec.routes[0], {
       when: "projectType=='copilot-agent-type'",
-      engine: "v3",
+      engine: "v4",
       templateId: "copilot-gpt-basic",
-      v3Adapter: "DeclarativeAgentGenerator",
     });
     assert.deepStrictEqual(spec.routes[1], {
       when: "projectType=='start-with-github-copilot'",
@@ -155,10 +149,15 @@ describe("v4/buildTarget/parseSelector", () => {
       { routes: [] }, // questions not an array (absent)
       { questions: {}, routes: [] }, // questions not an array
       { questions: [], routes: 7 }, // routes not an array
+      { questions: [null], routes: [] }, // question is not an object
       { questions: [{ type: "singleSelect" }], routes: [] }, // question without a string name
       { questions: [{ name: 5 }], routes: [] }, // question name not a string
+      { questions: [], routes: [null] }, // route is not an object
       { questions: [], routes: [{ engine: "v4", templateId: "x" }] }, // route without a string when
       { questions: [], routes: [{ when: "true", engine: "v9" }] }, // route engine outside the closed set
+      { questions: [], routes: [{ when: "true", engine: "v4", templateId: 7 }] },
+      { questions: [], routes: [{ when: "true", engine: "v4", surfaces: "vscode" }] },
+      { questions: [], routes: [{ when: "true", engine: "v4", surfaces: ["vscode", 7] }] },
       {
         questions: [{ name: "p", condition: { nope: "x" } }],
         routes: [],
@@ -171,6 +170,100 @@ describe("v4/buildTarget/parseSelector", () => {
       assert.instanceOf(error, UserError);
       assert.strictEqual(error.name, BUILD_TARGET_MALFORMED_SELECTOR);
     }
+  });
+
+  it("AC-23: engine 'v3-core-method' is outside the closed set, and a leftover coreMethod key is not a route key", () => {
+    const legacyEngine = parseSelectorSpec({
+      questions: [],
+      routes: [{ when: "true", engine: "v3-core-method", coreMethod: "addPlugin" }],
+    });
+    assert.isTrue(legacyEngine.isErr());
+    const error = legacyEngine._unsafeUnwrapErr();
+    assert.instanceOf(error, UserError);
+    assert.strictEqual(error.name, BUILD_TARGET_MALFORMED_SELECTOR);
+
+    const strayKey = parseSelectorSpec({
+      questions: [],
+      routes: [{ when: "true", engine: "v4", templateId: "da/no-action", coreMethod: "addPlugin" }],
+    });
+    assert.isTrue(strayKey.isOk());
+    assert.deepStrictEqual(strayKey._unsafeUnwrap().routes[0], {
+      when: "true",
+      engine: "v4",
+      templateId: "da/no-action",
+    });
+  });
+
+  it("malformed selector presentation is an explicit UserError", () => {
+    const malformed: unknown[] = [
+      { questions: [null] },
+      { questions: [{ staticOptions: [] }] },
+      { questions: [{ name: "projectType", condition: { nope: "x" } }] },
+      { questions: [{ name: "projectType", staticOptions: "not-an-array" }] },
+      { questions: [{ name: "projectType", staticOptions: [null] }] },
+      { questions: [{ name: "projectType", staticOptions: [{ label: "Missing id" }] }] },
+      {
+        questions: [
+          {
+            name: "projectType",
+            staticOptions: [{ id: "conditional", label: "Conditional", condition: { nope: "x" } }],
+          },
+        ],
+      },
+    ];
+
+    for (const raw of malformed) {
+      const result = parseSelectorPresentation(raw);
+      assert.isTrue(result.isErr(), `expected err for ${JSON.stringify(raw)}`);
+      const error = result._unsafeUnwrapErr();
+      assert.instanceOf(error, UserError);
+      assert.strictEqual(error.name, BUILD_TARGET_MALFORMED_SELECTOR);
+    }
+  });
+
+  it("selector presentation keeps valid question and option conditions", () => {
+    const questionCondition = { expr: "surface == 'vscode'" };
+    const optionCondition = { featureFlag: DT };
+
+    const result = parseSelectorPresentation({
+      questions: [
+        {
+          name: "projectType",
+          condition: questionCondition,
+          staticOptions: [{ id: "mcp", label: "MCP", condition: optionCondition }],
+        },
+      ],
+    });
+
+    assert.isTrue(result.isOk());
+    assert.deepEqual(result._unsafeUnwrap().questions[0].condition, questionCondition);
+    assert.deepEqual(
+      result._unsafeUnwrap().questions[0].staticOptions[0].condition,
+      optionCondition
+    );
+  });
+
+  it("AC-20: malformed selector diagnostics do not echo authored values", () => {
+    const marker = "sensitive-route-value-must-not-escape";
+    const result = parseSelectorSpec({
+      questions: [],
+      routes: [{ when: marker, engine: "invalid" }],
+    });
+
+    assert.isTrue(result.isErr());
+    assert.notInclude(result._unsafeUnwrapErr().message, marker);
+
+    const presentationMarker = "sensitive-option-id-must-not-escape";
+    const presentation = parseSelectorPresentation({
+      questions: [
+        {
+          name: "projectType",
+          staticOptions: [{ id: presentationMarker }],
+        },
+      ],
+    });
+    assert.isTrue(presentation.isErr());
+    assert.notInclude(presentation._unsafeUnwrapErr().message, presentationMarker);
   });
 
   it("AC-21: the real shipped selector routes the MCP dimensions by feature flag", async () => {

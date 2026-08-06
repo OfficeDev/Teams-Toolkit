@@ -1,4 +1,17 @@
 {
-  "$schema": "../../schema/question.schema.json",
-  "questions": []
+  "$schema": "../../schema/questions.schema.json",
+  "questions": [
+    {
+      "name": "officeAddinHosts",
+      "type": "multiSelect",
+      "keyPrefix": "template.officeAddin.hosts",
+      "default": ["word", "powerpoint", "outlook", "excel"],
+      "staticOptions": [
+        { "id": "word", "keyPrefix": "template.officeAddin.hosts.word" },
+        { "id": "powerpoint", "keyPrefix": "template.officeAddin.hosts.powerpoint" },
+        { "id": "outlook", "keyPrefix": "template.officeAddin.hosts.outlook" },
+        { "id": "excel", "keyPrefix": "template.officeAddin.hosts.excel" }
+      ]
+    }
+  ]
 }

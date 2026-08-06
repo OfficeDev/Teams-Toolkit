@@ -53,7 +53,9 @@ const EXPECTED_TS_FILES = [
   "appPackage/outline.png",
   "appPackage/repairDeclarativeAgent.json",
   "env/.env.dev",
+  "env/.env.dev.user",
   "env/.env.local",
+  "env/.env.local.user",
   "host.json",
   "infra/azure.bicep",
   "infra/azure.parameters.json",
@@ -178,7 +180,7 @@ describe("SCN-DA-CREATE-API-PLUGIN-FROM-SCRATCH (v4, T3 InMemoryRuntime)", () =>
   it("SCN-CREATE-APIPLUGIN-07: the only pipeline step is require-empty-target; no post-render injection runs", async () => {
     const { outcome } = await run("typescript");
     assert.deepStrictEqual(outcome.stepsRun, ["require-empty-target"]);
-    assert.isEmpty(outcome.stepsSkipped);
+    assert.deepStrictEqual(outcome.stepsSkipped, ["da/set-sensitivity-label"]);
   });
 
   it("SCN-CREATE-APIPLUGIN-08: a non-empty target fails require-empty-target first and writes nothing", async () => {

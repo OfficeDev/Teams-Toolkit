@@ -1,9 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { FxError, SystemError, UserError } from "@microsoft/teamsfx-api";
+import { FxError, SystemError, UserError, Warning } from "@microsoft/teamsfx-api";
 import { Result, err, ok } from "neverthrow";
+import { ConditionalExpression, evaluateConditionalWhen } from "../expression/evaluateExpression";
 import { RenderVars, TemplateFileEntry } from "../model/dataModel";
+import { getLocalizedString } from "../../common/localizeUtils";
 
 /** v4 scaffold pipeline executor. See the run-scaffold-pipeline spec and ADR-0017. */
 
@@ -14,7 +16,12 @@ const STEP_REQUIRE_EMPTY_TARGET = "require-empty-target";
 
 const TPL_SUFFIX = ".tpl";
 
-const SKIP_WARNING = "exists, not overwritten; delete or rename it to rebuild";
+function skipWarning(path: string): string {
+  return getLocalizedString("core.v4.scaffold.existingFileSkipped", path);
+}
+
+/** `Warning.type` for a render path left untouched because the target already had that file. */
+export const EXISTING_FILE_SKIPPED_WARNING = "v4ExistingFileSkipped";
 
 /** A resolved step parameter value. */
 export type ParamValue = string | boolean | string[];
@@ -23,18 +30,27 @@ export type ParamValue = string | boolean | string[];
 export type StepParams = Record<string, ParamValue>;
 
 /** One `pipeline.steps` entry. `produces` is reserved for future cross-step data flow. */
-export interface PipelineStep {
+export interface PipelineStep extends ConditionalExpression {
   step: string;
-  comment?: string;
-  when?: string;
   with?: StepParams;
   produces?: string[];
+}
+
+/** One render-phase file filter. Paths are target-relative output paths after `.tpl` suffix stripping. */
+export interface RenderFilter extends ConditionalExpression {
+  exclude: string[];
+}
+
+/** Render-phase controls declared by `pipeline.json`. */
+export interface PipelineRender {
+  filters?: RenderFilter[];
 }
 
 /** A parsed, schema-valid `pipeline.json`. */
 export interface Pipeline {
   pipeline: string;
   comment?: string;
+  render?: PipelineRender;
   steps: PipelineStep[];
 }
 
@@ -53,6 +69,7 @@ export interface SkippedFile {
 /** The result of a scaffold run. */
 export interface ScaffoldOutcome {
   written: string[];
+  filtered: string[];
   skipped: SkippedFile[];
   stepsRun: string[];
   stepsSkipped: string[];
@@ -65,15 +82,30 @@ export interface Orchestration {
 
 /** Minimal manifest wrapper face needed by registered steps. */
 export interface ManifestWrapper {
-  addAction(action: Record<string, string>): void;
+  registerDeclarativeAgentAction(
+    teamsManifestPath: string,
+    pluginManifestPath: string
+  ): Result<void, FxError>;
+  setSensitivityLabel?(path: string, id: string): Result<void, FxError>;
 }
 
 /** The capabilities the executor hands each registered step's `apply`. */
 export interface StepContext {
   write(path: string, data: Buffer): void;
+  /** Persist regular and `SECRET_*` values through the runtime's environment boundary. */
+  writeEnvironment(
+    environment: string,
+    values: Record<string, string>
+  ): Promise<Result<void, FxError>>;
   manifestWrapper(kind: string): ManifestWrapper;
   /** Read current bytes at a target path, or `undefined` when absent. */
   read(path: string): Buffer | undefined;
+  /**
+   * Emit a localized, user-visible warning without failing the pipeline. The `type` is what
+   * lets a surface decide what to do with it (summary line, notification, log only), so it
+   * travels with the message instead of being dropped at the boundary.
+   */
+  warn?(warning: Warning): void;
 }
 
 /** An engine-registered, whitelist-dispatched post-render step. */
@@ -92,7 +124,12 @@ export interface PipelineRuntimePort {
   evalWhen(expr: string, renderVars: RenderVars): Result<boolean, FxError>;
   render(mustache: string, renderVars: RenderVars): Result<string, FxError>;
   manifestWrapper(kind: string): ManifestWrapper;
+  warn?(warning: Warning): void;
   write(path: string, data: Buffer): void;
+  writeEnvironment(
+    environment: string,
+    values: Record<string, string>
+  ): Promise<Result<void, FxError>>;
   /** Current bytes at a path, or `undefined` when absent. */
   read(path: string): Buffer | undefined;
 }
@@ -116,7 +153,43 @@ function whenActive(
   renderVars: RenderVars,
   port: PipelineRuntimePort
 ): Result<boolean, FxError> {
-  return step.when ? port.evalWhen(step.when, renderVars) : ok(true);
+  return evaluateConditionalWhen(step, (expr) => port.evalWhen(expr, renderVars));
+}
+
+function filterActive(
+  filter: RenderFilter,
+  renderVars: RenderVars,
+  port: PipelineRuntimePort
+): Result<boolean, FxError> {
+  return evaluateConditionalWhen(filter, (expr) => port.evalWhen(expr, renderVars));
+}
+
+function normalizedPath(path: string): string {
+  return path.replace(/\\/g, "/");
+}
+
+function matchesActiveFilter(
+  path: string,
+  filters: RenderFilter[] | undefined,
+  renderVars: RenderVars,
+  port: PipelineRuntimePort
+): Result<boolean, FxError> {
+  if (filters === undefined) {
+    return ok(false);
+  }
+  for (const filter of filters) {
+    if (!filter.exclude.includes(path)) {
+      continue;
+    }
+    const active = filterActive(filter, renderVars, port);
+    if (active.isErr()) {
+      return err(active.error);
+    }
+    if (active.value) {
+      return ok(true);
+    }
+  }
+  return ok(false);
 }
 
 /** Resolve a step's `with`: strings render through Mustache; literals pass through. */
@@ -203,6 +276,7 @@ export async function runScaffoldPipeline(
 
   // Phase 1: render `.tpl` path/body pairs; copy non-template files verbatim.
   const written: string[] = [];
+  const filtered: string[] = [];
   const skipped: SkippedFile[] = [];
   for (const entry of content) {
     if (entry.path.endsWith(TPL_SUFFIX)) {
@@ -210,9 +284,19 @@ export async function runScaffoldPipeline(
       if (renderedPath.isErr()) {
         return err(renderedPath.error);
       }
-      const writePath = renderedPath.value;
+      const writePath = normalizedPath(renderedPath.value);
+      const omitted = matchesActiveFilter(writePath, pipeline.render?.filters, renderVars, port);
+      if (omitted.isErr()) {
+        return err(omitted.error);
+      }
+      if (omitted.value) {
+        filtered.push(writePath);
+        continue;
+      }
       if (targetDir.existing.includes(writePath)) {
-        skipped.push({ path: writePath, warning: SKIP_WARNING });
+        const warning = skipWarning(writePath);
+        skipped.push({ path: writePath, warning });
+        port.warn?.({ type: EXISTING_FILE_SKIPPED_WARNING, content: warning });
         continue;
       }
       const renderedBody = port.render(entry.data.toString("utf8"), renderVars); // AC-18
@@ -222,20 +306,33 @@ export async function runScaffoldPipeline(
       port.write(writePath, Buffer.from(renderedBody.value, "utf8"));
       written.push(writePath);
     } else {
-      if (targetDir.existing.includes(entry.path)) {
-        skipped.push({ path: entry.path, warning: SKIP_WARNING });
+      const writePath = normalizedPath(entry.path);
+      const omitted = matchesActiveFilter(writePath, pipeline.render?.filters, renderVars, port);
+      if (omitted.isErr()) {
+        return err(omitted.error);
+      }
+      if (omitted.value) {
+        filtered.push(writePath);
         continue;
       }
-      port.write(entry.path, entry.data);
-      written.push(entry.path);
+      if (targetDir.existing.includes(writePath)) {
+        const warning = skipWarning(writePath);
+        skipped.push({ path: writePath, warning });
+        port.warn?.({ type: EXISTING_FILE_SKIPPED_WARNING, content: warning });
+        continue;
+      }
+      port.write(writePath, entry.data);
+      written.push(writePath);
     }
   }
 
   // Phase 2 — post-render steps, in declared order.
   const ctx: StepContext = {
     write: (path, data) => port.write(path, data),
+    writeEnvironment: (environment, values) => port.writeEnvironment(environment, values),
     manifestWrapper: (kind) => port.manifestWrapper(kind),
     read: (path) => port.read(path),
+    warn: port.warn,
   };
   const stepsRun: string[] = [];
   const stepsSkipped: string[] = [];
@@ -288,5 +385,5 @@ export async function runScaffoldPipeline(
     stepsRun.push(step.step);
   }
 
-  return ok({ written, skipped, stepsRun, stepsSkipped });
+  return ok({ written, filtered, skipped, stepsRun, stepsSkipped });
 }

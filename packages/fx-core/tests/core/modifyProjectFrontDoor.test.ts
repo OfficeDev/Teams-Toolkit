@@ -22,12 +22,6 @@ const V4_TARGET: BuildTarget = {
   answers: { addCapability: "add-action", actionSource: "mcp" },
 };
 
-const V3_CORE_TARGET: BuildTarget = {
-  templateId: "addPlugin",
-  engine: "v3-core-method",
-  answers: { addCapability: "add-action", actionSource: "mcp" },
-};
-
 function recorder<A extends unknown[], R>(
   impl: (...args: A) => R
 ): { fn: (...args: A) => R; calls: A[] } {
@@ -136,10 +130,6 @@ const failScaffoldV4 = (
 ): Promise<Result<undefined, FxError>> => {
   throw new Error("scaffoldV4 must not run on this path");
 };
-const failCoreMethod = (): Promise<Result<undefined, FxError>> => {
-  throw new Error("callCoreMethod must not run on this path");
-};
-
 function deps(overrides: Partial<ModifyFrontDoorDeps>): ModifyFrontDoorDeps {
   return {
     readFloorBytes: () => EMPTY_FLOOR,
@@ -148,7 +138,6 @@ function deps(overrides: Partial<ModifyFrontDoorDeps>): ModifyFrontDoorDeps {
     runSelector: failRunSelector,
     runInputs: failRunInputs,
     scaffoldV4: failScaffoldV4,
-    callCoreMethod: failCoreMethod,
     ...overrides,
   };
 }
@@ -176,12 +165,6 @@ describe("modifyProjectFrontDoor", () => {
         return okUndefined();
       }
     );
-    const coreMethod = recorder((_inputs: Inputs, _target: BuildTarget) => {
-      void _inputs;
-      void _target;
-      return okUndefined();
-    });
-
     const res = await modifyProjectFrontDoor(
       { platform: Platform.VSCode },
       { addCapability: "add-action", actionSource: "mcp" },
@@ -190,7 +173,6 @@ describe("modifyProjectFrontDoor", () => {
         runSelector: runSelector.fn,
         runInputs: runInputs.fn,
         scaffoldV4: scaffoldV4.fn,
-        callCoreMethod: coreMethod.fn,
       })
     );
 
@@ -212,7 +194,6 @@ describe("modifyProjectFrontDoor", () => {
     assert.equal(scaffoldV4.calls.length, 1);
     assert.deepEqual(scaffoldV4.calls[0][1], V4_TARGET);
     assert.deepEqual(scaffoldV4.calls[0][2], q2);
-    assert.equal(coreMethod.calls.length, 0);
   });
 
   it("MDE-01b: interactive modify uses one staged snapshot for selector, metadata, and templates", async () => {
@@ -401,30 +382,6 @@ describe("modifyProjectFrontDoor", () => {
     assert.strictEqual(selectorResult._unsafeUnwrapErr(), selectorError);
     assert.strictEqual(metadataResult._unsafeUnwrapErr(), metadataError);
     assert.strictEqual(templatesResult._unsafeUnwrapErr(), templatesError);
-  });
-
-  it("MDE-02: engine v3-core-method dispatches to the core-method handler without v4 Q2", async () => {
-    const runSelector = selectorRecorder(V3_CORE_TARGET);
-    const coreMethod = recorder((_inputs: Inputs, _target: BuildTarget) => {
-      void _inputs;
-      void _target;
-      return okUndefined();
-    });
-
-    const res = await modifyProjectFrontDoor(
-      { platform: Platform.CLI },
-      { addCapability: "add-action", actionSource: "mcp" },
-      {},
-      deps({
-        runSelector: runSelector.fn,
-        callCoreMethod: coreMethod.fn,
-      })
-    );
-
-    assert.isTrue(res.isOk());
-    assert.equal(runSelector.calls[0][2], "cli");
-    assert.equal(coreMethod.calls.length, 1);
-    assert.deepEqual(coreMethod.calls[0][1], V3_CORE_TARGET);
   });
 
   it("MDE-03: unsupported selector engines fail loudly", async () => {

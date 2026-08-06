@@ -43,6 +43,7 @@ import {
 import { getDefaultString, localize } from "../utils/localizeUtils";
 import {
   Microsoft,
+  MicrosoftSovereignCloud,
   VSCodeAzureSubscriptionProvider,
   getSessionFromVSCode,
 } from "./vscodeAzureSubscriptionProvider";
@@ -488,7 +489,7 @@ export class AzureAccountManager extends login implements AzureAccountProvider {
       AzureAccountManager.currentStatus = loggedIn;
     }
     vscode.authentication.onDidChangeSessions(async (e) => {
-      if (e.provider.id != Microsoft) {
+      if (e.provider.id != Microsoft && e.provider.id != MicrosoftSovereignCloud) {
         return;
       }
       if (await this.isUserLogin()) {

@@ -1,9 +1,33 @@
 {
   "pipeline": "default",
-  "comment": "Office task pane create package: pure render. The require-empty-target step guards the create contract so render writes the TypeScript add-in project without post-render injection.",
+  "comment": "Office task pane create package. The require-empty-target step guards the create contract; render filters drop per-host source files for the Office applications the developer did not select.",
   "steps": [
     {
       "step": "require-empty-target"
     }
-  ]
+  ],
+  "render": {
+    "filters": [
+      {
+        "comment": "Drop Word source when Word is not selected.",
+        "when": "HostWord == ''",
+        "exclude": ["src/taskpane/word.ts", "src/commands/word.ts"]
+      },
+      {
+        "comment": "Drop Excel source when Excel is not selected.",
+        "when": "HostExcel == ''",
+        "exclude": ["src/taskpane/excel.ts", "src/commands/excel.ts"]
+      },
+      {
+        "comment": "Drop PowerPoint source when PowerPoint is not selected.",
+        "when": "HostPowerPoint == ''",
+        "exclude": ["src/taskpane/powerpoint.ts", "src/commands/powerpoint.ts"]
+      },
+      {
+        "comment": "Drop Outlook source when Outlook is not selected.",
+        "when": "HostOutlook == ''",
+        "exclude": ["src/taskpane/outlook.ts", "src/commands/outlook.ts"]
+      }
+    ]
+  }
 }

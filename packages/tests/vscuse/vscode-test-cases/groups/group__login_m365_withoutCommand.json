@@ -60,8 +60,8 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 626,
-        "y": 456
+        "x": 629,
+        "y": 484
       },
       "description": "Click the \"Next\" button on the Microsoft sign-in page after entering the email address in the browser.",
       "content_refs": [],
@@ -70,9 +70,9 @@
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:626:456:16:5:4a2698c9aab29a9b",
-        "dhash:626:456:96:5:00004e71714e0000",
-        "dhash:626:456:0:10:1b28d0d9e7e6dae4"
+        "dhash:629:484:16:5:23248c4b6c24d32c",
+        "dhash:629:484:96:5:00004eb131860000",
+        "dhash:629:484:0:10:1b28f0d9e7e6dae4"
       ],
       "postconditions": [],
       "tags": [
@@ -97,9 +97,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:1b08f0d9d1e6e6e4"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "delay: 3"

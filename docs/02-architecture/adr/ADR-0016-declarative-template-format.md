@@ -80,13 +80,19 @@ Schemas. The two MCP scenarios are the conformance fixtures: identical
    `condition` that is the **shared Decision-7 grammar**, not option-bound logic.
    **No configuration payload** hangs off an option — the v3 `option.data` /
    `JSON.parse(option.data)` overload does **not** exist (it is absent from
-   `question.schema.json`); configuration lives in `descriptor.optionsSchema` and
+   `questions.schema.json`); configuration lives in `descriptor.optionsSchema` and
    computed fields in the provider `derived.<id>.<key>` namespace (§5). Exactly
-   one of `staticOptions` / `optionsFrom`
-   per option-bearing question. `validation` is either an engine-registered
-   validator name as a **shorthand string** (e.g. `"uri"` on `mcpServerUrl`) or
-   `{ use, params }`. `skipSingleOption:true` auto-selects a sole option (used on
-   `mcpServerType`).
+  one of `staticOptions` / `optionsFrom`
+  per option-bearing question. `optionsFrom` names an engine-owned provider
+  registry entry, and `validation` names an engine-owned validator registry
+  entry as either a **shorthand string** (e.g. `"uri"` on `mcpServerUrl`) or
+  `{ use, params }`. Both registries are first-class v4 scaffolding extension
+  points: implementations live in dedicated provider/validator files and are
+  composed into the collect-inputs port by the caller, the same way pipeline
+  steps are registered outside template data. The validator registry is shared
+  by every normalized question-walk caller, including Q1 selector adapters and
+  Q2+common-floor create-input adapters; no stage owns a private validator set.
+  `skipSingleOption:true` auto-selects a sole option (used on `mcpServerType`).
 
 7. **One closed expression grammar is shared** across `replaceMap.when`,
    `condition` (`{equals}/{enum}/{expr}/{anyOf}/{featureFlag}/{capability}`), and
@@ -118,6 +124,19 @@ Schemas. The two MCP scenarios are the conformance fixtures: identical
   ADR owns the *question/identity/replaceMap* surface; the *side-effect* surface
   (`pipeline.json`, steps) is ADR-0017. They share the one closed expression
   grammar and the `optionsSchema.properties` identifier space.
+- **Extension-point placement:** `optionsFrom` providers and validators are not
+  surface wiring. They are named, engine-owned extension points parallel to
+  pipeline steps: templates reference ids, registry files bind ids to typed
+  implementations, and the surface/create-input adapter only composes those
+  registries into the port.
+- **No hidden business logic in the v4 engine:** capability-specific behavior
+  must decompose into template data plus named extension points. Question-time
+  business logic belongs in `questions.json` / `descriptor.json` / `replaceMap`
+  or in an `optionsFrom` provider / validator; post-answer side effects belong in
+  `pipeline.steps`. The generic v4 engine may hardcode the schema, parser,
+  registry lookup, closed evaluator, and orchestration contracts, but it MUST NOT
+  add MCP/OpenAPI/Graph/Office/template-specific branches in the walk, render, or
+  front-door code.
 - **Revisit via a superseding ADR:** now Accepted, the closed field/grammar sets
   are immutable; the two MCP packages are the conformance fixtures, and the
   derived specs below are the behavioral contract.

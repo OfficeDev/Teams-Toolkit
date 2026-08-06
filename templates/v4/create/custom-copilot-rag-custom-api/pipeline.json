@@ -2,6 +2,20 @@
   "$schema": "../../schema/pipeline.schema.json",
   "pipeline": "default",
   "comment": "Render the Teams AI custom API shell, then generate the filtered OpenAPI spec and custom API function wiring from the selected operations.",
+  "render": {
+    "filters": [
+      {
+        "comment": "Sandbox files are opt-in.",
+        "when": "!featureFlag('TEAMSFX_SANDBOXED_TEAM')",
+        "exclude": [
+          "m365agents.sandbox.yml",
+          "teamsapp.sandbox.yml",
+          "env/.env.sandbox",
+          "env/.env.sandbox.user"
+        ]
+      }
+    ]
+  },
   "steps": [
     { "step": "require-empty-target" },
     {

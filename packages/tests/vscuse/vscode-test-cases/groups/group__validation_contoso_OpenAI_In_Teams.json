@@ -38,7 +38,7 @@
         "x": 587,
         "y": 513
       },
-      "description": "Click the \"Compare Contoso Electronics plan\" card in the vscuse_app_HBlkdev interface on Microsoft Teams.",
+      "description": "Click the \"Compare Contoso Electronics plan\" card in the ${{var:app_name}}dev interface on Microsoft Teams.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

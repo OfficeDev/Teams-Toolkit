@@ -50,7 +50,7 @@
         "x": 474,
         "y": 210
       },
-      "description": "Click on the \"General Teams Agent\" option within the dropdown menu titled \"Teams Agent or App Using Teams AI Library\" at coordinates (474, 210).",
+      "description": "Click on the \"Other Teams Capabilities\" option within the dropdown menu titled \"Teams Agent or App Using Microsoft Teams SDK\" at coordinates (474, 210).",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -146,7 +146,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion there's message \"App name needs to begin with letters, include minimum two letters or digits, and exclude certain special chararcters.\"",
+      "description": "@assertion there's message \"App name needs to begin with letters, include minimum two letters or digits, and exclude certain special characters.\"",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -168,7 +168,7 @@
         "x": 228,
         "y": 15
       },
-      "description": "Click the \"Back\" button (with shortcut Ctrl+Alt+←) in the \"Application Name\" popup dialog at the top of the Microsoft 365 Agents Toolkit interface in Visual Studio Code, positioned within the red validation message area.",
+      "description": "Click the \"Back\" button (with shortcut Ctrl+Alt+←) in the title bar of the \"Application Name\" popup dialog at the top of the Microsoft 365 Agents Toolkit interface in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

@@ -1,6 +1,6 @@
 # Operation — `resolve-build-target`
 
-- **Status:** Accepted (Decision source ADR-0014 Accepted 2026-06-05; amended per ADR-0014 Amendments 1–2, 2026-06-15) — ready for tests
+- **Status:** Accepted (Decision source ADR-0014 Accepted 2026-06-05; amended per ADR-0014 Amendments 1–3, 2026-06-15) — ready for tests
 - **Domain:** [`01-scaffolding`](../../domains/01-scaffolding.md)
 - **Decision source:** [ADR-0014](../../../02-architecture/adr/ADR-0014-dispatcher-buildtarget-resolution.md)
   (Amendment 2 — a single `walk` source; `language` is no longer a route axis,
@@ -17,8 +17,9 @@
 
 Resolve a user/caller create entry into a **`BuildTarget = { templateId,
 engine, answers? }`** before any template is opened or rendered, and dispatch
-that `templateId` to the world (v4 / v3 / v3-core-method / surface-action) that
-handles it.
+that `templateId` to the world (`v4` or `surface-action`) that handles it.
+Legacy v3 generator routes and the v3 core-method exception are no longer part
+of the closed engine set (ADR-0014 Amendments 3 and 5).
 
 Route resolution produces a **`templateId` only** (plus the walked dimension
 `answers`); `language` is **not** resolved here — it is the Q0 `language`
@@ -34,27 +35,27 @@ single front stage that replaces v3's `templateNames.ts` + `question/create.ts`
 | `selector` | the per-kind `selector.json` (Q1 routing table + route predicates) | templates package (`templates/v4/<kind>/selector.json`) |
 | `prefilled` | `Record<string, string>`, optional | Q1-dimension answers known up front (CLI flags / `atk add` / CodeLens seed); a pre-filled dimension is used as-is, never prompted |
 | `interactive` | `boolean` | whether an un-pre-filled dimension may be prompted (`false` ⇒ a missing required dimension is a `UserError`) |
-| `port` | narrow `RouteResolverPort` (`{ prompt, featureFlag, v4Registry, v3Registry, v3CoreMethodRegistry }`) | injected; an in-memory fake in tests |
+| `port` | narrow resolver port (`{ prompt, featureFlag, v4Registry }`) | injected; `prompt` adapts Q1 into the shared question-walk face, and `v4Registry` is the route-matching face; an in-memory fake in tests |
 
 There is a **single source** — the prefill-aware `walk`. A caller that already
 knows a dimension simply pre-fills it (`atk add` / CodeLens / a CLI batch are
 fully pre-filled, `interactive=false`); there is no separate `direct`
 templateId entry (ADR-0014 Amendment 2).
 
-The operation declares the narrow `RouteResolverPort` it actually uses
-(interface-segregation); it does **not** depend on the full `ScaffoldRuntime`
-(ADR-0018), and in particular it does **not** open the template package
-(ADR-0015 `open-template-package`) and **never** reads `descriptor.languages` —
-that read belongs to the Q0 `language` question in
-[`collect-create-inputs`](collect-create-inputs.md).
+The operation declares only the narrow faces it actually uses
+(interface-segregation). The Q1 answer walk adapts selector dimensions into
+normalized `QuestionSpec[]` and invokes the shared [`collect-inputs`](collect-inputs.md)
+engine with `appendLanguage=false`; route matching uses the route registries
+below. It does **not** depend on the full `ScaffoldRuntime` (ADR-0018), and in
+particular it does **not** open the template package (ADR-0015
+`open-template-package`) and **never** reads `descriptor.languages` — that read
+belongs to the Q0 `language` question in [`collect-create-inputs`](collect-create-inputs.md).
 
 | Port face | Shape | Responsibility |
 |-----------|-------|----------------|
 | `prompt` | `(question) => Promise<answer>` | the interactive (un-pre-filled) Q1 dimension prompts |
 | `featureFlag` | `(name) => boolean` | evaluate `featureFlag(...)` in route predicates (e.g. `TEAMSFX_MCP_FOR_DA_DT`) |
 | `v4Registry` | `(templateId) => boolean` | membership test (derived from `templates/v4/<kind>/*` descriptors, §5.3) |
-| `v3Registry` | `(templateId) => boolean` | frozen v3 generator allow-list |
-| `v3CoreMethodRegistry` | `(coreMethod) => boolean` | frozen v3 core-method allow-list |
 
 ## Outputs
 
@@ -62,9 +63,9 @@ A `BuildTarget` plus the dispatch decision:
 
 | Field | Meaning |
 |-------|---------|
-| `templateId` | the resolved `<kind>/<id>` (v4) or v3 `TemplateNames` value, or the `coreMethod` / `action` id for the non-generator engines |
-| `engine` | `v4 \| v3 \| v3-core-method \| surface-action` — which world dispatch hands off to |
-| `answers` | the dimension answers the walk collected (pre-filled + prompted); consumed downstream (v3 adapter inputs, and the gate for the Q0 `language` question); absent for a `surface-action` route that scaffolds nothing |
+| `templateId` | the resolved `<kind>/<id>` (v4), or the `action` id for a `surface-action` route |
+| `engine` | `v4 \| surface-action` — the selector's closed engine value |
+| `answers` | the dimension answers the walk collected (pre-filled + prompted); consumed downstream by v4 Q2 entry params and the gate for the Q0 `language` question; absent for a `surface-action` route that scaffolds nothing |
 
 ## Resolution shape
 
@@ -77,8 +78,7 @@ resolveBuildTarget(selector, prefilled, interactive) → { templateId, engine, a
          — never reads descriptor.languages; never resolves a language
 
 dispatch(templateId) → engine                     // keys off templateId ONLY
-  v4 registry → v4 world | v3 registry → v3 world
-  v3-core-method → core method | surface-action → surface command
+  v4 registry → v4 world | surface-action → surface command
   else → explicit UserError (no silent fallback)
 ```
 
@@ -96,20 +96,22 @@ is in hand, [`collect-create-inputs`](collect-create-inputs.md) runs the Q0
 | AC-03a | L1 | the `walk` source, `interactive=true`, `prefilled` carrying `projectType=copilot-agent-type` only | resolve | `projectType` is **not** prompted (used from pre-fill); the remaining gated dimensions (`daTemplate`, …) **are** prompted |
 | AC-03b | L1 | the `walk` source, `interactive=false`, `prefilled` missing a required gated dimension (e.g. no `daTemplate` for `projectType=copilot-agent-type`) | resolve | an explicit `UserError` naming the missing dimension; **no** prompt, **no** `no-matching-route` coercion |
 | AC-04 | L1 | a route whose predicate is `featureFlag('TEAMSFX_MCP_FOR_DA_DT')` and the flag is **on** | resolve | resolves the v4 route `da/mcp-server` (`engine=v4`) |
-| AC-05 | L1 | the same MCP routing context with `TEAMSFX_MCP_FOR_DA_DT` **off** | resolve | resolves the non-DT route (`engine=v3` / `v3-core-method` per the modify selector), **not** the v4 id |
+| AC-05 | L1 | the same create MCP routing context with `TEAMSFX_MCP_FOR_DA_DT` **off** | resolve | resolves the non-DT static route (`engine=v4`, `templateId="da/mcp-server-static"`), **not** the dynamic MCP id |
 | AC-06 | L1 | a matched route with `engine=v4` | dispatch | hands off to the v4 world (`engine=v4`); the dispatch decision does **not** branch on language — language is `collect-create-inputs`' Q0 (ADR-0014 Amendment 2) |
-| AC-07 | L1 | a matched route with `engine=v3` (a v3 generator `templateId`) | dispatch | hands off to the v3 world via the §5.1 glue (`engine=v3`); the v3 route is trusted, not re-checked against a registry |
-| AC-08 | L1 | a modify route naming `coreMethod="addPlugin"` present in `v3CoreMethodRegistry` | dispatch | `engine=v3-core-method`; the named core method is selected with the collected inputs |
+| AC-07 | L1 | legacy `engine=v3` generator route | parse / dispatch | **withdrawn** — v3 generator routes are no longer in the closed selector engine set; `parseSelectorSpec` rejects them as malformed selector JSON (AC-20) |
+| AC-08 | L1 | a modify route naming `coreMethod="addPlugin"` | dispatch | **withdrawn** — `v3-core-method` is no longer in the closed engine set; such a route is rejected at parse (AC-23) |
 | AC-09 | L1 | a route with `engine=surface-action` naming an `action` | dispatch | `engine=surface-action`; **nothing** is scaffolded; the action id is returned for the surface to run |
-| AC-10 | L1 | a matched route naming a `coreMethod` **absent** from `v3CoreMethodRegistry` (an unknown dispatch target) | dispatch | raises a `UserError` naming the unknown core method; **no** silent fallback |
-| AC-11 | L1 | a `selector.json` route missing the engine-specific required key (e.g. `engine=v4` with no `templateId`, or `engine=v3` with no `v3Adapter`) | load | the loader rejects it (invariant 12); other branches' keys present on the same route are also rejected |
+| AC-09a | L1 | a route with `engine=surface-action`, plus pre-filled answers for a downstream selector dimension whose `condition` is false | resolve | the skipped dimension is not carried in `answers`; Q1 answer output contains only dimensions reached by the walk |
+| AC-10 | L1 | a matched route naming an unknown `coreMethod` | dispatch | **withdrawn** with AC-08; "no silent fallback" for an unmatched route is INV-6, locked by the no-matching-route error |
+| AC-11 | L1 | a `selector.json` route missing the engine-specific required key (`engine=v4` with no `templateId`, or `engine=surface-action` with no `action`) | load | the loader rejects it (invariant 12); the other branch's key present on the same route is also rejected |
 | AC-12 | L1 | a v4 route whose `templateId` has **no** `templates/v4/<kind>/<id>/descriptor.json` | build | build failure (invariant 17 — routing is descriptor-derived, not hand-listed) |
 | AC-17 | L1 | identical `selector`, `prefilled`, registries, and feature-flag state | resolve twice | both return the identical `{ templateId, engine, answers }` |
 | AC-18 | L1 | `atk new` (walk, no pre-fill) and `atk add` (walk, the dimensions pre-filled) reaching the **same** `templateId` | resolve | the dispatch hand-off (`templateId`, `engine`) is identical; both carry the same dimension `answers` (one prompted, one pre-filled) — there is no separate `direct` path |
-| AC-19 | L1 | a raw `selector.json` whose `questions` carry presentation fields (`type` / `title` / `staticOptions` / `keyPrefix`) and `routes` carry `engine` + its key | parse (`parseSelectorSpec`) | a `SelectorSpec` keeping **only** `{ name, condition? }` per question (the `condition` kept verbatim as the `ExpressionNode`) and `{ when, engine, templateId? / v3Adapter? / coreMethod? / action? / surfaces? }` per route; the result drives `resolveBuildTarget` unchanged — presentation is the surface's concern, not this operation's (INV-3) |
+| AC-19 | L1 | a raw `selector.json` whose `questions` carry presentation fields (`type` / `title` / `staticOptions` / `keyPrefix`) and `routes` carry `engine` + its key | parse (`parseSelectorSpec`) | a `SelectorSpec` keeping **only** `{ name, condition? }` per question (the `condition` kept verbatim as the `ExpressionNode`) and `{ when, engine, templateId? / action? / surfaces? }` per route; the result drives `resolveBuildTarget` unchanged — presentation is the surface's concern, not this operation's (INV-3) |
 | AC-20 | L1 | a malformed raw `selector.json` — not an object, `questions` / `routes` not arrays, a question without a string `name`, or a route without a string `when` / a non-closed-set `engine` | parse | an explicit `UserError` (no crash, no `as` coercion); engine-key **completeness** (e.g. `engine=v4` with no `templateId`) is left to the load gate AC-11, not the parser |
-| AC-21 | L1 | the **real shipped** `templates/v4/create/selector.json`, parsed, the `walk` source (`interactive=false`) with the MCP dimension answers (`projectType=copilot-agent-type`, `daTemplate=add-action`, `actionSource=mcp`) | parse + resolve | with `TEAMSFX_MCP_FOR_DA_DT` **on** → `{ engine=v4, templateId="da/mcp-server" }`; **off** → `{ engine=v3, templateId="declarative-agent-with-action-from-mcp" }`; a sibling dimension (`projectType=graph-connector-type`) → its `{ engine=v3 }` route — a regression lock on the shipped routing table (the template id is selected by the v4 selector, not a hand-coded check) |
+| AC-21 | L1 | the **real shipped** `templates/v4/create/selector.json`, parsed, the `walk` source (`interactive=false`) with the MCP dimension answers (`projectType=copilot-agent-type`, `daTemplate=add-action`, `actionSource=mcp`) | parse + resolve | with `TEAMSFX_MCP_FOR_DA_DT` **on** → `{ engine=v4, templateId="da/mcp-server" }`; **off** → `{ engine=v4, templateId="da/mcp-server-static" }`; a sibling dimension (`projectType=graph-connector-type`) → its `{ engine=v4, templateId="graph-connector" }` route — a regression lock on the shipped routing table (the template id is selected by the v4 selector, not a hand-coded check) |
 | AC-22 | L1 | the bundled-floor channel `templates.zip` bytes, where the create selector lives at the `v4/create/selector.json` zip entry | open (`openCreateSelector`) | the parsed `SelectorSpec` (structure delegated to `parseSelectorSpec`, AC-19); bytes that are not a valid archive → `SystemError`; a floor missing the `v4/create/selector.json` entry → `SystemError`; an entry that is not valid JSON → `SystemError` (packaging faults, not user-fixable) |
+| AC-23 | L1 | a raw `selector.json` route with `engine="v3-core-method"` | parse | an explicit `UserError` — the closed engine set is `{ v4, surface-action }`, so a v4→v3 dispatch hand-off is not authorable (ADR-0014 Amendment 5). A leftover `coreMethod` key is no longer a route key: it is dropped like any other non-routing field (AC-19), and `selector.schema.json`'s `additionalProperties: false` rejects it at authoring time |
 
 > **Withdrawn by ADR-0014 Amendment 2:** AC-02 (the `direct` source) and
 > AC-13 – AC-16a (the in-resolver `language` / `bindLanguage` axis). The
@@ -128,14 +130,10 @@ flowchart TD
 
   tid --> disp{dispatch — templateId only}
   disp -->|v4 registry| v4[engine = v4]
-  disp -->|v3 registry| v3[engine = v3]
-  disp -->|core-method registry| cm[engine = v3-core-method]
   disp -->|surface-action route| sa[engine = surface-action]
   disp -->|unknown| errU([UserError: unknown templateId])
 
   v4 --> bt["BuildTarget { templateId, engine, answers }"]
-  v3 --> bt
-  cm --> bt
   sa --> done([dispatch result])
   bt --> done
 ```
@@ -156,11 +154,10 @@ This operation does **not**:
   `descriptor.languages`, `skipSingleOption`) belongs to
   [`collect-create-inputs`](collect-create-inputs.md), after a
   `templateId`/`descriptor` is in hand (ADR-0014 Amendment 2).
-- Decide the v3/v4/core-method/surface-action **registries' contents**. Those
-  are frozen allow-lists (v3) or descriptor-derived (v4, §5.3); this operation
-  only tests membership.
-- Run the v3 generator or v4 pipeline. It hands off; execution is the chosen
-  world's concern.
+- Decide the v4/surface-action **registries' contents**. v4 is
+  descriptor-derived (§5.3); this operation only tests membership.
+- Run the v4 pipeline or the surface action. It returns the dispatch value;
+  execution or rejection is the caller's concern.
 
 ## Invariants
 
@@ -179,8 +176,9 @@ This operation does **not**:
   path); there is a **single** source — no `direct` entry — and no second
   (CLI-side) routing table (proposal §9, deletes `actionTemplateMap`).
 - **INV-4 — Closed engine set, exclusive keys.** Every route's `engine ∈
-  { v4, v3, v3-core-method, surface-action }` carries exactly its own required
-  key and none of the others' (invariant 12).
+  { v4, surface-action }` carries exactly its own required key and not the
+  other's (invariant 12). `engine="v3"` and `engine="v3-core-method"` are not
+  valid after the v4 migration (ADR-0014 Amendments 3 and 5).
 - **INV-5 — v4 routing is descriptor-derived.** Every v4 route id resolves to an
   existing `templates/v4/<kind>/<id>/descriptor.json`, checked at build
   (invariant 17).
@@ -189,9 +187,9 @@ This operation does **not**:
 - **INV-7 — Determinism.** Given identical `selector`, `prefilled`, registries,
   and feature-flag state, the resolved `{ templateId, engine, answers }` is a
   pure function of them.
-- **INV-8 — v4-owned seam.** This operation lives in the v4 world; v3 is reached
-  only through the composition-root glue (proposal §5.1 seam direction); it adds
-  no v3-specific method or fixture.
+- **INV-8 — v4-owned seam.** This operation lives in the v4 world; it can
+  dispatch only to a v4 package or a surface action, and adds no v3 hand-off
+  path of any kind.
 
 ## Notes
 
@@ -221,11 +219,12 @@ This operation does **not**:
   (`parseSelectorPresentation`) only renders `staticOptions` picks. The runtime
   parser needs no guard for this: `parseSelectorSpec` already drops `type`
   (AC-19, presentation is the surface's concern).
-- `openCreateSelector` (AC-22) is the bundled-floor sibling of
-  `parseSelectorSpec`: it reads the `v4/create/selector.json` entry from the
-  channel `templates.zip` and hands the parsed JSON to `parseSelectorSpec`. The
-  zip-read faults (corrupt archive, missing entry, non-JSON) are `SystemError`s
-  (packaging faults), while structural validity stays `parseSelectorSpec`'s
-  contract (AC-20). It is v4-owned (INV-7) — the floor read that lets the create
-  front door route through the shipped selector with no hand-coded template-id
-  table.
+- `openCreateSelector` (AC-22) is the full-package sibling of
+  `parseSelectorSpec`: it reads the `v4/create/selector.json` entry from a
+  channel `templates.zip` and hands the parsed JSON to `parseSelectorSpec`.
+  Production staged-snapshot callers may instead pass the standalone
+  `create-selector.json` artifact to `openSelectorFromJsonBytes`. Zip-read faults
+  (corrupt archive, missing entry, non-JSON) are `SystemError`s (packaging
+  faults), while structural validity stays `parseSelectorSpec`'s contract
+  (AC-20). It is v4-owned (INV-7) — the selector read lets the create front door
+  route through the shipped selector with no hand-coded template-id table.

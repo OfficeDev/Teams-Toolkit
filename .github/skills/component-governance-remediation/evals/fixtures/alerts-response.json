@@ -1,0 +1,70 @@
+{
+  "value": [
+    {
+      "id": 101,
+      "alertState": "active",
+      "severity": "high",
+      "title": "CVE-TEST-0001",
+      "component": {
+        "displayName": "example-package",
+        "displayVersion": "1.0.0"
+      },
+      "actionItems": "Upgrade example-package.",
+      "discoveredDate": "2026-07-23T00:00:00Z",
+      "stateDetails": [
+        {
+          "alertState": "active",
+          "snapshotTypeId": 38309165
+        }
+      ]
+    },
+    {
+      "id": 102,
+      "alertState": "active",
+      "severity": "medium",
+      "title": "CVE-TEST-0002",
+      "component": {
+        "displayName": "other-snapshot-package",
+        "displayVersion": "2.0.0"
+      },
+      "stateDetails": [
+        {
+          "alertState": "active",
+          "snapshotTypeId": 999
+        }
+      ]
+    },
+    {
+      "id": 103,
+      "alertState": "fixed",
+      "severity": "low",
+      "title": "CVE-TEST-0003",
+      "component": {
+        "displayName": "fixed-package",
+        "displayVersion": "3.0.0"
+      },
+      "stateDetails": [
+        {
+          "alertState": "fixed",
+          "snapshotTypeId": 38309165
+        }
+      ]
+    },
+    {
+      "id": 104,
+      "alertState": "active",
+      "severity": "medium",
+      "title": "CVE-TEST-0004",
+      "component": {
+        "displayName": "stale-state-package",
+        "displayVersion": "4.0.0"
+      },
+      "stateDetails": [
+        {
+          "alertState": "fixed",
+          "snapshotTypeId": 38309165
+        }
+      ]
+    }
+  ]
+}

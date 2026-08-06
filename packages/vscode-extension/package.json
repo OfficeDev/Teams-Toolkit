@@ -2,7 +2,7 @@
   "name": "ms-teams-vscode-extension",
   "displayName": "Microsoft 365 Agents Toolkit",
   "description": "Create, debug, and deploy agents with Microsoft 365 Agents Toolkit",
-  "version": "6.10.2",
+  "version": "6.12.1",
   "publisher": "TeamsDevApp",
   "author": "Microsoft Corporation",
   "private": true,
@@ -1507,11 +1507,6 @@
           "default": false,
           "markdownDescription": "Enable launch Agent for Teams in Microsoft 365 Copilot. For more information please refer to [this documentation](https://aka.ms/cea-feature-flag)."
         },
-        "M365AgentsToolkit.enableDeclarativeAgentInOfficeAddIn": {
-          "type": "boolean",
-          "default": true,
-          "markdownDescription": "Enable Declarative Agent support in Office Add-in project."
-        },
         "M365AgentsToolkit.enableCustomFunctionShortcutInOfficeAddIn": {
           "type": "boolean",
           "default": true,
@@ -1547,7 +1542,6 @@
     ]
   },
   "scripts": {
-    "lint:staged": "lint-staged",
     "vscode:prepublish": "rimraf out && npm run package",
     "package": "npm run check-types && npm run vite && node esbuild.mjs --production",
     "build": "npm run check-types && npm run vite && node esbuild.mjs",
@@ -1617,7 +1611,7 @@
     "mermaid": "^10.9.0",
     "mock-fs": "^5.2.0",
     "mocked-env": "^1.3.5",
-    "prettier": "^2.4.1",
+    "prettier": "^3.3.3",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-intl": "^5.13.5",
@@ -1632,7 +1626,7 @@
     "typescript": "~5.9.0",
     "typescript-eslint": "^8.56.0",
     "vitest": "^4.1.8",
-    "uuid": "^8.3.2",
+    "uuid": "^11.1.1",
     "vite": "^6.4.1",
     "vite-plugin-svgr": "^4.2.0"
   },
@@ -1640,7 +1634,7 @@
     "@azure/arm-resources-subscriptions": "^2.1.0",
     "@azure/identity": "^4.1.0",
     "@azure/ms-rest-azure-env": "^2.0.0",
-    "@azure/msal-node": "^2.6.6",
+    "@azure/msal-node": "^5.4.0",
     "@azure/msal-node-extensions": "^1.5.25",
     "@microsoft/dev-tunnels-connections": "1.1.45",
     "@microsoft/dev-tunnels-contracts": "1.1.45",
@@ -1695,16 +1689,11 @@
   },
   "lint-staged": {
     "*.{js,jsx,css,ts,tsx}": [
-      "npx eslint --cache --fix --quiet"
+      "eslint --cache --fix --quiet",
+      "prettier --cache --write --ignore-unknown"
     ],
     "*.json": [
-      "npx prettier --cache --write --ignore-unknown"
+      "prettier --cache --write --ignore-unknown"
     ]
-  },
-  "pnpm": {
-    "overrides": {
-      "hono@<4.12.16": "^4.12.16",
-      "ip-address@<10.1.1": "^10.1.1"
-    }
   }
 }

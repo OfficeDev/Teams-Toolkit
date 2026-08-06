@@ -5,7 +5,6 @@ import { hooks } from "@feathersjs/hooks/lib";
 import {
   Colors,
   DeclarativeCopilotCapabilityName,
-  EmbeddedKnowledgeCapability,
   err,
   FunctionObject,
   FxError,
@@ -385,7 +384,7 @@ export class CreateAppPackageDriver implements StepDriver {
           if (embeddedKnowledgeCapabilities.length > 0) {
             const fileSet = new Set<string>();
             for (const capability of embeddedKnowledgeCapabilities) {
-              const embeddedCapability = capability as EmbeddedKnowledgeCapability;
+              const embeddedCapability = capability;
               if (embeddedCapability.files) {
                 for (const file of embeddedCapability.files) {
                   if (file.file) {
@@ -464,6 +463,20 @@ export class CreateAppPackageDriver implements StepDriver {
       );
       if (addSkillsRes.isErr()) {
         return err(addSkillsRes.error);
+      }
+    }
+
+    const teamsManifestAgentConnectors = (
+      manifest as TeamsManifestVDevPreview.TeamsManifestVDevPreview
+    ).agentConnectors;
+    if (teamsManifestAgentConnectors?.length) {
+      const addConnectorsRes = await this.addAgentConnectorFiles(
+        zip,
+        teamsManifestAgentConnectors,
+        appDirectory
+      );
+      if (addConnectorsRes.isErr()) {
+        return err(addConnectorsRes.error);
       }
     }
 
@@ -578,6 +591,31 @@ export class CreateAppPackageDriver implements StepDriver {
         return err(new InvalidFileOutsideOfTheDirectotryError(skillFolderAbs));
       }
       await this.addLocalFolderRecursive(zip, skillFolderAbs, appDirectory);
+    }
+    return ok(undefined);
+  }
+
+  private async addAgentConnectorFiles(
+    zip: AdmZip,
+    agentConnectors: TeamsManifestVDevPreview.AgentConnector[],
+    appDirectory: string
+  ): Promise<Result<undefined, FxError>> {
+    for (const connector of agentConnectors) {
+      const mcpToolDescriptionFile =
+        connector.toolSource?.remoteMcpServer?.mcpToolDescription?.file;
+      if (!mcpToolDescriptionFile) {
+        continue;
+      }
+      const mcpFileAbsolutePath = path.resolve(appDirectory, mcpToolDescriptionFile);
+      const checkExistenceRes = await this.validateReferencedFile(
+        mcpFileAbsolutePath,
+        appDirectory
+      );
+      if (checkExistenceRes.isErr()) {
+        return err(checkExistenceRes.error);
+      }
+      const dir = path.dirname(mcpToolDescriptionFile);
+      this.addFileInZip(zip, dir, mcpFileAbsolutePath);
     }
     return ok(undefined);
   }
@@ -877,7 +915,7 @@ export class CreateAppPackageDriver implements StepDriver {
     }
 
     if (checkExistenceRes.isErr()) {
-      delete func.capabilities!.response_semantics!.static_template!.file;
+      delete func.capabilities!.response_semantics!.static_template;
       context.logProvider.warning(
         getLocalizedString(
           "plugins.appstudio.createPackage.aiPlugin.invalidFilePropertyWarning",

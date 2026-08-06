@@ -55,7 +55,7 @@
         "x": 474,
         "y": 210
       },
-      "description": "Click on the \"General Teams Agent\" option within the dropdown menu titled \"Teams Agent or App Using Teams AI Library\" at coordinates (474, 210).",
+      "description": "Click on the \"Other Teams Capabilities\" option within the dropdown menu titled \"Teams Agent or App Using Microsoft Teams SDK\" at coordinates (474, 210).",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -67,7 +67,9 @@
         "dhash:474:210:0:10:c0c89094b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_a60e64d9",
       "created_at": "2026-01-29T08:55:17.431100",
       "plan_id": "plan_9603bf77"
@@ -93,7 +95,9 @@
         "dhash:328:76:0:10:d0c0b094b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_4f022cc4",
       "created_at": "2026-01-29T08:55:17.451552",
       "plan_id": "plan_9603bf77"
@@ -119,7 +123,9 @@
         "dhash:473:77:0:10:d0b09494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_a8f39118",
       "created_at": "2026-01-29T08:55:17.468381",
       "plan_id": "plan_9603bf77"

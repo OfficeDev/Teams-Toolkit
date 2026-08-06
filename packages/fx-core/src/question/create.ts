@@ -1367,7 +1367,8 @@ export function selectApiOperationForRegenerateQuestion(): MultiSelectQuestion {
       if (res.isOk()) {
         inputs.supportedApisFromApiSpec = res.value;
       } else {
-        throw res.error;
+        const message = res.error.map((error) => error.content).join("\n");
+        throw new UserError("FxCore", "ListOpenAPISpecOperationsError", message, message);
       }
 
       if (!inputs.supportedApisFromApiSpec || inputs.supportedApisFromApiSpec.length === 0) {

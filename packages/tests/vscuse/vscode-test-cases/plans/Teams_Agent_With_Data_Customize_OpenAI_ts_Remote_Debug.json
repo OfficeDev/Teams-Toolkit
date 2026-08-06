@@ -52,7 +52,7 @@
         "x": 385,
         "y": 128
       },
-      "description": "Click the \"General Teams Agent\" dropdown option within the \"Teams Agent or App Using Teams AI Library\" selection popup in Visual Studio Code.",
+      "description": "Click the \"Teams Agent with Data\" dropdown option.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -64,7 +64,9 @@
         "dhash:385:128:0:10:c0c88694b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_9cbb7326",
       "created_at": "2025-11-28T03:57:39.889308",
       "plan_id": "plan_8076024c"

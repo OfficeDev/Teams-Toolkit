@@ -9,7 +9,6 @@
     "clean-build": "npm run clean && npm run build",
     "build": "rollup -c",
     "lint": "eslint \"**/*.ts\"",
-    "lint:staged": "lint-staged",
     "precommit": "lint-staged",
     "check-format": "prettier --list-different \"src/**/*.ts\" \"*.{js,json}\"",
     "format": "prettier --write --config ./.prettierrc.js --ignore-path ./.prettierignore \"src/**/*.ts\" \"*.{js,json}\""
@@ -46,12 +45,27 @@
     "adaptive-expressions": "^4.20.0",
     "adaptivecards": "~2.10.0",
     "adaptivecards-templating": "^2.1.0",
-    "markdown-it": "^13.0.2",
+    "markdown-it": "^14.3.0",
     "react": "^17.0.2"
   },
   "overrides": {
     "adaptive-expressions": {
-      "fast-xml-parser": "4.4.1"
+      "fast-xml-parser": "5.7.0",
+      "uuid": "11.1.1"
+    }
+  },
+  "pnpm": {
+    "overrides": {
+      "@xmldom/xmldom@^0.8.0": "0.8.13",
+      "brace-expansion@^1.0.0": "1.1.16",
+      "braces@^3.0.0": "3.0.3",
+      "flatted@^3.0.0": "3.4.2",
+      "fast-xml-parser@^4.0.0": "5.7.0",
+      "js-yaml@^4.0.0": "4.3.0",
+      "lodash@^4.0.0": "4.18.1",
+      "minimatch@^3.0.0": "3.1.5",
+      "picomatch@^2.0.0": "2.3.2",
+      "uuid@8.3.2": "11.1.1"
     }
   },
   "publishConfig": {
@@ -66,7 +80,8 @@
   ],
   "lint-staged": {
     "*.{js,jsx,css,ts,tsx}": [
-      "npx eslint --cache --fix --quiet"
+      "eslint --cache --fix --quiet",
+      "prettier --cache --write --ignore-unknown"
     ]
   }
 }

@@ -37,7 +37,7 @@ export default [
       "import-x/export": "off",
     },
   },
-  { files: ["src/**/*.ts"], ...header },
-  { files: ["src/**/*.ts"], ...promise },
-  { files: ["src/**/*.ts"], ...typeConfig },
+  { files: ["src/**/*.ts", "scripts/scenario-tooling/**/*.ts"], ...header },
+  { files: ["src/**/*.ts", "scripts/scenario-tooling/**/*.ts"], ...promise },
+  { files: ["src/**/*.ts", "scripts/scenario-tooling/**/*.ts"], ...typeConfig },
 ];

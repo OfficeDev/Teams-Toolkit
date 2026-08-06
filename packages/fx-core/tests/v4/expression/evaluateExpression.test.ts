@@ -10,6 +10,7 @@ import {
   ExpressionRuntimePort,
   NULL_VALUE,
   WhitelistFn,
+  collectFeatureFlagReferences,
   evaluateExpression,
 } from "../../../src/v4/expression/evaluateExpression";
 
@@ -313,5 +314,23 @@ describe("evaluateExpression (v4)", () => {
       )._unsafeUnwrap(),
       true
     );
+  });
+
+  it("collects every literal feature-flag reference without evaluating or short-circuiting", () => {
+    const result = collectFeatureFlagReferences({
+      expr: "(!featureFlag('UNDER_NOT') && (kind == 'x' || safeUpper(featureFlag('CALL_ARG')) == featureFlag(flagName))) || (missing == null && featureFlag('DUPLICATE')) || featureFlag('DUPLICATE') || featureFlag()",
+    });
+
+    assert.isTrue(result.isOk());
+    assert.deepEqual([...result._unsafeUnwrap()], ["UNDER_NOT", "CALL_ARG", "DUPLICATE"]);
+  });
+
+  it("returns a parse error when collecting references from a malformed expression", () => {
+    const result = collectFeatureFlagReferences({ expr: "featureFlag('A'" });
+
+    assert.isTrue(result.isErr());
+    const error = result._unsafeUnwrapErr();
+    assert.instanceOf(error, SystemError);
+    assert.strictEqual(error.name, EXPR_PARSE_ERROR);
   });
 });

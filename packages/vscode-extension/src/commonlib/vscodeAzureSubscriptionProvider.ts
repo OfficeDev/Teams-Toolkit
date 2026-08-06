@@ -5,11 +5,16 @@ import { SubscriptionClient, TenantIdDescription } from "@azure/arm-resources-su
 import { TokenCredential } from "@azure/core-auth";
 import * as vscode from "vscode";
 import * as azureEnv from "@azure/ms-rest-azure-env";
-import { AzureScopes } from "@microsoft/teamsfx-core";
+import { AzureScopes, isSovereignHigh } from "@microsoft/teamsfx-core";
 import { LoginFailureError } from "./codeFlowLogin";
 import { Environment } from "@azure/ms-rest-azure-env";
 
 export const Microsoft = "microsoft";
+export const MicrosoftSovereignCloud = "microsoft-sovereign-cloud";
+
+export function getConfiguredAuthProviderId(): string {
+  return isSovereignHigh() ? MicrosoftSovereignCloud : Microsoft;
+}
 
 // Licensed under the MIT license.
 export class VSCodeAzureSubscriptionProvider {
@@ -134,11 +139,10 @@ export async function getSessionFromVSCode(
   tenantId?: string,
   options?: vscode.AuthenticationGetSessionOptions
 ): Promise<vscode.AuthenticationSession | undefined> {
-  return await vscode.authentication.getSession(
-    Microsoft,
-    formScopesArg(scopes, tenantId),
-    options
-  );
+  const provider = getConfiguredAuthProviderId();
+  const scopeList = formScopesArg(scopes, tenantId);
+  const session = await vscode.authentication.getSession(provider, scopeList, options);
+  return session;
 }
 
 function ensureEndingSlash(value: string): string {
@@ -205,11 +209,23 @@ export interface AzureAuthentication {
 /**
  * Gets the configured Azure environment.
  *
- * @returns The configured Azure environment from the settings in the built-in authentication provider extension
+ * Derived from the same sovereign cloud source as `AzureScopes()` (the fx-core sovereign
+ * cloud feature flag) so the resource manager endpoint matches the audience of the token
+ * acquired for those scopes. Returning a mismatched endpoint (e.g. public ARM for a US
+ * Government token) causes `InvalidAuthenticationTokenAudience` (401) errors.
+ *
+ * @returns The Azure environment matching the configured sovereign cloud.
  */
 export function getConfiguredAzureEnv(): azureEnv.Environment & { isCustomCloud: boolean } {
+  if (isSovereignHigh()) {
+    return {
+      ...azureEnv.Environment.USGovernment,
+      isCustomCloud: false,
+    };
+  }
+
   return {
-    ...azureEnv.Environment.get(azureEnv.Environment.AzureCloud.name),
+    ...azureEnv.Environment.AzureCloud,
     isCustomCloud: false,
   };
 }

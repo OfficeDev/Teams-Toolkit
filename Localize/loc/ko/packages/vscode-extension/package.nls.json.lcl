@@ -3518,7 +3518,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Automate routine business tasks through conversation.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[대화를 통해 일상적인 비즈니스 작업을 자동화합니다.]]></Val>
+            <Val><![CDATA[대화를 통해 루틴 비즈니스 작업을 자동화합니다.]]></Val>
           </Tgt>
           <Prev Cat="Text">
             <Val><![CDATA[Automate repetitive workflows for common business processes in conversation]]></Val>
@@ -3566,7 +3566,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Automate routine tasks using simple commands in a chat.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[채팅에서 간단한 명령을 사용하여 일상적인 작업을 자동화합니다.]]></Val>
+            <Val><![CDATA[채팅에서 간단한 명령을 사용하여 루틴 작업을 자동화합니다.]]></Val>
           </Tgt>
           <Prev Cat="Text">
             <Val><![CDATA[Automate repetitive tasks with a simple command and response in conversation.]]></Val>

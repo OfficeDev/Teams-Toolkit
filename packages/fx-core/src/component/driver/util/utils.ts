@@ -40,10 +40,11 @@ export function createDriverContext(inputs: Inputs): DriverContext {
   const driverContext: DriverContext = {
     azureAccountProvider: TOOLS.tokenProvider.azureAccountProvider,
     m365TokenProvider: TOOLS.tokenProvider.m365TokenProvider,
+    signal: inputs.abortSignal as AbortSignal | undefined,
     ui: TOOLS.ui,
     progressBar: undefined,
     logProvider: TOOLS.logProvider,
-    telemetryReporter: TOOLS.telemetryReporter!,
+    telemetryReporter: TOOLS.telemetryReporter,
     projectPath: inputs.projectPath!,
     platform: inputs.platform,
   };

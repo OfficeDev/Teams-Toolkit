@@ -19,3 +19,6 @@ packages:
   -  "templates"
 onlyBuiltDependencies:
   - keytar
+overrides:
+  "hono@>=4.0.0 <4.12.27": "4.12.27"
+  "ip-address@>=10.0.0 <10.1.1": "10.2.0"

@@ -127,7 +127,9 @@
         "dhash:381:74:0:10:d0949094b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_4dda74af",
       "created_at": "2026-05-25T10:06:39.848602",
       "plan_id": "plan_a94bb561"
@@ -153,7 +155,9 @@
         "dhash:405:76:0:10:f0b09494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_25460bc8",
       "created_at": "2026-05-25T10:06:39.855674",
       "plan_id": "plan_a94bb561"
@@ -213,7 +217,7 @@
         "x": 1008,
         "y": 18
       },
-      "description": "Click the \"Close\" (X) button on the \"m365agents.yml\" file tab in the Visual Studio Code editor interface to close the file.",
+      "description": "Click the \"Close\" (X) button in the top-right corner of the Visual Studio Code window title bar.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -349,7 +353,7 @@
         "x": 954,
         "y": 126
       },
-      "description": "Click the English language selection button (flag icon) in the upper-right corner of the VS Code welcome screen modal.",
+      "description": "Click the close (X) button in the upper-right corner of the \"Welcome to VS Code\" modal.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -375,7 +379,7 @@
         "x": 27,
         "y": 303
       },
-      "description": "Click the \"Map\" extension icon in the left sidebar of Visual Studio Code to open the Map extension panel.",
+      "description": "Click the \"Microsoft 365 Agents Toolkit\" icon in the left sidebar of Visual Studio Code to open its panel.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

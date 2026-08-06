@@ -44,7 +44,7 @@
         "x": 400,
         "y": 84
       },
-      "description": "Click on \"Agents for Microsoft 365 Copilot\" option in the dropdown menu under the \"New Project\" modal.",
+      "description": "Click on the \"Declarative Agent\" option in the dropdown menu under the \"New Project\" modal.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -174,7 +174,7 @@
         "x": 455,
         "y": 73
       },
-      "description": "Click the \"Default folder\" input field in the \"Workspace Folder\" dropdown to specify the directory path.",
+      "description": "Click the \"Default folder\" option in the \"Workspace Folder\" dropdown to select the default directory path.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

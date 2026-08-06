@@ -1,5 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
+import AdmZip from "adm-zip";
 import fs from "fs-extra";
 import ignore from "ignore";
 import * as os from "os";
@@ -78,5 +79,20 @@ describe("Test", () => {
 
     const res = await zipFolderAsync(tmp, path.join(tmp, "tmp.zip"), ignore());
     chai.expect(res).to.equal(readStreamStub.mock.results[0].value);
+  });
+
+  it("should continue when an added zip entry cannot be retrieved", async () => {
+    const zip = new AdmZip();
+    const getEntryStub = vi.spyOn(zip, "getEntry").mockReturnValue(null);
+    vi.spyOn(fileOperationDeps, "createZip").mockReturnValue(zip);
+    vi.spyOn(fileOperationDeps, "writeZip").mockResolvedValue({});
+    const readStream = fs.createReadStream(tmpFile);
+    vi.spyOn(fileOperationDeps, "createReadStream").mockReturnValue(readStream);
+
+    const result = await zipFolderAsync(tmp, path.join(tmp, "tmp.zip"), ignore());
+
+    chai.expect(getEntryStub).toHaveBeenCalledWith("test.txt");
+    chai.expect(result).to.equal(readStream);
+    readStream.destroy();
   });
 });

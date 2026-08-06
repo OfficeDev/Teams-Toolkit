@@ -54,6 +54,11 @@ on:
         required: false
         type: number
         default: 80
+      max_parallel:
+        description: "Maximum number of per-plan matrix jobs to run concurrently."
+        required: false
+        type: number
+        default: 100
       no_failed_step_text:
         required: false
         type: string
@@ -104,12 +109,15 @@ jobs:
           INPUT_TEST_PLAN: ${{ inputs.test_plan }}
         run: |
           if [ -z "$INPUT_TEST_PLAN" ]; then
-            # Use caller-supplied find predicate to enumerate default plans
-            plans=$(eval "find packages/tests/vscuse/vscode-test-cases/plans/ -maxdepth 1 -type f $PLAN_FIND_ARGS -exec basename {} .json \;" | jq -R -s -c 'split("\n")[:-1]')
+            # Use caller-supplied find predicate to enumerate default plans.
+            # Shuffle so that similarly named plans (e.g. Teams_*, DA_*) are spread
+            # across parallel batches instead of all landing in the same one, which
+            # reduces contention on the shared test tenant / Azure resources.
+            plans=$(eval "find packages/tests/vscuse/vscode-test-cases/plans/ -maxdepth 1 -type f $PLAN_FIND_ARGS -exec basename {} .json \;" | shuf | jq -R -s -c 'split("\n")[:-1]')
             echo "plans=$plans" >> $GITHUB_OUTPUT
             echo "Found test plans: $plans"
           else
-            input_plans=$(echo "$INPUT_TEST_PLAN" | tr ',' '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | jq -R -s -c 'split("\n")[:-1]')
+            input_plans=$(echo "$INPUT_TEST_PLAN" | tr ',' '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | shuf | jq -R -s -c 'split("\n")[:-1]')
             echo "plans=$input_plans" >> $GITHUB_OUTPUT
             echo "Using input test plans: $input_plans"
           fi
@@ -124,7 +132,7 @@ jobs:
       matrix:
         test_plan: ${{ fromJson(needs.discover-test-plans.outputs.test-plans) }}
       fail-fast: false
-      max-parallel: 100
+      max-parallel: ${{ inputs.max_parallel }}
     permissions:
       contents: read
       packages: write
@@ -179,8 +187,22 @@ jobs:
       GITHUB_MFA_SECRET: ${{ secrets.GH_MFA_SECRET }}
       #Additional value:
       DA_MCP_ENTRA_SSO_CLIENTID: ${{ secrets.DA_MCP_ENTRA_SSO_CLIENTID }}
-      DA_MCP_OAUTH_CLIENT_SECERT: ${{ secrets.DA_MCP_OAUTH_CLIENT_SECERT }}
+      DA_MCP_OAUTH_CLIENT_SECRET: ${{ secrets.DA_MCP_OAUTH_CLIENT_SECRET }}
       DA_MCP_OAUTH_CLIENTID: ${{ secrets.DA_MCP_OAUTH_CLIENTID }}
+
+      # Credentials registered by the da/api-plugin-from-existing-api cases. The
+      # cases only register them through apiKey/register and oauth/register; they
+      # never call the sample API. Defaults reuse the literals the retired
+      # DA_Add_Action_Import_Existing_API_* plans typed, so no secret is required.
+      EXISTING_API_KEY: ${{ secrets.EXISTING_API_KEY || 'faketestvalue' }}
+      EXISTING_API_BEARER_TOKEN: ${{ secrets.EXISTING_API_BEARER_TOKEN || 'my-secret-value' }}
+      EXISTING_API_OAUTH_CLIENT_ID: ${{ secrets.EXISTING_API_OAUTH_CLIENT_ID || 'fake_client_id' }}
+      EXISTING_API_OAUTH_CLIENT_SECRET: ${{ secrets.EXISTING_API_OAUTH_CLIENT_SECRET || 'fake_clientsecret' }}
+
+      # OpenAI (openai.com). No test subscription exists, so this falls back to the
+      # same fake key the existing UI tests use. Cases using this path must not
+      # assert a real model completion.
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || 'fake' }}
 
       # SQL server
       SQL_USER: ${{ secrets.SQL_USER }}
@@ -220,8 +242,8 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install dependencies for download actions
-        run: npm install @octokit/auth-app @octokit/request @octokit/core node-fetch
+      - name: Install workflow Node dependencies
+        run: npm install @octokit/auth-app @octokit/request @octokit/core node-fetch yaml@2.8.3
         shell: bash
 
       - name: Run download script
@@ -307,8 +329,10 @@ jobs:
           fi
 
       - name: Run test
+        env:
+          TEST_PLAN: ${{ matrix.test_plan }}
         run: |
-          echo "🚀 Running test plan: ${{ matrix.test_plan }}"
+          echo "🚀 Running test plan: $TEST_PLAN"
           echo "Using image tag: ${{ inputs.image_tag }}"
           echo "Test execution started at: $(date)"
 
@@ -316,7 +340,8 @@ jobs:
           cd packages/tests/vscuse/vscode-test-cases
           python -m venv .venv
           source .venv/bin/activate
-          vscuse execute --config-file ./config.yaml --groups-dir groups ./plans/${{ matrix.test_plan }}.json 2>&1 | tee run_result.txt
+          node ./engine/prepare-vscuse-config.cjs ./config.yaml "./plans/$TEST_PLAN.json" ./config.run.yaml
+          vscuse execute --config-file ./config.run.yaml --groups-dir groups "./plans/$TEST_PLAN.json" 2>&1 | tee run_result.txt
 
       - name: Extract errors from run result
         if: always()
@@ -364,12 +389,17 @@ jobs:
             echo "No run_result.txt found" > error.txt
           fi
 
+          # Copy to a uniquely named file so the report job can recover the test
+          # plan identity from the file name even when download-artifact flattens a
+          # single artifact into the download root (no per-artifact subdirectory).
+          cp error.txt "error-${{ matrix.test_plan }}-${{ github.run_id }}.txt"
+
       - name: Upload error file
         if: always()
         uses: actions/upload-artifact@v6
         with:
           name: error-file-${{ matrix.test_plan }}-${{ github.run_id }}
-          path: error.txt
+          path: error-${{ matrix.test_plan }}-${{ github.run_id }}.txt
           retention-days: 7
           if-no-files-found: ignore
 
@@ -415,7 +445,7 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
-      - name : Login to Azure
+      - name: Login to Azure
         if: always()
         uses: azure/login@v2
         with:
@@ -436,7 +466,7 @@ jobs:
 
           Write-Host "🌐Here is the report: $storageUrl"
 
-          echo "$storageUrl" > storage_url.txt
+          echo "$storageUrl" > "storage_url-${{ matrix.test_plan }}-${{ github.run_id }}.txt"
 
           az storage blob upload-batch `
             --account-name $account `
@@ -452,7 +482,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: storage-url-${{ matrix.test_plan }}-${{ github.run_id }}
-          path: storage_url.txt
+          path: storage_url-${{ matrix.test_plan }}-${{ github.run_id }}.txt
           retention-days: 7
           if-no-files-found: ignore
 
@@ -523,12 +553,14 @@ jobs:
         with:
           pattern: storage-url-*
           path: /tmp/storage-urls
+          merge-multiple: true
 
       - name: Download error files
         uses: actions/download-artifact@v7
         with:
           pattern: error-file-*
           path: /tmp/error-files
+          merge-multiple: true
 
       - name: Process storage URLs
         shell: bash
@@ -540,13 +572,13 @@ jobs:
             echo "{" > /tmp/url_mapping.json
             first_entry=true
 
-            find /tmp/storage-urls -type f -name "storage_url.txt" | while read file; do
-              dir_name=$(basename $(dirname "$file"))
-              run_id=$(echo "$dir_name" | rev | cut -d'-' -f1 | rev)
-              test_plan=$(echo "$dir_name" | sed "s/^storage-url-//" | sed "s/-${run_id}$//")
-              case_run_id="${test_plan}-${run_id}"
+            find /tmp/storage-urls -type f -name "storage_url-*.txt" | while read file; do
+              # Identity is encoded in the file name (storage_url-<test_plan>-<run_id>.txt)
+              # rather than the parent directory, so this works whether download-artifact
+              # nests each artifact in its own folder or flattens a single one.
+              case_run_id=$(basename "$file" | sed "s/^storage_url-//" | sed "s/\.txt$//")
 
-              echo "Processing: dir_name=$dir_name, test_plan=$test_plan, run_id=$run_id, case_run_id=$case_run_id"
+              echo "Processing: file=$file, case_run_id=$case_run_id"
 
               content_json=$(cat "$file" | tr -d '\n' | tr -d '\r' | jq -Rs .)
 
@@ -565,7 +597,7 @@ jobs:
             echo "Generated JSON mapping:"
             cat /tmp/url_mapping.json
 
-            total_urls=$(find /tmp/storage-urls -type f -name "storage_url.txt" | wc -l)
+            total_urls=$(find /tmp/storage-urls -type f -name "storage_url-*.txt" | wc -l)
             echo "Total storage URL files processed: $total_urls"
           else
             echo "No storage URL artifacts found"
@@ -583,13 +615,12 @@ jobs:
             echo "{" > /tmp/error_mapping.json
             first_entry=true
 
-            find /tmp/error-files -type f -name "error.txt" | while read file; do
-              dir_name=$(basename $(dirname "$file"))
-              run_id=$(echo "$dir_name" | rev | cut -d'-' -f1 | rev)
-              test_plan=$(echo "$dir_name" | sed "s/^error-file-//" | sed "s/-${run_id}$//")
-              case_run_id="${test_plan}-${run_id}"
+            find /tmp/error-files -type f -name "error-*.txt" | while read file; do
+              # Identity is encoded in the file name (error-<test_plan>-<run_id>.txt),
+              # which survives both the nested and flattened download-artifact layouts.
+              case_run_id=$(basename "$file" | sed "s/^error-//" | sed "s/\.txt$//")
 
-              echo "Processing error: dir_name=$dir_name, test_plan=$test_plan, run_id=$run_id, case_run_id=$case_run_id"
+              echo "Processing error: file=$file, case_run_id=$case_run_id"
 
               content_json=$(cat "$file" | tr -d '\n' | tr -d '\r' | jq -Rs .)
 

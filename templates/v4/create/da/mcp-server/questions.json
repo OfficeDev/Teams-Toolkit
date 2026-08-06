@@ -1,12 +1,13 @@
 {
-  "$schema": "../../../schema/question.schema.json",
+  "$schema": "../../../schema/questions.schema.json",
   "questions": [
     {
       "name": "mcpServerType",
       "type": "singleSelect",
       "title": "MCP Server Type",
-      "keyPrefix": "template.daMcpServer.mcpServerType",
+      "keyPrefix": "core.createProjectQuestion.mcpServerType",
       "optionsFrom": "mcp.serverTypes",
+      "optionsFromParams": { "selected": { "from": "mcpServerType" } },
       "skipSingleOption": true,
       "default": "remote"
     },
@@ -14,61 +15,70 @@
       "name": "mcpServerUrl",
       "type": "text",
       "title": "MCP Server URL",
-      "keyPrefix": "template.daMcpServer.mcpServerUrl",
+      "keyPrefix": "core.createProjectQuestion.mcpForDa.ServerUrl",
       "condition": { "expr": "mcpServerType == 'remote'" },
-      "validation": "uri"
+      "validation": "mcp.serverUrl"
     },
     {
       "name": "selectedLocalServers",
       "type": "multiSelect",
-      "title": "Local MCP Servers",
-      "keyPrefix": "template.daMcpServer.localServers",
+      "title": "Local MCP Server",
+      "keyPrefix": "core.createProjectQuestion.mcpLocalServer",
       "optionsFrom": "mcp.localServers",
       "condition": { "expr": "mcpServerType == 'local'" }
     },
     {
       "name": "authType",
       "type": "singleSelect",
-      "title": "Authentication",
-      "keyPrefix": "template.daMcpServer.authType",
+      "title": "Select Authentication Type",
+      "keyPrefix": "core.createProjectQuestion.mcpForDa.AuthType",
       "condition": { "expr": "mcpServerType == 'remote'" },
       "staticOptions": [
         { "id": "oauth", "label": "OAuth (with static registration)" },
-        { "id": "oauth-dynamic", "label": "OAuth (with dynamic registration)",
-          "condition": { "expr": "featureFlag('TEAMSFX_MCP_FOR_DA_DT') && featureFlag('TEAMSFX_MCP_FOR_DA_DCR')" } },
+        {
+          "id": "oauth-dynamic",
+          "label": "OAuth (with dynamic registration)",
+          "condition": {
+            "expr": "featureFlag('TEAMSFX_MCP_FOR_DA_DT') && featureFlag('TEAMSFX_MCP_FOR_DA_DCR')"
+          }
+        },
         { "id": "entra-sso", "label": "Entra SSO" },
         { "id": "none", "label": "None" }
       ],
-      "default": "none"
+      "default": "oauth"
     },
     {
       "name": "oauthClientId",
       "type": "text",
       "title": "OAuth Client ID",
-      "keyPrefix": "template.daMcpServer.oauthClientId",
-      "condition": { "expr": "authType == 'oauth'" }
+      "keyPrefix": "core.createProjectQuestion.mcpForDa.ClientId",
+      "condition": { "expr": "authType == 'oauth'" },
+      "validation": "mcp.oauthClientIdRequired"
     },
     {
       "name": "oauthClientSecret",
       "type": "text",
+      "password": true,
       "title": "OAuth Client Secret",
-      "keyPrefix": "template.daMcpServer.oauthClientSecret",
-      "condition": { "expr": "authType == 'oauth'" }
+      "keyPrefix": "core.createProjectQuestion.mcpForDa.ClientSecret",
+      "condition": { "expr": "authType == 'oauth'" },
+      "validation": "mcp.oauthClientSecretRequired"
     },
     {
       "name": "oauthScopes",
       "type": "text",
-      "title": "OAuth Scopes",
-      "keyPrefix": "template.daMcpServer.oauthScopes",
+      "title": "OAuth Scopes (optional)",
+      "keyPrefix": "core.createProjectQuestion.mcpForDa.Scopes",
       "condition": { "expr": "authType == 'oauth'" },
       "optional": true
     },
     {
       "name": "entraClientId",
       "type": "text",
-      "title": "Entra Client ID",
-      "keyPrefix": "template.daMcpServer.entraClientId",
-      "condition": { "expr": "authType == 'entra-sso'" }
+      "title": "Microsoft Entra Application (Client) ID",
+      "keyPrefix": "core.createProjectQuestion.mcpForDa.EntraClientId",
+      "condition": { "expr": "authType == 'entra-sso'" },
+      "validation": "mcp.entraClientIdRequired"
     }
   ]
 }

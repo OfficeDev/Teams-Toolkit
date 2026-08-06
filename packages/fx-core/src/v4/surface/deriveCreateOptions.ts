@@ -83,6 +83,9 @@ function q2Option(question: QuestionSpec): Result<CLICommandOption, FxError> {
   const choices = question.staticOptions?.map((item) => item.id) ?? [];
   if (type.value === "array") {
     const option: CLICommandOption = { ...base, type: "array" };
+    if (Array.isArray(question.default)) {
+      option.default = question.default;
+    }
     if (choices.length > 0) {
       option.choices = choices;
     }
@@ -93,7 +96,7 @@ function q2Option(question: QuestionSpec): Result<CLICommandOption, FxError> {
   }
 
   const option: CLICommandOption = { ...base, type: "string" };
-  if (question.default !== undefined) {
+  if (typeof question.default === "string") {
     option.default = question.default;
   }
   if (choices.length > 0) {
@@ -106,7 +109,7 @@ function q2Option(question: QuestionSpec): Result<CLICommandOption, FxError> {
 }
 
 function choiceSet(option: CLICommandOption): Set<string> {
-  const choices = option.type === "boolean" ? [] : option.choices ?? [];
+  const choices = option.type === "boolean" ? [] : (option.choices ?? []);
   return new Set(choices);
 }
 

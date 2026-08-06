@@ -34,7 +34,11 @@ import { manifestUtils } from "../component/driver/teamsApp/utils/ManifestUtils"
 import { pluginManifestUtils } from "../component/driver/teamsApp/utils/PluginManifestUtils";
 import { normalizePath } from "../component/driver/teamsApp/utils/utils";
 import * as declarativeAgentHelperModule from "../component/generator/declarativeAgent/helper";
-import { deriveMCPServerNameFromUrl } from "../component/generator/declarativeAgent/helper";
+import {
+  deriveMCPNamespaceFromUrl,
+  deriveMCPRegistrationIdFromUrl,
+  deriveMCPServerNameFromUrl,
+} from "../component/generator/declarativeAgent/helper";
 import { templateDefaultOnActionError } from "../component/generator/generator";
 import { GeneratorContext } from "../component/generator/generatorAction";
 import * as openApiSpecHelperModule from "../component/generator/openApiSpec/helper";
@@ -46,16 +50,17 @@ import {
 import { QuestionMW } from "../component/middleware/questionMW";
 import { outputScaffoldingWarningMessage } from "../component/utils/common";
 import {
+  MCP_AUTH_PLACEHOLDER_WARNING_TYPES,
   ResolvedMCPAuthEndpoints,
   deriveMCPManifestOAuth,
   injectMCPAuthActionToYml,
+  persistMCPAuthCredentialEnvVars,
   resolveMCPAuthEndpoints,
 } from "../component/utils/mcpAuthScaffolder";
 import { pathUtils } from "../component/utils/pathUtils";
 import { UserCancelError, assembleError } from "../error/common";
 import { ActionStartOptions, QuestionNames } from "../question/constants";
 import { CreateNewPluginManifestSentinel } from "../question/scaffold/vsc/teamsProjectTypeNode";
-import type { Answers, BuildTarget } from "../v4";
 import { ConcurrentLockerMW } from "./middleware/concurrentLocker";
 import { ErrorHandlerMW } from "./middleware/errorHandler";
 import { modifyProjectFrontDoor } from "./modifyProjectFrontDoor";
@@ -75,19 +80,6 @@ export interface ScaffoldAddMcpServerFromV4Options {
 function targetRelativePath(projectPath: string, filePath: string): string {
   const absolute = path.isAbsolute(filePath) ? filePath : path.resolve(projectPath, filePath);
   return path.relative(projectPath, absolute).replace(/\\/g, "/");
-}
-
-function stringAnswer(answers: Answers, key: string): string | undefined {
-  const value = answers[key];
-  return typeof value === "string" ? value : undefined;
-}
-
-function unsupportedModifyTarget(target: BuildTarget): SystemError {
-  return new SystemError({
-    source: "Scaffold",
-    name: "UnsupportedModifyEngine",
-    message: `The add MCP server flow does not handle the '${target.engine}' modify target '${target.templateId}'.`,
-  });
 }
 
 async function scaffoldAddMcpServerFromV4(
@@ -117,6 +109,14 @@ async function scaffoldAddMcpServerFromV4(
     );
     if (source.warning) {
       TOOLS.logProvider.warning(source.warning);
+    }
+    // Like the shipped add-action flow, this path has no scaffolding summary to fall back on,
+    // so an m365agents.yml left with auth placeholders has to be said out loud — otherwise
+    // provision fails later with an opaque error.
+    for (const warning of context.warnings ?? []) {
+      if (MCP_AUTH_PLACEHOLDER_WARNING_TYPES.includes(warning.type)) {
+        void TOOLS.ui.showMessage("warn", warning.content, false);
+      }
     }
   } catch (error) {
     return err(assembleError(error));
@@ -358,7 +358,7 @@ export class FxCoreDeclarativeAgentPart {
 
     if (mcpAuth === "OAuthPluginVault" && !!registrationId) {
       // insert oauth info in teamsapp.yaml
-      await injectMCPAuthActionToYml({
+      const injectResult = await injectMCPAuthActionToYml({
         ymlPath: pathUtils.getYmlFilePath(projectPath) as string,
         authType,
         authName: serverName,
@@ -366,6 +366,22 @@ export class FxCoreDeclarativeAgentPart {
         mcpServerUrl,
         endpoints: mcpAuthEndpoints,
       });
+      // This flow has no scaffolding summary to fall back on, so surface the placeholders
+      // directly — otherwise provision fails later with an opaque error.
+      if (injectResult.wellKnownUrlPlaceholderUsed) {
+        void context.userInteraction.showMessage(
+          "warn",
+          getLocalizedString("core.MCPForDA.mcpAuthDcrPlaceholderWarning"),
+          false
+        );
+      }
+      if (injectResult.oauthUrlPlaceholderUsed) {
+        void context.userInteraction.showMessage(
+          "warn",
+          getLocalizedString("core.MCPForDA.mcpAuthOAuthPlaceholderWarning"),
+          false
+        );
+      }
     }
     void context.userInteraction
       .showMessage(
@@ -428,6 +444,8 @@ export class FxCoreDeclarativeAgentPart {
     const isGenerateFromApiSpec =
       inputs[QuestionNames.ActionType] === ActionStartOptions.apiSpec().id;
     const isGenerateFromMCP = inputs[QuestionNames.ActionType] === ActionStartOptions.mcp().id;
+    const useMCPDTModifyFlow =
+      isGenerateFromMCP && featureFlagManager.getBooleanValue(FeatureFlags.MCPForDADT);
 
     // VS Code MCP "Add Action" flow: aligned with the "DA with MCP" scaffolding
     // behavior. Only the MCP server URL is collected from the user. The toolkit
@@ -441,13 +459,9 @@ export class FxCoreDeclarativeAgentPart {
     // OAuth registration, since the CLI has no equivalent notification UX.
     //
     // Under the Dynamic Tool Discovery (DT) flag this early redirect is skipped
-    // so that VS Code runs the same inline scaffolder as the CLI — the
-    // CodeLens "fetch action" hop is absorbed into add-action itself.
-    if (
-      isGenerateFromMCP &&
-      inputs.platform === Platform.VSCode &&
-      !featureFlagManager.getBooleanValue(FeatureFlags.MCPForDADT)
-    ) {
+    // so that VS Code runs the same inline scaffolder as the CLI. DT owns the
+    // generated content shape; it must not depend on the global v4 feature flag.
+    if (isGenerateFromMCP && inputs.platform === Platform.VSCode && !useMCPDTModifyFlow) {
       return await this.addPluginFromMCP(inputs, context);
     }
 
@@ -479,6 +493,58 @@ export class FxCoreDeclarativeAgentPart {
             teamsManifestPath
           )
         )
+      );
+    }
+
+    if (useMCPDTModifyFlow && featureFlagManager.getBooleanValue(FeatureFlags.V4Enabled)) {
+      const entryParams: Record<string, string> = {
+        teamsManifestPath: targetRelativePath(projectPath, teamsManifestPath),
+      };
+      const mcpServerUrl = inputs[QuestionNames.MCPForDAServerUrl];
+      if (typeof mcpServerUrl === "string") {
+        entryParams.mcpServerUrl = mcpServerUrl;
+      }
+      const authType = inputs[QuestionNames.MCPForDAAuthType];
+      if (typeof authType === "string") {
+        entryParams.authType = authType;
+      }
+      const appName = teamsManifest.name.short.replace("${{APP_NAME_SUFFIX}}", "");
+
+      return await fxCoreDeclarativeAgentDeps.modifyProjectFrontDoor(
+        inputs,
+        { addCapability: "add-action", actionSource: "mcp" },
+        entryParams,
+        {
+          resolveArtifactSnapshot: fxCoreDeclarativeAgentDeps.resolveV4TemplateArtifactSnapshot,
+          scaffoldV4: async (frontDoorInputs, target, answers, resolvedPackage) => {
+            const resolvedMcpServerUrl = answers.mcpServerUrl;
+            const resolvedTeamsManifestPath = answers.teamsManifestPath;
+            const resolvedAuthType = answers.authType;
+            if (
+              typeof resolvedMcpServerUrl !== "string" ||
+              typeof resolvedTeamsManifestPath !== "string" ||
+              typeof resolvedAuthType !== "string"
+            ) {
+              return err(
+                new SystemError({
+                  source: "FxCore",
+                  name: "InvalidAddMcpServerAnswers",
+                  message: "The MCP add-action inputs are incomplete.",
+                })
+              );
+            }
+            return await fxCoreDeclarativeAgentDeps.scaffoldAddMcpServerFromV4({
+              templateId: target.templateId,
+              projectPath,
+              platform: frontDoorInputs.platform,
+              teamsManifestPath: resolvedTeamsManifestPath,
+              appName,
+              mcpServerUrl: resolvedMcpServerUrl,
+              authType: resolvedAuthType,
+              resolvedPackage,
+            });
+          },
+        }
       );
     }
     const gptManifestFilePathRes = await copilotGptManifestUtils.getManifestPath(teamsManifestPath);
@@ -543,10 +609,7 @@ export class FxCoreDeclarativeAgentPart {
     // VS Code MCP inline flow (DT on) skips the confirmation modal to match
     // the leaner `updateActionWithMCP` UX; writes happen as soon as the last
     // required answer is provided. CLI interactive and other flows still show it.
-    const skipConfirmModal =
-      isGenerateFromMCP &&
-      inputs.platform === Platform.VSCode &&
-      featureFlagManager.getBooleanValue(FeatureFlags.MCPForDADT);
+    const skipConfirmModal = useMCPDTModifyFlow && inputs.platform === Platform.VSCode;
 
     if (!skipConfirmModal) {
       const confirmRes = await context.userInteraction.showMessage(
@@ -652,59 +715,174 @@ export class FxCoreDeclarativeAgentPart {
         );
       }
 
-      // Dynamic Tool Discovery flow: the v4 modify package renders the dynamic
-      // plugin manifest and reuses the same MCP auth steps as create.
-      if (featureFlagManager.getBooleanValue(FeatureFlags.MCPForDADT)) {
+      // Dynamic Tool Discovery flow: write a URL-only plugin manifest directly
+      // and reuse the shared MCP auth injector. DT owns the generated content
+      // and must NOT depend on the v4 modify front door. The runtime carries
+      // only the MCP server URL (dynamic discovery is the host default) — no
+      // static tools list, no `mcp_tool_description`, no
+      // `enable_dynamic_discovery`.
+      if (useMCPDTModifyFlow) {
         const authType = inputs[QuestionNames.MCPForDAAuthType] as string | undefined;
-        const dispatchRes = await fxCoreDeclarativeAgentDeps.modifyProjectFrontDoor(
-          inputs,
-          { addCapability: "add-action", actionSource: "mcp" },
-          {
-            mcpServerUrl,
-            teamsManifestPath: targetRelativePath(projectPath, teamsManifestPath),
-            authType: authType || "none",
-          },
-          {
-            scaffoldV4: async (
-              _inputs: Inputs,
-              target: BuildTarget,
-              answers: Answers,
-              resolvedPackage?: ResolvedV4ChannelPackage
-            ) => {
-              if (target.engine !== "v4") {
-                return err(unsupportedModifyTarget(target));
-              }
-              const answerMcpServerUrl = stringAnswer(answers, "mcpServerUrl");
-              const answerAuthType = stringAnswer(answers, "authType") ?? "none";
-              if (answerMcpServerUrl === undefined) {
-                return err(
-                  new SystemError({
-                    source: "Scaffold",
-                    name: "ModifyInputMissing",
-                    message: "The add MCP server modify package did not resolve mcpServerUrl.",
-                  })
-                );
-              }
-              return fxCoreDeclarativeAgentDeps.scaffoldAddMcpServerFromV4({
-                templateId: target.templateId,
-                projectPath,
-                platform: inputs.platform,
-                teamsManifestPath,
-                appName: manifestRes.value.name?.short ?? path.basename(projectPath),
-                mcpServerUrl: answerMcpServerUrl,
-                authType: answerAuthType,
-                resolvedPackage,
-              });
+        // Name the plugin namespace + oauth/register action after the MCP server
+        // URL (shared verbatim with the create flow via deriveMCPNamespaceFromUrl
+        // / deriveMCPRegistrationIdFromUrl). This keeps one registration per
+        // server: re-adding the same server reuses the same `oauth/register`
+        // (idempotent on registrationId), while a different server gets its own.
+        const namespace = deriveMCPNamespaceFromUrl(mcpServerUrl);
+        const registrationId = deriveMCPRegistrationIdFromUrl(mcpServerUrl);
+
+        destinationPluginManifestPath =
+          await copilotGptManifestUtils.getDefaultNextAvailablePluginManifestPath(
+            appPackageFolder,
+            undefined
+          );
+
+        const pluginManifest: any = {
+          $schema: "https://developer.microsoft.com/json-schemas/copilot/plugin/v2.4/schema.json",
+          schema_version: "v2.4",
+          name_for_human: manifestRes.value.name?.short ?? path.basename(projectPath),
+          description_for_human: "Action powered by MCP server",
+          contact_email: "publisher-email@example.com",
+          namespace,
+          functions: [],
+          runtimes: [
+            {
+              type: "RemoteMCPServer",
+              spec: { url: mcpServerUrl },
+              run_for_functions: ["*"],
+              auth: deriveMCPManifestOAuth(authType, registrationId) ?? { type: "None" },
             },
-            callCoreMethod: (_inputs: Inputs, target: BuildTarget) =>
-              Promise.resolve(err(unsupportedModifyTarget(target))),
-            resolveArtifactSnapshot: fxCoreDeclarativeAgentDeps.resolveV4TemplateArtifactSnapshot,
+          ],
+        };
+
+        if (authType && authType !== "none") {
+          // Uppercased server name drives the credential env-var suffix
+          // (`MCP_DA_OAUTH_CLIENT_ID_<NAME>` ...). Shared with the create flow so
+          // a created project and a re-add of the same server reuse the same vars.
+          const serverName = deriveMCPServerNameFromUrl(mcpServerUrl).toUpperCase();
+          // The add question tree does not collect the auth-server metadata /
+          // well-known URL, so — mirroring the create flow — probe the MCP
+          // server to discover it when the caller didn't pass one. The result
+          // feeds resolveMCPAuthEndpoints so oauth/register + dcr/register get
+          // real authorization/token/well-known URLs. Only oauth / oauth-dynamic
+          // consume metadata; entra-sso resolves no endpoints, so skip the
+          // (10s-timeout) probe for it.
+          const needsMetadataProbe = authType === "oauth" || authType === "oauth-dynamic";
+          if (needsMetadataProbe && !inputs[QuestionNames.MCPForDAAuthMetadataUrl]) {
+            try {
+              const { probeMCPServerAuth } = await import("../component/utils/mcpToolFetcher");
+              const authProbe = await probeMCPServerAuth(mcpServerUrl);
+              if (authProbe.authMetadataUrl) {
+                inputs[QuestionNames.MCPForDAAuthMetadataUrl] = authProbe.authMetadataUrl;
+              }
+              // Same advisory warning the create flow raises on its DT branch: this branch
+              // never fetches tools, so a URL that is not an MCP endpoint would otherwise
+              // leave no trace — endpoint discovery falls back to the host and the action
+              // looks complete.
+              if (authProbe.endpointStatus === "notEndpoint") {
+                mcpWarnings.push({
+                  type: "mcpServerUrlNotAnEndpoint",
+                  content: getLocalizedString(
+                    "core.MCPForDA.mcpServerUrlNotAnEndpoint",
+                    mcpServerUrl,
+                    String(authProbe.responseStatus)
+                  ),
+                });
+              }
+            } catch {
+              // best-effort probe; endpoint resolution below tolerates undefined
+            }
           }
-        );
-        if (dispatchRes.isErr()) {
-          return err(dispatchRes.error);
+          // Endpoint resolution is best-effort and MUST NOT block the
+          // oauth/register injection: an unreachable server or missing metadata
+          // leaves endpoints empty and the injector still writes the action
+          // (with placeholder URLs) so the developer can fill them in later.
+          let endpoints: ResolvedMCPAuthEndpoints = {};
+          try {
+            endpoints = await resolveMCPAuthEndpoints(authType, inputs);
+          } catch (error: any) {
+            mcpWarnings.push({
+              type: "mcpAuthMetadataError",
+              content: getLocalizedString(
+                "core.MCPForDA.mcpAuthMetadataMissingError",
+                error.message
+              ),
+            });
+          }
+          try {
+            const ymlPath = pathUtils.getYmlFilePath(inputs.projectPath);
+            if (ymlPath) {
+              const injectResult = await injectMCPAuthActionToYml({
+                ymlPath,
+                authType,
+                authName: namespace,
+                registrationId,
+                mcpServerUrl,
+                endpoints,
+                persistCredentialEnvRefs: true,
+                serverName,
+                scopes: inputs[QuestionNames.MCPForDAScopes],
+              });
+              if (injectResult.wellKnownUrlPlaceholderUsed) {
+                mcpWarnings.push({
+                  type: "mcpAuthDcrWellKnownUrlPlaceholder",
+                  content: getLocalizedString("core.MCPForDA.mcpAuthDcrPlaceholderWarning"),
+                });
+              }
+              if (injectResult.oauthUrlPlaceholderUsed) {
+                mcpWarnings.push({
+                  type: "mcpAuthOAuthUrlPlaceholder",
+                  content: getLocalizedString("core.MCPForDA.mcpAuthOAuthPlaceholderWarning"),
+                });
+              }
+            }
+          } catch (error: any) {
+            mcpWarnings.push({
+              type: "mcpAuthMetadataError",
+              content: getLocalizedString(
+                "core.MCPForDA.mcpAuthMetadataMissingError",
+                error.message
+              ),
+            });
+          }
+          // Persist the client id / secret / scopes the user entered into env
+          // files so the `${{...}}` refs stamped above resolve at provision time.
+          // No-op for oauth-dynamic / none. Mirrors the create flow.
+          try {
+            await persistMCPAuthCredentialEnvVars({
+              projectPath,
+              authType,
+              serverName,
+              clientId: inputs[QuestionNames.MCPForDAClientId],
+              clientSecret: inputs[QuestionNames.MCPForDAClientSecret],
+              scopes: inputs[QuestionNames.MCPForDAScopes],
+            });
+          } catch (error: any) {
+            mcpWarnings.push({
+              type: "mcpAuthEnvPersistError",
+              content: getLocalizedString(
+                "core.MCPForDA.mcpAuthMetadataMissingError",
+                error.message
+              ),
+            });
+          }
         }
-        return ok(undefined);
+
+        await fs.ensureFile(destinationPluginManifestPath);
+        await fs.writeJSON(destinationPluginManifestPath, pluginManifest, { spaces: 4 });
+
+        const addActionRes = await copilotGptManifestUtils.addAction(
+          declarativeCopilotManifestPath,
+          actionId,
+          normalizePath(path.relative(appPackageFolder, destinationPluginManifestPath), true)
+        );
+        if (addActionRes.isErr()) {
+          return err(addActionRes.error);
+        }
+
+        for (const warning of mcpWarnings) {
+          context.logProvider.warning(warning.content);
+        }
       } else {
         // Load tools from file if provided and not yet loaded
         const existingTools = inputs[QuestionNames.MCPForDAAvailableTools];
@@ -878,7 +1056,7 @@ export class FxCoreDeclarativeAgentPart {
               const endpoints = await resolveMCPAuthEndpoints(authType, inputs);
               const ymlPath = pathUtils.getYmlFilePath(inputs.projectPath);
               if (ymlPath) {
-                await injectMCPAuthActionToYml({
+                const injectResult = await injectMCPAuthActionToYml({
                   ymlPath,
                   authType,
                   authName: actionId,
@@ -886,6 +1064,18 @@ export class FxCoreDeclarativeAgentPart {
                   mcpServerUrl,
                   endpoints,
                 });
+                if (injectResult.wellKnownUrlPlaceholderUsed) {
+                  mcpWarnings.push({
+                    type: "mcpAuthDcrWellKnownUrlPlaceholder",
+                    content: getLocalizedString("core.MCPForDA.mcpAuthDcrPlaceholderWarning"),
+                  });
+                }
+                if (injectResult.oauthUrlPlaceholderUsed) {
+                  mcpWarnings.push({
+                    type: "mcpAuthOAuthUrlPlaceholder",
+                    content: getLocalizedString("core.MCPForDA.mcpAuthOAuthPlaceholderWarning"),
+                  });
+                }
               }
             } catch (error: any) {
               mcpWarnings.push({
@@ -918,6 +1108,26 @@ export class FxCoreDeclarativeAgentPart {
           }
         }
       }
+
+      // An unreplaced placeholder guarantees a provision failure later, and the output channel
+      // is easy to miss — more so here, where the action is about to report success. Raise this
+      // one case to a notification, as the create flow does.
+      const placeholderWarning = mcpWarnings.find(
+        (warning) =>
+          warning.type === "mcpAuthDcrWellKnownUrlPlaceholder" ||
+          warning.type === "mcpAuthOAuthUrlPlaceholder"
+      );
+      if (placeholderWarning && inputs.platform === Platform.VSCode) {
+        const openYml = getLocalizedString("core.MCPForDA.openYmlFile");
+        const ymlPath = pathUtils.getYmlFilePath(inputs.projectPath);
+        void context.userInteraction
+          .showMessage("warn", placeholderWarning.content, false, openYml)
+          .then((userRes) => {
+            if (userRes.isOk() && userRes.value === openYml && ymlPath) {
+              void TOOLS?.ui?.openFile?.(ymlPath);
+            }
+          });
+      }
     } else {
       const addPluginRes = await declarativeAgentHelperModule.addExistingPlugin(
         declarativeCopilotManifestPath,
@@ -943,7 +1153,7 @@ export class FxCoreDeclarativeAgentPart {
         .showMessage("info", successMessage, false, viewPluginManifest)
         .then((userRes) => {
           if (userRes.isOk() && userRes.value === viewPluginManifest) {
-            context.telemetryReporter.sendTelemetryEvent(
+            context.telemetryReporter?.sendTelemetryEvent(
               TelemetryEvent.ViewPluginManifestAfterAdded
             );
             void TOOLS?.ui?.openFile?.(destinationPluginManifestPath);

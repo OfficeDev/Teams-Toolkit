@@ -46,7 +46,7 @@
         "x": 307,
         "y": 132
       },
-      "description": "Click the \"Teams Agent with Data\" dropdown option in the \"Teams Agent or App Using Teams AI Library\" selection menu within the Microsoft 365 Agents Toolkit interface in Visual Studio Code.",
+      "description": "Click the \"Teams Agent with Data\" dropdown option.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -58,7 +58,9 @@
         "dhash:307:132:0:10:c0c88694b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_4c2d549c",
       "created_at": "2025-12-02T07:18:21.120044",
       "plan_id": "plan_287cbe00"
@@ -84,7 +86,9 @@
         "dhash:288:87:0:10:c0c0b094b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_cb3da780",
       "created_at": "2025-12-02T07:18:21.130167",
       "plan_id": "plan_287cbe00"

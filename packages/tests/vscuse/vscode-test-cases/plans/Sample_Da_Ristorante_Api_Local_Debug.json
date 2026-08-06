@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2.0,
       "step_retry_timeout": 0.0
     },
-    "total_steps": 18,
+    "total_steps": 17,
     "created_at": "2026-05-13T05:14:45.531565",
     "name": "Sample Da Ristorante Api Local Debug",
     "description": {
@@ -37,7 +37,6 @@
       "plan_dcd3b7c4",
       "step_373fa827",
       "step_5aca54bb",
-      "step_8751ce63",
       "step_7b7da1fc",
       "step_84e8ba69",
       "step_450b02f8",
@@ -349,30 +348,6 @@
       ],
       "screenshot": "step_5aca54bb",
       "created_at": "2026-05-13T06:16:35.371065",
-      "plan_id": "plan_b0d5be76"
-    },
-    {
-      "step_id": "step_8751ce63",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "f5"
-      },
-      "description": "Refresh the Microsoft 365 Copilot chat interface in Google Chrome by pressing the F5 key.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:11d1c7f4b8c6c4c0"
-      ],
-      "postconditions": [],
-      "tags": [
-        "force_run:true"
-      ],
-      "screenshot": "step_8751ce63",
-      "created_at": "2026-05-13T06:26:42.376866",
       "plan_id": "plan_b0d5be76"
     },
     {

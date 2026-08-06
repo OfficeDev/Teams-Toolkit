@@ -98,7 +98,9 @@
         "dhash:354:88:0:10:c8c88094b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_74a7b615",
       "created_at": "2026-01-13T05:43:04.334093",
       "plan_id": "plan_5dff80b2"
@@ -129,7 +131,9 @@
         "dhash:372:83:0:10:c0c0b094b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_228287d5",
       "created_at": "2026-01-13T05:43:04.344141",
       "plan_id": "plan_5dff80b2"
@@ -160,7 +164,9 @@
         "dhash:277:75:0:10:f0b09494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_3895cf9c",
       "created_at": "2026-01-13T05:43:04.353737",
       "plan_id": "plan_5dff80b2"
@@ -189,7 +195,9 @@
         "dhash:512:384:0:20:328c2a2323032421"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_41348483",
       "created_at": "2026-01-13T05:43:04.367312",
       "plan_id": "plan_5dff80b2"
@@ -218,7 +226,9 @@
         "dhash:512:384:0:20:e4c048672303a421"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_7cb3871c",
       "created_at": "2026-01-13T05:43:04.374379",
       "plan_id": "plan_5dff80b2"
@@ -247,7 +257,9 @@
         "dhash:512:384:0:20:cc8422232303a421"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_010a4e75",
       "created_at": "2026-01-13T05:43:04.381409",
       "plan_id": "plan_5dff80b2"
@@ -597,7 +609,7 @@
         "x": 24,
         "y": 57
       },
-      "description": "Click the \"MICROSOFT 365 AGENTS TOOLKIT\" panel icon in the Visual Studio Code sidebar to expand or focus the toolkit panel.",
+      "description": "Click the \"Explorer\" icon in the Visual Studio Code Activity Bar to open the Explorer panel.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -649,7 +661,7 @@
         "x": 114,
         "y": 145
       },
-      "description": "Click the editable text field for renaming the \"build\" folder in the File Explorer panel of Visual Studio Code.",
+      "description": "Click the \"build\" folder within the appPackage folder in the Explorer panel of Visual Studio Code to expand its contents.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

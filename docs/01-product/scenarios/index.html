@@ -1,410 +1,487 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Product Human-Facing Index</title>
-  <link rel="stylesheet" href="../_assets/product-review/product-review.css">
-  <style>
-    body {
-      margin: 0;
-      height: 100vh;
-      display: grid;
-      grid-template-columns: 320px 1fr;
-      background: var(--paper);
-    }
-
-    .sidebar {
-      height: 100vh;
-      overflow-y: auto;
-      border-right: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.7);
-      padding: 22px 18px;
-    }
-
-    .sidebar > header,
-    .sidebar > main,
-    .sidebar > footer {
-      width: auto;
-      margin: 0;
-      padding: 0;
-    }
-
-    .sidebar > header { margin-bottom: 18px; }
-    .sidebar .eyebrow { margin-bottom: 6px; }
-    .sidebar h1 {
-      font-family: inherit;
-      font-size: 1.35rem;
-      line-height: 1.2;
-    }
-    .sidebar .intro {
-      margin-top: 8px;
-      font-size: 0.85rem;
-    }
-
-    .sidebar section + section { margin-top: 22px; }
-    .sidebar .section-head {
-      padding-bottom: 6px;
-      align-items: baseline;
-    }
-    .sidebar .section-head p { display: none; }
-    .sidebar h2 {
-      font-size: 0.78rem;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--muted);
-    }
-
-    .sidebar .tree { margin-top: 8px; }
-    .sidebar .tree ul {
-      margin: 4px 0 0 10px;
-      padding-left: 10px;
-    }
-    .sidebar .tree li { margin: 2px 0; }
-
-    .sidebar details {
-      padding: 4px 6px;
-      border: none;
-      background: transparent;
-      box-shadow: none;
-    }
-    .sidebar details details { padding: 0; }
-    .sidebar summary {
-      padding: 4px 6px;
-      border-radius: 6px;
-      font-size: 0.88rem;
-    }
-    .sidebar summary:hover { background: rgba(15, 108, 189, 0.08); }
-
-    .sidebar .file-link {
-      display: block;
-      grid-template-columns: none;
-      gap: 0;
-      min-height: 30px;
-      padding: 6px 10px;
-      font-size: 0.88rem;
-      border-color: transparent;
-      background: transparent;
-    }
-    .sidebar .file-link .tag,
-    .sidebar .file-link .note { display: none; }
-    .sidebar .file-link .path {
-      font-family: inherit;
-      font-size: 0.88rem;
-    }
-    .sidebar .file-link:hover {
-      background: rgba(15, 108, 189, 0.06);
-      border-color: var(--line);
-    }
-    .sidebar .file-link.active {
-      background: rgba(15, 108, 189, 0.12);
-      border-color: rgba(15, 108, 189, 0.3);
-      color: var(--accent);
-      font-weight: 600;
-    }
-
-    .sidebar .empty {
-      list-style: none;
-      padding: 6px 10px;
-      color: var(--muted);
-      font-size: 0.85rem;
-      font-style: italic;
-    }
-
-    .sidebar > footer {
-      margin-top: 24px;
-      padding-top: 14px;
-      border-top: 1px solid var(--line);
-      font-size: 0.78rem;
-    }
-
-    .viewer {
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-      background: var(--panel);
-    }
-    .viewer-bar {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 18px;
-      border-bottom: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.9);
-      font-size: 0.86rem;
-      color: var(--muted);
-    }
-    .viewer-bar .current-path {
-      flex: 1;
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      font-family: Consolas, "Liberation Mono", monospace;
-      color: var(--ink);
-    }
-    .viewer-bar a {
-      color: var(--accent);
-      text-decoration: none;
-      font-weight: 600;
-      white-space: nowrap;
-    }
-    .viewer-bar a[aria-disabled="true"] {
-      color: var(--muted);
-      pointer-events: none;
-    }
-    .viewer-frame {
-      flex: 1;
-      width: 100%;
-      border: 0;
-      background: var(--paper);
-    }
-    .viewer-empty {
-      flex: 1;
-      display: grid;
-      place-items: center;
-      padding: 24px;
-      color: var(--muted);
-      text-align: center;
-    }
-    .viewer-empty p { max-width: 360px; margin: 6px 0; }
-
-    .viewer-empty[hidden],
-    .viewer-frame[hidden] { display: none; }
-
-    @media (max-width: 820px) {
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Product Human-Facing Index</title>
+    <link
+      rel="stylesheet"
+      href="../_assets/product-review/product-review.css"
+    />
+    <style>
       body {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto 1fr;
-        height: auto;
+        margin: 0;
+        height: 100vh;
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        background: var(--paper);
       }
+
       .sidebar {
-        height: auto;
-        max-height: 50vh;
-        border-right: none;
+        height: 100vh;
+        overflow-y: auto;
+        border-right: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.7);
+        padding: 22px 18px;
+      }
+
+      .sidebar > header,
+      .sidebar > main,
+      .sidebar > footer {
+        width: auto;
+        margin: 0;
+        padding: 0;
+      }
+
+      .sidebar > header {
+        margin-bottom: 18px;
+      }
+      .sidebar .eyebrow {
+        margin-bottom: 6px;
+      }
+      .sidebar h1 {
+        font-family: inherit;
+        font-size: 1.35rem;
+        line-height: 1.2;
+      }
+      .sidebar .intro {
+        margin-top: 8px;
+        font-size: 0.85rem;
+      }
+
+      .sidebar section + section {
+        margin-top: 22px;
+      }
+      .sidebar .section-head {
+        padding-bottom: 6px;
+        align-items: baseline;
+      }
+      .sidebar .section-head p {
+        display: none;
+      }
+      .sidebar h2 {
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+      }
+
+      .sidebar .tree {
+        margin-top: 8px;
+      }
+      .sidebar .tree ul {
+        margin: 4px 0 0 10px;
+        padding-left: 10px;
+      }
+      .sidebar .tree li {
+        margin: 2px 0;
+      }
+
+      .sidebar details {
+        padding: 4px 6px;
+        border: none;
+        background: transparent;
+        box-shadow: none;
+      }
+      .sidebar details details {
+        padding: 0;
+      }
+      .sidebar summary {
+        padding: 4px 6px;
+        border-radius: 6px;
+        font-size: 0.88rem;
+      }
+      .sidebar summary:hover {
+        background: rgba(15, 108, 189, 0.08);
+      }
+
+      .sidebar .file-link {
+        display: block;
+        grid-template-columns: none;
+        gap: 0;
+        min-height: 30px;
+        padding: 6px 10px;
+        font-size: 0.88rem;
+        border-color: transparent;
+        background: transparent;
+      }
+      .sidebar .file-link .tag,
+      .sidebar .file-link .note {
+        display: none;
+      }
+      .sidebar .file-link .path {
+        font-family: inherit;
+        font-size: 0.88rem;
+      }
+      .sidebar .file-link:hover {
+        background: rgba(15, 108, 189, 0.06);
+        border-color: var(--line);
+      }
+      .sidebar .file-link.active {
+        background: rgba(15, 108, 189, 0.12);
+        border-color: rgba(15, 108, 189, 0.3);
+        color: var(--accent);
+        font-weight: 600;
+      }
+
+      .sidebar .empty {
+        list-style: none;
+        padding: 6px 10px;
+        color: var(--muted);
+        font-size: 0.85rem;
+        font-style: italic;
+      }
+
+      .sidebar > footer {
+        margin-top: 24px;
+        padding-top: 14px;
+        border-top: 1px solid var(--line);
+        font-size: 0.78rem;
+      }
+
+      .viewer {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        background: var(--panel);
+      }
+      .viewer-bar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 18px;
         border-bottom: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.9);
+        font-size: 0.86rem;
+        color: var(--muted);
       }
-      .viewer { height: 60vh; }
-    }
-  </style>
-</head>
-<body>
-  <aside class="sidebar">
-    <header>
-      <p class="eyebrow">Product scenarios</p>
-      <h1>Scenario index</h1>
-      <p class="intro">
-        Click a scenario to load it on the right. Same-name Markdown is the behavior source of truth.
-      </p>
-    </header>
-
-    <main>
-      <section aria-labelledby="live-heading">
-        <div class="section-head">
-          <h2 id="live-heading">Live</h2>
-        </div>
-        <ul class="tree" id="liveTree"></ul>
-      </section>
-
-      <section aria-labelledby="draft-heading">
-        <div class="section-head">
-          <h2 id="draft-heading">Drafts</h2>
-        </div>
-        <ul class="tree" id="draftTree"></ul>
-      </section>
-    </main>
-
-    <footer>
-      Maintained with <code>prd-ux-design</code>. Archive HTML is not listed; reach it via repo navigation.
-    </footer>
-  </aside>
-
-  <section class="viewer" aria-label="Scenario viewer">
-    <div class="viewer-bar">
-      <span class="current-path" id="currentPath">No scenario selected</span>
-      <a id="openInTab" href="#" target="_blank" rel="noopener" aria-disabled="true">Open in new tab</a>
-    </div>
-    <div class="viewer-empty" id="viewerEmpty">
-      <p><strong>Pick a scenario from the left.</strong></p>
-      <p>The selected page renders here. Use the link above to open it in a standalone tab.</p>
-    </div>
-    <iframe class="viewer-frame" id="viewerFrame" title="Scenario preview" hidden></iframe>
-  </section>
-
-  <script type="module">
-    const liveArtifacts = [
-      "da/add-mcp-action-to-da.html",
-      "da/create-da-with-mcp-server.html",
-      "da/fetch-mcp-tools.html"
-    ];
-
-    const draftArtifacts = [
-      "da/draft/create-da-with-mcp-server.html",
-      "da/draft/add-mcp-action-to-da.html"
-    ];
-
-    const knownPaths = new Set([...liveArtifacts, ...draftArtifacts]);
-
-    renderInto("#liveTree", liveArtifacts);
-    renderInto("#draftTree", draftArtifacts);
-
-    const frame = document.getElementById("viewerFrame");
-    const emptyState = document.getElementById("viewerEmpty");
-    const currentPath = document.getElementById("currentPath");
-    const openInTab = document.getElementById("openInTab");
-
-    document.addEventListener("click", (event) => {
-      const link = event.target.closest("a.file-link");
-      if (!link) return;
-      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-      event.preventDefault();
-      const path = link.dataset.path;
-      if (path) selectPath(path);
-    });
-
-    frame.addEventListener("load", () => {
-      try {
-        const doc = frame.contentDocument;
-        if (!doc) return;
-        // Remove any legacy <base target="_blank"> that would force every link
-        // (including in-page "#section" anchors from the On-this-page TOC) to
-        // open in a new tab.
-        const legacyBase = doc.head?.querySelector('base[data-injected="scenario-index"]');
-        if (legacyBase) legacyBase.remove();
-        if (doc.defaultView?.__scenarioIndexLinkHandler) return;
-        const handler = (event) => {
-          const anchor = event.target.closest?.("a[href]");
-          if (!anchor) return;
-          if (event.defaultPrevented) return;
-          if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-          const href = anchor.getAttribute("href");
-          if (!href) return;
-          const explicitTarget = anchor.getAttribute("target");
-          if (explicitTarget && explicitTarget !== "_self") return;
-          // In-page anchor: scroll inside the iframe.
-          if (href.startsWith("#")) return;
-          // Same-document fragment (e.g. "page.html#foo" targeting current doc): allow default.
-          try {
-            const url = new URL(href, doc.baseURI);
-            if (url.origin === doc.location.origin && url.pathname === doc.location.pathname && url.hash) return;
-          } catch {
-            /* ignore parse errors and fall through to new-tab behavior */
-          }
-          event.preventDefault();
-          window.open(anchor.href, "_blank", "noopener");
-        };
-        doc.addEventListener("click", handler);
-        doc.defaultView.__scenarioIndexLinkHandler = handler;
-      } catch {
-        /* cross-origin guard; safe to ignore */
+      .viewer-bar .current-path {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-family: Consolas, "Liberation Mono", monospace;
+        color: var(--ink);
       }
-    });
-
-    window.addEventListener("hashchange", applyHash);
-    applyHash();
-
-    function applyHash() {
-      let path = "";
-      try {
-        path = decodeURIComponent(location.hash.replace(/^#/, ""));
-      } catch (_) {
-        clearSelection();
-        return;
+      .viewer-bar a {
+        color: var(--accent);
+        text-decoration: none;
+        font-weight: 600;
+        white-space: nowrap;
       }
-      if (path && knownPaths.has(path)) selectPath(path, { updateHash: false });
-      else clearSelection();
-    }
+      .viewer-bar a[aria-disabled="true"] {
+        color: var(--muted);
+        pointer-events: none;
+      }
+      .viewer-frame {
+        flex: 1;
+        width: 100%;
+        border: 0;
+        background: var(--paper);
+      }
+      .viewer-empty {
+        flex: 1;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        color: var(--muted);
+        text-align: center;
+      }
+      .viewer-empty p {
+        max-width: 360px;
+        margin: 6px 0;
+      }
 
-    function selectPath(path, options = {}) {
-      const updateHash = options.updateHash !== false;
-      frame.src = path;
-      frame.hidden = false;
-      emptyState.hidden = true;
-      currentPath.textContent = path;
-      openInTab.href = path;
-      openInTab.removeAttribute("aria-disabled");
-      for (const link of document.querySelectorAll("a.file-link")) {
-        link.classList.toggle("active", link.dataset.path === path);
+      .viewer-empty[hidden],
+      .viewer-frame[hidden] {
+        display: none;
       }
-      if (updateHash) {
-        const target = `#${encodeURIComponent(path)}`;
-        if (location.hash !== target) history.replaceState(null, "", target);
-      }
-    }
 
-    function clearSelection() {
-      frame.removeAttribute("src");
-      frame.hidden = true;
-      emptyState.hidden = false;
-      currentPath.textContent = "No scenario selected";
-      openInTab.href = "#";
-      openInTab.setAttribute("aria-disabled", "true");
-      for (const link of document.querySelectorAll("a.file-link")) {
-        link.classList.remove("active");
-      }
-    }
-
-    function renderInto(selector, artifacts) {
-      const container = document.querySelector(selector);
-      if (artifacts.length === 0) {
-        const li = document.createElement("li");
-        li.className = "empty";
-        li.textContent = "No entries.";
-        container.append(li);
-        return;
-      }
-      const root = {};
-      for (const artifact of artifacts) {
-        let cursor = root;
-        const parts = artifact.split("/");
-        for (const part of parts.slice(0, -1)) {
-          cursor[part] ||= {};
-          cursor = cursor[part];
+      @media (max-width: 820px) {
+        body {
+          grid-template-columns: 1fr;
+          grid-template-rows: auto 1fr;
+          height: auto;
         }
-        cursor[parts.at(-1)] = artifact;
-      }
-      container.append(...renderTree(root));
-    }
-
-    function renderTree(node) {
-      return Object.entries(node).sort(compareEntries).map(([name, value]) => {
-        const item = document.createElement("li");
-        if (typeof value === "string") {
-          item.append(createLink(value, name));
-          return item;
+        .sidebar {
+          height: auto;
+          max-height: 50vh;
+          border-right: none;
+          border-bottom: 1px solid var(--line);
         }
-        const details = document.createElement("details");
-        details.open = true;
-        const summary = document.createElement("summary");
-        summary.textContent = `${name}/`;
-        const list = document.createElement("ul");
-        list.append(...renderTree(value));
-        details.append(summary, list);
-        item.append(details);
-        return item;
+        .viewer {
+          height: 60vh;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <aside class="sidebar">
+      <header>
+        <p class="eyebrow">Product scenarios</p>
+        <h1>Scenario index</h1>
+        <p class="intro">
+          Click a scenario to load it on the right. Same-name Markdown is the
+          behavior source of truth.
+        </p>
+      </header>
+
+      <main>
+        <section aria-labelledby="current-heading">
+          <div class="section-head">
+            <h2 id="current-heading">Current</h2>
+          </div>
+          <ul class="tree" id="currentTree"></ul>
+        </section>
+
+        <section aria-labelledby="review-heading">
+          <div class="section-head">
+            <h2 id="review-heading">In review</h2>
+          </div>
+          <ul class="tree" id="reviewTree"></ul>
+        </section>
+      </main>
+
+      <footer>
+        Generated from scenario metadata. Archived and superseded HTML is not
+        listed.
+      </footer>
+    </aside>
+
+    <section class="viewer" aria-label="Scenario viewer">
+      <div class="viewer-bar">
+        <span class="current-path" id="currentPath">No scenario selected</span>
+        <a
+          id="openInTab"
+          href="#"
+          target="_blank"
+          rel="noopener"
+          aria-disabled="true"
+          >Open in new tab</a
+        >
+      </div>
+      <div class="viewer-empty" id="viewerEmpty">
+        <p><strong>Pick a scenario from the left.</strong></p>
+        <p>
+          The selected page renders here. Use the link above to open it in a
+          standalone tab.
+        </p>
+      </div>
+      <iframe
+        class="viewer-frame"
+        id="viewerFrame"
+        title="Scenario preview"
+        hidden
+      ></iframe>
+    </section>
+
+    <!-- scenario-index-data:start -->
+    <script id="scenario-index-data" type="application/json">
+      {
+        "current": [
+          "da/add-mcp-action-to-da.html",
+          "da/create-da-with-mcp-server.html",
+          "da/fetch-mcp-tools.html"
+        ],
+        "inReview": []
+      }
+    </script>
+    <!-- scenario-index-data:end -->
+
+    <script type="module">
+      const scenarioData = JSON.parse(
+        document.getElementById("scenario-index-data").textContent,
+      );
+      const knownPaths = new Set([
+        ...scenarioData.current,
+        ...scenarioData.inReview,
+      ]);
+
+      renderInto("#currentTree", scenarioData.current);
+      renderInto("#reviewTree", scenarioData.inReview);
+
+      const frame = document.getElementById("viewerFrame");
+      const emptyState = document.getElementById("viewerEmpty");
+      const currentPath = document.getElementById("currentPath");
+      const openInTab = document.getElementById("openInTab");
+
+      document.addEventListener("click", (event) => {
+        const link = event.target.closest("a.file-link");
+        if (!link) return;
+        if (
+          event.button !== 0 ||
+          event.metaKey ||
+          event.ctrlKey ||
+          event.shiftKey ||
+          event.altKey
+        )
+          return;
+        event.preventDefault();
+        const path = link.dataset.path;
+        if (path) selectPath(path);
       });
-    }
 
-    function compareEntries([leftName, leftValue], [rightName, rightValue]) {
-      const leftDirectory = typeof leftValue !== "string";
-      const rightDirectory = typeof rightValue !== "string";
-      if (leftDirectory !== rightDirectory) return leftDirectory ? 1 : -1;
-      return leftName.localeCompare(rightName);
-    }
+      frame.addEventListener("load", () => {
+        try {
+          const doc = frame.contentDocument;
+          if (!doc) return;
+          // Remove any legacy <base target="_blank"> that would force every link
+          // (including in-page "#section" anchors from the On-this-page TOC) to
+          // open in a new tab.
+          const legacyBase = doc.head?.querySelector(
+            'base[data-injected="scenario-index"]',
+          );
+          if (legacyBase) legacyBase.remove();
+          if (doc.defaultView?.__scenarioIndexLinkHandler) return;
+          const handler = (event) => {
+            const anchor = event.target.closest?.("a[href]");
+            if (!anchor) return;
+            if (event.defaultPrevented) return;
+            if (
+              event.button !== 0 ||
+              event.metaKey ||
+              event.ctrlKey ||
+              event.shiftKey ||
+              event.altKey
+            )
+              return;
+            const href = anchor.getAttribute("href");
+            if (!href) return;
+            const explicitTarget = anchor.getAttribute("target");
+            if (explicitTarget && explicitTarget !== "_self") return;
+            // In-page anchor: scroll inside the iframe.
+            if (href.startsWith("#")) return;
+            // Same-document fragment (e.g. "page.html#foo" targeting current doc): allow default.
+            try {
+              const url = new URL(href, doc.baseURI);
+              if (
+                url.origin === doc.location.origin &&
+                url.pathname === doc.location.pathname &&
+                url.hash
+              )
+                return;
+            } catch {
+              /* ignore parse errors and fall through to new-tab behavior */
+            }
+            event.preventDefault();
+            window.open(anchor.href, "_blank", "noopener");
+          };
+          doc.addEventListener("click", handler);
+          doc.defaultView.__scenarioIndexLinkHandler = handler;
+        } catch {
+          /* cross-origin guard; safe to ignore */
+        }
+      });
 
-    function createLink(path, leafName) {
-      const link = document.createElement("a");
-      link.className = "file-link";
-      link.href = path;
-      link.dataset.path = path;
-      link.title = path;
-      const pathLabel = document.createElement("span");
-      pathLabel.className = "path";
-      pathLabel.textContent = leafName.replace(/\.html$/, "");
-      link.append(pathLabel);
-      return link;
-    }
-  </script>
-</body>
+      window.addEventListener("hashchange", applyHash);
+      applyHash();
+
+      function applyHash() {
+        let path = "";
+        try {
+          path = decodeURIComponent(location.hash.replace(/^#/, ""));
+        } catch (_) {
+          clearSelection();
+          return;
+        }
+        if (path && knownPaths.has(path))
+          selectPath(path, { updateHash: false });
+        else clearSelection();
+      }
+
+      function selectPath(path, options = {}) {
+        const updateHash = options.updateHash !== false;
+        frame.src = path;
+        frame.hidden = false;
+        emptyState.hidden = true;
+        currentPath.textContent = path;
+        openInTab.href = path;
+        openInTab.removeAttribute("aria-disabled");
+        for (const link of document.querySelectorAll("a.file-link")) {
+          link.classList.toggle("active", link.dataset.path === path);
+        }
+        if (updateHash) {
+          const target = `#${encodeURIComponent(path)}`;
+          if (location.hash !== target) history.replaceState(null, "", target);
+        }
+      }
+
+      function clearSelection() {
+        frame.removeAttribute("src");
+        frame.hidden = true;
+        emptyState.hidden = false;
+        currentPath.textContent = "No scenario selected";
+        openInTab.href = "#";
+        openInTab.setAttribute("aria-disabled", "true");
+        for (const link of document.querySelectorAll("a.file-link")) {
+          link.classList.remove("active");
+        }
+      }
+
+      function renderInto(selector, artifacts) {
+        const container = document.querySelector(selector);
+        if (artifacts.length === 0) {
+          const li = document.createElement("li");
+          li.className = "empty";
+          li.textContent = "No entries.";
+          container.append(li);
+          return;
+        }
+        const root = {};
+        for (const artifact of artifacts) {
+          let cursor = root;
+          const parts = artifact.split("/");
+          for (const part of parts.slice(0, -1)) {
+            cursor[part] ||= {};
+            cursor = cursor[part];
+          }
+          cursor[parts.at(-1)] = artifact;
+        }
+        container.append(...renderTree(root));
+      }
+
+      function renderTree(node) {
+        return Object.entries(node)
+          .sort(compareEntries)
+          .map(([name, value]) => {
+            const item = document.createElement("li");
+            if (typeof value === "string") {
+              item.append(createLink(value, name));
+              return item;
+            }
+            const details = document.createElement("details");
+            details.open = true;
+            const summary = document.createElement("summary");
+            summary.textContent = `${name}/`;
+            const list = document.createElement("ul");
+            list.append(...renderTree(value));
+            details.append(summary, list);
+            item.append(details);
+            return item;
+          });
+      }
+
+      function compareEntries([leftName, leftValue], [rightName, rightValue]) {
+        const leftDirectory = typeof leftValue !== "string";
+        const rightDirectory = typeof rightValue !== "string";
+        if (leftDirectory !== rightDirectory) return leftDirectory ? 1 : -1;
+        return leftName.localeCompare(rightName);
+      }
+
+      function createLink(path, leafName) {
+        const link = document.createElement("a");
+        link.className = "file-link";
+        link.href = path;
+        link.dataset.path = path;
+        link.title = path;
+        const pathLabel = document.createElement("span");
+        pathLabel.className = "path";
+        pathLabel.textContent = leafName.replace(/\.html$/, "");
+        link.append(pathLabel);
+        return link;
+      }
+    </script>
+  </body>
 </html>

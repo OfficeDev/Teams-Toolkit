@@ -158,7 +158,7 @@ export async function executeCommand(
       {
         shell: finalShell,
         cwd: workingDir,
-        encoding: "buffer",
+        encoding: null,
         env: { ...process.env, ...env },
         timeout: timeout,
       },

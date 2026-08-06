@@ -20,12 +20,24 @@ import {
 } from "../commonUtils";
 import {
   deleteAadAppByClientId,
+  deleteAadAppByObjectId,
   deleteBot,
   deleteTeamsApp,
   getAadAppByClientId,
+  getAadAppByObjectId,
   getBot,
   getTeamsApp,
 } from "../debug/utility";
+
+async function validateAadApp(context: Record<string, string>) {
+  chai.assert.isDefined(context.BOT_ID);
+  chai.assert.isNotEmpty(context.BOT_ID);
+  const aadApp = context.BOT_OBJECT_ID
+    ? await getAadAppByObjectId(context.BOT_OBJECT_ID)
+    : await getAadAppByClientId(context.BOT_ID);
+  chai.assert.isDefined(aadApp);
+  chai.assert.equal(aadApp?.appId, context.BOT_ID);
+}
 
 describe("Debug V3 custom-copilot-rag TypeScript template", () => {
   const testFolder = getTestFolder();
@@ -41,6 +53,10 @@ describe("Debug V3 custom-copilot-rag TypeScript template", () => {
     }
     if (context?.BOT_ID) {
       await deleteBot(context.BOT_ID);
+    }
+    if (context?.BOT_OBJECT_ID) {
+      await deleteAadAppByObjectId(context.BOT_OBJECT_ID);
+    } else if (context?.BOT_ID) {
       await deleteAadAppByClientId(context.BOT_ID);
     }
     await cleanUpLocalProject(projectPath);
@@ -66,7 +82,7 @@ describe("Debug V3 custom-copilot-rag TypeScript template", () => {
         testFolder,
         "custom-copilot-rag-customize",
         undefined,
-        options
+        options,
       );
       console.log(`[Successfully] scaffold to ${projectPath}`);
 
@@ -82,16 +98,12 @@ describe("Debug V3 custom-copilot-rag TypeScript template", () => {
       chai.assert.isDefined(context);
 
       // validate bot
-      chai.assert.isDefined(context.BOT_ID);
-      chai.assert.isNotEmpty(context.BOT_ID);
-      const aadApp = await getAadAppByClientId(context.BOT_ID);
-      chai.assert.isDefined(aadApp);
-      chai.assert.equal(aadApp?.appId, context.BOT_ID);
+      await validateAadApp(context);
       const bot = await getBot(context.BOT_ID);
       chai.assert.equal(bot?.botId, context.BOT_ID);
       chai.assert.equal(
         bot?.messagingEndpoint,
-        "https://test.ngrok.io/api/messages"
+        "https://test.ngrok.io/api/messages",
       );
       chai.assert.deepEqual(bot?.configuredChannels, ["msteams"]);
 
@@ -106,7 +118,7 @@ describe("Debug V3 custom-copilot-rag TypeScript template", () => {
 
       context = await readContextMultiEnvV3(projectPath, "local");
       chai.assert.isDefined(context);
-    }
+    },
   );
 
   it(
@@ -127,7 +139,7 @@ describe("Debug V3 custom-copilot-rag TypeScript template", () => {
         testFolder,
         "custom-copilot-rag-customize",
         undefined,
-        options
+        options,
       );
       console.log(`[Successfully] scaffold to ${projectPath}`);
 
@@ -143,16 +155,12 @@ describe("Debug V3 custom-copilot-rag TypeScript template", () => {
       chai.assert.isDefined(context);
 
       // validate bot
-      chai.assert.isDefined(context.BOT_ID);
-      chai.assert.isNotEmpty(context.BOT_ID);
-      const aadApp = await getAadAppByClientId(context.BOT_ID);
-      chai.assert.isDefined(aadApp);
-      chai.assert.equal(aadApp?.appId, context.BOT_ID);
+      await validateAadApp(context);
       const bot = await getBot(context.BOT_ID);
       chai.assert.equal(bot?.botId, context.BOT_ID);
       chai.assert.equal(
         bot?.messagingEndpoint,
-        "https://test.ngrok.io/api/messages"
+        "https://test.ngrok.io/api/messages",
       );
       chai.assert.deepEqual(bot?.configuredChannels, ["msteams"]);
 
@@ -167,7 +175,7 @@ describe("Debug V3 custom-copilot-rag TypeScript template", () => {
 
       context = await readContextMultiEnvV3(projectPath, "local");
       chai.assert.isDefined(context);
-    }
+    },
   );
 
   it(
@@ -190,7 +198,7 @@ describe("Debug V3 custom-copilot-rag TypeScript template", () => {
         testFolder,
         "custom-copilot-rag-customize",
         undefined,
-        options
+        options,
       );
       console.log(`[Successfully] scaffold to ${projectPath}`);
 
@@ -206,16 +214,12 @@ describe("Debug V3 custom-copilot-rag TypeScript template", () => {
       chai.assert.isDefined(context);
 
       // validate bot
-      chai.assert.isDefined(context.BOT_ID);
-      chai.assert.isNotEmpty(context.BOT_ID);
-      const aadApp = await getAadAppByClientId(context.BOT_ID);
-      chai.assert.isDefined(aadApp);
-      chai.assert.equal(aadApp?.appId, context.BOT_ID);
+      await validateAadApp(context);
       const bot = await getBot(context.BOT_ID);
       chai.assert.equal(bot?.botId, context.BOT_ID);
       chai.assert.equal(
         bot?.messagingEndpoint,
-        "https://test.ngrok.io/api/messages"
+        "https://test.ngrok.io/api/messages",
       );
       chai.assert.deepEqual(bot?.configuredChannels, ["msteams"]);
 
@@ -230,7 +234,7 @@ describe("Debug V3 custom-copilot-rag TypeScript template", () => {
 
       context = await readContextMultiEnvV3(projectPath, "local");
       chai.assert.isDefined(context);
-    }
+    },
   );
 
   it(
@@ -251,7 +255,7 @@ describe("Debug V3 custom-copilot-rag TypeScript template", () => {
         testFolder,
         "custom-copilot-rag-customize",
         undefined,
-        options
+        options,
       );
       console.log(`[Successfully] scaffold to ${projectPath}`);
 
@@ -267,16 +271,12 @@ describe("Debug V3 custom-copilot-rag TypeScript template", () => {
       chai.assert.isDefined(context);
 
       // validate bot
-      chai.assert.isDefined(context.BOT_ID);
-      chai.assert.isNotEmpty(context.BOT_ID);
-      const aadApp = await getAadAppByClientId(context.BOT_ID);
-      chai.assert.isDefined(aadApp);
-      chai.assert.equal(aadApp?.appId, context.BOT_ID);
+      await validateAadApp(context);
       const bot = await getBot(context.BOT_ID);
       chai.assert.equal(bot?.botId, context.BOT_ID);
       chai.assert.equal(
         bot?.messagingEndpoint,
-        "https://test.ngrok.io/api/messages"
+        "https://test.ngrok.io/api/messages",
       );
       chai.assert.deepEqual(bot?.configuredChannels, ["msteams"]);
 
@@ -291,6 +291,6 @@ describe("Debug V3 custom-copilot-rag TypeScript template", () => {
 
       context = await readContextMultiEnvV3(projectPath, "local");
       chai.assert.isDefined(context);
-    }
+    },
   );
 });

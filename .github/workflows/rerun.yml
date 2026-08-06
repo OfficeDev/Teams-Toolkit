@@ -129,15 +129,16 @@ jobs:
     env:
       CLEAN_CLIENT_ID: ${{ vars.TEST_TENANT_CLEAN_CLIENT_ID }}
       CLEAN_CLIENT_SECRET: ${{ secrets.TEST_TENANT_CLEAN_CLIENT_SECRET }}
-      CLEAN_TENANT_ID: ${{ secrets.TEST_TENANT_CLEAN_TENANT_ID }}
+      CLEAN_TENANT_ID: ${{ vars.TEST_TENANT_CLEAN_TENANT_ID }}
       AZURE_TENANT_ID: ${{ secrets.TEST_TENANT_TENANT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ secrets.TEST_TENANT_SUBSCRIPTION_ID }}
       AZURE_ACCOUNT_NAME: ${{ secrets.TEST_TENANT_AZURE_ACCOUNT_NAME }}
       AZURE_ACCOUNT_PASSWORD: ${{ secrets.TEST_TENANT_AZURE_ACCOUNT_PASSWORD }}
+      # M365_ACCOUNT_NAME is overwritten per matrix leg with test001..test020
+      # (vars.M365_USERNAMES), so this password must be valid for those accounts.
       M365_ACCOUNT_PASSWORD: ${{ secrets.TEST_TENANT_M365_ACCOUNT_ADMIN_PASSWORD }}
       M365_DISPLAY_NAME: "test"
       MAIL_API_KEY: ${{ secrets.MAIL_API_KEY }}
-      TEST_TENANT_M365_ACCOUNT_NAME: ${{ secrets.TEST_TENANT_M365_ACCOUNT_ADMIN_ACCOUNT }}
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.build-clean-matrix.outputs.matrix) }}

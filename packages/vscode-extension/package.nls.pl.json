@@ -186,8 +186,6 @@
   "teamstoolkit.commandsTreeViewProvider.manageCollaboratorDescription": "Zarządzaj współpracownikami aplikacji platformy Microsoft 365 (za pomocą aplikacji Microsoft Entra)",
   "teamstoolkit.commandsTreeViewProvider.addPluginTitle": "Dodawanie akcji",
   "teamstoolkit.commandsTreeViewProvider.addPluginDescription": "Dodaj akcję w agencie deklaracyjnym",
-  "teamstoolkit.commandsTreeViewProvider.metaOSExtendToDA": "Rozszerz aplikację na agenta deklaratywnego",
-  "teamstoolkit.commandsTreeViewProvider.metaOSExtendToDADescription": "Rozszerz projekt dodatku na agenta deklaratywnego",
   "teamstoolkit.commandsTreeViewProvider.metaOS.convert.title": "Rozszerz na agenta deklaratywnego",
   "teamstoolkit.commandsTreeViewProvider.metaOS.convert.description": "Rozszerz projekt dodatku o akcję agenta deklaratywnego",
   "teamstoolkit.commandsTreeViewProvider.regenerateActionTitle": "Akcja ponownego generowania",

@@ -121,7 +121,7 @@
         "x": 344,
         "y": 76
       },
-      "description": "Click the \"Default folder\" option under the \"Choose the folder where your project root will be located\" dropdown in the Workspace Folder dialog. Ensure the selected folder path is \"/vscode/AgentsToolkitProjects\".",
+      "description": "Click the \"Default folder\" option under the \"Choose the folder where your project root will be located\" dropdown in the Workspace Folder dialog. Ensure the selected folder path is \"/home/vscode/AgentsToolkitProjects\".",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -133,7 +133,9 @@
         "dhash:344:76:0:10:f0b09494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_99533fd2",
       "created_at": "2026-01-30T09:40:41.919024",
       "plan_id": "plan_dcbdbcbf"

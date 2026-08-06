@@ -75,6 +75,7 @@ adapter = CloudAdapter(connection_manager=connection_manager)
 agent_app = AgentApplication[TurnState](
     storage=storage,
     adapter=adapter,
+    connection_manager=connection_manager,
     **agents_sdk_config
 )
 

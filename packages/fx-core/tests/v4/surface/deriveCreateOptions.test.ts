@@ -15,10 +15,16 @@ import { assert } from "vitest";
 
 const TEMPLATES_V4_DIR = path.resolve(__dirname, "../../../../../templates/v4");
 
+let cachedFloor: Buffer | undefined;
+
 function buildFloor(): Buffer {
+  if (cachedFloor !== undefined) {
+    return Buffer.from(cachedFloor);
+  }
   const zip = new AdmZip();
   zip.addLocalFolder(TEMPLATES_V4_DIR, "v4");
-  return zip.toBuffer();
+  cachedFloor = zip.toBuffer();
+  return Buffer.from(cachedFloor);
 }
 
 function buildSyntheticDuplicateFloor(): Buffer {
@@ -143,6 +149,7 @@ describe("deriveCreateOptions", () => {
 
       const authType = optionByName(res.value, "auth-type");
       assert.equal(authType?.questionName, "authType");
+      assert.equal(defaultOf(authType), "oauth");
       assert.includeMembers(choicesOf(authType), ["oauth", "oauth-dynamic", "entra-sso", "none"]);
     }
   });
@@ -160,6 +167,21 @@ describe("deriveCreateOptions", () => {
       assert.equal(apiOperations?.questionName, "apiOperations");
       assert.equal(apiOperations?.type, "array");
       assert.isTrue(skipValidationOf(apiOperations));
+
+      // A static multiSelect with an array default surfaces as an array option
+      // carrying that default (the office task-pane host picker).
+      const officeAddinHosts = optionByName(res.value, "office-addin-hosts");
+      assert.equal(officeAddinHosts?.type, "array");
+      assert.deepEqual(officeAddinHosts?.default, ["word", "powerpoint", "outlook", "excel"]);
+      assert.includeMembers(choicesOf(officeAddinHosts), [
+        "word",
+        "excel",
+        "outlook",
+        "powerpoint",
+      ]);
+
+      const openApiSpecType = optionByName(res.value, "open-api-spec-type");
+      assert.includeMembers(choicesOf(openApiSpecType), ["enter-url", "open-file", "search-api"]);
 
       const apiSpecLocation = optionByName(res.value, "api-spec-location");
       assert.equal(apiSpecLocation?.shortName, "a");

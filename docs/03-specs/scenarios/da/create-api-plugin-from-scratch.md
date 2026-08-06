@@ -11,15 +11,15 @@
 
 This is the **vertical** contract for one template: what scaffolding the
 `da/api-plugin-from-scratch` create package produces **end-to-end**, for each
-declared language. It **composes** the *horizontal* scaffolding operation specs
+declared language. It **composes** the _horizontal_ scaffolding operation specs
 (linked under [Composed operations](#composed-operations)) and adds only the
-**concrete** artifacts *this* template emits — a sample "repairs" backend
+**concrete** artifacts _this_ template emits — a sample "repairs" backend
 (Azure Functions) plus the declarative agent wired to a pre-baked API plugin
-action (`repairDeclarativeAgent.json` → `ai-plugin.json` → `repair.yml`). Like
-the basic DA it is a **pure render**: the `default` pipeline carries a single
-`require-empty-target` guard and **no** post-render injection — the action is
-**pre-baked** into the template's `repairDeclarativeAgent.json`, not injected
-(this is the *new API from scratch* path, not the spec-parser *existing API*
+action (`repairDeclarativeAgent.json` → `ai-plugin.json` → `repair.yml`). The
+action is **pre-baked** into the template's `repairDeclarativeAgent.json`, not
+injected by a post-render step; the `default` pipeline carries a
+`require-empty-target` guard plus the feature-gated sensitivity-label step
+(this is the _new API from scratch_ path, not the spec-parser _existing API_
 path). The new axis this scenario exercises is **language partitioning**: the
 package ships `content/{typescript,javascript}/` and the
 [`select-language-content`](../../operations/scaffolding/select-language-content.md)
@@ -30,17 +30,17 @@ whole template scaffolded under `InMemoryRuntime` (every row is **L1**).
 
 ## Acceptance Criteria
 
-| ID | Tier | Given | When | Then |
-|----|------|-------|------|------|
-| SCN-CREATE-APIPLUGIN-01 | L1 | empty target, language `typescript` | scaffold completes | the render phase writes exactly the TypeScript backend file set (`.tpl` stripped, `typescript/` prefix stripped) — incl. `appPackage/repairDeclarativeAgent.json`, `appPackage/ai-plugin.json`, `appPackage/manifest.json`, `appPackage/apiSpecificationFile/repair.yml`, `appPackage/adaptiveCards/listRepairs.json`, `appPackage/instruction.txt`, `appPackage/color.png`, `appPackage/outline.png`, `src/functions/repairs.ts`, `src/repairsData.json`, `package.json`, `tsconfig.json`, `host.json`, `local.settings.json`, `infra/azure.bicep`, `infra/azure.parameters.json`, `m365agents.yml`, `m365agents.local.yml`, `env/.env.dev`, `env/.env.local`, `README.md`, the four `.vscode/*.json`, `.funcignore`, `.gitignore` — and nothing is skipped |
-| SCN-CREATE-APIPLUGIN-02 | L1 | rendered `appPackage/repairDeclarativeAgent.json` (typescript) | render | `name == "{{appName}}${{APP_NAME_SUFFIX}}"` (the `appName` floor token rendered, the env ref preserved verbatim), `instructions == "$[file('instruction.txt')]"`, and `actions` is the single pre-baked entry `{ id: "repairPlugin", file: "ai-plugin.json" }`; **no** `sensitivity_label` block (`TEAMSFX_SENSITIVITY_LABEL` defaults off ⇒ the `{{#SensitivityLabelEnabled}}` section is omitted) |
-| SCN-CREATE-APIPLUGIN-03 | L1 | rendered `appPackage/ai-plugin.json` (typescript) | render | `namespace == "repairs"`, `name_for_human == "{{appName}}${{APP_NAME_SUFFIX}}"` (appName rendered, env ref preserved), and `runtimes[0]` is the `OpenApi` runtime with `auth.type == "None"` (the no-auth source) and `spec.url == "apiSpecificationFile/repair.yml"` |
-| SCN-CREATE-APIPLUGIN-04 | L1 | rendered `appPackage/manifest.json` (typescript) | render | `manifestVersion == "1.28"`; the env refs survive render — `id == "${{TEAMS_APP_ID}}"`, `name.short == "{{appName}}${{APP_NAME_SUFFIX}}"`; `copilotAgents.declarativeAgents` is the single entry `{ id: "repairDeclarativeAgent", file: "repairDeclarativeAgent.json" }` |
-| SCN-CREATE-APIPLUGIN-05 | L1 | empty target, language `typescript` | scaffold | the **language axis** narrows correctly — every written path is project-root-relative (the `typescript/` prefix stripped, no path begins with `typescript/` or `javascript/`); `src/functions/repairs.ts` and `tsconfig.json` are present, and **no** `src/functions/repairs.js` is written |
-| SCN-CREATE-APIPLUGIN-06 | L1 | empty target, language `javascript` | scaffold | the JavaScript subtree is written instead — `src/functions/repairs.js` is present, **no** `tsconfig.json` and **no** `src/functions/repairs.ts`; the rendered `repairDeclarativeAgent.json` / `ai-plugin.json` / `manifest.json` shapes (SCN-02..04) hold identically for the JS package |
-| SCN-CREATE-APIPLUGIN-07 | L1 | empty target | scaffold | the **only** pipeline step run is `require-empty-target` (`stepsSkipped` empty); **no** post-render injection runs (no MCP, no auth, no action injection) — the API plugin action is pre-baked, so nothing is added after render |
-| SCN-CREATE-APIPLUGIN-08 | L1 | non-empty target | scaffold | `require-empty-target` fails first with **`UserError`** and writes nothing (the create contract; ordering mechanism owned by `run-scaffold-pipeline`) |
-| SCN-CREATE-APIPLUGIN-09 | L1 | identical inputs re-run (typescript) | scaffold | deterministic — identical `written` set and identical rendered agent `name` |
+| ID                      | Tier | Given                                                          | When               | Then                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ----------------------- | ---- | -------------------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SCN-CREATE-APIPLUGIN-01 | L1   | empty target, language `typescript`                            | scaffold completes | the render phase writes exactly the TypeScript backend file set (`.tpl` stripped, `typescript/` prefix stripped) — incl. `appPackage/repairDeclarativeAgent.json`, `appPackage/ai-plugin.json`, `appPackage/manifest.json`, `appPackage/apiSpecificationFile/repair.yml`, `appPackage/adaptiveCards/listRepairs.json`, `appPackage/instruction.txt`, `appPackage/color.png`, `appPackage/outline.png`, `src/functions/repairs.ts`, `src/repairsData.json`, `package.json`, `tsconfig.json`, `host.json`, `local.settings.json`, `infra/azure.bicep`, `infra/azure.parameters.json`, `m365agents.yml`, `m365agents.local.yml`, `env/.env.dev`, `env/.env.dev.user`, `env/.env.local`, `env/.env.local.user`, `README.md`, the four `.vscode/*.json`, `.funcignore`, `.gitignore` |
+| SCN-CREATE-APIPLUGIN-02 | L1   | rendered `appPackage/repairDeclarativeAgent.json` (typescript) | render             | `name == "{{appName}}${{APP_NAME_SUFFIX}}"` (the `appName` floor token rendered, the env ref preserved verbatim), `instructions == "$[file('instruction.txt')]"`, and `actions` is the single pre-baked entry `{ id: "repairPlugin", file: "ai-plugin.json" }`; render does not own a `sensitivity_label` block                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| SCN-CREATE-APIPLUGIN-03 | L1   | rendered `appPackage/ai-plugin.json` (typescript)              | render             | `namespace == "repairs"`, `name_for_human == "{{appName}}${{APP_NAME_SUFFIX}}"` (appName rendered, env ref preserved), and `runtimes[0]` is the `OpenApi` runtime with `auth.type == "None"` (the no-auth source) and `spec.url == "apiSpecificationFile/repair.yml"`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| SCN-CREATE-APIPLUGIN-04 | L1   | rendered `appPackage/manifest.json` (typescript)               | render             | `manifestVersion == "1.29"`; the env refs survive render — `id == "${{TEAMS_APP_ID}}"`, `name.short == "{{appName}}${{APP_NAME_SUFFIX}}"`; `copilotAgents.declarativeAgents` is the single entry `{ id: "repairDeclarativeAgent", file: "repairDeclarativeAgent.json" }`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| SCN-CREATE-APIPLUGIN-05 | L1   | empty target, language `typescript`                            | scaffold           | the **language axis** narrows correctly — every written path is project-root-relative (the `typescript/` prefix stripped, no path begins with `typescript/` or `javascript/`); `src/functions/repairs.ts` and `tsconfig.json` are present, and **no** `src/functions/repairs.js` is written                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| SCN-CREATE-APIPLUGIN-06 | L1   | empty target, language `javascript`                            | scaffold           | the JavaScript subtree is written instead — `src/functions/repairs.js` is present, **no** `tsconfig.json` and **no** `src/functions/repairs.ts`; the rendered `repairDeclarativeAgent.json` / `ai-plugin.json` / `manifest.json` shapes (SCN-02..04) hold identically for the JS package                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| SCN-CREATE-APIPLUGIN-07 | L1   | empty target with `TEAMSFX_SENSITIVITY_LABEL` disabled         | scaffold           | the only pipeline step run is `require-empty-target`; `da/set-sensitivity-label` is skipped and no MCP, auth, or action injection runs — the API plugin action is pre-baked                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| SCN-CREATE-APIPLUGIN-08 | L1   | non-empty target                                               | scaffold           | `require-empty-target` fails first with **`UserError`** and writes nothing (the create contract; ordering mechanism owned by `run-scaffold-pipeline`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| SCN-CREATE-APIPLUGIN-09 | L1   | identical inputs re-run (typescript)                           | scaffold           | deterministic — identical `written` set and identical rendered agent `name`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 
 ## Composed operations
 
@@ -56,9 +56,9 @@ This scenario **flows through** these operation specs; their mechanics are
   — picks the `da/api-plugin-from-scratch` package and pins its
   `{version, digest}` (ADR-0006 / ADR-0015).
 - [`open-template-package`](../../operations/scaffolding/open-template-package.md)
-  + [`validate-template-package`](../../operations/scaffolding/validate-template-package.md)
-  — opens and well-formed-checks the package (ADR-0015); content is returned
-  flat, both language subtrees present.
+  - [`validate-template-package`](../../operations/scaffolding/validate-template-package.md)
+    — opens and well-formed-checks the package (ADR-0015); content is returned
+    flat, both language subtrees present.
 - [`select-language-content`](../../operations/scaffolding/select-language-content.md)
   — narrows the flat `content/**` to the Q0 language subtree
   (`content/typescript/` or `content/javascript/`), stripping the prefix
@@ -73,10 +73,15 @@ This scenario **flows through** these operation specs; their mechanics are
   for provision to resolve later.
 - [`run-scaffold-pipeline`](../../operations/scaffolding/run-scaffold-pipeline.md)
   — the two-phase executor: its **render phase** writes the new files in
-  SCN-CREATE-APIPLUGIN-01; its **`default` pipeline** runs the single
-  `require-empty-target` guard and nothing else (ADR-0017). The render-var floor
+  SCN-CREATE-APIPLUGIN-01; its **`default` pipeline** runs the
+  `require-empty-target` guard and skips the feature-gated sensitivity step in
+  this scenario's baseline (ADR-0017). The render-var floor
   is owned by
   [ADR-0016](../../../02-architecture/adr/ADR-0016-declarative-template-format.md).
+- [`set-declarative-agent-sensitivity-label`](../../operations/scaffolding/set-declarative-agent-sensitivity-label.md)
+  — owns the optional post-render label mutation; its flag-on vertical behavior
+  is covered by
+  [`SCN-DA-SENSITIVITY-LABEL`](apply-general-sensitivity-label.md).
 
 ## Flow
 
@@ -105,8 +110,8 @@ This scenario does **not** assert:
   ([`da/api-plugin-from-scratch-oauth`](./create-api-plugin-from-scratch-oauth.md))
   action sources are each their own v4 scenario; only the no-auth source is
   asserted here.
-- **The spec-parser / existing-API path** — this is the *new API from scratch*
-  template (a bundled sample spec, pre-baked action); the *existing API spec*
+- **The spec-parser / existing-API path** — this is the _new API from scratch_
+  template (a bundled sample spec, pre-baked action); the _existing API spec_
   path is covered by
   [`da/api-plugin-from-existing-api`](./create-api-plugin-from-existing-api.md).
 - **Surface mechanics** — the VS Code Quick Pick / CLI prompt-and-flag tree that

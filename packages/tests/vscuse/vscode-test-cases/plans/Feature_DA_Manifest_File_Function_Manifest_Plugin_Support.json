@@ -84,7 +84,9 @@
         "dhash:354:88:0:10:c8c88094b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_9e5fbb93",
       "created_at": "2026-03-05T05:32:20.937271",
       "plan_id": "plan_5b46db62"
@@ -214,7 +216,7 @@
       "parameters": {
         "key": "enter"
       },
-      "description": "Press Enter to confirm the \"Enter OpenAPI Description Document Location\" input in the VS Code Microsoft 365 Agents Toolkit interface.",
+      "description": "Press the \"Enter\" key again to proceed to typing in the \"Enter OpenAPI Description Document Location\" input within the VS Code Microsoft 365 Agents Toolkit interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -282,7 +284,7 @@
         "x": 232,
         "y": 80
       },
-      "description": "Click the search/filter input box in the \"Select Operation(s) Copilot Can Interact with\" modal at the top of the Microsoft Visual Studio Code interface, to activate text entry for filtering available API operations.",
+      "description": "Click the checkbox next to the \"GET /repairs\" operation in the \"Select Operation(s) Copilot Can Interact with\" modal to select it.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -310,7 +312,7 @@
         "x": 790,
         "y": 49
       },
-      "description": "Click the language selector button (flag icon) in the API operations dropdown within the Visual Studio Code Microsoft 365 Agents Toolkit extension interface.",
+      "description": "Click the OK button in the \"Select Operation(s) Copilot Can Interact with\" modal to confirm the selected operation.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -353,7 +355,9 @@
         "dhash:277:75:0:10:f0b09494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_3e6eb2f2",
       "created_at": "2026-03-05T05:32:21.172836",
       "plan_id": "plan_5b46db62"
@@ -418,7 +422,9 @@
         "dhash:512:384:0:20:328c2a2323032421"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_fe8a4019",
       "created_at": "2026-03-05T05:32:21.234084",
       "plan_id": "plan_5b46db62"
@@ -447,7 +453,9 @@
         "dhash:512:384:0:20:e4c048672303a421"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_849035f2",
       "created_at": "2026-03-05T05:32:21.252055",
       "plan_id": "plan_5b46db62"
@@ -476,7 +484,9 @@
         "dhash:512:384:0:20:cc8422232303a421"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_851318b7",
       "created_at": "2026-03-05T05:32:21.276188",
       "plan_id": "plan_5b46db62"

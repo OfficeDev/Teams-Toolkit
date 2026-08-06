@@ -23,9 +23,16 @@ import { EOL } from "os";
 import * as path from "path";
 import { Service } from "typedi";
 import { teamsDevPortalClient } from "../../../client/teamsDevPortalClient";
+import { SovereignCloudEnvironment } from "../../../common/accountUtils";
 import { AppStudioScopes } from "../../../common/constants";
+import { FeatureFlagName } from "../../../common/featureFlags";
 import { getDefaultString, getLocalizedString } from "../../../common/localizeUtils";
-import { FileNotFoundError, InvalidActionInputError } from "../../../error/common";
+import {
+  FileNotFoundError,
+  InvalidActionInputError,
+  UserCancelError,
+  assembleError,
+} from "../../../error/common";
 import { SummaryConstant } from "../../configManager/constant";
 import { metadataUtil } from "../../utils/metadataUtil";
 import { DriverContext } from "../interface/commonArgs";
@@ -35,11 +42,10 @@ import { WrapDriverContext } from "../util/wrapUtil";
 import { Constants, GeneralValidationErrorId } from "./constants";
 import { AppStudioError } from "./errors";
 import { ValidateAppPackageArgs } from "./interfaces/ValidateAppPackageArgs";
+import { IValidationResult } from "./interfaces/appdefinitions/IValidationResult";
 import { AppStudioResultFactory } from "./results";
-import { TelemetryPropertyKey } from "./utils/telemetry";
 import { manifestUtils } from "./utils/ManifestUtils";
-import { FeatureFlagName } from "../../../common/featureFlags";
-import { SovereignCloudEnvironment } from "../../../common/accountUtils";
+import { TelemetryPropertyKey } from "./utils/telemetry";
 
 const actionName = "teamsApp/validateAppPackage";
 
@@ -60,6 +66,65 @@ export class ValidateAppPackageDriver implements StepDriver {
       result: res,
       summaries: wrapContext.summaries,
     };
+  }
+
+  /**
+   * Validate an app package for in-process consumers (for example,
+   * teamsAppMgr.validateTeamsAppForClient).
+   *
+   * Difference from the existing execute/validate path:
+   * 1) Returns raw IValidationResult data so callers can decide how to render
+   *    errors/warnings/notes.
+   * 2) Does not show UI messages or write CLI/log-window summaries.
+   * 3) Does not convert validation findings into ValidationFailed FxError when
+   *    the package is rejected.
+   */
+  public async validateForClient(
+    args: ValidateAppPackageArgs,
+    context: DriverContext
+  ): Promise<Result<IValidationResult, FxError>> {
+    if (context.signal?.aborted) {
+      return err(new UserCancelError(actionName));
+    }
+    const argsValidationResult = this.validateArgs(args);
+    if (argsValidationResult.isErr()) {
+      return err(argsValidationResult.error);
+    }
+
+    let appPackagePath = args.appPackagePath;
+    if (!path.isAbsolute(appPackagePath)) {
+      appPackagePath = path.join(context.projectPath, appPackagePath);
+    }
+    if (!(await fs.pathExists(appPackagePath))) {
+      return err(new FileNotFoundError(actionName, appPackagePath));
+    }
+
+    try {
+      const archivedFile = await fs.readFile(appPackagePath);
+      if (context.signal?.aborted) {
+        return err(new UserCancelError(actionName));
+      }
+      const tokenResult = await context.m365TokenProvider.getAccessToken({
+        scopes: AppStudioScopes(),
+      });
+      if (tokenResult.isErr()) {
+        return err(tokenResult.error);
+      }
+      const validationResult = await teamsDevPortalClient.partnerCenterAppPackageValidation(
+        tokenResult.value,
+        archivedFile,
+        context.signal
+      );
+      if (context.signal?.aborted) {
+        return err(new UserCancelError(actionName));
+      }
+      return ok(validationResult);
+    } catch (error) {
+      if (context.signal?.aborted) {
+        return err(new UserCancelError(actionName));
+      }
+      return err(assembleError(error as Error, actionName));
+    }
   }
 
   @hooks([addStartAndEndTelemetry(actionName, actionName)])

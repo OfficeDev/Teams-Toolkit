@@ -662,7 +662,7 @@ export class WorkspaceEdit implements vscode.WorkspaceEdit {
     return this._textEdits.has(uri.toString());
   }
 
-  set(uri: vscUri.URI, edits: TextEdit[]): void {
+  set(uri: vscUri.URI, edits: readonly any[]): void {
     let data = this._textEdits.get(uri.toString());
     if (!data) {
       data = { seq: (this._seqPool += 1), uri, edits: [] };
@@ -906,16 +906,13 @@ export class Diagnostic {
 }
 
 export class Hover {
-  public contents: vscode.MarkdownString[] | vscode.MarkedString[];
+  public contents: (vscode.MarkdownString | vscode.MarkedString)[];
 
   public range: Range;
 
   constructor(
     contents:
-      | vscode.MarkdownString
-      | vscode.MarkedString
-      | vscode.MarkdownString[]
-      | vscode.MarkedString[],
+      vscode.MarkdownString | vscode.MarkedString | vscode.MarkdownString[] | vscode.MarkedString[],
     range?: Range
   ) {
     if (!contents) {
@@ -1774,10 +1771,7 @@ export class Task implements vscode.Task {
   private _definition!: vscode.TaskDefinition;
 
   private _scope:
-    | vscode.TaskScope.Global
-    | vscode.TaskScope.Workspace
-    | vscode.WorkspaceFolder
-    | undefined;
+    vscode.TaskScope.Global | vscode.TaskScope.Workspace | vscode.WorkspaceFolder | undefined;
 
   private _name!: string;
 
@@ -1900,10 +1894,7 @@ export class Task implements vscode.Task {
   }
 
   get scope():
-    | vscode.TaskScope.Global
-    | vscode.TaskScope.Workspace
-    | vscode.WorkspaceFolder
-    | undefined {
+    vscode.TaskScope.Global | vscode.TaskScope.Workspace | vscode.WorkspaceFolder | undefined {
     return this._scope;
   }
 
@@ -2038,7 +2029,7 @@ export class TreeItem {
 
   resourceUri?: vscUri.URI;
 
-  iconPath?: string | vscUri.URI | { light: string | vscUri.URI; dark: string | vscUri.URI };
+  iconPath?: string | vscUri.URI | vscode.ThemeIcon | { light: vscUri.URI; dark: vscUri.URI };
 
   command?: vscode.Command;
 
@@ -2356,14 +2347,7 @@ export declare type uinteger = number;
 export declare type decimal = number;
 
 export declare type LSPAny =
-  | LSPObject
-  | LSPArray
-  | string
-  | integer
-  | uinteger
-  | decimal
-  | boolean
-  | null;
+  LSPObject | LSPArray | string | integer | uinteger | decimal | boolean | null;
 
 export class ProtocolTypeHierarchyItem extends TypeHierarchyItem {
   data?;

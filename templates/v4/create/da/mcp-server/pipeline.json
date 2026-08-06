@@ -1,6 +1,6 @@
 {
   "pipeline": "default",
-  "comment": "Render produces the pure parts: ai-plugin.json is rendered in full (URL-derived namespace + auth reference_id via the mcpNamespace/mcpAuthRef expr functions + the unconditional dynamic-discovery RemoteMCPServer runtime), and m365agents.yml is the v1.12 skeleton WITHOUT the auth step. The auth wiring is post-render injection, NOT render, for two reasons the PR makes explicit: (1) it is impure — probed oauth authorization/token URLs, DCR well-known auto-discovery that falls back to a placeholder + warning, and a v1.12 -> v1.13 schema bump on dcr/register; (2) it must run through the SAME code path as the `add` flow (mcpAuthScaffolder.injectMCPAuthActionToYml + ActionInjector + persistMCPAuthCredentialEnvVars) so create and add never drift. The step derives namespace / registration id from mcpServerUrl itself (deriveMCPServerNameFromUrl -> namespace `apigithubc`, id `MCP_DA_AUTH_ID_APIGITHUBC`, never `action_1`); passing them in would duplicate that derivation. Routed only when DT is on, so credential persistence to env files (includeCredentialRefs) is unconditional. See proposal §13.1.",
+  "comment": "Render produces the pure parts: ai-plugin.json is rendered in full (URL-derived namespace + auth reference_id via the mcpNamespace/mcpAuthRef expr functions + the unconditional dynamic-discovery RemoteMCPServer runtime), and m365agents.yml is the v1.12 skeleton without the auth step. Auth wiring is post-render injection because it includes endpoint discovery, DCR fallback, the v1.13 schema bump, and explicit static credential environment references. The persist step writes the registration-result placeholder plus collected static credentials through the runtime environment writer, which isolates SECRET_* values. The final feature-gated step optionally applies the sensitivity label.",
   "steps": [
     {
       "step": "require-empty-target",
@@ -13,7 +13,10 @@
         "ymlPath": "m365agents.yml",
         "authType": "{{authType}}",
         "mcpServerUrl": "{{MCPForDAServerUrl}}",
-        "includeCredentialRefs": true
+        "oauthClientId": "{{OAuthClientId}}",
+        "oauthClientSecret": "{{OAuthClientSecret}}",
+        "oauthScopes": "{{OAuthScopes}}",
+        "entraClientId": "{{EntraClientId}}"
       }
     },
     {
@@ -21,7 +24,11 @@
       "when": "mcpServerType == 'remote' && (authType == 'oauth' || authType == 'entra-sso')",
       "with": {
         "authType": "{{authType}}",
-        "mcpServerUrl": "{{MCPForDAServerUrl}}"
+        "mcpServerUrl": "{{MCPForDAServerUrl}}",
+        "oauthClientId": "{{OAuthClientId}}",
+        "oauthClientSecret": "{{OAuthClientSecret}}",
+        "oauthScopes": "{{OAuthScopes}}",
+        "entraClientId": "{{EntraClientId}}"
       }
     },
     {
@@ -30,7 +37,14 @@
       "with": {
         "target": ".vscode/mcp.json",
         "selected": "{{selectedLocalServers}}",
-        "catalog": "{{localServerCatalog}}"
+        "catalog": "{{derived.mcp.serverTypes.catalog}}"
+      }
+    },
+    {
+      "step": "da/set-sensitivity-label",
+      "when": "featureFlag('TEAMSFX_SENSITIVITY_LABEL')",
+      "with": {
+        "manifestPath": "appPackage/declarativeAgent.json"
       }
     }
   ]

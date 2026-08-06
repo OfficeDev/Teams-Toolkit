@@ -54,8 +54,10 @@ export const CapabilityName: { readonly [K in CapabilityNameValue]: K } = {
   TeamsMessages: "TeamsMessages",
   Dataverse: "Dataverse",
   Email: "Email",
+  EmailActions: "EmailActions",
   People: "People",
   Meetings: "Meetings",
+  MeetingActions: "MeetingActions",
   ScenarioModels: "ScenarioModels",
 } as const;
 
@@ -168,6 +170,13 @@ export class DeclarativeAgentManifestWrapper extends BaseManifest<DeclarativeAge
   }
 
   /**
+   * Returns the sensitivity label applied to the agent.
+   */
+  get sensitivityLabel(): SensitivityLabel {
+    return "sensitivity_label" in this._data ? this._data.sensitivity_label : undefined;
+  }
+
+  /**
    * Returns a readonly array of actions.
    */
   get actions(): readonly ActionElementType[] {
@@ -224,6 +233,15 @@ export class DeclarativeAgentManifestWrapper extends BaseManifest<DeclarativeAge
     return this;
   }
 
+  /**
+   * Sets the sensitivity label applied to the agent.
+   */
+  setSensitivityLabel(id: string): this {
+    Object.assign(this._data, { sensitivity_label: { id } });
+    this.markDirty();
+    return this;
+  }
+
   // ============= Action Operations =============
 
   /**
@@ -236,6 +254,22 @@ export class DeclarativeAgentManifestWrapper extends BaseManifest<DeclarativeAge
       this._data.actions = [];
     }
     (this._data.actions as ActionElementType[]).push({ id, file } as ActionElementType);
+    this.markDirty();
+    return this;
+  }
+
+  /**
+   * Adds an action or updates the existing action that references the same plugin file.
+   * @param id - Unique identifier for the action.
+   * @param file - Relative path to the plugin manifest file.
+   */
+  upsertAction(id: string, file: string): this {
+    const existing = this.actions.find((action) => action.file === file);
+    if (existing === undefined) {
+      return this.addAction(id, file);
+    }
+    existing.id = id;
+    existing.file = file;
     this.markDirty();
     return this;
   }

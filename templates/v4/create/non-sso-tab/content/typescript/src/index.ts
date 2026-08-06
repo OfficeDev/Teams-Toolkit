@@ -1,3 +1,4 @@
+import "./proxy";
 import fs from "fs";
 import https from "https";
 import path from "path";

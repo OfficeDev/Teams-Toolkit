@@ -40,6 +40,7 @@ import { azureLoginMessage, env, m365LoginMessage, sendFileTimeout } from "./com
 import { getAccountByHomeId } from "./common/tokenCacheUtils";
 import { decodeClaimsChallenge } from "./common/utils";
 import CliCodeLogInstance from "./log";
+import { getParentWindowHandle } from "./windowHandle";
 
 export class ErrorMessage {
   static readonly loginFailureTitle = "LoginFail";
@@ -325,6 +326,9 @@ export class CodeFlowLogin {
       authority: authority,
       prompt: "select_account",
       claims: claim,
+      // Parents the native WAM dialog. Without it MSAL passes a NULL owner and the dialog can
+      // be created behind the terminal with no way for the user to reach it.
+      windowHandle: this.isBrokerAvailable ? getParentWindowHandle() : undefined,
       openBrowser: async (url: string) => {
         url += "#";
         if (this.accountName == "azure") {

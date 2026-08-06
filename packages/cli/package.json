@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/m365agentstoolkit-cli",
-  "version": "1.1.11",
+  "version": "1.1.13",
   "author": "Microsoft Corporation",
   "description": "Microsoft 365 Agents Toolkit CLI",
   "license": "MIT",
@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/OfficeDev/teams-toolkit.git"
+    "url": "git+https://github.com/OfficeDev/microsoft-365-agents-toolkit.git"
   },
   "scripts": {
     "copy-files": "copyfiles -u 1 src/**/*.html src/**/*.css lib/",
@@ -83,7 +83,7 @@
     "html-webpack-plugin": "^5.3.1",
     "lint-staged": "^10.5.4",
     "mocked-env": "^1.3.5",
-    "prettier": "^2.4.1",
+    "prettier": "^3.3.3",
     "rimraf": "^5.0.1",
     "sass-loader": "^11.1.1",
     "sinon": "^22.0.0",
@@ -106,7 +106,7 @@
     "@azure/arm-subscriptions": "^5.0.0",
     "@azure/core-auth": "^1.4.0",
     "@azure/identity": "^4.13.1",
-    "@azure/msal-node": "^5.2.2",
+    "@azure/msal-node": "^5.4.0",
     "@azure/msal-node-extensions": "^1.5.25",
     "@inquirer/core": "^5.1.2",
     "@inquirer/prompts": "^7.10.1",
@@ -127,6 +127,7 @@
     "node-machine-id": "^1.1.12",
     "open": "^8.2.1",
     "semver": "^7.5.4",
+    "tas-client": "^0.1.73",
     "tree-kill": "^1.2.2",
     "underscore": "^1.13.8"
   },
@@ -148,7 +149,8 @@
   },
   "lint-staged": {
     "*.{js,jsx,css,ts,tsx}": [
-      "npx eslint --cache --fix --quiet"
+      "eslint --cache --fix --quiet",
+      "prettier --cache --write --ignore-unknown"
     ]
   }
 }

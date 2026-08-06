@@ -6,7 +6,6 @@
   "license": "MIT",
   "scripts": {
     "build": "npx tsc -p ./",
-    "lint:staged": "lint-staged",
     "precommit": "lint-staged",
     "test:unit": "nyc mocha \"tests/**/*.test.ts\" "
   },
@@ -30,7 +29,7 @@
     "globals": "^16.2.0",
     "lint-staged": "^13.2.1",
     "nyc": "^17.1.0",
-    "prettier": "^2.4.1",
+    "prettier": "^3.3.3",
     "source-map-support": "^0.5.21",
     "ts-node": "^10.9.2",
     "tslib": "^2.3.1",
@@ -42,7 +41,8 @@
   },
   "lint-staged": {
     "*.{js,jsx,css,ts,tsx}": [
-      "npx eslint --cache --fix --quiet"
+      "eslint --cache --fix --quiet",
+      "prettier --cache --write --ignore-unknown"
     ]
   }
 }

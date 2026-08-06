@@ -15,7 +15,6 @@ import {
   ErrorType,
   InvalidAPIInfo,
   ListAPIInfo,
-  ParseOptions,
   ProjectType,
   SpecParser,
   SpecParserError,
@@ -50,6 +49,7 @@ import * as util from "util";
 import { SpecParserSource } from "../../../common/constants";
 import { featureFlagManager, FeatureFlags } from "../../../common/featureFlags";
 import { getLocalizedString } from "../../../common/localizeUtils";
+import { getParserOptions } from "../../../common/openApiParserOptions";
 import {
   ApiSpecTelemetryPropertis,
   sendTelemetryErrorEvent,
@@ -72,6 +72,7 @@ import {
 import { manifestUtils } from "../../driver/teamsApp/utils/ManifestUtils";
 import { pluginManifestUtils } from "../../driver/teamsApp/utils/PluginManifestUtils";
 import { generatePlugin, listAPIInfo, validateOpenAPISpec } from "../../../common/daSpecParser";
+import { isMCPScaffoldWarning } from "../../utils/mcpAuthScaffolder";
 import { pathUtils } from "../../utils/pathUtils";
 
 const enum telemetryProperties {
@@ -99,62 +100,7 @@ const enum telemetryEvents {
   failedToGetGenerateWarning = "failed-to-get-generate-warning",
 }
 
-export function getParserOptions(
-  type: ProjectType,
-  isDeclarativeAgent?: boolean,
-  platform?: string
-): ParseOptions {
-  return type === ProjectType.Copilot
-    ? {
-        isGptPlugin: isDeclarativeAgent,
-        allowAPIKeyAuth: false,
-        allowBearerTokenAuth: !!platform && platform === Platform.VS ? false : true,
-        allowMultipleParameters: true,
-        allowOauth2: !!platform && platform === Platform.VS ? false : true,
-        projectType: ProjectType.Copilot,
-        allowMissingId: true,
-        allowSwagger: true,
-        allowMethods: [
-          "get",
-          "post",
-          "put",
-          "delete",
-          "patch",
-          "head",
-          "connect",
-          "options",
-          "trace",
-        ],
-        allowResponseSemantics: true,
-        allowConversationStarters: false, // Conversation starters in the plugin file are no longer used; they are now sourced from the declarativeAgent file.
-        allowConfirmation: false, // confirmation is not stable for public preview in Sydney, so it's temporarily set to false
-      }
-    : type === ProjectType.TeamsAi
-      ? {
-          allowAPIKeyAuth: true,
-          allowBearerTokenAuth: true,
-          allowMultipleParameters: true,
-          allowOauth2: true,
-          projectType: ProjectType.TeamsAi,
-          allowMethods: [
-            "get",
-            "post",
-            "put",
-            "delete",
-            "patch",
-            "head",
-            "connect",
-            "options",
-            "trace",
-          ],
-        }
-      : {
-          projectType: type,
-          allowBearerTokenAuth: !!platform && platform === Platform.VS ? false : true, // Currently, API key auth support is actually bearer token auth
-          allowMultipleParameters: true,
-          allowOauth2: featureFlagManager.getBooleanValue(FeatureFlags.SMEOAuth),
-        };
-}
+export { getParserOptions } from "../../../common/openApiParserOptions";
 
 export const specParserGenerateResultTelemetryEvent = "spec-parser-generate-result";
 export const specParserGenerateResultAllSuccessTelemetryProperty = "all-success";
@@ -265,7 +211,7 @@ export async function listOperations(
     );
 
     let operations = listResult.APIs.filter((value) => value.isValid);
-    context.telemetryReporter.sendTelemetryEvent(telemetryEvents.listApis, {
+    context.telemetryReporter?.sendTelemetryEvent(telemetryEvents.listApis, {
       [telemetryProperties.generateType]: projectType.toString(),
       [telemetryProperties.validApisCount]: listResult.validAPICount.toString(),
       [telemetryProperties.allApisCount]: listResult.allAPICount.toString(),
@@ -558,7 +504,7 @@ export async function generateFromApiSpec(
           );
 
     // Send SpecParser.generate() warnings
-    context.telemetryReporter.sendTelemetryEvent(specParserGenerateResultTelemetryEvent, {
+    context.telemetryReporter?.sendTelemetryEvent(specParserGenerateResultTelemetryEvent, {
       [telemetryProperties.generateType]: projectType.toString(),
       [specParserGenerateResultAllSuccessTelemetryProperty]: generateResult.allSuccess.toString(),
       [specParserGenerateResultWarningsTelemetryProperty]: generateResult.warnings
@@ -629,7 +575,7 @@ export function logValidationResults(
     if (existingCorrelationId) {
       properties["correlation-id"] = existingCorrelationId;
     }
-    context.telemetryReporter.sendTelemetryEvent(telemetryEvents.validateApiSpec, properties);
+    context.telemetryReporter?.sendTelemetryEvent(telemetryEvents.validateApiSpec, properties);
   }
 
   if (errors.length === 0 && (warnings.length === 0 || !shouldLogWarning)) {
@@ -782,10 +728,19 @@ export async function generateScaffoldingSummary(
     });
   }
 
+  // MCP scaffolding warnings are not spec-parser warnings, but they report a project that
+  // cannot provision until the developer edits it (unresolved auth placeholders, tools that
+  // could not be fetched), so they must reach the summary too. Declarative-agent projects
+  // route through this function, which would otherwise drop them silently.
+  const mcpWarningMessage = warnings.filter(isMCPScaffoldWarning).map((warn) => {
+    return `${SummaryConstant.NotExecuted} ${warn.content}`;
+  });
+
   if (
     apiSpecWarningMessage.length ||
     manifestWarningMessage.length ||
-    pluginWarningMessage.length
+    pluginWarningMessage.length ||
+    mcpWarningMessage.length
   ) {
     let details = "";
     if (apiSpecWarningMessage.length) {
@@ -798,6 +753,10 @@ export async function generateScaffoldingSummary(
 
     if (pluginWarningMessage.length) {
       details += EOL + pluginWarningMessage.join(EOL);
+    }
+
+    if (mcpWarningMessage.length) {
+      details += EOL + mcpWarningMessage.join(EOL);
     }
 
     return getLocalizedString("core.copilotPlugin.scaffold.summary", details);

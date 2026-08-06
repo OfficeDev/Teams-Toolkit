@@ -1,18 +1,20 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { Inputs, Platform, UserError, err, ok } from "@microsoft/teamsfx-api";
+import { Inputs, Platform, UserError, err, ok, signedOut } from "@microsoft/teamsfx-api";
 import * as fs from "fs-extra";
 import os from "os";
 import path from "path";
 import { assert, vi } from "vitest";
 
+import { ListSensitivityLabelScope } from "../../src/common/constants";
 import { setTools } from "../../src/common/globalVars";
 import { TelemetryEvent, TelemetryProperty, TelemetrySuccess } from "../../src/common/telemetry";
 import { coordinator } from "../../src/component/coordinator";
+import { manifestUtils } from "../../src/component/driver/teamsApp/utils/ManifestUtils";
+import { TemplateNames } from "../../src/component/generator/templates/templateNames";
 import { pathUtils } from "../../src/component/utils/pathUtils";
 import {
-  applyV3PreFill,
   collectCreateFloor,
   scaffoldV4,
   scaffoldV4Deps,
@@ -40,317 +42,6 @@ describe("createFrontDoorAdapters", () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
-  });
-
-  describe("applyV3PreFill", () => {
-    it("is a no-op when the target carries no Q1 picks (the direct source)", () => {
-      const inputs: Inputs = { platform: Platform.VSCode };
-      const target: BuildTarget = { templateId: "default-bot", engine: "v3" };
-
-      applyV3PreFill(inputs, target);
-
-      assert.deepEqual(inputs, { platform: Platform.VSCode });
-    });
-
-    it("is a no-op when the picks carry no projectType", () => {
-      const inputs: Inputs = { platform: Platform.VSCode };
-      const target: BuildTarget = { templateId: "default-bot", engine: "v3", answers: {} };
-
-      applyV3PreFill(inputs, target);
-
-      assert.deepEqual(inputs, { platform: Platform.VSCode });
-    });
-
-    it("maps copilot-agent no-action onto the v3 declarative-agent path", () => {
-      const inputs: Inputs = { platform: Platform.VSCode };
-      const target: BuildTarget = {
-        templateId: "copilot-gpt-basic",
-        engine: "v3",
-        answers: { projectType: "copilot-agent-type", daTemplate: "no-action" },
-      };
-
-      applyV3PreFill(inputs, target);
-
-      assert.equal(inputs[QuestionNames.ProjectType], "copilot-agent-type");
-      assert.equal(inputs[QuestionNames.Capabilities], "declarative-agent");
-      assert.equal(inputs[QuestionNames.WithPlugin], "no");
-      assert.isUndefined(inputs[QuestionNames.ActionType]);
-      assert.isUndefined(inputs[QuestionNames.ApiAuth]);
-    });
-
-    it("maps copilot-agent add-action + new-api + auth onto the full v3 path", () => {
-      const inputs: Inputs = { platform: Platform.VSCode };
-      const target: BuildTarget = {
-        templateId: "api-plugin-from-scratch",
-        engine: "v3",
-        answers: {
-          projectType: "copilot-agent-type",
-          daTemplate: "add-action",
-          actionSource: "new-api",
-          apiAuth: "api-key",
-        },
-      };
-
-      applyV3PreFill(inputs, target);
-
-      assert.equal(inputs[QuestionNames.WithPlugin], "yes");
-      assert.equal(inputs[QuestionNames.ActionType], "new-api");
-      assert.equal(inputs[QuestionNames.ApiAuth], "api-key");
-    });
-
-    it("maps the openapi action source onto the v3 api-spec id and drops api-auth", () => {
-      const inputs: Inputs = { platform: Platform.VSCode };
-      const target: BuildTarget = {
-        templateId: "api-plugin-existing-api",
-        engine: "v3",
-        answers: {
-          projectType: "copilot-agent-type",
-          daTemplate: "add-action",
-          actionSource: "openapi",
-          apiAuth: "api-key",
-        },
-      };
-
-      applyV3PreFill(inputs, target);
-
-      assert.equal(inputs[QuestionNames.ActionType], "api-spec");
-      // api-auth only applies to the new-api source.
-      assert.isUndefined(inputs[QuestionNames.ApiAuth]);
-    });
-
-    it("maps the mcp action source onto the v3 mcp id and drops api-auth", () => {
-      const inputs: Inputs = { platform: Platform.VSCode };
-      const target: BuildTarget = {
-        templateId: "declarative-agent-with-action-from-mcp",
-        engine: "v3",
-        answers: {
-          projectType: "copilot-agent-type",
-          daTemplate: "add-action",
-          actionSource: "mcp",
-        },
-      };
-
-      applyV3PreFill(inputs, target);
-
-      assert.equal(inputs[QuestionNames.ProjectType], "copilot-agent-type");
-      assert.equal(inputs[QuestionNames.Capabilities], "declarative-agent");
-      assert.equal(inputs[QuestionNames.WithPlugin], "yes");
-      assert.equal(inputs[QuestionNames.ActionType], "mcp");
-      // api-auth only applies to the new-api source; the v3 walk re-asks the
-      // mcp-server-type dimension (the selector does not collect it).
-      assert.isUndefined(inputs[QuestionNames.ApiAuth]);
-    });
-
-    it("does not map the removed da-meta-os action source", () => {
-      const inputs: Inputs = { platform: Platform.VSCode };
-      const target: BuildTarget = {
-        templateId: "declarative-agent-with-action-from-mcp",
-        engine: "v3",
-        answers: {
-          projectType: "copilot-agent-type",
-          daTemplate: "add-action",
-          actionSource: "da-meta-os",
-        },
-      };
-
-      applyV3PreFill(inputs, target);
-
-      assert.equal(inputs[QuestionNames.WithPlugin], "yes");
-      assert.isUndefined(inputs[QuestionNames.ActionType]);
-      assert.isUndefined(inputs[QuestionNames.ApiAuth]);
-    });
-
-    it("maps the graph-connector and typespec da templates", () => {
-      const gc: Inputs = { platform: Platform.VSCode };
-      applyV3PreFill(gc, {
-        templateId: "declarative-agent-with-graph-connector",
-        engine: "v3",
-        answers: { projectType: "copilot-agent-type", daTemplate: "graph-connector" },
-      });
-      assert.equal(gc[QuestionNames.WithPlugin], "gc");
-      assert.isUndefined(gc[QuestionNames.ActionType]);
-
-      const ts: Inputs = { platform: Platform.VSCode };
-      applyV3PreFill(ts, {
-        templateId: "declarative-agent-typespec",
-        engine: "v3",
-        answers: { projectType: "copilot-agent-type", daTemplate: "typespec" },
-      });
-      assert.equal(ts[QuestionNames.WithPlugin], "type-spec");
-    });
-
-    it("maps the skill da template onto WithPlugin so the v3 walk does not re-ask", () => {
-      const inputs: Inputs = { platform: Platform.VSCode };
-      applyV3PreFill(inputs, {
-        templateId: "declarative-agent-with-skill",
-        engine: "v3",
-        answers: { projectType: "copilot-agent-type", daTemplate: "skill" },
-      });
-      assert.equal(inputs[QuestionNames.Capabilities], "declarative-agent");
-      assert.equal(inputs[QuestionNames.WithPlugin], "skill");
-      assert.isUndefined(inputs[QuestionNames.ActionType]);
-    });
-
-    it("maps the custom-engine-agent capability onto the v3 capabilities question", () => {
-      const basic: Inputs = { platform: Platform.VSCode };
-      applyV3PreFill(basic, {
-        templateId: "basic-custom-engine-agent",
-        engine: "v3",
-        answers: {
-          projectType: "custom-engine-agent-type",
-          customEngineAgent: "basic-custom-engine-agent",
-        },
-      });
-      assert.equal(basic[QuestionNames.ProjectType], "custom-engine-agent-type");
-      assert.equal(basic[QuestionNames.Capabilities], "basic-custom-engine-agent");
-
-      const weather: Inputs = { platform: Platform.VSCode };
-      applyV3PreFill(weather, {
-        templateId: "weather-agent",
-        engine: "v3",
-        answers: { projectType: "custom-engine-agent-type", customEngineAgent: "weather-agent" },
-      });
-      assert.equal(weather[QuestionNames.Capabilities], "weather-agent");
-    });
-
-    it("maps the teams general agent onto the renamed v3 teams-app-type id", () => {
-      const inputs: Inputs = { platform: Platform.VSCode };
-      applyV3PreFill(inputs, {
-        templateId: "custom-copilot-basic",
-        engine: "v3",
-        answers: { projectType: "teams-agent-and-app-type", teamsApp: "custom-copilot-basic" },
-      });
-
-      assert.equal(inputs[QuestionNames.ProjectType], "teams-agent-and-app-type");
-      assert.equal(inputs[QuestionNames.TeamsAppType], "custom-copilot-basic");
-      assert.isUndefined(inputs[QuestionNames.CustomCopilotRag]);
-    });
-
-    it("renames the teams rag app and maps the rag source verbatim", () => {
-      const inputs: Inputs = { platform: Platform.VSCode };
-      applyV3PreFill(inputs, {
-        templateId: "custom-copilot-rag-custom-api",
-        engine: "v3",
-        answers: {
-          projectType: "teams-agent-and-app-type",
-          teamsApp: "rag",
-          customCopilotRagType: "custom-copilot-rag-custom-api",
-        },
-      });
-
-      assert.equal(inputs[QuestionNames.TeamsAppType], "custom-copilot-rag");
-      assert.equal(inputs[QuestionNames.CustomCopilotRag], "custom-copilot-rag-custom-api");
-    });
-
-    it("maps the teams collaborator agent", () => {
-      const inputs: Inputs = { platform: Platform.VSCode };
-      applyV3PreFill(inputs, {
-        templateId: "teams-collaborator-agent",
-        engine: "v3",
-        answers: { projectType: "teams-agent-and-app-type", teamsApp: "teams-collaborator-agent" },
-      });
-
-      assert.equal(inputs[QuestionNames.TeamsAppType], "teams-collaborator-agent");
-    });
-
-    it("renames the teams other app and maps the other capability verbatim", () => {
-      const inputs: Inputs = { platform: Platform.VSCode };
-      applyV3PreFill(inputs, {
-        templateId: "default-bot",
-        engine: "v3",
-        answers: {
-          projectType: "teams-agent-and-app-type",
-          teamsApp: "other",
-          teamsOtherAppType: "default-bot",
-        },
-      });
-
-      assert.equal(inputs[QuestionNames.TeamsAppType], "teams-other-app-type");
-      assert.equal(inputs["teams-other-app-type"], "default-bot");
-    });
-
-    it("leaves teams Q2 unfilled when the teams app selector id is unknown", () => {
-      const inputs: Inputs = { platform: Platform.VSCode };
-      applyV3PreFill(inputs, {
-        templateId: "future-teams-template",
-        engine: "v3",
-        answers: { projectType: "teams-agent-and-app-type", teamsApp: "future-teams-template" },
-      });
-
-      assert.equal(inputs[QuestionNames.ProjectType], "teams-agent-and-app-type");
-      assert.isUndefined(inputs[QuestionNames.TeamsAppType]);
-    });
-
-    it("maps the office-addin taskpane and config capabilities onto the renamed v3 ids", () => {
-      const taskpane: Inputs = { platform: Platform.VSCode };
-      applyV3PreFill(taskpane, {
-        templateId: "office-addin-wxpo-taskpane",
-        engine: "v3",
-        answers: {
-          projectType: "office-meta-os-type",
-          officeAddinCapability: "office-addin-wxpo-taskpane",
-        },
-      });
-      assert.equal(taskpane[QuestionNames.ProjectType], "office-meta-os-type");
-      assert.equal(taskpane[QuestionNames.Capabilities], "wxp-json-taskpane");
-
-      const config: Inputs = { platform: Platform.VSCode };
-      applyV3PreFill(config, {
-        templateId: "office-addin-config",
-        engine: "v3",
-        answers: {
-          projectType: "office-meta-os-type",
-          officeAddinCapability: "office-addin-config",
-        },
-      });
-      assert.equal(config[QuestionNames.Capabilities], "office-addin-import");
-    });
-
-    it("maps the office DA-meta-os upgrade capability onto the renamed v3 ids", () => {
-      const inputs: Inputs = { platform: Platform.VSCode };
-      applyV3PreFill(inputs, {
-        templateId: "declarative-agent-meta-os-upgrade-project",
-        engine: "v3",
-        answers: {
-          projectType: "office-meta-os-type",
-          officeAddinCapability: "office-da-meta-os",
-          daMetaOsCapability: "declarative-agent-meta-os-upgrade-project",
-        },
-      });
-
-      assert.equal(inputs[QuestionNames.Capabilities], "office-da-meta-os");
-      assert.equal(inputs[QuestionNames.DAMetaOSCapability], "da-meta-os-upgrade-existing-project");
-    });
-
-    it("leaves office Q2 unfilled when the office capability selector id is unknown", () => {
-      const inputs: Inputs = { platform: Platform.VSCode };
-      applyV3PreFill(inputs, {
-        templateId: "future-office-template",
-        engine: "v3",
-        answers: {
-          projectType: "office-meta-os-type",
-          officeAddinCapability: "future-office-template",
-        },
-      });
-
-      assert.equal(inputs[QuestionNames.ProjectType], "office-meta-os-type");
-      assert.isUndefined(inputs[QuestionNames.Capabilities]);
-    });
-
-    it("sets only projectType for graph-connector (no capability dimension — safe re-ask)", () => {
-      const inputs: Inputs = { platform: Platform.VSCode };
-      const target: BuildTarget = {
-        templateId: "graph-connector",
-        engine: "v3",
-        answers: { projectType: "graph-connector-type" },
-      };
-
-      applyV3PreFill(inputs, target);
-
-      assert.equal(inputs[QuestionNames.ProjectType], "graph-connector-type");
-      assert.isUndefined(inputs[QuestionNames.Capabilities]);
-      assert.isUndefined(inputs[QuestionNames.TeamsAppType]);
-    });
   });
 
   describe("scaffoldV4", () => {
@@ -403,6 +94,13 @@ describe("createFrontDoorAdapters", () => {
         [QuestionNames.AppName]: "MyApp",
       };
       const flagReader = (name: string): boolean => name === "TEAMSFX_TEST_FLAG";
+      const provider = tools.tokenProvider.m365TokenProvider;
+      if (provider === undefined) {
+        assert.fail("expected an M365 token provider");
+      }
+      const getStatus = vi
+        .spyOn(provider, "getStatus")
+        .mockResolvedValue(ok({ status: signedOut }));
 
       const res = await scaffoldV4(inputs, v4Target, { mcpServerType: "remote" }, flagReader);
 
@@ -413,6 +111,26 @@ describe("createFrontDoorAdapters", () => {
       assert.deepEqual(firstCall[2], { mcpServerType: "remote" });
       assert.deepEqual(firstCall[3], { appName: "MyApp", language: "common" });
       assert.strictEqual(firstCall[5], flagReader);
+      const stepRegistry = firstCall[7];
+      const sensitivityStep = stepRegistry?.get("da/set-sensitivity-label");
+      if (sensitivityStep === undefined) {
+        assert.fail("expected a registered sensitivity-label step");
+      }
+      const applyResult = await sensitivityStep.apply(
+        { manifestPath: "appPackage/declarativeAgent.json" },
+        {
+          read: (): Buffer | undefined => undefined,
+          write: (): void => undefined,
+          manifestWrapper: () => ({
+            registerDeclarativeAgentAction: () => ok(undefined),
+          }),
+        }
+      );
+      assert.isTrue(applyResult.isOk());
+      assert.deepStrictEqual(getStatus.mock.calls[0][0], {
+        scopes: [ListSensitivityLabelScope],
+        showDialog: false,
+      });
     });
 
     it("DCE-21: emits v3-compatible generate-template telemetry when v4 scaffold succeeds", async () => {
@@ -432,7 +150,6 @@ describe("createFrontDoorAdapters", () => {
         platform: Platform.VSCode,
         [QuestionNames.Folder]: "/tmp",
         [QuestionNames.AppName]: "MyApp",
-        [QuestionNames.TemplateName]: "declarative-agent-with-action-from-mcp",
       };
 
       const res = await scaffoldV4(inputs, v4Target, { language: "typescript" });
@@ -471,7 +188,6 @@ describe("createFrontDoorAdapters", () => {
         platform: Platform.VSCode,
         [QuestionNames.Folder]: "/tmp",
         [QuestionNames.AppName]: "MyApp",
-        [QuestionNames.TemplateName]: "declarative-agent-with-action-from-mcp",
       };
 
       const res = await scaffoldV4(inputs, v4Target, {});
@@ -486,6 +202,99 @@ describe("createFrontDoorAdapters", () => {
       assert.equal(
         sendTelemetryError.mock.calls[0][1]?.[TelemetryProperty.Success],
         TelemetrySuccess.No
+      );
+    });
+
+    it("DCE-19: derives the v3-compatible telemetry template id from the v4 target id", async () => {
+      const expectedMappings: ReadonlyArray<readonly [string, string]> = [
+        ["basic-custom-engine-agent", TemplateNames.BasicCustomEngineAgent],
+        ["weather-agent", TemplateNames.WeatherAgent],
+        ["graph-connector", TemplateNames.GraphConnector],
+        ["custom-copilot-basic", TemplateNames.CustomCopilotBasic],
+        ["custom-copilot-rag-customize", TemplateNames.CustomCopilotRagCustomize],
+        ["custom-copilot-rag-azure-ai-search", TemplateNames.CustomCopilotRagAzureAISearch],
+        ["custom-copilot-rag-custom-api", TemplateNames.CustomCopilotRagCustomApi],
+        ["teams-collaborator-agent", TemplateNames.TeamsCollaboratorAgent],
+        ["non-sso-tab", TemplateNames.Tab],
+        ["default-message-extension", TemplateNames.DefaultMessageExtension],
+        ["default-bot", TemplateNames.DefaultBot],
+        ["office-addin-wxpo-taskpane", TemplateNames.WXPTaskpane],
+        ["office-addin-excel-cfshortcut", TemplateNames.ExcelCFShortcut],
+        ["office-addin-excel-customfunctions", TemplateNames.ExcelCustomFunctions],
+        ["office-addin-sso-naa", TemplateNames.OfficeAddinSsoNaa],
+        ["declarative-agent-meta-os-upgrade-project", "declarative-agent-meta-os-upgrade-project"],
+        ["office-addin-config", TemplateNames.OfficeAddinCommon],
+        ["da/no-action", TemplateNames.DeclarativeAgentBasic],
+        ["da/graph-connector", TemplateNames.DeclarativeAgentWithGraphConnector],
+        ["da/typespec", TemplateNames.DeclarativeAgentWithTypeSpec],
+        ["da/skill", TemplateNames.DeclarativeAgentWithSkill],
+        ["da/api-plugin-from-scratch", TemplateNames.DeclarativeAgentWithActionFromScratch],
+        [
+          "da/api-plugin-from-scratch-bearer",
+          TemplateNames.DeclarativeAgentWithActionFromScratchBearer,
+        ],
+        [
+          "da/api-plugin-from-scratch-oauth",
+          TemplateNames.DeclarativeAgentWithActionFromScratchOAuth,
+        ],
+        [
+          "da/api-plugin-from-existing-api",
+          TemplateNames.DeclarativeAgentWithActionFromExistingApiSpec,
+        ],
+        ["da/mcp-server-static", TemplateNames.DeclarativeAgentWithActionFromMCP],
+        ["da/mcp-server", TemplateNames.DeclarativeAgentWithActionFromMCP],
+      ];
+      vi.spyOn(scaffoldV4Deps, "scaffoldDeclarativeFromV4Channel").mockResolvedValue(
+        TEMPLATE_SOURCE
+      );
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue(undefined);
+      const sendTelemetry = vi.spyOn(tools.telemetryReporter, "sendTelemetryEvent");
+
+      for (const [templateId, expectedTemplateName] of expectedMappings) {
+        sendTelemetry.mockClear();
+        const inputs: Inputs = {
+          platform: Platform.VSCode,
+          [QuestionNames.Folder]: "/tmp",
+          [QuestionNames.AppName]: "MyApp",
+        };
+
+        const res = await scaffoldV4(
+          inputs,
+          { templateId, engine: "v4", language: "common" },
+          { language: "typescript" }
+        );
+
+        assert.isTrue(res.isOk());
+        assert.equal(
+          sendTelemetry.mock.calls[0][1]?.[TelemetryProperty.TemplateName],
+          `${expectedTemplateName}-ts`,
+          templateId
+        );
+      }
+    });
+
+    it("DCE-20: an unmapped v4 target id falls back to itself as the telemetry key", async () => {
+      vi.spyOn(scaffoldV4Deps, "scaffoldDeclarativeFromV4Channel").mockResolvedValue(
+        TEMPLATE_SOURCE
+      );
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue(undefined);
+      const sendTelemetry = vi.spyOn(tools.telemetryReporter, "sendTelemetryEvent");
+      const inputs: Inputs = {
+        platform: Platform.VSCode,
+        [QuestionNames.Folder]: "/tmp",
+        [QuestionNames.AppName]: "MyApp",
+      };
+
+      const res = await scaffoldV4(
+        inputs,
+        { templateId: "future/v4-template", engine: "v4", language: "common" },
+        { language: "typescript" }
+      );
+
+      assert.isTrue(res.isOk());
+      assert.equal(
+        sendTelemetry.mock.calls[0][1]?.[TelemetryProperty.TemplateName],
+        "future/v4-template-ts"
       );
     });
 
@@ -513,6 +322,52 @@ describe("createFrontDoorAdapters", () => {
       } finally {
         await fs.remove(folder);
       }
+    });
+
+    it("DCE-26: trims an over-length manifest short name after the scaffold", async () => {
+      const folder = tempFolder();
+      const appName = "MyVeryLongDeclarativeAgentName";
+      const manifestPath = path.join(folder, appName, "appPackage", "manifest.json");
+      vi.spyOn(scaffoldV4Deps, "scaffoldDeclarativeFromV4Channel").mockImplementation(async () => {
+        await fs.outputJson(manifestPath, { name: { short: `${appName}\${{APP_NAME_SUFFIX}}` } });
+        return TEMPLATE_SOURCE;
+      });
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue(undefined);
+      const inputs: Inputs = {
+        platform: Platform.VSCode,
+        [QuestionNames.Folder]: folder,
+        [QuestionNames.AppName]: appName,
+      };
+
+      try {
+        const res = await scaffoldV4(inputs, v4Target, {});
+
+        assert.isTrue(res.isOk());
+        const manifest = await fs.readJson(manifestPath);
+        assert.equal(manifest.name.short, "MyVeryLongDeclarativeAgen${{APP_NAME_SUFFIX}}");
+      } finally {
+        await fs.remove(folder);
+      }
+    });
+
+    it("returns the trim error when trimManifestShortName fails", async () => {
+      vi.spyOn(scaffoldV4Deps, "scaffoldDeclarativeFromV4Channel").mockResolvedValue(
+        TEMPLATE_SOURCE
+      );
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue(undefined);
+      vi.spyOn(manifestUtils, "trimManifestShortName").mockResolvedValue(
+        err(new UserError({ source: "Test", name: "TrimShortNameFailed", message: "failed" }))
+      );
+      const inputs: Inputs = {
+        platform: Platform.VSCode,
+        [QuestionNames.Folder]: "/tmp",
+        [QuestionNames.AppName]: "MyApp",
+      };
+
+      const res = await scaffoldV4(inputs, v4Target, {});
+
+      assert.isTrue(res.isErr());
+      assert.equal(res._unsafeUnwrapErr().name, "TrimShortNameFailed");
     });
 
     it("defaults the caller-floor language to common when the target has none", async () => {
@@ -549,6 +404,48 @@ describe("createFrontDoorAdapters", () => {
 
       assert.isTrue(res.isOk());
       assert.equal(warning.mock.calls[0][0], "Using bundled template fallback.");
+    });
+
+    it("carries the pipeline warnings onto the create result", async () => {
+      vi.spyOn(scaffoldV4Deps, "scaffoldDeclarativeFromV4Channel").mockImplementation(
+        async (context) => {
+          context.warnings = [{ type: "mcpAuthOAuthUrlPlaceholder", content: "repair the urls" }];
+          return TEMPLATE_SOURCE;
+        }
+      );
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue(undefined);
+      const inputs: Inputs = {
+        platform: Platform.VSCode,
+        [QuestionNames.Folder]: "/tmp",
+        [QuestionNames.AppName]: "MyApp",
+      };
+
+      const res = await scaffoldV4(inputs, v4Target, {});
+
+      assert.isTrue(res.isOk());
+      assert.deepEqual(res._unsafeUnwrap().warnings, [
+        { type: "mcpAuthOAuthUrlPlaceholder", content: "repair the urls" },
+      ]);
+    });
+
+    it("leaves the create result without warnings when the pipeline raised none", async () => {
+      vi.spyOn(scaffoldV4Deps, "scaffoldDeclarativeFromV4Channel").mockImplementation(
+        async (context) => {
+          context.warnings = [];
+          return TEMPLATE_SOURCE;
+        }
+      );
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue(undefined);
+      const inputs: Inputs = {
+        platform: Platform.VSCode,
+        [QuestionNames.Folder]: "/tmp",
+        [QuestionNames.AppName]: "MyApp",
+      };
+
+      const res = await scaffoldV4(inputs, v4Target, {});
+
+      assert.isTrue(res.isOk());
+      assert.isUndefined(res._unsafeUnwrap().warnings);
     });
 
     it("returns the tracking id error when ensureTrackingId fails", async () => {

@@ -3,7 +3,6 @@
 import { DeclarativeAgentManifest, Platform, err, ok, signedIn } from "@microsoft/teamsfx-api";
 import mockedEnv from "mocked-env";
 import { assert, expect, vi } from "vitest";
-import packageJson from "../../../package.json";
 import { GraphClient } from "../../../src/client/graphClient";
 import { createContext, setTools } from "../../../src/common/globalVars";
 import * as requestUtils from "../../../src/common/requestUtils";
@@ -17,6 +16,8 @@ import {
   setGeneralSensitivityLabel,
 } from "../../../src/component/generator/utils";
 import { MockTools } from "../../core/utils";
+
+const packageJson = require("../../../package.json");
 
 describe("utils unit test cases", () => {
   const sandbox = vi;
@@ -101,7 +102,7 @@ describe("utils unit test cases", () => {
     const getLatestVersion = () => Promise.resolve(templateConfig.vsversion);
     const result = await getTemplateUrl("csharp", getLatestVersion, Platform.VS);
     const expectedUrl =
-      "https://github.com/OfficeDev/microsoft-365-agents-toolkit/releases/download/templates-vs@18.6.0/csharp.zip";
+      "https://github.com/OfficeDev/microsoft-365-agents-toolkit/releases/download/templates-vs@0.0.0-rc/csharp.zip";
     assert.strictEqual(result, expectedUrl);
   });
 
@@ -129,6 +130,7 @@ describe("utils unit test cases", () => {
 
   it("should return undefined for alpha version in package.json", async () => {
     (packageJson as any).version = "3.0.0-alpha.1";
+    Object.assign(templateConfig, { useLocalTemplate: false });
     const getLatestVersion = () => Promise.resolve("6.0.0");
     const result = await getTemplateUrl("ts", getLatestVersion, Platform.VSCode);
     assert.isUndefined(result);
@@ -136,9 +138,12 @@ describe("utils unit test cases", () => {
 
   it("should return rc URL for rc version in package.json", async () => {
     (packageJson as any).version = "3.0.0-rc.1";
+    Object.assign(templateConfig, { useLocalTemplate: false });
     const getLatestVersion = () => Promise.resolve("6.0.0");
     const result = await getTemplateUrl("ts", getLatestVersion, Platform.VSCode);
-    assert.isUndefined(result);
+    const expectedUrl =
+      "https://github.com/OfficeDev/microsoft-365-agents-toolkit/releases/download/templates@0.0.0-rc/ts.zip";
+    assert.strictEqual(result, expectedUrl);
   });
 
   it("should use latest version for beta version in package.json when latest is higher", async () => {
@@ -187,6 +192,18 @@ describe("utils unit test cases", () => {
     };
     Object.assign(templateConfig, mockSettings);
     const getLatestVersion = () => Promise.resolve("5.0.0");
+    const result = await getTemplateUrl("ts", getLatestVersion, Platform.VSCode);
+    assert.isUndefined(result);
+  });
+
+  it("should return undefined for getTemplateVSCUrl when useLocalTemplate flag is true even if latest is higher", async () => {
+    (packageJson as any).version = "3.0.0";
+    Object.assign(templateConfig, {
+      useLocalTemplate: true,
+      localVersion: "5.0.0",
+      tagPrefix: "templates@",
+    });
+    const getLatestVersion = () => Promise.resolve("6.0.0");
     const result = await getTemplateUrl("ts", getLatestVersion, Platform.VSCode);
     assert.isUndefined(result);
   });
@@ -279,65 +296,53 @@ describe("utils unit test cases", () => {
 
 describe("templateHelper unit test cases", () => {
   const originalPackageVersion = (packageJson as any).version;
+  const originalTemplateConfig = JSON.parse(JSON.stringify(templateConfig));
 
   afterEach(() => {
     (packageJson as any).version = originalPackageVersion;
+    Object.assign(templateConfig, originalTemplateConfig);
   });
 
   it("should return true when TEMPLATE_VERSION is set to local", () => {
     const restore = mockedEnv({
       TEMPLATE_VERSION: "local",
     });
+    // local override wins even when the config flag is off.
+    (templateConfig as any).useLocalTemplate = false;
     const result = useLocalTemplate();
     assert.isTrue(result);
     restore();
   });
 
-  it("should return false when TEMPLATE_VERSION is not set to local", () => {
+  it("should return false when an explicit non-local TEMPLATE_VERSION is set", () => {
     const restore = mockedEnv({
       TEMPLATE_VERSION: "1.0.0",
     });
     (packageJson as any).version = "3.0.0";
+    (templateConfig as any).useLocalTemplate = true;
+    // An explicit version override forces a download regardless of the flag.
     const result = useLocalTemplate();
     assert.isFalse(result);
     restore();
   });
 
-  it("should return true when package version contains alpha", () => {
-    const restore = mockedEnv({
-      TEMPLATE_VERSION: "",
-    });
-    (packageJson as any).version = "3.0.0-alpha.1";
-    const result = useLocalTemplate();
-    assert.isFalse(result);
-    restore();
-  });
-
-  it("should return false when package version is stable and TEMPLATE_VERSION is not local", () => {
+  it("should return true when the useLocalTemplate config flag is true", () => {
     const restore = mockedEnv({
       TEMPLATE_VERSION: "",
     });
     (packageJson as any).version = "3.0.0";
+    (templateConfig as any).useLocalTemplate = true;
     const result = useLocalTemplate();
-    assert.isFalse(result);
+    assert.isTrue(result);
     restore();
   });
 
-  it("should return false when package version contains beta", () => {
+  it("should return false when the useLocalTemplate config flag is false", () => {
     const restore = mockedEnv({
       TEMPLATE_VERSION: "",
     });
-    (packageJson as any).version = "3.0.0-beta.1";
-    const result = useLocalTemplate();
-    assert.isFalse(result);
-    restore();
-  });
-
-  it("should return false when package version contains rc", () => {
-    const restore = mockedEnv({
-      TEMPLATE_VERSION: "",
-    });
-    (packageJson as any).version = "3.0.0-rc.1";
+    (packageJson as any).version = "3.0.0";
+    (templateConfig as any).useLocalTemplate = false;
     const result = useLocalTemplate();
     assert.isFalse(result);
     restore();

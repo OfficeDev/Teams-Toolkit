@@ -70,7 +70,9 @@
         "dhash:362:127:0:10:c0c88694b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_f8d68c05",
       "created_at": "2025-12-02T02:27:32.922808",
       "plan_id": "plan_42cb7b61"
@@ -92,7 +94,9 @@
         "dhash:512:384:0:20:c0c0b094b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_e3049d8a",
       "created_at": "2025-12-02T02:27:32.932278",
       "plan_id": "plan_42cb7b61"
@@ -114,7 +118,9 @@
         "dhash:512:384:0:20:d0b89494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_7ef6e51f",
       "created_at": "2025-12-02T02:27:32.941631",
       "plan_id": "plan_42cb7b61"
@@ -126,7 +132,7 @@
       "parameters": {
         "key": "enter"
       },
-      "description": "Press the \"Enter\" key to confirm the selected file path in the \"Enter OpenAPI Description Document Location\" input field within the Microsoft 365 Agents Toolkit interface.",
+      "description": "Press the \"Enter\" key again after selecting \"Custom API Preview\" to proceed to the \"Enter OpenAPI Description Document Location\" input field within the Microsoft 365 Agents Toolkit interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -136,7 +142,9 @@
         "dhash:512:384:0:20:f0b09494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_646ad69a",
       "created_at": "2025-12-02T02:27:32.952343",
       "plan_id": "plan_42cb7b61"
@@ -158,7 +166,9 @@
         "dhash:512:384:0:20:e0b09494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_e03a3fa1",
       "created_at": "2025-12-02T02:27:32.963437",
       "plan_id": "plan_42cb7b61"
@@ -180,7 +190,9 @@
         "dhash:512:384:0:20:f0b09494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_2a5a45c0",
       "created_at": "2025-12-02T02:27:32.973738",
       "plan_id": "plan_42cb7b61"
@@ -207,7 +219,8 @@
       ],
       "postconditions": [],
       "tags": [
-        "delay:3"
+        "delay:3",
+        "precondition:old"
       ],
       "screenshot": "step_c0c3b887",
       "created_at": "2025-12-02T02:27:32.983751",
@@ -230,7 +243,9 @@
         "dhash:512:384:0:20:e4989494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_466cfbf0",
       "created_at": "2025-12-02T02:27:32.992593",
       "plan_id": "plan_42cb7b61"
@@ -252,7 +267,9 @@
         "dhash:512:384:0:20:f0b09494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_88e2a412",
       "created_at": "2025-12-02T02:27:33.000171",
       "plan_id": "plan_42cb7b61"

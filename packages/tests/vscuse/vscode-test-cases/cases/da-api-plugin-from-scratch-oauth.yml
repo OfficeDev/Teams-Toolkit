@@ -1,0 +1,316 @@
+version: 1
+
+cases:
+  - id: da-api-plugin-from-scratch-entra-ts-local-copilot
+    scenarioId: SCN-DA-CREATE-API-PLUGIN-FROM-SCRATCH
+    workItemIds: [34594770]
+    gate: manual
+    steps:
+      [
+        scaffold-entra-ts,
+        check-entra-ts,
+        login-m365,
+        f5-copilot-local,
+        open-agent,
+        check-repair,
+      ]
+
+  - id: da-api-plugin-from-scratch-oauth-ts-local-copilot
+    scenarioId: SCN-DA-CREATE-API-PLUGIN-FROM-SCRATCH
+    workItemIds: [34628898]
+    gate: manual
+    steps:
+      [
+        scaffold-oauth-ts,
+        check-oauth-ts,
+        login-m365,
+        f5-copilot-local,
+        open-agent,
+        check-oauth-sign-in,
+      ]
+
+  - id: da-api-plugin-from-scratch-oauth-js-local-copilot
+    scenarioId: SCN-DA-CREATE-API-PLUGIN-FROM-SCRATCH
+    workItemIds: [34628898]
+    gate: manual
+    steps:
+      [
+        scaffold-oauth-js,
+        check-oauth-js,
+        login-m365,
+        f5-copilot-local,
+        open-agent,
+        check-oauth-sign-in,
+      ]
+
+steps:
+  scaffold-entra-ts:
+    type: scaffold
+    with:
+      template: da/api-plugin-from-scratch-oauth
+      answers:
+        - question: projectType
+          value: copilot-agent-type
+        - question: daTemplate
+          value: add-action
+        - question: actionSource
+          value: new-api
+        - question: apiAuth
+          value: microsoft-entra
+        - question: language
+          value: typescript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-entra-ts:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/repairDeclarativeAgent.json
+        expect:
+          contains:
+            - '"name": "${{var:app_name}}${{APP_NAME_SUFFIX}}"'
+            - '"id": "repairPlugin"'
+            - '"file": "ai-plugin.json"'
+      - type: file
+        path: appPackage/ai-plugin.json
+        expect:
+          contains:
+            - '"namespace": "repairs"'
+            - '"type": "OpenApi"'
+            - '"type": "OAuthPluginVault"'
+            - '"reference_id": "${{AADAUTHCODE_CONFIGURATION_ID}}"'
+            - '"url": "apiSpecificationFile/repair.yml"'
+          notContains:
+            ['"reference_id": "${{OAUTH2AUTHCODE_CONFIGURATION_ID}}"']
+      - type: file
+        path: m365agents.local.yml
+        expect:
+          contains:
+            - "uses: aadApp/create"
+            - "generateClientSecret: false"
+            - "uses: oauth/register"
+            - "identityProvider: MicrosoftEntra"
+            - "configurationId: AADAUTHCODE_CONFIGURATION_ID"
+          notContains:
+            - "clientSecret: SECRET_AAD_APP_CLIENT_SECRET"
+            - "configurationId: OAUTH2AUTHCODE_CONFIGURATION_ID"
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains:
+            - "uses: aadApp/create"
+            - "generateClientSecret: false"
+            - "uses: oauth/register"
+            - "identityProvider: MicrosoftEntra"
+            - "configurationId: AADAUTHCODE_CONFIGURATION_ID"
+          notContains:
+            - "clientSecret: SECRET_AAD_APP_CLIENT_SECRET"
+            - "configurationId: OAUTH2AUTHCODE_CONFIGURATION_ID"
+      - type: file
+        path: aad.manifest.json
+        expect:
+          exists: true
+      - type: file
+        path: src/functions/repairs.ts
+        expect:
+          exists: true
+      - type: file
+        path: src/functions/repairs.js
+        expect:
+          exists: false
+      - type: file
+        path: tsconfig.json
+        expect:
+          exists: true
+
+  scaffold-oauth-ts:
+    type: scaffold
+    with:
+      template: da/api-plugin-from-scratch-oauth
+      answers:
+        - question: projectType
+          value: copilot-agent-type
+        - question: daTemplate
+          value: add-action
+        - question: actionSource
+          value: new-api
+        - question: apiAuth
+          value: oauth
+        - question: language
+          value: typescript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-oauth-ts:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/ai-plugin.json
+        expect:
+          contains:
+            - '"namespace": "repairs"'
+            - '"type": "OpenApi"'
+            - '"type": "OAuthPluginVault"'
+            - '"reference_id": "${{OAUTH2AUTHCODE_CONFIGURATION_ID}}"'
+            - '"url": "apiSpecificationFile/repair.yml"'
+          notContains: ['"reference_id": "${{AADAUTHCODE_CONFIGURATION_ID}}"']
+      - type: file
+        path: m365agents.local.yml
+        expect:
+          contains:
+            - "uses: aadApp/create"
+            - "generateClientSecret: true"
+            - "clientSecret: SECRET_AAD_APP_CLIENT_SECRET"
+            - "uses: oauth/register"
+            - "clientSecret: ${{SECRET_AAD_APP_CLIENT_SECRET}}"
+            - "configurationId: OAUTH2AUTHCODE_CONFIGURATION_ID"
+          notContains: ["identityProvider: MicrosoftEntra"]
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains:
+            - "uses: aadApp/create"
+            - "generateClientSecret: true"
+            - "clientSecret: SECRET_AAD_APP_CLIENT_SECRET"
+            - "uses: oauth/register"
+            - "clientSecret: ${{SECRET_AAD_APP_CLIENT_SECRET}}"
+            - "configurationId: OAUTH2AUTHCODE_CONFIGURATION_ID"
+          notContains: ["identityProvider: MicrosoftEntra"]
+      - type: file
+        path: aad.manifest.json
+        expect:
+          exists: true
+      - type: file
+        path: src/functions/repairs.ts
+        expect:
+          exists: true
+      - type: file
+        path: src/functions/repairs.js
+        expect:
+          exists: false
+      - type: file
+        path: tsconfig.json
+        expect:
+          exists: true
+
+  scaffold-oauth-js:
+    type: scaffold
+    with:
+      template: da/api-plugin-from-scratch-oauth
+      answers:
+        - question: projectType
+          value: copilot-agent-type
+        - question: daTemplate
+          value: add-action
+        - question: actionSource
+          value: new-api
+        - question: apiAuth
+          value: oauth
+        - question: language
+          value: javascript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-oauth-js:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/ai-plugin.json
+        expect:
+          contains:
+            - '"namespace": "repairs"'
+            - '"type": "OpenApi"'
+            - '"type": "OAuthPluginVault"'
+            - '"reference_id": "${{OAUTH2AUTHCODE_CONFIGURATION_ID}}"'
+            - '"url": "apiSpecificationFile/repair.yml"'
+          notContains: ['"reference_id": "${{AADAUTHCODE_CONFIGURATION_ID}}"']
+      - type: file
+        path: m365agents.local.yml
+        expect:
+          contains:
+            - "uses: aadApp/create"
+            - "generateClientSecret: true"
+            - "clientSecret: SECRET_AAD_APP_CLIENT_SECRET"
+            - "uses: oauth/register"
+            - "clientSecret: ${{SECRET_AAD_APP_CLIENT_SECRET}}"
+            - "configurationId: OAUTH2AUTHCODE_CONFIGURATION_ID"
+          notContains: ["identityProvider: MicrosoftEntra"]
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains:
+            - "uses: aadApp/create"
+            - "generateClientSecret: true"
+            - "clientSecret: SECRET_AAD_APP_CLIENT_SECRET"
+            - "uses: oauth/register"
+            - "clientSecret: ${{SECRET_AAD_APP_CLIENT_SECRET}}"
+            - "configurationId: OAUTH2AUTHCODE_CONFIGURATION_ID"
+          notContains: ["identityProvider: MicrosoftEntra"]
+      - type: file
+        path: aad.manifest.json
+        expect:
+          exists: true
+      - type: file
+        path: src/functions/repairs.js
+        expect:
+          exists: true
+      - type: file
+        path: src/functions/repairs.ts
+        expect:
+          exists: false
+      - type: file
+        path: tsconfig.json
+        expect:
+          exists: false
+
+  login-m365:
+    type: login
+    with:
+      type: m365
+      account: "${{env:M365_ACCOUNT_NAME}}"
+      password: "${{secret:M365_ACCOUNT_PASSWORD}}"
+
+  f5-copilot-local:
+    type: target
+    with:
+      profile: "Debug in Copilot (Chrome)"
+      profileSelection: first
+
+  open-agent:
+    type: open
+    with:
+      kind: agent
+      destination: chat
+
+  check-repair:
+    type: checks
+    with:
+      - type: chat
+        send: show repair records assigned to karin blair
+        allowAction: true
+        expect:
+          contains: ["Oil Change"]
+
+  # OAuth requires an interactive sign-in after action consent. The button is
+  # stable evidence that the protected action reached that state; this case
+  # does not depend on credentials for the generated Repair Service app.
+  check-oauth-sign-in:
+    type: checks
+    with:
+      - type: chat
+        send: List all repairs with oauth
+        allowAction: true
+      - type: browser
+        expect:
+          role: button
+          name: Sign in to Repair Service

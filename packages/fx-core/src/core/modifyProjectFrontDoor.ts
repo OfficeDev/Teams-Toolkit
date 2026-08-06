@@ -36,7 +36,6 @@ export interface ModifyFrontDoorDeps {
     answers: Answers,
     resolvedPackage?: ResolvedV4ChannelPackage
   ) => Promise<Result<undefined, FxError>>;
-  callCoreMethod: (inputs: Inputs, target: BuildTarget) => Promise<Result<undefined, FxError>>;
   flagReader?: (name: string) => boolean;
   readFloorBytes?: () => Buffer;
   artifactSnapshot?: TemplateArtifactSnapshot;
@@ -189,9 +188,6 @@ export async function modifyProjectFrontDoor(
       }
       return deps.scaffoldV4(inputs, target.value, answers.value);
     }
-    case "v3-core-method":
-      return deps.callCoreMethod(inputs, target.value);
-    case "v3":
     case "surface-action":
       return err(unsupportedModifyTarget(target.value));
   }

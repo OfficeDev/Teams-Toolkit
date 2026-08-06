@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/m365-spec-parser",
-  "version": "0.2.13",
+  "version": "0.2.15",
   "description": "OpenAPI specification files Parser for M365 Apps",
   "main": "dist/index.node.cjs.js",
   "browser": "dist/index.esm2017.js",
@@ -12,7 +12,6 @@
     "test:unit:node": "nyc --no-clean -- mocha -r config/mocha.env.ts --config config/.mocharc.json",
     "test:unit:browser": "karma start karma.conf.cjs --single-run --unit",
     "test:unit": "npm run test:unit:node && npm run test:unit:browser ",
-    "lint:staged": "lint-staged",
     "lint": "eslint \"**/*.ts\"",
     "precommit": "lint-staged",
     "check-format": "prettier --list-different \"src/**/*.ts\" \"test/**/*.ts\" \"*.{js,json}\"",
@@ -25,7 +24,10 @@
     "README.md",
     "LICENSE"
   ],
-  "repository": "https://github.com/OfficeDev/TeamsFx",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OfficeDev/microsoft-365-agents-toolkit.git"
+  },
   "engines": {
     "node": ">=10.0.0"
   },
@@ -40,7 +42,7 @@
     "@apidevtools/swagger-parser": "^10.1.1",
     "@microsoft/app-manifest": "workspace:*",
     "fs-extra": "^11.2.0",
-    "js-yaml": "^4.1.0",
+    "js-yaml": "^4.3.0",
     "openapi-types": "^7.2.3",
     "swagger2openapi": "^7.0.8"
   },
@@ -118,7 +120,7 @@
     "object-inspect": "1.13.1",
     "path-browserify": "^1.0.1",
     "pathval": "^2.0.0",
-    "prettier": "^2.4.1",
+    "prettier": "^3.3.3",
     "process": "^0.11.10",
     "puppeteer": "^13.1.3",
     "qs": "6.11.0",
@@ -144,7 +146,8 @@
   },
   "lint-staged": {
     "*.{js,jsx,css,ts,tsx}": [
-      "npx eslint --cache --fix --quiet"
+      "eslint --cache --fix --quiet",
+      "prettier --cache --write --ignore-unknown"
     ]
   }
 }

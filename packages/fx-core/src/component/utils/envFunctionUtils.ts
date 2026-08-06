@@ -87,7 +87,7 @@ async function runManifestResolver(
   }
 
   if (resolved.functionCount > 0) {
-    ctx.telemetryReporter.sendTelemetryEvent(telemetryEvent, {
+    ctx.telemetryReporter?.sendTelemetryEvent(telemetryEvent, {
       [TelemetryPropertyKey.manifestType]: manifestType.toString(),
       [TelemetryPropertyKey.functionCount]: resolved.functionCount.toString(),
     });

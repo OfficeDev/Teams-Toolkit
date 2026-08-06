@@ -180,6 +180,7 @@ export enum TelemetryProperty {
   CommandVerbose = "command-verbose",
   CommandInteractive = "command-interactive",
   BinName = "bin-name", // the input binary name: atk
+  CallerSource = "caller-source", // invoking tool/surface (e.g. "wiqd"), from ATK_CALLER
 }
 
 export enum TelemetrySuccess {

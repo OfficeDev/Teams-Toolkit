@@ -5,12 +5,16 @@ import {
   FxError,
   InputTextConfig,
   InputTextResult,
+  InputResult,
   MultiSelectConfig,
   MultiSelectResult,
   OptionItem as SurfaceOptionItem,
   Platform,
+  SelectFileConfig,
+  SelectFileResult,
   SelectFolderConfig,
   SelectFolderResult,
+  SingleFileOrInputConfig,
   SingleSelectConfig,
   SingleSelectResult,
   SystemError,
@@ -27,8 +31,13 @@ import { openCreateQuestions } from "../../../src/v4/distribution/createQuestion
 import { openDeclarativePackageMetadata } from "../../../src/v4/distribution/declarativePackage";
 import { DeclarativeLocator } from "../../../src/v4/model/dataModel";
 import { createUiPromptUI } from "../../../src/v4/surface/uiPromptUI";
-import { gateLanguagesBySurface, runCreateInputs } from "../../../src/v4/surface/createInputs";
-import { assert } from "vitest";
+import {
+  gateLanguagesBySurface,
+  runCreateInputs,
+  runCreateInputsWalk,
+} from "../../../src/v4/surface/createInputs";
+import { assert, vi } from "vitest";
+import { teamsProjectTypeDeps } from "../../../src/question/scaffold/vsc/teamsProjectTypeNode";
 
 /**
  * Tests for docs/03-specs/operations/scaffolding/collect-create-inputs.md.
@@ -42,6 +51,7 @@ import { assert } from "vitest";
 
 const TEMPLATES_V4_DIR = path.resolve(__dirname, "../../../../../templates/v4");
 const MCP_DA: DeclarativeLocator = { kind: "create", templateId: "da/mcp-server" };
+const NO_ACTION: DeclarativeLocator = { kind: "create", templateId: "da/no-action" };
 const STATIC_MCP_DA: DeclarativeLocator = {
   kind: "create",
   templateId: "da/mcp-server-static",
@@ -80,18 +90,24 @@ const RAG_CUSTOM_API: DeclarativeLocator = {
 };
 const OPENAPI_SPEC = path.resolve(__dirname, "../scenarios/fixtures/repairs-openapi.yaml");
 
+let cachedFloor: Buffer | undefined;
+
 function buildFloor(): Buffer {
+  if (cachedFloor !== undefined) {
+    return Buffer.from(cachedFloor);
+  }
   const zip = new AdmZip();
   zip.addLocalFolder(TEMPLATES_V4_DIR, "v4");
-  return zip.toBuffer();
+  cachedFloor = zip.toBuffer();
+  return Buffer.from(cachedFloor);
 }
 
-function buildLanguageFloor(): Buffer {
+function buildLanguageFloor(languages = ["typescript", "csharp"]): Buffer {
   const zip = new AdmZip();
   const root = "v4/create/test/language-axis";
   zip.addFile(
     `${root}/descriptor.json`,
-    Buffer.from(JSON.stringify({ id: "test/language-axis", languages: ["typescript", "csharp"] }))
+    Buffer.from(JSON.stringify({ id: "test/language-axis", languages }))
   );
   zip.addFile(`${root}/questions.json`, Buffer.from(JSON.stringify({ questions: [] })));
   zip.addFile(`${root}/pipeline.json`, Buffer.from("{}"));
@@ -126,6 +142,8 @@ const localMcpServers = [
 interface Script {
   select?: Record<string, string>;
   text?: Record<string, string>;
+  fileOrInput?: Record<string, string>;
+  file?: Record<string, string>;
   folder?: Record<string, string>;
   multi?: Record<string, string[]>;
   back?: string[];
@@ -146,31 +164,58 @@ class ScriptedUserInteraction {
   selectNames: string[] = [];
   textNames: string[] = [];
   folderNames: string[] = [];
+  fileNames: string[] = [];
+  fileOrInputNames: string[] = [];
   multiNames: string[] = [];
+  dynamicOptionNames: string[] = [];
+  inputConfigs: InputTextConfig[] = [];
   lastSelectConfig?: SingleSelectConfig;
   lastInputConfig?: InputTextConfig;
+  lastFileOrInputConfig?: SingleFileOrInputConfig;
+  lastFileConfig?: SelectFileConfig;
   lastFolderConfig?: SelectFolderConfig;
   lastMultiConfig?: MultiSelectConfig;
   constructor(private readonly script: Script) {}
 
-  selectOption(config: SingleSelectConfig): Promise<Result<SingleSelectResult, FxError>> {
+  async selectOption(config: SingleSelectConfig): Promise<Result<SingleSelectResult, FxError>> {
     this.promptNames.push(config.name);
     this.selectNames.push(config.name);
+    let loadedOptions = config.options;
+    if (typeof config.options === "function") {
+      this.dynamicOptionNames.push(config.name);
+      try {
+        loadedOptions = await config.options();
+        config = { ...config, options: loadedOptions };
+      } catch (error) {
+        if (error instanceof UserError || error instanceof SystemError) {
+          return err(error);
+        }
+        return err(noAnswer(config.name));
+      }
+    }
     this.lastSelectConfig = config;
+    if (
+      Array.isArray(loadedOptions) &&
+      config.skipSingleOption === true &&
+      loadedOptions.length === 1
+    ) {
+      return ok({ type: "skip", result: optionId(loadedOptions[0]) });
+    }
     if (this.script.back?.includes(config.name) === true) {
-      return Promise.resolve(ok({ type: "back" }));
+      return ok({ type: "back" });
     }
     const answer = this.script.select?.[config.name];
     if (answer === undefined) {
-      return Promise.resolve(err(noAnswer(config.name)));
+      return err(noAnswer(config.name));
     }
     const result: SingleSelectResult = { type: "success", result: answer };
-    return Promise.resolve(ok(result));
+    return ok(result);
   }
 
   inputText(config: InputTextConfig): Promise<Result<InputTextResult, FxError>> {
     this.promptNames.push(config.name);
     this.textNames.push(config.name);
+    this.inputConfigs.push(config);
     this.lastInputConfig = config;
     if (this.script.back?.includes(config.name) === true) {
       return Promise.resolve(ok({ type: "back" }));
@@ -179,7 +224,85 @@ class ScriptedUserInteraction {
     if (answer === undefined) {
       return Promise.resolve(err(noAnswer(config.name)));
     }
+    const validation = config.validation;
+    if (validation !== undefined) {
+      return Promise.resolve(validation(answer)).then((message) => {
+        if (message !== undefined) {
+          return err(
+            new UserError({
+              source: "Test",
+              name: INPUT_VALIDATION_FAILED,
+              message: `'${config.name}': ${message}`,
+            })
+          );
+        }
+        const result: InputTextResult = { type: "success", result: answer };
+        return ok(result);
+      });
+    }
     const result: InputTextResult = { type: "success", result: answer };
+    return Promise.resolve(ok(result));
+  }
+
+  selectFileOrInput(
+    config: SingleFileOrInputConfig
+  ): Promise<Result<InputResult<string>, FxError>> {
+    this.promptNames.push(config.name);
+    this.fileOrInputNames.push(config.name);
+    this.lastFileOrInputConfig = config;
+    if (this.script.back?.includes(config.name) === true) {
+      return Promise.resolve(ok({ type: "back" }));
+    }
+    const answer = this.script.fileOrInput?.[config.name];
+    if (answer === undefined) {
+      return Promise.resolve(err(noAnswer(config.name)));
+    }
+    const validation = config.validation;
+    if (validation !== undefined) {
+      return Promise.resolve(validation(answer)).then((message) => {
+        if (message !== undefined) {
+          return err(
+            new UserError({
+              source: "Test",
+              name: INPUT_VALIDATION_FAILED,
+              message: `'${config.name}': ${message}`,
+            })
+          );
+        }
+        return ok({ type: "success", result: answer });
+      });
+    }
+    return Promise.resolve(ok({ type: "success", result: answer }));
+  }
+
+  selectFile(config: SelectFileConfig): Promise<Result<SelectFileResult, FxError>> {
+    this.promptNames.push(config.name);
+    this.fileNames.push(config.name);
+    this.lastFileConfig = config;
+    if (this.script.back?.includes(config.name) === true) {
+      return Promise.resolve(ok({ type: "back" }));
+    }
+    const answer = this.script.file?.[config.name];
+    if (answer === undefined) {
+      return Promise.resolve(err(noAnswer(config.name)));
+    }
+    const validation = config.validation;
+    if (validation !== undefined) {
+      return Promise.resolve(validation(answer)).then((message) => {
+        if (message !== undefined) {
+          return err(
+            new UserError({
+              source: "Test",
+              name: INPUT_VALIDATION_FAILED,
+              message: `'${config.name}': ${message}`,
+            })
+          );
+        }
+        const result: SelectFileResult = { type: "success", result: answer };
+        return ok(result);
+      });
+    }
+    const result: SelectFileResult = { type: "success", result: answer };
     return Promise.resolve(ok(result));
   }
 
@@ -194,23 +317,59 @@ class ScriptedUserInteraction {
     if (answer === undefined) {
       return Promise.resolve(err(noAnswer(config.name)));
     }
+    const validation = config.validation;
+    if (validation !== undefined) {
+      return Promise.resolve(validation(answer)).then((message) => {
+        if (message !== undefined) {
+          return err(
+            new UserError({
+              source: "Test",
+              name: INPUT_VALIDATION_FAILED,
+              message: `'${config.name}': ${message}`,
+            })
+          );
+        }
+        const result: SelectFolderResult = { type: "success", result: answer };
+        return ok(result);
+      });
+    }
     const result: SelectFolderResult = { type: "success", result: answer };
     return Promise.resolve(ok(result));
   }
 
-  selectOptions(config: MultiSelectConfig): Promise<Result<MultiSelectResult, FxError>> {
+  async selectOptions(config: MultiSelectConfig): Promise<Result<MultiSelectResult, FxError>> {
     this.promptNames.push(config.name);
     this.multiNames.push(config.name);
+    let loadedOptions = config.options;
+    if (typeof config.options === "function") {
+      this.dynamicOptionNames.push(config.name);
+      try {
+        loadedOptions = await config.options();
+        config = { ...config, options: loadedOptions };
+      } catch (error) {
+        if (error instanceof UserError || error instanceof SystemError) {
+          return err(error);
+        }
+        return err(noAnswer(config.name));
+      }
+    }
     this.lastMultiConfig = config;
+    if (
+      Array.isArray(loadedOptions) &&
+      config.skipSingleOption === true &&
+      loadedOptions.length === 1
+    ) {
+      return ok({ type: "skip", result: [optionId(loadedOptions[0])] });
+    }
     if (this.script.back?.includes(config.name) === true) {
-      return Promise.resolve(ok({ type: "back" }));
+      return ok({ type: "back" });
     }
     const answer = this.script.multi?.[config.name];
     if (answer === undefined) {
-      return Promise.resolve(err(noAnswer(config.name)));
+      return err(noAnswer(config.name));
     }
     const result: MultiSelectResult = { type: "success", result: answer };
-    return Promise.resolve(ok(result));
+    return ok(result);
   }
 }
 
@@ -235,6 +394,27 @@ function multiOptionAt(config: MultiSelectConfig | undefined, index: number): Su
   return option;
 }
 
+function selectOptionAt(config: SingleSelectConfig | undefined, index: number): SurfaceOptionItem {
+  if (config === undefined) {
+    assert.fail("expected a single-select config");
+  }
+  if (!Array.isArray(config.options)) {
+    assert.fail("expected static single-select options");
+  }
+  const option = config.options[index];
+  if (option === undefined) {
+    assert.fail(`expected single-select option at index ${index}`);
+  }
+  if (typeof option === "string") {
+    assert.fail(`expected single-select option item at index ${index}`);
+  }
+  return option;
+}
+
+function optionId(option: string | SurfaceOptionItem): string {
+  return typeof option === "string" ? option : option.id;
+}
+
 describe("runCreateInputs (collect-create-inputs)", () => {
   it("CCI-00: metadata-only bytes drive Q2 language gating without content", async () => {
     const ui = new ScriptedUserInteraction({});
@@ -251,7 +431,155 @@ describe("runCreateInputs (collect-create-inputs)", () => {
     assert.deepEqual(ui.selectNames, []);
   });
 
+  it("CCI-25: threads baseStep + backable so Q2's first prompt shows Back and a back returns a typed outcome", async () => {
+    const ui = new ScriptedUserInteraction({ back: ["llmService"] });
+    const res = await runCreateInputsWalk(buildFloor(), CUSTOM_COPILOT_BASIC, {}, asUI(ui), {
+      flagReader: () => false,
+      surface: "vscode",
+      baseStep: 3,
+      backable: true,
+    });
+    assert.isTrue(res.isOk(), res.isErr() ? `${res.error.name}: ${res.error.message}` : "ok");
+    if (res.isOk()) {
+      // a back at Q2's first prompt hands control back to the front door (no cancel).
+      assert.strictEqual(res.value.kind, "back");
+    }
+    // llmService is the first prompt, shown at baseStep + 1 = 4, so the host renders a
+    // Back button (step > 1).
+    assert.strictEqual(ui.lastSelectConfig?.step, 4);
+  });
+
+  it("CCI-26: a different locator rebuilds Q2+Q3 fresh — no stale question is carried across templates", async () => {
+    // The MCP server template asks its own Q2 (mcpServerType / url / authType).
+    const mcpUi = new ScriptedUserInteraction({
+      text: { mcpServerUrl: "https://api.example.com/mcp" },
+      select: { authType: "none" },
+    });
+    const mcp = await runCreateInputs(buildFloor(), MCP_DA, {}, asUI(mcpUi), {
+      listLocalMcpServers: async () => [],
+      flagReader: () => false,
+    });
+    assert.isTrue(mcp.isOk(), mcp.isErr() ? `${mcp.error.name}: ${mcp.error.message}` : "ok");
+    assert.deepEqual(mcpUi.promptNames, ["mcpServerType", "mcpServerUrl", "authType"]);
+
+    // The no-action template (empty Q2, common language) under a different locator asks none
+    // of the MCP questions — the Q2+Q3 set is a pure function of the current locator.
+    const noActionUi = new ScriptedUserInteraction({});
+    const noAction = await runCreateInputs(buildFloor(), NO_ACTION, {}, asUI(noActionUi), {
+      flagReader: () => false,
+    });
+    assert.isTrue(
+      noAction.isOk(),
+      noAction.isErr() ? `${noAction.error.name}: ${noAction.error.message}` : "ok"
+    );
+    assert.deepEqual(noActionUi.promptNames, []);
+  });
+
+  it("CCI-28: a provider-single-option first question is back-transparent, so a back at the next prompt re-enters Q1", async () => {
+    const ui = new ScriptedUserInteraction({ back: ["mcpServerUrl"] });
+    const res = await runCreateInputsWalk(buildFloor(), MCP_DA, {}, asUI(ui), {
+      listLocalMcpServers: async () => [], // remote-only → mcpServerType auto-skips
+      flagReader: () => false,
+      baseStep: 3,
+      backable: true,
+    });
+    assert.isTrue(res.isOk(), res.isErr() ? `${res.error.name}: ${res.error.message}` : "ok");
+    if (res.isOk()) {
+      // mcpServerType auto-skipped (records remote, no back-stop); backing mcpServerUrl now
+      // crosses straight into Q1 instead of re-asking the skipped provider question.
+      assert.strictEqual(res.value.kind, "back");
+    }
+    // mcpServerUrl is the first *visible* prompt, at baseStep + 1 = 4 (the skip left no step).
+    assert.strictEqual(ui.lastInputConfig?.step, 4);
+  });
+
+  it("CCI-17: VS Code Teams Agents and Apps Python language option carries the v3 Preview description", async () => {
+    const ui = new ScriptedUserInteraction({
+      select: { llmService: "llm-service-openai", language: "python" },
+      text: { openAIKey: "fake-openai-key" },
+    });
+
+    const res = await runCreateInputs(buildFloor(), CUSTOM_COPILOT_BASIC, {}, asUI(ui), {
+      flagReader: () => false,
+      surface: "vscode",
+    });
+
+    assert.isTrue(res.isOk(), res.isErr() ? `${res.error.name}: ${res.error.message}` : "ok");
+    assert.strictEqual(res._unsafeUnwrap().language, "python");
+    const pythonOption = selectOptionAt(ui.lastSelectConfig, 2);
+    assert.strictEqual(pythonOption.id, "python");
+    assert.strictEqual(pythonOption.label, "Python");
+    assert.strictEqual(pythonOption.description, "Preview");
+  });
+
+  it("does not mark Python preview for non-Teams Agents and Apps language descriptors", async () => {
+    const ui = new ScriptedUserInteraction({ select: { language: "python" } });
+
+    const res = await runCreateInputs(
+      buildLanguageFloor(["typescript", "javascript", "python"]),
+      LANGUAGE_DA,
+      {},
+      asUI(ui),
+      {
+        flagReader: () => false,
+        surface: "vscode",
+      }
+    );
+
+    assert.isTrue(res.isOk(), res.isErr() ? `${res.error.name}: ${res.error.message}` : "ok");
+    assert.strictEqual(res._unsafeUnwrap().language, "python");
+    const pythonOption = selectOptionAt(ui.lastSelectConfig, 2);
+    assert.strictEqual(pythonOption.id, "python");
+    assert.isUndefined(pythonOption.description);
+  });
+
+  it("does not mark Python preview for Custom Engine Agent language options", async () => {
+    const ui = new ScriptedUserInteraction({
+      select: { llmService: "llm-service-openai", language: "python" },
+      text: { openAIKey: "fake-openai-key", "app-name": "MyAgent" },
+      folder: { folder: "C:/src" },
+    });
+
+    const res = await runCreateInputs(buildFloor(), BASIC_CUSTOM_ENGINE_AGENT, {}, asUI(ui), {
+      flagReader: () => false,
+      inputs: { platform: Platform.VSCode },
+      surface: "vscode",
+    });
+
+    assert.isTrue(res.isOk(), res.isErr() ? `${res.error.name}: ${res.error.message}` : "ok");
+    assert.strictEqual(res._unsafeUnwrap().language, "python");
+    const pythonOption = selectOptionAt(ui.lastSelectConfig, 2);
+    assert.strictEqual(pythonOption.id, "python");
+    assert.isUndefined(pythonOption.description);
+  });
+
+  it("uses the language id as the label for unrecognized descriptor languages", async () => {
+    const ui = new ScriptedUserInteraction({ select: { language: "rust" } });
+
+    const res = await runCreateInputs(
+      buildLanguageFloor(["typescript", "rust"]),
+      LANGUAGE_DA,
+      {},
+      asUI(ui),
+      {
+        flagReader: () => false,
+        surface: "vscode",
+      }
+    );
+
+    assert.isTrue(res.isOk(), res.isErr() ? `${res.error.name}: ${res.error.message}` : "ok");
+    assert.strictEqual(res._unsafeUnwrap().language, "rust");
+    const rustOption = selectOptionAt(ui.lastSelectConfig, 1);
+    assert.strictEqual(rustOption.id, "rust");
+    assert.strictEqual(rustOption.label, "rust");
+    assert.isUndefined(rustOption.description);
+  });
+
   it("CCI-01: remote-only provider auto-skips mcpServerType, asks url + authType=none", async () => {
+    // The server-URL question probes the server (ADR-0020); keep this test offline.
+    const probe = vi
+      .spyOn(teamsProjectTypeDeps, "probeMCPServerAuth")
+      .mockResolvedValue({ requiresAuth: false, endpointStatus: "confirmed" });
     const ui = new ScriptedUserInteraction({
       text: { mcpServerUrl: "https://api.example.com/mcp" },
       select: { authType: "none" },
@@ -267,14 +595,24 @@ describe("runCreateInputs (collect-create-inputs)", () => {
       assert.deepEqual(res.value, {
         surface: "vscode",
         mcpServerType: "remote",
+        "derived.mcp.serverTypes.catalog": "{}",
         mcpServerUrl: "https://api.example.com/mcp",
         authType: "none",
       });
     }
-    // mcpServerType has a single option (remote-only) + skipSingleOption -> never prompted.
-    assert.notInclude(ui.selectNames, "mcpServerType");
-    assert.deepEqual(ui.selectNames, ["authType"]);
+    // mcpServerType has a single dynamic option (remote-only) + skipSingleOption -> auto-skipped.
+    assert.deepEqual(ui.selectNames, ["mcpServerType", "authType"]);
+    assert.deepEqual(ui.dynamicOptionNames, ["mcpServerType"]);
     assert.deepEqual(ui.textNames, ["mcpServerUrl"]);
+    assert.equal(ui.lastInputConfig?.name, "mcpServerUrl");
+    assert.isFunction(ui.lastInputConfig?.validation);
+    const validation = ui.lastInputConfig?.validation;
+    if (validation === undefined) {
+      assert.fail("expected MCP server URL prompt validation");
+    }
+    assert.include(await validation("not a uri"), "absolute URL");
+    assert.isUndefined(await validation("https://api.example.com/mcp"));
+    probe.mockRestore();
   });
 
   it("CCI-17: openapi.operations provider lists operations from the selected OpenAPI document", async () => {
@@ -300,7 +638,191 @@ describe("runCreateInputs (collect-create-inputs)", () => {
     }
     assert.deepEqual(ui.textNames, []);
     assert.deepEqual(ui.multiNames, ["apiOperations"]);
+    assert.deepEqual(ui.dynamicOptionNames, ["apiOperations"]);
     assert.strictEqual(multiOptionAt(ui.lastMultiConfig, 0).id, "GET /repairs");
+  });
+
+  it("asks for the OpenAPI spec source before collecting DA OpenAPI operations", async () => {
+    const ui = new ScriptedUserInteraction({
+      select: { openApiSpecType: "enter-url" },
+      text: { apiSpecLocation: "https://example.com/openapi.yaml" },
+      multi: { apiOperations: ["GET /repairs"] },
+    });
+
+    const res = await runCreateInputs(buildFloor(), OPENAPI_DA, {}, asUI(ui), {
+      flagReader: () => false,
+    });
+
+    assert.isTrue(res.isErr(), "expected the fake remote URL to fail when operations load");
+    assert.equal(res._unsafeUnwrapErr().name, "OpenApiSpecInvalid");
+    assert.deepEqual(ui.promptNames, ["openApiSpecType", "apiSpecLocation", "apiOperations"]);
+    assert.deepEqual(ui.textNames, ["apiSpecLocation"]);
+    assert.deepEqual(ui.fileNames, []);
+    assert.deepEqual(ui.fileOrInputNames, []);
+    assert.equal(ui.lastInputConfig?.title, "OpenAPI Document");
+    assert.equal(ui.lastInputConfig?.placeholder, "Enter OpenAPI Document URL");
+    assert.isUndefined(ui.lastInputConfig?.prompt);
+    assert.isFunction(ui.lastInputConfig?.validation);
+    assert.equal(
+      await ui.lastInputConfig?.validation?.("./openapi.yaml"),
+      "Enter a valid HTTP URL without authentication to access your OpenAPI description document."
+    );
+    assert.deepEqual(ui.dynamicOptionNames, ["apiOperations"]);
+  });
+
+  it("browses a local DA OpenAPI document only from the local file branch", async () => {
+    const ui = new ScriptedUserInteraction({
+      select: { openApiSpecType: "open-file" },
+      file: { apiSpecLocation: OPENAPI_SPEC },
+      multi: { apiOperations: ["GET /repairs"] },
+    });
+
+    const res = await runCreateInputs(buildFloor(), OPENAPI_DA, {}, asUI(ui), {
+      flagReader: () => false,
+    });
+
+    assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
+    if (res.isOk()) {
+      assert.equal(res.value.openApiSpecType, "open-file");
+      assert.equal(res.value.apiSpecLocation, OPENAPI_SPEC);
+      assert.deepEqual(res.value.apiOperations, ["GET /repairs"]);
+    }
+    assert.deepEqual(ui.promptNames, ["openApiSpecType", "apiSpecLocation", "apiOperations"]);
+    assert.deepEqual(ui.fileNames, ["apiSpecLocation"]);
+    assert.deepEqual(ui.textNames, []);
+    assert.deepEqual(ui.fileOrInputNames, []);
+    assert.equal(ui.lastFileConfig?.title, "OpenAPI Document");
+    assert.isUndefined(ui.lastFileConfig?.placeholder);
+    assert.deepEqual(ui.lastFileConfig?.filters, {
+      "OpenAPI Description Document": ["json", "yml", "yaml"],
+    });
+  });
+
+  it("collects DA OpenAPI operations from a searched OpenAPI document", async () => {
+    const ui = new ScriptedUserInteraction({
+      select: { openApiSpecType: "search-api", selectOpenApiSpec: OPENAPI_SPEC },
+      text: { searchOpenApiSpecQuery: "repairs" },
+      multi: { apiOperations: ["GET /repairs"] },
+    });
+
+    const res = await runCreateInputs(buildFloor(), OPENAPI_DA, {}, asUI(ui), {
+      flagReader: () => false,
+      searchOpenAPISpec: async (query) => {
+        assert.equal(query, "repairs");
+        return [
+          {
+            key: "Repairs API",
+            url: OPENAPI_SPEC,
+            description: "Manage repairs",
+          },
+        ];
+      },
+    });
+
+    assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
+    if (res.isOk()) {
+      assert.equal(res.value.openApiSpecType, "search-api");
+      assert.equal(res.value.searchOpenApiSpecQuery, "repairs");
+      assert.equal(res.value.selectOpenApiSpec, OPENAPI_SPEC);
+      assert.equal(res.value.apiSpecLocation, OPENAPI_SPEC);
+      assert.deepEqual(res.value.apiOperations, ["GET /repairs"]);
+    }
+    assert.deepEqual(ui.promptNames, [
+      "openApiSpecType",
+      "searchOpenApiSpecQuery",
+      "selectOpenApiSpec",
+      "apiOperations",
+    ]);
+    assert.deepEqual(ui.dynamicOptionNames, ["selectOpenApiSpec", "apiOperations"]);
+    const options = (ui.lastSelectConfig?.options ?? []) as SurfaceOptionItem[];
+    assert.equal(options[0].id, OPENAPI_SPEC);
+    assert.equal(options[0].label, "Repairs API");
+    assert.equal(options[0].detail, "Manage repairs");
+  });
+
+  it("surfaces empty OpenAPI search results as a user-fixable error", async () => {
+    const ui = new ScriptedUserInteraction({
+      select: { openApiSpecType: "search-api" },
+      text: { searchOpenApiSpecQuery: "missing" },
+    });
+
+    const res = await runCreateInputs(buildFloor(), OPENAPI_DA, {}, asUI(ui), {
+      flagReader: () => false,
+      searchOpenAPISpec: async () => [],
+    });
+
+    assert.isTrue(res.isErr(), "expected empty search results to fail");
+    assert.equal(res._unsafeUnwrapErr().name, "OpenApi" + "SearchResult" + "NotFound");
+    assert.deepEqual(ui.promptNames, [
+      "openApiSpecType",
+      "searchOpenApiSpecQuery",
+      "selectOpenApiSpec",
+    ]);
+    assert.deepEqual(ui.dynamicOptionNames, ["selectOpenApiSpec"]);
+  });
+
+  it("surfaces blank OpenAPI search query as a user-fixable error", async () => {
+    const ui = new ScriptedUserInteraction({
+      select: { openApiSpecType: "search-api" },
+      text: { searchOpenApiSpecQuery: "   " },
+    });
+
+    const res = await runCreateInputs(buildFloor(), OPENAPI_DA, {}, asUI(ui), {
+      flagReader: () => false,
+    });
+
+    assert.isTrue(res.isErr(), "expected blank search query to fail");
+    assert.equal(res._unsafeUnwrapErr().name, "OpenApiSearchQueryMissing");
+    assert.deepEqual(ui.dynamicOptionNames, ["selectOpenApiSpec"]);
+  });
+
+  it("surfaces OpenAPI documents with no supported operations as a user-fixable error", async () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "atk-openapi-empty-"));
+    const openApiPath = path.join(tempDir, "openapi.yaml");
+    fs.writeFileSync(
+      openApiPath,
+      ["openapi: 3.0.0", "info:", "  title: Empty API", "  version: 1.0.0", "paths: {}"].join("\n"),
+      "utf8"
+    );
+    const ui = new ScriptedUserInteraction({ multi: { apiOperations: [] } });
+
+    try {
+      const res = await runCreateInputs(
+        buildFloor(),
+        OPENAPI_DA,
+        { apiSpecLocation: openApiPath },
+        asUI(ui),
+        { flagReader: () => false }
+      );
+
+      assert.isTrue(res.isErr(), "expected empty OpenAPI operations to fail");
+      assert.equal(res._unsafeUnwrapErr().name, "OpenApiSpecInvalid");
+      assert.deepEqual(ui.dynamicOptionNames, ["apiOperations"]);
+    } finally {
+      removeSync(tempDir);
+    }
+  });
+
+  it("surfaces invalid OpenAPI operation loading as a user-fixable error", async () => {
+    const ui = new ScriptedUserInteraction({
+      multi: { apiOperations: ["GET /repairs"] },
+    });
+
+    const res = await runCreateInputs(
+      buildFloor(),
+      OPENAPI_DA,
+      { apiSpecLocation: __filename },
+      asUI(ui),
+      { flagReader: () => false }
+    );
+
+    assert.isTrue(res.isErr(), "expected invalid OpenAPI spec to fail");
+    if (res.isErr()) {
+      assert.equal(res.error.name, "OpenApiSpecInvalid");
+      assert.isTrue(res.error instanceof UserError);
+    }
+    assert.deepEqual(ui.promptNames, ["apiOperations"]);
+    assert.deepEqual(ui.dynamicOptionNames, ["apiOperations"]);
   });
 
   it("validates Graph connector display name", async () => {
@@ -437,6 +959,39 @@ describe("runCreateInputs (collect-create-inputs)", () => {
       assert.equal(res.value.language, "typescript");
     }
     assert.deepEqual(ui.promptNames, ["llmService", "openAIKey", "language", "folder", "app-name"]);
+    assert.isFunction(ui.lastInputConfig?.validation);
+    assert.isString(await ui.lastInputConfig?.validation?.("!"));
+  });
+
+  it("CCI-24: threads create floor app-name validation to the text prompt", async () => {
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "v4-app-name-"));
+    try {
+      fs.ensureDirSync(path.join(tempRoot, "TakenName"));
+      const ui = new ScriptedUserInteraction({
+        select: { llmService: "llm-service-openai", language: "typescript" },
+        text: { openAIKey: "fake-openai-key", "app-name": "MyAgent" },
+        folder: { folder: tempRoot },
+      });
+
+      const res = await runCreateInputs(buildFloor(), BASIC_CUSTOM_ENGINE_AGENT, {}, asUI(ui), {
+        flagReader: () => false,
+        inputs: { platform: Platform.VSCode },
+        surface: "vscode",
+      });
+
+      assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
+      assert.equal(ui.lastInputConfig?.name, "app-name");
+      assert.isFunction(ui.lastInputConfig?.validation);
+      const validation = ui.lastInputConfig?.validation;
+      if (validation === undefined) {
+        assert.fail("expected app-name prompt validation");
+      }
+      assert.include(await validation("a".repeat(31)), "30 characters");
+      assert.include(await validation("TakenName"), "Path exists");
+      assert.isUndefined(await validation("AvailableName"));
+    } finally {
+      removeSync(tempRoot);
+    }
   });
 
   it("uses create floor defaults without prompts in non-interactive mode", async () => {
@@ -590,8 +1145,8 @@ describe("runCreateInputs (collect-create-inputs)", () => {
   it("collects custom API OpenAPI inputs before LLM inputs", async () => {
     const ui = new ScriptedUserInteraction({
       select: { llmService: "llm-service-azure-openai" },
+      fileOrInput: { apiSpecLocation: OPENAPI_SPEC },
       text: {
-        apiSpecLocation: OPENAPI_SPEC,
         azureOpenAIKey: "fake-azure-openai-key",
         azureOpenAIEndpoint: "https://fake.openai.azure.com/",
         azureOpenAIDeploymentName: "fake-deployment",
@@ -624,6 +1179,80 @@ describe("runCreateInputs (collect-create-inputs)", () => {
       "azureOpenAIEndpoint",
       "azureOpenAIDeploymentName",
     ]);
+    assert.deepEqual(ui.fileOrInputNames, ["apiSpecLocation"]);
+    assert.equal(ui.lastFileOrInputConfig?.title, "OpenAPI Document");
+    assert.equal(ui.lastFileOrInputConfig?.placeholder, "Enter OpenAPI Document URL");
+    assert.equal(ui.lastFileOrInputConfig?.inputOptionItem.id, "input");
+    assert.equal(
+      ui.lastFileOrInputConfig?.inputOptionItem.label,
+      "$(cloud) Enter OpenAPI Document URL"
+    );
+    assert.isUndefined(ui.lastFileOrInputConfig?.validation);
+    assert.isFunction(ui.lastFileOrInputConfig?.inputBoxConfig.validation);
+    assert.equal(
+      await ui.lastFileOrInputConfig?.inputBoxConfig.validation?.("not-a-url"),
+      "Enter a valid HTTP URL without authentication to access your OpenAPI description document."
+    );
+    assert.deepEqual(ui.lastFileOrInputConfig?.filters, { files: ["json", "yml", "yaml"] });
+  });
+
+  it("browses a local OpenAPI document for custom API through the combined picker", async () => {
+    const ui = new ScriptedUserInteraction({
+      select: { llmService: "llm-service-azure-openai" },
+      fileOrInput: { apiSpecLocation: OPENAPI_SPEC },
+      multi: { apiOperations: ["GET /repairs"] },
+      text: {
+        azureOpenAIKey: "",
+      },
+    });
+    const res = await runCreateInputs(
+      buildFloor(),
+      RAG_CUSTOM_API,
+      { language: "typescript", platform: Platform.VSCode },
+      asUI(ui),
+      { flagReader: () => false }
+    );
+
+    if (res.isErr()) {
+      assert.fail(res.error.message);
+    }
+    assert.equal(res.value.apiSpecLocation, OPENAPI_SPEC);
+    // Empty Azure OpenAI key short-circuits the cascade: the endpoint and
+    // deployment name questions are never asked.
+    assert.deepEqual(ui.textNames, ["azureOpenAIKey"]);
+    assert.deepEqual(ui.fileNames, []);
+    assert.deepEqual(ui.fileOrInputNames, ["apiSpecLocation"]);
+    assert.equal(ui.lastFileOrInputConfig?.inputBoxConfig.name, "input-api-spec-url");
+    assert.equal(ui.lastFileOrInputConfig?.inputBoxConfig.title, "OpenAPI Document");
+    assert.equal(
+      ui.lastFileOrInputConfig?.inputBoxConfig.placeholder,
+      "Enter OpenAPI Document URL"
+    );
+    assert.isUndefined(ui.lastFileOrInputConfig?.validation);
+    assert.isFunction(ui.lastFileOrInputConfig?.inputBoxConfig.validation);
+  });
+
+  it("cascades Azure OpenAI questions: a filled key reveals the endpoint, an empty endpoint skips the deployment name", async () => {
+    const ui = new ScriptedUserInteraction({
+      select: { llmService: "llm-service-azure-openai" },
+      text: {
+        azureOpenAIKey: "fake-azure-openai-key",
+        azureOpenAIEndpoint: "",
+      },
+    });
+
+    const res = await runCreateInputs(
+      buildFloor(),
+      WEATHER_AGENT,
+      { language: "typescript" },
+      asUI(ui),
+      { flagReader: () => false }
+    );
+
+    assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
+    // The filled key reveals the endpoint; the empty endpoint short-circuits
+    // the deployment name.
+    assert.deepEqual(ui.textNames, ["azureOpenAIKey", "azureOpenAIEndpoint"]);
   });
 
   it("lists static MCP tools from the provided tools JSON", async () => {
@@ -728,7 +1357,12 @@ describe("runCreateInputs (collect-create-inputs)", () => {
       asUI(ui),
       {
         surface: "cli",
-        inputs: { nonInteractive: true, folder: "C:/src", "app-name": "MyAgent" },
+        inputs: {
+          platform: Platform.CLI,
+          nonInteractive: true,
+          folder: "C:/src",
+          "app-name": "MyAgent",
+        },
         flagReader: () => false,
         fetchMcpTools: async () => {
           fetchCalled = true;
@@ -749,6 +1383,31 @@ describe("runCreateInputs (collect-create-inputs)", () => {
     assert.isFalse(fetchCalled);
     assert.notProperty(res._unsafeUnwrap(), "selectedMcpTools");
     assert.notProperty(res._unsafeUnwrap(), "mcpToolsJson");
+  });
+
+  it("fails before static MCP materialization when non-interactive CLI create omits the server URL", async () => {
+    const ui = new ScriptedUserInteraction({});
+    let fetchCalled = false;
+
+    const res = await runCreateInputs(buildFloor(), STATIC_MCP_DA, {}, asUI(ui), {
+      surface: "cli",
+      inputs: {
+        platform: Platform.CLI,
+        nonInteractive: true,
+        folder: "C:/src",
+        "app-name": "MyAgent",
+      },
+      flagReader: () => false,
+      fetchMcpTools: async () => {
+        fetchCalled = true;
+        return { requiresAuth: false, tools: [] };
+      },
+    });
+
+    assert.isTrue(res.isErr(), "expected missing MCP server URL to fail");
+    assert.strictEqual(res._unsafeUnwrapErr().name, INPUT_VALIDATION_FAILED);
+    assert.include(res._unsafeUnwrapErr().message, "mcpServerUrl");
+    assert.isFalse(fetchCalled);
   });
 
   it("fails when static MCP tool auto-fetch requires auth", async () => {
@@ -907,6 +1566,13 @@ describe("runCreateInputs (collect-create-inputs)", () => {
       assert.notProperty(res.value, "mcpServerUrl");
       assert.notProperty(res.value, "authType");
       assert.deepEqual(res.value.selectedLocalServers, ["baremcp"]);
+      assert.equal(
+        res.value["derived.mcp.serverTypes.catalog"],
+        JSON.stringify({
+          ghmcp: { command: "npx", args: ["-y", "@github/github-mcp-server"] },
+          baremcp: { command: "baremcp", args: [] },
+        })
+      );
     }
     // mcpServerType prompted (local is available); remote URL/auth questions are skipped.
     assert.deepEqual(ui.selectNames, ["mcpServerType"]);
@@ -922,13 +1588,63 @@ describe("runCreateInputs (collect-create-inputs)", () => {
     assert.strictEqual(multiOptionAt(ui.lastMultiConfig, 1).detail, "1 tools available");
   });
 
-  it("CCI-03: an entryParams mcpServerUrl is used as-is (not prompted); authType=oauth", async () => {
+  it("CCI-02: a prefilled local MCP pick still resolves the local server catalog", async () => {
+    const ui = new ScriptedUserInteraction({
+      multi: { selectedLocalServers: ["baremcp"] },
+    });
+
+    const res = await runCreateInputs(buildFloor(), MCP_DA, { mcpServerType: "local" }, asUI(ui), {
+      listLocalMcpServers: async () => localMcpServers,
+      flagReader: () => false,
+    });
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.equal(res.value.mcpServerType, "local");
+      assert.deepEqual(res.value.selectedLocalServers, ["baremcp"]);
+      assert.equal(
+        res.value["derived.mcp.serverTypes.catalog"],
+        JSON.stringify({
+          ghmcp: { command: "npx", args: ["-y", "@github/github-mcp-server"] },
+          baremcp: { command: "baremcp", args: [] },
+        })
+      );
+    }
+    assert.deepEqual(ui.selectNames, []);
+    assert.deepEqual(ui.multiNames, ["selectedLocalServers"]);
+  });
+
+  it("CCI-02: a prefilled remote MCP pick resolves an empty catalog without local discovery", async () => {
+    const listLocalMcpServers = vi.fn(async () => localMcpServers);
+    const ui = new ScriptedUserInteraction({});
+
+    const res = await runCreateInputs(
+      buildFloor(),
+      MCP_DA,
+      {
+        mcpServerType: "remote",
+        mcpServerUrl: "https://api.example.com/mcp",
+        authType: "none",
+      },
+      asUI(ui),
+      { listLocalMcpServers, flagReader: () => false }
+    );
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.equal(res.value["derived.mcp.serverTypes.catalog"], "{}");
+    }
+    assert.equal(listLocalMcpServers.mock.calls.length, 0);
+    assert.deepEqual(ui.selectNames, []);
+  });
+
+  it("CCI-03: static OAuth asks for client id, masked secret, then optional scopes", async () => {
     const ui = new ScriptedUserInteraction({
       select: { authType: "oauth" },
       text: {
-        oauthClientId: "client-id",
-        oauthClientSecret: "client-secret",
-        oauthScopes: "scope.read",
+        oauthClientId: "oauth-client-id",
+        oauthClientSecret: "oauth-client-secret",
+        oauthScopes: "read:user repo",
       },
     });
 
@@ -945,15 +1661,16 @@ describe("runCreateInputs (collect-create-inputs)", () => {
       assert.equal(res.value.mcpServerUrl, "https://seed.example.com/mcp");
       assert.equal(res.value.mcpServerType, "remote");
       assert.equal(res.value.authType, "oauth");
-      assert.equal(res.value.oauthClientId, "client-id");
-      assert.equal(res.value.oauthClientSecret, "client-secret");
-      assert.equal(res.value.oauthScopes, "scope.read");
+      assert.equal(res.value.oauthClientId, "oauth-client-id");
+      assert.equal(res.value.oauthClientSecret, "oauth-client-secret");
+      assert.equal(res.value.oauthScopes, "read:user repo");
     }
-    // The pre-filled url is used as-is (INPUT-12); only OAuth credential prompts run.
     assert.deepEqual(ui.textNames, ["oauthClientId", "oauthClientSecret", "oauthScopes"]);
+    assert.isBelow(ui.promptNames.indexOf("authType"), ui.promptNames.indexOf("oauthClientId"));
+    assert.isTrue(ui.inputConfigs.find((config) => config.name === "oauthClientSecret")?.password);
   });
 
-  it("CCI-03b: authType=entra-sso asks only Entra client id", async () => {
+  it("CCI-03a: Entra SSO asks only for the Entra client id", async () => {
     const ui = new ScriptedUserInteraction({
       select: { authType: "entra-sso" },
       text: { entraClientId: "entra-client-id" },
@@ -975,6 +1692,88 @@ describe("runCreateInputs (collect-create-inputs)", () => {
       assert.notProperty(res.value, "oauthScopes");
     }
     assert.deepEqual(ui.textNames, ["entraClientId"]);
+    assert.isBelow(ui.promptNames.indexOf("authType"), ui.promptNames.indexOf("entraClientId"));
+  });
+
+  it("CCI-03b: dynamic OAuth and none ask no static credential questions", async () => {
+    for (const authType of ["oauth-dynamic", "none"]) {
+      const ui = new ScriptedUserInteraction({});
+      const res = await runCreateInputs(
+        buildFloor(),
+        MCP_DA,
+        {
+          mcpServerType: "remote",
+          mcpServerUrl: "https://seed.example.com/mcp",
+          authType,
+        },
+        asUI(ui),
+        { flagReader: () => true }
+      );
+
+      assert.isTrue(res.isOk());
+      if (res.isOk()) {
+        assert.notProperty(res.value, "oauthClientId");
+        assert.notProperty(res.value, "oauthClientSecret");
+        assert.notProperty(res.value, "oauthScopes");
+        assert.notProperty(res.value, "entraClientId");
+      }
+      assert.deepEqual(ui.textNames, []);
+    }
+  });
+
+  it("CCI-03b: non-interactive none and dynamic OAuth do not require static credentials", async () => {
+    for (const authType of ["none", "oauth-dynamic"]) {
+      const ui = new ScriptedUserInteraction({});
+      const res = await runCreateInputs(
+        buildFloor(),
+        MCP_DA,
+        {
+          mcpServerType: "remote",
+          mcpServerUrl: "https://seed.example.com/mcp",
+          authType,
+        },
+        asUI(ui),
+        {
+          surface: "cli",
+          flagReader: () => true,
+          inputs: {
+            platform: Platform.CLI,
+            nonInteractive: true,
+            teamsAppFromTdp: { appName: "My Agent" },
+          },
+        }
+      );
+
+      assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
+      if (res.isOk()) {
+        assert.equal(res.value.authType, authType);
+        assert.notProperty(res.value, "oauthClientId");
+        assert.notProperty(res.value, "oauthClientSecret");
+        assert.notProperty(res.value, "entraClientId");
+      }
+      assert.deepEqual(ui.promptNames, []);
+    }
+  });
+
+  it("CCI-03c: static OAuth rejects an empty required client secret", async () => {
+    const ui = new ScriptedUserInteraction({
+      select: { authType: "oauth" },
+      text: { oauthClientId: "oauth-client-id", oauthClientSecret: " " },
+    });
+
+    const res = await runCreateInputs(
+      buildFloor(),
+      MCP_DA,
+      { mcpServerUrl: "https://seed.example.com/mcp" },
+      asUI(ui),
+      { flagReader: () => false }
+    );
+
+    assert.isTrue(res.isErr());
+    if (res.isErr()) {
+      assert.instanceOf(res.error, UserError);
+      assert.equal(res.error.name, INPUT_VALIDATION_FAILED);
+    }
   });
 
   it("CCI-04: an invalid uri for mcpServerUrl -> UserError INPUT_VALIDATION_FAILED", async () => {
@@ -1095,6 +1894,121 @@ describe("createUiPromptUI (collect-create-inputs)", () => {
     assert.equal(options[1].label, "b");
   });
 
+  it("renders authored option icons through the existing VS Code codicon label syntax", async () => {
+    const ui = new ScriptedUserInteraction({ select: { picker: "a" } });
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask({ name: "picker", type: "singleSelect", title: "Pick" }, [
+      { id: "a", label: "Agent", iconPath: "teamsfx-agent" },
+    ]);
+
+    assert.isTrue(res.isOk());
+    const options = (ui.lastSelectConfig?.options ?? []) as SurfaceOptionItem[];
+    assert.equal(options[0].label, "$(teamsfx-agent) Agent");
+  });
+
+  it("projects undefined singleSelect results to an empty value", async () => {
+    const ui = new ScriptedUserInteraction({ select: { picker: "a" } });
+    ui.selectOption = async (config: SingleSelectConfig) => {
+      ui.lastSelectConfig = config;
+      return ok({ type: "success" });
+    };
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask({ name: "picker", type: "singleSelect", title: "Pick" }, [
+      { id: "a" },
+    ]);
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.deepEqual(res.value, { kind: "value", value: "" });
+    }
+  });
+
+  it("projects object singleSelect results to their option id", async () => {
+    const ui = new ScriptedUserInteraction({ select: { picker: "a" } });
+    ui.selectOption = async (config: SingleSelectConfig) => {
+      ui.lastSelectConfig = config;
+      return ok({ type: "success", result: { id: "a", label: "A" } });
+    };
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask({ name: "picker", type: "singleSelect", title: "Pick" }, [
+      { id: "a", label: "A" },
+    ]);
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.deepEqual(res.value, { kind: "value", value: "a" });
+    }
+  });
+
+  it("rejects singleSelect questions when no options source is supplied", async () => {
+    const ui = new ScriptedUserInteraction({});
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask(
+      { name: "picker", type: "singleSelect", title: "Pick" },
+      undefined
+    );
+
+    assert.isTrue(res.isErr());
+    assert.equal(res._unsafeUnwrapErr().name, "UnsupportedQuestionKind");
+  });
+
+  it("rejects unsupported ask question kinds after other supported kinds are checked", async () => {
+    const ui = new ScriptedUserInteraction({});
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask({ name: "servers", type: "multiSelect", title: "Servers" }, [
+      { id: "alpha" },
+    ]);
+
+    assert.isTrue(res.isErr());
+    assert.equal(res._unsafeUnwrapErr().name, "UnsupportedQuestionKind");
+  });
+
+  it("resolves keyPrefix localization before rendering authored v4 LLM questions", async () => {
+    const ui = new ScriptedUserInteraction({ select: { llmService: "llm-service-openai" } });
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask(
+      {
+        name: "llmService",
+        type: "singleSelect",
+        title: "Service for Large Language Model (LLM)",
+        placeholder: "Select a service to access LLMs",
+        keyPrefix: "core.createProjectQuestion.llmService",
+      },
+      [
+        {
+          id: "llm-service-azure-openai",
+          label: "Azure OpenAI",
+          detail: "Access powerful LLMs in OpenAI with Azure security and reliability",
+          keyPrefix: "core.createProjectQuestion.llmServiceAzureOpenAIOption",
+        },
+        {
+          id: "llm-service-openai",
+          label: "OpenAI",
+          detail: "Access LLMs developed by OpenAI",
+          keyPrefix: "core.createProjectQuestion.llmServiceOpenAIOption",
+        },
+      ]
+    );
+
+    assert.isTrue(res.isOk());
+    assert.equal(ui.lastSelectConfig?.title, "Service for Large Language Model (LLM)");
+    assert.equal(ui.lastSelectConfig?.placeholder, "Select a service to access LLMs");
+    const options = (ui.lastSelectConfig?.options ?? []) as SurfaceOptionItem[];
+    assert.equal(options[0].label, "Azure OpenAI");
+    assert.equal(
+      options[0].detail,
+      "Access powerful LLMs in OpenAI with Azure security and reliability"
+    );
+    assert.equal(options[1].label, "OpenAI");
+    assert.equal(options[1].detail, "Access LLMs developed by OpenAI");
+  });
+
   it("CCI-07: ask maps a text question to inputText and returns the string", async () => {
     const ui = new ScriptedUserInteraction({ text: { freeText: "hello world" } });
     const prompt = createUiPromptUI(asUI(ui));
@@ -1106,6 +2020,140 @@ describe("createUiPromptUI (collect-create-inputs)", () => {
       assert.deepEqual(res.value, { kind: "value", value: "hello world" });
     }
     assert.deepEqual(ui.textNames, ["freeText"]);
+  });
+
+  it("maps a singleFileOrText question to selectFileOrInput and returns the path or text", async () => {
+    const ui = new ScriptedUserInteraction({ fileOrInput: { apiSpecLocation: OPENAPI_SPEC } });
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask(
+      {
+        name: "apiSpecLocation",
+        type: "singleFileOrText",
+        title: "OpenAPI Document",
+        placeholder: "Enter OpenAPI Document URL",
+        inputOptionItem: { id: "input", label: "$(cloud) Enter OpenAPI Document URL" },
+        inputBoxConfig: {
+          name: "input-api-spec-url",
+          title: "OpenAPI Document",
+          placeholder: "Enter OpenAPI Document URL",
+        },
+        filters: { files: ["json", "yml", "yaml"] },
+      },
+      undefined,
+      2
+    );
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.deepEqual(res.value, { kind: "value", value: OPENAPI_SPEC });
+    }
+    assert.deepEqual(ui.fileOrInputNames, ["apiSpecLocation"]);
+    assert.equal(ui.lastFileOrInputConfig?.step, 2);
+  });
+
+  it("maps a singleFile question to selectFile and returns the path", async () => {
+    const ui = new ScriptedUserInteraction({ file: { apiSpecLocation: OPENAPI_SPEC } });
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask(
+      {
+        name: "apiSpecLocation",
+        type: "singleFile",
+        title: "OpenAPI Document",
+        filters: { files: ["json", "yml", "yaml"] },
+      },
+      undefined,
+      2
+    );
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.deepEqual(res.value, { kind: "value", value: OPENAPI_SPEC });
+    }
+    assert.deepEqual(ui.fileNames, ["apiSpecLocation"]);
+    assert.equal(ui.lastFileConfig?.step, 2);
+  });
+
+  it("returns host errors from singleFile prompts", async () => {
+    const ui = new ScriptedUserInteraction({});
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask(
+      { name: "apiSpecLocation", type: "singleFile", title: "OpenAPI Document" },
+      undefined
+    );
+
+    assert.isTrue(res.isErr());
+    assert.equal(res._unsafeUnwrapErr().name, "NoScriptedAnswer");
+  });
+
+  it("projects a host back on a singleFile question to { kind: 'back' }", async () => {
+    const ui = new ScriptedUserInteraction({ back: ["apiSpecLocation"] });
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask(
+      { name: "apiSpecLocation", type: "singleFile", title: "OpenAPI Document" },
+      undefined
+    );
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.deepEqual(res.value, { kind: "back" });
+    }
+  });
+
+  it("returns host errors from singleFileOrText prompts", async () => {
+    const ui = new ScriptedUserInteraction({});
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask(
+      {
+        name: "apiSpecLocation",
+        type: "singleFileOrText",
+        title: "OpenAPI Document",
+        inputOptionItem: { id: "input" },
+        inputBoxConfig: { name: "input-api-spec-url" },
+      },
+      undefined
+    );
+
+    assert.isTrue(res.isErr());
+    assert.equal(res._unsafeUnwrapErr().name, "NoScriptedAnswer");
+  });
+
+  it("projects a host back on a singleFileOrText question to { kind: 'back' }", async () => {
+    const ui = new ScriptedUserInteraction({ back: ["apiSpecLocation"] });
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask(
+      {
+        name: "apiSpecLocation",
+        type: "singleFileOrText",
+        title: "OpenAPI Document",
+        inputOptionItem: { id: "input" },
+        inputBoxConfig: { name: "input-api-spec-url" },
+      },
+      undefined
+    );
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.deepEqual(res.value, { kind: "back" });
+    }
+  });
+
+  it("rejects malformed singleFileOrText question configs", async () => {
+    const ui = new ScriptedUserInteraction({});
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.ask(
+      { name: "apiSpecLocation", type: "singleFileOrText", title: "OpenAPI Document" },
+      undefined
+    );
+
+    assert.isTrue(res.isErr());
+    assert.equal(res._unsafeUnwrapErr().name, "UnsupportedQuestionKind");
   });
 
   it("maps a folder question to selectFolder and returns the path", async () => {
@@ -1151,6 +2199,43 @@ describe("createUiPromptUI (collect-create-inputs)", () => {
     assert.deepEqual(ui.multiNames, ["servers"]);
   });
 
+  it("projects undefined multiSelect results to an empty list", async () => {
+    const ui = new ScriptedUserInteraction({ multi: { servers: ["alpha"] } });
+    ui.selectOptions = async (config: MultiSelectConfig) => {
+      ui.lastMultiConfig = config;
+      return ok({ type: "success" });
+    };
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.askMulti({ name: "servers", type: "multiSelect", title: "Servers" }, [
+      { id: "alpha" },
+    ]);
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.deepEqual(res.value, { kind: "value", value: [] });
+    }
+  });
+
+  it("rejects askMulti when the question kind or options source is unsupported", async () => {
+    const ui = new ScriptedUserInteraction({});
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const wrongKind = await prompt.askMulti(
+      { name: "servers", type: "singleSelect", title: "Servers" },
+      [{ id: "alpha" }]
+    );
+    const missingOptions = await prompt.askMulti(
+      { name: "servers", type: "multiSelect", title: "Servers" },
+      undefined
+    );
+
+    assert.isTrue(wrongKind.isErr());
+    assert.equal(wrongKind._unsafeUnwrapErr().name, "UnsupportedQuestionKind");
+    assert.isTrue(missingOptions.isErr());
+    assert.equal(missingOptions._unsafeUnwrapErr().name, "UnsupportedQuestionKind");
+  });
+
   it("CCI-10: ask projects a host back on a singleSelect to { kind: 'back' }", async () => {
     const ui = new ScriptedUserInteraction({ back: ["picker"] });
     const prompt = createUiPromptUI(asUI(ui));
@@ -1175,6 +2260,38 @@ describe("createUiPromptUI (collect-create-inputs)", () => {
     assert.isTrue(res.isOk());
     if (res.isOk()) {
       assert.deepEqual(res.value, { kind: "back" });
+    }
+  });
+
+  it("CCI-27: ask projects a host skip on a skipSingleOption singleSelect to { kind: 'skip' }", async () => {
+    const ui = new ScriptedUserInteraction({});
+    const prompt = createUiPromptUI(asUI(ui));
+
+    // A single option + skipSingleOption → the surface returns { type: "skip" }, which the
+    // bridge projects to { kind: "skip" } so the walk records it without a back-stop.
+    const res = await prompt.ask(
+      { name: "picker", type: "singleSelect", title: "Pick", skipSingleOption: true },
+      [{ id: "only" }]
+    );
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.deepEqual(res.value, { kind: "skip", value: "only" });
+    }
+  });
+
+  it("CCI-27b: askMulti projects a host skip on a skipSingleOption multiSelect to { kind: 'skip' }", async () => {
+    const ui = new ScriptedUserInteraction({});
+    const prompt = createUiPromptUI(asUI(ui));
+
+    const res = await prompt.askMulti(
+      { name: "servers", type: "multiSelect", title: "Servers", skipSingleOption: true },
+      [{ id: "only" }]
+    );
+
+    assert.isTrue(res.isOk());
+    if (res.isOk()) {
+      assert.deepEqual(res.value, { kind: "skip", value: ["only"] });
     }
   });
 
@@ -1252,6 +2369,12 @@ describe("openCreateQuestions (collect-create-inputs)", () => {
           "entraClientId",
         ]
       );
+      const secret = res.value.find((question) => question.name === "oauthClientSecret");
+      const scopes = res.value.find((question) => question.name === "oauthScopes");
+      const authType = res.value.find((question) => question.name === "authType");
+      assert.equal(authType?.default, "oauth");
+      assert.isTrue(secret?.password);
+      assert.isTrue(scopes?.optional);
     }
   });
 

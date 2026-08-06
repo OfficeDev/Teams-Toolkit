@@ -64,5 +64,11 @@
   "template.newCFShortcut.detail": "Task pane add-in with custom function and shortcut",
   "template.newCFShortcut.label": "Custom Function and Shortcut",
   "template.newTaskpaneAddin.detail": "在任务窗格中使用按钮和嵌入内容自定义功能区",
-  "template.newTaskpaneAddin.label": "任务窗格"
+  "template.newTaskpaneAddin.label": "任务窗格",
+  "template.officeAddin.hosts.title": "Select the Office applications to support",
+  "template.officeAddin.hosts.placeholder": "Select at least one Office application",
+  "template.officeAddin.hosts.word.label": "Word",
+  "template.officeAddin.hosts.powerpoint.label": "PowerPoint",
+  "template.officeAddin.hosts.outlook.label": "Outlook",
+  "template.officeAddin.hosts.excel.label": "Excel"
 }

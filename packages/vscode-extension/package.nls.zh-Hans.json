@@ -186,8 +186,6 @@
   "teamstoolkit.commandsTreeViewProvider.manageCollaboratorDescription": "管理 Microsoft 365 应用(使用 Microsoft Entra 应用)协作者",
   "teamstoolkit.commandsTreeViewProvider.addPluginTitle": "添加操作",
   "teamstoolkit.commandsTreeViewProvider.addPluginDescription": "在声明性代理中添加操作",
-  "teamstoolkit.commandsTreeViewProvider.metaOSExtendToDA": "将应用扩展到声明性代理",
-  "teamstoolkit.commandsTreeViewProvider.metaOSExtendToDADescription": "将加载项项目扩展到声明性代理",
   "teamstoolkit.commandsTreeViewProvider.metaOS.convert.title": "扩展到声明性代理",
   "teamstoolkit.commandsTreeViewProvider.metaOS.convert.description": "将加载项项目扩展到声明性代理操作",
   "teamstoolkit.commandsTreeViewProvider.regenerateActionTitle": "重新生成操作",

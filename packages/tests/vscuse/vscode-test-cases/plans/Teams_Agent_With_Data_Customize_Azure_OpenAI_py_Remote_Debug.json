@@ -50,7 +50,7 @@
         "x": 307,
         "y": 132
       },
-      "description": "Click the \"Teams Agent with Data\" dropdown option in the \"Teams Agent or App Using Teams AI Library\" selection menu within the Microsoft 365 Agents Toolkit interface in Visual Studio Code.",
+      "description": "Click the \"Teams Agent with Data\" dropdown option.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -76,7 +76,7 @@
         "x": 288,
         "y": 87
       },
-      "description": "Click the \"Custom\" option within the \"Select an option to load your data\" dropdown menu in the Teams Agent with Data extension in Visual Studio Code.",
+      "description": "Click the \"Customize\" option within the \"Select an option to load your data\" dropdown menu in the Teams Agent with Data extension in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -114,7 +114,9 @@
         "dhash:273:122:0:10:d09c9094b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_cd0e731a",
       "created_at": "2026-03-17T01:47:12.461700",
       "plan_id": "plan_c24b1c2e"
@@ -166,7 +168,9 @@
         "dhash:318:705:0:10:30b0b08cad6988a1"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_0aecaf6f",
       "created_at": "2026-03-17T01:47:12.476770",
       "plan_id": "plan_c24b1c2e"
@@ -188,7 +192,9 @@
         "dhash:512:384:0:20:30b0b08cad6988b1"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_fa9ce821",
       "created_at": "2026-03-17T01:47:12.483591",
       "plan_id": "plan_c24b1c2e"
@@ -214,7 +220,9 @@
         "dhash:925:719:0:10:30b0b08cad6988b1"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_26b901e3",
       "created_at": "2026-03-17T01:47:12.491590",
       "plan_id": "plan_c24b1c2e"

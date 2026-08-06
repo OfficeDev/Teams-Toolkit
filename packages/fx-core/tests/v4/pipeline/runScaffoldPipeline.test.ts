@@ -43,8 +43,8 @@ class ExprPort implements ExpressionRuntimePort {
   functions(_name: string): WhitelistFn | undefined {
     return undefined;
   }
-  flags(_name: string): boolean {
-    return false;
+  flags(name: string): boolean {
+    return name === "TEST_ON";
   }
 }
 
@@ -75,9 +75,13 @@ function renderMustache(template: string, vars: RenderVars): Result<string, FxEr
 
 /** Records every manifest mutation as the wrapper's action shape (AC-12 observability). */
 class RecordingWrapper implements ManifestWrapper {
-  actions: Record<string, string>[] = [];
-  addAction(action: Record<string, string>): void {
-    this.actions.push(action);
+  registrations: Array<{ teamsManifestPath: string; pluginManifestPath: string }> = [];
+  registerDeclarativeAgentAction(
+    teamsManifestPath: string,
+    pluginManifestPath: string
+  ): Result<void, FxError> {
+    this.registrations.push({ teamsManifestPath, pluginManifestPath });
+    return ok(undefined);
   }
 }
 
@@ -105,9 +109,13 @@ class FakeStep implements RegisteredStep {
 function makePort(opts: { pipelines?: string[]; steps?: Record<string, RegisteredStep> } = {}): {
   port: PipelineRuntimePort;
   writes: Map<string, Buffer>;
+  environmentWrites: Array<{ environment: string; values: Record<string, string> }>;
   wrapper: RecordingWrapper;
+  warnings: string[];
 } {
   const writes = new Map<string, Buffer>();
+  const environmentWrites: Array<{ environment: string; values: Record<string, string> }> = [];
+  const warnings: string[] = [];
   const wrapper = new RecordingWrapper();
   const pipelines = new Set(
     opts.pipelines ?? ["default", "openapi", "typespec", "officeAddin", "spfx"]
@@ -129,12 +137,17 @@ function makePort(opts: { pipelines?: string[]; steps?: Record<string, Registere
     },
     render: (mustache, vars) => renderMustache(mustache, vars),
     manifestWrapper: () => wrapper,
+    warn: (warning) => warnings.push(warning.content),
     write: (path, data) => {
       writes.set(path, data);
     },
     read: (path) => writes.get(path),
+    writeEnvironment: (environment, values) => {
+      environmentWrites.push({ environment, values });
+      return Promise.resolve(ok(undefined));
+    },
   };
-  return { port, writes, wrapper };
+  return { port, writes, environmentWrites, wrapper, warnings };
 }
 
 function entry(path: string, body: string): TemplateFileEntry {
@@ -203,7 +216,7 @@ describe("runScaffoldPipeline (v4)", () => {
 
   it("AC-05: a colliding render path is skipped + warned, never overwritten; siblings still write", async () => {
     const pipeline: Pipeline = { pipeline: "default", steps: [] };
-    const { port, writes } = makePort();
+    const { port, writes, warnings } = makePort();
     const res = await runScaffoldPipeline(
       pipeline,
       [entry("ai-plugin.json.tpl", "{}"), entry("m365agents.yml.tpl", "v")],
@@ -222,6 +235,163 @@ describe("runScaffoldPipeline (v4)", () => {
     assert.notInclude(outcome.written, "ai-plugin.json");
     assert.isFalse(writes.has("ai-plugin.json")); // never overwritten
     assert.isTrue(writes.has("m365agents.yml"));
+    assert.lengthOf(warnings, 1);
+    assert.include(warnings[0], "ai-plugin.json");
+    assert.include(warnings[0], "not overwritten");
+  });
+
+  it("AC-23: active render filters omit matching paths before write/skip handling", async () => {
+    const pipeline: Pipeline = {
+      pipeline: "default",
+      render: {
+        filters: [
+          {
+            when: "!featureFlag('TEST_OFF')",
+            exclude: ["m365agents.sandbox.yml", "env/.env.sandbox"],
+          },
+        ],
+      },
+      steps: [],
+    };
+    const { port, writes } = makePort();
+    const res = await runScaffoldPipeline(
+      pipeline,
+      [
+        entry("m365agents.sandbox.yml.tpl", "sandbox"),
+        entry("env/.env.sandbox", "sandbox-env"),
+        entry("m365agents.yml.tpl", "main"),
+      ],
+      {},
+      target(["env/.env.sandbox"]),
+      port
+    );
+
+    assert.isTrue(res.isOk());
+    const outcome = res._unsafeUnwrap();
+    assert.deepStrictEqual(outcome.filtered, ["m365agents.sandbox.yml", "env/.env.sandbox"]);
+    assert.deepStrictEqual(outcome.written, ["m365agents.yml"]);
+    assert.deepStrictEqual(outcome.skipped, []);
+    assert.isFalse(writes.has("m365agents.sandbox.yml"));
+    assert.isFalse(writes.has("env/.env.sandbox"));
+    assert.isTrue(writes.has("m365agents.yml"));
+  });
+
+  it("AC-24: active render filters omit tpl bodies before missing-token render failures", async () => {
+    const pipeline: Pipeline = {
+      pipeline: "default",
+      render: {
+        filters: [{ when: "featureFlag('TEST_ON')", exclude: ["filtered.txt"] }],
+      },
+      steps: [],
+    };
+    const { port } = makePort();
+    const res = await runScaffoldPipeline(
+      pipeline,
+      [entry("filtered.txt.tpl", "{{missingProducer}}"), entry("kept.txt.tpl", "ok")],
+      {},
+      target([]),
+      port
+    );
+
+    assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
+    assert.deepStrictEqual(res._unsafeUnwrap().filtered, ["filtered.txt"]);
+    assert.deepStrictEqual(res._unsafeUnwrap().written, ["kept.txt"]);
+  });
+
+  it("AC-23: inactive render filters leave matching files to normal write and skip handling", async () => {
+    const pipeline: Pipeline = {
+      pipeline: "default",
+      render: {
+        filters: [{ when: "featureFlag('TEST_OFF')", exclude: ["copy.txt", "skip.txt"] }],
+      },
+      steps: [],
+    };
+    const { port, writes } = makePort();
+    const res = await runScaffoldPipeline(
+      pipeline,
+      [entry("copy.txt", "copy"), entry("skip.txt", "skip")],
+      {},
+      target(["skip.txt"]),
+      port
+    );
+
+    assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
+    const outcome = res._unsafeUnwrap();
+    assert.deepStrictEqual(outcome.filtered, []);
+    assert.deepStrictEqual(outcome.written, ["copy.txt"]);
+    assert.deepStrictEqual(
+      outcome.skipped.map((s) => s.path),
+      ["skip.txt"]
+    );
+    assert.strictEqual(writes.get("copy.txt")?.toString(), "copy");
+    assert.isFalse(writes.has("skip.txt"));
+  });
+
+  it("AC-23: render filter predicate errors stop before writing matching files", async () => {
+    const pipeline: Pipeline = {
+      pipeline: "default",
+      render: {
+        filters: [{ when: "missingFlag == 'on'", exclude: ["copy.txt"] }],
+      },
+      steps: [],
+    };
+    const { port, writes } = makePort();
+    const res = await runScaffoldPipeline(
+      pipeline,
+      [entry("copy.txt", "copy")],
+      {},
+      target([]),
+      port
+    );
+
+    assert.isTrue(res.isErr());
+    assert.instanceOf(res._unsafeUnwrapErr(), SystemError);
+    assert.strictEqual(writes.size, 0);
+  });
+
+  it("AC-23: render filter predicate errors stop tpl files before body render", async () => {
+    const pipeline: Pipeline = {
+      pipeline: "default",
+      render: {
+        filters: [{ when: "missingFlag == 'on'", exclude: ["copy.txt"] }],
+      },
+      steps: [],
+    };
+    const { port, writes } = makePort();
+    const res = await runScaffoldPipeline(
+      pipeline,
+      [entry("copy.txt.tpl", "{{missingProducer}}")],
+      {},
+      target([]),
+      port
+    );
+
+    assert.isTrue(res.isErr());
+    assert.instanceOf(res._unsafeUnwrapErr(), SystemError);
+    assert.strictEqual(writes.size, 0);
+  });
+
+  it("AC-23: render filters match the final output path after path render and tpl stripping", async () => {
+    const pipeline: Pipeline = {
+      pipeline: "default",
+      render: {
+        filters: [{ exclude: ["sandbox/m365agents.yml"] }],
+      },
+      steps: [],
+    };
+    const { port, writes } = makePort();
+    const res = await runScaffoldPipeline(
+      pipeline,
+      [entry("{{folder}}/m365agents.yml.tpl", "{{missingProducer}}"), entry("kept.yml.tpl", "ok")],
+      { folder: "sandbox" },
+      target([]),
+      port
+    );
+
+    assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
+    assert.deepStrictEqual(res._unsafeUnwrap().filtered, ["sandbox/m365agents.yml"]);
+    assert.isFalse(writes.has("sandbox/m365agents.yml"));
+    assert.isTrue(writes.has("kept.yml"));
   });
 
   it("AC-06: declared-order steps apply in order, after the render phase completes", async () => {
@@ -378,8 +548,9 @@ describe("runScaffoldPipeline (v4)", () => {
     const register = new FakeStep({
       run: (r, ctx) => {
         const file = typeof r.pluginManifestPath === "string" ? r.pluginManifestPath : "";
-        ctx.manifestWrapper("declarativeAgent").addAction({ id: "action_1", file });
-        return ok(undefined);
+        return ctx
+          .manifestWrapper("declarativeAgent")
+          .registerDeclarativeAgentAction("appPackage/manifest.json", file);
       },
     });
     const pipeline: Pipeline = {
@@ -402,8 +573,11 @@ describe("runScaffoldPipeline (v4)", () => {
       port
     );
     assert.isTrue(res.isOk());
-    assert.deepStrictEqual(wrapper.actions, [
-      { id: "action_1", file: "appPackage/ai-plugin-apigithubc.json" },
+    assert.deepStrictEqual(wrapper.registrations, [
+      {
+        teamsManifestPath: "appPackage/manifest.json",
+        pluginManifestPath: "appPackage/ai-plugin-apigithubc.json",
+      },
     ]);
   });
 
@@ -426,7 +600,6 @@ describe("runScaffoldPipeline (v4)", () => {
             ymlPath: "m365agents.yml",
             authType: "{{authType}}",
             mcpServerUrl: "{{MCPForDAServerUrl}}",
-            includeCredentialRefs: true,
           },
         },
         {
@@ -456,8 +629,6 @@ describe("runScaffoldPipeline (v4)", () => {
     assert.include(outcome.written, "appPackage/ai-plugin.json"); // from render, not a step
     assert.strictEqual(inject.applied.length, 1);
     assert.strictEqual(persist.applied.length, 1);
-    // includeCredentialRefs: true is a JSON literal that passes through unrendered
-    assert.strictEqual(inject.applied[0].includeCredentialRefs, true);
     assert.strictEqual(writes.get("m365agents.yml")?.toString(), "# auth injected");
   });
 
@@ -490,8 +661,9 @@ describe("runScaffoldPipeline (v4)", () => {
     const register = new FakeStep({
       run: (r, ctx) => {
         const file = typeof r.pluginManifestPath === "string" ? r.pluginManifestPath : "";
-        ctx.manifestWrapper("declarativeAgent").addAction({ file });
-        return ok(undefined);
+        return ctx
+          .manifestWrapper("declarativeAgent")
+          .registerDeclarativeAgentAction("appPackage/manifest.json", file);
       },
     });
     const inject = new FakeStep();
@@ -545,7 +717,12 @@ describe("runScaffoldPipeline (v4)", () => {
     ]);
     assert.deepStrictEqual(outcome.written, ["appPackage/ai-plugin-apigithubc.json"]);
     assert.isTrue(writes.has("appPackage/ai-plugin-apigithubc.json"));
-    assert.deepStrictEqual(wrapper.actions, [{ file: "appPackage/ai-plugin-apigithubc.json" }]);
+    assert.deepStrictEqual(wrapper.registrations, [
+      {
+        teamsManifestPath: "appPackage/manifest.json",
+        pluginManifestPath: "appPackage/ai-plugin-apigithubc.json",
+      },
+    ]);
   });
 
   it("AC-16: a cross-step reference (produces) is loader-rejected", async () => {
@@ -681,5 +858,37 @@ describe("runScaffoldPipeline (v4)", () => {
     assert.isTrue(res.isOk());
     // the sole-token list resolves structurally (verbatim array); a scalar token still renders to a string
     assert.deepStrictEqual(s.applied[0], { servers: ["alpha", "gamma"], host: "example" });
+  });
+
+  it("AC-27: a named step reaches the injected environment writer without ordinary file writes", async () => {
+    const persist: RegisteredStep = {
+      validateParams: () => undefined,
+      apply: (_resolved, ctx) =>
+        ctx.writeEnvironment("dev", {
+          MCP_DA_OAUTH_CLIENT_ID_TEST: "client-id",
+          SECRET_MCP_DA_OAUTH_CLIENT_SECRET_TEST: "client-secret",
+        }),
+    };
+    const pipeline: Pipeline = {
+      pipeline: "default",
+      steps: [{ step: "mcp-auth/persist-credential-env" }],
+    };
+    const { port, writes, environmentWrites } = makePort({
+      steps: { "mcp-auth/persist-credential-env": persist },
+    });
+
+    const result = await runScaffoldPipeline(pipeline, [], {}, target([]), port);
+
+    assert.isTrue(result.isOk());
+    assert.deepStrictEqual(environmentWrites, [
+      {
+        environment: "dev",
+        values: {
+          MCP_DA_OAUTH_CLIENT_ID_TEST: "client-id",
+          SECRET_MCP_DA_OAUTH_CLIENT_SECRET_TEST: "client-secret",
+        },
+      },
+    ]);
+    assert.strictEqual(writes.size, 0);
   });
 });

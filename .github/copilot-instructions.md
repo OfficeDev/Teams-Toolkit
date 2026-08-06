@@ -45,6 +45,9 @@ the principles still apply to maintenance and to PRD / scenario work.
 |---|---|
 | Add or update engine-neutral PRD / scenario design before specs or code | **`prd-ux-design`** skill |
 | Add or change behavior, or refactor toward a structural shape governed by ADRs in [`docs/02-architecture/`](../docs/02-architecture/README.md) | **`vibe-coding`** skill |
+| Change v4 scaffolding code, templates, specs, tests, providers, validators, or pipeline steps | `.github/instructions/v4-scaffolding.instructions.md` + **`vibe-coding`** for behavior / shape changes |
+| Change generated vscuse cases, components, compiler code, or the case-bundle spec | `.github/instructions/vscuse-case-engine.instructions.md` |
+| Run, repair, or author hand-recorded vscuse plans | **`vscuse-case-diagnosis`** / **`vscuse-scenario-authoring`** skills |
 | Per-package coding conventions and cross-cutting security rules | `.github/instructions/*.instructions.md` (auto-loaded by `applyTo`) |
 
 Pure maintenance (a bug fix, dependency bump, lint cleanup, or internal refactor that does not change behavior or structural shape) has no dedicated workflow skill — follow the coding-style, architecture, and package-specific rules below.
@@ -160,6 +163,8 @@ Detailed instructions for individual packages are available in `.github/instruct
 | Scope | Instructions File | Covers |
 |-------|-------------------|--------|
 | `@microsoft/app-manifest` (packages/manifest) | `.github/instructions/manifest.instructions.md` | `TeamsManifest`, `DeclarativeAgentManifest`, `APIPluginManifest`, `AppManifestUtils`, Wrappers |
+| v4 scaffolding | `.github/instructions/v4-scaffolding.instructions.md` | `fx-core` v4 scaffolding, `templates/v4`, scaffolding specs / ADRs, providers, validators, pipeline steps, tests |
+| Generated vscuse cases (packages/tests/vscuse/vscode-test-cases) | `.github/instructions/vscuse-case-engine.instructions.md` | Verification loop, component format, coordinate policy, evidence-backed assertions, AC + test order |
 | All `packages/**/*.{ts,tsx}` | `.github/instructions/security.instructions.md` | Webview XSS, command injection, path traversal, untrusted JSON, cryptography |
 
 > **Note**: When working with a specific package, read the corresponding instructions file for detailed documentation about the package's architecture, APIs, and patterns

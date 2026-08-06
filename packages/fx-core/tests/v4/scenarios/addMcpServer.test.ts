@@ -3,7 +3,8 @@
 
 import { createInMemoryRuntime } from "../../../src/v4/runtime/inMemoryRuntime";
 import { scaffold } from "../../../src/v4/runtime/scaffold";
-import { assert } from "vitest";
+import { mcpAuthScaffoldDeps } from "../../../src/v4/mcp/mcpAuthScaffold";
+import { afterEach, assert, beforeEach, vi } from "vitest";
 import {
   isRecord,
   isRecordArray,
@@ -18,7 +19,7 @@ import {
  * T3 scenario tier: the `modify/add-mcp-server` package applied to an existing
  * DA project under `InMemoryRuntime`.
  *
- * Spec: docs/03-specs/scenarios/da/add-mcp-server.md (SCN-ADD-MCP-01..09)
+ * Spec: docs/03-specs/scenarios/da/add-mcp-server.md (SCN-ADD-MCP-01..10)
  */
 
 const MCP_SERVER_URL = "https://api.github.com/mcp";
@@ -82,7 +83,15 @@ async function run(options: RunOptions = {}): Promise<{
         },
       }),
       [DA_MANIFEST_PATH]: JSON.stringify({ name: "Existing Agent" }),
-      [YML_PATH]: ["version: v1.12", "provision:"].join("\n"),
+      [YML_PATH]: [
+        "version: v1.12",
+        "provision:",
+        "  - uses: teamsApp/create",
+        "    with:",
+        "      name: existing",
+        "    writeToEnvironmentFile:",
+        "      teamsAppId: TEAMS_APP_ID",
+      ].join("\n"),
       [ENV_PATH]: "TEAMSFX_ENV=dev\n",
     },
     targetPath: "/project",
@@ -95,6 +104,24 @@ function unwrapOutcome(result: Awaited<ReturnType<typeof scaffold>>) {
 }
 
 describe("SCN-DA-ADD-MCP-ACTION-TO-DA (v4, T3 InMemoryRuntime)", () => {
+  beforeEach(() => {
+    // The oauth/oauth-dynamic auth step probes the server for metadata; stub the network so the
+    // scenario stays offline and deterministic. entra-sso/none never probe.
+    vi.spyOn(mcpAuthScaffoldDeps, "probeMCPServerAuth").mockResolvedValue({
+      requiresAuth: true,
+      authMetadataUrl: "https://auth.example.com/.well-known/oauth-protected-resource",
+    });
+    vi.spyOn(mcpAuthScaffoldDeps, "resolveMCPOAuthMetadata").mockResolvedValue({
+      authorizationUrl: "https://auth.example.com/authorize",
+      tokenUrl: "https://auth.example.com/token",
+      wellKnownUrl: "https://auth.example.com/.well-known/oauth-authorization-server",
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("SCN-ADD-MCP-01: writes only the dynamic plugin manifest in the render phase", async () => {
     const { outcome } = await run();
     assert.deepStrictEqual(outcome.written, [PLUGIN_PATH]);
@@ -115,8 +142,7 @@ describe("SCN-DA-ADD-MCP-ACTION-TO-DA (v4, T3 InMemoryRuntime)", () => {
     assert.strictEqual(runtime.type, "RemoteMCPServer");
     const spec = runtime.spec;
     assert.isTrue(isRecord(spec));
-    assert.strictEqual(spec.url, MCP_SERVER_URL);
-    assert.strictEqual(spec.enable_dynamic_discovery, true);
+    assert.deepStrictEqual(spec, { url: MCP_SERVER_URL });
     assert.deepStrictEqual(runtime.run_for_functions, ["*"]);
   });
 
@@ -164,6 +190,25 @@ describe("SCN-DA-ADD-MCP-ACTION-TO-DA (v4, T3 InMemoryRuntime)", () => {
     assert.isDefined(mcpServerUrlQuestion);
     const condition = recordProperty(mcpServerUrlQuestion ?? {}, "condition");
     assert.strictEqual(condition.expr, "mcpServerUrl == null");
+  });
+
+  it("SCN-ADD-MCP-10: static auth defers credentials to provision", async () => {
+    assert.isTrue(isRecord(descriptor));
+    const properties = recordProperty(recordProperty(descriptor, "optionsSchema"), "properties");
+    assert.notProperty(properties, "oauthClientId");
+    assert.notProperty(properties, "oauthClientSecret");
+    assert.notProperty(properties, "oauthScopes");
+    assert.notProperty(properties, "entraClientId");
+
+    for (const authType of ["oauth", "entra-sso"]) {
+      const { files } = await run({ authType });
+      const yml = text(files, YML_PATH);
+      assert.include(yml, "uses: oauth/register");
+      assert.notInclude(yml, "clientId:");
+      assert.notInclude(yml, "clientSecret:");
+      assert.notInclude(yml, "MCP_DA_OAUTH_");
+      assert.notInclude(yml, "SECRET_MCP_DA_OAUTH_");
+    }
   });
 
   it("SCN-ADD-MCP-05: a same-URL re-run skips render collision and does not duplicate actions or auth", async () => {

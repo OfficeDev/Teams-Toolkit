@@ -69,7 +69,8 @@ export async function resolveMCPAuthEndpoints(
   }
   const metadata = await mcpAuthScaffolderDeps.resolveMCPOAuthMetadata(
     inputs[QuestionNames.MCPForDAAuthMetadataUrl],
-    inputs[QuestionNames.MCPForDAAuthWellKnownUrl]
+    inputs[QuestionNames.MCPForDAAuthWellKnownUrl],
+    inputs[QuestionNames.MCPForDAServerUrl]
   );
   return {
     authorizationUrl: metadata.authorizationUrl,
@@ -88,10 +89,44 @@ export async function resolveMCPAuthEndpoints(
 export const MCP_DCR_WELL_KNOWN_URL_PLACEHOLDER =
   "<PLEASE_FILL_IN_WELL_KNOWN_AUTHORIZATION_SERVER_URL>";
 
+/**
+ * Placeholders written to `oauth/register` when endpoint discovery can't produce the
+ * authorization / token URLs for a static `oauth` (`identityProvider: Custom`) action.
+ * Omitting the fields instead would hide the gap entirely — the action looks complete but
+ * can never provision — so the placeholders make the missing values visible and editable,
+ * mirroring the `dcr/register` contract above.
+ */
+export const MCP_OAUTH_AUTHORIZATION_URL_PLACEHOLDER = "<PLEASE_FILL_IN_AUTHORIZATION_URL>";
+export const MCP_OAUTH_TOKEN_URL_PLACEHOLDER = "<PLEASE_FILL_IN_TOKEN_URL>";
+
+/**
+ * Every MCP scaffolding warning type is camelCased with this prefix (`mcpAuthRequired`,
+ * `mcpNoToolsFetched`, `mcpAuthDcrWellKnownUrlPlaceholder`, ...), while spec-parser warning
+ * types are kebab-cased (`operationid-missing`, `generate-card-failed`, ...). Surfaces use
+ * this predicate to let MCP warnings through the scaffolding summary without also leaking
+ * spec-parser warnings that the API-plugin flows deliberately suppress.
+ */
+export function isMCPScaffoldWarning(warning: { type: string }): boolean {
+  return warning.type.startsWith("mcp");
+}
+
+/**
+ * The subset of MCP scaffolding warnings that mean the generated `m365agents.yml` still holds a
+ * placeholder and therefore cannot provision. Surfaces single these out for a blocking-looking
+ * notification instead of a summary line.
+ */
+export const MCP_AUTH_PLACEHOLDER_WARNING_TYPES = [
+  "mcpAuthDcrWellKnownUrlPlaceholder",
+  "mcpAuthOAuthUrlPlaceholder",
+];
+
 export interface InjectMCPAuthActionResult {
   /** True when `oauth-dynamic` was injected with the placeholder URL because
    * `endpoints.wellKnownUrl` was missing. */
   wellKnownUrlPlaceholderUsed?: boolean;
+  /** True when `oauth` was injected with placeholder authorization / token URLs
+   * because endpoint discovery didn't return them. */
+  oauthUrlPlaceholderUsed?: boolean;
 }
 
 /**
@@ -104,7 +139,9 @@ export interface InjectMCPAuthActionResult {
  * When `persistCredentialEnvRefs` is set (DT mode), the OAuth injector
  * adds explicit `${{...}}` references to credential env vars derived from
  * `serverName` so that `oauth/register` resolves credentials from env files
- * persisted by the add-action flow instead of the in-process bridge.
+ * persisted by the add-action flow instead of the in-process bridge. The scope
+ * reference is emitted only when `scopes` is non-empty, matching the conditional
+ * env-var write so provision never sees a dangling `${{...}}` reference.
  *
  * `oauth-dynamic` is always injected even when `endpoints.wellKnownUrl` is
  * missing — a placeholder string is written instead so the action shows up in
@@ -120,6 +157,7 @@ export async function injectMCPAuthActionToYml(args: {
   endpoints: ResolvedMCPAuthEndpoints;
   persistCredentialEnvRefs?: boolean;
   serverName?: string;
+  scopes?: string;
 }): Promise<InjectMCPAuthActionResult> {
   if (args.authType === "none") return {};
   if (args.authType === "oauth-dynamic") {
@@ -135,14 +173,18 @@ export async function injectMCPAuthActionToYml(args: {
     return placeholderUsed ? { wellKnownUrlPlaceholderUsed: true } : {};
   }
   let credentialEnvNames:
-    | { clientIdEnvName: string; clientSecretEnvName?: string; scopeEnvName?: string }
-    | undefined;
+    { clientIdEnvName: string; clientSecretEnvName?: string; scopeEnvName?: string } | undefined;
   if (args.persistCredentialEnvRefs && args.serverName) {
     if (args.authType === "oauth") {
       credentialEnvNames = {
         clientIdEnvName: `MCP_DA_OAUTH_CLIENT_ID_${args.serverName}`,
         clientSecretEnvName: `SECRET_MCP_DA_OAUTH_CLIENT_SECRET_${args.serverName}`,
-        scopeEnvName: `MCP_DA_OAUTH_SCOPE_${args.serverName}`,
+        // Reference the scope env var only when a scope was actually provided.
+        // persistMCPAuthCredentialEnvVars writes MCP_DA_OAUTH_SCOPE_<NAME> only
+        // for a non-empty scope (scope is optional for OAuth); emitting the
+        // ${{...}} ref unconditionally leaves a dangling reference that fails to
+        // resolve and breaks provision.
+        ...(args.scopes ? { scopeEnvName: `MCP_DA_OAUTH_SCOPE_${args.serverName}` } : {}),
       };
     } else if (args.authType === "entra-sso") {
       credentialEnvNames = {
@@ -150,18 +192,25 @@ export async function injectMCPAuthActionToYml(args: {
       };
     }
   }
+  // Only static `oauth` emits these endpoints; `entra-sso` resolves them from Entra.
+  const oauthUrlPlaceholderUsed =
+    args.authType === "oauth" && (!args.endpoints.authorizationUrl || !args.endpoints.tokenUrl);
   await ActionInjector.injectCreateOAuthActionForMCP(
     args.ymlPath,
     args.authType,
     args.authName,
     args.registrationId,
     args.mcpServerUrl,
-    args.endpoints.authorizationUrl,
-    args.endpoints.tokenUrl,
+    args.authType === "oauth"
+      ? (args.endpoints.authorizationUrl ?? MCP_OAUTH_AUTHORIZATION_URL_PLACEHOLDER)
+      : args.endpoints.authorizationUrl,
+    args.authType === "oauth"
+      ? (args.endpoints.tokenUrl ?? MCP_OAUTH_TOKEN_URL_PLACEHOLDER)
+      : args.endpoints.tokenUrl,
     args.endpoints.refreshUrl,
     credentialEnvNames
   );
-  return {};
+  return oauthUrlPlaceholderUsed ? { oauthUrlPlaceholderUsed: true } : {};
 }
 
 /**

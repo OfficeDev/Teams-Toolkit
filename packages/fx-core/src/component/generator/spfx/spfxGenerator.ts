@@ -299,7 +299,7 @@ export class SPFxGenerator {
             Constants.RecommendedLowestSpfxVersion.substring(1)
           );
         if (isLowerVersion) {
-          context.telemetryReporter.sendTelemetryEvent(TelemetryEvents.UseNotRecommendedVersion);
+          context.telemetryReporter?.sendTelemetryEvent(TelemetryEvents.UseNotRecommendedVersion);
         }
       }
 
@@ -528,7 +528,7 @@ export class SPFxGenerator {
   ): Promise<boolean> {
     if (globalVersion === solutionVersion) {
       // use globally installed pacakge to add web part
-      context.telemetryReporter.sendTelemetryEvent(TelemetryEvents.CheckAddWebPartPackage, {
+      context.telemetryReporter?.sendTelemetryEvent(TelemetryEvents.CheckAddWebPartPackage, {
         [TelemetryProperty.PackageSource]: "global",
       });
       return false;
@@ -536,7 +536,7 @@ export class SPFxGenerator {
 
     if (localVersion === solutionVersion) {
       // use locally installed package to add web part
-      context.telemetryReporter.sendTelemetryEvent(TelemetryEvents.CheckAddWebPartPackage, {
+      context.telemetryReporter?.sendTelemetryEvent(TelemetryEvents.CheckAddWebPartPackage, {
         [TelemetryProperty.PackageSource]: "local",
         [TelemetryProperty.UserAction]: "none",
       });
@@ -601,7 +601,7 @@ export class SPFxGenerator {
         );
         userSelected = res.isOk() ? res.value : undefined;
         if (userSelected === helpText) {
-          context.telemetryReporter.sendTelemetryEvent(TelemetryEvents.LearnMoreVersionMismatch);
+          context.telemetryReporter?.sendTelemetryEvent(TelemetryEvents.LearnMoreVersionMismatch);
           void context.userInteraction.openUrl(Constants.AddWebpartHelpLink);
         }
       } while (userSelected === helpText);
@@ -629,7 +629,7 @@ export class SPFxGenerator {
       );
     }
 
-    context.telemetryReporter.sendTelemetryEvent(TelemetryEvents.CheckAddWebPartPackage, {
+    context.telemetryReporter?.sendTelemetryEvent(TelemetryEvents.CheckAddWebPartPackage, {
       [TelemetryProperty.PackageSource]: "local",
       [TelemetryProperty.UserAction]: defaultContinueText,
       [TelemetryProperty.ConfirmAddWebPartResult]: !userAnswer ? "Cancel" : defaultContinueText,

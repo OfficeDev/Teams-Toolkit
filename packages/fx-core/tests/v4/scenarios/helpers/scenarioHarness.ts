@@ -3,6 +3,7 @@
 
 import * as fs from "fs";
 import * as path from "path";
+import { Warning } from "@microsoft/teamsfx-api";
 import { TemplateFileEntry } from "../../../../src/v4/model/dataModel";
 import { createInMemoryRuntime } from "../../../../src/v4/runtime/inMemoryRuntime";
 import { ScaffoldRequest, scaffold } from "../../../../src/v4/runtime/scaffold";
@@ -44,7 +45,12 @@ export function loadV4Package(kind: V4TemplateKind, templateId: string): LoadedV
 export async function runV4Package(
   templatePackage: LoadedV4Package,
   options: RunV4PackageOptions = {}
-): Promise<{ files: Map<string, Buffer>; outcome: V4ScenarioOutcome }> {
+): Promise<{
+  files: Map<string, Buffer>;
+  secrets: Map<string, string>;
+  warnings: Warning[];
+  outcome: V4ScenarioOutcome;
+}> {
   const runtime = createInMemoryRuntime();
   for (const [filePath, body] of Object.entries(options.seedFiles ?? {})) {
     runtime.files.set(filePath, typeof body === "string" ? Buffer.from(body, "utf8") : body);
@@ -59,13 +65,27 @@ export async function runV4Package(
     targetDir: { path: options.targetPath ?? "/out", existing: options.existing ?? [] },
   };
   const result = await scaffold(request, runtime);
-  return { files: runtime.files, outcome: unwrapOutcome(result) };
+  return {
+    files: runtime.files,
+    secrets: runtime.secretEnvironmentVariables.get("dev") ?? new Map(),
+    warnings: runtime.warnings,
+    outcome: unwrapOutcome(result),
+  };
 }
 
 export function text(files: Map<string, Buffer>, filePath: string): string {
   const buf = files.get(filePath);
   assert.isDefined(buf, `expected '${filePath}' to exist`);
   return (buf ?? Buffer.from("", "utf8")).toString("utf8");
+}
+
+export function assertContainsInOrder(content: string, fragments: string[]): void {
+  let searchStart = 0;
+  for (const fragment of fragments) {
+    const currentIndex = content.indexOf(fragment, searchStart);
+    assert.isAtLeast(currentIndex, 0, `expected generated file to include '${fragment}' in order`);
+    searchStart = currentIndex + fragment.length;
+  }
 }
 
 export function readJsonObject(

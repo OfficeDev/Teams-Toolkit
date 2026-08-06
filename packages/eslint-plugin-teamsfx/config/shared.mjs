@@ -1,8 +1,13 @@
-import tseslint from "typescript-eslint";
-import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
+import eslintConfigPrettier from "eslint-config-prettier";
 import importPlugin from "eslint-plugin-import-x";
 import noSecrets from "eslint-plugin-no-secrets";
 import globals from "globals";
+import tseslint from "typescript-eslint";
+
+// When ESLINT_FAST is set (e.g. by the pre-commit hook) skip the whole-graph
+// cyclic-import check, which traverses the entire import graph and is expensive.
+// CI still runs it.
+const fast = !!process.env.ESLINT_FAST;
 
 export default [
   {
@@ -22,7 +27,6 @@ export default [
     },
   },
   ...tseslint.configs.recommended,
-  eslintPluginPrettierRecommended,
   importPlugin.flatConfigs.recommended,
   {
     ...importPlugin.flatConfigs.typescript,
@@ -36,12 +40,6 @@ export default [
       "no-secrets": noSecrets,
     },
     rules: {
-      quotes: [
-        "error",
-        "double",
-        { allowTemplateLiterals: true, avoidEscape: true },
-      ],
-      semi: ["error", "always"],
       "@typescript-eslint/no-require-imports": "off",
       "@typescript-eslint/no-empty-function": "off",
       "@typescript-eslint/no-explicit-any": "warn",
@@ -49,13 +47,15 @@ export default [
       "@typescript-eslint/no-unused-expressions": "off",
       "@typescript-eslint/no-duplicate-enum-values": "warn",
       "@typescript-eslint/no-unsafe-declaration-merging": "warn",
-      "import-x/no-cycle": [
-        "error",
-        {
-          maxDepth: Infinity,
-          ignoreExternal: true,
-        },
-      ],
+      "import-x/no-cycle": fast
+        ? "off"
+        : [
+            "error",
+            {
+              maxDepth: Infinity,
+              ignoreExternal: true,
+            },
+          ],
       "import-x/no-unresolved": ["warn"],
       "no-secrets/no-secrets": [
         "warn",
@@ -69,4 +69,8 @@ export default [
       ],
     },
   },
+  // Keep last: turns off all ESLint rules that conflict with Prettier so Prettier is
+  // the single source of truth for formatting (approach B: eslint = quality, prettier =
+  // formatting, run as separate tools).
+  eslintConfigPrettier,
 ];

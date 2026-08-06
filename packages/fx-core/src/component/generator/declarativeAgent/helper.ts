@@ -199,7 +199,7 @@ export async function addExistingPlugin(
 
   const runtimes = pluginManifest.runtimes!; // have validated that the value exists.
   const destinationApiSpecRelativePath = runtimes.find((runtime) => runtime.type === "OpenApi")!
-    .spec.url as string; // have validated that the value exists.
+    .spec.url; // have validated that the value exists.
 
   const outputFolder = path.dirname(declarativeCopilotManifestPath);
 
@@ -508,6 +508,18 @@ export async function generateForMCPForDA(
   destinationPath: string,
   inputs: Inputs
 ): Promise<Result<GeneratorResult, FxError>> {
+  const mcpServerUrl = inputs[QuestionNames.MCPForDAServerUrl];
+  if (!mcpServerUrl) {
+    return err(
+      new UserError({
+        source: "Scaffold",
+        name: "InputValidationFailed",
+        message: "mcpServerUrl is required when --api-plugin-type is mcp.",
+        displayMessage: getLocalizedString("core.MCPForDA.missingServerUrl"),
+      })
+    );
+  }
+
   // 1. Get ai-plugin.json
   const aiPluginFilePath = path.join(
     destinationPath,
@@ -538,7 +550,6 @@ export async function generateForMCPForDA(
     return generateForMCPForDAWithAuth(destinationPath, aiPluginFilePath, inputs);
   }
 
-  const mcpServerUrl = inputs[QuestionNames.MCPForDAServerUrl];
   const serverName = inputs[QuestionNames.MCPForDAServerName];
   const warnings: Warning[] = [];
 
@@ -717,10 +728,13 @@ export async function generateForMCPForDA(
           if (injectResult.wellKnownUrlPlaceholderUsed) {
             warnings.push({
               type: "mcpAuthDcrWellKnownUrlPlaceholder",
-              content: getLocalizedString(
-                "core.MCPForDA.mcpAuthDcrPlaceholderWarning",
-                mcpServerUrl
-              ),
+              content: getLocalizedString("core.MCPForDA.mcpAuthDcrPlaceholderWarning"),
+            });
+          }
+          if (injectResult.oauthUrlPlaceholderUsed) {
+            warnings.push({
+              type: "mcpAuthOAuthUrlPlaceholder",
+              content: getLocalizedString("core.MCPForDA.mcpAuthOAuthPlaceholderWarning"),
             });
           }
         }
@@ -810,6 +824,21 @@ async function generateForMCPForDAWithAuth(
           if (authProbe.authMetadataUrl) {
             inputs[QuestionNames.MCPForDAAuthMetadataUrl] = authProbe.authMetadataUrl;
           }
+          // This branch never fetches tools, so a mistyped server URL would otherwise leave no
+          // trace at all: endpoint discovery falls back to the host and happily returns its
+          // authorization server, and the scaffold looks complete. Warns on every `notEndpoint`
+          // shape, not just 404 — this is advisory, so it can be broader than the blocking rule
+          // applied when the URL is first entered.
+          if (authProbe.endpointStatus === "notEndpoint") {
+            warnings.push({
+              type: "mcpServerUrlNotAnEndpoint",
+              content: getLocalizedString(
+                "core.MCPForDA.mcpServerUrlNotAnEndpoint",
+                mcpServerUrl,
+                String(authProbe.responseStatus)
+              ),
+            });
+          }
         } catch {
           // Probe failed — continue; endpoint resolution below will best-effort
           // and yml injection will still run with undefined endpoints.
@@ -843,14 +872,18 @@ async function generateForMCPForDAWithAuth(
             endpoints,
             persistCredentialEnvRefs: dtOn,
             serverName,
+            scopes: inputs[QuestionNames.MCPForDAScopes],
           });
           if (injectResult.wellKnownUrlPlaceholderUsed) {
             warnings.push({
               type: "mcpAuthDcrWellKnownUrlPlaceholder",
-              content: getLocalizedString(
-                "core.MCPForDA.mcpAuthDcrPlaceholderWarning",
-                mcpServerUrl
-              ),
+              content: getLocalizedString("core.MCPForDA.mcpAuthDcrPlaceholderWarning"),
+            });
+          }
+          if (injectResult.oauthUrlPlaceholderUsed) {
+            warnings.push({
+              type: "mcpAuthOAuthUrlPlaceholder",
+              content: getLocalizedString("core.MCPForDA.mcpAuthOAuthPlaceholderWarning"),
             });
           }
         }

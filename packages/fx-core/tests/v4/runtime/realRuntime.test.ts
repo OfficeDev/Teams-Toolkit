@@ -9,7 +9,8 @@ import { TemplateFileEntry } from "../../../src/v4/model/dataModel";
 import { REQUIRE_EMPTY_TARGET } from "../../../src/v4/pipeline/runScaffoldPipeline";
 import { createRealRuntime } from "../../../src/v4/runtime/realRuntime";
 import { ScaffoldRequest, scaffold } from "../../../src/v4/runtime/scaffold";
-import { assert } from "vitest";
+import { mcpAuthScaffoldDeps } from "../../../src/v4/mcp/mcpAuthScaffold";
+import { afterEach, assert, beforeEach, vi } from "vitest";
 
 /**
  * The on-disk `ScaffoldRuntime` face (ADR-0018): the same `da/mcp-server` create
@@ -22,7 +23,7 @@ import { assert } from "vitest";
  * Spec: docs/03-specs/scenarios/da/create-mcp-server.md (the SCN-CREATE-MCP-*
  * contract, here re-validated against a real filesystem sink).
  *
- * v4-owned (INV-7): no v3 symbol participates.
+ * v4-owned (INV-7), including the MCP auth YAML action mutator shared by create and add.
  */
 
 const PKG_DIR = path.resolve(__dirname, "../../../../../templates/v4/create/da/mcp-server");
@@ -30,6 +31,10 @@ const PKG_DIR = path.resolve(__dirname, "../../../../../templates/v4/create/da/m
 const MCP_SERVER_URL = "https://api.github.com/mcp"; // namespace derives to apigithubc
 const NAMESPACE = "apigithubc";
 const AUTH_ENV_VAR = "MCP_DA_AUTH_ID_APIGITHUBC";
+const CLIENT_ID_ENV_VAR = "MCP_DA_OAUTH_CLIENT_ID_APIGITHUBC";
+const CLIENT_SECRET_ENV_VAR = "SECRET_MCP_DA_OAUTH_CLIENT_SECRET_APIGITHUBC";
+const CLIENT_ID = "on-disk-client-id";
+const CLIENT_SECRET = "on-disk-client-secret";
 
 const descriptor: unknown = JSON.parse(
   fs.readFileSync(path.join(PKG_DIR, "descriptor.json"), "utf8")
@@ -66,6 +71,7 @@ interface RunOptions {
 
 /** Build one scaffold request rooted at `dir` (the on-disk runtime's output root). */
 function makeRequest(dir: string, options: RunOptions = {}): ScaffoldRequest {
+  const authType = options.authType ?? "none";
   return {
     descriptor,
     pipeline,
@@ -73,7 +79,11 @@ function makeRequest(dir: string, options: RunOptions = {}): ScaffoldRequest {
     answers: {
       mcpServerType: "remote",
       mcpServerUrl: MCP_SERVER_URL,
-      authType: options.authType ?? "none",
+      authType,
+      ...(authType === "oauth"
+        ? { oauthClientId: CLIENT_ID, oauthClientSecret: CLIENT_SECRET }
+        : {}),
+      ...(authType === "entra-sso" ? { entraClientId: CLIENT_ID } : {}),
     },
     callerFloor: { appName: "MyMcpAgent", language: "common" },
     targetDir: { path: dir, existing: options.existing ?? [] },
@@ -81,6 +91,24 @@ function makeRequest(dir: string, options: RunOptions = {}): ScaffoldRequest {
 }
 
 describe("createRealRuntime (v4, on-disk ScaffoldRuntime)", () => {
+  beforeEach(() => {
+    // The oauth/oauth-dynamic auth step probes the server for metadata; stub the network so the
+    // on-disk run stays offline and deterministic. entra-sso/none never probe.
+    vi.spyOn(mcpAuthScaffoldDeps, "probeMCPServerAuth").mockResolvedValue({
+      requiresAuth: true,
+      authMetadataUrl: "https://auth.example.com/.well-known/oauth-protected-resource",
+    });
+    vi.spyOn(mcpAuthScaffoldDeps, "resolveMCPOAuthMetadata").mockResolvedValue({
+      authorizationUrl: "https://auth.example.com/authorize",
+      tokenUrl: "https://auth.example.com/token",
+      wellKnownUrl: "https://auth.example.com/.well-known/oauth-authorization-server",
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   let tempDir: string;
 
   beforeEach(() => {
@@ -141,7 +169,7 @@ describe("createRealRuntime (v4, on-disk ScaffoldRuntime)", () => {
     assert.strictEqual(aiPlugin.namespace, NAMESPACE);
   });
 
-  it("ON-DISK-02: an oauth run injects oauth/register and persists the env var on disk", async () => {
+  it("ON-DISK-02: an oauth run persists regular credentials and an encrypted user-env secret", async () => {
     const result = await run({ authType: "oauth" });
     assert.isTrue(result.isOk(), result.isErr() ? result.error.message : "expected ok");
 
@@ -150,15 +178,23 @@ describe("createRealRuntime (v4, on-disk ScaffoldRuntime)", () => {
     assert.include(yml, "uses: oauth/register");
     assert.include(yml, `name: ${NAMESPACE}`);
 
-    // The persist step appended the credential var into the rendered env file.
-    assert.include(diskText("env/.env.dev"), `${AUTH_ENV_VAR}=`);
+    const env = diskText("env/.env.dev");
+    assert.include(env, `${AUTH_ENV_VAR}=`);
+    assert.include(env, `${CLIENT_ID_ENV_VAR}=${CLIENT_ID}`);
+    assert.notInclude(env, CLIENT_SECRET);
+
+    const userEnv = diskText("env/.env.dev.user");
+    assert.include(userEnv, `${CLIENT_SECRET_ENV_VAR}=crypto_`);
+    assert.notInclude(userEnv, CLIENT_SECRET);
+    assert.include(yml, "projectId:");
   });
 
-  it("ON-DISK-03: an entra-sso run injects microsoftEntra/register and persists the env var", async () => {
+  it("ON-DISK-03: an entra-sso run injects oauth/register (Entra) and persists the env var", async () => {
     const result = await run({ authType: "entra-sso" });
     assert.isTrue(result.isOk(), result.isErr() ? result.error.message : "expected ok");
 
-    assert.include(diskText("m365agents.yml"), "uses: microsoftEntra/register");
+    assert.include(diskText("m365agents.yml"), "uses: oauth/register");
+    assert.include(diskText("m365agents.yml"), "identityProvider: MicrosoftEntra");
     assert.include(diskText("env/.env.dev"), `${AUTH_ENV_VAR}=`);
   });
 

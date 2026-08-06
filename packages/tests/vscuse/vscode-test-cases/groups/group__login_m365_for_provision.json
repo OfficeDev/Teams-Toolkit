@@ -1,0 +1,280 @@
+{
+  "plan_metadata": {
+    "version": "1.1",
+    "plan_id": "plan_login_m365_for_provision",
+    "execution_context": {
+      "delay_between_steps": 0.5,
+      "stop_on_error": true,
+      "precondition_wait_timeout": 30,
+      "precondition_retry_interval": 2,
+      "step_retry_count": 0
+    },
+    "total_steps": 11,
+    "created_at": "2026-07-13T13:45:00.000000",
+    "name": "group: login_m365_for_provision",
+    "description": {
+      "other": "Sign in to Microsoft 365 without Azure login before provisioning.",
+      "owner": "",
+      "workitem": ""
+    },
+    "generated_at": "2026-07-13T13:45:00.000000",
+    "execution_order": [
+      "step_open_m365_accounts_command",
+      "step_filter_m365_accounts_command",
+      "step_select_m365_accounts_command",
+      "step_select_m365_sign_in",
+      "step_confirm_m365_sign_in",
+      "plan_dcd3b7c4",
+      "step_close_m365_login_browser",
+      "step_reopen_m365_accounts_command",
+      "step_refilter_m365_accounts_command",
+      "step_reselect_m365_accounts_command",
+      "step_verify_m365_account",
+      "step_close_m365_accounts_menu"
+    ],
+    "tags": [
+      "group",
+      "m365_login",
+      "no_azure_login"
+    ],
+    "updated_at": "2026-07-13T13:45:00.000000"
+  },
+  "steps": [
+    {
+      "step_id": "step_open_m365_accounts_command",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "f1"
+      },
+      "description": "Press F1 to open the Visual Studio Code command palette before signing in to Microsoft 365.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": null,
+      "created_at": "2026-07-13T13:45:00.000000",
+      "plan_id": "plan_login_m365_for_provision"
+    },
+    {
+      "step_id": "step_filter_m365_accounts_command",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Microsoft 365 Agents: Accounts"
+      },
+      "description": "Type 'Microsoft 365 Agents: Accounts' into the Visual Studio Code command palette.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": null,
+      "created_at": "2026-07-13T13:45:00.000000",
+      "plan_id": "plan_login_m365_for_provision"
+    },
+    {
+      "step_id": "step_select_m365_accounts_command",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 461,
+        "y": 70
+      },
+      "description": "Click the exact 'Microsoft 365 Agents: Accounts' command below the similarly named Accounts View command.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": null,
+      "created_at": "2026-07-13T13:45:00.000000",
+      "plan_id": "plan_login_m365_for_provision"
+    },
+    {
+      "step_id": "step_select_m365_sign_in",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 379,
+        "y": 52
+      },
+      "description": "Click the 'Sign in to Microsoft 365' option in the Accounts menu.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": null,
+      "created_at": "2026-07-13T13:45:00.000000",
+      "plan_id": "plan_login_m365_for_provision"
+    },
+    {
+      "step_id": "step_confirm_m365_sign_in",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 762,
+        "y": 97
+      },
+      "description": "Click the Microsoft 365 sign-in confirmation button.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": null,
+      "created_at": "2026-07-13T13:45:00.000000",
+      "plan_id": "plan_login_m365_for_provision"
+    },
+    {
+      "step_id": "step_close_m365_login_browser",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 1004,
+        "y": 19
+      },
+      "description": "Close the Microsoft 365 sign-in browser after authentication completes.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:1004:19:16:5:aac833964c9633cc",
+        "dhash:1004:19:96:5:d2232323c200e6e6"
+      ],
+      "postconditions": [],
+      "tags": [
+        "delay:3"
+      ],
+      "screenshot": null,
+      "created_at": "2026-07-13T13:45:00.000000",
+      "plan_id": "plan_login_m365_for_provision"
+    },
+    {
+      "step_id": "step_reopen_m365_accounts_command",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "f1"
+      },
+      "description": "Open the Visual Studio Code command palette after Microsoft 365 authentication completes.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": null,
+      "created_at": "2026-07-13T13:45:00.000000",
+      "plan_id": "plan_login_m365_for_provision"
+    },
+    {
+      "step_id": "step_refilter_m365_accounts_command",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Microsoft 365 Agents: Accounts"
+      },
+      "description": "Filter the command palette to the Microsoft 365 Agents Accounts commands after sign-in.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": null,
+      "created_at": "2026-07-13T13:45:00.000000",
+      "plan_id": "plan_login_m365_for_provision"
+    },
+    {
+      "step_id": "step_reselect_m365_accounts_command",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 461,
+        "y": 70
+      },
+      "description": "Open the exact 'Microsoft 365 Agents: Accounts' command so the signed-in account is visible.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": null,
+      "created_at": "2026-07-13T13:45:00.000000",
+      "plan_id": "plan_login_m365_for_provision"
+    },
+    {
+      "step_id": "step_verify_m365_account",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion there's ${{env:M365_ACCOUNT_NAME}} in the Accounts section.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "step_retry_timeout:60"
+      ],
+      "screenshot": null,
+      "created_at": "2026-07-13T13:45:00.000000",
+      "plan_id": "plan_login_m365_for_provision"
+    },
+    {
+      "step_id": "step_close_m365_accounts_menu",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "esc"
+      },
+      "description": "Close the Accounts menu after verifying the Microsoft 365 account.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": null,
+      "created_at": "2026-07-13T13:45:00.000000",
+      "plan_id": "plan_login_m365_for_provision"
+    }
+  ],
+  "screenshots": {}
+}

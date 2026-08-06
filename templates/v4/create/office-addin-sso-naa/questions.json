@@ -1,0 +1,16 @@
+{
+  "$schema": "../../schema/questions.schema.json",
+  "questions": [
+    {
+      "name": "officeAddinNaaHost",
+      "type": "singleSelect",
+      "keyPrefix": "template.officeAddin.naaHost",
+      "default": "word",
+      "staticOptions": [
+        { "id": "word", "keyPrefix": "template.officeAddin.hosts.word" },
+        { "id": "excel", "keyPrefix": "template.officeAddin.hosts.excel" },
+        { "id": "powerpoint", "keyPrefix": "template.officeAddin.hosts.powerpoint" }
+      ]
+    }
+  ]
+}

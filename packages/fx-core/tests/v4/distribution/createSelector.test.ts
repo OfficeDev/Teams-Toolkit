@@ -22,10 +22,16 @@ const TEMPLATES_V4_DIR = path.resolve(__dirname, "../../../../../templates/v4");
  * the test exercises the real `v4/create/selector.json` entry with no built
  * `templates.zip` artifact (CI-clean).
  */
+let cachedFloor: Buffer | undefined;
+
 function buildFloor(): Buffer {
+  if (cachedFloor !== undefined) {
+    return Buffer.from(cachedFloor);
+  }
   const zip = new AdmZip();
   zip.addLocalFolder(TEMPLATES_V4_DIR, "v4");
-  return zip.toBuffer();
+  cachedFloor = zip.toBuffer();
+  return Buffer.from(cachedFloor);
 }
 
 describe("openCreateSelector (resolve-build-target AC-22)", () => {

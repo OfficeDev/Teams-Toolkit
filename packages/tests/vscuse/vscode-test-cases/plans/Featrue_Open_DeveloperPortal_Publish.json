@@ -5,9 +5,9 @@
     "execution_context": {
       "delay_between_steps": 0.5,
       "stop_on_error": true,
-      "precondition_wait_timeout": 60.0,
-      "precondition_retry_interval": 2.0,
-      "step_retry_timeout": 0.0
+      "precondition_wait_timeout": 60,
+      "precondition_retry_interval": 2,
+      "step_retry_timeout": 0
     },
     "total_steps": 22,
     "created_at": "2026-01-08T02:56:22.389128",
@@ -165,7 +165,7 @@
         "x": 1002,
         "y": 16
       },
-      "description": "Click the \"Close\" button (red \"X\") at the top-right corner of the Microsoft Teams window to close the application tab.",
+      "description": "Click the \"Close\" button (X) at the top-right corner of the browser window to close the Microsoft Teams browser window.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -445,9 +445,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:1b18e0d8d9f6e6e4"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "precondition_wait_timeout:60"

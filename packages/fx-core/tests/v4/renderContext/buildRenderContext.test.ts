@@ -254,6 +254,19 @@ describe("buildRenderContext (v4)", () => {
     assert.strictEqual(undeclared._unsafeUnwrapErr().name, EXPR_UNDECLARED_IDENTIFIER);
   });
 
+  it("RCTX-13: a {from} copies a flat provider-derived scalar key verbatim", () => {
+    const catalog = JSON.stringify({ ghmcp: { command: "npx", args: [] } });
+    const res = buildRenderContext(
+      [{ var: "LocalMCPServerCatalog", from: "derived.mcp.serverTypes.catalog" }],
+      { "derived.mcp.serverTypes.catalog": catalog },
+      {},
+      new FakePort()
+    );
+
+    assert.isTrue(res.isOk());
+    assert.strictEqual(res._unsafeUnwrap().LocalMCPServerCatalog, catalog);
+  });
+
   it("INV-3: an undeclared identifier in {from}/{expr} propagates as a SystemError", () => {
     const res = buildRenderContext([{ var: "X", from: "doesNotExist" }], {}, {}, new FakePort());
     assert.isTrue(res.isErr());

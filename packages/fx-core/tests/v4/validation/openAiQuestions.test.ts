@@ -7,6 +7,7 @@ import { assert } from "vitest";
 
 const REPO_ROOT = path.resolve(__dirname, "../../../../..");
 const CREATE_TEMPLATES_ROOT = path.join(REPO_ROOT, "templates/v4/create");
+const SHARED_QUESTIONS_ROOT = path.join(REPO_ROOT, "templates/v4/_shared/questions");
 const OPENAI_RENDER_VARS = new Set([
   "openAIKey",
   "azureOpenAIKey",
@@ -51,16 +52,22 @@ function listFiles(root: string, matches: (name: string) => boolean): string[] {
 }
 
 function questionNames(templateDir: string): Set<string> {
-  const questions = readJsonObject(path.join(templateDir, "questions.json"))["questions"];
   const names = new Set<string>();
-  if (!Array.isArray(questions)) {
-    return names;
-  }
-  for (const question of questions) {
-    if (isRecord(question) && typeof question.name === "string") {
-      names.add(question.name);
+  const collect = (questionsPath: string): void => {
+    const questions = readJsonObject(questionsPath)["questions"];
+    if (!Array.isArray(questions)) {
+      return;
     }
-  }
+    for (const question of questions) {
+      if (isRecord(question) && typeof question.use === "string") {
+        // Resolve a shared question fragment the same way the loader does.
+        collect(path.join(SHARED_QUESTIONS_ROOT, `${question.use}.json`));
+      } else if (isRecord(question) && typeof question.name === "string") {
+        names.add(question.name);
+      }
+    }
+  };
+  collect(path.join(templateDir, "questions.json"));
   return names;
 }
 

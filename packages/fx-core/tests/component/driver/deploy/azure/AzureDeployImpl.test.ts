@@ -40,6 +40,21 @@ import { TestLogProvider } from "../../../util/logProviderMock";
 describe("AzureDeployImpl zip deploy acceleration", () => {
   const sandbox = vi;
   const tempFile = path.join(os.tmpdir(), "test.zip");
+  const zipDeployResource: AzureResourceInfo = {
+    subscriptionId: "aaa",
+    resourceGroupName: "bbb",
+    instanceId: "ccc",
+  };
+  const zipDeployConfig: AzureUploadConfig = {
+    headers: {
+      "Content-Type": "AAA",
+      "Cache-Control": "bbb",
+      Authorization: "ccc",
+    },
+    maxContentLength: 1,
+    maxBodyLength: 2,
+    timeout: 3,
+  };
 
   before(async () => {
     fs.writeFileSync(tempFile, "test");
@@ -159,6 +174,92 @@ describe("AzureDeployImpl zip deploy acceleration", () => {
       .to.be.equal(
         "https://management.azure.com/subscriptions/aaa/resourceGroups/bbb/providers/Microsoft.Web/sites/ccc?api-version=2024-04-01"
       );
+  });
+
+  it("Get zip deploy endpoint reports ARM status when resource lookup fails", async () => {
+    const ar: AzureResourceInfo = {
+      subscriptionId: "aaa",
+      resourceGroupName: "bbb",
+      instanceId: "ccc",
+    };
+    const config: AzureUploadConfig = {
+      headers: {
+        "Content-Type": "AAA",
+        "Cache-Control": "bbb",
+        Authorization: "ccc",
+      },
+      maxContentLength: 1,
+      maxBodyLength: 2,
+      timeout: 3,
+    };
+    vi.spyOn(global, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          error: {
+            code: "ResourceNotFound",
+            message: "The Resource was not found.",
+          },
+        }),
+        { status: 404 }
+      )
+    );
+
+    await expect(AzureZipDeployImpl.getZipDeployEndpoint(ar, config)).rejects.toThrow(
+      "Failed to get Azure App Service host names. Status code: 404"
+    );
+  });
+
+  it("Get zip deploy endpoint reports plain text ARM error response", async () => {
+    vi.spyOn(global, "fetch").mockResolvedValue(
+      new Response("temporary platform error", { status: 502 })
+    );
+
+    await expect(
+      AzureZipDeployImpl.getZipDeployEndpoint(zipDeployResource, zipDeployConfig)
+    ).rejects.toThrow(
+      "Failed to get Azure App Service host names. Status code: 502. Response: temporary platform error"
+    );
+  });
+
+  it("Get zip deploy endpoint reports empty success response", async () => {
+    vi.spyOn(global, "fetch").mockResolvedValue(new Response("", { status: 200 }));
+
+    await expect(
+      AzureZipDeployImpl.getZipDeployEndpoint(zipDeployResource, zipDeployConfig)
+    ).rejects.toThrow(
+      "Failed to get Azure App Service host names. Response does not contain properties.enabledHostNames. Response: "
+    );
+  });
+
+  it("Get zip deploy endpoint reports malformed enabled host names", async () => {
+    const malformedResponse = {
+      properties: {
+        enabledHostNames: ["ssssxx-h0gjdtbsa8bqhjhe.canadacentral-01.azurewebsites.net", 1],
+      },
+    };
+    vi.spyOn(global, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(malformedResponse), { status: 200 })
+    );
+
+    await expect(
+      AzureZipDeployImpl.getZipDeployEndpoint(zipDeployResource, zipDeployConfig)
+    ).rejects.toThrow(
+      `Failed to get Azure App Service host names. Response does not contain properties.enabledHostNames. Response: ${JSON.stringify(
+        malformedResponse
+      )}`
+    );
+  });
+
+  it("Get zip deploy endpoint truncates long ARM error response", async () => {
+    vi.spyOn(global, "fetch").mockResolvedValue(new Response("x".repeat(1001), { status: 500 }));
+
+    await expect(
+      AzureZipDeployImpl.getZipDeployEndpoint(zipDeployResource, zipDeployConfig)
+    ).rejects.toThrow(
+      `Failed to get Azure App Service host names. Status code: 500. Response: ${"x".repeat(
+        1000
+      )}...`
+    );
   });
 
   it("checkDeployStatus empty response", async () => {
@@ -410,7 +511,7 @@ describe("AzureDeployImpl zip deploy acceleration", () => {
     const context = {
       logProvider: new TestLogProvider(),
       ui: new MockUserInteraction(),
-      telemetryReporter: new MockTelemetryReporter(),
+      telemetryReporter: undefined,
     } as any;
     const impl = new AzureZipDeployImpl(
       args,
@@ -434,9 +535,7 @@ describe("AzureDeployImpl zip deploy acceleration", () => {
       return mockWebSiteManagementClient;
     } as any);
     const token = new MyTokenCredential();
-    vi.spyOn(token, "getToken").mockImplementation(() => {
-      throw new Error("test message");
-    });
+    vi.spyOn(token, "getToken").mockResolvedValue(null);
     await expect(
       impl.createAzureDeployConfig(
         {
@@ -447,6 +546,29 @@ describe("AzureDeployImpl zip deploy acceleration", () => {
         token
       )
     ).rejects.toThrow(GetPublishingCredentialsError);
+  });
+
+  it("zip deploy succeeds without a telemetry reporter", async () => {
+    const args = {
+      workingDirectory: "/",
+      artifactFolder: "/",
+      resourceId: "/subscriptions/sub/resourceGroups/rg/providers/Microsoft.Web/sites/app",
+    } as DeployArgs;
+    const context = {
+      logProvider: new TestLogProvider(),
+      ui: new MockUserInteraction(),
+      telemetryReporter: undefined,
+    } as any;
+    const impl = new AzureZipDeployImpl(args, context, "Azure App Service", "help", [], []);
+    vi.spyOn(impl as any, "packageToZip").mockResolvedValue(Readable.from("test"));
+    vi.spyOn(impl, "createAzureDeployConfig").mockResolvedValue(zipDeployConfig);
+    vi.spyOn(AzureZipDeployImpl, "getZipDeployEndpoint").mockResolvedValue("endpoint");
+    vi.spyOn(impl, "zipDeployPackage").mockResolvedValue("location");
+    vi.spyOn(impl, "checkDeployStatus").mockResolvedValue({ status: 4 } as any);
+
+    const cost = await impl.zipDeploy({}, zipDeployResource, new MyTokenCredential());
+
+    expect(cost).toBeGreaterThanOrEqual(0);
   });
 
   it("zipDeployPackage DeployZipPackageError throw 500", async () => {

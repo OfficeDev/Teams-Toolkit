@@ -27,6 +27,7 @@
     "@azure/identity": "^4.8.0",
     "@azure/openai": "^2.0.0",
     "@microsoft/agents-hosting-express": "^1.0.0",
+    "undici": "^6.21.0",
     "openai": "^4.94.0"
   },
   "devDependencies": {

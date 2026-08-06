@@ -221,10 +221,10 @@ class EnvUtil {
       await fs.writeFile(dotEnvSecretFilePath, contentSecret, { encoding: "utf8" });
     }
     if (!envFileExists) {
-      TOOLS.logProvider.info("  Created environment file at " + dotEnvFilePath + EOL + EOL);
+      TOOLS?.logProvider.info("  Created environment file at " + dotEnvFilePath + EOL + EOL);
     }
     if (!envSecretFileExists && Object.keys(parsedDotenvSecret.obj).length > 0) {
-      TOOLS.logProvider.info(
+      TOOLS?.logProvider.info(
         "  Created environment file (secret) at " + dotEnvSecretFilePath + EOL + EOL
       );
     }
@@ -238,7 +238,7 @@ class EnvUtil {
     const list = await fs.readdir(envFolderPath);
     let envs = list
       .map((fileName) => this.extractEnvNameFromFileName(fileName))
-      .filter((env) => env !== undefined) as string[];
+      .filter((env) => env !== undefined);
     if (remoteOnly) {
       envs = envs.filter((env) => environmentNameManager.isRemoteEnvironment(env));
     }
@@ -295,8 +295,7 @@ export const envUtil = new EnvUtil();
 
 const NEW_LINE_SPLITTER = /\r?\n/;
 type DotenvParsedLine =
-  | string
-  | { key: string; value: string; comment?: string; quote?: '"' | "'" };
+  string | { key: string; value: string; comment?: string; quote?: '"' | "'" };
 interface DotenvParseResult {
   lines?: DotenvParsedLine[];
   obj: DotenvOutput;

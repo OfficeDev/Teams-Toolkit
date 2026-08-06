@@ -508,6 +508,17 @@ describe("OfficeAddinGeneratorNew", () => {
       chai.assert.isTrue(res);
     });
 
+    it(`should return true for excel custom functions and sso naa`, async () => {
+      for (const templateName of [
+        TemplateNames.ExcelCustomFunctions,
+        TemplateNames.OfficeAddinSsoNaa,
+      ]) {
+        const inputs: Inputs = { platform: Platform.CLI, projectPath: "./" };
+        inputs[QuestionNames.TemplateName] = templateName;
+        chai.assert.isTrue(generator.activate(context, inputs));
+      }
+    });
+
     it(`should return false`, async () => {
       const inputs: Inputs = {
         platform: Platform.CLI,
@@ -516,6 +527,24 @@ describe("OfficeAddinGeneratorNew", () => {
       inputs[QuestionNames.ProgrammingLanguage] = ProgrammingLanguage.JS;
       const res = generator.activate(context, inputs);
       chai.assert.isFalse(res);
+    });
+  });
+
+  describe("OfficeAddinCapabilityOptions", () => {
+    it(`excelCustomFunctions maps to ExcelCustomFunctions template`, () => {
+      const option = OfficeAddinCapabilityOptions.excelCustomFunctions();
+      chai.assert.equal(option.id, "wxp-json-excel-cf");
+      chai.assert.equal(option.data, TemplateNames.ExcelCustomFunctions);
+      chai.assert.isString(option.label);
+      chai.assert.isString(option.detail);
+    });
+
+    it(`ssoNaa maps to OfficeAddinSsoNaa template`, () => {
+      const option = OfficeAddinCapabilityOptions.ssoNaa();
+      chai.assert.equal(option.id, "wxp-json-sso-naa");
+      chai.assert.equal(option.data, TemplateNames.OfficeAddinSsoNaa);
+      chai.assert.isString(option.label);
+      chai.assert.isString(option.detail);
     });
   });
 
@@ -610,6 +639,96 @@ describe("OfficeAddinGeneratorNew", () => {
       const res = await generator.getTemplateInfos(context, inputs, "./");
       chai.assert.isTrue(res.isErr());
     });
+
+    it(`should set all host flags by default for WXPTaskpane`, async () => {
+      vi.spyOn(OfficeAddinGenerator, "doScaffolding").mockResolvedValue(ok(undefined));
+      const inputs: Inputs = {
+        platform: Platform.CLI,
+        projectPath: "./",
+      };
+      inputs[QuestionNames.TemplateName] = TemplateNames.WXPTaskpane;
+      const res = await generator.getTemplateInfos(context, inputs, "./");
+      chai.assert.isTrue(res.isOk());
+      if (res.isOk()) {
+        const replaceMap = res.value[0].replaceMap!;
+        chai.assert.equal(replaceMap.word, "true");
+        chai.assert.equal(replaceMap.excel, "true");
+        chai.assert.equal(replaceMap.powerpoint, "true");
+        chai.assert.equal(replaceMap.outlook, "true");
+        chai.assert.equal(
+          replaceMap.manifestScopes,
+          `"document",\n                    "presentation",\n                    "mail",\n                    "workbook"`
+        );
+      }
+    });
+
+    it(`should honor host subset for WXPTaskpane`, async () => {
+      vi.spyOn(OfficeAddinGenerator, "doScaffolding").mockResolvedValue(ok(undefined));
+      const inputs: Inputs = {
+        platform: Platform.CLI,
+        projectPath: "./",
+      };
+      inputs[QuestionNames.TemplateName] = TemplateNames.WXPTaskpane;
+      inputs[QuestionNames.OfficeAddinHosts] = ["word"];
+      const res = await generator.getTemplateInfos(context, inputs, "./");
+      chai.assert.isTrue(res.isOk());
+      if (res.isOk()) {
+        const replaceMap = res.value[0].replaceMap!;
+        chai.assert.equal(replaceMap.word, "true");
+        chai.assert.equal(replaceMap.excel, "");
+        chai.assert.equal(replaceMap.powerpoint, "");
+        chai.assert.equal(replaceMap.outlook, "");
+        chai.assert.equal(replaceMap.manifestScopes, `"document"`);
+      }
+    });
+
+    it(`should set manifestScope for sso naa based on selected host`, async () => {
+      vi.spyOn(OfficeAddinGenerator, "doScaffolding").mockResolvedValue(ok(undefined));
+      const inputs: Inputs = { platform: Platform.CLI, projectPath: "./" };
+      inputs[QuestionNames.TemplateName] = TemplateNames.OfficeAddinSsoNaa;
+      inputs[QuestionNames.OfficeAddinNaaHost] = "excel";
+      const res = await generator.getTemplateInfos(context, inputs, "./");
+      chai.assert.isTrue(res.isOk());
+      if (res.isOk()) {
+        chai.assert.equal(res.value[0].replaceMap!.manifestScope, `"workbook"`);
+      }
+    });
+
+    it(`should default sso naa manifestScope to word when host not answered`, async () => {
+      vi.spyOn(OfficeAddinGenerator, "doScaffolding").mockResolvedValue(ok(undefined));
+      const inputs: Inputs = { platform: Platform.CLI, projectPath: "./" };
+      inputs[QuestionNames.TemplateName] = TemplateNames.OfficeAddinSsoNaa;
+      const res = await generator.getTemplateInfos(context, inputs, "./");
+      chai.assert.isTrue(res.isOk());
+      if (res.isOk()) {
+        chai.assert.equal(res.value[0].replaceMap!.manifestScope, `"document"`);
+      }
+    });
+
+    it(`should default sso naa manifestScope to word when host is unsupported`, async () => {
+      vi.spyOn(OfficeAddinGenerator, "doScaffolding").mockResolvedValue(ok(undefined));
+      const inputs: Inputs = { platform: Platform.CLI, projectPath: "./" };
+      inputs[QuestionNames.TemplateName] = TemplateNames.OfficeAddinSsoNaa;
+      // Outlook is not a supported NAA host; the generator must fall back to word.
+      inputs[QuestionNames.OfficeAddinNaaHost] = "outlook";
+      const res = await generator.getTemplateInfos(context, inputs, "./");
+      chai.assert.isTrue(res.isOk());
+      if (res.isOk()) {
+        chai.assert.equal(res.value[0].replaceMap!.manifestScope, `"document"`);
+      }
+    });
+
+    it(`should return excel custom functions template`, async () => {
+      vi.spyOn(OfficeAddinGenerator, "doScaffolding").mockResolvedValue(ok(undefined));
+      const inputs: Inputs = { platform: Platform.CLI, projectPath: "./" };
+      inputs[QuestionNames.TemplateName] = TemplateNames.ExcelCustomFunctions;
+      const res = await generator.getTemplateInfos(context, inputs, "./");
+      chai.assert.isTrue(res.isOk());
+      if (res.isOk()) {
+        chai.assert.equal(res.value[0].templateName, TemplateNames.ExcelCustomFunctions);
+        chai.assert.equal(res.value[0].language, ProgrammingLanguage.TS);
+      }
+    });
   });
 
   describe("post()", () => {
@@ -648,6 +767,165 @@ describe("OfficeAddinGeneratorNew", () => {
       const res = await generator.post(context, inputs, "./");
       chai.assert.isTrue(res.isOk());
       chai.assert.isTrue(reset.mock.calls.length === 0);
+    });
+
+    it(`prunes unselected host files for WXPTaskpane`, async () => {
+      const remove = vi.spyOn(fse, "remove").mockResolvedValue();
+      vi.spyOn(fse, "pathExists").mockResolvedValue(false as any);
+      const inputs: Inputs = {
+        platform: Platform.CLI,
+        projectPath: "./",
+      };
+      inputs[QuestionNames.TemplateName] = TemplateNames.WXPTaskpane;
+      inputs[QuestionNames.OfficeAddinHosts] = ["word", "excel"];
+      const res = await generator.post(context, inputs, "/dest");
+      chai.assert.isTrue(res.isOk());
+      const removed = remove.mock.calls.map((c) => (c[0] as string).replace(/\\/g, "/"));
+      chai.assert.include(removed, "/dest/src/taskpane/powerpoint.ts");
+      chai.assert.include(removed, "/dest/src/commands/powerpoint.ts");
+      chai.assert.include(removed, "/dest/src/taskpane/outlook.ts");
+      chai.assert.include(removed, "/dest/src/commands/outlook.ts");
+      chai.assert.notInclude(removed, "/dest/src/taskpane/word.ts");
+      chai.assert.notInclude(removed, "/dest/src/taskpane/excel.ts");
+    });
+
+    it(`prunes nothing for WXPTaskpane when all hosts selected`, async () => {
+      const remove = vi.spyOn(fse, "remove").mockResolvedValue();
+      vi.spyOn(fse, "pathExists").mockResolvedValue(false as any);
+      const inputs: Inputs = {
+        platform: Platform.CLI,
+        projectPath: "./",
+      };
+      inputs[QuestionNames.TemplateName] = TemplateNames.WXPTaskpane;
+      const res = await generator.post(context, inputs, "/dest");
+      chai.assert.isTrue(res.isOk());
+      chai.assert.isTrue(remove.mock.calls.length === 0);
+    });
+
+    it(`prunes launch.json and package.json for unselected hosts`, async () => {
+      const dest = path.resolve("./tmp-wxp-prune");
+      await fse.ensureDir(path.join(dest, ".vscode"));
+      await fse.ensureDir(path.join(dest, "src", "taskpane"));
+      await fse.ensureDir(path.join(dest, "src", "commands"));
+      // Minimal source files so removal has something to act on.
+      for (const host of ["word", "excel", "powerpoint", "outlook"]) {
+        await fse.writeFile(path.join(dest, "src", "taskpane", `${host}.ts`), "");
+        await fse.writeFile(path.join(dest, "src", "commands", `${host}.ts`), "");
+      }
+      const mkHostConfigs = (host: string) => [
+        { name: `${host[0].toUpperCase()}${host.slice(1)} Desktop Host` },
+        { name: `${host[0].toUpperCase()}${host.slice(1)} Desktop Attach (Edge Chromium)` },
+      ];
+      await fse.writeJson(path.join(dest, ".vscode", "launch.json"), {
+        version: "0.2.0",
+        configurations: [
+          // Non-host entry and a nameless entry must always be kept.
+          { name: "Attach to Component" },
+          {},
+          ...["word", "excel", "powerpoint", "outlook"].flatMap(mkHostConfigs),
+        ],
+        compounds: [
+          {},
+          ...["word", "excel", "powerpoint", "outlook"].map((host) => ({
+            name: `${host[0].toUpperCase()}${host.slice(1)} Desktop (Edge Chromium)`,
+          })),
+        ],
+      });
+      await fse.writeJson(path.join(dest, "package.json"), {
+        config: { app_to_debug: "excel", app_type_to_debug: "desktop" },
+        scripts: {
+          start: "office-addin-debugging start appPackage/manifest.json",
+          "start:desktop:word": "cmd word",
+          "start:desktop:excel": "cmd excel",
+          "start:desktop:powerpoint": "cmd powerpoint",
+          "start:desktop:outlook": "cmd outlook",
+        },
+      });
+
+      try {
+        const inputs: Inputs = { platform: Platform.CLI, projectPath: dest };
+        inputs[QuestionNames.TemplateName] = TemplateNames.WXPTaskpane;
+        inputs[QuestionNames.OfficeAddinHosts] = ["word"];
+        const res = await generator.post(context, inputs, dest);
+        chai.assert.isTrue(res.isOk());
+
+        const launch = await fse.readJson(path.join(dest, ".vscode", "launch.json"));
+        const compoundNames = launch.compounds.map((c: { name?: string }) => c.name);
+        chai.assert.deepEqual(compoundNames, [undefined, "Word Desktop (Edge Chromium)"]);
+        const configNames = launch.configurations.map((c: { name?: string }) => c.name);
+        chai.assert.deepEqual(configNames, [
+          "Attach to Component",
+          undefined,
+          "Word Desktop Host",
+          "Word Desktop Attach (Edge Chromium)",
+        ]);
+
+        const pkg = await fse.readJson(path.join(dest, "package.json"));
+        chai.assert.equal(pkg.config.app_to_debug, "word");
+        chai.assert.property(pkg.scripts, "start:desktop:word");
+        chai.assert.notProperty(pkg.scripts, "start:desktop:excel");
+        chai.assert.notProperty(pkg.scripts, "start:desktop:powerpoint");
+        chai.assert.notProperty(pkg.scripts, "start:desktop:outlook");
+        chai.assert.property(pkg.scripts, "start");
+
+        chai.assert.isFalse(await fse.pathExists(path.join(dest, "src", "taskpane", "excel.ts")));
+        chai.assert.isTrue(await fse.pathExists(path.join(dest, "src", "taskpane", "word.ts")));
+      } finally {
+        await fse.remove(dest);
+      }
+    });
+
+    it(`prunes debug config to the single host for sso naa without removing source`, async () => {
+      const dest = path.resolve("./tmp-naa-prune");
+      await fse.ensureDir(path.join(dest, ".vscode"));
+      await fse.ensureDir(path.join(dest, "src", "taskpane"));
+      await fse.writeFile(path.join(dest, "src", "taskpane", "authConfig.ts"), "");
+      const mkHostConfigs = (host: string) => [
+        { name: `${host[0].toUpperCase()}${host.slice(1)} Desktop Host` },
+        { name: `${host[0].toUpperCase()}${host.slice(1)} Desktop Attach (Edge Chromium)` },
+      ];
+      await fse.writeJson(path.join(dest, ".vscode", "launch.json"), {
+        version: "0.2.0",
+        configurations: ["word", "excel", "powerpoint"].flatMap(mkHostConfigs),
+        compounds: ["word", "excel", "powerpoint"].map((host) => ({
+          name: `${host[0].toUpperCase()}${host.slice(1)} Desktop (Edge Chromium)`,
+        })),
+      });
+      await fse.writeJson(path.join(dest, "package.json"), {
+        config: { app_to_debug: "word" },
+        scripts: {
+          start: "office-addin-debugging start appPackage/manifest.json",
+          "start:desktop:word": "cmd word",
+          "start:desktop:excel": "cmd excel",
+          "start:desktop:powerpoint": "cmd powerpoint",
+        },
+      });
+
+      try {
+        const inputs: Inputs = { platform: Platform.CLI, projectPath: dest };
+        inputs[QuestionNames.TemplateName] = TemplateNames.OfficeAddinSsoNaa;
+        inputs[QuestionNames.OfficeAddinNaaHost] = "excel";
+        const res = await generator.post(context, inputs, dest);
+        chai.assert.isTrue(res.isOk());
+
+        const launch = await fse.readJson(path.join(dest, ".vscode", "launch.json"));
+        chai.assert.deepEqual(
+          launch.compounds.map((c: { name: string }) => c.name),
+          ["Excel Desktop (Edge Chromium)"]
+        );
+        const pkg = await fse.readJson(path.join(dest, "package.json"));
+        chai.assert.equal(pkg.config.app_to_debug, "excel");
+        chai.assert.deepEqual(
+          Object.keys(pkg.scripts).filter((s: string) => s.startsWith("start:desktop:")),
+          ["start:desktop:excel"]
+        );
+        // NAA source is host-agnostic — nothing removed.
+        chai.assert.isTrue(
+          await fse.pathExists(path.join(dest, "src", "taskpane", "authConfig.ts"))
+        );
+      } finally {
+        await fse.remove(dest);
+      }
     });
   });
 });

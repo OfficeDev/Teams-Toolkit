@@ -6,9 +6,9 @@ import { LogProvider, M365TokenProvider } from "@microsoft/teamsfx-api";
 import axios, { AxiosError, AxiosInstance, AxiosRequestHeaders } from "axios";
 import axiosRetry from "axios-retry";
 import { getResourceServiceEndpoint, GraphScopes, ResourceServiceType } from "../common/constants";
+import { ErrorContextMW } from "../common/globalVars";
 import { getLocalizedString } from "../common/localizeUtils";
 import { AadOwner } from "../common/permissionInterface";
-import { ErrorContextMW } from "../common/globalVars";
 import {
   DeleteOrUpdatePermissionFailedError,
   HostNameNotOnVerifiedDomainError,
@@ -18,10 +18,10 @@ import { CredentialInvalidLifetimeError } from "../component/driver/aad/error/cr
 import { SignInAudienceNotAllowedError } from "../component/driver/aad/error/signInAudienceNotAllowedError";
 import { AADApplication } from "../component/driver/aad/interface/AADApplication";
 import { AADManifest } from "../component/driver/aad/interface/AADManifest";
-import { IAADDefinition } from "./interfaces/aad/IAADDefinition";
 import { SignInAudience } from "../component/driver/aad/interface/signInAudience";
 import { AadManifestHelper } from "../component/driver/aad/utility/aadManifestHelper";
 import { aadErrorCode } from "../component/driver/aad/utility/constants";
+import { IAADDefinition } from "./interfaces/aad/IAADDefinition";
 // Another implementation of src\component\resource\aadApp\graph.ts to reduce call stacks
 // It's our internal utility so make sure pass valid parameters to it instead of relying on it to handle parameter errors
 
@@ -95,7 +95,7 @@ export class AadAppClient {
           err.response.data?.error?.code === aadErrorCode.signInAudienceNotAllowedAsPerAppPolicy
         ) {
           throw new SignInAudienceNotAllowedError(
-            AadAppClient.name,
+            "AadAppClient",
             err.response.data.error?.message,
             isMicrosoftUser
           );
@@ -146,12 +146,12 @@ export class AadAppClient {
         if (
           err.response.data?.error?.code === aadErrorCode.credentialInvalidLifetimeAsPerAppPolicy
         ) {
-          throw new CredentialInvalidLifetimeError(AadAppClient.name);
+          throw new CredentialInvalidLifetimeError("AadAppClient");
         }
         if (
           err.response.data?.error?.code === aadErrorCode.credentialTypeNotAllowedAsPerAppPolicy
         ) {
-          throw new ClientSecretNotAllowedError(AadAppClient.name, isMicrosoftUser);
+          throw new ClientSecretNotAllowedError("AadAppClient", isMicrosoftUser);
         }
       }
       throw err;
@@ -177,11 +177,11 @@ export class AadAppClient {
     } catch (err) {
       if (axios.isAxiosError(err) && err.response && err.response.status === 400) {
         if (err.response.data.error?.code === aadErrorCode.permissionErrorCode) {
-          throw new DeleteOrUpdatePermissionFailedError(AadAppClient.name);
+          throw new DeleteOrUpdatePermissionFailedError("AadAppClient");
         }
         if (err.response.data.error?.code === aadErrorCode.hostNameNotOnVerifiedDomain) {
           throw new HostNameNotOnVerifiedDomainError(
-            AadAppClient.name,
+            "AadAppClient",
             err.response.data.error.message
           );
         }

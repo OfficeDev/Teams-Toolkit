@@ -16,7 +16,5 @@
     "additionalProperties": false
   },
 
-  "replaceMap": [
-    { "var": "OfficeAddinFolder", "from": "officeAddinFolder" }
-  ]
+  "replaceMap": [{ "var": "OfficeAddinFolder", "from": "officeAddinFolder" }]
 }

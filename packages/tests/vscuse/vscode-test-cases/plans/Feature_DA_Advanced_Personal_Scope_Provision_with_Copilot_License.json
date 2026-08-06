@@ -61,7 +61,9 @@
         "dhash:354:78:0:10:c8c88094b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_c3776fa0",
       "created_at": "2025-12-30T07:17:04.627595",
       "plan_id": "plan_b654165d"
@@ -87,7 +89,9 @@
         "dhash:312:124:0:10:c0c0b094b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_16066167",
       "created_at": "2025-12-30T07:17:04.646670",
       "plan_id": "plan_b654165d"
@@ -113,7 +117,9 @@
         "dhash:337:77:0:10:c0e08294b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_831d26e6",
       "created_at": "2025-12-30T07:17:04.663515",
       "plan_id": "plan_b654165d"
@@ -139,7 +145,9 @@
         "dhash:295:76:0:10:c0949094b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_76c42321",
       "created_at": "2025-12-30T07:17:04.685566",
       "plan_id": "plan_b654165d"
@@ -165,7 +173,9 @@
         "dhash:292:78:0:10:d0989494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_df1089f7",
       "created_at": "2025-12-30T07:17:04.702015",
       "plan_id": "plan_b654165d"
@@ -191,7 +201,9 @@
         "dhash:331:76:0:10:f0b09494b2717075"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition:old"
+      ],
       "screenshot": "step_f72dc410",
       "created_at": "2025-12-30T07:17:04.722190",
       "plan_id": "plan_b654165d"
@@ -231,7 +243,7 @@
         "x": 75,
         "y": 146
       },
-      "description": "Click the \".env\" file in the Explorer panel of Visual Studio Code to select it.",
+      "description": "Click the \"env\" folder in the Explorer panel of Visual Studio Code to expand it.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -283,7 +295,7 @@
         "x": 504,
         "y": 196
       },
-      "description": "Click the \"View provisioned resources\" button in the notification popup at the bottom right of the Visual Studio Code interface.",
+      "description": "Click on the value field \"personal\" of the AGENT_SCOPE environment variable in the .env.dev file within the Visual Studio Code editor.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

@@ -5,7 +5,8 @@ import { UserError } from "@microsoft/teamsfx-api";
 import { REQUIRE_EMPTY_TARGET } from "../../../src/v4/pipeline/runScaffoldPipeline";
 import { createInMemoryRuntime } from "../../../src/v4/runtime/inMemoryRuntime";
 import { ScaffoldRequest, scaffold } from "../../../src/v4/runtime/scaffold";
-import { assert } from "vitest";
+import { mcpAuthScaffoldDeps } from "../../../src/v4/mcp/mcpAuthScaffold";
+import { afterEach, assert, beforeEach, vi } from "vitest";
 import {
   loadV4Package,
   readJsonObject,
@@ -20,17 +21,25 @@ import {
  * T3 scenario tier (ADR-0018): the whole `da/mcp-server` create package
  * scaffolded under `InMemoryRuntime`, asserting the vertical contract.
  *
- * Spec: docs/03-specs/scenarios/da/create-mcp-server.md (SCN-CREATE-MCP-01..14)
+ * Spec: docs/03-specs/scenarios/da/create-mcp-server.md (SCN-CREATE-MCP-01..18)
  *
  * Each `it("SCN-CREATE-MCP-0X")` maps 1:1 to a scenario AC row. The package's
  * real authored files are loaded from disk (the distribution chain's output
- * shape), then composed; no v3 symbol participates.
+ * shape), then composed. The render/scaffold core is v4-owned; the MCP auth step
+ * is implemented by the v4-owned MCP auth YAML action mutator
+ * so create and the add-action flow share one auth implementation (pipeline.json).
  */
 
 const MCP_SERVER_URL = "https://api.github.com/mcp"; // namespace derives to apigithubc
 const NAMESPACE = "apigithubc";
 const AUTH_REF = "${{MCP_DA_AUTH_ID_APIGITHUBC}}";
 const AUTH_ENV_VAR = "MCP_DA_AUTH_ID_APIGITHUBC";
+const CLIENT_ID_ENV_VAR = "MCP_DA_OAUTH_CLIENT_ID_APIGITHUBC";
+const CLIENT_SECRET_ENV_VAR = "SECRET_MCP_DA_OAUTH_CLIENT_SECRET_APIGITHUBC";
+const SCOPE_ENV_VAR = "MCP_DA_OAUTH_SCOPE_APIGITHUBC";
+const CLIENT_ID = "test-oauth-client-id";
+const CLIENT_SECRET = "test-oauth-client-secret";
+const ENTRA_CLIENT_ID = "test-entra-client-id";
 
 const templatePackage = loadV4Package("create", "da/mcp-server");
 
@@ -46,24 +55,37 @@ interface RunOptions {
   mcpServerType?: string;
   selectedLocalServers?: string[];
   localServerCatalog?: string;
+  oauthScopes?: string;
 }
 
 /** Scaffold the package with the given auth type against a fresh in-memory runtime. */
-async function run(
-  options: RunOptions = {}
-): Promise<{ files: Map<string, Buffer>; outcome: V4ScenarioOutcome }> {
+async function run(options: RunOptions = {}): Promise<{
+  files: Map<string, Buffer>;
+  secrets: Map<string, string>;
+  outcome: V4ScenarioOutcome;
+}> {
+  const authType = options.authType ?? "none";
   const answers: ScaffoldRequest["answers"] =
     options.mcpServerType === "local"
       ? {
           mcpServerType: "local",
           selectedLocalServers: options.selectedLocalServers ?? [],
-          localServerCatalog: options.localServerCatalog ?? "{}",
-          authType: options.authType ?? "none",
+          "derived.mcp.serverTypes.catalog": options.localServerCatalog ?? "{}",
+          authType,
         }
       : {
           mcpServerType: "remote",
+          "derived.mcp.serverTypes.catalog": "{}",
           mcpServerUrl: MCP_SERVER_URL,
-          authType: options.authType ?? "none",
+          authType,
+          ...(authType === "oauth"
+            ? {
+                oauthClientId: CLIENT_ID,
+                oauthClientSecret: CLIENT_SECRET,
+                ...(options.oauthScopes === undefined ? {} : { oauthScopes: options.oauthScopes }),
+              }
+            : {}),
+          ...(authType === "entra-sso" ? { entraClientId: ENTRA_CLIENT_ID } : {}),
         };
   return runV4Package(templatePackage, {
     answers,
@@ -73,6 +95,24 @@ async function run(
 }
 
 describe("SCN-DA-CREATE-WITH-MCP-SERVER (v4, T3 InMemoryRuntime)", () => {
+  beforeEach(() => {
+    // The oauth/oauth-dynamic auth step probes the server for metadata; stub the network so the
+    // scenario stays offline and deterministic. entra-sso/none never probe.
+    vi.spyOn(mcpAuthScaffoldDeps, "probeMCPServerAuth").mockResolvedValue({
+      requiresAuth: true,
+      authMetadataUrl: "https://auth.example.com/.well-known/oauth-protected-resource",
+    });
+    vi.spyOn(mcpAuthScaffoldDeps, "resolveMCPOAuthMetadata").mockResolvedValue({
+      authorizationUrl: "https://auth.example.com/authorize",
+      tokenUrl: "https://auth.example.com/token",
+      wellKnownUrl: "https://auth.example.com/.well-known/oauth-authorization-server",
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("SCN-CREATE-MCP-01: the render phase writes the new files (authType=none, empty target)", async () => {
     const { files, outcome } = await run();
     for (const expected of [
@@ -107,8 +147,7 @@ describe("SCN-DA-CREATE-WITH-MCP-SERVER (v4, T3 InMemoryRuntime)", () => {
     const runtime = recordArrayProperty(plugin, "runtimes")[0];
     const spec = recordProperty(runtime, "spec");
     assert.strictEqual(runtime.type, "RemoteMCPServer");
-    assert.strictEqual(spec.url, MCP_SERVER_URL);
-    assert.strictEqual(spec.enable_dynamic_discovery, true);
+    assert.deepStrictEqual(spec, { url: MCP_SERVER_URL });
     assert.deepStrictEqual(runtime.run_for_functions, ["*"]);
   });
 
@@ -160,7 +199,12 @@ describe("SCN-DA-CREATE-WITH-MCP-SERVER (v4, T3 InMemoryRuntime)", () => {
       descriptor: templatePackage.descriptor,
       pipeline: templatePackage.pipeline,
       content: templatePackage.content,
-      answers: { mcpServerType: "remote", mcpServerUrl: MCP_SERVER_URL, authType: "none" },
+      answers: {
+        mcpServerType: "remote",
+        "derived.mcp.serverTypes.catalog": "{}",
+        mcpServerUrl: MCP_SERVER_URL,
+        authType: "none",
+      },
       callerFloor: { appName: "MyMcpAgent", language: "common" },
       targetDir: { path: "/out", existing: ["appPackage/manifest.json"] },
     };
@@ -242,5 +286,68 @@ describe("SCN-DA-CREATE-WITH-MCP-SERVER (v4, T3 InMemoryRuntime)", () => {
     });
     assert.include(outcome.stepsRun, "mcp-local/materialize-servers");
     assert.notInclude(outcome.stepsRun, "mcp-auth/inject-yml-action");
+  });
+
+  it("SCN-CREATE-MCP-15: static OAuth writes credential refs, regular values, and an isolated secret", async () => {
+    const { files, secrets } = await run({
+      authType: "oauth",
+      oauthScopes: "read:user repo",
+    });
+    const yml = text(files, "m365agents.yml");
+    const env = text(files, "env/.env.dev");
+
+    assert.include(yml, "uses: oauth/register");
+    assert.include(yml, "identityProvider: Custom");
+    assert.include(yml, `clientId: \${{${CLIENT_ID_ENV_VAR}}}`);
+    assert.include(yml, `clientSecret: \${{${CLIENT_SECRET_ENV_VAR}}}`);
+    assert.include(yml, `scope: \${{${SCOPE_ENV_VAR}}}`);
+    assert.include(env, `${CLIENT_ID_ENV_VAR}=${CLIENT_ID}`);
+    assert.include(env, `${SCOPE_ENV_VAR}=read:user repo`);
+    assert.include(env, `${AUTH_ENV_VAR}=`);
+    assert.notInclude(env, CLIENT_SECRET);
+    assert.strictEqual(secrets.get(CLIENT_SECRET_ENV_VAR), CLIENT_SECRET);
+    for (const contents of files.values()) {
+      assert.notInclude(contents.toString("utf8"), CLIENT_SECRET);
+    }
+  });
+
+  it("SCN-CREATE-MCP-16: static OAuth without scopes writes no dangling scope ref or value", async () => {
+    const { files } = await run({ authType: "oauth" });
+    const yml = text(files, "m365agents.yml");
+    const env = text(files, "env/.env.dev");
+
+    assert.include(yml, `clientId: \${{${CLIENT_ID_ENV_VAR}}}`);
+    assert.include(yml, `clientSecret: \${{${CLIENT_SECRET_ENV_VAR}}}`);
+    assert.notInclude(yml, SCOPE_ENV_VAR);
+    assert.notInclude(env, SCOPE_ENV_VAR);
+  });
+
+  it("SCN-CREATE-MCP-17: Entra SSO writes only its client-id credential ref and value", async () => {
+    const { files, secrets } = await run({ authType: "entra-sso" });
+    const yml = text(files, "m365agents.yml");
+    const env = text(files, "env/.env.dev");
+
+    assert.include(yml, "uses: oauth/register");
+    assert.include(yml, "identityProvider: MicrosoftEntra");
+    assert.include(yml, `clientId: \${{${CLIENT_ID_ENV_VAR}}}`);
+    assert.notInclude(yml, "clientSecret:");
+    assert.notInclude(yml, SCOPE_ENV_VAR);
+    assert.include(env, `${CLIENT_ID_ENV_VAR}=${ENTRA_CLIENT_ID}`);
+    assert.include(env, `${AUTH_ENV_VAR}=`);
+    assert.strictEqual(secrets.size, 0);
+  });
+
+  it("SCN-CREATE-MCP-18: dynamic registration writes no static credential values or refs", async () => {
+    const { files, secrets, outcome } = await run({ authType: "oauth-dynamic" });
+    const yml = text(files, "m365agents.yml");
+    const env = text(files, "env/.env.dev");
+
+    assert.include(yml, "uses: dcr/register");
+    assert.notInclude(yml, "clientId:");
+    assert.notInclude(yml, "clientSecret:");
+    assert.notInclude(yml, "MCP_DA_OAUTH_");
+    assert.notInclude(env, "MCP_DA_OAUTH_");
+    assert.strictEqual(secrets.size, 0);
+    assert.include(outcome.stepsSkipped, "mcp-auth/persist-credential-env");
   });
 });

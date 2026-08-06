@@ -1,8 +1,16 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { FxError, UserError } from "@microsoft/teamsfx-api";
+import { FxError, SystemError, UserError } from "@microsoft/teamsfx-api";
 import { Result, err, ok } from "neverthrow";
+import {
+  CollectInputsPort,
+  OptionItem,
+  PromptUI,
+  QuestionSpec,
+  WalkHistoryEntry,
+  walkInputs,
+} from "../collectInputs/collectInputs";
 import {
   ExpressionNode,
   ExpressionRuntimePort,
@@ -15,16 +23,14 @@ import {
 
 const SOURCE = "Scaffold";
 
-/** The four worlds dispatch can hand off to. */
-export type DispatchEngine = "v4" | "v3" | "v3-core-method" | "surface-action";
+/** The worlds dispatch can hand off to. */
+export type DispatchEngine = "v4" | "surface-action";
 
 /** One parsed `selector.json` route. */
 export interface SelectorRoute {
   when: string;
   engine: DispatchEngine;
   templateId?: string;
-  v3Adapter?: string;
-  coreMethod?: string;
   action?: string;
   surfaces?: string[];
 }
@@ -63,20 +69,27 @@ export interface RouteResolverPort {
   featureFlag(name: string): boolean;
   /** Membership test for the v4 world. */
   v4Registry(templateId: string): boolean;
-  /** Membership test for the frozen v3 generator allow-list. */
-  v3Registry(templateId: string): boolean;
-  /** Membership test for the frozen v3 core-method allow-list. */
-  v3CoreMethodRegistry(coreMethod: string): boolean;
 }
 
 /** The resolved dispatch outcome. */
 export interface BuildTarget {
-  /** The v4/v3 template id, core method, or surface action id. */
+  /** The v4 template id, core method, or surface action id. */
   templateId: string;
   /** Which world dispatch hands off to. */
   engine: DispatchEngine;
   /** The Q1 dimension picks that produced this target. */
   answers?: Record<string, string>;
+}
+
+/**
+ * A `BuildTarget` plus the Q1 walk state the front door retains for cross-phase
+ * back (a superset, so existing `BuildTarget` reads are unaffected). `history` is
+ * opaque to the front door — it is only handed back via `resume`; `promptCount`
+ * is the number of Q1 dimensions actually prompted (Q2's `baseStep`).
+ */
+export interface SelectorWalkResult extends BuildTarget {
+  history: WalkHistoryEntry[];
+  promptCount: number;
 }
 
 /** `UserError` name: a resolved/supplied `templateId` belongs to no world. */
@@ -120,8 +133,6 @@ function buildScope(declared: string[], answers: Record<string, string>): Scope 
 function malformedRouteReason(r: SelectorRoute): string | undefined {
   const has = {
     templateId: r.templateId !== undefined,
-    v3Adapter: r.v3Adapter !== undefined,
-    coreMethod: r.coreMethod !== undefined,
     action: r.action !== undefined,
   };
   switch (r.engine) {
@@ -129,43 +140,35 @@ function malformedRouteReason(r: SelectorRoute): string | undefined {
       if (!has.templateId) {
         return "engine 'v4' requires 'templateId'";
       }
-      if (has.v3Adapter || has.coreMethod || has.action) {
-        return "engine 'v4' must not carry 'v3Adapter' / 'coreMethod' / 'action'";
-      }
-      return undefined;
-    case "v3":
-      if (!has.v3Adapter) {
-        return "engine 'v3' requires 'v3Adapter'";
-      }
-      if (has.coreMethod || has.action) {
-        return "engine 'v3' must not carry 'coreMethod' / 'action'";
-      }
-      return undefined;
-    case "v3-core-method":
-      if (!has.coreMethod) {
-        return "engine 'v3-core-method' requires 'coreMethod'";
-      }
-      if (has.templateId || has.v3Adapter || has.action) {
-        return "engine 'v3-core-method' must not carry 'templateId' / 'v3Adapter' / 'action'";
+      if (has.action) {
+        return "engine 'v4' must not carry 'action'";
       }
       return undefined;
     case "surface-action":
       if (!has.action) {
         return "engine 'surface-action' requires 'action'";
       }
-      if (has.templateId || has.v3Adapter || has.coreMethod) {
-        return "engine 'surface-action' must not carry 'templateId' / 'v3Adapter' / 'coreMethod'";
+      if (has.templateId) {
+        return "engine 'surface-action' must not carry 'templateId'";
       }
       return undefined;
   }
 }
 
+/** Validate only a selector route's engine-specific key shape. */
+export function validateSelectorRouteShape(route: SelectorRoute): Result<void, FxError> {
+  const reason = malformedRouteReason(route);
+  return reason === undefined
+    ? ok(undefined)
+    : err(userError(BUILD_TARGET_MALFORMED_ROUTE, `selector route has invalid shape: ${reason}`));
+}
+
 /** Validate the routing table before matching any route. */
 function validateRoutes(routes: SelectorRoute[], port: RouteResolverPort): Result<void, FxError> {
   for (const r of routes) {
-    const reason = malformedRouteReason(r);
-    if (reason !== undefined) {
-      return err(userError(BUILD_TARGET_MALFORMED_ROUTE, `route '${r.when}': ${reason}`));
+    const shape = validateSelectorRouteShape(r);
+    if (shape.isErr()) {
+      return err(shape.error);
     }
     if (r.engine === "v4" && r.templateId !== undefined && !port.v4Registry(r.templateId)) {
       return err(
@@ -179,57 +182,137 @@ function validateRoutes(routes: SelectorRoute[], port: RouteResolverPort): Resul
   return ok(undefined);
 }
 
-/** Walk Q1 with prefill support and back history for prompted dimensions. */
-async function walkWithPrefill(
+function selectorQuestions(selector: SelectorSpec): QuestionSpec[] {
+  return selector.questions.map((question) => ({
+    name: question.name,
+    type: "singleSelect",
+    condition: question.condition,
+  }));
+}
+
+function selectorOptionsSchema(selector: SelectorSpec): { properties: Record<string, unknown> } {
+  const properties: Record<string, unknown> = {};
+  for (const question of selector.questions) {
+    properties[question.name] = {};
+  }
+  return { properties };
+}
+
+function q1PromptUi(interactive: boolean, port: RouteResolverPort): PromptUI {
+  return {
+    async ask(question: QuestionSpec, _options: OptionItem[] | undefined, step = 1) {
+      if (!interactive) {
+        return err(
+          userError(
+            BUILD_TARGET_MISSING_DIMENSION,
+            `required dimension '${question.name}' was not provided (non-interactive)`
+          )
+        );
+      }
+      const outcome = await port.prompt(
+        { name: question.name, condition: question.condition },
+        step
+      );
+      if (outcome.kind === "back" && step <= 1) {
+        return err(userError(BUILD_TARGET_WALK_CANCELLED, "the create selector was cancelled"));
+      }
+      return ok(outcome);
+    },
+    askMulti() {
+      return Promise.resolve(
+        err(
+          new SystemError({
+            source: SOURCE,
+            name: "BuildTargetMultiSelectUnsupported",
+            message: "selector dimensions do not support multi-select questions",
+          })
+        )
+      );
+    },
+  };
+}
+
+function buildCollectPort(interactive: boolean, port: RouteResolverPort): CollectInputsPort {
+  return {
+    ui: q1PromptUi(interactive, port),
+    optionsProvider: () => undefined,
+    validator: () => undefined,
+    evaluate: (node, scope) => evaluateExpression(node, scope, exprPort(port)),
+  };
+}
+
+function scalarAnswers(
   selector: SelectorSpec,
-  prefilled: Record<string, string>,
-  interactive: boolean,
+  answers: Record<string, unknown>,
   port: RouteResolverPort
-): Promise<Result<Record<string, string>, FxError>> {
-  const declared = selector.questions.map((q) => q.name);
-  let answers: Record<string, string> = {};
-  const history: { index: number; snapshot: Record<string, string> }[] = [];
-  let index = 0;
-  while (index < selector.questions.length) {
-    const q = selector.questions[index];
-    if (q.condition !== undefined) {
-      const gate = evaluateExpression(q.condition, buildScope(declared, answers), exprPort(port));
+): Result<Record<string, string>, FxError> {
+  const normalized: Record<string, string> = {};
+  const declared = selector.questions.map((question) => question.name);
+  for (const question of selector.questions) {
+    if (question.condition !== undefined) {
+      const gate = evaluateExpression(
+        question.condition,
+        buildScope(declared, normalized),
+        exprPort(port)
+      );
       if (gate.isErr()) {
         return err(gate.error);
       }
       if (gate.value !== true) {
-        index++;
         continue;
       }
     }
-    if (prefilled[q.name] !== undefined) {
-      answers[q.name] = prefilled[q.name];
-      index++;
+    const value = answers[question.name];
+    if (value === undefined) {
       continue;
     }
-    if (!interactive) {
+    if (typeof value !== "string") {
       return err(
-        userError(
-          BUILD_TARGET_MISSING_DIMENSION,
-          `required dimension '${q.name}' was not provided (non-interactive)`
-        )
+        new SystemError({
+          source: SOURCE,
+          name: "BuildTargetNonScalarAnswer",
+          message: `selector dimension '${question.name}' resolved to a non-scalar answer`,
+        })
       );
     }
-    const outcome = await port.prompt(q, history.length + 1);
-    if (outcome.kind === "back") {
-      const restore = history.pop();
-      if (restore === undefined) {
-        return err(userError(BUILD_TARGET_WALK_CANCELLED, "the create selector was cancelled"));
-      }
-      answers = restore.snapshot;
-      index = restore.index;
-      continue;
-    }
-    history.push({ index, snapshot: { ...answers } });
-    answers[q.name] = outcome.value;
-    index++;
+    normalized[question.name] = value;
   }
-  return ok(answers);
+  return ok(normalized);
+}
+
+/** Walk Q1 through the shared collect-inputs engine with selector-specific prompt wiring. */
+async function collectSelectorAnswers(
+  selector: SelectorSpec,
+  prefilled: Record<string, string>,
+  interactive: boolean,
+  port: RouteResolverPort,
+  resume: { history: WalkHistoryEntry[] } | undefined
+): Promise<
+  Result<
+    { answers: Record<string, string>; history: WalkHistoryEntry[]; promptCount: number },
+    FxError
+  >
+> {
+  const collected = await walkInputs(
+    selectorQuestions(selector),
+    selectorOptionsSchema(selector),
+    prefilled,
+    buildCollectPort(interactive, port),
+    { resume }
+  );
+  if (collected.isErr()) {
+    return err(collected.error);
+  }
+  const outcome = collected.value;
+  // `backable` is off for Q1, so a back past the first prompt errors in the prompt face (WCS-17)
+  // rather than returning a top-level back; the `done` branch is the live path.
+  return outcome.kind === "done"
+    ? scalarAnswers(selector, outcome.answers, port).map((answers) => ({
+        answers,
+        history: outcome.history,
+        promptCount: outcome.promptCount,
+      }))
+    : err(userError(BUILD_TARGET_WALK_CANCELLED, "the create selector was cancelled"));
 }
 
 /** Match the first route whose `when` predicate is true against the collected answers. */
@@ -261,33 +344,16 @@ function matchRoute(
 
 /** Dispatch a matched route to its engine-specific id. */
 function dispatchRoute(
-  r: SelectorRoute,
-  port: RouteResolverPort
+  r: SelectorRoute
 ): Result<{ templateId: string; engine: DispatchEngine }, FxError> {
   switch (r.engine) {
     case "v4":
-    case "v3":
       if (r.templateId === undefined) {
         return err(
           userError(BUILD_TARGET_MALFORMED_ROUTE, `route '${r.when}': missing 'templateId'`)
         );
       }
       return ok({ templateId: r.templateId, engine: r.engine });
-    case "v3-core-method":
-      if (r.coreMethod === undefined) {
-        return err(
-          userError(BUILD_TARGET_MALFORMED_ROUTE, `route '${r.when}': missing 'coreMethod'`)
-        );
-      }
-      if (!port.v3CoreMethodRegistry(r.coreMethod)) {
-        return err(
-          userError(
-            BUILD_TARGET_UNKNOWN_TEMPLATE,
-            `core method '${r.coreMethod}' is not in the v3 core-method allow-list`
-          )
-        );
-      }
-      return ok({ templateId: r.coreMethod, engine: r.engine });
     case "surface-action":
       if (r.action === undefined) {
         return err(userError(BUILD_TARGET_MALFORMED_ROUTE, `route '${r.when}': missing 'action'`));
@@ -301,8 +367,9 @@ export async function resolveBuildTarget(
   selector: SelectorSpec,
   prefilled: Record<string, string>,
   interactive: boolean,
-  port: RouteResolverPort
-): Promise<Result<BuildTarget, FxError>> {
+  port: RouteResolverPort,
+  options: { resume?: { history: WalkHistoryEntry[] } } = {}
+): Promise<Result<SelectorWalkResult, FxError>> {
   // Validate the whole routing table before any route match.
   const routesOk = validateRoutes(selector.routes, port);
   if (routesOk.isErr()) {
@@ -310,20 +377,26 @@ export async function resolveBuildTarget(
   }
 
   // One prefill-aware walk covers interactive and non-interactive resolution.
-  const walked = await walkWithPrefill(selector, prefilled, interactive, port);
+  const walked = await collectSelectorAnswers(
+    selector,
+    prefilled,
+    interactive,
+    port,
+    options.resume
+  );
   if (walked.isErr()) {
     return err(walked.error);
   }
-  const answers = walked.value;
+  const { answers, history, promptCount } = walked.value;
 
   const matched = matchRoute(selector, answers, port);
   if (matched.isErr()) {
     return err(matched.error);
   }
-  const dispatched = dispatchRoute(matched.value, port);
+  const dispatched = dispatchRoute(matched.value);
   if (dispatched.isErr()) {
     return err(dispatched.error);
   }
 
-  return ok({ ...dispatched.value, answers });
+  return ok({ ...dispatched.value, answers, history, promptCount });
 }
