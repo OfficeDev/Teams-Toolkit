@@ -770,7 +770,7 @@ test("VCB-85: existing API registration credentials are prompted only during pro
     description.includes("uploads the client ID/Secret"),
   );
   const readinessIndex = oauthDescriptions.findIndex((description) =>
-    description.includes("shows the opened agent's identity header"),
+    description.includes("shows an agent selected in the Agents list"),
   );
   const targetSelectionIndex = oauthDescriptions.findIndex((description) =>
     description.includes("confirm the highlighted filtered option"),
@@ -869,7 +869,12 @@ test("VCB-89: action consent closes on the Allow button, not on the prompt", asy
   const dismissed = oauth.plan.steps.find((step) =>
     step.step_id.includes("allowCopilotAction_assertDismissed"),
   );
+  const click = oauth.plan.steps.find((step) =>
+    step.step_id.includes("allowCopilotAction_click"),
+  );
 
+  assert.deepEqual(click.parameters, { button: "left", x: 333, y: 327 });
+  assert.equal(click.tags.includes("ocr:true"), true);
   assert.equal(
     dismissed.description,
     "@assertion the Copilot action-consent Allow button is no longer visible.",
@@ -1176,7 +1181,7 @@ test("Copilot target authenticates the browser before readiness", async (context
   assert.equal(passwordIndex < readinessIndex, true);
   assert.equal(
     readinessDescription,
-    "@assertion the main section of Microsoft 365 Copilot shows the opened agent's identity header with an icon and display name together with a visible message input.",
+    "@assertion Microsoft 365 Copilot shows an agent selected in the Agents list and that agent's chat open in the main section with a visible message input.",
   );
   assert.doesNotMatch(readinessDescription, /\$\{\{var:app_name\}\}/);
   assert.doesNotMatch(readinessDescription, /\}\}local/);
@@ -1988,7 +1993,7 @@ test("VCB-96: General Teams Agent Copilot targets use their remote and local lif
     assert.deepEqual(lifecycleCommands, expectedLifecycleCommands, caseId);
     assert.equal(
       plan.steps.some((step) =>
-        step.description.includes("shows the opened agent's identity header"),
+        step.description.includes("shows an agent selected in the Agents list"),
       ),
       true,
       caseId,
@@ -2577,7 +2582,7 @@ test("VCB-26: an already-ready Copilot target makes its open emit no step", asyn
     result.value[0].plan.steps.filter(
       (step) =>
         step.description ===
-        "@assertion the main section of Microsoft 365 Copilot shows the opened agent's identity header with an icon and display name together with a visible message input.",
+        "@assertion Microsoft 365 Copilot shows an agent selected in the Agents list and that agent's chat open in the main section with a visible message input.",
     ).length,
     1,
   );
@@ -2592,11 +2597,11 @@ test("semantic adapter requires an immediate post-scaffold file check", async ()
   assert.equal(result.diagnostics[0].code, "VCB_OPERATION_ORDER");
 });
 
-test("VCB-43: Copilot readiness requires the opened agent identity and message input", async () => {
+test("VCB-43: Copilot readiness requires a selected agent and open chat", async () => {
   const readySubject = (result) =>
     result.value[0].plan.steps
       .map((step) => step.description)
-      .find((description) => description.includes("identity header"));
+      .find((description) => description.includes("agent selected"));
   const suffixed = await compileFixture(
     "da-no-action.yml",
     (sourceText) => sourceText,
@@ -2610,7 +2615,7 @@ test("VCB-43: Copilot readiness requires the opened agent identity and message i
   assert.equal(unsuffixed.ok, true);
   assert.equal(
     readySubject(suffixed),
-    "@assertion the main section of Microsoft 365 Copilot shows the opened agent's identity header with an icon and display name together with a visible message input.",
+    "@assertion Microsoft 365 Copilot shows an agent selected in the Agents list and that agent's chat open in the main section with a visible message input.",
   );
   assert.equal(readySubject(unsuffixed), readySubject(suffixed));
   assert.doesNotMatch(readySubject(suffixed), /\$\{\{var:app_name\}\}/);
@@ -2665,7 +2670,7 @@ test("VCB-125: Copilot assertions do not normalize or compare the app name", asy
   );
   assert.equal(
     descriptions.includes(
-      "@assertion the main section of Microsoft 365 Copilot shows the opened agent's identity header with an icon and display name together with a visible message input.",
+      "@assertion Microsoft 365 Copilot shows an agent selected in the Agents list and that agent's chat open in the main section with a visible message input.",
     ),
     true,
   );
