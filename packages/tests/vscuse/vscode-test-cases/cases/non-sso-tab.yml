@@ -1,0 +1,158 @@
+version: 1
+
+# The Tab package ships one language, so this bundle has no language axis. What
+# it does have is a destination axis the other Teams bundles do not: the same
+# launch titles that open a conversation for a bot open a tab page here.
+cases:
+  - id: tab-ts-remote-teams
+    scenarioId: SCN-CREATE-NON-SSO-TAB-01
+    steps:
+      [
+        scaffold-tab-ts,
+        check-tab-ts,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote-ts,
+        open-tab,
+        check-tab-page,
+      ]
+
+  - id: tab-ts-local-teams
+    scenarioId: SCN-CREATE-NON-SSO-TAB-01
+    steps:
+      [
+        scaffold-tab-ts,
+        check-tab-ts,
+        login-m365,
+        f5-teams-local,
+        open-tab,
+        check-tab-page,
+      ]
+
+  # The template ships `env/.env.local`, so the only way to observe the local
+  # lifecycle recreating it is to delete the scaffolded copy first.
+  - id: tab-ts-local-teams-env-recreated
+    scenarioId: SCN-CREATE-NON-SSO-TAB-02
+    steps:
+      [
+        scaffold-tab-ts,
+        check-tab-ts,
+        remove-local-environment-file,
+        login-m365,
+        f5-teams-local,
+        open-tab,
+        check-tab-page,
+        check-local-environment-file,
+      ]
+
+steps:
+  scaffold-tab-ts:
+    type: scaffold
+    with:
+      template: non-sso-tab
+      answers:
+        - question: projectType
+          value: teams-agent-and-app-type
+        - question: teamsAppType
+          value: teams-other-app-type
+        - question: teamsOtherAppType
+          value: non-sso-tab
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-tab-ts:
+    type: checks
+    with:
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains:
+            [
+              "version: v1.11",
+              "provision:",
+              "deploy:",
+              "azureAppService/zipDeploy",
+            ]
+      - type: file
+        path: appPackage/manifest.json
+        expect:
+          contains: ['"staticTabs"', '"name": "Home"', "/tabs/home"]
+      - type: file
+        path: src/Tab/App.tsx
+        expect:
+          contains: ["Your app is running in"]
+      - type: file
+        path: env/.env.local
+        expect:
+          exists: true
+
+  remove-local-environment-file:
+    type: removeWorkspaceFile
+    with:
+      path: env/.env.local
+
+  check-local-environment-file:
+    type: checks
+    with:
+      - type: file
+        path: env/.env.local
+        expect:
+          exists: true
+
+  login-azure:
+    type: login
+    with:
+      type: azure
+      account: "${{env:AZURE_ACCOUNT_NAME}}"
+      password: "${{secret:AZURE_ACCOUNT_PASSWORD}}"
+
+  login-m365:
+    type: login
+    with:
+      type: m365
+      account: "${{env:M365_ACCOUNT_NAME}}"
+      password: "${{secret:M365_ACCOUNT_PASSWORD}}"
+
+  provision-arm:
+    type: provision
+    with:
+      environment: none
+      arm:
+        targetResourceGroupName: "+ New resource group"
+        newResourceGroupName: "${{var:app_name}}-rg"
+        newResourceGroupLocation: "${{env:RESOURCE_GROUP_REGION}}"
+
+  deploy:
+    type: deploy
+    with:
+      environment: none
+
+  f5-teams-remote-ts:
+    type: target
+    with:
+      profile: "View Remote App in Teams (Chrome)"
+      profileSelection: first
+
+  f5-teams-local:
+    type: target
+    with:
+      profile: "Debug in Teams (Chrome)"
+      profileSelection: first
+
+  open-tab:
+    type: open
+    with:
+      kind: app
+      destination: page
+
+  check-tab-page:
+    type: checks
+    with:
+      - type: page
+        expect:
+          contains: ["Your app is running in TeamsModern"]

@@ -6,7 +6,7 @@
 
 import { BuildArgs } from "../interface/buildAndDeployArgs";
 import { asFactory, asOptional, asString, checkMissingArgs } from "../../utils/common";
-import { err, ok, IProgressHandler, LogProvider, TelemetryReporter } from "@microsoft/teamsfx-api";
+import { err, ok, IProgressHandler, LogProvider } from "@microsoft/teamsfx-api";
 import { DriverContext } from "../interface/commonArgs";
 import * as path from "path";
 import { ExecutionResult } from "../interface/stepDriver";
@@ -21,7 +21,6 @@ export abstract class BaseBuildDriver {
   protected context: DriverContext;
   protected logProvider: LogProvider;
   protected progressBar?: IProgressHandler;
-  protected telemetryReporter: TelemetryReporter;
   static readonly emptyMap = new Map<string, string>();
   abstract buildPrefix: string;
 
@@ -33,7 +32,6 @@ export abstract class BaseBuildDriver {
       ? this.args.workingDirectory
       : path.join(context.projectPath, this.args.workingDirectory);
     this.logProvider = context.logProvider;
-    this.telemetryReporter = context.telemetryReporter;
     this.context = context;
     this.progressBar = context.progressBar;
     this.execPath = this.args.execPath;

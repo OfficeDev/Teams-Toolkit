@@ -43,7 +43,7 @@ export function createDriverContext(inputs: Inputs): DriverContext {
     ui: TOOLS.ui,
     progressBar: undefined,
     logProvider: TOOLS.logProvider,
-    telemetryReporter: TOOLS.telemetryReporter!,
+    telemetryReporter: TOOLS.telemetryReporter,
     projectPath: inputs.projectPath!,
     platform: inputs.platform,
   };

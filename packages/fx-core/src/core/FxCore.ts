@@ -294,7 +294,7 @@ export class FxCore extends FxCoreOpenPluginPart {
       if (containsUnsupportedFeature(inputs.teamsAppFromTdp)) {
         return err(new InputValidationError("manifest.json", "App contains unsupported features"));
       } else {
-        context.telemetryReporter.sendTelemetryEvent(CoreTelemetryEvent.CreateFromTdpStart, {
+        context.telemetryReporter?.sendTelemetryEvent(CoreTelemetryEvent.CreateFromTdpStart, {
           [CoreTelemetryProperty.TdpTeamsAppFeatures]: getFeaturesFromAppDefinition(
             inputs.teamsAppFromTdp
           ).join(","),
@@ -1723,7 +1723,7 @@ export class FxCore extends FxCoreOpenPluginPart {
       ui: TOOLS.ui,
       progressBar: undefined,
       logProvider: TOOLS.logProvider,
-      telemetryReporter: TOOLS.telemetryReporter!,
+      telemetryReporter: TOOLS.telemetryReporter,
       projectPath: projectPath,
       platform: inputs.platform,
     };
@@ -2158,7 +2158,7 @@ export class FxCore extends FxCoreOpenPluginPart {
         .showMessage("info", successMessage, false, viewPluginManifest)
         .then((userRes) => {
           if (userRes.isOk() && userRes.value === viewPluginManifest) {
-            context.telemetryReporter.sendTelemetryEvent(
+            context.telemetryReporter?.sendTelemetryEvent(
               TelemetryEvent.ViewPluginManifestAfterAdded
             );
             void TOOLS?.ui?.openFile?.(destinationPluginManifestPath);
@@ -2985,12 +2985,12 @@ export class FxCore extends FxCoreOpenPluginPart {
         );
       }
 
-      context.telemetryReporter.sendTelemetryEvent(TelemetryEvent.AddAuthAction, {
+      context.telemetryReporter?.sendTelemetryEvent(TelemetryEvent.AddAuthAction, {
         [TelemetryProperty.AddAuthType]: authType,
       });
     } catch (e: any) {
       const error = assembleError(e);
-      context.telemetryReporter.sendTelemetryErrorEvent(TelemetryEvent.AddAuthAction, {
+      context.telemetryReporter?.sendTelemetryErrorEvent(TelemetryEvent.AddAuthAction, {
         [TelemetryProperty.ErrorCode]: error.name,
         [TelemetryProperty.ErrorMessage]: error.message,
       });
@@ -3458,7 +3458,7 @@ export class FxCore extends FxCoreOpenPluginPart {
         .showMessage("info", successMessage, false, viewAgentManifest)
         .then((userRes) => {
           if (userRes.isOk() && userRes.value === viewAgentManifest) {
-            context.telemetryReporter.sendTelemetryEvent(
+            context.telemetryReporter?.sendTelemetryEvent(
               TelemetryEvent.ViewAgentManifestAfterAdded
             );
             void TOOLS?.ui?.openFile?.(agentManifestPath);

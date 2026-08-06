@@ -324,6 +324,62 @@ describe("addAuthActionQuestion", () => {
     }
   });
 
+  it("apiFromPluginManifestQuestion condition: should select all APIs non-interactively", async () => {
+    const inputs: Inputs = {
+      platform: Platform.CLI,
+      nonInteractive: true,
+      [QuestionNames.PluginManifestFilePath]: "test",
+    };
+    vi.spyOn(fs, "readJson").mockResolvedValue({
+      schema_version: "1.0",
+      name_for_human: "test",
+      description_for_human: "test",
+      runtimes: [
+        {
+          type: "OpenApi",
+          auth: { type: "None" },
+          spec: { url: "spec.yaml" },
+          run_for_functions: ["function1"],
+        },
+        {
+          type: "OpenApi",
+          auth: { type: "None" },
+          spec: { url: "spec.yaml" },
+          run_for_functions: ["function2", "function1"],
+        },
+      ],
+    });
+
+    const questions = addAuthActionQuestion();
+    const apiSpecCondition = questions.children![0].condition as ConditionFunc;
+    const apiOperationCondition = questions.children![1].condition as ConditionFunc;
+    const apiSpecResult = await apiSpecCondition(inputs);
+    const apiOperationResult = await apiOperationCondition(inputs);
+
+    assert.isFalse(apiSpecResult);
+    assert.equal(inputs[QuestionNames.ApiSpecLocation], "spec.yaml");
+    assert.isFalse(apiOperationResult);
+    assert.deepEqual(inputs[QuestionNames.ApiOperation], ["function1", "function2"]);
+  });
+
+  it("apiFromPluginManifestQuestion condition: should preserve explicit APIs", async () => {
+    const inputs: Inputs = {
+      platform: Platform.CLI,
+      nonInteractive: true,
+      [QuestionNames.PluginManifestFilePath]: "test",
+      [QuestionNames.ApiSpecLocation]: "spec.yaml",
+      [QuestionNames.ApiOperation]: ["function2"],
+    };
+    const readJsonSpy = vi.spyOn(fs, "readJson");
+
+    const condition = addAuthActionQuestion().children![1].condition as ConditionFunc;
+    const res = await condition(inputs);
+
+    assert.isFalse(res);
+    assert.deepEqual(inputs[QuestionNames.ApiOperation], ["function2"]);
+    expect(readJsonSpy).not.toHaveBeenCalled();
+  });
+
   it("apiFromPluginManifestQuestion condition: should skip", async () => {
     const inputs = {
       platform: Platform.VSCode,

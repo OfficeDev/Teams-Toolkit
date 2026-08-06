@@ -109,7 +109,7 @@ export class ConfigGenerator {
     }
     await settingsUtil.writeSettings(destinationPath, settings);
 
-    context.telemetryReporter.sendTelemetryEvent(TelemetryEvent.GenerateConfigSummary, {
+    context.telemetryReporter?.sendTelemetryEvent(TelemetryEvent.GenerateConfigSummary, {
       [ProjectTypeProps.TeamsManifestCapabilities]: this.getCapabilities(features).join(",") || "",
       successComponents: successComponents.join(",") || "",
       failedComponents: failedComponents.join(",") || "",

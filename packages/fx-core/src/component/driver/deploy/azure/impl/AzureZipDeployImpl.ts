@@ -127,7 +127,7 @@ export class AzureZipDeployImpl extends AzureDeployImpl {
         : "",
     };
     this.context.logProvider.verbose(`Start send telemetry data ${JSON.stringify(telemetryData)}`);
-    this.context.telemetryReporter.sendTelemetryEvent("deployResponse", telemetryData);
+    this.context.telemetryReporter?.sendTelemetryEvent("deployResponse", telemetryData);
     return cost;
   }
 
