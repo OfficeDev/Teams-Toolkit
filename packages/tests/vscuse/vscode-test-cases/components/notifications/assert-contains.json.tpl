@@ -11,7 +11,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion a visible Visual Studio Code notification contains {{text:notificationText}}.",
+      "description": "@assertion a visible Visual Studio Code notification contains the literal text {{text:notificationText}}. A notification with different text, including an in-progress notification, does not satisfy this assertion.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
