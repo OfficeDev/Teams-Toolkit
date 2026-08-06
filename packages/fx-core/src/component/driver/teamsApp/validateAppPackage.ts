@@ -69,9 +69,15 @@ export class ValidateAppPackageDriver implements StepDriver {
   }
 
   /**
-   * Validate an app package without translating a rejected package into an
-   * FxError. In-process clients need the service-owned findings as data while
-   * the legacy execute path keeps its existing CLI-oriented behavior.
+   * Validate an app package for in-process consumers (for example,
+   * teamsAppMgr.validateTeamsAppForClient).
+   *
+   * Difference from the existing execute/validate path:
+   * 1) Returns raw IValidationResult data so callers can decide how to render
+   *    errors/warnings/notes.
+   * 2) Does not show UI messages or write CLI/log-window summaries.
+   * 3) Does not convert validation findings into ValidationFailed FxError when
+   *    the package is rejected.
    */
   public async validateForClient(
     args: ValidateAppPackageArgs,
