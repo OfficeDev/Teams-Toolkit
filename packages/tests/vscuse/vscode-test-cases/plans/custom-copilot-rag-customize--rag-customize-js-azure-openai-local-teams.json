@@ -12,7 +12,7 @@
     "name": "rag-customize-js-azure-openai-local-teams",
     "description": {
       "owner": "",
-      "workitem": "SCN-CREATE-RAG-CUSTOMIZE-03",
+      "workitem": "27569146",
       "other": ""
     },
     "execution_order": [

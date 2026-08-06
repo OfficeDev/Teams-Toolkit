@@ -12,7 +12,7 @@
     "name": "da-mcp-remote-entra-preview",
     "description": {
       "owner": "",
-      "workitem": "SCN-DA-CREATE-WITH-MCP-SERVER",
+      "workitem": "35613646",
       "other": ""
     },
     "execution_order": [

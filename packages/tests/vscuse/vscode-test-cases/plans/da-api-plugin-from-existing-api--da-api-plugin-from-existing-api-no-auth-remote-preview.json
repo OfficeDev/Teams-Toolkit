@@ -12,7 +12,7 @@
     "name": "da-api-plugin-from-existing-api-no-auth-remote-preview",
     "description": {
       "owner": "",
-      "workitem": "SCN-DA-CREATE-API-PLUGIN-FROM-EXISTING-API",
+      "workitem": "28941863",
       "other": ""
     },
     "execution_order": [

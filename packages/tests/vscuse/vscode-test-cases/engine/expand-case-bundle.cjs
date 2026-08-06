@@ -66,6 +66,7 @@ function expandCaseBundle({ bundle, sourcePath }) {
       ]),
       gate: caseDefinition.gate ?? "pr",
       scenarioId: caseDefinition.scenarioId,
+      workItemIds: structuredClone(caseDefinition.workItemIds),
       steps,
       templateId: scaffolds[0]?.definition.with.template,
     });
