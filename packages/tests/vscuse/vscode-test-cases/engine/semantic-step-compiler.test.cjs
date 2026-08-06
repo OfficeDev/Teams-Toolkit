@@ -2239,16 +2239,25 @@ steps:
   });
 
   assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
-  const step = result.value[0].plan.steps.find((candidate) =>
+  const mutation = result.value[0].plan.steps.filter((candidate) =>
     candidate.step_id.startsWith("step_setLocalUserEnvironmentVariable_"),
   );
-  assert.equal(step.agent, "code");
+  const command = mutation.find((step) => step.tool === "type_text");
+  const encodedScript = command.parameters.text.match(
+    /base64\.b64decode\("([^"]+)"\)/,
+  )?.[1];
+  assert.equal(typeof encodedScript, "string");
+  const mutationScript = Buffer.from(encodedScript, "base64").toString("utf8");
+  assert.equal(mutationScript.includes('/ "env" / ".env.local.user"'), true);
+  assert.equal(mutationScript.includes("if len(matches) != 1:"), true);
   assert.equal(
-    step.parameters.sample.includes('/ "env" / ".env.local.user"'),
+    mutation.some((step) => step.description.includes("SECRET_API_KEY")),
     true,
   );
-  assert.equal(step.description.includes("SECRET_API_KEY"), true);
-  assert.equal(step.description.includes("api-key"), false);
+  assert.equal(
+    mutation.some((step) => step.description.includes("api-key")),
+    false,
+  );
 
   const unsafe = await compileCaseBundle({
     compileStep: createSemanticStepCompiler(),
@@ -2262,6 +2271,69 @@ steps:
   assert.equal(
     unsafe.diagnostics[0].code,
     "VCB_LOCAL_USER_ENVIRONMENT_INPUT_INVALID",
+  );
+});
+
+test("VCB-127: local user environment uses a verified terminal mutation", async () => {
+  const result = await compileFixture(
+    "da-api-plugin-from-scratch-bearer.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const generated = result.value.find(
+    (candidate) =>
+      candidate.caseId ===
+      "da-api-plugin-from-scratch-api-key-js-local-copilot",
+  );
+  const mutation = generated.plan.steps.filter((step) =>
+    step.step_id.startsWith("step_setLocalUserEnvironmentVariable_"),
+  );
+  assert.deepEqual(
+    mutation.map((step) => [step.agent, step.tool]),
+    [
+      ["interaction", "keyboard_shortcut"],
+      ["assertion", ""],
+      ["interaction", "type_text"],
+      ["interaction", "key_press"],
+      ["interaction", "type_text"],
+      ["interaction", "key_press"],
+      ["assertion", ""],
+      ["interaction", "keyboard_shortcut"],
+      ["assertion", ""],
+    ],
+  );
+  assert.equal(
+    mutation.some((step) => step.agent === "code"),
+    false,
+  );
+  const command = mutation.find(
+    (step) =>
+      step.tool === "type_text" && step.parameters.text.includes("read -rs"),
+  );
+  assert.equal(command.parameters.text.includes("SECRET_API_KEY"), true);
+  assert.equal(command.parameters.text.includes("-api-key"), false);
+  assert.equal(
+    command.parameters.text.includes(
+      "printf '\\nVSCUSE_LOCAL_USER_ENVIRONMENT_%s\\n' UPDATED",
+    ),
+    true,
+  );
+  const hiddenValue = mutation.find(
+    (step) =>
+      step.tool === "type_text" &&
+      step.parameters.text === "${{var:app_name}}-api-key",
+  );
+  assert.equal(hiddenValue.description.includes("api-key"), false);
+  assert.equal(
+    mutation.some((step) =>
+      step.description.includes("VSCUSE_LOCAL_USER_ENVIRONMENT_UPDATED"),
+    ),
+    true,
+  );
+  assert.equal(
+    mutation.some((step) => step.description.includes("proving")),
+    false,
   );
 });
 

@@ -17,6 +17,30 @@ const provisionInputGroups = new Set(["apiKey", "arm", "oauth"]);
 const provisionEnvironmentInput = "environment";
 const provisionEnvironmentSkipValue = "none";
 const copilotLaunchFeatureFlag = "TEAMSFX_CEA_ENABLED=true";
+const localUserEnvironmentMutationScript = String.raw`import os
+from pathlib import Path
+
+environment_file = Path(os.environ["PROJECT_DIR"]).resolve() / "env" / ".env.local.user"
+name = os.environ["VARIABLE_NAME"]
+value = os.environ["VARIABLE_VALUE"]
+if not value:
+  raise AssertionError("The variable value resolved to nothing")
+lines = environment_file.read_text(encoding="utf-8").splitlines()
+prefix = name + "="
+matches = [index for index, line in enumerate(lines) if line.startswith(prefix)]
+if len(matches) != 1:
+  raise AssertionError("The local user environment variable must already exist exactly once")
+expected = name + "='" + value + "'"
+lines[matches[0]] = expected
+environment_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
+written = [line for line in environment_file.read_text(encoding="utf-8").splitlines() if line.startswith(prefix)]
+if written != [expected]:
+  raise AssertionError("The local user environment variable was not written exactly once with its value")
+`;
+const localUserEnvironmentMutationScriptBase64 = Buffer.from(
+  localUserEnvironmentMutationScript,
+  "utf8",
+).toString("base64");
 const typeSpecGitHubIssuesMutationScript = String.raw`import os
 from pathlib import Path
 
@@ -1183,6 +1207,7 @@ function createSemanticStepCompiler() {
       const error = append(
         output,
         render(state, "workspace/local-user-environment-variable.json.tpl", {
+          mutationScriptBase64: localUserEnvironmentMutationScriptBase64,
           variableName: name,
           variableValue: inputs[name],
         }),
