@@ -7,6 +7,7 @@ version: 1
 cases:
   - id: rag-custom-api-ts-azure-openai-local-teams
     scenarioId: SCN-CREATE-RAG-CUSTOM-API-01
+    workItemIds: [27588564]
     steps:
       [
         scaffold-rag-custom-api-ts-azure-openai,
@@ -19,6 +20,7 @@ cases:
 
   - id: rag-custom-api-ts-openai-local-teams
     scenarioId: SCN-CREATE-RAG-CUSTOM-API-01
+    workItemIds: [27588580]
     steps:
       [
         scaffold-rag-custom-api-ts-openai,
@@ -32,6 +34,7 @@ cases:
 
   - id: rag-custom-api-js-azure-openai-local-teams
     scenarioId: SCN-CREATE-RAG-CUSTOM-API-04
+    workItemIds: [27588577]
     steps:
       [
         scaffold-rag-custom-api-js-azure-openai,
@@ -44,6 +47,7 @@ cases:
 
   - id: rag-custom-api-js-openai-local-teams
     scenarioId: SCN-CREATE-RAG-CUSTOM-API-04
+    workItemIds: [27588587]
     steps:
       [
         scaffold-rag-custom-api-js-openai,
@@ -57,6 +61,7 @@ cases:
 
   - id: rag-custom-api-py-azure-openai-local-teams
     scenarioId: SCN-CREATE-RAG-CUSTOM-API-05
+    workItemIds: [28969537]
     steps:
       [
         scaffold-rag-custom-api-py-azure-openai,
@@ -70,6 +75,7 @@ cases:
 
   - id: rag-custom-api-py-openai-local-teams
     scenarioId: SCN-CREATE-RAG-CUSTOM-API-05
+    workItemIds: [28969579]
     steps:
       [
         scaffold-rag-custom-api-py-openai,

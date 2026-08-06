@@ -7,6 +7,7 @@ version: 1
 cases:
   - id: rag-customize-ts-azure-openai-local-teams
     scenarioId: SCN-CREATE-RAG-CUSTOMIZE-01
+    workItemIds: [27569137]
     steps:
       [
         scaffold-rag-customize-ts-azure-openai,
@@ -19,6 +20,7 @@ cases:
 
   - id: rag-customize-ts-openai-local-teams
     scenarioId: SCN-CREATE-RAG-CUSTOMIZE-01
+    workItemIds: [28869466]
     steps:
       [
         scaffold-rag-customize-ts-openai,
@@ -32,6 +34,7 @@ cases:
 
   - id: rag-customize-js-azure-openai-local-teams
     scenarioId: SCN-CREATE-RAG-CUSTOMIZE-03
+    workItemIds: [27569146]
     steps:
       [
         scaffold-rag-customize-js-azure-openai,
@@ -44,6 +47,7 @@ cases:
 
   - id: rag-customize-js-openai-local-teams
     scenarioId: SCN-CREATE-RAG-CUSTOMIZE-03
+    workItemIds: [28869495]
     steps:
       [
         scaffold-rag-customize-js-openai,
@@ -57,6 +61,7 @@ cases:
 
   - id: rag-customize-py-azure-openai-local-teams
     scenarioId: SCN-CREATE-RAG-CUSTOMIZE-04
+    workItemIds: [27551381]
     steps:
       [
         scaffold-rag-customize-py-azure-openai,
@@ -70,6 +75,7 @@ cases:
 
   - id: rag-customize-py-openai-local-teams
     scenarioId: SCN-CREATE-RAG-CUSTOMIZE-04
+    workItemIds: [27551384]
     steps:
       [
         scaffold-rag-customize-py-openai,
@@ -84,6 +90,7 @@ cases:
 
   - id: rag-customize-py-openai-local-copilot
     scenarioId: SCN-CREATE-RAG-CUSTOMIZE-04
+    workItemIds: [36031920]
     # The run workflow injects this before VS Code starts so scaffold renders
     # the Copilot profiles without mutating user settings or reloading.
     featureFlags:

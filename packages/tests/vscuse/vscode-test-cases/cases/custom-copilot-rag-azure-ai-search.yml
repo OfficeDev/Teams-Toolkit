@@ -6,6 +6,7 @@ version: 1
 cases:
   - id: rag-azure-ai-search-ts-azure-openai-local-teams
     scenarioId: SCN-CREATE-RAG-AZURE-SEARCH-01
+    workItemIds: [27569074]
     steps:
       [
         scaffold-rag-search-ts-azure-openai,
@@ -20,6 +21,7 @@ cases:
 
   - id: rag-azure-ai-search-ts-openai-local-teams
     scenarioId: SCN-CREATE-RAG-AZURE-SEARCH-01
+    workItemIds: [28970306]
     steps:
       [
         scaffold-rag-search-ts-openai,
@@ -34,6 +36,7 @@ cases:
 
   - id: rag-azure-ai-search-js-azure-openai-local-teams
     scenarioId: SCN-CREATE-RAG-AZURE-SEARCH-03
+    workItemIds: [36534512]
     steps:
       [
         scaffold-rag-search-js-azure-openai,
@@ -48,6 +51,7 @@ cases:
 
   - id: rag-azure-ai-search-js-openai-local-teams
     scenarioId: SCN-CREATE-RAG-AZURE-SEARCH-03
+    workItemIds: [28970334]
     steps:
       [
         scaffold-rag-search-js-openai,
@@ -62,6 +66,7 @@ cases:
 
   - id: rag-azure-ai-search-py-azure-openai-local-teams
     scenarioId: SCN-CREATE-RAG-AZURE-SEARCH-04
+    workItemIds: [27454153]
     steps:
       [
         scaffold-rag-search-py-azure-openai,
@@ -77,6 +82,7 @@ cases:
 
   - id: rag-azure-ai-search-py-openai-local-teams
     scenarioId: SCN-CREATE-RAG-AZURE-SEARCH-04
+    workItemIds: [27454158]
     steps:
       [
         scaffold-rag-search-py-openai,

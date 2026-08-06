@@ -12,7 +12,7 @@
     "name": "rag-customize-py-openai-local-copilot",
     "description": {
       "owner": "",
-      "workitem": "SCN-CREATE-RAG-CUSTOMIZE-04",
+      "workitem": "36031920",
       "other": ""
     },
     "execution_order": [

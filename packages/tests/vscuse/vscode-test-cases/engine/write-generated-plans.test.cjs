@@ -12,6 +12,7 @@ version: 1
 cases:
   - id: remote
     scenarioId: SCN-REMOTE
+    workItemIds: [1001]
     steps: [scaffold]
 steps:
   scaffold:
@@ -26,6 +27,7 @@ const twoCaseSourceText = sourceText.replace(
   `    steps: [scaffold]
   - id: local
     scenarioId: SCN-LOCAL
+    workItemIds: [1002]
     steps: [scaffold]
 steps:`,
 );

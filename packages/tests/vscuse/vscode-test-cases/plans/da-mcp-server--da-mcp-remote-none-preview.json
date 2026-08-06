@@ -12,7 +12,7 @@
     "name": "da-mcp-remote-none-preview",
     "description": {
       "owner": "",
-      "workitem": "SCN-DA-CREATE-WITH-MCP-SERVER",
+      "workitem": "36270854",
       "other": ""
     },
     "execution_order": [

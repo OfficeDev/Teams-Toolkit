@@ -7,6 +7,7 @@ featureFlags:
 cases:
   - id: da-mcp-remote-none-preview
     scenarioId: SCN-DA-CREATE-WITH-MCP-SERVER
+    workItemIds: [36270854]
     steps:
       [
         scaffold-mcp-none,
@@ -20,6 +21,7 @@ cases:
 
   - id: da-mcp-remote-oauth-preview
     scenarioId: SCN-DA-CREATE-WITH-MCP-SERVER
+    workItemIds: [35613058]
     steps:
       [
         scaffold-mcp-oauth,
@@ -33,6 +35,7 @@ cases:
 
   - id: da-mcp-remote-entra-preview
     scenarioId: SCN-DA-CREATE-WITH-MCP-SERVER
+    workItemIds: [35613646]
     steps:
       [
         scaffold-mcp-entra,

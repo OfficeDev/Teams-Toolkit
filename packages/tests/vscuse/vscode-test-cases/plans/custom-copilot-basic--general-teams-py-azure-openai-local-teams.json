@@ -12,7 +12,7 @@
     "name": "general-teams-py-azure-openai-local-teams",
     "description": {
       "owner": "",
-      "workitem": "SCN-CREATE-CUSTOM-COPILOT-BASIC-04",
+      "workitem": "27178027",
       "other": ""
     },
     "execution_order": [

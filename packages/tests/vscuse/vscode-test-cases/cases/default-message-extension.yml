@@ -6,6 +6,7 @@ version: 1
 cases:
   - id: message-extension-ts-remote-teams
     scenarioId: SCN-CREATE-MESSAGE-EXTENSION-01
+    workItemIds: [35692309]
     steps:
       [
         scaffold-message-extension-ts,
@@ -20,6 +21,7 @@ cases:
 
   - id: message-extension-ts-local-teams
     scenarioId: SCN-CREATE-MESSAGE-EXTENSION-01
+    workItemIds: [34869342]
     steps:
       [
         scaffold-message-extension-ts,
@@ -31,11 +33,13 @@ cases:
 
   - id: message-extension-ts-playground
     scenarioId: SCN-CREATE-MESSAGE-EXTENSION-01
+    workItemIds: [27548742]
     steps:
       [scaffold-message-extension-ts, check-message-extension-ts, f5-playground]
 
   - id: message-extension-py-remote-teams
     scenarioId: SCN-CREATE-MESSAGE-EXTENSION-03
+    workItemIds: [35636525]
     steps:
       [
         scaffold-message-extension-py,
@@ -51,6 +55,7 @@ cases:
 
   - id: message-extension-py-local-teams
     scenarioId: SCN-CREATE-MESSAGE-EXTENSION-03
+    workItemIds: [35732768]
     steps:
       [
         scaffold-message-extension-py,
@@ -63,6 +68,7 @@ cases:
 
   - id: message-extension-py-playground
     scenarioId: SCN-CREATE-MESSAGE-EXTENSION-03
+    workItemIds: [35732768]
     steps:
       [
         scaffold-message-extension-py,

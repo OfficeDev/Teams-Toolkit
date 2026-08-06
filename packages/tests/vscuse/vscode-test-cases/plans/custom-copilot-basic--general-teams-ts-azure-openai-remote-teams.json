@@ -12,7 +12,7 @@
     "name": "general-teams-ts-azure-openai-remote-teams",
     "description": {
       "owner": "",
-      "workitem": "SCN-CREATE-CUSTOM-COPILOT-BASIC-01",
+      "workitem": "27042830",
       "other": ""
     },
     "execution_order": [
