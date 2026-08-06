@@ -770,7 +770,7 @@ test("VCB-85: existing API registration credentials are prompted only during pro
     description.includes("uploads the client ID/Secret"),
   );
   const readinessIndex = oauthDescriptions.findIndex((description) =>
-    description.includes("is displayed in the main section"),
+    description.includes("shows the opened agent's identity header"),
   );
   const targetSelectionIndex = oauthDescriptions.findIndex((description) =>
     description.includes("confirm the highlighted filtered option"),
@@ -1174,12 +1174,11 @@ test("Copilot target authenticates the browser before readiness", async (context
   assert.equal(profileIndex < accountIndex, true);
   assert.equal(accountIndex < passwordIndex, true);
   assert.equal(passwordIndex < readinessIndex, true);
-  // Readiness names the app by the prefix the case authored, so it holds
-  // whether or not the manifest appended an environment suffix.
-  assert.match(
+  assert.equal(
     readinessDescription,
-    /whose displayed name starts with the underscore-free form of \$\{\{var:app_name\}\}/,
+    "@assertion the main section of Microsoft 365 Copilot shows the opened agent's identity header with an icon and display name together with a visible message input.",
   );
+  assert.doesNotMatch(readinessDescription, /\$\{\{var:app_name\}\}/);
   assert.doesNotMatch(readinessDescription, /\}\}local/);
   assert.doesNotMatch(readinessDescription, /\}\}dev/);
   assert.doesNotMatch(readinessDescription, /is ready is ready/);
@@ -1989,9 +1988,7 @@ test("VCB-96: General Teams Agent Copilot targets use their remote and local lif
     assert.deepEqual(lifecycleCommands, expectedLifecycleCommands, caseId);
     assert.equal(
       plan.steps.some((step) =>
-        step.description.includes(
-          "is displayed in the main section of Microsoft 365 Copilot",
-        ),
+        step.description.includes("shows the opened agent's identity header"),
       ),
       true,
       caseId,
@@ -2580,7 +2577,7 @@ test("VCB-26: an already-ready Copilot target makes its open emit no step", asyn
     result.value[0].plan.steps.filter(
       (step) =>
         step.description ===
-        "@assertion an agent whose displayed name starts with the underscore-free form of ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot.",
+        "@assertion the main section of Microsoft 365 Copilot shows the opened agent's identity header with an icon and display name together with a visible message input.",
     ).length,
     1,
   );
@@ -2595,15 +2592,11 @@ test("semantic adapter requires an immediate post-scaffold file check", async ()
   assert.equal(result.diagnostics[0].code, "VCB_OPERATION_ORDER");
 });
 
-test("VCB-43: the Copilot ready subject names the app by its authored prefix", async () => {
+test("VCB-43: Copilot readiness requires the opened agent identity and message input", async () => {
   const readySubject = (result) =>
     result.value[0].plan.steps
       .map((step) => step.description)
-      .find((description) =>
-        description.includes("is displayed in the main section"),
-      );
-  // These two templates compose the agent name differently: one appends
-  // `${{APP_NAME_SUFFIX}}` and the other does not. One prefix claim covers both.
+      .find((description) => description.includes("identity header"));
   const suffixed = await compileFixture(
     "da-no-action.yml",
     (sourceText) => sourceText,
@@ -2617,9 +2610,10 @@ test("VCB-43: the Copilot ready subject names the app by its authored prefix", a
   assert.equal(unsuffixed.ok, true);
   assert.equal(
     readySubject(suffixed),
-    "@assertion an agent whose displayed name starts with the underscore-free form of ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot.",
+    "@assertion the main section of Microsoft 365 Copilot shows the opened agent's identity header with an icon and display name together with a visible message input.",
   );
   assert.equal(readySubject(unsuffixed), readySubject(suffixed));
+  assert.doesNotMatch(readySubject(suffixed), /\$\{\{var:app_name\}\}/);
 });
 
 test("VCB-44: the Copilot message input is read independently of its placeholder", async () => {
@@ -2637,7 +2631,7 @@ test("VCB-44: the Copilot message input is read independently of its placeholder
   // absent.
   assert.equal(
     descriptions.includes(
-      "@assertion the Microsoft 365 Copilot message input is visible on a page for an agent whose displayed name starts with the underscore-free form of ${{var:app_name}}.",
+      "@assertion the Microsoft 365 Copilot message input is visible in the open agent chat.",
     ),
     true,
   );
@@ -2659,7 +2653,7 @@ test("VCB-44: the Copilot message input is read independently of its placeholder
   );
 });
 
-test("VCB-125: Copilot assertions use the underscore-free app-name prefix", async () => {
+test("VCB-125: Copilot assertions do not normalize or compare the app name", async () => {
   const result = await compileFixture(
     "da-no-action.yml",
     (sourceText) => sourceText,
@@ -2671,15 +2665,21 @@ test("VCB-125: Copilot assertions use the underscore-free app-name prefix", asyn
   );
   assert.equal(
     descriptions.includes(
-      "@assertion an agent whose displayed name starts with the underscore-free form of ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot.",
+      "@assertion the main section of Microsoft 365 Copilot shows the opened agent's identity header with an icon and display name together with a visible message input.",
     ),
     true,
   );
   assert.equal(
     descriptions.includes(
-      "@assertion the Microsoft 365 Copilot message input is visible on a page for an agent whose displayed name starts with the underscore-free form of ${{var:app_name}}.",
+      "@assertion the Microsoft 365 Copilot message input is visible in the open agent chat.",
     ),
     true,
+  );
+  assert.equal(
+    descriptions.some((description) =>
+      description.includes("${{var:app_name}}"),
+    ),
+    false,
   );
 });
 

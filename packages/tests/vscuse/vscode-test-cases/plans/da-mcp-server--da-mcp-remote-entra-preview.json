@@ -2400,7 +2400,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion an agent whose displayed name starts with the underscore-free form of ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot.",
+      "description": "@assertion the main section of Microsoft 365 Copilot shows the opened agent's identity header with an icon and display name together with a visible message input.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
