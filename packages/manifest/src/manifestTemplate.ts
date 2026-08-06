@@ -35,6 +35,13 @@ export interface ResolveManifestOptions {
   logger?: { error: (message: string) => void };
 }
 
+export interface ResolveManifestResult {
+  // The resolved manifest content.
+  content: string;
+  // Number of `file()` macros that produced a value, for host telemetry.
+  functionCount: number;
+}
+
 /**
  * Base error for all template-resolution failures. Consumers can catch this to
  * distinguish resolution errors from unexpected exceptions. Subclasses carry the
@@ -91,7 +98,10 @@ export class FileNotFoundError extends ManifestTemplateError {
 }
 
 export class MissingEnvironmentVariablesError extends ManifestTemplateError {
-  constructor(public readonly names: string) {
+  constructor(
+    public readonly names: string,
+    public readonly fromPath: string
+  ) {
     super(`The following environment variables are not defined: ${names}.`);
     this.name = "MissingEnvironmentVariablesError";
   }
@@ -213,7 +223,7 @@ export async function expandFileFunctionMacros(
   content: string,
   isJson: boolean,
   options: Pick<ResolveManifestOptions, "envs" | "fromPath" | "logger">
-): Promise<{ content: string; functionCount: number }> {
+): Promise<ResolveManifestResult> {
   const matches = content.match(functionRegex);
   if (!matches) {
     return { content, functionCount: 0 }; // no function
@@ -239,14 +249,19 @@ export async function expandFileFunctionMacros(
 
 // Fully resolve a manifest template string: expand `$[file()]` calls (except for
 // ApiSpec) then `${{ENV}}` variables, failing if any variable is left unresolved.
-// This is the host-agnostic counterpart of fx-core's getResolvedManifest.
+// This is the host-agnostic counterpart of fx-core's getResolvedManifest, which
+// wraps it with telemetry and localized-error mapping. `functionCount` is the number
+// of `file()` calls that produced a value, so a host can report telemetry.
 export async function resolveManifest(
   content: string,
   options: ResolveManifestOptions
-): Promise<string> {
+): Promise<ResolveManifestResult> {
   let value = content;
+  let functionCount = 0;
   if (options.manifestType !== ManifestType.ApiSpec) {
-    value = (await expandFileFunctionMacros(content, true, options)).content;
+    const expanded = await expandFileFunctionMacros(content, true, options);
+    value = expanded.content;
+    functionCount = expanded.functionCount;
     value = expandEnvironmentVariable(value, options.envs);
   } else {
     value = expandEnvironmentVariable(value, options.envs);
@@ -254,7 +269,8 @@ export async function resolveManifest(
 
   const notExpandedVars = getEnvironmentVariables(value);
   if (notExpandedVars.length > 0) {
-    throw new MissingEnvironmentVariablesError(notExpandedVars.join(","));
+    throw new MissingEnvironmentVariablesError(notExpandedVars.join(","), options.fromPath);
   }
-  return value;
+
+  return { content: value, functionCount };
 }

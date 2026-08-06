@@ -183,7 +183,8 @@ describe("manifestTemplate", () => {
         manifestType: ManifestType.DeclarativeCopilotManifest,
         envs: { TASK: "things" },
       });
-      assert.strictEqual(JSON.parse(out).i, "do things");
+      assert.strictEqual(JSON.parse(out.content).i, "do things");
+      assert.strictEqual(out.functionCount, 1);
     });
 
     it("skips file() expansion for an ApiSpec", async () => {
@@ -192,7 +193,8 @@ describe("manifestTemplate", () => {
         fromPath,
         manifestType: ManifestType.ApiSpec,
       });
-      assert.strictEqual(out, input);
+      assert.strictEqual(out.content, input);
+      assert.strictEqual(out.functionCount, 0);
     });
 
     it("throws MissingEnvironmentVariablesError for an unresolved variable", async () => {
@@ -205,6 +207,7 @@ describe("manifestTemplate", () => {
         assert.fail("should have thrown");
       } catch (e) {
         assert.instanceOf(e, MissingEnvironmentVariablesError);
+        assert.strictEqual((e as MissingEnvironmentVariablesError).fromPath, fromPath);
       }
     });
   });

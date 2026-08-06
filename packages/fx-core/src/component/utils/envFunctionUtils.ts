@@ -15,8 +15,11 @@ import {
   InvalidFunctionParameterError as ManifestInvalidFunctionParameterError,
   ReadFileError as ManifestReadFileError,
   FileNotFoundError as ManifestFileNotFoundError,
+  MissingEnvironmentVariablesError as ManifestMissingEnvironmentVariablesError,
+  resolveManifest,
+  ResolveManifestResult,
 } from "@microsoft/teamsfx-api";
-import { FileNotFoundError, assembleError } from "../../error";
+import { FileNotFoundError, MissingEnvironmentVariablesError, assembleError } from "../../error";
 import { getLocalizedString } from "../../common/localizeUtils";
 import { DriverContext } from "../driver/interface/commonArgs";
 
@@ -62,24 +65,23 @@ function toFxError(e: unknown, ctx: DriverContext): FxError {
   if (e instanceof ManifestFileNotFoundError) {
     return new FileNotFoundError(source, e.filePath);
   }
-  // MissingEnvironmentVariablesError is intentionally unmapped: fx-core only calls
-  // expandFileFunctionMacros (which never throws it), not resolveManifest. A future
-  // caller wiring fx-core to resolveManifest must add its localized mapping here.
+  if (e instanceof ManifestMissingEnvironmentVariablesError) {
+    return new MissingEnvironmentVariablesError("manifest", e.names, e.fromPath);
+  }
   // Anything else is unexpected; wrap it so the Result<T, FxError> contract holds.
   return assembleError(e, source);
 }
 
-export async function expandVariableWithFunction(
-  content: string,
+// Run a resolver that yields { content, functionCount }, mapping thrown
+// ManifestTemplateErrors to localized FxError and emitting function-count telemetry.
+async function runManifestResolver(
+  resolve: () => Promise<ResolveManifestResult>,
   ctx: DriverContext,
-  envs: { [key in string]: string } | undefined,
-  isJson: boolean,
-  manifestType: ManifestType,
-  fromPath: string
+  manifestType: ManifestType
 ): Promise<Result<string, FxError>> {
-  let resolved: { content: string; functionCount: number };
+  let resolved: ResolveManifestResult;
   try {
-    resolved = await expandFileFunctionMacros(content, isJson, { envs, fromPath });
+    resolved = await resolve();
   } catch (e) {
     return err(toFxError(e, ctx));
   }
@@ -91,6 +93,37 @@ export async function expandVariableWithFunction(
     });
   }
   return ok(resolved.content);
+}
+
+// Expand only `$[file()]` macros, leaving `${{ENV}}` substitution to the caller.
+export async function expandVariableWithFunction(
+  content: string,
+  ctx: DriverContext,
+  envs: { [key in string]: string } | undefined,
+  isJson: boolean,
+  manifestType: ManifestType,
+  fromPath: string
+): Promise<Result<string, FxError>> {
+  return runManifestResolver(
+    () => expandFileFunctionMacros(content, isJson, { envs, fromPath }),
+    ctx,
+    manifestType
+  );
+}
+
+// Fully resolve a manifest via @microsoft/app-manifest's resolveManifest (shared
+// file()+env logic), adding the fx-core concerns it is agnostic to.
+export async function resolveManifestWithContext(
+  content: string,
+  ctx: DriverContext,
+  manifestType: ManifestType,
+  fromPath: string
+): Promise<Result<string, FxError>> {
+  return runManifestResolver(
+    () => resolveManifest(content, { manifestType, fromPath }),
+    ctx,
+    manifestType
+  );
 }
 
 class UnsupportedFileFormatError extends UserError {
