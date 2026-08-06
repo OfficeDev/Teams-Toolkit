@@ -1606,6 +1606,12 @@ function createSemanticStepCompiler() {
         "The browser check requires a preceding target operation.",
       );
     }
+    if (assertion.expect.namePrefix !== undefined) {
+      return render(state, "browser/assert-element-name-prefix.json.tpl", {
+        accessibleNamePrefix: assertion.expect.namePrefix,
+        role: assertion.expect.role,
+      });
+    }
     return render(state, "browser/assert-element.json.tpl", {
       accessibleName: assertion.expect.name,
       role: assertion.expect.role,
@@ -1669,7 +1675,7 @@ function createSemanticStepCompiler() {
       assertion.type === "file"
         ? new Set(["exists", "contains", "notContains"])
         : assertion.type === "browser"
-          ? new Set(["role", "name"])
+          ? new Set(["role", "name", "namePrefix"])
           : assertion.type === "page"
             ? new Set(["contains"])
             : new Set(["replied", "contains", "notContains"]);
@@ -1685,8 +1691,15 @@ function createSemanticStepCompiler() {
       (assertion.type === "browser" &&
         (typeof expected.role !== "string" ||
           expected.role.length === 0 ||
-          typeof expected.name !== "string" ||
-          expected.name.length === 0)) ||
+          ["name", "namePrefix"].filter(
+            (field) => expected[field] !== undefined,
+          ).length !== 1 ||
+          ["name", "namePrefix"].some(
+            (field) =>
+              expected[field] !== undefined &&
+              (typeof expected[field] !== "string" ||
+                expected[field].length === 0),
+          ))) ||
       (assertion.type === "page" && expected.contains === undefined) ||
       listFields.some(
         (field) =>

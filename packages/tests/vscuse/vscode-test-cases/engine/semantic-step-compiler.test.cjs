@@ -776,7 +776,7 @@ test("VCB-85: existing API registration credentials are prompted only during pro
     description.includes("confirm the highlighted filtered option"),
   );
   const signInIndex = oauthDescriptions.indexOf(
-    "@assertion a visible browser element has role button and accessible name Sign in to Repair Service.",
+    "@assertion a visible browser element has role button and an accessible name that starts with Sign in to.",
   );
   assert.equal(environmentIndex < clientIdIndex, true);
   assert.equal(clientIdIndex < clientSecretIndex, true);
@@ -981,6 +981,45 @@ test("browser checks require a preceding target", async () => {
 
   assert.equal(result.ok, false);
   assert.equal(result.diagnostics[0].code, "VCB_BROWSER_ADAPTER_UNKNOWN");
+});
+
+test("VCB-126: browser checks can match an accessible-name prefix", async () => {
+  const result = await compileFixture(
+    "da-api-plugin-from-scratch-oauth.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const browserAssertions = result.value.flatMap((generated) =>
+    generated.plan.steps
+      .map((step) => step.description)
+      .filter((description) =>
+        description.startsWith(
+          "@assertion a visible browser element has role button",
+        ),
+      ),
+  );
+  assert.deepEqual(browserAssertions, [
+    "@assertion a visible browser element has role button and an accessible name that starts with Sign in to.",
+    "@assertion a visible browser element has role button and an accessible name that starts with Sign in to.",
+  ]);
+  assert.equal(
+    browserAssertions.some((description) =>
+      description.includes("Sign in to Repair Service"),
+    ),
+    false,
+  );
+
+  const ambiguous = await compileFixture(
+    "da-api-plugin-from-scratch-oauth.yml",
+    (sourceText) =>
+      sourceText.replace(
+        "namePrefix: Sign in to",
+        "name: Sign in to Repair Service\n          namePrefix: Sign in to",
+      ),
+  );
+  assert.equal(ambiguous.ok, false);
+  assert.equal(ambiguous.diagnostics[0].code, "VCB_CHECK_ASSERTION_INVALID");
 });
 
 test("VCB-17: client ID prompt title follows the authored authentication answer", async (context) => {

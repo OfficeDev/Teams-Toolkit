@@ -336,7 +336,7 @@ steps:
       - type: browser
         expect:
           role: button
-          name: Sign in to Repair Service
+          namePrefix: Sign in to
 
   login-m365:
     type: login

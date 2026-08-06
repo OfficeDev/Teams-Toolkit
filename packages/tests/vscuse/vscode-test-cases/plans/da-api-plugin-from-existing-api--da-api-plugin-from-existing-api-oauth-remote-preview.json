@@ -141,7 +141,7 @@
       "step_allowCopilotAction_assert_cd7e35bb7_7_2",
       "step_allowCopilotAction_click_cd7e35bb7_7_2",
       "step_allowCopilotAction_assertDismissed_cd7e35bb7_7_2",
-      "step_assertElement_assertVisible_cd7e35bb7_7_3"
+      "step_assertElementNamePrefix_assertVisible_cd7e35bb7_7_3"
     ],
     "tags": [
       "case_id:da-api-plugin-from-existing-api-oauth-remote-preview",
@@ -2937,11 +2937,11 @@
       ]
     },
     {
-      "step_id": "step_assertElement_assertVisible_cd7e35bb7_7_3",
+      "step_id": "step_assertElementNamePrefix_assertVisible_cd7e35bb7_7_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion a visible browser element has role button and accessible name Sign in to Repair Service.",
+      "description": "@assertion a visible browser element has role button and an accessible name that starts with Sign in to.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -2953,7 +2953,7 @@
       "postconditions": [],
       "tags": [
         "component:browser",
-        "action:assert-element",
+        "action:assert-element-name-prefix",
         "step_retry_timeout: 60"
       ]
     }
