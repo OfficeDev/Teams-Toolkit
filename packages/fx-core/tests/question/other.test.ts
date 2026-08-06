@@ -324,7 +324,7 @@ describe("addAuthActionQuestion", () => {
     }
   });
 
-  it("apiFromPluginManifestQuestion condition: should select all APIs non-interactively", async () => {
+  it("apiFromPluginManifestQuestion condition: should require selection for multiple APIs", async () => {
     const inputs: Inputs = {
       platform: Platform.CLI,
       nonInteractive: true,
@@ -358,8 +358,8 @@ describe("addAuthActionQuestion", () => {
 
     assert.isFalse(apiSpecResult);
     assert.equal(inputs[QuestionNames.ApiSpecLocation], "spec.yaml");
-    assert.isFalse(apiOperationResult);
-    assert.deepEqual(inputs[QuestionNames.ApiOperation], ["function1", "function2"]);
+    assert.isTrue(apiOperationResult);
+    assert.isUndefined(inputs[QuestionNames.ApiOperation]);
   });
 
   it("apiFromPluginManifestQuestion condition: should preserve explicit APIs", async () => {
