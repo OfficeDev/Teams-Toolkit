@@ -119,23 +119,12 @@ export type FxCoreAddSkillInputs = FxCoreAddSkillBaseInputs &
     | {
         "skill-name": string;
         "skill-description": string;
-        "skill-source-type"?: "new";
-        "skill-from"?: never;
-        "skill-from-zip-file"?: never;
       }
     | {
         "skill-from": string;
-        "skill-source-type"?: never;
-        "skill-name"?: never;
-        "skill-description"?: never;
-        "skill-from-zip-file"?: never;
       }
     | {
         "skill-from-zip-file": string;
-        "skill-source-type": "existing";
-        "skill-name"?: never;
-        "skill-description"?: never;
-        "skill-from"?: never;
       }
   );
 
@@ -233,7 +222,12 @@ export class FxCoreClient implements IFxCoreClient {
     inputs: FxCoreAddSkillInputs,
     options?: FxCoreExecutionOptions
   ): Promise<Result<undefined, FxError>> {
-    return this.runAdd(inputs, options, (clientInputs) => this.core.addSkill(clientInputs));
+    const clientInputs = inputs["skill-from-zip-file"]
+      ? { ...inputs, "skill-source-type": "existing" }
+      : inputs;
+    return this.runAdd(clientInputs, options, (resolvedInputs) =>
+      this.core.addSkill(resolvedInputs)
+    );
   }
 
   public async addAuthAction(

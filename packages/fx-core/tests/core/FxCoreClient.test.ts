@@ -105,6 +105,26 @@ describe("FxCoreClient", () => {
     });
   });
 
+  it("addSkill_ZipInput_DerivesExistingSourceType", async () => {
+    const addSkillSpy = vi.spyOn(FxCore.prototype, "addSkill").mockResolvedValue(ok(undefined));
+    const client = new FxCoreClient(new MockTools());
+
+    const result = await client.addSkill({
+      platform: Platform.CLI,
+      projectPath: "project",
+      "manifest-path": "project/appPackage/manifest.json",
+      "skill-from-zip-file": "weather.zip",
+    });
+
+    expect(result.isOk()).toBe(true);
+    expect(addSkillSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        "skill-from-zip-file": "weather.zip",
+        "skill-source-type": "existing",
+      })
+    );
+  });
+
   it("addPlugin_AbortedAfterCommitStarts_ReturnsEngineResult", async () => {
     const controller = new AbortController();
     vi.spyOn(FxCore.prototype, "addPlugin").mockImplementation(async () => {
