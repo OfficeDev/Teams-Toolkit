@@ -70,7 +70,7 @@ export async function expandVariableWithFunction(
   }
 
   if (count > 0) {
-    ctx.telemetryReporter.sendTelemetryEvent(telemetryEvent, {
+    ctx.telemetryReporter?.sendTelemetryEvent(telemetryEvent, {
       [TelemetryPropertyKey.manifestType]: manifestType.toString(),
       [TelemetryPropertyKey.functionCount]: count.toString(),
     });

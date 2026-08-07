@@ -7,6 +7,7 @@ version: 1
 cases:
   - id: basic-cea-ts-azure-openai-remote-teams
     scenarioId: SCN-CREATE-BASIC-CEA-01
+    workItemIds: [33338525]
     steps:
       [
         scaffold-basic-cea-ts-azure-openai,
@@ -22,6 +23,7 @@ cases:
 
   - id: basic-cea-ts-azure-openai-local-teams
     scenarioId: SCN-CREATE-BASIC-CEA-01
+    workItemIds: [33338524]
     steps:
       [
         scaffold-basic-cea-ts-azure-openai,
@@ -34,6 +36,7 @@ cases:
 
   - id: basic-cea-ts-azure-openai-playground
     scenarioId: SCN-CREATE-BASIC-CEA-01
+    workItemIds: [36119770]
     steps:
       [
         scaffold-basic-cea-ts-azure-openai,
@@ -45,6 +48,7 @@ cases:
 
   - id: basic-cea-js-azure-openai-remote-teams
     scenarioId: SCN-CREATE-BASIC-CEA-03
+    workItemIds: [33338521]
     steps:
       [
         scaffold-basic-cea-js-azure-openai,
@@ -60,6 +64,7 @@ cases:
 
   - id: basic-cea-js-azure-openai-local-teams
     scenarioId: SCN-CREATE-BASIC-CEA-03
+    workItemIds: [33338520]
     steps:
       [
         scaffold-basic-cea-js-azure-openai,
@@ -72,6 +77,7 @@ cases:
 
   - id: basic-cea-js-azure-openai-playground
     scenarioId: SCN-CREATE-BASIC-CEA-03
+    workItemIds: [36119761]
     steps:
       [
         scaffold-basic-cea-js-azure-openai,
@@ -87,6 +93,7 @@ cases:
   # launch before that operation starts an app with no dependencies.
   - id: basic-cea-py-azure-openai-remote-teams
     scenarioId: SCN-CREATE-BASIC-CEA-04
+    workItemIds: [36162207]
     steps:
       [
         scaffold-basic-cea-py-azure-openai,
@@ -103,6 +110,7 @@ cases:
 
   - id: basic-cea-py-azure-openai-local-teams
     scenarioId: SCN-CREATE-BASIC-CEA-04
+    workItemIds: [36061767, 36176601]
     steps:
       [
         scaffold-basic-cea-py-azure-openai,
@@ -116,6 +124,7 @@ cases:
 
   - id: basic-cea-py-azure-openai-playground
     scenarioId: SCN-CREATE-BASIC-CEA-04
+    workItemIds: [36119764]
     steps:
       [
         scaffold-basic-cea-py-azure-openai,

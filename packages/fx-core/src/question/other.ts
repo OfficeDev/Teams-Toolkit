@@ -922,6 +922,9 @@ export function addAuthActionQuestion(): IQTreeNode {
           if (!!!pluginManifestPath || !!!apiSpecPath) {
             return false;
           }
+          if (inputs[QuestionNames.ApiOperation] !== undefined) {
+            return false;
+          }
           const pluginManifest = (await fs.readJson(
             pluginManifestPath as string
           )) as PluginManifestSchema;

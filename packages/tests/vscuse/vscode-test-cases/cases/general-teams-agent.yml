@@ -8,6 +8,7 @@ version: 1
 cases:
   - id: general-teams-ts-azure-openai-remote-teams
     scenarioId: SCN-CREATE-CUSTOM-COPILOT-BASIC-01
+    workItemIds: [27042830]
     steps:
       [
         scaffold-general-ts-azure-openai,
@@ -23,6 +24,7 @@ cases:
 
   - id: general-teams-ts-azure-openai-local-teams
     scenarioId: SCN-CREATE-CUSTOM-COPILOT-BASIC-01
+    workItemIds: [27042450]
     steps:
       [
         scaffold-general-ts-azure-openai,
@@ -35,6 +37,7 @@ cases:
 
   - id: general-teams-ts-azure-openai-playground
     scenarioId: SCN-CREATE-CUSTOM-COPILOT-BASIC-01
+    workItemIds: [36229816]
     steps:
       [
         scaffold-general-ts-azure-openai,
@@ -46,6 +49,7 @@ cases:
 
   - id: general-teams-ts-azure-openai-remote-copilot
     scenarioId: SCN-CREATE-CUSTOM-COPILOT-BASIC-01
+    workItemIds: [36033075]
     # The run workflow injects this before VS Code starts so scaffold renders
     # the Copilot profiles without mutating user settings or reloading.
     featureFlags:
@@ -65,6 +69,7 @@ cases:
 
   - id: general-teams-ts-azure-openai-local-copilot
     scenarioId: SCN-CREATE-CUSTOM-COPILOT-BASIC-01
+    workItemIds: [36033050]
     featureFlags:
       - TEAMSFX_CEA_ENABLED=true
     steps:
@@ -79,6 +84,7 @@ cases:
 
   - id: general-teams-js-azure-openai-remote-teams
     scenarioId: SCN-CREATE-CUSTOM-COPILOT-BASIC-03
+    workItemIds: [27042828]
     steps:
       [
         scaffold-general-js-azure-openai,
@@ -94,6 +100,7 @@ cases:
 
   - id: general-teams-js-azure-openai-local-teams
     scenarioId: SCN-CREATE-CUSTOM-COPILOT-BASIC-03
+    workItemIds: [27042416]
     steps:
       [
         scaffold-general-js-azure-openai,
@@ -106,6 +113,7 @@ cases:
 
   - id: general-teams-js-azure-openai-playground
     scenarioId: SCN-CREATE-CUSTOM-COPILOT-BASIC-03
+    workItemIds: [36217287]
     steps:
       [
         scaffold-general-js-azure-openai,
@@ -117,6 +125,7 @@ cases:
 
   - id: general-teams-py-azure-openai-remote-teams
     scenarioId: SCN-CREATE-CUSTOM-COPILOT-BASIC-04
+    workItemIds: [27551399]
     steps:
       [
         scaffold-general-py-azure-openai,
@@ -133,6 +142,7 @@ cases:
 
   - id: general-teams-py-azure-openai-local-teams
     scenarioId: SCN-CREATE-CUSTOM-COPILOT-BASIC-04
+    workItemIds: [27178027]
     steps:
       [
         scaffold-general-py-azure-openai,
@@ -146,6 +156,7 @@ cases:
 
   - id: general-teams-py-azure-openai-playground
     scenarioId: SCN-CREATE-CUSTOM-COPILOT-BASIC-04
+    workItemIds: [36229811]
     steps:
       [
         scaffold-general-py-azure-openai,
@@ -161,6 +172,7 @@ cases:
   # Azure OpenAI v1 endpoint and assert a real completion.
   - id: general-teams-ts-openai-remote-teams
     scenarioId: SCN-CREATE-CUSTOM-COPILOT-BASIC-01
+    workItemIds: [27042831]
     steps:
       [
         scaffold-general-ts-openai,
@@ -175,6 +187,7 @@ cases:
 
   - id: general-teams-ts-openai-local-teams
     scenarioId: SCN-CREATE-CUSTOM-COPILOT-BASIC-01
+    workItemIds: [27042451]
     steps:
       [
         scaffold-general-ts-openai,
@@ -188,6 +201,7 @@ cases:
 
   - id: general-teams-js-openai-remote-teams
     scenarioId: SCN-CREATE-CUSTOM-COPILOT-BASIC-03
+    workItemIds: [27042829]
     steps:
       [
         scaffold-general-js-openai,
@@ -202,6 +216,7 @@ cases:
 
   - id: general-teams-js-openai-local-teams
     scenarioId: SCN-CREATE-CUSTOM-COPILOT-BASIC-03
+    workItemIds: [27042433]
     steps:
       [
         scaffold-general-js-openai,
@@ -215,6 +230,7 @@ cases:
 
   - id: general-teams-py-openai-remote-teams
     scenarioId: SCN-CREATE-CUSTOM-COPILOT-BASIC-04
+    workItemIds: [27551403]
     steps:
       [
         scaffold-general-py-openai,
@@ -230,6 +246,7 @@ cases:
 
   - id: general-teams-py-openai-local-teams
     scenarioId: SCN-CREATE-CUSTOM-COPILOT-BASIC-04
+    workItemIds: [27178071]
     steps:
       [
         scaffold-general-py-openai,

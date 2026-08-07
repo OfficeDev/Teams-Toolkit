@@ -51,6 +51,21 @@ describe("expandVariableWithFunction", async () => {
 
     assert.isTrue(res.isOk() && res.value === content);
   });
+  it("reports expansion results safely without telemetry", async () => {
+    const content = 'description:"description of the app"';
+    const contextWithoutTelemetry = { ...context, telemetryReporter: undefined };
+
+    const res = await expandVariableWithFunction(
+      content,
+      contextWithoutTelemetry as any,
+      undefined,
+      true,
+      ManifestType.DeclarativeCopilotManifest,
+      "C://test"
+    );
+
+    assert.isTrue(res.isOk() && res.value === content);
+  });
 
   it("happy path with placeholders", async () => {
     mockedEnvRestore = mockedEnv({

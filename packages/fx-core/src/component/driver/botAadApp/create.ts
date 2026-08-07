@@ -149,7 +149,7 @@ export class CreateBotAadAppDriver implements StepDriver {
       context.logProvider?.info(
         getLocalizedString(logMessageKeys.successExecuteDriver, actionName)
       );
-      context.telemetryReporter.sendTelemetryEvent(successRegisterBotAad, {
+      context.telemetryReporter?.sendTelemetryEvent(successRegisterBotAad, {
         [propertyKeys.reusingExistingBotAad]: isReusingExisting.toString(),
         [propertyKeys.registerBotAadTime]: durationMilliSeconds.toString(),
       });

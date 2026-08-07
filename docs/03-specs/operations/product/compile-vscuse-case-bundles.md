@@ -160,6 +160,9 @@ cases:
 The example scenario ID identifies the target behavior as the case's primary validation goal;
 scaffold, login, provision, and deploy may be setup for that goal. The current compiler preserves
 this required ID in generated metadata but does not yet resolve it against the scenario documents.
+Each case separately declares the numeric Azure DevOps work items that own its imported GitHub
+test-case parents. These IDs populate the legacy VScUse `description.workitem` field and must not be
+replaced by the engineering Scenario ID.
 
 `bundleId` is intentionally absent. Its original purpose was to identify the source file and its
 generated outputs, but the repository-relative YAML path already provides that identity. Generated
@@ -178,6 +181,7 @@ only duplicate information.
 | `cases`                                                 | One or more explicit cases for the file's single scaffold template. V1 has no matrix expansion.                                                                                                                                       |
 | `case.id`                                               | Required and unique within the file. Combined with the resolved scaffold template for the generated plan name.                                                                                                                        |
 | `case.scenarioId`                                       | Required non-empty product/engineering Scenario ID; copied to generated metadata without current doc lookup.                                                                                                                          |
+| `case.workItemIds`                                      | Required non-empty list of unique positive integer Azure DevOps work item IDs; serialized as a comma-separated list in `plan_metadata.description.workitem`.                                                                          |
 | `case.steps`                                            | Required ordered references containing exactly one `scaffold`. Inline definitions and overrides are invalid.                                                                                                                          |
 | `case.gate`                                             | Optional execution gate: `pr`, `scheduled`, or `manual`; default is `pr`.                                                                                                                                                             |
 | `case.featureFlags`                                     | Optional non-empty list of unique case-local compatibility switches. These are merged with bundle-level defaults, and duplicate names across the two scopes are invalid.                                                              |
@@ -1042,7 +1046,8 @@ flowchart LR
 5. Resolve accounts, exact launch titles, open/check adapters, ARM input, and lifecycle operations
    through compiler-owned operation adapters. Authored open kind and destination select a compatible
    component for the current target state.
-6. Preserve the required non-empty `scenarioId` in generated metadata. Document lookup and
+6. Preserve the required non-empty `scenarioId` in the generated `scenario_id:*` metadata tag and
+   serialize `workItemIds` into the legacy `description.workitem` field. Document lookup and
    active/superseded identity validation are not implemented in V1.
 7. Compose each plan by instantiating case initialization once, the compiler-owned create command
    once before the scaffold answers, and quick-input components in resolved answer order. Then
@@ -1279,6 +1284,9 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-118 | Given a `Debug in Teams (Chrome)` open with `destination: page`, the adapter accepts the local development certificate at `https://localhost:3978` in a separate browser tab before it adds and opens the app, then allows the `teams.cloud.microsoft` request to access other apps and services on the device before claiming `page-ready`; the remote tab profile emits neither local-only step because its public endpoint carries a valid certificate and does not access the local device.                                                                                    |
 | VCB-119 | Given a `page` check, compilation requires the preceding sequence to have reached `page-ready`, requires a non-empty `expect.contains` list, and emits one visible-content assertion per item in authored order; a `page` check without a preceding page `open` fails before plan output.                                                                                                                                                                                                                                                                                          |
 | VCB-120 | Given a `removeWorkspaceFile` operation, compilation emits one workspace mutation that deletes the authored project-relative file and fails when the path is absent, absolute, or escapes the project, so a case can prove that a later local debug recreates a file the template ships.                                                                                                                                                                                                                                                                                           |
+| VCB-121 | Given a `teams-collaborator-agent` scaffold, the authored selector path resolves `Teams Agents and Apps` then `Teams Collaborator Agent` followed by the Azure OpenAI key, endpoint, and deployment name inputs, and authors no LLM-service and no programming-language answer, because that template ships TypeScript only and reads Azure OpenAI settings directly.                                                                                                                                                                                                              |
+| VCB-122 | Given the Teams Collaborator Agent bundle, its remote Teams case selects `Launch Remote (Chrome)` and stops once the deployed app conversation opens, while its local Teams case selects `Debug in Teams (Chrome)` and asserts one reply in that personal conversation, where the agent answers without an at-mention.                                                                                                                                                                                                                                                             |
+| VCB-123 | Given a semantic case, it requires one or more unique positive integer Azure DevOps work item IDs, preserves its engineering Scenario ID in the `scenario_id:*` tag, and serializes only the numeric work item IDs into `plan_metadata.description.workitem`, so test-run synchronization can resolve imported GitHub test-case parents.                                                                                                                                                                                                                                           |
 
 ## Boundary
 

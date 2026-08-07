@@ -3,6 +3,7 @@ version: 1
 cases:
   - id: da-api-plugin-from-scratch-api-key-ts-local-copilot
     scenarioId: SCN-DA-CREATE-API-PLUGIN-FROM-SCRATCH
+    workItemIds: [34592925]
     gate: manual
     steps:
       [
@@ -17,6 +18,7 @@ cases:
 
   - id: da-api-plugin-from-scratch-api-key-js-local-copilot
     scenarioId: SCN-DA-CREATE-API-PLUGIN-FROM-SCRATCH
+    workItemIds: [34628854, 36176601]
     gate: manual
     steps:
       [

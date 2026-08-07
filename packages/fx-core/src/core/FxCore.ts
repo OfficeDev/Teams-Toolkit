@@ -192,11 +192,11 @@ import { LocalCrypto } from "./crypto";
 import { environmentNameManager } from "./environmentName";
 import { FxCoreOpenPluginPart } from "./FxCore.openPlugin";
 import { generateConfigFiles } from "./generateConfigFiles";
-import { resolveV4TemplateArtifactSnapshot } from "./v4ArtifactSnapshot";
 import { ConcurrentLockerMW } from "./middleware/concurrentLocker";
 import { ContextInjectorMW } from "./middleware/contextInjector";
 import { ErrorHandlerMW } from "./middleware/errorHandler";
 import { withFileLock } from "./middleware/fileLocker";
+import { resolveV4TemplateArtifactSnapshot } from "./v4ArtifactSnapshot";
 
 import { runWithRetry } from "./middleware/retry";
 import * as v3MigrationUtils from "./middleware/utils/v3MigrationUtils";
@@ -228,6 +228,10 @@ export class FxCore extends FxCoreOpenPluginPart {
   constructor(tools: Tools) {
     super();
     setTools(tools);
+  }
+
+  private getAbortSignal(inputs: Inputs): AbortSignal | undefined {
+    return inputs.abortSignal as AbortSignal | undefined;
   }
 
   /**
@@ -294,7 +298,7 @@ export class FxCore extends FxCoreOpenPluginPart {
       if (containsUnsupportedFeature(inputs.teamsAppFromTdp)) {
         return err(new InputValidationError("manifest.json", "App contains unsupported features"));
       } else {
-        context.telemetryReporter.sendTelemetryEvent(CoreTelemetryEvent.CreateFromTdpStart, {
+        context.telemetryReporter?.sendTelemetryEvent(CoreTelemetryEvent.CreateFromTdpStart, {
           [CoreTelemetryProperty.TdpTeamsAppFeatures]: getFeaturesFromAppDefinition(
             inputs.teamsAppFromTdp
           ).join(","),
@@ -423,6 +427,9 @@ export class FxCore extends FxCoreOpenPluginPart {
     QuestionMW("uninstall"),
   ])
   async uninstall(inputs: UninstallInputs): Promise<Result<undefined, FxError>> {
+    if (this.getAbortSignal(inputs)?.aborted) {
+      return err(new UserCancelError("FxCore"));
+    }
     switch (inputs[QuestionNames.UninstallMode as string]) {
       case QuestionNames.UninstallModeManifestId:
         return await this.uninstallByManifestId(inputs);
@@ -453,20 +460,24 @@ export class FxCore extends FxCoreOpenPluginPart {
     const botOption = uninstallOptions?.includes(QuestionNames.UninstallOptionBot);
 
     if (m356AppOption) {
-      const res = await this.uninstallM365App(undefined, manifestId);
+      const res = await this.uninstallM365App(undefined, manifestId, this.getAbortSignal(inputs));
       if (res.isErr()) {
         return err(res.error);
       }
     }
     if (botOption) {
-      const res = await this.uninstallBotFrameworRegistration(undefined, manifestId);
+      const res = await this.uninstallBotFrameworRegistration(
+        undefined,
+        manifestId,
+        this.getAbortSignal(inputs)
+      );
       if (res.isErr()) {
         return err(res.error);
       }
     }
     // App registraion should be the last to remove, because we might need to query some metadata from TDP.
     if (tdpOption) {
-      const res = await this.uninstallAppRegistration(manifestId);
+      const res = await this.uninstallAppRegistration(manifestId, this.getAbortSignal(inputs));
       if (res.isErr()) {
         return err(res.error);
       }
@@ -525,7 +536,7 @@ export class FxCore extends FxCoreOpenPluginPart {
     const botOption = uninstallOptions?.includes(QuestionNames.UninstallOptionBot);
 
     if ((teamsAppId || m365TitleId) && m356AppOption) {
-      const res = await this.uninstallM365App(m365TitleId, teamsAppId);
+      const res = await this.uninstallM365App(m365TitleId, teamsAppId, this.getAbortSignal(inputs));
       if (res.isErr()) {
         return err(res.error);
       }
@@ -533,7 +544,11 @@ export class FxCore extends FxCoreOpenPluginPart {
       this.resetEnvVar(m365TitleIdKeyName, ctx);
     }
     if (botId && botOption) {
-      const res = await this.uninstallBotFrameworRegistration(botId);
+      const res = await this.uninstallBotFrameworRegistration(
+        botId,
+        undefined,
+        this.getAbortSignal(inputs)
+      );
       if (res.isErr()) {
         return err(res.error);
       }
@@ -541,7 +556,7 @@ export class FxCore extends FxCoreOpenPluginPart {
     }
     // App registraion should be the last to remove, because we might need to query some metadata from TDP.
     if (teamsAppId && tdpOption) {
-      const res = await this.uninstallAppRegistration(teamsAppId);
+      const res = await this.uninstallAppRegistration(teamsAppId, this.getAbortSignal(inputs));
       if (res.isErr()) {
         return err(res.error);
       }
@@ -574,7 +589,7 @@ export class FxCore extends FxCoreOpenPluginPart {
     if (!titleId) {
       return err(new MissingRequiredInputError("title-id", "FxCore"));
     }
-    const res = await this.uninstallM365App(titleId);
+    const res = await this.uninstallM365App(titleId, undefined, this.getAbortSignal(inputs));
     if (res.isErr()) {
       return err(res.error);
     }
@@ -590,8 +605,12 @@ export class FxCore extends FxCoreOpenPluginPart {
   ])
   async uninstallM365App(
     titleId?: string,
-    manifestId?: string
+    manifestId?: string,
+    signal?: AbortSignal
   ): Promise<Result<undefined, FxError>> {
+    if (signal?.aborted) {
+      return err(new UserCancelError("Uninstall M365 App"));
+    }
     if (titleId === undefined && manifestId === undefined) {
       return err(new MissingRequiredInputError("title id or manifest id", "FxCore"));
     }
@@ -605,7 +624,11 @@ export class FxCore extends FxCoreOpenPluginPart {
     const packageService = new PackageService(sideloadingServiceEndpoint, TOOLS.logProvider);
     if (titleId === undefined) {
       try {
-        titleId = await packageService.retrieveTitleId(sideloadingTokenRes.value, manifestId ?? "");
+        titleId = await packageService.retrieveTitleId(
+          sideloadingTokenRes.value,
+          manifestId ?? "",
+          signal
+        );
       } catch (err: any) {
         await TOOLS.ui.showMessage(
           "info",
@@ -621,7 +644,10 @@ export class FxCore extends FxCoreOpenPluginPart {
       default: true,
     });
     if (confirmRes?.isOk() && confirmRes.value.result === true) {
-      await packageService.unacquire(sideloadingTokenRes.value, titleId);
+      if (signal?.aborted) {
+        return err(new UserCancelError("Uninstall M365 App"));
+      }
+      await packageService.unacquire(sideloadingTokenRes.value, titleId, signal);
       await TOOLS.ui.showMessage(
         "info",
         getLocalizedString("core.uninstall.success.m365App", titleId),
@@ -650,7 +676,13 @@ export class FxCore extends FxCoreOpenPluginPart {
     ErrorContextMW({ component: "FxCore", stage: "uninstallAppRegistration", reset: true }),
     ErrorHandlerMW,
   ])
-  async uninstallAppRegistration(manifestId: string): Promise<Result<undefined, FxError>> {
+  async uninstallAppRegistration(
+    manifestId: string,
+    signal?: AbortSignal
+  ): Promise<Result<undefined, FxError>> {
+    if (signal?.aborted) {
+      return err(new UserCancelError("Uninstall App Registration"));
+    }
     const appStudioTokenRes = await TOOLS.tokenProvider.m365TokenProvider.getAccessToken({
       scopes: AppStudioScopes(),
     });
@@ -663,8 +695,14 @@ export class FxCore extends FxCoreOpenPluginPart {
       default: true,
     });
     if (confirmRes?.isOk() && confirmRes.value.result === true) {
+      if (signal?.aborted) {
+        return err(new UserCancelError("Uninstall App Registration"));
+      }
       const token = appStudioTokenRes.value;
       await teamsDevPortalClient.deleteApp(token, manifestId);
+      if (signal?.aborted) {
+        return err(new UserCancelError("Uninstall App Registration"));
+      }
       await TOOLS.ui.showMessage(
         "info",
         getLocalizedString("core.uninstall.success.tdp", manifestId),
@@ -690,8 +728,12 @@ export class FxCore extends FxCoreOpenPluginPart {
   ])
   async uninstallBotFrameworRegistration(
     botId?: string,
-    manifestId?: string
+    manifestId?: string,
+    signal?: AbortSignal
   ): Promise<Result<undefined, FxError>> {
+    if (signal?.aborted) {
+      return err(new UserCancelError("Uninstall Bot Framework Registration"));
+    }
     if (!botId && !manifestId) {
       return err(new MissingRequiredInputError("bot id or manifest id", "FxCore"));
     }
@@ -716,7 +758,13 @@ export class FxCore extends FxCoreOpenPluginPart {
       default: true,
     });
     if (confirmRes?.isOk() && confirmRes.value.result === true) {
+      if (signal?.aborted) {
+        return err(new UserCancelError("Uninstall Bot Framework Registration"));
+      }
       await teamsDevPortalClient.deleteBot(token, botId);
+      if (signal?.aborted) {
+        return err(new UserCancelError("Uninstall Bot Framework Registration"));
+      }
       await TOOLS.ui.showMessage(
         "info",
         getLocalizedString("core.uninstall.success.bot", botId),
@@ -1723,7 +1771,7 @@ export class FxCore extends FxCoreOpenPluginPart {
       ui: TOOLS.ui,
       progressBar: undefined,
       logProvider: TOOLS.logProvider,
-      telemetryReporter: TOOLS.telemetryReporter!,
+      telemetryReporter: TOOLS.telemetryReporter,
       projectPath: projectPath,
       platform: inputs.platform,
     };
@@ -2158,7 +2206,7 @@ export class FxCore extends FxCoreOpenPluginPart {
         .showMessage("info", successMessage, false, viewPluginManifest)
         .then((userRes) => {
           if (userRes.isOk() && userRes.value === viewPluginManifest) {
-            context.telemetryReporter.sendTelemetryEvent(
+            context.telemetryReporter?.sendTelemetryEvent(
               TelemetryEvent.ViewPluginManifestAfterAdded
             );
             void TOOLS?.ui?.openFile?.(destinationPluginManifestPath);
@@ -2985,12 +3033,12 @@ export class FxCore extends FxCoreOpenPluginPart {
         );
       }
 
-      context.telemetryReporter.sendTelemetryEvent(TelemetryEvent.AddAuthAction, {
+      context.telemetryReporter?.sendTelemetryEvent(TelemetryEvent.AddAuthAction, {
         [TelemetryProperty.AddAuthType]: authType,
       });
     } catch (e: any) {
       const error = assembleError(e);
-      context.telemetryReporter.sendTelemetryErrorEvent(TelemetryEvent.AddAuthAction, {
+      context.telemetryReporter?.sendTelemetryErrorEvent(TelemetryEvent.AddAuthAction, {
         [TelemetryProperty.ErrorCode]: error.name,
         [TelemetryProperty.ErrorMessage]: error.message,
       });
@@ -3458,7 +3506,7 @@ export class FxCore extends FxCoreOpenPluginPart {
         .showMessage("info", successMessage, false, viewAgentManifest)
         .then((userRes) => {
           if (userRes.isOk() && userRes.value === viewAgentManifest) {
-            context.telemetryReporter.sendTelemetryEvent(
+            context.telemetryReporter?.sendTelemetryEvent(
               TelemetryEvent.ViewAgentManifestAfterAdded
             );
             void TOOLS?.ui?.openFile?.(agentManifestPath);

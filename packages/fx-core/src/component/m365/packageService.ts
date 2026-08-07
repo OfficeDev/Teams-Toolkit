@@ -416,7 +416,11 @@ export class PackageService {
   }
 
   @hooks([ErrorContextMW({ source: M365ErrorSource, component: M365ErrorComponent })])
-  public async getLaunchInfoByManifestId(token: string, manifestId: string): Promise<any> {
+  public async getLaunchInfoByManifestId(
+    token: string,
+    manifestId: string,
+    signal?: AbortSignal
+  ): Promise<any> {
     try {
       const serviceUrl = await this.getTitleServiceUrl(token);
       this.logger?.verbose(`Getting LaunchInfo with ManifestId ${manifestId} ...`);
@@ -453,6 +457,7 @@ export class PackageService {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          signal,
         }
       );
 
@@ -471,8 +476,12 @@ export class PackageService {
   }
 
   @hooks([ErrorContextMW({ source: M365ErrorSource, component: M365ErrorComponent })])
-  public async retrieveTitleId(token: string, manifestId: string): Promise<string> {
-    const launchInfo = await this.getLaunchInfoByManifestId(token, manifestId);
+  public async retrieveTitleId(
+    token: string,
+    manifestId: string,
+    signal?: AbortSignal
+  ): Promise<string> {
+    const launchInfo = await this.getLaunchInfoByManifestId(token, manifestId, signal);
     const titleId =
       (launchInfo.acquisition?.titleId?.id as string) ??
       (launchInfo.acquisition?.titleId as string);
@@ -488,7 +497,7 @@ export class PackageService {
   }
 
   @hooks([ErrorContextMW({ source: M365ErrorSource, component: M365ErrorComponent })])
-  public async unacquire(token: string, titleId: string): Promise<void> {
+  public async unacquire(token: string, titleId: string, signal?: AbortSignal): Promise<void> {
     try {
       const serviceUrl = await this.getTitleServiceUrl(token);
       this.logger?.verbose(`Unacquiring package with TitleId ${titleId} ...`);
@@ -497,6 +506,7 @@ export class PackageService {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        signal,
       });
 
       try {
@@ -505,6 +515,7 @@ export class PackageService {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          signal,
         });
       } catch (error: any) {
         if (error.response && error.response.status === 404) {
@@ -523,7 +534,11 @@ export class PackageService {
   }
 
   @hooks([ErrorContextMW({ source: M365ErrorSource, component: M365ErrorComponent })])
-  public async getLaunchInfoByTitleId(token: string, titleId: string): Promise<unknown> {
+  public async getLaunchInfoByTitleId(
+    token: string,
+    titleId: string,
+    signal?: AbortSignal
+  ): Promise<unknown> {
     try {
       const serviceUrl = await this.getTitleServiceUrl(token);
       this.logger?.verbose(`Getting LaunchInfo with TitleId ${titleId} ...`);
@@ -539,6 +554,7 @@ export class PackageService {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          signal,
         }
       );
       this.logger?.info(JSON.stringify(launchInfo.data));

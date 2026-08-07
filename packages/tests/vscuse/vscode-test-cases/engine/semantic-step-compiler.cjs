@@ -186,6 +186,7 @@ const scaffoldQuestionAdapters = {
     options: {
       "custom-copilot-basic": "General Teams Agent",
       "custom-copilot-rag": "Teams Agent with Data",
+      "teams-collaborator-agent": "Teams Collaborator Agent",
       "teams-other-app-type": "Other Teams Capabilities",
     },
     title: "Teams Agent or App Using Microsoft Teams SDK",
@@ -375,10 +376,11 @@ const targetAdapters = {
     readySubject: teamsAppDetailsSubject,
     requires: ["login:azure", "login:m365", "provision", "deploy"],
   },
-  // The Python templates name the same remote Teams launch `Launch Remote
-  // (Chrome)`, without the `in Teams` the TypeScript and JavaScript templates
-  // use. It reaches the same Teams app details page, so it reuses that adapter's
-  // open transition and readiness subject.
+  // The Python templates and the Teams Collaborator Agent TypeScript template
+  // name the same remote Teams launch `Launch Remote (Chrome)`, without the `in
+  // Teams` the other TypeScript and JavaScript templates use. It reaches the
+  // same Teams app details page, so it reuses that adapter's open transition and
+  // readiness subject.
   "Launch Remote (Chrome)": {
     browserAuthentication: {
       component: "authentication/browser/m365-password-sign-in.json.tpl",

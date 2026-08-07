@@ -12,7 +12,7 @@
     "name": "basic-cea-js-azure-openai-remote-teams",
     "description": {
       "owner": "",
-      "workitem": "SCN-CREATE-BASIC-CEA-03",
+      "workitem": "33338521",
       "other": ""
     },
     "execution_order": [
@@ -2874,7 +2874,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion a visible Visual Studio Code notification contains provision stage executed successfully.",
+      "description": "@assertion a visible Visual Studio Code notification contains the literal text provision stage executed successfully. A notification with different text, including an in-progress notification, does not satisfy this assertion.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -3262,7 +3262,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion a visible Visual Studio Code notification contains actions in deploy stage executed successfully.",
+      "description": "@assertion a visible Visual Studio Code notification contains the literal text actions in deploy stage executed successfully. A notification with different text, including an in-progress notification, does not satisfy this assertion.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

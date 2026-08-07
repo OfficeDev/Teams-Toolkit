@@ -12,7 +12,7 @@
     "name": "rag-azure-ai-search-ts-openai-local-teams",
     "description": {
       "owner": "",
-      "workitem": "SCN-CREATE-RAG-AZURE-SEARCH-01",
+      "workitem": "28970306",
       "other": ""
     },
     "execution_order": [

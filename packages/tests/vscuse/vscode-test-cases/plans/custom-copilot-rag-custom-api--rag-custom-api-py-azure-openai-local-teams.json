@@ -12,7 +12,7 @@
     "name": "rag-custom-api-py-azure-openai-local-teams",
     "description": {
       "owner": "",
-      "workitem": "SCN-CREATE-RAG-CUSTOM-API-05",
+      "workitem": "28969537",
       "other": ""
     },
     "execution_order": [
@@ -2346,7 +2346,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion a visible Visual Studio Code notification contains The following environment is selected:.",
+      "description": "@assertion a visible Visual Studio Code notification contains the literal text The following environment is selected:. A notification with different text, including an in-progress notification, does not satisfy this assertion.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

@@ -211,7 +211,7 @@ export async function listOperations(
     );
 
     let operations = listResult.APIs.filter((value) => value.isValid);
-    context.telemetryReporter.sendTelemetryEvent(telemetryEvents.listApis, {
+    context.telemetryReporter?.sendTelemetryEvent(telemetryEvents.listApis, {
       [telemetryProperties.generateType]: projectType.toString(),
       [telemetryProperties.validApisCount]: listResult.validAPICount.toString(),
       [telemetryProperties.allApisCount]: listResult.allAPICount.toString(),
@@ -504,7 +504,7 @@ export async function generateFromApiSpec(
           );
 
     // Send SpecParser.generate() warnings
-    context.telemetryReporter.sendTelemetryEvent(specParserGenerateResultTelemetryEvent, {
+    context.telemetryReporter?.sendTelemetryEvent(specParserGenerateResultTelemetryEvent, {
       [telemetryProperties.generateType]: projectType.toString(),
       [specParserGenerateResultAllSuccessTelemetryProperty]: generateResult.allSuccess.toString(),
       [specParserGenerateResultWarningsTelemetryProperty]: generateResult.warnings
@@ -575,7 +575,7 @@ export function logValidationResults(
     if (existingCorrelationId) {
       properties["correlation-id"] = existingCorrelationId;
     }
-    context.telemetryReporter.sendTelemetryEvent(telemetryEvents.validateApiSpec, properties);
+    context.telemetryReporter?.sendTelemetryEvent(telemetryEvents.validateApiSpec, properties);
   }
 
   if (errors.length === 0 && (warnings.length === 0 || !shouldLogWarning)) {

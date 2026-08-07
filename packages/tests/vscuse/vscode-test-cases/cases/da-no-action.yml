@@ -3,6 +3,7 @@ version: 1
 cases:
   - id: da-no-action-remote-preview
     scenarioId: SCN-DA-CREATE-NO-ACTION
+    workItemIds: [28941585]
     steps:
       [
         scaffold-da-no-action,
