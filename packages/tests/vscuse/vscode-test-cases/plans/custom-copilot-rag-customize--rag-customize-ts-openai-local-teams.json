@@ -12,7 +12,7 @@
     "name": "rag-customize-ts-openai-local-teams",
     "description": {
       "owner": "",
-      "workitem": "SCN-CREATE-RAG-CUSTOMIZE-01",
+      "workitem": "28869466",
       "other": ""
     },
     "execution_order": [

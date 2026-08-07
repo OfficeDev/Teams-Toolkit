@@ -6,6 +6,7 @@ version: 1
 cases:
   - id: simple-bot-ts-remote-teams
     scenarioId: SCN-CREATE-DEFAULT-BOT-01
+    workItemIds: [14134645]
     steps:
       [
         scaffold-simple-bot-ts,
@@ -21,6 +22,7 @@ cases:
 
   - id: simple-bot-ts-local-teams
     scenarioId: SCN-CREATE-DEFAULT-BOT-01
+    workItemIds: [9729308]
     steps:
       [
         scaffold-simple-bot-ts,
@@ -33,6 +35,7 @@ cases:
 
   - id: simple-bot-ts-playground
     scenarioId: SCN-CREATE-DEFAULT-BOT-01
+    workItemIds: [36232737, 15988344]
     steps:
       [
         scaffold-simple-bot-ts,
@@ -44,6 +47,7 @@ cases:
 
   - id: simple-bot-js-remote-teams
     scenarioId: SCN-CREATE-DEFAULT-BOT-03
+    workItemIds: [9729295]
     steps:
       [
         scaffold-simple-bot-js,
@@ -59,6 +63,7 @@ cases:
 
   - id: simple-bot-js-local-teams
     scenarioId: SCN-CREATE-DEFAULT-BOT-03
+    workItemIds: [11042961]
     steps:
       [
         scaffold-simple-bot-js,
@@ -71,6 +76,7 @@ cases:
 
   - id: simple-bot-js-playground
     scenarioId: SCN-CREATE-DEFAULT-BOT-03
+    workItemIds: [36232743, 15988344]
     steps:
       [
         scaffold-simple-bot-js,
@@ -82,6 +88,7 @@ cases:
 
   - id: simple-bot-py-remote-teams
     scenarioId: SCN-CREATE-DEFAULT-BOT-04
+    workItemIds: [36045666]
     steps:
       [
         scaffold-simple-bot-py,
@@ -98,6 +105,7 @@ cases:
 
   - id: simple-bot-py-local-teams
     scenarioId: SCN-CREATE-DEFAULT-BOT-04
+    workItemIds: [35636569]
     steps:
       [
         scaffold-simple-bot-py,
@@ -111,6 +119,7 @@ cases:
 
   - id: simple-bot-py-playground
     scenarioId: SCN-CREATE-DEFAULT-BOT-04
+    workItemIds: [36232730, 15988344]
     steps:
       [
         scaffold-simple-bot-py,

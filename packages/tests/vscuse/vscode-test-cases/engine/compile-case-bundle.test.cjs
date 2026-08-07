@@ -12,9 +12,11 @@ featureFlags:
 cases:
   - id: remote
     scenarioId: SCN-REMOTE
+    workItemIds: [1001, 1002]
     steps: [scaffold, deploy, deploy]
   - id: local
     scenarioId: SCN-LOCAL
+    workItemIds: [1003]
     gate: manual
     steps: [scaffold, target]
 

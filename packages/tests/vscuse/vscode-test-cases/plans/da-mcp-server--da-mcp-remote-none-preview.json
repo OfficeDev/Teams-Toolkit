@@ -12,7 +12,7 @@
     "name": "da-mcp-remote-none-preview",
     "description": {
       "owner": "",
-      "workitem": "SCN-DA-CREATE-WITH-MCP-SERVER",
+      "workitem": "36270854",
       "other": ""
     },
     "execution_order": [
@@ -1946,7 +1946,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion a visible Visual Studio Code notification contains provision stage executed successfully.",
+      "description": "@assertion a visible Visual Studio Code notification contains the literal text provision stage executed successfully. A notification with different text, including an in-progress notification, does not satisfy this assertion.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

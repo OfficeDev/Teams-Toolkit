@@ -311,6 +311,8 @@ test("lifecycle recipes have reusable confirmation and notification primitives",
   assert.equal(notification.component.id, "assertContains");
   assert.equal(notification.steps.length, 1);
   assert.match(notification.steps[0].description, /stage completed/);
+  assert.match(notification.steps[0].description, /literal text/);
+  assert.match(notification.steps[0].description, /in-progress notification/);
   assert.ok(notification.steps[0].tags.includes("step_retry_timeout: 900"));
 });
 
