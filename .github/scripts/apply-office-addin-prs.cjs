@@ -9,6 +9,12 @@ const RESULTS_PATH = path.join(
   ".github",
   "office-addin-drift-results.json",
 );
+const BASELINE_PATH = path.join(
+  REPO_ROOT,
+  ".github",
+  "office-addin-upstream-baseline.json",
+);
+const BASELINE_REL = ".github/office-addin-upstream-baseline.json";
 const TEMPLATE_REL = path.join("templates", "vsc", "ts");
 
 function readJson(filePath) {
@@ -176,6 +182,27 @@ function hasChanges() {
   return out.trim().length > 0;
 }
 
+// Advance this template's baseline entry to the upstream state this PR syncs to,
+// so that once the PR merges the daily check no longer re-detects the same drift
+// (and stops opening duplicate PRs). Written into the same commit as the code.
+function bumpBaseline(row) {
+  const baseline = readJson(BASELINE_PATH);
+  const entry = baseline.templates && baseline.templates[row.id];
+  if (!entry) return false;
+
+  if (row.upstreamManifestVersion && row.upstreamManifestVersion !== "N/A") {
+    entry.upstreamManifestVersion = row.upstreamManifestVersion;
+  }
+  if (row.upstreamCommitSha && row.upstreamCommitSha !== "N/A") {
+    entry.upstreamCommitSha = row.upstreamCommitSha;
+  }
+  if (row.upstreamDepHash && row.upstreamDepHash !== "N/A") {
+    entry.upstreamDepHash = row.upstreamDepHash;
+  }
+  fs.writeFileSync(BASELINE_PATH, JSON.stringify(baseline, null, 2) + "\n");
+  return true;
+}
+
 function createPr(row, changeSummary) {
   const token = process.env.GH_TOKEN || "";
   if (!token) throw new Error("GH_TOKEN not set; cannot push or open PR.");
@@ -187,7 +214,10 @@ function createPr(row, changeSummary) {
   const runId = process.env.GITHUB_RUN_ID || "";
 
   run(`git checkout -b ${branch}`);
+  // Also advance the baseline so merging this PR stops re-detection of this drift.
+  const bumped = bumpBaseline(row);
   run(`git add -- ${TEMPLATE_REL}/${row.id}`);
+  if (bumped) run(`git add -- ${BASELINE_REL}`);
   run(
     `git -c user.name="office-addin-drift-bot" -c user.email="noreply@github.com" commit -m ${JSON.stringify(
       `fix(office-addin): sync ${row.id} with upstream ${row.upstreamRepo}`,
@@ -202,6 +232,8 @@ function createPr(row, changeSummary) {
     `Upstream: \`${row.upstreamRepo}@${row.upstreamBranch}\``,
     "",
     "This PR was generated from the Office Add-in drift audit. Review carefully — the edits were produced by Copilot from the audit judgment.",
+    "",
+    "It also bumps this template's entry in `.github/office-addin-upstream-baseline.json` to the synced upstream state, so merging stops the daily check from re-detecting the same drift.",
     "",
     "### Audit judgment",
     "",
