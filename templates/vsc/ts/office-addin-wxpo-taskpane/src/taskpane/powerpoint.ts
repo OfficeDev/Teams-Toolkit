@@ -3,7 +3,7 @@
  * See LICENSE in the project root for license information.
  */
 
-/* global document, Office */
+/* global document, Office, PowerPoint */
 
 Office.onReady((info) => {
   if (info.host === Office.HostType.PowerPoint) {
@@ -17,8 +17,16 @@ export async function runPowerPoint() {
   /**
    * Insert your PowerPoint code here
    */
-  const options: Office.SetSelectedDataOptions = { coercionType: Office.CoercionType.Text };
-
-  await Office.context.document.setSelectedDataAsync(" ", options);
-  await Office.context.document.setSelectedDataAsync("Hello World!", options);
+  await PowerPoint.run(async (context: PowerPoint.RequestContext) => {
+    const shapes: PowerPoint.ShapeCollection = context.presentation.slides.getItemAt(0).shapes;
+    const shapeOptions: PowerPoint.ShapeAddOptions = {
+      left: 100,
+      top: 300,
+      height: 300,
+      width: 450,
+    };
+    const textbox: PowerPoint.Shape = shapes.addTextBox("Hello World!", shapeOptions);
+    textbox.name = "GreetingTextbox";
+    await context.sync();
+  });
 }
