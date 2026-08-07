@@ -1,0 +1,506 @@
+version: 1
+
+# Every LLM service and language reaches a local Teams launch, because those
+# dimensions change the generated action handlers, config module, and local
+# lifecycle. The OpenAPI document is a public no-auth spec, so the flow needs no
+# credential follow-up.
+cases:
+  - id: rag-custom-api-ts-azure-openai-local-teams
+    scenarioId: SCN-CREATE-RAG-CUSTOM-API-01
+    workItemIds: [27588564]
+    steps:
+      [
+        scaffold-rag-custom-api-ts-azure-openai,
+        check-rag-custom-api-ts-azure-openai,
+        login-m365,
+        f5-teams-local,
+        open-app,
+        check-rag-custom-api-chat,
+      ]
+
+  - id: rag-custom-api-ts-openai-local-teams
+    scenarioId: SCN-CREATE-RAG-CUSTOM-API-01
+    workItemIds: [27588580]
+    steps:
+      [
+        scaffold-rag-custom-api-ts-openai,
+        check-rag-custom-api-ts-openai,
+        redirect-openai-base-url,
+        login-m365,
+        f5-teams-local,
+        open-app,
+        check-rag-custom-api-chat-openai,
+      ]
+
+  - id: rag-custom-api-js-azure-openai-local-teams
+    scenarioId: SCN-CREATE-RAG-CUSTOM-API-04
+    workItemIds: [27588577]
+    steps:
+      [
+        scaffold-rag-custom-api-js-azure-openai,
+        check-rag-custom-api-js-azure-openai,
+        login-m365,
+        f5-teams-local,
+        open-app,
+        check-rag-custom-api-chat,
+      ]
+
+  - id: rag-custom-api-js-openai-local-teams
+    scenarioId: SCN-CREATE-RAG-CUSTOM-API-04
+    workItemIds: [27588587]
+    steps:
+      [
+        scaffold-rag-custom-api-js-openai,
+        check-rag-custom-api-js-openai,
+        redirect-openai-base-url,
+        login-m365,
+        f5-teams-local,
+        open-app,
+        check-rag-custom-api-chat-openai,
+      ]
+
+  - id: rag-custom-api-py-azure-openai-local-teams
+    scenarioId: SCN-CREATE-RAG-CUSTOM-API-05
+    workItemIds: [28969537]
+    steps:
+      [
+        scaffold-rag-custom-api-py-azure-openai,
+        check-rag-custom-api-py-azure-openai,
+        create-python-environment,
+        login-m365,
+        f5-teams-local,
+        open-app,
+        check-rag-custom-api-chat,
+      ]
+
+  - id: rag-custom-api-py-openai-local-teams
+    scenarioId: SCN-CREATE-RAG-CUSTOM-API-05
+    workItemIds: [28969579]
+    steps:
+      [
+        scaffold-rag-custom-api-py-openai,
+        check-rag-custom-api-py-openai,
+        create-python-environment,
+        redirect-openai-base-url,
+        login-m365,
+        f5-teams-local,
+        open-app,
+        check-rag-custom-api-chat-openai,
+      ]
+
+steps:
+  scaffold-rag-custom-api-ts-azure-openai:
+    type: scaffold
+    with:
+      template: custom-copilot-rag-custom-api
+      answers:
+        - question: projectType
+          value: teams-agent-and-app-type
+        - question: teamsAppType
+          value: custom-copilot-rag
+        - question: customCopilotRag
+          value: custom-copilot-rag-custom-api
+        - question: apiSpecLocation
+          type: text
+          value: https://raw.githubusercontent.com/SLdragon/example-openapi-spec/main/real-no-auth.yaml
+        - question: apiOperations
+          type: multiSelect
+          value: all
+        - question: llmService
+          value: llm-service-azure-openai
+        - question: azureOpenAIKey
+          type: text
+          value: "${{secret:AZURE_OPENAI_API_KEY}}"
+        - question: azureOpenAIEndpoint
+          type: text
+          value: "${{env:AZURE_OPENAI_ENDPOINT}}"
+        - question: azureOpenAIDeploymentName
+          type: text
+          value: "${{env:AZURE_OPENAI_MODEL}}"
+        - question: language
+          value: typescript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-rag-custom-api-ts-azure-openai:
+    type: checks
+    with:
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains:
+            ["version: v1.11", "provision:", "deploy:", "teamsApp/extendToM365"]
+      - type: file
+        path: appPackage/apiSpecificationFile/openapi.yaml
+        expect:
+          exists: true
+      - type: file
+        path: src/app/handlers.ts
+        expect:
+          exists: true
+      - type: file
+        path: src/app/functions.json
+        expect:
+          exists: true
+      - type: file
+        path: src/config.ts
+        expect:
+          contains:
+            [
+              "azureOpenAIKey: process.env.AZURE_OPENAI_API_KEY",
+              "azureOpenAIDeployment: process.env.AZURE_OPENAI_DEPLOYMENT_NAME",
+            ]
+          notContains: ["openAIKey: process.env.OPENAI_API_KEY"]
+      - type: file
+        path: .vscode/launch.json
+        expect:
+          contains:
+            [
+              "Debug in Teams (Chrome)",
+              "Debug in Microsoft 365 Agents Playground",
+            ]
+      - type: file
+        path: package.json
+        expect:
+          exists: true
+      - type: file
+        path: appPackage/manifest.json
+        expect:
+          contains: ['"manifestVersion": "1.29"']
+
+  scaffold-rag-custom-api-ts-openai:
+    type: scaffold
+    with:
+      template: custom-copilot-rag-custom-api
+      answers:
+        - question: projectType
+          value: teams-agent-and-app-type
+        - question: teamsAppType
+          value: custom-copilot-rag
+        - question: customCopilotRag
+          value: custom-copilot-rag-custom-api
+        - question: apiSpecLocation
+          type: text
+          value: https://raw.githubusercontent.com/SLdragon/example-openapi-spec/main/real-no-auth.yaml
+        - question: apiOperations
+          type: multiSelect
+          value: all
+        - question: llmService
+          value: llm-service-openai
+        # The OpenAI client is redirected to an Azure OpenAI v1 endpoint before
+        # launch, so the case supplies the Azure OpenAI key here.
+        - question: openAIKey
+          type: text
+          value: "${{secret:AZURE_OPENAI_API_KEY}}"
+        - question: language
+          value: typescript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-rag-custom-api-ts-openai:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/apiSpecificationFile/openapi.yaml
+        expect:
+          exists: true
+      - type: file
+        path: src/app/handlers.ts
+        expect:
+          exists: true
+      - type: file
+        path: src/config.ts
+        expect:
+          contains: ["openAIKey: process.env.OPENAI_API_KEY"]
+          notContains: [azureOpenAIKey]
+
+  scaffold-rag-custom-api-js-azure-openai:
+    type: scaffold
+    with:
+      template: custom-copilot-rag-custom-api
+      answers:
+        - question: projectType
+          value: teams-agent-and-app-type
+        - question: teamsAppType
+          value: custom-copilot-rag
+        - question: customCopilotRag
+          value: custom-copilot-rag-custom-api
+        - question: apiSpecLocation
+          type: text
+          value: https://raw.githubusercontent.com/SLdragon/example-openapi-spec/main/real-no-auth.yaml
+        - question: apiOperations
+          type: multiSelect
+          value: all
+        - question: llmService
+          value: llm-service-azure-openai
+        - question: azureOpenAIKey
+          type: text
+          value: "${{secret:AZURE_OPENAI_API_KEY}}"
+        - question: azureOpenAIEndpoint
+          type: text
+          value: "${{env:AZURE_OPENAI_ENDPOINT}}"
+        - question: azureOpenAIDeploymentName
+          type: text
+          value: "${{env:AZURE_OPENAI_MODEL}}"
+        - question: language
+          value: javascript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-rag-custom-api-js-azure-openai:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/apiSpecificationFile/openapi.yaml
+        expect:
+          exists: true
+      - type: file
+        path: src/app/handlers.js
+        expect:
+          exists: true
+      - type: file
+        path: src/config.js
+        expect:
+          contains:
+            [
+              "azureOpenAIKey: process.env.AZURE_OPENAI_API_KEY",
+              "azureOpenAIDeployment: process.env.AZURE_OPENAI_DEPLOYMENT_NAME",
+            ]
+          notContains: ["openAIKey: process.env.OPENAI_API_KEY"]
+      - type: file
+        path: src/config.ts
+        expect:
+          exists: false
+
+  scaffold-rag-custom-api-js-openai:
+    type: scaffold
+    with:
+      template: custom-copilot-rag-custom-api
+      answers:
+        - question: projectType
+          value: teams-agent-and-app-type
+        - question: teamsAppType
+          value: custom-copilot-rag
+        - question: customCopilotRag
+          value: custom-copilot-rag-custom-api
+        - question: apiSpecLocation
+          type: text
+          value: https://raw.githubusercontent.com/SLdragon/example-openapi-spec/main/real-no-auth.yaml
+        - question: apiOperations
+          type: multiSelect
+          value: all
+        - question: llmService
+          value: llm-service-openai
+        - question: openAIKey
+          type: text
+          value: "${{secret:AZURE_OPENAI_API_KEY}}"
+        - question: language
+          value: javascript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-rag-custom-api-js-openai:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/apiSpecificationFile/openapi.yaml
+        expect:
+          exists: true
+      - type: file
+        path: src/app/handlers.js
+        expect:
+          exists: true
+      - type: file
+        path: src/config.js
+        expect:
+          contains: ["openAIKey: process.env.OPENAI_API_KEY"]
+          notContains: [azureOpenAIKey]
+
+  scaffold-rag-custom-api-py-azure-openai:
+    type: scaffold
+    with:
+      template: custom-copilot-rag-custom-api
+      answers:
+        - question: projectType
+          value: teams-agent-and-app-type
+        - question: teamsAppType
+          value: custom-copilot-rag
+        - question: customCopilotRag
+          value: custom-copilot-rag-custom-api
+        - question: apiSpecLocation
+          type: text
+          value: https://raw.githubusercontent.com/SLdragon/example-openapi-spec/main/real-no-auth.yaml
+        - question: apiOperations
+          type: multiSelect
+          value: all
+        - question: llmService
+          value: llm-service-azure-openai
+        - question: azureOpenAIKey
+          type: text
+          value: "${{secret:AZURE_OPENAI_API_KEY}}"
+        - question: azureOpenAIEndpoint
+          type: text
+          value: "${{env:AZURE_OPENAI_ENDPOINT}}"
+        - question: azureOpenAIDeploymentName
+          type: text
+          value: "${{env:AZURE_OPENAI_MODEL}}"
+        - question: language
+          value: python
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-rag-custom-api-py-azure-openai:
+    type: checks
+    with:
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains:
+            ["version: v1.11", "provision:", "deploy:", "teamsApp/extendToM365"]
+      - type: file
+        path: appPackage/apiSpecificationFile/openapi.yaml
+        expect:
+          exists: true
+      - type: file
+        path: src/bot.py
+        expect:
+          exists: true
+      - type: file
+        path: src/prompts/chat/config.json
+        expect:
+          exists: true
+      - type: file
+        path: src/config.py
+        expect:
+          contains:
+            [
+              AZURE_OPENAI_API_KEY,
+              AZURE_OPENAI_ENDPOINT,
+              AZURE_OPENAI_DEPLOYMENT_NAME,
+            ]
+          notContains: [OPENAI_MODEL_NAME]
+      - type: file
+        path: requirements.txt
+        expect:
+          exists: true
+      - type: file
+        path: package.json
+        expect:
+          exists: false
+
+  scaffold-rag-custom-api-py-openai:
+    type: scaffold
+    with:
+      template: custom-copilot-rag-custom-api
+      answers:
+        - question: projectType
+          value: teams-agent-and-app-type
+        - question: teamsAppType
+          value: custom-copilot-rag
+        - question: customCopilotRag
+          value: custom-copilot-rag-custom-api
+        - question: apiSpecLocation
+          type: text
+          value: https://raw.githubusercontent.com/SLdragon/example-openapi-spec/main/real-no-auth.yaml
+        - question: apiOperations
+          type: multiSelect
+          value: all
+        - question: llmService
+          value: llm-service-openai
+        - question: openAIKey
+          type: text
+          value: "${{secret:AZURE_OPENAI_API_KEY}}"
+        - question: language
+          value: python
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-rag-custom-api-py-openai:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/apiSpecificationFile/openapi.yaml
+        expect:
+          exists: true
+      - type: file
+        path: src/bot.py
+        expect:
+          exists: true
+      - type: file
+        path: src/config.py
+        expect:
+          contains: [OPENAI_API_KEY, "OPENAI_MODEL_NAME='gpt-3.5-turbo'"]
+          notContains: [AZURE_OPENAI_API_KEY]
+
+  create-python-environment:
+    type: pythonEnvironment
+    with:
+      interpreter: "Python 3.12"
+
+  # The OpenAI branch reads OPENAI_BASE_URL, so pointing it at the Azure OpenAI
+  # v1 surface lets the case reuse the Azure OpenAI key it already supplied.
+  redirect-openai-base-url:
+    type: localEnvironment
+    with:
+      OPENAI_BASE_URL: "${{env:AZURE_OPENAI_ENDPOINT}}/openai/v1"
+
+  login-m365:
+    type: login
+    with:
+      type: m365
+      account: "${{env:M365_ACCOUNT_NAME}}"
+      password: "${{secret:M365_ACCOUNT_PASSWORD}}"
+
+  f5-teams-local:
+    type: target
+    with:
+      profile: "Debug in Teams (Chrome)"
+      profileSelection: first
+
+  open-app:
+    type: open
+    with:
+      kind: app
+      destination: chat
+
+  check-rag-custom-api-chat:
+    type: checks
+    with:
+      # The generated actions call a public sample API and the reply wording
+      # comes from the model, so the case asserts that the agent answered without
+      # failing rather than asserting text this repository does not control.
+      - type: chat
+        send: List all the repairs
+        expect:
+          replied: true
+          notContains: ["error"]
+
+  check-rag-custom-api-chat-openai:
+    type: checks
+    with:
+      # The OpenAI branch hardcodes `gpt-3.5-turbo` in the generated app, and
+      # the redirected Azure OpenAI resource resolves that as a deployment name
+      # it does not host, so the reply cannot be grounded. The legacy OpenAI
+      # plans asserted no more than this either.
+      - type: chat
+        send: List all the repairs
+        expect:
+          replied: true

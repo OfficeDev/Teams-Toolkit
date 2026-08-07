@@ -123,6 +123,22 @@ describe("botAadAppCreate", async () => {
     expect(result.output.get(outputKeys.botId)).to.be.equal(expectedClientId);
     expect(result.output.get(outputKeys.botPassword)).to.be.equal(expectedSecretText);
   });
+  it("happy path with handler without telemetry", async () => {
+    const args: any = {
+      name: expectedDisplayName,
+    };
+    const context = { ...mockedDriverContext, telemetryReporter: undefined };
+    vi.spyOn(AadAppClient.prototype, "createAadApp").mockResolvedValue({
+      id: expectedObjectId,
+      displayName: expectedDisplayName,
+      appId: expectedClientId,
+    } as AADApplication);
+    vi.spyOn(AadAppClient.prototype, "generateClientSecret").mockResolvedValue(expectedSecretText);
+
+    const result = await createBotAadAppDriver.handler(args, context, outputEnvVarNames);
+
+    expect(result.output.get(outputKeys.botId)).to.equal(expectedClientId);
+  });
 
   it("happy path with execute", async () => {
     const args: any = {

@@ -11,6 +11,8 @@ import { ListSensitivityLabelScope } from "../../src/common/constants";
 import { setTools } from "../../src/common/globalVars";
 import { TelemetryEvent, TelemetryProperty, TelemetrySuccess } from "../../src/common/telemetry";
 import { coordinator } from "../../src/component/coordinator";
+import { manifestUtils } from "../../src/component/driver/teamsApp/utils/ManifestUtils";
+import { TemplateNames } from "../../src/component/generator/templates/templateNames";
 import { pathUtils } from "../../src/component/utils/pathUtils";
 import {
   collectCreateFloor,
@@ -148,7 +150,6 @@ describe("createFrontDoorAdapters", () => {
         platform: Platform.VSCode,
         [QuestionNames.Folder]: "/tmp",
         [QuestionNames.AppName]: "MyApp",
-        [QuestionNames.TemplateName]: "declarative-agent-with-action-from-mcp",
       };
 
       const res = await scaffoldV4(inputs, v4Target, { language: "typescript" });
@@ -187,7 +188,6 @@ describe("createFrontDoorAdapters", () => {
         platform: Platform.VSCode,
         [QuestionNames.Folder]: "/tmp",
         [QuestionNames.AppName]: "MyApp",
-        [QuestionNames.TemplateName]: "declarative-agent-with-action-from-mcp",
       };
 
       const res = await scaffoldV4(inputs, v4Target, {});
@@ -202,6 +202,99 @@ describe("createFrontDoorAdapters", () => {
       assert.equal(
         sendTelemetryError.mock.calls[0][1]?.[TelemetryProperty.Success],
         TelemetrySuccess.No
+      );
+    });
+
+    it("DCE-19: derives the v3-compatible telemetry template id from the v4 target id", async () => {
+      const expectedMappings: ReadonlyArray<readonly [string, string]> = [
+        ["basic-custom-engine-agent", TemplateNames.BasicCustomEngineAgent],
+        ["weather-agent", TemplateNames.WeatherAgent],
+        ["graph-connector", TemplateNames.GraphConnector],
+        ["custom-copilot-basic", TemplateNames.CustomCopilotBasic],
+        ["custom-copilot-rag-customize", TemplateNames.CustomCopilotRagCustomize],
+        ["custom-copilot-rag-azure-ai-search", TemplateNames.CustomCopilotRagAzureAISearch],
+        ["custom-copilot-rag-custom-api", TemplateNames.CustomCopilotRagCustomApi],
+        ["teams-collaborator-agent", TemplateNames.TeamsCollaboratorAgent],
+        ["non-sso-tab", TemplateNames.Tab],
+        ["default-message-extension", TemplateNames.DefaultMessageExtension],
+        ["default-bot", TemplateNames.DefaultBot],
+        ["office-addin-wxpo-taskpane", TemplateNames.WXPTaskpane],
+        ["office-addin-excel-cfshortcut", TemplateNames.ExcelCFShortcut],
+        ["office-addin-excel-customfunctions", TemplateNames.ExcelCustomFunctions],
+        ["office-addin-sso-naa", TemplateNames.OfficeAddinSsoNaa],
+        ["declarative-agent-meta-os-upgrade-project", "declarative-agent-meta-os-upgrade-project"],
+        ["office-addin-config", TemplateNames.OfficeAddinCommon],
+        ["da/no-action", TemplateNames.DeclarativeAgentBasic],
+        ["da/graph-connector", TemplateNames.DeclarativeAgentWithGraphConnector],
+        ["da/typespec", TemplateNames.DeclarativeAgentWithTypeSpec],
+        ["da/skill", TemplateNames.DeclarativeAgentWithSkill],
+        ["da/api-plugin-from-scratch", TemplateNames.DeclarativeAgentWithActionFromScratch],
+        [
+          "da/api-plugin-from-scratch-bearer",
+          TemplateNames.DeclarativeAgentWithActionFromScratchBearer,
+        ],
+        [
+          "da/api-plugin-from-scratch-oauth",
+          TemplateNames.DeclarativeAgentWithActionFromScratchOAuth,
+        ],
+        [
+          "da/api-plugin-from-existing-api",
+          TemplateNames.DeclarativeAgentWithActionFromExistingApiSpec,
+        ],
+        ["da/mcp-server-static", TemplateNames.DeclarativeAgentWithActionFromMCP],
+        ["da/mcp-server", TemplateNames.DeclarativeAgentWithActionFromMCP],
+      ];
+      vi.spyOn(scaffoldV4Deps, "scaffoldDeclarativeFromV4Channel").mockResolvedValue(
+        TEMPLATE_SOURCE
+      );
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue(undefined);
+      const sendTelemetry = vi.spyOn(tools.telemetryReporter, "sendTelemetryEvent");
+
+      for (const [templateId, expectedTemplateName] of expectedMappings) {
+        sendTelemetry.mockClear();
+        const inputs: Inputs = {
+          platform: Platform.VSCode,
+          [QuestionNames.Folder]: "/tmp",
+          [QuestionNames.AppName]: "MyApp",
+        };
+
+        const res = await scaffoldV4(
+          inputs,
+          { templateId, engine: "v4", language: "common" },
+          { language: "typescript" }
+        );
+
+        assert.isTrue(res.isOk());
+        assert.equal(
+          sendTelemetry.mock.calls[0][1]?.[TelemetryProperty.TemplateName],
+          `${expectedTemplateName}-ts`,
+          templateId
+        );
+      }
+    });
+
+    it("DCE-20: an unmapped v4 target id falls back to itself as the telemetry key", async () => {
+      vi.spyOn(scaffoldV4Deps, "scaffoldDeclarativeFromV4Channel").mockResolvedValue(
+        TEMPLATE_SOURCE
+      );
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue(undefined);
+      const sendTelemetry = vi.spyOn(tools.telemetryReporter, "sendTelemetryEvent");
+      const inputs: Inputs = {
+        platform: Platform.VSCode,
+        [QuestionNames.Folder]: "/tmp",
+        [QuestionNames.AppName]: "MyApp",
+      };
+
+      const res = await scaffoldV4(
+        inputs,
+        { templateId: "future/v4-template", engine: "v4", language: "common" },
+        { language: "typescript" }
+      );
+
+      assert.isTrue(res.isOk());
+      assert.equal(
+        sendTelemetry.mock.calls[0][1]?.[TelemetryProperty.TemplateName],
+        "future/v4-template-ts"
       );
     });
 
@@ -229,6 +322,52 @@ describe("createFrontDoorAdapters", () => {
       } finally {
         await fs.remove(folder);
       }
+    });
+
+    it("DCE-26: trims an over-length manifest short name after the scaffold", async () => {
+      const folder = tempFolder();
+      const appName = "MyVeryLongDeclarativeAgentName";
+      const manifestPath = path.join(folder, appName, "appPackage", "manifest.json");
+      vi.spyOn(scaffoldV4Deps, "scaffoldDeclarativeFromV4Channel").mockImplementation(async () => {
+        await fs.outputJson(manifestPath, { name: { short: `${appName}\${{APP_NAME_SUFFIX}}` } });
+        return TEMPLATE_SOURCE;
+      });
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue(undefined);
+      const inputs: Inputs = {
+        platform: Platform.VSCode,
+        [QuestionNames.Folder]: folder,
+        [QuestionNames.AppName]: appName,
+      };
+
+      try {
+        const res = await scaffoldV4(inputs, v4Target, {});
+
+        assert.isTrue(res.isOk());
+        const manifest = await fs.readJson(manifestPath);
+        assert.equal(manifest.name.short, "MyVeryLongDeclarativeAgen${{APP_NAME_SUFFIX}}");
+      } finally {
+        await fs.remove(folder);
+      }
+    });
+
+    it("returns the trim error when trimManifestShortName fails", async () => {
+      vi.spyOn(scaffoldV4Deps, "scaffoldDeclarativeFromV4Channel").mockResolvedValue(
+        TEMPLATE_SOURCE
+      );
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue(undefined);
+      vi.spyOn(manifestUtils, "trimManifestShortName").mockResolvedValue(
+        err(new UserError({ source: "Test", name: "TrimShortNameFailed", message: "failed" }))
+      );
+      const inputs: Inputs = {
+        platform: Platform.VSCode,
+        [QuestionNames.Folder]: "/tmp",
+        [QuestionNames.AppName]: "MyApp",
+      };
+
+      const res = await scaffoldV4(inputs, v4Target, {});
+
+      assert.isTrue(res.isErr());
+      assert.equal(res._unsafeUnwrapErr().name, "TrimShortNameFailed");
     });
 
     it("defaults the caller-floor language to common when the target has none", async () => {
@@ -265,6 +404,48 @@ describe("createFrontDoorAdapters", () => {
 
       assert.isTrue(res.isOk());
       assert.equal(warning.mock.calls[0][0], "Using bundled template fallback.");
+    });
+
+    it("carries the pipeline warnings onto the create result", async () => {
+      vi.spyOn(scaffoldV4Deps, "scaffoldDeclarativeFromV4Channel").mockImplementation(
+        async (context) => {
+          context.warnings = [{ type: "mcpAuthOAuthUrlPlaceholder", content: "repair the urls" }];
+          return TEMPLATE_SOURCE;
+        }
+      );
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue(undefined);
+      const inputs: Inputs = {
+        platform: Platform.VSCode,
+        [QuestionNames.Folder]: "/tmp",
+        [QuestionNames.AppName]: "MyApp",
+      };
+
+      const res = await scaffoldV4(inputs, v4Target, {});
+
+      assert.isTrue(res.isOk());
+      assert.deepEqual(res._unsafeUnwrap().warnings, [
+        { type: "mcpAuthOAuthUrlPlaceholder", content: "repair the urls" },
+      ]);
+    });
+
+    it("leaves the create result without warnings when the pipeline raised none", async () => {
+      vi.spyOn(scaffoldV4Deps, "scaffoldDeclarativeFromV4Channel").mockImplementation(
+        async (context) => {
+          context.warnings = [];
+          return TEMPLATE_SOURCE;
+        }
+      );
+      vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue(undefined);
+      const inputs: Inputs = {
+        platform: Platform.VSCode,
+        [QuestionNames.Folder]: "/tmp",
+        [QuestionNames.AppName]: "MyApp",
+      };
+
+      const res = await scaffoldV4(inputs, v4Target, {});
+
+      assert.isTrue(res.isOk());
+      assert.isUndefined(res._unsafeUnwrap().warnings);
     });
 
     it("returns the tracking id error when ensureTrackingId fails", async () => {

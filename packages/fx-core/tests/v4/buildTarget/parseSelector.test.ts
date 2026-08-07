@@ -77,9 +77,6 @@ function makePort(opts: PortOpts): RouteResolverPort {
     v4Registry(templateId) {
       return (opts.v4 ?? []).includes(templateId);
     },
-    v3CoreMethodRegistry() {
-      return false;
-    },
   };
 }
 
@@ -173,6 +170,28 @@ describe("v4/buildTarget/parseSelector", () => {
       assert.instanceOf(error, UserError);
       assert.strictEqual(error.name, BUILD_TARGET_MALFORMED_SELECTOR);
     }
+  });
+
+  it("AC-23: engine 'v3-core-method' is outside the closed set, and a leftover coreMethod key is not a route key", () => {
+    const legacyEngine = parseSelectorSpec({
+      questions: [],
+      routes: [{ when: "true", engine: "v3-core-method", coreMethod: "addPlugin" }],
+    });
+    assert.isTrue(legacyEngine.isErr());
+    const error = legacyEngine._unsafeUnwrapErr();
+    assert.instanceOf(error, UserError);
+    assert.strictEqual(error.name, BUILD_TARGET_MALFORMED_SELECTOR);
+
+    const strayKey = parseSelectorSpec({
+      questions: [],
+      routes: [{ when: "true", engine: "v4", templateId: "da/no-action", coreMethod: "addPlugin" }],
+    });
+    assert.isTrue(strayKey.isOk());
+    assert.deepStrictEqual(strayKey._unsafeUnwrap().routes[0], {
+      when: "true",
+      engine: "v4",
+      templateId: "da/no-action",
+    });
   });
 
   it("malformed selector presentation is an explicit UserError", () => {

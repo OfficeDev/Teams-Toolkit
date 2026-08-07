@@ -72,6 +72,7 @@ import {
 import { manifestUtils } from "../../driver/teamsApp/utils/ManifestUtils";
 import { pluginManifestUtils } from "../../driver/teamsApp/utils/PluginManifestUtils";
 import { generatePlugin, listAPIInfo, validateOpenAPISpec } from "../../../common/daSpecParser";
+import { isMCPScaffoldWarning } from "../../utils/mcpAuthScaffolder";
 import { pathUtils } from "../../utils/pathUtils";
 
 const enum telemetryProperties {
@@ -210,7 +211,7 @@ export async function listOperations(
     );
 
     let operations = listResult.APIs.filter((value) => value.isValid);
-    context.telemetryReporter.sendTelemetryEvent(telemetryEvents.listApis, {
+    context.telemetryReporter?.sendTelemetryEvent(telemetryEvents.listApis, {
       [telemetryProperties.generateType]: projectType.toString(),
       [telemetryProperties.validApisCount]: listResult.validAPICount.toString(),
       [telemetryProperties.allApisCount]: listResult.allAPICount.toString(),
@@ -503,7 +504,7 @@ export async function generateFromApiSpec(
           );
 
     // Send SpecParser.generate() warnings
-    context.telemetryReporter.sendTelemetryEvent(specParserGenerateResultTelemetryEvent, {
+    context.telemetryReporter?.sendTelemetryEvent(specParserGenerateResultTelemetryEvent, {
       [telemetryProperties.generateType]: projectType.toString(),
       [specParserGenerateResultAllSuccessTelemetryProperty]: generateResult.allSuccess.toString(),
       [specParserGenerateResultWarningsTelemetryProperty]: generateResult.warnings
@@ -574,7 +575,7 @@ export function logValidationResults(
     if (existingCorrelationId) {
       properties["correlation-id"] = existingCorrelationId;
     }
-    context.telemetryReporter.sendTelemetryEvent(telemetryEvents.validateApiSpec, properties);
+    context.telemetryReporter?.sendTelemetryEvent(telemetryEvents.validateApiSpec, properties);
   }
 
   if (errors.length === 0 && (warnings.length === 0 || !shouldLogWarning)) {
@@ -727,10 +728,19 @@ export async function generateScaffoldingSummary(
     });
   }
 
+  // MCP scaffolding warnings are not spec-parser warnings, but they report a project that
+  // cannot provision until the developer edits it (unresolved auth placeholders, tools that
+  // could not be fetched), so they must reach the summary too. Declarative-agent projects
+  // route through this function, which would otherwise drop them silently.
+  const mcpWarningMessage = warnings.filter(isMCPScaffoldWarning).map((warn) => {
+    return `${SummaryConstant.NotExecuted} ${warn.content}`;
+  });
+
   if (
     apiSpecWarningMessage.length ||
     manifestWarningMessage.length ||
-    pluginWarningMessage.length
+    pluginWarningMessage.length ||
+    mcpWarningMessage.length
   ) {
     let details = "";
     if (apiSpecWarningMessage.length) {
@@ -743,6 +753,10 @@ export async function generateScaffoldingSummary(
 
     if (pluginWarningMessage.length) {
       details += EOL + pluginWarningMessage.join(EOL);
+    }
+
+    if (mcpWarningMessage.length) {
+      details += EOL + mcpWarningMessage.join(EOL);
     }
 
     return getLocalizedString("core.copilotPlugin.scaffold.summary", details);

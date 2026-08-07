@@ -1,0 +1,449 @@
+version: 1
+
+# The first eight cases are the full LLM x language x launch matrix. Language is
+# a genuinely different template package, so every language gets its own launch
+# and, where a real key exists, its own completion. Launch and language are
+# orthogonal — m365agents.yml and launch.json are byte-identical between the
+# TypeScript and JavaScript packages — so the remaining surfaces are sampled once
+# rather than crossed with every language.
+cases:
+  - id: weather-ts-azure-openai-remote-teams
+    scenarioId: SCN-CREATE-WEATHER-01
+    workItemIds: [34648368]
+    steps:
+      [
+        scaffold-weather-ts-azure-openai,
+        check-weather-ts,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote,
+        open-app,
+        check-weather-chat,
+      ]
+
+  # Local debug: the launch profile's preLaunchTask chain registers the app,
+  # starts the tunnel, and runs the local lifecycle itself, so the case authors
+  # neither provision nor deploy. Only the Microsoft 365 account is signed in,
+  # because the local run reads no Azure resources.
+  - id: weather-ts-azure-openai-local-teams
+    scenarioId: SCN-CREATE-WEATHER-01
+    workItemIds: [34648342]
+    steps:
+      [
+        scaffold-weather-ts-azure-openai,
+        check-weather-ts,
+        login-m365,
+        f5-teams-local,
+        open-app,
+        check-weather-chat,
+      ]
+
+  - id: weather-js-azure-openai-remote-teams
+    scenarioId: SCN-CREATE-WEATHER-01
+    workItemIds: [34648345]
+    steps:
+      [
+        scaffold-weather-js-azure-openai,
+        check-weather-js,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote,
+        open-app,
+        check-weather-chat,
+      ]
+
+  - id: weather-js-azure-openai-local-teams
+    scenarioId: SCN-CREATE-WEATHER-01
+    workItemIds: [34648323]
+    steps:
+      [
+        scaffold-weather-js-azure-openai,
+        check-weather-js,
+        login-m365,
+        f5-teams-local,
+        open-app,
+        check-weather-chat,
+      ]
+
+  # The OpenAI remote cases end at the launched surface and assert no
+  # completion. An Azure OpenAI resource speaks the OpenAI v1 protocol, so the
+  # local cases below redirect the OpenAI client at it and do assert one, but a
+  # remote run reads its app settings from infra/azure.bicep, which declares only
+  # the key. What both halves cover is the OpenAI branch of the scaffold question
+  # tree, which asks for a single key instead of an endpoint and a deployment
+  # name, and the different generated configuration that follows from it.
+  - id: weather-ts-openai-remote-teams
+    scenarioId: SCN-CREATE-WEATHER-03
+    workItemIds: [34648339]
+    steps:
+      [
+        scaffold-weather-ts-openai,
+        check-weather-ts,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote,
+        open-app,
+      ]
+
+  - id: weather-ts-openai-local-teams
+    scenarioId: SCN-CREATE-WEATHER-03
+    workItemIds: [34648300]
+    steps:
+      [
+        scaffold-weather-ts-openai,
+        check-weather-ts,
+        redirect-openai-base-url,
+        login-m365,
+        f5-teams-local,
+        open-app,
+        check-weather-chat,
+      ]
+
+  - id: weather-js-openai-remote-teams
+    scenarioId: SCN-CREATE-WEATHER-03
+    workItemIds: [34648304]
+    steps:
+      [
+        scaffold-weather-js-openai,
+        check-weather-js,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote,
+        open-app,
+      ]
+
+  - id: weather-js-openai-local-teams
+    scenarioId: SCN-CREATE-WEATHER-03
+    workItemIds: [34648299]
+    steps:
+      [
+        scaffold-weather-js-openai,
+        check-weather-js,
+        redirect-openai-base-url,
+        login-m365,
+        f5-teams-local,
+        open-app,
+        check-weather-chat,
+      ]
+
+  # Surfaces beyond Teams, sampled on the canonical TypeScript + Azure OpenAI
+  # combination. A custom engine agent previewed in Copilot needs its bot
+  # deployed first, unlike a declarative agent.
+  - id: weather-ts-azure-openai-remote-copilot
+    scenarioId: SCN-CREATE-WEATHER-01
+    workItemIds: [33338502]
+    steps:
+      [
+        scaffold-weather-ts-azure-openai,
+        check-weather-ts,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-copilot-remote,
+        open-agent,
+        check-weather-chat,
+      ]
+
+  - id: weather-ts-azure-openai-local-copilot
+    scenarioId: SCN-CREATE-WEATHER-01
+    workItemIds: [33338504]
+    steps:
+      [
+        scaffold-weather-ts-azure-openai,
+        check-weather-ts,
+        login-m365,
+        f5-copilot-local,
+        open-agent,
+        check-weather-chat,
+      ]
+
+  # The Agents Playground hosts the agent locally and never signs in to
+  # Microsoft 365, so this is the shortest case that still exercises a real
+  # completion from the scaffolded agent.
+  - id: weather-ts-azure-openai-playground
+    scenarioId: SCN-CREATE-WEATHER-01
+    workItemIds: [36230430]
+    steps:
+      [
+        scaffold-weather-ts-azure-openai,
+        check-weather-ts,
+        f5-playground,
+        open-app,
+        check-weather-chat,
+      ]
+
+  - id: weather-js-azure-openai-playground
+    scenarioId: SCN-CREATE-WEATHER-01
+    workItemIds: [36230411]
+    steps:
+      [
+        scaffold-weather-js-azure-openai,
+        check-weather-js,
+        f5-playground,
+        open-app,
+        check-weather-chat,
+      ]
+
+steps:
+  scaffold-weather-ts-azure-openai:
+    type: scaffold
+    with:
+      template: weather-agent
+      answers:
+        - question: projectType
+          value: custom-engine-agent-type
+        - question: customEngineAgent
+          value: weather-agent
+        - question: llmService
+          value: llm-service-azure-openai
+        - question: azureOpenAIKey
+          type: text
+          value: "${{secret:AZURE_OPENAI_API_KEY}}"
+        - question: azureOpenAIEndpoint
+          type: text
+          value: "${{env:AZURE_OPENAI_ENDPOINT}}"
+        - question: azureOpenAIDeploymentName
+          type: text
+          value: "${{env:AZURE_OPENAI_MODEL}}"
+        - question: language
+          value: typescript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-weather-ts:
+    type: checks
+    with:
+      - type: file
+        path: m365agents.yml
+        expect:
+          exists: true
+          contains: ["version: v1.11", "provision:", "deploy:"]
+          notContains: ["oauth/register", "dcr/register"]
+      - type: file
+        path: src/index.ts
+        expect:
+          exists: true
+      - type: file
+        path: src/agent.ts
+        expect:
+          exists: true
+      - type: file
+        path: src/tools/getWeatherTool.ts
+        expect:
+          exists: true
+      - type: file
+        path: package.json
+        expect:
+          exists: true
+      - type: file
+        path: infra/azure.bicep
+        expect:
+          exists: true
+      - type: file
+        path: appPackage/manifest.json
+        expect:
+          contains: ['"manifestVersion": "1.29"']
+
+  scaffold-weather-ts-openai:
+    type: scaffold
+    with:
+      template: weather-agent
+      answers:
+        - question: projectType
+          value: custom-engine-agent-type
+        - question: customEngineAgent
+          value: weather-agent
+        - question: llmService
+          value: llm-service-openai
+        # An Azure OpenAI resource authenticates its OpenAI v1 endpoint with the
+        # resource key presented as a bearer token, so the OpenAI branch can be
+        # driven by the same secret the Azure branch uses.
+        - question: openAIKey
+          type: text
+          value: "${{secret:AZURE_OPENAI_API_KEY}}"
+        - question: language
+          value: typescript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  scaffold-weather-js-azure-openai:
+    type: scaffold
+    with:
+      template: weather-agent
+      answers:
+        - question: projectType
+          value: custom-engine-agent-type
+        - question: customEngineAgent
+          value: weather-agent
+        - question: llmService
+          value: llm-service-azure-openai
+        - question: azureOpenAIKey
+          type: text
+          value: "${{secret:AZURE_OPENAI_API_KEY}}"
+        - question: azureOpenAIEndpoint
+          type: text
+          value: "${{env:AZURE_OPENAI_ENDPOINT}}"
+        - question: azureOpenAIDeploymentName
+          type: text
+          value: "${{env:AZURE_OPENAI_MODEL}}"
+        - question: language
+          value: javascript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  scaffold-weather-js-openai:
+    type: scaffold
+    with:
+      template: weather-agent
+      answers:
+        - question: projectType
+          value: custom-engine-agent-type
+        - question: customEngineAgent
+          value: weather-agent
+        - question: llmService
+          value: llm-service-openai
+        - question: openAIKey
+          type: text
+          value: "${{secret:AZURE_OPENAI_API_KEY}}"
+        - question: language
+          value: javascript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  # The scaffolded agent constructs its OpenAI client without a base URL, so the
+  # client falls back to OPENAI_BASE_URL. Writing it into the lifecycle rather
+  # than the container environment keeps the redirect inside the two cases that
+  # ask for it, and routes it through the same generated .localConfigs the key
+  # travels through.
+  redirect-openai-base-url:
+    type: localEnvironment
+    with:
+      OPENAI_BASE_URL: "${{env:AZURE_OPENAI_ENDPOINT}}/openai/v1"
+
+  check-weather-js:
+    type: checks
+    with:
+      - type: file
+        path: src/index.js
+        expect:
+          exists: true
+      - type: file
+        path: src/agent.js
+        expect:
+          exists: true
+      - type: file
+        path: src/tools/getWeatherTool.js
+        expect:
+          exists: true
+      - type: file
+        path: package.json
+        expect:
+          contains: ['"start"', '"dev:teamsfx"']
+      - type: file
+        path: src/index.ts
+        expect:
+          exists: false
+
+  login-azure:
+    type: login
+    with:
+      type: azure
+      account: "${{env:AZURE_ACCOUNT_NAME}}"
+      password: "${{secret:AZURE_ACCOUNT_PASSWORD}}"
+
+  login-m365:
+    type: login
+    with:
+      type: m365
+      account: "${{env:M365_ACCOUNT_NAME}}"
+      password: "${{secret:M365_ACCOUNT_PASSWORD}}"
+
+  # The weather agent is a custom engine agent, so its manifest declares
+  # copilotAgents.customEngineAgents instead of declarativeAgents. The toolkit
+  # therefore offers remote environments only, leaving dev as the single
+  # selectable environment, and auto-selects it for every lifecycle command.
+  provision-arm:
+    type: provision
+    with:
+      environment: none
+      arm:
+        targetResourceGroupName: "+ New resource group"
+        newResourceGroupName: "${{var:app_name}}-rg"
+        newResourceGroupLocation: "${{env:RESOURCE_GROUP_REGION}}"
+
+  deploy:
+    type: deploy
+    with:
+      environment: none
+
+  f5-teams-remote:
+    type: target
+    with:
+      profile: "Launch Remote in Teams (Chrome)"
+      profileSelection: first
+
+  f5-teams-local:
+    type: target
+    with:
+      profile: "Debug in Teams (Chrome)"
+      profileSelection: first
+
+  f5-copilot-local:
+    type: target
+    with:
+      profile: "(Preview) Debug in Copilot (Chrome)"
+      profileSelection: first
+
+  f5-copilot-remote:
+    type: target
+    with:
+      profile: "(Preview) Launch Remote in Copilot (Chrome)"
+      profileSelection: first
+
+  f5-playground:
+    type: target
+    with:
+      profile: "Debug in Microsoft 365 Agents Playground"
+      profileSelection: first
+
+  open-app:
+    type: open
+    with:
+      kind: app
+      destination: chat
+
+  open-agent:
+    type: open
+    with:
+      kind: agent
+      destination: chat
+
+  check-weather-chat:
+    type: checks
+    with:
+      - type: chat
+        send: What is the weather in Seattle?
+        expect:
+          replied: true
+          contains: [Seattle]

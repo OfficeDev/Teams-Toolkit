@@ -1,0 +1,345 @@
+version: 1
+
+# Each language is a separate template subtree and each launch owns a distinct
+# lifecycle. The matrix keeps those boundaries explicit instead of asking the
+# compiler to infer combinations.
+cases:
+  - id: simple-bot-ts-remote-teams
+    scenarioId: SCN-CREATE-DEFAULT-BOT-01
+    workItemIds: [14134645]
+    steps:
+      [
+        scaffold-simple-bot-ts,
+        check-simple-bot-ts,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote-ts,
+        open-app,
+        check-simple-bot-chat,
+      ]
+
+  - id: simple-bot-ts-local-teams
+    scenarioId: SCN-CREATE-DEFAULT-BOT-01
+    workItemIds: [9729308]
+    steps:
+      [
+        scaffold-simple-bot-ts,
+        check-simple-bot-ts,
+        login-m365,
+        f5-teams-local,
+        open-app,
+        check-simple-bot-chat,
+      ]
+
+  - id: simple-bot-ts-playground
+    scenarioId: SCN-CREATE-DEFAULT-BOT-01
+    workItemIds: [36232737, 15988344]
+    steps:
+      [
+        scaffold-simple-bot-ts,
+        check-simple-bot-ts,
+        f5-playground,
+        open-app,
+        check-simple-bot-chat,
+      ]
+
+  - id: simple-bot-js-remote-teams
+    scenarioId: SCN-CREATE-DEFAULT-BOT-03
+    workItemIds: [9729295]
+    steps:
+      [
+        scaffold-simple-bot-js,
+        check-simple-bot-js,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote,
+        open-app,
+        check-simple-bot-chat,
+      ]
+
+  - id: simple-bot-js-local-teams
+    scenarioId: SCN-CREATE-DEFAULT-BOT-03
+    workItemIds: [11042961]
+    steps:
+      [
+        scaffold-simple-bot-js,
+        check-simple-bot-js,
+        login-m365,
+        f5-teams-local,
+        open-app,
+        check-simple-bot-chat,
+      ]
+
+  - id: simple-bot-js-playground
+    scenarioId: SCN-CREATE-DEFAULT-BOT-03
+    workItemIds: [36232743, 15988344]
+    steps:
+      [
+        scaffold-simple-bot-js,
+        check-simple-bot-js,
+        f5-playground,
+        open-app,
+        check-simple-bot-chat,
+      ]
+
+  - id: simple-bot-py-remote-teams
+    scenarioId: SCN-CREATE-DEFAULT-BOT-04
+    workItemIds: [36045666]
+    steps:
+      [
+        scaffold-simple-bot-py,
+        check-simple-bot-py,
+        create-python-environment,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote,
+        open-app,
+        check-simple-bot-chat,
+      ]
+
+  - id: simple-bot-py-local-teams
+    scenarioId: SCN-CREATE-DEFAULT-BOT-04
+    workItemIds: [35636569]
+    steps:
+      [
+        scaffold-simple-bot-py,
+        check-simple-bot-py,
+        create-python-environment,
+        login-m365,
+        f5-teams-local,
+        open-app,
+        check-simple-bot-chat,
+      ]
+
+  - id: simple-bot-py-playground
+    scenarioId: SCN-CREATE-DEFAULT-BOT-04
+    workItemIds: [36232730, 15988344]
+    steps:
+      [
+        scaffold-simple-bot-py,
+        check-simple-bot-py,
+        create-python-environment,
+        f5-playground,
+        open-app,
+        check-simple-bot-chat,
+      ]
+
+steps:
+  scaffold-simple-bot-ts:
+    type: scaffold
+    with:
+      template: default-bot
+      answers:
+        - question: projectType
+          value: teams-agent-and-app-type
+        - question: teamsAppType
+          value: teams-other-app-type
+        - question: teamsOtherAppType
+          value: default-bot
+        - question: language
+          value: typescript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-simple-bot-ts:
+    type: checks
+    with:
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains: ["version: v1.11", "provision:", "deploy:"]
+      - type: file
+        path: app.ts
+        expect:
+          exists: true
+          contains: ["Default echo behavior"]
+      - type: file
+        path: index.ts
+        expect:
+          exists: true
+      - type: file
+        path: config.ts
+        expect:
+          exists: true
+      - type: file
+        path: package.json
+        expect:
+          exists: true
+      - type: file
+        path: infra/azure.bicep
+        expect:
+          exists: true
+      - type: file
+        path: appPackage/manifest.json
+        expect:
+          contains: ['"manifestVersion": "1.29"', '"composeExtensions": []']
+
+  scaffold-simple-bot-js:
+    type: scaffold
+    with:
+      template: default-bot
+      answers:
+        - question: projectType
+          value: teams-agent-and-app-type
+        - question: teamsAppType
+          value: teams-other-app-type
+        - question: teamsOtherAppType
+          value: default-bot
+        - question: language
+          value: javascript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-simple-bot-js:
+    type: checks
+    with:
+      - type: file
+        path: app.js
+        expect:
+          exists: true
+          contains: ["Default echo behavior"]
+      - type: file
+        path: index.js
+        expect:
+          exists: true
+      - type: file
+        path: config.js
+        expect:
+          exists: true
+      - type: file
+        path: package.json
+        expect:
+          exists: true
+      - type: file
+        path: index.ts
+        expect:
+          exists: false
+
+  scaffold-simple-bot-py:
+    type: scaffold
+    with:
+      template: default-bot
+      answers:
+        - question: projectType
+          value: teams-agent-and-app-type
+        - question: teamsAppType
+          value: teams-other-app-type
+        - question: teamsOtherAppType
+          value: default-bot
+        - question: language
+          value: python
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-simple-bot-py:
+    type: checks
+    with:
+      - type: file
+        path: src/app.py
+        expect:
+          exists: true
+          contains: ["handle_message"]
+      - type: file
+        path: src/config.py
+        expect:
+          exists: true
+      - type: file
+        path: src/requirements.txt
+        expect:
+          exists: true
+          contains: [microsoft-teams-apps, azure-identity]
+      - type: file
+        path: infra/azure.bicep
+        expect:
+          exists: true
+      - type: file
+        path: package.json
+        expect:
+          exists: false
+
+  create-python-environment:
+    type: pythonEnvironment
+    with:
+      interpreter: "Python 3.12"
+
+  login-azure:
+    type: login
+    with:
+      type: azure
+      account: "${{env:AZURE_ACCOUNT_NAME}}"
+      password: "${{secret:AZURE_ACCOUNT_PASSWORD}}"
+
+  login-m365:
+    type: login
+    with:
+      type: m365
+      account: "${{env:M365_ACCOUNT_NAME}}"
+      password: "${{secret:M365_ACCOUNT_PASSWORD}}"
+
+  provision-arm:
+    type: provision
+    with:
+      environment: none
+      arm:
+        targetResourceGroupName: "+ New resource group"
+        newResourceGroupName: "${{var:app_name}}-rg"
+        newResourceGroupLocation: "${{env:RESOURCE_GROUP_REGION}}"
+
+  deploy:
+    type: deploy
+    with:
+      environment: none
+
+  f5-teams-remote-ts:
+    type: target
+    with:
+      profile: "View Remote App in Teams (Chrome)"
+      profileSelection: first
+
+  f5-teams-remote:
+    type: target
+    with:
+      profile: "Launch Remote (Chrome)"
+      profileSelection: first
+
+  f5-teams-local:
+    type: target
+    with:
+      profile: "Debug in Teams (Chrome)"
+      profileSelection: first
+
+  f5-playground:
+    type: target
+    with:
+      profile: "Debug in Microsoft 365 Agents Playground"
+      profileSelection: first
+
+  open-app:
+    type: open
+    with:
+      kind: app
+      destination: chat
+
+  check-simple-bot-chat:
+    type: checks
+    with:
+      - type: chat
+        send: vscuse echo
+        expect:
+          replied: true
+          contains: [vscuse echo]

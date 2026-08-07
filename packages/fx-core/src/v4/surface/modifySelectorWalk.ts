@@ -119,9 +119,6 @@ function buildPort(
       }
       return openDeclarativePackage(floorBytes, { kind: "modify", templateId }).isOk();
     },
-    v3CoreMethodRegistry(coreMethod: string): boolean {
-      return coreMethod === "addPlugin";
-    },
   };
 }
 

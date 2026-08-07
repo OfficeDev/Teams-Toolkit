@@ -95,6 +95,26 @@ describe("SPFxGenerator", function () {
     }
   });
 
+  it("selects matching SPFx dependencies without telemetry", async () => {
+    context.telemetryReporter = undefined;
+
+    const useGlobal = await SPFxGenerator.shouldAddWebPartWithLocalDependencies(
+      "1.17.4",
+      "1.17.4",
+      undefined,
+      context
+    );
+    const useLocal = await SPFxGenerator.shouldAddWebPartWithLocalDependencies(
+      "1.17.4",
+      undefined,
+      "1.17.4",
+      context
+    );
+
+    chai.expect(useGlobal).to.be.false;
+    chai.expect(useLocal).to.be.true;
+  });
+
   it("Both yeoman generator and template generator is called when scaffold SPFx project", async function () {
     const inputs: Inputs = {
       platform: Platform.CLI,
@@ -816,8 +836,10 @@ describe("SPFxGenerator", function () {
         [QuestionNames.SPFxSolution]: "new",
         [QuestionNames.SPFxFolder]: "folder",
         [QuestionNames.SPFxWebpartName]: "hello",
+        globalSpfxPackageVersion: "1.13.0",
         stage: Stage.addWebpart,
       };
+      context.telemetryReporter = undefined;
 
       vi.spyOn(GeneratorChecker.prototype, "findGloballyInstalledVersion").mockResolvedValue(
         "1.17.4"

@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/teamsfx-test",
-  "version": "0.1.19",
+  "version": "0.1.21",
   "description": "A UI Test Project of Teams Toolkit Extension",
   "private": true,
   "author": "Microsoft Corporation",
@@ -12,6 +12,8 @@
     "test:e2e:parallel": "mocha --parallel --exit --reporter @mochajs/json-file-reporter \"src/e2e/**/*.tests.ts\"",
     "test:e2e:smoke": "mocha --exit --reporter @mochajs/json-file-reporter \"src/e2e/smoke/*.tests.ts\"",
     "test:e2e:others": "mocha --exit --reporter @mochajs/json-file-reporter \"src/e2e/{,!(smoke)}/*.tests.ts\"",
+    "generate:vscuse-cases": "node -e \"require('./vscuse/vscode-test-cases/engine/index.cjs').setupGeneratedPlans().then((result) => { if (!result.ok) { console.error(JSON.stringify(result.diagnostics, null, 2)); process.exitCode = 1; } })\"",
+    "test:vscuse-engine": "node --test vscuse/vscode-test-cases/engine/*.test.cjs vscuse/vscode-test-cases/components/lifecycle-components.test.cjs vscuse/docker/vscuse-atk/*.test.cjs",
     "precommit": "lint-staged"
   },
   "devDependencies": {

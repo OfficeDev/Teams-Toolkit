@@ -1,0 +1,2278 @@
+{
+  "plan_metadata": {
+    "version": "1.1",
+    "plan_id": "plan_7043fb6321ff",
+    "execution_context": {
+      "delay_between_steps": 1,
+      "stop_on_error": true,
+      "precondition_wait_timeout": 30,
+      "precondition_retry_interval": 1
+    },
+    "total_steps": 95,
+    "name": "tab-ts-local-teams-env-recreated",
+    "description": {
+      "owner": "",
+      "workitem": "17038910",
+      "other": ""
+    },
+    "execution_order": [
+      "step_closeWelcomeOverlay_assertVisible_c9c198c7d_1_1",
+      "step_closeWelcomeOverlay_close_c9c198c7d_1_1",
+      "step_closeWelcomeOverlay_assertReady_c9c198c7d_1_1",
+      "step_executeCommand_open_c9c198c7d_1_2",
+      "step_executeCommand_assertPalette_c9c198c7d_1_2",
+      "step_executeCommand_filter_c9c198c7d_1_2",
+      "step_executeCommand_assertCommand_c9c198c7d_1_2",
+      "step_executeCommand_execute_c9c198c7d_1_2",
+      "step_assertToolkitViewSettled_assert_c9c198c7d_1_3",
+      "step_closeGetStartedEditor_assertActive_c9c198c7d_1_4",
+      "step_closeGetStartedEditor_close_c9c198c7d_1_4",
+      "step_closeGetStartedEditor_assertClosed_c9c198c7d_1_4",
+      "step_executeCommand_open_c9c198c7d_1_5",
+      "step_executeCommand_assertPalette_c9c198c7d_1_5",
+      "step_executeCommand_filter_c9c198c7d_1_5",
+      "step_executeCommand_assertCommand_c9c198c7d_1_5",
+      "step_executeCommand_execute_c9c198c7d_1_5",
+      "step_singleSelect_assertQuestion_c9c198c7d_1_6",
+      "step_singleSelect_assertOptionsLoaded_c9c198c7d_1_6",
+      "step_singleSelect_filter_c9c198c7d_1_6",
+      "step_singleSelect_assertOption_c9c198c7d_1_6",
+      "step_singleSelect_confirm_c9c198c7d_1_6",
+      "step_singleSelect_assertQuestion_c9c198c7d_1_7",
+      "step_singleSelect_assertOptionsLoaded_c9c198c7d_1_7",
+      "step_singleSelect_filter_c9c198c7d_1_7",
+      "step_singleSelect_assertOption_c9c198c7d_1_7",
+      "step_singleSelect_confirm_c9c198c7d_1_7",
+      "step_singleSelect_assertQuestion_c9c198c7d_1_8",
+      "step_singleSelect_assertOptionsLoaded_c9c198c7d_1_8",
+      "step_singleSelect_filter_c9c198c7d_1_8",
+      "step_singleSelect_assertOption_c9c198c7d_1_8",
+      "step_singleSelect_confirm_c9c198c7d_1_8",
+      "step_confirmOption_assertPrompt_c9c198c7d_1_9",
+      "step_confirmOption_confirm_c9c198c7d_1_9",
+      "step_textInput_assertQuestion_c9c198c7d_1_10",
+      "step_textInput_input_c9c198c7d_1_10",
+      "step_textInput_confirm_c9c198c7d_1_10",
+      "step_assertProjectWindowReady_assert_c9c198c7d_1_11",
+      "step_checkWorkspaceFiles_verify_c9c198c7d_2_1",
+      "step_checkWorkspaceFiles_verify_c9c198c7d_2_2",
+      "step_checkWorkspaceFiles_verify_c9c198c7d_2_3",
+      "step_checkWorkspaceFiles_verify_c9c198c7d_2_4",
+      "step_removeWorkspaceFile_remove_c9c198c7d_3_1",
+      "step_executeCommand_open_c9c198c7d_4_1",
+      "step_executeCommand_assertPalette_c9c198c7d_4_1",
+      "step_executeCommand_filter_c9c198c7d_4_1",
+      "step_executeCommand_assertCommand_c9c198c7d_4_1",
+      "step_executeCommand_execute_c9c198c7d_4_1",
+      "step_signInM365_assertOption_c9c198c7d_4_2",
+      "step_signInM365_selectOption_c9c198c7d_4_2",
+      "step_signInM365_confirmSignIn_c9c198c7d_4_2",
+      "step_signInM365_focusAccount_c9c198c7d_4_2",
+      "step_signInM365_typeAccount_c9c198c7d_4_2",
+      "step_signInM365_next_c9c198c7d_4_2",
+      "step_signInM365_typePassword_c9c198c7d_4_2",
+      "step_signInM365_submit_c9c198c7d_4_2",
+      "step_signInM365_closeBrowser_c9c198c7d_4_2",
+      "step_signInM365_assertReady_c9c198c7d_4_2",
+      "step_executeCommand_open_c9c198c7d_5_1",
+      "step_executeCommand_assertPalette_c9c198c7d_5_1",
+      "step_executeCommand_filter_c9c198c7d_5_1",
+      "step_executeCommand_assertCommand_c9c198c7d_5_1",
+      "step_executeCommand_execute_c9c198c7d_5_1",
+      "step_filterOption_filter_c9c198c7d_5_2",
+      "step_filterOption_assertOption_c9c198c7d_5_2",
+      "step_filterOption_confirm_c9c198c7d_5_2",
+      "step_browserM365PasswordSignIn_assertPassword_c9c198c7d_5_3",
+      "step_browserM365PasswordSignIn_focusPassword_c9c198c7d_5_3",
+      "step_browserM365PasswordSignIn_enterPassword_c9c198c7d_5_3",
+      "step_browserM365PasswordSignIn_submitPassword_c9c198c7d_5_3",
+      "step_browserM365PasswordSignIn_assertStaySignedIn_c9c198c7d_5_3",
+      "step_browserM365PasswordSignIn_confirmStaySignedIn_c9c198c7d_5_3",
+      "step_assertReady_assertReady_c9c198c7d_5_4",
+      "step_trustLocalTabCertificate_assertTabBar_c9c198c7d_6_1",
+      "step_trustLocalTabCertificate_newTab_c9c198c7d_6_1",
+      "step_trustLocalTabCertificate_assertAddressBar_c9c198c7d_6_1",
+      "step_trustLocalTabCertificate_typeUrl_c9c198c7d_6_1",
+      "step_trustLocalTabCertificate_navigate_c9c198c7d_6_1",
+      "step_trustLocalTabCertificate_assertWarning_c9c198c7d_6_1",
+      "step_trustLocalTabCertificate_expandWarning_c9c198c7d_6_1",
+      "step_trustLocalTabCertificate_assertProceed_c9c198c7d_6_1",
+      "step_trustLocalTabCertificate_proceed_c9c198c7d_6_1",
+      "step_trustLocalTabCertificate_assertTrusted_c9c198c7d_6_1",
+      "step_trustLocalTabCertificate_switchBack_c9c198c7d_6_1",
+      "step_trustLocalTabCertificate_assertReturned_c9c198c7d_6_1",
+      "step_addAndOpenApp_assertAdd_c9c198c7d_6_2",
+      "step_addAndOpenApp_add_c9c198c7d_6_2",
+      "step_addAndOpenApp_assertAdded_c9c198c7d_6_2",
+      "step_addAndOpenApp_open_c9c198c7d_6_2",
+      "step_addAndOpenApp_assertReady_c9c198c7d_6_2",
+      "step_allowLocalDeviceAccess_assertPrompt_c9c198c7d_6_3",
+      "step_allowLocalDeviceAccess_allow_c9c198c7d_6_3",
+      "step_allowLocalDeviceAccess_assertDismissed_c9c198c7d_6_3",
+      "step_assertPageContains_assert_c9c198c7d_7_1",
+      "step_checkWorkspaceFiles_verify_c9c198c7d_8_1"
+    ],
+    "tags": [
+      "case_id:tab-ts-local-teams-env-recreated",
+      "scenario_id:SCN-CREATE-NON-SSO-TAB-02",
+      "template_id:non-sso-tab",
+      "gate:pr"
+    ]
+  },
+  "steps": [
+    {
+      "step_id": "step_closeWelcomeOverlay_assertVisible_c9c198c7d_1_1",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the startup \"Welcome to VS Code\" sign-in overlay is visible and its Close button is available.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:initialization",
+        "initialization:closeWelcomeOverlay",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_closeWelcomeOverlay_close_c9c198c7d_1_1",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 952,
+        "y": 128
+      },
+      "description": "Click the Close button on the startup Welcome sign-in overlay.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_closeWelcomeOverlay_assertVisible_c9c198c7d_1_1"
+      ],
+      "preconditions": [
+        "dhash:952:128:16:5:255266345964665b",
+        "dhash:952:128:96:5:16100c10100c1404",
+        "dhash:952:128:0:10:2592eae0f08e8621"
+      ],
+      "postconditions": [],
+      "tags": [
+        "component:initialization",
+        "initialization:closeWelcomeOverlay",
+        "force_run:true"
+      ]
+    },
+    {
+      "step_id": "step_closeWelcomeOverlay_assertReady_c9c198c7d_1_1",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the startup sign-in overlay is no longer visible and the VS Code workbench is ready.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_closeWelcomeOverlay_close_c9c198c7d_1_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:initialization",
+        "initialization:closeWelcomeOverlay",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_open_c9c198c7d_1_2",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "f1"
+      },
+      "description": "Press the F1 key to open the Command Palette in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_closeWelcomeOverlay_assertReady_c9c198c7d_1_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_assertPalette_c9c198c7d_1_2",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Visual Studio Code Command Palette is visible with a > character in its input box and is ready to accept a command search.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_open_c9c198c7d_1_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_filter_c9c198c7d_1_2",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View"
+      },
+      "description": "Type the resolved command title into the active Command Palette.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_assertPalette_c9c198c7d_1_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_assertCommand_c9c198c7d_1_2",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Command Palette input box reads >Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View and the highlighted command listed under it is titled Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_filter_c9c198c7d_1_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_execute_c9c198c7d_1_2",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to execute the selected Command Palette command.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_assertCommand_c9c198c7d_1_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_assertToolkitViewSettled_assert_c9c198c7d_1_3",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Microsoft 365 Agents Toolkit view is open in the side bar and an editor tab labeled Welcome showing the Build a Declarative Agent walkthrough is open in the editor area.",
+      "content_refs": [],
+      "timeout": 120,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_execute_c9c198c7d_1_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:initialization",
+        "initialization:assertToolkitViewSettled",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_closeGetStartedEditor_assertActive_c9c198c7d_1_4",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the editor tab labeled Welcome showing the Build a Declarative Agent walkthrough is the active editor tab in the Visual Studio Code editor area.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_assertToolkitViewSettled_assert_c9c198c7d_1_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:initialization",
+        "initialization:closeGetStartedEditor",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_closeGetStartedEditor_close_c9c198c7d_1_4",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+w"
+      },
+      "description": "Press Ctrl+W to close the Welcome editor tab.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_closeGetStartedEditor_assertActive_c9c198c7d_1_4"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:initialization",
+        "initialization:closeGetStartedEditor"
+      ]
+    },
+    {
+      "step_id": "step_closeGetStartedEditor_assertClosed_c9c198c7d_1_4",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion no editor tab is open in the Visual Studio Code editor area.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_closeGetStartedEditor_close_c9c198c7d_1_4"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:initialization",
+        "initialization:closeGetStartedEditor",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_open_c9c198c7d_1_5",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "f1"
+      },
+      "description": "Press the F1 key to open the Command Palette in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_closeGetStartedEditor_assertClosed_c9c198c7d_1_4"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_assertPalette_c9c198c7d_1_5",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Visual Studio Code Command Palette is visible with a > character in its input box and is ready to accept a command search.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_open_c9c198c7d_1_5"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_filter_c9c198c7d_1_5",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Microsoft 365 Agents: Create New Agent/App"
+      },
+      "description": "Type the resolved command title into the active Command Palette.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_assertPalette_c9c198c7d_1_5"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_assertCommand_c9c198c7d_1_5",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Command Palette input box reads >Microsoft 365 Agents: Create New Agent/App and the highlighted command listed under it is titled Microsoft 365 Agents: Create New Agent/App.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_filter_c9c198c7d_1_5"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_execute_c9c198c7d_1_5",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to execute the selected Command Palette command.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_assertCommand_c9c198c7d_1_5"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertQuestion_c9c198c7d_1_6",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the active prompt titled New Project is visible.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_execute_c9c198c7d_1_5"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertOptionsLoaded_c9c198c7d_1_6",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the prompt titled New Project has finished loading and lists at least one selectable option.",
+      "content_refs": [],
+      "timeout": 120,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertQuestion_c9c198c7d_1_6"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_filter_c9c198c7d_1_6",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Teams Agents and Apps"
+      },
+      "description": "Type the resolved option label Teams Agents and Apps into the active single-select prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertOptionsLoaded_c9c198c7d_1_6"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertOption_c9c198c7d_1_6",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the option Teams Agents and Apps is visible and selectable in the filtered single-select prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_filter_c9c198c7d_1_6"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_confirm_c9c198c7d_1_6",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the filtered single-select option.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertOption_c9c198c7d_1_6"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertQuestion_c9c198c7d_1_7",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the active prompt titled Teams Agent or App Using Microsoft Teams SDK is visible.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_confirm_c9c198c7d_1_6"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertOptionsLoaded_c9c198c7d_1_7",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the prompt titled Teams Agent or App Using Microsoft Teams SDK has finished loading and lists at least one selectable option.",
+      "content_refs": [],
+      "timeout": 120,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertQuestion_c9c198c7d_1_7"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_filter_c9c198c7d_1_7",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Other Teams Capabilities"
+      },
+      "description": "Type the resolved option label Other Teams Capabilities into the active single-select prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertOptionsLoaded_c9c198c7d_1_7"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertOption_c9c198c7d_1_7",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the option Other Teams Capabilities is visible and selectable in the filtered single-select prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_filter_c9c198c7d_1_7"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_confirm_c9c198c7d_1_7",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the filtered single-select option.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertOption_c9c198c7d_1_7"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertQuestion_c9c198c7d_1_8",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the active prompt titled Teams Capability is visible.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_confirm_c9c198c7d_1_7"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertOptionsLoaded_c9c198c7d_1_8",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the prompt titled Teams Capability has finished loading and lists at least one selectable option.",
+      "content_refs": [],
+      "timeout": 120,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertQuestion_c9c198c7d_1_8"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_filter_c9c198c7d_1_8",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Tab"
+      },
+      "description": "Type the resolved option label Tab into the active single-select prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertOptionsLoaded_c9c198c7d_1_8"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertOption_c9c198c7d_1_8",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the option Tab is visible and selectable in the filtered single-select prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_filter_c9c198c7d_1_8"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_confirm_c9c198c7d_1_8",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the filtered single-select option.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertOption_c9c198c7d_1_8"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_confirmOption_assertPrompt_c9c198c7d_1_9",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the active prompt titled Workspace Folder is visible and the option Default folder is focused.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_confirm_c9c198c7d_1_8"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "interaction:key-press",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_confirmOption_confirm_c9c198c7d_1_9",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the Default folder option.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_confirmOption_assertPrompt_c9c198c7d_1_9"
+      ],
+      "preconditions": [
+        "dhash:364:74:16:5:08056a9a5d5516b6",
+        "dhash:364:74:96:5:44232286e2168e01",
+        "dhash:364:74:0:10:f0b09494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "interaction:key-press"
+      ]
+    },
+    {
+      "step_id": "step_textInput_assertQuestion_c9c198c7d_1_10",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the active prompt titled Application Name is visible.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_confirmOption_confirm_c9c198c7d_1_9"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:text",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_textInput_input_c9c198c7d_1_10",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{var:app_name:vscuse_app_#####}}"
+      },
+      "description": "Type the authored value into the active text prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_textInput_assertQuestion_c9c198c7d_1_10"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:text"
+      ]
+    },
+    {
+      "step_id": "step_textInput_confirm_c9c198c7d_1_10",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to submit the accepted text input.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_textInput_input_c9c198c7d_1_10"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:text"
+      ]
+    },
+    {
+      "step_id": "step_assertProjectWindowReady_assert_c9c198c7d_1_11",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Preview README.md editor tab is open in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 60,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_textInput_confirm_c9c198c7d_1_10"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:initialization",
+        "initialization:assertProjectWindowReady",
+        "step_retry_timeout: 60"
+      ]
+    },
+    {
+      "step_id": "step_checkWorkspaceFiles_verify_c9c198c7d_2_1",
+      "agent": "code",
+      "tool": "",
+      "parameters": {
+        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" ASSERTIONS_B64=\"W3sicGF0aCI6Im0zNjVhZ2VudHMueW1sIiwiZXhpc3RzIjp0cnVlLCJjb250YWlucyI6WyJ2ZXJzaW9uOiB2MS4xMSIsInByb3Zpc2lvbjoiLCJkZXBsb3k6IiwiYXp1cmVBcHBTZXJ2aWNlL3ppcERlcGxveSJdLCJub3RDb250YWlucyI6W119XQ==\" python3 - <<'PY'\nimport base64\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\nassertions = json.loads(base64.b64decode(os.environ[\"ASSERTIONS_B64\"]).decode(\"utf-8\"))\nfor assertion in assertions:\n    target = (project / assertion[\"path\"]).resolve()\n    try:\n        target.relative_to(project)\n    except ValueError as error:\n        raise AssertionError(\"File assertion escaped the project directory\") from error\n    exists = target.is_file()\n    if exists != assertion[\"exists\"]:\n        raise AssertionError(f\"Unexpected file existence for {assertion['path']}\")\n    if not exists:\n        continue\n    content = target.read_text(encoding=\"utf-8\")\n    for expected in assertion.get(\"contains\", []):\n        expected = expected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if expected not in content:\n            raise AssertionError(f\"Expected content is absent from {assertion['path']}\")\n    for unexpected in assertion.get(\"notContains\", []):\n        unexpected = unexpected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if unexpected in content:\n            raise AssertionError(f\"Unexpected content is present in {assertion['path']}\")\nPY\n```"
+      },
+      "description": "@code verify the authored workspace file existence and content assertions without logging file contents.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_assertProjectWindowReady_assert_c9c198c7d_1_11"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:checks",
+        "assertion:file",
+        "step_retry_timeout:120"
+      ]
+    },
+    {
+      "step_id": "step_checkWorkspaceFiles_verify_c9c198c7d_2_2",
+      "agent": "code",
+      "tool": "",
+      "parameters": {
+        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" ASSERTIONS_B64=\"W3sicGF0aCI6ImFwcFBhY2thZ2UvbWFuaWZlc3QuanNvbiIsImV4aXN0cyI6dHJ1ZSwiY29udGFpbnMiOlsiXCJzdGF0aWNUYWJzXCIiLCJcIm5hbWVcIjogXCJIb21lXCIiLCIvdGFicy9ob21lIl0sIm5vdENvbnRhaW5zIjpbXX1d\" python3 - <<'PY'\nimport base64\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\nassertions = json.loads(base64.b64decode(os.environ[\"ASSERTIONS_B64\"]).decode(\"utf-8\"))\nfor assertion in assertions:\n    target = (project / assertion[\"path\"]).resolve()\n    try:\n        target.relative_to(project)\n    except ValueError as error:\n        raise AssertionError(\"File assertion escaped the project directory\") from error\n    exists = target.is_file()\n    if exists != assertion[\"exists\"]:\n        raise AssertionError(f\"Unexpected file existence for {assertion['path']}\")\n    if not exists:\n        continue\n    content = target.read_text(encoding=\"utf-8\")\n    for expected in assertion.get(\"contains\", []):\n        expected = expected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if expected not in content:\n            raise AssertionError(f\"Expected content is absent from {assertion['path']}\")\n    for unexpected in assertion.get(\"notContains\", []):\n        unexpected = unexpected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if unexpected in content:\n            raise AssertionError(f\"Unexpected content is present in {assertion['path']}\")\nPY\n```"
+      },
+      "description": "@code verify the authored workspace file existence and content assertions without logging file contents.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_checkWorkspaceFiles_verify_c9c198c7d_2_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:checks",
+        "assertion:file",
+        "step_retry_timeout:120"
+      ]
+    },
+    {
+      "step_id": "step_checkWorkspaceFiles_verify_c9c198c7d_2_3",
+      "agent": "code",
+      "tool": "",
+      "parameters": {
+        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" ASSERTIONS_B64=\"W3sicGF0aCI6InNyYy9UYWIvQXBwLnRzeCIsImV4aXN0cyI6dHJ1ZSwiY29udGFpbnMiOlsiWW91ciBhcHAgaXMgcnVubmluZyBpbiJdLCJub3RDb250YWlucyI6W119XQ==\" python3 - <<'PY'\nimport base64\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\nassertions = json.loads(base64.b64decode(os.environ[\"ASSERTIONS_B64\"]).decode(\"utf-8\"))\nfor assertion in assertions:\n    target = (project / assertion[\"path\"]).resolve()\n    try:\n        target.relative_to(project)\n    except ValueError as error:\n        raise AssertionError(\"File assertion escaped the project directory\") from error\n    exists = target.is_file()\n    if exists != assertion[\"exists\"]:\n        raise AssertionError(f\"Unexpected file existence for {assertion['path']}\")\n    if not exists:\n        continue\n    content = target.read_text(encoding=\"utf-8\")\n    for expected in assertion.get(\"contains\", []):\n        expected = expected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if expected not in content:\n            raise AssertionError(f\"Expected content is absent from {assertion['path']}\")\n    for unexpected in assertion.get(\"notContains\", []):\n        unexpected = unexpected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if unexpected in content:\n            raise AssertionError(f\"Unexpected content is present in {assertion['path']}\")\nPY\n```"
+      },
+      "description": "@code verify the authored workspace file existence and content assertions without logging file contents.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_checkWorkspaceFiles_verify_c9c198c7d_2_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:checks",
+        "assertion:file",
+        "step_retry_timeout:120"
+      ]
+    },
+    {
+      "step_id": "step_checkWorkspaceFiles_verify_c9c198c7d_2_4",
+      "agent": "code",
+      "tool": "",
+      "parameters": {
+        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" ASSERTIONS_B64=\"W3sicGF0aCI6ImVudi8uZW52LmxvY2FsIiwiZXhpc3RzIjp0cnVlLCJjb250YWlucyI6W10sIm5vdENvbnRhaW5zIjpbXX1d\" python3 - <<'PY'\nimport base64\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\nassertions = json.loads(base64.b64decode(os.environ[\"ASSERTIONS_B64\"]).decode(\"utf-8\"))\nfor assertion in assertions:\n    target = (project / assertion[\"path\"]).resolve()\n    try:\n        target.relative_to(project)\n    except ValueError as error:\n        raise AssertionError(\"File assertion escaped the project directory\") from error\n    exists = target.is_file()\n    if exists != assertion[\"exists\"]:\n        raise AssertionError(f\"Unexpected file existence for {assertion['path']}\")\n    if not exists:\n        continue\n    content = target.read_text(encoding=\"utf-8\")\n    for expected in assertion.get(\"contains\", []):\n        expected = expected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if expected not in content:\n            raise AssertionError(f\"Expected content is absent from {assertion['path']}\")\n    for unexpected in assertion.get(\"notContains\", []):\n        unexpected = unexpected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if unexpected in content:\n            raise AssertionError(f\"Unexpected content is present in {assertion['path']}\")\nPY\n```"
+      },
+      "description": "@code verify the authored workspace file existence and content assertions without logging file contents.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_checkWorkspaceFiles_verify_c9c198c7d_2_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:checks",
+        "assertion:file",
+        "step_retry_timeout:120"
+      ]
+    },
+    {
+      "step_id": "step_removeWorkspaceFile_remove_c9c198c7d_3_1",
+      "agent": "code",
+      "tool": "",
+      "parameters": {
+        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" RELATIVE_PATH=\"env/.env.local\" python3 - <<'PY'\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\ntarget = (project / os.environ[\"RELATIVE_PATH\"]).resolve()\ntry:\n    target.relative_to(project)\nexcept ValueError as error:\n    raise AssertionError(\"The removal path escaped the project directory\") from error\nif not target.is_file():\n    raise AssertionError(\"The file to remove does not exist\")\ntarget.unlink()\nif target.exists():\n    raise AssertionError(\"The file was not removed\")\nPY\n```"
+      },
+      "description": "@code remove env/.env.local from the generated project so a later operation can be observed recreating it.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_checkWorkspaceFiles_verify_c9c198c7d_2_4"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:workspace",
+        "operation:remove-file",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_open_c9c198c7d_4_1",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "f1"
+      },
+      "description": "Press the F1 key to open the Command Palette in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_removeWorkspaceFile_remove_c9c198c7d_3_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_assertPalette_c9c198c7d_4_1",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Visual Studio Code Command Palette is visible with a > character in its input box and is ready to accept a command search.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_open_c9c198c7d_4_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_filter_c9c198c7d_4_1",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "View: Show Microsoft 365 Agents Toolkit"
+      },
+      "description": "Type the resolved command title into the active Command Palette.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_assertPalette_c9c198c7d_4_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_assertCommand_c9c198c7d_4_1",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Command Palette input box reads >View: Show Microsoft 365 Agents Toolkit and the highlighted command listed under it is titled View: Show Microsoft 365 Agents Toolkit.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_filter_c9c198c7d_4_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_execute_c9c198c7d_4_1",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to execute the selected Command Palette command.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_assertCommand_c9c198c7d_4_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_signInM365_assertOption_c9c198c7d_4_2",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the ACCOUNTS section of the side bar lists an entry whose label begins with Sign in to Microsoft.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_execute_c9c198c7d_4_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "account:m365",
+        "entry_state:toolkit-side-bar-visible",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_signInM365_selectOption_c9c198c7d_4_2",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 213,
+        "y": 102
+      },
+      "description": "Click the entry whose label begins with \"Sign in to Microsoft\" in the ACCOUNTS section of the side bar.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_signInM365_assertOption_c9c198c7d_4_2"
+      ],
+      "preconditions": [
+        "dhash:213:102:16:5:9c63d67674d4c718",
+        "dhash:213:102:96:5:8c512758d92c2cce",
+        "dhash:213:102:0:10:92c86223a3622421"
+      ],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "account:m365"
+      ]
+    },
+    {
+      "step_id": "step_signInM365_confirmSignIn_c9c198c7d_4_2",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 762,
+        "y": 97
+      },
+      "description": "Click the \"Sign in\" button within the Microsoft 365 developer sandbox modal.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_signInM365_selectOption_c9c198c7d_4_2"
+      ],
+      "preconditions": [
+        "dhash:762:97:16:5:24b1a72ba9aba343",
+        "dhash:762:97:96:5:0008304b0f344900",
+        "dhash:762:97:0:10:9c68332223232421"
+      ],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "account:m365"
+      ]
+    },
+    {
+      "step_id": "step_signInM365_focusAccount_c9c198c7d_4_2",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 369,
+        "y": 350
+      },
+      "description": "Click on the \"Email or phone\" input field in the Microsoft Sign-in form on the login.microsoftonline.com webpage to focus the cursor for credential entry.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_signInM365_confirmSignIn_c9c198c7d_4_2"
+      ],
+      "preconditions": [
+        "dhash:369:350:16:5:2113d25252525221",
+        "dhash:369:350:96:5:0919006d19220812",
+        "dhash:369:350:0:10:1b88d0d1e5e6dae4"
+      ],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "account:m365",
+        "precondition_wait_timeout: 60"
+      ]
+    },
+    {
+      "step_id": "step_signInM365_typeAccount_c9c198c7d_4_2",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{env:M365_ACCOUNT_NAME}}"
+      },
+      "description": "Enter the resolved Microsoft 365 account name into the email or username input field on the Microsoft Sign in page.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_signInM365_focusAccount_c9c198c7d_4_2"
+      ],
+      "preconditions": [
+        "dhash:512:384:0:20:1b28f0d9e7e6dae4"
+      ],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "account:m365",
+        "delay: 3"
+      ]
+    },
+    {
+      "step_id": "step_signInM365_next_c9c198c7d_4_2",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 629,
+        "y": 484
+      },
+      "description": "Click the blue \"Next\" button on the Microsoft sign-in page, confirming the entered email address for login.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_signInM365_typeAccount_c9c198c7d_4_2"
+      ],
+      "preconditions": [
+        "dhash:629:484:16:5:23248c4b6c24d32c",
+        "dhash:629:484:96:5:00004eb131860000",
+        "dhash:629:484:0:10:1b28f0d9e7e6dae4"
+      ],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "account:m365",
+        "delay:3"
+      ]
+    },
+    {
+      "step_id": "step_signInM365_typePassword_c9c198c7d_4_2",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{secret:M365_ACCOUNT_PASSWORD}}"
+      },
+      "description": "Type the resolved Microsoft 365 account password into the Password field on the Microsoft login page.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_signInM365_next_c9c198c7d_4_2"
+      ],
+      "preconditions": [
+        "dhash:512:384:0:20:1b08f0d9d1e6e6e4"
+      ],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "account:m365",
+        "delay: 3"
+      ]
+    },
+    {
+      "step_id": "step_signInM365_submit_c9c198c7d_4_2",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to submit the Microsoft 365 login form from the password entry screen.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_signInM365_typePassword_c9c198c7d_4_2"
+      ],
+      "preconditions": [
+        "dhash:512:384:0:20:1b08f0d9d1e6e6e4"
+      ],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "account:m365",
+        "delay: 3"
+      ]
+    },
+    {
+      "step_id": "step_signInM365_closeBrowser_c9c198c7d_4_2",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 1004,
+        "y": 19
+      },
+      "description": "Click the \"Close\" button (red cross icon) in the browser tab bar to close the \"M365 Account - Sign In\" page.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_signInM365_submit_c9c198c7d_4_2"
+      ],
+      "preconditions": [
+        "dhash:1004:19:16:5:aac833964c9633cc",
+        "dhash:1004:19:96:5:d2232323c200e6e6",
+        "dhash:1004:19:0:10:0b01410169414141"
+      ],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "account:m365",
+        "delay: 3"
+      ]
+    },
+    {
+      "step_id": "step_signInM365_assertReady_c9c198c7d_4_2",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the \"ACCOUNTS\" section lists an entry whose label is ${{env:M365_ACCOUNT_NAME}} or that name cut short by the side bar with a trailing ellipsis.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_signInM365_closeBrowser_c9c198c7d_4_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "account:m365",
+        "readiness:account-visible",
+        "step_retry_timeout: 180"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_open_c9c198c7d_5_1",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "f1"
+      },
+      "description": "Press the F1 key to open the Command Palette in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_signInM365_assertReady_c9c198c7d_4_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_assertPalette_c9c198c7d_5_1",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Visual Studio Code Command Palette is visible with a > character in its input box and is ready to accept a command search.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_open_c9c198c7d_5_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_filter_c9c198c7d_5_1",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Debug: Select and Start Debugging"
+      },
+      "description": "Type the resolved command title into the active Command Palette.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_assertPalette_c9c198c7d_5_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_assertCommand_c9c198c7d_5_1",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Command Palette input box reads >Debug: Select and Start Debugging and the highlighted command listed under it is titled Debug: Select and Start Debugging.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_filter_c9c198c7d_5_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_execute_c9c198c7d_5_1",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to execute the selected Command Palette command.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_assertCommand_c9c198c7d_5_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_filterOption_filter_c9c198c7d_5_2",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Debug in Teams (Chrome)"
+      },
+      "description": "Type the resolved option label into the active option picker.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_execute_c9c198c7d_5_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_filterOption_assertOption_c9c198c7d_5_2",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the option Debug in Teams (Chrome) is visible and selectable in the filtered option picker.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_filterOption_filter_c9c198c7d_5_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_filterOption_confirm_c9c198c7d_5_2",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the filtered option.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_filterOption_assertOption_c9c198c7d_5_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_browserM365PasswordSignIn_assertPassword_c9c198c7d_5_3",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Microsoft sign-in page in Chrome names ${{env:M365_ACCOUNT_NAME}} and asks for that account's password.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_filterOption_confirm_c9c198c7d_5_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "surface:browser",
+        "step_retry_timeout: 300"
+      ]
+    },
+    {
+      "step_id": "step_browserM365PasswordSignIn_focusPassword_c9c198c7d_5_3",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 400,
+        "y": 405
+      },
+      "description": "Click the password input on the Microsoft sign-in page to move focus out of the browser address bar.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_browserM365PasswordSignIn_assertPassword_c9c198c7d_5_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "surface:browser"
+      ]
+    },
+    {
+      "step_id": "step_browserM365PasswordSignIn_enterPassword_c9c198c7d_5_3",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{secret:M365_ACCOUNT_PASSWORD}}"
+      },
+      "description": "Enter the registered Microsoft 365 password in the focused password input of the browser sign-in form.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_browserM365PasswordSignIn_focusPassword_c9c198c7d_5_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "surface:browser"
+      ]
+    },
+    {
+      "step_id": "step_browserM365PasswordSignIn_submitPassword_c9c198c7d_5_3",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to submit the Microsoft 365 password.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_browserM365PasswordSignIn_enterPassword_c9c198c7d_5_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "surface:browser"
+      ]
+    },
+    {
+      "step_id": "step_browserM365PasswordSignIn_assertStaySignedIn_c9c198c7d_5_3",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Microsoft Stay signed in question is visible with Yes focused.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_browserM365PasswordSignIn_submitPassword_c9c198c7d_5_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "surface:browser",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_browserM365PasswordSignIn_confirmStaySignedIn_c9c198c7d_5_3",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm staying signed in.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_browserM365PasswordSignIn_assertStaySignedIn_c9c198c7d_5_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "surface:browser",
+        "delay: 30"
+      ]
+    },
+    {
+      "step_id": "step_assertReady_assertReady_c9c198c7d_5_4",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Microsoft Teams app details page for an app whose name starts with ${{var:app_name}} is visible.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_browserM365PasswordSignIn_confirmStaySignedIn_c9c198c7d_5_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "action:assert-ready",
+        "step_retry_timeout: 180"
+      ]
+    },
+    {
+      "step_id": "step_trustLocalTabCertificate_assertTabBar_c9c198c7d_6_1",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion Microsoft Teams is the displayed page in Google Chrome and the Chrome tab bar shows its new-tab button to the right of the open tabs.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_assertReady_assertReady_c9c198c7d_5_4"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:teams",
+        "entry_state:teams-page",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_trustLocalTabCertificate_newTab_c9c198c7d_6_1",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 295,
+        "y": 21
+      },
+      "description": "Click the new-tab (+) button in the Google Chrome tab bar.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_trustLocalTabCertificate_assertTabBar_c9c198c7d_6_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:teams",
+        "entry_state:teams-page",
+        "ocr:true"
+      ]
+    },
+    {
+      "step_id": "step_trustLocalTabCertificate_assertAddressBar_c9c198c7d_6_1",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion a new empty Google Chrome tab is displayed with its address bar ready for typing.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_trustLocalTabCertificate_newTab_c9c198c7d_6_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:teams",
+        "entry_state:new-tab",
+        "step_retry_timeout: 60"
+      ]
+    },
+    {
+      "step_id": "step_trustLocalTabCertificate_typeUrl_c9c198c7d_6_1",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "https://localhost:3978/tabs/home"
+      },
+      "description": "Type the local tab page address https://localhost:3978/tabs/home into the Google Chrome address bar.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_trustLocalTabCertificate_assertAddressBar_c9c198c7d_6_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:teams",
+        "entry_state:new-tab"
+      ]
+    },
+    {
+      "step_id": "step_trustLocalTabCertificate_navigate_c9c198c7d_6_1",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to navigate to the typed local tab page address.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_trustLocalTabCertificate_typeUrl_c9c198c7d_6_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:teams",
+        "entry_state:new-tab"
+      ]
+    },
+    {
+      "step_id": "step_trustLocalTabCertificate_assertWarning_c9c198c7d_6_1",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Google Chrome certificate warning page for localhost is displayed with the button that expands its details.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_trustLocalTabCertificate_navigate_c9c198c7d_6_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:teams",
+        "entry_state:certificate-warning",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_trustLocalTabCertificate_expandWarning_c9c198c7d_6_1",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 279,
+        "y": 512
+      },
+      "description": "Click the \"Advanced\" button on the Google Chrome certificate warning page for localhost.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_trustLocalTabCertificate_assertWarning_c9c198c7d_6_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:teams",
+        "entry_state:certificate-warning",
+        "ocr:true"
+      ]
+    },
+    {
+      "step_id": "step_trustLocalTabCertificate_assertProceed_c9c198c7d_6_1",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the expanded Google Chrome certificate warning shows the link that continues to localhost anyway.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_trustLocalTabCertificate_expandWarning_c9c198c7d_6_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:teams",
+        "entry_state:certificate-warning-expanded",
+        "step_retry_timeout: 60"
+      ]
+    },
+    {
+      "step_id": "step_trustLocalTabCertificate_proceed_c9c198c7d_6_1",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 327,
+        "y": 665
+      },
+      "description": "Click the \"Proceed to localhost (unsafe)\" link on the expanded Google Chrome certificate warning page.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_trustLocalTabCertificate_assertProceed_c9c198c7d_6_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:teams",
+        "entry_state:certificate-warning-expanded",
+        "ocr:true"
+      ]
+    },
+    {
+      "step_id": "step_trustLocalTabCertificate_assertTrusted_c9c198c7d_6_1",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the page served from https://localhost:3978 is displayed instead of the certificate warning, and the Microsoft Teams tab is still open in the Google Chrome tab bar.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_trustLocalTabCertificate_proceed_c9c198c7d_6_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:teams",
+        "entry_state:localhost-trusted",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_trustLocalTabCertificate_switchBack_c9c198c7d_6_1",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 175,
+        "y": 19
+      },
+      "description": "Click the Microsoft Teams tab in the Google Chrome tab bar to return to it.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_trustLocalTabCertificate_assertTrusted_c9c198c7d_6_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:teams",
+        "entry_state:localhost-trusted",
+        "ocr:true"
+      ]
+    },
+    {
+      "step_id": "step_trustLocalTabCertificate_assertReturned_c9c198c7d_6_1",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion Microsoft Teams is again the displayed page in Google Chrome.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_trustLocalTabCertificate_switchBack_c9c198c7d_6_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:teams",
+        "exit_state:teams-page",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_addAndOpenApp_assertAdd_c9c198c7d_6_2",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the app details popup is visible with its primary action button below the app name.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_trustLocalTabCertificate_assertReturned_c9c198c7d_6_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:teams",
+        "entry_state:app-details",
+        "step_retry_timeout: 180"
+      ]
+    },
+    {
+      "step_id": "step_addAndOpenApp_add_c9c198c7d_6_2",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 265,
+        "y": 214
+      },
+      "description": "Click the visible blue \"Add\" or \"Open\" button in the Microsoft Teams app details dialog.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_addAndOpenApp_assertAdd_c9c198c7d_6_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:teams",
+        "entry_state:app-details",
+        "ocr:true"
+      ]
+    },
+    {
+      "step_id": "step_addAndOpenApp_assertAdded_c9c198c7d_6_2",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the dialog that the app details popup opened is visible with its Open button.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_addAndOpenApp_add_c9c198c7d_6_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:teams",
+        "entry_state:added",
+        "step_retry_timeout: 180"
+      ]
+    },
+    {
+      "step_id": "step_addAndOpenApp_open_c9c198c7d_6_2",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 529,
+        "y": 506
+      },
+      "description": "Click the blue \"Open\" button in the \"Added successfully!\" or \"Let's go\" dialog for the app in Microsoft Teams.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_addAndOpenApp_assertAdded_c9c198c7d_6_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:teams",
+        "entry_state:added",
+        "ocr:true"
+      ]
+    },
+    {
+      "step_id": "step_addAndOpenApp_assertReady_c9c198c7d_6_2",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Microsoft Teams tab page for an app whose name starts with ${{var:app_name}} is open.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_addAndOpenApp_open_c9c198c7d_6_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:teams",
+        "readiness:page-ready",
+        "step_retry_timeout: 180"
+      ]
+    },
+    {
+      "step_id": "step_allowLocalDeviceAccess_assertPrompt_c9c198c7d_6_3",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion Google Chrome is displaying a teams.cloud.microsoft permission prompt that asks to access other apps and services on this device and its Allow button is available.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_addAndOpenApp_assertReady_c9c198c7d_6_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:teams",
+        "entry_state:local-device-access-prompt",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_allowLocalDeviceAccess_allow_c9c198c7d_6_3",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 389,
+        "y": 241
+      },
+      "description": "Click Allow in the teams.cloud.microsoft permission prompt that asks to access other apps and services on this device.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_allowLocalDeviceAccess_assertPrompt_c9c198c7d_6_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:teams",
+        "entry_state:local-device-access-prompt",
+        "ocr:true"
+      ]
+    },
+    {
+      "step_id": "step_allowLocalDeviceAccess_assertDismissed_c9c198c7d_6_3",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the teams.cloud.microsoft permission prompt asking to access other apps and services on this device is no longer visible and the Microsoft Teams tab page remains displayed in Google Chrome.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_allowLocalDeviceAccess_allow_c9c198c7d_6_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:teams",
+        "exit_state:teams-app-tab",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_assertPageContains_assert_c9c198c7d_7_1",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the page the current target opened contains \"Your app is running in TeamsModern\".",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_allowLocalDeviceAccess_assertDismissed_c9c198c7d_6_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "action:assert-page-content",
+        "expectation:contains",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_checkWorkspaceFiles_verify_c9c198c7d_8_1",
+      "agent": "code",
+      "tool": "",
+      "parameters": {
+        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" ASSERTIONS_B64=\"W3sicGF0aCI6ImVudi8uZW52LmxvY2FsIiwiZXhpc3RzIjp0cnVlLCJjb250YWlucyI6W10sIm5vdENvbnRhaW5zIjpbXX1d\" python3 - <<'PY'\nimport base64\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\nassertions = json.loads(base64.b64decode(os.environ[\"ASSERTIONS_B64\"]).decode(\"utf-8\"))\nfor assertion in assertions:\n    target = (project / assertion[\"path\"]).resolve()\n    try:\n        target.relative_to(project)\n    except ValueError as error:\n        raise AssertionError(\"File assertion escaped the project directory\") from error\n    exists = target.is_file()\n    if exists != assertion[\"exists\"]:\n        raise AssertionError(f\"Unexpected file existence for {assertion['path']}\")\n    if not exists:\n        continue\n    content = target.read_text(encoding=\"utf-8\")\n    for expected in assertion.get(\"contains\", []):\n        expected = expected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if expected not in content:\n            raise AssertionError(f\"Expected content is absent from {assertion['path']}\")\n    for unexpected in assertion.get(\"notContains\", []):\n        unexpected = unexpected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if unexpected in content:\n            raise AssertionError(f\"Unexpected content is present in {assertion['path']}\")\nPY\n```"
+      },
+      "description": "@code verify the authored workspace file existence and content assertions without logging file contents.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_assertPageContains_assert_c9c198c7d_7_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:checks",
+        "assertion:file",
+        "step_retry_timeout:120"
+      ]
+    }
+  ],
+  "screenshots": {}
+}

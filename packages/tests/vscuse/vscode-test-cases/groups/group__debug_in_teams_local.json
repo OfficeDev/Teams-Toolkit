@@ -190,9 +190,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:1c0cf0d9d1e6e6e4"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_abda900e",
@@ -278,7 +276,7 @@
         "x": 288,
         "y": 214
       },
-      "description": "Click the \"Add\" button on the app details popup for the ${{var:app_name}}local app within the Microsoft Teams interface.",
+      "description": "Click the \"Open\" or \"Add\" button on the app details popup for the ${{var:app_name}}local app within the Microsoft Teams interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -324,7 +322,7 @@
         "x": 533,
         "y": 508
       },
-      "description": "Click the \"Open\" button in the \"Added successfully!\" dialog for the ${{var:app_name}}local app within Microsoft Teams web interface.",
+      "description": "Click the \"Open\" button in the \"Let's go\" or \"Added successfully!\" dialog for the ${{var:app_name}}local app within Microsoft Teams web interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

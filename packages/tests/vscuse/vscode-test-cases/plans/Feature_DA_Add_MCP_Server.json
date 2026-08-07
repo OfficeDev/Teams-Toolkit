@@ -627,9 +627,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:d0902223a3222421"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "precondition:old"

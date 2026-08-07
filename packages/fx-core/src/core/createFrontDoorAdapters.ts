@@ -32,11 +32,13 @@ import { coordinator } from "../component/coordinator";
 import { templateDefaultOnActionError } from "../component/generator/generator";
 import { GeneratorContext } from "../component/generator/generatorAction";
 import { convertToLangKey } from "../component/generator/utils";
+import { TemplateNames } from "../component/generator/templates/templateNames";
 import {
   ResolvedV4ChannelPackage,
   scaffoldDeclarativeFromV4Channel,
 } from "../component/generator/v4TemplateBridge";
 import { sendErrorEvent, sendSuccessEvent } from "../component/telemetry";
+import { manifestUtils } from "../component/driver/teamsApp/utils/ManifestUtils";
 import { pathUtils } from "../component/utils/pathUtils";
 import { InputValidationError, MissingRequiredInputError, assembleError } from "../error/common";
 import { AppNamePattern, QuestionNames, appNameQuestion, folderQuestion } from "../question";
@@ -55,14 +57,43 @@ const CREATE_KIND = "create";
 /** The language a single-language (language-neutral) v4 package scaffolds under. */
 const COMMON_LANGUAGE = "common";
 
-function scaffoldTelemetryProps(
-  inputs: Inputs,
-  target: BuildTarget,
-  language: string
-): Record<string, string> {
-  const templateName = inputs[QuestionNames.TemplateName];
-  const templateId =
-    typeof templateName === "string" && templateName.length > 0 ? templateName : target.templateId;
+/**
+ * v4 template id → its v3 `TemplateNames` equivalent, used **only** as the
+ * `generate-template` telemetry key so existing OKR queries keep joining with
+ * command-level `create-project` (DCE-19/-21). It is not a dispatch input.
+ */
+const LEGACY_TELEMETRY_TEMPLATE_ID: Readonly<Record<string, string>> = {
+  "basic-custom-engine-agent": TemplateNames.BasicCustomEngineAgent,
+  "weather-agent": TemplateNames.WeatherAgent,
+  "graph-connector": TemplateNames.GraphConnector,
+  "custom-copilot-basic": TemplateNames.CustomCopilotBasic,
+  "custom-copilot-rag-customize": TemplateNames.CustomCopilotRagCustomize,
+  "custom-copilot-rag-azure-ai-search": TemplateNames.CustomCopilotRagAzureAISearch,
+  "custom-copilot-rag-custom-api": TemplateNames.CustomCopilotRagCustomApi,
+  "teams-collaborator-agent": TemplateNames.TeamsCollaboratorAgent,
+  "non-sso-tab": TemplateNames.Tab,
+  "default-message-extension": TemplateNames.DefaultMessageExtension,
+  "default-bot": TemplateNames.DefaultBot,
+  "office-addin-wxpo-taskpane": TemplateNames.WXPTaskpane,
+  "office-addin-excel-cfshortcut": TemplateNames.ExcelCFShortcut,
+  "office-addin-excel-customfunctions": TemplateNames.ExcelCustomFunctions,
+  "office-addin-sso-naa": TemplateNames.OfficeAddinSsoNaa,
+  "declarative-agent-meta-os-upgrade-project": "declarative-agent-meta-os-upgrade-project",
+  "office-addin-config": TemplateNames.OfficeAddinCommon,
+  "da/no-action": TemplateNames.DeclarativeAgentBasic,
+  "da/graph-connector": TemplateNames.DeclarativeAgentWithGraphConnector,
+  "da/typespec": TemplateNames.DeclarativeAgentWithTypeSpec,
+  "da/skill": TemplateNames.DeclarativeAgentWithSkill,
+  "da/api-plugin-from-scratch": TemplateNames.DeclarativeAgentWithActionFromScratch,
+  "da/api-plugin-from-scratch-bearer": TemplateNames.DeclarativeAgentWithActionFromScratchBearer,
+  "da/api-plugin-from-scratch-oauth": TemplateNames.DeclarativeAgentWithActionFromScratchOAuth,
+  "da/api-plugin-from-existing-api": TemplateNames.DeclarativeAgentWithActionFromExistingApiSpec,
+  "da/mcp-server-static": TemplateNames.DeclarativeAgentWithActionFromMCP,
+  "da/mcp-server": TemplateNames.DeclarativeAgentWithActionFromMCP,
+};
+
+function scaffoldTelemetryProps(target: BuildTarget, language: string): Record<string, string> {
+  const templateId = LEGACY_TELEMETRY_TEMPLATE_ID[target.templateId] ?? target.templateId;
   return {
     [TelemetryProperty.Component]: Component.core,
     [TelemetryProperty.TemplateName]: `${templateId}-${convertToLangKey(language)}`,
@@ -85,8 +116,9 @@ export const scaffoldV4Deps = {
  * floor (`folder` / `app-name`), then renders the located `create/<templateId>`
  * declarative package onto disk via the v4 distribution channel.
  *
- * Mirrors the legacy customized-generator validation and tracking-id tail so a
- * v4 scaffold yields the same `CreateProjectResult` shape as every other create path.
+ * Mirrors the legacy customized-generator validation, tracking-id and manifest
+ * short-name-trim tail so a v4 scaffold yields the same `CreateProjectResult`
+ * shape as every other create path.
  */
 export async function scaffoldV4(
   inputs: Inputs,
@@ -115,7 +147,7 @@ export async function scaffoldV4(
   // never asks it, so an absent answer falls back to the language-neutral floor.
   const languageAnswer = answers["language"];
   const language = typeof languageAnswer === "string" ? languageAnswer : COMMON_LANGUAGE;
-  const telemetryProps = scaffoldTelemetryProps(inputs, target, language);
+  const telemetryProps = scaffoldTelemetryProps(target, language);
   const generatorContext: GeneratorContext = {
     name: appName,
     language,
@@ -151,6 +183,11 @@ export async function scaffoldV4(
   sendSuccessEvent(TelemetryEvent.GenerateTemplate, telemetryProps);
 
   const result: CreateProjectResult = { projectPath };
+  // The scaffolding summary and the surfaces' post-create notifications read these; dropping
+  // them here is what would make a placeholder-bearing m365agents.yml fail silently later.
+  if (generatorContext.warnings?.length) {
+    result.warnings = generatorContext.warnings;
+  }
   const ymlPath = pathUtils.getYmlFilePath(projectPath, "dev");
   if (ymlPath && (await fs.pathExists(ymlPath))) {
     const ensureRes = await coordinator.ensureTrackingId(projectPath, inputs.projectId);
@@ -158,6 +195,10 @@ export async function scaffoldV4(
       return err(ensureRes.error);
     }
     result.projectId = ensureRes.value;
+  }
+  const trimRes = await manifestUtils.trimManifestShortName(projectPath);
+  if (trimRes.isErr()) {
+    return err(trimRes.error);
   }
   return ok(result);
 }

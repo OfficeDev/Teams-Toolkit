@@ -231,7 +231,7 @@ export abstract class AzureDeployImpl extends BaseDeployImpl {
           timeout: DeployConstant.DEPLOY_TIMEOUT_IN_MS,
         };
       } else {
-        this.context.telemetryReporter.sendTelemetryErrorEvent(
+        this.context.telemetryReporter?.sendTelemetryErrorEvent(
           "Get-Deploy-Microsoft Entra-token-failed",
           {
             error: "Microsoft Entra token is empty.",
@@ -242,7 +242,7 @@ export abstract class AzureDeployImpl extends BaseDeployImpl {
         );
       }
     } catch (e) {
-      this.context.telemetryReporter.sendTelemetryErrorEvent("Get-Deploy-AAD-token-failed", {
+      this.context.telemetryReporter?.sendTelemetryErrorEvent("Get-Deploy-AAD-token-failed", {
         error: (e as Error).toString(),
       });
       this.logger.info(

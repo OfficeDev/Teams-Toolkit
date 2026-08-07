@@ -29,7 +29,7 @@ on:
         type: boolean
         default: false
       source_ref:
-        description: 'Source branch this build belongs to. Used only to group concurrency so a re-dispatch for the same branch cancels the stale build. Leave empty for release/manual builds.'
+        description: 'Source branch this build belongs to. Used to checkout the Docker context and group concurrency. Leave empty for release/manual builds.'
         required: false
         default: ''
 env:
@@ -65,6 +65,8 @@ jobs:
 
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.source_ref || github.ref }}
 
       - name: Download latest M365 Agent Toolkit
         id: m365_download

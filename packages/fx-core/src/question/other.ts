@@ -65,6 +65,7 @@ import { inputOrSearchAPISpecNode } from "./scaffold/commonNodes";
 import {
   MCPForDAAuthCredentialNodes,
   MCPForDAAuthTypeStaticOptions,
+  validateMCPServerUrl,
 } from "./scaffold/vsc/teamsProjectTypeNode";
 
 export function convertAadToNewSchemaQuestionNode(): IQTreeNode {
@@ -717,6 +718,14 @@ export function addPluginQuestionNode(): IQTreeNode {
           placeholder: getLocalizedString(
             "core.createProjectQuestion.mcpForDa.ServerUrl.placeholder"
           ),
+          // Same rejection rule as the create flow — a URL that is not an MCP endpoint is
+          // no more usable when added to an existing project than when creating a new one.
+          additionalValidationOnAccept: {
+            validFunc: async (value: string): Promise<string | undefined> => {
+              if (!value) return undefined;
+              return await validateMCPServerUrl(value);
+            },
+          },
         },
         children: [
           // MCP tools file input (CLI only — VS Code DT-on uses dynamic discovery)
@@ -911,6 +920,9 @@ export function addAuthActionQuestion(): IQTreeNode {
           const pluginManifestPath = inputs[QuestionNames.PluginManifestFilePath];
           const apiSpecPath = inputs[QuestionNames.ApiSpecLocation];
           if (!!!pluginManifestPath || !!!apiSpecPath) {
+            return false;
+          }
+          if (inputs[QuestionNames.ApiOperation] !== undefined) {
             return false;
           }
           const pluginManifest = (await fs.readJson(

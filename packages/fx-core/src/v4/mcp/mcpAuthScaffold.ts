@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { FxError, SystemError } from "@microsoft/teamsfx-api";
+import { FxError, SystemError, Warning } from "@microsoft/teamsfx-api";
 import { Result, err, ok } from "neverthrow";
 import { getLocalizedString } from "../../common/localizeUtils";
 import { ResolvedMCPAuthEndpoints, injectMcpAuthActionYaml } from "./mcpAuthAction";
@@ -67,16 +67,31 @@ function mcpAuthIdentifiers(mcpServerUrl: string): {
 async function resolveEndpoints(
   authType: string,
   mcpServerUrl: string,
-  warn?: (message: string) => void
+  warn?: (warning: Warning) => void
 ): Promise<ResolvedMCPAuthEndpoints> {
   if (authType !== "oauth" && authType !== "oauth-dynamic") {
     return {};
   }
   try {
     const probe = await mcpAuthScaffoldDeps.probeMCPServerAuth(mcpServerUrl);
+    // A mistyped server URL would otherwise leave no trace: endpoint discovery falls back to
+    // the host and happily returns its authorization server, so the scaffold looks complete.
+    // Advisory, so it covers every `notEndpoint` shape — not just the 404 that blocks at input
+    // time (ADR-0020).
+    if (probe.endpointStatus === "notEndpoint") {
+      warn?.({
+        type: "mcpServerUrlNotAnEndpoint",
+        content: getLocalizedString(
+          "core.MCPForDA.mcpServerUrlNotAnEndpoint",
+          mcpServerUrl,
+          String(probe.responseStatus)
+        ),
+      });
+    }
     const metadata = await mcpAuthScaffoldDeps.resolveMCPOAuthMetadata(
       probe.authMetadataUrl,
-      undefined
+      undefined,
+      mcpServerUrl
     );
     return {
       authorizationUrl: metadata.authorizationUrl,
@@ -85,7 +100,10 @@ async function resolveEndpoints(
       wellKnownUrl: metadata.wellKnownUrl,
     };
   } catch (error) {
-    warn?.(getLocalizedString("core.MCPForDA.mcpAuthMetadataMissingError", errorMessage(error)));
+    warn?.({
+      type: "mcpAuthMetadataError",
+      content: getLocalizedString("core.MCPForDA.mcpAuthMetadataMissingError", errorMessage(error)),
+    });
     return {};
   }
 }
@@ -140,7 +158,16 @@ export async function injectMcpAuthAction(
     return err(injectResult.error);
   }
   if (injectResult.value.wellKnownUrlPlaceholderUsed) {
-    ctx.warn?.(getLocalizedString("core.MCPForDA.mcpAuthDcrPlaceholderWarning", args.mcpServerUrl));
+    ctx.warn?.({
+      type: "mcpAuthDcrWellKnownUrlPlaceholder",
+      content: getLocalizedString("core.MCPForDA.mcpAuthDcrPlaceholderWarning"),
+    });
+  }
+  if (injectResult.value.oauthUrlPlaceholderUsed) {
+    ctx.warn?.({
+      type: "mcpAuthOAuthUrlPlaceholder",
+      content: getLocalizedString("core.MCPForDA.mcpAuthOAuthPlaceholderWarning"),
+    });
   }
   ctx.write(args.ymlPath, Buffer.from(injectResult.value.yaml, "utf8"));
   return ok(undefined);

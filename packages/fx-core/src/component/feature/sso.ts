@@ -26,7 +26,7 @@ async function addSsoV3(
   context: Context,
   inputs: InputsWithProjectPath
 ): Promise<Result<any, FxError>> {
-  context.telemetryReporter.sendTelemetryEvent(SolutionTelemetryEvent.AddSsoStart, {
+  context.telemetryReporter?.sendTelemetryEvent(SolutionTelemetryEvent.AddSsoStart, {
     [SolutionTelemetryProperty.Component]: SolutionTelemetryComponentName,
   });
 
@@ -41,7 +41,7 @@ async function addSsoV3(
     );
   }
 
-  context.telemetryReporter.sendTelemetryEvent(SolutionTelemetryEvent.AddSso, {
+  context.telemetryReporter?.sendTelemetryEvent(SolutionTelemetryEvent.AddSso, {
     [SolutionTelemetryProperty.Component]: SolutionTelemetryComponentName,
     [SolutionTelemetryProperty.Success]: TelemetrySuccess.Yes,
   });

@@ -9,6 +9,9 @@ import * as templateHelper from "../../../../src/component/generator/templateHel
 import {
   getAllTemplatesOnPlatform,
   getDefaultTemplatesOnPlatform,
+  groupTemplatesByName,
+  listAllTemplates,
+  listDeclarativeAgentTemplates,
 } from "../../../../src/component/generator/templates/metadata";
 import { Template } from "../../../../src/component/generator/templates/metadata/interface";
 import * as folder from "../../../../src/folder";
@@ -293,5 +296,157 @@ describe("useBundledMetadataForV4", () => {
     vi.spyOn(fs, "pathExistsSync").mockReturnValue(false);
 
     assert.isTrue(templateHelper.useBundledMetadataForV4());
+  });
+});
+
+describe("groupTemplatesByName", () => {
+  it("keeps the first language encountered for a given name", () => {
+    const templates: Template[] = [
+      { id: "a-ts", name: "app", language: "typescript", description: "desc", displayName: "App" },
+      { id: "a-js", name: "app", language: "javascript", description: "desc", displayName: "App" },
+    ];
+
+    const result = groupTemplatesByName(templates);
+
+    assert.lengthOf(result, 1);
+    assert.equal(result[0].name, "app");
+    assert.equal(result[0].language, "typescript");
+  });
+
+  it("falls back displayName to alias then name", () => {
+    const templates: Template[] = [
+      { id: "a", name: "with-display", language: "common", description: "d", displayName: "Nice" },
+      { id: "b", name: "with-alias", alias: "the-alias", language: "common", description: "d" },
+      { id: "c", name: "bare-name", language: "common", description: "d" },
+    ];
+
+    const result = groupTemplatesByName(templates);
+
+    assert.equal(result[0].displayName, "Nice");
+    assert.equal(result[1].displayName, "the-alias");
+    assert.equal(result[2].displayName, "bare-name");
+  });
+
+  it("returns an empty array when given no templates", () => {
+    assert.deepEqual(groupTemplatesByName([]), []);
+  });
+});
+
+const listMockTemplates: Template[] = [
+  {
+    id: "declarative-agent-basic",
+    name: "copilot-gpt-basic",
+    alias: "declarative-agent",
+    language: "common",
+    displayName: "Declarative Agent",
+    description: "Basic DA",
+  },
+  {
+    id: "declarative-agent-basic-csharp",
+    name: "copilot-gpt-basic",
+    alias: "declarative-agent",
+    language: "csharp",
+    displayName: "Declarative Agent",
+    description: "Basic DA",
+  },
+  {
+    id: "custom-copilot-basic-ts",
+    name: "custom-copilot-basic",
+    alias: "teams-agent",
+    language: "typescript",
+    displayName: "General Teams Agent",
+    description: "Teams agent",
+  },
+  {
+    id: "custom-copilot-basic-csharp",
+    name: "custom-copilot-basic",
+    alias: "teams-agent",
+    language: "csharp",
+    displayName: "General Teams Agent",
+    description: "Teams agent",
+  },
+];
+
+function mockMetadataFs() {
+  vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(false);
+  vi.spyOn(folder, "getTemplatesFolder").mockReturnValue("/bundled");
+  vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
+  vi.spyOn(fs, "readFileSync").mockReturnValue(JSON.stringify(listMockTemplates));
+}
+
+describe("listAllTemplates", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("lists VSCode (non-csharp) templates grouped by name when CLIDotNet is off", () => {
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+    mockMetadataFs();
+
+    const result = listAllTemplates();
+
+    assert.deepEqual(
+      result.map((t) => t.name),
+      ["copilot-gpt-basic", "custom-copilot-basic"]
+    );
+    assert.equal(result[0].language, "common");
+    assert.equal(result[1].language, "typescript");
+  });
+
+  it("lists VS (csharp) templates grouped by name when CLIDotNet is on", () => {
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(true);
+    mockMetadataFs();
+
+    const result = listAllTemplates();
+
+    assert.deepEqual(
+      result.map((t) => t.name),
+      ["copilot-gpt-basic", "custom-copilot-basic"]
+    );
+    assert.isTrue(result.every((t) => t.language === "csharp"));
+  });
+});
+
+describe("listDeclarativeAgentTemplates", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("lists only declarative agent templates for VSCode when CLIDotNet is off", () => {
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+    mockMetadataFs();
+
+    const result = listDeclarativeAgentTemplates();
+
+    assert.deepEqual(
+      result.map((t) => t.name),
+      ["copilot-gpt-basic"]
+    );
+    assert.equal(result[0].language, "common");
+  });
+
+  it("lists only declarative agent templates for VS when CLIDotNet is on", () => {
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(true);
+    mockMetadataFs();
+
+    const result = listDeclarativeAgentTemplates();
+
+    assert.deepEqual(
+      result.map((t) => t.name),
+      ["copilot-gpt-basic"]
+    );
+    assert.equal(result[0].language, "csharp");
+  });
+
+  it("returns an empty array when no declarative agent templates exist", () => {
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+    vi.spyOn(templateHelper, "useLocalTemplate").mockReturnValue(false);
+    vi.spyOn(folder, "getTemplatesFolder").mockReturnValue("/bundled");
+    vi.spyOn(fs, "pathExistsSync").mockReturnValue(true);
+    vi.spyOn(fs, "readFileSync").mockReturnValue(
+      JSON.stringify([listMockTemplates[2], listMockTemplates[3]])
+    );
+
+    assert.deepEqual(listDeclarativeAgentTemplates(), []);
   });
 });

@@ -590,12 +590,17 @@ export class TeamsDevPortalClient {
    * @returns
    */
   @hooks([ErrorContextMW({ source: "Teams", component: "TeamsDevPortalClient" })])
-  async partnerCenterAppPackageValidation(token: string, file: Buffer): Promise<IValidationResult> {
+  async partnerCenterAppPackageValidation(
+    token: string,
+    file: Buffer,
+    signal?: AbortSignal
+  ): Promise<IValidationResult> {
     const requester = this.createRequesterWithToken(token);
     try {
       const response = await RetryHandler.Retry(() =>
         requester.post("/api/appdefinitions/partnerCenterAppPackageValidation", file, {
           headers: { "Content-Type": "application/zip" },
+          signal,
         })
       );
       return response?.data;

@@ -143,9 +143,6 @@ function buildPort(
       }
       return openDeclarativePackage(floorBytes, { kind: "create", templateId }).isOk();
     },
-    v3CoreMethodRegistry(): boolean {
-      return false;
-    },
   };
 }
 

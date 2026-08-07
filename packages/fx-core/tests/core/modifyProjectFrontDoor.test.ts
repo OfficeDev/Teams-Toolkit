@@ -22,12 +22,6 @@ const V4_TARGET: BuildTarget = {
   answers: { addCapability: "add-action", actionSource: "mcp" },
 };
 
-const V3_CORE_TARGET: BuildTarget = {
-  templateId: "addPlugin",
-  engine: "v3-core-method",
-  answers: { addCapability: "add-action", actionSource: "mcp" },
-};
-
 function recorder<A extends unknown[], R>(
   impl: (...args: A) => R
 ): { fn: (...args: A) => R; calls: A[] } {
@@ -388,24 +382,6 @@ describe("modifyProjectFrontDoor", () => {
     assert.strictEqual(selectorResult._unsafeUnwrapErr(), selectorError);
     assert.strictEqual(metadataResult._unsafeUnwrapErr(), metadataError);
     assert.strictEqual(templatesResult._unsafeUnwrapErr(), templatesError);
-  });
-
-  it("MDE-02: engine v3-core-method is unsupported and never calls the core-method handler", async () => {
-    const runSelector = selectorRecorder(V3_CORE_TARGET);
-    const res = await modifyProjectFrontDoor(
-      { platform: Platform.CLI },
-      { addCapability: "add-action", actionSource: "mcp" },
-      {},
-      deps({
-        runSelector: runSelector.fn,
-      })
-    );
-
-    assert.isTrue(res.isErr());
-    if (res.isErr()) {
-      assert.equal(res.error.name, "UnsupportedModifyEngine");
-    }
-    assert.equal(runSelector.calls[0][2], "cli");
   });
 
   it("MDE-03: unsupported selector engines fail loudly", async () => {

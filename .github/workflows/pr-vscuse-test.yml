@@ -14,6 +14,9 @@
 #   2. Gets the diff between the PR branch and the target branch
 #   3. Selects test plans — a changed test plan file is run as an "impacted" case;
 #      for product-code changes GitHub Copilot CLI (Claude Sonnet 4.6) picks relevant plans
+#      (the final list is capped at 256 entries — GitHub Actions' hard limit on the number
+#      of configurations a single job's `strategy.matrix` can expand to; see
+#      MAX_MATRIX_PLANS / cap_plans_json in the "Select test plans via AI" step)
 #   4. Posts a PR comment listing the selected plans
 #   5. Dispatches dev-smoke-test-pipeline.yml with those plans
 #   6. Resolves (edits) the PR comment with the final pass/fail result
@@ -302,6 +305,30 @@ jobs:
         run: |
           set -euo pipefail
 
+          # GitHub Actions hard-caps a single job's `strategy.matrix` at 256 generated
+          # configurations. dev-smoke-test-pipeline.yml forwards our test_plans CSV
+          # straight into ui-test-vscuse-template.yml's `strategy.matrix.test_plan`, so
+          # handing it more than 256 plans makes GitHub fail that job during matrix
+          # expansion -- before a single Case-* test even starts. This is not
+          # theoretical: run 30250346356 was manually dispatched with 270 plans and
+          # every Case-* job silently never ran (the run still showed a red ❌, but
+          # zero test cases actually executed). This workflow's own AI/impacted-plan
+          # selection normally stays well under the limit, but cap defensively
+          # wherever a plan list is about to become the final test_plans output, so a
+          # large "impacted files" or smoke-fallback list can never repeat that
+          # failure mode. Keep only the first MAX_MATRIX_PLANS entries.
+          MAX_MATRIX_PLANS=256
+          cap_plans_json() {
+            local plans_json="$1" count
+            count=$(echo "$plans_json" | jq 'length')
+            if [ "$count" -gt "$MAX_MATRIX_PLANS" ]; then
+              echo "::warning::Selected ${count} test plans, which exceeds the GitHub Actions matrix limit of ${MAX_MATRIX_PLANS} configurations; truncating to the first ${MAX_MATRIX_PLANS}." >&2
+              echo "$plans_json" | jq -c ".[0:${MAX_MATRIX_PLANS}]"
+            else
+              echo "$plans_json"
+            fi
+          }
+
           # List every available plan name (one per line)
           PLANS_TEXT=$(find packages/tests/vscuse/vscode-test-cases/plans \
             -maxdepth 1 -name "*.json" -exec basename {} .json \; | sort)
@@ -371,6 +398,7 @@ jobs:
           # steps are gated on has_code_files), so we must not invoke it here.
           if [ "${HAS_CODE_FILES:-true}" != "true" ]; then
             if [ "$HINT_MATCHED_COUNT" -gt 0 ]; then
+              HINT_MATCHED_PLANS=$(cap_plans_json "$HINT_MATCHED_PLANS")
               PLANS_CSV=$(echo "$HINT_MATCHED_PLANS" | jq -r 'join(",")')
               echo "test_plans=${PLANS_CSV}" >> "$GITHUB_OUTPUT"
               echo "reason=Selected ${HINT_MATCHED_COUNT} user-requested plan(s) from authoritative hint (no product code modified)." >> "$GITHUB_OUTPUT"
@@ -378,6 +406,7 @@ jobs:
               echo "is_fallback=false" >> "$GITHUB_OUTPUT"
               echo "Selected user-hinted plans: $PLANS_CSV"
             elif [ "$IMPACTED_COUNT" -gt 0 ]; then
+              IMPACTED_PLANS=$(cap_plans_json "$IMPACTED_PLANS")
               PLANS_CSV=$(echo "$IMPACTED_PLANS" | jq -r 'join(",")')
               echo "test_plans=${PLANS_CSV}" >> "$GITHUB_OUTPUT"
               echo "reason=Selected ${IMPACTED_COUNT} impacted test plan(s) changed in this PR (no product code modified)." >> "$GITHUB_OUTPUT"
@@ -386,6 +415,7 @@ jobs:
               echo "Selected impacted plans only: $PLANS_CSV"
             else
               SMOKE_PLANS=$(jq -c '[.smokeTestCases[]]' packages/tests/vscuse/smoking-test-cases.json)
+              SMOKE_PLANS=$(cap_plans_json "$SMOKE_PLANS")
               PLANS_CSV=$(echo "$SMOKE_PLANS" | jq -r 'join(",")')
               echo "test_plans=${PLANS_CSV}" >> "$GITHUB_OUTPUT"
               echo "reason=No runnable changed plans found; using smoke test cases as fallback." >> "$GITHUB_OUTPUT"
@@ -476,6 +506,7 @@ jobs:
             IS_FALLBACK="true"
           fi
 
+          VALID_PLANS=$(cap_plans_json "$VALID_PLANS")
           PLANS_CSV=$(echo "$VALID_PLANS" | jq -r 'join(",")')
           echo "test_plans=${PLANS_CSV}"    >> "$GITHUB_OUTPUT"
           echo "reason=${AI_REASON}"        >> "$GITHUB_OUTPUT"

@@ -1,0 +1,407 @@
+version: 1
+
+cases:
+  - id: da-api-plugin-from-existing-api-no-auth-remote-preview
+    scenarioId: SCN-DA-CREATE-API-PLUGIN-FROM-EXISTING-API
+    workItemIds: [28941863]
+    gate: manual
+    steps:
+      [
+        scaffold-existing-api,
+        check-existing-api,
+        login-m365,
+        provision,
+        f5-copilot-remote,
+        open-agent,
+        check-repair-chat,
+      ]
+
+  - id: da-api-plugin-from-existing-api-api-key-remote-preview
+    scenarioId: SCN-DA-CREATE-API-PLUGIN-FROM-EXISTING-API
+    workItemIds: [31434601]
+    gate: manual
+    steps:
+      [
+        scaffold-existing-api-key,
+        check-existing-api-key,
+        login-m365,
+        provision-api-key,
+        f5-copilot-remote,
+        open-agent,
+        check-repair-action,
+      ]
+
+  - id: da-api-plugin-from-existing-api-bearer-remote-preview
+    scenarioId: SCN-DA-CREATE-API-PLUGIN-FROM-EXISTING-API
+    workItemIds: [31434602]
+    gate: manual
+    steps:
+      [
+        scaffold-existing-api-bearer,
+        check-existing-api-bearer,
+        login-m365,
+        provision-bearer,
+        f5-copilot-remote,
+        open-agent,
+        check-repair-action,
+      ]
+
+  - id: da-api-plugin-from-existing-api-oauth-remote-preview
+    scenarioId: SCN-DA-CREATE-API-PLUGIN-FROM-EXISTING-API
+    workItemIds: [31434597]
+    gate: manual
+    steps:
+      [
+        scaffold-existing-api-oauth,
+        check-existing-api-oauth,
+        login-m365,
+        provision-oauth,
+        f5-copilot-remote,
+        open-agent,
+        check-oauth-sign-in,
+      ]
+
+steps:
+  scaffold-existing-api:
+    type: scaffold
+    with:
+      template: da/api-plugin-from-existing-api
+      answers:
+        - question: projectType
+          value: copilot-agent-type
+        - question: daTemplate
+          value: add-action
+        - question: actionSource
+          value: openapi
+        - question: openApiSpecType
+          value: enter-url
+        - question: apiSpecLocation
+          type: text
+          value: https://raw.githubusercontent.com/Alive-Fish/example-openapi-spec/main/real-no-auth.yaml
+        - question: apiOperations
+          type: multiSelect
+          value: all
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  scaffold-existing-api-key:
+    type: scaffold
+    with:
+      template: da/api-plugin-from-existing-api
+      answers:
+        - question: projectType
+          value: copilot-agent-type
+        - question: daTemplate
+          value: add-action
+        - question: actionSource
+          value: openapi
+        - question: openApiSpecType
+          value: enter-url
+        - question: apiSpecLocation
+          type: text
+          value: https://raw.githubusercontent.com/SLdragon/example-openapi-spec/refs/heads/main/real-custom-api-key.yaml
+        - question: apiOperations
+          type: multiSelect
+          value: all
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  scaffold-existing-api-bearer:
+    type: scaffold
+    with:
+      template: da/api-plugin-from-existing-api
+      answers:
+        - question: projectType
+          value: copilot-agent-type
+        - question: daTemplate
+          value: add-action
+        - question: actionSource
+          value: openapi
+        - question: openApiSpecType
+          value: enter-url
+        - question: apiSpecLocation
+          type: text
+          value: https://raw.githubusercontent.com/SLdragon/example-openapi-spec/refs/heads/main/real-bearer.yaml
+        - question: apiOperations
+          type: multiSelect
+          value: all
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  scaffold-existing-api-oauth:
+    type: scaffold
+    with:
+      template: da/api-plugin-from-existing-api
+      answers:
+        - question: projectType
+          value: copilot-agent-type
+        - question: daTemplate
+          value: add-action
+        - question: actionSource
+          value: openapi
+        - question: openApiSpecType
+          value: enter-url
+        - question: apiSpecLocation
+          type: text
+          value: https://raw.githubusercontent.com/SLdragon/example-openapi-spec/refs/heads/main/real-oauth.yaml
+        - question: apiOperations
+          type: multiSelect
+          value: all
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-existing-api:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/ai-plugin.json
+        expect:
+          contains:
+            - '"type": "OpenApi"'
+            - '"type": "None"'
+            - '"url": "apiSpecificationFile/openapi.yaml"'
+      - type: file
+        path: appPackage/apiSpecificationFile/openapi.yaml
+        expect:
+          contains: ["/repairs:", "operationId: listRepairs"]
+      - type: file
+        path: appPackage/apiSpecificationFile/openapi.yaml.original
+        expect:
+          contains: ["title: Repair Service", "operationId: listRepairs"]
+      - type: file
+        path: appPackage/declarativeAgent.json
+        expect:
+          contains:
+            - '"name": "${{var:app_name}}"'
+            - '"text": "List all repairs"'
+            - '"id": "action_1"'
+            - '"file": "ai-plugin.json"'
+          notContains: ['"sensitivity_label"']
+      - type: file
+        path: appPackage/manifest.json
+        expect:
+          contains:
+            - '"manifestVersion": "1.29"'
+            - '"id": "${{TEAMS_APP_ID}}"'
+            - '"id": "declarativeAgent"'
+            - '"file": "declarativeAgent.json"'
+      - type: file
+        path: appPackage/adaptiveCards/listRepairs.json
+        expect:
+          exists: true
+      - type: file
+        path: m365agents.yml
+        expect:
+          notContains:
+            [
+              "apiKey/register",
+              "oauth/register",
+              "dcr/register",
+              "aadApp/create",
+            ]
+      - type: file
+        path: m365agents.local.yml
+        expect:
+          notContains:
+            [
+              "apiKey/register",
+              "oauth/register",
+              "dcr/register",
+              "aadApp/create",
+            ]
+
+  check-existing-api-key:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/ai-plugin.json
+        expect:
+          contains:
+            - '"type": "OpenApi"'
+            - '"type": "ApiKeyPluginVault"'
+            - '"url": "apiSpecificationFile/openapi.yaml"'
+      - type: file
+        path: appPackage/apiSpecificationFile/openapi.yaml.original
+        expect:
+          contains:
+            ["title: Repair Service with Custom API key", "type: apiKey"]
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains:
+            [
+              "uses: apiKey/register",
+              "apiSpecPath: ./appPackage/apiSpecificationFile/openapi.yaml",
+            ]
+          notContains: ["oauth/register"]
+      - type: file
+        path: m365agents.local.yml
+        expect:
+          contains:
+            [
+              "uses: apiKey/register",
+              "apiSpecPath: ./appPackage/apiSpecificationFile/openapi.yaml",
+            ]
+          notContains: ["oauth/register"]
+
+  check-existing-api-bearer:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/ai-plugin.json
+        expect:
+          contains:
+            - '"type": "OpenApi"'
+            - '"type": "ApiKeyPluginVault"'
+            - '"url": "apiSpecificationFile/openapi.yaml"'
+      - type: file
+        path: appPackage/apiSpecificationFile/openapi.yaml.original
+        expect:
+          contains: ["scheme: bearer", "operationId: listRepairs"]
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains:
+            [
+              "uses: apiKey/register",
+              "apiSpecPath: ./appPackage/apiSpecificationFile/openapi.yaml",
+            ]
+          notContains: ["oauth/register"]
+      - type: file
+        path: m365agents.local.yml
+        expect:
+          contains:
+            [
+              "uses: apiKey/register",
+              "apiSpecPath: ./appPackage/apiSpecificationFile/openapi.yaml",
+            ]
+          notContains: ["oauth/register"]
+
+  check-existing-api-oauth:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/ai-plugin.json
+        expect:
+          contains:
+            - '"type": "OpenApi"'
+            - '"type": "OAuthPluginVault"'
+            - '"url": "apiSpecificationFile/openapi.yaml"'
+      - type: file
+        path: appPackage/apiSpecificationFile/openapi.yaml.original
+        expect:
+          contains:
+            ["type: oauth2", "authorizationCode:", "operationId: listRepairs"]
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains:
+            [
+              "uses: oauth/register",
+              "flow: authorizationCode",
+              "apiSpecPath: ./appPackage/apiSpecificationFile/openapi.yaml",
+            ]
+          notContains: ["apiKey/register"]
+      - type: file
+        path: m365agents.local.yml
+        expect:
+          contains:
+            [
+              "uses: oauth/register",
+              "flow: authorizationCode",
+              "apiSpecPath: ./appPackage/apiSpecificationFile/openapi.yaml",
+            ]
+          notContains: ["apiKey/register"]
+
+  # The OAuth consent only appears once the agent tries to call the protected
+  # API, so the agent has to be asked something first. The recorded
+  # `validation_DA_repair_Oauth` group shows the order the product uses: send the
+  # message, allow the action, and only then does the sign-in button appear. The
+  # message needs no expectation of its own because the button the next check
+  # reads is the response it produces.
+  check-oauth-sign-in:
+    type: checks
+    with:
+      - type: chat
+        send: List all repairs with oauth
+        allowAction: true
+      - type: browser
+        expect:
+          role: button
+          name: Sign in to Repair Service
+
+  login-m365:
+    type: login
+    with:
+      type: m365
+      account: "${{env:M365_ACCOUNT_NAME}}"
+      password: "${{secret:M365_ACCOUNT_PASSWORD}}"
+
+  provision:
+    type: provision
+
+  provision-api-key:
+    type: provision
+    with:
+      apiKey: "${{secret:EXISTING_API_KEY}}"
+
+  provision-bearer:
+    type: provision
+    with:
+      apiKey: "${{secret:EXISTING_API_BEARER_TOKEN}}"
+
+  provision-oauth:
+    type: provision
+    with:
+      oauth:
+        clientId: "${{env:EXISTING_API_OAUTH_CLIENT_ID}}"
+        clientSecret: "${{secret:EXISTING_API_OAUTH_CLIENT_SECRET}}"
+
+  f5-copilot-remote:
+    type: target
+    with:
+      profile: "Preview in Copilot (Chrome)"
+      profileSelection: second
+
+  open-agent:
+    type: open
+    with:
+      kind: agent
+      destination: chat
+
+  # The repair service is hosted outside this repository, so its exact records
+  # are not stable test data. Require a completed, non-error response instead.
+  check-repair-chat:
+    type: checks
+    with:
+      - type: chat
+        send: show repair records assigned to karin blair
+        allowAction: true
+        expect:
+          replied: true
+          notContains: ["error"]
+
+  # The API-key and bearer variants point at a repair service this repository
+  # cannot reach, so any response they produce reports that service rather than
+  # the credential the case provisioned. The consent prompt is the last state
+  # these cases own: Copilot only raises it once it has resolved the plugin and
+  # is about to call it, so accepting it proves the credential reached a wired
+  # plugin without reading the upstream answer.
+  check-repair-action:
+    type: checks
+    with:
+      - type: chat
+        send: show repair records assigned to karin blair
+        allowAction: true

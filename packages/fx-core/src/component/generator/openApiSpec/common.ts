@@ -157,7 +157,7 @@ export async function getTemplateInfosFromApiSpec(
     convertedAuthData ?? [],
     llmServiceData
   );
-  context.telemetryReporter.sendTelemetryEvent(declarativeAgentExistingApiSpecUrlTelemetryEvent, {
+  context.telemetryReporter?.sendTelemetryEvent(declarativeAgentExistingApiSpecUrlTelemetryEvent, {
     [telemetryProperties.isRemoteUrlTelemetryProperty]: isValidHttpUrl(url).toString(),
     [telemetryProperties.generateType]: projectType.toString(),
     [telemetryProperties.authType]: authData?.map((item: any) => item.authType).join(",") ?? "None",
