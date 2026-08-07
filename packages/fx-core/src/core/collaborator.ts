@@ -31,6 +31,7 @@ import {
   AgentOwner,
   AppIds,
   Collaborator,
+  CollaboratorType,
   CollaborationState,
   ListCollaboratorResult,
   PermissionsResult,
@@ -495,7 +496,7 @@ function mergeCollaborators(
     collaborators.push({
       userPrincipalName: teamsOwner.userPrincipalName,
       userObjectId: teamsOwner.userObjectId,
-      collaboratorType: CollaborationConstants.TeamsAppQuestionId,
+      collaboratorType: CollaboratorType.TeamsApp,
       collaboratorResourceId: teamsOwner.resourceId,
     });
   }
@@ -503,7 +504,7 @@ function mergeCollaborators(
     collaborators.push({
       userPrincipalName: aadOwner.userPrincipalName,
       userObjectId: aadOwner.userObjectId,
-      collaboratorType: CollaborationConstants.AadAppQuestionId,
+      collaboratorType: CollaboratorType.AadApp,
       collaboratorResourceId: aadOwner.resourceId,
     });
   }
@@ -511,7 +512,7 @@ function mergeCollaborators(
     collaborators.push({
       userPrincipalName: agentOwner.userPrincipalName,
       userObjectId: agentOwner.userObjectId,
-      collaboratorType: CollaborationConstants.AgentOptionId,
+      collaboratorType: CollaboratorType.Agent,
       collaboratorResourceId: agentOwner.resourceId,
     });
   }

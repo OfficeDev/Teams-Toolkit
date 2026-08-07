@@ -15,7 +15,7 @@ import mockedEnv from "mocked-env";
 import os from "os";
 import * as path from "path";
 import { assert, beforeEach, describe, it, vi } from "vitest";
-import { CollaborationState } from "../../src/common/permissionInterface";
+import { CollaboratorType, CollaborationState } from "../../src/common/permissionInterface";
 import { SolutionError } from "../../src/component/constants";
 import * as shareUtils from "../../src/component/driver/share/utils";
 import {
@@ -152,7 +152,7 @@ describe("Collaborator APIs for V3", () => {
         {
           userObjectId: "fake-aad-user-object-id",
           userPrincipalName: "fake-user-principal-name",
-          collaboratorType: CollaborationConstants.AadAppQuestionId,
+          collaboratorType: CollaboratorType.AadApp,
           collaboratorResourceId: "fake-resource-id",
         },
       ]);
@@ -240,19 +240,19 @@ describe("Collaborator APIs for V3", () => {
         {
           userObjectId: "teams-only-user-object-id",
           userPrincipalName: "teams-only-user-principal-name",
-          collaboratorType: CollaborationConstants.TeamsAppQuestionId,
+          collaboratorType: CollaboratorType.TeamsApp,
           collaboratorResourceId: "fake-teams-resource-id",
         },
         {
           userObjectId: "teams-only-user-object-id",
           userPrincipalName: "teams-only-user-principal-name",
-          collaboratorType: CollaborationConstants.AadAppQuestionId,
+          collaboratorType: CollaboratorType.AadApp,
           collaboratorResourceId: "fake-aad-resource-id",
         },
         {
           userObjectId: "aad-only-user-object-id",
           userPrincipalName: "aad-only-user-principal-name",
-          collaboratorType: CollaborationConstants.AadAppQuestionId,
+          collaboratorType: CollaboratorType.AadApp,
           collaboratorResourceId: "fake-aad-only-resource-id",
         },
       ]);
@@ -289,7 +289,7 @@ describe("Collaborator APIs for V3", () => {
         {
           userObjectId: "agent-only-user-object-id",
           userPrincipalName: "agent-only-user-principal-name",
-          collaboratorType: CollaborationConstants.AgentOptionId,
+          collaboratorType: CollaboratorType.Agent,
           collaboratorResourceId: expectedTitleId,
         },
       ]);

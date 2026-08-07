@@ -40,10 +40,16 @@ export interface PermissionsResult {
   permissions?: ResourcePermission[];
 }
 
+export enum CollaboratorType {
+  TeamsApp = "teamsApp",
+  AadApp = "aadApp",
+  Agent = "agent",
+}
+
 export interface Collaborator {
   userPrincipalName: string;
   userObjectId: string;
-  collaboratorType: string;
+  collaboratorType: CollaboratorType;
   collaboratorResourceId: string;
 }
 
