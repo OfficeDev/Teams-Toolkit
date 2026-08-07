@@ -45,9 +45,10 @@ export interface ExportOpenPluginCoreResult {
 
 export class FxCoreOpenPluginPart extends FxCoreDeclarativeAgentPart {
   /**
-   * Import an Open Plugin (Open Plugin Spec v1.0 / Claude Code plugin /
-   * Cursor plugin) directory into a scaffolded Microsoft 365 Agents Toolkit
-   * project.
+   * Import an Agent Plugins v1.0.0 directory (https://agent-plugins.org/) into
+   * a scaffolded Microsoft 365 Agents Toolkit project. Pre-1.0.0 layouts
+   * (Open Plugin / Claude Code / Cursor) are also accepted, with a deprecation
+   * warning.
    */
   @hooks([
     ErrorContextMW({ component: "FxCore", stage: Stage.create, reset: true }),
@@ -80,9 +81,9 @@ export class FxCoreOpenPluginPart extends FxCoreDeclarativeAgentPart {
   }
 
   /**
-   * Export an ATK project into an Open Plugin Spec directory. Round-trips
-   * losslessly with `importOpenPlugin` via the `x-microsoft-365-agents-toolkit`
-   * extension block embedded in plugin.json.
+   * Export an ATK project into an Agent Plugins v1.0.0 directory. Round-trips
+   * losslessly with `importOpenPlugin` via the
+   * `extensions["com.microsoft.agents-toolkit"]` block embedded in plugin.json.
    */
   @hooks([
     ErrorContextMW({ component: "FxCore", stage: Stage.create, reset: true }),
