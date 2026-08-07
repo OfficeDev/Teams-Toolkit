@@ -152,9 +152,8 @@ describe("Collaborator APIs for V3", () => {
         {
           userObjectId: "fake-aad-user-object-id",
           userPrincipalName: "fake-user-principal-name",
-          isAadOwner: true,
-          teamsAppResourceId: "fake-resource-id",
-          aadResourceId: "fake-resource-id",
+          collaboratorType: CollaborationConstants.AadAppQuestionId,
+          collaboratorResourceId: "fake-resource-id",
         },
       ]);
     });
@@ -193,7 +192,7 @@ describe("Collaborator APIs for V3", () => {
       assert.deepEqual(result._unsafeUnwrap(), { state: CollaborationState.OK });
     });
 
-    it("should merge distinct teams and aad owners into collaborators list", async () => {
+    it("should preserve collaborators for each resource relationship", async () => {
       vi.spyOn(tokenProvider.m365TokenProvider, "getJsonObject").mockResolvedValue(
         ok({
           tid: "mock_project_tenant_id",
@@ -215,8 +214,14 @@ describe("Collaborator APIs for V3", () => {
       vi.spyOn(AadCollaboration.prototype, "listCollaborator").mockResolvedValue(
         ok([
           {
-            userObjectId: "aad-only-user-object-id",
+            userObjectId: "teams-only-user-object-id",
             resourceId: "fake-aad-resource-id",
+            displayName: "teams-only-display-name",
+            userPrincipalName: "teams-only-user-principal-name",
+          },
+          {
+            userObjectId: "aad-only-user-object-id",
+            resourceId: "fake-aad-only-resource-id",
             displayName: "aad-only-display-name",
             userPrincipalName: "aad-only-user-principal-name",
           },
@@ -235,15 +240,20 @@ describe("Collaborator APIs for V3", () => {
         {
           userObjectId: "teams-only-user-object-id",
           userPrincipalName: "teams-only-user-principal-name",
-          isAadOwner: false,
-          teamsAppResourceId: "fake-teams-resource-id",
+          collaboratorType: CollaborationConstants.TeamsAppQuestionId,
+          collaboratorResourceId: "fake-teams-resource-id",
+        },
+        {
+          userObjectId: "teams-only-user-object-id",
+          userPrincipalName: "teams-only-user-principal-name",
+          collaboratorType: CollaborationConstants.AadAppQuestionId,
+          collaboratorResourceId: "fake-aad-resource-id",
         },
         {
           userObjectId: "aad-only-user-object-id",
           userPrincipalName: "aad-only-user-principal-name",
-          isAadOwner: true,
-          teamsAppResourceId: "",
-          aadResourceId: "fake-aad-resource-id",
+          collaboratorType: CollaborationConstants.AadAppQuestionId,
+          collaboratorResourceId: "fake-aad-only-resource-id",
         },
       ]);
     });
@@ -279,8 +289,8 @@ describe("Collaborator APIs for V3", () => {
         {
           userObjectId: "agent-only-user-object-id",
           userPrincipalName: "agent-only-user-principal-name",
-          isAadOwner: false,
-          teamsAppResourceId: "",
+          collaboratorType: CollaborationConstants.AgentOptionId,
+          collaboratorResourceId: expectedTitleId,
         },
       ]);
     });

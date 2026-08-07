@@ -490,41 +490,32 @@ function mergeCollaborators(
   aadOwners: AadOwner[],
   agentOwners: AgentOwner[]
 ): Collaborator[] {
-  const collaboratorMap = new Map<string, Collaborator>();
+  const collaborators: Collaborator[] = [];
   for (const teamsOwner of teamsAppOwners) {
-    collaboratorMap.set(teamsOwner.userObjectId, {
+    collaborators.push({
       userPrincipalName: teamsOwner.userPrincipalName,
       userObjectId: teamsOwner.userObjectId,
-      isAadOwner: false,
-      teamsAppResourceId: teamsOwner.resourceId,
+      collaboratorType: CollaborationConstants.TeamsAppQuestionId,
+      collaboratorResourceId: teamsOwner.resourceId,
     });
   }
   for (const aadOwner of aadOwners) {
-    const existing = collaboratorMap.get(aadOwner.userObjectId);
-    if (existing) {
-      existing.isAadOwner = true;
-      existing.aadResourceId = aadOwner.resourceId;
-    } else {
-      collaboratorMap.set(aadOwner.userObjectId, {
-        userPrincipalName: aadOwner.userPrincipalName,
-        userObjectId: aadOwner.userObjectId,
-        isAadOwner: true,
-        teamsAppResourceId: "",
-        aadResourceId: aadOwner.resourceId,
-      });
-    }
+    collaborators.push({
+      userPrincipalName: aadOwner.userPrincipalName,
+      userObjectId: aadOwner.userObjectId,
+      collaboratorType: CollaborationConstants.AadAppQuestionId,
+      collaboratorResourceId: aadOwner.resourceId,
+    });
   }
   for (const agentOwner of agentOwners) {
-    if (!collaboratorMap.has(agentOwner.userObjectId)) {
-      collaboratorMap.set(agentOwner.userObjectId, {
-        userPrincipalName: agentOwner.userPrincipalName,
-        userObjectId: agentOwner.userObjectId,
-        isAadOwner: false,
-        teamsAppResourceId: "",
-      });
-    }
+    collaborators.push({
+      userPrincipalName: agentOwner.userPrincipalName,
+      userObjectId: agentOwner.userObjectId,
+      collaboratorType: CollaborationConstants.AgentOptionId,
+      collaboratorResourceId: agentOwner.resourceId,
+    });
   }
-  return Array.from(collaboratorMap.values());
+  return collaborators;
 }
 
 export async function checkPermission(

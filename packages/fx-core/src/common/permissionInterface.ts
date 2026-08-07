@@ -43,9 +43,8 @@ export interface PermissionsResult {
 export interface Collaborator {
   userPrincipalName: string;
   userObjectId: string;
-  isAadOwner: boolean;
-  teamsAppResourceId: string;
-  aadResourceId?: string;
+  collaboratorType: string;
+  collaboratorResourceId: string;
 }
 
 export interface AadOwner {
