@@ -5,8 +5,9 @@
 
 /* global Office */
 
-Office.onReady(() => {
-  // If needed, Office.js is ready to be called.
+Office.onReady(async () => {
+  // Register the function with Office.
+  Office.actions.associate("action", action);
 });
 
 /**
@@ -30,6 +31,3 @@ function action(event: Office.AddinCommands.Event) {
   // Be sure to indicate when the add-in command function is complete.
   event.completed();
 }
-
-// Register the function with Office.
-Office.actions.associate("action", action);
