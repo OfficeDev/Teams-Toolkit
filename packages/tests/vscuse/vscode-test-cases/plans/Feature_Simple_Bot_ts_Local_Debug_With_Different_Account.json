@@ -462,7 +462,9 @@
       "depends_on": [],
       "preconditions": [],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "delay: 3"
+      ],
       "screenshot": "step_2db18dfb",
       "created_at": "2026-05-27T02:00:01.677450",
       "plan_id": "plan_68e70b6d"
@@ -858,7 +860,9 @@
       "depends_on": [],
       "preconditions": [],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "delay: 3"
+      ],
       "screenshot": "step_82d51d3a",
       "created_at": "2026-05-27T02:00:01.902491",
       "plan_id": "plan_68e70b6d"

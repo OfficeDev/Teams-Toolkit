@@ -2,7 +2,12 @@ azure_openai:
   endpoint: "${AZURE_OPENAI_ENDPOINT}" # Required: Set via environment variable
   api_key: "${AZURE_OPENAI_API_KEY}" # Required: Set via environment variable
   api_version: "${AZURE_OPENAI_API_VERSION}" # Default: "2025-04-01-preview"
-  model: "${AZURE_OPENAI_MODEL}" # Default: "gpt-4.1"
+  model: "${AZURE_OPENAI_VSCUSE_MODEL}" # Deployment used by the vscuse driver's OWN agents
+                                        # (action + assertion/precondition verification). Point
+                                        # AZURE_OPENAI_VSCUSE_MODEL at a stronger model (e.g.
+                                        # gpt-5.4) to run vscuse's reasoning on it. The product
+                                        # under test uses a separate deployment, typed in via
+                                        # ${{env:AZURE_OPENAI_MODEL}} in the plan steps.
   timeout: 60 # Default: 60 (seconds)
   use_azure_credential: false # Default: false
 

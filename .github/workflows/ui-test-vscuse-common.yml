@@ -39,7 +39,7 @@ on:
       max_retries:
         required: false
         type: number
-        default: 7
+        default: 1
       schedule_trigger:
         required: false
         type: boolean
@@ -145,7 +145,15 @@ jobs:
       GH_APP_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}
       AZURE_OPENAI_ENDPOINT: ${{ vars.TEST_TENANT_AZURE_OPENAI_ENDPOINT }}
       AZURE_OPENAI_API_KEY: ${{ secrets.TEST_TENANT_AZURE_OPENAI_KEY }}
+      # Deployment name for the PRODUCT under test (typed into the app's .env as
+      # AZURE_OPENAI_DEPLOYMENT_NAME via the plan steps). Keep this on a cheap model (e.g. gpt-4.1).
       AZURE_OPENAI_MODEL: ${{ vars.TEST_TENANT_AZURE_OPENAI_MODEL }}
+      # Deployment name used by the vscuse automation driver's OWN agents (action + assertion /
+      # precondition verification) via config.yaml. Set the repo variable to a stronger model
+      # (e.g. gpt-5.4) to improve UI reasoning + assertions without touching the product model.
+      # Falls back to AZURE_OPENAI_MODEL when the variable is unset. Dial it back here if it hits
+      # the Azure OpenAI rate-limit threshold.
+      AZURE_OPENAI_VSCUSE_MODEL: ${{ vars.TEST_TENANT_AZURE_OPENAI_VSCUSE_MODEL || vars.TEST_TENANT_AZURE_OPENAI_MODEL }}
       AZURE_OPENAI_API_VERSION: ${{ vars.TEST_TENANT_AZURE_OPENAI_API_VERSION }}
 
       # Vision service
@@ -246,10 +254,16 @@ jobs:
         run: npm install @octokit/auth-app @octokit/request @octokit/core node-fetch yaml@2.8.3
         shell: bash
 
-      - name: Run download script
-        run: node download-vscuse-python.js "${{ inputs.vscuse_version }}" "${{ github.workspace }}/packages/tests/vscuse/vscode-test-cases"
+      # TEST BRANCH: use the locally-built vscuse wheel (vsc-use PR #27 – AI precondition
+      # click-retarget) committed under packages/tests/vscuse/local-wheel/ instead of
+      # downloading the published vscuse-doc release. The `vscuse_version` input is ignored
+      # here. Revert this step to `node download-vscuse-python.js ...` to restore the release download.
+      - name: Use locally-committed vscuse wheel
+        run: |
+          cp packages/tests/vscuse/local-wheel/*.whl packages/tests/vscuse/vscode-test-cases/
+          echo "Using local vscuse wheel:"
+          ls -la packages/tests/vscuse/vscode-test-cases/*.whl
         shell: bash
-        working-directory: .github/actions/setup-vscuse-environment
 
       - name: Set up Python virtual environment and install wheel
         run: |

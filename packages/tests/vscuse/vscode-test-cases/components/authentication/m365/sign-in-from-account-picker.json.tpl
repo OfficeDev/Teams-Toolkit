@@ -163,7 +163,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": ["step_signInM365FromPicker_next_{{text:instanceSuffix}}"],
-      "preconditions": ["dhash:512:384:0:20:1392e8d8d9f6e6e4"],
+      "preconditions": [],
       "postconditions": [],
       "tags": ["component:authentication", "account:m365", "delay: 3"]
     },

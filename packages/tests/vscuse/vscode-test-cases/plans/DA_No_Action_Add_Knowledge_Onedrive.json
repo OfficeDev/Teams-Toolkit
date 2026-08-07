@@ -338,7 +338,8 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "precondition:old"
+        "precondition:old",
+        "delay: 3"
       ],
       "screenshot": "step_9b5d64bc",
       "created_at": "2026-05-20T04:53:33.937144",

@@ -193,7 +193,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": ["step_signInAzure_next_{{text:instanceSuffix}}"],
-      "preconditions": ["dhash:512:384:0:20:1908f0d9d1e6e6e4"],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:authentication",
