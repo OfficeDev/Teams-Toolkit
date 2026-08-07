@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 4,
+    "total_steps": 6,
     "created_at": "2025-12-16T06:34:23.291039",
     "name": "Basic Custom Engine Azure OpenAI ts Copilot Local Debug",
     "description": {
@@ -29,10 +29,12 @@
       "plan_r_1021_081410",
       "plan_f355465c",
       "step_7c9a1e4b",
+      "step_44dc00b6",
+      "step_f3034c35",
       "plan_568c0a08"
     ],
     "tags": [],
-    "updated_at": "2026-08-07T08:19:39.333000"
+    "updated_at": "2026-08-07T08:39:15.917000"
   },
   "steps": [
     {
@@ -124,7 +126,7 @@
         "x": 375,
         "y": 223
       },
-      "description": "Click the visible \"Add\" button in the Microsoft 365 Copilot agent details dialog to add and open the local agent before chat validation.",
+      "description": "Click the visible \"Add\" button in the Microsoft 365 Copilot agent details dialog.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -137,6 +139,50 @@
       ],
       "screenshot": "",
       "created_at": "2026-08-07T08:19:39.333000",
+      "plan_id": "plan_c917256b"
+    },
+    {
+      "step_id": "step_44dc00b6",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Microsoft 365 Copilot agent details dialog is visible with an \"Open\" button.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "step_retry_timeout: 180"
+      ],
+      "screenshot": "",
+      "created_at": "2026-08-07T08:39:15.917000",
+      "plan_id": "plan_c917256b"
+    },
+    {
+      "step_id": "step_f3034c35",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 375,
+        "y": 223
+      },
+      "description": "Click the visible \"Open\" button in the Microsoft 365 Copilot agent details dialog to open the local agent chat.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "ocr:true"
+      ],
+      "screenshot": "",
+      "created_at": "2026-08-07T08:39:15.917000",
       "plan_id": "plan_c917256b"
     }
   ],
