@@ -6,6 +6,7 @@ version: 1
 cases:
   - id: tab-ts-remote-teams
     scenarioId: SCN-CREATE-NON-SSO-TAB-01
+    workItemIds: [14134646, 15263834]
     steps:
       [
         scaffold-tab-ts,
@@ -21,6 +22,7 @@ cases:
 
   - id: tab-ts-local-teams
     scenarioId: SCN-CREATE-NON-SSO-TAB-01
+    workItemIds: [15276946, 15455338, 12615302]
     steps:
       [
         scaffold-tab-ts,
@@ -35,6 +37,7 @@ cases:
   # lifecycle recreating it is to delete the scaffolded copy first.
   - id: tab-ts-local-teams-env-recreated
     scenarioId: SCN-CREATE-NON-SSO-TAB-02
+    workItemIds: [17038910]
     steps:
       [
         scaffold-tab-ts,

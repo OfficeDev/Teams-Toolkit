@@ -937,7 +937,7 @@ export function addAuthActionQuestion(): IQTreeNode {
               apis.push(...(runtime.run_for_functions as string[]));
             });
           const apisDedup = [...new Set(apis)];
-          if (apisDedup.length === 1 || (inputs.nonInteractive && apisDedup.length > 0)) {
+          if (apisDedup.length === 1) {
             inputs[QuestionNames.ApiOperation] = apisDedup;
             return false;
           }

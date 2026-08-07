@@ -61,7 +61,7 @@ function composeCase({ compileStep, expandedCase, sourcePath }) {
           name: expandedCase.caseId,
           description: {
             owner: "",
-            workitem: expandedCase.scenarioId,
+            workitem: expandedCase.workItemIds.join(","),
             other: "",
           },
           execution_order: steps.map(({ step_id }) => step_id),

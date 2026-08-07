@@ -3,6 +3,7 @@ version: 1
 cases:
   - id: da-api-plugin-from-existing-api-no-auth-remote-preview
     scenarioId: SCN-DA-CREATE-API-PLUGIN-FROM-EXISTING-API
+    workItemIds: [28941863]
     gate: manual
     steps:
       [
@@ -17,6 +18,7 @@ cases:
 
   - id: da-api-plugin-from-existing-api-api-key-remote-preview
     scenarioId: SCN-DA-CREATE-API-PLUGIN-FROM-EXISTING-API
+    workItemIds: [31434601]
     gate: manual
     steps:
       [
@@ -31,6 +33,7 @@ cases:
 
   - id: da-api-plugin-from-existing-api-bearer-remote-preview
     scenarioId: SCN-DA-CREATE-API-PLUGIN-FROM-EXISTING-API
+    workItemIds: [31434602]
     gate: manual
     steps:
       [
@@ -45,6 +48,7 @@ cases:
 
   - id: da-api-plugin-from-existing-api-oauth-remote-preview
     scenarioId: SCN-DA-CREATE-API-PLUGIN-FROM-EXISTING-API
+    workItemIds: [31434597]
     gate: manual
     steps:
       [

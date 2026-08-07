@@ -17,7 +17,11 @@ import * as util from "util";
 import { AppStudioScopes } from "../../../common/constants";
 import { getLocalizedString } from "../../../common/localizeUtils";
 import { runForTypeSpecProject } from "../../../common/tools";
-import { FileNotFoundError, MissingRequiredInputError } from "../../../error/common";
+import {
+  FileNotFoundError,
+  MissingRequiredInputError,
+  UserCancelError,
+} from "../../../error/common";
 import { resolveString } from "../../configManager/lifecycle";
 import { envUtil } from "../../utils/envUtil";
 import { pathUtils } from "../../utils/pathUtils";
@@ -35,6 +39,7 @@ import { PublishAppPackageArgs } from "./interfaces/PublishAppPackageArgs";
 import { ValidateAppPackageArgs } from "./interfaces/ValidateAppPackageArgs";
 import { ValidateManifestArgs } from "./interfaces/ValidateManifestArgs";
 import { ValidateWithTestCasesArgs } from "./interfaces/ValidateWithTestCasesArgs";
+import { IValidationResult } from "./interfaces/appdefinitions/IValidationResult";
 import {
   actionName as PublishAppPackageActionName,
   PublishAppPackageDriver,
@@ -50,6 +55,9 @@ export const teamsAppMgrDeps = {
 
 class TeamsAppMgr {
   async ensureAppPackageFile(inputs: TeamsAppInputs): Promise<Result<undefined, FxError>> {
+    if ((inputs.abortSignal as AbortSignal | undefined)?.aborted) {
+      return err(new UserCancelError("TeamsAppMgr"));
+    }
     // if no package file input, then do package first
     if (!inputs["package-file"]) {
       const packageRes = await this.packageTeamsApp(inputs);
@@ -138,6 +146,9 @@ class TeamsAppMgr {
   }
 
   async packageTeamsApp(inputs: TeamsAppInputs): Promise<Result<CreateAppPackageArgs, FxError>> {
+    if ((inputs.abortSignal as AbortSignal | undefined)?.aborted) {
+      return err(new UserCancelError("TeamsAppMgr"));
+    }
     if (!inputs["manifest-file"]) {
       const defaultManifestPath = manifestUtils.getTeamsAppManifestPath(inputs.projectPath);
       if (!(await fs.pathExists(defaultManifestPath))) {
@@ -152,6 +163,9 @@ class TeamsAppMgr {
 
     const loadEnvRes = await this.checkAndTryToLoadEnv(inputs);
     if (loadEnvRes.isErr()) return err(loadEnvRes.error);
+    if ((inputs.abortSignal as AbortSignal | undefined)?.aborted) {
+      return err(new UserCancelError("TeamsAppMgr"));
+    }
     const env = loadEnvRes.value;
 
     // reach here means manifes-file is provided and exists
@@ -177,6 +191,9 @@ class TeamsAppMgr {
     // For TSP projects
     await teamsAppMgrDeps.runForTypeSpecProject(inputs.projectPath, driverContext);
     const res = (await buildDriver.execute(packageArgs, driverContext)).result;
+    if ((inputs.abortSignal as AbortSignal | undefined)?.aborted) {
+      return err(new UserCancelError("TeamsAppMgr"));
+    }
     if (res.isErr()) {
       return err(res.error);
     }
@@ -235,6 +252,17 @@ class TeamsAppMgr {
       }
     }
     return ok(undefined);
+  }
+
+  async validateTeamsAppForClient(
+    inputs: TeamsAppInputs
+  ): Promise<Result<IValidationResult, FxError>> {
+    if (!inputs["package-file"]) {
+      return err(new MissingRequiredInputError("package-file", "TeamsAppMgr"));
+    }
+    const context = createDriverContext(inputs);
+    const driver: ValidateAppPackageDriver = Container.get("teamsApp/validateAppPackage");
+    return driver.validateForClient({ appPackagePath: inputs["package-file"] }, context);
   }
 
   /**
@@ -300,10 +328,16 @@ class TeamsAppMgr {
   }
 
   async publishTeamsApp(inputs: TeamsAppInputs): Promise<Result<undefined, FxError>> {
+    if ((inputs.abortSignal as AbortSignal | undefined)?.aborted) {
+      return err(new UserCancelError("TeamsAppMgr"));
+    }
     // 1. zip package if necessary
     const packageRes = await this.ensureAppPackageFile(inputs);
     if (packageRes.isErr()) {
       return err(packageRes.error);
+    }
+    if ((inputs.abortSignal as AbortSignal | undefined)?.aborted) {
+      return err(new UserCancelError("TeamsAppMgr"));
     }
 
     const appPackageFile = inputs["package-file"] as string;
@@ -320,6 +354,9 @@ class TeamsAppMgr {
     if (validateRes.isErr()) {
       return err(validateRes.error);
     }
+    if ((inputs.abortSignal as AbortSignal | undefined)?.aborted) {
+      return err(new UserCancelError("TeamsAppMgr"));
+    }
 
     // 3. publish app package
     const publishArgs: PublishAppPackageArgs = {
@@ -328,6 +365,9 @@ class TeamsAppMgr {
 
     const publishDriver: PublishAppPackageDriver = Container.get(PublishAppPackageActionName);
     const updateRes = (await publishDriver.execute(publishArgs, driverContext)).result;
+    if ((inputs.abortSignal as AbortSignal | undefined)?.aborted) {
+      return err(new UserCancelError("TeamsAppMgr"));
+    }
     if (updateRes.isErr()) {
       return err(updateRes.error);
     }

@@ -65,6 +65,83 @@ async function compileFixture(fileName, transform) {
   });
 }
 
+test("VCB-128: numeric work item IDs remain distinct from scenario metadata", () => {
+  const sourceText = `version: 1
+cases:
+  - id: remote
+    scenarioId: SCN-REMOTE
+    workItemIds: [1001, 1002]
+    steps: [scaffold]
+steps:
+  scaffold:
+    type: scaffold
+    with:
+      template: weather-agent
+      answers: []
+`;
+  const compileStep = () => ({
+    ok: true,
+    value: [
+      {
+        step_id: "step_scaffold",
+        agent: "assertion",
+        tool: "",
+        parameters: {},
+        description: "Compiled scaffold",
+        depends_on: [],
+        tags: [],
+      },
+    ],
+  });
+  const result = compileCaseBundle({
+    sourcePath: "cases/work-items.yml",
+    sourceText,
+    compileStep,
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(
+    result.value[0].plan.plan_metadata.description.workitem,
+    "1001,1002",
+  );
+  assert.equal(
+    result.value[0].plan.plan_metadata.tags.includes("scenario_id:SCN-REMOTE"),
+    true,
+  );
+
+  for (const invalidWorkItemIds of [
+    undefined,
+    "[]",
+    "[0]",
+    "[-1]",
+    "[1.5]",
+    "[9007199254740992]",
+    "[1001, 1001]",
+    '["1001"]',
+  ]) {
+    const invalid = compileCaseBundle({
+      sourcePath: "cases/work-items.yml",
+      sourceText: sourceText.replace(
+        "    workItemIds: [1001, 1002]\n",
+        invalidWorkItemIds === undefined
+          ? ""
+          : `    workItemIds: ${invalidWorkItemIds}\n`,
+      ),
+      compileStep,
+    });
+    const label = invalidWorkItemIds ?? "missing";
+    assert.equal(invalid.ok, false, label);
+    assert.ok(
+      invalid.diagnostics.some(
+        ({ code, yamlPath }) =>
+          code === "VCB_WORK_ITEM_IDS_INVALID" &&
+          yamlPath === "$.cases[0].workItemIds",
+      ),
+      label,
+    );
+  }
+});
+
 test("VCB-34: semantic compiler does not read external template contracts", async (context) => {
   const plansDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "vscuse-contract-reads-"),
@@ -444,6 +521,7 @@ test("VCB-91: Teams Other scaffolds resolve the complete authored selector path"
 cases:
   - id: ${caseId}
     scenarioId: VCB-91
+    workItemIds: [1001]
     steps: [scaffold, check]
 steps:
   scaffold:
@@ -615,7 +693,7 @@ test("VCB-34: DA API plugin from scratch compiles complete remote branches in au
       [...optionIndexes].sort((left, right) => left - right),
     );
     const runtimeFlow = [
-      "@assertion a visible Visual Studio Code notification contains provision stage executed successfully.",
+      "@assertion a visible Visual Studio Code notification contains the literal text provision stage executed successfully. A notification with different text, including an in-progress notification, does not satisfy this assertion.",
       'Click the "Message" input box in the Microsoft 365 Copilot web application.',
       "@assertion the Copilot action-consent Allow button is visible.",
       'Click the "Allow" button in the Microsoft 365 Copilot chat interface to grant the agent access.',
@@ -1106,7 +1184,7 @@ test("provision confirmation follows the authored provision input", async (conte
   const notificationIndex = daPlan.steps.findIndex(
     (step) =>
       step.description ===
-      "@assertion a visible Visual Studio Code notification contains provision stage executed successfully.",
+      "@assertion a visible Visual Studio Code notification contains the literal text provision stage executed successfully. A notification with different text, including an in-progress notification, does not satisfy this assertion.",
   );
 
   assert.equal(provisionCommandIndex >= 0, true);
@@ -2208,6 +2286,7 @@ test("VCB-107: local user environment values update the fixed project file", asy
 cases:
   - id: local-user-environment
     scenarioId: VCB-107
+    workItemIds: [1001]
     steps: [scaffold, check, set-api-key]
 steps:
   scaffold:
@@ -2342,6 +2421,7 @@ test("VCB-123: TypeSpec GitHub issues action uses a deterministic terminal mutat
 cases:
   - id: typespec-github-issues
     scenarioId: VCB-123
+    workItemIds: [123]
     steps: [scaffold, check, configure-action]
 steps:
   scaffold:
@@ -2466,7 +2546,7 @@ test("VCB-124: TypeSpec single environment skips the provision picker", async ()
   );
   assert.equal(
     descriptions.includes(
-      "@assertion a visible Visual Studio Code notification contains provision stage executed successfully.",
+      "@assertion a visible Visual Studio Code notification contains the literal text provision stage executed successfully. A notification with different text, including an in-progress notification, does not satisfy this assertion.",
     ),
     true,
   );

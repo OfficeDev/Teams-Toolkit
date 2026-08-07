@@ -604,6 +604,9 @@ importers:
       linkedom:
         specifier: ^0.18.9
         version: 0.18.9
+      lodash:
+        specifier: 4.18.1
+        version: 4.18.1
       md5:
         specifier: ^2.3.0
         version: 2.3.0
@@ -830,9 +833,6 @@ importers:
       lint-staged:
         specifier: ^10.5.4
         version: 10.5.4
-      lodash:
-        specifier: 4.18.1
-        version: 4.18.1
       mock-fs:
         specifier: 5.2.0
         version: 5.2.0

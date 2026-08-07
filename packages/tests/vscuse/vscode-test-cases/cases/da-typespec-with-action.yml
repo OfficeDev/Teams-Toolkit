@@ -3,6 +3,7 @@ version: 1
 cases:
   - id: da-typespec-with-action-remote-preview
     scenarioId: SCN-DA-CREATE-TYPESPEC
+    workItemIds: [32772441]
     gate: manual
     steps:
       [

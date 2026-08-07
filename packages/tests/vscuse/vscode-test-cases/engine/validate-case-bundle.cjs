@@ -3,6 +3,7 @@ const { createDiagnostic } = require("./diagnostics.cjs");
 const allowedCaseFields = new Set([
   "id",
   "scenarioId",
+  "workItemIds",
   "featureFlags",
   "steps",
   "gate",
@@ -206,6 +207,24 @@ function validateCaseBundle({ bundle, sourcePath }) {
             sourcePath,
             `${yamlPath}.scenarioId`,
             "Each case must have a non-empty scenario ID.",
+          ),
+        );
+      }
+      if (
+        !Array.isArray(caseDefinition.workItemIds) ||
+        caseDefinition.workItemIds.length === 0 ||
+        caseDefinition.workItemIds.some(
+          (workItemId) => !Number.isSafeInteger(workItemId) || workItemId <= 0,
+        ) ||
+        new Set(caseDefinition.workItemIds).size !==
+          caseDefinition.workItemIds.length
+      ) {
+        diagnostics.push(
+          createDiagnostic(
+            "VCB_WORK_ITEM_IDS_INVALID",
+            sourcePath,
+            `${yamlPath}.workItemIds`,
+            "Each case must have unique positive integer work item IDs.",
           ),
         );
       }

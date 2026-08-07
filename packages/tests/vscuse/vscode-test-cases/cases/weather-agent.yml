@@ -9,6 +9,7 @@ version: 1
 cases:
   - id: weather-ts-azure-openai-remote-teams
     scenarioId: SCN-CREATE-WEATHER-01
+    workItemIds: [34648368]
     steps:
       [
         scaffold-weather-ts-azure-openai,
@@ -28,6 +29,7 @@ cases:
   # because the local run reads no Azure resources.
   - id: weather-ts-azure-openai-local-teams
     scenarioId: SCN-CREATE-WEATHER-01
+    workItemIds: [34648342]
     steps:
       [
         scaffold-weather-ts-azure-openai,
@@ -40,6 +42,7 @@ cases:
 
   - id: weather-js-azure-openai-remote-teams
     scenarioId: SCN-CREATE-WEATHER-01
+    workItemIds: [34648345]
     steps:
       [
         scaffold-weather-js-azure-openai,
@@ -55,6 +58,7 @@ cases:
 
   - id: weather-js-azure-openai-local-teams
     scenarioId: SCN-CREATE-WEATHER-01
+    workItemIds: [34648323]
     steps:
       [
         scaffold-weather-js-azure-openai,
@@ -74,6 +78,7 @@ cases:
   # name, and the different generated configuration that follows from it.
   - id: weather-ts-openai-remote-teams
     scenarioId: SCN-CREATE-WEATHER-03
+    workItemIds: [34648339]
     steps:
       [
         scaffold-weather-ts-openai,
@@ -88,6 +93,7 @@ cases:
 
   - id: weather-ts-openai-local-teams
     scenarioId: SCN-CREATE-WEATHER-03
+    workItemIds: [34648300]
     steps:
       [
         scaffold-weather-ts-openai,
@@ -101,6 +107,7 @@ cases:
 
   - id: weather-js-openai-remote-teams
     scenarioId: SCN-CREATE-WEATHER-03
+    workItemIds: [34648304]
     steps:
       [
         scaffold-weather-js-openai,
@@ -115,6 +122,7 @@ cases:
 
   - id: weather-js-openai-local-teams
     scenarioId: SCN-CREATE-WEATHER-03
+    workItemIds: [34648299]
     steps:
       [
         scaffold-weather-js-openai,
@@ -131,6 +139,7 @@ cases:
   # deployed first, unlike a declarative agent.
   - id: weather-ts-azure-openai-remote-copilot
     scenarioId: SCN-CREATE-WEATHER-01
+    workItemIds: [33338502]
     steps:
       [
         scaffold-weather-ts-azure-openai,
@@ -146,6 +155,7 @@ cases:
 
   - id: weather-ts-azure-openai-local-copilot
     scenarioId: SCN-CREATE-WEATHER-01
+    workItemIds: [33338504]
     steps:
       [
         scaffold-weather-ts-azure-openai,
@@ -161,6 +171,7 @@ cases:
   # completion from the scaffolded agent.
   - id: weather-ts-azure-openai-playground
     scenarioId: SCN-CREATE-WEATHER-01
+    workItemIds: [36230430]
     steps:
       [
         scaffold-weather-ts-azure-openai,
@@ -172,6 +183,7 @@ cases:
 
   - id: weather-js-azure-openai-playground
     scenarioId: SCN-CREATE-WEATHER-01
+    workItemIds: [36230411]
     steps:
       [
         scaffold-weather-js-azure-openai,

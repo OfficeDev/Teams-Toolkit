@@ -8,6 +8,7 @@ version: 1
 cases:
   - id: collaborator-ts-azure-openai-remote-teams
     scenarioId: SCN-CREATE-COLLABORATOR-01
+    workItemIds: [35692291]
     steps:
       [
         scaffold-collaborator-ts,
@@ -22,6 +23,7 @@ cases:
 
   - id: collaborator-ts-azure-openai-local-teams
     scenarioId: SCN-CREATE-COLLABORATOR-01
+    workItemIds: [35527255]
     steps:
       [
         scaffold-collaborator-ts,
