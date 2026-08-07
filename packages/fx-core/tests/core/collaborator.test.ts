@@ -152,6 +152,12 @@ describe("Collaborator APIs for V3", () => {
         {
           userObjectId: "fake-aad-user-object-id",
           userPrincipalName: "fake-user-principal-name",
+          collaboratorType: CollaboratorType.TeamsApp,
+          collaboratorResourceId: "fake-resource-id",
+        },
+        {
+          userObjectId: "fake-aad-user-object-id",
+          userPrincipalName: "fake-user-principal-name",
           collaboratorType: CollaboratorType.AadApp,
           collaboratorResourceId: "fake-resource-id",
         },
