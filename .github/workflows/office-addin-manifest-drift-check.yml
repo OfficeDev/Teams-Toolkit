@@ -11,8 +11,8 @@ on:
         description: "After the report, open a separate PR per template Copilot judged UPDATE NEEDED (edits src + package.json.tpl)"
         type: boolean
         default: false
-  # schedule:
-  #   - cron: "23 6 * * *"
+  schedule:
+    - cron: "23 6 * * *"
 
 permissions:
   contents: write
@@ -171,7 +171,7 @@ jobs:
             }
 
       - name: Create update PRs
-        if: ${{ inputs.create_prs && steps.drift_check.outputs.update_ids != '' }}
+        if: ${{ (inputs.create_prs || github.event_name == 'schedule') && steps.drift_check.outputs.update_ids != '' }}
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_CLI_RUNNER_TOKEN }}
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
