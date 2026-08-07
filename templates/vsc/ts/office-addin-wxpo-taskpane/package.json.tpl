@@ -39,11 +39,12 @@
     "regenerator-runtime": "^0.14.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.24.0",
-    "@babel/preset-typescript": "^7.23.3",
+    "@babel/core": "^8.0.1",
+    "@babel/preset-env": "^8.0.2",
+    "@babel/preset-typescript": "^8.0.1",
     "@types/office-js": "^1.0.377",
     "@types/office-runtime": "^1.0.35",
-    "babel-loader": "^9.1.3",
+    "babel-loader": "^10.1.1",
     "copy-webpack-plugin": "^14.0.0",
     "eslint-plugin-office-addins": "^3.0.2",
     "file-loader": "^6.2.0",
@@ -58,7 +59,6 @@
     "os-browserify": "^0.3.0",
     "process": "^0.11.10",
     "source-map-loader": "^5.0.0",
-    "ts-loader": "^9.5.1",
     "typescript": "^5.4.2",
     "webpack": "^5.90.3",
     "webpack-cli": "^5.1.4",
