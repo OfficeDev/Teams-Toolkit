@@ -243,17 +243,30 @@ function parseVerdict(judgmentText) {
 
 function stripCliTrace(raw) {
   const text = String(raw).replace(/\r/g, "");
-  const verdictIdx = text.search(/\*{0,2}VERDICT\b/i);
-  if (verdictIdx !== -1) {
-    return text.slice(verdictIdx).trim();
-  }
-  const cleaned = text
+
+  // Drop the CLI tool-call trace lines wherever they appear (tree glyphs, web
+  // fetches, greps, file reads, content-type notes, api/raw URLs).
+  const dropped = text
     .split("\n")
-    .filter((line) => !/^\s*[●│└/]/.test(line))
+    .filter((line) => !/^\s*[●│└/✗✘✓]/.test(line))
+    .filter((line) => !/^\s*●?\s*skill\(/.test(line))
+    .filter((line) => !/Fetching web content|Content type .*cannot be simplified/.test(line))
+    .filter((line) => !/^\s*Search \(|(\d+ (files|lines) (found|read))/.test(line))
+    .filter((line) => !/^\s*https?:\/\/(api\.github\.com|raw\.githubusercontent\.com|github\.com)/.test(line))
     .join("\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
-  return cleaned || text.trim();
+
+  // Prefer everything from the real verdict LINE onward (keyword required, so a
+  // stray lowercase "verdict." in prose can't false-match), searched in the
+  // already-cleaned text.
+  const verdictIdx = dropped.search(
+    /^\**\s*verdict\**\s*[:\-]?\s*(update needed|no update needed|review)/im,
+  );
+  if (verdictIdx !== -1) {
+    return dropped.slice(verdictIdx).trim();
+  }
+  return dropped || text.trim();
 }
 
 // Ask Copilot CLI to explore upstream + toolkit code itself and judge whether
