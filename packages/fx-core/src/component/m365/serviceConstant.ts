@@ -17,11 +17,6 @@ export const MOS3ApiDefinitions: any = {
     method: "POST",
     path: /^\/dev\/v1\/users\/packages\/addins$/,
   },
-  PostDevPackage: {
-    key: "post_dev_package",
-    method: "POST",
-    path: /^\/dev\/v1\/users\/packages$/,
-  },
   GetDevStatus: {
     key: "get_dev_status",
     method: "GET",
@@ -36,11 +31,6 @@ export const MOS3ApiDefinitions: any = {
     key: "get_builder_status",
     method: "GET",
     path: /^\/builder\/v1\/users\/packages\/status\/[^\/]+/,
-  },
-  PostDevPackageAcquisitions: {
-    key: "post_dev_package_acquire",
-    method: "POST",
-    path: /^\/dev\/v1\/users\/packages\/acquisitions/,
   },
   GetShareInfo: {
     key: "get_share_info",

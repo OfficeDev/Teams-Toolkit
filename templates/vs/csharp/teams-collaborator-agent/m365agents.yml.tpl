@@ -71,6 +71,7 @@ provision:
 {{#CEAEnabled}}
   - uses: teamsApp/extendToM365
     with:
+      scope: ${{AGENT_SCOPE}}
       # Relative path to the build app package.
       appPackagePath: ./appPackage/build/appPackage.${{TEAMSFX_ENV}}.zip
     # Write the information of created resources into environment file for
