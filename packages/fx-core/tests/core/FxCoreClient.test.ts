@@ -16,6 +16,134 @@ describe("FxCoreClient", () => {
     vi.restoreAllMocks();
   });
 
+  it("addOperations_PreAbortedSignal_DoNotInvokeEngine", async () => {
+    const addPluginSpy = vi.spyOn(FxCore.prototype, "addPlugin");
+    const addSkillSpy = vi.spyOn(FxCore.prototype, "addSkill");
+    const addAuthActionSpy = vi.spyOn(FxCore.prototype, "addAuthAction");
+    const controller = new AbortController();
+    controller.abort();
+    const client = new FxCoreClient(new MockTools());
+    const addPluginInputs = {
+      platform: Platform.CLI,
+      projectPath: "project",
+      "manifest-path": "project/appPackage/manifest.json",
+      "api-plugin-type": "api-spec" as const,
+      "openapi-spec-type": "open-file" as const,
+      "openapi-spec-location": "openapi.yaml",
+    };
+    const addSkillInputs = {
+      platform: Platform.CLI,
+      projectPath: "project",
+      "manifest-path": "project/appPackage/manifest.json",
+      "skill-name": "weather",
+      "skill-description": "Weather instructions",
+    };
+    const addAuthInputs = {
+      platform: Platform.CLI,
+      projectPath: "project",
+      "plugin-manifest-path": "project/appPackage/ai-plugin.json",
+      "auth-name": "apiAuth",
+      "api-auth": "bearer-token" as const,
+    };
+
+    const results = await Promise.all([
+      client.addPlugin(addPluginInputs, { signal: controller.signal }),
+      client.addSkill(addSkillInputs, { signal: controller.signal }),
+      client.addAuthAction(addAuthInputs, { signal: controller.signal }),
+    ]);
+
+    results.forEach((result) => {
+      expect(result.isErr()).toBe(true);
+      if (result.isErr()) expect(result.error.name).toBe("UserCancel");
+    });
+    expect(addPluginSpy).not.toHaveBeenCalled();
+    expect(addSkillSpy).not.toHaveBeenCalled();
+    expect(addAuthActionSpy).not.toHaveBeenCalled();
+  });
+
+  it("addOperations_ActiveSignal_IsForwardedToEveryEngineInput", async () => {
+    const addPluginSpy = vi.spyOn(FxCore.prototype, "addPlugin").mockResolvedValue(ok(undefined));
+    const addSkillSpy = vi.spyOn(FxCore.prototype, "addSkill").mockResolvedValue(ok(undefined));
+    const addAuthActionSpy = vi
+      .spyOn(FxCore.prototype, "addAuthAction")
+      .mockResolvedValue(ok(undefined));
+    const controller = new AbortController();
+    const client = new FxCoreClient(new MockTools());
+    const addPluginInputs = {
+      platform: Platform.CLI,
+      projectPath: "project",
+      "manifest-path": "project/appPackage/manifest.json",
+      "api-plugin-type": "api-spec" as const,
+      "openapi-spec-type": "open-file" as const,
+      "openapi-spec-location": "openapi.yaml",
+    };
+    const addSkillInputs = {
+      platform: Platform.CLI,
+      projectPath: "project",
+      "manifest-path": "project/appPackage/manifest.json",
+      "skill-from": "skills/weather",
+    };
+    const addAuthInputs = {
+      platform: Platform.CLI,
+      projectPath: "project",
+      "plugin-manifest-path": "project/appPackage/ai-plugin.json",
+      "auth-name": "apiAuth",
+      "api-auth": "api-key" as const,
+      "api-key-in": "header" as const,
+      "api-key-name": "x-api-key",
+    };
+
+    const results = await Promise.all([
+      client.addPlugin(addPluginInputs, { signal: controller.signal }),
+      client.addSkill(addSkillInputs, { signal: controller.signal }),
+      client.addAuthAction(addAuthInputs, { signal: controller.signal }),
+    ]);
+
+    results.forEach((result) => expect(result.isOk()).toBe(true));
+    [addPluginSpy, addSkillSpy, addAuthActionSpy].forEach((spy) => {
+      expect(spy).toHaveBeenCalledWith(expect.objectContaining({ abortSignal: controller.signal }));
+    });
+  });
+
+  it("addPlugin_AbortedAfterCommitStarts_ReturnsEngineResult", async () => {
+    const controller = new AbortController();
+    vi.spyOn(FxCore.prototype, "addPlugin").mockImplementation(async () => {
+      controller.abort();
+      return ok(undefined);
+    });
+    const client = new FxCoreClient(new MockTools());
+
+    const result = await client.addPlugin(
+      {
+        platform: Platform.CLI,
+        projectPath: "project",
+        "manifest-path": "project/appPackage/manifest.json",
+        "api-plugin-type": "api-spec",
+        "openapi-spec-type": "open-file",
+        "openapi-spec-location": "openapi.yaml",
+      },
+      { signal: controller.signal }
+    );
+
+    expect(result.isOk()).toBe(true);
+  });
+
+  it("addAuthAction_EngineFailure_ReturnsOriginalError", async () => {
+    const expectedError = new UserCancelError("test");
+    vi.spyOn(FxCore.prototype, "addAuthAction").mockResolvedValue(err(expectedError));
+    const client = new FxCoreClient(new MockTools());
+
+    const result = await client.addAuthAction({
+      platform: Platform.CLI,
+      projectPath: "project",
+      "plugin-manifest-path": "project/appPackage/ai-plugin.json",
+      "auth-name": "apiAuth",
+    });
+
+    expect(result.isErr()).toBe(true);
+    if (result.isErr()) expect(result.error).toBe(expectedError);
+  });
+
   it("provision_PreAbortedSignal_DoesNotInvokeEngine", async () => {
     const provisionSpy = vi.spyOn(FxCore.prototype, "provisionResources");
     const controller = new AbortController();

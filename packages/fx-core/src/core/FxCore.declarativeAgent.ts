@@ -21,6 +21,7 @@ import {
 import fs from "fs-extra";
 import * as path from "path";
 import { listAPIInfo } from "../common/daSpecParser";
+import { getAbortSignal, throwIfAborted } from "../common/cancellation";
 import { FeatureFlags, featureFlagManager } from "../common/featureFlags";
 import { ErrorContextMW, TOOLS, createContext } from "../common/globalVars";
 import { getDefaultString, getLocalizedString } from "../common/localizeUtils";
@@ -649,6 +650,7 @@ export class FxCoreDeclarativeAgentPart {
         path.join(appPackageFolder, DefaultApiSpecFolderName)
       );
 
+      throwIfAborted(inputs);
       const generateRes = await openApiSpecHelperModule.generateFromApiSpec(
         specParser,
         teamsManifestPath,
@@ -771,7 +773,7 @@ export class FxCoreDeclarativeAgentPart {
           if (needsMetadataProbe && !inputs[QuestionNames.MCPForDAAuthMetadataUrl]) {
             try {
               const { probeMCPServerAuth } = await import("../component/utils/mcpToolFetcher");
-              const authProbe = await probeMCPServerAuth(mcpServerUrl);
+              const authProbe = await probeMCPServerAuth(mcpServerUrl, getAbortSignal(inputs));
               if (authProbe.authMetadataUrl) {
                 inputs[QuestionNames.MCPForDAAuthMetadataUrl] = authProbe.authMetadataUrl;
               }
@@ -809,6 +811,9 @@ export class FxCoreDeclarativeAgentPart {
               ),
             });
           }
+          // Everything below updates project files. Once this gate passes, finish the
+          // mutation sequence so cancellation cannot leave half-written auth configuration.
+          throwIfAborted(inputs);
           try {
             const ymlPath = pathUtils.getYmlFilePath(inputs.projectPath);
             if (ymlPath) {
@@ -914,7 +919,7 @@ export class FxCoreDeclarativeAgentPart {
         ) {
           try {
             const { probeMCPServerAuth } = await import("../component/utils/mcpToolFetcher");
-            const authProbe = await probeMCPServerAuth(mcpServerUrl);
+            const authProbe = await probeMCPServerAuth(mcpServerUrl, getAbortSignal(inputs));
             if (authProbe.requiresAuth) {
               inputs[QuestionNames.MCPForDAAuth] = "OAuthPluginVault";
               if (authProbe.authMetadataUrl) {
@@ -931,7 +936,7 @@ export class FxCoreDeclarativeAgentPart {
         if ((!currentTools || currentTools.length === 0) && mcpServerUrl) {
           try {
             const { fetchMCPTools } = await import("../component/utils/mcpToolFetcher");
-            const result = await fetchMCPTools(mcpServerUrl);
+            const result = await fetchMCPTools(mcpServerUrl, getAbortSignal(inputs));
             if (!result.requiresAuth && result.tools.length > 0) {
               inputs[QuestionNames.MCPForDAAvailableTools] = result.tools;
               if (!inputs[QuestionNames.MCPForDAPreFetchTools]) {
@@ -972,6 +977,8 @@ export class FxCoreDeclarativeAgentPart {
             });
           }
         }
+
+        throwIfAborted(inputs);
 
         // If no tools available (auth required or fetch failed), skip creating plugin - just warn
         const mcpTools = inputs[QuestionNames.MCPForDAAvailableTools];
@@ -1219,7 +1226,6 @@ export class FxCoreDeclarativeAgentPart {
         mcpConfig = { servers: {} };
       }
     }
-
     // Ensure unique server entry name to avoid overwriting an existing one.
     let uniqueName = serverName;
     let suffix = 1;
@@ -1231,6 +1237,7 @@ export class FxCoreDeclarativeAgentPart {
       url: mcpServerUrl,
     };
 
+    throwIfAborted(inputs);
     await fs.ensureDir(mcpConfigDir);
     await fs.writeJSON(mcpConfigPath, mcpConfig, { spaces: 2 });
 
