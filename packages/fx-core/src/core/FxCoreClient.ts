@@ -20,7 +20,7 @@ import { teamsappMgr } from "../component/driver/teamsApp/teamsappMgr";
 import { PackageService } from "../component/m365/packageService";
 import { envUtil } from "../component/utils/envUtil";
 import { UserCancelError, assembleError } from "../error";
-import { UninstallInputs } from "../question";
+import { AddAuthActionInputs, AddPluginInputs, AddSkillInputs, UninstallInputs } from "../question";
 import { FxCore } from "./FxCore";
 
 /** Execution controls shared by every first-class fx-core client operation. */
@@ -70,104 +70,26 @@ export type FxCoreLaunchInfoResult = Record<string, unknown>;
 
 export type FxCoreProvisionInputs = InputsWithProjectPath & { env: string };
 
-interface FxCoreAddPluginBaseInputs extends InputsWithProjectPath {
-  "manifest-path": string;
-}
-
 /** Inputs for adding an OpenAPI or MCP action to an existing project. */
-export type FxCoreAddPluginInputs =
-  | (FxCoreAddPluginBaseInputs & {
-      "api-plugin-type": "api-spec";
-      "api-operation"?: string[];
-    } & (
-        | {
-            "openapi-spec-type": "enter-url" | "open-file";
-            "openapi-spec-location": string;
-          }
-        | {
-            "openapi-spec-type": "search-api";
-            "search-openapi-spec-query": string;
-            "select-openapi-spec": string;
-          }
-      ))
-  | (FxCoreAddPluginBaseInputs & {
-      "api-plugin-type": "mcp";
-      "mcp-da-server-url": string;
-      "mcp-tools-file-path"?: string;
-    } & (
-        | { "mcp-da-auth-type": "none" | "oauth-dynamic" }
-        | {
-            "mcp-da-auth-type": "entra-sso";
-            "mcp-da-client-id": string;
-          }
-        | {
-            "mcp-da-auth-type": "oauth";
-            "mcp-da-client-id": string;
-            "mcp-da-client-secret": string;
-            "mcp-da-scopes"?: string;
-          }
-      ));
-
-interface FxCoreAddSkillBaseInputs extends InputsWithProjectPath {
-  "manifest-path": string;
-  "expose-to-copilot"?: "yes" | "no";
-}
+export type FxCoreAddPluginInputs = AddPluginInputs &
+  InputsWithProjectPath & {
+    "manifest-path": string;
+    "api-plugin-type": "api-spec" | "mcp";
+  };
 
 /** Inputs for creating or importing an agent skill. */
-export type FxCoreAddSkillInputs = FxCoreAddSkillBaseInputs &
-  (
-    | {
-        "skill-name": string;
-        "skill-description": string;
-        "skill-source-type"?: "new";
-        "skill-from"?: never;
-        "skill-from-zip-file"?: never;
-      }
-    | {
-        "skill-from": string;
-        "skill-source-type"?: never;
-        "skill-name"?: never;
-        "skill-description"?: never;
-        "skill-from-zip-file"?: never;
-      }
-    | {
-        "skill-from-zip-file": string;
-        "skill-source-type": "existing";
-        "skill-name"?: never;
-        "skill-description"?: never;
-        "skill-from"?: never;
-      }
-  );
-
-interface FxCoreAddAuthBaseInputs extends InputsWithProjectPath {
-  "plugin-manifest-path": string;
-  "auth-name": string;
-  "openapi-spec-location"?: string;
-  "api-operation"?: string[];
-}
+export type FxCoreAddSkillInputs = AddSkillInputs &
+  InputsWithProjectPath & {
+    "manifest-path": string;
+    "expose-to-copilot"?: "yes" | "no";
+  };
 
 /** Inputs for adding an authentication configuration to a plugin. */
-export type FxCoreAddAuthActionInputs = FxCoreAddAuthBaseInputs &
-  (
-    | { "api-auth": "bearer-token" }
-    | {
-        "api-auth": "api-key";
-        "api-key-in": "header" | "query";
-        "api-key-name": string;
-      }
-    | {
-        "api-auth": "oauth";
-        "oauth-authorization-url": string;
-        "oauth-token-url": string;
-        "oauth-scope": string;
-        "oauth-refresh-url"?: string;
-        "oauth-pkce"?: "true" | "false";
-      }
-    | {
-        "api-auth": "microsoft-entra";
-        "oauth-scope": string;
-      }
-  );
+export type FxCoreAddAuthActionInputs = AddAuthActionInputs &
+  InputsWithProjectPath & {
+    "plugin-manifest-path": string;
+    "auth-name": string;
+  };
 
 /**
  * Stable, typed lifecycle boundary for in-process consumers.
