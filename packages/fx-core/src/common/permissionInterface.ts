@@ -24,6 +24,11 @@ export interface CollaborationStateResult {
 export interface ListCollaboratorResult {
   state: CollaborationState;
   message?: string;
+  /**
+   * Structured list of collaborators. Only populated when the caller opts in
+   * via `inputs[CollaborationConstants.IncludeCollaborators] = true`;
+   * omitted otherwise for backward compatibility.
+   */
   collaborators?: Collaborator[];
   error?: any;
 }
@@ -35,12 +40,17 @@ export interface PermissionsResult {
   permissions?: ResourcePermission[];
 }
 
+export enum CollaboratorType {
+  TeamsApp = "teamsApp",
+  AadApp = "aadApp",
+  Agent = "agent",
+}
+
 export interface Collaborator {
   userPrincipalName: string;
   userObjectId: string;
-  isAadOwner: boolean;
-  teamsAppResourceId: string;
-  aadResourceId?: string;
+  collaboratorType: CollaboratorType;
+  collaboratorResourceId: string;
 }
 
 export interface AadOwner {
