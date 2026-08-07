@@ -21,6 +21,7 @@ export async function run() {
 
   const item = Office.context.mailbox.item;
   const insertAt = document.getElementById("item-subject");
+  if (!insertAt || !item) return;
   const label = document.createElement("b").appendChild(document.createTextNode("Subject: "));
   insertAt.appendChild(label);
   insertAt.appendChild(document.createElement("br"));
