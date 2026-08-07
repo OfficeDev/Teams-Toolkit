@@ -1247,13 +1247,26 @@ function createSemanticStepCompiler() {
         "The TypeSpec action input is not supported.",
       );
     }
-    return render(
-      state,
-      "workspace/configure-typespec-github-issues-action.json.tpl",
-      {
-        mutationScriptBase64: typeSpecGitHubIssuesMutationScriptBase64,
-      },
+    const output = [];
+    let error = append(
+      output,
+      render(state, "command-palette/execute-command.json.tpl", {
+        commandTitle: commandTitles.clearNotifications,
+      }),
     );
+    if (error) return error;
+    error = append(
+      output,
+      render(
+        state,
+        "workspace/configure-typespec-github-issues-action.json.tpl",
+        {
+          mutationScriptBase64: typeSpecGitHubIssuesMutationScriptBase64,
+        },
+      ),
+    );
+    if (error) return error;
+    return { ok: true, value: output };
   }
 
   function compileLifecycle(state, definition) {

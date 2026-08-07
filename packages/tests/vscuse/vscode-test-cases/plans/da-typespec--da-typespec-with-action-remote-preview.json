@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 104,
+    "total_steps": 109,
     "name": "da-typespec-with-action-remote-preview",
     "description": {
       "owner": "",
@@ -51,13 +51,18 @@
       "step_assertProjectWindowReady_assert_c00dfe362_1_10",
       "step_checkWorkspaceFiles_verify_c00dfe362_2_1",
       "step_checkWorkspaceFiles_verify_c00dfe362_2_2",
-      "step_configureTypeSpecGitHubIssuesAction_openTerminal_c00dfe362_3_1",
-      "step_configureTypeSpecGitHubIssuesAction_assertTerminal_c00dfe362_3_1",
-      "step_configureTypeSpecGitHubIssuesAction_typeCommand_c00dfe362_3_1",
-      "step_configureTypeSpecGitHubIssuesAction_runCommand_c00dfe362_3_1",
-      "step_configureTypeSpecGitHubIssuesAction_assertConfigured_c00dfe362_3_1",
-      "step_configureTypeSpecGitHubIssuesAction_closeTerminal_c00dfe362_3_1",
-      "step_configureTypeSpecGitHubIssuesAction_assertClosed_c00dfe362_3_1",
+      "step_executeCommand_open_c00dfe362_3_1",
+      "step_executeCommand_assertPalette_c00dfe362_3_1",
+      "step_executeCommand_filter_c00dfe362_3_1",
+      "step_executeCommand_assertCommand_c00dfe362_3_1",
+      "step_executeCommand_execute_c00dfe362_3_1",
+      "step_configureTypeSpecGitHubIssuesAction_openTerminal_c00dfe362_3_2",
+      "step_configureTypeSpecGitHubIssuesAction_assertTerminal_c00dfe362_3_2",
+      "step_configureTypeSpecGitHubIssuesAction_typeCommand_c00dfe362_3_2",
+      "step_configureTypeSpecGitHubIssuesAction_runCommand_c00dfe362_3_2",
+      "step_configureTypeSpecGitHubIssuesAction_assertConfigured_c00dfe362_3_2",
+      "step_configureTypeSpecGitHubIssuesAction_closeTerminal_c00dfe362_3_2",
+      "step_configureTypeSpecGitHubIssuesAction_assertClosed_c00dfe362_3_2",
       "step_checkWorkspaceFiles_verify_c00dfe362_4_1",
       "step_executeCommand_open_c00dfe362_5_1",
       "step_executeCommand_assertPalette_c00dfe362_5_1",
@@ -895,7 +900,115 @@
       ]
     },
     {
-      "step_id": "step_configureTypeSpecGitHubIssuesAction_openTerminal_c00dfe362_3_1",
+      "step_id": "step_executeCommand_open_c00dfe362_3_1",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "f1"
+      },
+      "description": "Press the F1 key to open the Command Palette in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_checkWorkspaceFiles_verify_c00dfe362_2_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_assertPalette_c00dfe362_3_1",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Visual Studio Code Command Palette is visible with a > character in its input box and is ready to accept a command search.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_open_c00dfe362_3_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_filter_c00dfe362_3_1",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Notifications: Clear All Notifications"
+      },
+      "description": "Type the resolved command title into the active Command Palette.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_assertPalette_c00dfe362_3_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_assertCommand_c00dfe362_3_1",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Command Palette input box reads >Notifications: Clear All Notifications and the highlighted command listed under it is titled Notifications: Clear All Notifications.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_filter_c00dfe362_3_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_execute_c00dfe362_3_1",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to execute the selected Command Palette command.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_assertCommand_c00dfe362_3_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_configureTypeSpecGitHubIssuesAction_openTerminal_c00dfe362_3_2",
       "agent": "interaction",
       "tool": "keyboard_shortcut",
       "parameters": {
@@ -907,7 +1020,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_checkWorkspaceFiles_verify_c00dfe362_2_2"
+        "step_executeCommand_execute_c00dfe362_3_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -917,7 +1030,7 @@
       ]
     },
     {
-      "step_id": "step_configureTypeSpecGitHubIssuesAction_assertTerminal_c00dfe362_3_1",
+      "step_id": "step_configureTypeSpecGitHubIssuesAction_assertTerminal_c00dfe362_3_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -927,7 +1040,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_configureTypeSpecGitHubIssuesAction_openTerminal_c00dfe362_3_1"
+        "step_configureTypeSpecGitHubIssuesAction_openTerminal_c00dfe362_3_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -938,7 +1051,7 @@
       ]
     },
     {
-      "step_id": "step_configureTypeSpecGitHubIssuesAction_typeCommand_c00dfe362_3_1",
+      "step_id": "step_configureTypeSpecGitHubIssuesAction_typeCommand_c00dfe362_3_2",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -950,7 +1063,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_configureTypeSpecGitHubIssuesAction_assertTerminal_c00dfe362_3_1"
+        "step_configureTypeSpecGitHubIssuesAction_assertTerminal_c00dfe362_3_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -960,7 +1073,7 @@
       ]
     },
     {
-      "step_id": "step_configureTypeSpecGitHubIssuesAction_runCommand_c00dfe362_3_1",
+      "step_id": "step_configureTypeSpecGitHubIssuesAction_runCommand_c00dfe362_3_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -972,7 +1085,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_configureTypeSpecGitHubIssuesAction_typeCommand_c00dfe362_3_1"
+        "step_configureTypeSpecGitHubIssuesAction_typeCommand_c00dfe362_3_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -982,17 +1095,17 @@
       ]
     },
     {
-      "step_id": "step_configureTypeSpecGitHubIssuesAction_assertConfigured_c00dfe362_3_1",
+      "step_id": "step_configureTypeSpecGitHubIssuesAction_assertConfigured_c00dfe362_3_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the VS Code integrated terminal displays VSCUSE_TYPESPEC_ACTION_CONFIGURED on its own output line after the shell prompt, proving the TypeSpec GitHub issues declarations were enabled and verified.",
+      "description": "@assertion the VS Code integrated terminal visibly displays the complete text VSCUSE_TYPESPEC_ACTION_CONFIGURED.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_configureTypeSpecGitHubIssuesAction_runCommand_c00dfe362_3_1"
+        "step_configureTypeSpecGitHubIssuesAction_runCommand_c00dfe362_3_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1003,7 +1116,7 @@
       ]
     },
     {
-      "step_id": "step_configureTypeSpecGitHubIssuesAction_closeTerminal_c00dfe362_3_1",
+      "step_id": "step_configureTypeSpecGitHubIssuesAction_closeTerminal_c00dfe362_3_2",
       "agent": "interaction",
       "tool": "keyboard_shortcut",
       "parameters": {
@@ -1015,7 +1128,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_configureTypeSpecGitHubIssuesAction_assertConfigured_c00dfe362_3_1"
+        "step_configureTypeSpecGitHubIssuesAction_assertConfigured_c00dfe362_3_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1025,7 +1138,7 @@
       ]
     },
     {
-      "step_id": "step_configureTypeSpecGitHubIssuesAction_assertClosed_c00dfe362_3_1",
+      "step_id": "step_configureTypeSpecGitHubIssuesAction_assertClosed_c00dfe362_3_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1035,7 +1148,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_configureTypeSpecGitHubIssuesAction_closeTerminal_c00dfe362_3_1"
+        "step_configureTypeSpecGitHubIssuesAction_closeTerminal_c00dfe362_3_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1058,7 +1171,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_configureTypeSpecGitHubIssuesAction_assertClosed_c00dfe362_3_1"
+        "step_configureTypeSpecGitHubIssuesAction_assertClosed_c00dfe362_3_2"
       ],
       "preconditions": [],
       "postconditions": [],

@@ -2500,11 +2500,14 @@ steps:
     ),
     true,
   );
-  assert.equal(
-    mutation.some((step) =>
+  const markerAssertion = mutation.find(
+    (step) =>
+      step.agent === "assertion" &&
       step.description.includes("VSCUSE_TYPESPEC_ACTION_CONFIGURED"),
-    ),
-    true,
+  );
+  assert.equal(
+    markerAssertion.description,
+    "@assertion the VS Code integrated terminal visibly displays the complete text VSCUSE_TYPESPEC_ACTION_CONFIGURED.",
   );
 
   for (const invalidInput of [
@@ -2550,6 +2553,41 @@ test("VCB-124: TypeSpec single environment skips the provision picker", async ()
     ),
     true,
   );
+});
+
+test("VCB-129: TypeSpec action configuration clears notifications before opening its terminal", async () => {
+  const result = await compileFixture(
+    "da-typespec-with-action.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const steps = result.value[0].plan.steps;
+  const terminalIndex = steps.findIndex((step) =>
+    step.step_id.startsWith(
+      "step_configureTypeSpecGitHubIssuesAction_openTerminal_",
+    ),
+  );
+  assert.notEqual(terminalIndex, -1);
+  assert.deepEqual(
+    steps
+      .slice(terminalIndex - 5, terminalIndex)
+      .map((step) => [step.agent, step.tool]),
+    [
+      ["interaction", "key_press"],
+      ["assertion", ""],
+      ["interaction", "type_text"],
+      ["assertion", ""],
+      ["interaction", "key_press"],
+    ],
+  );
+  assert.equal(
+    steps[terminalIndex - 3].parameters.text,
+    "Notifications: Clear All Notifications",
+  );
+  assert.deepEqual(steps[terminalIndex].depends_on, [
+    steps[terminalIndex - 1].step_id,
+  ]);
 });
 
 test("VCB-88: a local environment step names its variable and verifies its own write", async () => {

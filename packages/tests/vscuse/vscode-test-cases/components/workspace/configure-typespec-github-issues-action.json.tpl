@@ -86,7 +86,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the VS Code integrated terminal displays VSCUSE_TYPESPEC_ACTION_CONFIGURED on its own output line after the shell prompt, proving the TypeSpec GitHub issues declarations were enabled and verified.",
+      "description": "@assertion the VS Code integrated terminal visibly displays the complete text VSCUSE_TYPESPEC_ACTION_CONFIGURED.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
