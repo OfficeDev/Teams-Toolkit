@@ -20,7 +20,6 @@ import stripBom from "strip-bom";
 import { getResourceServiceEndpoint, ResourceServiceType } from "../../common/constants";
 import { ErrorContextMW, TOOLS } from "../../common/globalVars";
 import { getDefaultString, getLocalizedString } from "../../common/localizeUtils";
-import { IsDeclarativeAgentManifest } from "../../common/projectTypeChecker";
 import {
   Component,
   sendTelemetryErrorEvent,
@@ -202,28 +201,16 @@ export class PackageService {
     if (!manifest) {
       throw new Error("Invalid app package zip. manifest.json is missing");
     }
-    const isDelcarativeAgentApp = IsDeclarativeAgentManifest(manifest);
-    if (isDelcarativeAgentApp) {
-      const res = await this.sideLoadingV2(token, packagePath, appScope);
-      let shareLink = "";
-      if (appScope.toLowerCase() === AppScope.Shared.toLowerCase()) {
-        shareLink = await this.getShareLink(token, res[0]);
-      }
-      sendTelemetryEvent(Component.core, TelemetryEvent.MosSideloadEnd, {
-        [TelemetryProperty.MosTitleId]: res[0],
-        [TelemetryProperty.MosAppId]: res[1],
-        [TelemetryProperty.IsDeclarativeAgent]: isDelcarativeAgentApp.toString(),
-      });
-      return [res[0], res[1], shareLink];
-    } else {
-      const res = await this.sideLoadingV1(token, packagePath);
-      sendTelemetryEvent(Component.core, TelemetryEvent.MosSideloadEnd, {
-        [TelemetryProperty.MosTitleId]: res[0],
-        [TelemetryProperty.MosAppId]: res[1],
-        [TelemetryProperty.IsDeclarativeAgent]: isDelcarativeAgentApp.toString(),
-      });
-      return [res[0], res[1], ""];
+    const res = await this.sideLoadingV2(token, packagePath, appScope);
+    let shareLink = "";
+    if (appScope.toLowerCase() === AppScope.Shared.toLowerCase()) {
+      shareLink = await this.getShareLink(token, res[0]);
     }
+    sendTelemetryEvent(Component.core, TelemetryEvent.MosSideloadEnd, {
+      [TelemetryProperty.MosTitleId]: res[0],
+      [TelemetryProperty.MosAppId]: res[1],
+    });
+    return [res[0], res[1], shareLink];
   }
 
   // Side loading using Builder API
@@ -317,80 +304,8 @@ export class PackageService {
     sendTelemetryEvent(Component.core, TelemetryEvent.MosSideloadEnd, {
       [TelemetryProperty.MosTitleId]: res[0],
       [TelemetryProperty.MosAppId]: res[1],
-      [TelemetryProperty.IsDeclarativeAgent]: "true",
     });
     return [res[0], res[1], shareLink];
-  }
-
-  @hooks([ErrorContextMW({ source: M365ErrorSource, component: M365ErrorComponent })])
-  public async sideLoadingV1(token: string, manifestPath: string): Promise<[string, string]> {
-    try {
-      this.checkZip(manifestPath);
-      const data = await fs.readFile(manifestPath);
-      const content = new FormData();
-      content.append("package", data);
-      const serviceUrl = await this.getTitleServiceUrl(token);
-      this.logger?.debug("Uploading package with sideLoading V1 ...");
-      const uploadHeaders = content.getHeaders();
-      uploadHeaders["Authorization"] = `Bearer ${token}`;
-      const uploadResponse = await this.withNetworkRetry(() =>
-        this.axiosInstance.post("/dev/v1/users/packages", content.getBuffer(), {
-          baseURL: serviceUrl,
-          headers: uploadHeaders,
-        })
-      );
-
-      const operationId = uploadResponse.data.operationId;
-      this.logger?.debug(`Package uploaded. OperationId: ${operationId as string}`);
-
-      this.logger?.verbose("Acquiring package ...");
-      const acquireResponse = await this.axiosInstance.post(
-        "/dev/v1/users/packages/acquisitions",
-        {
-          operationId: operationId,
-        },
-        {
-          baseURL: serviceUrl,
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const statusId = acquireResponse.data.statusId;
-      this.logger?.debug(`Acquiring package with statusId: ${statusId as string} ...`);
-
-      do {
-        const statusResponse = await this.axiosInstance.get(
-          `/dev/v1/users/packages/status/${statusId as string}`,
-          {
-            baseURL: serviceUrl,
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        const resCode = statusResponse.status;
-        this.logger?.debug(`Package status: ${resCode} ...`);
-        if (resCode === 200) {
-          const titleId: string = statusResponse.data.titleId;
-          const appId: string = statusResponse.data.appId;
-          this.logger?.info(`TitleId: ${titleId}`);
-          this.logger?.info(`AppId: ${appId}`);
-          this.logger?.verbose("Sideloading done.");
-          return [titleId, appId];
-        } else {
-          await waitSeconds(7);
-        }
-      } while (true);
-    } catch (error: any) {
-      // this.logger?.error("Sideloading failed.");
-      if (error.response) {
-        // this.logger?.error(JSON.stringify(error.response.data));
-        error = this.traceError(error);
-      } else {
-        // this.logger?.error(error.message);
-      }
-      throw assembleError(error, M365ErrorSource);
-    }
   }
 
   @hooks([ErrorContextMW({ source: M365ErrorSource, component: M365ErrorComponent })])

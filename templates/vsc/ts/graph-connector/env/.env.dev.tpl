@@ -14,3 +14,4 @@ AZURE_RESOURCE_GROUP_NAME=
 RESOURCE_SUFFIX=
 
 # Generated during provision, you can also add your own variables.
+AGENT_SCOPE=shared
