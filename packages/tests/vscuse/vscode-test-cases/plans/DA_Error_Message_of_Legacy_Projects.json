@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 41,
+    "total_steps": 36,
     "created_at": "2026-06-12T07:59:00.069173",
     "name": "DA Error Message of Legacy Projects",
     "description": {
@@ -57,11 +57,6 @@
       "step_25d8fd04",
       "step_0a80bfba",
       "step_ef8cb1e3",
-      "step_c79083b3",
-      "step_004504a7",
-      "step_d3a2179b",
-      "step_08c24417",
-      "step_628c2735",
       "step_46eb6b82"
     ],
     "tags": [],
@@ -867,125 +862,11 @@
       "plan_id": "plan_c69f4221"
     },
     {
-      "step_id": "step_c79083b3",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press the \"Enter\" key to confirm the selection of \"Share access with selected user(s)\" from the dropdown menu in the \"Share the agent\" dialog within the Visual Studio Code interface.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:e0b030303232a421"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_c79083b3",
-      "created_at": "2026-06-12T07:59:00.980299",
-      "plan_id": "plan_c69f4221"
-    },
-    {
-      "step_id": "step_004504a7",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press the \"Enter\" key to confirm the selection of the sharing scope dropdown option (\"Share the agent with selected user(s)\") in the \"Share the agent with users\" dialog within the Microsoft 365 Agents extension panel in Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:c0b030303232a421"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_004504a7",
-      "created_at": "2026-06-12T07:59:01.007676",
-      "plan_id": "plan_c69f4221"
-    },
-    {
-      "step_id": "step_d3a2179b",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 254,
-        "y": 48
-      },
-      "description": "Click the input field labeled \"Email addresses of users or groups for agent sharing\" at the top of the VS Code interface to specify sharing recipients.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:254:48:16:5:0000000000000000",
-        "dhash:254:48:96:5:809080c4b2cce6b0",
-        "dhash:254:48:0:10:f0b038303232a421"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_d3a2179b",
-      "created_at": "2026-06-12T07:59:01.040719",
-      "plan_id": "plan_c69f4221"
-    },
-    {
-      "step_id": "step_08c24417",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "${{env:MS_AZURE_ACCOUNT_NAME}}"
-      },
-      "description": "Type text: ${{env:MS_AZURE_ACCOUNT_NAME}} into the input field labeled 'Email addresses of users or groups for agent sharing' within the Microsoft 365 Agents extension panel in Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:f0b038303232a421"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_08c24417",
-      "created_at": "2026-06-12T07:59:01.071492",
-      "plan_id": "plan_c69f4221"
-    },
-    {
-      "step_id": "step_628c2735",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press the \"Enter\" key to confirm the email address input in the \"Email addresses of users or groups for agent sharing\" field within the agent sharing interface of Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:c0b038303232a421"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_628c2735",
-      "created_at": "2026-06-12T07:59:01.104019",
-      "plan_id": "plan_c69f4221"
-    },
-    {
       "step_id": "step_46eb6b82",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion 'Share feature only supports m365agents.yml version v1.10 or above' is visible",
+      "description": "@assertion notification \"actions in publish stage executed successfully\" exist",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -993,7 +874,9 @@
       "depends_on": [],
       "preconditions": [],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "step_retry_timeout:180"
+      ],
       "screenshot": null,
       "created_at": "2026-06-12T07:59:01.138018",
       "plan_id": "plan_c69f4221"
