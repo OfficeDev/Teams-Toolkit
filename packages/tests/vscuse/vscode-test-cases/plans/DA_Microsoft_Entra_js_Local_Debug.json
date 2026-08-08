@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 6,
+    "total_steps": 7,
     "created_at": "2025-11-06T04:48:51.709604",
     "name": "DA Microsoft Entra js Local Debug",
     "description": {
@@ -28,6 +28,7 @@
       "step_f79dee85",
       "plan_r_0928_014459",
       "plan_r_1021_081410",
+      "step_5f0c9e2a",
       "plan_r_0928_095902",
       "plan_r_0928_091745"
     ],
@@ -189,6 +190,26 @@
       "tags": [],
       "screenshot": "step_f79dee85",
       "created_at": "2025-11-14T02:59:16.910101",
+      "plan_id": "plan_0fd1fc4e"
+    },
+    {
+      "step_id": "step_5f0c9e2a",
+      "agent": "code",
+      "tool": "",
+      "parameters": {
+        "sample": "=== Generated Script ===\nLanguage: python\n\n```python\nfrom pathlib import Path\n\ninput_path = Path('/home/vscode/AgentsToolkitProjects/${{var:app_name}}/.vscode/launch.json')\ncontent = input_path.read_text(encoding='utf-8')\nold_url = 'https://m365.cloud.microsoft/chat/entity1-d870f6cd-4aa5-4d42-9626-ab690c041429/${local:agent-hint}?auth=2&${account-hint}&developerMode=Basic'\nnew_url = 'https://m365.cloud.microsoft/chat/?titleId=${local:agent-hint}&source=agents-toolkit'\nif old_url not in content:\n    raise RuntimeError('Legacy Copilot launch URL not found')\ninput_path.write_text(content.replace(old_url, new_url), encoding='utf-8')\nprint('Updated Copilot launch URLs.')\n```\n\n=== Execution Results ===\nExit Code: 0\n\n=== STDOUT ===\nUpdated Copilot launch URLs.\n\nScript executed successfully"
+      },
+      "description": "@code open json file `/home/vscode/AgentsToolkitProjects/${{var:app_name}}/.vscode/launch.json`, Update the json file.\nReplace all places:\n`https://m365.cloud.microsoft/chat/entity1-d870f6cd-4aa5-4d42-9626-ab690c041429/${local:agent-hint}?auth=2&${account-hint}&developerMode=Basic`\nWith:\n`https://m365.cloud.microsoft/chat/?titleId=${local:agent-hint}&source=agents-toolkit`\nPreserve all formatting.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": null,
+      "created_at": "2026-08-08T02:50:12.120000",
       "plan_id": "plan_0fd1fc4e"
     }
   ],
