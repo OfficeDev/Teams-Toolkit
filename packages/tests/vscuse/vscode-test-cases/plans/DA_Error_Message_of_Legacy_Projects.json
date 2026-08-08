@@ -851,7 +851,7 @@
       "parameters": {
         "button": "left",
         "x": 89,
-        "y": 577
+        "y": 594
       },
       "description": "Click the \"Publish to Organization (1)\" option under the \"LIFECYCLE\" section in the \"MICROSOFT 365 AGENTS TOOLKIT\" panel.",
       "content_refs": [],
