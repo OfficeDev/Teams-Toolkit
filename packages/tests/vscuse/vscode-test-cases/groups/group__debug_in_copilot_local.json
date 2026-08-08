@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 21,
+    "total_steps": 22,
     "created_at": "2026-05-18T10:07:16.265795",
     "name": "group: debug_in_copilot_local",
     "description": {
@@ -37,13 +37,14 @@
       "step_86a70854",
       "step_a0762a17",
       "step_3bb29c8a",
-      "step_5a0f79c2",
+      "step_8a41c62e",
+      "step_d91e7b34",
       "step_670cbf14"
     ],
     "tags": [
       "group"
     ],
-    "updated_at": "2026-08-08T02:50:49.794000"
+    "updated_at": "2026-08-08T03:39:57.684000"
   },
   "steps": [
     {
@@ -486,13 +487,13 @@
       "plan_id": "plan_r_0928_095902"
     },
     {
-      "step_id": "step_5a0f79c2",
+      "step_id": "step_8a41c62e",
       "agent": "interaction",
       "tool": "keyboard_shortcut",
       "parameters": {
-        "keys": "ctrl+r"
+        "keys": "alt+tab"
       },
-      "description": "Refresh the Microsoft 365 Copilot deep link after local agent initialization so a transient \"This agent is not installed\" response can recover.",
+      "description": "Switch from the authenticated Microsoft 365 Copilot browser window back to Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -501,10 +502,34 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
+        "delay: 3",
         "force_run:true"
       ],
       "screenshot": "",
-      "created_at": "2026-08-08T02:50:49.794000",
+      "created_at": "2026-08-08T03:39:57.684000",
+      "plan_id": "plan_r_0928_095902"
+    },
+    {
+      "step_id": "step_d91e7b34",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+shift+f5"
+      },
+      "description": "Restart the active \"Debug in Copilot (Chrome)\" session so \"Start Agent Locally\" provisions the agent again after browser authentication.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay: 60",
+        "force_run:true"
+      ],
+      "screenshot": "",
+      "created_at": "2026-08-08T03:39:57.684000",
       "plan_id": "plan_r_0928_095902"
     },
     {
