@@ -853,17 +853,13 @@
         "x": 89,
         "y": 577
       },
-      "description": "Click the \"Share\" option under the \"LIFECYCLE\" section in the \"MICROSOFT 365 AGENTS TOOLKIT\" panel to change the shared scope of the agent.",
+      "description": "Click the \"Publish to Organization (1)\" option under the \"LIFECYCLE\" section in the \"MICROSOFT 365 AGENTS TOOLKIT\" panel.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:89:577:16:5:a88969a9cb26d439",
-        "dhash:89:577:96:5:cad4dad4dcd81802",
-        "dhash:89:577:0:10:33b0383032328431"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_ef8cb1e3",
