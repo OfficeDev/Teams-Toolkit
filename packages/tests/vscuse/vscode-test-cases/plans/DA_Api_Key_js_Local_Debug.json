@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 13,
+    "total_steps": 12,
     "created_at": "2025-11-07T05:20:32.399564",
     "name": "DA Api Key js Local Debug",
     "description": {
@@ -34,12 +34,11 @@
       "step_4bccae30",
       "step_e4b31d6b",
       "plan_r_1021_081410",
-      "step_5e7c1a90",
       "plan_r_0928_095902",
       "plan_r_0928_091745"
     ],
     "tags": [],
-    "updated_at": "2026-08-08T02:49:25.866000"
+    "updated_at": "2026-08-08T03:09:37.611000"
   },
   "steps": [
     {
@@ -340,24 +339,6 @@
       "tags": [],
       "screenshot": "step_e4b31d6b",
       "created_at": "2025-11-14T02:49:04.975304",
-      "plan_id": "plan_39dad59a"
-    },
-    {
-      "step_id": "step_5e7c1a90",
-      "agent": "code",
-      "tool": "",
-      "parameters": {},
-      "description": "@code update /home/vscode/AgentsToolkitProjects/${{var:app_name}}/.vscode/launch.json. Replace every exact URL `https://m365.cloud.microsoft/chat/?titleId=${local:agent-hint}&source=agents-toolkit` with `https://m365.cloud.microsoft/chat/entity1-d870f6cd-4aa5-4d42-9626-ab690c041429/${local:agent-hint}?auth=2&${account-hint}&developerMode=Basic`. Fail if no replacement is made, preserve the JSON formatting, and save the file.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": null,
-      "created_at": "2026-08-08T02:49:25.866000",
       "plan_id": "plan_39dad59a"
     }
   ],

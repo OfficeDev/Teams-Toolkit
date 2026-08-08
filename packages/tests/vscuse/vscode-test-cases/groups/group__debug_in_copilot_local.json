@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 20,
+    "total_steps": 25,
     "created_at": "2026-05-18T10:07:16.265795",
     "name": "group: debug_in_copilot_local",
     "description": {
@@ -36,13 +36,18 @@
       "step_86a70854",
       "step_a0762a17",
       "step_9f14c2d8",
+      "step_6a4d27c1",
+      "step_31be8a45",
+      "step_c9410e72",
+      "step_d05e8f34",
+      "step_825ba913",
       "step_3bb29c8a",
       "step_670cbf14"
     ],
     "tags": [
       "group"
     ],
-    "updated_at": "2026-08-08T02:30:25.736000"
+    "updated_at": "2026-08-08T03:09:37.611000"
   },
   "steps": [
     {
@@ -444,9 +449,9 @@
       "agent": "interaction",
       "tool": "keyboard_shortcut",
       "parameters": {
-        "keys": "ctrl+r"
+        "keys": "ctrl+w"
       },
-      "description": "Refresh the Microsoft 365 Copilot deep link after sign-in so the newly installed local agent is loaded for the authenticated session.",
+      "description": "Close the first Copilot browser window after sign-in so the agent deep link can be relaunched in the authenticated browser session.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -455,10 +460,112 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "delay: 10"
+        "delay: 3"
       ],
       "screenshot": null,
-      "created_at": "2026-08-08T02:30:25.736000",
+      "created_at": "2026-08-08T03:09:37.611000",
+      "plan_id": "plan_r_0928_095902"
+    },
+    {
+      "step_id": "step_6a4d27c1",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "f1"
+      },
+      "description": "Press F1 in Visual Studio Code after browser authentication to reopen the Command Palette.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": null,
+      "created_at": "2026-08-08T03:09:37.611000",
+      "plan_id": "plan_r_0928_095902"
+    },
+    {
+      "step_id": "step_31be8a45",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Debug: Select and Start Debugging"
+      },
+      "description": "Type \"Debug: Select and Start Debugging\" into the VS Code Command Palette to relaunch the authenticated Copilot deep link.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": null,
+      "created_at": "2026-08-08T03:09:37.611000",
+      "plan_id": "plan_r_0928_095902"
+    },
+    {
+      "step_id": "step_c9410e72",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the \"Debug: Select and Start Debugging\" command after browser authentication.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": null,
+      "created_at": "2026-08-08T03:09:37.611000",
+      "plan_id": "plan_r_0928_095902"
+    },
+    {
+      "step_id": "step_d05e8f34",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Debug in Copilot (Chrome)"
+      },
+      "description": "Type \"Debug in Copilot (Chrome)\" into the debug configuration selector after browser authentication.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": null,
+      "created_at": "2026-08-08T03:09:37.611000",
+      "plan_id": "plan_r_0928_095902"
+    },
+    {
+      "step_id": "step_825ba913",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to relaunch \"Debug in Copilot (Chrome)\" in the authenticated browser session.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay: 15"
+      ],
+      "screenshot": null,
+      "created_at": "2026-08-08T03:09:37.611000",
       "plan_id": "plan_r_0928_095902"
     },
     {
