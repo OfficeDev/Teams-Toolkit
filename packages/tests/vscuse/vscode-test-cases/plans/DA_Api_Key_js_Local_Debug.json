@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 11,
+    "total_steps": 13,
     "created_at": "2025-11-07T05:20:32.399564",
     "name": "DA Api Key js Local Debug",
     "description": {
@@ -27,6 +27,8 @@
       "step_e98b11ec",
       "step_8ab7ee4b",
       "plan_r_0928_014459",
+      "step_63f8a2c1",
+      "step_f14b7d90",
       "step_a635bc5d",
       "step_456602d9",
       "step_d728e592",
@@ -37,7 +39,7 @@
       "plan_r_0928_091745"
     ],
     "tags": [],
-    "updated_at": "2026-08-08T03:09:37.611000"
+    "updated_at": "2026-08-08T03:59:50.604000"
   },
   "steps": [
     {
@@ -194,6 +196,48 @@
       "tags": [],
       "screenshot": "step_8ab7ee4b",
       "created_at": "2025-11-14T02:49:04.885170",
+      "plan_id": "plan_39dad59a"
+    },
+    {
+      "step_id": "step_63f8a2c1",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "alt+tab"
+      },
+      "description": "Switch from the previous project window to the new Visual Studio Code window opened for ${{var:app_name}}.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay: 5"
+      ],
+      "screenshot": null,
+      "created_at": "2026-08-08T03:59:50.604000",
+      "plan_id": "plan_39dad59a"
+    },
+    {
+      "step_id": "step_f14b7d90",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the active Visual Studio Code window has ${{var:app_name}} open as the current workspace folder.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "step_retry_timeout: 30"
+      ],
+      "screenshot": null,
+      "created_at": "2026-08-08T03:59:50.604000",
       "plan_id": "plan_39dad59a"
     },
     {
