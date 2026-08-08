@@ -129,8 +129,7 @@
       "depends_on": [],
       "preconditions": [
         "dhash:221:46:16:5:000000002954dbb9",
-        "dhash:221:46:96:5:2161851292ca2e0d",
-        "dhash:221:46:0:10:a268626363226421"
+        "dhash:221:46:96:5:2161851292ca2e0d"
       ],
       "postconditions": [],
       "tags": [],
