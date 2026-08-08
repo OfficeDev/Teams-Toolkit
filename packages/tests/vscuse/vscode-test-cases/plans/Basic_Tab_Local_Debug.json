@@ -168,17 +168,13 @@
         "x": 228,
         "y": 15
       },
-      "description": "Click the \"Back\" button (with shortcut Ctrl+Alt+←) in the title bar of the \"Application Name\" popup dialog at the top of the Microsoft 365 Agents Toolkit interface in Visual Studio Code.",
+      "description": "Click the \"Back\" button (with shortcut Ctrl+Alt+\u2190) in the title bar of the \"Application Name\" popup dialog at the top of the Microsoft 365 Agents Toolkit interface in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:228:15:16:5:aac01865ca94b8d7",
-        "dhash:228:15:96:5:3070703335b41230",
-        "dhash:228:15:0:10:e0b89494b2717075"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_0309849c",
