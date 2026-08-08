@@ -388,7 +388,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion there's ${{env:M365_ACCOUNT_NAME}} exist.",
+      "description": "@assertion notification \"Successfully signed in to Microsoft 365 account.\" exists.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

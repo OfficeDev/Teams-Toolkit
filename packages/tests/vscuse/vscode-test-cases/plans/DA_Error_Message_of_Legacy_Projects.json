@@ -291,7 +291,7 @@
       "parameters": {
         "keys": "ctrl+shift+~"
       },
-      "description": "Use the keyboard shortcut **Ctrl+Shift+~** in Visual Studio Code to open a new integrated terminal from the Explorer view with the workspace folder  loaded.",
+      "description": "Use the keyboard shortcut **Ctrl+Shift+~** in Visual Studio Code to open a new integrated terminal from the Explorer view with the workspace folder loaded.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
