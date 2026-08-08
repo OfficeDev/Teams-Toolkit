@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 19,
+    "total_steps": 20,
     "created_at": "2026-05-18T10:07:16.265795",
     "name": "group: debug_in_copilot_local",
     "description": {
@@ -35,13 +35,14 @@
       "step_d3bcefd8",
       "step_86a70854",
       "step_a0762a17",
+      "step_9f14c2d8",
       "step_3bb29c8a",
       "step_670cbf14"
     ],
     "tags": [
       "group"
     ],
-    "updated_at": "2026-05-19T00:31:12.303051"
+    "updated_at": "2026-08-08T02:30:25.736000"
   },
   "steps": [
     {
@@ -436,6 +437,28 @@
       ],
       "screenshot": "step_a0762a17",
       "created_at": "2026-05-18T10:07:16.344676",
+      "plan_id": "plan_r_0928_095902"
+    },
+    {
+      "step_id": "step_9f14c2d8",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+r"
+      },
+      "description": "Refresh the Microsoft 365 Copilot deep link after sign-in so the newly installed local agent is loaded for the authenticated session.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay: 10"
+      ],
+      "screenshot": null,
+      "created_at": "2026-08-08T02:30:25.736000",
       "plan_id": "plan_r_0928_095902"
     },
     {

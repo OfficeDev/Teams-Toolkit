@@ -175,7 +175,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion get ai send back message include \"Oil change\"",
+      "description": "@assertion the AI response includes the repair-record title \"oil change\", matched case-insensitively.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
