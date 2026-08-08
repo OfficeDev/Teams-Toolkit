@@ -129,10 +129,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:221:46:16:5:000000002954dbb9",
-        "dhash:221:46:96:5:2161851292ca2e0d"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_fb1102dc",
