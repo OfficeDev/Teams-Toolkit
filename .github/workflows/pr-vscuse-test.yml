@@ -13,7 +13,7 @@
 #   1. Resolves PR context (works for both automatic and manual triggers)
 #   2. Gets the diff between the PR branch and the target branch
 #   3. Selects test plans — a changed test plan file is run as an "impacted" case;
-#      for product-code changes GitHub Copilot CLI (Claude Sonnet 4.6) picks relevant plans
+#      for product-code changes GitHub Copilot CLI (GPT-5.6-sol) picks relevant plans
 #      (the final list is capped at 256 entries — GitHub Actions' hard limit on the number
 #      of configurations a single job's `strategy.matrix` can expand to; see
 #      MAX_MATRIX_PLANS / cap_plans_json in the "Select test plans via AI" step)
@@ -442,7 +442,7 @@ jobs:
 
           AI_SOURCE="smoke-fallback"
           echo "Running Copilot CLI for test plan selection..."
-          copilot --yolo --model claude-sonnet-4.6 --reasoning-effort high -p "$USER_PROMPT" > /tmp/copilot_output.txt 2>&1 || true
+          copilot --yolo --model gpt-5.6-sol --reasoning-effort high -p "$USER_PROMPT" > /tmp/copilot_output.txt 2>&1 || true
           echo "--- Copilot output ---"
           cat /tmp/copilot_output.txt || true
 
@@ -913,7 +913,7 @@ jobs:
               '<details>',
               '<summary>ℹ️ How were these tests selected?</summary>',
               '',
-              'GitHub Copilot (Claude Sonnet 4.6, high reasoning) analysed the PR title, description, and the diff between',
+              'GitHub Copilot (GPT-5.6-sol, high reasoning) analysed the PR title, description, and the diff between',
               `\`${headRef}\` and \`${baseRef}\``,
               `to pick the most relevant test plans from [\`packages/tests/vscuse/Index.md\`](../blob/${baseRef}/packages/tests/vscuse/Index.md).`,
               '',

@@ -69,6 +69,7 @@ provision:
   # Extend your app to Outlook and the Microsoft 365 app
   - uses: teamsApp/extendToM365
     with:
+      scope: ${{AGENT_SCOPE}}
       # Relative path to the build app package.
       appPackagePath: ./appPackage/build/appPackage.${{TEAMSFX_ENV}}.zip
     # Write the information of created resources into environment file for
