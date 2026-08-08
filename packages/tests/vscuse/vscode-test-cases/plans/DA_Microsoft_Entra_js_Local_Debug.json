@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 7,
+    "total_steps": 10,
     "created_at": "2025-11-06T04:48:51.709604",
     "name": "DA Microsoft Entra js Local Debug",
     "description": {
@@ -29,11 +29,14 @@
       "plan_r_0928_014459",
       "plan_r_1021_081410",
       "step_5f0c9e2a",
+      "step_d4a809b1",
+      "step_83bc772e",
+      "step_1a2e5f60",
       "plan_r_0928_095902",
       "plan_r_0928_091745"
     ],
     "tags": [],
-    "updated_at": "2025-11-14T02:59:58.653252"
+    "updated_at": "2026-08-08T03:22:48.096000"
   },
   "steps": [
     {
@@ -210,6 +213,68 @@
       "tags": [],
       "screenshot": null,
       "created_at": "2026-08-08T02:50:12.120000",
+      "plan_id": "plan_0fd1fc4e"
+    },
+    {
+      "step_id": "step_d4a809b1",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+shift+P"
+      },
+      "description": "Open the VS Code Command Palette after rewriting launch.json so the modified debug configuration can be reloaded.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": null,
+      "created_at": "2026-08-08T03:22:48.096000",
+      "plan_id": "plan_0fd1fc4e"
+    },
+    {
+      "step_id": "step_83bc772e",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Developer: Reload Window"
+      },
+      "description": "Type \"Developer: Reload Window\" into the VS Code Command Palette.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": null,
+      "created_at": "2026-08-08T03:22:48.096000",
+      "plan_id": "plan_0fd1fc4e"
+    },
+    {
+      "step_id": "step_1a2e5f60",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to reload the VS Code window and refresh its cached debug configuration URLs.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay: 10"
+      ],
+      "screenshot": null,
+      "created_at": "2026-08-08T03:22:48.096000",
       "plan_id": "plan_0fd1fc4e"
     }
   ],
