@@ -175,7 +175,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the current assistant response contains the exact repair title \"Oil change(2)\".",
+      "description": "@assertion the current assistant response contains the repair title \"Oil change(2)\", matched case-insensitively.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
