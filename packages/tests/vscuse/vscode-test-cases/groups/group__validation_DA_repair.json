@@ -175,7 +175,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion there's \"Oil change\" exist.",
+      "description": "@assertion an \"Oil change\" repair title is visible; match case-insensitively and allow a duplicate-title suffix such as \"(2)\".",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

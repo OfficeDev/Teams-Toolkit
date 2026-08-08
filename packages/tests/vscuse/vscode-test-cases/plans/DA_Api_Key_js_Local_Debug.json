@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 12,
+    "total_steps": 11,
     "created_at": "2025-11-07T05:20:32.399564",
     "name": "DA Api Key js Local Debug",
     "description": {
@@ -31,7 +31,6 @@
       "step_456602d9",
       "step_d728e592",
       "step_52700b04",
-      "step_4bccae30",
       "step_e4b31d6b",
       "plan_r_1021_081410",
       "plan_r_0928_095902",
@@ -295,24 +294,6 @@
       "tags": [],
       "screenshot": "step_52700b04",
       "created_at": "2025-11-14T02:49:04.948708",
-      "plan_id": "plan_39dad59a"
-    },
-    {
-      "step_id": "step_4bccae30",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion SECRET_API_KEY has value",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": null,
-      "created_at": "2025-11-14T02:49:04.962219",
       "plan_id": "plan_39dad59a"
     },
     {
