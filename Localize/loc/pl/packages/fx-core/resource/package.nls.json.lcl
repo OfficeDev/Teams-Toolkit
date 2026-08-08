@@ -573,10 +573,13 @@
       </Item>
       <Item ItemId=";core.MCPForDA.authUrlNotFound" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
-          <Val><![CDATA[Unable to find the authentication URL(s) from response of Authorization Server Metadata of the MCP server.]]></Val>
+          <Val><![CDATA[Unable to find the authentication URL(s) from response of Authorization Server Metadata of the MCP server. Attempted: %s]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Nie można odnaleźć adresów URL uwierzytelniania z odpowiedzi na metadane serwera autoryzacji serwera MCP.]]></Val>
+            <Val><![CDATA[Nie można odnaleźć adresów URL uwierzytelniania z odpowiedzi na metadane serwera autoryzacji serwera MCP. Podjęto próbę: %s]]></Val>
           </Tgt>
+          <Prev Cat="Text">
+            <Val><![CDATA[Unable to find the authentication URL(s) from response of Authorization Server Metadata of the MCP server.]]></Val>
+          </Prev>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -594,10 +597,13 @@
       </Item>
       <Item ItemId=";core.MCPForDA.mcpAuthDcrPlaceholderWarning" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
-          <Val><![CDATA[Unable to discover the OAuth well-known authorization server URL for MCP server '%s'. The 'dcr/register' action was added to m365agents.yml with a placeholder — replace '<PLEASE_FILL_IN_WELL_KNOWN_AUTHORIZATION_SERVER_URL>' with the correct URL before provisioning.]]></Val>
+          <Val><![CDATA[Scaffolding succeeded, but the OAuth endpoints couldn't be discovered automatically. Your MCP server is reachable, but it doesn't advertise its OAuth endpoints — ATK checks the server's OAuth metadata ('.well-known/oauth-authorization-server') and found 'none'. Replace the 'wellKnownAuthorizationServer' placeholder in 'm365agents.yml' with the right value before provisioning.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Nie można odnaleźć dobrze znanego adresu URL serwera autoryzacji OAuth dla serwera MCP „%s”. Akcja „dcr/register” została dodana do m365agents.yml z symbolem zastępczym — przed aprowizowaniem zastąp ciąg „<PLEASE_FILL_IN_WELL_KNOWN_AUTHORIZATION_SERVER_URL>” poprawnym adresem URL.]]></Val>
+            <Val><![CDATA[Tworzenie szkieletu powiodło się, ale nie można było automatycznie odnaleźć punktów końcowych OAuth. Serwer MCP jest dostępny, ale nie publikuje swoich punktów końcowych OAuth — ATK sprawdza metadane OAuth serwera („.well-known/oauth-authorization-server”) i znalazł wartość „none”. Zastąp symbol zastępczy „wellKnownAuthorizationServer” w pliku 'm365agents.yml' właściwą wartością przed rozpoczęciem aprowizacji.]]></Val>
           </Tgt>
+          <Prev Cat="Text">
+            <Val><![CDATA[Unable to discover the OAuth well-known authorization server URL for MCP server '%s'. The 'dcr/register' action was added to m365agents.yml with a placeholder — replace '<PLEASE_FILL_IN_WELL_KNOWN_AUTHORIZATION_SERVER_URL>' with the correct URL before provisioning.]]></Val>
+          </Prev>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -619,11 +625,32 @@
         </Str>
         <Disp Icon="Str" />
       </Item>
+      <Item ItemId=";core.MCPForDA.mcpAuthOAuthPlaceholderWarning" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Scaffolding succeeded, but the OAuth endpoints couldn't be discovered automatically. Your MCP server is reachable, but it doesn't advertise its OAuth endpoints — ATK checks the server's OAuth metadata ('.well-known/oauth-authorization-server') and found 'none'. Replace the 'authorizationUrl' and 'tokenUrl' placeholders in 'm365agents.yml' with the right values before provisioning.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Tworzenie szkieletu powiodło się, ale nie można było automatycznie odnaleźć punktów końcowych OAuth. Serwer MCP jest dostępny, ale nie publikuje swoich punktów końcowych OAuth — ATK sprawdza metadane OAuth serwera („.well-known/oauth-authorization-server”) i znalazł wartość „none”. Zastąp symbole zastępcze „authorizationUrl” i „tokenUrl” w pliku „m365agents.yml” właściwymi wartościami przed rozpoczęciem aprowizacji.]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
       <Item ItemId=";core.MCPForDA.mcpServerMetadataUrlNotFound" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
-          <Val><![CDATA[Unable to find the server metadata from property "authorization_servers" from repsonse of the Protected Resource Metadata of the MCP server.]]></Val>
+          <Val><![CDATA[Unable to find the server metadata from property "authorization_servers" from response of the Protected Resource Metadata of the MCP server.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Nie można odnaleźć metadanych serwera z właściwości „authorization_servers” z repozytorium chronionych metadanych zasobu serwera MCP.]]></Val>
+            <Val><![CDATA[Nie można odnaleźć metadanych serwera z właściwości „authorization_servers” na podstawie odpowiedzi chronionych metadanych zasobu serwera MCP.]]></Val>
+          </Tgt>
+          <Prev Cat="Text">
+            <Val><![CDATA[Unable to find the server metadata from property "authorization_servers" from repsonse of the Protected Resource Metadata of the MCP server.]]></Val>
+          </Prev>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";core.MCPForDA.mcpServerUrlNotAnEndpoint" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[%s answered an MCP initialize request with HTTP %s, so it may not be an MCP server URL. Verify the URL before provisioning.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[%s odpowiedział na żądanie inicjowania MCP z HTTP %s, więc może to nie być adres URL serwera MCP. Sprawdź adres URL przed aprowizowaniem.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -658,6 +685,15 @@
           <Prev Cat="Text">
             <Val><![CDATA[No tools were discovered from the MCP server at %s. To add tools later, run:]A;  atk add action --api-plugin-type mcp --mcp-da-server-url <server-url> --mcp-tools-file-path <path-to-tools-json> --interactive false]]></Val>
           </Prev>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";core.MCPForDA.openYmlFile" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Open m365agents.yml]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Otwórz m365agents.yml]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -4222,6 +4258,24 @@
         </Str>
         <Disp Icon="Str" />
       </Item>
+      <Item ItemId=";core.createProjectQuestion.mcpForDa.ServerUrl.invalidUrl" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Enter an absolute URL that starts with https:// or http://.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Wprowadź bezwzględny adres URL, który zaczyna się od https:// lub http://.]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";core.createProjectQuestion.mcpForDa.ServerUrl.notAnMcpEndpoint" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Couldn't reach an MCP server at this URL (returned 404 to the MCP 'initialize' request). Verify the URL, or confirm the server is running.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Nie udało się nawiązać połączenia z serwerem MCP pod tym adresem URL (zwrócono 404 w odpowiedzi na żądanie MCP „initialize”). Sprawdź adres URL lub upewnij się, że serwer jest uruchomiony.]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
       <Item ItemId=";core.createProjectQuestion.mcpForDa.ServerUrl.placeholder" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Enter your MCP server URL(e.g. https://example-mcp.com)]]></Val>
@@ -6174,6 +6228,15 @@
           <Val><![CDATA['%s' exists and was not overwritten. Delete or rename it to rebuild the file.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
             <Val><![CDATA[Element „%s” istnieje i nie został zastąpiony. Usuń plik lub zmień jego nazwę, aby odbudować plik.]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";core.v4.scaffoldMetadataSourceReadFailed" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[The scaffold metadata source could not be read.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Nie można odczytać źródła metadanych szkieletu.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
