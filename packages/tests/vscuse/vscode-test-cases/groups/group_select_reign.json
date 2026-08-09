@@ -53,10 +53,10 @@
     },
     {
       "step_id": "step_82e9023a",
-      "agent": "code",
+      "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@code there's drop list shows includes ${{env:RESOURCE_GROUP_REGION}}.",
+      "description": "@assertion the \"Location for the new resource group\" dropdown shows at least one selectable region option.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
