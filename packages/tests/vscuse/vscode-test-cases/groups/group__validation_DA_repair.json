@@ -29,7 +29,7 @@
     "tags": [
       "group"
     ],
-    "updated_at": "2026-08-09T03:14:39.463000"
+    "updated_at": "2026-08-09T04:17:27.858000"
   },
   "steps": [
     {
@@ -39,7 +39,7 @@
       "parameters": {
         "button": "left",
         "x": 500,
-        "y": 490
+        "y": 430
       },
       "description": "Click the \"Message Copilot\" composer in the redesigned M365 Copilot agent page.",
       "content_refs": [],
