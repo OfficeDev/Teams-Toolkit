@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 14,
+    "total_steps": 16,
     "created_at": "2026-04-21T01:53:19.454385",
     "name": "group: debug_in_copilot_remote",
     "description": {
@@ -31,12 +31,14 @@
       "step_ae7fbcbb",
       "step_c9a61771",
       "step_cc9e3f90",
+      "step_6a9df101",
+      "step_f3c02a77",
       "step_074de24c"
     ],
     "tags": [
       "group"
     ],
-    "updated_at": "2026-04-21T03:02:53.359113"
+    "updated_at": "2026-08-09T02:51:49.007000"
   },
   "steps": [
     {
@@ -356,6 +358,56 @@
       ],
       "screenshot": "step_cc9e3f90",
       "created_at": "2026-04-21T03:02:41.169652",
+      "plan_id": "plan_r_0928_041352"
+    },
+    {
+      "step_id": "step_6a9df101",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 716,
+        "y": 461
+      },
+      "description": "Dismiss the \"This agent is not installed\" dialog by clicking Close. If the dialog is absent, this coordinate harmlessly focuses the Copilot chat area.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "force_run:true",
+        "delay: 2"
+      ],
+      "screenshot": "",
+      "created_at": "2026-08-09T02:51:49.007000",
+      "plan_id": "plan_r_0928_041352"
+    },
+    {
+      "step_id": "step_f3c02a77",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 872,
+        "y": 114
+      },
+      "description": "Enable the \"New design\" experience when the legacy Copilot interface is shown. This coordinate is inert when the new design is already active.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "force_run:true",
+        "delay: 10"
+      ],
+      "screenshot": "",
+      "created_at": "2026-08-09T02:51:49.007000",
       "plan_id": "plan_r_0928_041352"
     },
     {
