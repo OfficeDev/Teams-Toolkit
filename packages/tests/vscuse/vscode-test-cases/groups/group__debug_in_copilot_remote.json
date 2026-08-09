@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 18,
+    "total_steps": 14,
     "created_at": "2026-04-21T01:53:19.454385",
     "name": "group: debug_in_copilot_remote",
     "description": {
@@ -31,10 +31,6 @@
       "step_ae7fbcbb",
       "step_c9a61771",
       "step_cc9e3f90",
-      "step_4d6c8a10",
-      "step_9e2f4b71",
-      "step_63c17b2e",
-      "step_22df1829",
       "step_074de24c"
     ],
     "tags": [
@@ -363,101 +359,11 @@
       "plan_id": "plan_r_0928_041352"
     },
     {
-      "step_id": "step_4d6c8a10",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 716,
-        "y": 461
-      },
-      "description": "Click the \"Close\" button in the redesigned M365 Copilot \"This agent is not installed\" dialog.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": null,
-      "created_at": "2026-08-09T02:56:26.964000",
-      "plan_id": "plan_r_0928_041352"
-    },
-    {
-      "step_id": "step_9e2f4b71",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 871,
-        "y": 114
-      },
-      "description": "Turn off the redesigned M365 Copilot view so the remote-debug deep link can open the sideloaded declarative agent.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "delay: 5"
-      ],
-      "screenshot": null,
-      "created_at": "2026-08-09T02:56:26.964000",
-      "plan_id": "plan_r_0928_041352"
-    },
-    {
-      "step_id": "step_63c17b2e",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 707,
-        "y": 545
-      },
-      "description": "Click \"Cancel\" in the feedback dialog that appears after turning off the redesigned M365 Copilot view.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "delay: 5"
-      ],
-      "screenshot": null,
-      "created_at": "2026-08-09T03:23:59.378000",
-      "plan_id": "plan_r_0928_041352"
-    },
-    {
-      "step_id": "step_22df1829",
-      "agent": "interaction",
-      "tool": "keyboard_shortcut",
-      "parameters": {
-        "keys": "ctrl+r"
-      },
-      "description": "Reload the remote-debug deep link after switching to the classic M365 Copilot view so the sideloaded declarative agent opens.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": null,
-      "created_at": "2026-08-09T03:23:59.378000",
-      "plan_id": "plan_r_0928_041352"
-    },
-    {
       "step_id": "step_074de24c",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion  ${{var:app_name}}dev can be found.",
+      "description": "@assertion the active M365 Copilot agent is ${{var:app_name}}dev; in the redesigned composer this is confirmed when the input placeholder reads \"Message ${{var:app_name}}dev\", even if the agent is not listed in the sidebar.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
