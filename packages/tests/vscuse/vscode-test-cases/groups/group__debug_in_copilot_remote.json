@@ -54,7 +54,7 @@
         "x": null,
         "y": null
       },
-      "description": "@code Update `/home/vscode/AgentsToolkitProjects/${{var:app_name}}/.vscode/launch.json` by replacing the legacy Copilot URL `https://m365.cloud.microsoft/chat/entity1-d870f6cd-4aa5-4d42-9626-ab690c041429/${agent-hint}?auth=2&developerMode=Basic` with `https://m365.cloud.microsoft/chat/?titleId=${agent-hint}&source=agents-toolkit`. Preserve the JSON formatting. If the current titleId URL is already present, leave the file unchanged. Fail if neither URL is present.",
+      "description": "@code Parse `/home/vscode/AgentsToolkitProjects/${{var:app_name}}/.vscode/launch.json` as JSON, find the `configurations` entry whose `name` is exactly `Preview in Copilot (Chrome)`, and set its `url` to the literal string `https://m365.cloud.microsoft/chat/?titleId=${agent-hint}&source=agents-toolkit`. Preserve `${agent-hint}` literally: do not place it in a shell double-quoted string; when scripting, construct it without interpolation (for example, JavaScript `\"$\" + \"{agent-hint}\"`). Write the JSON with its existing indentation, re-read it, and fail unless that configuration's URL exactly equals the requested literal string.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
