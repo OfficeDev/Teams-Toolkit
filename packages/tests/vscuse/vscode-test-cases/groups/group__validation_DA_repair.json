@@ -39,7 +39,7 @@
       "parameters": {
         "button": "left",
         "x": 350,
-        "y": 373
+        "y": 491
       },
       "description": "Click the input box in the M365 Copilot chat page.",
       "content_refs": [],
@@ -47,11 +47,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:350:373:16:5:4c141314cc21c100",
-        "dhash:350:373:96:5:0040006367004000",
-        "dhash:350:373:0:10:159087f4a8c0c0c0"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "ocr:true"
