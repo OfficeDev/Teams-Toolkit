@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 12,
+    "total_steps": 13,
     "created_at": "2025-11-07T05:20:32.399564",
     "name": "DA Api Key js Local Debug",
     "description": {
@@ -33,6 +33,7 @@
       "step_52700b04",
       "step_4bccae30",
       "step_e4b31d6b",
+      "step_91c9e6ad",
       "plan_r_1021_081410",
       "plan_r_0928_095902",
       "plan_r_0928_091745"
@@ -339,6 +340,26 @@
       "tags": [],
       "screenshot": "step_e4b31d6b",
       "created_at": "2025-11-14T02:49:04.975304",
+      "plan_id": "plan_39dad59a"
+    },
+    {
+      "step_id": "step_91c9e6ad",
+      "agent": "code",
+      "tool": "",
+      "parameters": {
+        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\ncd \"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" && python3 - <<'PY'\nimport re\nimport sys\nfrom pathlib import Path\n\nlaunch_file = Path(\".vscode/launch.json\")\ncontent = launch_file.read_text(encoding=\"utf-8\")\ncurrent_url = \"https://m365.cloud.microsoft/chat/?titleId=${local:agent-hint}&source=agents-toolkit\"\nlegacy_url = re.compile(\n    r\"https://m365\\.cloud\\.microsoft/chat/entity1-[^/\\\"]+/\\$\\{local:agent-hint\\}(?:\\?[^\\\"]*)?\"\n)\nupdated, count = legacy_url.subn(current_url, content)\nif count:\n    launch_file.write_text(updated, encoding=\"utf-8\")\nelif current_url not in content:\n    sys.exit(\"No legacy or current local Copilot launch URL was found.\")\nif current_url not in launch_file.read_text(encoding=\"utf-8\"):\n    sys.exit(\"The redesigned Copilot launch URL was not written.\")\nprint(f\"Updated {count} legacy local Copilot launch URL(s) in {launch_file}\")\nPY\n```"
+      },
+      "description": "@code Execute the reference sample script EXACTLY as provided. It upgrades legacy GUID-based local Copilot deep links in /home/vscode/AgentsToolkitProjects/${{var:app_name}}/.vscode/launch.json to the redesigned Microsoft 365 Copilot titleId URL, verifies the current URL is present, and preserves already-updated projects.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": null,
+      "created_at": "2026-08-09T02:36:54.710000",
       "plan_id": "plan_39dad59a"
     }
   ],
