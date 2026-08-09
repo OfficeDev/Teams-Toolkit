@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 14,
+    "total_steps": 16,
     "created_at": "2026-04-21T01:53:19.454385",
     "name": "group: debug_in_copilot_remote",
     "description": {
@@ -31,6 +31,8 @@
       "step_ae7fbcbb",
       "step_c9a61771",
       "step_cc9e3f90",
+      "step_6c9d4a2f",
+      "step_81f3b7c4",
       "step_074de24c"
     ],
     "tags": [
@@ -356,6 +358,52 @@
       ],
       "screenshot": "step_cc9e3f90",
       "created_at": "2026-04-21T03:02:41.169652",
+      "plan_id": "plan_r_0928_041352"
+    },
+    {
+      "step_id": "step_6c9d4a2f",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 738,
+        "y": 466
+      },
+      "description": "Close the \"This agent is not installed\" dialog shown by the redesigned Microsoft 365 Copilot experience.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_6c9d4a2f",
+      "created_at": "2026-08-09T02:29:16.986000",
+      "plan_id": "plan_r_0928_041352"
+    },
+    {
+      "step_id": "step_81f3b7c4",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 870,
+        "y": 114
+      },
+      "description": "Turn off the Microsoft 365 Copilot \"New design\" toggle so the classic declarative agent preview and composer are restored.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay: 10"
+      ],
+      "screenshot": "step_81f3b7c4",
+      "created_at": "2026-08-09T02:29:16.986000",
       "plan_id": "plan_r_0928_041352"
     },
     {
