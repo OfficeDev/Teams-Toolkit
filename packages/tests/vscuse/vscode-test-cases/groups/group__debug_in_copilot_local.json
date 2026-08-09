@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 22,
+    "total_steps": 21,
     "created_at": "2026-05-18T10:07:16.265795",
     "name": "group: debug_in_copilot_local",
     "description": {
@@ -36,8 +36,7 @@
       "step_86a70854",
       "step_a0762a17",
       "step_8f309f57",
-      "step_9f4a2c6e",
-      "step_d4a6f2c9",
+      "step_5a8d14e2",
       "step_3bb29c8a",
       "step_670cbf14"
     ],
@@ -442,29 +441,6 @@
       "plan_id": "plan_r_0928_095902"
     },
     {
-      "step_id": "step_9f4a2c6e",
-      "agent": "interaction",
-      "tool": "keyboard_shortcut",
-      "parameters": {
-        "keys": "alt+f4"
-      },
-      "description": "Close the Microsoft 365 Copilot browser window so the local debug session terminates before retrying the agent launch.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "delay: 3",
-        "force_run:true"
-      ],
-      "screenshot": null,
-      "created_at": "2026-08-09T02:56:08.551000",
-      "plan_id": "plan_r_0928_095902"
-    },
-    {
       "step_id": "step_8f309f57",
       "agent": "interaction",
       "tool": "click",
@@ -490,26 +466,25 @@
       "plan_id": "plan_r_0928_095902"
     },
     {
-      "step_id": "step_d4a6f2c9",
-      "agent": "interaction",
-      "tool": "key_press",
+      "step_id": "step_5a8d14e2",
+      "agent": "code",
+      "tool": "",
       "parameters": {
-        "key": "f5"
+        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\ncd \"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" && python3 - <<'PY'\nimport json\nimport sys\nimport urllib.parse\nimport urllib.request\nfrom pathlib import Path\n\nenv_file = Path(\"env/.env.local\")\nvalues = {}\nfor raw_line in env_file.read_text(encoding=\"utf-8\").splitlines():\n    line = raw_line.strip()\n    if not line or line.startswith(\"#\") or \"=\" not in line:\n        continue\n    key, value = line.split(\"=\", 1)\n    values[key] = value.strip().strip(\"'\\\"\")\n\ntitle_id = values.get(\"M365_TITLE_ID\")\nif not title_id:\n    sys.exit(\"M365_TITLE_ID was not generated in env/.env.local.\")\n\ncopilot_url = (\n    \"https://m365.cloud.microsoft/chat/?titleId=\"\n    + urllib.parse.quote(title_id, safe=\"\")\n    + \"&source=agents-toolkit\"\n)\nrequest = urllib.request.Request(\n    \"http://127.0.0.1:9223/json/new?\" + copilot_url,\n    method=\"PUT\",\n)\nwith urllib.request.urlopen(request, timeout=15) as response:\n    target = json.load(response)\ntarget_id = target.get(\"id\")\nif not target_id:\n    sys.exit(\"Chrome did not create a Copilot target for the titleId URL.\")\nwith urllib.request.urlopen(\n    \"http://127.0.0.1:9223/json/activate/\" + urllib.parse.quote(target_id, safe=\"\"),\n    timeout=15,\n):\n    pass\nprint(\"Opened the redesigned Copilot titleId route in the active debug browser.\")\nPY\n```"
       },
-      "description": "Press F5 in Visual Studio Code to restart the selected Debug in Copilot (Chrome) session after the initial agent-installation race.",
+      "description": "@code Execute the reference sample script EXACTLY as provided. It reads the local agent's generated M365_TITLE_ID and opens the redesigned Microsoft 365 Copilot titleId route through the active Chrome debug endpoint, bypassing the obsolete entity1 deep link without restarting the debug session.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
-      "continue_on_error": "false",
+      "continue_on_error": "0",
       "depends_on": [],
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "delay: 60",
-        "force_run:true"
+        "delay: 3"
       ],
       "screenshot": null,
-      "created_at": "2026-08-09T04:00:26.438000",
+      "created_at": "2026-08-09T04:21:13.280000",
       "plan_id": "plan_r_0928_095902"
     },
     {
