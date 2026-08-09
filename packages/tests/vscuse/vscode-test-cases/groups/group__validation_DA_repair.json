@@ -39,7 +39,7 @@
       "parameters": {
         "button": "left",
         "x": 350,
-        "y": 491
+        "y": 475
       },
       "description": "Click the input box in the M365 Copilot chat page.",
       "content_refs": [],
@@ -81,7 +81,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the M365 Copilot message composer placeholder starts with \"Message ${{var:app_name}}\" and may include an environment suffix such as local or dev.",
+      "description": "@assertion the active M365 Copilot agent name starts with \"${{var:app_name}}\" and may include an environment suffix such as local or dev; the name can appear in either the agent header or the message composer placeholder.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
