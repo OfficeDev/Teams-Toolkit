@@ -175,7 +175,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the current assistant response mentions an oil change; ignore capitalization when matching the phrase.",
+      "description": "@assertion the current assistant response contains \"Oil change\" with this exact capitalization.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
