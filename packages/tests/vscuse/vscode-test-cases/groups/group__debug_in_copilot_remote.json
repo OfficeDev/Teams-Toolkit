@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 14,
+    "total_steps": 25,
     "created_at": "2026-04-21T01:53:19.454385",
     "name": "group: debug_in_copilot_remote",
     "description": {
@@ -18,6 +18,8 @@
     },
     "generated_at": "2026-04-21T01:53:19.454382",
     "execution_order": [
+      "step_0d5f7a2e",
+      "step_b4a3c981",
       "step_1f4f9871",
       "step_21d33988",
       "step_763cc4e5",
@@ -30,6 +32,15 @@
       "step_5c6eb288",
       "step_ae7fbcbb",
       "step_c9a61771",
+      "step_16c2e8f4",
+      "step_706b34a1",
+      "step_ad7e290c",
+      "step_5b9f431e",
+      "step_8cd4a672",
+      "step_f47b13d8",
+      "step_2ea9d603",
+      "step_61f72bc5",
+      "step_d3a84e90",
       "step_cc9e3f90",
       "step_074de24c"
     ],
@@ -39,6 +50,46 @@
     "updated_at": "2026-04-21T03:02:53.359113"
   },
   "steps": [
+    {
+      "step_id": "step_0d5f7a2e",
+      "agent": "code",
+      "tool": "",
+      "parameters": {},
+      "description": "@code Read the non-empty TEAMS_APP_ID value from \"/home/vscode/AgentsToolkitProjects/${{var:app_name}}/env/.env.dev\" and return exactly one line in this format: https://teams.microsoft.com/l/app/<TEAMS_APP_ID>?installAppPackage=true&webjoin=true",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "store_fact:teams_install_url"
+      ],
+      "screenshot": null,
+      "created_at": "2026-08-09T04:30:00.000000",
+      "plan_id": "plan_r_0928_041352"
+    },
+    {
+      "step_id": "step_b4a3c981",
+      "agent": "code",
+      "tool": "",
+      "parameters": {},
+      "description": "@code Read the non-empty M365_TITLE_ID value from \"/home/vscode/AgentsToolkitProjects/${{var:app_name}}/env/.env.dev\" and return exactly one line in this format: https://m365.cloud.microsoft/chat/?titleId=<M365_TITLE_ID>&source=agents-toolkit",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "store_fact:copilot_agent_url"
+      ],
+      "screenshot": null,
+      "created_at": "2026-08-09T04:30:00.000000",
+      "plan_id": "plan_r_0928_041352"
+    },
     {
       "step_id": "step_1f4f9871",
       "agent": "interaction",
@@ -331,6 +382,196 @@
       "tags": [],
       "screenshot": "step_c9a61771",
       "created_at": "2026-04-21T03:02:41.164117",
+      "plan_id": "plan_r_0928_041352"
+    },
+    {
+      "step_id": "step_16c2e8f4",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+l"
+      },
+      "description": "Focus the Chrome address bar after Microsoft 365 sign-in, regardless of whether Copilot shows the feedback dialog or the \"This agent is not installed\" dialog.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay: 5"
+      ],
+      "screenshot": null,
+      "created_at": "2026-08-09T04:30:00.000000",
+      "plan_id": "plan_r_0928_041352"
+    },
+    {
+      "step_id": "step_706b34a1",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{fact:teams_install_url}}"
+      },
+      "description": "Type the generated Microsoft Teams installation URL for the provisioned declarative agent into the Chrome address bar.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": null,
+      "created_at": "2026-08-09T04:30:00.000000",
+      "plan_id": "plan_r_0928_041352"
+    },
+    {
+      "step_id": "step_ad7e290c",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to open the provisioned declarative agent's Microsoft Teams installation page.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay: 10"
+      ],
+      "screenshot": null,
+      "created_at": "2026-08-09T04:30:00.000000",
+      "plan_id": "plan_r_0928_041352"
+    },
+    {
+      "step_id": "step_5b9f431e",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion there is a visible blue \"Add\" or \"Open\" button on the Microsoft Teams app details dialog for the provisioned declarative agent.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "step_retry_timeout: 180"
+      ],
+      "screenshot": null,
+      "created_at": "2026-08-09T04:30:00.000000",
+      "plan_id": "plan_r_0928_041352"
+    },
+    {
+      "step_id": "step_8cd4a672",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 265,
+        "y": 214
+      },
+      "description": "Click the visible blue \"Add\" or \"Open\" button in the Microsoft Teams app details dialog to install or open the provisioned declarative agent.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "ocr:true"
+      ],
+      "screenshot": null,
+      "created_at": "2026-08-09T04:30:00.000000",
+      "plan_id": "plan_r_0928_041352"
+    },
+    {
+      "step_id": "step_f47b13d8",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the declarative agent installation completed: either an \"Added successfully!\" or \"Let's go\" dialog with a blue \"Open\" button is visible, or ${{var:app_name}}dev is already open in Microsoft Teams.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "step_retry_timeout: 180"
+      ],
+      "screenshot": null,
+      "created_at": "2026-08-09T04:30:00.000000",
+      "plan_id": "plan_r_0928_041352"
+    },
+    {
+      "step_id": "step_2ea9d603",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+l"
+      },
+      "description": "Focus the Chrome address bar after the provisioned declarative agent has been installed in Microsoft Teams.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": null,
+      "created_at": "2026-08-09T04:30:00.000000",
+      "plan_id": "plan_r_0928_041352"
+    },
+    {
+      "step_id": "step_61f72bc5",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{fact:copilot_agent_url}}"
+      },
+      "description": "Type the generated M365 Copilot deep link for the newly installed declarative agent into the Chrome address bar.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": null,
+      "created_at": "2026-08-09T04:30:00.000000",
+      "plan_id": "plan_r_0928_041352"
+    },
+    {
+      "step_id": "step_d3a84e90",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to return to the newly installed declarative agent in M365 Copilot.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay: 30"
+      ],
+      "screenshot": null,
+      "created_at": "2026-08-09T04:30:00.000000",
       "plan_id": "plan_r_0928_041352"
     },
     {
