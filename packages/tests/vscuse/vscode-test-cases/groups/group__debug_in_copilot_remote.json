@@ -160,7 +160,7 @@
       "parameters": {
         "button": "left",
         "x": 551,
-        "y": 359
+        "y": 385
       },
       "description": "Click inside the \"Email or phone\" input field on the Microsoft Sign in page to focus the cursor for credential entry.",
       "content_refs": [],
@@ -168,11 +168,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:551:359:16:5:0000000000000000",
-        "dhash:551:359:96:5:0000000000000000",
-        "dhash:551:359:0:10:0b28d0d9e7e6dae4"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "precondition_wait_timeout: 60"
@@ -210,7 +206,7 @@
       "parameters": {
         "button": "left",
         "x": 650,
-        "y": 490
+        "y": 518
       },
       "description": "Click the blue \"Next\" button on the Microsoft sign-in page after entering the email address ${{env:M365_ACCOUNT_NAME}} in the login.microsoftonline.com web interface.",
       "content_refs": [],
@@ -218,11 +214,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:650:490:16:5:d4dc48b440000000",
-        "dhash:650:490:96:5:002bc3c32b004300",
-        "dhash:650:490:0:10:1b28f0d9e7e6dae4"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "delay: 5"

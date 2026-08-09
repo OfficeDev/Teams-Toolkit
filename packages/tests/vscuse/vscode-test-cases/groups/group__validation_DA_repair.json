@@ -175,7 +175,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the AI response contains the phrase \"oil change\", matching case-insensitively.",
+      "description": "@assertion the current assistant response contains \"Oil change\".",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
