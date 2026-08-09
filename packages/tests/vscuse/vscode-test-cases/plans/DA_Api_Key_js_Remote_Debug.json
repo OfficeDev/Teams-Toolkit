@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 13,
+    "total_steps": 14,
     "created_at": "2026-04-14T12:49:32.825617",
     "name": "DA Api Key js Remote Debug",
     "description": {
@@ -37,6 +37,7 @@
       "plan_r_0928_020230",
       "plan_720915c9",
       "plan_4b4ec310",
+      "step_a4f8c2d1",
       "plan_r_0928_041352",
       "plan_r_0928_091745"
     ],
@@ -421,6 +422,26 @@
       "tags": [],
       "screenshot": "step_51101c7e",
       "created_at": "2026-04-14T12:49:32.920356",
+      "plan_id": "plan_9e8bca35"
+    },
+    {
+      "step_id": "step_a4f8c2d1",
+      "agent": "code",
+      "tool": "",
+      "parameters": {
+        "sample": "=== Generated Script ===\nLanguage: python\n\n```python\nimport re\nfrom pathlib import Path\n\nfile_path = Path(\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}/.vscode/launch.json\")\ncontent = file_path.read_text(encoding=\"utf-8\")\npattern = re.compile(\n    r\"https://m365\\.cloud\\.microsoft/chat/entity1-[^/\\\"]+/\\$\\{agent-hint\\}(?:\\?[^\\\"]*)?\"\n)\nreplacement = \"https://m365.cloud.microsoft/chat/?titleId=${agent-hint}&source=agents-toolkit\"\nupdated, count = pattern.subn(replacement, content)\n\nif count == 0:\n    if replacement not in content:\n        raise ValueError(\"Legacy Copilot launch URL was not found.\")\n    print(\"Copilot launch URL is already current.\")\nelse:\n    file_path.write_text(updated, encoding=\"utf-8\")\n    print(f\"Updated {count} Copilot launch URL(s).\")\n```\n\n=== Execution Results ===\nExit Code: 0\n\n=== STDOUT ===\nUpdated 2 Copilot launch URL(s).\n\n\u2713 Script executed successfully"
+      },
+      "description": "@code update `/home/vscode/AgentsToolkitProjects/${{var:app_name}}/.vscode/launch.json`. Replace every legacy Copilot URL matching `https://m365.cloud.microsoft/chat/entity1-<guid>/${agent-hint}?...` with `https://m365.cloud.microsoft/chat/?titleId=${agent-hint}&source=agents-toolkit`. Preserve the JSON formatting. Fail if neither the legacy nor current URL is present.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": null,
+      "created_at": "2026-08-09T03:16:37.954000",
       "plan_id": "plan_9e8bca35"
     }
   ],
