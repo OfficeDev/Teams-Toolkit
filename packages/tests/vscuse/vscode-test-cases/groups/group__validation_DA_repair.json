@@ -39,9 +39,9 @@
       "parameters": {
         "button": "left",
         "x": 416,
-        "y": 369
+        "y": 519
       },
-      "description": "Click the input box in the M365 Copilot chat page.",
+      "description": "Click the redesigned Message Copilot input box at the bottom of the Microsoft 365 Copilot chat page.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
