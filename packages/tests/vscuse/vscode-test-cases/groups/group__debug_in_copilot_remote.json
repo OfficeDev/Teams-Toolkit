@@ -55,7 +55,7 @@
       "agent": "code",
       "tool": "",
       "parameters": {},
-      "description": "@code Read the non-empty TEAMS_APP_ID value from \"/home/vscode/AgentsToolkitProjects/${{var:app_name}}/env/.env.dev\" and return exactly one line in this format: https://teams.microsoft.com/l/app/<TEAMS_APP_ID>?installAppPackage=true&webjoin=true",
+      "description": "@code Read the non-empty TEAMS_APP_ID value from \"/home/vscode/AgentsToolkitProjects/${{var:app_name}}/env/.env.dev\" and return only the raw TEAMS_APP_ID value.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -64,7 +64,7 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "store_fact:teams_install_url"
+        "store_fact:teams_app_id"
       ],
       "screenshot": null,
       "created_at": "2026-08-09T04:30:00.000000",
@@ -75,7 +75,7 @@
       "agent": "code",
       "tool": "",
       "parameters": {},
-      "description": "@code Read the non-empty M365_TITLE_ID value from \"/home/vscode/AgentsToolkitProjects/${{var:app_name}}/env/.env.dev\" and return exactly one line in this format: https://m365.cloud.microsoft/chat/?titleId=<M365_TITLE_ID>&source=agents-toolkit",
+      "description": "@code Read the non-empty M365_TITLE_ID value from \"/home/vscode/AgentsToolkitProjects/${{var:app_name}}/env/.env.dev\" and return only the raw M365_TITLE_ID value.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -84,7 +84,7 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "store_fact:copilot_agent_url"
+        "store_fact:m365_title_id"
       ],
       "screenshot": null,
       "created_at": "2026-08-09T04:30:00.000000",
@@ -411,7 +411,7 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "${{fact:teams_install_url}}"
+        "text": "https://teams.microsoft.com/l/app/${{fact:teams_app_id}}?installAppPackage=true&webjoin=true"
       },
       "description": "Type the generated Microsoft Teams installation URL for the provisioned declarative agent into the Chrome address bar.",
       "content_refs": [],
@@ -537,7 +537,7 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "${{fact:copilot_agent_url}}"
+        "text": "https://m365.cloud.microsoft/chat/?titleId=${{fact:m365_title_id}}&source=agents-toolkit"
       },
       "description": "Type the generated M365 Copilot deep link for the newly installed declarative agent into the Chrome address bar.",
       "content_refs": [],
