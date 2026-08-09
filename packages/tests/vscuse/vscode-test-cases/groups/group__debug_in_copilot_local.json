@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 19,
+    "total_steps": 20,
     "created_at": "2026-05-18T10:07:16.265795",
     "name": "group: debug_in_copilot_local",
     "description": {
@@ -36,6 +36,7 @@
       "step_86a70854",
       "step_a0762a17",
       "step_3bb29c8a",
+      "step_9f2e7c4a",
       "step_670cbf14"
     ],
     "tags": [
@@ -461,6 +462,29 @@
       ],
       "screenshot": "step_3bb29c8a",
       "created_at": "2026-05-18T10:07:16.352198",
+      "plan_id": "plan_r_0928_095902"
+    },
+    {
+      "step_id": "step_9f2e7c4a",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+r"
+      },
+      "description": "Refresh the M365 Copilot page after the local agent installation propagation wait so the newly installed agent is resolved.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay: 30",
+        "force_run:true"
+      ],
+      "screenshot": null,
+      "created_at": "2026-08-09T02:47:27.849000",
       "plan_id": "plan_r_0928_095902"
     },
     {
