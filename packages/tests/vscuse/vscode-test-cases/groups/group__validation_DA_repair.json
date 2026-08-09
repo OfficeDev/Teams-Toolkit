@@ -29,7 +29,7 @@
     "tags": [
       "group"
     ],
-    "updated_at": "2026-04-21T02:28:11.819066"
+    "updated_at": "2026-08-09T03:14:39.463000"
   },
   "steps": [
     {
@@ -38,10 +38,10 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 350,
-        "y": 373
+        "x": 500,
+        "y": 490
       },
-      "description": "Click the input box in the M365 Copilot chat page.",
+      "description": "Click the \"Message Copilot\" composer in the redesigned M365 Copilot agent page.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
