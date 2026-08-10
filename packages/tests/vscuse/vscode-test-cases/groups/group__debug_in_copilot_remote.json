@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 18,
+    "total_steps": 20,
     "created_at": "2026-04-21T01:53:19.454385",
     "name": "group: debug_in_copilot_remote",
     "description": {
@@ -35,6 +35,8 @@
       "step_6f2a9c41",
       "step_d81e4b73",
       "step_7349e8a1",
+      "step_49ef8c72",
+      "step_98c34b61",
       "step_074de24c"
     ],
     "tags": [
@@ -442,6 +444,55 @@
       ],
       "screenshot": "",
       "created_at": "2026-08-10T04:26:39.860000",
+      "plan_id": "plan_r_0928_041352"
+    },
+    {
+      "step_id": "step_49ef8c72",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 374,
+        "y": 222
+      },
+      "description": "Click the visible \"Add\" or \"Open\" button in the M365 Copilot agent details dialog.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "ocr:true"
+      ],
+      "screenshot": "",
+      "created_at": "2026-08-10T04:51:03.772000",
+      "plan_id": "plan_r_0928_041352"
+    },
+    {
+      "step_id": "step_98c34b61",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 374,
+        "y": 222
+      },
+      "description": "Click the \"Open\" button after the provisioned agent has been added to M365 Copilot.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay: 15",
+        "ocr:true"
+      ],
+      "screenshot": "",
+      "created_at": "2026-08-10T04:51:03.772000",
       "plan_id": "plan_r_0928_041352"
     },
     {
