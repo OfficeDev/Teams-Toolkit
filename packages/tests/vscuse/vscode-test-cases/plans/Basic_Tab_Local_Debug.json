@@ -168,7 +168,7 @@
         "x": 228,
         "y": 15
       },
-      "description": "Click the \"Back\" button (with shortcut Ctrl+Alt+←) in the title bar of the \"Application Name\" popup dialog at the top of the Microsoft 365 Agents Toolkit interface in Visual Studio Code.",
+      "description": "Click the \"Back\" button (with shortcut Ctrl+Alt+\u2190) in the title bar of the \"Application Name\" popup dialog at the top of the Microsoft 365 Agents Toolkit interface in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -238,7 +238,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion \"app name is longer than the 30 characters\" exist.",
+      "description": "@assertion \"App name is longer than the 30 characters\" exist.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
