@@ -197,7 +197,7 @@
       "agent": "code",
       "tool": "",
       "parameters": {},
-      "description": "@code open JSON file `/home/vscode/AgentsToolkitProjects/${{var:app_name}}/.vscode/launch.json`. Replace every legacy local Copilot launch URL `https://m365.cloud.microsoft/chat/entity1-d870f6cd-4aa5-4d42-9626-ab690c041429/${local:agent-hint}?auth=2&${account-hint}&developerMode=Basic` with `https://m365.cloud.microsoft/chat/?titleId=${local:agent-hint}&source=agents-toolkit`. Preserve all other content and formatting.",
+      "description": "@code open JSON file `/home/vscode/AgentsToolkitProjects/${{var:app_name}}/.vscode/launch.json`. Find the configurations named `Debug in Copilot (Edge)` and `Debug in Copilot (Chrome)` and set each complete `url` value to `https://m365.cloud.microsoft/chat/?titleId=${local:agent-hint}&source=agents-toolkit`, regardless of its current value. Preserve all other content and formatting. Re-read the file and fail this step unless both named configurations have exactly that URL and neither retains a `/chat/entity1-` URL.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
