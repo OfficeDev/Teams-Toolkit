@@ -3,6 +3,7 @@
 
 import {
   FxError,
+  Inputs,
   InputsWithProjectPath,
   Result,
   TeamsAppInputs,
@@ -19,7 +20,7 @@ import { teamsappMgr } from "../component/driver/teamsApp/teamsappMgr";
 import { PackageService } from "../component/m365/packageService";
 import { envUtil } from "../component/utils/envUtil";
 import { UserCancelError, assembleError } from "../error";
-import { UninstallInputs } from "../question";
+import { AddAuthActionInputs, AddPluginInputs, AddSkillInputs, UninstallInputs } from "../question";
 import { FxCore } from "./FxCore";
 
 /** Execution controls shared by every first-class fx-core client operation. */
@@ -69,6 +70,27 @@ export type FxCoreLaunchInfoResult = Record<string, unknown>;
 
 export type FxCoreProvisionInputs = InputsWithProjectPath & { env: string };
 
+/** Inputs for adding an OpenAPI or MCP action to an existing project. */
+export type FxCoreAddPluginInputs = AddPluginInputs &
+  InputsWithProjectPath & {
+    "manifest-path": string;
+    "api-plugin-type": "api-spec" | "mcp";
+  };
+
+/** Inputs for creating or importing an agent skill. */
+export type FxCoreAddSkillInputs = AddSkillInputs &
+  InputsWithProjectPath & {
+    "manifest-path": string;
+    "expose-to-copilot"?: "yes" | "no";
+  };
+
+/** Inputs for adding an authentication configuration to a plugin. */
+export type FxCoreAddAuthActionInputs = AddAuthActionInputs &
+  InputsWithProjectPath & {
+    "plugin-manifest-path": string;
+    "auth-name": string;
+  };
+
 /**
  * Stable, typed lifecycle boundary for in-process consumers.
  *
@@ -76,6 +98,18 @@ export type FxCoreProvisionInputs = InputsWithProjectPath & { env: string };
  * are successful domain outcomes from validate(), with valid set to false.
  */
 export interface IFxCoreClient {
+  addPlugin(
+    inputs: FxCoreAddPluginInputs,
+    options?: FxCoreExecutionOptions
+  ): Promise<Result<undefined, FxError>>;
+  addSkill(
+    inputs: FxCoreAddSkillInputs,
+    options?: FxCoreExecutionOptions
+  ): Promise<Result<undefined, FxError>>;
+  addAuthAction(
+    inputs: FxCoreAddAuthActionInputs,
+    options?: FxCoreExecutionOptions
+  ): Promise<Result<undefined, FxError>>;
   provision(
     inputs: FxCoreProvisionInputs,
     options?: FxCoreExecutionOptions
@@ -108,6 +142,27 @@ export class FxCoreClient implements IFxCoreClient {
 
   public constructor(private readonly tools: Tools) {
     this.core = new FxCore(tools);
+  }
+
+  public async addPlugin(
+    inputs: FxCoreAddPluginInputs,
+    options?: FxCoreExecutionOptions
+  ): Promise<Result<undefined, FxError>> {
+    return this.runAdd(inputs, options, (clientInputs) => this.core.addPlugin(clientInputs));
+  }
+
+  public async addSkill(
+    inputs: FxCoreAddSkillInputs,
+    options?: FxCoreExecutionOptions
+  ): Promise<Result<undefined, FxError>> {
+    return this.runAdd(inputs, options, (clientInputs) => this.core.addSkill(clientInputs));
+  }
+
+  public async addAuthAction(
+    inputs: FxCoreAddAuthActionInputs,
+    options?: FxCoreExecutionOptions
+  ): Promise<Result<undefined, FxError>> {
+    return this.runAdd(inputs, options, (clientInputs) => this.core.addAuthAction(clientInputs));
   }
 
   public async provision(
@@ -238,6 +293,18 @@ export class FxCoreClient implements IFxCoreClient {
 
   private withSignal<T extends Record<string, unknown>>(inputs: T, signal?: AbortSignal): T {
     return { ...inputs, abortSignal: signal };
+  }
+
+  private async runAdd<TInputs extends Inputs, TResult>(
+    inputs: TInputs,
+    options: FxCoreExecutionOptions | undefined,
+    operation: (clientInputs: TInputs) => Promise<Result<TResult, FxError>>
+  ): Promise<Result<undefined, FxError>> {
+    const cancelled = this.cancelled<undefined>(options?.signal);
+    if (cancelled) return cancelled;
+    const result = await operation(this.withSignal(inputs, options?.signal));
+    if (result.isErr()) return err(result.error);
+    return ok(undefined);
   }
 
   private cancelled<T>(signal?: AbortSignal): Result<T, FxError> | undefined {

@@ -21,11 +21,15 @@ export interface MCPFetchResult {
 }
 
 /** Fetch MCP tool definitions from a remote MCP server. */
-export async function fetchMCPTools(serverUrl: string): Promise<MCPFetchResult> {
+export async function fetchMCPTools(
+  serverUrl: string,
+  signal?: AbortSignal
+): Promise<MCPFetchResult> {
   let authMetadataUrl: string | undefined;
   try {
-    await axios.get(serverUrl, { timeout: 10000 });
+    await axios.get(serverUrl, { timeout: 10000, signal });
   } catch (error: any) {
+    signal?.throwIfAborted();
     if (error?.response?.status === 401 || error?.status === 401) {
       const wwwAuth = error?.response?.headers?.["www-authenticate"];
       if (wwwAuth) {
@@ -52,7 +56,9 @@ export async function fetchMCPTools(serverUrl: string): Promise<MCPFetchResult> 
 
     try {
       await client.connect(transport);
+      signal?.throwIfAborted();
       const result = await client.listTools();
+      signal?.throwIfAborted();
       const tools: MCPTool[] = result.tools.map((tool: any) => ({
         ...tool,
         description: tool.description ?? "",
@@ -62,6 +68,7 @@ export async function fetchMCPTools(serverUrl: string): Promise<MCPFetchResult> 
       await client.close();
     }
   } catch (error: any) {
+    signal?.throwIfAborted();
     try {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - dynamic import of MCP SDK subpath
@@ -75,7 +82,9 @@ export async function fetchMCPTools(serverUrl: string): Promise<MCPFetchResult> 
 
       try {
         await client.connect(transport);
+        signal?.throwIfAborted();
         const result = await client.listTools();
+        signal?.throwIfAborted();
         const tools: MCPTool[] = result.tools.map((tool: any) => ({
           ...tool,
           description: tool.description ?? "",
@@ -85,6 +94,7 @@ export async function fetchMCPTools(serverUrl: string): Promise<MCPFetchResult> 
         await client.close();
       }
     } catch {
+      signal?.throwIfAborted();
       if (
         error?.message?.includes("401") ||
         error?.message?.includes("Unauthorized") ||
@@ -194,15 +204,22 @@ export interface MCPAuthProbeResult {
  * server announces where its messages go. Anything else — the stream ending, an error, a
  * stream that just keeps talking, a server that never answers — means no such announcement.
  */
-function announcesLegacyMessageEndpoint(stream: Readable): Promise<boolean> {
+function announcesLegacyMessageEndpoint(stream: Readable, signal?: AbortSignal): Promise<boolean> {
   return new Promise((resolve) => {
     let buffered = "";
     const settle = (found: boolean) => {
       clearTimeout(timer);
+      signal?.removeEventListener("abort", onAbort);
       stream.destroy();
       resolve(found);
     };
+    const onAbort = () => settle(false);
     const timer = setTimeout(() => settle(false), LEGACY_SSE_TIMEOUT_MS);
+    signal?.addEventListener("abort", onAbort, { once: true });
+    if (signal?.aborted) {
+      settle(false);
+      return;
+    }
     stream.on("data", (chunk: Buffer | string) => {
       buffered += chunk.toString();
       if (/^event:\s*endpoint\s*$/m.test(buffered)) {
@@ -226,27 +243,34 @@ function announcesLegacyMessageEndpoint(stream: Readable): Promise<boolean> {
  * own disambiguation is to open an SSE stream with GET: an HTTP+SSE server replies
  * `text/event-stream` and names its message endpoint in the first event.
  */
-async function servesLegacySSETransport(serverUrl: string): Promise<boolean> {
+async function servesLegacySSETransport(serverUrl: string, signal?: AbortSignal): Promise<boolean> {
   try {
     const response = await axios.get(serverUrl, {
       timeout: LEGACY_SSE_TIMEOUT_MS,
       responseType: "stream",
       headers: { Accept: "text/event-stream" },
+      signal,
     });
     const contentType = String(response.headers?.["content-type"] ?? "");
     if (!contentType.includes("text/event-stream")) {
       response.data?.destroy?.();
       return false;
     }
-    return await announcesLegacyMessageEndpoint(response.data);
+    const announcesEndpoint = await announcesLegacyMessageEndpoint(response.data, signal);
+    signal?.throwIfAborted();
+    return announcesEndpoint;
   } catch {
+    signal?.throwIfAborted();
     // A GET that fails says only that the old transport is not there either.
     return false;
   }
 }
 
 /** Probe an MCP streamable-HTTP endpoint for an OAuth challenge and for the URL's validity. */
-export async function probeMCPServerAuth(serverUrl: string): Promise<MCPAuthProbeResult> {
+export async function probeMCPServerAuth(
+  serverUrl: string,
+  signal?: AbortSignal
+): Promise<MCPAuthProbeResult> {
   const initializeBody = {
     jsonrpc: "2.0",
     id: 1,
@@ -264,11 +288,13 @@ export async function probeMCPServerAuth(serverUrl: string): Promise<MCPAuthProb
         "Content-Type": "application/json",
         Accept: "application/json, text/event-stream",
       },
+      signal,
     });
     return carriesJSONRPCEnvelope(response.data)
       ? { requiresAuth: false, endpointStatus: "confirmed" }
       : { requiresAuth: false, endpointStatus: "notEndpoint", responseStatus: response.status };
   } catch (error: any) {
+    signal?.throwIfAborted();
     const status: unknown = error?.response?.status ?? error?.status;
     if (status === 401) {
       // Only something that means to be a protected resource issues an OAuth challenge, so a
@@ -286,7 +312,7 @@ export async function probeMCPServerAuth(serverUrl: string): Promise<MCPAuthProb
     if (typeof status === "number" && NOT_AN_ENDPOINT_STATUSES.includes(status)) {
       // The spec reads a 4xx here as "this may be the old transport", not as "wrong URL", so
       // the verdict is not settled until HTTP+SSE has been ruled out.
-      return (await servesLegacySSETransport(serverUrl))
+      return (await servesLegacySSETransport(serverUrl, signal))
         ? { requiresAuth: false, endpointStatus: "confirmed" }
         : { requiresAuth: false, endpointStatus: "notEndpoint", responseStatus: status };
     }

@@ -52,6 +52,7 @@ import { Container } from "typedi";
 import { pathToFileURL } from "url";
 import { teamsDevPortalClient } from "../client/teamsDevPortalClient";
 import { ApiKeyParameters, AuthParameters } from "../common/authInterface";
+import { throwIfAborted } from "../common/cancellation";
 import {
   AppStudioScopes,
   MosServiceScope,
@@ -231,7 +232,7 @@ export class FxCore extends FxCoreOpenPluginPart {
   }
 
   private getAbortSignal(inputs: Inputs): AbortSignal | undefined {
-    return inputs.abortSignal as AbortSignal | undefined;
+    return inputs.abortSignal;
   }
 
   /**
@@ -2388,6 +2389,7 @@ export class FxCore extends FxCoreOpenPluginPart {
       true,
       getLocalizedString("core.addSkill.continue")
     );
+    throwIfAborted(inputs);
     if (confirmRes.isErr()) {
       return err(confirmRes.error);
     } else if (confirmRes.value !== getLocalizedString("core.addSkill.continue")) {
@@ -2961,6 +2963,7 @@ export class FxCore extends FxCoreOpenPluginPart {
 
       // Update openapi spec
       const specParser = new SpecParser(apiSpecPath, getParserOptions(ProjectType.Copilot, true));
+      throwIfAborted(inputs);
       await specParser.addAuthScheme(authName, authType, authParameters);
 
       let authTypeScheme;
