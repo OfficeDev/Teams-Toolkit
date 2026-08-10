@@ -296,6 +296,8 @@
   "teamstoolkit.handlers.manualStepRequired": "[%s] se vytváří v [local address](%s). Pokud si chcete zobrazit náhled aplikace, postupujte podle pokynů v souboru README.",
   "teamstoolkit.handlers.manualStepRequired.fallback": "[%s] se vytváří v %s. Pokud si chcete zobrazit náhled aplikace, postupujte podle pokynů v souboru README.",
   "teamstoolkit.handlers.manualStepRequiredTitle": "Otevřít SOUBOR README",
+  "teamstoolkit.handlers.mcpAuthPlaceholder.openYmlTitle": "Open m365agents.yml",
+  "teamstoolkit.handlers.mcpAuthPlaceholder.recreateTitle": "Create New App",
   "teamstoolkit.handlers.referLinkForMoreDetails": "Další podrobnosti najdete na tomto odkazu: ",
   "teamstoolkit.handlers.reportIssue": "Nahlásit problém",
   "teamstoolkit.handlers.similarIssues": "Podobné problémy",

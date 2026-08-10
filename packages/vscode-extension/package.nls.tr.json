@@ -296,6 +296,8 @@
   "teamstoolkit.handlers.manualStepRequired": "[%s], [local address](%s) konumunda oluşturulur. Uygulamanızın önizlemesini görüntülemek için BENİOKU dosyasındaki yönergeleri izleyin.",
   "teamstoolkit.handlers.manualStepRequired.fallback": "[%s] şu anda %s. Uygulamanızın önizlemesini görüntülemek için BENİOKU dosyasındaki yönergeleri izleyin.",
   "teamstoolkit.handlers.manualStepRequiredTitle": "BENİOKU'ya Aç",
+  "teamstoolkit.handlers.mcpAuthPlaceholder.openYmlTitle": "Open m365agents.yml",
+  "teamstoolkit.handlers.mcpAuthPlaceholder.recreateTitle": "Create New App",
   "teamstoolkit.handlers.referLinkForMoreDetails": "Daha fazla ayrıntı için lütfen bu bağlantıya bakın: ",
   "teamstoolkit.handlers.reportIssue": "Sorun Raporla",
   "teamstoolkit.handlers.similarIssues": "Benzer Sorunlar",

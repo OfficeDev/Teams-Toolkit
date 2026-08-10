@@ -296,6 +296,8 @@
   "teamstoolkit.handlers.manualStepRequired": "[%s] 是在 [local address](%s) 处创建的。按照 README 文件中的说明预览应用。",
   "teamstoolkit.handlers.manualStepRequired.fallback": "[%s] 是在 %s 处创建的。按照 README 文件中的说明预览应用。",
   "teamstoolkit.handlers.manualStepRequiredTitle": "打开自述文件",
+  "teamstoolkit.handlers.mcpAuthPlaceholder.openYmlTitle": "Open m365agents.yml",
+  "teamstoolkit.handlers.mcpAuthPlaceholder.recreateTitle": "Create New App",
   "teamstoolkit.handlers.referLinkForMoreDetails": "有关更多详细信息，请参阅此链接: ",
   "teamstoolkit.handlers.reportIssue": "报告问题",
   "teamstoolkit.handlers.similarIssues": "类似的问题",

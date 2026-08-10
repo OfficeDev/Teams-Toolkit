@@ -296,6 +296,8 @@
   "teamstoolkit.handlers.manualStepRequired": "Element [%s] jest tworzony w [local address](%s). Postępuj zgodnie z instrukcjami w pliku README, aby wyświetlić podgląd aplikacji.",
   "teamstoolkit.handlers.manualStepRequired.fallback": "Obiekt [%s] został utworzony w %s. Postępuj zgodnie z instrukcjami w pliku README, aby wyświetlić podgląd aplikacji.",
   "teamstoolkit.handlers.manualStepRequiredTitle": "Otwórz plik README",
+  "teamstoolkit.handlers.mcpAuthPlaceholder.openYmlTitle": "Open m365agents.yml",
+  "teamstoolkit.handlers.mcpAuthPlaceholder.recreateTitle": "Create New App",
   "teamstoolkit.handlers.referLinkForMoreDetails": "Aby uzyskać więcej informacji, skorzystaj z tego linku: ",
   "teamstoolkit.handlers.reportIssue": "Zgłoś problem",
   "teamstoolkit.handlers.similarIssues": "Podobne problemy",
