@@ -138,7 +138,7 @@ async function readFileContent(
   const absolutePath = path.resolve(manifestDirectory, filePath);
   const safeFileReference = path.isAbsolute(filePath) ? path.basename(filePath) : filePath;
   if (!isPathContained(manifestDirectory, absolutePath)) {
-    return fileReferenceOutsideManifestDirectory(ctx);
+    return fileReferenceOutsideManifestDirectory(ctx, filePath, absolutePath, manifestDirectory);
   }
 
   if (!isSupportedFileFormat(filePath)) {
@@ -168,7 +168,7 @@ async function readFileContent(
   }
 
   if (!isPathContained(realManifestDirectory, realFilePath)) {
-    return fileReferenceOutsideManifestDirectory(ctx);
+    return fileReferenceOutsideManifestDirectory(ctx, filePath, realFilePath, manifestDirectory);
   }
 
   if (!isSupportedFileFormat(realFilePath)) {
@@ -224,10 +224,22 @@ function getFileSystemErrorCode(error: unknown): string {
     : "UNKNOWN";
 }
 
-function fileReferenceOutsideManifestDirectory(ctx: DriverContext): Result<string, FxError> {
-  ctx.logProvider.error(
-    getLocalizedString("core.envFunc.fileReferenceOutsideManifestDirectory.errorLog")
-  );
+function fileReferenceOutsideManifestDirectory(
+  ctx: DriverContext,
+  fileReference: string,
+  resolvedPath: string,
+  manifestDirectory: string
+): Result<string, FxError> {
+  const errorLog =
+    ctx.platform === Platform.VSCode
+      ? getLocalizedString(
+          "core.envFunc.fileReferenceOutsideManifestDirectory.errorLog.vsc",
+          fileReference,
+          resolvedPath,
+          manifestDirectory
+        )
+      : getLocalizedString("core.envFunc.fileReferenceOutsideManifestDirectory.errorLog");
+  ctx.logProvider.error(errorLog);
   return err(new FileReferenceOutsideManifestDirectoryError(ctx.platform));
 }
 

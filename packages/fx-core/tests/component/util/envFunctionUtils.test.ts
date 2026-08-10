@@ -159,6 +159,41 @@ describe("expandVariableWithFunction", async () => {
     }
   });
 
+  it("FILE-AC-10: explains how to fix a lexical external file reference", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "env-function-lexical-diagnostic-"));
+    try {
+      const manifestDirectory = path.join(root, "appPackage");
+      const manifestPath = path.join(manifestDirectory, "manifest.json");
+      const externalFile = path.join(root, "secret.txt");
+      const fileReference = "../secret.txt";
+      await fs.ensureDir(manifestDirectory);
+      await fs.writeFile(externalFile, "external secret");
+
+      const res = await expandVariableWithFunction(
+        `description:"$[file('${fileReference}')]"`,
+        context,
+        undefined,
+        true,
+        ManifestType.DeclarativeCopilotManifest,
+        manifestPath
+      );
+
+      assert.isTrue(res.isErr() && res.error.name === "FileReferenceOutsideManifestDirectory");
+      assert.include(context.logProvider.msg, fileReference);
+      assert.include(context.logProvider.msg, externalFile);
+      assert.include(context.logProvider.msg, manifestDirectory);
+      assert.include(context.logProvider.msg, "Move the file into the manifest directory");
+      if (res.isErr()) {
+        assert.notInclude(res.error.message, externalFile);
+        assert.notInclude(res.error.message, manifestDirectory);
+        assert.notInclude(res.error.displayMessage, externalFile);
+        assert.notInclude(res.error.displayMessage, manifestDirectory);
+      }
+    } finally {
+      await fs.remove(root);
+    }
+  });
+
   it("FILE-AC-02: rejects a sibling-prefix reference", async () => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), "env-function-sibling-"));
     try {
@@ -295,6 +330,47 @@ describe("expandVariableWithFunction", async () => {
     }
   });
 
+  it("FILE-AC-10: explains how to fix a canonical external file reference", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "env-function-canonical-diagnostic-"));
+    try {
+      const manifestDirectory = path.join(root, "appPackage");
+      const externalDirectory = path.join(root, "external");
+      const externalFile = path.join(externalDirectory, "secret.txt");
+      const fileReference = "linked/secret.txt";
+      await fs.ensureDir(manifestDirectory);
+      await fs.ensureDir(externalDirectory);
+      await fs.writeFile(externalFile, "external secret");
+      await fs.symlink(
+        externalDirectory,
+        path.join(manifestDirectory, "linked"),
+        process.platform === "win32" ? "junction" : "dir"
+      );
+
+      const res = await expandVariableWithFunction(
+        `description:"$[file('${fileReference}')]"`,
+        context,
+        undefined,
+        true,
+        ManifestType.DeclarativeCopilotManifest,
+        path.join(manifestDirectory, "manifest.json")
+      );
+
+      assert.isTrue(res.isErr() && res.error.name === "FileReferenceOutsideManifestDirectory");
+      assert.include(context.logProvider.msg, fileReference);
+      assert.include(context.logProvider.msg, externalFile);
+      assert.include(context.logProvider.msg, manifestDirectory);
+      assert.include(context.logProvider.msg, "update the file reference");
+      if (res.isErr()) {
+        assert.notInclude(res.error.message, externalFile);
+        assert.notInclude(res.error.message, manifestDirectory);
+        assert.notInclude(res.error.displayMessage, externalFile);
+        assert.notInclude(res.error.displayMessage, manifestDirectory);
+      }
+    } finally {
+      await fs.remove(root);
+    }
+  });
+
   it("FILE-AC-05: rejects a supported reference whose real target is unsupported", async () => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), "env-function-extension-"));
     try {
@@ -357,6 +433,34 @@ describe("expandVariableWithFunction", async () => {
       assert.isTrue(
         nestedResult.isErr() && nestedResult.error.name === "FileReferenceOutsideManifestDirectory"
       );
+    } finally {
+      await fs.remove(root);
+    }
+  });
+
+  it("FILE-AC-08: does not disclose external file paths in CLI output", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "env-function-cli-diagnostic-"));
+    try {
+      const manifestDirectory = path.join(root, "appPackage");
+      const externalFile = path.join(root, "secret.txt");
+      const cliLogProvider = new MockedLogProvider();
+      const cliContext = { ...context, platform: Platform.CLI, logProvider: cliLogProvider };
+      await fs.ensureDir(manifestDirectory);
+      await fs.writeFile(externalFile, "external secret");
+
+      const res = await expandVariableWithFunction(
+        "description:\"$[file('../secret.txt')]\"",
+        cliContext,
+        undefined,
+        true,
+        ManifestType.DeclarativeCopilotManifest,
+        path.join(manifestDirectory, "manifest.json")
+      );
+
+      assert.isTrue(res.isErr() && res.error.name === "FileReferenceOutsideManifestDirectory");
+      assert.notInclude(cliLogProvider.msg, root);
+      assert.notInclude(cliLogProvider.msg, externalFile);
+      assert.notInclude(cliLogProvider.msg, manifestDirectory);
     } finally {
       await fs.remove(root);
     }
