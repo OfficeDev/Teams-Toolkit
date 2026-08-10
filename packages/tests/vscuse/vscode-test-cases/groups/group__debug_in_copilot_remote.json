@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 16,
+    "total_steps": 18,
     "created_at": "2026-04-21T01:53:19.454385",
     "name": "group: debug_in_copilot_remote",
     "description": {
@@ -18,6 +18,7 @@
     },
     "generated_at": "2026-04-21T01:53:19.454382",
     "execution_order": [
+      "step_f33e76bd",
       "step_1f4f9871",
       "step_21d33988",
       "step_763cc4e5",
@@ -33,6 +34,7 @@
       "step_cc9e3f90",
       "step_6f2a9c41",
       "step_d81e4b73",
+      "step_7349e8a1",
       "step_074de24c"
     ],
     "tags": [
@@ -41,6 +43,26 @@
     "updated_at": "2026-04-21T03:02:53.359113"
   },
   "steps": [
+    {
+      "step_id": "step_f33e76bd",
+      "agent": "code",
+      "tool": "",
+      "parameters": {},
+      "description": "@code read M365_TITLE_ID from /home/vscode/AgentsToolkitProjects/${{var:app_name}}/env/.env.dev and return only its exact value.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "store_fact:M365_TITLE_ID"
+      ],
+      "screenshot": null,
+      "created_at": "2026-08-10T04:26:39.860000",
+      "plan_id": "plan_r_0928_041352"
+    },
     {
       "step_id": "step_1f4f9871",
       "agent": "interaction",
@@ -363,13 +385,11 @@
     {
       "step_id": "step_6f2a9c41",
       "agent": "interaction",
-      "tool": "click",
+      "tool": "keyboard_shortcut",
       "parameters": {
-        "button": "left",
-        "x": 716,
-        "y": 461
+        "keys": "ctrl+l"
       },
-      "description": "Close the blocking \"This agent is not installed\" dialog in Microsoft 365 Copilot.",
+      "description": "Focus the Chrome address bar so the obsolete Copilot agent deep link can be replaced.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -385,11 +405,31 @@
     {
       "step_id": "step_d81e4b73",
       "agent": "interaction",
-      "tool": "keyboard_shortcut",
+      "tool": "type_text",
       "parameters": {
-        "keys": "ctrl+shift+r"
+        "text": "https://m365.cloud.microsoft/chat/?titleId=${{fact:M365_TITLE_ID}}&source=agents-toolkit"
       },
-      "description": "Hard refresh the Microsoft 365 Copilot agent link after deployment propagation instead of changing the current design mode.",
+      "description": "Replace the obsolete Copilot deep link with the supported titleId URL for the provisioned agent.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
+      "created_at": "2026-08-10T03:32:58.522000",
+      "plan_id": "plan_r_0928_041352"
+    },
+    {
+      "step_id": "step_7349e8a1",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Open the supported Copilot titleId URL for the provisioned agent.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -398,10 +438,10 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "delay: 120"
+        "delay: 30"
       ],
       "screenshot": "",
-      "created_at": "2026-08-10T03:32:58.522000",
+      "created_at": "2026-08-10T04:26:39.860000",
       "plan_id": "plan_r_0928_041352"
     },
     {

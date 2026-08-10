@@ -157,9 +157,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:340:354:0:10:1595d29af0e2f0e6"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "ocr:true"
