@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 10,
+    "total_steps": 12,
     "created_at": "2026-06-08T03:49:50.948783",
     "name": "group  provision DA",
     "description": {
@@ -23,6 +23,8 @@
       "step_73436897",
       "step_f96cc0f5",
       "step_913f3155",
+      "step_a31477e2",
+      "step_c68df24a",
       "step_14032a3c",
       "step_a83e01db",
       "step_e107a057",
@@ -151,18 +153,18 @@
     {
       "step_id": "step_913f3155",
       "agent": "interaction",
-      "tool": "click",
+      "tool": "type_text",
       "parameters": {
-        "button": "left",
+        "button": null,
         "dx": null,
         "dy": null,
         "key": null,
         "keys": null,
-        "text": null,
-        "x": 404,
-        "y": 100
+        "text": "vscuse_app_",
+        "x": null,
+        "y": null
       },
-      "description": "Click the first existing resource group in the \"Select a resource group\" dropdown within Visual Studio Code.",
+      "description": "Type \"vscuse_app_\" into the \"Select a resource group\" dropdown to filter out unrelated shared resource groups.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -176,6 +178,55 @@
       ],
       "screenshot": "step_913f3155",
       "created_at": "2026-06-08T03:49:50.974085",
+      "plan_id": "plan_720915c9"
+    },
+    {
+      "step_id": "step_a31477e2",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the filtered \"Select a resource group\" dropdown shows at least one existing resource group whose name starts with \"vscuse_app_\".",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "0",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "step_retry_timeout: 30"
+      ],
+      "screenshot": null,
+      "created_at": "2026-08-10T04:57:52.299000",
+      "plan_id": "plan_720915c9"
+    },
+    {
+      "step_id": "step_c68df24a",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "button": null,
+        "dx": null,
+        "dy": null,
+        "key": "enter",
+        "keys": null,
+        "text": null,
+        "x": null,
+        "y": null
+      },
+      "description": "Press Enter to select the highlighted toolkit-owned resource group whose name starts with \"vscuse_app_\".",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "0",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay:3"
+      ],
+      "screenshot": null,
+      "created_at": "2026-08-10T04:57:52.299000",
       "plan_id": "plan_720915c9"
     },
     {
