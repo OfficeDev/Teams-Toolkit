@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 20,
+    "total_steps": 21,
     "created_at": "2026-05-18T10:07:16.265795",
     "name": "group: debug_in_copilot_local",
     "description": {
@@ -36,13 +36,14 @@
       "step_86a70854",
       "step_a0762a17",
       "step_8f4d2c91",
+      "step_91be2c7d",
       "step_3bb29c8a",
       "step_670cbf14"
     ],
     "tags": [
       "group"
     ],
-    "updated_at": "2026-08-10T02:57:34.363000"
+    "updated_at": "2026-08-10T03:50:49.281000"
   },
   "steps": [
     {
@@ -444,9 +445,32 @@
       "agent": "interaction",
       "tool": "keyboard_shortcut",
       "parameters": {
-        "keys": "ctrl+r"
+        "keys": "alt+tab"
       },
-      "description": "Reload the authenticated M365 Copilot agent deep link so the newly sideloaded local agent can be resolved after sign-in.",
+      "description": "Switch back to Visual Studio Code after authenticating in Chrome so the local Copilot debug session can be restarted with the authenticated browser profile.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay: 10",
+        "force_run:true"
+      ],
+      "screenshot": "",
+      "created_at": "2026-08-10T02:57:34.363000",
+      "plan_id": "plan_r_0928_095902"
+    },
+    {
+      "step_id": "step_91be2c7d",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+shift+f5"
+      },
+      "description": "Restart the active \"Debug in Copilot (Chrome)\" session after browser authentication so the developer-mode deep link installs and opens the local agent.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -459,7 +483,7 @@
         "force_run:true"
       ],
       "screenshot": "",
-      "created_at": "2026-08-10T02:57:34.363000",
+      "created_at": "2026-08-10T03:50:49.281000",
       "plan_id": "plan_r_0928_095902"
     },
     {
@@ -475,9 +499,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:13a282828a828282"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "delay: 30",

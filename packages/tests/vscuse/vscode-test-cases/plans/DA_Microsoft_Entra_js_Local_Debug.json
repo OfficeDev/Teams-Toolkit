@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0
     },
-    "total_steps": 7,
+    "total_steps": 6,
     "created_at": "2025-11-06T04:48:51.709604",
     "name": "DA Microsoft Entra js Local Debug",
     "description": {
@@ -28,12 +28,11 @@
       "step_f79dee85",
       "plan_r_0928_014459",
       "plan_r_1021_081410",
-      "step_5dcf4f2a",
       "plan_r_0928_095902",
       "plan_r_0928_091745"
     ],
     "tags": [],
-    "updated_at": "2026-08-10T03:15:35.354000"
+    "updated_at": "2026-08-10T03:50:49.281000"
   },
   "steps": [
     {
@@ -190,24 +189,6 @@
       "tags": [],
       "screenshot": "step_f79dee85",
       "created_at": "2025-11-14T02:59:16.910101",
-      "plan_id": "plan_0fd1fc4e"
-    },
-    {
-      "step_id": "step_5dcf4f2a",
-      "agent": "code",
-      "tool": "",
-      "parameters": {},
-      "description": "@code open JSON file `/home/vscode/AgentsToolkitProjects/${{var:app_name}}/.vscode/launch.json`. Find the configurations named `Debug in Copilot (Edge)` and `Debug in Copilot (Chrome)` and set each complete `url` value to `https://m365.cloud.microsoft/chat/?titleId=${local:agent-hint}&source=agents-toolkit`, regardless of its current value. Preserve all other content and formatting. Re-read the file and fail this step unless both named configurations have exactly that URL and neither retains a `/chat/entity1-` URL.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": null,
-      "created_at": "2026-08-10T03:15:35.354000",
       "plan_id": "plan_0fd1fc4e"
     }
   ],
