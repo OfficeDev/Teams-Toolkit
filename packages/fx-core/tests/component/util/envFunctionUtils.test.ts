@@ -183,11 +183,13 @@ describe("expandVariableWithFunction", async () => {
       assert.include(context.logProvider.msg, externalFile);
       assert.include(context.logProvider.msg, manifestDirectory);
       assert.include(context.logProvider.msg, "Move the file into the manifest directory");
+      assert.include(context.logProvider.msg, "$[file()]");
       if (res.isErr()) {
         assert.include(res.error.displayMessage, fileReference);
         assert.include(res.error.displayMessage, externalFile);
         assert.include(res.error.displayMessage, manifestDirectory);
         assert.include(res.error.displayMessage, "Move the file into the manifest directory");
+        assert.include(res.error.displayMessage, "$[file()]");
         assert.notInclude(res.error.displayMessage, "Output panel");
         assert.notInclude(res.error.message, externalFile);
         assert.notInclude(res.error.message, manifestDirectory);

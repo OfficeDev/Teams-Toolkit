@@ -234,7 +234,8 @@ function fileReferenceOutsideManifestDirectory(
     "core.envFunc.fileReferenceOutsideManifestDirectory.errorLog.local",
     fileReference,
     resolvedPath,
-    manifestDirectory
+    manifestDirectory,
+    "$[file()]"
   );
   ctx.logProvider.error(errorLog);
   return err(
@@ -271,7 +272,8 @@ class FileReferenceOutsideManifestDirectoryError extends UserError {
       "core.envFunc.fileReferenceOutsideManifestDirectory.errorMessage.local",
       fileReference,
       resolvedPath,
-      manifestDirectory
+      manifestDirectory,
+      "$[file()]"
     );
     const errorOptions: UserErrorOptions = {
       source,
