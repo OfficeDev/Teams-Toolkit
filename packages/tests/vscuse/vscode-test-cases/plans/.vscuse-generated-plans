@@ -62,6 +62,7 @@
     "da-mcp-server--da-mcp-remote-none-preview.json",
     "da-mcp-server--da-mcp-remote-oauth-preview.json",
     "da-no-action--da-no-action-remote-preview.json",
+    "da-typespec--da-typespec-with-action-remote-preview.json",
     "default-bot--simple-bot-js-local-teams.json",
     "default-bot--simple-bot-js-playground.json",
     "default-bot--simple-bot-js-remote-teams.json",

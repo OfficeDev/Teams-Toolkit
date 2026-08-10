@@ -65,7 +65,7 @@ async function compileFixture(fileName, transform) {
   });
 }
 
-test("VCB-123: numeric work item IDs remain distinct from scenario metadata", () => {
+test("VCB-128: numeric work item IDs remain distinct from scenario metadata", () => {
   const sourceText = `version: 1
 cases:
   - id: remote
@@ -185,7 +185,7 @@ test("VCB-34: semantic compiler does not read external template contracts", asyn
   }
 });
 
-test("VCB-34: default setup compiles the checked-in YAML sources into ninety-three plans", async (context) => {
+test("VCB-34: default setup compiles the checked-in YAML sources into ninety-four plans", async (context) => {
   const plansDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "vscuse-generated-"),
   );
@@ -198,9 +198,9 @@ test("VCB-34: default setup compiles the checked-in YAML sources into ninety-thr
   });
 
   assert.equal(first.ok, true);
-  assert.equal(first.value.files.length, 93);
+  assert.equal(first.value.files.length, 94);
   const generatedFiles = first.value.files;
-  assert.equal(generatedFiles.length, 93);
+  assert.equal(generatedFiles.length, 94);
   assert.equal(
     generatedFiles.includes(
       "da-api-plugin-from-existing-api--da-api-plugin-from-existing-api-no-auth.json",
@@ -693,7 +693,7 @@ test("VCB-34: DA API plugin from scratch compiles complete remote branches in au
       [...optionIndexes].sort((left, right) => left - right),
     );
     const runtimeFlow = [
-      "@assertion a visible Visual Studio Code notification contains provision stage executed successfully.",
+      "@assertion a visible Visual Studio Code notification contains the literal text provision stage executed successfully. A notification with different text, including an in-progress notification, does not satisfy this assertion.",
       'Click the "Message" input box in the Microsoft 365 Copilot web application.',
       "@assertion the Copilot action-consent Allow button is visible.",
       'Click the "Allow" button in the Microsoft 365 Copilot chat interface to grant the agent access.',
@@ -848,13 +848,13 @@ test("VCB-85: existing API registration credentials are prompted only during pro
     description.includes("uploads the client ID/Secret"),
   );
   const readinessIndex = oauthDescriptions.findIndex((description) =>
-    description.includes("is displayed in the main section"),
+    description.includes("shows an agent selected in the Agents list"),
   );
   const targetSelectionIndex = oauthDescriptions.findIndex((description) =>
     description.includes("confirm the highlighted filtered option"),
   );
   const signInIndex = oauthDescriptions.indexOf(
-    "@assertion a visible browser element has role button and accessible name Sign in to Repair Service.",
+    "@assertion a visible browser element has role button and an accessible name that starts with Sign in to.",
   );
   assert.equal(environmentIndex < clientIdIndex, true);
   assert.equal(clientIdIndex < clientSecretIndex, true);
@@ -947,7 +947,12 @@ test("VCB-89: action consent closes on the Allow button, not on the prompt", asy
   const dismissed = oauth.plan.steps.find((step) =>
     step.step_id.includes("allowCopilotAction_assertDismissed"),
   );
+  const click = oauth.plan.steps.find((step) =>
+    step.step_id.includes("allowCopilotAction_click"),
+  );
 
+  assert.deepEqual(click.parameters, { button: "left", x: 333, y: 327 });
+  assert.equal(click.tags.includes("ocr:true"), true);
   assert.equal(
     dismissed.description,
     "@assertion the Copilot action-consent Allow button is no longer visible.",
@@ -1061,6 +1066,45 @@ test("browser checks require a preceding target", async () => {
   assert.equal(result.diagnostics[0].code, "VCB_BROWSER_ADAPTER_UNKNOWN");
 });
 
+test("VCB-126: browser checks can match an accessible-name prefix", async () => {
+  const result = await compileFixture(
+    "da-api-plugin-from-scratch-oauth.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const browserAssertions = result.value.flatMap((generated) =>
+    generated.plan.steps
+      .map((step) => step.description)
+      .filter((description) =>
+        description.startsWith(
+          "@assertion a visible browser element has role button",
+        ),
+      ),
+  );
+  assert.deepEqual(browserAssertions, [
+    "@assertion a visible browser element has role button and an accessible name that starts with Sign in to.",
+    "@assertion a visible browser element has role button and an accessible name that starts with Sign in to.",
+  ]);
+  assert.equal(
+    browserAssertions.some((description) =>
+      description.includes("Sign in to Repair Service"),
+    ),
+    false,
+  );
+
+  const ambiguous = await compileFixture(
+    "da-api-plugin-from-scratch-oauth.yml",
+    (sourceText) =>
+      sourceText.replace(
+        "namePrefix: Sign in to",
+        "name: Sign in to Repair Service\n          namePrefix: Sign in to",
+      ),
+  );
+  assert.equal(ambiguous.ok, false);
+  assert.equal(ambiguous.diagnostics[0].code, "VCB_CHECK_ASSERTION_INVALID");
+});
+
 test("VCB-17: client ID prompt title follows the authored authentication answer", async (context) => {
   const plansDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "vscuse-generated-"),
@@ -1140,7 +1184,7 @@ test("provision confirmation follows the authored provision input", async (conte
   const notificationIndex = daPlan.steps.findIndex(
     (step) =>
       step.description ===
-      "@assertion a visible Visual Studio Code notification contains provision stage executed successfully.",
+      "@assertion a visible Visual Studio Code notification contains the literal text provision stage executed successfully. A notification with different text, including an in-progress notification, does not satisfy this assertion.",
   );
 
   assert.equal(provisionCommandIndex >= 0, true);
@@ -1213,12 +1257,11 @@ test("Copilot target authenticates the browser before readiness", async (context
   assert.equal(profileIndex < accountIndex, true);
   assert.equal(accountIndex < passwordIndex, true);
   assert.equal(passwordIndex < readinessIndex, true);
-  // Readiness names the app by the prefix the case authored, so it holds
-  // whether or not the manifest appended an environment suffix.
-  assert.match(
+  assert.equal(
     readinessDescription,
-    /whose name starts with \$\{\{var:app_name\}\}/,
+    "@assertion Microsoft 365 Copilot shows an agent selected in the Agents list and that agent's chat open in the main section with a visible message input.",
   );
+  assert.doesNotMatch(readinessDescription, /\$\{\{var:app_name\}\}/);
   assert.doesNotMatch(readinessDescription, /\}\}local/);
   assert.doesNotMatch(readinessDescription, /\}\}dev/);
   assert.doesNotMatch(readinessDescription, /is ready is ready/);
@@ -2028,9 +2071,7 @@ test("VCB-96: General Teams Agent Copilot targets use their remote and local lif
     assert.deepEqual(lifecycleCommands, expectedLifecycleCommands, caseId);
     assert.equal(
       plan.steps.some((step) =>
-        step.description.includes(
-          "is displayed in the main section of Microsoft 365 Copilot",
-        ),
+        step.description.includes("shows an agent selected in the Agents list"),
       ),
       true,
       caseId,
@@ -2277,16 +2318,25 @@ steps:
   });
 
   assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
-  const step = result.value[0].plan.steps.find((candidate) =>
+  const mutation = result.value[0].plan.steps.filter((candidate) =>
     candidate.step_id.startsWith("step_setLocalUserEnvironmentVariable_"),
   );
-  assert.equal(step.agent, "code");
+  const command = mutation.find((step) => step.tool === "type_text");
+  const encodedScript = command.parameters.text.match(
+    /base64\.b64decode\("([^"]+)"\)/,
+  )?.[1];
+  assert.equal(typeof encodedScript, "string");
+  const mutationScript = Buffer.from(encodedScript, "base64").toString("utf8");
+  assert.equal(mutationScript.includes('/ "env" / ".env.local.user"'), true);
+  assert.equal(mutationScript.includes("if len(matches) != 1:"), true);
   assert.equal(
-    step.parameters.sample.includes('/ "env" / ".env.local.user"'),
+    mutation.some((step) => step.description.includes("SECRET_API_KEY")),
     true,
   );
-  assert.equal(step.description.includes("SECRET_API_KEY"), true);
-  assert.equal(step.description.includes("api-key"), false);
+  assert.equal(
+    mutation.some((step) => step.description.includes("api-key")),
+    false,
+  );
 
   const unsafe = await compileCaseBundle({
     compileStep: createSemanticStepCompiler(),
@@ -2301,6 +2351,243 @@ steps:
     unsafe.diagnostics[0].code,
     "VCB_LOCAL_USER_ENVIRONMENT_INPUT_INVALID",
   );
+});
+
+test("VCB-127: local user environment uses a verified terminal mutation", async () => {
+  const result = await compileFixture(
+    "da-api-plugin-from-scratch-bearer.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const generated = result.value.find(
+    (candidate) =>
+      candidate.caseId ===
+      "da-api-plugin-from-scratch-api-key-js-local-copilot",
+  );
+  const mutation = generated.plan.steps.filter((step) =>
+    step.step_id.startsWith("step_setLocalUserEnvironmentVariable_"),
+  );
+  assert.deepEqual(
+    mutation.map((step) => [step.agent, step.tool]),
+    [
+      ["interaction", "keyboard_shortcut"],
+      ["assertion", ""],
+      ["interaction", "type_text"],
+      ["interaction", "key_press"],
+      ["interaction", "type_text"],
+      ["interaction", "key_press"],
+      ["assertion", ""],
+      ["interaction", "keyboard_shortcut"],
+      ["assertion", ""],
+    ],
+  );
+  assert.equal(
+    mutation.some((step) => step.agent === "code"),
+    false,
+  );
+  const command = mutation.find(
+    (step) =>
+      step.tool === "type_text" && step.parameters.text.includes("read -rs"),
+  );
+  assert.equal(command.parameters.text.includes("SECRET_API_KEY"), true);
+  assert.equal(command.parameters.text.includes("-api-key"), false);
+  assert.equal(
+    command.parameters.text.includes(
+      "printf '\\nVSCUSE_LOCAL_USER_ENVIRONMENT_%s\\n' UPDATED",
+    ),
+    true,
+  );
+  const hiddenValue = mutation.find(
+    (step) =>
+      step.tool === "type_text" &&
+      step.parameters.text === "${{var:app_name}}-api-key",
+  );
+  assert.equal(hiddenValue.description.includes("api-key"), false);
+  assert.equal(
+    mutation.some((step) =>
+      step.description.includes("VSCUSE_LOCAL_USER_ENVIRONMENT_UPDATED"),
+    ),
+    true,
+  );
+  assert.equal(
+    mutation.some((step) => step.description.includes("proving")),
+    false,
+  );
+});
+
+test("VCB-123: TypeSpec GitHub issues action uses a deterministic terminal mutation", async () => {
+  const sourceText = `version: 1
+cases:
+  - id: typespec-github-issues
+    scenarioId: VCB-123
+    workItemIds: [123]
+    steps: [scaffold, check, configure-action]
+steps:
+  scaffold:
+    type: scaffold
+    with:
+      template: da/typespec
+      answers:
+        - question: daTemplate
+          value: typespec
+        - question: appName
+          type: text
+          value: "\${{var:app_name:vscuse_app_#####}}"
+  check:
+    type: checks
+    with:
+      - type: file
+        path: src/agent/main.tsp
+        expect:
+          exists: true
+  configure-action:
+    type: configureTypeSpecAction
+    with:
+      action: github-issues
+`;
+  const result = await compileCaseBundle({
+    compileStep: createSemanticStepCompiler(),
+    sourcePath: "cases/da-typespec-with-action.yml",
+    sourceText,
+  });
+
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const plan = result.value[0].plan;
+  assert.equal(
+    plan.steps.some((step) =>
+      step.description.includes(
+        "Start with TypeSpec for Microsoft 365 Copilot",
+      ),
+    ),
+    true,
+  );
+  const mutation = plan.steps.filter((step) =>
+    step.step_id.startsWith("step_configureTypeSpecGitHubIssuesAction_"),
+  );
+  assert.deepEqual(
+    mutation.map((step) => [step.agent, step.tool]),
+    [
+      ["interaction", "keyboard_shortcut"],
+      ["assertion", ""],
+      ["interaction", "type_text"],
+      ["interaction", "key_press"],
+      ["assertion", ""],
+      ["interaction", "keyboard_shortcut"],
+      ["assertion", ""],
+    ],
+  );
+  assert.equal(
+    mutation.some((step) => step.agent === "code"),
+    false,
+  );
+  const command = mutation.find((step) => step.tool === "type_text");
+  assert.equal(
+    command.parameters.text.includes(
+      "/home/vscode/AgentsToolkitProjects/${{var:app_name}}",
+    ),
+    true,
+  );
+  assert.equal(command.parameters.text.includes("src/agent/main.tsp"), false);
+  assert.equal(command.parameters.text.includes("range(16"), false);
+  assert.equal(
+    command.parameters.text.includes("VSCUSE_TYPESPEC_ACTION_CONFIGURED"),
+    false,
+  );
+  assert.equal(
+    command.parameters.text.includes(
+      "printf '\\nVSCUSE_TYPESPEC_ACTION_%s\\n' CONFIGURED",
+    ),
+    true,
+  );
+  const markerAssertion = mutation.find(
+    (step) =>
+      step.agent === "assertion" &&
+      step.description.includes("VSCUSE_TYPESPEC_ACTION_CONFIGURED"),
+  );
+  assert.equal(
+    markerAssertion.description,
+    "@assertion the VS Code integrated terminal visibly displays the complete text VSCUSE_TYPESPEC_ACTION_CONFIGURED.",
+  );
+
+  for (const invalidInput of [
+    "action: unknown",
+    "action: github-issues\n      path: other.tsp",
+  ]) {
+    const invalid = await compileCaseBundle({
+      compileStep: createSemanticStepCompiler(),
+      sourcePath: "cases/da-typespec-with-action.yml",
+      sourceText: sourceText.replace("action: github-issues", invalidInput),
+    });
+    assert.equal(invalid.ok, false);
+    assert.equal(
+      invalid.diagnostics[0].code,
+      "VCB_TYPESPEC_ACTION_INPUT_INVALID",
+    );
+  }
+});
+
+test("VCB-124: TypeSpec single environment skips the provision picker", async () => {
+  const result = await compileFixture(
+    "da-typespec-with-action.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const descriptions = result.value[0].plan.steps.map(
+    (step) => step.description,
+  );
+  assert.equal(
+    descriptions.includes(
+      "@assertion the active prompt titled Select an environment is visible and the option dev is selectable.",
+    ),
+    false,
+  );
+  assert.equal(
+    descriptions.includes("Click the dev option in the active prompt."),
+    false,
+  );
+  assert.equal(
+    descriptions.includes(
+      "@assertion a visible Visual Studio Code notification contains the literal text provision stage executed successfully. A notification with different text, including an in-progress notification, does not satisfy this assertion.",
+    ),
+    true,
+  );
+});
+
+test("VCB-129: TypeSpec action configuration clears notifications before opening its terminal", async () => {
+  const result = await compileFixture(
+    "da-typespec-with-action.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const steps = result.value[0].plan.steps;
+  const terminalIndex = steps.findIndex((step) =>
+    step.step_id.startsWith(
+      "step_configureTypeSpecGitHubIssuesAction_openTerminal_",
+    ),
+  );
+  assert.notEqual(terminalIndex, -1);
+  assert.deepEqual(
+    steps
+      .slice(terminalIndex - 5, terminalIndex)
+      .map((step) => [step.agent, step.tool]),
+    [
+      ["interaction", "key_press"],
+      ["assertion", ""],
+      ["interaction", "type_text"],
+      ["assertion", ""],
+      ["interaction", "key_press"],
+    ],
+  );
+  assert.equal(
+    steps[terminalIndex - 3].parameters.text,
+    "Notifications: Clear All Notifications",
+  );
+  assert.deepEqual(steps[terminalIndex].depends_on, [
+    steps[terminalIndex - 1].step_id,
+  ]);
 });
 
 test("VCB-88: a local environment step names its variable and verifies its own write", async () => {
@@ -2485,7 +2772,7 @@ test("VCB-26: an already-ready Copilot target makes its open emit no step", asyn
     result.value[0].plan.steps.filter(
       (step) =>
         step.description ===
-        "@assertion an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot.",
+        "@assertion Microsoft 365 Copilot shows an agent selected in the Agents list and that agent's chat open in the main section with a visible message input.",
     ).length,
     1,
   );
@@ -2500,15 +2787,11 @@ test("semantic adapter requires an immediate post-scaffold file check", async ()
   assert.equal(result.diagnostics[0].code, "VCB_OPERATION_ORDER");
 });
 
-test("VCB-43: the Copilot ready subject names the app by its authored prefix", async () => {
+test("VCB-43: Copilot readiness requires a selected agent and open chat", async () => {
   const readySubject = (result) =>
     result.value[0].plan.steps
       .map((step) => step.description)
-      .find((description) =>
-        description.includes("is displayed in the main section"),
-      );
-  // These two templates compose the agent name differently: one appends
-  // `${{APP_NAME_SUFFIX}}` and the other does not. One prefix claim covers both.
+      .find((description) => description.includes("agent selected"));
   const suffixed = await compileFixture(
     "da-no-action.yml",
     (sourceText) => sourceText,
@@ -2522,9 +2805,10 @@ test("VCB-43: the Copilot ready subject names the app by its authored prefix", a
   assert.equal(unsuffixed.ok, true);
   assert.equal(
     readySubject(suffixed),
-    "@assertion an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot.",
+    "@assertion Microsoft 365 Copilot shows an agent selected in the Agents list and that agent's chat open in the main section with a visible message input.",
   );
   assert.equal(readySubject(unsuffixed), readySubject(suffixed));
+  assert.doesNotMatch(readySubject(suffixed), /\$\{\{var:app_name\}\}/);
 });
 
 test("VCB-44: the Copilot message input is read independently of its placeholder", async () => {
@@ -2542,7 +2826,7 @@ test("VCB-44: the Copilot message input is read independently of its placeholder
   // absent.
   assert.equal(
     descriptions.includes(
-      "@assertion the Microsoft 365 Copilot message input is visible on a page for an agent whose name starts with ${{var:app_name}}.",
+      "@assertion the Microsoft 365 Copilot message input is visible in the open agent chat.",
     ),
     true,
   );
@@ -2560,6 +2844,36 @@ test("VCB-44: the Copilot message input is read independently of its placeholder
   );
   assert.equal(
     descriptions.some((description) => description.includes("Message Copilot")),
+    false,
+  );
+});
+
+test("VCB-125: Copilot assertions do not normalize or compare the app name", async () => {
+  const result = await compileFixture(
+    "da-no-action.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const descriptions = result.value[0].plan.steps.map(
+    (step) => step.description,
+  );
+  assert.equal(
+    descriptions.includes(
+      "@assertion Microsoft 365 Copilot shows an agent selected in the Agents list and that agent's chat open in the main section with a visible message input.",
+    ),
+    true,
+  );
+  assert.equal(
+    descriptions.includes(
+      "@assertion the Microsoft 365 Copilot message input is visible in the open agent chat.",
+    ),
+    true,
+  );
+  assert.equal(
+    descriptions.some((description) =>
+      description.includes("${{var:app_name}}"),
+    ),
     false,
   );
 });
