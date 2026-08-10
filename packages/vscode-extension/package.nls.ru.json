@@ -296,6 +296,8 @@
   "teamstoolkit.handlers.manualStepRequired": "Создание [%s] по [локальному адресу](%s) выполнено. Следуйте инструкциям в файле README для предварительного просмотра приложения.",
   "teamstoolkit.handlers.manualStepRequired.fallback": "[%s] создается в %s. Следуйте инструкциям в файле README, чтобы просмотреть приложение.",
   "teamstoolkit.handlers.manualStepRequiredTitle": "Открыть файл сведений",
+  "teamstoolkit.handlers.mcpAuthPlaceholder.openYmlTitle": "Open m365agents.yml",
+  "teamstoolkit.handlers.mcpAuthPlaceholder.recreateTitle": "Create New App",
   "teamstoolkit.handlers.referLinkForMoreDetails": "Дополнительные сведения можно найти по этой ссылке: ",
   "teamstoolkit.handlers.reportIssue": "Сообщить об ошибке",
   "teamstoolkit.handlers.similarIssues": "Схожие проблемы",

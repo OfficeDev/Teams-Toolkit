@@ -15,6 +15,7 @@ import {
   InvalidFunctionParameterError as ManifestInvalidFunctionParameterError,
   ReadFileError as ManifestReadFileError,
   FileNotFoundError as ManifestFileNotFoundError,
+  FileReferenceOutsideManifestDirectoryError as ManifestFileReferenceOutsideManifestDirectoryError,
   MissingEnvironmentVariablesError as ManifestMissingEnvironmentVariablesError,
   resolveManifest,
   ResolveManifestResult,
@@ -64,6 +65,22 @@ function toFxError(e: unknown, ctx: DriverContext): FxError {
   }
   if (e instanceof ManifestFileNotFoundError) {
     return new FileNotFoundError(source, e.filePath);
+  }
+  if (e instanceof ManifestFileReferenceOutsideManifestDirectoryError) {
+    ctx.logProvider.error(
+      getLocalizedString(
+        "core.envFunc.fileReferenceOutsideManifestDirectory.errorLog.local",
+        e.fileReference,
+        e.resolvedPath,
+        e.manifestDirectory,
+        "$[file()]"
+      )
+    );
+    return new FileReferenceOutsideManifestDirectoryError(
+      e.fileReference,
+      e.resolvedPath,
+      e.manifestDirectory
+    );
   }
   if (e instanceof ManifestMissingEnvironmentVariablesError) {
     return new MissingEnvironmentVariablesError("manifest", e.names, e.fromPath);
@@ -140,6 +157,29 @@ class UnsupportedFileFormatError extends UserError {
       name: "UnsupportedFileFormat",
       message,
       displayMessage: message,
+      helpLink,
+    };
+    super(errorOptions);
+  }
+}
+
+class FileReferenceOutsideManifestDirectoryError extends UserError {
+  constructor(fileReference: string, resolvedPath: string, manifestDirectory: string) {
+    const message = getLocalizedString(
+      "core.envFunc.fileReferenceOutsideManifestDirectory.errorMessage"
+    );
+    const displayMessage = getLocalizedString(
+      "core.envFunc.fileReferenceOutsideManifestDirectory.errorMessage.local",
+      fileReference,
+      resolvedPath,
+      manifestDirectory,
+      "$[file()]"
+    );
+    const errorOptions: UserErrorOptions = {
+      source,
+      name: "FileReferenceOutsideManifestDirectory",
+      message,
+      displayMessage,
       helpLink,
     };
     super(errorOptions);

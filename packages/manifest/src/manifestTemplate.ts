@@ -97,6 +97,19 @@ export class FileNotFoundError extends ManifestTemplateError {
   }
 }
 
+export class FileReferenceOutsideManifestDirectoryError extends ManifestTemplateError {
+  constructor(
+    public readonly fileReference: string,
+    public readonly resolvedPath: string,
+    public readonly manifestDirectory: string
+  ) {
+    super(
+      `The file reference '${fileReference}' resolves to '${resolvedPath}', outside the manifest directory '${manifestDirectory}'.`
+    );
+    this.name = "FileReferenceOutsideManifestDirectoryError";
+  }
+}
+
 export class MissingEnvironmentVariablesError extends ManifestTemplateError {
   constructor(
     public readonly names: string,
@@ -148,38 +161,109 @@ export function getEnvironmentVariables(content: string): string[] {
   return [];
 }
 
-function getAbsolutePath(relativeOrAbsolutePath: string, fromPath: string): string {
-  return path.isAbsolute(relativeOrAbsolutePath)
-    ? relativeOrAbsolutePath
-    : path.join(path.dirname(fromPath), relativeOrAbsolutePath);
+function isPathContained(directory: string, filePath: string): boolean {
+  const relativePath = path.relative(directory, filePath);
+  return (
+    relativePath === "" ||
+    (relativePath !== ".." &&
+      !relativePath.startsWith(`..${path.sep}`) &&
+      !path.isAbsolute(relativePath))
+  );
 }
 
+function isSupportedFileFormat(filePath: string): boolean {
+  const extension = path.extname(filePath).toLowerCase();
+  return extension === ".txt" || extension === ".md";
+}
+
+function getFileSystemErrorCode(error: unknown): string {
+  return typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    typeof (error as { code?: unknown }).code === "string"
+    ? (error as { code: string }).code
+    : "UNKNOWN";
+}
+
+function isFileNotFoundError(error: unknown): boolean {
+  return getFileSystemErrorCode(error) === "ENOENT";
+}
+
+// Read and env-expand an embedded `.txt` / `.md` file. The referenced path must
+// resolve to a file inside the manifest directory: `..` traversal and absolute
+// paths that escape it are rejected before and after symlink resolution, so a
+// malicious `$[file()]` reference cannot read arbitrary files on disk.
 async function readFileContent(
   filePath: string,
   envs: { [key in string]: string } | undefined,
   fromPath: string,
   logger?: { error: (message: string) => void }
 ): Promise<string> {
-  const ext = path.extname(filePath).toLowerCase();
-  if (ext !== ".txt" && ext !== ".md") {
-    logger?.error(`Unsupported file '${filePath}'. Only .txt and .md files are supported.`);
-    throw new UnsupportedFileFormatError(filePath);
+  const manifestDirectory = path.resolve(path.dirname(fromPath));
+  const absolutePath = path.resolve(manifestDirectory, filePath);
+  const safeFileReference = path.isAbsolute(filePath) ? path.basename(filePath) : filePath;
+
+  if (!isPathContained(manifestDirectory, absolutePath)) {
+    logger?.error(
+      `The file reference '${safeFileReference}' resolves to '${absolutePath}', outside the manifest directory '${manifestDirectory}'.`
+    );
+    throw new FileReferenceOutsideManifestDirectoryError(
+      safeFileReference,
+      absolutePath,
+      manifestDirectory
+    );
   }
 
-  const absolutePath = getAbsolutePath(filePath, fromPath);
-  if (await fs.pathExists(absolutePath)) {
-    try {
-      let fileContent = await fs.readFile(absolutePath, "utf8");
-      fileContent = stripBom(fileContent);
-      let processedFileContent = expandEnvironmentVariable(fileContent, envs);
-      processedFileContent = processedFileContent.replace(/\r\n/g, "\n");
-      return processedFileContent;
-    } catch (e) {
-      logger?.error(`Failed to read file '${absolutePath}': ${(e as Error)?.toString()}`);
-      throw new ReadFileError(absolutePath, e);
-    }
+  if (!isSupportedFileFormat(filePath)) {
+    logger?.error(
+      `Unsupported file '${safeFileReference}'. Only .txt and .md files are supported.`
+    );
+    throw new UnsupportedFileFormatError(safeFileReference);
   }
-  throw new FileNotFoundError(filePath);
+
+  let realManifestDirectory: string;
+  let realFilePath: string;
+  try {
+    realManifestDirectory = await fs.realpath(manifestDirectory);
+    realFilePath = await fs.realpath(absolutePath);
+  } catch (error) {
+    if (isFileNotFoundError(error)) {
+      throw new FileNotFoundError(safeFileReference);
+    }
+    logger?.error(`Failed to read file '${safeFileReference}': ${(error as Error)?.toString()}`);
+    throw new ReadFileError(safeFileReference, error);
+  }
+
+  // Re-check after resolving symlinks so a symlinked file inside the directory
+  // cannot point at a target outside it.
+  if (!isPathContained(realManifestDirectory, realFilePath)) {
+    logger?.error(
+      `The file reference '${safeFileReference}' resolves to '${realFilePath}', outside the manifest directory '${manifestDirectory}'.`
+    );
+    throw new FileReferenceOutsideManifestDirectoryError(
+      safeFileReference,
+      realFilePath,
+      manifestDirectory
+    );
+  }
+
+  if (!isSupportedFileFormat(realFilePath)) {
+    logger?.error(
+      `Unsupported file '${safeFileReference}'. Only .txt and .md files are supported.`
+    );
+    throw new UnsupportedFileFormatError(safeFileReference);
+  }
+
+  try {
+    let fileContent = await fs.readFile(realFilePath, "utf8");
+    fileContent = stripBom(fileContent);
+    let processedFileContent = expandEnvironmentVariable(fileContent, envs);
+    processedFileContent = processedFileContent.replace(/\r\n/g, "\n");
+    return processedFileContent;
+  } catch (error) {
+    logger?.error(`Failed to read file '${safeFileReference}': ${(error as Error)?.toString()}`);
+    throw new ReadFileError(safeFileReference, error);
+  }
 }
 
 export async function processManifestFunction(

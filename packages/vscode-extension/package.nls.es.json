@@ -296,6 +296,8 @@
   "teamstoolkit.handlers.manualStepRequired": "[%s] se crea en [local address](%s). Siga las instrucciones del archivo LÉAME para obtener una vista previa de la aplicación.",
   "teamstoolkit.handlers.manualStepRequired.fallback": "[%s] se crea en %s. Siga las instrucciones del archivo LÉAME para obtener una vista previa de la aplicación.",
   "teamstoolkit.handlers.manualStepRequiredTitle": "Abrir LÉAME",
+  "teamstoolkit.handlers.mcpAuthPlaceholder.openYmlTitle": "Open m365agents.yml",
+  "teamstoolkit.handlers.mcpAuthPlaceholder.recreateTitle": "Create New App",
   "teamstoolkit.handlers.referLinkForMoreDetails": "Consulte este vínculo para obtener más detalles: ",
   "teamstoolkit.handlers.reportIssue": "Notificar problema",
   "teamstoolkit.handlers.similarIssues": "Problemas similares",

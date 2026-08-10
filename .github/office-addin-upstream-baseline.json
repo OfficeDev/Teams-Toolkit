@@ -1,31 +1,41 @@
 {
-  "_comment": "Last-known upstream OfficeDev manifest.json manifestVersion per toolkit Office Add-in template. The office-addin-manifest-drift-check workflow fires a tracking issue only when upstream advances past these values. After handling a drift issue, bump the affected entry here.",
-  "_verified": "2026-08-03",
+  "_comment": "Last-known upstream OfficeDev state per toolkit Office Add-in template. The office-addin-manifest-drift-check workflow fires a tracking issue when upstream advances past upstreamManifestVersion (manifest drift), publishes commits past upstreamCommitSha (code drift), or changes its package.json dependency set past upstreamDepHash (dependency drift). After handling a drift issue, bump the affected entries here.",
+  "_verified": "2026-08-06",
   "templates": {
     "office-addin-wxpo-taskpane": {
       "upstreamRepo": "OfficeDev/Office-Addin-TaskPane",
       "upstreamBranch": "release",
-      "upstreamManifestVersion": "1.24"
+      "upstreamManifestVersion": "1.24",
+      "upstreamCommitSha": "c9b464671c69e7f214db1b07c06cc662e992b66d",
+      "upstreamDepHash": "3478f447fd4d7c33"
     },
     "office-addin-outlook-taskpane": {
       "upstreamRepo": "OfficeDev/Office-Addin-TaskPane",
       "upstreamBranch": "release",
-      "upstreamManifestVersion": "1.24"
+      "upstreamManifestVersion": "1.24",
+      "upstreamCommitSha": "c9b464671c69e7f214db1b07c06cc662e992b66d",
+      "upstreamDepHash": "3478f447fd4d7c33"
     },
     "office-addin-excel-customfunctions": {
       "upstreamRepo": "OfficeDev/Excel-Custom-Functions",
       "upstreamBranch": "release",
-      "upstreamManifestVersion": "1.17"
+      "upstreamManifestVersion": "1.17",
+      "upstreamCommitSha": "64358fbcef881d2438bd5a18618cd855d8693ce2",
+      "upstreamDepHash": "cab63a23898af62f"
     },
     "office-addin-excel-cfshortcut": {
       "upstreamRepo": "OfficeDev/Excel-Custom-Functions-Shared",
       "upstreamBranch": "release",
-      "upstreamManifestVersion": "1.17"
+      "upstreamManifestVersion": "1.17",
+      "upstreamCommitSha": "6cbf3ead24dbab6cd0477f3eaa5b995089e27738",
+      "upstreamDepHash": "84a2816c93164e41"
     },
     "office-addin-sso-naa": {
       "upstreamRepo": "OfficeDev/Office-Addin-TaskPane-SSO-NAA",
       "upstreamBranch": "yo-office",
-      "upstreamManifestVersion": "xml-only"
+      "upstreamManifestVersion": "xml-only",
+      "upstreamCommitSha": "c046f70ce4a15a8a4415da792b0bc6c32b902072",
+      "upstreamDepHash": "98329f1354bd617c"
     }
   }
 }

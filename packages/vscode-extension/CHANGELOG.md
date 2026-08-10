@@ -2,6 +2,42 @@
 > Note: This changelog only includes the changes for the stable versions of Microsoft 365 Agents Toolkit (evolved from Teams Toolkit). For the changelog of pre-released versions, please refer to the [Microsoft 365 Agents Toolkit Pre-release Changelog](https://github.com/OfficeDev/TeamsFx/blob/dev/packages/vscode-extension/PRERELEASE.md).
 
 
+## 6.14.0 - August 5, 2026
+
+### New Features
+
+#### Expanded Office Add-in templates and host selection
+
+Office Add-in project creation now includes templates for Excel custom functions using a JavaScript-only runtime and task pane add-ins using Nested App Auth for single sign-on. You can select the target Office applications for task pane projects and choose Word, Excel, or PowerPoint for Nested App Auth projects in interactive and non-interactive flows. Generated projects also use updated Office Add-in development, debugging, linting, and manifest tooling for improved compatibility.
+
+#### Proxy-aware core workflows and templates
+
+ATK now supports proxy configuration across core workflows and templates, making it easier to work in enterprise or restricted network environments. If your organization requires outbound traffic through a proxy, you can configure standard environment variables such as `HTTP_PROXY`, `HTTPS_PROXY`, and `NO_PROXY` and have toolkit workflows respect them. This improves reliability when creating, scaffolding, and working with projects behind a corporate proxy. To use it, set the proxy environment variables in your shell before running ATK in VS Code or from the CLI.
+
+### Enhancement
+
+#### Better readability for `.env` examples on sample pages
+
+The sample detail page now shows `.env` code snippets with improved text contrast in Light theme. This update fixes accessibility issues where some syntax colors were too faint against a white background, making configuration examples harder to read. The new scoped styling keeps those snippets clearer and more WCAG-friendly without changing the Dark theme experience. If you browse samples in ATK VS Code with a light theme enabled, environment variable examples should now be much easier to scan.
+
+#### Added troubleshooting guidance for skill manifest validation errors
+
+ATK now includes additional troubleshooting guidance to help you diagnose manifest validation problems in skill-related scenarios. When validation issues occur, the guidance helps point you toward likely causes and next steps instead of leaving you with a generic failure state. This should make it easier to recover from packaging or validation problems during development. The update is especially helpful for users who are iterating on manifest changes and need clearer remediation guidance.
+
+#### Better support for packaging tool files in manifest ZIPs
+
+Manifest packaging has been improved so tool-related files are correctly included in generated manifest ZIP archives. This helps prevent packaging gaps that could lead to incomplete app packages or follow-on validation issues. For users creating packages in VS Code or through the CLI, the packaging result should now better reflect the files expected by the tooling workflow. This makes manifest ZIP generation more dependable for deployment and testing.
+
+### Bug Fix
+- Fixed template and metadata source selection so PR and non-production builds use bundled local content when `useLocalTemplate` is enabled, [PR #16291](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16291)
+- Handled invalid OpenAI keys in Python local-debug data agent templates so errors return a fallback response instead of surfacing as HTTP 500 failures, [PR #16317](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16317)
+- Fixed manifest validation for conditional and optional properties with `undefined` values to avoid false additional-properties errors, [PR #16341](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16341)
+- Kept injecting OAuth registration settings when MCP auth metadata resolution fails, [PR #16359](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16359)
+- Persisted MCP add-action OAuth credentials to environment files, [PR #16359](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16359)
+- Omitted MCP scope environment references when no scope is provided, [PR #16359](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16359)
+- Updated the agent link URL to avoid agent-installed issues, [PR #16396](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16396)
+
+
 ## 6.12.1 - July 27, 2026
 
 ### Bug Fix

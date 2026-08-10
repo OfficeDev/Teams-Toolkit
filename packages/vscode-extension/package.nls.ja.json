@@ -296,6 +296,8 @@
   "teamstoolkit.handlers.manualStepRequired": "[%s] は [local address](%s) に作成されます。README ファイルの指示に従って、アプリをプレビューします。",
   "teamstoolkit.handlers.manualStepRequired.fallback": "[%s] は %s に作成されます。README ファイルの指示に従って、アプリをプレビューします。",
   "teamstoolkit.handlers.manualStepRequiredTitle": "README を開く",
+  "teamstoolkit.handlers.mcpAuthPlaceholder.openYmlTitle": "Open m365agents.yml",
+  "teamstoolkit.handlers.mcpAuthPlaceholder.recreateTitle": "Create New App",
   "teamstoolkit.handlers.referLinkForMoreDetails": "詳細については、このリンクを参照してください。 ",
   "teamstoolkit.handlers.reportIssue": "問題を報告",
   "teamstoolkit.handlers.similarIssues": "類似の問題",

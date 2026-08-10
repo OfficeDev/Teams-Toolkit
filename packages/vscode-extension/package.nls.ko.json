@@ -296,6 +296,8 @@
   "teamstoolkit.handlers.manualStepRequired": "[%s]이(가) [local address](%s)에 생성되었습니다. README 파일의 지침에 따라 앱을 미리 봅니다.",
   "teamstoolkit.handlers.manualStepRequired.fallback": "[%s]이(가) %s 생성되었습니다. README 파일의 지침에 따라 앱을 미리 봅니다.",
   "teamstoolkit.handlers.manualStepRequiredTitle": "추가 정보 열기",
+  "teamstoolkit.handlers.mcpAuthPlaceholder.openYmlTitle": "Open m365agents.yml",
+  "teamstoolkit.handlers.mcpAuthPlaceholder.recreateTitle": "Create New App",
   "teamstoolkit.handlers.referLinkForMoreDetails": "자세한 내용은 다음 링크를 참조하세요. ",
   "teamstoolkit.handlers.reportIssue": "문제 보고",
   "teamstoolkit.handlers.similarIssues": "유사한 문제",

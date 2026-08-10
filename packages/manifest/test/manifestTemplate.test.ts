@@ -18,6 +18,7 @@ import {
   InvalidFunctionParameterError,
   ReadFileError,
   FileNotFoundError,
+  FileReferenceOutsideManifestDirectoryError,
   MissingEnvironmentVariablesError,
 } from "../src/manifestTemplate";
 
@@ -172,6 +173,49 @@ describe("manifestTemplate", () => {
         assert.instanceOf(e, ReadFileError);
         assert.isDefined((e as ReadFileError).cause);
       }
+    });
+  });
+
+  describe("path traversal protection", () => {
+    it("rejects a relative file() path that escapes the manifest directory", async () => {
+      // A sibling file next to the manifest directory must not be reachable.
+      fs.writeFileSync(path.join(os.tmpdir(), "outside-secret.txt"), "secret");
+      try {
+        await processManifestFunction("file('../outside-secret.txt')", undefined, fromPath);
+        assert.fail("should have thrown");
+      } catch (e) {
+        assert.instanceOf(e, FileReferenceOutsideManifestDirectoryError);
+        assert.strictEqual(
+          (e as FileReferenceOutsideManifestDirectoryError).manifestDirectory,
+          path.resolve(tmpDir)
+        );
+      } finally {
+        fs.rmSync(path.join(os.tmpdir(), "outside-secret.txt"), { force: true });
+      }
+    });
+
+    it("rejects an absolute file() path outside the manifest directory", async () => {
+      const outside = path.join(os.tmpdir(), "outside-abs.txt");
+      fs.writeFileSync(outside, "secret");
+      try {
+        await processManifestFunction(`file('${outside}')`, undefined, fromPath);
+        assert.fail("should have thrown");
+      } catch (e) {
+        assert.instanceOf(e, FileReferenceOutsideManifestDirectoryError);
+        // The reported reference is the basename, never the full external path.
+        assert.strictEqual(
+          (e as FileReferenceOutsideManifestDirectoryError).fileReference,
+          "outside-abs.txt"
+        );
+      } finally {
+        fs.rmSync(outside, { force: true });
+      }
+    });
+
+    it("allows a file inside the manifest directory", async () => {
+      writeFixture("inside.txt", "ok");
+      const out = await processManifestFunction("file('inside.txt')", undefined, fromPath);
+      assert.strictEqual(out, "ok");
     });
   });
 
