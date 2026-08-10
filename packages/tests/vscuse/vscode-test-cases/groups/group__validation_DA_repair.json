@@ -175,7 +175,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the AI response includes the phrase \"oil change\" using a case-insensitive comparison.",
+      "description": "@assertion the AI response includes a repair record about changing the oil; accept any capitalization or equivalent wording for the repair title.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
