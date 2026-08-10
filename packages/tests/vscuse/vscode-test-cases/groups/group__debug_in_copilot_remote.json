@@ -385,13 +385,11 @@
     {
       "step_id": "step_d81e4b73",
       "agent": "interaction",
-      "tool": "click",
+      "tool": "keyboard_shortcut",
       "parameters": {
-        "button": "left",
-        "x": 871,
-        "y": 113
+        "keys": "ctrl+shift+r"
       },
-      "description": "Enable the \"New design\" toggle in Microsoft 365 Copilot so the provisioned agent can open in the current agent experience.",
+      "description": "Hard refresh the Microsoft 365 Copilot agent link after deployment propagation instead of changing the current design mode.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -400,7 +398,7 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "delay: 10"
+        "delay: 120"
       ],
       "screenshot": "",
       "created_at": "2026-08-10T03:32:58.522000",

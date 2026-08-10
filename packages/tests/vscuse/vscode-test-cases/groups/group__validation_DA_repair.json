@@ -148,10 +148,10 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 340,
-        "y": 354
+        "x": 344,
+        "y": 362
       },
-      "description": "Click the gray \"Allow\" button in the Microsoft 365 Copilot chat interface to grant access for the \"vscuse_app_${{var:app_name}}dev\" agent.",
+      "description": "Click the \"Allow\" button in the Microsoft 365 Copilot chat interface to grant access for the \"vscuse_app_${{var:app_name}}dev\" agent.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
