@@ -175,7 +175,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the AI response includes the repair title \"Oil change\"; match case-insensitively and do not require the obsolete text \"Change(5)\".",
+      "description": "@assertion the AI response includes the words \"oil change\" in any letter case.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
