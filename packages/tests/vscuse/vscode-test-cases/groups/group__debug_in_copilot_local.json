@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 22,
+    "total_steps": 23,
     "created_at": "2026-05-18T10:07:16.265795",
     "name": "group: debug_in_copilot_local",
     "description": {
@@ -38,13 +38,14 @@
       "step_8f4d2c91",
       "step_91be2c7d",
       "step_c89f2a10",
+      "step_6a4d3c21",
       "step_3bb29c8a",
       "step_670cbf14"
     ],
     "tags": [
       "group"
     ],
-    "updated_at": "2026-08-10T04:08:43.908000"
+    "updated_at": "2026-08-10T04:25:17.841000"
   },
   "steps": [
     {
@@ -508,6 +509,30 @@
       ],
       "screenshot": "",
       "created_at": "2026-08-10T04:08:43.908000",
+      "plan_id": "plan_r_0928_095902"
+    },
+    {
+      "step_id": "step_6a4d3c21",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 485,
+        "y": 115
+      },
+      "description": "Click \"Confirm\" in the dev tunnel parameter update dialog so the fresh local Copilot debug launch can continue.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "force_run:true"
+      ],
+      "screenshot": "",
+      "created_at": "2026-08-10T04:25:17.841000",
       "plan_id": "plan_r_0928_095902"
     },
     {
