@@ -134,37 +134,113 @@ async function readFileContent(
   envs: { [key in string]: string } | undefined,
   fromPath: string
 ): Promise<Result<string, FxError>> {
-  const ext = path.extname(filePath);
-  if (ext.toLowerCase() !== ".txt" && ext.toLowerCase() !== ".md") {
+  const manifestDirectory = path.resolve(path.dirname(fromPath));
+  const absolutePath = path.resolve(manifestDirectory, filePath);
+  const safeFileReference = path.isAbsolute(filePath) ? path.basename(filePath) : filePath;
+  if (!isPathContained(manifestDirectory, absolutePath)) {
+    return fileReferenceOutsideManifestDirectory(ctx, filePath, absolutePath, manifestDirectory);
+  }
+
+  if (!isSupportedFileFormat(filePath)) {
     ctx.logProvider.error(
-      getLocalizedString("core.envFunc.unsupportedFile.errorLog", filePath, "txt")
+      getLocalizedString("core.envFunc.unsupportedFile.errorLog", safeFileReference, "txt")
     );
     return err(new UnsupportedFileFormatError(ctx.platform));
   }
 
-  const absolutePath = getAbsolutePath(filePath, fromPath);
-  if (await fs.pathExists(absolutePath)) {
-    try {
-      let fileContent = await fs.readFile(absolutePath, "utf8");
-      fileContent = stripBom(fileContent);
-      let processedFileContent = expandEnvironmentVariable(fileContent, envs);
-      processedFileContent = processedFileContent.replace(/\r\n/g, "\n");
-      return ok(processedFileContent);
-    } catch (e) {
-      ctx.logProvider.error(
-        getLocalizedString("core.envFunc.readFile.errorLog", absolutePath, e?.toString())
-      );
-      return err(new ReadFileError(ctx.platform, absolutePath));
+  let realManifestDirectory: string;
+  let realFilePath: string;
+  try {
+    realManifestDirectory = await fs.realpath(manifestDirectory);
+    realFilePath = await fs.realpath(absolutePath);
+  } catch (error) {
+    if (isFileNotFoundError(error)) {
+      return err(new FileNotFoundError(source, safeFileReference));
     }
-  } else {
-    return err(new FileNotFoundError(source, filePath));
+    ctx.logProvider.error(
+      getLocalizedString(
+        "core.envFunc.readFile.errorLog",
+        safeFileReference,
+        getFileSystemErrorCode(error)
+      )
+    );
+    return err(new ReadFileError(ctx.platform, safeFileReference));
+  }
+
+  if (!isPathContained(realManifestDirectory, realFilePath)) {
+    return fileReferenceOutsideManifestDirectory(ctx, filePath, realFilePath, manifestDirectory);
+  }
+
+  if (!isSupportedFileFormat(realFilePath)) {
+    ctx.logProvider.error(
+      getLocalizedString("core.envFunc.unsupportedFile.errorLog", safeFileReference, "txt")
+    );
+    return err(new UnsupportedFileFormatError(ctx.platform));
+  }
+
+  try {
+    let fileContent = await fs.readFile(realFilePath, "utf8");
+    fileContent = stripBom(fileContent);
+    let processedFileContent = expandEnvironmentVariable(fileContent, envs);
+    processedFileContent = processedFileContent.replace(/\r\n/g, "\n");
+    return ok(processedFileContent);
+  } catch (error) {
+    ctx.logProvider.error(
+      getLocalizedString(
+        "core.envFunc.readFile.errorLog",
+        safeFileReference,
+        getFileSystemErrorCode(error)
+      )
+    );
+    return err(new ReadFileError(ctx.platform, safeFileReference));
   }
 }
 
-function getAbsolutePath(relativeOrAbsolutePath: string, fromPath: string): string {
-  return path.isAbsolute(relativeOrAbsolutePath)
-    ? relativeOrAbsolutePath
-    : path.join(path.dirname(fromPath), relativeOrAbsolutePath);
+function isPathContained(directory: string, filePath: string): boolean {
+  const relativePath = path.relative(directory, filePath);
+  return (
+    relativePath === "" ||
+    (relativePath !== ".." &&
+      !relativePath.startsWith(`..${path.sep}`) &&
+      !path.isAbsolute(relativePath))
+  );
+}
+
+function isSupportedFileFormat(filePath: string): boolean {
+  const extension = path.extname(filePath).toLowerCase();
+  return extension === ".txt" || extension === ".md";
+}
+
+function isFileNotFoundError(error: unknown): boolean {
+  return getFileSystemErrorCode(error) === "ENOENT";
+}
+
+function getFileSystemErrorCode(error: unknown): string {
+  return typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    typeof error.code === "string"
+    ? error.code
+    : "UNKNOWN";
+}
+
+function fileReferenceOutsideManifestDirectory(
+  ctx: DriverContext,
+  fileReference: string,
+  resolvedPath: string,
+  manifestDirectory: string
+): Result<string, FxError> {
+  const errorLog = getLocalizedString(
+    "core.envFunc.fileReferenceOutsideManifestDirectory.errorLog.local",
+    fileReference,
+    resolvedPath,
+    manifestDirectory,
+    "$[file()]"
+  );
+  ctx.logProvider.error(errorLog);
+  return err(
+    new FileReferenceOutsideManifestDirectoryError(fileReference, resolvedPath, manifestDirectory)
+  );
 }
 
 class UnsupportedFileFormatError extends UserError {
@@ -181,6 +257,29 @@ class UnsupportedFileFormatError extends UserError {
       name: "UnsupportedFileFormat",
       message,
       displayMessage: message,
+      helpLink,
+    };
+    super(errorOptions);
+  }
+}
+
+class FileReferenceOutsideManifestDirectoryError extends UserError {
+  constructor(fileReference: string, resolvedPath: string, manifestDirectory: string) {
+    const message = getLocalizedString(
+      "core.envFunc.fileReferenceOutsideManifestDirectory.errorMessage"
+    );
+    const displayMessage = getLocalizedString(
+      "core.envFunc.fileReferenceOutsideManifestDirectory.errorMessage.local",
+      fileReference,
+      resolvedPath,
+      manifestDirectory,
+      "$[file()]"
+    );
+    const errorOptions: UserErrorOptions = {
+      source,
+      name: "FileReferenceOutsideManifestDirectory",
+      message,
+      displayMessage,
       helpLink,
     };
     super(errorOptions);
