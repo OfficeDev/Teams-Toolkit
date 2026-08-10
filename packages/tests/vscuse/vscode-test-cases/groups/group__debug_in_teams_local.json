@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 13,
+    "total_steps": 19,
     "created_at": "2026-06-05T07:17:53.766103",
     "name": "group: debug_in_teams_local",
     "description": {
@@ -27,6 +27,12 @@
       "step_abda900e",
       "step_a527f679",
       "step_7f03643c",
+      "step_6c8b1f42",
+      "step_f412d6a8",
+      "step_98e34c71",
+      "step_b605fa23",
+      "step_d2f07a9c",
+      "step_4a71ce65",
       "step_afa29596",
       "step_31620d1e",
       "step_7f090e7d",
@@ -35,7 +41,7 @@
     "tags": [
       "group"
     ],
-    "updated_at": "2026-06-05T09:08:12.655697"
+    "updated_at": "2026-08-10T03:17:09.841000"
   },
   "steps": [
     {
@@ -245,6 +251,130 @@
       "tags": [],
       "screenshot": "step_7f03643c",
       "created_at": "2026-06-05T09:07:45.979439",
+      "plan_id": "plan_r_0930_083113"
+    },
+    {
+      "step_id": "step_6c8b1f42",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 1002,
+        "y": 21
+      },
+      "description": "Close the Microsoft Teams browser window after sign-in so the authenticated app deep link can be launched again.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay: 30"
+      ],
+      "screenshot": "",
+      "created_at": "2026-08-10T03:17:09.841000",
+      "plan_id": "plan_r_0930_083113"
+    },
+    {
+      "step_id": "step_f412d6a8",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "f1"
+      },
+      "description": "Press F1 in Visual Studio Code to reopen the Command Palette after Teams sign-in completes.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
+      "created_at": "2026-08-10T03:17:09.841000",
+      "plan_id": "plan_r_0930_083113"
+    },
+    {
+      "step_id": "step_98e34c71",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Debug: Select and Start Debugging"
+      },
+      "description": "Type \"Debug: Select and Start Debugging\" into the Visual Studio Code Command Palette.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
+      "created_at": "2026-08-10T03:17:09.841000",
+      "plan_id": "plan_r_0930_083113"
+    },
+    {
+      "step_id": "step_b605fa23",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to select \"Debug: Select and Start Debugging\" from the Command Palette.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
+      "created_at": "2026-08-10T03:17:09.841000",
+      "plan_id": "plan_r_0930_083113"
+    },
+    {
+      "step_id": "step_d2f07a9c",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Debug in Teams (Chrome)"
+      },
+      "description": "Type \"Debug in Teams (Chrome)\" into the launch configuration picker.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
+      "created_at": "2026-08-10T03:17:09.841000",
+      "plan_id": "plan_r_0930_083113"
+    },
+    {
+      "step_id": "step_4a71ce65",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to relaunch \"Debug in Teams (Chrome)\" with the authenticated browser session.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
+      "created_at": "2026-08-10T03:17:09.841000",
       "plan_id": "plan_r_0930_083113"
     },
     {
