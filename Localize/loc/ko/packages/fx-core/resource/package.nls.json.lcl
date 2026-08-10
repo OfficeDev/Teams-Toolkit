@@ -649,6 +649,18 @@
       <Item ItemId=";core.MCPForDA.mcpServerUrlNotAnEndpoint" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[%s answered an MCP initialize request with HTTP %s, so it may not be an MCP server URL. Verify the URL before provisioning.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[%s HTTP %s를 사용하여 MCP 초기화 요청에 응답했으므로 MCP 서버 URL이 아닐 수 있습니다. 프로비전하기 전에 URL을 확인합니다.]]></Val>
+          </Tgt>
+          <Prev Cat="Text">
+            <Val><![CDATA[Unable to find the server metadata from property "authorization_servers" from repsonse of the Protected Resource Metadata of the MCP server.]]></Val>
+          </Prev>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";core.MCPForDA.mcpServerUrlNotAnEndpoint" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[%s answered an MCP initialize request with HTTP %s, so it may not be an MCP server URL. Verify the URL before provisioning.]]></Val>
         </Str>
         <Disp Icon="Str" />
       </Item>

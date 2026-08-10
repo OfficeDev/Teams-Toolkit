@@ -296,6 +296,8 @@
   "teamstoolkit.handlers.manualStepRequired": "[%s] wird in [local address](%s) erstellt. Befolgen Sie die Anweisungen in der INFODATEI, um eine Vorschau Ihrer App anzuzeigen.",
   "teamstoolkit.handlers.manualStepRequired.fallback": "[%s] wird unter %s erstellt. Befolgen Sie die Anweisungen in der INFODATEI, um eine Vorschau Ihrer App anzuzeigen.",
   "teamstoolkit.handlers.manualStepRequiredTitle": "INFODATEI öffnen",
+  "teamstoolkit.handlers.mcpAuthPlaceholder.openYmlTitle": "Open m365agents.yml",
+  "teamstoolkit.handlers.mcpAuthPlaceholder.recreateTitle": "Create New App",
   "teamstoolkit.handlers.referLinkForMoreDetails": "Weitere Informationen finden Sie unter diesem Link: ",
   "teamstoolkit.handlers.reportIssue": "Problem melden",
   "teamstoolkit.handlers.similarIssues": "Ähnliche Probleme",
