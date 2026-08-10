@@ -838,7 +838,7 @@ describe("Summary", () => {
     );
   });
 
-  it("should use the telemetry-safe error message in CLI summaries", async () => {
+  it("should use the actionable display message in CLI summaries", async () => {
     const lifecycle = new Lifecycle(
       "configureApp",
       [{ uses: "DriverThatReturnsErrorWithSummary", with: {} }],
@@ -850,7 +850,7 @@ describe("Summary", () => {
       platform: Platform.CLI,
     });
 
-    assert.equal(summaries[0][0], `${SummaryConstant.Failed} fake message`);
+    assert.equal(summaries[0][0], `${SummaryConstant.Failed} fake display message`);
   });
 
   it("should contain error summary if there are unresolved placeholders", async () => {

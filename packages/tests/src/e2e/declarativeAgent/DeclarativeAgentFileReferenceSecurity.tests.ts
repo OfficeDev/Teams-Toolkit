@@ -146,7 +146,10 @@ describe("Declarative agent manifest file reference security", function () {
       expect(output).to.include(
         "The file reference must point to a file inside the manifest directory",
       );
-      expect(output).to.not.include(externalFixture);
+      expect(output).to.include(manifestFixtureReference);
+      expect(output).to.include(externalFixture);
+      expect(output).to.include(manifestDirectory);
+      expect(output).to.include("Move the file into the manifest directory");
       expect(output).to.not.include(sentinel);
       expect(
         await fs.pathExists(path.join(buildPath, "declarativeAgent.dev.json")),

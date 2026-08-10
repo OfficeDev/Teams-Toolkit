@@ -230,17 +230,16 @@ function fileReferenceOutsideManifestDirectory(
   resolvedPath: string,
   manifestDirectory: string
 ): Result<string, FxError> {
-  const errorLog =
-    ctx.platform === Platform.VSCode
-      ? getLocalizedString(
-          "core.envFunc.fileReferenceOutsideManifestDirectory.errorLog.vsc",
-          fileReference,
-          resolvedPath,
-          manifestDirectory
-        )
-      : getLocalizedString("core.envFunc.fileReferenceOutsideManifestDirectory.errorLog");
+  const errorLog = getLocalizedString(
+    "core.envFunc.fileReferenceOutsideManifestDirectory.errorLog.local",
+    fileReference,
+    resolvedPath,
+    manifestDirectory
+  );
   ctx.logProvider.error(errorLog);
-  return err(new FileReferenceOutsideManifestDirectoryError(ctx.platform, fileReference));
+  return err(
+    new FileReferenceOutsideManifestDirectoryError(fileReference, resolvedPath, manifestDirectory)
+  );
 }
 
 class UnsupportedFileFormatError extends UserError {
@@ -264,17 +263,16 @@ class UnsupportedFileFormatError extends UserError {
 }
 
 class FileReferenceOutsideManifestDirectoryError extends UserError {
-  constructor(platform: Platform | undefined, fileReference: string) {
+  constructor(fileReference: string, resolvedPath: string, manifestDirectory: string) {
     const message = getLocalizedString(
       "core.envFunc.fileReferenceOutsideManifestDirectory.errorMessage"
     );
-    const displayMessage =
-      platform === Platform.VSCode
-        ? getLocalizedString(
-            "core.envFunc.fileReferenceOutsideManifestDirectory.errorMessage.vsc",
-            fileReference
-          )
-        : message;
+    const displayMessage = getLocalizedString(
+      "core.envFunc.fileReferenceOutsideManifestDirectory.errorMessage.local",
+      fileReference,
+      resolvedPath,
+      manifestDirectory
+    );
     const errorOptions: UserErrorOptions = {
       source,
       name: "FileReferenceOutsideManifestDirectory",

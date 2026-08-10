@@ -5,7 +5,7 @@
  * @author yefuwang@microsoft.com
  */
 
-import { err, FxError, LogProvider, ok, Platform, Result } from "@microsoft/teamsfx-api";
+import { err, FxError, LogProvider, ok, Result } from "@microsoft/teamsfx-api";
 import _, { camelCase } from "lodash";
 import { Container } from "typedi";
 import { setErrorContext } from "../../common/globalVars";
@@ -309,10 +309,7 @@ export class Lifecycle implements ILifecycle {
       const summary = r.summaries.map((s) => `${SummaryConstant.Succeeded} ${s}`);
       summaries.push(summary);
       if (result.isErr()) {
-        const errorMessage =
-          ctx.platform === Platform.VSCode
-            ? (getDisplayMessage(result.error) ?? result.error.message)
-            : result.error.message;
+        const errorMessage = getDisplayMessage(result.error) ?? result.error.message;
         summary.push(`${SummaryConstant.Failed} ${errorMessage}`);
         return {
           result: err({

@@ -185,6 +185,8 @@ describe("expandVariableWithFunction", async () => {
       assert.include(context.logProvider.msg, "Move the file into the manifest directory");
       if (res.isErr()) {
         assert.include(res.error.displayMessage, fileReference);
+        assert.include(res.error.displayMessage, externalFile);
+        assert.include(res.error.displayMessage, manifestDirectory);
         assert.include(res.error.displayMessage, "Move the file into the manifest directory");
         assert.notInclude(res.error.displayMessage, "Output panel");
         assert.notInclude(res.error.message, externalFile);
@@ -442,7 +444,7 @@ describe("expandVariableWithFunction", async () => {
     }
   });
 
-  it("FILE-AC-08: does not disclose external file paths in CLI output", async () => {
+  it("FILE-AC-08: reports actionable external file paths in CLI output", async () => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), "env-function-cli-diagnostic-"));
     try {
       const manifestDirectory = path.join(root, "appPackage");
@@ -462,9 +464,14 @@ describe("expandVariableWithFunction", async () => {
       );
 
       assert.isTrue(res.isErr() && res.error.name === "FileReferenceOutsideManifestDirectory");
-      assert.notInclude(cliLogProvider.msg, root);
-      assert.notInclude(cliLogProvider.msg, externalFile);
-      assert.notInclude(cliLogProvider.msg, manifestDirectory);
+      assert.include(cliLogProvider.msg, "../secret.txt");
+      assert.include(cliLogProvider.msg, externalFile);
+      assert.include(cliLogProvider.msg, manifestDirectory);
+      if (res.isErr()) {
+        assert.include(res.error.displayMessage, externalFile);
+        assert.include(res.error.displayMessage, manifestDirectory);
+        assert.notInclude(res.error.message, root);
+      }
     } finally {
       await fs.remove(root);
     }
