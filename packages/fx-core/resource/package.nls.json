@@ -899,6 +899,7 @@
   "error.teamsApp.AppIdNotExistError": "App with ID %s does not exist in Developer Portal.",
   "error.teamsApp.InvalidAppIdError": "App ID %s is invalid, must be a GUID.",
   "error.teamsApp.createAppPackage.invalidFile": "A referenced file is invalid. It must be in the same directory as manifest.json or a subdirectory of it.",
+  "error.teamsApp.createAppPackage.invalidFile.local": "The file reference \"%s\" resolves to \"%s\", outside the manifest directory \"%s\". Move the file into the manifest directory, then update this reference in the manifest that contains it.",
   "error.teamsApp.createAppPackage.packageSizeExceeded": "The generated app package (%s MB) exceeds the maximum allowed size of %s MB. Reduce the package contents before building.",
   "error.teamsApp.createAppPackage.fileSystemError.telemetry": "The app package file operation failed. File system error: %s.",
   "error.teamsApp.createAppPackage.fileSystemError.display": "The app package file operation failed for '%s'. File system error: %s.",

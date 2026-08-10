@@ -134,7 +134,7 @@ export class CreateAppPackageDriver implements StepDriver {
     }
     for (const file of relativeFiles) {
       const filePath = path.resolve(appDirectory, file);
-      const validationResult = await this.validateReferencedFile(filePath, appDirectory);
+      const validationResult = await this.validateReferencedFile(filePath, appDirectory, file);
       if (validationResult.isErr()) {
         return err(validationResult.error);
       }
@@ -169,7 +169,7 @@ export class CreateAppPackageDriver implements StepDriver {
       for (const language of additionalLanguages) {
         const file = language.file;
         const fileName = path.resolve(appDirectory, file);
-        const validationResult = await this.validateReferencedFile(fileName, appDirectory);
+        const validationResult = await this.validateReferencedFile(fileName, appDirectory, file);
         if (validationResult.isErr()) {
           return err(validationResult.error);
         }
@@ -177,7 +177,11 @@ export class CreateAppPackageDriver implements StepDriver {
     }
     if (defaultLanguageFile) {
       const fileName = path.resolve(appDirectory, defaultLanguageFile);
-      const validationResult = await this.validateReferencedFile(fileName, appDirectory);
+      const validationResult = await this.validateReferencedFile(
+        fileName,
+        appDirectory,
+        defaultLanguageFile
+      );
       if (validationResult.isErr()) {
         return err(validationResult.error);
       }
@@ -230,7 +234,8 @@ export class CreateAppPackageDriver implements StepDriver {
       const apiSpecificationFilePath = path.resolve(appDirectory, apiSpecificationFile);
       const checkExistenceRes = await this.validateReferencedFile(
         apiSpecificationFilePath,
-        appDirectory
+        appDirectory,
+        apiSpecificationFile
       );
       if (checkExistenceRes.isErr()) {
         return err(checkExistenceRes.error);
@@ -256,7 +261,8 @@ export class CreateAppPackageDriver implements StepDriver {
             );
             const checkExistenceRes = await this.validateReferencedFile(
               adaptiveCardFile,
-              appDirectory
+              appDirectory,
+              command.apiResponseRenderingTemplateFile
             );
             if (checkExistenceRes.isErr()) {
               return err(checkExistenceRes.error);
@@ -276,7 +282,8 @@ export class CreateAppPackageDriver implements StepDriver {
       );
       const checkExistenceRes = await this.validateReferencedFile(
         declarativeAgentManifestFile,
-        appDirectory
+        appDirectory,
+        declarativeAgents[0].file
       );
       if (checkExistenceRes.isErr()) {
         return err(checkExistenceRes.error);
@@ -346,7 +353,8 @@ export class CreateAppPackageDriver implements StepDriver {
               context,
               !shouldwriteAllManifest ? undefined : jsonFileDir,
               hasTTKGeneratedFolder ? appDirectory : undefined,
-              resolvedJsonFiles
+              resolvedJsonFiles,
+              pluginFile
             );
 
             if (addPluginRes.isErr()) {
@@ -378,7 +386,8 @@ export class CreateAppPackageDriver implements StepDriver {
                 // check existence
                 const checkExistenceRes = await this.validateReferencedFile(
                   knowledgeFileAbsolutePath,
-                  appDirectory
+                  appDirectory,
+                  file
                 );
                 if (checkExistenceRes.isErr()) {
                   return err(checkExistenceRes.error);
@@ -403,7 +412,8 @@ export class CreateAppPackageDriver implements StepDriver {
                 const skillFolderAbsolutePath = path.resolve(appDirectory, skill.folder);
                 const checkExistenceRes = await this.validateReferencedFile(
                   skillFolderAbsolutePath,
-                  appDirectory
+                  appDirectory,
+                  skill.folder
                 );
                 if (checkExistenceRes.isErr()) {
                   return err(checkExistenceRes.error);
@@ -569,10 +579,16 @@ export class CreateAppPackageDriver implements StepDriver {
 
   private async validateReferencedFile(
     file: string,
-    directory: string
+    directory: string,
+    originalReference?: string
   ): Promise<Result<undefined, FxError>> {
+    const displayDirectory = path.resolve(directory);
+    const resolvedFile = path.resolve(file);
+    const fileReference = originalReference ?? path.relative(displayDirectory, resolvedFile);
     if (!this.isPathContained(directory, file)) {
-      return err(new InvalidFileOutsideOfTheDirectotryError());
+      return err(
+        new InvalidFileOutsideOfTheDirectotryError(fileReference, resolvedFile, displayDirectory)
+      );
     }
 
     if (!(await fs.pathExists(file))) {
@@ -594,7 +610,9 @@ export class CreateAppPackageDriver implements StepDriver {
       return err(new AppPackageFileSystemError(error, file));
     }
     if (!this.isPathContained(realDirectory, realFile)) {
-      return err(new InvalidFileOutsideOfTheDirectotryError());
+      return err(
+        new InvalidFileOutsideOfTheDirectotryError(fileReference, realFile, displayDirectory)
+      );
     }
 
     return ok(undefined);
@@ -617,7 +635,11 @@ export class CreateAppPackageDriver implements StepDriver {
   ): Promise<Result<undefined, FxError>> {
     for (const skill of agentSkills) {
       const skillFolderAbs = path.resolve(appDirectory, skill.folder);
-      const validationResult = await this.validateReferencedFile(skillFolderAbs, appDirectory);
+      const validationResult = await this.validateReferencedFile(
+        skillFolderAbs,
+        appDirectory,
+        skill.folder
+      );
       if (validationResult.isErr()) {
         return err(validationResult.error);
       }
@@ -650,7 +672,8 @@ export class CreateAppPackageDriver implements StepDriver {
       const mcpFileAbsolutePath = path.resolve(appDirectory, mcpToolDescriptionFile);
       const checkExistenceRes = await this.validateReferencedFile(
         mcpFileAbsolutePath,
-        appDirectory
+        appDirectory,
+        mcpToolDescriptionFile
       );
       if (checkExistenceRes.isErr()) {
         return err(checkExistenceRes.error);
@@ -702,10 +725,15 @@ export class CreateAppPackageDriver implements StepDriver {
     context: WrapDriverContext,
     outputDirectory?: string,
     defaultAppDirectry?: string,
-    resolvedJsonFiles?: Map<string, string>
+    resolvedJsonFiles?: Map<string, string>,
+    originalReference?: string
   ): Promise<Result<undefined, FxError>> {
     const pluginFile = path.resolve(appDirectory, pluginRelativePath);
-    const checkExistenceRes = await this.validateReferencedFile(pluginFile, appDirectory);
+    const checkExistenceRes = await this.validateReferencedFile(
+      pluginFile,
+      appDirectory,
+      originalReference ?? pluginRelativePath
+    );
     if (checkExistenceRes.isErr()) {
       return err(checkExistenceRes.error);
     }
@@ -853,7 +881,11 @@ export class CreateAppPackageDriver implements StepDriver {
         if (runtime.type === "OpenApi" && runtime.spec?.url) {
           const specFile = path.resolve(path.dirname(pluginFilePath), runtime.spec.url);
           // add openapi spec
-          const checkExistenceRes = await this.validateReferencedFile(specFile, appDirectory);
+          const checkExistenceRes = await this.validateReferencedFile(
+            specFile,
+            appDirectory,
+            runtime.spec.url
+          );
           if (checkExistenceRes.isErr()) {
             return err(checkExistenceRes.error);
           }
@@ -880,7 +912,11 @@ export class CreateAppPackageDriver implements StepDriver {
             (runtime as any).spec.mcp_tool_description.file
           );
           // add mcp tool description file
-          const checkExistenceRes = await this.validateReferencedFile(mcpFile, appDirectory);
+          const checkExistenceRes = await this.validateReferencedFile(
+            mcpFile,
+            appDirectory,
+            (runtime as any).spec.mcp_tool_description.file
+          );
           if (checkExistenceRes.isErr()) {
             return err(checkExistenceRes.error);
           }
@@ -1098,7 +1134,8 @@ export class CreateAppPackageDriver implements StepDriver {
     );
     let checkExistenceRes = await this.validateReferencedFile(
       staticTemplateFile,
-      defaultAppDirectry ?? appDirectory
+      defaultAppDirectry ?? appDirectory,
+      func.capabilities!.response_semantics!.static_template!.file as string
     );
     if (checkExistenceRes.isOk()) {
       return ok(staticTemplateFile);
@@ -1113,7 +1150,11 @@ export class CreateAppPackageDriver implements StepDriver {
         appDirectory,
         func.capabilities!.response_semantics!.static_template!.file as string
       );
-      checkExistenceRes = await this.validateReferencedFile(staticTemplateFile, appDirectory);
+      checkExistenceRes = await this.validateReferencedFile(
+        staticTemplateFile,
+        appDirectory,
+        func.capabilities!.response_semantics!.static_template!.file as string
+      );
     }
 
     if (checkExistenceRes.isErr()) {
