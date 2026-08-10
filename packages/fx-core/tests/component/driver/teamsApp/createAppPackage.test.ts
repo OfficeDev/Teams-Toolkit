@@ -12,8 +12,10 @@ import {
   UserError,
 } from "@microsoft/teamsfx-api";
 import AdmZip from "adm-zip";
+import { randomBytes } from "crypto";
 import fs from "fs-extra";
 import mockedEnv, { RestoreFn } from "mocked-env";
+import * as os from "os";
 import * as path from "path";
 import { chai, vi } from "vitest";
 import { featureFlagManager, FeatureFlagName } from "../../../../src/common/featureFlags";
@@ -25,8 +27,13 @@ import { manifestUtils } from "../../../../src/component/driver/teamsApp/utils/M
 import * as driverUtils from "../../../../src/component/driver/util/utils";
 import * as envFunctionUtils from "../../../../src/component/utils/envFunctionUtils";
 import { ManifestType } from "../../../../src/component/utils/envFunctionUtils";
-import { FileNotFoundError, JSONSyntaxError } from "../../../../src/error/common";
 import {
+  FileNotFoundError,
+  InvalidActionInputError,
+  JSONSyntaxError,
+} from "../../../../src/error/common";
+import {
+  AppPackageFileSystemError,
   AppPackageSizeExceededError,
   InvalidFileOutsideOfTheDirectotryError,
 } from "../../../../src/error/teamsApp";
@@ -383,7 +390,7 @@ describe("teamsApp/createAppPackage", async () => {
         "./tests/plugins/resource/appstudio/resources-multi-env/build/appPackage/manifest.dev.json",
     };
     vi.spyOn(fs, "pathExists").mockImplementation((filePath) => {
-      if (filePath.includes("fake.json")) {
+      if (filePath.includes("fake.json") || filePath.endsWith("aaa")) {
         return false;
       } else {
         return true;
@@ -467,11 +474,11 @@ describe("teamsApp/createAppPackage", async () => {
     vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
 
     vi.spyOn(fs, "chmod").mockImplementation(async () => {});
-    const writeFileStub = vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+    const outputFileStub = vi.spyOn(fs, "outputFile");
 
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
     chai.assert(result.isOk());
-    chai.assert(writeFileStub.mock.calls.length === 1);
+    chai.assert(outputFileStub.mock.calls.length === 1);
     if (await fs.pathExists(args.outputZipPath)) {
       const zip = new AdmZip(args.outputZipPath);
 
@@ -541,11 +548,11 @@ describe("teamsApp/createAppPackage", async () => {
     vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
 
     vi.spyOn(fs, "chmod").mockImplementation(async () => {});
-    const writeFileStub = vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+    const outputFileStub = vi.spyOn(fs, "outputFile");
 
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
     chai.assert(result.isOk());
-    chai.assert(writeFileStub.mock.calls.length === 1);
+    chai.assert(outputFileStub.mock.calls.length === 1);
     if (await fs.pathExists(args.outputZipPath)) {
       const zip = new AdmZip(args.outputZipPath);
 
@@ -815,7 +822,7 @@ describe("teamsApp/createAppPackage", async () => {
     };
     vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
     vi.spyOn(fs, "chmod").mockImplementation(async () => {});
-    const writeFileStub = vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+    const outputFileStub = vi.spyOn(fs, "outputFile");
 
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
     if (result.isErr()) {
@@ -824,7 +831,7 @@ describe("teamsApp/createAppPackage", async () => {
     chai.assert.isTrue(result.isOk());
     const outputExist = await fs.pathExists(args.outputZipPath);
     chai.assert.isTrue(outputExist);
-    chai.assert.isTrue(writeFileStub.mock.calls.length === 2);
+    chai.assert.isTrue(outputFileStub.mock.calls.length === 2);
     if (outputExist) {
       const zip = new AdmZip(args.outputZipPath);
       const openapiContent = "";
@@ -842,6 +849,1082 @@ describe("teamsApp/createAppPackage", async () => {
 
       chai.assert(declarativeAgentsContent);
       await fs.remove(args.outputZipPath);
+    }
+  });
+
+  it("FILE-AC-07: rejects an external file reference without writing package artifacts", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "create-app-package-contained-"));
+    try {
+      const appDirectory = path.join(root, "appPackage");
+      const outputFolder = path.join(root, "build");
+      const manifestPath = path.join(appDirectory, "manifest.json");
+      const declarativeAgentPath = path.join(appDirectory, "declarativeAgent.json");
+      const outputZipPath = path.join(outputFolder, "appPackage.dev.zip");
+      await fs.ensureDir(appDirectory);
+      await fs.writeFile(path.join(appDirectory, "color.png"), "color");
+      await fs.writeFile(path.join(appDirectory, "outline.png"), "outline");
+      await fs.writeFile(path.join(root, "outside.txt"), "outside content");
+      await fs.writeJSON(declarativeAgentPath, {
+        version: "v1.6",
+        name: "Contained agent",
+        description: "Contained agent",
+        instructions: "$[file('../outside.txt')]",
+      });
+
+      const manifest = {
+        manifestVersion: "1.19",
+        icons: {
+          color: "color.png",
+          outline: "outline.png",
+        },
+        copilotAgents: {
+          declarativeAgents: [{ file: "declarativeAgent.json", id: "agent" }],
+        },
+      } satisfies TeamsManifestV1D19.TeamsManifestV1D19;
+      await fs.writeJSON(manifestPath, manifest);
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+
+      const args: CreateAppPackageArgs = {
+        manifestPath,
+        outputZipPath,
+        outputFolder,
+      };
+      const context = {
+        ...mockedDriverContext,
+        projectPath: root,
+      };
+
+      const result = (await teamsAppDriver.execute(args, context)).result;
+
+      chai.assert.isTrue(
+        result.isErr() && result.error.name === "FileReferenceOutsideManifestDirectory"
+      );
+      chai.assert.isFalse(await fs.pathExists(outputZipPath));
+      chai.assert.deepEqual(await fs.readdir(outputFolder), []);
+    } finally {
+      await fs.remove(root);
+    }
+  });
+
+  it("FILE-AC-07: removes earlier resolved manifests when a later file reference fails", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "create-app-package-late-failure-"));
+    try {
+      const appDirectory = path.join(root, "appPackage");
+      const outputFolder = path.join(root, "build");
+      const manifestPath = path.join(appDirectory, "manifest.json");
+      const declarativeAgentPath = path.join(appDirectory, "declarativeAgent.json");
+      const pluginPath = path.join(appDirectory, "plugin.json");
+      const outputZipPath = path.join(outputFolder, "appPackage.dev.zip");
+      await fs.ensureDir(appDirectory);
+      await fs.writeFile(path.join(appDirectory, "color.png"), "color");
+      await fs.writeFile(path.join(appDirectory, "outline.png"), "outline");
+      await fs.writeFile(path.join(root, "outside.txt"), "outside content");
+      await fs.writeJSON(declarativeAgentPath, {
+        version: "v1.6",
+        name: "Contained agent",
+        description: "Contained agent",
+        instructions: "Contained instructions",
+        actions: [{ id: "action", file: "plugin.json" }],
+      });
+      await fs.writeJSON(pluginPath, {
+        schema_version: "v2",
+        name_for_human: "Plugin",
+        description_for_model: "$[file('../outside.txt')]",
+        runtimes: [],
+      });
+
+      const manifest = {
+        manifestVersion: "1.19",
+        icons: {
+          color: "color.png",
+          outline: "outline.png",
+        },
+        copilotAgents: {
+          declarativeAgents: [{ file: "declarativeAgent.json", id: "agent" }],
+        },
+      } satisfies TeamsManifestV1D19.TeamsManifestV1D19;
+      await fs.writeJSON(manifestPath, manifest);
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+
+      const args: CreateAppPackageArgs = {
+        manifestPath,
+        outputZipPath,
+        outputFolder,
+      };
+      const context = {
+        ...mockedDriverContext,
+        projectPath: root,
+      };
+
+      const result = (await teamsAppDriver.execute(args, context)).result;
+
+      chai.assert.isTrue(
+        result.isErr() && result.error.name === "FileReferenceOutsideManifestDirectory"
+      );
+      chai.assert.isFalse(await fs.pathExists(outputZipPath));
+      chai.assert.deepEqual(await fs.readdir(outputFolder), []);
+    } finally {
+      await fs.remove(root);
+    }
+  });
+
+  it("ZIP-AC-04: identifies an external declarative agent manifest reference", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "create-app-package-agent-location-"));
+    try {
+      const appDirectory = path.join(root, "appPackage");
+      const outputFolder = path.join(root, "build");
+      const manifestPath = path.join(appDirectory, "manifest.json");
+      const externalAgentPath = path.join(root, "declarativeAgent.json");
+      const outputZipPath = path.join(outputFolder, "appPackage.dev.zip");
+      const agentReference = "../declarativeAgent.json";
+      await fs.ensureDir(appDirectory);
+      await fs.writeFile(path.join(appDirectory, "color.png"), "color");
+      await fs.writeFile(path.join(appDirectory, "outline.png"), "outline");
+      const manifest = {
+        manifestVersion: "1.19",
+        version: "1.0.0",
+        id: "00000000-0000-0000-0000-000000000000",
+        packageName: "com.microsoft.test",
+        developer: {
+          name: "Microsoft",
+          websiteUrl: "https://www.microsoft.com",
+          privacyUrl: "https://www.microsoft.com/privacy",
+          termsOfUseUrl: "https://www.microsoft.com/terms",
+        },
+        name: { short: "Test" },
+        description: { short: "Test", full: "Test" },
+        icons: { color: "color.png", outline: "outline.png" },
+        accentColor: "#FFFFFF",
+        copilotAgents: {
+          declarativeAgents: [{ file: agentReference, id: "agent" }],
+        },
+      } satisfies TeamsManifestV1D19.TeamsManifestV1D19;
+      await fs.writeJSON(manifestPath, manifest);
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+
+      const result = (
+        await teamsAppDriver.execute(
+          { manifestPath, outputZipPath, outputFolder },
+          { ...mockedDriverContext, projectPath: root }
+        )
+      ).result;
+
+      chai.assert.isTrue(
+        result.isErr() && result.error instanceof InvalidFileOutsideOfTheDirectotryError
+      );
+      if (result.isErr() && result.error instanceof InvalidFileOutsideOfTheDirectotryError) {
+        chai.assert.include(result.error.displayMessage, agentReference);
+        chai.assert.include(result.error.displayMessage, externalAgentPath);
+        chai.assert.include(result.error.displayMessage, appDirectory);
+        chai.assert.notInclude(result.error.message, root);
+      }
+      chai.assert.isFalse(await fs.pathExists(outputZipPath));
+    } finally {
+      await fs.remove(root);
+    }
+  });
+
+  it("ZIP-AC-04: identifies the owning nested manifest reference", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "create-app-package-action-location-"));
+    try {
+      const appDirectory = path.join(root, "appPackage");
+      const agentDirectory = path.join(appDirectory, "resources");
+      const outputFolder = path.join(root, "build");
+      const manifestPath = path.join(appDirectory, "manifest.json");
+      const declarativeAgentPath = path.join(agentDirectory, "declarativeAgent.json");
+      const externalPluginPath = path.join(root, "outside-plugin.json");
+      const outputZipPath = path.join(outputFolder, "appPackage.dev.zip");
+      const pluginReference = "../../outside-plugin.json";
+      await fs.ensureDir(agentDirectory);
+      await fs.writeFile(path.join(appDirectory, "color.png"), "color");
+      await fs.writeFile(path.join(appDirectory, "outline.png"), "outline");
+      await fs.writeJSON(declarativeAgentPath, {
+        version: "v1.6",
+        name: "Agent",
+        description: "Agent",
+        instructions: "Contained instructions",
+        actions: [{ id: "action", file: pluginReference }],
+      });
+      const manifest = {
+        manifestVersion: "1.19",
+        version: "1.0.0",
+        id: "00000000-0000-0000-0000-000000000000",
+        packageName: "com.microsoft.test",
+        developer: {
+          name: "Microsoft",
+          websiteUrl: "https://www.microsoft.com",
+          privacyUrl: "https://www.microsoft.com/privacy",
+          termsOfUseUrl: "https://www.microsoft.com/terms",
+        },
+        name: { short: "Test" },
+        description: { short: "Test", full: "Test" },
+        icons: { color: "color.png", outline: "outline.png" },
+        accentColor: "#FFFFFF",
+        copilotAgents: {
+          declarativeAgents: [{ file: "resources/declarativeAgent.json", id: "agent" }],
+        },
+      } satisfies TeamsManifestV1D19.TeamsManifestV1D19;
+      await fs.writeJSON(manifestPath, manifest);
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+
+      const result = (
+        await teamsAppDriver.execute(
+          { manifestPath, outputZipPath, outputFolder },
+          { ...mockedDriverContext, projectPath: root }
+        )
+      ).result;
+
+      chai.assert.isTrue(
+        result.isErr() && result.error instanceof InvalidFileOutsideOfTheDirectotryError
+      );
+      if (result.isErr() && result.error instanceof InvalidFileOutsideOfTheDirectotryError) {
+        chai.assert.include(result.error.displayMessage, pluginReference);
+        chai.assert.include(result.error.displayMessage, externalPluginPath);
+        chai.assert.include(result.error.displayMessage, appDirectory);
+        chai.assert.include(
+          result.error.displayMessage,
+          "update this reference in the manifest that contains it"
+        );
+        chai.assert.notInclude(result.error.message, root);
+      }
+      chai.assert.isFalse(await fs.pathExists(outputZipPath));
+    } finally {
+      await fs.remove(root);
+    }
+  });
+
+  it.runIf(process.platform === "win32")(
+    "ZIP-AC-01: rejects a referenced file on another Windows drive",
+    async () => {
+      const currentDrive = path.parse(process.cwd()).root.slice(0, 2).toUpperCase();
+      const otherDrive = currentDrive === "Z:" ? "Y:" : "Z:";
+      const trustedDirectory = path.join(currentDrive + path.sep, "trusted-app-package");
+      const externalFile = path.join(otherDrive + path.sep, "external", "secret.txt");
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "realpath").mockImplementation(async (filePath) => String(filePath));
+
+      const result = await (teamsAppDriver as any).validateReferencedFile(
+        externalFile,
+        trustedDirectory
+      );
+
+      chai.assert.isTrue(
+        result.isErr() && result.error instanceof InvalidFileOutsideOfTheDirectotryError
+      );
+    }
+  );
+
+  it.runIf(process.platform === "win32")(
+    "ZIP-AC-01: rejects a referenced file on a Windows UNC share",
+    async () => {
+      const trustedDirectory = path.resolve("C:\\trusted-app-package");
+      const externalFile = "\\\\server\\share\\external\\secret.txt";
+      vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+      vi.spyOn(fs, "realpath").mockImplementation(async (filePath) => String(filePath));
+
+      const result = await (teamsAppDriver as any).validateReferencedFile(
+        externalFile,
+        trustedDirectory
+      );
+
+      chai.assert.isTrue(
+        result.isErr() && result.error instanceof InvalidFileOutsideOfTheDirectotryError
+      );
+    }
+  );
+
+  it("ZIP-AC-04: separates actionable local paths from the telemetry message", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "create-app-package-error-path-"));
+    try {
+      const trustedDirectory = path.join(root, "appPackage");
+      const externalFile = path.join(root, "external", "secret.txt");
+      await fs.ensureDir(trustedDirectory);
+      await fs.ensureFile(externalFile);
+
+      const result = await (teamsAppDriver as any).validateReferencedFile(
+        externalFile,
+        trustedDirectory
+      );
+
+      chai.assert.isTrue(
+        result.isErr() && result.error instanceof InvalidFileOutsideOfTheDirectotryError
+      );
+      if (result.isErr() && result.error instanceof InvalidFileOutsideOfTheDirectotryError) {
+        chai.assert.notInclude(result.error.message, root);
+        chai.assert.include(
+          result.error.displayMessage,
+          path.relative(trustedDirectory, externalFile)
+        );
+        chai.assert.include(result.error.displayMessage, externalFile);
+        chai.assert.include(result.error.displayMessage, trustedDirectory);
+        chai.assert.include(
+          result.error.displayMessage,
+          "update this reference in the manifest that contains it"
+        );
+      }
+    } finally {
+      await fs.remove(root);
+    }
+  });
+
+  it("ZIP-AC-04: does not disclose an absolute path for a missing package file", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "create-app-package-missing-path-"));
+    try {
+      const trustedDirectory = path.join(root, "appPackage");
+      const missingFile = path.join(trustedDirectory, "missing.json");
+      await fs.ensureDir(trustedDirectory);
+
+      const result = await (teamsAppDriver as any).validateReferencedFile(
+        missingFile,
+        trustedDirectory
+      );
+
+      chai.assert.isTrue(result.isErr());
+      if (result.isErr()) {
+        chai.assert.notInclude(result.error.message, root);
+        chai.assert.notInclude(result.error.displayMessage, root);
+      }
+    } finally {
+      await fs.remove(root);
+    }
+  });
+
+  it("ZIP-AC-01: rejects an external adaptive card instead of silently removing it", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "create-app-package-card-"));
+    try {
+      const appDirectory = path.join(root, "appPackage");
+      const pluginFile = path.join(appDirectory, "resources", "plugin.json");
+      const functionObject = {
+        name: "externalCard",
+        capabilities: {
+          response_semantics: {
+            static_template: { file: "../../../outside.json" },
+          },
+        },
+      } as any;
+
+      const result = await (teamsAppDriver as any).getAdaptiveCardTemplateFile(
+        mockedDriverContext,
+        pluginFile,
+        functionObject,
+        appDirectory
+      );
+
+      chai.assert.isTrue(
+        result?.isErr() && result.error instanceof InvalidFileOutsideOfTheDirectotryError
+      );
+    } finally {
+      await fs.remove(root);
+    }
+  });
+
+  it("ZIP-AC-06: separates local paths from telemetry when source canonicalization fails", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "create-app-package-source-error-"));
+    try {
+      const trustedDirectory = path.join(root, "appPackage");
+      const sourceFile = path.join(trustedDirectory, "source.json");
+      await fs.ensureDir(trustedDirectory);
+      await fs.ensureFile(sourceFile);
+      vi.spyOn(fs, "realpath").mockRejectedValue(
+        Object.assign(new Error(`EACCES: realpath '${sourceFile}'`), { code: "EACCES" })
+      );
+
+      const result = await (teamsAppDriver as any).validateReferencedFile(
+        sourceFile,
+        trustedDirectory
+      );
+
+      chai.assert.isTrue(result.isErr() && result.error instanceof AppPackageFileSystemError);
+      if (result.isErr()) {
+        chai.assert.include(result.error.displayMessage, sourceFile);
+        chai.assert.notInclude(result.error.message, root);
+      }
+    } finally {
+      await fs.remove(root);
+    }
+  });
+
+  it("ZIP-AC-05: separates local paths from telemetry when output inspection fails", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "create-app-package-output-error-"));
+    try {
+      const appDirectory = path.join(root, "appPackage");
+      const manifestPath = path.join(appDirectory, "manifest.json");
+      const outputZipPath = path.join(root, "build", "appPackage.zip");
+      const outputJsonPath = path.join(root, "build", "manifest.json");
+      await fs.ensureDir(appDirectory);
+      await fs.writeFile(path.join(appDirectory, "color.png"), "color");
+      await fs.writeFile(path.join(appDirectory, "outline.png"), "outline");
+      const manifest = {
+        manifestVersion: "1.19",
+        icons: { color: "color.png", outline: "outline.png" },
+      } satisfies TeamsManifestV1D19.TeamsManifestV1D19;
+      await fs.writeJSON(manifestPath, manifest);
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+      const stat = fs.stat.bind(fs);
+      vi.spyOn(fs, "stat").mockImplementation(async (filePath) => {
+        if (filePath === outputZipPath) {
+          throw Object.assign(new Error(`EACCES: stat '${outputZipPath}'`), { code: "EACCES" });
+        }
+        return stat(filePath);
+      });
+
+      const result = (
+        await teamsAppDriver.execute(
+          { manifestPath, outputZipPath, outputJsonPath },
+          { ...mockedDriverContext, projectPath: root }
+        )
+      ).result;
+
+      chai.assert.isTrue(result.isErr() && result.error instanceof AppPackageFileSystemError);
+      if (result.isErr()) {
+        chai.assert.include(result.error.displayMessage, outputZipPath);
+        chai.assert.notInclude(result.error.message, root);
+        chai.assert.equal(result.error.innerError?.code, "EACCES");
+      }
+      chai.assert.isFalse(await fs.pathExists(outputJsonPath));
+      chai.assert.isFalse(await fs.pathExists(outputZipPath));
+    } finally {
+      await fs.remove(root);
+    }
+  });
+
+  it("ZIP-AC-04: adaptive card override warnings do not disclose the plugin path", async () => {
+    const warning = vi.fn();
+    const context = {
+      ...mockedDriverContext,
+      logProvider: { ...mockedDriverContext.logProvider, warning },
+    };
+    const pluginFile = path.resolve(
+      "tests/plugins/resource/appstudio/resources-multi-env/templates/appPackage/resources/ai-plugin-with-external-ac.json"
+    );
+    const appDirectory = path.resolve(
+      "tests/plugins/resource/appstudio/resources-multi-env/templates/appPackage"
+    );
+    vi.spyOn(driverUtils, "updateVersionForTeamsAppYamlFile").mockResolvedValue();
+
+    const result = await (teamsAppDriver as any).addPlugin(
+      new AdmZip(),
+      path.relative(appDirectory, pluginFile),
+      appDirectory,
+      context
+    );
+
+    chai.assert.isTrue(result.isOk());
+    chai.assert.isTrue(warning.mock.calls.length > 0);
+    for (const call of warning.mock.calls) {
+      chai.assert.notInclude(String(call[0]), appDirectory);
+    }
+  });
+
+  it("ZIP-AC-03: restores prior outputs when a later JSON publication fails", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "create-app-package-rollback-"));
+    try {
+      const stagedZipFile = path.join(root, "staged.zip");
+      const outputZipFile = path.join(root, "appPackage.zip");
+      const firstJsonFile = path.join(root, "first.json");
+      const secondJsonFile = path.join(root, "second.json");
+      await fs.writeFile(stagedZipFile, "new zip");
+      await fs.writeFile(outputZipFile, "old zip");
+      await fs.writeFile(firstJsonFile, "old first");
+      await fs.writeFile(secondJsonFile, "old second");
+
+      const rename = fs.rename.bind(fs);
+      let publicationFailed = false;
+      let publicationError: unknown;
+      vi.spyOn(fs, "rename").mockImplementation(async (source, destination) => {
+        if (!publicationFailed && destination === secondJsonFile) {
+          publicationFailed = true;
+          throw Object.assign(new Error(`EACCES: rename '${source}' -> '${destination}'`), {
+            code: "EACCES",
+            path: source,
+            dest: destination,
+          });
+        }
+        await rename(source, destination);
+      });
+
+      try {
+        await (teamsAppDriver as any).publishOutputs(
+          stagedZipFile,
+          outputZipFile,
+          new Map([
+            [firstJsonFile, "new first"],
+            [secondJsonFile, "new second"],
+          ])
+        );
+      } catch (error) {
+        publicationError = error;
+      }
+
+      chai.assert.isTrue(publicationFailed);
+      chai.assert.instanceOf(publicationError, AppPackageFileSystemError);
+      if (!(publicationError instanceof AppPackageFileSystemError)) {
+        return;
+      }
+      chai.assert.notInclude(String(publicationError.innerError?.message), root);
+      chai.assert.notProperty(publicationError.innerError, "path");
+      chai.assert.notProperty(publicationError.innerError, "dest");
+      chai.assert.equal(await fs.readFile(firstJsonFile, "utf8"), "old first");
+      chai.assert.equal(await fs.readFile(secondJsonFile, "utf8"), "old second");
+      chai.assert.equal(await fs.readFile(outputZipFile, "utf8"), "old zip");
+      chai.assert.deepEqual(
+        (await fs.readdir(root)).filter((fileName) => fileName.startsWith(".")),
+        []
+      );
+    } finally {
+      await fs.remove(root);
+    }
+  });
+
+  it("ZIP-AC-05: reports a rollback failure after restoring prior outputs", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "create-app-package-rollback-error-"));
+    try {
+      const stagedZipFile = path.join(root, "staged.zip");
+      const outputZipFile = path.join(root, "appPackage.zip");
+      const firstJsonFile = path.join(root, "first.json");
+      const secondJsonFile = path.join(root, "second.json");
+      await fs.writeFile(stagedZipFile, "new zip");
+      await fs.writeFile(outputZipFile, "old zip");
+      await fs.writeFile(firstJsonFile, "old first");
+      await fs.writeFile(secondJsonFile, "old second");
+
+      const rename = fs.rename.bind(fs);
+      let publicationFailed = false;
+      vi.spyOn(fs, "rename").mockImplementation(async (source, destination) => {
+        if (!publicationFailed && destination === secondJsonFile) {
+          publicationFailed = true;
+          throw Object.assign(new Error("EACCES: publication failed"), { code: "EACCES" });
+        }
+        await rename(source, destination);
+      });
+      const chmod = fs.chmod.bind(fs);
+      vi.spyOn(fs, "chmod").mockImplementation(async (filePath, mode) => {
+        if (filePath === firstJsonFile) {
+          throw Object.assign(new Error("EBUSY: rollback chmod failed"), { code: "EBUSY" });
+        }
+        await chmod(filePath, mode);
+      });
+
+      let rollbackError: unknown;
+      try {
+        await (teamsAppDriver as any).publishOutputs(
+          stagedZipFile,
+          outputZipFile,
+          new Map([
+            [firstJsonFile, "new first"],
+            [secondJsonFile, "new second"],
+          ])
+        );
+      } catch (error) {
+        rollbackError = error;
+      }
+
+      chai.assert.isTrue(publicationFailed);
+      chai.assert.instanceOf(rollbackError, AppPackageFileSystemError);
+      if (!(rollbackError instanceof AppPackageFileSystemError)) {
+        return;
+      }
+      chai.assert.equal(rollbackError.innerError?.code, "EBUSY");
+      chai.assert.equal(await fs.readFile(firstJsonFile, "utf8"), "old first");
+      chai.assert.equal(await fs.readFile(secondJsonFile, "utf8"), "old second");
+      chai.assert.equal(await fs.readFile(outputZipFile, "utf8"), "old zip");
+      chai.assert.deepEqual(
+        (await fs.readdir(root)).filter((fileName) => fileName.startsWith(".")),
+        []
+      );
+    } finally {
+      await fs.remove(root);
+    }
+  });
+
+  it("ZIP-AC-05: restores outputs and separates local paths from telemetry when ZIP publication fails", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "create-app-package-zip-rollback-"));
+    try {
+      const appDirectory = path.join(root, "appPackage");
+      const manifestPath = path.join(appDirectory, "manifest.json");
+      const outputZipFile = path.join(root, "appPackage.zip");
+      const jsonFile = path.join(root, "manifest.json");
+      await fs.ensureDir(appDirectory);
+      await fs.writeFile(path.join(appDirectory, "color.png"), "color");
+      await fs.writeFile(path.join(appDirectory, "outline.png"), "outline");
+      await fs.writeFile(outputZipFile, "old zip");
+      await fs.writeFile(jsonFile, "old json");
+      const manifest = {
+        manifestVersion: "1.19",
+        icons: { color: "color.png", outline: "outline.png" },
+      } satisfies TeamsManifestV1D19.TeamsManifestV1D19;
+      await fs.writeJSON(manifestPath, manifest);
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+
+      const rename = fs.rename.bind(fs);
+      let zipPublicationFailed = false;
+      vi.spyOn(fs, "rename").mockImplementation(async (source, destination) => {
+        if (!zipPublicationFailed && destination === outputZipFile) {
+          zipPublicationFailed = true;
+          throw Object.assign(new Error(`EACCES: rename '${source}' -> '${destination}'`), {
+            code: "EACCES",
+          });
+        }
+        await rename(source, destination);
+      });
+      const remove = fs.remove.bind(fs);
+      vi.spyOn(fs, "remove").mockImplementation(async (filePath) => {
+        if (
+          path.basename(String(filePath)).startsWith(`.${path.basename(jsonFile)}.`) &&
+          String(filePath).endsWith(".tmp")
+        ) {
+          throw Object.assign(new Error("EBUSY: staged cleanup failed"), { code: "EBUSY" });
+        }
+        await remove(filePath);
+      });
+
+      const result = (
+        await teamsAppDriver.execute(
+          {
+            manifestPath,
+            outputZipPath: outputZipFile,
+            outputJsonPath: jsonFile,
+          },
+          { ...mockedDriverContext, projectPath: root }
+        )
+      ).result;
+
+      chai.assert.isTrue(zipPublicationFailed);
+      chai.assert.isTrue(result.isErr() && result.error instanceof AppPackageFileSystemError);
+      if (result.isOk()) {
+        return;
+      }
+      const publicationError = result.error;
+      chai.assert.include(String(publicationError.displayMessage), outputZipFile);
+      chai.assert.notInclude(publicationError.message, root);
+      chai.assert.notInclude(String(publicationError.innerError?.message), root);
+      chai.assert.equal(publicationError.innerError?.code, "EACCES");
+      chai.assert.equal(await fs.readFile(jsonFile, "utf8"), "old json");
+      chai.assert.equal(await fs.readFile(outputZipFile, "utf8"), "old zip");
+      chai.assert.deepEqual(
+        (await fs.readdir(root)).filter(
+          (fileName) => fileName.startsWith(".") || fileName.endsWith(".tmp")
+        ),
+        []
+      );
+    } finally {
+      await fs.remove(root);
+    }
+  });
+
+  it("ZIP-AC-03: stages every JSON before moving prior outputs", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "create-app-package-stage-json-"));
+    try {
+      const stagedZipFile = path.join(root, "staged.zip");
+      const outputZipFile = path.join(root, "appPackage.zip");
+      const firstJsonFile = path.join(root, "first.json");
+      const secondJsonFile = path.join(root, "second.json");
+      await fs.writeFile(stagedZipFile, "new zip");
+      await fs.writeFile(outputZipFile, "old zip");
+      await fs.writeFile(firstJsonFile, "old first");
+      await fs.writeFile(secondJsonFile, "old second");
+
+      const outputFile = fs.outputFile.bind(fs);
+      let writeCount = 0;
+      vi.spyOn(fs, "outputFile").mockImplementation(async (file, content) => {
+        writeCount += 1;
+        if (writeCount === 2) {
+          throw new Error("simulated staging failure");
+        }
+        await outputFile(file, content);
+      });
+      const rename = vi.spyOn(fs, "rename");
+
+      let publicationFailed = false;
+      try {
+        await (teamsAppDriver as any).publishOutputs(
+          stagedZipFile,
+          outputZipFile,
+          new Map([
+            [firstJsonFile, "new first"],
+            [secondJsonFile, "new second"],
+          ])
+        );
+      } catch {
+        publicationFailed = true;
+      }
+
+      chai.assert.isTrue(publicationFailed);
+      chai.assert.equal(rename.mock.calls.length, 0);
+      chai.assert.equal(await fs.readFile(firstJsonFile, "utf8"), "old first");
+      chai.assert.equal(await fs.readFile(secondJsonFile, "utf8"), "old second");
+      chai.assert.equal(await fs.readFile(outputZipFile, "utf8"), "old zip");
+    } finally {
+      await fs.remove(root);
+    }
+  });
+
+  it("ZIP-AC-03: treats backup cleanup after publication as best effort", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "create-app-package-cleanup-"));
+    const remove = fs.remove.bind(fs);
+    let removeStub: ReturnType<typeof vi.spyOn> | undefined;
+    try {
+      const stagedZipFile = path.join(root, "staged.zip");
+      const outputZipFile = path.join(root, "appPackage.zip");
+      const jsonFile = path.join(root, "manifest.json");
+      await fs.writeFile(stagedZipFile, "new zip");
+      await fs.writeFile(outputZipFile, "old zip");
+      await fs.writeFile(jsonFile, "old json");
+
+      removeStub = vi.spyOn(fs, "remove").mockImplementation(async (filePath) => {
+        if (await fs.pathExists(filePath)) {
+          throw new Error("simulated backup cleanup failure");
+        }
+        await remove(filePath);
+      });
+
+      await (teamsAppDriver as any).publishOutputs(
+        stagedZipFile,
+        outputZipFile,
+        new Map([[jsonFile, "new json"]])
+      );
+
+      chai.assert.equal(await fs.readFile(jsonFile, "utf8"), "new json");
+      chai.assert.equal(await fs.readFile(outputZipFile, "utf8"), "new zip");
+    } finally {
+      removeStub?.mockRestore();
+      await remove(root);
+    }
+  });
+
+  it("ZIP-AC-01: does not write rewritten plugins through a pre-existing temp junction", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "create-app-package-plugin-temp-"));
+    try {
+      const appDirectory = path.join(root, "appPackage");
+      const externalDirectory = path.join(root, "external");
+      const pluginFile = path.join(appDirectory, "plugin.json");
+      await fs.ensureDir(appDirectory);
+      await fs.ensureDir(externalDirectory);
+      await fs.symlink(externalDirectory, path.join(appDirectory, ".tmp"), "junction");
+      await fs.writeJSON(pluginFile, {
+        schema_version: "v2",
+        name_for_human: "Plugin",
+        description_for_model: "Plugin",
+        namespace: "unsafe_namespace",
+        runtimes: [],
+      });
+
+      const result = await (teamsAppDriver as any).addPlugin(
+        new AdmZip(),
+        "plugin.json",
+        appDirectory,
+        mockedDriverContext
+      );
+
+      chai.assert.isTrue(result.isOk());
+      chai.assert.deepEqual(await fs.readdir(externalDirectory), []);
+    } finally {
+      await fs.remove(root);
+    }
+  });
+
+  it("ZIP-AC-03: removes rewritten plugin temp files when writing fails", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "create-app-package-plugin-write-"));
+    try {
+      const appDirectory = path.join(root, "appPackage");
+      const pluginFile = path.join(appDirectory, "plugin.json");
+      await fs.ensureDir(appDirectory);
+      await fs.writeJSON(pluginFile, {
+        schema_version: "v2",
+        name_for_human: "Plugin",
+        description_for_model: "Plugin",
+        namespace: "unsafe_namespace",
+        runtimes: [],
+      });
+      const writeJson = fs.writeJSON.bind(fs);
+      vi.spyOn(fs, "writeJSON").mockImplementation(async (file, content, options) => {
+        await writeJson(file, content, options);
+        if (path.basename(String(file)).startsWith("tmp-ai-plugin-")) {
+          throw new Error("simulated temp write failure");
+        }
+      });
+
+      let writeFailed = false;
+      try {
+        await (teamsAppDriver as any).addPlugin(
+          new AdmZip(),
+          "plugin.json",
+          appDirectory,
+          mockedDriverContext
+        );
+      } catch {
+        writeFailed = true;
+      }
+
+      chai.assert.isTrue(writeFailed);
+      chai.assert.deepEqual(
+        (await fs.readdir(appDirectory)).filter((entry) => entry.startsWith(".tmp-")),
+        []
+      );
+    } finally {
+      await fs.remove(root);
+    }
+  });
+
+  it("ZIP-AC-03: rejects a JSON output path that equals the ZIP output path", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "create-app-package-output-collision-"));
+    try {
+      const appDirectory = path.join(root, "appPackage");
+      const manifestPath = path.join(appDirectory, "manifest.json");
+      const outputPath = path.join(root, "build", "appPackage.zip");
+      await fs.ensureDir(appDirectory);
+      await fs.writeFile(path.join(appDirectory, "color.png"), "color");
+      await fs.writeFile(path.join(appDirectory, "outline.png"), "outline");
+      await fs.ensureDir(path.dirname(outputPath));
+      await fs.writeFile(outputPath, "prior output");
+      const manifest = {
+        manifestVersion: "1.19",
+        icons: { color: "color.png", outline: "outline.png" },
+      } as TeamsManifestV1D19.TeamsManifestV1D19;
+      await fs.writeJSON(manifestPath, manifest);
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+
+      const result = (
+        await teamsAppDriver.execute(
+          { manifestPath, outputZipPath: outputPath, outputJsonPath: outputPath },
+          { ...mockedDriverContext, projectPath: root }
+        )
+      ).result;
+
+      chai.assert.isTrue(result.isErr() && result.error instanceof InvalidActionInputError);
+      chai.assert.equal(await fs.readFile(outputPath, "utf8"), "prior output");
+    } finally {
+      await fs.remove(root);
+    }
+  });
+
+  it("ZIP-AC-03: rejects a ZIP output path that contains the JSON output", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "create-app-package-output-parent-"));
+    try {
+      const appDirectory = path.join(root, "appPackage");
+      const manifestPath = path.join(appDirectory, "manifest.json");
+      const outputPath = path.join(root, "build", "appPackage.zip");
+      const priorOutputPath = path.join(outputPath, "prior-output.txt");
+      await fs.ensureDir(appDirectory);
+      await fs.writeFile(path.join(appDirectory, "color.png"), "color");
+      await fs.writeFile(path.join(appDirectory, "outline.png"), "outline");
+      await fs.ensureDir(outputPath);
+      await fs.writeFile(priorOutputPath, "prior output");
+      const manifest = {
+        manifestVersion: "1.19",
+        icons: { color: "color.png", outline: "outline.png" },
+      } as TeamsManifestV1D19.TeamsManifestV1D19;
+      await fs.writeJSON(manifestPath, manifest);
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+
+      const result = (
+        await teamsAppDriver.execute(
+          { manifestPath, outputZipPath: outputPath, outputFolder: outputPath },
+          { ...mockedDriverContext, projectPath: root }
+        )
+      ).result;
+
+      chai.assert.isTrue(result.isErr() && result.error instanceof InvalidActionInputError);
+      chai.assert.equal(await fs.readFile(priorOutputPath, "utf8"), "prior output");
+    } finally {
+      await fs.remove(root);
+    }
+  });
+
+  it("ZIP-AC-03: rejects an existing directory at the ZIP output path", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "create-app-package-zip-directory-"));
+    try {
+      const appDirectory = path.join(root, "appPackage");
+      const manifestPath = path.join(appDirectory, "manifest.json");
+      const outputZipPath = path.join(root, "build", "appPackage.zip");
+      const outputJsonPath = path.join(root, "build", "manifest.json");
+      const priorOutputPath = path.join(outputZipPath, "prior-output.txt");
+      await fs.ensureDir(appDirectory);
+      await fs.writeFile(path.join(appDirectory, "color.png"), "color");
+      await fs.writeFile(path.join(appDirectory, "outline.png"), "outline");
+      await fs.ensureDir(outputZipPath);
+      await fs.writeFile(priorOutputPath, "prior output");
+      const manifest = {
+        manifestVersion: "1.19",
+        icons: { color: "color.png", outline: "outline.png" },
+      } as TeamsManifestV1D19.TeamsManifestV1D19;
+      await fs.writeJSON(manifestPath, manifest);
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+
+      const result = (
+        await teamsAppDriver.execute(
+          { manifestPath, outputZipPath, outputJsonPath },
+          { ...mockedDriverContext, projectPath: root }
+        )
+      ).result;
+
+      chai.assert.isTrue(result.isErr() && result.error instanceof InvalidActionInputError);
+      chai.assert.equal(await fs.readFile(priorOutputPath, "utf8"), "prior output");
+      chai.assert.isFalse(await fs.pathExists(outputJsonPath));
+    } finally {
+      await fs.remove(root);
+    }
+  });
+
+  it("ZIP-AC-03: rejects an existing directory at a JSON output path", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "create-app-package-json-directory-"));
+    try {
+      const appDirectory = path.join(root, "appPackage");
+      const manifestPath = path.join(appDirectory, "manifest.json");
+      const outputZipPath = path.join(root, "build", "appPackage.zip");
+      const outputJsonPath = path.join(root, "build", "manifest.json");
+      const priorOutputPath = path.join(outputJsonPath, "prior-output.txt");
+      await fs.ensureDir(appDirectory);
+      await fs.writeFile(path.join(appDirectory, "color.png"), "color");
+      await fs.writeFile(path.join(appDirectory, "outline.png"), "outline");
+      await fs.ensureDir(outputJsonPath);
+      await fs.writeFile(priorOutputPath, "prior output");
+      const manifest = {
+        manifestVersion: "1.19",
+        icons: { color: "color.png", outline: "outline.png" },
+      } as TeamsManifestV1D19.TeamsManifestV1D19;
+      await fs.writeJSON(manifestPath, manifest);
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+
+      const result = (
+        await teamsAppDriver.execute(
+          { manifestPath, outputZipPath, outputJsonPath },
+          { ...mockedDriverContext, projectPath: root }
+        )
+      ).result;
+
+      chai.assert.isTrue(result.isErr() && result.error instanceof InvalidActionInputError);
+      chai.assert.equal(await fs.readFile(priorOutputPath, "utf8"), "prior output");
+      chai.assert.isFalse(await fs.pathExists(outputZipPath));
+    } finally {
+      await fs.remove(root);
+    }
+  });
+
+  it("ZIP-AC-03: rejects ZIP and JSON paths whose parent directories are aliases", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "create-app-package-output-alias-"));
+    try {
+      const appDirectory = path.join(root, "appPackage");
+      const outputDirectory = path.join(root, "build");
+      const outputAlias = path.join(root, "build-alias");
+      const manifestPath = path.join(appDirectory, "manifest.json");
+      const outputZipPath = path.join(outputDirectory, "appPackage.zip");
+      const outputJsonPath = path.join(outputAlias, "appPackage.zip");
+      await fs.ensureDir(appDirectory);
+      await fs.ensureDir(outputDirectory);
+      await fs.symlink(
+        outputDirectory,
+        outputAlias,
+        process.platform === "win32" ? "junction" : "dir"
+      );
+      await fs.writeFile(path.join(appDirectory, "color.png"), "color");
+      await fs.writeFile(path.join(appDirectory, "outline.png"), "outline");
+      await fs.writeFile(outputZipPath, "prior output");
+      const manifest = {
+        manifestVersion: "1.19",
+        icons: { color: "color.png", outline: "outline.png" },
+      } as TeamsManifestV1D19.TeamsManifestV1D19;
+      await fs.writeJSON(manifestPath, manifest);
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+
+      const result = (
+        await teamsAppDriver.execute(
+          { manifestPath, outputZipPath, outputJsonPath },
+          { ...mockedDriverContext, projectPath: root }
+        )
+      ).result;
+
+      chai.assert.isTrue(result.isErr() && result.error instanceof InvalidActionInputError);
+      chai.assert.equal(await fs.readFile(outputZipPath, "utf8"), "prior output");
+    } finally {
+      await fs.remove(root);
+    }
+  });
+
+  it("ZIP-AC-03: rejects ZIP and JSON paths whose final files are aliases", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "create-app-package-file-alias-"));
+    try {
+      const appDirectory = path.join(root, "appPackage");
+      const outputDirectory = path.join(root, "build");
+      const manifestPath = path.join(appDirectory, "manifest.json");
+      const outputZipPath = path.join(outputDirectory, "appPackage.zip");
+      const outputJsonPath = path.join(outputDirectory, "manifest.json");
+      await fs.ensureDir(appDirectory);
+      await fs.ensureDir(outputDirectory);
+      await fs.writeFile(path.join(appDirectory, "color.png"), "color");
+      await fs.writeFile(path.join(appDirectory, "outline.png"), "outline");
+      await fs.writeFile(outputZipPath, "prior output");
+      await fs.writeFile(outputJsonPath, "prior output");
+      const manifest = {
+        manifestVersion: "1.19",
+        icons: { color: "color.png", outline: "outline.png" },
+      } as TeamsManifestV1D19.TeamsManifestV1D19;
+      await fs.writeJSON(manifestPath, manifest);
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+      const realpath = fs.realpath.bind(fs);
+      vi.spyOn(fs, "realpath").mockImplementation(async (filePath) => {
+        const resolvedPath = path.resolve(String(filePath));
+        if (resolvedPath === outputZipPath || resolvedPath === outputJsonPath) {
+          return outputZipPath;
+        }
+        return realpath(filePath);
+      });
+
+      const result = (
+        await teamsAppDriver.execute(
+          { manifestPath, outputZipPath, outputJsonPath },
+          { ...mockedDriverContext, projectPath: root }
+        )
+      ).result;
+
+      chai.assert.isTrue(result.isErr() && result.error instanceof InvalidActionInputError);
+      chai.assert.equal(await fs.readFile(outputZipPath, "utf8"), "prior output");
+      chai.assert.equal(await fs.readFile(outputJsonPath, "utf8"), "prior output");
+    } finally {
+      await fs.remove(root);
+    }
+  });
+
+  it("ZIP-AC-03: rejects duplicate resolved JSON producers", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "create-app-package-json-producers-"));
+    try {
+      const appDirectory = path.join(root, "appPackage");
+      const outputDirectory = path.join(root, "build");
+      const manifestPath = path.join(appDirectory, "teams-manifest.json");
+      const declarativeAgentPath = path.join(appDirectory, "manifest.json");
+      const outputZipPath = path.join(outputDirectory, "appPackage.zip");
+      const outputManifestPath = path.join(outputDirectory, "manifest.dev.json");
+      await fs.ensureDir(appDirectory);
+      await fs.writeFile(path.join(appDirectory, "color.png"), "color");
+      await fs.writeFile(path.join(appDirectory, "outline.png"), "outline");
+      await fs.writeJSON(declarativeAgentPath, {
+        version: "v1.6",
+        name: "Agent",
+        description: "Agent",
+        instructions: "Contained instructions",
+      });
+      const manifest = {
+        manifestVersion: "1.19",
+        icons: { color: "color.png", outline: "outline.png" },
+        copilotAgents: {
+          declarativeAgents: [{ file: "manifest.json", id: "agent" }],
+        },
+      } satisfies TeamsManifestV1D19.TeamsManifestV1D19;
+      await fs.writeJSON(manifestPath, manifest);
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+
+      const result = (
+        await teamsAppDriver.execute(
+          { manifestPath, outputZipPath, outputFolder: outputDirectory },
+          { ...mockedDriverContext, projectPath: root }
+        )
+      ).result;
+
+      chai.assert.isTrue(result.isErr() && result.error instanceof InvalidActionInputError);
+      chai.assert.isFalse(await fs.pathExists(outputZipPath));
+      chai.assert.isFalse(await fs.pathExists(outputManifestPath));
+    } finally {
+      await fs.remove(root);
     }
   });
 
@@ -871,7 +1954,7 @@ describe("teamsApp/createAppPackage", async () => {
     };
     vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
     vi.spyOn(fs, "chmod").mockImplementation(async () => {});
-    const writeFileStub = vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+    const outputFileStub = vi.spyOn(fs, "outputFile");
 
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
     if (result.isErr()) {
@@ -880,7 +1963,7 @@ describe("teamsApp/createAppPackage", async () => {
     chai.assert.isTrue(result.isOk());
     const outputExist = await fs.pathExists(args.outputZipPath);
     chai.assert.isTrue(outputExist);
-    chai.assert.isTrue(writeFileStub.mock.calls.length === 3);
+    chai.assert.isTrue(outputFileStub.mock.calls.length === 3);
     if (outputExist) {
       const zip = new AdmZip(args.outputZipPath);
       let aiPluginContent = "";
@@ -999,7 +2082,7 @@ describe("teamsApp/createAppPackage", async () => {
     };
     vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
     vi.spyOn(fs, "chmod").mockImplementation(async () => {});
-    const writeFileStub = vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+    const outputFileStub = vi.spyOn(fs, "outputFile");
 
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
     if (result.isErr()) {
@@ -1008,7 +2091,7 @@ describe("teamsApp/createAppPackage", async () => {
     chai.assert.isTrue(result.isOk());
     const outputExist = await fs.pathExists(args.outputZipPath);
     chai.assert.isTrue(outputExist);
-    chai.assert.isTrue(writeFileStub.mock.calls.length === 3);
+    chai.assert.isTrue(outputFileStub.mock.calls.length === 3);
     if (outputExist) {
       const zip = new AdmZip(args.outputZipPath);
       let aiPluginContent = "";
@@ -1119,7 +2202,7 @@ describe("teamsApp/createAppPackage", async () => {
       return mcpPluginContent;
     });
     vi.spyOn(fs, "stat").mockImplementation(async () => {
-      return { mode: 0o644 } as any;
+      return { mode: 0o644, isDirectory: () => false } as any;
     });
     vi.spyOn(fs, "readFile").mockImplementation((async (filePath: any, options?: any) => {
       const content = JSON.stringify(mcpPluginContent);
@@ -1222,7 +2305,7 @@ describe("teamsApp/createAppPackage", async () => {
       return mcpToolDescriptionContent;
     });
     vi.spyOn(fs, "stat").mockImplementation(async () => {
-      return { mode: 0o644 } as any;
+      return { mode: 0o644, isDirectory: () => false } as any;
     });
     vi.spyOn(fs, "readFile").mockImplementation((async (filePath: any, options?: any) => {
       let content: string;
@@ -1299,7 +2382,7 @@ describe("teamsApp/createAppPackage", async () => {
     vi.spyOn(fs, "chmod").mockImplementation(async () => {});
     vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
     vi.spyOn(fs, "stat").mockImplementation(async () => {
-      return { mode: 0o644 } as any;
+      return { mode: 0o644, isDirectory: () => false } as any;
     });
     vi.spyOn(fs, "readFile").mockImplementation((async (_filePath: any, options?: any) => {
       const content = "{}";
@@ -1363,7 +2446,7 @@ describe("teamsApp/createAppPackage", async () => {
     vi.spyOn(fs, "chmod").mockImplementation(async () => {});
     vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
     vi.spyOn(fs, "stat").mockImplementation(async () => {
-      return { mode: 0o644 } as any;
+      return { mode: 0o644, isDirectory: () => false } as any;
     });
     vi.spyOn(fs, "readFile").mockImplementation((async (_filePath: any, options?: any) => {
       const content = "{}";
@@ -1411,7 +2494,9 @@ describe("teamsApp/createAppPackage", async () => {
     });
     vi.spyOn(fs, "realpath").mockImplementation(async (p: any) => p);
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
-    chai.assert(result.isErr());
+    chai.assert.isTrue(
+      result.isErr() && result.error instanceof InvalidFileOutsideOfTheDirectotryError
+    );
     if (result.isErr()) {
       chai.assert.isTrue(result.error instanceof InvalidFileOutsideOfTheDirectotryError);
     }
@@ -1554,17 +2639,23 @@ describe("teamsApp/createAppPackage", async () => {
     vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
     vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     const appDir = path.resolve(path.dirname(args.manifestPath));
+    const canonicalTarget = path.resolve("/outside-secrets/color.png");
     vi.spyOn(fs, "realpath").mockImplementation(async (p: any) => {
       const resolved = String(p);
       if (resolved.includes("symlinked")) {
-        return path.resolve("/outside-secrets/color.png");
+        return canonicalTarget;
       }
-      return resolved;
+      return path.resolve(resolved);
     });
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
-    chai.assert(result.isErr());
-    if (result.isErr()) {
-      chai.assert.isTrue(result.error instanceof InvalidFileOutsideOfTheDirectotryError);
+    chai.assert.isTrue(
+      result.isErr() && result.error instanceof InvalidFileOutsideOfTheDirectotryError
+    );
+    if (result.isErr() && result.error instanceof InvalidFileOutsideOfTheDirectotryError) {
+      chai.assert.include(result.error.displayMessage, manifest.icons.color);
+      chai.assert.include(result.error.displayMessage, canonicalTarget);
+      chai.assert.include(result.error.displayMessage, appDir);
+      chai.assert.notInclude(result.error.message, canonicalTarget);
     }
   });
 
@@ -1757,14 +2848,14 @@ describe("teamsApp/createAppPackage", async () => {
       };
       vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
       vi.spyOn(fs, "chmod").mockImplementation(async () => {});
-      const writeFileStub = vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+      const outputFileStub = vi.spyOn(fs, "outputFile");
 
       const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
       if (result.isErr()) {
         console.log(result.error);
       }
       chai.assert.isTrue(result.isOk());
-      chai.assert.isTrue(writeFileStub.mock.calls.length === 1);
+      chai.assert.isTrue(outputFileStub.mock.calls.length === 1);
       const outputExist = await fs.pathExists(args.outputZipPath);
       chai.assert.isTrue(outputExist);
       if (outputExist) {
@@ -1825,14 +2916,14 @@ describe("teamsApp/createAppPackage", async () => {
       };
       vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
       vi.spyOn(fs, "chmod").mockImplementation(async () => {});
-      const writeFileStub = vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+      const outputFileStub = vi.spyOn(fs, "outputFile");
 
       const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
       if (result.isErr()) {
         console.log(result.error);
       }
       chai.assert.isTrue(result.isOk());
-      chai.assert.isTrue(writeFileStub.mock.calls.length === 3);
+      chai.assert.isTrue(outputFileStub.mock.calls.length === 3);
       const outputExist = await fs.pathExists(args.outputZipPath);
       chai.assert.isTrue(outputExist);
       if (outputExist) {
@@ -2071,7 +3162,7 @@ describe("teamsApp/createAppPackage", async () => {
       vi.spyOn(fs, "pathExists").mockResolvedValue(true);
       vi.spyOn(fs, "chmod").mockImplementation(async () => {});
       vi.spyOn(fs, "realpath").mockImplementation(async (p: any) => p);
-      const writeFileStub = vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+      const outputFileStub = vi.spyOn(fs, "outputFile");
 
       const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
       if (result.isErr()) {
@@ -2246,12 +3337,12 @@ describe("teamsApp/createAppPackage", async () => {
       vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
 
       vi.spyOn(fs, "chmod").mockImplementation(async () => {});
-      const writeFileStub = vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
+      const outputFileStub = vi.spyOn(fs, "outputFile");
       vi.spyOn(manifestUtils, "resolveLocFile").mockResolvedValue(ok("{}"));
 
       const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
       chai.assert(result.isOk());
-      chai.assert(writeFileStub.mock.calls.length === 1);
+      chai.assert(outputFileStub.mock.calls.length === 1);
       if (await fs.pathExists(args.outputZipPath)) {
         const zip = new AdmZip(args.outputZipPath);
 
@@ -2835,6 +3926,134 @@ describe("teamsApp/createAppPackage", async () => {
       }
     });
 
+    it("ZIP-AC-02: omits a nested skill link to an external directory", async () => {
+      const root = await fs.mkdtemp(path.join(os.tmpdir(), "create-app-package-skill-link-"));
+      try {
+        const appDirectory = path.join(root, "appPackage");
+        const skillDirectory = path.join(appDirectory, "skills", "linked-skill");
+        const externalDirectory = path.join(root, "external");
+        const outputZipPath = path.join(root, "build", "appPackage.zip");
+        const manifestPath = path.join(appDirectory, "manifest.json");
+        await fs.ensureDir(skillDirectory);
+        await fs.ensureDir(externalDirectory);
+        await fs.writeFile(path.join(appDirectory, "color.png"), "color");
+        await fs.writeFile(path.join(appDirectory, "outline.png"), "outline");
+        await fs.writeFile(path.join(skillDirectory, "SKILL.md"), "# Safe skill");
+        await fs.writeFile(path.join(externalDirectory, "secret.txt"), "EXTERNAL_SENTINEL");
+        await fs.symlink(
+          externalDirectory,
+          path.join(skillDirectory, "linked"),
+          process.platform === "win32" ? "junction" : "dir"
+        );
+        await fs.writeJSON(path.join(appDirectory, "declarativeAgent.json"), {
+          version: "v1.6",
+          name: "Skill agent",
+          description: "Skill agent",
+          instructions: "Use the skill",
+          agent_skills: [{ folder: "skills/linked-skill" }],
+        });
+
+        const manifest = {
+          manifestVersion: "1.19",
+          icons: { color: "color.png", outline: "outline.png" },
+          copilotAgents: {
+            declarativeAgents: [{ file: "declarativeAgent.json", id: "agent" }],
+          },
+        } satisfies TeamsManifestV1D19.TeamsManifestV1D19;
+        await fs.writeJSON(manifestPath, manifest);
+        vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+        vi.spyOn(copilotGptManifestUtils, "getManifest").mockResolvedValue(
+          ok({
+            name: "Skill agent",
+            description: "Skill agent",
+            instructions: "Use the skill",
+            actions: [],
+            agent_skills: [{ folder: "skills/linked-skill" }],
+          } as any)
+        );
+
+        const result = (
+          await teamsAppDriver.execute(
+            {
+              manifestPath,
+              outputZipPath,
+              outputJsonPath: path.join(root, "build", "manifest.json"),
+            },
+            { ...mockedDriverContext, projectPath: root }
+          )
+        ).result;
+
+        chai.assert.isTrue(result.isOk());
+        const zip = new AdmZip(outputZipPath);
+        chai.assert.isNull(zip.getEntry("skills/linked-skill/linked/secret.txt"));
+        chai.assert.notInclude(
+          zip
+            .getEntries()
+            .map((entry) => entry.getData().toString("utf8"))
+            .join("\n"),
+          "EXTERNAL_SENTINEL"
+        );
+      } finally {
+        await fs.remove(root);
+      }
+    });
+
+    it("ZIP-AC-03: leaves no final artifacts when the package exceeds the size limit", async () => {
+      const root = await fs.mkdtemp(path.join(os.tmpdir(), "create-app-package-size-"));
+      try {
+        const appDirectory = path.join(root, "appPackage");
+        const skillDirectory = path.join(appDirectory, "skills", "large-skill");
+        const outputDirectory = path.join(root, "build");
+        const outputZipPath = path.join(outputDirectory, "appPackage.zip");
+        const outputJsonPath = path.join(outputDirectory, "manifest.json");
+        const manifestPath = path.join(appDirectory, "manifest.json");
+        await fs.ensureDir(skillDirectory);
+        await fs.writeFile(path.join(appDirectory, "color.png"), "color");
+        await fs.writeFile(path.join(appDirectory, "outline.png"), "outline");
+        await fs.writeFile(path.join(skillDirectory, "SKILL.md"), "# Large skill");
+        await fs.writeFile(path.join(skillDirectory, "payload.bin"), randomBytes(11 * 1024 * 1024));
+        await fs.writeJSON(path.join(appDirectory, "declarativeAgent.json"), {
+          version: "v1.6",
+          name: "Large skill agent",
+          description: "Large skill agent",
+          instructions: "Use the skill",
+          agent_skills: [{ folder: "skills/large-skill" }],
+        });
+
+        const manifest = {
+          manifestVersion: "1.19",
+          icons: { color: "color.png", outline: "outline.png" },
+          copilotAgents: {
+            declarativeAgents: [{ file: "declarativeAgent.json", id: "agent" }],
+          },
+        } satisfies TeamsManifestV1D19.TeamsManifestV1D19;
+        await fs.writeJSON(manifestPath, manifest);
+        vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+        vi.spyOn(copilotGptManifestUtils, "getManifest").mockResolvedValue(
+          ok({
+            name: "Large skill agent",
+            description: "Large skill agent",
+            instructions: "Use the skill",
+            actions: [],
+            agent_skills: [{ folder: "skills/large-skill" }],
+          } as any)
+        );
+
+        const result = (
+          await teamsAppDriver.execute(
+            { manifestPath, outputZipPath, outputJsonPath },
+            { ...mockedDriverContext, projectPath: root }
+          )
+        ).result;
+
+        chai.assert.isTrue(result.isErr() && result.error instanceof AppPackageSizeExceededError);
+        chai.assert.isFalse(await fs.pathExists(outputZipPath));
+        chai.assert.isFalse(await fs.pathExists(outputJsonPath));
+      } finally {
+        await fs.remove(root);
+      }
+    });
+
     it("should return error when skill folder does not exist", async () => {
       const manifest = createTeamsManifest();
       const declarativeAgentManifest = {
@@ -3152,7 +4371,11 @@ describe("teamsApp/createAppPackage", async () => {
       vi.spyOn(driverUtils, "updateVersionForTeamsAppYamlFile").mockResolvedValue();
       vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
       // Stub fs.stat to return a large file size
-      vi.spyOn(fs, "stat").mockResolvedValue({ size: 20 * 1024 * 1024, mode: 0o644 } as any);
+      vi.spyOn(fs, "stat").mockResolvedValue({
+        size: 20 * 1024 * 1024,
+        mode: 0o644,
+        isDirectory: () => false,
+      } as any);
 
       const args: CreateAppPackageArgs = {
         manifestPath:
@@ -3186,7 +4409,11 @@ describe("teamsApp/createAppPackage", async () => {
       vi.spyOn(driverUtils, "updateVersionForTeamsAppYamlFile").mockResolvedValue();
       vi.spyOn(fs, "writeFile").mockImplementation(async () => {});
       // Stub fs.stat to return a small file size
-      vi.spyOn(fs, "stat").mockResolvedValue({ size: 1024 * 1024, mode: 0o644 } as any);
+      vi.spyOn(fs, "stat").mockResolvedValue({
+        size: 1024 * 1024,
+        mode: 0o644,
+        isDirectory: () => false,
+      } as any);
 
       const args: CreateAppPackageArgs = {
         manifestPath:

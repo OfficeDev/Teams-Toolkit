@@ -45,6 +45,12 @@ function resolveDriverDef(
   }
 }
 
+function getDisplayMessage(error: FxError): string | undefined {
+  return "displayMessage" in error && typeof error.displayMessage === "string"
+    ? error.displayMessage
+    : undefined;
+}
+
 // Replace placeholders in the driver definitions' `with` field inplace
 // and returns resolved and unresolved placeholders
 function resolvePlaceHolders(
@@ -289,7 +295,8 @@ export class Lifecycle implements ILifecycle {
       const summary = r.summaries.map((s) => `${SummaryConstant.Succeeded} ${s}`);
       summaries.push(summary);
       if (result.isErr()) {
-        summary.push(`${SummaryConstant.Failed} ${result.error.message}`);
+        const errorMessage = getDisplayMessage(result.error) ?? result.error.message;
+        summary.push(`${SummaryConstant.Failed} ${errorMessage}`);
         return {
           result: err({
             kind: "PartialSuccess",

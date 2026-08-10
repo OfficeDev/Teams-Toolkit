@@ -13,6 +13,7 @@ import {
   Platform,
   Result,
   SystemError,
+  UserError,
 } from "@microsoft/teamsfx-api";
 import mockedEnv, { RestoreFn } from "mocked-env";
 import Container from "typedi";
@@ -119,12 +120,12 @@ class DriverThatHasNestedArgs implements StepDriver {
 
 class DriverThatReturnsErrorWithSummary implements StepDriver {
   async execute(args: unknown, context: DriverContext): Promise<ExecutionResult> {
-    const fxError: FxError = {
+    const fxError = new UserError({
+      source: "xxx",
       name: "fakeError",
       message: "fake message",
-      source: "xxx",
-      timestamp: new Date(),
-    };
+      displayMessage: "fake display message",
+    });
     return { result: err(fxError), summaries: [] };
   }
 }
@@ -747,8 +748,23 @@ describe("Summary", () => {
         summaries[1][0] ===
           `${SummaryConstant.Succeeded} Environment variable OUTPUT_B set in env/.env file` &&
         summaries[2].length === 1 &&
-        summaries[2][0].includes(`${SummaryConstant.Failed} fake message`)
+        summaries[2][0].includes(`${SummaryConstant.Failed} fake display message`)
     );
+  });
+
+  it("should use the actionable display message in CLI summaries", async () => {
+    const lifecycle = new Lifecycle(
+      "configureApp",
+      [{ uses: "DriverThatReturnsErrorWithSummary", with: {} }],
+      "1.0.0"
+    );
+
+    const { summaries } = await lifecycle.execute({
+      ...mockedDriverContext,
+      platform: Platform.CLI,
+    });
+
+    assert.equal(summaries[0][0], `${SummaryConstant.Failed} fake display message`);
   });
 
   it("should contain error summary if there are unresolved placeholders", async () => {
