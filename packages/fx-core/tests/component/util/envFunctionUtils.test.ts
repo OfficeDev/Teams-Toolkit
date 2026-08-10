@@ -393,9 +393,10 @@ describe("expandVariableWithFunction", async () => {
     try {
       const manifestPath = path.join(root, "manifest.json");
       const missingPath = path.join(root, "instruction.txt");
+      const absoluteReference = missingPath.replace(/\\/g, "/");
 
       const res = await expandVariableWithFunction(
-        `description:"$[file('${missingPath.replace(/\\/g, "/")}')]"`,
+        `description:"$[file('${absoluteReference}')]"`,
         context,
         undefined,
         true,
@@ -405,10 +406,10 @@ describe("expandVariableWithFunction", async () => {
 
       assert.isTrue(res.isErr() && res.error instanceof FileNotFoundError);
       if (res.isErr()) {
-        assert.notInclude(res.error.message, root);
-        assert.notInclude(res.error.displayMessage, root);
+        assert.notInclude(res.error.message, absoluteReference);
+        assert.notInclude(res.error.displayMessage, absoluteReference);
       }
-      assert.notInclude(context.logProvider.msg, root);
+      assert.notInclude(context.logProvider.msg, absoluteReference);
     } finally {
       await fs.remove(root);
     }
@@ -419,9 +420,10 @@ describe("expandVariableWithFunction", async () => {
     try {
       const manifestPath = path.join(root, "manifest.json");
       const unsupportedPath = path.join(root, "instruction.png");
+      const absoluteReference = unsupportedPath.replace(/\\/g, "/");
 
       const res = await expandVariableWithFunction(
-        `description:"$[file('${unsupportedPath.replace(/\\/g, "/")}')]"`,
+        `description:"$[file('${absoluteReference}')]"`,
         context,
         undefined,
         true,
@@ -430,7 +432,7 @@ describe("expandVariableWithFunction", async () => {
       );
 
       assert.isTrue(res.isErr() && res.error.name === "UnsupportedFileFormat");
-      assert.notInclude(context.logProvider.msg, root);
+      assert.notInclude(context.logProvider.msg, absoluteReference);
     } finally {
       await fs.remove(root);
     }
@@ -441,13 +443,14 @@ describe("expandVariableWithFunction", async () => {
     try {
       const manifestPath = path.join(root, "manifest.json");
       const instructionPath = path.join(root, "instruction.txt");
+      const absoluteReference = instructionPath.replace(/\\/g, "/");
       await fs.writeFile(instructionPath, "instructions");
       vi.spyOn(fs, "readFile").mockRejectedValue(
         Object.assign(new Error(`access denied: ${instructionPath}`), { code: "EACCES" })
       );
 
       const res = await expandVariableWithFunction(
-        `description:"$[file('${instructionPath.replace(/\\/g, "/")}')]"`,
+        `description:"$[file('${absoluteReference}')]"`,
         context,
         undefined,
         true,
@@ -457,10 +460,10 @@ describe("expandVariableWithFunction", async () => {
 
       assert.isTrue(res.isErr() && res.error.name === "ReadFileError");
       if (res.isErr()) {
-        assert.notInclude(res.error.message, root);
-        assert.notInclude(res.error.displayMessage, root);
+        assert.notInclude(res.error.message, absoluteReference);
+        assert.notInclude(res.error.displayMessage, absoluteReference);
       }
-      assert.notInclude(context.logProvider.msg, root);
+      assert.notInclude(context.logProvider.msg, absoluteReference);
     } finally {
       await fs.remove(root);
     }

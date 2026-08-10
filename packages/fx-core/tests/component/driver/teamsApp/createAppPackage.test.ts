@@ -33,6 +33,7 @@ import {
   JSONSyntaxError,
 } from "../../../../src/error/common";
 import {
+  AppPackageFileSystemError,
   AppPackageSizeExceededError,
   InvalidFileOutsideOfTheDirectotryError,
 } from "../../../../src/error/teamsApp";
@@ -1081,6 +1082,32 @@ describe("teamsApp/createAppPackage", async () => {
     }
   });
 
+  it("ZIP-AC-06: separates local paths from telemetry when source canonicalization fails", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "create-app-package-source-error-"));
+    try {
+      const trustedDirectory = path.join(root, "appPackage");
+      const sourceFile = path.join(trustedDirectory, "source.json");
+      await fs.ensureDir(trustedDirectory);
+      await fs.ensureFile(sourceFile);
+      vi.spyOn(fs, "realpath").mockRejectedValue(
+        Object.assign(new Error(`EACCES: realpath '${sourceFile}'`), { code: "EACCES" })
+      );
+
+      const result = await (teamsAppDriver as any).validateReferencedFile(
+        sourceFile,
+        trustedDirectory
+      );
+
+      chai.assert.isTrue(result.isErr() && result.error instanceof AppPackageFileSystemError);
+      if (result.isErr()) {
+        chai.assert.include(result.error.displayMessage, sourceFile);
+        chai.assert.notInclude(result.error.message, root);
+      }
+    } finally {
+      await fs.remove(root);
+    }
+  });
+
   it("ZIP-AC-04: adaptive card override warnings do not disclose the plugin path", async () => {
     const warning = vi.fn();
     const context = {
@@ -1121,17 +1148,21 @@ describe("teamsApp/createAppPackage", async () => {
       await fs.writeFile(firstJsonFile, "old first");
       await fs.writeFile(secondJsonFile, "old second");
 
-      const outputFile = fs.outputFile.bind(fs);
-      let writeCount = 0;
-      vi.spyOn(fs, "outputFile").mockImplementation(async (file, content) => {
-        await outputFile(file, content);
-        writeCount += 1;
-        if (writeCount === 2) {
-          throw new Error("simulated publication failure");
+      const rename = fs.rename.bind(fs);
+      let publicationFailed = false;
+      let publicationError: unknown;
+      vi.spyOn(fs, "rename").mockImplementation(async (source, destination) => {
+        if (!publicationFailed && destination === secondJsonFile) {
+          publicationFailed = true;
+          throw Object.assign(new Error(`EACCES: rename '${source}' -> '${destination}'`), {
+            code: "EACCES",
+            path: source,
+            dest: destination,
+          });
         }
+        await rename(source, destination);
       });
 
-      let publicationFailed = false;
       try {
         await (teamsAppDriver as any).publishOutputs(
           stagedZipFile,
@@ -1141,14 +1172,100 @@ describe("teamsApp/createAppPackage", async () => {
             [secondJsonFile, "new second"],
           ])
         );
-      } catch {
-        publicationFailed = true;
+      } catch (error) {
+        publicationError = error;
       }
 
       chai.assert.isTrue(publicationFailed);
+      chai.assert.instanceOf(publicationError, AppPackageFileSystemError);
+      if (!(publicationError instanceof AppPackageFileSystemError)) {
+        return;
+      }
+      chai.assert.notInclude(String(publicationError.innerError?.message), root);
+      chai.assert.notProperty(publicationError.innerError, "path");
+      chai.assert.notProperty(publicationError.innerError, "dest");
       chai.assert.equal(await fs.readFile(firstJsonFile, "utf8"), "old first");
       chai.assert.equal(await fs.readFile(secondJsonFile, "utf8"), "old second");
       chai.assert.equal(await fs.readFile(outputZipFile, "utf8"), "old zip");
+      chai.assert.deepEqual(
+        (await fs.readdir(root)).filter((fileName) => fileName.startsWith(".")),
+        []
+      );
+    } finally {
+      await fs.remove(root);
+    }
+  });
+
+  it("ZIP-AC-05: restores outputs and separates local paths from telemetry when ZIP publication fails", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "create-app-package-zip-rollback-"));
+    try {
+      const appDirectory = path.join(root, "appPackage");
+      const manifestPath = path.join(appDirectory, "manifest.json");
+      const outputZipFile = path.join(root, "appPackage.zip");
+      const jsonFile = path.join(root, "manifest.json");
+      await fs.ensureDir(appDirectory);
+      await fs.writeFile(path.join(appDirectory, "color.png"), "color");
+      await fs.writeFile(path.join(appDirectory, "outline.png"), "outline");
+      await fs.writeFile(outputZipFile, "old zip");
+      await fs.writeFile(jsonFile, "old json");
+      const manifest = {
+        manifestVersion: "1.19",
+        icons: { color: "color.png", outline: "outline.png" },
+      } satisfies TeamsManifestV1D19.TeamsManifestV1D19;
+      await fs.writeJSON(manifestPath, manifest);
+      vi.spyOn(manifestUtils, "getManifestV3").mockResolvedValue(ok(manifest));
+
+      const rename = fs.rename.bind(fs);
+      let zipPublicationFailed = false;
+      vi.spyOn(fs, "rename").mockImplementation(async (source, destination) => {
+        if (!zipPublicationFailed && destination === outputZipFile) {
+          zipPublicationFailed = true;
+          throw Object.assign(new Error(`EACCES: rename '${source}' -> '${destination}'`), {
+            code: "EACCES",
+          });
+        }
+        await rename(source, destination);
+      });
+      const remove = fs.remove.bind(fs);
+      vi.spyOn(fs, "remove").mockImplementation(async (filePath) => {
+        if (
+          path.basename(String(filePath)).startsWith(`.${path.basename(jsonFile)}.`) &&
+          String(filePath).endsWith(".tmp")
+        ) {
+          throw Object.assign(new Error("EBUSY: staged cleanup failed"), { code: "EBUSY" });
+        }
+        await remove(filePath);
+      });
+
+      const result = (
+        await teamsAppDriver.execute(
+          {
+            manifestPath,
+            outputZipPath: outputZipFile,
+            outputJsonPath: jsonFile,
+          },
+          { ...mockedDriverContext, projectPath: root }
+        )
+      ).result;
+
+      chai.assert.isTrue(zipPublicationFailed);
+      chai.assert.isTrue(result.isErr() && result.error instanceof AppPackageFileSystemError);
+      if (result.isOk()) {
+        return;
+      }
+      const publicationError = result.error;
+      chai.assert.include(String(publicationError.displayMessage), outputZipFile);
+      chai.assert.notInclude(publicationError.message, root);
+      chai.assert.notInclude(String(publicationError.innerError?.message), root);
+      chai.assert.equal(publicationError.innerError?.code, "EACCES");
+      chai.assert.equal(await fs.readFile(jsonFile, "utf8"), "old json");
+      chai.assert.equal(await fs.readFile(outputZipFile, "utf8"), "old zip");
+      chai.assert.deepEqual(
+        (await fs.readdir(root)).filter(
+          (fileName) => fileName.startsWith(".") || fileName.endsWith(".tmp")
+        ),
+        []
+      );
     } finally {
       await fs.remove(root);
     }

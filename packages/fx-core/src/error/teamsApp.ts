@@ -124,6 +124,30 @@ export class AppPackageSizeExceededError extends UserError {
   }
 }
 
+export class AppPackageFileSystemError extends SystemError {
+  constructor(error: unknown, filePath: string) {
+    const innerError = error instanceof Error ? error : new Error();
+    const errorCode =
+      "code" in innerError && typeof innerError.code === "string" ? innerError.code : "UNKNOWN";
+    const sanitizedInnerError = Object.assign(new Error(errorCode), { code: errorCode });
+    const errorOptions: SystemErrorOptions = {
+      source: Constants.PLUGIN_NAME,
+      error: sanitizedInnerError,
+      message: getDefaultString(
+        "error.teamsApp.createAppPackage.fileSystemError.telemetry",
+        errorCode
+      ),
+      displayMessage: getLocalizedString(
+        "error.teamsApp.createAppPackage.fileSystemError.display",
+        filePath,
+        errorCode
+      ),
+      categories: [ErrorCategory.Internal],
+    };
+    super(errorOptions);
+  }
+}
+
 export class AppIdNotExist extends UserError {
   constructor(appId: string, source?: string) {
     super({

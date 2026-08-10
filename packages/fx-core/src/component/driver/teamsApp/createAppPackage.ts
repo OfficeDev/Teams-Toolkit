@@ -28,6 +28,7 @@ import { ErrorContextMW } from "../../../common/globalVars";
 import { getLocalizedString } from "../../../common/localizeUtils";
 import { FileNotFoundError, InvalidActionInputError, JSONSyntaxError } from "../../../error/common";
 import {
+  AppPackageFileSystemError,
   InvalidFileOutsideOfTheDirectotryError,
   AppPackageSizeExceededError,
 } from "../../../error/teamsApp";
@@ -470,11 +471,16 @@ export class CreateAppPackageDriver implements StepDriver {
     const canonicalOutputPaths: string[] = [];
     let hasInvalidOutputPath = false;
     for (const outputFileName of outputFileNames) {
-      if (await this.isDirectory(outputFileName)) {
-        hasInvalidOutputPath = true;
-        break;
+      let canonicalOutputPath: string;
+      try {
+        if (await this.isDirectory(outputFileName)) {
+          hasInvalidOutputPath = true;
+          break;
+        }
+        canonicalOutputPath = await this.getCanonicalDestinationPath(outputFileName);
+      } catch (error) {
+        return err(new AppPackageFileSystemError(error, outputFileName));
       }
-      const canonicalOutputPath = await this.getCanonicalDestinationPath(outputFileName);
       if (
         canonicalOutputPaths.some(
           (outputPath) =>
@@ -508,6 +514,12 @@ export class CreateAppPackageDriver implements StepDriver {
       }
 
       await this.publishOutputs(stagedZipFileName, zipFileName, resolvedJsonFiles);
+    } catch (error) {
+      return err(
+        error instanceof AppPackageFileSystemError
+          ? error
+          : new AppPackageFileSystemError(error, zipFileName)
+      );
     } finally {
       await fs.remove(stagedZipFileName).catch(() => {});
     }
@@ -573,8 +585,14 @@ export class CreateAppPackageDriver implements StepDriver {
       );
     }
 
-    const realFile = await fs.realpath(file);
-    const realDirectory = await fs.realpath(directory);
+    let realFile: string;
+    let realDirectory: string;
+    try {
+      realFile = await fs.realpath(file);
+      realDirectory = await fs.realpath(directory);
+    } catch (error) {
+      return err(new AppPackageFileSystemError(error, file));
+    }
     if (!this.isPathContained(realDirectory, realFile)) {
       return err(new InvalidFileOutsideOfTheDirectotryError());
     }
@@ -982,6 +1000,7 @@ export class CreateAppPackageDriver implements StepDriver {
     const stagedJsonFiles = new Map<string, string>();
     const backupFiles = new Map<string, string>();
     const publishedFiles: string[] = [];
+    let publicationError: unknown;
     try {
       for (const [jsonFile, content] of jsonFiles) {
         const stagedJsonFile = this.getStagedOutputPath(jsonFile);
@@ -1020,13 +1039,25 @@ export class CreateAppPackageDriver implements StepDriver {
         }
       }
       if (rollbackError) {
-        throw rollbackError;
+        publicationError = rollbackError;
+      } else {
+        publicationError = error;
       }
-      throw error;
-    } finally {
-      for (const stagedJsonFile of stagedJsonFiles.values()) {
+    }
+
+    let stagedCleanupError: unknown;
+    for (const stagedJsonFile of stagedJsonFiles.values()) {
+      try {
         await fs.remove(stagedJsonFile);
+      } catch (error) {
+        stagedCleanupError ??= error;
       }
+    }
+    if (publicationError) {
+      throw new AppPackageFileSystemError(publicationError, outputZipFile);
+    }
+    if (stagedCleanupError) {
+      throw new AppPackageFileSystemError(stagedCleanupError, outputZipFile);
     }
 
     for (const backupFile of backupFiles.values()) {

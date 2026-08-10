@@ -10,6 +10,7 @@ import {
 } from "@microsoft/teamsfx-api";
 import fs from "fs-extra";
 import mockedEnv, { RestoreFn } from "mocked-env";
+import os from "os";
 import path from "path";
 import { assert, vi } from "vitest";
 import {
@@ -582,40 +583,40 @@ describe("resolveLocFile", () => {
   });
 
   it("resolves $[file(...)] when context is provided", async () => {
-    vi.spyOn(fs, "pathExists").mockImplementation(async (filePath) => {
-      return filePath === "loc_file_path" || filePath === "instruction.txt";
-    });
-    vi.spyOn(fs, "readFile").mockImplementation(((filePath: number | fs.PathLike) => {
-      if (filePath === "loc_file_path") {
-        return Promise.resolve(
-          JSON.stringify({
-            name: {
-              short: "$[file('instruction.txt')]",
-            },
-          })
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "resolve-loc-file-"));
+    try {
+      const locFilePath = path.join(root, "loc.json");
+      await fs.writeFile(
+        locFilePath,
+        JSON.stringify({
+          name: {
+            short: "$[file('instruction.txt')]",
+          },
+        })
+      );
+      await fs.writeFile(path.join(root, "instruction.txt"), "localized short name");
+
+      const context: any = {
+        platform: Platform.VSCode,
+        logProvider: {
+          error: () => {},
+        },
+        telemetryReporter: {
+          sendTelemetryEvent: () => {},
+        },
+      };
+
+      const locFile = await manifestUtils.resolveLocFile(locFilePath, context);
+
+      assert.isTrue(locFile.isOk());
+      if (locFile.isOk()) {
+        assert.equal(
+          (JSON.parse(locFile.value) as TeamsAppManifest).name.short,
+          "localized short name"
         );
       }
-      return Promise.resolve("localized short name");
-    }) as any);
-
-    const context: any = {
-      platform: Platform.VSCode,
-      logProvider: {
-        error: () => {},
-      },
-      telemetryReporter: {
-        sendTelemetryEvent: () => {},
-      },
-    };
-
-    const locFile = await manifestUtils.resolveLocFile("loc_file_path", context);
-
-    assert.isTrue(locFile.isOk());
-    if (locFile.isOk()) {
-      assert.equal(
-        (JSON.parse(locFile.value) as TeamsAppManifest).name.short,
-        "localized short name"
-      );
+    } finally {
+      await fs.remove(root);
     }
   });
 

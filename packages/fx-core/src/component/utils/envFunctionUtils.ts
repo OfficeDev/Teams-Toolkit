@@ -136,13 +136,14 @@ async function readFileContent(
 ): Promise<Result<string, FxError>> {
   const manifestDirectory = path.resolve(path.dirname(fromPath));
   const absolutePath = path.resolve(manifestDirectory, filePath);
+  const safeFileReference = path.isAbsolute(filePath) ? path.basename(filePath) : filePath;
   if (!isPathContained(manifestDirectory, absolutePath)) {
     return fileReferenceOutsideManifestDirectory(ctx);
   }
 
   if (!isSupportedFileFormat(filePath)) {
     ctx.logProvider.error(
-      getLocalizedString("core.envFunc.unsupportedFile.errorLog", filePath, "txt")
+      getLocalizedString("core.envFunc.unsupportedFile.errorLog", safeFileReference, "txt")
     );
     return err(new UnsupportedFileFormatError(ctx.platform));
   }
@@ -154,12 +155,16 @@ async function readFileContent(
     realFilePath = await fs.realpath(absolutePath);
   } catch (error) {
     if (isFileNotFoundError(error)) {
-      return err(new FileNotFoundError(source, filePath));
+      return err(new FileNotFoundError(source, safeFileReference));
     }
     ctx.logProvider.error(
-      getLocalizedString("core.envFunc.readFile.errorLog", filePath, getFileSystemErrorCode(error))
+      getLocalizedString(
+        "core.envFunc.readFile.errorLog",
+        safeFileReference,
+        getFileSystemErrorCode(error)
+      )
     );
-    return err(new ReadFileError(ctx.platform, filePath));
+    return err(new ReadFileError(ctx.platform, safeFileReference));
   }
 
   if (!isPathContained(realManifestDirectory, realFilePath)) {
@@ -168,7 +173,7 @@ async function readFileContent(
 
   if (!isSupportedFileFormat(realFilePath)) {
     ctx.logProvider.error(
-      getLocalizedString("core.envFunc.unsupportedFile.errorLog", filePath, "txt")
+      getLocalizedString("core.envFunc.unsupportedFile.errorLog", safeFileReference, "txt")
     );
     return err(new UnsupportedFileFormatError(ctx.platform));
   }
@@ -181,9 +186,13 @@ async function readFileContent(
     return ok(processedFileContent);
   } catch (error) {
     ctx.logProvider.error(
-      getLocalizedString("core.envFunc.readFile.errorLog", filePath, getFileSystemErrorCode(error))
+      getLocalizedString(
+        "core.envFunc.readFile.errorLog",
+        safeFileReference,
+        getFileSystemErrorCode(error)
+      )
     );
-    return err(new ReadFileError(ctx.platform, filePath));
+    return err(new ReadFileError(ctx.platform, safeFileReference));
   }
 }
 
