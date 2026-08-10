@@ -5,7 +5,7 @@
  * @author yefuwang@microsoft.com
  */
 
-import { err, FxError, LogProvider, ok, Result } from "@microsoft/teamsfx-api";
+import { err, FxError, LogProvider, ok, Platform, Result } from "@microsoft/teamsfx-api";
 import _, { camelCase } from "lodash";
 import { Container } from "typedi";
 import { setErrorContext } from "../../common/globalVars";
@@ -43,6 +43,12 @@ function resolveDriverDef(
       def.env[k] = resolveString(val, resolved, unresolved);
     }
   }
+}
+
+function getDisplayMessage(error: FxError): string | undefined {
+  return "displayMessage" in error && typeof error.displayMessage === "string"
+    ? error.displayMessage
+    : undefined;
 }
 
 // Replace placeholders in the driver definitions' `with` field inplace
@@ -303,7 +309,11 @@ export class Lifecycle implements ILifecycle {
       const summary = r.summaries.map((s) => `${SummaryConstant.Succeeded} ${s}`);
       summaries.push(summary);
       if (result.isErr()) {
-        summary.push(`${SummaryConstant.Failed} ${result.error.message}`);
+        const errorMessage =
+          ctx.platform === Platform.VSCode
+            ? (getDisplayMessage(result.error) ?? result.error.message)
+            : result.error.message;
+        summary.push(`${SummaryConstant.Failed} ${errorMessage}`);
         return {
           result: err({
             kind: "PartialSuccess",

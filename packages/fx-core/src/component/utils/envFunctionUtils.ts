@@ -240,7 +240,7 @@ function fileReferenceOutsideManifestDirectory(
         )
       : getLocalizedString("core.envFunc.fileReferenceOutsideManifestDirectory.errorLog");
   ctx.logProvider.error(errorLog);
-  return err(new FileReferenceOutsideManifestDirectoryError(ctx.platform));
+  return err(new FileReferenceOutsideManifestDirectoryError(ctx.platform, fileReference));
 }
 
 class UnsupportedFileFormatError extends UserError {
@@ -264,19 +264,22 @@ class UnsupportedFileFormatError extends UserError {
 }
 
 class FileReferenceOutsideManifestDirectoryError extends UserError {
-  constructor(platform: Platform | undefined) {
-    const message =
+  constructor(platform: Platform | undefined, fileReference: string) {
+    const message = getLocalizedString(
+      "core.envFunc.fileReferenceOutsideManifestDirectory.errorMessage"
+    );
+    const displayMessage =
       platform === Platform.VSCode
         ? getLocalizedString(
-            "core.envFunc.fileReferenceOutsideManifestDirectory.errorMessage",
-            getLocalizedString("core.error.checkOutput.vsc")
+            "core.envFunc.fileReferenceOutsideManifestDirectory.errorMessage.vsc",
+            fileReference
           )
-        : getLocalizedString("core.envFunc.fileReferenceOutsideManifestDirectory.errorMessage", "");
+        : message;
     const errorOptions: UserErrorOptions = {
       source,
       name: "FileReferenceOutsideManifestDirectory",
       message,
-      displayMessage: message,
+      displayMessage,
       helpLink,
     };
     super(errorOptions);
