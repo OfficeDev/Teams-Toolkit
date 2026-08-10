@@ -176,7 +176,7 @@ runs:
           "$SYSTEM_PROMPT" "$CHANGED_FILES" "$AVAILABLE_CASES")
 
         echo "Running Copilot CLI for e2e test case selection..."
-        copilot --yolo --model claude-sonnet-4.6 --reasoning-effort high -p "$USER_PROMPT" > /tmp/copilot_e2e_output.txt 2>&1 || true
+        copilot --yolo --model gpt-5.6-sol --reasoning-effort high -p "$USER_PROMPT" > /tmp/copilot_e2e_output.txt 2>&1 || true
         echo "--- Copilot output ---"
         cat /tmp/copilot_e2e_output.txt || true
 
