@@ -298,7 +298,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion there's \"open\" blue button exist.",
+      "description": "@assertion there's \"Open\" blue button exist.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
