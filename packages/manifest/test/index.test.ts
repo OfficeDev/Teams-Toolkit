@@ -4,7 +4,13 @@ import fs from "fs-extra";
 import "mocha";
 import * as path from "path";
 import sinon from "sinon";
-import { AppManifestUtils, ManifestUtil, TeamsAppManifest, TeamsManifestConverter } from "../src";
+import {
+  AppManifestUtils,
+  ManifestUtil,
+  SchemaFetchError,
+  TeamsAppManifest,
+  TeamsManifestConverter,
+} from "../src";
 
 chai.use(chaiAsPromised);
 
@@ -236,6 +242,23 @@ describe("ManifestUtil", () => {
           .to.equal(
             "Failed to get manifest at url https://example.com/invalid-schema.json due to: Network error"
           );
+      }
+    });
+
+    it("should throw a typed SchemaFetchError preserving the cause", async () => {
+      const fetchError = new Error("Network error");
+      sandbox.stub(mockFetch, "default").rejects(fetchError);
+
+      const manifest = { $schema: "https://example.com/invalid-schema.json" } as TeamsAppManifest;
+
+      try {
+        await ManifestUtil.fetchSchema(manifest);
+        chai.assert.fail("Expected error not thrown");
+      } catch (error: unknown) {
+        chai.expect(error).to.be.instanceOf(SchemaFetchError);
+        const schemaFetchError = error as SchemaFetchError;
+        chai.expect(schemaFetchError.schemaUrl).to.equal("https://example.com/invalid-schema.json");
+        chai.expect(schemaFetchError.cause).to.equal(fetchError);
       }
     });
 
