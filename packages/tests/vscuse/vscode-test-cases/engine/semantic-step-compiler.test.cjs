@@ -2874,6 +2874,25 @@ test("semantic adapter requires an immediate post-scaffold file check", async ()
   assert.equal(result.diagnostics[0].code, "VCB_OPERATION_ORDER");
 });
 
+test("VCB-141: file checks preserve compiler-owned script semantics", async () => {
+  const result = await compileFixture(
+    "weather-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  const fileChecks = result.value[0].plan.steps.filter((step) =>
+    step.tags.includes("assertion:file"),
+  );
+  assert.notEqual(fileChecks.length, 0);
+  for (const step of fileChecks) {
+    assert.equal(
+      step.description,
+      "@code execute the supplied generated bash script exactly as authored and read its exact PROJECT_DIR under /home/vscode/AgentsToolkitProjects/ from that script; verify its project-relative file assertions, project files are not VS Code .code-workspace files, do not use /workspace, and do not log file contents.",
+    );
+  }
+});
+
 test("VCB-43: Copilot readiness requires a selected agent and open chat", async () => {
   const readySubject = (result) =>
     result.value[0].plan.steps
