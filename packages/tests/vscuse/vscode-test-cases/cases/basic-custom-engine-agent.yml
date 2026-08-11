@@ -145,10 +145,6 @@ cases:
         check-basic-cea-error-free-chat,
       ]
 
-  # The retained OpenAI plans intentionally use the same fake key and assert
-  # only that the agent returns a response. The two Playground plans instead
-  # assert a generic error state that the current semantic checks cannot name,
-  # so they remain recorded.
   - id: basic-cea-ts-openai-remote-teams
     scenarioId: SCN-CREATE-BASIC-CEA-01
     workItemIds: [36009400]
@@ -156,6 +152,8 @@ cases:
       [
         scaffold-basic-cea-ts-openai,
         check-basic-cea-ts,
+        use-gpt-4o-mini-ts,
+        configure-openai-remote,
         login-azure,
         login-m365,
         provision-arm,
@@ -172,6 +170,8 @@ cases:
       [
         scaffold-basic-cea-ts-openai,
         check-basic-cea-ts,
+        use-gpt-4o-mini-ts,
+        configure-openai-local,
         login-m365,
         f5-teams-local,
         open-app,
@@ -185,6 +185,8 @@ cases:
       [
         scaffold-basic-cea-ts-openai,
         check-basic-cea-ts,
+        use-gpt-4o-mini-ts,
+        configure-openai-remote,
         login-azure,
         login-m365,
         provision-arm,
@@ -201,6 +203,8 @@ cases:
       [
         scaffold-basic-cea-ts-openai,
         check-basic-cea-ts,
+        use-gpt-4o-mini-ts,
+        configure-openai-local,
         login-m365,
         f5-copilot-local,
         open-agent,
@@ -214,6 +218,8 @@ cases:
       [
         scaffold-basic-cea-js-openai,
         check-basic-cea-js,
+        use-gpt-4o-mini-js,
+        configure-openai-remote,
         login-azure,
         login-m365,
         provision-arm,
@@ -230,6 +236,8 @@ cases:
       [
         scaffold-basic-cea-js-openai,
         check-basic-cea-js,
+        use-gpt-4o-mini-js,
+        configure-openai-local,
         login-m365,
         f5-teams-local,
         open-app,
@@ -243,6 +251,8 @@ cases:
       [
         scaffold-basic-cea-js-openai,
         check-basic-cea-js,
+        use-gpt-4o-mini-js,
+        configure-openai-remote,
         login-azure,
         login-m365,
         provision-arm,
@@ -259,6 +269,8 @@ cases:
       [
         scaffold-basic-cea-js-openai,
         check-basic-cea-js,
+        use-gpt-4o-mini-js,
+        configure-openai-local,
         login-m365,
         f5-copilot-local,
         open-agent,
@@ -355,7 +367,7 @@ steps:
           value: llm-service-openai
         - question: openAIKey
           type: text
-          value: "${{secret:FAKE_OPENAI_API_KEY}}"
+          value: "${{secret:AZURE_OPENAI_API_KEY}}"
         - question: language
           value: typescript
         - question: workspaceFolder
@@ -437,7 +449,7 @@ steps:
           value: llm-service-openai
         - question: openAIKey
           type: text
-          value: "${{secret:FAKE_OPENAI_API_KEY}}"
+          value: "${{secret:AZURE_OPENAI_API_KEY}}"
         - question: language
           value: javascript
         - question: workspaceFolder
@@ -542,6 +554,28 @@ steps:
         path: package.json
         expect:
           exists: false
+
+  use-gpt-4o-mini-ts:
+    type: openAIModel
+    with:
+      path: src/config.ts
+      current: gpt-3.5-turbo
+
+  use-gpt-4o-mini-js:
+    type: openAIModel
+    with:
+      path: src/config.js
+      current: gpt-3.5-turbo
+
+  configure-openai-local:
+    type: localEnvironment
+    with:
+      OPENAI_BASE_URL: "${{env:AZURE_OPENAI_ENDPOINT}}/openai/v1"
+
+  configure-openai-remote:
+    type: remoteEnvironment
+    with:
+      OPENAI_BASE_URL: "${{env:AZURE_OPENAI_ENDPOINT}}/openai/v1"
 
   # The interpreter label is the patch version the runner image carries. It is
   # authored here rather than fixed in the compiler so an image bump changes one
