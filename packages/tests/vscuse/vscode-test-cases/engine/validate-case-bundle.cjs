@@ -23,6 +23,8 @@ const allowedStepTypes = new Set([
   "deploy",
   "pythonEnvironment",
   "localEnvironment",
+  "remoteEnvironment",
+  "openAIModel",
   "localUserEnvironment",
   "removeWorkspaceFile",
   "configureTypeSpecAction",

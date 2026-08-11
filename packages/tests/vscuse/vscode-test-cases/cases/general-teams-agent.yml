@@ -235,22 +235,22 @@ cases:
         check-general-chat,
       ]
 
-  # Remote cases preserve the legacy fake-key error path. Local cases redirect
-  # the OpenAI client to an Azure OpenAI v1 endpoint and use its real key.
   - id: general-teams-ts-openai-remote-teams
     scenarioId: SCN-CREATE-CUSTOM-COPILOT-BASIC-01
     workItemIds: [27042831]
     steps:
       [
-        scaffold-general-ts-openai-fake-key,
+        scaffold-general-ts-openai,
         check-general-ts-openai,
+        use-gpt-4o-mini-ts,
+        redirect-openai-base-url-remote,
         login-azure,
         login-m365,
         provision-arm,
         deploy,
         f5-teams-remote-node,
         open-app,
-        check-general-chat-openai-remote,
+        check-general-chat-openai,
       ]
 
   - id: general-teams-ts-openai-local-teams
@@ -260,11 +260,12 @@ cases:
       [
         scaffold-general-ts-openai,
         check-general-ts-openai,
+        use-gpt-4o-mini-ts,
         redirect-openai-base-url,
         login-m365,
         f5-teams-local,
         open-app,
-        check-general-chat,
+        check-general-chat-openai,
       ]
 
   - id: general-teams-js-openai-remote-teams
@@ -272,15 +273,17 @@ cases:
     workItemIds: [27042829]
     steps:
       [
-        scaffold-general-js-openai-fake-key,
+        scaffold-general-js-openai,
         check-general-js-openai,
+        use-gpt-4o-mini-js,
+        redirect-openai-base-url-remote,
         login-azure,
         login-m365,
         provision-arm,
         deploy,
         f5-teams-remote-node,
         open-app,
-        check-general-chat-openai-remote,
+        check-general-chat-openai,
       ]
 
   - id: general-teams-js-openai-local-teams
@@ -290,11 +293,12 @@ cases:
       [
         scaffold-general-js-openai,
         check-general-js-openai,
+        use-gpt-4o-mini-js,
         redirect-openai-base-url,
         login-m365,
         f5-teams-local,
         open-app,
-        check-general-chat,
+        check-general-chat-openai,
       ]
 
   - id: general-teams-py-openai-remote-teams
@@ -302,16 +306,18 @@ cases:
     workItemIds: [27551403]
     steps:
       [
-        scaffold-general-py-openai-fake-key,
+        scaffold-general-py-openai,
         check-general-py-openai,
+        use-gpt-4o-mini-py,
         create-python-environment,
+        redirect-openai-base-url-remote,
         login-azure,
         login-m365,
         provision-arm,
         deploy,
         f5-teams-remote-python,
         open-app,
-        send-general-chat-openai-remote,
+        check-general-chat-openai,
       ]
 
   - id: general-teams-py-openai-local-teams
@@ -321,12 +327,13 @@ cases:
       [
         scaffold-general-py-openai,
         check-general-py-openai,
+        use-gpt-4o-mini-py,
         create-python-environment,
         redirect-openai-base-url,
         login-m365,
         f5-teams-local,
         open-app,
-        check-general-chat,
+        check-general-chat-openai,
       ]
 
 steps:
@@ -702,71 +709,23 @@ steps:
         expect:
           exists: false
 
-  scaffold-general-ts-openai-fake-key:
-    type: scaffold
+  use-gpt-4o-mini-ts:
+    type: openAIModel
     with:
-      template: custom-copilot-basic
-      answers:
-        - question: projectType
-          value: teams-agent-and-app-type
-        - question: teamsAppType
-          value: custom-copilot-basic
-        - question: llmService
-          value: llm-service-openai
-        - question: openAIKey
-          type: text
-          value: "${{secret:FAKE_OPENAI_API_KEY}}"
-        - question: language
-          value: typescript
-        - question: workspaceFolder
-          value: default
-        - question: appName
-          type: text
-          value: "${{var:app_name:vscuse_app_#####}}"
+      path: src/config.ts
+      current: gpt-3.5-turbo
 
-  scaffold-general-js-openai-fake-key:
-    type: scaffold
+  use-gpt-4o-mini-js:
+    type: openAIModel
     with:
-      template: custom-copilot-basic
-      answers:
-        - question: projectType
-          value: teams-agent-and-app-type
-        - question: teamsAppType
-          value: custom-copilot-basic
-        - question: llmService
-          value: llm-service-openai
-        - question: openAIKey
-          type: text
-          value: "${{secret:FAKE_OPENAI_API_KEY}}"
-        - question: language
-          value: javascript
-        - question: workspaceFolder
-          value: default
-        - question: appName
-          type: text
-          value: "${{var:app_name:vscuse_app_#####}}"
+      path: src/config.js
+      current: gpt-3.5-turbo
 
-  scaffold-general-py-openai-fake-key:
-    type: scaffold
+  use-gpt-4o-mini-py:
+    type: openAIModel
     with:
-      template: custom-copilot-basic
-      answers:
-        - question: projectType
-          value: teams-agent-and-app-type
-        - question: teamsAppType
-          value: custom-copilot-basic
-        - question: llmService
-          value: llm-service-openai
-        - question: openAIKey
-          type: text
-          value: "${{secret:FAKE_OPENAI_API_KEY}}"
-        - question: language
-          value: python
-        - question: workspaceFolder
-          value: default
-        - question: appName
-          type: text
-          value: "${{var:app_name:vscuse_app_#####}}"
+      path: src/config.py
+      current: gpt-3.5-turbo
 
   create-python-environment:
     type: pythonEnvironment
@@ -775,6 +734,11 @@ steps:
 
   redirect-openai-base-url:
     type: localEnvironment
+    with:
+      OPENAI_BASE_URL: "${{env:AZURE_OPENAI_ENDPOINT}}/openai/v1"
+
+  redirect-openai-base-url-remote:
+    type: remoteEnvironment
     with:
       OPENAI_BASE_URL: "${{env:AZURE_OPENAI_ENDPOINT}}/openai/v1"
 
@@ -862,16 +826,11 @@ steps:
         expect:
           replied: true
 
-  check-general-chat-openai-remote:
+  check-general-chat-openai:
     type: checks
     with:
       - type: chat
         send: How to develop agent for Teams?
         expect:
-          contains: ["The agent encountered an error or bug."]
-
-  send-general-chat-openai-remote:
-    type: checks
-    with:
-      - type: chat
-        send: How to develop agent for Teams?
+          replied: true
+          notContains: ["error"]
