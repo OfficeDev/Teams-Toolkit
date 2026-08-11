@@ -353,6 +353,7 @@ describe("Package Service", () => {
       data: {
         titleId: "test-title-id-builder-api",
         appId: "test-app-id-builder-api",
+        validationInfo: { status: "successful", completedDate: "2026-08-06T20:53:30.5267304Z" },
       },
     };
     axiosGetResponses["/marketplace/v1/users/titles/test-title-id-builder-api/sharingInfo"] = {
@@ -482,12 +483,11 @@ describe("Package Service", () => {
     };
     axiosPostResponses["/builder/v1/users/packages"] = {
       status: 200,
-      data: {
-        titlePreview: {
-          titleId: "test-title-id",
-          appId: "test-app-id",
-        },
-      },
+      data: { statusId: "test-status-id-builder-api" },
+    };
+    axiosGetResponses["/builder/v1/users/packages/status/test-status-id-builder-api"] = {
+      status: 200,
+      data: { titleId: "test-title-id", appId: "test-app-id" },
     };
 
     const postStub = vi.spyOn(testAxiosInstance, "post");
@@ -505,13 +505,12 @@ describe("Package Service", () => {
     chai.assert.isDefined(builderRequest);
     chai.assert.deepEqual(builderRequest?.[2]?.params, {
       scope: AppScope.Tenant,
-      shouldBlock: true,
     });
     chai.assert.equal(builderRequest?.[2]?.headers?.Authorization, "Bearer test-token");
     chai.assert.isFalse(postStub.mock.calls.some(([url]) => url === "/dev/v1/users/packages"));
   });
 
-  it("sideLoadingV2 returns immediately when shouldBlock response is 200", async () => {
+  it("sideLoadingV2 polls status after a 200 upload response", async () => {
     axiosGetResponses["/config/v1/environment"] = {
       data: {
         titlesServiceUrl: "https://test-url",
@@ -519,12 +518,11 @@ describe("Package Service", () => {
     };
     axiosPostResponses["/builder/v1/users/packages"] = {
       status: 200,
-      data: {
-        titlePreview: {
-          titleId: "test-title-id-blocked",
-          appId: "test-app-id-blocked",
-        },
-      },
+      data: { statusId: "test-status-id-blocked" },
+    };
+    axiosGetResponses["/builder/v1/users/packages/status/test-status-id-blocked"] = {
+      status: 200,
+      data: { titleId: "test-title-id-blocked", appId: "test-app-id-blocked" },
     };
 
     const packageService = new PackageService("https://test-endpoint", logger);
@@ -548,7 +546,7 @@ describe("Package Service", () => {
     expect(verboseStub).toHaveBeenCalledWith("Sideloading done.");
   });
 
-  it("sideLoadingV2 returns immediately when shouldBlock response is 201", async () => {
+  it("sideLoadingV2 polls status after a 201 upload response", async () => {
     axiosGetResponses["/config/v1/environment"] = {
       data: {
         titlesServiceUrl: "https://test-url",
@@ -556,12 +554,11 @@ describe("Package Service", () => {
     };
     axiosPostResponses["/builder/v1/users/packages"] = {
       status: 201,
-      data: {
-        titlePreview: {
-          titleId: "test-title-id-created",
-          appId: "test-app-id-created",
-        },
-      },
+      data: { statusId: "test-status-id-created" },
+    };
+    axiosGetResponses["/builder/v1/users/packages/status/test-status-id-created"] = {
+      status: 200,
+      data: { titleId: "test-title-id-created", appId: "test-app-id-created" },
     };
 
     const packageService = new PackageService("https://test-endpoint", logger);
@@ -580,36 +577,43 @@ describe("Package Service", () => {
     chai.assert.equal(result[1], "test-app-id-created");
   });
 
-  it("sideload builder status api with 202 on first try and 200 on second try", async () => {
-    axiosPostResponses["/builder/v1/users/packages"] = {
-      data: {
-        statusId: "test-status-id-builder-api",
-        titlePreview: {
-          titleId: "test-title-id-preview-builder-api",
-        },
+  it("waits for RAI validation after upload", async () => {
+    setTools({
+      expServiceProvider: {
+        getTreatmentVariableAsync: vi.fn().mockResolvedValue(true),
       },
+    } as any);
+    axiosPostResponses["/builder/v1/users/packages"] = {
+      status: 200,
+      data: { statusId: "test-status-id-builder-api" },
     };
     let statusCallCount = 0;
-    vi.spyOn(testAxiosInstance, "get").mockImplementation((url: string): any => {
+    const getStub = vi.spyOn(testAxiosInstance, "get").mockImplementation((url: string): any => {
       if (url === "/builder/v1/users/packages/status/test-status-id-builder-api") {
         statusCallCount++;
         if (statusCallCount === 1) {
-          return Promise.resolve({ status: 202 });
+          return Promise.resolve({
+            status: 202,
+            data: { validationInfo: { status: "pending" } },
+          });
+        }
+        if (statusCallCount === 2) {
+          return Promise.resolve({
+            status: 200,
+            data: { validationInfo: { status: "pending" } },
+          });
         }
         return Promise.resolve({
           status: 200,
           data: {
             titleId: "test-title-id-builder-api",
             appId: "test-app-id-builder-api",
+            validationInfo: { status: "successful", completedDate: "2026-08-06T20:53:30.5267304Z" },
           },
         });
       }
       if (url === "/config/v1/environment") {
-        return Promise.resolve({
-          data: {
-            titlesServiceUrl: "https://test-url",
-          },
-        });
+        return Promise.resolve({ data: { titlesServiceUrl: "https://test-url" } });
       }
       return Promise.resolve({});
     });
@@ -617,27 +621,69 @@ describe("Package Service", () => {
     const packageService = new PackageService("https://test-endpoint", logger);
     vi.spyOn(packageService, "getManifestFromZip" as keyof PackageService).mockReturnValue({
       copilotAgents: {
-        declarativeAgents: [
-          {
-            id: "declarativeAgent",
-            file: "declarativeAgent.json",
-          },
-        ],
+        declarativeAgents: [{ id: "declarativeAgent", file: "declarativeAgent.json" }],
       },
     } as any);
-    let actualError: Error | undefined;
-    try {
-      const result = await packageService.sideLoading("test-token", "test-path");
-      chai.assert.equal(result[0], "test-title-id-builder-api");
-      chai.assert.equal(result[1], "test-app-id-builder-api");
-    } catch (error: any) {
-      actualError = error;
-    }
 
-    chai.assert.isUndefined(actualError);
+    const result = await packageService.sideLoading("test-token", "test-path");
+
+    chai.assert.deepEqual(result, ["test-title-id-builder-api", "test-app-id-builder-api", ""]);
+    chai.assert.equal(statusCallCount, 3);
+    const statusRequest = getStub.mock.calls.find(
+      ([url]) => url === "/builder/v1/users/packages/status/test-status-id-builder-api"
+    );
+    expect(statusRequest?.[1]?.params).toEqual({ isRAIValidationAsync: true });
+    expect(vi.mocked(commonUtils.waitSeconds)).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(commonUtils.waitSeconds)).toHaveBeenCalledWith(7);
+  });
+
+  it("surfaces RAI validation failure reasons", async () => {
+    setTools({
+      expServiceProvider: {
+        getTreatmentVariableAsync: vi.fn().mockResolvedValue(true),
+      },
+    } as any);
+    axiosGetResponses["/config/v1/environment"] = {
+      data: { titlesServiceUrl: "https://test-url" },
+    };
+    axiosPostResponses["/builder/v1/users/packages"] = {
+      status: 200,
+      data: { statusId: "test-status-id-builder-api" },
+    };
+    axiosGetResponses["/builder/v1/users/packages/status/test-status-id-builder-api"] = {
+      status: 200,
+      data: {
+        validationInfo: {
+          status: "failed",
+          failureReasons: [
+            {
+              errorCode: "RAIViolation",
+              errorDetail: "Detected offensive content in agent description.",
+            },
+          ],
+        },
+      },
+    };
+    const errorStub = vi.spyOn(logger, "error").mockReturnValue();
+    const packageService = new PackageService("https://test-endpoint", logger);
+    await expect(
+      packageService.sideLoadingV2("test-token", "test-path", AppScope.Personal)
+    ).rejects.toMatchObject({
+      name: "PackageValidationFailed",
+      message: expect.stringContaining("RAIViolation"),
+      displayMessage: expect.stringContaining("Detected offensive content in agent description."),
+    });
+    expect(errorStub).toHaveBeenCalledWith(
+      expect.stringContaining("Resolve the following issues and try again")
+    );
+    expect(errorStub).toHaveBeenCalledWith(expect.stringContaining("RAIViolation"));
+    expect(errorStub).toHaveBeenCalledWith(
+      expect.stringContaining("Detected offensive content in agent description.")
+    );
   });
 
   it("sideloading throws error in get status", async () => {
+    setTools({} as any);
     axiosGetResponses["/config/v1/environment"] = {
       data: {
         titlesServiceUrl: "https://test-url",
@@ -645,11 +691,9 @@ describe("Package Service", () => {
     };
 
     axiosPostResponses["/builder/v1/users/packages"] = {
+      status: 202,
       data: {
         statusId: "test-status-id-builder-api",
-        titlePreview: {
-          titleId: "test-title-id-preview-builder-api",
-        },
       },
     };
     let actualError: Error | undefined;
@@ -671,6 +715,7 @@ describe("Package Service", () => {
     }
     chai.assert.isDefined(actualError);
 
+    setTools({} as any);
     const expectedError = new Error("test-status") as any;
     expectedError.response = {
       data: {
@@ -1929,9 +1974,13 @@ describe("Package Service", () => {
 
   it("withNetworkRetry works for sideLoadingV2 upload", async () => {
     let postCallCount = 0;
-    vi.spyOn(testAxiosInstance, "get").mockImplementation(() => {
+    vi.spyOn(testAxiosInstance, "get").mockImplementation((url: string) => {
+      if (url === "/config/v1/environment") {
+        return Promise.resolve({ data: { titlesServiceUrl: "https://test-url" } });
+      }
       return Promise.resolve({
-        data: { titlesServiceUrl: "https://test-url" },
+        status: 200,
+        data: { titleId: "retry-title-id", appId: "retry-app-id" },
       });
     });
     vi.spyOn(testAxiosInstance, "post").mockImplementation((url: string) => {
@@ -1944,12 +1993,7 @@ describe("Package Service", () => {
         }
         return Promise.resolve({
           status: 200,
-          data: {
-            titlePreview: {
-              titleId: "retry-title-id",
-              appId: "retry-app-id",
-            },
-          },
+          data: { statusId: "retry-status-id" },
         });
       }
       return Promise.reject(new Error("unexpected url"));
@@ -1982,6 +2026,12 @@ describe("Package Service", () => {
           data: { titlesServiceUrl: "https://test-url" },
         });
       }
+      if (url === "/builder/v1/users/packages/status/retry-builder-status-id") {
+        return Promise.resolve({
+          status: 200,
+          data: { titleId: "retry-builder-title-id", appId: "retry-builder-app-id" },
+        });
+      }
       return Promise.reject(new Error("unexpected get url"));
     });
     vi.spyOn(testAxiosInstance, "post").mockImplementation((url: string) => {
@@ -1994,12 +2044,7 @@ describe("Package Service", () => {
         }
         return Promise.resolve({
           status: 200,
-          data: {
-            titlePreview: {
-              titleId: "retry-builder-title-id",
-              appId: "retry-builder-app-id",
-            },
-          },
+          data: { statusId: "retry-builder-status-id" },
         });
       }
       return Promise.reject(new Error("unexpected url"));
@@ -2083,12 +2128,12 @@ describe("Package Service", () => {
     };
     axiosPostResponses["/builder/v1/users/packages"] = {
       status: 201,
-      data: {
-        titlePreview: {
-          titleId: "test-title-id",
-          appId: "test-app-id",
-        },
-      },
+      data: { statusId: "test-status-id-builder-api" },
+    };
+
+    axiosGetResponses["/builder/v1/users/packages/status/test-status-id-builder-api"] = {
+      status: 200,
+      data: { titleId: "test-title-id", appId: "test-app-id" },
     };
 
     const packageService = new PackageService("https://test-endpoint", logger);
@@ -2106,12 +2151,11 @@ describe("Package Service", () => {
     };
     axiosPostResponses["/builder/v1/users/packages"] = {
       status: 201,
-      data: {
-        titlePreview: {
-          titleId: "test-title-id",
-          appId: "test-app-id",
-        },
-      },
+      data: { statusId: "test-status-id-builder-api" },
+    };
+    axiosGetResponses["/builder/v1/users/packages/status/test-status-id-builder-api"] = {
+      status: 200,
+      data: { titleId: "test-title-id", appId: "test-app-id" },
     };
     axiosGetResponses["/marketplace/v1/users/titles/test-title-id/sharingInfo"] = {
       status: 200,
@@ -2135,12 +2179,12 @@ describe("Package Service", () => {
     };
     axiosPostResponses["/builder/v1/users/packages"] = {
       status: 201,
-      data: {
-        titlePreview: {
-          titleId: "test-title-id",
-          appId: "test-app-id",
-        },
-      },
+      data: { statusId: "test-status-id-builder-api" },
+    };
+
+    axiosGetResponses["/builder/v1/users/packages/status/test-status-id-builder-api"] = {
+      status: 200,
+      data: { titleId: "test-title-id", appId: "test-app-id" },
     };
 
     const packageService = new PackageService("https://test-endpoint", logger);
@@ -2158,12 +2202,12 @@ describe("Package Service", () => {
     };
     axiosPostResponses["/builder/v1/users/packages"] = {
       status: 201,
-      data: {
-        titlePreview: {
-          titleId: "test-title-id",
-          appId: "test-app-id",
-        },
-      },
+      data: { statusId: "test-status-id-builder-api" },
+    };
+
+    axiosGetResponses["/builder/v1/users/packages/status/test-status-id-builder-api"] = {
+      status: 200,
+      data: { titleId: "test-title-id", appId: "test-app-id" },
     };
 
     const packageService = new PackageService("https://test-endpoint", logger);

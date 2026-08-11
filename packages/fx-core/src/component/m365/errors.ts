@@ -17,3 +17,23 @@ export class NotExtendedToM365Error extends UserError {
     });
   }
 }
+
+export interface PackageValidationFailureReason {
+  errorCode: string;
+  errorDetail: string;
+}
+
+export class PackageValidationFailedError extends UserError {
+  constructor(source: string, failureReasons: PackageValidationFailureReason[]) {
+    const reasons = failureReasons
+      .map(({ errorCode, errorDetail }) => `${errorCode}: ${errorDetail}`)
+      .join("\n");
+    super({
+      source,
+      name: "PackageValidationFailed",
+      message: getDefaultString("error.m365.packageService.validationFailed", reasons),
+      displayMessage: getLocalizedString("error.m365.packageService.validationFailed", reasons),
+      helpLink: M365HelpLink,
+    });
+  }
+}
