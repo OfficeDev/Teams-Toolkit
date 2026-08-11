@@ -698,7 +698,7 @@ test("VCB-34: DA API plugin from scratch compiles complete remote branches in au
       "@assertion the Copilot action-consent Allow button is visible.",
       'Click the "Allow" button in the Microsoft 365 Copilot chat interface to grant the agent access.',
       "@assertion the Copilot action-consent Allow button is no longer visible.",
-      '@assertion the current assistant response contains "Oil Change".',
+      '@assertion the current assistant response contains "Oil change".',
     ];
     const runtimeIndexes = runtimeFlow.map((description) =>
       descriptions.indexOf(description),
