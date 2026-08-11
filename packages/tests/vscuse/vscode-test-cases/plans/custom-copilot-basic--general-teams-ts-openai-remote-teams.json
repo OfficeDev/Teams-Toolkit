@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 151,
+    "total_steps": 157,
     "name": "general-teams-ts-openai-remote-teams",
     "description": {
       "owner": "",
@@ -166,7 +166,13 @@
       "step_addAndOpenApp_add_cf58d3877_8_1",
       "step_addAndOpenApp_assertAdded_cf58d3877_8_1",
       "step_addAndOpenApp_open_cf58d3877_8_1",
-      "step_addAndOpenApp_assertReady_cf58d3877_8_1"
+      "step_addAndOpenApp_assertReady_cf58d3877_8_1",
+      "step_sendTeamsMessage_assertInput_cf58d3877_9_1",
+      "step_sendTeamsMessage_focusInput_cf58d3877_9_1",
+      "step_sendTeamsMessage_type_cf58d3877_9_1",
+      "step_sendTeamsMessage_send_cf58d3877_9_1",
+      "step_assertChatReplied_assert_cf58d3877_9_2",
+      "step_assertChatContains_assert_cf58d3877_9_3"
     ],
     "tags": [
       "case_id:general-teams-ts-openai-remote-teams",
@@ -893,7 +899,7 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "${{secret:AZURE_OPENAI_API_KEY}}"
+        "text": "${{secret:FAKE_OPENAI_API_KEY}}"
       },
       "description": "Type the authored value into the active text prompt.",
       "content_refs": [],
@@ -3556,6 +3562,155 @@
         "host_surface:teams",
         "readiness:chat-ready",
         "step_retry_timeout: 180"
+      ]
+    },
+    {
+      "step_id": "step_sendTeamsMessage_assertInput_cf58d3877_9_1",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Teams \"Type a message\" input is visible.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_addAndOpenApp_assertReady_cf58d3877_8_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:teams",
+        "entry_state:chat-ready",
+        "action:send-message",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_sendTeamsMessage_focusInput_cf58d3877_9_1",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 200,
+        "y": 712
+      },
+      "description": "Click the Teams \"Type a message\" input.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_sendTeamsMessage_assertInput_cf58d3877_9_1"
+      ],
+      "preconditions": [
+        "dhash:200:712:16:5:258c421e0d2c2d1c",
+        "dhash:200:712:96:5:0020887362000200",
+        "dhash:200:712:0:10:24b4b08e8e8c81a1"
+      ],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:teams",
+        "entry_state:chat-ready",
+        "action:send-message"
+      ]
+    },
+    {
+      "step_id": "step_sendTeamsMessage_type_cf58d3877_9_1",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "How to develop agent for Teams?"
+      },
+      "description": "Type \"How to develop agent for Teams?\" into the Teams message input.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_sendTeamsMessage_focusInput_cf58d3877_9_1"
+      ],
+      "preconditions": [
+        "dhash:512:384:0:20:24b4b08e8e8c80a9"
+      ],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:teams",
+        "entry_state:chat-ready",
+        "action:send-message"
+      ]
+    },
+    {
+      "step_id": "step_sendTeamsMessage_send_cf58d3877_9_1",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to send the Teams message.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_sendTeamsMessage_type_cf58d3877_9_1"
+      ],
+      "preconditions": [
+        "dhash:512:384:0:20:24b4b08e8e8c80b9"
+      ],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:teams",
+        "entry_state:chat-ready",
+        "action:send-message"
+      ]
+    },
+    {
+      "step_id": "step_assertChatReplied_assert_cf58d3877_9_2",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the current assistant turn is complete and contains a non-empty response.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_sendTeamsMessage_send_cf58d3877_9_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "action:assert-chat-response",
+        "expectation:replied",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_assertChatContains_assert_cf58d3877_9_3",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the current assistant response contains \"The agent encountered an error or bug.\".",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_assertChatReplied_assert_cf58d3877_9_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "action:assert-chat-response",
+        "expectation:contains",
+        "step_retry_timeout: 120"
       ]
     }
   ],

@@ -88,6 +88,100 @@ cases:
         check-rag-custom-api-chat-openai,
       ]
 
+  - id: rag-custom-api-ts-azure-openai-remote-teams
+    scenarioId: SCN-CREATE-RAG-CUSTOM-API-01
+    workItemIds: [28891618]
+    steps:
+      [
+        scaffold-rag-custom-api-ts-azure-openai,
+        check-rag-custom-api-ts-azure-openai,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote,
+        open-app,
+        check-rag-custom-api-chat-node-remote,
+      ]
+
+  - id: rag-custom-api-js-azure-openai-remote-teams
+    scenarioId: SCN-CREATE-RAG-CUSTOM-API-04
+    workItemIds: [28891605]
+    steps:
+      [
+        scaffold-rag-custom-api-js-azure-openai,
+        check-rag-custom-api-js-azure-openai,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote,
+        open-app,
+        check-rag-custom-api-chat-node-remote,
+      ]
+
+  - id: rag-custom-api-py-azure-openai-remote-teams
+    scenarioId: SCN-CREATE-RAG-CUSTOM-API-05
+    workItemIds: [29165758]
+    steps:
+      [
+        scaffold-rag-custom-api-py-azure-openai,
+        check-rag-custom-api-py-azure-openai,
+        create-python-environment,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote,
+        open-app,
+        check-rag-custom-api-chat-python-remote,
+      ]
+
+  - id: rag-custom-api-ts-openai-remote-teams
+    scenarioId: SCN-CREATE-RAG-CUSTOM-API-01
+    workItemIds: [28939523]
+    steps:
+      [
+        scaffold-rag-custom-api-ts-openai-fake-key,
+        check-rag-custom-api-ts-openai,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote,
+        open-app,
+        check-rag-custom-api-chat-openai-remote,
+      ]
+
+  - id: rag-custom-api-js-openai-remote-teams
+    scenarioId: SCN-CREATE-RAG-CUSTOM-API-04
+    workItemIds: [28939529]
+    steps:
+      [
+        scaffold-rag-custom-api-js-openai-fake-key,
+        check-rag-custom-api-js-openai,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote,
+        open-app,
+        check-rag-custom-api-chat-openai-remote,
+      ]
+
+  - id: rag-custom-api-py-azure-openai-playground
+    scenarioId: SCN-CREATE-RAG-CUSTOM-API-05
+    workItemIds: [36231823]
+    steps:
+      [
+        scaffold-rag-custom-api-py-azure-openai,
+        check-rag-custom-api-py-azure-openai,
+        create-python-environment,
+        f5-playground,
+        open-app,
+        check-rag-custom-api-playground-chat,
+      ]
+
 steps:
   scaffold-rag-custom-api-ts-azure-openai:
     type: scaffold
@@ -328,6 +422,66 @@ steps:
           contains: ["openAIKey: process.env.OPENAI_API_KEY"]
           notContains: [azureOpenAIKey]
 
+  scaffold-rag-custom-api-ts-openai-fake-key:
+    type: scaffold
+    with:
+      template: custom-copilot-rag-custom-api
+      answers:
+        - question: projectType
+          value: teams-agent-and-app-type
+        - question: teamsAppType
+          value: custom-copilot-rag
+        - question: customCopilotRag
+          value: custom-copilot-rag-custom-api
+        - question: apiSpecLocation
+          type: text
+          value: https://raw.githubusercontent.com/SLdragon/example-openapi-spec/main/real-no-auth.yaml
+        - question: apiOperations
+          type: multiSelect
+          value: all
+        - question: llmService
+          value: llm-service-openai
+        - question: openAIKey
+          type: text
+          value: "${{secret:FAKE_OPENAI_API_KEY}}"
+        - question: language
+          value: typescript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  scaffold-rag-custom-api-js-openai-fake-key:
+    type: scaffold
+    with:
+      template: custom-copilot-rag-custom-api
+      answers:
+        - question: projectType
+          value: teams-agent-and-app-type
+        - question: teamsAppType
+          value: custom-copilot-rag
+        - question: customCopilotRag
+          value: custom-copilot-rag-custom-api
+        - question: apiSpecLocation
+          type: text
+          value: https://raw.githubusercontent.com/SLdragon/example-openapi-spec/main/real-no-auth.yaml
+        - question: apiOperations
+          type: multiSelect
+          value: all
+        - question: llmService
+          value: llm-service-openai
+        - question: openAIKey
+          type: text
+          value: "${{secret:FAKE_OPENAI_API_KEY}}"
+        - question: language
+          value: javascript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
   scaffold-rag-custom-api-py-azure-openai:
     type: scaffold
     with:
@@ -462,6 +616,13 @@ steps:
     with:
       OPENAI_BASE_URL: "${{env:AZURE_OPENAI_ENDPOINT}}/openai/v1"
 
+  login-azure:
+    type: login
+    with:
+      type: azure
+      account: "${{env:AZURE_ACCOUNT_NAME}}"
+      password: "${{secret:AZURE_ACCOUNT_PASSWORD}}"
+
   login-m365:
     type: login
     with:
@@ -469,10 +630,36 @@ steps:
       account: "${{env:M365_ACCOUNT_NAME}}"
       password: "${{secret:M365_ACCOUNT_PASSWORD}}"
 
+  provision-arm:
+    type: provision
+    with:
+      environment: none
+      arm:
+        targetResourceGroupName: "+ New resource group"
+        newResourceGroupName: "${{var:app_name}}-rg"
+        newResourceGroupLocation: "${{env:RESOURCE_GROUP_REGION}}"
+
+  deploy:
+    type: deploy
+    with:
+      environment: none
+
   f5-teams-local:
     type: target
     with:
       profile: "Debug in Teams (Chrome)"
+      profileSelection: first
+
+  f5-teams-remote:
+    type: target
+    with:
+      profile: "Launch Remote in Teams (Chrome)"
+      profileSelection: first
+
+  f5-playground:
+    type: target
+    with:
+      profile: "Debug in Microsoft 365 Agents Playground"
       profileSelection: first
 
   open-app:
@@ -502,5 +689,39 @@ steps:
       # plans asserted no more than this either.
       - type: chat
         send: List all the repairs
+        expect:
+          replied: true
+
+  check-rag-custom-api-chat-openai-remote:
+    type: checks
+    with:
+      - type: chat
+        send: List all repairs without auth
+        expect:
+          replied: true
+
+  check-rag-custom-api-chat-node-remote:
+    type: checks
+    with:
+      - type: chat
+        send: get repairs assign karin
+        expect:
+          replied: true
+          notContains: ["error"]
+
+  check-rag-custom-api-chat-python-remote:
+    type: checks
+    with:
+      - type: chat
+        send: list all repairs without auth
+        expect:
+          replied: true
+          notContains: ["error"]
+
+  check-rag-custom-api-playground-chat:
+    type: checks
+    with:
+      - type: chat
+        send: get repairs assign Karin
         expect:
           replied: true

@@ -2,8 +2,8 @@ version: 1
 
 # Every LLM service and language reaches a local Teams launch, because those
 # dimensions change the rendered data source, config module, and local
-# lifecycle. One Python OpenAI case samples the local Copilot surface without
-# recreating the legacy Cartesian product across equivalent launch profiles.
+# lifecycle. Retained local Copilot plans reuse the same language and LLM
+# scaffold branches with the Copilot feature flag declared by each case.
 cases:
   - id: rag-customize-ts-azure-openai-local-teams
     scenarioId: SCN-CREATE-RAG-CUSTOMIZE-01
@@ -105,7 +105,323 @@ cases:
         login-m365,
         f5-copilot-local,
         open-agent,
-        check-rag-customize-chat-openai,
+        check-rag-customize-copilot-chat-openai,
+      ]
+
+  - id: rag-customize-ts-openai-local-copilot
+    scenarioId: SCN-CREATE-RAG-CUSTOMIZE-01
+    workItemIds: [36031897]
+    featureFlags:
+      - TEAMSFX_CEA_ENABLED=true
+    steps:
+      [
+        scaffold-rag-customize-ts-openai,
+        check-rag-customize-ts-openai,
+        check-rag-customize-copilot-launch,
+        redirect-openai-base-url,
+        login-m365,
+        f5-copilot-local,
+        open-agent,
+        check-rag-customize-copilot-chat-openai,
+      ]
+
+  - id: rag-customize-js-openai-local-copilot
+    scenarioId: SCN-CREATE-RAG-CUSTOMIZE-03
+    workItemIds: [36031895]
+    featureFlags:
+      - TEAMSFX_CEA_ENABLED=true
+    steps:
+      [
+        scaffold-rag-customize-js-openai,
+        check-rag-customize-js-openai,
+        check-rag-customize-copilot-launch,
+        redirect-openai-base-url,
+        login-m365,
+        f5-copilot-local,
+        open-agent,
+        check-rag-customize-copilot-chat-openai,
+      ]
+
+  - id: rag-customize-ts-azure-openai-local-copilot
+    scenarioId: SCN-CREATE-RAG-CUSTOMIZE-01
+    workItemIds: [36048259]
+    featureFlags:
+      - TEAMSFX_CEA_ENABLED=true
+    steps:
+      [
+        scaffold-rag-customize-ts-azure-openai,
+        check-rag-customize-ts-azure-openai,
+        check-rag-customize-copilot-launch,
+        login-m365,
+        f5-copilot-local,
+        open-agent,
+        check-rag-customize-copilot-chat,
+      ]
+
+  - id: rag-customize-js-azure-openai-local-copilot
+    scenarioId: SCN-CREATE-RAG-CUSTOMIZE-03
+    workItemIds: [36048248]
+    featureFlags:
+      - TEAMSFX_CEA_ENABLED=true
+    steps:
+      [
+        scaffold-rag-customize-js-azure-openai,
+        check-rag-customize-js-azure-openai,
+        check-rag-customize-copilot-launch,
+        login-m365,
+        f5-copilot-local,
+        open-agent,
+        check-rag-customize-copilot-chat,
+      ]
+
+  - id: rag-customize-py-azure-openai-local-copilot
+    scenarioId: SCN-CREATE-RAG-CUSTOMIZE-04
+    workItemIds: [36048572]
+    featureFlags:
+      - TEAMSFX_CEA_ENABLED=true
+    steps:
+      [
+        scaffold-rag-customize-py-azure-openai,
+        check-rag-customize-py-azure-openai,
+        check-rag-customize-copilot-launch,
+        create-python-environment,
+        login-m365,
+        f5-copilot-local,
+        open-agent,
+        check-rag-customize-copilot-chat,
+      ]
+
+  - id: rag-customize-ts-openai-remote-copilot
+    scenarioId: SCN-CREATE-RAG-CUSTOMIZE-01
+    workItemIds: [36031917]
+    featureFlags:
+      - TEAMSFX_CEA_ENABLED=true
+    steps:
+      [
+        scaffold-rag-customize-ts-openai-fake-key,
+        check-rag-customize-ts-openai,
+        check-rag-customize-copilot-remote-launch,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-copilot-remote,
+        open-agent,
+        check-rag-customize-copilot-chat-openai,
+      ]
+
+  - id: rag-customize-js-openai-remote-copilot
+    scenarioId: SCN-CREATE-RAG-CUSTOMIZE-03
+    workItemIds: [36031915]
+    featureFlags:
+      - TEAMSFX_CEA_ENABLED=true
+    steps:
+      [
+        scaffold-rag-customize-js-openai-fake-key,
+        check-rag-customize-js-openai,
+        check-rag-customize-copilot-remote-launch,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-copilot-remote,
+        open-agent,
+        check-rag-customize-copilot-chat-openai,
+      ]
+
+  - id: rag-customize-py-openai-remote-copilot
+    scenarioId: SCN-CREATE-RAG-CUSTOMIZE-04
+    workItemIds: [36031923]
+    featureFlags:
+      - TEAMSFX_CEA_ENABLED=true
+    steps:
+      [
+        scaffold-rag-customize-py-openai-fake-key,
+        check-rag-customize-py-openai,
+        check-rag-customize-copilot-remote-launch,
+        create-python-environment,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-copilot-remote,
+        open-agent,
+        check-rag-customize-copilot-chat-openai,
+      ]
+
+  - id: rag-customize-ts-azure-openai-remote-copilot
+    scenarioId: SCN-CREATE-RAG-CUSTOMIZE-01
+    workItemIds: [36048528]
+    featureFlags:
+      - TEAMSFX_CEA_ENABLED=true
+    steps:
+      [
+        scaffold-rag-customize-ts-azure-openai,
+        check-rag-customize-ts-azure-openai,
+        check-rag-customize-copilot-remote-launch,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-copilot-remote,
+        open-agent,
+        check-rag-customize-copilot-chat,
+      ]
+
+  - id: rag-customize-js-azure-openai-remote-copilot
+    scenarioId: SCN-CREATE-RAG-CUSTOMIZE-03
+    workItemIds: [36048277]
+    featureFlags:
+      - TEAMSFX_CEA_ENABLED=true
+    steps:
+      [
+        scaffold-rag-customize-js-azure-openai,
+        check-rag-customize-js-azure-openai,
+        check-rag-customize-copilot-remote-launch,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-copilot-remote,
+        open-agent,
+        check-rag-customize-copilot-chat,
+      ]
+
+  - id: rag-customize-py-azure-openai-remote-copilot
+    scenarioId: SCN-CREATE-RAG-CUSTOMIZE-04
+    workItemIds: [36048992]
+    featureFlags:
+      - TEAMSFX_CEA_ENABLED=true
+    steps:
+      [
+        scaffold-rag-customize-py-azure-openai,
+        check-rag-customize-py-azure-openai,
+        check-rag-customize-copilot-remote-launch,
+        create-python-environment,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-copilot-remote,
+        open-agent,
+        check-rag-customize-copilot-chat,
+      ]
+
+  - id: rag-customize-ts-openai-remote-teams
+    scenarioId: SCN-CREATE-RAG-CUSTOMIZE-01
+    workItemIds: [36020780]
+    steps:
+      [
+        scaffold-rag-customize-ts-openai-fake-key,
+        check-rag-customize-ts-openai,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote,
+        open-app,
+        check-rag-customize-chat-openai-remote-teams,
+      ]
+
+  - id: rag-customize-js-openai-remote-teams
+    scenarioId: SCN-CREATE-RAG-CUSTOMIZE-03
+    workItemIds: [36022420]
+    steps:
+      [
+        scaffold-rag-customize-js-openai-fake-key,
+        check-rag-customize-js-openai,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote,
+        open-app,
+        check-rag-customize-chat-openai-remote-teams,
+      ]
+
+  - id: rag-customize-ts-azure-openai-remote-teams
+    scenarioId: SCN-CREATE-RAG-CUSTOMIZE-01
+    workItemIds: [27569142]
+    steps:
+      [
+        scaffold-rag-customize-ts-azure-openai,
+        check-rag-customize-ts-azure-openai,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote,
+        open-app,
+        check-rag-customize-chat-azure-openai-remote-teams,
+      ]
+
+  - id: rag-customize-js-azure-openai-remote-teams
+    scenarioId: SCN-CREATE-RAG-CUSTOMIZE-03
+    workItemIds: [27569147]
+    steps:
+      [
+        scaffold-rag-customize-js-azure-openai,
+        check-rag-customize-js-azure-openai,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote,
+        open-app,
+        check-rag-customize-chat-azure-openai-remote-teams,
+      ]
+
+  - id: rag-customize-py-azure-openai-remote-teams
+    scenarioId: SCN-CREATE-RAG-CUSTOMIZE-04
+    workItemIds: [27178092]
+    steps:
+      [
+        scaffold-rag-customize-py-azure-openai,
+        check-rag-customize-py-azure-openai,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote,
+        open-app,
+        check-rag-customize-chat-python-remote-teams,
+      ]
+
+  - id: rag-customize-ts-azure-openai-playground
+    scenarioId: SCN-CREATE-RAG-CUSTOMIZE-01
+    workItemIds: [36230313]
+    steps:
+      [
+        scaffold-rag-customize-ts-azure-openai,
+        check-rag-customize-ts-azure-openai,
+        f5-playground,
+        open-app,
+        check-rag-customize-playground-chat,
+      ]
+
+  - id: rag-customize-js-azure-openai-playground
+    scenarioId: SCN-CREATE-RAG-CUSTOMIZE-03
+    workItemIds: [36229473]
+    steps:
+      [
+        scaffold-rag-customize-js-azure-openai,
+        check-rag-customize-js-azure-openai,
+        f5-playground,
+        open-app,
+        check-rag-customize-playground-chat,
+      ]
+
+  - id: rag-customize-py-azure-openai-playground
+    scenarioId: SCN-CREATE-RAG-CUSTOMIZE-04
+    workItemIds: [36231322]
+    steps:
+      [
+        scaffold-rag-customize-py-azure-openai,
+        check-rag-customize-py-azure-openai,
+        create-python-environment,
+        f5-playground,
+        open-app,
+        check-rag-customize-playground-chat,
       ]
 
 steps:
@@ -452,6 +768,78 @@ steps:
           contains:
             [microsoft-teams-apps, microsoft.teams.ai, microsoft.teams.openai]
 
+  scaffold-rag-customize-ts-openai-fake-key:
+    type: scaffold
+    with:
+      template: custom-copilot-rag-customize
+      answers:
+        - question: projectType
+          value: teams-agent-and-app-type
+        - question: teamsAppType
+          value: custom-copilot-rag
+        - question: customCopilotRag
+          value: custom-copilot-rag-customize
+        - question: llmService
+          value: llm-service-openai
+        - question: openAIKey
+          type: text
+          value: "${{secret:FAKE_OPENAI_API_KEY}}"
+        - question: language
+          value: typescript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  scaffold-rag-customize-js-openai-fake-key:
+    type: scaffold
+    with:
+      template: custom-copilot-rag-customize
+      answers:
+        - question: projectType
+          value: teams-agent-and-app-type
+        - question: teamsAppType
+          value: custom-copilot-rag
+        - question: customCopilotRag
+          value: custom-copilot-rag-customize
+        - question: llmService
+          value: llm-service-openai
+        - question: openAIKey
+          type: text
+          value: "${{secret:FAKE_OPENAI_API_KEY}}"
+        - question: language
+          value: javascript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  scaffold-rag-customize-py-openai-fake-key:
+    type: scaffold
+    with:
+      template: custom-copilot-rag-customize
+      answers:
+        - question: projectType
+          value: teams-agent-and-app-type
+        - question: teamsAppType
+          value: custom-copilot-rag
+        - question: customCopilotRag
+          value: custom-copilot-rag-customize
+        - question: llmService
+          value: llm-service-openai
+        - question: openAIKey
+          type: text
+          value: "${{secret:FAKE_OPENAI_API_KEY}}"
+        - question: language
+          value: python
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
   # The Copilot launch profiles render only when the feature flag the case
   # declares is set before VS Code starts.
   check-rag-customize-copilot-launch:
@@ -461,6 +849,14 @@ steps:
         path: .vscode/launch.json
         expect:
           contains: ["Debug in Copilot (Chrome)"]
+
+  check-rag-customize-copilot-remote-launch:
+    type: checks
+    with:
+      - type: file
+        path: .vscode/launch.json
+        expect:
+          contains: ["Launch Remote in Copilot (Chrome)"]
 
   create-python-environment:
     type: pythonEnvironment
@@ -474,12 +870,33 @@ steps:
     with:
       OPENAI_BASE_URL: "${{env:AZURE_OPENAI_ENDPOINT}}/openai/v1"
 
+  login-azure:
+    type: login
+    with:
+      type: azure
+      account: "${{env:AZURE_ACCOUNT_NAME}}"
+      password: "${{secret:AZURE_ACCOUNT_PASSWORD}}"
+
   login-m365:
     type: login
     with:
       type: m365
       account: "${{env:M365_ACCOUNT_NAME}}"
       password: "${{secret:M365_ACCOUNT_PASSWORD}}"
+
+  provision-arm:
+    type: provision
+    with:
+      environment: none
+      arm:
+        targetResourceGroupName: "+ New resource group"
+        newResourceGroupName: "${{var:app_name}}-rg"
+        newResourceGroupLocation: "${{env:RESOURCE_GROUP_REGION}}"
+
+  deploy:
+    type: deploy
+    with:
+      environment: none
 
   f5-teams-local:
     type: target
@@ -491,6 +908,24 @@ steps:
     type: target
     with:
       profile: "Debug in Copilot (Chrome)"
+      profileSelection: first
+
+  f5-copilot-remote:
+    type: target
+    with:
+      profile: "Launch Remote in Copilot (Chrome)"
+      profileSelection: first
+
+  f5-teams-remote:
+    type: target
+    with:
+      profile: "Launch Remote in Teams (Chrome)"
+      profileSelection: first
+
+  f5-playground:
+    type: target
+    with:
+      profile: "Debug in Microsoft 365 Agents Playground"
       profileSelection: first
 
   open-app:
@@ -526,5 +961,59 @@ steps:
       # plans asserted no more than this either.
       - type: chat
         send: What is included in the Contoso Electronics PerksPlus program?
+        expect:
+          replied: true
+
+  check-rag-customize-chat-openai-remote-teams:
+    type: checks
+    with:
+      - type: chat
+        send: Compare Contoso Electronics plan
+        expect:
+          replied: true
+
+  check-rag-customize-chat-azure-openai-remote-teams:
+    type: checks
+    with:
+      - type: chat
+        send: Compare Contoso Electronics plan
+        expect:
+          replied: true
+          notContains: ["error"]
+
+  check-rag-customize-chat-python-remote-teams:
+    type: checks
+    with:
+      - type: chat
+        send: List Contoso history in table
+        expect:
+          contains: ["1985"]
+
+  check-rag-customize-copilot-chat:
+    type: checks
+    with:
+      - type: chat
+        send: Tell me the history of Contoso Electronics, format in a table.
+        expect:
+          replied: true
+          notContains: ["error"]
+
+  check-rag-customize-copilot-chat-openai:
+    type: checks
+    with:
+      - type: chat
+        send: How to develop agent for Teams?
+        expect:
+          replied: true
+
+  check-rag-customize-playground-chat:
+    type: checks
+    with:
+      - type: chat
+        send: hi
+        expect:
+          replied: true
+      - type: chat
+        send: List Contoso history in table
         expect:
           replied: true

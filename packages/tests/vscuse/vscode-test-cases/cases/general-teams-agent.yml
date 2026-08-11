@@ -2,9 +2,9 @@ version: 1
 
 # Teams remote and local launches cover the complete LLM x language matrix,
 # because those dimensions change the rendered package and lifecycle. Azure
-# OpenAI covers Playground in every language, while one TypeScript combination
-# samples Copilot remote and local without recreating the legacy Cartesian
-# product across equivalent launch profiles.
+# OpenAI covers Playground in every language, while Azure OpenAI covers Copilot
+# remote and local in every language so retained legacy scenarios each have a
+# one-to-one generated replacement.
 cases:
   - id: general-teams-ts-azure-openai-remote-teams
     scenarioId: SCN-CREATE-CUSTOM-COPILOT-BASIC-01
@@ -123,6 +123,39 @@ cases:
         check-general-chat,
       ]
 
+  - id: general-teams-js-azure-openai-remote-copilot
+    scenarioId: SCN-CREATE-CUSTOM-COPILOT-BASIC-03
+    workItemIds: [36033116]
+    featureFlags:
+      - TEAMSFX_CEA_ENABLED=true
+    steps:
+      [
+        scaffold-general-js-azure-openai,
+        check-general-js-azure-openai,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-copilot-remote,
+        open-agent,
+        check-general-chat,
+      ]
+
+  - id: general-teams-js-azure-openai-local-copilot
+    scenarioId: SCN-CREATE-CUSTOM-COPILOT-BASIC-03
+    workItemIds: [36031468]
+    featureFlags:
+      - TEAMSFX_CEA_ENABLED=true
+    steps:
+      [
+        scaffold-general-js-azure-openai,
+        check-general-js-azure-openai,
+        login-m365,
+        f5-copilot-local,
+        open-agent,
+        check-general-chat,
+      ]
+
   - id: general-teams-py-azure-openai-remote-teams
     scenarioId: SCN-CREATE-CUSTOM-COPILOT-BASIC-04
     workItemIds: [27551399]
@@ -167,15 +200,49 @@ cases:
         check-general-chat,
       ]
 
-  # OpenAI remote cases stop after launch. The generated remote infrastructure
-  # carries only the key, while local cases can redirect the OpenAI client to an
-  # Azure OpenAI v1 endpoint and assert a real completion.
+  - id: general-teams-py-azure-openai-remote-copilot
+    scenarioId: SCN-CREATE-CUSTOM-COPILOT-BASIC-04
+    workItemIds: [36033322]
+    featureFlags:
+      - TEAMSFX_CEA_ENABLED=true
+    steps:
+      [
+        scaffold-general-py-azure-openai,
+        check-general-py-azure-openai,
+        create-python-environment,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-copilot-remote,
+        open-agent,
+        check-general-chat,
+      ]
+
+  - id: general-teams-py-azure-openai-local-copilot
+    scenarioId: SCN-CREATE-CUSTOM-COPILOT-BASIC-04
+    workItemIds: [36033211]
+    featureFlags:
+      - TEAMSFX_CEA_ENABLED=true
+    steps:
+      [
+        scaffold-general-py-azure-openai,
+        check-general-py-azure-openai,
+        create-python-environment,
+        login-m365,
+        f5-copilot-local,
+        open-agent,
+        check-general-chat,
+      ]
+
+  # Remote cases preserve the legacy fake-key error path. Local cases redirect
+  # the OpenAI client to an Azure OpenAI v1 endpoint and use its real key.
   - id: general-teams-ts-openai-remote-teams
     scenarioId: SCN-CREATE-CUSTOM-COPILOT-BASIC-01
     workItemIds: [27042831]
     steps:
       [
-        scaffold-general-ts-openai,
+        scaffold-general-ts-openai-fake-key,
         check-general-ts-openai,
         login-azure,
         login-m365,
@@ -183,6 +250,7 @@ cases:
         deploy,
         f5-teams-remote-node,
         open-app,
+        check-general-chat-openai-remote,
       ]
 
   - id: general-teams-ts-openai-local-teams
@@ -204,7 +272,7 @@ cases:
     workItemIds: [27042829]
     steps:
       [
-        scaffold-general-js-openai,
+        scaffold-general-js-openai-fake-key,
         check-general-js-openai,
         login-azure,
         login-m365,
@@ -212,6 +280,7 @@ cases:
         deploy,
         f5-teams-remote-node,
         open-app,
+        check-general-chat-openai-remote,
       ]
 
   - id: general-teams-js-openai-local-teams
@@ -233,7 +302,7 @@ cases:
     workItemIds: [27551403]
     steps:
       [
-        scaffold-general-py-openai,
+        scaffold-general-py-openai-fake-key,
         check-general-py-openai,
         create-python-environment,
         login-azure,
@@ -242,6 +311,7 @@ cases:
         deploy,
         f5-teams-remote-python,
         open-app,
+        send-general-chat-openai-remote,
       ]
 
   - id: general-teams-py-openai-local-teams
@@ -632,6 +702,72 @@ steps:
         expect:
           exists: false
 
+  scaffold-general-ts-openai-fake-key:
+    type: scaffold
+    with:
+      template: custom-copilot-basic
+      answers:
+        - question: projectType
+          value: teams-agent-and-app-type
+        - question: teamsAppType
+          value: custom-copilot-basic
+        - question: llmService
+          value: llm-service-openai
+        - question: openAIKey
+          type: text
+          value: "${{secret:FAKE_OPENAI_API_KEY}}"
+        - question: language
+          value: typescript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  scaffold-general-js-openai-fake-key:
+    type: scaffold
+    with:
+      template: custom-copilot-basic
+      answers:
+        - question: projectType
+          value: teams-agent-and-app-type
+        - question: teamsAppType
+          value: custom-copilot-basic
+        - question: llmService
+          value: llm-service-openai
+        - question: openAIKey
+          type: text
+          value: "${{secret:FAKE_OPENAI_API_KEY}}"
+        - question: language
+          value: javascript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  scaffold-general-py-openai-fake-key:
+    type: scaffold
+    with:
+      template: custom-copilot-basic
+      answers:
+        - question: projectType
+          value: teams-agent-and-app-type
+        - question: teamsAppType
+          value: custom-copilot-basic
+        - question: llmService
+          value: llm-service-openai
+        - question: openAIKey
+          type: text
+          value: "${{secret:FAKE_OPENAI_API_KEY}}"
+        - question: language
+          value: python
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
   create-python-environment:
     type: pythonEnvironment
     with:
@@ -725,3 +861,17 @@ steps:
         send: How to develop agent for Teams?
         expect:
           replied: true
+
+  check-general-chat-openai-remote:
+    type: checks
+    with:
+      - type: chat
+        send: How to develop agent for Teams?
+        expect:
+          contains: ["The agent encountered an error or bug."]
+
+  send-general-chat-openai-remote:
+    type: checks
+    with:
+      - type: chat
+        send: How to develop agent for Teams?
