@@ -279,11 +279,11 @@ export class PackageService {
       if (!statusId) {
         throw new Error("Missing statusId in package upload response.");
       }
-      this.logger?.debug(`Acquiring package with statusId: ${statusId as string} ...`);
+      this.logger?.debug(`Acquiring package with statusId: ${statusId} ...`);
 
       do {
         const statusResponse = await this.axiosInstance.get(
-          `/builder/v1/users/packages/status/${statusId as string}`,
+          `/builder/v1/users/packages/status/${statusId}`,
           {
             baseURL: serviceUrl,
             headers: { Authorization: `Bearer ${token}` },
