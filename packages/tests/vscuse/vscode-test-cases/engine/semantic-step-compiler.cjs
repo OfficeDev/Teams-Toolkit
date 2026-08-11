@@ -390,7 +390,7 @@ const teamsPageSubject =
 const teamsAppDetailsSubject =
   "the Microsoft Teams app details page for an app whose name starts with ${{var:app_name}} is visible";
 const copilotAgentSubject =
-  "Microsoft 365 Copilot shows an agent selected in the Agents list and that agent's chat open in the main section with a visible message input";
+  "Microsoft 365 Copilot shows an agent's chat open in the main section with a visible message input";
 const targetAdapters = {
   // Every Chrome launch configuration the templates ship omits `userDataDir`, so
   // js-debug hands the session a profile of its own that carries no Microsoft 365
