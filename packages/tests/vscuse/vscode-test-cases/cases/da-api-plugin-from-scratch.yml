@@ -183,7 +183,7 @@ steps:
         send: show repair records assigned to karin blair
         allowAction: true
         expect:
-          contains: ["Oil Change"]
+          contains: ["Oil change"]
 
   scaffold-js:
     type: scaffold
