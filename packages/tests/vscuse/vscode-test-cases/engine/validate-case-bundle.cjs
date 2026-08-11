@@ -25,6 +25,7 @@ const allowedStepTypes = new Set([
   "localEnvironment",
   "localUserEnvironment",
   "removeWorkspaceFile",
+  "configureTypeSpecAction",
   "target",
   "open",
   "checks",

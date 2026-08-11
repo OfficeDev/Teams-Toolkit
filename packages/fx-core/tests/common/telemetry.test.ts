@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import { afterEach, assert } from "vitest";
+import { UserError } from "@microsoft/teamsfx-api";
 import { TelemetryProperty, telemetryUtils } from "../../src/common/telemetry";
 import { ScriptExecutionError } from "../../src/error/script";
 
@@ -57,6 +58,25 @@ describe("telemetry", () => {
       };
       telemetryUtils.fillInErrorProperties(props, fxError);
       assert.equal(props[TelemetryProperty.ErrorMessage], "");
+    });
+
+    it("excludes the local display message from telemetry", () => {
+      const props: Record<string, string> = {};
+      const localPath = "C:\\Users\\test\\outside.txt";
+      const error = new UserError({
+        source: "test",
+        name: "LocalDiagnosticError",
+        message: "The file reference is outside the manifest directory.",
+        displayMessage: `The file reference resolves to "${localPath}".`,
+      });
+
+      telemetryUtils.fillInErrorProperties(props, error);
+
+      assert.equal(
+        props[TelemetryProperty.ErrorMessage],
+        "The file reference is outside the manifest directory."
+      );
+      assert.notInclude(props[TelemetryProperty.ErrorMessage], localPath);
     });
   });
 });

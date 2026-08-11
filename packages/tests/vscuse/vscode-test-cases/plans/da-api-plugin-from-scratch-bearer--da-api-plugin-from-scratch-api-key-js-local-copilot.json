@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 100,
+    "total_steps": 108,
     "name": "da-api-plugin-from-scratch-api-key-js-local-copilot",
     "description": {
       "owner": "",
@@ -72,7 +72,15 @@
       "step_checkWorkspaceFiles_verify_ccd5883c8_2_6",
       "step_checkWorkspaceFiles_verify_ccd5883c8_2_7",
       "step_checkWorkspaceFiles_verify_ccd5883c8_2_8",
-      "step_setLocalUserEnvironmentVariable_ccd5883c8_3_1",
+      "step_setLocalUserEnvironmentVariable_openTerminal_ccd5883c8_3_1",
+      "step_setLocalUserEnvironmentVariable_assertTerminal_ccd5883c8_3_1",
+      "step_setLocalUserEnvironmentVariable_typeCommand_ccd5883c8_3_1",
+      "step_setLocalUserEnvironmentVariable_runCommand_ccd5883c8_3_1",
+      "step_setLocalUserEnvironmentVariable_typeValue_ccd5883c8_3_1",
+      "step_setLocalUserEnvironmentVariable_submitValue_ccd5883c8_3_1",
+      "step_setLocalUserEnvironmentVariable_assertUpdated_ccd5883c8_3_1",
+      "step_setLocalUserEnvironmentVariable_closeTerminal_ccd5883c8_3_1",
+      "step_setLocalUserEnvironmentVariable_assertClosed_ccd5883c8_3_1",
       "step_executeCommand_open_ccd5883c8_4_1",
       "step_executeCommand_assertPalette_ccd5883c8_4_1",
       "step_executeCommand_filter_ccd5883c8_4_1",
@@ -1350,13 +1358,13 @@
       ]
     },
     {
-      "step_id": "step_setLocalUserEnvironmentVariable_ccd5883c8_3_1",
-      "agent": "code",
-      "tool": "",
+      "step_id": "step_setLocalUserEnvironmentVariable_openTerminal_ccd5883c8_3_1",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
       "parameters": {
-        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" VARIABLE_NAME=\"SECRET_API_KEY\" VARIABLE_VALUE=\"${{var:app_name}}-api-key\" python3 - <<'PY'\nimport os\nfrom pathlib import Path\n\nenvironment_file = Path(os.environ[\"PROJECT_DIR\"]).resolve() / \"env\" / \".env.local.user\"\nname = os.environ[\"VARIABLE_NAME\"]\nvalue = os.environ[\"VARIABLE_VALUE\"]\nif not value:\n    raise AssertionError(\"The variable value resolved to nothing\")\nlines = environment_file.read_text(encoding=\"utf-8\").splitlines()\nprefix = name + \"=\"\nmatches = [index for index, line in enumerate(lines) if line.startswith(prefix)]\nif len(matches) != 1:\n    raise AssertionError(\"The local user environment variable must already exist exactly once\")\nexpected = name + \"='\" + value + \"'\"\nlines[matches[0]] = expected\nenvironment_file.write_text(\"\\n\".join(lines) + \"\\n\", encoding=\"utf-8\")\nwritten = [line for line in environment_file.read_text(encoding=\"utf-8\").splitlines() if line.startswith(prefix)]\nif written != [expected]:\n    raise AssertionError(\"The local user environment variable was not written exactly once with its value\")\nPY\n```"
+        "keys": "ctrl+shift+~"
       },
-      "description": "@code set SECRET_API_KEY in env/.env.local.user to exactly the value the reference script assigns, without logging that value.",
+      "description": "Open a new integrated terminal in Visual Studio Code with Ctrl+Shift+~.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1368,8 +1376,180 @@
       "postconditions": [],
       "tags": [
         "component:workspace",
+        "operation:local-user-environment"
+      ]
+    },
+    {
+      "step_id": "step_setLocalUserEnvironmentVariable_assertTerminal_ccd5883c8_3_1",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion a new VS Code integrated terminal is visible and focused with a Bash shell prompt ready for input.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_setLocalUserEnvironmentVariable_openTerminal_ccd5883c8_3_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:workspace",
+        "operation:local-user-environment",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_setLocalUserEnvironmentVariable_typeCommand_ccd5883c8_3_1",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "read -rs VARIABLE_VALUE && PROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" VARIABLE_NAME=\"SECRET_API_KEY\" VARIABLE_VALUE=\"$VARIABLE_VALUE\" python3 -c 'import base64;exec(base64.b64decode(\"aW1wb3J0IG9zCmZyb20gcGF0aGxpYiBpbXBvcnQgUGF0aAoKZW52aXJvbm1lbnRfZmlsZSA9IFBhdGgob3MuZW52aXJvblsiUFJPSkVDVF9ESVIiXSkucmVzb2x2ZSgpIC8gImVudiIgLyAiLmVudi5sb2NhbC51c2VyIgpuYW1lID0gb3MuZW52aXJvblsiVkFSSUFCTEVfTkFNRSJdCnZhbHVlID0gb3MuZW52aXJvblsiVkFSSUFCTEVfVkFMVUUiXQppZiBub3QgdmFsdWU6CiAgcmFpc2UgQXNzZXJ0aW9uRXJyb3IoIlRoZSB2YXJpYWJsZSB2YWx1ZSByZXNvbHZlZCB0byBub3RoaW5nIikKbGluZXMgPSBlbnZpcm9ubWVudF9maWxlLnJlYWRfdGV4dChlbmNvZGluZz0idXRmLTgiKS5zcGxpdGxpbmVzKCkKcHJlZml4ID0gbmFtZSArICI9IgptYXRjaGVzID0gW2luZGV4IGZvciBpbmRleCwgbGluZSBpbiBlbnVtZXJhdGUobGluZXMpIGlmIGxpbmUuc3RhcnRzd2l0aChwcmVmaXgpXQppZiBsZW4obWF0Y2hlcykgIT0gMToKICByYWlzZSBBc3NlcnRpb25FcnJvcigiVGhlIGxvY2FsIHVzZXIgZW52aXJvbm1lbnQgdmFyaWFibGUgbXVzdCBhbHJlYWR5IGV4aXN0IGV4YWN0bHkgb25jZSIpCmV4cGVjdGVkID0gbmFtZSArICI9JyIgKyB2YWx1ZSArICInIgpsaW5lc1ttYXRjaGVzWzBdXSA9IGV4cGVjdGVkCmVudmlyb25tZW50X2ZpbGUud3JpdGVfdGV4dCgiXG4iLmpvaW4obGluZXMpICsgIlxuIiwgZW5jb2Rpbmc9InV0Zi04IikKd3JpdHRlbiA9IFtsaW5lIGZvciBsaW5lIGluIGVudmlyb25tZW50X2ZpbGUucmVhZF90ZXh0KGVuY29kaW5nPSJ1dGYtOCIpLnNwbGl0bGluZXMoKSBpZiBsaW5lLnN0YXJ0c3dpdGgocHJlZml4KV0KaWYgd3JpdHRlbiAhPSBbZXhwZWN0ZWRdOgogIHJhaXNlIEFzc2VydGlvbkVycm9yKCJUaGUgbG9jYWwgdXNlciBlbnZpcm9ubWVudCB2YXJpYWJsZSB3YXMgbm90IHdyaXR0ZW4gZXhhY3RseSBvbmNlIHdpdGggaXRzIHZhbHVlIikK\"))' && printf '\\nVSCUSE_LOCAL_USER_ENVIRONMENT_%s\\n' UPDATED"
+      },
+      "description": "Type the compiler-owned SECRET_API_KEY mutation command into the active integrated terminal.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_setLocalUserEnvironmentVariable_assertTerminal_ccd5883c8_3_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:workspace",
+        "operation:local-user-environment"
+      ]
+    },
+    {
+      "step_id": "step_setLocalUserEnvironmentVariable_runCommand_ccd5883c8_3_1",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to run the SECRET_API_KEY mutation command and begin hidden value input.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_setLocalUserEnvironmentVariable_typeCommand_ccd5883c8_3_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:workspace",
+        "operation:local-user-environment"
+      ]
+    },
+    {
+      "step_id": "step_setLocalUserEnvironmentVariable_typeValue_ccd5883c8_3_1",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{var:app_name}}-api-key"
+      },
+      "description": "Type the resolved SECRET_API_KEY value into the Bash read command, which does not echo the value.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_setLocalUserEnvironmentVariable_runCommand_ccd5883c8_3_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:workspace",
+        "operation:local-user-environment"
+      ]
+    },
+    {
+      "step_id": "step_setLocalUserEnvironmentVariable_submitValue_ccd5883c8_3_1",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to submit the hidden SECRET_API_KEY value and finish the verified mutation.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_setLocalUserEnvironmentVariable_typeValue_ccd5883c8_3_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:workspace",
+        "operation:local-user-environment"
+      ]
+    },
+    {
+      "step_id": "step_setLocalUserEnvironmentVariable_assertUpdated_ccd5883c8_3_1",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the VS Code integrated terminal visibly shows the exact text VSCUSE_LOCAL_USER_ENVIRONMENT_UPDATED on a standalone line, followed by a Bash shell prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_setLocalUserEnvironmentVariable_submitValue_ccd5883c8_3_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:workspace",
         "operation:local-user-environment",
         "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_setLocalUserEnvironmentVariable_closeTerminal_ccd5883c8_3_1",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+`"
+      },
+      "description": "Close the verified integrated terminal with Ctrl+`.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_setLocalUserEnvironmentVariable_assertUpdated_ccd5883c8_3_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:workspace",
+        "operation:local-user-environment"
+      ]
+    },
+    {
+      "step_id": "step_setLocalUserEnvironmentVariable_assertClosed_ccd5883c8_3_1",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the integrated terminal panel is no longer visible and the Visual Studio Code workbench is ready.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_setLocalUserEnvironmentVariable_closeTerminal_ccd5883c8_3_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:workspace",
+        "operation:local-user-environment",
+        "step_retry_timeout: 30"
       ]
     },
     {
@@ -1385,7 +1565,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_setLocalUserEnvironmentVariable_ccd5883c8_3_1"
+        "step_setLocalUserEnvironmentVariable_assertClosed_ccd5883c8_3_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2118,7 +2298,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot.",
+      "description": "@assertion Microsoft 365 Copilot shows an agent selected in the Agents list and that agent's chat open in the main section with a visible message input.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -2161,7 +2341,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the Microsoft 365 Copilot message input is visible on a page for an agent whose name starts with ${{var:app_name}}.",
+      "description": "@assertion the Microsoft 365 Copilot message input is visible in the open agent chat.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -2282,8 +2462,8 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 340,
-        "y": 354
+        "x": 333,
+        "y": 327
       },
       "description": "Click the \"Allow\" button in the Microsoft 365 Copilot chat interface to grant the agent access.",
       "content_refs": [],

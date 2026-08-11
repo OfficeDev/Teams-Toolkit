@@ -17,6 +17,57 @@ const provisionInputGroups = new Set(["apiKey", "arm", "oauth"]);
 const provisionEnvironmentInput = "environment";
 const provisionEnvironmentSkipValue = "none";
 const copilotLaunchFeatureFlag = "TEAMSFX_CEA_ENABLED=true";
+const localUserEnvironmentMutationScript = String.raw`import os
+from pathlib import Path
+
+environment_file = Path(os.environ["PROJECT_DIR"]).resolve() / "env" / ".env.local.user"
+name = os.environ["VARIABLE_NAME"]
+value = os.environ["VARIABLE_VALUE"]
+if not value:
+  raise AssertionError("The variable value resolved to nothing")
+lines = environment_file.read_text(encoding="utf-8").splitlines()
+prefix = name + "="
+matches = [index for index, line in enumerate(lines) if line.startswith(prefix)]
+if len(matches) != 1:
+  raise AssertionError("The local user environment variable must already exist exactly once")
+expected = name + "='" + value + "'"
+lines[matches[0]] = expected
+environment_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
+written = [line for line in environment_file.read_text(encoding="utf-8").splitlines() if line.startswith(prefix)]
+if written != [expected]:
+  raise AssertionError("The local user environment variable was not written exactly once with its value")
+`;
+const localUserEnvironmentMutationScriptBase64 = Buffer.from(
+  localUserEnvironmentMutationScript,
+  "utf8",
+).toString("base64");
+const typeSpecGitHubIssuesMutationScript = String.raw`import os
+from pathlib import Path
+
+project_dir = Path(os.environ["PROJECT_DIR"]).resolve()
+source_file = project_dir / Path("src/agent/main.tsp")
+disabled_to_enabled = {
+  '// @conversationStarter(#{': '@conversationStarter(#{',
+  '//   title: "Get latest issues",': '  title: "Get latest issues",',
+  '//   text: "Get the latest issues from GitHub"': '  text: "Get the latest issues from GitHub"',
+  '// })': '})',
+  '  // op searchIssues is global.GitHubAPI.searchIssues;': '  op searchIssues is global.GitHubAPI.searchIssues;',
+}
+lines = source_file.read_text(encoding="utf-8").splitlines()
+for disabled in disabled_to_enabled:
+  if sum(line.rstrip() == disabled for line in lines) != 1:
+    raise AssertionError("Each disabled GitHub issues declaration must occur exactly once")
+updated = [disabled_to_enabled.get(line.rstrip(), line) for line in lines]
+source_file.write_text("\n".join(updated) + "\n", encoding="utf-8")
+written = source_file.read_text(encoding="utf-8").splitlines()
+for disabled, enabled in disabled_to_enabled.items():
+  if any(line.rstrip() == disabled for line in written) or written.count(enabled) != 1:
+    raise AssertionError("The GitHub issues declaration was not enabled exactly once")
+`;
+const typeSpecGitHubIssuesMutationScriptBase64 = Buffer.from(
+  typeSpecGitHubIssuesMutationScript,
+  "utf8",
+).toString("base64");
 
 const commandTitles = {
   clearNotifications: "Notifications: Clear All Notifications",
@@ -138,7 +189,11 @@ const scaffoldQuestionAdapters = {
     type: "singleSelect",
   },
   daTemplate: {
-    options: { "add-action": "Add an Action", "no-action": "No Action" },
+    options: {
+      "add-action": "Add an Action",
+      "no-action": "No Action",
+      typespec: "Start with TypeSpec for Microsoft 365 Copilot",
+    },
     title: "Create Declarative Agent",
     type: "singleSelect",
   },
@@ -334,7 +389,7 @@ const teamsPageSubject =
 const teamsAppDetailsSubject =
   "the Microsoft Teams app details page for an app whose name starts with ${{var:app_name}} is visible";
 const copilotAgentSubject =
-  "an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot";
+  "Microsoft 365 Copilot shows an agent selected in the Agents list and that agent's chat open in the main section with a visible message input";
 const targetAdapters = {
   // Every Chrome launch configuration the templates ship omits `userDataDir`, so
   // js-debug hands the session a profile of its own that carries no Microsoft 365
@@ -1152,6 +1207,7 @@ function createSemanticStepCompiler() {
       const error = append(
         output,
         render(state, "workspace/local-user-environment-variable.json.tpl", {
+          mutationScriptBase64: localUserEnvironmentMutationScriptBase64,
           variableName: name,
           variableValue: inputs[name],
         }),
@@ -1177,6 +1233,40 @@ function createSemanticStepCompiler() {
     return render(state, "workspace/remove-file.json.tpl", {
       relativePath: inputs.path,
     });
+  }
+
+  function compileConfigureTypeSpecAction(state, definition) {
+    if (
+      state.template !== "da/typespec" ||
+      !isRecord(definition.with) ||
+      !hasOnlyFields(definition.with, new Set(["action"])) ||
+      definition.with.action !== "github-issues"
+    ) {
+      return failure(
+        "VCB_TYPESPEC_ACTION_INPUT_INVALID",
+        "The TypeSpec action input is not supported.",
+      );
+    }
+    const output = [];
+    let error = append(
+      output,
+      render(state, "command-palette/execute-command.json.tpl", {
+        commandTitle: commandTitles.clearNotifications,
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(
+        state,
+        "workspace/configure-typespec-github-issues-action.json.tpl",
+        {
+          mutationScriptBase64: typeSpecGitHubIssuesMutationScriptBase64,
+        },
+      ),
+    );
+    if (error) return error;
+    return { ok: true, value: output };
   }
 
   function compileLifecycle(state, definition) {
@@ -1554,6 +1644,12 @@ function createSemanticStepCompiler() {
         "The browser check requires a preceding target operation.",
       );
     }
+    if (assertion.expect.namePrefix !== undefined) {
+      return render(state, "browser/assert-element-name-prefix.json.tpl", {
+        accessibleNamePrefix: assertion.expect.namePrefix,
+        role: assertion.expect.role,
+      });
+    }
     return render(state, "browser/assert-element.json.tpl", {
       accessibleName: assertion.expect.name,
       role: assertion.expect.role,
@@ -1617,7 +1713,7 @@ function createSemanticStepCompiler() {
       assertion.type === "file"
         ? new Set(["exists", "contains", "notContains"])
         : assertion.type === "browser"
-          ? new Set(["role", "name"])
+          ? new Set(["role", "name", "namePrefix"])
           : assertion.type === "page"
             ? new Set(["contains"])
             : new Set(["replied", "contains", "notContains"]);
@@ -1633,8 +1729,15 @@ function createSemanticStepCompiler() {
       (assertion.type === "browser" &&
         (typeof expected.role !== "string" ||
           expected.role.length === 0 ||
-          typeof expected.name !== "string" ||
-          expected.name.length === 0)) ||
+          ["name", "namePrefix"].filter(
+            (field) => expected[field] !== undefined,
+          ).length !== 1 ||
+          ["name", "namePrefix"].some(
+            (field) =>
+              expected[field] !== undefined &&
+              (typeof expected[field] !== "string" ||
+                expected[field].length === 0),
+          ))) ||
       (assertion.type === "page" && expected.contains === undefined) ||
       listFields.some(
         (field) =>
@@ -1744,6 +1847,8 @@ function createSemanticStepCompiler() {
         return compileLocalUserEnvironment(state, definition);
       case "removeWorkspaceFile":
         return compileRemoveWorkspaceFile(state, definition);
+      case "configureTypeSpecAction":
+        return compileConfigureTypeSpecAction(state, definition);
       case "target":
         return compileTarget(state, definition);
       case "open":

@@ -1444,11 +1444,11 @@
         </Str>
         <Disp Icon="Str" />
       </Item>
-      <Item ItemId=";teamstoolkit.commands.checkCopilotAccess.title" ItemType="0" PsrId="306" Leaf="true">
+      <Item ItemId=";teamstoolkit.commands.checkCopilotAccess" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Check Copilot Access]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Copilot-Zugriff überprüfen]]></Val>
+            <Val><![CDATA[Copilot-Zugriff prüfen]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -2071,6 +2071,42 @@
         </Str>
         <Disp Icon="Str" />
       </Item>
+      <Item ItemId=";teamstoolkit.commandsTreeViewProvider.addSkill.blockTooltip" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Unable to run command when adding a skill. Try again after adding completes.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Der Befehl kann beim Hinzufügen einer Qualifikation nicht ausgeführt werden. Versuchen Sie es nach Abschluss des Hinzufügens noch mal.]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";teamstoolkit.commandsTreeViewProvider.addSkill.running" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Adding skill...]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Qualifikation wird hinzugefügt...]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";teamstoolkit.commandsTreeViewProvider.addSkillDescription" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Add skill in declarative agent]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Fähigkeit im deklarativen Agent hinzufügen]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";teamstoolkit.commandsTreeViewProvider.addSkillTitle" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Add Skill]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Qualifikation hinzufügen]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
       <Item ItemId=";teamstoolkit.commandsTreeViewProvider.addWebpartTitle" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Add SPFx Web Part]]></Val>
@@ -2451,24 +2487,6 @@
           <Val><![CDATA[Extend to Declarative Agent]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
             <Val><![CDATA[Auf deklarativen Agent erweitern]]></Val>
-          </Tgt>
-        </Str>
-        <Disp Icon="Str" />
-      </Item>
-      <Item ItemId=";teamstoolkit.commandsTreeViewProvider.metaOSExtendToDA" ItemType="0" PsrId="306" Leaf="true">
-        <Str Cat="Text">
-          <Val><![CDATA[Extend the App to Declarative Agent]]></Val>
-          <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[App auf deklarativen Agent erweitern]]></Val>
-          </Tgt>
-        </Str>
-        <Disp Icon="Str" />
-      </Item>
-      <Item ItemId=";teamstoolkit.commandsTreeViewProvider.metaOSExtendToDADescription" ItemType="0" PsrId="306" Leaf="true">
-        <Str Cat="Text">
-          <Val><![CDATA[Extend the add-in project to Declarative Agent]]></Val>
-          <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Add-In-Projekt auf deklarativen Agent erweitern]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -4270,6 +4288,24 @@
         </Str>
         <Disp Icon="Str" />
       </Item>
+      <Item ItemId=";teamstoolkit.handlers.mcpAuthPlaceholder.openYmlTitle" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Open m365agents.yml]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[M365agents.yml öffnen]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";teamstoolkit.handlers.mcpAuthPlaceholder.recreateTitle" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Create New App]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Neue App erstellen]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
       <Item ItemId=";teamstoolkit.handlers.noOpenWorkspace" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[No open workspace]]></Val>
@@ -4296,6 +4332,15 @@
           <Val><![CDATA[Declarative agent project successfully created with a MCP wrapped. You can now start the MCP server from CodeLens button "Start" or customize your MCP server in .vscode/mcp.json file.]A;To fetch tools from MCP server, click "ATK: Update Action with MCP" from the CodeLens or Command Palatte.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
             <Val><![CDATA[Das Projekt des deklarativen Agenten wurde erfolgreich mit einem MCP-Wrapper erstellt. Sie können den MCP-Server jetzt über die CodeLens-Schaltfläche „Start“ starten oder Ihren MCP-Server in der .vscode/mcp.json-Datei anpassen.]A;Um Tools vom MCP-Server abzurufen, klicken Sie in CodeLens oder Command Palatte auf „ATK: Aktion mit MCP aktualisieren“.]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";teamstoolkit.handlers.openWorkspaceMCPConfigNotification.dt" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Declarative agent project successfully created with the MCP action already wired into the manifest. Tools are discovered from the MCP server at runtime (dynamic tool discovery) — provision and run the agent directly. If dynamic discovery doesn’t work for your server, you can fall back to baking tool definitions into ai-plugin.json via the CodeLens in .vscode/mcp.json.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Das deklarative Agent-Projekt wurde erfolgreich erstellt, und die MCP-Aktion ist bereits im Manifest eingebunden. Tools werden zur Laufzeit vom MCP-Server ermittelt (dynamische Toolerkennung) – stellen Sie den Agent direkt bereit und führen Sie ihn aus. Wenn die dynamische Ermittlung für den Server nicht funktioniert, können Sie die Tooldefinitionen über den CodeLens in .vscode/mcp.json in ai-plugin.json einbetten.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />

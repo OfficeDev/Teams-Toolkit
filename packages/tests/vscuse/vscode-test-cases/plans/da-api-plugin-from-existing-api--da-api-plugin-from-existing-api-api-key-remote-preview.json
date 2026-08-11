@@ -2660,7 +2660,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot.",
+      "description": "@assertion Microsoft 365 Copilot shows an agent selected in the Agents list and that agent's chat open in the main section with a visible message input.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -2703,7 +2703,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the Microsoft 365 Copilot message input is visible on a page for an agent whose name starts with ${{var:app_name}}.",
+      "description": "@assertion the Microsoft 365 Copilot message input is visible in the open agent chat.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -2824,8 +2824,8 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 340,
-        "y": 354
+        "x": 333,
+        "y": 327
       },
       "description": "Click the \"Allow\" button in the Microsoft 365 Copilot chat interface to grant the agent access.",
       "content_refs": [],
