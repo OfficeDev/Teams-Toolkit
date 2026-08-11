@@ -4500,17 +4500,14 @@ test("VCB-142: every OpenAI case reuses Azure OpenAI without fake-key error cont
     );
 
     const isRemote = caseId.includes("-remote-");
-    assert.equal(
-      codeSteps.some((step) =>
-        step.step_id.startsWith(
-          isRemote
-            ? "step_setRemoteEnvironmentVariable_"
-            : "step_setLocalEnvironmentVariable_",
-        ),
+    const endpointStep = codeSteps.find((step) =>
+      step.step_id.startsWith(
+        isRemote
+          ? "step_setRemoteEnvironmentVariable_"
+          : "step_setLocalEnvironmentVariable_",
       ),
-      true,
-      caseId,
     );
+    assert.notEqual(endpointStep, undefined, caseId);
     assert.equal(
       codeSteps.some(
         (step) =>
@@ -4522,6 +4519,17 @@ test("VCB-142: every OpenAI case reuses Azure OpenAI without fake-key error cont
       true,
       caseId,
     );
+    for (const instruction of [
+      "execute the supplied generated bash script exactly as authored",
+      "/home/vscode/AgentsToolkitProjects/",
+      "do not use /workspace",
+    ]) {
+      assert.equal(
+        endpointStep.description.includes(instruction),
+        true,
+        `${caseId}: ${instruction}`,
+      );
+    }
 
     assert.equal(
       codeSteps.some((step) => step.step_id.startsWith("step_setOpenAIModel_")),
@@ -4538,6 +4546,17 @@ test("VCB-142: every OpenAI case reuses Azure OpenAI without fake-key error cont
         true,
         caseId,
       );
+      for (const instruction of [
+        "execute the supplied generated bash script exactly as authored",
+        "/home/vscode/AgentsToolkitProjects/",
+        "do not use /workspace",
+      ]) {
+        assert.equal(
+          modelStep.description.includes(instruction),
+          true,
+          `${caseId}: ${instruction}`,
+        );
+      }
     }
   }
 });
