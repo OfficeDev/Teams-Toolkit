@@ -185,7 +185,7 @@ test("VCB-34: semantic compiler does not read external template contracts", asyn
   }
 });
 
-test("VCB-34: default setup compiles the checked-in YAML sources into ninety-four plans", async (context) => {
+test("VCB-34: default setup compiles the checked-in YAML sources into 138 plans", async (context) => {
   const plansDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "vscuse-generated-"),
   );
@@ -198,9 +198,9 @@ test("VCB-34: default setup compiles the checked-in YAML sources into ninety-fou
   });
 
   assert.equal(first.ok, true);
-  assert.equal(first.value.files.length, 94);
+  assert.equal(first.value.files.length, 138);
   const generatedFiles = first.value.files;
-  assert.equal(generatedFiles.length, 94);
+  assert.equal(generatedFiles.length, 138);
   assert.equal(
     generatedFiles.includes(
       "da-api-plugin-from-existing-api--da-api-plugin-from-existing-api-no-auth.json",
@@ -1967,7 +1967,90 @@ test("VCB-93: CEA, Bot, and Message Extension bundles author their supported lau
         assert.equal(caseIds.has(caseId), true, caseId);
       }
     }
-    assert.equal(caseIds.size, languages.length * 3, fileName);
+    assert.equal(
+      caseIds.size,
+      prefix === "basic-cea" ? 21 : languages.length * 3,
+      fileName,
+    );
+  }
+});
+
+test("VCB-132: Basic CEA retained Teams and Copilot plans have semantic replacements", async () => {
+  const result = await compileFixture(
+    "basic-custom-engine-agent.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(result.ok, true, JSON.stringify(result.diagnostics?.[0]));
+
+  const expectedCases = [
+    ["basic-cea-ts-openai-remote-teams", "36009400"],
+    ["basic-cea-ts-openai-local-teams", "36009300"],
+    ["basic-cea-ts-openai-remote-copilot", "36010157"],
+    ["basic-cea-ts-openai-local-copilot", "36010142"],
+    ["basic-cea-js-openai-remote-teams", "36009391"],
+    ["basic-cea-js-openai-local-teams", "36002299"],
+    ["basic-cea-js-openai-remote-copilot", "36010146"],
+    ["basic-cea-js-openai-local-copilot", "36010130"],
+    ["basic-cea-ts-azure-openai-remote-copilot", "36206193"],
+    ["basic-cea-ts-azure-openai-local-copilot", "33338527"],
+    ["basic-cea-js-azure-openai-remote-copilot", "36206141"],
+    ["basic-cea-js-azure-openai-local-copilot", "33338523"],
+  ];
+
+  for (const [caseId, workItemId] of expectedCases) {
+    const generated = result.value.find((entry) => entry.caseId === caseId);
+    assert.notEqual(generated, undefined, caseId);
+    assert.equal(
+      generated.plan.plan_metadata.description.workitem,
+      workItemId,
+      caseId,
+    );
+
+    const typedValues = generated.plan.steps
+      .filter((step) => step.tool === "type_text")
+      .map((step) => step.parameters.text);
+    const targetsCopilot = caseId.endsWith("copilot");
+    const isRemote = caseId.includes("-remote-");
+    assert.equal(
+      typedValues.includes(
+        targetsCopilot
+          ? isRemote
+            ? "(Preview) Launch Remote in Copilot (Chrome)"
+            : "(Preview) Debug in Copilot (Chrome)"
+          : isRemote
+            ? "Launch Remote in Teams (Chrome)"
+            : "Debug in Teams (Chrome)",
+      ),
+      true,
+      caseId,
+    );
+    assert.equal(
+      generated.plan.steps.some((step) =>
+        step.step_id.startsWith(
+          targetsCopilot
+            ? "step_sendCopilotMessage_"
+            : "step_sendTeamsMessage_",
+        ),
+      ),
+      true,
+      caseId,
+    );
+
+    if (!caseId.includes("-azure-openai-")) {
+      assert.equal(
+        typedValues.includes("${{secret:FAKE_OPENAI_API_KEY}}"),
+        true,
+        caseId,
+      );
+    } else {
+      assert.equal(
+        generated.plan.steps.some((step) =>
+          step.step_id.startsWith("step_assertChatNotContains_"),
+        ),
+        true,
+        caseId,
+      );
+    }
   }
 });
 
@@ -2022,9 +2105,11 @@ test("VCB-95: the General Teams Agent bundle authors its explicit behavior matri
       }
     }
     expectedCaseIds.add(`general-teams-${language}-azure-openai-playground`);
+    expectedCaseIds.add(
+      `general-teams-${language}-azure-openai-remote-copilot`,
+    );
+    expectedCaseIds.add(`general-teams-${language}-azure-openai-local-copilot`);
   }
-  expectedCaseIds.add("general-teams-ts-azure-openai-remote-copilot");
-  expectedCaseIds.add("general-teams-ts-azure-openai-local-copilot");
 
   assert.deepEqual(caseIds, expectedCaseIds);
   const typedValues = result.value[0].plan.steps
@@ -2102,7 +2187,7 @@ test("VCB-96: General Teams Agent Copilot targets use their remote and local lif
   }
 });
 
-test("VCB-97: General Teams Agent OpenAI cases chat locally but not remotely", async () => {
+test("VCB-97: General Teams Agent OpenAI cases preserve local and remote chat contracts", async () => {
   const result = await compileFixture(
     "general-teams-agent.yml",
     (sourceText) => sourceText,
@@ -2116,15 +2201,18 @@ test("VCB-97: General Teams Agent OpenAI cases chat locally but not remotely", a
     ) {
       continue;
     }
-    const isLocal = generated.caseId.includes("-local-");
     const sendsAMessage = generated.plan.steps.some((step) =>
       /^step_sendTeamsMessage_/.test(step.step_id || ""),
     );
     const setsOpenAIBaseUrl = generated.plan.steps.some((step) =>
       /^step_setLocalEnvironmentVariable_/.test(step.step_id || ""),
     );
-    assert.equal(sendsAMessage, isLocal, generated.caseId);
-    assert.equal(setsOpenAIBaseUrl, isLocal, generated.caseId);
+    assert.equal(sendsAMessage, true, generated.caseId);
+    assert.equal(
+      setsOpenAIBaseUrl,
+      generated.caseId.includes("-local-"),
+      generated.caseId,
+    );
   }
 });
 
@@ -2134,7 +2222,7 @@ test("VCB-98: only General Teams Agent Copilot cases inject the launch flag befo
     (sourceText) => sourceText,
   );
   assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
-  assert.equal(result.value.length, 17);
+  assert.equal(result.value.length, 21);
 
   for (const entry of result.value) {
     const hasSettingOrReload = entry.plan.steps.some(
@@ -2230,7 +2318,7 @@ test("VCB-99: Playground reply checks use visible completion evidence", async ()
   );
 });
 
-test("VCB-73: an OpenAI weather case asserts a completion locally but not remotely", async () => {
+test("VCB-73: OpenAI weather cases preserve their local and remote chat contracts", async () => {
   const result = await compileFixture(
     "weather-agent.yml",
     (sourceText) => sourceText,
@@ -2244,13 +2332,12 @@ test("VCB-73: an OpenAI weather case asserts a completion locally but not remote
     ) {
       continue;
     }
-    const isLocal = generated.caseId.includes("-local-");
     const sendsAMessage = generated.plan.steps.some((step) =>
       /^step_send(Teams|Copilot|Playground)Message_/.test(step.step_id || ""),
     );
     assert.equal(
       sendsAMessage,
-      isLocal,
+      true,
       `${generated.caseId} sends ${sendsAMessage ? "a" : "no"} chat message`,
     );
   }
@@ -3224,20 +3311,39 @@ test("VCB-111: the Teams Agent with Data bundles cover their launch matrix and s
   );
   assert.equal(customize.ok, true, customize.diagnostics?.[0]?.code);
   assert.deepEqual(customize.value.map((entry) => entry.caseId).sort(), [
+    "rag-customize-js-azure-openai-local-copilot",
     "rag-customize-js-azure-openai-local-teams",
+    "rag-customize-js-azure-openai-playground",
+    "rag-customize-js-azure-openai-remote-copilot",
+    "rag-customize-js-azure-openai-remote-teams",
+    "rag-customize-js-openai-local-copilot",
     "rag-customize-js-openai-local-teams",
+    "rag-customize-js-openai-remote-copilot",
+    "rag-customize-js-openai-remote-teams",
+    "rag-customize-py-azure-openai-local-copilot",
     "rag-customize-py-azure-openai-local-teams",
+    "rag-customize-py-azure-openai-playground",
+    "rag-customize-py-azure-openai-remote-copilot",
+    "rag-customize-py-azure-openai-remote-teams",
     "rag-customize-py-openai-local-copilot",
     "rag-customize-py-openai-local-teams",
+    "rag-customize-py-openai-remote-copilot",
+    "rag-customize-ts-azure-openai-local-copilot",
     "rag-customize-ts-azure-openai-local-teams",
+    "rag-customize-ts-azure-openai-playground",
+    "rag-customize-ts-azure-openai-remote-copilot",
+    "rag-customize-ts-azure-openai-remote-teams",
+    "rag-customize-ts-openai-local-copilot",
     "rag-customize-ts-openai-local-teams",
+    "rag-customize-ts-openai-remote-copilot",
+    "rag-customize-ts-openai-remote-teams",
   ]);
   for (const generated of customize.value) {
     assert.equal(
       generated.plan.plan_metadata.tags.includes(
         "feature_flag:TEAMSFX_CEA_ENABLED=true",
       ),
-      generated.caseId.endsWith("-local-copilot"),
+      generated.caseId.endsWith("-copilot"),
       generated.caseId,
     );
   }
@@ -3297,12 +3403,551 @@ test("VCB-111: the Teams Agent with Data bundles cover their launch matrix and s
   assert.equal(customApi.ok, true, customApi.diagnostics?.[0]?.code);
   assert.deepEqual(customApi.value.map((entry) => entry.caseId).sort(), [
     "rag-custom-api-js-azure-openai-local-teams",
+    "rag-custom-api-js-azure-openai-remote-teams",
     "rag-custom-api-js-openai-local-teams",
+    "rag-custom-api-js-openai-remote-teams",
     "rag-custom-api-py-azure-openai-local-teams",
+    "rag-custom-api-py-azure-openai-playground",
+    "rag-custom-api-py-azure-openai-remote-teams",
     "rag-custom-api-py-openai-local-teams",
     "rag-custom-api-ts-azure-openai-local-teams",
+    "rag-custom-api-ts-azure-openai-remote-teams",
     "rag-custom-api-ts-openai-local-teams",
+    "rag-custom-api-ts-openai-remote-teams",
   ]);
+});
+
+test("VCB-133: retained RAG Customize local Copilot plans have semantic replacements", async () => {
+  const result = await compileFixture(
+    "custom-copilot-rag-customize.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(result.ok, true, JSON.stringify(result.diagnostics?.[0]));
+
+  for (const [caseId, workItemId] of [
+    ["rag-customize-ts-openai-local-copilot", "36031897"],
+    ["rag-customize-js-openai-local-copilot", "36031895"],
+    ["rag-customize-ts-azure-openai-local-copilot", "36048259"],
+    ["rag-customize-js-azure-openai-local-copilot", "36048248"],
+    ["rag-customize-py-azure-openai-local-copilot", "36048572"],
+  ]) {
+    const generated = result.value.find((entry) => entry.caseId === caseId);
+    assert.notEqual(generated, undefined, caseId);
+    assert.equal(
+      generated.plan.plan_metadata.description.workitem,
+      workItemId,
+      caseId,
+    );
+    assert.equal(
+      generated.plan.plan_metadata.tags.includes(
+        "feature_flag:TEAMSFX_CEA_ENABLED=true",
+      ),
+      true,
+      caseId,
+    );
+
+    const typedValues = generated.plan.steps
+      .filter((step) => step.tool === "type_text")
+      .map((step) => step.parameters.text);
+    assert.equal(
+      typedValues.includes("Debug in Copilot (Chrome)"),
+      true,
+      caseId,
+    );
+    assert.equal(
+      generated.plan.steps.some((step) =>
+        step.step_id.startsWith("step_sendCopilotMessage_"),
+      ),
+      true,
+      caseId,
+    );
+
+    const usesAzureOpenAI = caseId.includes("-azure-openai-");
+    assert.equal(
+      typedValues.includes(
+        usesAzureOpenAI
+          ? "Tell me the history of Contoso Electronics, format in a table."
+          : "How to develop agent for Teams?",
+      ),
+      true,
+      caseId,
+    );
+    assert.equal(
+      generated.plan.steps.some((step) =>
+        step.step_id.startsWith("step_assertChatNotContains_"),
+      ),
+      usesAzureOpenAI,
+      caseId,
+    );
+    assert.equal(
+      generated.plan.steps.some(
+        (step) =>
+          typeof step.parameters.sample === "string" &&
+          step.parameters.sample.includes('VARIABLE_NAME="OPENAI_BASE_URL"'),
+      ),
+      !usesAzureOpenAI,
+      caseId,
+    );
+  }
+});
+
+test("VCB-134: retained RAG Customize remote Copilot plans have semantic replacements", async () => {
+  const result = await compileFixture(
+    "custom-copilot-rag-customize.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(result.ok, true, JSON.stringify(result.diagnostics?.[0]));
+
+  for (const [caseId, workItemId] of [
+    ["rag-customize-ts-openai-remote-copilot", "36031917"],
+    ["rag-customize-js-openai-remote-copilot", "36031915"],
+    ["rag-customize-py-openai-remote-copilot", "36031923"],
+    ["rag-customize-ts-azure-openai-remote-copilot", "36048528"],
+    ["rag-customize-js-azure-openai-remote-copilot", "36048277"],
+    ["rag-customize-py-azure-openai-remote-copilot", "36048992"],
+  ]) {
+    const generated = result.value.find((entry) => entry.caseId === caseId);
+    assert.notEqual(generated, undefined, caseId);
+    assert.equal(
+      generated.plan.plan_metadata.description.workitem,
+      workItemId,
+      caseId,
+    );
+    assert.equal(
+      generated.plan.plan_metadata.tags.includes(
+        "feature_flag:TEAMSFX_CEA_ENABLED=true",
+      ),
+      true,
+      caseId,
+    );
+
+    const typedValues = generated.plan.steps
+      .filter((step) => step.tool === "type_text")
+      .map((step) => step.parameters.text);
+    for (const value of [
+      "Microsoft 365 Agents: Provision",
+      "Microsoft 365 Agents: Deploy",
+      "Launch Remote in Copilot (Chrome)",
+    ]) {
+      assert.equal(typedValues.includes(value), true, `${caseId}: ${value}`);
+    }
+    assert.equal(
+      generated.plan.steps.some((step) =>
+        step.step_id.startsWith("step_sendCopilotMessage_"),
+      ),
+      true,
+      caseId,
+    );
+
+    const usesAzureOpenAI = caseId.includes("-azure-openai-");
+    assert.equal(
+      typedValues.includes(
+        usesAzureOpenAI
+          ? "Tell me the history of Contoso Electronics, format in a table."
+          : "How to develop agent for Teams?",
+      ),
+      true,
+      caseId,
+    );
+    assert.equal(
+      generated.plan.steps.some((step) =>
+        step.step_id.startsWith("step_assertChatNotContains_"),
+      ),
+      usesAzureOpenAI,
+      caseId,
+    );
+    assert.equal(
+      typedValues.includes("${{secret:FAKE_OPENAI_API_KEY}}"),
+      !usesAzureOpenAI,
+      caseId,
+    );
+  }
+});
+
+test("VCB-135: retained Custom API Azure OpenAI remote Teams plans have semantic replacements", async () => {
+  const result = await compileFixture(
+    "custom-copilot-rag-custom-api.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(result.ok, true, JSON.stringify(result.diagnostics?.[0]));
+
+  for (const [caseId, workItemId, prompt] of [
+    [
+      "rag-custom-api-ts-azure-openai-remote-teams",
+      "28891618",
+      "get repairs assign karin",
+    ],
+    [
+      "rag-custom-api-js-azure-openai-remote-teams",
+      "28891605",
+      "get repairs assign karin",
+    ],
+    [
+      "rag-custom-api-py-azure-openai-remote-teams",
+      "29165758",
+      "list all repairs without auth",
+    ],
+  ]) {
+    const generated = result.value.find((entry) => entry.caseId === caseId);
+    assert.notEqual(generated, undefined, caseId);
+    assert.equal(
+      generated.plan.plan_metadata.description.workitem,
+      workItemId,
+      caseId,
+    );
+
+    const typedValues = generated.plan.steps
+      .filter((step) => step.tool === "type_text")
+      .map((step) => step.parameters.text);
+    for (const value of [
+      "Microsoft 365 Agents: Provision",
+      "Microsoft 365 Agents: Deploy",
+      "Launch Remote in Teams (Chrome)",
+      prompt,
+    ]) {
+      assert.equal(typedValues.includes(value), true, `${caseId}: ${value}`);
+    }
+    assert.equal(
+      generated.plan.steps.some((step) =>
+        step.step_id.startsWith("step_assertChatNotContains_"),
+      ),
+      true,
+      caseId,
+    );
+    assert.equal(
+      typedValues.includes("Python: Create Environment..."),
+      caseId.includes("-py-"),
+      caseId,
+    );
+  }
+});
+
+test("VCB-136: retained Custom API OpenAI remote Teams plans have semantic replacements", async () => {
+  const result = await compileFixture(
+    "custom-copilot-rag-custom-api.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(result.ok, true, JSON.stringify(result.diagnostics?.[0]));
+
+  for (const [caseId, workItemId] of [
+    ["rag-custom-api-ts-openai-remote-teams", "28939523"],
+    ["rag-custom-api-js-openai-remote-teams", "28939529"],
+  ]) {
+    const generated = result.value.find((entry) => entry.caseId === caseId);
+    assert.notEqual(generated, undefined, caseId);
+    assert.equal(
+      generated.plan.plan_metadata.description.workitem,
+      workItemId,
+      caseId,
+    );
+
+    const typedValues = generated.plan.steps
+      .filter((step) => step.tool === "type_text")
+      .map((step) => step.parameters.text);
+    for (const value of [
+      "${{secret:FAKE_OPENAI_API_KEY}}",
+      "Microsoft 365 Agents: Provision",
+      "Microsoft 365 Agents: Deploy",
+      "Launch Remote in Teams (Chrome)",
+      "List all repairs without auth",
+    ]) {
+      assert.equal(typedValues.includes(value), true, `${caseId}: ${value}`);
+    }
+    assert.equal(
+      generated.plan.steps.some((step) =>
+        step.step_id.startsWith("step_assertChatReplied_"),
+      ),
+      true,
+      caseId,
+    );
+    assert.equal(
+      generated.plan.steps.some((step) =>
+        step.step_id.startsWith("step_assertChatNotContains_"),
+      ),
+      false,
+      caseId,
+    );
+  }
+});
+
+test("VCB-137: retained RAG Customize Azure OpenAI Playground plans have semantic replacements", async () => {
+  const result = await compileFixture(
+    "custom-copilot-rag-customize.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(result.ok, true, JSON.stringify(result.diagnostics?.[0]));
+
+  for (const [caseId, workItemId] of [
+    ["rag-customize-ts-azure-openai-playground", "36230313"],
+    ["rag-customize-js-azure-openai-playground", "36229473"],
+    ["rag-customize-py-azure-openai-playground", "36231322"],
+  ]) {
+    const generated = result.value.find((entry) => entry.caseId === caseId);
+    assert.notEqual(generated, undefined, caseId);
+    assert.equal(
+      generated.plan.plan_metadata.description.workitem,
+      workItemId,
+      caseId,
+    );
+
+    const typedValues = generated.plan.steps
+      .filter((step) => step.tool === "type_text")
+      .map((step) => step.parameters.text);
+    for (const value of [
+      "Debug in Microsoft 365 Agents Playground",
+      "hi",
+      "List Contoso history in table",
+    ]) {
+      assert.equal(typedValues.includes(value), true, `${caseId}: ${value}`);
+    }
+    assert.equal(
+      typedValues.filter((value) =>
+        ["hi", "List Contoso history in table"].includes(value),
+      ).length,
+      2,
+      caseId,
+    );
+    assert.equal(
+      generated.plan.steps.some((step) =>
+        step.step_id.startsWith("step_sendPlaygroundMessage_"),
+      ),
+      true,
+      caseId,
+    );
+    assert.equal(
+      generated.plan.steps.some((step) =>
+        step.step_id.startsWith("step_assertChatReplied_"),
+      ),
+      true,
+      caseId,
+    );
+    assert.equal(
+      generated.plan.steps.some((step) =>
+        ["step_signInAzure_", "step_signInM365_"].some((prefix) =>
+          step.step_id.startsWith(prefix),
+        ),
+      ),
+      false,
+      caseId,
+    );
+    assert.equal(
+      typedValues.includes("Python: Create Environment..."),
+      caseId.includes("-py-"),
+      caseId,
+    );
+  }
+});
+
+test("VCB-138: retained Custom API Azure OpenAI Python Playground plan has a semantic replacement", async () => {
+  const result = await compileFixture(
+    "custom-copilot-rag-custom-api.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(result.ok, true, JSON.stringify(result.diagnostics?.[0]));
+
+  const generated = result.value.find(
+    (entry) => entry.caseId === "rag-custom-api-py-azure-openai-playground",
+  );
+  assert.notEqual(generated, undefined);
+  assert.equal(generated.plan.plan_metadata.description.workitem, "36231823");
+
+  const typedValues = generated.plan.steps
+    .filter((step) => step.tool === "type_text")
+    .map((step) => step.parameters.text);
+  for (const value of [
+    "Python: Create Environment...",
+    "Debug in Microsoft 365 Agents Playground",
+    "get repairs assign Karin",
+  ]) {
+    assert.equal(typedValues.includes(value), true, value);
+  }
+  assert.equal(
+    generated.plan.steps.some((step) =>
+      step.step_id.startsWith("step_assertChatReplied_"),
+    ),
+    true,
+  );
+  assert.equal(
+    generated.plan.steps.some((step) =>
+      ["step_signInAzure_", "step_signInM365_"].some((prefix) =>
+        step.step_id.startsWith(prefix),
+      ),
+    ),
+    false,
+  );
+});
+
+test("VCB-139: retained RAG Customize remote Teams plans have semantic replacements", async () => {
+  const result = await compileFixture(
+    "custom-copilot-rag-customize.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(result.ok, true, JSON.stringify(result.diagnostics?.[0]));
+
+  for (const [caseId, workItemId, prompt] of [
+    [
+      "rag-customize-ts-openai-remote-teams",
+      "36020780",
+      "Compare Contoso Electronics plan",
+    ],
+    [
+      "rag-customize-js-openai-remote-teams",
+      "36022420",
+      "Compare Contoso Electronics plan",
+    ],
+    [
+      "rag-customize-ts-azure-openai-remote-teams",
+      "27569142",
+      "Compare Contoso Electronics plan",
+    ],
+    [
+      "rag-customize-js-azure-openai-remote-teams",
+      "27569147",
+      "Compare Contoso Electronics plan",
+    ],
+    [
+      "rag-customize-py-azure-openai-remote-teams",
+      "27178092",
+      "List Contoso history in table",
+    ],
+  ]) {
+    const generated = result.value.find((entry) => entry.caseId === caseId);
+    assert.notEqual(generated, undefined, caseId);
+    assert.equal(
+      generated.plan.plan_metadata.description.workitem,
+      workItemId,
+      caseId,
+    );
+
+    const typedValues = generated.plan.steps
+      .filter((step) => step.tool === "type_text")
+      .map((step) => step.parameters.text);
+    for (const value of [
+      "Microsoft 365 Agents: Provision",
+      "Microsoft 365 Agents: Deploy",
+      "Launch Remote in Teams (Chrome)",
+      prompt,
+    ]) {
+      assert.equal(typedValues.includes(value), true, `${caseId}: ${value}`);
+    }
+
+    const usesAzureOpenAI = caseId.includes("-azure-openai-");
+    const usesPython = caseId.includes("-py-");
+    assert.equal(
+      typedValues.includes("${{secret:FAKE_OPENAI_API_KEY}}"),
+      !usesAzureOpenAI,
+      caseId,
+    );
+    assert.equal(
+      generated.plan.steps.some((step) =>
+        step.step_id.startsWith("step_assertChatNotContains_"),
+      ),
+      usesAzureOpenAI && !usesPython,
+      caseId,
+    );
+    assert.equal(
+      generated.plan.steps.some((step) =>
+        step.step_id.startsWith("step_assertChatContains_"),
+      ),
+      usesPython,
+      caseId,
+    );
+    assert.equal(
+      typedValues.includes("Python: Create Environment..."),
+      false,
+      caseId,
+    );
+  }
+});
+
+test("VCB-140: Partial OpenAI remote Teams replacements preserve their legacy error contracts", async () => {
+  const weather = await compileFixture(
+    "weather-agent.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(weather.ok, true, JSON.stringify(weather.diagnostics?.[0]));
+
+  for (const [caseId, workItemId] of [
+    ["weather-ts-openai-remote-teams", "34648339"],
+    ["weather-js-openai-remote-teams", "34648304"],
+  ]) {
+    const generated = weather.value.find((entry) => entry.caseId === caseId);
+    assert.notEqual(generated, undefined, caseId);
+    assert.equal(
+      generated.plan.plan_metadata.description.workitem,
+      workItemId,
+      caseId,
+    );
+    const typedValues = generated.plan.steps
+      .filter((step) => step.tool === "type_text")
+      .map((step) => step.parameters.text);
+    for (const value of [
+      "${{secret:FAKE_OPENAI_API_KEY}}",
+      "Microsoft 365 Agents: Provision",
+      "Microsoft 365 Agents: Deploy",
+      "Launch Remote in Teams (Chrome)",
+      "Can you forecast the tomorrow weather in San Francisco for me?",
+    ]) {
+      assert.equal(typedValues.includes(value), true, `${caseId}: ${value}`);
+    }
+    assert.equal(
+      generated.plan.steps.some(
+        (step) =>
+          step.step_id.startsWith("step_assertChatContains_") &&
+          step.description.includes("encountered an error"),
+      ),
+      true,
+      caseId,
+    );
+  }
+
+  const general = await compileFixture(
+    "general-teams-agent.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(general.ok, true, JSON.stringify(general.diagnostics?.[0]));
+
+  for (const [caseId, workItemId] of [
+    ["general-teams-ts-openai-remote-teams", "27042831"],
+    ["general-teams-js-openai-remote-teams", "27042829"],
+    ["general-teams-py-openai-remote-teams", "27551403"],
+  ]) {
+    const generated = general.value.find((entry) => entry.caseId === caseId);
+    assert.notEqual(generated, undefined, caseId);
+    assert.equal(
+      generated.plan.plan_metadata.description.workitem,
+      workItemId,
+      caseId,
+    );
+    const typedValues = generated.plan.steps
+      .filter((step) => step.tool === "type_text")
+      .map((step) => step.parameters.text);
+    for (const value of [
+      "${{secret:FAKE_OPENAI_API_KEY}}",
+      "Microsoft 365 Agents: Provision",
+      "Microsoft 365 Agents: Deploy",
+      caseId.includes("-py-")
+        ? "Launch Remote (Chrome)"
+        : "Launch Remote in Teams (Chrome)",
+      "How to develop agent for Teams?",
+    ]) {
+      assert.equal(typedValues.includes(value), true, `${caseId}: ${value}`);
+    }
+    const chatAssertions = generated.plan.steps.filter((step) =>
+      step.step_id.startsWith("step_assertChat"),
+    );
+    if (caseId.includes("-py-")) {
+      assert.equal(chatAssertions.length, 0, caseId);
+    } else {
+      assert.equal(
+        chatAssertions.some((step) =>
+          step.description.includes("The agent encountered an error or bug."),
+        ),
+        true,
+        caseId,
+      );
+    }
+  }
 });
 
 test("VCB-112: a local environment step accepts either runtime environment file", async () => {
@@ -3335,6 +3980,9 @@ test("VCB-113: the OpenAI branch asserts no grounded answer", async () => {
     assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
 
     for (const generated of result.value) {
+      if (!generated.caseId.includes("-local-teams")) {
+        continue;
+      }
       const hasStep = (prefix) =>
         generated.plan.steps.some((candidate) =>
           candidate.step_id.startsWith(prefix),
@@ -3651,6 +4299,7 @@ test("VCB-122: the Teams Collaborator Agent bundle chats locally but stops after
     [
       "collaborator-ts-azure-openai-remote-teams",
       "collaborator-ts-azure-openai-local-teams",
+      "collaborator-ts-azure-openai-playground",
     ],
   );
 
@@ -3691,5 +4340,106 @@ test("VCB-122: the Teams Collaborator Agent bundle chats locally but stops after
       expectsChat,
       caseId,
     );
+  }
+});
+
+test("VCB-130: the Teams Collaborator Agent Playground case preserves its recorded chat path", async () => {
+  const result = await compileFixture(
+    "teams-collaborator-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true, JSON.stringify(result.diagnostics?.[0]));
+  const generated = result.value.find(
+    (entry) => entry.caseId === "collaborator-ts-azure-openai-playground",
+  );
+  assert.notEqual(generated, undefined);
+
+  const typedValues = generated.plan.steps
+    .filter((step) => step.tool === "type_text")
+    .map((step) => step.parameters.text);
+  assert.equal(
+    typedValues.includes("Debug in Microsoft 365 Agents Playground"),
+    true,
+  );
+  assert.equal(
+    typedValues.includes(
+      "@Collaborator create a task to review the proposal by Friday",
+    ),
+    true,
+  );
+  assert.equal(
+    generated.plan.steps.some(
+      (step) =>
+        step.description ===
+        '@assertion the Agents Playground shows a non-empty assistant response, and the "Type a message..." composer is ready for the next user turn with no response-generation indicator visible.',
+    ),
+    true,
+  );
+  assert.equal(
+    generated.plan.steps.some(
+      (step) =>
+        step.description.includes("Sign in") ||
+        step.description.includes("Log in"),
+    ),
+    false,
+  );
+});
+
+test("VCB-131: capability-free Copilot crossings replace their retained legacy plans", async () => {
+  for (const { fileName, expectedCases } of [
+    {
+      fileName: "weather-agent.yml",
+      expectedCases: [
+        ["weather-js-azure-openai-remote-copilot", "33338497"],
+        ["weather-js-azure-openai-local-copilot", "33338500"],
+      ],
+    },
+    {
+      fileName: "general-teams-agent.yml",
+      expectedCases: [
+        ["general-teams-js-azure-openai-remote-copilot", "36033116"],
+        ["general-teams-js-azure-openai-local-copilot", "36031468"],
+        ["general-teams-py-azure-openai-remote-copilot", "36033322"],
+        ["general-teams-py-azure-openai-local-copilot", "36033211"],
+      ],
+    },
+  ]) {
+    const result = await compileFixture(fileName, (sourceText) => sourceText);
+    assert.equal(result.ok, true, JSON.stringify(result.diagnostics?.[0]));
+
+    for (const [caseId, workItemId] of expectedCases) {
+      const generated = result.value.find((entry) => entry.caseId === caseId);
+      assert.notEqual(generated, undefined, caseId);
+      assert.equal(
+        generated.plan.plan_metadata.description.workitem,
+        workItemId,
+        caseId,
+      );
+
+      const typedValues = generated.plan.steps
+        .filter((step) => step.tool === "type_text")
+        .map((step) => step.parameters.text);
+      assert.equal(
+        typedValues.includes(
+          caseId.endsWith("remote-copilot")
+            ? caseId.startsWith("weather-")
+              ? "(Preview) Launch Remote in Copilot (Chrome)"
+              : "Launch Remote in Copilot (Chrome)"
+            : caseId.startsWith("weather-")
+              ? "(Preview) Debug in Copilot (Chrome)"
+              : "Debug in Copilot (Chrome)",
+        ),
+        true,
+        caseId,
+      );
+      assert.equal(
+        generated.plan.steps.some((step) =>
+          step.step_id.startsWith("step_sendCopilotMessage_"),
+        ),
+        true,
+        caseId,
+      );
+    }
   }
 });

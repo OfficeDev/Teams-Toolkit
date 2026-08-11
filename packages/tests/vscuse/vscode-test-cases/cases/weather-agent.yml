@@ -69,19 +69,14 @@ cases:
         check-weather-chat,
       ]
 
-  # The OpenAI remote cases end at the launched surface and assert no
-  # completion. An Azure OpenAI resource speaks the OpenAI v1 protocol, so the
-  # local cases below redirect the OpenAI client at it and do assert one, but a
-  # remote run reads its app settings from infra/azure.bicep, which declares only
-  # the key. What both halves cover is the OpenAI branch of the scaffold question
-  # tree, which asks for a single key instead of an endpoint and a deployment
-  # name, and the different generated configuration that follows from it.
+  # Remote cases preserve the legacy fake-key error path. Local cases redirect
+  # the OpenAI client to an Azure OpenAI v1 endpoint and use its real key.
   - id: weather-ts-openai-remote-teams
     scenarioId: SCN-CREATE-WEATHER-03
     workItemIds: [34648339]
     steps:
       [
-        scaffold-weather-ts-openai,
+        scaffold-weather-ts-openai-fake-key,
         check-weather-ts,
         login-azure,
         login-m365,
@@ -89,6 +84,7 @@ cases:
         deploy,
         f5-teams-remote,
         open-app,
+        check-weather-chat-openai-remote,
       ]
 
   - id: weather-ts-openai-local-teams
@@ -110,7 +106,7 @@ cases:
     workItemIds: [34648304]
     steps:
       [
-        scaffold-weather-js-openai,
+        scaffold-weather-js-openai-fake-key,
         check-weather-js,
         login-azure,
         login-m365,
@@ -118,6 +114,7 @@ cases:
         deploy,
         f5-teams-remote,
         open-app,
+        check-weather-chat-openai-remote,
       ]
 
   - id: weather-js-openai-local-teams
@@ -134,9 +131,9 @@ cases:
         check-weather-chat,
       ]
 
-  # Surfaces beyond Teams, sampled on the canonical TypeScript + Azure OpenAI
-  # combination. A custom engine agent previewed in Copilot needs its bot
-  # deployed first, unlike a declarative agent.
+  # A custom engine agent previewed remotely in Copilot needs its bot deployed
+  # first, unlike a declarative agent. Both Azure OpenAI language packages keep
+  # a one-to-one Copilot replacement for their recorded scenarios.
   - id: weather-ts-azure-openai-remote-copilot
     scenarioId: SCN-CREATE-WEATHER-01
     workItemIds: [33338502]
@@ -160,6 +157,35 @@ cases:
       [
         scaffold-weather-ts-azure-openai,
         check-weather-ts,
+        login-m365,
+        f5-copilot-local,
+        open-agent,
+        check-weather-chat,
+      ]
+
+  - id: weather-js-azure-openai-remote-copilot
+    scenarioId: SCN-CREATE-WEATHER-01
+    workItemIds: [33338497]
+    steps:
+      [
+        scaffold-weather-js-azure-openai,
+        check-weather-js,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-copilot-remote,
+        open-agent,
+        check-weather-chat,
+      ]
+
+  - id: weather-js-azure-openai-local-copilot
+    scenarioId: SCN-CREATE-WEATHER-01
+    workItemIds: [33338500]
+    steps:
+      [
+        scaffold-weather-js-azure-openai,
+        check-weather-js,
         login-m365,
         f5-copilot-local,
         open-agent,
@@ -331,6 +357,50 @@ steps:
           type: text
           value: "${{var:app_name:vscuse_app_#####}}"
 
+  scaffold-weather-ts-openai-fake-key:
+    type: scaffold
+    with:
+      template: weather-agent
+      answers:
+        - question: projectType
+          value: custom-engine-agent-type
+        - question: customEngineAgent
+          value: weather-agent
+        - question: llmService
+          value: llm-service-openai
+        - question: openAIKey
+          type: text
+          value: "${{secret:FAKE_OPENAI_API_KEY}}"
+        - question: language
+          value: typescript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  scaffold-weather-js-openai-fake-key:
+    type: scaffold
+    with:
+      template: weather-agent
+      answers:
+        - question: projectType
+          value: custom-engine-agent-type
+        - question: customEngineAgent
+          value: weather-agent
+        - question: llmService
+          value: llm-service-openai
+        - question: openAIKey
+          type: text
+          value: "${{secret:FAKE_OPENAI_API_KEY}}"
+        - question: language
+          value: javascript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
   # The scaffolded agent constructs its OpenAI client without a base URL, so the
   # client falls back to OPENAI_BASE_URL. Writing it into the lifecycle rather
   # than the container environment keeps the redirect inside the two cases that
@@ -447,3 +517,11 @@ steps:
         expect:
           replied: true
           contains: [Seattle]
+
+  check-weather-chat-openai-remote:
+    type: checks
+    with:
+      - type: chat
+        send: Can you forecast the tomorrow weather in San Francisco for me?
+        expect:
+          contains: ["encountered an error"]

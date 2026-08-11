@@ -298,9 +298,12 @@ From the repository root, load the `atk06` profile into the current PowerShell s
 $vscuseEnvScript = ".\set-azure-env.ps1"
 . $vscuseEnvScript -Env atk06
 $env:TEMPLATE_VERSION = "local"
+$env:FAKE_OPENAI_API_KEY = "faked_openapi_key"
 ```
 
 Prefer current-session variables for local validation. Use `-PersistUser` only when the user explicitly wants the secrets persisted to the Windows user environment. Keep `TEMPLATE_VERSION` as `local` for local-repo validation runs.
+`FAKE_OPENAI_API_KEY` is a non-secret compatibility value used by retained template cases that
+intentionally validate the response produced by an invalid OpenAI key.
 
 Ensure the Docker CLI is visible to the Python process that runs vscuse. Interaction steps use the vscuse HTTP endpoint, but `agent: code` steps invoke host-side Docker CLI commands such as `docker inspect` and `docker cp`. If Python cannot find `docker.exe`, those steps may log `Container 'vscuse-container' is not running or not accessible` and then be reported as successful even though no script ran.
 
