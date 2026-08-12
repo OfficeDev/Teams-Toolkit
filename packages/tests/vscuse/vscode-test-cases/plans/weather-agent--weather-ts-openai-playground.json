@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 68,
+    "total_steps": 69,
     "name": "weather-ts-openai-playground",
     "description": {
       "owner": "",
@@ -69,21 +69,22 @@
       "step_checkWorkspaceFiles_verify_cf38b3187_2_5",
       "step_checkWorkspaceFiles_verify_cf38b3187_2_6",
       "step_checkWorkspaceFiles_verify_cf38b3187_2_7",
-      "step_executeCommand_open_cf38b3187_3_1",
-      "step_executeCommand_assertPalette_cf38b3187_3_1",
-      "step_executeCommand_filter_cf38b3187_3_1",
-      "step_executeCommand_assertCommand_cf38b3187_3_1",
-      "step_executeCommand_execute_cf38b3187_3_1",
-      "step_filterOption_filter_cf38b3187_3_2",
-      "step_filterOption_assertOption_cf38b3187_3_2",
-      "step_filterOption_confirm_cf38b3187_3_2",
-      "step_assertReady_assertReady_cf38b3187_3_3",
-      "step_sendPlaygroundMessage_assertInput_cf38b3187_5_1",
-      "step_sendPlaygroundMessage_focusInput_cf38b3187_5_1",
-      "step_sendPlaygroundMessage_type_cf38b3187_5_1",
-      "step_sendPlaygroundMessage_send_cf38b3187_5_1",
-      "step_assertChatReplied_assert_cf38b3187_5_2",
-      "step_assertChatContains_assert_cf38b3187_5_3"
+      "step_setLocalEnvironmentVariable_cf38b3187_3_1",
+      "step_executeCommand_open_cf38b3187_4_1",
+      "step_executeCommand_assertPalette_cf38b3187_4_1",
+      "step_executeCommand_filter_cf38b3187_4_1",
+      "step_executeCommand_assertCommand_cf38b3187_4_1",
+      "step_executeCommand_execute_cf38b3187_4_1",
+      "step_filterOption_filter_cf38b3187_4_2",
+      "step_filterOption_assertOption_cf38b3187_4_2",
+      "step_filterOption_confirm_cf38b3187_4_2",
+      "step_assertReady_assertReady_cf38b3187_4_3",
+      "step_sendPlaygroundMessage_assertInput_cf38b3187_6_1",
+      "step_sendPlaygroundMessage_focusInput_cf38b3187_6_1",
+      "step_sendPlaygroundMessage_type_cf38b3187_6_1",
+      "step_sendPlaygroundMessage_send_cf38b3187_6_1",
+      "step_assertChatReplied_assert_cf38b3187_6_2",
+      "step_assertChatContains_assert_cf38b3187_6_3"
     ],
     "tags": [
       "case_id:weather-ts-openai-playground",
@@ -810,7 +811,7 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "${{secret:FAKE_OPENAI_API_KEY}}"
+        "text": "${{secret:AZURE_OPENAI_API_KEY}}"
       },
       "description": "Type the authored value into the active text prompt.",
       "content_refs": [],
@@ -1253,7 +1254,30 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_open_cf38b3187_3_1",
+      "step_id": "step_setLocalEnvironmentVariable_cf38b3187_3_1",
+      "agent": "code",
+      "tool": "",
+      "parameters": {
+        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" VARIABLE_NAME=\"OPENAI_BASE_URL\" VARIABLE_VALUE=\"${{env:AZURE_OPENAI_ENDPOINT}}/openai/v1\" python3 - <<'PY'\nimport os\nfrom pathlib import Path\n\nlifecycle = Path(os.environ[\"PROJECT_DIR\"]).resolve() / \"m365agents.local.yml\"\nname = os.environ[\"VARIABLE_NAME\"]\nvalue = os.environ[\"VARIABLE_VALUE\"]\nif not value:\n    raise AssertionError(\"The variable value resolved to nothing\")\nlines = lifecycle.read_text(encoding=\"utf-8\").splitlines()\ntargets = (\"target: ./.localConfigs\", \"target: ./.env\")\ntarget = next((index for index, line in enumerate(lines) if line.strip() in targets), None)\nif target is None:\n    raise AssertionError(\"The local lifecycle writes no runtime environment file\")\nheader = next((index for index in range(target + 1, len(lines)) if lines[index].strip() == \"envs:\"), None)\nif header is None:\n    raise AssertionError(\"The runtime environment file declares no envs mapping\")\nindent = \" \" * (len(lines[header]) - len(lines[header].lstrip()) + 2)\nend = header + 1\nwhile end < len(lines) and lines[end].startswith(indent) and lines[end].strip():\n    end += 1\nkept = [line for line in lines[header + 1 : end] if not line.strip().startswith(name + \":\")]\nlines[header + 1 : end] = kept + [indent + name + \": \" + value]\nlifecycle.write_text(\"\\n\".join(lines) + \"\\n\", encoding=\"utf-8\")\nwritten = [line for line in lifecycle.read_text(encoding=\"utf-8\").splitlines() if line.strip().startswith(name + \":\")]\nif written != [indent + name + \": \" + value]:\n    raise AssertionError(\"The variable was not written exactly once with its value\")\nPY\n```"
+      },
+      "description": "@code execute the supplied generated bash script exactly as authored and read its exact PROJECT_DIR under /home/vscode/AgentsToolkitProjects/ from that script; set OPENAI_BASE_URL in the envs mapping the local lifecycle writes into the project's runtime environment file to exactly the value the script assigns, do not reinterpret or regenerate the script, do not use /workspace, and do not log that value.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_checkWorkspaceFiles_verify_cf38b3187_2_7"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:workspace",
+        "operation:local-environment",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_open_cf38b3187_4_1",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1265,7 +1289,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_checkWorkspaceFiles_verify_cf38b3187_2_7"
+        "step_setLocalEnvironmentVariable_cf38b3187_3_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1275,7 +1299,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertPalette_cf38b3187_3_1",
+      "step_id": "step_executeCommand_assertPalette_cf38b3187_4_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1285,7 +1309,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_open_cf38b3187_3_1"
+        "step_executeCommand_open_cf38b3187_4_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1296,7 +1320,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_filter_cf38b3187_3_1",
+      "step_id": "step_executeCommand_filter_cf38b3187_4_1",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1308,7 +1332,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertPalette_cf38b3187_3_1"
+        "step_executeCommand_assertPalette_cf38b3187_4_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1318,7 +1342,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertCommand_cf38b3187_3_1",
+      "step_id": "step_executeCommand_assertCommand_cf38b3187_4_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1328,7 +1352,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_filter_cf38b3187_3_1"
+        "step_executeCommand_filter_cf38b3187_4_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1339,7 +1363,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_execute_cf38b3187_3_1",
+      "step_id": "step_executeCommand_execute_cf38b3187_4_1",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1351,7 +1375,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertCommand_cf38b3187_3_1"
+        "step_executeCommand_assertCommand_cf38b3187_4_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1361,7 +1385,7 @@
       ]
     },
     {
-      "step_id": "step_filterOption_filter_cf38b3187_3_2",
+      "step_id": "step_filterOption_filter_cf38b3187_4_2",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1373,7 +1397,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_cf38b3187_3_1"
+        "step_executeCommand_execute_cf38b3187_4_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1383,7 +1407,7 @@
       ]
     },
     {
-      "step_id": "step_filterOption_assertOption_cf38b3187_3_2",
+      "step_id": "step_filterOption_assertOption_cf38b3187_4_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1393,7 +1417,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_filter_cf38b3187_3_2"
+        "step_filterOption_filter_cf38b3187_4_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1404,7 +1428,7 @@
       ]
     },
     {
-      "step_id": "step_filterOption_confirm_cf38b3187_3_2",
+      "step_id": "step_filterOption_confirm_cf38b3187_4_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1416,7 +1440,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_assertOption_cf38b3187_3_2"
+        "step_filterOption_assertOption_cf38b3187_4_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1426,7 +1450,7 @@
       ]
     },
     {
-      "step_id": "step_assertReady_assertReady_cf38b3187_3_3",
+      "step_id": "step_assertReady_assertReady_cf38b3187_4_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1436,7 +1460,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_confirm_cf38b3187_3_2"
+        "step_filterOption_confirm_cf38b3187_4_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1447,7 +1471,7 @@
       ]
     },
     {
-      "step_id": "step_sendPlaygroundMessage_assertInput_cf38b3187_5_1",
+      "step_id": "step_sendPlaygroundMessage_assertInput_cf38b3187_6_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1457,7 +1481,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertReady_assertReady_cf38b3187_3_3"
+        "step_assertReady_assertReady_cf38b3187_4_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1470,7 +1494,7 @@
       ]
     },
     {
-      "step_id": "step_sendPlaygroundMessage_focusInput_cf38b3187_5_1",
+      "step_id": "step_sendPlaygroundMessage_focusInput_cf38b3187_6_1",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -1484,7 +1508,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_sendPlaygroundMessage_assertInput_cf38b3187_5_1"
+        "step_sendPlaygroundMessage_assertInput_cf38b3187_6_1"
       ],
       "preconditions": [
         "dhash:176:710:16:5:00000000006858d8",
@@ -1500,19 +1524,19 @@
       ]
     },
     {
-      "step_id": "step_sendPlaygroundMessage_type_cf38b3187_5_1",
+      "step_id": "step_sendPlaygroundMessage_type_cf38b3187_6_1",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Can you forecast the tomorrow weather in San Francisco for me?"
+        "text": "What is the weather in Seattle?"
       },
-      "description": "Type \"Can you forecast the tomorrow weather in San Francisco for me?\" into the Agents Playground message input.",
+      "description": "Type \"What is the weather in Seattle?\" into the Agents Playground message input.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_sendPlaygroundMessage_focusInput_cf38b3187_5_1"
+        "step_sendPlaygroundMessage_focusInput_cf38b3187_6_1"
       ],
       "preconditions": [
         "dhash:512:384:0:20:5c4a03c080828260"
@@ -1526,7 +1550,7 @@
       ]
     },
     {
-      "step_id": "step_sendPlaygroundMessage_send_cf38b3187_5_1",
+      "step_id": "step_sendPlaygroundMessage_send_cf38b3187_6_1",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1538,7 +1562,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_sendPlaygroundMessage_type_cf38b3187_5_1"
+        "step_sendPlaygroundMessage_type_cf38b3187_6_1"
       ],
       "preconditions": [
         "dhash:512:384:0:20:5c4a03c080828260"
@@ -1552,7 +1576,7 @@
       ]
     },
     {
-      "step_id": "step_assertChatReplied_assert_cf38b3187_5_2",
+      "step_id": "step_assertChatReplied_assert_cf38b3187_6_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1562,7 +1586,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_sendPlaygroundMessage_send_cf38b3187_5_1"
+        "step_sendPlaygroundMessage_send_cf38b3187_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1576,17 +1600,17 @@
       ]
     },
     {
-      "step_id": "step_assertChatContains_assert_cf38b3187_5_3",
+      "step_id": "step_assertChatContains_assert_cf38b3187_6_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the current assistant response contains \"encountered an error\".",
+      "description": "@assertion the current assistant response contains \"Seattle\".",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertChatReplied_assert_cf38b3187_5_2"
+        "step_assertChatReplied_assert_cf38b3187_6_2"
       ],
       "preconditions": [],
       "postconditions": [],

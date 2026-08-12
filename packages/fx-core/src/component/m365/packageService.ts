@@ -20,6 +20,7 @@ import stripBom from "strip-bom";
 import { getResourceServiceEndpoint, ResourceServiceType } from "../../common/constants";
 import { ErrorContextMW, TOOLS } from "../../common/globalVars";
 import { getDefaultString, getLocalizedString } from "../../common/localizeUtils";
+import { TreatmentVariables } from "../../common/treatmentVariables";
 import {
   Component,
   sendTelemetryErrorEvent,
@@ -33,7 +34,11 @@ import { assembleError } from "../../error/common";
 import { ErrorCategory } from "../../error/types";
 import { AppUser } from "../driver/teamsApp/interfaces/appdefinitions/appUser";
 import { advancedDASettingUrl, M365HelpLink } from "./constants";
-import { NotExtendedToM365Error } from "./errors";
+import {
+  NotExtendedToM365Error,
+  PackageValidationFailedError,
+  PackageValidationFailureReason,
+} from "./errors";
 import { M365AppDefinition, M365AppEntity } from "./interface";
 
 const M365ErrorSource = "M365";
@@ -53,6 +58,26 @@ export const AgentPermission = {
   owner: "Owner",
   type: "M365",
 };
+
+enum BuilderValidationStatus {
+  Pending = "pending",
+  Successful = "successful",
+  Failed = "failed",
+}
+
+interface BuilderPackageUploadResponse {
+  statusId?: string;
+}
+
+interface BuilderPackageStatusResponse {
+  titleId?: string;
+  appId?: string;
+  validationInfo?: {
+    completedDate?: string;
+    failureReasons?: PackageValidationFailureReason[];
+    status: BuilderValidationStatus;
+  };
+}
 
 // Call m365 service for package CRUD
 export class PackageService {
@@ -230,49 +255,92 @@ export class PackageService {
       this.logger?.debug(`"Uploading package with sideLoading V2 in ${appScope} scope ..."`);
       const uploadHeaders = content.getHeaders();
       uploadHeaders["Authorization"] = `Bearer ${token}`;
+      const forceRaiValidationEnabled = process.env.TEAMSFX_RAI_VALIDATION_ENABLED;
+      const isRaiValidationEnabled =
+        forceRaiValidationEnabled === undefined
+          ? ((await TOOLS.expServiceProvider?.getTreatmentVariableAsync<boolean>(
+              TreatmentVariables.VSCodeConfig,
+              TreatmentVariables.RaiValidation,
+              true
+            )) ?? false)
+          : forceRaiValidationEnabled === "true" || forceRaiValidationEnabled === "1";
       const uploadResponse = await this.withNetworkRetry(() =>
         this.axiosInstance.post("/builder/v1/users/packages", content, {
           baseURL: serviceUrl,
           headers: uploadHeaders,
           params: {
             scope: appScope,
-            shouldBlock: true,
+            ...(isRaiValidationEnabled && { isRAIValidationAsync: true }),
           },
         })
       );
 
-      if (uploadResponse.status === 200 || uploadResponse.status === 201) {
-        const titleId: string = uploadResponse.data.titlePreview.titleId;
-        const appId: string = uploadResponse.data.titlePreview.appId;
-        this.logger?.info(`TitleId: ${titleId}`);
-        this.logger?.info(`AppId: ${appId}`);
-        this.logger?.verbose("Sideloading done.");
-        return [titleId, appId];
+      const { statusId } = uploadResponse.data as BuilderPackageUploadResponse;
+      if (!statusId) {
+        throw new Error("Missing statusId in package upload response.");
       }
-
-      const statusId = uploadResponse.data.statusId;
-      this.logger?.debug(`Acquiring package with statusId: ${statusId as string} ...`);
+      this.logger?.debug(`Acquiring package with statusId: ${statusId} ...`);
 
       do {
         const statusResponse = await this.axiosInstance.get(
-          `/builder/v1/users/packages/status/${statusId as string}`,
+          `/builder/v1/users/packages/status/${statusId}`,
           {
             baseURL: serviceUrl,
             headers: { Authorization: `Bearer ${token}` },
+            ...(isRaiValidationEnabled && { params: { isRAIValidationAsync: true } }),
           }
         );
         const resCode = statusResponse.status;
         this.logger?.debug(`Package status: ${resCode} ...`);
-        if (resCode === 200) {
-          const titleId: string = statusResponse.data.titleId;
-          const appId: string = statusResponse.data.appId;
+
+        if (!isRaiValidationEnabled) {
+          if (resCode === 200) {
+            const titleId: string = statusResponse.data.titleId;
+            const appId: string = statusResponse.data.appId;
+            this.logger?.info(`TitleId: ${titleId}`);
+            this.logger?.info(`AppId: ${appId}`);
+            this.logger?.verbose("Sideloading done.");
+            return [titleId, appId];
+          }
+          await waitSeconds(7);
+          continue;
+        }
+
+        const statusResult = statusResponse.data as BuilderPackageStatusResponse;
+        const validationInfo = statusResult?.validationInfo;
+        if (
+          !validationInfo ||
+          (validationInfo.status === BuilderValidationStatus.Pending &&
+            (resCode === 202 || resCode === 200))
+        ) {
+          this.logger?.info(getLocalizedString("info.m365.packageService.raiValidationInProgress"));
+          await waitSeconds(7);
+          continue;
+        }
+
+        if (resCode === 200 && validationInfo?.status === BuilderValidationStatus.Successful) {
+          const { titleId, appId } = statusResult;
+          if (!titleId || !appId) {
+            throw new Error("Missing titleId or appId in successful package status response.");
+          }
           this.logger?.info(`TitleId: ${titleId}`);
           this.logger?.info(`AppId: ${appId}`);
           this.logger?.verbose("Sideloading done.");
           return [titleId, appId];
-        } else {
-          await waitSeconds(7);
         }
+
+        if (resCode === 200 && validationInfo?.status === BuilderValidationStatus.Failed) {
+          const validationError = new PackageValidationFailedError(
+            M365ErrorSource,
+            validationInfo.failureReasons ?? []
+          );
+          this.logger?.error(validationError.displayMessage ?? validationError.message);
+          throw validationError;
+        }
+
+        throw new Error(
+          `Unexpected package status response: HTTP ${resCode}, validation status ${validationInfo?.status}.`
+        );
       } while (true);
     } catch (error: any) {
       if (error.response) {

@@ -27,11 +27,12 @@ cases:
         scaffold-rag-search-ts-openai,
         check-rag-search-ts-openai,
         fill-azure-search-credentials,
-        use-fake-openai-key,
+        use-gpt-4o-mini-ts,
+        redirect-openai-base-url,
         login-m365,
         f5-teams-local,
         open-app,
-        check-rag-search-chat-openai-fake-key,
+        check-rag-search-chat,
       ]
 
   - id: rag-azure-ai-search-js-azure-openai-local-teams
@@ -57,11 +58,12 @@ cases:
         scaffold-rag-search-js-openai,
         check-rag-search-js-openai,
         fill-azure-search-credentials,
-        use-fake-openai-key,
+        use-gpt-4o-mini-js,
+        redirect-openai-base-url,
         login-m365,
         f5-teams-local,
         open-app,
-        check-rag-search-chat-openai-fake-key,
+        check-rag-search-chat,
       ]
 
   - id: rag-azure-ai-search-py-azure-openai-local-teams
@@ -87,13 +89,14 @@ cases:
       [
         scaffold-rag-search-py-openai,
         check-rag-search-py-openai,
+        use-gpt-4o-mini-py,
         create-python-environment,
         fill-azure-search-credentials,
         redirect-openai-base-url,
         login-m365,
         f5-teams-local,
         open-app,
-        check-rag-search-chat-openai,
+        check-rag-search-chat,
       ]
 
   - id: rag-azure-ai-search-ts-azure-openai-remote-teams
@@ -193,16 +196,18 @@ cases:
     workItemIds: [28970327]
     steps:
       [
-        scaffold-rag-search-ts-openai-fake-key,
+        scaffold-rag-search-ts-openai,
         check-rag-search-ts-openai,
+        use-gpt-4o-mini-ts,
         fill-dev-openai-search-credentials,
+        redirect-openai-base-url-remote,
         login-azure,
         login-m365,
         provision-arm,
         deploy,
         f5-teams-remote-node,
         open-app,
-        check-rag-search-chat-openai-remote-node,
+        check-rag-search-chat,
       ]
 
   - id: rag-azure-ai-search-js-openai-remote-teams
@@ -210,16 +215,18 @@ cases:
     workItemIds: [28970337]
     steps:
       [
-        scaffold-rag-search-js-openai-fake-key,
+        scaffold-rag-search-js-openai,
         check-rag-search-js-openai,
+        use-gpt-4o-mini-js,
         fill-dev-openai-search-credentials,
+        redirect-openai-base-url-remote,
         login-azure,
         login-m365,
         provision-arm,
         deploy,
         f5-teams-remote-node,
         open-app,
-        check-rag-search-chat-openai-remote-node,
+        check-rag-search-chat,
       ]
 
   - id: rag-azure-ai-search-py-openai-remote-teams
@@ -227,17 +234,19 @@ cases:
     workItemIds: [27454412]
     steps:
       [
-        scaffold-rag-search-py-openai-fake-key,
+        scaffold-rag-search-py-openai,
         check-rag-search-py-openai,
+        use-gpt-4o-mini-py,
         create-python-environment,
         fill-dev-openai-search-credentials,
+        redirect-openai-base-url-remote,
         login-azure,
         login-m365,
         provision-arm,
         deploy,
         f5-teams-remote-python,
         open-app,
-        check-rag-search-chat-openai-remote-python,
+        check-rag-search-chat,
       ]
 
 steps:
@@ -328,37 +337,9 @@ steps:
           value: custom-copilot-rag-azure-ai-search
         - question: llmService
           value: llm-service-openai
-        # A secret expression is the only accepted shape here; the case replaces
-        # the value with the legacy fake key before launch.
         - question: openAIKey
           type: text
           value: "${{secret:AZURE_OPENAI_API_KEY}}"
-        - question: language
-          value: typescript
-        - question: workspaceFolder
-          value: default
-        - question: appName
-          type: text
-          value: "${{var:app_name:vscuse_app_#####}}"
-
-  # Remote Teams keeps the legacy fake key at scaffold time; the local paths keep
-  # their existing scaffold answers and later local-environment mutation.
-  scaffold-rag-search-ts-openai-fake-key:
-    type: scaffold
-    with:
-      template: custom-copilot-rag-azure-ai-search
-      answers:
-        - question: projectType
-          value: teams-agent-and-app-type
-        - question: teamsAppType
-          value: custom-copilot-rag
-        - question: customCopilotRag
-          value: custom-copilot-rag-azure-ai-search
-        - question: llmService
-          value: llm-service-openai
-        - question: openAIKey
-          type: text
-          value: "${{secret:FAKE_OPENAI_API_KEY}}"
         - question: language
           value: typescript
         - question: workspaceFolder
@@ -458,35 +439,9 @@ steps:
           value: custom-copilot-rag-azure-ai-search
         - question: llmService
           value: llm-service-openai
-        # A secret expression is the only accepted shape here; the case replaces
-        # the value with the legacy fake key before launch.
         - question: openAIKey
           type: text
           value: "${{secret:AZURE_OPENAI_API_KEY}}"
-        - question: language
-          value: javascript
-        - question: workspaceFolder
-          value: default
-        - question: appName
-          type: text
-          value: "${{var:app_name:vscuse_app_#####}}"
-
-  scaffold-rag-search-js-openai-fake-key:
-    type: scaffold
-    with:
-      template: custom-copilot-rag-azure-ai-search
-      answers:
-        - question: projectType
-          value: teams-agent-and-app-type
-        - question: teamsAppType
-          value: custom-copilot-rag
-        - question: customCopilotRag
-          value: custom-copilot-rag-azure-ai-search
-        - question: llmService
-          value: llm-service-openai
-        - question: openAIKey
-          type: text
-          value: "${{secret:FAKE_OPENAI_API_KEY}}"
         - question: language
           value: javascript
         - question: workspaceFolder
@@ -603,30 +558,6 @@ steps:
           type: text
           value: "${{var:app_name:vscuse_app_#####}}"
 
-  scaffold-rag-search-py-openai-fake-key:
-    type: scaffold
-    with:
-      template: custom-copilot-rag-azure-ai-search
-      answers:
-        - question: projectType
-          value: teams-agent-and-app-type
-        - question: teamsAppType
-          value: custom-copilot-rag
-        - question: customCopilotRag
-          value: custom-copilot-rag-azure-ai-search
-        - question: llmService
-          value: llm-service-openai
-        - question: openAIKey
-          type: text
-          value: "${{secret:FAKE_OPENAI_API_KEY}}"
-        - question: language
-          value: python
-        - question: workspaceFolder
-          value: default
-        - question: appName
-          type: text
-          value: "${{var:app_name:vscuse_app_#####}}"
-
   check-rag-search-py-openai:
     type: checks
     with:
@@ -649,6 +580,24 @@ steps:
     type: pythonEnvironment
     with:
       interpreter: "Python 3.12"
+
+  use-gpt-4o-mini-ts:
+    type: openAIModel
+    with:
+      path: src/config.ts
+      current: gpt-3.5-turbo
+
+  use-gpt-4o-mini-js:
+    type: openAIModel
+    with:
+      path: src/config.js
+      current: gpt-3.5-turbo
+
+  use-gpt-4o-mini-py:
+    type: openAIModel
+    with:
+      path: src/config.py
+      current: gpt-3.5-turbo
 
   # The templates read these from the generated runtime environment file, but
   # the scaffold never prompts for them, so the local lifecycle would otherwise
@@ -712,7 +661,7 @@ steps:
     with:
       target: dev
       variables:
-        SECRET_OPENAI_API_KEY: "${{secret:FAKE_OPENAI_API_KEY}}"
+        SECRET_OPENAI_API_KEY: "${{secret:AZURE_OPENAI_API_KEY}}"
         SECRET_AZURE_SEARCH_KEY: "${{secret:AZURE_SEARCH_KEY}}"
         AZURE_SEARCH_ENDPOINT: "${{env:AZURE_SEARCH_ENDPOINT}}"
 
@@ -723,12 +672,10 @@ steps:
     with:
       OPENAI_BASE_URL: "${{env:AZURE_OPENAI_ENDPOINT}}/openai/v1"
 
-  # The legacy Node plans ran on this fake key and asserted the failure it
-  # produced, which is coverage of the authentication path no working key gives.
-  use-fake-openai-key:
-    type: localEnvironment
+  redirect-openai-base-url-remote:
+    type: remoteEnvironment
     with:
-      OPENAI_API_KEY: faked_openapi_key
+      OPENAI_BASE_URL: "${{env:AZURE_OPENAI_ENDPOINT}}/openai/v1"
 
   login-azure:
     type: login
@@ -801,29 +748,6 @@ steps:
           replied: true
           notContains: ["error"]
 
-  check-rag-search-chat-openai:
-    type: checks
-    with:
-      # The OpenAI branch hardcodes `gpt-3.5-turbo` and `text-embedding-ada-002`
-      # in the generated config, and the redirected Azure OpenAI resource
-      # resolves those as deployment names it does not host, so the reply cannot
-      # be grounded. The legacy Python plan asserted its failure in the terminal,
-      # which no adapter reaches, so the case asserts the reply itself.
-      - type: chat
-        send: What is the Contoso Electronics PerksPlus program?
-        expect:
-          replied: true
-
-  check-rag-search-chat-openai-fake-key:
-    type: checks
-    with:
-      # The wording is the Teams AI library's, not the model's, and is what the
-      # legacy Node plans asserted on the same fake key.
-      - type: chat
-        send: What is the Contoso Electronics PerksPlus program?
-        expect:
-          contains: ["encountered an error"]
-
   check-rag-search-playground-chat:
     type: checks
     with:
@@ -833,23 +757,5 @@ steps:
           replied: true
       - type: chat
         send: List Contoso history in table
-        expect:
-          replied: true
-
-  check-rag-search-chat-openai-remote-node:
-    type: checks
-    with:
-      - type: chat
-        send: list contoso history in table
-        expect:
-          contains: ["encountered an error"]
-
-  check-rag-search-chat-openai-remote-python:
-    type: checks
-    with:
-      # The legacy Python plan asserted only a generic error state, which the
-      # semantic chat adapter cannot identify without relying on response text.
-      - type: chat
-        send: list contoso history in table
         expect:
           replied: true

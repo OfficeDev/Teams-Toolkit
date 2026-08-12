@@ -13,6 +13,7 @@ const relativePathPattern =
   /^(?!\/)(?![A-Za-z]:)(?!.*(?:^|\/)\.\.(?:\/|$))[^\\]+$/;
 const localEnvironmentNamePattern = /^[A-Z][A-Z0-9_]*$/;
 const localEnvironmentValuePattern = /^[A-Za-z0-9:/._-]*$/;
+const openAIModelPattern = /^gpt-[a-z0-9.-]+$/;
 const runnerPlaceholderPattern = /\$\{\{[a-z]+:[A-Za-z0-9_:#-]+\}\}/g;
 const userEnvironmentTargetFiles = Object.freeze({
   dev: ".env.dev.user",
@@ -439,7 +440,7 @@ const teamsPageSubject =
 const teamsAppDetailsSubject =
   "the Microsoft Teams app details page for an app whose name starts with ${{var:app_name}} is visible";
 const copilotAgentSubject =
-  "Microsoft 365 Copilot shows an agent selected in the Agents list and that agent's chat open in the main section with a visible message input";
+  "Microsoft 365 Copilot shows an agent's chat open in the main section with a visible message input";
 const targetAdapters = {
   // Every Chrome launch configuration the templates ship omits `userDataDir`, so
   // js-debug hands the session a profile of its own that carries no Microsoft 365
@@ -1321,6 +1322,66 @@ function createSemanticStepCompiler() {
       if (error) return error;
     }
     return { ok: true, value: output };
+  }
+
+  function compileRemoteEnvironment(state, definition) {
+    const inputs = definition.with ?? {};
+    const names = isRecord(inputs) ? Object.keys(inputs).sort() : [];
+    if (
+      !isRecord(inputs) ||
+      names.length === 0 ||
+      names.some(
+        (name) =>
+          !localEnvironmentNamePattern.test(name) ||
+          typeof inputs[name] !== "string" ||
+          inputs[name].length === 0 ||
+          !localEnvironmentValuePattern.test(
+            inputs[name].replaceAll(runnerPlaceholderPattern, ""),
+          ),
+      )
+    ) {
+      return failure(
+        "VCB_REMOTE_ENVIRONMENT_INPUT_INVALID",
+        "The remote environment operation requires shell-safe variable names and values.",
+      );
+    }
+    const output = [];
+    for (const name of names) {
+      const error = append(
+        output,
+        render(state, "workspace/remote-environment-variable.json.tpl", {
+          variableName: name,
+          variableValue: inputs[name],
+        }),
+      );
+      if (error) return error;
+    }
+    return { ok: true, value: output };
+  }
+
+  function compileOpenAIModel(state, definition) {
+    const inputs = definition.with ?? {};
+    if (
+      !isRecord(inputs) ||
+      Object.keys(inputs).some(
+        (field) => field !== "path" && field !== "current",
+      ) ||
+      typeof inputs.path !== "string" ||
+      !relativePathPattern.test(inputs.path) ||
+      typeof inputs.current !== "string" ||
+      !openAIModelPattern.test(inputs.current) ||
+      inputs.current === "gpt-4o" ||
+      inputs.current === "gpt-4o-mini"
+    ) {
+      return failure(
+        "VCB_OPENAI_MODEL_INPUT_INVALID",
+        "The OpenAI model operation requires a safe relative path and an unsupported current GPT model.",
+      );
+    }
+    return render(state, "workspace/openai-model.json.tpl", {
+      currentModel: inputs.current,
+      relativePath: inputs.path,
+    });
   }
 
   function compileLocalUserEnvironment(state, definition) {
@@ -2417,6 +2478,10 @@ function createSemanticStepCompiler() {
         return compilePythonEnvironment(state, definition);
       case "localEnvironment":
         return compileLocalEnvironment(state, definition);
+      case "remoteEnvironment":
+        return compileRemoteEnvironment(state, definition);
+      case "openAIModel":
+        return compileOpenAIModel(state, definition);
       case "localUserEnvironment":
         return compileLocalUserEnvironment(state, definition);
       case "userEnvironment":
