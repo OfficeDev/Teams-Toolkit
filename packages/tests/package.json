@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/teamsfx-test",
-  "version": "0.1.22-rc.0",
+  "version": "0.1.22",
   "description": "A UI Test Project of Teams Toolkit Extension",
   "private": true,
   "author": "Microsoft Corporation",
