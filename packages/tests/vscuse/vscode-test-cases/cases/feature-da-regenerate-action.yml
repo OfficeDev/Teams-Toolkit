@@ -1,14 +1,14 @@
 version: 1
 
 cases:
-  - id: da-regenerate-find-pets-by-status
+  - id: da-regenerate-list-repairs
     scenarioId: SCN-DA-REGENERATE-ACTION
     workItemIds: [32550020]
     steps:
       [
         scaffold-da-action,
         check-da-action,
-        regenerate-find-pets-by-status,
+        regenerate-list-repairs,
         check-regenerated-action,
       ]
 
@@ -28,7 +28,7 @@ steps:
           value: enter-url
         - question: apiSpecLocation
           type: text
-          value: https://raw.githubusercontent.com/SLdragon/example-openapi-spec/refs/heads/main/petstore-official.yaml
+          value: https://raw.githubusercontent.com/SLdragon/example-openapi-spec/675fd5e0bf33ac3c4cb77a4eb51fc80461caff1d/real-no-auth.yaml
         - question: apiOperations
           type: multiSelect
           value: all
@@ -54,15 +54,14 @@ steps:
         expect:
           contains: ['"id": "action_1"']
 
-  regenerate-find-pets-by-status:
+  regenerate-list-repairs:
     type: regenerateDaAction
     with:
-      operationId: findPetsByStatus
+      operationId: listRepairs
 
   check-regenerated-action:
     type: checks
     with:
       - type: file
         path: appPackage/ai-plugin.json
-        expect:
-          contains: [findPetsByStatus]
+        expect: { contains: [listRepairs] }

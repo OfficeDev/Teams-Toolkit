@@ -6147,7 +6147,7 @@ steps:
   }
 });
 
-test("VCB-151: regenerateDaAction copies the recorded findByStatus multi-select evidence", () => {
+test("VCB-151: regenerateDaAction selects a supported operation without pointer coordinates", () => {
   const sourceText = `version: 1
 cases:
   - id: regenerate-action
@@ -6160,6 +6160,12 @@ steps:
     with:
       template: da/api-plugin-from-existing-api
       answers:
+        - question: apiSpecLocation
+          type: text
+          value: https://raw.githubusercontent.com/SLdragon/example-openapi-spec/675fd5e0bf33ac3c4cb77a4eb51fc80461caff1d/real-no-auth.yaml
+        - question: apiOperations
+          type: multiSelect
+          value: all
         - question: appName
           type: text
           value: "\${{var:app_name:vscuse_app_#####}}"
@@ -6172,13 +6178,13 @@ steps:
   regenerate:
     type: regenerateDaAction
     with:
-      operationId: findPetsByStatus
+      operationId: listRepairs
   verify:
     type: checks
     with:
       - type: file
         path: appPackage/ai-plugin.json
-        expect: { contains: [findPetsByStatus] }
+        expect: { contains: [listRepairs] }
 `;
   const result = compileInlineSource(sourceText, "vscuse-vcb-151.yml");
   assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
@@ -6195,16 +6201,49 @@ steps:
     "dhash:322:77:96:5:0000ba40c4b86060",
     "dhash:322:77:0:10:5024226363636421",
   ]);
-  assertRecordedClick(plan, 235, 258, [
-    "dhash:235:258:16:5:0c64c48494242820",
-    "dhash:235:258:96:5:9d6d6d7c7d6d667d",
-    "dhash:235:258:0:10:64444044236a6421",
-  ]);
-  assertRecordedClick(plan, 799, 50, [
-    "dhash:799:50:16:5:69b5c549a5916da5",
-    "dhash:799:50:96:5:3212d22222c22292",
-    "dhash:799:50:0:10:64c4404523636421",
-  ]);
+  assert.equal(
+    plan.steps.some(
+      (step) =>
+        step.description ===
+        "@assertion the active multi-select prompt titled Select operation(s) Copilot can interact with. is visible.",
+    ),
+    true,
+  );
+  const operationPromptIndex = plan.steps.findIndex(
+    (step) =>
+      step.description ===
+      "@assertion the active multi-select prompt titled Select operation(s) Copilot can interact with. is visible.",
+  );
+  const confirmationIndex = plan.steps.findIndex((step) =>
+    step.step_id.startsWith("step_regenerateDaActionConfirm_assert_"),
+  );
+  assert.notEqual(operationPromptIndex, -1);
+  assert.notEqual(confirmationIndex, -1);
+  assert.equal(
+    plan.steps
+      .slice(operationPromptIndex, confirmationIndex)
+      .some((step) => step.tool === "click"),
+    false,
+  );
+  assert.equal(
+    plan.steps.some(
+      (step) =>
+        step.tool === "key_press" &&
+        step.parameters.key === "space" &&
+        step.description ===
+          "Press Space to check every option of the multi-select prompt.",
+    ),
+    true,
+  );
+  assert.equal(
+    plan.steps.some(
+      (step) =>
+        step.tool === "click" &&
+        step.parameters.x === 235 &&
+        step.parameters.y === 258,
+    ),
+    false,
+  );
   assertRecordedClick(plan, 494, 118, [
     "dhash:494:118:16:5:88953db1cd224900",
     "dhash:494:118:96:5:0028c0a323c40200",
@@ -6214,25 +6253,22 @@ steps:
     readFileAssertions(plan).some(
       (assertion) =>
         assertion.path === "appPackage/ai-plugin.json" &&
-        assertion.contains.includes("findPetsByStatus"),
+        assertion.contains.includes("listRepairs"),
     ),
     true,
   );
 
   for (const [label, invalidSource] of [
-    [
-      "unsupported operation",
-      sourceText.replace("findPetsByStatus", "getPetById"),
-    ],
+    ["unsupported operation", sourceText.replace("listRepairs", "getPetById")],
     [
       "missing operation",
-      sourceText.replace("\n      operationId: findPetsByStatus", ""),
+      sourceText.replace("\n      operationId: listRepairs", ""),
     ],
     [
       "extra field",
       sourceText.replace(
-        "      operationId: findPetsByStatus",
-        "      operationId: findPetsByStatus\n      file: custom.json",
+        "      operationId: listRepairs",
+        "      operationId: listRepairs\n      file: custom.json",
       ),
     ],
     [
@@ -6254,6 +6290,112 @@ steps:
       label,
     );
   }
+});
+
+test("VCB-158: regeneration selects a pinned supported no-auth operation", async () => {
+  const result = await compileFixture(
+    "feature-da-regenerate-action.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const plan = result.value[0].plan;
+  const typedValues = plan.steps
+    .filter((step) => step.tool === "type_text")
+    .map((step) => step.parameters.text);
+  assert.equal(
+    typedValues.includes(
+      "https://raw.githubusercontent.com/SLdragon/example-openapi-spec/675fd5e0bf33ac3c4cb77a4eb51fc80461caff1d/real-no-auth.yaml",
+    ),
+    true,
+  );
+  assert.equal(
+    plan.steps.some(
+      (step) =>
+        step.description ===
+        "@assertion the active multi-select prompt titled Select operation(s) Copilot can interact with. is visible.",
+    ),
+    true,
+  );
+  assert.equal(
+    plan.steps.some((step) =>
+      step.step_id.startsWith("step_regenerateDaActionSelectFindByStatus_"),
+    ),
+    false,
+  );
+  assert.equal(
+    readFileAssertions(plan).some(
+      (assertion) =>
+        assertion.path === "appPackage/ai-plugin.json" &&
+        assertion.contains.includes("listRepairs"),
+    ),
+    true,
+  );
+  for (const [label, mutate] of [
+    [
+      "mismatched source",
+      (sourceText) =>
+        sourceText.replace(
+          "https://raw.githubusercontent.com/SLdragon/example-openapi-spec/675fd5e0bf33ac3c4cb77a4eb51fc80461caff1d/real-no-auth.yaml",
+          "https://raw.githubusercontent.com/SLdragon/example-openapi-spec/refs/heads/main/petstore-official.yaml",
+        ),
+    ],
+    [
+      "missing select-all answer",
+      (sourceText) =>
+        sourceText.replace(
+          `        - question: apiOperations
+          type: multiSelect
+          value: all
+`,
+          "",
+        ),
+    ],
+  ]) {
+    const invalid = await compileFixture(
+      "feature-da-regenerate-action.yml",
+      mutate,
+    );
+    assert.equal(invalid.ok, false, label);
+    assert.equal(
+      invalid.diagnostics[0].code,
+      "VCB_REGENERATE_DA_ACTION_INPUT_INVALID",
+      label,
+    );
+  }
+  assert.equal(
+    plan.steps.some(
+      (step) =>
+        step.description ===
+        '@assertion a visible Visual Studio Code notification contains the literal text Action "action_1" updated successfully.. A notification with different text, including an in-progress notification, does not satisfy this assertion.',
+    ),
+    true,
+  );
+  const actionGroundingIndex = plan.steps.findIndex((step) =>
+    readFileAssertions({ steps: [step] }).some(
+      (assertion) =>
+        assertion.path === "appPackage/declarativeAgent.json" &&
+        assertion.contains.includes('"id": "action_1"'),
+    ),
+  );
+  const confirmationIndex = plan.steps.findIndex((step) =>
+    step.step_id.startsWith("step_regenerateDaActionConfirm_click_"),
+  );
+  const successIndex = plan.steps.findIndex((step) =>
+    step.step_id.startsWith("step_assertNotificationContains_assert_"),
+  );
+  const finalCheckIndex = plan.steps.findIndex((step) =>
+    readFileAssertions({ steps: [step] }).some(
+      (assertion) =>
+        assertion.path === "appPackage/ai-plugin.json" &&
+        assertion.contains.includes("listRepairs"),
+    ),
+  );
+  assert.equal(
+    actionGroundingIndex < confirmationIndex &&
+      confirmationIndex < successIndex &&
+      successIndex < finalCheckIndex,
+    true,
+  );
 });
 
 function createPackageSource({
@@ -6567,9 +6709,9 @@ test("VCB-154: exactly six legacy plans are replaced while one Partial and six N
     },
     {
       source: "feature-da-regenerate-action.yml",
-      caseId: "da-regenerate-find-pets-by-status",
+      caseId: "da-regenerate-list-repairs",
       generated:
-        "da-api-plugin-from-existing-api--da-regenerate-find-pets-by-status.json",
+        "da-api-plugin-from-existing-api--da-regenerate-list-repairs.json",
       legacy: "DA_Regenrate_Action.json",
     },
     {

@@ -23,6 +23,8 @@ const provisionInputGroups = new Set(["apiKey", "arm", "oauth"]);
 const provisionEnvironmentInput = "environment";
 const provisionEnvironmentSkipValue = "none";
 const copilotLaunchFeatureFlag = "TEAMSFX_CEA_ENABLED=true";
+const regenerateDaActionApiSpecLocation =
+  "https://raw.githubusercontent.com/SLdragon/example-openapi-spec/675fd5e0bf33ac3c4cb77a4eb51fc80461caff1d/real-no-auth.yaml";
 const localUserEnvironmentMutationScript = String.raw`import os
 from pathlib import Path
 
@@ -972,6 +974,8 @@ function createSemanticStepCompiler() {
     if (error) return error;
     state.template = definition.with.template;
     state.language = answerState.language;
+    state.apiSpecLocation = answerState.apiSpecLocation;
+    state.apiOperations = answerState.apiOperations;
     return { ok: true, value: output };
   }
 
@@ -1668,9 +1672,11 @@ function createSemanticStepCompiler() {
     const inputs = definition.with;
     if (
       state.template !== "da/api-plugin-from-existing-api" ||
+      state.apiSpecLocation !== regenerateDaActionApiSpecLocation ||
+      state.apiOperations !== "all" ||
       !isRecord(inputs) ||
       !hasOnlyFields(inputs, new Set(["operationId"])) ||
-      inputs.operationId !== "findPetsByStatus"
+      inputs.operationId !== "listRepairs"
     ) {
       return failure(
         "VCB_REGENERATE_DA_ACTION_INPUT_INVALID",
@@ -1717,16 +1723,22 @@ function createSemanticStepCompiler() {
     if (error) return error;
     error = append(
       output,
-      render(
-        state,
-        "quick-input/regenerate-da-action-select-find-by-status.json.tpl",
-        {},
-      ),
+      render(state, "quick-input/multi-select.json.tpl", {
+        questionTitle: "Select operation(s) Copilot can interact with.",
+      }),
     );
     if (error) return error;
     error = append(
       output,
       render(state, "dialog/regenerate-da-action-confirm.json.tpl", {}),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "notifications/assert-contains.json.tpl", {
+        notificationText: 'Action "action_1" updated successfully.',
+        retryTimeout: "120",
+      }),
     );
     if (error) return error;
     state.completed.add("regenerateDaAction");
