@@ -6041,6 +6041,14 @@ steps:
     ),
     true,
   );
+  assert.equal(
+    plan.steps.some(
+      (step) =>
+        step.description ===
+        "@assertion the active prompt titled Enter OpenAPI Document URL is visible.",
+    ),
+    true,
+  );
   assert.equal(typedValues.includes("Microsoft 365 Agents: Provision"), false);
   assert.equal(
     plan.steps.some((step) =>

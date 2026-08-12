@@ -1180,7 +1180,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the active prompt titled Enter OpenAPI Description Document URL is visible.",
+      "description": "@assertion the active prompt titled Enter OpenAPI Document URL is visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

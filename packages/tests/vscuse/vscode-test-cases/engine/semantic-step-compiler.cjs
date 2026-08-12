@@ -1631,7 +1631,7 @@ function createSemanticStepCompiler() {
       output,
       render(state, "quick-input/text.json.tpl", {
         inputValue: inputs.url,
-        questionTitle: "Enter OpenAPI Description Document URL",
+        questionTitle: "Enter OpenAPI Document URL",
       }),
     );
     if (error) return error;
