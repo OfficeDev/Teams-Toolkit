@@ -12,6 +12,7 @@ import {
   readJsonObject,
   recordProperty,
   runV4Package,
+  text,
 } from "./helpers/scenarioHarness";
 
 /**
@@ -102,5 +103,17 @@ describe("SCN-TEAMS-CREATE-WEATHER-AGENT (v4, T3 InMemoryRuntime)", () => {
     assert.instanceOf(error, UserError);
     assert.strictEqual(error.name, REQUIRE_EMPTY_TARGET);
     assert.strictEqual(runtime.files.size, 0);
+  });
+
+  it("SCN-CREATE-WEATHER-07: generated agents normalize Adaptive Card content", async () => {
+    for (const language of ["typescript", "javascript"] as const) {
+      const { files } = await run(language);
+      const extension = language === "typescript" ? "ts" : "js";
+      const agentSource = text(files, `src/agent.${extension}`);
+
+      assert.include(agentSource, "content must be a JSON object, not a JSON-encoded string");
+      assert.include(agentSource, 'typeof llmResponseContent.content === "string"');
+      assert.include(agentSource, "content: adaptiveCardContent");
+    }
   });
 });
