@@ -3637,10 +3637,13 @@ test("VCB-135: retained Custom API Azure OpenAI remote Teams plans have semantic
     const typedValues = generated.plan.steps
       .filter((step) => step.tool === "type_text")
       .map((step) => step.parameters.text);
+    const remoteProfile = caseId.includes("-py-")
+      ? "Launch Remote (Chrome)"
+      : "Launch Remote in Teams (Chrome)";
     for (const value of [
       "Microsoft 365 Agents: Provision",
       "Microsoft 365 Agents: Deploy",
-      "Launch Remote in Teams (Chrome)",
+      remoteProfile,
       prompt,
     ]) {
       assert.equal(typedValues.includes(value), true, `${caseId}: ${value}`);
@@ -3860,10 +3863,13 @@ test("VCB-139: retained RAG Customize remote Teams plans have semantic replaceme
     const typedValues = generated.plan.steps
       .filter((step) => step.tool === "type_text")
       .map((step) => step.parameters.text);
+    const remoteProfile = caseId.includes("-py-")
+      ? "Launch Remote (Chrome)"
+      : "Launch Remote in Teams (Chrome)";
     for (const value of [
       "Microsoft 365 Agents: Provision",
       "Microsoft 365 Agents: Deploy",
-      "Launch Remote in Teams (Chrome)",
+      remoteProfile,
       prompt,
     ]) {
       assert.equal(typedValues.includes(value), true, `${caseId}: ${value}`);
