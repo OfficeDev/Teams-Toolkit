@@ -4364,7 +4364,7 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Launch Remote in Teams (Chrome)"
+        "text": "Launch Remote (Chrome)"
       },
       "description": "Type the resolved option label into the active option picker.",
       "content_refs": [],
@@ -4386,7 +4386,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the option Launch Remote in Teams (Chrome) is visible and selectable in the filtered option picker.",
+      "description": "@assertion the option Launch Remote (Chrome) is visible and selectable in the filtered option picker.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

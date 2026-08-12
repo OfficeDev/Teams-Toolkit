@@ -135,7 +135,7 @@ cases:
         login-m365,
         provision-arm,
         deploy,
-        f5-teams-remote,
+        f5-teams-remote-python,
         open-app,
         check-rag-custom-api-chat-python-remote,
       ]
