@@ -145,10 +145,9 @@ cases:
         check-basic-cea-error-free-chat,
       ]
 
-  # The retained OpenAI plans intentionally use the same fake key and assert
-  # only that the agent returns a response. The two Playground plans instead
-  # assert a generic error state that the current semantic checks cannot name,
-  # so they remain recorded.
+  # The retained OpenAI plans intentionally use the same fake key. The
+  # Playground plans send the same prompt as the other targets and reuse their
+  # reply-only check because the recorded `bot has error` names no stable text.
   - id: basic-cea-ts-openai-remote-teams
     scenarioId: SCN-CREATE-BASIC-CEA-01
     workItemIds: [36009400]
@@ -262,6 +261,30 @@ cases:
         login-m365,
         f5-copilot-local,
         open-agent,
+        check-basic-cea-chat,
+      ]
+
+  - id: basic-cea-ts-openai-playground
+    scenarioId: SCN-CREATE-BASIC-CEA-01
+    workItemIds: [33338526]
+    steps:
+      [
+        scaffold-basic-cea-ts-openai,
+        check-basic-cea-ts,
+        f5-playground,
+        open-app,
+        check-basic-cea-chat,
+      ]
+
+  - id: basic-cea-js-openai-playground
+    scenarioId: SCN-CREATE-BASIC-CEA-03
+    workItemIds: [33338522]
+    steps:
+      [
+        scaffold-basic-cea-js-openai,
+        check-basic-cea-js,
+        f5-playground,
+        open-app,
         check-basic-cea-chat,
       ]
 

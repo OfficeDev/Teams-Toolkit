@@ -339,6 +339,26 @@ cases:
         check-rag-customize-chat-openai-remote-teams,
       ]
 
+  # The recorded Python plan stopped after checking its suggested prompts. The
+  # matching prompt is already exercised by both Node OpenAI remote cases, so
+  # Python sends it after establishing its own interpreter and remote profile.
+  - id: rag-customize-py-openai-remote-teams
+    scenarioId: SCN-CREATE-RAG-CUSTOMIZE-04
+    workItemIds: [27178104]
+    steps:
+      [
+        scaffold-rag-customize-py-openai-fake-key,
+        check-rag-customize-py-openai,
+        create-python-environment,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote-python,
+        open-app,
+        check-rag-customize-chat-openai-remote-teams,
+      ]
+
   - id: rag-customize-ts-azure-openai-remote-teams
     scenarioId: SCN-CREATE-RAG-CUSTOMIZE-01
     workItemIds: [27569142]
@@ -920,6 +940,12 @@ steps:
     type: target
     with:
       profile: "Launch Remote in Teams (Chrome)"
+      profileSelection: first
+
+  f5-teams-remote-python:
+    type: target
+    with:
+      profile: "Launch Remote (Chrome)"
       profileSelection: first
 
   f5-playground:

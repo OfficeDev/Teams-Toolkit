@@ -43,6 +43,88 @@ cases:
         check-oauth-sign-in,
       ]
 
+  - id: da-api-plugin-from-scratch-entra-js-local-copilot
+    scenarioId: SCN-DA-CREATE-API-PLUGIN-FROM-SCRATCH
+    workItemIds: [34628872]
+    gate: manual
+    steps:
+      [
+        scaffold-entra-js,
+        check-entra-js,
+        login-m365,
+        f5-copilot-local,
+        open-agent,
+        check-repair,
+      ]
+
+  - id: da-api-plugin-from-scratch-entra-ts-remote-copilot
+    scenarioId: SCN-DA-CREATE-API-PLUGIN-FROM-SCRATCH
+    workItemIds: [29417723]
+    gate: manual
+    steps:
+      [
+        scaffold-entra-ts,
+        check-entra-ts,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-copilot-remote,
+        open-agent,
+        check-repair,
+      ]
+
+  - id: da-api-plugin-from-scratch-entra-js-remote-copilot
+    scenarioId: SCN-DA-CREATE-API-PLUGIN-FROM-SCRATCH
+    workItemIds: [34628887]
+    gate: manual
+    steps:
+      [
+        scaffold-entra-js,
+        check-entra-js,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-copilot-remote,
+        open-agent,
+        check-repair,
+      ]
+
+  - id: da-api-plugin-from-scratch-oauth-ts-remote-copilot
+    scenarioId: SCN-DA-CREATE-API-PLUGIN-FROM-SCRATCH
+    workItemIds: [28941947]
+    gate: manual
+    steps:
+      [
+        scaffold-oauth-ts,
+        check-oauth-ts,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-copilot-remote,
+        open-agent,
+        check-oauth-repair-sign-in,
+      ]
+
+  - id: da-api-plugin-from-scratch-oauth-js-remote-copilot
+    scenarioId: SCN-DA-CREATE-API-PLUGIN-FROM-SCRATCH
+    workItemIds: [34628911]
+    gate: manual
+    steps:
+      [
+        scaffold-oauth-js,
+        check-oauth-js,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-copilot-remote,
+        open-agent,
+        check-oauth-repair-sign-in,
+      ]
+
 steps:
   scaffold-entra-ts:
     type: scaffold
@@ -126,6 +208,89 @@ steps:
         path: tsconfig.json
         expect:
           exists: true
+
+  scaffold-entra-js:
+    type: scaffold
+    with:
+      template: da/api-plugin-from-scratch-oauth
+      answers:
+        - question: projectType
+          value: copilot-agent-type
+        - question: daTemplate
+          value: add-action
+        - question: actionSource
+          value: new-api
+        - question: apiAuth
+          value: microsoft-entra
+        - question: language
+          value: javascript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-entra-js:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/repairDeclarativeAgent.json
+        expect:
+          contains:
+            - '"name": "${{var:app_name}}${{APP_NAME_SUFFIX}}"'
+            - '"id": "repairPlugin"'
+            - '"file": "ai-plugin.json"'
+      - type: file
+        path: appPackage/ai-plugin.json
+        expect:
+          contains:
+            - '"namespace": "repairs"'
+            - '"type": "OpenApi"'
+            - '"type": "OAuthPluginVault"'
+            - '"reference_id": "${{AADAUTHCODE_CONFIGURATION_ID}}"'
+            - '"url": "apiSpecificationFile/repair.yml"'
+          notContains:
+            ['"reference_id": "${{OAUTH2AUTHCODE_CONFIGURATION_ID}}"']
+      - type: file
+        path: m365agents.local.yml
+        expect:
+          contains:
+            - "uses: aadApp/create"
+            - "generateClientSecret: false"
+            - "uses: oauth/register"
+            - "identityProvider: MicrosoftEntra"
+            - "configurationId: AADAUTHCODE_CONFIGURATION_ID"
+          notContains:
+            - "clientSecret: SECRET_AAD_APP_CLIENT_SECRET"
+            - "configurationId: OAUTH2AUTHCODE_CONFIGURATION_ID"
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains:
+            - "uses: aadApp/create"
+            - "generateClientSecret: false"
+            - "uses: oauth/register"
+            - "identityProvider: MicrosoftEntra"
+            - "configurationId: AADAUTHCODE_CONFIGURATION_ID"
+          notContains:
+            - "clientSecret: SECRET_AAD_APP_CLIENT_SECRET"
+            - "configurationId: OAUTH2AUTHCODE_CONFIGURATION_ID"
+      - type: file
+        path: aad.manifest.json
+        expect:
+          exists: true
+      - type: file
+        path: src/functions/repairs.js
+        expect:
+          exists: true
+      - type: file
+        path: src/functions/repairs.ts
+        expect:
+          exists: false
+      - type: file
+        path: tsconfig.json
+        expect:
+          exists: false
 
   scaffold-oauth-ts:
     type: scaffold
@@ -273,6 +438,13 @@ steps:
         expect:
           exists: false
 
+  login-azure:
+    type: login
+    with:
+      type: azure
+      account: "${{env:AZURE_ACCOUNT_NAME}}"
+      password: "${{secret:AZURE_ACCOUNT_PASSWORD}}"
+
   login-m365:
     type: login
     with:
@@ -280,10 +452,27 @@ steps:
       account: "${{env:M365_ACCOUNT_NAME}}"
       password: "${{secret:M365_ACCOUNT_PASSWORD}}"
 
+  provision-arm:
+    type: provision
+    with:
+      arm:
+        targetResourceGroupName: "+ New resource group"
+        newResourceGroupName: "${{var:app_name}}-rg"
+        newResourceGroupLocation: "${{env:RESOURCE_GROUP_REGION}}"
+
+  deploy:
+    type: deploy
+
   f5-copilot-local:
     type: target
     with:
       profile: "Debug in Copilot (Chrome)"
+      profileSelection: first
+
+  f5-copilot-remote:
+    type: target
+    with:
+      profile: "Preview in Copilot (Chrome)"
       profileSelection: first
 
   open-agent:
@@ -309,6 +498,17 @@ steps:
     with:
       - type: chat
         send: List all repairs with oauth
+        allowAction: true
+      - type: browser
+        expect:
+          role: button
+          namePrefix: Sign in to
+
+  check-oauth-repair-sign-in:
+    type: checks
+    with:
+      - type: chat
+        send: show repair records assigned to karin blair
         allowAction: true
       - type: browser
         expect:

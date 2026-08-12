@@ -219,6 +219,34 @@ cases:
         check-weather-chat,
       ]
 
+  # The retained OpenAI plans stopped at the Playground welcome state. The same
+  # fake-key template branches have an established error-path chat check in
+  # remote Teams, so the Playground replacements reuse that stable interaction
+  # without adding response wording or coordinates.
+  - id: weather-ts-openai-playground
+    scenarioId: SCN-CREATE-WEATHER-03
+    workItemIds: [33338503]
+    steps:
+      [
+        scaffold-weather-ts-openai-fake-key,
+        check-weather-ts,
+        f5-playground,
+        open-app,
+        check-weather-chat-openai-remote,
+      ]
+
+  - id: weather-js-openai-playground
+    scenarioId: SCN-CREATE-WEATHER-03
+    workItemIds: [33338498]
+    steps:
+      [
+        scaffold-weather-js-openai-fake-key,
+        check-weather-js,
+        f5-playground,
+        open-app,
+        check-weather-chat-openai-remote,
+      ]
+
 steps:
   scaffold-weather-ts-azure-openai:
     type: scaffold
