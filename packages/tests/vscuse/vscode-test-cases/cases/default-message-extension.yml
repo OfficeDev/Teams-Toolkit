@@ -1,8 +1,5 @@
 version: 1
 
-# The generated engine currently owns scaffold, lifecycle, and launch adapters.
-# Invoking the message extension itself remains on the recorded legacy group
-# until a dedicated semantic component is captured from the live Teams UI.
 cases:
   - id: message-extension-ts-remote-teams
     scenarioId: SCN-CREATE-MESSAGE-EXTENSION-01
@@ -17,6 +14,7 @@ cases:
         deploy,
         f5-teams-remote-ts,
         open-app,
+        check-message-extension,
       ]
 
   - id: message-extension-ts-local-teams
@@ -29,13 +27,20 @@ cases:
         login-m365,
         f5-teams-local,
         open-app,
+        check-message-extension,
       ]
 
   - id: message-extension-ts-playground
     scenarioId: SCN-CREATE-MESSAGE-EXTENSION-01
     workItemIds: [27548742]
     steps:
-      [scaffold-message-extension-ts, check-message-extension-ts, f5-playground]
+      [
+        scaffold-message-extension-ts,
+        check-message-extension-ts,
+        f5-playground,
+        open-app,
+        check-message-extension,
+      ]
 
   - id: message-extension-py-remote-teams
     scenarioId: SCN-CREATE-MESSAGE-EXTENSION-03
@@ -51,6 +56,7 @@ cases:
         deploy,
         f5-teams-remote,
         open-app,
+        check-message-extension,
       ]
 
   - id: message-extension-py-local-teams
@@ -64,6 +70,7 @@ cases:
         login-m365,
         f5-teams-local,
         open-app,
+        check-message-extension,
       ]
 
   - id: message-extension-py-playground
@@ -75,6 +82,8 @@ cases:
         check-message-extension-py,
         create-python-environment,
         f5-playground,
+        open-app,
+        check-message-extension,
       ]
 
 steps:
@@ -237,3 +246,8 @@ steps:
     with:
       kind: app
       destination: chat
+
+  check-message-extension:
+    type: checks
+    with:
+      - type: messageExtension

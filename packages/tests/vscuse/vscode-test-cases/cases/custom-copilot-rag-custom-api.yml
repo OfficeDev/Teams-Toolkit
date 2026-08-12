@@ -176,6 +176,55 @@ cases:
         check-rag-custom-api-chat-openai-remote,
       ]
 
+  # The legacy Python plan checked only that its suggested prompt was visible.
+  # Python reuses the same stable interaction after creating its environment
+  # and selects the profile authored by the Python template.
+  - id: rag-custom-api-py-openai-remote-teams
+    scenarioId: SCN-CREATE-RAG-CUSTOM-API-05
+    workItemIds: [29165762]
+    steps:
+      [
+        scaffold-rag-custom-api-py-openai,
+        check-rag-custom-api-py-openai,
+        use-gpt-4o-mini-py,
+        create-python-environment,
+        redirect-openai-base-url-remote,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote-python,
+        open-app,
+        check-rag-custom-api-chat-openai-remote,
+      ]
+
+  # These two recorded plans checked the Playground welcome state before the
+  # repairs prompt. The Python Azure OpenAI Playground case already exercises
+  # that prompt with a reply-only assertion, so all three languages share it.
+  - id: rag-custom-api-ts-azure-openai-playground
+    scenarioId: SCN-CREATE-RAG-CUSTOM-API-01
+    workItemIds: [36230747]
+    steps:
+      [
+        scaffold-rag-custom-api-ts-azure-openai,
+        check-rag-custom-api-ts-azure-openai,
+        f5-playground,
+        open-app,
+        check-rag-custom-api-playground-chat,
+      ]
+
+  - id: rag-custom-api-js-azure-openai-playground
+    scenarioId: SCN-CREATE-RAG-CUSTOM-API-04
+    workItemIds: [36230103]
+    steps:
+      [
+        scaffold-rag-custom-api-js-azure-openai,
+        check-rag-custom-api-js-azure-openai,
+        f5-playground,
+        open-app,
+        check-rag-custom-api-playground-chat,
+      ]
+
   - id: rag-custom-api-py-azure-openai-playground
     scenarioId: SCN-CREATE-RAG-CUSTOM-API-05
     workItemIds: [36231823]

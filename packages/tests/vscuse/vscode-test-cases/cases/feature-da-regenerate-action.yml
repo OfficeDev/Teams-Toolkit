@@ -1,0 +1,67 @@
+version: 1
+
+cases:
+  - id: da-regenerate-list-repairs
+    scenarioId: SCN-DA-REGENERATE-ACTION
+    workItemIds: [32550020]
+    steps:
+      [
+        scaffold-da-action,
+        check-da-action,
+        regenerate-list-repairs,
+        check-regenerated-action,
+      ]
+
+steps:
+  scaffold-da-action:
+    type: scaffold
+    with:
+      template: da/api-plugin-from-existing-api
+      answers:
+        - question: projectType
+          value: copilot-agent-type
+        - question: daTemplate
+          value: add-action
+        - question: actionSource
+          value: openapi
+        - question: openApiSpecType
+          value: enter-url
+        - question: apiSpecLocation
+          type: text
+          value: https://raw.githubusercontent.com/SLdragon/example-openapi-spec/675fd5e0bf33ac3c4cb77a4eb51fc80461caff1d/real-no-auth.yaml
+        - question: apiOperations
+          type: multiSelect
+          value: all
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-da-action:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/ai-plugin.json
+        expect:
+          exists: true
+      - type: file
+        path: appPackage/apiSpecificationFile/openapi.yaml
+        expect:
+          exists: true
+      - type: file
+        path: appPackage/declarativeAgent.json
+        expect:
+          contains: ['"id": "action_1"']
+
+  regenerate-list-repairs:
+    type: regenerateDaAction
+    with:
+      operationId: listRepairs
+
+  check-regenerated-action:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/ai-plugin.json
+        expect: { contains: [listRepairs] }

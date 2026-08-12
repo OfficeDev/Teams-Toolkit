@@ -277,6 +277,34 @@ cases:
         check-basic-cea-chat,
       ]
 
+  - id: basic-cea-ts-openai-playground
+    scenarioId: SCN-CREATE-BASIC-CEA-01
+    workItemIds: [33338526]
+    steps:
+      [
+        scaffold-basic-cea-ts-openai,
+        check-basic-cea-ts,
+        use-gpt-4o-mini-ts,
+        configure-openai-local,
+        f5-playground,
+        open-app,
+        check-basic-cea-chat,
+      ]
+
+  - id: basic-cea-js-openai-playground
+    scenarioId: SCN-CREATE-BASIC-CEA-03
+    workItemIds: [33338522]
+    steps:
+      [
+        scaffold-basic-cea-js-openai,
+        check-basic-cea-js,
+        use-gpt-4o-mini-js,
+        configure-openai-local,
+        f5-playground,
+        open-app,
+        check-basic-cea-chat,
+      ]
+
   # Every Python case creates its virtual environment right after the file
   # check. The scaffold writes src/requirements.txt but installs nothing, and
   # each launch profile starts the app from the workspace interpreter, so a

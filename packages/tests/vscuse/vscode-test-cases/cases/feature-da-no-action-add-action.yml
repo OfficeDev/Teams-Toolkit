@@ -1,0 +1,65 @@
+version: 1
+
+cases:
+  - id: da-no-action-add-openapi-action
+    scenarioId: SCN-DA-ADD-OPENAPI-ACTION
+    workItemIds: [28941585]
+    steps:
+      [
+        scaffold-da-no-action,
+        check-da-no-action,
+        add-openapi-action,
+        check-openapi-action,
+      ]
+
+steps:
+  scaffold-da-no-action:
+    type: scaffold
+    with:
+      template: da/no-action
+      answers:
+        - question: projectType
+          value: copilot-agent-type
+        - question: daTemplate
+          value: no-action
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-da-no-action:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/declarativeAgent.json
+        expect:
+          exists: true
+          notContains: ['"actions"']
+      - type: file
+        path: appPackage/ai-plugin.json
+        expect:
+          exists: false
+
+  add-openapi-action:
+    type: addDaAction
+    with:
+      source: openapi
+      url: https://raw.githubusercontent.com/huimiu/api-spec-example/main/repair-service.yml
+      operations: all
+
+  check-openapi-action:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/ai-plugin.json
+        expect:
+          exists: true
+      - type: file
+        path: appPackage/apiSpecificationFile/openapi.yaml
+        expect:
+          exists: true
+      - type: file
+        path: appPackage/declarativeAgent.json
+        expect:
+          contains: ['"actions"', '"id": "action_1"']
