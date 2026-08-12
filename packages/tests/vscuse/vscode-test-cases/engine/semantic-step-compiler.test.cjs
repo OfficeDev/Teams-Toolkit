@@ -5890,6 +5890,22 @@ steps:
   }
 });
 
+test("VCB-157: the overlength return assertion describes only the visible folder prompt", async () => {
+  const result = await compileFixture(
+    "feature-basic-tab-local-debug.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const folderAssertion = result.value[0].plan.steps.find((step) =>
+    step.step_id.startsWith("step_rejectedOverlengthAppName_assertFolder_"),
+  );
+  assert.notEqual(folderAssertion, undefined);
+  assert.equal(
+    folderAssertion.description,
+    "@assertion the Workspace Folder prompt is visible and Default folder is selectable.",
+  );
+});
+
 test("VCB-149: addDaCapability adds the recorded Copilot connector and rejects unsafe input", () => {
   const sourceText = `version: 1
 cases:

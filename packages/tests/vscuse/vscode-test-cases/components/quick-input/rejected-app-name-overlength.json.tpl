@@ -90,7 +90,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the Workspace Folder prompt is visible and Default folder is selectable after the overlength rejection.",
+      "description": "@assertion the Workspace Folder prompt is visible and Default folder is selectable.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
