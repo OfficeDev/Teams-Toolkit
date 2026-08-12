@@ -177,7 +177,15 @@ const defaultFolderOption = {
 // toolkit flow, so its literals live next to the semantic step that drives it.
 const pythonEnvironment = {
   commandTitle: "Python: Create Environment...",
-  dependenciesTitle: "Select dependencies to install",
+  dependencyLabels: {
+    "basic-custom-engine-agent": "src/requirements.txt",
+    "custom-copilot-basic": "src/requirements.txt",
+    "custom-copilot-rag-azure-ai-search": "src/requirements.txt",
+    "custom-copilot-rag-custom-api": "requirements.txt",
+    "custom-copilot-rag-customize": "src/requirements.txt",
+    "default-bot": "src/requirements.txt",
+    "default-message-extension": "src/requirements.txt",
+  },
   environmentTypeLabel: "Venv",
   successText: "The following environment is selected:",
   successTimeout: "300",
@@ -1228,11 +1236,13 @@ function createSemanticStepCompiler() {
 
   function compilePythonEnvironment(state, definition) {
     const inputs = definition.with ?? {};
+    const dependencyLabel = pythonEnvironment.dependencyLabels[state.template];
     if (
       !isRecord(inputs) ||
       !hasOnlyFields(inputs, new Set(["interpreter"])) ||
       typeof inputs.interpreter !== "string" ||
-      inputs.interpreter.length === 0
+      inputs.interpreter.length === 0 ||
+      dependencyLabel === undefined
     ) {
       return failure(
         "VCB_PYTHON_ENVIRONMENT_INPUT_INVALID",
@@ -1263,8 +1273,8 @@ function createSemanticStepCompiler() {
     if (error) return error;
     error = append(
       output,
-      render(state, "quick-input/multi-select.json.tpl", {
-        questionTitle: pythonEnvironment.dependenciesTitle,
+      render(state, "quick-input/python-dependencies.json.tpl", {
+        dependencyLabel,
       }),
     );
     if (error) return error;

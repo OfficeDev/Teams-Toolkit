@@ -1768,6 +1768,70 @@ test("VCB-67: a Python environment operation drives the Venv creation flow", asy
   );
 });
 
+test("VCB-159: Python dependency prompts name the exact requirements file", async () => {
+  for (const [sourceName, caseId, dependencyLabel] of [
+    [
+      "basic-custom-engine-agent.yml",
+      "basic-cea-py-azure-openai-playground",
+      "src/requirements.txt",
+    ],
+    [
+      "general-teams-agent.yml",
+      "general-teams-py-azure-openai-playground",
+      "src/requirements.txt",
+    ],
+    [
+      "custom-copilot-rag-azure-ai-search.yml",
+      "rag-azure-ai-search-py-azure-openai-remote-teams",
+      "src/requirements.txt",
+    ],
+    [
+      "custom-copilot-rag-custom-api.yml",
+      "rag-custom-api-py-azure-openai-remote-teams",
+      "requirements.txt",
+    ],
+    [
+      "custom-copilot-rag-customize.yml",
+      "rag-customize-py-azure-openai-playground",
+      "src/requirements.txt",
+    ],
+    ["default-bot.yml", "simple-bot-py-playground", "src/requirements.txt"],
+    [
+      "default-message-extension.yml",
+      "message-extension-py-playground",
+      "src/requirements.txt",
+    ],
+  ]) {
+    const result = await compileFixture(sourceName, (sourceText) => sourceText);
+    assert.equal(result.ok, true, sourceName);
+    const plan = result.value.find(
+      (generated) => generated.caseId === caseId,
+    ).plan;
+    const dependencyAssertions = plan.steps.filter(
+      (step) =>
+        step.agent === "assertion" &&
+        step.description.includes("Select dependencies to install"),
+    );
+
+    assert.equal(
+      dependencyAssertions.some(
+        (step) =>
+          step.description ===
+          `@assertion the active multi-select prompt titled Select dependencies to install has finished loading and lists the selectable dependency option labeled ${dependencyLabel}.`,
+      ),
+      true,
+      caseId,
+    );
+    assert.equal(
+      dependencyAssertions.some((step) =>
+        step.description.includes("square selection control"),
+      ),
+      false,
+      caseId,
+    );
+  }
+});
+
 test("VCB-68: a Python environment operation reads its interpreter from the case", async () => {
   const result = await compileFixture(
     "basic-custom-engine-agent.yml",
