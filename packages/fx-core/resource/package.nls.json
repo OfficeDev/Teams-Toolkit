@@ -904,6 +904,8 @@
   "error.teamsApp.createAppPackage.fileSystemError.telemetry": "The app package file operation failed. File system error: %s.",
   "error.teamsApp.createAppPackage.fileSystemError.display": "The app package file operation failed for '%s'. File system error: %s.",
   "error.m365.packageService.packageSizeExceeded": "The app package (%s MB) exceeds the maximum supported size (%s MB). Reduce the package contents before uploading.",
+  "error.m365.packageService.validationFailed": "The app package failed RAI validation. Resolve the following issues and try again:\n%s",
+  "info.m365.packageService.raiValidationInProgress": "RAI validation is in progress. Waiting for completion...",
   "driver.botFramework.description": "creates or updates the bot registration on dev.botframework.com",
   "driver.botFramework.summary.create": "The bot registration has been created successfully (%s).",
   "driver.botFramework.summary.update": "The bot registration has been updated successfully (%s).",

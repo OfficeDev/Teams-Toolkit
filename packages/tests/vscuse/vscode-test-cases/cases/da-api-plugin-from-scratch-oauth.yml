@@ -299,7 +299,7 @@ steps:
         send: show repair records assigned to karin blair
         allowAction: true
         expect:
-          contains: ["Oil Change"]
+          contains: ["Oil change"]
 
   # OAuth requires an interactive sign-in after action consent. The button is
   # stable evidence that the protected action reached that state; this case
