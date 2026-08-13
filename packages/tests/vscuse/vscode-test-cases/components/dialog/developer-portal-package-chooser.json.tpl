@@ -10,7 +10,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the native package file chooser is visible with appPackage selectable and Open as its primary action.",
+      "description": "@assertion the native package file chooser is visible and ready for a package path.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -25,15 +25,13 @@
       ]
     },
     {
-      "step_id": "step_developerPortalPackageChooser_appPackage_{{text:instanceSuffix}}",
+      "step_id": "step_developerPortalPackageChooser_openLocation_{{text:instanceSuffix}}",
       "agent": "interaction",
-      "tool": "click",
+      "tool": "keyboard_shortcut",
       "parameters": {
-        "button": "left",
-        "x": 344,
-        "y": 83
+        "keys": "ctrl+l"
       },
-      "description": "Click the recorded appPackage folder in the native file chooser.",
+      "description": "Open the native file chooser Location field with Ctrl+L.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -41,86 +39,66 @@
       "depends_on": [
         "step_developerPortalPackageChooser_assert_{{text:instanceSuffix}}"
       ],
-      "preconditions": [
-        "dhash:344:83:16:5:0000000000000000",
-        "dhash:344:83:96:5:0000000000000000",
-        "dhash:344:83:0:10:0e60c0d1c0c0c240"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": ["component:dialog", "action:select-package"]
     },
     {
-      "step_id": "step_developerPortalPackageChooser_openAppPackage_{{text:instanceSuffix}}",
+      "step_id": "step_developerPortalPackageChooser_typeLocation_{{text:instanceSuffix}}",
       "agent": "interaction",
-      "tool": "click",
+      "tool": "type_text",
       "parameters": {
-        "button": "left",
-        "x": 980,
-        "y": 748
+        "text": "/home/vscode/AgentsToolkitProjects/${{var:app_name}}/appPackage/build/appPackage.local.zip"
       },
-      "description": "Click Open to enter the recorded appPackage selection.",
+      "description": "Type the exact local app package path into the native file chooser Location field.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_developerPortalPackageChooser_appPackage_{{text:instanceSuffix}}"
+        "step_developerPortalPackageChooser_openLocation_{{text:instanceSuffix}}"
       ],
-      "preconditions": [
-        "dhash:980:748:16:5:cc541555cd32cc00",
-        "dhash:980:748:96:5:6e9105e09c9cd021",
-        "dhash:980:748:0:10:0e60c0d1c0c0c240"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": ["component:dialog", "action:select-package"]
     },
     {
-      "step_id": "step_developerPortalPackageChooser_openBuild_{{text:instanceSuffix}}",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 980,
-        "y": 748
-      },
-      "description": "Click Open to enter the recorded build selection.",
+      "step_id": "step_developerPortalPackageChooser_assertLocation_{{text:instanceSuffix}}",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the native package file chooser Location field visibly contains exactly /home/vscode/AgentsToolkitProjects/${{var:app_name}}/appPackage/build/appPackage.local.zip and is ready to submit that path.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_developerPortalPackageChooser_openAppPackage_{{text:instanceSuffix}}"
+        "step_developerPortalPackageChooser_typeLocation_{{text:instanceSuffix}}"
       ],
-      "preconditions": [
-        "dhash:980:748:16:5:cc541555cd32cc00",
-        "dhash:980:748:96:5:6e9105e09c9cd021",
-        "dhash:980:748:0:10:2688c0e1c0c0c240"
-      ],
+      "preconditions": [],
       "postconditions": [],
-      "tags": ["component:dialog", "action:select-package"]
+      "tags": [
+        "component:dialog",
+        "action:select-package",
+        "step_retry_timeout: 30"
+      ]
     },
     {
-      "step_id": "step_developerPortalPackageChooser_openZip_{{text:instanceSuffix}}",
+      "step_id": "step_developerPortalPackageChooser_submitLocation_{{text:instanceSuffix}}",
       "agent": "interaction",
-      "tool": "click",
+      "tool": "keyboard_shortcut",
       "parameters": {
-        "button": "left",
-        "x": 980,
-        "y": 748
+        "keys": "alt+o"
       },
-      "description": "Click Open to choose the recorded appPackage.local.zip file.",
+      "description": "Use the native file chooser Open mnemonic to submit the verified local app package path.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_developerPortalPackageChooser_openBuild_{{text:instanceSuffix}}"
+        "step_developerPortalPackageChooser_assertLocation_{{text:instanceSuffix}}"
       ],
-      "preconditions": [
-        "dhash:980:748:16:5:cc541555cd32cc00",
-        "dhash:980:748:96:5:6e9105e09c9cd021",
-        "dhash:980:748:0:10:0688c0c2c0c0c240"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": ["component:dialog", "action:select-package"]
     }
