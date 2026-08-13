@@ -46,6 +46,35 @@ cases:
         check-basic-cea-chat,
       ]
 
+  - id: basic-cea-ts-azure-openai-remote-copilot
+    scenarioId: SCN-CREATE-BASIC-CEA-01
+    workItemIds: [36206193]
+    steps:
+      [
+        scaffold-basic-cea-ts-azure-openai,
+        check-basic-cea-ts,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-copilot-remote,
+        open-agent,
+        check-basic-cea-error-free-chat,
+      ]
+
+  - id: basic-cea-ts-azure-openai-local-copilot
+    scenarioId: SCN-CREATE-BASIC-CEA-01
+    workItemIds: [33338527]
+    steps:
+      [
+        scaffold-basic-cea-ts-azure-openai,
+        check-basic-cea-ts,
+        login-m365,
+        f5-copilot-local,
+        open-agent,
+        check-basic-cea-error-free-chat,
+      ]
+
   - id: basic-cea-js-azure-openai-remote-teams
     scenarioId: SCN-CREATE-BASIC-CEA-03
     workItemIds: [33338521]
@@ -82,6 +111,195 @@ cases:
       [
         scaffold-basic-cea-js-azure-openai,
         check-basic-cea-js,
+        f5-playground,
+        open-app,
+        check-basic-cea-chat,
+      ]
+
+  - id: basic-cea-js-azure-openai-remote-copilot
+    scenarioId: SCN-CREATE-BASIC-CEA-03
+    workItemIds: [36206141]
+    steps:
+      [
+        scaffold-basic-cea-js-azure-openai,
+        check-basic-cea-js,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-copilot-remote,
+        open-agent,
+        check-basic-cea-error-free-chat,
+      ]
+
+  - id: basic-cea-js-azure-openai-local-copilot
+    scenarioId: SCN-CREATE-BASIC-CEA-03
+    workItemIds: [33338523]
+    steps:
+      [
+        scaffold-basic-cea-js-azure-openai,
+        check-basic-cea-js,
+        login-m365,
+        f5-copilot-local,
+        open-agent,
+        check-basic-cea-error-free-chat,
+      ]
+
+  - id: basic-cea-ts-openai-remote-teams
+    scenarioId: SCN-CREATE-BASIC-CEA-01
+    workItemIds: [36009400]
+    steps:
+      [
+        scaffold-basic-cea-ts-openai,
+        check-basic-cea-ts,
+        use-gpt-4o-mini-ts,
+        configure-openai-remote,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote-node,
+        open-app,
+        check-basic-cea-chat,
+      ]
+
+  - id: basic-cea-ts-openai-local-teams
+    scenarioId: SCN-CREATE-BASIC-CEA-01
+    workItemIds: [36009300]
+    steps:
+      [
+        scaffold-basic-cea-ts-openai,
+        check-basic-cea-ts,
+        use-gpt-4o-mini-ts,
+        configure-openai-local,
+        login-m365,
+        f5-teams-local,
+        open-app,
+        check-basic-cea-chat,
+      ]
+
+  - id: basic-cea-ts-openai-remote-copilot
+    scenarioId: SCN-CREATE-BASIC-CEA-01
+    workItemIds: [36010157]
+    steps:
+      [
+        scaffold-basic-cea-ts-openai,
+        check-basic-cea-ts,
+        use-gpt-4o-mini-ts,
+        configure-openai-remote,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-copilot-remote,
+        open-agent,
+        check-basic-cea-chat,
+      ]
+
+  - id: basic-cea-ts-openai-local-copilot
+    scenarioId: SCN-CREATE-BASIC-CEA-01
+    workItemIds: [36010142]
+    steps:
+      [
+        scaffold-basic-cea-ts-openai,
+        check-basic-cea-ts,
+        use-gpt-4o-mini-ts,
+        configure-openai-local,
+        login-m365,
+        f5-copilot-local,
+        open-agent,
+        check-basic-cea-chat,
+      ]
+
+  - id: basic-cea-js-openai-remote-teams
+    scenarioId: SCN-CREATE-BASIC-CEA-03
+    workItemIds: [36009391]
+    steps:
+      [
+        scaffold-basic-cea-js-openai,
+        check-basic-cea-js,
+        use-gpt-4o-mini-js,
+        configure-openai-remote,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote-node,
+        open-app,
+        check-basic-cea-chat,
+      ]
+
+  - id: basic-cea-js-openai-local-teams
+    scenarioId: SCN-CREATE-BASIC-CEA-03
+    workItemIds: [36002299]
+    steps:
+      [
+        scaffold-basic-cea-js-openai,
+        check-basic-cea-js,
+        use-gpt-4o-mini-js,
+        configure-openai-local,
+        login-m365,
+        f5-teams-local,
+        open-app,
+        check-basic-cea-chat,
+      ]
+
+  - id: basic-cea-js-openai-remote-copilot
+    scenarioId: SCN-CREATE-BASIC-CEA-03
+    workItemIds: [36010146]
+    steps:
+      [
+        scaffold-basic-cea-js-openai,
+        check-basic-cea-js,
+        use-gpt-4o-mini-js,
+        configure-openai-remote,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-copilot-remote,
+        open-agent,
+        check-basic-cea-chat,
+      ]
+
+  - id: basic-cea-js-openai-local-copilot
+    scenarioId: SCN-CREATE-BASIC-CEA-03
+    workItemIds: [36010130]
+    steps:
+      [
+        scaffold-basic-cea-js-openai,
+        check-basic-cea-js,
+        use-gpt-4o-mini-js,
+        configure-openai-local,
+        login-m365,
+        f5-copilot-local,
+        open-agent,
+        check-basic-cea-chat,
+      ]
+
+  - id: basic-cea-ts-openai-playground
+    scenarioId: SCN-CREATE-BASIC-CEA-01
+    workItemIds: [33338526]
+    steps:
+      [
+        scaffold-basic-cea-ts-openai,
+        check-basic-cea-ts,
+        use-gpt-4o-mini-ts,
+        configure-openai-local,
+        f5-playground,
+        open-app,
+        check-basic-cea-chat,
+      ]
+
+  - id: basic-cea-js-openai-playground
+    scenarioId: SCN-CREATE-BASIC-CEA-03
+    workItemIds: [33338522]
+    steps:
+      [
+        scaffold-basic-cea-js-openai,
+        check-basic-cea-js,
+        use-gpt-4o-mini-js,
+        configure-openai-local,
         f5-playground,
         open-app,
         check-basic-cea-chat,
@@ -164,6 +382,28 @@ steps:
           type: text
           value: "${{var:app_name:vscuse_app_#####}}"
 
+  scaffold-basic-cea-ts-openai:
+    type: scaffold
+    with:
+      template: basic-custom-engine-agent
+      answers:
+        - question: projectType
+          value: custom-engine-agent-type
+        - question: customEngineAgent
+          value: basic-custom-engine-agent
+        - question: llmService
+          value: llm-service-openai
+        - question: openAIKey
+          type: text
+          value: "${{secret:AZURE_OPENAI_API_KEY}}"
+        - question: language
+          value: typescript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
   check-basic-cea-ts:
     type: checks
     with:
@@ -216,6 +456,28 @@ steps:
         - question: azureOpenAIDeploymentName
           type: text
           value: "${{env:AZURE_OPENAI_MODEL}}"
+        - question: language
+          value: javascript
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  scaffold-basic-cea-js-openai:
+    type: scaffold
+    with:
+      template: basic-custom-engine-agent
+      answers:
+        - question: projectType
+          value: custom-engine-agent-type
+        - question: customEngineAgent
+          value: basic-custom-engine-agent
+        - question: llmService
+          value: llm-service-openai
+        - question: openAIKey
+          type: text
+          value: "${{secret:AZURE_OPENAI_API_KEY}}"
         - question: language
           value: javascript
         - question: workspaceFolder
@@ -321,6 +583,28 @@ steps:
         expect:
           exists: false
 
+  use-gpt-4o-mini-ts:
+    type: openAIModel
+    with:
+      path: src/config.ts
+      current: gpt-3.5-turbo
+
+  use-gpt-4o-mini-js:
+    type: openAIModel
+    with:
+      path: src/config.js
+      current: gpt-3.5-turbo
+
+  configure-openai-local:
+    type: localEnvironment
+    with:
+      OPENAI_BASE_URL: "${{env:AZURE_OPENAI_ENDPOINT}}/openai/v1"
+
+  configure-openai-remote:
+    type: remoteEnvironment
+    with:
+      OPENAI_BASE_URL: "${{env:AZURE_OPENAI_ENDPOINT}}/openai/v1"
+
   # The interpreter label is the patch version the runner image carries. It is
   # authored here rather than fixed in the compiler so an image bump changes one
   # case line instead of every Python plan.
@@ -382,10 +666,28 @@ steps:
       profile: "Debug in Microsoft 365 Agents Playground"
       profileSelection: first
 
+  f5-copilot-remote:
+    type: target
+    with:
+      profile: "(Preview) Launch Remote in Copilot (Chrome)"
+      profileSelection: first
+
+  f5-copilot-local:
+    type: target
+    with:
+      profile: "(Preview) Debug in Copilot (Chrome)"
+      profileSelection: first
+
   open-app:
     type: open
     with:
       kind: app
+      destination: chat
+
+  open-agent:
+    type: open
+    with:
+      kind: agent
       destination: chat
 
   # The basic agent answers general questions rather than calling a tool, so the
@@ -397,3 +699,12 @@ steps:
         send: How to develop agent for Teams?
         expect:
           replied: true
+
+  check-basic-cea-error-free-chat:
+    type: checks
+    with:
+      - type: chat
+        send: How can I develop agents with Microsoft 365 Agents Toolkit?
+        expect:
+          replied: true
+          notContains: [error]

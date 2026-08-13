@@ -30,10 +30,13 @@ import {
   AadOwner,
   AgentOwner,
   AppIds,
+  Collaborator,
+  CollaboratorType,
   CollaborationState,
   ListCollaboratorResult,
   PermissionsResult,
   ResourcePermission,
+  TeamsAppAdmin,
 } from "../common/permissionInterface";
 import { SolutionError, SolutionSource, SolutionTelemetryProperty } from "../component/constants";
 import { parseShareAppActionYamlConfig } from "../component/driver/share/utils";
@@ -62,6 +65,10 @@ export class CollaborationConstants {
   static readonly TeamsAppQuestionId = "teamsApp";
   static readonly AadAppQuestionId = "aadApp";
   static readonly AgentOptionId = "agent";
+
+  // listCollaborator() output options. Opt-in and defaults to false/undefined
+  // so existing callers keep getting the exact same result shape as before.
+  static readonly IncludeCollaborators = "includeCollaborators";
 
   static readonly placeholderRegex = /\$\{\{ *[a-zA-Z0-9_.-]* *\}\}/g;
 }
@@ -468,9 +475,48 @@ export async function listCollaborator(
     telemetryProps[SolutionTelemetryProperty.CollaboratorCount] = teamsOwnerCount.toString();
     telemetryProps[SolutionTelemetryProperty.AadOwnerCount] = aadOwnerCount.toString();
   }
+  if (inputs[CollaborationConstants.IncludeCollaborators] === true) {
+    return ok({
+      state: CollaborationState.OK,
+      collaborators: mergeCollaborators(teamsAppOwners, aadOwners, agentOwners),
+    });
+  }
   return ok({
     state: CollaborationState.OK,
   });
+}
+
+function mergeCollaborators(
+  teamsAppOwners: TeamsAppAdmin[],
+  aadOwners: AadOwner[],
+  agentOwners: AgentOwner[]
+): Collaborator[] {
+  const collaborators: Collaborator[] = [];
+  for (const teamsOwner of teamsAppOwners) {
+    collaborators.push({
+      userPrincipalName: teamsOwner.userPrincipalName,
+      userObjectId: teamsOwner.userObjectId,
+      collaboratorType: CollaboratorType.TeamsApp,
+      collaboratorResourceId: teamsOwner.resourceId,
+    });
+  }
+  for (const aadOwner of aadOwners) {
+    collaborators.push({
+      userPrincipalName: aadOwner.userPrincipalName,
+      userObjectId: aadOwner.userObjectId,
+      collaboratorType: CollaboratorType.AadApp,
+      collaboratorResourceId: aadOwner.resourceId,
+    });
+  }
+  for (const agentOwner of agentOwners) {
+    collaborators.push({
+      userPrincipalName: agentOwner.userPrincipalName,
+      userObjectId: agentOwner.userObjectId,
+      collaboratorType: CollaboratorType.Agent,
+      collaboratorResourceId: agentOwner.resourceId,
+    });
+  }
+  return collaborators;
 }
 
 export async function checkPermission(

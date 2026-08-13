@@ -33,8 +33,8 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 340,
-        "y": 354
+        "x": 333,
+        "y": 327
       },
       "description": "Click the \"Allow\" button in the Microsoft 365 Copilot chat interface to grant the agent access.",
       "content_refs": [],

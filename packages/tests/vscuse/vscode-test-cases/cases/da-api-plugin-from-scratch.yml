@@ -49,6 +49,20 @@ cases:
         check-repair,
       ]
 
+  - id: da-api-plugin-from-scratch-ts-local-copilot
+    scenarioId: SCN-DA-CREATE-API-PLUGIN-FROM-SCRATCH
+    workItemIds: [35692262]
+    gate: manual
+    steps:
+      [
+        scaffold-ts,
+        check-ts,
+        login-m365,
+        f5-copilot-local,
+        open-agent,
+        check-repair,
+      ]
+
 steps:
   scaffold-ts:
     type: scaffold
@@ -183,7 +197,7 @@ steps:
         send: show repair records assigned to karin blair
         allowAction: true
         expect:
-          contains: ["Oil Change"]
+          contains: ["Oil change"]
 
   scaffold-js:
     type: scaffold

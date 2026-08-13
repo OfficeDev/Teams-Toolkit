@@ -6,19 +6,114 @@ const { renderComponent } = require("./render-component.cjs");
 const componentRoot = path.join(__dirname, "..", "components");
 const appNameExpressionPattern =
   /^\$\{\{var:app_name:[A-Za-z0-9][A-Za-z0-9_#-]*\}\}$/;
+const connectionIdPattern = /^[A-Za-z0-9][A-Za-z0-9_-]*$/;
 const environmentExpressionPattern = /^\$\{\{env:([A-Z_a-z][A-Z_a-z0-9]*)\}\}$/;
 const secretExpressionPattern = /^\$\{\{secret:[A-Z_a-z][A-Z_a-z0-9]*\}\}$/;
 const relativePathPattern =
   /^(?!\/)(?![A-Za-z]:)(?!.*(?:^|\/)\.\.(?:\/|$))[^\\]+$/;
 const localEnvironmentNamePattern = /^[A-Z][A-Z0-9_]*$/;
 const localEnvironmentValuePattern = /^[A-Za-z0-9:/._-]*$/;
+const openAIModelPattern = /^gpt-[a-z0-9.-]+$/;
 const runnerPlaceholderPattern = /\$\{\{[a-z]+:[A-Za-z0-9_:#-]+\}\}/g;
+const userEnvironmentTargetFiles = Object.freeze({
+  dev: ".env.dev.user",
+  playground: ".env.playground.user",
+});
 const provisionInputGroups = new Set(["apiKey", "arm", "oauth"]);
 const provisionEnvironmentInput = "environment";
 const provisionEnvironmentSkipValue = "none";
 const copilotLaunchFeatureFlag = "TEAMSFX_CEA_ENABLED=true";
+const regenerateDaActionApiSpecLocation =
+  "https://raw.githubusercontent.com/SLdragon/example-openapi-spec/675fd5e0bf33ac3c4cb77a4eb51fc80461caff1d/real-no-auth.yaml";
+const unsupportedWorkflowVersionShareError =
+  "Share feature only supports m365agents.yml version v1.10 or above, follow [the guide](https://github.com/OfficeDev/microsoft-365-agents-toolkit/wiki/Share-Declarative-Agents-with-Others#About-YAML-schema) to upgrade and proceed.";
+const localUserEnvironmentMutationScript = String.raw`import os
+from pathlib import Path
+
+environment_file = Path(os.environ["PROJECT_DIR"]).resolve() / "env" / ".env.local.user"
+name = os.environ["VARIABLE_NAME"]
+value = os.environ["VARIABLE_VALUE"]
+if not value:
+  raise AssertionError("The variable value resolved to nothing")
+lines = environment_file.read_text(encoding="utf-8").splitlines()
+prefix = name + "="
+matches = [index for index, line in enumerate(lines) if line.startswith(prefix)]
+if len(matches) != 1:
+  raise AssertionError("The local user environment variable must already exist exactly once")
+expected = name + "='" + value + "'"
+lines[matches[0]] = expected
+environment_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
+written = [line for line in environment_file.read_text(encoding="utf-8").splitlines() if line.startswith(prefix)]
+if written != [expected]:
+  raise AssertionError("The local user environment variable was not written exactly once with its value")
+`;
+const localUserEnvironmentMutationScriptBase64 = Buffer.from(
+  localUserEnvironmentMutationScript,
+  "utf8",
+).toString("base64");
+const userEnvironmentMutationScript = String.raw`import os
+from pathlib import Path
+
+project_dir = Path(os.environ["PROJECT_DIR"]).resolve()
+target_key = os.environ["TARGET_KEY"]
+targets = {
+  "dev": project_dir / "env" / ".env.dev.user",
+  "playground": project_dir / "env" / ".env.playground.user",
+}
+environment_file = targets.get(target_key)
+if environment_file is None:
+  raise AssertionError("The user environment target is not supported")
+environment_file.parent.mkdir(parents=True, exist_ok=True)
+environment_file.touch(exist_ok=True)
+name = os.environ["VARIABLE_NAME"]
+value = os.environ["VARIABLE_VALUE"]
+if not value:
+  raise AssertionError("The variable value resolved to nothing")
+lines = environment_file.read_text(encoding="utf-8").splitlines()
+prefix = name + "="
+expected = name + "='" + value + "'"
+kept = [line for line in lines if not line.startswith(prefix)]
+kept.append(expected)
+environment_file.write_text("\n".join(kept) + "\n", encoding="utf-8")
+written = [line for line in environment_file.read_text(encoding="utf-8").splitlines() if line.startswith(prefix)]
+if written != [expected]:
+  raise AssertionError("The user environment variable was not written exactly once with its value")
+`;
+const userEnvironmentMutationScriptBase64 = Buffer.from(
+  userEnvironmentMutationScript,
+  "utf8",
+).toString("base64");
+const typeSpecGitHubIssuesMutationScript = String.raw`import os
+from pathlib import Path
+
+project_dir = Path(os.environ["PROJECT_DIR"]).resolve()
+source_file = project_dir / Path("src/agent/main.tsp")
+disabled_to_enabled = {
+  '// @conversationStarter(#{': '@conversationStarter(#{',
+  '//   title: "Get latest issues",': '  title: "Get latest issues",',
+  '//   text: "Get the latest issues from GitHub"': '  text: "Get the latest issues from GitHub"',
+  '// })': '})',
+  '  // op searchIssues is global.GitHubAPI.searchIssues;': '  op searchIssues is global.GitHubAPI.searchIssues;',
+}
+lines = source_file.read_text(encoding="utf-8").splitlines()
+for disabled in disabled_to_enabled:
+  if sum(line.rstrip() == disabled for line in lines) != 1:
+    raise AssertionError("Each disabled GitHub issues declaration must occur exactly once")
+updated = [disabled_to_enabled.get(line.rstrip(), line) for line in lines]
+source_file.write_text("\n".join(updated) + "\n", encoding="utf-8")
+written = source_file.read_text(encoding="utf-8").splitlines()
+for disabled, enabled in disabled_to_enabled.items():
+  if any(line.rstrip() == disabled for line in written) or written.count(enabled) != 1:
+    raise AssertionError("The GitHub issues declaration was not enabled exactly once")
+`;
+const typeSpecGitHubIssuesMutationScriptBase64 = Buffer.from(
+  typeSpecGitHubIssuesMutationScript,
+  "utf8",
+).toString("base64");
 
 const commandTitles = {
+  addDaAction: "Microsoft 365 Agents: Add Action",
+  addDaCapability: "Microsoft 365 Agents: Add Capability",
   clearNotifications: "Notifications: Clear All Notifications",
   create: "Microsoft 365 Agents: Create New Agent/App",
   deploy: "Microsoft 365 Agents: Deploy",
@@ -32,12 +127,24 @@ const commandTitles = {
   focusToolkitView:
     "Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View",
   notifications: "Notifications: Show Notifications",
+  packageApp: "Microsoft 365 Agents: Zip App Package",
+  publishDeveloperPortal:
+    "Microsoft 365 Agents: Publish to Store in Developer Portal",
   provision: "Microsoft 365 Agents: Provision",
+  regenerateDaAction: "Microsoft 365 Agents: Regenerate Action",
+  share: "Microsoft 365 Agents: Share",
   // VS Code generates one show command per view container, so this title exists
   // in both windows, and the container renders every view the current
   // `fx-extension.isTeamsFx` value allows, ACCOUNTS first.
   showToolkit: "View: Show Microsoft 365 Agents Toolkit",
   target: "Debug: Select and Start Debugging",
+};
+
+const rejectedScaffoldTextAttemptOrder = ["invalidCharacters", "overlength"];
+const rejectedScaffoldTextAttemptAdapters = {
+  invalidCharacters:
+    "quick-input/rejected-app-name-invalid-characters.json.tpl",
+  overlength: "quick-input/rejected-app-name-overlength.json.tpl",
 };
 
 // Every toolkit sign-in runs through the same Microsoft identity endpoint in
@@ -73,7 +180,15 @@ const defaultFolderOption = {
 // toolkit flow, so its literals live next to the semantic step that drives it.
 const pythonEnvironment = {
   commandTitle: "Python: Create Environment...",
-  dependenciesTitle: "Select dependencies to install",
+  dependencyLabels: {
+    "basic-custom-engine-agent": "src/requirements.txt",
+    "custom-copilot-basic": "src/requirements.txt",
+    "custom-copilot-rag-azure-ai-search": "src/requirements.txt",
+    "custom-copilot-rag-custom-api": "requirements.txt",
+    "custom-copilot-rag-customize": "src/requirements.txt",
+    "default-bot": "src/requirements.txt",
+    "default-message-extension": "src/requirements.txt",
+  },
   environmentTypeLabel: "Venv",
   successText: "The following environment is selected:",
   successTimeout: "300",
@@ -138,7 +253,11 @@ const scaffoldQuestionAdapters = {
     type: "singleSelect",
   },
   daTemplate: {
-    options: { "add-action": "Add an Action", "no-action": "No Action" },
+    options: {
+      "add-action": "Add an Action",
+      "no-action": "No Action",
+      typespec: "Start with TypeSpec for Microsoft 365 Copilot",
+    },
     title: "Create Declarative Agent",
     type: "singleSelect",
   },
@@ -334,7 +453,7 @@ const teamsPageSubject =
 const teamsAppDetailsSubject =
   "the Microsoft Teams app details page for an app whose name starts with ${{var:app_name}} is visible";
 const copilotAgentSubject =
-  "an agent whose name starts with ${{var:app_name}} is displayed in the main section of Microsoft 365 Copilot";
+  "Microsoft 365 Copilot shows an agent's chat open in the main section with a visible message input";
 const targetAdapters = {
   // Every Chrome launch configuration the templates ship omits `userDataDir`, so
   // js-debug hands the session a profile of its own that carries no Microsoft 365
@@ -343,6 +462,7 @@ const targetAdapters = {
   // `${account-hint}`, which resolves to a `login_hint` and asks straight for the
   // password of the account already signed in to Visual Studio Code.
   "Launch Remote in Teams (Chrome)": {
+    appNameSuffix: "dev",
     browserAuthentication: {
       component: "authentication/browser/m365-password-sign-in.json.tpl",
       credentials: "m365",
@@ -361,6 +481,7 @@ const targetAdapters = {
   // remote Teams launch `View Remote App in Teams (Chrome)`, and so does the Tab
   // template, which reaches a tab page rather than a conversation.
   "View Remote App in Teams (Chrome)": {
+    appNameSuffix: "dev",
     browserAuthentication: {
       component: "authentication/browser/m365-password-sign-in.json.tpl",
       credentials: "m365",
@@ -382,6 +503,7 @@ const targetAdapters = {
   // same Teams app details page, so it reuses that adapter's open transition and
   // readiness subject.
   "Launch Remote (Chrome)": {
+    appNameSuffix: "dev",
     browserAuthentication: {
       component: "authentication/browser/m365-password-sign-in.json.tpl",
       credentials: "m365",
@@ -452,6 +574,7 @@ const targetAdapters = {
   // prefix the case authored, which holds for the `local` suffix as it does for
   // `dev`.
   "Debug in Teams (Chrome)": {
+    appNameSuffix: "local",
     browserAuthentication: {
       component: "authentication/browser/m365-password-sign-in.json.tpl",
       credentials: "m365",
@@ -476,6 +599,19 @@ const targetAdapters = {
     requires: ["login:m365"],
   },
   "(Preview) Debug in Copilot (Chrome)": {
+    browserAuthentication: {
+      component: "authentication/browser/m365-sign-in.json.tpl",
+      credentials: "m365",
+    },
+    host: "copilot",
+    open: { chat: { adapter: "ready", kind: "agent" } },
+    profileSelections: {
+      first: { component: "quick-input/filter-option.json.tpl" },
+    },
+    readySubject: copilotAgentSubject,
+    requires: ["login:m365"],
+  },
+  "Preview Local in Copilot (Chrome)": {
     browserAuthentication: {
       component: "authentication/browser/m365-sign-in.json.tpl",
       credentials: "m365",
@@ -516,6 +652,17 @@ const targetAdapters = {
   },
 };
 
+const messageExtensionComponents = Object.freeze({
+  playground: {
+    python: "browser/message-extension/playground-python.json.tpl",
+    typescript: "browser/message-extension/playground-typescript.json.tpl",
+  },
+  teams: {
+    python: "browser/message-extension/teams-python.json.tpl",
+    typescript: "browser/message-extension/teams-typescript.json.tpl",
+  },
+});
+
 function failure(code, message) {
   return { ok: false, diagnostics: [{ code, message }] };
 }
@@ -526,6 +673,23 @@ function isRecord(value) {
 
 function hasOnlyFields(value, allowedFields) {
   return Object.keys(value).every((field) => allowedFields.has(field));
+}
+
+function isHttpsUrl(value) {
+  if (typeof value !== "string" || value.length === 0) {
+    return false;
+  }
+  try {
+    const url = new URL(value);
+    return (
+      url.protocol === "https:" &&
+      url.username === "" &&
+      url.password === "" &&
+      url.hostname.length > 0
+    );
+  } catch {
+    return false;
+  }
 }
 
 function isConfirmOption(option) {
@@ -628,7 +792,43 @@ function createSemanticStepCompiler() {
     if (error) return error;
 
     const answerState = {};
+    const rejectedTextAttempts = [];
     for (const answer of definition.with.answers) {
+      if (isRecord(answer) && answer.type === "rejectedScaffoldTextAttempt") {
+        const inputs = answer.with;
+        const expectedReason =
+          rejectedScaffoldTextAttemptOrder[rejectedTextAttempts.length];
+        if (
+          definition.with.template !== "non-sso-tab" ||
+          !hasOnlyFields(answer, new Set(["type", "with"])) ||
+          !isRecord(inputs) ||
+          !hasOnlyFields(inputs, new Set(["question", "reason"])) ||
+          inputs.question !== "appName" ||
+          inputs.reason !== expectedReason ||
+          answerState.workspaceFolder !== "default" ||
+          Object.hasOwn(answerState, "appName")
+        ) {
+          return failure(
+            "VCB_REJECTED_SCAFFOLD_TEXT_ATTEMPT_INPUT_INVALID",
+            "The rejected scaffold text attempt is not supported for this prompt state.",
+          );
+        }
+        const component = rejectedScaffoldTextAttemptAdapters[inputs.reason];
+        error = append(output, render(state, component, {}));
+        if (error) return error;
+        rejectedTextAttempts.push(inputs.reason);
+        continue;
+      }
+      if (
+        answer?.question === "appName" &&
+        rejectedTextAttempts.length > 0 &&
+        rejectedTextAttempts.length !== rejectedScaffoldTextAttemptOrder.length
+      ) {
+        return failure(
+          "VCB_REJECTED_SCAFFOLD_TEXT_ATTEMPT_INPUT_INVALID",
+          "The rejected scaffold text attempt sequence is incomplete.",
+        );
+      }
       const question = scaffoldQuestionAdapters[answer.question];
       if (question === undefined) {
         return failure(
@@ -743,6 +943,16 @@ function createSemanticStepCompiler() {
           );
           if (error) return error;
         }
+        if (
+          rejectedTextAttempts.length > 0 &&
+          rejectedTextAttempts.length !==
+            rejectedScaffoldTextAttemptOrder.length
+        ) {
+          return failure(
+            "VCB_REJECTED_SCAFFOLD_TEXT_ATTEMPT_INPUT_INVALID",
+            "The rejected scaffold text attempt sequence is incomplete.",
+          );
+        }
         error = append(
           output,
           render(state, "quick-input/text.json.tpl", {
@@ -774,6 +984,9 @@ function createSemanticStepCompiler() {
     );
     if (error) return error;
     state.template = definition.with.template;
+    state.language = answerState.language;
+    state.apiSpecLocation = answerState.apiSpecLocation;
+    state.apiOperations = answerState.apiOperations;
     return { ok: true, value: output };
   }
 
@@ -1026,11 +1239,13 @@ function createSemanticStepCompiler() {
 
   function compilePythonEnvironment(state, definition) {
     const inputs = definition.with ?? {};
+    const dependencyLabel = pythonEnvironment.dependencyLabels[state.template];
     if (
       !isRecord(inputs) ||
       !hasOnlyFields(inputs, new Set(["interpreter"])) ||
       typeof inputs.interpreter !== "string" ||
-      inputs.interpreter.length === 0
+      inputs.interpreter.length === 0 ||
+      dependencyLabel === undefined
     ) {
       return failure(
         "VCB_PYTHON_ENVIRONMENT_INPUT_INVALID",
@@ -1061,8 +1276,8 @@ function createSemanticStepCompiler() {
     if (error) return error;
     error = append(
       output,
-      render(state, "quick-input/multi-select.json.tpl", {
-        questionTitle: pythonEnvironment.dependenciesTitle,
+      render(state, "quick-input/python-dependencies.json.tpl", {
+        dependencyLabel,
       }),
     );
     if (error) return error;
@@ -1089,7 +1304,11 @@ function createSemanticStepCompiler() {
     return { ok: true, value: output };
   }
 
-  function compileLocalEnvironment(state, definition) {
+  function compileEnvironmentVariables(
+    state,
+    definition,
+    { componentPath, diagnosticCode, diagnosticMessage },
+  ) {
     const inputs = definition.with ?? {};
     const names = isRecord(inputs) ? Object.keys(inputs).sort() : [];
     if (
@@ -1107,16 +1326,13 @@ function createSemanticStepCompiler() {
           ),
       )
     ) {
-      return failure(
-        "VCB_LOCAL_ENVIRONMENT_INPUT_INVALID",
-        "The local environment operation requires shell-safe variable names and values.",
-      );
+      return failure(diagnosticCode, diagnosticMessage);
     }
     const output = [];
     for (const name of names) {
       const error = append(
         output,
-        render(state, "workspace/local-environment-variable.json.tpl", {
+        render(state, componentPath, {
           variableName: name,
           variableValue: inputs[name],
         }),
@@ -1124,6 +1340,84 @@ function createSemanticStepCompiler() {
       if (error) return error;
     }
     return { ok: true, value: output };
+  }
+
+  function compileLocalEnvironment(state, definition) {
+    return compileEnvironmentVariables(state, definition, {
+      componentPath: "workspace/local-environment-variable.json.tpl",
+      diagnosticCode: "VCB_LOCAL_ENVIRONMENT_INPUT_INVALID",
+      diagnosticMessage:
+        "The local environment operation requires shell-safe variable names and values.",
+    });
+  }
+
+  function compilePlaygroundEnvironment(state, definition) {
+    return compileEnvironmentVariables(state, definition, {
+      componentPath: "workspace/playground-environment-variable.json.tpl",
+      diagnosticCode: "VCB_PLAYGROUND_ENVIRONMENT_INPUT_INVALID",
+      diagnosticMessage:
+        "The Playground environment operation requires shell-safe variable names and values.",
+    });
+  }
+
+  function compileRemoteEnvironment(state, definition) {
+    const inputs = definition.with ?? {};
+    const names = isRecord(inputs) ? Object.keys(inputs).sort() : [];
+    if (
+      !isRecord(inputs) ||
+      names.length === 0 ||
+      names.some(
+        (name) =>
+          !localEnvironmentNamePattern.test(name) ||
+          typeof inputs[name] !== "string" ||
+          inputs[name].length === 0 ||
+          !localEnvironmentValuePattern.test(
+            inputs[name].replaceAll(runnerPlaceholderPattern, ""),
+          ),
+      )
+    ) {
+      return failure(
+        "VCB_REMOTE_ENVIRONMENT_INPUT_INVALID",
+        "The remote environment operation requires shell-safe variable names and values.",
+      );
+    }
+    const output = [];
+    for (const name of names) {
+      const error = append(
+        output,
+        render(state, "workspace/remote-environment-variable.json.tpl", {
+          variableName: name,
+          variableValue: inputs[name],
+        }),
+      );
+      if (error) return error;
+    }
+    return { ok: true, value: output };
+  }
+
+  function compileOpenAIModel(state, definition) {
+    const inputs = definition.with ?? {};
+    if (
+      !isRecord(inputs) ||
+      Object.keys(inputs).some(
+        (field) => field !== "path" && field !== "current",
+      ) ||
+      typeof inputs.path !== "string" ||
+      !relativePathPattern.test(inputs.path) ||
+      typeof inputs.current !== "string" ||
+      !openAIModelPattern.test(inputs.current) ||
+      inputs.current === "gpt-4o" ||
+      inputs.current === "gpt-4o-mini"
+    ) {
+      return failure(
+        "VCB_OPENAI_MODEL_INPUT_INVALID",
+        "The OpenAI model operation requires a safe relative path and an unsupported current GPT model.",
+      );
+    }
+    return render(state, "workspace/openai-model.json.tpl", {
+      currentModel: inputs.current,
+      relativePath: inputs.path,
+    });
   }
 
   function compileLocalUserEnvironment(state, definition) {
@@ -1152,8 +1446,54 @@ function createSemanticStepCompiler() {
       const error = append(
         output,
         render(state, "workspace/local-user-environment-variable.json.tpl", {
+          mutationScriptBase64: localUserEnvironmentMutationScriptBase64,
           variableName: name,
           variableValue: inputs[name],
+        }),
+      );
+      if (error) return error;
+    }
+    return { ok: true, value: output };
+  }
+
+  function compileUserEnvironment(state, definition) {
+    const inputs = definition.with ?? {};
+    const variables = inputs.variables ?? {};
+    const names = isRecord(variables) ? Object.keys(variables).sort() : [];
+    if (
+      !isRecord(inputs) ||
+      !hasOnlyFields(inputs, new Set(["target", "variables"])) ||
+      typeof inputs.target !== "string" ||
+      !Object.prototype.hasOwnProperty.call(
+        userEnvironmentTargetFiles,
+        inputs.target,
+      ) ||
+      !isRecord(variables) ||
+      names.length === 0 ||
+      names.some(
+        (name) =>
+          !localEnvironmentNamePattern.test(name) ||
+          typeof variables[name] !== "string" ||
+          variables[name].length === 0 ||
+          !localEnvironmentValuePattern.test(
+            variables[name].replaceAll(runnerPlaceholderPattern, ""),
+          ),
+      )
+    ) {
+      return failure(
+        "VCB_USER_ENVIRONMENT_INPUT_INVALID",
+        "The user environment operation requires one supported target and shell-safe variable names and values.",
+      );
+    }
+    const output = [];
+    for (const name of names) {
+      const error = append(
+        output,
+        render(state, "workspace/user-environment-variable.json.tpl", {
+          mutationScriptBase64: userEnvironmentMutationScriptBase64,
+          targetKey: inputs.target,
+          variableName: name,
+          variableValue: variables[name],
         }),
       );
       if (error) return error;
@@ -1177,6 +1517,507 @@ function createSemanticStepCompiler() {
     return render(state, "workspace/remove-file.json.tpl", {
       relativePath: inputs.path,
     });
+  }
+
+  function compileWorkflowVersion(state, definition) {
+    const inputs = definition.with ?? {};
+    if (
+      state.template !== "da/no-action" ||
+      !isRecord(inputs) ||
+      !hasOnlyFields(inputs, new Set(["version"])) ||
+      inputs.version !== "v1.9"
+    ) {
+      return failure(
+        "VCB_WORKFLOW_VERSION_INPUT_INVALID",
+        "The workflow version operation supports only v1.9 for a no-action declarative agent.",
+      );
+    }
+    const result = render(state, "workspace/workflow-version.json.tpl", {
+      workflowVersion: inputs.version,
+    });
+    if (!result.ok) return result;
+    state.completed.add("workflowVersion:v1.9");
+    return result;
+  }
+
+  function compileShare(state, definition) {
+    const inputs = definition.with ?? {};
+    if (
+      state.template !== "da/no-action" ||
+      !isRecord(inputs) ||
+      !hasOnlyFields(inputs, new Set(["scope", "email", "expectError"])) ||
+      inputs.scope !== "users" ||
+      typeof inputs.email !== "string" ||
+      !environmentExpressionPattern.test(inputs.email) ||
+      inputs.expectError !== "unsupportedWorkflowVersion"
+    ) {
+      return failure(
+        "VCB_SHARE_INPUT_INVALID",
+        "The Share operation requires the supported scope, environment-backed email, and error expectation.",
+      );
+    }
+    if (
+      !state.completed.has("login:m365") ||
+      !state.completed.has("workflowVersion:v1.9")
+    ) {
+      return failure(
+        "VCB_SHARE_PREREQUISITE",
+        "The legacy Share error requires Microsoft 365 login and the supported workflow-version mutation.",
+      );
+    }
+
+    const output = [];
+    for (const commandTitle of [
+      commandTitles.clearNotifications,
+      commandTitles.notifications,
+      commandTitles.share,
+    ]) {
+      const error = append(
+        output,
+        render(state, "command-palette/execute-command.json.tpl", {
+          commandTitle,
+        }),
+      );
+      if (error) return error;
+    }
+    for (const answer of [
+      {
+        component: "quick-input/single-select.json.tpl",
+        values: {
+          questionTitle: "Share the agent",
+          optionLabel: "Share access",
+        },
+      },
+      {
+        component: "quick-input/single-select.json.tpl",
+        values: {
+          questionTitle: "Share the agent with users",
+          optionLabel: "Share to specified users(s) or user group",
+        },
+      },
+      {
+        component: "quick-input/text.json.tpl",
+        values: {
+          questionTitle: "Email addresses of users or groups for agent sharing",
+          inputValue: inputs.email,
+        },
+      },
+    ]) {
+      const error = append(
+        output,
+        render(state, answer.component, answer.values),
+      );
+      if (error) return error;
+    }
+    const error = append(
+      output,
+      render(state, "notifications/assert-contains.json.tpl", {
+        notificationText: unsupportedWorkflowVersionShareError,
+        retryTimeout: "60",
+      }),
+    );
+    if (error) return error;
+    state.completed.add("share");
+    return { ok: true, value: output };
+  }
+
+  function compileConfigureTypeSpecAction(state, definition) {
+    if (
+      state.template !== "da/typespec" ||
+      !isRecord(definition.with) ||
+      !hasOnlyFields(definition.with, new Set(["action"])) ||
+      definition.with.action !== "github-issues"
+    ) {
+      return failure(
+        "VCB_TYPESPEC_ACTION_INPUT_INVALID",
+        "The TypeSpec action input is not supported.",
+      );
+    }
+    const output = [];
+    let error = append(
+      output,
+      render(state, "command-palette/execute-command.json.tpl", {
+        commandTitle: commandTitles.clearNotifications,
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(
+        state,
+        "workspace/configure-typespec-github-issues-action.json.tpl",
+        {
+          mutationScriptBase64: typeSpecGitHubIssuesMutationScriptBase64,
+        },
+      ),
+    );
+    if (error) return error;
+    return { ok: true, value: output };
+  }
+
+  function compileAddDaCapability(state, definition) {
+    const inputs = definition.with;
+    if (
+      state.template !== "da/no-action" ||
+      !isRecord(inputs) ||
+      !hasOnlyFields(inputs, new Set(["capability", "connectionId"])) ||
+      inputs.capability !== "copilotConnector" ||
+      typeof inputs.connectionId !== "string" ||
+      !connectionIdPattern.test(inputs.connectionId)
+    ) {
+      return failure(
+        "VCB_ADD_DA_CAPABILITY_INPUT_INVALID",
+        "The declarative-agent capability input is not supported.",
+      );
+    }
+    const output = [];
+    let error = append(
+      output,
+      render(state, "command-palette/execute-command.json.tpl", {
+        commandTitle: commandTitles.addDaCapability,
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "quick-input/single-select.json.tpl", {
+        optionLabel: "Copilot connector",
+        questionTitle: "Add Capability",
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "quick-input/single-select.json.tpl", {
+        optionLabel: "Enter a Copilot connector Connection ID",
+        questionTitle: "Copilot connector Content",
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "quick-input/text.json.tpl", {
+        inputValue: inputs.connectionId,
+        questionTitle: "Connection ID",
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "quick-input/click-option.json.tpl", {
+        optionLabel: "manifest.json",
+        preconditions: [
+          "dhash:367:75:16:5:00649b6452d25256",
+          "dhash:367:75:96:5:0000902029c80000",
+          "dhash:367:75:0:10:d0202223a62c2c2d",
+        ],
+        questionTitle: "Select Teams manifest.json File",
+        x: 367,
+        y: 75,
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "dialog/add-da-capability-confirm.json.tpl", {}),
+    );
+    if (error) return error;
+    state.completed.add("addDaCapability");
+    return { ok: true, value: output };
+  }
+
+  function compileAddDaAction(state, definition) {
+    const inputs = definition.with;
+    if (
+      state.template !== "da/no-action" ||
+      !isRecord(inputs) ||
+      !hasOnlyFields(inputs, new Set(["source", "url", "operations"])) ||
+      inputs.source !== "openapi" ||
+      !isHttpsUrl(inputs.url) ||
+      inputs.operations !== "all"
+    ) {
+      return failure(
+        "VCB_ADD_DA_ACTION_INPUT_INVALID",
+        "The declarative-agent action input is not supported.",
+      );
+    }
+    const output = [];
+    let error = append(
+      output,
+      render(state, "command-palette/execute-command.json.tpl", {
+        commandTitle: commandTitles.addDaAction,
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "quick-input/single-select.json.tpl", {
+        optionLabel: "Start with an OpenAPI Description Document",
+        questionTitle: "Add an Action",
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "quick-input/single-select.json.tpl", {
+        optionLabel: "Enter OpenAPI Document URL",
+        questionTitle: "OpenAPI Spec Document",
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "quick-input/text.json.tpl", {
+        inputValue: inputs.url,
+        questionTitle: "Enter OpenAPI Document URL",
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "quick-input/add-da-action-select-all.json.tpl", {}),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "quick-input/click-option.json.tpl", {
+        optionLabel: "manifest.json",
+        preconditions: [
+          "dhash:442:81:16:5:636a0aaafb600aa1",
+          "dhash:442:81:96:5:00012ed251080000",
+          "dhash:442:81:0:10:d0282263666c6c2d",
+        ],
+        questionTitle: "Select Teams manifest.json File",
+        x: 442,
+        y: 81,
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "dialog/add-da-action-confirm.json.tpl", {}),
+    );
+    if (error) return error;
+    state.completed.add("addDaAction");
+    return { ok: true, value: output };
+  }
+
+  function compileRegenerateDaAction(state, definition) {
+    const inputs = definition.with;
+    if (
+      state.template !== "da/api-plugin-from-existing-api" ||
+      state.apiSpecLocation !== regenerateDaActionApiSpecLocation ||
+      state.apiOperations !== "all" ||
+      !isRecord(inputs) ||
+      !hasOnlyFields(inputs, new Set(["operationId"])) ||
+      inputs.operationId !== "listRepairs"
+    ) {
+      return failure(
+        "VCB_REGENERATE_DA_ACTION_INPUT_INVALID",
+        "The declarative-agent regeneration input is not supported.",
+      );
+    }
+    const output = [];
+    let error = append(
+      output,
+      render(state, "command-palette/execute-command.json.tpl", {
+        commandTitle: commandTitles.regenerateDaAction,
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "quick-input/click-option.json.tpl", {
+        optionLabel: "ai-plugin.json",
+        preconditions: [
+          "dhash:322:77:16:5:00c0202020201060",
+          "dhash:322:77:96:5:0000ba40c4b86060",
+          "dhash:322:77:0:10:5024226363636421",
+        ],
+        questionTitle: "Select plugin manifest file",
+        x: 322,
+        y: 77,
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "quick-input/click-option.json.tpl", {
+        optionLabel: "apiSpecificationFile/openapi.yaml",
+        preconditions: [
+          "dhash:322:77:16:5:320d225a5a722695",
+          "dhash:322:77:96:5:000040aca7606060",
+          "dhash:322:77:0:10:6024226363636421",
+        ],
+        questionTitle: "Select OpenAPI description document file",
+        x: 322,
+        y: 77,
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "quick-input/multi-select.json.tpl", {
+        questionTitle: "Select operation(s) Copilot can interact with.",
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "dialog/regenerate-da-action-confirm.json.tpl", {}),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "notifications/assert-contains.json.tpl", {
+        notificationText: 'Action "action_1" updated successfully.',
+        retryTimeout: "120",
+      }),
+    );
+    if (error) return error;
+    state.completed.add("regenerateDaAction");
+    return { ok: true, value: output };
+  }
+
+  function compilePackageApp(state, definition) {
+    const inputs = definition.with;
+    if (
+      state.template !== "default-bot" ||
+      state.profile !== targetAdapters["Debug in Teams (Chrome)"] ||
+      !state.completed.has("login:m365") ||
+      !state.completed.has("chat-ready") ||
+      !isRecord(inputs) ||
+      !hasOnlyFields(inputs, new Set(["environment"])) ||
+      inputs.environment !== "local"
+    ) {
+      return failure(
+        "VCB_PACKAGE_APP_INPUT_INVALID",
+        "The app package input or local Teams entry state is not supported.",
+      );
+    }
+    const output = [];
+    let error = append(
+      output,
+      render(state, "browser/teams/close-local-app-window.json.tpl", {}),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "command-palette/execute-command.json.tpl", {
+        commandTitle: commandTitles.packageApp,
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "quick-input/click-option.json.tpl", {
+        optionLabel: "manifest.json",
+        preconditions: [
+          "dhash:394:76:16:5:21a65953529ab34e",
+          "dhash:394:76:96:5:0005804505010000",
+          "dhash:394:76:0:10:d0832723b2292168",
+        ],
+        questionTitle: "Select Teams manifest.json File",
+        x: 394,
+        y: 76,
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "quick-input/filter-option.json.tpl", {
+        optionLabel: inputs.environment,
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "notifications/assert-contains.json.tpl", {
+        notificationText: "App package successfully built at",
+        retryTimeout: "120",
+      }),
+    );
+    if (error) return error;
+    state.completed.add("packageApp");
+    return { ok: true, value: output };
+  }
+
+  function compilePublishDeveloperPortal(state, definition) {
+    const credentials = state.credentials.get("m365");
+    if (
+      definition.with !== undefined ||
+      !state.completed.has("packageApp") ||
+      credentials === undefined
+    ) {
+      return failure(
+        "VCB_PUBLISH_DEVELOPER_PORTAL_INPUT_INVALID",
+        "Developer Portal publishing requires the recorded package and Microsoft 365 credential state with no authored input.",
+      );
+    }
+    const output = [];
+    let error = append(
+      output,
+      render(state, "command-palette/execute-command.json.tpl", {
+        commandTitle: commandTitles.publishDeveloperPortal,
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "quick-input/click-option.json.tpl", {
+        optionLabel: "Browse...",
+        preconditions: [
+          "dhash:457:72:16:5:0000000000000000",
+          "dhash:457:72:96:5:2954160010000000",
+          "dhash:457:72:0:10:d063676332696128",
+        ],
+        questionTitle: "Select Your App Package",
+        x: 457,
+        y: 72,
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "dialog/developer-portal-package-chooser.json.tpl", {}),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "quick-input/click-option.json.tpl", {
+        optionLabel: "appPackage.local.zip",
+        preconditions: [
+          "dhash:393:80:16:5:9c5a543434b1cd48",
+          "dhash:393:80:96:5:2494104a6a900000",
+          "dhash:393:80:0:10:d063676332696128",
+        ],
+        questionTitle: "Select Your App Package",
+        x: 393,
+        y: 80,
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "dialog/open-developer-portal.json.tpl", {}),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(
+        state,
+        "authentication/browser/developer-portal-sign-in.json.tpl",
+        { accountPassword: credentials.accountPassword },
+      ),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "browser/developer-portal/publish.json.tpl", {}),
+    );
+    if (error) return error;
+    state.completed.add("publishDeveloperPortal");
+    return { ok: true, value: output };
   }
 
   function compileLifecycle(state, definition) {
@@ -1554,6 +2395,12 @@ function createSemanticStepCompiler() {
         "The browser check requires a preceding target operation.",
       );
     }
+    if (assertion.expect.namePrefix !== undefined) {
+      return render(state, "browser/assert-element-name-prefix.json.tpl", {
+        accessibleNamePrefix: assertion.expect.namePrefix,
+        role: assertion.expect.role,
+      });
+    }
     return render(state, "browser/assert-element.json.tpl", {
       accessibleName: assertion.expect.name,
       role: assertion.expect.role,
@@ -1580,6 +2427,28 @@ function createSemanticStepCompiler() {
     return { ok: true, value: output };
   }
 
+  function compileMessageExtensionCheck(state) {
+    const component =
+      messageExtensionComponents[state.profile?.host]?.[state.language];
+    if (
+      state.template !== "default-message-extension" ||
+      !state.completed.has("chat-ready") ||
+      component === undefined
+    ) {
+      return failure(
+        "VCB_MESSAGE_EXTENSION_ADAPTER_UNKNOWN",
+        "The message extension check has no compatible recorded adapter.",
+      );
+    }
+    return render(
+      state,
+      component,
+      state.profile.host === "teams"
+        ? { appNameSuffix: state.profile.appNameSuffix }
+        : {},
+    );
+  }
+
   function validateCheckAssertion(assertion) {
     if (!isRecord(assertion)) {
       return failure(
@@ -1594,7 +2463,9 @@ function createSemanticStepCompiler() {
           ? new Set(["type", "expect"])
           : assertion.type === "chat"
             ? new Set(["type", "send", "allowAction", "expect"])
-            : undefined;
+            : assertion.type === "messageExtension"
+              ? new Set(["type"])
+              : undefined;
     if (assertionFields === undefined) {
       return failure(
         "VCB_CHECK_ADAPTER_UNKNOWN",
@@ -1608,6 +2479,10 @@ function createSemanticStepCompiler() {
       );
     }
 
+    if (assertion.type === "messageExtension") {
+      return { ok: true };
+    }
+
     // A chat check may omit its expectation when the message only has to reach
     // the agent so that a later assertion can observe the resulting surface.
     const sendOnlyChat =
@@ -1617,7 +2492,7 @@ function createSemanticStepCompiler() {
       assertion.type === "file"
         ? new Set(["exists", "contains", "notContains"])
         : assertion.type === "browser"
-          ? new Set(["role", "name"])
+          ? new Set(["role", "name", "namePrefix"])
           : assertion.type === "page"
             ? new Set(["contains"])
             : new Set(["replied", "contains", "notContains"]);
@@ -1633,8 +2508,15 @@ function createSemanticStepCompiler() {
       (assertion.type === "browser" &&
         (typeof expected.role !== "string" ||
           expected.role.length === 0 ||
-          typeof expected.name !== "string" ||
-          expected.name.length === 0)) ||
+          ["name", "namePrefix"].filter(
+            (field) => expected[field] !== undefined,
+          ).length !== 1 ||
+          ["name", "namePrefix"].some(
+            (field) =>
+              expected[field] !== undefined &&
+              (typeof expected[field] !== "string" ||
+                expected[field].length === 0),
+          ))) ||
       (assertion.type === "page" && expected.contains === undefined) ||
       listFields.some(
         (field) =>
@@ -1685,10 +2567,12 @@ function createSemanticStepCompiler() {
               ? compilePageCheck(state, assertion)
               : assertion.type === "chat"
                 ? compileChatCheck(state, assertion)
-                : failure(
-                    "VCB_CHECK_ADAPTER_UNKNOWN",
-                    "The assertion type is not supported by the semantic adapter.",
-                  );
+                : assertion.type === "messageExtension"
+                  ? compileMessageExtensionCheck(state)
+                  : failure(
+                      "VCB_CHECK_ADAPTER_UNKNOWN",
+                      "The assertion type is not supported by the semantic adapter.",
+                    );
       if (!result.ok) return result;
       output.push(...result.value);
     }
@@ -1740,10 +2624,34 @@ function createSemanticStepCompiler() {
         return compilePythonEnvironment(state, definition);
       case "localEnvironment":
         return compileLocalEnvironment(state, definition);
+      case "playgroundEnvironment":
+        return compilePlaygroundEnvironment(state, definition);
+      case "remoteEnvironment":
+        return compileRemoteEnvironment(state, definition);
+      case "openAIModel":
+        return compileOpenAIModel(state, definition);
       case "localUserEnvironment":
         return compileLocalUserEnvironment(state, definition);
+      case "userEnvironment":
+        return compileUserEnvironment(state, definition);
       case "removeWorkspaceFile":
         return compileRemoveWorkspaceFile(state, definition);
+      case "workflowVersion":
+        return compileWorkflowVersion(state, definition);
+      case "configureTypeSpecAction":
+        return compileConfigureTypeSpecAction(state, definition);
+      case "addDaCapability":
+        return compileAddDaCapability(state, definition);
+      case "addDaAction":
+        return compileAddDaAction(state, definition);
+      case "regenerateDaAction":
+        return compileRegenerateDaAction(state, definition);
+      case "packageApp":
+        return compilePackageApp(state, definition);
+      case "publishDeveloperPortal":
+        return compilePublishDeveloperPortal(state, definition);
+      case "share":
+        return compileShare(state, definition);
       case "target":
         return compileTarget(state, definition);
       case "open":

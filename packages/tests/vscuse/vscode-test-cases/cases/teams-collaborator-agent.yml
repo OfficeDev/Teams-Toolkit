@@ -34,6 +34,18 @@ cases:
         check-collaborator-chat,
       ]
 
+  - id: collaborator-ts-azure-openai-playground
+    scenarioId: SCN-CREATE-COLLABORATOR-01
+    workItemIds: [36048495]
+    steps:
+      [
+        scaffold-collaborator-ts,
+        check-collaborator-ts,
+        f5-playground,
+        open-app,
+        check-collaborator-playground-chat,
+      ]
+
 steps:
   scaffold-collaborator-ts:
     type: scaffold
@@ -151,6 +163,12 @@ steps:
       profile: "Debug in Teams (Chrome)"
       profileSelection: first
 
+  f5-playground:
+    type: target
+    with:
+      profile: "Debug in Microsoft 365 Agents Playground"
+      profileSelection: first
+
   open-app:
     type: open
     with:
@@ -165,5 +183,13 @@ steps:
     with:
       - type: chat
         send: Create a task to review the proposal by Friday
+        expect:
+          replied: true
+
+  check-collaborator-playground-chat:
+    type: checks
+    with:
+      - type: chat
+        send: "@Collaborator create a task to review the proposal by Friday"
         expect:
           replied: true

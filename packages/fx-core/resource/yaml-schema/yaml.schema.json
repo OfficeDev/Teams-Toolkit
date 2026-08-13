@@ -1402,7 +1402,7 @@
             },
             "scope": {
               "type": "string",
-              "description": "The scope of the app (only works for declarative agent). personal is only visible to the owners. shared can be visible to other users in the tenant. Default is personal"
+              "description": "The scope of the app. personal is only visible to the owners. shared can be visible to other users in the tenant. Default is personal"
             }
           }
         },

@@ -203,6 +203,7 @@ jobs:
       # same fake key the existing UI tests use. Cases using this path must not
       # assert a real model completion.
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || 'fake' }}
+      FAKE_OPENAI_API_KEY: "faked_openapi_key"
 
       # SQL server
       SQL_USER: ${{ secrets.SQL_USER }}
