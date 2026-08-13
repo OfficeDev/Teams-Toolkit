@@ -1832,7 +1832,7 @@ test("VCB-159: Python dependency prompts name the exact requirements file", asyn
   }
 });
 
-test("VCB-160: Weather OpenAI Playground redirects use the Playground lifecycle", async () => {
+test("VCB-161: Weather OpenAI Playground redirects use the Playground lifecycle", async () => {
   const result = await compileFixture(
     "weather-agent.yml",
     (sourceText) => sourceText,
@@ -6630,7 +6630,7 @@ test("VCB-152: packageApp preserves the recorded local package flow and rejects 
   }
 });
 
-test("VCB-153: publishDeveloperPortal preserves every recorded pointer precondition", () => {
+test("VCB-153: publishDeveloperPortal preserves every remaining recorded pointer precondition", () => {
   const sourceText = createPackageSource({ includePublish: true });
   const result = compileInlineSource(sourceText, "vscuse-vcb-153.yml");
   assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
@@ -6657,15 +6657,6 @@ test("VCB-153: publishDeveloperPortal preserves every recorded pointer precondit
         "dhash:457:72:16:5:0000000000000000",
         "dhash:457:72:96:5:2954160010000000",
         "dhash:457:72:0:10:d063676332696128",
-      ],
-    ],
-    [
-      344,
-      83,
-      [
-        "dhash:344:83:16:5:0000000000000000",
-        "dhash:344:83:96:5:0000000000000000",
-        "dhash:344:83:0:10:0e60c0d1c0c0c240",
       ],
     ],
     [
@@ -6734,32 +6725,6 @@ test("VCB-153: publishDeveloperPortal preserves every recorded pointer precondit
   ]) {
     assertRecordedClick(plan, x, y, preconditions);
   }
-  const openClicks = plan.steps.filter(
-    (step) =>
-      step.tool === "click" &&
-      step.parameters.x === 980 &&
-      step.parameters.y === 748,
-  );
-  assert.deepEqual(
-    openClicks.map((step) => step.preconditions),
-    [
-      [
-        "dhash:980:748:16:5:cc541555cd32cc00",
-        "dhash:980:748:96:5:6e9105e09c9cd021",
-        "dhash:980:748:0:10:0e60c0d1c0c0c240",
-      ],
-      [
-        "dhash:980:748:16:5:cc541555cd32cc00",
-        "dhash:980:748:96:5:6e9105e09c9cd021",
-        "dhash:980:748:0:10:2688c0e1c0c0c240",
-      ],
-      [
-        "dhash:980:748:16:5:cc541555cd32cc00",
-        "dhash:980:748:96:5:6e9105e09c9cd021",
-        "dhash:980:748:0:10:0688c0c2c0c0c240",
-      ],
-    ],
-  );
 
   for (const [label, invalidSource] of [
     [
@@ -6785,6 +6750,57 @@ test("VCB-153: publishDeveloperPortal preserves every recorded pointer precondit
       label,
     );
   }
+});
+
+test("VCB-160: publishDeveloperPortal submits the local package through the native chooser location", () => {
+  const sourceText = createPackageSource({ includePublish: true });
+  const result = compileInlineSource(sourceText, "vscuse-vcb-160.yml");
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const plan = result.value[0].plan;
+  const chooser = plan.steps.filter((step) =>
+    step.step_id.startsWith("step_developerPortalPackageChooser_"),
+  );
+
+  assert.deepEqual(
+    chooser.map((step) => [step.agent, step.tool]),
+    [
+      ["assertion", ""],
+      ["interaction", "keyboard_shortcut"],
+      ["interaction", "type_text"],
+      ["assertion", ""],
+      ["interaction", "keyboard_shortcut"],
+    ],
+  );
+  assert.equal(chooser[1].parameters.keys, "ctrl+l");
+  assert.equal(
+    chooser[2].parameters.text,
+    "/home/vscode/AgentsToolkitProjects/${{var:app_name}}/appPackage/build/appPackage.local.zip",
+  );
+  assert.equal(
+    chooser[3].description,
+    "@assertion the native package file chooser Location field visibly contains exactly /home/vscode/AgentsToolkitProjects/${{var:app_name}}/appPackage/build/appPackage.local.zip and is ready to submit that path.",
+  );
+  assert.equal(chooser[4].parameters.keys, "alt+o");
+  assert.equal(
+    chooser.some((step) => step.tool === "click"),
+    false,
+  );
+  assert.deepEqual(
+    chooser.map((step) => step.preconditions),
+    chooser.map(() => []),
+  );
+  for (let index = 1; index < chooser.length; index += 1) {
+    assert.deepEqual(chooser[index].depends_on, [chooser[index - 1].step_id]);
+  }
+
+  const chooserEndIndex = plan.steps.indexOf(chooser[chooser.length - 1]);
+  const confirmation = plan.steps[chooserEndIndex + 1];
+  assert.match(confirmation.step_id, /^step_clickOption_assertPrompt_/);
+  assert.equal(
+    confirmation.description.includes("Select Your App Package") &&
+      confirmation.description.includes("appPackage.local.zip"),
+    true,
+  );
 });
 
 test("VCB-154: exactly six legacy plans are replaced while one Partial and six Not Mapped plans remain", async () => {

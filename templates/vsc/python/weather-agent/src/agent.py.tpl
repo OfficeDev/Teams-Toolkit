@@ -131,7 +131,10 @@ Respond in JSON format with the following JSON schema, and do not use markdown i
 {
     "contentType": "'Text' or 'AdaptiveCard' only",
     "content": "{The content of the response, may be plain text, or JSON based adaptive card}"
-}"""
+}
+
+For Text responses, content must be a string.
+For AdaptiveCard responses, content must be a JSON object, not a JSON-encoded string."""
 )
 
 @weather_agent.activity(ActivityTypes.Message)
@@ -159,9 +162,12 @@ async def on_message(context: TurnContext, state: TurnState):
         if llm_response_content["contentType"] == "Text":
             await context.send_activity(llm_response_content["content"])
         elif llm_response_content["contentType"] == "AdaptiveCard":
+            adaptive_card_content = llm_response_content["content"]
+            if isinstance(adaptive_card_content, str):
+                adaptive_card_content = json.loads(adaptive_card_content)
             response = MessageFactory.attachment({
                 "contentType": "application/vnd.microsoft.card.adaptive",
-                "content": llm_response_content["content"],
+                "content": adaptive_card_content,
             })
             await context.send_activity(response)
     except (json.JSONDecodeError, KeyError) as e:
