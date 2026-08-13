@@ -6817,6 +6817,12 @@ steps:
     with:
       template: da/no-action
       answers:
+        - question: projectType
+          value: copilot-agent-type
+        - question: daTemplate
+          value: no-action
+        - question: workspaceFolder
+          value: default
         - question: appName
           type: text
           value: "\${{var:app_name:vscuse_app_#####}}"
@@ -6860,6 +6866,42 @@ steps:
   const typedValues = plan.steps
     .filter((step) => step.tool === "type_text")
     .map((step) => step.parameters.text);
+  const scaffoldFlow = [
+    "Declarative Agent",
+    "No Action",
+    "${{var:app_name:vscuse_app_#####}}",
+  ];
+  let previousScaffoldIndex = -1;
+  const scaffoldIndexes = scaffoldFlow.map((value) => {
+    previousScaffoldIndex = typedValues.indexOf(
+      value,
+      previousScaffoldIndex + 1,
+    );
+    return previousScaffoldIndex;
+  });
+  assert.equal(
+    scaffoldIndexes.every((index) => index >= 0),
+    true,
+  );
+  const scaffoldPromptTitles = [
+    "New Project",
+    "Create Declarative Agent",
+    "Workspace Folder",
+    "Application Name",
+  ];
+  let previousPromptIndex = -1;
+  const scaffoldPromptIndexes = scaffoldPromptTitles.map((title) => {
+    previousPromptIndex = descriptions.findIndex(
+      (description, index) =>
+        index > previousPromptIndex &&
+        description.includes(`active prompt titled ${title}`),
+    );
+    return previousPromptIndex;
+  });
+  assert.equal(
+    scaffoldPromptIndexes.every((index) => index >= 0),
+    true,
+  );
   const shareFlow = [
     "Microsoft 365 Agents: Share",
     "Share access",
