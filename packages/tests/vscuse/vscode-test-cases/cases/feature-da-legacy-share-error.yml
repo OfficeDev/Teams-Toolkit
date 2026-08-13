@@ -1,0 +1,52 @@
+version: 1
+
+cases:
+  - id: da-legacy-share-error
+    scenarioId: VCB-162
+    workItemIds: [36266720]
+    gate: manual
+    steps:
+      [
+        scaffold-da-no-action,
+        check-current-workflow,
+        login-m365,
+        downgrade-workflow,
+        share-agent,
+      ]
+
+steps:
+  scaffold-da-no-action:
+    type: scaffold
+    with:
+      template: da/no-action
+      answers:
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-current-workflow:
+    type: checks
+    with:
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains: ["version: v1.12", "copilotAgent/publish"]
+
+  login-m365:
+    type: login
+    with:
+      type: m365
+      account: "${{env:M365_ACCOUNT_NAME}}"
+      password: "${{secret:M365_ACCOUNT_PASSWORD}}"
+
+  downgrade-workflow:
+    type: workflowVersion
+    with:
+      version: v1.9
+
+  share-agent:
+    type: share
+    with:
+      scope: users
+      email: "${{env:M365_ACCOUNT_NAME}}"
+      expectError: unsupportedWorkflowVersion

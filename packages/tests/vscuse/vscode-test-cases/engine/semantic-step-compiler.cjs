@@ -25,6 +25,8 @@ const provisionEnvironmentSkipValue = "none";
 const copilotLaunchFeatureFlag = "TEAMSFX_CEA_ENABLED=true";
 const regenerateDaActionApiSpecLocation =
   "https://raw.githubusercontent.com/SLdragon/example-openapi-spec/675fd5e0bf33ac3c4cb77a4eb51fc80461caff1d/real-no-auth.yaml";
+const unsupportedWorkflowVersionShareError =
+  "Share feature only supports m365agents.yml version v1.10 or above, follow [the guide](https://github.com/OfficeDev/microsoft-365-agents-toolkit/wiki/Share-Declarative-Agents-with-Others#About-YAML-schema) to upgrade and proceed.";
 const localUserEnvironmentMutationScript = String.raw`import os
 from pathlib import Path
 
@@ -130,6 +132,7 @@ const commandTitles = {
     "Microsoft 365 Agents: Publish to Store in Developer Portal",
   provision: "Microsoft 365 Agents: Provision",
   regenerateDaAction: "Microsoft 365 Agents: Regenerate Action",
+  share: "Microsoft 365 Agents: Share",
   // VS Code generates one show command per view container, so this title exists
   // in both windows, and the container renders every view the current
   // `fx-extension.isTeamsFx` value allows, ACCOUNTS first.
@@ -1516,6 +1519,108 @@ function createSemanticStepCompiler() {
     });
   }
 
+  function compileWorkflowVersion(state, definition) {
+    const inputs = definition.with ?? {};
+    if (
+      state.template !== "da/no-action" ||
+      !isRecord(inputs) ||
+      !hasOnlyFields(inputs, new Set(["version"])) ||
+      inputs.version !== "v1.9"
+    ) {
+      return failure(
+        "VCB_WORKFLOW_VERSION_INPUT_INVALID",
+        "The workflow version operation supports only v1.9 for a no-action declarative agent.",
+      );
+    }
+    const result = render(state, "workspace/workflow-version.json.tpl", {
+      workflowVersion: inputs.version,
+    });
+    if (!result.ok) return result;
+    state.completed.add("workflowVersion:v1.9");
+    return result;
+  }
+
+  function compileShare(state, definition) {
+    const inputs = definition.with ?? {};
+    if (
+      state.template !== "da/no-action" ||
+      !isRecord(inputs) ||
+      !hasOnlyFields(inputs, new Set(["scope", "email", "expectError"])) ||
+      inputs.scope !== "users" ||
+      typeof inputs.email !== "string" ||
+      !environmentExpressionPattern.test(inputs.email) ||
+      inputs.expectError !== "unsupportedWorkflowVersion"
+    ) {
+      return failure(
+        "VCB_SHARE_INPUT_INVALID",
+        "The Share operation requires the supported scope, environment-backed email, and error expectation.",
+      );
+    }
+    if (
+      !state.completed.has("login:m365") ||
+      !state.completed.has("workflowVersion:v1.9")
+    ) {
+      return failure(
+        "VCB_SHARE_PREREQUISITE",
+        "The legacy Share error requires Microsoft 365 login and the supported workflow-version mutation.",
+      );
+    }
+
+    const output = [];
+    for (const commandTitle of [
+      commandTitles.clearNotifications,
+      commandTitles.notifications,
+      commandTitles.share,
+    ]) {
+      const error = append(
+        output,
+        render(state, "command-palette/execute-command.json.tpl", {
+          commandTitle,
+        }),
+      );
+      if (error) return error;
+    }
+    for (const answer of [
+      {
+        component: "quick-input/single-select.json.tpl",
+        values: {
+          questionTitle: "Share the agent",
+          optionLabel: "Share access",
+        },
+      },
+      {
+        component: "quick-input/single-select.json.tpl",
+        values: {
+          questionTitle: "Share the agent with users",
+          optionLabel: "Share to specified users(s) or user group",
+        },
+      },
+      {
+        component: "quick-input/text.json.tpl",
+        values: {
+          questionTitle: "Email addresses of users or groups for agent sharing",
+          inputValue: inputs.email,
+        },
+      },
+    ]) {
+      const error = append(
+        output,
+        render(state, answer.component, answer.values),
+      );
+      if (error) return error;
+    }
+    const error = append(
+      output,
+      render(state, "notifications/assert-contains.json.tpl", {
+        notificationText: unsupportedWorkflowVersionShareError,
+        retryTimeout: "60",
+      }),
+    );
+    if (error) return error;
+    state.completed.add("share");
+    return { ok: true, value: output };
+  }
+
   function compileConfigureTypeSpecAction(state, definition) {
     if (
       state.template !== "da/typespec" ||
@@ -2531,6 +2636,8 @@ function createSemanticStepCompiler() {
         return compileUserEnvironment(state, definition);
       case "removeWorkspaceFile":
         return compileRemoveWorkspaceFile(state, definition);
+      case "workflowVersion":
+        return compileWorkflowVersion(state, definition);
       case "configureTypeSpecAction":
         return compileConfigureTypeSpecAction(state, definition);
       case "addDaCapability":
@@ -2543,6 +2650,8 @@ function createSemanticStepCompiler() {
         return compilePackageApp(state, definition);
       case "publishDeveloperPortal":
         return compilePublishDeveloperPortal(state, definition);
+      case "share":
+        return compileShare(state, definition);
       case "target":
         return compileTarget(state, definition);
       case "open":
