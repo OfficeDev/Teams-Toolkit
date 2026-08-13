@@ -185,7 +185,7 @@ test("VCB-34: semantic compiler does not read external template contracts", asyn
   }
 });
 
-test("VCB-34: default setup compiles the checked-in YAML sources into 170 plans", async (context) => {
+test("VCB-34: default setup compiles the checked-in YAML sources into 171 plans", async (context) => {
   const plansDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "vscuse-generated-"),
   );
@@ -198,9 +198,9 @@ test("VCB-34: default setup compiles the checked-in YAML sources into 170 plans"
   });
 
   assert.equal(first.ok, true);
-  assert.equal(first.value.files.length, 170);
+  assert.equal(first.value.files.length, 171);
   const generatedFiles = first.value.files;
-  assert.equal(generatedFiles.length, 170);
+  assert.equal(generatedFiles.length, 171);
   assert.equal(
     generatedFiles.includes(
       "da-api-plugin-from-existing-api--da-api-plugin-from-existing-api-no-auth.json",
@@ -6803,7 +6803,226 @@ test("VCB-160: publishDeveloperPortal submits the local package through the nati
   );
 });
 
-test("VCB-154: exactly six legacy plans are replaced while one Partial and six Not Mapped plans remain", async () => {
+test("VCB-162: legacy workflow Share error uses a verified mutation and coordinate-free prompts", () => {
+  const sourceText = `version: 1
+cases:
+  - id: da-legacy-share-error
+    scenarioId: VCB-162
+    workItemIds: [36266720]
+    gate: manual
+    steps: [scaffold, check, login, workflow-version, share]
+steps:
+  scaffold:
+    type: scaffold
+    with:
+      template: da/no-action
+      answers:
+        - question: projectType
+          value: copilot-agent-type
+        - question: daTemplate
+          value: no-action
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "\${{var:app_name:vscuse_app_#####}}"
+  check:
+    type: checks
+    with:
+      - type: file
+        path: m365agents.yml
+        expect: { contains: ["version: v1.12", "copilotAgent/publish"] }
+  login:
+    type: login
+    with:
+      type: m365
+      account: "\${{env:M365_ACCOUNT_NAME}}"
+      password: "\${{secret:M365_ACCOUNT_PASSWORD}}"
+  workflow-version:
+    type: workflowVersion
+    with:
+      version: v1.9
+  share:
+    type: share
+    with:
+      scope: users
+      email: "\${{env:M365_ACCOUNT_NAME}}"
+      expectError: unsupportedWorkflowVersion
+`;
+  const result = compileInlineSource(sourceText, "vscuse-vcb-162.yml");
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const plan = result.value[0].plan;
+  assert.equal(plan.plan_metadata.tags.includes("gate:manual"), true);
+
+  const descriptions = plan.steps.map((step) => step.description);
+  assert.equal(
+    descriptions.some((description) =>
+      description.includes(
+        "replace the top-level version in m365agents.yml with v1.9 and verify the written workflow",
+      ),
+    ),
+    true,
+  );
+  const typedValues = plan.steps
+    .filter((step) => step.tool === "type_text")
+    .map((step) => step.parameters.text);
+  const scaffoldFlow = [
+    "Declarative Agent",
+    "No Action",
+    "${{var:app_name:vscuse_app_#####}}",
+  ];
+  let previousScaffoldIndex = -1;
+  const scaffoldIndexes = scaffoldFlow.map((value) => {
+    previousScaffoldIndex = typedValues.indexOf(
+      value,
+      previousScaffoldIndex + 1,
+    );
+    return previousScaffoldIndex;
+  });
+  assert.equal(
+    scaffoldIndexes.every((index) => index >= 0),
+    true,
+  );
+  const scaffoldPromptTitles = [
+    "New Project",
+    "Create Declarative Agent",
+    "Workspace Folder",
+    "Application Name",
+  ];
+  let previousPromptIndex = -1;
+  const scaffoldPromptIndexes = scaffoldPromptTitles.map((title) => {
+    previousPromptIndex = descriptions.findIndex(
+      (description, index) =>
+        index > previousPromptIndex &&
+        description.includes(`active prompt titled ${title}`),
+    );
+    return previousPromptIndex;
+  });
+  assert.equal(
+    scaffoldPromptIndexes.every((index) => index >= 0),
+    true,
+  );
+  const shareFlow = [
+    "Microsoft 365 Agents: Share",
+    "Share access",
+    "Share to specified users(s) or user group",
+    "${{env:M365_ACCOUNT_NAME}}",
+  ];
+  let previousShareIndex = -1;
+  const shareIndexes = shareFlow.map((value) => {
+    previousShareIndex = typedValues.indexOf(value, previousShareIndex + 1);
+    return previousShareIndex;
+  });
+  assert.equal(
+    shareIndexes.every((index) => index >= 0),
+    true,
+  );
+  assert.deepEqual(
+    shareIndexes,
+    [...shareIndexes].sort((left, right) => left - right),
+  );
+  assert.equal(typedValues.includes("Microsoft 365 Agents: Provision"), false);
+
+  const shareCommandIndex = plan.steps.findIndex(
+    (step) =>
+      step.tool === "type_text" && step.parameters.text === shareFlow[0],
+  );
+  const errorText =
+    "Share feature only supports m365agents.yml version v1.10 or above, follow [the guide](https://github.com/OfficeDev/microsoft-365-agents-toolkit/wiki/Share-Declarative-Agents-with-Others#About-YAML-schema) to upgrade and proceed.";
+  const errorIndex = plan.steps.findIndex((step) =>
+    step.description.includes(errorText),
+  );
+  assert.equal(shareCommandIndex >= 0 && errorIndex > shareCommandIndex, true);
+  assert.equal(
+    plan.steps
+      .slice(shareCommandIndex, errorIndex + 1)
+      .some((step) => step.tool === "click"),
+    false,
+  );
+
+  for (const [label, invalidSource] of [
+    [
+      "unsupported version",
+      sourceText.replace("version: v1.9", "version: v1.10"),
+    ],
+    [
+      "extra version field",
+      sourceText.replace(
+        "      version: v1.9",
+        "      version: v1.9\n      path: custom.yml",
+      ),
+    ],
+    [
+      "unsupported template",
+      sourceText.replace("template: da/no-action", "template: default-bot"),
+    ],
+  ]) {
+    const invalid = compileInlineSource(
+      invalidSource,
+      `vscuse-vcb-162-workflow-${label}.yml`,
+    );
+    assert.equal(invalid.ok, false, label);
+    assert.equal(
+      invalid.diagnostics[0].code,
+      "VCB_WORKFLOW_VERSION_INPUT_INVALID",
+      label,
+    );
+  }
+
+  for (const [label, invalidSource, diagnostic] of [
+    [
+      "missing login",
+      sourceText.replace(
+        "check, login, workflow-version",
+        "check, workflow-version",
+      ),
+      "VCB_SHARE_PREREQUISITE",
+    ],
+    [
+      "unsupported scope",
+      sourceText.replace("scope: users", "scope: tenant"),
+      "VCB_SHARE_INPUT_INVALID",
+    ],
+    [
+      "missing scope",
+      sourceText.replace("      scope: users\n", ""),
+      "VCB_SHARE_INPUT_INVALID",
+    ],
+    [
+      "extra field",
+      sourceText.replace(
+        "      scope: users",
+        "      scope: users\n      environment: local",
+      ),
+      "VCB_SHARE_INPUT_INVALID",
+    ],
+    [
+      "literal email",
+      sourceText.replace(
+        'email: "${{env:M365_ACCOUNT_NAME}}"',
+        "email: user@example.com",
+      ),
+      "VCB_SHARE_INPUT_INVALID",
+    ],
+    [
+      "unsupported expectation",
+      sourceText.replace(
+        "expectError: unsupportedWorkflowVersion",
+        "expectError: serviceFailure",
+      ),
+      "VCB_SHARE_INPUT_INVALID",
+    ],
+  ]) {
+    const invalid = compileInlineSource(
+      invalidSource,
+      `vscuse-vcb-162-share-${label}.yml`,
+    );
+    assert.equal(invalid.ok, false, label);
+    assert.equal(invalid.diagnostics[0].code, diagnostic, label);
+  }
+});
+
+test("VCB-154: exactly seven legacy plans are replaced while one Partial and five Not Mapped plans remain", async () => {
   const migrations = [
     {
       source: "feature-basic-tab-local-debug.yml",
@@ -6841,6 +7060,12 @@ test("VCB-154: exactly six legacy plans are replaced while one Partial and six N
       caseId: "simple-bot-ts-publish-developer-portal",
       generated: "default-bot--simple-bot-ts-publish-developer-portal.json",
       legacy: "Featrue_Open_DeveloperPortal_Publish.json",
+    },
+    {
+      source: "feature-da-legacy-share-error.yml",
+      caseId: "da-legacy-share-error",
+      generated: "da-no-action--da-legacy-share-error.json",
+      legacy: "DA_Error_Message_of_Legacy_Projects.json",
     },
   ];
   const plansDirectory = path.join(casesDirectory, "..", "plans");
@@ -6916,10 +7141,6 @@ test("VCB-154: exactly six legacy plans are replaced while one Partial and six N
     [
       "DA_Typespec_Oauth_Without_Reference_Id.json",
       "mutable blob/main source is not pinned",
-    ],
-    [
-      "DA_Error_Message_of_Legacy_Projects.json",
-      "extension-version and restart compatibility harness",
     ],
   ];
   const mapping = await fs.readFile(
