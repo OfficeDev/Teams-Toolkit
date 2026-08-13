@@ -1,0 +1,93 @@
+version: 1
+
+cases:
+  - id: tab-ts-local-name-validation
+    scenarioId: SCN-CREATE-NON-SSO-TAB-01
+    workItemIds: [15276946, 15455338, 12615302]
+    steps:
+      [
+        scaffold-tab-ts-with-name-rejections,
+        check-tab-ts,
+        login-m365,
+        f5-teams-local,
+        open-tab,
+        check-tab-page,
+      ]
+
+steps:
+  scaffold-tab-ts-with-name-rejections:
+    type: scaffold
+    with:
+      template: non-sso-tab
+      answers:
+        - question: projectType
+          value: teams-agent-and-app-type
+        - question: teamsAppType
+          value: teams-other-app-type
+        - question: teamsOtherAppType
+          value: non-sso-tab
+        - question: workspaceFolder
+          value: default
+        - type: rejectedScaffoldTextAttempt
+          with:
+            question: appName
+            reason: invalidCharacters
+        - type: rejectedScaffoldTextAttempt
+          with:
+            question: appName
+            reason: overlength
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-tab-ts:
+    type: checks
+    with:
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains:
+            [
+              "version: v1.11",
+              "provision:",
+              "deploy:",
+              "azureAppService/zipDeploy",
+            ]
+      - type: file
+        path: appPackage/manifest.json
+        expect:
+          contains: ['"staticTabs"', '"name": "Home"', "/tabs/home"]
+      - type: file
+        path: src/Tab/App.tsx
+        expect:
+          contains: ["Your app is running in"]
+      - type: file
+        path: env/.env.local
+        expect:
+          exists: true
+
+  login-m365:
+    type: login
+    with:
+      type: m365
+      account: "${{env:M365_ACCOUNT_NAME}}"
+      password: "${{secret:M365_ACCOUNT_PASSWORD}}"
+
+  f5-teams-local:
+    type: target
+    with:
+      profile: "Debug in Teams (Chrome)"
+      profileSelection: first
+
+  open-tab:
+    type: open
+    with:
+      kind: app
+      destination: page
+
+  check-tab-page:
+    type: checks
+    with:
+      - type: page
+        expect:
+          contains: ["Your app is running in TeamsModern"]

@@ -85,12 +85,12 @@
       "step_filterOption_filter_c25bdc1b6_3_3",
       "step_filterOption_assertOption_c25bdc1b6_3_3",
       "step_filterOption_confirm_c25bdc1b6_3_3",
-      "step_multiSelect_assertQuestion_c25bdc1b6_3_4",
-      "step_multiSelect_assertOptionsLoaded_c25bdc1b6_3_4",
-      "step_multiSelect_focusSelectAll_c25bdc1b6_3_4",
-      "step_multiSelect_selectAll_c25bdc1b6_3_4",
-      "step_multiSelect_restoreFocus_c25bdc1b6_3_4",
-      "step_multiSelect_confirm_c25bdc1b6_3_4",
+      "step_pythonDependencies_assertQuestion_c25bdc1b6_3_4",
+      "step_pythonDependencies_assertDependency_c25bdc1b6_3_4",
+      "step_pythonDependencies_focusSelectAll_c25bdc1b6_3_4",
+      "step_pythonDependencies_selectAll_c25bdc1b6_3_4",
+      "step_pythonDependencies_restoreFocus_c25bdc1b6_3_4",
+      "step_pythonDependencies_confirm_c25bdc1b6_3_4",
       "step_executeCommand_open_c25bdc1b6_3_5",
       "step_executeCommand_assertPalette_c25bdc1b6_3_5",
       "step_executeCommand_filter_c25bdc1b6_3_5",
@@ -1651,7 +1651,7 @@
       ]
     },
     {
-      "step_id": "step_multiSelect_assertQuestion_c25bdc1b6_3_4",
+      "step_id": "step_pythonDependencies_assertQuestion_c25bdc1b6_3_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1672,17 +1672,17 @@
       ]
     },
     {
-      "step_id": "step_multiSelect_assertOptionsLoaded_c25bdc1b6_3_4",
+      "step_id": "step_pythonDependencies_assertDependency_c25bdc1b6_3_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the multi-select prompt titled Select dependencies to install has finished loading and lists at least one selectable option: an option row with a text label beside a square selection control. The selection-count badge reports how many options are selected, not how many options are available.",
+      "description": "@assertion the active multi-select prompt titled Select dependencies to install has finished loading and lists the selectable dependency option labeled src/requirements.txt.",
       "content_refs": [],
       "timeout": 120,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_multiSelect_assertQuestion_c25bdc1b6_3_4"
+        "step_pythonDependencies_assertQuestion_c25bdc1b6_3_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1693,7 +1693,7 @@
       ]
     },
     {
-      "step_id": "step_multiSelect_focusSelectAll_c25bdc1b6_3_4",
+      "step_id": "step_pythonDependencies_focusSelectAll_c25bdc1b6_3_4",
       "agent": "interaction",
       "tool": "keyboard_shortcut",
       "parameters": {
@@ -1705,7 +1705,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_multiSelect_assertOptionsLoaded_c25bdc1b6_3_4"
+        "step_pythonDependencies_assertDependency_c25bdc1b6_3_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1715,7 +1715,7 @@
       ]
     },
     {
-      "step_id": "step_multiSelect_selectAll_c25bdc1b6_3_4",
+      "step_id": "step_pythonDependencies_selectAll_c25bdc1b6_3_4",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1727,7 +1727,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_multiSelect_focusSelectAll_c25bdc1b6_3_4"
+        "step_pythonDependencies_focusSelectAll_c25bdc1b6_3_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1737,7 +1737,7 @@
       ]
     },
     {
-      "step_id": "step_multiSelect_restoreFocus_c25bdc1b6_3_4",
+      "step_id": "step_pythonDependencies_restoreFocus_c25bdc1b6_3_4",
       "agent": "interaction",
       "tool": "keyboard_shortcut",
       "parameters": {
@@ -1749,7 +1749,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_multiSelect_selectAll_c25bdc1b6_3_4"
+        "step_pythonDependencies_selectAll_c25bdc1b6_3_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1759,7 +1759,7 @@
       ]
     },
     {
-      "step_id": "step_multiSelect_confirm_c25bdc1b6_3_4",
+      "step_id": "step_pythonDependencies_confirm_c25bdc1b6_3_4",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1771,7 +1771,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_multiSelect_restoreFocus_c25bdc1b6_3_4"
+        "step_pythonDependencies_restoreFocus_c25bdc1b6_3_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1793,7 +1793,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_multiSelect_confirm_c25bdc1b6_3_4"
+        "step_pythonDependencies_confirm_c25bdc1b6_3_4"
       ],
       "preconditions": [],
       "postconditions": [],

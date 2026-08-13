@@ -1,0 +1,82 @@
+version: 1
+
+cases:
+  - id: da-typespec-no-action-remote-preview
+    scenarioId: SCN-DA-CREATE-TYPESPEC
+    workItemIds: [32237977]
+    gate: manual
+    steps:
+      [
+        scaffold-typespec,
+        check-scaffold,
+        login-m365,
+        provision,
+        f5-copilot-remote,
+        open-agent,
+        check-reply,
+      ]
+
+steps:
+  scaffold-typespec:
+    type: scaffold
+    with:
+      template: da/typespec
+      answers:
+        - question: projectType
+          value: copilot-agent-type
+        - question: daTemplate
+          value: typespec
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-scaffold:
+    type: checks
+    with:
+      - type: file
+        path: src/agent/main.tsp
+        expect:
+          contains:
+            - "// @conversationStarter(#{"
+            - '//   title: "Get latest issues",'
+            - '//   text: "Get the latest issues from GitHub"'
+            - "// })"
+            - "// op searchIssues is global.GitHubAPI.searchIssues;"
+      - type: file
+        path: src/agent/actions/github.tsp
+        expect:
+          exists: true
+
+  login-m365:
+    type: login
+    with:
+      type: m365
+      account: "${{env:M365_ACCOUNT_NAME}}"
+      password: "${{secret:M365_ACCOUNT_PASSWORD}}"
+
+  provision:
+    type: provision
+    with:
+      environment: none
+
+  f5-copilot-remote:
+    type: target
+    with:
+      profile: "Preview in Copilot (Chrome)"
+      profileSelection: second
+
+  open-agent:
+    type: open
+    with:
+      kind: agent
+      destination: chat
+
+  check-reply:
+    type: checks
+    with:
+      - type: chat
+        send: how can you assistant me?
+        expect:
+          replied: true

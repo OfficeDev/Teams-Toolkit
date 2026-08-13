@@ -89,7 +89,10 @@ Respond in JSON format with the following JSON schema, and do not use markdown i
 {
     "contentType": "'Text' or 'AdaptiveCard' only",
     "content": "{The content of the response, may be plain text, or JSON based adaptive card}"
-}`);
+}
+
+For Text responses, content must be a string.
+For AdaptiveCard responses, content must be a JSON object, not a JSON-encoded string.`);
 
 weatherAgent.onActivity(ActivityTypes.Message, async (context, state) => {
   if (supportsFilesWarning && !supportsFilesWarned) {
@@ -112,9 +115,13 @@ weatherAgent.onActivity(ActivityTypes.Message, async (context, state) => {
   if (llmResponseContent.contentType === "Text") {
     await context.sendActivity(llmResponseContent.content);
   } else if (llmResponseContent.contentType === "AdaptiveCard") {
+    const adaptiveCardContent =
+      typeof llmResponseContent.content === "string"
+        ? JSON.parse(llmResponseContent.content)
+        : llmResponseContent.content;
     const response = MessageFactory.attachment({
       contentType: "application/vnd.microsoft.card.adaptive",
-      content: llmResponseContent.content,
+      content: adaptiveCardContent,
     });
     await context.sendActivity(response);
   }

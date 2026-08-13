@@ -31,6 +31,42 @@ cases:
         check-repair,
       ]
 
+  - id: da-api-plugin-from-scratch-api-key-ts-remote-copilot
+    scenarioId: SCN-DA-CREATE-API-PLUGIN-FROM-SCRATCH
+    workItemIds: [28941598]
+    gate: manual
+    steps:
+      [
+        scaffold-ts,
+        check-ts,
+        set-api-key-dev,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-copilot-remote,
+        open-agent,
+        check-repair,
+      ]
+
+  - id: da-api-plugin-from-scratch-api-key-js-remote-copilot
+    scenarioId: SCN-DA-CREATE-API-PLUGIN-FROM-SCRATCH
+    workItemIds: [34628865]
+    gate: manual
+    steps:
+      [
+        scaffold-js,
+        check-js,
+        set-api-key-dev,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-copilot-remote,
+        open-agent,
+        check-repair,
+      ]
+
 steps:
   scaffold-ts:
     type: scaffold
@@ -170,7 +206,7 @@ steps:
         expect:
           contains: ["SECRET_API_KEY="]
       - type: file
-        path: src/functions/repairs.js
+        path: src/functions/repair.js
         expect:
           exists: true
       - type: file
@@ -187,6 +223,20 @@ steps:
     with:
       SECRET_API_KEY: "${{var:app_name}}-api-key"
 
+  set-api-key-dev:
+    type: userEnvironment
+    with:
+      target: dev
+      variables:
+        SECRET_API_KEY: "${{var:app_name}}-api-key"
+
+  login-azure:
+    type: login
+    with:
+      type: azure
+      account: "${{env:AZURE_ACCOUNT_NAME}}"
+      password: "${{secret:AZURE_ACCOUNT_PASSWORD}}"
+
   login-m365:
     type: login
     with:
@@ -194,10 +244,27 @@ steps:
       account: "${{env:M365_ACCOUNT_NAME}}"
       password: "${{secret:M365_ACCOUNT_PASSWORD}}"
 
+  provision-arm:
+    type: provision
+    with:
+      arm:
+        targetResourceGroupName: "+ New resource group"
+        newResourceGroupName: "${{var:app_name}}-rg"
+        newResourceGroupLocation: "${{env:RESOURCE_GROUP_REGION}}"
+
+  deploy:
+    type: deploy
+
   f5-copilot-local:
     type: target
     with:
       profile: "Debug in Copilot (Chrome)"
+      profileSelection: first
+
+  f5-copilot-remote:
+    type: target
+    with:
+      profile: "Preview in Copilot (Chrome)"
       profileSelection: first
 
   open-agent:

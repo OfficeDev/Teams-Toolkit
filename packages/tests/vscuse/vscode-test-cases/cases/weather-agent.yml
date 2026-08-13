@@ -219,6 +219,35 @@ cases:
         check-weather-chat,
       ]
 
+  # The retained OpenAI plans stopped at the Playground welcome state. Their
+  # replacements reuse the existing successful weather interaction without
+  # adding response wording or coordinates.
+  - id: weather-ts-openai-playground
+    scenarioId: SCN-CREATE-WEATHER-03
+    workItemIds: [33338503]
+    steps:
+      [
+        scaffold-weather-ts-openai,
+        check-weather-ts,
+        redirect-openai-base-url,
+        f5-playground,
+        open-app,
+        check-weather-chat,
+      ]
+
+  - id: weather-js-openai-playground
+    scenarioId: SCN-CREATE-WEATHER-03
+    workItemIds: [33338498]
+    steps:
+      [
+        scaffold-weather-js-openai,
+        check-weather-js,
+        redirect-openai-base-url,
+        f5-playground,
+        open-app,
+        check-weather-chat,
+      ]
+
 steps:
   scaffold-weather-ts-azure-openai:
     type: scaffold
