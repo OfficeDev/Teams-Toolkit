@@ -23,6 +23,7 @@ const allowedStepTypes = new Set([
   "deploy",
   "pythonEnvironment",
   "localEnvironment",
+  "playgroundEnvironment",
   "remoteEnvironment",
   "openAIModel",
   "localUserEnvironment",

@@ -1832,6 +1832,42 @@ test("VCB-159: Python dependency prompts name the exact requirements file", asyn
   }
 });
 
+test("VCB-160: Weather OpenAI Playground redirects use the Playground lifecycle", async () => {
+  const result = await compileFixture(
+    "weather-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true);
+  for (const caseId of [
+    "weather-ts-openai-playground",
+    "weather-js-openai-playground",
+  ]) {
+    const plan = result.value.find(
+      (generated) => generated.caseId === caseId,
+    ).plan;
+    const environmentStep = plan.steps.find((step) =>
+      step.description.includes("set OPENAI_BASE_URL"),
+    );
+
+    assert.equal(
+      environmentStep.parameters.sample.includes("m365agents.playground.yml"),
+      true,
+      caseId,
+    );
+    assert.equal(
+      environmentStep.parameters.sample.includes(".localConfigs.playground"),
+      true,
+      caseId,
+    );
+    assert.equal(
+      environmentStep.parameters.sample.includes("m365agents.local.yml"),
+      false,
+      caseId,
+    );
+  }
+});
+
 test("VCB-68: a Python environment operation reads its interpreter from the case", async () => {
   const result = await compileFixture(
     "basic-custom-engine-agent.yml",
@@ -6962,11 +6998,9 @@ test("VCB-142: every OpenAI case reuses Azure OpenAI without fake-key error cont
 
     const isRemote = caseId.includes("-remote-");
     const endpointStep = codeSteps.find((step) =>
-      step.step_id.startsWith(
-        isRemote
-          ? "step_setRemoteEnvironmentVariable_"
-          : "step_setLocalEnvironmentVariable_",
-      ),
+      isRemote
+        ? step.step_id.startsWith("step_setRemoteEnvironmentVariable_")
+        : /step_set(?:Local|Playground)EnvironmentVariable_/.test(step.step_id),
     );
     assert.notEqual(endpointStep, undefined, caseId);
     assert.equal(

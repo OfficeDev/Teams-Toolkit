@@ -67,7 +67,7 @@
       "step_checkWorkspaceFiles_verify_c625d0946_2_3",
       "step_checkWorkspaceFiles_verify_c625d0946_2_4",
       "step_checkWorkspaceFiles_verify_c625d0946_2_5",
-      "step_setLocalEnvironmentVariable_c625d0946_3_1",
+      "step_setPlaygroundEnvironmentVariable_c625d0946_3_1",
       "step_executeCommand_open_c625d0946_4_1",
       "step_executeCommand_assertPalette_c625d0946_4_1",
       "step_executeCommand_filter_c625d0946_4_1",
@@ -1206,13 +1206,13 @@
       ]
     },
     {
-      "step_id": "step_setLocalEnvironmentVariable_c625d0946_3_1",
+      "step_id": "step_setPlaygroundEnvironmentVariable_c625d0946_3_1",
       "agent": "code",
       "tool": "",
       "parameters": {
-        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" VARIABLE_NAME=\"OPENAI_BASE_URL\" VARIABLE_VALUE=\"${{env:AZURE_OPENAI_ENDPOINT}}/openai/v1\" python3 - <<'PY'\nimport os\nfrom pathlib import Path\n\nlifecycle = Path(os.environ[\"PROJECT_DIR\"]).resolve() / \"m365agents.local.yml\"\nname = os.environ[\"VARIABLE_NAME\"]\nvalue = os.environ[\"VARIABLE_VALUE\"]\nif not value:\n    raise AssertionError(\"The variable value resolved to nothing\")\nlines = lifecycle.read_text(encoding=\"utf-8\").splitlines()\ntargets = (\"target: ./.localConfigs\", \"target: ./.env\")\ntarget = next((index for index, line in enumerate(lines) if line.strip() in targets), None)\nif target is None:\n    raise AssertionError(\"The local lifecycle writes no runtime environment file\")\nheader = next((index for index in range(target + 1, len(lines)) if lines[index].strip() == \"envs:\"), None)\nif header is None:\n    raise AssertionError(\"The runtime environment file declares no envs mapping\")\nindent = \" \" * (len(lines[header]) - len(lines[header].lstrip()) + 2)\nend = header + 1\nwhile end < len(lines) and lines[end].startswith(indent) and lines[end].strip():\n    end += 1\nkept = [line for line in lines[header + 1 : end] if not line.strip().startswith(name + \":\")]\nlines[header + 1 : end] = kept + [indent + name + \": \" + value]\nlifecycle.write_text(\"\\n\".join(lines) + \"\\n\", encoding=\"utf-8\")\nwritten = [line for line in lifecycle.read_text(encoding=\"utf-8\").splitlines() if line.strip().startswith(name + \":\")]\nif written != [indent + name + \": \" + value]:\n    raise AssertionError(\"The variable was not written exactly once with its value\")\nPY\n```"
+        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" VARIABLE_NAME=\"OPENAI_BASE_URL\" VARIABLE_VALUE=\"${{env:AZURE_OPENAI_ENDPOINT}}/openai/v1\" python3 - <<'PY'\nimport os\nfrom pathlib import Path\n\nlifecycle = Path(os.environ[\"PROJECT_DIR\"]).resolve() / \"m365agents.playground.yml\"\nname = os.environ[\"VARIABLE_NAME\"]\nvalue = os.environ[\"VARIABLE_VALUE\"]\nif not value:\n    raise AssertionError(\"The variable value resolved to nothing\")\nlines = lifecycle.read_text(encoding=\"utf-8\").splitlines()\ntarget = next((index for index, line in enumerate(lines) if line.strip() == \"target: ./.localConfigs.playground\"), None)\nif target is None:\n    raise AssertionError(\"The Playground lifecycle does not write .localConfigs.playground\")\nheader = next((index for index in range(target + 1, len(lines)) if lines[index].strip() == \"envs:\"), None)\nif header is None:\n    raise AssertionError(\"The Playground runtime environment file declares no envs mapping\")\nindent = \" \" * (len(lines[header]) - len(lines[header].lstrip()) + 2)\nend = header + 1\nwhile end < len(lines) and lines[end].startswith(indent) and lines[end].strip():\n    end += 1\nkept = [line for line in lines[header + 1 : end] if not line.strip().startswith(name + \":\")]\nlines[header + 1 : end] = kept + [indent + name + \": \" + value]\nlifecycle.write_text(\"\\n\".join(lines) + \"\\n\", encoding=\"utf-8\")\nwritten = [line for line in lifecycle.read_text(encoding=\"utf-8\").splitlines() if line.strip().startswith(name + \":\")]\nif written != [indent + name + \": \" + value]:\n    raise AssertionError(\"The variable was not written exactly once with its value\")\nPY\n```"
       },
-      "description": "@code execute the supplied generated bash script exactly as authored and read its exact PROJECT_DIR under /home/vscode/AgentsToolkitProjects/ from that script; set OPENAI_BASE_URL in the envs mapping the local lifecycle writes into the project's runtime environment file to exactly the value the script assigns, do not reinterpret or regenerate the script, do not use /workspace, and do not log that value.",
+      "description": "@code execute the supplied generated bash script exactly as authored and read its exact PROJECT_DIR under /home/vscode/AgentsToolkitProjects/ from that script; set OPENAI_BASE_URL in the envs mapping the Playground lifecycle writes into .localConfigs.playground to exactly the value the script assigns, do not reinterpret or regenerate the script, do not use /workspace, and do not log that value.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1224,7 +1224,7 @@
       "postconditions": [],
       "tags": [
         "component:workspace",
-        "operation:local-environment",
+        "operation:playground-environment",
         "step_retry_timeout: 120"
       ]
     },
@@ -1241,7 +1241,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_setLocalEnvironmentVariable_c625d0946_3_1"
+        "step_setPlaygroundEnvironmentVariable_c625d0946_3_1"
       ],
       "preconditions": [],
       "postconditions": [],

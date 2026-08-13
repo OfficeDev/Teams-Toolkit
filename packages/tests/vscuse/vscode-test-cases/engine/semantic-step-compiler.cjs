@@ -1301,7 +1301,11 @@ function createSemanticStepCompiler() {
     return { ok: true, value: output };
   }
 
-  function compileLocalEnvironment(state, definition) {
+  function compileEnvironmentVariables(
+    state,
+    definition,
+    { componentPath, diagnosticCode, diagnosticMessage },
+  ) {
     const inputs = definition.with ?? {};
     const names = isRecord(inputs) ? Object.keys(inputs).sort() : [];
     if (
@@ -1319,16 +1323,13 @@ function createSemanticStepCompiler() {
           ),
       )
     ) {
-      return failure(
-        "VCB_LOCAL_ENVIRONMENT_INPUT_INVALID",
-        "The local environment operation requires shell-safe variable names and values.",
-      );
+      return failure(diagnosticCode, diagnosticMessage);
     }
     const output = [];
     for (const name of names) {
       const error = append(
         output,
-        render(state, "workspace/local-environment-variable.json.tpl", {
+        render(state, componentPath, {
           variableName: name,
           variableValue: inputs[name],
         }),
@@ -1336,6 +1337,24 @@ function createSemanticStepCompiler() {
       if (error) return error;
     }
     return { ok: true, value: output };
+  }
+
+  function compileLocalEnvironment(state, definition) {
+    return compileEnvironmentVariables(state, definition, {
+      componentPath: "workspace/local-environment-variable.json.tpl",
+      diagnosticCode: "VCB_LOCAL_ENVIRONMENT_INPUT_INVALID",
+      diagnosticMessage:
+        "The local environment operation requires shell-safe variable names and values.",
+    });
+  }
+
+  function compilePlaygroundEnvironment(state, definition) {
+    return compileEnvironmentVariables(state, definition, {
+      componentPath: "workspace/playground-environment-variable.json.tpl",
+      diagnosticCode: "VCB_PLAYGROUND_ENVIRONMENT_INPUT_INVALID",
+      diagnosticMessage:
+        "The Playground environment operation requires shell-safe variable names and values.",
+    });
   }
 
   function compileRemoteEnvironment(state, definition) {
@@ -2500,6 +2519,8 @@ function createSemanticStepCompiler() {
         return compilePythonEnvironment(state, definition);
       case "localEnvironment":
         return compileLocalEnvironment(state, definition);
+      case "playgroundEnvironment":
+        return compilePlaygroundEnvironment(state, definition);
       case "remoteEnvironment":
         return compileRemoteEnvironment(state, definition);
       case "openAIModel":
