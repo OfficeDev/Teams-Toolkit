@@ -6957,7 +6957,7 @@ steps:
     [
       "literal email",
       sourceText.replace(
-        'email: "\${{env:M365_ACCOUNT_NAME}}"',
+        'email: "${{env:M365_ACCOUNT_NAME}}"',
         "email: user@example.com",
       ),
       "VCB_SHARE_INPUT_INVALID",
