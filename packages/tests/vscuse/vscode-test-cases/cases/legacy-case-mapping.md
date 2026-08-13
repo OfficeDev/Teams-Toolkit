@@ -13,6 +13,9 @@ that no longer exists wherever the status is **Full**.
   until that gap closes.
 - **Not Mapped**: no generated case safely replaces the named legacy-specific behavior; the precise
   blocker is recorded below and the legacy plan is kept.
+- **Retired**: the legacy-specific behavior is intentionally no longer tested because it is not a
+  required product contract or duplicates coverage elsewhere; the legacy plan is removed without a
+  generated replacement.
 
 A generated case is still **Full** when it sends the legacy prompt and asserts an error-free reply
 where the legacy plan asserted reply wording. The wording is the model's, so asserting it would tie
@@ -202,16 +205,17 @@ and VCB-156.
 | `teams-collaborator-agent.yml`                    | `collaborator-ts-azure-openai-local-teams`               | `teams-collaborator-agent--collaborator-ts-azure-openai-local-teams.json`                      | `Teams_Collaborator_Agent_local_debug.json`                                 | Full    | Teams Collaborator Agent, Azure OpenAI, TypeScript, local Teams launch, and an action-item chat validation asserting a reply instead of the legacy model-authored wording.                                                                                                   |
 | `teams-collaborator-agent.yml`                    | `collaborator-ts-azure-openai-playground`                | `teams-collaborator-agent--collaborator-ts-azure-openai-playground.json`                       | `Teams_Collaborator_Agent_debug_in_playground.json`                         | Full    | Teams Collaborator Agent, Azure OpenAI, TypeScript, Agents Playground launch, and the legacy collaborator at-mention with a visible reply assertion.                                                                                                                         |
 
-## Legacy Weather Plans Not Mapped
+## Retired Legacy Weather Plans
 
 The legacy weather corpus was the full two LLM services by two languages by five surfaces matrix, so
 it held twenty plans. Azure OpenAI now has one-to-one generated coverage across all retained surfaces.
-The four OpenAI Copilot plans below remain recorded because their runtime contracts are not full
-replacements:
+The four OpenAI Copilot plans below are retired without generated replacements:
 `Weather_Agent_OpenAI_ts_Copilot_Local_Debug.json`, `Weather_Agent_OpenAI_ts_Copilot_Remote_Debug.json`,
 `Weather_Agent_OpenAI_js_Copilot_Local_Debug.json`, and
-`Weather_Agent_OpenAI_js_Copilot_Remote_Debug.json`. They assert one of two legacy error messages,
-which the current semantic checks do not express without adding capability.
+`Weather_Agent_OpenAI_js_Copilot_Remote_Debug.json`. They only asserted one of two generic Copilot
+error messages after configuring an invalid OpenAI key. Generated cases already cover successful
+OpenAI Copilot execution across TypeScript, JavaScript, local, and remote modes, while generated
+Weather Agent cases cover OpenAI on Teams and Playground and Copilot with Azure OpenAI.
 
 ## Retained Legacy Plans Not Mapped
 
