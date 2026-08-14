@@ -53,7 +53,6 @@ Compiled from the YAML cases under [`vscode-test-cases/cases/`](vscode-test-case
 | ---------------------------------------- | -------------------------- |
 | `DA_No_Action_Local_Debug`               | No action — local          |
 | `DA_No_Action_Add_Action`                | Add action to no-action DA |
-| `DA_No_Action_Add_Knowledge_Onedrive`    | OneDrive knowledge         |
 | `DA_No_Action_Web_Search`                | Web search                 |
 | `DA_None_js_Local_Debug`                 | None auth JS local         |
 | `DA_None_ts_Local_Debug`                 | None auth TS local         |
@@ -69,7 +68,6 @@ Compiled from the YAML cases under [`vscode-test-cases/cases/`](vscode-test-case
 | `DA_Microsoft_Entra_js_Remote_Debug`     | Entra SSO JS remote        |
 | `DA_Microsoft_Entra_ts_Local_Debug`      | Entra SSO TS local         |
 | `DA_Microsoft_Entra_ts_Remote_Debug`     | Entra SSO TS remote        |
-| `DA_Add_Action_Import_Existing_API`      | Import existing API        |
 | `DA_AddCapability_CopilotConnector`      | Add Copilot Connector      |
 | `DA_Regenrate_Action`                    | Regenerate action          |
 | `DA_Error_Message_of_Legacy_Projects`    | Legacy project errors      |

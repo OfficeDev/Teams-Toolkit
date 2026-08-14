@@ -220,16 +220,18 @@ Weather Agent cases cover OpenAI on Teams and Playground and Copilot with Azure 
 
 ## Retained Legacy Plans Not Mapped
 
-| Legacy plan                                   | Status     | Blocker                                                                                                                                                                              |
-| --------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `DA_No_Action_Add_Knowledge_Onedrive.json`    | Not Mapped | The plan is mislabeled and contains no OneDrive steps; its actual no-action DA local happy path is already covered, so duplicating it would not migrate the named OneDrive behavior. |
-| `DA_No_Action_Web_Search.json`                | Not Mapped | The first branch records `https://example.com`, but the ambiguous second branch omits its URL; an `all websites` value must not be fabricated.                                       |
-| `DA_With_EK_Happy_Path.json`                  | Not Mapped | Its external Document.docx fixture is neither vendored nor pinned, so the Embedded Knowledge upload and GPA assertion are not reproducible.                                          |
-| `DA_Typespec_Oauth_With_Reference_Id.json`    | Not Mapped | The source replacement reads a mutable blob/main TypeSpec file; that mutable blob/main source is not pinned, so the OAuth behavior cannot be reproduced safely.                      |
-| `DA_Typespec_Oauth_Without_Reference_Id.json` | Not Mapped | The source replacement reads a mutable blob/main TypeSpec file; that mutable blob/main source is not pinned, so the OAuth behavior cannot be reproduced safely.                      |
+| Legacy plan                                   | Status     | Blocker                                                                                                                                                         |
+| --------------------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DA_No_Action_Web_Search.json`                | Not Mapped | The first branch records `https://example.com`, but the ambiguous second branch omits its URL; an `all websites` value must not be fabricated.                  |
+| `DA_With_EK_Happy_Path.json`                  | Not Mapped | Its external Document.docx fixture is neither vendored nor pinned, so the Embedded Knowledge upload and GPA assertion are not reproducible.                     |
+| `DA_Typespec_Oauth_With_Reference_Id.json`    | Not Mapped | The source replacement reads a mutable blob/main TypeSpec file; that mutable blob/main source is not pinned, so the OAuth behavior cannot be reproduced safely. |
+| `DA_Typespec_Oauth_Without_Reference_Id.json` | Not Mapped | The source replacement reads a mutable blob/main TypeSpec file; that mutable blob/main source is not pinned, so the OAuth behavior cannot be reproduced safely. |
 
-## Legacy Plan Not Mapped
+## Retired Legacy DA Plans
 
-`DA_Add_Action_Import_Existing_API.json` is intentionally excluded and kept. It represents a broader obsolete/generic flow and does not match one generated case closely enough for replacement. The four `Basic` authentication variants are the migration sources for the existing-API bundle.
+| Legacy plan                                | Status  | Reason                                                                                                                           |
+| ------------------------------------------ | ------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `DA_No_Action_Add_Knowledge_Onedrive.json` | Retired | The plan is mislabeled and contains no OneDrive steps; its actual no-action DA local happy path is already covered.              |
+| `DA_Add_Action_Import_Existing_API.json`   | Retired | The obsolete generic flow is superseded: four authentication variants provide the retained coverage for the existing-API bundle. |
 
 Generated plan filenames remain owned by `plans/.vscuse-generated-plans`; this document does not change setup ownership or generation behavior.

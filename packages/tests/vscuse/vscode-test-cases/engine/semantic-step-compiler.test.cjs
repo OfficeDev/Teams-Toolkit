@@ -7022,7 +7022,7 @@ steps:
   }
 });
 
-test("VCB-154: exactly seven legacy plans are replaced while one Partial and five Not Mapped plans remain", async () => {
+test("VCB-154: seven legacy plans are replaced, two are retired, and five remain", async () => {
   const migrations = [
     {
       source: "feature-basic-tab-local-debug.yml",
@@ -7125,10 +7125,6 @@ test("VCB-154: exactly seven legacy plans are replaced while one Partial and fiv
     "legacy provision-before-login flow is not covered",
   ];
   const notMapped = [
-    [
-      "DA_No_Action_Add_Knowledge_Onedrive.json",
-      "mislabeled and contains no OneDrive steps",
-    ],
     ["DA_No_Action_Web_Search.json", "ambiguous second branch omits its URL"],
     [
       "DA_With_EK_Happy_Path.json",
@@ -7143,10 +7139,36 @@ test("VCB-154: exactly seven legacy plans are replaced while one Partial and fiv
       "mutable blob/main source is not pinned",
     ],
   ];
+  const retired = [
+    [
+      "DA_No_Action_Add_Knowledge_Onedrive.json",
+      "mislabeled and contains no OneDrive steps",
+    ],
+    [
+      "DA_Add_Action_Import_Existing_API.json",
+      "four authentication variants provide the retained coverage",
+    ],
+  ];
   const mapping = await fs.readFile(
     path.join(casesDirectory, "legacy-case-mapping.md"),
     "utf8",
   );
+  const index = await fs.readFile(
+    path.join(casesDirectory, "..", "..", "Index.md"),
+    "utf8",
+  );
+  for (const [status, expectedCount] of [
+    ["Partial", 1],
+    ["Not Mapped", 4],
+    ["Retired", 2],
+  ]) {
+    assert.equal(
+      mapping.match(new RegExp(`^\\|[^\\n]*\\|\\s*${status}\\s*\\|`, "gmu"))
+        ?.length ?? 0,
+      expectedCount,
+      `${status} row count`,
+    );
+  }
   assert.equal(fsSync.existsSync(path.join(plansDirectory, partial[0])), true);
   assert.match(
     mapping,
@@ -7170,6 +7192,22 @@ test("VCB-154: exactly seven legacy plans are replaced while one Partial and fiv
       mapping,
       new RegExp(
         `\\| \\\`${legacy.replaceAll(".", "\\.")}\\\`\\s+\\| Not Mapped\\s+\\|[^\\n]*${blocker}`,
+        "i",
+      ),
+      legacy,
+    );
+  }
+  for (const [legacy, reason] of retired) {
+    assert.equal(fsSync.existsSync(path.join(plansDirectory, legacy)), false);
+    assert.equal(
+      index.includes(`\`${path.parse(legacy).name}\``),
+      false,
+      `${legacy} is not indexed`,
+    );
+    assert.match(
+      mapping,
+      new RegExp(
+        `\\| \\\`${legacy.replaceAll(".", "\\.")}\\\`\\s+\\| Retired\\s+\\|[^\\n]*${reason}`,
         "i",
       ),
       legacy,
