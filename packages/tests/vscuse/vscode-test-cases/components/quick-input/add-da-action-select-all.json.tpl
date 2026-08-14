@@ -10,7 +10,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the Select Operation(s) Copilot Can Interact with multi-select prompt is visible with the Toggle all checkboxes control.",
+      "description": "@assertion the Select Operation(s) Copilot Can Interact with multi-select prompt is visible, and the square checkbox immediately to the left of the input box is the control for toggling all operation checkboxes.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
