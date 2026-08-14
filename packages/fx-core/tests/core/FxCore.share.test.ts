@@ -67,7 +67,7 @@ describe("FxCore.shareApplication", () => {
     it("share happy path", async () => {
       const shareWithTenantStub = coreSpy("shareWithTenant").mockResolvedValue(ok(undefined));
 
-      coreSpy("parseShareAppActionYamlConfig").mockResolvedValue(
+      const parseShareConfigStub = coreSpy("parseShareAppActionYamlConfig").mockResolvedValue(
         ok({ teamsappId: "mockAppId", titleId: "mockTitleId", appId: "mockAppId" })
       );
       vi.spyOn(metadataUtil, "parse").mockResolvedValue(ok(mockProjectModel));
@@ -93,6 +93,7 @@ describe("FxCore.shareApplication", () => {
       const inputs: Inputs = {
         platform: Platform.VSCode,
         projectPath: ".",
+        env: "prod",
         [QuestionNames.ShareOperation]: ShareOperationOption.ShareWithUsers,
         [QuestionNames.ShareScope]: ShareScopeOption.ShareAppWithTenantUsers,
       };
@@ -100,6 +101,7 @@ describe("FxCore.shareApplication", () => {
       const res = await runShareApplicationRaw(fxCore, inputs);
       chai.assert.isTrue(res.isOk());
       chai.assert.equal(shareWithTenantStub.mock.calls.length, 1);
+      chai.assert.deepEqual(parseShareConfigStub.mock.calls[0], [".", "prod"]);
     });
   });
 
