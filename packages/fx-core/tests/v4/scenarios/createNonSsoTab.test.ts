@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+import * as fs from "fs";
+import * as path from "path";
 import { UserError } from "@microsoft/teamsfx-api";
 import { assert } from "vitest";
 import { REQUIRE_EMPTY_TARGET } from "../../../src/v4/pipeline/runScaffoldPipeline";
@@ -12,13 +14,14 @@ import {
   readJsonObject,
   recordProperty,
   runV4Package,
+  text,
 } from "./helpers/scenarioHarness";
 
 /**
  * T3 scenario tier: the `non-sso-tab` create package scaffolded under `InMemoryRuntime`.
  *
  * Spec: docs/03-specs/scenarios/teams/create-non-sso-tab.md
- * (SCN-CREATE-NONSSO-TAB-01..05)
+ * (SCN-CREATE-NONSSO-TAB-01..06)
  */
 
 const templatePackage = loadV4Package("create", "non-sso-tab");
@@ -42,6 +45,13 @@ function descriptorLanguages(): string[] {
 
 async function run(language: "typescript" = "typescript") {
   return runV4Package(templatePackage, { callerFloor: { appName, language } });
+}
+
+function tsupEntries(templateName: string, tsupConfig: string): string[] {
+  assert.match(tsupConfig, /bundle:\s*false/, `${templateName} must remain unbundled`);
+  const entryList = tsupConfig.match(/entry:\s*\[([^\]]+)\]/);
+  assert.isNotNull(entryList, `${templateName} must declare its tsup entries`);
+  return Array.from((entryList?.[1] ?? "").matchAll(/["']([^"']+)["']/g), (match) => match[1]);
 }
 
 describe("SCN-TEAMS-CREATE-NONSSO-TAB (v4, T3 InMemoryRuntime)", () => {
@@ -92,5 +102,20 @@ describe("SCN-TEAMS-CREATE-NONSSO-TAB (v4, T3 InMemoryRuntime)", () => {
     assert.instanceOf(error, UserError);
     assert.strictEqual(error.name, REQUIRE_EMPTY_TARGET);
     assert.strictEqual(runtime.files.size, 0);
+  });
+
+  it("SCN-CREATE-NONSSO-TAB-06: v4 declares its proxy module without dropping the v3 server entry", async () => {
+    const v3TemplateDir = path.resolve(templatePackage.packageDir, "../../../vsc/ts/basic-tab");
+    const v3Entries = tsupEntries(
+      "v3 basic-tab",
+      fs.readFileSync(path.join(v3TemplateDir, "tsup.config.js"), "utf8")
+    );
+
+    const { files } = await run("typescript");
+    assert.match(text(files, "src/index.ts"), /^import "\.\/proxy";/m);
+    assert.deepStrictEqual(tsupEntries("v4 non-sso-tab", text(files, "tsup.config.js")), [
+      ...v3Entries,
+      "src/proxy.ts",
+    ]);
   });
 });

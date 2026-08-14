@@ -1017,7 +1017,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the Application Name prompt is visible and ready for text input after the invalid-character correction.",
+      "description": "@assertion the Application Name prompt is visible and ready for text input.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

@@ -11,6 +11,6 @@ module.exports = {
   clean: true,
   outDir: "dist",
   format: ["cjs", "esm"],
-  entry: ["src/index.ts"],
+  entry: ["src/index.ts", "src/proxy.ts"],
   tsconfig: "tsconfig.node.json",
 };
