@@ -152,7 +152,10 @@ export function selectUsersToRemoveSharedAccess(): MultiSelectQuestion {
         throw tokenRes.error;
       }
       const token = tokenRes.value;
-      const configRes = await shareUtils.parseShareAppActionYamlConfig(inputs.projectPath);
+      const configRes = await shareUtils.parseShareAppActionYamlConfig(
+        inputs.projectPath,
+        inputs.env
+      );
       if (configRes.isErr()) {
         throw configRes.error;
       }

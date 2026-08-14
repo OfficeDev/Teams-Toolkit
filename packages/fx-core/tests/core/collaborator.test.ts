@@ -274,9 +274,11 @@ describe("Collaborator APIs for V3", () => {
         })
       );
       const expectedTitleId = "test-agent-title";
-      vi.spyOn(shareUtils, "parseShareAppActionYamlConfig").mockResolvedValueOnce(
-        ok({ titleId: expectedTitleId, teamsappId: "", appId: "" })
-      );
+      const parseShareConfigSpy = vi
+        .spyOn(shareUtils, "parseShareAppActionYamlConfig")
+        .mockResolvedValueOnce(
+          ok({ titleId: expectedTitleId, teamsappId: "", appId: "" })
+        );
       vi.spyOn(AgentCollaboration.prototype, "listCollaborator").mockResolvedValue(
         ok([
           {
@@ -287,10 +289,12 @@ describe("Collaborator APIs for V3", () => {
           },
         ])
       );
+      inputs.env = "prod";
       inputs[QuestionNames.collaborationAppType] = [CollaborationConstants.AgentOptionId];
       inputs[CollaborationConstants.IncludeCollaborators] = true;
       const result = await listCollaborator(ctx, inputs, tokenProvider);
       assert.isTrue(result.isOk());
+      assert.deepEqual(parseShareConfigSpy.mock.calls[0], [inputs.projectPath, "prod"]);
       assert.deepEqual(result._unsafeUnwrap().collaborators, [
         {
           userObjectId: "agent-only-user-object-id",
@@ -736,11 +740,12 @@ describe("Collaborator APIs for V3", () => {
       const expectedTitleId = "test-agent-title";
       inputs.email = "your_collaborator@yourcompany.com";
       inputs.platform = Platform.CLI;
+      inputs.env = "prod";
       inputs[QuestionNames.collaborationAppType] = [CollaborationConstants.AgentOptionId];
 
-      vi.spyOn(shareUtils, "parseShareAppActionYamlConfig").mockResolvedValueOnce(
-        ok({ titleId: expectedTitleId, teamsappId: "", appId: "" })
-      );
+      const parseShareConfigSpy = vi
+        .spyOn(shareUtils, "parseShareAppActionYamlConfig")
+        .mockResolvedValueOnce(ok({ titleId: expectedTitleId, teamsappId: "", appId: "" }));
       vi.spyOn(AgentCollaboration.prototype, "grantPermission").mockResolvedValue(
         ok([
           {
@@ -754,6 +759,7 @@ describe("Collaborator APIs for V3", () => {
 
       const result = await grantPermission(ctx, inputs, tokenProvider);
       assert.isTrue(result.isOk());
+      assert.deepEqual(parseShareConfigSpy.mock.calls[0], [inputs.projectPath, "prod"]);
       if (result.isOk()) {
         const agentPermission = result.value.permissions?.find((p) => p.name === "agent_app");
         assert.isDefined(agentPermission);
